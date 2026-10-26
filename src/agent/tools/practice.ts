@@ -27,6 +27,7 @@ import { activeProblemOf } from "../../core/native-messages.ts";
 import type { LhMessage } from "../../core/native-messages.ts";
 import { concludeResult, invalidInputResult, problemResult } from "../tool-execute.ts";
 import { healEncodedArguments, healToolRecord } from "./heal.ts";
+import { languageTools, type ReviewSeam } from "./language.ts";
 
 
 /** The record-reading context the gates need (the plan-tools idiom). */
@@ -44,6 +45,8 @@ export interface PracticeToolContext {
 	 *  Each absent context (tests) = absent from the registry. */
 	graph?: GraphToolContext;
 	jobs?: JobToolContext;
+	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
+	review?: ReviewSeam;
 }
 
 /** TURN-SCOPED GATE STATE (the BKT incident, 2026-10-05): the gates used
@@ -245,5 +248,6 @@ export function practiceTools(ctx: PracticeToolContext): Record<string, AgentToo
 		...(jobs?.research ? { research: jobs.research } : {}),
 		...(jobs ? { pdf: jobs.pdf! } : {}),
 		...(ctx.graph ? proberGraphTools(ctx.graph) : {}),
+		...languageTools(ctx.review),
 	});
 }

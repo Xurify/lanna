@@ -96,6 +96,7 @@ describe("prober graph tools — registration", () => {
 			"grep",
 			"list_propositions",
 			"list_sessions",
+			"lookup_word",
 			"ls",
 			"pdf",
 			"probe",

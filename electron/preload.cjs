@@ -27,6 +27,8 @@
  *   window.lh.onOpenSettings(cb) — menu navigation, buffered until React
  *   subscribes after a window is reopened. Browser builds have no bridge.
  *
+ *   window.lh.relaunch() — restart the app after a language-profile switch.
+ *
  * Channel names are mirrored in electron/main.cjs — keep them in sync.
  */
 const { contextBridge, ipcRenderer } = require("electron");
@@ -74,6 +76,8 @@ contextBridge.exposeInMainWorld("lh", {
 		},
 	},
 	expandWindow: () => ipcRenderer.send("lh:expand-window"),
+	/** Restart the whole app (language-profile switch). */
+	relaunch: () => ipcRenderer.send("lh:relaunch"),
 	onZoom: (cb) => {
 		const listener = (_event, factor) => cb(factor);
 		ipcRenderer.on("lh:zoom", listener);

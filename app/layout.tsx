@@ -10,12 +10,13 @@ import UpdateBanner from "@/components/update-banner";
 
 // Chrome = JetBrains Mono, teaching prose = Source Sans 3, titles = CMU
 // Serif (the bundled lh-cmu @font-face in globals.css — no CDN).
-const ui = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
-const prose = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans3" });
+// LangHarness: latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä), cyrillic carries Russian.
+const ui = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains" });
+const prose = Source_Sans_3({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-sans3" });
 
 export const metadata: Metadata = {
-	title: "Learning Harness",
-	description: "A teacher agent with a memory — sessions, quizzes, and a knowledge graph of what you know.",
+	title: "LangHarness",
+	description: "A Slovak and Russian tutor with a memory: sessions, practice, spaced review, and a knowledge graph of what you know.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

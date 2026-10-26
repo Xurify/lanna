@@ -45,3 +45,10 @@ export * from "./observability.ts";
 export * from "./model-catalog.ts";
 export { subscriptionControlsResponse, subscriptionBrowserResponse } from "./web-subscription-http.ts";
 export { sessionCost } from "./pricing.ts";
+// LangHarness: language profiles + curriculum seeding, speech synthesis,
+// spaced review, and the lexicon lookup the review page and tutor share.
+export * from "./language.ts";
+export * from "./tts.ts";
+export * from "./review.ts";
+export { lookupWord, loadLexicon } from "../agent/lexicon.ts";
+export { isLanguageProfile, LANGUAGE_PROFILES, type LanguageProfile } from "../../config.ts";

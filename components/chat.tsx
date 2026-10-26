@@ -14,6 +14,7 @@ import {
 	ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { DiacriticBar } from "@/components/diacritic-bar";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
@@ -2303,6 +2304,9 @@ function DockOverlay({
 							claim={revealPending}
 						/>
 					)}
+					{/* LangHarness: one-click target-language letters + playback
+					    speed, typing into whichever field was focused last. */}
+					<DiacriticBar />
 					<div ref={shellRef} className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-lg">
 						<div
 						ref={contentRef}

@@ -59,6 +59,10 @@ import {
 } from "../core/input-events.ts";
 import { steerDelivered } from "../core/contracts.ts";
 import type {CallUsage} from "../core/contracts.ts";
+import { enqueueWords, reviewDigest } from "./review.ts";
+
+/** LangHarness: the spaced-review seam every agent's language tools use. */
+const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
 
 /**
  * One chat turn over the server-owned native record. Framework-free (plain
@@ -432,6 +436,7 @@ export async function handleChatInput(
 							searchAvailable,
 						},
 						...(graphToolsEnabled(effective) ? { graph: { chatStore: stores.chatStore, graphStore: stores.graphStore } } : {}),
+						review: reviewSeam,
 					},
 					agentOpts,
 				)
@@ -445,6 +450,7 @@ export async function handleChatInput(
 						// The registry drop's signal (2026-09-20): no live engine
 						// = no research tool in the teacher's registry.
 						searchAvailable,
+						review: reviewSeam,
 					},
 					agentOpts,
 				)
@@ -463,6 +469,7 @@ export async function handleChatInput(
 						// knowledge graph through tools when the gate opens —
 						// graph master switch AND the agent.graphTools toggle.
 						...(graphToolsEnabled(effective) ? { graphStore: stores.graphStore } : {}),
+						review: reviewSeam,
 					},
 					agentOpts,
 				);

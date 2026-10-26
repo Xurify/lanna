@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,15 +15,59 @@ export const ROOT = path.dirname(fileURLToPath(import.meta.url));
  * byte-for-byte as before. Read-only assets (prompts) stay ROOT-anchored
  * on purpose: they ship inside the app bundle by design.
  */
-const DATA_ROOT = process.env.LH_DATA_DIR
+const BASE_DATA_ROOT = process.env.LH_DATA_DIR
 	? path.resolve(process.env.LH_DATA_DIR)
 	: path.join(ROOT, "data");
+
+// ─── Language profiles (LangHarness, spec D7 / WF-01) ──────────────────────
+// Each target language keeps its own learning records under
+// <data>/profiles/<language>/ — chats, graph ledgers, jobs, review cards,
+// debug — so Slovak and Russian never mix. Settings, prompt overrides, keys
+// and the audio cache stay at the data root: they are about the learner and
+// their providers, not about one language. The active profile is read ONCE
+// at boot (LH_PROFILE env wins, else <data>/profile.json, else slovak);
+// switching profiles restarts the server (POST /api/profile).
+
+export const LANGUAGE_PROFILES = ["slovak", "russian"] as const;
+export type LanguageProfile = (typeof LANGUAGE_PROFILES)[number];
+
+/** Where the active profile choice is stored (a tiny {active} JSON). */
+export const PROFILE_FILE = path.join(BASE_DATA_ROOT, "profile.json");
+
+export function isLanguageProfile(v: unknown): v is LanguageProfile {
+	return typeof v === "string" && (LANGUAGE_PROFILES as readonly string[]).includes(v);
+}
+
+function readActiveProfile(): LanguageProfile {
+	if (isLanguageProfile(process.env.LH_PROFILE)) return process.env.LH_PROFILE;
+	try {
+		const parsed: unknown = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8"));
+		const active = parsed && typeof parsed === "object" ? (parsed as { active?: unknown }).active : undefined;
+		if (isLanguageProfile(active)) return active;
+	} catch {
+		// absent or unreadable — the default profile
+	}
+	return "slovak";
+}
+
+export const ACTIVE_PROFILE: LanguageProfile = readActiveProfile();
+
+const DATA_ROOT = path.join(BASE_DATA_ROOT, "profiles", ACTIVE_PROFILE);
 
 export const PATHS = {
 	root: ROOT,
 	/** Teacher system prompt — the agent's instructions (src/agent/). */
 	teacherPrompt: path.join(ROOT, "src", "agent", "system-prompt.md"),
+	/** The data root shared by every language profile. */
+	base: BASE_DATA_ROOT,
+	/** The ACTIVE profile's root (data/profiles/<language>). */
 	data: DATA_ROOT,
+	/** The read-only curriculum assets (seed graph, lexicon) per language. */
+	curriculum: path.join(ROOT, "curriculum"),
+	/** Synthesized speech, keyed by sha256 — shared across profiles. */
+	audioCache: path.join(BASE_DATA_ROOT, "cache", "audio"),
+	/** Spaced-review cards and their log (src/store/review.ts). */
+	review: path.join(DATA_ROOT, "review"),
 	/** Chat sessions (AI SDK UIMessage transcripts, one JSON file per chat). */
 	chats: path.join(DATA_ROOT, "chats"),
 	graph: path.join(DATA_ROOT, "graph"),
@@ -109,7 +154,7 @@ export const GRAPH_FORMAT_FILE = path.join(PATHS.graph, "format.json");
  * with per-session models, owner 2026-09-28 — sessions own their model
  * from birth, stamped from the strong slot.)
  */
-export const SETTINGS_FILE = path.join(DATA_ROOT, "settings.json");
+export const SETTINGS_FILE = path.join(BASE_DATA_ROOT, "settings.json");
 
 /**
  * User prompt-override files (settings-storage wave, 2026-09-19): the
@@ -124,7 +169,7 @@ export const SETTINGS_FILE = path.join(DATA_ROOT, "settings.json");
  * remove, or reorder fragments adapt automatically; an override keyed to
  * a vanished segment stops composing but stays on disk.
  */
-export const PROMPTS_OVERRIDE_DIR = path.join(DATA_ROOT, "prompts");
+export const PROMPTS_OVERRIDE_DIR = path.join(BASE_DATA_ROOT, "prompts");
 
 /**
  * THE AUTH/KEY STORE (auth-keys wave, 2026-09-19): BYOK provider keys in a

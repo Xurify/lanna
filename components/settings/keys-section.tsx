@@ -33,6 +33,13 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 
 /** One pi-ai provider with plain API-key auth (the Platform seam —
  *  derived from pi-ai's own env-key table; no drift possible). */
+/** Which settings group a service key sits in (LangHarness adds Speech). */
+function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Search" {
+	if (id === "ELEVENLABS_API_KEY") return "Speech";
+	if (id === "DEEPGRAM_API_KEY") return "Dictation";
+	return "Search";
+}
+
 export interface ProviderKeyInfo {
 	id: string;
 	envVar: string;
@@ -459,8 +466,8 @@ export function KeysSection({
 				<SubscriptionConnections />
 			</SettingsGroup>
 
-			{(["Dictation", "Search"] as const).map((label) => <SettingsGroup key={label} label={label} testid={label === "Dictation" ? "group-dictation" : "group-search"}>
-				{toolRows.filter((status) => label === "Dictation" ? status.id === "DEEPGRAM_API_KEY" : status.id !== "DEEPGRAM_API_KEY").map((status) => (
+			{(["Speech", "Dictation", "Search"] as const).map((label) => <SettingsGroup key={label} label={label} testid={label === "Dictation" ? "group-dictation" : label === "Speech" ? "group-speech" : "group-search"}>
+				{toolRows.filter((status) => TOOL_KEY_GROUP(status.id) === label).map((status) => (
 					<KeyTableRow
 						key={status.id}
 						label={status.info?.label ?? status.id}

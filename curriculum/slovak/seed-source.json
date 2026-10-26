@@ -1,0 +1,489 @@
+{
+	"language": "slovak",
+	"about": "Hand-authored A1–B1 seed for the Slovak profile (spec D2 / WF-02). Grammar nodes carry an English statement and an Estonian bridge; lexical clusters list lemmas with Estonian glosses (English comes from the lexicon at build time). Build with: npx tsx scripts/build-seed.ts slovak",
+	"grammar": [
+		{
+			"key": "ph-spelling",
+			"strand": "phonetics",
+			"name": "Spelling is phonetic, stress is first",
+			"statement": "Slovak spelling is phonetic: each letter stands for one sound and is always read the same way, and word stress always falls on the first syllable (Bratislava = BRA-ti-sla-va).",
+			"et": "Same as Estonian: written as spoken, stress on the first syllable."
+		},
+		{
+			"key": "ph-length",
+			"strand": "phonetics",
+			"name": "Dĺžeň: long vowels change meaning",
+			"statement": "The dĺžeň (´) marks a long vowel (á, é, í, ó, ú, ý) or syllabic ĺ/ŕ, and length changes meaning: pas (passport) vs pás (belt, strip), vina (guilt) vs vína (wines).",
+			"et": "Like Estonian vowel length (sada vs saada): Slovak marks it with an accent instead of doubling the letter."
+		},
+		{
+			"key": "ph-makcen",
+			"strand": "phonetics",
+			"name": "Mäkčeň: soft consonants",
+			"statement": "The mäkčeň (ˇ) marks soft (palatal) consonants ď, ť, ň, ľ and the hushing č, š, ž, dž; before e, i, í and ie the letters d, t, n, l are soft even without the mark (deti is read ďeťi).",
+			"et": "Estonian palatalizes too (palk vs pal'k) but never writes it; Slovak always shows it, either with ˇ or with the following e/i."
+		},
+		{
+			"key": "ph-y-i",
+			"strand": "phonetics",
+			"name": "y or i after the consonant",
+			"statement": "In native Slovak words y/ý is written after the hard consonants d, t, n, l, h, ch, k, g and i/í after soft ones (č, š, ž, ť, ď, ň, ľ, c, dz, j); y and i sound identical, so the choice is spelling, not pronunciation.",
+			"et": "No Estonian equivalent: this is a spelling rule only, the sound is always [i]."
+		},
+		{
+			"key": "ph-rhythm",
+			"strand": "phonetics",
+			"name": "Rytmický zákon (rhythmic law)",
+			"statement": "The rhythmic law (rytmický zákon) forbids two long syllables in a row inside one word, so an ending that is normally long becomes short after a long syllable: pekný but krásny, ženám but básňam, robím but chválim.",
+			"et": "Think of it as a length budget per two syllables: Estonian quantity also depends on the neighbouring syllable."
+		},
+		{
+			"key": "ph-voicing",
+			"strand": "phonetics",
+			"name": "Final devoicing and assimilation",
+			"statement": "Voiced consonants become voiceless at the end of a word and before a voiceless consonant (dub is read [dup], vták is read [fta:k]), and voiceless ones become voiced before a voiced consonant (kde is read [gde]); the spelling does not change.",
+			"et": "Estonian b/d/g are already half-voiced; in Slovak the switch is full and automatic."
+		},
+		{
+			"key": "pr-personal",
+			"strand": "pronouns",
+			"name": "Personal pronouns and pro-drop",
+			"statement": "The subject pronouns are ja, ty, on/ona/ono, my, vy, oni/ony, but they are usually dropped because the verb ending already shows the person (Som doma = I am at home); a pronoun is added only for emphasis or contrast.",
+			"et": "Estonian drops them the same way (Olen kodus)."
+		},
+		{
+			"key": "pr-vykanie",
+			"strand": "pronouns",
+			"name": "Vykanie: polite vy",
+			"statement": "Slovak addresses one person politely with vy and a plural verb (Ako sa máte? Odkiaľ ste?), and with ty only among friends, family and children.",
+			"et": "Exactly Estonian teietamine: te + plural verb (Kuidas teil läheb?)."
+		},
+		{
+			"key": "cop-byt",
+			"strand": "pronouns",
+			"name": "byť (to be): present",
+			"statement": "The present tense of byť is som, si, je, sme, ste, sú (Som študent. Kde si? Sú doma.).",
+			"et": "olen, oled, on, oleme, olete, on — note Slovak, unlike Estonian, has a distinct 3rd person plural (sú)."
+		},
+		{
+			"key": "cop-byt-neg",
+			"strand": "pronouns",
+			"name": "byť negated: nie som",
+			"statement": "byť is negated with a separate nie: nie som, nie si, nie je, nie sme, nie ste, nie sú (Nie som unavený.), unlike every other verb, where ne- is written together with the verb.",
+			"et": "Estonian uses one form for all persons (ma ei ole, sa ei ole); Slovak keeps the person ending after nie."
+		},
+		{
+			"key": "gender",
+			"strand": "nouns",
+			"name": "Three genders, read from the ending",
+			"statement": "Every Slovak noun is masculine, feminine or neuter, mostly visible from the ending: a consonant is usually masculine (dom, muž), -a usually feminine (žena, ulica), -o/-e/-ie/-a(ä) usually neuter (mesto, srdce, vysvedčenie, dievča); masculine nouns for people and animals are 'animate' and decline differently.",
+			"et": "Estonian has no grammatical gender at all, so this is a genuinely new dimension: learn every noun with its gender."
+		},
+		{
+			"key": "adj-agree",
+			"strand": "nouns",
+			"name": "Adjectives agree with the noun",
+			"statement": "Adjectives agree with their noun in gender, number and case: nový dom, nová kniha, nové mesto, noví študenti; hard adjectives end -ý/-á/-é (pekný), soft ones -í/-ia/-ie (cudzí).",
+			"et": "Estonian adjectives agree in case and number (suures majas); Slovak adds gender on top."
+		},
+		{
+			"key": "demonstr",
+			"strand": "nouns",
+			"name": "ten, tá, to",
+			"statement": "The demonstrative 'this/that' follows gender: ten (masculine), tá (feminine), to (neuter), plural tí (masculine animate) and tie (others): ten muž, tá žena, to mesto; to also means 'it/that' in To je… (That is…).",
+			"et": "see/need, but marked for gender."
+		},
+		{
+			"key": "possessive",
+			"strand": "nouns",
+			"name": "Possessives môj, tvoj, náš…",
+			"statement": "Possessives agree with the thing owned: môj/moja/moje (my), tvoj/tvoja/tvoje, náš/naša/naše, váš/vaša/vaše, while jeho (his), jej (her) and ich (their) never change; svoj replaces them when the owner is the subject (Mám svoju knihu).",
+			"et": "Estonian minu/sinu/tema don't agree; Slovak môj does. svoj ≈ Estonian oma (Mul on oma raamat)."
+		},
+		{
+			"key": "case-system",
+			"strand": "cases",
+			"name": "Six cases with prepositions",
+			"statement": "Slovak nouns, adjectives and pronouns take six cases — nominative, genitive, dative, accusative, locative, instrumental — and most prepositions require one specific case (z + genitive, k + dative, s + instrumental).",
+			"et": "Estonian has 14 cases and almost no prepositions; Slovak has fewer endings and lets prepositions carry the spatial meaning that Estonian kohakäänded carry (koolis = v škole)."
+		},
+		{
+			"key": "case-nom",
+			"strand": "cases",
+			"name": "Nominative (Kto? Čo?)",
+			"statement": "The nominative is the dictionary form and marks the subject and the noun after To je… / Je to…: Žena číta. To je môj brat.",
+			"et": "nimetav (kes? mis?)."
+		},
+		{
+			"key": "plural-nom",
+			"strand": "cases",
+			"name": "Nominative plural",
+			"statement": "The nominative plural depends on gender: feminine -y/-e (ženy, ulice), neuter -á/-ia (mestá, srdcia), masculine inanimate -y/-e (stoly, stroje), masculine animate -i/-ia/-ovia (študenti, učitelia, synovia).",
+			"et": "Estonian has one plural marker (-d); Slovak's depends on gender and animacy."
+		},
+		{
+			"key": "acc-fem",
+			"strand": "cases",
+			"name": "Accusative: feminine -a → -u",
+			"statement": "A feminine noun in -a takes -u in the accusative, the case of the direct object: Mám sestru. Pijem kávu. Vidím ulicu; feminine adjectives go -á → -ú (novú knihu).",
+			"et": "The Slovak accusative is the direct object. Estonian splits objects into total (omastav: ostsin raamatu) and partial (osastav: lugesin raamatut); Slovak uses one case and shows the total/partial difference with verb aspect instead."
+		},
+		{
+			"key": "acc-inan",
+			"strand": "cases",
+			"name": "Accusative = nominative (things)",
+			"statement": "Masculine inanimate and neuter nouns have the same form in the accusative as in the nominative: Mám dom. Vidím mesto. Kupujem nový telefón.",
+			"et": "Like an Estonian total object in the plural, which looks like the nominative."
+		},
+		{
+			"key": "acc-anim",
+			"strand": "cases",
+			"name": "Accusative of people: -a",
+			"statement": "Masculine animate nouns (people, animals) take -a in the accusative, the same form as their genitive: Vidím brata. Poznám toho muža. Mám psa.",
+			"et": "No Estonian parallel: animacy changes the ending in Slovak."
+		},
+		{
+			"key": "gen",
+			"strand": "cases",
+			"name": "Genitive (Koho? Čoho?)",
+			"statement": "The genitive marks possession (kniha brata), a part or quantity (pohár vody, veľa ľudí), and follows do, z, od, bez, u, okolo, vedľa and počas (Idem do školy. Som z Bratislavy.); singular endings are feminine -y/-e (ženy, ulice), masculine -a or -u (brata, stola, domu), neuter -a (mesta).",
+			"et": "Covers both Estonian omastav (venna raamat = kniha brata) and the quantity use of osastav (klaas vett = pohár vody)."
+		},
+		{
+			"key": "gen-pl",
+			"strand": "cases",
+			"name": "Genitive plural: zero ending",
+			"statement": "Feminine and neuter nouns usually have no ending in the genitive plural, and the last stem vowel lengthens instead: žena → žien, kniha → kníh, mesto → miest, pivo → pív; masculine nouns take -ov (stolov, študentov).",
+			"et": "Estonian partitive plural (palju naisi) is the nearest analogue."
+		},
+		{
+			"key": "dat",
+			"strand": "cases",
+			"name": "Dative (Komu? Čomu?)",
+			"statement": "The dative marks the receiver (Dám to mame. Pomáham bratovi.) and follows k/ku (towards), vďaka, proti and oproti; endings are feminine -e/-i (žene, ulici), masculine animate -ovi (bratovi), masculine inanimate and neuter -u (stolu, mestu).",
+			"et": "alaleütlev -le: Annan selle emale = Dám to mame."
+		},
+		{
+			"key": "loc",
+			"strand": "cases",
+			"name": "Locative (o kom? o čom? kde?)",
+			"statement": "The locative only occurs after prepositions — v (in), na (on, at), o (about), po (after), pri (by) — and answers 'where?': v škole, na ulici, v meste, o filme, v parku (-u after k, g, h, ch).",
+			"et": "v + locative ≈ seesütlev -s (koolis), na + locative ≈ alalütlev -l (tänaval)."
+		},
+		{
+			"key": "kam-kde",
+			"strand": "cases",
+			"name": "Kam? vs Kde?: v/na + A or L",
+			"statement": "v and na take the accusative for direction (kam? where to?) and the locative for location (kde? where?): Idem na poštu (A) but Som na pošte (L); with cities and buildings 'to' is usually do + genitive (Idem do Bratislavy, do školy).",
+			"et": "Mirrors Estonian sisseütlev/alaleütlev (kuhu?) vs seesütlev/alalütlev (kus?): postkontorisse vs postkontoris."
+		},
+		{
+			"key": "ins",
+			"strand": "cases",
+			"name": "Instrumental (s kým? s čím?)",
+			"statement": "The instrumental marks company with s/so (s mamou, s bratom), the means without a preposition (Píšem perom. Cestujem vlakom.), and position with pred, za, nad, pod, medzi (pred domom); endings are feminine -ou (ženou), masculine and neuter -om (bratom, mestom).",
+			"et": "kaasaütlev -ga covers both uses exactly: emaga = s mamou, rongiga = vlakom."
+		},
+		{
+			"key": "pron-cases",
+			"strand": "cases",
+			"name": "Pronoun cases: ma/mňa, mi/mne",
+			"statement": "Personal pronouns have short unstressed forms (ma, ťa, ho, ju, mi, ti, mu, jej) used by default and long stressed forms (mňa, teba, jeho, mne, tebe, jemu) for emphasis or after prepositions: Vidíš ma? but Pre mňa? Daj mi to. / Mne to nedávaj.",
+			"et": "Like Estonian mind/mu and mulle/mul short vs long forms, but Slovak also changes the form after prepositions."
+		},
+		{
+			"key": "clitics",
+			"strand": "cases",
+			"name": "Second-position clitics",
+			"statement": "Short words like som/si (past auxiliary), sa/si (reflexive) and ma/mi/ho/mu go in the second position of the clause, after the first stressed word or phrase: Včera som ho videl. Ako sa máš?",
+			"et": "No Estonian equivalent; Estonian word order is freer here."
+		},
+		{
+			"key": "adj-cases",
+			"strand": "cases",
+			"name": "Adjective case endings",
+			"statement": "Adjectives decline with their noun: masculine/neuter nový → nového (G/A animate), novému (D), novom (L), novým (I); feminine nová → novej (G/D/L), novú (A), novou (I).",
+			"et": "Estonian adjectives also take the noun's case ending (uue maja); Slovak's set depends on gender."
+		},
+		{
+			"key": "numerals",
+			"strand": "cases",
+			"name": "Numbers and the noun's case",
+			"statement": "After 2, 3 and 4 the noun is nominative plural (dve ženy, tri knihy) but from 5 up it is genitive plural (päť žien, desať kníh); jeden/jedna/jedno agree like adjectives, dva/dve depends on gender, and men take dvaja, traja, štyria.",
+			"et": "Estonian switches to osastav singular already at 2 (kaks naist); Slovak switches to genitive plural only at 5."
+		},
+		{
+			"key": "v-present",
+			"strand": "verbs",
+			"name": "Present tense: person endings",
+			"statement": "Slovak verbs mark person with endings: -m (1sg), -š (2sg), - (3sg), -me (1pl), -te (2pl), and a 3pl ending (-jú/-ia/-ú/-u); the 1st person singular tells you which pattern the verb follows (volám, robím, píšem, nesiem, pracujem).",
+			"et": "Estonian -n, -d, -b, -me, -te, -vad: the same six slots, different endings."
+		},
+		{
+			"key": "v-am",
+			"strand": "verbs",
+			"name": "Pattern volať: -ám",
+			"statement": "Verbs like volať, čakať and mať conjugate volám, voláš, volá, voláme, voláte, volajú.",
+			"et": ""
+		},
+		{
+			"key": "v-im",
+			"strand": "verbs",
+			"name": "Pattern robiť: -ím",
+			"statement": "Verbs in -iť and many in -ieť conjugate like robiť: robím, robíš, robí, robíme, robíte, robia (with the rhythmic law: chválim, chváliš).",
+			"et": ""
+		},
+		{
+			"key": "v-em",
+			"strand": "verbs",
+			"name": "Pattern písať / niesť: -em, -iem",
+			"statement": "Many verbs take -em or -iem: písať → píšem, píšeš, píše, píšeme, píšete, píšu; niesť → nesiem, nesieš, nesie, nesieme, nesiete, nesú; the stem often changes (brať → beriem).",
+			"et": ""
+		},
+		{
+			"key": "v-ujem",
+			"strand": "verbs",
+			"name": "Pattern pracovať: -ujem",
+			"statement": "Verbs in -ovať drop -ovať and take -ujem: pracovať → pracujem, pracuješ, pracuje, pracujeme, pracujete, pracujú; this productive pattern covers most international verbs (študovať, telefonovať).",
+			"et": "Like Estonian -eerima loan verbs (studeerima), one regular pattern for borrowings."
+		},
+		{
+			"key": "v-irregular",
+			"strand": "verbs",
+			"name": "Irregular core verbs",
+			"statement": "A few core verbs are irregular and must be memorized: ísť (idem, ideš, ide, ideme, idete, idú), chcieť (chcem … chcú), jesť (jem, ješ, je, jeme, jete, jedia), vedieť (viem, vieš, vie, vieme, viete, vedia), môcť (môžem … môžu).",
+			"et": ""
+		},
+		{
+			"key": "v-neg",
+			"strand": "verbs",
+			"name": "Negation: ne- written together",
+			"statement": "Verbs are negated by prefixing ne- written as one word (nemám, nerobím, nechcem, nejdem), and Slovak keeps double negatives: Nikto nič nevie.",
+			"et": "Estonian uses a separate ei (ma ei tea); Slovak glues ne- on and still conjugates."
+		},
+		{
+			"key": "v-reflexive",
+			"strand": "verbs",
+			"name": "Reflexive sa and si",
+			"statement": "Many verbs come with sa (accusative reflexive, often just part of the verb: volám sa, učím sa, smejem sa) or si (dative reflexive, 'for oneself': kúpim si kávu, umývam si ruky).",
+			"et": "si ≈ Estonian endale (ostan endale kohvi); sa is often untranslated."
+		},
+		{
+			"key": "v-past",
+			"strand": "verbs",
+			"name": "Past tense: -l + som/si",
+			"statement": "The past tense is the l-form agreeing in gender and number (robil, robila, robilo, robili) plus som/si/sme/ste in the 1st and 2nd person only: robil som, robila si, robil, robili sme.",
+			"et": "Estonian lihtminevik (tegin, tegid) has no gender; Slovak past shows the speaker's gender (bol som / bola som)."
+		},
+		{
+			"key": "v-byt-past",
+			"strand": "verbs",
+			"name": "byť in the past: bol som",
+			"statement": "The past of byť is bol/bola/bolo/boli with the auxiliary in the 1st and 2nd person: bol som, bola si, bol, boli sme, boli ste, boli.",
+			"et": "olin, olid, oli…"
+		},
+		{
+			"key": "aspect",
+			"strand": "verbs",
+			"name": "Aspect: robiť vs urobiť",
+			"statement": "Most Slovak verbs come in aspect pairs: the imperfective (robiť, písať, kupovať) presents an action as ongoing, repeated or in general, the perfective (urobiť, napísať, kúpiť) as one completed whole with a result: Písal som list (I was writing) vs Napísal som list (I wrote it, it's done).",
+			"et": "The Estonian object case does this job: lugesin raamatut (osastav, unfinished) ≈ čítal som knihu; lugesin raamatu läbi (omastav, finished) ≈ prečítal som knihu."
+		},
+		{
+			"key": "aspect-form",
+			"strand": "verbs",
+			"name": "Making perfectives",
+			"statement": "Perfectives are mostly formed with a prefix (na-písať, u-robiť, pre-čítať, za-platiť) or imperfectives with a suffix (kúpiť → kupovať, dať → dávať), and a prefix can also add meaning (písať → prepísať 'rewrite', odpísať 'reply').",
+			"et": "Estonian particles do the same work: läbi, ära, valmis (kirjutan valmis ≈ napíšem)."
+		},
+		{
+			"key": "v-future",
+			"strand": "verbs",
+			"name": "Future: urobím / budem robiť",
+			"statement": "The present form of a perfective verb means the future (Urobím to zajtra = I'll get it done tomorrow), while imperfectives form the future with budem, budeš, bude, budeme, budete, budú + infinitive (Budem pracovať).",
+			"et": "Estonian has no future tense and uses the present (teen homme); Slovak perfective present works the same way."
+		},
+		{
+			"key": "modals",
+			"strand": "verbs",
+			"name": "Modals: môcť, chcieť, musieť, vedieť",
+			"statement": "Modal verbs take an infinitive: môcť (can, may), chcieť (want), musieť (must), mať (be supposed to), smieť (be allowed), vedieť (know how: Viem plávať).",
+			"et": "vedieť = oskama (oskan ujuda), môcť = saama/võima, musieť = pidama, chcieť = tahtma."
+		},
+		{
+			"key": "motion",
+			"strand": "verbs",
+			"name": "ísť vs chodiť",
+			"statement": "ísť means going on foot in one direction now or on one trip (Idem do školy), chodiť means going regularly or around (Chodím do školy = I attend school); by vehicle you use ísť/cestovať + instrumental (Idem autom).",
+			"et": "Exactly minema vs käima: lähen kooli = idem do školy, käin koolis = chodím do školy."
+		},
+		{
+			"key": "imperative",
+			"strand": "verbs",
+			"name": "Imperative: rob! robte!",
+			"statement": "The imperative comes from the 3rd person plural stem: robia → rob!, píšu → píš!, volajú → volaj!, adding -te for plural or polite vy (robte!, píšte!) and -me for 'let's' (poďme!).",
+			"et": "Like Estonian käskiv (tee! tehke! teeme!)."
+		},
+		{
+			"key": "conditional",
+			"strand": "verbs",
+			"name": "Conditional: by + l-form",
+			"statement": "The conditional is by plus the l-form (with som/si in 1st/2nd person): urobil by som (I would do), and Chcel/Chcela by som… is the polite way to ask for something.",
+			"et": "tingiv kõneviis: tahaksin = chcel by som."
+		},
+		{
+			"key": "questions",
+			"strand": "syntax",
+			"name": "Questions and question words",
+			"statement": "Yes/no questions use rising intonation or a fronted verb with no question particle (Máš čas?), and wh-questions start with kto, čo, kde, kam, odkiaľ, kedy, prečo, ako, koľko, aký or ktorý; indirect yes/no questions use či (Neviem, či príde).",
+			"et": "Estonian marks yes/no questions with kas; Slovak has none (Máš čas? = Kas sul on aega?), and či = kas in indirect questions."
+		},
+		{
+			"key": "word-order",
+			"strand": "syntax",
+			"name": "Flexible word order: new info last",
+			"statement": "Because cases mark the roles, Slovak word order is flexible and the newest or most important information goes at the end: Knihu mi dal brat (it was my brother who gave me the book).",
+			"et": "Estonian works the same way thanks to its cases."
+		},
+		{
+			"key": "mat-have",
+			"strand": "syntax",
+			"name": "mať: to have",
+			"statement": "Possession uses the verb mať with the owner as subject and the owned thing in the accusative: Mám brata. Máš čas? Nemám peniaze.",
+			"et": "Estonian 'mul on' (alalütlev + on) becomes a plain verb: Mul on vend = Mám brata."
+		},
+		{
+			"key": "rad",
+			"strand": "syntax",
+			"name": "Liking: mám rád, rád čítam",
+			"statement": "'Like' is mať rád/rada + accusative for things and people (Mám rád kávu, Mám rada Petra) and rád/rada/radi + verb for activities (Rád čítam); rád agrees with the speaker's gender.",
+			"et": "Estonian meeldima puts the person in alaleütlev (mulle meeldib kohv); Slovak keeps the person as the subject."
+		},
+		{
+			"key": "time",
+			"strand": "syntax",
+			"name": "Telling the time",
+			"statement": "Koľko je hodín? uses the numeral rule: Je jedna hodina, Sú dve/tri/štyri hodiny, Je päť hodín; 'at' a time is o + the locative of the ordinal (o jednej, o tretej, o piatej).",
+			"et": "Kell on viis; kell viis = o piatej."
+		},
+		{
+			"key": "dates",
+			"strand": "syntax",
+			"name": "Days and months",
+			"statement": "On a weekday is v/vo + accusative (v pondelok, vo štvrtok, v sobotu), in a month is v + locative (v januári, v máji); days and months are written in lower case.",
+			"et": "Estonian uses the -l adessive for days (esmaspäeval) and -s for months (jaanuaris); Slovak spreads that over two cases."
+		}
+	],
+	"chains": [
+		{ "premises": ["ph-spelling"], "conclusion": "ph-length" },
+		{ "premises": ["ph-spelling"], "conclusion": "ph-makcen" },
+		{ "premises": ["ph-makcen"], "conclusion": "ph-y-i" },
+		{ "premises": ["ph-length"], "conclusion": "ph-rhythm" },
+		{ "premises": ["ph-spelling"], "conclusion": "ph-voicing" },
+		{ "premises": ["pr-personal", "v-present"], "conclusion": "cop-byt" },
+		{ "premises": ["pr-personal"], "conclusion": "pr-vykanie" },
+		{ "premises": ["cop-byt"], "conclusion": "cop-byt-neg" },
+		{ "premises": ["gender"], "conclusion": "adj-agree" },
+		{ "premises": ["gender"], "conclusion": "demonstr" },
+		{ "premises": ["gender", "pr-personal"], "conclusion": "possessive" },
+		{ "premises": ["gender"], "conclusion": "case-system" },
+		{ "premises": ["case-system"], "conclusion": "case-nom" },
+		{ "premises": ["case-nom", "gender"], "conclusion": "plural-nom" },
+		{ "premises": ["case-nom", "gender"], "conclusion": "acc-fem" },
+		{ "premises": ["case-nom", "gender"], "conclusion": "acc-inan" },
+		{ "premises": ["acc-fem", "acc-inan"], "conclusion": "mat-have" },
+		{ "premises": ["gen", "acc-inan"], "conclusion": "acc-anim" },
+		{ "premises": ["case-system", "case-nom"], "conclusion": "gen" },
+		{ "premises": ["gen", "plural-nom", "ph-length"], "conclusion": "gen-pl" },
+		{ "premises": ["case-system", "case-nom"], "conclusion": "dat" },
+		{ "premises": ["case-system", "case-nom"], "conclusion": "loc" },
+		{ "premises": ["loc", "acc-fem", "gen"], "conclusion": "kam-kde" },
+		{ "premises": ["case-system", "case-nom"], "conclusion": "ins" },
+		{ "premises": ["acc-anim", "dat", "pr-personal"], "conclusion": "pron-cases" },
+		{ "premises": ["pron-cases", "v-reflexive"], "conclusion": "clitics" },
+		{ "premises": ["adj-agree", "gen", "dat", "loc", "ins"], "conclusion": "adj-cases" },
+		{ "premises": ["plural-nom", "gen-pl"], "conclusion": "numerals" },
+		{ "premises": ["pr-personal"], "conclusion": "v-present" },
+		{ "premises": ["v-present"], "conclusion": "v-am" },
+		{ "premises": ["v-present", "ph-rhythm"], "conclusion": "v-im" },
+		{ "premises": ["v-present"], "conclusion": "v-em" },
+		{ "premises": ["v-present"], "conclusion": "v-ujem" },
+		{ "premises": ["v-am", "v-em"], "conclusion": "v-irregular" },
+		{ "premises": ["v-present", "cop-byt-neg"], "conclusion": "v-neg" },
+		{ "premises": ["v-present", "acc-fem"], "conclusion": "v-reflexive" },
+		{ "premises": ["v-present", "gender", "cop-byt"], "conclusion": "v-past" },
+		{ "premises": ["v-past"], "conclusion": "v-byt-past" },
+		{ "premises": ["v-past", "acc-fem"], "conclusion": "aspect" },
+		{ "premises": ["aspect"], "conclusion": "aspect-form" },
+		{ "premises": ["aspect", "cop-byt"], "conclusion": "v-future" },
+		{ "premises": ["v-irregular", "v-present"], "conclusion": "modals" },
+		{ "premises": ["v-irregular", "kam-kde", "ins"], "conclusion": "motion" },
+		{ "premises": ["v-present", "pr-vykanie"], "conclusion": "imperative" },
+		{ "premises": ["v-past", "clitics"], "conclusion": "conditional" },
+		{ "premises": ["v-present"], "conclusion": "questions" },
+		{ "premises": ["case-system", "clitics"], "conclusion": "word-order" },
+		{ "premises": ["mat-have", "acc-anim"], "conclusion": "rad" },
+		{ "premises": ["numerals", "loc"], "conclusion": "time" },
+		{ "premises": ["kam-kde", "loc"], "conclusion": "dates" }
+	],
+	"clusters": [
+		{ "key": "lx-greetings", "name": "Greetings & courtesy", "et": "tervitused ja viisakus", "words": [["ahoj", "tere; tšau"], ["dobrý deň", "tere päevast"], ["dovidenia", "nägemist"], ["ďakujem", "aitäh"], ["prosím", "palun"], ["prepáčte", "vabandage"], ["áno", "jah"], ["nie", "ei"]] },
+		{ "key": "lx-questions", "name": "Question words", "et": "küsisõnad", "words": [["kto", "kes"], ["čo", "mis"], ["kde", "kus"], ["kam", "kuhu"], ["kedy", "millal"], ["prečo", "miks"], ["ako", "kuidas"], ["koľko", "kui palju"], ["aký", "milline"], ["ktorý", "milline; kumb"]] },
+		{ "key": "lx-family", "name": "Family", "et": "perekond", "words": [["rodina", "perekond"], ["matka", "ema"], ["otec", "isa"], ["brat", "vend"], ["sestra", "õde"], ["syn", "poeg"], ["dcéra", "tütar"], ["dieťa", "laps"], ["babka", "vanaema"], ["dedko", "vanaisa"], ["manžel", "abikaasa (mees)"], ["manželka", "abikaasa (naine)"]] },
+		{ "key": "lx-people", "name": "People", "et": "inimesed", "words": [["človek", "inimene"], ["muž", "mees"], ["žena", "naine"], ["chlapec", "poiss"], ["dievča", "tüdruk"], ["priateľ", "sõber"], ["kamarát", "semu; sõber"], ["sused", "naaber"]] },
+		{ "key": "lx-body", "name": "The body", "et": "keha", "words": [["hlava", "pea"], ["ruka", "käsi"], ["noha", "jalg"], ["oko", "silm"], ["ucho", "kõrv"], ["ústa", "suu"], ["srdce", "süda"], ["zub", "hammas"], ["telo", "keha"]] },
+		{ "key": "lx-health", "name": "Health", "et": "tervis", "words": [["lekár", "arst"], ["choroba", "haigus"], ["nemocnica", "haigla"], ["liek", "ravim"], ["bolieť", "valutama"], ["zdravý", "terve"], ["chorý", "haige"]] },
+		{ "key": "lx-food", "name": "Food", "et": "toit", "words": [["chlieb", "leib"], ["mäso", "liha"], ["syr", "juust"], ["vajce", "muna"], ["ryža", "riis"], ["zelenina", "köögivili"], ["ovocie", "puuvili"], ["jablko", "õun"], ["polievka", "supp"]] },
+		{ "key": "lx-drinks", "name": "Drinks", "et": "joogid", "words": [["voda", "vesi"], ["káva", "kohv"], ["čaj", "tee"], ["pivo", "õlu"], ["víno", "vein"], ["mlieko", "piim"]] },
+		{ "key": "lx-meals", "name": "Meals & eating", "et": "söögikorrad", "words": [["raňajky", "hommikusöök"], ["obed", "lõuna"], ["večera", "õhtusöök"], ["jesť", "sööma"], ["piť", "jooma"], ["variť", "keetma; süüa tegema"], ["stôl", "laud"], ["tanier", "taldrik"]] },
+		{ "key": "lx-cafe", "name": "Restaurant & café", "et": "restoran ja kohvik", "words": [["reštaurácia", "restoran"], ["kaviareň", "kohvik"], ["čašník", "kelner"], ["účet", "arve"], ["prosím", "palun"]] },
+		{ "key": "lx-shopping", "name": "Shopping & money", "et": "poed ja raha", "words": [["obchod", "pood"], ["peniaze", "raha"], ["cena", "hind"], ["euro", "euro"], ["kúpiť", "ostma"], ["platiť", "maksma"], ["lacný", "odav"], ["drahý", "kallis"]] },
+		{ "key": "lx-clothes", "name": "Clothes", "et": "riided", "words": [["oblečenie", "riided"], ["košeľa", "särk"], ["nohavice", "püksid"], ["šaty", "kleit"], ["kabát", "mantel"], ["čiapka", "müts"]] },
+		{ "key": "lx-home", "name": "Home", "et": "kodu", "words": [["dom", "maja"], ["byt", "korter"], ["izba", "tuba"], ["kuchyňa", "köök"], ["kúpeľňa", "vannituba"], ["okno", "aken"], ["dvere", "uks"], ["posteľ", "voodi"]] },
+		{ "key": "lx-city", "name": "The city", "et": "linn", "words": [["mesto", "linn"], ["ulica", "tänav"], ["námestie", "väljak"], ["park", "park"], ["kostol", "kirik"], ["most", "sild"], ["banka", "pank"], ["pošta", "postkontor"]] },
+		{ "key": "lx-transport", "name": "Transport", "et": "transport", "words": [["auto", "auto"], ["autobus", "buss"], ["vlak", "rong"], ["lietadlo", "lennuk"], ["električka", "tramm"], ["bicykel", "jalgratas"], ["stanica", "jaam"], ["letisko", "lennujaam"]] },
+		{ "key": "lx-directions", "name": "Travel & directions", "et": "reisimine ja suunad", "words": [["cesta", "tee; reis"], ["mapa", "kaart"], ["hotel", "hotell"], ["lístok", "pilet"], ["vľavo", "vasakul"], ["vpravo", "paremal"], ["rovno", "otse"], ["ďaleko", "kaugel"], ["blízko", "lähedal"]] },
+		{ "key": "lx-time", "name": "Time", "et": "aeg", "words": [["deň", "päev"], ["týždeň", "nädal"], ["mesiac", "kuu"], ["rok", "aasta"], ["hodina", "tund"], ["minúta", "minut"]] },
+		{ "key": "lx-weekdays", "name": "Days of the week", "et": "nädalapäevad", "words": [["pondelok", "esmaspäev"], ["utorok", "teisipäev"], ["streda", "kolmapäev"], ["štvrtok", "neljapäev"], ["piatok", "reede"], ["sobota", "laupäev"], ["nedeľa", "pühapäev"]] },
+		{ "key": "lx-seasons", "name": "Seasons", "et": "aastaajad", "words": [["jar", "kevad"], ["leto", "suvi"], ["jeseň", "sügis"], ["zima", "talv"], ["január", "jaanuar"]] },
+		{ "key": "lx-weather", "name": "Weather", "et": "ilm", "words": [["počasie", "ilm"], ["slnko", "päike"], ["dážď", "vihm"], ["sneh", "lumi"], ["vietor", "tuul"], ["teplo", "soe (on soe)"], ["studený", "külm"], ["teplý", "soe"]] },
+		{ "key": "lx-nature", "name": "Nature", "et": "loodus", "words": [["príroda", "loodus"], ["strom", "puu"], ["les", "mets"], ["hora", "mägi"], ["rieka", "jõgi"], ["more", "meri"], ["jazero", "järv"], ["kvet", "lill"]] },
+		{ "key": "lx-animals", "name": "Animals", "et": "loomad", "words": [["pes", "koer"], ["mačka", "kass"], ["kôň", "hobune"], ["krava", "lehm"], ["vták", "lind"], ["ryba", "kala"]] },
+		{ "key": "lx-colours", "name": "Colours", "et": "värvid", "words": [["farba", "värv"], ["červený", "punane"], ["modrý", "sinine"], ["zelený", "roheline"], ["žltý", "kollane"], ["čierny", "must"], ["biely", "valge"]] },
+		{ "key": "lx-numbers", "name": "Numbers", "et": "arvud", "words": [["jeden", "üks", "one"], ["dva", "kaks", "two"], ["tri", "kolm", "three"], ["štyri", "neli", "four"], ["päť", "viis", "five"], ["desať", "kümme", "ten"], ["sto", "sada", "hundred"], ["tisíc", "tuhat", "thousand"]] },
+		{ "key": "lx-work", "name": "Work", "et": "töö", "words": [["práca", "töö"], ["kancelária", "kontor"], ["firma", "firma"], ["šéf", "ülemus"], ["pracovať", "töötama"], ["plat", "palk"], ["učiteľ", "õpetaja"]] },
+		{ "key": "lx-school", "name": "School & learning", "et": "kool ja õppimine", "words": [["škola", "kool"], ["študent", "üliõpilane"], ["učiť", "õpetama"], ["kniha", "raamat"], ["slovo", "sõna"], ["jazyk", "keel"], ["otázka", "küsimus"], ["odpoveď", "vastus"]] },
+		{ "key": "lx-hobbies", "name": "Free time", "et": "vaba aeg", "words": [["šport", "sport"], ["futbal", "jalgpall"], ["hudba", "muusika"], ["film", "film"], ["hrať", "mängima"], ["spievať", "laulma"], ["tancovať", "tantsima"], ["čítať", "lugema"]] },
+		{ "key": "lx-feelings", "name": "Feelings", "et": "tunded", "words": [["šťastný", "õnnelik"], ["smutný", "kurb"], ["láska", "armastus"], ["strach", "hirm"], ["radosť", "rõõm"]] },
+		{ "key": "lx-describe-people", "name": "Describing people", "et": "inimeste kirjeldamine", "words": [["pekný", "ilus"], ["mladý", "noor"], ["starý", "vana"], ["vysoký", "pikk; kõrge"], ["malý", "väike"], ["veľký", "suur"], ["dobrý", "hea"], ["zlý", "halb"]] },
+		{ "key": "lx-describe-things", "name": "Describing things", "et": "asjade kirjeldamine", "words": [["nový", "uus"], ["dlhý", "pikk"], ["krátky", "lühike"], ["ťažký", "raske"], ["ľahký", "kerge"], ["rýchly", "kiire"], ["pomalý", "aeglane"]] },
+		{ "key": "lx-routine", "name": "Daily routine", "et": "igapäevaelu", "words": [["vstávať", "tõusma"], ["spať", "magama"], ["umývať", "pesema"], ["obliekať", "riietama"], ["robiť", "tegema"]] },
+		{ "key": "lx-motion", "name": "Going places", "et": "liikumine", "words": [["ísť", "minema"], ["chodiť", "käima"], ["prísť", "tulema (kohale)"], ["odísť", "lahkuma"], ["bežať", "jooksma"], ["cestovať", "reisima"]] },
+		{ "key": "lx-speaking", "name": "Speaking & writing", "et": "rääkimine ja kirjutamine", "words": [["hovoriť", "rääkima"], ["povedať", "ütlema"], ["rozprávať", "jutustama; vestlema"], ["písať", "kirjutama"], ["volať", "helistama; kutsuma"], ["odpovedať", "vastama"]] },
+		{ "key": "lx-thinking", "name": "Knowing & thinking", "et": "teadmine ja mõtlemine", "words": [["myslieť", "mõtlema"], ["vedieť", "teadma; oskama"], ["poznať", "tundma (kedagi)"], ["rozumieť", "aru saama"], ["pamätať", "mäletama"], ["zabudnúť", "unustama"]] },
+		{ "key": "lx-core-verbs", "name": "Core verbs", "et": "põhitegusõnad", "words": [["byť", "olema"], ["mať", "omama (mul on)"], ["chcieť", "tahtma"], ["môcť", "saama; võima"], ["musieť", "pidama"], ["smieť", "tohtima"]] },
+		{ "key": "lx-when", "name": "When & how often", "et": "millal ja kui tihti", "words": [["dnes", "täna"], ["zajtra", "homme"], ["včera", "eile"], ["teraz", "nüüd"], ["potom", "siis; pärast"], ["často", "tihti"], ["vždy", "alati", "always"], ["niekedy", "mõnikord", "sometimes"], ["nikdy", "mitte kunagi", "never"]] },
+		{ "key": "lx-where", "name": "Here & there", "et": "siin ja seal", "words": [["tu", "siin"], ["tam", "seal"], ["doma", "kodus"], ["vonku", "väljas"], ["hore", "üleval"], ["dole", "all"]] },
+		{ "key": "lx-tech", "name": "Technology", "et": "tehnika", "words": [["počítač", "arvuti"], ["telefón", "telefon"], ["internet", "internet"], ["správa", "sõnum; uudis"]] },
+		{ "key": "lx-admin", "name": "Forms & documents", "et": "dokumendid", "words": [["doklad", "dokument"], ["formulár", "vorm; blankett"], ["meno", "nimi"], ["adresa", "aadress"], ["číslo", "number"], ["podpis", "allkiri"]] },
+		{ "key": "lx-languages", "name": "Countries & languages", "et": "riigid ja keeled", "words": [["Slovensko", "Slovakkia"], ["Slovák", "slovakk"], ["slovenčina", "slovaki keel"], ["angličtina", "inglise keel"], ["Estónsko", "Eesti", "Estonia"]] }
+	],
+	"cluster_chains": [
+		{ "premises": ["lx-greetings", "pr-vykanie"], "conclusion": "can-introduce" },
+		{ "premises": ["lx-cafe", "lx-drinks", "conditional", "acc-fem"], "conclusion": "can-order" },
+		{ "premises": ["lx-directions", "kam-kde", "lx-city"], "conclusion": "can-directions" },
+		{ "premises": ["lx-family", "mat-have", "acc-anim"], "conclusion": "can-family" },
+		{ "premises": ["lx-weekdays", "time", "dates"], "conclusion": "can-appointment" },
+		{ "premises": ["lx-shopping", "numerals", "lx-food"], "conclusion": "can-shop" },
+		{ "premises": ["lx-routine", "v-past", "aspect"], "conclusion": "can-tell-day" }
+	],
+	"can_do": [
+		{ "key": "can-introduce", "name": "Can introduce myself", "statement": "With greetings, polite vy and byť a learner can introduce themselves and ask someone's name and origin: Dobrý deň, volám sa… Som z Estónska. Odkiaľ ste?" },
+		{ "key": "can-order", "name": "Can order in a café", "statement": "With café vocabulary, the accusative and Chcel/Chcela by som… a learner can order politely and pay: Dám si kávu, prosím. Chcela by som jeden čaj. Zaplatím, prosím." },
+		{ "key": "can-directions", "name": "Can ask the way", "statement": "With kam/kde and place words a learner can ask for and follow directions: Prepáčte, kde je stanica? Choďte rovno a potom vľavo." },
+		{ "key": "can-family", "name": "Can talk about family", "statement": "With mať, family words and the animate accusative a learner can describe their family: Mám brata a dve sestry. Moja mama je učiteľka." },
+		{ "key": "can-appointment", "name": "Can make an appointment", "statement": "With days, times and dates a learner can arrange a meeting: Máš čas v piatok o piatej? Stretneme sa v sobotu." },
+		{ "key": "can-shop", "name": "Can shop for food", "statement": "With numbers, prices and food words a learner can buy food and understand prices: Prosím si kilo jabĺk. Koľko to stojí? Päť eur." },
+		{ "key": "can-tell-day", "name": "Can tell what I did", "statement": "With the past tense, aspect and routine verbs a learner can tell what they did yesterday: Ráno som vstal o siedmej, potom som išiel do práce a večer som prečítal knihu." }
+	]
+}

@@ -38,6 +38,7 @@ import {
 } from "streamdown";
 import type { ExtraProps } from "streamdown";
 import { MERMAID_FONT_SIZE, renderMermaid } from "@/components/mermaid-render";
+import { SpokenPhrase, spokenText } from "@/components/speech";
 import { MermaidError } from "@/components/mermaid-error";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { chartSize, useSessionMermaid } from "@/components/session-overlay";
@@ -239,6 +240,9 @@ export function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 
 	// Inline code: no data-block (the pre handler stamps block fences only).
 	if (!("data-block" in props)) {
+		// LangHarness: `say: …` is a target-language phrase with a play button.
+		const spoken = spokenText(codeSource(children));
+		if (spoken) return <SpokenPhrase text={spoken} />;
 		return (
 			<code className={cn("rounded bg-muted px-1.5 py-0.5 font-mono text-sm", className)} data-streamdown="inline-code" {...rest}>
 				{children}

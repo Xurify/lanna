@@ -42,7 +42,9 @@ const path = require("node:path");
 // renderer owns the number; this is the IPC widen target).
 const SIDEBAR_AUTOCLOSE = 928;
 
-const PRODUCT_NAME = "LearnHarness";
+// LangHarness fork: its own name, so it never shares userData (chats,
+// keys, graph) with an installed upstream LearnHarness.
+const PRODUCT_NAME = "LangHarness";
 
 // APP NAME → userData (owner, 2026-10-10): the Application Support dir is
 // exactly "LearnHarness" in dev AND packaged. Packaged Electron would
@@ -717,6 +719,13 @@ async function main() {
 	// are log lines — this can never block boot.
 	setupAutoUpdater();
 	ipcMain.on("lh:update-install", () => installUpdateNow());
+	// Language-profile switch (LangHarness): the server reads the active
+	// profile once at boot, so a switch is a full relaunch. before-quit
+	// stops the child server.
+	ipcMain.on("lh:relaunch", () => {
+		app.relaunch();
+		app.quit();
+	});
 	ipcMain.handle("lh:update:get", (event) => {
 		if (!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) throw new Error("Untrusted desktop request.");
 		return updateState;

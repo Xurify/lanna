@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-pricing-transport-"));
 process.env.LH_DATA_DIR = scratch;
+process.env.LH_PROFILE = "slovak";
 process.env.LH_AUTH_FILE = path.join(scratch, "empty-auth.json");
 fs.writeFileSync(process.env.LH_AUTH_FILE, "{}", { mode: 0o600 });
 const { chatStore } = await import("../src/store/chats.ts");
@@ -19,7 +20,7 @@ test("chat GET supplies derived Pi costs without persisting dollars or changing 
 	for (const [id, model] of [["api", "openrouter:openai/gpt-6.1-sol"], ["plan", "chatgpt:fixture"], ["unknown", "missing:fixture"]]) {
 		chatStore.appendTurnUsage(record.id, { id: id!, model: model!, messageId: "fixture-input", at: "fixture", steps: [step] });
 	}
-	const file = path.join(scratch, "chats", `${record.id}.json`);
+	const file = path.join(scratch, "profiles", "slovak", "chats", `${record.id}.json`);
 	const before = fs.readFileSync(file, "utf8");
 	const response = await GET(new Request(`http://localhost/api/chats/${record.id}`), { params: Promise.resolve({ id: record.id }) });
 	assert.equal(response.status, 200);

@@ -178,6 +178,9 @@ describe("the source-derived segment list", () => {
 			[
 				"system-prompt.md",
 				"prober/10-probe-doctrine.md",
+				"prober/20-language-probe.md",
+				// LangHarness: the active language's doctrine, before the appendix.
+				"language/10-slovak.md",
 				"shared/10-voice.md",
 				"shared/15-accuracy.md",
 				"shared/16-mental-model.md",
@@ -192,7 +195,7 @@ describe("the source-derived segment list", () => {
 		assert.equal(teacher.some((s) => s.path === "teacher/60-probing-in-brief.md"), false);
 		assert.equal(
 			teacher.every(
-				(s) => s.path === "system-prompt.md" || s.path.startsWith("teacher/") || s.path.startsWith("shared/"),
+				(s) => s.path === "system-prompt.md" || s.path.startsWith("teacher/") || s.path.startsWith("shared/") || s.path === "language/10-slovak.md",
 			),
 			true,
 		);
@@ -264,6 +267,8 @@ describe("composeInstructions: override honoring + the byte-identical source pat
 			return [
 				base,
 				...fragmentsOf(`src/agent/prompts/${kind}`),
+				// LangHarness: the active (default: slovak) language doctrine.
+				fs.readFileSync("src/agent/prompts/language/10-slovak.md", "utf-8").trim(),
 				...fragmentsOf("src/agent/prompts/shared"),
 			].join("\n\n---\n\n");
 		};

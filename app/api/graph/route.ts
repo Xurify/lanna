@@ -1,4 +1,4 @@
-import { graphView } from "@/src/server";
+import { ensureSeeded, graphView } from "@/src/server";
 
 /**
  * The home graph view's data endpoint (W4; vision §1 "Home page") — thin
@@ -9,5 +9,8 @@ import { graphView } from "@/src/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+	// LangHarness: a fresh language profile gets its curriculum seed the
+	// first time the home graph loads (a no-op once seeded).
+	ensureSeeded();
 	return Response.json(graphView());
 }

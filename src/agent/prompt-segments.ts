@@ -29,7 +29,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { PATHS, PROMPTS_OVERRIDE_DIR } from "../../config.ts";
+import { ACTIVE_PROFILE, PATHS, PROMPTS_OVERRIDE_DIR } from "../../config.ts";
 import { FRAGMENT_RE, isValidSegmentPath, type PromptAgent, type PromptSegmentInfo } from "../core/prompt-segments.ts";
 
 const PROMPTS_DIR = path.join(PATHS.root, "src", "agent", "prompts");
@@ -80,6 +80,18 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
 		for (const f of fragments) {
 			segments.push({ path: `${agent}/${f}`, shared: false, file: path.join(dir, f) });
 		}
+	}
+	// LangHarness: the active language profile's doctrine (target language,
+	// the English + Estonian bridges, immersion, audio and spelling rules)
+	// composes into EVERY agent, after its own fragments and before the
+	// shared appendix. language/<NN>-<profile>.md — only the active one.
+	const languageDir = path.join(PROMPTS_DIR, "language");
+	if (fs.existsSync(languageDir)) {
+		const own = fs
+			.readdirSync(languageDir)
+			.filter((f) => FRAGMENT_RE.test(f) && f.replace(/^\d+-/, "").replace(/\.md$/, "") === ACTIVE_PROFILE)
+			.sort();
+		for (const f of own) segments.push({ path: `language/${f}`, shared: true, file: path.join(languageDir, f) });
 	}
 	const sharedDir = path.join(PROMPTS_DIR, "shared");
 	if (fs.existsSync(sharedDir)) {

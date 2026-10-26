@@ -32,8 +32,12 @@ const GOLDEN = path.join(HERE, "fixtures", "golden-data");
 
 // ── the seam, BEFORE any config-loading import ──────────────────────────────
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-golden-"));
-fs.cpSync(GOLDEN, TMP, { recursive: true });
+// LangHarness: records live under the language profile, settings at the root.
+const PROFILE_DIR = path.join(TMP, "profiles", "slovak");
+fs.cpSync(GOLDEN, PROFILE_DIR, { recursive: true });
+if (fs.existsSync(path.join(PROFILE_DIR, "settings.json"))) fs.renameSync(path.join(PROFILE_DIR, "settings.json"), path.join(TMP, "settings.json"));
 process.env.LH_DATA_DIR = TMP;
+process.env.LH_PROFILE = "slovak";
 
 const { chatStore } = await import("../src/store/chats.ts");
 const { graphStore } = await import("../src/store/graph.ts");
@@ -188,7 +192,7 @@ test("graph: render-settings sanitize and positions parse", () => {
 	assert.ok(raw, "render-settings.json reads");
 	const clean = sanitizeRenderSettings(raw);
 	assert.ok(clean.nodeSize > 0 && typeof clean.labelZoom === "number", "sanitizes to concrete knobs");
-	const positionsFile = JSON.parse(fs.readFileSync(path.join(TMP, "graph", "positions.json"), "utf8")) as {
+	const positionsFile = JSON.parse(fs.readFileSync(path.join(PROFILE_DIR, "graph", "positions.json"), "utf8")) as {
 		positions: Record<string, unknown>;
 	};
 	assert.ok(Object.keys(positionsFile.positions).length >= 300, "positions parse");
