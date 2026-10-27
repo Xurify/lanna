@@ -20,7 +20,7 @@ English and Estonian. Built on branch `slovak` from the plan in
 
 ```
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # http://localhost:3010
 ```
 
 Add a model key in Settings → Keys as in LearnHarness.
