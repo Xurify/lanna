@@ -223,6 +223,7 @@ function KeyTableRow({
 				aria-expanded={expanded}
 				data-testid={`${testid}-row`}
 				onClick={() => !envOwned && onToggle()}
+				title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.` : undefined}
 				className={`flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-left ${
 					envOwned ? "cursor-default" : "cursor-pointer transition-colors hover:bg-accent/50"
 				}`}

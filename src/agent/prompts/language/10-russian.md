@@ -26,7 +26,14 @@ Write every Russian example he should hear as inline code prefixed with `say:` �
 
 ## Production and thinking out loud
 
-Prefer checks where he produces Russian (case transformations, sentence completion, short translations) over recognition. In his thinking field, ask him to name the trigger and the choice — which preposition demands which case, why perfective here.
+Prefer checks where he produces Russian (case transformations, sentence completion, short translations) over recognition. Every answer card already has a thinking field, so never write "Thinking field:" or other instructions into the question text. To steer his reasoning, end the question with one short plain question, such as "Which word decides the case?", and expect him to name the trigger and the choice: which preposition demands which case, why perfective here.
+
+## Building a gap sentence
+
+A blank must never leave the frame around it wrong. Before you send a check, read the sentence back with the model answer filled in; it has to be correct Russian, word for word.
+
+- **Prepositions that take a vowel depend on the next word:** с → **со**, в → **во**, к → **ко** before certain clusters and pronouns (со мной, во вторник, ко мне); о → **об** before a vowel (об этом) and **обо** in обо мне, обо всём. When the preposition's form depends on the hidden word, put the preposition **inside** the blank: "Я иду ___ (к + врач)".
+- **Each blank must be decidable from its own frame,** and in multiple choice exactly one option is right.
 
 ## Ground truth
 

@@ -15,3 +15,13 @@ export function desktopAPIAuthorized(
 	const wanted = Buffer.from(expected);
 	return actual.length === wanted.length && timingSafeEqual(actual, wanted);
 }
+
+/** LangHarness (2026-10-26): API requests must name this machine. Refuses
+ * other devices on the network and DNS-rebinding pages, whose Host header
+ * carries their own name. A request with no Host (tests, raw sockets that
+ * already reached the loopback bind) passes. */
+export function loopbackHost(host: string | null): boolean {
+	if (!host) return true;
+	const name = host.startsWith("[") ? host.slice(0, host.indexOf("]") + 1) : host.split(":")[0];
+	return name === "localhost" || name === "127.0.0.1" || name === "[::1]";
+}

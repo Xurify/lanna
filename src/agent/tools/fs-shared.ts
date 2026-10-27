@@ -35,6 +35,39 @@ export const WALK_TIMEOUT_MS = 10_000;
  */
 const EXCLUDED_DIR_NAMES = new Set(["node_modules", ".git", "Library", ".Trash"]);
 
+/**
+ * Credential locations the fs tools never read, list or search (LangHarness,
+ * 2026-10-26): whatever a tool returns goes to the model provider, and a
+ * fetched page can talk the agent into reading a file. Directories are
+ * matched by name anywhere in the path; files by basename.
+ */
+const SECRET_DIR_NAMES = new Set([".ssh", ".gnupg", ".aws", ".azure", ".kube", ".docker"]);
+const SECRET_FILE_PATTERNS = [
+	/^auth\.json$/i,
+	/^\.env(\..*)?$/i,
+	/^\.(npmrc|netrc|pypirc|git-credentials)$/i,
+	/^id_(rsa|dsa|ecdsa|ed25519)(\.pub)?$/i,
+	/\.(pem|key|p12|pfx)$/i,
+];
+
+/** True when `absolute` is a credential file or lies inside a credential
+ *  directory. Pure path check; callers resolve symlinks first. */
+export function isSecretPath(absolute: string): boolean {
+	const parts = path.resolve(absolute).split(/[\\/]+/);
+	if (parts.some((part) => SECRET_DIR_NAMES.has(part.toLowerCase()))) return true;
+	const base = parts[parts.length - 1] ?? "";
+	return SECRET_FILE_PATTERNS.some((re) => re.test(base));
+}
+
+/** Refuse a credential path, following symlinks so a renamed link cannot
+ *  slip past. Missing paths pass through (the caller's own ENOENT wins). */
+export async function assertNotSecret(absolute: string): Promise<void> {
+	const real = await fs.realpath(absolute).catch(() => absolute);
+	if (isSecretPath(absolute) || isSecretPath(real)) {
+		throw new Error(`Refused: ${absolute} holds credentials and is off-limits to the agent.`);
+	}
+}
+
 /** Resolve a tool path argument: absolute stays, relative/absent → home.
  *  (pi resolves against the project cwd; the harness's "project" is the
  *  learner's life, so the home directory is the anchor.) */
@@ -168,9 +201,10 @@ export async function walkFiles(
 			}
 			const full = path.join(dir, entry.name);
 			if (entry.isDirectory()) {
-				if (EXCLUDED_DIR_NAMES.has(entry.name)) continue;
+				if (EXCLUDED_DIR_NAMES.has(entry.name) || SECRET_DIR_NAMES.has(entry.name.toLowerCase())) continue;
 				if (await walkDir(full)) return true;
 			} else if (entry.isFile()) {
+				if (isSecretPath(full)) continue;
 				if (await visit(full)) return true;
 			}
 			// symlinks/other: not followed (pi's fd doesn't follow either)

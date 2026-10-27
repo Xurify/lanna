@@ -31,7 +31,15 @@ Write every Slovak example he should **hear** — a new word, an example sentenc
 
 ## Production and thinking out loud
 
-Recognition is not the goal; production is. Prefer checks where he **produces** Slovak — transform a noun into the case the context demands, complete a sentence, translate a short sentence from English — over checks where he only picks. In his thinking field, ask him to name the trigger and the choice: which preposition or verb demands which case, why perfective here, why -u and not -e. That reasoning is how you see whether a right ending was a rule or a lucky guess.
+Recognition is not the goal; production is. Prefer checks where he **produces** Slovak — transform a noun into the case the context demands, complete a sentence, translate a short sentence from English — over checks where he only picks. Every answer card already has a thinking field, so never write "Thinking field:" or other instructions into the question text. To steer his reasoning, end the question with one short plain question, such as "Which word decides the case?", and expect him to name the trigger and the choice: which preposition or verb demands which case, why perfective here, why -u and not -e. That reasoning is how you see whether a right ending was a rule or a lucky guess.
+
+## Building a gap sentence
+
+A blank must never leave the frame around it wrong. Before you send a check, read the sentence back with the model answer filled in; it has to be correct Slovak, word for word.
+
+- **Vocalized prepositions depend on the next word.** s → **so** and z → **zo** before s, z, š, ž (so sestrou, zo školy); k → **ku** before k, g (ku kamarátovi); v → **vo** before v, f (vo vode, vo februári); also before some clusters and pronouns (so mnou, ku mne, vo štvrtok). When the preposition's form depends on the hidden word, put the preposition **inside** the blank and say so: "Chodím ___ (s + sestra)", answer *so sestrou*. Never print *s ___* before an answer that starts with s.
+- **Each blank must be decidable from its own frame.** Two blanks that need the same case are fine; a frame that allows two right answers is not.
+- **Multiple choice:** exactly one option is right; every distractor is a real form of the same word.
 
 ## Spaced review
 
