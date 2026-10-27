@@ -863,6 +863,23 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 	return (
 		<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), check())}>
 			<p className="font-prose text-2xl text-foreground">“{item.translation}”</p>
+			{/* After the answer: the sentence as one line, with a replay button
+			    (it also plays on its own when the answer lands). */}
+			{locked && (
+				<div className="lh-pop mt-6 flex items-center gap-3" data-testid="build-sentence">
+					<button
+						type="button"
+						onClick={() => void speak(item.sentence)}
+						aria-label="Play the sentence"
+						className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
+					>
+						<Volume2Icon className="size-5" />
+					</button>
+					<p className="font-prose text-2xl text-foreground" lang="sk">
+						{item.sentence}
+					</p>
+				</div>
+			)}
 			<div className="mt-6 flex min-h-[4.5rem] flex-wrap items-center gap-2 border-b-2 border-border pb-3" data-testid="build-answer">
 				{picked.map((bi, k) => (
 					<button key={`${bi}-${k}`} type="button" disabled={locked} onClick={() => setPicked((p) => p.filter((_, j) => j !== k))} className={cn("lh-pop", tile)} lang="sk">
