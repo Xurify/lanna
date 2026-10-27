@@ -69,6 +69,7 @@ function renderDock(props: {
 	toolCallId: string;
 	input: never;
 	onSubmit?: () => void;
+	initialDraft?: never;
 }) {
 	// expanded=true renders the full form (the collapsed bar is covered by the
 	// QuestionDockBar test below). No scroll context needed — the DockOverlay
@@ -162,12 +163,28 @@ describe("DispatchCard — the BYOK refusal tone (owner, 2026-09-22)", () => {
 	});
 });
 
+/** A draft with reasoning written — reopens the dock's reasoning panel. */
+const OPEN = { selection: { selected: new Set<number>(), otherSelected: false, dontKnow: false }, thinking: "because", other: "", text: "", confidenceIndex: 2 };
+
 describe("render smoke tests", () => {
 	it("QuizCard renders question, options, and the automatic 'I don't know'", () => {
 		const html = renderDock({ toolName: "quiz", toolCallId: "q1", input: quizInput as never });
 		assert.match(html, /Which planet is closest to the sun\?/);
 		assert.match(html, /Mercury/);
 		assert.match(html, /I don&#x27;t know|I don't know/);
+		// One tap (LangHarness redesign): closed by default, the dock is just
+		// the options plus "Explain my reasoning" — no slider, no field.
+		assert.ok(html.includes('data-testid="explain-toggle"'), "reasoning sits behind a toggle");
+		assert.ok(!html.includes('data-testid="thinking-field"'), "no thinking field until asked");
+		assert.ok(!html.includes('data-testid="confidence-track"'), "no confidence slider until asked");
+		assert.match(html, /tap an answer/);
+		assert.ok(!html.includes('type="radio"'), "no native radio inputs");
+		assert.ok(html.includes('role="radio"'), "button-based radio role present");
+	});
+
+	it("QuizCard with reasoning open renders the thinking field and confidence", () => {
+		const html = renderDock({ toolName: "quiz", toolCallId: "q1", input: quizInput as never, initialDraft: OPEN as never });
+		assert.ok(html.includes('data-testid="confidence-track"'), "confidence returns with the reasoning panel");
 		// The learner's voice: a labeled "Your thinking" composer-twin lives
 		// INSIDE the dock — never called optional, inviting the dump.
 		assert.ok(html.includes('data-testid="thinking-field"'), "thinking field present");
@@ -176,9 +193,6 @@ describe("render smoke tests", () => {
 		assert.ok(!html.includes("optional"), "the field is never called optional");
 		assert.match(html, /Submit answer/, "send becomes Submit answer");
 		assert.match(html, /↵ submits · ⇧↵ newline/, "the standard chord is discoverable (owner round 5)");
-		// The v1 desync bug: options are buttons with ARIA roles, not native inputs.
-		assert.ok(!html.includes('type="radio"'), "no native radio inputs");
-		assert.ok(html.includes('role="radio"'), "button-based radio role present");
 	});
 
 	it("QuizCard never leaks the explanation or the correct answer before submit", () => {
@@ -199,8 +213,7 @@ describe("render smoke tests", () => {
 		assert.match(html, /Type your own answer/, "type directly into the option");
 		assert.ok(html.includes('role="radio"'), "Other row keeps the option role");
 		assert.match(html, /aria-checked="false"/, "circle starts unfilled");
-		assert.ok(html.includes('data-testid="thinking-field"'), "thinking field coexists with Other");
-		assert.match(html, /YOUR THINKING/, "ask select-mode also gets the learner's voice");
+		assert.ok(html.includes('data-testid="explain-toggle"'), "ask select-mode offers the reasoning panel too");
 	});
 
 	it("multi-select ask renders checkbox rows and the select-all hint", () => {
@@ -244,12 +257,13 @@ describe("render smoke tests", () => {
 				input={quizInput as never}
 				expanded={true}
 				phase="teach"
+				initialDraft={OPEN as never}
 				onExpand={() => {}}
 				onSubmit={() => {}}
 			/>,
 		);
 		assert.ok(teach.includes("min-h-[4.5rem]"), "teach: a generous dump area");
-		const probe = renderDock({ toolName: "quiz", toolCallId: "q1", input: quizInput as never });
+		const probe = renderDock({ toolName: "quiz", toolCallId: "q1", input: quizInput as never, initialDraft: OPEN as never });
 		assert.ok(!probe.includes("min-h-[4.5rem]"), "probe (default): stays compact");
 		assert.ok(probe.includes("min-h-10"), "probe: one quiet row");
 	});
@@ -466,7 +480,7 @@ describe("teach-check reveal (W5 phase separation)", () => {
 		// path renders the identical form; this is also the regression pin for it.
 		const html = renderDock({ toolName: "quiz", toolCallId: "t1", input: quizInput as never });
 		assert.ok(html.includes('data-testid="question-dock"'), "the form is the dock's content once expanded");
-		assert.match(html, /Submit answer/);
+		assert.match(html, /Explain my reasoning/);
 	});
 });
 

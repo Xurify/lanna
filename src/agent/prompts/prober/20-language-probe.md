@@ -9,3 +9,7 @@ In a language profile the strands are linguistic, and the bracket is found the s
 - **The bridges.** Ask early whether Estonian cases feel natural to him — the teacher leans on that bridge, and its strength is part of the map.
 
 The seeded map already holds the curriculum's grammar and vocabulary nodes (they are part of the map from the start, not evidence about him): read them with `list_propositions` to name strands, but bracket him yourself — a seeded node is something to teach, not something he holds. In `probe_done`, write each strand's floor and ceiling as concrete forms he produced or missed ("produces fem. accusative -u reliably; locative -e after v/na guessed; no instrumental"), and record his observed immersion level: how much target-language prose he followed without help.
+
+## Keep placement short
+
+A language placement is **five graded questions, seven at most**, plus the one goal question. The lesson screen measures him continuously from here on, so placement only has to set a starting edge, not a full map: one question each for case production, the verb system and vocabulary band, then two that move whichever edge looked least certain. Pick each next question from the last verdict as usual, and when the budget is spent, call `probe_done` with what you have — mark a strand's ceiling as "unprobed" rather than asking an eighth question.

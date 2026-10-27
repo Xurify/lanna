@@ -12,7 +12,7 @@ const dom = parseHTML("<html><body></body></html>");
 Object.assign(globalThis, { window: dom.window, document: dom.document, Element: dom.window.Element,
 	HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true });
 
-test("actual select → submit → saved result → historical Why uses source data and presentation-only recovery", async () => {
+test("actual one-tap select → submit → saved result → historical Why uses source data and presentation-only recovery", async () => {
 	const question = String.raw`Find $\\nabla f$ for $\begin{pmatrix}a&b\\c&d\end{pmatrix}$.`;
 	const label = String.raw`$\\nabla f$`;
 	const explanation = String.raw`First paragraph.\n\nThe matrix is $\begin{pmatrix}p&q\\r&s\end{pmatrix}$ and $\\nabla f$ is its gradient.`;
@@ -29,12 +29,8 @@ test("actual select → submit → saved result → historical Why uses source d
 		assert.ok(choice);
 		await act(async () => choice.click());
 		assert.equal(choice.getAttribute("aria-checked"), "true");
-		const submit = [...host.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent?.includes("Submit answer"))!;
-		assert.equal(submit.disabled, false);
-		// linkedom does not implement the browser's default button→form
-		// action; dispatch its native submit event through React instead.
-		await act(async () => submit.closest("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
-		assert.ok(answer);
+		// One tap (LangHarness redesign): a single-select click IS the answer.
+		assert.ok(answer, "the click submitted");
 		assert.equal(answer.questionText, question);
 		assert.equal(answer.explanation, explanation);
 		assert.equal(answer.answers[0]!.value, label, "display recovery must not alter the submitted identity");

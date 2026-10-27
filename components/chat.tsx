@@ -48,7 +48,7 @@ import { PlanBlock, PlanPopup, latestTree } from "@/components/plan-block";
 import { PlanMarginalia, planExists } from "@/components/plan-window";
 import { MermaidOverlay, SessionMermaidContext } from "@/components/session-overlay";
 import { AbortTurnDialog, type AbortMode } from "@/components/abort-turn-dialog";
-import { ArrowRightIcon, DumbbellIcon, WaypointsIcon } from "lucide-react";
+import { ArrowRightIcon, CogIcon, DumbbellIcon, WaypointsIcon } from "lucide-react";
 import type { PlanBlockData } from "@/src/core";
 import { QuestionDock } from "@/components/question-dock";
 import { SessionFind } from "@/components/session-find";
@@ -57,6 +57,8 @@ import { PracticeDock } from "@/components/practice-dock";
 import { ThinkingCard, type PracticeThinkingData } from "@/components/practice-cards";
 import { GraphContextCard, type GraphContextData } from "@/components/graph-context-card";
 import { TopBar } from "@/components/top-bar";
+import { cn } from "@/lib/utils";
+import { setShowWorking, useShowWorking, WORKING_TOOLS } from "@/components/show-working";
 import type { ArtifactPartProps, JobRecord, Phase3, QuestionAnswerData, QuestionFormDraft, TurnUsage, SessionPricing } from "@/src/core";
 import type { LhViewMessage } from "@/src/core";
 import { PhaseChip, PhaseDivider } from "@/components/phase-divider";
@@ -812,6 +814,7 @@ export function Chat({
 	// The live plan popup (wave 4): opened by any transcript plan block, the
 	// top-bar plan chip, and the dock band's marginalia.
 	const [planOpen, setPlanOpen] = useState(false);
+	const showWorking = useShowWorking();
 	// Real plan presence — gates the marginalia's clickable flank. A JSX
 	// element is always truthy; gating on the node alone mounted a phantom
 	// (invisible, clickable) button in the bottom-right whenever a question
@@ -1291,6 +1294,26 @@ export function Chat({
 						</button>
 </Hint>
 					)}
+					{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
+					    tool calls are hidden by default; this chip brings them back. */}
+					<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+						<button
+							type="button"
+							data-testid="show-working"
+							aria-pressed={showWorking}
+							onClick={(e) => {
+								blurAfterPointerClick(e);
+								setShowWorking(!showWorking);
+							}}
+							className={cn(
+								"lh-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium uppercase tracking-wide transition-colors hover:text-foreground",
+								showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
+							)}
+						>
+							<CogIcon className="size-3.5" aria-hidden />
+							Working
+						</button>
+					</Hint>
 					{/* The extraction ring (owner-locked redesign, 2026-09-24): fills
 					    with uncovered vs the chunk threshold, pulses while a run is in
 					    flight, vanishes when the graph is off. Click → the exact
@@ -1483,6 +1506,9 @@ export function Chat({
 														);
 													}
 													case "reasoning":
+														// Hidden unless "Show working" is on — except the live
+														// row while this turn streams, which is the activity signal.
+														if (!showWorking && !(status === "streaming" && isLastPart)) return null;
 														return (
 															<Reasoning key={pi} isStreaming={status === "streaming" && isLastPart} className="mb-2">
 																<ReasoningTrigger />
@@ -1530,6 +1556,7 @@ export function Chat({
 														// parts and future artifacts render via the
 														// registry — add renderers there, not here.
 														if (part.type.startsWith("tool-")) {
+															if (!showWorking && WORKING_TOOLS.has(part.type.slice("tool-".length))) return null;
 															const Renderer = artifactRenderers[part.type.slice("tool-".length)];
 															if (Renderer) return <Renderer key={pi} part={part as ArtifactPartProps["part"]} />;
 														}

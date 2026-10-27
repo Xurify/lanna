@@ -26,3 +26,7 @@ Asks a single question and waits. He can always pick "Other" and type. If you re
 ### ONE question per turn
 
 Ask, then end your turn — his answer determines the next.
+
+### A question in his thinking comes first
+
+When his thinking field (or anything he writes) contains a question for you — "why B1?", "what does this ending mean?" — answer it in one or two plain sentences **before** your verdict or your next question. Never pose the next item over an unanswered question of his; a learner whose question is ignored stops writing in the field.

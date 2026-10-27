@@ -339,6 +339,11 @@ function QuestionDockForm({
 	// between questions, so each question starts fresh at 50.
 	const [confIdx, setConfIdx] = useState<number>(initialDraft?.confidenceIndex ?? DEFAULT_CONFIDENCE_INDEX);
 	const selectMode: SelectMode = qd.mode === "multi-select" ? "multi-select" : "single-select";
+	/* ONE TAP (LangHarness redesign): the confidence slider and the thinking
+	 * field cost ~60 s a question and were left untouched most of the time,
+	 * so they sit behind "Explain my reasoning". Closed, a single-select
+	 * click IS the answer; open, the dock is the full reasoning surface. */
+	const [explain, setExplain] = useState<boolean>(() => Boolean(initialDraft?.thinking?.trim()));
 
 	// The PRIMARY dictation input (owner, STT round 1): while a question
 	// waits, dictated finals land HERE, never in the hidden composer — text
@@ -369,6 +374,14 @@ function QuestionDockForm({
 	);
 
 	const toggle = (idx: number) => setSel(toggleOption(selectMode, sel, idx));
+	// A click on a single-select option answers at once unless the learner
+	// is explaining (then it just selects, and Enter or Submit sends).
+	const pick = (idx: number) => {
+		const next = toggleOption(selectMode, sel, idx);
+		setSel(next);
+		if (selectMode === "single-select" && !explain && !compactionRunning && next.selected.size > 0 && !isDictationActive())
+			submitWith(next);
+	};
 
 	const canSubmit =
 		qd.mode === "text"
@@ -391,6 +404,9 @@ function QuestionDockForm({
 	};
 	const doSubmit = () => {
 		if (!canSubmit) return;
+		submitWith(sel);
+	};
+	const submitWith = (sel: DockSelection) => {
 		const req: AnswerRequest = {
 			dontKnow: sel.dontKnow,
 			values: [...sel.selected].map((i) => qd.options[i]!.value),
@@ -399,7 +415,9 @@ function QuestionDockForm({
 			thinking: qd.mode !== "text" ? thinkingTextRef.current.trim() || undefined : undefined,
 			// Always sent on quiz answers (owner: 50 must mean 50, never
 			// "untouched"); buildAnswer drops it on "I don't know".
-			confidence: kind === "quiz" ? CONFIDENCE_STOPS[confIdx] : undefined,
+			// Sent only when the learner opened the reasoning panel — an
+			// untouched slider is not a stated 50.
+			confidence: kind === "quiz" && explain ? CONFIDENCE_STOPS[confIdx] : undefined,
 		};
 		// Snapshot before optimistic submission unmounts the form. Ref values
 		// include the dictation finals that just landed, unlike stale closures.
@@ -512,6 +530,14 @@ function QuestionDockForm({
 			// Keys from a typing surface keep their meaning (arrows move
 			// the caret, space types).
 			if (typing || modded) return;
+			// Number keys pick an option directly (1 = first row), the same
+			// as a click: one-tap answers for single-select.
+			if (/^[1-9]$/.test(e.key) && Number(e.key) <= optionCount) {
+				e.preventDefault();
+				setKbdIdx(Number(e.key) - 1);
+				pick(Number(e.key) - 1);
+				return;
+			}
 			if (e.key === "ArrowDown") {
 				e.preventDefault();
 				const next = Math.min((kbdIdx ?? -1) + 1, rowCount - 1);
@@ -599,7 +625,7 @@ function QuestionDockForm({
 									role={qd.mode === "multi-select" ? "checkbox" : "radio"}
 									aria-checked={isSel}
 									data-kbdrow={i}
-									onClick={() => toggle(i)}
+									onClick={() => pick(i)}
 									className={cn(
 										"flex items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm outline-none transition-colors",
 										isSel ? "border-primary bg-accent" : "hover:bg-accent/50",
@@ -753,7 +779,7 @@ function QuestionDockForm({
 				app-wide). Clicking and dragging are native. "I don't know"
 				GRAYS it out — the layout holds, no value is sent, the IDK
 				signal stands alone. */}
-			{kind === "quiz" && (
+			{kind === "quiz" && explain && (
 				<div className="border-t border-border/60 px-4 py-2.5">
 					<div className="flex items-center gap-3">
 						<span
@@ -836,6 +862,38 @@ function QuestionDockForm({
 			    send. Select modes get "Your thinking" (Enter makes a newline — it
 			    is for dumping, soon dictated; the button submits); text mode
 			    keeps "Your answer" with Enter-to-submit. */}
+			{qd.mode !== "text" && !explain ? (
+				<div className="flex items-center gap-2 border-t border-border/60 px-3 py-2">
+					<button
+						type="button"
+						data-testid="explain-toggle"
+						onClick={() => {
+							setExplain(true);
+							requestAnimationFrame(() => thinkingRef.current?.focus());
+						}}
+						className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+					>
+						Explain my reasoning
+					</button>
+					<span aria-hidden className="ml-auto text-xs text-muted-foreground">
+						{compactionRunning
+							? "compacting session…"
+							: qd.mode === "single-select"
+								? `tap an answer · 1–${Math.min(9, qd.options.length)} keys`
+								: "↵ submits"}
+					</span>
+					{(qd.mode === "multi-select" || sel.dontKnow || sel.otherSelected) && (
+						<Button
+							type="button"
+							onClick={submit}
+							disabled={!canSubmit || compactionRunning}
+							className="h-8 rounded-[6px] px-3 text-sm font-medium"
+						>
+							Submit answer
+						</Button>
+					)}
+				</div>
+			) : (
 			<form
 				className="border-t border-border/60 p-1.5"
 				onSubmit={(e) => {
@@ -928,6 +986,7 @@ function QuestionDockForm({
 					</div>
 				</div>
 			</form>
+			)}
 		</div>
 	);
 }

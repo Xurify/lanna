@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { PlayButton, speak, useActiveLanguage } from "@/components/speech";
+import { sfx } from "@/components/lesson/sound";
 import {
 	compareAnswer,
 	diacriticSlips,
@@ -121,6 +122,9 @@ export function ReviewSession() {
 		setGiven(answer);
 		setVerdict(v);
 		setSuggested(ratingFor(v, Date.now() - shownAt.current));
+		if (v === "exact") sfx.right();
+		else if (v === "accents") sfx.almost();
+		else sfx.wrong();
 		if (autoplay) void speak(prompt.card.sentence);
 	};
 
@@ -355,24 +359,43 @@ export function ReviewSession() {
 									<p className="mt-1 text-sm text-muted-foreground">
 										{prompt.card.lemma} · {prompt.card.gloss}
 									</p>
-									<div className="mt-4 grid grid-cols-4 gap-2" data-testid="review-ratings">
-										{([1, 2, 3, 4] as Rating[]).map((r) => (
-											<button
-												key={r}
-												type="button"
-												disabled={saving}
-												onClick={() => void rate(r)}
-												className={cn(
-													"flex flex-col items-center rounded-lg border px-2 py-2 text-sm transition-colors hover:bg-accent disabled:opacity-50",
-													r === suggested ? "border-primary bg-primary/10 text-foreground" : "text-muted-foreground",
-												)}
-											>
-												<span>{RATING_LABELS[r]}</span>
-												<span className="font-mono text-[11px] text-muted-foreground">{formatInterval(prompt.intervals[r])}</span>
-											</button>
-										))}
+									{/* The checker already knows how it went: Continue schedules with
+									    the derived rating (redesign 2026-10-27 — one decision per card,
+									    not two). The four ratings stay as a quiet override. */}
+									<div className="mt-5 flex flex-wrap items-center gap-3" data-testid="review-ratings">
+										<button
+											type="button"
+											autoFocus
+											disabled={saving}
+											onClick={() => void rate(suggested)}
+											data-testid="review-continue"
+											className={cn(
+												"rounded-2xl px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none disabled:opacity-50",
+												verdict === "exact" ? "bg-go text-go-ink" : verdict === "accents" ? "bg-warn text-background" : "bg-miss text-background",
+											)}
+										>
+											Continue
+										</button>
+										<span className="font-ui text-[11px] text-muted-foreground">
+											{RATING_LABELS[suggested]} · next in {formatInterval(prompt.intervals[suggested])}
+										</span>
+										<span className="ml-auto flex items-center gap-1 font-ui text-[11px] text-muted-foreground/80">
+											<span className="mr-1">Override:</span>
+											{([1, 2, 3, 4] as Rating[]).map((r) => (
+												<button
+													key={r}
+													type="button"
+													disabled={saving}
+													onClick={() => void rate(r)}
+													title={`${RATING_LABELS[r]}: next in ${formatInterval(prompt.intervals[r])} (key ${r})`}
+													className={cn("rounded-md px-1.5 py-1 transition-colors hover:bg-accent hover:text-foreground", r === suggested && "text-foreground")}
+												>
+													{RATING_LABELS[r]}
+												</button>
+											))}
+										</span>
 									</div>
-									<p className="mt-2 text-center font-ui text-[11px] text-muted-foreground/70">Enter accepts the highlighted rating · 1–4 to choose</p>
+									<p className="mt-2 font-ui text-[11px] text-muted-foreground/70">Enter continues · 1–4 to override</p>
 								</div>
 							)}
 
