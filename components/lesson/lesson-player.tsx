@@ -88,6 +88,13 @@ const KIND_LABEL: Record<ItemKind, string> = {
 	listen: "Type what you hear",
 };
 
+/** A vocabulary rep blanks the word itself, so the ask is the word, not a form. */
+function kindLabel(item: LessonItem): string {
+	if (item.kind === "choose" && unitInfo(item.unit).kind === "words") return "Choose the word";
+	if (item.kind === "type" && unitInfo(item.unit).kind === "words") return "Type the word";
+	return KIND_LABEL[item.kind];
+}
+
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
 
 export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId; mode: Mode; initialPlan?: LessonPlan | null }) {
@@ -573,8 +580,9 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 const REP_FORM = "lesson-rep";
 
 function hintFor(item: LessonItem): string {
-	// "First words": the blank IS the dictionary form, so the hint is the meaning.
-	return item.unit === "words" ? item.gloss : item.lemma;
+	// A vocabulary rep blanks the word itself, so its hint is the meaning;
+	// a grammar rep shows the dictionary form (core/lesson.ts decides).
+	return item.hint ?? item.lemma;
 }
 
 function RepView({
@@ -602,7 +610,7 @@ function RepView({
 				{eyebrow}
 				{item.again && <span className="text-xp"> · Once more</span>}
 			</p>
-			<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">{KIND_LABEL[item.kind]}</h2>
+			<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">{kindLabel(item)}</h2>
 			{item.kind === "build" ? (
 				<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
 			) : (
@@ -800,7 +808,7 @@ function ClozeRep({
 						<span>{item.after}</span>
 					</p>
 					<p className="mt-2 font-prose text-lg text-muted-foreground">
-						{item.unit !== "words" && <span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>}
+						<span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>
 						{item.translation}
 					</p>
 					{typed && !locked && <DiacriticBar variant="keys" className="mt-6" />}

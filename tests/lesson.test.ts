@@ -157,5 +157,5 @@ test("a right answer after the hint earns half", () => {
 });
 
 test("every grammar unit carries an Estonian bridge", () => {
-	for (const u of UNITS) if (u.id !== "words") assert.ok(u.bridge && u.bridge.length > 10, u.id);
+	for (const u of UNITS) if (u.kind !== "words" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
 });

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 	try {
 		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating });
 		// Reviews count toward the day's XP and the streak (Today screen).
-		const xp = recordReviewXp(outcome.verdict, tzOf(req));
+		const xp = recordReviewXp(outcome.verdict, tzOf(req), new Date(), ms);
 		return Response.json({ ...outcome, xp });
 	} catch (err) {
 		return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });

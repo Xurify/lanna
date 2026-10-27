@@ -5,10 +5,10 @@
  * the knowledge-graph home (now at /map), because a language app opens on
  * what to do next, not on a blank "What do you want to learn?".
  *
- * One obvious next step (Continue, Enter starts it), the day's goal and
- * streak, four ways to practise (Review, Blitz, Talk, Story), and the
- * skill path: every grammar unit as a node whose ring fills as lessons
- * are finished.
+ * One obvious next step (Continue, Enter starts it), today's plan on the
+ * road to the target level (components/daily-plan.tsx), four ways to
+ * practise (Review, Blitz, Talk, Story), and the path: the whole A1→B2
+ * map folded to the current chapter (components/curriculum-path.tsx).
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -32,9 +32,11 @@ import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { startTutorChat, storyPrompt, TALK_SCENES, talkPrompt, type Scene } from "@/components/lesson/tutor";
-import { UnitIcon } from "@/components/lesson/unit-icon";
-import { LESSONS_TO_COMPLETE } from "@/src/core";
-import type { UnitId } from "@/src/core";
+import { UnitBadge } from "@/components/unit-badge";
+import { DailyPlan, type Goal } from "@/components/daily-plan";
+import { CurriculumPath } from "@/components/curriculum-path";
+import { curriculumUnit, LESSONS_TO_COMPLETE, tutorUnitPrompt } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, UnitId, UnitState } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
@@ -61,6 +63,10 @@ interface Summary {
 	next: UnitId;
 	bestBlitz: number;
 	review: { due: number; newLeft: number; total: number; available: boolean };
+	curriculum: CurriculumState;
+	plan: Plan;
+	goal: Goal;
+	projection: Projection;
 }
 
 function greeting(now = new Date()): string {
@@ -69,8 +75,6 @@ function greeting(now = new Date()): string {
 	if (h < 18) return "Dobrý deň";
 	return "Dobrý večer";
 }
-
-const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
 
 export function Today({ initialConfigured, initialSummary = null }: { initialConfigured: boolean; initialSummary?: Summary | null }) {
 	const router = useRouter();
@@ -131,12 +135,45 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		withTutor(() =>
 			startTutorChat(router, {
 				title: "Story: Robo in Bratislava",
-				prompt: storyPrompt((s?.units ?? []).filter((u) => u.lessons > 0 && u.id !== "words").map((u) => u.title)),
+				prompt: storyPrompt(
+					(s?.curriculum.chapters ?? [])
+						.flatMap((c) => c.units)
+						.filter((u) => u.kind === "drill" && u.lessons > 0 && u.id !== "words")
+						.map((u) => u.title),
+				),
 			}),
 		);
+	/** A tutor unit on the path: a practice session with the unit's brief. */
+	const tutorUnit = (u: UnitState) => {
+		const unit = curriculumUnit(u.id);
+		if (!unit) return;
+		withTutor(() => startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }));
+	};
+	/** A goal's Talk scene, by scene id. */
+	const sceneById = (id: string) => {
+		const scene = TALK_SCENES.find((x) => x.id === id);
+		if (scene) talk(scene);
+	};
+	/** The plan's speaking task: a tutor unit, the chapter's scene, or a story. */
+	const speak = (task: PlanTask) => {
+		if (task.via === "tutor" && task.unit) {
+			const u = (s?.curriculum.chapters ?? []).flatMap((c) => c.units).find((x) => x.id === task.unit);
+			if (u) tutorUnit(u);
+		} else if (task.via === "talk" && task.unit) sceneById(task.unit);
+		else if (task.via === "talk") setTalkOpen(true);
+		else story();
+	};
+	const changeGoal = async (goal: Goal) => {
+		const res = await fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ goal }),
+		});
+		if (!res.ok) throw new Error(String(res.status));
+		setS((await res.json()) as Summary);
+	};
 
 	const next = s?.units.find((u) => u.id === s.next);
-	const goalPct = s ? Math.min(1, s.todayXp / Math.max(1, s.dailyGoal)) : 0;
 
 	return (
 		<div className="relative min-h-dvh bg-background">
@@ -204,36 +241,8 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						</div>
 					</div>
 
-					{/* Daily goal + week */}
-					<div className="mt-5 flex flex-wrap items-center gap-6 rounded-3xl border bg-card px-6 py-5">
-						<GoalRing pct={goalPct} xp={s?.todayXp ?? 0} goal={s?.dailyGoal ?? 50} />
-						<div className="min-w-0 flex-1">
-							<p className="font-ui text-lg font-bold text-foreground">
-								{goalPct >= 1 ? "Daily goal reached. Pekne!" : `${Math.max(0, (s?.dailyGoal ?? 50) - (s?.todayXp ?? 0))} XP left for today's goal`}
-							</p>
-							<div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2" aria-label="This week">
-								{(s?.week ?? Array.from({ length: 7 }, (_, i) => ({ day: String(i), xp: 0 }))).map((d, i, all) => {
-									const isToday = i === all.length - 1;
-									const wd = /\d{4}-\d{2}-\d{2}/.test(d.day) ? WEEKDAY[new Date(`${d.day}T12:00:00`).getDay()] : "";
-									return (
-										<div key={d.day} className="flex flex-col items-center gap-1">
-											<span
-												className={cn(
-													"flex size-7 items-center justify-center rounded-full border-2 sm:size-8",
-													d.xp > 0 ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground/40",
-													isToday && d.xp === 0 && "border-dashed border-foreground/40",
-												)}
-												title={`${d.day}: ${d.xp} XP`}
-											>
-												<FlameIcon className="size-4" />
-											</span>
-											<span className={cn("font-ui text-[10px] uppercase", isToday ? "text-foreground" : "text-muted-foreground")}>{wd}</span>
-										</div>
-									);
-								})}
-							</div>
-						</div>
-					</div>
+					{/* Today's plan: the day's tasks on the road to the goal */}
+					<DailyPlan plan={s?.plan ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} week={s?.week ?? []} busy={busy} onSpeak={speak} onGoalChange={changeGoal} />
 
 					{/* Ways to practise */}
 					<div className="mt-5 grid grid-cols-2 gap-4" data-testid="modes">
@@ -283,6 +292,10 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							<BookOpenTextIcon className="size-3.5" />
 							Practice problems
 						</Link>
+						<Link href="/curriculum" className="flex items-center gap-1.5 hover:text-foreground">
+							<MapIcon className="size-3.5" />
+							The whole path
+						</Link>
 						<Link href="/map" className="flex items-center gap-1.5 hover:text-foreground">
 							<MapIcon className="size-3.5" />
 							Knowledge map
@@ -290,33 +303,19 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					</div>
 				</section>
 
-				{/* The skill path */}
-				<aside aria-label="Skill path" data-testid="skill-path">
-					<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">Your path</p>
-					<ol className="relative mt-4">
-						{(s?.units ?? []).map((u, i) => {
-							const offset = [0, 1, 2, 1][i % 4]!;
-							const current = u.id === s?.next;
-							return (
-								<li key={u.id} className="relative flex items-center gap-4 pb-6" style={{ paddingLeft: `${offset * 2.25}rem` }}>
-									{i > 0 && (
-										<span
-											aria-hidden="true"
-											className="absolute -top-6 h-6 border-l-[3px] border-dotted border-border"
-											style={{ left: `calc(${([0, 1, 2, 1][(i - 1) % 4]! + offset) * 1.125}rem + 1.75rem)` }}
-										/>
-									)}
-									<Link href={`/lesson?unit=${u.id}`} className="group flex items-center gap-4" data-testid={`unit-${u.id}`}>
-										<UnitBadge glyph={u.glyph} progress={u.progress} done={u.done} active={current} />
-										<span className="min-w-0">
-											<span className={cn("block font-ui text-base font-bold", current ? "text-go" : "text-foreground group-hover:text-foreground")}>{u.title}</span>
-											<span className="block font-ui text-xs text-muted-foreground">{pathLine(u, current)}</span>
-										</span>
-									</Link>
-								</li>
-							);
-						})}
-					</ol>
+				{/* The path: the whole map, folded to the current chapter */}
+				<aside aria-label="Your path" data-testid="skill-path">
+					<div className="flex items-baseline justify-between">
+						<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">Your path</p>
+						{s && (
+							<p className="font-ui text-xs text-muted-foreground">
+								{s.curriculum.level} · {s.curriculum.done}/{s.curriculum.total} to {s.goal.level}
+							</p>
+						)}
+					</div>
+					<div className="mt-4">
+						<CurriculumPath state={s?.curriculum ?? null} next={s?.next} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
+					</div>
 				</aside>
 			</main>
 
@@ -354,87 +353,6 @@ function lessonLine(u: UnitSummary): string {
 	if (u.done) return `Unit complete · one more lesson to keep it sharp · ${Math.round((u.accuracy ?? 0) * 100)}% right`;
 	const n = Math.min(u.lessons + 1, LESSONS_TO_COMPLETE);
 	return `Lesson ${n} of ${LESSONS_TO_COMPLETE} · 12 reps · about 3 minutes`;
-}
-
-/** The second line of a path node: done, in progress, up next, or what it
- *  teaches. */
-function pathLine(u: UnitSummary, current: boolean): string {
-	const pct = u.accuracy !== null && u.reps > 0 ? `${Math.round(u.accuracy * 100)}% right` : null;
-	if (u.done) return `Done · ${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
-	if (u.lessons > 0) return `Lesson ${Math.min(u.lessons + 1, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} next${pct ? ` · ${pct}` : ""}`;
-	return current ? "Up next" : u.tagline;
-}
-
-/** A unit's circle: its icon, with a ring that fills as its lessons are
- *  finished and turns gold with a check when the unit is complete. */
-function UnitBadge({ glyph, progress, done = false, active = false, size = "md" }: { glyph: string; progress: number; done?: boolean; active?: boolean; size?: "md" | "lg" }) {
-	const px = size === "lg" ? 88 : 56;
-	const stroke = size === "lg" ? 7 : 5;
-	const r = (px - stroke) / 2;
-	const c = 2 * Math.PI * r;
-	return (
-		<span className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-pulse-ring")} style={{ width: px, height: px }}>
-			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
-				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke} />
-				<circle
-					cx={px / 2}
-					cy={px / 2}
-					r={r}
-					fill="none"
-					stroke={done ? "var(--lh-gold)" : "var(--lh-go)"}
-					strokeWidth={stroke}
-					strokeLinecap="round"
-					strokeDasharray={c}
-					strokeDashoffset={c * (1 - (done ? 1 : progress))}
-					className="transition-[stroke-dashoffset] duration-700"
-				/>
-			</svg>
-			<span
-				className={cn(
-					"flex items-center justify-center rounded-full",
-					size === "lg" ? "size-[66px]" : "size-[40px]",
-					active ? "bg-go text-go-ink" : done ? "bg-gold/15 text-gold" : progress > 0 ? "bg-card text-foreground" : "bg-accent text-foreground/70",
-				)}
-			>
-				<UnitIcon name={glyph} className={size === "lg" ? "size-8" : "size-5"} strokeWidth={2.25} />
-			</span>
-			{done && (
-				<span className="absolute -bottom-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full border-2 border-background bg-gold text-background" title="Unit complete">
-					<CheckIcon className="size-3" strokeWidth={3.5} />
-				</span>
-			)}
-		</span>
-	);
-}
-
-function GoalRing({ pct, xp, goal }: { pct: number; xp: number; goal: number }) {
-	const px = 76;
-	const stroke = 8;
-	const r = (px - stroke) / 2;
-	const c = 2 * Math.PI * r;
-	return (
-		<span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: px, height: px }} aria-label={`${xp} of ${goal} XP today`}>
-			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
-				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke} />
-				<circle
-					cx={px / 2}
-					cy={px / 2}
-					r={r}
-					fill="none"
-					stroke="var(--lh-xp)"
-					strokeWidth={stroke}
-					strokeLinecap="round"
-					strokeDasharray={c}
-					strokeDashoffset={c * (1 - pct)}
-					className="transition-[stroke-dashoffset] duration-700"
-				/>
-			</svg>
-			<span className="text-center">
-				<span className="block font-ui text-lg font-black leading-none text-foreground tabular-nums">{xp}</span>
-				<span className="block font-ui text-[10px] text-muted-foreground">/ {goal}</span>
-			</span>
-		</span>
-	);
 }
 
 function ModeTile({

@@ -13,7 +13,20 @@
  * course.
  */
 
-export async function startTutorChat(router: { push: (href: string) => void }, opts: { title: string; prompt: string }): Promise<void> {
+export async function startTutorChat(
+	router: { push: (href: string) => void },
+	opts: { title: string; prompt: string; activity?: "talk" | "story" | "tutor"; unit?: string },
+): Promise<void> {
+	// The day's plan counts a Talk, a Story or a tutor unit as its speaking
+	// task; a tutor unit also counts the session toward the unit.
+	const activity = opts.activity ?? (opts.title.startsWith("Talk:") ? "talk" : opts.title.startsWith("Story:") ? "story" : undefined);
+	if (activity) {
+		void fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ activity, unit: opts.unit }),
+		}).catch(() => undefined);
+	}
 	const res = await fetch("/api/chats", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },

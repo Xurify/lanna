@@ -17,6 +17,21 @@ export interface DayRecord {
 	lessons: number;
 	reps: number;
 	reviews: number;
+	/** Lessons finished that day, per unit (the daily plan's evidence). */
+	units?: Record<string, number>;
+	blitz?: number;
+	talks?: number;
+	stories?: number;
+	/** Tutor-unit sessions started. */
+	tutors?: number;
+	/** Minutes spent in lessons and review (from the client's timers). */
+	minutes?: number;
+}
+
+/** The learner's target (src/core/curriculum.ts). */
+export interface GoalRecord {
+	level: "A1" | "A2" | "B1" | "B2" | "C1";
+	minutesPerDay: number;
 }
 
 export interface UnitRecord {
@@ -35,9 +50,11 @@ export interface ProgressRecord {
 	/** Item ids of the last lessons, newest last (capped). */
 	recent: string[];
 	bestBlitz?: number;
+	goal?: GoalRecord;
 }
 
 export const DEFAULT_DAILY_GOAL = 50;
+export const DEFAULT_GOAL: GoalRecord = { level: "B2", minutesPerDay: 30 };
 
 const FILE = () => path.join(PATHS.data, "progress.json");
 

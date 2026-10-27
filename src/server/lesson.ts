@@ -27,7 +27,19 @@ import {
 	type UnitId,
 } from "../core/lesson.ts";
 import { dayKey } from "../core/review.ts";
-import { progressStore, type DayRecord, type ProgressRecord } from "../store/progress.ts";
+import {
+	CEFR_ORDER,
+	curriculumState,
+	curriculumUnit,
+	dailyPlan,
+	nextLessonUnit,
+	projection,
+	type Cefr,
+	type CurriculumState,
+	type DailyPlan,
+	type Projection,
+} from "../core/curriculum.ts";
+import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
 const RECENT_CAP = 240;
@@ -48,18 +60,21 @@ export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
 	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
-	const order = UNITS.map((u) => u.id);
-	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || order.indexOf(u) < order.indexOf(unit);
-	const contrast = CONTRAST[unit].filter(reached);
-	const others = order.filter((u) => u !== unit && u !== "words" && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
-	const mix = unit === "words" ? [] : [...contrast, ...others].slice(0, 3);
+	const info = UNITS.find((u) => u.id === unit)!;
+	const grammar = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern).map((u) => u.id);
+	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || grammar.indexOf(u) < grammar.indexOf(unit);
+	const contrast = (CONTRAST[unit] ?? []).filter(reached);
+	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
+	// Vocabulary, word-order and mixed units are not interleaved with others:
+	// the first two are a different kind of rep, the third is the mix itself.
+	const mix = info.kind === "words" || info.union || info.pattern ? [] : [...contrast, ...others].slice(0, 3);
 	return buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix });
 }
 
 /** Blitz runs over the units you have started (at least the first three). */
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
-	const started = UNITS.filter((u) => u.id !== "words" && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
+	const started = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
 	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
 	return buildBlitz(entries(), units, seed);
 }
@@ -123,12 +138,16 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 		if (total > 0) xp += LESSON_BONUS + (perfect ? PERFECT_BONUS : 0);
 		unit.lessons++;
 		day.lessons++;
+		day.units ??= {};
+		day.units[input.unit] = (day.units[input.unit] ?? 0) + 1;
 	} else {
+		day.blitz = (day.blitz ?? 0) + 1;
 		if (correct > (p.bestBlitz ?? 0)) {
 			p.bestBlitz = correct;
 			newBest = correct;
 		}
 	}
+	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(60, input.ms / 60_000);
 	unit.reps += total;
 	unit.correct += correct;
 	unit.lastAt = now.toISOString();
@@ -144,15 +163,38 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 }
 
 /** A review answer counts toward XP and the day (called by /api/review). */
-export function recordReviewXp(verdict: RepVerdict, tz?: number, now = new Date()): number {
+export function recordReviewXp(verdict: RepVerdict, tz?: number, now = new Date(), ms?: number): number {
 	const p = progressStore.read();
 	const day = dayOf(p, today(tz, now));
 	const xp = verdict === "exact" ? 8 : verdict === "accents" ? 4 : 1;
 	day.xp += xp;
 	day.reviews++;
+	if (ms && Number.isFinite(ms)) day.minutes = (day.minutes ?? 0) + Math.min(5, ms / 60_000);
 	p.xp += xp;
 	progressStore.write(p);
 	return xp;
+}
+
+export type Activity = "talk" | "story" | "tutor";
+
+/** A Talk, a Story or a tutor unit's session was started: the day's plan
+ *  counts it as the speaking task; a tutor unit counts the session toward
+ *  the unit (TUTOR_SESSIONS of them complete it). */
+export function recordActivity(activity: Activity, unit?: string, tz?: number, now = new Date()): ProgressSummary {
+	const p = progressStore.read();
+	const day = dayOf(p, today(tz, now));
+	if (activity === "talk") day.talks = (day.talks ?? 0) + 1;
+	else if (activity === "story") day.stories = (day.stories ?? 0) + 1;
+	else {
+		day.tutors = (day.tutors ?? 0) + 1;
+		if (unit && curriculumUnit(unit)?.kind === "tutor") {
+			const u = (p.units[unit] ??= { lessons: 0, reps: 0, correct: 0 });
+			u.lessons++;
+			u.lastAt = now.toISOString();
+		}
+	}
+	progressStore.write(p);
+	return progressSummary(tz, now);
 }
 
 export interface UnitSummary {
@@ -185,6 +227,12 @@ export interface ProgressSummary {
 	next: UnitId;
 	bestBlitz: number;
 	review: { due: number; newLeft: number; total: number; available: boolean };
+	/** The whole A1→B2 map and where the learner stands on it. */
+	curriculum: CurriculumState;
+	/** Today's tasks on that map. */
+	plan: DailyPlan;
+	goal: GoalRecord;
+	projection: Projection;
 }
 
 export function progressSummary(tz?: number, now = new Date()): ProgressSummary {
@@ -214,13 +262,30 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			accuracy,
 		};
 	});
-	// Continue = the first grammar unit not yet complete; when every unit is
-	// done, the one with the lowest accuracy. "First words" stays on the path
-	// but is never the default: the placement showed reading ahead of
-	// production, so the work is endings.
-	const grammar = units.filter((u) => u.id !== "words");
-	const next = (grammar.find((u) => !u.done) ?? [...grammar].sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0))[0]!).id;
+	// Continue = the first open drill on the map (then a words unit): the
+	// curriculum's chapter order, with locks. Never dead-ends.
+	const goal = p.goal ?? DEFAULT_GOAL;
+	const curriculum = curriculumState(p.units, goal.level);
+	const next = nextLessonUnit(curriculum);
 	const rs = reviewStatus(now, tz, { mint: false });
+	const review = {
+		due: rs.counts.due + rs.counts.learning,
+		newLeft: rs.counts.newLeft,
+		total: rs.counts.total,
+		available: rs.available,
+	};
+	const d = p.days[key];
+	const plan = dailyPlan({
+		state: curriculum,
+		evidence: p.units,
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0 },
+		review,
+		minutesPerDay: goal.minutesPerDay,
+		next,
+		dayOfYear: Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000),
+	});
+	const recentMinutes: number[] = [];
+	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),
@@ -231,13 +296,23 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		units,
 		next,
 		bestBlitz: p.bestBlitz ?? 0,
-		review: {
-			due: rs.counts.due + rs.counts.learning,
-			newLeft: rs.counts.newLeft,
-			total: rs.counts.total,
-			available: rs.available,
-		},
+		review,
+		curriculum,
+		plan,
+		goal,
+		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, recentMinutes, now }),
 	};
+}
+
+/** Change the target level and the planned minutes a day. */
+export function setGoal(goal: Partial<GoalRecord>, tz?: number): ProgressSummary {
+	const p = progressStore.read();
+	const cur = p.goal ?? DEFAULT_GOAL;
+	const level = goal.level && CEFR_ORDER.includes(goal.level) ? (goal.level as Cefr) : cur.level;
+	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(240, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
+	p.goal = { level, minutesPerDay };
+	progressStore.write(p);
+	return progressSummary(tz);
 }
 
 export function setDailyGoal(goal: number): ProgressSummary {
