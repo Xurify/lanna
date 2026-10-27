@@ -9,7 +9,7 @@
  * env itself, waits for Next to answer, then opens Electron. Closing either
  * one stops both.
  */
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,7 +24,13 @@ let stopping = false;
 function stop(code = 0) {
 	if (stopping) return;
 	stopping = true;
-	for (const c of children) if (c.exitCode === null) c.kill();
+	for (const c of children) {
+		if (c.exitCode !== null) continue;
+		// Windows: kill() ends only the top process and leaves Next's
+		// workers holding the port, so take down the whole tree.
+		if (process.platform === "win32") spawnSync("taskkill", ["/PID", String(c.pid), "/T", "/F"], { stdio: "ignore" });
+		else c.kill();
+	}
 	process.exit(code);
 }
 process.on("SIGINT", () => stop(0));
