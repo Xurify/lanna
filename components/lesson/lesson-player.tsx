@@ -15,35 +15,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-	FlameIcon,
-	HelpCircleIcon,
-	LoaderCircleIcon,
-	SnailIcon,
-	SparklesIcon,
-	TimerIcon,
-	Volume2Icon,
-	VolumeXIcon,
-	XIcon,
-	ZapIcon,
-} from "lucide-react";
+import { CheckIcon, FlameIcon, LoaderCircleIcon, SnailIcon, TimerIcon, TrophyIcon, Volume2Icon, VolumeXIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { setSpeed, speak, SPEEDS, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
-import {
-	compareAnswer,
-	diacriticSlips,
-	repXp,
-	sameSentence,
-	unitInfo,
-	type ItemKind,
-	type LessonItem,
-	type LessonPlan,
-	type RepVerdict,
-	type UnitId,
-} from "@/src/core";
+import { compareAnswer, diacriticSlips, gradeListen, repXp, sameSentence, unitInfo, type ItemKind, type LessonItem, type LessonPlan, type RepVerdict, type UnitId } from "@/src/core";
 
 type Mode = "lesson" | "blitz";
 
@@ -65,7 +43,13 @@ interface Outcome {
 	perfect: boolean;
 	queued: string[];
 	newBest?: number;
-	summary: { streak: { days: number; activeToday: boolean }; todayXp: number; dailyGoal: number; next: UnitId; bestBlitz: number };
+	summary: {
+		streak: { days: number; activeToday: boolean };
+		todayXp: number;
+		dailyGoal: number;
+		next: UnitId;
+		bestBlitz: number;
+	};
 }
 
 const BLITZ_SECONDS = 60;
@@ -74,7 +58,7 @@ const KIND_LABEL: Record<ItemKind, string> = {
 	choose: "Choose the right form",
 	type: "Type the missing word",
 	build: "Build the sentence",
-	listen: "Listen and type the missing word",
+	listen: "Type what you hear",
 };
 
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
@@ -102,13 +86,18 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	// more try before the answer is shown (a prompt, not a recast — making
 	// the learner find the form is what moves grammar, telling them is not).
 	const [miss, setMiss] = useState<string | null>(null);
+	// Whether the rep has an answer to check (drives the footer's Check).
+	const [ready, setReady] = useState(false);
 	const relearned = useRef(0);
 	const repBox = useRef<HTMLDivElement>(null);
 	// A miss shakes the rep without remounting it (the typed text stays).
 	useEffect(() => {
 		if (shake === 0) return;
 		if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-		repBox.current?.animate?.([{ transform: "translateX(0)" }, { transform: "translateX(-8px)" }, { transform: "translateX(8px)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }], { duration: 320 });
+		repBox.current?.animate?.(
+			[{ transform: "translateX(0)" }, { transform: "translateX(-8px)" }, { transform: "translateX(8px)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }],
+			{ duration: 320 },
+		);
 	}, [shake]);
 	const startedAt = useRef(Date.now());
 	const finishing = useRef(false);
@@ -169,7 +158,13 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					body: JSON.stringify({
 						unit: plan.unit,
 						mode,
-						reps: all.map((r) => ({ itemId: r.item.id, slug: r.item.slug, kind: r.item.kind, verdict: r.verdict, assisted: r.assisted === true })),
+						reps: all.map((r) => ({
+							itemId: r.item.id,
+							slug: r.item.slug,
+							kind: r.item.kind,
+							verdict: r.verdict,
+							assisted: r.assisted === true,
+						})),
 						ms: Date.now() - startedAt.current,
 						tz: new Date().getTimezoneOffset(),
 					}),
@@ -182,7 +177,13 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					total: all.length,
 					perfect: false,
 					queued: [],
-					summary: { streak: { days: 0, activeToday: false }, todayXp: xp, dailyGoal: 50, next: plan.unit, bestBlitz: 0 },
+					summary: {
+						streak: { days: 0, activeToday: false },
+						todayXp: xp,
+						dailyGoal: 50,
+						next: plan.unit,
+						bestBlitz: 0,
+					},
 				});
 			} finally {
 				setSaving(false);
@@ -237,11 +238,14 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			const all = [...reps, rep];
 			setReps(all);
 			setCurrent(rep);
-			window.setTimeout(() => {
-				setCurrent(null);
-				if (index + 1 >= total) void finish(all);
-				else setIndex((i) => i + 1);
-			}, verdict === "wrong" ? 650 : 280);
+			window.setTimeout(
+				() => {
+					setCurrent(null);
+					if (index + 1 >= total) void finish(all);
+					else setIndex((i) => i + 1);
+				},
+				verdict === "wrong" ? 650 : 280,
+			);
 			return;
 		}
 		setCurrent(rep);
@@ -260,7 +264,13 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		const it = current.item;
 		if ((current.verdict === "wrong" || current.assisted) && !it.again && it.kind !== "build" && relearned.current < RELEARN_MAX) {
 			relearned.current++;
-			const again: LessonItem = { ...it, id: `${it.id}~again`, kind: "type", again: true, options: undefined };
+			const again: LessonItem = {
+				...it,
+				id: `${it.id}~again`,
+				kind: "type",
+				again: true,
+				options: undefined,
+			};
 			setPlan({ ...plan, items: [...plan.items, again] });
 			nextTotal++;
 		}
@@ -273,7 +283,12 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		try {
 			await startTutorChat(router, {
 				title: `Why ${current.item.answer}?`,
-				prompt: whyPrompt({ sentence: current.item.sentence, answer: current.item.answer, given: current.given, lemma: current.item.lemma }),
+				prompt: whyPrompt({
+					sentence: current.item.sentence,
+					answer: current.item.answer,
+					given: current.given,
+					lemma: current.item.lemma,
+				}),
 			});
 		} catch {
 			setError("Couldn't open the tutor. Check Settings → Models.");
@@ -335,87 +350,146 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	if (done || saving) {
 		return (
 			<Frame>
-				<EndScreen
-					mode={mode}
-					unit={plan.unit}
-					reps={reps}
-					outcome={outcome}
-					saving={saving}
-					onAgain={() => void load()}
-					onNext={(u) => router.push(`/lesson?unit=${u}`)}
-				/>
+				<EndScreen mode={mode} unit={plan.unit} reps={reps} outcome={outcome} saving={saving} onAgain={() => void load()} onNext={(u) => router.push(`/lesson?unit=${u}`)} />
 			</Frame>
 		);
 	}
 
-	const unitTitle = mode === "blitz" ? "Blitz" : unitInfo(plan.unit).title;
 	const progress = mode === "blitz" ? left / BLITZ_SECONDS : (index + (current ? 1 : 0)) / total;
+	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && current.item.kind !== "build" && relearned.current < RELEARN_MAX;
+	const examples = current ? plan.items.filter((o) => o.unit === current.item.unit && o.sentence !== current.item.sentence && !o.again).slice(0, 2) : [];
 
 	return (
-		<Frame>
-			{/* Top bar: exit · progress · combo · sound */}
-			<div className="mx-auto flex w-full max-w-3xl items-center gap-4 px-5 pt-5">
-				<Link href="/" aria-label="Leave the lesson" className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-					<XIcon className="size-5" />
-				</Link>
-				<div
-					role="progressbar"
-					aria-valuemin={0}
-					aria-valuemax={100}
-					aria-valuenow={Math.round(progress * 100)}
-					className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-accent"
-					aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}
-				>
+		<Frame strip={false}>
+			{/* Top bar: exit · progress · combo · sound. The whole band drags the
+			    window (its buttons carve themselves out, app/globals.css). */}
+			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+				<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
+					<Link href="/" aria-label="Leave the lesson" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						<XIcon className="size-5" />
+					</Link>
 					<div
-						className={cn("h-full rounded-full transition-[width] duration-500 ease-out", mode === "blitz" ? (left <= 10 ? "bg-miss" : "bg-sky") : "bg-go")}
-						style={{ width: `${Math.max(3, progress * 100)}%` }}
-					/>
-					<div className="absolute inset-x-3 top-[3px] h-1 rounded-full bg-white/20" style={{ width: `calc(${Math.max(3, progress * 100)}% - 1.5rem)` }} />
-				</div>
-				{mode === "blitz" && (
-					<span className={cn("flex items-center gap-1 font-ui text-sm tabular-nums", left <= 10 ? "text-miss" : "text-sky")}>
-						<TimerIcon className="size-4" />
-						{left}s
-					</span>
-				)}
-				<div className={cn("relative flex min-w-14 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-flame" : "text-muted-foreground")} data-testid="combo">
-					<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} />
-					{combo}
-					{floater && (
-						<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-xp">
-							{floater.text}
+						role="progressbar"
+						aria-valuemin={0}
+						aria-valuemax={100}
+						aria-valuenow={Math.round(progress * 100)}
+						className="relative h-3 flex-1 overflow-hidden rounded-full bg-accent"
+						aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}
+					>
+						<div
+							className={cn("h-full rounded-full transition-[width] duration-500 ease-out", mode === "blitz" ? (left <= 10 ? "bg-miss" : "bg-sky") : "bg-go")}
+							style={{ width: `${Math.max(3, progress * 100)}%` }}
+						/>
+					</div>
+					{mode === "blitz" && (
+						<span className={cn("flex items-center gap-1 font-ui text-sm font-semibold tabular-nums", left <= 10 ? "text-miss" : "text-sky")}>
+							<TimerIcon className="size-5" />
+							{left}s
 						</span>
 					)}
+					<div
+						className={cn("relative flex min-w-12 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-flame" : "text-muted-foreground")}
+						data-testid="combo"
+						title="Right in a row"
+					>
+						<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} />
+						{combo}
+						{floater && (
+							<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-xp">
+								{floater.text}
+							</span>
+						)}
+					</div>
+					<button
+						type="button"
+						onClick={toggleSound}
+						aria-label={sound ? "Mute sounds" : "Turn sounds on"}
+						className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
+						{sound ? <Volume2Icon className="size-5" /> : <VolumeXIcon className="size-5" />}
+					</button>
 				</div>
-				<button type="button" onClick={toggleSound} aria-label={sound ? "Mute sounds" : "Turn sounds on"} className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-					{sound ? <Volume2Icon className="size-4" /> : <VolumeXIcon className="size-4" />}
-				</button>
-			</div>
-
-			<div className="mx-auto mt-1 w-full max-w-3xl px-5 font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">
-				{unitTitle}
-				{mode === "blitz" && <span className="ml-2 text-foreground">{reps.filter((r) => r.verdict !== "wrong").length} right</span>}
 			</div>
 
 			{/* The rep */}
-			<div className="flex flex-1 flex-col overflow-y-auto px-5 pb-6 pt-[10vh]">
-				<div key={`${item.id}-${index}`} ref={repBox} className="lh-rise mx-auto w-full max-w-2xl">
-					<RepView key={`${item.id}-${index}`} item={item} tag={tag} locked={!!current} result={current} miss={miss} onGrade={grade} />
+			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
+				<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lh-rise")}>
+					<RepView
+						key={`${item.id}-${index}`}
+						item={item}
+						tag={tag}
+						locked={!!current}
+						result={current}
+						miss={miss}
+						onGrade={grade}
+						onReady={setReady}
+						eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : unitInfo(item.unit).title}
+					/>
 				</div>
 			</div>
 
-			{/* Feedback sheet (lessons only — blitz flashes and moves on) */}
-			{mode === "lesson" && current && <FeedbackSheet rep={current} tag={tag} onContinue={advance} onWhy={() => void why()} last={index + 1 >= total} />}
+			{/* One bar at the bottom, always in the same place: Check before the
+			    answer, the verdict and Continue after it (lessons only — blitz
+			    flashes and moves on). */}
+			{mode === "lesson" && current ? (
+				<FeedbackSheet rep={current} tag={tag} onContinue={advance} onAskTutor={() => void why()} last={index + 1 >= total} comesBack={comesBack} examples={examples} />
+			) : (
+				<ActionBar kind={item.kind} ready={ready} blitz={mode === "blitz"} />
+			)}
 		</Frame>
 	);
 }
 
-function Frame({ children }: { children: React.ReactNode }) {
+/** The one content column every row lines up on: top bar, rep and footer. */
+const COLUMN = "mx-auto w-full max-w-3xl px-6";
+
+/** Flat buttons, one height. No faux-3D bottom edge: on the tinted
+ *  feedback bar it read as a muddy stripe under the label. */
+const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
+const PRIMARY = cn(
+	BUTTON,
+	"bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100",
+);
+const SECONDARY = cn(BUTTON, "border-2 border-foreground/20 px-5 text-foreground hover:bg-foreground/5");
+
+const ACTION_HINT: Record<ItemKind, string> = {
+	choose: "Pick one, or press its number",
+	type: "Press Enter to check",
+	listen: "Press Enter to check",
+	build: "Tap the words in order · Backspace takes the last one back",
+};
+
+function ActionBar({ kind, ready, blitz }: { kind: ItemKind; ready: boolean; blitz: boolean }) {
+	return (
+		<div className="border-t border-border">
+			<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
+				<p className="font-prose text-sm text-muted-foreground">{ACTION_HINT[kind]}</p>
+				{kind !== "choose" && !blitz && (
+					<button type="submit" form={REP_FORM} disabled={!ready} className={PRIMARY} data-testid="lesson-check">
+						Check
+					</button>
+				)}
+			</div>
+		</div>
+	);
+}
+
+function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
 	// Full screen, over the sidebar: a lesson is a focus mode (Esc leaves).
-	return <div className="fixed inset-0 z-40 flex flex-col bg-background">{children}</div>;
+	// It covers the app's own title bar, so it brings a drag band: the top
+	// bar is one, and the other states (loading, end) get a plain strip.
+	return (
+		<div className="fixed inset-0 z-40 flex flex-col bg-background">
+			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+			{children}
+		</div>
+	);
 }
 
 // ─── One rep ────────────────────────────────────────────────────────────────
+
+/** The rep's form: the footer's Check submits it from outside. */
+const REP_FORM = "lesson-rep";
 
 function hintFor(item: LessonItem): string {
 	// "First words": the blank IS the dictionary form, so the hint is the meaning.
@@ -429,6 +503,8 @@ function RepView({
 	result,
 	miss,
 	onGrade,
+	onReady,
+	eyebrow,
 }: {
 	item: LessonItem;
 	tag: string;
@@ -436,15 +512,20 @@ function RepView({
 	result: Rep | null;
 	miss: string | null;
 	onGrade: (given: string, verdict: RepVerdict) => void;
+	onReady: (ready: boolean) => void;
+	eyebrow: string;
 }) {
 	return (
 		<div>
-			{item.again && <p className="mb-1 font-ui text-xs font-bold text-xp">Once more</p>}
-			<p className="mb-5 font-prose text-xl font-semibold text-foreground">{KIND_LABEL[item.kind]}</p>
+			<p className="font-ui text-sm font-bold text-muted-foreground first-letter:uppercase">
+				{eyebrow}
+				{item.again && <span className="text-xp"> · Once more</span>}
+			</p>
+			<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">{KIND_LABEL[item.kind]}</h2>
 			{item.kind === "build" ? (
-				<BuildRep item={item} locked={locked} onGrade={onGrade} />
+				<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
 			) : (
-				<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} onGrade={onGrade} />
+				<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} onGrade={onGrade} onReady={onReady} />
 			)}
 		</div>
 	);
@@ -454,21 +535,27 @@ function RepView({
 function HintPanel({ item, miss }: { item: LessonItem; miss: string }) {
 	const info = unitInfo(item.unit);
 	return (
-		<div className="lh-rise mt-6 rounded-2xl border-2 border-warn/40 bg-warn-soft px-4 py-3" role="status" aria-live="polite" data-testid="lesson-hint">
+		<div className="lh-rise mt-8 rounded-2xl border border-warn/40 bg-warn-soft px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
 			<p className="font-ui text-base font-extrabold text-warn">
-				Not <span lang="sk">{miss}</span>. One more try.
+				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : "One more try."}
 			</p>
-			{item.trigger && (
-				<p className="mt-1 font-prose text-base text-foreground">
-					Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it decides the form.
-				</p>
-			)}
-			<p className="mt-1 font-prose text-base text-muted-foreground">{info.rule}</p>
-			{info.bridge && (
-				<p className="mt-1 font-prose text-base text-muted-foreground">
-					<span className="font-ui text-xs font-bold text-foreground">Estonian:</span> {info.bridge}
-				</p>
-			)}
+			<div className="mt-2 flex flex-col gap-1 font-prose text-base leading-relaxed">
+				{item.trigger && (
+					<p className="text-foreground">
+						Look at{" "}
+						<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
+							{item.trigger}
+						</span>
+						: it decides the form.
+					</p>
+				)}
+				<p className="text-muted-foreground">{info.rule}</p>
+				{info.bridge && (
+					<p className="text-muted-foreground">
+						<span className="font-semibold text-foreground">Estonian:</span> {info.bridge}
+					</p>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -480,6 +567,7 @@ function ClozeRep({
 	result,
 	miss,
 	onGrade,
+	onReady,
 }: {
 	item: LessonItem;
 	tag: string;
@@ -487,15 +575,19 @@ function ClozeRep({
 	result: Rep | null;
 	miss: string | null;
 	onGrade: (given: string, verdict: RepVerdict) => void;
+	onReady: (ready: boolean) => void;
 }) {
 	const [given, setGiven] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
 	const typed = item.kind === "type" || item.kind === "listen";
+	const listen = item.kind === "listen";
 
 	useEffect(() => {
 		if (typed) inputRef.current?.focus();
-		if (item.kind === "listen") void speak(item.sentence).catch(() => {});
-	}, [item, typed]);
+		if (listen) void speak(item.sentence).catch(() => {});
+	}, [item, typed, listen]);
+
+	useEffect(() => onReady(given.trim().length > 0), [given, onReady]);
 
 	// The retry: select the wrong answer so typing replaces it.
 	useEffect(() => {
@@ -504,7 +596,7 @@ function ClozeRep({
 
 	const submit = () => {
 		if (locked || !given.trim()) return;
-		onGrade(given, compareAnswer(item.answer, given, tag));
+		onGrade(given, listen ? gradeListen(item, given, tag) : compareAnswer(item.answer, given, tag));
 	};
 
 	// 1–4 pick an option.
@@ -522,14 +614,18 @@ function ClozeRep({
 		return () => window.removeEventListener("keydown", onKey);
 	}, [item, locked, onGrade, tag, miss]);
 
-	const hidden = item.kind === "listen" && !locked;
 	// The filled-in word is the right form, so it reads as right (green) even
-	// after a miss; the sheet below says what was wrong.
+	// after a miss; the bar below says what was wrong.
 	const verdictInk = result ? (result.verdict === "accents" ? "text-warn" : "text-go") : "";
 	// During the retry the trigger word is underlined: noticing it is the skill.
 	const triggerAt = miss !== null && item.trigger ? item.before.trimEnd().lastIndexOf(" ") + 1 : -1;
 	const beforeText =
-		triggerAt >= 0 && item.before.trimEnd().slice(triggerAt).toLocaleLowerCase("sk-SK").replace(/^[„“"'(]+/, "") === item.trigger ? (
+		triggerAt >= 0 &&
+		item.before
+			.trimEnd()
+			.slice(triggerAt)
+			.toLocaleLowerCase("sk-SK")
+			.replace(/^[„“"'(]+/, "") === item.trigger ? (
 			<span>
 				{item.before.slice(0, triggerAt)}
 				<span className="underline decoration-warn decoration-[3px] underline-offset-[6px]">{item.before.trimEnd().slice(triggerAt)}</span>
@@ -539,85 +635,101 @@ function ClozeRep({
 			<span>{item.before}</span>
 		);
 
+	const input = (className: string) => (
+		<input
+			ref={inputRef}
+			value={given}
+			onChange={(e) => setGiven(e.target.value)}
+			aria-label={listen ? "What you hear" : "Missing word"}
+			placeholder={listen ? "Type what you hear" : undefined}
+			data-testid="lesson-input"
+			autoComplete="off"
+			autoCorrect="off"
+			autoCapitalize="off"
+			spellCheck={false}
+			className={cn(
+				"rounded-xl border-2 border-border bg-card text-foreground caret-go outline-none transition-colors selection:bg-go/30 placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-go",
+				className,
+			)}
+		/>
+	);
+
+	// Listening before the answer: nothing to read, only to hear and type.
+	if (listen && !locked) {
+		return (
+			<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), submit())}>
+				<div className="flex items-center gap-3">
+					<button
+						type="button"
+						onClick={() => void speak(item.sentence)}
+						aria-label="Play the sentence"
+						className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
+					>
+						<Volume2Icon className="size-8" />
+					</button>
+					<button
+						type="button"
+						onClick={() => void slowSpeak(item.sentence)}
+						aria-label="Play slowly"
+						title="Play slowly"
+						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
+					>
+						<SnailIcon className="size-6" />
+					</button>
+				</div>
+				{input("mt-6 block w-full px-4 py-3 font-prose text-2xl font-semibold")}
+				<DiacriticBar variant="keys" className="mt-4" />
+				{miss !== null && <HintPanel item={item} miss={miss} />}
+			</form>
+		);
+	}
+
 	return (
 		<div>
-			<div className="flex items-start gap-3">
-				{(item.kind === "listen" || locked) && (
-					<div className="flex shrink-0 flex-col gap-1.5 pt-1">
-						<button
-							type="button"
-							onClick={() => void speak(item.sentence)}
-							aria-label="Play the sentence"
-							className={cn("flex items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95", item.kind === "listen" ? "size-14" : "size-10")}
-						>
-							<Volume2Icon className={item.kind === "listen" ? "size-7" : "size-5"} />
-						</button>
-						{item.kind === "listen" && (
-							<button
-								type="button"
-								onClick={() => void slowSpeak(item.sentence)}
-								aria-label="Play slowly"
-								className="flex size-14 items-center justify-center rounded-2xl border border-sky/50 text-sky transition-transform hover:scale-105"
-							>
-								<SnailIcon className="size-6" />
-							</button>
-						)}
-					</div>
+			<div className="relative">
+				{/* The play button hangs in the left margin, so the sentence lines
+				    up with the heading and never moves when the button appears. */}
+				{locked && (
+					<button
+						type="button"
+						onClick={() => void speak(item.sentence)}
+						aria-label="Play the sentence"
+						className="lh-pop absolute -left-14 top-2.5 flex size-10 items-center justify-center rounded-xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
+					>
+						<Volume2Icon className="size-5" />
+					</button>
 				)}
-				<form
-					className="flex-1"
-					onSubmit={(e) => {
-						e.preventDefault();
-						submit();
-					}}
-				>
-					<p className="font-prose text-[28px] leading-[1.5] text-foreground" lang="sk">
-						{hidden ? <span className="text-muted-foreground/60">{item.before.replace(/\S/g, "·")}</span> : beforeText}
+				<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), submit())}>
+					<p className="font-prose text-[30px] leading-[1.6] text-foreground" lang="sk">
+						{beforeText}
 						{locked ? (
-							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>
-								{item.answer}
-							</span>
+							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>{item.answer}</span>
 						) : typed ? (
-							<input
-								ref={inputRef}
-								value={given}
-								onChange={(e) => setGiven(e.target.value)}
-								aria-label="Missing word"
-								data-testid="lesson-input"
-								autoComplete="off"
-								autoCorrect="off"
-								autoCapitalize="off"
-								spellCheck={false}
-								style={{ width: `${Math.max(5, item.answer.length + 2)}ch` }}
-								className="mx-1 inline-block rounded-lg border-2 border-b-[4px] border-border bg-card px-2 text-center font-bold text-foreground caret-go outline-none transition-colors focus:border-go"
-							/>
+							// Grows with what is typed (a hidden twin sizes it), so a long
+							// answer is never clipped.
+							<span className="mx-1 inline-grid max-w-full align-baseline" style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}>
+								<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre border-2 px-3 font-bold">
+									{given || " "}
+								</span>
+								{input("col-start-1 row-start-1 w-full min-w-0 px-3 py-0 font-bold")}
+							</span>
 						) : (
-							<span className="mx-1 inline-block min-w-20 rounded-lg border-b-[3px] border-dashed border-muted-foreground/50 text-center">&nbsp;</span>
+							<span className="mx-1 inline-block h-[1.1em] w-[5ch] translate-y-[0.2em] rounded-lg border-2 border-dashed border-muted-foreground/50" aria-label="blank" />
 						)}
-						{hidden ? <span className="text-muted-foreground/60">{item.after.replace(/[^\s.,!?]/g, "·")}</span> : <span>{item.after}</span>}
+						<span>{item.after}</span>
 					</p>
-					{!hidden && (
-						<p className="mt-2 font-prose text-lg text-muted-foreground">
-							{item.unit !== "words" && <span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>}
-							{item.translation}
-						</p>
-					)}
-					{hidden && <p className="mt-2 font-prose text-base text-muted-foreground">Listen, then type the word that goes in the blank.</p>}
-					{typed && !locked && (
-						<div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-							<button type="submit" disabled={!given.trim()} className={CHECK_BUTTON}>
-								Check
-							</button>
-							<DiacriticBar className="min-w-0 flex-1 flex-wrap justify-start" />
-						</div>
-					)}
+					<p className="mt-2 font-prose text-lg text-muted-foreground">
+						{item.unit !== "words" && <span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>}
+						{item.translation}
+					</p>
+					{typed && !locked && <DiacriticBar variant="keys" className="mt-6" />}
 				</form>
 			</div>
 
 			{miss !== null && !locked && <HintPanel item={item} miss={miss} />}
 
 			{item.kind === "choose" && (
-				<div className={"mt-8 grid grid-cols-2 gap-3"} data-testid="lesson-options">
+				<div className="mt-8 grid grid-cols-2 gap-3" data-testid="lesson-options">
 					{item.options!.map((o, i) => {
 						const picked = result?.given === o;
 						const right = locked && compareAnswer(item.answer, o, tag) === "exact";
@@ -629,15 +741,15 @@ function ClozeRep({
 								disabled={locked || ruledOut}
 								onClick={() => onGrade(o, compareAnswer(item.answer, o, tag))}
 								className={cn(
-									"group flex items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left font-prose text-xl text-foreground shadow-[0_3px_0_0_var(--border)] transition-all",
-									!locked && "hover:-translate-y-0.5 hover:border-foreground/40 active:translate-y-0.5 active:shadow-none",
-									right && "border-go bg-go-soft shadow-[0_3px_0_0_var(--lh-go)]",
-									picked && !right && "border-miss bg-miss-soft shadow-[0_3px_0_0_var(--lh-miss)]",
+									"flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3.5 text-left font-prose text-xl text-foreground transition-colors",
+									!locked && !ruledOut && "hover:border-foreground/40 hover:bg-accent",
+									right && "border-go bg-go-soft",
+									picked && !right && "border-miss bg-miss-soft",
 									locked && !right && !picked && "opacity-50",
-									ruledOut && "border-miss/50 line-through opacity-50",
+									ruledOut && "border-miss/40 bg-transparent line-through opacity-50",
 								)}
 							>
-								<span className="flex size-7 shrink-0 items-center justify-center rounded-lg border font-ui text-xs text-muted-foreground">{i + 1}</span>
+								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
 								<span lang="sk">{o}</span>
 							</button>
 						);
@@ -647,11 +759,6 @@ function ClozeRep({
 		</div>
 	);
 }
-
-/** The green CHECK. Disabled reads as a grey slab, not a faded green one,
- *  so it never looks pressable before there is an answer. */
-const CHECK_BUTTON =
-	"rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:shadow-none";
 
 async function slowSpeak(text: string) {
 	// The speed preference is global; a slow replay is a one-off.
@@ -666,11 +773,13 @@ async function slowSpeak(text: string) {
 	setSpeed(previous);
 }
 
-function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean; onGrade: (given: string, verdict: RepVerdict) => void }) {
+function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked: boolean; onGrade: (given: string, verdict: RepVerdict) => void; onReady: (ready: boolean) => void }) {
 	// Bank entries by position (words can repeat in a sentence).
 	const [picked, setPicked] = useState<number[]>([]);
 	const bank = item.bank ?? [];
 	const tokens = item.tokens ?? [];
+
+	useEffect(() => onReady(picked.length > 0), [picked, onReady]);
 
 	const check = () => {
 		if (locked || picked.length === 0) return;
@@ -693,25 +802,18 @@ function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
+	const tile = "rounded-xl border-2 border-border bg-card px-3.5 py-2 font-prose text-xl text-foreground";
 	return (
-		<div>
+		<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), check())}>
 			<p className="font-prose text-2xl text-foreground">“{item.translation}”</p>
-			<div className="mt-6 flex min-h-20 flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-border px-3 py-3" data-testid="build-answer">
-				{picked.length === 0 && <span className="font-prose text-base text-muted-foreground">Tap the words below in order</span>}
+			<div className="mt-6 flex min-h-[4.5rem] flex-wrap items-center gap-2 border-b-2 border-border pb-3" data-testid="build-answer">
 				{picked.map((bi, k) => (
-					<button
-						key={`${bi}-${k}`}
-						type="button"
-						disabled={locked}
-						onClick={() => setPicked((p) => p.filter((_, j) => j !== k))}
-						className="lh-pop rounded-xl border-2 bg-card px-3 py-1.5 font-prose text-xl text-foreground shadow-[0_3px_0_0_var(--border)]"
-						lang="sk"
-					>
+					<button key={`${bi}-${k}`} type="button" disabled={locked} onClick={() => setPicked((p) => p.filter((_, j) => j !== k))} className={cn("lh-pop", tile)} lang="sk">
 						{bank[bi]}
 					</button>
 				))}
 			</div>
-			<div className="mt-6 flex flex-wrap justify-center gap-2">
+			<div className="mt-8 flex flex-wrap justify-center gap-2">
 				{bank.map((w, bi) => {
 					const used = picked.includes(bi);
 					return (
@@ -723,10 +825,7 @@ function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean
 								sfx.tap();
 								setPicked((p) => [...p, bi]);
 							}}
-							className={cn(
-								"rounded-xl border-2 px-3 py-1.5 font-prose text-xl shadow-[0_3px_0_0_var(--border)] transition-all",
-								used ? "border-transparent bg-accent text-transparent shadow-none" : "bg-card text-foreground hover:-translate-y-0.5",
-							)}
+							className={cn(tile, "transition-colors", used ? "border-transparent bg-accent text-transparent" : "hover:border-foreground/40 hover:bg-accent")}
 							lang="sk"
 						>
 							{w}
@@ -734,84 +833,144 @@ function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean
 					);
 				})}
 			</div>
-			{!locked && (
-				<div className="mt-8 flex justify-center">
-					<button type="button" onClick={check} disabled={picked.length === 0} className={CHECK_BUTTON}>
-						Check
-					</button>
-				</div>
-			)}
-		</div>
+		</form>
 	);
 }
 
 // ─── Feedback ───────────────────────────────────────────────────────────────
 
-function FeedbackSheet({ rep, tag, onContinue, onWhy, last }: { rep: Rep; tag: string; onContinue: () => void; onWhy: () => void; last: boolean }) {
+function FeedbackSheet({
+	rep,
+	tag,
+	onContinue,
+	onAskTutor,
+	last,
+	comesBack,
+	examples,
+}: {
+	rep: Rep;
+	tag: string;
+	onContinue: () => void;
+	onAskTutor: () => void;
+	last: boolean;
+	comesBack: boolean;
+	examples: LessonItem[];
+}) {
 	const praise = useMemo(() => PRAISE[Math.floor(Math.random() * PRAISE.length)]!, []);
+	const [open, setOpen] = useState(false);
 	const { item, verdict, given } = rep;
-	const slips = verdict === "accents" ? new Set(diacriticSlips(item.answer, given, tag)) : new Set<number>();
+	const info = unitInfo(item.unit);
+	// A whole typed sentence (listening) is answered with the whole sentence.
+	const expected = item.kind === "build" || (item.kind === "listen" && given.trim().includes(" ")) ? item.sentence : item.answer;
+	const slips = verdict === "accents" ? new Set(diacriticSlips(expected, given, tag)) : new Set<number>();
 	const tone =
-		verdict === "exact" && rep.assisted
-			? { bg: "bg-go-soft", ink: "text-go", btn: "bg-go text-go-ink", title: "Got it on the second try" }
-			: verdict === "exact"
-			? { bg: "bg-go-soft", ink: "text-go", btn: "bg-go text-go-ink", title: praise }
+		verdict === "exact"
+			? {
+					bg: "bg-go-soft",
+					ink: "text-go",
+					badge: "bg-go text-go-ink",
+					btn: "bg-go text-go-ink",
+					title: rep.assisted ? "Got it on the second try" : praise,
+				}
 			: verdict === "accents"
-				? { bg: "bg-warn-soft", ink: "text-warn", btn: "bg-warn text-background", title: "Almost! Check the accents" }
-				: { bg: "bg-miss-soft", ink: "text-miss", btn: "bg-miss text-background", title: "Not quite" };
+				? {
+						bg: "bg-warn-soft",
+						ink: "text-warn",
+						badge: "bg-warn text-background",
+						btn: "bg-warn text-background",
+						title: "Almost! Check the accents",
+					}
+				: {
+						bg: "bg-miss-soft",
+						ink: "text-miss",
+						badge: "bg-miss text-background",
+						btn: "bg-miss text-background",
+						title: "Not quite",
+					};
+	const canExplain = verdict === "wrong" && item.kind !== "build";
 	return (
-		<div className={cn("lh-rise border-t-2 border-border/40", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} role="status" aria-live="polite">
-			<div className="mx-auto flex w-full max-w-3xl flex-wrap items-end gap-4 px-5 py-5">
-				<div className="min-w-0 flex-1">
-					<p className={cn("flex items-center gap-2 font-ui text-2xl font-bold", tone.ink)}>
-						{verdict === "exact" && <SparklesIcon className="size-6" />}
-						{tone.title}
-					</p>
-					{verdict !== "exact" && (
-						<p className="mt-1 font-prose text-lg text-foreground">
-							{item.kind === "build" ? "Correct sentence: " : "Correct answer: "}
-							<span className="font-bold" lang="sk">
-								{item.kind === "build"
-									? item.sentence
-									: [...item.answer].map((ch, i) => (
+		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} role="status" aria-live="polite">
+			<div className={cn(COLUMN, "py-5")}>
+				<div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-3">
+					<div className="flex min-w-0 flex-1 items-start gap-3">
+						<span className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full", tone.badge)} aria-hidden="true">
+							{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={3} /> : <CheckIcon className="size-5" strokeWidth={3} />}
+						</span>
+						<div className="min-w-0">
+							<p className={cn("font-ui text-2xl font-bold leading-tight", tone.ink)}>{tone.title}</p>
+							{verdict !== "exact" && (
+								<p className="mt-1 font-prose text-lg text-foreground">
+									Correct answer:{" "}
+									<span className="font-bold" lang="sk">
+										{[...expected].map((ch, i) => (
 											<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
 												{ch}
 											</span>
 										))}
-							</span>
-							{verdict === "wrong" && given && item.kind !== "build" && <span className="ml-2 text-muted-foreground line-through">{given}</span>}
-						</p>
-					)}
-					{verdict !== "exact" && item.kind !== "build" && <p className="mt-1 font-prose text-base text-muted-foreground">{unitInfo(item.unit).rule}</p>}
-					{verdict !== "exact" && item.kind !== "build" && unitInfo(item.unit).bridge && (
-						<p className="mt-0.5 font-prose text-base text-muted-foreground">
-							<span className="font-ui text-xs font-bold text-foreground">Estonian:</span> {unitInfo(item.unit).bridge}
-						</p>
-					)}
-					{verdict === "wrong" && item.kind !== "build" && <p className="mt-1 font-ui text-xs font-bold text-muted-foreground">It comes back once more at the end.</p>}
-					{verdict === "exact" && item.kind !== "build" && (
-						<p className="mt-1 font-prose text-base text-muted-foreground" lang="sk">
-							{item.sentence} <span className="text-muted-foreground/70">· {item.translation}</span>
-						</p>
-					)}
-				</div>
-				<div className="flex items-center gap-2">
-					{verdict !== "exact" && (
-						<button type="button" onClick={onWhy} className="flex items-center gap-1.5 rounded-2xl border-2 border-foreground/20 px-4 py-3 font-ui text-xs font-extrabold uppercase tracking-wider text-foreground hover:bg-background/40">
-							<HelpCircleIcon className="size-4" />
-							Why?
+									</span>
+								</p>
+							)}
+							{verdict === "wrong" && given && (
+								<p className="font-prose text-base text-muted-foreground">
+									You wrote “<span lang="sk">{given}</span>”
+								</p>
+							)}
+							{item.kind === "listen" && verdict === "exact" && (
+								<p className="mt-1 font-prose text-base text-muted-foreground" lang="sk">
+									{item.sentence} <span className="text-muted-foreground/80">· {item.translation}</span>
+								</p>
+							)}
+							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}
+						</div>
+					</div>
+					<div className="flex items-center gap-2">
+						{canExplain && (
+							<button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={SECONDARY} data-testid="lesson-why">
+								{open ? "Hide" : "Why?"}
+							</button>
+						)}
+						<button type="button" autoFocus onClick={onContinue} data-testid="lesson-continue" className={cn(BUTTON, "hover:brightness-110", tone.btn)}>
+							{last ? "Finish" : "Continue"}
 						</button>
-					)}
-					<button
-						type="button"
-						autoFocus
-						onClick={onContinue}
-						data-testid="lesson-continue"
-						className={cn("rounded-2xl px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none", tone.btn)}
-					>
-						{last ? "Finish" : "Continue"}
-					</button>
+					</div>
 				</div>
+
+				{/* "Why?" opens here, under the verdict: the lesson stays where it is. */}
+				{open && (
+					<div className="lh-rise mt-4 border-t border-foreground/10 pt-4 font-prose text-base leading-relaxed" data-testid="lesson-why-panel">
+						{item.trigger && (
+							<p className="text-foreground">
+								<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
+									{item.trigger}
+								</span>{" "}
+								decides the form here.
+							</p>
+						)}
+						<p className="text-foreground">{info.rule}</p>
+						{info.bridge && (
+							<p className="text-muted-foreground">
+								<span className="font-semibold text-foreground">Estonian:</span> {info.bridge}
+							</p>
+						)}
+						{examples.length > 0 && (
+							<ul className="mt-2 flex flex-col gap-0.5">
+								{examples.map((ex) => (
+									<li key={ex.id} className="text-muted-foreground">
+										<span className="text-foreground" lang="sk">
+											{ex.before}
+											<b>{ex.answer}</b>
+											{ex.after}
+										</span>{" "}
+										· {ex.translation}
+									</li>
+								))}
+							</ul>
+						)}
+						<button type="button" onClick={onAskTutor} className="mt-2 font-ui text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground">
+							Still unsure? Ask the tutor (opens a chat)
+						</button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -838,7 +997,15 @@ function Confetti() {
 				<span
 					key={b.i}
 					className="lh-confetti-bit absolute block h-2.5 w-1.5 rounded-sm"
-					style={{ background: b.color, animationDelay: b.delay, ["--dx" as string]: b.dx, ["--dy" as string]: b.dy, ["--rot" as string]: b.rot } as React.CSSProperties}
+					style={
+						{
+							background: b.color,
+							animationDelay: b.delay,
+							["--dx" as string]: b.dx,
+							["--dy" as string]: b.dy,
+							["--rot" as string]: b.rot,
+						} as React.CSSProperties
+					}
 				/>
 			))}
 		</div>
@@ -864,7 +1031,8 @@ function EndScreen({
 }) {
 	const correct = reps.filter((r) => r.verdict !== "wrong").length;
 	const accuracy = reps.length ? Math.round((correct / reps.length) * 100) : 0;
-	const missed = reps.filter((r) => r.verdict !== "exact");
+	// One line per sentence: a miss and its "once more" rep are the same item.
+	const missed = reps.filter((r, i) => (r.verdict !== "exact" || r.assisted) && reps.findIndex((o) => o.item.sentence === r.item.sentence) === i);
 	const goalMet = outcome ? outcome.summary.todayXp >= outcome.summary.dailyGoal : false;
 
 	useEffect(() => {
@@ -883,11 +1051,9 @@ function EndScreen({
 		<div className="relative m-auto w-full max-w-xl px-5 text-center" data-testid="lesson-end">
 			<Confetti />
 			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-gold/15 text-gold">
-				{mode === "blitz" ? <ZapIcon className="size-12" /> : <SparklesIcon className="size-12" />}
+				{mode === "blitz" ? <ZapIcon className="size-12" /> : <TrophyIcon className="size-12" />}
 			</div>
-			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
-				{mode === "blitz" ? (outcome?.newBest ? "New best!" : "Time!") : outcome?.perfect ? "Perfect lesson!" : "Lesson complete!"}
-			</h1>
+			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">{mode === "blitz" ? (outcome?.newBest ? "New best!" : "Time!") : outcome?.perfect ? "Perfect lesson!" : "Lesson complete!"}</h1>
 			<p className="mt-2 font-prose text-lg text-muted-foreground">{mode === "blitz" ? `${correct} right in 60 seconds` : unitInfo(unit).title}</p>
 
 			<div className="mt-8 grid grid-cols-3 gap-3">
@@ -897,7 +1063,7 @@ function EndScreen({
 			</div>
 
 			{outcome && (
-				<p className="mt-4 font-ui text-xs text-muted-foreground">
+				<p className="mt-4 font-prose text-sm text-muted-foreground">
 					{goalMet ? "Daily goal reached. " : `${Math.max(0, outcome.summary.dailyGoal - outcome.summary.todayXp)} XP to today's goal. `}
 					{outcome.queued.length > 0 && `${outcome.queued.length} missed word${outcome.queued.length === 1 ? "" : "s"} added to your review deck.`}
 				</p>
@@ -905,14 +1071,16 @@ function EndScreen({
 
 			{missed.length > 0 && (
 				<div className="mt-6 rounded-2xl border bg-card p-4 text-left">
-					<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">Worth another look</p>
-					<ul className="mt-2 flex flex-col gap-1.5">
+					<p className="font-ui text-sm font-bold text-muted-foreground">Worth another look</p>
+					<ul className="mt-2 flex flex-col gap-2">
 						{missed.slice(0, 5).map((r, i) => (
-							<li key={i} className="flex items-baseline gap-2 font-prose text-base text-foreground" lang="sk">
-								<span className="font-bold">{r.item.answer}</span>
-								<span className="text-muted-foreground">
-									{r.item.before.trim().split(/\s+/).slice(-2).join(" ")} ___ · {r.item.gloss}
+							<li key={i} className="font-prose text-base leading-snug">
+								<span className="text-foreground" lang="sk">
+									{r.item.before}
+									<b>{r.item.answer}</b>
+									{r.item.after}
 								</span>
+								<span className="block text-sm text-muted-foreground">{r.item.translation}</span>
 							</li>
 						))}
 					</ul>
@@ -920,11 +1088,11 @@ function EndScreen({
 			)}
 
 			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-				<Link href="/" className="rounded-2xl border-2 px-6 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-foreground hover:bg-accent">
+				<Link href="/" className={SECONDARY}>
 					Today
 				</Link>
 				{mode === "blitz" ? (
-					<button type="button" onClick={onAgain} className="rounded-2xl bg-sky px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-background shadow-[0_4px_0_0_rgb(0_0_0/0.35)] hover:brightness-110">
+					<button type="button" onClick={onAgain} className={cn(BUTTON, "bg-sky text-background hover:brightness-110")}>
 						Go again
 					</button>
 				) : (
@@ -932,7 +1100,7 @@ function EndScreen({
 						type="button"
 						disabled={!outcome}
 						onClick={() => outcome && onNext(outcome.summary.next)}
-						className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] hover:brightness-110 disabled:opacity-40"
+						className={PRIMARY}
 					>
 						Next lesson
 					</button>
@@ -945,7 +1113,7 @@ function EndScreen({
 function Stat({ label, value, ink, icon }: { label: string; value: string; ink: string; icon?: React.ReactNode }) {
 	return (
 		<div className="rounded-2xl border-2 bg-card px-3 py-4">
-			<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">{label}</p>
+			<p className="font-ui text-sm font-bold text-muted-foreground">{label}</p>
 			<p className={cn("mt-1 flex items-center justify-center gap-1 font-ui text-3xl font-black tabular-nums", ink)}>
 				{icon}
 				{value}

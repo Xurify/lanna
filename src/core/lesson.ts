@@ -236,6 +236,27 @@ export function sameSentence(expected: string[], given: string[]): boolean {
 	return norm(expected) === norm(given);
 }
 
+/** Grade a listening rep. The learner hears the whole sentence, so typing
+ *  the whole sentence is as right as typing only the missing word
+ *  (dictation): case and punctuation never count, accents are "accents". */
+export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given: string, tag = "sk-SK"): "exact" | "accents" | "wrong" {
+	const words = (s: string) =>
+		s
+			.normalize("NFC")
+			.toLocaleLowerCase(tag)
+			.split(/\s+/)
+			.map((w) => w.replace(/^[„“"'(¿¡]+|[,.;:!?„“"')…]+$/gu, ""))
+			.filter(Boolean);
+	const g = words(given);
+	if (g.length === 0) return "wrong";
+	const target = g.length > 1 ? words(item.sentence) : words(item.answer);
+	const a = target.join(" ");
+	const b = g.join(" ");
+	if (a === b) return "exact";
+	if (foldDiacritics(a) === foldDiacritics(b)) return "accents";
+	return "wrong";
+}
+
 /** The rhythm of a first lesson on a unit: recognise first, then produce,
  *  a word bank and a listening rep to vary the work. */
 export const LESSON_PATTERN: ItemKind[] = ["choose", "type", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];

@@ -40,7 +40,10 @@ export function insertAtCaret(field: Field, text: string): void {
 	field.setSelectionRange(caret, caret);
 }
 
-export function DiacriticBar({ className }: { className?: string }) {
+/** `keys`: the lesson's keycap row — real tap targets, no speed toggle and
+ *  no fold (the lesson has its own sound control, and the letters are
+ *  needed on every typed rep). */
+export function DiacriticBar({ className, variant = "bar" }: { className?: string; variant?: "bar" | "keys" }) {
 	const lang = useActiveLanguage();
 	const lastField = useRef<Field | null>(null);
 	const [open, setOpen] = useState(true);
@@ -76,6 +79,25 @@ export function DiacriticBar({ className }: { className?: string }) {
 		if (!target) return;
 		insertAtCaret(target, upper ? letter.toLocaleUpperCase(lang.tag) : letter);
 	};
+
+	if (variant === "keys") {
+		return (
+			<div data-testid="diacritic-bar" className={cn("flex flex-wrap gap-1.5 font-prose", className)} aria-label={`${lang.english} letters`}>
+				{lang.specialLetters.map((letter) => (
+					<button
+						key={letter}
+						type="button"
+						onMouseDown={(e) => e.preventDefault()}
+						onClick={(e) => type(letter, e.shiftKey)}
+						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
+						className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-lg text-foreground transition-colors hover:border-foreground/40 hover:bg-accent active:bg-background"
+					>
+						{letter}
+					</button>
+				))}
+			</div>
+		);
+	}
 
 	return (
 		<div
