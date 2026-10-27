@@ -33,11 +33,17 @@ export async function POST(req: Request) {
 	// (PUT /api/chats/:id/settings). No strong slot configured (fresh BYOK
 	// boot) → no stamp; the turn gate's 503 models_not_configured envelope
 	// refuses honestly until the setup flow fills the slot.
-	const strong = readSettingsRecord()?.models?.strong;
-	if (strong?.model) {
+	// LangHarness (Xurify, 2026-10-27): a practice session (Talk, Story,
+	// Why?, Practice a topic) is a conversation or a quick drill, not a
+	// course, so it is born on the CHEAP slot — the slot for the assistants
+	// that grade work. Learn-a-topic (prober + teacher) keeps the strong
+	// slot. No cheap slot configured → strong, as before.
+	const models = readSettingsRecord()?.models;
+	const slot = (kind === "practice" && models?.cheap?.model ? models.cheap : models?.strong) ?? null;
+	if (slot?.model) {
 		stores.chatStore.saveSettings(chat.id, {
-			model: { provider: strong.model.provider, id: strong.model.id },
-			thinkingLevel: strong.thinkingLevel,
+			model: { provider: slot.model.provider, id: slot.model.id },
+			thinkingLevel: slot.thinkingLevel,
 		});
 	}
 	// The session's map context (owner, 2026-10-04): the picked
