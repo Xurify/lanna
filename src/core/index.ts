@@ -85,3 +85,4 @@ export * from "./session-markdown.ts";
 export * from "./language.ts";
 export * from "./fsrs.ts";
 export * from "./review.ts";
+export * from "./lesson.ts";

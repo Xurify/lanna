@@ -3,10 +3,10 @@
  * (minting today's new cards as needed; ?peek never mints).
  * POST /api/review {cardId, given, ms?, rating?} — grade one answer and
  * schedule the card (FSRS). Returns the verdict, the rating used and the
- * updated card.
+ * updated card, plus the XP the answer earned.
  */
 
-import { answerReview, reviewStatus } from "@/src/server";
+import { answerReview, recordReviewXp, reviewStatus } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,10 @@ export async function POST(req: Request) {
 	const rating = body.rating === 1 || body.rating === 2 || body.rating === 3 || body.rating === 4 ? body.rating : undefined;
 	const ms = typeof body.ms === "number" && Number.isFinite(body.ms) ? body.ms : undefined;
 	try {
-		return Response.json(answerReview({ cardId: body.cardId, given: body.given, ms, rating }));
+		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating });
+		// Reviews count toward the day's XP and the streak (Today screen).
+		const xp = recordReviewXp(outcome.verdict, tzOf(req));
+		return Response.json({ ...outcome, xp });
 	} catch (err) {
 		return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 	}

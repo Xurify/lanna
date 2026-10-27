@@ -598,3 +598,92 @@ body {
 	outline: 1px solid var(--border);
 	border-radius: 0.25rem;
 }
+
+/* ─── Learning screens (LangHarness redesign, 2026-10-27) ────────────────
+   The Today screen, lessons and blitz are the one place the app allows
+   colour: feedback must read at a glance (green right, amber accents only,
+   red miss), and the fun layer (streak flame, XP, level rings) needs its
+   own inks. Chrome elsewhere stays monochrome. Tokens, so a theme can
+   retune them; utilities read them as bg-go, text-flame, etc. */
+:root,
+.dark {
+	--lh-go: #3ccf7a;
+	--lh-go-soft: rgb(60 207 122 / 0.14);
+	--lh-go-ink: #08220f;
+	--lh-warn: #f2b134;
+	--lh-warn-soft: rgb(242 177 52 / 0.14);
+	--lh-miss: #ff6b6b;
+	--lh-miss-soft: rgb(255 107 107 / 0.13);
+	--lh-flame: #ff8a3d;
+	--lh-xp: #a78bfa;
+	--lh-sky: #5cc8ff;
+	--lh-gold: #ffd166;
+}
+
+@theme inline {
+	--color-go: var(--lh-go);
+	--color-go-soft: var(--lh-go-soft);
+	--color-go-ink: var(--lh-go-ink);
+	--color-warn: var(--lh-warn);
+	--color-warn-soft: var(--lh-warn-soft);
+	--color-miss: var(--lh-miss);
+	--color-miss-soft: var(--lh-miss-soft);
+	--color-flame: var(--lh-flame);
+	--color-xp: var(--lh-xp);
+	--color-sky: var(--lh-sky);
+	--color-gold: var(--lh-gold);
+}
+
+@keyframes lh-pop {
+	0% { transform: scale(0.85); opacity: 0; }
+	60% { transform: scale(1.06); opacity: 1; }
+	100% { transform: scale(1); }
+}
+@keyframes lh-shake {
+	0%, 100% { transform: translateX(0); }
+	20% { transform: translateX(-6px); }
+	40% { transform: translateX(6px); }
+	60% { transform: translateX(-4px); }
+	80% { transform: translateX(3px); }
+}
+@keyframes lh-rise {
+	from { transform: translateY(16px); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
+}
+@keyframes lh-float-up {
+	0% { transform: translateY(0); opacity: 0; }
+	20% { opacity: 1; }
+	100% { transform: translateY(-28px); opacity: 0; }
+}
+@keyframes lh-pulse-ring {
+	0% { box-shadow: 0 0 0 0 rgb(60 207 122 / 0.45); }
+	70% { box-shadow: 0 0 0 12px rgb(60 207 122 / 0); }
+	100% { box-shadow: 0 0 0 0 rgb(60 207 122 / 0); }
+}
+@keyframes lh-flicker {
+	0%, 100% { transform: scale(1) rotate(0deg); }
+	50% { transform: scale(1.08) rotate(-3deg); }
+}
+@keyframes lh-confetti {
+	0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
+	100% { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)); opacity: 0; }
+}
+.lh-pop { animation: lh-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.lh-shake { animation: lh-shake 360ms ease-in-out; }
+.lh-rise { animation: lh-rise 220ms ease-out both; }
+.lh-float-up { animation: lh-float-up 900ms ease-out forwards; }
+.lh-pulse-ring { animation: lh-pulse-ring 1.8s ease-out infinite; }
+.lh-flicker { animation: lh-flicker 1.6s ease-in-out infinite; }
+.lh-confetti-bit { animation: lh-confetti 1100ms cubic-bezier(0.1, 0.7, 0.3, 1) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+	.lh-pop,
+	.lh-shake,
+	.lh-rise,
+	.lh-float-up,
+	.lh-pulse-ring,
+	.lh-flicker,
+	.lh-confetti-bit {
+		animation: none;
+	}
+}

@@ -2,15 +2,15 @@
 
 /**
  * The sidebar's language block (LangHarness): which language profile is
- * running, a switch to the other one, and the spaced-review door with its
- * due count. Switching writes the choice and restarts — the desktop app
+ * running, a switch to the other one, the Today door, and the
+ * spaced-review door with its due count. Switching writes the choice and restarts — the desktop app
  * relaunches itself; under `next dev` the learner restarts the server.
  */
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { RepeatIcon } from "lucide-react";
+import { RepeatIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProfileInfo {
@@ -94,6 +94,17 @@ export function LanguageSwitcher() {
 				</div>
 			)}
 			{note && <p className="px-1 text-[11px] text-muted-foreground">{note}</p>}
+			<Link
+				href="/"
+				data-testid="today-door"
+				className={cn(
+					"flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider transition-colors hover:bg-accent hover:text-foreground",
+					pathname === "/" ? "bg-accent text-foreground" : "text-muted-foreground",
+				)}
+			>
+				<SunIcon className="size-3" />
+				Today
+			</Link>
 			<Link
 				href="/review"
 				data-testid="review-door"
