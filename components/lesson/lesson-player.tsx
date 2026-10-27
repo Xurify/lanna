@@ -33,6 +33,18 @@ interface Rep {
 	assisted?: boolean;
 }
 
+interface SavedLesson {
+	plan: LessonPlan;
+	index: number;
+	reps: Rep[];
+	current: Rep | null;
+	combo: number;
+	xp: number;
+	miss: string | null;
+	relearned: number;
+	startedAt: number;
+}
+
 /** Missed reps asked again at the end of a lesson, at most. */
 const RELEARN_MAX = 3;
 
@@ -101,6 +113,49 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	}, [shake]);
 	const startedAt = useRef(Date.now());
 	const finishing = useRef(false);
+	// A lesson survives leaving the page (the tutor chat, Today, a reload):
+	// its state is kept in this tab's sessionStorage until it is finished
+	// or left on purpose (X, Escape). Blitz is a 60 s sprint and is not kept.
+	const saveKey = mode === "lesson" && unit ? `lh-lesson:${unit}` : null;
+	const restoring = useRef(saveKey !== null);
+	useEffect(() => {
+		restoring.current = false;
+		if (!saveKey) return;
+		try {
+			const raw = sessionStorage.getItem(saveKey);
+			if (!raw) return;
+			const saved = JSON.parse(raw) as SavedLesson;
+			if (!saved.plan || (saved.reps.length === 0 && saved.index === 0 && !saved.current)) return;
+			setPlan(saved.plan);
+			setIndex(saved.index);
+			setReps(saved.reps);
+			setCurrent(saved.current);
+			setCombo(saved.combo);
+			setXp(saved.xp);
+			setMiss(saved.miss);
+			relearned.current = saved.relearned;
+			startedAt.current = saved.startedAt;
+		} catch {
+			// storage blocked or stale: start fresh
+		}
+	}, [saveKey]);
+	useEffect(() => {
+		if (!saveKey || !plan || outcome || restoring.current) return;
+		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, relearned: relearned.current, startedAt: startedAt.current };
+		try {
+			sessionStorage.setItem(saveKey, JSON.stringify(saved));
+		} catch {
+			// storage blocked: the lesson is not kept
+		}
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, outcome]);
+	const forget = useCallback(() => {
+		if (!saveKey) return;
+		try {
+			sessionStorage.removeItem(saveKey);
+		} catch {
+			// nothing kept
+		}
+	}, [saveKey]);
 
 	useEffect(() => setSound(soundOn()), []);
 
@@ -170,6 +225,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					}),
 				});
 				setOutcome((await res.json()) as Outcome);
+				forget();
 			} catch {
 				setOutcome({
 					xp,
@@ -189,7 +245,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				setSaving(false);
 			}
 		},
-		[plan, mode, xp],
+		[plan, mode, xp, forget],
 	);
 
 	// Blitz clock.
@@ -299,6 +355,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
+				forget();
 				router.push("/");
 				return;
 			}
@@ -365,7 +422,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			    window (its buttons carve themselves out, app/globals.css). */}
 			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 				<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-					<Link href="/" aria-label="Leave the lesson" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+					<Link href="/" aria-label="Leave the lesson" onClick={forget} className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 						<XIcon className="size-5" />
 					</Link>
 					<div
