@@ -110,7 +110,7 @@ export function LanguageSwitcher() {
 						<span
 							className={cn(
 								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
-								reviewDue > 0 ? "bg-sky/20 text-sky" : "bg-accent text-muted-foreground",
+								reviewDue > 0 ? "bg-sky/20 text-sky" : "bg-accent text-foreground",
 							)}
 						>
 							{reviewDue > 0 ? `${reviewDue} due` : `${reviewNew} new`}

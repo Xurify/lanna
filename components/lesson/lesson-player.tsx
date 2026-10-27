@@ -51,7 +51,12 @@ interface Rep {
 	item: LessonItem;
 	given: string;
 	verdict: RepVerdict;
+	/** Right on the second try, after the hint. */
+	assisted?: boolean;
 }
+
+/** Missed reps asked again at the end of a lesson, at most. */
+const RELEARN_MAX = 3;
 
 interface Outcome {
 	xp: number;
@@ -93,6 +98,18 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	const [sound, setSound] = useState(true);
 	const [left, setLeft] = useState(BLITZ_SECONDS);
 	const [shake, setShake] = useState(0);
+	// The first wrong answer on this rep: the learner gets a hint and one
+	// more try before the answer is shown (a prompt, not a recast — making
+	// the learner find the form is what moves grammar, telling them is not).
+	const [miss, setMiss] = useState<string | null>(null);
+	const relearned = useRef(0);
+	const repBox = useRef<HTMLDivElement>(null);
+	// A miss shakes the rep without remounting it (the typed text stays).
+	useEffect(() => {
+		if (shake === 0) return;
+		if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+		repBox.current?.animate?.([{ transform: "translateX(0)" }, { transform: "translateX(-8px)" }, { transform: "translateX(8px)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }], { duration: 320 });
+	}, [shake]);
 	const startedAt = useRef(Date.now());
 	const finishing = useRef(false);
 
@@ -111,6 +128,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setCombo(0);
 		setXp(0);
 		setOutcome(null);
+		setMiss(null);
+		relearned.current = 0;
 		setLeft(BLITZ_SECONDS);
 		finishing.current = false;
 		try {
@@ -150,7 +169,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					body: JSON.stringify({
 						unit: plan.unit,
 						mode,
-						reps: all.map((r) => ({ itemId: r.item.id, slug: r.item.slug, kind: r.item.kind, verdict: r.verdict })),
+						reps: all.map((r) => ({ itemId: r.item.id, slug: r.item.slug, kind: r.item.kind, verdict: r.verdict, assisted: r.assisted === true })),
 						ms: Date.now() - startedAt.current,
 						tz: new Date().getTimezoneOffset(),
 					}),
@@ -194,9 +213,17 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const grade = (given: string, verdict: RepVerdict) => {
 		if (!item || current) return;
-		const rep: Rep = { item, given, verdict };
+		if (mode === "lesson" && verdict === "wrong" && miss === null && item.kind !== "build") {
+			setMiss(given);
+			setCombo(0);
+			sfx.wrong();
+			setShake((s) => s + 1);
+			return;
+		}
+		const assisted = mode === "lesson" && miss !== null && verdict !== "wrong";
+		const rep: Rep = { item, given, verdict, assisted };
 		const nextCombo = verdict === "wrong" ? 0 : combo + 1;
-		const gained = repXp(item.kind, verdict, nextCombo);
+		const gained = repXp(item.kind, verdict, nextCombo, assisted);
 		setCombo(nextCombo);
 		setXp((x) => x + gained);
 		if (gained > 0) setFloater({ key: Date.now(), text: `+${gained}` });
@@ -222,11 +249,22 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	};
 
 	const advance = () => {
-		if (!current) return;
+		if (!current || !plan) return;
 		const all = [...reps, current];
 		setReps(all);
 		setCurrent(null);
-		if (index + 1 >= total) void finish(all);
+		setMiss(null);
+		// A miss comes back once at the end, typed (successive relearning:
+		// a retrieval that succeeds after a failure is what fixes the form).
+		let nextTotal = total;
+		const it = current.item;
+		if ((current.verdict === "wrong" || current.assisted) && !it.again && it.kind !== "build" && relearned.current < RELEARN_MAX) {
+			relearned.current++;
+			const again: LessonItem = { ...it, id: `${it.id}~again`, kind: "type", again: true, options: undefined };
+			setPlan({ ...plan, items: [...plan.items, again] });
+			nextTotal++;
+		}
+		if (index + 1 >= nextTotal) void finish(all);
 		else setIndex((i) => i + 1);
 	};
 
@@ -320,7 +358,14 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				<Link href="/" aria-label="Leave the lesson" className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 					<XIcon className="size-5" />
 				</Link>
-				<div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-accent" aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}>
+				<div
+					role="progressbar"
+					aria-valuemin={0}
+					aria-valuemax={100}
+					aria-valuenow={Math.round(progress * 100)}
+					className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-accent"
+					aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}
+				>
 					<div
 						className={cn("h-full rounded-full transition-[width] duration-500 ease-out", mode === "blitz" ? (left <= 10 ? "bg-miss" : "bg-sky") : "bg-go")}
 						style={{ width: `${Math.max(3, progress * 100)}%` }}
@@ -354,8 +399,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 			{/* The rep */}
 			<div className="flex flex-1 flex-col overflow-y-auto px-5 pb-6 pt-[10vh]">
-				<div key={`${item.id}-${index}`} className={cn("lh-rise mx-auto w-full max-w-2xl", shake && current?.verdict === "wrong" && "lh-shake")}>
-					<RepView key={`${item.id}-${index}-${shake}`} item={item} tag={tag} locked={!!current} result={current} onGrade={grade} />
+				<div key={`${item.id}-${index}`} ref={repBox} className="lh-rise mx-auto w-full max-w-2xl">
+					<RepView key={`${item.id}-${index}`} item={item} tag={tag} locked={!!current} result={current} miss={miss} onGrade={grade} />
 				</div>
 			</div>
 
@@ -382,21 +427,47 @@ function RepView({
 	tag,
 	locked,
 	result,
+	miss,
 	onGrade,
 }: {
 	item: LessonItem;
 	tag: string;
 	locked: boolean;
 	result: Rep | null;
+	miss: string | null;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 }) {
 	return (
 		<div>
+			{item.again && <p className="mb-1 font-ui text-xs font-bold text-xp">Once more</p>}
 			<p className="mb-5 font-prose text-xl font-semibold text-foreground">{KIND_LABEL[item.kind]}</p>
 			{item.kind === "build" ? (
 				<BuildRep item={item} locked={locked} onGrade={onGrade} />
 			) : (
-				<ClozeRep item={item} tag={tag} locked={locked} result={result} onGrade={onGrade} />
+				<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} onGrade={onGrade} />
+			)}
+		</div>
+	);
+}
+
+/** After a first miss: what decides the form, in his terms, and one more try. */
+function HintPanel({ item, miss }: { item: LessonItem; miss: string }) {
+	const info = unitInfo(item.unit);
+	return (
+		<div className="lh-rise mt-6 rounded-2xl border-2 border-warn/40 bg-warn-soft px-4 py-3" role="status" aria-live="polite" data-testid="lesson-hint">
+			<p className="font-ui text-base font-extrabold text-warn">
+				Not <span lang="sk">{miss}</span>. One more try.
+			</p>
+			{item.trigger && (
+				<p className="mt-1 font-prose text-base text-foreground">
+					Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it decides the form.
+				</p>
+			)}
+			<p className="mt-1 font-prose text-base text-muted-foreground">{info.rule}</p>
+			{info.bridge && (
+				<p className="mt-1 font-prose text-base text-muted-foreground">
+					<span className="font-ui text-xs font-bold text-foreground">Estonian:</span> {info.bridge}
+				</p>
 			)}
 		</div>
 	);
@@ -407,12 +478,14 @@ function ClozeRep({
 	tag,
 	locked,
 	result,
+	miss,
 	onGrade,
 }: {
 	item: LessonItem;
 	tag: string;
 	locked: boolean;
 	result: Rep | null;
+	miss: string | null;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 }) {
 	const [given, setGiven] = useState("");
@@ -423,6 +496,11 @@ function ClozeRep({
 		if (typed) inputRef.current?.focus();
 		if (item.kind === "listen") void speak(item.sentence).catch(() => {});
 	}, [item, typed]);
+
+	// The retry: select the wrong answer so typing replaces it.
+	useEffect(() => {
+		if (miss !== null && typed) inputRef.current?.select();
+	}, [miss, typed]);
 
 	const submit = () => {
 		if (locked || !given.trim()) return;
@@ -435,17 +513,31 @@ function ClozeRep({
 		const onKey = (e: KeyboardEvent) => {
 			const n = Number(e.key);
 			const opt = item.options?.[n - 1];
-			if (opt) {
+			if (opt && opt !== miss) {
 				e.preventDefault();
 				onGrade(opt, compareAnswer(item.answer, opt, tag));
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [item, locked, onGrade, tag]);
+	}, [item, locked, onGrade, tag, miss]);
 
 	const hidden = item.kind === "listen" && !locked;
-	const verdictInk = result ? (result.verdict === "exact" ? "text-go" : result.verdict === "accents" ? "text-warn" : "text-miss") : "";
+	// The filled-in word is the right form, so it reads as right (green) even
+	// after a miss; the sheet below says what was wrong.
+	const verdictInk = result ? (result.verdict === "accents" ? "text-warn" : "text-go") : "";
+	// During the retry the trigger word is underlined: noticing it is the skill.
+	const triggerAt = miss !== null && item.trigger ? item.before.trimEnd().lastIndexOf(" ") + 1 : -1;
+	const beforeText =
+		triggerAt >= 0 && item.before.trimEnd().slice(triggerAt).toLocaleLowerCase("sk-SK").replace(/^[„“"'(]+/, "") === item.trigger ? (
+			<span>
+				{item.before.slice(0, triggerAt)}
+				<span className="underline decoration-warn decoration-[3px] underline-offset-[6px]">{item.before.trimEnd().slice(triggerAt)}</span>
+				{item.before.slice(item.before.trimEnd().length)}
+			</span>
+		) : (
+			<span>{item.before}</span>
+		);
 
 	return (
 		<div>
@@ -480,9 +572,9 @@ function ClozeRep({
 					}}
 				>
 					<p className="font-prose text-[28px] leading-[1.5] text-foreground" lang="sk">
-						{hidden ? <span className="text-muted-foreground/60">{item.before.replace(/\S/g, "·")}</span> : <span>{item.before}</span>}
+						{hidden ? <span className="text-muted-foreground/60">{item.before.replace(/\S/g, "·")}</span> : beforeText}
 						{locked ? (
-							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "exact" ? "bg-go-soft" : result?.verdict === "accents" ? "bg-warn-soft" : "bg-miss-soft")}>
+							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>
 								{item.answer}
 							</span>
 						) : typed ? (
@@ -512,30 +604,29 @@ function ClozeRep({
 					)}
 					{hidden && <p className="mt-2 font-prose text-base text-muted-foreground">Listen, then type the word that goes in the blank.</p>}
 					{typed && !locked && (
-						<div className="mt-8 flex items-center justify-between gap-4">
-							<DiacriticBar className="min-w-0 flex-1 flex-wrap justify-start" />
-							<button
-								type="submit"
-								disabled={!given.trim()}
-								className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
-							>
+						<div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+							<button type="submit" disabled={!given.trim()} className={CHECK_BUTTON}>
 								Check
 							</button>
+							<DiacriticBar className="min-w-0 flex-1 flex-wrap justify-start" />
 						</div>
 					)}
 				</form>
 			</div>
+
+			{miss !== null && !locked && <HintPanel item={item} miss={miss} />}
 
 			{item.kind === "choose" && (
 				<div className={"mt-8 grid grid-cols-2 gap-3"} data-testid="lesson-options">
 					{item.options!.map((o, i) => {
 						const picked = result?.given === o;
 						const right = locked && compareAnswer(item.answer, o, tag) === "exact";
+						const ruledOut = !locked && miss === o;
 						return (
 							<button
 								key={o}
 								type="button"
-								disabled={locked}
+								disabled={locked || ruledOut}
 								onClick={() => onGrade(o, compareAnswer(item.answer, o, tag))}
 								className={cn(
 									"group flex items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left font-prose text-xl text-foreground shadow-[0_3px_0_0_var(--border)] transition-all",
@@ -543,6 +634,7 @@ function ClozeRep({
 									right && "border-go bg-go-soft shadow-[0_3px_0_0_var(--lh-go)]",
 									picked && !right && "border-miss bg-miss-soft shadow-[0_3px_0_0_var(--lh-miss)]",
 									locked && !right && !picked && "opacity-50",
+									ruledOut && "border-miss/50 line-through opacity-50",
 								)}
 							>
 								<span className="flex size-7 shrink-0 items-center justify-center rounded-lg border font-ui text-xs text-muted-foreground">{i + 1}</span>
@@ -555,6 +647,11 @@ function ClozeRep({
 		</div>
 	);
 }
+
+/** The green CHECK. Disabled reads as a grey slab, not a faded green one,
+ *  so it never looks pressable before there is an answer. */
+const CHECK_BUTTON =
+	"rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:shadow-none";
 
 async function slowSpeak(text: string) {
 	// The speed preference is global; a slow replay is a one-off.
@@ -599,8 +696,8 @@ function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean
 	return (
 		<div>
 			<p className="font-prose text-2xl text-foreground">“{item.translation}”</p>
-			<div className="mt-6 flex min-h-16 flex-wrap items-center gap-2 border-y-2 border-border/70 py-3" data-testid="build-answer">
-				{picked.length === 0 && <span className="font-prose text-base text-muted-foreground/60">Tap the words in order</span>}
+			<div className="mt-6 flex min-h-20 flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-border px-3 py-3" data-testid="build-answer">
+				{picked.length === 0 && <span className="font-prose text-base text-muted-foreground">Tap the words below in order</span>}
 				{picked.map((bi, k) => (
 					<button
 						key={`${bi}-${k}`}
@@ -638,13 +735,8 @@ function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean
 				})}
 			</div>
 			{!locked && (
-				<div className="mt-8 flex justify-end">
-					<button
-						type="button"
-						onClick={check}
-						disabled={picked.length === 0}
-						className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
-					>
+				<div className="mt-8 flex justify-center">
+					<button type="button" onClick={check} disabled={picked.length === 0} className={CHECK_BUTTON}>
 						Check
 					</button>
 				</div>
@@ -660,13 +752,15 @@ function FeedbackSheet({ rep, tag, onContinue, onWhy, last }: { rep: Rep; tag: s
 	const { item, verdict, given } = rep;
 	const slips = verdict === "accents" ? new Set(diacriticSlips(item.answer, given, tag)) : new Set<number>();
 	const tone =
-		verdict === "exact"
+		verdict === "exact" && rep.assisted
+			? { bg: "bg-go-soft", ink: "text-go", btn: "bg-go text-go-ink", title: "Got it on the second try" }
+			: verdict === "exact"
 			? { bg: "bg-go-soft", ink: "text-go", btn: "bg-go text-go-ink", title: praise }
 			: verdict === "accents"
 				? { bg: "bg-warn-soft", ink: "text-warn", btn: "bg-warn text-background", title: "Almost! Check the accents" }
 				: { bg: "bg-miss-soft", ink: "text-miss", btn: "bg-miss text-background", title: "Not quite" };
 	return (
-		<div className={cn("lh-rise border-t-2 border-border/40", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict}>
+		<div className={cn("lh-rise border-t-2 border-border/40", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} role="status" aria-live="polite">
 			<div className="mx-auto flex w-full max-w-3xl flex-wrap items-end gap-4 px-5 py-5">
 				<div className="min-w-0 flex-1">
 					<p className={cn("flex items-center gap-2 font-ui text-2xl font-bold", tone.ink)}>
@@ -689,6 +783,12 @@ function FeedbackSheet({ rep, tag, onContinue, onWhy, last }: { rep: Rep; tag: s
 						</p>
 					)}
 					{verdict !== "exact" && item.kind !== "build" && <p className="mt-1 font-prose text-base text-muted-foreground">{unitInfo(item.unit).rule}</p>}
+					{verdict !== "exact" && item.kind !== "build" && unitInfo(item.unit).bridge && (
+						<p className="mt-0.5 font-prose text-base text-muted-foreground">
+							<span className="font-ui text-xs font-bold text-foreground">Estonian:</span> {unitInfo(item.unit).bridge}
+						</p>
+					)}
+					{verdict === "wrong" && item.kind !== "build" && <p className="mt-1 font-ui text-xs font-bold text-muted-foreground">It comes back once more at the end.</p>}
 					{verdict === "exact" && item.kind !== "build" && (
 						<p className="mt-1 font-prose text-base text-muted-foreground" lang="sk">
 							{item.sentence} <span className="text-muted-foreground/70">· {item.translation}</span>

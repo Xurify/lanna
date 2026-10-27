@@ -39,6 +39,7 @@ interface UnitSummary {
 	tagline: string;
 	glyph: string;
 	lessons: number;
+	reps: number;
 	level: number;
 	progress: number;
 	accuracy: number | null;
@@ -152,10 +153,11 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						<div className="flex items-center gap-2">
 							<Pill className="text-flame" title={s?.streak.restUsed ? "Streak (one rest day used)" : "Day streak"}>
 								<FlameIcon className={cn("size-4", s?.streak.activeToday && "lh-flicker")} />
-								{s?.streak.days ?? "–"}
+								{s ? `${s.streak.days} ${s.streak.days === 1 ? "day" : "days"}` : "–"}
 							</Pill>
-							<Pill className="text-xp" title="Total XP">
-								<span className="flex size-5 items-center justify-center rounded-full bg-xp/20 font-ui text-[10px] font-bold">{s?.level.level ?? 1}</span>
+							<Pill className="text-xp" title={s ? `Level ${s.level.level}: ${s.level.span - s.level.into} XP to level ${s.level.level + 1}` : "Level"}>
+								Level {s?.level.level ?? 1}
+								<span className="text-muted-foreground">·</span>
 								{s?.xp ?? 0} XP
 							</Pill>
 						</div>
@@ -179,7 +181,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							<div className="min-w-0">
 								<h2 className="font-ui text-3xl font-black text-foreground">{next?.title ?? "First words"}</h2>
 								<p className="mt-1 font-prose text-lg text-muted-foreground">{next?.tagline ?? "Everyday words in real sentences"}</p>
-								<p className="mt-1 font-ui text-xs text-muted-foreground">12 quick reps · about 3 minutes{next && next.lessons > 0 ? ` · lesson ${next.lessons + 1}` : ""}</p>
+								<p className="mt-1 font-ui text-xs text-muted-foreground">12 reps · about 3 minutes{next && next.lessons > 0 ? ` · lesson ${next.lessons + 1}` : ""}</p>
 							</div>
 						</div>
 						<div className="mt-6 flex flex-wrap items-center gap-3">
@@ -200,7 +202,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						<GoalRing pct={goalPct} xp={s?.todayXp ?? 0} goal={s?.dailyGoal ?? 50} />
 						<div className="min-w-0 flex-1">
 							<p className="font-ui text-lg font-bold text-foreground">
-								{goalPct >= 1 ? "Daily goal reached. Pekne!" : `${Math.max(0, (s?.dailyGoal ?? 50) - (s?.todayXp ?? 0))} XP to today's goal`}
+								{goalPct >= 1 ? "Daily goal reached. Pekne!" : `${Math.max(0, (s?.dailyGoal ?? 50) - (s?.todayXp ?? 0))} XP left for today's goal`}
 							</p>
 							<div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2" aria-label="This week">
 								{(s?.week ?? Array.from({ length: 7 }, (_, i) => ({ day: String(i), xp: 0 }))).map((d, i, all) => {
@@ -301,9 +303,12 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 										<UnitBadge glyph={u.glyph} progress={u.progress} level={u.level} active={current} />
 										<span className="min-w-0">
 											<span className={cn("block font-ui text-base font-bold", current ? "text-go" : "text-foreground group-hover:text-foreground")}>{u.title}</span>
-											<span className="block font-ui text-[11px] text-muted-foreground">
-												{u.level > 0 ? `Level ${u.level}` : u.lessons > 0 ? "Started" : current ? "Up next" : u.tagline}
-												{u.accuracy !== null && ` · ${Math.round(u.accuracy * 100)}%`}
+											<span className="block font-ui text-xs text-muted-foreground">
+												{u.accuracy !== null && u.reps > 0
+													? `${Math.round(u.accuracy * 100)}% right in ${u.reps} reps`
+													: current
+														? "Up next"
+														: u.tagline}
 											</span>
 										</span>
 									</Link>
@@ -370,7 +375,7 @@ function UnitBadge({ glyph, progress, level = 0, active = false, size = "md" }: 
 				className={cn(
 					"flex items-center justify-center rounded-full font-prose font-black",
 					size === "lg" ? "size-[66px] text-2xl" : "size-[40px] text-base",
-					active ? "bg-go text-go-ink" : level > 0 ? "bg-card text-foreground" : "bg-accent text-muted-foreground",
+					active ? "bg-go text-go-ink" : level > 0 ? "bg-card text-foreground" : "bg-accent text-foreground/80",
 				)}
 			>
 				{glyph}

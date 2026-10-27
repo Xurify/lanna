@@ -221,7 +221,7 @@ describe("GraphSection — master switch + chunk budget (wave 7 + 2026-10-02)", 
 describe("KeysSection (thin SSR)", () => {
 	it("SSR = the loading state (effects never fire)", () => {
 		const html = renderToStaticMarkup(<KeysSection />);
-		assert.ok(html.includes("Loading keys…"));
+		assert.ok(html.includes(`aria-label="Loading keys"`), "a skeleton of the key rows while they load");
 	});
 });
 

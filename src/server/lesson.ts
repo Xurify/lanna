@@ -10,12 +10,14 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import {
 	buildBlitz,
 	buildLesson,
+	CONTRAST,
 	LESSON_BONUS,
 	levelProgress,
 	PERFECT_BONUS,
 	repXp,
 	streakOf,
 	unitLevel,
+	unitStage,
 	UNITS,
 	xpLevel,
 	type ItemKind,
@@ -33,9 +35,24 @@ function entries() {
 	return loadLexicon()?.entries ?? [];
 }
 
+/**
+ * The lesson for a unit, shaped by how far the learner is with it: a first
+ * lesson recognises before it produces; once the unit holds (two lessons at
+ * 60%+) almost every rep is typed. Either way some reps come from
+ * neighbouring units the learner has reached (CONTRAST first), so the case
+ * has to be chosen from the trigger rather than assumed from the lesson's
+ * title — interleaving, which is what makes the choice stick.
+ */
 export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
-	return buildLesson(entries(), unit, { seed, recent: new Set(progress.recent) });
+	const rec = progress.units[unit];
+	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
+	const order = UNITS.map((u) => u.id);
+	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || order.indexOf(u) < order.indexOf(unit);
+	const contrast = CONTRAST[unit].filter(reached);
+	const others = order.filter((u) => u !== unit && u !== "words" && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
+	const mix = unit === "words" ? [] : [...contrast, ...others].slice(0, 3);
+	return buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix });
 }
 
 /** Blitz runs over the units you have started (at least the first three). */
@@ -51,6 +68,8 @@ export interface RepResult {
 	slug: string;
 	kind: ItemKind;
 	verdict: RepVerdict;
+	/** Right on the second try, after the hint. */
+	assisted?: boolean;
 }
 
 export interface LessonResultInput {
@@ -93,7 +112,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 			combo++;
 			correct++;
 		}
-		xp += repXp(r.kind, r.verdict, combo);
+		xp += repXp(r.kind, r.verdict, combo, r.assisted);
 	}
 	const total = input.reps.length;
 	const perfect = total > 0 && input.reps.every((r) => r.verdict === "exact");
@@ -115,10 +134,10 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	day.reps += total;
 	day.xp += xp;
 	p.xp += xp;
-	p.recent = [...p.recent, ...input.reps.map((r) => r.itemId)].slice(-RECENT_CAP);
+	p.recent = [...p.recent, ...input.reps.map((r) => r.itemId.replace(/~again$/, ""))].slice(-RECENT_CAP);
 	progressStore.write(p);
 	// Every miss goes to the review deck — the lesson and the deck feed each other.
-	const missed = [...new Set(input.reps.filter((r) => r.verdict !== "exact").map((r) => r.slug))];
+	const missed = [...new Set(input.reps.filter((r) => r.verdict !== "exact" || r.assisted).map((r) => r.slug))];
 	const queued = missed.length ? enqueueWords(missed, now) : [];
 	return { xp, correct, total, perfect, queued, newBest, summary: progressSummary(input.tz, now) };
 }
@@ -142,6 +161,9 @@ export interface UnitSummary {
 	glyph: string;
 	rule: string;
 	lessons: number;
+	/** Reps answered in this unit, and the share right — the evidence the
+	 *  path shows instead of a guessed level. */
+	reps: number;
 	level: number;
 	progress: number;
 	accuracy: number | null;
@@ -181,6 +203,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			glyph: u.glyph,
 			rule: u.rule,
 			lessons,
+			reps: r?.reps ?? 0,
 			level: unitLevel(lessons),
 			progress: levelProgress(lessons),
 			accuracy: r && r.reps > 0 ? r.correct / r.reps : null,

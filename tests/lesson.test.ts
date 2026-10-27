@@ -14,7 +14,9 @@ import {
 	sameSentence,
 	sentenceTokens,
 	streakOf,
+	triggerOf,
 	unitLevel,
+	unitStage,
 	UNITS,
 	xpLevel,
 } from "../src/core/lesson.ts";
@@ -97,4 +99,45 @@ test("levels climb with lessons and XP", () => {
 	assert.ok(unitLevel(15) > unitLevel(3));
 	assert.equal(xpLevel(0).level, 1);
 	assert.ok(xpLevel(1000).level > xpLevel(100).level);
+});
+
+// ─── The method (2026-10-27): production once a unit holds, interleaving,
+// the trigger for the hint, half XP for the second try ────────────────────
+
+test("a practised unit is mostly typed; a new one recognises first", () => {
+	const fresh = buildLesson(entries, "gen", { seed: 5 });
+	const held = buildLesson(entries, "gen", { seed: 5, stage: "practised" });
+	const typed = (items: { kind: string }[]) => items.filter((i) => i.kind === "type" || i.kind === "listen").length;
+	assert.ok(typed(held.items) > typed(fresh.items));
+	assert.ok(held.items.filter((i) => i.kind === "choose").length <= 2);
+});
+
+test("mixing pulls a few reps from neighbouring units, marked and graded by their own unit", () => {
+	const plan = buildLesson(entries, "gen", { seed: 9, stage: "practised", mix: ["loc", "acc-people"] });
+	const mixed = plan.items.filter((i) => i.mixed);
+	assert.ok(mixed.length >= 2 && mixed.length <= 4, `mixed ${mixed.length}`);
+	assert.ok(mixed.every((i) => i.unit !== "gen"));
+	assert.ok(plan.items.filter((i) => !i.mixed).every((i) => i.unit === "gen"));
+	assert.equal(new Set(plan.items.map((i) => i.slug)).size, plan.items.length, "still one sentence per word");
+});
+
+test("triggerOf names the case-picking preposition, nothing else", () => {
+	assert.equal(triggerOf("Idem do školy.", "Idem do ".length), "do");
+	assert.equal(triggerOf("Som v meste.", "Som v ".length), "v");
+	assert.equal(triggerOf("Pijem kávu.", "Pijem ".length), undefined);
+});
+
+test("unitStage: two lessons at 60% make a unit practised", () => {
+	assert.equal(unitStage(1, 0.9), "new");
+	assert.equal(unitStage(2, 0.5), "new");
+	assert.equal(unitStage(2, 0.6), "practised");
+});
+
+test("a right answer after the hint earns half", () => {
+	assert.equal(repXp("type", "exact", 1, true), Math.ceil(repXp("type", "exact", 1) / 2));
+	assert.equal(repXp("type", "wrong", 1, true), 0);
+});
+
+test("every grammar unit carries an Estonian bridge", () => {
+	for (const u of UNITS) if (u.id !== "words") assert.ok(u.bridge && u.bridge.length > 10, u.id);
 });

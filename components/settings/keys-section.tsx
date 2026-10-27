@@ -405,7 +405,14 @@ export function KeysSection({
 	}
 
 	if (loading || statuses === null) {
-		return <p className="px-6 py-5 text-xs text-muted-foreground/70">Loading keys…</p>;
+		// A skeleton the shape of the key rows: the panel does not jump when they land.
+		return (
+			<div className="flex flex-col gap-3 px-6 py-5" aria-busy="true" aria-label="Loading keys">
+				{[0, 1, 2].map((i) => (
+					<div key={i} className="h-12 animate-pulse rounded-lg bg-accent/60" />
+				))}
+			</div>
+		);
 	}
 
 	const { providerRows, toolRows, unknownRows, addable } = classifyKeys(statuses, providers);

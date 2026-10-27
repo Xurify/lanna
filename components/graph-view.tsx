@@ -301,6 +301,14 @@ function fmtRunCost(dollars: number | null, providers: readonly string[] = []): 
 function graphProviders(value: { subscriptionRuns?: number; subscriptionProviders?: string[] }): string[] {
 	return value.subscriptionProviders ?? ((value.subscriptionRuns ?? 0) > 0 ? ["ChatGPT"] : []);
 }
+/** The seeded curriculum's sources are named "Slovak curriculum: cases";
+ *  on the map the language is already known, so the label is "Cases". */
+function regionName(label: string | null): string | null {
+	if (label == null) return label;
+	const short = label.replace(/^\p{L}+ curriculum: /u, "");
+	return short.charAt(0).toLocaleUpperCase() + short.slice(1);
+}
+
 function graphUsageLabel(costs: Pick<GraphCostSummary, "stages">): string {
 	const stages = [costs.stages.extraction, costs.stages.audit];
 	const providers = [...new Set(stages.flatMap(graphProviders))];
@@ -1425,7 +1433,7 @@ export function GraphView({
 			edges: snapshot.edges.map((e) => ({ from: e.from, to: e.to })),
 			logicalEdges: snapshot.logicalEdges.map((e) => ({ from: e.from, to: e.to })),
 			impLinks: snapshot.impLinks,
-			clusters: snapshot.clusters.map((c) => ({ id: c.id, label: c.label, members: c.members })),
+			clusters: snapshot.clusters.map((c) => ({ id: c.id, label: regionName(c.label), members: c.members })),
 			colors: {
 				node: tokenHex(NODE_COLOR_TOKEN),
 				edge: tokenHex("--ring"),

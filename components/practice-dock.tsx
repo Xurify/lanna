@@ -118,8 +118,8 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 				data-testid="practice-thinking-field"
 				className="m-1.5 rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
 			>
-				<div className="px-2.5 pt-2 font-ui text-[11px] font-extrabold tracking-wide text-muted-foreground">
-					YOUR THINKING
+				<div className="px-2.5 pt-2 font-ui text-xs font-extrabold text-muted-foreground">
+					Your answer
 				</div>
 				<textarea
 					value={thinking}
@@ -143,7 +143,7 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 							submit();
 						}
 					}}
-					placeholder="Work here, think out loud."
+					placeholder="Answer in Slovak. Add your reasoning only if you want to."
 					rows={4}
 					className={cn(
 						"field-sizing-content lh-input max-h-64 min-h-16 w-full resize-none bg-transparent px-2.5 pb-2 outline-none placeholder:text-muted-foreground",
@@ -164,7 +164,7 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 						onClick={() => submit()}
 						className="ml-auto h-9 rounded-[6px] bg-go px-4 font-ui text-sm font-extrabold text-go-ink hover:bg-go/90"
 					>
-						Submit thinking
+						Check
 					</Button>
 				</div>
 			</div>

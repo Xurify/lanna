@@ -55,7 +55,9 @@ describe("PracticeDock", () => {
 		assert.match(html, /Problem/);
 		// The measured column cap (the old fixed 40vh is only the fallback).
 		assert.match(html, /--dock-max-h/);
-		assert.match(html, /YOUR THINKING/);
+		// Answer-first (2026-10-27): his practice problems were abandoned at
+		// a "Your thinking" field; the field now asks for the answer.
+		assert.match(html, /Your answer/);
 		assert.match(html, /data-testid="practice-send"/);
 		assert.ok(!html.includes("practice-nudge") && !html.includes("practice-commit"), "the two-lane buttons are gone");
 		// The buttons carry their lane in the disabled gate; both start

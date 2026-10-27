@@ -722,7 +722,7 @@ function SessionsSidebar() {
 
 				{/* The tutor: two ways to start a model-led session. */}
 				<div className="mx-3 mb-3 flex flex-col gap-0.5">
-					<div className="px-2.5 pb-1 text-xs font-bold text-muted-foreground/70">Tutor</div>
+					<div className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">Tutor</div>
 					<button
 						type="button"
 						data-testid="new-session"
@@ -730,7 +730,7 @@ function SessionsSidebar() {
 						className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 					>
 						<GraduationCapIcon className="size-[18px]" />
-						New lesson
+						Learn a topic
 						<span className="sr-only">create a new teaching session</span>
 						<PlusIcon className="ml-auto size-4 opacity-60" />
 					</button>
@@ -741,14 +741,14 @@ function SessionsSidebar() {
 						className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 					>
 						<DumbbellIcon className="size-[18px]" />
-						New practice
+						Practice a topic
 						<span className="sr-only">create a new practice session</span>
 						<PlusIcon className="ml-auto size-4 opacity-60" />
 					</button>
 				</div>
 
 				<div className="mx-3 mb-2 flex flex-col gap-1.5 border-t border-border/50 pt-3">
-					<span className="px-2.5 text-xs font-bold text-muted-foreground/70">Sessions</span>
+					<span className="px-2.5 text-xs font-bold text-muted-foreground">Sessions</span>
 					<Hint label="Search sessions" action="sessions-search" side="bottom">
 					<span className="relative flex-1">
 						<Input
@@ -829,7 +829,7 @@ function SessionsSidebar() {
 									: "text-muted-foreground hover:text-foreground",
 							)}
 						>
-							{f === "teach" ? "Lessons" : f === "all" ? "All" : "Practice"}
+							{f === "teach" ? "Learn" : f === "all" ? "All" : "Practice"}
 						</button>
 					))}
 				</div>

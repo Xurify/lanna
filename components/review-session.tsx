@@ -271,7 +271,7 @@ export function ReviewSession() {
 							>
 								<span>{prompt.before}</span>
 								{verdict ? (
-									<span className={cn("rounded-md px-1 font-semibold", VERDICT_STYLE[verdict].className)} data-testid="review-answer">
+									<span className={cn("rounded-md px-1 font-semibold", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)} data-testid="review-answer">
 										{[...prompt.card.answer].map((ch, i) => (
 											<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
 												{ch}
@@ -379,8 +379,8 @@ export function ReviewSession() {
 										<span className="font-ui text-[11px] text-muted-foreground">
 											{RATING_LABELS[suggested]} · next in {formatInterval(prompt.intervals[suggested])}
 										</span>
-										<span className="ml-auto flex items-center gap-1 font-ui text-[11px] text-muted-foreground/80">
-											<span className="mr-1">Override:</span>
+										<span className="ml-auto flex items-center gap-1 font-ui text-xs text-muted-foreground">
+											<span className="mr-1">Rate it yourself:</span>
 											{([1, 2, 3, 4] as Rating[]).map((r) => (
 												<button
 													key={r}
@@ -395,7 +395,7 @@ export function ReviewSession() {
 											))}
 										</span>
 									</div>
-									<p className="mt-2 font-ui text-[11px] text-muted-foreground/70">Enter continues · 1–4 to override</p>
+									<p className="mt-2 font-ui text-xs text-muted-foreground">Enter continues · 1–4 rates it yourself</p>
 								</div>
 							)}
 
@@ -403,7 +403,7 @@ export function ReviewSession() {
 								<button
 									type="button"
 									onClick={() => void suspend()}
-									className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground/70 hover:bg-accent hover:text-foreground"
+									className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
 									title="Never show this sentence again"
 								>
 									<EyeOffIcon className="size-3" />
@@ -430,7 +430,7 @@ export function ReviewSession() {
 					)}
 
 					{status?.available && (
-						<p className="mt-10 text-center text-[11px] text-muted-foreground/60">
+						<p className="mt-10 text-center text-xs text-muted-foreground">
 							Sentences from slovak.wiki — curated examples and Tatoeba (CC BY 2.0 FR).
 						</p>
 					)}

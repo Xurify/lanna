@@ -34,20 +34,22 @@ export interface UnitInfo {
 	glyph: string;
 	/** The seed grammar node this unit practises (curriculum/slovak). */
 	node?: string;
+	/** The Estonian bridge (spec D3): the same idea in his first language. */
+	bridge?: string;
 }
 
 /** The path, in teaching order. */
 export const UNITS: UnitInfo[] = [
 	{ id: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "Aa", rule: "Learn the word with its sentence: the sentence is what you will hear." },
-	{ id: "present", title: "I, you, we", tagline: "Verbs in the present", glyph: "-m", rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.", node: "n_seed_v_present" },
-	{ id: "acc-fem", title: "Objects: -a → -u", tagline: "What you have, see, drink", glyph: "-u", rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.", node: "n_seed_acc_fem" },
-	{ id: "loc", title: "Where? v, na, o", tagline: "Kde? The locative", glyph: "v", rule: "After v / na / o / po / pri for place or topic, the noun takes the locative: v meste, na stole, o škole.", node: "n_seed_loc" },
-	{ id: "acc-people", title: "People as objects", tagline: "Vidím brata", glyph: "-a", rule: "A masculine person as the object takes -a: Mám brata. Poznáš učiteľa?", node: "n_seed_acc_anim" },
-	{ id: "gen", title: "From, to, without", tagline: "do, z, od, bez + genitive", glyph: "z", rule: "do / z / od / bez / u / okolo take the genitive: do školy, z práce, bez cukru.", node: "n_seed_gen" },
-	{ id: "ins", title: "With: s, pred, za", tagline: "The instrumental", glyph: "s", rule: "s / pred / za / nad / pod / medzi (for place) take the instrumental: s kamarátom, pred domom, so sestrou.", node: "n_seed_ins" },
-	{ id: "adj", title: "Describing words", tagline: "Adjectives agree", glyph: "-ý", rule: "The adjective copies the noun's gender, case and number: nová kniha, novú knihu, v novej knihe.", node: "n_seed_adj_cases" },
-	{ id: "past", title: "What happened", tagline: "Past tense: -l, -la, -lo, -li", glyph: "-l", rule: "Past tense = -l / -la / -lo / -li by the subject's gender and number, plus som/si for I/you: Robil som. Robila si.", node: "n_seed_v_past" },
-	{ id: "dat", title: "To and for: k", tagline: "k, proti, vďaka + dative", glyph: "k", rule: "k / ku / proti / vďaka / kvôli take the dative: k bratovi, ku škole, vďaka mame.", node: "n_seed_dat" },
+	{ id: "present", title: "I, you, we", tagline: "Verbs in the present", glyph: "-m", rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.", node: "n_seed_v_present", bridge: "Like Estonian: my robíme ≈ me teeme, vy robíte ≈ te teete. Ja robím ≈ ma teen." },
+	{ id: "acc-fem", title: "Objects: -a → -u", tagline: "What you have, see, drink", glyph: "-u", rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.", node: "n_seed_acc_fem", bridge: "The object case, like Estonian osastav: Pijem kávu ≈ Joon kohvi." },
+	{ id: "loc", title: "Where? v, na, o", tagline: "Kde? The locative", glyph: "v", rule: "After v / na / o / po / pri for place or topic, the noun takes the locative: v meste, na stole, o škole.", node: "n_seed_loc", bridge: "Like the Estonian place cases: v meste ≈ linnas (seesütlev), na stole ≈ laual (alalütlev)." },
+	{ id: "acc-people", title: "People as objects", tagline: "Vidím brata", glyph: "-a", rule: "A masculine person as the object takes -a: Mám brata. Poznáš učiteľa?", node: "n_seed_acc_anim", bridge: "A male person as the object, like osastav: Vidím brata ≈ Näen venda." },
+	{ id: "gen", title: "From, to, without", tagline: "do, z, od, bez + genitive", glyph: "z", rule: "do / z / od / bez / u / okolo take the genitive: do školy, z práce, bez cukru.", node: "n_seed_gen", bridge: "do školy ≈ kooli (sisseütlev), zo školy ≈ koolist (seestütlev), bez cukru ≈ suhkruta (ilmaütlev)." },
+	{ id: "ins", title: "With: s, pred, za", tagline: "The instrumental", glyph: "s", rule: "s / pred / za / nad / pod / medzi (for place) take the instrumental: s kamarátom, pred domom, so sestrou.", node: "n_seed_ins", bridge: "Like Estonian kaasaütlev -ga: s kamarátom ≈ sõbraga, autobusom ≈ bussiga." },
+	{ id: "adj", title: "Describing words", tagline: "Adjectives agree", glyph: "-ý", rule: "The adjective copies the noun's gender, case and number: nová kniha, novú knihu, v novej knihe.", node: "n_seed_adj_cases", bridge: "Adjectives agree, as in Estonian: nová kniha → novú knihu ≈ uus raamat → uut raamatut." },
+	{ id: "past", title: "What happened", tagline: "Past tense: -l, -la, -lo, -li", glyph: "-l", rule: "Past tense = -l / -la / -lo / -li by the subject's gender and number, plus som/si for I/you: Robil som. Robila si.", node: "n_seed_v_past", bridge: "Built like the Estonian perfect: an -l form plus 'be' (robil som ~ olen teinud), with som/si only for I and you." },
+	{ id: "dat", title: "To and for: k", tagline: "k, proti, vďaka + dative", glyph: "k", rule: "k / ku / proti / vďaka / kvôli take the dative: k bratovi, ku škole, vďaka mame.", node: "n_seed_dat", bridge: "Like Estonian alaleütlev -le: k bratovi ≈ vennale, dal som mame ≈ andsin emale." },
 ];
 
 export function isUnitId(v: unknown): v is UnitId {
@@ -132,6 +134,13 @@ export interface LessonItem {
 	tokens?: string[];
 	/** build: the shuffled bank, tokens plus two distractors. */
 	bank?: string[];
+	/** The preposition right before the blank, when one decides the case. */
+	trigger?: string;
+	/** Mixed in from another unit, so the lesson cannot be passed by
+	 *  ignoring the trigger (interleaving). */
+	mixed?: boolean;
+	/** A missed rep asked again at the end of the lesson. */
+	again?: boolean;
 }
 
 export interface Candidate {
@@ -190,20 +199,24 @@ function matchCase(form: string, like: string): string {
 }
 
 /** Other forms of the same word: the best distractors for a form drill,
- *  because only the ending differs. Falls back to `pool` (answers of other
- *  items in the unit) when the word has too few verified forms. */
+ *  because only the ending differs — so a word with two other forms gets a
+ *  three-way choice rather than a padded one. Falls back to `pool` (answers
+ *  of other items in the unit) only when the word has no other form. */
 export function formOptions(entry: LexiconEntry, answer: string, pool: readonly string[], rand: () => number): string[] {
 	const seen = new Set([fold(answer)]);
 	const picks: string[] = [];
 	const own = [entry.sk, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])];
-	for (const f of [...shuffle(own, rand), ...shuffle([...pool], rand)]) {
-		if (!f || f.includes(" ")) continue;
+	const add = (f: string) => {
+		if (!f || f.includes(" ")) return;
 		const k = fold(f);
-		if (seen.has(k)) continue;
+		if (seen.has(k)) return;
 		seen.add(k);
 		picks.push(matchCase(f, answer));
-		if (picks.length === 3) break;
-	}
+	};
+	for (const f of shuffle(own, rand)) if (picks.length < 3) add(f);
+	// Another word's form is a give-away (only one option is this word), so
+	// the pool only tops up a word with no other verified form at all.
+	if (picks.length === 0) for (const f of shuffle([...pool], rand)) if (picks.length < 3) add(f);
 	return shuffle([answer, ...picks], rand);
 }
 
@@ -223,9 +236,43 @@ export function sameSentence(expected: string[], given: string[]): boolean {
 	return norm(expected) === norm(given);
 }
 
-/** The rhythm of a 12-rep lesson: recognise first, then produce, a word
- *  bank and a listening rep to vary the work. */
+/** The rhythm of a first lesson on a unit: recognise first, then produce,
+ *  a word bank and a listening rep to vary the work. */
 export const LESSON_PATTERN: ItemKind[] = ["choose", "type", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
+
+/** Once a unit is known: production almost throughout. Picking a form from
+ *  four trains recognising it; typing it trains producing it, and producing
+ *  endings is the gap (reading is ahead of production). */
+export const PRACTISED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
+
+/** Slots (by position) that take an item from another unit. */
+const MIX_SLOTS: Record<"new" | "practised", number[]> = { new: [5, 9], practised: [2, 5, 8, 11] };
+
+/** Units that are easy to confuse with each one: the mix comes from these
+ *  first, so the learner has to read the trigger to choose the case. */
+export const CONTRAST: Record<UnitId, UnitId[]> = {
+	words: [],
+	present: ["past"],
+	"acc-fem": ["loc", "gen"],
+	loc: ["acc-fem", "gen"],
+	"acc-people": ["acc-fem", "gen"],
+	gen: ["loc", "acc-people"],
+	ins: ["loc", "gen"],
+	adj: ["acc-fem", "loc"],
+	past: ["present"],
+	dat: ["loc", "gen"],
+};
+
+/** Ready when a unit has two lessons at 60% or better. */
+export function unitStage(lessons: number, accuracy: number | null): "new" | "practised" {
+	return lessons >= 2 && (accuracy ?? 0) >= 0.6 ? "practised" : "new";
+}
+
+/** The preposition before the blank, if it is one that picks a case. */
+export function triggerOf(sentence: string, at: number): string | undefined {
+	const w = wordBefore(sentence, at);
+	return ALL_PREPS.has(w) ? w : undefined;
+}
 
 export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[], rand: () => number): LessonItem {
 	const ex = c.entry.examples[c.index]!;
@@ -243,6 +290,8 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 		before: ex.sk.slice(0, at),
 		after: ex.sk.slice(at + answer.length),
 	};
+	const trigger = c.unit === "words" ? undefined : triggerOf(ex.sk, at);
+	if (trigger) item.trigger = trigger;
 	if (kind === "choose") item.options = formOptions(c.entry, answer, pool, rand);
 	if (kind === "build") {
 		const tokens = sentenceTokens(ex.sk);
@@ -268,28 +317,38 @@ export interface LessonPlan {
 export function buildLesson(
 	entries: readonly LexiconEntry[],
 	unit: UnitId,
-	opts: { seed: number; recent?: ReadonlySet<string>; length?: number },
+	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: "new" | "practised"; mix?: readonly UnitId[] },
 ): LessonPlan {
 	const rand = rng(opts.seed);
-	const all = candidatesFor(entries, unit);
-	const top = all.slice(0, 160);
-	const fresh = top.filter((c) => !opts.recent?.has(`${c.entry.slug}#${c.index}`));
-	const source = shuffle(fresh.length >= (opts.length ?? LESSON_PATTERN.length) ? fresh : top, rand);
-	const pattern = LESSON_PATTERN.slice(0, opts.length ?? LESSON_PATTERN.length);
-	const pool = top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
+	const stage = opts.stage ?? "new";
+	const length = opts.length ?? LESSON_PATTERN.length;
+	const pattern = (stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN).slice(0, length);
+	const sourceFor = (u: UnitId) => {
+		const top = candidatesFor(entries, u).slice(0, 160);
+		const fresh = top.filter((c) => !opts.recent?.has(`${c.entry.slug}#${c.index}`));
+		return { top, list: shuffle(fresh.length >= length ? fresh : top, rand) };
+	};
+	const main = sourceFor(unit);
+	const mixes = (opts.mix ?? []).filter((u) => u !== unit).map(sourceFor).filter((m) => m.list.length > 0);
+	const pool = main.top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
 	const used = new Set<string>();
 	const items: LessonItem[] = [];
-	for (const kind of pattern) {
+	pattern.forEach((kind, slot) => {
 		// A word bank needs a short sentence; listening needs one worth hearing.
 		const fits = (c: Candidate) => {
 			const n = c.entry.examples[c.index]!.sk.split(/\s+/).length;
 			return kind === "build" ? n >= 3 && n <= 7 : true;
 		};
-		const pick = source.find((c) => !used.has(c.entry.slug) && fits(c)) ?? source.find((c) => !used.has(c.entry.slug));
-		if (!pick) break;
+		const take = (list: Candidate[]) => list.find((c) => !used.has(c.entry.slug) && fits(c)) ?? list.find((c) => !used.has(c.entry.slug));
+		const mix = MIX_SLOTS[stage].includes(slot) && mixes.length > 0 ? mixes[Math.floor(rand() * mixes.length)]! : null;
+		const pick = (mix && take(mix.list)) || take(main.list);
+		if (!pick) return;
 		used.add(pick.entry.slug);
-		items.push(buildItem(pick, kind, pool, rand));
-	}
+		const fromMix = mix !== null && pick.unit !== unit;
+		const item = buildItem(pick, kind, fromMix ? mix.top.map((c) => c.entry.examples[c.index]!.cloze!.answer) : pool, rand);
+		if (fromMix) item.mixed = true;
+		items.push(item);
+	});
 	return { unit, items };
 }
 
@@ -321,10 +380,11 @@ export type RepVerdict = "exact" | "accents" | "wrong";
 export const XP_FOR: Record<ItemKind, number> = { choose: 5, type: 10, build: 10, listen: 12 };
 
 /** XP for one rep: a typed answer earns more than a picked one; accents-only
- *  earns half; a combo of 3+ adds 2 per step, capped. */
-export function repXp(kind: ItemKind, verdict: RepVerdict, combo: number): number {
+ *  earns half, and so does a right answer on the second try (after the
+ *  hint); a combo of 3+ adds 2 per step, capped. */
+export function repXp(kind: ItemKind, verdict: RepVerdict, combo: number, assisted = false): number {
 	if (verdict === "wrong") return 0;
-	const base = verdict === "accents" ? Math.ceil(XP_FOR[kind] / 2) : XP_FOR[kind];
+	const base = verdict === "accents" || assisted ? Math.ceil(XP_FOR[kind] / 2) : XP_FOR[kind];
 	const bonus = combo >= 3 ? Math.min(10, (combo - 2) * 2) : 0;
 	return base + bonus;
 }
