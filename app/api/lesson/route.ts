@@ -2,9 +2,11 @@
  * GET /api/lesson?unit=<id> — a fresh 12-rep lesson for one unit, built
  * locally from the lexicon (no model call). ?mode=blitz — a choose-only
  * sprint across the units you have started.
- * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?}], ms?, tz?}
+ * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, detail?}], ms?, tz?}
  * — record the finished lesson: XP, the day, the unit's level; missed
- * words go into the review deck. Returns the outcome and a fresh summary.
+ * words go into the review deck; the whole lesson (every sentence and
+ * answer, from `detail`) is appended to the lesson log. Returns the
+ * outcome and a fresh summary.
  */
 
 import { isUnitId } from "@/src/core";
@@ -21,6 +23,27 @@ export async function GET(req: Request) {
 }
 
 const KINDS = new Set(["choose", "type", "build", "listen"]);
+
+const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) : undefined);
+
+/** The optional per-rep record for the lesson log: strings only, bounded. */
+function repDetail(v: unknown): RepResult["detail"] {
+	if (!v || typeof v !== "object") return undefined;
+	const d = v as Record<string, unknown>;
+	return {
+		unit: str(d.unit, 40),
+		lemma: str(d.lemma, 80),
+		gloss: str(d.gloss, 200),
+		sentence: str(d.sentence),
+		translation: str(d.translation),
+		answer: str(d.answer, 120),
+		given: str(d.given),
+		trigger: str(d.trigger, 40),
+		options: Array.isArray(d.options) ? d.options.filter((o): o is string => typeof o === "string").slice(0, 8) : undefined,
+		mixed: d.mixed === true,
+		again: d.again === true,
+	};
+}
 const VERDICTS = new Set(["exact", "accents", "wrong"]);
 
 export async function POST(req: Request) {
@@ -37,7 +60,7 @@ export async function POST(req: Request) {
 	const reps: RepResult[] = body.reps.flatMap((r: unknown) => {
 		const x = r as Partial<RepResult> | null;
 		return x && typeof x.itemId === "string" && typeof x.slug === "string" && KINDS.has(x.kind as string) && VERDICTS.has(x.verdict as string)
-			? [{ itemId: x.itemId, slug: x.slug, kind: x.kind!, verdict: x.verdict!, ...(x.assisted === true ? { assisted: true } : {}) }]
+			? [{ itemId: x.itemId, slug: x.slug, kind: x.kind!, verdict: x.verdict!, ...(x.assisted === true ? { assisted: true } : {}), detail: repDetail(x.detail) }]
 			: [];
 	});
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;

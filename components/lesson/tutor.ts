@@ -13,9 +13,22 @@
  * course.
  */
 
+export interface WhyReuse {
+	sentence: string;
+	answer: string;
+	lemma: string;
+	given: string;
+}
+
+/**
+ * Open a tutor chat with a prepared first message. With `reuse` (a lesson's
+ * Why?), POST /api/why first looks the (sentence, answer) pair up in the
+ * profile's Why? index: an existing chat is reopened as it is, with no new
+ * turn, so the explanation is paid for once.
+ */
 export async function startTutorChat(
 	router: { push: (href: string) => void },
-	opts: { title: string; prompt: string; activity?: "talk" | "story" | "tutor"; unit?: string },
+	opts: { title: string; prompt: string; activity?: "talk" | "story" | "tutor"; unit?: string; reuse?: WhyReuse },
 ): Promise<void> {
 	// The day's plan counts a Talk, a Story or a tutor unit as its speaking
 	// task; a tutor unit also counts the session toward the unit.
@@ -26,6 +39,17 @@ export async function startTutorChat(
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ activity, unit: opts.unit }),
 		}).catch(() => undefined);
+	}
+	if (opts.reuse) {
+		const res = await fetch("/api/why", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ title: opts.title, ...opts.reuse }),
+		});
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const { id, reused } = (await res.json()) as { id: string; reused: boolean };
+		router.push(reused ? `/chat/${id}` : `/chat/${id}?prompt=${encodeURIComponent(opts.prompt)}`);
+		return;
 	}
 	const res = await fetch("/api/chats", {
 		method: "POST",

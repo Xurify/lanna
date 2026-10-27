@@ -51,5 +51,7 @@ export * from "./language.ts";
 export * from "./tts.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+export * from "./why.ts";
+export * from "./corpus-export.ts";
 export { lookupWord, loadLexicon } from "../agent/lexicon.ts";
 export { isLanguageProfile, LANGUAGE_PROFILES, type LanguageProfile } from "../../config.ts";

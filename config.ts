@@ -64,8 +64,20 @@ export const PATHS = {
 	data: DATA_ROOT,
 	/** The read-only curriculum assets (seed graph, lexicon) per language. */
 	curriculum: path.join(ROOT, "curriculum"),
-	/** Synthesized speech, keyed by sha256 — shared across profiles. */
-	audioCache: path.join(BASE_DATA_ROOT, "cache", "audio"),
+	/** Every spoken clip, paid for once and kept for good (LangHarness
+	 *  corpus, 2026-10-27): <data>/audio/<lang>/<voice>/<slug>-<key>.mp3
+	 *  plus audio/index.jsonl (text, voice, tier, date per clip). Shared
+	 *  across profiles — a Slovak clip is a Slovak clip. */
+	audio: path.join(BASE_DATA_ROOT, "audio"),
+	/** Where clips lived before 2026-10-27 (<data>/cache/audio/<sha256>.mp3,
+	 *  no index). Migrated into `audio` on first use (src/store/corpus.ts). */
+	audioLegacy: path.join(BASE_DATA_ROOT, "cache", "audio"),
+	/** Every finished lesson and blitz with every sentence and answer
+	 *  (lessons/<day>.jsonl) and the Why? index (lessons/why-index.json),
+	 *  so a repeat Why? reopens its chat instead of paying for a new one. */
+	lessons: path.join(DATA_ROOT, "lessons"),
+	/** Normalized, app-independent exports (npm run corpus:export). */
+	exports: path.join(BASE_DATA_ROOT, "export"),
 	/** Spaced-review cards and their log (src/store/review.ts). */
 	review: path.join(DATA_ROOT, "review"),
 	/** Chat sessions (AI SDK UIMessage transcripts, one JSON file per chat). */

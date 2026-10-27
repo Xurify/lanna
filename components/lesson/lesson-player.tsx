@@ -241,6 +241,20 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 							kind: r.item.kind,
 							verdict: r.verdict,
 							assisted: r.assisted === true,
+							// Everything shown and answered, for the lesson log on disk.
+							detail: {
+								unit: r.item.unit,
+								lemma: r.item.lemma,
+								gloss: r.item.gloss,
+								sentence: r.item.sentence,
+								translation: r.item.translation,
+								answer: r.item.answer,
+								given: r.given,
+								trigger: r.item.trigger,
+								options: r.item.options,
+								mixed: r.item.mixed === true,
+								again: r.item.again === true,
+							},
 						})),
 						ms: Date.now() - startedAt.current,
 						tz: new Date().getTimezoneOffset(),
@@ -360,6 +374,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	const why = async () => {
 		if (!current) return;
 		try {
+			// The same sentence asked before reopens that chat (data/profiles/
+			// <language>/lessons/why-index.json) instead of paying for a new one.
 			await startTutorChat(router, {
 				title: `Why ${current.item.answer}?`,
 				prompt: whyPrompt({
@@ -368,6 +384,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					given: current.given,
 					lemma: current.item.lemma,
 				}),
+				reuse: { sentence: current.item.sentence, answer: current.item.answer, lemma: current.item.lemma, given: current.given },
 			});
 		} catch {
 			setError("Couldn't open the tutor. Check Settings → Models.");

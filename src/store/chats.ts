@@ -181,17 +181,26 @@ function renameChat(id: string, title: string): ChatRecord {
 	return record;
 }
 
-/** Delete the session record file entirely (session-deletion wave 6,
- *  owner 2026-09-22). False when the id is unknown — the route turns that
- *  into a 404. The record's graph traces and jobs are the route's
- *  choreography (core/graph-deletion.ts), not the store's. */
+/** Delete the session from the list (session-deletion wave 6, owner
+ *  2026-09-22). False when the id is unknown — the route turns that into
+ *  a 404. The record's graph traces and jobs are the route's choreography
+ *  (core/graph-deletion.ts), not the store's.
+ *  LangHarness (Xurify, 2026-10-27: every generated thing is kept): the
+ *  file is MOVED to chats/trash/, not unlinked — a deleted session leaves
+ *  the app but stays on disk for the corpus. Move it back up to restore. */
 function deleteChat(id: string): boolean {
+	const file = chatFile(id);
+	if (!fs.existsSync(file)) return false; // never existed, already deleted — same answer
 	try {
-		fs.unlinkSync(chatFile(id));
+		const trash = path.join(PATHS.chats, "trash");
+		fs.mkdirSync(trash, { recursive: true });
+		let target = path.join(trash, `${id}.json`);
+		if (fs.existsSync(target)) target = path.join(trash, `${id}.${Date.now().toString(36)}.json`);
+		fs.renameSync(file, target);
 		emit("chats-changed", {}); // only a real removal — the present-entry law
 		return true;
 	} catch {
-		return false; // never existed, already deleted, or unreadable — same answer
+		return false; // unreadable or locked — same answer as unknown
 	}
 }
 

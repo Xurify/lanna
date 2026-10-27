@@ -39,6 +39,7 @@ import {
 	type DailyPlan,
 	type Projection,
 } from "../core/curriculum.ts";
+import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
@@ -86,6 +87,23 @@ export interface RepResult {
 	verdict: RepVerdict;
 	/** Right on the second try, after the hint. */
 	assisted?: boolean;
+	/** What the learner saw and wrote — kept in the lesson log
+	 *  (data/profiles/<language>/lessons/<day>.jsonl, store/corpus.ts) so a
+	 *  lesson is a record, not just a score. Absent on old clients. */
+	detail?: {
+		unit?: string;
+		lemma?: string;
+		gloss?: string;
+		sentence?: string;
+		translation?: string;
+		answer?: string;
+		given?: string;
+		hint?: string;
+		trigger?: string;
+		options?: string[];
+		mixed?: boolean;
+		again?: boolean;
+	};
 }
 
 export interface LessonResultInput {
@@ -159,7 +177,50 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	// Every miss goes to the review deck — the lesson and the deck feed each other.
 	const missed = [...new Set(input.reps.filter((r) => r.verdict !== "exact" || r.assisted).map((r) => r.slug))];
 	const queued = missed.length ? enqueueWords(missed, now) : [];
+	// The lesson itself — every sentence and answer — goes to the corpus
+	// log; progress.json keeps only the totals.
+	try {
+		appendLessonLog({
+			id: `lesson_${now.getTime().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+			at: now.toISOString(),
+			day: today(input.tz, now),
+			unit: input.unit,
+			mode: input.mode,
+			ms: input.ms,
+			xp,
+			correct,
+			total,
+			perfect,
+			queued,
+			reps: input.reps.map(logRep),
+		});
+	} catch (err) {
+		console.warn("[lesson] could not append the lesson log:", err instanceof Error ? err.message : err);
+	}
 	return { xp, correct, total, perfect, queued, newBest, summary: progressSummary(input.tz, now) };
+}
+
+function logRep(r: RepResult): LessonLogRep {
+	const d = r.detail ?? {};
+	return {
+		itemId: r.itemId,
+		kind: r.kind,
+		unit: d.unit ?? "",
+		slug: r.slug,
+		lemma: d.lemma ?? "",
+		gloss: d.gloss ?? "",
+		sentence: d.sentence ?? "",
+		translation: d.translation ?? "",
+		answer: d.answer ?? "",
+		given: d.given ?? "",
+		verdict: r.verdict,
+		assisted: r.assisted === true,
+		...(d.hint ? { hint: d.hint } : {}),
+		...(d.trigger ? { trigger: d.trigger } : {}),
+		...(d.options ? { options: d.options } : {}),
+		...(d.mixed ? { mixed: true } : {}),
+		...(d.again ? { again: true } : {}),
+	};
 }
 
 /** A review answer counts toward XP and the day (called by /api/review). */

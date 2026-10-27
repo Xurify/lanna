@@ -12,19 +12,27 @@
  *   4. Browser      nothing above worked → 204 + "x-tts-fallback: browser";
  *                   the client speaks with window.speechSynthesis.
  *
- * Every synthesized clip is cached under <data>/cache/audio/<sha256>.<ext>
- * keyed by (language, voice preference, text), so a sentence is paid for
- * once and replays offline. Playback speed is the client's job
- * (HTMLAudioElement.playbackRate) and never splits the cache.
+ * Every synthesized clip is KEPT under <data>/audio/<lang>/<voice>/
+ * <slug>-<key>.mp3 and listed in <data>/audio/index.jsonl (text, voice,
+ * tier, date — src/store/corpus.ts), keyed by (language, voice preference,
+ * text), so a sentence is paid for once, replays offline, and stays
+ * reusable outside the app. Playback speed is the client's job
+ * (HTMLAudioElement.playbackRate) and never splits the key. Clips from
+ * the pre-index location (<data>/cache/audio/<sha256>.mp3) are moved into
+ * the tree on the first request, their texts recovered by hashing every
+ * phrase the app could have spoken.
  */
 
 import { spawn } from "node:child_process";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { PATHS } from "../../config.ts";
-import { languageByCode, type LanguageInfo } from "../core/language.ts";
+import { ACTIVE_PROFILE } from "../../config.ts";
+import { loadLexicon } from "../agent/lexicon.ts";
+import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { chatStore } from "../store/chats.ts";
+import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
+import { reviewStore } from "../store/review.ts";
 import { keyValue } from "./keys.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
@@ -53,25 +61,70 @@ const DEFAULT_ELEVENLABS_VOICE: Record<string, string> = { sk: "YJsJ2Mt3VRr0gCiT
 const EXT_TYPES: Record<string, string> = { mp3: "audio/mpeg", wav: "audio/wav" };
 
 export function ttsCacheKey(req: TtsRequest): string {
-	const text = req.text.normalize("NFC").trim();
-	return crypto.createHash("sha256").update(`${req.lang}\u0000${req.voice ?? "female"}\u0000${text}`).digest("hex");
+	return audioKey(req.lang, req.voice ?? "female", req.text);
+}
+
+const SAY_SPAN = /`say:\s*([^`]+)`/g;
+
+/**
+ * Every phrase the app could have spoken so far — the texts behind the
+ * hash-named clips of the old cache: `say:` spans in every chat (both
+ * voices), the lexicon's example sentences and lemmas, and the review
+ * cards' sentences, for every language with a lexicon.
+ */
+function* spokenPhrases(): Generator<MigrationCandidate> {
+	const voices: Array<"female" | "male"> = ["female", "male"];
+	const seen = new Set<string>();
+	const emit = function* (lang: string, text: string) {
+		const t = text.normalize("NFC").trim();
+		if (!t || seen.has(`${lang}\u0000${t}`)) return;
+		seen.add(`${lang}\u0000${t}`);
+		for (const voice of voices) yield { lang, voice, text: t };
+	};
+	for (const [profile, info] of Object.entries(LANGUAGES)) {
+		const lex = loadLexicon(profile);
+		if (!lex) continue;
+		for (const e of lex.entries) {
+			yield* emit(info.code, e.sk);
+			for (const ex of e.examples) yield* emit(info.code, ex.sk);
+		}
+	}
+	const active = LANGUAGES[ACTIVE_PROFILE].code;
+	for (const card of Object.values(reviewStore.readCards())) yield* emit(active, card.sentence);
+	for (const summary of chatStore.listChats()) {
+		const chat = chatStore.getChat(summary.id);
+		if (!chat) continue;
+		for (const m of chat.messages) {
+			const blocks = Array.isArray(m.content) ? m.content : [{ type: "text", text: String(m.content ?? "") }];
+			for (const b of blocks as Array<{ type?: string; text?: string }>) {
+				if (b.type !== "text" || typeof b.text !== "string") continue;
+				for (const match of b.text.matchAll(SAY_SPAN)) yield* emit(active, match[1]!);
+			}
+		}
+	}
+}
+
+let migrated = false;
+
+/** Once per process: move the old hash-only cache into the indexed tree. */
+export function migrateAudioOnce(): { moved: number; matched: number } | null {
+	if (migrated) return null;
+	migrated = true;
+	try {
+		const result = migrateLegacyAudio(spokenPhrases);
+		if (result.moved > 0) console.log(`[tts] moved ${result.moved} clips into data/audio (${result.matched} texts recovered)`);
+		return result;
+	} catch (err) {
+		console.warn("[tts] audio migration failed:", err instanceof Error ? err.message : err);
+		return null;
+	}
 }
 
 function cached(key: string): TtsClip | null {
-	for (const ext of Object.keys(EXT_TYPES)) {
-		const file = path.join(PATHS.audioCache, `${key}.${ext}`);
-		if (fs.existsSync(file) && fs.statSync(file).size > 0) return { file, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache" };
-	}
-	return null;
-}
-
-function store(key: string, ext: "mp3" | "wav", data: Buffer): string {
-	fs.mkdirSync(PATHS.audioCache, { recursive: true });
-	const file = path.join(PATHS.audioCache, `${key}.${ext}`);
-	const tmp = `${file}.${process.pid}.tmp`;
-	fs.writeFileSync(tmp, data);
-	fs.renameSync(tmp, file);
-	return file;
+	const hit = findAudioClip(key);
+	if (!hit) return null;
+	const ext = hit.file.endsWith(".wav") ? "wav" : "mp3";
+	return { file: hit.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache" };
 }
 
 function envFor(name: string, code: string): string | undefined {
@@ -162,6 +215,7 @@ const TIERS: Array<{ tier: TtsTier; ext: "mp3" | "wav"; run: (req: TtsRequest, l
 export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	const lang = languageByCode(req.lang);
 	if (!lang) throw new Error(`unsupported language "${req.lang}"`);
+	migrateAudioOnce();
 	const key = ttsCacheKey(req);
 	const hit = cached(key);
 	if (hit) return hit;
@@ -169,7 +223,10 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 		if (req.skip?.includes(tier)) continue;
 		try {
 			const audio = await run(req, lang);
-			if (audio && audio.length > 0) return { file: store(key, ext, audio), contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier };
+			if (audio && audio.length > 0) {
+				const stored = storeAudioClip({ key, lang: lang.code, voice: req.voice ?? "female", tier, text: req.text, ext, data: audio });
+				return { file: stored.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier };
+			}
 		} catch (err) {
 			console.warn(`[tts] ${tier} failed, falling through:`, err instanceof Error ? err.message : err);
 		}

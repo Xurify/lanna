@@ -21,6 +21,7 @@
 		"typecheck": "tsc --noEmit",
 		"lexicon:export": "node scripts/export-slovakwiki-lexicon.mjs ../slovak.wiki",
 		"seed:build": "tsx scripts/build-seed.ts slovak",
+		"corpus:export": "tsx scripts/corpus-export.ts",
 		"desktop:dev": "node scripts/desktop-dev.mjs",
 		"dev:fresh": "bash scripts/dev-fresh.sh",
 		"desktop:dist": "rm -rf dist .next/standalone && next build && node scripts/smoke-provider-runtime.mjs && node scripts/build-server.mjs && node scripts/smoke-server.mjs && DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer} APPLE_KEYCHAIN_PROFILE=LH_NOTARY APPLE_TEAM_ID=JS6XN22HY6 electron-builder --mac --arm64"
