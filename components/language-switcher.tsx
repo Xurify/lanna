@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { RepeatIcon, SunIcon } from "lucide-react";
+import { MapIcon, RepeatIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProfileInfo {
@@ -66,62 +66,93 @@ export function LanguageSwitcher() {
 	const reviewNew = counts?.newLeft ?? 0;
 
 	return (
-		<div className="mx-3 mb-2 flex flex-col gap-1.5" data-testid="language-block">
-			{profile && (
-				<div className="flex items-center gap-0.5 rounded-md border border-border/60 bg-background p-0.5" role="radiogroup" aria-label="Language">
-					{profile.profiles.map((p) => {
-						const running = p.id === profile.active;
-						const pending = p.id === profile.selected && profile.restartRequired;
-						return (
-							<button
-								key={p.id}
-								type="button"
-								role="radio"
-								aria-checked={running}
-								data-testid={`profile-${p.id}`}
-								onClick={() => void choose(p.id, p.english)}
-								title={pending ? `${p.english} after restart` : running ? `${p.english} (running)` : `Switch to ${p.english}`}
-								className={cn(
-									"flex-1 rounded-sm px-2 py-1 text-[11px] tracking-wide transition-colors",
-									running ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
-									pending && "ring-1 ring-primary/50",
-								)}
-							>
-								{p.endonym}
-							</button>
-						);
-					})}
-				</div>
-			)}
-			{note && <p className="px-1 text-[11px] text-muted-foreground">{note}</p>}
-			<Link
-				href="/"
-				data-testid="today-door"
-				className={cn(
-					"flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider transition-colors hover:bg-accent hover:text-foreground",
-					pathname === "/" ? "bg-accent text-foreground" : "text-muted-foreground",
+		<div className="mx-3 mb-3 flex flex-col gap-3" data-testid="language-block">
+			{/* Reserved height: the profile arrives after mount, and the nav
+			    below must not jump when it does (CLS). */}
+			<div className="h-9">
+				{profile ? (
+					<div className="flex h-9 items-center gap-1 rounded-xl bg-card p-1" role="radiogroup" aria-label="Language">
+						{profile.profiles.map((p) => {
+							const running = p.id === profile.active;
+							const pending = p.id === profile.selected && profile.restartRequired;
+							return (
+								<button
+									key={p.id}
+									type="button"
+									role="radio"
+									aria-checked={running}
+									data-testid={`profile-${p.id}`}
+									onClick={() => void choose(p.id, p.english)}
+									title={pending ? `${p.english} after restart` : running ? `${p.english} (running)` : `Switch to ${p.english}`}
+									className={cn(
+										"flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-semibold transition-colors",
+										running ? "bg-accent text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+										pending && "ring-1 ring-primary/50",
+									)}
+								>
+									{p.endonym}
+								</button>
+							);
+						})}
+					</div>
+				) : (
+					<div className="h-9 animate-pulse rounded-xl bg-card" aria-hidden />
 				)}
-			>
-				<SunIcon className="size-3" />
-				Today
-			</Link>
-			<Link
-				href="/review"
-				data-testid="review-door"
-				className={cn(
-					"flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider transition-colors hover:bg-accent hover:text-foreground",
-					pathname === "/review" ? "bg-accent text-foreground" : "text-muted-foreground",
-				)}
-			>
-				<RepeatIcon className="size-3" />
-				Review
-				{counts && (reviewDue > 0 || reviewNew > 0) && (
-					<span className="ml-auto flex gap-1.5 font-mono text-[11px] normal-case tracking-normal">
-						{reviewDue > 0 && <span className="text-foreground">{reviewDue} due</span>}
-						{reviewNew > 0 && <span className="text-muted-foreground">{reviewNew} new</span>}
-					</span>
-				)}
-			</Link>
+			</div>
+			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
+			<nav className="flex flex-col gap-0.5" aria-label="Main">
+				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />} tint="text-gold">
+					Today
+				</NavItem>
+				<NavItem href="/review" testid="review-door" active={pathname === "/review"} icon={<RepeatIcon className="size-[18px]" />} tint="text-sky">
+					Review
+					{counts && (reviewDue > 0 || reviewNew > 0) && (
+						<span
+							className={cn(
+								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
+								reviewDue > 0 ? "bg-sky/20 text-sky" : "bg-accent text-muted-foreground",
+							)}
+						>
+							{reviewDue > 0 ? `${reviewDue} due` : `${reviewNew} new`}
+						</span>
+					)}
+				</NavItem>
+				<NavItem href="/map" testid="map-door" active={pathname === "/map"} icon={<MapIcon className="size-[18px]" />} tint="text-xp">
+					Skill map
+				</NavItem>
+			</nav>
 		</div>
+	);
+}
+
+/** One primary destination: icon in its own color, label in sentence case. */
+function NavItem({
+	href,
+	testid,
+	active,
+	icon,
+	tint,
+	children,
+}: {
+	href: string;
+	testid: string;
+	active: boolean;
+	icon: React.ReactNode;
+	tint: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<Link
+			href={href}
+			data-testid={testid}
+			aria-current={active ? "page" : undefined}
+			className={cn(
+				"flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
+				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+			)}
+		>
+			<span className={cn("shrink-0", active ? tint : "")}>{icon}</span>
+			{children}
+		</Link>
 	);
 }

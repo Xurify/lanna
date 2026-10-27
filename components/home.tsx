@@ -234,7 +234,7 @@ export function Home({
 									type="button"
 									data-testid="setup-cta"
 									onClick={() => setSetupOpen(true)}
-									className="rounded-sm border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent cursor-pointer"
+									className="cursor-pointer rounded-full border-2 border-gold/40 bg-gold/10 px-4 py-1.5 font-ui text-xs font-bold text-gold transition-colors hover:bg-gold/20"
 								>
 									Set up your models
 								</button>

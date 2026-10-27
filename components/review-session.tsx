@@ -187,13 +187,13 @@ export function ReviewSession() {
 	return (
 		<div className="flex h-dvh flex-col">
 			<TopBar>
-				<span className="font-ui text-xs uppercase tracking-widest text-muted-foreground">Review</span>
+				<h1 className="font-ui text-base font-extrabold text-foreground">Review</h1>
 				{counts && (
-					<span className="ml-auto flex items-center gap-3 font-mono text-[11px] text-muted-foreground" data-testid="review-counts">
-						<span title="Cards due for review">{counts.due + counts.learning} due</span>
-						<span title="New cards left today">{counts.newLeft} new</span>
-						<span title="Reviews done today">{counts.reviewedToday} done today</span>
-						<span title="Words in the deck">{counts.total} words</span>
+					<span className="ml-auto flex items-center gap-1.5 font-ui text-xs font-bold text-muted-foreground tabular-nums" data-testid="review-counts">
+						<span title="Cards due for review" className="rounded-full bg-sky/15 px-2.5 py-1 text-sky">{counts.due + counts.learning} due</span>
+						<span title="New cards left today" className="rounded-full bg-accent px-2.5 py-1">{counts.newLeft} new</span>
+						<span title="Reviews done today" className="rounded-full bg-go-soft px-2.5 py-1 text-go">{counts.reviewedToday} done today</span>
+						<span title="Words in the deck" className="hidden px-1.5 sm:inline">{counts.total} words</span>
 					</span>
 				)}
 			</TopBar>
@@ -209,8 +209,8 @@ export function ReviewSession() {
 					)}
 
 					{status?.available && !prompt && (
-						<div className="rounded-xl border bg-card p-6" data-testid="review-done">
-							<p className="text-base text-foreground">You are done for now.</p>
+						<div className="rounded-3xl border-2 bg-card p-8 text-center" data-testid="review-done">
+							<p className="font-ui text-2xl font-black text-foreground">All caught up 🎉</p>
 							<p className="mt-1 text-sm text-muted-foreground">
 								{counts?.reviewedToday ?? 0} reviews today. New words tomorrow: {status.settings.newPerDay}. Words that come back
 								sooner wait in the deck until they are due.
@@ -230,8 +230,8 @@ export function ReviewSession() {
 					)}
 
 					{prompt && (
-						<div className="rounded-2xl border bg-card p-6 shadow-sm" data-testid="review-card">
-							<div className="mb-4 flex items-center gap-2 font-ui text-[11px] uppercase tracking-wider text-muted-foreground">
+						<div className="rounded-3xl border-2 bg-card p-8 shadow-[0_4px_0_0_var(--border)]" data-testid="review-card">
+							<div className="mb-5 flex items-center gap-2 font-ui text-xs font-bold text-muted-foreground">
 								<span>{prompt.card.state === "new" ? "New word" : prompt.card.state === "learning" ? "Relearning" : "Review"}</span>
 								<div className="ml-auto flex items-center gap-1">
 									{(["type", "choice"] as const).map((m) => (
@@ -266,7 +266,7 @@ export function ReviewSession() {
 									e.preventDefault();
 									check(given);
 								}}
-								className="text-2xl leading-relaxed text-foreground"
+								className="text-3xl leading-relaxed text-foreground"
 								lang={lang?.code}
 							>
 								<span>{prompt.before}</span>
@@ -289,7 +289,7 @@ export function ReviewSession() {
 										spellCheck={false}
 										data-testid="review-input"
 										style={{ width: `${Math.max(4, prompt.card.answer.length + 1)}ch` }}
-										className="mx-1 inline-block rounded-md border-b-2 border-primary/60 bg-primary/5 px-1 text-center font-semibold outline-none focus:border-primary"
+										className="mx-1 inline-block rounded-lg border-2 border-b-[4px] border-border bg-background px-2 text-center font-bold caret-go outline-none transition-colors focus:border-go"
 									/>
 								) : (
 									<span className="mx-1 inline-block min-w-16 border-b-2 border-dashed border-muted-foreground/50 text-center">&nbsp;</span>
@@ -297,7 +297,7 @@ export function ReviewSession() {
 								<span>{prompt.after}</span>
 							</form>
 
-							<p className="mt-3 text-base text-muted-foreground">{prompt.card.translation}</p>
+							<p className="mt-3 text-lg text-muted-foreground">{prompt.card.translation}</p>
 
 							{!verdict && mode === "choice" && (
 								<div className="mt-5 grid grid-cols-2 gap-2" data-testid="review-options">
@@ -306,7 +306,7 @@ export function ReviewSession() {
 											key={o}
 											type="button"
 											onClick={() => check(o)}
-											className="rounded-lg border bg-background px-3 py-2 text-lg text-foreground transition-colors hover:border-primary/60 hover:bg-accent"
+											className="rounded-2xl border-2 bg-background px-4 py-3 text-left text-xl text-foreground shadow-[0_3px_0_0_var(--border)] transition-all hover:border-sky/60 hover:bg-accent active:translate-y-0.5 active:shadow-none"
 										>
 											{o}
 										</button>
@@ -315,9 +315,9 @@ export function ReviewSession() {
 							)}
 
 							{!verdict && (
-								<div className="mt-5 flex items-center gap-2 text-sm">
+								<div className="mt-7 flex items-center gap-2 font-ui text-sm">
 									{mode === "type" && (
-										<button type="button" onClick={() => check(given)} className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:opacity-90">
+										<button type="button" onClick={() => check(given)} className="rounded-2xl bg-go px-7 py-2.5 font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none">
 											Check
 										</button>
 									)}
@@ -417,7 +417,7 @@ export function ReviewSession() {
 
 					{status && status.leeches.length > 0 && (
 						<div className="mt-10" data-testid="review-leeches">
-							<h2 className="font-ui text-[11px] uppercase tracking-widest text-muted-foreground">Words that keep slipping</h2>
+							<h2 className="font-ui text-sm font-extrabold text-muted-foreground">Words that keep slipping</h2>
 							<ul className="mt-2 flex flex-wrap gap-2 text-sm">
 								{status.leeches.map((l) => (
 									<li key={l.id} className="rounded-md border px-2 py-1">

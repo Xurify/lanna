@@ -337,13 +337,13 @@ export function LessonPlayer({ unit, mode }: { unit?: UnitId; mode: Mode }) {
 				</button>
 			</div>
 
-			<div className="mx-auto mt-1 w-full max-w-3xl px-5 font-ui text-[11px] uppercase tracking-widest text-muted-foreground">
+			<div className="mx-auto mt-1 w-full max-w-3xl px-5 font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">
 				{unitTitle}
 				{mode === "blitz" && <span className="ml-2 text-foreground">{reps.filter((r) => r.verdict !== "wrong").length} right</span>}
 			</div>
 
 			{/* The rep */}
-			<div className="flex flex-1 flex-col justify-center overflow-y-auto px-5 pb-6">
+			<div className="flex flex-1 flex-col overflow-y-auto px-5 pb-6 pt-[10vh]">
 				<div key={`${item.id}-${index}`} className={cn("lh-rise mx-auto w-full max-w-2xl", shake && current?.verdict === "wrong" && "lh-shake")}>
 					<RepView key={`${item.id}-${index}-${shake}`} item={item} tag={tag} locked={!!current} result={current} onGrade={grade} />
 				</div>
@@ -507,7 +507,7 @@ function ClozeRep({
 							<button
 								type="submit"
 								disabled={!given.trim()}
-								className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
+								className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
 							>
 								Check
 							</button>
@@ -633,7 +633,7 @@ function BuildRep({ item, locked, onGrade }: { item: LessonItem; locked: boolean
 						type="button"
 						onClick={check}
 						disabled={picked.length === 0}
-						className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
+						className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all enabled:hover:brightness-110 enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
 					>
 						Check
 					</button>
@@ -659,7 +659,7 @@ function FeedbackSheet({ rep, tag, onContinue, onWhy, last }: { rep: Rep; tag: s
 		<div className={cn("lh-rise border-t-2 border-border/40", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict}>
 			<div className="mx-auto flex w-full max-w-3xl flex-wrap items-end gap-4 px-5 py-5">
 				<div className="min-w-0 flex-1">
-					<p className={cn("flex items-center gap-2 font-prose text-2xl font-bold", tone.ink)}>
+					<p className={cn("flex items-center gap-2 font-ui text-2xl font-bold", tone.ink)}>
 						{verdict === "exact" && <SparklesIcon className="size-6" />}
 						{tone.title}
 					</p>
@@ -687,7 +687,7 @@ function FeedbackSheet({ rep, tag, onContinue, onWhy, last }: { rep: Rep; tag: s
 				</div>
 				<div className="flex items-center gap-2">
 					{verdict !== "exact" && (
-						<button type="button" onClick={onWhy} className="flex items-center gap-1.5 rounded-2xl border-2 border-foreground/20 px-4 py-3 font-ui text-xs font-bold uppercase tracking-wider text-foreground hover:bg-background/40">
+						<button type="button" onClick={onWhy} className="flex items-center gap-1.5 rounded-2xl border-2 border-foreground/20 px-4 py-3 font-ui text-xs font-extrabold uppercase tracking-wider text-foreground hover:bg-background/40">
 							<HelpCircleIcon className="size-4" />
 							Why?
 						</button>
@@ -697,7 +697,7 @@ function FeedbackSheet({ rep, tag, onContinue, onWhy, last }: { rep: Rep; tag: s
 						autoFocus
 						onClick={onContinue}
 						data-testid="lesson-continue"
-						className={cn("rounded-2xl px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none", tone.btn)}
+						className={cn("rounded-2xl px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none", tone.btn)}
 					>
 						{last ? "Finish" : "Continue"}
 					</button>
@@ -775,7 +775,7 @@ function EndScreen({
 			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-gold/15 text-gold">
 				{mode === "blitz" ? <ZapIcon className="size-12" /> : <SparklesIcon className="size-12" />}
 			</div>
-			<h1 className="mt-5 font-prose text-4xl font-black text-foreground">
+			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
 				{mode === "blitz" ? (outcome?.newBest ? "New best!" : "Time!") : outcome?.perfect ? "Perfect lesson!" : "Lesson complete!"}
 			</h1>
 			<p className="mt-2 font-prose text-lg text-muted-foreground">{mode === "blitz" ? `${correct} right in 60 seconds` : unitInfo(unit).title}</p>
@@ -795,7 +795,7 @@ function EndScreen({
 
 			{missed.length > 0 && (
 				<div className="mt-6 rounded-2xl border bg-card p-4 text-left">
-					<p className="font-ui text-[11px] uppercase tracking-widest text-muted-foreground">Worth another look</p>
+					<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">Worth another look</p>
 					<ul className="mt-2 flex flex-col gap-1.5">
 						{missed.slice(0, 5).map((r, i) => (
 							<li key={i} className="flex items-baseline gap-2 font-prose text-base text-foreground" lang="sk">
@@ -810,11 +810,11 @@ function EndScreen({
 			)}
 
 			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-				<Link href="/" className="rounded-2xl border-2 px-6 py-3 font-ui text-sm font-bold uppercase tracking-wider text-foreground hover:bg-accent">
+				<Link href="/" className="rounded-2xl border-2 px-6 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-foreground hover:bg-accent">
 					Today
 				</Link>
 				{mode === "blitz" ? (
-					<button type="button" onClick={onAgain} className="rounded-2xl bg-sky px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider text-background shadow-[0_4px_0_0_rgb(0_0_0/0.35)] hover:brightness-110">
+					<button type="button" onClick={onAgain} className="rounded-2xl bg-sky px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-background shadow-[0_4px_0_0_rgb(0_0_0/0.35)] hover:brightness-110">
 						Go again
 					</button>
 				) : (
@@ -822,7 +822,7 @@ function EndScreen({
 						type="button"
 						disabled={!outcome}
 						onClick={() => outcome && onNext(outcome.summary.next)}
-						className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] hover:brightness-110 disabled:opacity-40"
+						className="rounded-2xl bg-go px-8 py-3 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] hover:brightness-110 disabled:opacity-40"
 					>
 						Next lesson
 					</button>
@@ -835,8 +835,8 @@ function EndScreen({
 function Stat({ label, value, ink, icon }: { label: string; value: string; ink: string; icon?: React.ReactNode }) {
 	return (
 		<div className="rounded-2xl border-2 bg-card px-3 py-4">
-			<p className="font-ui text-[11px] uppercase tracking-widest text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 flex items-center justify-center gap-1 font-prose text-3xl font-black tabular-nums", ink)}>
+			<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">{label}</p>
+			<p className={cn("mt-1 flex items-center justify-center gap-1 font-ui text-3xl font-black tabular-nums", ink)}>
 				{icon}
 				{value}
 			</p>

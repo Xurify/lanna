@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
 	// The manual copies the docs require — public/ and .next/static — are
 	// done by scripts/build-server.mjs.
 	output: "standalone",
+	// The dev "N" bubble sat on top of the sidebar's Settings button in
+	// desktop:dev; build errors still show as an overlay.
+	devIndicators: false,
 	// SAFETY (empirically verified 2026-09-17): without this, output file
 	// tracing sweeps the repo's real data/ — chat records, graph ledgers —
 	// INTO the standalone bundle. A shipped desktop app would carry the

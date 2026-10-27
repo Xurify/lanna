@@ -7,13 +7,17 @@ import { DumbbellIcon } from "lucide-react";
  * setup is centered only when it is the sole action. */
 export function ComposerActions({ picker, setup }: { picker?: ReactNode; setup?: ReactNode }) {
 	if (!picker && !setup) return null;
+	// Zero in-flow height: the row floats just above the composer, so a
+	// pill that appears after load (the key check) never moves the dock (CLS).
 	return (
-		<div
-			data-testid="composer-actions"
-			className={`pointer-events-auto mb-2 flex flex-wrap items-center gap-2 ${picker ? "justify-start" : "justify-center"}`}
-		>
-			{picker}
-			{setup}
+		<div className="relative h-0">
+			<div
+				data-testid="composer-actions"
+				className={`pointer-events-auto absolute inset-x-0 bottom-2 flex flex-wrap items-center gap-2 ${picker ? "justify-start" : "justify-center"}`}
+			>
+				{picker}
+				{setup}
+			</div>
 		</div>
 	);
 }

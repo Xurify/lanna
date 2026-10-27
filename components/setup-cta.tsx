@@ -51,12 +51,16 @@ export function ZeroKeysPill({ onOpen, inline = false }: { onOpen: () => void; i
 			type="button"
 			data-testid="setup-cta-keys"
 			onClick={onOpen}
-			className="rounded-sm border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent cursor-pointer"
+			className="cursor-pointer rounded-full border-2 border-gold/40 bg-gold/10 px-4 py-1.5 font-ui text-xs font-bold text-gold transition-colors hover:bg-gold/20"
 		>
 			Add a provider key
 		</button>
 	);
-	return inline ? button : <div className="pointer-events-auto mb-2 flex justify-center">{button}</div>;
+	return inline ? button : (
+		<div className="relative h-0">
+			<div className="pointer-events-auto absolute inset-x-0 bottom-2 flex justify-center">{button}</div>
+		</div>
+	);
 }
 /** Pure: the strong slot is pinned to a provider whose key is GONE (owner
  *  interlude, 2026-09-25 — the original deleted-key scenario). The catalog

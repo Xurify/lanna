@@ -1,5 +1,5 @@
 import { Today } from "@/components/today";
-import { readSettingsRecord } from "@/src/server";
+import { progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 // Dynamic: the configured state is server-rendered into the page (Talk and
@@ -10,5 +10,13 @@ export const dynamic = "force-dynamic";
  *  The knowledge-graph home moved to /map. */
 export default function HomePage() {
 	const record = readSettingsRecord();
-	return <Today initialConfigured={slotsConfigured(record?.models)} />;
+	// The summary renders with the page (the server is the learner's own
+	// machine, so its clock is the learner's): no empty state, no swap.
+	let summary = null;
+	try {
+		summary = progressSummary(new Date().getTimezoneOffset());
+	} catch {
+		summary = null;
+	}
+	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} />;
 }

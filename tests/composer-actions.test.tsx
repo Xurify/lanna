@@ -72,10 +72,13 @@ describe("composer action row", () => {
 
 	it("existing chat callers retain the standalone provider-key pill wrapper", () => {
 		const document = documentFor(<ZeroKeysPill onOpen={() => {}} />);
+		// Zero-height wrapper (CLS): the pill floats above the composer.
 		const wrapper = document.body.firstElementChild!;
 		assert.equal(wrapper.tagName, "DIV");
-		assert.ok(wrapper.classList.contains("justify-center"));
-		assert.ok(wrapper.classList.contains("mb-2"));
+		assert.ok(wrapper.classList.contains("h-0"));
+		const row = wrapper.firstElementChild!;
+		assert.ok(row.classList.contains("justify-center"));
+		assert.ok(row.classList.contains("absolute"));
 	});
 
 	it("the practice shell preserves a selected node in teaching mode", () => {

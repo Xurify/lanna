@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { DumbbellIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon } from "lucide-react";
+import { DumbbellIcon, GraduationCapIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon } from "lucide-react";
 import { ActivitySection } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
@@ -18,6 +18,7 @@ import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { fuzzyScore } from "@/src/core";
 import { useServerEvent, useServerResync } from "@/components/server-events";
 import type { ChatListItem } from "@/src/core";
@@ -32,6 +33,10 @@ import { notifySettingsSaved } from "@/components/settings-signal";
  */
 
 const STORAGE_KEY = "lh:sidebar-open";
+function persistOpen(v: boolean) {
+	localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
+	document.cookie = `${SIDEBAR_COOKIE}=${v ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+}
 
 /*
  * Narrow-window behavior (owner, 2026-09-17): below SIDEBAR_AUTOCLOSE the
@@ -93,7 +98,7 @@ export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-export function SidebarProvider({ children }: { children: React.ReactNode }) {
+export function SidebarProvider({ children, initialOpen = true }: { children: React.ReactNode; initialOpen?: boolean }) {
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -101,9 +106,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
 		return off;
 	}, []);
-	// Start closed so server and client first-render agree (no hydration
-	// mismatch); the stored value is applied after mount.
-	const [open, setOpen] = useState(false);
+	// The server read the cookie, so server and first client render agree
+	// AND match the stored preference: no hydration mismatch, no slide-in.
+	const [open, setOpen] = useState(initialOpen);
 	const [narrow, setNarrow] = useState(false);
 	const [mounted, setMounted] = useState(false);
 
@@ -128,11 +133,28 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 		const off = window.lh?.onZoom?.(setZoomVar);
 		void window.lh?.getZoom?.().then(setZoomVar);
 
+		// Migrate a localStorage-only preference into the cookie once (the
+		// cookie wins from then on). Default: open.
 		const stored = localStorage.getItem(STORAGE_KEY);
-		// Default: open (first run introduces the sidebar).
-		setOpen(stored === null ? true : stored === "1");
-		setMounted(true);
-		return () => off?.();
+		if (!String(document.cookie ?? "").includes(`${SIDEBAR_COOKIE}=`)) {
+			const v = stored === null ? true : stored === "1";
+			persistOpen(v);
+			setOpen(v);
+		}
+		// Arm the width transition only after the first frames have painted,
+		// so nothing applied at mount animates.
+		// (setTimeout fallback: test DOMs have no requestAnimationFrame.)
+		const frame = typeof requestAnimationFrame === "function" ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 16) as unknown as number;
+		const cancel = typeof cancelAnimationFrame === "function" ? cancelAnimationFrame : (id: number) => clearTimeout(id);
+		let inner = 0;
+		const outer = frame(() => {
+			inner = frame(() => setMounted(true));
+		});
+		return () => {
+			off?.();
+			cancel(outer);
+			cancel(inner);
+		};
 	}, []);
 
 	// Narrow-window auto-close/auto-restore (see SIDEBAR_AUTOCLOSE note):
@@ -154,13 +176,13 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 		// persists like any other open, so a restart at a narrow width
 		// still auto-restores when widened.
 		if (narrow && !open) {
-			localStorage.setItem(STORAGE_KEY, "0");
+			persistOpen(true);
 			setOpen(true);
 			window.lh?.expandWindow();
 			return;
 		}
 		setOpen((v) => {
-			localStorage.setItem(STORAGE_KEY, v ? "0" : "1");
+			persistOpen(!v);
 			return !v;
 		});
 	}, [narrow, open]);
@@ -679,6 +701,9 @@ function SessionsSidebar() {
 							<LhMark className="size-6" />
 						</Link>
 					</Hint>
+					<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
+						Lang<span className="text-go">Harness</span>
+					</Link>
 					<Hint label="Close sidebar" action="toggle-sidebar">
 						<Button
 							variant="ghost"
@@ -692,38 +717,38 @@ function SessionsSidebar() {
 					</Hint>
 				</div>
 
-				{/* Two doors, STACKED (owner round 8, 2026-10-05 — was a
-				    half/half row): full-width rows read cleaner and give the
-				    labels room; teaching keeps the original draft route,
-				    practice carries its mode. */}
-				<div className="mx-3 mb-2 flex flex-col gap-1.5">
+				{/* LangHarness: the language profile + the main destinations. */}
+				<LanguageSwitcher />
+
+				{/* The tutor: two ways to start a model-led session. */}
+				<div className="mx-3 mb-3 flex flex-col gap-0.5">
+					<div className="px-2.5 pb-1 text-xs font-bold text-muted-foreground/70">Tutor</div>
 					<button
 						type="button"
 						data-testid="new-session"
 						onClick={() => void newSession()}
-						className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 					>
-						<PlusIcon className="size-3" />
-						Teaching
+						<GraduationCapIcon className="size-[18px]" />
+						New lesson
 						<span className="sr-only">create a new teaching session</span>
+						<PlusIcon className="ml-auto size-4 opacity-60" />
 					</button>
 					<button
 						type="button"
 						data-testid="new-session-practice"
 						onClick={() => router.push("/chat/new?mode=practice")}
-						className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 					>
-						<DumbbellIcon className="size-3" />
-						Practice
+						<DumbbellIcon className="size-[18px]" />
+						New practice
 						<span className="sr-only">create a new practice session</span>
+						<PlusIcon className="ml-auto size-4 opacity-60" />
 					</button>
 				</div>
 
-				{/* LangHarness: the language profile + the spaced-review door. */}
-				<LanguageSwitcher />
-
-				<div className="mx-3 mb-2 flex items-center gap-2">
-					<span className="text-xs uppercase tracking-widest text-muted-foreground/70">Sessions</span>
+				<div className="mx-3 mb-2 flex flex-col gap-1.5 border-t border-border/50 pt-3">
+					<span className="px-2.5 text-xs font-bold text-muted-foreground/70">Sessions</span>
 					<Hint label="Search sessions" action="sessions-search" side="bottom">
 					<span className="relative flex-1">
 						<Input
@@ -776,9 +801,9 @@ function SessionsSidebar() {
 							}}
 							placeholder="Search…"
 							aria-label="Search sessions"
-							className="h-6 rounded-sm border-border bg-background pl-6 text-xs placeholder:text-muted-foreground/60"
+							className="h-8 rounded-lg border-0 bg-card pl-8 shadow-none text-sm placeholder:text-muted-foreground/60"
 						/>
-						<SearchIcon className="pointer-events-none absolute left-1.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground/70" />
+						<SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
 					</span>
 					</Hint>
 				</div>
@@ -790,7 +815,7 @@ function SessionsSidebar() {
 				    Practice / All — the real modes first, "All" as the escape
 				    hatch on the right, mirroring the create-buttons above.
 				    Persisted client-side. */}
-				<div className="mx-3 flex items-center gap-0.5 rounded-md border border-border/60 bg-background p-0.5" data-testid="session-kind-filter">
+				<div className="mx-3 flex items-center gap-1 px-0.5" data-testid="session-kind-filter">
 					{(["teach", "practice", "all"] as const).map((f) => (
 						<button
 							key={f}
@@ -798,13 +823,13 @@ function SessionsSidebar() {
 							data-testid={`kind-filter-${f}`}
 							onClick={() => setFilter(f)}
 							className={cn(
-								"flex-1 rounded-sm px-2 py-1 text-[11px] uppercase tracking-wider transition-colors",
+								"rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors",
 								kindFilter === f
 									? "bg-accent text-foreground"
 									: "text-muted-foreground hover:text-foreground",
 							)}
 						>
-							{f === "teach" ? "Teaching" : f === "all" ? "All" : "Practice"}
+							{f === "teach" ? "Lessons" : f === "all" ? "All" : "Practice"}
 						</button>
 					))}
 				</div>
@@ -858,9 +883,9 @@ function SessionsSidebar() {
 								type="button"
 								onClick={() => openSettings()}
 								data-testid="settings-entry"
-								className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 							>
-								<SettingsIcon className="size-3" />
+								<SettingsIcon className="size-[18px]" />
 								Settings
 							</button>
 						</Hint>

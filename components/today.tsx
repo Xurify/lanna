@@ -66,9 +66,9 @@ function greeting(now = new Date()): string {
 
 const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
 
-export function Today({ initialConfigured }: { initialConfigured: boolean }) {
+export function Today({ initialConfigured, initialSummary = null }: { initialConfigured: boolean; initialSummary?: Summary | null }) {
 	const router = useRouter();
-	const [s, setS] = useState<Summary | null>(null);
+	const [s, setS] = useState<Summary | null>(initialSummary);
 	const [failed, setFailed] = useState(false);
 	const [talkOpen, setTalkOpen] = useState(false);
 	const [configured, setConfigured] = useState(initialConfigured);
@@ -144,10 +144,10 @@ export function Today({ initialConfigured }: { initialConfigured: boolean }) {
 					{/* Greeting + the day's numbers */}
 					<div className="flex flex-wrap items-end justify-between gap-4">
 						<div>
-							<p className="font-ui text-[11px] uppercase tracking-widest text-muted-foreground">
+							<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">
 								{new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" })}
 							</p>
-							<h1 className="mt-1 font-prose text-4xl font-black tracking-tight text-foreground">{greeting()}!</h1>
+							<h1 className="mt-1 font-ui text-4xl font-black tracking-tight text-foreground">{greeting()}!</h1>
 						</div>
 						<div className="flex items-center gap-2">
 							<Pill className="text-flame" title={s?.streak.restUsed ? "Streak (one rest day used)" : "Day streak"}>
@@ -173,11 +173,11 @@ export function Today({ initialConfigured }: { initialConfigured: boolean }) {
 					{/* Continue — the one obvious next step */}
 					<div className="relative mt-6 overflow-hidden rounded-3xl border-2 border-go/40 bg-gradient-to-br from-go/20 via-card to-card p-6 sm:p-8" data-testid="continue-card">
 						<div className="absolute -right-10 -top-10 size-48 rounded-full bg-go/10 blur-2xl" aria-hidden="true" />
-						<p className="font-ui text-[11px] uppercase tracking-widest text-go">Continue</p>
+						<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-go">Continue</p>
 						<div className="mt-3 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
 							<UnitBadge glyph={next?.glyph ?? "Aa"} progress={next?.progress ?? 0} size="lg" active />
 							<div className="min-w-0">
-								<h2 className="font-prose text-3xl font-black text-foreground">{next?.title ?? "First words"}</h2>
+								<h2 className="font-ui text-3xl font-black text-foreground">{next?.title ?? "First words"}</h2>
 								<p className="mt-1 font-prose text-lg text-muted-foreground">{next?.tagline ?? "Everyday words in real sentences"}</p>
 								<p className="mt-1 font-ui text-xs text-muted-foreground">12 quick reps · about 3 minutes{next && next.lessons > 0 ? ` · lesson ${next.lessons + 1}` : ""}</p>
 							</div>
@@ -186,7 +186,7 @@ export function Today({ initialConfigured }: { initialConfigured: boolean }) {
 							<Link
 								href={`/lesson?unit=${s?.next ?? "words"}`}
 								data-testid="start-lesson"
-								className="lh-pulse-ring flex items-center gap-2 rounded-2xl bg-go px-8 py-3.5 font-ui text-sm font-bold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none"
+								className="lh-pulse-ring flex items-center gap-2 rounded-2xl bg-go px-8 py-3.5 font-ui text-sm font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none"
 							>
 								<PlayIcon className="size-4 fill-current" />
 								Start
@@ -199,7 +199,7 @@ export function Today({ initialConfigured }: { initialConfigured: boolean }) {
 					<div className="mt-5 flex flex-wrap items-center gap-6 rounded-3xl border bg-card px-6 py-5">
 						<GoalRing pct={goalPct} xp={s?.todayXp ?? 0} goal={s?.dailyGoal ?? 50} />
 						<div className="min-w-0 flex-1">
-							<p className="font-prose text-lg font-bold text-foreground">
+							<p className="font-ui text-lg font-bold text-foreground">
 								{goalPct >= 1 ? "Daily goal reached. Pekne!" : `${Math.max(0, (s?.dailyGoal ?? 50) - (s?.todayXp ?? 0))} XP to today's goal`}
 							</p>
 							<div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2" aria-label="This week">
@@ -283,7 +283,7 @@ export function Today({ initialConfigured }: { initialConfigured: boolean }) {
 
 				{/* The skill path */}
 				<aside aria-label="Skill path" data-testid="skill-path">
-					<p className="font-ui text-[11px] uppercase tracking-widest text-muted-foreground">Your path</p>
+					<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">Your path</p>
 					<ol className="relative mt-4">
 						{(s?.units ?? []).map((u, i) => {
 							const offset = [0, 1, 2, 1][i % 4]!;
@@ -300,7 +300,7 @@ export function Today({ initialConfigured }: { initialConfigured: boolean }) {
 									<Link href={`/lesson?unit=${u.id}`} className="group flex items-center gap-4" data-testid={`unit-${u.id}`}>
 										<UnitBadge glyph={u.glyph} progress={u.progress} level={u.level} active={current} />
 										<span className="min-w-0">
-											<span className={cn("block font-prose text-base font-bold", current ? "text-go" : "text-foreground group-hover:text-foreground")}>{u.title}</span>
+											<span className={cn("block font-ui text-base font-bold", current ? "text-go" : "text-foreground group-hover:text-foreground")}>{u.title}</span>
 											<span className="block font-ui text-[11px] text-muted-foreground">
 												{u.level > 0 ? `Level ${u.level}` : u.lessons > 0 ? "Started" : current ? "Up next" : u.tagline}
 												{u.accuracy !== null && ` · ${Math.round(u.accuracy * 100)}%`}
@@ -405,7 +405,7 @@ function GoalRing({ pct, xp, goal }: { pct: number; xp: number; goal: number }) 
 				/>
 			</svg>
 			<span className="text-center">
-				<span className="block font-prose text-lg font-black leading-none text-foreground tabular-nums">{xp}</span>
+				<span className="block font-ui text-lg font-black leading-none text-foreground tabular-nums">{xp}</span>
 				<span className="block font-ui text-[10px] text-muted-foreground">/ {goal}</span>
 			</span>
 		</span>
@@ -436,7 +436,7 @@ function ModeTile({
 	const body = (
 		<>
 			<span className={cn("flex size-12 items-center justify-center rounded-2xl bg-accent", ink)}>{icon}</span>
-			<span className="mt-4 block font-prose text-xl font-black text-foreground">{title}</span>
+			<span className="mt-4 block font-ui text-xl font-black text-foreground">{title}</span>
 			<span className="mt-0.5 block font-prose text-sm text-muted-foreground">{line}</span>
 			{badge && <span className="absolute right-4 top-4 rounded-full bg-sky px-2 py-0.5 font-ui text-xs font-bold text-background">{badge}</span>}
 		</>
@@ -467,7 +467,7 @@ function TalkPicker({ onClose, onPick, busy }: { onClose: () => void; onPick: (s
 			<div className="lh-rise w-full max-w-2xl rounded-3xl border-2 bg-card p-6">
 				<div className="flex items-start justify-between">
 					<div>
-						<h2 className="font-prose text-2xl font-black text-foreground">Pick a scene</h2>
+						<h2 className="font-ui text-2xl font-black text-foreground">Pick a scene</h2>
 						<p className="mt-1 font-prose text-base text-muted-foreground">Slovak only, one line at a time. Write “koniec” to stop and get your corrections.</p>
 					</div>
 					<button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
@@ -483,7 +483,7 @@ function TalkPicker({ onClose, onPick, busy }: { onClose: () => void; onPick: (s
 							onClick={() => onPick(scene)}
 							className="rounded-2xl border-2 bg-background px-4 py-3.5 text-left shadow-[0_3px_0_0_var(--border)] transition-all hover:-translate-y-0.5 hover:border-xp/60 disabled:opacity-50"
 						>
-							<span className="block font-prose text-lg font-bold text-foreground" lang="sk">
+							<span className="block font-ui text-lg font-bold text-foreground" lang="sk">
 								{scene.title}
 							</span>
 							<span className="block font-prose text-sm text-muted-foreground">{scene.blurb}</span>

@@ -32,6 +32,10 @@ export type DraftPick = { id: string; name: string; statement: string };
 
 const DOCK = "mx-auto w-full max-w-[46rem] px-4";
 
+/** One-tap starting points for an empty draft (they fill the composer). */
+const TEACH_IDEAS = ["Ordering food in a café", "Talking about my weekend", "The past tense", "Cases after prepositions"];
+const PRACTICE_IDEAS = ["Verb endings in the present", "Accusative after mám, vidím", "Where? v, na + locative", "Past tense -l, -la, -lo"];
+
 /**
  * The draft's whole behavior as one pure seam: create the session (title =
  * the first message), persist the lifted pre-chat settings, return the push
@@ -171,14 +175,36 @@ export function DraftShell({
 					<div className="pointer-events-none sticky bottom-0 mt-auto w-full">
 						<Conversation className="h-full min-w-0 flex-1" initial="instant">
 							<ConversationContent className="min-h-full gap-0 p-0">
-								<ConversationEmptyState
-									title={mode === "practice" ? "New practice session" : "New session"}
-									description={
-										mode === "practice"
-											? "Pick nodes from your knowledge graph, describe what you want to practice, or bring your own problem."
-											: "The teacher will open by probing what you already know."
-									}
-								/>
+								<ConversationEmptyState>
+									<div className="flex size-16 items-center justify-center rounded-3xl bg-go-soft text-3xl" aria-hidden>
+										{mode === "practice" ? "🏋️" : "🎓"}
+									</div>
+									<div className="max-w-md space-y-1.5">
+										<h3 className="font-ui text-3xl font-black tracking-tight text-foreground">
+											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
+										</h3>
+										<p className="text-base text-muted-foreground">
+											{mode === "practice"
+												? "Describe it, pick skills from your map, or paste your own sentence."
+												: "Your tutor checks what you already know in a few quick questions, then teaches from there."}
+										</p>
+									</div>
+									<div className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2" data-testid="draft-suggestions">
+										{(mode === "practice" ? PRACTICE_IDEAS : TEACH_IDEAS).map((idea) => (
+											<button
+												key={idea}
+												type="button"
+												onClick={() => {
+													onChange(idea);
+													composerInputRef.current?.focus();
+												}}
+												className="rounded-full border-2 bg-card px-4 py-2 font-ui text-sm font-bold text-foreground shadow-[0_3px_0_0_var(--border)] transition-all hover:border-go/60 active:translate-y-0.5 active:shadow-none"
+											>
+												{idea}
+											</button>
+										))}
+									</div>
+								</ConversationEmptyState>
 							</ConversationContent>
 						</Conversation>
 						<div className="h-24 bg-gradient-to-t from-background via-background/85 to-transparent" />
@@ -355,7 +381,7 @@ export function NewSession({ initialConfigured, mode = "teach" }: { initialConfi
 								type="button"
 								data-testid="setup-cta"
 								onClick={() => setSetupOpen(true)}
-								className="rounded-sm border border-border bg-card px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent cursor-pointer"
+								className="cursor-pointer rounded-full border-2 border-gold/40 bg-gold/10 px-4 py-1.5 font-ui text-xs font-bold text-gold transition-colors hover:bg-gold/20"
 							>
 								Set up your models
 							</button>
