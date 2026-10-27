@@ -74,11 +74,13 @@ const KIND_LABEL: Record<ItemKind, string> = {
 
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
 
-export function LessonPlayer({ unit, mode }: { unit?: UnitId; mode: Mode }) {
+export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId; mode: Mode; initialPlan?: LessonPlan | null }) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
-	const [plan, setPlan] = useState<LessonPlan | null>(null);
+	// The first plan renders with the page (server-built), so the first
+	// question never swaps for another one after load.
+	const [plan, setPlan] = useState<LessonPlan | null>(initialPlan);
 	const [error, setError] = useState<string | null>(null);
 	const [index, setIndex] = useState(0);
 	const [reps, setReps] = useState<Rep[]>([]);
@@ -96,7 +98,11 @@ export function LessonPlayer({ unit, mode }: { unit?: UnitId; mode: Mode }) {
 
 	useEffect(() => setSound(soundOn()), []);
 
+	// Only the latest request may land: a slower earlier response must
+	// never replace the plan on screen.
+	const loadSeq = useRef(0);
 	const load = useCallback(async () => {
+		const seq = ++loadSeq.current;
 		setPlan(null);
 		setError(null);
 		setIndex(0);
@@ -111,6 +117,7 @@ export function LessonPlayer({ unit, mode }: { unit?: UnitId; mode: Mode }) {
 			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}`);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
+			if (seq !== loadSeq.current) return;
 			if (next.items.length === 0) throw new Error("There are no sentences for this unit yet.");
 			setPlan(next);
 			startedAt.current = Date.now();
@@ -119,7 +126,10 @@ export function LessonPlayer({ unit, mode }: { unit?: UnitId; mode: Mode }) {
 		}
 	}, [mode, unit]);
 
+	// Fetch on mount only when the server could not build the plan.
+	const hadInitial = useRef(initialPlan !== null);
 	useEffect(() => {
+		if (hadInitial.current) return;
 		void load();
 	}, [load]);
 

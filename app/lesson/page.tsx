@@ -1,11 +1,22 @@
 import { LessonPlayer } from "@/components/lesson/lesson-player";
-import { isUnitId } from "@/src/core";
+import { isUnitId, type LessonPlan } from "@/src/core";
+import { blitzFor, lessonFor } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
-/** A lesson (?unit=<id>) or a blitz (?mode=blitz): the fast local drill loop. */
+/** A lesson (?unit=<id>) or a blitz (?mode=blitz): the fast local drill loop.
+ *  The plan is built here, with the page, so the first question is in the
+ *  first HTML and never swaps after load. */
 export default async function LessonPage({ searchParams }: { searchParams: Promise<{ unit?: string; mode?: string }> }) {
 	const { unit, mode } = await searchParams;
-	if (mode === "blitz") return <LessonPlayer mode="blitz" />;
-	return <LessonPlayer mode="lesson" unit={isUnitId(unit) ? unit : "words"} />;
+	const id = isUnitId(unit) ? unit : "words";
+	let plan: LessonPlan | null = null;
+	try {
+		plan = mode === "blitz" ? blitzFor() : lessonFor(id);
+		if (plan.items.length === 0) plan = null;
+	} catch {
+		plan = null;
+	}
+	if (mode === "blitz") return <LessonPlayer mode="blitz" initialPlan={plan} />;
+	return <LessonPlayer mode="lesson" unit={id} initialPlan={plan} />;
 }
