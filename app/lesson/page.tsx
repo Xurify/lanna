@@ -18,5 +18,5 @@ export default async function LessonPage({ searchParams }: { searchParams: Promi
 		plan = null;
 	}
 	if (mode === "blitz") return <LessonPlayer mode="blitz" initialPlan={plan} />;
-	return <LessonPlayer mode="lesson" unit={id} initialPlan={plan} />;
+	return <LessonPlayer key={id} mode="lesson" unit={id} initialPlan={plan} />;
 }

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
 	BookOpenTextIcon,
+	CheckIcon,
 	FlameIcon,
 	GraduationCapIcon,
 	MapIcon,
@@ -31,6 +32,8 @@ import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { startTutorChat, storyPrompt, TALK_SCENES, talkPrompt, type Scene } from "@/components/lesson/tutor";
+import { UnitIcon } from "@/components/lesson/unit-icon";
+import { LESSONS_TO_COMPLETE } from "@/src/core";
 import type { UnitId } from "@/src/core";
 
 interface UnitSummary {
@@ -41,7 +44,9 @@ interface UnitSummary {
 	lessons: number;
 	reps: number;
 	level: number;
+	/** 0..1 toward completion. */
 	progress: number;
+	done: boolean;
 	accuracy: number | null;
 }
 
@@ -177,11 +182,13 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						<div className="absolute -right-10 -top-10 size-48 rounded-full bg-go/10 blur-2xl" aria-hidden="true" />
 						<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-go">Continue</p>
 						<div className="mt-3 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-							<UnitBadge glyph={next?.glyph ?? "Aa"} progress={next?.progress ?? 0} size="lg" active />
+							<UnitBadge glyph={next?.glyph ?? "book"} progress={next?.progress ?? 0} size="lg" active />
 							<div className="min-w-0">
 								<h2 className="font-ui text-3xl font-black text-foreground">{next?.title ?? "First words"}</h2>
 								<p className="mt-1 font-prose text-lg text-muted-foreground">{next?.tagline ?? "Everyday words in real sentences"}</p>
-								<p className="mt-1 font-ui text-xs text-muted-foreground">12 reps · about 3 minutes{next && next.lessons > 0 ? ` · lesson ${next.lessons + 1}` : ""}</p>
+								<p className="mt-1 font-ui text-xs text-muted-foreground" data-testid="continue-meta">
+									{next ? lessonLine(next) : "12 reps · about 3 minutes"}
+								</p>
 							</div>
 						</div>
 						<div className="mt-6 flex flex-wrap items-center gap-3">
@@ -300,16 +307,10 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 										/>
 									)}
 									<Link href={`/lesson?unit=${u.id}`} className="group flex items-center gap-4" data-testid={`unit-${u.id}`}>
-										<UnitBadge glyph={u.glyph} progress={u.progress} level={u.level} active={current} />
+										<UnitBadge glyph={u.glyph} progress={u.progress} done={u.done} active={current} />
 										<span className="min-w-0">
 											<span className={cn("block font-ui text-base font-bold", current ? "text-go" : "text-foreground group-hover:text-foreground")}>{u.title}</span>
-											<span className="block font-ui text-xs text-muted-foreground">
-												{u.accuracy !== null && u.reps > 0
-													? `${Math.round(u.accuracy * 100)}% right in ${u.reps} reps`
-													: current
-														? "Up next"
-														: u.tagline}
-											</span>
+											<span className="block font-ui text-xs text-muted-foreground">{pathLine(u, current)}</span>
 										</span>
 									</Link>
 								</li>
@@ -347,13 +348,30 @@ function Pill({ children, className, title }: { children: React.ReactNode; class
 	);
 }
 
-/** A unit's circle: its glyph, with a ring that fills toward the next level. */
-function UnitBadge({ glyph, progress, level = 0, active = false, size = "md" }: { glyph: string; progress: number; level?: number; active?: boolean; size?: "md" | "lg" }) {
+/** What the Continue card says under the unit: which lesson of the unit
+ *  comes next, and how far the unit is. */
+function lessonLine(u: UnitSummary): string {
+	if (u.done) return `Unit complete · one more lesson to keep it sharp · ${Math.round((u.accuracy ?? 0) * 100)}% right`;
+	const n = Math.min(u.lessons + 1, LESSONS_TO_COMPLETE);
+	return `Lesson ${n} of ${LESSONS_TO_COMPLETE} · 12 reps · about 3 minutes`;
+}
+
+/** The second line of a path node: done, in progress, up next, or what it
+ *  teaches. */
+function pathLine(u: UnitSummary, current: boolean): string {
+	const pct = u.accuracy !== null && u.reps > 0 ? `${Math.round(u.accuracy * 100)}% right` : null;
+	if (u.done) return `Done · ${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
+	if (u.lessons > 0) return `Lesson ${Math.min(u.lessons + 1, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} next${pct ? ` · ${pct}` : ""}`;
+	return current ? "Up next" : u.tagline;
+}
+
+/** A unit's circle: its icon, with a ring that fills as its lessons are
+ *  finished and turns gold with a check when the unit is complete. */
+function UnitBadge({ glyph, progress, done = false, active = false, size = "md" }: { glyph: string; progress: number; done?: boolean; active?: boolean; size?: "md" | "lg" }) {
 	const px = size === "lg" ? 88 : 56;
 	const stroke = size === "lg" ? 7 : 5;
 	const r = (px - stroke) / 2;
 	const c = 2 * Math.PI * r;
-	const done = level >= 5;
 	return (
 		<span className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-pulse-ring")} style={{ width: px, height: px }}>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
@@ -373,15 +391,17 @@ function UnitBadge({ glyph, progress, level = 0, active = false, size = "md" }: 
 			</svg>
 			<span
 				className={cn(
-					"flex items-center justify-center rounded-full font-prose font-black",
-					size === "lg" ? "size-[66px] text-2xl" : "size-[40px] text-base",
-					active ? "bg-go text-go-ink" : level > 0 ? "bg-card text-foreground" : "bg-accent text-foreground/80",
+					"flex items-center justify-center rounded-full",
+					size === "lg" ? "size-[66px]" : "size-[40px]",
+					active ? "bg-go text-go-ink" : done ? "bg-gold/15 text-gold" : progress > 0 ? "bg-card text-foreground" : "bg-accent text-foreground/70",
 				)}
 			>
-				{glyph}
+				<UnitIcon name={glyph} className={size === "lg" ? "size-8" : "size-5"} strokeWidth={2.25} />
 			</span>
-			{level > 0 && (
-				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-background bg-gold font-ui text-[10px] font-bold text-background">{level}</span>
+			{done && (
+				<span className="absolute -bottom-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full border-2 border-background bg-gold text-background" title="Unit complete">
+					<CheckIcon className="size-3" strokeWidth={3.5} />
+				</span>
 			)}
 		</span>
 	);

@@ -15,7 +15,9 @@ import {
 	sentenceTokens,
 	streakOf,
 	triggerOf,
+	unitDone,
 	unitLevel,
+	unitProgress,
 	unitStage,
 	UNITS,
 	xpLevel,
@@ -92,6 +94,22 @@ test("streakOf counts back from today and forgives one rest day after six", () =
 	assert.equal(s.restUsed, true);
 	assert.equal(s.days, 8);
 	assert.equal(streakOf(new Set(["2026-10-20"]), "2026-10-27").days, 0);
+});
+
+// A unit is complete after 3 lessons at 80% right, or 6 lessons whatever
+// the accuracy; the ring fills toward that, and holds short of full while
+// the accuracy bar is unmet.
+test("a unit completes after three good lessons, or six of any kind", () => {
+	assert.equal(unitDone(0, null), false);
+	assert.equal(unitDone(2, 1), false);
+	assert.equal(unitDone(3, 0.8), true);
+	assert.equal(unitDone(3, 0.7), false);
+	assert.equal(unitDone(5, 0.5), false);
+	assert.equal(unitDone(6, 0.5), true);
+	assert.equal(unitProgress(0, null), 0);
+	assert.ok(unitProgress(1, 1) > 0 && unitProgress(1, 1) < unitProgress(2, 1));
+	assert.ok(unitProgress(3, 0.7) < 1);
+	assert.equal(unitProgress(3, 0.9), 1);
 });
 
 test("levels climb with lessons and XP", () => {

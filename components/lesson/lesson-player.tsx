@@ -21,7 +21,21 @@ import { DiacriticBar } from "@/components/diacritic-bar";
 import { setSpeed, speak, SPEEDS, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
-import { compareAnswer, diacriticSlips, gradeListen, repXp, sameSentence, unitInfo, type ItemKind, type LessonItem, type LessonPlan, type RepVerdict, type UnitId } from "@/src/core";
+import {
+	compareAnswer,
+	diacriticSlips,
+	gradeListen,
+	LESSONS_TO_COMPLETE,
+	repXp,
+	sameSentence,
+	unitDone,
+	unitInfo,
+	type ItemKind,
+	type LessonItem,
+	type LessonPlan,
+	type RepVerdict,
+	type UnitId,
+} from "@/src/core";
 
 type Mode = "lesson" | "blitz";
 
@@ -61,6 +75,7 @@ interface Outcome {
 		dailyGoal: number;
 		next: UnitId;
 		bestBlitz: number;
+		units: Array<{ id: UnitId; title: string; lessons: number; done: boolean; accuracy: number | null }>;
 	};
 }
 
@@ -239,6 +254,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 						dailyGoal: 50,
 						next: plan.unit,
 						bestBlitz: 0,
+						units: [],
 					},
 				});
 			} finally {
@@ -407,7 +423,15 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	if (done || saving) {
 		return (
 			<Frame>
-				<EndScreen mode={mode} unit={plan.unit} reps={reps} outcome={outcome} saving={saving} onAgain={() => void load()} onNext={(u) => router.push(`/lesson?unit=${u}`)} />
+				<EndScreen
+					mode={mode}
+					unit={plan.unit}
+					reps={reps}
+					outcome={outcome}
+					saving={saving}
+					onAgain={() => void load()}
+					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}`))}
+				/>
 			</Frame>
 		);
 	}
@@ -1108,6 +1132,12 @@ function EndScreen({
 	// One line per sentence: a miss and its "once more" rep are the same item.
 	const missed = reps.filter((r, i) => (r.verdict !== "exact" || r.assisted) && reps.findIndex((o) => o.item.sentence === r.item.sentence) === i);
 	const goalMet = outcome ? outcome.summary.todayXp >= outcome.summary.dailyGoal : false;
+	// Where this lesson leaves the unit (the summary is post-save, so it
+	// already counts this lesson) and what the button opens next.
+	const here = outcome?.summary.units.find((u) => u.id === unit) ?? null;
+	const wasDone = here ? unitDone(here.lessons - 1, here.accuracy) : false;
+	const nextUnit = outcome ? (outcome.summary.units.find((u) => u.id === outcome.summary.next) ?? null) : null;
+	const stayHere = !!outcome && outcome.summary.next === unit;
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -1127,8 +1157,19 @@ function EndScreen({
 			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-gold/15 text-gold">
 				{mode === "blitz" ? <ZapIcon className="size-12" /> : <TrophyIcon className="size-12" />}
 			</div>
-			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">{mode === "blitz" ? (outcome?.newBest ? "New best!" : "Time!") : outcome?.perfect ? "Perfect lesson!" : "Lesson complete!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground">{mode === "blitz" ? `${correct} right in 60 seconds` : unitInfo(unit).title}</p>
+			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
+				{mode === "blitz" ? (outcome?.newBest ? "New best!" : "Time!") : here?.done && !wasDone ? "Unit complete!" : outcome?.perfect ? "Perfect lesson!" : "Lesson complete!"}
+			</h1>
+			<p className="mt-2 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
+				{mode === "blitz" ? `${correct} right in 60 seconds` : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
+			</p>
+			{mode === "lesson" && here && !here.done && (
+				<ol className="mx-auto mt-3 flex items-center justify-center gap-2" aria-label={`${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done`}>
+					{Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
+						<li key={i} className={cn("h-2.5 w-8 rounded-full", i < here.lessons ? "bg-go" : "bg-accent")} />
+					))}
+				</ol>
+			)}
 
 			<div className="mt-8 grid grid-cols-3 gap-3">
 				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-xp" />
@@ -1170,18 +1211,21 @@ function EndScreen({
 						Go again
 					</button>
 				) : (
-					<button
-						type="button"
-						disabled={!outcome}
-						onClick={() => outcome && onNext(outcome.summary.next)}
-						className={PRIMARY}
-					>
-						Next lesson
+					<button type="button" disabled={!outcome} onClick={() => outcome && onNext(outcome.summary.next)} className={PRIMARY} data-testid="lesson-next">
+						{stayHere || !nextUnit ? "Next lesson" : `Next: ${nextUnit.title}`}
 					</button>
 				)}
 			</div>
 		</div>
 	);
+}
+
+/** The line under the end-screen heading: lesson N of 3 in this unit, or
+ *  the unit is done and here is what follows. */
+function whereLine(here: { title: string; lessons: number; done: boolean; accuracy: number | null }, next: { id: UnitId; title: string } | null): string {
+	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} in ${here.title}`;
+	if (here.lessons === LESSONS_TO_COMPLETE || !next || next.title === here.title) return `${here.title} · ${here.lessons} lessons · ${Math.round((here.accuracy ?? 0) * 100)}% right`;
+	return `${here.title} is done. Up next: ${next.title}`;
 }
 
 function Stat({ label, value, ink, icon }: { label: string; value: string; ink: string; icon?: React.ReactNode }) {

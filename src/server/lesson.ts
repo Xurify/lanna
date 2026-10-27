@@ -12,11 +12,12 @@ import {
 	buildLesson,
 	CONTRAST,
 	LESSON_BONUS,
-	levelProgress,
 	PERFECT_BONUS,
 	repXp,
 	streakOf,
+	unitDone,
 	unitLevel,
+	unitProgress,
 	unitStage,
 	UNITS,
 	xpLevel,
@@ -165,7 +166,9 @@ export interface UnitSummary {
 	 *  path shows instead of a guessed level. */
 	reps: number;
 	level: number;
+	/** 0..1 toward completion (see unitDone). */
 	progress: number;
+	done: boolean;
 	accuracy: number | null;
 }
 
@@ -196,6 +199,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const units: UnitSummary[] = UNITS.map((u) => {
 		const r = p.units[u.id];
 		const lessons = r?.lessons ?? 0;
+		const accuracy = r && r.reps > 0 ? r.correct / r.reps : null;
 		return {
 			id: u.id,
 			title: u.title,
@@ -205,15 +209,17 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			lessons,
 			reps: r?.reps ?? 0,
 			level: unitLevel(lessons),
-			progress: levelProgress(lessons),
-			accuracy: r && r.reps > 0 ? r.correct / r.reps : null,
+			progress: unitProgress(lessons, accuracy),
+			done: unitDone(lessons, accuracy),
+			accuracy,
 		};
 	});
-	// Continue = the first grammar unit below level 2, else the least-practised
-	// one. "First words" stays on the path but is never the default: the
-	// placement showed reading ahead of production, so the work is endings.
+	// Continue = the first grammar unit not yet complete; when every unit is
+	// done, the one with the lowest accuracy. "First words" stays on the path
+	// but is never the default: the placement showed reading ahead of
+	// production, so the work is endings.
 	const grammar = units.filter((u) => u.id !== "words");
-	const next = (grammar.find((u) => u.level < 2) ?? [...grammar].sort((a, b) => a.lessons - b.lessons)[0]!).id;
+	const next = (grammar.find((u) => !u.done) ?? [...grammar].sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0))[0]!).id;
 	const rs = reviewStatus(now, tz, { mint: false });
 	return {
 		xp: p.xp,

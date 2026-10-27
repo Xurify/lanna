@@ -30,7 +30,7 @@ export interface UnitInfo {
 	tagline: string;
 	/** One line shown after a miss: the rule behind the right form. */
 	rule: string;
-	/** An emoji-free glyph for the skill path (rendered as text). */
+	/** The path icon's name (a lucide icon, resolved in the Today page). */
 	glyph: string;
 	/** The seed grammar node this unit practises (curriculum/slovak). */
 	node?: string;
@@ -40,16 +40,16 @@ export interface UnitInfo {
 
 /** The path, in teaching order. */
 export const UNITS: UnitInfo[] = [
-	{ id: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "Aa", rule: "Learn the word with its sentence: the sentence is what you will hear." },
-	{ id: "present", title: "I, you, we", tagline: "Verbs in the present", glyph: "-m", rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.", node: "n_seed_v_present", bridge: "Like Estonian: my robíme ≈ me teeme, vy robíte ≈ te teete. Ja robím ≈ ma teen." },
-	{ id: "acc-fem", title: "Objects: -a → -u", tagline: "What you have, see, drink", glyph: "-u", rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.", node: "n_seed_acc_fem", bridge: "The object case, like Estonian osastav: Pijem kávu ≈ Joon kohvi." },
-	{ id: "loc", title: "Where? v, na, o", tagline: "Kde? The locative", glyph: "v", rule: "After v / na / o / po / pri for place or topic, the noun takes the locative: v meste, na stole, o škole.", node: "n_seed_loc", bridge: "Like the Estonian place cases: v meste ≈ linnas (seesütlev), na stole ≈ laual (alalütlev)." },
-	{ id: "acc-people", title: "People as objects", tagline: "Vidím brata", glyph: "-a", rule: "A masculine person as the object takes -a: Mám brata. Poznáš učiteľa?", node: "n_seed_acc_anim", bridge: "A male person as the object, like osastav: Vidím brata ≈ Näen venda." },
-	{ id: "gen", title: "From, to, without", tagline: "do, z, od, bez + genitive", glyph: "z", rule: "do / z / od / bez / u / okolo take the genitive: do školy, z práce, bez cukru.", node: "n_seed_gen", bridge: "do školy ≈ kooli (sisseütlev), zo školy ≈ koolist (seestütlev), bez cukru ≈ suhkruta (ilmaütlev)." },
-	{ id: "ins", title: "With: s, pred, za", tagline: "The instrumental", glyph: "s", rule: "s / pred / za / nad / pod / medzi (for place) take the instrumental: s kamarátom, pred domom, so sestrou.", node: "n_seed_ins", bridge: "Like Estonian kaasaütlev -ga: s kamarátom ≈ sõbraga, autobusom ≈ bussiga." },
-	{ id: "adj", title: "Describing words", tagline: "Adjectives agree", glyph: "-ý", rule: "The adjective copies the noun's gender, case and number: nová kniha, novú knihu, v novej knihe.", node: "n_seed_adj_cases", bridge: "Adjectives agree, as in Estonian: nová kniha → novú knihu ≈ uus raamat → uut raamatut." },
-	{ id: "past", title: "What happened", tagline: "Past tense: -l, -la, -lo, -li", glyph: "-l", rule: "Past tense = -l / -la / -lo / -li by the subject's gender and number, plus som/si for I/you: Robil som. Robila si.", node: "n_seed_v_past", bridge: "Built like the Estonian perfect: an -l form plus 'be' (robil som ~ olen teinud), with som/si only for I and you." },
-	{ id: "dat", title: "To and for: k", tagline: "k, proti, vďaka + dative", glyph: "k", rule: "k / ku / proti / vďaka / kvôli take the dative: k bratovi, ku škole, vďaka mame.", node: "n_seed_dat", bridge: "Like Estonian alaleütlev -le: k bratovi ≈ vennale, dal som mame ≈ andsin emale." },
+	{ id: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: "Learn the word with its sentence: the sentence is what you will hear." },
+	{ id: "present", title: "I, you, we", tagline: "Verbs in the present", glyph: "users", rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.", node: "n_seed_v_present", bridge: "Like Estonian: my robíme ≈ me teeme, vy robíte ≈ te teete. Ja robím ≈ ma teen." },
+	{ id: "acc-fem", title: "Objects: -a → -u", tagline: "What you have, see, drink", glyph: "coffee", rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.", node: "n_seed_acc_fem", bridge: "The object case, like Estonian osastav: Pijem kávu ≈ Joon kohvi." },
+	{ id: "loc", title: "Where? v, na, o", tagline: "Kde? The locative", glyph: "map-pin", rule: "After v / na / o / po / pri for place or topic, the noun takes the locative: v meste, na stole, o škole.", node: "n_seed_loc", bridge: "Like the Estonian place cases: v meste ≈ linnas (seesütlev), na stole ≈ laual (alalütlev)." },
+	{ id: "acc-people", title: "People as objects", tagline: "Vidím brata", glyph: "user-round", rule: "A masculine person as the object takes -a: Mám brata. Poznáš učiteľa?", node: "n_seed_acc_anim", bridge: "A male person as the object, like osastav: Vidím brata ≈ Näen venda." },
+	{ id: "gen", title: "From, to, without", tagline: "do, z, od, bez + genitive", glyph: "door-open", rule: "do / z / od / bez / u / okolo take the genitive: do školy, z práce, bez cukru.", node: "n_seed_gen", bridge: "do školy ≈ kooli (sisseütlev), zo školy ≈ koolist (seestütlev), bez cukru ≈ suhkruta (ilmaütlev)." },
+	{ id: "ins", title: "With: s, pred, za", tagline: "The instrumental", glyph: "handshake", rule: "s / pred / za / nad / pod / medzi (for place) take the instrumental: s kamarátom, pred domom, so sestrou.", node: "n_seed_ins", bridge: "Like Estonian kaasaütlev -ga: s kamarátom ≈ sõbraga, autobusom ≈ bussiga." },
+	{ id: "adj", title: "Describing words", tagline: "Adjectives agree", glyph: "palette", rule: "The adjective copies the noun's gender, case and number: nová kniha, novú knihu, v novej knihe.", node: "n_seed_adj_cases", bridge: "Adjectives agree, as in Estonian: nová kniha → novú knihu ≈ uus raamat → uut raamatut." },
+	{ id: "past", title: "What happened", tagline: "Past tense: -l, -la, -lo, -li", glyph: "history", rule: "Past tense = -l / -la / -lo / -li by the subject's gender and number, plus som/si for I/you: Robil som. Robila si.", node: "n_seed_v_past", bridge: "Built like the Estonian perfect: an -l form plus 'be' (robil som ~ olen teinud), with som/si only for I and you." },
+	{ id: "dat", title: "To and for: k", tagline: "k, proti, vďaka + dative", glyph: "gift", rule: "k / ku / proti / vďaka / kvôli take the dative: k bratovi, ku škole, vďaka mame.", node: "n_seed_dat", bridge: "Like Estonian alaleütlev -le: k bratovi ≈ vennale, dal som mame ≈ andsin emale." },
 ];
 
 export function isUnitId(v: unknown): v is UnitId {
@@ -414,6 +414,23 @@ export const LESSON_BONUS = 20;
 export const PERFECT_BONUS = 15;
 
 /** Lessons finished → the unit's level (0–5), the ring on the skill path. */
+/** When a unit counts as complete: LESSONS_TO_COMPLETE finished lessons with
+ *  at least COMPLETE_ACCURACY of the reps right, or twice that many lessons
+ *  whatever the accuracy (so a unit can never trap the learner). The path
+ *  ring fills toward this, and "Continue" is the first unit not yet done. */
+export const LESSONS_TO_COMPLETE = 3;
+export const COMPLETE_ACCURACY = 0.8;
+export function unitDone(lessons: number, accuracy: number | null): boolean {
+	if (lessons >= LESSONS_TO_COMPLETE * 2) return true;
+	return lessons >= LESSONS_TO_COMPLETE && (accuracy ?? 0) >= COMPLETE_ACCURACY;
+}
+/** 0..1 toward completion: lessons out of LESSONS_TO_COMPLETE; a unit at the
+ *  count but under the accuracy bar holds just short of full. */
+export function unitProgress(lessons: number, accuracy: number | null): number {
+	if (unitDone(lessons, accuracy)) return 1;
+	return Math.min(lessons / LESSONS_TO_COMPLETE, 0.9);
+}
+
 export const LEVEL_STEPS = [1, 3, 6, 10, 15];
 export function unitLevel(lessons: number): number {
 	return LEVEL_STEPS.filter((s) => lessons >= s).length;
