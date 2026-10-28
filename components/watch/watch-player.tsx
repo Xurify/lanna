@@ -569,6 +569,10 @@ interface YTPlayer {
 	getPlayerState(): number;
 	setPlaybackRate(rate: number): void;
 	destroy(): void;
+	/** Undocumented but long-standing: drops the player's own caption
+	 *  module, so a track the viewer left switched on does not show the
+	 *  line we are hiding. */
+	unloadModule?(name: string): void;
 }
 interface YTNamespace {
 	Player: new (el: HTMLElement, opts: Record<string, unknown>) => YTPlayer;
@@ -663,6 +667,12 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 						onReady: () => {
 							if (!alive) return;
 							player.current = p;
+							// YouTube remembers "captions on" per viewer and ignores
+							// cc_load_policy for it; the lines are ours to show.
+							try {
+								p!.unloadModule?.("captions");
+								p!.unloadModule?.("cc");
+							} catch {}
 							setReady(true);
 							p!.seekTo(segs[0]!.start, true);
 							p!.playVideo();
@@ -917,6 +927,14 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 					{/* The player keeps its box from the first paint. */}
 					<div className="relative mx-auto aspect-video w-full overflow-hidden rounded-2xl bg-black" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player">
 						<div ref={holder} className="absolute inset-0 [&>iframe]:size-full" />
+						{/* Step mode hides the line; this band covers YouTube's own
+						    subtitles should the player still draw them. Clicks pass
+						    through to the controls. */}
+						{ready && !playerError && !textShown && (
+							<div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[26%] items-end justify-center bg-black pb-2" aria-hidden data-testid="watch-caption-cover">
+								<span className="font-ui text-[11px] font-bold text-white/40">subtitles covered · T to reveal</span>
+							</div>
+						)}
 						{!ready && !playerError && (
 							<div className="absolute inset-0 flex items-center justify-center text-white/70">
 								<LoaderCircleIcon className="size-8 animate-spin" />
