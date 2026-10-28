@@ -440,7 +440,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 				)}
 			</main>
 
-			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={d.minutes} daysPerWeek={d.days} target={level} hoursDone={hoursDone} />
+			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={d.minutes} daysPerWeek={d.days} target={level} hoursDone={hoursDone} languages={d.languages} />
 
 			{step < 4 && (
 				<div className="border-t border-border">

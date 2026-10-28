@@ -17,7 +17,7 @@
 import { useEffect, useState } from "react";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CEFR_ORDER, GUIDED_HOURS, weeklyHours, type Cefr } from "@/src/core";
+import { CEFR_ORDER, GUIDED_HOURS, languageName, weeklyHours, type Cefr, type Lang } from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
@@ -49,7 +49,7 @@ export const STUDIES: Array<{ who: string; what: string; line: string }> = [
 	{
 		who: "Ringbom (2007), Cross-linguistic Similarity in Foreign Language Learning",
 		what: "Why the first language matters",
-		line: "Learners whose languages already have the target's structures learn them faster. Estonian's cases are a real head start on Slovak cases; a Slavic language would be a bigger one. The green bars sit between the two yardsticks for that reason.",
+		line: "Learners whose languages already have the target's structures learn them faster. A language with cases (Estonian, Finnish, German, Latvian…) is a real head start on Slovak cases; a Slavic language is a bigger one. The green bars sit between the two yardsticks for that reason.",
 	},
 	{
 		who: "Cepeda, Pashler, Vul, Wixted & Rohrer (2006), Psychological Bulletin",
@@ -58,12 +58,45 @@ export const STUDIES: Array<{ who: string; what: string; line: string }> = [
 	},
 ];
 
+/** What each known language is worth as a head start on Slovak, for the
+ *  note under the chart. Slavic languages share the case system and the
+ *  vocabulary; the others listed have cases of their own (Ringbom 2007). */
+const HEAD_START: Partial<Record<Lang, string>> = {
+	ru: "Slavic, the same six cases",
+	uk: "Slavic, the same case logic",
+	pl: "Slavic, cases and aspect",
+	cs: "Slavic, nearly the same grammar",
+	sl: "Slavic, cases and aspect",
+	hr: "Slavic, seven cases",
+	bg: "Slavic vocabulary and aspect",
+	et: "14 cases",
+	fi: "15 cases",
+	hu: "cases",
+	lv: "seven cases",
+	lt: "seven cases",
+	de: "four cases and gender",
+	tr: "cases",
+};
+
+/** The one line that says what the green bars assume and whether this
+ *  learner has it. Xurify (2026-10-28): the old legend said "from
+ *  Estonian", which read as the app's language; the hours table does not
+ *  change by language, the assumption behind it does. */
+export function headStartLine(languages: readonly Lang[]): string {
+	const have = languages.filter((l) => HEAD_START[l]).map((l) => `${languageName(l)} (${HEAD_START[l]})`);
+	const worth = `the gap to the FSI line, ${FSI_CAT3 - GUIDED_HOURS.C1}–${FSI_CAT3 - GUIDED_HOURS.B2} hours at B2–C1`;
+	const assume = "The green bars assume a head start: a language you know that already has cases, or is Slavic.";
+	if (have.length === 0) return `${assume} None of yours is, so read nearer the FSI line; the head start is ${worth} (Ringbom 2007).`;
+	return `${assume} Yours: ${have.join(", ")}. The head start is ${worth} (Ringbom 2007).`;
+}
+
 function monthOf(d: Date): string {
 	return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 }
 
 export function HoursSheet({
 	open,
+	languages = [],
 	onClose,
 	minutesPerDay,
 	daysPerWeek,
@@ -76,6 +109,8 @@ export function HoursSheet({
 	daysPerWeek: number;
 	target: Cefr;
 	hoursDone?: number;
+	/** The learner's languages, for the head-start note under the chart. */
+	languages?: readonly Lang[];
 }) {
 	const [view, setView] = useState<"chart" | "table">("chart");
 	const [hover, setHover] = useState<{ level: Cefr; series: "app" | "en" } | null>(null);
@@ -122,7 +157,7 @@ export function HoursSheet({
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground" aria-label="Legend">
 						<span className="flex items-center gap-1.5">
 							<span className="inline-block size-2.5 rounded-sm bg-go" aria-hidden="true" />
-							This app · Slovak, from Estonian
+							This app · Slovak
 						</span>
 						<span className="flex items-center gap-1.5">
 							<span className="inline-block size-2.5 rounded-sm bg-muted-foreground/50" aria-hidden="true" />
@@ -223,6 +258,10 @@ export function HoursSheet({
 						</tbody>
 					</table>
 				)}
+
+				<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="hours-head-start">
+					{headStartLine(languages)}
+				</p>
 
 				<p className="mt-3 rounded-xl bg-accent/60 px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
 					At <b>{minutesPerDay} min</b> × <b>{daysPerWeek} days</b> you put in about <b>{Math.round(yearly)} hours a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.

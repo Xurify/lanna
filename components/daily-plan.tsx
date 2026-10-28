@@ -19,7 +19,7 @@ import { HoursSheet } from "@/components/hours-sheet";
 import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrandBalance } from "@/components/strand-balance";
-import { DEFAULT_DAYS_PER_WEEK, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
+import { DEFAULT_DAYS_PER_WEEK, knownLanguages, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -132,7 +132,7 @@ export function DailyPlan({
 					</button>
 				</div>
 			</div>
-			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={goal?.minutesPerDay ?? 30} daysPerWeek={goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} target={goal?.level ?? "B2"} hoursDone={projection?.hoursDone ?? 0} />
+			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={goal?.minutesPerDay ?? 30} daysPerWeek={goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} target={goal?.level ?? "B2"} hoursDone={projection?.hoursDone ?? 0} languages={knownLanguages(goal)} />
 		</section>
 	);
 }
