@@ -39,7 +39,7 @@ import {
 	customMilestone,
 	estimateMilestone,
 	GENRES,
-	LEVEL_VOCAB,
+	levelVocabulary,
 	MILESTONES,
 	normalizeCustomText,
 	parseCustomMapping,
@@ -103,8 +103,18 @@ export interface WordSets {
 	assumed: Set<string>;
 	/** met ∪ assumed */
 	known: Set<string>;
+	/** Where the map has the learner now. */
 	level: Cefr;
+	levelProgress: number;
+	/** A placement check was done at some point. */
 	placed: boolean;
+	/** The lemmas credited beyond the ones met: the word check's estimate
+	 *  when there was one, else the band of the level completed plus the
+	 *  progress through the current one. */
+	credited: number;
+	basis: "measured" | "level";
+	measuredAt?: string;
+	measuredReliable?: boolean;
 }
 
 /** New words a day the input tasks add on top of the deck's setting:
@@ -117,8 +127,13 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 	const p = progressStore.read();
 	const goal = p.goal ?? DEFAULT_GOAL;
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
-	const placed = !!goal.placedLevel;
-	const level: Cefr = goal.placedLevel ?? state.level;
+	// The level is where the map has the learner: placement set its start,
+	// every lesson since has moved it. (It used to pin goal.placedLevel for
+	// good, and to credit the whole band of the level being entered.)
+	const placed = !!goal.placedAt;
+	const level: Cefr = state.level;
+	const measured = goal.vocabulary;
+	const credited = measured ? measured.size : levelVocabulary(level, state.levelProgress);
 	const met = new Set<string>();
 	let solid = 0;
 	const cards = Object.values(reviewStore.readCards()).filter((c) => !c.suspended);
@@ -131,8 +146,8 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 		for (const lemma of u.lemmas ?? []) for (const e of lexicon?.byForm.get(lemma.toLocaleLowerCase("sk-SK")) ?? []) met.add(e.slug);
 	}
 	const assumed = new Set<string>();
-	if (lexicon) for (const slug of frequencyOrder(lexicon).slice(0, LEVEL_VOCAB[level])) if (!met.has(slug)) assumed.add(slug);
-	return { met, solid, assumed, known: new Set([...met, ...assumed]), level, placed };
+	if (lexicon) for (const slug of frequencyOrder(lexicon).slice(0, credited)) if (!met.has(slug)) assumed.add(slug);
+	return { met, solid, assumed, known: new Set([...met, ...assumed]), level, levelProgress: state.levelProgress, placed, credited, basis: measured ? "measured" : "level", ...(measured ? { measuredAt: measured.at, measuredReliable: measured.reliable } : {}) };
 }
 
 // ─── Speed evidence ─────────────────────────────────────────────────────────
@@ -244,7 +259,9 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 
 	const base: Omit<LearnerFacts, "speed"> = {
 		level: sets.level,
+		levelProgress: sets.levelProgress,
 		placed: sets.placed,
+		words: { basis: sets.basis, credited: sets.credited, ...(sets.measuredAt ? { measuredAt: sets.measuredAt, reliable: sets.measuredReliable ?? true } : {}) },
 		met: sets.met.size,
 		solid: sets.solid,
 		assumed: sets.assumed.size,

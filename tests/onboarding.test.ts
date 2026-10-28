@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
 import { CHAPTERS, curriculumState, hoursDone, nextLessonUnit } from "../src/core/curriculum.ts";
-import { buildLesson, PLACEMENT_PATTERN, UNITS } from "../src/core/lesson.ts";
+import { buildLesson, UNITS } from "../src/core/lesson.ts";
 import {
 	BRIDGE_LANGS,
 	bridgeLanguages,
@@ -59,22 +59,23 @@ test("purposes map onto real goals and scenes, and the target follows the most d
 	assert.deepEqual(purposeScenes(["daily", "family"]), ["cafe", "way", "shop", "doctor", "family", "colleague"]);
 });
 
-test("every placement tier has lesson material and stands for real chapters", () => {
+test("every placement tier has lesson material and stands for real chapters; B2 chapters re-check from the last tier", () => {
 	for (const t of PLACEMENT_TIERS) {
 		for (const u of t.units) {
 			assert.ok(UNITS.some((x) => x.id === u), `${t.id}: ${u} is not a lesson unit`);
-			const plan = buildLesson(entries, u, { seed: 3, length: REPS_PER_UNIT, pattern: PLACEMENT_PATTERN });
-			assert.equal(plan.items.length, REPS_PER_UNIT, `${t.id}/${u}`);
-			assert.deepEqual(plan.items.map((i) => i.kind), ["choose", "type"]);
+			const plan = buildLesson(entries, u, { seed: 3, length: 1, pattern: ["type"] });
+			assert.equal(plan.items.length, 1, `${t.id}/${u}`);
+			assert.equal(plan.items[0]!.kind, "type", "the check is production only");
 		}
 		for (const c of t.chapters) assert.ok(CHAPTERS.some((x) => x.id === c), `${t.id}: no chapter ${c}`);
 	}
 	assert.equal(tierForChapter("hello"), 0);
 	assert.equal(tierForChapter("shopping"), 2);
-	assert.equal(tierForChapter("nuance"), 0);
+	assert.equal(tierForChapter("nuance"), 3, "a B2 chapter re-checks from the B1 tier, not from the top");
+	assert.equal(tierForChapter(undefined), 0);
 });
 
-test("the staircase: a beginner stops on the first tier, a reader climbs to their edge", () => {
+test("the staircase outcome: a beginner stops on the first tier, a reader climbs to their edge, a re-check from a later tier holds the tiers below (the A1 demotion bug)", () => {
 	const beginner = placementOutcome(tierReps("a1a", 3));
 	assert.equal(beginner.level, "A1");
 	assert.equal(beginner.startChapter, "hello");
@@ -93,6 +94,17 @@ test("the staircase: a beginner stops on the first tier, a reader climbs to thei
 	assert.equal(reader.units["present"]?.correct, 2);
 	assert.ok(reader.testedOut.includes("present"));
 	assert.ok(reader.weak.includes("motion"), "the A2 misses are the first strengthen tasks");
+	assert.equal(reader.ceiling, false);
+
+	// The bug: a re-check from tier 2 used to score nothing and place at A1/"hello".
+	const recheck = placementOutcome([...tierReps("a2", 8), ...tierReps("b1", 8)], { from: 2 });
+	assert.equal(recheck.tiers.filter((t) => t.held).length, 2, "the tiers below the start are held");
+	assert.equal(recheck.startChapter, "nuance");
+	assert.equal(recheck.level, "B2");
+	assert.equal(recheck.ceiling, true, "every tier passed: the check ran out, the level is a floor");
+	const fell = placementOutcome(tierReps("a2", 2), { from: 2 });
+	assert.equal(fell.startChapter, "health", "a failed re-check never goes below the tier it started at");
+	assert.equal(fell.level, "A2");
 });
 
 test("placement moves the map: tested-out units are done, chapters behind the start are skipped and credited, Continue starts in the new chapter", () => {
@@ -143,14 +155,14 @@ test("the profile block says what the tutor must not ask, and is null on a fresh
 	assert.ok(two.includes("key line and the grammar terms in Russian"), two);
 	assert.ok(two.includes("knows Russian only at A2: keep those lines short"), two);
 	assert.ok(text.includes("started with simple sentences"));
-	assert.ok(text.includes("Placement drill on 2026-10-28: A2; tested out of"));
+	assert.ok(text.includes("Placement check on 2026-10-28: works at A2; tested out of"));
 	assert.ok(text.includes("missed"));
 	assert.ok(text.includes('chapter "Health and body"'));
 	assert.ok(text.includes("do not ask for either"));
 });
 
 test("the server round trip: the wizard's PUT and the drill's POST land in progress.json and the summary", async () => {
-	const { setGoal, placementFor, recordPlacement, progressSummary } = await import("../src/server/lesson.ts");
+	const { setGoal, recordPlacement, progressSummary } = await import("../src/server/lesson.ts");
 	const { progressStore } = await import("../src/store/progress.ts");
 	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
 	let s = progressSummary(0);
@@ -181,12 +193,10 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	assert.deepEqual(lessonFor("loc", 1).bridges, ["et", "ru"], "the lesson plan carries the bridge languages");
 	s = setGoal({ languages: ["et", "ru"], languageLevels: { et: "A1", ru: "C2" } }, 0);
 	assert.deepEqual(lessonFor("loc", 1).bridges, ["ru", "et"], "the better-known language leads");
-	const plan = placementFor();
-	assert.equal(plan.from, 0);
-	assert.equal(plan.tiers.length, PLACEMENT_TIERS.length);
-	for (const t of plan.tiers) assert.equal(t.items.length, t.units.length * REPS_PER_UNIT, t.id);
-	const reps = plan.tiers.slice(0, 2).flatMap((t) => t.items.map((it, i) => ({ tier: t.id, itemId: it.id, slug: it.slug, kind: it.kind, verdict: (t.id === "a1b" && i >= 6 ? "wrong" : "exact") as "exact" | "wrong", detail: { unit: it.unit, sentence: it.sentence, answer: it.answer, given: it.answer } })));
-	const r = recordPlacement({ reps, ms: 90_000, tz: 0 }, new Date("2026-10-28T10:05:00Z"));
+	// The check's record: the outcome lands in progress.json; a re-check
+	// from tier 2 replaces only the evidence of the tiers it asked again.
+	const first = placementOutcome([...tierReps("a1a", 8), ...tierReps("a1b", 6)]);
+	const r = recordPlacement({ outcome: first, reps: [], ms: 90_000, tz: 0 }, new Date("2026-10-28T10:05:00Z"));
 	assert.equal(r.level, "A2");
 	assert.equal(r.startChapter, "health");
 	assert.equal(r.summary.goal.placedLevel, "A2");
@@ -196,13 +206,19 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	assert.ok(rec.units["present"]?.placed);
 	assert.equal(rec.units["present"]?.lessons, 0);
 	assert.equal(rec.xp, progressStore.read().xp, "no XP for a measurement");
-	// The speak task rotates the purposes' scenes in.
 	assert.ok(r.summary.plan.tasks.some((t) => t.id === "speak"));
-	// A re-check starts from the current chapter's tier and replaces placed evidence.
-	assert.equal(placementFor({ recheck: true }).from, 2);
-	const again = recordPlacement({ reps: reps.slice(0, 8), tz: 0 }, new Date("2026-10-29T10:05:00Z"));
-	assert.equal(again.startChapter, "family");
-	assert.equal(progressStore.read().units["acc-people"], undefined, "the earlier placement's evidence is gone");
+	const again = recordPlacement({ outcome: placementOutcome(tierReps("a2", 8), { from: 2 }), reps: [], tz: 0, note: "Holds the A2 forms; aspect is the edge.", vocabulary: { size: 1850, at: "2026-10-29T10:05:00Z", reliable: true } }, new Date("2026-10-29T10:05:00Z"));
+	assert.equal(again.startChapter, "stories");
+	assert.ok(progressStore.read().units["present"]?.placed, "the first tiers' evidence stays: they were not asked again");
+	assert.equal(progressStore.read().goal?.placedNote, "Holds the A2 forms; aspect is the edge.");
+	assert.equal(progressStore.read().goal?.vocabulary?.size, 1850);
+	const text = learnerProfileText(progressStore.read().goal, null, progressStore.read().units)!;
+	assert.match(text, /Vocabulary check on 2026-10-29: about 1,850 lemmas/);
+	assert.match(text, /aspect is the edge/);
+	// Today's ETA uses the learner's days a week like the setup's does (it hard-coded six).
+	const three = setGoal({ daysPerWeek: 3 }, 0).projection.etaPlanned!;
+	const six = setGoal({ daysPerWeek: 6 }, 0).projection.etaPlanned!;
+	assert.ok(three > six, `${three} should be later than ${six}`);
 });
 
 test("every grammar unit has a bridge in each of the four languages, and the profile picks them", () => {

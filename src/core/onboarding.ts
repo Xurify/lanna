@@ -401,6 +401,12 @@ export interface LearnerGoal {
 	placedAt?: string;
 	placedLevel?: Cefr;
 	startChapter?: string;
+	/** The Socratic stage's closing line from the last check: the edge in words. */
+	placedNote?: string;
+	/** The last vocabulary-size check (src/core/vocab-probe.ts): the
+	 *  estimate in lemmas and when. The words calculator trusts it over
+	 *  the level's band. */
+	vocabulary?: { size: number; at: string; reliable: boolean };
 }
 
 export const DEFAULT_DAYS_PER_WEEK = 6;
@@ -456,13 +462,23 @@ export function placementTier(id: string): PlacementTier | undefined {
  *  learner's current chapter (or the first). */
 export function tierForChapter(chapter: string | undefined): number {
 	const i = PLACEMENT_TIERS.findIndex((t) => t.chapters.includes(chapter ?? ""));
-	return i < 0 ? 0 : i;
+	if (i >= 0) return i;
+	// A chapter past the last tier's (B2: the check stops at B1 grammar)
+	// re-checks from the last tier, not from the first.
+	const idx = CHAPTERS.findIndex((c) => c.id === chapter);
+	const last = CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[PLACEMENT_TIERS.length - 1]!.chapters.at(-1));
+	return idx > last ? PLACEMENT_TIERS.length - 1 : 0;
 }
 
 export interface PlacementRep {
 	tier: string;
 	unit: UnitId;
 	verdict: "exact" | "accents" | "wrong";
+	/** "probe": the Socratic stage's verdict on the unit, folded into reps
+	 *  (held = both right, slip = one, gap = none). Absent = the drill. */
+	source?: "drill" | "probe";
+	/** A typed miss the model accepted as a valid alternative (counts as right). */
+	judged?: boolean;
 }
 
 export interface TierResult {
@@ -472,6 +488,9 @@ export interface TierResult {
 	reps: number;
 	correct: number;
 	passed: boolean;
+	/** A re-check started above this tier: it was not asked again and
+	 *  stands as passed (the learner already works past it). */
+	held?: boolean;
 }
 
 export interface PlacementOutcome {
@@ -479,6 +498,11 @@ export interface PlacementOutcome {
 	 *  after the tiers passed (A1 when none was). */
 	level: Cefr;
 	tiers: TierResult[];
+	/** The tier the check started at (0 for a first placement). */
+	from: number;
+	/** Every tier passed: the check ran out, nothing above B1 grammar was
+	 *  measured, so the level is a floor, not a reading. */
+	ceiling: boolean;
 	/** The first chapter to work in. */
 	startChapter: string;
 	/** Per probed unit: its reps and hits; `placed` marks it as evidence
@@ -491,11 +515,26 @@ export interface PlacementOutcome {
 /** Does a verdict count as right? Accent slips do, as in lessons. */
 export const isHit = (v: PlacementRep["verdict"]) => v !== "wrong";
 
-/** Fold answered reps into the outcome. Pure: the server records it. */
-export function placementOutcome(reps: readonly PlacementRep[]): PlacementOutcome {
+/** The hits a tier needs from `reps` answers. */
+export function tierNeed(reps: number): number {
+	return Math.ceil(reps * PASS_SHARE);
+}
+
+/**
+ * Fold answered reps into the outcome. Pure: the server records it.
+ * `from` is the tier a re-check started at: the tiers below it were not
+ * asked and count as held (bug fixed 2026-10-28: a re-check from tier 2
+ * used to score no tier at all and send the learner back to A1).
+ */
+export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: number } = {}): PlacementOutcome {
+	const from = Math.max(0, Math.min(PLACEMENT_TIERS.length - 1, opts.from ?? 0));
 	const tiers: TierResult[] = [];
 	const units: PlacementOutcome["units"] = {};
-	for (const t of PLACEMENT_TIERS) {
+	for (const [i, t] of PLACEMENT_TIERS.entries()) {
+		if (i < from) {
+			tiers.push({ id: t.id, level: t.level, title: t.title, reps: 0, correct: 0, passed: true, held: true });
+			continue;
+		}
 		const mine = reps.filter((r) => r.tier === t.id);
 		if (mine.length === 0) break;
 		const correct = mine.filter((r) => isHit(r.verdict)).length;
@@ -519,13 +558,147 @@ export function placementOutcome(reps: readonly PlacementRep[]): PlacementOutcom
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, startChapter, units, testedOut, weak };
+	return { level, tiers, from, ceiling: lastPassed === PLACEMENT_TIERS.length - 1, startChapter, units, testedOut, weak };
 }
 
 /** Should the staircase climb after this tier's reps? */
 export function tierPassed(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
 	const mine = reps.filter((r) => r.tier === tier.id);
 	return mine.length >= tier.units.length && mine.filter((r) => isHit(r.verdict)).length / mine.length >= PASS_SHARE;
+}
+
+/** One more typed rep per unit when a tier lands on the line. */
+export const EXTRA_REPS_PER_UNIT = 1;
+
+/**
+ * Is the tier's verdict a close call after its base reps — a hit either
+ * side of the pass line (5 or 6 of 8)? Eight answers at 75% put a learner
+ * who truly knows three in four through only two times in three; a third
+ * rep per unit steepens the curve where it matters, and costs nothing
+ * elsewhere.
+ */
+export function tierBorderline(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
+	const mine = reps.filter((r) => r.tier === tier.id);
+	const base = tier.units.length * REPS_PER_UNIT;
+	if (mine.length !== base) return false;
+	const hits = mine.filter((r) => isHit(r.verdict)).length;
+	const need = tierNeed(base);
+	return hits === need || hits === need - 1;
+}
+
+/** The tier a unit belongs to (undefined for a unit no tier probes). */
+export function tierOfUnit(unit: UnitId): PlacementTier | undefined {
+	return PLACEMENT_TIERS.find((t) => t.units.includes(unit));
+}
+
+// ─── The edge: the Socratic stage ───────────────────────────────────────────
+
+/** How the tutor read the learner's answers on one unit: held (produces
+ *  the form and knows what decided it), slip (right form, shaky reason, or
+ *  one miss in a row of hits), gap (cannot produce it). */
+export type ProbeResult = "held" | "slip" | "gap";
+
+export interface ProbeVerdict {
+	unit: UnitId;
+	result: ProbeResult;
+	/** The evidence in one line: what was produced or missed. */
+	note: string;
+}
+
+export interface ProbeAsk {
+	unit: UnitId;
+	/** The task in the explanation language ("Put the word in the right form.") */
+	prompt: string;
+	/** The Slovak frame: a sentence with ___ (and the word in brackets), or
+	 *  a sentence to transform. */
+	sk: string;
+	/** produce: a form; why: say what decided a form the learner just gave. */
+	kind: "produce" | "why";
+}
+
+export interface ProbeReply {
+	/** One or two sentences to the learner: what the last answer showed. */
+	say: string;
+	verdict?: ProbeVerdict;
+	ask?: ProbeAsk;
+	/** The stage is over: two sentences on the edge found. */
+	done?: string;
+}
+
+export interface ProbeTurn {
+	reply: ProbeReply;
+	/** The learner's answer to `reply.ask` (absent while open or when skipped). */
+	answer?: string;
+	at: string;
+}
+
+/** The most questions the stage asks: one or two per unit at the edge. */
+export const PROBE_TURNS = 6;
+
+/** The units the stage may probe, in order of value: the drill's misses
+ *  first (slip or gap?), then the units of the first tier the drill never
+ *  reached (a strong learner can be moved up on evidence). At most eight. */
+export function probeUnits(outcome: PlacementOutcome): UnitId[] {
+	const out: UnitId[] = [...outcome.weak];
+	const stopped = outcome.tiers.findIndex((t) => !t.passed);
+	const next = stopped < 0 ? PLACEMENT_TIERS[outcome.tiers.length] : undefined;
+	const after = stopped >= 0 ? undefined : next;
+	for (const u of after?.units ?? []) if (!out.includes(u)) out.push(u);
+	// A failed tier's untested-out units too: the drill asked two reps each.
+	if (stopped >= 0) for (const u of PLACEMENT_TIERS[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
+	return out.slice(0, 8);
+}
+
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+/** Read the tutor's JSON turn; anything malformed becomes a plain `say`.
+ *  A verdict or an ask on a unit outside `units` is dropped. */
+export function parseProbeReply(text: string, units: readonly UnitId[]): ProbeReply {
+	let o: Record<string, unknown> | null = null;
+	const m = text.match(/\{[\s\S]*\}/);
+	if (m) {
+		try {
+			o = JSON.parse(m[0]) as Record<string, unknown>;
+		} catch {
+			o = null;
+		}
+	}
+	if (!o) return { say: text.trim().replace(/^```[a-z]*\s*|\s*```$/g, "").slice(0, 600), done: "" };
+	const reply: ProbeReply = { say: str(o.say, 600) };
+	const v = o.verdict as Record<string, unknown> | null | undefined;
+	if (v && typeof v === "object" && units.includes(str(v.unit, 40) as UnitId) && ["held", "slip", "gap"].includes(str(v.result, 10))) {
+		reply.verdict = { unit: str(v.unit, 40) as UnitId, result: str(v.result, 10) as ProbeResult, note: str(v.note, 300) };
+	}
+	const a = o.ask as Record<string, unknown> | null | undefined;
+	if (a && typeof a === "object" && units.includes(str(a.unit, 40) as UnitId) && str(a.sk, 400)) {
+		reply.ask = { unit: str(a.unit, 40) as UnitId, prompt: str(a.prompt, 300), sk: str(a.sk, 400), kind: str(a.kind, 10) === "why" ? "why" : "produce" };
+	}
+	if (typeof o.done === "string" || o.done === true) reply.done = str(o.done, 600) || reply.say;
+	if (!reply.ask && reply.done === undefined) reply.done = reply.say;
+	return reply;
+}
+
+/** A verdict as placement reps: held = both right, slip = one of two,
+ *  gap = none. Two reps, like the drill's, so a tier's pass rule holds. */
+export function probeReps(verdicts: readonly ProbeVerdict[]): PlacementRep[] {
+	const out: PlacementRep[] = [];
+	for (const v of verdicts) {
+		const tier = tierOfUnit(v.unit);
+		if (!tier) continue;
+		const hits = v.result === "held" ? 2 : v.result === "slip" ? 1 : 0;
+		for (let i = 0; i < REPS_PER_UNIT; i++) out.push({ tier: tier.id, unit: v.unit, verdict: i < hits ? "exact" : "wrong", source: "probe" });
+	}
+	return out;
+}
+
+/** The drill's reps with the stage's verdicts folded in: a unit the tutor
+ *  judged is scored by that judgement (the last one wins), not by its two
+ *  drill reps. A tier the drill never reached scores from the stage alone. */
+export function withProbe(drill: readonly PlacementRep[], verdicts: readonly ProbeVerdict[]): PlacementRep[] {
+	const last = new Map<UnitId, ProbeVerdict>();
+	for (const v of verdicts) last.set(v.unit, v);
+	const kept = drill.filter((r) => !last.has(r.unit));
+	return [...kept, ...probeReps([...last.values()])];
 }
 
 // ─── The profile the tutor reads ────────────────────────────────────────────
@@ -577,8 +750,9 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const placed = Object.entries(evidence).filter(([, e]) => e?.placed);
 		const out = placed.filter(([, e]) => e!.reps > 0 && e!.correct === e!.reps).map(([id]) => unitInfo(id as UnitId).title);
 		const missed = placed.filter(([, e]) => e!.correct < e!.reps).map(([id, e]) => `${unitInfo(id as UnitId).title} (${e!.correct}/${e!.reps})`);
-		lines.push(`- Placement drill on ${goal.placedAt.slice(0, 10)}: ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.`);
+		lines.push(`- Placement check on ${goal.placedAt.slice(0, 10)}: works at ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.${goal.placedNote ? ` The tutor's reading of the edge: ${goal.placedNote}` : ""}`);
 	}
+	if (goal?.vocabulary) lines.push(`- Vocabulary check on ${goal.vocabulary.at.slice(0, 10)}: about ${goal.vocabulary.size.toLocaleString("en-GB")} lemmas recognised${goal.vocabulary.reliable ? "" : " (over-claimed on the pseudowords: treat as generous)"}.`);
 	if (state) {
 		const cur = state.chapters.find((c) => c.id === state.current);
 		const stage = STAGES.find((s) => s.id === cur?.stage);

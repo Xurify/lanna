@@ -13,7 +13,6 @@ import {
 	CONTRAST,
 	LESSON_BONUS,
 	PERFECT_BONUS,
-	PLACEMENT_PATTERN,
 	repXp,
 	streakOf,
 	unitDone,
@@ -57,14 +56,9 @@ import {
 	isPurpose,
 	MAX_MINUTES,
 	MAX_PURPOSES,
-	PLACEMENT_TIERS,
-	placementOutcome,
 	purposeScenes,
-	REPS_PER_UNIT,
-	tierForChapter,
+	placementTier,
 	type PlacementOutcome,
-	type PlacementRep,
-	type PlacementTier,
 } from "../core/onboarding.ts";
 import { strandBalance, type StrandBalance } from "../core/strands.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
@@ -429,7 +423,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		curriculum,
 		plan,
 		goal,
-		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, recentMinutes, now }),
+		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
 		balance,
 	};
 }
@@ -490,36 +484,19 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	return progressSummary(tz, now);
 }
 
-// ─── Placement: the staircase drill ─────────────────────────────────────────
-
-export interface PlacementPlan {
-	/** The tier to start at (an index into `tiers`). */
-	from: number;
-	tiers: Array<PlacementTier & { items: ReturnType<typeof buildLesson>["items"] }>;
-}
-
-/**
- * Every tier's reps, built locally from the lexicon in one go: two reps
- * per unit (choose, then type), so the client can climb tier by tier
- * without another request. `from` is where a re-check starts: the tier
- * the learner's current chapter belongs to.
- */
-export function placementFor(opts: { recheck?: boolean } = {}, seed = Date.now()): PlacementPlan {
-	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
-	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
-	const from = opts.recheck ? tierForChapter(state.current) : 0;
-	const tiers = PLACEMENT_TIERS.map((t, i) => ({
-		...t,
-		items: t.units.flatMap((u) => buildLesson(entries(), u, { seed: seed + i * 97 + t.units.indexOf(u), length: REPS_PER_UNIT, recent: new Set(p.recent), pattern: PLACEMENT_PATTERN }).items),
-	}));
-	return { from, tiers };
-}
+// ─── Placement: recording the check ─────────────────────────────────────────
 
 export interface PlacementResultInput {
+	/** The outcome the three stages folded into (src/server/placement.ts). */
+	outcome: PlacementOutcome;
+	/** Every ladder item answered, for the lesson log. */
 	reps: Array<RepResult & { tier: string }>;
 	ms?: number;
 	tz?: number;
+	/** The Socratic stage's closing line. */
+	note?: string;
+	/** The vocabulary-size estimate, when the learner did the word check. */
+	vocabulary?: GoalRecord["vocabulary"];
 }
 
 export interface PlacementResult extends PlacementOutcome {
@@ -527,33 +504,34 @@ export interface PlacementResult extends PlacementOutcome {
 }
 
 /**
- * Record a finished placement: the outcome (src/core/onboarding.ts) is
- * written into the units ledger as placed evidence (both reps right =
- * tested out; a miss = a weak unit the daily plan will strengthen), the
- * goal remembers the level and the chapter to start in, and every rep
- * goes to the lesson log like a lesson's. No XP: it is a measurement.
+ * Record a finished placement: the outcome is written into the units
+ * ledger as placed evidence (every rep right = tested out; a miss = a weak
+ * unit the daily plan will strengthen), the goal remembers the level and
+ * the chapter to start in, and every rep goes to the lesson log like a
+ * lesson's. No XP: it is a measurement. A re-check replaces the earlier
+ * placement's evidence only on the tiers it asked again (`outcome.from`);
+ * a unit with lessons behind it keeps its lesson evidence untouched.
  */
 export function recordPlacement(input: PlacementResultInput, now = new Date()): PlacementResult {
 	const p = progressStore.read();
-	const reps: PlacementRep[] = input.reps.map((r) => ({ tier: r.tier, unit: (r.detail?.unit ?? "") as PlacementRep["unit"], verdict: r.verdict }));
-	const outcome = placementOutcome(reps);
-	// A re-check replaces the earlier placement's evidence; lesson evidence
-	// stays (a unit with lessons behind it keeps them).
-	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0) delete p.units[id];
+	const { outcome } = input;
+	const asked = new Set(outcome.tiers.filter((t) => !t.held).flatMap((t) => placementTier(t.id)?.units ?? []));
+	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0 && asked.has(id as UnitId)) delete p.units[id];
 	for (const [id, e] of Object.entries(outcome.units)) {
 		const rec = p.units[id];
-		if (rec && rec.lessons > 0) {
-			rec.reps += e.reps;
-			rec.correct += e.correct;
-		} else p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
+		if (rec && rec.lessons > 0) continue;
+		p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
 	}
 	const goal = { ...(p.goal ?? DEFAULT_GOAL) };
 	goal.placedAt = now.toISOString();
 	goal.placedLevel = outcome.level;
 	goal.startChapter = outcome.startChapter;
+	if (input.note) goal.placedNote = input.note;
+	else delete goal.placedNote;
+	if (input.vocabulary) goal.vocabulary = input.vocabulary;
 	p.goal = goal;
 	const day = dayOf(p, today(input.tz, now));
-	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(15, input.ms / 60_000);
+	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(20, input.ms / 60_000);
 	progressStore.write(p);
 	try {
 		appendLessonLog({

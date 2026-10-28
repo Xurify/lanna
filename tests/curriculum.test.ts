@@ -126,6 +126,9 @@ test("the target level bounds the count; hours and the projection move with prog
 	assert.ok(p.etaPlanned && p.etaPlanned > "2029-01-01", p.etaPlanned ?? "");
 	const faster = projection(a1done, { target: "B2", minutesPerDay: 60, recentMinutes: [], now });
 	assert.ok(faster.etaPlanned! < p.etaPlanned!);
+	const fewer = projection(a1done, { target: "B2", minutesPerDay: 30, daysPerWeek: 3, recentMinutes: [], now });
+	assert.ok(fewer.etaPlanned! > p.etaPlanned!, "three days a week is later than the default six");
+	assert.equal(fewer.plannedWeekly, 1.5);
 });
 
 test("the daily plan: review first, listen (input) before the lesson, strengthen the weakest, words, read, speak, speed; it ticks off from the ledger", () => {

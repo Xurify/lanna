@@ -90,6 +90,8 @@ export * from "./lesson.ts";
 export * from "./word-clusters.ts";
 export * from "./curriculum.ts";
 export * from "./onboarding.ts";
+export * from "./placement-ladder.ts";
+export * from "./vocab-probe.ts";
 export * from "./unit-bridges.ts";
 export * from "./reading.ts";
 export * from "./listen.ts";

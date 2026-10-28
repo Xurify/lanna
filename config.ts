@@ -105,6 +105,11 @@ export const PATHS = {
 	 *  speak/<id>/<n>.webm (the learner's own recordings), speak/index.jsonl
 	 *  — src/store/speak.ts. */
 	speak: path.join(DATA_ROOT, "speak"),
+	/** Placement checks (LangHarness, 2026-10-28): placement/<id>.json —
+	 *  every item and answer of the adaptive ladder, the model's judgements,
+	 *  the Socratic turns, the vocabulary ticks, the outcome and the cost —
+	 *  and placement/index.jsonl, one line per finished check. */
+	placement: path.join(DATA_ROOT, "placement"),
 	/** The fluency strand's log (timed re-reads, say-it-faster rounds):
 	 *  fluency/log.jsonl — src/store/speak.ts. */
 	fluency: path.join(DATA_ROOT, "fluency"),
