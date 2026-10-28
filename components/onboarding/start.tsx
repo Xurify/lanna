@@ -350,7 +350,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
 							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
-							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; the bridges above are where the lessons show your languages.</p>
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
 						</Field>
 						<Field label="Slovak so far">
 							<Choices items={PRIORS} value={d.prior} onPick={(v) => set("prior", v)} />
