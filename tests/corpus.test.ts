@@ -209,3 +209,21 @@ describe("export", () => {
 		assert.ok(fs.existsSync(path.join(PATHS.chats, "README.md")));
 	});
 });
+
+describe("spending report", () => {
+	it("folds every session, live and trashed, by kind, with the audio library", async () => {
+		const { usageReport, sessionMode } = await import("../src/server/usage-report.ts");
+		const report = usageReport(new Date("2026-10-28T00:00:00Z"));
+		assert.ok(report.sessions.length >= 4, "live and trashed sessions both count");
+		assert.ok(report.sessions.some((s) => s.deleted), "the trashed one is marked");
+		assert.ok(report.sessions.every((s) => s.mode === "why"), "every fixture session is a Why? chat");
+		assert.equal(report.byMode[0]?.mode, "why");
+		assert.equal(report.audio.clips, 3);
+		assert.equal(report.totalUsd, 0, "no priced turns in the fixtures");
+		assert.equal(report.unpricedTurns, 0);
+		assert.equal(sessionMode({ kind: "practice", title: "Talk: Kaviareň", messages: [] }), "talk");
+		assert.equal(sessionMode({ kind: "practice", title: "x", messages: [{ id: "u", role: "user", content: "Story: tell me", timestamp: 1 } as never] }), "story");
+		assert.equal(sessionMode({ kind: undefined, title: "Cases", messages: [] }), "learn");
+		assert.equal(sessionMode({ kind: "practice", title: "Household items", messages: [] }), "practice");
+	});
+});

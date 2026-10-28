@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,7 +18,25 @@ export const ROOT = path.dirname(fileURLToPath(import.meta.url));
  */
 const BASE_DATA_ROOT = process.env.LH_DATA_DIR
 	? path.resolve(process.env.LH_DATA_DIR)
-	: path.join(ROOT, "data");
+	: process.env.NODE_ENV === "test"
+		? testDataRoot()
+		: path.join(ROOT, "data");
+
+/**
+ * THE TEST FENCE (LangHarness, 2026-10-28): a test run that does not set
+ * LH_DATA_DIR itself gets a throwaway folder under the OS temp dir, never
+ * the real data/. Upstream tests create chats ("feed chat A", "getApiKey
+ * pin") and jobs through the real stores and clean up with unlink; run on
+ * Xurify's PC from a shell where deletes are blocked, those fixtures
+ * landed in the learner's own session list, and opening one started a
+ * paid placement turn. Tests that set the seam before importing config
+ * (the chat-store-events pattern) keep their own folder.
+ */
+function testDataRoot(): string {
+	const dir = path.join(os.tmpdir(), `lh-test-data-${process.pid}`);
+	fs.mkdirSync(dir, { recursive: true });
+	return dir;
+}
 
 // ─── Language profiles (LangHarness, spec D7 / WF-01) ──────────────────────
 // Each target language keeps its own learning records under
