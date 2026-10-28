@@ -36,6 +36,7 @@ import { UNITS } from "../core/lesson.ts";
 import { purposeInfo, type Purpose } from "../core/onboarding.ts";
 import {
 	COVERAGE_FLOOR,
+	grammarWord,
 	knownCoverage,
 	gradeAnswers,
 	KNOWN_RANK,
@@ -312,6 +313,16 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 		if (introduced) {
 			token.lemma = introduced.lemma;
 			token.gloss = introduced.gloss;
+		} else {
+			// A pronoun form or particle the dictionary lacks: glossed from
+			// the table, known at every level.
+			const grammar = grammarWord(t.text);
+			if (grammar) {
+				token.lemma = grammar.lemma;
+				token.gloss = grammar.gloss;
+				token.cat = "Grammar";
+				return token;
+			}
 		}
 		// A proper name is not fresh vocabulary; an unknown word is.
 		if (!name) token.fresh = true;

@@ -242,6 +242,39 @@ export function wordTokens(sentences: readonly { tokens: readonly StoryToken[] }
 	return sentences.flatMap((s) => s.tokens.filter((t) => t.word));
 }
 
+/** Grammar words the slovak.wiki lexicon has no entry for: declined
+ *  pronouns, the reflexive particle, a few prepositions, conjunctions and
+ *  adverbs. Keyed by the lowercase form as written; each is [lemma, gloss].
+ *  They are read as known at every level: a learner meets "sa" and "jeho"
+ *  in the first week, and a text is not harder for using them. */
+export const GRAMMAR_WORDS: Readonly<Record<string, readonly [string, string]>> = {
+	ono: ["ono", "it"], ony: ["ony", "they (things, women)"],
+	mňa: ["ja", "me"], mi: ["ja", "to me"], mne: ["ja", "(to) me"],
+	ťa: ["ty", "you (object)"], teba: ["ty", "you (object)"], ti: ["ty", "to you"], tebe: ["ty", "(to) you"],
+	ho: ["on", "him; it"], jeho: ["on", "his; him"], mu: ["on", "to him"], jemu: ["on", "to him"], ňom: ["on", "him (after a preposition)"], ním: ["on", "(with) him"],
+	ňou: ["ona", "her (after a preposition)"], nej: ["ona", "her; to her"], ju: ["ona", "her"], jej: ["ona", "her; to her"], ňu: ["ona", "her (after a preposition)"],
+	nás: ["my", "us"], nám: ["my", "to us"], vás: ["vy", "you (plural, object)"], vám: ["vy", "to you (plural)"],
+	ich: ["oni", "them; their"], im: ["oni", "to them"], nich: ["oni", "them (after a preposition)"], nimi: ["oni", "(with) them"],
+	sa: ["sa", "oneself (reflexive particle)"], seba: ["seba", "oneself"], sebe: ["seba", "(to) oneself"], sebou: ["seba", "(with) oneself"],
+	moja: ["môj", "my"], moje: ["môj", "my"], môjho: ["môj", "my"], mojho: ["môj", "my"], mojej: ["môj", "my"],
+	tvoja: ["tvoj", "your"], tvoje: ["tvoj", "your"], naša: ["náš", "our"], naše: ["náš", "our"], vaša: ["váš", "your (plural)"], vaše: ["váš", "your (plural)"],
+	svoja: ["svoj", "one's own"], svoje: ["svoj", "one's own"],
+	tá: ["ten", "that; this (feminine)"], tí: ["ten", "those"], tie: ["ten", "those"], toho: ["ten", "that (object)"], tomu: ["ten", "to that"], tom: ["ten", "that (after a preposition)"], tým: ["ten", "(with) that"], tej: ["ten", "that (feminine)"], tú: ["ten", "that (feminine, object)"], tých: ["ten", "those (object)"],
+	toto: ["tento", "this"], táto: ["tento", "this (feminine)"], títo: ["tento", "these"], tieto: ["tento", "these"], tohto: ["tento", "this (object)"], tejto: ["tento", "this (feminine)"], týmto: ["tento", "(with) this"],
+	sem: ["sem", "(to) here"], koho: ["kto", "whom"], komu: ["kto", "to whom"], čom: ["čo", "what (after a preposition)"], čím: ["čo", "(with) what"], čoho: ["čo", "of what"], čomu: ["čo", "to what"],
+	i: ["aj", "and; also"], aj: ["aj", "also; too"], ak: ["ak", "if"], aby: ["aby", "so that; in order to"], no: ["no", "well; but"], však: ["však", "however; after all"], iba: ["iba", "only"],
+	vždy: ["vždy", "always"], nikdy: ["nikdy", "never"], niekedy: ["niekedy", "sometimes"], nikde: ["nikde", "nowhere"], niekde: ["niekde", "somewhere"], všetko: ["všetko", "everything"], všetci: ["všetci", "everyone"],
+	tak: ["tak", "so; like that"], taký: ["taký", "such"], takto: ["takto", "like this"],
+	vo: ["v", "in"], k: ["k", "to; towards"], ku: ["k", "to; towards"], u: ["u", "at (someone's place)"], pred: ["pred", "in front of; before"], nad: ["nad", "above"], pod: ["pod", "under"], medzi: ["medzi", "between; among"], bez: ["bez", "without"], cez: ["cez", "through; across"], pri: ["pri", "at; by; near"], proti: ["proti", "against"], podľa: ["podľa", "according to"],
+	až: ["až", "until; as much as"], ani: ["ani", "not even; nor"], než: ["než", "than"], nech: ["nech", "let (may)"], by: ["by", "would (conditional)"],
+};
+
+/** The grammar word a form is, if the table has it. */
+export function grammarWord(form: string): { lemma: string; gloss: string } | undefined {
+	const hit = GRAMMAR_WORDS[form.toLocaleLowerCase()];
+	return hit ? { lemma: hit[0], gloss: hit[1] } : undefined;
+}
+
 /** Share of word tokens the learner can read: known words, plus the
  *  words the episode introduces on purpose (glossed, repeated, queued —
  *  the i+1). What is left are stray unknowns, the ones the floor limits. */
