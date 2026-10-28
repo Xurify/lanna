@@ -50,6 +50,7 @@ import {
 	suggestedLevel,
 	LEVEL_CAN_DO,
 	levelFitLine,
+	parallelsLine,
 	unitInfo,
 	type Cefr,
 	type Lang,
@@ -336,18 +337,20 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 
 				{step === 2 && (
 					<section className="lh-rise" data-testid="start-you">
-						<Heading title="What you bring" line="Every language you know is a bridge: the lessons and the tutor show a form the Estonian way, the Russian way, whichever you bring." />
+						<Heading title="What you bring" line="The tutor explains in a language you choose, and knows which of your languages a Slovak rule resembles." />
 						<Field label="Languages you know" hint="any language you can read a simple text in; then your level, on the CEFR">
 							<LanguagePicker
 								value={d.languages}
 								levels={d.languageLevels}
 								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(x.explainIn, languages) }))}
 							/>
-							<p className="mt-3 font-prose text-sm text-muted-foreground">Estonian, Finnish, Russian and German also appear inside the lessons, as the same form seen their way: the one you know best leads, one at A1 or A2 is an aside. The tutor draws on all of them.</p>
+							<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="parallels-line">
+								{parallelsLine({ languages: d.languages, languageLevels: d.languageLevels })}
+							</p>
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
 							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
-							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; the bridges above are where the lessons show your languages.</p>
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
 						</Field>
 						<Field label="Slovak so far">
 							<Choices items={PRIORS} value={d.prior} onPick={(v) => set("prior", v)} />

@@ -12,13 +12,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { explainChoices, LanguagePicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
-import { explanationLanguages, knownLanguages, MAX_EXPLAIN, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
-import { SettingsGroup } from "./controls.tsx";
+import { explanationLanguages, knownLanguages, MAX_EXPLAIN, parallelsLine, parallelsOn, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
+import { SettingsGroup, Toggle } from "./controls.tsx";
 
 interface Langs {
 	languages: Lang[];
 	languageLevels: Partial<Record<Lang, LangLevel>>;
 	explainIn: Lang[];
+	showParallels: boolean;
 }
 
 export function LearnerSection({ onClose }: { onClose: () => void }) {
@@ -32,7 +33,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 			.then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
 			.then((s: { goal?: LearnerGoal }) => {
 				if (gone) return;
-				setState({ languages: knownLanguages(s.goal), languageLevels: s.goal?.languageLevels ?? {}, explainIn: explanationLanguages(s.goal) });
+				setState({ languages: knownLanguages(s.goal), languageLevels: s.goal?.languageLevels ?? {}, explainIn: explanationLanguages(s.goal), showParallels: parallelsOn(s.goal) });
 			})
 			.catch(() => !gone && setStatus("failed"));
 		return () => {
@@ -58,8 +59,16 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 	return (
 		<>
 			<SettingsGroup label="Languages you know" testid="learner-languages">
-				<LanguagePicker value={state.languages} levels={state.languageLevels} onChange={(languages, languageLevels) => void save({ languages, languageLevels, explainIn: keepExplain(state.explainIn, languages) })} />
-				<p className="text-xs text-muted-foreground">Any language you can read a simple text in, and your CEFR level in it (A1 to C2, or native). Estonian, Finnish, Russian and German show up inside the lessons as the same form seen their way, the best-known first; the tutor draws on every language here.</p>
+				<LanguagePicker value={state.languages} levels={state.languageLevels} onChange={(languages, languageLevels) => void save({ ...state, languages, languageLevels, explainIn: keepExplain(state.explainIn, languages) })} />
+				<p className="text-xs text-muted-foreground">Any language you can read a simple text in, and your CEFR level in it (A1 to C2, or native). The tutor uses them to understand you and to pick what to compare.</p>
+			</SettingsGroup>
+			<SettingsGroup label="Parallels from my languages" testid="learner-parallels">
+				<div className="flex items-center justify-between gap-4 py-1">
+					<span className="font-prose text-(length:--lh-prose-size)" data-testid="parallels-line">
+						{parallelsLine(state).replace(/ You can turn it off in Settings → Learner\.$/, "")}
+					</span>
+					<Toggle checked={state.showParallels} onChange={(showParallels) => void save({ ...state, showParallels })} label="Show parallels from my languages" />
+				</div>
 			</SettingsGroup>
 			<SettingsGroup label="Explain to me in" testid="learner-explain">
 				<PickSome items={explainChoices(state.languages)} value={state.explainIn} onChange={(explainIn) => void save({ ...state, explainIn })} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />

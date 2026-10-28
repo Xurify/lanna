@@ -1138,6 +1138,7 @@ function FeedbackSheet({
 	// retrieval should explain, not only correct (Butler, Godbole & Marsh
 	// 2013). A right answer keeps it behind Why?.
 	const [open, setOpen] = useState(verdict === "wrong" && item.kind !== "build" && item.kind !== "meaning");
+	const bridgeLangs = useContext(BridgesContext);
 	const info = unitInfo(item.unit);
 	// A whole typed sentence (listening) is answered with the whole sentence.
 	const expected = item.kind === "meaning" ? item.translation : item.kind === "build" || (item.kind === "listen" && given.trim().includes(" ")) ? item.sentence : item.answer;
@@ -1281,10 +1282,14 @@ function FeedbackSheet({
 							)}
 							{info.rule}
 						</dd>
-						<dt className={WHY_LABEL}>Bridges</dt>
-						<dd className="flex flex-col gap-1">
-							<Bridges unit={item.unit} />
-						</dd>
+						{unitBridges(item.unit, bridgeLangs).length > 0 && (
+							<>
+								<dt className={WHY_LABEL}>Parallels</dt>
+								<dd className="flex flex-col gap-1">
+									<Bridges unit={item.unit} />
+								</dd>
+							</>
+						)}
 						{examples.length > 0 && (
 							<>
 								<dt className={WHY_LABEL}>Same pattern</dt>

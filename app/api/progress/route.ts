@@ -44,6 +44,7 @@ export async function PUT(req: Request) {
 					languageLevels: g.languageLevels && typeof g.languageLevels === "object" ? (Object.fromEntries(Object.entries(g.languageLevels as Record<string, unknown>).filter(([, v]) => typeof v === "string").slice(0, 32)) as never) : undefined,
 					explainIn: (typeof g.explainIn === "string" ? [g.explainIn] : strs(g.explainIn)) as never,
 					prior: typeof g.prior === "string" ? (g.prior as never) : undefined,
+					showParallels: typeof g.showParallels === "boolean" ? g.showParallels : undefined,
 					onboarded: g.onboarded === true,
 				},
 				tzOf(req),

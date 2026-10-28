@@ -8,7 +8,7 @@
  * buttons with aria-pressed, the stepper is a real number input.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
@@ -137,6 +137,7 @@ export function LanguagePicker({
 	const [pending, setPending] = useState<Lang[] | null>(null);
 	const [query, setQuery] = useState("");
 	const more = pending !== null;
+	const anchor = useRef<HTMLSpanElement>(null);
 	const chosen = pending ?? value;
 	const prune = (langs: readonly Lang[]) => {
 		const next: Partial<Record<Lang, LangLevel>> = {};
@@ -156,6 +157,25 @@ export function LanguagePicker({
 		setPending(null);
 		setQuery("");
 	};
+	// Close on a press anywhere outside the chip and panel (the page margins
+	// included) or on Escape. A backdrop element cannot do this: the step
+	// animates with a transform, which pins a fixed child to the form column
+	// (Xurify, 2026-10-28: "I click on the sides and the dropdown won't close").
+	useEffect(() => {
+		if (!more) return;
+		const onDown = (e: PointerEvent) => {
+			if (!anchor.current?.contains(e.target as Node)) close();
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") close();
+		};
+		document.addEventListener("pointerdown", onDown, true);
+		document.addEventListener("keydown", onKey);
+		return () => {
+			document.removeEventListener("pointerdown", onDown, true);
+			document.removeEventListener("keydown", onKey);
+		};
+	});
 	const shown = KNOWN_LANGUAGES.filter((l) => l.primary || value.includes(l.id));
 	const q = query.trim().toLowerCase();
 	const found = KNOWN_LANGUAGES.filter((l) => (q ? l.title.toLowerCase().includes(q) : !l.primary));
@@ -171,14 +191,13 @@ export function LanguagePicker({
 						</button>
 					);
 				})}
-				<span className="relative">
+				<span className="relative" ref={anchor}>
 					<button type="button" aria-expanded={more} onClick={() => (more ? close() : open())} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm", more && "border-foreground/40 text-foreground")} data-testid={`${testid}-more`}>
 						<SearchIcon className="-ml-0.5 mr-1.5 inline size-3.5" />
 						More languages
 					</button>
 					{more && (
 						<>
-							<div className="fixed inset-0 z-10" onClick={close} aria-hidden="true" />
 							<div className="absolute left-0 top-full z-20 mt-2 w-[22rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-border bg-card p-3 shadow-xl" role="dialog" aria-label="More languages" data-testid={`${testid}-panel`}>
 								<input
 									autoFocus
