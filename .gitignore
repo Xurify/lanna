@@ -19,3 +19,11 @@ xai-credentials.json*
 
 # dev-fresh launcher scratch (fresh-user sim): disposable per launch
 .fresh-data/
+
+# env files, local backups and transfer bundles
+.env
+.env.*
+_backup-before-redesign/
+_backup-before-curriculum/
+*.bundle
+langharness-2.tar.gz
