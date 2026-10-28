@@ -29,6 +29,8 @@ export interface DayRecord {
 	reads?: number;
 	/** Listening sessions finished (the Listen task). */
 	listens?: number;
+	/** YouTube videos watched (the Watch task, src/server/watch.ts). */
+	watches?: number;
 	/** Spoken scenes finished (the Speak task, src/server/speak.ts). */
 	speaks?: number;
 	/** Timed re-reads of an episode (the fluency strand). */

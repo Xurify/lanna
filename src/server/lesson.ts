@@ -71,6 +71,8 @@ import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
+import { videoStore } from "../store/videos.ts";
+import { watchMinutes } from "../core/watch.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
 const RECENT_CAP = 240;
@@ -340,6 +342,22 @@ export interface ProgressSummary {
 	balance: StrandBalance;
 }
 
+/** The video the daily plan should show: the one watched today (so the
+ *  task reads as done), else the newest added and not watched yet;
+ *  undefined when neither exists. */
+function pendingWatch(day: string): { id: string; title: string; minutes: number; coverage: number } | undefined {
+	try {
+		const watches = videoStore.watches();
+		const library = videoStore.list();
+		const todays = watches.filter((w) => w.day === day).at(-1);
+		const watched = new Set(watches.map((w) => w.videoId));
+		const v = (todays && library.find((e) => e.id === todays.videoId)) ?? [...library].reverse().find((e) => !watched.has(e.id));
+		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec), coverage: v.coverage } : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 export function progressSummary(tz?: number, now = new Date()): ProgressSummary {
 	const p = progressStore.read();
 	const key = today(tz, now);
@@ -383,7 +401,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
@@ -391,6 +409,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		scenes: purposeScenes(goal.purposes ?? []),
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
+		watch: pendingWatch(key),
 	});
 	const recentMinutes: number[] = [];
 	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);

@@ -63,6 +63,7 @@ export function UsageSection() {
 					{report.jobsUsd > 0 && <> · background agents {formatUsd(report.jobsUsd)}</>}
 					{report.stories.count > 0 && <> · {report.stories.count} story {report.stories.count === 1 ? "episode" : "episodes"} {formatUsd(report.storiesUsd)}</>}
 					{(report.speak?.count ?? 0) > 0 && <> · {report.speak.count} spoken {report.speak.count === 1 ? "scene" : "scenes"} {formatUsd(report.speakUsd)}</>}
+					{(report.videos?.count ?? 0) > 0 && <> · {report.videos.count} {report.videos.count === 1 ? "video" : "videos"} prepared {formatUsd(report.videosUsd)}</>}
 					{report.unpricedTurns > 0 && <> · {report.unpricedTurns} turns had no catalog price and are not counted</>}
 					. Lessons, blitz, review, Listen and the speed rounds run locally and cost nothing.
 				</p>

@@ -16,7 +16,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HoursSheet } from "@/components/hours-sheet";
-import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrandBalance } from "@/components/strand-balance";
 import { DEFAULT_DAYS_PER_WEEK, knownLanguages, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
@@ -145,6 +145,7 @@ const TASK_ICON: Record<PlanTask["id"], { icon: React.ReactNode; ink: string }> 
 	blitz: { icon: <ZapIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 	words: { icon: <BookOpenTextIcon className="size-5" />, ink: "text-flame bg-flame/15" },
 	read: { icon: <BookOpenIcon className="size-5" />, ink: "text-xp bg-xp/15" },
+	watch: { icon: <MonitorPlayIcon className="size-5" />, ink: "text-go bg-go/15" },
 	speak: { icon: <MicIcon className="size-5" />, ink: "text-xp bg-xp/15" },
 	fluency: { icon: <GaugeIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 };

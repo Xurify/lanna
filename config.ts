@@ -108,6 +108,12 @@ export const PATHS = {
 	/** The fluency strand's log (timed re-reads, say-it-faster rounds):
 	 *  fluency/log.jsonl — src/store/speak.ts. */
 	fluency: path.join(DATA_ROOT, "fluency"),
+	/** YouTube videos prepared for the Watch task (LangHarness watch,
+	 *  2026-10-28): videos/<id>.json (the segmented transcript with glossed
+	 *  tokens, translations, questions, cost), videos/captions/<id>.<lang>.json
+	 *  (the raw caption track as fetched), videos/index.jsonl and
+	 *  videos/watches.jsonl (one line per watching) — src/store/videos.ts. */
+	videos: path.join(DATA_ROOT, "videos"),
 	/** Normalized, app-independent exports (npm run corpus:export). */
 	exports: path.join(BASE_DATA_ROOT, "export"),
 	/** Spaced-review cards and their log (src/store/review.ts). */

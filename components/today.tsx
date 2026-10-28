@@ -20,9 +20,11 @@ import {
 	CheckIcon,
 	FlameIcon,
 	GraduationCapIcon,
+	HeadphonesIcon,
 	MapIcon,
 	MessagesSquareIcon,
 	MicIcon,
+	MonitorPlayIcon,
 	PlayIcon,
 	RepeatIcon,
 	XIcon,
@@ -273,6 +275,22 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							ring="hover:border-flame/60"
 							title="Read"
 							line={s?.plan.tasks.some((t) => t.id === "read" && t.done) ? "Today's episode is read · the library" : "Today's episode, every word tappable"}
+						/>
+						<ModeTile
+							href="/listen"
+							icon={<HeadphonesIcon className="size-6" />}
+							ink="text-sky"
+							ring="hover:border-sky/60"
+							title="Listen"
+							line={s?.plan.tasks.some((t) => t.id === "listen" && t.done) ? "Ten sentences heard today · more?" : "Ten sentences you can follow"}
+						/>
+						<ModeTile
+							href="/watch"
+							icon={<MonitorPlayIcon className="size-6" />}
+							ink="text-go"
+							ring="hover:border-go/60"
+							title="Watch"
+							line={s?.plan.tasks.some((t) => t.id === "watch" && !t.done) ? "A video is waiting · both subtitles" : "Paste a YouTube link · both subtitles"}
 						/>
 					</div>
 
