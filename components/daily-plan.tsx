@@ -6,8 +6,8 @@
  *
  * The plan is computed on the server (src/core/curriculum.ts dailyPlan):
  * review what is due, ten sentences to listen to, one lesson of new
- * ground, strengthen the weakest unit, new words, an episode to read, and
- * speaking with feedback, cut to
+ * ground, strengthen the weakest unit, new words, an episode to read,
+ * a scene to speak, and three minutes of speed on what is known, cut to
  * the planned minutes.
  * Each task is a link into the app; a task ticks itself off from the
  * progress ledger, so there is nothing to mark by hand.
@@ -16,7 +16,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HoursSheet } from "@/components/hours-sheet";
-import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrandBalance } from "@/components/strand-balance";
 import { DEFAULT_DAYS_PER_WEEK, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
@@ -145,7 +145,8 @@ const TASK_ICON: Record<PlanTask["id"], { icon: React.ReactNode; ink: string }> 
 	blitz: { icon: <ZapIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 	words: { icon: <BookOpenTextIcon className="size-5" />, ink: "text-flame bg-flame/15" },
 	read: { icon: <BookOpenIcon className="size-5" />, ink: "text-xp bg-xp/15" },
-	speak: { icon: <MessagesSquareIcon className="size-5" />, ink: "text-xp bg-xp/15" },
+	speak: { icon: <MicIcon className="size-5" />, ink: "text-xp bg-xp/15" },
+	fluency: { icon: <GaugeIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 };
 
 function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpeak: (task: PlanTask) => void }) {
@@ -153,7 +154,7 @@ function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpe
 	const body = (
 		<>
 			<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", task.done ? "bg-accent text-muted-foreground" : ink)}>
-				{task.done ? <CheckIcon className="size-5" strokeWidth={3} /> : task.via === "story" ? <ScrollTextIcon className="size-5" /> : task.via === "tutor" ? <GraduationCapIcon className="size-5" /> : icon}
+				{task.done ? <CheckIcon className="size-5" strokeWidth={3} /> : task.via === "story" ? <ScrollTextIcon className="size-5" /> : task.via === "tutor" ? <GraduationCapIcon className="size-5" /> : task.via === "talk" ? <MessagesSquareIcon className="size-5" /> : icon}
 			</span>
 			<span className="min-w-0 flex-1">
 				<span className={cn("block font-ui text-base font-bold", task.done ? "text-muted-foreground line-through decoration-2" : "text-foreground")}>{task.title}</span>

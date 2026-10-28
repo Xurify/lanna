@@ -7,7 +7,7 @@
  *
  * One obvious next step (Continue, Enter starts it), today's plan on the
  * road to the target level (components/daily-plan.tsx), four ways to
- * practise (Review, Blitz, Talk, Read), and the path: the whole A1→B2
+ * practise (Review, Blitz, Speak, Read), and the path: the whole A1→B2
  * map folded to the current chapter (components/curriculum-path.tsx).
  */
 
@@ -22,6 +22,7 @@ import {
 	GraduationCapIcon,
 	MapIcon,
 	MessagesSquareIcon,
+	MicIcon,
 	PlayIcon,
 	RepeatIcon,
 	XIcon,
@@ -155,12 +156,14 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		const scene = TALK_SCENES.find((x) => x.id === id);
 		if (scene) talk(scene);
 	};
-	/** The plan's speaking task: a tutor unit, the chapter's scene, or a story. */
+	/** The plan's speaking task: a tutor unit, a spoken scene (/speak, a
+	 *  link the row follows itself), a text Talk, or a story. */
 	const speak = (task: PlanTask) => {
 		if (task.via === "tutor" && task.unit) {
 			const u = (s?.curriculum.chapters ?? []).flatMap((c) => c.units).find((x) => x.id === task.unit);
 			if (u) tutorUnit(u);
-		} else if (task.via === "talk" && task.unit) sceneById(task.unit);
+		} else if (task.via === "speak") router.push(task.href ?? (task.unit ? `/speak?scene=${task.unit}` : "/speak"));
+		else if (task.via === "talk" && task.unit) sceneById(task.unit);
 		else if (task.via === "talk") setTalkOpen(true);
 		else story();
 	};
@@ -256,13 +259,12 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							line={s && s.bestBlitz > 0 ? `60 seconds · best ${s.bestBlitz}` : "60 seconds, as many as you can"}
 						/>
 						<ModeTile
-							onClick={() => setTalkOpen(true)}
-							icon={<MessagesSquareIcon className="size-6" />}
+							href="/speak"
+							icon={<MicIcon className="size-6" />}
 							ink="text-xp"
 							ring="hover:border-xp/60"
-							title="Talk"
-							line="Role-play a real scene"
-							disabled={busy}
+							title="Speak"
+							line={s?.plan.tasks.some((t) => t.id === "speak" && t.done) ? "A scene said today · another?" : "Say a real scene out loud"}
 						/>
 						<ModeTile
 							href="/read"
@@ -282,6 +284,14 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						<Link href="/chat/new?mode=practice" className="flex items-center gap-1.5 hover:text-foreground">
 							<BookOpenTextIcon className="size-3.5" />
 							Practice problems
+						</Link>
+						<button type="button" onClick={() => setTalkOpen(true)} disabled={busy} className="flex items-center gap-1.5 hover:text-foreground disabled:opacity-50">
+							<MessagesSquareIcon className="size-3.5" />
+							Talk in writing
+						</button>
+						<Link href="/fluency?mode=fast" className="flex items-center gap-1.5 hover:text-foreground">
+							<ZapIcon className="size-3.5" />
+							Say it faster
 						</Link>
 						<Link href="/curriculum" className="flex items-center gap-1.5 hover:text-foreground">
 							<MapIcon className="size-3.5" />

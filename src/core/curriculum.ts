@@ -536,7 +536,7 @@ export function projection(state: CurriculumState, opts: { target: Cefr; minutes
 
 // ─── The daily plan ─────────────────────────────────────────────────────────
 
-export type TaskKind = "review" | "listen" | "lesson" | "strengthen" | "words" | "read" | "speak" | "blitz";
+export type TaskKind = "review" | "listen" | "lesson" | "strengthen" | "words" | "read" | "speak" | "fluency" | "blitz";
 
 export interface PlanTask {
 	id: TaskKind;
@@ -547,8 +547,9 @@ export interface PlanTask {
 	done: boolean;
 	/** lesson/strengthen/words: the unit; speak: a tutor unit id or a scene id. */
 	unit?: string;
-	/** speak: how to start it. */
-	via?: "tutor" | "talk" | "story";
+	/** speak: how to start it — a tutor chat, a spoken scene (/speak), a
+	 *  text Talk, or a Story. */
+	via?: "tutor" | "speak" | "talk" | "story";
 	href?: string;
 }
 
@@ -572,6 +573,11 @@ export interface DayEvidence {
 	reads?: number;
 	/** Listening sessions finished today (the Listen task). */
 	listens?: number;
+	/** Spoken scenes finished today (the Speak task). */
+	speaks?: number;
+	/** Timed re-reads and "say it faster" rounds today (the fluency strand). */
+	rereads?: number;
+	fasts?: number;
 }
 
 export interface PlanInput {
@@ -587,13 +593,15 @@ export interface PlanInput {
 	/** Talk scenes the learner's purposes call for (src/core/onboarding.ts);
 	 *  they rotate with the chapter's own scene. */
 	scenes?: string[];
+	/** An episode read before today exists, so a timed re-read is possible. */
+	reread?: boolean;
 }
 
 /** Which tasks survive a tight budget first (lower keeps): the must-haves,
  *  then one task of each strand, then the second form-focused ones. */
-const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, strengthen: 5, blitz: 5, words: 6 };
+const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, fluency: 5, strengthen: 6, blitz: 6, words: 7 };
 
-export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, blitz: 1 } as const;
+export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, fluency: 3, blitz: 1 } as const;
 
 /**
  * The day's plan, from the research on what actually moves a learner:
@@ -601,10 +609,12 @@ export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, 
  * asked of you (ten sentences to listen to and understand), new ground on
  * the path (one lesson on the Continue unit), interleaved strengthening of
  * the weakest practised unit, new words in context, an episode to read at
- * the learner's level, and output with feedback (a tutor unit, a Talk
- * scene or a Story). The order follows comprehension-before-production;
- * the mix follows Nation's four strands (src/core/strands.ts). The list
- * is cut to the planned minutes, never below review + the lesson.
+ * the learner's level, output with feedback (a tutor unit, else a spoken
+ * scene from what Slovak is for), and three minutes of speed on what is
+ * already known (a timed re-read of an episode, or "say it faster"). The
+ * order follows comprehension-before-production; the mix follows
+ * Nation's four strands (src/core/strands.ts). The list is cut to the
+ * planned minutes, never below review + the lesson.
  */
 export function dailyPlan(input: PlanInput): DailyPlan {
 	const { state, evidence, day, review } = input;
@@ -703,26 +713,38 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	});
 
 	// 7. Speak: output with feedback. A tutor unit in the current chapter
-	//    first; else the current chapter's scene, alternating with a story.
+	//    first; else a spoken scene (src/core/speak.ts): the chapter's own
+	//    scene and the ones the learner's purposes ask for, rotating day
+	//    by day, said out loud with the tutor answering in voice.
 	const current = state.chapters.find((c) => c.id === state.current);
 	const tutorUnit = current?.units.find((u) => u.kind === "tutor" && (u.status === "open" || u.status === "started"));
 	const chapterScene = current?.units.find((u) => u.kind === "goal")?.scene;
-	// The scenes worth talking through: the chapter's own, then the ones
-	// the learner's purposes ask for, rotating day by day.
 	const scenes = [...new Set([chapterScene, ...(input.scenes ?? [])].filter((s): s is string => !!s))];
-	const scene = scenes.length ? scenes[Math.floor(input.dayOfYear / 2) % scenes.length] : undefined;
-	const speakDone = day.talks + day.stories + day.tutors > 0;
+	const scene = scenes.length ? scenes[input.dayOfYear % scenes.length] : undefined;
+	const speakDone = day.talks + day.stories + day.tutors + (day.speaks ?? 0) > 0;
 	if (tutorUnit) {
 		tasks.push({ id: "speak", title: `With the tutor: ${tutorUnit.title}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
-	} else if (input.dayOfYear % 2 === 0 && scene) {
-		tasks.push({ id: "speak", title: "Talk", line: scene === chapterScene ? "Role-play the chapter's scene — say it before you are sure" : "Role-play a scene from what Slovak is for — say it before you are sure", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "talk" });
+	} else if (scene) {
+		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers in Slovak and prompts your slips" : "Say a scene from what Slovak is for out loud — the tutor answers in Slovak and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
 	} else {
-		tasks.push({ id: "speak", title: "Story", line: "Robo's next episode with the tutor, then three questions — input you can talk back to", minutes: TASK_MINUTES.speak, done: speakDone, via: "story" });
+		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers in Slovak and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
 	}
+
+	// 8. Speed: fluency on what is already known (src/core/fluency.ts). A
+	//    timed re-read of an episode read before, alternating with "say it
+	//    faster" on known sentences; the latter alone until an episode has
+	//    been read.
+	const fluencyDone = (day.rereads ?? 0) + (day.fasts ?? 0) > 0;
+	const rereadDay = input.reread && input.dayOfYear % 2 === 1;
+	tasks.push(
+		rereadDay
+			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/fluency?mode=reread" }
+			: { id: "fluency", title: "Say it faster", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/fluency?mode=fast" },
+	);
 
 	// Cut to the planned minutes, keeping review and the lesson. A tight
 	// budget keeps one task per strand before a second form-focused one
-	// (input, then speaking, before strengthen and words), so a short day
+	// (input, speaking and speed before strengthen and words), so a short day
 	// is still balanced rather than all drills (src/core/strands.ts).
 	const budget = Math.max(5, input.minutesPerDay);
 	const keep = new Set<TaskKind>();

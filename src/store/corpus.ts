@@ -281,8 +281,10 @@ export interface LessonLogEntry {
 	unit: string;
 	/** placement: the setup's staircase drill (unit "placement");
 	 *  listen: the Listen task (unit "listen"), where `answer` is the
-	 *  translation picked and `given` the meaning chosen. */
-	mode: "lesson" | "blitz" | "placement" | "listen";
+	 *  translation picked and `given` the meaning chosen; speak: a spoken
+	 *  scene (unit = the scene id), one rep per correction; fluency: a
+	 *  "say it faster" round, one rep per sentence (unit "fast"). */
+	mode: "lesson" | "blitz" | "placement" | "listen" | "speak" | "fluency";
 	ms?: number;
 	xp: number;
 	correct: number;
@@ -404,6 +406,8 @@ export function ensureReadmes(force = false): void {
 		[path.join(PATHS.lessons, "README.md"), DATA_READMES.lessons],
 		[path.join(PATHS.chats, "README.md"), DATA_READMES.chats],
 		[path.join(PATHS.stories, "README.md"), DATA_READMES.stories],
+		[path.join(PATHS.speak, "README.md"), DATA_READMES.speak],
+		[path.join(PATHS.fluency, "README.md"), DATA_READMES.fluency],
 	];
 	for (const [file, text] of targets) {
 		if (readmesWritten.has(file) && !force) continue;

@@ -24,6 +24,8 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/lessons/\` | Every finished lesson and blitz: every sentence shown, your answer, the verdict, the hint used | JSON Lines per day |
 | \`profiles/slovak/lessons/why-index.json\` | Which chat answered "Why?" for which sentence, so the question is paid for once | JSON |
 | \`profiles/slovak/stories/\` | Every graded story episode written for the Read task, with every word glossed, the questions and what it cost; \`index.jsonl\` lists them, \`reads.jsonl\` logs every reading | JSON + JSON Lines |
+| \`profiles/slovak/speak/\` | Every spoken scene from the Speak task: each line (the tutor's with its meaning, yours with how it arrived), every repair prompt, the end summary and what it cost; your own recordings in \`<id>/\`; \`index.jsonl\` lists the scenes | JSON + WebM/Opus + JSON Lines |
+| \`profiles/slovak/fluency/\` | The speed strand's log: every timed re-read (words a minute) and every "say it faster" round (each pass's time, window, what was heard) | JSON Lines |
 | \`profiles/slovak/review/\` | The spaced-review deck: \`cards.json\` (every card and its memory state), \`log.jsonl\` (every answer), \`meta.json\` (settings) | JSON + JSON Lines |
 | \`profiles/slovak/progress.json\` | XP, days practised, each unit's lessons and accuracy | JSON |
 | \`profiles/slovak/graph/\` | The knowledge graph the tutor extracted from your sessions (nodes, chains, sources) | JSON Lines ledgers |
@@ -82,6 +84,8 @@ where the format is not obvious.
 - \`chats/\`: every tutor session (one JSON per chat). See \`chats/README.md\`.
 - \`lessons/\`: every finished lesson with every answer. See \`lessons/README.md\`.
 - \`stories/\`: every story episode written for the Read task. See \`stories/README.md\`.
+- \`speak/\`: every spoken scene from the Speak task, with your recordings. See \`speak/README.md\`.
+- \`fluency/\`: the speed strand's log (timed re-reads, "say it faster"). See \`fluency/README.md\`.
 - \`review/\`: the spaced-review deck. \`cards.json\` is every card with its
   FSRS memory state; \`log.jsonl\` is one line per answer (card, what you
   typed, verdict, rating, when); \`meta.json\` holds settings and how many
@@ -100,7 +104,8 @@ const LESSONS = `# lessons/
 One file per local day, \`YYYY-MM-DD.jsonl\`, one JSON object per line, one
 per finished lesson or blitz. Each holds:
 
-- \`id\`, \`at\` (ISO time), \`day\`, \`unit\`, \`mode\` (\`lesson\` | \`blitz\`), \`ms\`
+- \`id\`, \`at\` (ISO time), \`day\`, \`unit\`, \`mode\` (\`lesson\` | \`blitz\` |
+  \`placement\` | \`listen\` | \`speak\` | \`fluency\`), \`ms\`
 - \`xp\`, \`correct\`, \`total\`, \`perfect\`, \`queued\` (words sent to review)
 - \`reps\`: every exercise in order. Per rep: \`kind\` (\`choose\`, \`type\`,
   \`build\`, \`listen\`), \`unit\`, \`slug\`, \`lemma\`, \`gloss\`, \`sentence\`
@@ -169,4 +174,43 @@ story at your level, each paid for once and kept here for good.
 The sentences\' audio is in \`../../../audio/\` like every other clip.
 `;
 
-export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES } as const;
+const SPEAK = `# speak/
+
+Spoken scenes from the Speak task: a role-play said out loud with the
+tutor, one file per scene, kept for good.
+
+- \`<id>.json\` (e.g. \`sp-2026-10-28-cafe-k3f9ab.json\`): \`scene\`,
+  \`sceneTitle\`, \`level\`, \`chapter\`, \`startedAt\`, \`endedAt\`, \`ms\`;
+  \`turns[]\` in order: \`role\` (\`tutor\` | \`learner\`), \`text\` (Slovak),
+  \`en\` (the tutor's meaning), \`prompt\` (a repair prompt on your last
+  line: \`yours\`, \`hint\`, \`kind\` = case | verb | aspect), \`repaired\`
+  (your next line fixed it), \`via\` (\`voice\` | \`typed\`), \`audio\` (your
+  recording's file name in \`<id>/\`), \`at\`; \`summary\`: \`corrections[]\`
+  (\`yours\` → \`right\`, \`rule\`, \`kind\`, \`lemma\`, \`slug\`), \`keep[]\`
+  (phrases worth remembering), \`note\`; \`xp\`, \`queued\` (words sent to
+  the review deck), \`usage\` (the model and every call's tokens; priced
+  at read time in Settings → Spending).
+- \`<id>/01.webm\`, \`02.webm\`…: your own voice, line by line, as the
+  browser recorded it (Opus). The transcript the app used is \`turns[].text\`.
+- \`index.jsonl\`: one line per finished scene (lines said, prompts,
+  repairs, corrections, model, XP).
+
+The tutor's lines are spoken from \`../../../audio/\` like every other clip.
+`;
+
+const FLUENCY = `# fluency/
+
+The speed strand: work on what you already know, against the clock.
+
+\`log.jsonl\` holds one JSON object per line, one per round:
+
+- \`mode: "reread"\`: a timed re-read of an episode from \`../stories/\`:
+  \`storyId\`, \`at\`, \`day\`, \`words\`, \`ms\`, \`wpm\` (words a minute),
+  \`question\` (which of the episode's questions was asked), \`right\`, \`xp\`.
+- \`mode: "fast"\`: a "say it faster" round: \`reps[]\` per sentence
+  (\`itemId\`, \`slug\`, \`sentence\`, \`translation\`, \`passes[]\` with each
+  pass's \`ms\`, \`window\`, \`made\`, and \`heard\`/\`match\` when the
+  microphone was on), \`passesMade\`, \`sentencesMade\`, \`xp\`.
+`;
+
+export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY } as const;

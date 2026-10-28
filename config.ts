@@ -100,6 +100,14 @@ export const PATHS = {
 	 *  stories/index.jsonl (one line per story) and stories/reads.jsonl
 	 *  (one line per reading) — src/store/stories.ts. */
 	stories: path.join(DATA_ROOT, "stories"),
+	/** Spoken scenes for the Speak task (LangHarness, 2026-10-28):
+	 *  speak/<id>.json (every line, the prompts, the summary, cost),
+	 *  speak/<id>/<n>.webm (the learner's own recordings), speak/index.jsonl
+	 *  — src/store/speak.ts. */
+	speak: path.join(DATA_ROOT, "speak"),
+	/** The fluency strand's log (timed re-reads, say-it-faster rounds):
+	 *  fluency/log.jsonl — src/store/speak.ts. */
+	fluency: path.join(DATA_ROOT, "fluency"),
 	/** Normalized, app-independent exports (npm run corpus:export). */
 	exports: path.join(BASE_DATA_ROOT, "export"),
 	/** Spaced-review cards and their log (src/store/review.ts). */

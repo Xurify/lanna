@@ -67,6 +67,7 @@ import { strandBalance, type StrandBalance } from "../core/strands.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
+import { storyStore } from "../store/stories.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
 const RECENT_CAP = 240;
@@ -379,12 +380,14 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0 },
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
 		dayOfYear: Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000),
 		scenes: purposeScenes(goal.purposes ?? []),
+		// A timed re-read needs an episode read on an earlier day.
+		reread: storyStore.reads().some((r) => r.day < key),
 	});
 	const recentMinutes: number[] = [];
 	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);

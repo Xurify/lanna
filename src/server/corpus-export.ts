@@ -18,6 +18,8 @@ import { chatStore } from "../store/chats.ts";
 import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEntry } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
+import { fluencyStore, speakStore } from "../store/speak.ts";
+import type { SpeakSession } from "../core/speak.ts";
 import type { StoryRecord } from "../core/reading.ts";
 import { sessionCost, turnCost } from "./pricing.ts";
 import { migrateAudioOnce } from "./tts.ts";
@@ -83,8 +85,8 @@ export interface CorpusSummary {
 	exportedAt: string;
 	profile: string;
 	language: string;
-	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number };
-	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number };
+	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number; spokenScenes: number; fluencyRounds: number };
+	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number; /** Spoken scenes (the Speak task), USD. */ speakUsd: number };
 }
 
 const SAY_SPAN = /`say:\s*([^`]+)`/g;
@@ -191,6 +193,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`explanations.json\` | Why? question | \`sentence\`, \`answer\`, \`lemma\`, \`learnerWrote\`, \`question\`, \`explanation\` (the tutor's reply), \`chatId\`, \`askedAt\`, \`reopened\` |
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
+| \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, Slovak, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
 
 Text is UTF-8 with Slovak diacritics as written. Verdicts: \`exact\`,
 \`accents\` (right apart from diacritics), \`wrong\`. Tokens are per provider
@@ -243,8 +246,21 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			// unpriced model: not counted
 		}
 	}
+	const scenes = speakStore
+		.list()
+		.map((e) => speakStore.get(e.id))
+		.filter((s): s is SpeakSession => s !== null);
+	const fluency = fluencyStore.list();
+	let speakUsd = 0;
+	for (const s of scenes) {
+		try {
+			speakUsd += turnCost(s.usage as never) ?? 0;
+		} catch {
+			// unpriced model: not counted
+		}
+	}
 
-	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0, storiesUsd: Math.round(storiesUsd * 10000) / 10000 };
+	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0, storiesUsd: Math.round(storiesUsd * 10000) / 10000, speakUsd: Math.round(speakUsd * 10000) / 10000 };
 	for (const d of dialogues) {
 		usage.turns += d.usage.turns;
 		usage.inputTokens += d.usage.inputTokens;
@@ -271,6 +287,8 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			reviewAnswers: answers.length,
 			stories: stories.length,
 			readings: readings.length,
+			spokenScenes: scenes.length,
+			fluencyRounds: fluency.length,
 		},
 		usage,
 	};
@@ -284,6 +302,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("explanations.json", explanations);
 	write("review.json", { cards, answers });
 	write("stories.json", { stories, readings });
+	write("spoken.json", { scenes, fluency });
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };
 }

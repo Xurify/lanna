@@ -19,6 +19,7 @@ import { userFacingTextOf } from "../core/native-messages.ts";
 import { chatStore } from "../store/chats.ts";
 import { listAudioClips } from "../store/corpus.ts";
 import { storyStore } from "../store/stories.ts";
+import { speakStore } from "../store/speak.ts";
 import { jobCost, turnCost } from "./pricing.ts";
 import { stores } from "./stores.ts";
 
@@ -163,6 +164,19 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(s.createdAt, usd);
 		}
 	}
+	// Spoken scenes (the Speak task): a few short calls each, priced like turns.
+	let speakUsd = 0;
+	let speakUnpriced = 0;
+	const speakIndex = speakStore.list();
+	for (const e of speakIndex) {
+		const s = speakStore.get(e.id);
+		const usd = s ? safeTurnCost(s.usage) : null;
+		if (usd === null) speakUnpriced++;
+		else {
+			speakUsd += usd;
+			addMonth(e.startedAt, usd);
+		}
+	}
 	const clips = listAudioClips();
 	const byTier: Record<string, number> = {};
 	let bytes = 0;
@@ -175,12 +189,14 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd),
+		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd),
 		turnsUsd: round(turnsUsd),
 		extractionUsd: round(extractionUsd),
 		jobsUsd: round(jobsUsd),
 		storiesUsd: round(storiesUsd),
 		stories: { count: storyIndex.length, unpriced: storiesUnpriced },
+		speakUsd: round(speakUsd),
+		speak: { count: speakIndex.length, unpriced: speakUnpriced },
 		unpricedTurns,
 		byMonth: [...months.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([month, m]) => ({ month, usd: round(m.usd), turns: m.turns })),
 		byMode: [...byModeMap.entries()].sort(([, a], [, b]) => b.usd - a.usd).map(([mode, m]) => ({ mode, ...m, usd: round(m.usd) })),

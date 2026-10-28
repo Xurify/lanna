@@ -128,17 +128,31 @@ test("the target level bounds the count; hours and the projection move with prog
 	assert.ok(faster.etaPlanned! < p.etaPlanned!);
 });
 
-test("the daily plan: review first, listen (input) before the lesson, strengthen the weakest, words, read, speak; it ticks off from the ledger", () => {
+test("the daily plan: review first, listen (input) before the lesson, strengthen the weakest, words, read, speak, speed; it ticks off from the ledger", () => {
 	const evidence: Record<string, UnitEvidence> = { present: { lessons: 2, reps: 30, correct: 24 }, "acc-fem": { lessons: 2, reps: 24, correct: 14 } };
 	const state = curriculumState(evidence, "B2");
 	const next = nextLessonUnit(state);
-	const base = { state, evidence, review: { due: 12, newLeft: 10, available: true }, minutesPerDay: 30, next, dayOfYear: 301 };
+	// Eight steps take about 32 minutes at this review load; 35 keeps them all.
+	const base = { state, evidence, review: { due: 12, newLeft: 10, available: true }, minutesPerDay: 35, next, dayOfYear: 301 };
 	const plan = dailyPlan({ ...base, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } });
 	assert.deepEqual(
 		plan.tasks.map((t) => t.id),
-		["review", "listen", "lesson", "strengthen", "words", "read", "speak"],
+		["review", "listen", "lesson", "strengthen", "words", "read", "speak", "fluency"],
 	);
 	assert.equal(plan.tasks[1]!.href, "/listen");
+	// Speak: the chapter's open tutor unit first; once that is held, a
+	// spoken scene (a link into /speak), never a text chat or a story.
+	assert.equal(plan.tasks[6]!.via, "tutor");
+	const held: Record<string, UnitEvidence> = { ...evidence };
+	for (const u of state.chapters.flatMap((c) => c.units)) if (u.kind === "tutor") held[u.id] = { lessons: 2, reps: 0, correct: 0 };
+	const spoken = dailyPlan({ ...base, evidence: held, state: curriculumState(held, "B2"), day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "speak")!;
+	assert.equal(spoken.via, "speak");
+	assert.match(spoken.href ?? "", /^\/speak\?scene=[a-z]+$/);
+	// Speed: "say it faster" until an episode has been read on an earlier
+	// day; then a timed re-read on alternate days.
+	assert.equal(plan.tasks[7]!.href, "/fluency?mode=fast");
+	assert.equal(dailyPlan({ ...base, reread: true, dayOfYear: 301, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "fluency")!.href, "/fluency?mode=reread");
+	assert.equal(dailyPlan({ ...base, reread: true, dayOfYear: 302, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "fluency")!.href, "/fluency?mode=fast");
 	assert.equal(plan.tasks[2]!.unit, next);
 	assert.equal(plan.tasks[3]!.unit, "acc-fem");
 	assert.equal(plan.done, 0);
@@ -147,7 +161,7 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 		...base,
 		evidence: { ...evidence, [next]: { lessons: (evidence[next]?.lessons ?? 0) + 1, reps: 12, correct: 11 }, "acc-fem": { lessons: 3, reps: 36, correct: 25 }, "lx-greetings": { lessons: 1, reps: 12, correct: 12 } },
 		review: { due: 0, newLeft: 0, available: true },
-		day: { units: { [next]: 1, "acc-fem": 1, "lx-greetings": 1 }, reviews: 20, blitz: 0, talks: 0, stories: 0, tutors: 1, reads: 1, listens: 1 },
+		day: { units: { [next]: 1, "acc-fem": 1, "lx-greetings": 1 }, reviews: 20, blitz: 0, talks: 0, stories: 0, tutors: 0, reads: 1, listens: 1, speaks: 1, fasts: 1 },
 	});
 	assert.equal(after.done, after.total);
 	// A tight budget keeps review and the lesson.
@@ -156,15 +170,20 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 		tight.tasks.map((t) => t.id),
 		["review", "lesson"],
 	);
-	// A middling budget keeps one task per strand (listen, speak) before a
-	// second drill, so a short day is still balanced; the order on screen
-	// stays the teaching order.
+	// A middling budget keeps one task per strand (listen, speak, then
+	// read and speed) before a second drill, so a short day is still
+	// balanced; the order on screen stays the teaching order.
 	const middling = dailyPlan({ ...base, minutesPerDay: 20, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } });
 	assert.deepEqual(
 		middling.tasks.map((t) => t.id),
 		["review", "listen", "lesson", "speak"],
 	);
 	assert.ok(middling.minutes <= 20 + 1);
+	const half = dailyPlan({ ...base, minutesPerDay: 27, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } });
+	assert.deepEqual(
+		half.tasks.map((t) => t.id),
+		["review", "listen", "lesson", "read", "speak", "fluency"],
+	);
 });
 
 test("a tutor unit's prompt carries its brief and the answer-first doctrine", () => {

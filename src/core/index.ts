@@ -94,3 +94,5 @@ export * from "./unit-bridges.ts";
 export * from "./reading.ts";
 export * from "./listen.ts";
 export * from "./strands.ts";
+export * from "./speak.ts";
+export * from "./fluency.ts";

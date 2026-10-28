@@ -30,7 +30,7 @@ export interface SessionSpend {
 
 export interface UsageReport {
 	generatedAt: string;
-	/** Everything priced, USD: turns + extraction + jobs + stories. */
+	/** Everything priced, USD: turns + extraction + jobs + stories + spoken scenes. */
 	totalUsd: number;
 	turnsUsd: number;
 	extractionUsd: number;
@@ -39,6 +39,9 @@ export interface UsageReport {
 	storiesUsd: number;
 	/** Episodes written, and how many had no catalog price. */
 	stories: { count: number; unpriced: number };
+	/** Spoken scenes (the Speak task, src/server/speak.ts), USD. */
+	speakUsd: number;
+	speak: { count: number; unpriced: number };
 	unpricedTurns: number;
 	/** YYYY-MM → USD (turns, extraction and jobs by their own dates). */
 	byMonth: Array<{ month: string; usd: number; turns: number }>;
