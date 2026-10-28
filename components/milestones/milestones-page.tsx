@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate } from "@/src/core";
+import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate } from "@/src/core";
 import type { MilestonesReport, NextWord } from "@/src/server/milestones";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -93,6 +93,7 @@ function monthOf(iso: string | null): string | null {
 function when(days: number | null, iso: string | null): string {
 	if (days === null) return "—";
 	if (days <= 0) return "now";
+	if (days > 3653) return "more than 10 years away";
 	if (days < 14) return `in ${Math.max(1, Math.round(days))} days`;
 	if (days < 60) return `in ${Math.round(days / 7)} weeks`;
 	if (days < 365) return `in ${Math.round(days / 30.4)} months · ${monthOf(iso)}`;
@@ -185,7 +186,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 
 				{facts && <Evidence facts={facts} />}
 
-				{report && sorted.length > 0 && <Timeline items={sorted} />}
+				{report && sorted.length > 0 && <Timeline items={sorted} paceKnown={(facts?.paceDays ?? 0) >= MIN_PACE_DAYS} />}
 
 				<ol className="mt-6 flex flex-col gap-3" data-testid="milestone-list">
 					{sorted.map((m) => (
@@ -274,7 +275,7 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 				<h2 className="font-ui text-xs font-bold tracking-wide text-muted-foreground">What the app knows about you</h2>
 				<p className="font-ui text-xs text-muted-foreground">
 					level from the map ·{" "}
-					<Link href="/start?edit=1" className="underline hover:text-foreground">
+					<Link href="/start?edit=1&check=1" className="underline hover:text-foreground">
 						re-check
 					</Link>
 				</p>
@@ -310,7 +311,8 @@ function Fact({ label, value, line, dim }: { label: string; value: string; line:
  *  line to its planned date (filled dot), a dashed tail to the real-pace
  *  date (hollow dot). One series, labels in the left column, so no two
  *  labels can collide. */
-function Timeline({ items }: { items: MilestoneEstimate[] }) {
+export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate[]; /** False until a real pace can be quoted (MIN_PACE_DAYS of study). */ paceKnown?: boolean }) {
+	const [tip, setTip] = useState<string | null>(null);
 	const dated = items.filter((m) => m.eta.daysPlanned !== null);
 	if (dated.length === 0) return null;
 	const paceOf = (m: MilestoneEstimate) => (m.eta.daysPace !== null ? Math.min(m.eta.daysPace, Math.max(365, (m.eta.daysPlanned ?? 0) * 2.5)) : 0);
@@ -329,7 +331,7 @@ function Timeline({ items }: { items: MilestoneEstimate[] }) {
 	// Half-years when the span is short enough to show them.
 	if (maxDays <= 800) for (let h = 1; h * 182.6 <= maxDays; h += 2) ticks.push({ d: h * 182.6, label: `${Math.floor(h / 2) === 0 ? "" : ""}${h * 6} mo` });
 	return (
-		<figure className="mt-6" data-testid="milestone-timeline">
+		<figure className="relative mt-6" data-testid="milestone-timeline" onMouseLeave={() => setTip(null)}>
 			<svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="When each milestone lands at your planned pace and at your real pace">
 				{ticks.map((t) => (
 					<g key={t.label}>
@@ -351,20 +353,15 @@ function Timeline({ items }: { items: MilestoneEstimate[] }) {
 					const showPace = pace !== null && pace > d;
 					const title = m.def.title.length > 30 ? `${m.def.title.slice(0, 28).trimEnd()}…` : m.def.title;
 					return (
-						<g key={m.def.id}>
+						<g key={m.def.id} tabIndex={0} role="img" aria-label={`${m.def.title}: ${reached ? "within reach now" : `${when(d, m.eta.planned)} at your plan`}`} className="outline-none" onMouseEnter={() => setTip(m.def.id)} onFocus={() => setTip(m.def.id)} onBlur={() => setTip(null)} data-testid={`timeline-row-${m.def.id}`}>
+							<rect x={0} y={cy - rowH / 2} width={W} height={rowH} fill="transparent" />
 							<text x={left - 10} y={cy + 3.5} textAnchor="end" className="fill-foreground font-ui" fontSize={11} fontWeight={700}>
 								{title}
 							</text>
 							<line x1={x(0)} x2={x(d)} y1={cy} y2={cy} className={reached ? "stroke-go" : "stroke-sky"} strokeWidth={2} />
 							{showPace && <line x1={x(d)} x2={x(paceOf(m))} y1={cy} y2={cy} className="stroke-sky" strokeWidth={2} strokeOpacity={0.4} strokeDasharray="3 3" />}
-							{showPace && (
-								<circle cx={x(paceOf(m))} cy={cy} r={4} fill="var(--background)" className="stroke-sky" strokeWidth={2}>
-									<title>{`${m.def.title}: ${when(pace, m.eta.pace)} at your real pace`}</title>
-								</circle>
-							)}
-							<circle cx={x(d)} cy={cy} r={5} className={reached ? "fill-go" : "fill-sky"}>
-								<title>{`${m.def.title}: ${reached ? "within reach now" : `${when(d, m.eta.planned)} at your plan`}`}</title>
-							</circle>
+							{showPace && <circle cx={x(paceOf(m))} cy={cy} r={4} fill="var(--background)" className="stroke-sky" strokeWidth={2} />}
+							<circle cx={x(d)} cy={cy} r={5} className={reached ? "fill-go" : "fill-sky"} />
 							<text x={x(d) + (reached ? 9 : 0)} y={reached ? cy + 3.5 : cy - 7} textAnchor={reached ? "start" : "middle"} className="fill-muted-foreground font-ui" fontSize={10}>
 								{reached ? "now" : (monthOf(m.eta.planned) ?? "")}
 							</text>
@@ -372,7 +369,32 @@ function Timeline({ items }: { items: MilestoneEstimate[] }) {
 					);
 				})}
 			</svg>
-			<figcaption className="mt-1 font-ui text-xs text-muted-foreground">Filled dot: at your planned minutes. Hollow dot on the dashed tail: at your real pace of the last two weeks. Hover a dot for the date.</figcaption>
+			{(() => {
+				const i = dated.findIndex((m) => m.def.id === tip);
+				const m = dated[i];
+				if (!m) return null;
+				const reached = m.status === "reached";
+				const cy = top + i * rowH + rowH / 2;
+				const anchor = x(m.eta.daysPlanned ?? 0) / W;
+				return (
+					<div
+						role="tooltip"
+						data-testid="timeline-tip"
+						className="pointer-events-none absolute z-10 w-72 max-w-[85%] rounded-xl border bg-popover px-3 py-2 font-ui text-xs text-popover-foreground shadow-lg"
+						style={{ top: `calc(${(cy / H) * 100}% + 14px)`, left: `${Math.min(Math.max(anchor * 100, 22), 78)}%`, transform: "translateX(-50%)" }}
+					>
+						<p className="text-sm font-bold text-foreground">{m.def.title}</p>
+						{m.def.line && <p className="mt-0.5 text-muted-foreground">{m.def.line}</p>}
+						<p className="mt-1.5 text-foreground">{reached ? "Within reach now." : `${when(m.eta.daysPlanned, m.eta.planned)} at your plan.`}</p>
+						{!reached && <p className="text-muted-foreground">{!paceKnown ? "Real pace: not enough data yet." : m.eta.daysPace === null ? "Real pace: no date yet." : `${when(m.eta.daysPace, m.eta.pace)} at your real pace.`}</p>}
+						{!reached && <p className="mt-1 text-muted-foreground">{m.binding === "speed" ? "Speed is the longer road." : m.binding === "words" ? "Words are the longer road." : ""}</p>}
+					</div>
+				);
+			})()}
+			<figcaption className="mt-1 font-ui text-xs text-muted-foreground">
+				Filled dot: at your planned minutes.{" "}
+				{paceKnown ? "Hollow dot on the dashed tail: at your real pace of the last two weeks." : "Your real pace appears here once seven of the last fourteen days have study in them."} Hover a row for the full name and details.
+			</figcaption>
 		</figure>
 	);
 }
@@ -405,7 +427,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 								{m.eta.daysPace !== null ? (
 									<span className="text-muted-foreground"> · {when(m.eta.daysPace, m.eta.pace)} at your real pace</span>
 								) : (
-									<span className="text-muted-foreground"> · real pace after two weeks of study</span>
+									<span className="text-muted-foreground"> · real pace: not enough data yet</span>
 								)}
 							</>
 						)}
@@ -438,7 +460,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 						<Row k="Words at your plan" v={`${when(m.words.eta.daysPlanned, m.words.eta.planned)}${facts ? ` · ${Math.round((facts.wordsPerDayPlanned * facts.daysPerWeek) / 7 * 10) / 10} new words a day` : ""}`} />
 						<Row k="Words at your real pace" v={m.words.eta.daysPace === null ? (facts?.wordsPerDayReal === null ? "after two weeks in the deck" : "no new words lately") : `${when(m.words.eta.daysPace, m.words.eta.pace)}${facts?.wordsPerDayReal ? ` · ${Math.round(facts.wordsPerDayReal * 10) / 10} a day` : ""}`} />
 						{m.speed.need > 0 && <Row k="Speed at your plan" v={`${when(m.speed.eta.daysPlanned, m.speed.eta.planned)} · about ${n(m.speed.hoursToGo)} guided hours${m.speed.hoursBasis === "trend" ? ", from your own Listen trend" : ", by the hours ladder"}`} />}
-						{m.speed.need > 0 && <Row k="Speed at your real pace" v={m.speed.eta.daysPace === null ? "after two weeks of study" : when(m.speed.eta.daysPace, m.speed.eta.pace)} />}
+						{m.speed.need > 0 && <Row k="Speed at your real pace" v={m.speed.eta.daysPace === null ? "not enough data yet (needs 7 study days of the last 14)" : when(m.speed.eta.daysPace, m.speed.eta.pace)} />}
 						<Row k="Kind of language" v={`${genre.title}: about ${n(lemmas.n95)} lemmas for 95% of the words, ${n(lemmas.n98)} for 98%`} />
 						<Row k="Support" v={SUPPORT_LINE[m.def.support]} />
 						{m.def.cefr && <Row k="CEFR" v={m.def.cefr} />}

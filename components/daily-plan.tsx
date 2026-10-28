@@ -13,13 +13,11 @@
  * progress ledger, so there is nothing to mark by hand.
  */
 
-import { useState } from "react";
 import Link from "next/link";
-import { HoursSheet } from "@/components/hours-sheet";
 import { AlertTriangleIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrandBalance } from "@/components/strand-balance";
-import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, purposePhrase, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance, type WeakSpotSummary } from "@/src/core";
+import { LEVEL_CAN_DO, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance, type WeakSpotSummary } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -51,7 +49,6 @@ export function DailyPlan({
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
 }) {
-	const [hoursOpen, setHoursOpen] = useState(false);
 	const done = plan?.done ?? 0;
 	const total = plan?.total ?? 0;
 	const complete = total > 0 && done >= total;
@@ -105,44 +102,25 @@ export function DailyPlan({
 			    lessons or the deck flagged, until enough reps come back right. */}
 			<WeakSpots weak={weak} />
 
-			{/* The goal the plan serves, and what the map says about the road.
-			    Changing it reopens setup (components/onboarding/start.tsx),
-			    pre-filled, with a re-check of the level on its last screen. */}
-			<div className="mt-4 border-t pt-4 font-ui text-xs text-muted-foreground" data-testid="goal-line">
-				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<span className="text-foreground">
-						<TargetIcon className="mr-1.5 inline size-3.5 align-[-2px] text-flame" />
-						<span className="whitespace-nowrap" title={LEVEL_CAN_DO[goal?.level ?? "B2"]}>
-							Goal: <b>{goal?.level ?? "B2"}</b> at <b>{goal?.minutesPerDay ?? 30} min</b> a day
-						</span>
-						{goal?.purposes && goal.purposes.length > 0 && (
-							<span className="text-muted-foreground" title={goal.purposeNote}>
-								{" "}· for {goal.purposes.map((p) => (p === "other" && goal.purposeNote ? (goal.purposeNote.length > 48 ? `${goal.purposeNote.slice(0, 45).trimEnd()}…` : goal.purposeNote) : purposePhrase(p))).join(", ")}
+			{/* The goal in one line, and the door to everything about it: pace
+			    sliders, hours, milestones and the level re-check live on the
+			    Plan page (components/plan/plan-page.tsx). */}
+			<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-4 font-ui text-xs text-muted-foreground" data-testid="goal-line">
+				<span className="text-foreground">
+					<TargetIcon className="mr-1.5 inline size-3.5 align-[-2px] text-flame" />
+					<span className="whitespace-nowrap" title={LEVEL_CAN_DO[goal?.level ?? "B2"]}>
+						Goal: <b>{goal?.level ?? "B2"}</b>
+						{projection?.etaPlanned && (
+							<span className="font-normal text-muted-foreground">
+								{" "}· about <b className="text-foreground">{monthOf(projection.etaPlanned)}</b>
 							</span>
 						)}
 					</span>
-					{projection && (
-						<span>
-							· {projection.hoursDone} of ~{projection.hoursTarget} guided hours
-							{projection.etaPlanned && ` · at that pace about ${monthOf(projection.etaPlanned)}`}
-							{projection.etaPace && projection.paceMinutes > 0 && ` · at your real pace (${projection.paceMinutes} min/day) ${monthOf(projection.etaPace)}`}
-						</span>
-					)}
-					<Link href="/start?edit=1" className="underline hover:text-foreground" data-testid="goal-change">
-						Change
-					</Link>
-					<Link href="/start?edit=1" className="underline hover:text-foreground" data-testid="goal-recheck">
-						Re-check my level
-					</Link>
-					<button type="button" onClick={() => setHoursOpen(true)} className="underline hover:text-foreground" data-testid="goal-hours">
-						How long does it take?
-					</button>
-					<Link href="/milestones" className="underline hover:text-foreground" data-testid="goal-milestones">
-						When can I…?
-					</Link>
-				</div>
+				</span>
+				<Link href="/plan" className="underline hover:text-foreground" data-testid="goal-plan">
+					Your plan
+				</Link>
 			</div>
-			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={goal?.minutesPerDay ?? 30} daysPerWeek={goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} target={goal?.level ?? "B2"} hoursDone={projection?.hoursDone ?? 0} languages={knownLanguages(goal)} />
 		</section>
 	);
 }
@@ -220,7 +198,7 @@ function PlanRing({ done, total }: { done: number; total: number }) {
 /** The struggles on record, one line each: the unit (or the family two
  *  units share), where it was seen, and the tally since. Each opens the
  *  unit's lesson; the map shows the same spots in place. */
-function WeakSpots({ weak }: { weak: WeakSpotSummary[] }) {
+export function WeakSpots({ weak }: { weak: WeakSpotSummary[] }) {
 	const groups = weakSpotGroups(weak);
 	if (!groups.length) return null;
 	return (

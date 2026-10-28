@@ -495,10 +495,24 @@ export interface Projection {
 	plannedWeekly: number;
 	/** Minutes actually studied in the last 14 days, per day. */
 	paceMinutes: number;
+	/** Days of the last 14 with any study in them. */
+	paceDays: number;
 	/** ISO date the target is reached at the planned pace, or null when the plan is 0 minutes. */
 	etaPlanned: string | null;
-	/** The same at the measured pace, or null without 14 days of evidence. */
+	/** The same at the measured pace, or null until MIN_PACE_DAYS of the last 14 days have study in them. */
 	etaPace: string | null;
+}
+
+/** A real pace is only quoted once this many of the last 14 days have study
+ *  in them: a week of one minute a day is a start, not a rate, and
+ *  extrapolating it dates the goal in the next century. */
+export const MIN_PACE_DAYS = 7;
+
+/** ISO date `hoursLeft` of study lands at the measured pace (minutes a day
+ *  over the last 14 days), or null while the evidence is too thin. */
+export function paceEta(hoursLeft: number, paceMinutes: number, paceDays: number, now: Date): string | null {
+	if (paceDays < MIN_PACE_DAYS || paceMinutes <= 0) return null;
+	return addDaysIso(now, hoursLeft / (paceMinutes / 60));
 }
 
 function addDaysIso(from: Date, days: number): string {
@@ -533,8 +547,9 @@ export function projection(state: CurriculumState, opts: { target: Cefr; minutes
 	const plannedWeekly = (opts.minutesPerDay / 60) * (opts.daysPerWeek ?? DAYS_PER_WEEK);
 	const paceMinutes = opts.recentMinutes.length ? opts.recentMinutes.reduce((a, b) => a + b, 0) / opts.recentMinutes.length : 0;
 	const etaPlanned = plannedWeekly > 0 ? addDaysIso(opts.now, (left / plannedWeekly) * 7) : null;
-	const etaPace = paceMinutes > 0 && opts.recentMinutes.length >= 14 ? addDaysIso(opts.now, left / (paceMinutes / 60)) : null;
-	return { target: opts.target, hoursDone: Math.round(done), hoursTarget: targetHours, plannedWeekly: Math.round(plannedWeekly * 10) / 10, paceMinutes: Math.round(paceMinutes), etaPlanned, etaPace };
+	const paceDays = opts.recentMinutes.filter((m) => m > 0).length;
+	const etaPace = opts.recentMinutes.length >= 14 ? paceEta(left, paceMinutes, paceDays, opts.now) : null;
+	return { target: opts.target, hoursDone: Math.round(done), hoursTarget: targetHours, plannedWeekly: Math.round(plannedWeekly * 10) / 10, paceMinutes: Math.round(paceMinutes), paceDays, etaPlanned, etaPace };
 }
 
 // ─── The daily plan ─────────────────────────────────────────────────────────

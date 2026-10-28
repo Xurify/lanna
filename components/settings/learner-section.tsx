@@ -75,19 +75,28 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 				<p className="text-xs text-muted-foreground">Up to {MAX_EXPLAIN}: the tutor explains in the first and adds the key line and the terms in the second. Lesson rules stay in English for now.</p>
 			</SettingsGroup>
 			<SettingsGroup label="Goal, level and time" testid="learner-goal">
-				<div className="flex items-center justify-between gap-4 py-1">
-					<span className="font-prose text-(length:--lh-prose-size)">What Slovak is for, the target level, minutes a day, and the placement check.</span>
-					<button
-						type="button"
-						data-testid="learner-open-setup"
-						onClick={() => {
-							onClose();
-							router.push("/start?edit=1");
-						}}
-						className="shrink-0 rounded-xl border-2 border-border px-4 py-1.5 font-ui text-sm font-bold text-foreground transition-colors hover:border-foreground/40"
-					>
-						Open setup
-					</button>
+				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
+					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">What Slovak is for, the target level and minutes a day, or where you stand now.</span>
+					<span className="flex shrink-0 flex-wrap gap-2">
+						{[
+							{ id: "learner-open-plan", href: "/plan", label: "Open plan" },
+							{ id: "learner-open-setup", href: "/start?edit=1", label: "Open setup" },
+							{ id: "learner-recheck", href: "/start?edit=1&check=1", label: "Re-check my level" },
+						].map((b) => (
+							<button
+								key={b.id}
+								type="button"
+								data-testid={b.id}
+								onClick={() => {
+									onClose();
+									router.push(b.href);
+								}}
+								className="rounded-xl border-2 border-border px-4 py-1.5 font-ui text-sm font-bold text-foreground transition-colors hover:border-foreground/40"
+							>
+								{b.label}
+							</button>
+						))}
+					</span>
 				</div>
 			</SettingsGroup>
 			<p className="text-xs text-muted-foreground" aria-live="polite" data-testid="learner-status">
