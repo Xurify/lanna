@@ -27,7 +27,8 @@
  */
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
-import { unitInfo, type UnitId } from "./lesson.ts";
+import { unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { weakSpotList, weakSpotsLine, type WeakRecord } from "./weak-spots.ts";
 
 // ─── What Slovak is for ─────────────────────────────────────────────────────
 
@@ -148,10 +149,56 @@ export function purposePhrase(id: Purpose): string {
 export function suggestedLevel(purposes: readonly Purpose[], examLevel?: Cefr): Cefr {
 	let best: Cefr = "A2";
 	for (const id of purposes) {
-		const lv = id === "exam" && examLevel ? examLevel : purposeInfo(id).level;
+		const lv = purposeLevel(id, examLevel);
 		if (CEFR_ORDER.indexOf(lv) > CEFR_ORDER.indexOf(best)) best = lv;
 	}
 	return best;
+}
+
+/** What each level buys in Slovak life, in plain words: the setup's target
+ *  box, the hours sheet and Today share these so a learner who meets the
+ *  CEFR here for the first time can still pick (Xurify, 2026-10-28:
+ *  "How else will people generally know what they want"). Phrased from
+ *  the CEFR Companion Volume (2020) global scale, made concrete. */
+export const LEVEL_CAN_DO: Record<Cefr, string> = {
+	A1: "Say hello, order a coffee, count, ask the way. Set phrases and a lot of pointing; people switch to English fast.",
+	A2: "Shop, book the doctor, say what you did today, get around town. Simple talk with people who slow down for you.",
+	B1: "Chat with family and friends about everyday life, tell a story, give an opinion, get through an office visit. A vlog with clear speech is followable.",
+	B2: "Hold your own at work and in an argument, follow the news and most films, write a formal email. Slovaks talk to you at their own speed.",
+	C1: "Nuance, humour, long articles and novels, any meeting. Mistakes are rare and nobody slows down for you.",
+};
+
+/** The level a purpose needs: the exam's own level when given. */
+export function purposeLevel(id: Purpose, examLevel?: Cefr): Cefr {
+	return id === "exam" && examLevel ? examLevel : purposeInfo(id).level;
+}
+
+/** How a target level fits the purposes: which it already covers, and
+ *  which still need a higher one. "Something else" has no level and is
+ *  left out. */
+export function levelFit(level: Cefr, purposes: readonly Purpose[], examLevel?: Cefr): { covered: Purpose[]; short: Array<{ purpose: Purpose; level: Cefr }> } {
+	const covered: Purpose[] = [];
+	const short: Array<{ purpose: Purpose; level: Cefr }> = [];
+	for (const p of purposes) {
+		if (p === "other") continue;
+		const need = purposeLevel(p, examLevel);
+		if (CEFR_ORDER.indexOf(need) <= CEFR_ORDER.indexOf(level)) covered.push(p);
+		else short.push({ purpose: p, level: need });
+	}
+	return { covered, short };
+}
+
+/** One sentence on how `level` serves the purposes, or "" with none. */
+export function levelFitLine(level: Cefr, purposes: readonly Purpose[], examLevel?: Cefr): string {
+	const { covered, short } = levelFit(level, purposes, examLevel);
+	const list = (ps: readonly Purpose[]) => ps.map(purposePhrase).join(", ");
+	const parts: string[] = [];
+	if (covered.length) parts.push(`Enough for ${list(covered)}.`);
+	if (short.length) {
+		const line = short.map((x) => `${purposePhrase(x.purpose)} needs ${x.level}`).join(", ");
+		parts.push(`${line.charAt(0).toUpperCase()}${line.slice(1)}: at ${level} ${short.length === 1 ? "that part stays" : "those stay"} out of reach.`);
+	}
+	return parts.join(" ");
 }
 
 /** Goal unit ids the purposes serve (for the map's "your goal" marks). */
@@ -343,6 +390,25 @@ export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "languageL
 
 export const MAX_EXPLAIN = 2;
 
+/** Whether parallels from the learner's languages are shown (absent = on). */
+export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | undefined): boolean {
+	return goal?.showParallels !== false;
+}
+
+/** The setup's and Settings' one-line explanation of parallels, in the
+ *  learner's own languages: "Estonian, then Czech" rather than the fixed
+ *  bridge set (Xurify, 2026-10-28: "Why are there other languages randomly
+ *  appearing in the lesson?"). Only the languages the lessons have a line
+ *  for are named, best-known first. */
+export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): string {
+	const langs = bridgeLanguages(goal);
+	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
+	const names = langs.map(languageName);
+	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+	const example = langs[0] === "et" ? "v meste ≈ linnas" : langs[0] === "fi" ? "v meste ≈ kaupungissa" : langs[0] === "ru" ? "v meste ≈ в городе" : "v meste ≈ in der Stadt";
+	return `When a Slovak rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learner.`;
+}
+
 /** The languages explanations come in, in order: the first carries the
  *  explanation, the second gets the key line and the terms (Xurify,
  *  2026-10-28: "the more I see the language(s) the more I can learn").
@@ -394,6 +460,11 @@ export interface LearnerGoal {
 	/** @deprecated See `firstLanguage`. */
 	bridges?: string[];
 	prior?: Prior;
+	/** Show parallels from the learner's languages (a Slovak rule next to
+	 *  the Estonian or Czech form it mirrors) in the Why? panel and the
+	 *  tutor's hints. Absent = on. Xurify (2026-10-28 06:06Z) found the
+	 *  parallels "unrelated", so they are one tap to turn off. */
+	showParallels?: boolean;
 	/** ISO time the setup was completed (or skipped). Absent = first run. */
 	onboardedAt?: string;
 	/** The last placement: when, the level it found, and the first chapter
@@ -401,6 +472,12 @@ export interface LearnerGoal {
 	placedAt?: string;
 	placedLevel?: Cefr;
 	startChapter?: string;
+	/** The Socratic stage's closing line from the last check: the edge in words. */
+	placedNote?: string;
+	/** The last vocabulary-size check (src/core/vocab-probe.ts): the
+	 *  estimate in lemmas and when. The words calculator trusts it over
+	 *  the level's band. */
+	vocabulary?: { size: number; at: string; reliable: boolean };
 }
 
 export const DEFAULT_DAYS_PER_WEEK = 6;
@@ -456,13 +533,23 @@ export function placementTier(id: string): PlacementTier | undefined {
  *  learner's current chapter (or the first). */
 export function tierForChapter(chapter: string | undefined): number {
 	const i = PLACEMENT_TIERS.findIndex((t) => t.chapters.includes(chapter ?? ""));
-	return i < 0 ? 0 : i;
+	if (i >= 0) return i;
+	// A chapter past the last tier's (B2: the check stops at B1 grammar)
+	// re-checks from the last tier, not from the first.
+	const idx = CHAPTERS.findIndex((c) => c.id === chapter);
+	const last = CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[PLACEMENT_TIERS.length - 1]!.chapters.at(-1));
+	return idx > last ? PLACEMENT_TIERS.length - 1 : 0;
 }
 
 export interface PlacementRep {
 	tier: string;
 	unit: UnitId;
 	verdict: "exact" | "accents" | "wrong";
+	/** "probe": the Socratic stage's verdict on the unit, folded into reps
+	 *  (held = both right, slip = one, gap = none). Absent = the drill. */
+	source?: "drill" | "probe";
+	/** A typed miss the model accepted as a valid alternative (counts as right). */
+	judged?: boolean;
 }
 
 export interface TierResult {
@@ -472,6 +559,9 @@ export interface TierResult {
 	reps: number;
 	correct: number;
 	passed: boolean;
+	/** A re-check started above this tier: it was not asked again and
+	 *  stands as passed (the learner already works past it). */
+	held?: boolean;
 }
 
 export interface PlacementOutcome {
@@ -479,6 +569,11 @@ export interface PlacementOutcome {
 	 *  after the tiers passed (A1 when none was). */
 	level: Cefr;
 	tiers: TierResult[];
+	/** The tier the check started at (0 for a first placement). */
+	from: number;
+	/** Every tier passed: the check ran out, nothing above B1 grammar was
+	 *  measured, so the level is a floor, not a reading. */
+	ceiling: boolean;
 	/** The first chapter to work in. */
 	startChapter: string;
 	/** Per probed unit: its reps and hits; `placed` marks it as evidence
@@ -491,11 +586,26 @@ export interface PlacementOutcome {
 /** Does a verdict count as right? Accent slips do, as in lessons. */
 export const isHit = (v: PlacementRep["verdict"]) => v !== "wrong";
 
-/** Fold answered reps into the outcome. Pure: the server records it. */
-export function placementOutcome(reps: readonly PlacementRep[]): PlacementOutcome {
+/** The hits a tier needs from `reps` answers. */
+export function tierNeed(reps: number): number {
+	return Math.ceil(reps * PASS_SHARE);
+}
+
+/**
+ * Fold answered reps into the outcome. Pure: the server records it.
+ * `from` is the tier a re-check started at: the tiers below it were not
+ * asked and count as held (bug fixed 2026-10-28: a re-check from tier 2
+ * used to score no tier at all and send the learner back to A1).
+ */
+export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: number } = {}): PlacementOutcome {
+	const from = Math.max(0, Math.min(PLACEMENT_TIERS.length - 1, opts.from ?? 0));
 	const tiers: TierResult[] = [];
 	const units: PlacementOutcome["units"] = {};
-	for (const t of PLACEMENT_TIERS) {
+	for (const [i, t] of PLACEMENT_TIERS.entries()) {
+		if (i < from) {
+			tiers.push({ id: t.id, level: t.level, title: t.title, reps: 0, correct: 0, passed: true, held: true });
+			continue;
+		}
 		const mine = reps.filter((r) => r.tier === t.id);
 		if (mine.length === 0) break;
 		const correct = mine.filter((r) => isHit(r.verdict)).length;
@@ -519,13 +629,147 @@ export function placementOutcome(reps: readonly PlacementRep[]): PlacementOutcom
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, startChapter, units, testedOut, weak };
+	return { level, tiers, from, ceiling: lastPassed === PLACEMENT_TIERS.length - 1, startChapter, units, testedOut, weak };
 }
 
 /** Should the staircase climb after this tier's reps? */
 export function tierPassed(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
 	const mine = reps.filter((r) => r.tier === tier.id);
 	return mine.length >= tier.units.length && mine.filter((r) => isHit(r.verdict)).length / mine.length >= PASS_SHARE;
+}
+
+/** One more typed rep per unit when a tier lands on the line. */
+export const EXTRA_REPS_PER_UNIT = 1;
+
+/**
+ * Is the tier's verdict a close call after its base reps — a hit either
+ * side of the pass line (5 or 6 of 8)? Eight answers at 75% put a learner
+ * who truly knows three in four through only two times in three; a third
+ * rep per unit steepens the curve where it matters, and costs nothing
+ * elsewhere.
+ */
+export function tierBorderline(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
+	const mine = reps.filter((r) => r.tier === tier.id);
+	const base = tier.units.length * REPS_PER_UNIT;
+	if (mine.length !== base) return false;
+	const hits = mine.filter((r) => isHit(r.verdict)).length;
+	const need = tierNeed(base);
+	return hits === need || hits === need - 1;
+}
+
+/** The tier a unit belongs to (undefined for a unit no tier probes). */
+export function tierOfUnit(unit: UnitId): PlacementTier | undefined {
+	return PLACEMENT_TIERS.find((t) => t.units.includes(unit));
+}
+
+// ─── The edge: the Socratic stage ───────────────────────────────────────────
+
+/** How the tutor read the learner's answers on one unit: held (produces
+ *  the form and knows what decided it), slip (right form, shaky reason, or
+ *  one miss in a row of hits), gap (cannot produce it). */
+export type ProbeResult = "held" | "slip" | "gap";
+
+export interface ProbeVerdict {
+	unit: UnitId;
+	result: ProbeResult;
+	/** The evidence in one line: what was produced or missed. */
+	note: string;
+}
+
+export interface ProbeAsk {
+	unit: UnitId;
+	/** The task in the explanation language ("Put the word in the right form.") */
+	prompt: string;
+	/** The Slovak frame: a sentence with ___ (and the word in brackets), or
+	 *  a sentence to transform. */
+	sk: string;
+	/** produce: a form; why: say what decided a form the learner just gave. */
+	kind: "produce" | "why";
+}
+
+export interface ProbeReply {
+	/** One or two sentences to the learner: what the last answer showed. */
+	say: string;
+	verdict?: ProbeVerdict;
+	ask?: ProbeAsk;
+	/** The stage is over: two sentences on the edge found. */
+	done?: string;
+}
+
+export interface ProbeTurn {
+	reply: ProbeReply;
+	/** The learner's answer to `reply.ask` (absent while open or when skipped). */
+	answer?: string;
+	at: string;
+}
+
+/** The most questions the stage asks: one or two per unit at the edge. */
+export const PROBE_TURNS = 6;
+
+/** The units the stage may probe, in order of value: the drill's misses
+ *  first (slip or gap?), then the units of the first tier the drill never
+ *  reached (a strong learner can be moved up on evidence). At most eight. */
+export function probeUnits(outcome: PlacementOutcome): UnitId[] {
+	const out: UnitId[] = [...outcome.weak];
+	const stopped = outcome.tiers.findIndex((t) => !t.passed);
+	const next = stopped < 0 ? PLACEMENT_TIERS[outcome.tiers.length] : undefined;
+	const after = stopped >= 0 ? undefined : next;
+	for (const u of after?.units ?? []) if (!out.includes(u)) out.push(u);
+	// A failed tier's untested-out units too: the drill asked two reps each.
+	if (stopped >= 0) for (const u of PLACEMENT_TIERS[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
+	return out.slice(0, 8);
+}
+
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+/** Read the tutor's JSON turn; anything malformed becomes a plain `say`.
+ *  A verdict or an ask on a unit outside `units` is dropped. */
+export function parseProbeReply(text: string, units: readonly UnitId[]): ProbeReply {
+	let o: Record<string, unknown> | null = null;
+	const m = text.match(/\{[\s\S]*\}/);
+	if (m) {
+		try {
+			o = JSON.parse(m[0]) as Record<string, unknown>;
+		} catch {
+			o = null;
+		}
+	}
+	if (!o) return { say: text.trim().replace(/^```[a-z]*\s*|\s*```$/g, "").slice(0, 600), done: "" };
+	const reply: ProbeReply = { say: str(o.say, 600) };
+	const v = o.verdict as Record<string, unknown> | null | undefined;
+	if (v && typeof v === "object" && units.includes(str(v.unit, 40) as UnitId) && ["held", "slip", "gap"].includes(str(v.result, 10))) {
+		reply.verdict = { unit: str(v.unit, 40) as UnitId, result: str(v.result, 10) as ProbeResult, note: str(v.note, 300) };
+	}
+	const a = o.ask as Record<string, unknown> | null | undefined;
+	if (a && typeof a === "object" && units.includes(str(a.unit, 40) as UnitId) && str(a.sk, 400)) {
+		reply.ask = { unit: str(a.unit, 40) as UnitId, prompt: str(a.prompt, 300), sk: str(a.sk, 400), kind: str(a.kind, 10) === "why" ? "why" : "produce" };
+	}
+	if (typeof o.done === "string" || o.done === true) reply.done = str(o.done, 600) || reply.say;
+	if (!reply.ask && reply.done === undefined) reply.done = reply.say;
+	return reply;
+}
+
+/** A verdict as placement reps: held = both right, slip = one of two,
+ *  gap = none. Two reps, like the drill's, so a tier's pass rule holds. */
+export function probeReps(verdicts: readonly ProbeVerdict[]): PlacementRep[] {
+	const out: PlacementRep[] = [];
+	for (const v of verdicts) {
+		const tier = tierOfUnit(v.unit);
+		if (!tier) continue;
+		const hits = v.result === "held" ? 2 : v.result === "slip" ? 1 : 0;
+		for (let i = 0; i < REPS_PER_UNIT; i++) out.push({ tier: tier.id, unit: v.unit, verdict: i < hits ? "exact" : "wrong", source: "probe" });
+	}
+	return out;
+}
+
+/** The drill's reps with the stage's verdicts folded in: a unit the tutor
+ *  judged is scored by that judgement (the last one wins), not by its two
+ *  drill reps. A tier the drill never reached scores from the stage alone. */
+export function withProbe(drill: readonly PlacementRep[], verdicts: readonly ProbeVerdict[]): PlacementRep[] {
+	const last = new Map<UnitId, ProbeVerdict>();
+	for (const v of verdicts) last.set(v.unit, v);
+	const kept = drill.filter((r) => !last.has(r.unit));
+	return [...kept, ...probeReps([...last.values()])];
 }
 
 // ─── The profile the tutor reads ────────────────────────────────────────────
@@ -544,7 +788,7 @@ const PRIOR_LINE: Record<Prior, string> = {
  * prober fragment tells the agent to treat this as the goal and the
  * level already found. Null when nothing is known yet (first run).
  */
-export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>): string | null {
+export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -566,7 +810,7 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
 		const [first, second] = explanationLanguages(goal);
 		lines.push(
-			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""} When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}`,
+			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? ` When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}` : " The learner turned parallels off: do not compare Slovak to these languages unless asked; use them only to understand what the learner means."}`,
 		);
 		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, Slovak examples in Slovak, English only when asked.`;
 		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
@@ -577,8 +821,9 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const placed = Object.entries(evidence).filter(([, e]) => e?.placed);
 		const out = placed.filter(([, e]) => e!.reps > 0 && e!.correct === e!.reps).map(([id]) => unitInfo(id as UnitId).title);
 		const missed = placed.filter(([, e]) => e!.correct < e!.reps).map(([id, e]) => `${unitInfo(id as UnitId).title} (${e!.correct}/${e!.reps})`);
-		lines.push(`- Placement drill on ${goal.placedAt.slice(0, 10)}: ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.`);
+		lines.push(`- Placement check on ${goal.placedAt.slice(0, 10)}: works at ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.${goal.placedNote ? ` The tutor's reading of the edge: ${goal.placedNote}` : ""}`);
 	}
+	if (goal?.vocabulary) lines.push(`- Vocabulary check on ${goal.vocabulary.at.slice(0, 10)}: about ${goal.vocabulary.size.toLocaleString("en-GB")} lemmas recognised${goal.vocabulary.reliable ? "" : " (over-claimed on the pseudowords: treat as generous)"}.`);
 	if (state) {
 		const cur = state.chapters.find((c) => c.id === state.current);
 		const stage = STAGES.find((s) => s.id === cur?.stage);
@@ -589,9 +834,79 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 			.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0))
 			.slice(0, 5);
 		if (weak.length) lines.push(`- Measured weak points (lesson accuracy): ${weak.map((u) => `${u.title} ${Math.round((u.accuracy ?? 0) * 100)}%`).join(", ")}.`);
+		const spots = weakSpotsLine(weakSpotList(weak_));
+		if (spots) lines.push(spots);
 		const done = state.chapters.flatMap((c) => c.units).filter((u) => u.status === "done" && (u.kind === "drill" || u.kind === "words"));
 		if (done.length) lines.push(`- Holds (units done on the map): ${done.slice(0, 12).map((u) => u.title).join(", ")}${done.length > 12 ? `, and ${done.length - 12} more` : ""}.`);
 	}
 	if (lines.length === 0) return null;
 	return ["# This learner (from the app's profile and the lesson ledger)", ...lines, "Treat the goal as concrete and the level as measured: do not ask for either. Build from the units held, work on the weak points, and keep the purposes in the examples you choose."].join("\n");
+}
+
+// ─── The verdict on a missed item ───────────────────────────────────────────
+
+/** What the miss footer says: the form, the judge's reason as clean
+ *  sentences, and the unit's rule so the verdict teaches the pattern once
+ *  instead of only naming the case. */
+export interface MissVerdict {
+	/** "The form here is kuchára" (the form is bolded by the UI). */
+	form: string;
+	/** The judge's note, normalised: no quotes around the Slovak words, no
+	 *  semicolons, one full stop per sentence, none doubled. */
+	reason: string | null;
+	/** The unit's rule in one line, when it adds to the reason. */
+	pattern: string | null;
+}
+
+/** Normalise a model's one-line note into prose: 'ponuku' → ponuku, a
+ *  semicolon starts a new sentence, trailing punctuation is trimmed, the
+ *  first letter is capitalised and exactly one full stop closes it. */
+export function cleanNote(note: string | undefined | null): string | null {
+	if (!note) return null;
+	let t = note
+		.normalize("NFC")
+		.trim()
+		.replace(/^["“”„]+|["“”„]+$/gu, "")
+		.replace(/(^|[\s(])['‘’`]([^'‘’`]{1,40})['‘’`](?=[\s).,;:!?]|$)/gu, "$1$2")
+		.replace(/\s*;\s*/gu, ". ")
+		.replace(/\s+/gu, " ")
+		.replace(/[\s.,;:]+$/u, "")
+		.trim();
+	if (!t) return null;
+	t = t.replace(/\.\s+([a-záäčďéíĺľňóôŕšťúýž])/gu, (_m, c: string) => `. ${c.toLocaleUpperCase("sk-SK")}`);
+	t = t.charAt(0).toLocaleUpperCase("sk-SK") + t.slice(1);
+	return `${t}.`;
+}
+
+export function missVerdict(item: Pick<LessonItem, "answer" | "unit" | "trigger">, note?: string | null): MissVerdict {
+	const reason = cleanNote(note);
+	const info = unitInfo(item.unit);
+	// A word unit's rule is advice, not a pattern: left out.
+	const pattern = info && info.kind !== "words" ? info.rule : null;
+	return { form: item.answer, reason, pattern };
+}
+
+// ─── Calm items for the check ───────────────────────────────────────────────
+
+/** Sentences about crime, violence and death are odd company for a
+ *  learner's first minutes with the app ("the police caught the murderer"
+ *  at A1). The check draws its items from the rest. Slovak stems and
+ *  English words, both sides of every example. */
+const GRIM = /\b(murder|kill|corpse|blood|weapon|gun|knife|war|rape|suicide|terror|bomb|hostage|victim|prison|jail|crime|criminal|thie(?:f|ves)|st(?:eal|ole|olen)|die[ds]?|dying|dead|death|police|shoot|shot|stab|attack|drugs?)\b|\b(vrah|vražd|zabi|zabíj|mŕtv|krv|zbra[ňn]|nož|vojn|znásil|samovra|teror|bomb|rukojem|obe[ťt]|väzen|väzn|zloči|trestn|zlode|ukrad|krádež|zomr|zomier|smrť|smrti|políc|strie[ľl]|zastrel|bodn|útok|útoč|drog)/iu;
+
+export function isGrim(text: string): boolean {
+	return GRIM.test(text.normalize("NFC"));
+}
+
+/** The lexicon with the grim examples left out, and entries with nothing
+ *  left dropped. */
+export function calmEntries<E extends { sk: string; en: string; examples: Array<{ sk: string; en: string }> }>(entries: readonly E[]): E[] {
+	const out: E[] = [];
+	for (const e of entries) {
+		if (isGrim(e.sk) || isGrim(e.en)) continue;
+		const examples = e.examples.filter((x) => !isGrim(x.sk) && !isGrim(x.en));
+		if (!examples.length) continue;
+		out.push(examples.length === e.examples.length ? e : { ...e, examples });
+	}
+	return out;
 }

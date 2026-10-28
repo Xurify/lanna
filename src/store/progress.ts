@@ -9,6 +9,7 @@
  */
 
 import fs from "node:fs";
+import type { WeakRecord } from "../core/weak-spots.ts";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { LearnerGoal } from "../core/onboarding.ts";
@@ -66,6 +67,9 @@ export interface ProgressRecord {
 	recent: string[];
 	bestBlitz?: number;
 	goal?: GoalRecord;
+	/** Units the learner struggles with, flagged by the level check, lessons
+	 *  or review and dropped once mended (src/core/weak-spots.ts). */
+	weak?: WeakRecord;
 }
 
 export const DEFAULT_DAILY_GOAL = 50;

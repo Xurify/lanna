@@ -99,7 +99,9 @@ test("the speed trend needs eight sessions across a week, then gives a slope", (
 function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 	const base: Omit<LearnerFacts, "speed"> = {
 		level: "B1",
+		levelProgress: 0.4,
 		placed: true,
+		words: { basis: "level", credited: 2880 },
 		met: 400,
 		solid: 120,
 		assumed: 3200,
@@ -217,7 +219,7 @@ test("facts from a profile: met and assumed words, the frequency order, pace and
 	assert.ok(order.indexOf("mat") < 20);
 
 	const p = progressStore.read();
-	p.goal = { level: "B2", minutesPerDay: 60, daysPerWeek: 5, placedLevel: "A2", placedAt: NOW.toISOString(), onboardedAt: NOW.toISOString() };
+	p.goal = { level: "B2", minutesPerDay: 60, daysPerWeek: 5, placedLevel: "A2", placedAt: NOW.toISOString(), startChapter: "health", onboardedAt: NOW.toISOString() };
 	for (let i = 0; i < 14; i++) {
 		const d = new Date(NOW.getTime() - i * 86_400_000).toISOString().slice(0, 10);
 		p.days[d] = { xp: 10, lessons: 1, reps: 10, reviews: 0, minutes: 30 };
@@ -233,10 +235,23 @@ test("facts from a profile: met and assumed words, the frequency order, pace and
 	reviewStore.writeCards(cards);
 
 	const sets = wordSets(lexicon);
-	assert.equal(sets.level, "A2", "placement wins over the map");
+	assert.equal(sets.level, "A2", "the map, whose start placement set");
+	assert.equal(sets.basis, "level");
+	assert.equal(sets.credited, core.LEVEL_VOCAB.A1, "entering A2 credits the A1 band, not A2's (the old over-credit)");
+	assert.equal(core.levelVocabulary("A1", 0), 0);
+	assert.equal(core.levelVocabulary("A2", 0.5), 1800);
+	assert.equal(core.levelVocabulary("B1", 1), core.LEVEL_VOCAB.B1);
 	assert.equal(sets.met.size, 3);
 	assert.equal(sets.solid, 2);
-	assert.equal(sets.known.size, core.LEVEL_VOCAB.A2 + (sets.met.has("praca") && order.indexOf("praca") >= core.LEVEL_VOCAB.A2 ? 1 : 0));
+	assert.equal(sets.known.size, sets.credited + (sets.met.has("praca") && order.indexOf("praca") >= sets.credited ? 1 : 0) + (order.indexOf("mesto") >= sets.credited ? 1 : 0) + (order.indexOf("byt") >= sets.credited ? 1 : 0));
+	// A word check replaces the band.
+	p.goal.vocabulary = { size: 2150, at: NOW.toISOString(), reliable: true };
+	progressStore.write(p);
+	const measured = wordSets(lexicon);
+	assert.equal(measured.basis, "measured");
+	assert.equal(measured.credited, 2150);
+	delete p.goal.vocabulary;
+	progressStore.write(p);
 	assert.ok(sets.known.has("byt") && sets.known.has("praca"));
 
 	const f = learnerFacts(lexicon, NOW, 0);
@@ -286,7 +301,7 @@ test("Listen sessions feed the speed reading; the report ranks milestones and li
 	assert.equal(vlog.speed.basis, "listen");
 	assert.ok(report.nextWords.length > 0 && report.nextWords.length <= 24);
 	for (const w of report.nextWords) assert.ok(!["byt", "mesto", "praca"].includes(w.slug), "met words are not next words");
-	assert.ok(report.nextWords[0]!.rank > core.LEVEL_VOCAB.A2, "the next words sit past the level's credited band");
+	assert.ok(report.nextWords[0]!.rank > core.LEVEL_VOCAB.A1, "the next words sit past the credited band");
 	assert.ok(report.goals["can-order"], "the map's goals are on the report");
 });
 

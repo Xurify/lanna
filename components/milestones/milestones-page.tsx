@@ -273,15 +273,15 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 				<h2 className="font-ui text-xs font-bold tracking-wide text-muted-foreground">What the app knows about you</h2>
 				<p className="font-ui text-xs text-muted-foreground">
-					{facts.placed ? "level from your placement" : "level from the map"} ·{" "}
+					level from the map ·{" "}
 					<Link href="/start?edit=1" className="underline hover:text-foreground">
 						re-check
 					</Link>
 				</p>
 			</div>
 			<dl className="mt-3 grid gap-3 sm:grid-cols-4">
-				<Fact label="Level" value={facts.level} line={facts.placed ? "placed" : "where the map has you"} />
-				<Fact label="Words" value={n(facts.vocabulary)} line={`${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid) · ${n(facts.assumed)} more credited to ${facts.level}`} />
+				<Fact label="Level" value={facts.level} line={`where the map has you${facts.placed ? " (placement set the start; lessons move it)" : ""} · ${Math.round(facts.levelProgress * 100)}% through it`} />
+				<Fact label="Words" value={n(facts.vocabulary)} line={`${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid) · ${n(facts.assumed)} more ${facts.words.basis === "measured" ? `from your word check${facts.words.measuredAt ? ` on ${facts.words.measuredAt.slice(0, 10)}` : ""}${facts.words.reliable === false ? " (generous: pseudowords were ticked)" : ""}` : `credited for the ${facts.level === "A1" ? "part of A1" : `levels before ${facts.level} and the part of it`} behind you; a word check (re-check) measures it`}`} />
 				<Fact label="Speed" value={`${facts.speed.wpm} w/min`} line={speedLine} dim={facts.speed.basis === "level"} />
 				<Fact label="Pace" value={`${facts.paceMinutes} min/day`} line={`last 14 days · plan ${facts.minutesPerDay} min × ${facts.daysPerWeek} days · ${facts.hoursLogged} h logged`} />
 			</dl>

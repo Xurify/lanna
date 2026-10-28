@@ -13,7 +13,6 @@ import {
 	CONTRAST,
 	LESSON_BONUS,
 	PERFECT_BONUS,
-	PLACEMENT_PATTERN,
 	repXp,
 	streakOf,
 	unitDone,
@@ -43,6 +42,7 @@ import {
 import {
 	DEFAULT_DAYS_PER_WEEK,
 	bridgeLanguages,
+	parallelsOn,
 	DEFAULT_LANG_LEVEL,
 	isLang,
 	normalizeLangLevel,
@@ -57,17 +57,13 @@ import {
 	isPurpose,
 	MAX_MINUTES,
 	MAX_PURPOSES,
-	PLACEMENT_TIERS,
-	placementOutcome,
 	purposeScenes,
-	REPS_PER_UNIT,
-	tierForChapter,
+	placementTier,
 	type PlacementOutcome,
-	type PlacementRep,
-	type PlacementTier,
 } from "../core/onboarding.ts";
 import { strandBalance, type StrandBalance } from "../core/strands.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
+import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
@@ -101,7 +97,7 @@ export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern ? [] : [...contrast, ...others].slice(0, 3);
-	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }), bridges: bridgeLanguages(progress.goal) });
+	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -121,7 +117,7 @@ export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
 	const started = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
 	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
-	return { ...buildBlitz(entries(), units, seed), bridges: bridgeLanguages(progress.goal) };
+	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }
 
 export interface RepResult {
@@ -213,6 +209,16 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	unit.reps += total;
 	unit.correct += correct;
 	unit.lastAt = now.toISOString();
+	// The weak-spots record (src/core/weak-spots.ts): every lesson rep counts
+	// against a flagged unit, and a unit under the bar gets flagged.
+	if (input.mode === "lesson" && total > 0) {
+		const t = tallyWeak(p.weak ?? {}, input.unit, correct, total - correct, now);
+		p.weak = t.weak;
+		// This lesson under the bar flags the unit (a lesson just mended is not re-flagged by its own reps).
+		if (!t.mended && !p.weak[input.unit] && lessonFlagsWeak(total, correct)) {
+			p.weak = flagWeak(p.weak, input.unit, "lesson", `${Math.round((correct / total) * 100)}% right in lesson ${unit.lessons}`, now);
+		}
+	}
 	day.reps += total;
 	day.xp += xp;
 	p.xp += xp;
@@ -340,6 +346,8 @@ export interface ProgressSummary {
 	projection: Projection;
 	/** This week's minutes by Nation's four strands, against a quarter each. */
 	balance: StrandBalance;
+	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
+	weakSpots: WeakSpotSummary[];
 }
 
 /** The video the daily plan should show: the one watched today (so the
@@ -407,6 +415,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		next,
 		dayOfYear: Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000),
 		scenes: purposeScenes(goal.purposes ?? []),
+		weak: weakSpotList(p.weak).map((w) => w.unit),
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),
@@ -429,8 +438,9 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		curriculum,
 		plan,
 		goal,
-		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, recentMinutes, now }),
+		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
 		balance,
+		weakSpots: weakSpotList(p.weak),
 	};
 }
 
@@ -454,6 +464,10 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 		const note = goal.purposeNote.trim().slice(0, MAX_PURPOSE_NOTE);
 		if (note) next.purposeNote = note;
 		else delete next.purposeNote;
+	}
+	if (typeof goal.showParallels === "boolean") {
+		if (goal.showParallels) delete next.showParallels;
+		else next.showParallels = false;
 	}
 	if (Array.isArray(goal.languages)) {
 		next.languages = [...new Set(goal.languages.filter(isLang))].slice(0, MAX_LANGUAGES);
@@ -490,36 +504,22 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	return progressSummary(tz, now);
 }
 
-// ─── Placement: the staircase drill ─────────────────────────────────────────
-
-export interface PlacementPlan {
-	/** The tier to start at (an index into `tiers`). */
-	from: number;
-	tiers: Array<PlacementTier & { items: ReturnType<typeof buildLesson>["items"] }>;
-}
-
-/**
- * Every tier's reps, built locally from the lexicon in one go: two reps
- * per unit (choose, then type), so the client can climb tier by tier
- * without another request. `from` is where a re-check starts: the tier
- * the learner's current chapter belongs to.
- */
-export function placementFor(opts: { recheck?: boolean } = {}, seed = Date.now()): PlacementPlan {
-	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
-	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
-	const from = opts.recheck ? tierForChapter(state.current) : 0;
-	const tiers = PLACEMENT_TIERS.map((t, i) => ({
-		...t,
-		items: t.units.flatMap((u) => buildLesson(entries(), u, { seed: seed + i * 97 + t.units.indexOf(u), length: REPS_PER_UNIT, recent: new Set(p.recent), pattern: PLACEMENT_PATTERN }).items),
-	}));
-	return { from, tiers };
-}
+// ─── Placement: recording the check ─────────────────────────────────────────
 
 export interface PlacementResultInput {
+	/** The outcome the three stages folded into (src/server/placement.ts). */
+	outcome: PlacementOutcome;
+	/** Every ladder item answered, for the lesson log. */
 	reps: Array<RepResult & { tier: string }>;
 	ms?: number;
 	tz?: number;
+	/** The Socratic stage's closing line. */
+	note?: string;
+	/** The vocabulary-size estimate, when the learner did the word check. */
+	vocabulary?: GoalRecord["vocabulary"];
+	/** Why each missed unit was missed, in the tutor's or the judge's words
+	 *  (src/server/placement.ts), for the weak-spots record. */
+	weakNotes?: Partial<Record<UnitId, string>>;
 }
 
 export interface PlacementResult extends PlacementOutcome {
@@ -527,33 +527,40 @@ export interface PlacementResult extends PlacementOutcome {
 }
 
 /**
- * Record a finished placement: the outcome (src/core/onboarding.ts) is
- * written into the units ledger as placed evidence (both reps right =
- * tested out; a miss = a weak unit the daily plan will strengthen), the
- * goal remembers the level and the chapter to start in, and every rep
- * goes to the lesson log like a lesson's. No XP: it is a measurement.
+ * Record a finished placement: the outcome is written into the units
+ * ledger as placed evidence (every rep right = tested out; a miss = a weak
+ * unit the daily plan will strengthen), the goal remembers the level and
+ * the chapter to start in, and every rep goes to the lesson log like a
+ * lesson's. No XP: it is a measurement. A re-check replaces the earlier
+ * placement's evidence only on the tiers it asked again (`outcome.from`);
+ * a unit with lessons behind it keeps its lesson evidence untouched.
  */
 export function recordPlacement(input: PlacementResultInput, now = new Date()): PlacementResult {
 	const p = progressStore.read();
-	const reps: PlacementRep[] = input.reps.map((r) => ({ tier: r.tier, unit: (r.detail?.unit ?? "") as PlacementRep["unit"], verdict: r.verdict }));
-	const outcome = placementOutcome(reps);
-	// A re-check replaces the earlier placement's evidence; lesson evidence
-	// stays (a unit with lessons behind it keeps them).
-	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0) delete p.units[id];
+	const { outcome } = input;
+	const asked = new Set(outcome.tiers.filter((t) => !t.held).flatMap((t) => placementTier(t.id)?.units ?? []));
+	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0 && asked.has(id as UnitId)) delete p.units[id];
+	let weak = p.weak ?? {};
 	for (const [id, e] of Object.entries(outcome.units)) {
+		// The check's word on a unit it asked about: a miss flags it, a clean
+		// run clears it, whatever flagged it before.
+		if (e.reps > 0 && e.correct < e.reps) weak = flagWeak(weak, id, "check", input.weakNotes?.[id as UnitId] ?? `${e.correct} of ${e.reps} right in the check`, now);
+		else if (e.reps > 0) weak = clearWeak(weak, id);
 		const rec = p.units[id];
-		if (rec && rec.lessons > 0) {
-			rec.reps += e.reps;
-			rec.correct += e.correct;
-		} else p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
+		if (rec && rec.lessons > 0) continue;
+		p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
 	}
+	p.weak = weak;
 	const goal = { ...(p.goal ?? DEFAULT_GOAL) };
 	goal.placedAt = now.toISOString();
 	goal.placedLevel = outcome.level;
 	goal.startChapter = outcome.startChapter;
+	if (input.note) goal.placedNote = input.note;
+	else delete goal.placedNote;
+	if (input.vocabulary) goal.vocabulary = input.vocabulary;
 	p.goal = goal;
 	const day = dayOf(p, today(input.tz, now));
-	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(15, input.ms / 60_000);
+	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(20, input.ms / 60_000);
 	progressStore.write(p);
 	try {
 		appendLessonLog({

@@ -523,11 +523,14 @@ export function hoursDone(state: CurriculumState): number {
 	return hours;
 }
 
-export function projection(state: CurriculumState, opts: { target: Cefr; minutesPerDay: number; recentMinutes: number[]; now: Date }): Projection {
+/** Study days a week when the goal does not say (DEFAULT_DAYS_PER_WEEK in onboarding.ts). */
+const DAYS_PER_WEEK = 6;
+
+export function projection(state: CurriculumState, opts: { target: Cefr; minutesPerDay: number; daysPerWeek?: number; recentMinutes: number[]; now: Date }): Projection {
 	const done = hoursDone(state);
 	const targetHours = GUIDED_HOURS[opts.target];
 	const left = Math.max(0, targetHours - done);
-	const plannedWeekly = (opts.minutesPerDay / 60) * 6;
+	const plannedWeekly = (opts.minutesPerDay / 60) * (opts.daysPerWeek ?? DAYS_PER_WEEK);
 	const paceMinutes = opts.recentMinutes.length ? opts.recentMinutes.reduce((a, b) => a + b, 0) / opts.recentMinutes.length : 0;
 	const etaPlanned = plannedWeekly > 0 ? addDaysIso(opts.now, (left / plannedWeekly) * 7) : null;
 	const etaPace = paceMinutes > 0 && opts.recentMinutes.length >= 14 ? addDaysIso(opts.now, left / (paceMinutes / 60)) : null;
@@ -595,6 +598,9 @@ export interface PlanInput {
 	/** Talk scenes the learner's purposes call for (src/core/onboarding.ts);
 	 *  they rotate with the chapter's own scene. */
 	scenes?: string[];
+	/** Units on record as weak spots (src/core/weak-spots.ts), most urgent
+	 *  first: the Strengthen task takes the first one that can be drilled. */
+	weak?: UnitId[];
 	/** A video the learner added and has not watched yet (src/core/watch.ts):
 	 *  it joins the plan as input until it is watched. */
 	watch?: { id: string; title: string; minutes: number; coverage: number };
@@ -670,17 +676,21 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		href: `/lesson?unit=${input.next}`,
 	});
 
-	// 4. Strengthen: the weakest practised drill (not the Continue unit),
-	//    else a blitz across the units started.
-	const weak = all
-		.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
-		.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
-	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && lessonsBeforeToday(id) >= 1 && (day.units[id] ?? 0) > 0) || day.blitz > 0;
+	// 4. Strengthen: a weak spot on record first (the check or the deck
+	//    flagged it, even with no lesson yet), else the weakest practised
+	//    drill (not the Continue unit), else a blitz across the units started.
+	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && u.kind === "drill" && u.id !== input.next && u.status !== "locked");
+	const weak =
+		spot ??
+		all
+			.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
+			.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
+	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0) || day.blitz > 0;
 	if (weak) {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weak.title}`,
-			line: `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbours`,
+			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbours` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbours`,
 			minutes: TASK_MINUTES.strengthen,
 			done: strengthenDone,
 			unit: weak.id,
