@@ -648,6 +648,13 @@ async function main() {
 
 	await app.whenReady();
 
+	// Embedded YouTube (the Watch task) refuses to play when the user agent
+	// names the app or Electron ("An error occurred. Please try again
+	// later." with a Playback ID, seen 2026-10-28): the player is served a
+	// build for a browser it does not recognise. Present as the Chrome we
+	// are; nothing else keys off these tokens.
+	app.userAgentFallback = app.userAgentFallback.replace(/ (learnharness|LearnHarness|Electron)\/\S+/g, "");
+
 	// Dev mode: point at a running `next dev` server (LH_DEV_URL) — no
 	// spawn, no packaging, full HMR. The rest of this shell still applies
 	// (guards, menu, single instance).
