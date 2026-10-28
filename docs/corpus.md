@@ -1,6 +1,6 @@
 # The data corpus: everything the app generates stays on disk
 
-Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor turns, explanations, stories, translations) and anything the learner produces (answers, recordings) is written under `data/` in open formats, indexed, and reused before it is ever regenerated. Xurify wants it "extremely organized, even overly organized and easy to find" so it can seed a language app of their own later. Built 2026-10-27 in the "Save all generated content for reuse" thread.
+Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor turns, explanations, stories, translations) and anything the learner produces (answers, recordings) is written under `data/` in open formats, indexed, and reused before it is ever regenerated. The owner wants it "extremely organized, even overly organized and easy to find" so it can seed a future app. Built 2026-10-27 in the "Save all generated content for reuse" thread.
 
 `data/` is gitignored. Every folder gets a README written by the app at boot (`ensureReadmes`), so `data/README.md` is the place to start on a real profile.
 

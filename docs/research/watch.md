@@ -4,7 +4,7 @@
 
 ## Why
 
-Xurify's goal is to follow Slovak YouTube, and their gap is assembling meaning fast enough, not vocabulary ([../learner.md](../learner.md)). They asked for "double subtitles, so I see both as I watch". Authentic video is the input strand's natural material, but only if it is made comprehensible: the research threshold for listening is about 93 to 95% known words, and the useful signal is whether a line was understood on the first unaided hearing.
+The first learner's goal is to follow Slovak YouTube, and the gap is assembling meaning fast enough, not vocabulary ([../learner.md](../learner.md)). The ask was "double subtitles, so I see both as I watch". Authentic video is the input strand's natural material, but only if it is made comprehensible: the research threshold for listening is about 93 to 95% known words, and the useful signal is whether a line was understood on the first unaided hearing.
 
 ## Design
 
@@ -19,4 +19,4 @@ Xurify's goal is to follow Slovak YouTube, and their gap is assembling meaning f
 
 ## Status
 
-Verified live on the PC with an "Učíme sa slovenčinu" video (manual Slovak captions, 108 lines, 75% coverage, about 15 s to prepare). The cloud container cannot reach YouTube, so caption fetching is only testable on the PC. Unverified by Xurify.
+Verified live on the PC with an "Učíme sa slovenčinu" video (manual Slovak captions, 108 lines, 75% coverage, about 15 s to prepare). The cloud container cannot reach YouTube, so caption fetching is only testable on the PC. Unverified by the owner.

@@ -1,11 +1,11 @@
 # Working on LangHarness
 
-LangHarness is a Slovak-learning fork of LearnHarness owned by Xurify. Read these before changing anything:
+LangHarness is a Slovak-learning fork of LearnHarness. Read these before changing anything:
 
 1. [docs/DECISIONS.md](docs/DECISIONS.md): product principles, engineering rules and working rules, with dates and the why. The working rules there (take over, do not ask; descriptive branch names; never merge to main; keys out of chat) override the upstream "No guessing, always ask" rule in `AGENTS.md`.
-2. [docs/learner.md](docs/learner.md): who this is built for and what made them drop off.
+2. [docs/learner.md](docs/learner.md): what the app assumes about its learners and what makes them drop off.
 3. [docs/research/README.md](docs/research/README.md): the evidence behind every task. New research goes there.
-4. [docs/CHANGELOG-2026-10.md](docs/CHANGELOG-2026-10.md): what was built when, and what Xurify has not verified yet.
+4. [docs/CHANGELOG-2026-10.md](docs/CHANGELOG-2026-10.md): what was built when, and what the owner has not verified yet.
 5. [docs/corpus.md](docs/corpus.md): where generated data lives and the rules for adding more.
 6. [LANGHARNESS.md](LANGHARNESS.md): the user-facing description of every feature, keys and commands.
 

@@ -4,7 +4,7 @@
 
 ## The problem
 
-Xurify: "I feel like we should restructure how we figure out the goals of a learner. I feel like the way we do it with a bunch of chats is kinda ancient and inefficient." Their first real session had spent 23 minutes on a chat placement, and after about 15 questions they asked "Can we do something fun?". At the same time they are fine with the model being used precisely and Socratically to understand their understanding; what they reject is wasteful chat.
+The owner: "I feel like we should restructure how we figure out the goals of a learner. I feel like the way we do it with a bunch of chats is kinda ancient and inefficient." Their first real session had spent 23 minutes on a chat placement, and after about 15 questions they asked "Can we do something fun?". At the same time they are fine with the model being used precisely and Socratically to understand their understanding; what they reject is wasteful chat.
 
 ## Principle
 
@@ -15,7 +15,7 @@ Measure cheaply first, spend model questions only on the edge. Setup asks nothin
 **Four screens, no model call, Enter continues, every screen skippable.**
 
 1. **What Slovak is for.** Can-do purposes (family, daily life, work, offices, media, exam, curious, other with a free note). Each purpose implies a target level and the Talk and Speak scenes; the highest implied level wins and an exam level overrides. "Other" defaults to A2 with an explicit chip. The note is passed word for word into the tutor's profile block.
-2. **What you bring.** Languages known, picked from 61 (20 as chips, the rest behind a searchable panel; no free text after round 5, because Xurify asked to "remove the custom input and just increase the amount of languages"). Each language gets a level on the CEFR (A1 to C2 plus Native; PR #6). "Know" means can read a simple text. Up to two explanation languages, ordered. The best-known language leads the bridge line in lessons.
+2. **What you bring.** Languages known, picked from 61 (20 as chips, the rest behind a searchable panel; no free text after round 5, after the ask to "remove the custom input and just increase the amount of languages"). Each language gets a level on the CEFR (A1 to C2 plus Native; PR #6). "Know" means can read a simple text. Up to two explanation languages, ordered. The best-known language leads the bridge line in lessons.
 3. **Time.** Minutes a day (stepper, quick picks to 120, max 600 since "the 90-minute cap is bad for power learners") and days a week, with the date that pace reaches the target. The "How long does it take?" sheet shows the app's guided-hours ladder against Cambridge English bands and the FSI category III line, with the head start a known Slavic language is assumed to give, and four cited sources.
 4. **Placement drill.** A staircase of real sentences, A1 → A1 → A2 → B1, two reps per unit, eight items a tier, pass at six. Units aced are tested out; chapters behind the edge are skipped but open to revisit; misses come first in the daily plan; the result shows the sentences as evidence. "Go deeper with the tutor" opens a teach chat seeded with the misses.
 
@@ -31,7 +31,7 @@ Measure cheaply first, spend model questions only on the edge. Setup asks nothin
 
 ## What the audit found (same day)
 
-The drill is sound for a first placement of a beginner to A2 learner, but: re-check demotes everyone to A1 (critical bug), eight items per tier is noisy by about one tier, it is grammar-only yet downstream tasks infer vocabulary from it, the ceiling is B1 grammar, and exact-string grading marks valid alternatives wrong. Xurify's verdict: "The checker is so bad. I don't even think it uses AI when this test should be dynamic and kinda Socratic." The rebuild (cheap drill, model-judged alternatives, adaptive Socratic stage, vocabulary-size check) is in [level-assessment-audit.md](level-assessment-audit.md).
+The drill is sound for a first placement of a beginner to A2 learner, but: re-check demotes everyone to A1 (critical bug), eight items per tier is noisy by about one tier, it is grammar-only yet downstream tasks infer vocabulary from it, the ceiling is B1 grammar, and exact-string grading marks valid alternatives wrong. The owner's verdict: "The checker is so bad. I don't even think it uses AI when this test should be dynamic and kinda Socratic." The rebuild (cheap drill, model-judged alternatives, adaptive Socratic stage, vocabulary-size check) is in [level-assessment-audit.md](level-assessment-audit.md).
 
 ## Known limits
 

@@ -4,7 +4,7 @@
 
 ## Why
 
-Before this pass the app had no meaning-focused output strand and no fluency strand (see [comprehensible-input.md](comprehensible-input.md)). Xurify's profile is input-strong and output-weak, and their stated gap is parsing speed. Later the same day they asked for "accuracy, pronunciation, accent" as well.
+Before this pass the app had no meaning-focused output strand and no fluency strand (see [comprehensible-input.md](comprehensible-input.md)). The first learner's profile is input-strong and output-weak, with parsing speed as the stated gap. Later the same day the owner asked for "accuracy, pronunciation, accent" as well.
 
 ## Evidence
 
@@ -36,4 +36,4 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 
 ## Status
 
-Xurify had no Azure key at deploy time, so the live scores are "match" until one is set. Cloud screenshots used made-up scores from the dev seam (`LH_PRON_SCRIPT=1`), so their numbers are not real. Unverified by Xurify.
+No Azure key was set at deploy time, so the live scores are "match" until one is set. Cloud screenshots used made-up scores from the dev seam (`LH_PRON_SCRIPT=1`), so their numbers are not real. Unverified by the owner.

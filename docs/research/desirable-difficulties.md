@@ -1,6 +1,6 @@
 # Desirable difficulties and LangHarness
 
-*Xurify, 2026-10-28: "things should be hard and the user should face
+*Owner's rule, 2026-10-28: "things should be hard and the user should face
 struggle because that is where the learning happens… even though people
 like to think they can speedrun or disregard it."* This note is the
 standing rule behind every task in the app: **the learner retrieves,
@@ -54,7 +54,7 @@ Too easy:
    production.
 3. **The English was always on the screen.** Every type/choose rep showed
    the full translation before the attempt, so the Slovak sentence never
-   had to be parsed; parsing speed is exactly Xurify's gap. *Now:* once a
+   had to be parsed; parsing speed is exactly the first learner's gap. *Now:* once a
    unit is practised, the translation is hidden until the answer. A
    "Meaning" button shows it early and halves the rep's XP (a priced
    hint), the same as the second try.

@@ -42,7 +42,7 @@ Not fixing: listening and production measures (the Listen and Speak tasks alread
 
 ## What happened next (2026-10-28, later the same hour)
 
-Xurify, on seeing the audit and a screenshot where *Zostal sám doma* (correct Slovak) was marked wrong because the check only accepts the dictionary word the sentence was built from: "it's clearly wrong. The checker is so bad. I don't even think it uses AI when this test should be dynamic and kinda Socratic to better find your current level."
+The owner, on seeing the audit and a screenshot where *Zostal sám doma* (correct Slovak) was marked wrong because the check only accepts the dictionary word the sentence was built from: "it's clearly wrong. The checker is so bad. I don't even think it uses AI when this test should be dynamic and kinda Socratic to better find your current level."
 
 The fix branch (`fix/level-assessment`) therefore widened from bug fixes to a rebuilt check:
 
@@ -51,4 +51,4 @@ The fix branch (`fix/level-assessment`) therefore widened from bug fixes to a re
 3. The two-minute yes/no vocabulary-size check (above).
 4. The re-check, ETA and milestones bugs fixed alongside.
 
-Status at the time of writing: in progress in the thread "Audit the Slovak level assessment"; not merged, not yet verified by Xurify.
+Status at the time of writing: in progress in the thread "Audit the Slovak level assessment"; not merged, not yet verified by the owner.

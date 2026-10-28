@@ -43,11 +43,11 @@ For listening the bar is a little lower: van Zeeland and Schmitt (2013) found in
 
 Two meta-analyses of classroom extensive-reading programmes, Nakanishi (2015, 34 studies) and Jeon and Day (2016, 49 samples), both find a medium effect on reading comprehension and rate, around half a standard deviation, with longer programmes doing better. Most of that research is on English learners in schools, so the exact size for an adult reading Slovak alone is a guess. The direction is not.
 
-### 4. Input alone leaves accuracy gaps. This is the finding that matters most for Xurify.
+### 4. Input alone leaves accuracy gaps. This is the finding that matters most for the first learner.
 
 Merrill Swain studied Canadian children who had spent years in French immersion, which is comprehensible input at scale. Their comprehension was near native. Their grammar in speech and writing was not: they understood everything and still got genders, agreement and verb forms wrong (Swain 1985). Her output hypothesis says that producing the language forces you to notice the gap between what you meant and what you can say, and that this noticing is where accuracy comes from. Lichtman and VanPatten still rate output as helping "sometimes, under some conditions", but the immersion result has been replicated enough that no serious programme skips production.
 
-Xurify's placement showed the same profile: reading around B1, case endings chosen by pattern memory rather than rule. A learner who already understands more than they can produce is the worst candidate for a method that postpones production.
+The first learner's placement showed the same profile: reading around B1, case endings chosen by pattern memory rather than rule. A learner who already understands more than they can produce is the worst candidate for a method that postpones production.
 
 ### 5. Explicit teaching measurably helps, with one honest caveat.
 
