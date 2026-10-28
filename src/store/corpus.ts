@@ -401,6 +401,7 @@ export function ensureReadmes(force = false): void {
 		[path.join(PATHS.data, "README.md"), DATA_READMES.profile],
 		[path.join(PATHS.lessons, "README.md"), DATA_READMES.lessons],
 		[path.join(PATHS.chats, "README.md"), DATA_READMES.chats],
+		[path.join(PATHS.stories, "README.md"), DATA_READMES.stories],
 	];
 	for (const [file, text] of targets) {
 		if (readmesWritten.has(file) && !force) continue;

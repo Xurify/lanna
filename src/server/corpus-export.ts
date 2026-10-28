@@ -17,7 +17,9 @@ import { userFacingTextOf, failedOutputCallIds } from "../core/native-messages.t
 import { chatStore } from "../store/chats.ts";
 import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEntry } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
-import { sessionCost } from "./pricing.ts";
+import { storyStore } from "../store/stories.ts";
+import type { StoryRecord } from "../core/reading.ts";
+import { sessionCost, turnCost } from "./pricing.ts";
 import { migrateAudioOnce } from "./tts.ts";
 
 /** At boot (the Today page's first render): move the old audio cache into
@@ -81,8 +83,8 @@ export interface CorpusSummary {
 	exportedAt: string;
 	profile: string;
 	language: string;
-	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number };
-	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number };
+	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number };
+	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number };
 }
 
 const SAY_SPAN = /`say:\s*([^`]+)`/g;
@@ -188,6 +190,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`dialogues.json\` | tutor session | \`id\`, \`title\`, \`kind\` (learn/practice), \`practiceMode\` (why/talk/story/practice), \`deleted\`, dates, \`messages[]\` (\`role\`, \`text\`, \`spoken[]\` = the say: phrases), \`usage\` (tokens, cost, models) |
 | \`explanations.json\` | Why? question | \`sentence\`, \`answer\`, \`lemma\`, \`learnerWrote\`, \`question\`, \`explanation\` (the tutor's reply), \`chatId\`, \`askedAt\`, \`reopened\` |
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
+| \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
 
 Text is UTF-8 with Slovak diacritics as written. Verdicts: \`exact\`,
 \`accents\` (right apart from diacritics), \`wrong\`. Tokens are per provider
@@ -227,8 +230,21 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		.sort((a, b) => a.askedAt.localeCompare(b.askedAt));
 	const cards = Object.values(reviewStore.readCards()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 	const answers = reviewStore.readLog();
+	const stories = storyStore
+		.list()
+		.map((s) => storyStore.get(s.id))
+		.filter((s): s is StoryRecord => s !== null);
+	const readings = storyStore.reads();
+	let storiesUsd = 0;
+	for (const s of stories) {
+		try {
+			storiesUsd += turnCost(s.usage as never) ?? 0;
+		} catch {
+			// unpriced model: not counted
+		}
+	}
 
-	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0 };
+	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0, storiesUsd: Math.round(storiesUsd * 10000) / 10000 };
 	for (const d of dialogues) {
 		usage.turns += d.usage.turns;
 		usage.inputTokens += d.usage.inputTokens;
@@ -253,6 +269,8 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			explanations: explanations.length,
 			reviewCards: cards.length,
 			reviewAnswers: answers.length,
+			stories: stories.length,
+			readings: readings.length,
 		},
 		usage,
 	};
@@ -265,6 +283,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("dialogues.json", dialogues);
 	write("explanations.json", explanations);
 	write("review.json", { cards, answers });
+	write("stories.json", { stories, readings });
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };
 }

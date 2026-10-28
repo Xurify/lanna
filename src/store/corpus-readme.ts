@@ -23,6 +23,7 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/chats/trash/\` | Sessions you deleted in the app. Kept here, never destroyed | one JSON per chat |
 | \`profiles/slovak/lessons/\` | Every finished lesson and blitz: every sentence shown, your answer, the verdict, the hint used | JSON Lines per day |
 | \`profiles/slovak/lessons/why-index.json\` | Which chat answered "Why?" for which sentence, so the question is paid for once | JSON |
+| \`profiles/slovak/stories/\` | Every graded story episode written for the Read task, with every word glossed, the questions and what it cost; \`index.jsonl\` lists them, \`reads.jsonl\` logs every reading | JSON + JSON Lines |
 | \`profiles/slovak/review/\` | The spaced-review deck: \`cards.json\` (every card and its memory state), \`log.jsonl\` (every answer), \`meta.json\` (settings) | JSON + JSON Lines |
 | \`profiles/slovak/progress.json\` | XP, days practised, each unit's lessons and accuracy | JSON |
 | \`profiles/slovak/graph/\` | The knowledge graph the tutor extracted from your sessions (nodes, chains, sources) | JSON Lines ledgers |
@@ -80,6 +81,7 @@ where the format is not obvious.
 
 - \`chats/\`: every tutor session (one JSON per chat). See \`chats/README.md\`.
 - \`lessons/\`: every finished lesson with every answer. See \`lessons/README.md\`.
+- \`stories/\`: every story episode written for the Read task. See \`stories/README.md\`.
 - \`review/\`: the spaced-review deck. \`cards.json\` is every card with its
   FSRS memory state; \`log.jsonl\` is one line per answer (card, what you
   typed, verdict, rating, when); \`meta.json\` holds settings and how many
@@ -139,4 +141,32 @@ One JSON file per tutor session, named by its id. Fields:
 one level to restore it.
 `;
 
-export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS } as const;
+const STORIES = `# stories/
+
+Graded reading texts written for the Read task: episodes of an ongoing
+story at your level, each paid for once and kept here for good.
+
+- \`<id>.json\` (e.g. \`ep-003-robo-na-trhu.json\`): one episode as written.
+  \`title\`, \`episode\`, \`series\`, \`level\` (the level it was written for),
+  \`chapter\`, \`theme\` (the setting it was asked to use), \`createdAt\`;
+  \`sentences[]\`: \`sk\`, \`en\` and \`tokens[]\` (every word with the
+  dictionary's \`slug\`, \`lemma\`, \`gloss\`, \`cat\`, \`gender\`, and \`fresh\`
+  when you had not met it); \`questions[]\` (Slovak, three options, the
+  \`answer\` index); \`newWords[]\` (the words it introduces on purpose);
+  \`recap\` (one English line, used to write the next episode);
+  \`coverage\` (share of running words you were expected to know),
+  \`wordCount\`, \`drafts\` (2 when the first draft was too hard and was
+  redone), \`usage\` (the model and tokens it cost; priced at read time in
+  Settings → Spending).
+- \`index.jsonl\`: one line per episode (id, title, level, theme, date, word
+  count, coverage, new words, model), so the library lists without opening
+  every file.
+- \`reads.jsonl\`: one line per reading: \`storyId\`, \`at\`, \`day\`, \`ms\`,
+  \`correct\`/\`total\` on the comprehension check, \`answers\` (the option
+  picked per question, -1 = skipped), \`tapped\` (the words you looked up),
+  \`queued\` (the words sent to the review deck), \`xp\`.
+
+The sentences\' audio is in \`../../../audio/\` like every other clip.
+`;
+
+export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES } as const;

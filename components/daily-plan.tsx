@@ -6,7 +6,8 @@
  *
  * The plan is computed on the server (src/core/curriculum.ts dailyPlan):
  * review what is due, one lesson of new ground, strengthen the weakest
- * unit, new words, and speaking with feedback, cut to the planned minutes.
+ * unit, new words, an episode to read, and speaking with feedback, cut to
+ * the planned minutes.
  * Each task is a link into the app; a task ticks itself off from the
  * progress ledger, so there is nothing to mark by hand.
  */
@@ -14,7 +15,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HoursSheet } from "@/components/hours-sheet";
-import { BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DAYS_PER_WEEK, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection } from "@/src/core";
 
@@ -133,6 +134,7 @@ const TASK_ICON: Record<PlanTask["id"], { icon: React.ReactNode; ink: string }> 
 	strengthen: { icon: <DumbbellIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 	blitz: { icon: <ZapIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 	words: { icon: <BookOpenTextIcon className="size-5" />, ink: "text-flame bg-flame/15" },
+	read: { icon: <BookOpenIcon className="size-5" />, ink: "text-xp bg-xp/15" },
 	speak: { icon: <MessagesSquareIcon className="size-5" />, ink: "text-xp bg-xp/15" },
 };
 

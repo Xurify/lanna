@@ -52,6 +52,8 @@ export * from "./tts.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
 export * from "./why.ts";
+export * from "./reading.ts";
+export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";
 export * from "./usage-report.ts";
 export { lookupWord, loadLexicon } from "../agent/lexicon.ts";

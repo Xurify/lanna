@@ -95,6 +95,11 @@ export const PATHS = {
 	 *  (lessons/<day>.jsonl) and the Why? index (lessons/why-index.json),
 	 *  so a repeat Why? reopens its chat instead of paying for a new one. */
 	lessons: path.join(DATA_ROOT, "lessons"),
+	/** Graded stories for the Read task (LangHarness reading, 2026-10-28):
+	 *  stories/<id>.json (the text with glossed tokens, questions, cost),
+	 *  stories/index.jsonl (one line per story) and stories/reads.jsonl
+	 *  (one line per reading) — src/store/stories.ts. */
+	stories: path.join(DATA_ROOT, "stories"),
 	/** Normalized, app-independent exports (npm run corpus:export). */
 	exports: path.join(BASE_DATA_ROOT, "export"),
 	/** Spaced-review cards and their log (src/store/review.ts). */

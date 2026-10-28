@@ -7,7 +7,7 @@
  *
  * One obvious next step (Continue, Enter starts it), today's plan on the
  * road to the target level (components/daily-plan.tsx), four ways to
- * practise (Review, Blitz, Talk, Story), and the path: the whole A1→B2
+ * practise (Review, Blitz, Talk, Read), and the path: the whole A1→B2
  * map folded to the current chapter (components/curriculum-path.tsx).
  */
 
@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+	BookOpenIcon,
 	BookOpenTextIcon,
 	CheckIcon,
 	FlameIcon,
@@ -23,7 +24,6 @@ import {
 	MessagesSquareIcon,
 	PlayIcon,
 	RepeatIcon,
-	ScrollTextIcon,
 	XIcon,
 	ZapIcon,
 } from "lucide-react";
@@ -264,13 +264,12 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							disabled={busy}
 						/>
 						<ModeTile
-							onClick={story}
-							icon={<ScrollTextIcon className="size-6" />}
+							href="/read"
+							icon={<BookOpenIcon className="size-6" />}
 							ink="text-flame"
 							ring="hover:border-flame/60"
-							title="Story"
-							line="Robo's next episode"
-							disabled={busy}
+							title="Read"
+							line={s?.plan.tasks.some((t) => t.id === "read" && t.done) ? "Today's episode is read · the library" : "Today's episode, every word tappable"}
 						/>
 					</div>
 

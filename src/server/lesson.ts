@@ -373,7 +373,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0 },
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,

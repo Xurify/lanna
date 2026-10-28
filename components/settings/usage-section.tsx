@@ -61,6 +61,7 @@ export function UsageSection() {
 					Model turns {formatUsd(report.turnsUsd)}
 					{report.extractionUsd > 0 && <> · graph extraction {formatUsd(report.extractionUsd)}</>}
 					{report.jobsUsd > 0 && <> · background agents {formatUsd(report.jobsUsd)}</>}
+					{report.stories.count > 0 && <> · {report.stories.count} story {report.stories.count === 1 ? "episode" : "episodes"} {formatUsd(report.storiesUsd)}</>}
 					{report.unpricedTurns > 0 && <> · {report.unpricedTurns} turns had no catalog price and are not counted</>}
 					. Lessons, blitz and review run locally and cost nothing.
 				</p>

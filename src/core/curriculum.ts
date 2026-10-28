@@ -535,7 +535,7 @@ export function projection(state: CurriculumState, opts: { target: Cefr; minutes
 
 // ─── The daily plan ─────────────────────────────────────────────────────────
 
-export type TaskKind = "review" | "lesson" | "strengthen" | "words" | "speak" | "blitz";
+export type TaskKind = "review" | "lesson" | "strengthen" | "words" | "read" | "speak" | "blitz";
 
 export interface PlanTask {
 	id: TaskKind;
@@ -567,6 +567,8 @@ export interface DayEvidence {
 	talks: number;
 	stories: number;
 	tutors: number;
+	/** Story episodes read today (the Read task). */
+	reads?: number;
 }
 
 export interface PlanInput {
@@ -584,15 +586,16 @@ export interface PlanInput {
 	scenes?: string[];
 }
 
-export const TASK_MINUTES = { lesson: 3, strengthen: 3, words: 3, speak: 6, blitz: 1 } as const;
+export const TASK_MINUTES = { lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, blitz: 1 } as const;
 
 /**
  * The day's plan, from the research on what actually moves a learner:
  * spaced retrieval first (the review deck), then new ground on the path
  * (one lesson on the Continue unit), interleaved strengthening of the
- * weakest practised unit, new words in context, and output with
- * feedback (a tutor unit, a Talk scene or a Story). The list is cut to the
- * planned minutes, never below review + the lesson.
+ * weakest practised unit, new words in context, an episode to read at
+ * the learner's level, and output with feedback (a tutor unit, a Talk
+ * scene or a Story). The list is cut to the planned minutes, never below
+ * review + the lesson.
  */
 export function dailyPlan(input: PlanInput): DailyPlan {
 	const { state, evidence, day, review } = input;
@@ -666,7 +669,19 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		});
 	}
 
-	// 5. Speak: output with feedback. A tutor unit in the current chapter
+	// 5. Read: an episode at the learner's level (src/core/reading.ts) —
+	//    extensive reading at ~97% known words is where vocabulary grows
+	//    between lessons, and the one input the plan had none of.
+	tasks.push({
+		id: "read",
+		title: "Read",
+		line: (day.reads ?? 0) > 0 ? "Today's episode is read" : "Today's episode of Robo in Bratislava — tap any word for its meaning",
+		minutes: TASK_MINUTES.read,
+		done: (day.reads ?? 0) > 0,
+		href: "/read",
+	});
+
+	// 6. Speak: output with feedback. A tutor unit in the current chapter
 	//    first; else the current chapter's scene, alternating with a story.
 	const current = state.chapters.find((c) => c.id === state.current);
 	const tutorUnit = current?.units.find((u) => u.kind === "tutor" && (u.status === "open" || u.status === "started"));

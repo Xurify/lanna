@@ -4,7 +4,8 @@
  * GET /api/usage and Settings → Spending. Every number is folded at read
  * time from what is already on disk: each chat's `turns` log (one entry
  * per model turn, with the model), its `extractions` log (the background
- * graph pipeline), the sub-agent jobs, and the audio library's index.
+ * graph pipeline), the sub-agent jobs, the story episodes written for the
+ * Read task (each carries its own usage), and the audio library's index.
  * Nothing is estimated from elsewhere; a turn whose model has no price in
  * the catalog counts as unpriced and is shown as such.
  */
@@ -17,6 +18,7 @@ import type { SessionMode, SessionSpend, UsageReport } from "../core/usage-repor
 import { userFacingTextOf } from "../core/native-messages.ts";
 import { chatStore } from "../store/chats.ts";
 import { listAudioClips } from "../store/corpus.ts";
+import { storyStore } from "../store/stories.ts";
 import { jobCost, turnCost } from "./pricing.ts";
 import { stores } from "./stores.ts";
 
@@ -148,6 +150,19 @@ export function usageReport(now = new Date()): UsageReport {
 		m.usd += (s.costUsd ?? 0) + s.extractionUsd + s.jobsUsd;
 		byModeMap.set(s.mode, m);
 	}
+	// Story episodes (the Read task): one generation each, priced like a turn.
+	let storiesUsd = 0;
+	let storiesUnpriced = 0;
+	const storyIndex = storyStore.list();
+	for (const s of storyIndex) {
+		const story = storyStore.get(s.id);
+		const usd = story ? safeTurnCost(story.usage) : null;
+		if (usd === null) storiesUnpriced++;
+		else {
+			storiesUsd += usd;
+			addMonth(s.createdAt, usd);
+		}
+	}
 	const clips = listAudioClips();
 	const byTier: Record<string, number> = {};
 	let bytes = 0;
@@ -160,10 +175,12 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + extractionUsd + jobsUsd),
+		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd),
 		turnsUsd: round(turnsUsd),
 		extractionUsd: round(extractionUsd),
 		jobsUsd: round(jobsUsd),
+		storiesUsd: round(storiesUsd),
+		stories: { count: storyIndex.length, unpriced: storiesUnpriced },
 		unpricedTurns,
 		byMonth: [...months.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([month, m]) => ({ month, usd: round(m.usd), turns: m.turns })),
 		byMode: [...byModeMap.entries()].sort(([, a], [, b]) => b.usd - a.usd).map(([mode, m]) => ({ mode, ...m, usd: round(m.usd) })),
