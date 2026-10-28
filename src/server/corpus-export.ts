@@ -19,6 +19,8 @@ import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEn
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { fluencyStore, speakStore } from "../store/speak.ts";
+import { videoStore } from "../store/videos.ts";
+import type { VideoRecord } from "../core/watch.ts";
 import type { SpeakSession } from "../core/speak.ts";
 import type { StoryRecord } from "../core/reading.ts";
 import { sessionCost, turnCost } from "./pricing.ts";
@@ -85,8 +87,8 @@ export interface CorpusSummary {
 	exportedAt: string;
 	profile: string;
 	language: string;
-	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number; spokenScenes: number; fluencyRounds: number };
-	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number; /** Spoken scenes (the Speak task), USD. */ speakUsd: number };
+	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number; spokenScenes: number; fluencyRounds: number; videos: number; watchings: number };
+	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number; /** Spoken scenes (the Speak task), USD. */ speakUsd: number; /** Videos prepared for the Watch task (translation + questions), USD. */ videosUsd: number };
 }
 
 const SAY_SPAN = /`say:\s*([^`]+)`/g;
@@ -193,6 +195,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`explanations.json\` | Why? question | \`sentence\`, \`answer\`, \`lemma\`, \`learnerWrote\`, \`question\`, \`explanation\` (the tutor's reply), \`chatId\`, \`askedAt\`, \`reopened\` |
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
+| \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage) and \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats) |
 | \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, Slovak, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
 
 Text is UTF-8 with Slovak diacritics as written. Verdicts: \`exact\`,
@@ -251,6 +254,19 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		.map((e) => speakStore.get(e.id))
 		.filter((s): s is SpeakSession => s !== null);
 	const fluency = fluencyStore.list();
+	const videos = videoStore
+		.list()
+		.map((e) => videoStore.get(e.id))
+		.filter((v): v is VideoRecord => v !== null);
+	const watchings = videoStore.watches();
+	let videosUsd = 0;
+	for (const v of videos) {
+		try {
+			videosUsd += turnCost(v.usage as never) ?? 0;
+		} catch {
+			// unpriced model: not counted
+		}
+	}
 	let speakUsd = 0;
 	for (const s of scenes) {
 		try {
@@ -260,7 +276,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		}
 	}
 
-	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0, storiesUsd: Math.round(storiesUsd * 10000) / 10000, speakUsd: Math.round(speakUsd * 10000) / 10000 };
+	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0, storiesUsd: Math.round(storiesUsd * 10000) / 10000, speakUsd: Math.round(speakUsd * 10000) / 10000, videosUsd: Math.round(videosUsd * 10000) / 10000 };
 	for (const d of dialogues) {
 		usage.turns += d.usage.turns;
 		usage.inputTokens += d.usage.inputTokens;
@@ -289,6 +305,8 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			readings: readings.length,
 			spokenScenes: scenes.length,
 			fluencyRounds: fluency.length,
+			videos: videos.length,
+			watchings: watchings.length,
 		},
 		usage,
 	};
@@ -303,6 +321,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("review.json", { cards, answers });
 	write("stories.json", { stories, readings });
 	write("spoken.json", { scenes, fluency });
+	write("videos.json", { videos, watchings });
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };
 }

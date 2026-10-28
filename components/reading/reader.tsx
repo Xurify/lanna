@@ -21,11 +21,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, CheckIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { BookOpenIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setSpeed, speak, SPEEDS, useSpeed } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { gradeAnswers, QUESTION_KIND_INFO, readXp, type ReadingState, type StoryRecord, type StoryToken } from "@/src/core";
+import { Check } from "@/components/reading/check";
+import { Word } from "@/components/reading/word";
+import { gradeAnswers, readXp, type ReadingState, type StoryRecord, type StoryToken } from "@/src/core";
 
 type Stage = "writing" | "reading" | "questions" | "end" | "shelf" | "error";
 
@@ -212,7 +214,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			<Frame strip={false}>
 				<TopBar story={story} step={`Question ${Math.min(answers.length + 1, story.questions.length)} of ${story.questions.length}`} progress={story.questions.length ? answers.length / story.questions.length : 1} onShelf={() => setStage("shelf")} />
 				<Check
-					story={story}
+					questions={story.questions}
 					answers={answers}
 					onAnswer={(i) => {
 						const all = [...answers, i];
@@ -448,163 +450,6 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 				)}
 			</article>
 		</div>
-	);
-}
-
-/** One tappable word. A fresh word (not met before) carries a dotted
- *  underline so the eye knows where the new ground is; a word looked up
- *  keeps a faint mark. The popover opens under the word. */
-function Word({ token, looked, open, onOpen, onClose }: { token: StoryToken; looked: boolean; open: boolean; onOpen: () => void; onClose: () => void }) {
-	const ref = useRef<HTMLSpanElement>(null);
-	const [side, setSide] = useState<"left" | "right">("left");
-	useEffect(() => {
-		if (!open || !ref.current) return;
-		const r = ref.current.getBoundingClientRect();
-		const column = ref.current.closest("article")?.getBoundingClientRect();
-		if (column) setSide(r.left - column.left > column.width * 0.55 ? "right" : "left");
-	}, [open]);
-	return (
-		<span ref={ref} className="relative inline">
-			<button
-				type="button"
-				data-word
-				onClick={() => (open ? onClose() : onOpen())}
-				aria-expanded={open}
-				className={cn(
-					"rounded-md px-0.5 -mx-0.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-go",
-					token.fresh && "underline decoration-dotted decoration-xp decoration-2 underline-offset-[5px]",
-					looked && !token.fresh && "underline decoration-dotted decoration-foreground/30 decoration-2 underline-offset-[5px]",
-					open && "bg-accent",
-				)}
-			>
-				{token.text}
-			</button>
-			{open && (
-				<span
-					data-word-popover
-					role="dialog"
-					aria-label={`About ${token.text}`}
-					className={cn("lh-pop absolute top-full z-10 mt-2 block w-max min-w-[13rem] max-w-[22rem] rounded-2xl border-2 bg-card p-4 text-left font-prose text-base shadow-lg", side === "left" ? "left-0" : "right-0")}
-					data-testid="word-popover"
-				>
-					<span className="flex items-baseline justify-between gap-3">
-						<span className="font-ui text-xl font-black text-foreground" lang="sk">
-							{token.lemma ?? token.text}
-						</span>
-						<button
-							type="button"
-							onMouseDown={(e) => e.preventDefault()}
-							onClick={() => void speak(token.lemma ?? token.text).catch(() => {})}
-							aria-label="Play the word"
-							className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-						>
-							<Volume2Icon className="size-4" />
-						</button>
-					</span>
-					{token.lemma && token.lemma.toLocaleLowerCase("sk-SK") !== token.text.toLocaleLowerCase("sk-SK") && (
-						<span className="block font-ui text-xs text-muted-foreground">
-							here: <span lang="sk">{token.text}</span>
-						</span>
-					)}
-					<span className="mt-1 block leading-snug text-foreground">{token.gloss ?? "Not in the dictionary yet."}</span>
-					{(token.cat || token.gender || token.fresh) && (
-						<span className="mt-1.5 flex flex-wrap gap-1.5">
-							{token.cat && <Tag>{token.cat.toLowerCase()}</Tag>}
-							{token.gender && <Tag>{token.gender}</Tag>}
-							{token.fresh && <Tag className="bg-xp/15 text-xp">new word</Tag>}
-						</span>
-					)}
-				</span>
-			)}
-		</span>
-	);
-}
-
-function Tag({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <span className={cn("rounded-full bg-accent px-2 py-0.5 font-ui text-[11px] font-bold text-muted-foreground", className)}>{children}</span>;
-}
-
-// ─── The check ──────────────────────────────────────────────────────────────
-
-function Check({ story, answers, onAnswer }: { story: StoryRecord; answers: number[]; onAnswer: (i: number) => void }) {
-	const i = answers.length;
-	const q = story.questions[i];
-	const [picked, setPicked] = useState<number | null>(null);
-	useEffect(() => setPicked(null), [i]);
-
-	const pick = useCallback(
-		(n: number) => {
-			if (!q || picked !== null) return;
-			setPicked(n);
-			if (n === q.answer) sfx.right();
-			else sfx.wrong();
-			void speak(q.options[q.answer]!).catch(() => {});
-		},
-		[q, picked],
-	);
-
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => {
-			if (!q) return;
-			const n = Number(e.key);
-			if (picked === null && n >= 1 && n <= q.options.length) {
-				e.preventDefault();
-				pick(n - 1);
-			} else if (picked !== null && e.key === "Enter") {
-				e.preventDefault();
-				onAnswer(picked);
-			}
-		};
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [q, picked, pick, onAnswer]);
-
-	if (!q) return null;
-	const right = picked === q.answer;
-	return (
-		<>
-			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
-				<div key={i} className={cn(COLUMN, "lh-rise")} data-testid="read-question">
-					<p className="font-ui text-sm font-bold text-muted-foreground">{QUESTION_KIND_INFO[q.kind ?? "recall"].label}</p>
-					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground" lang="sk">
-						{q.q}
-					</h2>
-					<div className="grid gap-3">
-						{q.options.map((o, n) => {
-							const tone = picked === null ? "" : n === q.answer ? "border-go bg-go-soft" : n === picked ? "border-miss bg-miss-soft" : "opacity-60";
-							return (
-								<button
-									key={n}
-									type="button"
-									disabled={picked !== null}
-									onClick={() => pick(n)}
-									className={cn("flex items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4 text-left font-prose text-xl text-foreground transition-colors hover:border-foreground/40 disabled:cursor-default", tone)}
-									data-testid="read-option"
-									lang="sk"
-								>
-									<kbd className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-background font-ui text-xs font-bold text-muted-foreground">{n + 1}</kbd>
-									<span className="flex-1">{o}</span>
-									{picked !== null && n === q.answer && <CheckIcon className="size-5 text-go" strokeWidth={3} />}
-									{picked !== null && n === picked && n !== q.answer && <XIcon className="size-5 text-miss" strokeWidth={3} />}
-								</button>
-							);
-						})}
-					</div>
-				</div>
-			</div>
-			<div className={cn("border-t border-border", picked !== null && (right ? "bg-go-soft" : "bg-miss-soft"))}>
-				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
-					<p className={cn("font-ui text-lg font-bold", picked === null ? "text-muted-foreground font-prose text-sm font-normal" : right ? "text-go" : "text-miss")}>
-						{picked === null ? "Pick one, or press its number" : right ? "Presne tak!" : "Not quite — the right one is marked"}
-					</p>
-					{picked !== null && (
-						<button type="button" autoFocus onClick={() => onAnswer(picked)} className={cn(BUTTON, right ? "bg-go text-go-ink" : "bg-miss text-background", "hover:brightness-110")} data-testid="read-continue">
-							{i + 1 >= story.questions.length ? "Finish" : "Continue"}
-						</button>
-					)}
-				</div>
-			</div>
-		</>
 	);
 }
 

@@ -536,7 +536,7 @@ export function projection(state: CurriculumState, opts: { target: Cefr; minutes
 
 // ─── The daily plan ─────────────────────────────────────────────────────────
 
-export type TaskKind = "review" | "listen" | "lesson" | "strengthen" | "words" | "read" | "speak" | "fluency" | "blitz";
+export type TaskKind = "review" | "listen" | "lesson" | "strengthen" | "words" | "read" | "watch" | "speak" | "fluency" | "blitz";
 
 export interface PlanTask {
 	id: TaskKind;
@@ -573,6 +573,8 @@ export interface DayEvidence {
 	reads?: number;
 	/** Listening sessions finished today (the Listen task). */
 	listens?: number;
+	/** Videos watched today (the Watch task). */
+	watches?: number;
 	/** Spoken scenes finished today (the Speak task). */
 	speaks?: number;
 	/** Timed re-reads and "say it faster" rounds today (the fluency strand). */
@@ -593,13 +595,16 @@ export interface PlanInput {
 	/** Talk scenes the learner's purposes call for (src/core/onboarding.ts);
 	 *  they rotate with the chapter's own scene. */
 	scenes?: string[];
+	/** A video the learner added and has not watched yet (src/core/watch.ts):
+	 *  it joins the plan as input until it is watched. */
+	watch?: { id: string; title: string; minutes: number; coverage: number };
 	/** An episode read before today exists, so a timed re-read is possible. */
 	reread?: boolean;
 }
 
 /** Which tasks survive a tight budget first (lower keeps): the must-haves,
  *  then one task of each strand, then the second form-focused ones. */
-const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, fluency: 5, strengthen: 6, blitz: 6, words: 7 };
+const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, watch: 4, fluency: 5, strengthen: 6, blitz: 6, words: 7 };
 
 export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, fluency: 3, blitz: 1 } as const;
 
@@ -711,6 +716,20 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		done: (day.reads ?? 0) > 0,
 		href: "/read",
 	});
+
+	// 6b. Watch: a YouTube video the learner pasted in (src/core/watch.ts),
+	//     both subtitles, one line at a time. Only while one waits: the
+	//     learner chooses the videos, the plan keeps them in view.
+	if (input.watch) {
+		tasks.push({
+			id: "watch",
+			title: `Watch: ${input.watch.title}`,
+			line: (day.watches ?? 0) > 0 ? "Watched today" : `${Math.round(input.watch.coverage * 100)} of every 100 words known — listen first, then reveal`,
+			minutes: input.watch.minutes,
+			done: (day.watches ?? 0) > 0,
+			href: `/watch?id=${input.watch.id}`,
+		});
+	}
 
 	// 7. Speak: output with feedback. A tutor unit in the current chapter
 	//    first; else a spoken scene (src/core/speak.ts): the chapter's own

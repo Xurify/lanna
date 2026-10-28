@@ -330,6 +330,26 @@ export interface StoryDraft {
 	recap: string;
 }
 
+/** The usable questions in a model's list: a question with two to four
+ *  options and a valid answer index (a number, or the right option's text);
+ *  a known `kind` is kept. Anything else is dropped, never fatal. Shared
+ *  by the Read task's draft and the Watch task's questions. */
+export function questionsFrom(raw: unknown): StoryQuestion[] {
+	const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+	if (!Array.isArray(raw)) return [];
+	return raw
+		.map((q) => {
+			if (!q || typeof q !== "object") return null;
+			const qq = q as { q?: unknown; options?: unknown; answer?: unknown; kind?: unknown };
+			const options = Array.isArray(qq.options) ? qq.options.map(str).filter(Boolean) : [];
+			const answer = typeof qq.answer === "number" ? qq.answer : typeof qq.answer === "string" ? options.indexOf(qq.answer.trim()) : -1;
+			if (!str(qq.q) || options.length < 2 || answer < 0 || answer >= Math.min(options.length, 4)) return null;
+			const kind = (STORY_QUESTION_KINDS as readonly string[]).includes(str(qq.kind)) ? (str(qq.kind) as StoryQuestionKind) : undefined;
+			return { q: str(qq.q), options: options.slice(0, 4), answer, ...(kind ? { kind } : {}) };
+		})
+		.filter((q): q is StoryQuestion => q !== null);
+}
+
 /** Pull the draft out of the model's text: the first {...} block, fences
  *  and prose around it ignored. Throws on anything that is not a usable
  *  story, so the caller can redo the draft. */
@@ -356,19 +376,7 @@ export function parseStoryDraft(text: string): StoryDraft {
 				.map((w) => (w && typeof w === "object" ? { sk: str((w as { sk?: unknown }).sk), en: str((w as { en?: unknown }).en) } : null))
 				.filter((w): w is { sk: string; en: string } => !!w && w.sk.length > 0)
 		: [];
-	const questions = Array.isArray(o.questions)
-		? o.questions
-				.map((q) => {
-					if (!q || typeof q !== "object") return null;
-					const qq = q as { q?: unknown; options?: unknown; answer?: unknown; kind?: unknown };
-					const options = Array.isArray(qq.options) ? qq.options.map(str).filter(Boolean) : [];
-					const answer = typeof qq.answer === "number" ? qq.answer : typeof qq.answer === "string" ? options.indexOf(qq.answer.trim()) : -1;
-					if (!str(qq.q) || options.length < 2 || answer < 0 || answer >= Math.min(options.length, 4)) return null;
-					const kind = (STORY_QUESTION_KINDS as readonly string[]).includes(str(qq.kind)) ? (str(qq.kind) as StoryQuestionKind) : undefined;
-					return { q: str(qq.q), options: options.slice(0, 4), answer, ...(kind ? { kind } : {}) };
-				})
-				.filter((q): q is StoryQuestion => q !== null)
-		: [];
+	const questions = questionsFrom(o.questions);
 	return {
 		title: str(o.title) || sentences[0]!.sk.replace(/[.!?…]+$/, ""),
 		sentences,

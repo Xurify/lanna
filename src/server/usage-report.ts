@@ -20,6 +20,7 @@ import { chatStore } from "../store/chats.ts";
 import { listAudioClips } from "../store/corpus.ts";
 import { storyStore } from "../store/stories.ts";
 import { speakStore } from "../store/speak.ts";
+import { videoStore } from "../store/videos.ts";
 import { jobCost, turnCost } from "./pricing.ts";
 import { stores } from "./stores.ts";
 
@@ -177,6 +178,19 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(e.startedAt, usd);
 		}
 	}
+	// Videos prepared for the Watch task: the translation and the questions.
+	let videosUsd = 0;
+	let videosUnpriced = 0;
+	const videoIndex = videoStore.list();
+	for (const e of videoIndex) {
+		const v = videoStore.get(e.id);
+		const usd = v ? safeTurnCost(v.usage) : null;
+		if (usd === null) videosUnpriced++;
+		else {
+			videosUsd += usd;
+			addMonth(e.createdAt, usd);
+		}
+	}
 	const clips = listAudioClips();
 	const byTier: Record<string, number> = {};
 	let bytes = 0;
@@ -189,7 +203,7 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd),
+		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd + videosUsd),
 		turnsUsd: round(turnsUsd),
 		extractionUsd: round(extractionUsd),
 		jobsUsd: round(jobsUsd),
@@ -197,6 +211,8 @@ export function usageReport(now = new Date()): UsageReport {
 		stories: { count: storyIndex.length, unpriced: storiesUnpriced },
 		speakUsd: round(speakUsd),
 		speak: { count: speakIndex.length, unpriced: speakUnpriced },
+		videosUsd: round(videosUsd),
+		videos: { count: videoIndex.length, unpriced: videosUnpriced },
 		unpricedTurns,
 		byMonth: [...months.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([month, m]) => ({ month, usd: round(m.usd), turns: m.turns })),
 		byMode: [...byModeMap.entries()].sort(([, a], [, b]) => b.usd - a.usd).map(([mode, m]) => ({ mode, ...m, usd: round(m.usd) })),

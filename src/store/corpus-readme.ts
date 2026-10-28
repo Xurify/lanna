@@ -24,6 +24,7 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/lessons/\` | Every finished lesson and blitz: every sentence shown, your answer, the verdict, the hint used | JSON Lines per day |
 | \`profiles/slovak/lessons/why-index.json\` | Which chat answered "Why?" for which sentence, so the question is paid for once | JSON |
 | \`profiles/slovak/stories/\` | Every graded story episode written for the Read task, with every word glossed, the questions and what it cost; \`index.jsonl\` lists them, \`reads.jsonl\` logs every reading | JSON + JSON Lines |
+| \`profiles/slovak/videos/\` | Every YouTube video prepared for the Watch task: the caption track as fetched (\`captions/\`), every line with its times, translation and glossed words, the pre-teach words and the questions; \`index.jsonl\` lists them, \`watches.jsonl\` logs every watching (lines understood on the first listen, replays, the check) | JSON + JSON Lines |
 | \`profiles/slovak/speak/\` | Every spoken scene from the Speak task: each line (the tutor's with its meaning, yours with how it arrived), every repair prompt, the end summary and what it cost; your own recordings in \`<id>/\`; \`index.jsonl\` lists the scenes | JSON + WebM/Opus + JSON Lines |
 | \`profiles/slovak/fluency/\` | The speed strand's log: every timed re-read (words a minute) and every "say it faster" round (each pass's time, window, what was heard, how clearly it was said) | JSON Lines |
 | \`profiles/slovak/review/\` | The spaced-review deck: \`cards.json\` (every card and its memory state), \`log.jsonl\` (every answer), \`meta.json\` (settings) | JSON + JSON Lines |
@@ -84,6 +85,7 @@ where the format is not obvious.
 - \`chats/\`: every tutor session (one JSON per chat). See \`chats/README.md\`.
 - \`lessons/\`: every finished lesson with every answer. See \`lessons/README.md\`.
 - \`stories/\`: every story episode written for the Read task. See \`stories/README.md\`.
+- \`videos/\`: every YouTube video prepared for the Watch task. See \`videos/README.md\`.
 - \`speak/\`: every spoken scene from the Speak task, with your recordings. See \`speak/README.md\`.
 - \`fluency/\`: the speed strand's log (timed re-reads, "say it faster"). See \`fluency/README.md\`.
 - \`review/\`: the spaced-review deck. \`cards.json\` is every card with its
@@ -219,4 +221,38 @@ The speed strand: work on what you already know, against the clock.
   \`sentencesMade\`, \`xp\`.
 `;
 
-export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY } as const;
+const VIDEOS = `# videos/
+
+YouTube videos prepared for the Watch task. The video itself is never
+downloaded or stored (it plays in YouTube's own player); what is kept is
+everything the app made of its captions, paid for once.
+
+- \`<id>.json\` (the YouTube video id): \`title\`, \`channel\`, \`url\`,
+  \`durationSec\`, \`source\` (\`captions\` = made by people,
+  \`auto-captions\` = YouTube's automatic ones, \`transcription\` = the
+  audio transcribed because the video had none; and how it was fetched),
+  \`level\` (yours when it was prepared); \`segments[]\`: every line with
+  \`start\`/\`end\` (seconds), \`sk\`, \`en\` (the translation) and
+  \`tokens[]\` (every word with the dictionary's \`slug\`, \`lemma\`,
+  \`gloss\`, \`cat\`, \`gender\`, and \`fresh\` when you had not met it);
+  \`preTeach[]\` (the unknown words worth meeting first, with how often
+  each appears); \`questions[]\` (Slovak, the \`answer\` index, the
+  \`kind\`); \`coverage\` (share of running words you were expected to
+  know), \`wordCount\`, \`unknownCount\`, \`usage\` (the model and
+  tokens the translation and questions cost).
+- \`captions/<id>.<lang>.<json|xml|vtt>\`: the caption track exactly as
+  YouTube served it, so the lines can be cut again without fetching.
+- \`index.jsonl\`: one line per video (id, title, channel, length, level,
+  date, coverage, word count, line count, pre-teach words, source, model).
+- \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
+  \`ms\`, \`mode\` (\`step\` = one line at a time, \`flow\` = straight
+  through), \`segments\`, \`gotFirst\` (lines understood on the first
+  unaided listen), \`gotAfter\` (after a replay, slow-down or the text),
+  \`missed\`, \`replays\`, \`slowed\`, \`correct\`/\`total\` on the check,
+  \`answers\`, \`tapped\` (words looked up), \`queued\` (words sent to the
+  review deck), \`xp\`, and \`stats[]\` per line (\`i\`, \`words\`, \`sec\`,
+  \`replays\`, \`slow\`, \`revealed\`, \`got\`) — words a second of the
+  lines got first time is the listening-speed signal.
+`;
+
+export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS } as const;

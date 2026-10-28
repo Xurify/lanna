@@ -42,6 +42,9 @@ export interface UsageReport {
 	/** Spoken scenes (the Speak task, src/server/speak.ts), USD. */
 	speakUsd: number;
 	speak: { count: number; unpriced: number };
+	/** Videos prepared for the Watch task (src/server/watch.ts): translation + questions, USD. */
+	videosUsd: number;
+	videos: { count: number; unpriced: number };
 	unpricedTurns: number;
 	/** YYYY-MM → USD (turns, extraction and jobs by their own dates). */
 	byMonth: Array<{ month: string; usd: number; turns: number }>;
