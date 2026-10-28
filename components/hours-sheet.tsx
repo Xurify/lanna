@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CEFR_ORDER, GUIDED_HOURS, languageName, weeklyHours, type Cefr, type Lang } from "@/src/core";
+import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, weeklyHours, type Cefr, type Lang } from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
@@ -28,13 +28,6 @@ const CAMBRIDGE_ENGLISH: Record<Cefr, number> = { A1: 95, A2: 190, B1: 375, B2: 
 const FSI_CAT3 = 1100;
 const FSI_CAT1 = 700;
 
-const LEVEL_LINE: Record<Cefr, string> = {
-	A1: "Introduce yourself, order, ask the way",
-	A2: "Shop, make appointments, tell what happened",
-	B1: "Tell stories, give opinions, deal with offices",
-	B2: "Argue a point, follow film and news, write formally",
-	C1: "Nuance, register, long texts with ease",
-};
 
 export const STUDIES: Array<{ who: string; what: string; line: string }> = [
 	{
@@ -230,7 +223,7 @@ export function HoursSheet({
 						<p className="mt-1 min-h-5 font-ui text-xs text-muted-foreground" role="status" aria-live="polite">
 							{hover ? (
 								<>
-									<b className="text-foreground">{hover.level}</b> · {hover.series === "app" ? `about ${GUIDED_HOURS[hover.level]} h in this app` : `about ${CAMBRIDGE_ENGLISH[hover.level]} h for English (Cambridge)`} · {LEVEL_LINE[hover.level]}
+									<b className="text-foreground">{hover.level}</b> · {hover.series === "app" ? `about ${GUIDED_HOURS[hover.level]} h in this app` : `about ${CAMBRIDGE_ENGLISH[hover.level]} h for English (Cambridge)`} · {LEVEL_CAN_DO[hover.level]}
 								</>
 							) : (
 								"Hover a bar for what the level means."
@@ -250,7 +243,10 @@ export function HoursSheet({
 						<tbody>
 							{CEFR_ORDER.map((lv) => (
 								<tr key={lv} className={cn("border-t", lv === target && "text-foreground font-bold")}>
-									<td className="py-1.5">{lv}</td>
+									<td className="py-1.5">
+										{lv}
+										<span className="block max-w-[22rem] font-normal text-muted-foreground">{LEVEL_CAN_DO[lv]}</span>
+									</td>
 									<td className="py-1.5 tabular-nums">{GUIDED_HOURS[lv]} h</td>
 									<td className="py-1.5 tabular-nums">{CAMBRIDGE_ENGLISH[lv]} h</td>
 									<td className="py-1.5 tabular-nums">{dateFor(GUIDED_HOURS[lv])}</td>

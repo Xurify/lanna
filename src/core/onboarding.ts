@@ -148,10 +148,56 @@ export function purposePhrase(id: Purpose): string {
 export function suggestedLevel(purposes: readonly Purpose[], examLevel?: Cefr): Cefr {
 	let best: Cefr = "A2";
 	for (const id of purposes) {
-		const lv = id === "exam" && examLevel ? examLevel : purposeInfo(id).level;
+		const lv = purposeLevel(id, examLevel);
 		if (CEFR_ORDER.indexOf(lv) > CEFR_ORDER.indexOf(best)) best = lv;
 	}
 	return best;
+}
+
+/** What each level buys in Slovak life, in plain words: the setup's target
+ *  box, the hours sheet and Today share these so a learner who meets the
+ *  CEFR here for the first time can still pick (Xurify, 2026-10-28:
+ *  "How else will people generally know what they want"). Phrased from
+ *  the CEFR Companion Volume (2020) global scale, made concrete. */
+export const LEVEL_CAN_DO: Record<Cefr, string> = {
+	A1: "Say hello, order a coffee, count, ask the way. Set phrases and a lot of pointing; people switch to English fast.",
+	A2: "Shop, book the doctor, say what you did today, get around town. Simple talk with people who slow down for you.",
+	B1: "Chat with family and friends about everyday life, tell a story, give an opinion, get through an office visit. A vlog with clear speech is followable.",
+	B2: "Hold your own at work and in an argument, follow the news and most films, write a formal email. Slovaks talk to you at their own speed.",
+	C1: "Nuance, humour, long articles and novels, any meeting. Mistakes are rare and nobody slows down for you.",
+};
+
+/** The level a purpose needs: the exam's own level when given. */
+export function purposeLevel(id: Purpose, examLevel?: Cefr): Cefr {
+	return id === "exam" && examLevel ? examLevel : purposeInfo(id).level;
+}
+
+/** How a target level fits the purposes: which it already covers, and
+ *  which still need a higher one. "Something else" has no level and is
+ *  left out. */
+export function levelFit(level: Cefr, purposes: readonly Purpose[], examLevel?: Cefr): { covered: Purpose[]; short: Array<{ purpose: Purpose; level: Cefr }> } {
+	const covered: Purpose[] = [];
+	const short: Array<{ purpose: Purpose; level: Cefr }> = [];
+	for (const p of purposes) {
+		if (p === "other") continue;
+		const need = purposeLevel(p, examLevel);
+		if (CEFR_ORDER.indexOf(need) <= CEFR_ORDER.indexOf(level)) covered.push(p);
+		else short.push({ purpose: p, level: need });
+	}
+	return { covered, short };
+}
+
+/** One sentence on how `level` serves the purposes, or "" with none. */
+export function levelFitLine(level: Cefr, purposes: readonly Purpose[], examLevel?: Cefr): string {
+	const { covered, short } = levelFit(level, purposes, examLevel);
+	const list = (ps: readonly Purpose[]) => ps.map(purposePhrase).join(", ");
+	const parts: string[] = [];
+	if (covered.length) parts.push(`Enough for ${list(covered)}.`);
+	if (short.length) {
+		const line = short.map((x) => `${purposePhrase(x.purpose)} needs ${x.level}`).join(", ");
+		parts.push(`${line.charAt(0).toUpperCase()}${line.slice(1)}: at ${level} ${short.length === 1 ? "that part stays" : "those stay"} out of reach.`);
+	}
+	return parts.join(" ");
 }
 
 /** Goal unit ids the purposes serve (for the map's "your goal" marks). */

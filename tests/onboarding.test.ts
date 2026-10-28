@@ -229,3 +229,16 @@ test("every grammar unit has a bridge in each of the four languages, and the pro
 	assert.deepEqual(explanationLanguages({ explainIn: ["et", "ru", "de"] }), ["et", "ru"]);
 	assert.deepEqual(explanationLanguages({}), ["en"]);
 });
+
+test("each target level says what it buys and which purposes it covers", async () => {
+	const { LEVEL_CAN_DO, levelFit, levelFitLine, CEFR_ORDER } = await import("../src/core/index.ts");
+	for (const lv of CEFR_ORDER) assert.ok(LEVEL_CAN_DO[lv].length > 40, `${lv} has a can-do line`);
+	assert.equal(new Set(Object.values(LEVEL_CAN_DO)).size, CEFR_ORDER.length, "every level reads differently");
+	const fit = levelFit("B1", ["family", "daily", "media", "other"]);
+	assert.deepEqual(fit.covered, ["family", "daily"]);
+	assert.deepEqual(fit.short, [{ purpose: "media", level: "B2" }]);
+	assert.equal(levelFitLine("B1", ["family", "daily", "media"]), "Enough for family and friends, daily life in Slovakia. News, books and film needs B2: at B1 that part stays out of reach.");
+	assert.equal(levelFitLine("C1", ["exam"], "B2"), "Enough for an exam or citizenship.");
+	assert.equal(levelFitLine("A1", ["exam"], "B2"), "An exam or citizenship needs B2: at A1 that part stays out of reach.");
+	assert.equal(levelFitLine("B2", ["other"]), "");
+});

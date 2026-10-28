@@ -48,6 +48,8 @@ import {
 	PURPOSES,
 	purposePhrase,
 	suggestedLevel,
+	LEVEL_CAN_DO,
+	levelFitLine,
 	unitInfo,
 	type Cefr,
 	type Lang,
@@ -368,12 +370,15 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 									{monthOf(eta)}
 								</p>
 							</div>
-							<p className="mt-2 font-prose text-sm text-muted-foreground">
-								{d.purposes.some((p) => p !== "other") ? `${level} is what ${d.purposes.filter((p) => p !== "other").map(purposePhrase).join(", ")} ${d.purposes.filter((p) => p !== "other").length === 1 ? "needs" : "need"} on the map.` : d.purposes.includes("other") ? "The map has no level for your own goal, so A2 to start: pick the one you mean below." : "Nothing picked, so A2: enough to get by."} The map credits hours as units are done, so the date moves with you.
+							<p className="mt-2 font-prose text-sm text-foreground" data-testid="start-level-cando">
+								{LEVEL_CAN_DO[level]}
+							</p>
+							<p className="mt-1.5 font-prose text-sm text-muted-foreground" data-testid="start-level-fit">
+								{levelFitLine(level, d.purposes, d.examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The map credits hours as units are done, so the date moves with you.
 							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-3">
 								<span className="font-ui text-sm text-foreground">Aim for</span>
-								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l, hint: `about ${GUIDED_HOURS[l]} guided hours${l === suggested ? " · suggested" : ""}` }))} value={level} onPick={(v) => set("levelOverride", v === suggested ? null : v)} label="Target level" testid="start-level" />
+								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l, hint: `${LEVEL_CAN_DO[l]} About ${GUIDED_HOURS[l]} guided hours${l === suggested ? " · suggested" : ""}` }))} value={level} onPick={(v) => set("levelOverride", v === suggested ? null : v)} label="Target level" testid="start-level" />
 								{level !== suggested && (
 									<button type="button" onClick={() => set("levelOverride", null)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
 										Back to {suggested}, the suggested one

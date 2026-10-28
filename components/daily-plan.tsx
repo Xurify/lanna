@@ -19,7 +19,7 @@ import { HoursSheet } from "@/components/hours-sheet";
 import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrandBalance } from "@/components/strand-balance";
-import { DEFAULT_DAYS_PER_WEEK, knownLanguages, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
+import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -105,7 +105,7 @@ export function DailyPlan({
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
 					<span className="text-foreground">
 						<TargetIcon className="mr-1.5 inline size-3.5 align-[-2px] text-flame" />
-						<span className="whitespace-nowrap">
+						<span className="whitespace-nowrap" title={LEVEL_CAN_DO[goal?.level ?? "B2"]}>
 							Goal: <b>{goal?.level ?? "B2"}</b> at <b>{goal?.minutesPerDay ?? 30} min</b> a day
 						</span>
 						{goal?.purposes && goal.purposes.length > 0 && (
