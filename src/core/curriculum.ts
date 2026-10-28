@@ -703,7 +703,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 export function tutorUnitPrompt(unit: CurriculumUnit): string {
 	return [
 		`Lesson with the tutor: ${unit.title}. ${unit.brief ?? unit.tagline}`,
-		"Keep it answer-first: explain in at most four short lines (with the Estonian bridge where one helps), then give me eight quick problems one at a time, answered in Slovak.",
+		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in Slovak.",
 		"On a miss, name the trigger and let me try once more before you give the form. Use say: spans for every Slovak example. End with the three forms to remember.",
 	].join(" ");
 }

@@ -41,8 +41,12 @@ import {
 } from "../core/curriculum.ts";
 import {
 	DEFAULT_DAYS_PER_WEEK,
-	isBridge,
-	isFirstLanguage,
+	bridgeLanguages,
+	isLang,
+	MAX_LANGUAGES,
+	MAX_PURPOSE_NOTE,
+	MAX_OTHER_LANGUAGE_LENGTH,
+	MAX_OTHER_LANGUAGES,
 	isPrior,
 	isPurpose,
 	MAX_MINUTES,
@@ -87,7 +91,7 @@ export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern ? [] : [...contrast, ...others].slice(0, 3);
-	return withKnown(buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }));
+	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }), bridges: bridgeLanguages(progress.goal) });
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -107,7 +111,7 @@ export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
 	const started = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
 	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
-	return buildBlitz(entries(), units, seed);
+	return { ...buildBlitz(entries(), units, seed), bridges: bridgeLanguages(progress.goal) };
 }
 
 export interface RepResult {
@@ -398,8 +402,8 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 
 /**
  * Change the goal: the target level and planned minutes (the old inline
- * form) or the whole profile the setup wizard writes (purposes, first
- * language, bridges, prior knowledge, days a week). Every field is
+ * form) or the whole profile the setup wizard writes (purposes, the
+ * languages, prior knowledge, days a week). Every field is
  * validated here; unknown values keep what was there. `onboardedAt` is
  * stamped the first time the wizard saves (or is skipped), so the Today
  * page stops redirecting to it.
@@ -412,8 +416,24 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	const daysPerWeek = typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek) ? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek))) : (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
 	const next: GoalRecord = { ...cur, level, minutesPerDay, daysPerWeek };
 	if (Array.isArray(goal.purposes)) next.purposes = [...new Set(goal.purposes.filter(isPurpose))].slice(0, MAX_PURPOSES);
-	if (isFirstLanguage(goal.firstLanguage)) next.firstLanguage = goal.firstLanguage;
-	if (Array.isArray(goal.bridges)) next.bridges = [...new Set(goal.bridges.filter(isBridge))];
+	if (typeof goal.purposeNote === "string") {
+		const note = goal.purposeNote.trim().slice(0, MAX_PURPOSE_NOTE);
+		if (note) next.purposeNote = note;
+		else delete next.purposeNote;
+	}
+	if (Array.isArray(goal.languages)) {
+		next.languages = [...new Set(goal.languages.filter(isLang))].slice(0, MAX_LANGUAGES);
+		delete next.firstLanguage;
+		delete next.bridges;
+	}
+	if (Array.isArray(goal.otherLanguages)) {
+		next.otherLanguages = [...new Set(goal.otherLanguages.filter((v): v is string => typeof v === "string").map((v) => v.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH)).filter(Boolean))].slice(0, MAX_OTHER_LANGUAGES);
+	}
+	if (goal.explainIn !== undefined) {
+		const known = next.languages ?? [];
+		next.explainIn = isLang(goal.explainIn) && (goal.explainIn === "en" || known.includes(goal.explainIn)) ? goal.explainIn : undefined;
+		if (next.explainIn === "en" || next.explainIn === undefined) delete next.explainIn;
+	}
 	if (isPrior(goal.prior)) next.prior = goal.prior;
 	if (goal.onboarded && !next.onboardedAt) next.onboardedAt = now.toISOString();
 	p.goal = next;

@@ -31,7 +31,7 @@ import { unitInfo, type UnitId } from "./lesson.ts";
 
 // ─── What Slovak is for ─────────────────────────────────────────────────────
 
-export type Purpose = "family" | "daily" | "work" | "offices" | "media" | "exam" | "curious";
+export type Purpose = "family" | "daily" | "work" | "offices" | "media" | "exam" | "curious" | "other";
 
 export interface PurposeInfo {
 	id: Purpose;
@@ -111,9 +111,22 @@ export const PURPOSES: PurposeInfo[] = [
 		goals: ["can-introduce", "can-order", "can-directions", "can-family"],
 		scenes: ["cafe", "way", "family"],
 	},
+	{
+		// Xurify (2026-10-28): "There should be an Other which gives people an
+		// option to explain." The note goes to the tutor word for word; the
+		// level is the learner's own pick (A2 until they say otherwise).
+		id: "other",
+		title: "Something else",
+		blurb: "Say it in a sentence; the tutor reads it",
+		glyph: "pen-line",
+		level: "A2",
+		goals: [],
+		scenes: [],
+	},
 ];
 
 export const MAX_PURPOSES = 3;
+export const MAX_PURPOSE_NOTE = 240;
 
 export function isPurpose(v: unknown): v is Purpose {
 	return typeof v === "string" && PURPOSES.some((p) => p.id === v);
@@ -153,22 +166,97 @@ export function purposeScenes(purposes: readonly Purpose[]): string[] {
 
 // ─── What the learner brings ────────────────────────────────────────────────
 
-export type FirstLanguage = "et" | "en" | "other";
-export type Bridge = "cs" | "pl" | "ru" | "uk";
+/** A language the learner may know. The catalogue is what the setup
+ *  offers as chips; anything else goes in `otherLanguages` as free text.
+ *  Xurify (2026-10-28): knowing a language is a bridge, so the lessons and
+ *  the tutor should draw on every one picked, not only the first. */
+export type Lang =
+	| "et" | "fi" | "ru" | "de"
+	| "cs" | "pl" | "uk" | "sl" | "hr" | "bg"
+	| "hu" | "lv" | "lt"
+	| "en" | "sv" | "nl" | "fr" | "es" | "it" | "pt" | "tr" | "ja" | "zh";
+
+/** The languages the lessons carry a bridge line for (src/core/unit-bridges.ts). */
 export type Prior = "none" | "words" | "sentences" | "reading";
 
-export const FIRST_LANGUAGES: Array<{ id: FirstLanguage; title: string; line: string }> = [
-	{ id: "et", title: "Estonian", line: "14 cases: the best bridge into Slovak cases" },
-	{ id: "en", title: "English", line: "Explanations stay in English either way" },
-	{ id: "other", title: "Something else", line: "Tell the tutor; it adapts" },
+export type BridgeLang = "et" | "fi" | "ru" | "de";
+export const BRIDGE_LANGS: readonly BridgeLang[] = ["et", "fi", "ru", "de"];
+
+export interface KnownLanguageInfo {
+	id: Lang;
+	title: string;
+	/** What it brings to Slovak, in a few words (the chip's tooltip and the tutor's note). */
+	line: string;
+}
+
+/** Bridge languages first, then the Slavic family, then other case languages. */
+export const KNOWN_LANGUAGES: readonly KnownLanguageInfo[] = [
+	{ id: "et", title: "Estonian", line: "14 cases: the closest model for Slovak cases; the lessons show every form the Estonian way" },
+	{ id: "fi", title: "Finnish", line: "15 cases: the lessons show every form the Finnish way" },
+	{ id: "ru", title: "Russian", line: "The same six cases and aspect; cognates and false friends; the lessons show every form the Russian way" },
+	{ id: "de", title: "German", line: "Four cases, gender and agreement; the lessons show every form the German way" },
+	{ id: "cs", title: "Czech", line: "Nearly the same grammar, different sounds" },
+	{ id: "pl", title: "Polish", line: "Cases and aspect carry over; cognates" },
+	{ id: "uk", title: "Ukrainian", line: "Close vocabulary, the same case logic" },
+	{ id: "sl", title: "Slovene", line: "Cases and aspect carry over; the dual is extra" },
+	{ id: "hr", title: "Croatian", line: "Seven cases and aspect; many cognates" },
+	{ id: "bg", title: "Bulgarian", line: "Aspect and vocabulary carry over; no cases to lean on" },
+	{ id: "hu", title: "Hungarian", line: "Cases and agglutination: the idea of a case ending is familiar" },
+	{ id: "lv", title: "Latvian", line: "Seven cases and gender" },
+	{ id: "lt", title: "Lithuanian", line: "Seven cases, gender and aspect-like prefixes" },
+	{ id: "en", title: "English", line: "The app explains in English" },
+	{ id: "sv", title: "Swedish", line: "Gender and verb-second word order" },
+	{ id: "nl", title: "Dutch", line: "Gender and verb-second word order" },
+	{ id: "fr", title: "French", line: "Gender, agreement and verb endings" },
+	{ id: "es", title: "Spanish", line: "Gender, agreement, verb endings and a perfective/imperfective past" },
+	{ id: "it", title: "Italian", line: "Gender, agreement and verb endings" },
+	{ id: "pt", title: "Portuguese", line: "Gender, agreement and verb endings" },
+	{ id: "tr", title: "Turkish", line: "Cases and agglutination" },
+	{ id: "ja", title: "Japanese", line: "Particles mark the role a case ending marks in Slovak" },
+	{ id: "zh", title: "Chinese", line: "No endings at all: every Slovak ending is new" },
 ];
 
-export const BRIDGES: Array<{ id: Bridge; title: string; line: string }> = [
-	{ id: "cs", title: "Czech", line: "Nearly the same grammar, different sounds" },
-	{ id: "pl", title: "Polish", line: "Cases and aspect carry over" },
-	{ id: "ru", title: "Russian", line: "Cognates, and false friends to watch" },
-	{ id: "uk", title: "Ukrainian", line: "Close vocabulary, same case logic" },
-];
+export const MAX_LANGUAGES = 8;
+export const MAX_OTHER_LANGUAGES = 5;
+export const MAX_OTHER_LANGUAGE_LENGTH = 40;
+
+export function isLang(v: unknown): v is Lang {
+	return typeof v === "string" && KNOWN_LANGUAGES.some((l) => l.id === v);
+}
+export function isBridgeLang(v: unknown): v is BridgeLang {
+	return typeof v === "string" && (BRIDGE_LANGS as readonly string[]).includes(v);
+}
+export function languageInfo(id: Lang): KnownLanguageInfo {
+	return KNOWN_LANGUAGES.find((l) => l.id === id)!;
+}
+export function languageName(id: Lang): string {
+	return languageInfo(id).title;
+}
+
+/** Before 2026-10-28 evening the setup kept one first language and a few
+ *  Slavic "bridges"; a profile written then is read as the same list. */
+const LEGACY_FIRST: Record<string, Lang | undefined> = { et: "et", en: "en" };
+
+/** Every language the learner knows, strongest first. A profile that never
+ *  said (the app's first learner) reads as Estonian and English. */
+export function knownLanguages(goal: Pick<LearnerGoal, "languages" | "firstLanguage" | "bridges"> | null | undefined): Lang[] {
+	if (goal?.languages) return goal.languages;
+	if (goal?.firstLanguage || goal?.bridges?.length) {
+		const first = LEGACY_FIRST[goal.firstLanguage ?? ""];
+		return [...new Set([...(first ? [first] : []), ...(goal.bridges ?? []).filter(isLang), "en" as Lang])];
+	}
+	return ["et", "en"];
+}
+
+/** The known languages the lessons can show a form in, in the learner's order. */
+export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "firstLanguage" | "bridges"> | null | undefined): BridgeLang[] {
+	return knownLanguages(goal).filter(isBridgeLang);
+}
+
+/** The language explanations come in: the learner's pick, else English. */
+export function explanationLanguage(goal: Pick<LearnerGoal, "explainIn"> | null | undefined): Lang {
+	return goal?.explainIn ?? "en";
+}
 
 export const PRIORS: Array<{ id: Prior; title: string; line: string }> = [
 	{ id: "none", title: "Nothing yet", line: "Start at the very beginning" },
@@ -180,12 +268,6 @@ export const PRIORS: Array<{ id: Prior; title: string; line: string }> = [
 export function isPrior(v: unknown): v is Prior {
 	return typeof v === "string" && PRIORS.some((p) => p.id === v);
 }
-export function isFirstLanguage(v: unknown): v is FirstLanguage {
-	return typeof v === "string" && FIRST_LANGUAGES.some((p) => p.id === v);
-}
-export function isBridge(v: unknown): v is Bridge {
-	return typeof v === "string" && BRIDGES.some((p) => p.id === v);
-}
 
 // ─── The learner's goal record ──────────────────────────────────────────────
 
@@ -196,8 +278,18 @@ export interface LearnerGoal {
 	minutesPerDay: number;
 	daysPerWeek?: number;
 	purposes?: Purpose[];
-	firstLanguage?: FirstLanguage;
-	bridges?: Bridge[];
+	/** The learner's own words for "other" (or anything the cards miss). */
+	purposeNote?: string;
+	/** Languages the learner knows (catalogue ids, strongest first) and any
+	 *  others as free text. `knownLanguages()` reads either shape. */
+	languages?: Lang[];
+	otherLanguages?: string[];
+	/** The language the tutor explains in; English unless chosen. */
+	explainIn?: Lang;
+	/** @deprecated The setup before 2026-10-28 evening wrote these; read through `knownLanguages()`. */
+	firstLanguage?: string;
+	/** @deprecated See `firstLanguage`. */
+	bridges?: string[];
 	prior?: Prior;
 	/** ISO time the setup was completed (or skipped). Absent = first run. */
 	onboardedAt?: string;
@@ -335,8 +427,6 @@ export function tierPassed(tier: PlacementTier, reps: readonly PlacementRep[]): 
 
 // ─── The profile the tutor reads ────────────────────────────────────────────
 
-const LANGUAGE_NAME: Record<FirstLanguage, string> = { et: "Estonian", en: "English", other: "another language (not Estonian)" };
-const BRIDGE_NAME: Record<Bridge, string> = { cs: "Czech", pl: "Polish", ru: "Russian", uk: "Ukrainian" };
 const PRIOR_LINE: Record<Prior, string> = {
 	none: "started from nothing",
 	words: "started with a few words",
@@ -355,11 +445,23 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
-	if (purposes.length) lines.push(`- Slovak is for: ${purposes.map(purposePhrase).join("; ")}. The goal is concrete: the map's can-do goals ${[...purposeGoals(purposes)].map((g) => `"${curriculumUnit(g)?.title ?? g}"`).slice(0, 5).join(", ")}.`);
+	const note = goal?.purposeNote?.trim();
+	if (purposes.length || note) {
+		const named = purposes.filter((p) => p !== "other").map(purposePhrase);
+		const goals = [...purposeGoals(purposes)].map((g) => `"${curriculumUnit(g)?.title ?? g}"`).slice(0, 5);
+		lines.push(`- Slovak is for: ${[...named, ...(note ? [`in the learner's own words, "${note}"`] : purposes.includes("other") ? ["something the cards did not cover"] : [])].join("; ")}.${goals.length ? ` The goal is concrete: the map's can-do goals ${goals.join(", ")}.` : ""}${note ? " Shape examples and scenes around those words." : ""}`);
+	}
 	if (goal) lines.push(`- Target: ${goal.level} (about ${GUIDED_HOURS[goal.level]} guided hours), at ${goal.minutesPerDay} minutes a day, ${goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} days a week.`);
-	if (goal?.firstLanguage) {
-		const bridges = (goal.bridges ?? []).map((b) => BRIDGE_NAME[b]);
-		lines.push(`- First language: ${LANGUAGE_NAME[goal.firstLanguage]}.${bridges.length ? ` Also knows ${bridges.join(", ")}: use cognates and name the false friends.` : ""}${goal.firstLanguage !== "et" ? " Do not lean on Estonian bridges." : ""}`);
+	if (goal) {
+		const known = knownLanguages(goal);
+		const other = (goal.otherLanguages ?? []).filter(Boolean);
+		const names = [...known.map(languageName), ...other];
+		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
+		const explain = explanationLanguage(goal);
+		lines.push(
+			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""} When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}`,
+		);
+		lines.push(explain === "en" ? "- Explanations in English." : `- Explain in ${languageName(explain)} (the learner's choice): prose and rules in ${languageName(explain)}, Slovak examples in Slovak, English only when asked.`);
 	}
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
 	if (goal?.placedAt && goal.placedLevel) {

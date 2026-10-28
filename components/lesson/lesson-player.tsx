@@ -12,7 +12,7 @@
  * ("Why?"), never in the loop.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookmarkCheckIcon, BookmarkIcon, CheckIcon, FlameIcon, LoaderCircleIcon, SnailIcon, TimerIcon, TrophyIcon, Volume2Icon, VolumeXIcon, XIcon, ZapIcon } from "lucide-react";
@@ -30,7 +30,9 @@ import {
 	sameSentence,
 	rankLabel,
 	unitDone,
+	unitBridges,
 	unitInfo,
+	type BridgeLang,
 	type ItemKind,
 	type LessonItem,
 	type LessonPlan,
@@ -39,6 +41,39 @@ import {
 } from "@/src/core";
 
 type Mode = "lesson" | "blitz";
+
+/** The languages the hints bridge to, from the plan (the learner's
+ *  profile). A plan built before profiles carried languages reads as
+ *  Estonian, the app's first learner. */
+const BridgesContext = createContext<readonly BridgeLang[]>(["et"]);
+
+/** The bridge lines for a unit in the languages the learner knows, one
+ *  line each, after the rule (the Estonian, Finnish, Russian or German way
+ *  of the same point; src/core/unit-bridges.ts). `compact` (the retry
+ *  hint) shows the strongest language and folds the rest behind one line,
+ *  so the second try is not under a wall of text. */
+function Bridges({ unit, compact = false }: { unit: UnitId; compact?: boolean }) {
+	const langs = useContext(BridgesContext);
+	const [all, setAll] = useState(false);
+	const lines = unitBridges(unit, langs);
+	if (lines.length === 0) return null;
+	const shown = compact && !all ? lines.slice(0, 1) : lines;
+	const rest = lines.slice(1);
+	return (
+		<>
+			{shown.map((b) => (
+				<p key={b.lang} className="text-muted-foreground" data-testid={`bridge-${b.lang}`}>
+					<span className="font-semibold text-foreground">{b.name}:</span> {b.text}
+				</p>
+			))}
+			{compact && !all && rest.length > 0 && (
+				<button type="button" onClick={() => setAll(true)} className="self-start font-prose text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground" data-testid="bridges-more">
+					Also the {rest.map((b) => b.name).join(" and ")} way
+				</button>
+			)}
+		</>
+	);
+}
 
 interface Rep {
 	item: LessonItem;
@@ -466,6 +501,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	const examples = current ? plan.items.filter((o) => o.unit === current.item.unit && o.sentence !== current.item.sentence && !o.again).slice(0, 2) : [];
 
 	return (
+		<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
 		<Frame strip={false}>
 			{/* Top bar: exit · progress · combo · sound. The whole band drags the
 			    window (its buttons carve themselves out, app/globals.css). */}
@@ -543,6 +579,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				<ActionBar kind={item.kind} ready={ready} blitz={mode === "blitz"} />
 			)}
 		</Frame>
+		</BridgesContext.Provider>
 	);
 }
 
@@ -657,11 +694,7 @@ function HintPanel({ item, miss }: { item: LessonItem; miss: string }) {
 					</p>
 				)}
 				<p className="text-muted-foreground">{info.rule}</p>
-				{info.bridge && (
-					<p className="text-muted-foreground">
-						<span className="font-semibold text-foreground">Estonian:</span> {info.bridge}
-					</p>
-				)}
+				<Bridges unit={item.unit} compact />
 			</div>
 		</div>
 	);
@@ -1114,11 +1147,7 @@ function FeedbackSheet({
 							</p>
 						)}
 						<p className="text-foreground">{info.rule}</p>
-						{info.bridge && (
-							<p className="text-muted-foreground">
-								<span className="font-semibold text-foreground">Estonian:</span> {info.bridge}
-							</p>
-						)}
+						<Bridges unit={item.unit} />
 						{examples.length > 0 && (
 							<ul className="mt-2 flex flex-col gap-0.5">
 								{examples.map((ex) => (

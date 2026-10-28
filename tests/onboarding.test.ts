@@ -10,6 +10,10 @@ import { test } from "node:test";
 import { CHAPTERS, curriculumState, hoursDone, nextLessonUnit } from "../src/core/curriculum.ts";
 import { buildLesson, UNITS } from "../src/core/lesson.ts";
 import {
+	BRIDGE_LANGS,
+	bridgeLanguages,
+	explanationLanguage,
+	knownLanguages,
 	learnerProfileText,
 	PLACEMENT_TIERS,
 	placementOutcome,
@@ -23,6 +27,7 @@ import {
 	type PlacementRep,
 } from "../src/core/onboarding.ts";
 import { curriculumUnit } from "../src/core/curriculum.ts";
+import { unitBridges, unitsBridgedIn } from "../src/core/unit-bridges.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 import { TALK_SCENES } from "../components/lesson/tutor.ts";
 
@@ -47,6 +52,8 @@ test("purposes map onto real goals and scenes, and the target follows the most d
 	assert.equal(suggestedLevel(["daily", "family"]), "B1");
 	assert.equal(suggestedLevel(["family", "work"]), "B2");
 	assert.equal(suggestedLevel(["exam"], "B2"), "B2");
+	assert.equal(suggestedLevel(["other"]), "A2", "a goal in the learner's own words sets no level; the chips do");
+	assert.equal(suggestedLevel(["other", "work"]), "B2");
 	assert.ok(purposeGoals(["family"]).has("can-family"));
 	assert.deepEqual(purposeScenes(["daily", "family"]), ["cafe", "way", "shop", "doctor", "family", "colleague"]);
 });
@@ -113,13 +120,23 @@ test("placement moves the map: tested-out units are done, chapters behind the st
 test("the profile block says what the tutor must not ask, and is null on a fresh profile", () => {
 	assert.equal(learnerProfileText(undefined, null, {}), null);
 	const o = placementOutcome([...tierReps("a1a", 8), ...tierReps("a1b", 6)]);
-	const goal = { level: "B1" as const, minutesPerDay: 20, daysPerWeek: 5, purposes: ["family" as const, "daily" as const], firstLanguage: "et" as const, bridges: ["ru" as const], prior: "sentences" as const, onboardedAt: "2026-10-28T00:00:00Z", placedAt: "2026-10-28T00:10:00Z", placedLevel: o.level, startChapter: o.startChapter };
+	const goal = { level: "B1" as const, minutesPerDay: 20, daysPerWeek: 5, purposes: ["family" as const, "daily" as const], languages: ["et" as const, "ru" as const], otherLanguages: ["Swahili"], prior: "sentences" as const, onboardedAt: "2026-10-28T00:00:00Z", placedAt: "2026-10-28T00:10:00Z", placedLevel: o.level, startChapter: o.startChapter };
 	const state = curriculumState(o.units, goal.level, { startChapter: goal.startChapter });
 	const text = learnerProfileText(goal, state, o.units)!;
 	assert.ok(text.startsWith("# This learner"));
 	assert.ok(text.includes("family and friends; daily life in Slovakia"), text);
 	assert.ok(text.includes("Target: B1"));
-	assert.ok(text.includes("First language: Estonian. Also knows Russian"));
+	assert.ok(text.includes("Knows: Estonian, Russian, Swahili."), text);
+	assert.ok(text.includes("Russian: The same six cases"), text);
+	assert.ok(text.includes("Explanations in English."));
+	assert.ok(!text.includes("Do not lean on Estonian"));
+	// A learner without Estonian who wants German explanations.
+	const own = learnerProfileText({ ...goal, purposes: ["other", "daily"], purposeNote: "a nursing job in Košice" }, state, o.units)!;
+	assert.ok(own.includes('Slovak is for: daily life in Slovakia; in the learner\'s own words, "a nursing job in Košice".'), own);
+	assert.ok(own.includes("Shape examples and scenes around those words"), own);
+	const de = learnerProfileText({ ...goal, languages: ["de", "en"], explainIn: "de" }, state, o.units)!;
+	assert.ok(de.includes("Do not lean on Estonian bridges"), de);
+	assert.ok(de.includes("Explain in German"), de);
 	assert.ok(text.includes("started with simple sentences"));
 	assert.ok(text.includes("Placement drill on 2026-10-28: A2; tested out of"));
 	assert.ok(text.includes("missed"));
@@ -133,11 +150,24 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
 	let s = progressSummary(0);
 	assert.equal(s.goal.onboardedAt, undefined);
-	s = setGoal({ level: "B1", minutesPerDay: 20, daysPerWeek: 5, purposes: ["family", "bogus" as never, "family"], firstLanguage: "et", bridges: ["ru"], prior: "words", onboarded: true }, 0, new Date("2026-10-28T10:00:00Z"));
+	s = setGoal({ level: "B1", minutesPerDay: 20, daysPerWeek: 5, purposes: ["family", "bogus" as never, "family"], languages: ["et", "ru", "xx" as never, "ru"], otherLanguages: [" Swahili ", "", "Swahili"], explainIn: "ru", prior: "words", onboarded: true }, 0, new Date("2026-10-28T10:00:00Z"));
 	assert.equal(s.goal.level, "B1");
 	assert.deepEqual(s.goal.purposes, ["family"]);
 	assert.equal(s.goal.daysPerWeek, 5);
+	assert.deepEqual(s.goal.languages, ["et", "ru"]);
+	s = setGoal({ purposes: ["other"], purposeNote: "  for my in-laws in Žilina  " }, 0);
+	assert.equal(s.goal.purposeNote, "for my in-laws in Žilina");
+	s = setGoal({ purposeNote: "   " }, 0);
+	assert.equal(s.goal.purposeNote, undefined, "an empty note is dropped");
+	assert.deepEqual(s.goal.otherLanguages, ["Swahili"]);
+	assert.equal(s.goal.explainIn, "ru");
 	assert.ok(s.goal.onboardedAt);
+	// Dropping Russian from the list drops it as the explanation language too; English is never stored.
+	s = setGoal({ languages: ["et"], explainIn: "ru" }, 0);
+	assert.equal(s.goal.explainIn, undefined);
+	s = setGoal({ languages: ["et", "ru"], explainIn: "ru" }, 0);
+	const { lessonFor } = await import("../src/server/lesson.ts");
+	assert.deepEqual(lessonFor("loc", 1).bridges, ["et", "ru"], "the lesson plan carries the bridge languages");
 	const plan = placementFor();
 	assert.equal(plan.from, 0);
 	assert.equal(plan.tiers.length, PLACEMENT_TIERS.length);
@@ -160,4 +190,24 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	const again = recordPlacement({ reps: reps.slice(0, 8), tz: 0 }, new Date("2026-10-29T10:05:00Z"));
 	assert.equal(again.startChapter, "family");
 	assert.equal(progressStore.read().units["acc-people"], undefined, "the earlier placement's evidence is gone");
+});
+
+test("every grammar unit has a bridge in each of the four languages, and the profile picks them", () => {
+	const grammar = UNITS.filter((u) => u.kind !== "words" && !u.union).map((u) => u.id);
+	for (const lang of BRIDGE_LANGS) {
+		const have = unitsBridgedIn(lang);
+		for (const u of grammar) assert.ok(have.includes(u), `${u} lacks a ${lang} line`);
+	}
+	assert.deepEqual(unitBridges("gen", ["ru", "et", "ru"]).map((b) => b.lang), ["ru", "et"], "the learner's order, once each");
+	assert.ok(unitBridges("gen", ["de"])[0]!.text.includes("ohne Zucker"));
+	assert.deepEqual(unitBridges("lx-greetings" as never, ["et"]), [], "a words unit has no bridge");
+	// Reading a profile: the new list, the setup's old shape, and none at all.
+	assert.deepEqual(knownLanguages({ languages: ["de", "en"] }), ["de", "en"]);
+	assert.deepEqual(knownLanguages({ firstLanguage: "et", bridges: ["ru", "cs"] }), ["et", "ru", "cs", "en"]);
+	assert.deepEqual(knownLanguages({ firstLanguage: "other" }), ["en"]);
+	assert.deepEqual(knownLanguages(undefined), ["et", "en"]);
+	assert.deepEqual(bridgeLanguages({ languages: ["en", "ru", "fi", "pl"] }), ["ru", "fi"]);
+	assert.deepEqual(bridgeLanguages({ languages: [] }), []);
+	assert.equal(explanationLanguage({ explainIn: "et" }), "et");
+	assert.equal(explanationLanguage({}), "en");
 });

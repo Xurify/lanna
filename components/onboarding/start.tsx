@@ -29,16 +29,17 @@ import { cn } from "@/lib/utils";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { PlacementDrill, type DrillRep, type DrillTier } from "@/components/onboarding/placement-drill";
-import { Chips, NumberPicker } from "@/components/onboarding/controls";
+import { Chips, explainChoices, LanguagePicker, NumberPicker } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
 import {
-	BRIDGES,
 	CEFR_ORDER,
 	CHAPTERS,
 	DEFAULT_DAYS_PER_WEEK,
 	etaFromScratch,
-	FIRST_LANGUAGES,
+	explanationLanguage,
 	GUIDED_HOURS,
+	knownLanguages,
+	MAX_PURPOSE_NOTE,
 	MAX_PURPOSES,
 	MINUTE_CHOICES,
 	MAX_MINUTES,
@@ -47,9 +48,8 @@ import {
 	purposePhrase,
 	suggestedLevel,
 	unitInfo,
-	type Bridge,
 	type Cefr,
-	type FirstLanguage,
+	type Lang,
 	type LearnerGoal,
 	type PlacementOutcome,
 	type Prior,
@@ -61,10 +61,12 @@ type Step = 1 | 2 | 3 | 4;
 
 interface Draft {
 	purposes: Purpose[];
+	purposeNote: string;
 	examLevel: Cefr;
 	levelOverride: Cefr | null;
-	firstLanguage: FirstLanguage;
-	bridges: Bridge[];
+	languages: Lang[];
+	otherLanguages: string[];
+	explainIn: Lang;
 	prior: Prior;
 	minutes: number;
 	days: number;
@@ -83,10 +85,12 @@ function monthOf(iso: string | null): string {
 function draftFrom(goal: LearnerGoal | null): Draft {
 	return {
 		purposes: goal?.purposes ?? [],
+		purposeNote: goal?.purposeNote ?? "",
 		examLevel: "B1",
 		levelOverride: goal?.onboardedAt && goal.level ? goal.level : null,
-		firstLanguage: goal?.firstLanguage ?? "et",
-		bridges: goal?.bridges ?? [],
+		languages: knownLanguages(goal),
+		otherLanguages: goal?.otherLanguages ?? [],
+		explainIn: explanationLanguage(goal),
 		prior: goal?.prior ?? "none",
 		minutes: goal?.minutesPerDay ?? 20,
 		days: goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
@@ -138,8 +142,10 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 							minutesPerDay: d.minutes,
 							daysPerWeek: d.days,
 							purposes: d.purposes,
-							firstLanguage: d.firstLanguage,
-							bridges: d.bridges,
+							purposeNote: d.purposes.includes("other") ? d.purposeNote : "",
+							languages: d.languages,
+							otherLanguages: d.otherLanguages,
+							explainIn: d.explainIn,
 							prior: d.prior,
 							onboarded: true,
 							...extra,
@@ -285,7 +291,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 										<span className="min-w-0">
 											<span className="flex items-center gap-2 font-ui text-base font-bold text-foreground">
 												{p.title}
-												<span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-black text-muted-foreground">{p.level}</span>
+												{p.id !== "other" && <span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-black text-muted-foreground">{p.level}</span>}
 											</span>
 											<span className="block font-prose text-sm text-muted-foreground">{p.blurb}</span>
 										</span>
@@ -293,6 +299,20 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 								);
 							})}
 						</div>
+						{d.purposes.includes("other") && (
+							<Field label="What for?" hint="in your words; the tutor reads this">
+								<textarea
+									value={d.purposeNote}
+									onChange={(e) => set("purposeNote", e.target.value.slice(0, MAX_PURPOSE_NOTE))}
+									rows={2}
+									maxLength={MAX_PURPOSE_NOTE}
+									placeholder="e.g. Moving to Košice next spring for a nursing job; I want to follow the ward and the paperwork."
+									aria-label="What Slovak is for, in your words"
+									className="w-full resize-none rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-go"
+									data-testid="purpose-note"
+								/>
+							</Field>
+						)}
 						{d.purposes.includes("exam") && (
 							<Field label="The exam's level">
 								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l }))} value={d.examLevel} onPick={(v) => set("examLevel", v)} label="The exam's level" testid="exam-level" />
@@ -303,21 +323,17 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 
 				{step === 2 && (
 					<section className="lh-rise" data-testid="start-you">
-						<Heading title="What you bring" line="Your first language decides which bridges the lessons draw; the rest shapes the first check." />
-						<Field label="First language">
-							<Choices items={FIRST_LANGUAGES} value={d.firstLanguage} onPick={(v) => set("firstLanguage", v)} />
+						<Heading title="What you bring" line="Every language you know is a bridge: the lessons and the tutor show a form the Estonian way, the Russian way, whichever you bring." />
+						<Field label="Languages you know" hint="every one you can read">
+							<LanguagePicker
+								value={d.languages}
+								other={d.otherLanguages}
+								onChange={(languages, otherLanguages) => setD((x) => ({ ...x, languages, otherLanguages, explainIn: languages.includes(x.explainIn) ? x.explainIn : "en" }))}
+							/>
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Estonian, Finnish, Russian and German also appear inside the lessons, as the same form seen their way. The tutor draws on all of them.</p>
 						</Field>
-						<Field label="Other Slavic languages you know" hint="optional">
-							<div className="flex flex-wrap gap-2">
-								{BRIDGES.map((b) => {
-									const on = d.bridges.includes(b.id);
-									return (
-										<button key={b.id} type="button" aria-pressed={on} onClick={() => set("bridges", on ? d.bridges.filter((x) => x !== b.id) : [...d.bridges, b.id])} title={b.line} className={cn("rounded-full border-2 px-4 py-1.5 font-ui text-sm font-bold transition-colors", on ? "border-go bg-go/10 text-foreground" : "border-border text-muted-foreground hover:border-foreground/40")}>
-											{b.title}
-										</button>
-									);
-								})}
-							</div>
+						<Field label="Explain to me in" hint="the tutor's language; lesson rules stay in English for now">
+							<Chips items={explainChoices(d.languages)} value={d.explainIn} onPick={(v) => set("explainIn", v)} label="Explain to me in" testid="explain-in" />
 						</Field>
 						<Field label="Slovak so far">
 							<Choices items={PRIORS} value={d.prior} onPick={(v) => set("prior", v)} />
@@ -344,7 +360,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 								</p>
 							</div>
 							<p className="mt-2 font-prose text-sm text-muted-foreground">
-								{d.purposes.length ? `${level} is what ${d.purposes.map(purposePhrase).join(", ")} ${d.purposes.length === 1 ? "needs" : "need"} on the map.` : "Nothing picked, so A2: enough to get by."} The map credits hours as units are done, so the date moves with you.
+								{d.purposes.some((p) => p !== "other") ? `${level} is what ${d.purposes.filter((p) => p !== "other").map(purposePhrase).join(", ")} ${d.purposes.filter((p) => p !== "other").length === 1 ? "needs" : "need"} on the map.` : d.purposes.includes("other") ? "The map has no level for your own goal, so A2 to start: pick the one you mean below." : "Nothing picked, so A2: enough to get by."} The map credits hours as units are done, so the date moves with you.
 							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-3">
 								<span className="font-ui text-sm text-foreground">Aim for</span>

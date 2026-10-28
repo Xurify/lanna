@@ -93,10 +93,16 @@ export function DailyPlan({
 			    pre-filled, with a re-check of the level on its last screen. */}
 			<div className="mt-4 border-t pt-4 font-ui text-xs text-muted-foreground" data-testid="goal-line">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<span className="flex items-center gap-1.5 text-foreground">
-						<TargetIcon className="size-3.5 text-flame" />
-						Goal: <b>{goal?.level ?? "B2"}</b> at <b>{goal?.minutesPerDay ?? 30} min</b> a day
-						{goal?.purposes && goal.purposes.length > 0 && <span className="text-muted-foreground">· for {goal.purposes.map(purposePhrase).join(", ")}</span>}
+					<span className="text-foreground">
+						<TargetIcon className="mr-1.5 inline size-3.5 align-[-2px] text-flame" />
+						<span className="whitespace-nowrap">
+							Goal: <b>{goal?.level ?? "B2"}</b> at <b>{goal?.minutesPerDay ?? 30} min</b> a day
+						</span>
+						{goal?.purposes && goal.purposes.length > 0 && (
+							<span className="text-muted-foreground" title={goal.purposeNote}>
+								{" "}· for {goal.purposes.map((p) => (p === "other" && goal.purposeNote ? (goal.purposeNote.length > 48 ? `${goal.purposeNote.slice(0, 45).trimEnd()}…` : goal.purposeNote) : purposePhrase(p))).join(", ")}
+							</span>
+						)}
 					</span>
 					{projection && (
 						<span>

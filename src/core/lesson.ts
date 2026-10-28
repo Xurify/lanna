@@ -591,6 +591,9 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 export interface LessonPlan {
 	unit: UnitId;
 	items: LessonItem[];
+	/** The languages the hints show a bridge in (from the learner's profile;
+	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
+	bridges?: Array<"et" | "fi" | "ru" | "de">;
 }
 
 /**
