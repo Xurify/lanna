@@ -41,7 +41,7 @@ export async function PUT(req: Request) {
 					purposeNote: typeof g.purposeNote === "string" ? g.purposeNote.slice(0, 1000) : undefined,
 					languages: strs(g.languages) as never,
 					otherLanguages: strs(g.otherLanguages),
-					explainIn: typeof g.explainIn === "string" ? (g.explainIn as never) : undefined,
+					explainIn: (typeof g.explainIn === "string" ? [g.explainIn] : strs(g.explainIn)) as never,
 					prior: typeof g.prior === "string" ? (g.prior as never) : undefined,
 					onboarded: g.onboarded === true,
 				},

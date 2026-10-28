@@ -43,10 +43,12 @@ import {
 	DEFAULT_DAYS_PER_WEEK,
 	bridgeLanguages,
 	isLang,
+	MAX_EXPLAIN,
 	MAX_LANGUAGES,
 	MAX_PURPOSE_NOTE,
 	MAX_OTHER_LANGUAGE_LENGTH,
 	MAX_OTHER_LANGUAGES,
+	type Lang,
 	isPrior,
 	isPurpose,
 	MAX_MINUTES,
@@ -431,8 +433,10 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	}
 	if (goal.explainIn !== undefined) {
 		const known = next.languages ?? [];
-		next.explainIn = isLang(goal.explainIn) && (goal.explainIn === "en" || known.includes(goal.explainIn)) ? goal.explainIn : undefined;
-		if (next.explainIn === "en" || next.explainIn === undefined) delete next.explainIn;
+		const raw = Array.isArray(goal.explainIn) ? goal.explainIn : [goal.explainIn];
+		const list = [...new Set(raw.filter((l): l is Lang => isLang(l) && (l === "en" || known.includes(l))))].slice(0, MAX_EXPLAIN);
+		if (list.length === 0 || (list.length === 1 && list[0] === "en")) delete next.explainIn;
+		else next.explainIn = list;
 	}
 	if (isPrior(goal.prior)) next.prior = goal.prior;
 	if (goal.onboarded && !next.onboardedAt) next.onboardedAt = now.toISOString();

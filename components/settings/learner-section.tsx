@@ -10,14 +10,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Chips, explainChoices, LanguagePicker } from "@/components/onboarding/controls";
-import { explanationLanguage, knownLanguages, type Lang, type LearnerGoal } from "@/src/core";
+import { explainChoices, LanguagePicker, PickSome } from "@/components/onboarding/controls";
+import { keepExplain } from "@/components/onboarding/start";
+import { explanationLanguages, knownLanguages, MAX_EXPLAIN, type Lang, type LearnerGoal } from "@/src/core";
 import { SettingsGroup } from "./controls.tsx";
 
 interface Langs {
 	languages: Lang[];
 	otherLanguages: string[];
-	explainIn: Lang;
+	explainIn: Lang[];
 }
 
 export function LearnerSection({ onClose }: { onClose: () => void }) {
@@ -31,7 +32,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 			.then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
 			.then((s: { goal?: LearnerGoal }) => {
 				if (gone) return;
-				setState({ languages: knownLanguages(s.goal), otherLanguages: s.goal?.otherLanguages ?? [], explainIn: explanationLanguage(s.goal) });
+				setState({ languages: knownLanguages(s.goal), otherLanguages: s.goal?.otherLanguages ?? [], explainIn: explanationLanguages(s.goal) });
 			})
 			.catch(() => !gone && setStatus("failed"));
 		return () => {
@@ -57,12 +58,12 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 	return (
 		<>
 			<SettingsGroup label="Languages you know" testid="learner-languages">
-				<LanguagePicker value={state.languages} other={state.otherLanguages} onChange={(languages, otherLanguages) => void save({ languages, otherLanguages, explainIn: languages.includes(state.explainIn) ? state.explainIn : "en" })} />
+				<LanguagePicker value={state.languages} other={state.otherLanguages} onChange={(languages, otherLanguages) => void save({ languages, otherLanguages, explainIn: keepExplain(state.explainIn, languages) })} />
 				<p className="text-xs text-muted-foreground">Estonian, Finnish, Russian and German show up inside the lessons as the same form seen their way; the tutor draws on every language here.</p>
 			</SettingsGroup>
 			<SettingsGroup label="Explain to me in" testid="learner-explain">
-				<Chips items={explainChoices(state.languages)} value={state.explainIn} onPick={(explainIn) => void save({ ...state, explainIn })} label="Explain to me in" testid="explain-in" />
-				<p className="text-xs text-muted-foreground">The tutor's language. Lesson rules stay in English for now.</p>
+				<PickSome items={explainChoices(state.languages)} value={state.explainIn} onChange={(explainIn) => void save({ ...state, explainIn })} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
+				<p className="text-xs text-muted-foreground">Up to {MAX_EXPLAIN}: the tutor explains in the first and adds the key line and the terms in the second. Lesson rules stay in English for now.</p>
 			</SettingsGroup>
 			<SettingsGroup label="Goal, level and time" testid="learner-goal">
 				<div className="flex items-center justify-between gap-4 py-1">

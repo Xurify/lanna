@@ -12,7 +12,7 @@ import { buildLesson, UNITS } from "../src/core/lesson.ts";
 import {
 	BRIDGE_LANGS,
 	bridgeLanguages,
-	explanationLanguage,
+	explanationLanguages,
 	knownLanguages,
 	learnerProfileText,
 	PLACEMENT_TIERS,
@@ -134,9 +134,12 @@ test("the profile block says what the tutor must not ask, and is null on a fresh
 	const own = learnerProfileText({ ...goal, purposes: ["other", "daily"], purposeNote: "a nursing job in Košice" }, state, o.units)!;
 	assert.ok(own.includes('Slovak is for: daily life in Slovakia; in the learner\'s own words, "a nursing job in Košice".'), own);
 	assert.ok(own.includes("Shape examples and scenes around those words"), own);
-	const de = learnerProfileText({ ...goal, languages: ["de", "en"], explainIn: "de" }, state, o.units)!;
+	const de = learnerProfileText({ ...goal, languages: ["de", "en"], explainIn: ["de"] }, state, o.units)!;
 	assert.ok(de.includes("Do not lean on Estonian bridges"), de);
 	assert.ok(de.includes("Explain in German"), de);
+	const two = learnerProfileText({ ...goal, explainIn: ["en", "et"] }, state, o.units)!;
+	assert.ok(two.includes("Explanations in English. Also Estonian, which the learner is still learning"), two);
+	assert.ok(two.includes("key line and the grammar terms in Estonian"), two);
 	assert.ok(text.includes("started with simple sentences"));
 	assert.ok(text.includes("Placement drill on 2026-10-28: A2; tested out of"));
 	assert.ok(text.includes("missed"));
@@ -150,7 +153,7 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
 	let s = progressSummary(0);
 	assert.equal(s.goal.onboardedAt, undefined);
-	s = setGoal({ level: "B1", minutesPerDay: 20, daysPerWeek: 5, purposes: ["family", "bogus" as never, "family"], languages: ["et", "ru", "xx" as never, "ru"], otherLanguages: [" Swahili ", "", "Swahili"], explainIn: "ru", prior: "words", onboarded: true }, 0, new Date("2026-10-28T10:00:00Z"));
+	s = setGoal({ level: "B1", minutesPerDay: 20, daysPerWeek: 5, purposes: ["family", "bogus" as never, "family"], languages: ["et", "ru", "xx" as never, "ru"], otherLanguages: [" Swahili ", "", "Swahili"], explainIn: ["ru", "et", "fi", "ru"], prior: "words", onboarded: true }, 0, new Date("2026-10-28T10:00:00Z"));
 	assert.equal(s.goal.level, "B1");
 	assert.deepEqual(s.goal.purposes, ["family"]);
 	assert.equal(s.goal.daysPerWeek, 5);
@@ -160,12 +163,14 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	s = setGoal({ purposeNote: "   " }, 0);
 	assert.equal(s.goal.purposeNote, undefined, "an empty note is dropped");
 	assert.deepEqual(s.goal.otherLanguages, ["Swahili"]);
-	assert.equal(s.goal.explainIn, "ru");
+	assert.deepEqual(s.goal.explainIn, ["ru", "et"], "two at most, known ones only, in order");
 	assert.ok(s.goal.onboardedAt);
 	// Dropping Russian from the list drops it as the explanation language too; English is never stored.
-	s = setGoal({ languages: ["et"], explainIn: "ru" }, 0);
+	s = setGoal({ languages: ["et"], explainIn: ["ru"] }, 0);
 	assert.equal(s.goal.explainIn, undefined);
-	s = setGoal({ languages: ["et", "ru"], explainIn: "ru" }, 0);
+	s = setGoal({ languages: ["et"], explainIn: ["en"] }, 0);
+	assert.equal(s.goal.explainIn, undefined, "English alone is the default, not stored");
+	s = setGoal({ languages: ["et", "ru"], explainIn: ["ru"] }, 0);
 	const { lessonFor } = await import("../src/server/lesson.ts");
 	assert.deepEqual(lessonFor("loc", 1).bridges, ["et", "ru"], "the lesson plan carries the bridge languages");
 	const plan = placementFor();
@@ -208,6 +213,7 @@ test("every grammar unit has a bridge in each of the four languages, and the pro
 	assert.deepEqual(knownLanguages(undefined), ["et", "en"]);
 	assert.deepEqual(bridgeLanguages({ languages: ["en", "ru", "fi", "pl"] }), ["ru", "fi"]);
 	assert.deepEqual(bridgeLanguages({ languages: [] }), []);
-	assert.equal(explanationLanguage({ explainIn: "et" }), "et");
-	assert.equal(explanationLanguage({}), "en");
+	assert.deepEqual(explanationLanguages({ explainIn: "et" }), ["et"], "the older single string still reads");
+	assert.deepEqual(explanationLanguages({ explainIn: ["et", "ru", "de"] }), ["et", "ru"]);
+	assert.deepEqual(explanationLanguages({}), ["en"]);
 });

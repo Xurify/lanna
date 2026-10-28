@@ -253,9 +253,17 @@ export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "firstLang
 	return knownLanguages(goal).filter(isBridgeLang);
 }
 
-/** The language explanations come in: the learner's pick, else English. */
-export function explanationLanguage(goal: Pick<LearnerGoal, "explainIn"> | null | undefined): Lang {
-	return goal?.explainIn ?? "en";
+export const MAX_EXPLAIN = 2;
+
+/** The languages explanations come in, in order: the first carries the
+ *  explanation, the second gets the key line and the terms (Xurify,
+ *  2026-10-28: "the more I see the language(s) the more I can learn").
+ *  English when nothing was chosen; a profile written when this was one
+ *  string reads the same. */
+export function explanationLanguages(goal: Pick<LearnerGoal, "explainIn"> | null | undefined): Lang[] {
+	const raw = goal?.explainIn;
+	const list = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter(isLang);
+	return list.length ? [...new Set(list)].slice(0, MAX_EXPLAIN) : ["en"];
 }
 
 export const PRIORS: Array<{ id: Prior; title: string; line: string }> = [
@@ -284,8 +292,10 @@ export interface LearnerGoal {
 	 *  others as free text. `knownLanguages()` reads either shape. */
 	languages?: Lang[];
 	otherLanguages?: string[];
-	/** The language the tutor explains in; English unless chosen. */
-	explainIn?: Lang;
+	/** The languages the tutor explains in, up to MAX_EXPLAIN, first one
+	 *  leading; English unless chosen. (A single string from before
+	 *  2026-10-28 evening is read as a list of one.) */
+	explainIn?: Lang[] | Lang;
 	/** @deprecated The setup before 2026-10-28 evening wrote these; read through `knownLanguages()`. */
 	firstLanguage?: string;
 	/** @deprecated See `firstLanguage`. */
@@ -457,11 +467,12 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const other = (goal.otherLanguages ?? []).filter(Boolean);
 		const names = [...known.map(languageName), ...other];
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
-		const explain = explanationLanguage(goal);
+		const [first, second] = explanationLanguages(goal);
 		lines.push(
 			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""} When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}`,
 		);
-		lines.push(explain === "en" ? "- Explanations in English." : `- Explain in ${languageName(explain)} (the learner's choice): prose and rules in ${languageName(explain)}, Slovak examples in Slovak, English only when asked.`);
+		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, Slovak examples in Slovak, English only when asked.`;
+		lines.push(second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.` : lead);
 	}
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
 	if (goal?.placedAt && goal.placedLevel) {

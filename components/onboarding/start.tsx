@@ -29,16 +29,17 @@ import { cn } from "@/lib/utils";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { PlacementDrill, type DrillRep, type DrillTier } from "@/components/onboarding/placement-drill";
-import { Chips, explainChoices, LanguagePicker, NumberPicker } from "@/components/onboarding/controls";
+import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
 import {
 	CEFR_ORDER,
 	CHAPTERS,
 	DEFAULT_DAYS_PER_WEEK,
 	etaFromScratch,
-	explanationLanguage,
+	explanationLanguages,
 	GUIDED_HOURS,
 	knownLanguages,
+	MAX_EXPLAIN,
 	MAX_PURPOSE_NOTE,
 	MAX_PURPOSES,
 	MINUTE_CHOICES,
@@ -66,7 +67,7 @@ interface Draft {
 	levelOverride: Cefr | null;
 	languages: Lang[];
 	otherLanguages: string[];
-	explainIn: Lang;
+	explainIn: Lang[];
 	prior: Prior;
 	minutes: number;
 	days: number;
@@ -76,6 +77,12 @@ const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px
 const PRIMARY = cn(BUTTON, "bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100");
 const SECONDARY = cn(BUTTON, "border-2 border-foreground/20 px-5 text-foreground hover:bg-foreground/5");
 const COLUMN = "mx-auto w-full max-w-2xl px-6";
+
+/** When a language leaves the known list it leaves the explanation list too; English stands in for an empty one. */
+export function keepExplain(explain: readonly Lang[], languages: readonly Lang[]): Lang[] {
+	const kept = explain.filter((l) => l === "en" || languages.includes(l));
+	return kept.length ? kept : ["en"];
+}
 
 function monthOf(iso: string | null): string {
 	if (!iso) return "—";
@@ -90,7 +97,7 @@ function draftFrom(goal: LearnerGoal | null): Draft {
 		levelOverride: goal?.onboardedAt && goal.level ? goal.level : null,
 		languages: knownLanguages(goal),
 		otherLanguages: goal?.otherLanguages ?? [],
-		explainIn: explanationLanguage(goal),
+		explainIn: explanationLanguages(goal),
 		prior: goal?.prior ?? "none",
 		minutes: goal?.minutesPerDay ?? 20,
 		days: goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
@@ -328,12 +335,13 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 							<LanguagePicker
 								value={d.languages}
 								other={d.otherLanguages}
-								onChange={(languages, otherLanguages) => setD((x) => ({ ...x, languages, otherLanguages, explainIn: languages.includes(x.explainIn) ? x.explainIn : "en" }))}
+								onChange={(languages, otherLanguages) => setD((x) => ({ ...x, languages, otherLanguages, explainIn: keepExplain(x.explainIn, languages) }))}
 							/>
 							<p className="mt-3 font-prose text-sm text-muted-foreground">Estonian, Finnish, Russian and German also appear inside the lessons, as the same form seen their way. The tutor draws on all of them.</p>
 						</Field>
-						<Field label="Explain to me in" hint="the tutor's language; lesson rules stay in English for now">
-							<Chips items={explainChoices(d.languages)} value={d.explainIn} onPick={(v) => set("explainIn", v)} label="Explain to me in" testid="explain-in" />
+						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
+							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; the bridges above are where the lessons show your languages.</p>
 						</Field>
 						<Field label="Slovak so far">
 							<Choices items={PRIORS} value={d.prior} onPick={(v) => set("prior", v)} />

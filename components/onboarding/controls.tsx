@@ -191,6 +191,53 @@ export function LanguagePicker({
 	);
 }
 
+/**
+ * Up to `max` of a few, in the order pressed: the first chip wears "1",
+ * the second "2". Pressing a third when full replaces the last one;
+ * pressing a chosen chip drops it. Never empty: `fallback` is chosen when
+ * the last one goes.
+ */
+export function PickSome<T extends string>({
+	items,
+	value,
+	onChange,
+	max,
+	fallback,
+	label,
+	testid,
+}: {
+	items: ReadonlyArray<{ id: T; title: string; hint?: string }>;
+	value: readonly T[];
+	onChange: (v: T[]) => void;
+	max: number;
+	fallback: T;
+	label: string;
+	testid?: string;
+}) {
+	const pick = (id: T) => {
+		if (value.includes(id)) {
+			const rest = value.filter((v) => v !== id);
+			return onChange(rest.length ? rest : [fallback]);
+		}
+		const kept = value.length >= max ? value.slice(0, max - 1) : [...value];
+		onChange([...kept, id]);
+	};
+	return (
+		<div className="flex flex-wrap gap-2" role="group" aria-label={label} data-testid={testid}>
+			{items.map((it) => {
+				const at = value.indexOf(it.id);
+				const on = at >= 0;
+				return (
+					<button key={String(it.id)} type="button" aria-pressed={on} title={it.hint} onClick={() => pick(it.id)} className={cn(CHIP, "inline-flex items-center gap-2", on ? ON : OFF)} data-testid={testid ? `${testid}-${it.id}` : undefined}>
+						{on && max > 1 && <span className="flex size-5 items-center justify-center rounded-full bg-go font-ui text-[11px] font-black text-go-ink">{at + 1}</span>}
+						{it.title}
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
 /** The explanation language: English, or any language picked above. */
 export function explainChoices(langs: readonly Lang[]): Array<{ id: Lang; title: string }> {
 	return [{ id: "en" as Lang, title: "English" }, ...langs.filter((l) => l !== "en").map((l) => ({ id: l, title: languageName(l) }))];
