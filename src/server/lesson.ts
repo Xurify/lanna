@@ -42,6 +42,7 @@ import {
 import {
 	DEFAULT_DAYS_PER_WEEK,
 	bridgeLanguages,
+	parallelsOn,
 	DEFAULT_LANG_LEVEL,
 	isLang,
 	normalizeLangLevel,
@@ -95,7 +96,7 @@ export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern ? [] : [...contrast, ...others].slice(0, 3);
-	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }), bridges: bridgeLanguages(progress.goal) });
+	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -115,7 +116,7 @@ export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
 	const started = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
 	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
-	return { ...buildBlitz(entries(), units, seed), bridges: bridgeLanguages(progress.goal) };
+	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }
 
 export interface RepResult {
@@ -448,6 +449,10 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 		const note = goal.purposeNote.trim().slice(0, MAX_PURPOSE_NOTE);
 		if (note) next.purposeNote = note;
 		else delete next.purposeNote;
+	}
+	if (typeof goal.showParallels === "boolean") {
+		if (goal.showParallels) delete next.showParallels;
+		else next.showParallels = false;
 	}
 	if (Array.isArray(goal.languages)) {
 		next.languages = [...new Set(goal.languages.filter(isLang))].slice(0, MAX_LANGUAGES);

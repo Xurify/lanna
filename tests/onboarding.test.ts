@@ -258,3 +258,22 @@ test("each target level says what it buys and which purposes it covers", async (
 	assert.equal(levelFitLine("A1", ["exam"], "B2"), "An exam or citizenship needs B2: at A1 that part stays out of reach.");
 	assert.equal(levelFitLine("B2", ["other"]), "");
 });
+
+test("parallels name only the learner's languages and can be turned off", async () => {
+	const { parallelsLine, parallelsOn, learnerProfileText, bridgeLanguages } = await import("../src/core/index.ts");
+	assert.equal(parallelsLine({ languages: ["et", "cs", "en"] }).startsWith("When a Slovak rule mirrors one in Estonian, the Why? panel"), true, parallelsLine({ languages: ["et", "cs", "en"] }));
+	assert.ok(parallelsLine({ languages: ["ru", "et"], languageLevels: { ru: "native", et: "A2" } }).includes("in Russian and Estonian,"), "best-known first, only languages with lines");
+	assert.ok(parallelsLine({ languages: ["en", "fr"] }).startsWith("Explanations stay in English"));
+	assert.equal(parallelsOn({}), true);
+	assert.equal(parallelsOn({ showParallels: false }), false);
+	assert.deepEqual(bridgeLanguages({ languages: ["et"] }), ["et"]);
+	const { setGoal, lessonFor } = await import("../src/server/lesson.ts");
+	let s = setGoal({ languages: ["et", "ru"], showParallels: false }, 0);
+	assert.equal(s.goal.showParallels, false);
+	assert.deepEqual(lessonFor("loc", 1).bridges, [], "no bridge lines when parallels are off");
+	const off = learnerProfileText(s.goal, null, {})!;
+	assert.ok(off.includes("turned parallels off"), off);
+	s = setGoal({ showParallels: true, languageLevels: {} }, 0);
+	assert.equal(s.goal.showParallels, undefined, "on is the default, not stored");
+	assert.deepEqual(lessonFor("loc", 1).bridges, ["et", "ru"]);
+});

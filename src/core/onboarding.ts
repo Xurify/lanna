@@ -389,6 +389,25 @@ export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "languageL
 
 export const MAX_EXPLAIN = 2;
 
+/** Whether parallels from the learner's languages are shown (absent = on). */
+export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | undefined): boolean {
+	return goal?.showParallels !== false;
+}
+
+/** The setup's and Settings' one-line explanation of parallels, in the
+ *  learner's own languages: "Estonian, then Czech" rather than the fixed
+ *  bridge set (Xurify, 2026-10-28: "Why are there other languages randomly
+ *  appearing in the lesson?"). Only the languages the lessons have a line
+ *  for are named, best-known first. */
+export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): string {
+	const langs = bridgeLanguages(goal);
+	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
+	const names = langs.map(languageName);
+	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+	const example = langs[0] === "et" ? "v meste ≈ linnas" : langs[0] === "fi" ? "v meste ≈ kaupungissa" : langs[0] === "ru" ? "v meste ≈ в городе" : "v meste ≈ in der Stadt";
+	return `When a Slovak rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learner.`;
+}
+
 /** The languages explanations come in, in order: the first carries the
  *  explanation, the second gets the key line and the terms (Xurify,
  *  2026-10-28: "the more I see the language(s) the more I can learn").
@@ -440,6 +459,11 @@ export interface LearnerGoal {
 	/** @deprecated See `firstLanguage`. */
 	bridges?: string[];
 	prior?: Prior;
+	/** Show parallels from the learner's languages (a Slovak rule next to
+	 *  the Estonian or Czech form it mirrors) in the Why? panel and the
+	 *  tutor's hints. Absent = on. Xurify (2026-10-28 06:06Z) found the
+	 *  parallels "unrelated", so they are one tap to turn off. */
+	showParallels?: boolean;
 	/** ISO time the setup was completed (or skipped). Absent = first run. */
 	onboardedAt?: string;
 	/** The last placement: when, the level it found, and the first chapter
@@ -785,7 +809,7 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
 		const [first, second] = explanationLanguages(goal);
 		lines.push(
-			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""} When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}`,
+			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? ` When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}` : " The learner turned parallels off: do not compare Slovak to these languages unless asked; use them only to understand what the learner means."}`,
 		);
 		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, Slovak examples in Slovak, English only when asked.`;
 		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
