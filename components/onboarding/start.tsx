@@ -28,7 +28,7 @@ import { ArrowLeftIcon, CheckIcon, FlagIcon, LoaderCircleIcon, XIcon } from "luc
 import { cn } from "@/lib/utils";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { PlacementDrill, type DrillRep, type DrillTier } from "@/components/onboarding/placement-drill";
+import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
 import {
@@ -53,10 +53,13 @@ import {
 	type Lang,
 	type LangLevel,
 	type LearnerGoal,
+	type LessonItem,
 	type PlacementOutcome,
 	type Prior,
+	type ProbeVerdict,
 	type Purpose,
 	type UnitId,
+	type VocabEstimate,
 } from "@/src/core";
 
 type Step = 1 | 2 | 3 | 4;
@@ -111,9 +114,10 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 	const [d, setD] = useState<Draft>(() => draftFrom(goal));
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [drill, setDrill] = useState<{ tiers: DrillTier[]; from: number } | null>(null);
-	const [outcome, setOutcome] = useState<PlacementOutcome | null>(null);
-	const [missed, setMissed] = useState<DrillRep[]>([]);
+	const [check, setCheck] = useState<CheckStart | null>(null);
+	const [stage, setStage] = useState<"ladder" | "edge" | "words">("ladder");
+	const [checkMs, setCheckMs] = useState(0);
+	const [outcome, setOutcome] = useState<CheckResult | null>(null);
 	const [drilling, setDrilling] = useState(false);
 	const [hoursOpen, setHoursOpen] = useState(false);
 
@@ -189,49 +193,48 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 		try {
 			const res = await fetch(`/api/placement${recheck ? "?recheck=1" : ""}`);
 			if (!res.ok) throw new Error(String(res.status));
-			setDrill((await res.json()) as { tiers: DrillTier[]; from: number });
+			setStage("ladder");
+			setCheck((await res.json()) as CheckStart);
 		} catch {
 			setError("Couldn't build the check. Try again.");
+		} finally {
 			setDrilling(false);
 		}
 	};
 
-	const finishDrill = async (reps: DrillRep[], ms: number) => {
+	/** The ladder is done: the tutor's questions at the edge come next. */
+	const ladderDone = useCallback((ms: number) => {
+		setCheckMs(ms);
+		setStage("edge");
+	}, []);
+
+	const edgeDone = useCallback(() => setStage("words"), []);
+
+	const finishCheck = async () => {
+		if (!check) return;
 		setSaving(true);
 		try {
-			const res = await fetch("/api/placement", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					ms,
-					tz,
-					reps: reps.map((r) => ({
-						tier: r.tier,
-						itemId: r.item.id,
-						slug: r.item.slug,
-						kind: r.item.kind,
-						verdict: r.verdict,
-						detail: { unit: r.item.unit, lemma: r.item.lemma, gloss: r.item.gloss, sentence: r.item.sentence, translation: r.item.translation, answer: r.item.answer, given: r.given, trigger: r.item.trigger, options: r.item.options },
-					})),
-				}),
-			});
+			const res = await fetch("/api/placement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: check.id, ms: checkMs, tz }) });
 			if (!res.ok) throw new Error(String(res.status));
-			setOutcome((await res.json()) as PlacementOutcome);
-			setMissed(reps.filter((r) => r.verdict === "wrong"));
-			setDrill(null);
+			setOutcome((await res.json()) as CheckResult);
+			setCheck(null);
 		} catch {
-			setError("Couldn't save the check. Your answers are kept on this screen; try again.");
+			setError("Couldn't save the check. Try again.");
 		} finally {
 			setSaving(false);
 		}
 	};
 
+	const stageError = useCallback((msg: string) => setError(msg), []);
+
 	/** The Socratic follow-up: a Learn session seeded with the misses. */
 	const goDeeper = () => {
+		const missed = outcome?.missed ?? [];
 		const lines = missed.slice(0, 6).map((r) => `- "${r.item.sentence}" (${r.item.translation}): I wrote "${r.given || "nothing"}", the form is "${r.item.answer}" — ${unitInfo(r.item.unit).title}.`);
 		const prompt = [
-			"Placement follow-up. In the app's placement drill I missed these:",
+			"Placement follow-up. In the app's placement check I missed these:",
 			...lines,
+			...(outcome?.probe.summary ? [`The placement tutor's reading of my edge: ${outcome.probe.summary}`] : []),
 			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need Slovak for.",
 		].join("\n");
 		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Add a model key in Settings first."));
@@ -243,7 +246,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 		<div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-background" data-testid="start">
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className={cn(COLUMN, "relative flex h-16 items-center gap-4 pt-2")}>
-				{step > 1 && !drill && !outcome ? (
+				{step > 1 && !check && !outcome ? (
 					<button type="button" onClick={() => setStep((step - 1) as Step)} aria-label="Back" className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
 						<ArrowLeftIcon className="size-5" />
 					</button>
@@ -387,16 +390,16 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 					</section>
 				)}
 
-				{step === 4 && !drill && !outcome && (
+				{step === 4 && !check && !outcome && (
 					<section className="lh-rise" data-testid="start-check">
 						<Heading
 							title={edit && goal?.placedAt ? "Re-check where you stand?" : d.prior === "none" ? "You start at the beginning" : "Where do you stand?"}
 							line={
 								edit && goal?.placedAt
-									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts from your current chapter and replaces it.`
+									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts from your current chapter, never below it, and replaces it.`
 									: d.prior === "none"
 										? "First words and the present tense are the first lesson. If you know more than you said, a 2-minute check can skip you ahead."
-										: "A short check of real sentences: it climbs from A1 while you keep three in four right, and stops at your edge. Units you ace are ticked off the map; the ones you miss come first in your plan."
+										: "An adaptive check: every sentence is chosen from your answers so far, so it finds your edge in about a dozen typed answers. Then the tutor asks a few questions at that edge, and a two-minute word check counts your vocabulary. Units you hold are ticked off the map; the ones you miss come first in your plan."
 							}
 						/>
 						<div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -422,17 +425,24 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 								</>
 							)}
 						</div>
-						<p className="mt-4 font-prose text-sm text-muted-foreground">About 8 to 32 sentences, choose or type, no hints. Every answer is kept in your lesson log.</p>
+						<p className="mt-4 font-prose text-sm text-muted-foreground">About a dozen typed sentences, then the tutor's questions, then the words: five minutes or so, no hints. A typed answer the dictionary did not expect is judged by the tutor, not marked wrong. Every answer is kept in your lesson log.</p>
 					</section>
 				)}
 
-				{step === 4 && drill && (
+				{step === 4 && check && (
 					<section>
-						<PlacementDrill tiers={drill.tiers} from={drill.from} onDone={(reps, ms) => void finishDrill(reps, ms)} />
+						{stage === "ladder" && <LadderStage key={check.id} start={check} onDone={ladderDone} onError={stageError} />}
+						{stage === "edge" && <EdgeStage id={check.id} onDone={edgeDone} onError={stageError} />}
+						{stage === "words" && !saving && <WordsStage id={check.id} onDone={() => void finishCheck()} onError={stageError} />}
+						{stage === "words" && saving && (
+							<p className="mt-8 flex items-center gap-2 font-prose text-lg text-muted-foreground" role="status">
+								<LoaderCircleIcon className="size-5 animate-spin" /> Working out where you stand…
+							</p>
+						)}
 					</section>
 				)}
 
-				{step === 4 && outcome && <Result outcome={outcome} missed={missed} edit={edit} onDeeper={goDeeper} />}
+				{step === 4 && outcome && <Result outcome={outcome} edit={edit} onDeeper={goDeeper} />}
 
 				{error && (
 					<p className="mt-6 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 font-prose text-sm text-foreground" role="alert">
@@ -498,21 +508,31 @@ function Choices<T extends string>({ items, value, onPick }: { items: ReadonlyAr
 	);
 }
 
-/** The drill's result: the level with its evidence, what was tested out,
- *  what comes first in the plan, and the two ways on — the path, or the
- *  tutor for the Socratic part. */
-function Result({ outcome, missed, edit, onDeeper }: { outcome: PlacementOutcome; missed: DrillRep[]; edit: boolean; onDeeper: () => void }) {
+/** The check's result: the level with its evidence — the tiers, the
+ *  tutor's reading of the edge, the words counted, what was tested out,
+ *  what comes first in the plan — and the two ways on: the path, or the
+ *  tutor for more. */
+export interface CheckResult extends PlacementOutcome {
+	probe: { verdicts: ProbeVerdict[]; summary: string; skipped: boolean };
+	vocabulary: VocabEstimate | null;
+	missed: Array<{ item: LessonItem; given: string }>;
+}
+
+const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft text-go", slip: "bg-warn-soft text-warn", gap: "bg-miss-soft text-miss" };
+
+function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boolean; onDeeper: () => void }) {
 	const chapter = CHAPTERS.find((c) => c.id === outcome.startChapter);
 	const skipped = useMemo(() => CHAPTERS.slice(0, Math.max(0, CHAPTERS.findIndex((c) => c.id === outcome.startChapter))).length, [outcome.startChapter]);
 	const title = (id: UnitId) => unitInfo(id).title;
+	const missed = outcome.missed;
 	return (
 		<section className="lh-rise" data-testid="start-result">
 			<div className="lh-pop mx-auto flex size-20 items-center justify-center rounded-full bg-gold/15 text-gold">
 				<FlagIcon className="size-10" />
 			</div>
-			<h1 className="mt-5 text-center font-ui text-4xl font-black text-foreground">{skipped === 0 ? "Starting at the beginning" : `You start at ${outcome.level}`}</h1>
+			<h1 className="mt-5 text-center font-ui text-4xl font-black text-foreground">{skipped === 0 ? "Starting at the beginning" : outcome.ceiling ? "Beyond the check" : `You start at ${outcome.level}`}</h1>
 			<p className="mt-2 text-center font-prose text-lg text-muted-foreground">
-				{chapter ? `You start in “${chapter.title}”` : "You start at the top"}
+				{outcome.ceiling ? `The check stops at B1 grammar and you held all of it, so you start in “${chapter?.title ?? outcome.startChapter}” (${outcome.level}); the lessons measure you from here` : chapter ? `You start in “${chapter.title}”` : "You start at the top"}
 				{skipped > 0 && ` · ${skipped} chapter${skipped === 1 ? "" : "s"} behind you, open to revisit`}
 			</p>
 
@@ -523,29 +543,56 @@ function Result({ outcome, missed, edit, onDeeper }: { outcome: PlacementOutcome
 						<span className="min-w-0 flex-1 font-ui text-sm font-bold text-foreground">
 							{t.level} · {t.title}
 						</span>
-						<span className="font-ui text-xs tabular-nums text-muted-foreground">
-							{t.correct}/{t.reps} {t.passed ? "· passed" : "· your edge"}
-						</span>
+						<span className="font-ui text-xs tabular-nums text-muted-foreground">{t.held ? "held from before · not asked again" : t.reps === 0 ? (t.passed ? "held · below where you entered" : "not reached") : `${t.correct}/${t.reps} ${t.passed ? "· passed" : "· your edge"}`}</span>
 					</li>
 				))}
 			</ol>
 
-			{(outcome.testedOut.length > 0 || outcome.weak.length > 0) && (
-				<div className="mt-4 grid gap-3 sm:grid-cols-2">
-					{outcome.testedOut.length > 0 && (
-						<div className="rounded-2xl border bg-card p-4">
-							<p className="font-ui text-xs font-bold tracking-wide text-go">Tested out</p>
-							<p className="mt-1 font-prose text-sm text-foreground">{outcome.testedOut.map(title).join(", ")}</p>
-						</div>
-					)}
-					{outcome.weak.length > 0 && (
-						<div className="rounded-2xl border bg-card p-4">
-							<p className="font-ui text-xs font-bold tracking-wide text-flame">First in your plan</p>
-							<p className="mt-1 font-prose text-sm text-foreground">{outcome.weak.map(title).join(", ")}</p>
-						</div>
+			{(outcome.probe.summary || outcome.probe.verdicts.length > 0) && (
+				<div className="mt-4 rounded-2xl border bg-card p-4 text-left" data-testid="result-edge">
+					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">The tutor's reading of your edge</p>
+					{outcome.probe.summary && <p className="mt-1 font-prose text-base text-foreground">{outcome.probe.summary}</p>}
+					{outcome.probe.verdicts.length > 0 && (
+						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Verdicts">
+							{outcome.probe.verdicts.map((v, i) => (
+								<li key={i} className={cn("rounded-md px-2 py-0.5 font-ui text-xs font-bold", RESULT_INK[v.result])} title={v.note}>
+									{title(v.unit)}: {v.result}
+								</li>
+							))}
+						</ul>
 					)}
 				</div>
 			)}
+
+			<div className="mt-4 grid gap-3 sm:grid-cols-2">
+				{outcome.vocabulary && (
+					<div className="rounded-2xl border bg-card p-4" data-testid="result-words">
+						<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Words</p>
+						<p className="mt-1 font-prose text-base text-foreground">
+							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognised{outcome.vocabulary.reliable ? "" : " — you ticked words that are not Slovak, so treat this as generous"}.
+						</p>
+						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="By frequency band">
+							{outcome.vocabulary.bands.map((b) => (
+								<li key={b.id} className="rounded-md bg-accent px-2 py-0.5 font-ui text-xs text-foreground">
+									{b.from === 0 ? "top" : b.from.toLocaleString("en-GB")}–{b.to.toLocaleString("en-GB")}: {Math.round(b.share * 100)}%
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
+				{outcome.testedOut.length > 0 && (
+					<div className="rounded-2xl border bg-card p-4">
+						<p className="font-ui text-xs font-bold tracking-wide text-go">Tested out</p>
+						<p className="mt-1 font-prose text-sm text-foreground">{outcome.testedOut.map(title).join(", ")}</p>
+					</div>
+				)}
+				{outcome.weak.length > 0 && (
+					<div className="rounded-2xl border bg-card p-4">
+						<p className="font-ui text-xs font-bold tracking-wide text-flame">First in your plan</p>
+						<p className="mt-1 font-prose text-sm text-foreground">{outcome.weak.map(title).join(", ")}</p>
+					</div>
+				)}
+			</div>
 
 			{missed.length > 0 && (
 				<div className="mt-4 rounded-2xl border bg-card p-4 text-left">
@@ -577,8 +624,7 @@ function Result({ outcome, missed, edit, onDeeper }: { outcome: PlacementOutcome
 					</button>
 				)}
 			</div>
-			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">{missed.length > 0 ? "The tutor starts from these sentences and asks the few questions a drill cannot: slip, gap, or misconception." : "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}</p>
+			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">{missed.length > 0 ? "The tutor starts from these sentences and teaches the one that matters most for what you need Slovak for." : "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}</p>
 		</section>
 	);
 }
-

@@ -113,6 +113,18 @@ export function lemmasFor(genre: Genre, coverage: number): number {
  *  French learners), raised by INFLECTION_FACTOR like the genre counts. */
 export const LEVEL_VOCAB: Record<Cefr, number> = { A1: 1200, A2: 2400, B1: 3600, B2: 4400, C1: 5300 };
 
+/** The words a learner WORKING at `level`, `progress` of the way through
+ *  it, is credited: the band of the level completed plus that share of
+ *  the way to the current level's band. (The calculator used to credit
+ *  the whole band of the level being entered: 2,400 words for passing
+ *  the A1 grammar tiers.) */
+export function levelVocabulary(level: Cefr, progress: number): number {
+	const i = CEFR_ORDER.indexOf(level);
+	const below = i <= 0 ? 0 : LEVEL_VOCAB[CEFR_ORDER[i - 1]!];
+	const p = Math.max(0, Math.min(1, progress));
+	return Math.round(below + p * (LEVEL_VOCAB[level] - below));
+}
+
 // ─── Speed ──────────────────────────────────────────────────────────────────
 
 export type Support = "none" | "visual" | "subtitles" | "interactive";
@@ -388,9 +400,15 @@ export function builtinMilestone(id: string): MilestoneDef | undefined {
 // ─── What the app knows about the learner ───────────────────────────────────
 
 export interface LearnerFacts {
-	/** The level the app works at (placement when there was one, else the map). */
+	/** The level the map has the learner working at (placement set its
+	 *  start; every lesson since moved it), and how far through it. */
 	level: Cefr;
+	levelProgress: number;
+	/** A placement check was done at some point. */
 	placed: boolean;
+	/** Where the credited words come from: the word check (measured) or
+	 *  the level completed (level). */
+	words: { basis: "measured" | "level"; credited: number; measuredAt?: string; reliable?: boolean };
 	/** Words the learner has met in the deck or in word lessons. */
 	met: number;
 	/** Of those, stable for a week or more in the deck. */

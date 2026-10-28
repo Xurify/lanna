@@ -45,6 +45,9 @@ export interface UsageReport {
 	/** Videos prepared for the Watch task (src/server/watch.ts): translation + questions, USD. */
 	videosUsd: number;
 	videos: { count: number; unpriced: number };
+	/** Placement checks (src/server/placement.ts): judged answers + the Socratic stage, USD. */
+	placementUsd?: number;
+	placement?: { count: number; unpriced: number };
 	unpricedTurns: number;
 	/** YYYY-MM → USD (turns, extraction and jobs by their own dates). */
 	byMonth: Array<{ month: string; usd: number; turns: number }>;

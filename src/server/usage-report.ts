@@ -20,6 +20,7 @@ import { chatStore } from "../store/chats.ts";
 import { listAudioClips } from "../store/corpus.ts";
 import { storyStore } from "../store/stories.ts";
 import { speakStore } from "../store/speak.ts";
+import { placementStore } from "../store/placement.ts";
 import { videoStore } from "../store/videos.ts";
 import { jobCost, turnCost } from "./pricing.ts";
 import { stores } from "./stores.ts";
@@ -191,6 +192,20 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(e.createdAt, usd);
 		}
 	}
+	// Placement checks: the judged answers and the Socratic stage.
+	let placementUsd = 0;
+	let placementUnpriced = 0;
+	const placementIndex = placementStore.list();
+	for (const e of placementIndex) {
+		const s = placementStore.get(e.id);
+		if (!s || s.usage.steps.length === 0) continue;
+		const usd = safeTurnCost(s.usage);
+		if (usd === null) placementUnpriced++;
+		else {
+			placementUsd += usd;
+			addMonth(e.startedAt, usd);
+		}
+	}
 	const clips = listAudioClips();
 	const byTier: Record<string, number> = {};
 	let bytes = 0;
@@ -203,7 +218,7 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd + videosUsd),
+		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd),
 		turnsUsd: round(turnsUsd),
 		extractionUsd: round(extractionUsd),
 		jobsUsd: round(jobsUsd),
@@ -213,6 +228,8 @@ export function usageReport(now = new Date()): UsageReport {
 		speak: { count: speakIndex.length, unpriced: speakUnpriced },
 		videosUsd: round(videosUsd),
 		videos: { count: videoIndex.length, unpriced: videosUnpriced },
+		placementUsd: round(placementUsd),
+		placement: { count: placementIndex.length, unpriced: placementUnpriced },
 		unpricedTurns,
 		byMonth: [...months.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([month, m]) => ({ month, usd: round(m.usd), turns: m.turns })),
 		byMode: [...byModeMap.entries()].sort(([, a], [, b]) => b.usd - a.usd).map(([mode, m]) => ({ mode, ...m, usd: round(m.usd) })),

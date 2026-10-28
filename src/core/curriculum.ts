@@ -523,11 +523,14 @@ export function hoursDone(state: CurriculumState): number {
 	return hours;
 }
 
-export function projection(state: CurriculumState, opts: { target: Cefr; minutesPerDay: number; recentMinutes: number[]; now: Date }): Projection {
+/** Study days a week when the goal does not say (DEFAULT_DAYS_PER_WEEK in onboarding.ts). */
+const DAYS_PER_WEEK = 6;
+
+export function projection(state: CurriculumState, opts: { target: Cefr; minutesPerDay: number; daysPerWeek?: number; recentMinutes: number[]; now: Date }): Projection {
 	const done = hoursDone(state);
 	const targetHours = GUIDED_HOURS[opts.target];
 	const left = Math.max(0, targetHours - done);
-	const plannedWeekly = (opts.minutesPerDay / 60) * 6;
+	const plannedWeekly = (opts.minutesPerDay / 60) * (opts.daysPerWeek ?? DAYS_PER_WEEK);
 	const paceMinutes = opts.recentMinutes.length ? opts.recentMinutes.reduce((a, b) => a + b, 0) / opts.recentMinutes.length : 0;
 	const etaPlanned = plannedWeekly > 0 ? addDaysIso(opts.now, (left / plannedWeekly) * 7) : null;
 	const etaPace = paceMinutes > 0 && opts.recentMinutes.length >= 14 ? addDaysIso(opts.now, left / (paceMinutes / 60)) : null;
