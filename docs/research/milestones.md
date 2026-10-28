@@ -2,7 +2,7 @@
 
 *LangHarness, 2026-10-28. Code: `src/core/milestones.ts` (the model), `src/server/milestones.ts` (the evidence), `components/milestones/milestones-page.tsx` (the page).*
 
-Xurify asked for a calculator that "has a memory and a brain, so it knows what we know" and says when they will "understand most of what I hear when I watch a Slovak YouTube video. Right now I get a lot of words, but I can't put them together into meaning fast enough, unless it's something I heard countless times or something basic."
+The owner asked for a calculator that "has a memory and a brain, so it knows what we know" and says when they will "understand most of what I hear when I watch a Slovak YouTube video. Right now I get a lot of words, but I can't put them together into meaning fast enough, unless it's something I heard countless times or something basic."
 
 That sentence names two different gaps, and the research treats them separately.
 
@@ -28,7 +28,7 @@ A measurement tried and dropped: coverage of the dictionary's sentences by the w
 
 ## 2. Speed: parsing automaticity
 
-Knowing a word is not retrieving it inside the ~400 ms a speaker gives you. Segalowitz (2010) separates *fluent* processing (fast and stable) from merely correct processing; this is exactly the gap Xurify describes — familiar phrases are automatic, the rest is not. DeKeyser (1997) shows processing speed improving with practice along a power law over weeks.
+Knowing a word is not retrieving it inside the ~400 ms a speaker gives you. Segalowitz (2010) separates *fluent* processing (fast and stable) from merely correct processing; this is exactly the gap the learner describes — familiar phrases are automatic, the rest is not. DeKeyser (1997) shows processing speed improving with practice along a power law over weeks.
 
 The app measures it as **words a minute of understanding**: in the Listen task, the words of a sentence divided by the time from its first sound to the right meaning picked (never less than the audio itself; replays and a peek at the text count against it; wrong and peeked answers do not count at all). In the Watch task, the segments understood on the first unaided pass at the speaker's real rate. Natural Slovak speech runs about 150 words a minute (Slovak words are longer than English ones, so fewer of them per minute).
 
