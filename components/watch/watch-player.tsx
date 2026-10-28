@@ -875,6 +875,21 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 		return () => window.removeEventListener("keydown", onKey);
 	}, [popover, mode, heard, atEnd, idx, segs.length, togglePlay, replay, toggleSlow, showText, showMeaning, gotIt, notYet, goTo, onDone, statsOf]);
 
+	// A click on the player puts keyboard focus inside YouTube's iframe,
+	// where our window-level shortcuts (T, R, S, M...) never fire. Take it back.
+	useEffect(() => {
+		const reclaim = () => {
+			setTimeout(() => {
+				if (document.activeElement instanceof HTMLIFrameElement) {
+					document.activeElement.blur();
+					window.focus();
+				}
+			}, 0);
+		};
+		window.addEventListener("blur", reclaim);
+		return () => window.removeEventListener("blur", reclaim);
+	}, []);
+
 	// A word popover pauses the video; close it with a click outside.
 	useEffect(() => {
 		if (popover === null) return;
