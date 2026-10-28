@@ -10,7 +10,7 @@
  */
 
 import { loadLexicon } from "../agent/lexicon.ts";
-import { listenXp, pickListen, sessionCoverage, type ListenPlan } from "../core/listen.ts";
+import { listenXp, pickListen, sessionCoverage, understood, type ListenPlan } from "../core/listen.ts";
 import { dayKey } from "../core/review.ts";
 import { appendLessonLog } from "../store/corpus.ts";
 import { progressStore } from "../store/progress.ts";
@@ -80,7 +80,7 @@ export function recordListen(input: ListenResultInput, now = new Date()): Listen
 	const key = dayKey(now, input.tz);
 	const day = (p.days[key] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	const total = input.reps.length;
-	const correct = input.reps.filter((r) => r.verdict === "exact").length;
+	const correct = understood(input.reps);
 	const xp = listenXp(correct, total);
 	day.listens = (day.listens ?? 0) + 1;
 	day.reps += total;

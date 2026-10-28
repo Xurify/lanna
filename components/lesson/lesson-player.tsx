@@ -22,6 +22,7 @@ import {
 	ChartColumnIcon,
 	CheckIcon,
 	FlameIcon,
+	LanguagesIcon,
 	LoaderCircleIcon,
 	SnailIcon,
 	TimerIcon,
@@ -100,7 +101,8 @@ interface Rep {
 	item: LessonItem;
 	given: string;
 	verdict: RepVerdict;
-	/** Right on the second try, after the hint. */
+	/** Right with help: on the second try after the cue, or with the
+	 *  meaning shown early. Earns half (a priced hint). */
 	assisted?: boolean;
 }
 
@@ -116,8 +118,10 @@ interface SavedLesson {
 	startedAt: number;
 }
 
-/** Missed reps asked again at the end of a lesson, at most. */
-const RELEARN_MAX = 3;
+/** Missed reps asked again at the end of a lesson, at most (successive
+ *  relearning: a miss retrieved again before the session ends is what
+ *  fixes it; docs/research/desirable-difficulties.md). */
+const RELEARN_MAX = 4;
 
 /** Kinds with no second try and no typed comeback: a word bank (the
  *  mistake is visible) and a meaning rep (input, not a form to produce). */
@@ -182,6 +186,9 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	// more try before the answer is shown (a prompt, not a recast — making
 	// the learner find the form is what moves grammar, telling them is not).
 	const [miss, setMiss] = useState<string | null>(null);
+	// The translation asked for before the answer (hidden from the
+	// practised stage on): a priced hint, the rep earns half.
+	const [peeked, setPeeked] = useState(false);
 	// Whether the rep has an answer to check (drives the footer's Check).
 	const [ready, setReady] = useState(false);
 	const relearned = useRef(0);
@@ -376,7 +383,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			setShake((s) => s + 1);
 			return;
 		}
-		const assisted = mode === "lesson" && miss !== null && verdict !== "wrong";
+		const assisted = mode === "lesson" && (miss !== null || peeked) && verdict !== "wrong";
 		const rep: Rep = { item, given, verdict, assisted };
 		const nextCombo = verdict === "wrong" ? 0 : combo + 1;
 		const gained = repXp(item.kind, verdict, nextCombo, assisted);
@@ -413,6 +420,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setReps(all);
 		setCurrent(null);
 		setMiss(null);
+		setPeeked(false);
 		// A miss comes back once at the end, typed (successive relearning:
 		// a retrieval that succeeds after a failure is what fixes the form).
 		let nextTotal = total;
@@ -589,6 +597,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 							locked={!!current}
 							result={current}
 							miss={miss}
+							hideMeaning={mode === "lesson" && hidesMeaning(plan.stage, item) && !peeked}
+							onPeek={() => setPeeked(true)}
 							onGrade={grade}
 							onReady={setReady}
 							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : unitInfo(item.unit).title}
@@ -602,7 +612,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				{mode === "lesson" && current ? (
 					<FeedbackSheet rep={current} tag={tag} onContinue={advance} onAskTutor={() => void why()} last={index + 1 >= total} comesBack={comesBack} examples={examples} />
 				) : (
-					<ActionBar kind={item.kind} ready={ready} blitz={mode === "blitz"} />
+					<ActionBar kind={miss !== null && item.kind === "choose" ? "type" : item.kind} ready={ready} blitz={mode === "blitz"} />
 				)}
 			</Frame>
 		</BridgesContext.Provider>
@@ -661,6 +671,17 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 /** The rep's form: the footer's Check submits it from outside. */
 const REP_FORM = "lesson-rep";
 
+/** From the practised stage on, a type or choose rep hides the English
+ *  until the answer: the Slovak sentence has to be parsed to know the
+ *  form (parsing at speed is the gap the lessons found), and the
+ *  dictionary-form chip is cue enough. A relearn rep and a new unit keep
+ *  it (docs/research/desirable-difficulties.md). */
+function hidesMeaning(stage: LessonPlan["stage"], item: LessonItem): boolean {
+	if (!stage || stage === "new") return false;
+	if (item.again) return false;
+	return item.kind === "type" || item.kind === "choose";
+}
+
 function hintFor(item: LessonItem): string {
 	// A vocabulary rep blanks the word itself, so its hint is the meaning;
 	// a grammar rep shows the dictionary form (core/lesson.ts decides).
@@ -673,6 +694,8 @@ function RepView({
 	locked,
 	result,
 	miss,
+	hideMeaning,
+	onPeek,
 	onGrade,
 	onReady,
 	eyebrow,
@@ -682,6 +705,8 @@ function RepView({
 	locked: boolean;
 	result: Rep | null;
 	miss: string | null;
+	hideMeaning: boolean;
+	onPeek: () => void;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 	eyebrow: string;
@@ -692,26 +717,31 @@ function RepView({
 				{eyebrow}
 				{item.again && <span className="text-xp"> · Once more</span>}
 			</p>
-			<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">{kindLabel(item)}</h2>
+			<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">{miss !== null && item.kind === "choose" ? kindLabel({ ...item, kind: "type" }) : kindLabel(item)}</h2>
 			{item.kind === "build" ? (
 				<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
 			) : (
-				<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} onGrade={onGrade} onReady={onReady} />
+				<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} hideMeaning={hideMeaning} onPeek={onPeek} onGrade={onGrade} onReady={onReady} />
 			)}
 		</div>
 	);
 }
 
-/** After a first miss: what decides the form, in his terms, and one more try. */
-function HintPanel({ item, miss }: { item: LessonItem; miss: string }) {
-	const info = unitInfo(item.unit);
+/** After a first miss: the smallest cue and one more try. The trigger word
+ *  (the preposition that decides the case) when there is one, else which
+ *  form is wanted in plain words; never the rule, never the bridge — those
+ *  come with the answer after the second miss. A graded hint keeps the
+ *  retry a retrieval, not a reading (Aleven & Koedinger 2002; docs/
+ *  research/desirable-difficulties.md). A missed choice retries typed. */
+function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; wasChoice: boolean }) {
+	const vocabulary = unitInfo(item.unit).kind === "words";
 	return (
 		<div className="lh-rise mt-8 rounded-2xl border border-warn/40 bg-warn-soft px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
 			<p className="font-ui text-base font-extrabold text-warn">
-				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : "One more try."}
+				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
 			<div className="mt-2 flex flex-col gap-1 font-prose text-base leading-relaxed">
-				{item.trigger && (
+				{item.trigger ? (
 					<p className="text-foreground">
 						Look at{" "}
 						<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
@@ -719,9 +749,11 @@ function HintPanel({ item, miss }: { item: LessonItem; miss: string }) {
 						</span>
 						: it decides the form.
 					</p>
+				) : item.form && !vocabulary ? (
+					<p className="text-foreground">Wanted: {item.form}.</p>
+				) : (
+					<p className="text-muted-foreground">{vocabulary ? "The meaning is above; find the word." : "Read the whole sentence again: who, what, which case."}</p>
 				)}
-				<p className="text-muted-foreground">{info.rule}</p>
-				<Bridges unit={item.unit} compact />
 			</div>
 		</div>
 	);
@@ -733,6 +765,8 @@ function ClozeRep({
 	locked,
 	result,
 	miss,
+	hideMeaning,
+	onPeek,
 	onGrade,
 	onReady,
 }: {
@@ -741,12 +775,18 @@ function ClozeRep({
 	locked: boolean;
 	result: Rep | null;
 	miss: string | null;
+	hideMeaning: boolean;
+	onPeek: () => void;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 }) {
 	const [given, setGiven] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
-	const typed = item.kind === "type" || item.kind === "listen";
+	// A missed choice retries typed: recognition failed, so the second try
+	// is production (recall beats recognition; a second pick from three
+	// would be a guess).
+	const retypes = item.kind === "choose" && miss !== null;
+	const typed = item.kind === "type" || item.kind === "listen" || retypes;
 	const listen = item.kind === "listen";
 	// A meaning rep is input: the whole sentence, spoken as it appears, the
 	// target form marked, and three meanings to choose from.
@@ -759,9 +799,12 @@ function ClozeRep({
 
 	useEffect(() => onReady(given.trim().length > 0), [given, onReady]);
 
-	// The retry: select the wrong answer so typing replaces it.
+	// The retry: select the wrong answer so typing replaces it; a missed
+	// choice starts an empty field.
 	useEffect(() => {
-		if (miss !== null && typed) inputRef.current?.select();
+		if (miss === null || !typed) return;
+		inputRef.current?.focus();
+		inputRef.current?.select();
 	}, [miss, typed]);
 
 	const submit = () => {
@@ -773,9 +816,9 @@ function ClozeRep({
 	 *  the translation. */
 	const judge = (o: string): RepVerdict => (meaning ? (o === item.translation ? "exact" : "wrong") : compareAnswer(item.answer, o, tag));
 
-	// 1–4 pick an option.
+	// 1–4 pick an option (not during a typed retry).
 	useEffect(() => {
-		if ((item.kind !== "choose" && !meaning) || locked) return;
+		if ((item.kind !== "choose" && !meaning) || locked || retypes) return;
 		const onKey = (e: KeyboardEvent) => {
 			const n = Number(e.key);
 			const opt = item.options?.[n - 1];
@@ -853,7 +896,7 @@ function ClozeRep({
 				</div>
 				{input("mt-6 block w-full px-4 py-3 font-prose text-2xl font-semibold")}
 				<DiacriticBar variant="keys" className="mt-4" />
-				{miss !== null && <HintPanel item={item} miss={miss} />}
+				{miss !== null && <HintPanel item={item} miss={miss} wasChoice={false} />}
 			</form>
 		);
 	}
@@ -918,16 +961,33 @@ function ClozeRep({
 					</p>
 					<p className="mt-2 font-prose text-lg text-muted-foreground">
 						<span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>
-						{/* The meaning is the question, so it shows only once answered. */}
-						{meaning && !locked ? <span className="text-muted-foreground/70">Hear it, then pick what it means.</span> : item.translation}
+						{/* The meaning is the question, so it shows only once answered;
+						    from the practised stage on it hides until the answer, and
+						    asking for it early halves the rep. */}
+						{meaning && !locked ? (
+							<span className="text-muted-foreground/70">Hear it, then pick what it means.</span>
+						) : hideMeaning && !locked ? (
+							<button
+								type="button"
+								onClick={onPeek}
+								className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-ui text-sm font-bold text-muted-foreground/80 hover:bg-accent hover:text-foreground"
+								data-testid="lesson-peek"
+								title="Show the English (the rep then earns half)"
+							>
+								<LanguagesIcon className="size-4" />
+								Meaning · half XP
+							</button>
+						) : (
+							item.translation
+						)}
 					</p>
 					{typed && !locked && <DiacriticBar variant="keys" className="mt-6" />}
 				</form>
 			</div>
 
-			{miss !== null && !locked && <HintPanel item={item} miss={miss} />}
+			{miss !== null && !locked && <HintPanel item={item} miss={miss} wasChoice={retypes} />}
 
-			{(item.kind === "choose" || meaning) && (
+			{(item.kind === "choose" || meaning) && !retypes && (
 				<div className={cn("mt-8 grid gap-3", meaning ? "grid-cols-1" : "grid-cols-2")} data-testid="lesson-options">
 					{item.options!.map((o, i) => {
 						const picked = result?.given === o;
@@ -1073,8 +1133,11 @@ function FeedbackSheet({
 	examples: LessonItem[];
 }) {
 	const praise = useMemo(() => PRAISE[Math.floor(Math.random() * PRAISE.length)]!, []);
-	const [open, setOpen] = useState(false);
 	const { item, verdict, given } = rep;
+	// After a miss the rule opens by itself: feedback after a failed
+	// retrieval should explain, not only correct (Butler, Godbole & Marsh
+	// 2013). A right answer keeps it behind Why?.
+	const [open, setOpen] = useState(verdict === "wrong" && item.kind !== "build" && item.kind !== "meaning");
 	const info = unitInfo(item.unit);
 	// A whole typed sentence (listening) is answered with the whole sentence.
 	const expected = item.kind === "meaning" ? item.translation : item.kind === "build" || (item.kind === "listen" && given.trim().includes(" ")) ? item.sentence : item.answer;
@@ -1086,7 +1149,7 @@ function FeedbackSheet({
 					ink: "text-go",
 					badge: "bg-go text-go-ink",
 					btn: "bg-go text-go-ink",
-					title: rep.assisted ? "Got it on the second try" : praise,
+					title: rep.assisted ? "Got it, with help" : praise,
 				}
 			: verdict === "accents"
 				? {
@@ -1384,7 +1447,8 @@ function EndScreen({
 
 			{missed.length > 0 && (
 				<div className="mt-6 rounded-2xl border bg-card p-4 text-left">
-					<p className="font-ui text-sm font-bold text-muted-foreground">Worth another look</p>
+					<p className="font-ui text-sm font-bold text-muted-foreground">What you worked for</p>
+					<p className="mt-0.5 font-prose text-sm text-muted-foreground">A miss you then got right is the rep that sticks.</p>
 					<ul className="mt-2 flex flex-col gap-2">
 						{missed.slice(0, 5).map((r, i) => (
 							<li key={i} className="font-prose text-base leading-snug">

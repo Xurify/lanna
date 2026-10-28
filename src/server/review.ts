@@ -10,7 +10,7 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, LANGUAGES, isLanguageId } from "../core/language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm } from "../core/lesson.ts";
-import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingFor, type LexiconEntry, type ReviewCard, type ReviewSettings } from "../core/review.ts";
+import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 
 const DAY_MS = 86_400_000;
@@ -160,8 +160,13 @@ export interface ReviewAnswer {
 	cardId: string;
 	given: string;
 	ms?: number;
-	/** Override the derived rating (the learner pressed a button). */
+	/** Override the derived rating (the learner pressed a button); still
+	 *  capped by the help taken. */
 	rating?: Rating;
+	/** Hints taken before the answer (1 = meaning, 2 = the word too). */
+	hints?: number;
+	/** Picked from four rather than typed. */
+	picked?: boolean;
 }
 
 export interface ReviewOutcome {
@@ -176,7 +181,8 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	if (!card) throw new Error(`unknown card ${input.cardId}`);
 	const meta = reviewStore.readMeta();
 	const verdict = compareAnswer(card.answer, input.given, tag());
-	const rating = input.rating ?? ratingFor(verdict, input.ms);
+	const help: ReviewHelp = { ...(input.hints ? { hints: input.hints } : {}), ...(input.picked ? { picked: true } : {}) };
+	const rating = Math.min(input.rating ?? ratingFor(verdict, input.ms, help), ratingCap(help)) as Rating;
 	const elapsedDays = card.lastReview ? (now.getTime() - Date.parse(card.lastReview)) / DAY_MS : 0;
 	const memory = review(card.memory, rating, elapsedDays);
 	const updated: ReviewCard = {
@@ -198,6 +204,8 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		elapsedDays,
 		reviewedAt: now.toISOString(),
 		...(input.ms !== undefined ? { ms: input.ms } : {}),
+		...(input.hints ? { hints: input.hints } : {}),
+		...(input.picked ? { picked: true } : {}),
 	});
 	return { verdict, rating, card: updated };
 }

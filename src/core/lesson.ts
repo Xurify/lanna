@@ -494,6 +494,13 @@ export const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type
  *  endings is the gap (reading is ahead of production). */
 export const PRACTISED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
 
+/** Once a unit is complete (unitDone): production only. No choose rep
+ *  (recognition is done teaching), more of the lesson from the units it
+ *  is confused with (see MIX_SLOTS), and the player hides the translation
+ *  until the answer — desirable difficulties (docs/research/
+ *  desirable-difficulties.md), difficulty that rises with mastery. */
+export const STRONG_PATTERN: ItemKind[] = ["type", "type", "build", "type", "listen", "type", "type", "build", "type", "listen", "type", "type"];
+
 /** The placement drill (src/core/onboarding.ts): two reps a unit that
  *  measure, so they ask for the form — recognise it, then produce it. */
 export const PLACEMENT_PATTERN: ItemKind[] = ["choose", "type"];
@@ -502,7 +509,7 @@ export const PLACEMENT_PATTERN: ItemKind[] = ["choose", "type"];
 export const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
 
 /** Slots (by position) that take an item from another unit. */
-const MIX_SLOTS: Record<"new" | "practised", number[]> = { new: [5, 9], practised: [2, 5, 8, 11] };
+const MIX_SLOTS: Record<UnitStage, number[]> = { new: [5, 9], practised: [2, 5, 8, 11], strong: [1, 3, 5, 7, 9, 11] };
 
 /** Units that are easy to confuse with each one: the mix comes from these
  *  first, so the learner has to read the trigger to choose the case. */
@@ -528,8 +535,13 @@ export const CONTRAST: Partial<Record<UnitId, UnitId[]>> = {
 	"adj-cases": ["adj", "loc"],
 };
 
-/** Ready when a unit has two lessons at 60% or better. */
-export function unitStage(lessons: number, accuracy: number | null): "new" | "practised" {
+export type UnitStage = "new" | "practised" | "strong";
+
+/** Practised when a unit has two lessons at 60% or better; strong once it
+ *  is complete (unitDone). Each stage asks for more: see LESSON_PATTERN,
+ *  PRACTISED_PATTERN, STRONG_PATTERN and MIX_SLOTS. */
+export function unitStage(lessons: number, accuracy: number | null): UnitStage {
+	if (unitDone(lessons, accuracy)) return "strong";
 	return lessons >= 2 && (accuracy ?? 0) >= 0.6 ? "practised" : "new";
 }
 
@@ -614,6 +626,9 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 export interface LessonPlan {
 	unit: UnitId;
 	items: LessonItem[];
+	/** How far the learner is with the unit; the player hides the
+	 *  translation before the answer from "practised" on. */
+	stage?: UnitStage;
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
@@ -629,13 +644,13 @@ export interface LessonPlan {
 export function buildLesson(
 	entries: readonly LexiconEntry[],
 	unit: UnitId,
-	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: "new" | "practised"; mix?: readonly UnitId[]; pattern?: readonly ItemKind[] },
+	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: UnitStage; mix?: readonly UnitId[]; pattern?: readonly ItemKind[] },
 ): LessonPlan {
 	const rand = rng(opts.seed);
 	const info = unitInfo(unit);
 	const stage = opts.stage ?? "new";
 	const length = opts.length ?? LESSON_PATTERN.length;
-	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN);
+	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN);
 	const pattern = base.slice(0, length);
 	const sourceFor = (u: UnitId) => {
 		const top = candidatesFor(entries, u).slice(0, unitInfo(u).kind === "words" ? 400 : 160);
@@ -673,7 +688,7 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
-	return { unit, items };
+	return { unit, items, stage };
 }
 
 /** Blitz: choose-only reps across the given units, as many as a minute holds. */
@@ -704,8 +719,10 @@ export type RepVerdict = "exact" | "accents" | "wrong";
 export const XP_FOR: Record<ItemKind, number> = { meaning: 4, choose: 5, type: 10, build: 10, listen: 12 };
 
 /** XP for one rep: a typed answer earns more than a picked one; accents-only
- *  earns half, and so does a right answer on the second try (after the
- *  hint); a combo of 3+ adds 2 per step, capped. */
+ *  earns half, and so does an assisted answer (right on the second try
+ *  after the cue, or with the meaning shown early — a priced hint, see
+ *  docs/research/desirable-difficulties.md); a combo of 3+ adds 2 per
+ *  step, capped. */
 export function repXp(kind: ItemKind, verdict: RepVerdict, combo: number, assisted = false): number {
 	if (verdict === "wrong") return 0;
 	const base = verdict === "accents" || assisted ? Math.ceil(XP_FOR[kind] / 2) : XP_FOR[kind];
