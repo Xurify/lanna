@@ -131,22 +131,35 @@ export function LanguagePicker({
 	onChange: (langs: Lang[], levels: Partial<Record<Lang, LangLevel>>) => void;
 	testid?: string;
 }) {
-	const [more, setMore] = useState(false);
+	// The panel works on a copy: nothing outside it (the chip row, the level
+	// rows, the explanation chips) moves until it closes, so the panel never
+	// slides out from under the pointer (Xurify: content shift on every pick).
+	const [pending, setPending] = useState<Lang[] | null>(null);
 	const [query, setQuery] = useState("");
+	const more = pending !== null;
+	const chosen = pending ?? value;
+	const prune = (langs: readonly Lang[]) => {
+		const next: Partial<Record<Lang, LangLevel>> = {};
+		for (const l of langs) if (levels[l]) next[l] = levels[l];
+		return next;
+	};
 	const toggle = (id: Lang) => {
-		if (value.includes(id)) {
-			const next = { ...levels };
-			delete next[id];
-			return onChange(value.filter((l) => l !== id), next);
-		}
+		if (value.includes(id)) return onChange(value.filter((l) => l !== id), prune(value.filter((l) => l !== id)));
 		if (value.length >= MAX_LANGUAGES) return;
 		onChange([...value, id], { ...levels });
 	};
+	const togglePending = (id: Lang) => setPending((p) => (p ? (p.includes(id) ? p.filter((l) => l !== id) : p.length >= MAX_LANGUAGES ? p : [...p, id]) : p));
 	const setLevel = (id: Lang, level: LangLevel) => onChange([...value], { ...levels, [id]: level });
+	const open = () => (setQuery(""), setPending([...value]));
+	const close = () => {
+		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l))) onChange(pending, prune(pending));
+		setPending(null);
+		setQuery("");
+	};
 	const shown = KNOWN_LANGUAGES.filter((l) => l.primary || value.includes(l.id));
 	const q = query.trim().toLowerCase();
 	const found = KNOWN_LANGUAGES.filter((l) => (q ? l.title.toLowerCase().includes(q) : !l.primary));
-	const close = () => (setMore(false), setQuery(""));
+	const added = pending ? pending.filter((l) => !value.includes(l)).length : 0;
 	return (
 		<div data-testid={testid}>
 			<div className="flex flex-wrap gap-2" role="group" aria-label="Languages you know">
@@ -159,7 +172,7 @@ export function LanguagePicker({
 					);
 				})}
 				<span className="relative">
-					<button type="button" aria-expanded={more} onClick={() => (more ? close() : setMore(true))} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm", more && "border-foreground/40 text-foreground")} data-testid={`${testid}-more`}>
+					<button type="button" aria-expanded={more} onClick={() => (more ? close() : open())} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm", more && "border-foreground/40 text-foreground")} data-testid={`${testid}-more`}>
 						<SearchIcon className="-ml-0.5 mr-1.5 inline size-3.5" />
 						More languages
 					</button>
@@ -173,7 +186,7 @@ export function LanguagePicker({
 									onChange={(e) => setQuery(e.target.value)}
 									onKeyDown={(e) => {
 										if (e.key === "Escape") (e.preventDefault(), close());
-										if (e.key === "Enter" && found[0]) (e.preventDefault(), toggle(found[0].id));
+										if (e.key === "Enter" && found[0]) (e.preventDefault(), togglePending(found[0].id));
 									}}
 									placeholder="Search languages"
 									aria-label="Search languages"
@@ -182,15 +195,23 @@ export function LanguagePicker({
 								/>
 								<div className="mt-2 grid max-h-64 grid-cols-2 gap-1 overflow-y-auto pr-1">
 									{found.map((l) => {
-										const on = value.includes(l.id);
+										const on = chosen.includes(l.id);
 										return (
-											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-bold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
+											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => togglePending(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-bold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
 												<span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3" strokeWidth={3} />}</span>
 												{l.title}
 											</button>
 										);
 									})}
 									{found.length === 0 && <p className="col-span-2 px-2 py-3 font-prose text-sm text-muted-foreground">Nothing by that name. Pick the nearest relative; the tutor adapts.</p>}
+								</div>
+								<div className="mt-2 flex items-center justify-between gap-3 border-t border-border/60 pt-2">
+									<span className="font-ui text-xs text-muted-foreground" aria-live="polite">
+										{added === 0 ? "Pick as many as you like" : `${added} to add`}
+									</span>
+									<button type="button" onClick={close} className="rounded-lg bg-go px-3 py-1.5 font-ui text-xs font-extrabold text-go-ink hover:brightness-110" data-testid={`${testid}-done`}>
+										Done
+									</button>
 								</div>
 							</div>
 						</>
@@ -202,11 +223,11 @@ export function LanguagePicker({
 					{value.map((id) => {
 						const level = levels[id] ?? DEFAULT_LANG_LEVEL;
 						return (
-							<div key={id} className="flex flex-wrap items-center gap-2" data-testid={`level-${id}`}>
-								<span className="w-28 shrink-0 font-ui text-sm font-bold text-foreground">{languageName(id)}</span>
-								<span className="flex gap-1" role="group" aria-label={`How well you know ${languageName(id)}`}>
+							<div key={id} className="flex items-center gap-2" data-testid={`level-${id}`}>
+								<span className="w-28 shrink-0 truncate font-ui text-sm font-bold text-foreground">{languageName(id)}</span>
+								<span className="flex shrink-0 gap-1" role="group" aria-label={`How well you know ${languageName(id)}`}>
 									{LANG_LEVELS.map((lv) => (
-										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("rounded-lg border-2 px-2.5 py-1 font-ui text-xs font-bold transition-colors", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
+										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("whitespace-nowrap rounded-lg border-2 px-2.5 py-1 font-ui text-xs font-bold transition-colors", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
 											{lv.title}
 										</button>
 									))}
