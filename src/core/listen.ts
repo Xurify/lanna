@@ -93,6 +93,18 @@ export function listenXp(correct: number, total: number): number {
 	return correct * LISTEN_XP + (total > 0 ? LISTEN_BONUS : 0);
 }
 
+/** A sentence counts as understood only by ear: right, and the text not
+ *  shown before the pick. Peeking is allowed (after two listens) and
+ *  priced: that sentence earns nothing and does not count (docs/research/
+ *  desirable-difficulties.md). */
+export function understood(reps: readonly { verdict: "exact" | "wrong"; peeked?: boolean }[]): number {
+	return reps.filter((r) => r.verdict === "exact" && !r.peeked).length;
+}
+
+/** How many times a sentence must have been heard before its text may be
+ *  shown: the first playback and one replay. */
+export const PEEK_AFTER_REPLAYS = 1;
+
 /** What the core needs from the server to judge a sentence: the entry a
  *  surface form belongs to (src/server/reading.ts resolveWord), the
  *  learner's known slugs, and names that are not vocabulary. */

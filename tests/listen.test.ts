@@ -18,7 +18,7 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { judgeSentence, LISTEN_COUNT, LISTEN_FLOOR, listenXp, meaningOptions, pickListen, sessionCoverage, STRETCH_MAX } = await import("../src/core/listen.ts");
+const { judgeSentence, LISTEN_COUNT, LISTEN_FLOOR, listenXp, meaningOptions, pickListen, sessionCoverage, STRETCH_MAX, understood } = await import("../src/core/listen.ts");
 const { strandAdvice, strandBalance, STRANDS } = await import("../src/core/strands.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { knownWords, resolveWord } = await import("../src/server/reading.ts");
@@ -133,13 +133,16 @@ test("the server: a session for the learner's known words; finishing records the
 		translation: it.translation,
 		given: i === 0 ? it.options.find((o) => o !== it.translation)! : it.translation,
 		verdict: (i === 0 ? "wrong" : "exact") as "wrong" | "exact",
+		// The second sentence was answered with the text shown: not by ear.
+		...(i === 1 ? { peeked: true } : {}),
 		options: it.options,
 		stretch: it.stretch.map((w) => w.slug).filter((s): s is string => !!s),
 	}));
 	const out = recordListen({ reps, ms: 150_000, tz: 0 }, new Date("2026-10-28T10:00:00Z"));
 	assert.equal(out.total, LISTEN_COUNT);
-	assert.equal(out.correct, LISTEN_COUNT - 1);
-	assert.equal(out.xp, listenXp(LISTEN_COUNT - 1, LISTEN_COUNT));
+	assert.equal(out.correct, LISTEN_COUNT - 2, "a peeked sentence is not understood by ear");
+	assert.equal(out.xp, listenXp(LISTEN_COUNT - 2, LISTEN_COUNT));
+	assert.equal(understood([{ verdict: "exact" }, { verdict: "exact", peeked: true }, { verdict: "wrong" }]), 1);
 	const p = progressStore.read();
 	assert.equal(p.days["2026-10-28"]?.listens, 1);
 	assert.equal(p.days["2026-10-28"]?.xp, out.xp);

@@ -1,7 +1,7 @@
 /**
  * GET /api/review[?tz=<minutes>][&peek] — the deck's counts and the next card
  * (minting today's new cards as needed; ?peek never mints).
- * POST /api/review {cardId, given, ms?, rating?} — grade one answer and
+ * POST /api/review {cardId, given, ms?, rating?, hints?, picked?} — grade one answer and
  * schedule the card (FSRS). Returns the verdict, the rating used and the
  * updated card, plus the XP the answer earned.
  */
@@ -22,14 +22,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; rating?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; rating?: unknown; hints?: unknown; picked?: unknown } | null;
 	if (typeof body?.cardId !== "string" || typeof body.given !== "string") {
 		return Response.json({ message: "cardId and given are required strings" }, { status: 400 });
 	}
 	const rating = body.rating === 1 || body.rating === 2 || body.rating === 3 || body.rating === 4 ? body.rating : undefined;
 	const ms = typeof body.ms === "number" && Number.isFinite(body.ms) ? body.ms : undefined;
 	try {
-		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating });
+		const hints = typeof body.hints === "number" && body.hints > 0 ? Math.min(2, Math.floor(body.hints)) : undefined;
+		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating, hints, picked: body.picked === true });
 		// Reviews count toward the day's XP and the streak (Today screen).
 		const xp = recordReviewXp(outcome.verdict, tzOf(req), new Date(), ms);
 		return Response.json({ ...outcome, xp });

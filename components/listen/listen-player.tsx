@@ -21,7 +21,7 @@ import { CheckIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon,
 import { cn } from "@/lib/utils";
 import { setSpeed, speak, SPEEDS } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { LISTEN_XP, listenXp, type ListenItem, type ListenPlan } from "@/src/core";
+import { LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan } from "@/src/core";
 
 interface Rep {
 	item: ListenItem;
@@ -61,6 +61,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [reps, setReps] = useState<Rep[]>([]);
 	const [current, setCurrent] = useState<Rep | null>(null);
 	const [peeked, setPeeked] = useState(false);
+	// Replays of the current sentence (mirrors timing.current for the
+	// render): the text can be shown only once it has been heard twice.
+	const [replays, setReplays] = useState(0);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const startedAt = useRef(Date.now());
@@ -108,6 +111,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		if (!item || current) return;
 		const t0 = Date.now();
 		timing.current = { shownAt: t0, replays: 0 };
+		setReplays(0);
 		void speak(item.sentence)
 			.then(() => {
 				if (timing.current.shownAt === t0 && timing.current.heardMs === undefined) timing.current.heardMs = Date.now() - t0;
@@ -118,6 +122,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const replay = (slow = false) => {
 		if (!item) return;
 		timing.current.replays++;
+		setReplays(timing.current.replays);
 		void (slow ? slowSpeak(item.sentence) : speak(item.sentence)).catch(() => {});
 	};
 
@@ -127,7 +132,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			finishing.current = true;
 			setSaving(true);
 			sfx.done();
-			const correct = all.filter((r) => r.verdict === "exact").length;
+			// Understood by ear only: a right pick with the text shown is not counted.
+			const correct = understood(all);
 			try {
 				const res = await fetch("/api/listen", {
 					method: "POST",
@@ -303,10 +309,19 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						>
 							<SnailIcon className="size-6" />
 						</button>
+						{/* The text, only after two listens, and it costs the sentence:
+						    the ear has to try first (docs/research/desirable-difficulties.md). */}
 						{!current && !peeked && (
-							<button type="button" onClick={() => setPeeked(true)} className="ml-auto flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground" data-testid="listen-peek">
+							<button
+								type="button"
+								onClick={() => setPeeked(true)}
+								disabled={replays < PEEK_AFTER_REPLAYS}
+								title={replays < PEEK_AFTER_REPLAYS ? "Listen once more first" : "Show the text — this sentence then does not count as understood"}
+								className="ml-auto flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+								data-testid="listen-peek"
+							>
 								<EyeIcon className="size-4" />
-								Show the text
+								{replays < PEEK_AFTER_REPLAYS ? "Text · listen again first" : "Show the text · not counted"}
 							</button>
 						)}
 					</div>
@@ -338,7 +353,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								)}
 							</div>
 						) : (
-							<p className="font-ui text-sm text-muted-foreground">Listen first. The text appears once you have picked a meaning.</p>
+							<p className="font-ui text-sm text-muted-foreground">Listen first. The text appears once you have picked a meaning{peeked ? "" : replays < PEEK_AFTER_REPLAYS ? " (or after a second listen, at a price)" : ""}.</p>
 						)}
 					</div>
 
@@ -445,7 +460,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				<div>
 					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Listen · done</p>
 					<h1 className="font-ui text-3xl font-black text-foreground">
-						{outcome.correct} of {outcome.total} understood
+						{outcome.correct} of {outcome.total} understood by ear
 					</h1>
 				</div>
 			</div>

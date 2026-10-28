@@ -17,7 +17,7 @@ import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { PlayButton, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { compareAnswer, diacriticSlips, formatInterval, rankLabel, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, rankLabel, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
 interface Prompt {
 	card: ReviewCard;
@@ -92,7 +92,9 @@ export function ReviewSession() {
 	const [given, setGiven] = useState("");
 	const [verdict, setVerdict] = useState<AnswerVerdict | null>(null);
 	const [suggested, setSuggested] = useState<Rating>(3);
-	const [hint, setHint] = useState(false);
+	// Hints taken on this card: 1 = the meaning, 2 = the dictionary form too.
+	// Each one is allowed and priced (caps the rating; core/review.ts).
+	const [hint, setHint] = useState(0);
 	const [mode, setMode] = useState<Mode>("type");
 	const [autoplay, setAutoplay] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -112,7 +114,7 @@ export function ReviewSession() {
 			setStatus(next);
 			setGiven("");
 			setVerdict(null);
-			setHint(false);
+			setHint(0);
 			shownAt.current = Date.now();
 			setLoadError(null);
 		} catch (err) {
@@ -124,19 +126,24 @@ export function ReviewSession() {
 		void load();
 	}, [load]);
 
-	useEffect(() => {
-		if (status?.next && !verdict && mode === "type") inputRef.current?.focus();
-	}, [status?.next, verdict, mode]);
-
 	const prompt = status?.next ?? null;
 	const tag = lang?.tag ?? "sk-SK";
+	// A card already retrieved once (state "review") is always typed:
+	// choosing from four is for meeting a word, producing it is what keeps
+	// it (recall beats recognition; docs/research/desirable-difficulties.md).
+	const picks = mode === "choice" && !!prompt && prompt.card.state !== "review";
+	const help = { hints: hint, picked: picks };
+
+	useEffect(() => {
+		if (status?.next && !verdict && !picks) inputRef.current?.focus();
+	}, [status?.next, verdict, picks]);
 
 	const check = (answer: string) => {
 		if (!prompt || verdict) return;
 		const v = compareAnswer(prompt.card.answer, answer, tag);
 		setGiven(answer);
 		setVerdict(v);
-		setSuggested(ratingFor(v, Date.now() - shownAt.current));
+		setSuggested(ratingFor(v, Date.now() - shownAt.current, help));
 		if (v === "exact") sfx.right();
 		else if (v === "accents") sfx.almost();
 		else sfx.wrong();
@@ -150,7 +157,7 @@ export function ReviewSession() {
 			await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, rating }),
+				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks }),
 			});
 			await load();
 		} finally {
@@ -297,7 +304,7 @@ export function ReviewSession() {
 											</span>
 										))}
 									</span>
-								) : mode === "type" ? (
+								) : !picks ? (
 									<input
 										ref={inputRef}
 										value={given}
@@ -318,7 +325,9 @@ export function ReviewSession() {
 
 							<p className="mt-3 text-lg text-muted-foreground">{prompt.card.translation}</p>
 
-							{!verdict && mode === "choice" && (
+							{!verdict && mode === "choice" && !picks && <p className="mt-1 font-ui text-xs font-bold text-muted-foreground">You have had this one before, so it is typed.</p>}
+
+							{!verdict && picks && (
 								<div className="mt-5 grid grid-cols-2 gap-2" data-testid="review-options">
 									{prompt.options.map((o) => (
 										<button
@@ -335,7 +344,7 @@ export function ReviewSession() {
 
 							{!verdict && (
 								<div className="mt-7 flex items-center gap-2 font-ui text-sm">
-									{mode === "type" && (
+									{!picks && (
 										<button
 											type="button"
 											onClick={() => check(given)}
@@ -344,15 +353,17 @@ export function ReviewSession() {
 											Check
 										</button>
 									)}
-									<button type="button" onClick={() => setHint(true)} className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+									{/* Graded: the meaning first (caps at Good), then the word (caps at Hard). */}
+									<button
+										type="button"
+										onClick={() => setHint((h) => Math.min(2, h + 1))}
+										disabled={hint >= 2}
+										className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:hover:bg-transparent"
+										title={hint === 0 ? "Show the meaning (the card can then rate at most Good)" : hint === 1 ? "Show the word (at most Hard)" : undefined}
+										data-testid="review-hint"
+									>
 										<LightbulbIcon className="size-3.5" />
-										{hint ? (
-											<span>
-												{prompt.card.lemma} · {prompt.card.gloss}
-											</span>
-										) : (
-											"Hint"
-										)}
+										{hint === 0 ? "Hint · meaning" : hint === 1 ? <span>{prompt.card.gloss} · show the word?</span> : <span>{prompt.card.lemma} · {prompt.card.gloss}</span>}
 									</button>
 									<button type="button" onClick={() => check("")} className="ml-auto rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
 										I don&apos;t know
@@ -426,15 +437,15 @@ export function ReviewSession() {
 												<button
 													key={r}
 													type="button"
-													disabled={saving}
+													disabled={saving || r > ratingCap(help)}
 													onClick={() => void rate(r)}
-													title={`${RATING_LABELS[r]}: next in ${formatInterval(prompt.intervals[r])} (key ${r})`}
-													className={cn("rounded-full border px-2.5 py-1 transition-colors hover:bg-accent hover:text-foreground", r === suggested && "border-foreground/40 text-foreground")}
+													title={r > ratingCap(help) ? `${RATING_LABELS[r]} is off: you had help on this card` : `${RATING_LABELS[r]}: next in ${formatInterval(prompt.intervals[r])} (key ${r})`}
+													className={cn("rounded-full border px-2.5 py-1 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-35 disabled:line-through disabled:hover:bg-transparent", r === suggested && "border-foreground/40 text-foreground")}
 												>
 													{RATING_LABELS[r]} · {formatInterval(prompt.intervals[r])}
 												</button>
 											))}
-											<span className="ml-auto">Enter continues · 1–4 rates</span>
+											<span className="ml-auto">{hint > 0 || picks ? `With help: at most ${RATING_LABELS[ratingCap(help)]}` : "Enter continues · 1–4 rates"}</span>
 										</div>
 									</div>
 								</div>

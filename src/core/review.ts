@@ -76,6 +76,10 @@ export interface ReviewLogEntry {
 	elapsedDays: number;
 	reviewedAt: string;
 	ms?: number;
+	/** Hints taken before answering (1 = the meaning, 2 = the word too). */
+	hints?: number;
+	/** The answer was picked from four, not typed. */
+	picked?: boolean;
 }
 
 export interface ReviewSettings {
@@ -145,13 +149,33 @@ export function dayKey(d: Date, timeZoneOffsetMinutes = d.getTimezoneOffset()): 
 	return new Date(d.getTime() - timeZoneOffsetMinutes * 60_000).toISOString().slice(0, 10);
 }
 
+/** How the answer was helped: hints taken (1 = the meaning shown, 2 = the
+ *  dictionary form too) and whether it was picked from four rather than
+ *  typed. Help is allowed, and priced: it caps the rating (docs/research/
+ *  desirable-difficulties.md). */
+export interface ReviewHelp {
+	hints?: number;
+	picked?: boolean;
+}
+
+/** The highest rating an answer can earn with the help it had: with the
+ *  meaning shown or picked from four, at most Good; with the word itself
+ *  shown, at most Hard (the ending was produced, the word was not). */
+export function ratingCap(help?: ReviewHelp): Rating {
+	if ((help?.hints ?? 0) >= 2) return 2;
+	if ((help?.hints ?? 0) >= 1 || help?.picked) return 3;
+	return 4;
+}
+
 /** Map a typed answer's verdict (and speed) to an FSRS rating. A diacritic
- *  slip is Hard: the word came back, its spelling did not. */
-export function ratingFor(verdict: "exact" | "accents" | "wrong", ms?: number): Rating {
+ *  slip is Hard: the word came back, its spelling did not. Help lowers
+ *  the ceiling (ratingCap). */
+export function ratingFor(verdict: "exact" | "accents" | "wrong", ms?: number, help?: ReviewHelp): Rating {
 	if (verdict === "wrong") return 1;
-	if (verdict === "accents") return 2;
-	if (ms !== undefined && ms < 4000) return 4;
-	return 3;
+	const cap = ratingCap(help);
+	if (verdict === "accents") return Math.min(2, cap) as Rating;
+	if (ms !== undefined && ms < 4000) return Math.min(4, cap) as Rating;
+	return Math.min(3, cap) as Rating;
 }
 
 export interface QueueCounts {

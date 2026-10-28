@@ -166,10 +166,25 @@ test("triggerOf names the case-picking preposition, nothing else", () => {
 	assert.equal(triggerOf("Pijem kávu.", "Pijem ".length), undefined);
 });
 
-test("unitStage: two lessons at 60% make a unit practised", () => {
+test("unitStage: two lessons at 60% make a unit practised; a complete unit is strong", () => {
 	assert.equal(unitStage(1, 0.9), "new");
 	assert.equal(unitStage(2, 0.5), "new");
 	assert.equal(unitStage(2, 0.6), "practised");
+	assert.equal(unitStage(3, 0.8), "strong");
+	assert.equal(unitStage(6, 0.3), "strong");
+});
+
+// ─── Desirable difficulties (2026-10-28, docs/research/desirable-difficulties.md):
+// difficulty rises with mastery ─────────────────────────────────────────────
+
+test("a strong unit is production only, interleaved more, and the plan says so", () => {
+	const held = buildLesson(entries, "gen", { seed: 5, stage: "practised", mix: ["loc", "acc-people"] });
+	const strong = buildLesson(entries, "gen", { seed: 5, stage: "strong", mix: ["loc", "acc-people"] });
+	assert.equal(strong.stage, "strong");
+	assert.equal(held.stage, "practised");
+	assert.equal(strong.items.filter((i) => i.kind === "choose" || i.kind === "meaning").length, 0, "no recognition reps");
+	assert.ok(strong.items.filter((i) => i.mixed).length > held.items.filter((i) => i.mixed).length, "more of the contrast units");
+	assert.ok(strong.items.filter((i) => i.kind === "type").length >= 7);
 });
 
 test("a right answer after the hint earns half", () => {

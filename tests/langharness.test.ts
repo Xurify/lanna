@@ -120,6 +120,13 @@ describe("cloze cards", () => {
 		assert.equal(ratingFor("accents"), 2);
 		assert.equal(ratingFor("exact", 2000), 4);
 		assert.equal(ratingFor("exact", 9000), 3);
+		// Help is priced: the meaning shown or picked from four caps at Good,
+		// the word shown caps at Hard; a wrong answer is Again whatever.
+		assert.equal(ratingFor("exact", 2000, { hints: 1 }), 3);
+		assert.equal(ratingFor("exact", 2000, { picked: true }), 3);
+		assert.equal(ratingFor("exact", 2000, { hints: 2 }), 2);
+		assert.equal(ratingFor("accents", 2000, { hints: 2 }), 2);
+		assert.equal(ratingFor("wrong", 2000, { hints: 2 }), 1);
 		const sorted = [...lexicon.entries].sort(lexiconOrder);
 		assert.equal(sorted[0]!.origin, "curated", "beginner words come first");
 		const now = new Date();

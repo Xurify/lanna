@@ -789,7 +789,13 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 	}, [rate, seek, update]);
 
 	const showText = useCallback(() => update({ revealedText: true }), [update]);
-	const showMeaning = useCallback(() => update({ revealedText: true, revealedMeaning: true }), [update]);
+	// The meaning only after the Slovak is on screen: hear, then read, then
+	// translate — never English straight from the audio (docs/research/
+	// desirable-difficulties.md).
+	const showMeaning = useCallback(() => {
+		if (!(lines.current.get(idxRef.current)?.revealedText ?? false)) return;
+		update({ revealedMeaning: true });
+	}, [update]);
 
 	const togglePlay = useCallback(() => {
 		const p = player.current;
@@ -1034,7 +1040,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 					{step ? (
 						<>
 							<Ctl onClick={showText} label="Slovak" keyName="T" active={line.revealedText} disabled={line.revealedText} icon={<EyeIcon className="size-4" />} testId="watch-text" />
-							<Ctl onClick={showMeaning} label="Meaning" keyName="M" active={line.revealedMeaning} disabled={line.revealedMeaning} icon={<LanguagesIcon className="size-4" />} testId="watch-meaning" />
+							<Ctl onClick={showMeaning} label="Meaning" keyName="M" active={line.revealedMeaning} disabled={line.revealedMeaning || !line.revealedText} icon={<LanguagesIcon className="size-4" />} testId="watch-meaning" />
 						</>
 					) : (
 						<Ctl onClick={() => setShowEn((v) => !v)} label={showEn ? "Hide meaning" : "Meaning"} keyName="M" active={showEn} icon={<LanguagesIcon className="size-4" />} testId="watch-meaning" />
