@@ -29,6 +29,8 @@ import { cn } from "@/lib/utils";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { PlacementDrill, type DrillRep, type DrillTier } from "@/components/onboarding/placement-drill";
+import { Chips, NumberPicker } from "@/components/onboarding/controls";
+import { HoursSheet } from "@/components/hours-sheet";
 import {
 	BRIDGES,
 	CEFR_ORDER,
@@ -39,6 +41,7 @@ import {
 	GUIDED_HOURS,
 	MAX_PURPOSES,
 	MINUTE_CHOICES,
+	MAX_MINUTES,
 	PRIORS,
 	PURPOSES,
 	purposePhrase,
@@ -100,6 +103,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 	const [outcome, setOutcome] = useState<PlacementOutcome | null>(null);
 	const [missed, setMissed] = useState<DrillRep[]>([]);
 	const [drilling, setDrilling] = useState(false);
+	const [hoursOpen, setHoursOpen] = useState(false);
 
 	const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
 	const suggested = suggestedLevel(d.purposes, d.examLevel);
@@ -290,16 +294,9 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 							})}
 						</div>
 						{d.purposes.includes("exam") && (
-							<label className="mt-4 flex items-center gap-3 font-ui text-sm text-foreground">
-								The exam's level
-								<select value={d.examLevel} onChange={(e) => set("examLevel", e.target.value as Cefr)} className="rounded-lg border bg-background px-2 py-1 font-ui text-sm">
-									{CEFR_ORDER.map((l) => (
-										<option key={l} value={l}>
-											{l}
-										</option>
-									))}
-								</select>
-							</label>
+							<Field label="The exam's level">
+								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l }))} value={d.examLevel} onPick={(v) => set("examLevel", v)} label="The exam's level" testid="exam-level" />
+							</Field>
 						)}
 					</section>
 				)}
@@ -331,23 +328,11 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 				{step === 3 && (
 					<section className="lh-rise" data-testid="start-time">
 						<Heading title="How much time?" line="A short session every day beats a long one on Sunday. The plan is cut to fit this." />
-						<Field label="Minutes a day">
-							<div className="flex flex-wrap gap-2">
-								{MINUTE_CHOICES.map((m) => (
-									<button key={m} type="button" aria-pressed={d.minutes === m} onClick={() => set("minutes", m)} className={cn("min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors", d.minutes === m ? "border-go bg-go/10 text-foreground" : "border-border text-muted-foreground hover:border-foreground/40")}>
-										{m}
-									</button>
-								))}
-							</div>
+						<Field label="Minutes a day" hint="any number up to ten hours">
+							<NumberPicker value={d.minutes} onChange={(v) => set("minutes", v)} quick={MINUTE_CHOICES} min={5} max={MAX_MINUTES} step={5} unit="min" label="Minutes a day" testid="minutes" />
 						</Field>
 						<Field label="Days a week">
-							<div className="flex flex-wrap gap-2">
-								{[3, 4, 5, 6, 7].map((n) => (
-									<button key={n} type="button" aria-pressed={d.days === n} onClick={() => set("days", n)} className={cn("min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors", d.days === n ? "border-go bg-go/10 text-foreground" : "border-border text-muted-foreground hover:border-foreground/40")}>
-										{n}
-									</button>
-								))}
-							</div>
+							<Chips items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: n, title: String(n) }))} value={d.days} onPick={(v) => set("days", v)} label="Days a week" testid="days" />
 						</Field>
 						<div className="mt-8 rounded-2xl border bg-card px-5 py-4" data-testid="start-target">
 							<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -361,16 +346,18 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 							<p className="mt-2 font-prose text-sm text-muted-foreground">
 								{d.purposes.length ? `${level} is what ${d.purposes.map(purposePhrase).join(", ")} ${d.purposes.length === 1 ? "needs" : "need"} on the map.` : "Nothing picked, so A2: enough to get by."} The map credits hours as units are done, so the date moves with you.
 							</p>
-							<label className="mt-3 flex items-center gap-2 font-ui text-sm text-foreground">
-								Aim for
-								<select value={level} onChange={(e) => set("levelOverride", e.target.value === suggested ? null : (e.target.value as Cefr))} className="rounded-lg border bg-background px-2 py-1 font-ui text-sm" data-testid="start-level">
-									{CEFR_ORDER.map((l) => (
-										<option key={l} value={l}>
-											{l} · ~{GUIDED_HOURS[l]} h{l === suggested ? " · suggested" : ""}
-										</option>
-									))}
-								</select>
-							</label>
+							<div className="mt-3 flex flex-wrap items-center gap-3">
+								<span className="font-ui text-sm text-foreground">Aim for</span>
+								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l, hint: `about ${GUIDED_HOURS[l]} guided hours${l === suggested ? " · suggested" : ""}` }))} value={level} onPick={(v) => set("levelOverride", v === suggested ? null : v)} label="Target level" testid="start-level" />
+								{level !== suggested && (
+									<button type="button" onClick={() => set("levelOverride", null)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+										Back to {suggested}, the suggested one
+									</button>
+								)}
+								<button type="button" onClick={() => setHoursOpen(true)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="start-hours">
+									How long does it take?
+								</button>
+							</div>
 						</div>
 					</section>
 				)}
@@ -428,6 +415,8 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 					</p>
 				)}
 			</main>
+
+			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={d.minutes} daysPerWeek={d.days} target={level} hoursDone={hoursDone} />
 
 			{step < 4 && (
 				<div className="border-t border-border">

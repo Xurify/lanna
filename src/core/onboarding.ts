@@ -209,7 +209,10 @@ export interface LearnerGoal {
 }
 
 export const DEFAULT_DAYS_PER_WEEK = 6;
-export const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60] as const;
+/** Quick picks; the setup's stepper takes any number up to MAX_MINUTES
+ *  (a power learner's three hours a day is a plan, not an outlier). */
+export const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60, 90, 120] as const;
+export const MAX_MINUTES = 600;
 
 /** Guided hours a week at the planned minutes and days. */
 export function weeklyHours(minutesPerDay: number, daysPerWeek = DEFAULT_DAYS_PER_WEEK): number {

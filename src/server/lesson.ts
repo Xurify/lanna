@@ -45,6 +45,7 @@ import {
 	isFirstLanguage,
 	isPrior,
 	isPurpose,
+	MAX_MINUTES,
 	MAX_PURPOSES,
 	PLACEMENT_TIERS,
 	placementOutcome,
@@ -394,7 +395,7 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	const p = progressStore.read();
 	const cur = p.goal ?? DEFAULT_GOAL;
 	const level = goal.level && CEFR_ORDER.includes(goal.level) ? (goal.level as Cefr) : cur.level;
-	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(240, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
+	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(MAX_MINUTES, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
 	const daysPerWeek = typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek) ? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek))) : (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
 	const next: GoalRecord = { ...cur, level, minutesPerDay, daysPerWeek };
 	if (Array.isArray(goal.purposes)) next.purposes = [...new Set(goal.purposes.filter(isPurpose))].slice(0, MAX_PURPOSES);

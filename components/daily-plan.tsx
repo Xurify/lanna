@@ -11,10 +11,12 @@
  * progress ledger, so there is nothing to mark by hand.
  */
 
+import { useState } from "react";
 import Link from "next/link";
+import { HoursSheet } from "@/components/hours-sheet";
 import { BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection } from "@/src/core";
+import { DEFAULT_DAYS_PER_WEEK, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -40,6 +42,7 @@ export function DailyPlan({
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
 }) {
+	const [hoursOpen, setHoursOpen] = useState(false);
 	const done = plan?.done ?? 0;
 	const total = plan?.total ?? 0;
 	const complete = total > 0 && done >= total;
@@ -108,8 +111,12 @@ export function DailyPlan({
 					<Link href="/start?edit=1" className="underline hover:text-foreground" data-testid="goal-recheck">
 						Re-check my level
 					</Link>
+					<button type="button" onClick={() => setHoursOpen(true)} className="underline hover:text-foreground" data-testid="goal-hours">
+						How long does it take?
+					</button>
 				</div>
 			</div>
+			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={goal?.minutesPerDay ?? 30} daysPerWeek={goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} target={goal?.level ?? "B2"} hoursDone={projection?.hoursDone ?? 0} />
 		</section>
 	);
 }
