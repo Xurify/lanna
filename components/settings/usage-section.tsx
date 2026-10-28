@@ -94,7 +94,9 @@ export function UsageSection() {
 							{report.byMonth.map((m) => (
 								<tr key={m.month} className="border-t border-border/40 first:border-t-0">
 									<td className="py-1.5 pr-3 text-foreground">{monthLabel(m.month)}</td>
-									<td className="py-1.5 pr-3 text-muted-foreground">{m.turns} turns</td>
+									<td className="py-1.5 pr-3 text-muted-foreground">
+										{m.turns} {m.turns === 1 ? "turn" : "turns"}
+									</td>
 									<td className="py-1.5 text-right tabular-nums text-foreground">{formatUsd(m.usd)}</td>
 								</tr>
 							))}

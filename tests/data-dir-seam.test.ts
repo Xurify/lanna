@@ -43,10 +43,14 @@ describe("LH_DATA_DIR seam", () => {
 	});
 
 	it("unset = the repo data/ exactly as before (fresh child process, no env)", () => {
+		// NODE_ENV "production" rather than the runner's "test": under "test"
+		// config.ts fences data into a temp folder (the test fence, 2026-10-28);
+		// this child simulates the packaged app.
+		const env = { ...process.env, LH_DATA_DIR: "", LH_PROFILE: "", NODE_ENV: "production" as const };
 		const out = execFileSync(
 			process.execPath,
 			["--import", TSX_LOADER, "--eval", `const m = await import(${JSON.stringify(path.join(REPO_ROOT, "config.ts"))}); console.log(JSON.stringify({ data: m.PATHS.data, chats: m.PATHS.chats }));`],
-			{ cwd: REPO_ROOT, encoding: "utf-8", env: { ...process.env, LH_DATA_DIR: "", LH_PROFILE: "" } },
+			{ cwd: REPO_ROOT, encoding: "utf-8", env },
 		);
 		const parsed = JSON.parse(out) as { data: string; chats: string | null };
 		assert.equal(parsed.data, path.join(REPO_ROOT, "data", "profiles", "slovak"));
