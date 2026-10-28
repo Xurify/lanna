@@ -37,4 +37,4 @@ Found in the first learner's sessions on 2026-10-27, and treated as general:
 | Self-diagnosed gap | "I get a lot of words, but I can't put them together into meaning fast enough" (parsing speed, not vocabulary) |
 | Reviewing style | Skims, then looks at screenshots closely; notices small UI details; wants Duolingo-like structure, custom controls, no layout shift |
 
-Their PC profile had not yet gone through the new setup (the home page redirects to `/start`), so the Today screen, daily plan and most tasks built on 2026-10-28 are unverified by them. See the unverified list in [CHANGELOG-2026-10.md](CHANGELOG-2026-10.md).
+They ran the rebuilt level check live on 2026-10-28 at about 06:10 (the model judge accepted a valid alternative form; they asked why *-a* rather than *-u*, which is noun class). Most other tasks built on 2026-10-28 are still unverified by them. See the unverified list in [CHANGELOG-2026-10.md](CHANGELOG-2026-10.md).

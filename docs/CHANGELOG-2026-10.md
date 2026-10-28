@@ -33,7 +33,11 @@ A narrative of the first three days, from the fork to the task-based app. Times 
 - **Desirable difficulties** (PR #5 merged ~04:05): graded, priced help everywhere; production over recognition; the "strong" stage; Listen and Watch reveal rules. See [research/desirable-difficulties.md](research/desirable-difficulties.md).
 - **04:00 Git rules:** descriptive branch names; no merging to main without the owner. PR #6 (CEFR levels) is the first PR left open on purpose.
 - **04:23 Level-assessment audit:** critical re-check bug, noisy grammar-only tiers, exact-string grading. Rebuild as an adaptive, model-judged check started on `fix/level-assessment`. See [research/level-assessment-audit.md](research/level-assessment-audit.md).
-- **04:33 This write-up** (`docs/project-learnings`).
+- **04:33 This write-up** (`docs/project-learnings`, PR #7).
+- **05:03 Level descriptions** (PR #8): each target level has a plain can-do line in Slovak-life terms and says which chosen purposes it covers; the same lines sit under the level chips, in the hours sheet and on Today's goal line.
+- **05:22 Rebuilt level check** (PR #9, merged by the owner at 06:03): an adaptive ladder over the 16 drill units that starts from the self-report and closes in about a dozen items; typed answers the dictionary did not expect are judged by the Cheap slot; a Socratic stage on the Strong slot asks up to six production and "why" questions at the edge and rates each unit held, slip or gap; a two-minute yes/no word check (40 words over five frequency bands plus 8 pseudowords) feeds the milestones page. Re-check, days-per-week and milestones bugs fixed. Every check is saved under `data/profiles/<lang>/placement/` and costed. The owner ran it live at about 06:10 and the judge accepted a valid alternative form.
+- **06:10 Setup polish** (PR #10): the language panel closes on any outside press; the line under the languages names only the learner's own languages and explains what a parallel is; Settings → Learner gets a "Parallels from my languages" switch.
+- **06:24 Weak spots** (PR #11): a weak-spots record in progress.json written by the check, by lessons under 85% and by review cards that keep lapsing, cleared after eight reps at 85%; shown on Today, the map, the tutor's profile block and the plan's Strengthen task. The check's miss verdict now teaches the pattern; crime, violence and death sentences are left out of the item pool.
 
 ## Pull requests
 
@@ -43,17 +47,20 @@ A narrative of the first three days, from the fork to the task-based app. Times 
 | #2 | (harness name) | Milestones calculator | merged 2026-10-28 03:15 |
 | #3, #4 | (harness name) | Watch task; subtitle cover | merged 2026-10-28 |
 | #5 | (harness name) | Desirable difficulties | merged 2026-10-28 ~04:05, minutes before the no-merge rule; may be reverted on request |
-| #6 | `setup/cefr-language-levels` | Per-language CEFR levels | open |
-| — | `fix/level-assessment` | Rebuilt level check | in progress |
-| — | `docs/project-learnings` | These documents | open |
+| #6 | `setup/cefr-language-levels` | Per-language CEFR levels | merged by the owner |
+| #7 | `docs/project-learnings` | These documents | open |
+| #8 | `setup/level-descriptions` | What each target level buys | merged by the owner |
+| #9 | `fix/level-assessment` | Rebuilt level check | merged by the owner 2026-10-28 06:03 |
+| #10 | `setup/parallels-and-panel-close` | Panel close, parallels wording and switch | merged by the owner |
+| #11 | `feat/weak-spots` | Weak spots on record | merged by the owner |
 
 GitHub Actions never runs on this repo (owner-side setting); a red check there is not a code failure.
 
-## Unverified by the owner as of 2026-10-28 04:30
+## Unverified by the owner as of 2026-10-28 06:30
 
 Their PC profile had not gone through the new setup (the home page redirects to `/start`), so they have not yet seen the new Today, daily plan or strand balance with their own data. Specifically unverified:
 
-- Setup wizard end to end, including PR #6's CEFR levels (screenshots only).
+- Setup wizard end to end apart from the level check, which the owner ran live at about 06:10 (the judge, Socratic stage and word check worked on their profile). Still unseen: PR #8's level lines, PR #10's parallels switch, PR #11's weak spots on Today and the map.
 - Read: real episode generation with a live model (only the faux engine so far).
 - Listen task and meaning-first lesson openers.
 - Speak, Say it faster, Read it faster, and clarity scoring (no Azure key set; cloud screenshots used made-up scores).

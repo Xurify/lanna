@@ -51,4 +51,4 @@ The fix branch (`fix/level-assessment`) therefore widened from bug fixes to a re
 3. The two-minute yes/no vocabulary-size check (above).
 4. The re-check, ETA and milestones bugs fixed alongside.
 
-Status at the time of writing: in progress in the thread "Audit the Slovak level assessment"; not merged, not yet verified by the owner.
+Status: built as PR #9 (`fix/level-assessment`, commit a5f36b7) and merged by the owner on 2026-10-28 at 06:03. The owner ran the check live on their own profile the same hour; the judge accepted a valid alternative form ("kuchára, not kucháru" was its note). The follow-up, PR #11 (`feat/weak-spots`), makes the check leave a trace: a weak-spots record in progress.json fed by the check, lessons and review, shown on Today, the map, the tutor's profile block and the plan's Strengthen task. The level description lines (PR #8) answer the "level word used in two senses" point above by saying what each level buys.
