@@ -121,13 +121,13 @@ test("placement moves the map: tested-out units are done, chapters behind the st
 test("the profile block says what the tutor must not ask, and is null on a fresh profile", () => {
 	assert.equal(learnerProfileText(undefined, null, {}), null);
 	const o = placementOutcome([...tierReps("a1a", 8), ...tierReps("a1b", 6)]);
-	const goal = { level: "B1" as const, minutesPerDay: 20, daysPerWeek: 5, purposes: ["family" as const, "daily" as const], languages: ["et" as const, "ru" as const], languageLevels: { et: "fluent" as const, ru: "basic" as const }, otherLanguages: ["Swahili"], prior: "sentences" as const, onboardedAt: "2026-10-28T00:00:00Z", placedAt: "2026-10-28T00:10:00Z", placedLevel: o.level, startChapter: o.startChapter };
+	const goal = { level: "B1" as const, minutesPerDay: 20, daysPerWeek: 5, purposes: ["family" as const, "daily" as const], languages: ["et" as const, "ru" as const], languageLevels: { et: "native" as const, ru: "A2" as const }, otherLanguages: ["Swahili"], prior: "sentences" as const, onboardedAt: "2026-10-28T00:00:00Z", placedAt: "2026-10-28T00:10:00Z", placedLevel: o.level, startChapter: o.startChapter };
 	const state = curriculumState(o.units, goal.level, { startChapter: goal.startChapter });
 	const text = learnerProfileText(goal, state, o.units)!;
 	assert.ok(text.startsWith("# This learner"));
 	assert.ok(text.includes("family and friends; daily life in Slovakia"), text);
 	assert.ok(text.includes("Target: B1"));
-	assert.ok(text.includes("Knows: Estonian (fluent), Russian (a bit), Swahili."), text);
+	assert.ok(text.includes("Knows: Estonian (native), Russian (A2 on the CEFR), Swahili."), text);
 	assert.ok(text.includes("Russian: The same six cases"), text);
 	assert.ok(text.includes("Explanations in English."));
 	assert.ok(!text.includes("Do not lean on Estonian"));
@@ -141,7 +141,7 @@ test("the profile block says what the tutor must not ask, and is null on a fresh
 	const two = learnerProfileText({ ...goal, explainIn: ["en", "ru"] }, state, o.units)!;
 	assert.ok(two.includes("Explanations in English. Also Russian, which the learner is still learning"), two);
 	assert.ok(two.includes("key line and the grammar terms in Russian"), two);
-	assert.ok(two.includes("knows Russian only a bit: keep those lines short"), two);
+	assert.ok(two.includes("knows Russian only at A2: keep those lines short"), two);
 	assert.ok(text.includes("started with simple sentences"));
 	assert.ok(text.includes("Placement drill on 2026-10-28: A2; tested out of"));
 	assert.ok(text.includes("missed"));
@@ -155,12 +155,12 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
 	let s = progressSummary(0);
 	assert.equal(s.goal.onboardedAt, undefined);
-	s = setGoal({ level: "B1", minutesPerDay: 20, daysPerWeek: 5, purposes: ["family", "bogus" as never, "family"], languages: ["et", "ru", "xx" as never, "ru"], languageLevels: { et: "fluent", ru: "basic", de: "fluent", en: "nope" as never }, otherLanguages: [" Swahili ", "", "Swahili"], explainIn: ["ru", "et", "fi", "ru"], prior: "words", onboarded: true }, 0, new Date("2026-10-28T10:00:00Z"));
+	s = setGoal({ level: "B1", minutesPerDay: 20, daysPerWeek: 5, purposes: ["family", "bogus" as never, "family"], languages: ["et", "ru", "xx" as never, "ru"], languageLevels: { et: "native", ru: "basic" as never, de: "C1", en: "nope" as never }, otherLanguages: [" Swahili ", "", "Swahili"], explainIn: ["ru", "et", "fi", "ru"], prior: "words", onboarded: true }, 0, new Date("2026-10-28T10:00:00Z"));
 	assert.equal(s.goal.level, "B1");
 	assert.deepEqual(s.goal.purposes, ["family"]);
 	assert.equal(s.goal.daysPerWeek, 5);
 	assert.deepEqual(s.goal.languages, ["et", "ru"]);
-	assert.deepEqual(s.goal.languageLevels, { et: "fluent", ru: "basic" }, "levels only for known languages, only valid ones");
+	assert.deepEqual(s.goal.languageLevels, { et: "native", ru: "A2" }, "levels only for known languages; a legacy level is read as CEFR");
 	s = setGoal({ purposes: ["other"], purposeNote: "  for my in-laws in Žilina  " }, 0);
 	assert.equal(s.goal.purposeNote, "for my in-laws in Žilina");
 	s = setGoal({ purposeNote: "   " }, 0);
@@ -171,15 +171,15 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	// Dropping Russian from the list drops it as the explanation language too; English is never stored.
 	s = setGoal({ languages: ["et"], explainIn: ["ru"] }, 0);
 	assert.equal(s.goal.explainIn, undefined);
-	assert.deepEqual(s.goal.languageLevels, { et: "fluent" }, "Russian's level left with it");
-	s = setGoal({ languageLevels: { et: "good" } }, 0);
+	assert.deepEqual(s.goal.languageLevels, { et: "native" }, "Russian's level left with it");
+	s = setGoal({ languageLevels: { et: "B2" } }, 0);
 	assert.equal(s.goal.languageLevels, undefined, "the default level is not stored");
 	s = setGoal({ languages: ["et"], explainIn: ["en"] }, 0);
 	assert.equal(s.goal.explainIn, undefined, "English alone is the default, not stored");
 	s = setGoal({ languages: ["et", "ru"], explainIn: ["ru"] }, 0);
 	const { lessonFor } = await import("../src/server/lesson.ts");
 	assert.deepEqual(lessonFor("loc", 1).bridges, ["et", "ru"], "the lesson plan carries the bridge languages");
-	s = setGoal({ languages: ["et", "ru"], languageLevels: { et: "basic", ru: "fluent" } }, 0);
+	s = setGoal({ languages: ["et", "ru"], languageLevels: { et: "A1", ru: "C2" } }, 0);
 	assert.deepEqual(lessonFor("loc", 1).bridges, ["ru", "et"], "the better-known language leads");
 	const plan = placementFor();
 	assert.equal(plan.from, 0);
@@ -220,7 +220,8 @@ test("every grammar unit has a bridge in each of the four languages, and the pro
 	assert.deepEqual(knownLanguages({ firstLanguage: "other" }), ["en"]);
 	assert.deepEqual(knownLanguages(undefined), ["et", "en"]);
 	assert.deepEqual(bridgeLanguages({ languages: ["en", "ru", "fi", "pl"] }), ["ru", "fi"]);
-	assert.deepEqual(bridgeLanguages({ languages: ["ru", "fi", "et"], languageLevels: { ru: "basic", et: "fluent" } }), ["et", "fi", "ru"], "fluent, then comfortable, then a bit");
+	assert.deepEqual(bridgeLanguages({ languages: ["ru", "fi", "et"], languageLevels: { ru: "A2", et: "native" } }), ["et", "fi", "ru"], "native, then the default B2, then A2");
+	assert.deepEqual(bridgeLanguages({ languages: ["ru", "et"], languageLevels: { ru: "fluent" as never, et: "good" as never } }), ["ru", "et"], "legacy levels still order the bridges");
 	assert.ok(KNOWN_LANGUAGES.filter((l) => l.primary).length === 20 && KNOWN_LANGUAGES.length >= 60, "twenty chips, the rest in the panel");
 	assert.equal(new Set(KNOWN_LANGUAGES.map((l) => l.id)).size, KNOWN_LANGUAGES.length, "no duplicate ids");
 	assert.deepEqual(bridgeLanguages({ languages: [] }), []);

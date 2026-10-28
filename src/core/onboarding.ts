@@ -187,16 +187,27 @@ export type Prior = "none" | "words" | "sentences" | "reading";
 export type BridgeLang = "et" | "fi" | "ru" | "de";
 export const BRIDGE_LANGS: readonly BridgeLang[] = ["et", "fi", "ru", "de"];
 
-/** How well a language is known. "Know" on the screen means "you can
- *  read a simple text in it"; the level says how much weight it carries. */
-export type LangLevel = "basic" | "good" | "fluent";
+/** How well a language is known, on the CEFR (A1 to C2) plus "native".
+ *  "Know" on the screen means "you can read a simple text in it"; the
+ *  level says how much weight the language carries in the lessons. */
+export type LangLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "native";
 export const LANG_LEVELS: ReadonlyArray<{ id: LangLevel; title: string; line: string }> = [
-	{ id: "basic", title: "A bit", line: "I can read a simple text with help" },
-	{ id: "good", title: "Comfortable", line: "I read and get by" },
-	{ id: "fluent", title: "Fluent", line: "Native, or near it" },
+	{ id: "A1", title: "A1", line: "A few words and set phrases" },
+	{ id: "A2", title: "A2", line: "Simple texts and everyday talk, with help" },
+	{ id: "B1", title: "B1", line: "I get by in most everyday situations" },
+	{ id: "B2", title: "B2", line: "I read and talk comfortably about most things" },
+	{ id: "C1", title: "C1", line: "Long, demanding texts; I rarely search for a word" },
+	{ id: "C2", title: "C2", line: "Everything, with ease; near native" },
+	{ id: "native", title: "Native", line: "I grew up with it" },
 ];
-export const DEFAULT_LANG_LEVEL: LangLevel = "good";
-const LEVEL_RANK: Record<LangLevel, number> = { basic: 0, good: 1, fluent: 2 };
+export const DEFAULT_LANG_LEVEL: LangLevel = "B2";
+const LEVEL_RANK: Record<LangLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5, native: 6 };
+/** The three-step scale the setup used before 2026-10-28 night, read as CEFR. */
+const LEGACY_LEVEL: Record<string, LangLevel> = { basic: "A2", good: "B2", fluent: "native" };
+/** A level the learner still needs a hand with: lines in it stay short. */
+export function isLowLevel(level: LangLevel): boolean {
+	return LEVEL_RANK[level] <= LEVEL_RANK.A2;
+}
 
 export interface KnownLanguageInfo {
 	id: Lang;
@@ -284,6 +295,11 @@ export function isLang(v: unknown): v is Lang {
 export function isLangLevel(v: unknown): v is LangLevel {
 	return typeof v === "string" && LANG_LEVELS.some((l) => l.id === v);
 }
+/** A stored level, new or legacy, as a CEFR level; undefined when neither. */
+export function normalizeLangLevel(v: unknown): LangLevel | undefined {
+	if (isLangLevel(v)) return v;
+	return typeof v === "string" ? LEGACY_LEVEL[v] : undefined;
+}
 export function isBridgeLang(v: unknown): v is BridgeLang {
 	return typeof v === "string" && (BRIDGE_LANGS as readonly string[]).includes(v);
 }
@@ -311,12 +327,12 @@ export function knownLanguages(goal: Pick<LearnerGoal, "languages" | "firstLangu
 
 /** How well the learner knows a language (DEFAULT_LANG_LEVEL when unsaid). */
 export function languageLevel(goal: Pick<LearnerGoal, "languageLevels"> | null | undefined, lang: Lang): LangLevel {
-	return goal?.languageLevels?.[lang] ?? DEFAULT_LANG_LEVEL;
+	return normalizeLangLevel(goal?.languageLevels?.[lang]) ?? DEFAULT_LANG_LEVEL;
 }
 
 /** The known languages the lessons can show a form in: the best-known
- *  first (a fluent one leads the retry hint, one known "a bit" is an
- *  aside), ties in the learner's own order. */
+ *  first (a native or C-level one leads the retry hint, an A-level one is
+ *  an aside), ties in the learner's own order. */
 export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): BridgeLang[] {
 	return knownLanguages(goal)
 		.filter(isBridgeLang)
@@ -363,7 +379,9 @@ export interface LearnerGoal {
 	/** Languages the learner knows (catalogue ids, strongest first) and any
 	 *  others as free text. `knownLanguages()` reads either shape. */
 	languages?: Lang[];
-	/** How well each of `languages` is known; absent = DEFAULT_LANG_LEVEL. */
+	/** How well each of `languages` is known, as a CEFR level or "native";
+	 *  absent = DEFAULT_LANG_LEVEL. Profiles from before 2026-10-28 night may
+	 *  still hold "basic" | "good" | "fluent"; read them through languageLevel(). */
 	languageLevels?: Partial<Record<Lang, LangLevel>>;
 	/** @deprecated Free text from the 2026-10-28 afternoon setup; still read, no longer written. */
 	otherLanguages?: string[];
@@ -540,7 +558,10 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 	if (goal) {
 		const known = knownLanguages(goal);
 		const other = (goal.otherLanguages ?? []).filter(Boolean);
-		const levelOf = (l: Lang) => LANG_LEVELS.find((x) => x.id === languageLevel(goal, l))!.title.toLowerCase();
+		const levelOf = (l: Lang) => {
+			const lv = languageLevel(goal, l);
+			return lv === "native" ? "native" : `${lv} on the CEFR`;
+		};
 		const names = [...known.map((l) => `${languageName(l)} (${levelOf(l)})`), ...other];
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
 		const [first, second] = explanationLanguages(goal);
@@ -548,7 +569,7 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""} When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}`,
 		);
 		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, Slovak examples in Slovak, English only when asked.`;
-		const simple = (l: Lang) => (languageLevel(goal, l) === "basic" ? ` The learner knows ${languageName(l)} only a bit: keep those lines short and simple, and gloss a hard word.` : "");
+		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
 		lines.push((second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}` : lead) + (first !== "en" ? simple(first!) : ""));
 	}
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
