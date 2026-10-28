@@ -12,8 +12,8 @@ import type { ChatDeleteMode, ChatListItem } from "@/src/core";
 export const TRACES_COPY = {
 	testid: "delete-traces",
 	checkbox: "delete-traces-checkbox",
-	title: "Also remove its graph traces",
-	body: "This session’s topics, links, and events leave the graph too. Topics other sessions or imported notes also cover survive; topics only this session created are removed entirely.",
+	title: "Also remove what it added to the skill map",
+	body: "Its topics, links and events leave the skill map too. Topics that other sessions also cover stay; topics only this session created are removed.",
 };
 
 /**
@@ -176,8 +176,8 @@ export function DeleteSessionBody({
 				</code>
 			</div>
 			<p className="mt-2 text-sm text-muted-foreground">
-				This permanently removes the session — its messages, background jobs, and extraction records. Everything
-				it added to the graph stays unless you check below. This cannot be undone.
+				The session leaves your list and its background work stops. What it added to your skill map stays unless
+				you tick the box below. The file itself is kept in the trash, so opening the session&apos;s link later can put it back.
 			</p>
 			<label
 				data-testid={TRACES_COPY.testid}

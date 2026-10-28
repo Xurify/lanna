@@ -99,8 +99,8 @@ describe("DeleteSessionDialog — the node-dialog shape (owner flow rework 2026-
 		assert.ok(!/"checked"/.test(html), "unchecked by default");
 		// plain-language consequences on the checkbox body
 		assert.ok(html.includes(TRACES_COPY.title));
-		assert.ok(html.includes("leave the graph too"));
-		assert.ok(html.includes("survive"));
+		assert.ok(html.includes("leave the skill map too"));
+		assert.ok(html.includes("also cover stay"));
 		// the old two-button design is gone
 		assert.ok(!html.includes("delete-option-preserve"));
 		assert.ok(!html.includes("delete-option-nodes"));

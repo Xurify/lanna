@@ -185,34 +185,35 @@ export function CoverageMenuBody({
 }) {
 	const busy = coverage.running || extracting;
 	const complete = coverage.uncoveredTokens === 0 && coverage.uncoveredCount === 0;
+	const n = coverage.uncoveredCount;
+	// The learner's words for extraction: what this session taught goes into
+	// the skill map. Token counts stay in the ring's popover for the curious.
 	return (
-		<div data-testid="ctx-coverage" className="flex flex-col gap-1 px-2.5 pt-1 pb-2">
+		<div data-testid="ctx-coverage" className="flex flex-col gap-1.5 px-2.5 pt-1 pb-1">
+			<span className="font-bold text-muted-foreground">Skill map</span>
 			{busy ? (
 				<span className="flex items-center gap-1.5 text-muted-foreground" data-testid="ctx-coverage-running">
 					<span className="size-1.5 animate-pulse rounded-full bg-foreground/70" aria-hidden />
-					extracting…
+					Adding what this session taught…
 				</span>
 			) : complete ? (
-				<span className="text-muted-foreground">fully extracted</span>
+				<span className="text-muted-foreground">Everything here is in your skill map.</span>
 			) : (
-				<span className="flex flex-col">
-					<span className="tabular-nums text-foreground">
-						{formatTokens(coverage.uncoveredTokens)} tok uncovered
-					</span>
-					<span className="tabular-nums text-muted-foreground">
-						{coverage.uncoveredCount} message{coverage.uncoveredCount === 1 ? "" : "s"} unextracted
-					</span>
+				<span className="text-foreground">
+					{n === 1 ? "1 message isn’t" : `${n} messages aren’t`} in your skill map yet.
 				</span>
 			)}
-			<button
-				type="button"
-				data-testid="ctx-extract"
-				onClick={onExtract}
-				disabled={busy || complete}
-				className="flex items-center justify-center rounded-lg border px-2 py-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
-			>
-				{busy ? "Running" : "Extract"}
-			</button>
+			{!complete && (
+				<button
+					type="button"
+					data-testid="ctx-extract"
+					onClick={onExtract}
+					disabled={busy}
+					className="flex items-center justify-center rounded-lg border px-2 py-1 text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-transparent"
+				>
+					{busy ? "Adding…" : "Add to skill map"}
+				</button>
+			)}
 		</div>
 	);
 }

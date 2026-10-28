@@ -104,18 +104,17 @@ describe("ringFill (the donut's fold, pure)", () => {
 });
 
 describe("CoverageMenuBody — the context-menu block", () => {
-	it("renders the uncovered numbers + the Extract affordance", () => {
+	it("renders the plain-words count + the add affordance", () => {
 		const html = renderToStaticMarkup(
 			<CoverageMenuBody coverage={coverage()} extracting={false} onExtract={() => {}} />,
 		);
 		assert.ok(html.includes('data-testid="ctx-coverage"'), "the block carries its testid");
-		assert.match(html, /2k tok uncovered/, "the unit is typed out — tok (owner refinement round)");
-		assert.match(html, /5 messages unextracted/);
+		assert.match(html, /5 messages aren’t in your skill map yet/, "learner words, not token counts (Xurify, 2026-10-28)");
 		assert.ok(html.includes('data-testid="ctx-extract"'), "the Extract affordance");
 		assert.ok(!html.includes('disabled=""'), "an uncovered session can extract (the disabled: utilities alone don't count)");
 	});
 
-	it("fully extracted: the quiet line, Extract disabled (never a fake run)", () => {
+	it("fully extracted: the quiet line, no button (nothing to run)", () => {
 		const html = renderToStaticMarkup(
 			<CoverageMenuBody
 				coverage={coverage({ uncoveredTokens: 0, uncoveredCount: 0 })}
@@ -123,8 +122,8 @@ describe("CoverageMenuBody — the context-menu block", () => {
 				onExtract={() => {}}
 			/>,
 		);
-		assert.match(html, /fully extracted/);
-		assert.ok(html.includes("disabled"), "nothing to run — the button rests");
+		assert.match(html, /Everything here is in your skill map/);
+		assert.ok(!html.includes('data-testid="ctx-extract"'), "nothing to run — no button");
 	});
 
 	it("running: the pulse line + 'Running', not the numbers (motion is the state)", () => {
@@ -132,8 +131,8 @@ describe("CoverageMenuBody — the context-menu block", () => {
 			<CoverageMenuBody coverage={coverage({ running: true })} extracting={false} onExtract={() => {}} />,
 		);
 		assert.ok(html.includes('data-testid="ctx-coverage-running"'));
-		assert.match(html, /extracting…/);
-		assert.ok(html.includes(">Running</button>"), "the affordance reads Running while in flight");
+		assert.match(html, /Adding what this session taught…/);
+		assert.ok(html.includes(">Adding…</button>"), "the affordance reads Adding… while in flight");
 		assert.ok(html.includes("disabled"), "no double-fire");
 	});
 
@@ -142,7 +141,7 @@ describe("CoverageMenuBody — the context-menu block", () => {
 			<CoverageMenuBody coverage={coverage()} extracting onExtract={() => {}} />,
 		);
 		assert.ok(html.includes('data-testid="ctx-coverage-running"'), "the optimistic state shows at once");
-		assert.match(html, />Running</);
+		assert.match(html, />Adding…</);
 	});
 });
 

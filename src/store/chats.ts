@@ -204,6 +204,43 @@ function deleteChat(id: string): boolean {
 	}
 }
 
+/** The trash folder (deleteChat moves records here). */
+function trashDir(): string {
+	return path.join(PATHS.chats, "trash");
+}
+
+/** The trashed file for an id, newest copy first; null when not in the trash. */
+function trashedFile(id: string): string | null {
+	const dir = trashDir();
+	if (!fs.existsSync(dir)) return null;
+	const plain = path.join(dir, `${id}.json`);
+	const copies = fs
+		.readdirSync(dir)
+		.filter((f) => f.startsWith(`${id}.`) && f.endsWith(".json"))
+		.map((f) => path.join(dir, f))
+		.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+	return copies.includes(plain) ? plain : (copies[0] ?? null);
+}
+
+/** Is this session in the trash (deleted, but kept on disk)? */
+export function trashedChat(id: string): boolean {
+	return trashedFile(id) !== null;
+}
+
+/** Move a trashed session back into the list. False when it is not in the
+ *  trash or a live record with that id already exists. */
+export function restoreChat(id: string): boolean {
+	const from = trashedFile(id);
+	if (!from || fs.existsSync(chatFile(id))) return false;
+	try {
+		fs.renameSync(from, chatFile(id));
+		emit("chats-changed", {});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /** Persist the session plan tree (plan tools call this in execute). */
 function saveTree(id: string, tree: PlanTree): void {
 	const record = getChat(id);

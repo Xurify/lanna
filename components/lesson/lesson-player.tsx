@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, FlameIcon, LoaderCircleIcon, SnailIcon, TimerIcon, TrophyIcon, Volume2Icon, VolumeXIcon, XIcon, ZapIcon } from "lucide-react";
+import { BookmarkCheckIcon, BookmarkIcon, CheckIcon, FlameIcon, LoaderCircleIcon, SnailIcon, TimerIcon, TrophyIcon, Volume2Icon, VolumeXIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { setSpeed, speak, SPEEDS, useActiveLanguage } from "@/components/speech";
@@ -28,6 +28,7 @@ import {
 	LESSONS_TO_COMPLETE,
 	repXp,
 	sameSentence,
+	rankLabel,
 	unitDone,
 	unitInfo,
 	type ItemKind,
@@ -1010,7 +1011,18 @@ function FeedbackSheet({
 						btn: "bg-miss text-background",
 						title: "Not quite",
 					};
-	const canExplain = verdict === "wrong" && item.kind !== "build";
+	const canExplain = item.kind !== "build";
+	const [marked, setMarked] = useState(false);
+	// "Tricky": put the word in the review deck now, ahead of its turn.
+	const mark = async () => {
+		setMarked(true);
+		try {
+			await fetch("/api/review/enqueue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slugs: [item.slug] }) });
+		} catch {
+			setMarked(false);
+		}
+	};
+	const inDeck = marked || (item.known !== null && item.known !== undefined);
 	return (
 		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} role="status" aria-live="polite">
 			<div className={cn(COLUMN, "py-5")}>
@@ -1038,15 +1050,47 @@ function FeedbackSheet({
 									You wrote “<span lang="sk">{given}</span>”
 								</p>
 							)}
-							{item.kind === "listen" && verdict === "exact" && (
-								<p className="mt-1 font-prose text-base text-muted-foreground" lang="sk">
-									{item.sentence} <span className="text-muted-foreground/80">· {item.translation}</span>
+							{verdict === "exact" && item.kind !== "build" && (
+								<p className="mt-1 flex flex-wrap items-center gap-x-2 font-prose text-lg text-foreground" data-testid="right-sentence">
+									<button
+										type="button"
+										onClick={() => void speak(item.sentence)}
+										className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sky/20 text-sky hover:bg-sky/30"
+										aria-label="Play the sentence again"
+										title="Play again"
+									>
+										<Volume2Icon className="size-4" />
+									</button>
+									<span lang="sk">
+										{item.before}
+										<b>{item.answer}</b>
+										{item.after}
+									</span>
+									<span className="text-base text-muted-foreground">{item.translation}</span>
+								</p>
+							)}
+							{verdict === "exact" && (
+								<p className="mt-1 font-prose text-sm text-muted-foreground" data-testid="right-meta">
+									{[item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`, rankLabel(item.rank, item.cat), knownLine(item.known)].filter(Boolean).join("  ·  ")}
 								</p>
 							)}
 							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}
 						</div>
 					</div>
 					<div className="flex items-center gap-2">
+						{verdict === "exact" && (
+							<button
+								type="button"
+								onClick={() => void mark()}
+								disabled={inDeck}
+								className={cn(SECONDARY, "gap-1.5 disabled:opacity-70")}
+								data-testid="lesson-tricky"
+								title={inDeck ? "This word is in your review deck" : "Add this word to your review deck"}
+							>
+								{inDeck ? <BookmarkCheckIcon className="size-4" /> : <BookmarkIcon className="size-4" />}
+								{inDeck ? "In your deck" : "Tricky"}
+							</button>
+						)}
 						{canExplain && (
 							<button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={SECONDARY} data-testid="lesson-why">
 								{open ? "Hide" : "Why?"}
@@ -1243,6 +1287,15 @@ function EndScreen({
 			</div>
 		</div>
 	);
+}
+
+/** How well the review deck knows this word, in one phrase. */
+function knownLine(known: LessonItem["known"]): string | undefined {
+	if (!known) return "not in review yet";
+	if (known.state === "new" || known.reps === 0) return "new in review";
+	const days = Math.round((Date.parse(known.due) - Date.now()) / 86_400_000);
+	const when = days <= 0 ? "due now" : days === 1 ? "back tomorrow" : `back in ${days} days`;
+	return known.state === "learning" ? `learning · ${when}` : `known · ${when}`;
 }
 
 /** The line under the end-screen heading: lesson N of 3 in this unit, or

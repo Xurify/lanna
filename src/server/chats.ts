@@ -22,6 +22,7 @@ import { discardChatDeliveries } from "./jobs.ts";
  */
 
 export const { createChat, getChat, listChats } = stores.chatStore;
+export { restoreChat, trashedChat } from "../store/chats.ts";
 export { titleFromPrompt };
 export type { ChatDeleteMode, ChatDeletionStats } from "../core/graph-deletion.ts";
 

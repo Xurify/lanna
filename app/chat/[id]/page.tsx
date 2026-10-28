@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
 import { Chat } from "@/components/chat";
+import { SessionGone } from "@/components/session-gone";
 import { slotsConfigured } from "@/src/core";
-import { compactionInFlight, getChat, isTurnRunning, readSettingsRecord, turnFailure } from "@/src/server";
+import { compactionInFlight, getChat, isTurnRunning, readSettingsRecord, trashedChat, turnFailure } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,9 @@ export default async function ChatPage({
 }) {
 	const [{ id }, { prompt }] = await Promise.all([params, searchParams]);
 	const chat = getChat(id);
-	if (!chat) notFound();
+	// A deleted session is in the trash and can be put back; anything else
+	// is an old or wrong link. Neither deserves the framework's bare 404.
+	if (!chat) return <SessionGone id={id} trashed={trashedChat(id)} />;
 	// The persistent setup CTA's seed (BYOK, owner 2026-09-22): slotsConfigured
 	// over the settings record, server-read — the same gate home/new read. The
 	// server's 503 stays the truth; this only decides whether the pill rides.

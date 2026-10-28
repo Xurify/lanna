@@ -58,6 +58,7 @@ import {
 } from "../core/onboarding.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
+import { reviewStore } from "../store/review.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
 const RECENT_CAP = 240;
@@ -86,7 +87,19 @@ export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern ? [] : [...contrast, ...others].slice(0, 3);
-	return buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix });
+	return withKnown(buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }));
+}
+
+/** Attach what the review deck knows about each item's word: its own card,
+ *  else the most-practised card of the same word, else null. */
+function withKnown<T extends LessonPlan>(plan: T): T {
+	const cards = Object.values(reviewStore.readCards());
+	for (const item of plan.items) {
+		const own = cards.find((c) => c.id === item.id);
+		const card = own ?? cards.filter((c) => c.slug === item.slug).sort((a, b) => b.reps - a.reps)[0];
+		item.known = card ? { state: card.state, due: card.due, reps: card.reps } : null;
+	}
+	return plan;
 }
 
 /** Blitz runs over the units you have started (at least the first three). */

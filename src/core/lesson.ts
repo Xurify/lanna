@@ -291,6 +291,62 @@ export interface LessonItem {
 	/** What to show as the clue: the word's meaning for a vocabulary rep (the
 	 *  blank is the word itself), else the dictionary form. */
 	hint: string;
+	/** Frequency rank within its part of speech (lower = commoner). */
+	rank?: number;
+	/** The dictionary's category, for the rank's label ("#68 of verbs"). */
+	cat?: string;
+	gender?: string;
+	/** The answer's form in plain words: "he / she / it form of dávať",
+	 *  "accusative of káva". */
+	form?: string;
+	/** The review deck's memory of this word, attached by the server. */
+	known?: WordKnown | null;
+}
+
+/** What the review deck knows about a word (the client's "how well you
+ *  know this" line after a right answer). */
+export interface WordKnown {
+	state: "new" | "learning" | "review";
+	due: string;
+	reps: number;
+}
+
+const CASE_OF_UNIT: Partial<Record<UnitId, string>> = {
+	"acc-fem": "accusative",
+	"acc-people": "accusative",
+	loc: "locative",
+	gen: "genitive",
+	ins: "instrumental",
+	dat: "dative",
+};
+
+/** The answer's form in plain words, from the ending and the unit: who is
+ *  doing a verb, which case a noun is in. Undefined when nothing safe can
+ *  be said (an adverb, a phrase, a form the unit does not name). */
+export function describeForm(entry: Pick<LexiconEntry, "sk" | "pos" | "cat" | "forms" | "gender">, answer: string, unit: UnitId): string | undefined {
+	const isVerb = entry.pos === "verb" || entry.cat === "Verbs";
+	const a = answer.toLowerCase();
+	if (a === entry.sk.toLowerCase()) return undefined;
+	// A verb form the dictionary lists, or any form in a verb unit (the
+	// dictionary's form lists are incomplete for prefixed verbs).
+	const verbUnit = /^(present|past|cond|core-verbs|motion|verbs-mix)/.test(unit);
+	if (isVerb && ((entry.forms ?? []).some((f) => f.toLowerCase() === a) || verbUnit)) {
+		const past = a.endsWith("li") ? "they" : a.endsWith("la") ? "she" : a.endsWith("lo") ? "it" : a.endsWith("l") ? "he" : null;
+		if (past) return `${past} (past) form of ${entry.sk}`;
+		const who = a.endsWith("me") ? "we" : a.endsWith("te") ? "you (plural)" : a.endsWith("m") ? "I" : a.endsWith("š") ? "you" : /(ú|ia|jú|u)$/.test(a) ? "they" : "he / she / it";
+		return `${who} form of ${entry.sk}`;
+	}
+	const kase = CASE_OF_UNIT[unit];
+	if (kase && !isVerb) return `${kase} of ${entry.sk}${entry.gender ? ` (${entry.gender})` : ""}`;
+	return undefined;
+}
+
+/** A frequency rank in words: how often the learner will meet this word. */
+export function rankLabel(rank: number | undefined, cat?: string): string | undefined {
+	if (rank === undefined) return undefined;
+	const tier = rank <= 200 ? "very common" : rank <= 800 ? "common" : rank <= 2000 ? "fairly common" : "less common";
+	const of = cat ? ` · #${rank} of ${cat.toLowerCase()}` : "";
+	return `${tier}${of}`;
 }
 
 export interface Candidate {
@@ -512,6 +568,11 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 		after: ex.sk.slice(at + answer.length),
 		hint: vocabulary ? shortGloss(c.entry.en) : c.entry.sk,
 	};
+	if (c.entry.rank !== undefined) item.rank = c.entry.rank;
+	if (c.entry.cat) item.cat = c.entry.cat;
+	if (c.entry.gender) item.gender = c.entry.gender;
+	const form = describeForm(c.entry, answer, c.unit);
+	if (form) item.form = form;
 	const trigger = vocabulary ? undefined : triggerOf(ex.sk, at);
 	if (trigger) item.trigger = trigger;
 	const options = () => (info.kind === "words" ? wordOptions(answer, c.entry.sk, pool, rand) : formOptions(c.entry, answer, pool, rand));
