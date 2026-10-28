@@ -160,7 +160,8 @@ test("reading news is self-paced: words alone decide; a café exchange is within
 
 test("without a Listen measurement the speed is assumed from the hours ladder and said so", () => {
 	const f = facts({ listen: { sessions: 0, reading: null, trend: null, knownSentences: { total: 0, right: 0 } }, hoursDone: 200 });
-	assert.deepEqual(f.speed, { wpm: 60, basis: "level" });
+	assert.deepEqual(f.speed, { wpm: 95, basis: "level" }, "a placed B1 is credited B1's rung, not the few hours the map has");
+	assert.deepEqual(facts({ listen: f.listen, hoursDone: 500, level: "A2" }).speed, { wpm: 111, basis: "level" }, "more hours than the rung count");
 	const vlog = estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, f, { now: NOW });
 	assert.equal(vlog.speed.basis, "level");
 	assert.match(vlog.missing[1]!, /a listener at your point on the map/);
