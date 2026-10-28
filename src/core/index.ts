@@ -96,4 +96,5 @@ export * from "./listen.ts";
 export * from "./strands.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
+export * from "./watch.ts";
 export * from "./milestones.ts";
