@@ -90,6 +90,8 @@ export interface KnownWords {
 	/** Units with lessons behind them but not yet held: the i+1 grammar. */
 	practising: string[];
 	purposes: Purpose[];
+	/** "Something else", in the learner's own words (onboarding). */
+	note?: string;
 }
 
 export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords {
@@ -135,6 +137,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords 
 		grammar,
 		practising,
 		purposes: goal.purposes ?? [],
+		note: goal.purposeNote?.trim() || undefined,
 	};
 }
 
@@ -353,6 +356,9 @@ export function episodeTheme(purposes: readonly Purpose[], episode: number): str
 		media: ["a Slovak film at the cinema", "the evening news on TV", "a podcast about Bratislava"],
 		exam: ["a language course in the evening", "a study day before an exam"],
 		curious: ["a trip to the castle", "a day in the Tatras", "a Slovak word that puzzles him"],
+		// "Something else" is a note in the learner's words; the brief carries
+		// it, the setting falls back to everyday life.
+		other: [],
 	};
 	const pool = (purposes.length ? purposes : (["daily"] as Purpose[])).flatMap((p) => SETTINGS[p] ?? []);
 	if (pool.length === 0) return "a day in Bratislava";
@@ -372,6 +378,7 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		k.practising.length ? `Grammar being practised now (use it a few times, correctly): ${k.practising.join("; ")}.` : "",
 		k.sample.length ? `Known words to lean on: ${k.sample.join(", ")}.` : "The learner is at the very start: use only the most common words (greetings, family, food and drink, the home, going places, numbers to ten).",
 		k.purposes.length ? `The learner is learning Slovak for: ${k.purposes.map((p) => purposeInfo(p).title.toLowerCase()).join(", ")}.` : "",
+		k.note ? `In their own words: "${k.note.replace(/\s+/g, " ").slice(0, 300)}". Let the setting serve this when it can.` : "",
 		recaps.length ? `Earlier episodes, oldest first:\n${recaps.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}` : "This is the first episode: introduce Robo and one other person.",
 		`Today is ${now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}; the season may show.`,
 	].filter(Boolean);
