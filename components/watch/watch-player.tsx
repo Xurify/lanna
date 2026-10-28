@@ -927,12 +927,14 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 					{/* The player keeps its box from the first paint. */}
 					<div className="relative mx-auto aspect-video w-full overflow-hidden rounded-2xl bg-black" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player">
 						<div ref={holder} className="absolute inset-0 [&>iframe]:size-full" />
-						{/* Step mode hides the line; this band covers YouTube's own
-						    subtitles should the player still draw them. Clicks pass
-						    through to the controls. */}
-						{ready && !playerError && !textShown && (
+						{/* In step mode the lines are ours to show, one at a time:
+						    this band covers YouTube's own subtitles for the whole
+						    mode (a viewer's remembered caption setting survives
+						    cc_load_policy, and after a reveal the player would
+						    already show the next line). Clicks pass through. */}
+						{ready && !playerError && step && (
 							<div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[26%] items-end justify-center bg-black pb-2" aria-hidden data-testid="watch-caption-cover">
-								<span className="font-ui text-[11px] font-bold text-white/40">subtitles covered · T to reveal</span>
+								<span className="font-ui text-[11px] font-bold text-white/40">{textShown ? "the line is below" : "subtitles covered · T to reveal"}</span>
 							</div>
 						)}
 						{!ready && !playerError && (
