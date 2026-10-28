@@ -64,11 +64,44 @@ export interface StorySentence {
 	tokens: StoryToken[];
 }
 
-/** One comprehension question: Slovak, three options, one right. */
+/** What a comprehension question asks for. The kinds grow with the
+ *  level (QUESTION_PLAN): a beginner is asked what happened; an
+ *  intermediate reader is asked why, what a word meant here and what a
+ *  sentence said in other words; an advanced one what was implied and
+ *  how someone felt. */
+export type StoryQuestionKind = "recall" | "inference" | "vocab" | "paraphrase" | "attitude";
+
+export const STORY_QUESTION_KINDS: readonly StoryQuestionKind[] = ["recall", "inference", "vocab", "paraphrase", "attitude"];
+
+/** How each kind is shown over the question, and what the model is told
+ *  to write. */
+export const QUESTION_KIND_INFO: Readonly<Record<StoryQuestionKind, { label: string; brief: string }>> = {
+	recall: { label: "What happened?", brief: "a literal question about what happened (who, what, where, when) answered directly by the text" },
+	inference: { label: "Between the lines", brief: "a question the text answers only indirectly (why someone did something, what will probably happen next, what a character wants)" },
+	vocab: { label: "A word from the text", brief: "what one word or phrase from the text means IN THIS SENTENCE, with options that are other plausible meanings; quote the word in the question" },
+	paraphrase: { label: "In other words", brief: "which option says the same as one sentence of the text in different words; the distractors change one detail" },
+	attitude: { label: "How they feel", brief: "how a character feels or what their attitude or intention is, shown by what they say or do, never stated outright" },
+};
+
+/** The questions an episode gets at each level: how many, how many
+ *  options each, and of which kinds in order. */
+export const QUESTION_PLAN: Readonly<Record<Cefr, { count: number; options: number; kinds: readonly StoryQuestionKind[] }>> = {
+	A1: { count: 3, options: 3, kinds: ["recall", "recall", "recall"] },
+	A2: { count: 3, options: 3, kinds: ["recall", "recall", "inference"] },
+	B1: { count: 4, options: 4, kinds: ["recall", "inference", "vocab", "paraphrase"] },
+	B2: { count: 5, options: 4, kinds: ["inference", "vocab", "paraphrase", "attitude", "recall"] },
+	C1: { count: 5, options: 4, kinds: ["inference", "attitude", "paraphrase", "vocab", "inference"] },
+};
+
+/** The most questions an episode can carry. */
+export const MAX_QUESTIONS = 5;
+
+/** One comprehension question in Slovak: three or four options, one right. */
 export interface StoryQuestion {
 	q: string;
 	options: string[];
 	answer: number;
+	kind?: StoryQuestionKind;
 }
 
 export interface StoryWord {
@@ -205,7 +238,8 @@ export const KNOWN_RANK: Record<Cefr, number> = { A1: 500, A2: 1000, B1: 2000, B
 /** Below this share of known running words the draft is written again. */
 export const COVERAGE_FLOOR = 0.92;
 
-export const QUESTIONS_PER_STORY = 3;
+/** @deprecated the count is per level now: QUESTION_PLAN[level].count. */
+export const QUESTIONS_PER_STORY = QUESTION_PLAN.A1.count;
 
 /** Minutes the daily plan books for a Read task. */
 export const READ_MINUTES = 4;
@@ -326,11 +360,12 @@ export function parseStoryDraft(text: string): StoryDraft {
 		? o.questions
 				.map((q) => {
 					if (!q || typeof q !== "object") return null;
-					const qq = q as { q?: unknown; options?: unknown; answer?: unknown };
+					const qq = q as { q?: unknown; options?: unknown; answer?: unknown; kind?: unknown };
 					const options = Array.isArray(qq.options) ? qq.options.map(str).filter(Boolean) : [];
 					const answer = typeof qq.answer === "number" ? qq.answer : typeof qq.answer === "string" ? options.indexOf(qq.answer.trim()) : -1;
-					if (!str(qq.q) || options.length < 2 || answer < 0 || answer >= options.length) return null;
-					return { q: str(qq.q), options: options.slice(0, 4), answer: Math.min(answer, 3) };
+					if (!str(qq.q) || options.length < 2 || answer < 0 || answer >= Math.min(options.length, 4)) return null;
+					const kind = (STORY_QUESTION_KINDS as readonly string[]).includes(str(qq.kind)) ? (str(qq.kind) as StoryQuestionKind) : undefined;
+					return { q: str(qq.q), options: options.slice(0, 4), answer, ...(kind ? { kind } : {}) };
 				})
 				.filter((q): q is StoryQuestion => q !== null)
 		: [];
@@ -338,7 +373,7 @@ export function parseStoryDraft(text: string): StoryDraft {
 		title: str(o.title) || sentences[0]!.sk.replace(/[.!?…]+$/, ""),
 		sentences,
 		newWords,
-		questions: questions.slice(0, QUESTIONS_PER_STORY),
+		questions: questions.slice(0, MAX_QUESTIONS),
 		recap: str(o.recap),
 	};
 }

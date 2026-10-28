@@ -42,7 +42,8 @@ import {
 	KNOWN_RANK,
 	NEW_WORDS_MAX,
 	parseStoryDraft,
-	QUESTIONS_PER_STORY,
+	QUESTION_KIND_INFO,
+	QUESTION_PLAN,
 	readXp,
 	STORY_LENGTH,
 	storyId,
@@ -54,6 +55,7 @@ import {
 	type StoryDraft,
 	type StoryRecord,
 	type StorySentence,
+	type StoryQuestion,
 	type StoryToken,
 	type StoryUsage,
 	type StoryWord,
@@ -344,11 +346,11 @@ Rules that matter more than the plot:
 - Correct Slovak spelling with all diacritics. Check case endings and verb forms; a wrong form teaches a wrong form.
 - One sentence per array item; each 5 to 14 words; the whole episode within the sentence count the brief gives.
 - "en" is a plain English translation of the sentence.
-- Three comprehension questions in simple Slovak about what happened, each with three short options in Slovak and the index (0, 1 or 2) of the right one. Questions test meaning, never grammar.
+- Comprehension questions as the brief lists them: that many, of those kinds in that order, each with that many options, question and options in Slovak at the text's level. Mark each question with its "kind". Options are short and all the same shape; the wrong ones are plausible (things the text mentions, or a near meaning), never silly. The right one is at a different index each time. "answer" is the index of the right option. Questions test meaning, never grammar.
 - "recap" is one English sentence saying what happened, for the next episode's brief.
 - "title" is two to five Slovak words.
 
-Shape: {"title": "...", "sentences": [{"sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+Shape: {"title": "...", "sentences": [{"sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
 
 export interface StoryBrief {
 	episode: number;
@@ -376,6 +378,13 @@ export function episodeTheme(purposes: readonly Purpose[], episode: number): str
 	return pool[(episode - 1) % pool.length]!;
 }
 
+/** What the brief asks for in questions at a level: the plan spelled out. */
+export function questionLine(level: Cefr): string {
+	const plan = QUESTION_PLAN[level];
+	const kinds = plan.kinds.map((kind, i) => `${i + 1}. ${kind}: ${QUESTION_KIND_INFO[kind].brief}`);
+	return `Questions: ${plan.count}, each with ${plan.options} options, in this order:\n${kinds.map((l) => `  ${l}`).join("\n")}`;
+}
+
 export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date()): StoryBrief {
 	const episode = previous.length + 1;
 	const theme = episodeTheme(k.purposes, episode);
@@ -385,6 +394,7 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		`Episode ${episode}. Setting: ${theme}.`,
 		`Learner level: ${k.level}${stage ? ` (${stage.title})` : ""}, working in the chapter "${k.chapterTitle}".`,
 		`Length: ${len.min} to ${len.max} sentences. New words allowed: at most ${NEW_WORDS_MAX[k.level]}.`,
+		questionLine(k.level),
 		k.grammar.length ? `Grammar held (use it freely): ${k.grammar.join("; ")}.` : "Grammar held: only the present tense of common verbs, nouns in the nominative and the accusative after common verbs, and short questions.",
 		k.practising.length ? `Grammar being practised now (use it a few times, correctly): ${k.practising.join("; ")}.` : "",
 		k.sample.length ? `Known words to lean on: ${k.sample.join(", ")}.` : "The learner is at the very start: use only the most common words (greetings, family, food and drink, the home, going places, numbers to ten).",
@@ -440,6 +450,13 @@ async function draft(engine: PiEngine, prompt: string, usage: StoryUsage, chatId
 	return parseStoryDraft(text);
 }
 
+/** The level's share of the questions, each stamped with its kind when
+ *  the model forgot (the plan's kind at that position). */
+function withKinds(questions: readonly StoryQuestion[], level: Cefr): StoryQuestion[] {
+	const plan = QUESTION_PLAN[level];
+	return questions.slice(0, plan.count).map((q, i) => (q.kind ? q : { ...q, kind: plan.kinds[i] ?? "recall" }));
+}
+
 /** Turn a draft into the record: gloss, measure, number. */
 export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, lexicon: Lexicon | null, usage: StoryUsage, drafts: number, now: Date): StoryRecord {
 	const newWords: StoryWord[] = d.newWords.map((w) => {
@@ -468,7 +485,7 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 		theme: brief.theme,
 		createdAt: now.toISOString(),
 		sentences,
-		questions: d.questions.slice(0, QUESTIONS_PER_STORY),
+		questions: withKinds(d.questions, k.level),
 		newWords: newWords.slice(0, 12),
 		recap: d.recap || d.sentences.map((s) => s.en).join(" ").slice(0, 300),
 		coverage: Math.round(coverage * 1000) / 1000,

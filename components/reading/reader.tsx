@@ -25,7 +25,7 @@ import { BookOpenIcon, CheckIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, 
 import { cn } from "@/lib/utils";
 import { setSpeed, speak, SPEEDS, useSpeed } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { gradeAnswers, QUESTIONS_PER_STORY, readXp, type ReadingState, type StoryRecord, type StoryToken } from "@/src/core";
+import { gradeAnswers, QUESTION_KIND_INFO, readXp, type ReadingState, type StoryRecord, type StoryToken } from "@/src/core";
 
 type Stage = "writing" | "reading" | "questions" | "end" | "shelf" | "error";
 
@@ -246,7 +246,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 						data-testid="read-done"
 						ref={(el) => el?.focus()}
 					>
-						{story.questions.length ? `${QUESTIONS_PER_STORY} quick questions` : "Done"}
+						{story.questions.length ? `${story.questions.length} quick questions` : "Done"}
 					</button>
 				</div>
 			</div>
@@ -565,7 +565,7 @@ function Check({ story, answers, onAnswer }: { story: StoryRecord; answers: numb
 		<>
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
 				<div key={i} className={cn(COLUMN, "lh-rise")} data-testid="read-question">
-					<p className="font-ui text-sm font-bold text-muted-foreground">What happened?</p>
+					<p className="font-ui text-sm font-bold text-muted-foreground">{QUESTION_KIND_INFO[q.kind ?? "recall"].label}</p>
 					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground" lang="sk">
 						{q.q}
 					</h2>

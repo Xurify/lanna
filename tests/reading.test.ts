@@ -73,6 +73,13 @@ describe("the pure rules", () => {
 		assert.equal(d.sentences.length, 6);
 		assert.equal(d.questions.length, 3);
 		assert.equal(d.questions[2]!.answer, 1, "an answer given as text becomes its index");
+		const kinds = core.parseStoryDraft(JSON.stringify({ ...EPISODE, questions: [{ kind: "vocab", q: "Čo znamená „čerstvý“?", options: ["nový", "starý", "drahý", "malý"], answer: 0 }, { kind: "nonsense", q: "Kde?", options: ["a", "b"], answer: 1 }] }));
+		assert.equal(kinds.questions[0]!.kind, "vocab", "the model's kind is kept");
+		assert.equal(kinds.questions[0]!.options.length, 4, "four options from B1");
+		assert.equal(kinds.questions[1]!.kind, undefined, "an unknown kind is dropped, the question kept");
+		assert.deepEqual(core.QUESTION_PLAN.A1.kinds, ["recall", "recall", "recall"]);
+		assert.ok(core.QUESTION_PLAN.B1.kinds.includes("inference") && core.QUESTION_PLAN.B1.options === 4);
+		assert.ok(core.QUESTION_PLAN.C1.kinds.includes("attitude") && core.QUESTION_PLAN.C1.count === 5);
 		assert.throws(() => core.parseStoryDraft("Sorry, I cannot do that."), /no JSON/);
 		assert.throws(() => core.parseStoryDraft('{"title": "x", "sentences": [{"sk": "Ahoj."}]}'), /sentences/);
 	});
@@ -157,6 +164,10 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(story.sentences.length, 6);
 		assert.equal(story.questions.length, 3);
 		assert.equal(story.questions[2]!.answer, 1);
+		assert.deepEqual(story.questions.map((q) => q.kind), ["recall", "recall", "recall"], "an A1 episode's questions are literal, stamped from the plan");
+		assert.match(reading.questionLine("B1"), /4 options/);
+		assert.match(reading.questionLine("B1"), /inference/);
+		assert.match(reading.questionLine("A1"), /3 options/);
 		assert.ok(story.coverage > 0.6 && story.coverage <= 1, `coverage ${story.coverage}`);
 		assert.equal(story.drafts, 1);
 		assert.equal(story.usage.model, "faux:story");
