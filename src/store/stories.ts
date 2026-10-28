@@ -63,6 +63,8 @@ export function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 		title: story.title,
 		level: story.level,
 		theme: story.theme,
+		...(story.genre ? { genre: story.genre } : {}),
+		...(story.topic ? { topic: story.topic } : {}),
 		createdAt: story.createdAt,
 		wordCount: story.wordCount,
 		coverage: story.coverage,

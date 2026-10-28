@@ -62,6 +62,65 @@ export interface StorySentence {
 	sk: string;
 	en: string;
 	tokens: StoryToken[];
+	/** Who says it: "narrator", or a name from the story's cast. A line
+	 *  of dialogue is spoken in that character's voice. */
+	who?: string;
+}
+
+/** A person in the story. The voice is a TTS voice id chosen when the
+ *  story is kept (src/server/voices.ts), stable for a recurring name. */
+export interface StoryCharacter {
+	name: string;
+	gender: "f" | "m";
+	age: "child" | "young" | "adult" | "old";
+	voice?: string;
+}
+
+// ─── Genres ─────────────────────────────────────────────────────────────────
+
+/** What kinds of text the shelf holds. Robo is the running series; the
+ *  rest are stand-alone pieces so a learner meets the text types the CEFR
+ *  describes for the level (messages and dialogues at A1, diary and
+ *  tales at A2, news and interviews at B1, opinion and history at B2). */
+export type StoryGenre = "robo" | "dialogue" | "message" | "diary" | "folk" | "travel" | "fable" | "news" | "interview" | "work" | "opinion" | "history";
+
+export interface GenreInfo {
+	id: StoryGenre;
+	label: string;
+	/** The lowest level the genre is written at. */
+	from: Cefr;
+	/** What the model is told to write. */
+	brief: string;
+}
+
+export const STORY_GENRES: readonly GenreInfo[] = [
+	{ id: "robo", label: "Robo in Bratislava", from: "A1", brief: "an episode of the running series about Robo (see the earlier recaps); mostly dialogue with a little narration" },
+	{ id: "dialogue", label: "A conversation", from: "A1", brief: "a stand-alone conversation between two people in an everyday place (a shop, a bus, a kitchen, a reception desk); almost every line is speech, with one narrator line to set the scene" },
+	{ id: "message", label: "Messages", from: "A1", brief: "an exchange of short text messages or a short email and its reply between two named people; each sentence is one message or one line of a message" },
+	{ id: "diary", label: "A diary page", from: "A2", brief: "a diary entry written in the first person by a named person about one day; narration only" },
+	{ id: "folk", label: "A folk tale", from: "A2", brief: "a Slovak folk tale or legend retold simply (a water sprite, a castle, a shepherd, the Tatras); narration with a few lines of speech" },
+	{ id: "travel", label: "A place in Slovakia", from: "A2", brief: "a short piece about a real Slovak town, region or custom, as a friendly guide would tell it; narration only" },
+	{ id: "fable", label: "A fable", from: "A2", brief: "a short fable with animals and a one-line moral at the end; narration with lines of speech" },
+	{ id: "news", label: "A news item", from: "B1", brief: "a short local news item in plain newspaper Slovak about an everyday event (a new tram line, a festival, a lost dog found); one quoted person" },
+	{ id: "interview", label: "An interview", from: "B1", brief: "a short interview: a named interviewer's questions and a named person's answers about their work or hobby" },
+	{ id: "work", label: "At work", from: "B1", brief: "a scene at work (a meeting, a phone call with a client, an email thread) with two or three named colleagues; mostly speech" },
+	{ id: "opinion", label: "An opinion piece", from: "B2", brief: "a short opinion column that argues one point about life in Slovakia and admits one counter-argument; narration only" },
+	{ id: "history", label: "From history", from: "B2", brief: "a short piece about a person, place or event from Slovak history, told as a story; narration with at most two lines of speech" },
+];
+
+export function genreInfo(id: string): GenreInfo {
+	return STORY_GENRES.find((g) => g.id === id) ?? STORY_GENRES[0]!;
+}
+
+const LEVEL_ORDER: readonly Cefr[] = ["A1", "A2", "B1", "B2", "C1"];
+
+export function levelIndex(level: Cefr): number {
+	return Math.max(0, LEVEL_ORDER.indexOf(level));
+}
+
+/** The genres written at a level. */
+export function genresAt(level: Cefr): GenreInfo[] {
+	return STORY_GENRES.filter((g) => levelIndex(g.from) <= levelIndex(level));
 }
 
 /** What a comprehension question asks for. The kinds grow with the
@@ -140,6 +199,14 @@ export interface StoryRecord {
 	chapter: string;
 	/** The setting the episode was asked to use (from the learner's purposes). */
 	theme: string;
+	/** The kind of text (STORY_GENRES); absent on the first episodes = "robo". */
+	genre?: StoryGenre;
+	/** One short line on what it is about, for variety across the shelf. */
+	topic?: string;
+	/** The people in it, each with the voice that reads their lines. */
+	cast?: StoryCharacter[];
+	/** The voice that reads the narration. */
+	narratorVoice?: string;
 	createdAt: string;
 	sentences: StorySentence[];
 	questions: StoryQuestion[];
@@ -164,6 +231,8 @@ export interface StoryIndexEntry {
 	title: string;
 	level: Cefr;
 	theme: string;
+	genre?: StoryGenre;
+	topic?: string;
 	createdAt: string;
 	wordCount: number;
 	coverage: number;
@@ -206,9 +275,125 @@ export interface ReadingState {
 	library: LibraryEntry[];
 	/** A model is configured, so a new episode can be written. */
 	canWrite: boolean;
-	generating: boolean;
+	/** A story is being written right now (in the background or for the
+	 *  reader): what, and how far the text has come. */
+	generating: WritingProgress | null;
 	/** Episodes read today (the daily plan's Read task). */
 	readToday: number;
+	/** Why `current` was picked (the picker's reason), for the shelf. */
+	pick?: PickReason;
+}
+
+/** A story being written: enough for a screen to show the sentences as
+ *  they arrive. */
+export interface WritingProgress {
+	level: Cefr;
+	genre: StoryGenre;
+	startedAt: string;
+	/** The Slovak sentences found in the model's text so far. */
+	sentences: string[];
+	/** Writing for the reader now (true) or filling the shelf (false). */
+	wanted: boolean;
+}
+
+export interface PickReason {
+	score: number;
+	coverage: number;
+	line: string;
+}
+
+// ─── The shelf ──────────────────────────────────────────────────────────────
+
+/** How many unread stories the shelf keeps ready at the learner's own
+ *  level and at the levels either side of it. */
+export const SHELF_OWN = 3;
+export const SHELF_NEAR = 1;
+/** The most stories written in one day for the shelf (the spend guard). */
+export const SHELF_DAILY_CAP = 8;
+
+/** Which (level, genre) to write next so the shelf stays stocked: the
+ *  learner's level first until it holds SHELF_OWN unread stories, then one
+ *  at the level below and one above; genres rotate so no level holds two
+ *  unread stories of one kind, and Robo episodes stay in the mix. */
+export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: StoryGenre }[], recentGenres: readonly StoryGenre[] = []): Array<{ level: Cefr; genre: StoryGenre }> {
+	const li = levelIndex(level);
+	const wants: Array<{ level: Cefr; want: number }> = [{ level, want: SHELF_OWN }];
+	if (li > 0) wants.push({ level: LEVEL_ORDER[li - 1]!, want: SHELF_NEAR });
+	if (li < LEVEL_ORDER.length - 1) wants.push({ level: LEVEL_ORDER[li + 1]!, want: SHELF_NEAR });
+	const out: Array<{ level: Cefr; genre: StoryGenre }> = [];
+	for (const w of wants) {
+		const have = unread.filter((u) => u.level === w.level).map((u) => u.genre ?? "robo");
+		const taken = new Set<StoryGenre>([...have, ...out.filter((o) => o.level === w.level).map((o) => o.genre)]);
+		for (let n = have.length; n < w.want; n++) {
+			const pool = genresAt(w.level).map((g) => g.id).filter((g) => !taken.has(g));
+			// Robo first when the level has no episode waiting, then the
+			// genre read least recently.
+			const pick = pool.includes("robo") && !taken.has("robo") ? "robo" : [...pool].sort((a, b) => lastSeen(a, recentGenres) - lastSeen(b, recentGenres))[0];
+			if (!pick) break;
+			taken.add(pick);
+			out.push({ level: w.level, genre: pick });
+		}
+	}
+	return out;
+}
+
+function lastSeen(genre: StoryGenre, recent: readonly StoryGenre[]): number {
+	const i = recent.lastIndexOf(genre);
+	return i < 0 ? -1 : recent.length - i;
+}
+
+/** Share of a kept story's words the learner knows NOW (the known set
+ *  grows; a story written for a level stays what it is). Words the story
+ *  teaches on purpose count as known, as do names, numbers and grammar
+ *  words. */
+export function storyCoverage(story: Pick<StoryRecord, "sentences" | "newWords">, known: ReadonlySet<string>): number {
+	const taught = new Set(story.newWords.map((w) => w.slug).filter((x): x is string => !!x));
+	const words = wordTokens(story.sentences);
+	if (words.length === 0) return 1;
+	const ok = words.filter((t) => {
+		if (t.slug) return known.has(t.slug) || taught.has(t.slug);
+		if (t.cat === "Grammar") return true;
+		return !t.fresh;
+	}).length;
+	return ok / words.length;
+}
+
+export interface PickInput {
+	level: Cefr;
+	known: ReadonlySet<string>;
+	/** Genres of the last readings, newest last. */
+	recentGenres: readonly StoryGenre[];
+	/** Topics of the last readings, newest last. */
+	recentTopics: readonly string[];
+}
+
+/** The best unread story for this learner, or null when nothing on the
+ *  shelf fits well enough and a new one should be written. The score
+ *  weighs how many words the learner knows (the 95–98% band reads best),
+ *  the level the text was written for, and variety against the last few
+ *  readings; Robo episodes are offered in order. */
+export function pickStory(stories: readonly StoryRecord[], input: PickInput): { story: StoryRecord; reason: PickReason } | null {
+	const unread = stories;
+	const roboNext = Math.min(...unread.filter((s) => (s.genre ?? "robo") === "robo").map((s) => s.episode), Infinity);
+	let best: { story: StoryRecord; reason: PickReason } | null = null;
+	for (const story of unread) {
+		const genre = story.genre ?? "robo";
+		if (genre === "robo" && story.episode > roboNext) continue; // a later episode waits for the earlier one
+		const coverage = storyCoverage(story, input.known);
+		// 0.96 is the sweet spot; each 0.01 away costs 0.08, so 0.92 → 0.68 and 0.88 → 0.36.
+		const fit = Math.max(0, 1 - Math.abs(coverage - 0.96) * 8);
+		const dist = Math.abs(levelIndex(story.level) - levelIndex(input.level));
+		const levelScore = dist === 0 ? 1 : dist === 1 ? 0.7 : 0.3;
+		const recentG = input.recentGenres.slice(-2);
+		const variety = (recentG.includes(genre) ? 0 : 0.15) + (story.topic && input.recentTopics.slice(-3).includes(story.topic) ? 0 : 0.1);
+		const series = genre === "robo" ? 0.1 : 0;
+		const score = Math.round((fit * 0.55 + levelScore * 0.25 + variety + series) * 100) / 100;
+		const line = `${Math.round(coverage * 100)} of 100 words known · ${story.level} ${genreInfo(genre).label.toLowerCase()}${recentG.includes(genre) ? " (read lately)" : ""}`;
+		if (!best || score > best.reason.score) best = { story, reason: { score, coverage, line } };
+	}
+	// Too hard or too easy to be worth it: write a new one instead.
+	if (best && (best.reason.score < 0.5 || best.reason.coverage < 0.86)) return null;
+	return best;
 }
 
 // ─── Level rules ────────────────────────────────────────────────────────────
@@ -324,7 +509,9 @@ export function knownCoverage(sentences: readonly { tokens: readonly StoryToken[
 /** The JSON the generator asks the model for. */
 export interface StoryDraft {
 	title: string;
-	sentences: Array<{ sk: string; en: string }>;
+	topic: string;
+	cast: StoryCharacter[];
+	sentences: Array<{ sk: string; en: string; who?: string }>;
 	newWords: Array<{ sk: string; en: string }>;
 	questions: StoryQuestion[];
 	recap: string;
@@ -365,10 +552,35 @@ export function parseStoryDraft(text: string): StoryDraft {
 	}
 	const o = raw as Partial<Record<keyof StoryDraft, unknown>>;
 	const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+	const cast: StoryCharacter[] = Array.isArray(o.cast)
+		? o.cast
+				.map((c) => {
+					if (!c || typeof c !== "object") return null;
+					const cc = c as { name?: unknown; gender?: unknown; age?: unknown };
+					const name = str(cc.name);
+					if (!name) return null;
+					const g = str(cc.gender).toLowerCase();
+					const a = str(cc.age).toLowerCase();
+					return {
+						name,
+						gender: g.startsWith("f") || g === "woman" || g === "girl" ? "f" : "m",
+						age: a === "child" || a === "young" || a === "old" ? a : "adult",
+					} as StoryCharacter;
+				})
+				.filter((c): c is StoryCharacter => c !== null)
+				.slice(0, 6)
+		: [];
+	const names = new Set(cast.map((c) => c.name.toLocaleLowerCase()));
 	const sentences = Array.isArray(o.sentences)
 		? o.sentences
-				.map((s) => (s && typeof s === "object" ? { sk: str((s as { sk?: unknown }).sk), en: str((s as { en?: unknown }).en) } : null))
-				.filter((s): s is { sk: string; en: string } => !!s && s.sk.length > 0)
+				.map((s) => {
+					if (!s || typeof s !== "object") return null;
+					const ss = s as { sk?: unknown; en?: unknown; who?: unknown };
+					const who = str(ss.who);
+					const known = who && who.toLocaleLowerCase() !== "narrator" && names.has(who.toLocaleLowerCase()) ? cast.find((c) => c.name.toLocaleLowerCase() === who.toLocaleLowerCase())!.name : undefined;
+					return { sk: str(ss.sk), en: str(ss.en), ...(known ? { who: known } : {}) };
+				})
+				.filter((s): s is { sk: string; en: string; who?: string } => !!s && s.sk.length > 0)
 		: [];
 	if (sentences.length < 3) throw new Error(`the draft has ${sentences.length} sentences`);
 	const newWords = Array.isArray(o.newWords)
@@ -379,6 +591,8 @@ export function parseStoryDraft(text: string): StoryDraft {
 	const questions = questionsFrom(o.questions);
 	return {
 		title: str(o.title) || sentences[0]!.sk.replace(/[.!?…]+$/, ""),
+		topic: str(o.topic).slice(0, 80),
+		cast,
 		sentences,
 		newWords,
 		questions: questions.slice(0, MAX_QUESTIONS),

@@ -14,6 +14,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
+import type { StoryGenre, StoryRecord } from "../src/core/reading.ts";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-reading-"));
 process.env.LH_DATA_DIR = TMP_DATA;
@@ -150,9 +151,65 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(k.met.size, 0);
 		const brief = reading.storyBrief(k, [], []);
 		assert.equal(brief.episode, 1);
-		assert.match(brief.prompt, /Episode 1/);
+		assert.match(brief.prompt, /episode 1 of the Robo series/);
 		assert.match(brief.prompt, /first episode/);
 		assert.match(brief.prompt, /6 to 8 sentences/);
+		const diary = reading.storyBrief(k, [{ id: "x", series: "diary", episode: 0, title: "t", level: "A2", theme: "a diary page", genre: "diary", topic: "a rainy Monday", createdAt: "", wordCount: 40, coverage: 0.95, newWords: [], model: "m" }], [], new Date(), "diary");
+		assert.equal(diary.episode, 0);
+		assert.match(diary.prompt, /diary entry/);
+		assert.match(diary.prompt, /write about something else\): a rainy Monday/);
+		assert.doesNotMatch(diary.prompt, /first episode/);
+	});
+
+	it("the shelf plan: the learner's level first, one each side, genres rotate, Robo first", () => {
+		const needs = core.shelfNeeds("A2", []);
+		assert.deepEqual(needs.map((n) => n.level), ["A2", "A2", "A2", "A1", "B1"]);
+		assert.equal(needs[0]!.genre, "robo");
+		assert.equal(new Set(needs.filter((n) => n.level === "A2").map((n) => n.genre)).size, 3, "three different genres at the own level");
+		const stocked = core.shelfNeeds("A2", [{ level: "A2", genre: "robo" }, { level: "A2", genre: "dialogue" }, { level: "A2", genre: "diary" }, { level: "A1", genre: "robo" }, { level: "B1", genre: "news" }]);
+		assert.deepEqual(stocked, [], "a full shelf needs nothing");
+		assert.ok(core.shelfNeeds("A1", []).every((n) => n.level !== "A1" || core.genreInfo(n.genre).from === "A1"), "A1 only gets A1 genres");
+		assert.ok(!core.shelfNeeds("C1", []).some((n) => n.level === "C2" as never));
+	});
+
+	it("the picker: the best-fitting unread story, Robo in order, none when too hard", () => {
+		const mk = (id: string, level: "A1" | "A2" | "B1", genre: StoryGenre, episode: number, fresh: number): StoryRecord => ({
+			id, lang: "sk", series: genre, episode, title: id, level, chapter: "hello", theme: "t", genre, createdAt: "2026-10-28T00:00:00Z", drafts: 1, wordCount: 20, coverage: 1, recap: "", usage: { model: "m", steps: [] }, questions: [], newWords: [],
+			sentences: [{ sk: "x", en: "x", tokens: Array.from({ length: 20 }, (_, i) => ({ text: "w", word: true, slug: i < fresh ? `unk${i}` : `k${i}`, ...(i < fresh ? { fresh: true } : {}) })) }],
+		});
+		const known = new Set(Array.from({ length: 20 }, (_, i) => `k${i}`));
+		const input = { level: "A2" as const, known, recentGenres: ["dialogue" as const], recentTopics: [] };
+		const good = mk("ep-2", "A2", "robo", 2, 1); // 95% known
+		const later = mk("ep-3", "A2", "robo", 3, 0);
+		const hard = mk("news", "B1", "news", 0, 6); // 70% known
+		const dialogue = mk("dlg", "A2", "dialogue", 0, 1);
+		const pick = core.pickStory([later, hard, dialogue, good], input);
+		assert.equal(pick?.story.id, "ep-2", "episode 2 before 3, Robo bonus over the dialogue just read");
+		assert.ok(pick!.reason.coverage > 0.9 && pick!.reason.line.includes("95 of 100"));
+		assert.equal(core.pickStory([hard], input), null, "70% known is not readable: write a new one");
+		assert.equal(core.pickStory([], input), null);
+		assert.equal(core.storyCoverage(good, known), 0.95);
+	});
+
+	it("the model's text as it streams: the Slovak sentences so far", () => {
+		const partial = '{"title": "Ahoj", "cast": [{"name": "Robo"}], "sentences": [{"who": "narrator", "sk": "Robo je doma.", "en": "Robo is at home."}, {"who": "Robo", "sk": "„Ahoj, mama!“ hovor';
+		assert.deepEqual(reading.sentencesSoFar(partial), ["Robo je doma."], "a sentence is listed once its closing quote has arrived");
+		assert.deepEqual(reading.sentencesSoFar(partial + 'í.", "en": "x"}'), ["Robo je doma.", "„Ahoj, mama!“ hovorí."]);
+	});
+
+	it("cast and speakers: parsed from the draft, each character gets a stable voice, the narrator its own", async () => {
+		const { assignVoices, NARRATOR_VOICE, VOICE_PALETTE } = await import("../src/server/voices.ts");
+		const d = core.parseStoryDraft(JSON.stringify({ ...EPISODE, cast: [{ name: "Robo", gender: "m", age: "young" }, { name: "Eva", gender: "female", age: "old" }], sentences: [{ who: "narrator", sk: "Robo je doma.", en: "x" }, { who: "Eva", sk: "Ahoj, Robo!", en: "x" }, { who: "Nobody", sk: "Kto?", en: "x" }] }));
+		assert.deepEqual(d.cast, [{ name: "Robo", gender: "m", age: "young" }, { name: "Eva", gender: "f", age: "old" }]);
+		assert.deepEqual(d.sentences.map((s) => s.who), [undefined, "Eva", undefined], "narrator and unknown names carry no speaker");
+		const voiced = assignVoices(d.cast);
+		assert.equal(voiced.length, 2);
+		assert.ok(voiced.every((c) => c.voice && c.voice !== NARRATOR_VOICE), "characters never use the narrator's voice");
+		assert.notEqual(voiced[0]!.voice, voiced[1]!.voice);
+		assert.equal(VOICE_PALETTE.find((v) => v.id === voiced[0]!.voice)?.gender, "m");
+		assert.equal(VOICE_PALETTE.find((v) => v.id === voiced[1]!.voice)?.age, "old");
+		assert.equal(assignVoices([{ name: "robo", gender: "m", age: "young" }])[0]!.voice, voiced[0]!.voice, "the same name gets the same voice in every story");
+		assert.equal(assignVoices(d.cast, new Set([NARRATOR_VOICE]))[0]!.voice, NARRATOR_VOICE, "with no usable voice in the account, the narrator reads it");
 	});
 
 	it("writes, glosses, measures and keeps the episode; usage is on the record", async () => {
@@ -173,6 +230,8 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(story.usage.model, "faux:story");
 		assert.equal(story.usage.steps.length, 1);
 		assert.ok(story.newWords.some((w) => w.slug === "kaviaren"), "the introduced word is on the list with its slug");
+		assert.equal(story.genre, "robo");
+		assert.ok(Array.isArray(story.cast) && story.narratorVoice, "the record carries its cast and narrator voice");
 		assert.ok(fs.existsSync(path.join(PATHS.stories, "ep-001-robo-pije-kavu.json")));
 		assert.ok(fs.existsSync(path.join(PATHS.stories, "README.md")), "the folder explains itself");
 		const index = storyStore.list();
@@ -243,16 +302,37 @@ describe("an episode on a scripted engine", () => {
 		assert.match(story.recap, /coffee/);
 	});
 
+	it("fills the shelf in the background: one story per need, varied genres, the day's cap, and the picker serves it", async () => {
+		const piece = (title: string, genre: string) => fauxAssistantMessage(JSON.stringify({ ...EPISODE, title, topic: `${genre} topic`, cast: [{ name: "Robo", gender: "m", age: "young" }], sentences: EPISODE.sentences.map((x, i) => ({ ...x, who: i === 0 ? "narrator" : "Robo" })) }));
+		const before = storyStore.list().length;
+		const engine = fauxEngine(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"].map((t) => piece(`Príbeh ${t}`, t)));
+		const written = await reading.fillShelf({ engine, model: "faux:shelf", now: new Date("2026-10-29T09:00:00Z") });
+		const list = storyStore.list();
+		assert.ok(written >= 3 && written <= core.SHELF_DAILY_CAP, `wrote ${written}`);
+		assert.equal(list.length, before + written);
+		const fresh = list.slice(before);
+		assert.ok(reading.library().filter((s) => s.reads === 0 && s.level === "A1").length >= 3, "three unread at the learner's level");
+		assert.ok(fresh.some((s) => s.level === "A2"), "one at the level above");
+		assert.ok(new Set(reading.library().filter((s) => s.reads === 0 && s.level === "A1").map((s) => s.genre ?? "robo")).size >= 3, "different genres at the own level");
+		assert.ok(fresh.every((s) => s.genre === "robo" || s.id.startsWith(`${s.genre}-`)), "stand-alone pieces are named by genre");
+		assert.equal(await reading.fillShelf({ engine, now: new Date("2026-10-29T09:00:00Z") }), 0, "a stocked shelf writes nothing");
+		const state = reading.readingState(0, new Date("2026-10-29T09:00:00Z"));
+		assert.ok(state.current, "the picker has something to offer");
+		assert.ok(state.pick && state.pick.coverage > 0.9, "and says why");
+		assert.equal(state.generating, null);
+		assert.equal(storyStore.get(state.current!.id)!.sentences[1]!.who, "Robo", "speakers are kept on the sentences");
+	});
+
 	it("the spending report and the export see the episodes", () => {
 		const report = usageReport(new Date("2026-10-29T12:00:00Z"));
-		assert.equal(report.stories.count, 2);
-		assert.equal(report.stories.unpriced, 2, "a faux model has no catalog price");
+		assert.ok(report.stories.count >= 5);
+		assert.equal(report.stories.unpriced, report.stories.count, "a faux model has no catalog price");
 		assert.equal(report.storiesUsd, 0);
 		const { dir, summary } = exportCorpus({ stamp: "reading-test", now: new Date("2026-10-29T12:00:00Z") });
-		assert.equal(summary.counts.stories, 2);
+		assert.equal(summary.counts.stories, report.stories.count);
 		assert.equal(summary.counts.readings, 1);
 		const file = JSON.parse(fs.readFileSync(path.join(dir, "stories.json"), "utf-8")) as { stories: unknown[]; readings: unknown[] };
-		assert.equal(file.stories.length, 2);
+		assert.equal(file.stories.length, report.stories.count);
 		assert.equal(file.readings.length, 1);
 		assert.match(fs.readFileSync(path.join(dir, "README.md"), "utf-8"), /stories\.json/);
 	});

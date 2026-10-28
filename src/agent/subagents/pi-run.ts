@@ -38,6 +38,9 @@ export interface SubagentRunOptions {
 	onToolStart?: (toolName: string, args: unknown) => void;
 	/** Per completed assistant message (extraction's step log). */
 	onAssistantMessage?: (message: AssistantMessage, step: number) => void;
+	/** The assistant's text so far, on every stream update (a screen that
+	 *  shows a draft as it is written). */
+	onPartialText?: (text: string) => void;
 	/** Extra stop rule (extractor: stop after a clean submit). */
 	shouldStop?: (message: AssistantMessage, toolResults: ToolResultMessage[]) => boolean;
 	/** Debug: when set AND LH_PROVIDER_EVENTS=1, raw provider stream
@@ -113,6 +116,17 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 						opts.onUsage?.(m.usage);
 						opts.onAssistantMessage?.(m, step);
 						if (m.stopReason === "error") errorMessage = m.errorMessage;
+					}
+					break;
+				case "message_update":
+					if (opts.onPartialText && (event.message as { role?: string }).role === "assistant") {
+						const m = event.message as AssistantMessage;
+						opts.onPartialText(
+							m.content
+								.filter((c): c is { type: "text"; text: string } => c.type === "text")
+								.map((c) => c.text)
+								.join(""),
+						);
 					}
 					break;
 				case "tool_execution_start":

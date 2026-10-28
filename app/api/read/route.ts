@@ -1,7 +1,9 @@
 /**
- * GET /api/read?tz=<minutes> — the reading state: the episode to read now
- * (the newest unread one), the library with every episode's readings, and
- * whether a new episode can be written. ?id=<story> — one story.
+ * GET /api/read?tz=<minutes> — the reading state: the story to read now
+ * (the shelf's best fit for the learner), the library with every story's
+ * readings, whether a new one can be written, and what is being written in
+ * the background. ?id=<story> — one story. ?progress — the story being
+ * written right now, sentence by sentence.
  * POST /api/read {action: "next"} — the next episode: the newest unread
  * one, or a new one written on the cheap model slot and kept under
  * data/profiles/<language>/stories/ (src/server/reading.ts).
@@ -10,7 +12,7 @@
  * review deck, and a fresh summary.
  */
 
-import { nextStory, readingState, recordRead, storyStore } from "@/src/server";
+import { generating, nextStory, readingState, recordRead, storyStore } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,9 @@ function tzOf(v: unknown): number | undefined {
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
+	// The sentences of the story being written so far (the writing screen
+	// polls this and shows them as they arrive).
+	if (url.searchParams.get("progress") !== null) return Response.json({ generating: generating() });
 	const id = url.searchParams.get("id");
 	if (id) {
 		const story = storyStore.get(id);

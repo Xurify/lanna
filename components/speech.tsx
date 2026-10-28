@@ -116,11 +116,22 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 
 /** Speak `text` in the active language (or `lang`). Resolves when playback
  *  ends; a new call stops whatever was playing. */
-export async function speak(text: string, lang?: LanguageInfo): Promise<void> {
+export interface SpeakOptions {
+	/** A voice id (a story character) or "female" | "male". */
+	voice?: string;
+	gender?: "female" | "male";
+	style?: "narration" | "dialogue";
+}
+
+export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOptions = {}): Promise<void> {
 	const language = lang ?? (await activeLanguage());
 	const rate = currentSpeed();
 	current?.pause();
-	const url = `/api/tts?lang=${language.code}&text=${encodeURIComponent(text)}`;
+	const q = new URLSearchParams({ lang: language.code, text });
+	if (opts.voice) q.set("voice", opts.voice);
+	if (opts.gender) q.set("gender", opts.gender);
+	if (opts.style) q.set("style", opts.style);
+	const url = `/api/tts?${q.toString()}`;
 	const res = await fetch(url).catch(() => null);
 	if (!res || res.status === 204 || !res.ok) return speakWithBrowser(text, language, rate);
 	const blob = await res.blob();
