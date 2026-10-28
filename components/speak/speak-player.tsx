@@ -55,6 +55,9 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 	const [session, setSession] = useState<SpeakSession | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
+	// Browser globals are read after mount so server and client agree.
+	const [micOk, setMicOk] = useState(false);
+	useEffect(() => setMicOk(micSupported()), []);
 	const [draft, setDraft] = useState("");
 	const [sending, setSending] = useState(false);
 	const [listening, setListening] = useState(false);
@@ -304,7 +307,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 	const counts = speakCounts(session.turns);
 	const lastTutor = [...session.turns].reverse().find((t) => t.role === "tutor");
 	const scene = state?.scenes.find((s) => s.id === session.scene);
-	const canMic = !!state?.stt && micSupported();
+	const canMic = !!state?.stt && micOk;
 
 	return (
 		<TaskFrame strip={false}>

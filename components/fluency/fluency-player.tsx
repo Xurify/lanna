@@ -386,7 +386,15 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 	const [elapsed, setElapsed] = useState(0);
 	const [level, setLevel] = useState(0);
 	const [outcome, setOutcome] = useState<FastOutcome | null>(null);
-	const [useMic, setUseMic] = useState(stt && micSupported());
+	// The mic check reads browser globals: decided after mount so the
+	// server and the first client render agree (no hydration mismatch).
+	const [micOk, setMicOk] = useState(false);
+	const [useMic, setUseMic] = useState(false);
+	useEffect(() => {
+		const ok = micSupported();
+		setMicOk(ok);
+		setUseMic(stt && ok);
+	}, [stt]);
 	const startedAt = useRef(Date.now());
 	const passStart = useRef(0);
 	const recorder = useRef<Recorder | null>(null);
@@ -729,7 +737,7 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 					) : (
 						<>
 							<div className="flex items-center gap-3">
-								<button type="button" onClick={() => setUseMic((v) => !v)} disabled={!stt || !micSupported()} className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50" aria-pressed={useMic} title={stt ? "Use the microphone to time each pass" : "Add an ElevenLabs or Deepgram key for the microphone"}>
+								<button type="button" onClick={() => setUseMic((v) => !v)} disabled={!stt || !micOk} className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50" aria-pressed={useMic} title={stt ? "Use the microphone to time each pass" : "Add an ElevenLabs or Deepgram key for the microphone"}>
 									{useMic ? <MicIcon className="size-4" /> : <MicOffIcon className="size-4" />}
 									{useMic ? "Mic on" : "Mic off"}
 								</button>
