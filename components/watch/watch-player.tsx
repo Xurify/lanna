@@ -685,7 +685,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 						},
 						onError: (e: { data: number }) => {
 							if (!alive) return;
-							setPlayerError(e.data === 101 || e.data === 150 ? "The owner of this video does not allow it to be embedded. Open it on YouTube and read the lines here." : e.data === 100 ? "This video was removed or is private." : "YouTube could not play this video.");
+							setPlayerError(e.data === 101 || e.data === 150 ? "The owner of this video does not allow it to be embedded. Open it on YouTube and read the lines here." : e.data === 100 ? "This video was removed or is private." : `YouTube could not play this video (error ${e.data}). The lines still work here.`);
 						},
 					},
 				});
@@ -948,15 +948,16 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 								<LoaderCircleIcon className="size-8 animate-spin" />
 							</div>
 						)}
-						{playerError && (
-							<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-white">
-								<p className="font-prose text-base">{playerError}</p>
-								<a href={video.url} target="_blank" rel="noreferrer" className={cn(SECONDARY, "border-white/40 text-white hover:bg-white/10")}>
-									Open on YouTube
-								</a>
-							</div>
-						)}
 					</div>
+					{/* The player's own message stays readable; ours sits under it. */}
+					{playerError && (
+						<div className="mx-auto mt-3 flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player-error">
+							<p className="font-prose text-sm text-foreground">{playerError}</p>
+							<a href={video.url} target="_blank" rel="noreferrer" className={cn(SECONDARY, "h-9 px-3 text-sm")}>
+								Open on YouTube
+							</a>
+						</div>
+					)}
 
 					{/* Both subtitles */}
 					<div className="mt-4 min-h-[7.5rem]" data-word-column data-testid="watch-subtitles">
