@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CEFR_ORDER, GUIDED_HOURS, languageName, weeklyHours, type Cefr, type Lang } from "@/src/core";
@@ -279,6 +280,13 @@ export function HoursSheet({
 					))}
 				</ol>
 				<p className="mt-4 font-prose text-xs text-muted-foreground">Guided hours mean lessons and tutoring with feedback; the bands assume about as much again in reading, listening and review on your own. All of it is a planning estimate.</p>
+				<p className="mt-2 font-prose text-xs text-muted-foreground">
+					Hours say when a level lands.{" "}
+					<Link href="/milestones" className="underline hover:text-foreground" data-testid="hours-milestones">
+						When can I…?
+					</Link>{" "}
+					says when real situations do: a vlog, the news, a film, the in-laws.
+				</p>
 			</div>
 		</div>
 	);

@@ -130,6 +130,9 @@ export function DailyPlan({
 					<button type="button" onClick={() => setHoursOpen(true)} className="underline hover:text-foreground" data-testid="goal-hours">
 						How long does it take?
 					</button>
+					<Link href="/milestones" className="underline hover:text-foreground" data-testid="goal-milestones">
+						When can I…?
+					</Link>
 				</div>
 			</div>
 			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={goal?.minutesPerDay ?? 30} daysPerWeek={goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} target={goal?.level ?? "B2"} hoursDone={projection?.hoursDone ?? 0} languages={knownLanguages(goal)} />
