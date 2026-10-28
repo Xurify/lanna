@@ -253,6 +253,8 @@ describe("classifyKeys — the Keys section's two-group projection", () => {
 		assert.deepEqual(out.toolRows.map((r) => r.id), [
 			"ELEVENLABS_API_KEY",
 			"DEEPGRAM_API_KEY",
+			"AZURE_SPEECH_KEY",
+			"AZURE_SPEECH_REGION",
 			"TAVILY_API_KEY",
 			"BRAVE_API_KEY",
 		]);
