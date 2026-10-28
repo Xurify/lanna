@@ -128,7 +128,7 @@ test("the target level bounds the count; hours and the projection move with prog
 	assert.ok(faster.etaPlanned! < p.etaPlanned!);
 });
 
-test("the daily plan: review first, the Continue lesson, strengthen the weakest, words, speak; it ticks off from the ledger", () => {
+test("the daily plan: review first, the Continue lesson, strengthen the weakest, words, read, speak; it ticks off from the ledger", () => {
 	const evidence: Record<string, UnitEvidence> = { present: { lessons: 2, reps: 30, correct: 24 }, "acc-fem": { lessons: 2, reps: 24, correct: 14 } };
 	const state = curriculumState(evidence, "B2");
 	const next = nextLessonUnit(state);
@@ -136,7 +136,7 @@ test("the daily plan: review first, the Continue lesson, strengthen the weakest,
 	const plan = dailyPlan({ ...base, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } });
 	assert.deepEqual(
 		plan.tasks.map((t) => t.id),
-		["review", "lesson", "strengthen", "words", "speak"],
+		["review", "lesson", "strengthen", "words", "read", "speak"],
 	);
 	assert.equal(plan.tasks[1]!.unit, next);
 	assert.equal(plan.tasks[2]!.unit, "acc-fem");
@@ -146,7 +146,7 @@ test("the daily plan: review first, the Continue lesson, strengthen the weakest,
 		...base,
 		evidence: { ...evidence, [next]: { lessons: (evidence[next]?.lessons ?? 0) + 1, reps: 12, correct: 11 }, "acc-fem": { lessons: 3, reps: 36, correct: 25 }, "lx-greetings": { lessons: 1, reps: 12, correct: 12 } },
 		review: { due: 0, newLeft: 0, available: true },
-		day: { units: { [next]: 1, "acc-fem": 1, "lx-greetings": 1 }, reviews: 20, blitz: 0, talks: 0, stories: 0, tutors: 1 },
+		day: { units: { [next]: 1, "acc-fem": 1, "lx-greetings": 1 }, reviews: 20, blitz: 0, talks: 0, stories: 0, tutors: 1, reads: 1 },
 	});
 	assert.equal(after.done, after.total);
 	// A tight budget keeps review and the lesson.
