@@ -7,7 +7,7 @@
  *
  *   1  What Slovak is for    — can-do purposes that map onto the map's
  *                              goals and scenes; the target follows
- *   2  What you bring        — first language, other Slavic languages,
+ *   2  What you bring        — the languages you know and how well,
  *                              how much Slovak already
  *   3  Time                  — minutes a day, days a week, and the date
  *                              that pace reaches the target
@@ -51,6 +51,7 @@ import {
 	unitInfo,
 	type Cefr,
 	type Lang,
+	type LangLevel,
 	type LearnerGoal,
 	type PlacementOutcome,
 	type Prior,
@@ -66,7 +67,7 @@ interface Draft {
 	examLevel: Cefr;
 	levelOverride: Cefr | null;
 	languages: Lang[];
-	otherLanguages: string[];
+	languageLevels: Partial<Record<Lang, LangLevel>>;
 	explainIn: Lang[];
 	prior: Prior;
 	minutes: number;
@@ -96,7 +97,7 @@ function draftFrom(goal: LearnerGoal | null): Draft {
 		examLevel: "B1",
 		levelOverride: goal?.onboardedAt && goal.level ? goal.level : null,
 		languages: knownLanguages(goal),
-		otherLanguages: goal?.otherLanguages ?? [],
+		languageLevels: goal?.languageLevels ?? {},
 		explainIn: explanationLanguages(goal),
 		prior: goal?.prior ?? "none",
 		minutes: goal?.minutesPerDay ?? 20,
@@ -151,7 +152,7 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 							purposes: d.purposes,
 							purposeNote: d.purposes.includes("other") ? d.purposeNote : "",
 							languages: d.languages,
-							otherLanguages: d.otherLanguages,
+							languageLevels: d.languageLevels,
 							explainIn: d.explainIn,
 							prior: d.prior,
 							onboarded: true,
@@ -331,13 +332,13 @@ export function Start({ goal, edit, hoursDone, currentChapter }: { goal: Learner
 				{step === 2 && (
 					<section className="lh-rise" data-testid="start-you">
 						<Heading title="What you bring" line="Every language you know is a bridge: the lessons and the tutor show a form the Estonian way, the Russian way, whichever you bring." />
-						<Field label="Languages you know" hint="every one you can read">
+						<Field label="Languages you know" hint="any language you can read a simple text in; then say how well">
 							<LanguagePicker
 								value={d.languages}
-								other={d.otherLanguages}
-								onChange={(languages, otherLanguages) => setD((x) => ({ ...x, languages, otherLanguages, explainIn: keepExplain(x.explainIn, languages) }))}
+								levels={d.languageLevels}
+								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(x.explainIn, languages) }))}
 							/>
-							<p className="mt-3 font-prose text-sm text-muted-foreground">Estonian, Finnish, Russian and German also appear inside the lessons, as the same form seen their way. The tutor draws on all of them.</p>
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Estonian, Finnish, Russian and German also appear inside the lessons, as the same form seen their way: the one you know best leads, one you know a bit is an aside. The tutor draws on all of them.</p>
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
 							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />

@@ -167,61 +167,122 @@ export function purposeScenes(purposes: readonly Purpose[]): string[] {
 // ─── What the learner brings ────────────────────────────────────────────────
 
 /** A language the learner may know. The catalogue is what the setup
- *  offers as chips; anything else goes in `otherLanguages` as free text.
- *  Xurify (2026-10-28): knowing a language is a bridge, so the lessons and
- *  the tutor should draw on every one picked, not only the first. */
+ *  offers: the `primary` twenty as chips, the rest behind a searchable
+ *  panel (Xurify, 2026-10-28: no free text, more languages, good UX).
+ *  Knowing a language is a bridge, so the lessons and the tutor draw on
+ *  every one picked, weighted by how well it is known. */
 export type Lang =
 	| "et" | "fi" | "ru" | "de"
 	| "cs" | "pl" | "uk" | "sl" | "hr" | "bg"
 	| "hu" | "lv" | "lt"
-	| "en" | "sv" | "nl" | "fr" | "es" | "it" | "pt" | "tr" | "ja" | "zh";
+	| "en" | "sv" | "nl" | "fr" | "es" | "it" | "pt"
+	| "sr" | "mk" | "be" | "ro" | "el" | "tr" | "no" | "da" | "is" | "ga" | "cy" | "eu" | "ca" | "gl" | "sq" | "mt"
+	| "ar" | "he" | "fa" | "hi" | "ur" | "bn" | "pa" | "ta" | "te" | "ml"
+	| "ja" | "ko" | "zh" | "vi" | "th" | "id" | "ms" | "tl"
+	| "sw" | "am" | "ka" | "hy" | "az" | "kk" | "uz" | "mn";
 
-/** The languages the lessons carry a bridge line for (src/core/unit-bridges.ts). */
 export type Prior = "none" | "words" | "sentences" | "reading";
 
+/** The languages the lessons carry a bridge line for (src/core/unit-bridges.ts). */
 export type BridgeLang = "et" | "fi" | "ru" | "de";
 export const BRIDGE_LANGS: readonly BridgeLang[] = ["et", "fi", "ru", "de"];
+
+/** How well a language is known. "Know" on the screen means "you can
+ *  read a simple text in it"; the level says how much weight it carries. */
+export type LangLevel = "basic" | "good" | "fluent";
+export const LANG_LEVELS: ReadonlyArray<{ id: LangLevel; title: string; line: string }> = [
+	{ id: "basic", title: "A bit", line: "I can read a simple text with help" },
+	{ id: "good", title: "Comfortable", line: "I read and get by" },
+	{ id: "fluent", title: "Fluent", line: "Native, or near it" },
+];
+export const DEFAULT_LANG_LEVEL: LangLevel = "good";
+const LEVEL_RANK: Record<LangLevel, number> = { basic: 0, good: 1, fluent: 2 };
 
 export interface KnownLanguageInfo {
 	id: Lang;
 	title: string;
 	/** What it brings to Slovak, in a few words (the chip's tooltip and the tutor's note). */
 	line: string;
+	/** Shown as a chip without opening the panel. */
+	primary?: boolean;
 }
 
-/** Bridge languages first, then the Slavic family, then other case languages. */
+/** Bridge languages first, then the Slavic family, then other case
+ *  languages, then the rest of Europe; the panel holds everything else. */
 export const KNOWN_LANGUAGES: readonly KnownLanguageInfo[] = [
-	{ id: "et", title: "Estonian", line: "14 cases: the closest model for Slovak cases; the lessons show every form the Estonian way" },
-	{ id: "fi", title: "Finnish", line: "15 cases: the lessons show every form the Finnish way" },
-	{ id: "ru", title: "Russian", line: "The same six cases and aspect; cognates and false friends; the lessons show every form the Russian way" },
-	{ id: "de", title: "German", line: "Four cases, gender and agreement; the lessons show every form the German way" },
-	{ id: "cs", title: "Czech", line: "Nearly the same grammar, different sounds" },
-	{ id: "pl", title: "Polish", line: "Cases and aspect carry over; cognates" },
-	{ id: "uk", title: "Ukrainian", line: "Close vocabulary, the same case logic" },
-	{ id: "sl", title: "Slovene", line: "Cases and aspect carry over; the dual is extra" },
-	{ id: "hr", title: "Croatian", line: "Seven cases and aspect; many cognates" },
-	{ id: "bg", title: "Bulgarian", line: "Aspect and vocabulary carry over; no cases to lean on" },
-	{ id: "hu", title: "Hungarian", line: "Cases and agglutination: the idea of a case ending is familiar" },
-	{ id: "lv", title: "Latvian", line: "Seven cases and gender" },
-	{ id: "lt", title: "Lithuanian", line: "Seven cases, gender and aspect-like prefixes" },
-	{ id: "en", title: "English", line: "The app explains in English" },
-	{ id: "sv", title: "Swedish", line: "Gender and verb-second word order" },
-	{ id: "nl", title: "Dutch", line: "Gender and verb-second word order" },
-	{ id: "fr", title: "French", line: "Gender, agreement and verb endings" },
-	{ id: "es", title: "Spanish", line: "Gender, agreement, verb endings and a perfective/imperfective past" },
-	{ id: "it", title: "Italian", line: "Gender, agreement and verb endings" },
-	{ id: "pt", title: "Portuguese", line: "Gender, agreement and verb endings" },
+	{ id: "et", title: "Estonian", line: "14 cases: the closest model for Slovak cases; the lessons show every form the Estonian way", primary: true },
+	{ id: "fi", title: "Finnish", line: "15 cases: the lessons show every form the Finnish way", primary: true },
+	{ id: "ru", title: "Russian", line: "The same six cases and aspect; cognates and false friends; the lessons show every form the Russian way", primary: true },
+	{ id: "de", title: "German", line: "Four cases, gender and agreement; the lessons show every form the German way", primary: true },
+	{ id: "cs", title: "Czech", line: "Nearly the same grammar, different sounds", primary: true },
+	{ id: "pl", title: "Polish", line: "Cases and aspect carry over; cognates", primary: true },
+	{ id: "uk", title: "Ukrainian", line: "Close vocabulary, the same case logic", primary: true },
+	{ id: "sl", title: "Slovene", line: "Cases and aspect carry over; the dual is extra", primary: true },
+	{ id: "hr", title: "Croatian", line: "Seven cases and aspect; many cognates", primary: true },
+	{ id: "bg", title: "Bulgarian", line: "Aspect and vocabulary carry over; no cases to lean on", primary: true },
+	{ id: "hu", title: "Hungarian", line: "Cases and agglutination: the idea of a case ending is familiar", primary: true },
+	{ id: "lv", title: "Latvian", line: "Seven cases and gender", primary: true },
+	{ id: "lt", title: "Lithuanian", line: "Seven cases, gender and aspect-like prefixes", primary: true },
+	{ id: "en", title: "English", line: "The app explains in English", primary: true },
+	{ id: "sv", title: "Swedish", line: "Gender and verb-second word order", primary: true },
+	{ id: "nl", title: "Dutch", line: "Gender and verb-second word order", primary: true },
+	{ id: "fr", title: "French", line: "Gender, agreement and verb endings", primary: true },
+	{ id: "es", title: "Spanish", line: "Gender, agreement, verb endings and a perfective/imperfective past", primary: true },
+	{ id: "it", title: "Italian", line: "Gender, agreement and verb endings", primary: true },
+	{ id: "pt", title: "Portuguese", line: "Gender, agreement and verb endings", primary: true },
+	{ id: "sr", title: "Serbian", line: "Seven cases and aspect; many cognates" },
+	{ id: "mk", title: "Macedonian", line: "Aspect and vocabulary carry over; no cases to lean on" },
+	{ id: "be", title: "Belarusian", line: "The same six cases and aspect; close vocabulary" },
+	{ id: "ro", title: "Romanian", line: "Gender, a little case marking, and a Slavic layer in the vocabulary" },
+	{ id: "el", title: "Greek", line: "Four cases, gender and agreement; aspect in the verb" },
 	{ id: "tr", title: "Turkish", line: "Cases and agglutination" },
+	{ id: "no", title: "Norwegian", line: "Gender and verb-second word order" },
+	{ id: "da", title: "Danish", line: "Gender and verb-second word order" },
+	{ id: "is", title: "Icelandic", line: "Four cases, gender and agreement" },
+	{ id: "ga", title: "Irish", line: "Cases, gender and initial mutations" },
+	{ id: "cy", title: "Welsh", line: "Gender and initial mutations; no cases" },
+	{ id: "eu", title: "Basque", line: "Cases and agglutination; ergative" },
+	{ id: "ca", title: "Catalan", line: "Gender, agreement and verb endings" },
+	{ id: "gl", title: "Galician", line: "Gender, agreement and verb endings" },
+	{ id: "sq", title: "Albanian", line: "Cases, gender and a definite ending" },
+	{ id: "mt", title: "Maltese", line: "Gender and agreement; Semitic verb patterns" },
+	{ id: "ar", title: "Arabic", line: "Case endings in the formal language; gender and agreement" },
+	{ id: "he", title: "Hebrew", line: "Gender and agreement; no cases" },
+	{ id: "fa", title: "Persian", line: "No gender or cases; an object marker" },
+	{ id: "hi", title: "Hindi", line: "Gender, an oblique case and postpositions" },
+	{ id: "ur", title: "Urdu", line: "Gender, an oblique case and postpositions" },
+	{ id: "bn", title: "Bengali", line: "Case suffixes; no gender" },
+	{ id: "pa", title: "Punjabi", line: "Gender, an oblique case and postpositions" },
+	{ id: "ta", title: "Tamil", line: "Case suffixes and agglutination" },
+	{ id: "te", title: "Telugu", line: "Case suffixes and agglutination" },
+	{ id: "ml", title: "Malayalam", line: "Case suffixes and agglutination" },
 	{ id: "ja", title: "Japanese", line: "Particles mark the role a case ending marks in Slovak" },
+	{ id: "ko", title: "Korean", line: "Particles mark the role a case ending marks in Slovak" },
 	{ id: "zh", title: "Chinese", line: "No endings at all: every Slovak ending is new" },
+	{ id: "vi", title: "Vietnamese", line: "No endings at all: every Slovak ending is new" },
+	{ id: "th", title: "Thai", line: "No endings at all: every Slovak ending is new" },
+	{ id: "id", title: "Indonesian", line: "No cases or gender; affixes on the verb" },
+	{ id: "ms", title: "Malay", line: "No cases or gender; affixes on the verb" },
+	{ id: "tl", title: "Filipino", line: "Case markers on the noun phrase; focus on the verb" },
+	{ id: "sw", title: "Swahili", line: "Noun classes and agreement, like gender with more classes" },
+	{ id: "am", title: "Amharic", line: "Gender and agreement; an object marker" },
+	{ id: "ka", title: "Georgian", line: "Seven cases and agglutination" },
+	{ id: "hy", title: "Armenian", line: "Seven cases; no gender" },
+	{ id: "az", title: "Azerbaijani", line: "Cases and agglutination" },
+	{ id: "kk", title: "Kazakh", line: "Cases and agglutination" },
+	{ id: "uz", title: "Uzbek", line: "Cases and agglutination" },
+	{ id: "mn", title: "Mongolian", line: "Cases and agglutination" },
 ];
 
-export const MAX_LANGUAGES = 8;
+export const MAX_LANGUAGES = 12;
 export const MAX_OTHER_LANGUAGES = 5;
 export const MAX_OTHER_LANGUAGE_LENGTH = 40;
 
 export function isLang(v: unknown): v is Lang {
 	return typeof v === "string" && KNOWN_LANGUAGES.some((l) => l.id === v);
+}
+export function isLangLevel(v: unknown): v is LangLevel {
+	return typeof v === "string" && LANG_LEVELS.some((l) => l.id === v);
 }
 export function isBridgeLang(v: unknown): v is BridgeLang {
 	return typeof v === "string" && (BRIDGE_LANGS as readonly string[]).includes(v);
@@ -248,9 +309,20 @@ export function knownLanguages(goal: Pick<LearnerGoal, "languages" | "firstLangu
 	return ["et", "en"];
 }
 
-/** The known languages the lessons can show a form in, in the learner's order. */
-export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "firstLanguage" | "bridges"> | null | undefined): BridgeLang[] {
-	return knownLanguages(goal).filter(isBridgeLang);
+/** How well the learner knows a language (DEFAULT_LANG_LEVEL when unsaid). */
+export function languageLevel(goal: Pick<LearnerGoal, "languageLevels"> | null | undefined, lang: Lang): LangLevel {
+	return goal?.languageLevels?.[lang] ?? DEFAULT_LANG_LEVEL;
+}
+
+/** The known languages the lessons can show a form in: the best-known
+ *  first (a fluent one leads the retry hint, one known "a bit" is an
+ *  aside), ties in the learner's own order. */
+export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): BridgeLang[] {
+	return knownLanguages(goal)
+		.filter(isBridgeLang)
+		.map((l, i) => ({ l, i, rank: LEVEL_RANK[languageLevel(goal, l)] }))
+		.sort((a, b) => b.rank - a.rank || a.i - b.i)
+		.map((x) => x.l);
 }
 
 export const MAX_EXPLAIN = 2;
@@ -291,6 +363,9 @@ export interface LearnerGoal {
 	/** Languages the learner knows (catalogue ids, strongest first) and any
 	 *  others as free text. `knownLanguages()` reads either shape. */
 	languages?: Lang[];
+	/** How well each of `languages` is known; absent = DEFAULT_LANG_LEVEL. */
+	languageLevels?: Partial<Record<Lang, LangLevel>>;
+	/** @deprecated Free text from the 2026-10-28 afternoon setup; still read, no longer written. */
 	otherLanguages?: string[];
 	/** The languages the tutor explains in, up to MAX_EXPLAIN, first one
 	 *  leading; English unless chosen. (A single string from before
@@ -465,14 +540,16 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 	if (goal) {
 		const known = knownLanguages(goal);
 		const other = (goal.otherLanguages ?? []).filter(Boolean);
-		const names = [...known.map(languageName), ...other];
+		const levelOf = (l: Lang) => LANG_LEVELS.find((x) => x.id === languageLevel(goal, l))!.title.toLowerCase();
+		const names = [...known.map((l) => `${languageName(l)} (${levelOf(l)})`), ...other];
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
 		const [first, second] = explanationLanguages(goal);
 		lines.push(
 			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""} When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}`,
 		);
 		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, Slovak examples in Slovak, English only when asked.`;
-		lines.push(second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.` : lead);
+		const simple = (l: Lang) => (languageLevel(goal, l) === "basic" ? ` The learner knows ${languageName(l)} only a bit: keep those lines short and simple, and gloss a hard word.` : "");
+		lines.push((second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}` : lead) + (first !== "en" ? simple(first!) : ""));
 	}
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
 	if (goal?.placedAt && goal.placedLevel) {
