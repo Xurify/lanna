@@ -1,0 +1,18 @@
+# Research notes
+
+Every task in LangHarness is meant to start from evidence: published language-learning research and the learner's own logs. The notes here say what was read, what was concluded, and what changed in the app. Rule W4 in [../DECISIONS.md](../DECISIONS.md): new research goes here, in Markdown, with sources, and this index is updated.
+
+| Note | Question | Date | What it changed |
+|---|---|---|---|
+| [comprehensible-input.md](comprehensible-input.md) | Does the app follow comprehensible input, and should it? | 2026-10-28 | Nation's four strands as the frame; the Listen task; meaning-first lesson openers; one task per strand in the daily plan; the strand balance on Today. Not a pure-input app by design. |
+| [desirable-difficulties.md](desirable-difficulties.md) | How hard should practice be, and what help is allowed? | 2026-10-28 | Retrieval first everywhere; graded, priced hints; production over recognition; the "strong" stage; Review rating caps; Listen peek rules. |
+| [milestones.md](milestones.md) | When will the learner understand a vlog, the news, the in-laws? | 2026-10-28 | The `/milestones` calculator: words (coverage thresholds from Nation, Webb & Rodgers, Adolphs & Schmitt) and speed (parsing, Listen and Watch timing) measured apart. |
+| [reading.md](reading.md) | What makes a reading task work? | 2026-10-28 | The Read task: graded episodes at ~97% known words, repeated new words, tap-to-gloss, level-graded question kinds. |
+| [speak-fluency.md](speak-fluency.md) | How to build the output and fluency strands, and score pronunciation honestly? | 2026-10-28 | The Speak task (prompts, not recasts), Say it faster and Read it faster, clarity scoring with Azure Speech or transcript matching. |
+| [watch.md](watch.md) | How to turn a YouTube video into guided comprehensible input? | 2026-10-28 | The Watch task: line-by-line listening with hidden text, coverage and pre-teach, listening-speed signal. |
+| [onboarding.md](onboarding.md) | How should goals and level be found without a long chat? | 2026-10-28 | The four-screen setup, purposes → target, known languages with CEFR levels, two explanation languages, the hours sheet, the placement drill and its limits. |
+| [level-assessment-audit.md](level-assessment-audit.md) | Is the level check buggy or inaccurate? | 2026-10-28 | Found a critical re-check bug, an ETA mismatch, milestones level errors, and construct problems (grammar-only, 8 items per tier, B1 ceiling). Led to the rebuilt adaptive, model-judged check (in progress). |
+
+Earlier design write-ups that lived only as pages: the UX audit of 2026-10-27 ("why it doesn't feel like a language app") and "built for what works" (hint-and-retry, mixed units, Estonian bridges, answer-first). Their conclusions are folded into [../DECISIONS.md](../DECISIONS.md) and [../learner.md](../learner.md); the screenshots are in the project's audit folder, not in the repo.
+
+Upstream LearnHarness has its own methodology note at [../teaching-methodology.md](../teaching-methodology.md); it describes the chat tutor, not the task-based layer.

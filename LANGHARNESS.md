@@ -47,6 +47,15 @@ Originals of every file the redesign changed are in
 
 | Your data, kept | Everything the app generates or you produce stays on disk in open formats, with a README in every folder: `data/README.md` is the map. Tutor chats (with token usage per turn) in `data/profiles/<language>/chats/` (deleted ones move to `chats/trash/`), every finished lesson with every answer in `lessons/<day>.jsonl`, a repeat "Why?" reopens its earlier chat (`lessons/why-index.json`), the review deck and its answer log in `review/`. `npm run corpus:export` writes a clean, app-independent snapshot to `data/export/<stamp>/` (sentences, lessons, dialogues, explanations, audio catalog, review history, usage summary). |
 
+## Where the thinking lives
+
+- [docs/DECISIONS.md](docs/DECISIONS.md): the principles and rules behind the app, dated, with the why.
+- [docs/learner.md](docs/learner.md): the learner it is built for and what made them drop off.
+- [docs/research/README.md](docs/research/README.md): the research note behind each task.
+- [docs/CHANGELOG-2026-10.md](docs/CHANGELOG-2026-10.md): what was built when, and what is still unverified.
+- [docs/corpus.md](docs/corpus.md): where every generated thing is kept under `data/`.
+- [CLAUDE.md](CLAUDE.md): the short version for a new session.
+
 ## Run it
 
 ```
