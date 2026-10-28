@@ -26,6 +26,7 @@
 
 import type { Cefr } from "./curriculum.ts";
 import { foldDiacritics } from "./language.ts";
+import type { PronEngine, PronScore } from "./pronounce.ts";
 import type { StoryUsage } from "./reading.ts";
 
 // ─── Scenes ─────────────────────────────────────────────────────────────────
@@ -103,6 +104,8 @@ export interface SpeakTurn {
 	audio?: string;
 	/** Learner turn: how long the recording was. */
 	ms?: number;
+	/** Learner turn: how clearly it was said (src/core/pronounce.ts). */
+	pron?: PronScore;
 	at: string;
 }
 
@@ -146,6 +149,8 @@ export interface SpeakSession {
 	queued?: string[];
 	/** Wall time of the whole scene. */
 	ms?: number;
+	/** Pronunciation across the spoken turns, set at the end. */
+	pron?: { average: number; lines: number; clear: number; engine: PronEngine };
 }
 
 /** data/profiles/<lang>/speak/index.jsonl: one line per scene. */
@@ -182,24 +187,34 @@ export const SPEAK_BONUS = 10;
  *  is a turn too, but the XP cap stops padding). */
 export const SPEAK_XP_TURNS_CAP = 10;
 
-export function speakXp(learnerTurns: number, repaired: number): number {
+/** A spoken line scored "clear" (src/core/pronounce.ts PRON_GOOD) earns this on top. */
+export const SPEAK_CLEAR_XP = 2;
+
+export function speakXp(learnerTurns: number, repaired: number, clear = 0): number {
 	if (learnerTurns === 0) return 0;
-	return Math.min(learnerTurns, SPEAK_XP_TURNS_CAP) * SPEAK_TURN_XP + repaired * SPEAK_REPAIR_XP + SPEAK_BONUS;
+	return Math.min(learnerTurns, SPEAK_XP_TURNS_CAP) * SPEAK_TURN_XP + repaired * SPEAK_REPAIR_XP + Math.min(clear, SPEAK_XP_TURNS_CAP) * SPEAK_CLEAR_XP + SPEAK_BONUS;
 }
 
 /** The counts the index and the end screen show. */
-export function speakCounts(turns: readonly SpeakTurn[]): { learner: number; prompts: number; repaired: number } {
+export function speakCounts(turns: readonly SpeakTurn[]): { learner: number; prompts: number; repaired: number; spoken: number; clear: number } {
 	let learner = 0;
 	let prompts = 0;
 	let repaired = 0;
+	let spoken = 0;
+	let clear = 0;
 	for (const t of turns) {
-		if (t.role === "learner") learner++;
-		else {
+		if (t.role === "learner") {
+			learner++;
+			if (t.pron) {
+				spoken++;
+				if (t.pron.overall >= 85) clear++;
+			}
+		} else {
 			if (t.prompt) prompts++;
 			if (t.repaired) repaired++;
 		}
 	}
-	return { learner, prompts, repaired };
+	return { learner, prompts, repaired, spoken, clear };
 }
 
 // ─── What the model writes ──────────────────────────────────────────────────

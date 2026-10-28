@@ -1,5 +1,6 @@
 import { FluencyPlayer, type FastPlan, type RereadPlan } from "@/components/fluency/fluency-player";
-import { fastFor, rereadFor, sttEngine } from "@/src/server";
+import type { PronEngine } from "@/src/core";
+import { fastFor, pronounceEngine, rereadFor, sttEngine } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,10 @@ export default async function FluencyPage({ searchParams }: { searchParams: Prom
 	let rereadPlan: RereadPlan | null = null;
 	let fastPlan: FastPlan | null = null;
 	let stt = false;
+	let pron: PronEngine | null = null;
 	try {
 		stt = sttEngine() !== null;
+		pron = pronounceEngine();
 		if (reread) rereadPlan = rereadFor({ id: id && /^[a-z0-9][a-z0-9-]*$/.test(id) ? id : undefined });
 		else {
 			fastPlan = fastFor();
@@ -23,5 +26,5 @@ export default async function FluencyPage({ searchParams }: { searchParams: Prom
 		rereadPlan = null;
 		fastPlan = null;
 	}
-	return <FluencyPlayer key={mode ?? "fast"} mode={reread ? "reread" : "fast"} initialReread={rereadPlan} initialFast={fastPlan} stt={stt} />;
+	return <FluencyPlayer key={mode ?? "fast"} mode={reread ? "reread" : "fast"} initialReread={rereadPlan} initialFast={fastPlan} stt={stt} pron={pron} />;
 }

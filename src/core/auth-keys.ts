@@ -43,6 +43,18 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		docsUrl: "https://console.deepgram.com/",
 	},
 	{
+		id: "AZURE_SPEECH_KEY",
+		label: "Azure Speech",
+		description: "Pronunciation assessment for Speak and Say it faster: a sound-level score for every line you say (Slovak is covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
+		docsUrl: "https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices",
+	},
+	{
+		id: "AZURE_SPEECH_REGION",
+		label: "Azure Speech region",
+		description: "The region of your Azure Speech resource, e.g. westeurope or germanywestcentral.",
+		docsUrl: "https://learn.microsoft.com/azure/ai-services/speech-service/regions",
+	},
+	{
 		id: "TAVILY_API_KEY",
 		label: "Tavily",
 		description: "Web-search engine for the researcher sub-agent (AI-native search API). Setting the key activates it — no engine toggle needed.",
@@ -173,6 +185,11 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 		case "DEEPGRAM_API_KEY":
 			// No public format — the length floor only catches truncated pastes.
 			return nonEmpty(20);
+		case "AZURE_SPEECH_KEY":
+			// 32 hex characters today; a length floor only.
+			return nonEmpty(20);
+		case "AZURE_SPEECH_REGION":
+			return /^[a-z0-9]{4,40}$/.test(value) ? { ok: true } : { ok: false, error: `${id} must be a region name such as westeurope (lowercase letters and digits)` };
 		default:
 			return { ok: false, error: `unknown key "${id}" (supported: ${[...AUTH_KEY_IDS].join(", ")})` };
 	}

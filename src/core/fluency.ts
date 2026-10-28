@@ -22,6 +22,7 @@
 import type { Cefr } from "./curriculum.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { judgeSentence, type ListenLookup } from "./listen.ts";
+import type { PronScore } from "./pronounce.ts";
 import type { LexiconEntry } from "./review.ts";
 
 export type FluencyMode = "reread" | "fast";
@@ -112,9 +113,11 @@ export interface FastRep {
 	slug: string;
 	sentence: string;
 	translation: string;
-	/** Each pass: how long it took, the window it had, and the transcript
-	 *  heard (when speech-to-text ran). */
-	passes: Array<{ ms: number; window: number; made: boolean; heard?: string; match?: number }>;
+	/** Each pass: how long it took, the window it had, whether it was
+	 *  inside it, the transcript heard and the pronunciation score (when
+	 *  the microphone ran). `made` is the verdict: in the window AND clear
+	 *  (src/core/pronounce.ts passMade). */
+	passes: Array<{ ms: number; window: number; made: boolean; inWindow?: boolean; heard?: string; match?: number; pron?: PronScore }>;
 }
 
 export interface FastLogEntry {

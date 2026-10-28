@@ -26,6 +26,7 @@ import type { Usage } from "@earendil-works/pi-ai";
 import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
 import { LANGUAGES } from "../core/language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
+import type { PronEngine, PronScore } from "../core/pronounce.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { dayKey } from "../core/review.ts";
 import {
@@ -49,6 +50,7 @@ import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
 import { speakStore } from "../store/speak.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
+import { pronounceEngine, pronunciationReport, type PronReport } from "./pronounce.ts";
 import { resolveWord, storyEngine } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
 
@@ -183,7 +185,12 @@ export type SttEngine = "elevenlabs" | "deepgram";
 
 /** Which speech-to-text engine a line would go to; null when neither key
  *  is set (the screen then takes typing only). */
+/** Dev only: LH_STT_SCRIPT=<text> answers every recording with that
+ *  transcript, so the spoken flow runs without a key. */
+const sttScript = () => (process.env.NODE_ENV !== "production" ? process.env.LH_STT_SCRIPT : undefined);
+
 export function sttEngine(): SttEngine | null {
+	if (sttScript()) return "elevenlabs";
 	if (keyValue("ELEVENLABS_API_KEY")) return "elevenlabs";
 	if (keyValue("DEEPGRAM_API_KEY")) return "deepgram";
 	return null;
@@ -200,6 +207,7 @@ export async function transcribe(audio: Uint8Array, mime: string, lang = code())
 	const engine = sttEngine();
 	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs or Deepgram key in Settings → Keys, or type your line.");
 	if (audio.byteLength === 0) return { text: "", engine };
+	if (sttScript()) return { text: sttScript()!, engine };
 	if (engine === "elevenlabs") {
 		const form = new FormData();
 		form.set("model_id", "scribe_v1");
@@ -226,6 +234,8 @@ export interface SpeakState {
 	scenes: Array<SpeakScene & { suggested: boolean; done: number }>;
 	canSpeak: boolean;
 	stt: SttEngine | null;
+	/** How spoken lines are scored for clarity: sound by sound, from the transcript, or not at all. */
+	pron: PronEngine | null;
 	/** A scene started and not finished (reopen or drop). */
 	unfinished: { id: string; scene: string; sceneTitle: string; turns: number } | null;
 	recent: SpeakIndexEntry[];
@@ -247,6 +257,7 @@ export function speakState(): SpeakState {
 		scenes,
 		canSpeak: storyEngine() !== null || scriptedEngine() !== null,
 		stt: sttEngine(),
+		pron: pronounceEngine(),
 		unfinished: open && open.turns.some((t) => t.role === "learner") ? { id: open.id, scene: open.scene, sceneTitle: open.sceneTitle, turns: speakCounts(open.turns).learner } : null,
 		recent: done.slice(-8).reverse(),
 	};
@@ -311,6 +322,8 @@ export interface SpeakTurnInput {
 	ms?: number;
 	/** The learner's recording, kept next to the session. */
 	audio?: { data: Uint8Array; ext: string };
+	/** How clearly the line was said, scored by /api/pronounce on the way in. */
+	pron?: PronScore;
 }
 
 export interface SpeakTurnOutcome {
@@ -332,7 +345,7 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 		const text = input.text.replace(/\s+/g, " ").trim().slice(0, 600);
 		if (!text) throw new Error("say something first");
 		const n = speakCounts(s.turns).learner + 1;
-		const turn: SpeakTurn = { role: "learner", text, via: input.via, at: now.toISOString(), ...(input.ms ? { ms: input.ms } : {}) };
+		const turn: SpeakTurn = { role: "learner", text, via: input.via, at: now.toISOString(), ...(input.ms ? { ms: input.ms } : {}), ...(input.pron ? { pron: input.pron } : {}) };
 		if (input.audio && input.audio.data.byteLength > 0) {
 			try {
 				turn.audio = speakStore.putRecording(s.id, n, input.audio.data, input.audio.ext);
@@ -368,6 +381,8 @@ export interface SpeakOutcome {
 	xp: number;
 	queued: string[];
 	summary: ProgressSummary;
+	/** What to work on in pronunciation, across recent scenes and rounds. */
+	report: PronReport;
 }
 
 /** The scene is over: the summary, the day's speaking, XP, the slips'
@@ -378,7 +393,7 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		const s = speakStore.get(input.id);
 		if (!s) throw new Error(`unknown scene ${input.id}`);
 		const now = opts.now ?? new Date();
-		if (s.endedAt) return { session: s, xp: s.xp ?? 0, queued: s.queued ?? [], summary: progressSummary(input.tz, now) };
+		if (s.endedAt) return { session: s, xp: s.xp ?? 0, queued: s.queued ?? [], summary: progressSummary(input.tz, now), report: pronunciationReport() };
 		const learner = speakCounts(s.turns).learner;
 		if (learner === 0) throw new Error("nothing was said");
 		const scene = speakScene(s.scene)!;
@@ -390,8 +405,10 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		s.endedAt = now.toISOString();
 		if (input.ms && Number.isFinite(input.ms)) s.ms = Math.round(input.ms);
 		const counts = speakCounts(s.turns);
-		const xp = speakXp(counts.learner, counts.repaired);
+		const xp = speakXp(counts.learner, counts.repaired, counts.clear);
 		s.xp = xp;
+		const scored = s.turns.filter((t) => t.role === "learner" && t.pron);
+		if (scored.length) s.pron = { average: Math.round(scored.reduce((n, t) => n + t.pron!.overall, 0) / scored.length), lines: scored.length, clear: counts.clear, engine: scored[scored.length - 1]!.pron!.engine };
 		const slugs = [...new Set(summary.corrections.map((c) => c.slug).filter((x): x is string => !!x))];
 		const queued = slugs.length ? enqueueWords(slugs, now) : [];
 		s.queued = queued;
@@ -438,7 +455,7 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		} catch (err) {
 			console.warn("[speak] could not append the lesson log:", err instanceof Error ? err.message : err);
 		}
-		return { session: s, xp, queued, summary: progressSummary(input.tz, now) };
+		return { session: s, xp, queued, summary: progressSummary(input.tz, now), report: pronunciationReport() };
 	});
 }
 

@@ -11,8 +11,10 @@
  *   fast   — six known sentences; each is heard once, then said three
  *            times with the window shrinking (4/3/2 shrunk to a line).
  *            With a microphone the recorder stops itself when the voice
- *            does and the clip is transcribed in the background, so the
- *            pass shows what it heard; without one, Space marks the end.
+ *            does and the clip is scored (src/core/pronounce.ts): a pass
+ *            counts only when it was in the window AND clear, so a fast
+ *            mumble does not pass. Without one, Space marks the end and
+ *            time alone decides.
  *
  * Full screen like a lesson; Escape leaves. No model call anywhere.
  */
@@ -25,8 +27,9 @@ import { cn } from "@/lib/utils";
 import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
-import { Recorder, micSupported, transcribeClip } from "@/components/speak/recorder";
-import { FAST_PASSES, fastWindows, QUESTION_KIND_INFO, wordMatch, wordsPerMinute, type FastItem, type FastRep, type StoryQuestion, type StoryRecord } from "@/src/core";
+import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
+import { PronChip, PronWorkOn } from "@/components/speak/pron";
+import { FAST_PASSES, fastWindows, passMade, PRON_CLEAR, QUESTION_KIND_INFO, wordsPerMinute, type FastItem, type FastRep, type PronEngine, type PronReport, type PronScore, type StoryQuestion, type StoryRecord } from "@/src/core";
 
 export type FluencyMode = "reread" | "fast";
 
@@ -52,9 +55,9 @@ interface Summary {
 	streak: { days: number };
 }
 
-export function FluencyPlayer({ mode, initialReread = null, initialFast = null, stt = false }: { mode: FluencyMode; initialReread?: RereadPlan | null; initialFast?: FastPlan | null; stt?: boolean }) {
+export function FluencyPlayer({ mode, initialReread = null, initialFast = null, stt = false, pron = null }: { mode: FluencyMode; initialReread?: RereadPlan | null; initialFast?: FastPlan | null; stt?: boolean; pron?: PronEngine | null }) {
 	if (mode === "reread") return <Reread initial={initialReread} />;
-	return <Fast initial={initialFast} stt={stt} />;
+	return <Fast initial={initialFast} stt={stt} pron={pron} />;
 }
 
 // ─── Re-read ────────────────────────────────────────────────────────────────
@@ -361,9 +364,14 @@ type FastPhase = "loading" | "ready" | "running" | "between" | "done";
 interface Pass {
 	ms: number;
 	window: number;
+	/** The verdict: in the window and (when scored) clear. */
 	made: boolean;
+	inWindow: boolean;
+	/** The clip is being scored; the verdict is not in yet. */
+	pending?: boolean;
 	heard?: string;
 	match?: number;
+	pron?: PronScore;
 }
 
 interface FastOutcome {
@@ -372,9 +380,13 @@ interface FastOutcome {
 	sentencesMade: number;
 	total: number;
 	summary: Summary;
+	report: PronReport;
 }
 
-function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
+/** How long the verdict waits for the score before time alone decides. */
+const SCORE_WAIT_MS = 8000;
+
+function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; pron: PronEngine | null }) {
 	const router = useRouter();
 	const [plan, setPlan] = useState<FastPlan | null>(initial);
 	const [error, setError] = useState<string | null>(null);
@@ -470,30 +482,46 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 			const ms = Date.now() - passStart.current;
 			setPhase("between");
 			setElapsed(ms);
-			const made = ms <= win;
-			if (made) sfx.right(pass + 1);
-			else sfx.wrong();
-			const p: Pass = { ms, window: win, made };
-			const next = [...passes, p];
-			setPasses(next);
-			// The clip: transcribed in the background; the pass shows what was heard.
+			const inWindow = ms <= win;
 			const rec = recorder.current;
 			recorder.current = null;
-			if (rec) {
-				const at = next.length - 1;
-				void rec
-					.stop()
-					.then(async (clip) => {
-						if (clip.ms < 200) return;
-						const heard = await transcribeClip(clip.blob);
-						const m = wordMatch(item.sentence, heard);
-						setPasses((cur) => cur.map((x, i) => (i === at ? { ...x, heard, match: Math.round(m.score * 100) / 100 } : x)));
-					})
-					.catch(() => undefined);
+			const scored = !!rec && !!pron;
+			const p: Pass = { ms, window: win, made: inWindow, inWindow, ...(scored ? { pending: true } : {}) };
+			const next = [...passes, p];
+			setPasses(next);
+			const verdict = (made: boolean) => {
+				if (made) sfx.right(pass + 1);
+				else sfx.wrong();
+			};
+			if (!scored) {
+				verdict(inWindow);
+				if (rec) void rec.stop().catch(() => undefined);
+				return;
 			}
+			// The clip is scored before the verdict: in the window AND clear.
+			const at = next.length - 1;
+			let settled = false;
+			const settle = (extra: Partial<Pass>) => {
+				if (settled) return;
+				settled = true;
+				const made = passMade(inWindow, extra.pron ?? null);
+				setPasses((cur) => cur.map((x, i) => (i === at ? { ...x, ...extra, made, pending: false } : x)));
+				verdict(made);
+			};
+			const timer = setTimeout(() => settle({}), SCORE_WAIT_MS);
+			void rec
+				.stop()
+				.then(async (clip) => {
+					if (clip.ms < 200) return settle({});
+					const score = await scoreClip(clip, item.sentence);
+					if (!score) return settle({ heard: "" });
+					settle({ pron: score, heard: score.heard ?? "", match: score.accuracy / 100 });
+				})
+				.catch(() => settle({}))
+				.finally(() => clearTimeout(timer));
 			void auto;
 		},
-		[item, phase, win, pass, passes],
+		[item, phase, win, pass, passes, pron],
 	);
 	const endRef = useRef(endPass);
 	endRef.current = endPass;
@@ -504,7 +532,7 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 		if (useMic) {
 			const rec = new Recorder();
 			try {
-				await rec.start({ onLevel: setLevel, silenceMs: 650, maxMs: win * 3, onAutoStop: () => void endRef.current(true) });
+				await rec.start({ onLevel: setLevel, silenceMs: 650, maxMs: win * 3, onAutoStop: () => void endRef.current(true), wav: pron === "azure" });
 				recorder.current = rec;
 			} catch {
 				setUseMic(false);
@@ -514,11 +542,11 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 		passStart.current = Date.now();
 		setElapsed(0);
 		setPhase("running");
-	}, [item, phase, useMic, win]);
+	}, [item, phase, useMic, win, pron]);
 
 	/** After a pass: the next pass, the next sentence, or the end. */
 	const advance = useCallback(() => {
-		if (!item || phase !== "between") return;
+		if (!item || phase !== "between" || passes[passes.length - 1]?.pending) return;
 		if (pass + 1 < FAST_PASSES) {
 			setPass(pass + 1);
 			void startPass();
@@ -592,6 +620,9 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 	if (phase === "done") {
 		const made = reps.reduce((n, r) => n + r.passes.filter((p) => p.made).length, 0);
 		const clean = reps.filter((r) => r.passes[r.passes.length - 1]?.made).length;
+		const scoredPasses = reps.flatMap((r) => r.passes.filter((p) => p.pron));
+		const clearPasses = scoredPasses.filter((p) => (p.pron?.overall ?? 0) >= PRON_CLEAR).length;
+		const avg = scoredPasses.length ? Math.round(scoredPasses.reduce((n, p) => n + (p.pron?.overall ?? 0), 0) / scoredPasses.length) : null;
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="fast-end">
@@ -608,8 +639,10 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 					</div>
 					<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
 						<Stat label="XP" value={outcome ? `+${outcome.xp}` : "…"} ink="text-xp" />
-						<Stat label="Passes in the window" value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-go" />
+						<Stat label={scoredPasses.length ? "Passes in the window and clear" : "Passes in the window"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-go" />
+						{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear`} ink={avg >= 85 ? "text-go" : avg >= PRON_CLEAR ? "text-gold" : "text-miss"} />}
 					</div>
+					<PronWorkOn report={outcome?.report} />
 					<ul className="mt-8 flex flex-col gap-2" data-testid="fast-reps">
 						{reps.map((r) => (
 							<li key={r.itemId} className="rounded-xl border border-border bg-card px-4 py-3">
@@ -625,8 +658,8 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 									</div>
 									<div className="flex gap-1.5" aria-label="Passes">
 										{r.passes.map((p, i) => (
-											<span key={i} className={cn("rounded-md px-1.5 py-0.5 font-ui text-xs font-bold tabular-nums", p.made ? "bg-go-soft text-go" : "bg-miss-soft text-miss")} title={`${(p.ms / 1000).toFixed(1)} s of ${(p.window / 1000).toFixed(1)} s${p.heard ? ` · heard: ${p.heard}` : ""}`}>
-												{(p.ms / 1000).toFixed(1)}s
+											<span key={i} className={cn("rounded-md px-1.5 py-0.5 font-ui text-xs font-bold tabular-nums", p.made ? "bg-go-soft text-go" : "bg-miss-soft text-miss")} title={`${(p.ms / 1000).toFixed(1)} s of ${(p.window / 1000).toFixed(1)} s${p.pron ? ` · ${p.pron.overall} clear` : ""}${p.heard ? ` · heard: ${p.heard}` : ""}${p.inWindow && !p.made ? " · in the window but not clear" : ""}`}>
+												{(p.ms / 1000).toFixed(1)}s{p.pron ? ` · ${p.pron.overall}` : ""}
 											</span>
 										))}
 									</div>
@@ -667,7 +700,7 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 						Say it faster · pass {Math.min(pass + 1, FAST_PASSES)} of {FAST_PASSES} · {item.practised ? "a sentence you got right in a lesson" : "every word is yours"}
 					</p>
 					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">
-						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? "Say it now" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : "Over the window"}
+						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? "Say it now" : last?.pending ? "Listening back…" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : last?.inWindow ? "Fast, but not clear" : "Over the window"}
 					</h2>
 					<div className="flex items-start gap-3">
 						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gold/20 text-foreground transition-transform hover:scale-105 active:scale-95" data-testid="fast-play">
@@ -687,7 +720,7 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 							const p = passes[i];
 							const live = i === pass && phase === "running";
 							return (
-								<div key={i} className={cn("rounded-xl border-2 px-3 py-2", p ? (p.made ? "border-go bg-go-soft" : "border-miss bg-miss-soft") : live ? "border-gold bg-gold/10" : "border-border")}>
+								<div key={i} className={cn("rounded-xl border-2 px-3 py-2", p ? (p.pending ? "border-gold bg-gold/10" : p.made ? "border-go bg-go-soft" : "border-miss bg-miss-soft") : live ? "border-gold bg-gold/10" : "border-border")}>
 									<p className="font-ui text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{["Say it", "Faster", "Full speed"][i]}</p>
 									<p className="font-ui text-xl font-black tabular-nums text-foreground">{p ? `${(p.ms / 1000).toFixed(1)} s` : live ? `${(left / 1000).toFixed(1)} s` : `${(w / 1000).toFixed(1)} s`}</p>
 									{live && (
@@ -695,10 +728,19 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 											<div className="h-full rounded-full bg-gold" style={{ width: `${(left / w) * 100}%`, transition: "width 50ms linear" }} />
 										</div>
 									)}
-									{p?.heard !== undefined && (
+									{p?.pending && (
+										<p className="mt-1 flex items-center gap-1 font-ui text-xs text-muted-foreground">
+											<LoaderCircleIcon className="size-3 animate-spin" /> scoring
+										</p>
+									)}
+									{p?.pron && (
+										<p className="mt-1">
+											<PronChip score={p.pron} />
+										</p>
+									)}
+									{p && !p.pending && !p.pron && p.heard !== undefined && (
 										<p className="mt-1 truncate font-prose text-xs text-muted-foreground" title={p.heard} data-testid="fast-heard">
 											heard: {p.heard || "—"}
-											{p.match !== undefined && ` · ${Math.round(p.match * 100)}%`}
 										</p>
 									)}
 								</div>
@@ -712,7 +754,7 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 					)}
 				</div>
 			</div>
-			<div className={cn("border-t border-border", phase === "between" && (last?.made ? "bg-go-soft" : "bg-miss-soft"), phase === "running" && "bg-gold/10")}>
+			<div className={cn("border-t border-border", phase === "between" && (last?.pending ? "bg-gold/10" : last?.made ? "bg-go-soft" : "bg-miss-soft"), phase === "running" && "bg-gold/10")}>
 				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
 					{phase === "running" ? (
 						<>
@@ -727,21 +769,31 @@ function Fast({ initial, stt }: { initial: FastPlan | null; stt: boolean }) {
 						</>
 					) : phase === "between" ? (
 						<>
-							<p className={cn("font-ui text-lg font-extrabold", last?.made ? "text-go" : "text-miss")} data-testid="fast-verdict">
-								{last?.made ? `In the window · ${((last?.ms ?? 0) / 1000).toFixed(1)} s` : `${(((last?.ms ?? 0) - win) / 1000).toFixed(1)} s over`}
+							<p className={cn("flex items-center gap-2 font-ui text-lg font-extrabold", last?.pending ? "text-foreground" : last?.made ? "text-go" : "text-miss")} data-testid="fast-verdict">
+								{last?.pending ? (
+									<>
+										<LoaderCircleIcon className="size-5 animate-spin" /> Listening back…
+									</>
+								) : last?.made ? (
+									`In the window · ${((last?.ms ?? 0) / 1000).toFixed(1)} s${last.pron ? ` · ${last.pron.overall} clear` : ""}`
+								) : last?.inWindow ? (
+									`In the window, but ${last.pron ? `${last.pron.overall} — ` : ""}not clear enough${last.pron?.words.some((w) => w.error === "omission") ? ` · missed: ${last.pron.words.filter((w) => w.error === "omission").map((w) => w.word).join(", ")}` : ""}`
+								) : (
+									`${(((last?.ms ?? 0) - win) / 1000).toFixed(1)} s over`
+								)}
 							</p>
-							<button type="button" onClick={advance} className={cn(PRIMARY, !last?.made && "bg-miss text-background")} data-testid="fast-continue" ref={(el) => el?.focus()}>
+							<button type="button" onClick={advance} disabled={!!last?.pending} className={cn(PRIMARY, !last?.pending && !last?.made && "bg-miss text-background", "disabled:opacity-50")} data-testid="fast-continue" ref={(el) => el?.focus()}>
 								{pass + 1 < FAST_PASSES ? "Next pass" : index + 1 >= total ? "Finish" : "Next sentence"}
 							</button>
 						</>
 					) : (
 						<>
 							<div className="flex items-center gap-3">
-								<button type="button" onClick={() => setUseMic((v) => !v)} disabled={!stt || !micOk} className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50" aria-pressed={useMic} title={stt ? "Use the microphone to time each pass" : "Add an ElevenLabs or Deepgram key for the microphone"}>
+								<button type="button" onClick={() => setUseMic((v) => !v)} disabled={!stt || !micOk} className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50" aria-pressed={useMic} title={stt ? (pron === "azure" ? "The microphone times each pass and scores it sound by sound" : "The microphone times each pass and checks the words were clear") : "Add an ElevenLabs or Deepgram key for the microphone"}>
 									{useMic ? <MicIcon className="size-4" /> : <MicOffIcon className="size-4" />}
 									{useMic ? "Mic on" : "Mic off"}
 								</button>
-								<p className="font-prose text-sm text-muted-foreground">Space starts the pass{useMic ? "" : " and ends it"} · R plays it again</p>
+								<p className="font-prose text-sm text-muted-foreground">Space starts the pass{useMic ? "" : " and ends it"} · R plays it again{useMic ? " · a pass counts only if it was clear" : ""}</p>
 							</div>
 							<button type="button" onClick={() => void startPass()} className={PRIMARY} data-testid="fast-start" ref={(el) => el?.focus()}>
 								{pass === 0 ? "Go" : "Again, faster"}

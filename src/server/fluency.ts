@@ -24,6 +24,7 @@ import { progressStore } from "../store/progress.ts";
 import { fluencyStore } from "../store/speak.ts";
 import { storyStore } from "../store/stories.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
+import { pronunciationReport, type PronReport } from "./pronounce.ts";
 import { knownWords, resolveWord, STORY_NAMES } from "./reading.ts";
 
 // ─── Re-read ────────────────────────────────────────────────────────────────
@@ -179,6 +180,8 @@ export interface FastOutcome {
 	sentencesMade: number;
 	total: number;
 	summary: ProgressSummary;
+	/** What to work on in pronunciation, across recent rounds and scenes. */
+	report: PronReport;
 }
 
 export function recordFast(input: FastResultInput, now = new Date()): FastOutcome {
@@ -228,5 +231,5 @@ export function recordFast(input: FastResultInput, now = new Date()): FastOutcom
 	} catch (err) {
 		console.warn("[fluency] could not append the lesson log:", err instanceof Error ? err.message : err);
 	}
-	return { xp, passesMade, sentencesMade, total: reps.length, summary: progressSummary(input.tz, now) };
+	return { xp, passesMade, sentencesMade, total: reps.length, summary: progressSummary(input.tz, now), report: pronunciationReport() };
 }

@@ -96,3 +96,4 @@ export * from "./listen.ts";
 export * from "./strands.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
+export * from "./pronounce.ts";

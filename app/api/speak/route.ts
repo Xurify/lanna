@@ -5,13 +5,15 @@
  * that scene's record as `session` (to carry on with it).
  * POST /api/speak {action: "start", scene} — open a scene: the record and
  *   the tutor's first line.
- * POST /api/speak {action: "turn", id, text, via, ms?} — the learner's line
- *   (text, or multipart with the recording as `audio`); the tutor's reply.
+ * POST /api/speak {action: "turn", id, text, via, ms?, pron?} — the learner's
+ *   line (text, or multipart with the recording as `audio`; `pron` the score
+ *   /api/pronounce gave it); the tutor's reply.
  * POST /api/speak {action: "end", id, ms?, tz?} — the summary, XP, the day's
  *   speaking, the slips' words into the review deck.
  * POST /api/speak {action: "drop", id} — forget a scene that never got going.
  */
 
+import { isPronScore, type PronScore } from "@/src/core";
 import { speakDrop, speakEnd, speakStart, speakState, speakStore, speakTurn, STT_MAX_BYTES } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,14 @@ interface Body {
 	via?: unknown;
 	ms?: unknown;
 	tz?: unknown;
+	pron?: unknown;
+}
+
+/** A pronunciation score the client got from /api/pronounce, as JSON (a
+ *  string in multipart, an object in JSON); anything else is dropped. */
+function pronOf(v: unknown): PronScore | undefined {
+	const o = typeof v === "string" ? (JSON.parse(v.slice(0, 20_000)) as unknown) : v;
+	return isPronScore(o) ? o : undefined;
 }
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) : "");
@@ -43,7 +53,7 @@ export async function POST(req: Request) {
 	try {
 		if (type.startsWith("multipart/form-data")) {
 			const form = await req.formData();
-			body = { action: form.get("action"), id: form.get("id"), text: form.get("text"), via: form.get("via"), ms: form.get("ms"), tz: form.get("tz") };
+			body = { action: form.get("action"), id: form.get("id"), text: form.get("text"), via: form.get("via"), ms: form.get("ms"), tz: form.get("tz"), pron: form.get("pron") };
 			const file = form.get("audio");
 			if (file instanceof Blob && file.size > 0 && file.size <= STT_MAX_BYTES) {
 				const mime = file.type || "audio/webm";
@@ -60,7 +70,7 @@ export async function POST(req: Request) {
 				return Response.json(await speakStart(str(body.scene, 40)));
 			case "turn": {
 				const via = body.via === "voice" ? "voice" : "typed";
-				return Response.json(await speakTurn({ id: str(body.id, 80), text: str(body.text), via, ms: num(body.ms), audio }));
+				return Response.json(await speakTurn({ id: str(body.id, 80), text: str(body.text), via, ms: num(body.ms), audio, pron: pronOf(body.pron) }));
 			}
 			case "end":
 				return Response.json(await speakEnd({ id: str(body.id, 80), ms: num(body.ms), tz: tz !== undefined && Math.abs(tz) <= 840 ? tz : undefined }));

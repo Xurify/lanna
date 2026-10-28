@@ -56,6 +56,7 @@ export * from "./reading.ts";
 export * from "./listen.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
+export * from "./pronounce.ts";
 export { speakStore, fluencyStore } from "../store/speak.ts";
 export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";

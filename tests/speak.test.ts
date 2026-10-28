@@ -96,7 +96,7 @@ test("speakXp and speakCounts: lines, prompts and repairs", () => {
 		{ role: "learner", text: "d", at: "" },
 		{ role: "tutor", text: "e", at: "", repaired: true },
 	]);
-	assert.deepEqual(c, { learner: 2, prompts: 1, repaired: 1 });
+	assert.deepEqual(c, { learner: 2, prompts: 1, repaired: 1, spoken: 0, clear: 0 });
 });
 
 test("wordMatch: diacritics and punctuation fold, order does not matter, missing and extra words are named", () => {

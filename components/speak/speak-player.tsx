@@ -24,8 +24,9 @@ import { cn } from "@/lib/utils";
 import { speak, SpeedToggle } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
-import { Recorder, micSupported, transcribeClip } from "@/components/speak/recorder";
-import { SLIP_LABEL, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
+import { PronChip, PronWorkOn } from "@/components/speak/pron";
+import { pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
 
 type SttEngine = "elevenlabs" | "deepgram";
 
@@ -33,6 +34,7 @@ export interface SpeakState {
 	scenes: Array<SpeakScene & { suggested: boolean; done: number }>;
 	canSpeak: boolean;
 	stt: SttEngine | null;
+	pron: PronEngine | null;
 	unfinished: { id: string; scene: string; sceneTitle: string; turns: number } | null;
 	recent: Array<{ id: string; scene: string; sceneTitle: string; startedAt: string; turns: number; corrections: number; xp?: number }>;
 }
@@ -42,6 +44,7 @@ interface Outcome {
 	xp: number;
 	queued: string[];
 	summary: { todayXp: number; dailyGoal: number; streak: { days: number } };
+	report: PronReport;
 }
 
 type Phase = "pick" | "starting" | "scene" | "ending" | "done";
@@ -155,13 +158,13 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 	}, [session, phase]);
 
 	const send = useCallback(
-		async (text: string, via: "voice" | "typed", clip?: { blob: Blob; ms: number }) => {
+		async (text: string, via: "voice" | "typed", clip?: { blob: Blob; ms: number; pron?: PronScore | null }) => {
 			if (!session || sending || !text.trim()) return;
 			setSending(true);
 			setDraft("");
 			setMeaning(false);
 			// The learner's line shows at once; the tutor's follows.
-			const mine: SpeakTurn = { role: "learner", text: text.trim(), via, at: new Date().toISOString() };
+			const mine: SpeakTurn = { role: "learner", text: text.trim(), via, at: new Date().toISOString(), ...(clip?.pron ? { pron: clip.pron } : {}) };
 			setSession({ ...session, turns: [...session.turns, mine] });
 			try {
 				const form = new FormData();
@@ -172,6 +175,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 				if (clip) {
 					form.set("ms", String(clip.ms));
 					form.set("audio", clip.blob, "line.webm");
+					if (clip.pron) form.set("pron", JSON.stringify(clip.pron));
 				}
 				const out = await post<{ session: SpeakSession; reply: SpeakTurn; end: boolean }>(form);
 				setSession(out.session);
@@ -214,7 +218,12 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 					setError("Nothing heard. Say it once more, a little louder.");
 					return;
 				}
-				await send(text, "voice", { blob: clip.blob, ms: clip.ms });
+				// Sound by sound, when Azure is set: what was said, against the
+				// words speech-to-text made of it. The transcript engine alone
+				// cannot score free speech (nothing to compare with).
+				let pron: PronScore | null = null;
+				if (state?.pron === "azure") pron = await scoreClip(clip, text, text).catch(() => null);
+				await send(text, "voice", { blob: clip.blob, ms: clip.ms, pron });
 			} catch (err) {
 				setError(err instanceof Error ? err.message : String(err));
 			} finally {
@@ -227,7 +236,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 		const rec = new Recorder();
 		recorder.current = rec;
 		try {
-			await rec.start({ onLevel: setLevel, maxMs: 30_000, onAutoStop: () => void toggleRef.current() });
+			await rec.start({ onLevel: setLevel, maxMs: 30_000, onAutoStop: () => void toggleRef.current(), wav: state?.pron === "azure" });
 			setListening(true);
 		} catch {
 			recorder.current = null;
@@ -523,7 +532,10 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 			<p className="font-prose text-lg text-foreground" lang="sk">
 				{turn.text}
 			</p>
-			<p className="mt-0.5 font-ui text-[11px] text-muted-foreground">{turn.via === "voice" ? "heard" : "typed"}</p>
+			<p className="mt-0.5 flex items-center gap-2 font-ui text-[11px] text-muted-foreground">
+				<span>{turn.via === "voice" ? "heard" : "typed"}</span>
+				{turn.pron && <PronChip score={turn.pron} />}
+			</p>
 		</div>
 	);
 }
@@ -628,8 +640,15 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-xp" />
 				<Stat label="Prompts repaired" value={`${counts.repaired} of ${counts.prompts}`} ink="text-go" />
+				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= 85 ? "text-go" : s.pron.average >= 70 ? "text-gold" : "text-miss"} />}
 				<Stat label="In your deck" value={String(outcome.queued.length)} ink="text-sky" />
 			</div>
+			{s.pron && (
+				<p className="mt-2 font-prose text-sm text-muted-foreground" data-testid="speak-pron">
+					{s.pron.clear} of {s.pron.lines} spoken {s.pron.lines === 1 ? "line" : "lines"} said clearly (+{SPEAK_CLEAR_XP} XP each){s.pron.engine === "azure" ? ", scored sound by sound" : ""}.
+				</p>
+			)}
+			<PronWorkOn report={outcome.report} />
 			{sum?.note && <p className="mt-6 font-prose text-base text-foreground">{sum.note}</p>}
 			{sum && sum.corrections.length > 0 ? (
 				<div className="mt-8">
