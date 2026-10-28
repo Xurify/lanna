@@ -45,7 +45,7 @@ import {
 	bridgeLanguages,
 	DEFAULT_LANG_LEVEL,
 	isLang,
-	isLangLevel,
+	normalizeLangLevel,
 	MAX_EXPLAIN,
 	MAX_LANGUAGES,
 	MAX_PURPOSE_NOTE,
@@ -463,7 +463,10 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	if (goal.languageLevels && typeof goal.languageLevels === "object") {
 		const known = next.languages ?? [];
 		const levels: Partial<Record<Lang, LangLevel>> = {};
-		for (const [k, v] of Object.entries(goal.languageLevels)) if (isLang(k) && known.includes(k) && isLangLevel(v) && v !== DEFAULT_LANG_LEVEL) levels[k] = v;
+		for (const [k, v] of Object.entries(goal.languageLevels)) {
+			const lv = normalizeLangLevel(v);
+			if (isLang(k) && known.includes(k) && lv && lv !== DEFAULT_LANG_LEVEL) levels[k] = lv;
+		}
 		if (Object.keys(levels).length) next.languageLevels = levels;
 		else delete next.languageLevels;
 	} else if (next.languageLevels && next.languages) {

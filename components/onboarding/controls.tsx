@@ -11,7 +11,7 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, type Lang, type LangLevel } from "@/src/core";
+import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors";
 const ON = "border-go bg-go/10 text-foreground";
@@ -221,13 +221,13 @@ export function LanguagePicker({
 			{value.length > 0 && (
 				<div className="mt-4 flex flex-col gap-1.5" data-testid={`${testid}-levels`}>
 					{value.map((id) => {
-						const level = levels[id] ?? DEFAULT_LANG_LEVEL;
+						const level = normalizeLangLevel(levels[id]) ?? DEFAULT_LANG_LEVEL; // a profile from before may still say "fluent"
 						return (
 							<div key={id} className="flex items-center gap-2" data-testid={`level-${id}`}>
 								<span className="w-28 shrink-0 truncate font-ui text-sm font-bold text-foreground">{languageName(id)}</span>
-								<span className="flex shrink-0 gap-1" role="group" aria-label={`How well you know ${languageName(id)}`}>
+								<span className="flex shrink-0 gap-1" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
 									{LANG_LEVELS.map((lv) => (
-										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("whitespace-nowrap rounded-lg border-2 px-2.5 py-1 font-ui text-xs font-bold transition-colors", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
+										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("whitespace-nowrap rounded-lg border-2 py-1 font-ui text-xs font-bold tabular-nums transition-colors", lv.id === "native" ? "px-2.5" : "px-2", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
 											{lv.title}
 										</button>
 									))}

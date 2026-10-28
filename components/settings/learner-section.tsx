@@ -59,7 +59,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 		<>
 			<SettingsGroup label="Languages you know" testid="learner-languages">
 				<LanguagePicker value={state.languages} levels={state.languageLevels} onChange={(languages, languageLevels) => void save({ languages, languageLevels, explainIn: keepExplain(state.explainIn, languages) })} />
-				<p className="text-xs text-muted-foreground">Any language you can read a simple text in, and how well. Estonian, Finnish, Russian and German show up inside the lessons as the same form seen their way, the best-known first; the tutor draws on every language here.</p>
+				<p className="text-xs text-muted-foreground">Any language you can read a simple text in, and your CEFR level in it (A1 to C2, or native). Estonian, Finnish, Russian and German show up inside the lessons as the same form seen their way, the best-known first; the tutor draws on every language here.</p>
 			</SettingsGroup>
 			<SettingsGroup label="Explain to me in" testid="learner-explain">
 				<PickSome items={explainChoices(state.languages)} value={state.explainIn} onChange={(explainIn) => void save({ ...state, explainIn })} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
