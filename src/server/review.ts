@@ -12,6 +12,8 @@ import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts"
 import { classifyExample, describeForm } from "../core/lesson.ts";
 import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
+import { progressStore } from "../store/progress.ts";
+import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
 
 const DAY_MS = 86_400_000;
 const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
@@ -196,6 +198,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	};
 	cards[card.id] = updated;
 	reviewStore.writeCards(cards);
+	noteWeakForm(updated, rating, now);
 	reviewStore.appendLog({
 		cardId: card.id,
 		rating,
@@ -208,6 +211,29 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...(input.picked ? { picked: true } : {}),
 	});
 	return { verdict, rating, card: updated };
+}
+
+/** The weak-spots record (src/core/weak-spots.ts): a card whose cloze is
+ *  a grammar form counts its answer against that unit, and a card that
+ *  keeps lapsing flags the unit. Words with no form (plain vocabulary)
+ *  stay the deck's business. */
+function noteWeakForm(card: ReviewCard, rating: Rating, now: Date): void {
+	const entry = loadLexicon()?.bySlug.get(card.slug);
+	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	if (!unit || unit === "words") return;
+	try {
+		const p = progressStore.read();
+		let weak = p.weak ?? {};
+		const miss = rating === 1;
+		weak = tallyWeak(weak, unit, miss ? 0 : 1, miss ? 1 : 0, now).weak;
+		if (miss && !weak[unit] && card.lapses >= WEAK_REVIEW_LAPSES) weak = flagWeak(weak, unit, "review", `${card.lemma} keeps slipping (${card.answer}, ×${card.lapses})`, now);
+		if (weak !== (p.weak ?? {})) {
+			p.weak = weak;
+			progressStore.write(p);
+		}
+	} catch (err) {
+		console.warn("[review] could not update the weak spots:", err instanceof Error ? err.message : err);
+	}
 }
 
 export function suspendCard(cardId: string, suspended = true): void {

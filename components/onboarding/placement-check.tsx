@@ -21,7 +21,7 @@ import { CheckIcon, LoaderCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveLanguage } from "@/components/speech";
-import { compareAnswer, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem } from "@/src/core";
+import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem } from "@/src/core";
 
 const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
 const PRIMARY = cn(BUTTON, "bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100");
@@ -148,6 +148,9 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 					{progress.asked} answered{progress.floor ? ` · holds ${unitInfo(progress.floor as LessonItem["unit"]).title}` : ""}{progress.ceiling ? ` · edge at ${unitInfo(progress.ceiling as LessonItem["unit"]).title}` : ""}
 				</p>
 			</div>
+			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="ladder-note">
+				You get the word; type the form this sentence needs. This stage measures grammar only: words are checked on their own after.
+			</p>
 			<div className="mt-3 h-2 overflow-hidden rounded-full bg-accent" aria-hidden="true">
 				<div className="h-full rounded-full bg-go transition-[width] duration-300" style={{ width: `${Math.round(share * 100)}%` }} />
 			</div>
@@ -208,20 +211,35 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				</p>
 			)}
 			{result && result.verdict === "wrong" && (
-				<div className="lh-rise mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-miss/40 bg-miss-soft px-5 py-4" role="status" aria-live="polite">
-					<p className="font-prose text-base text-foreground">
-						The form here is <b lang="sk">{item.answer}</b>
-						{item.trigger && (
+				<div className="lh-rise mt-8 rounded-2xl border border-miss/40 bg-miss-soft px-5 py-4" role="status" aria-live="polite" data-testid="placement-miss">
+					{(() => {
+						const v = missVerdict(item, result.judged && !result.judged.accepted ? result.judged.note : null);
+						return (
 							<>
-								{" "}
-								— decided by <span lang="sk" className="font-bold">{item.trigger}</span>
+								<p className="font-prose text-base text-foreground">
+									The form here is <b lang="sk">{v.form}</b>
+									{item.trigger && (
+										<>
+											{" "}
+											— decided by <span lang="sk" className="font-bold">{item.trigger}</span>
+										</>
+									)}
+									.{v.reason ? ` ${v.reason}` : ""}
+								</p>
+								{v.pattern && (
+									<p className="mt-1.5 font-prose text-sm text-muted-foreground" data-testid="placement-pattern">
+										The pattern: {v.pattern}
+									</p>
+								)}
 							</>
-						)}
-						.{result.judged && !result.judged.accepted && result.judged.note ? ` ${result.judged.note}.` : ""} No hint in a check; the lessons explain it.
-					</p>
-					<button type="button" onClick={advance} className={PRIMARY} data-testid="placement-continue">
-						Continue
-					</button>
+						);
+					})()}
+					<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+						<span className="font-ui text-xs text-muted-foreground">A check gives no hint before the answer; the lessons explain it.</span>
+						<button type="button" onClick={advance} className={PRIMARY} data-testid="placement-continue">
+							Continue
+						</button>
+					</div>
 				</div>
 			)}
 		</div>
@@ -299,6 +317,9 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 					{turn ? `${Math.min(turn.turn, PROBE_TURNS)} of up to ${PROBE_TURNS}` : ""}
 				</p>
 			</div>
+			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="edge-note">
+				The tutor asks you to produce the forms at your edge and to say why: a slip and a gap look the same in a drill, not here.
+			</p>
 
 			{log.length > 0 && (
 				<ol className="mt-5 flex flex-col gap-2" aria-label="So far">
@@ -398,6 +419,9 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 				</p>
 				<p className="font-ui text-xs tabular-nums text-muted-foreground">{yes.size} ticked</p>
 			</div>
+			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="words-note">
+				Vocabulary, on its own: forty words from five frequency bands estimate how many you recognise.
+			</p>
 			<h2 className="mt-8 font-prose text-2xl font-semibold text-foreground">Tick every word whose meaning you know</h2>
 			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not Slovak words at all, and ticking them lowers the estimate. Two minutes.</p>
 			{!items ? (

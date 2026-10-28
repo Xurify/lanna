@@ -17,13 +17,15 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-placement-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 
 const { PATHS } = await import("../config.ts");
+import type { UnitId } from "../src/core/lesson.ts";
 const ladder = await import("../src/core/placement-ladder.ts");
 const onboarding = await import("../src/core/onboarding.ts");
 const vocab = await import("../src/core/vocab-probe.ts");
 const server = await import("../src/server/placement.ts");
 const { placementStore } = await import("../src/store/placement.ts");
 const { progressStore } = await import("../src/store/progress.ts");
-const { setGoal } = await import("../src/server/lesson.ts");
+const { setGoal, progressSummary, recordLesson } = await import("../src/server/lesson.ts");
+const { learnerProfileSegment } = await import("../src/agent/learner-profile.ts");
 const { readLessonLog } = await import("../src/store/corpus.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 
@@ -241,6 +243,31 @@ test("the whole check through the server: items one at a time, a typed alternati
 	assert.equal(rec.goal?.startChapter, r.startChapter);
 	assert.ok(rec.units["cond"]?.placed);
 	assert.equal(rec.units["cond"]?.correct, 2);
+	// The weak-spots record: every unit missed in the check is flagged with the judge's words; the unit the tutor held is not.
+	const weakUnits = Object.keys(rec.weak ?? {});
+	assert.ok(weakUnits.length >= 1, "the misses are on record");
+	assert.ok(weakUnits.every((u) => rec.weak![u]!.source === "check"));
+	assert.ok(weakUnits.some((u) => rec.weak![u]!.note === "wrong case"), `the judge's note is the evidence: ${JSON.stringify(rec.weak)}`);
+	assert.equal(rec.weak!["cond"], undefined, "held by the tutor: not a weak spot");
+	setGoal({ minutesPerDay: 90 }, 0, now); // room in the plan for every task
+	const summary = progressSummary(0, now);
+	assert.ok(summary.weakSpots.length >= 1);
+	assert.equal(summary.weakSpots[0]!.source, "check");
+	// Strengthen opens a weak spot the map has unlocked (a spot still locked is new ground, a lesson in its turn).
+	const mapUnits = summary.curriculum.chapters.flatMap((c) => c.units);
+	const openWeak = weakUnits.filter((u) => mapUnits.find((m) => m.id === u)?.status !== "locked");
+	const strengthen = summary.plan.tasks.find((t) => t.id === "strengthen");
+	if (openWeak.length) assert.ok(strengthen && openWeak.includes(strengthen.unit!), `Strengthen opens a weak spot: ${JSON.stringify(strengthen)}; weak ${JSON.stringify(weakUnits)}; next ${summary.next}; map ${JSON.stringify(mapUnits.filter((m) => weakUnits.includes(m.id)).map((m) => [m.id, m.kind, m.status]))}; tasks ${JSON.stringify(summary.plan.tasks.map((t) => [t.id, t.unit]))}`);
+	assert.match(learnerProfileSegment() ?? "", /Weak spots on record:/);
+	// Lessons mend it: enough reps right since the flag and the spot is dropped.
+	const target = weakUnits[0]! as UnitId;
+	const rep = (i: number, verdict: "exact" | "wrong") => ({ itemId: `x#${i}`, slug: "x", kind: "type" as const, verdict });
+	recordLesson({ unit: target, mode: "lesson", reps: Array.from({ length: 10 }, (_, i) => rep(i, i < 9 ? "exact" : "wrong")), tz: 0 }, now);
+	assert.equal(progressStore.read().weak![target], undefined, "9/10 since the flag mends it");
+	// And lessons flag one on their own: a unit under the bar after enough reps.
+	recordLesson({ unit: "gen", mode: "lesson", reps: Array.from({ length: 8 }, (_, i) => rep(i, i < 4 ? "exact" : "wrong")), tz: 0 }, now);
+	assert.equal(progressStore.read().weak!["gen"]?.source, "lesson");
+	assert.equal(progressStore.read().weak!["gen"]?.note, "50% right in lesson 1");
 	assert.equal(rec.xp, 0, "no XP for a measurement");
 	const log = readLessonLog().filter((e) => e.mode === "placement");
 	assert.equal(log.length, 1);

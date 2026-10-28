@@ -27,3 +27,6 @@ _backup-before-redesign/
 _backup-before-curriculum/
 *.bundle
 langharness-2.tar.gz
+
+# Deploy leftovers from assistant threads (never needed)
+_handoff/

@@ -16,10 +16,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HoursSheet } from "@/components/hours-sheet";
-import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
+import { AlertTriangleIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrandBalance } from "@/components/strand-balance";
-import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
+import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, purposePhrase, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance, type WeakSpotSummary } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -35,6 +35,7 @@ export function DailyPlan({
 	goal,
 	projection,
 	balance = null,
+	weak = [],
 	week,
 	busy = false,
 	onSpeak,
@@ -44,6 +45,8 @@ export function DailyPlan({
 	projection: Projection | null;
 	/** This week by Nation's four strands (src/core/strands.ts). */
 	balance?: Balance | null;
+	/** Units on record as weak spots (src/core/weak-spots.ts). */
+	weak?: WeakSpotSummary[];
 	week: Array<{ day: string; xp: number }>;
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
@@ -97,6 +100,10 @@ export function DailyPlan({
 			{/* The week by strand: input, speaking, words & rules, speed, against
 			    a quarter each (Nation's four strands). */}
 			<StrandBalance balance={balance} />
+
+			{/* Weak spots on record (src/core/weak-spots.ts): what the check, the
+			    lessons or the deck flagged, until enough reps come back right. */}
+			<WeakSpots weak={weak} />
 
 			{/* The goal the plan serves, and what the map says about the road.
 			    Changing it reopens setup (components/onboarding/start.tsx),
@@ -207,5 +214,38 @@ function PlanRing({ done, total }: { done: number; total: number }) {
 				<span className="text-xs text-muted-foreground">/{total}</span>
 			</span>
 		</span>
+	);
+}
+
+/** The struggles on record, one line each: the unit (or the family two
+ *  units share), where it was seen, and the tally since. Each opens the
+ *  unit's lesson; the map shows the same spots in place. */
+function WeakSpots({ weak }: { weak: WeakSpotSummary[] }) {
+	const groups = weakSpotGroups(weak);
+	if (!groups.length) return null;
+	return (
+		<div className="mt-4 border-t pt-4" data-testid="weak-spots">
+			<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">
+				<AlertTriangleIcon className="mr-1.5 inline size-3.5 align-[-2px] text-miss" />
+				Your weak spots
+			</p>
+			<ul className="mt-1.5 flex flex-col gap-1">
+				{groups.slice(0, 4).map((g) => (
+					<li key={g.id}>
+						<Link href={`/lesson?unit=${g.unit}`} className="group flex flex-wrap items-baseline gap-x-2 rounded-lg px-1 py-0.5 hover:bg-accent" data-testid={`weak-spot-${g.id}`}>
+							<span className="font-ui text-sm font-bold text-foreground group-hover:text-go">{g.title}</span>
+							<span className="font-ui text-xs text-muted-foreground">{g.spots.length > 1 ? `${g.spots.map((m) => m.title).join(" + ")} · ${g.spots[0]!.line}` : g.line}</span>
+						</Link>
+					</li>
+				))}
+				{groups.length > 4 && (
+					<li className="px-1 font-ui text-xs text-muted-foreground">
+						<Link href="/curriculum" className="underline hover:text-foreground">
+							and {groups.length - 4} more on the map
+						</Link>
+					</li>
+				)}
+			</ul>
+		</div>
 	);
 }
