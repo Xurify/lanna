@@ -39,7 +39,7 @@ import { UnitBadge } from "@/components/unit-badge";
 import { DailyPlan, type Goal } from "@/components/daily-plan";
 import { CurriculumPath } from "@/components/curriculum-path";
 import { curriculumUnit, LESSONS_TO_COMPLETE, purposeGoals, tutorUnitPrompt } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, StrandBalance, UnitId, UnitState } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, StrandBalance, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
@@ -71,6 +71,7 @@ interface Summary {
 	goal: Goal;
 	projection: Projection;
 	balance?: StrandBalance;
+	weakSpots?: WeakSpotSummary[];
 }
 
 function greeting(now = new Date()): string {
@@ -239,7 +240,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					</div>
 
 					{/* Today's plan: the day's tasks on the road to the goal */}
-					<DailyPlan plan={s?.plan ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} balance={s?.balance ?? null} week={s?.week ?? []} busy={busy} onSpeak={speak} />
+					<DailyPlan plan={s?.plan ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} balance={s?.balance ?? null} weak={s?.weakSpots ?? []} week={s?.week ?? []} busy={busy} onSpeak={speak} />
 
 					{/* Ways to practise */}
 					<div className="mt-5 grid grid-cols-2 gap-4" data-testid="modes">
@@ -333,7 +334,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						)}
 					</div>
 					<div className="mt-4">
-						<CurriculumPath state={s?.curriculum ?? null} next={s?.next} goals={purposeGoals(s?.goal.purposes ?? [])} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
+						<CurriculumPath state={s?.curriculum ?? null} next={s?.next} goals={purposeGoals(s?.goal.purposes ?? [])} weak={s?.weakSpots ?? []} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
 					</div>
 				</aside>
 			</main>

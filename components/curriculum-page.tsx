@@ -15,9 +15,9 @@ import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { CurriculumPath } from "@/components/curriculum-path";
 import { startTutorChat, TALK_SCENES, talkPrompt } from "@/components/lesson/tutor";
-import { curriculumUnit, purposeGoals, tutorUnitPrompt, type CurriculumState, type LearnerGoal, type UnitState } from "@/src/core";
+import { curriculumUnit, purposeGoals, tutorUnitPrompt, type CurriculumState, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
 
-export function CurriculumPage({ initialConfigured, state, next, goal }: { initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal }) {
+export function CurriculumPage({ initialConfigured, state, next, goal, weak = [] }: { initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[] }) {
 	const router = useRouter();
 	const [configured, setConfigured] = useState(initialConfigured);
 	const [setupOpen, setSetupOpen] = useState(false);
@@ -65,7 +65,7 @@ export function CurriculumPage({ initialConfigured, state, next, goal }: { initi
 					you are never held in what you already know.
 				</p>
 				<div className="mt-8">
-					<CurriculumPath state={state} next={next} mode="full" goals={purposeGoals(goal.purposes ?? [])} busy={busy} onTutor={onTutor} onScene={onScene} />
+					<CurriculumPath state={state} next={next} mode="full" goals={purposeGoals(goal.purposes ?? [])} weak={weak} busy={busy} onTutor={onTutor} onScene={onScene} />
 				</div>
 			</main>
 			<SetupDialog

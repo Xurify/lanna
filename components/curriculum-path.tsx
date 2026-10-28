@@ -13,16 +13,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitBadge } from "@/components/unit-badge";
-import { STAGES, TUTOR_SESSIONS, type ChapterState, type CurriculumState, type UnitState } from "@/src/core";
+import { STAGES, TUTOR_SESSIONS, type ChapterState, type CurriculumState, type UnitState, type WeakSpotSummary } from "@/src/core";
 
 export function CurriculumPath({
 	state,
 	next,
 	mode = "compact",
 	goals,
+	weak,
 	busy = false,
 	onTutor,
 	onScene,
@@ -32,11 +33,14 @@ export function CurriculumPath({
 	mode?: "compact" | "full";
 	/** Goal units the learner's purposes serve (src/core/onboarding.ts): starred. */
 	goals?: ReadonlySet<string>;
+	/** Units on record as weak spots (src/core/weak-spots.ts): marked, with why. */
+	weak?: WeakSpotSummary[];
 	busy?: boolean;
 	onTutor: (unit: UnitState) => void;
 	onScene: (scene: string, unit: UnitState) => void;
 }) {
 	const [opened, setOpened] = useState<Record<string, boolean>>({});
+	const weakBy = new Map((weak ?? []).map((w) => [w.unit as string, w]));
 	if (!state) return null;
 	const isOpen = (ch: ChapterState) => mode === "full" || opened[ch.id] || (opened[ch.id] === undefined && ch.id === state.current);
 	const toggle = (id: string) => setOpened((o) => ({ ...o, [id]: !(o[id] ?? id === state.current) }));
@@ -84,7 +88,7 @@ export function CurriculumPath({
 										<ol className="flex flex-col gap-1 px-2 pb-2">
 											{ch.units.map((u) => (
 												<li key={u.id}>
-													<UnitRow unit={u} active={u.id === next} starred={goals?.has(u.id) ?? false} busy={busy} onTutor={onTutor} onScene={onScene} />
+													<UnitRow unit={u} active={u.id === next} starred={goals?.has(u.id) ?? false} weak={weakBy.get(u.id)} busy={busy} onTutor={onTutor} onScene={onScene} />
 												</li>
 											))}
 										</ol>
@@ -117,7 +121,7 @@ export function unitLine(u: UnitState, active: boolean): string {
 	return active ? "Up next" : u.tagline;
 }
 
-function UnitRow({ unit: u, active, starred, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
+function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; weak?: WeakSpotSummary; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
 	const locked = u.status === "locked";
 	const skipped = u.status === "skipped";
 	const tone = u.kind === "tutor" ? "xp" : u.kind === "goal" ? "flame" : "go";
@@ -132,8 +136,11 @@ function UnitRow({ unit: u, active, starred, busy, onTutor, onScene }: { unit: U
 					{starred && <StarIcon className="size-3.5 shrink-0 fill-gold text-gold" aria-label="One of your goals" />}
 					{u.kind === "tutor" && <GraduationCapIcon className="size-3.5 shrink-0 text-xp" aria-label="With the tutor" />}
 					{u.kind === "goal" && <FlagIcon className="size-3.5 shrink-0 text-flame" aria-label="Can-do goal" />}
+					{weak && <AlertTriangleIcon className="size-3.5 shrink-0 text-miss" aria-label="A weak spot" data-testid={`weak-mark-${u.id}`} />}
 				</span>
-				<span className="block truncate font-ui text-xs text-muted-foreground">{unitLine(u, active)}</span>
+				<span className="block truncate font-ui text-xs text-muted-foreground" title={weak ? `Weak spot ${weak.line}` : undefined}>
+					{weak ? `Weak spot ${weak.line}` : unitLine(u, active)}
+				</span>
 			</span>
 		</>
 	);

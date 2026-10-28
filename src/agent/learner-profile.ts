@@ -14,10 +14,12 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import { curriculumState, type UnitEvidence } from "../core/curriculum.ts";
 import { learnerProfileText, type LearnerGoal } from "../core/onboarding.ts";
+import type { WeakRecord } from "../core/weak-spots.ts";
 
 interface ProgressFile {
 	units?: Record<string, UnitEvidence | undefined>;
 	goal?: LearnerGoal;
+	weak?: WeakRecord;
 }
 
 /** The profile block, or null when nothing is known yet (a fresh profile
@@ -35,5 +37,5 @@ export function learnerProfileSegment(): string | null {
 	const hasEvidence = Object.values(units).some((u) => u && u.reps > 0);
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
-	return learnerProfileText(goal, state, units);
+	return learnerProfileText(goal, state, units, record.weak);
 }

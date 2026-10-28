@@ -27,7 +27,8 @@
  */
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
-import { unitInfo, type UnitId } from "./lesson.ts";
+import { unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { weakSpotList, weakSpotsLine, type WeakRecord } from "./weak-spots.ts";
 
 // ─── What Slovak is for ─────────────────────────────────────────────────────
 
@@ -787,7 +788,7 @@ const PRIOR_LINE: Record<Prior, string> = {
  * prober fragment tells the agent to treat this as the goal and the
  * level already found. Null when nothing is known yet (first run).
  */
-export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>): string | null {
+export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -833,9 +834,79 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 			.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0))
 			.slice(0, 5);
 		if (weak.length) lines.push(`- Measured weak points (lesson accuracy): ${weak.map((u) => `${u.title} ${Math.round((u.accuracy ?? 0) * 100)}%`).join(", ")}.`);
+		const spots = weakSpotsLine(weakSpotList(weak_));
+		if (spots) lines.push(spots);
 		const done = state.chapters.flatMap((c) => c.units).filter((u) => u.status === "done" && (u.kind === "drill" || u.kind === "words"));
 		if (done.length) lines.push(`- Holds (units done on the map): ${done.slice(0, 12).map((u) => u.title).join(", ")}${done.length > 12 ? `, and ${done.length - 12} more` : ""}.`);
 	}
 	if (lines.length === 0) return null;
 	return ["# This learner (from the app's profile and the lesson ledger)", ...lines, "Treat the goal as concrete and the level as measured: do not ask for either. Build from the units held, work on the weak points, and keep the purposes in the examples you choose."].join("\n");
+}
+
+// ─── The verdict on a missed item ───────────────────────────────────────────
+
+/** What the miss footer says: the form, the judge's reason as clean
+ *  sentences, and the unit's rule so the verdict teaches the pattern once
+ *  instead of only naming the case. */
+export interface MissVerdict {
+	/** "The form here is kuchára" (the form is bolded by the UI). */
+	form: string;
+	/** The judge's note, normalised: no quotes around the Slovak words, no
+	 *  semicolons, one full stop per sentence, none doubled. */
+	reason: string | null;
+	/** The unit's rule in one line, when it adds to the reason. */
+	pattern: string | null;
+}
+
+/** Normalise a model's one-line note into prose: 'ponuku' → ponuku, a
+ *  semicolon starts a new sentence, trailing punctuation is trimmed, the
+ *  first letter is capitalised and exactly one full stop closes it. */
+export function cleanNote(note: string | undefined | null): string | null {
+	if (!note) return null;
+	let t = note
+		.normalize("NFC")
+		.trim()
+		.replace(/^["“”„]+|["“”„]+$/gu, "")
+		.replace(/(^|[\s(])['‘’`]([^'‘’`]{1,40})['‘’`](?=[\s).,;:!?]|$)/gu, "$1$2")
+		.replace(/\s*;\s*/gu, ". ")
+		.replace(/\s+/gu, " ")
+		.replace(/[\s.,;:]+$/u, "")
+		.trim();
+	if (!t) return null;
+	t = t.replace(/\.\s+([a-záäčďéíĺľňóôŕšťúýž])/gu, (_m, c: string) => `. ${c.toLocaleUpperCase("sk-SK")}`);
+	t = t.charAt(0).toLocaleUpperCase("sk-SK") + t.slice(1);
+	return `${t}.`;
+}
+
+export function missVerdict(item: Pick<LessonItem, "answer" | "unit" | "trigger">, note?: string | null): MissVerdict {
+	const reason = cleanNote(note);
+	const info = unitInfo(item.unit);
+	// A word unit's rule is advice, not a pattern: left out.
+	const pattern = info && info.kind !== "words" ? info.rule : null;
+	return { form: item.answer, reason, pattern };
+}
+
+// ─── Calm items for the check ───────────────────────────────────────────────
+
+/** Sentences about crime, violence and death are odd company for a
+ *  learner's first minutes with the app ("the police caught the murderer"
+ *  at A1). The check draws its items from the rest. Slovak stems and
+ *  English words, both sides of every example. */
+const GRIM = /\b(murder|kill|corpse|blood|weapon|gun|knife|war|rape|suicide|terror|bomb|hostage|victim|prison|jail|crime|criminal|thie(?:f|ves)|st(?:eal|ole|olen)|die[ds]?|dying|dead|death|police|shoot|shot|stab|attack|drugs?)\b|\b(vrah|vražd|zabi|zabíj|mŕtv|krv|zbra[ňn]|nož|vojn|znásil|samovra|teror|bomb|rukojem|obe[ťt]|väzen|väzn|zloči|trestn|zlode|ukrad|krádež|zomr|zomier|smrť|smrti|políc|strie[ľl]|zastrel|bodn|útok|útoč|drog)/iu;
+
+export function isGrim(text: string): boolean {
+	return GRIM.test(text.normalize("NFC"));
+}
+
+/** The lexicon with the grim examples left out, and entries with nothing
+ *  left dropped. */
+export function calmEntries<E extends { sk: string; en: string; examples: Array<{ sk: string; en: string }> }>(entries: readonly E[]): E[] {
+	const out: E[] = [];
+	for (const e of entries) {
+		if (isGrim(e.sk) || isGrim(e.en)) continue;
+		const examples = e.examples.filter((x) => !isGrim(x.sk) && !isGrim(x.en));
+		if (!examples.length) continue;
+		out.push(examples.length === e.examples.length ? e : { ...e, examples });
+	}
+	return out;
 }

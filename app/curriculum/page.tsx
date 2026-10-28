@@ -20,6 +20,7 @@ export default function CurriculumRoute() {
 			state={summary?.curriculum ?? null}
 			next={summary?.next ?? "words"}
 			goal={summary?.goal ?? { level: "B2", minutesPerDay: 30 }}
+			weak={summary?.weakSpots ?? []}
 		/>
 	);
 }

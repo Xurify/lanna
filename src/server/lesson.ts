@@ -63,6 +63,7 @@ import {
 } from "../core/onboarding.ts";
 import { strandBalance, type StrandBalance } from "../core/strands.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
+import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
@@ -208,6 +209,16 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	unit.reps += total;
 	unit.correct += correct;
 	unit.lastAt = now.toISOString();
+	// The weak-spots record (src/core/weak-spots.ts): every lesson rep counts
+	// against a flagged unit, and a unit under the bar gets flagged.
+	if (input.mode === "lesson" && total > 0) {
+		const t = tallyWeak(p.weak ?? {}, input.unit, correct, total - correct, now);
+		p.weak = t.weak;
+		// This lesson under the bar flags the unit (a lesson just mended is not re-flagged by its own reps).
+		if (!t.mended && !p.weak[input.unit] && lessonFlagsWeak(total, correct)) {
+			p.weak = flagWeak(p.weak, input.unit, "lesson", `${Math.round((correct / total) * 100)}% right in lesson ${unit.lessons}`, now);
+		}
+	}
 	day.reps += total;
 	day.xp += xp;
 	p.xp += xp;
@@ -335,6 +346,8 @@ export interface ProgressSummary {
 	projection: Projection;
 	/** This week's minutes by Nation's four strands, against a quarter each. */
 	balance: StrandBalance;
+	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
+	weakSpots: WeakSpotSummary[];
 }
 
 /** The video the daily plan should show: the one watched today (so the
@@ -402,6 +415,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		next,
 		dayOfYear: Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000),
 		scenes: purposeScenes(goal.purposes ?? []),
+		weak: weakSpotList(p.weak).map((w) => w.unit),
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),
@@ -426,6 +440,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		goal,
 		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
 		balance,
+		weakSpots: weakSpotList(p.weak),
 	};
 }
 
@@ -502,6 +517,9 @@ export interface PlacementResultInput {
 	note?: string;
 	/** The vocabulary-size estimate, when the learner did the word check. */
 	vocabulary?: GoalRecord["vocabulary"];
+	/** Why each missed unit was missed, in the tutor's or the judge's words
+	 *  (src/server/placement.ts), for the weak-spots record. */
+	weakNotes?: Partial<Record<UnitId, string>>;
 }
 
 export interface PlacementResult extends PlacementOutcome {
@@ -522,11 +540,17 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 	const { outcome } = input;
 	const asked = new Set(outcome.tiers.filter((t) => !t.held).flatMap((t) => placementTier(t.id)?.units ?? []));
 	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0 && asked.has(id as UnitId)) delete p.units[id];
+	let weak = p.weak ?? {};
 	for (const [id, e] of Object.entries(outcome.units)) {
+		// The check's word on a unit it asked about: a miss flags it, a clean
+		// run clears it, whatever flagged it before.
+		if (e.reps > 0 && e.correct < e.reps) weak = flagWeak(weak, id, "check", input.weakNotes?.[id as UnitId] ?? `${e.correct} of ${e.reps} right in the check`, now);
+		else if (e.reps > 0) weak = clearWeak(weak, id);
 		const rec = p.units[id];
 		if (rec && rec.lessons > 0) continue;
 		p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
 	}
+	p.weak = weak;
 	const goal = { ...(p.goal ?? DEFAULT_GOAL) };
 	goal.placedAt = now.toISOString();
 	goal.placedLevel = outcome.level;

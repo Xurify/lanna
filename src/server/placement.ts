@@ -29,7 +29,7 @@ import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
 import { buildLesson, unitInfo, type LessonItem, type RepVerdict, type UnitId } from "../core/lesson.ts";
-import { PLACEMENT_TIERS, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapter, tierOfUnit, type PlacementOutcome, type ProbeReply, type ProbeVerdict } from "../core/onboarding.ts";
+import { PLACEMENT_TIERS, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapter, tierOfUnit, type PlacementOutcome, type ProbeReply, type ProbeVerdict, calmEntries } from "../core/onboarding.ts";
 import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, LADDER, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
 import { grammarWord } from "../core/reading.ts";
 import type { StoryUsage } from "../core/reading.ts";
@@ -152,8 +152,13 @@ function progressOf(s: PlacementSession): PlacementProgress {
 	return { asked: s.ladder.asked, max: MAX_ITEMS, unit, tier: tier ? { id: tier.id, level: tier.level, title: tier.title } : null, floor: edge.floor, ceiling: edge.ceiling, phase: s.ladder.phase };
 }
 
+let calm: { source: Lexicon | null; entries: LexiconEntry[] } | null = null;
+/** The lexicon without its grim sentences (src/core/onboarding.ts
+ *  calmEntries), filtered once per loaded lexicon. */
 function entries(): LexiconEntry[] {
-	return loadLexicon()?.entries ?? [];
+	const lexicon = loadLexicon();
+	if (!calm || calm.source !== lexicon) calm = { source: lexicon, entries: calmEntries(lexicon?.entries ?? []) };
+	return calm.entries;
 }
 
 /** One typed item of `unit` the session has not shown. */
@@ -209,7 +214,7 @@ export interface AnswerResult {
 	progress: PlacementProgress;
 }
 
-const JUDGE_SYSTEM = `You check one answer in a Slovak fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right (vina ≠ vína); a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<at most 12 words in English, why>"}.`;
+const JUDGE_SYSTEM = `You check one answer in a Slovak fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right (vina ≠ vína); a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>"}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class (e.g. "After prijal the object is accusative, and feminine -a nouns take -u there"). Write Slovak words bare, with no quotation marks, and use no semicolons.`;
 
 function parseJudge(text: string): { accepted: boolean; note: string } {
 	const m = text.match(/\{[\s\S]*\}/);
@@ -477,7 +482,16 @@ export function finishPlacement(input: { id: string; ms?: number; tz?: number },
 			verdict: r.verdict!,
 			detail: { unit: r.item.unit, lemma: r.item.lemma, gloss: r.item.gloss, sentence: r.item.sentence, translation: r.item.translation, answer: r.item.answer, given: r.given, trigger: r.item.trigger, ...(r.judged?.accepted ? { hint: `accepted: ${r.judged.note}` } : {}) },
 		}));
-	const result = recordPlacement({ outcome, reps, ms: input.ms, tz: input.tz, note: s.probe.summary || undefined, vocabulary: s.words?.estimate ? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable } : undefined }, now);
+	// Why each missed unit was missed: the tutor's verdict first, else the
+	// judge's note on the first miss, else the form itself.
+	const weakNotes: Partial<Record<UnitId, string>> = {};
+	for (const r of s.items) {
+		const unit = (r.rung ?? r.item.unit) as UnitId;
+		if (r.verdict === undefined || r.verdict !== "wrong" || weakNotes[unit]) continue;
+		weakNotes[unit] = r.judged?.note ? r.judged.note : `wrote "${r.given}" for ${r.item.answer}`;
+	}
+	for (const [u, v] of last) if (v.result !== "held") weakNotes[u] = v.note ? `${v.result}: ${v.note}` : `the tutor saw a ${v.result}`;
+	const result = recordPlacement({ outcome, reps, ms: input.ms, tz: input.tz, note: s.probe.summary || undefined, weakNotes, vocabulary: s.words?.estimate ? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable } : undefined }, now);
 	placementStore.put(s);
 	placementStore.index(s);
 	return {
