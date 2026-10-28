@@ -177,6 +177,8 @@ describe("the source-derived segment list", () => {
 			prober.map((s) => s.path),
 			[
 				"system-prompt.md",
+				// LangHarness onboarding (2026-10-28): start from the measured profile.
+				"prober/05-the-profile.md",
 				"prober/10-probe-doctrine.md",
 				"prober/20-language-probe.md",
 				// LangHarness: the active language's doctrine, before the appendix.

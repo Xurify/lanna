@@ -3,8 +3,10 @@
  * level, today's XP against the daily goal, the streak and week strip,
  * every unit's level on the skill path, and the review deck's counts.
  * PUT /api/progress {dailyGoal} — change the daily XP goal;
- * PUT /api/progress {goal: {level?, minutesPerDay?}} — the target level and
- * planned minutes a day (the daily plan and the projection follow).
+ * PUT /api/progress {goal: {level?, minutesPerDay?, daysPerWeek?, purposes?,
+ * firstLanguage?, bridges?, prior?, onboarded?}} — the goal and profile
+ * the setup wizard writes (src/core/onboarding.ts); the daily plan, the
+ * projection and the tutor's profile block follow.
  * POST /api/progress {activity: "talk"|"story"|"tutor", unit?} — a tutor
  * session started from the Today page, for the day's speaking task.
  */
@@ -23,11 +25,27 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-	const body = (await req.json().catch(() => null)) as { dailyGoal?: unknown; goal?: { level?: unknown; minutesPerDay?: unknown } } | null;
+	const body = (await req.json().catch(() => null)) as { dailyGoal?: unknown; goal?: Record<string, unknown> } | null;
 	if (body?.goal && typeof body.goal === "object") {
-		const level = typeof body.goal.level === "string" ? (body.goal.level as "A1" | "A2" | "B1" | "B2" | "C1") : undefined;
-		const minutesPerDay = typeof body.goal.minutesPerDay === "number" ? body.goal.minutesPerDay : undefined;
-		return Response.json(setGoal({ level, minutesPerDay }, tzOf(req)));
+		const g = body.goal;
+		const level = typeof g.level === "string" ? (g.level as "A1" | "A2" | "B1" | "B2" | "C1") : undefined;
+		const num = (v: unknown) => (typeof v === "number" ? v : undefined);
+		const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 8) : undefined);
+		return Response.json(
+			setGoal(
+				{
+					level,
+					minutesPerDay: num(g.minutesPerDay),
+					daysPerWeek: num(g.daysPerWeek),
+					purposes: strs(g.purposes) as never,
+					firstLanguage: typeof g.firstLanguage === "string" ? (g.firstLanguage as never) : undefined,
+					bridges: strs(g.bridges) as never,
+					prior: typeof g.prior === "string" ? (g.prior as never) : undefined,
+					onboarded: g.onboarded === true,
+				},
+				tzOf(req),
+			),
+		);
 	}
 	if (typeof body?.dailyGoal !== "number") return Response.json({ message: "dailyGoal must be a number" }, { status: 400 });
 	return Response.json(setDailyGoal(body.dailyGoal));

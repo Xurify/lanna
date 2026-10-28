@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Today } from "@/components/today";
 import { prepareCorpus, progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
@@ -25,5 +26,9 @@ export default function HomePage() {
 	} catch {
 		summary = null;
 	}
+	// A fresh profile goes through setup once (a minute, no model): what
+	// Slovak is for, what the learner brings, the pace, and a placement
+	// drill. Skipping it stamps the record too, so this never repeats.
+	if (summary && !summary.goal.onboardedAt) redirect("/start");
 	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} />;
 }

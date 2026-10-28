@@ -39,6 +39,22 @@ import {
 	type DailyPlan,
 	type Projection,
 } from "../core/curriculum.ts";
+import {
+	DEFAULT_DAYS_PER_WEEK,
+	isBridge,
+	isFirstLanguage,
+	isPrior,
+	isPurpose,
+	MAX_PURPOSES,
+	PLACEMENT_TIERS,
+	placementOutcome,
+	purposeScenes,
+	REPS_PER_UNIT,
+	tierForChapter,
+	type PlacementOutcome,
+	type PlacementRep,
+	type PlacementTier,
+} from "../core/onboarding.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
@@ -326,7 +342,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	// Continue = the first open drill on the map (then a words unit): the
 	// curriculum's chapter order, with locks. Never dead-ends.
 	const goal = p.goal ?? DEFAULT_GOAL;
-	const curriculum = curriculumState(p.units, goal.level);
+	const curriculum = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const next = nextLessonUnit(curriculum);
 	const rs = reviewStatus(now, tz, { mint: false });
 	const review = {
@@ -344,6 +360,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		minutesPerDay: goal.minutesPerDay,
 		next,
 		dayOfYear: Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000),
+		scenes: purposeScenes(goal.purposes ?? []),
 	});
 	const recentMinutes: number[] = [];
 	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
@@ -365,15 +382,115 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	};
 }
 
-/** Change the target level and the planned minutes a day. */
-export function setGoal(goal: Partial<GoalRecord>, tz?: number): ProgressSummary {
+/**
+ * Change the goal: the target level and planned minutes (the old inline
+ * form) or the whole profile the setup wizard writes (purposes, first
+ * language, bridges, prior knowledge, days a week). Every field is
+ * validated here; unknown values keep what was there. `onboardedAt` is
+ * stamped the first time the wizard saves (or is skipped), so the Today
+ * page stops redirecting to it.
+ */
+export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?: number, now = new Date()): ProgressSummary {
 	const p = progressStore.read();
 	const cur = p.goal ?? DEFAULT_GOAL;
 	const level = goal.level && CEFR_ORDER.includes(goal.level) ? (goal.level as Cefr) : cur.level;
 	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(240, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
-	p.goal = { level, minutesPerDay };
+	const daysPerWeek = typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek) ? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek))) : (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
+	const next: GoalRecord = { ...cur, level, minutesPerDay, daysPerWeek };
+	if (Array.isArray(goal.purposes)) next.purposes = [...new Set(goal.purposes.filter(isPurpose))].slice(0, MAX_PURPOSES);
+	if (isFirstLanguage(goal.firstLanguage)) next.firstLanguage = goal.firstLanguage;
+	if (Array.isArray(goal.bridges)) next.bridges = [...new Set(goal.bridges.filter(isBridge))];
+	if (isPrior(goal.prior)) next.prior = goal.prior;
+	if (goal.onboarded && !next.onboardedAt) next.onboardedAt = now.toISOString();
+	p.goal = next;
 	progressStore.write(p);
-	return progressSummary(tz);
+	return progressSummary(tz, now);
+}
+
+// ─── Placement: the staircase drill ─────────────────────────────────────────
+
+export interface PlacementPlan {
+	/** The tier to start at (an index into `tiers`). */
+	from: number;
+	tiers: Array<PlacementTier & { items: ReturnType<typeof buildLesson>["items"] }>;
+}
+
+/**
+ * Every tier's reps, built locally from the lexicon in one go: two reps
+ * per unit (choose, then type), so the client can climb tier by tier
+ * without another request. `from` is where a re-check starts: the tier
+ * the learner's current chapter belongs to.
+ */
+export function placementFor(opts: { recheck?: boolean } = {}, seed = Date.now()): PlacementPlan {
+	const p = progressStore.read();
+	const goal = p.goal ?? DEFAULT_GOAL;
+	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
+	const from = opts.recheck ? tierForChapter(state.current) : 0;
+	const tiers = PLACEMENT_TIERS.map((t, i) => ({
+		...t,
+		items: t.units.flatMap((u) => buildLesson(entries(), u, { seed: seed + i * 97 + t.units.indexOf(u), length: REPS_PER_UNIT, recent: new Set(p.recent) }).items),
+	}));
+	return { from, tiers };
+}
+
+export interface PlacementResultInput {
+	reps: Array<RepResult & { tier: string }>;
+	ms?: number;
+	tz?: number;
+}
+
+export interface PlacementResult extends PlacementOutcome {
+	summary: ProgressSummary;
+}
+
+/**
+ * Record a finished placement: the outcome (src/core/onboarding.ts) is
+ * written into the units ledger as placed evidence (both reps right =
+ * tested out; a miss = a weak unit the daily plan will strengthen), the
+ * goal remembers the level and the chapter to start in, and every rep
+ * goes to the lesson log like a lesson's. No XP: it is a measurement.
+ */
+export function recordPlacement(input: PlacementResultInput, now = new Date()): PlacementResult {
+	const p = progressStore.read();
+	const reps: PlacementRep[] = input.reps.map((r) => ({ tier: r.tier, unit: (r.detail?.unit ?? "") as PlacementRep["unit"], verdict: r.verdict }));
+	const outcome = placementOutcome(reps);
+	// A re-check replaces the earlier placement's evidence; lesson evidence
+	// stays (a unit with lessons behind it keeps them).
+	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0) delete p.units[id];
+	for (const [id, e] of Object.entries(outcome.units)) {
+		const rec = p.units[id];
+		if (rec && rec.lessons > 0) {
+			rec.reps += e.reps;
+			rec.correct += e.correct;
+		} else p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
+	}
+	const goal = { ...(p.goal ?? DEFAULT_GOAL) };
+	goal.placedAt = now.toISOString();
+	goal.placedLevel = outcome.level;
+	goal.startChapter = outcome.startChapter;
+	p.goal = goal;
+	const day = dayOf(p, today(input.tz, now));
+	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(15, input.ms / 60_000);
+	progressStore.write(p);
+	try {
+		appendLessonLog({
+			id: `placement_${now.getTime().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+			at: now.toISOString(),
+			day: today(input.tz, now),
+			unit: "placement",
+			mode: "placement",
+			ms: input.ms,
+			xp: 0,
+			correct: input.reps.filter((r) => r.verdict !== "wrong").length,
+			total: input.reps.length,
+			perfect: false,
+			queued: [],
+			reps: input.reps.map(logRep),
+		});
+	} catch (err) {
+		console.warn("[placement] could not append the lesson log:", err instanceof Error ? err.message : err);
+	}
+	return { ...outcome, summary: progressSummary(input.tz, now) };
 }
 
 export function setDailyGoal(goal: number): ProgressSummary {

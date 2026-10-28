@@ -35,7 +35,7 @@ import { startTutorChat, storyPrompt, TALK_SCENES, talkPrompt, type Scene } from
 import { UnitBadge } from "@/components/unit-badge";
 import { DailyPlan, type Goal } from "@/components/daily-plan";
 import { CurriculumPath } from "@/components/curriculum-path";
-import { curriculumUnit, LESSONS_TO_COMPLETE, tutorUnitPrompt } from "@/src/core";
+import { curriculumUnit, LESSONS_TO_COMPLETE, purposeGoals, tutorUnitPrompt } from "@/src/core";
 import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, UnitId, UnitState } from "@/src/core";
 
 interface UnitSummary {
@@ -163,15 +163,6 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		else if (task.via === "talk") setTalkOpen(true);
 		else story();
 	};
-	const changeGoal = async (goal: Goal) => {
-		const res = await fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ goal }),
-		});
-		if (!res.ok) throw new Error(String(res.status));
-		setS((await res.json()) as Summary);
-	};
 
 	const next = s?.units.find((u) => u.id === s.next);
 
@@ -242,7 +233,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					</div>
 
 					{/* Today's plan: the day's tasks on the road to the goal */}
-					<DailyPlan plan={s?.plan ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} week={s?.week ?? []} busy={busy} onSpeak={speak} onGoalChange={changeGoal} />
+					<DailyPlan plan={s?.plan ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} week={s?.week ?? []} busy={busy} onSpeak={speak} />
 
 					{/* Ways to practise */}
 					<div className="mt-5 grid grid-cols-2 gap-4" data-testid="modes">
@@ -314,7 +305,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						)}
 					</div>
 					<div className="mt-4">
-						<CurriculumPath state={s?.curriculum ?? null} next={s?.next} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
+						<CurriculumPath state={s?.curriculum ?? null} next={s?.next} goals={purposeGoals(s?.goal.purposes ?? [])} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
 					</div>
 				</aside>
 			</main>

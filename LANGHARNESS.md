@@ -28,6 +28,7 @@ on placement, 37 minutes waiting at the plan approval and 9 minutes teaching.
 | Blitz (`/lesson?mode=blitz`) | 60 seconds of choose reps across the units you have started, with a best score. |
 | Progress | `data/profiles/<language>/progress.json` holds XP, days, unit levels and the streak. One rest day is forgiven after six active days. |
 | Review | A single Continue button takes the suggested rating (Enter). The four ratings stay as a quiet override row. Reviews earn XP. |
+| Setup (`/start`) | The minute that replaced the placement chat (October 2026). Four screens, no model call: what Slovak is for (can-do purposes that set the target and the Talk scenes), what you bring (first language, other Slavic languages, how much Slovak), minutes a day and days a week (with the date that pace reaches the target), and a placement drill: a staircase of real sentences (A1 → A1 → A2 → B1, two reps a unit) climbed while you hold three in four. Units you ace are tested out, the chapters behind your edge are skipped (open to revisit), misses come first in the daily plan, and the result shows the sentences as evidence. Every answer goes to the lesson log. "Change" and "Re-check my level" on Today reopen it. The tutor gets all of it as a "This learner" block in its prompt, so a Learn session probes only the shaky strands (one to three Socratic questions) and never asks for the goal. |
 | Tutor chat | Agent machinery (file reads, map lookups, reasoning) is hidden behind a Working toggle. Answers are one tap or one number key; confidence and thinking sit behind "Explain my reasoning". Placement is capped at about 5 questions, a question you write in the thinking field gets answered first, and teaching starts without a plan approval. |
 | Talk and Story | Talk opens a role-play in Slovak (6 scenes) with corrections only when you write `koniec`. Story tells a short Robo episode, then poses three problems. |
 
@@ -76,7 +77,7 @@ fresh, delete `data/profiles/slovak/`.
 
 ## Tests
 
-`tests/lesson.test.ts` covers the lesson builder, XP and streaks. `tests/corpus.test.ts` covers the audio library, the lesson log, Why? reuse, chat trash and the export. `tests/langharness.test.ts` covers answer comparison, FSRS-5, the lexicon,
+`tests/lesson.test.ts` covers the lesson builder, XP and streaks. `tests/onboarding.test.ts` covers the purposes, the placement staircase, how it moves the map, the tutor's profile block and the server round trip. `tests/corpus.test.ts` covers the audio library, the lesson log, Why? reuse, chat trash and the export. `tests/langharness.test.ts` covers answer comparison, FSRS-5, the lexicon,
 cloze cards, seed integrity (no cycles), prompt composition and the review
 service. The full suite passes except one Pi loader test that also fails
 on untouched upstream under Node 22.

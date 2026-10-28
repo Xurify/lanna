@@ -13,7 +13,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitBadge } from "@/components/unit-badge";
 import { STAGES, TUTOR_SESSIONS, type ChapterState, type CurriculumState, type UnitState } from "@/src/core";
@@ -22,6 +22,7 @@ export function CurriculumPath({
 	state,
 	next,
 	mode = "compact",
+	goals,
 	busy = false,
 	onTutor,
 	onScene,
@@ -29,6 +30,8 @@ export function CurriculumPath({
 	state: CurriculumState | null;
 	next?: string;
 	mode?: "compact" | "full";
+	/** Goal units the learner's purposes serve (src/core/onboarding.ts): starred. */
+	goals?: ReadonlySet<string>;
 	busy?: boolean;
 	onTutor: (unit: UnitState) => void;
 	onScene: (scene: string, unit: UnitState) => void;
@@ -81,7 +84,7 @@ export function CurriculumPath({
 										<ol className="flex flex-col gap-1 px-2 pb-2">
 											{ch.units.map((u) => (
 												<li key={u.id}>
-													<UnitRow unit={u} active={u.id === next} busy={busy} onTutor={onTutor} onScene={onScene} />
+													<UnitRow unit={u} active={u.id === next} starred={goals?.has(u.id) ?? false} busy={busy} onTutor={onTutor} onScene={onScene} />
 												</li>
 											))}
 										</ol>
@@ -105,23 +108,28 @@ export function CurriculumPath({
 /** The second line of a unit: what the ledger shows, or what it needs. */
 export function unitLine(u: UnitState, active: boolean): string {
 	const pct = u.accuracy !== null && u.reps > 0 ? `${Math.round(u.accuracy * 100)}% right` : "";
-	if (u.kind === "goal") return u.status === "done" ? (u.scene ? "Reached · prove it in a Talk scene" : "Reached") : (u.needs ?? u.tagline);
+	if (u.kind === "goal") return u.status === "done" ? (u.scene ? "Reached · prove it in a Talk scene" : "Reached") : u.status === "skipped" ? "Passed in placement" : (u.needs ?? u.tagline);
+	if (u.status === "skipped") return u.kind === "tutor" ? "Passed in placement · open any time" : `Passed in placement${pct ? ` · ${pct}` : ""} · open any time`;
 	if (u.status === "locked") return u.needs ?? u.tagline;
 	if (u.kind === "tutor") return u.status === "done" ? `Done · ${u.lessons} sessions` : u.lessons > 0 ? `${u.lessons} of ${TUTOR_SESSIONS} sessions · ${u.tagline}` : u.tagline;
-	if (u.status === "done") return `Done · ${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
+	if (u.status === "done") return u.lessons === 0 ? `Tested out in placement${pct ? ` · ${pct}` : ""}` : `Done · ${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
 	if (u.lessons > 0) return `${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
 	return active ? "Up next" : u.tagline;
 }
 
-function UnitRow({ unit: u, active, busy, onTutor, onScene }: { unit: UnitState; active: boolean; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
+function UnitRow({ unit: u, active, starred, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
 	const locked = u.status === "locked";
+	const skipped = u.status === "skipped";
 	const tone = u.kind === "tutor" ? "xp" : u.kind === "goal" ? "flame" : "go";
 	const body = (
 		<>
-			<UnitBadge glyph={u.glyph} progress={u.progress} done={u.status === "done"} active={active} locked={locked} size="sm" tone={tone} />
+			<span className={cn(skipped && "opacity-60")}>
+				<UnitBadge glyph={u.glyph} progress={u.progress} done={u.status === "done" || skipped} active={active} locked={locked} size="sm" tone={tone} />
+			</span>
 			<span className="min-w-0 flex-1">
-				<span className={cn("flex items-center gap-1.5 font-ui text-sm font-bold", locked ? "text-muted-foreground" : active ? "text-go" : "text-foreground")}>
+				<span className={cn("flex items-center gap-1.5 font-ui text-sm font-bold", locked || skipped ? "text-muted-foreground" : active ? "text-go" : "text-foreground")}>
 					<span className="truncate">{u.title}</span>
+					{starred && <StarIcon className="size-3.5 shrink-0 fill-gold text-gold" aria-label="One of your goals" />}
 					{u.kind === "tutor" && <GraduationCapIcon className="size-3.5 shrink-0 text-xp" aria-label="With the tutor" />}
 					{u.kind === "goal" && <FlagIcon className="size-3.5 shrink-0 text-flame" aria-label="Can-do goal" />}
 				</span>

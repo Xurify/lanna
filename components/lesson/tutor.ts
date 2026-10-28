@@ -28,7 +28,7 @@ export interface WhyReuse {
  */
 export async function startTutorChat(
 	router: { push: (href: string) => void },
-	opts: { title: string; prompt: string; activity?: "talk" | "story" | "tutor"; unit?: string; reuse?: WhyReuse },
+	opts: { title: string; prompt: string; activity?: "talk" | "story" | "tutor"; unit?: string; reuse?: WhyReuse; kind?: "practice" | "teach" },
 ): Promise<void> {
 	// The day's plan counts a Talk, a Story or a tutor unit as its speaking
 	// task; a tutor unit also counts the session toward the unit.
@@ -54,7 +54,9 @@ export async function startTutorChat(
 	const res = await fetch("/api/chats", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ title: opts.title, kind: "practice" }),
+		// A "teach" session (the placement follow-up) runs the prober with
+		// the learner profile in its prompt, then the teacher.
+		body: JSON.stringify({ title: opts.title, kind: opts.kind ?? "practice" }),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	const { id } = (await res.json()) as { id: string };

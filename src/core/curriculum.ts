@@ -321,9 +321,14 @@ export interface UnitEvidence {
 	lessons: number;
 	reps: number;
 	correct: number;
+	/** The reps came from the placement drill (src/core/onboarding.ts):
+	 *  every rep right = tested out of the unit. */
+	placed?: boolean;
 }
 
-export type UnitStatus = "locked" | "open" | "started" | "done";
+/** skipped: behind the chapter placement started in — counted as passed,
+ *  open to revisit any time. */
+export type UnitStatus = "locked" | "open" | "started" | "skipped" | "done";
 
 export interface UnitState {
 	id: string;
@@ -379,6 +384,8 @@ function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsT
 	const accuracy = e && e.reps > 0 ? e.correct / e.reps : null;
 	if (u.kind === "tutor") return { done: lessons >= TUTOR_SESSIONS, progress: Math.min(1, lessons / TUTOR_SESSIONS) };
 	if (u.lessonsToComplete) return { done: lessons >= lessonsToComplete, progress: Math.min(1, lessons / lessonsToComplete) };
+	// Placement: both of the drill's reps right tests the unit out.
+	if (e?.placed && lessons === 0 && e.reps >= 2 && e.correct === e.reps) return { done: true, progress: 1 };
 	const aced = lessons >= 1 && (e?.reps ?? 0) >= 10 && (accuracy ?? 0) >= TEST_OUT_ACCURACY;
 	const done = aced || unitDone(lessons, accuracy);
 	// Toward three lessons at the bar; an aced unit is simply done.
@@ -386,19 +393,23 @@ function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsT
 	return { done, progress };
 }
 
-/** The whole map's state from the progress ledger. Pure. */
-export function curriculumState(evidence: Record<string, UnitEvidence | undefined>, target: Cefr = "B2"): CurriculumState {
+/** The whole map's state from the progress ledger. Pure. `startChapter`
+ *  (from placement) skips every chapter before it: their undone units
+ *  count as passed and stay open to revisit. */
+export function curriculumState(evidence: Record<string, UnitEvidence | undefined>, target: Cefr = "B2", opts: { startChapter?: string } = {}): CurriculumState {
 	const targetIdx = CEFR_ORDER.indexOf(target);
+	const startIdx = Math.max(0, CHAPTERS.findIndex((c) => c.id === opts.startChapter));
 	const doneSet = new Set<string>();
 	const chapters: ChapterState[] = [];
 	let prevOpenSlack: boolean = true; // the first chapter is always open
 	let current: string | undefined;
 	let done = 0;
 	let total = 0;
-	for (const ch of CHAPTERS) {
+	for (const [chIdx, ch] of CHAPTERS.entries()) {
 		const stage = STAGES.find((s) => s.id === ch.stage)!;
 		const inTarget = CEFR_ORDER.indexOf(stage.level) <= targetIdx;
-		const open: boolean = prevOpenSlack;
+		const skippedChapter = chIdx < startIdx;
+		const open: boolean = prevOpenSlack || skippedChapter;
 		const units: UnitState[] = [];
 		let doneCount = 0;
 		const countable = ch.units.filter((id) => curriculumUnit(id)!.kind !== "goal").length;
@@ -413,20 +424,21 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 			if (u.kind === "goal") {
 				// A goal is reached when the chapter's other units are done.
 				const reached = open && doneCount >= countable;
-				status = reached ? "done" : open ? "locked" : "locked";
+				status = reached ? (units.some((x) => x.status === "skipped") ? "skipped" : "done") : "locked";
 				progress = countable > 0 ? Math.min(1, doneCount / countable) : 0;
 				if (!reached) needs = open ? `Finish the chapter's ${countable - doneCount} open unit${countable - doneCount === 1 ? "" : "s"}` : `Opens with “${ch.title}”`;
 			} else {
 				const p = unitProgressOf(u, e, u.lessonsToComplete ?? 0);
 				const missing = (u.requires ?? []).filter((r) => !doneSet.has(r));
 				if (p.done) status = "done";
+				else if (skippedChapter) status = "skipped";
 				else if (!open) status = "locked";
 				else if (missing.length) status = "locked";
 				else status = lessons > 0 ? "started" : "open";
 				progress = p.progress;
 				if (status === "locked") needs = !open ? `Opens with “${ch.title}”` : `After ${missing.map((m) => curriculumUnit(m)?.title ?? m).join(" and ")}`;
 			}
-			if (status === "done") {
+			if (status === "done" || status === "skipped") {
 				doneSet.add(id);
 				if (u.kind !== "goal") doneCount++;
 			}
@@ -435,9 +447,9 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 		const chapterDone = doneCount >= countable;
 		if (inTarget) {
 			total += ch.units.length;
-			done += units.filter((u) => u.status === "done").length;
+			done += units.filter((u) => u.status === "done" || u.status === "skipped").length;
 		}
-		if (open && !chapterDone && !current) current = ch.id;
+		if (open && !chapterDone && !current && !skippedChapter) current = ch.id;
 		chapters.push({ id: ch.id, stage: ch.stage, title: ch.title, tagline: ch.tagline, open, done: chapterDone, doneCount, total: countable, units });
 		prevOpenSlack = open && countable - doneCount <= CHAPTER_SLACK;
 	}
@@ -567,6 +579,9 @@ export interface PlanInput {
 	next: UnitId;
 	/** For alternating Talk and Story: the day of the year. */
 	dayOfYear: number;
+	/** Talk scenes the learner's purposes call for (src/core/onboarding.ts);
+	 *  they rotate with the chapter's own scene. */
+	scenes?: string[];
 }
 
 export const TASK_MINUTES = { lesson: 3, strengthen: 3, words: 3, speak: 6, blitz: 1 } as const;
@@ -655,12 +670,16 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	//    first; else the current chapter's scene, alternating with a story.
 	const current = state.chapters.find((c) => c.id === state.current);
 	const tutorUnit = current?.units.find((u) => u.kind === "tutor" && (u.status === "open" || u.status === "started"));
-	const scene = current?.units.find((u) => u.kind === "goal")?.scene;
+	const chapterScene = current?.units.find((u) => u.kind === "goal")?.scene;
+	// The scenes worth talking through: the chapter's own, then the ones
+	// the learner's purposes ask for, rotating day by day.
+	const scenes = [...new Set([chapterScene, ...(input.scenes ?? [])].filter((s): s is string => !!s))];
+	const scene = scenes.length ? scenes[Math.floor(input.dayOfYear / 2) % scenes.length] : undefined;
 	const speakDone = day.talks + day.stories + day.tutors > 0;
 	if (tutorUnit) {
 		tasks.push({ id: "speak", title: `With the tutor: ${tutorUnit.title}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
 	} else if (input.dayOfYear % 2 === 0 && scene) {
-		tasks.push({ id: "speak", title: "Talk", line: "Role-play the chapter's scene — say it before you are sure", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "talk" });
+		tasks.push({ id: "speak", title: "Talk", line: scene === chapterScene ? "Role-play the chapter's scene — say it before you are sure" : "Role-play a scene from what Slovak is for — say it before you are sure", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "talk" });
 	} else {
 		tasks.push({ id: "speak", title: "Story", line: "Robo's next episode, then three questions", minutes: TASK_MINUTES.speak, done: speakDone, via: "story" });
 	}

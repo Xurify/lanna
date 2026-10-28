@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
+import type { LearnerGoal } from "../core/onboarding.ts";
 
 export interface DayRecord {
 	xp: number;
@@ -28,11 +29,11 @@ export interface DayRecord {
 	minutes?: number;
 }
 
-/** The learner's target (src/core/curriculum.ts). */
-export interface GoalRecord {
-	level: "A1" | "A2" | "B1" | "B2" | "C1";
-	minutesPerDay: number;
-}
+/** The learner's goal and profile: the target level and planned minutes
+ *  (src/core/curriculum.ts) plus what the setup wizard learns
+ *  (src/core/onboarding.ts: purposes, first language, prior knowledge,
+ *  placement). */
+export type GoalRecord = LearnerGoal;
 
 export interface UnitRecord {
 	lessons: number;
@@ -40,6 +41,8 @@ export interface UnitRecord {
 	correct: number;
 	bestBlitz?: number;
 	lastAt?: string;
+	/** Written by the placement drill; both reps right tests the unit out. */
+	placed?: boolean;
 }
 
 export interface ProgressRecord {

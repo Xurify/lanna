@@ -89,3 +89,4 @@ export * from "./review.ts";
 export * from "./lesson.ts";
 export * from "./word-clusters.ts";
 export * from "./curriculum.ts";
+export * from "./onboarding.ts";

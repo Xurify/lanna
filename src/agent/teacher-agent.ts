@@ -6,6 +6,7 @@ import type { Usage } from "@earendil-works/pi-ai";
 import { PATHS } from "../../config.ts";
 import { APP_IDENTITY, piEngineFor, type PiEngine } from "./models.ts";
 import { effectivePromptSegments } from "./prompt-segments.ts";
+import { learnerProfileSegment } from "./learner-profile.ts";
 import {
 	askUserQuestionTool,
 	createProberTools,
@@ -181,9 +182,15 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	// ("practice" is not a ModelRole) honest about that.
 	const engine = opts.engine ?? piEngineFor(kind as "prober" | "teacher");
 	const stopper = makeQuestionStopper(kind);
-	const systemPrompt = opts.promptSwitches
+	// The learner profile (onboarding, 2026-10-28): what the app knows —
+	// goal, pace, first language, placement, the lesson ledger — joins
+	// the composition as a trailing block, read fresh per build so a
+	// lesson between turns changes it. Null on a fresh profile.
+	const profile = learnerProfileSegment();
+	const composed = opts.promptSwitches
 		? composeInstructions(kind, opts.promptSwitches)
 		: composedInstructions[kind]!;
+	const systemPrompt = profile ? `${composed}\n\n---\n\n${profile}` : composed;
 	// Debug recorder (owner, 2026-10-04): raw provider events when
 	// LH_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
 	// the normal no-observer path (tests, env-off).

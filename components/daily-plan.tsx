@@ -11,19 +11,14 @@
  * progress ledger, so there is nothing to mark by hand.
  */
 
-import { useState } from "react";
 import Link from "next/link";
 import { BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CEFR_ORDER, GUIDED_HOURS, type Cefr, type DailyPlan as Plan, type PlanTask, type Projection } from "@/src/core";
+import { purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection } from "@/src/core";
 
-export interface Goal {
-	level: Cefr;
-	minutesPerDay: number;
-}
+export type Goal = LearnerGoal;
 
 const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
-const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60, 90];
 
 function monthOf(iso: string | null): string | null {
 	if (!iso) return null;
@@ -37,7 +32,6 @@ export function DailyPlan({
 	week,
 	busy = false,
 	onSpeak,
-	onGoalChange,
 }: {
 	plan: Plan | null;
 	goal: Goal | null;
@@ -45,25 +39,10 @@ export function DailyPlan({
 	week: Array<{ day: string; xp: number }>;
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
-	onGoalChange: (goal: Goal) => Promise<void>;
 }) {
-	const [editing, setEditing] = useState(false);
-	const [level, setLevel] = useState<Cefr>(goal?.level ?? "B2");
-	const [minutes, setMinutes] = useState(goal?.minutesPerDay ?? 30);
-	const [saving, setSaving] = useState(false);
 	const done = plan?.done ?? 0;
 	const total = plan?.total ?? 0;
 	const complete = total > 0 && done >= total;
-
-	const save = async () => {
-		setSaving(true);
-		try {
-			await onGoalChange({ level, minutesPerDay: minutes });
-			setEditing(false);
-		} finally {
-			setSaving(false);
-		}
-	};
 
 	return (
 		<section className="mt-5 rounded-3xl border bg-card px-6 py-5" data-testid="daily-plan" aria-label="Today's plan">
@@ -106,62 +85,30 @@ export function DailyPlan({
 				))}
 			</ol>
 
-			{/* The goal the plan serves, and what the map says about the road */}
+			{/* The goal the plan serves, and what the map says about the road.
+			    Changing it reopens setup (components/onboarding/start.tsx),
+			    pre-filled, with a re-check of the level on its last screen. */}
 			<div className="mt-4 border-t pt-4 font-ui text-xs text-muted-foreground" data-testid="goal-line">
-				{!editing ? (
-					<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-						<span className="flex items-center gap-1.5 text-foreground">
-							<TargetIcon className="size-3.5 text-flame" />
-							Goal: <b>{goal?.level ?? "B2"}</b> at <b>{goal?.minutesPerDay ?? 30} min</b> a day
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+					<span className="flex items-center gap-1.5 text-foreground">
+						<TargetIcon className="size-3.5 text-flame" />
+						Goal: <b>{goal?.level ?? "B2"}</b> at <b>{goal?.minutesPerDay ?? 30} min</b> a day
+						{goal?.purposes && goal.purposes.length > 0 && <span className="text-muted-foreground">· for {goal.purposes.map(purposePhrase).join(", ")}</span>}
+					</span>
+					{projection && (
+						<span>
+							· {projection.hoursDone} of ~{projection.hoursTarget} guided hours
+							{projection.etaPlanned && ` · at that pace about ${monthOf(projection.etaPlanned)}`}
+							{projection.etaPace && projection.paceMinutes > 0 && ` · at your real pace (${projection.paceMinutes} min/day) ${monthOf(projection.etaPace)}`}
 						</span>
-						{projection && (
-							<span>
-								· {projection.hoursDone} of ~{projection.hoursTarget} guided hours
-								{projection.etaPlanned && ` · at that pace about ${monthOf(projection.etaPlanned)}`}
-								{projection.etaPace && projection.paceMinutes > 0 && ` · at your real pace (${projection.paceMinutes} min/day) ${monthOf(projection.etaPace)}`}
-							</span>
-						)}
-						<button type="button" onClick={() => setEditing(true)} className="underline hover:text-foreground">
-							Change
-						</button>
-					</div>
-				) : (
-					<form
-						className="flex flex-wrap items-center gap-3"
-						onSubmit={(e) => {
-							e.preventDefault();
-							void save();
-						}}
-					>
-						<label className="flex items-center gap-2 text-foreground">
-							Level
-							<select value={level} onChange={(e) => setLevel(e.target.value as Cefr)} className="rounded-lg border bg-background px-2 py-1 font-ui text-sm text-foreground">
-								{CEFR_ORDER.map((l) => (
-									<option key={l} value={l}>
-										{l} · ~{GUIDED_HOURS[l]} h
-									</option>
-								))}
-							</select>
-						</label>
-						<label className="flex items-center gap-2 text-foreground">
-							Minutes a day
-							<select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} className="rounded-lg border bg-background px-2 py-1 font-ui text-sm text-foreground">
-								{MINUTE_CHOICES.map((m) => (
-									<option key={m} value={m}>
-										{m}
-									</option>
-								))}
-							</select>
-						</label>
-						<button type="submit" disabled={saving} className="rounded-lg bg-go px-3 py-1 font-ui text-sm font-bold text-go-ink disabled:opacity-50">
-							Save
-						</button>
-						<button type="button" onClick={() => setEditing(false)} className="underline hover:text-foreground">
-							Cancel
-						</button>
-						<span className="basis-full">Hours are the usual guided-learning estimate for a Slavic language; the map credits them as units are done, so the date moves with you.</span>
-					</form>
-				)}
+					)}
+					<Link href="/start?edit=1" className="underline hover:text-foreground" data-testid="goal-change">
+						Change
+					</Link>
+					<Link href="/start?edit=1" className="underline hover:text-foreground" data-testid="goal-recheck">
+						Re-check my level
+					</Link>
+				</div>
 			</div>
 		</section>
 	);
