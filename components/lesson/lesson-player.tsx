@@ -15,7 +15,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookmarkCheckIcon, BookmarkIcon, CheckIcon, FlameIcon, LoaderCircleIcon, SnailIcon, TimerIcon, TrophyIcon, Volume2Icon, VolumeXIcon, XIcon, ZapIcon } from "lucide-react";
+import {
+	BookmarkCheckIcon,
+	BookmarkIcon,
+	BrainIcon,
+	ChartColumnIcon,
+	CheckIcon,
+	FlameIcon,
+	LoaderCircleIcon,
+	SnailIcon,
+	TimerIcon,
+	TrophyIcon,
+	Volume2Icon,
+	VolumeXIcon,
+	WholeWordIcon,
+	XIcon,
+	ZapIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { setSpeed, speak, SPEEDS, useActiveLanguage } from "@/components/speech";
@@ -67,7 +83,12 @@ function Bridges({ unit, compact = false }: { unit: UnitId; compact?: boolean })
 				</p>
 			))}
 			{compact && !all && rest.length > 0 && (
-				<button type="button" onClick={() => setAll(true)} className="self-start font-prose text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground" data-testid="bridges-more">
+				<button
+					type="button"
+					onClick={() => setAll(true)}
+					className="self-start font-prose text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
+					data-testid="bridges-more"
+				>
 					Also the {rest.map((b) => b.name).join(" and ")} way
 				</button>
 			)}
@@ -502,83 +523,83 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	return (
 		<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
-		<Frame strip={false}>
-			{/* Top bar: exit · progress · combo · sound. The whole band drags the
+			<Frame strip={false}>
+				{/* Top bar: exit · progress · combo · sound. The whole band drags the
 			    window (its buttons carve themselves out, app/globals.css). */}
-			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
-				<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-					<Link href="/" aria-label="Leave the lesson" onClick={forget} className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-						<XIcon className="size-5" />
-					</Link>
-					<div
-						role="progressbar"
-						aria-valuemin={0}
-						aria-valuemax={100}
-						aria-valuenow={Math.round(progress * 100)}
-						className="relative h-3 flex-1 overflow-hidden rounded-full bg-accent"
-						aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}
-					>
+				<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+					<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
+						<Link href="/" aria-label="Leave the lesson" onClick={forget} className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+							<XIcon className="size-5" />
+						</Link>
 						<div
-							className={cn("h-full rounded-full transition-[width] duration-500 ease-out", mode === "blitz" ? (left <= 10 ? "bg-miss" : "bg-sky") : "bg-go")}
-							style={{ width: `${Math.max(3, progress * 100)}%` }}
-						/>
-					</div>
-					{mode === "blitz" && (
-						<span className={cn("flex items-center gap-1 font-ui text-sm font-semibold tabular-nums", left <= 10 ? "text-miss" : "text-sky")}>
-							<TimerIcon className="size-5" />
-							{left}s
-						</span>
-					)}
-					<div
-						className={cn("relative flex min-w-12 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-flame" : "text-muted-foreground")}
-						data-testid="combo"
-						title="Right in a row"
-					>
-						<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} />
-						{combo}
-						{floater && (
-							<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-xp">
-								{floater.text}
+							role="progressbar"
+							aria-valuemin={0}
+							aria-valuemax={100}
+							aria-valuenow={Math.round(progress * 100)}
+							className="relative h-3 flex-1 overflow-hidden rounded-full bg-accent"
+							aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}
+						>
+							<div
+								className={cn("h-full rounded-full transition-[width] duration-500 ease-out", mode === "blitz" ? (left <= 10 ? "bg-miss" : "bg-sky") : "bg-go")}
+								style={{ width: `${Math.max(3, progress * 100)}%` }}
+							/>
+						</div>
+						{mode === "blitz" && (
+							<span className={cn("flex items-center gap-1 font-ui text-sm font-semibold tabular-nums", left <= 10 ? "text-miss" : "text-sky")}>
+								<TimerIcon className="size-5" />
+								{left}s
 							</span>
 						)}
+						<div
+							className={cn("relative flex min-w-12 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-flame" : "text-muted-foreground")}
+							data-testid="combo"
+							title="Right in a row"
+						>
+							<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} />
+							{combo}
+							{floater && (
+								<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-xp">
+									{floater.text}
+								</span>
+							)}
+						</div>
+						<button
+							type="button"
+							onClick={toggleSound}
+							aria-label={sound ? "Mute sounds" : "Turn sounds on"}
+							className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+						>
+							{sound ? <Volume2Icon className="size-5" /> : <VolumeXIcon className="size-5" />}
+						</button>
 					</div>
-					<button
-						type="button"
-						onClick={toggleSound}
-						aria-label={sound ? "Mute sounds" : "Turn sounds on"}
-						className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-					>
-						{sound ? <Volume2Icon className="size-5" /> : <VolumeXIcon className="size-5" />}
-					</button>
 				</div>
-			</div>
 
-			{/* The rep */}
-			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
-				<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lh-rise")}>
-					<RepView
-						key={`${item.id}-${index}`}
-						item={item}
-						tag={tag}
-						locked={!!current}
-						result={current}
-						miss={miss}
-						onGrade={grade}
-						onReady={setReady}
-						eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : unitInfo(item.unit).title}
-					/>
+				{/* The rep */}
+				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
+					<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lh-rise")}>
+						<RepView
+							key={`${item.id}-${index}`}
+							item={item}
+							tag={tag}
+							locked={!!current}
+							result={current}
+							miss={miss}
+							onGrade={grade}
+							onReady={setReady}
+							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : unitInfo(item.unit).title}
+						/>
+					</div>
 				</div>
-			</div>
 
-			{/* One bar at the bottom, always in the same place: Check before the
+				{/* One bar at the bottom, always in the same place: Check before the
 			    answer, the verdict and Continue after it (lessons only — blitz
 			    flashes and moves on). */}
-			{mode === "lesson" && current ? (
-				<FeedbackSheet rep={current} tag={tag} onContinue={advance} onAskTutor={() => void why()} last={index + 1 >= total} comesBack={comesBack} examples={examples} />
-			) : (
-				<ActionBar kind={item.kind} ready={ready} blitz={mode === "blitz"} />
-			)}
-		</Frame>
+				{mode === "lesson" && current ? (
+					<FeedbackSheet rep={current} tag={tag} onContinue={advance} onAskTutor={() => void why()} last={index + 1 >= total} comesBack={comesBack} examples={examples} />
+				) : (
+					<ActionBar kind={item.kind} ready={ready} blitz={mode === "blitz"} />
+				)}
+			</Frame>
 		</BridgesContext.Provider>
 	);
 }
@@ -1059,56 +1080,13 @@ function FeedbackSheet({
 	return (
 		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} role="status" aria-live="polite">
 			<div className={cn(COLUMN, "py-5")}>
-				<div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-3">
-					<div className="flex min-w-0 flex-1 items-start gap-3">
-						<span className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full", tone.badge)} aria-hidden="true">
+				{/* Header row: verdict on the left, actions on the right, on one line. */}
+				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+					<div className="flex items-center gap-3">
+						<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", tone.badge)} aria-hidden="true">
 							{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={3} /> : <CheckIcon className="size-5" strokeWidth={3} />}
 						</span>
-						<div className="min-w-0">
-							<p className={cn("font-ui text-2xl font-bold leading-tight", tone.ink)}>{tone.title}</p>
-							{verdict !== "exact" && (
-								<p className="mt-1 font-prose text-lg text-foreground">
-									Correct answer:{" "}
-									<span className="font-bold" lang="sk">
-										{[...expected].map((ch, i) => (
-											<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
-												{ch}
-											</span>
-										))}
-									</span>
-								</p>
-							)}
-							{verdict === "wrong" && given && (
-								<p className="font-prose text-base text-muted-foreground">
-									You wrote “<span lang="sk">{given}</span>”
-								</p>
-							)}
-							{verdict === "exact" && item.kind !== "build" && (
-								<p className="mt-1 flex flex-wrap items-center gap-x-2 font-prose text-lg text-foreground" data-testid="right-sentence">
-									<button
-										type="button"
-										onClick={() => void speak(item.sentence)}
-										className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sky/20 text-sky hover:bg-sky/30"
-										aria-label="Play the sentence again"
-										title="Play again"
-									>
-										<Volume2Icon className="size-4" />
-									</button>
-									<span lang="sk">
-										{item.before}
-										<b>{item.answer}</b>
-										{item.after}
-									</span>
-									<span className="text-base text-muted-foreground">{item.translation}</span>
-								</p>
-							)}
-							{verdict === "exact" && (
-								<p className="mt-1 font-prose text-sm text-muted-foreground" data-testid="right-meta">
-									{[item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`, rankLabel(item.rank, item.cat), knownLine(item.known)].filter(Boolean).join("  ·  ")}
-								</p>
-							)}
-							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}
-						</div>
+						<p className={cn("font-ui text-2xl font-bold leading-tight", tone.ink)}>{tone.title}</p>
 					</div>
 					<div className="flex items-center gap-2">
 						{verdict === "exact" && (
@@ -1135,38 +1113,122 @@ function FeedbackSheet({
 					</div>
 				</div>
 
+				{/* Details, aligned under the title (past the badge). */}
+				<div className="mt-3 flex flex-col gap-3 sm:pl-12">
+					{verdict !== "exact" && (
+						<div>
+							<p className="font-prose text-lg text-foreground">
+								Correct answer:{" "}
+								<span className="font-bold" lang="sk">
+									{[...expected].map((ch, i) => (
+										<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
+											{ch}
+										</span>
+									))}
+								</span>
+							</p>
+							{verdict === "wrong" && given && (
+								<p className="font-prose text-base text-muted-foreground">
+									You wrote “<span lang="sk">{given}</span>”
+								</p>
+							)}
+							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}
+						</div>
+					)}
+					{verdict === "exact" && item.kind !== "build" && (
+						<div className="flex items-start gap-3" data-testid="right-sentence">
+							<button
+								type="button"
+								onClick={() => void speak(item.sentence)}
+								className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-sky/20 text-sky transition-colors hover:bg-sky/30"
+								aria-label="Play the sentence again"
+								title="Play again"
+							>
+								<Volume2Icon className="size-4" />
+							</button>
+							<div className="min-w-0">
+								<p className="font-prose text-lg leading-snug text-foreground" lang="sk">
+									{item.before}
+									<b className={tone.ink}>{item.answer}</b>
+									{item.after}
+								</p>
+								<p className="font-prose text-base text-muted-foreground">{item.translation}</p>
+							</div>
+						</div>
+					)}
+					{verdict === "exact" && (
+						<dl className="flex flex-wrap gap-2" data-testid="right-meta">
+							<Fact icon={<WholeWordIcon className="size-4" />} label={item.form ? "Form" : "Word"} value={item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`} />
+							{rankLabel(item.rank, item.cat) && <Fact icon={<ChartColumnIcon className="size-4" />} label="How common" value={rankLabel(item.rank, item.cat)!} />}
+							<Fact icon={<BrainIcon className="size-4" />} label="Memory" value={knownLine(item.known)!} />
+						</dl>
+					)}
+				</div>
+
 				{/* "Why?" opens here, under the verdict: the lesson stays where it is. */}
 				{open && (
-					<div className="lh-rise mt-4 border-t border-foreground/10 pt-4 font-prose text-base leading-relaxed" data-testid="lesson-why-panel">
-						{item.trigger && (
-							<p className="text-foreground">
-								<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
-									{item.trigger}
-								</span>{" "}
-								decides the form here.
-							</p>
-						)}
-						<p className="text-foreground">{info.rule}</p>
-						<Bridges unit={item.unit} />
+					<dl className="lh-rise mt-4 grid gap-x-6 gap-y-2 border-t border-foreground/10 pt-4 font-prose text-base leading-relaxed sm:grid-cols-[6rem_1fr]" data-testid="lesson-why-panel">
+						<dt className={WHY_LABEL}>Rule</dt>
+						<dd className="text-foreground">
+							{item.trigger && (
+								<>
+									<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
+										{item.trigger}
+									</span>{" "}
+									decides the form here.{" "}
+								</>
+							)}
+							{info.rule}
+						</dd>
+						<dt className={WHY_LABEL}>Bridges</dt>
+						<dd className="flex flex-col gap-1">
+							<Bridges unit={item.unit} />
+						</dd>
 						{examples.length > 0 && (
-							<ul className="mt-2 flex flex-col gap-0.5">
-								{examples.map((ex) => (
-									<li key={ex.id} className="text-muted-foreground">
-										<span className="text-foreground" lang="sk">
-											{ex.before}
-											<b>{ex.answer}</b>
-											{ex.after}
-										</span>{" "}
-										· {ex.translation}
-									</li>
-								))}
-							</ul>
+							<>
+								<dt className={WHY_LABEL}>Same pattern</dt>
+								<dd>
+									<ul className="flex flex-col gap-0.5">
+										{examples.map((ex) => (
+											<li key={ex.id} className="text-muted-foreground">
+												<span className="text-foreground" lang="sk">
+													{ex.before}
+													<b>{ex.answer}</b>
+													{ex.after}
+												</span>{" "}
+												· {ex.translation}
+											</li>
+										))}
+									</ul>
+								</dd>
+							</>
 						)}
-						<button type="button" onClick={onAskTutor} className="mt-2 font-ui text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground">
-							Still unsure? Ask the tutor (opens a chat)
-						</button>
-					</div>
+						<dt className={WHY_LABEL} />
+						<dd>
+							<button type="button" onClick={onAskTutor} className="font-ui text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground">
+								Still unsure? Ask the tutor (opens a chat)
+							</button>
+						</dd>
+					</dl>
 				)}
+			</div>
+		</div>
+	);
+}
+
+const WHY_LABEL = "font-ui text-xs font-bold uppercase tracking-wide text-muted-foreground sm:pt-1";
+
+/** One labelled fact chip under a right answer: a small caption and the
+ *  value, so the footer scans as "Form / How common / Memory". */
+function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+	return (
+		<div className="flex items-center gap-2.5 rounded-xl bg-background/40 py-1.5 pl-2.5 pr-3.5">
+			<span className="text-muted-foreground" aria-hidden="true">
+				{icon}
+			</span>
+			<div className="min-w-0">
+				<dt className="font-ui text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
+				<dd className="font-prose text-sm leading-tight text-foreground">{value}</dd>
 			</div>
 		</div>
 	);
