@@ -433,7 +433,10 @@ export function creditedSpeed(facts: Omit<LearnerFacts, "speed">): LearnerFacts[
 	if (lOk && wOk) return { wpm: Math.round((l.wpm * l.words + w.wpm * w.words) / (l.words + w.words)), basis: "both" };
 	if (lOk) return { wpm: l.wpm, basis: "listen" };
 	if (wOk) return { wpm: w.wpm, basis: "watch" };
-	return { wpm: Math.round(speedForHours(facts.hoursDone)), basis: "level" };
+	// A listener at the level's rung at least: a placed B1 reader has not
+	// "1 word a minute" because the map has credited few hours yet.
+	const rung = SPEED_LADDER.find((r) => r.level === facts.level)?.wpm ?? 0;
+	return { wpm: Math.round(Math.max(speedForHours(facts.hoursDone), rung)), basis: "level" };
 }
 
 // ─── The estimate ───────────────────────────────────────────────────────────
@@ -562,7 +565,7 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 	if (!wordsDone) missing.push(`About ${toGo.toLocaleString("en-GB")} more words: the words you know cover about ${pct(coverageNow)} of ${genre.title}; this needs ${pct(def.coverage)} (≈${need.toLocaleString("en-GB")} lemmas).`);
 	if (!speedDone) {
 		const who = facts.speed.basis === "level" ? "a listener at your point on the map" : "you";
-		missing.push(`Speed: ${who} understand${facts.speed.basis === "level" ? "s" : ""} about ${speedHave} words a minute; this needs about ${speedNeed} (${def.wpm} spoken, ${SUPPORT_LINE[def.support]}).`);
+		missing.push(`Speed: ${who} understand${facts.speed.basis === "level" ? "s" : ""} about ${speedHave} word${speedHave === 1 ? "" : "s"} a minute; this needs about ${speedNeed} (${def.wpm} spoken, ${SUPPORT_LINE[def.support]}).`);
 	}
 	let verdict: string;
 	if (status === "reached") verdict = "The words and the speed are both there by this estimate. Go and try it; what you miss is the next lesson.";
