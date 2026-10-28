@@ -4,7 +4,7 @@
  * every unit's level on the skill path, and the review deck's counts.
  * PUT /api/progress {dailyGoal} — change the daily XP goal;
  * PUT /api/progress {goal: {level?, minutesPerDay?, daysPerWeek?, purposes?, purposeNote?,
- * languages?, otherLanguages?, explainIn?, prior?, onboarded?}} — the goal and profile
+ * languages?, languageLevels?, explainIn?, prior?, onboarded?}} — the goal and profile
  * the setup wizard writes (src/core/onboarding.ts); the daily plan, the
  * projection and the tutor's profile block follow.
  * POST /api/progress {activity: "talk"|"story"|"tutor", unit?} — a tutor
@@ -41,6 +41,7 @@ export async function PUT(req: Request) {
 					purposeNote: typeof g.purposeNote === "string" ? g.purposeNote.slice(0, 1000) : undefined,
 					languages: strs(g.languages) as never,
 					otherLanguages: strs(g.otherLanguages),
+					languageLevels: g.languageLevels && typeof g.languageLevels === "object" ? (Object.fromEntries(Object.entries(g.languageLevels as Record<string, unknown>).filter(([, v]) => typeof v === "string").slice(0, 32)) as never) : undefined,
 					explainIn: (typeof g.explainIn === "string" ? [g.explainIn] : strs(g.explainIn)) as never,
 					prior: typeof g.prior === "string" ? (g.prior as never) : undefined,
 					onboarded: g.onboarded === true,

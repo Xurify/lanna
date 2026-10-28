@@ -9,9 +9,9 @@
  */
 
 import { useEffect, useState } from "react";
-import { CheckIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KNOWN_LANGUAGES, languageName, MAX_OTHER_LANGUAGE_LENGTH, MAX_OTHER_LANGUAGES, type Lang } from "@/src/core";
+import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, type Lang, type LangLevel } from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors";
 const ON = "border-go bg-go/10 text-foreground";
@@ -112,80 +112,112 @@ export function NumberPicker({
 }
 
 /**
- * The languages the learner knows: every catalogue language as a chip
- * (any number pressed), the learner's own entries as chips with a ×, and
- * an "Another…" chip that opens a field for a language the catalogue
- * lacks. Xurify (2026-10-28): knowing a language is a bridge, so this is
- * a multi-pick and not limited to Slavic ones.
+ * The languages the learner knows. Twenty as chips (the catalogue's
+ * `primary` ones), any number pressed; everything else behind "More
+ * languages", a searchable panel of the app's own (no native select, no
+ * free text: Xurify, 2026-10-28). A chosen language from the panel joins
+ * the chip row. Under the row, one line per chosen language says how well
+ * it is known, three taps wide, so "know" has a meaning: a bit, comfortable,
+ * fluent.
  */
 export function LanguagePicker({
 	value,
-	other,
+	levels,
 	onChange,
 	testid = "languages",
 }: {
 	value: readonly Lang[];
-	other: readonly string[];
-	onChange: (langs: Lang[], other: string[]) => void;
+	levels: Readonly<Partial<Record<Lang, LangLevel>>>;
+	onChange: (langs: Lang[], levels: Partial<Record<Lang, LangLevel>>) => void;
 	testid?: string;
 }) {
-	const [adding, setAdding] = useState(false);
-	const [text, setText] = useState("");
-	const toggle = (id: Lang) => onChange(value.includes(id) ? value.filter((l) => l !== id) : [...value, id], [...other]);
-	const commit = () => {
-		const name = text.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH);
-		setText("");
-		setAdding(false);
-		if (!name || other.some((o) => o.toLowerCase() === name.toLowerCase())) return;
-		// A catalogue language typed by name is pressed, not duplicated.
-		const known = KNOWN_LANGUAGES.find((l) => l.title.toLowerCase() === name.toLowerCase());
-		if (known) return onChange(value.includes(known.id) ? [...value] : [...value, known.id], [...other]);
-		onChange([...value], [...other, name].slice(0, MAX_OTHER_LANGUAGES));
+	const [more, setMore] = useState(false);
+	const [query, setQuery] = useState("");
+	const toggle = (id: Lang) => {
+		if (value.includes(id)) {
+			const next = { ...levels };
+			delete next[id];
+			return onChange(value.filter((l) => l !== id), next);
+		}
+		if (value.length >= MAX_LANGUAGES) return;
+		onChange([...value, id], { ...levels });
 	};
+	const setLevel = (id: Lang, level: LangLevel) => onChange([...value], { ...levels, [id]: level });
+	const shown = KNOWN_LANGUAGES.filter((l) => l.primary || value.includes(l.id));
+	const q = query.trim().toLowerCase();
+	const found = KNOWN_LANGUAGES.filter((l) => (q ? l.title.toLowerCase().includes(q) : !l.primary));
+	const close = () => (setMore(false), setQuery(""));
 	return (
-		<div className="flex flex-wrap gap-2" role="group" aria-label="Languages you know" data-testid={testid}>
-			{KNOWN_LANGUAGES.map((l) => {
-				const on = value.includes(l.id);
-				return (
-					<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn(CHIP, "min-w-0 px-3.5 py-1.5 text-sm", on ? ON : OFF)} data-testid={`${testid}-${l.id}`}>
-						{l.title}
+		<div data-testid={testid}>
+			<div className="flex flex-wrap gap-2" role="group" aria-label="Languages you know">
+				{shown.map((l) => {
+					const on = value.includes(l.id);
+					return (
+						<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn(CHIP, "min-w-0 px-3.5 py-1.5 text-sm", on ? ON : OFF)} data-testid={`${testid}-${l.id}`}>
+							{l.title}
+						</button>
+					);
+				})}
+				<span className="relative">
+					<button type="button" aria-expanded={more} onClick={() => (more ? close() : setMore(true))} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm", more && "border-foreground/40 text-foreground")} data-testid={`${testid}-more`}>
+						<SearchIcon className="-ml-0.5 mr-1.5 inline size-3.5" />
+						More languages
 					</button>
-				);
-			})}
-			{other.map((name) => (
-				<span key={name} className={cn(CHIP, ON, "inline-flex min-w-0 items-center gap-1 py-1.5 pl-3.5 pr-1.5 text-sm")} data-testid={`${testid}-other`}>
-					{name}
-					<button type="button" aria-label={`Remove ${name}`} onClick={() => onChange([...value], other.filter((o) => o !== name))} className="rounded-md p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-						<XIcon className="size-3.5" />
-					</button>
+					{more && (
+						<>
+							<div className="fixed inset-0 z-10" onClick={close} aria-hidden="true" />
+							<div className="absolute left-0 top-full z-20 mt-2 w-[22rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-border bg-card p-3 shadow-xl" role="dialog" aria-label="More languages" data-testid={`${testid}-panel`}>
+								<input
+									autoFocus
+									value={query}
+									onChange={(e) => setQuery(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Escape") (e.preventDefault(), close());
+										if (e.key === "Enter" && found[0]) (e.preventDefault(), toggle(found[0].id));
+									}}
+									placeholder="Search languages"
+									aria-label="Search languages"
+									className="w-full rounded-xl border-2 border-border bg-background px-3 py-2 font-ui text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-go"
+									data-testid={`${testid}-search`}
+								/>
+								<div className="mt-2 grid max-h-64 grid-cols-2 gap-1 overflow-y-auto pr-1">
+									{found.map((l) => {
+										const on = value.includes(l.id);
+										return (
+											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-bold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
+												<span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3" strokeWidth={3} />}</span>
+												{l.title}
+											</button>
+										);
+									})}
+									{found.length === 0 && <p className="col-span-2 px-2 py-3 font-prose text-sm text-muted-foreground">Nothing by that name. Pick the nearest relative; the tutor adapts.</p>}
+								</div>
+							</div>
+						</>
+					)}
 				</span>
-			))}
-			{adding ? (
-				<span className="inline-flex items-center rounded-xl border-2 border-go bg-go/10 pl-3">
-					<input
-						autoFocus
-						value={text}
-						maxLength={MAX_OTHER_LANGUAGE_LENGTH}
-						placeholder="Which language?"
-						onChange={(e) => setText(e.target.value)}
-						onBlur={commit}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") (e.preventDefault(), commit());
-							if (e.key === "Escape") (setText(""), setAdding(false));
-						}}
-						aria-label="Another language"
-						className="w-36 bg-transparent font-ui text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground"
-						data-testid={`${testid}-input`}
-					/>
-					<button type="button" aria-label="Add language" onMouseDown={(e) => e.preventDefault()} onClick={commit} className="flex size-9 items-center justify-center text-muted-foreground hover:text-foreground">
-						<CheckIcon className="size-4" />
-					</button>
-				</span>
-			) : (
-				<button type="button" onClick={() => setAdding(true)} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm")} data-testid={`${testid}-add`}>
-					<PlusIcon className="-ml-0.5 mr-1 inline size-3.5" />
-					Another…
-				</button>
+			</div>
+			{value.length > 0 && (
+				<div className="mt-4 flex flex-col gap-1.5" data-testid={`${testid}-levels`}>
+					{value.map((id) => {
+						const level = levels[id] ?? DEFAULT_LANG_LEVEL;
+						return (
+							<div key={id} className="flex flex-wrap items-center gap-2" data-testid={`level-${id}`}>
+								<span className="w-28 shrink-0 font-ui text-sm font-bold text-foreground">{languageName(id)}</span>
+								<span className="flex gap-1" role="group" aria-label={`How well you know ${languageName(id)}`}>
+									{LANG_LEVELS.map((lv) => (
+										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("rounded-lg border-2 px-2.5 py-1 font-ui text-xs font-bold transition-colors", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
+											{lv.title}
+										</button>
+									))}
+								</span>
+								<button type="button" aria-label={`Remove ${languageName(id)}`} onClick={() => toggle(id)} className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+									<XIcon className="size-3.5" />
+								</button>
+							</div>
+						);
+					})}
+				</div>
 			)}
 		</div>
 	);

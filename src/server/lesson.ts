@@ -43,13 +43,16 @@ import {
 import {
 	DEFAULT_DAYS_PER_WEEK,
 	bridgeLanguages,
+	DEFAULT_LANG_LEVEL,
 	isLang,
+	isLangLevel,
 	MAX_EXPLAIN,
 	MAX_LANGUAGES,
 	MAX_PURPOSE_NOTE,
 	MAX_OTHER_LANGUAGE_LENGTH,
 	MAX_OTHER_LANGUAGES,
 	type Lang,
+	type LangLevel,
 	isPrior,
 	isPurpose,
 	MAX_MINUTES,
@@ -437,6 +440,16 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 		next.languages = [...new Set(goal.languages.filter(isLang))].slice(0, MAX_LANGUAGES);
 		delete next.firstLanguage;
 		delete next.bridges;
+	}
+	if (goal.languageLevels && typeof goal.languageLevels === "object") {
+		const known = next.languages ?? [];
+		const levels: Partial<Record<Lang, LangLevel>> = {};
+		for (const [k, v] of Object.entries(goal.languageLevels)) if (isLang(k) && known.includes(k) && isLangLevel(v) && v !== DEFAULT_LANG_LEVEL) levels[k] = v;
+		if (Object.keys(levels).length) next.languageLevels = levels;
+		else delete next.languageLevels;
+	} else if (next.languageLevels && next.languages) {
+		// Languages that left the list take their level with them.
+		for (const k of Object.keys(next.languageLevels) as Lang[]) if (!next.languages.includes(k)) delete next.languageLevels[k];
 	}
 	if (Array.isArray(goal.otherLanguages)) {
 		next.otherLanguages = [...new Set(goal.otherLanguages.filter((v): v is string => typeof v === "string").map((v) => v.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH)).filter(Boolean))].slice(0, MAX_OTHER_LANGUAGES);
