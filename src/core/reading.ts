@@ -196,7 +196,11 @@ export const NEW_WORDS_MAX: Record<Cefr, number> = { A1: 3, A2: 4, B1: 5, B2: 6,
 /** Frequency rank (within part of speech) up to which a word counts as
  *  "common at this level" for the coverage estimate — the words a learner
  *  at the level has met in the app's own word bands. */
-export const KNOWN_RANK: Record<Cefr, number> = { A1: 300, A2: 700, B1: 1500, B2: 3000, C1: 5000 };
+/** How far down the frequency list a learner at each level is assumed to
+ *  know (the usual CEFR vocabulary sizes: ~500 words at A1, ~1,000 at A2,
+ *  ~2,000 at B1; the lexicon ranks 3,000). The deck and the met words add
+ *  what the learner has actually studied. */
+export const KNOWN_RANK: Record<Cefr, number> = { A1: 500, A2: 1000, B1: 2000, B2: 3000, C1: 5000 };
 
 /** Below this share of known running words the draft is written again. */
 export const COVERAGE_FLOOR = 0.92;
@@ -238,11 +242,14 @@ export function wordTokens(sentences: readonly { tokens: readonly StoryToken[] }
 	return sentences.flatMap((s) => s.tokens.filter((t) => t.word));
 }
 
-/** Share of word tokens that are not fresh. */
-export function knownCoverage(sentences: readonly { tokens: readonly StoryToken[] }[]): number {
+/** Share of word tokens the learner can read: known words, plus the
+ *  words the episode introduces on purpose (glossed, repeated, queued —
+ *  the i+1). What is left are stray unknowns, the ones the floor limits. */
+export function knownCoverage(sentences: readonly { tokens: readonly StoryToken[] }[], introduced: readonly StoryWord[] = []): number {
 	const words = wordTokens(sentences);
 	if (words.length === 0) return 1;
-	return words.filter((t) => !t.fresh).length / words.length;
+	const taught = new Set(introduced.flatMap((w) => [w.slug, w.lemma.toLocaleLowerCase()]).filter((x): x is string => !!x));
+	return words.filter((t) => !t.fresh || (t.slug && taught.has(t.slug)) || (t.lemma && taught.has(t.lemma.toLocaleLowerCase()))).length / words.length;
 }
 
 // ─── The model's answer ─────────────────────────────────────────────────────

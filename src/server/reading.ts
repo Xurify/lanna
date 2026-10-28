@@ -58,6 +58,7 @@ import {
 	type StoryWord,
 } from "../core/reading.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
+import { ensureReadmes } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { readSettings } from "../store/settings.ts";
@@ -117,7 +118,10 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords 
 	}
 	const known = new Set(met);
 	const bound = KNOWN_RANK[state.level];
-	if (lexicon) for (const e of lexicon.entries) if (e.rank !== undefined && e.rank <= bound) known.add(e.slug);
+	// The common words at the level, slovak.wiki's curated beginner set
+	// (greetings, question words, pronouns) and place names (Bratislava is
+	// not vocabulary to learn) count as known at every level.
+	if (lexicon) for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
 	const all = state.chapters.flatMap((c) => c.units);
 	const grammar = all.filter((u) => (u.kind === "drill" || u.kind === "tutor") && (u.status === "done" || u.status === "skipped")).map((u) => u.title);
 	const practising = all.filter((u) => u.kind === "drill" && u.status === "started").map((u) => u.title);
@@ -136,28 +140,162 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords 
 
 // ─── Glossing ───────────────────────────────────────────────────────────────
 
+/**
+ * Stems for the 4,000-odd entries the dictionary lists no forms for
+ * (most nouns, many verbs): the lemma's letters without its ending, so
+ * "kávu" finds káva and "pekného" finds pekný. Built once per lexicon.
+ * Keyed by the folded stem's first four letters to keep the scan short.
+ */
+interface Stemmed {
+	entry: LexiconEntry;
+	/** The folded lemma without its ending ("kava" → "kav", "robit" → "robi"). */
+	stem: string;
+	folded: string;
+}
+const stemIndex = new WeakMap<Lexicon, Map<string, Stemmed[]>>();
+
+/** The stems a lemma's forms can start with: the infinitive without -ť
+ *  (robiť → robi-), a noun or adjective without its final vowel (káva →
+ *  káv-, pekný → pekn-), and, for a lemma ending in consonant + e/o +
+ *  consonant, the same without that fleeting vowel (cukor → cukr-,
+ *  kaviareň → kaviarn-, začiatok → začiatk-). */
+function stemsOf(folded: string, infinitive: boolean): string[] {
+	const out = new Set<string>();
+	if (infinitive && folded.length > 3) out.add(folded.slice(0, -1));
+	else {
+		const bare = folded.replace(/[aeiouy]$/, "");
+		if (bare.length >= 2) out.add(bare);
+		// The fleeting vowel: kaviareň → kaviarn-e, cukor → cukr-u, pes → ps-a.
+		const m = /^(.*[^aeiouy])[eo]([^aeiouy])$/.exec(folded);
+		if (m) out.add(m[1]! + m[2]!);
+	}
+	if (out.size === 0) out.add(folded);
+	return [...out];
+}
+
+/** Endings a Slovak noun, adjective or verb form can carry after its stem
+ *  (folded). A leftover outside this list is not a form of the stem. */
+const ENDINGS = new Set(
+	"|a|u|e|o|y|i|om|ou|am|ach|iach|och|ov|mi|ami|ia|ie|iu|eho|emu|ej|ych|ym|ymi|ych|l|la|lo|li|m|s|me|te|ju|u|em|es|eme|ete|im|is|ime|ite|aju|ia|ej|ov|ovi|ove|ovia|ami|ou|eni|ena|eny|eno|eniu|ene|eni|ani|ana|any|ano|ut|ute|uc|at|ajte|ite|ite|uj|ujem|ujes|uje|ujeme|ujete|uju|il|ila|ilo|ili|al|ala|alo|ali|el|ela|elo|eli|ol|ola|olo|oli|t|ti|ice|ica|icu|ici|iciach|icou|ic|iek|iam|iach|ami|ov|ou|ami".split("|"),
+);
+
+function stems(lexicon: Lexicon): Map<string, Stemmed[]> {
+	let idx = stemIndex.get(lexicon);
+	if (idx) return idx;
+	idx = new Map();
+	for (const entry of lexicon.entries) {
+		if (/\s/.test(entry.sk)) continue; // phrases are matched whole, by form
+		const folded = foldDiacritics(entry.sk.toLocaleLowerCase(tag()));
+		for (const stem of stemsOf(folded, entry.sk.endsWith("ť"))) {
+			const key = stem.slice(0, 2);
+			const list = idx.get(key) ?? [];
+			list.push({ entry, stem, folded });
+			idx.set(key, list);
+		}
+	}
+	stemIndex.set(lexicon, idx);
+	return idx;
+}
+
+/** A form's entry by stem: the longest stem that starts the folded form,
+ *  with at most four letters of ending left over; among ties the commonest
+ *  word. Short forms (under four letters) are not guessed at. */
+function byStem(lexicon: Lexicon, lower: string, folded: string, known: Set<string>): LexiconEntry | undefined {
+	if (folded.length < 3) return undefined;
+	const candidates = stems(lexicon).get(folded.slice(0, 2)) ?? [];
+	const sharedPrefix = (a: string, b: string) => {
+		let i = 0;
+		while (i < a.length && i < b.length && a[i] === b[i]) i++;
+		return i;
+	};
+	// Longest stem (the most specific lemma) first; then the lemma whose
+	// letters WITH diacritics match furthest (chýba → chýbať, not chyba);
+	// then a known word; then the commoner one.
+	const score = (s: Stemmed) => [s.stem.length, sharedPrefix(lower, s.entry.sk.toLocaleLowerCase(tag())), known.has(s.entry.slug) ? 1 : 0, -(s.entry.rank ?? 1e9)];
+	let best: Stemmed | undefined;
+	let bestScore: number[] = [];
+	for (const s of candidates) {
+		// A two-letter stem is only the fleeting-vowel form of a three-letter
+		// word (pes → psa, deň → dňa), and only with a short ending.
+		const minStem = s.folded.length <= 3 ? 2 : 3;
+		const rest = folded.slice(s.stem.length);
+		if (s.stem.length < minStem || !folded.startsWith(s.stem) || rest.length > (s.stem.length < 3 ? 3 : 5) || !ENDINGS.has(rest)) continue;
+		const sc = score(s);
+		if (!best || sc.some((v, i) => v !== bestScore[i]) && sc.findIndex((v, i) => v !== bestScore[i]) >= 0 && sc[sc.findIndex((v, i) => v !== bestScore[i])]! > bestScore[sc.findIndex((v, i) => v !== bestScore[i])]!) {
+			best = s;
+			bestScore = sc;
+		}
+	}
+	return best?.entry;
+}
+
 /** The dictionary entry a surface form most likely belongs to: an exact
  *  form match first (the commonest word when several share it, a known
- *  word before an unknown one), then the same letters without diacritics. */
-export function resolveWord(lexicon: Lexicon, form: string, known: Set<string>): LexiconEntry | undefined {
+ *  word before an unknown one), then the same letters without diacritics,
+ *  then the stem heuristic for entries without a form list. */
+export function resolveWord(lexicon: Lexicon, form: string, known: Set<string>, opts: { stem?: boolean } = {}): LexiconEntry | undefined {
 	const lower = form.toLocaleLowerCase(tag());
 	const pick = (list: LexiconEntry[] | undefined) => {
 		if (!list?.length) return undefined;
 		return [...list].sort((a, b) => Number(known.has(b.slug)) - Number(known.has(a.slug)) || (a.rank ?? 1e9) - (b.rank ?? 1e9))[0];
 	};
-	return pick(lexicon.byForm.get(lower)) ?? pick(lexicon.byFolded.get(foldDiacritics(lower)));
+	const folded = foldDiacritics(lower);
+	const exact = pick(lexicon.byForm.get(lower));
+	if (exact) return exact;
+	// Without diacritics two words can collide (chýba / chyba): the one
+	// whose own letters match the form furthest wins.
+	const loose = pick(lexicon.byFolded.get(folded));
+	const stemmed = opts.stem === false ? undefined : byStem(lexicon, lower, folded, known);
+	if (loose && stemmed && stemmed !== loose) {
+		const shared = (a: string, b: string) => {
+			let i = 0;
+			while (i < a.length && i < b.length && a[i] === b[i]) i++;
+			return i;
+		};
+		return shared(lower, stemmed.sk.toLocaleLowerCase(tag())) > shared(lower, loose.sk.toLocaleLowerCase(tag())) ? stemmed : loose;
+	}
+	return loose ?? stemmed;
 }
 
 /** Tokenize one sentence and gloss every word. A word the dictionary
  *  lacks keeps the story's own gloss when the model introduced it. */
-export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, known: Set<string>, newWords: readonly StoryWord[]): StorySentence {
+/** The series cast: never vocabulary, whatever the dictionary says. */
+export const STORY_NAMES: ReadonlySet<string> = new Set(["robo"]);
+
+/** The proper names in a text: capitalised words inside a sentence (not
+ *  its first word) that no dictionary form claims — Zuzka, Petržalka. A
+ *  sentence that starts with one of them is then read the same way. */
+export function storyNames(sentences: readonly { sk: string }[], lexicon: Lexicon | null): Set<string> {
+	const names = new Set(STORY_NAMES);
+	for (const s of sentences) {
+		let first = true;
+		for (const t of tokenize(s.sk)) {
+			if (!t.word) continue;
+			const lower = t.text.toLocaleLowerCase(tag());
+			const capital = t.text.charAt(0) !== lower.charAt(0);
+			if (!first && capital && !/^\p{N}/u.test(t.text) && !lexicon?.byForm.get(lower)?.length) names.add(foldDiacritics(lower));
+			first = false;
+		}
+	}
+	return names;
+}
+
+export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, known: Set<string>, newWords: readonly StoryWord[], names: ReadonlySet<string> = STORY_NAMES): StorySentence {
 	const fresh = new Map(newWords.map((w) => [foldDiacritics(w.lemma.toLocaleLowerCase(tag())), w]));
+	let seenWord = false;
 	const tokens: StoryToken[] = tokenize(sk).map((t) => {
 		if (!t.word) return { text: t.text, word: false };
 		const token: StoryToken = { text: t.text, word: true };
+		const first = !seenWord;
+		seenWord = true;
 		// Digits are not words to gloss.
 		if (/^\p{N}+$/u.test(t.text)) return token;
-		const entry = lexicon ? resolveWord(lexicon, t.text, known) : undefined;
+		const capital = t.text.charAt(0) !== t.text.charAt(0).toLocaleLowerCase(tag());
+		const name = capital && (names.has(foldDiacritics(t.text.toLocaleLowerCase(tag()))) || !first);
+		// A capitalised word inside the sentence, or one the text showed to
+		// be a name (Robo, Zuzka, Petržalka), is only claimed by a listed
+		// dictionary form, never by a stem guess.
+		const entry = lexicon ? resolveWord(lexicon, t.text, known, { stem: !name }) : undefined;
 		if (entry) {
 			token.slug = entry.slug;
 			token.lemma = entry.sk;
@@ -172,10 +310,8 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 			token.lemma = introduced.lemma;
 			token.gloss = introduced.gloss;
 		}
-		// Proper names (capitalised, mid-sentence or not) are not fresh
-		// vocabulary; an unknown lowercase word is.
-		const capital = t.text.charAt(0) !== t.text.charAt(0).toLocaleLowerCase(tag());
-		if (!capital) token.fresh = true;
+		// A proper name is not fresh vocabulary; an unknown word is.
+		if (!name) token.fresh = true;
 		return token;
 	});
 	return { sk, en, tokens };
@@ -292,9 +428,13 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 		const entry = lexicon ? resolveWord(lexicon, w.sk, k.known) : undefined;
 		return entry ? { lemma: entry.sk, gloss: entry.en, slug: entry.slug } : { lemma: w.sk, gloss: w.en };
 	});
-	const sentences = d.sentences.map((s) => glossSentence(s.sk, s.en, lexicon, k.known, newWords));
-	// A word the model introduced on purpose is fresh by design; make sure
-	// it is on the list even when the dictionary knows it, so it is queued.
+	const names = storyNames(d.sentences, lexicon);
+	const sentences = d.sentences.map((s) => glossSentence(s.sk, s.en, lexicon, k.known, newWords, names));
+	// Coverage counts the words the model introduced ON PURPOSE as taught,
+	// not as unknown: they are the i+1. Every other fresh word is a stray.
+	const coverage = knownCoverage(sentences, newWords);
+	// A stray the dictionary knows is still a word met and glossed: on the
+	// list after the deliberate ones, so it is queued for review too.
 	for (const t of sentences.flatMap((s) => s.tokens)) {
 		if (t.fresh && t.slug && !newWords.some((w) => w.slug === t.slug)) newWords.push({ lemma: t.lemma!, gloss: t.gloss ?? "", slug: t.slug });
 	}
@@ -313,7 +453,7 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 		questions: d.questions.slice(0, QUESTIONS_PER_STORY),
 		newWords: newWords.slice(0, 12),
 		recap: d.recap || d.sentences.map((s) => s.en).join(" ").slice(0, 300),
-		coverage: Math.round(knownCoverage(sentences) * 1000) / 1000,
+		coverage: Math.round(coverage * 1000) / 1000,
 		wordCount,
 		usage,
 		drafts,
@@ -345,10 +485,13 @@ export function generateStory(opts: GenerateOptions = {}): Promise<StoryRecord> 
 			model ??= resolved.model;
 		}
 		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
-		let first = assembleStory(await draft(engine, brief.prompt, usage), brief, k, lexicon, usage, 1, now);
+		const d1 = await draft(engine, brief.prompt, usage);
+		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now);
 		if (first.coverage < COVERAGE_FLOOR) {
-			// Too many unknown words: once more, naming the ones to drop.
-			const hard = [...new Set(first.sentences.flatMap((s) => s.tokens).filter((t) => t.fresh && !first.newWords.some((w) => w.lemma === t.lemma)).map((t) => t.lemma ?? t.text))].slice(0, 30);
+			// Too many stray unknown words: once more, naming the ones to drop.
+			const declared = new Set(d1.newWords.map((w) => foldDiacritics(w.sk.toLocaleLowerCase(tag()))));
+			const stray = (t: StoryToken) => t.fresh && !declared.has(foldDiacritics((t.lemma ?? t.text).toLocaleLowerCase(tag())));
+			const hard = [...new Set(first.sentences.flatMap((s) => s.tokens).filter(stray).map((t) => t.lemma ?? t.text))].slice(0, 30);
 			const again = `${brief.prompt}\n\nYour first draft used too many words the learner does not know (${Math.round((1 - first.coverage) * 100)} in 100). Write the episode again with simpler, more common words. Avoid these in particular: ${hard.join(", ")}. Keep the same plot.`;
 			try {
 				const second = assembleStory(await draft(engine, again, usage), brief, k, lexicon, usage, 2, now);
@@ -361,6 +504,7 @@ export function generateStory(opts: GenerateOptions = {}): Promise<StoryRecord> 
 		// Two episodes on the same day cannot share an id.
 		if (storyStore.get(first.id)) first = { ...first, id: `${first.id}-${now.getTime().toString(36).slice(-4)}` };
 		storyStore.put(first);
+		ensureReadmes();
 		return first;
 	})();
 	return inFlight.finally(() => {
