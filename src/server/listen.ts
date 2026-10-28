@@ -50,6 +50,14 @@ export interface ListenRep {
 	options?: string[];
 	/** Dictionary slugs of the sentence's stretch words. */
 	stretch: string[];
+	/** Timing, for the speed model (src/core/milestones.ts): sentence
+	 *  shown → meaning picked, the first playback's length, plays after
+	 *  it, whether the text was shown first, and the sentence's words. */
+	ms?: number;
+	heardMs?: number;
+	replays?: number;
+	peeked?: boolean;
+	words?: number;
 }
 
 export interface ListenResultInput {
@@ -112,6 +120,11 @@ export function recordListen(input: ListenResultInput, now = new Date()): Listen
 				verdict: r.verdict,
 				assisted: false,
 				...(r.options ? { options: r.options } : {}),
+				...(r.ms !== undefined ? { ms: r.ms } : {}),
+				...(r.heardMs !== undefined ? { heardMs: r.heardMs } : {}),
+				...(r.replays !== undefined ? { replays: r.replays } : {}),
+				...(r.peeked !== undefined ? { peeked: r.peeked } : {}),
+				...(r.words !== undefined ? { words: r.words } : {}),
 			})),
 		});
 	} catch (err) {
