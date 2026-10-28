@@ -59,7 +59,9 @@ import type { UpdateState } from "@/components/settings/update-settings.tsx";
 const SIDEBAR_AUTOCLOSE = 928;
 
 // Module scope, guarded for SSR (the server has no navigator).
-const IS_ELECTRON = typeof navigator !== "undefined" && navigator.userAgent.includes("Electron");
+// The preload bridge is the shell's identity: the user agent no longer
+// names Electron (electron/main.cjs strips it so embedded YouTube plays).
+const IS_ELECTRON = typeof window !== "undefined" && (!!window.lh?.platform || navigator.userAgent.includes("Electron"));
 
 declare global {
 	interface Window {
@@ -975,7 +977,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	return (
 		<SettingsDialogProvider>
 			<SessionsSidebar />
-			<main className="min-w-0 flex-1">{children}</main>
+			{/* The frame is one viewport tall; the content scrolls inside it so
+			    the sidebar stays put. */}
+			<main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
 			    matters for the events it dispatches, never for DOM priority. */}

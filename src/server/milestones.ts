@@ -193,7 +193,12 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 
 	// Pace: the last 14 days' minutes.
 	let paceTotal = 0;
-	for (let i = PACE_DAYS - 1; i >= 0; i--) paceTotal += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
+	let paceDays = 0;
+	for (let i = PACE_DAYS - 1; i >= 0; i--) {
+		const m = p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
+		paceTotal += m;
+		if (m > 0) paceDays++;
+	}
 	const hoursLogged = Object.values(p.days).reduce((n, d) => n + (d.minutes ?? 0), 0) / 60;
 
 	// Words a day: planned = the deck's setting + the input tasks; real =
@@ -271,6 +276,7 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 		minutesPerDay: goal.minutesPerDay,
 		daysPerWeek,
 		paceMinutes: Math.round(paceTotal / PACE_DAYS),
+		paceDays,
 		hoursDone: hoursDone(state),
 		hoursLogged: Math.round(hoursLogged * 10) / 10,
 		listen: { sessions: log.length, reading: listenReading, trend: trend ? { slope: trend.slope, points: trend.points } : null, knownSentences },

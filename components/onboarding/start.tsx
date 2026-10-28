@@ -111,9 +111,9 @@ function draftFrom(goal: LearnerGoal | null): Draft {
 	};
 }
 
-export function Start({ goal, edit, hoursDone, currentChapter }: { goal: LearnerGoal | null; edit: boolean; hoursDone: number; currentChapter: string }) {
+export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }: { goal: LearnerGoal | null; edit: boolean; hoursDone: number; currentChapter: string; /** Open on the check (the last screen), not the first. */ onCheck?: boolean }) {
 	const router = useRouter();
-	const [step, setStep] = useState<Step>(1);
+	const [step, setStep] = useState<Step>(onCheck ? 4 : 1);
 	const [d, setD] = useState<Draft>(() => draftFrom(goal));
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);

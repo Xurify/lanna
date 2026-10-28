@@ -36,7 +36,7 @@
  * on.
  */
 
-import { CEFR_ORDER, GUIDED_HOURS, type Cefr } from "./curriculum.ts";
+import { CEFR_ORDER, GUIDED_HOURS, MIN_PACE_DAYS, type Cefr } from "./curriculum.ts";
 
 // ─── Genres: the published coverage points ──────────────────────────────────
 
@@ -425,6 +425,8 @@ export interface LearnerFacts {
 	daysPerWeek: number;
 	/** Minutes a day actually studied over the last 14 days. */
 	paceMinutes: number;
+	/** Days of those 14 with any study; a real-pace date needs MIN_PACE_DAYS. */
+	paceDays: number;
 	/** Guided hours the map credits. */
 	hoursDone: number;
 	/** Hours actually logged (every day's minutes). */
@@ -568,7 +570,7 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 	const speedEta = etaFrom(
 		opts.now,
 		hoursToGo === 0 ? 0 : plannedWeekly > 0 ? (hoursToGo / plannedWeekly) * 7 : null,
-		hoursToGo === 0 ? 0 : facts.paceMinutes > 0 ? hoursToGo / (facts.paceMinutes / 60) : null,
+		hoursToGo === 0 ? 0 : facts.paceMinutes > 0 && facts.paceDays >= MIN_PACE_DAYS ? hoursToGo / (facts.paceMinutes / 60) : null,
 	);
 
 	const eta = later(wordsEta, speedEta);

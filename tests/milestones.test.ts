@@ -111,6 +111,7 @@ function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 		minutesPerDay: 60,
 		daysPerWeek: 6,
 		paceMinutes: 20,
+		paceDays: 12,
 		hoursDone: 300,
 		hoursLogged: 40,
 		listen: { sessions: 12, reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 }, trend: null, knownSentences: { total: 60, right: 52 } },
