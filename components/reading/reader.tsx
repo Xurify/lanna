@@ -138,10 +138,11 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 		[story, saving, tapped, load],
 	);
 
-	// Escape leaves, like a lesson.
+	// Escape leaves, like a lesson — unless a word popover is open, which
+	// it closes first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") router.push("/");
+			if (e.key === "Escape" && !document.querySelector("[data-word-popover]")) router.push("/");
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
