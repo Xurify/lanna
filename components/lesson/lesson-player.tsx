@@ -119,6 +119,10 @@ interface SavedLesson {
 /** Missed reps asked again at the end of a lesson, at most. */
 const RELEARN_MAX = 3;
 
+/** Kinds with no second try and no typed comeback: a word bank (the
+ *  mistake is visible) and a meaning rep (input, not a form to produce). */
+const NO_RETRY = new Set<ItemKind>(["build", "meaning"]);
+
 interface Outcome {
 	xp: number;
 	correct: number;
@@ -139,6 +143,7 @@ interface Outcome {
 const BLITZ_SECONDS = 60;
 
 const KIND_LABEL: Record<ItemKind, string> = {
+	meaning: "What does it mean?",
 	choose: "Choose the right form",
 	type: "Type the missing word",
 	build: "Build the sentence",
@@ -364,7 +369,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const grade = (given: string, verdict: RepVerdict) => {
 		if (!item || current) return;
-		if (mode === "lesson" && verdict === "wrong" && miss === null && item.kind !== "build") {
+		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind)) {
 			setMiss(given);
 			setCombo(0);
 			sfx.wrong();
@@ -412,7 +417,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		// a retrieval that succeeds after a failure is what fixes the form).
 		let nextTotal = total;
 		const it = current.item;
-		if ((current.verdict === "wrong" || current.assisted) && !it.again && it.kind !== "build" && relearned.current < RELEARN_MAX) {
+		if ((current.verdict === "wrong" || current.assisted) && !it.again && !NO_RETRY.has(it.kind) && relearned.current < RELEARN_MAX) {
 			relearned.current++;
 			const again: LessonItem = {
 				...it,
@@ -518,7 +523,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	}
 
 	const progress = mode === "blitz" ? left / BLITZ_SECONDS : (index + (current ? 1 : 0)) / total;
-	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && current.item.kind !== "build" && relearned.current < RELEARN_MAX;
+	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && !NO_RETRY.has(current.item.kind) && relearned.current < RELEARN_MAX;
 	const examples = current ? plan.items.filter((o) => o.unit === current.item.unit && o.sentence !== current.item.sentence && !o.again).slice(0, 2) : [];
 
 	return (
@@ -617,6 +622,7 @@ const PRIMARY = cn(
 const SECONDARY = cn(BUTTON, "border-2 border-foreground/20 px-5 text-foreground hover:bg-foreground/5");
 
 const ACTION_HINT: Record<ItemKind, string> = {
+	meaning: "Hear it, then pick the meaning, or press its number",
 	choose: "Pick one, or press its number",
 	type: "Press Enter to check",
 	listen: "Press Enter to check",
@@ -742,11 +748,14 @@ function ClozeRep({
 	const inputRef = useRef<HTMLInputElement>(null);
 	const typed = item.kind === "type" || item.kind === "listen";
 	const listen = item.kind === "listen";
+	// A meaning rep is input: the whole sentence, spoken as it appears, the
+	// target form marked, and three meanings to choose from.
+	const meaning = item.kind === "meaning";
 
 	useEffect(() => {
 		if (typed) inputRef.current?.focus();
-		if (listen) void speak(item.sentence).catch(() => {});
-	}, [item, typed, listen]);
+		if (listen || meaning) void speak(item.sentence).catch(() => {});
+	}, [item, typed, listen, meaning]);
 
 	useEffect(() => onReady(given.trim().length > 0), [given, onReady]);
 
@@ -760,20 +769,24 @@ function ClozeRep({
 		onGrade(given, listen ? gradeListen(item, given, tag) : compareAnswer(item.answer, given, tag));
 	};
 
+	/** An option's verdict: a form against the answer, a meaning against
+	 *  the translation. */
+	const judge = (o: string): RepVerdict => (meaning ? (o === item.translation ? "exact" : "wrong") : compareAnswer(item.answer, o, tag));
+
 	// 1–4 pick an option.
 	useEffect(() => {
-		if (item.kind !== "choose" || locked) return;
+		if ((item.kind !== "choose" && !meaning) || locked) return;
 		const onKey = (e: KeyboardEvent) => {
 			const n = Number(e.key);
 			const opt = item.options?.[n - 1];
 			if (opt && opt !== miss) {
 				e.preventDefault();
-				onGrade(opt, compareAnswer(item.answer, opt, tag));
+				onGrade(opt, judge(opt));
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [item, locked, onGrade, tag, miss]);
+	});
 
 	// The filled-in word is the right form, so it reads as right (green) even
 	// after a miss; the bar below says what was wrong.
@@ -847,10 +860,31 @@ function ClozeRep({
 
 	return (
 		<div>
+			{meaning && (
+				<div className="mb-6 flex items-center gap-3">
+					<button
+						type="button"
+						onClick={() => void speak(item.sentence)}
+						aria-label="Play the sentence"
+						className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
+					>
+						<Volume2Icon className="size-8" />
+					</button>
+					<button
+						type="button"
+						onClick={() => void slowSpeak(item.sentence)}
+						aria-label="Play slowly"
+						title="Play slowly"
+						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
+					>
+						<SnailIcon className="size-6" />
+					</button>
+				</div>
+			)}
 			<div className="relative">
 				{/* The play button hangs in the left margin, so the sentence lines
 				    up with the heading and never moves when the button appears. */}
-				{locked && (
+				{locked && !meaning && (
 					<button
 						type="button"
 						onClick={() => void speak(item.sentence)}
@@ -863,7 +897,10 @@ function ClozeRep({
 				<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), submit())}>
 					<p className="font-prose text-[30px] leading-[1.6] text-foreground" lang="sk">
 						{beforeText}
-						{locked ? (
+						{meaning ? (
+							// Input: the form is there to be met, not produced — marked, never blanked.
+							<mark className="rounded-lg bg-xp/20 px-1 font-bold text-foreground underline decoration-xp decoration-[3px] underline-offset-[6px]">{item.answer}</mark>
+						) : locked ? (
 							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>{item.answer}</span>
 						) : typed ? (
 							// Grows with what is typed (a hidden twin sizes it), so a long
@@ -881,7 +918,8 @@ function ClozeRep({
 					</p>
 					<p className="mt-2 font-prose text-lg text-muted-foreground">
 						<span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>
-						{item.translation}
+						{/* The meaning is the question, so it shows only once answered. */}
+						{meaning && !locked ? <span className="text-muted-foreground/70">Hear it, then pick what it means.</span> : item.translation}
 					</p>
 					{typed && !locked && <DiacriticBar variant="keys" className="mt-6" />}
 				</form>
@@ -889,18 +927,18 @@ function ClozeRep({
 
 			{miss !== null && !locked && <HintPanel item={item} miss={miss} />}
 
-			{item.kind === "choose" && (
-				<div className="mt-8 grid grid-cols-2 gap-3" data-testid="lesson-options">
+			{(item.kind === "choose" || meaning) && (
+				<div className={cn("mt-8 grid gap-3", meaning ? "grid-cols-1" : "grid-cols-2")} data-testid="lesson-options">
 					{item.options!.map((o, i) => {
 						const picked = result?.given === o;
-						const right = locked && compareAnswer(item.answer, o, tag) === "exact";
+						const right = locked && judge(o) === "exact";
 						const ruledOut = !locked && miss === o;
 						return (
 							<button
 								key={o}
 								type="button"
 								disabled={locked || ruledOut}
-								onClick={() => onGrade(o, compareAnswer(item.answer, o, tag))}
+								onClick={() => onGrade(o, judge(o))}
 								className={cn(
 									"flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3.5 text-left font-prose text-xl text-foreground transition-colors",
 									!locked && !ruledOut && "hover:border-foreground/40 hover:bg-accent",
@@ -911,7 +949,7 @@ function ClozeRep({
 								)}
 							>
 								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
-								<span lang="sk">{o}</span>
+								<span lang={meaning ? undefined : "sk"}>{o}</span>
 							</button>
 						);
 					})}
@@ -1039,7 +1077,7 @@ function FeedbackSheet({
 	const { item, verdict, given } = rep;
 	const info = unitInfo(item.unit);
 	// A whole typed sentence (listening) is answered with the whole sentence.
-	const expected = item.kind === "build" || (item.kind === "listen" && given.trim().includes(" ")) ? item.sentence : item.answer;
+	const expected = item.kind === "meaning" ? item.translation : item.kind === "build" || (item.kind === "listen" && given.trim().includes(" ")) ? item.sentence : item.answer;
 	const slips = verdict === "accents" ? new Set(diacriticSlips(expected, given, tag)) : new Set<number>();
 	const tone =
 		verdict === "exact"
@@ -1118,8 +1156,8 @@ function FeedbackSheet({
 					{verdict !== "exact" && (
 						<div>
 							<p className="font-prose text-lg text-foreground">
-								Correct answer:{" "}
-								<span className="font-bold" lang="sk">
+								{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
+								<span className="font-bold" lang={item.kind === "meaning" ? undefined : "sk"}>
 									{[...expected].map((ch, i) => (
 										<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
 											{ch}
@@ -1129,7 +1167,7 @@ function FeedbackSheet({
 							</p>
 							{verdict === "wrong" && given && (
 								<p className="font-prose text-base text-muted-foreground">
-									You wrote “<span lang="sk">{given}</span>”
+									{item.kind === "meaning" ? "You picked" : "You wrote"} “<span lang={item.kind === "meaning" ? undefined : "sk"}>{given}</span>”
 								</p>
 							)}
 							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}

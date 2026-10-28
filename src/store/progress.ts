@@ -27,6 +27,8 @@ export interface DayRecord {
 	tutors?: number;
 	/** Story episodes read (the Read task, src/server/reading.ts). */
 	reads?: number;
+	/** Listening sessions finished (the Listen task). */
+	listens?: number;
 	/** Minutes spent in lessons and review (from the client's timers). */
 	minutes?: number;
 }
