@@ -29,6 +29,13 @@ interface Rep {
 	verdict: "exact" | "wrong";
 	/** The text was shown before the meaning was picked. */
 	peeked: boolean;
+	/** Sentence shown (audio starts) → meaning picked, for the speed model
+	 *  (src/core/milestones.ts). */
+	ms: number;
+	/** How long the first playback took, when it finished before the pick. */
+	heardMs?: number;
+	/** Plays after the first (the slow play counts). */
+	replays: number;
 }
 
 interface Outcome {
@@ -57,6 +64,10 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const startedAt = useRef(Date.now());
+	// Per-sentence timing: when it was shown, how long the first playback
+	// took, how many times it was played again. The milestones page reads
+	// these as parsing speed, so they travel with every rep.
+	const timing = useRef<{ shownAt: number; heardMs?: number; replays: number }>({ shownAt: Date.now(), replays: 0 });
 	const finishing = useRef(false);
 	const loadSeq = useRef(0);
 
@@ -94,8 +105,21 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 
 	// Each sentence plays as it arrives: the ear meets it before the eye.
 	useEffect(() => {
-		if (item && !current) void speak(item.sentence).catch(() => {});
+		if (!item || current) return;
+		const t0 = Date.now();
+		timing.current = { shownAt: t0, replays: 0 };
+		void speak(item.sentence)
+			.then(() => {
+				if (timing.current.shownAt === t0 && timing.current.heardMs === undefined) timing.current.heardMs = Date.now() - t0;
+			})
+			.catch(() => {});
 	}, [item, current]);
+
+	const replay = (slow = false) => {
+		if (!item) return;
+		timing.current.replays++;
+		void (slow ? slowSpeak(item.sentence) : speak(item.sentence)).catch(() => {});
+	};
 
 	const finish = useCallback(
 		async (all: Rep[]) => {
@@ -120,6 +144,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							verdict: r.verdict,
 							options: r.item.options,
 							stretch: r.item.stretch.map((w) => w.slug).filter((s): s is string => !!s),
+							ms: r.ms,
+							heardMs: r.heardMs,
+							replays: r.replays,
+							peeked: r.peeked,
+							words: r.item.words,
 						})),
 						ms: Date.now() - startedAt.current,
 						tz: new Date().getTimezoneOffset(),
@@ -141,7 +170,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		const verdict: Rep["verdict"] = given === item.translation ? "exact" : "wrong";
 		if (verdict === "exact") sfx.right(1);
 		else sfx.wrong();
-		setCurrent({ item, given, verdict, peeked });
+		const t = timing.current;
+		setCurrent({ item, given, verdict, peeked, ms: Date.now() - t.shownAt, heardMs: t.heardMs, replays: t.replays });
 	};
 
 	const advance = () => {
@@ -173,7 +203,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			}
 			if (!current && e.key === " ") {
 				e.preventDefault();
-				void speak(item.sentence).catch(() => {});
+				replay();
 				return;
 			}
 			if (!current) {
@@ -257,7 +287,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 					<div className="flex flex-wrap items-center gap-3">
 						<button
 							type="button"
-							onClick={() => void speak(item.sentence)}
+							onClick={() => replay()}
 							aria-label="Play the sentence"
 							className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
 							data-testid="listen-play"
@@ -266,7 +296,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						</button>
 						<button
 							type="button"
-							onClick={() => void slowSpeak(item.sentence)}
+							onClick={() => replay(true)}
 							aria-label="Play slowly"
 							title="Play slowly"
 							className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"

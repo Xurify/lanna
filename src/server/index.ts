@@ -57,6 +57,7 @@ export * from "./listen.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
 export { speakStore, fluencyStore } from "../store/speak.ts";
+export * from "./milestones.ts";
 export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";
 export * from "./usage-report.ts";
