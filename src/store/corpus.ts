@@ -31,7 +31,10 @@ import { DATA_READMES } from "./corpus-readme.ts";
 
 // ─── Audio ───────────────────────────────────────────────────────────────────
 
-export type AudioVoice = "female" | "male";
+/** "female" | "male" (the language's default voice of that gender), or a
+ *  TTS voice id (a story character's voice, src/server/voices.ts). The
+ *  folder under data/audio/<lang>/ is named after it. */
+export type AudioVoice = string;
 
 export interface AudioClipEntry {
 	/** sha256 of (lang, voice, text) — the cache key; file names carry its first 12 chars. */

@@ -27,7 +27,21 @@ import { setSpeed, speak, SPEEDS, useSpeed } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
-import { gradeAnswers, readXp, type ReadingState, type StoryRecord, type StoryToken } from "@/src/core";
+import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+
+/** What a sentence is read with: the speaker's voice for a line of
+ *  dialogue, the narrator's for the rest (stories written before voices
+ *  were assigned have neither and get the default). */
+export function voiceFor(story: StoryRecord, s: StorySentence): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
+	const who = s.who && story.cast?.find((c) => c.name === s.who);
+	if (who) return { voice: who.voice, gender: who.gender === "f" ? "female" : "male", style: "dialogue" };
+	return { voice: story.narratorVoice, style: "narration" };
+}
+
+/** "Episode 3" for the series, the genre's name for the rest. */
+function kindOf(story: Pick<StoryRecord, "genre" | "episode">): string {
+	return (story.genre ?? "robo") === "robo" ? `Episode ${story.episode}` : genreInfo(story.genre!).label;
+}
 
 type Stage = "writing" | "reading" | "questions" | "end" | "shelf" | "error";
 
@@ -152,24 +166,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 
 	const onTap = (slugOrText: string) => setTapped((t) => (t.includes(slugOrText) ? t : [...t, slugOrText]));
 
-	if (stage === "writing") {
-		const n = (state?.library.length ?? 0) + 1;
-		return (
-			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="read-writing">
-					<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-flame/15 text-flame">
-						<SparklesIcon className="size-9 lh-flicker" />
-					</div>
-					<h1 className="mt-5 font-ui text-3xl font-black text-foreground">Writing episode {n}…</h1>
-					<p className="mt-2 font-prose text-lg text-muted-foreground">At your level, from the words you know. About twenty seconds; it is saved to your library, so it is written once.</p>
-					<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground">
-						<LoaderCircleIcon className="size-4 animate-spin" />
-						Robo in Bratislava
-					</p>
-				</div>
-			</Frame>
-		);
-	}
+	if (stage === "writing") return <Writing initial={state?.generating ?? null} />;
 
 	if (stage === "error") {
 		return (
@@ -256,6 +253,73 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	);
 }
 
+// ─── Writing ────────────────────────────────────────────────────────────────
+
+/** The sentences arrive as the model writes them: the learner starts
+ *  reading before the questions are even written. */
+function Writing({ initial }: { initial: WritingProgress | null }) {
+	const [progress, setProgress] = useState<WritingProgress | null>(initial);
+	useEffect(() => {
+		let live = true;
+		const tick = async () => {
+			try {
+				const res = await fetch("/api/read?progress");
+				if (res.ok && live) {
+					const body = (await res.json()) as { generating: WritingProgress | null };
+					if (body.generating) setProgress(body.generating);
+				}
+			} catch {
+				// the next tick tries again
+			}
+		};
+		void tick();
+		const timer = setInterval(() => void tick(), 700);
+		return () => {
+			live = false;
+			clearInterval(timer);
+		};
+	}, []);
+	const label = progress ? (progress.genre === "robo" ? "the next Robo episode" : `a ${genreInfo(progress.genre).label.toLowerCase()}`) : "your next story";
+	const lines = progress?.sentences ?? [];
+	return (
+		<Frame>
+			<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]">
+				<div className={cn(COLUMN, lines.length === 0 && "m-auto max-w-md text-center")} data-testid="read-writing">
+					<div className={cn("flex items-center gap-4", lines.length === 0 && "flex-col")}>
+						<div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-flame/15 text-flame">
+							<SparklesIcon className="size-7 lh-flicker" />
+						</div>
+						<div>
+							<h1 className="font-ui text-2xl font-black text-foreground">Writing {label}…</h1>
+							<p className="mt-1 font-prose text-base text-muted-foreground">
+								{progress ? `${progress.level} · from the words you know` : "At your level, from the words you know"} · kept in your library, so it is written once.
+							</p>
+						</div>
+					</div>
+					{lines.length > 0 ? (
+						<div className="mt-8 flex flex-col gap-4" aria-live="polite">
+							{lines.map((line, i) => (
+								<p key={i} className="lh-rise font-prose text-[1.65rem] leading-[1.6] text-foreground" lang="sk">
+									{line}
+								</p>
+							))}
+							<p className="mt-2 flex items-center gap-2 font-ui text-sm text-muted-foreground">
+								<LoaderCircleIcon className="size-4 animate-spin" />
+								Still writing: the rest, the meanings and the questions
+							</p>
+						</div>
+					) : (
+						<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground">
+							<LoaderCircleIcon className="size-4 animate-spin" />
+							The first sentences appear in a few seconds
+						</p>
+					)}
+				</div>
+			</div>
+		</Frame>
+	);
+}
+
 // ─── Chrome ─────────────────────────────────────────────────────────────────
 
 function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
@@ -276,7 +340,7 @@ function TopBar({ story, step, progress, onShelf }: { story: StoryRecord; step: 
 				</Link>
 				<div className="min-w-0 flex-1">
 					<p className="truncate font-ui text-sm font-bold text-foreground">
-						Episode {story.episode} · <span className="text-muted-foreground">{step}</span>
+						{kindOf(story)} · <span className="text-muted-foreground">{step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
 						<div className="h-full rounded-full bg-xp transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
@@ -330,7 +394,7 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 		for (let i = 0; i < story.sentences.length; i++) {
 			if (stop.current) break;
 			setPlaying(i);
-			await speak(story.sentences[i]!.sk).catch(() => {});
+			await speak(story.sentences[i]!.sk, undefined, voiceFor(story, story.sentences[i]!)).catch(() => {});
 		}
 		setAll(false);
 		setPlaying(null);
@@ -339,7 +403,7 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 		stop.current = true;
 		setAll(false);
 		setPlaying(i);
-		await speak(story.sentences[i]!.sk).catch(() => {});
+		await speak(story.sentences[i]!.sk, undefined, voiceFor(story, story.sentences[i]!)).catch(() => {});
 		setPlaying((p) => (p === i ? null : p));
 	};
 
@@ -370,7 +434,8 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 		<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[5vh]">
 			<article className={cn(COLUMN, "lh-rise")} data-testid="read-text">
 				<p className="font-ui text-sm font-bold text-muted-foreground first-letter:uppercase">
-					{story.level} · {story.theme}
+					{story.level} · {(story.genre ?? "robo") === "robo" ? story.theme : genreInfo(story.genre!).label}
+					{story.topic ? ` · ${story.topic}` : ""}
 				</p>
 				<div className="mt-1 flex flex-wrap items-center justify-between gap-3">
 					<h1 className="font-ui text-3xl font-black text-foreground" lang="sk">
@@ -394,6 +459,11 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 								<Volume2Icon className="size-4" />
 							</button>
 							<div className="min-w-0 flex-1">
+								{s.who && (
+									<span className="block font-ui text-xs font-bold uppercase tracking-wide text-xp" data-testid="read-speaker">
+										{s.who}
+									</span>
+								)}
 								<p className="font-prose text-[1.65rem] leading-[1.6] text-foreground" lang="sk">
 									{s.tokens.map((t, j) =>
 										t.word ? (
@@ -542,7 +612,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 				</button>
 				{unreadLeft ? (
 					<button type="button" onClick={onNext} className={PRIMARY}>
-						Next episode
+						Next story
 					</button>
 				) : (
 					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
@@ -550,7 +620,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 					</button>
 				)}
 			</div>
-			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">The next episode is written when you ask for it in the library (one model call).</p>}
+			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">The shelf is being filled in the background; the next story is a tap away in the library.</p>}
 		</div>
 	);
 }
@@ -575,10 +645,16 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
 						<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Your library</p>
-						<h1 className="mt-1 font-ui text-3xl font-black text-foreground">Robo in Bratislava</h1>
+						<h1 className="mt-1 font-ui text-3xl font-black text-foreground">Stories at your level</h1>
 						<p className="mt-1 font-prose text-base text-muted-foreground">
-							{list.length === 0 ? "No episodes yet." : `${list.length} episode${list.length === 1 ? "" : "s"}${unread ? ` · ${unread} unread` : ""}${state?.readToday ? ` · ${state.readToday} read today` : ""}`}
+							{list.length === 0 ? "Nothing yet." : `${list.length} ${list.length === 1 ? "story" : "stories"}${unread ? ` · ${unread} unread` : ""}${state?.readToday ? ` · ${state.readToday} read today` : ""}`}
+							{state?.generating ? ` · writing ${state.generating.genre === "robo" ? "a Robo episode" : `a ${genreInfo(state.generating.genre).label.toLowerCase()}`} (${state.generating.level})…` : ""}
 						</p>
+						{state?.current && state.pick && (
+							<p className="mt-1 font-prose text-sm text-muted-foreground" data-testid="read-pick">
+								Up next: <span className="text-foreground">{state.current.title}</span> · {state.pick.line}
+							</p>
+						)}
 					</div>
 					<div className="flex gap-3">
 						<Link href="/" className={SECONDARY}>
@@ -587,7 +663,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						{state?.canWrite !== false && (
 							<button type="button" onClick={onWrite} className={PRIMARY} data-testid="read-write-next" title="One model call on the cheap slot">
 								<SparklesIcon className="size-4" />
-								{unread ? "Read the next" : "Write the next episode"}
+								{unread ? "Read the next" : "Write a new one"}
 							</button>
 						)}
 					</div>
@@ -596,13 +672,13 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 					{list.map((s) => (
 						<li key={s.id}>
 							<button type="button" onClick={() => onOpen(s.id)} className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4 text-left transition-colors hover:border-foreground/40" data-testid="read-shelf-item">
-								<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl font-ui text-sm font-black", s.reads > 0 ? "bg-accent text-muted-foreground" : "bg-flame/15 text-flame")}>{s.episode}</span>
+								<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl font-ui text-xs font-black", s.reads > 0 ? "bg-accent text-muted-foreground" : "bg-flame/15 text-flame")}>{(s.genre ?? "robo") === "robo" ? s.episode : s.level}</span>
 								<span className="min-w-0 flex-1">
 									<span className="block truncate font-ui text-lg font-bold text-foreground" lang="sk">
 										{s.title}
 									</span>
 									<span className="block truncate font-prose text-sm text-muted-foreground">
-										{s.level} · {s.theme} · {s.wordCount} words{s.newWords.length ? ` · new: ${s.newWords.slice(0, 4).join(", ")}` : ""}
+										{s.level} · {(s.genre ?? "robo") === "robo" ? `Robo · ${s.theme}` : genreInfo(s.genre!).label}{s.topic ? ` · ${s.topic}` : ""} · {s.wordCount} words{s.newWords.length ? ` · new: ${s.newWords.slice(0, 4).join(", ")}` : ""}
 									</span>
 								</span>
 								<span className="shrink-0 text-right font-ui text-xs font-bold text-muted-foreground">

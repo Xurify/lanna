@@ -41,10 +41,25 @@ export interface TtsRequest {
 	text: string;
 	/** "sk" | "ru" */
 	lang: string;
-	/** "female" | "male" — picks among the language's voices. */
-	voice?: "female" | "male";
+	/** "female" | "male" (the language's default voice of that gender) or
+	 *  an ElevenLabs voice id (a story character). Part of the cache key. */
+	voice?: string;
+	/** The speaker's gender when `voice` is an id: picks the Edge voice
+	 *  when ElevenLabs is not available. */
+	gender?: "female" | "male";
+	/** How to read it: narration (steady) or a line of dialogue (livelier).
+	 *  Not part of the cache key. */
+	style?: "narration" | "dialogue";
 	/** Skip tiers (e.g. ["elevenlabs"] to save credits). */
 	skip?: TtsTier[];
+}
+
+const VOICE_ID = /^[A-Za-z0-9_-]{8,64}$/;
+
+/** A voice the request may name: the two gender words or a voice id. */
+export function ttsVoice(v: string | null | undefined): string {
+	if (v === "male" || v === "female") return v;
+	return v && VOICE_ID.test(v) ? v : "female";
 }
 
 export interface TtsClip {
@@ -134,8 +149,12 @@ function envFor(name: string, code: string): string | undefined {
 async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Buffer | null> {
 	const key = keyValue("ELEVENLABS_API_KEY");
 	if (!key) return null;
-	const voice = envFor("ELEVENLABS_VOICE_ID", lang.code) ?? DEFAULT_ELEVENLABS_VOICE[lang.code];
+	const custom = req.voice && req.voice !== "male" && req.voice !== "female" ? req.voice : undefined;
+	const voice = custom ?? envFor("ELEVENLABS_VOICE_ID", lang.code) ?? DEFAULT_ELEVENLABS_VOICE[lang.code];
 	if (!voice) return null;
+	// A line of speech wants more expression than narration; stability
+	// down, style up. Narration keeps the steady slovak.wiki reading.
+	const settings = req.style === "dialogue" ? { stability: 0.45, similarity_boost: 0.75, style: 0.4, use_speaker_boost: true } : { stability: 0.65, similarity_boost: 0.75, style: 0.15, use_speaker_boost: true };
 	const model = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2";
 	const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`, {
 		method: "POST",
@@ -145,7 +164,7 @@ async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Buffer |
 			model_id: model,
 			// Only some models accept language_code; multilingual_v2 infers it.
 			...(model.includes("flash") || model.includes("turbo") ? { language_code: lang.code } : {}),
-			voice_settings: { stability: 0.65, similarity_boost: 0.75, style: 0.15, use_speaker_boost: true },
+			voice_settings: settings,
 		}),
 		signal: AbortSignal.timeout(20_000),
 	});
@@ -155,7 +174,8 @@ async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Buffer |
 
 async function edge(req: TtsRequest, lang: LanguageInfo): Promise<Buffer | null> {
 	const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
-	const voice = lang.edgeVoices[req.voice === "male" ? 1 : 0] ?? lang.edgeVoices[0];
+	const male = req.voice === "male" || (req.voice !== "female" && req.gender === "male");
+	const voice = lang.edgeVoices[male ? 1 : 0] ?? lang.edgeVoices[0];
 	if (!voice) return null;
 	const tts = new MsEdgeTTS();
 	try {

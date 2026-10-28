@@ -44,6 +44,13 @@ import {
 	parseStoryDraft,
 	QUESTION_KIND_INFO,
 	QUESTION_PLAN,
+	genreInfo,
+	pickStory,
+	SHELF_DAILY_CAP,
+	shelfNeeds,
+	type PickReason,
+	type StoryGenre,
+	type WritingProgress,
 	readXp,
 	STORY_LENGTH,
 	storyId,
@@ -66,6 +73,7 @@ import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { readSettings } from "../store/settings.ts";
 import { storyStore } from "../store/stories.ts";
+import { assignVoices, availableVoiceIds, NARRATOR_VOICE } from "./voices.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { enqueueWords } from "./review.ts";
 
@@ -97,10 +105,15 @@ export interface KnownWords {
 	note?: string;
 }
 
-export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords {
+/** What the learner knows, as the brief and the coverage measure see it.
+ *  `level` writes for another level than the learner's own (the shelf
+ *  keeps a story one level down and one up): the met words stay, the
+ *  frequency bound moves. */
+export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr): KnownWords {
 	const p = progressStore.read();
 	const goal = p.goal ?? DEFAULT_GOAL;
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
+	const at = level ?? state.level;
 	const chapter = CHAPTERS.find((c) => c.id === state.current);
 	const met = new Set<string>();
 	const sample: string[] = [];
@@ -122,7 +135,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords 
 		}
 	}
 	const known = new Set(met);
-	const bound = KNOWN_RANK[state.level];
+	const bound = KNOWN_RANK[at];
 	// The common words at the level, slovak.wiki's curated beginner set
 	// (greetings, question words, pronouns) and place names (Bratislava is
 	// not vocabulary to learn) count as known at every level.
@@ -131,7 +144,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon()): KnownWords 
 	const grammar = all.filter((u) => (u.kind === "drill" || u.kind === "tutor") && (u.status === "done" || u.status === "skipped")).map((u) => u.title);
 	const practising = all.filter((u) => u.kind === "drill" && u.status === "started").map((u) => u.title);
 	return {
-		level: state.level,
+		level: at,
 		chapter: state.current,
 		chapterTitle: chapter?.title ?? state.current,
 		met,
@@ -337,22 +350,27 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 
 const SYSTEM = `You write graded Slovak reading texts for one learner inside a language app. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
-The text is an episode of an ongoing light story about Robo, a young man who has recently moved to Bratislava, and the people around him. Keep the same characters and places across episodes (the brief gives the earlier recaps). Plain, warm, a little funny; everyday life, nothing violent or sad.
+The brief says what kind of text to write (an episode of the running series about Robo, a young man who has recently moved to Bratislava; or a stand-alone piece: a conversation, messages, a diary page, a folk tale, a news item...). Plain, warm, a little funny where it fits; everyday life, nothing violent or sad. In the Robo series keep the same people and places across episodes (the brief gives the earlier recaps).
 
 Rules that matter more than the plot:
 - Write at the learner's level and ONLY with the grammar listed as held. Simple main clauses at A1; a subordinate clause with "že", "keď", "lebo" from A2.
 - Use the learner's known words. About 97 of every 100 running words must be words a learner at this level knows; the brief gives the known words to lean on. Repeat words rather than reach for new ones.
-- Introduce at most the number of new words the brief allows. Each new word appears at least three times in the episode, in different sentences, so it can be learnt from context. List every new word under newWords with its dictionary form and a short English gloss.
+- Introduce at most the number of new words the brief allows. Each new word appears at least three times in the text, in different sentences, so it can be learnt from context. List every new word under newWords with its dictionary form and a short English gloss.
+- Every sentence is something a Slovak would really say or write in that situation. No filler that states the obvious ("I listen and you talk", "we are a family and you are a friend"); at A1 lean on the real exchanges of the situation: greetings, asking and answering, wanting and having, liking, where and when. A line of dialogue sounds like speech: short, with a reaction to what was just said.
 - Correct Slovak spelling with all diacritics. Check case endings and verb forms; a wrong form teaches a wrong form.
-- One sentence per array item; each 5 to 14 words; the whole episode within the sentence count the brief gives.
+- One sentence per array item; each 4 to 14 words; the whole text within the sentence count the brief gives. Narration and speech are separate items: never put a speech tag ("he says") and the quoted line in one item — the "who" field says who speaks, so quoted lines need no quotation marks and no tags.
+- "cast" lists every person who speaks: name, gender ("f" or "m"), age ("child", "young", "adult" or "old"). Each sentence's "who" is "narrator" or one cast name exactly as listed. In the Robo series Robo is male, young.
 - "en" is a plain English translation of the sentence.
 - Comprehension questions as the brief lists them: that many, of those kinds in that order, each with that many options, question and options in Slovak at the text's level. Mark each question with its "kind". Options are short and all the same shape; the wrong ones are plausible (things the text mentions, or a near meaning), never silly. The right one is at a different index each time. "answer" is the index of the right option. Questions test meaning, never grammar.
-- "recap" is one English sentence saying what happened, for the next episode's brief.
+- "topic" is three to six English words saying what the text is about.
+- "recap" is one English sentence saying what happened (for the next Robo episode's brief).
 - "title" is two to five Slovak words.
 
-Shape: {"title": "...", "sentences": [{"sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+Shape: {"title": "...", "topic": "...", "cast": [{"name": "Robo", "gender": "m", "age": "young"}], "sentences": [{"who": "narrator", "sk": "...", "en": "..."}, {"who": "Robo", "sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
 
 export interface StoryBrief {
+	genre: StoryGenre;
+	/** The Robo episode number; 0 for a stand-alone piece. */
 	episode: number;
 	theme: string;
 	prompt: string;
@@ -385,13 +403,19 @@ export function questionLine(level: Cefr): string {
 	return `Questions: ${plan.count}, each with ${plan.options} options, in this order:\n${kinds.map((l) => `  ${l}`).join("\n")}`;
 }
 
-export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date()): StoryBrief {
-	const episode = previous.length + 1;
-	const theme = episodeTheme(k.purposes, episode);
+/** The brief for one text. `previous` lists the shelf (every kept story):
+ *  Robo episodes count the series, the others' topics are named so the
+ *  new text is about something else. */
+export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo"): StoryBrief {
+	const robo = previous.filter((s) => (s.genre ?? "robo") === "robo");
+	const episode = genre === "robo" ? robo.length + 1 : 0;
+	const theme = genre === "robo" ? episodeTheme(k.purposes, episode) : genreInfo(genre).label.toLowerCase();
 	const len = STORY_LENGTH[k.level];
 	const stage = STAGES.find((s) => s.level === k.level);
+	const topics = previous.map((s) => s.topic).filter((t): t is string => !!t).slice(-12);
 	const lines = [
-		`Episode ${episode}. Setting: ${theme}.`,
+		genre === "robo" ? `Text: episode ${episode} of the Robo series. Setting: ${theme}.` : `Text: ${genreInfo(genre).brief}.`,
+		topics.length ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
 		`Learner level: ${k.level}${stage ? ` (${stage.title})` : ""}, working in the chapter "${k.chapterTitle}".`,
 		`Length: ${len.min} to ${len.max} sentences. New words allowed: at most ${NEW_WORDS_MAX[k.level]}.`,
 		questionLine(k.level),
@@ -400,10 +424,10 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		k.sample.length ? `Known words to lean on: ${k.sample.join(", ")}.` : "The learner is at the very start: use only the most common words (greetings, family, food and drink, the home, going places, numbers to ten).",
 		k.purposes.length ? `The learner is learning Slovak for: ${k.purposes.map((p) => purposeInfo(p).title.toLowerCase()).join(", ")}.` : "",
 		k.note ? `In their own words: "${k.note.replace(/\s+/g, " ").slice(0, 300)}". Let the setting serve this when it can.` : "",
-		recaps.length ? `Earlier episodes, oldest first:\n${recaps.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}` : "This is the first episode: introduce Robo and one other person.",
+		genre !== "robo" ? "" : recaps.length ? `Earlier episodes, oldest first:\n${recaps.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}` : "This is the first episode: introduce Robo and one other person.",
 		`Today is ${now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}; the season may show.`,
 	].filter(Boolean);
-	return { episode, theme, prompt: lines.join("\n") };
+	return { genre, episode, theme, prompt: lines.join("\n") };
 }
 
 // ─── Generation ─────────────────────────────────────────────────────────────
@@ -414,6 +438,12 @@ export interface GenerateOptions {
 	now?: Date;
 	/** The model's label for the record ("provider:id"); the engine's when absent. */
 	model?: string;
+	/** The level to write for; the learner's own when absent. */
+	level?: Cefr;
+	/** The kind of text; a Robo episode when absent. */
+	genre?: StoryGenre;
+	/** A reader is waiting for it (true) or the shelf is being filled. */
+	wanted?: boolean;
 }
 
 /** The cheap slot (stories are reading input, not teaching), else the
@@ -422,7 +452,9 @@ export function storyEngine(): { engine: PiEngine; model: string } | null {
 	const models = readSettings()?.models;
 	const slot = models?.cheap?.model ? models.cheap : models?.strong?.model ? models.strong : null;
 	if (!slot?.model) return null;
-	const spec = { provider: slot.model.provider, id: slot.model.id, thinkingLevel: slot.thinkingLevel };
+	// Writing a short graded text needs no extended thinking: with the
+	// slot's thinking on, the wait doubled for no better Slovak.
+	const spec = { provider: slot.model.provider, id: slot.model.id, thinkingLevel: "off" as const };
 	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
 }
 
@@ -437,7 +469,21 @@ function stepOf(u: Usage): StoryUsage["steps"][number] {
 	};
 }
 
-async function draft(engine: PiEngine, prompt: string, usage: StoryUsage, chatId?: string): Promise<StoryDraft> {
+/** The Slovak sentences in the model's text so far (a screen shows them
+ *  while the rest is still being written). */
+export function sentencesSoFar(partial: string): string[] {
+	const out: string[] = [];
+	for (const m of partial.matchAll(/"sk"\s*:\s*"((?:[^"\\]|\\.)*)"/g)) {
+		try {
+			out.push(JSON.parse(`"${m[1]}"`) as string);
+		} catch {
+			// a half-escaped sequence at the cut: skip it
+		}
+	}
+	return out;
+}
+
+async function draft(engine: PiEngine, prompt: string, usage: StoryUsage, onPartial?: (text: string) => void, chatId?: string): Promise<StoryDraft> {
 	const { text } = await runSubagent([], {
 		role: "researcher",
 		engine,
@@ -445,6 +491,7 @@ async function draft(engine: PiEngine, prompt: string, usage: StoryUsage, chatId
 		prompt,
 		maxTurns: 1,
 		onUsage: (u) => usage.steps.push(stepOf(u)),
+		onPartialText: onPartial,
 		chatId,
 	});
 	return parseStoryDraft(text);
@@ -458,13 +505,14 @@ function withKinds(questions: readonly StoryQuestion[], level: Cefr): StoryQuest
 }
 
 /** Turn a draft into the record: gloss, measure, number. */
-export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, lexicon: Lexicon | null, usage: StoryUsage, drafts: number, now: Date): StoryRecord {
+export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, lexicon: Lexicon | null, usage: StoryUsage, drafts: number, now: Date, voices: ReadonlySet<string> | null = null): StoryRecord {
 	const newWords: StoryWord[] = d.newWords.map((w) => {
 		const entry = lexicon ? resolveWord(lexicon, w.sk, k.known) : undefined;
 		return entry ? { lemma: entry.sk, gloss: entry.en, slug: entry.slug } : { lemma: w.sk, gloss: w.en };
 	});
 	const names = storyNames(d.sentences, lexicon);
-	const sentences = d.sentences.map((s) => glossSentence(s.sk, s.en, lexicon, k.known, newWords, names));
+	const sentences = d.sentences.map((s) => ({ ...glossSentence(s.sk, s.en, lexicon, k.known, newWords, names), ...(s.who ? { who: s.who } : {}) }));
+	const cast = assignVoices(d.cast, voices);
 	// Coverage counts the words the model introduced ON PURPOSE as taught,
 	// not as unknown: they are the i+1. Every other fresh word is a stray.
 	const coverage = knownCoverage(sentences, newWords);
@@ -475,14 +523,18 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 	}
 	const wordCount = sentences.reduce((n, s) => n + s.tokens.filter((t) => t.word).length, 0);
 	return {
-		id: storyId(brief.episode, d.title),
+		id: brief.genre === "robo" ? storyId(brief.episode, d.title) : `${brief.genre}-${storyId(0, d.title).replace(/^ep-000-/, "")}`,
 		lang: code(),
-		series: STORY_SERIES,
+		series: brief.genre === "robo" ? STORY_SERIES : brief.genre,
 		episode: brief.episode,
 		title: d.title,
 		level: k.level,
 		chapter: k.chapter,
 		theme: brief.theme,
+		genre: brief.genre,
+		...(d.topic ? { topic: d.topic } : {}),
+		cast,
+		narratorVoice: NARRATOR_VOICE,
 		createdAt: now.toISOString(),
 		sentences,
 		questions: withKinds(d.questions, k.level),
@@ -495,60 +547,136 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 	};
 }
 
-let inFlight: Promise<StoryRecord> | null = null;
+// One story at a time, in a queue: a reader's request and the shelf's
+// background writing never run two model calls at once. On globalThis:
+// Next dev gives each route its own module instances.
+interface Writing {
+	queue: Promise<unknown>;
+	progress: WritingProgress | null;
+	shelfRunning: boolean;
+}
+const g = globalThis as unknown as { __lhStoryWriting?: Writing };
+const writing: Writing = (g.__lhStoryWriting ??= { queue: Promise.resolve(), progress: null, shelfRunning: false });
 
-/** Write the next episode and keep it. One generation at a time: a second
- *  caller waits for the first. */
+/** What is being written right now, if anything. */
+export function generating(): WritingProgress | null {
+	return writing.progress;
+}
+
+/** Write one story and keep it. Calls queue behind each other. */
 export function generateStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
-	if (inFlight) return inFlight;
-	inFlight = (async () => {
-		const now = opts.now ?? new Date();
-		const lexicon = loadLexicon();
-		const k = knownWords(lexicon);
-		const previous = storyStore.list().filter((s) => s.series === STORY_SERIES);
-		const recaps = previous
-			.slice(-4)
-			.map((s) => storyStore.get(s.id)?.recap)
-			.filter((r): r is string => !!r);
-		const brief = storyBrief(k, previous, recaps, now);
-		let engine = opts.engine;
-		let model = opts.model;
-		if (!engine) {
-			const resolved = storyEngine();
-			if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → Models.");
-			engine = resolved.engine;
-			model ??= resolved.model;
-		}
-		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
-		const d1 = await draft(engine, brief.prompt, usage);
-		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now);
+	const run = writing.queue.then(() => writeStory(opts), () => writeStory(opts));
+	writing.queue = run.catch(() => undefined);
+	return run;
+}
+
+async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
+	const now = opts.now ?? new Date();
+	const lexicon = loadLexicon();
+	const k = knownWords(lexicon, opts.level);
+	const genre = opts.genre ?? "robo";
+	const previous = storyStore.list();
+	const recaps = previous
+		.filter((s) => (s.genre ?? "robo") === "robo")
+		.slice(-4)
+		.map((s) => storyStore.get(s.id)?.recap)
+		.filter((r): r is string => !!r);
+	const brief = storyBrief(k, previous, recaps, now, genre);
+	let engine = opts.engine;
+	let model = opts.model;
+	if (!engine) {
+		const resolved = storyEngine();
+		if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → Models.");
+		engine = resolved.engine;
+		model ??= resolved.model;
+	}
+	const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
+	const progress: WritingProgress = { level: k.level, genre, startedAt: now.toISOString(), sentences: [], wanted: opts.wanted ?? true };
+	writing.progress = progress;
+	const onPartial = (text: string) => {
+		progress.sentences = sentencesSoFar(text);
+	};
+	try {
+		const voices = opts.engine ? null : await availableVoiceIds();
+		const d1 = await draft(engine, brief.prompt, usage, onPartial);
+		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now, voices);
 		if (first.coverage < COVERAGE_FLOOR) {
 			// Too many stray unknown words: once more, naming the ones to drop.
 			const declared = new Set(d1.newWords.map((w) => foldDiacritics(w.sk.toLocaleLowerCase(tag()))));
 			const stray = (t: StoryToken) => t.fresh && !declared.has(foldDiacritics((t.lemma ?? t.text).toLocaleLowerCase(tag())));
 			const hard = [...new Set(first.sentences.flatMap((s) => s.tokens).filter(stray).map((t) => t.lemma ?? t.text))].slice(0, 30);
-			const again = `${brief.prompt}\n\nYour first draft used too many words the learner does not know (${Math.round((1 - first.coverage) * 100)} in 100). Write the episode again with simpler, more common words. Avoid these in particular: ${hard.join(", ")}. Keep the same plot.`;
+			const again = `${brief.prompt}\n\nYour first draft used too many words the learner does not know (${Math.round((1 - first.coverage) * 100)} in 100). Write the text again with simpler, more common words. Avoid these in particular: ${hard.join(", ")}. Keep the same plot.`;
+			progress.sentences = [];
 			try {
-				const second = assembleStory(await draft(engine, again, usage), brief, k, lexicon, usage, 2, now);
+				const second = assembleStory(await draft(engine, again, usage, onPartial), brief, k, lexicon, usage, 2, now, voices);
 				if (second.coverage >= first.coverage) first = second;
 				else first = { ...first, usage, drafts: 2 };
 			} catch {
 				first = { ...first, usage, drafts: 2 };
 			}
 		}
-		// Two episodes on the same day cannot share an id.
+		// Two texts on the same day cannot share an id.
 		if (storyStore.get(first.id)) first = { ...first, id: `${first.id}-${now.getTime().toString(36).slice(-4)}` };
 		storyStore.put(first);
 		ensureReadmes();
 		return first;
-	})();
-	return inFlight.finally(() => {
-		inFlight = null;
-	});
+	} finally {
+		if (writing.progress === progress) writing.progress = null;
+	}
 }
 
-export function generating(): boolean {
-	return inFlight !== null;
+// ─── The shelf ──────────────────────────────────────────────────────────────
+
+/** Unread stories, as full records (the picker reads their words). */
+function unreadStories(): StoryRecord[] {
+	return library()
+		.filter((s) => s.reads === 0)
+		.map((s) => storyStore.get(s.id))
+		.filter((s): s is StoryRecord => s !== null);
+}
+
+function recentReads(): { genres: StoryGenre[]; topics: string[] } {
+	const index = new Map(storyStore.list().map((s) => [s.id, s]));
+	const reads = storyStore.reads().slice(-8);
+	return {
+		genres: reads.map((r) => index.get(r.storyId)?.genre ?? "robo"),
+		topics: reads.map((r) => index.get(r.storyId)?.topic).filter((t): t is string => !!t),
+	};
+}
+
+/** How many stories were written today (the shelf's spend guard). */
+function writtenToday(now: Date): number {
+	const day = now.toISOString().slice(0, 10);
+	return storyStore.list().filter((s) => s.createdAt.slice(0, 10) === day).length;
+}
+
+/** Fill the shelf: write what `shelfNeeds` lists, one story after the
+ *  other on the cheap slot, within the day's cap. Returns how many were
+ *  written. Safe to call often: a second call while one runs returns 0. */
+export async function fillShelf(opts: GenerateOptions = {}): Promise<number> {
+	if (writing.shelfRunning) return 0;
+	if (!opts.engine && !storyEngine()) return 0;
+	writing.shelfRunning = true;
+	let written = 0;
+	try {
+		for (let round = 0; round < 12; round++) {
+			const now = opts.now ?? new Date();
+			if (writtenToday(now) >= SHELF_DAILY_CAP) break;
+			const k = knownWords(loadLexicon());
+			const need = shelfNeeds(k.level, unreadStories(), recentReads().genres)[0];
+			if (!need) break;
+			await generateStory({ ...opts, level: need.level, genre: need.genre, wanted: false });
+			written++;
+		}
+	} finally {
+		writing.shelfRunning = false;
+	}
+	return written;
+}
+
+/** Start filling the shelf in the background; errors are logged, never thrown. */
+export function kickShelf(): void {
+	void fillShelf().catch((err) => console.warn("[read] shelf:", err instanceof Error ? err.message : err));
 }
 
 // ─── What to read ───────────────────────────────────────────────────────────
@@ -562,28 +690,42 @@ export function library(): LibraryEntry[] {
 	});
 }
 
+/** The picker's choice among the unread stories, with its reason. */
+export function pickNext(lexicon: Lexicon | null = loadLexicon()): { story: StoryRecord; reason: PickReason } | null {
+	const k = knownWords(lexicon);
+	const recent = recentReads();
+	return pickStory(unreadStories(), { level: k.level, known: k.known, recentGenres: recent.genres, recentTopics: recent.topics });
+}
+
 export function readingState(tz?: number, now = new Date()): ReadingState {
 	const lib = library();
-	const unread = [...lib].reverse().find((s) => s.reads === 0);
 	const today = dayKey(now, tz);
 	const readToday = storyStore.reads().filter((r) => r.day === today).length;
+	const canWrite = storyEngine() !== null;
+	const pick = pickNext();
+	// The shelf is topped up whenever the reader looks at it.
+	if (canWrite) kickShelf();
 	return {
-		current: unread ? storyStore.get(unread.id) : null,
+		current: pick?.story ?? null,
 		library: lib,
-		canWrite: storyEngine() !== null,
+		canWrite,
 		generating: generating(),
 		readToday,
+		...(pick ? { pick: pick.reason } : {}),
 	};
 }
 
-/** The story to read: the newest unread episode, else a new one. */
+/** The story to read: the shelf's best fit, else a new one written now
+ *  (the learner's level; a Robo episode when none waits, else the genre
+ *  the shelf lacks most). */
 export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
-	const unread = [...library()].reverse().find((s) => s.reads === 0);
-	if (unread) {
-		const story = storyStore.get(unread.id);
-		if (story) return story;
-	}
-	return generateStory(opts);
+	const pick = pickNext();
+	if (pick) return pick.story;
+	const k = knownWords(loadLexicon());
+	const need = shelfNeeds(k.level, unreadStories(), recentReads().genres)[0];
+	const story = await generateStory({ ...opts, level: need?.level ?? k.level, genre: need?.genre ?? "robo", wanted: true });
+	if (!opts.engine) kickShelf();
+	return story;
 }
 
 // ─── Recording a reading ────────────────────────────────────────────────────
@@ -639,5 +781,8 @@ export function recordRead(input: ReadResultInput, now = new Date()): ReadOutcom
 		xp,
 	};
 	storyStore.appendRead(entry);
+	// Something read means a gap on the shelf: fill it while the learner
+	// looks at the end screen.
+	if (storyEngine()) kickShelf();
 	return { xp, correct, total, queued, reread, summary: progressSummary(input.tz, now) };
 }
