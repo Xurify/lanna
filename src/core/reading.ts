@@ -388,7 +388,7 @@ export function pickStory(stories: readonly StoryRecord[], input: PickInput): { 
 		const variety = (recentG.includes(genre) ? 0 : 0.15) + (story.topic && input.recentTopics.slice(-3).includes(story.topic) ? 0 : 0.1);
 		const series = genre === "robo" ? 0.1 : 0;
 		const score = Math.round((fit * 0.55 + levelScore * 0.25 + variety + series) * 100) / 100;
-		const line = `${Math.round(coverage * 100)} of 100 words known · ${story.level} ${genreInfo(genre).label.toLowerCase()}${recentG.includes(genre) ? " (read lately)" : ""}`;
+		const line = `${Math.round(coverage * 100)} of 100 words known · ${story.level} · ${genreInfo(genre).label}${recentG.includes(genre) ? " (read lately)" : ""}`;
 		if (!best || score > best.reason.score) best = { story, reason: { score, coverage, line } };
 	}
 	// Too hard or too easy to be worth it: write a new one instead.
