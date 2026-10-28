@@ -9,19 +9,8 @@ import { ACTIVE_PROFILE } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, LANGUAGES, isLanguageId } from "../core/language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
-import {
-	clozeParts,
-	dayKey,
-	dueCards,
-	leeches,
-	lexiconOrder,
-	mintCard,
-	pickClozeExample,
-	ratingFor,
-	type LexiconEntry,
-	type ReviewCard,
-	type ReviewSettings,
-} from "../core/review.ts";
+import { classifyExample, describeForm } from "../core/lesson.ts";
+import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingFor, type LexiconEntry, type ReviewCard, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 
 const DAY_MS = 86_400_000;
@@ -41,10 +30,7 @@ function orderedLexicon(): LexiconEntry[] {
 function mintNext(cards: Record<string, ReviewCard>, now: Date, preferSlugs: string[] = []): ReviewCard | undefined {
 	const have = new Set(Object.values(cards).map((c) => c.slug));
 	const lexicon = loadLexicon();
-	const candidates = [
-		...preferSlugs.map((s) => lexicon?.bySlug.get(s)).filter((e): e is LexiconEntry => !!e),
-		...orderedLexicon(),
-	];
+	const candidates = [...preferSlugs.map((s) => lexicon?.bySlug.get(s)).filter((e): e is LexiconEntry => !!e), ...orderedLexicon()];
 	for (const entry of candidates) {
 		if (have.has(entry.slug)) continue;
 		const idx = pickClozeExample(entry);
@@ -63,6 +49,10 @@ export interface ReviewPrompt {
 	intervals: Record<Rating, number>;
 	/** Four choices including the answer, for multiple-choice mode. */
 	options: string[];
+	/** The word's facts for the verdict chips (see the lesson footer). */
+	rank?: number;
+	cat?: string;
+	form?: string;
 }
 
 export interface ReviewStatus {
@@ -79,7 +69,10 @@ function distractors(card: ReviewCard): string[] {
 	const entry = lexicon?.bySlug.get(card.slug);
 	const pool = orderedLexicon().filter((e) => e.slug !== card.slug && e.cat === entry?.cat);
 	// Neighbours in frequency: plausible, not trivially wrong.
-	const at = Math.max(0, pool.findIndex((e) => (e.rank ?? 1e9) >= (entry?.rank ?? 0)));
+	const at = Math.max(
+		0,
+		pool.findIndex((e) => (e.rank ?? 1e9) >= (entry?.rank ?? 0)),
+	);
 	const window = pool.slice(Math.max(0, at - 40), at + 40);
 	const seen = new Set([card.answer.toLocaleLowerCase(tag())]);
 	const picks: string[] = [];
@@ -109,11 +102,17 @@ function hash(s: string): number {
 
 function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPrompt {
 	const elapsed = card.lastReview ? (now.getTime() - Date.parse(card.lastReview)) / DAY_MS : 0;
+	const entry = loadLexicon()?.bySlug.get(card.slug);
+	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	return {
 		card,
 		...clozeParts(card),
 		intervals: previewIntervals(card.memory, elapsed, { retention: settings.retention }),
 		options: distractors(card),
+		...(entry?.rank !== undefined ? { rank: entry.rank } : {}),
+		...(entry?.cat ? { cat: entry.cat } : {}),
+		...(form ? { form } : {}),
 	};
 }
 
@@ -151,7 +150,9 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		},
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings) : null,
-		leeches: leeches(list).slice(0, 10).map(({ id, lemma, gloss, lapses }) => ({ id, lemma, gloss, lapses })),
+		leeches: leeches(list)
+			.slice(0, 10)
+			.map(({ id, lemma, gloss, lapses }) => ({ id, lemma, gloss, lapses })),
 	};
 }
 
@@ -244,8 +245,6 @@ export function reviewDigest(now = new Date()): string {
 	const slipping = leeches(list, 2).slice(0, 12);
 	return [
 		`Spaced review: ${list.length} words in the deck, ${learned} stable for a week or more, ${due} due now.`,
-		slipping.length
-			? `Words that keep slipping (lapses): ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.lapses}`).join("; ")}.`
-			: "No words are repeatedly slipping.",
+		slipping.length ? `Words that keep slipping (lapses): ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.lapses}`).join("; ")}.` : "No words are repeatedly slipping.",
 	].join("\n");
 }

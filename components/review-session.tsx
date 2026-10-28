@@ -11,22 +11,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { EyeOffIcon, LightbulbIcon } from "lucide-react";
+import { BrainIcon, ChartColumnIcon, CheckIcon, EyeOffIcon, LightbulbIcon, WholeWordIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { PlayButton, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import {
-	compareAnswer,
-	diacriticSlips,
-	formatInterval,
-	ratingFor,
-	RATING_LABELS,
-	type AnswerVerdict,
-	type Rating,
-	type ReviewCard,
-} from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, rankLabel, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
 interface Prompt {
 	card: ReviewCard;
@@ -34,6 +25,9 @@ interface Prompt {
 	after: string;
 	intervals: Record<Rating, number>;
 	options: string[];
+	rank?: number;
+	cat?: string;
+	form?: string;
 }
 
 interface Status {
@@ -64,11 +58,32 @@ function writePref(key: string, value: string) {
 	}
 }
 
-const VERDICT_STYLE: Record<AnswerVerdict, { label: string; className: string }> = {
-	exact: { label: "Correct", className: "text-green-600 dark:text-green-500" },
-	accents: { label: "Right word, check the accents", className: "text-amber-600 dark:text-amber-400" },
-	wrong: { label: "Not quite", className: "text-red-600 dark:text-red-400" },
+const VERDICT_STYLE: Record<AnswerVerdict, { label: string; className: string; badge: string; btn: string }> = {
+	exact: { label: "Correct", className: "text-go", badge: "bg-go text-go-ink", btn: "bg-go text-go-ink" },
+	accents: { label: "Almost! Check the accents", className: "text-warn", badge: "bg-warn text-background", btn: "bg-warn text-background" },
+	wrong: { label: "Not quite", className: "text-miss", badge: "bg-miss text-background", btn: "bg-miss text-background" },
 };
+
+/** What the deck will do with the card at the suggested rating, in words. */
+function memoryLine(state: ReviewCard["state"], days: number): string {
+	const when = `next in ${formatInterval(days)}`;
+	return state === "new" ? `new · ${when}` : state === "learning" ? `learning · ${when}` : `known · ${when}`;
+}
+
+/** One labelled fact chip (the lesson footer's shape). */
+function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+	return (
+		<div className="flex items-center gap-2.5 rounded-xl bg-accent/60 py-1.5 pl-2.5 pr-3.5">
+			<span className="text-muted-foreground" aria-hidden="true">
+				{icon}
+			</span>
+			<div className="min-w-0">
+				<dt className="font-ui text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
+				<dd className="font-prose text-sm leading-tight text-foreground">{value}</dd>
+			</div>
+		</div>
+	);
+}
 
 export function ReviewSession() {
 	const lang = useActiveLanguage();
@@ -168,10 +183,7 @@ export function ReviewSession() {
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const slips = useMemo(
-		() => (prompt && verdict === "accents" ? new Set(diacriticSlips(prompt.card.answer, given, tag)) : new Set<number>()),
-		[prompt, verdict, given, tag],
-	);
+	const slips = useMemo(() => (prompt && verdict === "accents" ? new Set(diacriticSlips(prompt.card.answer, given, tag)) : new Set<number>()), [prompt, verdict, given, tag]);
 
 	const saveNewPerDay = async (n: number) => {
 		const res = await fetch("/api/review/settings", {
@@ -190,10 +202,18 @@ export function ReviewSession() {
 				<h1 className="font-ui text-base font-extrabold text-foreground">Review</h1>
 				{counts && (
 					<span className="ml-auto flex items-center gap-1.5 font-ui text-xs font-bold text-muted-foreground tabular-nums" data-testid="review-counts">
-						<span title="Cards due for review" className="rounded-full bg-sky/15 px-2.5 py-1 text-sky">{counts.due + counts.learning} due</span>
-						<span title="New cards left today" className="rounded-full bg-accent px-2.5 py-1">{counts.newLeft} new</span>
-						<span title="Reviews done today" className="rounded-full bg-go-soft px-2.5 py-1 text-go">{counts.reviewedToday} done today</span>
-						<span title="Words in the deck" className="hidden px-1.5 sm:inline">{counts.total} words</span>
+						<span title="Cards due for review" className="rounded-full bg-sky/15 px-2.5 py-1 text-sky">
+							{counts.due + counts.learning} due
+						</span>
+						<span title="New cards left today" className="rounded-full bg-accent px-2.5 py-1">
+							{counts.newLeft} new
+						</span>
+						<span title="Reviews done today" className="rounded-full bg-go-soft px-2.5 py-1 text-go">
+							{counts.reviewedToday} done today
+						</span>
+						<span title="Words in the deck" className="hidden px-1.5 sm:inline">
+							{counts.total} words
+						</span>
 					</span>
 				)}
 			</TopBar>
@@ -212,8 +232,7 @@ export function ReviewSession() {
 						<div className="rounded-3xl border-2 bg-card p-8 text-center" data-testid="review-done">
 							<p className="font-ui text-2xl font-black text-foreground">All caught up 🎉</p>
 							<p className="mt-1 text-sm text-muted-foreground">
-								{counts?.reviewedToday ?? 0} reviews today. New words tomorrow: {status.settings.newPerDay}. Words that come back
-								sooner wait in the deck until they are due.
+								{counts?.reviewedToday ?? 0} reviews today. New words tomorrow: {status.settings.newPerDay}. Words that come back sooner wait in the deck until they are due.
 							</p>
 							<label className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
 								New words per day
@@ -271,7 +290,7 @@ export function ReviewSession() {
 							>
 								<span>{prompt.before}</span>
 								{verdict ? (
-									<span className={cn("rounded-md px-1 font-semibold", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)} data-testid="review-answer">
+									<span className={cn("-mx-0.5 rounded-md px-0.5 font-semibold", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)} data-testid="review-answer">
 										{[...prompt.card.answer].map((ch, i) => (
 											<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
 												{ch}
@@ -317,15 +336,15 @@ export function ReviewSession() {
 							{!verdict && (
 								<div className="mt-7 flex items-center gap-2 font-ui text-sm">
 									{mode === "type" && (
-										<button type="button" onClick={() => check(given)} className="rounded-2xl bg-go px-7 py-2.5 font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none">
+										<button
+											type="button"
+											onClick={() => check(given)}
+											className="rounded-2xl bg-go px-7 py-2.5 font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none"
+										>
 											Check
 										</button>
 									)}
-									<button
-										type="button"
-										onClick={() => setHint(true)}
-										className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-									>
+									<button type="button" onClick={() => setHint(true)} className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
 										<LightbulbIcon className="size-3.5" />
 										{hint ? (
 											<span>
@@ -335,34 +354,24 @@ export function ReviewSession() {
 											"Hint"
 										)}
 									</button>
-									<button
-										type="button"
-										onClick={() => check("")}
-										className="ml-auto rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-									>
+									<button type="button" onClick={() => check("")} className="ml-auto rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
 										I don&apos;t know
 									</button>
 								</div>
 							)}
 
 							{verdict && (
-								<div className="mt-5" data-testid="review-verdict">
-									<div className="flex items-center gap-2">
-										<span className={cn("font-medium", VERDICT_STYLE[verdict].className)}>{VERDICT_STYLE[verdict].label}</span>
-										{verdict !== "exact" && given && (
-											<span className="text-sm text-muted-foreground">
-												You wrote <span className="font-medium text-foreground">{given}</span>
+								<div className="mt-6 border-t pt-5" data-testid="review-verdict">
+									{/* Header row: the verdict left, Continue right (the lesson footer's shape). */}
+									<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+										<div className="flex items-center gap-3">
+											<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", VERDICT_STYLE[verdict].badge)} aria-hidden="true">
+												{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={3} /> : <CheckIcon className="size-5" strokeWidth={3} />}
 											</span>
-										)}
-										<PlayButton text={prompt.card.sentence} className="ml-auto" label="Play the sentence" />
-									</div>
-									<p className="mt-1 text-sm text-muted-foreground">
-										{prompt.card.lemma} · {prompt.card.gloss}
-									</p>
-									{/* The checker already knows how it went: Continue schedules with
-									    the derived rating (redesign 2026-10-27 — one decision per card,
-									    not two). The four ratings stay as a quiet override. */}
-									<div className="mt-5 flex flex-wrap items-center gap-3" data-testid="review-ratings">
+											<p className={cn("font-ui text-2xl font-bold leading-tight", VERDICT_STYLE[verdict].className)}>{VERDICT_STYLE[verdict].label}</p>
+										</div>
+										{/* The checker already knows how it went: Continue schedules with
+										    the derived rating (one decision per card, not two). */}
 										<button
 											type="button"
 											autoFocus
@@ -370,16 +379,48 @@ export function ReviewSession() {
 											onClick={() => void rate(suggested)}
 											data-testid="review-continue"
 											className={cn(
-												"rounded-2xl px-8 py-3 font-ui text-sm font-bold uppercase tracking-wider shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none disabled:opacity-50",
-												verdict === "exact" ? "bg-go text-go-ink" : verdict === "accents" ? "bg-warn text-background" : "bg-miss text-background",
+												"flex h-12 items-center justify-center rounded-xl px-7 font-ui text-base font-bold transition-all hover:brightness-110 disabled:opacity-50",
+												VERDICT_STYLE[verdict].btn,
 											)}
 										>
 											Continue
 										</button>
-										<span className="font-ui text-[11px] text-muted-foreground">
-											{RATING_LABELS[suggested]} · next in {formatInterval(prompt.intervals[suggested])}
-										</span>
-										<span className="ml-auto flex items-center gap-1 font-ui text-xs text-muted-foreground">
+									</div>
+									<div className="mt-3 flex flex-col gap-3 sm:pl-12">
+										{verdict !== "exact" && (
+											<div>
+												<p className="font-prose text-lg text-foreground">
+													Correct answer: <b lang={lang?.code}>{prompt.card.answer}</b>
+												</p>
+												{given && (
+													<p className="font-prose text-base text-muted-foreground">
+														You wrote “<span lang={lang?.code}>{given}</span>”
+													</p>
+												)}
+											</div>
+										)}
+										<div className="flex items-start gap-3">
+											<PlayButton text={prompt.card.sentence} className="mt-0.5 size-8 rounded-full bg-sky/20 text-sky hover:bg-sky/30 hover:text-sky" label="Play the sentence" />
+											<div className="min-w-0">
+												<p className="font-prose text-lg leading-snug text-foreground" lang={lang?.code}>
+													{prompt.before}
+													<b className={VERDICT_STYLE[verdict].className}>{prompt.card.answer}</b>
+													{prompt.after}
+												</p>
+												<p className="font-prose text-base text-muted-foreground">{prompt.card.translation}</p>
+											</div>
+										</div>
+										<dl className="flex flex-wrap gap-2" data-testid="review-facts">
+											<Fact
+												icon={<WholeWordIcon className="size-4" />}
+												label={prompt.form ? "Form" : "Word"}
+												value={prompt.form ?? `${prompt.card.lemma} · ${prompt.card.gloss.split(/[;,(]/)[0]!.trim()}`}
+											/>
+											{rankLabel(prompt.rank, prompt.cat) && <Fact icon={<ChartColumnIcon className="size-4" />} label="How common" value={rankLabel(prompt.rank, prompt.cat)!} />}
+											<Fact icon={<BrainIcon className="size-4" />} label="Memory" value={memoryLine(prompt.card.state, prompt.intervals[suggested])} />
+										</dl>
+										{/* The four ratings stay as a quiet override of the suggested one. */}
+										<div className="flex flex-wrap items-center gap-1.5 font-ui text-xs text-muted-foreground" data-testid="review-ratings">
 											<span className="mr-1">Rate it yourself:</span>
 											{([1, 2, 3, 4] as Rating[]).map((r) => (
 												<button
@@ -388,14 +429,14 @@ export function ReviewSession() {
 													disabled={saving}
 													onClick={() => void rate(r)}
 													title={`${RATING_LABELS[r]}: next in ${formatInterval(prompt.intervals[r])} (key ${r})`}
-													className={cn("rounded-md px-1.5 py-1 transition-colors hover:bg-accent hover:text-foreground", r === suggested && "text-foreground")}
+													className={cn("rounded-full border px-2.5 py-1 transition-colors hover:bg-accent hover:text-foreground", r === suggested && "border-foreground/40 text-foreground")}
 												>
-													{RATING_LABELS[r]}
+													{RATING_LABELS[r]} · {formatInterval(prompt.intervals[r])}
 												</button>
 											))}
-										</span>
+											<span className="ml-auto">Enter continues · 1–4 rates</span>
+										</div>
 									</div>
-									<p className="mt-2 font-ui text-xs text-muted-foreground">Enter continues · 1–4 rates it yourself</p>
 								</div>
 							)}
 
@@ -429,11 +470,7 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{status?.available && (
-						<p className="mt-10 text-center text-xs text-muted-foreground">
-							Sentences from slovak.wiki — curated examples and Tatoeba (CC BY 2.0 FR).
-						</p>
-					)}
+					{status?.available && <p className="mt-10 text-center text-xs text-muted-foreground">Sentences from slovak.wiki — curated examples and Tatoeba (CC BY 2.0 FR).</p>}
 				</div>
 			</main>
 		</div>

@@ -88,10 +88,7 @@ export function SpeedToggle({ className }: { className?: string }) {
 			onClick={() => setSpeed(next)}
 			aria-label={`Playback speed ${speed}×, click for ${next}×`}
 			title="Playback speed"
-			className={cn(
-				"rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-				className,
-			)}
+			className={cn("rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", className)}
 		>
 			{speed}×
 		</button>
@@ -142,24 +139,39 @@ export async function speak(text: string, lang?: LanguageInfo): Promise<void> {
 /** A speaker button for a phrase. */
 export function PlayButton({ text, className, label }: { text: string; className?: string; label?: string }) {
 	const [busy, setBusy] = useState(false);
+	const play = () => {
+		if (busy) return;
+		setBusy(true);
+		void speak(text).finally(() => setBusy(false));
+	};
+	// A span with the button role, not a <button>: the phrase can sit inside
+	// a quiz option or any other button, where a nested <button> is invalid
+	// HTML and broke hydration of the chat view.
 	return (
-		<button
-			type="button"
+		<span
+			role="button"
+			tabIndex={0}
 			onMouseDown={(e) => e.preventDefault()}
-			onClick={() => {
-				if (busy) return;
-				setBusy(true);
-				void speak(text).finally(() => setBusy(false));
+			onClick={(e) => {
+				e.stopPropagation();
+				play();
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					e.stopPropagation();
+					play();
+				}
 			}}
 			aria-label={label ?? `Play “${text}”`}
 			title="Play"
 			className={cn(
-				"inline-flex size-6 shrink-0 items-center justify-center rounded-md align-middle text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+				"inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md align-middle text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
 				className,
 			)}
 		>
 			{busy ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <Volume2Icon className="size-3.5" />}
-		</button>
+		</span>
 	);
 }
 
