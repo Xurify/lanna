@@ -5,8 +5,9 @@
  * the target level, and the goal that road is measured against.
  *
  * The plan is computed on the server (src/core/curriculum.ts dailyPlan):
- * review what is due, one lesson of new ground, strengthen the weakest
- * unit, new words, an episode to read, and speaking with feedback, cut to
+ * review what is due, ten sentences to listen to, one lesson of new
+ * ground, strengthen the weakest unit, new words, an episode to read, and
+ * speaking with feedback, cut to
  * the planned minutes.
  * Each task is a link into the app; a task ticks itself off from the
  * progress ledger, so there is nothing to mark by hand.
@@ -15,9 +16,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HoursSheet } from "@/components/hours-sheet";
-import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEFAULT_DAYS_PER_WEEK, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection } from "@/src/core";
+import { StrandBalance } from "@/components/strand-balance";
+import { DEFAULT_DAYS_PER_WEEK, purposePhrase, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -32,6 +34,7 @@ export function DailyPlan({
 	plan,
 	goal,
 	projection,
+	balance = null,
 	week,
 	busy = false,
 	onSpeak,
@@ -39,6 +42,8 @@ export function DailyPlan({
 	plan: Plan | null;
 	goal: Goal | null;
 	projection: Projection | null;
+	/** This week by Nation's four strands (src/core/strands.ts). */
+	balance?: Balance | null;
 	week: Array<{ day: string; xp: number }>;
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
@@ -89,6 +94,10 @@ export function DailyPlan({
 				))}
 			</ol>
 
+			{/* The week by strand: input, speaking, words & rules, speed, against
+			    a quarter each (Nation's four strands). */}
+			<StrandBalance balance={balance} />
+
 			{/* The goal the plan serves, and what the map says about the road.
 			    Changing it reopens setup (components/onboarding/start.tsx),
 			    pre-filled, with a re-check of the level on its last screen. */}
@@ -130,6 +139,7 @@ export function DailyPlan({
 
 const TASK_ICON: Record<PlanTask["id"], { icon: React.ReactNode; ink: string }> = {
 	review: { icon: <RepeatIcon className="size-5" />, ink: "text-sky bg-sky/15" },
+	listen: { icon: <HeadphonesIcon className="size-5" />, ink: "text-sky bg-sky/15" },
 	lesson: { icon: <PlayIcon className="size-5 fill-current" />, ink: "text-go bg-go/15" },
 	strengthen: { icon: <DumbbellIcon className="size-5" />, ink: "text-gold bg-gold/15" },
 	blitz: { icon: <ZapIcon className="size-5" />, ink: "text-gold bg-gold/15" },

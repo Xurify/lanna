@@ -26,6 +26,7 @@
  */
 
 import { UNITS, unitDone, type UnitId } from "./lesson.ts";
+import { LISTEN_MINUTES } from "./listen.ts";
 
 // ─── Levels and stages ─────────────────────────────────────────────────────
 
@@ -535,7 +536,7 @@ export function projection(state: CurriculumState, opts: { target: Cefr; minutes
 
 // ─── The daily plan ─────────────────────────────────────────────────────────
 
-export type TaskKind = "review" | "lesson" | "strengthen" | "words" | "read" | "speak" | "blitz";
+export type TaskKind = "review" | "listen" | "lesson" | "strengthen" | "words" | "read" | "speak" | "blitz";
 
 export interface PlanTask {
 	id: TaskKind;
@@ -569,6 +570,8 @@ export interface DayEvidence {
 	tutors: number;
 	/** Story episodes read today (the Read task). */
 	reads?: number;
+	/** Listening sessions finished today (the Listen task). */
+	listens?: number;
 }
 
 export interface PlanInput {
@@ -586,16 +589,22 @@ export interface PlanInput {
 	scenes?: string[];
 }
 
-export const TASK_MINUTES = { lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, blitz: 1 } as const;
+/** Which tasks survive a tight budget first (lower keeps): the must-haves,
+ *  then one task of each strand, then the second form-focused ones. */
+const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, strengthen: 5, blitz: 5, words: 6 };
+
+export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, blitz: 1 } as const;
 
 /**
  * The day's plan, from the research on what actually moves a learner:
- * spaced retrieval first (the review deck), then new ground on the path
- * (one lesson on the Continue unit), interleaved strengthening of the
- * weakest practised unit, new words in context, an episode to read at
+ * spaced retrieval first (the review deck), then input before anything is
+ * asked of you (ten sentences to listen to and understand), new ground on
+ * the path (one lesson on the Continue unit), interleaved strengthening of
+ * the weakest practised unit, new words in context, an episode to read at
  * the learner's level, and output with feedback (a tutor unit, a Talk
- * scene or a Story). The list is cut to the planned minutes, never below
- * review + the lesson.
+ * scene or a Story). The order follows comprehension-before-production;
+ * the mix follows Nation's four strands (src/core/strands.ts). The list
+ * is cut to the planned minutes, never below review + the lesson.
  */
 export function dailyPlan(input: PlanInput): DailyPlan {
 	const { state, evidence, day, review } = input;
@@ -618,7 +627,19 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		});
 	}
 
-	// 2. New ground: a lesson on the Continue unit.
+	// 2. Listen: meaning-focused input before any production. Ten real
+	//    sentences at 95–98% known words, heard first, understood by
+	//    picking the meaning (src/core/listen.ts).
+	tasks.push({
+		id: "listen",
+		title: "Listen",
+		line: (day.listens ?? 0) > 0 ? "Ten sentences heard and understood" : "Ten sentences you can follow — hear each, then pick what it meant",
+		minutes: TASK_MINUTES.listen,
+		done: (day.listens ?? 0) > 0,
+		href: "/listen",
+	});
+
+	// 3. New ground: a lesson on the Continue unit.
 	const next = byId.get(input.next);
 	const newGroundDone = Object.keys(day.units).some((id) => {
 		const u = byId.get(id);
@@ -634,7 +655,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		href: `/lesson?unit=${input.next}`,
 	});
 
-	// 3. Strengthen: the weakest practised drill (not the Continue unit),
+	// 4. Strengthen: the weakest practised drill (not the Continue unit),
 	//    else a blitz across the units started.
 	const weak = all
 		.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
@@ -654,7 +675,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({ id: "blitz", title: "Blitz", line: "60 seconds across everything you have started", minutes: TASK_MINUTES.blitz, done: strengthenDone, href: "/lesson?mode=blitz" });
 	}
 
-	// 4. Words: the first open words unit that is not already the lesson.
+	// 5. Words: the first open words unit that is not already the lesson.
 	const wordsUnit = all.find((u) => u.kind === "words" && u.id !== input.next && (u.status === "open" || u.status === "started"));
 	if (wordsUnit) {
 		const wordsDone = Object.keys(day.units).some((id) => byId.get(id)?.kind === "words" && id !== input.next && (day.units[id] ?? 0) > 0);
@@ -669,7 +690,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		});
 	}
 
-	// 5. Read: an episode at the learner's level (src/core/reading.ts) —
+	// 6. Read: an episode at the learner's level (src/core/reading.ts) —
 	//    extensive reading at ~97% known words is where vocabulary grows
 	//    between lessons, and the one input the plan had none of.
 	tasks.push({
@@ -681,7 +702,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		href: "/read",
 	});
 
-	// 6. Speak: output with feedback. A tutor unit in the current chapter
+	// 7. Speak: output with feedback. A tutor unit in the current chapter
 	//    first; else the current chapter's scene, alternating with a story.
 	const current = state.chapters.find((c) => c.id === state.current);
 	const tutorUnit = current?.units.find((u) => u.kind === "tutor" && (u.status === "open" || u.status === "started"));
@@ -696,20 +717,24 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	} else if (input.dayOfYear % 2 === 0 && scene) {
 		tasks.push({ id: "speak", title: "Talk", line: scene === chapterScene ? "Role-play the chapter's scene — say it before you are sure" : "Role-play a scene from what Slovak is for — say it before you are sure", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "talk" });
 	} else {
-		tasks.push({ id: "speak", title: "Story", line: "Robo's next episode, then three questions", minutes: TASK_MINUTES.speak, done: speakDone, via: "story" });
+		tasks.push({ id: "speak", title: "Story", line: "Robo's next episode with the tutor, then three questions — input you can talk back to", minutes: TASK_MINUTES.speak, done: speakDone, via: "story" });
 	}
 
-	// Cut to the planned minutes, keeping review and the lesson.
+	// Cut to the planned minutes, keeping review and the lesson. A tight
+	// budget keeps one task per strand before a second form-focused one
+	// (input, then speaking, before strengthen and words), so a short day
+	// is still balanced rather than all drills (src/core/strands.ts).
 	const budget = Math.max(5, input.minutesPerDay);
-	const kept: PlanTask[] = [];
+	const keep = new Set<TaskKind>();
 	let used = 0;
-	for (const t of tasks) {
+	for (const t of [...tasks].sort((a, b) => BUDGET_ORDER[a.id] - BUDGET_ORDER[b.id])) {
 		const must = t.id === "review" || t.id === "lesson";
 		if (must || used + t.minutes <= budget || t.done) {
-			kept.push(t);
+			keep.add(t.id);
 			used += t.minutes;
 		}
 	}
+	const kept = tasks.filter((t) => keep.has(t.id));
 	return { minutes: kept.reduce((n, t) => n + t.minutes, 0), tasks: kept, done: kept.filter((t) => t.done).length, total: kept.length };
 }
 

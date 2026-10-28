@@ -279,8 +279,10 @@ export interface LessonLogEntry {
 	/** The learner's local day (YYYY-MM-DD) — also the file it lives in. */
 	day: string;
 	unit: string;
-	/** placement: the setup's staircase drill (unit "placement"). */
-	mode: "lesson" | "blitz" | "placement";
+	/** placement: the setup's staircase drill (unit "placement");
+	 *  listen: the Listen task (unit "listen"), where `answer` is the
+	 *  translation picked and `given` the meaning chosen. */
+	mode: "lesson" | "blitz" | "placement" | "listen";
 	ms?: number;
 	xp: number;
 	correct: number;

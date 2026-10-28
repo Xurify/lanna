@@ -260,7 +260,10 @@ function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: { 
 
 // ─── Items ──────────────────────────────────────────────────────────────────
 
-export type ItemKind = "choose" | "type" | "build" | "listen";
+/** meaning: the whole sentence, spoken, with the target form marked; the
+ *  learner picks what it means. Input before output (comprehension
+ *  precedes production): the first two reps of a new unit. */
+export type ItemKind = "meaning" | "choose" | "type" | "build" | "listen";
 
 export interface LessonItem {
 	/** "<slug>#<exampleIndex>" — the same id the review deck uses. */
@@ -275,7 +278,8 @@ export interface LessonItem {
 	answer: string;
 	before: string;
 	after: string;
-	/** choose: four forms including the answer. */
+	/** choose: four forms including the answer; meaning: three English
+	 *  meanings including the translation. */
 	options?: string[];
 	/** build: the sentence's words in order (what must be rebuilt). */
 	tokens?: string[];
@@ -403,7 +407,7 @@ export function rng(seed: number): () => number {
 	};
 }
 
-function shuffle<T>(list: T[], rand: () => number): T[] {
+export function shuffle<T>(list: readonly T[], rand: () => number): T[] {
 	const a = [...list];
 	for (let i = a.length - 1; i > 0; i--) {
 		const j = Math.floor(rand() * (i + 1));
@@ -480,12 +484,19 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
 
 /** The rhythm of a first lesson on a unit: recognise first, then produce,
  *  a word bank and a listening rep to vary the work. */
-export const LESSON_PATTERN: ItemKind[] = ["choose", "type", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
+/** A new unit meets the form before it is asked for it: two reps that only
+ *  ask what the sentence means (spoken, form marked), then recognition,
+ *  then production. */
+export const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
 
 /** Once a unit is known: production almost throughout. Picking a form from
  *  four trains recognising it; typing it trains producing it, and producing
  *  endings is the gap (reading is ahead of production). */
 export const PRACTISED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
+
+/** The placement drill (src/core/onboarding.ts): two reps a unit that
+ *  measure, so they ask for the form — recognise it, then produce it. */
+export const PLACEMENT_PATTERN: ItemKind[] = ["choose", "type"];
 
 /** Word-order units: rebuild the sentence, with a listening rep to vary it. */
 export const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
@@ -549,6 +560,18 @@ export function wordOptions(answer: string, lemma: string, pool: readonly string
 	return shuffle([answer, ...picks], rand);
 }
 
+/** Three meanings for a meaning rep: the sentence's own translation and
+ *  two others of similar length from the unit, so length gives nothing
+ *  away. (The Listen task's version, with a wider pool: core/listen.ts.) */
+export function meaningChoices(translation: string, pool: readonly string[], rand: () => number): string[] {
+	const own = translation.trim();
+	const others = [...new Set(pool.map((p) => p.trim()).filter((p) => p && p.toLowerCase() !== own.toLowerCase()))];
+	const near = shuffle(others, rand)
+		.sort((a, b) => Math.abs(a.length - own.length) - Math.abs(b.length - own.length))
+		.slice(0, 6);
+	return shuffle([own, ...shuffle(near, rand).slice(0, 2)], rand);
+}
+
 export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[], rand: () => number): LessonItem {
 	const ex = c.entry.examples[c.index]!;
 	const { answer, at } = ex.cloze!;
@@ -606,13 +629,13 @@ export interface LessonPlan {
 export function buildLesson(
 	entries: readonly LexiconEntry[],
 	unit: UnitId,
-	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: "new" | "practised"; mix?: readonly UnitId[] },
+	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: "new" | "practised"; mix?: readonly UnitId[]; pattern?: readonly ItemKind[] },
 ): LessonPlan {
 	const rand = rng(opts.seed);
 	const info = unitInfo(unit);
 	const stage = opts.stage ?? "new";
 	const length = opts.length ?? LESSON_PATTERN.length;
-	const base = info.pattern === "build" ? BUILD_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN;
+	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN);
 	const pattern = base.slice(0, length);
 	const sourceFor = (u: UnitId) => {
 		const top = candidatesFor(entries, u).slice(0, unitInfo(u).kind === "words" ? 400 : 160);
@@ -634,6 +657,7 @@ export function buildLesson(
 			const ex = c.entry.examples[c.index]!;
 			const n = ex.sk.split(/\s+/).length;
 			if (kind === "build") return n >= 3 && n <= 7;
+			if (kind === "meaning") return n >= 3;
 			// A vocabulary choice is between words, so the blank is the dictionary form.
 			if (kind === "choose" && info.kind === "words") return fold(ex.cloze!.answer) === fold(c.entry.sk);
 			return true;
@@ -645,6 +669,7 @@ export function buildLesson(
 		if (!pick) return;
 		used.add(keyOf(pick));
 		const item = buildItem(pick, kind, fromMix ? poolOf(mix!.top, pick.unit) : pool, rand);
+		if (kind === "meaning") item.options = meaningChoices(item.translation, (fromMix ? mix!.top : main.top).filter((c) => c.entry.slug !== pick.entry.slug).map((c) => c.entry.examples[c.index]!.en), rand);
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
@@ -676,7 +701,7 @@ export function buildBlitz(entries: readonly LexiconEntry[], units: readonly Uni
 
 export type RepVerdict = "exact" | "accents" | "wrong";
 
-export const XP_FOR: Record<ItemKind, number> = { choose: 5, type: 10, build: 10, listen: 12 };
+export const XP_FOR: Record<ItemKind, number> = { meaning: 4, choose: 5, type: 10, build: 10, listen: 12 };
 
 /** XP for one rep: a typed answer earns more than a picked one; accents-only
  *  earns half, and so does a right answer on the second try (after the

@@ -122,6 +122,27 @@ test("levels climb with lessons and XP", () => {
 // ─── The method (2026-10-27): production once a unit holds, interleaving,
 // the trigger for the hint, half XP for the second try ────────────────────
 
+test("a new unit's lesson opens with two meaning reps (input before output): the whole sentence, three meanings, the translation among them", () => {
+	for (const unit of ["gen", "lx-greetings", "words"] as const) {
+		const plan = buildLesson(entries, unit, { seed: 3 });
+		assert.deepEqual(
+			plan.items.slice(0, 2).map((i) => i.kind),
+			["meaning", "meaning"],
+			unit,
+		);
+		for (const item of plan.items.filter((i) => i.kind === "meaning")) {
+			assert.equal(item.options?.length, 3);
+			assert.ok(item.options!.includes(item.translation));
+			assert.equal(new Set(item.options).size, 3);
+			assert.ok(!item.mixed, "the opening reps come from the unit itself");
+		}
+	}
+	// Once the unit holds, no meaning reps: production throughout.
+	const held = buildLesson(entries, "gen", { seed: 3, stage: "practised" });
+	assert.equal(held.items.filter((i) => i.kind === "meaning").length, 0);
+	assert.ok(repXp("meaning", "exact", 1) < repXp("choose", "exact", 1), "understanding earns less than producing");
+});
+
 test("a practised unit is mostly typed; a new one recognises first", () => {
 	const fresh = buildLesson(entries, "gen", { seed: 5 });
 	const held = buildLesson(entries, "gen", { seed: 5, stage: "practised" });

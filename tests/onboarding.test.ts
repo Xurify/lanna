@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
 import { CHAPTERS, curriculumState, hoursDone, nextLessonUnit } from "../src/core/curriculum.ts";
-import { buildLesson, UNITS } from "../src/core/lesson.ts";
+import { buildLesson, PLACEMENT_PATTERN, UNITS } from "../src/core/lesson.ts";
 import {
 	BRIDGE_LANGS,
 	bridgeLanguages,
@@ -62,7 +62,7 @@ test("every placement tier has lesson material and stands for real chapters", ()
 	for (const t of PLACEMENT_TIERS) {
 		for (const u of t.units) {
 			assert.ok(UNITS.some((x) => x.id === u), `${t.id}: ${u} is not a lesson unit`);
-			const plan = buildLesson(entries, u, { seed: 3, length: REPS_PER_UNIT });
+			const plan = buildLesson(entries, u, { seed: 3, length: REPS_PER_UNIT, pattern: PLACEMENT_PATTERN });
 			assert.equal(plan.items.length, REPS_PER_UNIT, `${t.id}/${u}`);
 			assert.deepEqual(plan.items.map((i) => i.kind), ["choose", "type"]);
 		}

@@ -13,6 +13,7 @@ import {
 	CONTRAST,
 	LESSON_BONUS,
 	PERFECT_BONUS,
+	PLACEMENT_PATTERN,
 	repXp,
 	streakOf,
 	unitDone,
@@ -62,6 +63,7 @@ import {
 	type PlacementRep,
 	type PlacementTier,
 } from "../core/onboarding.ts";
+import { strandBalance, type StrandBalance } from "../core/strands.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
@@ -330,6 +332,8 @@ export interface ProgressSummary {
 	plan: DailyPlan;
 	goal: GoalRecord;
 	projection: Projection;
+	/** This week's minutes by Nation's four strands, against a quarter each. */
+	balance: StrandBalance;
 }
 
 export function progressSummary(tz?: number, now = new Date()): ProgressSummary {
@@ -375,7 +379,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0 },
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
@@ -384,6 +388,8 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	});
 	const recentMinutes: number[] = [];
 	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
+	// The week by strand (src/core/strands.ts): the last seven days' ledgers.
+	const balance = strandBalance(week.map((w) => p.days[w.day]).filter((x): x is DayRecord => !!x));
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),
@@ -399,6 +405,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		plan,
 		goal,
 		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, recentMinutes, now }),
+		balance,
 	};
 }
 
@@ -466,7 +473,7 @@ export function placementFor(opts: { recheck?: boolean } = {}, seed = Date.now()
 	const from = opts.recheck ? tierForChapter(state.current) : 0;
 	const tiers = PLACEMENT_TIERS.map((t, i) => ({
 		...t,
-		items: t.units.flatMap((u) => buildLesson(entries(), u, { seed: seed + i * 97 + t.units.indexOf(u), length: REPS_PER_UNIT, recent: new Set(p.recent) }).items),
+		items: t.units.flatMap((u) => buildLesson(entries(), u, { seed: seed + i * 97 + t.units.indexOf(u), length: REPS_PER_UNIT, recent: new Set(p.recent), pattern: PLACEMENT_PATTERN }).items),
 	}));
 	return { from, tiers };
 }

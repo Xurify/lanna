@@ -53,6 +53,7 @@ export * from "./review.ts";
 export * from "./lesson.ts";
 export * from "./why.ts";
 export * from "./reading.ts";
+export * from "./listen.ts";
 export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";
 export * from "./usage-report.ts";

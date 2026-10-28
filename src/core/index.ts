@@ -92,3 +92,5 @@ export * from "./curriculum.ts";
 export * from "./onboarding.ts";
 export * from "./unit-bridges.ts";
 export * from "./reading.ts";
+export * from "./listen.ts";
+export * from "./strands.ts";
