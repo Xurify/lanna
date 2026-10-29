@@ -374,9 +374,11 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		if (mode === "blitz" && left === 0 && plan && !done) void finish(reps);
 	}, [left, mode, plan, done, finish, reps]);
 
-	const grade = (given: string, verdict: RepVerdict) => {
+	const grade = (given: string, verdict: RepVerdict, reveal = false) => {
 		if (!item || current) return;
-		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind)) {
+		// "I don't know" (reveal) skips the cue and the second try: the answer
+		// shows at once, the rep counts as a miss and comes back at the end.
+		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind) && !reveal) {
 			setMiss(given);
 			setCombo(0);
 			sfx.wrong();
@@ -413,6 +415,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setCurrent(rep);
 		if (item.kind !== "listen") void speak(item.sentence).catch(() => {});
 	};
+
+	const giveUp = () => grade("", "wrong", true);
 
 	const advance = () => {
 		if (!current || !plan) return;
@@ -612,7 +616,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				{mode === "lesson" && current ? (
 					<FeedbackSheet rep={current} tag={tag} onContinue={advance} onAskTutor={() => void why()} last={index + 1 >= total} comesBack={comesBack} examples={examples} />
 				) : (
-					<ActionBar kind={miss !== null && item.kind === "choose" ? "type" : item.kind} ready={ready} blitz={mode === "blitz"} />
+					<ActionBar kind={miss !== null && item.kind === "choose" ? "type" : item.kind} ready={ready} blitz={mode === "blitz"} onDontKnow={giveUp} />
 				)}
 			</Frame>
 		</BridgesContext.Provider>
@@ -639,16 +643,30 @@ const ACTION_HINT: Record<ItemKind, string> = {
 	build: "Tap the words in order · Backspace takes the last one back",
 };
 
-function ActionBar({ kind, ready, blitz }: { kind: ItemKind; ready: boolean; blitz: boolean }) {
+function ActionBar({ kind, ready, blitz, onDontKnow }: { kind: ItemKind; ready: boolean; blitz: boolean; onDontKnow: () => void }) {
 	return (
 		<div className="border-t border-border">
 			<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
 				<p className="font-prose text-sm text-muted-foreground">{ACTION_HINT[kind]}</p>
-				{kind !== "choose" && !blitz && (
-					<button type="submit" form={REP_FORM} disabled={!ready} className={PRIMARY} data-testid="lesson-check">
-						Check
-					</button>
-				)}
+				<div className="flex items-center gap-2">
+					{/* Always there, even before anything is typed: a learner who does
+					    not know the answer can leave the rep without typing a guess. */}
+					{!blitz && (
+						<button
+							type="button"
+							onClick={onDontKnow}
+							className="flex h-12 items-center rounded-xl px-4 font-ui text-base font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							data-testid="lesson-dont-know"
+						>
+							I don&apos;t know
+						</button>
+					)}
+					{kind !== "choose" && !blitz && (
+						<button type="submit" form={REP_FORM} disabled={!ready} className={PRIMARY} data-testid="lesson-check">
+							Check
+						</button>
+					)}
+				</div>
 			</div>
 		</div>
 	);

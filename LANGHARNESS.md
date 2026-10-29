@@ -24,7 +24,7 @@ on placement, 37 minutes waiting at the plan approval and 9 minutes teaching.
 | Area | What changed |
 |---|---|
 | Today (`/`) | The home screen. It shows a greeting, your streak and XP, one Continue button for the next unit, a daily goal ring, a week strip, and tiles for Review, Blitz, Speak and Read. A skill path of 10 units runs down the side. The old graph home moved to `/map`. |
-| Lessons (`/lesson?unit=`) | A full-screen lesson of 12 reps built from the lexicon on the spot, so no rep waits on a model. Reps mix choose (keys 1–4), type, build the sentence, and listen. Each answer gets green, amber or red feedback with the rule and a Why? button that asks the tutor. Combos, sounds, confetti and XP. Missed words go into the review deck. |
+| Lessons (`/lesson?unit=`) | A full-screen lesson of 12 reps built from the lexicon on the spot, so no rep waits on a model. Reps mix choose (keys 1–4), type, build the sentence, and listen. Each answer gets green, amber or red feedback with the rule and a Why? button that asks the tutor. **I don't know** (always on the footer, outside Blitz) shows the answer at once: it counts as a miss with no XP, and the rep comes back once at the end. Combos, sounds, confetti and XP. Missed words go into the review deck. |
 | Blitz (`/lesson?mode=blitz`) | 60 seconds of choose reps across the units you have started, with a best score. |
 | Progress | `data/profiles/<language>/progress.json` holds XP, days, unit levels and the streak. One rest day is forgiven after six active days. |
 | Review | A single Continue button takes the suggested rating (Enter). The four ratings stay as a quiet override row. Reviews earn XP. |
