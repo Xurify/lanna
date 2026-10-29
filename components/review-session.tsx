@@ -15,8 +15,8 @@ import { BrainIcon, ChartColumnIcon, CheckIcon, EyeOffIcon, LightbulbIcon, Whole
 import { cn } from "@/lib/utils";
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { PlayButton, speak, useActiveLanguage } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { compareAnswer, diacriticSlips, formatInterval, rankLabel, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
 interface Prompt {
@@ -41,7 +41,6 @@ interface Status {
 
 type Mode = "type" | "choice";
 const MODE_KEY = "lh-review-mode";
-const AUTOPLAY_KEY = "lh-review-autoplay";
 
 function readPref(key: string, fallback: string): string {
 	try {
@@ -96,14 +95,14 @@ export function ReviewSession() {
 	// Each one is allowed and priced (caps the rating; core/review.ts).
 	const [hint, setHint] = useState(0);
 	const [mode, setMode] = useState<Mode>("type");
-	const [autoplay, setAutoplay] = useState(true);
+	const [sound, setSound] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const shownAt = useRef(Date.now());
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		setMode(readPref(MODE_KEY, "type") === "choice" ? "choice" : "type");
-		setAutoplay(readPref(AUTOPLAY_KEY, "1") === "1");
+		setSound(soundOn());
 	}, []);
 
 	const load = useCallback(async () => {
@@ -147,7 +146,7 @@ export function ReviewSession() {
 		if (v === "exact") sfx.right();
 		else if (v === "accents") sfx.almost();
 		else sfx.wrong();
-		if (autoplay) void speak(prompt.card.sentence);
+		void speak(prompt.card.sentence);
 	};
 
 	const rate = async (rating: Rating) => {
@@ -276,13 +275,15 @@ export function ReviewSession() {
 									<button
 										type="button"
 										onClick={() => {
-											setAutoplay(!autoplay);
-											writePref(AUTOPLAY_KEY, autoplay ? "0" : "1");
+											const next = !sound;
+											setSoundOn(next);
+											setSound(next);
+											if (!next) stopSpeaking();
 										}}
 										className="rounded-sm px-2 py-0.5 hover:text-foreground"
-										title="Play the sentence after answering"
+										title="Speech and sounds, on every page"
 									>
-										Audio {autoplay ? "on" : "off"}
+										Audio {sound ? "on" : "off"}
 									</button>
 								</div>
 							</div>

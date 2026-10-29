@@ -11,6 +11,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { soundOn } from "@/components/lesson/sound";
 import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 
 // ─── The active language (fetched once per page load) ──────────────────────
@@ -97,7 +98,21 @@ export function SpeedToggle({ className }: { className?: string }) {
 
 // ─── Playing ───────────────────────────────────────────────────────────────
 
-let current: HTMLAudioElement | null = null;
+/** The sound now playing, with a way to stop it that also settles the promise
+ *  its caller awaits. */
+let stopCurrent: (() => void) | null = null;
+/** Bumped by every call and by stopSpeaking, so a clip still downloading when
+ *  the learner moves on or mutes never starts. */
+let generation = 0;
+
+/** Silence everything now: the clip or voice playing, and a clip still loading. */
+export function stopSpeaking(): void {
+	generation++;
+	const stop = stopCurrent;
+	stopCurrent = null;
+	stop?.();
+	if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+}
 
 function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promise<void> {
 	return new Promise((resolve) => {
@@ -108,8 +123,17 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 		u.rate = rate;
 		const voice = window.speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang.code));
 		if (voice) u.voice = voice;
-		u.onend = () => resolve();
-		u.onerror = () => resolve();
+		const finish = () => {
+			if (stopCurrent === stop) stopCurrent = null;
+			resolve();
+		};
+		const stop = () => {
+			window.speechSynthesis.cancel();
+			finish();
+		};
+		stopCurrent = stop;
+		u.onend = finish;
+		u.onerror = finish;
 		window.speechSynthesis.speak(u);
 	});
 }
@@ -124,27 +148,41 @@ export interface SpeakOptions {
 }
 
 export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOptions = {}): Promise<void> {
+	stopSpeaking();
+	// Muted: nothing plays, and no paid voice is fetched.
+	if (!soundOn()) return;
+	const mine = generation;
 	const language = lang ?? (await activeLanguage());
 	const rate = currentSpeed();
-	current?.pause();
 	const q = new URLSearchParams({ lang: language.code, text });
 	if (opts.voice) q.set("voice", opts.voice);
 	if (opts.gender) q.set("gender", opts.gender);
 	if (opts.style) q.set("style", opts.style);
 	const url = `/api/tts?${q.toString()}`;
 	const res = await fetch(url).catch(() => null);
+	// A newer call or a mute arrived while this one was loading: drop it.
+	if (mine !== generation || !soundOn()) return;
 	if (!res || res.status === 204 || !res.ok) return speakWithBrowser(text, language, rate);
 	const blob = await res.blob();
+	if (mine !== generation || !soundOn()) return;
 	const src = URL.createObjectURL(blob);
 	const audio = new Audio(src);
 	audio.playbackRate = rate;
-	current = audio;
 	await new Promise<void>((resolve) => {
-		audio.onended = () => resolve();
-		audio.onerror = () => resolve();
-		audio.play().catch(() => resolve());
+		const finish = () => {
+			if (stopCurrent === stop) stopCurrent = null;
+			URL.revokeObjectURL(src);
+			resolve();
+		};
+		const stop = () => {
+			audio.pause();
+			finish();
+		};
+		stopCurrent = stop;
+		audio.onended = finish;
+		audio.onerror = finish;
+		audio.play().catch(finish);
 	});
-	URL.revokeObjectURL(src);
 }
 
 /** A speaker button for a phrase. */
