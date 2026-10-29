@@ -103,13 +103,15 @@ export function classifyKeys(
 	};
 }
 
-/** The minimal status line, e.g. "…ab12 · 64 chars" (" · env" marks an
- *  environment-owned value — the row itself is read-only then). Pure. */
+/** The minimal status line, e.g. "…ab12 · 64 chars · saved 2026-10-28"
+ *  (" · env" marks an environment-owned value — the row itself is
+ *  read-only then). The date is the day the app last saved the key. Pure. */
 export function keyStatusLine(status: AuthKeyStatus): string {
 	if (!status.present || !status.masked) return "not set";
 	const tail = status.masked.replace(/ \((\d+) chars\)$/, "");
 	const chars = status.masked.match(/\((\d+) chars\)$/)?.[1] ?? "?";
-	return `${tail} · ${chars}${status.source === "env" ? " · env" : ""}`;
+	const saved = status.savedAt ? ` · saved ${status.savedAt.slice(0, 10)}` : "";
+	return `${tail} · ${chars}${saved}${status.source === "env" ? " · env" : ""}`;
 }
 
 /** One table row: label left, tiny docs link + status right. Writable

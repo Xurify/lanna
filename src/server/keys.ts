@@ -51,7 +51,7 @@ import {
 	maskKey,
 	validateKeyShape,
 } from "../core/auth-keys.ts";
-import { authStore } from "../store/auth.ts";
+import { authKeySavedAt, authStore } from "../store/auth.ts";
 import { isSubscriptionProvider, subscriptionConnected } from "../agent/subscription-connections.ts";
 
 // The once-per-process boot record — globalThis anchor (HMR re-imports the
@@ -151,6 +151,8 @@ export function resolveKeyStatuses(
 	 *  join the status rows — absent ones never spam (the dropdown is the
 	 *  discovery surface). Curated keys always get rows, present or not. */
 	providerEnvVars: ReadonlySet<string> = new Set(),
+	/** Save times by var name (src/store/auth.ts authKeySavedAt). */
+	savedAt: Readonly<Record<string, string>> = {},
 ): AuthKeyStatus[] {
 	const ids = new Set<string>([...AUTH_KEYS.map((k) => k.id), ...Object.keys(fileVars)]);
 	for (const envVar of providerEnvVars) {
@@ -165,13 +167,15 @@ export function resolveKeyStatuses(
 		// post fill-gap the file's values LIVE in env, so realEnv is what
 		// distinguishes a REAL env var from the store's own reflection).
 		const live = envValue !== undefined ? envValue : fileValue;
+		const source = isRealEnv ? "env" : live !== undefined ? "file" : "none";
 		rows.push({
 			id,
 			info: AUTH_KEYS.find((k) => k.id === id) ?? null,
 			present: live !== undefined,
 			masked: live !== undefined ? `${maskKey(live)} (${live.trim().length} chars)` : null,
-			source: isRealEnv ? "env" : live !== undefined ? "file" : "none",
+			source,
 			shadowedByEnv: isRealEnv && fileValue !== undefined && envValue !== fileValue,
+			savedAt: source === "file" ? (savedAt[id] ?? null) : null,
 		});
 	}
 	return rows;
@@ -179,7 +183,7 @@ export function resolveKeyStatuses(
 
 /** The GET view: every curated key (present or not) + unknown file vars. */
 export function keyStatuses(): AuthKeyStatus[] {
-	return resolveKeyStatuses(authStore.authVars(), process.env, boot().realEnv, AUTH_PROVIDER_ENV_VARS);
+	return resolveKeyStatuses(authStore.authVars(), process.env, boot().realEnv, AUTH_PROVIDER_ENV_VARS, authKeySavedAt.all());
 }
 
 /** The live value for one var, env-first (the env-wins rule) — the canonical
@@ -217,6 +221,7 @@ export function saveKey(id: string, value: string): { ok: true; status: AuthKeyS
 	if (!shape.ok) return { ok: false, error: shape.error };
 	const trimmed = value.trim();
 	authStore.setAuthVar(id, trimmed);
+	authKeySavedAt.set(id, new Date().toISOString());
 	const record = boot();
 	if (!record.realEnv.has(id)) {
 		process.env[id] = trimmed;
@@ -233,6 +238,7 @@ export function saveKey(id: string, value: string): { ok: true; status: AuthKeyS
  */
 export function deleteKey(id: string): AuthKeyStatus {
 	authStore.deleteAuthVar(id);
+	authKeySavedAt.delete(id);
 	const record = boot();
 	if (record.fillGap.has(id) && !record.realEnv.has(id)) {
 		delete process.env[id];

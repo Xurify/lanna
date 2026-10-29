@@ -54,7 +54,7 @@ process.env.OPENROUTER_API_KEY = "sk-or-v1-envvalue99";
 const { deleteKey, initAuthEnv, keyStatuses, keyValue, resolveKeyStatuses, saveKey, isWritableAuthKey } = await import(
 	"../src/server/keys.ts"
 );
-const { authStore } = await import("../src/store/auth.ts");
+const { authKeySavedAt, authStore } = await import("../src/store/auth.ts");
 
 const ENV_OWNED = "sk-or-v1-envvalue99";
 
@@ -106,6 +106,8 @@ describe("saveKey / deleteKey (immediate effect, no restart)", () => {
 		assert.equal(authStore.authVars().DEEPGRAM_API_KEY, value, "file updated");
 		assert.equal(r.status.source, "file", "the reflected copy is the store's — the file is its origin of truth");
 		assert.ok(!r.status.shadowedByEnv);
+		assert.match(r.status.savedAt ?? "", /^\d{4}-\d{2}-\d{2}T/, "the save time is kept beside auth.json");
+		assert.ok(authKeySavedAt.all().DEEPGRAM_API_KEY, "the sidecar holds the date");
 	});
 
 	it("save to an env-owned var: file updated, env NOT overwritten, shadow reported", () => {
@@ -114,6 +116,7 @@ describe("saveKey / deleteKey (immediate effect, no restart)", () => {
 		assert.equal(process.env.OPENROUTER_API_KEY, ENV_OWNED, "real env untouched");
 		assert.equal(authStore.authVars().OPENROUTER_API_KEY, "sk-or-v1-newvalue12345", "file updated for later");
 		assert.ok(r.status.shadowedByEnv);
+		assert.equal(r.status.savedAt, null, "an env-owned row shows no file save date");
 	});
 
 	it("bad shape: rejected, nothing stored or reflected", () => {
@@ -136,6 +139,7 @@ describe("saveKey / deleteKey (immediate effect, no restart)", () => {
 		assert.ok(!row.present);
 		assert.equal(process.env.DEEPGRAM_API_KEY, undefined, "env copy was ours — removed");
 		assert.ok(!("DEEPGRAM_API_KEY" in authStore.authVars()));
+		assert.equal(authKeySavedAt.all().DEEPGRAM_API_KEY, undefined, "the save date goes with the key");
 	});
 
 	it("delete of an env-owned var: file copy gone, env remains (env wins)", () => {

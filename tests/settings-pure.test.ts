@@ -282,6 +282,13 @@ describe("keyStatusLine — the minimal at-a-glance state", () => {
 		);
 	});
 
+	it("a file key shows the day it was saved in the app", () => {
+		assert.equal(
+			keyStatusLine({ id: "X", info: null, present: true, masked: "…ab12 (64 chars)", source: "file", shadowedByEnv: false, savedAt: "2026-10-28T09:15:00.000Z" }),
+			"…ab12 · 64 · saved 2026-10-28",
+		);
+	});
+
 	it("env-owned key carries the 'env' marker (the row renders read-only)", () => {
 		assert.equal(
 			keyStatusLine({ id: "X", info: null, present: true, masked: "…ca10 (73 chars)", source: "env", shadowedByEnv: false }),
