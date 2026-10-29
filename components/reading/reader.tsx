@@ -498,7 +498,7 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 								onClick={() => toggleShown(i)}
 								aria-label={shown.has(i) ? "Hide the translation" : "Show the translation"}
 								aria-pressed={shown.has(i)}
-								className={cn("mt-1.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground", shown.has(i) && "text-foreground")}
+								className={cn("mt-1.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", shown.has(i) && "text-foreground")}
 							>
 								<LanguagesIcon className="size-4" />
 							</button>

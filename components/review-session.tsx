@@ -226,7 +226,14 @@ export function ReviewSession() {
 
 			<main className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-10 font-prose">
 				<div className="w-full max-w-2xl">
-					{loadError && <p className="text-sm text-red-600">Could not load the deck: {loadError}</p>}
+					{loadError && (
+						<div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-miss">
+							<p>Could not load the deck: {loadError}</p>
+							<button type="button" onClick={() => void load()} className="text-foreground underline-offset-2 hover:underline">
+								Try again
+							</button>
+						</div>
+					)}
 
 					{status && !status.available && (
 						<div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground" data-testid="review-unavailable">
@@ -267,7 +274,8 @@ export function ReviewSession() {
 												setMode(m);
 												writePref(MODE_KEY, m);
 											}}
-											className={cn("rounded-sm px-2 py-0.5", mode === m ? "bg-accent text-foreground" : "hover:text-foreground")}
+											aria-pressed={mode === m}
+										className={cn("rounded-sm px-2 py-0.5", mode === m ? "bg-accent text-foreground" : "hover:text-foreground")}
 										>
 											{m === "type" ? "Type" : "Choose"}
 										</button>
@@ -280,10 +288,11 @@ export function ReviewSession() {
 											setSound(next);
 											if (!next) stopSpeaking();
 										}}
-										className="rounded-sm px-2 py-0.5 hover:text-foreground"
+										aria-pressed={sound}
+										className={cn("rounded-sm px-2 py-0.5", sound ? "bg-accent text-foreground" : "hover:text-foreground")}
 										title="Speech and sounds, on every page"
 									>
-										Audio {sound ? "on" : "off"}
+										Sound
 									</button>
 								</div>
 							</div>
@@ -466,7 +475,7 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{prompt && mode === "type" && !verdict && <DiacriticBar className="mt-2 justify-center" />}
+					{prompt && mode === "type" && !verdict && <DiacriticBar className="mt-2 sm:justify-center" />}
 
 					{status && status.leeches.length > 0 && (
 						<div className="mt-10" data-testid="review-leeches">

@@ -316,6 +316,7 @@ export function AgentSection({
 	const [openSegment, setOpenSegment] = useState<string | null>(null);
 	const [segmentDraft, setSegmentDraft] = useState<Record<string, string>>({});
 	const [segmentStatus, setSegmentStatus] = useState<string | null>(null);
+	const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(null);
 	/** One open dropdown for the whole section: which slot (or the search
 	 *  row), which kind. */
 	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | "search"; kind: "model" | "thinking" | "engine" } | null>(null);
@@ -458,7 +459,7 @@ export function AgentSection({
 		setSegmentStatus(null);
 		const res = await fetch(`/api/settings/prompts/${path}`, { method: "DELETE" });
 		if (!res.ok) {
-			setSegmentStatus(`Delete failed: ${res.status}`);
+			setSegmentStatus("Couldn't delete this version. Try again.");
 			return;
 		}
 		// Auto-off — the mirror of save's auto-on: deleting the file while
@@ -538,14 +539,14 @@ export function AgentSection({
 						setOpenSegment(open ? null : info.path);
 						setSegmentStatus(null);
 					}}
-					className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+					className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 				>
 					{open ? "Hide text" : "Show text"}
 				</button>
 				{open && (
 					<div className="mt-1 flex flex-col gap-2">
 						<div>
-							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">Source</p>
+							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Source</p>
 							<textarea
 								readOnly
 								value={info.sourceText}
@@ -554,7 +555,7 @@ export function AgentSection({
 							/>
 						</div>
 						<div>
-							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">Override</p>
+							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Override</p>
 							<textarea
 								value={segmentDraft[info.path] ?? info.overrideText ?? ""}
 								onChange={(e) => setSegmentDraft({ ...segmentDraft, [info.path]: e.target.value })}
@@ -576,14 +577,36 @@ export function AgentSection({
 							>
 								Save
 							</button>
-							{fileExists && (
+							{fileExists && confirmDeletePath !== info.path && (
 								<button
 									type="button"
-									onClick={() => void deleteSegment(info.path)}
-									className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-red-500 hover:underline"
+									onClick={() => setConfirmDeletePath(info.path)}
+									className="text-xs text-muted-foreground underline-offset-2 hover:text-miss hover:underline"
 								>
 									Delete
 								</button>
+							)}
+							{fileExists && confirmDeletePath === info.path && (
+								<span className="flex items-center gap-2 text-xs" data-testid="segment-delete-confirm">
+									<span className="text-muted-foreground">Your version goes, and the default instructions are used.</span>
+									<button
+										type="button"
+										onClick={() => {
+											setConfirmDeletePath(null);
+											void deleteSegment(info.path);
+										}}
+										className="text-miss underline-offset-2 hover:underline"
+									>
+										Delete
+									</button>
+									<button
+										type="button"
+										onClick={() => setConfirmDeletePath(null)}
+										className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+									>
+										Keep
+									</button>
+								</span>
 							)}
 							{/* The quiet inline confirmation — next to the
 							    action, not the old path-echoing line at the
@@ -592,7 +615,7 @@ export function AgentSection({
 							    open at a time (openSegment), so one shared
 							    status reads unambiguously. */}
 							{segmentStatus && (
-								<p className="text-xs text-muted-foreground/70" data-testid="segment-status">
+								<p className="text-xs text-muted-foreground" data-testid="segment-status">
 									{segmentStatus}
 								</p>
 							)}
@@ -884,7 +907,7 @@ export function AgentSection({
 
 			<SettingsGroup label="System prompts" testid="group-prompts">
 				{prompts === null ? (
-					<p className="text-xs text-muted-foreground/70">Loading prompt segments…</p>
+					<p className="text-xs text-muted-foreground">Loading prompt segments…</p>
 				) : (
 					<div className="flex flex-col gap-4">
 						{/* The owner's ruled order (2026-09-26): Teacher first,
@@ -893,11 +916,11 @@ export function AgentSection({
 						    order. */}
 						{sectionedSegments(prompts).map((section) => (
 							<div key={section.id} data-testid={`prompt-section-${section.id}`}>
-								<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">
+								<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">
 									{section.label}
 								</p>
 								{section.hint && (
-									<p className="mb-1 text-xs text-muted-foreground/60">{section.hint}</p>
+									<p className="mb-1 text-xs text-muted-foreground">{section.hint}</p>
 								)}
 								<div className="flex flex-col gap-2">
 									{section.segments.map((info) => segmentRow(info))}

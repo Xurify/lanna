@@ -27,6 +27,7 @@ import {
 	MonitorPlayIcon,
 	PlayIcon,
 	RepeatIcon,
+	RouteIcon,
 	XIcon,
 	ZapIcon,
 } from "lucide-react";
@@ -313,12 +314,12 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							Say it faster
 						</Link>
 						<Link href="/curriculum" className="flex items-center gap-1.5 hover:text-foreground">
-							<MapIcon className="size-3.5" />
+							<RouteIcon className="size-3.5" />
 							The whole path
 						</Link>
 						<Link href="/map" className="flex items-center gap-1.5 hover:text-foreground">
 							<MapIcon className="size-3.5" />
-							Knowledge map
+							Skill map
 						</Link>
 					</div>
 				</section>

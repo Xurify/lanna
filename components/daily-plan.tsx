@@ -72,14 +72,14 @@ export function DailyPlan({
 								<span
 									className={cn(
 										"flex size-7 items-center justify-center rounded-full border-2",
-										d.xp > 0 ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground/40",
+										d.xp > 0 ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground",
 										isToday && d.xp === 0 && "border-dashed border-foreground/40",
 									)}
 									title={`${d.day}: ${d.xp} XP`}
 								>
 									<FlameIcon className="size-3.5" />
 								</span>
-								<span className={cn("font-ui text-[10px] uppercase", isToday ? "text-foreground" : "text-muted-foreground")}>{wd}</span>
+								<span className={cn("font-ui text-xs uppercase", isToday ? "text-foreground" : "text-muted-foreground")}>{wd}</span>
 							</div>
 						);
 					})}

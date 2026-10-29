@@ -227,4 +227,7 @@ export interface AuthKeyStatus {
 	/** True when the file holds a value that the environment shadows — the
 	 *  settings page explains why a saved key is not the live one. */
 	shadowedByEnv: boolean;
+	/** When the app last saved this key (ISO time), for a file-held key.
+	 *  Null for env keys and for keys saved before dates were kept. */
+	savedAt?: string | null;
 }

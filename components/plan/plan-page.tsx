@@ -111,7 +111,8 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 				<section className={CARD} data-testid="plan-goal" aria-label="Your goal">
 					<h2 className={H2}>Your goal</h2>
 					<div className="mt-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-						<div className="min-w-0 flex-1">
+						{/* A floor on the text: on a phone the buttons wrap below it instead of squeezing it to a column. */}
+						<div className="min-w-48 flex-1">
 							<p className="font-ui text-2xl font-black text-foreground">
 								<TargetIcon className="mr-2 inline size-6 align-[-3px] text-flame" />
 								{goal.level}

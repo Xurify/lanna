@@ -507,6 +507,28 @@ export interface EstimateOptions {
 	now: Date;
 }
 
+/** One dictionary word the learner is not yet credited with. */
+export interface NextWord {
+	slug: string;
+	lemma: string;
+	gloss: string;
+	cat: string;
+	/** Position in the unified frequency order (1 = commonest). */
+	rank: number;
+}
+
+/** What /milestones and /plan render (built by src/server/milestones.ts). */
+export interface MilestonesReport {
+	facts: LearnerFacts;
+	milestones: MilestoneEstimate[];
+	/** The commonest dictionary words the learner is not credited with. */
+	nextWords: NextWord[];
+	/** The map's can-do goals, by id: title and whether they are done. */
+	goals: Record<string, { title: string; done: boolean; open: boolean }>;
+	guidedHours: Record<Cefr, number>;
+	generatedAt: string;
+}
+
 function addDaysIso(from: Date, days: number): string {
 	return new Date(from.getTime() + Math.round(days) * 86_400_000).toISOString().slice(0, 10);
 }

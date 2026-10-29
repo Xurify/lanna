@@ -36,14 +36,51 @@ function readMap(): Record<string, string> {
  *  leave a 0644 file (secrets) or a truncated JSON (looks like "no keys").
  *  tmp-in-same-dir + rename keeps the swap atomic; chmod BEFORE the
  *  rename so the mode never exists relaxed on the final path. */
-function writeMap(map: Record<string, string>): void {
-	const dir = path.dirname(AUTH_FILE);
+function writeJson(file: string, map: Record<string, string>): void {
+	const dir = path.dirname(file);
 	fs.mkdirSync(dir, { recursive: true });
-	const tmp = path.join(dir, `.auth.json.tmp-${process.pid}`);
+	const tmp = path.join(dir, `.${path.basename(file)}.tmp-${process.pid}`);
 	fs.writeFileSync(tmp, `${JSON.stringify(map, null, "\t")}\n`, { mode: 0o600 });
 	fs.chmodSync(tmp, 0o600); // umask may have relaxed the create mode
-	fs.renameSync(tmp, AUTH_FILE);
+	fs.renameSync(tmp, file);
 }
+
+function writeMap(map: Record<string, string>): void {
+	writeJson(AUTH_FILE, map);
+}
+
+/** When each key was last saved through the app (ISO time, by var name).
+ *  A sidecar next to auth.json, so auth.json keeps its flat var-only shape:
+ *  every string in auth.json is an env var, and a date there would leak
+ *  into the environment. A hand-edited key keeps its last saved date. */
+const SAVED_FILE = path.join(path.dirname(AUTH_FILE), "auth-saved.json");
+
+function readSaved(): Record<string, string> {
+	try {
+		const raw = JSON.parse(fs.readFileSync(SAVED_FILE, "utf-8"));
+		if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+		return Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === "string") as [string, string][]);
+	} catch {
+		return {};
+	}
+}
+
+export const authKeySavedAt = {
+	all(): Record<string, string> {
+		return readSaved();
+	},
+	set(name: string, iso: string): void {
+		const map = readSaved();
+		map[name] = iso;
+		writeJson(SAVED_FILE, map);
+	},
+	delete(name: string): void {
+		const map = readSaved();
+		if (!(name in map)) return;
+		delete map[name];
+		writeJson(SAVED_FILE, map);
+	},
+};
 
 export const authStore: AuthStore = {
 	authVars() {

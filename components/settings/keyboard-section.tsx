@@ -51,6 +51,7 @@ export function KeyboardSection() {
 	const [overrides, setOverrides] = useState<Partial<Record<KeyAction, string>>>({});
 	const [rebinding, setRebinding] = useState<KeyAction | null>(null);
 	const [nonce, setNonce] = useState(0);
+	const [confirmReset, setConfirmReset] = useState(false);
 
 	// localStorage is read post-mount (SSR-safe); `nonce` re-reads after writes.
 	useEffect(() => {
@@ -101,7 +102,7 @@ export function KeyboardSection() {
 				if (!actions.length) return null;
 				return (
 					<div key={scope} data-testid={`kbd-scope-${scope}`}>
-						<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground/70">{label}</p>
+						<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
 						<div className="flex flex-col gap-2">
 							{actions.map((def) => {
 								const effective = overrides[def.id] ?? def.binding;
@@ -120,7 +121,7 @@ export function KeyboardSection() {
 												<button
 													type="button"
 													onClick={() => setRebinding(null)}
-													className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+													className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 												>
 													Cancel
 												</button>
@@ -139,7 +140,7 @@ export function KeyboardSection() {
 															type="button"
 															onClick={() => resetOne(def.id)}
 															data-testid={`kbd-reset-${def.id}`}
-															className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+															className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 														>
 															Reset
 														</button>
@@ -155,15 +156,39 @@ export function KeyboardSection() {
 				);
 			})}
 			<div className="mt-1 flex items-center justify-between">
-				<span className="text-xs text-muted-foreground/70">Stored on this device (lh:keymap) — overrides only.</span>
-				<button
-					type="button"
-					onClick={resetAll}
-					data-testid="kbd-reset-all"
-					className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-				>
-					Reset all to defaults
-				</button>
+				<span className="text-xs text-muted-foreground">Stored on this device (lh:keymap) — overrides only.</span>
+				{confirmReset ? (
+					<span className="flex items-center gap-3 text-xs" data-testid="kbd-reset-confirm">
+						<span className="text-muted-foreground">Reset every shortcut to its default?</span>
+						<button
+							type="button"
+							onClick={() => {
+								setConfirmReset(false);
+								resetAll();
+							}}
+							data-testid="kbd-reset-all-confirm"
+							className="text-foreground underline-offset-2 hover:underline"
+						>
+							Reset all
+						</button>
+						<button
+							type="button"
+							onClick={() => setConfirmReset(false)}
+							className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						>
+							Keep
+						</button>
+					</span>
+				) : (
+					<button
+						type="button"
+						onClick={() => setConfirmReset(true)}
+						data-testid="kbd-reset-all"
+						className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+					>
+						Reset all to defaults
+					</button>
+				)}
 			</div>
 		</>
 	);

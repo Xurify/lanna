@@ -22,9 +22,16 @@
    session lit up when the quiz's ←/→ were pressed). Surfaces carry their
    own hover/active/selected affordances; the dock's keyboard walk uses
    its own ring utilities, unaffected by an outline reset. */
-*:focus,
-*:focus-visible {
+*:focus {
 	outline: none;
+}
+
+/* Keyboard focus ring, only while the keyboard drives focus: KeyboardFocusMode
+   sets data-keyboard on a Tab press and clears it on the next pointer press.
+   Mouse focus stays ring-free; arrow keys alone never light a clicked element. */
+html[data-keyboard] :focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
 }
 
 /* Palette (owner's hexes): main #141414, raised #1C1C1C, edges #434343.
@@ -494,7 +501,10 @@ body {
    - .lh-drag        window-drag region — on a dedicated mask div in
                        home.tsx placed FIRST in the page DOM (the mask
                        resolves by DOM order, not z-index: no-drag subtracts
-                       only regions added earlier in the tree)
+                       only regions added earlier in the tree). The floor
+                       under them all is AppShell's strip: sticky inside
+                       the scrolling <main>, so a scrolled-down page keeps
+                       a grab band (owner bug report, 2026-10-28)
    - .lh-no-drag     carve-out for interactive elements inside a drag band
                        (native interactive elements carve out AUTOMATICALLY —
                        see the auto carve-out rule below; manual use is for

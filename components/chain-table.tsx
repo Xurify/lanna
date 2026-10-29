@@ -257,7 +257,7 @@ export function ChainTableBody({
 						placeholder="Search nodes…"
 						aria-label="Search nodes"
 						spellCheck={false}
-						className="lh-no-drag h-8 w-56 rounded-lg border bg-background pl-8 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
+						className="lh-no-drag h-8 w-36 rounded-lg border bg-background pl-8 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring sm:w-56"
 					/>
 				</div>
 			<button
@@ -280,7 +280,7 @@ export function ChainTableBody({
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				{/* The TOP rule (owner round 5: the table is framed — a line under
 			    the header, a line under the last group, lines between groups). */}
-				<div className="sticky top-0 z-10 flex items-center gap-1 border-b border-border/60 bg-background/80 px-3 py-1.5 text-[11px] uppercase tracking-widest text-muted-foreground/70 backdrop-blur">
+				<div className="sticky top-0 z-10 flex items-center gap-1 border-b border-border/60 bg-background/80 px-3 py-1.5 text-[11px] uppercase tracking-widest text-muted-foreground backdrop-blur">
 					<button
 						type="button"
 						data-testid="sort-name"
@@ -313,6 +313,11 @@ export function ChainTableBody({
 				{groups.length === 0 && (
 					<div data-testid="chain-table-nomatch" className="px-4 pt-3 text-xs text-muted-foreground">
 						No matching chains.
+						{query && (
+							<button type="button" onClick={() => onQuery("")} className="ml-2 underline-offset-2 hover:text-foreground hover:underline">
+								Clear search
+							</button>
+						)}
 					</div>
 				)}
 
@@ -355,8 +360,8 @@ export function ChainTableBody({
 									{open ? <FolderOpenIcon className="size-3.5" /> : <FolderIcon className="size-3.5" />}
 								</span>
 								<span className="min-w-0 flex-1 truncate text-sm font-medium">
-									{group.label ?? <span className="text-muted-foreground/60">unlabeled</span>}
-									{group.kind === "notes" && <span className="ml-2 text-[11px] uppercase tracking-widest text-muted-foreground/60">notes</span>}
+									{group.label ?? <span className="text-muted-foreground">unlabeled</span>}
+									{group.kind === "notes" && <span className="ml-2 text-[11px] uppercase tracking-widest text-muted-foreground">notes</span>}
 								</span>
 								<span className="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
 									{group.nodeIds.length}
@@ -551,7 +556,7 @@ function Expander({ open, onClick, testid, label }: { open: boolean; onClick: ()
 			onClick={onClick}
 			aria-label={label}
 			aria-expanded={open}
-			className="flex h-5 w-3.5 shrink-0 items-center justify-center rounded text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground"
+			className="flex h-5 w-3.5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 		>
 			<ChevronRightIcon className={`size-3.5 transition-transform ${open ? "rotate-90" : ""}`} />
 		</button>

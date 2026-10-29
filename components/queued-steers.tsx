@@ -2,8 +2,9 @@
  * THE QUEUED-STEER INDICATOR (owner spec 2026-10-03): steers sent but not
  * yet drained render as quiet one-liners ABOVE the composer shell —
  * right-aligned to where the shell's corner rounding starts, truncated
- * with an ellipsis, no background, no container, roughly half opacity.
- * Visible but very quiet; layout tunable later.
+ * with an ellipsis, no background, no container, solid muted text (not
+ * faded: faded text fails WCAG AA contrast). Visible but very quiet;
+ * layout tunable later.
  *
  * A line dies the moment its card lands in the transcript: the drain's
  * verbatim message events upsert the real user card by the client-minted
@@ -26,7 +27,7 @@ export function QueuedSteersBody({ steers }: { steers: QueuedSteerLine[] }) {
 				<span
 					key={s.id}
 					title={s.text}
-					className="block max-w-[240px] truncate font-ui text-[11px] text-muted-foreground/60"
+					className="block max-w-[240px] truncate font-ui text-[11px] text-muted-foreground"
 				>
 					{s.text}
 				</span>

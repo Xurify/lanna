@@ -884,7 +884,7 @@ function ClozeRep({
 			autoCapitalize="off"
 			spellCheck={false}
 			className={cn(
-				"rounded-xl border-2 border-border bg-card text-foreground caret-go outline-none transition-colors selection:bg-go/30 placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-go",
+				"rounded-xl border-2 border-border bg-card text-foreground caret-go outline-none transition-colors selection:bg-go/30 placeholder:font-normal placeholder:text-muted-foreground focus:border-go",
 				className,
 			)}
 		/>
@@ -984,7 +984,7 @@ function ClozeRep({
 						    from the practised stage on it hides until the answer, and
 						    asking for it early halves the rep. */}
 						{meaning && !locked ? (
-							<span className="text-muted-foreground/70">Hear it, then pick what it means.</span>
+							<span className="text-muted-foreground">Hear it, then pick what it means.</span>
 						) : hideMeaning && !locked ? (
 							<button
 								type="button"

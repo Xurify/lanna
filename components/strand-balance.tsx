@@ -54,7 +54,7 @@ export function StrandBalance({ balance }: { balance: Balance | null }) {
 				})}
 			</ul>
 			<p className="mt-2 font-prose text-sm text-muted-foreground" data-testid="strand-advice">
-				{strandAdvice(balance)} <span className="text-muted-foreground/70">Minutes are the plan&apos;s estimates per activity.</span>
+				{strandAdvice(balance)} <span className="text-muted-foreground">Minutes are the plan&apos;s estimates per activity.</span>
 			</p>
 		</div>
 	);

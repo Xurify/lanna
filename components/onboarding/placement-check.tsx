@@ -142,7 +142,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 			<div className="flex items-center justify-between gap-4">
 				<p className="font-ui text-sm font-bold text-muted-foreground">
 					{progress.tier && <span className="rounded-md bg-accent px-2 py-0.5 text-foreground">{progress.tier.level}</span>} {progress.tier?.title}
-					<span className="text-muted-foreground/70"> · {unitInfo(item.unit).title}</span>
+					<span className="text-muted-foreground"> · {unitInfo(item.unit).title}</span>
 				</p>
 				<p className="font-ui text-xs tabular-nums text-muted-foreground" data-testid="placement-progress">
 					{progress.asked} answered{progress.floor ? ` · holds ${unitInfo(progress.floor as LessonItem["unit"]).title}` : ""}{progress.ceiling ? ` · edge at ${unitInfo(progress.ceiling as LessonItem["unit"]).title}` : ""}
@@ -311,7 +311,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 			<div className="flex items-center justify-between gap-4">
 				<p className="font-ui text-sm font-bold text-muted-foreground">
 					<span className="rounded-md bg-accent px-2 py-0.5 text-foreground">The edge</span> the tutor's questions
-					{ask && <span className="text-muted-foreground/70"> · {unitInfo(ask.unit).title}</span>}
+					{ask && <span className="text-muted-foreground"> · {unitInfo(ask.unit).title}</span>}
 				</p>
 				<p className="font-ui text-xs tabular-nums text-muted-foreground">
 					{turn ? `${Math.min(turn.turn, PROBE_TURNS)} of up to ${PROBE_TURNS}` : ""}

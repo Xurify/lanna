@@ -12,6 +12,7 @@ import { ActivityProvider } from "@/components/activity-dock";
 import { ServerEventsProvider } from "@/components/server-events";
 import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
+import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
 
 // Chrome = JetBrains Mono, teaching prose = Source Sans 3, titles = CMU
 // Serif (the bundled lh-cmu @font-face in globals.css — no CDN).
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					</SidebarProvider>
 				</AppearanceProvider>
 			</ServerEventsProvider>
+			<KeyboardFocusMode />
 			{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}
 			<UpdateBanner />
 		</body>
