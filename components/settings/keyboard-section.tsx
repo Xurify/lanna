@@ -51,6 +51,7 @@ export function KeyboardSection() {
 	const [overrides, setOverrides] = useState<Partial<Record<KeyAction, string>>>({});
 	const [rebinding, setRebinding] = useState<KeyAction | null>(null);
 	const [nonce, setNonce] = useState(0);
+	const [confirmReset, setConfirmReset] = useState(false);
 
 	// localStorage is read post-mount (SSR-safe); `nonce` re-reads after writes.
 	useEffect(() => {
@@ -156,14 +157,38 @@ export function KeyboardSection() {
 			})}
 			<div className="mt-1 flex items-center justify-between">
 				<span className="text-xs text-muted-foreground/70">Stored on this device (lh:keymap) — overrides only.</span>
-				<button
-					type="button"
-					onClick={resetAll}
-					data-testid="kbd-reset-all"
-					className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-				>
-					Reset all to defaults
-				</button>
+				{confirmReset ? (
+					<span className="flex items-center gap-3 text-xs" data-testid="kbd-reset-confirm">
+						<span className="text-muted-foreground">Reset every shortcut to its default?</span>
+						<button
+							type="button"
+							onClick={() => {
+								setConfirmReset(false);
+								resetAll();
+							}}
+							data-testid="kbd-reset-all-confirm"
+							className="text-foreground underline-offset-2 hover:underline"
+						>
+							Reset all
+						</button>
+						<button
+							type="button"
+							onClick={() => setConfirmReset(false)}
+							className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						>
+							Keep
+						</button>
+					</span>
+				) : (
+					<button
+						type="button"
+						onClick={() => setConfirmReset(true)}
+						data-testid="kbd-reset-all"
+						className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+					>
+						Reset all to defaults
+					</button>
+				)}
 			</div>
 		</>
 	);

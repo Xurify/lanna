@@ -79,7 +79,7 @@ export function DailyPlan({
 								>
 									<FlameIcon className="size-3.5" />
 								</span>
-								<span className={cn("font-ui text-[10px] uppercase", isToday ? "text-foreground" : "text-muted-foreground")}>{wd}</span>
+								<span className={cn("font-ui text-xs uppercase", isToday ? "text-foreground" : "text-muted-foreground")}>{wd}</span>
 							</div>
 						);
 					})}

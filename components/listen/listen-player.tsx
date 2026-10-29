@@ -394,7 +394,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							<p className={cn("font-ui text-lg font-extrabold", current.verdict === "exact" ? "text-go" : "text-miss")} data-testid="listen-verdict">
 								{current.verdict === "exact" ? `Understood · +${LISTEN_XP} XP` : "Not that one"}
 							</p>
-							<button type="button" onClick={advance} className={cn(BUTTON, current.verdict === "exact" ? "bg-go text-go-ink" : "bg-miss text-background")} data-testid="listen-continue" ref={(el) => el?.focus()}>
+							<button type="button" onClick={advance} className={cn(BUTTON, current.verdict === "exact" ? "bg-go text-go-ink" : "bg-miss text-background")} data-testid="listen-continue" autoFocus>
 								{index + 1 >= total ? "Finish" : "Continue"}
 							</button>
 						</>

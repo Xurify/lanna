@@ -349,7 +349,7 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 				{history.map((x, i) => (
 					<div key={i} className="flex flex-col items-center gap-1" title={`${x.wpm} wpm`}>
 						<span className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-gold" : "bg-accent")} style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }} />
-						<span className="font-ui text-[10px] tabular-nums text-muted-foreground">{x.wpm}</span>
+						<span className="font-ui text-xs tabular-nums text-muted-foreground">{x.wpm}</span>
 					</div>
 				))}
 			</div>

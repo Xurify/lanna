@@ -521,7 +521,7 @@ function Meter({ label, have, need, line, binding, dim }: { label: string; have:
 			<span className="flex items-baseline justify-between gap-2">
 				<span className={cn("font-ui text-xs font-bold", binding ? "text-foreground" : "text-muted-foreground")}>
 					{label}
-					{binding && <span className="ml-1.5 rounded bg-foreground/10 px-1 py-px text-[10px] font-bold text-foreground">the gap</span>}
+					{binding && <span className="ml-1.5 rounded bg-foreground/10 px-1 py-px text-xs font-bold text-foreground">the gap</span>}
 				</span>
 				<span className="font-ui text-xs tabular-nums text-muted-foreground">{pct(share)}</span>
 			</span>

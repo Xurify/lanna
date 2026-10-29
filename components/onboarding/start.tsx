@@ -135,7 +135,9 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 		if (step === 4) return;
 		const onKey = (e: KeyboardEvent) => {
 			const t = e.target as HTMLElement | null;
-			if (e.key !== "Enter" || (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA"))) return;
+			// A focused control keeps its own Enter (a button clicks, a radio picks):
+			// the window must not also advance the wizard.
+			if (e.key !== "Enter" || (t && t.closest("input,select,textarea,button,[role=radio],[role=checkbox]"))) return;
 			e.preventDefault();
 			void next();
 		};
@@ -188,6 +190,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 	const skipAll = async () => {
 		// Skipping still records that setup was seen, with sane defaults.
 		if (await fetch(`/api/progress?tz=${tz}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: { onboarded: true } }) }).then((r) => r.ok).catch(() => false)) router.push("/");
+		else setError("Couldn't skip setup. Try again.");
 	};
 
 	const loadDrill = async (recheck: boolean) => {

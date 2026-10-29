@@ -31,6 +31,7 @@ export function LanguageSwitcher() {
 	const [profile, setProfile] = useState<ProfileInfo | null>(null);
 	const [counts, setCounts] = useState<Counts | null>(null);
 	const [note, setNote] = useState<string | null>(null);
+	const [pending, setPending] = useState<{ id: string; label: string } | null>(null);
 
 	const refresh = useCallback(() => {
 		void fetch("/api/profile")
@@ -47,9 +48,17 @@ export function LanguageSwitcher() {
 		refresh();
 	}, [pathname, refresh]);
 
-	const choose = async (id: string, label: string) => {
+	// Switching restarts the app, so the choice waits for an inline confirm
+	// (custom UI, no native confirm dialog).
+	const choose = (id: string, label: string) => {
 		if (!profile || id === profile.selected) return;
-		if (!window.confirm(`Switch to ${label}? LangHarness restarts with the ${label} profile; your other language's sessions stay where they are.`)) return;
+		setPending({ id, label });
+	};
+
+	const confirmSwitch = async () => {
+		if (!pending) return;
+		const { id, label } = pending;
+		setPending(null);
 		const res = await fetch("/api/profile", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
@@ -59,7 +68,7 @@ export function LanguageSwitcher() {
 		setProfile(next);
 		if (!next.restartRequired) return;
 		if (window.lh?.relaunch) window.lh.relaunch();
-		else setNote(`Restart the server to switch to ${label}.`);
+		else setNote(`Restart LangHarness to switch to ${label}.`);
 	};
 
 	const reviewDue = counts ? counts.due + counts.learning : 0;
@@ -99,6 +108,30 @@ export function LanguageSwitcher() {
 					<div className="h-9 animate-pulse rounded-xl bg-card" aria-hidden />
 				)}
 			</div>
+			{pending && (
+				<div role="group" aria-label={`Switch to ${pending.label}`} data-testid="profile-confirm" className="flex flex-col gap-2 rounded-xl bg-card p-3">
+					<p className="text-xs text-muted-foreground">
+						Switch to {pending.label}? LangHarness restarts with the {pending.label} profile. Your other language&apos;s sessions stay where they are.
+					</p>
+					<div className="flex items-center justify-end gap-3">
+						<button
+							type="button"
+							onClick={() => setPending(null)}
+							className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={() => void confirmSwitch()}
+							data-testid="profile-confirm-switch"
+							className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+						>
+							Switch
+						</button>
+					</div>
+				</div>
+			)}
 			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
 			<nav className="flex flex-col gap-0.5" aria-label="Main">
 				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />} tint="text-gold">

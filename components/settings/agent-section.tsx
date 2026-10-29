@@ -316,6 +316,7 @@ export function AgentSection({
 	const [openSegment, setOpenSegment] = useState<string | null>(null);
 	const [segmentDraft, setSegmentDraft] = useState<Record<string, string>>({});
 	const [segmentStatus, setSegmentStatus] = useState<string | null>(null);
+	const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(null);
 	/** One open dropdown for the whole section: which slot (or the search
 	 *  row), which kind. */
 	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | "search"; kind: "model" | "thinking" | "engine" } | null>(null);
@@ -458,7 +459,7 @@ export function AgentSection({
 		setSegmentStatus(null);
 		const res = await fetch(`/api/settings/prompts/${path}`, { method: "DELETE" });
 		if (!res.ok) {
-			setSegmentStatus(`Delete failed: ${res.status}`);
+			setSegmentStatus("Couldn't delete this version. Try again.");
 			return;
 		}
 		// Auto-off — the mirror of save's auto-on: deleting the file while
@@ -576,14 +577,36 @@ export function AgentSection({
 							>
 								Save
 							</button>
-							{fileExists && (
+							{fileExists && confirmDeletePath !== info.path && (
 								<button
 									type="button"
-									onClick={() => void deleteSegment(info.path)}
-									className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-red-500 hover:underline"
+									onClick={() => setConfirmDeletePath(info.path)}
+									className="text-xs text-muted-foreground/70 underline-offset-2 hover:text-miss hover:underline"
 								>
 									Delete
 								</button>
+							)}
+							{fileExists && confirmDeletePath === info.path && (
+								<span className="flex items-center gap-2 text-xs" data-testid="segment-delete-confirm">
+									<span className="text-muted-foreground">Your version goes, and the default instructions are used.</span>
+									<button
+										type="button"
+										onClick={() => {
+											setConfirmDeletePath(null);
+											void deleteSegment(info.path);
+										}}
+										className="text-miss underline-offset-2 hover:underline"
+									>
+										Delete
+									</button>
+									<button
+										type="button"
+										onClick={() => setConfirmDeletePath(null)}
+										className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+									>
+										Keep
+									</button>
+								</span>
 							)}
 							{/* The quiet inline confirmation — next to the
 							    action, not the old path-echoing line at the

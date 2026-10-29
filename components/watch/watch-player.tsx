@@ -1109,7 +1109,7 @@ function Ctl({ onClick, label, keyName, icon, active, disabled, testId }: { onCl
 		>
 			{icon}
 			<span className="hidden sm:inline">{label}</span>
-			<kbd className="hidden rounded border bg-background px-1 font-ui text-[10px] font-bold text-muted-foreground lg:inline">{keyName}</kbd>
+			<kbd className="hidden rounded border bg-background px-1 font-ui text-xs font-bold text-muted-foreground lg:inline">{keyName}</kbd>
 		</button>
 	);
 }

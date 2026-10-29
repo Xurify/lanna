@@ -257,7 +257,7 @@ export function ChainTableBody({
 						placeholder="Search nodes…"
 						aria-label="Search nodes"
 						spellCheck={false}
-						className="lh-no-drag h-8 w-56 rounded-lg border bg-background pl-8 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
+						className="lh-no-drag h-8 w-36 rounded-lg border bg-background pl-8 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:border-ring sm:w-56"
 					/>
 				</div>
 			<button
@@ -313,6 +313,11 @@ export function ChainTableBody({
 				{groups.length === 0 && (
 					<div data-testid="chain-table-nomatch" className="px-4 pt-3 text-xs text-muted-foreground">
 						No matching chains.
+						{query && (
+							<button type="button" onClick={() => onQuery("")} className="ml-2 underline-offset-2 hover:text-foreground hover:underline">
+								Clear search
+							</button>
+						)}
 					</div>
 				)}
 

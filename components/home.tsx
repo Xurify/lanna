@@ -250,6 +250,7 @@ export function Home({
 				>
 					<textarea
 						ref={topicInputRef}
+						aria-label="What do you want to learn?"
 						value={topic}
 						onChange={(e) => {
 							topicRef.current = e.target.value;
