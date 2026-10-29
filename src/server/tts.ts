@@ -172,6 +172,10 @@ async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Buffer |
 	return Buffer.from(await res.arrayBuffer());
 }
 
+/** The library's default pace (rate 1.0) sounds slower than native Slovak;
+ *  +15% brings it up to a little slower than native. */
+const EDGE_RATE = "+15%";
+
 async function edge(req: TtsRequest, lang: LanguageInfo): Promise<Buffer | null> {
 	const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
 	const male = req.voice === "male" || (req.voice !== "female" && req.gender === "male");
@@ -180,7 +184,7 @@ async function edge(req: TtsRequest, lang: LanguageInfo): Promise<Buffer | null>
 	const tts = new MsEdgeTTS();
 	try {
 		await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-		const { audioStream } = tts.toStream(escapeXml(req.text));
+		const { audioStream } = tts.toStream(escapeXml(req.text), { rate: EDGE_RATE });
 		const chunks: Buffer[] = [];
 		await new Promise<void>((resolve, reject) => {
 			const timer = setTimeout(() => reject(new Error("Edge TTS timed out")), 20_000);
