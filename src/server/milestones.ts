@@ -49,6 +49,8 @@ import {
 	type LearnerFacts,
 	type MilestoneDef,
 	type MilestoneEstimate,
+	type MilestonesReport,
+	type NextWord,
 	type SpeedSample,
 	type TrendPoint,
 } from "../core/milestones.ts";
@@ -287,25 +289,7 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 
 // ─── The report ─────────────────────────────────────────────────────────────
 
-export interface NextWord {
-	slug: string;
-	lemma: string;
-	gloss: string;
-	cat: string;
-	/** Position in the unified frequency order (1 = commonest). */
-	rank: number;
-}
-
-export interface MilestonesReport {
-	facts: LearnerFacts;
-	milestones: MilestoneEstimate[];
-	/** The commonest dictionary words the learner is not credited with. */
-	nextWords: NextWord[];
-	/** The map's can-do goals, by id: title and whether they are done. */
-	goals: Record<string, { title: string; done: boolean; open: boolean }>;
-	guidedHours: Record<Cefr, number>;
-	generatedAt: string;
-}
+export type { MilestonesReport, NextWord };
 
 export const NEXT_WORDS = 24;
 

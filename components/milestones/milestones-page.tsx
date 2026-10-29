@@ -48,8 +48,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate } from "@/src/core";
-import type { MilestonesReport, NextWord } from "@/src/server/milestones";
+import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 	"monitor-play": MonitorPlayIcon,
@@ -408,9 +407,10 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 					</div>
 				);
 			})()}
-			<figcaption className="mt-1 font-ui text-xs text-muted-foreground">
+			{/* The legend describes the chart only; phones read the list, which states its own pace lines. */}
+			<figcaption className="mt-1 hidden font-ui text-xs text-muted-foreground sm:block">
 				Filled dot: at your planned minutes.{" "}
-				{paceKnown ? "Hollow dot on the dashed tail: at your real pace of the last two weeks." : "Your real pace appears here once seven of the last fourteen days have study in them."} Hover a row for the full name and details.
+				{paceKnown ? "Hollow dot on the dashed tail: at your real pace of the last two weeks." : "Your real pace appears here once seven of the last fourteen days have study in them."} Hover or tab to a row for the full name and details.
 			</figcaption>
 		</figure>
 	);
