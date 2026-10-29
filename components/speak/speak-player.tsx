@@ -65,6 +65,8 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 	const [sending, setSending] = useState(false);
 	const [listening, setListening] = useState(false);
 	const [hearing, setHearing] = useState(false);
+	// True while the captured line is sent (the tutor answers): drives "Heard" for screen readers.
+	const [heard, setHeard] = useState(false);
 	const [level, setLevel] = useState(0);
 	const [meaning, setMeaning] = useState(false);
 	const [typing, setTyping] = useState(false);
@@ -218,6 +220,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 					setError("Nothing heard. Say it once more, a little louder.");
 					return;
 				}
+				setHeard(true);
 				// Sound by sound, when Azure is set: what was said, against the
 				// words speech-to-text made of it. The transcript engine alone
 				// cannot score free speech (nothing to compare with).
@@ -228,6 +231,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 				setError(err instanceof Error ? err.message : String(err));
 			} finally {
 				setHearing(false);
+				setHeard(false);
 				setLevel(0);
 			}
 			return;
@@ -368,6 +372,9 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 
 			{/* The bottom bar: the mic (or the keyboard), what it hears, Koniec. */}
 			<div className={cn("border-t border-border", listening && "bg-xp/5")}>
+				<p role="status" aria-live="polite" className="sr-only">
+					{listening ? "Listening" : heard ? "Heard" : hearing ? "Hearing you" : ""}
+				</p>
 				<div className={cn(COLUMN, "flex min-h-24 flex-col gap-3 py-4")}>
 					{typing || !canMic ? (
 						<form
@@ -449,7 +456,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 								<SpeedToggle /> tutor speed
 							</span>
 						)}
-						<button type="button" onClick={() => void finish()} disabled={counts.learner === 0 || sending || phase !== "scene"} className={cn(SECONDARY, "h-10 px-4 text-sm")} data-testid="speak-end">
+						<button type="button" onClick={() => void finish()} disabled={counts.learner === 0 || sending || phase !== "scene"} className={cn(SECONDARY, "h-11 px-4 text-sm")} data-testid="speak-end">
 							Koniec · get my corrections
 						</button>
 					</div>

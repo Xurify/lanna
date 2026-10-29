@@ -29,6 +29,7 @@ const PROPS = {
 	searchInputRef: ref,
 	fileInputRef: ref,
 	onImportFiles: () => {},
+	onOpenImport: () => {},
 	settings: {} as GraphRenderSettings,
 	changeSettings: () => {},
 	onOpenChains: () => {},

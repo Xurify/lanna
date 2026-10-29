@@ -211,7 +211,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 							placeholder={modelReady ? "I want to be able to…" : "Set a model in Settings → Models to add your own"}
 							disabled={!modelReady || adding}
 							aria-label="Your milestone"
-							className="min-w-0 flex-1 rounded-xl border-2 border-border bg-card px-4 py-2.5 font-prose text-base text-foreground outline-none placeholder:text-muted-foreground/70 focus:border-go disabled:opacity-60"
+							className="min-w-0 flex-1 rounded-xl border-2 border-border bg-card px-4 py-2.5 font-prose text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-go disabled:opacity-60"
 							data-testid="milestone-input"
 						/>
 						<button type="submit" disabled={!modelReady || adding || text.trim().length < 3} className="inline-flex h-12 items-center gap-2 rounded-xl bg-go px-5 font-ui text-base font-extrabold text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100" data-testid="milestone-submit">
@@ -280,7 +280,7 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 					</Link>
 				</p>
 			</div>
-			<dl className="mt-3 grid gap-3 sm:grid-cols-4">
+			<dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
 				<Fact label="Level" value={facts.level} line={`where the map has you${facts.placed ? " (placement set the start; lessons move it)" : ""} · ${Math.round(facts.levelProgress * 100)}% through it`} />
 				<Fact label="Words" value={n(facts.vocabulary)} line={`${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid) · ${n(facts.assumed)} more ${facts.words.basis === "measured" ? `from your word check${facts.words.measuredAt ? ` on ${facts.words.measuredAt.slice(0, 10)}` : ""}${facts.words.reliable === false ? " (generous: pseudowords were ticked)" : ""}` : `credited for the ${facts.level === "A1" ? "part of A1" : `levels before ${facts.level} and the part of it`} behind you; a word check (re-check) measures it`}`} />
 				<Fact label="Speed" value={`${facts.speed.wpm} w/min`} line={speedLine} dim={facts.speed.basis === "level"} />
@@ -332,7 +332,7 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 	if (maxDays <= 800) for (let h = 1; h * 182.6 <= maxDays; h += 2) ticks.push({ d: h * 182.6, label: `${Math.floor(h / 2) === 0 ? "" : ""}${h * 6} mo` });
 	return (
 		<figure className="relative mt-6" data-testid="milestone-timeline" onMouseLeave={() => setTip(null)}>
-			<svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="When each milestone lands at your planned pace and at your real pace">
+			<svg viewBox={`0 0 ${W} ${H}`} className="hidden w-full sm:block" role="img" aria-label="When each milestone lands at your planned pace and at your real pace">
 				{ticks.map((t) => (
 					<g key={t.label}>
 						<line x1={x(t.d)} x2={x(t.d)} y1={top} y2={axisY} stroke="var(--border)" strokeWidth={1} />
@@ -369,6 +369,23 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 					);
 				})}
 			</svg>
+			{/* Phones: the same rows as a list, since the SVG labels are too small below sm. */}
+			<ol className="space-y-2 sm:hidden" aria-label="When each milestone lands at your planned pace and at your real pace">
+				{dated.map((m) => {
+					const reached = m.status === "reached";
+					const d = m.eta.daysPlanned ?? 0;
+					const level = m.def.cefr?.split(":")[0];
+					return (
+						<li key={m.def.id} className="rounded-xl border bg-card px-3 py-2" data-testid={`timeline-list-${m.def.id}`}>
+							<p className="font-ui text-sm font-bold text-foreground">{m.def.title}</p>
+							{level && <p className="font-ui text-xs text-muted-foreground">Target: {level}</p>}
+							<p className="mt-1 font-ui text-xs text-foreground">{reached ? "Within reach now." : `At your plan: ${when(d, m.eta.planned)}`}</p>
+							{!reached && <p className="font-ui text-xs text-muted-foreground">{!paceKnown ? "Real pace: not enough data yet." : m.eta.daysPace === null ? "Real pace: no date yet." : `At your real pace: ${when(m.eta.daysPace, m.eta.pace)}`}</p>}
+							{!reached && m.binding !== "none" && <p className="font-ui text-xs text-muted-foreground">{m.binding === "speed" ? "Speed is the longer road." : m.binding === "words" ? "Words are the longer road." : ""}</p>}
+						</li>
+					);
+				})}
+			</ol>
 			{(() => {
 				const i = dated.findIndex((m) => m.def.id === tip);
 				const m = dated[i];

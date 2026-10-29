@@ -63,7 +63,7 @@ export function UnitBadge({
 						: done
 							? "bg-gold/15 text-gold"
 							: locked
-								? "bg-accent/60 text-muted-foreground/50"
+								? "bg-accent/60 text-muted-foreground"
 								: progress > 0
 									? "bg-card text-foreground"
 									: "bg-accent text-foreground/70",

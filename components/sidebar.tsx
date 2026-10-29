@@ -13,6 +13,7 @@ import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
+import { PhoneNav, isPhoneNavPath } from "@/components/phone-nav";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -351,7 +352,7 @@ export function SessionRow({
 			    was left of the name; right-aligned keeps the titles flush with
 			    the teaching rows and reads cleaner. */}
 			{(chat.kind ?? "teach") === "practice" && (
-				<DumbbellIcon className="size-3.5 shrink-0 text-muted-foreground/70" aria-label="Practice session" />
+				<DumbbellIcon className="size-3.5 shrink-0 text-muted-foreground" aria-label="Practice session" />
 			)}
 		</button>
 	);
@@ -803,9 +804,9 @@ function SessionsSidebar() {
 							}}
 							placeholder="Search…"
 							aria-label="Search sessions"
-							className="h-8 rounded-lg border-0 bg-card pl-8 shadow-none text-sm placeholder:text-muted-foreground/60"
+							className="h-8 rounded-lg border-0 bg-card pl-8 shadow-none text-sm placeholder:text-muted-foreground"
 						/>
-						<SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
+						<SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
 					</span>
 					</Hint>
 				</div>
@@ -974,12 +975,16 @@ function SessionsSidebar() {
 
 /** The app frame: sidebar inline + content. Rendered once in the root layout. */
 export function AppShell({ children }: { children: React.ReactNode }) {
+	const pathname = usePathname();
+	const phoneNav = isPhoneNavPath(pathname);
 	return (
 		<SettingsDialogProvider>
 			<SessionsSidebar />
 			{/* The frame is one viewport tall; the content scrolls inside it so
-			    the sidebar stays put. */}
-			<main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+			    the sidebar stays put. On phones the four main pages leave room
+			    for the bottom nav (PhoneNav) at their end. */}
+			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-16 md:pb-0")}>{children}</main>
+			<PhoneNav pathname={pathname} />
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
 			    matters for the events it dispatches, never for DOM priority. */}

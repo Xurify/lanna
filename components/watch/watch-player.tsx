@@ -387,7 +387,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
-						className="h-12 min-w-0 flex-1 rounded-xl border-2 bg-card px-4 font-ui text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-go"
+						className="h-12 min-w-0 flex-1 rounded-xl border-2 bg-card px-4 font-ui text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-go"
 						data-testid="watch-url"
 					/>
 					<button type="submit" disabled={!valid || state?.canPrepare === false} className={PRIMARY} data-testid="watch-prepare">
@@ -977,7 +977,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 					{/* Both subtitles */}
 					<div className="mt-4 min-h-[7.5rem]" data-word-column data-testid="watch-subtitles">
 						{step && prev && (
-							<p className="mb-1 truncate font-prose text-sm text-muted-foreground/70" lang="sk" aria-hidden="true">
+							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang="sk" aria-hidden="true">
 								{prev.sk}
 							</p>
 						)}

@@ -785,7 +785,7 @@ function QuestionDockForm({
 						<span
 							className={cn(
 								"shrink-0 text-[11px] font-extrabold uppercase tracking-wider",
-								sel.dontKnow ? "text-muted-foreground/50" : "text-muted-foreground",
+								sel.dontKnow ? "text-muted-foreground" : "text-muted-foreground",
 							)}
 						>
 							Confidence
@@ -848,7 +848,7 @@ function QuestionDockForm({
 							data-testid="confidence-value"
 							className={cn(
 								"w-9 shrink-0 text-right font-mono text-sm tabular-nums",
-								sel.dontKnow && "text-muted-foreground/50",
+								sel.dontKnow && "text-muted-foreground",
 							)}
 						>
 							{sel.dontKnow ? "—" : `${CONFIDENCE_STOPS[confIdx]}%`}
@@ -965,7 +965,7 @@ function QuestionDockForm({
 							placeholder="Why this answer? Whatever comes to mind."
 							rows={1}
 							className={cn(
-								"field-sizing-content lh-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground/70",
+								"field-sizing-content lh-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
 								// Phase-scaled prominence: teaching invites depth,
 								// probing stays quick.
 								phase === "teach" ? "min-h-[4.5rem]" : "min-h-10",

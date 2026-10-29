@@ -102,7 +102,9 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	return (
 		<div
 			data-testid="diacritic-bar"
-			className={cn("pointer-events-auto flex items-center justify-end gap-0.5 px-1 pb-1 font-ui", className)}
+			// On a phone the strip is wider than the card: it starts at the left
+			// and scrolls sideways (justify-end would push the first letters off-screen).
+			className={cn("pointer-events-auto flex items-center justify-start gap-0.5 overflow-x-auto px-1 pb-1 font-ui sm:justify-end", className)}
 			aria-label={`${lang.english} letters`}
 		>
 			{open &&
@@ -114,7 +116,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 						onMouseDown={(e) => e.preventDefault()}
 						onClick={(e) => type(letter, e.shiftKey)}
 						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
-						className="min-w-6 rounded-sm px-1 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="min-w-6 shrink-0 rounded-sm px-1 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					>
 						{letter}
 					</button>
@@ -126,7 +128,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 				onClick={toggle}
 				aria-label={open ? "Hide letter bar" : "Show letter bar"}
 				title={open ? "Hide letter bar" : `${lang.english} letters`}
-				className="ml-0.5 flex items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground"
+				className="ml-0.5 flex shrink-0 items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 			>
 				{open ? <ChevronDownIcon className="size-3" /> : <>{lang.specialLetters.slice(0, 3).join(" ")} <ChevronUpIcon className="size-3" /></>}
 			</button>

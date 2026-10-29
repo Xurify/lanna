@@ -72,7 +72,7 @@ export function DailyPlan({
 								<span
 									className={cn(
 										"flex size-7 items-center justify-center rounded-full border-2",
-										d.xp > 0 ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground/40",
+										d.xp > 0 ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground",
 										isToday && d.xp === 0 && "border-dashed border-foreground/40",
 									)}
 									title={`${d.day}: ${d.xp} XP`}

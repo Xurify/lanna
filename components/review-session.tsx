@@ -475,7 +475,7 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{prompt && mode === "type" && !verdict && <DiacriticBar className="mt-2 justify-center" />}
+					{prompt && mode === "type" && !verdict && <DiacriticBar className="mt-2 sm:justify-center" />}
 
 					{status && status.leeches.length > 0 && (
 						<div className="mt-10" data-testid="review-leeches">

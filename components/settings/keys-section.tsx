@@ -144,6 +144,12 @@ function KeyTableRow({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	// The pasted key stays masked until the owner asks to see it (shoulder
+	// surfing, screen shares). Folding the editor hides it again.
+	const [reveal, setReveal] = useState(false);
+	useEffect(() => {
+		if (!expanded) setReveal(false);
+	}, [expanded]);
 
 	async function save() {
 		if (!value.trim() || busy) return;
@@ -165,7 +171,7 @@ function KeyTableRow({
 				<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`${testid}-editor`}>
 					<span className="shrink-0 font-ui text-xs text-foreground">{label}</span>
 					<input
-						type="text"
+						type={reveal ? "text" : "password"}
 						value={value}
 						onChange={(e) => setValue(e.target.value)}
 						onKeyDown={(e) => {
@@ -173,11 +179,24 @@ function KeyTableRow({
 						}}
 						placeholder="Paste key…"
 						aria-label={`${label} key`}
+						autoComplete="off"
+						spellCheck={false}
 						data-testid={`${testid}-input`}
 						disabled={busy}
 						autoFocus
-						className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50"
+						className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-muted-foreground/50"
 					/>
+					<button
+						type="button"
+						onClick={() => setReveal((r) => !r)}
+						aria-pressed={reveal}
+						aria-label={`${reveal ? "Hide" : "Show"} ${label} key`}
+						data-testid={`${testid}-reveal`}
+						disabled={busy}
+						className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+					>
+						{reveal ? "Hide" : "Show"}
+					</button>
 					<button
 						type="button"
 						onClick={() => void save()}
@@ -195,7 +214,7 @@ function KeyTableRow({
 						}}
 						disabled={busy}
 						data-testid={`${testid}-cancel`}
-						className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+						className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 					>
 						Cancel
 					</button>
@@ -205,7 +224,7 @@ function KeyTableRow({
 							onClick={() => setConfirmDelete(true)}
 							disabled={busy}
 							data-testid={`${testid}-delete`}
-							className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-miss hover:underline"
+							className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-miss hover:underline"
 						>
 							Delete
 						</button>
@@ -554,7 +573,7 @@ function AddProviderEditor({
 				aria-label={`${provider.label} key`}
 				data-testid={`key-${provider.id}-input`}
 				autoFocus
-				className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-muted-foreground/50"
+				className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-muted-foreground/50"
 			/>
 			<button
 				type="button"
@@ -569,7 +588,7 @@ function AddProviderEditor({
 				type="button"
 				onClick={onCancel}
 				data-testid={`key-${provider.id}-cancel`}
-				className="shrink-0 text-xs text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+				className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 			>
 				Cancel
 			</button>

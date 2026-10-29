@@ -66,7 +66,7 @@
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { NotesImportErrors, useNotesImport } from "@/components/notes-import.tsx";
 import Link from "next/link";
-import { FileTextIcon, ListTreeIcon, Loader2Icon, SearchIcon, SettingsIcon, UploadIcon, WaypointsIcon } from "lucide-react";
+import { FileTextIcon, ListTreeIcon, Loader2Icon, SearchIcon, SettingsIcon, UploadIcon, WaypointsIcon, XIcon } from "lucide-react";
 import { incrementalLayout, propositionSessionHref, type GraphCostSummary, type GraphNode, type GraphSnapshot } from "@/src/core";
 import { planCostLabel } from "@/components/usage-format";
 import { GraphCanvasRenderer, type GraphRenderSettings } from "./graph-canvas.ts";
@@ -850,10 +850,12 @@ export function GraphChromeRow({
 	query,
 	onQuery,
 	noMatch,
+	matchCount,
 	importing,
 	searchInputRef,
 	fileInputRef,
 	onImportFiles,
+	onOpenImport,
 	settings,
 	changeSettings,
 	onOpenChains,
@@ -864,10 +866,14 @@ export function GraphChromeRow({
 	/** The search panel's "No matching nodes." note (computed by the
 	 *  wrapper — it owns visibleIds + the snapshot). */
 	noMatch: boolean;
+	/** Matching node count while a query is set (undefined when none). */
+	matchCount?: number;
 	importing: boolean;
 	searchInputRef: React.RefObject<HTMLInputElement | null>;
 	fileInputRef: React.RefObject<HTMLInputElement | null>;
 	onImportFiles: (files: FileList | null) => void;
+	/** Opens the file picker: the chrome button and the empty state share it. */
+	onOpenImport: () => void;
 	settings: GraphRenderSettings;
 	changeSettings: (update: (cur: RenderSettings) => RenderSettings) => void;
 	/** Opens the chain table overlay (the chains-overlay plan,
@@ -877,7 +883,7 @@ export function GraphChromeRow({
 	return (
 		<>
 			{!isEmpty && (
-				<div className="graph-chrome-fade-in w-56 min-w-0 shrink rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur">
+				<div className="graph-chrome-fade-in w-40 min-w-0 shrink rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur sm:w-56">
 					<Hint
 						// ⌘F focuses node search (surface-scoped registry action).
 						label="Search nodes"
@@ -893,10 +899,28 @@ export function GraphChromeRow({
 							placeholder="Search nodes…"
 							aria-label="Search nodes"
 							spellCheck={false}
-							className="h-7 w-full rounded-lg border bg-background pl-8 text-xs outline-none placeholder:text-muted-foreground focus:border-ring"
+							className="h-9 w-full rounded-lg border bg-background pl-8 pr-8 text-xs outline-none placeholder:text-muted-foreground focus:border-ring sm:h-7"
 						/>
+						{query !== "" && (
+							<button
+								type="button"
+								aria-label="Clear search"
+								onClick={() => {
+									onQuery("");
+									searchInputRef.current?.focus();
+								}}
+								className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							>
+								<XIcon className="size-3.5" />
+							</button>
+						)}
 					</div>
 					</Hint>
+					{query.trim() !== "" && matchCount !== undefined && (
+						<div className="px-1.5 pt-1 text-[11px] text-muted-foreground">
+							{matchCount === 0 ? "No matches" : `${matchCount} ${matchCount === 1 ? "match" : "matches"}`}
+						</div>
+					)}
 					{noMatch && (
 						<div className="px-1.5 pt-1 text-[11px] text-muted-foreground">No matching nodes.</div>
 					)}
@@ -911,7 +935,7 @@ export function GraphChromeRow({
 							type="button"
 							onClick={onOpenChains}
 							data-testid="open-chain-table"
-							className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent"
+							className="flex h-9 items-center sm:h-7 gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent"
 						>
 							<ListTreeIcon className="size-3" />
 							Chains
@@ -943,10 +967,10 @@ export function GraphChromeRow({
 					<button
 						type="button"
 						disabled={importing}
-						onClick={() => fileInputRef.current?.click()}
+						onClick={onOpenImport}
 						data-testid="import-notes"
-					className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
-				>
+						className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:h-7"
+					>
 						<UploadIcon className="size-3" />
 						{importing ? "Importing…" : "Import notes…"}
 					</button>
@@ -1499,6 +1523,9 @@ export function GraphView({
 		card.style.visibility = "visible";
 	}, [selected]);
 
+	// The one import handler: the chrome button and the empty-state button both use it.
+	const openImportPicker = () => fileInputRef.current?.click();
+
 	return (
 		<div className="relative h-full w-full">
 			{isEmpty ? (
@@ -1510,6 +1537,16 @@ export function GraphView({
 						<p className="max-w-sm text-sm">
 							Start a session or import notes to build your graph.
 						</p>
+						<button
+							type="button"
+							onClick={openImportPicker}
+							disabled={importing}
+							data-testid="empty-import-notes"
+							className="mt-1 flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+						>
+							<UploadIcon className="size-4" />
+							Import notes
+						</button>
 					</div>
 				</div>
 			) : (
@@ -1605,7 +1642,8 @@ export function GraphView({
 			    the settings/coverage dropdowns (owner report), still hoverable
 			    and clickable on top of them. The row is a stacking context, so
 			    its open dropdowns cover the number; clicks land on the panel. */}
-			<div className="relative z-20 flex min-w-0 items-start gap-2">
+			{/* Phones (below sm) the row wraps inside the canvas; desktop stays one line. */}
+			<div className="relative z-20 flex min-w-0 flex-wrap items-start justify-end gap-2 sm:flex-nowrap sm:justify-start">
 				{/* The actions row (empty-graph chrome wave, owner 2026-09-25):
 				    Import Notes always — the empty graph's entry point; search +
 				    settings only when nodes exist, fading in on their mount. */}
@@ -1614,10 +1652,12 @@ export function GraphView({
 					query={query}
 					onQuery={setQuery}
 					noMatch={snapshot !== null && visibleIds.size === 0 && query.trim() !== ""}
+					matchCount={snapshot !== null && query.trim() !== "" ? visibleIds.size : undefined}
 					importing={importing}
 					searchInputRef={searchInputRef}
 					fileInputRef={fileInputRef}
 					onImportFiles={onImportFiles}
+					onOpenImport={openImportPicker}
 					settings={settings}
 					changeSettings={changeSettings}
 					onOpenChains={() => setChainsOpen(true)}

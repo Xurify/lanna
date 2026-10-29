@@ -396,6 +396,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	const [reps, setReps] = useState<FastRep[]>([]);
 	const [phase, setPhase] = useState<FastPhase>(initial ? "ready" : "loading");
 	const [elapsed, setElapsed] = useState(0);
+	const [paused, setPaused] = useState(false);
 	const [level, setLevel] = useState(0);
 	const [outcome, setOutcome] = useState<FastOutcome | null>(null);
 	// The mic check reads browser globals: decided after mount so the
@@ -409,6 +410,9 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	}, [stt]);
 	const startedAt = useRef(Date.now());
 	const passStart = useRef(0);
+	// Pause: time spent paused is kept out of the pass; pausedAt is 0 when running.
+	const pausedAt = useRef(0);
+	const pausedMs = useRef(0);
 	const recorder = useRef<Recorder | null>(null);
 	const finishing = useRef(false);
 
@@ -448,12 +452,12 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		if (item && phase === "ready" && pass === 0) void speak(item.sentence).catch(() => {});
 	}, [item, phase, pass]);
 
-	// The countdown.
+	// The countdown (frozen while paused).
 	useEffect(() => {
-		if (phase !== "running") return;
-		const t = setInterval(() => setElapsed(Date.now() - passStart.current), 50);
+		if (phase !== "running" || paused) return;
+		const t = setInterval(() => setElapsed((pausedAt.current || Date.now()) - passStart.current - pausedMs.current), 50);
 		return () => clearInterval(t);
-	}, [phase]);
+	}, [phase, paused]);
 
 	const finish = useCallback(
 		async (all: FastRep[]) => {
@@ -479,7 +483,9 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	const endPass = useCallback(
 		async (auto = false) => {
 			if (!item || phase !== "running") return;
-			const ms = Date.now() - passStart.current;
+			const ms = (pausedAt.current || Date.now()) - passStart.current - pausedMs.current;
+			pausedAt.current = 0;
+			setPaused(false);
 			setPhase("between");
 			setElapsed(ms);
 			const inWindow = ms <= win;
@@ -540,9 +546,26 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			}
 		}
 		passStart.current = Date.now();
+		pausedAt.current = 0;
+		pausedMs.current = 0;
+		setPaused(false);
 		setElapsed(0);
 		setPhase("running");
 	}, [item, phase, useMic, win, pron]);
+
+	/** Pause or resume the running pass (mic off only: the recorder runs on its own clock). */
+	const togglePause = useCallback(() => {
+		if (phase !== "running" || useMic) return;
+		if (pausedAt.current) {
+			pausedMs.current += Date.now() - pausedAt.current;
+			pausedAt.current = 0;
+			setPaused(false);
+		} else {
+			pausedAt.current = Date.now();
+			setElapsed(pausedAt.current - passStart.current - pausedMs.current);
+			setPaused(true);
+		}
+	}, [phase, useMic]);
 
 	/** After a pass: the next pass, the next sentence, or the end. */
 	const advance = useCallback(() => {
@@ -700,7 +723,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						Say it faster · pass {Math.min(pass + 1, FAST_PASSES)} of {FAST_PASSES} · {item.practised ? "a sentence you got right in a lesson" : "every word is yours"}
 					</p>
 					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">
-						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? "Say it now" : last?.pending ? "Listening back…" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : last?.inWindow ? "Fast, but not clear" : "Over the window"}
+						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : last?.inWindow ? "Fast, but not clear" : "Over the window"}
 					</h2>
 					<div className="flex items-start gap-3">
 						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gold/20 text-foreground transition-transform hover:scale-105 active:scale-95" data-testid="fast-play">
@@ -763,9 +786,16 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 								<p className="font-ui text-lg font-extrabold text-foreground">{useMic ? "Listening — it stops when you stop" : "Press Space when you have said it"}</p>
 								{useMic && <span className="h-2 w-16 overflow-hidden rounded-full bg-accent"><span className="block h-full bg-gold" style={{ width: `${level * 100}%` }} /></span>}
 							</div>
-							<button type="button" onClick={() => void endPass()} className={PRIMARY} data-testid="fast-said">
-								Said it
-							</button>
+							<div className="flex items-center gap-3">
+								{!useMic && (
+									<button type="button" onClick={togglePause} className={SECONDARY} data-testid="fast-pause">
+										{paused ? "Resume" : "Pause"}
+									</button>
+								)}
+								<button type="button" onClick={() => void endPass()} className={PRIMARY} data-testid="fast-said">
+									Said it
+								</button>
+							</div>
 						</>
 					) : phase === "between" ? (
 						<>

@@ -325,7 +325,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 									maxLength={MAX_PURPOSE_NOTE}
 									placeholder="e.g. Moving to Košice next spring for a nursing job; I want to follow the ward and the paperwork."
 									aria-label="What Slovak is for, in your words"
-									className="w-full resize-none rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-go"
+									className="w-full resize-none rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-go"
 									data-testid="purpose-note"
 								/>
 							</Field>
