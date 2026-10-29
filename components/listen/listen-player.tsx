@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { CheckIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setSpeed, speak, SPEEDS } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { sfx, soundOn } from "@/components/lesson/sound";
 import { LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan } from "@/src/core";
 
 interface Rep {
@@ -114,7 +114,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		setReplays(0);
 		void speak(item.sentence)
 			.then(() => {
-				if (timing.current.shownAt === t0 && timing.current.heardMs === undefined) timing.current.heardMs = Date.now() - t0;
+				if (soundOn() && timing.current.shownAt === t0 && timing.current.heardMs === undefined) timing.current.heardMs = Date.now() - t0;
 			})
 			.catch(() => {});
 	}, [item, current]);

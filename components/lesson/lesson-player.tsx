@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { setSpeed, speak, SPEEDS, useActiveLanguage } from "@/components/speech";
+import { setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import {
@@ -479,10 +479,11 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	});
 
 	const toggleSound = () => {
-		setSound((s) => {
-			setSoundOn(!s);
-			return !s;
-		});
+		const next = !sound;
+		setSoundOn(next);
+		setSound(next);
+		// Turning sound off silences a sentence that is already playing.
+		if (!next) stopSpeaking();
 	};
 
 	if (error) {
@@ -579,7 +580,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 						<button
 							type="button"
 							onClick={toggleSound}
-							aria-label={sound ? "Mute sounds" : "Turn sounds on"}
+							aria-label={sound ? "Mute sound and speech" : "Turn sound and speech on"}
 							className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
 						>
 							{sound ? <Volume2Icon className="size-5" /> : <VolumeXIcon className="size-5" />}

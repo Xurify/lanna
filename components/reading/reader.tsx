@@ -23,8 +23,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { setSpeed, speak, SPEEDS, useSpeed } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { setSpeed, speak, SPEEDS, stopSpeaking, useSpeed } from "@/components/speech";
+import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
@@ -385,10 +385,13 @@ function Text({ story, tapped, onTap }: { story: StoryRecord; tapped: string[]; 
 	const playAll = async () => {
 		if (all) {
 			stop.current = true;
+			stopSpeaking();
 			setAll(false);
 			setPlaying(null);
 			return;
 		}
+		// Muted: there is nothing to read aloud, so Play all does not start.
+		if (!soundOn()) return;
 		stop.current = false;
 		setAll(true);
 		for (let i = 0; i < story.sentences.length; i++) {
