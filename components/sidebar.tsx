@@ -983,7 +983,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 			{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. On phones the four main pages leave room
 			    for the bottom nav (PhoneNav) at their end. */}
-			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-16 md:pb-0")}>{children}</main>
+			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-16 md:pb-0")}>
+				{/* The SCROLL-PROOF window-drag strip (owner bug report,
+				    2026-10-28: "scrolled down, I can't grab the window"). The
+				    per-page strips are absolute inside the scrolling content,
+				    so they ride off-screen with it and a scrolled page has no
+				    grab point left. This one is sticky inside the scroll frame —
+				    glued to the top of the visible area at every scroll depth.
+				    FIRST child so later lh-no-drag elements still subtract (the
+				    DOM-order mask law), INSIDE main so it never spans the
+				    sidebar, and -mb-13 pulls the page up over it so nothing
+				    moves. The per-page strips stay for the surfaces they were
+				    tuned for; this is the floor every page stands on. */}
+				<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
+				{children}
+			</main>
 			<PhoneNav pathname={pathname} />
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
