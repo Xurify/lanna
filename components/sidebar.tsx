@@ -6,8 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { DumbbellIcon, GraduationCapIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon } from "lucide-react";
-import { ActivitySection } from "@/components/activity-dock";
+import { DumbbellIcon, GraduationCapIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, XIcon } from "lucide-react";
+import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -59,6 +59,13 @@ import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/sr
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
 const SIDEBAR_AUTOCLOSE = 928;
 
+/* Phone widths in the plain browser (Tailwind's max-md): the sidebar becomes
+ * a drawer over the page instead of a 288px column that would leave about
+ * 100px of page on a 390px phone. The drawer starts closed on every load and
+ * never touches the persisted desktop preference. Electron keeps its own
+ * narrow rule above. */
+const PHONE_QUERY = "(width < 48rem)";
+
 // Module scope, guarded for SSR (the server has no navigator).
 // The preload bridge is the shell's identity: the user agent no longer
 // names Electron (electron/main.cjs strips it so embedded YouTube plays).
@@ -92,9 +99,20 @@ declare global {
 	}
 }
 
-const SidebarContext = createContext<{ open: boolean; toggle: () => void }>({
+const SidebarContext = createContext<{
+	open: boolean;
+	/** Phone drawer open (browser below md only). */
+	drawer: boolean;
+	/** The browser is at phone width, so toggling drives the drawer. */
+	phone: boolean;
+	toggle: () => void;
+	closeDrawer: () => void;
+}>({
 	open: false,
+	drawer: false,
+	phone: false,
 	toggle: () => {},
+	closeDrawer: () => {},
 });
 
 export function useSidebar() {
@@ -172,7 +190,26 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 		return () => window.removeEventListener("resize", onResize);
 	}, []);
 
+	const [phone, setPhone] = useState(false);
+	const [drawer, setDrawer] = useState(false);
+	useEffect(() => {
+		if (IS_ELECTRON || typeof window.matchMedia !== "function") return;
+		const mq = window.matchMedia(PHONE_QUERY);
+		const sync = () => {
+			setPhone(mq.matches);
+			if (!mq.matches) setDrawer(false);
+		};
+		sync();
+		mq.addEventListener("change", sync);
+		return () => mq.removeEventListener("change", sync);
+	}, []);
+	const closeDrawer = useCallback(() => setDrawer(false), []);
+
 	const toggle = useCallback(() => {
+		if (phone) {
+			setDrawer((v) => !v);
+			return;
+		}
 		// Opening while narrow (auto-closed, or the user's own closed-at-
 		// narrow): ask the shell to widen to the threshold — the resize
 		// listener flips `narrow` and the sidebar appears. The preference
@@ -188,7 +225,7 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 			persistOpen(!v);
 			return !v;
 		});
-	}, [narrow, open]);
+	}, [narrow, open, phone]);
 
 	// ⌘B: the global shortcut dispatches kbdEventForAction("toggle-sidebar")
 	// and the context answers on exactly that name — the shared spelling
@@ -204,7 +241,7 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open: open && !narrow, toggle }}>
+		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div className={cn("flex h-dvh", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>
@@ -224,12 +261,16 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
  *  The icon fades with the slot and is clipped by it as it collapses —
  *  no popping in either direction. */
 export function SidebarToggle() {
-	const { open, toggle } = useSidebar();
+	const { open, drawer, phone, toggle } = useSidebar();
+	const shown = phone ? !drawer : !open;
 	return (
 		<span
 			className={cn(
 				"sidebar-motion lh-no-drag relative flex h-9 shrink-0 overflow-hidden duration-200",
 				open ? "w-0 -mr-3" : "w-9 mr-0 lh-closed-toggle",
+				// Phone widths follow the drawer, decided in CSS so the first
+				// paint is already right.
+				drawer ? "max-md:w-0 max-md:-mr-3" : "max-md:w-9 max-md:mr-0",
 			)}
 		>
 			<Hint label="Open sidebar" action="toggle-sidebar">
@@ -237,10 +278,14 @@ export function SidebarToggle() {
 				variant="ghost"
 				size="icon"
 				aria-label="Open sidebar"
-				aria-hidden={open}
-				tabIndex={open ? -1 : 0}
+				aria-hidden={!shown}
+				tabIndex={shown ? 0 : -1}
 				onClick={toggle}
-				className={cn("sidebar-motion duration-200", open ? "pointer-events-none opacity-0" : "opacity-100")}
+				className={cn(
+					"sidebar-motion duration-200",
+					open ? "pointer-events-none opacity-0" : "opacity-100",
+					drawer ? "max-md:pointer-events-none max-md:opacity-0" : "max-md:pointer-events-auto max-md:opacity-100",
+				)}
 			>
 				{/* Owner, round 6: size-4, SAME as the close glyph — the toggle
 				    must not grow when the sidebar is closed (it did: size-5 here).
@@ -333,7 +378,7 @@ export function SessionRow({
 			onContextMenu={onContextMenu}
 			data-testid={kbdSelected ? "session-row-kbd" : "session-row"}
 			className={cn(
-				"relative mb-0.5 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent",
+				"relative mb-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-accent",
 				active && "bg-accent",
 				kbdSelected && !active && "bg-accent/60 ring-1 ring-border",
 			)}
@@ -345,7 +390,7 @@ export function SessionRow({
 				    the meta line below stays JetBrains Mono (machine data). One
 				    rule, finally applied to the picker too (owner, typography
 				    round): mono = chrome, Source Sans = human words. */}
-				<span className="block truncate font-prose text-(length:--lh-prose-size)">{chat.title}</span>
+				<span className="block truncate font-prose text-[14px] leading-5">{chat.title}</span>
 				<span className="block text-xs text-muted-foreground">{sessionMeta(chat)}</span>
 			</span>
 			{/* The dumbbell rides the FAR RIGHT (owner round 6, 2026-10-05) —
@@ -375,7 +420,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 	return (
 		<div
 			data-testid="session-rename-row"
-			className="relative mb-0.5 flex w-full items-center rounded-lg bg-accent px-3 py-2"
+			className="relative mb-0.5 flex w-full items-center rounded-lg bg-accent px-2.5 py-1.5"
 		>
 			{/* NOTHING MOVES (owner, polish round): an idle row renders no
 			    status spacer (SessionStatus is null when not busy), so the
@@ -409,24 +454,21 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 }
 
 /** The three-way kind filter (practice sessions, owner 2026-10-04):
- *  Teaching / All / Practice — a client-side filter over the same
- *  snapshot, persisted in localStorage, defaulting to All. */
+ *  All / Learn / Practice — a client-side filter over the same snapshot.
+ *  It lives behind the search button and applies only while search is
+ *  open, so a forgotten filter can never leave the list silently short. */
 export type SessionKindFilter = "teach" | "all" | "practice";
-const KIND_FILTER_KEY = "lh:session-kind-filter";
 
 function SessionsSidebar() {
-	const { open, toggle } = useSidebar();
+	const { open, drawer, phone, toggle, closeDrawer } = useSidebar();
+	const visible = phone ? drawer : open;
 	const [chats, setChats] = useState<ChatListItem[] | null>(null);
 	const [query, setQuery] = useState("");
+	const [searching, setSearching] = useState(false);
 	const [kindFilter, setKindFilter] = useState<SessionKindFilter>("all");
-	useEffect(() => {
-		const stored = window.localStorage.getItem(KIND_FILTER_KEY);
-		if (stored === "teach" || stored === "all" || stored === "practice") setKindFilter(stored);
-	}, []);
-	const setFilter = useCallback((f: SessionKindFilter) => {
-		setKindFilter(f);
-		window.localStorage.setItem(KIND_FILTER_KEY, f);
-	}, []);
+	const searchBoxRef = useRef<HTMLDivElement>(null);
+	const { feed } = useActivity();
+	const agentsRunning = useMemo(() => toBlobs(feed).length > 0, [feed]);
 	const pathname = usePathname();
 	const router = useRouter();
 	const { open: openSettings } = useSettingsDialog();
@@ -561,6 +603,12 @@ function SessionsSidebar() {
 	   selection. */
 	const [kbdIndex, setKbdIndex] = useState<number | null>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
+	const closeSearch = useCallback(() => {
+		setSearching(false);
+		setQuery("");
+		setKindFilter("all");
+		setKbdIndex(null);
+	}, []);
 	const listRef = useRef<HTMLDivElement>(null);
 
 	/* ── Wave 6 chunk A: context menu + inline rename + deletion ──
@@ -647,14 +695,29 @@ function SessionsSidebar() {
 
 	useEffect(() => {
 		const onFocusSearch = () => {
-			if (!open) toggle();
-			// A clipped (overflow-hidden) input still focuses — the sidebar's
-			// slide-in doesn't gate the keystroke.
+			if (!visible) toggle();
+			// Opening mounts the input with autoFocus; an already-open search
+			// needs the explicit focus. A clipped (overflow-hidden) input still
+			// focuses, so the slide-in doesn't gate the keystroke.
+			setSearching(true);
 			requestAnimationFrame(() => searchRef.current?.focus());
 		};
 		window.addEventListener("lh:kbd-sessions-search", onFocusSearch);
 		return () => window.removeEventListener("lh:kbd-sessions-search", onFocusSearch);
-	}, [open, toggle]);
+	}, [visible, toggle]);
+
+	// The phone drawer closes on navigation and on Esc.
+	useEffect(() => {
+		closeDrawer();
+	}, [pathname, closeDrawer]);
+	useEffect(() => {
+		if (!drawer) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") closeDrawer();
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [drawer, closeDrawer]);
 
 	// Keep the kbd-selected row in view (the rows are the container's only
 	// buttons, so the index matches).
@@ -664,223 +727,240 @@ function SessionsSidebar() {
 	}, [kbdIndex]);
 
 	useEffect(() => {
-		if (!open) return;
+		if (!visible) return;
 		void refresh();
 		// Opening + navigation refetch; while open, the events channel owns
 		// freshness (S6) — no interval, nothing standing.
-	}, [open, pathname, refresh]);
+	}, [visible, pathname, refresh]);
 
 	return (
-		<aside
-			className={cn("sidebar-motion shrink-0 overflow-hidden duration-200", open ? "w-72" : "w-0")}
-			aria-hidden={!open}
-		>
-			<div className="flex h-full w-72 flex-col border-r bg-background">
-				{/* LH wordmark — the owner's header; close toggle sits at the edge.
-				    Merged chrome (2026-09-17): in Electron this band is the
-				    window's drag surface and starts after the traffic lights
-				    (.lh-lights-gutter); in the browser those classes are inert. */}
-				<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-3">
-					{/* The owner's mark (2026-09-17) replaces the "LH" text — still the
-					    home link, still vertically centered by the band's items-center.
-					    The 92px .lh-lights-gutter keeps it clear of the traffic lights
-					    with the lights' own edge-inset as the gap. */}
-					{/* Hover mirrors the ghost toggle buttons (owner ask, 2026-09-17):
-					    same size-9 chip geometry, same hover:bg-accent treatment. */}
-					<Hint
-						// Kept (owner, subtlety round 2026-09-25) but to the RIGHT
-						// of the logo, carrying its real shortcut: ⌘G jumps to
-						// the graph view (keyboard-shortcuts routes it to "/",
-						// the same destination as this logo).
-						label="Home"
-						action="jump-graph"
-						side="right"
-					>
-						<Link
-							href="/"
-							aria-label="Home"
-							className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
-						>
-							<LhMark className="size-6" />
+		<>
+			{drawer && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={closeDrawer} aria-hidden="true" />}
+			<aside
+				className={cn(
+					"sidebar-motion shrink-0 overflow-hidden duration-200",
+					open ? "w-72" : "w-0",
+					// Below md the sidebar floats over the page as a drawer instead of
+					// squeezing it. CSS makes the call before hydration, so a phone
+					// never paints the open column first.
+					"max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50",
+					drawer ? "max-md:w-72 max-md:shadow-2xl" : "max-md:w-0",
+				)}
+				aria-hidden={!visible}
+			>
+				<div className="flex h-full w-72 flex-col border-r bg-background">
+					{/* Merged chrome (2026-09-17): in Electron this band is the
+					    window's drag surface and starts after the traffic lights
+					    (.lh-lights-gutter); in the browser those classes are inert. */}
+					<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-3">
+						<Hint label="Home" action="jump-graph" side="right">
+							<Link
+								href="/"
+								aria-label="Home"
+								className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+							>
+								<LhMark className="size-6" />
+							</Link>
+						</Hint>
+						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
+							Lang<span className="text-go">Harness</span>
 						</Link>
-					</Hint>
-					<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
-						Lang<span className="text-go">Harness</span>
-					</Link>
-					<Hint label="Close sidebar" action="toggle-sidebar">
-						<Button
-							variant="ghost"
-							size="icon"
-							aria-label="Close sidebar"
-							onClick={toggle}
-							className="lh-no-drag"
-						>
-							<PanelLeftCloseIcon className="size-4" />
-						</Button>
-					</Hint>
-				</div>
+						<Hint label="Close sidebar" action="toggle-sidebar">
+							<Button variant="ghost" size="icon" aria-label="Close sidebar" onClick={toggle} className="lh-no-drag">
+								<PanelLeftCloseIcon className="size-4" />
+							</Button>
+						</Hint>
+					</div>
 
-				{/* LangHarness: the language profile + the main destinations. */}
-				<LanguageSwitcher />
+					{/* The language profile + the four main destinations. */}
+					<LanguageSwitcher />
 
-				{/* The tutor: two ways to start a model-led session. */}
-				<div className="mx-3 mb-3 flex flex-col gap-0.5">
-					<div className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">Tutor</div>
-					<button
-						type="button"
-						data-testid="new-session"
-						onClick={() => void newSession()}
-						className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-					>
-						<GraduationCapIcon className="size-[18px]" />
-						Learn a topic
-						<span className="sr-only">create a new teaching session</span>
-						<PlusIcon className="ml-auto size-4 opacity-60" />
-					</button>
-					<button
-						type="button"
-						data-testid="new-session-practice"
-						onClick={() => router.push("/chat/new?mode=practice")}
-						className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-					>
-						<DumbbellIcon className="size-[18px]" />
-						Practice a topic
-						<span className="sr-only">create a new practice session</span>
-						<PlusIcon className="ml-auto size-4 opacity-60" />
-					</button>
-				</div>
-
-				<div className="mx-3 mb-2 flex flex-col gap-1.5 border-t border-border/50 pt-3">
-					<span className="px-2.5 text-xs font-bold text-muted-foreground">Sessions</span>
-					<Hint label="Search sessions" action="sessions-search" side="bottom">
-					<span className="relative flex-1">
-						<Input
-							ref={searchRef}
-							data-testid="session-search"
-							value={query}
-							onChange={(e) => {
-								setQuery(e.target.value);
-								// The list reorders under the query every keystroke —
-								// a stale walk index would point at the wrong row.
-								setKbdIndex(null);
-							}}
-							// THE SEARCH OWNS THE WALK (owner, 2026-10-10 — the
-							// retired Alt+↑/↓/↵ cycle's successor): ↑/↓ cycle the
-							// filtered rows (wrap), Enter opens the walked row —
-							// or the FIRST match when nothing is walked (the
-							// quick-open pattern) — then blurs (focus returns to
-							// the app per the Enter law; the query stays for
-							// re-searching). Esc leaves the search (owner,
-							// keyboard wave): blur back to normal, and claim the
-							// key so the window Esc chain (dictation / abort)
-							// doesn't also fire.
-							onKeyDown={(e) => {
-								if (e.key === "Escape") {
-									e.stopPropagation();
-									e.currentTarget.blur();
-									return;
-								}
-								// Modified keys belong to the surface (⇧↵ etc.).
-								if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-								const n = shown?.length ?? 0;
-								if (n === 0) return;
-								if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-									// The rows move, not the caret.
-									e.preventDefault();
-									const dir = e.key === "ArrowDown" ? 1 : -1;
-									setKbdIndex((i) =>
-										i === null || i >= n ? (dir === 1 ? 0 : n - 1) : (i + dir + n) % n,
-										);
-									return;
-								}
-								if (e.key === "Enter") {
-									const target = shown![kbdIndex !== null && kbdIndex < n ? kbdIndex : 0];
-									if (!target) return;
-									e.preventDefault();
-									router.push(`/chat/${target.id}`);
-									setKbdIndex(null);
-									e.currentTarget.blur();
-								}
-							}}
-							placeholder="Search…"
-							aria-label="Search sessions"
-							className="h-8 rounded-lg border-0 bg-card pl-8 shadow-none text-sm placeholder:text-muted-foreground"
-						/>
-						<SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-					</span>
-					</Hint>
-				</div>
-
-				{/* The three-way filter, HEADING THE LIST (owner round 8b,
-				    2026-10-05 — moved below the search): it scopes what the
-				    list shows, so it sits directly above it as a caption row;
-				    search stays the top muscle-memory target. Order: Teaching /
-				    Practice / All — the real modes first, "All" as the escape
-				    hatch on the right, mirroring the create-buttons above.
-				    Persisted client-side. */}
-				<div className="mx-3 flex items-center gap-1 px-0.5" data-testid="session-kind-filter">
-					{(["teach", "practice", "all"] as const).map((f) => (
+					{/* The tutor: two ways to start a chat, then the chats themselves.
+					    Search and the kind filter sit behind one button: most days
+					    the list is short and the controls are noise. */}
+					<section aria-labelledby="sidebar-tutor" className="mx-3 flex min-h-0 flex-1 flex-col border-t border-border/50 pt-3">
+						<h2 id="sidebar-tutor" className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">
+							Tutor
+						</h2>
 						<button
-							key={f}
 							type="button"
-							data-testid={`kind-filter-${f}`}
-							onClick={() => setFilter(f)}
-							className={cn(
-								"rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors",
-								kindFilter === f
-									? "bg-accent text-foreground"
-									: "text-muted-foreground hover:text-foreground",
-							)}
+							data-testid="new-session"
+							onClick={() => void newSession()}
+							aria-label="Learn a topic: start a new teaching chat"
+							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 						>
-							{f === "teach" ? "Learn" : f === "all" ? "All" : "Practice"}
+							<GraduationCapIcon className="size-[18px]" />
+							Learn a topic
+							<PlusIcon className="ml-auto size-4 opacity-60" />
 						</button>
-					))}
-				</div>
+						<button
+							type="button"
+							data-testid="new-session-practice"
+							onClick={() => router.push("/chat/new?mode=practice")}
+							aria-label="Practice a topic: start a new practice chat"
+							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+						>
+							<DumbbellIcon className="size-[18px]" />
+							Practice a topic
+							<PlusIcon className="ml-auto size-4 opacity-60" />
+						</button>
 
-				<div ref={listRef} className="flex-1 overflow-y-auto p-2">
-					{shown === null ? (
-						<div className="px-2 py-4 text-xs text-muted-foreground">Loading…</div>
-					) : shown.length === 0 ? (
-						<div className="px-2 py-4 text-xs text-muted-foreground">
-							{query.trim() ? "No sessions match." : "No sessions yet."}
+						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
+							<div className="flex h-8 items-center">
+								{searching ? (
+									<span className="relative flex-1">
+										<Input
+											ref={searchRef}
+											autoFocus
+											data-testid="session-search"
+											value={query}
+											onChange={(e) => {
+												setQuery(e.target.value);
+												// The list reorders under the query every keystroke —
+												// a stale walk index would point at the wrong row.
+												setKbdIndex(null);
+											}}
+											onBlur={(e) => {
+												// Moving to a filter chip or the close button keeps
+												// search open; leaving with nothing typed closes it.
+												if (e.relatedTarget instanceof Node && searchBoxRef.current?.contains(e.relatedTarget)) return;
+												if (!query.trim() && kindFilter === "all") closeSearch();
+											}}
+											// THE SEARCH OWNS THE WALK (owner, 2026-10-10): ↑/↓ cycle
+											// the filtered rows (wrap), Enter opens the walked row —
+											// or the FIRST match when nothing is walked (the
+											// quick-open pattern) — then blurs. Esc closes search and
+											// claims the key so the window Esc chain doesn't fire.
+											onKeyDown={(e) => {
+												if (e.key === "Escape") {
+													e.stopPropagation();
+													closeSearch();
+													return;
+												}
+												if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+												const n = shown?.length ?? 0;
+												if (n === 0) return;
+												if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+													e.preventDefault();
+													const dir = e.key === "ArrowDown" ? 1 : -1;
+													setKbdIndex((i) => (i === null || i >= n ? (dir === 1 ? 0 : n - 1) : (i + dir + n) % n));
+													return;
+												}
+												if (e.key === "Enter") {
+													const target = shown![kbdIndex !== null && kbdIndex < n ? kbdIndex : 0];
+													if (!target) return;
+													e.preventDefault();
+													router.push(`/chat/${target.id}`);
+													setKbdIndex(null);
+													e.currentTarget.blur();
+												}
+											}}
+											placeholder="Search chats"
+											aria-label="Search chats"
+											className="h-8 rounded-lg border-0 bg-card pl-8 pr-8 text-sm shadow-none placeholder:text-muted-foreground"
+										/>
+										<SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+										<button
+											type="button"
+											aria-label="Close search"
+											data-testid="session-search-close"
+											onClick={closeSearch}
+											className="absolute right-1 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+										>
+											<XIcon className="size-3.5" />
+										</button>
+									</span>
+								) : (
+									<>
+										<span className="px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
+										<Hint label="Search chats" action="sessions-search" side="bottom">
+											<button
+												type="button"
+												aria-label="Search chats"
+												data-testid="session-search-open"
+												onClick={() => setSearching(true)}
+												className="ml-auto grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+											>
+												<SearchIcon className="size-3.5" />
+											</button>
+										</Hint>
+									</>
+								)}
+							</div>
+							{searching && (
+								<div className="flex items-center gap-1" role="group" aria-label="Show" data-testid="session-kind-filter">
+									{(["all", "teach", "practice"] as const).map((f) => (
+										<button
+											key={f}
+											type="button"
+											data-testid={`kind-filter-${f}`}
+											aria-pressed={kindFilter === f}
+											onClick={() => {
+												setKindFilter(f);
+												setKbdIndex(null);
+											}}
+											className={cn(
+												"rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors",
+												kindFilter === f ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
+											)}
+										>
+											{f === "teach" ? "Learn" : f === "all" ? "All" : "Practice"}
+										</button>
+									))}
+								</div>
+							)}
 						</div>
-					) : (
-						shown.map((c, i) =>
-							renamingId === c.id ? (
-								<RenameRow
-									key={c.id}
-									chat={c}
-									onCommit={(next) => void commitRename(c.id, next)}
-									onCancel={() => setRenamingId(null)}
-								/>
+
+						<div ref={listRef} className="-mx-1 mt-1 min-h-0 flex-1 overflow-y-auto px-1 pb-2">
+							{shown === null ? (
+								<div aria-busy="true" aria-label="Loading chats" className="flex flex-col">
+									{[0, 1, 2].map((i) => (
+										<div key={i} className="flex flex-col gap-1.5 px-2.5 py-2">
+											<div className="h-3.5 w-3/4 animate-pulse rounded bg-accent" />
+											<div className="h-2.5 w-1/4 animate-pulse rounded bg-accent/60" />
+										</div>
+									))}
+								</div>
+							) : shown.length === 0 ? (
+								<p className="px-2.5 py-2 text-xs text-muted-foreground">
+									{query.trim()
+										? `No chats match “${query.trim()}”.`
+										: kindFilter !== "all"
+											? `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
+											: "Your chats with the tutor show up here."}
+								</p>
 							) : (
-								<SessionRow
-									key={c.id}
-									chat={c}
-									active={pathname === `/chat/${c.id}`}
-									kbdSelected={i === kbdIndex}
-									onOpen={() => {
-										setKbdIndex(null);
-										router.push(`/chat/${c.id}`);
-									}}
-									onContextMenu={(e) => openContext(e, c)}
-								/>
-							),
-						)
-					)}
-				</div>
+								shown.map((c, i) =>
+									renamingId === c.id ? (
+										<RenameRow
+											key={c.id}
+											chat={c}
+											onCommit={(next) => void commitRename(c.id, next)}
+											onCancel={() => setRenamingId(null)}
+										/>
+									) : (
+										<SessionRow
+											key={c.id}
+											chat={c}
+											active={pathname === `/chat/${c.id}`}
+											kbdSelected={i === kbdIndex}
+											onOpen={() => {
+												setKbdIndex(null);
+												router.push(`/chat/${c.id}`);
+											}}
+											onContextMenu={(e) => openContext(e, c)}
+										/>
+									),
+								)
+							)}
+						</div>
+					</section>
 
-					{/* Background agents (owner, sidebar round): the section is
-					    ALWAYS here — empty means empty (the header sits alone); it
-					    populates and grows when processes run. The session list is
-					    flex-1, so this pins to the bottom. Sidebar closed = the
-					    learner opted out (no ambient signal, user decision). */}
-					<ActivitySection />
+					{/* Background agents appear only while one runs: an idle header
+					    told the learner nothing and read as machinery. */}
+					{agentsRunning && <ActivitySection />}
 
-					{/* Settings entry (settings-app wave): same row language as
-					    New session — quiet, bottom-pinned, opens the centered
-					    dialog (also mod+, in the keyboard registry). */}
-					<div className="px-3 pb-3 pt-1">
+					<div className="border-t border-border/50 px-3 py-2">
 						<Hint label="Settings" action="open-settings" side="right">
 							<button
 								type="button"
@@ -970,6 +1050,7 @@ function SessionsSidebar() {
 					onDeleted={onDeleted}
 				/>
 			</aside>
+		</>
 	);
 }
 

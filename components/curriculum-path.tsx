@@ -66,8 +66,11 @@ export function CurriculumPath({
 						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-accent" aria-hidden="true">
 							<div className={cn("h-full rounded-full transition-[width] duration-700", done >= total && total > 0 ? "bg-gold" : "bg-go")} style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} />
 						</div>
+						{/* Compact: a stage not reached yet is its header alone; its
+						    chapters are the full map's business. */}
+						{(reached || mode === "full") && (
 						<ol className="mt-3 flex flex-col gap-2">
-							{chapters.map((ch) => (
+							{chapters.map((ch, i) => (
 								<li key={ch.id} className={cn("rounded-2xl border", ch.id === state.current ? "border-go/50 bg-go/5" : "bg-card")} data-testid={`chapter-${ch.id}`}>
 									<button
 										type="button"
@@ -80,7 +83,7 @@ export function CurriculumPath({
 										</span>
 										<span className="min-w-0 flex-1">
 											<span className={cn("block font-ui text-sm font-bold", ch.open ? "text-foreground" : "text-muted-foreground")}>{ch.title}</span>
-											<span className="block truncate font-ui text-xs text-muted-foreground">{ch.open ? `${ch.doneCount}/${ch.total} · ${ch.tagline}` : `Opens when the chapter before is nearly done · ${ch.tagline}`}</span>
+											<span className="block truncate font-ui text-xs text-muted-foreground">{ch.open ? `${ch.doneCount}/${ch.total} · ${ch.tagline}` : chapters[i - 1]?.open ? `Opens when “${chapters[i - 1]!.title}” is nearly done` : ch.tagline}</span>
 										</span>
 										{mode === "compact" && (isOpen(ch) ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />)}
 									</button>
@@ -96,13 +99,14 @@ export function CurriculumPath({
 								</li>
 							))}
 						</ol>
+						)}
 					</section>
 				);
 			})}
 			{mode === "compact" && (
 				<Link href="/curriculum" className="mt-4 flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
 					<MapIcon className="size-3.5" />
-					The whole map, {state.done}/{state.total} units
+					See the whole path
 				</Link>
 			)}
 		</div>

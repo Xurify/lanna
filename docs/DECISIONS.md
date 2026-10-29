@@ -80,13 +80,26 @@ A unit is done after 3 lessons at 80% or better, or after 6 lessons. One lesson 
 
 No native `<select>`; chips, steppers and searchable panels instead. Sidebar state lives in a cookie, appearance variables are server-rendered on `<html>`, the Today summary is SSR'd, so there is no CLS or FOUC. Structure and alignment like Duolingo's; label every chip, because unlabelled prose lines read as unstructured. Run every screen state at both window sizes (about 1400×890 and 1133×700, or 1280 and 390 px wide) before calling a UI pass done; the owner reviews screenshots closely.
 
+### E4a. One button family, one answer first, labelled cues (2026-10-29)
+
+**Why:** the owner: "the UX here of our app is so freaking bad and it's hard to use the controls." Today showed the same next step three times (Continue card, plan, mode tiles), every learning screen carried its own button styles (the uppercase 3D Check on Review, small ghost links elsewhere), and cues such as a lone "still" under a lesson sentence read as stray words.
+
+**How to apply:**
+- Buttons on learning screens come from `components/ui/learn-buttons.ts` (`PRIMARY`, `SECONDARY`, `QUIET`, `SMALL`, `KBD`): flat, sentence case, 48px. No uppercase, no faux-3D bottom edge.
+- Strand colours come from `components/strand-style.ts` (input sky, output xp, form go, fluency gold), so a strand looks the same on Today, in the plan and in the week card.
+- Today answers first: the next undone task is drawn large with one Start (Enter starts it); everything else is grouped below by strand. Only one card says what to do next.
+- Every cue chip carries a label ("means", "base form"); a key that does something is shown as a key (`Enter` to check, `1`–`4` to pick), hidden on phone widths.
+- Leaving a lesson that has answers asks first (X or Escape); staying is the default.
+- The sidebar is language-first: language, the four destinations, then the tutor and its chats. Search and the Learn/Practice filter sit behind one search button. Background agents show only while one runs. Below `md` in the browser the sidebar is a drawer over the page, closed on load and on navigation.
+- Minimum text size is 12px (`--text-xs`); `--text-sm` is 13px.
+
 ### E5. Keep API keys out of chat (2026-10-26)
 
 Keys go in `.env` or environment variables, never in a thread. Each key only goes to its own service and is never logged in full.
 
 ### E6. Tests never touch the real profile (2026-10-28)
 
-A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. A few tests fail on main in the cloud regardless of changes (desktop payload trace, pi-ai package exports, one Pi loader test under Node 22); they are environment-bound, not regressions.
+A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. A few tests fail on main in the cloud regardless of changes (desktop payload trace, pi-ai package exports, one Pi loader test under Node 22); they are environment-bound, not regressions. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
 
 ### E7. Local only, no sync (2026-10-26)
 

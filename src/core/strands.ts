@@ -84,16 +84,16 @@ export function strandBalance(days: readonly StrandDay[]): StrandBalance {
 
 /** One line under the bars: what the week says to do next. */
 export function strandAdvice(b: StrandBalance): string {
-	if (b.total === 0) return "Nothing counted yet this week. A quarter each is the aim; the plan above is built that way.";
-	const over = STRANDS.filter((s) => b.share[s.id] > 0.5).map((s) => s.title.toLowerCase());
-	const name = (s: Strand) => STRANDS.find((x) => x.id === s)!.title.toLowerCase();
-	if (!b.behind) return "Close to a quarter each — the balance Nation's four strands ask for.";
+	if (b.total === 0) return "Nothing counted yet this week. Today's plan gives each strand about a quarter.";
+	const over = STRANDS.filter((s) => b.share[s.id] > 0.5).map((s) => s.title);
+	const name = (s: Strand) => STRANDS.find((x) => x.id === s)!.title;
+	if (!b.behind) return "Close to a quarter each, the balance Nation's four strands ask for.";
 	const pct = Math.round(b.share[b.behind] * 100);
 	const where: Record<Strand, string> = {
-		input: "Listen, Read, Watch and Story are where it grows",
-		output: "a spoken scene is where it grows",
-		form: "a lesson or the review deck is where it grows",
-		fluency: "a Blitz, a timed re-read or \"say it faster\" is where it grows",
+		input: "Listen, Read or Watch",
+		output: "A spoken scene",
+		form: "A lesson or the review deck",
+		fluency: "A Blitz, a timed re-read or Say it faster",
 	};
-	return `${name(b.behind)[0]!.toUpperCase()}${name(b.behind).slice(1)} is furthest behind at ${pct}% of the week${over.length ? `, ${over.join(" and ")} over half` : ""}; ${where[b.behind]}.`;
+	return `${name(b.behind)} is furthest behind at ${pct}%${over.length ? ` while ${over.join(" and ")} ${over.length > 1 ? "are" : "is"} over half` : ""}. ${where[b.behind]} is the quickest way to catch up.`;
 }

@@ -142,10 +142,13 @@ html[data-keyboard] :focus-visible {
 	   toggle write a runtime --font-title no consumer ever read (owner, fix
 	   wave: toggle looked dead). Non-inline emits :root { --font-title: … }
 	   and the utility reads var(--font-title) — appearance overrides win. */
-	--text-xs: 11px;
+	/* The floor was raised from 11 / 12.5 to 12 / 13 (2026-10-29): with the
+	   chrome in Nunito rather than mono, 11px grey labels were the hardest
+	   text in the app to read, and every hint, chip and caption sits there. */
+	--text-xs: 12px;
 	--text-xs--line-height: 1.4;
-	--text-sm: 12.5px;
-	--text-sm--line-height: 1.4;
+	--text-sm: 13px;
+	--text-sm--line-height: 1.45;
 	--text-base: 14px;
 	--text-base--line-height: 1.45;
 	--text-lg: 16px;

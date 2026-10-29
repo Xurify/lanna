@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
+import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
@@ -247,6 +248,13 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			// nothing kept
 		}
 	}, [saveKey]);
+	// Leaving on purpose drops the lesson, so once anything is answered the
+	// X and Escape ask first: one stray key should not cost five answers.
+	const [leaving, setLeaving] = useState(false);
+	const leave = useCallback(() => {
+		forget();
+		router.push("/");
+	}, [forget, router]);
 
 	useEffect(() => setSound(soundOn()), []);
 
@@ -465,12 +473,17 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		}
 	};
 
+	const answered = reps.length + (current ? 1 : 0);
+	const askLeave = () => {
+		if (mode === "lesson" && !done && (answered > 0 || miss !== null)) setLeaving(true);
+		else leave();
+	};
+
 	// Enter continues from the feedback sheet; Escape leaves.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
-				forget();
-				router.push("/");
+				askLeave();
 				return;
 			}
 			if (mode === "lesson" && current && e.key === "Enter") {
@@ -481,6 +494,20 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
 	});
+
+	// While the leave question is up, it owns the keyboard: the rep's own
+	// keys (1–4, Backspace, Enter) must not answer behind it. Capture on
+	// window runs before every other listener; Enter still clicks the
+	// focused button because only propagation stops, not the default.
+	useEffect(() => {
+		if (!leaving) return;
+		const onKey = (e: KeyboardEvent) => {
+			e.stopImmediatePropagation();
+			if (e.key === "Escape") setLeaving(false);
+		};
+		window.addEventListener("keydown", onKey, true);
+		return () => window.removeEventListener("keydown", onKey, true);
+	}, [leaving]);
 
 	const toggleSound = () => {
 		const next = !sound;
@@ -496,10 +523,10 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				<div className="m-auto max-w-md text-center">
 					<p className="font-prose text-lg text-foreground">{error}</p>
 					<div className="mt-6 flex justify-center gap-3">
-						<button type="button" onClick={() => void load()} className="rounded-xl bg-go px-5 py-2.5 font-semibold text-go-ink">
+						<button type="button" onClick={() => void load()} className={PRIMARY}>
 							Try again
 						</button>
-						<Link href="/" className="rounded-xl border px-5 py-2.5 text-foreground">
+						<Link href="/" className={SECONDARY}>
 							Back to Today
 						</Link>
 					</div>
@@ -546,9 +573,9 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			    window (its buttons carve themselves out, app/globals.css). */}
 				<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 					<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-						<Link href="/" aria-label="Leave the lesson" onClick={forget} className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						<button type="button" aria-label="Leave the lesson" onClick={askLeave} data-testid="lesson-leave" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 							<XIcon className="size-5" />
-						</Link>
+						</button>
 						<div
 							role="progressbar"
 							aria-valuemin={0}
@@ -573,8 +600,9 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 							data-testid="combo"
 							title="Right in a row"
 						>
-							<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} />
+							<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} aria-hidden="true" />
 							{combo}
+							<span className="sr-only"> right in a row</span>
 							{floater && (
 								<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-xp">
 									{floater.text}
@@ -617,8 +645,9 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				{mode === "lesson" && current ? (
 					<FeedbackSheet rep={current} tag={tag} onContinue={advance} onAskTutor={() => void why()} last={index + 1 >= total} comesBack={comesBack} examples={examples} />
 				) : (
-					<ActionBar kind={miss !== null && item.kind === "choose" ? "type" : item.kind} ready={ready} blitz={mode === "blitz"} onDontKnow={giveUp} />
+					<ActionBar kind={miss !== null && item.kind === "choose" ? "type" : item.kind} options={item.options?.length ?? 0} ready={ready} blitz={mode === "blitz"} onDontKnow={giveUp} />
 				)}
+				{leaving && <LeaveDialog answered={answered} total={total} onStay={() => setLeaving(false)} onLeave={leave} />}
 			</Frame>
 		</BridgesContext.Provider>
 	);
@@ -627,38 +656,35 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 /** The one content column every row lines up on: top bar, rep and footer. */
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
 
-/** Flat buttons, one height. No faux-3D bottom edge: on the tinted
- *  feedback bar it read as a muddy stripe under the label. */
-const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
-const PRIMARY = cn(
-	BUTTON,
-	"bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100",
-);
-const SECONDARY = cn(BUTTON, "border-2 border-foreground/20 px-5 text-foreground hover:bg-foreground/5");
+/** The keys that answer this kind of rep, shown beside the actions. Hidden
+ *  on phone widths, where there is no keyboard to press. */
+function ActionHint({ kind, options }: { kind: ItemKind; options: number }) {
+	const key = (k: string) => <kbd className={KBD}>{k}</kbd>;
+	return (
+		<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
+			{kind === "type" || kind === "listen" ? (
+				<>{key("Enter")} to check</>
+			) : kind === "build" ? (
+				<>Tap the words in order · {key("Backspace")} takes one back</>
+			) : options > 1 ? (
+				<>
+					{key("1")}–{key(String(options))} to pick
+				</>
+			) : null}
+		</p>
+	);
+}
 
-const ACTION_HINT: Record<ItemKind, string> = {
-	meaning: "Hear it, then pick the meaning, or press its number",
-	choose: "Pick one, or press its number",
-	type: "Press Enter to check",
-	listen: "Press Enter to check",
-	build: "Tap the words in order · Backspace takes the last one back",
-};
-
-function ActionBar({ kind, ready, blitz, onDontKnow }: { kind: ItemKind; ready: boolean; blitz: boolean; onDontKnow: () => void }) {
+function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind; options: number; ready: boolean; blitz: boolean; onDontKnow: () => void }) {
 	return (
 		<div className="border-t border-border">
 			<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
-				<p className="font-prose text-sm text-muted-foreground">{ACTION_HINT[kind]}</p>
-				<div className="flex items-center gap-2">
+				<ActionHint kind={kind} options={options} />
+				<div className="ml-auto flex items-center gap-2">
 					{/* Always there, even before anything is typed: a learner who does
 					    not know the answer can leave the rep without typing a guess. */}
 					{!blitz && (
-						<button
-							type="button"
-							onClick={onDontKnow}
-							className="flex h-12 items-center rounded-xl px-4 font-ui text-base font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-							data-testid="lesson-dont-know"
-						>
+						<button type="button" onClick={onDontKnow} className={QUIET} data-testid="lesson-dont-know">
 							I don&apos;t know
 						</button>
 					)}
@@ -667,6 +693,39 @@ function ActionBar({ kind, ready, blitz, onDontKnow }: { kind: ItemKind; ready: 
 							Check
 						</button>
 					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+/** The leave question: staying is the default (focused, and what Escape
+ *  does), leaving is the deliberate second choice. */
+function LeaveDialog({ answered, total, onStay, onLeave }: { answered: number; total: number; onStay: () => void; onLeave: () => void }) {
+	return (
+		<div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-6" onClick={onStay}>
+			<div
+				role="alertdialog"
+				aria-modal="true"
+				aria-labelledby="lesson-leave-title"
+				aria-describedby="lesson-leave-body"
+				onClick={(e) => e.stopPropagation()}
+				className="lh-rise w-full max-w-sm rounded-2xl border bg-card p-6 text-center shadow-2xl"
+				data-testid="lesson-leave-confirm"
+			>
+				<h2 id="lesson-leave-title" className="font-ui text-xl font-extrabold text-foreground">
+					Leave this lesson?
+				</h2>
+				<p id="lesson-leave-body" className="mt-2 font-prose text-base text-muted-foreground">
+					You have answered {answered} of {total}. If you leave now, {answered === 1 ? "that answer is" : "those answers are"} dropped and the lesson does not count.
+				</p>
+				<div className="mt-6 flex flex-col gap-2">
+					<button type="button" autoFocus onClick={onStay} className={PRIMARY} data-testid="lesson-leave-stay">
+						Keep going
+					</button>
+					<button type="button" onClick={onLeave} className={QUIET} data-testid="lesson-leave-confirm-leave">
+						Leave
+					</button>
 				</div>
 			</div>
 		</div>
@@ -705,6 +764,21 @@ function hintFor(item: LessonItem): string {
 	// A vocabulary rep blanks the word itself, so its hint is the meaning;
 	// a grammar rep shows the dictionary form (core/lesson.ts decides).
 	return item.hint ?? item.lemma;
+}
+
+/** The cue under the sentence, labelled so it never reads as a stray word:
+ *  "means" for a vocabulary rep (the English), "base form" for a grammar
+ *  rep (the dictionary form to inflect). */
+function HintChip({ item }: { item: LessonItem }) {
+	const meaning = unitInfo(item.unit).kind === "words" && !!item.hint;
+	return (
+		<span className="mr-2 inline-flex items-baseline gap-1.5 rounded-md bg-accent px-2 py-0.5 text-foreground" data-testid="lesson-hint-chip">
+			<span className="font-ui text-xs font-bold text-muted-foreground">{meaning ? "means" : "base form"}</span>
+			<span className="font-medium" lang={meaning ? undefined : "sk"}>
+				{hintFor(item)}
+			</span>
+		</span>
+	);
 }
 
 function RepView({
@@ -771,7 +845,15 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 				) : item.form && !vocabulary ? (
 					<p className="text-foreground">Wanted: {item.form}.</p>
 				) : (
-					<p className="text-muted-foreground">{vocabulary ? "The meaning is above; find the word." : "Read the whole sentence again: who, what, which case."}</p>
+					<p className="text-foreground">
+						{vocabulary ? (
+							<>
+								Find the Slovak word for “{hintFor(item)}”.
+							</>
+						) : (
+							"Read the whole sentence again: who does what, and which case follows."
+						)}
+					</p>
 				)}
 			</div>
 		</div>
@@ -951,7 +1033,7 @@ function ClozeRep({
 						type="button"
 						onClick={() => void speak(item.sentence)}
 						aria-label="Play the sentence"
-						className="lh-pop absolute -left-14 top-2.5 flex size-10 items-center justify-center rounded-xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
+						className="lh-pop absolute -left-14 top-2.5 flex size-10 items-center justify-center rounded-xl bg-sky text-background transition-transform hover:scale-105 active:scale-95 max-sm:relative max-sm:left-0 max-sm:top-0 max-sm:mb-3"
 					>
 						<Volume2Icon className="size-5" />
 					</button>
@@ -979,7 +1061,7 @@ function ClozeRep({
 						<span>{item.after}</span>
 					</p>
 					<p className="mt-2 font-prose text-lg text-muted-foreground">
-						<span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{hintFor(item)}</span>
+						<HintChip item={item} />
 						{/* The meaning is the question, so it shows only once answered;
 						    from the practised stage on it hides until the answer, and
 						    asking for it early halves the rep. */}
@@ -989,12 +1071,12 @@ function ClozeRep({
 							<button
 								type="button"
 								onClick={onPeek}
-								className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-ui text-sm font-bold text-muted-foreground/80 hover:bg-accent hover:text-foreground"
+								className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-ui text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground"
 								data-testid="lesson-peek"
-								title="Show the English (the rep then earns half)"
+								title="Show the English sentence. This answer then earns half XP."
 							>
-								<LanguagesIcon className="size-4" />
-								Meaning · half XP
+								<LanguagesIcon className="size-4" aria-hidden="true" />
+								Show translation · half XP
 							</button>
 						) : (
 							item.translation
@@ -1289,7 +1371,7 @@ function FeedbackSheet({
 				{/* "Why?" opens here, under the verdict: the lesson stays where it is. */}
 				{open && (
 					<dl className="lh-rise mt-4 grid gap-x-6 gap-y-2 border-t border-foreground/10 pt-4 font-prose text-base leading-relaxed sm:grid-cols-[6rem_1fr]" data-testid="lesson-why-panel">
-						<dt className={WHY_LABEL}>Rule</dt>
+						<dt className={WHY_LABEL}>{info.kind === "words" ? "Tip" : "Rule"}</dt>
 						<dd className="text-foreground">
 							{item.trigger && (
 								<>
@@ -1352,7 +1434,7 @@ function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; va
 				{icon}
 			</span>
 			<div className="min-w-0">
-				<dt className="font-ui text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
+				<dt className="font-ui text-xs font-bold text-muted-foreground">{label}</dt>
 				<dd className="font-prose text-sm leading-tight text-foreground">{value}</dd>
 			</div>
 		</div>
