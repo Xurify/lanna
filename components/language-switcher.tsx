@@ -47,6 +47,10 @@ export function LanguageSwitcher() {
 	useEffect(() => {
 		refresh();
 	}, [pathname, refresh]);
+	useEffect(() => {
+		window.addEventListener("lh:review-changed", refresh);
+		return () => window.removeEventListener("lh:review-changed", refresh);
+	}, [refresh]);
 
 	// Switching restarts the app, so the choice waits for an inline confirm
 	// (custom UI, no native confirm dialog).
@@ -111,7 +115,7 @@ export function LanguageSwitcher() {
 			{pending && (
 				<div role="group" aria-label={`Switch to ${pending.label}`} data-testid="profile-confirm" className="flex flex-col gap-2 rounded-xl bg-card p-3">
 					<p className="text-xs text-muted-foreground">
-						Switch to {pending.label}? LangHarness restarts with the {pending.label} profile. Your other language&apos;s sessions stay where they are.
+						Switch to {pending.label}? LangHarness restarts in {pending.label}. Your {profile?.profiles.find((p) => p.id === profile.active)?.english ?? "current"} progress stays as it is.
 					</p>
 					<div className="flex items-center justify-end gap-3">
 						<button

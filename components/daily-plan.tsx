@@ -1,158 +1,200 @@
 "use client";
 
 /**
- * Today's plan (LangHarness, 2026-10-28) — the day's tasks on the road to
- * the target level, and the goal that road is measured against.
+ * Today's plan (LangHarness, 2026-10-28; one-card layout 2026-10-29) — the
+ * day's tasks on the road to the target level.
  *
  * The plan is computed on the server (src/core/curriculum.ts dailyPlan):
  * review what is due, ten sentences to listen to, one lesson of new
  * ground, strengthen the weakest unit, new words, an episode to read,
  * a scene to speak, and three minutes of speed on what is known, cut to
  * the planned minutes.
- * Each task is a link into the app; a task ticks itself off from the
- * progress ledger, so there is nothing to mark by hand.
+ *
+ * The first task not done yet is the day's one next step: it is drawn
+ * large with its Start action, and Enter on Today starts it. Every task
+ * ticks itself off from the progress ledger, so there is nothing to mark
+ * by hand. A task's colour is its strand (components/strand-style.ts),
+ * the same ink the week's balance uses.
  */
 
 import Link from "next/link";
-import { AlertTriangleIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, TargetIcon, ZapIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowRightIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { StrandBalance } from "@/components/strand-balance";
-import { LEVEL_CAN_DO, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type Projection, type StrandBalance as Balance, type WeakSpotSummary } from "@/src/core";
+import { KBD, PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
+import { STRAND_STYLE, taskStrand } from "@/components/strand-style";
+import { STRANDS, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type WeakSpotSummary } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
-const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
-
-function monthOf(iso: string | null): string | null {
-	if (!iso) return null;
-	return new Date(`${iso}T12:00:00`).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+/** The day's next step: the first task in plan order not done yet. */
+export function nextTask(plan: Plan | null): PlanTask | null {
+	return plan?.tasks.find((t) => !t.done) ?? null;
 }
 
 export function DailyPlan({
 	plan,
-	goal,
-	projection,
-	balance = null,
-	weak = [],
-	week,
+	nextUnit,
 	busy = false,
 	onSpeak,
 }: {
 	plan: Plan | null;
-	goal: Goal | null;
-	projection: Projection | null;
-	/** This week by Nation's four strands (src/core/strands.ts). */
-	balance?: Balance | null;
-	/** Units on record as weak spots (src/core/weak-spots.ts). */
-	weak?: WeakSpotSummary[];
-	week: Array<{ day: string; xp: number }>;
+	/** The Continue unit: "one more lesson" once the plan is done. */
+	nextUnit: string;
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
 }) {
+	const tasks = plan?.tasks ?? [];
 	const done = plan?.done ?? 0;
 	const total = plan?.total ?? 0;
+	const up = nextTask(plan);
+	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
 	const complete = total > 0 && done >= total;
 
 	return (
-		<section className="mt-5 rounded-3xl border bg-card px-6 py-5" data-testid="daily-plan" aria-label="Today's plan">
-			<div className="flex flex-wrap items-center gap-5">
-				<PlanRing done={done} total={total} />
-				<div className="min-w-[15rem] flex-1">
-					<p className="font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">Today&apos;s plan</p>
-					<p className="font-ui text-lg font-bold text-foreground">
-						{plan ? (complete ? "All done for today. Pekne!" : `${done} of ${total} done · about ${plan.minutes} min`) : "Loading…"}
-					</p>
-				</div>
-				<div className="flex flex-wrap gap-1.5 sm:gap-2" aria-label="This week">
-					{(week.length ? week : Array.from({ length: 7 }, (_, i) => ({ day: String(i), xp: 0 }))).map((d, i, all) => {
-						const isToday = i === all.length - 1;
-						const wd = /\d{4}-\d{2}-\d{2}/.test(d.day) ? WEEKDAY[new Date(`${d.day}T12:00:00`).getDay()] : "";
-						return (
-							<div key={d.day} className="flex flex-col items-center gap-1">
-								<span
-									className={cn(
-										"flex size-7 items-center justify-center rounded-full border-2",
-										d.xp > 0 ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground",
-										isToday && d.xp === 0 && "border-dashed border-foreground/40",
-									)}
-									title={`${d.day}: ${d.xp} XP`}
-								>
-									<FlameIcon className="size-3.5" />
-								</span>
-								<span className={cn("font-ui text-xs uppercase", isToday ? "text-foreground" : "text-muted-foreground")}>{wd}</span>
-							</div>
-						);
-					})}
-				</div>
+		<section className="rounded-3xl border bg-card p-4 sm:p-5" data-testid="daily-plan" aria-labelledby="plan-title">
+			<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-1">
+				<h2 id="plan-title" className="text-xl font-black text-foreground">
+					Today&apos;s plan
+				</h2>
+				<p className="text-sm font-semibold tabular-nums text-muted-foreground" data-testid="plan-summary">
+					{!plan ? "\u00a0" : complete ? `All ${total} done` : done === 0 ? `${total} tasks · about ${left} min` : `${done} of ${total} done · about ${left} min left`}
+				</p>
 			</div>
+			<PlanProgress tasks={tasks} />
 
-			<ol className="mt-4 flex flex-col gap-1" data-testid="plan-tasks">
-				{(plan?.tasks ?? []).map((t) => (
-					<li key={t.id}>
-						<TaskRow task={t} busy={busy} onSpeak={onSpeak} />
-					</li>
-				))}
-			</ol>
+			{complete && (
+				<div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-gold/40 bg-gold/5 p-4" data-testid="plan-complete">
+					<div>
+						<p className="text-lg font-black text-foreground">All done for today. Pekne!</p>
+						<p className="text-sm text-muted-foreground">Anything more is a bonus. Practice freely below, or keep going on your path.</p>
+					</div>
+					<Link href={`/lesson?unit=${nextUnit}`} className={cn(SECONDARY, SMALL)} data-testid="plan-one-more">
+						One more lesson
+					</Link>
+				</div>
+			)}
 
-			{/* The week by strand: input, speaking, words & rules, speed, against
-			    a quarter each (Nation's four strands). */}
-			<StrandBalance balance={balance} />
-
-			{/* Weak spots on record (src/core/weak-spots.ts): what the check, the
-			    lessons or the deck flagged, until enough reps come back right. */}
-			<WeakSpots weak={weak} />
-
-			{/* The goal in one line, and the door to everything about it: pace
-			    sliders, hours, milestones and the level re-check live on the
-			    Plan page (components/plan/plan-page.tsx). */}
-			<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-4 font-ui text-xs text-muted-foreground" data-testid="goal-line">
-				<span className="text-foreground">
-					<TargetIcon className="mr-1.5 inline size-3.5 align-[-2px] text-flame" />
-					<span className="whitespace-nowrap" title={LEVEL_CAN_DO[goal?.level ?? "B2"]}>
-						Goal: <b>{goal?.level ?? "B2"}</b>
-						{projection?.etaPlanned && (
-							<span className="font-normal text-muted-foreground">
-								{" "}· about <b className="text-foreground">{monthOf(projection.etaPlanned)}</b>
-							</span>
-						)}
-					</span>
-				</span>
-				<Link href="/plan" className="underline hover:text-foreground" data-testid="goal-plan">
-					Your plan
-				</Link>
-			</div>
+			{plan ? (
+				<ol className="mt-3 flex flex-col gap-1" data-testid="plan-tasks">
+					{tasks.map((t) => (
+						<li key={t.id}>{t === up ? <NextTask task={t} busy={busy} onSpeak={onSpeak} /> : <TaskRow task={t} busy={busy} onSpeak={onSpeak} />}</li>
+					))}
+				</ol>
+			) : (
+				<PlanSkeleton />
+			)}
 		</section>
 	);
 }
 
-const TASK_ICON: Record<PlanTask["id"], { icon: React.ReactNode; ink: string }> = {
-	review: { icon: <RepeatIcon className="size-5" />, ink: "text-sky bg-sky/15" },
-	listen: { icon: <HeadphonesIcon className="size-5" />, ink: "text-sky bg-sky/15" },
-	lesson: { icon: <PlayIcon className="size-5 fill-current" />, ink: "text-go bg-go/15" },
-	strengthen: { icon: <DumbbellIcon className="size-5" />, ink: "text-gold bg-gold/15" },
-	blitz: { icon: <ZapIcon className="size-5" />, ink: "text-gold bg-gold/15" },
-	words: { icon: <BookOpenTextIcon className="size-5" />, ink: "text-flame bg-flame/15" },
-	read: { icon: <BookOpenIcon className="size-5" />, ink: "text-xp bg-xp/15" },
-	watch: { icon: <MonitorPlayIcon className="size-5" />, ink: "text-go bg-go/15" },
-	speak: { icon: <MicIcon className="size-5" />, ink: "text-xp bg-xp/15" },
-	fluency: { icon: <GaugeIcon className="size-5" />, ink: "text-gold bg-gold/15" },
+/** One segment per task, filled in the task's strand ink once it is done. */
+function PlanProgress({ tasks }: { tasks: PlanTask[] }) {
+	return (
+		<div className="mt-3 flex gap-1 px-1" aria-hidden="true">
+			{tasks.length === 0 ? (
+				<span className="h-1.5 flex-1 rounded-full bg-accent" />
+			) : (
+				tasks.map((t) => <span key={t.id} className={cn("h-1.5 flex-1 rounded-full transition-colors duration-500", t.done ? STRAND_STYLE[taskStrand(t)].bar : "bg-accent")} />)
+			)}
+		</div>
+	);
+}
+
+/** Rows shaped like the real ones while the plan loads, so nothing jumps. */
+function PlanSkeleton() {
+	return (
+		<ol className="mt-3 flex flex-col gap-1" aria-label="Loading today's plan">
+			{[0, 1, 2, 3, 4].map((i) => (
+				<li key={i} className="flex items-center gap-3 px-2 py-2">
+					<span className="size-10 shrink-0 animate-pulse rounded-xl bg-accent" />
+					<span className="flex-1">
+						<span className="block h-4 w-1/3 animate-pulse rounded bg-accent" />
+						<span className="mt-1.5 block h-3 w-2/3 animate-pulse rounded bg-accent/70" />
+					</span>
+				</li>
+			))}
+		</ol>
+	);
+}
+
+const TASK_ICON: Record<PlanTask["id"], React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+	review: RepeatIcon,
+	listen: HeadphonesIcon,
+	lesson: PlayIcon,
+	strengthen: DumbbellIcon,
+	blitz: ZapIcon,
+	words: BookOpenTextIcon,
+	read: BookOpenIcon,
+	watch: MonitorPlayIcon,
+	speak: MicIcon,
+	fluency: GaugeIcon,
 };
 
-function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpeak: (task: PlanTask) => void }) {
-	const { icon, ink } = TASK_ICON[task.id];
+function TaskIcon({ task, large = false }: { task: PlanTask; large?: boolean }) {
+	const st = STRAND_STYLE[taskStrand(task)];
+	const Icon = task.via === "story" ? ScrollTextIcon : task.via === "tutor" ? GraduationCapIcon : task.via === "talk" ? MessagesSquareIcon : TASK_ICON[task.id];
+	return (
+		<span className={cn("flex shrink-0 items-center justify-center rounded-xl", large ? "size-12" : "size-10", task.done ? cn("bg-accent", st.text) : st.tile)}>
+			{task.done ? <CheckIcon className="size-5" strokeWidth={3} aria-label="Done" /> : <Icon className={cn(large ? "size-6" : "size-5", task.id === "lesson" && "fill-current")} />}
+		</span>
+	);
+}
+
+/** The next step: one large target with its Start action. */
+function NextTask({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpeak: (task: PlanTask) => void }) {
+	const strand = taskStrand(task);
+	const st = STRAND_STYLE[strand];
 	const body = (
 		<>
-			<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", task.done ? "bg-accent text-muted-foreground" : ink)}>
-				{task.done ? <CheckIcon className="size-5" strokeWidth={3} /> : task.via === "story" ? <ScrollTextIcon className="size-5" /> : task.via === "tutor" ? <GraduationCapIcon className="size-5" /> : task.via === "talk" ? <MessagesSquareIcon className="size-5" /> : icon}
+			<span className="flex items-start gap-4">
+				<TaskIcon task={task} large />
+				<span className="min-w-0 flex-1">
+					<span className={cn("block text-xs font-bold", st.text)}>Up next · {STRANDS.find((s) => s.id === strand)?.title}</span>
+					<span className="mt-0.5 block text-lg font-black leading-tight text-foreground">{task.title}</span>
+					<span className="mt-1 block text-sm text-pretty text-muted-foreground">{task.line}</span>
+				</span>
 			</span>
-			<span className="min-w-0 flex-1">
-				<span className={cn("block font-ui text-base font-bold", task.done ? "text-muted-foreground line-through decoration-2" : "text-foreground")}>{task.title}</span>
-				<span className="block truncate font-prose text-sm text-muted-foreground">{task.line}</span>
+			<span className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 sm:pl-16">
+				<span className={cn(PRIMARY, "h-11 px-6 group-disabled:bg-accent group-disabled:text-muted-foreground")}>
+					Start
+					<ArrowRightIcon className="size-4" strokeWidth={3} />
+				</span>
+				<span className="text-sm text-muted-foreground">
+					About {task.minutes} min
+					{task.href && (
+						<>
+							{" · "}
+							<kbd className={KBD}>Enter</kbd> to start
+						</>
+					)}
+				</span>
 			</span>
-			<span className="shrink-0 font-ui text-xs font-bold tabular-nums text-muted-foreground">{task.done ? "done" : `${task.minutes} min`}</span>
 		</>
 	);
-	const cls = "flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition-colors hover:bg-accent disabled:opacity-60";
+	const cls = cn("group my-1 block w-full rounded-2xl border-2 p-4 text-left transition-colors", st.border, st.soft);
+	return task.href ? (
+		<Link href={task.href} className={cls} data-testid={`plan-${task.id}`} data-next="true">
+			{body}
+		</Link>
+	) : (
+		<button type="button" onClick={() => onSpeak(task)} disabled={busy} className={cls} data-testid={`plan-${task.id}`} data-next="true">
+			{body}
+		</button>
+	);
+}
+
+function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpeak: (task: PlanTask) => void }) {
+	const body = (
+		<>
+			<TaskIcon task={task} />
+			<span className="min-w-0 flex-1">
+				<span className={cn("block truncate text-base font-bold", task.done ? "text-muted-foreground" : "text-foreground")}>{task.title}</span>
+				<span className="block truncate text-sm text-muted-foreground">{task.line}</span>
+			</span>
+			<span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{task.done ? "Done" : `${task.minutes} min`}</span>
+		</>
+	);
+	const cls = "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-accent disabled:opacity-60";
 	return task.href ? (
 		<Link href={task.href} className={cls} data-testid={`plan-${task.id}`}>
 			{body}
@@ -164,62 +206,31 @@ function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpe
 	);
 }
 
-function PlanRing({ done, total }: { done: number; total: number }) {
-	const px = 64;
-	const stroke = 7;
-	const r = (px - stroke) / 2;
-	const c = 2 * Math.PI * r;
-	const pct = total > 0 ? done / total : 0;
-	return (
-		<span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: px, height: px }} aria-label={`${done} of ${total} tasks done`}>
-			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
-				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke} />
-				<circle
-					cx={px / 2}
-					cy={px / 2}
-					r={r}
-					fill="none"
-					stroke={pct >= 1 ? "var(--lh-gold)" : "var(--lh-go)"}
-					strokeWidth={stroke}
-					strokeLinecap="round"
-					strokeDasharray={c}
-					strokeDashoffset={c * (1 - pct)}
-					className="transition-[stroke-dashoffset] duration-700"
-				/>
-			</svg>
-			<span className="font-ui text-base font-black tabular-nums text-foreground">
-				{done}
-				<span className="text-xs text-muted-foreground">/{total}</span>
-			</span>
-		</span>
-	);
-}
-
 /** The struggles on record, one line each: the unit (or the family two
  *  units share), where it was seen, and the tally since. Each opens the
  *  unit's lesson; the map shows the same spots in place. */
-export function WeakSpots({ weak }: { weak: WeakSpotSummary[] }) {
+export function WeakSpots({ weak, className = "mt-4 border-t pt-4" }: { weak: WeakSpotSummary[]; className?: string }) {
 	const groups = weakSpotGroups(weak);
 	if (!groups.length) return null;
 	return (
-		<div className="mt-4 border-t pt-4" data-testid="weak-spots">
-			<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">
-				<AlertTriangleIcon className="mr-1.5 inline size-3.5 align-[-2px] text-miss" />
+		<div className={className} data-testid="weak-spots">
+			<p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+				<AlertTriangleIcon className="size-4 text-miss" aria-hidden="true" />
 				Your weak spots
 			</p>
-			<ul className="mt-1.5 flex flex-col gap-1">
+			<ul className="mt-2 flex flex-col gap-0.5">
 				{groups.slice(0, 4).map((g) => (
 					<li key={g.id}>
-						<Link href={`/lesson?unit=${g.unit}`} className="group flex flex-wrap items-baseline gap-x-2 rounded-lg px-1 py-0.5 hover:bg-accent" data-testid={`weak-spot-${g.id}`}>
-							<span className="font-ui text-sm font-bold text-foreground group-hover:text-go">{g.title}</span>
-							<span className="font-ui text-xs text-muted-foreground">{g.spots.length > 1 ? `${g.spots.map((m) => m.title).join(" + ")} · ${g.spots[0]!.line}` : g.line}</span>
+						<Link href={`/lesson?unit=${g.unit}`} className="group -mx-2 block rounded-lg px-2 py-1.5 hover:bg-accent" data-testid={`weak-spot-${g.id}`}>
+							<span className="block text-sm font-bold text-foreground group-hover:text-go">{g.title}</span>
+							<span className="block text-xs text-muted-foreground">{g.spots.length > 1 ? `${g.spots.map((m) => m.title).join(" + ")} · ${g.spots[0]!.line}` : g.line}</span>
 						</Link>
 					</li>
 				))}
 				{groups.length > 4 && (
-					<li className="px-1 font-ui text-xs text-muted-foreground">
-						<Link href="/curriculum" className="underline hover:text-foreground">
-							and {groups.length - 4} more on the map
+					<li className="pt-1 text-xs text-muted-foreground">
+						<Link href="/curriculum" className="underline underline-offset-2 hover:text-foreground">
+							{groups.length - 4} more on the path
 						</Link>
 					</li>
 				)}

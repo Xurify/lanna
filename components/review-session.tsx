@@ -11,8 +11,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BrainIcon, ChartColumnIcon, CheckIcon, EyeOffIcon, LightbulbIcon, WholeWordIcon, XIcon } from "lucide-react";
+import Link from "next/link";
+import { BrainIcon, ChartColumnIcon, CheckIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, Volume2Icon, VolumeXIcon, WholeWordIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -77,7 +79,7 @@ function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; va
 				{icon}
 			</span>
 			<div className="min-w-0">
-				<dt className="font-ui text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
+				<dt className="font-ui text-xs font-bold text-muted-foreground">{label}</dt>
 				<dd className="font-prose text-sm leading-tight text-foreground">{value}</dd>
 			</div>
 		</div>
@@ -159,6 +161,8 @@ export function ReviewSession() {
 				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks }),
 			});
 			await load();
+			// The sidebar's due badge counts the same deck.
+			window.dispatchEvent(new Event("lh:review-changed"));
 		} finally {
 			setSaving(false);
 		}
@@ -174,10 +178,18 @@ export function ReviewSession() {
 		await load();
 	};
 
-	// Keyboard: Enter checks / accepts the suggested rating; 1–4 rate.
+	// Keyboard: Enter checks / accepts the suggested rating; 1–4 rate, or
+	// pick an option before the answer when choosing.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (!verdict) return;
+			if (!verdict) {
+				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
+				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
+					e.preventDefault();
+					check(opt);
+				}
+				return;
+			}
 			if (e.key === "Enter") {
 				e.preventDefault();
 				void rate(suggested);
@@ -199,8 +211,25 @@ export function ReviewSession() {
 		});
 		if (res.ok) await load();
 	};
+	// The stepper shows the new value at once; the save lands behind it.
+	const [newPerDay, setNewPerDay] = useState<number | null>(null);
+	const stepNewPerDay = (delta: number) => {
+		const from = newPerDay ?? status?.settings.newPerDay ?? 0;
+		const next = Math.max(0, Math.min(100, from + delta));
+		if (next === from) return;
+		setNewPerDay(next);
+		void saveNewPerDay(next);
+	};
+
+	const toggleSound = () => {
+		const next = !sound;
+		setSoundOn(next);
+		setSound(next);
+		if (!next) stopSpeaking();
+	};
 
 	const counts = status?.counts;
+	const kbd = (k: string) => <kbd className={KBD}>{k}</kbd>;
 
 	return (
 		<div className="flex h-dvh flex-col">
@@ -227,72 +256,116 @@ export function ReviewSession() {
 			<main className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-10 font-prose">
 				<div className="w-full max-w-2xl">
 					{loadError && (
-						<div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-miss">
-							<p>Could not load the deck: {loadError}</p>
-							<button type="button" onClick={() => void load()} className="text-foreground underline-offset-2 hover:underline">
+						<div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 text-sm text-foreground">
+							<p>Couldn&apos;t load your review deck. {loadError}</p>
+							<button type="button" onClick={() => void load()} className={cn(SECONDARY, SMALL, "ml-auto")}>
 								Try again
 							</button>
 						</div>
 					)}
 
+					{!status && !loadError && (
+						<div className="rounded-3xl border bg-card p-6 sm:p-8" aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
+							<div className="h-3 w-20 animate-pulse rounded bg-accent" />
+							<div className="mt-7 h-9 w-full animate-pulse rounded-lg bg-accent" />
+							<div className="mt-3 h-9 w-2/3 animate-pulse rounded-lg bg-accent" />
+							<div className="mt-5 h-4 w-1/2 animate-pulse rounded bg-accent/70" />
+							<div className="mt-8 flex justify-end gap-2">
+								<div className="h-12 w-28 animate-pulse rounded-xl bg-accent/70" />
+								<div className="h-12 w-28 animate-pulse rounded-xl bg-accent" />
+							</div>
+						</div>
+					)}
+
 					{status && !status.available && (
-						<div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground" data-testid="review-unavailable">
-							There is no dictionary for this language yet, so there are no review sentences. Slovak has one; switch languages in the sidebar.
+						<div className="rounded-xl border bg-card p-6 text-base text-muted-foreground" data-testid="review-unavailable">
+							This language has no dictionary yet, so there are no review sentences. Slovak has one: switch languages at the top of the sidebar.
 						</div>
 					)}
 
 					{status?.available && !prompt && (
-						<div className="rounded-3xl border-2 bg-card p-8 text-center" data-testid="review-done">
-							<p className="font-ui text-2xl font-black text-foreground">All caught up 🎉</p>
-							<p className="mt-1 text-sm text-muted-foreground">
-								{counts?.reviewedToday ?? 0} reviews today. New words tomorrow: {status.settings.newPerDay}. Words that come back sooner wait in the deck until they are due.
+						<div className="rounded-3xl border bg-card p-8 text-center" data-testid="review-done">
+							<div className="mx-auto flex size-14 items-center justify-center rounded-full bg-go-soft text-go">
+								<CheckIcon className="size-7" strokeWidth={3} aria-hidden="true" />
+							</div>
+							<p className="mt-4 font-ui text-2xl font-black text-foreground">All caught up</p>
+							<p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
+								{(counts?.reviewedToday ?? 0) === 1 ? "1 review" : `${counts?.reviewedToday ?? 0} reviews`} done today. Words come back on the day they are due, and new ones arrive tomorrow.
 							</p>
-							<label className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-								New words per day
-								<input
-									type="number"
-									min={0}
-									max={100}
-									defaultValue={status.settings.newPerDay}
-									onBlur={(e) => void saveNewPerDay(Number(e.target.value))}
-									className="w-16 rounded-md border bg-background px-2 py-1 text-foreground"
-								/>
-							</label>
+							<div className="mt-6 flex items-center justify-center gap-3" data-testid="review-new-per-day">
+								<span className="font-ui text-sm font-semibold text-muted-foreground" id="review-new-per-day-label">
+									New words per day
+								</span>
+								<div className="flex items-center rounded-xl border-2 border-border" role="group" aria-labelledby="review-new-per-day-label">
+									<button
+										type="button"
+										onClick={() => stepNewPerDay(-5)}
+										disabled={(newPerDay ?? status.settings.newPerDay) <= 0}
+										aria-label="Five fewer new words per day"
+										className="grid size-10 place-items-center rounded-l-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+									>
+										<MinusIcon className="size-4" />
+									</button>
+									<span className="w-10 text-center font-ui text-base font-bold tabular-nums text-foreground" aria-live="polite">
+										{newPerDay ?? status.settings.newPerDay}
+									</span>
+									<button
+										type="button"
+										onClick={() => stepNewPerDay(5)}
+										disabled={(newPerDay ?? status.settings.newPerDay) >= 100}
+										aria-label="Five more new words per day"
+										className="grid size-10 place-items-center rounded-r-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+									>
+										<PlusIcon className="size-4" />
+									</button>
+								</div>
+							</div>
+							<div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
+								<Link href="/" className={SECONDARY}>
+									Back to Today
+								</Link>
+								<Link href="/lesson" className={PRIMARY}>
+									Do a lesson
+								</Link>
+							</div>
 						</div>
 					)}
 
 					{prompt && (
-						<div className="rounded-3xl border-2 bg-card p-8 shadow-[0_4px_0_0_var(--border)]" data-testid="review-card">
-							<div className="mb-5 flex items-center gap-2 font-ui text-xs font-bold text-muted-foreground">
+						<div className="rounded-3xl border bg-card p-6 sm:p-8" data-testid="review-card">
+							{/* Card header: where this word is in the deck, then how to answer. */}
+							<div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 font-ui text-xs font-bold text-muted-foreground">
 								<span>{prompt.card.state === "new" ? "New word" : prompt.card.state === "learning" ? "Relearning" : "Review"}</span>
-								<div className="ml-auto flex items-center gap-1">
-									{(["type", "choice"] as const).map((m) => (
-										<button
-											key={m}
-											type="button"
-											onClick={() => {
-												setMode(m);
-												writePref(MODE_KEY, m);
-											}}
-											aria-pressed={mode === m}
-										className={cn("rounded-sm px-2 py-0.5", mode === m ? "bg-accent text-foreground" : "hover:text-foreground")}
-										>
-											{m === "type" ? "Type" : "Choose"}
-										</button>
-									))}
+								<div className="ml-auto flex items-center gap-2">
+									<span id="review-mode-label">Answer by</span>
+									<div className="flex rounded-lg bg-accent/60 p-0.5" role="radiogroup" aria-labelledby="review-mode-label">
+										{(["type", "choice"] as const).map((m) => (
+											<button
+												key={m}
+												type="button"
+												role="radio"
+												aria-checked={mode === m}
+												onClick={() => {
+													setMode(m);
+													writePref(MODE_KEY, m);
+												}}
+												className={cn("rounded-md px-2.5 py-1 transition-colors", mode === m ? "bg-background text-foreground shadow-sm" : "hover:text-foreground")}
+												data-testid={`review-mode-${m}`}
+											>
+												{m === "type" ? "Typing" : "Choosing"}
+											</button>
+										))}
+									</div>
 									<button
 										type="button"
-										onClick={() => {
-											const next = !sound;
-											setSoundOn(next);
-											setSound(next);
-											if (!next) stopSpeaking();
-										}}
+										onClick={toggleSound}
 										aria-pressed={sound}
-										className={cn("rounded-sm px-2 py-0.5", sound ? "bg-accent text-foreground" : "hover:text-foreground")}
+										className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition-colors hover:bg-accent hover:text-foreground"
 										title="Speech and sounds, on every page"
+										data-testid="review-sound"
 									>
-										Sound
+										{sound ? <Volume2Icon className="size-4" aria-hidden="true" /> : <VolumeXIcon className="size-4" aria-hidden="true" />}
+										{sound ? "Sound on" : "Sound off"}
 									</button>
 								</div>
 							</div>
@@ -300,7 +373,7 @@ export function ReviewSession() {
 							<form
 								onSubmit={(e) => {
 									e.preventDefault();
-									check(given);
+									if (given.trim()) check(given);
 								}}
 								className="text-3xl leading-relaxed text-foreground"
 								lang={lang?.code}
@@ -325,59 +398,85 @@ export function ReviewSession() {
 										spellCheck={false}
 										data-testid="review-input"
 										style={{ width: `${Math.max(4, prompt.card.answer.length + 1)}ch` }}
-										className="mx-1 inline-block rounded-lg border-2 border-b-[4px] border-border bg-background px-2 text-center font-bold caret-go outline-none transition-colors focus:border-go"
+										className="mx-1 inline-block rounded-xl border-2 border-border bg-background px-2 text-center font-bold caret-go outline-none transition-colors selection:bg-go/30 focus:border-go"
 									/>
 								) : (
-									<span className="mx-1 inline-block min-w-16 border-b-2 border-dashed border-muted-foreground/50 text-center">&nbsp;</span>
+									<span className="mx-1 inline-block h-[1.1em] w-[5ch] translate-y-[0.2em] rounded-lg border-2 border-dashed border-muted-foreground/50" aria-label="blank" />
 								)}
 								<span>{prompt.after}</span>
 							</form>
 
 							<p className="mt-3 text-lg text-muted-foreground">{prompt.card.translation}</p>
 
-							{!verdict && mode === "choice" && !picks && <p className="mt-1 font-ui text-xs font-bold text-muted-foreground">You have had this one before, so it is typed.</p>}
+							{/* Hints taken, labelled the same way as the lesson's cue chip. */}
+							{!verdict && hint > 0 && (
+								<p className="mt-3 flex flex-wrap gap-2 text-base" data-testid="review-hints">
+									<span className="inline-flex items-baseline gap-1.5 rounded-md bg-accent px-2 py-0.5 text-foreground">
+										<span className="font-ui text-xs font-bold text-muted-foreground">means</span>
+										<span className="font-medium">{prompt.card.gloss}</span>
+									</span>
+									{hint > 1 && (
+										<span className="inline-flex items-baseline gap-1.5 rounded-md bg-accent px-2 py-0.5 text-foreground">
+											<span className="font-ui text-xs font-bold text-muted-foreground">base form</span>
+											<span className="font-medium" lang={lang?.code}>
+												{prompt.card.lemma}
+											</span>
+										</span>
+									)}
+								</p>
+							)}
+
+							{!verdict && mode === "choice" && !picks && <p className="mt-2 font-ui text-sm text-muted-foreground">You have met this word before, so this time you type it.</p>}
 
 							{!verdict && picks && (
-								<div className="mt-5 grid grid-cols-2 gap-2" data-testid="review-options">
-									{prompt.options.map((o) => (
+								<div className="mt-6 grid gap-3 sm:grid-cols-2" data-testid="review-options">
+									{prompt.options.map((o, i) => (
 										<button
 											key={o}
 											type="button"
 											onClick={() => check(o)}
-											className="rounded-2xl border-2 bg-background px-4 py-3 text-left text-xl text-foreground shadow-[0_3px_0_0_var(--border)] transition-all hover:border-sky/60 hover:bg-accent active:translate-y-0.5 active:shadow-none"
+											className="flex items-center gap-3 rounded-xl border-2 border-border bg-background px-4 py-3 text-left text-xl text-foreground transition-colors hover:border-foreground/40 hover:bg-accent"
+											lang={lang?.code}
 										>
+											<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
 											{o}
 										</button>
 									))}
 								</div>
 							)}
 
+							{!verdict && !picks && <DiacriticBar variant="keys" className="mt-6" />}
+
 							{!verdict && (
-								<div className="mt-7 flex items-center gap-2 font-ui text-sm">
-									{!picks && (
+								<div className="mt-7 flex flex-wrap items-center gap-2 font-ui">
+									{/* Graded help: the meaning first, then the base form. Each
+									    one caps the rating, so the card comes back sooner. */}
+									{hint < 2 && (
 										<button
 											type="button"
-											onClick={() => check(given)}
-											className="rounded-2xl bg-go px-7 py-2.5 font-extrabold uppercase tracking-wider text-go-ink shadow-[0_4px_0_0_rgb(0_0_0/0.35)] transition-all hover:brightness-110 active:translate-y-0.5 active:shadow-none"
+											onClick={() => {
+												setHint((h) => Math.min(2, h + 1));
+												inputRef.current?.focus();
+											}}
+											className="-ml-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+											title={hint === 0 ? "Show what the word means. The card then comes back sooner (rated Good at most)." : "Show the dictionary form. The card then comes back sooner (rated Hard at most)."}
+											data-testid="review-hint"
 										>
-											Check
+											<LightbulbIcon className="size-4" aria-hidden="true" />
+											{hint === 0 ? "Show meaning" : "Show base form"}
+											<span className="font-normal">· comes back sooner</span>
 										</button>
 									)}
-									{/* Graded: the meaning first (caps at Good), then the word (caps at Hard). */}
-									<button
-										type="button"
-										onClick={() => setHint((h) => Math.min(2, h + 1))}
-										disabled={hint >= 2}
-										className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:hover:bg-transparent"
-										title={hint === 0 ? "Show the meaning (the card can then rate at most Good)" : hint === 1 ? "Show the word (at most Hard)" : undefined}
-										data-testid="review-hint"
-									>
-										<LightbulbIcon className="size-3.5" />
-										{hint === 0 ? "Hint · meaning" : hint === 1 ? <span>{prompt.card.gloss} · show the word?</span> : <span>{prompt.card.lemma} · {prompt.card.gloss}</span>}
-									</button>
-									<button type="button" onClick={() => check("")} className="ml-auto rounded-md px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-										I don&apos;t know
-									</button>
+									<div className="ml-auto flex items-center gap-2">
+										<button type="button" onClick={() => check("")} className={QUIET} data-testid="review-dont-know">
+											I don&apos;t know
+										</button>
+										{!picks && (
+											<button type="button" onClick={() => check(given)} disabled={!given.trim()} className={PRIMARY} data-testid="review-check">
+												Check
+											</button>
+										)}
+									</div>
 								</div>
 							)}
 
@@ -399,11 +498,9 @@ export function ReviewSession() {
 											disabled={saving}
 											onClick={() => void rate(suggested)}
 											data-testid="review-continue"
-											className={cn(
-												"flex h-12 items-center justify-center rounded-xl px-7 font-ui text-base font-bold transition-all hover:brightness-110 disabled:opacity-50",
-												VERDICT_STYLE[verdict].btn,
-											)}
+											className={cn(BUTTON, "hover:brightness-110 disabled:opacity-50", VERDICT_STYLE[verdict].btn)}
 										>
+											{saving && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
 											Continue
 										</button>
 									</div>
@@ -455,7 +552,15 @@ export function ReviewSession() {
 													{RATING_LABELS[r]} · {formatInterval(prompt.intervals[r])}
 												</button>
 											))}
-											<span className="ml-auto">{hint > 0 || picks ? `With help: at most ${RATING_LABELS[ratingCap(help)]}` : "Enter continues · 1–4 rates"}</span>
+											<span className="ml-auto hidden items-center gap-1 sm:flex">
+												{hint > 0 || picks ? (
+													`With help: at most ${RATING_LABELS[ratingCap(help)]}`
+												) : (
+													<>
+														{kbd("Enter")} continues · {kbd("1")}–{kbd("4")} rate
+													</>
+												)}
+											</span>
 										</div>
 									</div>
 								</div>
@@ -465,33 +570,44 @@ export function ReviewSession() {
 								<button
 									type="button"
 									onClick={() => void suspend()}
-									className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+									className="flex items-center gap-1.5 rounded-md px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
 									title="Never show this sentence again"
+									data-testid="review-suspend"
 								>
-									<EyeOffIcon className="size-3" />
-									Hide this card
+									<EyeOffIcon className="size-3.5" aria-hidden="true" />
+									Hide this sentence
 								</button>
 							</div>
 						</div>
 					)}
 
-					{prompt && mode === "type" && !verdict && <DiacriticBar className="mt-2 sm:justify-center" />}
+					{prompt && !verdict && !picks && (
+						<p className="mt-3 hidden items-center justify-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
+							{kbd("Enter")} to check
+						</p>
+					)}
 
 					{status && status.leeches.length > 0 && (
 						<div className="mt-10" data-testid="review-leeches">
-							<h2 className="font-ui text-sm font-extrabold text-muted-foreground">Words that keep slipping</h2>
-							<ul className="mt-2 flex flex-wrap gap-2 text-sm">
+							<h2 className="font-ui text-sm font-extrabold text-foreground">Words that keep slipping</h2>
+							<p className="mt-0.5 text-sm text-muted-foreground">Missed again and again. A lesson on them, or a sentence of your own, often helps more than another review.</p>
+							<ul className="mt-3 flex flex-wrap gap-2 text-sm">
 								{status.leeches.map((l) => (
-									<li key={l.id} className="rounded-md border px-2 py-1">
-										<span className="text-foreground">{l.lemma}</span> <span className="text-muted-foreground">{l.gloss}</span>{" "}
-										<span className="font-mono text-[11px] text-muted-foreground">×{l.lapses}</span>
+									<li key={l.id} className="rounded-lg border px-2.5 py-1">
+										<span className="text-foreground" lang={lang?.code}>
+											{l.lemma}
+										</span>{" "}
+										<span className="text-muted-foreground">{l.gloss}</span>{" "}
+										<span className="font-ui text-xs text-muted-foreground" title={`Missed ${l.lapses} times`}>
+											×{l.lapses}
+										</span>
 									</li>
 								))}
 							</ul>
 						</div>
 					)}
 
-					{status?.available && <p className="mt-10 text-center text-xs text-muted-foreground">Sentences from slovak.wiki — curated examples and Tatoeba (CC BY 2.0 FR).</p>}
+					{status?.available && <p className="mt-10 text-center text-xs text-muted-foreground">Sentences from slovak.wiki: curated examples and Tatoeba (CC BY 2.0 FR).</p>}
 				</div>
 			</main>
 		</div>

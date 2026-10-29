@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { setSpeed, speak, SPEEDS, stopSpeaking, useSpeed } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
@@ -55,9 +56,6 @@ interface Outcome {
 }
 
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
-const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
-const PRIMARY = cn(BUTTON, "bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100");
-const SECONDARY = cn(BUTTON, "border-2 border-foreground/20 px-5 text-foreground hover:bg-foreground/5");
 
 export function Reader({ initial, initialStory }: { initial: ReadingState | null; initialStory?: StoryRecord | null }) {
 	const router = useRouter();

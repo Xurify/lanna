@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, FlagIcon, LoaderCircleIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
@@ -80,9 +81,6 @@ interface Draft {
 	days: number;
 }
 
-const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
-const PRIMARY = cn(BUTTON, "bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100");
-const SECONDARY = cn(BUTTON, "border-2 border-foreground/20 px-5 text-foreground hover:bg-foreground/5");
 const COLUMN = "mx-auto w-full max-w-2xl px-6";
 
 /** When a language leaves the known list it leaves the explanation list too; English stands in for an empty one. */

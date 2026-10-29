@@ -41,6 +41,16 @@ A narrative of the first three days, from the fork to the task-based app. Times 
 - **UX audit pass** (`fix/ux-audit-pass`, PR pending): confirm dialogs for destructive settings, inline profile switch, labelled review and listen controls, a phone bottom nav, a keyboard-only focus ring, masked API keys, AA-readable muted text, pause/resume for Fluency with the mic off, a live status line for Speak, and phone-friendly Milestones and graph empty states.
 - **Window-drag fix** (same branch, owner bug report: "scrolled down, I can't grab the window"): every drag strip was absolute inside the scrolling content, so it rode off-screen with the page and a scrolled page had no grab point left. AppShell's `<main>` now carries one sticky strip at the top — glued to the visible area at any scroll depth, inside `<main>` so it never spans the sidebar, first child so the DOM-order mask law still holds. Trade-off, same as the unscrolled state today: the top 52px of the window is always a drag band, so content scrolled under it is not clickable until it scrolls past.
 
+## 29 October: the UX revamp
+
+- **UX revamp** (`ux/revamp-views`, PR pending), after the owner's "so freaking bad and hard to use the controls". View by view, each checked at 1400×890, 1133×700 and 390 wide:
+  - **Today:** one answer first. The next undone task is drawn large with Start (Enter starts it) and a segmented progress bar; "All done for today" when it is. Below it, "Practice anything" groups every mode by strand. A side column holds the week (days studied, strand balance, goal line with a link to Plan), weak spots and the path. The duplicate Continue card and link row are gone. The path folds unreached stages to their header and says which chapter opens next.
+  - **Sidebar:** language and the four destinations first; the tutor's two actions and "Your chats" below, with search and the Learn/Practice filter behind one search button; Background agents only while one runs; session titles at 14px so they sit with the nav. On phone widths in the browser the sidebar is a drawer over the page instead of a column that left about 100px of page.
+  - **Lesson:** the cue under the sentence is labelled ("means work", "base form mesto"); "Show translation · half XP" replaces "Meaning · half XP"; keyboard hints are drawn as keys; the X and Escape ask before dropping answered reps; the replay button no longer hangs off-screen on a phone; shared buttons.
+  - **Review:** flat card and shared buttons (no uppercase 3D Check); a labelled "Answer by Typing / Choosing" switch and a "Sound on" toggle; hints show as labelled chips and say what they cost ("comes back sooner"); 1–4 pick an option when choosing; the letter keys sit in the card; a skeleton while the deck loads; the caught-up state gets a custom stepper for new words per day (the native number input is gone) and links to Today and a lesson; the sidebar's due badge updates after each card.
+  - **Plan:** hours credited show as "2.4", not "2.4324324324324325"; the goal card puts the purposes on their own line.
+  - **Type and copy:** `--text-xs` 11→12px, `--text-sm` 12.5→13px; strand advice and empty states rewritten in plain sentences; US spelling ("Practice") throughout.
+
 ## Pull requests
 
 | PR | Branch | What | State |
@@ -55,6 +65,7 @@ A narrative of the first three days, from the fork to the task-based app. Times 
 | #9 | `fix/level-assessment` | Rebuilt level check | merged by the owner 2026-10-28 06:03 |
 | #10 | `setup/parallels-and-panel-close` | Panel close, parallels wording and switch | merged by the owner |
 | #11 | `feat/weak-spots` | Weak spots on record | merged by the owner |
+| (new) | `ux/revamp-views` | UX revamp: Today, sidebar, lesson, Review, Plan | open |
 
 GitHub Actions never runs on this repo (owner-side setting); a red check there is not a code failure.
 
@@ -70,6 +81,7 @@ Their PC profile had not gone through the new setup (the home page redirects to 
 - Watch (verified live by a session on the PC, not by the owner).
 - Everything in PR #5 (difficulty rules).
 - The Spending page's totals against their own expectation.
+- The UX revamp (`ux/revamp-views`): the new Today, the sidebar and its phone drawer, the lesson leave question, and the Review card. Checked in a browser against a copy of the PC profile, not yet in the Electron window.
 
 ## Known environment facts
 

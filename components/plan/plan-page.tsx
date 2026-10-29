@@ -17,8 +17,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, FlagIcon, TargetIcon } from "lucide-react";
+import { ArrowLeftIcon, FlagIcon, LoaderCircleIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
 import { HoursSheet } from "@/components/hours-sheet";
 import { Slider } from "@/components/plan/slider";
@@ -46,9 +47,16 @@ function clock(minutes: number): string {
 	return minutes % 60 === 0 ? `${h} h` : `${h} h ${minutes % 60} min`;
 }
 
+/** Hours credited so far, as a person would say them: "2.4", "37". The
+ *  credit is a sum of fractional unit hours, so the raw number can run to
+ *  sixteen decimals. */
+function hoursText(h: number): string {
+	return h < 10 ? String(Math.round(h * 10) / 10) : String(Math.round(h));
+}
+
 const CARD = "mt-5 rounded-2xl border bg-card p-5";
 const H2 = "font-ui text-xs font-bold tracking-wide text-muted-foreground";
-const LINK_BTN = "rounded-xl border-2 border-border px-4 py-1.5 font-ui text-sm font-bold text-foreground transition-colors hover:border-foreground/40";
+const LINK_BTN = cn(SECONDARY, SMALL);
 
 export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[] }) {
 	const router = useRouter();
@@ -113,11 +121,11 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 					<div className="mt-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
 						{/* A floor on the text: on a phone the buttons wrap below it instead of squeezing it to a column. */}
 						<div className="min-w-48 flex-1">
-							<p className="font-ui text-2xl font-black text-foreground">
-								<TargetIcon className="mr-2 inline size-6 align-[-3px] text-flame" />
+							<p className="flex items-center gap-2 font-ui text-2xl font-black text-foreground">
+								<TargetIcon className="size-6 text-flame" aria-hidden="true" />
 								{goal.level}
-								{purposes && <span className="font-prose text-base font-normal text-muted-foreground"> · for {purposes}</span>}
 							</p>
+							{purposes && <p className="mt-1 font-prose text-base text-foreground first-letter:uppercase">For {purposes}</p>}
 							<p className="mt-1 font-prose text-sm text-muted-foreground">{LEVEL_CAN_DO[goal.level]}</p>
 						</div>
 						<div className="flex flex-wrap gap-2">
@@ -139,7 +147,7 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 						{target.days === 0 ? `${goal.level} is within reach now` : target.date ? `${goal.level} around ${monthOf(target.date)}` : "Set some minutes to see a date"}
 					</p>
 					<p className="mt-1 min-h-5 font-ui text-sm text-muted-foreground" aria-live="polite">
-						{shift ?? (dirty ? "About the same as your saved plan." : `${hoursDone} of ~${topHours} guided hours done · at ${clock(savedMinutes)} × ${savedDays} days a week`)}
+						{shift ?? (dirty ? "About the same as your saved plan." : `${hoursText(hoursDone)} of ~${topHours} guided hours done · at ${clock(savedMinutes)} × ${savedDays} days a week`)}
 					</p>
 
 					<div className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
@@ -179,8 +187,9 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 								>
 									Reset
 								</button>
-								<button type="button" onClick={() => void save()} disabled={saving === "saving"} className="inline-flex h-9 items-center rounded-xl bg-go px-4 font-ui text-sm font-extrabold text-go-ink hover:brightness-110 disabled:opacity-60" data-testid="plan-save">
-									{saving === "saving" ? "Saving…" : "Make this my plan"}
+								<button type="button" onClick={() => void save()} disabled={saving === "saving"} className={cn(PRIMARY, SMALL)} data-testid="plan-save">
+									{saving === "saving" && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
+									Make this my plan
 								</button>
 							</div>
 						)}
@@ -219,7 +228,7 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 					</ol>
 					<p className="mt-3 font-ui text-xs text-muted-foreground">
 						<FlagIcon className="mr-1 inline size-3 align-[-1px] text-flame" />
-						The blue part is what the map credits so far ({hoursDone} h). Hover a bar for the detail.
+						The blue part is what the map credits so far: {hoursText(hoursDone)} h.
 					</p>
 				</section>
 
