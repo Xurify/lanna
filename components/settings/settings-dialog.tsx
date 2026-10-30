@@ -52,6 +52,7 @@ import { AppearanceSection, GraphSection } from "./appearance-section.tsx";
 import { KeyboardSection } from "./keyboard-section.tsx";
 import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
+import { ResetSection } from "./reset-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 
@@ -67,6 +68,7 @@ const SECTIONS = [
 	{ id: "keyboard", label: "Keyboard", hint: "Stored on this device" },
 	{ id: "usage", label: "Spending" },
 	{ id: "general", label: "General" },
+	{ id: "reset", label: "Reset" },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -441,6 +443,11 @@ export function SettingsDialogBody({
 									testid="section-learner"
 								>
 									<LearnerSection onClose={onClose} />
+								</SettingsSection>
+							)}
+							{active === "reset" && (
+								<SettingsSection title="Reset" hint="Start over from scratch" testid="section-reset">
+									<ResetSection />
 								</SettingsSection>
 							)}
 							{active === "usage" && (
