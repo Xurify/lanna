@@ -34,7 +34,7 @@ globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
 }) as typeof fetch;
 
 const outbox = await import("../components/lesson/outbox.ts");
-const waiting = () => JSON.parse(store.get("lh-outbox") ?? "[]") as Array<{ id: string; lang: string }>;
+const waiting = () => JSON.parse(store.get("lh-outbox") ?? "[]") as Array<{ id: string; lang: string; refused?: number }>;
 
 beforeEach(() => {
 	store.clear();
@@ -78,16 +78,28 @@ describe("lesson outbox", () => {
 		assert.equal(waiting().length, 1);
 	});
 
-	it("drops a lesson the server refuses for good, and sends the rest", async () => {
+	it("keeps a lesson the server refuses, marked as refused, and sends the rest", async () => {
 		replies = [{ status: 400 }, { status: 200 }];
 		const bad = outbox.enqueueLesson("sk", { unit: "bad" });
 		const good = outbox.enqueueLesson("sk", { unit: "good" });
 		const verdict = new Promise((resolve) => outbox.onSettled(bad.id, resolve));
 		await outbox.flushOutbox("sk");
-		assert.deepEqual(sent.map((s) => s.unit), ["bad", "good"]);
+		assert.deepEqual(sent.map((s) => s.unit), ["bad", "good"], "the refused lesson is tried once per run");
 		assert.equal(await verdict, null);
-		assert.deepEqual(waiting().map((p) => p.id), []);
+		assert.deepEqual(waiting().map((p) => p.id), [bad.id], "the refused lesson is kept, the recorded one is removed");
+		assert.equal(waiting()[0]!.refused, 400);
 		assert.ok(good.id);
+	});
+
+	it("sends a refused lesson again on a later run", async () => {
+		replies = [{ status: 400 }, { status: 200 }];
+		const bad = outbox.enqueueLesson("sk", { unit: "bad" });
+		await outbox.flushOutbox("sk");
+		assert.equal(waiting().length, 1);
+		await outbox.flushOutbox("sk");
+		assert.equal(sent.length, 2);
+		assert.deepEqual(waiting().map((p) => p.id), []);
+		assert.ok(bad.id);
 	});
 
 	it("leaves another language's lessons alone", async () => {

@@ -1554,7 +1554,7 @@ function EndScreen({
 						{recorded.queued.length > 0 && `${recorded.queued.length} missed word${recorded.queued.length === 1 ? "" : "s"} added to your review deck.`}
 					</>
 				) : failed ? (
-					"This lesson could not be saved."
+					"Not saved yet. The app will send it again."
 				) : (
 					<Pulse className="h-3.5 w-64 align-middle" />
 				)}

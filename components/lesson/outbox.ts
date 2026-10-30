@@ -32,6 +32,8 @@ export interface Pending {
 	at: string;
 	/** The POST /api/lesson body, without the id. */
 	body: Record<string, unknown>;
+	/** The status the server refused it with. A refused lesson stays in the outbox. */
+	refused?: number;
 }
 
 const KEY = "lh-outbox";
@@ -107,8 +109,10 @@ function retryLater(lang: string): void {
 }
 
 async function drain(lang: string): Promise<void> {
+	// A refused lesson is skipped for the rest of this run, so it cannot loop.
+	const refusedNow = new Set<string>();
 	for (;;) {
-		const next = read().find((p) => p.lang === lang);
+		const next = read().find((p) => p.lang === lang && !refusedNow.has(p.id));
 		if (!next) {
 			failures = 0;
 			return;
@@ -136,8 +140,10 @@ async function drain(lang: string): Promise<void> {
 			continue;
 		}
 		if (res && res.status >= 400 && res.status < 500) {
-			// The server will never take this one. Drop it, so it cannot block the rest.
-			write(read().filter((p) => p.id !== next.id));
+			// Never dropped: a lesson stays until the server records it. It is marked and sent again on a later run.
+			const status = res.status;
+			refusedNow.add(next.id);
+			write(read().map((p) => (p.id === next.id ? { ...p, refused: status } : p)));
 			settle(next.id, null);
 			continue;
 		}
