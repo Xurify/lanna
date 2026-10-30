@@ -96,7 +96,7 @@ function distractors(card: ReviewCard): string[] {
 	// Prefer forms with the same ending as the answer (same case/person).
 	const ending = card.answer.slice(-2).toLocaleLowerCase(tag());
 	const scored = window
-		.flatMap((e) => e.examples.filter((x) => x.cloze).map((x) => x.cloze!.answer))
+		.flatMap((e) => e.examples.filter((x) => x.cloze && !x.rejected).map((x) => x.cloze!.answer))
 		.map((a) => ({ a, s: a.toLocaleLowerCase(tag()).endsWith(ending) ? 0 : 1 }))
 		.sort((x, y) => x.s - y.s || hash(x.a + card.id) - hash(y.a + card.id));
 	for (const { a } of scored) {

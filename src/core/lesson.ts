@@ -367,6 +367,7 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	const union = info.union ? new Set<UnitId>(info.union) : null;
 	for (const entry of entries) {
 		entry.examples.forEach((ex, index) => {
+			if (ex.rejected) return;
 			if (unit === "words") {
 				if (isFirstWord(entry, ex)) out.push({ entry, index, unit });
 			} else if (lemmas) {

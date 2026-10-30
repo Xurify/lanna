@@ -105,7 +105,7 @@ export function formatEntry(e: LexiconEntry, examples = 3): string {
 	} else {
 		lines.push("  forms: not in the dictionary — do not present a form as certain without saying so");
 	}
-	for (const ex of e.examples.slice(0, examples)) lines.push(`  e.g. ${ex.sk} — ${ex.en}`);
+	for (const ex of e.examples.filter((x) => !x.rejected).slice(0, examples)) lines.push(`  e.g. ${ex.sk} — ${ex.en}`);
 	if (e.related.length) lines.push(`  related: ${e.related.slice(0, 6).join(", ")}`);
 	return lines.join("\n");
 }

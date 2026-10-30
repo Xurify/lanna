@@ -215,7 +215,7 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 	outer: for (const entry of order) {
 		if (usedSlug.has(entry.slug)) continue;
 		const idx = shuffle(
-			entry.examples.map((_, i) => i),
+			entry.examples.flatMap((x, i) => (x.rejected ? [] : [i])),
 			rand,
 		);
 		for (const i of idx) {
