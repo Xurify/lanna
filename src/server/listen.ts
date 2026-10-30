@@ -4,7 +4,9 @@
  * the learner's known words (the same estimate the Read task uses, so the
  * two input tasks agree on what "known" means), so no rep waits on a
  * model and nothing is paid for except the audio, which the TTS library
- * caches once per sentence. Finishing records the day's listening, XP and
+ * caches once per sentence, and a near-miss wrong meaning for the rare
+ * sentence the dictionary has no close one for (distractors.ts, asked for
+ * before the session starts, kept on disk). Finishing records the day's listening, XP and
  * minutes, sends the stretch words to the review deck (their next
  * meetings, spaced) and logs every sentence and answer to the corpus.
  */

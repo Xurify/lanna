@@ -10,7 +10,7 @@
  */
 
 import { isUnitId } from "@/src/core";
-import { blitzFor, lessonFor, recordLesson, type RepResult } from "@/src/server";
+import { blitzFor, lessonFor, lessonWithBetterOptions, recordLesson, type RepResult } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 	if (url.searchParams.get("mode") === "blitz") return Response.json(blitzFor());
 	const unit = url.searchParams.get("unit");
 	if (!isUnitId(unit)) return Response.json({ message: "unknown unit" }, { status: 400 });
-	return Response.json(lessonFor(unit));
+	return Response.json(await lessonWithBetterOptions(lessonFor(unit)));
 }
 
 const KINDS = new Set(["choose", "type", "build", "listen"]);

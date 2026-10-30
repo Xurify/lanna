@@ -1,6 +1,6 @@
 import { LessonPlayer } from "@/components/lesson/lesson-player";
 import { isUnitId, type LessonPlan } from "@/src/core";
-import { blitzFor, lessonFor } from "@/src/server";
+import { blitzFor, lessonFor, lessonWithBetterOptions } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export default async function LessonPage({ searchParams }: { searchParams: Promi
 	const id = isUnitId(unit) ? unit : "words";
 	let plan: LessonPlan | null = null;
 	try {
-		plan = mode === "blitz" ? blitzFor() : lessonFor(id);
+		plan = mode === "blitz" ? blitzFor() : await lessonWithBetterOptions(lessonFor(id));
 		if (plan.items.length === 0) plan = null;
 	} catch {
 		plan = null;
