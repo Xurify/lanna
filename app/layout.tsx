@@ -13,6 +13,7 @@ import { ServerEventsProvider } from "@/components/server-events";
 import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
 import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
+import { OutboxFlush } from "@/components/lesson/outbox-flush";
 
 // Chrome = JetBrains Mono, teaching prose = Source Sans 3, titles = CMU
 // Serif (the bundled lh-cmu @font-face in globals.css — no CDN).
@@ -55,6 +56,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				</AppearanceProvider>
 			</ServerEventsProvider>
 			<KeyboardFocusMode />
+			{/* Lessons finished but not yet recorded are sent again (components/lesson/outbox.ts). */}
+			<OutboxFlush />
 			{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}
 			<UpdateBanner />
 		</body>

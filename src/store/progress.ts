@@ -84,6 +84,9 @@ export interface ProgressRecord {
 	/** Units the learner struggles with, flagged by the level check, lessons
 	 *  or review and dropped once mended (src/core/weak-spots.ts). */
 	weak?: WeakRecord;
+	/** The latest lesson saves by the id the client sent (src/server/lesson.ts):
+	 *  a retry of one of them is answered from here, not recorded again. */
+	lessonAcks?: Array<{ id: string; outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number } }>;
 }
 
 export const DEFAULT_DAILY_GOAL = 50;
