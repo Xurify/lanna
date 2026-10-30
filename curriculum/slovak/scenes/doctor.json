@@ -1,0 +1,53 @@
+{
+	"scene": "doctor",
+	"turns": [
+		{
+			"tutor": { "sk": "Dobrý deň, sadnite si. Čo vás trápi?", "en": "Hello, have a seat. What is troubling you?" },
+			"options": [
+				{ "sk": "Dobrý deň. Bolí ma hrdlo a hlava.", "correct": true, "lemmas": ["bolieť", "hrdlo", "hlava"] },
+				{ "sk": "Dobrý deň. Bolí ma hrdlom a hlavou.", "why": "The hurting parts are the subject: 'hrdlo a hlava' (nominative); 'hrdlom a hlavou' is instrumental." },
+				{ "sk": "Dobrý deň. Hrdlo a hlava ma boleť.", "why": "The conjugated form is 'bolí' (it hurts), not the infinitive 'boleť'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Od kedy vás to bolí?", "en": "Since when has it been hurting you?" },
+			"options": [
+				{ "sk": "Od včera. A dnes mám aj teplotu.", "correct": true, "lemmas": ["včera", "dnes", "mať", "teplota"] },
+				{ "sk": "Za včera. A dnes mám aj teplotu.", "why": "'Since yesterday' is 'od včera'; 'za včera' is not how Slovak says it." },
+				{ "sk": "Od včera. A dnes mám aj teplo.", "why": "Fever is 'teplota'; 'teplo' is warmth." }
+			]
+		},
+		{
+			"tutor": { "sk": "Pozriem sa… Hrdlo je červené. Kašlete tiež?", "en": "Let me look… The throat is red. Are you coughing too?" },
+			"options": [
+				{ "sk": "Trochu, ale hlava bolí viac.", "correct": true, "lemmas": ["trochu", "hlava", "bolieť", "viac"] },
+				{ "sk": "Trochu, ale hlavou bolí viac.", "why": "The head is the subject: 'hlava bolí'; 'hlavou' is instrumental." },
+				{ "sk": "Trochu, ale hrdlo boľím viac.", "why": "'Bolí' — it (the throat) hurts; 'boľím' would mean I am hurting something." }
+			]
+		},
+		{
+			"tutor": { "sk": "Áno, na to máme liek. Teplota nie je vysoká.", "en": "Yes, we have medicine for that. The fever is not high." },
+			"options": [
+				{ "sk": "Ďakujem. Máte niečo na bolesť hlavy?", "correct": true, "lemmas": ["ďakujem", "bolesť", "hlava"] },
+				{ "sk": "Ďakujem. Máte niečo na bolesť hlavu?", "why": "'Bolesť hlavy' — of the head, the genitive; 'hlavu' is accusative." },
+				{ "sk": "Ďakujem. Máte niečo pre bolesť hlavy?", "why": "Medicine FOR a headache is 'na bolesť hlavy'; 'pre' is the wrong preposition here." }
+			]
+		},
+		{
+			"tutor": { "sk": "Máme. Pite veľa vody a odpočívajte.", "en": "We do. Drink lots of water and rest." },
+			"options": [
+				{ "sk": "Áno, ďakujem za pomoc.", "correct": true, "lemmas": ["áno", "ďakujem", "pomoc"] },
+				{ "sk": "Áno, ďakujem za pomocou.", "why": "'Ďakujem za' takes the accusative: 'za pomoc'; 'pomocou' is instrumental (and means by means of)." },
+				{ "sk": "Áno, budeme odpočívať.", "why": "One person resting says 'budem odpočívať'; 'budeme' is we." }
+			]
+		},
+		{
+			"tutor": { "sk": "Nemusíte dnes ísť do práce. Tri dni doma, a príďte znova.", "en": "You do not need to go to work today. Three days at home, and come again." },
+			"options": [
+				{ "sk": "Áno, pane doktore. Ďakujem!", "correct": true, "lemmas": ["áno", "ďakujem"] },
+				{ "sk": "Áno, pane doktor. Ďakujem!", "why": "Addressing the doctor takes the calling form: 'pane doktore', not 'pane doktor'." },
+				{ "sk": "Áno, pán doktor. Ďakujem!", "why": "In direct address it is 'pane doktore', the calling form, not 'pán doktor'." }
+			]
+		}
+	]
+}

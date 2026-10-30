@@ -1,0 +1,61 @@
+{
+	"scene": "way",
+	"turns": [
+		{
+			"tutor": { "sk": "Prosím? Hľadáte niečo?", "en": "Yes? Are you looking for something?" },
+			"options": [
+				{ "sk": "Prepáčte, kde je hlavná stanica?", "correct": true, "lemmas": ["prepáčte", "kde", "hlavný", "stanica"] },
+				{ "sk": "Prepáčte, kam je hlavná stanica?", "why": "'Kde je' asks where something is; 'kam' asks where TO (a direction)." },
+				{ "sk": "Prepáčte, kde je hlavná stanici?", "why": "The subject stands in the nominative: 'hlavná stanica', not 'stanici'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Hlavná stanica? Idete pešo alebo vlakom?", "en": "The main station? Are you going on foot or by train?" },
+			"options": [
+				{ "sk": "Pešo, prosím. Je to ďaleko?", "correct": true, "lemmas": ["pešo", "prosím"] },
+				{ "sk": "Idú pešo, prosím. Je to ďaleko?", "why": "'Idú' is they go; one person going now says 'idem'." },
+				{ "sk": "Chodím pešo, prosím. Je to ďaleko?", "why": "For this one journey you go 'idem' (ísť); 'chodím' means I go there regularly (chodiť)." }
+			]
+		},
+		{
+			"tutor": { "sk": "Nie je to ďaleko. Desať minút priamo po Obchodnej.", "en": "It is not far. Ten minutes straight along Obchodná." },
+			"options": [
+				{ "sk": "Priamo po Obchodnej, a potom?", "correct": true, "lemmas": ["priamo", "minúta"] },
+				{ "sk": "Priamo po Obchodnou, a potom?", "why": "'Po' meaning along takes the locative: 'po Obchodnej'; 'Obchodnou' is instrumental." },
+				{ "sk": "Priamo do Obchodnej, a potom?", "why": "Along the street is 'po Obchodnej'; 'do' would mean into the street." }
+			]
+		},
+		{
+			"tutor": { "sk": "Máte mapu?", "en": "Do you have a map?" },
+			"options": [
+				{ "sk": "Áno, mám mapu v telefóne.", "correct": true, "lemmas": ["áno", "mať", "mapa", "telefón"] },
+				{ "sk": "Áno, mám mapa v telefóne.", "why": "'Mám' takes the accusative object: 'mám mapu', not 'mapa'." },
+				{ "sk": "Áno, mám mape v telefóne.", "why": "'Mapu' is the accusative object; 'mape' is the locative." }
+			]
+		},
+		{
+			"tutor": { "sk": "Dobre. Potom vľavo na Hlavné námestie. Stanica je naproti.", "en": "Good. Then left onto Hlavné námestie. The station is opposite." },
+			"options": [
+				{ "sk": "Vľavo na Hlavné námestie. Rozumiem.", "correct": true, "lemmas": ["vľavo", "námestie", "rozumiem"] },
+				{ "sk": "Vľavo na Hlavné námestiu. Rozumiem.", "why": "Direction takes the accusative: 'na Hlavné námestie'; 'námestiu' is a locative form." },
+				{ "sk": "Vľavo na Hlavní námestie. Rozumiem.", "why": "The adjective must agree with the neuter noun: 'Hlavné námestie', not 'Hlavní'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Presne tak. Desať minút, nie viac.", "en": "Exactly so. Ten minutes, no more." },
+			"options": [
+				{ "sk": "A tam bude aj toaleta?", "correct": true, "lemmas": ["toaleta"] },
+				{ "sk": "A tam budú aj toaleta?", "why": "'Toaleta' is singular: 'bude', not 'budú'." },
+				{ "sk": "A kam bude aj toaleta?", "why": "'Kde bude' asks where it will be; 'kam' asks for a direction." }
+			]
+		},
+		{
+			"tutor": { "sk": "Je, pri východe. Šťastnú cestu!", "en": "It is, by the exit. Have a good journey!" },
+			"options": [
+				{ "sk": "Ďakujem pekne. Dovidenia!", "correct": true, "lemmas": ["ďakujem", "dovidenia"] },
+				{ "sk": "Ďakujem pekne. Dobrý deň!", "why": "When you leave you say 'dovidenia'; 'dobrý deň' is the greeting." },
+				{ "sk": "Ďakujem pekne. Do videnia.", "why": "Goodbye is written as one word: 'dovidenia'." }
+			]
+		}
+	]
+}

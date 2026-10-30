@@ -1,0 +1,61 @@
+{
+	"scene": "colleague",
+	"turns": [
+		{
+			"tutor": { "sk": "Ahoj! Ty si tu nový, však?", "en": "Hi! You are the new one here, aren't you?" },
+			"options": [
+				{ "sk": "Áno, dnes je môj prvý deň. Volám sa Tomáš.", "correct": true, "lemmas": ["dnes", "môj", "volať"] },
+				{ "sk": "Áno, dnes je moja prvý deň. Volám sa Tomáš.", "why": "'Deň' is masculine: 'môj prvý deň', not 'moja prvý'." },
+				{ "sk": "Áno, dnes je môjho prvého dňa. Volám sa Tomáš.", "why": "You are saying what day it IS — nominative: 'môj prvý deň'; 'môjho prvého dňa' is genitive." }
+			]
+		},
+		{
+			"tutor": { "sk": "Teší ma, Tomáš. Ja som Zuzana. Odkiaľ si?", "en": "Nice to meet you, Tomáš. I am Zuzana. Where are you from?" },
+			"options": [
+				{ "sk": "Som z Anglicka. A ty, kde bývaš?", "correct": true, "lemmas": ["kde", "bývať"] },
+				{ "sk": "Ja byť z Anglicka.", "why": "The verb is conjugated: 'som z Anglicka' (I am), not the infinitive 'byť'." },
+				{ "sk": "Som z Anglicku.", "why": "After 'z' the genitive follows: 'z Anglicka'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Pekné. A pracuješ v kancelárii?", "en": "Nice. And do you work in the office?" },
+			"options": [
+				{ "sk": "Áno, pracujem v kancelárii. A ty?", "correct": true, "lemmas": ["pracovať", "kancelária"] },
+				{ "sk": "Áno, pracovať v kancelárii.", "why": "'Pracujem' (I work), not the infinitive 'pracovať'." },
+				{ "sk": "Áno, pracujem v kancelária.", "why": "After 'v' the locative follows: 'v kancelárii', not 'kancelária'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Super, ja tiež. Kávu chceš?", "en": "Great, me too. Do you want a coffee?" },
+			"options": [
+				{ "sk": "Áno, chcem. Ďakujem!", "correct": true, "lemmas": ["chcieť", "ďakujem"] },
+				{ "sk": "Áno, chcem. Prosím!", "why": "'Prosím' here would mean you're welcome; when you accept an offer, you say 'ďakujem'." },
+				{ "sk": "Áno, chceš. Ďakujem!", "why": "'Chcem' is I want; 'chceš' is you want." }
+			]
+		},
+		{
+			"tutor": { "sk": "Máš dnes veľa práce?", "en": "Do you have a lot of work today?" },
+			"options": [
+				{ "sk": "Nie, mám dnes málo práce. Učím sa slovensky.", "correct": true, "lemmas": ["mať", "práca", "učiť sa", "slovensky"] },
+				{ "sk": "Nie, máš dnes málo práce.", "why": "'Mám' is I have; 'máš' is you have." },
+				{ "sk": "Nie, mám dnes málo práca.", "why": "After 'málo' the genitive follows: 'málo práce', not 'práca'." }
+			]
+		},
+		{
+			"tutor": { "sk": "To je dobré. Ja som sa učila tri roky.", "en": "That is good. I studied it for three years." },
+			"options": [
+				{ "sk": "Tri roky? Ty hovoríš dobre!", "correct": true, "lemmas": ["rok", "hovoriť"] },
+				{ "sk": "Tri roky? Ty hovoríť dobre!", "why": "'Hovoríš' (you speak), not the infinitive 'hovoriť'." },
+				{ "sk": "Tri roky? Ty hovorím dobre!", "why": "'Hovoríš' is you speak; 'hovorím' is I speak." }
+			]
+		},
+		{
+			"tutor": { "sk": "Díky! Poďme hore, káva čaká.", "en": "Thanks! Let's go up, the coffee is waiting." },
+			"options": [
+				{ "sk": "Dobre, ideme hore.", "correct": true, "lemmas": ["ísť"] },
+				{ "sk": "Dobre, chodíme hore.", "why": "For one 'let's go now' you use 'ideme' (ísť); 'chodíme' is the regular, habitual form (chodiť)." },
+				{ "sk": "Dobre, idú hore.", "why": "'Idú' is they go; going together is 'ideme'." }
+			]
+		}
+	]
+}

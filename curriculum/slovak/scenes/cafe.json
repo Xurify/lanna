@@ -1,0 +1,61 @@
+{
+	"scene": "cafe",
+	"turns": [
+		{
+			"tutor": { "sk": "Dobrý deň! Vitajte. Čo vám prinesiem?", "en": "Hello! Welcome. What shall I bring you?" },
+			"options": [
+				{ "sk": "Dobrý deň. Chcem kávu, prosím.", "correct": true, "lemmas": ["chcieť", "káva", "prosím"] },
+				{ "sk": "Dobrý deň. Ja chcieť kávu, prosím.", "why": "Slovak needs the conjugated verb here: 'chcem' (I want), not the infinitive 'chcieť'." },
+				{ "sk": "Dobrý deň. Chcem kávou, prosím.", "why": "Coffee is the object, so it takes the accusative: 'kávu', not the instrumental 'kávou'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Hneď bude. Chcete stôl pri okne?", "en": "It will be right there. Would you like a table by the window?" },
+			"options": [
+				{ "sk": "Áno, pri okne, prosím.", "correct": true, "lemmas": ["áno", "stôl", "prosím"] },
+				{ "sk": "Áno, pri oknu, prosím.", "why": "'Pri' takes the locative: 'pri okne'; 'oknu' is the dative." },
+				{ "sk": "Áno, na okno, prosím.", "why": "'Pri okne' means by the window; 'na okno' would mean onto the window." }
+			]
+		},
+		{
+			"tutor": { "sk": "Hneď vám ho prinesiem. Máme aj čokoládový koláč.", "en": "I'll bring it right away. We also have chocolate cake." },
+			"options": [
+				{ "sk": "Výborne, dám si aj koláč. Ďakujem.", "correct": true, "lemmas": ["koláč", "ďakujem"] },
+				{ "sk": "Výborne, dám si aj koláču. Ďakujem.", "why": "'Koláču' is the genitive; the direct object takes the accusative: 'koláč'." },
+				{ "sk": "Výborne, dám si aj kávu. Ďakujem.", "why": "'Kávu' is the coffee you already ordered — this offer is the cake: 'koláč'." }
+			]
+		},
+		{
+			"tutor": { "sk": "S mliekom alebo bez mlieka?", "en": "With milk or without milk?" },
+			"options": [
+				{ "sk": "S mliekom, prosím.", "correct": true, "lemmas": ["mlieko", "prosím"] },
+				{ "sk": "S mlieku, prosím.", "why": "After 's' meaning with, the instrumental follows: 's mliekom'; 'mlieku' is a dative/locative form." },
+				{ "sk": "Bez mliekom, prosím.", "why": "'Bez' takes the genitive: 'bez mlieka'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Dobre. Niečo ešte? Máme aj dobrý chlieb.", "en": "Good. Anything else? We also have good bread." },
+			"options": [
+				{ "sk": "Nie, ďakujem, to je dosť.", "correct": true, "lemmas": ["nie", "ďakujem", "dosť"] },
+				{ "sk": "Nie, ďakujeme, to je dosť.", "why": "'Ďakujem' is I thank you; 'ďakujeme' is we thank you — one person ordering says 'ďakujem'." },
+				{ "sk": "Nie, ďakujem za chliebom.", "why": "'Ďakujem za' takes the accusative: 'za chlieb'; 'chliebom' is instrumental." }
+			]
+		},
+		{
+			"tutor": { "sk": "Tak to je 4 eurá a 20 centov.", "en": "That is 4 euros and 20 cents." },
+			"options": [
+				{ "sk": "Dobre, zaplatím kartou.", "correct": true, "lemmas": ["zaplatiť", "karta"] },
+				{ "sk": "Dobre, zaplatím karte.", "why": "Paying BY card is instrumental: 'kartou'; 'karte' is the locative/dative." },
+				{ "sk": "Dobre, zaplatiť kartou.", "why": "The first person needs the conjugated 'zaplatím' (I will pay), not the infinitive 'zaplatiť'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Prosím, tu je účet. Dovidenia!", "en": "Here is the bill. Goodbye!" },
+			"options": [
+				{ "sk": "Ďakujem pekne. Dovidenia!", "correct": true, "lemmas": ["ďakujem", "dovidenia"] },
+				{ "sk": "Ďakujem pekne. Dobrý deň!", "why": "When leaving you say 'dovidenia' (goodbye); 'dobrý deň' is the hello." },
+				{ "sk": "Ďakujem pekne. Do videnia.", "why": "Goodbye is one word in Slovak: 'dovidenia'." }
+			]
+		}
+	]
+}

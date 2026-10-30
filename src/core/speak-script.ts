@@ -1,0 +1,73 @@
+/**
+ * Scripted scenes (LangHarness, 2026-10-30, E13): each Speak scene has an
+ * authored script the learner can walk through before saying it live —
+ * the tutor's line, then a choice of three next lines, one right and two
+ * plausible slips. The scripts are data in curriculum/slovak/scenes/
+ * (authored, not generated — no model cost), and this module is the pure
+ * machinery on top: look a script up, and grade a choice with an
+ * explanation a learner can act on.
+ *
+ * Pure and browser-safe: the JSON is bundled, no fs, no model, no API.
+ */
+
+import cafe from "../../curriculum/slovak/scenes/cafe.json";
+import colleague from "../../curriculum/slovak/scenes/colleague.json";
+import doctor from "../../curriculum/slovak/scenes/doctor.json";
+import family from "../../curriculum/slovak/scenes/family.json";
+import shop from "../../curriculum/slovak/scenes/shop.json";
+import way from "../../curriculum/slovak/scenes/way.json";
+
+export interface SceneOption {
+	/** The line in Slovak. */
+	sk: string;
+	/** True on the one line that answers the tutor well. */
+	correct?: boolean;
+	/** On the correct option: the lexicon lemmas (their sk form) behind the key words. */
+	lemmas?: string[];
+	/** On a wrong option: the one-line English explanation of the slip. */
+	why?: string;
+}
+
+export interface ScriptTurn {
+	/** The tutor's line, in Slovak with its English meaning. */
+	tutor: { sk: string; en: string };
+	/** Exactly three options, exactly one correct. */
+	options: SceneOption[];
+}
+
+export interface SceneScript {
+	/** The scene id (one of SPEAK_SCENES, src/core/speak.ts). */
+	scene: string;
+	turns: ScriptTurn[];
+}
+
+const RAW: SceneScript[] = [cafe, colleague, doctor, family, shop, way].map((s) => s as SceneScript);
+
+const BY_SCENE = new Map(RAW.map((s) => [s.scene, s]));
+
+/** The scene's script, or undefined when the scene has none. */
+export function scriptFor(sceneId: string): SceneScript | undefined {
+	return BY_SCENE.get(sceneId);
+}
+
+/** What the grader says about one choice. */
+export interface ScriptGrade {
+	correct: boolean;
+	/** The right line in Slovak — the choice itself when correct, otherwise shown after the retry. */
+	right: string;
+	/** On a wrong choice: the English explanation of the slip. */
+	explanation?: string;
+}
+
+/** Grade one choice (option index) against one turn (turn index) of the
+ *  script. A wrong index returns undefined — the UI treats that as "no
+ *  such turn", never as an answer. */
+export function grade(script: SceneScript, turn: number, choice: number): ScriptGrade | undefined {
+	const t = script.turns[turn];
+	if (!t) return undefined;
+	const picked = t.options[choice];
+	if (!picked) return undefined;
+	if (picked.correct) return { correct: true, right: picked.sk };
+	const right = t.options.find((o) => o.correct);
+	return { correct: false, right: right?.sk ?? "", explanation: picked.why };
+}
