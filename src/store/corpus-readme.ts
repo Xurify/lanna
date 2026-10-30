@@ -255,4 +255,16 @@ everything the app made of its captions, paid for once.
   lines got first time is the listening-speed signal.
 `;
 
-export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS } as const;
+
+const DISTRACTORS = `# Distractors
+
+Wrong answers for the meaning questions (Lesson meaning reps and Listen),
+written once by the cheap model and kept so a sentence is paid for once.
+
+- \`near-misses.jsonl\`: one line per Slovak sentence: \`sk\`, \`en\` (its right
+  translation), \`near[]\` (two English meanings that differ from it in one
+  thing a form carries: person, tense, number, polarity), \`model\`,
+  \`createdAt\`.
+`;
+
+export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS, distractors: DISTRACTORS } as const;

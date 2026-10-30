@@ -1,6 +1,7 @@
 /**
  * Speech synthesis (LangHarness, spec D4 / WF-03) — the four-tier cascade
- * behind GET /api/tts:
+ * behind GET /api/tts. Before it: slovak.wiki's own clip for a dictionary
+ * word or example (wiki-audio.ts), free, kept on first use.
  *
  *   1. ElevenLabs   ELEVENLABS_API_KEY set (auth.json / .env.local).
  *                   Voice: ELEVENLABS_VOICE_ID_<SK|RU> → ELEVENLABS_VOICE_ID
@@ -34,6 +35,7 @@ import { chatStore } from "../store/chats.ts";
 import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { keyValue } from "./keys.ts";
+import { WIKI_BASE_RATE, wikiClip } from "./wiki-audio.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
 
@@ -65,7 +67,10 @@ export function ttsVoice(v: string | null | undefined): string {
 export interface TtsClip {
 	file: string;
 	contentType: string;
-	tier: TtsTier | "cache";
+	tier: TtsTier | "cache" | "wiki";
+	/** Playback rate that restores the voice's natural pace (wiki clips were
+	 *  recorded at 0.88×); the client multiplies the speed button by it. */
+	baseRate?: number;
 }
 
 export const TTS_MAX_CHARS = 600;
@@ -240,6 +245,11 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	const lang = languageByCode(req.lang);
 	if (!lang) throw new Error(`unsupported language "${req.lang}"`);
 	migrateAudioOnce();
+	// slovak.wiki's own recording beats any clip made here, for the default voice.
+	if (lang.code === "sk" && (req.voice === undefined || req.voice === "female")) {
+		const wiki = await wikiClip("slovak", lang.code, req.text);
+		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki", baseRate: WIKI_BASE_RATE };
+	}
 	const key = ttsCacheKey(req);
 	const hit = cached(key);
 	if (hit) return hit;

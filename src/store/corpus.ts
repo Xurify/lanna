@@ -420,6 +420,7 @@ export function ensureReadmes(force = false): void {
 		[path.join(PATHS.speak, "README.md"), DATA_READMES.speak],
 		[path.join(PATHS.fluency, "README.md"), DATA_READMES.fluency],
 		[path.join(PATHS.videos, "README.md"), DATA_READMES.videos],
+		[path.join(PATHS.distractors, "README.md"), DATA_READMES.distractors],
 	];
 	for (const [file, text] of targets) {
 		if (readmesWritten.has(file) && !force) continue;

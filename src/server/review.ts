@@ -7,7 +7,7 @@
 
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
-import { compareAnswer, LANGUAGES, isLanguageId } from "../core/language.ts";
+import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm } from "../core/lesson.ts";
 import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewSettings } from "../core/review.ts";
@@ -78,6 +78,21 @@ function distractors(card: ReviewCard): string[] {
 	const window = pool.slice(Math.max(0, at - 40), at + 40);
 	const seen = new Set([card.answer.toLocaleLowerCase(tag())]);
 	const picks: string[] = [];
+	const capital = card.answer.charAt(0) === card.answer.charAt(0).toLocaleUpperCase(tag());
+	// The best wrong answers are the word's own other forms (hovorím next to
+	// hovoríš, hovorí, hovoria): the choice is the ending, which is the point.
+	// A form that differs only by accents is a typo, not a wrong answer.
+	const folded = new Set([foldDiacritics(card.answer).toLocaleLowerCase(tag())]);
+	const own = [...new Set([...(entry?.forms ?? []), ...(entry?.declension?.singular ?? []), ...(entry?.declension?.plural ?? [])])];
+	for (const f of own.sort((x, y) => hash(x + card.id) - hash(y + card.id))) {
+		const k = f.toLocaleLowerCase(tag());
+		const fk = foldDiacritics(k);
+		if (!f.trim() || /\s/.test(f) || seen.has(k) || folded.has(fk)) continue;
+		seen.add(k);
+		folded.add(fk);
+		picks.push(capital ? f.charAt(0).toLocaleUpperCase(tag()) + f.slice(1) : k);
+		if (picks.length === 3) break;
+	}
 	// Prefer forms with the same ending as the answer (same case/person).
 	const ending = card.answer.slice(-2).toLocaleLowerCase(tag());
 	const scored = window
@@ -85,10 +100,10 @@ function distractors(card: ReviewCard): string[] {
 		.map((a) => ({ a, s: a.toLocaleLowerCase(tag()).endsWith(ending) ? 0 : 1 }))
 		.sort((x, y) => x.s - y.s || hash(x.a + card.id) - hash(y.a + card.id));
 	for (const { a } of scored) {
+		if (picks.length >= 3) break;
 		const k = a.toLocaleLowerCase(tag());
 		if (seen.has(k)) continue;
 		seen.add(k);
-		const capital = card.answer.charAt(0) === card.answer.charAt(0).toLocaleUpperCase(tag());
 		picks.push(capital ? a.charAt(0).toLocaleUpperCase(tag()) + a.slice(1) : a.toLocaleLowerCase(tag()));
 		if (picks.length === 3) break;
 	}

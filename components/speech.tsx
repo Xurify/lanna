@@ -167,7 +167,8 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	if (mine !== generation || !soundOn()) return;
 	const src = URL.createObjectURL(blob);
 	const audio = new Audio(src);
-	audio.playbackRate = rate;
+	const base = Number(res.headers.get("x-tts-base-rate"));
+	audio.playbackRate = rate * (base > 0.5 && base < 2 ? base : 1);
 	await new Promise<void>((resolve) => {
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;

@@ -33,6 +33,7 @@ export async function GET(req: Request) {
 				"content-length": String(data.length),
 				"cache-control": "private, max-age=31536000, immutable",
 				"x-tts-tier": clip.tier,
+				"x-tts-base-rate": String(clip.baseRate ?? 1),
 			},
 		});
 	} catch (err) {

@@ -134,6 +134,8 @@ export const PATHS = {
 	videos: path.join(DATA_ROOT, "videos"),
 	/** Normalized, app-independent exports (npm run corpus:export). */
 	exports: path.join(BASE_DATA_ROOT, "export"),
+	/** Near-miss wrong answers for meaning questions, written once by the cheap model (src/store/distractors.ts). */
+	distractors: path.join(DATA_ROOT, "distractors"),
 	/** Spaced-review cards and their log (src/store/review.ts). */
 	review: path.join(DATA_ROOT, "review"),
 	/** Chat sessions (AI SDK UIMessage transcripts, one JSON file per chat). */
