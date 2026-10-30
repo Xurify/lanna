@@ -1,0 +1,123 @@
+# Chapter arc: implementation plan
+
+Status: **proposed, waiting for the owner's decisions below.** Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
+
+Date: 2026-10-30. Evidence: [../research/slovake-eu-benchmark.md](../research/slovake-eu-benchmark.md).
+
+## What we're building
+
+Every chapter gets one arc of seven steps, built from what the app already does well: local drills, Read, Speak and Review. Each step adds one thing the chapter needs, such as a story, a contrast pair, a sound or an exam. The arc becomes the daily plan's source for a chapter, so "today" reads as "day 3 of *At the doctor's*" rather than a list of grammar IDs.
+
+## The arc
+
+| # | Step | Strand | Built from | Model calls |
+|---|---|---|---|---|
+| 1 | Príbeh (story) | input | a Read episode for the chapter (phase 2) | one per chapter, cached |
+| 2 | Slová (words) | form | existing word lessons and Review | none |
+| 3 | Tvary (forms) | form | the chapter's existing drill unit | none |
+| 4 | Dvojičky (pairs) | form | new pair drill (phase 3) | none |
+| 5 | Scéna (scene) | output | scripted scene, then live Speak (phase 5) | one per scene, cached |
+| 6 | Zvuk (sound) | fluency | minimal pairs and shadowing (phase 7) | none, TTS cached |
+| 7 | Skúška (exam) | all | mixed items from the chapter (phase 6) | one judge for free writing |
+
+## Decisions the owner must make before phase 1
+
+1. **Chapters.** Keep the 19 chapters and give each the arc, or re-cut them to fit a fixed arc? Re-cutting changes `src/core/curriculum.ts` and the can-do goals in `src/core/onboarding.ts`.
+2. **Exam gating.** Does a passed exam open the next chapter, or only stamp the passport? Today a chapter opens when the one before has at most two units left (`CHAPTER_SLACK` in `src/core/curriculum.ts`).
+3. **Story bible.** Who writes the cast and plot? I can draft it. Nothing is generated until you approve it.
+4. **Passport wording.** Paraphrase the CEFR "can do" descriptors with attribution, or write our own "I can" lines?
+5. **Calendar.** Which dates and traditions go in? Christmas, Easter and other holidays are cultural content, so this is your call.
+
+## Phases
+
+Each phase is one PR on its own branch, named after the work and assigned to the owner (W2). Each phase adds its decision to `docs/DECISIONS.md` in the same PR (W4).
+
+### Phase 0: done (PR #37)
+
+Settings links open the dialog. Talk and Story run on one screen each (E8).
+
+### Phase 1: arc skeleton, no visible change
+
+- Add an `arc` list to each chapter in `src/core/curriculum.ts`. Each of the seven steps points at the units that already provide it, or is marked "not yet".
+- Tests in `tests/curriculum.test.ts`: every chapter has a words step and a forms step. Every scene id used by a goal exists in `SPEAK_SCENES` (`src/core/speak.ts`).
+- Acceptance: the existing tests pass unchanged, and `/curriculum` looks the same.
+
+### Phase 2: story bible and chapter stories
+
+- New `curriculum/slovak/world.json`: a cast of about six people with their relationships, the places, and one plot thread per chapter. Approved by the owner before any generation.
+- `src/core/reading.ts`: `StoryRecord` gets an optional `chapter`. `pickStory` prefers the current chapter's unread episode.
+- `src/server/reading.ts`: writes one episode per chapter on the cheap slot. Cached under `data/profiles/<lang>/stories/` with the README (E1).
+- Tests in `tests/reading.test.ts`: the pick order, and the `chapter` field surviving a round trip.
+- Acceptance: the Read shelf shows the current chapter's episode first. A second visit makes no model call.
+
+### Phase 3: Dvojičky (contrast pairs)
+
+- `curriculum/slovak/pairs.json`: 12 to 20 pairs to start (ísť/chodiť, aký/ktorý, svoj/môj, radi/rady, kam/kde, and perfective/imperfective pairs). Each has a one-line rule and an Estonian bridge (P6).
+- `src/core/lesson.ts`: a `pairs` unit kind. Each rep offers exactly two forms, the target appears in the sentence, and the sentence comes from the lexicon's verified examples.
+- Tests in `tests/lesson.test.ts`: two options per rep, the target present in the sentence, and every pair with at least three verified sentences.
+- Acceptance: no rep is built from an unverified form (P8).
+
+### Phase 4: grammar atlas
+
+- `src/core/grammar.ts` (pure): builds reference pages from the unit rules and bridges (`src/core/lesson.ts`, `src/core/unit-bridges.ts`), and each learner's cell from `progress.units` and the review log.
+- `app/grammar/page.tsx`, `components/grammar/*`, and a sidebar link.
+- Tests in `tests/grammar.test.ts`: cell accuracy, and each cell's drill target.
+- Acceptance: each case × gender cell shows the learner's accuracy, or "not yet", and opens its drill.
+
+### Phase 5: scripted scenes
+
+- For each of the six scenes, a branching script of about eight turns. It is generated once on the cheap slot, reviewed by the owner, and stored under `curriculum/slovak/scenes/`.
+- `src/server/speak.ts`: a script mode that runs before the live scene. The learner picks or types the next line, and each answer is graded locally against the script.
+- `components/speak/speak-player.tsx`: the script screen.
+- Tests in `tests/speak.test.ts`: script grading and branch order.
+- Acceptance: the script runs with no model call. The live scene starts after it.
+
+### Phase 6: Skúška and the passport
+
+- `src/core/exam.ts`: the chapter's exam is built from the chapter's own items: words, a form, one pair, one scene line and one listening item. The pass rule follows decision 2.
+- `src/store/progress.ts`: an `exams` record per chapter, which is the evidence the passport uses.
+- `app/passport/page.tsx`: "I can" lines, each linked to the exam items that show it.
+- Tests in `tests/exam.test.ts`: composition from the chapter, the pass rule, and the record.
+- Acceptance: a failed exam records its misses and leaves the chapter open. No exam result appears without its evidence (P8).
+
+### Phase 7: Zvuk (sound of the week)
+
+- `curriculum/slovak/sounds.json`: one sound per chapter with minimal pairs (pas/pás, rad/rád, and the soft de/te/ne).
+- A listening check on each pair, then shadowing scored with the existing clarity score (`src/core/pronounce.ts`, `components/speak/pron.tsx`).
+- Tests in `tests/sounds.test.ts`: each pair differs in exactly one sound. The score thresholds are unchanged.
+- Acceptance: works without an Azure key, using transcript matching as Speak does today.
+
+### Phase 8: calendar and immersion labels
+
+- `src/core/calendar.ts` (pure): date to seasonal item. Easter is computed with the standard algorithm. The dates come from decision 5.
+- `curriculum/slovak/calendar.json`: one short episode and a few words per date.
+- `components/today.tsx`: one "Dnes" card when a date is near. `components/ui/learn-buttons.ts`: Slovak labels at A2 and above, with the meaning shown until the learner has seen each label a few times (E4a).
+- Tests in `tests/calendar.test.ts`: Easter dates for several years, and the date windows.
+
+### Quick wins (any time, one PR each)
+
+- A counter on each step in the path (`components/curriculum-path.tsx`).
+- Situation titles on units: "Kde bývaš?" as the title, with the grammar name as the subtitle.
+- A printable syllabus: `/curriculum` with print styles.
+
+## Checklist for every phase
+
+1. Branch named after the work. PR assigned to the owner. Nothing merged by me (W2).
+2. Tests with `NODE_ENV=test node --import tsx --test <files>`. Typecheck with `node node_modules/typescript/bin/tsc --noEmit`, since the `tsc` shim on this PC does not resolve. Lint with `npx eslint` on the changed files.
+3. A live check on a scratch profile: `LH_DATA_DIR` and `LH_AUTH_FILE` pointing at a temp folder, with no real keys. No model call without the owner's approval. Screenshots go in the PR.
+4. The decision goes into `docs/DECISIONS.md` in the same PR (W4). The research note is updated if the evidence changes.
+5. Before blaming a change for a failing test, run the same files on `main` in the same environment. PR #37 found 28 failures that were already there.
+
+## Risks
+
+- **Scope.** Eight phases is a lot. Phases 1 and 2 are the bet. Stop after phase 2 and check with the learner before going on.
+- **Model cost.** Everything generated is cached under `data/` (E1), so generation runs once per item.
+- **Slovak accuracy.** Pairs and forms come from verified lexicon forms (P8). Generated scene scripts and stories are reviewed before use.
+- **Licence.** The CEFR descriptors belong to the Council of Europe. Quote them only with attribution; otherwise paraphrase (decision 4).
+- **Test isolation.** `tests/speak.test.ts` reads the repo-root `auth.json`, so it fails on a PC that has an ElevenLabs key. Fix it in a small PR before phase 5.
+
+## Done when
+
+- Every chapter shows its seven steps, with counters.
+- The exam stamps a chapter, and the passport lists the evidence for each line.
+- The owner has reviewed the first two chapters end to end: story, pairs, scene and exam.
