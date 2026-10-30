@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BrainIcon, ChartColumnIcon, CheckIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, Volume2Icon, VolumeXIcon, WholeWordIcon, XIcon } from "lucide-react";
+import { CheckIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, Volume2Icon, VolumeXIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { TopBar } from "@/components/top-bar";
@@ -20,7 +20,7 @@ import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
-import { compareAnswer, diacriticSlips, formatInterval, rankLabel, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
 interface Prompt {
 	card: ReviewCard;
@@ -65,27 +65,6 @@ const VERDICT_STYLE: Record<AnswerVerdict, { label: string; className: string; b
 	accents: { label: "Almost! Check the accents", className: "text-warn", badge: "bg-warn text-background", btn: "bg-warn text-background" },
 	wrong: { label: "Not quite", className: "text-miss", badge: "bg-miss text-background", btn: "bg-miss text-background" },
 };
-
-/** What the deck will do with the card at the suggested rating, in words. */
-function memoryLine(state: ReviewCard["state"], days: number): string {
-	const when = `next in ${formatInterval(days)}`;
-	return state === "new" ? `new · ${when}` : state === "learning" ? `learning · ${when}` : `known · ${when}`;
-}
-
-/** One labelled fact chip (the lesson footer's shape). */
-function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-	return (
-		<div className="flex items-center gap-2.5 rounded-xl bg-accent/60 py-1.5 pl-2.5 pr-3.5">
-			<span className="text-muted-foreground" aria-hidden="true">
-				{icon}
-			</span>
-			<div className="min-w-0">
-				<dt className="font-ui text-xs font-bold text-muted-foreground">{label}</dt>
-				<dd className="font-prose text-sm leading-tight text-foreground">{value}</dd>
-			</div>
-		</div>
-	);
-}
 
 export function ReviewSession() {
 	const lang = useActiveLanguage();
@@ -344,8 +323,7 @@ export function ReviewSession() {
 							<div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 font-ui text-xs font-bold text-muted-foreground">
 								<span>{prompt.card.state === "new" ? "New word" : prompt.card.state === "learning" ? "Relearning" : "Review"}</span>
 								<div className="ml-auto flex items-center gap-2">
-									<span id="review-mode-label">Answer by</span>
-									<div className="flex rounded-lg bg-accent/60 p-0.5" role="radiogroup" aria-labelledby="review-mode-label">
+									<div className="flex rounded-lg bg-accent/60 p-0.5" role="radiogroup" aria-label="Answer by">
 										{(["type", "choice"] as const).map((m) => (
 											<button
 												key={m}
@@ -367,12 +345,12 @@ export function ReviewSession() {
 										type="button"
 										onClick={toggleSound}
 										aria-pressed={sound}
-										className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition-colors hover:bg-accent hover:text-foreground"
-										title="Speech and sounds, on every page"
+										className="flex items-center rounded-lg p-1.5 transition-colors hover:bg-accent hover:text-foreground"
+										title={sound ? "Sound on (speech and sounds, on every page)" : "Sound off"}
+										aria-label={sound ? "Sound on" : "Sound off"}
 										data-testid="review-sound"
 									>
 										{sound ? <Volume2Icon className="size-4" aria-hidden="true" /> : <VolumeXIcon className="size-4" aria-hidden="true" />}
-										{sound ? "Sound on" : "Sound off"}
 									</button>
 								</div>
 							</div>
@@ -386,34 +364,51 @@ export function ReviewSession() {
 								lang={lang?.code}
 							>
 								<span>{prompt.before}</span>
-								{verdict ? (
-									<span className={cn("-mx-0.5 rounded-md px-0.5 font-semibold", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)} data-testid="review-answer">
-										{[...prompt.card.answer].map((ch, i) => (
-											<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
-												{ch}
-											</span>
-										))}
+								<span
+									className={cn(
+										"-mx-1.5 inline-grid rounded-xl border-2 px-1.5 text-center font-bold transition-colors",
+										verdict
+											? cn("border-transparent", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)
+											: picks
+												? "border-dashed border-muted-foreground/50"
+												: "border-border bg-background focus-within:border-go",
+									)}
+								>
+									<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
+										{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
 									</span>
-								) : !picks ? (
-									<input
-										ref={inputRef}
-										value={given}
-										onChange={(e) => setGiven(e.target.value)}
-										aria-label="Missing word"
-										autoComplete="off"
-										autoCorrect="off"
-										spellCheck={false}
-										data-testid="review-input"
-										style={{ width: `${Math.max(4, prompt.card.answer.length + 1)}ch` }}
-										className="mx-1 inline-block rounded-xl border-2 border-border bg-background px-2 text-center font-bold caret-go outline-none transition-colors selection:bg-go/30 focus:border-go"
-									/>
-								) : (
-									<span className="mx-1 inline-block h-[1.1em] w-[5ch] translate-y-[0.2em] rounded-lg border-2 border-dashed border-muted-foreground/50" aria-label="blank" />
-								)}
+									{verdict ? (
+										<span className="col-start-1 row-start-1" data-testid="review-answer">
+											{[...prompt.card.answer].map((ch, i) => (
+												<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
+													{ch}
+												</span>
+											))}
+										</span>
+									) : picks ? (
+										<span className="col-start-1 row-start-1" aria-label="blank" />
+									) : (
+										<input
+											ref={inputRef}
+											value={given}
+											onChange={(e) => setGiven(e.target.value)}
+											aria-label="Missing word"
+											autoComplete="off"
+											autoCorrect="off"
+											spellCheck={false}
+											size={1}
+											data-testid="review-input"
+											className="col-start-1 row-start-1 w-full min-w-0 bg-transparent text-center font-bold caret-go outline-none selection:bg-go/30"
+										/>
+									)}
+								</span>
 								<span>{prompt.after}</span>
 							</form>
 
-							<p className="mt-3 text-lg text-muted-foreground">{prompt.card.translation}</p>
+							<div className="mt-3 flex items-center gap-2">
+								<p className="text-lg text-muted-foreground">{prompt.card.translation}</p>
+								{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-sky/20 text-sky hover:bg-sky/30 hover:text-sky" label="Play the sentence" />}
+							</div>
 
 							{/* Hints taken, labelled the same way as the lesson's cue chip. */}
 							{!verdict && hint > 0 && (
@@ -524,29 +519,8 @@ export function ReviewSession() {
 												)}
 											</div>
 										)}
-										<div className="flex items-start gap-3">
-											<PlayButton text={prompt.card.sentence} className="mt-0.5 size-8 rounded-full bg-sky/20 text-sky hover:bg-sky/30 hover:text-sky" label="Play the sentence" />
-											<div className="min-w-0">
-												<p className="font-prose text-lg leading-snug text-foreground" lang={lang?.code}>
-													{prompt.before}
-													<b className={VERDICT_STYLE[verdict].className}>{prompt.card.answer}</b>
-													{prompt.after}
-												</p>
-												<p className="font-prose text-base text-muted-foreground">{prompt.card.translation}</p>
-											</div>
-										</div>
-										<dl className="flex flex-wrap gap-2" data-testid="review-facts">
-											<Fact
-												icon={<WholeWordIcon className="size-4" />}
-												label={prompt.form ? "Form" : "Word"}
-												value={prompt.form ?? `${prompt.card.lemma} · ${prompt.card.gloss.split(/[;,(]/)[0]!.trim()}`}
-											/>
-											{rankLabel(prompt.rank, prompt.cat) && <Fact icon={<ChartColumnIcon className="size-4" />} label="How common" value={rankLabel(prompt.rank, prompt.cat)!} />}
-											<Fact icon={<BrainIcon className="size-4" />} label="Memory" value={memoryLine(prompt.card.state, prompt.intervals[suggested])} />
-										</dl>
 										{/* The four ratings stay as a quiet override of the suggested one. */}
 										<div className="flex flex-wrap items-center gap-1.5 font-ui text-xs text-muted-foreground" data-testid="review-ratings">
-											<span className="mr-1">Rate it yourself:</span>
 											{([1, 2, 3, 4] as Rating[]).map((r) => (
 												<button
 													key={r}
@@ -559,15 +533,7 @@ export function ReviewSession() {
 													{RATING_LABELS[r]} · {formatInterval(prompt.intervals[r])}
 												</button>
 											))}
-											<span className="ml-auto hidden items-center gap-1 sm:flex">
-												{hint > 0 || picks ? (
-													`With help: at most ${RATING_LABELS[ratingCap(help)]}`
-												) : (
-													<>
-														{kbd("Enter")} continues · {kbd("1")}–{kbd("4")} rate
-													</>
-												)}
-											</span>
+											{(hint > 0 || picks) && <span className="ml-auto">With help: at most {RATING_LABELS[ratingCap(help)]}</span>}
 										</div>
 									</div>
 								</div>
