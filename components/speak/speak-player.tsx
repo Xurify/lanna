@@ -27,6 +27,7 @@ import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
+import { SettingsLink } from "@/components/settings/settings-link";
 import { pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
 
 type SttEngine = "elevenlabs" | "deepgram";
@@ -52,7 +53,7 @@ type Phase = "pick" | "starting" | "scene" | "ending" | "done";
 
 const PRAISE = ["Výborne!", "Presne!", "Áno, tak!", "Super!"];
 
-export function SpeakPlayer({ initialState, sceneId = null }: { initialState: SpeakState | null; sceneId?: string | null }) {
+export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean }) {
 	const router = useRouter();
 	const [state, setState] = useState<SpeakState | null>(initialState);
 	const [phase, setPhase] = useState<Phase>("pick");
@@ -70,7 +71,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 	const [heard, setHeard] = useState(false);
 	const [level, setLevel] = useState(0);
 	const [meaning, setMeaning] = useState(false);
-	const [typing, setTyping] = useState(false);
+	const [typing, setTyping] = useState(typed);
 	const startedAt = useRef(Date.now());
 	// Only the scene itself is practice (not picking one or the summary
 	// after): the gaps between actions, each capped (`ms` stays the wall-clock).
@@ -302,7 +303,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 		return () => window.removeEventListener("keydown", onKey);
 	}, [phase, listening, session, router, toggleMic]);
 
-	if (phase === "pick") return <Picker state={state} error={error} sceneId={sceneId} onPick={(id) => void start(id)} onResume={(id) => void resume(id)} onRetry={() => void load()} />;
+	if (phase === "pick") return <Picker state={state} error={error} sceneId={sceneId} typed={typed} onPick={(id) => void start(id)} onResume={(id) => void resume(id)} onRetry={() => void load()} />;
 
 	if (phase === "starting" || !session) {
 		return (
@@ -454,9 +455,9 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 						{!state?.stt ? (
 							<p className="font-ui text-xs text-muted-foreground">
 								Voice needs an ElevenLabs or Deepgram key —{" "}
-								<Link href="/settings#keys" className="underline hover:text-foreground">
+								<SettingsLink keys className="underline hover:text-foreground">
 									Settings → Keys
-								</Link>
+								</SettingsLink>
 								. Typing works meanwhile.
 							</p>
 						) : (
@@ -555,7 +556,7 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 	);
 }
 
-function Picker({ state, error, sceneId, onPick, onResume, onRetry }: { state: SpeakState | null; error: string | null; sceneId: string | null; onPick: (id: string) => void; onResume: (id: string) => void; onRetry: () => void }) {
+function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { state: SpeakState | null; error: string | null; sceneId: string | null; typed: boolean; onPick: (id: string) => void; onResume: (id: string) => void; onRetry: () => void }) {
 	return (
 		<TaskFrame>
 			<div className={cn(COLUMN, "flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]")}>
@@ -564,10 +565,12 @@ function Picker({ state, error, sceneId, onPick, onResume, onRetry }: { state: S
 						← Today
 					</Link>
 				</div>
-				<p className="mt-6 font-ui text-sm font-bold text-muted-foreground">Speak</p>
-				<h1 className="mt-1 font-ui text-3xl font-black text-foreground">Pick a scene and say it</h1>
+				<p className="mt-6 font-ui text-sm font-bold text-muted-foreground">{typed ? "Talk in writing" : "Speak"}</p>
+				<h1 className="mt-1 font-ui text-3xl font-black text-foreground">{typed ? "Pick a scene and write it" : "Pick a scene and say it"}</h1>
 				<p className="mt-2 max-w-xl font-prose text-base text-muted-foreground">
-					The tutor plays the other person and answers out loud. Say your lines into the mic (press, speak, press). A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end.
+					{typed
+						? "The tutor plays the other person and answers out loud. Type each line and press Enter. A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."
+						: "The tutor plays the other person and answers out loud. Say your lines into the mic (press, speak, press). A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."}
 				</p>
 				{error && (
 					<p className="mt-4 rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert" data-testid="speak-error">
@@ -580,9 +583,7 @@ function Picker({ state, error, sceneId, onPick, onResume, onRetry }: { state: S
 				{state && !state.canSpeak && (
 					<p className="mt-4 rounded-xl bg-gold/15 px-4 py-2 font-ui text-sm text-foreground" data-testid="speak-nomodel">
 						A scene needs a model on the cheap slot —{" "}
-						<Link href="/settings" className="underline">
-							Settings → Models
-						</Link>
+						<SettingsLink className="underline">Settings → Models</SettingsLink>
 						.
 					</p>
 				)}

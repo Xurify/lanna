@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { SettingsLink } from "@/components/settings/settings-link";
 import { useActiveTime } from "@/components/use-active-time";
 import { setSpeed, speak, SPEEDS, stopSpeaking, useSpeed } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
@@ -185,9 +186,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 							</button>
 						)}
 						{state?.canWrite === false && (
-							<Link href="/settings" className={PRIMARY}>
-								Set up a model
-							</Link>
+							<SettingsLink className={PRIMARY}>Set up a model</SettingsLink>
 						)}
 						{(state?.library.length ?? 0) > 0 && (
 							<button type="button" onClick={() => setStage("shelf")} className={SECONDARY}>
@@ -698,7 +697,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 				</ol>
 				{list.length === 0 && state?.canWrite === false && (
 					<p className="mt-6 font-prose text-base text-muted-foreground">
-						Stories are written on the cheap model slot. <Link href="/settings" className="underline">Set up a model</Link> to get the first episode.
+						Stories are written on the cheap model slot. <SettingsLink className="underline">Set up a model</SettingsLink> to get the first episode.
 					</p>
 				)}
 			</div>

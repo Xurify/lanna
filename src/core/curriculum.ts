@@ -567,9 +567,8 @@ export interface PlanTask {
 	done: boolean;
 	/** lesson/strengthen/words: the unit; speak: a tutor unit id or a scene id. */
 	unit?: string;
-	/** speak: how to start it — a tutor chat, a spoken scene (/speak), a
-	 *  text Talk, or a Story. */
-	via?: "tutor" | "speak" | "talk" | "story";
+	/** speak: how to start it — a tutor chat or a spoken scene (/speak). */
+	via?: "tutor" | "speak";
 	href?: string;
 	/** The day this unfinished task was planned on (carry-over). */
 	from?: string;

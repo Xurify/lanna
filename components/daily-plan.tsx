@@ -18,7 +18,7 @@
  */
 
 import Link from "next/link";
-import { AlertTriangleIcon, ArrowRightIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ScrollTextIcon, ZapIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowRightIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KBD, PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { STRAND_STYLE, taskStrand } from "@/components/strand-style";
@@ -155,7 +155,7 @@ const TASK_ICON: Record<PlanTask["id"], React.ComponentType<{ className?: string
 
 function TaskIcon({ task, large = false }: { task: PlanTask; large?: boolean }) {
 	const st = STRAND_STYLE[taskStrand(task)];
-	const Icon = task.via === "story" ? ScrollTextIcon : task.via === "tutor" ? GraduationCapIcon : task.via === "talk" ? MessagesSquareIcon : TASK_ICON[task.id];
+	const Icon = task.via === "tutor" ? GraduationCapIcon : TASK_ICON[task.id];
 	return (
 		<span className={cn("flex shrink-0 items-center justify-center rounded-xl", large ? "size-12" : "size-10", task.done ? cn("bg-accent", st.text) : st.tile)}>
 			{task.done ? <CheckIcon className="size-5" strokeWidth={3} aria-label="Done" /> : <Icon className={cn(large ? "size-6" : "size-5", task.id === "lesson" && "fill-current")} />}
