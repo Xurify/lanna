@@ -152,7 +152,7 @@ const MAX_WORDS = 10;
 export function wordBefore(sentence: string, at: number): string {
 	const words = sentence.slice(0, at).trim().split(/\s+/);
 	const w = words[words.length - 1] ?? "";
-	return w.toLocaleLowerCase("sk-SK").replace(/^[„“"'(]+|[,.;:!?„“"')]+$/g, "");
+	return w.toLowerCase().replace(/^[„“"'(]+|[,.;:!?„“"')]+$/g, "");
 }
 
 const PLURAL_MARKERS = new Set(["sú", "dve", "tri", "štyri", "tieto", "moje", "tvoje", "naše", "vaše", "všetky", "mnohé", "niektoré", "boli", "obe", "oba", "aké", "také", "nové", "staré", "dobré", "malé", "veľké"]);
@@ -183,8 +183,8 @@ export function classifyAll(entry: LexiconEntry, example: { sk: string; cloze?: 
 	if (!c) return out;
 	const n = example.sk.split(/\s+/).length;
 	if (n > MAX_WORDS) return out;
-	const lemma = entry.sk.toLocaleLowerCase("sk-SK");
-	const answer = c.answer.toLocaleLowerCase("sk-SK");
+	const lemma = entry.sk.toLowerCase();
+	const answer = c.answer.toLowerCase();
 	const prev = wordBefore(example.sk, c.at);
 	if (entry.cat === "Nouns") {
 		if (answer === lemma) return out;
@@ -207,7 +207,7 @@ export function classifyAll(entry: LexiconEntry, example: { sk: string; cloze?: 
 		return out;
 	}
 	if (entry.cat === "Verbs") {
-		const toks = example.sk.split(/\s+/).map((t) => t.toLocaleLowerCase("sk-SK").replace(CLEAN, ""));
+		const toks = example.sk.split(/\s+/).map((t) => t.toLowerCase().replace(CLEAN, ""));
 		if (answer === lemma) {
 			if (MODAL_FORMS.test(prev)) out.push("modal-inf");
 		} else {
@@ -238,7 +238,7 @@ function isFirstWord(entry: LexiconEntry, example: { sk: string; cloze?: { answe
 	if (!example.cloze || example.cloze.answer.length < 3) return false;
 	if (example.sk.split(/\s+/).length > 8) return false;
 	if (entry.origin !== "curated" && (entry.rank ?? Infinity) > 150) return false;
-	return example.cloze.answer.toLocaleLowerCase("sk-SK") === entry.sk.toLocaleLowerCase("sk-SK");
+	return example.cloze.answer.toLowerCase() === entry.sk.toLowerCase();
 }
 
 const WORD_POS = new Set(["Nouns", "Verbs", "Adjectives", "Adverbs"]);
@@ -248,13 +248,13 @@ function inBand(entry: LexiconEntry, band: readonly [number, number], example: {
 	if (!example.cloze || example.cloze.answer.length < 3 || !WORD_POS.has(entry.cat)) return false;
 	if (entry.rank === undefined || entry.rank < band[0] || entry.rank >= band[1]) return false;
 	if (example.sk.split(/\s+/).length > 9) return false;
-	return example.cloze.answer.toLocaleLowerCase("sk-SK") === entry.sk.toLocaleLowerCase("sk-SK");
+	return example.cloze.answer.toLowerCase() === entry.sk.toLowerCase();
 }
 
 /** A cluster word in any short sentence; the dictionary form comes first
  *  (see candidatesFor), inflected forms only fill out a small cluster. */
 function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: { sk: string; cloze?: { answer: string } }): boolean {
-	if (!example.cloze || !lemmas.has(entry.sk.toLocaleLowerCase("sk-SK"))) return false;
+	if (!example.cloze || !lemmas.has(entry.sk.toLowerCase())) return false;
 	return example.sk.split(/\s+/).length <= 9;
 }
 
@@ -363,7 +363,7 @@ export interface Candidate {
 export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): Candidate[] {
 	const info = unitInfo(unit);
 	const out: Candidate[] = [];
-	const lemmas = info.lemmas ? new Set(info.lemmas.map((l) => l.toLocaleLowerCase("sk-SK"))) : null;
+	const lemmas = info.lemmas ? new Set(info.lemmas.map((l) => l.toLowerCase())) : null;
 	const union = info.union ? new Set<UnitId>(info.union) : null;
 	for (const entry of entries) {
 		entry.examples.forEach((ex, index) => {
@@ -384,7 +384,7 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	// A cluster unit puts the dictionary form first: that is the word to learn.
 	const band = (e: LexiconEntry) => (e.origin === "curated" ? -1 : Math.floor((e.rank ?? 1e9) / 300));
 	const words = (c: Candidate) => c.entry.examples[c.index]!.sk.split(/\s+/).length;
-	const inflected = (c: Candidate) => (lemmas && c.entry.examples[c.index]!.cloze!.answer.toLocaleLowerCase("sk-SK") !== c.entry.sk.toLocaleLowerCase("sk-SK") ? 1 : 0);
+	const inflected = (c: Candidate) => (lemmas && c.entry.examples[c.index]!.cloze!.answer.toLowerCase() !== c.entry.sk.toLowerCase() ? 1 : 0);
 	return out.sort(
 		(a, b) =>
 			inflected(a) - inflected(b) ||
@@ -416,11 +416,11 @@ export function shuffle<T>(list: readonly T[], rand: () => number): T[] {
 	return a;
 }
 
-const fold = (s: string) => foldDiacritics(s.toLocaleLowerCase("sk-SK"));
+const fold = (s: string) => foldDiacritics(s.toLowerCase());
 
 function matchCase(form: string, like: string): string {
-	const capital = like.charAt(0) !== like.charAt(0).toLocaleLowerCase("sk-SK");
-	return capital ? form.charAt(0).toLocaleUpperCase("sk-SK") + form.slice(1) : form.toLocaleLowerCase("sk-SK");
+	const capital = like.charAt(0) !== like.charAt(0).toLowerCase();
+	return capital ? form.charAt(0).toLocaleUpperCase("sk-SK") + form.slice(1) : form.toLowerCase();
 }
 
 /** Other forms of the same word: the best distractors for a form drill,
@@ -455,7 +455,7 @@ export function sentenceTokens(sentence: string): string[] {
 export function sameSentence(expected: string[], given: string[]): boolean {
 	const norm = (ws: string[]) =>
 		ws
-			.map((w) => w.toLocaleLowerCase("sk-SK").replace(/^[„“"'(]+|[,.;:!?„“"')]+$/g, ""))
+			.map((w) => w.toLowerCase().replace(/^[„“"'(]+|[,.;:!?„“"')]+$/g, ""))
 			.filter(Boolean)
 			.join(" ");
 	return norm(expected) === norm(given);
