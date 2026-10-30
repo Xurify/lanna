@@ -203,17 +203,19 @@ export function HoursSheet({
 								const en = CAMBRIDGE_ENGLISH[lv];
 								const dim = hover && hover.level !== lv;
 								return (
-									<g key={lv} opacity={dim ? 0.45 : 1} className="transition-opacity">
+									<g key={lv} opacity={dim ? 0.45 : 1} className="transition-opacity" onMouseLeave={() => setHover(null)}>
+										{/* One hit area for the whole row, gap between the two bars included, so the pointer never leaves it mid-row. */}
+										<rect x={0} y={y0 - (rowH - bar * 2 - gap) / 2} width={W} height={rowH} fill="transparent" onMouseEnter={() => setHover((h) => (h?.level === lv ? h : { level: lv, series: "app" }))} />
 										<text x={left - 10} y={y0 + bar + gap + 4} textAnchor="end" className="fill-foreground font-ui" fontSize={13} fontWeight={800}>
 											{lv}
 										</text>
-										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-go" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })} onMouseLeave={() => setHover(null)}>
+										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-go" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })}>
 											<title>{`${lv}: about ${app} guided hours (this app, Slovak)`}</title>
 										</rect>
 										<text x={x(app) + 6} y={y0 + bar - 3} className="fill-foreground font-ui" fontSize={11} fontWeight={700}>
 											{app}
 										</text>
-										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-muted-foreground/50" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })} onMouseLeave={() => setHover(null)}>
+										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-muted-foreground/50" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })}>
 											<title>{`${lv}: about ${en} guided hours (Cambridge, English)`}</title>
 										</rect>
 										{lv === target && (
@@ -226,7 +228,7 @@ export function HoursSheet({
 							})}
 						</svg>
 						{/* The hover readout sits under the plot, where it covers nothing. */}
-						<p className="mt-1 min-h-5 font-ui text-xs text-muted-foreground" role="status" aria-live="polite">
+						<p className="mt-1 min-h-10 font-ui text-xs text-muted-foreground" role="status" aria-live="polite">
 							{hover ? (
 								<>
 									<b className="text-foreground">{hover.level}</b> · {hover.series === "app" ? `about ${GUIDED_HOURS[hover.level]} h in this app` : `about ${CAMBRIDGE_ENGLISH[hover.level]} h for English (Cambridge)`} · {LEVEL_CAN_DO[hover.level]}
