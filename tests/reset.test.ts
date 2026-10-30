@@ -14,7 +14,7 @@ process.env.LH_DATA_DIR = TMP;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { resetProfileData } = await import("../src/server/reset.ts");
+const { resetProfileData, dataLocations } = await import("../src/server/reset.ts");
 
 after(() => fs.rmSync(TMP, { recursive: true, force: true }));
 
@@ -30,6 +30,13 @@ it("moves the profile into a backup and leaves a fresh one; shared files stay", 
 	assert.ok(fs.existsSync(path.join(out.backup, "chats")));
 	assert.deepEqual(fs.readdirSync(PATHS.data), []);
 	assert.ok(fs.existsSync(path.join(PATHS.base, "settings.json")));
+});
+
+it("reports where the data and the backups are, and how many backups exist", () => {
+	const where = dataLocations();
+	assert.equal(where.data, PATHS.data);
+	assert.equal(where.backups, path.join(PATHS.base, "backups"));
+	assert.equal(where.backupCount, fs.readdirSync(where.backups).length);
 });
 
 it("resetting an already-empty profile works and makes its own backup", () => {

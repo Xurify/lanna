@@ -5,7 +5,7 @@
  * page reloads into onboarding.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const CONFIRM_WORD = "RESET";
@@ -16,6 +16,14 @@ export function ResetSection({ language }: { language?: string }) {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [backup, setBackup] = useState<string | null>(null);
+	const [where, setWhere] = useState<{ data: string; backups: string; backupCount: number } | null>(null);
+
+	useEffect(() => {
+		void fetch("/api/reset", { cache: "no-store" })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => setWhere(d as typeof where))
+			.catch(() => undefined);
+	}, []);
 
 	const run = async () => {
 		setBusy(true);
@@ -46,6 +54,17 @@ export function ResetSection({ language }: { language?: string }) {
 				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking sessions and stories all go. Your provider keys, settings and the audio cache stay.
 				Nothing is deleted: the data is moved into a backup folder you can put back.
 			</p>
+			{where && (
+				<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs" data-testid="reset-locations">
+					<dt className="text-muted-foreground">Your data</dt>
+					<dd className="min-w-0 break-all font-mono text-foreground">{where.data}</dd>
+					<dt className="text-muted-foreground">Old data</dt>
+					<dd className="min-w-0 break-all font-mono text-foreground">
+						{where.backups}
+						<span className="font-sans text-muted-foreground">{where.backupCount === 0 ? " (none yet)" : ` (${where.backupCount} saved)`}</span>
+					</dd>
+				</dl>
+			)}
 			{!open ? (
 				<div>
 					<Button type="button" variant="destructive-soft" data-testid="reset-open" onClick={() => setOpen(true)}>

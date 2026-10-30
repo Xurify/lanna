@@ -12,6 +12,17 @@ import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 
 export const BACKUPS_DIR = path.join(PATHS.base, "backups");
 
+/** Where the learner's data lives now, and where resets are kept. */
+export function dataLocations(): { data: string; backups: string; backupCount: number } {
+	let backupCount = 0;
+	try {
+		backupCount = fs.readdirSync(BACKUPS_DIR).length;
+	} catch {
+		// no backups yet
+	}
+	return { data: PATHS.data, backups: BACKUPS_DIR, backupCount };
+}
+
 export interface ResetOutcome {
 	profile: string;
 	backup: string;
