@@ -18,7 +18,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, weeklyHours, type Cefr, type Lang } from "@/src/core";
+import { TrajectorySection } from "@/components/trajectory-section";
+import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, measuredPace, trajectory, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
@@ -96,7 +97,10 @@ export function HoursSheet({
 	daysPerWeek,
 	target,
 	hoursDone = 0,
+	trajectory: trajectoryInput,
 }: {
+	/** What the projected line draws from; without it the section is left out. */
+	trajectory?: TrajectoryInput;
 	open: boolean;
 	onClose: () => void;
 	minutesPerDay: number;
@@ -116,10 +120,16 @@ export function HoursSheet({
 	}, [open, onClose]);
 	if (!open) return null;
 
-	const weekly = weeklyHours(minutesPerDay, daysPerWeek);
-	const yearly = weekly * 52;
+	// With the day history the dates follow the recent pace once a week of
+	// study is on record, at the credited rate; without it, the planned pace.
+	const recent = trajectoryInput ? measuredPace(trajectoryInput.days, trajectoryInput.goalMinutes, trajectoryInput.goalDays) : null;
+	const paceWord = recent?.measured ? "recent" : "planned";
+	const paceMinutes = recent?.measured ? recent.minutesPerDay : minutesPerDay;
+	const paceDays = recent?.measured ? recent.daysPerWeek : daysPerWeek;
+	const perDay = trajectoryInput ? trajectory(trajectoryInput, "hours", { minutesPerDay: paceMinutes, daysPerWeek: paceDays }).ratePerDay : weeklyHours(paceMinutes, paceDays) / 7;
+	const yearly = perDay * 365;
 	const now = new Date();
-	const dateFor = (hours: number) => (weekly > 0 ? monthOf(new Date(now.getTime() + Math.max(0, hours - hoursDone) / weekly * 7 * 86_400_000)) : "—");
+	const dateFor = (hours: number) => (perDay > 0 ? monthOf(new Date(now.getTime() + Math.ceil(Math.max(0, hours - hoursDone) / perDay) * 86_400_000)) : "—");
 
 	// Chart geometry: horizontal grouped bars, one row per level.
 	const W = 560;
@@ -146,6 +156,8 @@ export function HoursSheet({
 						<XIcon className="size-5" />
 					</button>
 				</div>
+
+				{trajectoryInput && <TrajectorySection input={trajectoryInput} target={target} />}
 
 				<div className="mt-4 flex items-center justify-between gap-3">
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground" aria-label="Legend">
@@ -197,22 +209,24 @@ export function HoursSheet({
 								const en = CAMBRIDGE_ENGLISH[lv];
 								const dim = hover && hover.level !== lv;
 								return (
-									<g key={lv} opacity={dim ? 0.45 : 1} className="transition-opacity">
+									<g key={lv} opacity={dim ? 0.45 : 1} className="transition-opacity" onMouseLeave={() => setHover(null)}>
+										{/* One hit area for the whole row, gap between the two bars included, so the pointer never leaves it mid-row. */}
+										<rect x={0} y={y0 - (rowH - bar * 2 - gap) / 2} width={W} height={rowH} fill="transparent" onMouseEnter={() => setHover((h) => (h?.level === lv ? h : { level: lv, series: "app" }))} />
 										<text x={left - 10} y={y0 + bar + gap + 4} textAnchor="end" className="fill-foreground font-ui" fontSize={13} fontWeight={800}>
 											{lv}
 										</text>
-										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-go" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })} onMouseLeave={() => setHover(null)}>
+										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-go" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })}>
 											<title>{`${lv}: about ${app} guided hours (this app, Slovak)`}</title>
 										</rect>
 										<text x={x(app) + 6} y={y0 + bar - 3} className="fill-foreground font-ui" fontSize={11} fontWeight={700}>
 											{app}
 										</text>
-										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-muted-foreground/50" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })} onMouseLeave={() => setHover(null)}>
+										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-muted-foreground/50" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })}>
 											<title>{`${lv}: about ${en} guided hours (Cambridge, English)`}</title>
 										</rect>
 										{lv === target && (
 											<text x={x(Math.max(app, en)) + 6} y={y0 + bar * 2 + gap - 3} className="fill-muted-foreground font-ui" fontSize={10}>
-												your target · {dateFor(app)} at your pace
+												your target · {dateFor(app)} at your {paceWord} pace
 											</text>
 										)}
 									</g>
@@ -220,7 +234,7 @@ export function HoursSheet({
 							})}
 						</svg>
 						{/* The hover readout sits under the plot, where it covers nothing. */}
-						<p className="mt-1 min-h-5 font-ui text-xs text-muted-foreground" role="status" aria-live="polite">
+						<p className="mt-1 min-h-10 font-ui text-xs text-muted-foreground" role="status" aria-live="polite">
 							{hover ? (
 								<>
 									<b className="text-foreground">{hover.level}</b> · {hover.series === "app" ? `about ${GUIDED_HOURS[hover.level]} h in this app` : `about ${CAMBRIDGE_ENGLISH[hover.level]} h for English (Cambridge)`} · {LEVEL_CAN_DO[hover.level]}
@@ -237,7 +251,7 @@ export function HoursSheet({
 								<th className="py-1 font-bold">Level</th>
 								<th className="py-1 font-bold">This app (Slovak)</th>
 								<th className="py-1 font-bold">Cambridge (English)</th>
-								<th className="py-1 font-bold">At your pace</th>
+								<th className="py-1 font-bold">At your {paceWord} pace</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -261,7 +275,7 @@ export function HoursSheet({
 				</p>
 
 				<p className="mt-3 rounded-xl bg-accent/60 px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
-					At <b>{minutesPerDay} min</b> × <b>{daysPerWeek} days</b> you put in about <b>{Math.round(yearly)} hours a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.
+					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about <b>{Math.round(yearly)} hours of the map a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.
 				</p>
 
 				<h3 className="mt-5 font-ui text-xs font-bold tracking-wide text-muted-foreground">The studies behind the numbers</h3>

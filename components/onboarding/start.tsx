@@ -72,7 +72,7 @@ type Step = 1 | 2 | 3 | 4;
 interface Draft {
 	purposes: Purpose[];
 	purposeNote: string;
-	examLevel: Cefr;
+	examLevel: Cefr | null;
 	levelOverride: Cefr | null;
 	languages: Lang[];
 	languageLevels: Partial<Record<Lang, LangLevel>>;
@@ -99,11 +99,11 @@ function draftFrom(goal: LearnerGoal | null): Draft {
 	return {
 		purposes: goal?.purposes ?? [],
 		purposeNote: goal?.purposeNote ?? "",
-		examLevel: "B1",
+		examLevel: null,
 		levelOverride: goal?.onboardedAt && goal.level ? goal.level : null,
-		languages: knownLanguages(goal),
+		languages: goal?.onboardedAt ? knownLanguages(goal) : (goal?.languages ?? []),
 		languageLevels: goal?.languageLevels ?? {},
-		explainIn: explanationLanguages(goal),
+		explainIn: goal?.onboardedAt ? explanationLanguages(goal) : [],
 		prior: goal?.prior ?? "none",
 		minutes: goal?.minutesPerDay ?? 20,
 		days: goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
@@ -127,7 +127,9 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 	const [hoursOpen, setHoursOpen] = useState(false);
 
 	const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
-	const suggested = suggestedLevel(d.purposes, d.examLevel);
+	const examLevel = d.examLevel ?? undefined;
+	const suggested = suggestedLevel(d.purposes, examLevel);
+	const blocked = step === 1 ? d.purposes.includes("exam") && !d.examLevel : step === 2 ? d.languages.length === 0 : false;
 	const level = d.levelOverride ?? suggested;
 	const eta = etaFromScratch(level, d.minutes, d.days, hoursDone, new Date());
 	const tz = new Date().getTimezoneOffset();
@@ -184,6 +186,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 	);
 
 	const next = async () => {
+		if (blocked) return;
 		if (step < 3) return setStep((step + 1) as Step);
 		if (step === 3) {
 			if (await save()) setStep(4);
@@ -386,7 +389,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 								{LEVEL_CAN_DO[level]}
 							</p>
 							<p className="mt-1.5 font-prose text-sm text-muted-foreground" data-testid="start-level-fit">
-								{levelFitLine(level, d.purposes, d.examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The map credits hours as units are done, so the date moves with you.
+								{levelFitLine(level, d.purposes, examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The map credits hours as units are done, so the date moves with you.
 							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-3">
 								<span className="font-ui text-sm text-foreground">Aim for</span>
@@ -470,8 +473,18 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 			{step < 4 && (
 				<div className="border-t border-border">
 					<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
-						<p className="font-prose text-sm text-muted-foreground">{step === 1 ? (d.purposes.length ? `${d.purposes.length} picked · Enter continues` : "Pick at least one, or just continue") : "Enter continues"}</p>
-						<button type="button" onClick={() => void next()} disabled={saving} className={PRIMARY} data-testid="start-next">
+						<p className="font-prose text-sm text-muted-foreground">
+							{blocked
+								? step === 1
+									? "Pick the exam's level to continue"
+									: "Pick at least one language to continue"
+								: step === 1
+									? d.purposes.length
+										? `${d.purposes.length} picked · Enter continues`
+										: "Pick at least one, or just continue"
+									: "Enter continues"}
+						</p>
+						<button type="button" onClick={() => void next()} disabled={saving || blocked} className={PRIMARY} data-testid="start-next">
 							{saving ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 							{step === 3 ? "Save and continue" : "Continue"}
 						</button>

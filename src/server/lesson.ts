@@ -34,8 +34,11 @@ import {
 	curriculumState,
 	curriculumUnit,
 	dailyPlan,
+	GUIDED_HOURS,
+	hoursDone,
 	nextLessonUnit,
 	projection,
+	STAGES,
 	type Cefr,
 	type CurriculumState,
 	type DailyPlan,
@@ -64,6 +67,7 @@ import {
 	type PlacementOutcome,
 } from "../core/onboarding.ts";
 import { strandBalance, type StrandBalance } from "../core/strands.ts";
+import type { TrajectoryDay, TrajectoryInput } from "../core/trajectory.ts";
 import { carriedTasks, doneInLedger, RECENT_DAYS, type DayPlanSnapshot } from "../core/carry-over.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
@@ -75,6 +79,8 @@ import { watchMinutes } from "../core/watch.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
 const RECENT_CAP = 240;
+/** Days of history the trajectory draws. */
+const TRAJECTORY_DAYS = 120;
 
 function entries() {
 	return loadLexicon()?.entries ?? [];
@@ -365,6 +371,8 @@ export interface ProgressSummary {
 	projection: Projection;
 	/** This week's minutes by Nation's four strands, against a quarter each. */
 	balance: StrandBalance;
+	/** What the projected graph draws from (src/core/trajectory.ts). */
+	trajectory: TrajectoryInput;
 	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
 	weakSpots: WeakSpotSummary[];
 	/** The goal's daily minutes against what the last `windowDays` days logged. */
@@ -468,6 +476,34 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
 	// The week by strand (src/core/strands.ts): the last seven days' ledgers.
 	const balance = strandBalance(week.map((w) => p.days[w.day]).filter((x): x is DayRecord => !!x));
+	const stageIds = new Set(STAGES.filter((s) => CEFR_ORDER.indexOf(s.level) <= CEFR_ORDER.indexOf(goal.level)).map((s) => s.id));
+	const toTarget = curriculum.chapters.filter((c) => stageIds.has(c.stage));
+	const wordsNow = Object.values(reviewStore.readCards()).filter((c) => !c.suspended).length;
+	// The day's snapshots (src/core/trajectory.ts). Every recorder that moves
+	// them (a lesson, a tutor session, a placement) returns this summary, so
+	// the day's last value is written as it changes.
+	const hoursNow = Math.round(hoursDone(curriculum) * 100) / 100;
+	const unitsNow = curriculum.chapters.reduce((n, c) => n + c.doneCount, 0);
+	if (todayRecord.hoursDone !== hoursNow || todayRecord.unitsDone !== unitsNow || todayRecord.words !== wordsNow) {
+		todayRecord.hoursDone = hoursNow;
+		todayRecord.unitsDone = unitsNow;
+		todayRecord.words = wordsNow;
+		progressStore.write(p);
+	}
+	const trajectoryDays: TrajectoryDay[] = [];
+	for (let i = TRAJECTORY_DAYS - 1; i >= 0; i--) {
+		const day = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
+		const r = p.days[day];
+		trajectoryDays.push({
+			day,
+			minutes: r?.minutes ?? 0,
+			lessons: Object.values(r?.units ?? {}).reduce((a, b) => a + b, 0),
+			hours: r?.hoursDone ?? null,
+			units: r?.unitsDone ?? null,
+			words: r?.words ?? null,
+			...((r?.minutesBy?.placement ?? 0) > 0 ? { placed: true } : {}),
+		});
+	}
 	let loggedRecent = 0;
 	for (let i = 0; i < RECENT_DAYS; i++) loggedRecent += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
 	return {
@@ -486,6 +522,16 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		goal,
 		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
 		balance,
+		trajectory: {
+			days: trajectoryDays,
+			hoursDone: hoursNow,
+			hoursTarget: GUIDED_HOURS[goal.level],
+			unitsDone: unitsNow,
+			unitsTotal: toTarget.reduce((n, c) => n + c.total, 0),
+			wordsNow,
+			goalMinutes: goal.minutesPerDay,
+			goalDays: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
+		},
 		weakSpots: weakSpotList(p.weak),
 		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },
 		backlog,

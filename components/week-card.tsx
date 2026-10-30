@@ -6,11 +6,14 @@
  * add up to, with the door to the Plan page where the pace is set.
  */
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRightIcon, FlameIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HoursSheet } from "@/components/hours-sheet";
 import { StrandBalance } from "@/components/strand-balance";
-import { LEVEL_CAN_DO, type LearnerGoal, type Projection, type StrandBalance as Balance } from "@/src/core";
+import { monthAt, TrajectoryChart, trajectoryHeadline } from "@/components/trajectory-chart";
+import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, measuredPace, trajectory as projectTrajectory, type LearnerGoal, type Projection, type StrandBalance as Balance, type TrajectoryInput } from "@/src/core";
 
 const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
 const WEEKDAY_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -25,15 +28,26 @@ export function WeekCard({
 	balance,
 	goal,
 	projection,
+	trajectory,
 }: {
 	week: Array<{ day: string; xp: number }>;
 	balance: Balance | null;
 	goal: LearnerGoal | null;
 	projection: Projection | null;
+	trajectory?: TrajectoryInput | null;
 }) {
 	const days = week.length ? week : Array.from({ length: 7 }, (_, i) => ({ day: String(i), xp: 0 }));
 	const level = goal?.level ?? "B2";
-	const eta = monthOf(projection?.etaPlanned ?? null);
+	const [open, setOpen] = useState(false);
+	const pathState = useMemo(() => {
+		if (!trajectory) return null;
+		const now = new Date();
+		const pace = measuredPace(trajectory.days, trajectory.goalMinutes, trajectory.goalDays);
+		return { now, measured: pace.measured, t: projectTrajectory(trajectory, "hours", pace) };
+	}, [trajectory]);
+	// The date follows the recent pace once a week of study is on record, the plan until then.
+	const eta = pathState ? (pathState.t.daysToTarget === null ? null : monthAt(pathState.now, pathState.t.daysToTarget)) : monthOf(projection?.etaPlanned ?? null);
+	const paceWord = pathState?.measured ? "recent" : "planned";
 	return (
 		<section className="rounded-3xl border bg-card p-5" data-testid="week-card" aria-labelledby="week-title">
 			<h2 id="week-title" className="text-lg font-black text-foreground">
@@ -67,6 +81,21 @@ export function WeekCard({
 				<StrandBalance balance={balance} />
 			</div>
 
+			{pathState && (
+				<>
+					<button type="button" onClick={() => setOpen(true)} className="mt-4 block w-full rounded-2xl border p-3 text-left transition-colors hover:border-foreground/40" data-testid="trajectory-card" aria-label="Where you're heading: open the projection">
+						<span className="block text-xs font-bold tracking-wide text-muted-foreground">Where you&apos;re heading</span>
+						<span className="mt-0.5 block text-sm font-bold text-foreground" data-testid="trajectory-card-headline">
+							{trajectoryHeadline(pathState.t, pathState.now, level)}
+						</span>
+						<span className="mt-1 block">
+							<TrajectoryChart t={pathState.t} now={pathState.now} variant="compact" targetLevel={level} />
+						</span>
+					</button>
+					<HoursSheet open={open} onClose={() => setOpen(false)} minutesPerDay={goal?.minutesPerDay ?? 20} daysPerWeek={goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} target={level} hoursDone={projection?.hoursDone ?? 0} languages={knownLanguages(goal)} trajectory={trajectory ?? undefined} />
+				</>
+			)}
+
 			<Link
 				href="/plan"
 				className="group mt-4 flex items-center gap-3 rounded-2xl border border-flame/30 bg-flame/10 p-3 transition-colors hover:border-flame/50 hover:bg-flame/15"
@@ -81,7 +110,7 @@ export function WeekCard({
 						{eta && <span className="font-semibold text-muted-foreground"> · about {eta}</span>}
 					</span>
 					<span className="block text-xs text-muted-foreground group-hover:text-foreground" data-testid="goal-plan">
-						Your pace, hours and level check
+						At your {paceWord} pace · hours and level check
 					</span>
 				</span>
 				<ChevronRightIcon className="size-4 shrink-0 text-flame transition-transform group-hover:translate-x-0.5" aria-hidden="true" />

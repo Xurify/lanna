@@ -29,7 +29,7 @@ import { CurriculumPath } from "@/components/curriculum-path";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, STRANDS, tutorUnitPrompt } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, Strand, StrandBalance, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
@@ -61,6 +61,7 @@ interface Summary {
 	goal: Goal;
 	projection: Projection;
 	balance?: StrandBalance;
+	trajectory?: TrajectoryInput;
 	weakSpots?: WeakSpotSummary[];
 	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
 	backlog?: number;
@@ -272,7 +273,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				</div>
 
 				<aside className="flex min-w-0 flex-col gap-6 @5xl:pt-1" aria-label="Your week and your path">
-					<WeekCard week={s?.week ?? []} balance={s?.balance ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} />
+					<WeekCard week={s?.week ?? []} balance={s?.balance ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} trajectory={s?.trajectory ?? null} />
 
 					{(s?.weakSpots?.length ?? 0) > 0 && (
 						<section className="rounded-3xl border bg-card p-5" aria-label="Your weak spots">

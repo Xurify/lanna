@@ -45,6 +45,13 @@ export interface DayRecord {
 	/** The same minutes per activity, measured while the learner was
 	 *  active (src/core/active-time.ts). Absent on days before it was kept. */
 	minutesBy?: Partial<Record<TimedActivity, number>>;
+	/** End-of-day snapshots the trajectory draws from (src/core/trajectory.ts):
+	 *  hours the map credits, units done on the whole map, words met (the
+	 *  review deck). Rewritten whenever the summary is built, so the last
+	 *  one of the day stands, and kept from the day they were first written. */
+	hoursDone?: number;
+	unitsDone?: number;
+	words?: number;
 	/** The day's plan as last shown: each task and whether it was done (carry-over). */
 	planned?: Array<{ id: string; title: string; done: boolean }>;
 }
