@@ -92,6 +92,7 @@ export * from "./word-clusters.ts";
 export * from "./pairs.ts";
 export * from "./curriculum.ts";
 export * from "./arc.ts";
+export * from "./exam.ts";
 export * from "./onboarding.ts";
 export * from "./placement-ladder.ts";
 export * from "./weak-spots.ts";

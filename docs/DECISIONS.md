@@ -156,6 +156,12 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The grading is `src/core/speak-script.ts` (pure): `scriptFor(sceneId)` and `grade(script, turn, choice)` → correct, or wrong with the explanation and the right line. One wrong answer may be retried once; a second miss shows the right line and moves on.
 - `/speak?scene=<id>&mode=script` runs `components/speak/script-player.tsx` and never auto-starts the live scene (SpeakPlayer starts when `sceneId` is set — script mode renders the other player instead). "Say it live" at the end hands over to the normal scene; every picker card has a "Script first" link.
 
+### E14. The chapter exam is recorded before it gates (2026-10-30)
+
+**Why:** the plan makes the exam a required gate, but a gate on an unchecked exam would block learners. Phase 6a ships the exam as record only: every chapter's Skúška draws eight choose items from the chapter's own word and drill units, is scored against an 80% pass mark, and lands in the passport — and nothing opens or closes on it yet.
+
+**How to apply:** the draw and the score are `src/core/exam.ts` (pure), built from the lesson item builders (src/core/lesson.ts) — no second generator; a chapter with a Dvojičky unit gets one pair rep in place of a form item. Attempts live in progress.json's `exams` per chapter (`at`, `score`, `total`, `passed`, `misses`); the client sends only its picks, the server re-grades from the seed. `/passport` reads the best attempt per chapter and never changes `curriculumState`. The gate (6b) switches on only when the owner flips it.
+
 ## Working rules (how work reaches the repo)
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)

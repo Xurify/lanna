@@ -72,11 +72,26 @@ export interface UnitRecord {
 	placed?: boolean;
 }
 
+/** One chapter-exam attempt (Skúška, phase 6a, E14): the score, whether it
+ *  passed the 80% mark, and the item ids answered wrong. Record only —
+ *  nothing is gated on it yet. */
+export interface ExamAttempt {
+	at: string;
+	score: number;
+	total: number;
+	passed: boolean;
+	/** The item ids answered wrong, in exam order. */
+	misses: string[];
+}
+
 export interface ProgressRecord {
 	xp: number;
 	dailyGoal: number;
 	days: Record<string, DayRecord>;
 	units: Record<string, UnitRecord>;
+	/** Chapter-exam attempts, per chapter id, oldest first (the passport
+	 *  reads the best one; src/core/exam.ts bestAttempt). */
+	exams: Record<string, ExamAttempt[]>;
 	/** Item ids of the last lessons, newest last (capped). */
 	recent: string[];
 	bestBlitz?: number;
@@ -95,14 +110,14 @@ export const DEFAULT_GOAL: GoalRecord = { level: "B2", minutesPerDay: 30 };
 const FILE = () => path.join(PATHS.data, "progress.json");
 
 export function emptyProgress(): ProgressRecord {
-	return { xp: 0, dailyGoal: DEFAULT_DAILY_GOAL, days: {}, units: {}, recent: [] };
+	return { xp: 0, dailyGoal: DEFAULT_DAILY_GOAL, days: {}, units: {}, exams: {}, recent: [] };
 }
 
 export const progressStore = {
 	read(): ProgressRecord {
 		try {
 			const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Partial<ProgressRecord>;
-			return { ...emptyProgress(), ...raw, days: raw.days ?? {}, units: raw.units ?? {}, recent: raw.recent ?? [] };
+			return { ...emptyProgress(), ...raw, days: raw.days ?? {}, units: raw.units ?? {}, exams: raw.exams ?? {}, recent: raw.recent ?? [] };
 		} catch {
 			return emptyProgress();
 		}
