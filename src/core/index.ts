@@ -98,6 +98,7 @@ export * from "./reading.ts";
 export * from "./listen.ts";
 export * from "./active-time.ts";
 export * from "./strands.ts";
+export * from "./trajectory.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
 export * from "./pronounce.ts";

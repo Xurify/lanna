@@ -18,7 +18,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, weeklyHours, type Cefr, type Lang } from "@/src/core";
+import { TrajectorySection } from "@/components/trajectory-section";
+import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
@@ -96,7 +97,10 @@ export function HoursSheet({
 	daysPerWeek,
 	target,
 	hoursDone = 0,
+	trajectory: trajectoryInput,
 }: {
+	/** What the projected line draws from; without it the section is left out. */
+	trajectory?: TrajectoryInput;
 	open: boolean;
 	onClose: () => void;
 	minutesPerDay: number;
@@ -146,6 +150,8 @@ export function HoursSheet({
 						<XIcon className="size-5" />
 					</button>
 				</div>
+
+				{trajectoryInput && <TrajectorySection input={trajectoryInput} target={target} />}
 
 				<div className="mt-4 flex items-center justify-between gap-3">
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground" aria-label="Legend">
