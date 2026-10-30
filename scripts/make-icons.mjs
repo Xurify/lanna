@@ -1,15 +1,17 @@
-// Regenerate the Windows/Linux icon set from the flat design source
-// (build/icon-flat.svg — the owner's Affinity export, rounded squircle
-// with baked transparency, owner ruling 2026-10-13).
+// Regenerate the platform icon set from the flat design source
+// (build/icon-flat.svg — rounded squircle with baked transparency, owner
+// ruling 2026-10-13).
 //
 //   build/icon.ico  — Windows (.ico with 16/24/32/48/64/128/256 PNG entries)
 //   build/icon.png  — Linux (512×512; AppImage/deb/desktop entry)
+//   build/icon.icns — mac fallback for pre-Tahoe (16→1024 @1x/@2x entries)
 //
-// macOS does NOT come from here: build/icon.icon (the Icon Composer
-// document) is the mac source of truth, compiled by actool at package
-// time into Assets.car (macOS 26 Liquid Glass) + a fallback icns; the
-// hand-packed build/icon.icns replaces that fallback's 256px cap via
-// scripts/after-pack.cjs (pre-Tahoe keeps full-res).
+// macOS 26+ does NOT use the icns: build/icon.icon (the Icon Composer
+// document) is the layered Liquid Glass source, compiled by actool at
+// package time into Assets.car. actool's own fallback icns caps at 256px,
+// so scripts/after-pack.cjs swaps in this full-res build/icon.icns for
+// older systems. Generating it here (rather than hand-packing via
+// iconutil on a mac) keeps the whole set in step with one source.
 //
 // Renders each size DIRECTLY from the SVG (resvg) — sharper squircle
 // edges than downsampling a raster. Committed outputs; rerun only when
@@ -53,3 +55,38 @@ console.log(`build/icon.ico  ${ICO_SIZES.join("/")} — ${(ico.length / 1024).to
 const png512 = render(512);
 writeFileSync(path.join(root, "build", "icon.png"), png512);
 console.log(`build/icon.png  512×512 — ${(png512.length / 1024).toFixed(1)} KB`);
+
+// ---- build/icon.icns: the mac pre-Tahoe fallback -------------------------
+// ICNS is a flat container: 'icns' + total byte length, then an entry per
+// image ('icp4' 16 … 'ic10' 1024; 'ic11'–'ic14' are the @2x pixel sizes).
+const ICNS_ENTRIES = [
+	["icp4", 16],
+	["icp5", 32],
+	["icp6", 64],
+	["ic07", 128],
+	["ic08", 256],
+	["ic09", 512],
+	["ic10", 1024],
+	["ic11", 32],
+	["ic12", 64],
+	["ic13", 256],
+	["ic14", 512],
+];
+const icnsPngs = new Map();
+for (const [, size] of ICNS_ENTRIES) if (!icnsPngs.has(size)) icnsPngs.set(size, render(size));
+const icnsParts = [];
+for (const [type, size] of ICNS_ENTRIES) {
+	const png = icnsPngs.get(size);
+	const entry = Buffer.alloc(8 + png.length);
+	entry.write(type, 0, 4, "ascii");
+	entry.writeUInt32BE(8 + png.length, 4);
+	png.copy(entry, 8);
+	icnsParts.push(entry);
+}
+const icnsBody = Buffer.concat(icnsParts);
+const icns = Buffer.alloc(8 + icnsBody.length);
+icns.write("icns", 0, 4, "ascii");
+icns.writeUInt32BE(icns.length, 4);
+icnsBody.copy(icns, 8);
+writeFileSync(path.join(root, "build", "icon.icns"), icns);
+console.log(`build/icon.icns ${ICNS_ENTRIES.length} entries — ${(icns.length / 1024).toFixed(1)} KB`);

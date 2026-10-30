@@ -53,6 +53,15 @@ const PRODUCT_NAME = "LangHarness";
 // Must run before the LH_DEV_URL suffix below — dev becomes
 // "LearnHarness-dev".
 app.setName(PRODUCT_NAME);
+
+// Unpackaged (`npm run desktop:dev`) the process is the stock electron
+// binary, so the taskbar/dock would show Electron's atom. Packaged builds
+// embed their icon at build time (build/icon.*), so this is dev-only.
+// .ico on Windows (crisp taskbar sizes), .png elsewhere.
+const DEV_ICON = app.isPackaged
+	? undefined
+	: path.join(__dirname, "..", "build", process.platform === "win32" ? "icon.ico" : "icon.png");
+
 const AUTH_FILE = () => path.join(app.getPath("userData"), "auth.json");
 const DATA_DIR = () => path.join(app.getPath("userData"), "data");
 
@@ -293,6 +302,7 @@ function createWindow(url) {
 		width: 1440,
 		height: 900,
 		title: PRODUCT_NAME,
+		...(DEV_ICON ? { icon: DEV_ICON } : {}),
 		// Merged chrome (owner, 2026-09-17): the system title bar is gone;
 		// the app's own 60px header bands ARE the title bar. The traffic
 		// lights float over the sidebar's LH wordmark band, vertically
@@ -647,6 +657,7 @@ async function main() {
 	process.on("SIGHUP", killServer);
 
 	await app.whenReady();
+	if (DEV_ICON && process.platform === "darwin") app.dock?.setIcon(DEV_ICON);
 
 	// Embedded YouTube (the Watch task) refuses to play when the user agent
 	// names the app or Electron ("An error occurred. Please try again
