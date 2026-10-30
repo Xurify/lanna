@@ -87,6 +87,7 @@ export * from "./language.ts";
 export * from "./fsrs.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+export * from "./grammar.ts";
 export * from "./word-clusters.ts";
 export * from "./pairs.ts";
 export * from "./curriculum.ts";
