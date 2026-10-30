@@ -7,7 +7,7 @@ import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { CheckIcon, DumbbellIcon, GraduationCapIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, XIcon } from "lucide-react";
+import { CheckIcon, DumbbellIcon, GraduationCapIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
@@ -657,6 +657,7 @@ function SessionsSidebar() {
 		anchorRef.current = null;
 	}, []);
 	const selectedChats = useMemo(() => (chats ?? []).filter((c) => selected.has(c.id)), [chats, selected]);
+	const allShownSelected = !!shown && shown.length > 0 && shown.every((c) => selected.has(c.id));
 
 	const onRowClick = (e: React.MouseEvent<HTMLButtonElement>, c: ChatListItem, i: number) => {
 		const list = shown ?? [];
@@ -1004,41 +1005,23 @@ function SessionsSidebar() {
 								</div>
 							)}
 							{selectMode && (
-								<div className="flex items-center gap-1 px-1 text-xs" data-testid="session-select-bar">
-									<span className="px-1.5 font-semibold text-foreground" aria-live="polite">
-										{selected.size} selected
+								<div className="flex items-center gap-2 px-2.5 text-xs whitespace-nowrap" data-testid="session-select-bar">
+									<span className="font-semibold tabular-nums text-foreground" aria-live="polite">
+										{selectedChats.length} selected
 									</span>
 									<button
 										type="button"
 										data-testid="session-select-all"
-										onClick={() => setSelected(new Set((shown ?? []).map((c) => c.id)))}
-										className="rounded-md px-1.5 py-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+										onClick={() => setSelected(allShownSelected ? new Set() : new Set((shown ?? []).map((c) => c.id)))}
+										className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 									>
-										All
-									</button>
-									<button
-										type="button"
-										data-testid="session-select-none"
-										onClick={() => setSelected(new Set())}
-										disabled={selected.size === 0}
-										className="rounded-md px-1.5 py-0.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40"
-									>
-										None
-									</button>
-									<button
-										type="button"
-										data-testid="session-select-delete"
-										onClick={() => setBulkOpen(true)}
-										disabled={selectedChats.length === 0}
-										className="ml-auto rounded-md border border-destructive/50 bg-destructive/10 px-2 py-0.5 font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-40"
-									>
-										Delete {selectedChats.length || ""}
+										{allShownSelected ? "Clear" : "Select all"}
 									</button>
 									<button
 										type="button"
 										data-testid="session-select-done"
 										onClick={exitSelect}
-										className="rounded-md px-1.5 py-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+										className="ml-auto rounded-md px-2 py-1 font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
 									>
 										Done
 									</button>
@@ -1088,6 +1071,20 @@ function SessionsSidebar() {
 								)
 							)}
 						</div>
+						{selectMode && (
+							<div className="border-t border-border/50 pt-2">
+								<button
+									type="button"
+									data-testid="session-select-delete"
+									onClick={() => setBulkOpen(true)}
+									disabled={selectedChats.length === 0}
+									className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:cursor-not-allowed disabled:opacity-40"
+								>
+									<Trash2Icon className="size-4" />
+									{selectedChats.length === 0 ? "Select chats to delete" : `Delete ${selectedChats.length} ${selectedChats.length === 1 ? "chat" : "chats"}`}
+								</button>
+							</div>
+						)}
 					</section>
 
 					{/* Background agents appear only while one runs: an idle header
