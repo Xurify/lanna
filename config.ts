@@ -18,7 +18,7 @@ export const ROOT = path.dirname(fileURLToPath(import.meta.url));
  */
 const BASE_DATA_ROOT = process.env.LH_DATA_DIR
 	? path.resolve(process.env.LH_DATA_DIR)
-	: process.env.NODE_ENV === "test"
+	: underTestRunner()
 		? testDataRoot()
 		: path.join(ROOT, "data");
 
@@ -31,7 +31,20 @@ const BASE_DATA_ROOT = process.env.LH_DATA_DIR
  * landed in the learner's own session list, and opening one started a
  * paid placement turn. Tests that set the seam before importing config
  * (the chat-store-events pattern) keep their own folder.
+ *
+ * WIDENED 2026-10-29: the fence used to key on NODE_ENV=test alone, which
+ * `npm test` sets with POSIX syntax that Windows cmd.exe rejects, so people
+ * ran `tsx --test` bare and the suite wrote its fixtures, goal, units and
+ * test log entries into the learner's real data again and again (checked:
+ * fixtures from 10-27 and from several runs on 10-29). Node's own test
+ * runner marks every test process with NODE_TEST_CONTEXT (verified for both
+ * `node --test` and `tsx --test` with NODE_ENV unset), so the fence now
+ * holds however the suite is launched.
  */
+function underTestRunner(): boolean {
+	return process.env.NODE_ENV === "test" || process.env.NODE_TEST_CONTEXT !== undefined;
+}
+
 function testDataRoot(): string {
 	const dir = path.join(os.tmpdir(), `lh-test-data-${process.pid}`);
 	fs.mkdirSync(dir, { recursive: true });
