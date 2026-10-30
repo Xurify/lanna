@@ -19,7 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, SpeedToggle } from "@/components/speech";
@@ -548,7 +548,7 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 			<p className="font-prose text-lg text-foreground" lang="sk">
 				{turn.text}
 			</p>
-			<p className="mt-0.5 flex items-center gap-2 font-ui text-[11px] text-muted-foreground">
+			<p className="mt-0.5 flex items-center gap-2 font-ui text-xs text-muted-foreground">
 				<span>{turn.via === "voice" ? "heard" : "typed"}</span>
 				{turn.pron && <PronChip score={turn.pron} />}
 			</p>
@@ -561,8 +561,9 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 		<TaskFrame>
 			<div className={cn(COLUMN, "flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]")}>
 				<div className="lh-wco-gutter flex items-center justify-between">
-					<Link href="/" className="font-ui text-sm font-bold text-muted-foreground hover:text-foreground">
-						← Today
+					<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
+						<ArrowLeftIcon className="size-3.5" />
+						Today
 					</Link>
 				</div>
 				<p className="mt-6 font-ui text-sm font-bold text-muted-foreground">{typed ? "Talk in writing" : "Speak"}</p>
@@ -598,28 +599,20 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 				)}
 				<div className="mt-6 grid gap-3 sm:grid-cols-2" data-testid="speak-scenes">
 					{(state?.scenes ?? []).map((s) => (
-						<div key={s.id} className="flex flex-col gap-1">
-							<button
-								type="button"
-								disabled={!state?.canSpeak}
-								onClick={() => onPick(s.id)}
-								className={cn(
-									"rounded-2xl border-2 bg-card px-4 py-3.5 text-left shadow-[0_3px_0_0_var(--border)] transition-all hover:-translate-y-0.5 hover:border-xp/60 disabled:opacity-50",
-									s.id === sceneId && "border-xp",
-								)}
-								data-testid={`scene-${s.id}`}
-							>
-							<span className="flex items-baseline justify-between gap-2">
-								<span className="font-ui text-lg font-bold text-foreground" lang="sk">
-									{s.title}
+						<div key={s.id} className={cn("flex items-stretch rounded-2xl border-2 bg-card transition-colors hover:border-xp/60", s.id === sceneId ? "border-xp" : "border-border")}>
+							<button type="button" disabled={!state?.canSpeak} onClick={() => onPick(s.id)} className="flex min-w-0 flex-1 flex-col gap-1 rounded-l-2xl px-4 py-3.5 text-left disabled:opacity-50" data-testid={`scene-${s.id}`}>
+								<span className="flex items-baseline justify-between gap-2">
+									<span className="font-ui text-lg font-bold text-foreground" lang="sk">
+										{s.title}
+									</span>
+									{s.suggested && <span className="shrink-0 rounded-md bg-xp/15 px-1.5 py-0.5 font-ui text-xs font-bold text-xp">for you</span>}
 								</span>
-								{s.suggested && <span className="rounded-md bg-xp/15 px-1.5 py-0.5 font-ui text-[11px] font-bold text-xp">for you</span>}
-							</span>
-							<span className="block font-prose text-sm text-muted-foreground">{s.blurb}</span>
-							{s.done > 0 && <span className="mt-1 block font-ui text-xs text-muted-foreground">{s.done === 1 ? "once before" : `${s.done} times before`}</span>}
+								<span className="block font-prose text-sm text-muted-foreground">{s.blurb}</span>
+								{s.done > 0 && <span className="mt-1 block font-ui text-xs text-muted-foreground">{s.done === 1 ? "once before" : `${s.done} times before`}</span>}
 							</button>
-							<Link href={`/speak?scene=${s.id}&mode=script`} className="self-start font-ui text-xs font-bold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" data-testid={`scene-script-${s.id}`}>
-								Script first
+							{/* The step-by-step walk-through (E13) sits beside the scene, its own target and not nested in the button. */}
+							<Link href={`/speak?scene=${s.id}&mode=script`} className="flex shrink-0 items-center rounded-r-2xl border-l-2 border-border px-4 font-ui text-sm font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid={`scene-script-${s.id}`}>
+								Step by step
 							</Link>
 						</div>
 					))}
@@ -680,7 +673,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 					<ul className="mt-2 flex flex-col gap-2" data-testid="speak-corrections">
 						{sum.corrections.map((c, i) => (
 							<li key={i} className="rounded-xl border border-border bg-card px-4 py-3">
-								<p className="font-ui text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
+								<p className="font-ui text-xs font-bold uppercase tracking-wide text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
 								<p className="mt-1 font-prose text-base text-muted-foreground line-through decoration-2" lang="sk">
 									{c.yours}
 								</p>

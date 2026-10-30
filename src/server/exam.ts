@@ -34,7 +34,7 @@ export interface ExamRecordInput {
 
 export interface ExamRecord {
 	attempt: ExamAttempt;
-	/** The chapter's best attempt after this one (the passport's line). */
+	/** The chapter's best attempt after this one (the path's line). */
 	best: ExamAttempt | null;
 	/** How many attempts the chapter now has. */
 	attempts: number;

@@ -1,11 +1,15 @@
 "use client";
 
 /**
- * The chapter exam (Skúška, phase 6a, E14): eight choose items drawn from
- * the chapter's own units, one at a time, keys 1–4 to answer, feedback on
- * each, then the result — score, what was missed, and a retry with a fresh
- * draw. The client sends only its picks; the server grades from the seed
- * and keeps the attempt on the record. Record only: nothing is gated yet.
+ * The chapter exam (E14, on the path from E15): eight choose items drawn
+ * from the chapter's own units, one at a time. Keys 1–4 pick and Enter
+ * moves on. The options and the feedback band are the lesson's own parts:
+ * the band sits in the same place for every item, and the blank in the
+ * sentence stays a blank, so nothing above the options moves when an answer
+ * comes in. The result shows the score, what was missed, and a try again
+ * with a fresh draw. The client sends only its picks; the server grades
+ * from the seed and keeps the attempt on the record. Record only: nothing
+ * is gated yet.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -13,10 +17,11 @@ import Link from "next/link";
 import { CheckIcon, RotateCcwIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop } from "@/components/task-frame";
-import { EXAM_PASS_MARK, scoreExam, type ExamDraw } from "@/src/core";
+import { COLUMN, Stat, TaskFrame, TaskTop } from "@/components/task-frame";
+import { BUTTON, KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
 
-type Phase = { state: "playing" } | { state: "saving" } | { state: "result"; correct: number; total: number; passed: boolean; misses: string[]; recorded: boolean };
+type Phase = { state: "playing" } | { state: "saving"; score: ExamScore } | { state: "result"; score: ExamScore; recorded: boolean };
 
 export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; title: string; initial: ExamDraw | null }) {
 	const [draw, setDraw] = useState<ExamDraw | null>(initial);
@@ -25,10 +30,13 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	// The chosen option's index per item, sent to the server at the end.
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [phase, setPhase] = useState<Phase>({ state: "playing" });
+	const [drawing, setDrawing] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const items = draw?.items ?? [];
 	const item = items[Math.min(index, items.length - 1)];
 	const empty = draw !== null && items.length === 0;
+	const right = picked !== null && item?.options?.[picked] === item?.answer;
 
 	const pick = useCallback(
 		(choice: number) => {
@@ -46,7 +54,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	);
 
 	const next = useCallback(() => {
-		if (phase.state !== "playing" || picked === null) return;
+		if (phase.state !== "playing" || picked === null || !draw) return;
 		if (index + 1 < items.length) {
 			setIndex(index + 1);
 			setPicked(null);
@@ -55,28 +63,33 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		// The exam is over: grade locally for the screen, and send the picks
 		// for the server's own grade from the seed — the record.
 		const score = scoreExam(items, answers);
-		setPhase({ state: "saving" });
-		fetch("/api/exam", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chapter: chapterId, seed: draw!.seed, answers }) })
-			.then((res) => (res.ok ? setPhase({ state: "result", ...score, recorded: true }) : setPhase({ state: "result", ...score, recorded: false })))
-			.catch(() => setPhase({ state: "result", ...score, recorded: false }));
+		setPhase({ state: "saving", score });
+		fetch("/api/exam", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chapter: chapterId, seed: draw.seed, answers }) })
+			.then((res) => setPhase({ state: "result", score, recorded: res.ok }))
+			.catch(() => setPhase({ state: "result", score, recorded: false }));
 	}, [phase, picked, index, items, answers, chapterId, draw]);
 
-	// A fresh draw for a retry.
+	// A fresh draw: for a retry, or for a first draw that did not load.
 	const retry = useCallback(() => {
-		setPhase({ state: "saving" });
+		setDrawing(true);
+		setError(null);
 		fetch(`/api/exam?chapter=${chapterId}&seed=${Date.now()}`)
-			.then((res) => res.json())
-			.then((fresh: ExamDraw) => {
+			.then((res) => {
+				if (!res.ok) throw new Error(`exam draw ${res.status}`);
+				return res.json() as Promise<ExamDraw>;
+			})
+			.then((fresh) => {
 				setDraw(fresh);
 				setIndex(0);
 				setPicked(null);
 				setAnswers([]);
 				setPhase({ state: "playing" });
 			})
-			.catch(() => setPhase({ state: "playing" }));
+			.catch(() => setError("Could not load a new exam. Check the connection, then try again."))
+			.finally(() => setDrawing(false));
 	}, [chapterId]);
 
-	// Keys 1–4 answer; Enter moves on after the feedback.
+	// Keys 1–4 pick; Enter or Space moves on once the band is up.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (phase.state !== "playing") return;
@@ -95,17 +108,24 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto py-10")}>
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Skúška · {title}</p>
-					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">No exam yet</h1>
+					<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
+					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
 					<p className="mt-3 max-w-md font-prose text-base text-muted-foreground">
-						This chapter has no word or drill units to draw an exam from. Everything else on the arc still works.
+						{draw ? "This chapter has no words or drills to draw from. The rest of the path still works." : "Check the connection, then try again."}
 					</p>
+					{error && (
+						<p className="mt-3 font-ui text-sm text-miss" role="alert">
+							{error}
+						</p>
+					)}
 					<div className="mt-8 flex flex-wrap gap-3">
-						<Link href="/passport" className={PRIMARY}>
-							<span className="font-ui">Passport</span>
-						</Link>
-						<Link href="/" className={SECONDARY}>
-							Today
+						{!draw && (
+							<button type="button" onClick={retry} disabled={drawing} className={PRIMARY}>
+								Try again
+							</button>
+						)}
+						<Link href="/curriculum" className={draw ? PRIMARY : SECONDARY}>
+							Back to the path
 						</Link>
 					</div>
 				</div>
@@ -114,51 +134,52 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	}
 
 	if (phase.state !== "playing") {
-		const saving = phase.state === "saving";
+		const { score } = phase;
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="exam-result">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Skúška · {title}</p>
-					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">
-						{"correct" in phase ? (phase.passed ? "Passed" : "Not passed") : "…"}
-					</h1>
-					{"correct" in phase && (
-						<>
-							<div className="mt-6 flex gap-8">
-								<Stat label="Score" value={`${phase.correct}/${phase.total}`} ink={phase.passed ? "text-go" : "text-foreground"} />
-								<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-muted-foreground" />
-								<Stat label="Recorded" value={saving ? "…" : phase.recorded ? "Yes" : "Not saved"} ink="text-muted-foreground" />
-							</div>
-							{phase.misses.length > 0 && (
-								<div className="mt-8" data-testid="exam-misses">
-									<p className="font-ui text-sm font-bold text-muted-foreground">Missed</p>
-									<ul className="mt-3 flex flex-col gap-2">
-										{phase.misses.map((id) => {
-											const missed = items.find((i) => i.id === id);
-											if (!missed) return null;
-											return (
-												<li key={id} className="rounded-xl border bg-card px-4 py-3">
-													<p className="font-prose text-base text-foreground" lang="sk">
-														{missed.before}
-														<span className="font-bold text-go">{missed.answer}</span>
-														{missed.after}
-													</p>
-													<p className="mt-0.5 font-prose text-sm text-muted-foreground">{missed.translation}</p>
-												</li>
-											);
-										})}
-									</ul>
-								</div>
-							)}
-						</>
+					<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
+					<h1 className={cn("mt-1 font-ui text-3xl font-black", score.passed ? "text-go" : "text-foreground")}>{score.passed ? "Passed" : "Not passed"}</h1>
+					<div className="mt-6 flex flex-wrap gap-8">
+						<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-go" : "text-foreground"} />
+						<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-muted-foreground" />
+					</div>
+					<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="exam-saved">
+						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved on your path." : "This attempt was not saved, so the path will not show it."}
+					</p>
+					{score.misses.length > 0 && (
+						<div className="mt-8" data-testid="exam-misses">
+							<p className="font-ui text-sm font-bold text-muted-foreground">Missed</p>
+							<ul className="mt-3 flex flex-col gap-2">
+								{score.misses.map((id) => {
+									const missed = items.find((i) => i.id === id);
+									if (!missed) return null;
+									return (
+										<li key={id} className="rounded-xl border-2 border-border bg-card px-4 py-3">
+											<p className="font-prose text-base text-foreground" lang="sk">
+												{missed.sentence}
+											</p>
+											<p className="mt-0.5 font-prose text-sm text-muted-foreground">
+												The answer is <span className="font-bold text-foreground" lang="sk">{missed.answer}</span>. {missed.translation}
+											</p>
+										</li>
+									);
+								})}
+							</ul>
+						</div>
+					)}
+					{error && (
+						<p className="mt-6 font-ui text-sm text-miss" role="alert">
+							{error}
+						</p>
 					)}
 					<div className="mt-8 flex flex-wrap gap-3">
-						<button type="button" onClick={retry} disabled={saving} className={PRIMARY} data-testid="exam-retry">
+						<button type="button" onClick={retry} disabled={drawing} className={PRIMARY} data-testid="exam-retry">
 							<RotateCcwIcon className="size-4" />
-							Retry — a fresh draw
+							Try again
 						</button>
-						<Link href="/passport" className={SECONDARY}>
-							<span className="font-ui">Passport</span>
+						<Link href="/curriculum" className={SECONDARY}>
+							Back to the path
 						</Link>
 					</div>
 				</div>
@@ -167,29 +188,21 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	}
 
 	// ── playing ──
-	const right = picked !== null && item!.options?.[picked] === item!.answer;
 	return (
 		<TaskFrame>
-			<TaskTop progress={(index + (picked !== null ? 1 : 0)) / items.length} label={`item ${index + 1} of ${items.length}`} count={`${index + 1}/${items.length}`} ink="bg-xp" href="/passport" />
-			<div className={cn(COLUMN, "flex flex-1 flex-col overflow-y-auto pb-6 pt-4")}>
-				<div className={cn(COLUMN, "flex flex-col gap-4")}>
-					<p className="font-ui text-sm font-bold text-muted-foreground">Skúška · {title}</p>
-					<p className="font-prose text-xl text-foreground" lang="sk" data-testid="exam-sentence">
-						{item!.before}
-						<span className={cn("rounded-md px-1", picked === null ? "bg-accent text-accent-foreground/40" : right ? "bg-go-soft font-bold text-go" : "bg-miss-soft font-bold text-miss")}>
-							{picked === null ? "____" : item!.options?.[picked]}
-						</span>
-						{item!.after}
-					</p>
-					{picked !== null && !right && (
-						<p className="font-prose text-sm text-muted-foreground" data-testid="exam-answer">
-							The answer is <span className="font-bold text-foreground">{item!.answer}</span> — {item!.translation}
+			<TaskTop progress={(index + (picked !== null ? 1 : 0)) / items.length} label={`Question ${index + 1} of ${items.length}`} count={`${index + 1}/${items.length}`} ink="bg-xp" href="/curriculum" />
+			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
+				<div className={cn(COLUMN, "flex flex-col gap-8")}>
+					<div className="flex flex-col gap-2">
+						<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
+						<p className="font-prose text-xl text-foreground" lang="sk" data-testid="exam-sentence">
+							{item!.before}
+							<span className="rounded-md bg-accent px-1 text-muted-foreground">____</span>
+							{item!.after}
 						</p>
-					)}
-					{picked !== null && right && <p className="font-prose text-sm text-muted-foreground">{item!.translation}</p>}
-					<p className="font-ui text-xs text-muted-foreground">{item!.hint}</p>
-
-					<div className="flex flex-col gap-2" data-testid="exam-options">
+						<p className="font-ui text-sm text-muted-foreground">{item!.hint}</p>
+					</div>
+					<div className="grid grid-cols-2 gap-3" data-testid="exam-options">
 						{item!.options?.map((o, i) => {
 							const chosen = picked === i;
 							const isAnswer = o === item!.answer;
@@ -200,29 +213,54 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 									onClick={() => pick(i)}
 									disabled={picked !== null}
 									className={cn(
-										"flex items-center gap-3 rounded-2xl border-2 bg-card px-4 py-3 text-left font-prose text-lg transition-all",
-										picked === null && "border-border hover:border-xp/60",
-										picked !== null && isAnswer && "border-go/60",
-										chosen && !isAnswer && "border-miss/50 opacity-70",
-										picked !== null && !isAnswer && !chosen && "border-border opacity-50",
+										"flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3.5 text-left font-prose text-xl text-foreground transition-colors",
+										picked === null && "hover:border-foreground/40 hover:bg-accent",
+										picked !== null && isAnswer && "border-go bg-go-soft",
+										chosen && !isAnswer && "border-miss bg-miss-soft",
+										picked !== null && !isAnswer && !chosen && "opacity-50",
 									)}
 									data-testid={`exam-option-${i}`}
 								>
-									<span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted font-ui text-xs font-bold text-muted-foreground">{i + 1}</span>
-									<span lang="sk" className="text-foreground">
-										{o}
-									</span>
-									{picked !== null && isAnswer && <CheckIcon className="ml-auto size-4 shrink-0 text-go" />}
-									{chosen && !isAnswer && <XIcon className="ml-auto size-4 shrink-0 text-miss" />}
+									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
+									<span lang="sk">{o}</span>
 								</button>
 							);
 						})}
 					</div>
-
+				</div>
+			</div>
+			{/* One bar at the bottom, in the same place for every item: the keys
+			    before an answer, the verdict and Next after it (the lesson's
+			    layout). The sentence is shown whole here, so the question above
+			    never has to change. */}
+			<div className={cn("shrink-0 border-t border-border", picked !== null && (right ? "bg-go-soft" : "bg-miss-soft"))} aria-live="polite" data-testid="exam-footer">
+				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
+					{picked === null ? (
+						<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
+							<kbd className={KBD}>1</kbd>–<kbd className={KBD}>{item!.options?.length ?? 1}</kbd> to pick
+						</p>
+					) : (
+						<div className="flex min-w-0 items-start gap-3" data-testid="exam-feedback">
+							<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", right ? "bg-go text-go-ink" : "bg-miss text-background")} aria-hidden="true">
+								{right ? <CheckIcon className="size-5" strokeWidth={3} /> : <XIcon className="size-5" strokeWidth={3} />}
+							</span>
+							<div className="min-w-0">
+								<p className={cn("font-ui text-2xl font-bold leading-tight", right ? "text-go" : "text-miss")}>{right ? "Right" : "Not quite"}</p>
+								{!right && (
+									<p className="mt-1 font-prose text-base text-foreground">
+										The answer is <span className="font-bold" lang="sk">{item!.answer}</span>.
+									</p>
+								)}
+								<p className="mt-1 font-prose text-base text-foreground" lang="sk">
+									{item!.sentence}
+								</p>
+								<p className="font-prose text-sm text-muted-foreground">{item!.translation}</p>
+							</div>
+						</div>
+					)}
 					{picked !== null && (
-						<button type="button" onClick={next} className={cn(PRIMARY, "self-start")} data-testid="exam-next">
+						<button type="button" onClick={next} className={cn(BUTTON, "shrink-0 hover:brightness-110", right ? "bg-go text-go-ink" : "bg-miss text-background")} data-testid="exam-next">
 							{index + 1 < items.length ? "Next" : "Finish"}
-							<span className="ml-2 font-ui text-xs opacity-60">Enter</span>
 						</button>
 					)}
 				</div>

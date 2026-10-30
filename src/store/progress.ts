@@ -89,8 +89,8 @@ export interface ProgressRecord {
 	dailyGoal: number;
 	days: Record<string, DayRecord>;
 	units: Record<string, UnitRecord>;
-	/** Chapter-exam attempts, per chapter id, oldest first (the passport
-	 *  reads the best one; src/core/exam.ts bestAttempt). */
+	/** Chapter-exam attempts, per chapter id, oldest first (the path reads
+	 *  the best one; src/core/exam.ts examSummaries). */
 	exams: Record<string, ExamAttempt[]>;
 	/** Item ids of the last lessons, newest last (capped). */
 	recent: string[];

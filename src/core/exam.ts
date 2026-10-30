@@ -110,8 +110,51 @@ export function scoreExam(items: readonly LessonItem[], answers: readonly unknow
 	return { correct, total, ratio, passed: total > 0 && ratio >= EXAM_PASS_MARK, misses };
 }
 
-/** The passport's line for a chapter: the best attempt, highest score
- *  first, the more recent one breaking a tie. Null before any attempt. */
+/** A chapter's best attempt: the highest score first, the more recent one
+ *  breaking a tie. Null before any attempt. */
 export function bestAttempt<T extends { at: string; score: number; total: number; passed: boolean }>(attempts: readonly T[]): T | null {
 	return [...attempts].sort((a, b) => b.score - a.score || (a.at < b.at ? 1 : -1))[0] ?? null;
+}
+
+/** One attempt as the path reads it (src/store/progress.ts keeps more). */
+export interface ExamResult {
+	at: string;
+	score: number;
+	total: number;
+	passed: boolean;
+}
+
+/** A chapter's exam on record: how many attempts, and the best one. */
+export interface ExamSummary {
+	attempts: number;
+	best: ExamResult | null;
+}
+
+/** Whether a chapter has an exam: its arc gives it word units or a form
+ *  drill to draw from. Media has neither, so it has no exam row. */
+export function chapterHasExam(chapterId: string): boolean {
+	const steps = chapterArc(chapterId) ?? [];
+	return steps.some((s) => (s.step.id === "words" || s.step.id === "forms") && s.units.length > 0);
+}
+
+/** The record of every chapter that has an exam, by chapter id. A chapter
+ *  with no attempt still gets an entry (the path says "Not taken yet"). */
+export function examSummaries(exams: Record<string, readonly ExamResult[]>): Record<string, ExamSummary> {
+	const out: Record<string, ExamSummary> = {};
+	for (const ch of CHAPTERS) {
+		if (!chapterHasExam(ch.id)) continue;
+		const attempts = exams[ch.id] ?? [];
+		const best = bestAttempt(attempts);
+		out[ch.id] = { attempts: attempts.length, best: best ? { at: best.at, score: best.score, total: best.total, passed: best.passed } : null };
+	}
+	return out;
+}
+
+/** The path's line under a chapter's exam: where it stands, and the mark. */
+export function examLine(summary: ExamSummary): string {
+	const mark = `pass mark ${Math.round(EXAM_PASS_MARK * 100)}%`;
+	const best = summary.best;
+	if (!best) return `Not taken yet · ${mark}`;
+	if (best.passed) return `Passed · best ${best.score} of ${best.total}`;
+	return `Best ${best.score} of ${best.total} · ${mark}`;
 }

@@ -15,9 +15,9 @@ import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { CurriculumPath } from "@/components/curriculum-path";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
+import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type ExamSummary, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
 
-export function CurriculumPage({ initialConfigured, state, next, goal, weak = [] }: { initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[] }) {
+export function CurriculumPage({ initialConfigured, state, next, goal, weak = [], exams = {} }: { initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[]; exams?: Record<string, ExamSummary> }) {
 	const router = useRouter();
 	const [configured, setConfigured] = useState(initialConfigured);
 	const [setupOpen, setSetupOpen] = useState(false);
@@ -60,10 +60,10 @@ export function CurriculumPage({ initialConfigured, state, next, goal, weak = []
 					{state ? `${state.done} of ${state.total} units done. ` : ""}
 					Each chapter mixes lessons you can do on your own (built from real sentences), short sessions with the tutor for what a sentence drill cannot
 					check, and ends in something you can do. A chapter opens when the one before is nearly done; a lesson you ace in one go counts as done, so
-					you are never held in what you already know.
+					you are never held in what you already know. Each chapter ends with an exam. Its scores show here, and they do not lock anything yet.
 				</p>
 				<div className="mt-8">
-					<CurriculumPath state={state} next={next} mode="full" goals={purposeGoals(goal.purposes ?? [])} weak={weak} busy={busy} onTutor={onTutor} onScene={onScene} />
+					<CurriculumPath state={state} next={next} mode="full" goals={purposeGoals(goal.purposes ?? [])} weak={weak} exams={exams} busy={busy} onTutor={onTutor} onScene={onScene} />
 				</div>
 			</main>
 			<SetupDialog

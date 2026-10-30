@@ -20,7 +20,7 @@ process.env.LH_PROFILE = "slovak";
 
 const { CHAPTERS } = await import("../src/core/curriculum.ts");
 const { unitInfo } = await import("../src/core/lesson.ts");
-const { EXAM_LENGTH, EXAM_PASS_MARK, bestAttempt, examItems, scoreExam } = await import("../src/core/exam.ts");
+const { EXAM_LENGTH, EXAM_PASS_MARK, bestAttempt, chapterHasExam, examItems, examLine, examSummaries, scoreExam } = await import("../src/core/exam.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { progressStore } = await import("../src/store/progress.ts");
 const { examFor, recordExam } = await import("../src/server/exam.ts");
@@ -139,10 +139,33 @@ describe("the record", () => {
 		assert.equal(progressStore.read().exams["cafe"]?.length, 2);
 	});
 
-	it("the passport's best line: the highest score, the more recent breaking a tie", () => {
+	it("a chapter's best attempt: the highest score, the more recent breaking a tie", () => {
 		const t = (at: string, score: number) => ({ at, score, total: 8, passed: score >= 7 });
 		assert.deepEqual(bestAttempt([t("2026-10-30T10:00:00Z", 5), t("2026-10-30T11:00:00Z", 7), t("2026-10-30T09:00:00Z", 6)]), t("2026-10-30T11:00:00Z", 7));
 		assert.deepEqual(bestAttempt([t("2026-10-30T10:00:00Z", 7), t("2026-10-30T11:00:00Z", 7)].reverse()), { at: "2026-10-30T11:00:00Z", score: 7, total: 8, passed: true });
 		assert.equal(bestAttempt([]), null);
+	});
+});
+
+describe("the path's exam row", () => {
+	const t = (at: string, score: number) => ({ at, score, total: EXAM_LENGTH, passed: score / EXAM_LENGTH >= EXAM_PASS_MARK });
+
+	it("a chapter has an exam when its arc gives it words or a form drill: every chapter but media", () => {
+		for (const ch of CHAPTERS) assert.equal(chapterHasExam(ch.id), ch.id !== "media", `${ch.id}`);
+		assert.equal(chapterHasExam("nope"), false, "an unknown chapter has no exam");
+	});
+
+	it("examSummaries: an entry per exam chapter, its attempts, and the best; no entry for media", () => {
+		const summaries = examSummaries({ cafe: [t("2026-10-30T10:00:00Z", 5), t("2026-10-30T11:00:00Z", 7)] });
+		assert.deepEqual(summaries["cafe"], { attempts: 2, best: { at: "2026-10-30T11:00:00Z", score: 7, total: EXAM_LENGTH, passed: true } });
+		assert.deepEqual(summaries["town"], { attempts: 0, best: null }, "a chapter with no attempt is listed, not taken yet");
+		assert.equal(summaries["media"], undefined);
+		assert.equal(Object.keys(summaries).length, CHAPTERS.filter((c) => c.id !== "media").length);
+	});
+
+	it("examLine says where the exam stands, with the pass mark", () => {
+		assert.equal(examLine({ attempts: 0, best: null }), "Not taken yet · pass mark 80%");
+		assert.equal(examLine({ attempts: 2, best: t("2026-10-30T10:00:00Z", 5) }), "Best 5 of 8 · pass mark 80%");
+		assert.equal(examLine({ attempts: 1, best: t("2026-10-30T10:00:00Z", 8) }), "Passed · best 8 of 8");
 	});
 });

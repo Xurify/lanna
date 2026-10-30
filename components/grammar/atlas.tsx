@@ -39,8 +39,8 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				</Link>
 				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">Grammar</h1>
 				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
-					Six cases, three genders — every cell is the drill that teaches it, with how often you have been right. A cell without a drill yet says{" "}
-					<span className="text-foreground">not yet</span>. Point at a cell to read its rule; follow it to practise.
+					Each cell is one drill, and the percentage is how often you were right on it. Point at a cell to read its rule, then click it to practise.{" "}
+					<span className="text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
 				</p>
 
 				<table className="mt-8 w-full border-separate border-spacing-1.5 text-center" data-testid="grammar-atlas">
@@ -75,14 +75,14 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				</table>
 
 				{/* The selected cell's rule; a fixed region, so pointing around never shifts the page. */}
-				<div className="mt-6 min-h-24 rounded-2xl border bg-card p-5" data-testid="grammar-rule" aria-live="polite">
+				<div className="mt-6 min-h-24 rounded-2xl border-2 border-border bg-card p-5" data-testid="grammar-rule" aria-live="polite">
 					{sel ? (
 						<>
-							<p className="font-ui text-sm font-bold text-foreground">{sel.title}</p>
-							<p className="mt-1.5 font-prose text-sm text-muted-foreground">{sel.rule}</p>
+							<p className="font-ui text-base font-bold text-foreground">{sel.title}</p>
+							<p className="mt-1.5 font-prose text-base text-muted-foreground">{sel.rule}</p>
 						</>
 					) : (
-						<p className="font-prose text-sm text-muted-foreground">Not yet — no drill for this cell.</p>
+						<p className="font-prose text-base text-muted-foreground">No drill for this cell yet.</p>
 					)}
 				</div>
 			</main>
@@ -125,7 +125,7 @@ function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean
 				title={cell.reps > 0 ? `${cell.correct} of ${cell.reps} right` : "No reps yet"}
 			>
 				{inner}
-				{cell.accuracy === null ? null : <span className="text-[11px] text-muted-foreground tabular-nums">{cell.reps} reps</span>}
+				{cell.accuracy === null ? null : <span className="text-xs text-muted-foreground tabular-nums">{cell.reps} reps</span>}
 			</Link>
 		</td>
 	);

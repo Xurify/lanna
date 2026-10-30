@@ -4,7 +4,8 @@
  * The path (LangHarness, 2026-10-28) — the whole A1→B2 map as stages and
  * chapters, each unit a node whose ring fills as it is done, locked until
  * its chapter opens. The Today page shows it compact (the current chapter
- * open, the rest folded); /curriculum shows every chapter open.
+ * open, the rest folded); /curriculum shows every chapter open. An open
+ * chapter ends with its exam (E15): one row whose line says where it stands.
  *
  * Pure render over the server's CurriculumState (src/core/curriculum.ts);
  * starting a tutor unit or a goal's Talk scene is handed up, because those
@@ -16,7 +17,7 @@ import Link from "next/link";
 import { AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitBadge } from "@/components/unit-badge";
-import { STAGES, TUTOR_SESSIONS, type ChapterState, type CurriculumState, type UnitState, type WeakSpotSummary } from "@/src/core";
+import { examLine, STAGES, TUTOR_SESSIONS, type ChapterState, type CurriculumState, type ExamSummary, type UnitState, type WeakSpotSummary } from "@/src/core";
 
 export function CurriculumPath({
 	state,
@@ -24,6 +25,7 @@ export function CurriculumPath({
 	mode = "compact",
 	goals,
 	weak,
+	exams,
 	busy = false,
 	onTutor,
 	onScene,
@@ -35,6 +37,8 @@ export function CurriculumPath({
 	goals?: ReadonlySet<string>;
 	/** Units on record as weak spots (src/core/weak-spots.ts): marked, with why. */
 	weak?: WeakSpotSummary[];
+	/** Each chapter's exam on record (src/core/exam.ts), by chapter id. */
+	exams?: Record<string, ExamSummary>;
 	busy?: boolean;
 	onTutor: (unit: UnitState) => void;
 	onScene: (scene: string, unit: UnitState) => void;
@@ -69,36 +73,41 @@ export function CurriculumPath({
 						{/* Compact: a stage not reached yet is its header alone; its
 						    chapters are the full map's business. */}
 						{(reached || mode === "full") && (
-						<ol className="mt-3 flex flex-col gap-2">
-							{chapters.map((ch, i) => (
-								<li key={ch.id} className={cn("rounded-2xl border", ch.id === state.current ? "border-go/50 bg-go/5" : "bg-card")} data-testid={`chapter-${ch.id}`}>
-									<button
-										type="button"
-										onClick={() => mode === "compact" && toggle(ch.id)}
-										className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left", mode === "compact" && "hover:bg-accent/60 rounded-2xl")}
-										aria-expanded={isOpen(ch)}
-									>
-										<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-black", ch.done ? "bg-gold text-background" : ch.open ? "bg-go/20 text-go" : "bg-accent text-muted-foreground")}>
-											{ch.done ? "✓" : ch.open ? ch.doneCount : <LockIcon className="size-3" />}
-										</span>
-										<span className="min-w-0 flex-1">
-											<span className={cn("block font-ui text-sm font-bold", ch.open ? "text-foreground" : "text-muted-foreground")}>{ch.title}</span>
-											<span className="block truncate font-ui text-xs text-muted-foreground">{ch.open ? `${ch.doneCount}/${ch.total} · ${ch.tagline}` : chapters[i - 1]?.open ? `Opens when “${chapters[i - 1]!.title}” is nearly done` : ch.tagline}</span>
-										</span>
-										{mode === "compact" && (isOpen(ch) ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />)}
-									</button>
-									{isOpen(ch) && (
-										<ol className="flex flex-col gap-1 px-2 pb-2">
-											{ch.units.map((u) => (
-												<li key={u.id}>
-													<UnitRow unit={u} active={u.id === next} starred={goals?.has(u.id) ?? false} weak={weakBy.get(u.id)} busy={busy} onTutor={onTutor} onScene={onScene} />
-												</li>
-											))}
-										</ol>
-									)}
-								</li>
-							))}
-						</ol>
+							<ol className="mt-3 flex flex-col gap-2">
+								{chapters.map((ch, i) => (
+									<li key={ch.id} className={cn("rounded-2xl border", ch.id === state.current ? "border-go/50 bg-go/5" : "bg-card")} data-testid={`chapter-${ch.id}`}>
+										<button
+											type="button"
+											onClick={() => mode === "compact" && toggle(ch.id)}
+											className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left", mode === "compact" && "hover:bg-accent/60 rounded-2xl")}
+											aria-expanded={isOpen(ch)}
+										>
+											<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-black", ch.done ? "bg-gold text-background" : ch.open ? "bg-go/20 text-go" : "bg-accent text-muted-foreground")}>
+												{ch.done ? "✓" : ch.open ? ch.doneCount : <LockIcon className="size-3" />}
+											</span>
+											<span className="min-w-0 flex-1">
+												<span className={cn("block font-ui text-sm font-bold", ch.open ? "text-foreground" : "text-muted-foreground")}>{ch.title}</span>
+												<span className="block truncate font-ui text-xs text-muted-foreground">{ch.open ? `${ch.doneCount}/${ch.total} · ${ch.tagline}` : chapters[i - 1]?.open ? `Opens when “${chapters[i - 1]!.title}” is nearly done` : ch.tagline}</span>
+											</span>
+											{mode === "compact" && (isOpen(ch) ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />)}
+										</button>
+										{isOpen(ch) && (
+											<ol className="flex flex-col gap-1 px-2 pb-2">
+												{ch.units.map((u) => (
+													<li key={u.id}>
+														<UnitRow unit={u} active={u.id === next} starred={goals?.has(u.id) ?? false} weak={weakBy.get(u.id)} busy={busy} onTutor={onTutor} onScene={onScene} />
+													</li>
+												))}
+												{ch.open && exams?.[ch.id] && (
+													<li>
+														<ExamRow chapterId={ch.id} summary={exams[ch.id]!} />
+													</li>
+												)}
+											</ol>
+										)}
+									</li>
+								))}
+							</ol>
 						)}
 					</section>
 				);
@@ -167,5 +176,22 @@ function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { u
 		<button type="button" disabled={busy} onClick={() => (u.kind === "goal" && u.scene ? onScene(u.scene, u) : onTutor(u))} className={cn(cls, "disabled:opacity-60")} data-testid={`unit-${u.id}`}>
 			{body}
 		</button>
+	);
+}
+
+/** A chapter's exam, the last row of its open units (E14, E15). Record
+ *  only: the line says where it stands, and nothing on the path opens or
+ *  closes on it. Its ring is a unit's ring: it fills to the best score,
+ *  and turns gold once the exam is passed. */
+function ExamRow({ chapterId, summary }: { chapterId: string; summary: ExamSummary }) {
+	const best = summary.best;
+	return (
+		<Link href={`/exam?chapter=${chapterId}`} className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-accent" data-testid={`exam-${chapterId}`}>
+			<UnitBadge glyph="clipboard-check" progress={best ? best.score / best.total : 0} done={best?.passed ?? false} size="sm" tone="go" />
+			<span className="min-w-0 flex-1">
+				<span className="block font-ui text-sm font-bold text-foreground">Chapter exam</span>
+				<span className="block truncate font-ui text-xs text-muted-foreground">{examLine(summary)}</span>
+			</span>
+		</Link>
 	);
 }

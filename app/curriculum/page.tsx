@@ -21,6 +21,7 @@ export default function CurriculumRoute() {
 			next={summary?.next ?? "words"}
 			goal={summary?.goal ?? { level: "B2", minutesPerDay: 30 }}
 			weak={summary?.weakSpots ?? []}
+			exams={summary?.exams ?? {}}
 		/>
 	);
 }
