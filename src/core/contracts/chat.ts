@@ -52,6 +52,10 @@ export interface ChatRecord {
 	extractions?: ExtractionRunUsage[];
 	/** Per-chat model/thinking overrides for the conversation agents. */
 	settings?: ChatSettings;
+	/** The tutor unit this chat practises (the Tutor task). */
+	tutorUnit?: string;
+	/** The unit's session has been counted (on the learner's first typed message). */
+	tutorCounted?: boolean;
 	/** SCHEMA STAMP (schema-versioning wave, owner 2026-10-10): LAZY v1 —
 	 *  existing records stay unstamped (absence reads as v1); every write
 	 *  stamps the current version. A record stamped NEWER than this build

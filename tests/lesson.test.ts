@@ -94,6 +94,11 @@ test("streakOf counts back from today and forgives one rest day after six", () =
 	assert.equal(s.restUsed, true);
 	assert.equal(s.days, 8);
 	assert.equal(streakOf(new Set(["2026-10-20"]), "2026-10-27").days, 0);
+	// A six-day plan rests one day a week: that rest day keeps the streak.
+	const sixDays = new Set(["2026-10-18", "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-25", "2026-10-26", "2026-10-27"]);
+	assert.equal(streakOf(sixDays, "2026-10-27", 1).days, 9);
+	// A seven-day plan has no rest day to spend.
+	assert.equal(streakOf(sixDays, "2026-10-27", 0).days, 3);
 });
 
 // A unit is complete after 3 lessons at 80% right, or 6 lessons whatever

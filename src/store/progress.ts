@@ -38,8 +38,10 @@ export interface DayRecord {
 	rereads?: number;
 	/** "Say it faster" rounds finished (the fluency strand). */
 	fasts?: number;
-	/** Minutes spent in lessons and review (from the client's timers). */
+	/** Minutes spent across activities (lessons, review, speak, watch, read and the rest). */
 	minutes?: number;
+	/** The day's plan as last shown: each task and whether it was done (carry-over). */
+	planned?: Array<{ id: string; title: string; done: boolean }>;
 }
 
 /** The learner's goal and profile: the target level and planned minutes

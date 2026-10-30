@@ -25,6 +25,10 @@ import { coverageOf } from "../core/coverage.ts";
 import type { ChatStore, GraphStore } from "../core/ports.ts";
 import type { ExtractionPipeline } from "../agent/subagents/extraction.ts";
 import { ModelsNotConfiguredError, ProviderKeyMissingError } from "../core/settings.ts";
+import { recordActivity } from "./lesson.ts";
+
+/** User messages the app itself sends to open a tutor chat. */
+const OPENING_USER_MESSAGES = 1;
 
 /** Distinguish a failed canonical save from later bookkeeping failures. */
 export class TurnPersistenceError extends Error {
@@ -84,7 +88,14 @@ export function persistTurn(
 			...record.messages,
 			...stamped,
 		]);
-		chatStore.saveMessages(chatId, [...record.messages, ...stamped, ...blocks]);
+		const messages = [...record.messages, ...stamped, ...blocks];
+		chatStore.saveMessages(chatId, messages);
+		// A tutor unit's session counts once the learner types: the chat's own
+		// opening prompt is the only user message that is not theirs.
+		if (record.tutorUnit && !record.tutorCounted && messages.filter((m) => m.role === "user").length > OPENING_USER_MESSAGES) {
+			chatStore.markTutorCounted(chatId);
+			recordActivity("tutor", record.tutorUnit);
+		}
 		return stamped;
 	} catch (err) {
 		console.error(`[chat ${chatId}] persist failed:`, err, { isAborted });

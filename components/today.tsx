@@ -62,6 +62,8 @@ interface Summary {
 	projection: Projection;
 	balance?: StrandBalance;
 	weakSpots?: WeakSpotSummary[];
+	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
+	backlog?: number;
 }
 
 function greeting(now = new Date()): string {
@@ -253,7 +255,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						</p>
 					)}
 
-					<DailyPlan plan={s?.plan ?? null} nextUnit={s?.next ?? "words"} busy={busy} onSpeak={speak} />
+					<DailyPlan plan={s?.plan ?? null} nextUnit={s?.next ?? "words"} pace={s?.pace} backlog={s?.backlog} busy={busy} onSpeak={speak} />
 
 					{/* Every way to practise, outside the plan */}
 					<section aria-labelledby="practise-title" data-testid="modes">

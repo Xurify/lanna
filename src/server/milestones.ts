@@ -31,7 +31,7 @@ import { PATHS } from "../../config.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
-import { curriculumState, GUIDED_HOURS, hoursDone, type Cefr } from "../core/curriculum.ts";
+import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
 import { UNITS } from "../core/lesson.ts";
 import {
 	creditedSpeed,
@@ -123,7 +123,7 @@ export interface WordSets {
  *  Listen's stretch words and Read's deliberate new words. */
 export const INPUT_WORDS_PER_DAY = 5;
 /** Days of history the real rates need before they are shown. */
-export const PACE_DAYS = 14;
+export const PACE_DAYS = PACE_WINDOW_DAYS;
 
 export function wordSets(lexicon: Lexicon | null): WordSets {
 	const p = progressStore.read();

@@ -788,7 +788,7 @@ const PRIOR_LINE: Record<Prior, string> = {
  * prober fragment tells the agent to treat this as the goal and the
  * level already found. Null when nothing is known yet (first run).
  */
-export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord): string | null {
+export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -798,7 +798,7 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const goals = [...purposeGoals(purposes)].map((g) => `"${curriculumUnit(g)?.title ?? g}"`).slice(0, 5);
 		lines.push(`- Slovak is for: ${[...named, ...(note ? [`in the learner's own words, "${note}"`] : purposes.includes("other") ? ["something the cards did not cover"] : [])].join("; ")}.${goals.length ? ` The goal is concrete: the map's can-do goals ${goals.join(", ")}.` : ""}${note ? " Shape examples and scenes around those words." : ""}`);
 	}
-	if (goal) lines.push(`- Target: ${goal.level} (about ${GUIDED_HOURS[goal.level]} guided hours), at ${goal.minutesPerDay} minutes a day, ${goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} days a week.`);
+	if (goal) lines.push(`- Target: ${goal.level} (about ${GUIDED_HOURS[goal.level]} guided hours), at ${goal.minutesPerDay} minutes a day, ${goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} days a week.${pace_ ? ` Over the last ${pace_.days} days they actually averaged ${pace_.dailyAverage} minutes a day.` : ""}`);
 	if (goal) {
 		const known = knownLanguages(goal);
 		const other = (goal.otherLanguages ?? []).filter(Boolean);

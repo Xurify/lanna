@@ -189,6 +189,39 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 	);
 });
 
+test("the daily plan: only a spoken scene or a tutor session ticks Speak; a weak words unit is Strengthen; carried tasks lead without growing the plan", () => {
+	const evidence: Record<string, UnitEvidence> = { present: { lessons: 2, reps: 30, correct: 24 }, "acc-fem": { lessons: 2, reps: 24, correct: 14 } };
+	const state = curriculumState(evidence, "B2");
+	const next = nextLessonUnit(state);
+	const base = { state, evidence, review: { due: 12, newLeft: 10, available: true }, minutesPerDay: 90, next, dayOfYear: 301 };
+	const day = (over: Partial<Parameters<typeof dailyPlan>[0]["day"]> = {}) => ({ units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0, ...over });
+	const task = (plan: ReturnType<typeof dailyPlan>, id: string) => plan.tasks.find((t) => t.id === id);
+
+	// A tutor unit is open here: a Talk or a Story is not it, a tutor session is.
+	assert.equal(task(dailyPlan({ ...base, day: day({ talks: 1, stories: 1 }) }), "speak")!.done, false);
+	assert.equal(task(dailyPlan({ ...base, day: day({ tutors: 1 }) }), "speak")!.done, true);
+	// Held tutor units leave a spoken scene: only a finished scene ticks it.
+	const held: Record<string, UnitEvidence> = { ...evidence };
+	for (const u of state.chapters.flatMap((c) => c.units)) if (u.kind === "tutor") held[u.id] = { lessons: 2, reps: 0, correct: 0 };
+	const scene = (d: ReturnType<typeof day>) => task(dailyPlan({ ...base, evidence: held, state: curriculumState(held, "B2"), day: d }), "speak")!;
+	assert.equal(scene(day({ talks: 1, stories: 1, tutors: 1 })).done, false);
+	assert.equal(scene(day({ speaks: 1 })).done, true);
+
+	// A weak words unit becomes the Strengthen task, and the Words task moves on to another unit.
+	const weak = dailyPlan({ ...base, weak: ["lx-greetings"], day: day() });
+	assert.equal(task(weak, "strengthen")?.unit, "lx-greetings");
+	assert.notEqual(task(weak, "words")?.unit, "lx-greetings");
+
+	// Carried tasks lead the plan, labelled; a task done today is not; the plan keeps its size.
+	const plain = dailyPlan({ ...base, day: day() });
+	const carried = dailyPlan({ ...base, carried: [{ id: "fluency", from: "2026-10-27" }, { id: "read", from: "2026-10-26" }], day: day({ reads: 1 }) });
+	assert.equal(carried.tasks[0]!.id, "fluency");
+	assert.equal(carried.tasks[0]!.from, "2026-10-27");
+	assert.equal(task(carried, "read")!.from, undefined);
+	assert.equal(carried.total, plain.total);
+	assert.equal(carried.minutes, plain.minutes);
+});
+
 test("a tutor unit's prompt carries its brief and the answer-first doctrine", () => {
 	const p = tutorUnitPrompt(curriculumUnit("aspect")!);
 	assert.match(p, /robiť/);

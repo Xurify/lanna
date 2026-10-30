@@ -249,7 +249,7 @@ test("the whole check through the server: items one at a time, a typed alternati
 	assert.ok(weakUnits.every((u) => rec.weak![u]!.source === "check"));
 	assert.ok(weakUnits.some((u) => rec.weak![u]!.note === "wrong case"), `the judge's note is the evidence: ${JSON.stringify(rec.weak)}`);
 	assert.equal(rec.weak!["cond"], undefined, "held by the tutor: not a weak spot");
-	setGoal({ minutesPerDay: 90 }, 0, now); // room in the plan for every task
+	setGoal({ minutesPerDay: 90 }, 0, now); // a generous budget keeps every task; the plan is cut to the budget but never grows past its fixed task list
 	const summary = progressSummary(0, now);
 	assert.ok(summary.weakSpots.length >= 1);
 	assert.equal(summary.weakSpots[0]!.source, "check");
