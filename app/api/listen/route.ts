@@ -2,7 +2,7 @@
  * GET /api/listen — a Listen session: ten dictionary sentences at 95–98%
  * known words, each with three meanings to choose from and its stretch
  * words glossed (src/server/listen.ts). Built locally; no model.
- * POST /api/listen {reps, ms?, tz?} — a finished session: XP, the day's
+ * POST /api/listen {reps, ms?, activeMs?, tz?} — a finished session: XP, the day's
  * listening, the stretch words sent to the review deck, a fresh summary.
  */
 
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { reps?: unknown; ms?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { reps?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown } | null;
 	if (!body || !Array.isArray(body.reps)) return Response.json({ message: "reps must be an array" }, { status: 400 });
 	const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 600) : "");
 	const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.round(Math.min(v, 3_600_000)) : undefined);
@@ -37,5 +37,5 @@ export async function POST(req: Request) {
 		...(num(r.words) !== undefined ? { words: num(r.words) } : {}),
 	}));
 	const tz = Number(body.tz);
-	return Response.json(recordListen({ reps, ms: typeof body.ms === "number" ? body.ms : undefined, tz: Number.isFinite(tz) && Math.abs(tz) <= 840 ? tz : undefined }));
+	return Response.json(recordListen({ reps, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: Number.isFinite(tz) && Math.abs(tz) <= 840 ? tz : undefined }));
 }

@@ -2,7 +2,7 @@
  * GET /api/lesson?unit=<id> — a fresh 12-rep lesson for one unit, built
  * locally from the lexicon (no model call). ?mode=blitz — a choose-only
  * sprint across the units you have started.
- * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, detail?}], ms?, tz?}
+ * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, detail?}], ms?, activeMs?, tz?}
  * — record the finished lesson: XP, the day, the unit's level; missed
  * words go into the review deck; the whole lesson (every sentence and
  * answer, from `detail`) is appended to the lesson log. Returns the
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
 		mode?: unknown;
 		reps?: unknown;
 		ms?: unknown;
+		activeMs?: unknown;
 		tz?: unknown;
 	} | null;
 	if (!body || !isUnitId(body.unit) || !Array.isArray(body.reps)) {
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
 			mode: body.mode === "blitz" ? "blitz" : "lesson",
 			reps,
 			ms: typeof body.ms === "number" ? body.ms : undefined,
+			activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined,
 			tz,
 		}),
 	);

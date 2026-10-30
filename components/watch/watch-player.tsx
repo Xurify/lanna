@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { useActiveTime } from "@/components/use-active-time";
 import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
@@ -77,6 +78,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const startedAt = useRef(Date.now());
+	// Watching is mostly not clicking: the day's minutes count the time this
+	// tab is visible and focused while the video plays or its questions are
+	// answered (`ms` stays the wall-clock).
+	const activeTime = useActiveTime("watch", "passive", { active: stage === "watch" || stage === "questions" });
 
 	const load = useCallback(async () => {
 		try {
@@ -156,8 +161,9 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	const start = useCallback((m: WatchMode) => {
 		setMode(m);
 		startedAt.current = Date.now();
+		activeTime.restart();
 		setStage("watch");
-	}, []);
+	}, [activeTime]);
 
 	const finish = useCallback(
 		async (all: number[], segStats: SegmentStat[]) => {
@@ -169,7 +175,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 				const res = await fetch("/api/watch", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, tz: new Date().getTimezoneOffset() }),
+					body: JSON.stringify({ action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
 				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as Outcome);
@@ -183,7 +189,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 				setSaving(false);
 			}
 		},
-		[video, saving, mode, tapped, load],
+		[video, saving, mode, tapped, load, activeTime],
 	);
 
 	// Escape leaves, like a lesson — unless a word popover is open.

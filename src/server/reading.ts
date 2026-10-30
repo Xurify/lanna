@@ -30,6 +30,7 @@ import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
+import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { curriculumState, CHAPTERS, STAGES, type Cefr } from "../core/curriculum.ts";
 import { foldDiacritics, LANGUAGES } from "../core/language.ts";
 import { UNITS } from "../core/lesson.ts";
@@ -736,6 +737,8 @@ export interface ReadResultInput {
 	/** Slugs tapped for a gloss. */
 	tapped: string[];
 	ms?: number;
+	/** Active milliseconds since the last send (src/core/active-time.ts). */
+	activeMs?: number;
 	tz?: number;
 }
 
@@ -765,7 +768,7 @@ export function recordRead(input: ReadResultInput, now = new Date()): ReadOutcom
 	const d = (p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	d.reads = (d.reads ?? 0) + 1;
 	d.xp += xp;
-	if (input.ms && Number.isFinite(input.ms)) d.minutes = (d.minutes ?? 0) + Math.min(20, input.ms / 60_000);
+	addMinutes(d, "read", sessionMs(input));
 	p.xp += xp;
 	progressStore.write(p);
 	const entry: ReadLogEntry = {

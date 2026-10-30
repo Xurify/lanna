@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; storyId?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; storyId?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "next") {
 		try {
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 		const answers = Array.isArray(body.answers) ? body.answers.map((a) => (typeof a === "number" ? a : -1)).slice(0, 8) : [];
 		const tapped = Array.isArray(body.tapped) ? body.tapped.filter((t): t is string => typeof t === "string").slice(0, 200) : [];
 		try {
-			return Response.json(recordRead({ storyId: body.storyId, answers, tapped, ms: typeof body.ms === "number" ? body.ms : undefined, tz: tzOf(body.tz) }));
+			return Response.json(recordRead({ storyId: body.storyId, answers, tapped, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: tzOf(body.tz) }));
 		} catch (err) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 		}
