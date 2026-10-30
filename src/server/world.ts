@@ -1,0 +1,57 @@
+/**
+ * The story bible (LangHarness reading, chapter-arc phase 2, 2026-10-30):
+ * the series' cast, places and one plot beat per chapter, bundled under
+ * curriculum/<profile>/world.json. It seeds the Robo episodes the Read
+ * shelf writes for the chapter the learner is in, so every chapter opens
+ * with its own episode and the series keeps its people and places. Read
+ * only — no generation writes the bible; the picker and the brief read it.
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+
+export interface WorldPerson {
+	id: string;
+	name: string;
+	gender: "f" | "m";
+	age: "child" | "young" | "adult" | "old";
+	/** One line on who they are in the series. */
+	role: string;
+}
+
+export interface WorldPlace {
+	id: string;
+	/** The place as it appears in texts ("the Miletičova market"). */
+	name: string;
+	note: string;
+}
+
+export interface World {
+	series: string;
+	language?: string;
+	version?: number;
+	cast: WorldPerson[];
+	places: WorldPlace[];
+	/** One English sentence per chapter id (src/core/curriculum.ts CHAPTERS). */
+	beats: Record<string, string>;
+}
+
+const cache = new Map<string, World | null>();
+
+export function worldPath(profile: string = ACTIVE_PROFILE): string {
+	return path.join(PATHS.curriculum, profile, "world.json");
+}
+
+/** The active profile's story bible, or null when the language has none. */
+export function loadWorld(profile: string = ACTIVE_PROFILE): World | null {
+	if (cache.has(profile)) return cache.get(profile)!;
+	let world: World | null = null;
+	try {
+		world = JSON.parse(fs.readFileSync(worldPath(profile), "utf-8")) as World;
+	} catch {
+		world = null;
+	}
+	cache.set(profile, world);
+	return world;
+}

@@ -77,6 +77,7 @@ import { storyStore } from "../store/stories.ts";
 import { assignVoices, availableVoiceIds, NARRATOR_VOICE } from "./voices.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { enqueueWords } from "./review.ts";
+import { loadWorld, type World } from "./world.ts";
 
 export const STORY_SERIES = "robo";
 
@@ -406,16 +407,23 @@ export function questionLine(level: Cefr): string {
 
 /** The brief for one text. `previous` lists the shelf (every kept story):
  *  Robo episodes count the series, the others' topics are named so the
- *  new text is about something else. */
-export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo"): StoryBrief {
+ *  new text is about something else. A Robo episode is seeded from the
+ *  story bible (`curriculum/slovak/<profile>/world.json`, src/server/world.ts):
+ *  its cast, its places, and the chapter the learner is in as this
+ *  episode's plot beat. */
+export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null): StoryBrief {
 	const robo = previous.filter((s) => (s.genre ?? "robo") === "robo");
 	const episode = genre === "robo" ? robo.length + 1 : 0;
 	const theme = genre === "robo" ? episodeTheme(k.purposes, episode) : genreInfo(genre).label.toLowerCase();
 	const len = STORY_LENGTH[k.level];
 	const stage = STAGES.find((s) => s.level === k.level);
 	const topics = previous.map((s) => s.topic).filter((t): t is string => !!t).slice(-12);
+	const series = genre === "robo" && world?.cast.length ? world : null;
 	const lines = [
 		genre === "robo" ? `Text: episode ${episode} of the Robo series. Setting: ${theme}.` : `Text: ${genreInfo(genre).brief}.`,
+		series ? `Series bible, keep them as written — the cast: ${series.cast.map((c) => `${c.name} (${c.gender === "f" ? "woman" : "man"}, ${c.age}) ${c.role}`).join("; ")}.` : "",
+		series ? `The places they meet at: ${series.places.map((p) => p.name).join(", ")}.` : "",
+		series ? `This episode's beat: "${series.beats[k.chapter] ?? "another day in Bratislava"}" — build the episode on it.` : "",
 		topics.length ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
 		`Learner level: ${k.level}${stage ? ` (${stage.title})` : ""}, working in the chapter "${k.chapterTitle}".`,
 		`Length: ${len.min} to ${len.max} sentences. New words allowed: at most ${NEW_WORDS_MAX[k.level]}.`,
@@ -582,7 +590,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 		.slice(-4)
 		.map((s) => storyStore.get(s.id)?.recap)
 		.filter((r): r is string => !!r);
-	const brief = storyBrief(k, previous, recaps, now, genre);
+	const brief = storyBrief(k, previous, recaps, now, genre, loadWorld());
 	let engine = opts.engine;
 	let model = opts.model;
 	if (!engine) {
@@ -651,9 +659,11 @@ function writtenToday(now: Date): number {
 	return storyStore.list().filter((s) => s.createdAt.slice(0, 10) === day).length;
 }
 
-/** Fill the shelf: write what `shelfNeeds` lists, one story after the
- *  other on the cheap slot, within the day's cap. Returns how many were
- *  written. Safe to call often: a second call while one runs returns 0. */
+/** Fill the shelf: the current chapter's story episode first (the arc's
+ *  story step — one episode per chapter, seeded from the story bible),
+ *  then what `shelfNeeds` lists, one story after the other on the cheap
+ *  slot, within the day's cap. Returns how many were written. Safe to
+ *  call often: a second call while one runs returns 0. */
 export async function fillShelf(opts: GenerateOptions = {}): Promise<number> {
 	if (writing.shelfRunning) return 0;
 	if (!opts.engine && !storyEngine()) return 0;
@@ -664,6 +674,13 @@ export async function fillShelf(opts: GenerateOptions = {}): Promise<number> {
 			const now = opts.now ?? new Date();
 			if (writtenToday(now) >= SHELF_DAILY_CAP) break;
 			const k = knownWords(loadLexicon());
+			// The chapter's episode is written once, read or not (read ones
+			// are listed too), before the shelf's generic top-up.
+			if (!storyStore.list().some((s) => s.chapter === k.chapter)) {
+				await generateStory({ ...opts, wanted: false });
+				written++;
+				continue;
+			}
 			const need = shelfNeeds(k.level, unreadStories(), recentReads().genres)[0];
 			if (!need) break;
 			await generateStory({ ...opts, level: need.level, genre: need.genre, wanted: false });
@@ -691,11 +708,13 @@ export function library(): LibraryEntry[] {
 	});
 }
 
-/** The picker's choice among the unread stories, with its reason. */
+/** The picker's choice among the unread stories, with its reason. The
+ *  current chapter's unread episodes come before the fit scoring (the
+ *  arc's story step). */
 export function pickNext(lexicon: Lexicon | null = loadLexicon()): { story: StoryRecord; reason: PickReason } | null {
 	const k = knownWords(lexicon);
 	const recent = recentReads();
-	return pickStory(unreadStories(), { level: k.level, known: k.known, recentGenres: recent.genres, recentTopics: recent.topics });
+	return pickStory(unreadStories(), { level: k.level, known: k.known, recentGenres: recent.genres, recentTopics: recent.topics, chapter: k.chapter });
 }
 
 export function readingState(tz?: number, now = new Date()): ReadingState {
@@ -716,13 +735,19 @@ export function readingState(tz?: number, now = new Date()): ReadingState {
 	};
 }
 
-/** The story to read: the shelf's best fit, else a new one written now
- *  (the learner's level; a Robo episode when none waits, else the genre
- *  the shelf lacks most). */
+/** The story to read: an unread episode of the current chapter first (the
+ *  arc's story step), else the shelf's best fit, else a new one written
+ *  now — the chapter's episode when it has none yet, else a Robo episode
+ *  or the genre the shelf lacks most. */
 export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
 	const pick = pickNext();
 	if (pick) return pick.story;
 	const k = knownWords(loadLexicon());
+	if (!library().some((s) => s.chapter === k.chapter)) {
+		const chapterStory = await generateStory({ ...opts, wanted: true });
+		if (!opts.engine) kickShelf();
+		return chapterStory;
+	}
 	const need = shelfNeeds(k.level, unreadStories(), recentReads().genres)[0];
 	const story = await generateStory({ ...opts, level: need?.level ?? k.level, genre: need?.genre ?? "robo", wanted: true });
 	if (!opts.engine) kickShelf();
