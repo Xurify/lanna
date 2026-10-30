@@ -1,0 +1,150 @@
+{
+	"language": "slovak",
+	"version": 1,
+	"pairs": [
+		{
+			"id": "kam-vs-kde",
+			"a": "kam",
+			"b": "kde",
+			"rule": "kam asks where TO (a destination: Kam ideš?); kde asks where AT (a place: Kde bývaš?).",
+			"bridge": "Estonian splits them the same way: kuhu is where to (Kam ideš? ≈ Kuhu sa lähed?), kus is where at (Kde bývaš? ≈ Kus sa elad?).",
+			"chapter": "town"
+		},
+		{
+			"id": "svoj-vs-moj",
+			"a": "svoj",
+			"b": "môj",
+			"rule": "môj is plain 'my'; svoj points back to the subject's own — each person has their own svoj.",
+			"bridge": "Like Estonian oma vs minu: oma always points back to the subject (tal on oma auto), minu is plain possession (minu auto ≈ môj auto).",
+			"chapter": "family"
+		},
+		{
+			"id": "tento-vs-ten",
+			"a": "tento",
+			"b": "ten",
+			"rule": "tento is 'this', near the speaker; ten is 'that', or just plain 'the'.",
+			"bridge": "Estonian uses see for both: tento presses 'this one here' (see siin), ten is the plain one (see seal).",
+			"chapter": "family"
+		},
+		{
+			"id": "stavavat-vs-vstat",
+			"a": "vstávať",
+			"b": "vstať",
+			"rule": "vstávať is the habit or the process in progress; vstať is one getting-up, complete.",
+			"bridge": "Estonian tõusma covers both; Slovak marks the finished act on the verb: vstávam o siedmej (every day), vstal som (once, done).",
+			"chapter": "everyday"
+		},
+		{
+			"id": "pripravovat-vs-pripravit",
+			"a": "pripravovať",
+			"b": "pripraviť",
+			"rule": "pripravovať is preparing as a process; pripraviť is it ready — one finished act.",
+			"bridge": "Estonian valmistama covers both; the Slovak prefix closes the act: pripravujem večeru (at it), pripravil som večeru (done).",
+			"chapter": "everyday"
+		},
+		{
+			"id": "pomahat-vs-pomoc",
+			"a": "pomáhať",
+			"b": "pomôcť",
+			"rule": "pomáhať is helping as an ongoing process; pomôcť is one act of help.",
+			"bridge": "Estonian aitama for both; Slovak has two verbs: pomáham (I am helping), pomôžem (I will give a hand, once).",
+			"chapter": "health"
+		},
+		{
+			"id": "brat-vs-vziat",
+			"a": "brať",
+			"b": "vziať",
+			"rule": "brať is taking as a process or habit; vziať is one act of taking.",
+			"bridge": "Estonian võtma covers both; vziať closes the act: beriem si mlieko každý deň, vzal som si ho dnes.",
+			"chapter": "shopping"
+		},
+		{
+			"id": "kupovat-vs-kupit",
+			"a": "kupovať",
+			"b": "kúpiť",
+			"rule": "kupovať is buying as a process or habit; kúpiť is one purchase, complete.",
+			"bridge": "Estonian ostma for both; kúpiť is the purchase done: kupujem väčšinou v Lidle, kúpil som si bicykel.",
+			"chapter": "shopping"
+		},
+		{
+			"id": "predavat-vs-predat",
+			"a": "predávať",
+			"b": "predať",
+			"rule": "predávať is selling as a trade or habit; predať is one sale, complete.",
+			"bridge": "Estonian müüma for both; predať is the one sale: predáva autá (his trade), predal auto (done).",
+			"chapter": "shopping"
+		},
+		{
+			"id": "pisat-vs-napisat",
+			"a": "písať",
+			"b": "napísať",
+			"rule": "písať is writing in progress; napísať is it finished — a letter, a message.",
+			"bridge": "Like Estonian kirjutan (raamatut) vs kirjutan üles: the prefix na- does what üles does — it closes the act.",
+			"chapter": "plans"
+		},
+		{
+			"id": "citat-vs-precitat",
+			"a": "čítať",
+			"b": "prečítať",
+			"rule": "čítať is reading, no end claimed; prečítať is read through to the end.",
+			"bridge": "Like Estonian loen raamatut vs loen raamatu läbi: pre- is the läbi — the book finished.",
+			"chapter": "plans"
+		},
+		{
+			"id": "ist-vs-chodit",
+			"a": "ísť",
+			"b": "chodiť",
+			"rule": "ísť is one trip, now or planned; chodiť is repeated, a habit.",
+			"bridge": "Estonian uses one verb: lähden kooli (one trip) ≈ idem do školy, käin koolis (the habit) ≈ chodím do školy.",
+			"chapter": "moving"
+		},
+		{
+			"id": "robit-vs-urobit",
+			"a": "robiť",
+			"b": "urobiť",
+			"rule": "robiť is the doing itself; urobiť is it done, once — the prefix makes it perfective.",
+			"bridge": "Like the Estonian total object (lugesin raamatu läbi): what läbi does to the Estonian sentence, u- does to the Slovak verb.",
+			"chapter": "moving"
+		},
+		{
+			"id": "davat-vs-dat",
+			"a": "dávať",
+			"b": "dať",
+			"rule": "dávať is giving as a process or habit; dať is one act of giving.",
+			"bridge": "Estonian andma for both; dať is the one giving: dávam mu každý deň, dal som mu raz.",
+			"chapter": "moving"
+		},
+		{
+			"id": "vediet-vs-poznat",
+			"a": "vedieť",
+			"b": "poznať",
+			"rule": "vedieť is knowing a fact or how to do something; poznať is being familiar with a person or place.",
+			"bridge": "Like Estonian teadma vs tundma: viem plávať ≈ oskan ujuda (know-how), poznám Bratislavu ≈ tunnen Bratislavat.",
+			"chapter": "people"
+		},
+		{
+			"id": "vidiet-vs-uvidiet",
+			"a": "vidieť",
+			"b": "uvidieť",
+			"rule": "vidieť is seeing, a state; uvidieť is catching sight of it, one moment.",
+			"bridge": "Estonian näha for both; u- marks the moment it happened: uvidel som ho včera ≈ nägin teda eile.",
+			"chapter": "stories"
+		},
+		{
+			"id": "hovorit-vs-povedat",
+			"a": "hovoriť",
+			"b": "povedať",
+			"rule": "hovoriť is talking, speaking (ongoing or habitual); povedať is saying one thing, once.",
+			"bridge": "Like Estonian rääkima vs ütlema: hovorím po slovensky ≈ räägin slovakki, povedal som pravdu ≈ ütlesin tõe.",
+			"chapter": "stories"
+		},
+		{
+			"id": "aky-vs-ktory",
+			"a": "aký",
+			"b": "ktorý",
+			"rule": "aký asks what something is like (a quality); ktorý picks which one of a set.",
+			"bridge": "Estonian milline covers both: Aký je? asks what it is like, Ktorý? picks one of a set (kumb?).",
+			"chapter": "opinions"
+		}
+	]
+}

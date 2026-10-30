@@ -10,6 +10,7 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import {
 	buildBlitz,
 	buildLesson,
+	buildPairsLesson,
 	CONTRAST,
 	lessonScore,
 	streakOf,
@@ -93,11 +94,14 @@ function entries() {
  * title — interleaving, which is what makes the choice stick.
  */
 export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
+	const info = UNITS.find((u) => u.id === unit)!;
+	// Dvojičky build their own reps: a choice between the two twins, from
+	// pairs.json, not the cloze classifier.
+	if (info.kind === "pairs") return withKnown(buildPairsLesson(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
 	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
-	const info = UNITS.find((u) => u.id === unit)!;
-	const grammar = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern).map((u) => u.id);
+	const grammar = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
 	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || grammar.indexOf(u) < grammar.indexOf(unit);
 	const contrast = (CONTRAST[unit] ?? []).filter(reached);
 	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
@@ -122,7 +126,7 @@ function withKnown<T extends LessonPlan>(plan: T): T {
 /** Blitz runs over the units you have started (at least the first three). */
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
-	const started = UNITS.filter((u) => u.kind !== "words" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
+	const started = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
 	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
 	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }

@@ -39,19 +39,20 @@ export interface ChapterArcStep {
 }
 
 /** A chapter's seven steps. Words: its word units. Forms: its first grammar
- *  drill. Scene: its goal unit, whose scene it opens. Story, pairs, sound and
- *  exam have no unit yet. Undefined for an unknown chapter. */
+ *  drill. Pairs: its Dvojičky units. Scene: its goal unit, whose scene it
+ *  opens. Story, sound and exam have no unit yet. Undefined for an unknown
+ *  chapter. */
 export function chapterArc(chapterId: string): ChapterArcStep[] | undefined {
 	const chapter = CHAPTERS.find((c) => c.id === chapterId);
 	if (!chapter) return undefined;
 	const units = chapter.units.map((id) => curriculumUnit(id)!);
-	const form = units.find((u) => u.kind === "drill" && !u.id.startsWith("lx-"));
+	const form = units.find((u) => u.kind === "drill" && !u.id.startsWith("lx-") && !u.id.startsWith("pairs-"));
 	const goal = units.find((u) => u.kind === "goal");
 	const provided: Record<ArcStepId, string[]> = {
 		story: [],
 		words: units.filter((u) => u.kind === "words" || u.id.startsWith("lx-")).map((u) => u.id),
 		forms: form ? [form.id] : [],
-		pairs: [],
+		pairs: units.filter((u) => u.id.startsWith("pairs-")).map((u) => u.id),
 		scene: goal?.scene ? [goal.id] : [],
 		sound: [],
 		exam: [],
