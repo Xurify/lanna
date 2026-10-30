@@ -11,7 +11,19 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { TrajectoryChart, trajectoryHeadline } from "@/components/trajectory-chart";
-import { MAX_MINUTES, measuredPace, MIN_WORD_SNAPSHOTS, trajectory, TRAJECTORY_METRICS, type Cefr, type TrajectoryInput, type TrajectoryMetric } from "@/src/core";
+import { MAX_MINUTES, measuredPace, MIN_WORD_SNAPSHOTS, trajectory, TRAJECTORY_METRICS, type Cefr, type Trajectory, type TrajectoryInput, type TrajectoryMetric } from "@/src/core";
+
+/** What the line assumes about the payoff of an hour, said plainly. */
+function rateLine(t: Trajectory): string {
+	const per = t.perPracticeHour;
+	if (t.metric === "hours") {
+		return t.basis === "measured" ? `Lately an hour of practice has earned about ${per.toFixed(1)} map hours.` : "Until there is a couple of weeks of history, an hour of practice counts as one map hour.";
+	}
+	if (t.metric === "units") {
+		return t.basis === "measured" ? `Lately ${per.toFixed(2)} units for every hour of practice.` : "Estimated from lessons per hour until there is a couple of weeks of history.";
+	}
+	return t.basis === "measured" ? `Lately about ${Math.round(per)} new words for every hour of practice.` : "Not enough practice yet to say how fast words arrive.";
+}
 
 export function TrajectorySection({ input, target }: { input: TrajectoryInput; target: Cefr }) {
 	const [metric, setMetric] = useState<TrajectoryMetric>("hours");
@@ -56,6 +68,12 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 				{pace.measured ? "At your pace of the last two weeks" : "At your planned pace, until a week of study is on record"}: {minutes} min on {pace.daysPerWeek} days a week.
 			</p>
 
+			{main.ready && (
+				<p className="font-prose text-sm text-muted-foreground" data-testid="trajectory-rate">
+					{rateLine(main)}
+				</p>
+			)}
+
 			{main.ready ? (
 				<div className="mt-3">
 					<TrajectoryChart t={main} now={now} scenarios={scenarios} targetLevel={target} />
@@ -78,7 +96,7 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 					</button>
 				)}
 			</div>
-			<p className="mt-2 font-prose text-xs text-muted-foreground">An estimate: the line carries your recent pace forward and the map credits real progress as units are done. The slider only shows what a different pace would do; it doesn&apos;t change your plan.</p>
+			<p className="mt-2 font-prose text-xs text-muted-foreground">An estimate: the line carries your recent pace forward, and the solid part is what your days recorded (earlier days are pieced together from your practice). The slider only shows what a different pace would do; it doesn&apos;t change your plan.</p>
 		</section>
 	);
 }

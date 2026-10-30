@@ -479,7 +479,14 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const stageIds = new Set(STAGES.filter((s) => CEFR_ORDER.indexOf(s.level) <= CEFR_ORDER.indexOf(goal.level)).map((s) => s.id));
 	const toTarget = curriculum.chapters.filter((c) => stageIds.has(c.stage));
 	const wordsNow = Object.values(reviewStore.readCards()).filter((c) => !c.suspended).length;
-	if (todayRecord.words !== wordsNow) {
+	// The day's snapshots (src/core/trajectory.ts). Every recorder that moves
+	// them (a lesson, a tutor session, a placement) returns this summary, so
+	// the day's last value is written as it changes.
+	const hoursNow = Math.round(hoursDone(curriculum) * 100) / 100;
+	const unitsNow = curriculum.chapters.reduce((n, c) => n + c.doneCount, 0);
+	if (todayRecord.hoursDone !== hoursNow || todayRecord.unitsDone !== unitsNow || todayRecord.words !== wordsNow) {
+		todayRecord.hoursDone = hoursNow;
+		todayRecord.unitsDone = unitsNow;
 		todayRecord.words = wordsNow;
 		progressStore.write(p);
 	}
@@ -487,7 +494,15 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	for (let i = TRAJECTORY_DAYS - 1; i >= 0; i--) {
 		const day = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
 		const r = p.days[day];
-		trajectoryDays.push({ day, minutes: r?.minutes ?? 0, lessons: Object.values(r?.units ?? {}).reduce((a, b) => a + b, 0), words: r?.words ?? null });
+		trajectoryDays.push({
+			day,
+			minutes: r?.minutes ?? 0,
+			lessons: Object.values(r?.units ?? {}).reduce((a, b) => a + b, 0),
+			hours: r?.hoursDone ?? null,
+			units: r?.unitsDone ?? null,
+			words: r?.words ?? null,
+			...((r?.minutesBy?.placement ?? 0) > 0 ? { placed: true } : {}),
+		});
 	}
 	let loggedRecent = 0;
 	for (let i = 0; i < RECENT_DAYS; i++) loggedRecent += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
@@ -509,9 +524,9 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		balance,
 		trajectory: {
 			days: trajectoryDays,
-			hoursDone: hoursDone(curriculum),
+			hoursDone: hoursNow,
 			hoursTarget: GUIDED_HOURS[goal.level],
-			unitsDone: toTarget.reduce((n, c) => n + c.doneCount, 0),
+			unitsDone: unitsNow,
 			unitsTotal: toTarget.reduce((n, c) => n + c.total, 0),
 			wordsNow,
 			goalMinutes: goal.minutesPerDay,
