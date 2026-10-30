@@ -1,12 +1,12 @@
 # Chapter arc: implementation plan
 
-Status: **proposed, waiting for the owner's decisions below.** Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
+Status: **proposed.** Decided so far: the exam is a required gate, introduced in steps, and skip-ahead comes after the gate. Still open: chapter structure, which blocks phase 1. Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
 
 Date: 2026-10-30. Evidence: [../research/slovake-eu-benchmark.md](../research/slovake-eu-benchmark.md).
 
 ## What we're building
 
-Every chapter gets one arc of seven steps, built from what the app already does well: local drills, Read, Speak and Review. Each step adds one thing the chapter needs, such as a story, a contrast pair, a sound or an exam. The arc becomes the daily plan's source for a chapter, so "today" reads as "day 3 of *At the doctor's*" rather than a list of grammar IDs.
+The **arc** is the fixed run of seven steps that every chapter goes through, in the same order. Each step adds one thing the chapter needs, such as a story, a contrast pair, a sound or an exam. Every chapter gets the arc, and the daily plan works through it, so "today" reads as "day 3 of *At the doctor's*" rather than a list of grammar IDs. The arc uses what the app already does well: local drills, Read, Speak and Review.
 
 ## The arc
 
@@ -20,17 +20,18 @@ Every chapter gets one arc of seven steps, built from what the app already does 
 | 6 | Zvuk (sound) | fluency | minimal pairs and shadowing (phase 7) | none, TTS cached |
 | 7 | Skúška (exam) | all | mixed items from the chapter (phase 6) | one judge for free writing |
 
-## Decisions the owner must make before phase 1
+## Decisions
 
-1. **Chapters.** Keep the 19 chapters and give each the arc, or re-cut them to fit a fixed arc? Re-cutting changes `src/core/curriculum.ts` and the can-do goals in `src/core/onboarding.ts`.
-2. **Exam gating.** Does a passed exam open the next chapter, or only stamp the passport? Today a chapter opens when the one before has at most two units left (`CHAPTER_SLACK` in `src/core/curriculum.ts`).
-3. **Story bible.** Who writes the cast and plot? I can draft it. Nothing is generated until you approve it.
-4. **Passport wording.** Paraphrase the CEFR "can do" descriptors with attribution, or write our own "I can" lines?
-5. **Calendar.** Which dates and traditions go in? Christmas, Easter and other holidays are cultural content, so this is your call.
+1. **Chapters.** Keep the 19 chapters and give each the arc, or re-cut them to fit a fixed arc? Re-cutting changes `src/core/curriculum.ts` and the can-do goals in `src/core/onboarding.ts`. **Open. Blocks phase 1.**
+2. **Exam gating.** **Decided 2026-10-30: the exam is a required gate. Passing it opens the next chapter.** It ships in steps (6a record-only, then 6b the gate), because a gate built on an unchecked exam would block learners. Open details for 6b: the pass mark and the retry rule, and whether today's "at most two units left" count still applies alongside the gate. Today a chapter opens when the one before has at most two units left (`CHAPTER_SLACK` in `src/core/curriculum.ts`). **Blocks phase 6, not phase 1.**
+3. **Story bible.** Who writes the cast and plot? I can draft it. Nothing is generated until you approve it. **Open. Blocks phase 2.**
+4. **Passport wording.** Paraphrase the CEFR "can do" descriptors with attribution, or write our own "I can" lines? **Open. Blocks phase 6a.**
+5. **Calendar.** Which dates and traditions go in? Christmas, Easter and other holidays are cultural content, so this is your call. **Open. Blocks phase 8.**
+6. **Skip-ahead.** **Decided 2026-10-30: later, after the gate.** Passing a chapter's exam can open it early, without its lessons. Its rules come with phase 6c.
 
 ## Phases
 
-Each phase is one PR on its own branch, named after the work and assigned to the owner (W2). Each phase adds its decision to `docs/DECISIONS.md` in the same PR (W4).
+Each phase is one PR on its own branch, named after the work and assigned to the owner (W2). Each phase adds its decision to `docs/DECISIONS.md` in the same PR (W4). Phase 6 is three PRs.
 
 ### Phase 0: done (PR #37)
 
@@ -72,13 +73,27 @@ Settings links open the dialog. Talk and Story run on one screen each (E8).
 - Tests in `tests/speak.test.ts`: script grading and branch order.
 - Acceptance: the script runs with no model call. The live scene starts after it.
 
-### Phase 6: Skúška and the passport
+### Phase 6: Skúška and the passport, in three steps
 
-- `src/core/exam.ts`: the chapter's exam is built from the chapter's own items: words, a form, one pair, one scene line and one listening item. The pass rule follows decision 2.
+The exam is a required gate, but it can't block anyone until we trust it. So it ships in steps, and each step waits for the one before.
+
+**6a. Record only (first).** The exam is built from the chapter's own items: words, a form, one pair, one scene line and one listening item. Its result is recorded and fills in the passport. Nothing is blocked, so chapters open exactly as they do today.
+
+- `src/core/exam.ts`: composition and scoring.
 - `src/store/progress.ts`: an `exams` record per chapter, which is the evidence the passport uses.
-- `app/passport/page.tsx`: "I can" lines, each linked to the exam items that show it.
-- Tests in `tests/exam.test.ts`: composition from the chapter, the pass rule, and the record.
-- Acceptance: a failed exam records its misses and leaves the chapter open. No exam result appears without its evidence (P8).
+- `app/passport/page.tsx`: "I can" lines, each linked to the exam items that show it (decision 4).
+- Tests in `tests/exam.test.ts`: composition from the chapter, the scoring, and the record.
+- Acceptance: a failed exam records its misses. No exam result appears without its evidence (P8).
+
+**6b. The gate (after real results).** Passing the chapter's exam is required before the next chapter opens. It starts only after you have reviewed the 6a results and found them accurate.
+
+- Needs before it's built: the pass mark, what happens after a failed attempt, and whether the "two units left" count still applies alongside the gate (decision 2). That count would otherwise let a learner skip the exam.
+- Acceptance: a learner who fails cannot open the next chapter, and the screen says what to review.
+
+**6c. Skip-ahead (later, after 6b).** Passing a chapter's exam opens it without its lessons, like Duolingo's tests out of units. Decided 2026-10-30: this comes after the gate, not with it.
+
+- Needs before it's built: which chapters can be opened early (the next one only, or any later one), and how skipped lessons are labelled. The app already counts skipped units as done in its unit totals (`curriculumState`), so the labels keep the numbers honest (P8).
+- Acceptance: skipped lessons show as "tested out", not as studied.
 
 ### Phase 7: Zvuk (sound of the week)
 
@@ -111,6 +126,7 @@ Settings links open the dialog. Talk and Story run on one screen each (E8).
 ## Risks
 
 - **Scope.** Eight phases is a lot. Phases 1 and 2 are the bet. Stop after phase 2 and check with the learner before going on.
+- **Gate timing.** A gate on an exam we haven't checked would block learners. That's why 6b waits for 6a's results.
 - **Model cost.** Everything generated is cached under `data/` (E1), so generation runs once per item.
 - **Slovak accuracy.** Pairs and forms come from verified lexicon forms (P8). Generated scene scripts and stories are reviewed before use.
 - **Licence.** The CEFR descriptors belong to the Council of Europe. Quote them only with attribution; otherwise paraphrase (decision 4).
@@ -119,5 +135,5 @@ Settings links open the dialog. Talk and Story run on one screen each (E8).
 ## Done when
 
 - Every chapter shows its seven steps, with counters.
-- The exam stamps a chapter, and the passport lists the evidence for each line.
+- The exam is recorded (6a), gates the next chapter once trusted (6b), and the passport lists the evidence for each line.
 - The owner has reviewed the first two chapters end to end: story, pairs, scene and exam.
