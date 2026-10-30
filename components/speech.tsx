@@ -186,6 +186,14 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	});
 }
 
+/** Fetch a sentence's audio ahead of its turn: the same request speak() makes, so the browser's cache serves it at once. */
+export function prefetchSpeech(text: string, code: string): void {
+	if (!soundOn()) return;
+	void fetch(`/api/tts?${new URLSearchParams({ lang: code, text }).toString()}`)
+		.then((r) => r.blob())
+		.catch(() => {});
+}
+
 /** A speaker button for a phrase. */
 export function PlayButton({ text, className, label }: { text: string; className?: string; label?: string }) {
 	const [busy, setBusy] = useState(false);

@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
-import { setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { prefetchSpeech, setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
@@ -296,6 +296,11 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const item = plan?.items[index] ?? null;
 	const total = plan?.items.length ?? 0;
+	// The next sentence's audio is fetched while this one is on screen, so it starts at once.
+	const nextSentence = plan?.items[index + 1]?.sentence;
+	useEffect(() => {
+		if (nextSentence && lang) prefetchSpeech(nextSentence, lang.code);
+	}, [nextSentence, lang]);
 	const done = !!score;
 
 	const finish = useCallback(
