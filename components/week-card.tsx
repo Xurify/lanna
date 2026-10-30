@@ -67,8 +67,14 @@ export function WeekCard({
 				<StrandBalance balance={balance} />
 			</div>
 
-			<Link href="/plan" className="group -mx-2 mt-4 flex items-center gap-3 rounded-xl border-t px-2 pt-4 pb-1 hover:text-foreground" data-testid="goal-line">
-				<TargetIcon className="size-5 shrink-0 text-flame" aria-hidden="true" />
+			<Link
+				href="/plan"
+				className="group mt-4 flex items-center gap-3 rounded-2xl border border-flame/30 bg-flame/10 p-3 transition-colors hover:border-flame/50 hover:bg-flame/15"
+				data-testid="goal-line"
+			>
+				<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-flame/20">
+					<TargetIcon className="size-5 text-flame" aria-hidden="true" />
+				</span>
 				<span className="min-w-0 flex-1">
 					<span className="block text-sm font-bold text-foreground" title={LEVEL_CAN_DO[level]}>
 						Goal: {level}
@@ -78,7 +84,7 @@ export function WeekCard({
 						Your pace, hours and level check
 					</span>
 				</span>
-				<ChevronRightIcon className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" aria-hidden="true" />
+				<ChevronRightIcon className="size-4 shrink-0 text-flame transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
 			</Link>
 		</section>
 	);
