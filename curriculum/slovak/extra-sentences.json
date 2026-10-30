@@ -30,7 +30,7 @@
    "unit": "lx-greetings",
    "lemma": "ahoj",
    "sk": "Ahoj, rád ťa vidím!",
-   "en": "Hi, I am glad to see you!",
+   "en": "Hi, good to see you!",
    "cloze": {
     "answer": "Ahoj",
     "at": 0
@@ -41,7 +41,7 @@
    "unit": "lx-greetings",
    "lemma": "dovidenia",
    "sk": "Dovidenia, uvidíme sa zajtra.",
-   "en": "Goodbye, we will see each other tomorrow.",
+   "en": "Goodbye, see you tomorrow.",
    "cloze": {
     "answer": "Dovidenia",
     "at": 0
@@ -51,19 +51,19 @@
   {
    "unit": "lx-greetings",
    "lemma": "dovidenia",
-   "sk": "Pani predavačka povedala dovidenia.",
-   "en": "The saleswoman said goodbye.",
+   "sk": "Predavačka nám povedala dovidenia.",
+   "en": "The shop assistant said goodbye to us.",
    "cloze": {
     "answer": "dovidenia",
-    "at": 25
+    "at": 24
    },
    "src": "model"
   },
   {
    "unit": "lx-greetings",
    "lemma": "dovidenia",
-   "sk": "Dovidenia, mám už autobus.",
-   "en": "Goodbye, my bus is here.",
+   "sk": "Dovidenia, idem na autobus.",
+   "en": "Goodbye, I'm off to catch my bus.",
    "cloze": {
     "answer": "Dovidenia",
     "at": 0
@@ -95,8 +95,8 @@
   {
    "unit": "lx-greetings",
    "lemma": "ďakujem",
-   "sk": "Ďakujem, to je pre mňa.",
-   "en": "Thank you, that is for me.",
+   "sk": "Ďakujem, to je veľmi milé.",
+   "en": "Thank you, that is very kind.",
    "cloze": {
     "answer": "Ďakujem",
     "at": 0
@@ -140,7 +140,7 @@
    "unit": "lx-greetings",
    "lemma": "prosím",
    "sk": "Jeden chlieb, prosím.",
-   "en": "One bread, please.",
+   "en": "One loaf of bread, please.",
    "cloze": {
     "answer": "prosím",
     "at": 14
@@ -150,8 +150,8 @@
   {
    "unit": "lx-greetings",
    "lemma": "prepáčte",
-   "sk": "Prepáčte, som tu neskoro.",
-   "en": "Sorry, I am late here.",
+   "sk": "Prepáčte, prišiel som neskoro.",
+   "en": "Sorry, I am late.",
    "cloze": {
     "answer": "Prepáčte",
     "at": 0
@@ -172,8 +172,8 @@
   {
    "unit": "lx-greetings",
    "lemma": "prepáčte",
-   "sk": "Prepáčte, nerozumiem vám dobre.",
-   "en": "Sorry, I do not understand you well.",
+   "sk": "Prepáčte, nerozumiem dobre.",
+   "en": "Sorry, I don't understand very well.",
    "cloze": {
     "answer": "Prepáčte",
     "at": 0
@@ -360,7 +360,7 @@
    "unit": "lx-drinks",
    "lemma": "voda",
    "sk": "Voda je zdravá.",
-   "en": "Water is healthy.",
+   "en": "Water is good for you.",
    "cloze": {
     "answer": "Voda",
     "at": 0
@@ -370,10 +370,10 @@
   {
    "unit": "lx-drinks",
    "lemma": "voda",
-   "sk": "Chcem pohár studenej voda.",
+   "sk": "Chcem pohár studenej vody.",
    "en": "I want a glass of cold water.",
    "cloze": {
-    "answer": "voda",
+    "answer": "vody",
     "at": 21
    },
    "src": "model"
@@ -403,11 +403,11 @@
   {
    "unit": "lx-drinks",
    "lemma": "káva",
-   "sk": "Káva je ráno horúca.",
-   "en": "The coffee is hot in the morning.",
+   "sk": "Ranná káva je horúca.",
+   "en": "The morning coffee is hot.",
    "cloze": {
-    "answer": "Káva",
-    "at": 0
+    "answer": "káva",
+    "at": 6
    },
    "src": "model"
   },
@@ -425,11 +425,11 @@
   {
    "unit": "lx-drinks",
    "lemma": "káva",
-   "sk": "Mám rád silná káva.",
+   "sk": "Silná káva mi chutí.",
    "en": "I like strong coffee.",
    "cloze": {
     "answer": "káva",
-    "at": 14
+    "at": 6
    },
    "src": "model"
   },
@@ -634,8 +634,8 @@
   {
    "unit": "lx-cafe",
    "lemma": "čašník",
-   "sk": "Čašník dnes pracuje celý deň.",
-   "en": "The waiter works all day today.",
+   "sk": "Čašník pracuje celý víkend.",
+   "en": "The waiter works the whole weekend.",
    "cloze": {
     "answer": "Čašník",
     "at": 0
@@ -656,8 +656,8 @@
   {
    "unit": "lx-cafe",
    "lemma": "účet",
-   "sk": "Účet je dnes dosť vysoký.",
-   "en": "The bill is quite high today.",
+   "sk": "Účet bol dosť vysoký.",
+   "en": "The bill was quite high.",
    "cloze": {
     "answer": "Účet",
     "at": 0
@@ -689,8 +689,19 @@
   {
    "unit": "lx-cafe",
    "lemma": "prosím",
-   "sk": "Vodu bez bublinek, prosím.",
+   "sk": "Neperlivú vodu, prosím.",
    "en": "Still water, please.",
+   "cloze": {
+    "answer": "prosím",
+    "at": 16
+   },
+   "src": "model"
+  },
+  {
+   "unit": "lx-cafe",
+   "lemma": "prosím",
+   "sk": "Môžem dostať menu, prosím?",
+   "en": "Can I have the menu, please?",
    "cloze": {
     "answer": "prosím",
     "at": 19
@@ -698,21 +709,10 @@
    "src": "model"
   },
   {
-   "unit": "lx-cafe",
-   "lemma": "prosím",
-   "sk": "Menu, prosím, a ďakujem.",
-   "en": "The menu, please, and thank you.",
-   "cloze": {
-    "answer": "prosím",
-    "at": 6
-   },
-   "src": "model"
-  },
-  {
    "unit": "lx-clothes",
    "lemma": "oblečenie",
    "sk": "Nové oblečenie je v skrini.",
-   "en": "The new clothing is in the wardrobe.",
+   "en": "The new clothes are in the wardrobe.",
    "cloze": {
     "answer": "oblečenie",
     "at": 5
@@ -723,7 +723,7 @@
    "unit": "lx-clothes",
    "lemma": "oblečenie",
    "sk": "Kupujem oblečenie pre deti.",
-   "en": "I am buying clothing for the children.",
+   "en": "I am buying clothes for the children.",
    "cloze": {
     "answer": "oblečenie",
     "at": 8
@@ -734,7 +734,7 @@
    "unit": "lx-clothes",
    "lemma": "oblečenie",
    "sk": "Zimné oblečenie je veľmi teplé.",
-   "en": "Winter clothing is very warm.",
+   "en": "Winter clothes are very warm.",
    "cloze": {
     "answer": "oblečenie",
     "at": 6
@@ -745,7 +745,7 @@
    "unit": "lx-clothes",
    "lemma": "oblečenie",
    "sk": "Moje oblečenie je ešte mokré.",
-   "en": "My clothing is still wet.",
+   "en": "My clothes are still wet.",
    "cloze": {
     "answer": "oblečenie",
     "at": 5
@@ -821,8 +821,8 @@
   {
    "unit": "lx-clothes",
    "lemma": "nohavice",
-   "sk": "Nohavice sú pre mňa dlhé.",
-   "en": "The trousers are long for me.",
+   "sk": "Nohavice sú mi príliš dlhé.",
+   "en": "The trousers are too long for me.",
    "cloze": {
     "answer": "Nohavice",
     "at": 0
@@ -942,8 +942,8 @@
   {
    "unit": "lx-time",
    "lemma": "mesiac",
-   "sk": "Tento mesiac cestujem do Košíc.",
-   "en": "This month I am traveling to Košice.",
+   "sk": "Tento mesiac mám veľa práce.",
+   "en": "I have a lot of work this month.",
    "cloze": {
     "answer": "mesiac",
     "at": 6
@@ -953,11 +953,11 @@
   {
    "unit": "lx-time",
    "lemma": "mesiac",
-   "sk": "Jeden mesiac je krátky čas.",
-   "en": "One month is a short time.",
+   "sk": "Mesiac ubehne rýchlo.",
+   "en": "A month goes by quickly.",
    "cloze": {
-    "answer": "mesiac",
-    "at": 6
+    "answer": "Mesiac",
+    "at": 0
    },
    "src": "model"
   },
@@ -986,11 +986,11 @@
   {
    "unit": "lx-feelings",
    "lemma": "šťastný",
-   "sk": "Deti sú šťastný národ zábavy.",
-   "en": "Children are a happy nation of fun.",
+   "sk": "Chlapec je šťastný, keď hrá futbal.",
+   "en": "The boy is happy when he plays football.",
    "cloze": {
     "answer": "šťastný",
-    "at": 8
+    "at": 11
    },
    "src": "model"
   },
@@ -1064,7 +1064,7 @@
    "unit": "lx-routine",
    "lemma": "vstávať",
    "sk": "Ráno nerád vstávam, chcem vstávať neskoro.",
-   "en": "I don't like getting up in the morning, I want to get up late.",
+   "en": "I don't like getting up in the morning. I want to sleep in.",
    "cloze": {
     "answer": "vstávam",
     "at": 11
@@ -1085,8 +1085,8 @@
   {
    "unit": "lx-routine",
    "lemma": "vstávať",
-   "sk": "Chcem vstávať o siedmej hodine.",
-   "en": "I want to get up at seven o'clock.",
+   "sk": "Chcem vstávať o siedmej ráno.",
+   "en": "I want to get up at seven in the morning.",
    "cloze": {
     "answer": "vstávať",
     "at": 6
@@ -1108,7 +1108,7 @@
    "unit": "lx-routine",
    "lemma": "spať",
    "sk": "Večer idem spať o desiatej.",
-   "en": "In the evening I go to sleep at ten.",
+   "en": "In the evening I go to bed at ten.",
    "cloze": {
     "answer": "spať",
     "at": 11
@@ -1118,11 +1118,11 @@
   {
    "unit": "lx-routine",
    "lemma": "spať",
-   "sk": "Mačka rada môže spať celý deň.",
-   "en": "The cat likes to be able to sleep all day.",
+   "sk": "Mačka chce spať celý deň.",
+   "en": "The cat wants to sleep all day.",
    "cloze": {
     "answer": "spať",
-    "at": 16
+    "at": 11
    },
    "src": "model"
   },
@@ -1152,7 +1152,7 @@
    "unit": "lx-routine",
    "lemma": "umývať",
    "sk": "Ráno si idem umývať zuby.",
-   "en": "In the morning I go to brush my teeth.",
+   "en": "In the morning I brush my teeth.",
    "cloze": {
     "answer": "umývať",
     "at": 13
@@ -1228,10 +1228,10 @@
   {
    "unit": "lx-core-verbs",
    "lemma": "byť",
-   "sk": "Je fajn byť s rodinou.",
+   "sk": "Byť s rodinou je fajn.",
    "en": "It is nice to be with family.",
    "cloze": {
-    "answer": "Je",
+    "answer": "Byť",
     "at": 0
    },
    "src": "model"
@@ -1294,32 +1294,32 @@
   {
    "unit": "lx-core-verbs",
    "lemma": "chcieť",
-   "sk": "Dnes nechcem chcieť veľa.",
-   "en": "Today I don't want to want much.",
+   "sk": "Čo chceš na večeru?",
+   "en": "What do you want for dinner?",
    "cloze": {
-    "answer": "chcieť",
-    "at": 13
+    "answer": "chceš",
+    "at": 3
    },
    "src": "model"
   },
   {
    "unit": "lx-core-verbs",
    "lemma": "chcieť",
-   "sk": "Dieťa vie chcieť len sladkosti.",
-   "en": "The child can only want sweets.",
+   "sk": "Dieťa chce len sladkosti.",
+   "en": "The child only wants sweets.",
    "cloze": {
-    "answer": "chcieť",
-    "at": 10
+    "answer": "chce",
+    "at": 6
    },
    "src": "model"
   },
   {
    "unit": "lx-core-verbs",
    "lemma": "chcieť",
-   "sk": "Neviem, čo chcieť k narodeninám.",
-   "en": "I don't know what to want for my birthday.",
+   "sk": "Neviem, čo chcem k narodeninám.",
+   "en": "I don't know what I want for my birthday.",
    "cloze": {
-    "answer": "chcieť",
+    "answer": "chcem",
     "at": 11
    },
    "src": "model"
@@ -1503,11 +1503,11 @@
   {
    "unit": "lx-tech",
    "lemma": "počítač",
-   "sk": "Potrebujem nový počítač do školy.",
+   "sk": "Na školu potrebujem nový počítač.",
    "en": "I need a new computer for school.",
    "cloze": {
     "answer": "počítač",
-    "at": 16
+    "at": 25
    },
    "src": "model"
   },
@@ -1613,8 +1613,8 @@
   {
    "unit": "lx-tech",
    "lemma": "počítač",
-   "sk": "Počítač je na stole.",
-   "en": "The computer is on the table.",
+   "sk": "Počítač sa dnes pokazil.",
+   "en": "The computer broke today.",
    "cloze": {
     "answer": "Počítač",
     "at": 0
@@ -1767,8 +1767,8 @@
   {
    "unit": "lx-admin",
    "lemma": "meno",
-   "sk": "Moje meno je ťažké.",
-   "en": "My name is difficult.",
+   "sk": "Moje meno je ťažké vysloviť.",
+   "en": "My name is hard to pronounce.",
    "cloze": {
     "answer": "meno",
     "at": 5
@@ -1789,11 +1789,11 @@
   {
    "unit": "lx-languages",
    "lemma": "slovensko",
-   "sk": "Bývam na Slovensko.",
-   "en": "I live in Slovakia.",
+   "sk": "Slovensko je moja krajina.",
+   "en": "Slovakia is my country.",
    "cloze": {
     "answer": "Slovensko",
-    "at": 9
+    "at": 0
    },
    "src": "model"
   },
@@ -1877,10 +1877,10 @@
   {
    "unit": "lx-languages",
    "lemma": "slovenčina",
-   "sk": "Učím sa slovenčina každý deň.",
-   "en": "I learn Slovak every day.",
+   "sk": "Učím sa slovenčinu každý deň.",
+   "en": "I study Slovak every day.",
    "cloze": {
-    "answer": "slovenčina",
+    "answer": "slovenčinu",
     "at": 8
    },
    "src": "model"
@@ -1899,10 +1899,10 @@
   {
    "unit": "lx-languages",
    "lemma": "slovenčina",
-   "sk": "Rozumieš slovenčina dobre?",
+   "sk": "Rozumieš slovenčine dobre?",
    "en": "Do you understand Slovak well?",
    "cloze": {
-    "answer": "slovenčina",
+    "answer": "slovenčine",
     "at": 9
    },
    "src": "model"
@@ -1932,10 +1932,10 @@
   {
    "unit": "lx-languages",
    "lemma": "angličtina",
-   "sk": "V škole máme angličtina.",
+   "sk": "V škole máme angličtinu.",
    "en": "We have English at school.",
    "cloze": {
-    "answer": "angličtina",
+    "answer": "angličtinu",
     "at": 13
    },
    "src": "model"
