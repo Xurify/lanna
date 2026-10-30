@@ -18,7 +18,7 @@ directories:
 #         Glass); actool (Xcode 26+) compiles Assets.car (CFBundleIconName,
 #         macOS 26+ renders the true layered icon) + an actool fallback icns
 #         capped at 256px, which scripts/after-pack.cjs swaps for the
-#         hand-packed full-res build/icon.icns (pre-Tahoe keeps 16→1024).
+#         generated full-res build/icon.icns (pre-Tahoe keeps 16→1024).
 #         Requires actool ≥ 26: desktop:dist injects DEVELOPER_DIR locally;
 #         the release workflow's mac job runs setup-xcode.
 #   win   build/icon.ico  — generated (16→256) from the flat design by

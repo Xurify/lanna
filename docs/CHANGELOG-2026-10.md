@@ -50,6 +50,7 @@ A narrative of the first three days, from the fork to the task-based app. Times 
   - **Review:** flat card and shared buttons (no uppercase 3D Check); a labelled "Answer by Typing / Choosing" switch and a "Sound on" toggle; hints show as labelled chips and say what they cost ("comes back sooner"); 1–4 pick an option when choosing; the letter keys sit in the card; a skeleton while the deck loads; the caught-up state gets a custom stepper for new words per day (the native number input is gone) and links to Today and a lesson; the sidebar's due badge updates after each card.
   - **Plan:** hours credited show as "2.4", not "2.4324324324324325"; the goal card puts the purposes on their own line.
   - **Type and copy:** `--text-xs` 11→12px, `--text-sm` 12.5→13px; strand advice and empty states rewritten in plain sentences; US spelling ("Practice") throughout.
+- **Logo:** the mark is two voices — a filled speech bubble answered by an outlined one, in one ink, with a transparent gap between them (the ring is an open path, not a dark outline); it replaces the spiral/orbit icon. One geometry drives `build/mark.svg`, the app icon (`build/icon-flat.svg`, with `node scripts/make-icons.mjs` now also packing the pre-Tahoe `build/icon.icns`), the Icon Composer layers, the browser favicon (`app/icon.svg`) and the sidebar mark (`components/lh-mark.tsx`). Sheet: `docs/assets/brand/logo-sheet.png`; in-app shot: `docs/assets/brand/sidebar-mark.png`.
 
 ## Pull requests
 
