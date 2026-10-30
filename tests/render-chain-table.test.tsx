@@ -277,7 +277,7 @@ describe("ChainTableBody — the floating selection bar (never shifts layout)", 
 		// riding the same confirm dialog as the canvas delete.
 		assert.ok(html.includes('data-testid="chain-danger-divider"'));
 		const del = html.match(/<button[^>]*data-testid="chain-delete"[^>]*>/)?.[0] ?? "";
-		assert.match(del, /border-destructive\/50/); // the destructive pair
+		assert.match(del, /data-variant="destructive-soft"/); // the shared quiet destructive button
 		assert.match(del, /aria-label="Delete 3 selected nodes"/);
 		assert.ok(html.includes("lucide-trash-2"), "the trash icon");
 		// the fence is before Delete in the DOM (right end of the bar)

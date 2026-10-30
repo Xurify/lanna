@@ -119,8 +119,8 @@ describe("DeleteSessionDialog — the node-dialog shape (owner flow rework 2026-
 			/>,
 		);
 		assert.match(html, /data-testid="delete-cancel"[^>]*>Cancel</);
-		const del = html.match(/data-testid="delete-confirm"[^>]*>/)?.[0] ?? "";
-		assert.match(del, /border-destructive\/50/);
+		const del = html.match(/<button[^>]*data-testid="delete-confirm"[^>]*>/)?.[0] ?? "";
+		assert.match(del, /data-variant="destructive"/);
 		assert.match(html, /data-testid="delete-confirm"[^>]*>Deleting…</); // busy label on Delete
 		// the checkbox survives a busy render (disabled, not unmounted)
 		assert.match(html, /data-testid="delete-traces-checkbox"[^>]*disabled=""/);

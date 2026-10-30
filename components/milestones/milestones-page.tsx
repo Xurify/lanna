@@ -47,6 +47,7 @@ import {
 	XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
 import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
 
@@ -568,7 +569,7 @@ function NextWords({ words, queued, onQueue }: { words: NextWord[]; queued: Set<
 				))}
 			</ul>
 			<div className="mt-3 flex flex-wrap items-center gap-3">
-				<button type="button" onClick={() => onQueue(left.slice(0, 10).map((w) => w.slug))} disabled={left.length === 0} className="inline-flex h-10 items-center gap-2 rounded-xl border-2 border-foreground/20 px-4 font-ui text-sm font-extrabold text-foreground hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50" data-testid="milestone-queue">
+				<button type="button" onClick={() => onQueue(left.slice(0, 10).map((w) => w.slug))} disabled={left.length === 0} className={cn(SECONDARY, SMALL, "disabled:cursor-not-allowed")} data-testid="milestone-queue">
 					<PlusIcon className="size-4" />
 					{left.length === 0 ? "All in the deck" : `Put the next ${Math.min(10, left.length)} in Review`}
 				</button>

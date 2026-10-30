@@ -12,6 +12,14 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+        // A quiet destructive action: tinted fill, no border, so it reads as
+        // a button without shouting. The solid `destructive` is for the
+        // confirm step of a dialog.
+        "destructive-soft":
+          "bg-destructive/15 text-destructive hover:bg-destructive/25 focus-visible:ring-destructive/30",
+        // The gold call to action ("Set up your models"): tinted fill, no border.
+        "accent-soft":
+          "bg-gold/15 text-gold hover:bg-gold/25 focus-visible:ring-gold/30",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

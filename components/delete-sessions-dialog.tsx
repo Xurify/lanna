@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
+import { Button } from "@/components/ui/button";
 import { TRACES_COPY } from "@/components/delete-session-dialog";
 import type { ChatDeleteMode, ChatListItem } from "@/src/core";
 
@@ -135,24 +136,12 @@ export function DeleteSessionsDialog({
 					</div>
 				)}
 				<div className="mt-4 flex justify-end gap-2">
-					<button
-						type="button"
-						data-testid="delete-sessions-cancel"
-						onClick={onClose}
-						disabled={busy}
-						className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-					>
+					<Button type="button" variant="ghost" size="sm" data-testid="delete-sessions-cancel" onClick={onClose} disabled={busy}>
 						Cancel
-					</button>
-					<button
-						type="button"
-						data-testid="delete-sessions-confirm"
-						onClick={() => void run()}
-						disabled={busy || chats.length === 0}
-						className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40"
-					>
-						{busy ? "Deleting…" : `Delete ${chats.length}`}
-					</button>
+					</Button>
+					<Button type="button" variant="destructive" size="sm" data-testid="delete-sessions-confirm" onClick={() => void run()} disabled={busy || chats.length === 0}>
+						{busy ? "Deleting…" : `Delete ${chats.length} ${chats.length === 1 ? "chat" : "chats"}`}
+					</Button>
 				</div>
 			</div>
 		</div>,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
+import { Button } from "@/components/ui/button";
 import type { ChatDeleteMode, ChatListItem } from "@/src/core";
 
 /** The graph-traces checkbox copy (owner, 2026-09-24 flow rework — was
@@ -218,24 +219,12 @@ export function DeleteSessionBody({
 			    red Delete (border + text, fill on hover — the app's
 			    established destructive pair). */}
 			<div className="mt-4 flex justify-end gap-2">
-				<button
-					type="button"
-					data-testid="delete-cancel"
-					onClick={onClose}
-					disabled={busy}
-					className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-				>
+				<Button type="button" variant="ghost" size="sm" data-testid="delete-cancel" onClick={onClose} disabled={busy}>
 					Cancel
-				</button>
-				<button
-					type="button"
-					data-testid="delete-confirm"
-					onClick={onRun}
-					disabled={busy}
-					className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40"
-				>
+				</Button>
+				<Button type="button" variant="destructive" size="sm" data-testid="delete-confirm" onClick={onRun} disabled={busy}>
 					{busy ? "Deleting…" : "Delete"}
-				</button>
+				</Button>
 			</div>
 		</div>
 	);

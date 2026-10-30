@@ -42,6 +42,8 @@ import { ModelMenuList } from "@/components/settings/model-menu";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved, useSettingsSaved } from "@/components/settings-signal";
 import { Hint } from "@/components/ui/hint";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { type ProviderKeyInfo } from "@/components/settings/keys-section";
 import { ProviderMenuList } from "@/components/settings/model-menu";
 import { ChatGPTBackgroundAccess } from "@/components/settings/chatgpt-connection";
@@ -200,7 +202,7 @@ export function SetupKeysBody({
 							onClick={onSave}
 							disabled={saving || !value.trim()}
 							data-testid="setup-key-save"
-							className="shrink-0 rounded-sm border border-border bg-background px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+							className={cn(buttonVariants({ size: "sm" }), "shrink-0 disabled:cursor-not-allowed")}
 						>
 							{saving ? "Saving…" : "Save key"}
 						</button>
@@ -580,7 +582,7 @@ export function SetupDialog({
 								data-testid="setup-save"
 								disabled={!allPicked || saving}
 								onClick={() => void save()}
-								className="rounded-sm border border-border bg-background px-3 py-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+								className={cn(buttonVariants({ size: "sm" }), "disabled:cursor-not-allowed")}
 							>
 								{saving ? "Saving…" : "Save models"}
 							</button>

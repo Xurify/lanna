@@ -954,30 +954,31 @@ function SessionsSidebar() {
 									<>
 										<span className="px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
-											<button
+											<Button
 												type="button"
+												variant="ghost"
+												size="icon-sm"
 												aria-label={selectMode ? "Done selecting" : "Select chats"}
 												aria-pressed={selectMode}
 												data-testid="session-select-toggle"
 												onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
-												className={cn(
-													"ml-auto grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground",
-													selectMode && "bg-accent text-foreground",
-												)}
+												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
 											>
 												<ListChecksIcon className="size-3.5" />
-											</button>
+											</Button>
 										</Hint>
 										<Hint label="Search chats" action="sessions-search" side="bottom">
-											<button
+											<Button
 												type="button"
+												variant="ghost"
+												size="icon-sm"
 												aria-label="Search chats"
 												data-testid="session-search-open"
 												onClick={() => setSearching(true)}
-												className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+												className="rounded-lg text-muted-foreground"
 											>
 												<SearchIcon className="size-3.5" />
-											</button>
+											</Button>
 										</Hint>
 									</>
 								)}
@@ -1005,26 +1006,23 @@ function SessionsSidebar() {
 								</div>
 							)}
 							{selectMode && (
-								<div className="flex items-center gap-2 px-2.5 text-xs whitespace-nowrap" data-testid="session-select-bar">
-									<span className="font-semibold tabular-nums text-foreground" aria-live="polite">
+								<div className="flex h-8 items-center gap-1 pl-2.5 whitespace-nowrap" data-testid="session-select-bar">
+									<span className="mr-1 text-xs font-bold tabular-nums text-foreground" aria-live="polite">
 										{selectedChats.length} selected
 									</span>
-									<button
+									<Button
 										type="button"
+										variant="ghost"
+										size="xs"
 										data-testid="session-select-all"
 										onClick={() => setSelected(allShownSelected ? new Set() : new Set((shown ?? []).map((c) => c.id)))}
-										className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+										className="text-muted-foreground"
 									>
 										{allShownSelected ? "Clear" : "Select all"}
-									</button>
-									<button
-										type="button"
-										data-testid="session-select-done"
-										onClick={exitSelect}
-										className="ml-auto rounded-md px-2 py-1 font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
-									>
+									</Button>
+									<Button type="button" variant="ghost" size="xs" data-testid="session-select-done" onClick={exitSelect} className="ml-auto text-muted-foreground">
 										Done
-									</button>
+									</Button>
 								</div>
 							)}
 						</div>
@@ -1072,17 +1070,18 @@ function SessionsSidebar() {
 							)}
 						</div>
 						{selectMode && (
-							<div className="border-t border-border/50 pt-2">
-								<button
+							<div className="pt-3 pb-4">
+								<Button
 									type="button"
+									variant="destructive-soft"
 									data-testid="session-select-delete"
 									onClick={() => setBulkOpen(true)}
 									disabled={selectedChats.length === 0}
-									className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:cursor-not-allowed disabled:opacity-40"
+									className="w-full rounded-lg font-semibold"
 								>
-									<Trash2Icon className="size-4" />
+									<Trash2Icon />
 									{selectedChats.length === 0 ? "Select chats to delete" : `Delete ${selectedChats.length} ${selectedChats.length === 1 ? "chat" : "chats"}`}
-								</button>
+								</Button>
 							</div>
 						)}
 					</section>

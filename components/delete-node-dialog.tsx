@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
+import { Button } from "@/components/ui/button";
 
 /** The 409 extraction_running line (owner phrasing, node interlude):
  *  the server's error names the extraction; the ACTIVITY DOCK is the
@@ -104,27 +105,12 @@ export function DeleteNodeBody({
 				</div>
 			)}
 			<div className="mt-4 flex justify-end gap-2">
-				<button
-					type="button"
-					data-testid="node-delete-cancel"
-					onClick={onClose}
-					disabled={busy}
-					className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-				>
+				<Button type="button" variant="ghost" size="sm" data-testid="node-delete-cancel" onClick={onClose} disabled={busy}>
 					Cancel
-				</button>
-				<button
-					type="button"
-					data-testid="node-delete-confirm"
-					onClick={onRun}
-					disabled={busy}
-					// Destructive red (owner, polish round) — the
-					// app's established destructive pair (chat's
-					// refusal banner): border + text, fill on hover.
-					className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-40"
-				>
+				</Button>
+				<Button type="button" variant="destructive" size="sm" data-testid="node-delete-confirm" onClick={onRun} disabled={busy}>
 					{busy ? "Deleting…" : "Delete"}
-				</button>
+				</Button>
 			</div>
 		</div>
 	);
