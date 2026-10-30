@@ -163,7 +163,7 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 	/** A sentence that qualifies, or null. */
 	const judge = (entry: LexiconEntry, i: number): Found | null => {
 		const ex = entry.examples[i];
-		if (!ex?.en) return null;
+		if (!ex?.en || ex.rejected) return null;
 		if (usedSlug.has(entry.slug) || usedText.has(textOf(ex.sk))) return null;
 		const judged = judgeSentence(ex.sk, lookup);
 		if (judged.words < FAST_MIN_WORDS || judged.words > FAST_MAX_WORDS || judged.stretch.length > 0) return null;

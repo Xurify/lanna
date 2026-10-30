@@ -106,7 +106,7 @@ function* spokenPhrases(): Generator<MigrationCandidate> {
 		if (!lex) continue;
 		for (const e of lex.entries) {
 			yield* emit(info.code, e.sk);
-			for (const ex of e.examples) yield* emit(info.code, ex.sk);
+			for (const ex of e.examples) if (!ex.rejected) yield* emit(info.code, ex.sk);
 		}
 	}
 	const active = LANGUAGES[ACTIVE_PROFILE].code;

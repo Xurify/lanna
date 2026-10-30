@@ -19,6 +19,8 @@ export interface LexiconExample {
 	tatoebaId?: number;
 	/** The token that is a form of the entry's lemma, and where it starts. */
 	cloze?: { answer: string; at: number };
+	/** Reviewed and excluded from every feature. Kept in the file so the positions (and card ids) do not move. */
+	rejected?: boolean;
 }
 
 export interface LexiconEntry {
@@ -107,7 +109,7 @@ export function pickClozeExample(entry: LexiconEntry): number | undefined {
 	let best: number | undefined;
 	let bestScore = Infinity;
 	entry.examples.forEach((ex, i) => {
-		if (!ex.cloze) return;
+		if (!ex.cloze || ex.rejected) return;
 		const words = ex.sk.split(/\s+/).length;
 		if (words < 2 || words > 16) return;
 		const score = (ex.src === "curated" ? 0 : 100) + Math.abs(words - 7);

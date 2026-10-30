@@ -40,7 +40,7 @@ let indexFor: { lexicon: Lexicon; index: NeighbourIndex } | null = null;
 
 function neighbourIndex(lexicon: Lexicon): NeighbourIndex {
 	if (indexFor?.lexicon !== lexicon) {
-		indexFor = { lexicon, index: buildNeighbourIndex(lexicon.entries.flatMap((e) => e.examples.map((x) => x.en ?? ""))) };
+		indexFor = { lexicon, index: buildNeighbourIndex(lexicon.entries.flatMap((e) => e.examples.filter((x) => !x.rejected).map((x) => x.en ?? ""))) };
 	}
 	return indexFor.index;
 }

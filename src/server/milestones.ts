@@ -78,7 +78,7 @@ export function frequencyOrder(lexicon: Lexicon): string[] {
 	const all = new Set(lexicon.entries.map((e) => e.slug));
 	const counts = new Map<string, number>();
 	for (const e of lexicon.entries)
-		for (const ex of e.examples)
+		for (const ex of e.examples.filter((x) => !x.rejected))
 			for (const t of tokenize(ex.sk)) {
 				if (!t.word || /^\p{N}+$/u.test(t.text)) continue;
 				const entry = resolveWord(lexicon, t.text, all, { stem: false });
