@@ -2,7 +2,7 @@
  * GET /api/lesson?unit=<id> — a fresh 12-rep lesson for one unit, built
  * locally from the lexicon (no model call). ?mode=blitz — a choose-only
  * sprint across the units you have started.
- * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, detail?}], ms?, activeMs?, tz?}
+ * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, detail?}], ms?, activeMs?, tz?, clientId?}
  * — record the finished lesson: XP, the day, the unit's level; missed
  * words go into the review deck; the whole lesson (every sentence and
  * answer, from `detail`) is appended to the lesson log. Returns the
@@ -54,6 +54,7 @@ export async function POST(req: Request) {
 		ms?: unknown;
 		activeMs?: unknown;
 		tz?: unknown;
+		clientId?: unknown;
 	} | null;
 	if (!body || !isUnitId(body.unit) || !Array.isArray(body.reps)) {
 		return Response.json({ message: "unit and reps are required" }, { status: 400 });
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
 			: [];
 	});
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
+	const clientId = typeof body.clientId === "string" && /^[A-Za-z0-9-]{8,64}$/.test(body.clientId) ? body.clientId : undefined;
 	return Response.json(
 		recordLesson({
 			unit: body.unit,
@@ -73,6 +75,7 @@ export async function POST(req: Request) {
 			ms: typeof body.ms === "number" ? body.ms : undefined,
 			activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined,
 			tz,
+			clientId,
 		}),
 	);
 }

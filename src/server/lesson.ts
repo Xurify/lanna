@@ -162,6 +162,9 @@ export interface LessonResultInput {
 	 *  what the day's minutes count, `ms` stays the wall-clock for the log. */
 	activeMs?: number;
 	tz?: number;
+	/** The outbox's id for this lesson (components/lesson/outbox.ts). A save
+	 *  with an id already recorded is answered, not counted again. */
+	clientId?: string;
 }
 
 export interface LessonOutcome {
@@ -173,6 +176,8 @@ export interface LessonOutcome {
 	queued: string[];
 	newBest?: number;
 	summary: ProgressSummary;
+	/** A retry of a save already recorded: this is the first answer, again. */
+	duplicate?: boolean;
 }
 
 function today(tz?: number, now = new Date()) {
@@ -184,8 +189,13 @@ function dayOf(p: ProgressRecord, key: string): DayRecord {
 	return p.days[key]!;
 }
 
+/** How many recent lesson saves are remembered by id, for retries. */
+const ACK_CAP = 200;
+
 export function recordLesson(input: LessonResultInput, now = new Date()): LessonOutcome {
 	const p = progressStore.read();
+	const prior = input.clientId ? p.lessonAcks?.find((a) => a.id === input.clientId) : undefined;
+	if (prior) return { ...prior.outcome, duplicate: true, summary: progressSummary(input.tz, now) };
 	const day = dayOf(p, today(input.tz, now));
 	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
 	const unit = (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
@@ -222,10 +232,12 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	day.xp += xp;
 	p.xp += xp;
 	p.recent = [...p.recent, ...input.reps.map((r) => r.itemId.replace(/~again$/, ""))].slice(-RECENT_CAP);
-	progressStore.write(p);
 	// Every miss goes to the review deck — the lesson and the deck feed each other.
 	const missed = [...new Set(input.reps.filter((r) => r.verdict !== "exact" || r.assisted).map((r) => r.slug))];
 	const queued = missed.length ? enqueueWords(missed, now) : [];
+	const outcome = { xp, correct, total, perfect, queued, newBest };
+	if (input.clientId) p.lessonAcks = [...(p.lessonAcks ?? []), { id: input.clientId, outcome }].slice(-ACK_CAP);
+	progressStore.write(p);
 	// The lesson itself — every sentence and answer — goes to the corpus
 	// log; progress.json keeps only the totals.
 	try {
@@ -246,7 +258,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	} catch (err) {
 		console.warn("[lesson] could not append the lesson log:", err instanceof Error ? err.message : err);
 	}
-	return { xp, correct, total, perfect, queued, newBest, summary: progressSummary(input.tz, now) };
+	return { ...outcome, summary: progressSummary(input.tz, now) };
 }
 
 function logRep(r: RepResult): LessonLogRep {

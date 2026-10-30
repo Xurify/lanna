@@ -40,6 +40,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
+import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import {
 	compareAnswer,
 	diacriticSlips,
@@ -131,21 +132,6 @@ const RELEARN_MAX = 4;
  *  mistake is visible) and a meaning rep (input, not a form to produce). */
 const NO_RETRY = new Set<ItemKind>(["build", "meaning"]);
 
-/** What the server keeps once a lesson is saved; it arrives after the end
- *  screen is already up. */
-interface Recorded {
-	queued: string[];
-	newBest?: number;
-	summary: {
-		streak: { days: number; activeToday: boolean };
-		todayXp: number;
-		dailyGoal: number;
-		next: UnitId;
-		bestBlitz: number;
-		units: Array<{ id: UnitId; title: string; lessons: number; done: boolean; accuracy: number | null }>;
-	};
-}
-
 const BLITZ_SECONDS = 60;
 
 const KIND_LABEL: Record<ItemKind, string> = {
@@ -184,7 +170,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	const [score, setScore] = useState<LessonScore | null>(null);
 	const [recorded, setRecorded] = useState<Recorded | null>(null);
 	const [saveFailed, setSaveFailed] = useState(false);
-	const saveSeq = useRef(0);
+	// The lesson whose save the end screen is waiting on (a new lesson clears it).
+	const pendingId = useRef<string | null>(null);
 	const [sound, setSound] = useState(true);
 	const [left, setLeft] = useState(BLITZ_SECONDS);
 	const [shake, setShake] = useState(0);
@@ -281,7 +268,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setScore(null);
 		setRecorded(null);
 		setSaveFailed(false);
-		saveSeq.current++;
+		pendingId.current = null;
 		setMiss(null);
 		relearned.current = 0;
 		setLeft(BLITZ_SECONDS);
@@ -316,58 +303,53 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		if (finishing.current || !plan) return;
 		finishing.current = true;
 		sfx.done();
-		const seq = ++saveSeq.current;
 		setScore(
 			lessonScore(
 				all.map((r) => ({ kind: r.item.kind, verdict: r.verdict, assisted: r.assisted === true })),
 				mode,
 			),
 		);
-		// The end screen is up with the lesson's own score; the save runs behind it.
-		void fetch("/api/lesson", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({
-				unit: plan.unit,
-				mode,
-				reps: all.map((r) => ({
-					itemId: r.item.id,
-					slug: r.item.slug,
-					kind: r.item.kind,
-					verdict: r.verdict,
-					assisted: r.assisted === true,
-					// Everything shown and answered, for the lesson log on disk.
-					detail: {
-						unit: r.item.unit,
-						lemma: r.item.lemma,
-						gloss: r.item.gloss,
-						sentence: r.item.sentence,
-						translation: r.item.translation,
-						answer: r.item.answer,
-						given: r.given,
-						trigger: r.item.trigger,
-						options: r.item.options,
-						mixed: r.item.mixed === true,
-						again: r.item.again === true,
-					},
-				})),
-				ms: Date.now() - startedAt.current,
-				activeMs: activeTime.finish(),
-				tz: new Date().getTimezoneOffset(),
-			}),
-		})
-			.then(async (res) => {
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const body = (await res.json()) as Recorded;
-				if (seq !== saveSeq.current) return;
-				setRecorded(body);
-				forget();
-			})
-			.catch(() => {
-				if (seq === saveSeq.current) setSaveFailed(true);
-			});
+		// Kept in the outbox before anything waits on the network: the lesson
+		// survives a closed window, and the end screen fills in once it is recorded.
+		const entry = enqueueLesson(lang?.code ?? "sk", {
+			unit: plan.unit,
+			mode,
+			reps: all.map((r) => ({
+				itemId: r.item.id,
+				slug: r.item.slug,
+				kind: r.item.kind,
+				verdict: r.verdict,
+				assisted: r.assisted === true,
+				// Everything shown and answered, for the lesson log on disk.
+				detail: {
+					unit: r.item.unit,
+					lemma: r.item.lemma,
+					gloss: r.item.gloss,
+					sentence: r.item.sentence,
+					translation: r.item.translation,
+					answer: r.item.answer,
+					given: r.given,
+					trigger: r.item.trigger,
+					options: r.item.options,
+					mixed: r.item.mixed === true,
+					again: r.item.again === true,
+				},
+			})),
+			ms: Date.now() - startedAt.current,
+			activeMs: activeTime.finish(),
+			tz: new Date().getTimezoneOffset(),
+		});
+		forget();
+		pendingId.current = entry.id;
+		const off = onSettled(entry.id, (recorded) => {
+			off();
+			if (pendingId.current !== entry.id) return;
+			if (recorded) setRecorded(recorded);
+			else setSaveFailed(true);
+		});
+		void flushOutbox(entry.lang);
 	},
-	[plan, mode, forget, activeTime],
+	[plan, mode, lang, forget, activeTime],
 );
 
 	// Blitz clock.
