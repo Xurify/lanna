@@ -19,7 +19,7 @@ import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrajectorySection } from "@/components/trajectory-section";
-import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
+import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, measuredPace, trajectory, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
@@ -120,10 +120,16 @@ export function HoursSheet({
 	}, [open, onClose]);
 	if (!open) return null;
 
-	const weekly = weeklyHours(minutesPerDay, daysPerWeek);
-	const yearly = weekly * 52;
+	// With the day history the dates follow the recent pace once a week of
+	// study is on record, at the credited rate; without it, the planned pace.
+	const recent = trajectoryInput ? measuredPace(trajectoryInput.days, trajectoryInput.goalMinutes, trajectoryInput.goalDays) : null;
+	const paceWord = recent?.measured ? "recent" : "planned";
+	const paceMinutes = recent?.measured ? recent.minutesPerDay : minutesPerDay;
+	const paceDays = recent?.measured ? recent.daysPerWeek : daysPerWeek;
+	const perDay = trajectoryInput ? trajectory(trajectoryInput, "hours", { minutesPerDay: paceMinutes, daysPerWeek: paceDays }).ratePerDay : weeklyHours(paceMinutes, paceDays) / 7;
+	const yearly = perDay * 365;
 	const now = new Date();
-	const dateFor = (hours: number) => (weekly > 0 ? monthOf(new Date(now.getTime() + Math.max(0, hours - hoursDone) / weekly * 7 * 86_400_000)) : "—");
+	const dateFor = (hours: number) => (perDay > 0 ? monthOf(new Date(now.getTime() + Math.ceil(Math.max(0, hours - hoursDone) / perDay) * 86_400_000)) : "—");
 
 	// Chart geometry: horizontal grouped bars, one row per level.
 	const W = 560;
@@ -220,7 +226,7 @@ export function HoursSheet({
 										</rect>
 										{lv === target && (
 											<text x={x(Math.max(app, en)) + 6} y={y0 + bar * 2 + gap - 3} className="fill-muted-foreground font-ui" fontSize={10}>
-												your target · {dateFor(app)} at your pace
+												your target · {dateFor(app)} at your {paceWord} pace
 											</text>
 										)}
 									</g>
@@ -245,7 +251,7 @@ export function HoursSheet({
 								<th className="py-1 font-bold">Level</th>
 								<th className="py-1 font-bold">This app (Slovak)</th>
 								<th className="py-1 font-bold">Cambridge (English)</th>
-								<th className="py-1 font-bold">At your pace</th>
+								<th className="py-1 font-bold">At your {paceWord} pace</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -269,7 +275,7 @@ export function HoursSheet({
 				</p>
 
 				<p className="mt-3 rounded-xl bg-accent/60 px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
-					At <b>{minutesPerDay} min</b> × <b>{daysPerWeek} days</b> you put in about <b>{Math.round(yearly)} hours a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.
+					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about <b>{Math.round(yearly)} hours of the map a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.
 				</p>
 
 				<h3 className="mt-5 font-ui text-xs font-bold tracking-wide text-muted-foreground">The studies behind the numbers</h3>

@@ -12,7 +12,7 @@ import { ChevronRightIcon, FlameIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoursSheet } from "@/components/hours-sheet";
 import { StrandBalance } from "@/components/strand-balance";
-import { TrajectoryChart, trajectoryHeadline } from "@/components/trajectory-chart";
+import { monthAt, TrajectoryChart, trajectoryHeadline } from "@/components/trajectory-chart";
 import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, measuredPace, trajectory as projectTrajectory, type LearnerGoal, type Projection, type StrandBalance as Balance, type TrajectoryInput } from "@/src/core";
 
 const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
@@ -43,9 +43,11 @@ export function WeekCard({
 		if (!trajectory) return null;
 		const now = new Date();
 		const pace = measuredPace(trajectory.days, trajectory.goalMinutes, trajectory.goalDays);
-		return { now, t: projectTrajectory(trajectory, "hours", pace) };
+		return { now, measured: pace.measured, t: projectTrajectory(trajectory, "hours", pace) };
 	}, [trajectory]);
-	const eta = monthOf(projection?.etaPlanned ?? null);
+	// The date follows the recent pace once a week of study is on record, the plan until then.
+	const eta = pathState ? (pathState.t.daysToTarget === null ? null : monthAt(pathState.now, pathState.t.daysToTarget)) : monthOf(projection?.etaPlanned ?? null);
+	const paceWord = pathState?.measured ? "recent" : "planned";
 	return (
 		<section className="rounded-3xl border bg-card p-5" data-testid="week-card" aria-labelledby="week-title">
 			<h2 id="week-title" className="text-lg font-black text-foreground">
@@ -108,7 +110,7 @@ export function WeekCard({
 						{eta && <span className="font-semibold text-muted-foreground"> · about {eta}</span>}
 					</span>
 					<span className="block text-xs text-muted-foreground group-hover:text-foreground" data-testid="goal-plan">
-						Your pace, hours and level check
+						At your {paceWord} pace · hours and level check
 					</span>
 				</span>
 				<ChevronRightIcon className="size-4 shrink-0 text-flame transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
