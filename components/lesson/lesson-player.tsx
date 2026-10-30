@@ -45,6 +45,7 @@ import {
 	diacriticSlips,
 	gradeListen,
 	LESSONS_TO_COMPLETE,
+	lessonScore,
 	repXp,
 	sameSentence,
 	rankLabel,
@@ -55,6 +56,7 @@ import {
 	type ItemKind,
 	type LessonItem,
 	type LessonPlan,
+	type LessonScore,
 	type RepVerdict,
 	type UnitId,
 } from "@/src/core";
@@ -129,11 +131,9 @@ const RELEARN_MAX = 4;
  *  mistake is visible) and a meaning rep (input, not a form to produce). */
 const NO_RETRY = new Set<ItemKind>(["build", "meaning"]);
 
-interface Outcome {
-	xp: number;
-	correct: number;
-	total: number;
-	perfect: boolean;
+/** What the server keeps once a lesson is saved; it arrives after the end
+ *  screen is already up. */
+interface Recorded {
 	queued: string[];
 	newBest?: number;
 	summary: {
@@ -179,8 +179,12 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	const [combo, setCombo] = useState(0);
 	const [xp, setXp] = useState(0);
 	const [floater, setFloater] = useState<{ key: number; text: string } | null>(null);
-	const [outcome, setOutcome] = useState<Outcome | null>(null);
-	const [saving, setSaving] = useState(false);
+	// The lesson's own score, known the moment the last answer is in. The
+	// server's answer (streak, goal, unit progress) lands behind it.
+	const [score, setScore] = useState<LessonScore | null>(null);
+	const [recorded, setRecorded] = useState<Recorded | null>(null);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const saveSeq = useRef(0);
 	const [sound, setSound] = useState(true);
 	const [left, setLeft] = useState(BLITZ_SECONDS);
 	const [shake, setShake] = useState(0);
@@ -236,14 +240,14 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		}
 	}, [saveKey]);
 	useEffect(() => {
-		if (!saveKey || !plan || outcome || restoring.current) return;
+		if (!saveKey || !plan || score || restoring.current) return;
 		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, relearned: relearned.current, startedAt: startedAt.current };
 		try {
 			sessionStorage.setItem(saveKey, JSON.stringify(saved));
 		} catch {
 			// storage blocked: the lesson is not kept
 		}
-	}, [saveKey, plan, index, reps, current, combo, xp, miss, outcome]);
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, score]);
 	const forget = useCallback(() => {
 		if (!saveKey) return;
 		try {
@@ -274,7 +278,10 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setCurrent(null);
 		setCombo(0);
 		setXp(0);
-		setOutcome(null);
+		setScore(null);
+		setRecorded(null);
+		setSaveFailed(false);
+		saveSeq.current++;
 		setMiss(null);
 		relearned.current = 0;
 		setLeft(BLITZ_SECONDS);
@@ -302,71 +309,66 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const item = plan?.items[index] ?? null;
 	const total = plan?.items.length ?? 0;
-	const done = !!outcome;
+	const done = !!score;
 
 	const finish = useCallback(
-		async (all: Rep[]) => {
-			if (finishing.current || !plan) return;
-			finishing.current = true;
-			setSaving(true);
-			sfx.done();
-			try {
-				const res = await fetch("/api/lesson", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({
-						unit: plan.unit,
-						mode,
-						reps: all.map((r) => ({
-							itemId: r.item.id,
-							slug: r.item.slug,
-							kind: r.item.kind,
-							verdict: r.verdict,
-							assisted: r.assisted === true,
-							// Everything shown and answered, for the lesson log on disk.
-							detail: {
-								unit: r.item.unit,
-								lemma: r.item.lemma,
-								gloss: r.item.gloss,
-								sentence: r.item.sentence,
-								translation: r.item.translation,
-								answer: r.item.answer,
-								given: r.given,
-								trigger: r.item.trigger,
-								options: r.item.options,
-								mixed: r.item.mixed === true,
-								again: r.item.again === true,
-							},
-						})),
-						ms: Date.now() - startedAt.current,
-						activeMs: activeTime.finish(),
-						tz: new Date().getTimezoneOffset(),
-					}),
-				});
-				setOutcome((await res.json()) as Outcome);
-				forget();
-			} catch {
-				setOutcome({
-					xp,
-					correct: all.filter((r) => r.verdict !== "wrong").length,
-					total: all.length,
-					perfect: false,
-					queued: [],
-					summary: {
-						streak: { days: 0, activeToday: false },
-						todayXp: xp,
-						dailyGoal: 50,
-						next: plan.unit,
-						bestBlitz: 0,
-						units: [],
+	(all: Rep[]) => {
+		if (finishing.current || !plan) return;
+		finishing.current = true;
+		sfx.done();
+		const seq = ++saveSeq.current;
+		setScore(
+			lessonScore(
+				all.map((r) => ({ kind: r.item.kind, verdict: r.verdict, assisted: r.assisted === true })),
+				mode,
+			),
+		);
+		// The end screen is up with the lesson's own score; the save runs behind it.
+		void fetch("/api/lesson", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				unit: plan.unit,
+				mode,
+				reps: all.map((r) => ({
+					itemId: r.item.id,
+					slug: r.item.slug,
+					kind: r.item.kind,
+					verdict: r.verdict,
+					assisted: r.assisted === true,
+					// Everything shown and answered, for the lesson log on disk.
+					detail: {
+						unit: r.item.unit,
+						lemma: r.item.lemma,
+						gloss: r.item.gloss,
+						sentence: r.item.sentence,
+						translation: r.item.translation,
+						answer: r.item.answer,
+						given: r.given,
+						trigger: r.item.trigger,
+						options: r.item.options,
+						mixed: r.item.mixed === true,
+						again: r.item.again === true,
 					},
-				});
-			} finally {
-				setSaving(false);
-			}
-		},
-		[plan, mode, xp, forget, activeTime],
-	);
+				})),
+				ms: Date.now() - startedAt.current,
+				activeMs: activeTime.finish(),
+				tz: new Date().getTimezoneOffset(),
+			}),
+		})
+			.then(async (res) => {
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const body = (await res.json()) as Recorded;
+				if (seq !== saveSeq.current) return;
+				setRecorded(body);
+				forget();
+			})
+			.catch(() => {
+				if (seq === saveSeq.current) setSaveFailed(true);
+			});
+	},
+	[plan, mode, forget, activeTime],
+);
 
 	// Blitz clock.
 	useEffect(() => {
@@ -552,15 +554,16 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		);
 	}
 
-	if (done || saving) {
+	if (score) {
 		return (
 			<Frame>
 				<EndScreen
 					mode={mode}
 					unit={plan.unit}
 					reps={reps}
-					outcome={outcome}
-					saving={saving}
+					score={score}
+					recorded={recorded}
+					failed={saveFailed}
 					onAgain={() => void load()}
 					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}`))}
 				/>
@@ -1483,46 +1486,57 @@ function Confetti() {
 	);
 }
 
+/** A placeholder in the shape of what is coming, so its slot keeps its size. */
+function Pulse({ className }: { className?: string }) {
+	return <span aria-hidden="true" className={cn("inline-block animate-pulse rounded-md bg-accent motion-reduce:animate-none", className)} />;
+}
+
 function EndScreen({
 	mode,
 	unit,
 	reps,
-	outcome,
-	saving,
+	score,
+	recorded,
+	failed,
 	onAgain,
 	onNext,
 }: {
 	mode: Mode;
 	unit: UnitId;
 	reps: Rep[];
-	outcome: Outcome | null;
-	saving: boolean;
+	score: LessonScore;
+	recorded: Recorded | null;
+	failed: boolean;
 	onAgain: () => void;
 	onNext: (unit: UnitId) => void;
 }) {
-	const correct = reps.filter((r) => r.verdict !== "wrong").length;
+	const { correct, xp, perfect } = score;
 	const accuracy = reps.length ? Math.round((correct / reps.length) * 100) : 0;
 	// One line per sentence: a miss and its "once more" rep are the same item.
 	const missed = reps.filter((r, i) => (r.verdict !== "exact" || r.assisted) && reps.findIndex((o) => o.item.sentence === r.item.sentence) === i);
-	const goalMet = outcome ? outcome.summary.todayXp >= outcome.summary.dailyGoal : false;
-	// Where this lesson leaves the unit (the summary is post-save, so it
-	// already counts this lesson) and what the button opens next.
-	const here = outcome?.summary.units.find((u) => u.id === unit) ?? null;
+	// The score is the lesson's own and shows at once. What the server keeps
+	// (streak, goal, unit progress) fills its slot when it lands; each slot
+	// keeps its size until then, so nothing moves.
+	const goalMet = recorded ? recorded.summary.todayXp >= recorded.summary.dailyGoal : false;
+	const here = recorded?.summary.units.find((u) => u.id === unit) ?? null;
 	const wasDone = here ? unitDone(here.lessons - 1, here.accuracy) : false;
-	const nextUnit = outcome ? (outcome.summary.units.find((u) => u.id === outcome.summary.next) ?? null) : null;
-	const stayHere = !!outcome && outcome.summary.next === unit;
+	const nextUnit = recorded ? (recorded.summary.units.find((u) => u.id === recorded.summary.next) ?? null) : null;
+	const stayHere = !!recorded && recorded.summary.next === unit;
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome) {
+			if (e.key !== "Enter") return;
+			if (mode === "blitz") {
 				e.preventDefault();
-				if (mode === "blitz") onAgain();
-				else onNext(outcome.summary.next);
+				onAgain();
+			} else if (recorded) {
+				e.preventDefault();
+				onNext(recorded.summary.next);
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [outcome, mode, onAgain, onNext]);
+	}, [recorded, mode, onAgain, onNext]);
 
 	return (
 		<div className="relative m-auto w-full max-w-xl px-5 text-center" data-testid="lesson-end">
@@ -1531,31 +1545,38 @@ function EndScreen({
 				{mode === "blitz" ? <ZapIcon className="size-12" /> : <TrophyIcon className="size-12" />}
 			</div>
 			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
-				{mode === "blitz" ? (outcome?.newBest ? "New best!" : "Time!") : here?.done && !wasDone ? "Unit complete!" : outcome?.perfect ? "Perfect lesson!" : "Lesson complete!"}
+				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
 			</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
+			<p className="mt-2 min-h-7 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
 				{mode === "blitz" ? `${correct} right in 60 seconds` : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
 			</p>
-			{mode === "lesson" && here && !here.done && (
-				<ol className="mx-auto mt-3 flex items-center justify-center gap-2" aria-label={`${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done`}>
-					{Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
-						<li key={i} className={cn("h-2.5 w-8 rounded-full", i < here.lessons ? "bg-go" : "bg-accent")} />
-					))}
+			{mode === "lesson" && (
+				<ol className="mx-auto mt-3 flex h-2.5 items-center justify-center gap-2" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
+					{!here?.done &&
+						Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
+							<li key={i} className={cn("h-2.5 w-8 rounded-full", !here ? "animate-pulse bg-accent" : i < here.lessons ? "bg-go" : "bg-accent")} />
+						))}
 				</ol>
 			)}
 
 			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-xp" />
-				<Stat label={mode === "blitz" ? "Best" : "Accuracy"} value={mode === "blitz" ? String(Math.max(outcome?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink="text-go" />
-				<Stat label="Streak" value={outcome ? `${outcome.summary.streak.days}` : "…"} ink="text-flame" icon={<FlameIcon className="size-5" />} />
+				<Stat label="XP" value={`+${xp}`} ink="text-xp" />
+				<Stat label={mode === "blitz" ? "Best" : "Accuracy"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink="text-go" />
+				<Stat label="Streak" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-flame" icon={<FlameIcon className="size-5" />} />
 			</div>
 
-			{outcome && (
-				<p className="mt-4 font-prose text-sm text-muted-foreground">
-					{goalMet ? "Daily XP goal reached. " : `${Math.max(0, outcome.summary.dailyGoal - outcome.summary.todayXp)} XP to today's XP goal. `}
-					{outcome.queued.length > 0 && `${outcome.queued.length} missed word${outcome.queued.length === 1 ? "" : "s"} added to your review deck.`}
-				</p>
-			)}
+			<p className="mt-4 min-h-5 font-prose text-sm text-muted-foreground" data-testid="lesson-end-recorded">
+				{recorded ? (
+					<>
+						{goalMet ? "Daily XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
+						{recorded.queued.length > 0 && `${recorded.queued.length} missed word${recorded.queued.length === 1 ? "" : "s"} added to your review deck.`}
+					</>
+				) : failed ? (
+					"This lesson could not be saved."
+				) : (
+					<Pulse className="h-3.5 w-64 align-middle" />
+				)}
+			</p>
 
 			{missed.length > 0 && (
 				<div className="mt-6 rounded-2xl border bg-card p-4 text-left">
@@ -1585,8 +1606,8 @@ function EndScreen({
 						Go again
 					</button>
 				) : (
-					<button type="button" disabled={!outcome} onClick={() => outcome && onNext(outcome.summary.next)} className={PRIMARY} data-testid="lesson-next">
-						{stayHere || !nextUnit ? "Next lesson" : `Next: ${nextUnit.title}`}
+					<button type="button" disabled={!recorded} onClick={() => recorded && onNext(recorded.summary.next)} className={PRIMARY} data-testid="lesson-next">
+						{!recorded || stayHere || !nextUnit ? "Next lesson" : `Next: ${nextUnit.title}`}
 					</button>
 				)}
 			</div>
@@ -1611,13 +1632,13 @@ function whereLine(here: { title: string; lessons: number; done: boolean; accura
 	return `${here.title} is done. Up next: ${next.title}`;
 }
 
-function Stat({ label, value, ink, icon }: { label: string; value: string; ink: string; icon?: React.ReactNode }) {
+function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink: string; icon?: React.ReactNode }) {
 	return (
 		<div className="rounded-2xl border-2 bg-card px-3 py-4">
 			<p className="font-ui text-sm font-bold text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 flex items-center justify-center gap-1 font-ui text-3xl font-black tabular-nums", ink)}>
+			<p className={cn("mt-1 flex h-9 items-center justify-center gap-1 font-ui text-3xl font-black tabular-nums", ink)}>
 				{icon}
-				{value}
+				{value ?? <Pulse className="h-7 w-12" />}
 			</p>
 		</div>
 	);

@@ -733,6 +733,34 @@ export function repXp(kind: ItemKind, verdict: RepVerdict, combo: number, assist
 export const LESSON_BONUS = 20;
 export const PERFECT_BONUS = 15;
 
+export interface LessonScore {
+	xp: number;
+	correct: number;
+	total: number;
+	perfect: boolean;
+}
+
+/** A finished lesson's score from its reps alone. The server records the
+ *  same numbers (src/server/lesson.ts), so the end screen can show them the
+ *  moment the last answer is given instead of waiting for the save. */
+export function lessonScore(reps: readonly { kind: ItemKind; verdict: RepVerdict; assisted?: boolean }[], mode: "lesson" | "blitz"): LessonScore {
+	let combo = 0;
+	let xp = 0;
+	let correct = 0;
+	for (const r of reps) {
+		if (r.verdict === "wrong") combo = 0;
+		else {
+			combo++;
+			correct++;
+		}
+		xp += repXp(r.kind, r.verdict, combo, r.assisted);
+	}
+	const total = reps.length;
+	const perfect = total > 0 && reps.every((r) => r.verdict === "exact");
+	if (mode === "lesson" && total > 0) xp += LESSON_BONUS + (perfect ? PERFECT_BONUS : 0);
+	return { xp, correct, total, perfect };
+}
+
 /** Lessons finished → the unit's level (0–5), the ring on the skill path. */
 /** When a unit counts as complete: LESSONS_TO_COMPLETE finished lessons with
  *  at least COMPLETE_ACCURACY of the reps right, or twice that many lessons

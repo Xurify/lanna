@@ -11,9 +11,7 @@ import {
 	buildBlitz,
 	buildLesson,
 	CONTRAST,
-	LESSON_BONUS,
-	PERFECT_BONUS,
-	repXp,
+	lessonScore,
 	streakOf,
 	DAYS_IN_WEEK,
 	unitDone,
@@ -189,24 +187,11 @@ function dayOf(p: ProgressRecord, key: string): DayRecord {
 export function recordLesson(input: LessonResultInput, now = new Date()): LessonOutcome {
 	const p = progressStore.read();
 	const day = dayOf(p, today(input.tz, now));
-	let combo = 0;
-	let xp = 0;
-	let correct = 0;
-	for (const r of input.reps) {
-		if (r.verdict === "wrong") combo = 0;
-		else {
-			combo++;
-			correct++;
-		}
-		xp += repXp(r.kind, r.verdict, combo, r.assisted);
-	}
-	const total = input.reps.length;
-	const perfect = total > 0 && input.reps.every((r) => r.verdict === "exact");
+	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
 	const unit = (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
 	let newBest: number | undefined;
 	if (input.mode === "lesson") {
 		if (total > 0) {
-			xp += LESSON_BONUS + (perfect ? PERFECT_BONUS : 0);
 			unit.lessons++;
 			day.lessons++;
 			day.units ??= {};
