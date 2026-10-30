@@ -1552,7 +1552,7 @@ function EndScreen({
 
 			{outcome && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground">
-					{goalMet ? "Daily goal reached. " : `${Math.max(0, outcome.summary.dailyGoal - outcome.summary.todayXp)} XP to today's goal. `}
+					{goalMet ? "Daily XP goal reached. " : `${Math.max(0, outcome.summary.dailyGoal - outcome.summary.todayXp)} XP to today's XP goal. `}
 					{outcome.queued.length > 0 && `${outcome.queued.length} missed word${outcome.queued.length === 1 ? "" : "s"} added to your review deck.`}
 				</p>
 			)}

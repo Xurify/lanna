@@ -12,6 +12,8 @@ import { DictationBar, joinDictation, useDictation } from "@/components/dictatio
 import { useFieldCycle } from "@/components/field-cycle";
 import { SidebarToggle } from "@/components/sidebar";
 import { StatsBar } from "@/components/stats-bar";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { TurnUsage } from "@/src/core";
 
 /**
@@ -236,7 +238,7 @@ export function Home({
 									type="button"
 									data-testid="setup-cta"
 									onClick={() => setSetupOpen(true)}
-									className="cursor-pointer rounded-full border-2 border-gold/40 bg-gold/10 px-4 py-1.5 font-ui text-xs font-bold text-gold transition-colors hover:bg-gold/20"
+									className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-bold")}
 								>
 									Set up your models
 								</button>

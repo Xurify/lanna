@@ -38,6 +38,17 @@ function render(chat: ChatListItem, active = false) {
 	return renderToStaticMarkup(<SessionRow chat={chat} active={active} onOpen={() => {}} />);
 }
 
+describe("SessionRow selection (bulk delete)", () => {
+	const row = (selectMode: boolean, selected: boolean) => renderToStaticMarkup(<SessionRow chat={item({})} active={false} onOpen={() => {}} selectMode={selectMode} selected={selected} />);
+
+	it("a normal row has no checkbox; a selecting row has one, checked when selected", () => {
+		assert.ok(!row(false, false).includes("session-row-check"));
+		const off = row(true, false);
+		assert.ok(off.includes("session-row-check") && off.includes('aria-pressed="false"'));
+		assert.ok(row(true, true).includes('aria-pressed="true"'));
+	});
+});
+
 describe("SessionRow", () => {
 	it("no phase strips, no phase colors — the retired decoration", () => {
 		const html = render(item({ phase: "teach" }));

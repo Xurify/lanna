@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
+import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { DumbbellIcon, GraduationCapIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, XIcon } from "lucide-react";
+import { CheckIcon, DumbbellIcon, GraduationCapIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
@@ -361,10 +362,16 @@ export function SessionRow({
 	onOpen,
 	kbdSelected = false,
 	onContextMenu,
+	selectMode = false,
+	selected = false,
 }: {
 	chat: ChatListItem;
 	active: boolean;
-	onOpen: () => void;
+	/** The click: opens the chat, or toggles it while selecting (the parent reads the modifier keys). */
+	onOpen: (e: React.MouseEvent<HTMLButtonElement>) => void;
+	/** Bulk-delete selection: rows show a checkbox and a click toggles. */
+	selectMode?: boolean;
+	selected?: boolean;
 	/** Keyboard-cycle highlight (shortcut wave A: Alt+↑/↓ + Alt+Enter) —
 	 *  visually distinct from the active session, which stays filled. */
 	kbdSelected?: boolean;
@@ -377,12 +384,23 @@ export function SessionRow({
 			onClick={onOpen}
 			onContextMenu={onContextMenu}
 			data-testid={kbdSelected ? "session-row-kbd" : "session-row"}
+			aria-pressed={selectMode ? selected : undefined}
 			className={cn(
 				"relative mb-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-accent",
-				active && "bg-accent",
+				active && !selectMode && "bg-accent",
+				selected && "bg-accent",
 				kbdSelected && !active && "bg-accent/60 ring-1 ring-border",
 			)}
 		>
+			{selectMode && (
+				<span
+					aria-hidden="true"
+					data-testid="session-row-check"
+					className={cn("grid size-4 shrink-0 place-items-center rounded border", selected ? "border-foreground bg-foreground text-background" : "border-muted-foreground/60")}
+				>
+					{selected && <CheckIcon className="size-3" strokeWidth={3} />}
+				</span>
+			)}
 			<SessionStatus busy={chat.busy || chat.compacting} />
 			<span className="min-w-0 flex-1">
 				{/* Titles are the learner's/teacher's WORDS — Source Sans 3, the
@@ -624,6 +642,57 @@ function SessionsSidebar() {
 	const [renamingId, setRenamingId] = useState<string | null>(null);
 	const [deleting, setDeleting] = useState<ChatListItem | null>(null);
 
+	/* Bulk delete: a Select button, or Ctrl/⌘-click and Shift-click on any
+	   row, turns the list into a selection (checkbox rows; a click toggles,
+	   Shift extends a range from the last click). The selection bar deletes
+	   them all behind one dialog, always keeping graph traces. */
+	const [selectMode, setSelectMode] = useState(false);
+	const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+	const [bulkOpen, setBulkOpen] = useState(false);
+	const anchorRef = useRef<number | null>(null);
+	const exitSelect = useCallback(() => {
+		setSelectMode(false);
+		setSelected(new Set());
+		setBulkOpen(false);
+		anchorRef.current = null;
+	}, []);
+	const selectedChats = useMemo(() => (chats ?? []).filter((c) => selected.has(c.id)), [chats, selected]);
+	const allShownSelected = !!shown && shown.length > 0 && shown.every((c) => selected.has(c.id));
+
+	const onRowClick = (e: React.MouseEvent<HTMLButtonElement>, c: ChatListItem, i: number) => {
+		const list = shown ?? [];
+		if (e.shiftKey && anchorRef.current !== null) {
+			const [a, b] = [Math.min(anchorRef.current, i), Math.max(anchorRef.current, i)];
+			setSelectMode(true);
+			setSelected((prev) => new Set([...prev, ...list.slice(a, b + 1).map((x) => x.id)]));
+			return;
+		}
+		if (selectMode || e.shiftKey || e.ctrlKey || e.metaKey) {
+			setSelectMode(true);
+			anchorRef.current = i;
+			setSelected((prev) => {
+				const next = new Set(prev);
+				if (next.has(c.id)) next.delete(c.id);
+				else next.add(c.id);
+				return next;
+			});
+			return;
+		}
+		setKbdIndex(null);
+		router.push(`/chat/${c.id}`);
+	};
+
+	useEffect(() => {
+		if (!selectMode || bulkOpen) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key !== "Escape" || (e.target instanceof HTMLInputElement)) return;
+			e.stopPropagation();
+			exitSelect();
+		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [selectMode, bulkOpen, exitSelect]);
+
 	const openContext = (e: React.MouseEvent<HTMLButtonElement>, chat: ChatListItem) => {
 		e.preventDefault(); // suppress the native menu
 		ctxAnchorRef.current = e.currentTarget;
@@ -688,6 +757,17 @@ function SessionsSidebar() {
 			setDeleting(null);
 			setChats((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
 			if (pathname === `/chat/${id}`) router.push("/");
+			window.dispatchEvent(new CustomEvent("lh:graph-revision", { detail: { revision: graphRevision } }));
+		},
+		[pathname, router],
+	);
+
+	const onBulkDeleted = useCallback(
+		(ids: string[], graphRevision: number) => {
+			const gone = new Set(ids);
+			setChats((prev) => (prev ? prev.filter((c) => !gone.has(c.id)) : prev));
+			setSelected((prev) => new Set([...prev].filter((id) => !gone.has(id))));
+			if (ids.some((id) => pathname === `/chat/${id}`)) router.push("/");
 			window.dispatchEvent(new CustomEvent("lh:graph-revision", { detail: { revision: graphRevision } }));
 		},
 		[pathname, router],
@@ -873,16 +953,32 @@ function SessionsSidebar() {
 								) : (
 									<>
 										<span className="px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
-										<Hint label="Search chats" action="sessions-search" side="bottom">
-											<button
+										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
+											<Button
 												type="button"
+												variant="ghost"
+												size="icon-sm"
+												aria-label={selectMode ? "Done selecting" : "Select chats"}
+												aria-pressed={selectMode}
+												data-testid="session-select-toggle"
+												onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
+												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
+											>
+												<ListChecksIcon className="size-3.5" />
+											</Button>
+										</Hint>
+										<Hint label="Search chats" action="sessions-search" side="bottom">
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon-sm"
 												aria-label="Search chats"
 												data-testid="session-search-open"
 												onClick={() => setSearching(true)}
-												className="ml-auto grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+												className="rounded-lg text-muted-foreground"
 											>
 												<SearchIcon className="size-3.5" />
-											</button>
+											</Button>
 										</Hint>
 									</>
 								)}
@@ -907,6 +1003,26 @@ function SessionsSidebar() {
 											{f === "teach" ? "Learn" : f === "all" ? "All" : "Practice"}
 										</button>
 									))}
+								</div>
+							)}
+							{selectMode && (
+								<div className="flex h-8 items-center gap-1 pl-2.5 whitespace-nowrap" data-testid="session-select-bar">
+									<span className="mr-1 text-xs font-bold tabular-nums text-foreground" aria-live="polite">
+										{selectedChats.length} selected
+									</span>
+									<Button
+										type="button"
+										variant="ghost"
+										size="xs"
+										data-testid="session-select-all"
+										onClick={() => setSelected(allShownSelected ? new Set() : new Set((shown ?? []).map((c) => c.id)))}
+										className="text-muted-foreground"
+									>
+										{allShownSelected ? "Clear" : "Select all"}
+									</Button>
+									<Button type="button" variant="ghost" size="xs" data-testid="session-select-done" onClick={exitSelect} className="ml-auto text-muted-foreground">
+										Done
+									</Button>
 								</div>
 							)}
 						</div>
@@ -944,16 +1060,30 @@ function SessionsSidebar() {
 											chat={c}
 											active={pathname === `/chat/${c.id}`}
 											kbdSelected={i === kbdIndex}
-											onOpen={() => {
-												setKbdIndex(null);
-												router.push(`/chat/${c.id}`);
-											}}
+											selectMode={selectMode}
+											selected={selected.has(c.id)}
+											onOpen={(e) => onRowClick(e, c, i)}
 											onContextMenu={(e) => openContext(e, c)}
 										/>
 									),
 								)
 							)}
 						</div>
+						{selectMode && (
+							<div className="pt-3 pb-4">
+								<Button
+									type="button"
+									variant="destructive-soft"
+									data-testid="session-select-delete"
+									onClick={() => setBulkOpen(true)}
+									disabled={selectedChats.length === 0}
+									className="w-full rounded-lg font-semibold"
+								>
+									<Trash2Icon />
+									{selectedChats.length === 0 ? "Select chats to delete" : `Delete ${selectedChats.length} ${selectedChats.length === 1 ? "chat" : "chats"}`}
+								</Button>
+							</div>
+						)}
 					</section>
 
 					{/* Background agents appear only while one runs: an idle header
@@ -1048,6 +1178,12 @@ function SessionsSidebar() {
 					chat={deleting}
 					onClose={() => setDeleting(null)}
 					onDeleted={onDeleted}
+				/>
+				<DeleteSessionsDialog
+					open={bulkOpen}
+					chats={selectedChats}
+					onClose={() => setBulkOpen(false)}
+					onDeleted={onBulkDeleted}
 				/>
 			</aside>
 		</>

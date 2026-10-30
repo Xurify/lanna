@@ -12,6 +12,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { explainChoices, LanguagePicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
+import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
+import { cn } from "@/lib/utils";
 import { explanationLanguages, knownLanguages, MAX_EXPLAIN, parallelsLine, parallelsOn, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
 import { SettingsGroup, Toggle } from "./controls.tsx";
 
@@ -91,7 +93,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 									onClose();
 									router.push(b.href);
 								}}
-								className="rounded-xl border-2 border-border px-4 py-1.5 font-ui text-sm font-bold text-foreground transition-colors hover:border-foreground/40"
+								className={cn(SECONDARY, SMALL)}
 							>
 								{b.label}
 							</button>

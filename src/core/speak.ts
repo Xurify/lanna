@@ -128,6 +128,8 @@ export interface SpeakSummary {
 	keep: string[];
 	/** One encouraging line in English about what went well. */
 	note?: string;
+	/** The summary could not be read: no corrections are known, so none are claimed. */
+	unreadable?: boolean;
 }
 
 export interface SpeakSession {
@@ -298,7 +300,7 @@ export function parseTutorReply(text: string): TutorReply {
 export function parseSummary(text: string): SpeakSummary {
 	const o = firstObject(text);
 	const out: SpeakSummary = { corrections: [], keep: [] };
-	if (!o || typeof o !== "object") return out;
+	if (!o || typeof o !== "object") return { ...out, unreadable: true };
 	const r = o as Record<string, unknown>;
 	if (Array.isArray(r.corrections)) {
 		for (const c of r.corrections) {

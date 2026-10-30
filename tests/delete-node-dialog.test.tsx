@@ -71,8 +71,9 @@ describe("DeleteNodeBody — the minimal screen (owner, 2026-09-30)", () => {
 		assert.match(html, /data-testid="node-permanence-line"[^>]*>This permanently deletes the node — this cannot be undone\./);
 		assert.match(html, /data-testid="node-delete-cancel"/);
 		assert.match(html, /data-testid="node-delete-confirm"/);
-		// the Delete button carries the destructive red (owner, polish round)
-		assert.match(html, /border-destructive\/50[^>]*text-destructive/);
+		// the Delete button is the shared solid destructive variant; Cancel is quiet
+		assert.match(html, /<button[^>]*data-variant="destructive"[^>]*data-testid="node-delete-confirm"/);
+		assert.match(html, /<button[^>]*data-variant="ghost"[^>]*data-testid="node-delete-cancel"/);
 	});
 
 	it("NO impact facts, NO loading line, NO sessions join — the pre-flight read is dead", () => {

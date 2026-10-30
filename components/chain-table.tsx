@@ -70,6 +70,7 @@ import {
 import { chainsForSelection, formatChainLine, fuzzyScore } from "@/src/core";
 import type { GraphChain, GraphNode } from "@/src/core";
 import { TopBar } from "@/components/top-bar";
+import { Button } from "@/components/ui/button";
 import { DeleteNodeDialog } from "@/components/delete-node-dialog";
 import { LatexGlyph } from "@/components/latex-glyph";
 
@@ -527,16 +528,18 @@ export function ChainTableBody({
 								    safe actions and the kill switch never blend. The
 								    full-death confirm dialog catches the misclick. */}
 							<span data-testid="chain-danger-divider" aria-hidden="true" className="h-4 w-px bg-border/70" />
-							<button
+							<Button
 								type="button"
+								variant="destructive-soft"
+								size="sm"
 								data-testid="chain-delete"
 								onClick={onDelete}
 								aria-label={`Delete ${selection.size} selected ${selection.size === 1 ? "node" : "nodes"}`}
-								className="flex items-center gap-1.5 rounded-full border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+								className="rounded-full"
 							>
 								<Trash2Icon aria-hidden="true" className="size-3.5" />
 								Delete
-							</button>
+							</Button>
 							</>
 						)}
 					</div>

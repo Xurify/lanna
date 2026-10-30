@@ -15,6 +15,7 @@ import {
 	PERFECT_BONUS,
 	repXp,
 	streakOf,
+	DAYS_IN_WEEK,
 	unitDone,
 	unitLevel,
 	unitProgress,
@@ -63,6 +64,7 @@ import {
 	type PlacementOutcome,
 } from "../core/onboarding.ts";
 import { strandBalance, type StrandBalance } from "../core/strands.ts";
+import { carriedTasks, doneInLedger, RECENT_DAYS, type DayPlanSnapshot } from "../core/carry-over.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
@@ -197,11 +199,13 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	const unit = (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
 	let newBest: number | undefined;
 	if (input.mode === "lesson") {
-		if (total > 0) xp += LESSON_BONUS + (perfect ? PERFECT_BONUS : 0);
-		unit.lessons++;
-		day.lessons++;
-		day.units ??= {};
-		day.units[input.unit] = (day.units[input.unit] ?? 0) + 1;
+		if (total > 0) {
+			xp += LESSON_BONUS + (perfect ? PERFECT_BONUS : 0);
+			unit.lessons++;
+			day.lessons++;
+			day.units ??= {};
+			day.units[input.unit] = (day.units[input.unit] ?? 0) + 1;
+		}
 	} else {
 		day.blitz = (day.blitz ?? 0) + 1;
 		if (correct > (p.bestBlitz ?? 0)) {
@@ -363,6 +367,10 @@ export interface ProgressSummary {
 	balance: StrandBalance;
 	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
 	weakSpots: WeakSpotSummary[];
+	/** The goal's daily minutes against what the last `windowDays` days logged. */
+	pace: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
+	/** Unfinished plan tasks from the last RECENT_DAYS days (src/core/carry-over.ts). */
+	backlog: number;
 }
 
 /** The video the daily plan should show: the one watched today (so the
@@ -381,10 +389,16 @@ function pendingWatch(day: string): { id: string; title: string; minutes: number
 	}
 }
 
+/** Day of the year for a local YYYY-MM-DD key, so rotation turns at local midnight. */
+function dayOfYearOf(key: string): number {
+	const [y, m, d] = key.split("-").map(Number) as [number, number, number];
+	return Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 86_400_000);
+}
+
 export function progressSummary(tz?: number, now = new Date()): ProgressSummary {
 	const p = progressStore.read();
 	const key = today(tz, now);
-	const active = new Set(Object.entries(p.days).filter(([, d]) => d.xp > 0).map(([k]) => k));
+	const active = new Set(Object.entries(p.days).filter(([, d]) => d.xp > 0 || (d.talks ?? 0) + (d.stories ?? 0) + (d.tutors ?? 0) > 0).map(([k]) => k));
 	const week: Array<{ day: string; xp: number }> = [];
 	for (let i = 6; i >= 0; i--) {
 		const d = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
@@ -421,6 +435,13 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		available: rs.available,
 	};
 	const d = p.days[key];
+	const earlier: DayPlanSnapshot[] = [];
+	for (let i = 1; i <= RECENT_DAYS; i++) {
+		const day = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
+		const record = p.days[day];
+		if (record?.planned) earlier.push({ day, tasks: record.planned.map((t) => ({ ...t, done: t.done || doneInLedger(t.id, record) })) });
+	}
+	const carried = carriedTasks(earlier, key, new Set());
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
@@ -428,23 +449,33 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
-		dayOfYear: Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000),
+		dayOfYear: dayOfYearOf(key),
 		scenes: purposeScenes(goal.purposes ?? []),
 		weak: weakSpotList(p.weak).map((w) => w.unit),
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),
+		carried: carried.map((c) => ({ id: c.id, from: c.from })),
 	});
+	const snapshot = plan.tasks.map((t) => ({ id: t.id, title: t.title, done: t.done }));
+	const todayRecord = (p.days[key] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
+	if (JSON.stringify(todayRecord.planned) !== JSON.stringify(snapshot)) {
+		todayRecord.planned = snapshot;
+		progressStore.write(p);
+	}
+	const backlog = plan.tasks.filter((t) => t.from).length;
 	const recentMinutes: number[] = [];
 	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
 	// The week by strand (src/core/strands.ts): the last seven days' ledgers.
 	const balance = strandBalance(week.map((w) => p.days[w.day]).filter((x): x is DayRecord => !!x));
+	let loggedRecent = 0;
+	for (let i = 0; i < RECENT_DAYS; i++) loggedRecent += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),
 		todayXp: p.days[key]?.xp ?? 0,
 		dailyGoal: p.dailyGoal,
-		streak: streakOf(active, key),
+		streak: streakOf(active, key, Math.max(0, DAYS_IN_WEEK - (goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK))),
 		week,
 		units,
 		next,
@@ -456,6 +487,8 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
 		balance,
 		weakSpots: weakSpotList(p.weak),
+		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },
+		backlog,
 	};
 }
 

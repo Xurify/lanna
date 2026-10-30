@@ -167,6 +167,21 @@ function saveSettings(id: string, settings: ChatSettings): void {
 	writeChat(record);
 }
 
+/** The tutor unit a chat practises, and whether its session is counted. */
+function setTutorUnit(id: string, unit: string): void {
+	const record = getChat(id);
+	if (!record) throw new Error(`Chat not found: ${id}`);
+	record.tutorUnit = unit;
+	writeChat(record);
+}
+
+function markTutorCounted(id: string): void {
+	const record = getChat(id);
+	if (!record) throw new Error(`Chat not found: ${id}`);
+	record.tutorCounted = true;
+	writeChat(record);
+}
+
 /** Rename a session (the header's click-to-edit title, 2026-09-17). Like
  * saveSettings, a rename is NOT conversation activity: updatedAt stays put
  * so sidebar order never churns. Same fallback as createChat — the empty
@@ -258,6 +273,8 @@ export const chatStore: ChatStore = {
 	saveMessages,
 	saveTree,
 	saveSettings,
+	setTutorUnit,
+	markTutorCounted,
 	renameChat,
 	deleteChat,
 	appendTurnUsage,

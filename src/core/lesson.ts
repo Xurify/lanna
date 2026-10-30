@@ -770,13 +770,16 @@ function addDays(key: string, n: number): string {
 	return d.toISOString().slice(0, 10);
 }
 
+export const DAYS_IN_WEEK = 7;
+
 /**
  * The streak: consecutive active days ending today (or yesterday, while
- * today is still open). One missed day is forgiven as a rest day when the
- * six days before it were all active — a streak should reward the habit,
- * not punish a single off day.
+ * today is still open). A missed day is forgiven as a rest day when the
+ * seven days ending on it hold no more misses than `restAllowance` — the
+ * days the plan does not ask for (7 − daysPerWeek). A streak should reward
+ * the habit, not punish a planned off day.
  */
-export function streakOf(activeDays: ReadonlySet<string>, today: string): { days: number; restUsed: boolean; activeToday: boolean } {
+export function streakOf(activeDays: ReadonlySet<string>, today: string, restAllowance = 1): { days: number; restUsed: boolean; activeToday: boolean } {
 	const activeToday = activeDays.has(today);
 	let cursor = activeToday ? today : addDays(today, -1);
 	let days = 0;
@@ -787,12 +790,11 @@ export function streakOf(activeDays: ReadonlySet<string>, today: string): { days
 			cursor = addDays(cursor, -1);
 			continue;
 		}
-		const before = addDays(cursor, -1);
-		let run = 0;
-		for (let k = 0; k < 6; k++) if (activeDays.has(addDays(before, -k))) run++;
-		if (days > 0 && run === 6 && !restUsed) {
+		let misses = 0;
+		for (let k = 0; k < DAYS_IN_WEEK; k++) if (!activeDays.has(addDays(cursor, -k))) misses++;
+		if (days > 0 && misses <= restAllowance) {
 			restUsed = true;
-			cursor = before;
+			cursor = addDays(cursor, -1);
 			continue;
 		}
 		break;

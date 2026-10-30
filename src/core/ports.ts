@@ -51,6 +51,10 @@ export interface ChatStore {
 	appendTurnUsage(id: string, entry: TurnUsage): void;
 	/** Append one extraction-run usage entry — idempotent per startedAt. */
 	appendExtractionUsage(id: string, entry: ExtractionRunUsage): void;
+	/** Stamp the tutor unit a chat practises (set once, at creation). */
+	setTutorUnit(id: string, unit: string): void;
+	/** Mark the chat's tutor session as counted. */
+	markTutorCounted(id: string): void;
 	/** Persist the per-chat model/thinking settings (the model control).
 	 *  Replace-whole: the picker sends the complete settings object. */
 	saveSettings(id: string, settings: ChatSettings): void;

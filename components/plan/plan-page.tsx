@@ -25,7 +25,7 @@ import { HoursSheet } from "@/components/hours-sheet";
 import { Slider } from "@/components/plan/slider";
 import { Timeline } from "@/components/milestones/milestones-page";
 import { WeakSpots } from "@/components/daily-plan";
-import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages, LEVEL_CAN_DO, levelDates, MIN_PACE_DAYS, paceEta, purposePhrase, shiftLine, withPlan, type LearnerGoal, type WeakSpotSummary } from "@/src/core";
+import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages, LEVEL_CAN_DO, levelDates, MIN_PACE_DAYS, PACE_WINDOW_DAYS, paceEta, purposePhrase, shiftLine, withPlan, type LearnerGoal, type WeakSpotSummary } from "@/src/core";
 import type { LearnerFacts, MilestoneEstimate } from "@/src/core";
 
 /** The part of the milestones report (src/server/milestones.ts) the page reads. */
@@ -149,6 +149,11 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 					<p className="mt-1 min-h-5 font-ui text-sm text-muted-foreground" aria-live="polite">
 						{shift ?? (dirty ? "About the same as your saved plan." : `${hoursText(hoursDone)} of ~${topHours} guided hours done · at ${clock(savedMinutes)} × ${savedDays} days a week`)}
 					</p>
+					{facts && (
+						<p className="mt-2 font-ui text-sm font-semibold text-foreground" data-testid="plan-gap">
+							You planned {clock(savedMinutes)} a day. The last {PACE_WINDOW_DAYS} days averaged {clock(Math.round(facts.paceMinutes))} a day.
+						</p>
+					)}
 
 					<div className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
 						<div>
@@ -173,7 +178,7 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 
 					<div className="mt-3 flex min-h-10 flex-wrap items-center justify-between gap-3">
 						<p className="font-ui text-xs text-muted-foreground" data-testid="plan-real-pace">
-							{paceKnown ? (paceDate ? `At your real pace (${facts!.paceMinutes} min a day over the last two weeks): ${monthOf(paceDate)}.` : "At your real pace: no date yet.") : `At your real pace: not enough data yet (${facts?.paceDays ?? 0} of the ${MIN_PACE_DAYS} study days it needs, out of the last 14).`}
+							{paceKnown ? (paceDate ? `At your real pace (${facts!.paceMinutes} min a day over the last two weeks): ${monthOf(paceDate)}.` : "At your real pace: no date yet.") : `At your real pace: not enough data yet (${facts?.paceDays ?? 0} of the ${MIN_PACE_DAYS} study days it needs, out of the last ${PACE_WINDOW_DAYS}).`}
 						</p>
 						{dirty && (
 							<div className="flex items-center gap-2">

@@ -14,12 +14,22 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import { curriculumState, type UnitEvidence } from "../core/curriculum.ts";
 import { learnerProfileText, type LearnerGoal } from "../core/onboarding.ts";
+import { RECENT_DAYS } from "../core/carry-over.ts";
+import { dayKey } from "../core/review.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 
 interface ProgressFile {
 	units?: Record<string, UnitEvidence | undefined>;
 	goal?: LearnerGoal;
 	weak?: WeakRecord;
+	days?: Record<string, { minutes?: number } | undefined>;
+}
+
+/** Minutes a day actually logged over the last RECENT_DAYS days. */
+function recentAverage(days: ProgressFile["days"], now = new Date()): number {
+	let total = 0;
+	for (let i = 0; i < RECENT_DAYS; i++) total += days?.[dayKey(new Date(now.getTime() - i * 86_400_000))]?.minutes ?? 0;
+	return Math.round(total / RECENT_DAYS);
 }
 
 /** The profile block, or null when nothing is known yet (a fresh profile
@@ -37,5 +47,5 @@ export function learnerProfileSegment(): string | null {
 	const hasEvidence = Object.values(units).some((u) => u && u.reps > 0);
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
-	return learnerProfileText(goal, state, units, record.weak);
+	return learnerProfileText(goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS });
 }

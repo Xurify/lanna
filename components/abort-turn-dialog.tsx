@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
+import { Button } from "@/components/ui/button";
 
 /**
  * The ESC-abort guard (owner, 2026-10-02): the global Esc → abort chain
@@ -84,23 +85,12 @@ export function AbortTurnBody({
 					{busy && mode !== "turn" ? " The working turn stops too." : ""}
 				</p>
 				<div className="mt-4 flex justify-end gap-2">
-					<button
-						type="button"
-						data-testid="abort-turn-cancel"
-						onClick={onClose}
-						className="rounded-sm px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-					>
+					<Button type="button" variant="ghost" size="sm" data-testid="abort-turn-cancel" onClick={onClose}>
 						Cancel
-					</button>
-					<button
-						type="button"
-						data-testid="abort-turn-confirm"
-						onClick={onConfirm}
-						// Destructive red — the app's established destructive pair.
-						className="rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/20"
-					>
+					</Button>
+					<Button type="button" variant="destructive" size="sm" data-testid="abort-turn-confirm" onClick={onConfirm}>
 						{copy.action}
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>

@@ -362,7 +362,16 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 			`\nThe scene so far:\n${transcript(s)}`,
 			`\nThe learner has said ${n} line${n === 1 ? "" : "s"}${n >= SPEAK_TURNS ? ` — this was the last one, so close the scene now ("end": true)` : ""}. Answer the last line.`,
 		].join("\n");
-		const reply = parseTutorReply(await ask(engine, SYSTEM, prompt, s.usage));
+		let reply: TutorReply;
+		try {
+			reply = parseTutorReply(await ask(engine, SYSTEM, prompt, s.usage));
+		} catch (err) {
+			// The line got no answer: take it back out, so a retry does not
+			// say it twice or spend a second turn of the cap.
+			s.turns.pop();
+			speakStore.put(s);
+			throw err;
+		}
 		const forced = n >= SPEAK_TURNS;
 		const t = tutorTurn(reply, now);
 		s.turns.push(t);
@@ -437,7 +446,7 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 				xp,
 				correct: counts.repaired,
 				total: counts.prompts,
-				perfect: summary.corrections.length === 0,
+				perfect: summary.corrections.length === 0 && !summary.unreadable,
 				queued,
 				reps: summary.corrections.map((c, i) => ({
 					itemId: `${s.id}#${i}`,

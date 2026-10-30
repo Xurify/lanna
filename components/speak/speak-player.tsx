@@ -638,7 +638,10 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 	const s = outcome.session;
 	const counts = speakCounts(s.turns);
 	const sum = s.summary;
-	const praise = PRAISE[counts.learner % PRAISE.length]!;
+	// Praise only a scene that earned it: a readable summary with nothing to
+	// fix and every prompt repaired. Otherwise the heading just counts lines.
+	const earned = !!sum && !sum.unreadable && sum.corrections.length === 0 && counts.repaired >= counts.prompts;
+	const praise = earned ? `${PRAISE[counts.learner % PRAISE.length]!} ` : "";
 	return (
 		<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="speak-end">
 			<div className="flex items-center gap-4">
@@ -648,7 +651,8 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 				<div>
 					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Speak · {s.sceneTitle} · done</p>
 					<h1 className="font-ui text-3xl font-black text-foreground">
-						{praise} {counts.learner} {counts.learner === 1 ? "line" : "lines"} said
+						{praise}
+						{counts.learner} {counts.learner === 1 ? "line" : "lines"} said
 					</h1>
 				</div>
 			</div>
@@ -688,11 +692,16 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 					{outcome.queued.length > 0 && <p className="mt-2 font-prose text-sm text-muted-foreground">The words behind them are in your review deck now.</p>}
 				</div>
 			) : (
-				sum && (
+				sum &&
+				(sum.unreadable ? (
+					<p className="mt-6 rounded-xl bg-muted px-4 py-3 font-ui text-sm font-bold text-muted-foreground" data-testid="speak-unreadable">
+						The summary could not be read, so no fixes are listed.
+					</p>
+				) : (
 					<p className="mt-6 rounded-xl bg-go-soft px-4 py-3 font-ui text-sm font-bold text-go" data-testid="speak-clean">
 						Nothing to fix this time.
 					</p>
-				)
+				))
 			)}
 			{sum && sum.keep.length > 0 && (
 				<div className="mt-8">

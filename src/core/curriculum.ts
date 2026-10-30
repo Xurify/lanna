@@ -507,6 +507,8 @@ export interface Projection {
  *  in them: a week of one minute a day is a start, not a rate, and
  *  extrapolating it dates the goal in the next century. */
 export const MIN_PACE_DAYS = 7;
+/** The window the measured pace is averaged over. */
+export const PACE_WINDOW_DAYS = 14;
 
 /** ISO date `hoursLeft` of study lands at the measured pace (minutes a day
  *  over the last 14 days), or null while the evidence is too thin. */
@@ -569,6 +571,8 @@ export interface PlanTask {
 	 *  text Talk, or a Story. */
 	via?: "tutor" | "speak" | "talk" | "story";
 	href?: string;
+	/** The day this unfinished task was planned on (carry-over). */
+	from?: string;
 }
 
 export interface DailyPlan {
@@ -621,6 +625,9 @@ export interface PlanInput {
 	watch?: { id: string; title: string; minutes: number; coverage: number };
 	/** An episode read before today exists, so a timed re-read is possible. */
 	reread?: boolean;
+	/** Unfinished tasks from earlier days (src/core/carry-over.ts): the ones
+	 *  this plan offers again move to the top, labelled with their day. */
+	carried?: Array<{ id: string; from: string }>;
 }
 
 /** Which tasks survive a tight budget first (lower keeps): the must-haves,
@@ -694,7 +701,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	// 4. Strengthen: a weak spot on record first (the check or the deck
 	//    flagged it, even with no lesson yet), else the weakest practised
 	//    drill (not the Continue unit), else a blitz across the units started.
-	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && u.kind === "drill" && u.id !== input.next && u.status !== "locked");
+	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
 	const weak =
 		spot ??
 		all
@@ -716,9 +723,10 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	}
 
 	// 5. Words: the first open words unit that is not already the lesson.
-	const wordsUnit = all.find((u) => u.kind === "words" && u.id !== input.next && (u.status === "open" || u.status === "started"));
+	//    A words unit that Strengthen already takes is left to it.
+	const wordsUnit = all.find((u) => u.kind === "words" && u.id !== input.next && u.id !== spot?.id && (u.status === "open" || u.status === "started"));
 	if (wordsUnit) {
-		const wordsDone = Object.keys(day.units).some((id) => byId.get(id)?.kind === "words" && id !== input.next && (day.units[id] ?? 0) > 0);
+		const wordsDone = Object.keys(day.units).some((id) => byId.get(id)?.kind === "words" && id !== input.next && id !== spot?.id && (day.units[id] ?? 0) > 0);
 		tasks.push({
 			id: "words",
 			title: `Words: ${wordsUnit.title.replace(/^Words: /, "")}`,
@@ -765,7 +773,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const chapterScene = current?.units.find((u) => u.kind === "goal")?.scene;
 	const scenes = [...new Set([chapterScene, ...(input.scenes ?? [])].filter((s): s is string => !!s))];
 	const scene = scenes.length ? scenes[input.dayOfYear % scenes.length] : undefined;
-	const speakDone = day.talks + day.stories + day.tutors + (day.speaks ?? 0) > 0;
+	const speakDone = (day.speaks ?? 0) + (tutorUnit ? day.tutors : 0) > 0;
 	if (tutorUnit) {
 		tasks.push({ id: "speak", title: `With the tutor: ${tutorUnit.title}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
 	} else if (scene) {
@@ -801,7 +809,10 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		}
 	}
 	const kept = tasks.filter((t) => keep.has(t.id));
-	return { minutes: kept.reduce((n, t) => n + t.minutes, 0), tasks: kept, done: kept.filter((t) => t.done).length, total: kept.length };
+	const carried = new Map((input.carried ?? []).map((c) => [c.id, c.from]));
+	const marked = kept.map((t) => (carried.has(t.id) && !t.done ? { ...t, from: carried.get(t.id) } : t));
+	const ordered = [...marked.filter((t) => t.from), ...marked.filter((t) => !t.from)];
+	return { minutes: kept.reduce((n, t) => n + t.minutes, 0), tasks: ordered, done: kept.filter((t) => t.done).length, total: kept.length };
 }
 
 /** A tutor unit's first message: the brief plus the doctrine the practice

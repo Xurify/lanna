@@ -30,10 +30,12 @@ export async function startTutorChat(
 	router: { push: (href: string) => void },
 	opts: { title: string; prompt: string; activity?: "talk" | "story" | "tutor"; unit?: string; reuse?: WhyReuse; kind?: "practice" | "teach" },
 ): Promise<void> {
-	// The day's plan counts a Talk, a Story or a tutor unit as its speaking
-	// task; a tutor unit also counts the session toward the unit.
+	// The day's plan counts a Talk or a Story as its speaking task when it
+	// opens. A tutor unit's session counts when the learner first types
+	// (the server, src/server/turn-service.ts), so the chat carries the unit.
 	const activity = opts.activity ?? (opts.title.startsWith("Talk:") ? "talk" : opts.title.startsWith("Story:") ? "story" : undefined);
-	if (activity) {
+	const tutorUnit = activity === "tutor" && !opts.reuse ? opts.unit : undefined;
+	if (activity && activity !== "tutor") {
 		void fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -56,7 +58,7 @@ export async function startTutorChat(
 		headers: { "Content-Type": "application/json" },
 		// A "teach" session (the placement follow-up) runs the prober with
 		// the learner profile in its prompt, then the teacher.
-		body: JSON.stringify({ title: opts.title, kind: opts.kind ?? "practice" }),
+		body: JSON.stringify({ title: opts.title, kind: opts.kind ?? "practice", ...(tutorUnit ? { tutorUnit } : {}) }),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	const { id } = (await res.json()) as { id: string };
@@ -84,7 +86,7 @@ export function talkPrompt(scene: Scene): string {
 	return [
 		`Talk: role-play. You are ${scene.brief}.`,
 		"Speak only Slovak, short lines at my level, one turn at a time, and wait for my reply.",
-		"Stay in the scene. Do not correct me mid-scene; when I write 'koniec' (or after about 10 turns), step out and give me my 3 most useful corrections with the right forms in say: spans, then 2 phrases worth keeping.",
+		"Stay in the scene. When I slip, prompt me to fix it myself with a hint, not the answer; do not recast my line. When I write 'koniec' (or after about 10 turns), step out and give me my 3 most useful corrections with the right forms in say: spans, then 2 phrases worth keeping.",
 		"Start the scene now with your first line.",
 	].join(" ");
 }

@@ -82,7 +82,7 @@ test("parseSummary: at most three corrections with both sides, two phrases, a no
 	assert.equal(s.corrections[1]!.lemma, undefined);
 	assert.deepEqual(s.keep, ["Nech sa páči.", "Ďakujem pekne.", "extra"]);
 	assert.equal(s.note, "Clear and polite.");
-	assert.deepEqual(parseSummary("not json at all"), { corrections: [], keep: [] });
+	assert.deepEqual(parseSummary("not json at all"), { corrections: [], keep: [], unreadable: true });
 });
 
 test("speakXp and speakCounts: lines, prompts and repairs", () => {
@@ -192,6 +192,16 @@ test("a scene is forced closed after the turn cap, and an unfinished one is offe
 	assert.deepEqual(speak.speakState().unfinished, { id: s.id, scene: "way", sceneTitle: "Na ulici", turns: SPEAK_TURNS });
 	speak.speakDrop(s.id);
 	assert.equal(speak.speakState().unfinished, null);
+});
+
+test("a line the model could not answer is taken back, so a retry says it once and spends one turn", async () => {
+	const engine = fauxEngine([reply({ sk: "Ahoj!", en: "Hi!" })]);
+	const now = new Date("2026-10-30T10:00:00Z");
+	const s = await speak.speakStart("way", { engine, now });
+	await assert.rejects(speak.speakTurn({ id: s.id, text: "moja línia", via: "typed" }, { engine, now }));
+	assert.equal(speakStore.get(s.id)!.turns.length, 1, "only the tutor's opening line is left");
+	assert.equal(speakCounts(speakStore.get(s.id)!.turns).learner, 0);
+	speak.speakDrop(s.id);
 });
 
 test("transcribe refuses honestly without a key", async () => {

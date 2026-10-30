@@ -31,15 +31,26 @@ export function nextTask(plan: Plan | null): PlanTask | null {
 	return plan?.tasks.find((t) => !t.done) ?? null;
 }
 
+/** "Tue" for a YYYY-MM-DD day key. */
+function dayName(key: string): string {
+	return new Date(`${key}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short" });
+}
+
 export function DailyPlan({
 	plan,
 	nextUnit,
+	pace,
+	backlog = 0,
 	busy = false,
 	onSpeak,
 }: {
 	plan: Plan | null;
 	/** The Continue unit: "one more lesson" once the plan is done. */
 	nextUnit: string;
+	/** The goal against the plan and the last seven days' logged minutes. */
+	pace?: { goalMinutes: number; plannedMinutes: number; dailyAverage: number; windowDays: number };
+	/** Unfinished tasks from the last seven days. */
+	backlog?: number;
 	busy?: boolean;
 	onSpeak: (task: PlanTask) => void;
 }) {
@@ -60,13 +71,25 @@ export function DailyPlan({
 					{!plan ? "\u00a0" : complete ? `All ${total} done` : done === 0 ? `${total} tasks · about ${left} min` : `${done} of ${total} done · about ${left} min left`}
 				</p>
 			</div>
+			{pace && plan && (
+				<p className="mt-1 px-1 text-sm text-muted-foreground" data-testid="plan-pace">
+					Goal {pace.goalMinutes} min a day · today&apos;s plan about {pace.plannedMinutes} min · the last {pace.windowDays} days averaged {pace.dailyAverage} min a day
+				</p>
+			)}
+			{backlog > 0 && pace && (
+				<p className="mt-1 px-1 text-sm font-semibold text-gold" data-testid="plan-backlog">
+					{backlog} unfinished {backlog === 1 ? "task" : "tasks"} left over from the last {pace.windowDays} days
+				</p>
+			)}
 			<PlanProgress tasks={tasks} />
 
 			{complete && (
 				<div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-gold/40 bg-gold/5 p-4" data-testid="plan-complete">
 					<div>
 						<p className="text-lg font-black text-foreground">All done for today. Pekne!</p>
-						<p className="text-sm text-muted-foreground">Anything more is a bonus. Practice freely below, or keep going on your path.</p>
+						<p className="text-sm text-muted-foreground">
+							{pace ? `That is ${plan?.minutes ?? 0} of your ${pace.goalMinutes} min goal. ` : ""}Practice freely below, or keep going on your path.
+						</p>
 					</div>
 					<Link href={`/lesson?unit=${nextUnit}`} className={cn(SECONDARY, SMALL)} data-testid="plan-one-more">
 						One more lesson
@@ -151,7 +174,7 @@ function NextTask({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSp
 				<span className="min-w-0 flex-1">
 					<span className={cn("block text-xs font-bold", st.text)}>Up next · {STRANDS.find((s) => s.id === strand)?.title}</span>
 					<span className="mt-0.5 block text-lg font-black leading-tight text-foreground">{task.title}</span>
-					<span className="mt-1 block text-sm text-pretty text-muted-foreground">{task.line}</span>
+					<span className="mt-1 block text-sm text-pretty text-muted-foreground">{task.from ? `Left from ${dayName(task.from)} · ${task.line}` : task.line}</span>
 				</span>
 			</span>
 			<span className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 sm:pl-16">
@@ -189,7 +212,7 @@ function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpe
 			<TaskIcon task={task} />
 			<span className="min-w-0 flex-1">
 				<span className={cn("block truncate text-base font-bold", task.done ? "text-muted-foreground" : "text-foreground")}>{task.title}</span>
-				<span className="block truncate text-sm text-muted-foreground">{task.line}</span>
+				<span className="block truncate text-sm text-muted-foreground">{task.from ? `Left from ${dayName(task.from)} · ${task.line}` : task.line}</span>
 			</span>
 			<span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{task.done ? "Done" : `${task.minutes} min`}</span>
 		</>

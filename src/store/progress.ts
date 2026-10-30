@@ -45,6 +45,8 @@ export interface DayRecord {
 	/** The same minutes per activity, measured while the learner was
 	 *  active (src/core/active-time.ts). Absent on days before it was kept. */
 	minutesBy?: Partial<Record<TimedActivity, number>>;
+	/** The day's plan as last shown: each task and whether it was done (carry-over). */
+	planned?: Array<{ id: string; title: string; done: boolean }>;
 }
 
 /** The learner's goal and profile: the target level and planned minutes

@@ -5,6 +5,7 @@ import { useChatSession } from "@/components/session";
 import { visibleQueuedSteers } from "@/components/session-core";
 import { SetupDialog } from "@/components/setup-dialog";
 import { Hint } from "@/components/ui/hint";
+import { buttonVariants } from "@/components/ui/button";
 import { useZeroKeys, ZeroKeysPill } from "@/components/setup-cta";
 import { useStickToBottomContext, type StickToBottomContext } from "use-stick-to-bottom";
 import {
@@ -1656,7 +1657,7 @@ export function Chat({
 										type="button"
 										data-testid="setup-cta"
 										onClick={() => setSetupOpen(true)}
-										className="cursor-pointer rounded-full border-2 border-gold/40 bg-gold/10 px-4 py-1.5 font-ui text-xs font-bold text-gold transition-colors hover:bg-gold/20"
+										className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-bold")}
 									>
 										Set up your models
 									</button>

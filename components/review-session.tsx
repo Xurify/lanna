@@ -578,11 +578,11 @@ export function ReviewSession() {
 									type="button"
 									onClick={() => void suspend()}
 									className="flex items-center gap-1.5 rounded-md px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
-									title="Never show this sentence again"
+									title="Never show this word again"
 									data-testid="review-suspend"
 								>
 									<EyeOffIcon className="size-3.5" aria-hidden="true" />
-									Hide this sentence
+									Hide this word
 								</button>
 							</div>
 						</div>
