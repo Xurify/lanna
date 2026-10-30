@@ -9,16 +9,28 @@
  * prints the same week counted both ways. Start the app against the same
  * folder (LH_DATA_DIR=<folder> npm run dev) to try the live behaviour.
  *
- * Refuses to run without LH_DATA_DIR, so it can never touch your own
- * profile.
+ * `npm run dev:sandbox -- --seed` does both steps in a throwaway folder.
+ *
+ * Refuses to run without LH_DATA_DIR, and refuses a folder that already has
+ * any profile data in it, so it can never overwrite your own days.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
+/** Every file under `dir`, so a folder with anything in it is not empty. */
+function hasFiles(dir: string): boolean {
+	if (!fs.existsSync(dir)) return false;
+	return fs.readdirSync(dir, { withFileTypes: true }).some((e) => (e.isDirectory() ? hasFiles(path.join(dir, e.name)) : true));
+}
+
 const dir = process.env.LH_DATA_DIR;
 if (!dir) {
 	console.error("Set LH_DATA_DIR to an empty folder first: this script writes a demo profile and must not touch your real data.");
+	process.exit(1);
+}
+if (hasFiles(path.join(dir, "profiles"))) {
+	console.error(`${dir} already has profile data. This script only seeds an empty folder; it would replace the days in it. Use a new folder (npm run dev:sandbox -- --seed makes one).`);
 	process.exit(1);
 }
 process.env.LH_PROFILE = "slovak";

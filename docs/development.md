@@ -16,6 +16,7 @@ Not a chat app with a graph bolted on: sessions are probe→teach lessons, the p
 npm install          # once
 
 npm run dev          # http://localhost:3010
+npm run dev:sandbox  # a throwaway instance for demos and anything an agent drives (see "Sandbox" below)
 npm run build        # production build (standalone output)
 npm start            # serve the production build
 
@@ -178,7 +179,19 @@ pricing-generation step: Pi AI's catalog and public calculator are the authority
 
 **Dictation.** Optional speech-to-text: the server mints short-lived Deepgram tokens; audio streams browser→Deepgram over WebSocket, never through the server.
 
+## Sandbox: demos and agent runs never touch your real data
+
+Anything that starts the app to look at it, screenshot it or drive it (a demo, an agent, a manual check) must not use your own `data/`, your keys or your port. `npm run dev:sandbox` (`scripts/dev-sandbox.ts`) starts an instance with:
+
+- **data** in a new folder under the OS temp dir (`LH_DATA_DIR`), never inside the repo; add `-- --seed` to fill it with the demo week (`scripts/demo-measured-minutes.ts`, which refuses any folder that already has profile data);
+- **keys** hidden: `LH_AUTH_FILE` inside that folder and `LH_IGNORE_ENV_KEYS=1`, so `.env.local` and the environment's keys are not used and nothing paid can run;
+- **a free port** chosen by the OS, never 3010.
+
+It never edits a tracked file and never deletes anything; the folder is printed and is yours to delete. Next locks the checkout's `.next` folder, so while your own `npm run dev` is running here the sandbox cannot start (it says so and prints the worktree recipe: `git worktree add ..\<name>-sandbox`, install, run it there). A different build folder is not the answer: Next then rewrites the tracked `tsconfig.json` and `next-env.d.ts` (checked 2026-10-29). `dev:fresh` is the older new-user simulator; it ends in `npm run dev`, whose `-p 3010` beats the `PORT` it exports, so it does not move off the real port.
+
 ## Testing
+
+Run the suite with `NODE_ENV=test` set. It is the fence that sends the data folder to a temp dir (`config.ts`, E6); without it the tests write their fixtures into your real `data/`. `npm test` sets it with `NODE_ENV=test tsx --test ...`, which Windows `cmd.exe` rejects ("'NODE_ENV' is not recognized"), so on Windows set it yourself first (`$env:NODE_ENV="test"` in PowerShell) and never run `tsx --test` or `node --test` bare.
 
 All deterministic, no LLM, no network (engines are injected — pi-ai's faux provider scripted per test; `globalThis.fetch` stubbed where transport matters):
 
