@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useActiveTime } from "@/components/use-active-time";
 import { speak, SpeedToggle } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
@@ -71,6 +72,9 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 	const [meaning, setMeaning] = useState(false);
 	const [typing, setTyping] = useState(false);
 	const startedAt = useRef(Date.now());
+	// Only the scene itself is practice (not picking one or the summary
+	// after): the gaps between actions, each capped (`ms` stays the wall-clock).
+	const activeTime = useActiveTime("speak", "interactive", { start: false });
 	const recorder = useRef<Recorder | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -106,6 +110,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 				const s = await post<SpeakSession>({ action: "start", scene });
 				setSession(s);
 				startedAt.current = Date.now();
+				activeTime.restart();
 				setPhase("scene");
 				const first = s.turns[0];
 				if (first) void speak(first.text).catch(() => {});
@@ -114,7 +119,7 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 				setPhase("pick");
 			}
 		},
-		[],
+		[activeTime],
 	);
 
 	const resume = useCallback(async (id: string) => {
@@ -128,11 +133,12 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 			if (!data.session) throw new Error("That scene is gone.");
 			setSession(data.session);
 			startedAt.current = Date.now();
+			activeTime.restart();
 			setPhase("scene");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, []);
+	}, [activeTime]);
 
 	// ?scene=… opens the scene at once (the daily plan's link).
 	useEffect(() => {
@@ -149,15 +155,17 @@ export function SpeakPlayer({ initialState, sceneId = null }: { initialState: Sp
 		setPhase("ending");
 		sfx.done();
 		try {
-			const o = await post<Outcome>({ action: "end", id: session.id, ms: Date.now() - startedAt.current, tz: new Date().getTimezoneOffset() });
+			const o = await post<Outcome>({ action: "end", id: session.id, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
 			setOutcome(o);
 			setSession(o.session);
 			setPhase("done");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 			setPhase("scene");
+			// The scene goes on: count it again.
+			activeTime.restart();
 		}
-	}, [session, phase]);
+	}, [session, phase, activeTime]);
 
 	const send = useCallback(
 		async (text: string, via: "voice" | "typed", clip?: { blob: Blob; ms: number; pron?: PronScore | null }) => {

@@ -4,15 +4,16 @@
  * This week's balance (LangHarness, 2026-10-28) — the week's minutes by
  * Nation's four strands against a quarter each. One bar per strand with
  * the quarter marked, and one line saying which strand is furthest behind
- * and where it grows. The minutes are the plan's estimates per activity
- * (src/core/strands.ts), and the card says so, because a learner who sees
- * "76% words & rules" should know how it was counted.
+ * and where it grows. The minutes are measured while the learner was active
+ * (src/core/active-time.ts), with the plan's estimate per activity for what
+ * has no timer (src/core/strands.ts); the card says which, because a learner
+ * who sees "76% words & rules" should know how it was counted.
  */
 
 import { HeadphonesIcon, MessagesSquareIcon, PencilRulerIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STRAND_STYLE } from "@/components/strand-style";
-import { STRANDS, strandAdvice, type Strand, type StrandBalance as Balance } from "@/src/core";
+import { STRANDS, strandAdvice, strandCaption, type Strand, type StrandBalance as Balance } from "@/src/core";
 
 export const STRAND_ICON: Record<Strand, React.ComponentType<{ className?: string }>> = {
 	input: HeadphonesIcon,
@@ -51,8 +52,8 @@ export function StrandBalance({ balance }: { balance: Balance | null }) {
 			<p className="mt-3 text-sm text-pretty text-foreground/85" data-testid="strand-advice">
 				{strandAdvice(balance)}
 			</p>
-			<p className="mt-1 text-xs text-muted-foreground">
-				{balance.total > 0 ? `About ${Math.round(balance.total)} min this week, counted from each activity's planned minutes. The line marks a quarter.` : "Counted from each activity's planned minutes. The line marks a quarter."}
+			<p className="mt-1 text-xs text-muted-foreground" data-testid="strand-caption">
+				{strandCaption(balance)}
 			</p>
 		</div>
 	);

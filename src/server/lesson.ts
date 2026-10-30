@@ -26,6 +26,7 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "../core/lesson.ts";
+import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
 	CEFR_ORDER,
@@ -151,6 +152,9 @@ export interface LessonResultInput {
 	mode: "lesson" | "blitz";
 	reps: RepResult[];
 	ms?: number;
+	/** Active milliseconds since the last send (src/core/active-time.ts);
+	 *  what the day's minutes count, `ms` stays the wall-clock for the log. */
+	activeMs?: number;
 	tz?: number;
 }
 
@@ -205,7 +209,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 			newBest = correct;
 		}
 	}
-	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(60, input.ms / 60_000);
+	addMinutes(day, input.mode === "blitz" ? "blitz" : "lesson", sessionMs(input));
 	unit.reps += total;
 	unit.correct += correct;
 	unit.lastAt = now.toISOString();
@@ -274,16 +278,27 @@ function logRep(r: RepResult): LessonLogRep {
 }
 
 /** A review answer counts toward XP and the day (called by /api/review). */
-export function recordReviewXp(verdict: RepVerdict, tz?: number, now = new Date(), ms?: number): number {
+export function recordReviewXp(verdict: RepVerdict, tz?: number, now = new Date(), ms?: number, activeMs?: number): number {
 	const p = progressStore.read();
 	const day = dayOf(p, today(tz, now));
 	const xp = verdict === "exact" ? 8 : verdict === "accents" ? 4 : 1;
 	day.xp += xp;
 	day.reviews++;
-	if (ms && Number.isFinite(ms)) day.minutes = (day.minutes ?? 0) + Math.min(5, ms / 60_000);
+	addMinutes(day, "review", sessionMs({ ms, activeMs }));
 	p.xp += xp;
 	progressStore.write(p);
 	return xp;
+}
+
+/** Active time that no finished session carries: a lesson or card left
+ *  unfinished, a tab closed mid-session (the client sends it on leaving).
+ *  Adds minutes only; counts and XP wait for a session that finishes. */
+export function recordActiveTime(activity: TimedActivity, ms: number, tz?: number, now = new Date()): number {
+	const p = progressStore.read();
+	const day = dayOf(p, today(tz, now));
+	const added = addMinutes(day, activity, ms);
+	progressStore.write(p);
+	return added;
 }
 
 export type Activity = "talk" | "story" | "tutor";
@@ -512,6 +527,7 @@ export interface PlacementResultInput {
 	/** Every ladder item answered, for the lesson log. */
 	reps: Array<RepResult & { tier: string }>;
 	ms?: number;
+	activeMs?: number;
 	tz?: number;
 	/** The Socratic stage's closing line. */
 	note?: string;
@@ -560,7 +576,7 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 	if (input.vocabulary) goal.vocabulary = input.vocabulary;
 	p.goal = goal;
 	const day = dayOf(p, today(input.tz, now));
-	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(20, input.ms / 60_000);
+	addMinutes(day, "placement", sessionMs(input));
 	progressStore.write(p);
 	try {
 		appendLessonLog({

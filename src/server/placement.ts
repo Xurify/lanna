@@ -443,7 +443,7 @@ export interface FinishResult extends PlacementResult {
 }
 
 /** Fold the three stages into the outcome, record it, index the session. */
-export function finishPlacement(input: { id: string; ms?: number; tz?: number }, opts: PlacementOptions = {}): FinishResult {
+export function finishPlacement(input: { id: string; ms?: number; activeMs?: number; tz?: number }, opts: PlacementOptions = {}): FinishResult {
 	const s = placementStore.get(input.id);
 	if (!s) throw new Error("No such placement check.");
 	const now = opts.now ?? new Date();
@@ -491,7 +491,7 @@ export function finishPlacement(input: { id: string; ms?: number; tz?: number },
 		weakNotes[unit] = r.judged?.note ? r.judged.note : `wrote "${r.given}" for ${r.item.answer}`;
 	}
 	for (const [u, v] of last) if (v.result !== "held") weakNotes[u] = v.note ? `${v.result}: ${v.note}` : `the tutor saw a ${v.result}`;
-	const result = recordPlacement({ outcome, reps, ms: input.ms, tz: input.tz, note: s.probe.summary || undefined, weakNotes, vocabulary: s.words?.estimate ? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable } : undefined }, now);
+	const result = recordPlacement({ outcome, reps, ms: input.ms, activeMs: input.activeMs, tz: input.tz, note: s.probe.summary || undefined, weakNotes, vocabulary: s.words?.estimate ? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable } : undefined }, now);
 	placementStore.put(s);
 	placementStore.index(s);
 	return {

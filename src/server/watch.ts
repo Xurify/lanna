@@ -27,6 +27,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { LANGUAGES } from "../core/language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
+import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
 	MAX_SEGMENTS,
@@ -567,6 +568,8 @@ export interface WatchResultInput {
 	answers: number[];
 	tapped: string[];
 	ms?: number;
+	/** Active milliseconds since the last send (src/core/active-time.ts). */
+	activeMs?: number;
 	tz?: number;
 }
 
@@ -608,7 +611,7 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	const d = (p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	d.watches = (d.watches ?? 0) + 1;
 	d.xp += xp;
-	if (input.ms && Number.isFinite(input.ms)) d.minutes = (d.minutes ?? 0) + Math.min(40, input.ms / 60_000);
+	addMinutes(d, "watch", sessionMs(input));
 	p.xp += xp;
 	progressStore.write(p);
 	const entry: WatchLogEntry = {

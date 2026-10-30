@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
+import { useActiveTime } from "@/components/use-active-time";
 import { setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
@@ -204,6 +205,9 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		);
 	}, [shake]);
 	const startedAt = useRef(Date.now());
+	// The day's minutes count active time, not the wall-clock `ms` (which the
+	// lesson log keeps): the gaps between answers, each capped.
+	const activeTime = useActiveTime(mode === "blitz" ? "blitz" : "lesson", "interactive");
 	const finishing = useRef(false);
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
@@ -283,10 +287,11 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			if (next.items.length === 0) throw new Error("There are no sentences for this unit yet.");
 			setPlan(next);
 			startedAt.current = Date.now();
+			activeTime.restart();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, [mode, unit]);
+	}, [mode, unit, activeTime]);
 
 	// Fetch on mount only when the server could not build the plan.
 	const hadInitial = useRef(initialPlan !== null);
@@ -334,6 +339,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 							},
 						})),
 						ms: Date.now() - startedAt.current,
+						activeMs: activeTime.finish(),
 						tz: new Date().getTimezoneOffset(),
 					}),
 				});
@@ -359,7 +365,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				setSaving(false);
 			}
 		},
-		[plan, mode, xp, forget],
+		[plan, mode, xp, forget, activeTime],
 	);
 
 	// Blitz clock.

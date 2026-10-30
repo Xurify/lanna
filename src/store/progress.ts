@@ -9,6 +9,7 @@
  */
 
 import fs from "node:fs";
+import type { TimedActivity } from "../core/active-time.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -38,8 +39,12 @@ export interface DayRecord {
 	rereads?: number;
 	/** "Say it faster" rounds finished (the fluency strand). */
 	fasts?: number;
-	/** Minutes spent in lessons and review (from the client's timers). */
+	/** Minutes spent practising: the sum of `minutesBy` plus any older,
+	 *  unattributed time (from the client's timers). */
 	minutes?: number;
+	/** The same minutes per activity, measured while the learner was
+	 *  active (src/core/active-time.ts). Absent on days before it was kept. */
+	minutesBy?: Partial<Record<TimedActivity, number>>;
 }
 
 /** The learner's goal and profile: the target level and planned minutes

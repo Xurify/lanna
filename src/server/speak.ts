@@ -28,6 +28,7 @@ import { LANGUAGES } from "../core/language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
 import type { PronEngine, PronScore } from "../core/pronounce.ts";
 import type { StoryUsage } from "../core/reading.ts";
+import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
 	parseSummary,
@@ -373,6 +374,8 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 export interface SpeakEndInput {
 	id: string;
 	ms?: number;
+	/** Active milliseconds since the last send (src/core/active-time.ts). */
+	activeMs?: number;
 	tz?: number;
 }
 
@@ -420,7 +423,7 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		const day = (p.days[key] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 		day.speaks = (day.speaks ?? 0) + 1;
 		day.xp += xp;
-		if (s.ms) day.minutes = (day.minutes ?? 0) + Math.min(20, s.ms / 60_000);
+		addMinutes(day, "speak", sessionMs({ ms: s.ms, activeMs: input.activeMs }));
 		p.xp += xp;
 		progressStore.write(p);
 		try {

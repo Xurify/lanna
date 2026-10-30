@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
+import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { compareAnswer, diacriticSlips, formatInterval, rankLabel, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
@@ -100,6 +101,9 @@ export function ReviewSession() {
 	const [sound, setSound] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const shownAt = useRef(Date.now());
+	// One card at a time: its active time (the gaps between actions, each
+	// capped) is what the day's minutes count; `ms` stays the card's wall-clock.
+	const activeTime = useActiveTime("review", "interactive");
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -117,11 +121,14 @@ export function ReviewSession() {
 			setVerdict(null);
 			setHint(0);
 			shownAt.current = Date.now();
+			// A card is on screen: time it. The caught-up screen is not practice.
+			if (next.next) activeTime.restart();
+			else activeTime.finish();
 			setLoadError(null);
 		} catch (err) {
 			setLoadError(err instanceof Error ? err.message : String(err));
 		}
-	}, []);
+	}, [activeTime]);
 
 	useEffect(() => {
 		void load();
@@ -158,7 +165,7 @@ export function ReviewSession() {
 			await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks }),
+				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks }),
 			});
 			await load();
 			// The sidebar's due badge counts the same deck.
