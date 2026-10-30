@@ -1,6 +1,6 @@
 # Chapter arc: implementation plan
 
-Status: **proposed.** Decided so far: the exam is a required gate, introduced in steps, and skip-ahead comes after the gate. Still open: chapter structure, which blocks phase 1. Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
+Status: **proposed.** Decided: keep the 19 chapters; the exam is a required gate, introduced in steps; skip-ahead comes after the gate. Still open: story bible, passport wording and calendar. Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
 
 Date: 2026-10-30. Evidence: [../research/slovake-eu-benchmark.md](../research/slovake-eu-benchmark.md).
 
@@ -22,7 +22,7 @@ The **arc** is the fixed run of seven steps that every chapter goes through, in 
 
 ## Decisions
 
-1. **Chapters.** Keep the 19 chapters and give each the arc, or re-cut them to fit a fixed arc? Re-cutting changes `src/core/curriculum.ts` and the can-do goals in `src/core/onboarding.ts`. **Open. Blocks phase 1.**
+1. **Chapters.** **Decided 2026-10-30: keep the 19 chapters and give each the arc.** Re-cutting would have changed `src/core/curriculum.ts` and the can-do goals in `src/core/onboarding.ts`, so it's off the table. **Phase 1 is unblocked.**
 2. **Exam gating.** **Decided 2026-10-30: the exam is a required gate. Passing it opens the next chapter.** It ships in steps (6a record-only, then 6b the gate), because a gate built on an unchecked exam would block learners. Open details for 6b: the pass mark and the retry rule, and whether today's "at most two units left" count still applies alongside the gate. Today a chapter opens when the one before has at most two units left (`CHAPTER_SLACK` in `src/core/curriculum.ts`). **Blocks phase 6, not phase 1.**
 3. **Story bible.** Who writes the cast and plot? I can draft it. Nothing is generated until you approve it. **Open. Blocks phase 2.**
 4. **Passport wording.** Paraphrase the CEFR "can do" descriptors with attribution, or write our own "I can" lines? **Open. Blocks phase 6a.**
