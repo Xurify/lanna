@@ -30,7 +30,7 @@ import {
 import { curriculumUnit } from "../src/core/curriculum.ts";
 import { unitBridges, unitsBridgedIn } from "../src/core/unit-bridges.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
-import { TALK_SCENES } from "../components/lesson/tutor.ts";
+import { SPEAK_SCENES } from "../src/core/speak.ts";
 
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] };
 const entries = lexicon.words;
@@ -46,7 +46,7 @@ const tierReps = (tierId: string, hits: number): PlacementRep[] => {
 test("purposes map onto real goals and scenes, and the target follows the most demanding one", () => {
 	for (const p of PURPOSES) {
 		for (const g of p.goals) assert.equal(curriculumUnit(g)?.kind, "goal", `${p.id}: ${g} is not a goal on the map`);
-		for (const s of p.scenes) assert.ok(TALK_SCENES.some((x) => x.id === s), `${p.id}: no Talk scene ${s}`);
+		for (const s of p.scenes) assert.ok(SPEAK_SCENES.some((x) => x.id === s), `${p.id}: no Speak scene ${s}`);
 	}
 	assert.equal(suggestedLevel([]), "A2");
 	assert.equal(suggestedLevel(["daily"]), "A2");

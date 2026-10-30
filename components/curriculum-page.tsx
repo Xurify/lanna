@@ -14,8 +14,8 @@ import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { CurriculumPath } from "@/components/curriculum-path";
-import { startTutorChat, TALK_SCENES, talkPrompt } from "@/components/lesson/tutor";
-import { curriculumUnit, purposeGoals, tutorUnitPrompt, type CurriculumState, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
+import { startTutorChat } from "@/components/lesson/tutor";
+import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
 
 export function CurriculumPage({ initialConfigured, state, next, goal, weak = [] }: { initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[] }) {
 	const router = useRouter();
@@ -41,9 +41,7 @@ export function CurriculumPage({ initialConfigured, state, next, goal, weak = []
 		withTutor(() => startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }));
 	};
 	const onScene = (sceneId: string) => {
-		const scene = TALK_SCENES.find((s) => s.id === sceneId);
-		if (!scene) return;
-		withTutor(() => startTutorChat(router, { title: `Talk: ${scene.title}`, prompt: talkPrompt(scene) }));
+		if (speakScene(sceneId)) router.push(`/speak?scene=${sceneId}`);
 	};
 
 	return (

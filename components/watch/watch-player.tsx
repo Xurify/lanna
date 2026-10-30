@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { SettingsLink } from "@/components/settings/settings-link";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
@@ -242,11 +243,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 								Try again
 							</button>
 						)}
-						{state?.canPrepare === false && (
-							<Link href="/settings" className={PRIMARY}>
-								Set up a model
-							</Link>
-						)}
+						{state?.canPrepare === false && <SettingsLink className={PRIMARY}>Set up a model</SettingsLink>}
 						<button type="button" onClick={() => setStage("shelf")} className={SECONDARY}>
 							Another video
 						</button>
@@ -402,7 +399,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 				<p className="mt-2 font-prose text-xs text-muted-foreground">
 					{state?.canPrepare === false ? (
 						<>
-							Translating needs a model on the cheap slot. <Link href="/settings" className="underline">Set one up</Link>.
+							Translating needs a model on the cheap slot. <SettingsLink className="underline">Set one up</SettingsLink>.
 						</>
 					) : (
 						<>The captions come from YouTube (made by people, or its automatic ones); translating a video is one or two calls on the cheap model slot, paid once. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</>

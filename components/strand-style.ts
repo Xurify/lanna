@@ -20,7 +20,7 @@ export function taskStrand(task: Pick<PlanTask, "id" | "via">): Strand {
 		case "watch":
 			return "input";
 		case "speak":
-			return task.via === "tutor" ? "form" : task.via === "story" ? "input" : "output";
+			return task.via === "tutor" ? "form" : "output";
 		case "fluency":
 		case "blitz":
 			return "fluency";

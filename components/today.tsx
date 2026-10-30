@@ -22,13 +22,13 @@ import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
-import { startTutorChat, storyPrompt, TALK_SCENES, talkPrompt, type Scene } from "@/components/lesson/tutor";
+import { startTutorChat } from "@/components/lesson/tutor";
 import { DailyPlan, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
 import { WeekCard } from "@/components/week-card";
 import { CurriculumPath } from "@/components/curriculum-path";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
-import { curriculumUnit, purposeGoals, STRANDS, tutorUnitPrompt } from "@/src/core";
+import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
 import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
@@ -78,7 +78,6 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	const router = useRouter();
 	const [s, setS] = useState<Summary | null>(initialSummary);
 	const [failed, setFailed] = useState(false);
-	const [talkOpen, setTalkOpen] = useState(false);
 	const [configured, setConfigured] = useState(initialConfigured);
 	const [setupOpen, setSetupOpen] = useState(false);
 	const [pending, setPending] = useState<null | (() => Promise<void>)>(null);
@@ -109,7 +108,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	const enterHref = s ? (up ? up.href : `/lesson?unit=${s.next}`) : undefined;
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter" || !enterHref || talkOpen || setupOpen) return;
+			if (e.key !== "Enter" || !enterHref || setupOpen) return;
 			if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 			const t = e.target as HTMLElement | null;
 			// A focused control answers Enter itself.
@@ -119,7 +118,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [enterHref, talkOpen, setupOpen, router]);
+	}, [enterHref, setupOpen, router]);
 
 	/** Tutor chats need a model; without one, the setup dialog comes first. */
 	const withTutor = (run: () => Promise<void>) => {
@@ -132,41 +131,23 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		void run().catch(() => setBusy(false));
 	};
 
-	const talk = (scene: Scene) =>
-		withTutor(() => startTutorChat(router, { title: `Talk: ${scene.title}`, prompt: talkPrompt(scene) }));
-	const story = () =>
-		withTutor(() =>
-			startTutorChat(router, {
-				title: "Story: Robo in Bratislava",
-				prompt: storyPrompt(
-					(s?.curriculum.chapters ?? [])
-						.flatMap((c) => c.units)
-						.filter((u) => u.kind === "drill" && u.lessons > 0 && u.id !== "words")
-						.map((u) => u.title),
-				),
-			}),
-		);
 	/** A tutor unit on the path: a practice session with the unit's brief. */
 	const tutorUnit = (u: UnitState) => {
 		const unit = curriculumUnit(u.id);
 		if (!unit) return;
 		withTutor(() => startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }));
 	};
-	/** A goal's Talk scene, by scene id. */
+	/** A goal's scene, by scene id: the same spoken scene the plan's Speak task opens. */
 	const sceneById = (id: string) => {
-		const scene = TALK_SCENES.find((x) => x.id === id);
-		if (scene) talk(scene);
+		if (speakScene(id)) router.push(`/speak?scene=${id}`);
 	};
-	/** The plan's speaking task: a tutor unit, a spoken scene (/speak, a
-	 *  link the row follows itself), a text Talk, or a story. */
+	/** The plan's speaking task: a tutor unit, or a spoken scene (/speak, a
+	 *  link the row follows itself). */
 	const speak = (task: PlanTask) => {
 		if (task.via === "tutor" && task.unit) {
 			const u = (s?.curriculum.chapters ?? []).flatMap((c) => c.units).find((x) => x.id === task.unit);
 			if (u) tutorUnit(u);
 		} else if (task.via === "speak") router.push(task.href ?? (task.unit ? `/speak?scene=${task.unit}` : "/speak"));
-		else if (task.via === "talk" && task.unit) sceneById(task.unit);
-		else if (task.via === "talk") setTalkOpen(true);
-		else story();
 	};
 
 	const next = s?.units.find((u) => u.id === s.next);
@@ -185,7 +166,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 			strand: "output",
 			items: [
 				{ href: "/speak", icon: MicIcon, title: "Speak", line: doneToday("speak") ? "One scene said today. Another?" : "A real scene, said out loud", testid: "mode-speak" },
-				{ onClick: () => setTalkOpen(true), icon: MessagesSquareIcon, title: "Talk in writing", line: "A role-play in written Slovak", testid: "mode-talk" },
+				{ href: "/speak?mode=typed", icon: MessagesSquareIcon, title: "Talk in writing", line: "A role-play in written Slovak", testid: "mode-talk" },
 			],
 		},
 		{
@@ -300,8 +281,6 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				</aside>
 			</div>
 
-			{talkOpen && <TalkPicker onClose={() => setTalkOpen(false)} onPick={(scene) => talk(scene)} busy={busy} />}
-
 			<SetupDialog
 				open={setupOpen}
 				onClose={() => setSetupOpen(false)}
@@ -380,49 +359,6 @@ function PracticeGroup({ strand, items, busy }: { strand: Strand; items: Practic
 					);
 				})}
 			</ul>
-		</div>
-	);
-}
-
-function TalkPicker({ onClose, onPick, busy }: { onClose: () => void; onPick: (scene: Scene) => void; busy: boolean }) {
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
-	return (
-		<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-labelledby="talk-title">
-			<div className="lh-rise w-full max-w-2xl rounded-3xl border bg-card p-6">
-				<div className="flex items-start justify-between gap-4">
-					<div>
-						<h2 id="talk-title" className="text-2xl font-black text-foreground">
-							Pick a scene
-						</h2>
-						<p className="mt-1 text-base text-muted-foreground">
-							You write in Slovak, one line at a time. Write <span lang="sk" className="font-bold text-foreground">koniec</span> to stop and get your corrections.
-						</p>
-					</div>
-					<button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-						<XIcon className="size-5" />
-					</button>
-				</div>
-				<div className="mt-5 grid gap-2 sm:grid-cols-2">
-					{TALK_SCENES.map((scene) => (
-						<button
-							key={scene.id}
-							type="button"
-							disabled={busy}
-							onClick={() => onPick(scene)}
-							className="rounded-2xl border bg-background px-4 py-3 text-left transition-colors hover:border-xp/60 hover:bg-xp/5 disabled:opacity-50"
-						>
-							<span className="block text-base font-bold text-foreground" lang="sk">
-								{scene.title}
-							</span>
-							<span className="block text-sm text-muted-foreground">{scene.blurb}</span>
-						</button>
-					))}
-				</div>
-			</div>
 		</div>
 	);
 }
