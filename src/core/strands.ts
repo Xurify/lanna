@@ -12,9 +12,13 @@
  *              re-read, "say it faster")
  * and no more than a quarter to deliberate study. Before this module the
  * app gave form about three quarters of a day's plan and could not show
- * it. Pure and browser-safe; the minutes are the plan's own estimates
- * per activity, so the share is honest to about ±10 points.
+ * it. Pure and browser-safe. Since 2026-10-29 the minutes are measured
+ * while the learner was active (src/core/active-time.ts); an activity with
+ * no timer (Talk, Story, tutor) or a day before they were measured falls
+ * back to the plan's own estimate per activity, ±10 points.
  */
+
+import type { TimedActivity } from "./active-time.ts";
 
 export type Strand = "input" | "output" | "form" | "fluency";
 
@@ -29,6 +33,9 @@ export const STRAND_TARGET = 0.25;
 
 /** What a day's ledger counts (src/store/progress.ts DayRecord). */
 export interface StrandDay {
+	/** Measured minutes per activity (src/core/active-time.ts); an activity
+	 *  with an entry is counted from it, the others from the plan estimate. */
+	minutesBy?: Partial<Record<TimedActivity, number>>;
 	lessons?: number;
 	reviews?: number;
 	blitz?: number;
@@ -52,6 +59,10 @@ export const STRAND_MINUTES = { lesson: 3, review: 0.25, blitz: 1, talk: 6, stor
 export interface StrandBalance {
 	minutes: Record<Strand, number>;
 	total: number;
+	/** Of `total`, the minutes counted from plan estimates rather than
+	 *  measured: Talk, Story and tutor sessions have no timer, and days
+	 *  before minutes were measured have none either. */
+	estimated: number;
 	/** 0..1 of the total, every strand (0 when nothing was done). */
 	share: Record<Strand, number>;
 	/** The strand furthest under the target, when anything was done. */
@@ -59,27 +70,67 @@ export interface StrandBalance {
 	target: number;
 }
 
-export function strandMinutes(day: StrandDay): Record<Strand, number> {
-	return {
-		input: (day.listens ?? 0) * STRAND_MINUTES.listen + (day.reads ?? 0) * STRAND_MINUTES.read + (day.watches ?? 0) * STRAND_MINUTES.watch + (day.stories ?? 0) * STRAND_MINUTES.story,
-		output: (day.talks ?? 0) * STRAND_MINUTES.talk + (day.speaks ?? 0) * STRAND_MINUTES.speak,
-		form: (day.lessons ?? 0) * STRAND_MINUTES.lesson + (day.reviews ?? 0) * STRAND_MINUTES.review + (day.tutors ?? 0) * STRAND_MINUTES.tutor,
-		fluency: (day.blitz ?? 0) * STRAND_MINUTES.blitz + (day.rereads ?? 0) * STRAND_MINUTES.reread + (day.fasts ?? 0) * STRAND_MINUTES.fast,
+/** One day's minutes per strand, and how many of them were estimated. A
+ *  timed activity counts what was measured (even a measured 0) and only
+ *  falls back to count × planned minutes when the day has no measurement
+ *  for it; Talk, Story and tutor sessions are always estimated. Placement
+ *  time is in the day's total but in no strand, as it always was. */
+export function strandParts(day: StrandDay): { minutes: Record<Strand, number>; estimated: number } {
+	let estimated = 0;
+	const timed = (activity: TimedActivity, count: number | undefined, per: number): number => {
+		const measured = day.minutesBy?.[activity];
+		if (measured !== undefined) return measured;
+		const guess = (count ?? 0) * per;
+		estimated += guess;
+		return guess;
 	};
+	const untimed = (count: number | undefined, per: number): number => {
+		const guess = (count ?? 0) * per;
+		estimated += guess;
+		return guess;
+	};
+	return {
+		minutes: {
+			input: timed("listen", day.listens, STRAND_MINUTES.listen) + timed("read", day.reads, STRAND_MINUTES.read) + timed("watch", day.watches, STRAND_MINUTES.watch) + untimed(day.stories, STRAND_MINUTES.story),
+			output: untimed(day.talks, STRAND_MINUTES.talk) + timed("speak", day.speaks, STRAND_MINUTES.speak),
+			form: timed("lesson", day.lessons, STRAND_MINUTES.lesson) + timed("review", day.reviews, STRAND_MINUTES.review) + untimed(day.tutors, STRAND_MINUTES.tutor),
+			fluency: timed("blitz", day.blitz, STRAND_MINUTES.blitz) + timed("reread", day.rereads, STRAND_MINUTES.reread) + timed("fast", day.fasts, STRAND_MINUTES.fast),
+		},
+		estimated,
+	};
+}
+
+export function strandMinutes(day: StrandDay): Record<Strand, number> {
+	return strandParts(day).minutes;
 }
 
 export function strandBalance(days: readonly StrandDay[]): StrandBalance {
 	const minutes: Record<Strand, number> = { input: 0, output: 0, form: 0, fluency: 0 };
+	let estimated = 0;
 	for (const d of days) {
-		const m = strandMinutes(d);
-		for (const s of STRANDS) minutes[s.id] += m[s.id];
+		const part = strandParts(d);
+		for (const s of STRANDS) minutes[s.id] += part.minutes[s.id];
+		estimated += part.estimated;
 	}
 	for (const s of STRANDS) minutes[s.id] = Math.round(minutes[s.id] * 10) / 10;
 	const total = Math.round(STRANDS.reduce((n, s) => n + minutes[s.id], 0) * 10) / 10;
 	const share: Record<Strand, number> = { input: 0, output: 0, form: 0, fluency: 0 };
 	if (total > 0) for (const s of STRANDS) share[s.id] = minutes[s.id] / total;
 	const behind = total > 0 ? STRANDS.map((s) => s.id).sort((a, b) => share[a] - share[b])[0]! : null;
-	return { minutes, total, share, behind: behind !== null && share[behind] < STRAND_TARGET ? behind : null, target: STRAND_TARGET };
+	return { minutes, total, estimated: Math.min(total, Math.round(estimated * 10) / 10), share, behind: behind !== null && share[behind] < STRAND_TARGET ? behind : null, target: STRAND_TARGET };
+}
+
+/** How the minutes were counted, in one honest line: measured while the
+ *  learner was active, with the estimated part named (Talk, Story and
+ *  tutor sessions have no timer; older days were never measured). */
+export function strandCaption(b: StrandBalance): string {
+	const quarter = "The line marks a quarter.";
+	if (b.total <= 0) return `Measured while you practise. ${quarter}`;
+	const total = Math.round(b.total);
+	const guessed = Math.round(b.estimated);
+	if (guessed <= 0) return `${total} min this week, measured while you were active. ${quarter}`;
+	if (guessed >= total) return `About ${total} min this week, counted from each activity's planned minutes. ${quarter}`;
+	return `${total} min this week: ${total - guessed} measured while you were active, ${guessed} counted from planned minutes (tutor, Talk, Story and older days). ${quarter}`;
 }
 
 /** One line under the bars: what the week says to do next. */

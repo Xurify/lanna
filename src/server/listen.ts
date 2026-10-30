@@ -11,6 +11,7 @@
 
 import { loadLexicon } from "../agent/lexicon.ts";
 import { listenXp, pickListen, sessionCoverage, understood, type ListenPlan } from "../core/listen.ts";
+import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import { appendLessonLog } from "../store/corpus.ts";
 import { progressStore } from "../store/progress.ts";
@@ -63,6 +64,8 @@ export interface ListenRep {
 export interface ListenResultInput {
 	reps: ListenRep[];
 	ms?: number;
+	/** Active milliseconds since the last send (src/core/active-time.ts). */
+	activeMs?: number;
 	tz?: number;
 }
 
@@ -85,7 +88,7 @@ export function recordListen(input: ListenResultInput, now = new Date()): Listen
 	day.listens = (day.listens ?? 0) + 1;
 	day.reps += total;
 	day.xp += xp;
-	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(20, input.ms / 60_000);
+	addMinutes(day, "listen", sessionMs(input));
 	p.xp += xp;
 	p.recent = [...p.recent, ...input.reps.map((r) => r.itemId)].slice(-RECENT_CAP);
 	progressStore.write(p);

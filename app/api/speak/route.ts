@@ -32,6 +32,7 @@ interface Body {
 	text?: unknown;
 	via?: unknown;
 	ms?: unknown;
+	activeMs?: unknown;
 	tz?: unknown;
 	pron?: unknown;
 }
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
 				return Response.json(await speakTurn({ id: str(body.id, 80), text: str(body.text), via, ms: num(body.ms), audio, pron: pronOf(body.pron) }));
 			}
 			case "end":
-				return Response.json(await speakEnd({ id: str(body.id, 80), ms: num(body.ms), tz: tz !== undefined && Math.abs(tz) <= 840 ? tz : undefined }));
+				return Response.json(await speakEnd({ id: str(body.id, 80), ms: num(body.ms), activeMs: num(body.activeMs), tz: tz !== undefined && Math.abs(tz) <= 840 ? tz : undefined }));
 			case "drop":
 				speakDrop(str(body.id, 80));
 				return Response.json({ ok: true });

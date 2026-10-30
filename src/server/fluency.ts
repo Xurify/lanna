@@ -18,6 +18,7 @@
 import { loadLexicon } from "../agent/lexicon.ts";
 import { FAST_PASSES, fastXp, pickKnown, rereadXp, wordsPerMinute, WPM_TARGET, type FastItem, type FastRep, type FluencyLogEntry, type RereadLogEntry } from "../core/fluency.ts";
 import type { StoryQuestion, StoryRecord } from "../core/reading.ts";
+import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import { appendLessonLog, ensureReadmes, readLessonLog } from "../store/corpus.ts";
 import { progressStore } from "../store/progress.ts";
@@ -128,7 +129,8 @@ export function recordReread(input: RereadResultInput, now = new Date()): Reread
 	const day = (p.days[key] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	day.rereads = (day.rereads ?? 0) + 1;
 	day.xp += xp;
-	day.minutes = (day.minutes ?? 0) + Math.min(10, ms / 60_000);
+	// The timed read is the activity: its own clock (also the words a minute) is the time.
+	addMinutes(day, "reread", ms);
 	p.xp += xp;
 	progressStore.write(p);
 	fluencyStore.append({ mode: "reread", storyId: story.id, at: now.toISOString(), day: key, words, ms, wpm, question: input.questionIndex, right, xp });
@@ -171,6 +173,8 @@ export function fastFor(seed = Date.now()): FastPlan {
 export interface FastResultInput {
 	reps: FastRep[];
 	ms?: number;
+	/** Active milliseconds since the last send (src/core/active-time.ts). */
+	activeMs?: number;
 	tz?: number;
 }
 
@@ -195,7 +199,7 @@ export function recordFast(input: FastResultInput, now = new Date()): FastOutcom
 	day.fasts = (day.fasts ?? 0) + 1;
 	day.reps += reps.length;
 	day.xp += xp;
-	if (input.ms && Number.isFinite(input.ms)) day.minutes = (day.minutes ?? 0) + Math.min(10, input.ms / 60_000);
+	addMinutes(day, "fast", sessionMs(input));
 	p.xp += xp;
 	progressStore.write(p);
 	const entry: FluencyLogEntry = { mode: "fast", at: now.toISOString(), day: key, ...(input.ms ? { ms: Math.round(input.ms) } : {}), reps, passesMade, sentencesMade, xp };

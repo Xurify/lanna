@@ -24,6 +24,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, GaugeIcon, LoaderCircleIcon, MicIcon, MicOffIcon, RabbitIcon, RepeatIcon, TimerIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useActiveTime } from "@/components/use-active-time";
 import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
@@ -409,6 +410,10 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		setUseMic(stt && ok);
 	}, [stt]);
 	const startedAt = useRef(Date.now());
+	// The day's minutes count active time: the gaps between actions, each
+	// capped (`ms` stays the wall-clock). A timed re-read keeps its own
+	// reading clock, which is also what its words a minute is built from.
+	const activeTime = useActiveTime("fast", "interactive");
 	const passStart = useRef(0);
 	// Pause: time spent paused is kept out of the pass; pausedAt is 0 when running.
 	const pausedAt = useRef(0);
@@ -432,11 +437,12 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			if (p.items.length === 0) throw new Error("No known sentences yet. Finish a lesson or two first.");
 			setPlan(p);
 			startedAt.current = Date.now();
+			activeTime.restart();
 			setPhase("ready");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, []);
+	}, [activeTime]);
 
 	useEffect(() => {
 		if (!initial) void load();
@@ -469,7 +475,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				const res = await fetch("/api/fluency", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ mode: "fast", reps: all, ms: Date.now() - startedAt.current, tz: new Date().getTimezoneOffset() }),
+					body: JSON.stringify({ mode: "fast", reps: all, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
 				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as FastOutcome);
@@ -477,7 +483,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				setError(err instanceof Error ? err.message : String(err));
 			}
 		},
-		[],
+		[activeTime],
 	);
 
 	const endPass = useCallback(

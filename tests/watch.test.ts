@@ -265,7 +265,8 @@ describe("a video on a scripted engine", () => {
 		assert.ok(lib.lastGotFirst! > 0);
 		assert.equal(watch.pendingVideo()!.id, "AAAAAAAAAAA", "the other, unwatched video waits");
 		assert.equal(out.summary.plan.tasks.find((t) => t.id === "watch")!.done, true);
-		assert.equal(out.summary.balance.minutes.input >= 8, true);
+		// The watching's own 6 measured minutes, not the plan's 8.
+		assert.equal(out.summary.balance.minutes.input, 6);
 		// A rewatch earns the bonuses only.
 		const twice = watch.recordWatch({ videoId: v.id, mode: "flow", stats: [], answers: v.questions.map((q) => q.answer), tapped: [] }, new Date("2026-10-29T12:00:00Z"));
 		assert.equal(twice.rewatch, true);

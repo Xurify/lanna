@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { useActiveTime } from "@/components/use-active-time";
 import { setSpeed, speak, SPEEDS, stopSpeaking, useSpeed } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
@@ -71,6 +72,10 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const startedAt = useRef(Date.now());
+	// Reading is mostly not clicking: the day's minutes count the time this
+	// tab is visible and focused while an episode is being read or its
+	// questions answered (`ms` stays the wall-clock).
+	const activeTime = useActiveTime("read", "passive", { active: stage === "reading" || stage === "questions" });
 
 	const load = useCallback(async () => {
 		try {
@@ -94,13 +99,14 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			setAnswers([]);
 			setOutcome(null);
 			startedAt.current = Date.now();
+			activeTime.restart();
 			setStage("reading");
 			void load();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 			setStage("error");
 		}
-	}, [load]);
+	}, [load, activeTime]);
 
 	// Opened with nothing to read and nothing read today: write the episode.
 	const kicked = useRef(false);
@@ -119,6 +125,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 				setAnswers([]);
 				setOutcome(null);
 				startedAt.current = Date.now();
+				activeTime.restart();
 				setStage("reading");
 			})
 			.catch((err: Error) => {
@@ -137,7 +144,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 				const res = await fetch("/api/read", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, tz: new Date().getTimezoneOffset() }),
+					body: JSON.stringify({ action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
 				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as Outcome);
@@ -149,7 +156,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 				setSaving(false);
 			}
 		},
-		[story, saving, tapped, load],
+		[story, saving, tapped, load, activeTime],
 	);
 
 	// Escape leaves, like a lesson — unless a word popover is open, which

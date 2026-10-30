@@ -155,7 +155,8 @@ test("the server: a session for the learner's known words; finishing records the
 	assert.ok(out.queued.length > 0);
 	// The summary's plan ticks Listen off and the balance counts it as input.
 	assert.equal(out.summary.plan.tasks.find((t) => t.id === "listen")?.done, true);
-	assert.ok(out.summary.balance.minutes.input >= 4);
+	// The session's own 2.5 measured minutes, not the plan's 4.
+	assert.equal(out.summary.balance.minutes.input, 2.5);
 	// The session is in the lesson log, mode "listen".
 	const log = readLessonLog();
 	const entry = log.find((e) => e.mode === "listen");

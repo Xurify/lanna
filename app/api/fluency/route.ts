@@ -4,7 +4,7 @@
  * been read. GET /api/fluency?mode=fast — six sentences every word of
  * which is known (src/server/fluency.ts). Built locally; no model.
  * POST /api/fluency {mode: "reread", storyId, ms, questionIndex, answer, tz?}
- * POST /api/fluency {mode: "fast", reps, ms?, tz?} — a finished round:
+ * POST /api/fluency {mode: "fast", reps, ms?, activeMs?, tz?} — a finished round:
  * XP, the day's fluency work, the log line.
  */
 
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 						}))
 					: [],
 			}));
-			return Response.json(recordFast({ reps, ms: num(body.ms), tz: tzOk }));
+			return Response.json(recordFast({ reps, ms: num(body.ms), activeMs: num(body.activeMs), tz: tzOk }));
 		}
 		return Response.json({ message: "mode must be reread or fast" }, { status: 400 });
 	} catch (err) {

@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, FlagIcon, LoaderCircleIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { useActiveTime } from "@/components/use-active-time";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
@@ -118,6 +119,9 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 	const [check, setCheck] = useState<CheckStart | null>(null);
 	const [stage, setStage] = useState<"ladder" | "edge" | "words">("ladder");
 	const [checkMs, setCheckMs] = useState(0);
+	// Only the level check is practice, not the setup form around it: the
+	// clock starts when the check loads and ends when it is saved.
+	const activeTime = useActiveTime("placement", "interactive", { start: false });
 	const [outcome, setOutcome] = useState<CheckResult | null>(null);
 	const [drilling, setDrilling] = useState(false);
 	const [hoursOpen, setHoursOpen] = useState(false);
@@ -199,6 +203,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 			if (!res.ok) throw new Error(String(res.status));
 			setStage("ladder");
 			setCheck((await res.json()) as CheckStart);
+			activeTime.restart();
 		} catch {
 			setError("Couldn't build the check. Try again.");
 		} finally {
@@ -218,7 +223,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 		if (!check) return;
 		setSaving(true);
 		try {
-			const res = await fetch("/api/placement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: check.id, ms: checkMs, tz }) });
+			const res = await fetch("/api/placement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: check.id, ms: checkMs, activeMs: activeTime.finish(), tz }) });
 			if (!res.ok) throw new Error(String(res.status));
 			setOutcome((await res.json()) as CheckResult);
 			setCheck(null);

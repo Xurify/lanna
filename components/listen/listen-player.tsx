@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useActiveTime } from "@/components/use-active-time";
 import { setSpeed, speak, SPEEDS } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan } from "@/src/core";
@@ -67,6 +68,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const startedAt = useRef(Date.now());
+	// Listening is mostly hearing, not clicking: the day's minutes count the
+	// time this tab is visible and focused (`ms` stays the wall-clock).
+	const activeTime = useActiveTime("listen", "passive");
 	// Per-sentence timing: when it was shown, how long the first playback
 	// took, how many times it was played again. The milestones page reads
 	// these as parsing speed, so they travel with every rep.
@@ -92,10 +96,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			if (next.items.length === 0) throw new Error("No sentences to listen to yet. Finish a lesson or two first.");
 			setPlan(next);
 			startedAt.current = Date.now();
+			activeTime.restart();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, []);
+	}, [activeTime]);
 
 	const hadInitial = useRef(initialPlan !== null);
 	useEffect(() => {
@@ -157,6 +162,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							words: r.item.words,
 						})),
 						ms: Date.now() - startedAt.current,
+						activeMs: activeTime.finish(),
 						tz: new Date().getTimezoneOffset(),
 					}),
 				});
@@ -168,7 +174,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				setSaving(false);
 			}
 		},
-		[],
+		[activeTime],
 	);
 
 	const pick = (given: string) => {

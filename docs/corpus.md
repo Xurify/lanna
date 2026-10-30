@@ -9,7 +9,7 @@ Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor
 | Path | What | Written by |
 |---|---|---|
 | `data/audio/<lang>/<voice>/<slug>-<key12>.mp3` + `data/audio/index.jsonl` | The audio library: one clip per text and voice, named after what it says. Legacy `data/cache/audio/<sha256>.mp3` clips were migrated once and their texts recovered by hashing known sentences | `src/store/corpus.ts` |
-| `data/profiles/<lang>/progress.json` | XP, streak, days, unit evidence, the learner goal (level, minutes, purposes, languages, levels, placement) | `src/server/lesson.ts` |
+| `data/profiles/<lang>/progress.json` | XP, streak, days (with minutes per activity), unit evidence, the learner goal (level, minutes, purposes, languages, levels, placement) | `src/server/lesson.ts` |
 | `data/profiles/<lang>/lessons/<day>.jsonl` | Every rep of every lesson, placement and Listen session: sentence, answer, given, verdict, hint, timing | lesson log |
 | `data/profiles/<lang>/lessons/why-index.json` | Why? explanations by sentence + answer, so a repeat Why? reopens the chat with no model call | `src/server/why.ts` |
 | `data/profiles/<lang>/chats/` and `chats/trash/` | Tutor chats with per-turn token usage (`turns`); deleted chats move to trash | `src/store/chats.ts` |
