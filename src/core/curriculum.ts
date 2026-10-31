@@ -130,6 +130,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A1 · 3 In town ──
 	drill("loc"),
+	drill("pairs-town"),
 	drill("lx-city"),
 	drill("lx-directions"),
 	drill("kam-kde", { requires: ["loc", "acc-fem"] }),
@@ -139,6 +140,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A1 · 4 Family ──
 	drill("acc-people"),
+	drill("pairs-family"),
 	drill("gen"),
 	tutor("gender-this-my", "Gender, this and mine", "ten / tá / to, môj / moja / moje", "tag", "n_seed_gender", "Reading a noun's gender from its ending, and matching ten/tá/to and the possessives môj/moja/moje, tvoj, náš, váš (and the invariable jeho/jej/ich) to it. Drill me with mixed nouns."),
 	drill("lx-family"),
@@ -148,6 +150,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A1 · 5 Every day ──
 	drill("ins"),
+	drill("pairs-everyday"),
 	drill("adj"),
 	drill("lx-time"),
 	drill("lx-weekdays"),
@@ -165,6 +168,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A2 · 7 Health and body ──
 	drill("present-ujem"),
+	drill("pairs-health"),
 	drill("lx-body"),
 	drill("lx-health"),
 	tutor("reflexive", "sa and si", "Volám sa, umývam si ruky", "repeat", "n_seed_v_reflexive", "Reflexive verbs with sa and si: which verbs take sa (volať sa, učiť sa, báť sa), when si marks doing something to oneself (umývam si ruky), and where sa/si sit in the sentence (second position). Estonian has no reflexive particle, so show me the contrast with ennast/endale."),
@@ -172,6 +176,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A2 · 8 Shopping ──
 	drill("numbers"),
+	drill("pairs-shopping"),
 	drill("plural"),
 	drill("lx-clothes"),
 	drill("cond"),
@@ -179,6 +184,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A2 · 9 Plans and weather ──
 	drill("present-em"),
+	drill("pairs-plans"),
 	drill("lx-seasons"),
 	drill("lx-weather"),
 	drill("lx-when"),
@@ -187,6 +193,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A2 · 10 Moving around ──
 	drill("motion"),
+	drill("pairs-moving"),
 	drill("core-verbs"),
 	drill("lx-motion"),
 	drill("lx-where"),
@@ -196,6 +203,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── A2 · 11 People and feelings ──
 	drill("adj-cases", { requires: ["adj"] }),
+	drill("pairs-people"),
 	drill("lx-feelings"),
 	drill("lx-describe-people"),
 	drill("lx-describe-things"),
@@ -216,6 +224,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── B1 · 13 Telling stories ──
 	drill("cases-mix"),
+	drill("pairs-stories"),
 	drill("words-600"),
 	tutor("verb-prefixes", "Verb prefixes", "prísť, odísť, prejsť, vojsť", "route", "n_seed_motion", "Prefixes on verbs of motion and others: pri- (arrive), od- (leave), pre- (across/through), vy- (out), vo- (in), do- (reach), roz- (apart), and how a prefix also makes the verb perfective. Drill me with one scene told with ísť plus prefixes."),
 	tutor("narration", "Telling what happened", "Past tense with aspect, step by step", "book-open", "n_seed_aspect", "Narrating in the past: perfective verbs move the story forward (prišiel, otvoril, povedal), imperfectives set the scene (svietilo slnko, ľudia sedeli). Give me a six-picture story in English and have me tell it in Slovak one line at a time, prompting the aspect before you correct."),
@@ -223,6 +232,7 @@ export const CURRICULUM: CurriculumUnit[] = [
 
 	// ── B1 · 14 Opinions ──
 	drill("verbs-mix"),
+	drill("pairs-opinions"),
 	drill("lx-thinking"),
 	drill("lx-speaking"),
 	tutor("relative", "Which and that: ktorý", "Relative clauses and commas", "link", undefined, "Relative clauses with ktorý/ktorá/ktoré, which take the case their own clause needs (muž, ktorého poznám; kniha, o ktorej hovoríš), plus čo and kde, and the comma rule. Drill me on joining two sentences into one."),

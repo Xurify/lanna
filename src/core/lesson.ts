@@ -19,6 +19,7 @@
 import type { LexiconEntry } from "./review.ts";
 import { foldDiacritics } from "./language.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
+import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
@@ -53,9 +54,25 @@ export const GRAMMAR_UNIT_IDS = [
 /** Vocabulary by frequency band (rank within the part of speech). */
 export const BAND_UNIT_IDS = ["words-300", "words-600", "words-1000", "words-1500", "words-2000", "words-3000"] as const;
 
-export type UnitId = (typeof GRAMMAR_UNIT_IDS)[number] | (typeof BAND_UNIT_IDS)[number] | WordClusterId;
+/** The contrast-pairs units (Dvojičky), one per chapter that teaches a
+ *  pair (curriculum/slovak/pairs.json). Pinned as a literal so UnitId stays
+ *  a literal union; tests/pairs.test.ts checks it against the file. */
+export const PAIR_UNIT_IDS = [
+	"pairs-town",
+	"pairs-family",
+	"pairs-everyday",
+	"pairs-health",
+	"pairs-shopping",
+	"pairs-plans",
+	"pairs-moving",
+	"pairs-people",
+	"pairs-stories",
+	"pairs-opinions",
+] as const;
 
-export type UnitKind = "grammar" | "words";
+export type UnitId = (typeof GRAMMAR_UNIT_IDS)[number] | (typeof BAND_UNIT_IDS)[number] | (typeof PAIR_UNIT_IDS)[number] | WordClusterId;
+
+export type UnitKind = "grammar" | "words" | "pairs";
 
 export interface UnitInfo {
 	id: UnitId;
@@ -103,6 +120,19 @@ const BAND_DEFS: Array<[UnitId, readonly [number, number], string, string]> = [
 ];
 const BAND_UNITS: UnitInfo[] = BAND_DEFS.map(([id, band, title, tagline]) => ({ id, band, title, tagline, kind: "words", glyph: "book-open", rule: WORD_RULE }));
 
+/** One unit per chapter that teaches a pair: the reps choose between the
+ *  twins (buildPairsLesson), the rule and bridge are per pair, carried by
+ *  the item. */
+const PAIR_UNITS: UnitInfo[] = PAIR_UNIT_IDS.map((id) => ({
+	id,
+	kind: "pairs" as const,
+	title: "Dvojičky",
+	tagline: chapterPairs(id.slice("pairs-".length)).map((p) => `${p.a} / ${p.b}`).join(" · "),
+	glyph: "git-compare",
+	rule: "Read the sentence and pick the twin it really uses — which of the two words fits.",
+	repeat: true,
+}));
+
 /** The path, in teaching order. */
 export const UNITS: UnitInfo[] = [
 	{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE },
@@ -130,6 +160,7 @@ export const UNITS: UnitInfo[] = [
 	{ id: "verbs-mix", title: "All verb forms", tagline: "Mixed: present, past, would", glyph: "dices", rule: "Read the time words and the subject: they decide tense, person and whether by is needed.", node: "n_seed_v_present", union: ["present", "present-em", "present-ujem", "past", "cond", "core-verbs", "motion", "modal-inf"] },
 	...CLUSTER_UNITS,
 	...BAND_UNITS,
+	...PAIR_UNITS,
 ];
 
 export function isUnitId(v: unknown): v is UnitId {
@@ -303,6 +334,10 @@ export interface LessonItem {
 	/** The answer's form in plain words: "he / she / it form of dávať",
 	 *  "accusative of káva". */
 	form?: string;
+	/** pairs: the contrast pair behind this rep. The form in the sentence is
+	 *  the pair member's (item.form); the rule and the Estonian bridge are
+	 *  the pair's own, shown after a miss in place of the unit's. */
+	pair?: { id: string; rule: string; bridge: string };
 	/** The review deck's memory of this word, attached by the server. */
 	known?: WordKnown | null;
 }
@@ -690,6 +725,56 @@ export function buildLesson(
 		items.push(item);
 	});
 	return { unit, items, stage };
+}
+
+/** A Dvojičky lesson: twelve choose reps, each a verified sentence that
+ *  uses exactly one twin of the chapter's pairs. The form stands in the
+ *  sentence (item.form, marked by the player); the choice is between the
+ *  two lemmas — recognising which twin the sentence really uses. Deck
+ *  order is deterministic per seed; `recent` ids go to the back while
+ *  fresher sentences remain; a short deck cycles (repeat: true). */
+export function buildPairsLesson(entries: readonly LexiconEntry[], unit: UnitId, opts: { seed: number; length?: number; recent?: ReadonlySet<string> }): LessonPlan {
+	const rand = rng(opts.seed);
+	const length = opts.length ?? LESSON_PATTERN.length;
+	const chapter = unit.startsWith("pairs-") ? unit.slice("pairs-".length) : unit;
+	const deck = pairsWithSentences(entries, chapterPairs(chapter)).flatMap(({ pair, sentences }) => sentences.map((s) => ({ pair, s })));
+	const shuffled = shuffle(deck, rand);
+	const fresh = shuffled.filter((x) => !opts.recent?.has(`${x.s.entry.slug}#${x.s.index}`));
+	const order = [...fresh, ...shuffled.filter((x) => opts.recent?.has(`${x.s.entry.slug}#${x.s.index}`))];
+	const items: LessonItem[] = [];
+	for (let k = 0; items.length < length && order.length > 0; k++) {
+		const pick = order[k % order.length]!;
+		items.push(pairItem(pick, unit, entries, rand));
+	}
+	return { unit, items };
+}
+
+function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId, entries: readonly LexiconEntry[], rand: () => number): LessonItem {
+	const ex = s.entry.examples[s.index]!;
+	// The twins' own meanings, first sense, imperfective/perfective marker
+	// kept — for a pair it is often the only difference the chip can show.
+	const gloss = (lemma: string) => {
+		const members = pairMembers(entries, pair);
+		const e = members?.[pair.a === lemma ? 0 : 1];
+		return e ? e.en.split(";")[0]!.trim() : lemma;
+	};
+	return {
+		id: `${s.entry.slug}#${s.index}`,
+		kind: "choose",
+		unit,
+		slug: s.entry.slug,
+		lemma: s.entry.sk,
+		gloss: s.entry.en,
+		sentence: ex.sk,
+		translation: ex.en,
+		answer: s.member === "a" ? pair.a : pair.b,
+		form: s.form,
+		before: ex.sk.slice(0, s.at),
+		after: ex.sk.slice(s.at + s.form.length),
+		hint: `${pair.a} = ${gloss(pair.a)} · ${pair.b} = ${gloss(pair.b)}`,
+		options: shuffle([pair.a, pair.b], rand),
+		pair: { id: pair.id, rule: pair.rule, bridge: pair.bridge },
+	};
 }
 
 /** Blitz: choose-only reps across the given units, as many as a minute holds. */

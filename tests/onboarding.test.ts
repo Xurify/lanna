@@ -222,7 +222,7 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 });
 
 test("every grammar unit has a bridge in each of the four languages, and the profile picks them", () => {
-	const grammar = UNITS.filter((u) => u.kind !== "words" && !u.union).map((u) => u.id);
+	const grammar = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union).map((u) => u.id);
 	for (const lang of BRIDGE_LANGS) {
 		const have = unitsBridgedIn(lang);
 		for (const u of grammar) assert.ok(have.includes(u), `${u} lacks a ${lang} line`);

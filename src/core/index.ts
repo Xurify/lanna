@@ -88,6 +88,7 @@ export * from "./fsrs.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
 export * from "./word-clusters.ts";
+export * from "./pairs.ts";
 export * from "./curriculum.ts";
 export * from "./arc.ts";
 export * from "./onboarding.ts";

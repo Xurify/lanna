@@ -145,6 +145,7 @@ const KIND_LABEL: Record<ItemKind, string> = {
 /** A vocabulary rep blanks the word itself, so the ask is the word, not a form. */
 function kindLabel(item: LessonItem): string {
 	if (item.kind === "choose" && unitInfo(item.unit).kind === "words") return "Choose the word";
+	if (item.kind === "choose" && unitInfo(item.unit).kind === "pairs") return "Choose the twin";
 	if (item.kind === "type" && unitInfo(item.unit).kind === "words") return "Type the word";
 	return KIND_LABEL[item.kind];
 }
@@ -766,11 +767,12 @@ function hintFor(item: LessonItem): string {
  *  "means" for a vocabulary rep (the English), "base form" for a grammar
  *  rep (the dictionary form to inflect). */
 function HintChip({ item }: { item: LessonItem }) {
-	const meaning = unitInfo(item.unit).kind === "words" && !!item.hint;
+	const pairs = unitInfo(item.unit).kind === "pairs";
+	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
 	return (
 		<span className="mr-2 inline-flex items-baseline gap-1.5 rounded-md bg-accent px-2 py-0.5 text-foreground" data-testid="lesson-hint-chip">
-			<span className="font-ui text-xs font-bold text-muted-foreground">{meaning ? "means" : "base form"}</span>
-			<span className="font-medium" lang={meaning ? undefined : "sk"}>
+			<span className="font-ui text-xs font-bold text-muted-foreground">{pairs ? "twins" : meaning ? "means" : "base form"}</span>
+			<span className="font-medium" lang={meaning && !pairs ? undefined : "sk"}>
 				{hintFor(item)}
 			</span>
 		</span>
@@ -824,6 +826,7 @@ function RepView({
  *  research/desirable-difficulties.md). A missed choice retries typed. */
 function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; wasChoice: boolean }) {
 	const vocabulary = unitInfo(item.unit).kind === "words";
+	const pairs = unitInfo(item.unit).kind === "pairs";
 	return (
 		<div className="lh-rise mt-8 rounded-2xl border border-warn/40 bg-warn-soft px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
 			<p className="font-ui text-base font-extrabold text-warn">
@@ -839,7 +842,9 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 						: it decides the form.
 					</p>
 				) : item.form && !vocabulary ? (
-					<p className="text-foreground">Wanted: {item.form}.</p>
+					// A pairs rep is typed as the twin's dictionary form (what the
+					// options showed), not the inflected form the sentence has.
+					<p className="text-foreground">Wanted: {pairs ? item.answer : item.form}.</p>
 				) : (
 					<p className="text-foreground">
 						{vocabulary ? (
@@ -888,6 +893,10 @@ function ClozeRep({
 	// A meaning rep is input: the whole sentence, spoken as it appears, the
 	// target form marked, and three meanings to choose from.
 	const meaning = item.kind === "meaning";
+	// A pairs rep (Dvojičky): the sentence shows the twin's real form, and
+	// the choice between the pair's two lemmas is the question.
+	const pairsRep = unitInfo(item.unit).kind === "pairs";
+	const target = pairsRep ? (item.form ?? item.answer) : item.answer;
 
 	useEffect(() => {
 		if (typed) inputRef.current?.focus();
@@ -1041,7 +1050,11 @@ function ClozeRep({
 							// Input: the form is there to be met, not produced — marked, never blanked.
 							<mark className="rounded-lg bg-xp/20 px-1 font-bold text-foreground underline decoration-xp decoration-[3px] underline-offset-[6px]">{item.answer}</mark>
 						) : locked ? (
-							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>{item.answer}</span>
+							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>{pairsRep ? target : item.answer}</span>
+						) : pairsRep && !typed ? (
+							// Dvojičky: the twin's form is the evidence, so it stays marked
+							// and the choice between the two lemmas is the question.
+							<mark className="rounded-lg bg-xp/20 px-1 font-bold text-foreground underline decoration-xp decoration-[3px] underline-offset-[6px]">{target}</mark>
 						) : typed ? (
 							// Grows with what is typed (a hidden twin sizes it), so a long
 							// answer is never clipped.
@@ -1348,7 +1361,7 @@ function FeedbackSheet({
 							<div className="min-w-0">
 								<p className="font-prose text-lg leading-snug text-foreground" lang="sk">
 									{item.before}
-									<b className={tone.ink}>{item.answer}</b>
+									<b className={tone.ink}>{item.pair ? (item.form ?? item.answer) : item.answer}</b>
 									{item.after}
 								</p>
 								<p className="font-prose text-base text-muted-foreground">{item.translation}</p>
@@ -1377,15 +1390,22 @@ function FeedbackSheet({
 									decides the form here.{" "}
 								</>
 							)}
-							{info.rule}
+							{item.pair?.rule ?? info.rule}
 						</dd>
-						{unitBridges(item.unit, bridgeLangs).length > 0 && (
+						{item.pair ? (
 							<>
 								<dt className={WHY_LABEL}>Parallels</dt>
-								<dd className="flex flex-col gap-1">
-									<Bridges unit={item.unit} />
-								</dd>
+								<dd className="text-foreground">{item.pair.bridge}</dd>
 							</>
+						) : (
+							unitBridges(item.unit, bridgeLangs).length > 0 && (
+								<>
+									<dt className={WHY_LABEL}>Parallels</dt>
+									<dd className="flex flex-col gap-1">
+										<Bridges unit={item.unit} />
+									</dd>
+								</>
+							)
 						)}
 						{examples.length > 0 && (
 							<>

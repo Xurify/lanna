@@ -46,6 +46,7 @@ test("the map is well-formed: every chapter ends in a goal, every unit is on exa
 
 test("every lesson unit on the map has material for a full lesson", () => {
 	for (const u of UNITS) {
+		if (u.kind === "pairs") continue; // Dvojičky build their own reps (tests/pairs.test.ts).
 		const plan = buildLesson(entries, u.id, { seed: 11 });
 		assert.ok(plan.items.length >= 10, `${u.id}: ${plan.items.length} items`);
 		assert.ok(candidatesFor(entries, u.id).length >= 12, `${u.id}: too few candidates`);
