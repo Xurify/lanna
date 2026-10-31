@@ -83,7 +83,7 @@ Branch `feat/grammar-error-tracking`. Not pushed.
 - **Places** (Bratislava, Košice — no gender in the dictionary) now drill the cases in the classifier; they fill no atlas cell.
 - The logs keep the evidence: lesson reps carry `gender`, `first`, `slip`; review lines carry `unit`, `gender`, `slip`; Speak corrections carry `drill`, `slip`, `gender`.
 
-Unverified by the owner: the lesson player's first-try capture (the cue flow, a reload mid-cue) and the atlas at both window sizes — tests and typecheck pass, but the live run on the PC has not happened. Known on this machine: `tests/speak.test.ts` "transcribe refuses honestly without a key" fails when the profile's `auth.json` holds an ElevenLabs key (the refusal test assumes none); environment-bound, predates this branch.
+Unverified by the owner: the lesson player's first-try capture (the cue flow, a reload mid-cue) and the atlas at both window sizes — typecheck, lint and the affected suites pass, but the live run on the PC has not happened. Known on this machine: the full suite has 27 environment-bound failures that reproduce on the base commit (Windows path fixtures, the local `auth.json` keys, Electron/Node drift), including `tests/speak.test.ts` "transcribe refuses honestly without a key", which assumes no ElevenLabs key is saved.
 
 ## Pull requests
 
