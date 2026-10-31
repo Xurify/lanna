@@ -1,11 +1,9 @@
 "use client";
 
 /**
- * Speech in the browser (LangHarness, spec D4 / Phase 6): the play button
- * on every `say:` span, the review page's audio, and the playback-speed
- * preference. Audio comes from /api/tts (ElevenLabs → Edge → Piper,
- * cached server-side); a 204 means no server voice worked and the browser
- * speaks with window.speechSynthesis instead.
+ * Browser speech: the play button on each `say:` span, the review audio, and
+ * the playback-speed preference. Audio comes from /api/tts (cached server-side).
+ * A 204 means no server voice worked, so the browser speaks with speechSynthesis.
  */
 
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -17,17 +15,23 @@ import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 // ─── The active language (fetched once per page load) ──────────────────────
 
 let profilePromise: Promise<LanguageInfo> | null = null;
+// Set once the language arrives, so later mounts render it on the first frame.
+let knownLanguage: LanguageInfo | null = null;
 
 export function activeLanguage(): Promise<LanguageInfo> {
 	profilePromise ??= fetch("/api/profile")
 		.then((r) => r.json() as Promise<{ active?: string }>)
 		.then((p) => (isLanguageId(p.active) ? LANGUAGES[p.active] : LANGUAGES.slovak))
-		.catch(() => LANGUAGES.slovak);
+		.catch(() => LANGUAGES.slovak)
+		.then((l) => {
+			knownLanguage = l;
+			return l;
+		});
 	return profilePromise;
 }
 
 export function useActiveLanguage(): LanguageInfo | null {
-	const [lang, setLang] = useState<LanguageInfo | null>(null);
+	const [lang, setLang] = useState<LanguageInfo | null>(() => knownLanguage);
 	useEffect(() => {
 		let live = true;
 		void activeLanguage().then((l) => live && setLang(l));
@@ -138,8 +142,6 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 	});
 }
 
-/** Speak `text` in the active language (or `lang`). Resolves when playback
- *  ends; a new call stops whatever was playing. */
 export interface SpeakOptions {
 	/** A voice id (a story character) or "female" | "male". */
 	voice?: string;
@@ -147,6 +149,7 @@ export interface SpeakOptions {
 	style?: "narration" | "dialogue";
 }
 
+/** Speaks `text` in the active language (or `lang`). Resolves when playback ends; a new call stops whatever was playing. */
 export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOptions = {}): Promise<void> {
 	stopSpeaking();
 	// Muted: nothing plays, and no paid voice is fetched.
@@ -186,7 +189,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	});
 }
 
-/** Fetch a sentence's audio ahead of its turn: the same request speak() makes, so the browser's cache serves it at once. */
+/** Warms the browser cache with a sentence's audio, using the same request speak() makes. */
 export function prefetchSpeech(text: string, code: string): void {
 	if (!soundOn()) return;
 	void fetch(`/api/tts?${new URLSearchParams({ lang: code, text }).toString()}`)
@@ -202,9 +205,7 @@ export function PlayButton({ text, className, label }: { text: string; className
 		setBusy(true);
 		void speak(text).finally(() => setBusy(false));
 	};
-	// A span with the button role, not a <button>: the phrase can sit inside
-	// a quiz option or any other button, where a nested <button> is invalid
-	// HTML and broke hydration of the chat view.
+	// A span with button role: a nested <button> is invalid inside a quiz option and breaks hydration.
 	return (
 		<span
 			role="button"
@@ -233,8 +234,7 @@ export function PlayButton({ text, className, label }: { text: string; className
 	);
 }
 
-/** The rendering of a `say: …` inline-code span: the phrase in the
- *  target language with its play button. */
+/** Renders a `say: …` span: the phrase in the target language, with its play button. */
 export function SpokenPhrase({ text }: { text: string }) {
 	const lang = useActiveLanguage();
 	return (

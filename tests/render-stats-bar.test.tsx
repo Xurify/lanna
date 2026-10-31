@@ -8,9 +8,7 @@ import type { ModelCatalogEntry, ModelCatalogResponse } from "../src/core/contra
 import { prettyModel } from "../components/usage-format.ts";
 import type { ChatSettings, TurnUsage } from "../src/core/contracts.ts";
 
-// The stats bar: folds only (no cost math in the component), the "—"
-// doctrine for absent data, honest cost (never a fake $0), and the model +
-// thinking control (components/model-picker.tsx — pi-ai catalog backed).
+// Stats bar: folds turn usage, shows "—" for absent data, never a fake $0.
 
 function step(inputTokens: number, outputTokens: number, over: Record<string, number | undefined> = {}) {
 	return { inputTokens, outputTokens, cacheReadTokens: undefined, cacheWriteTokens: undefined, reasoningTokens: undefined, ...over };
@@ -33,18 +31,14 @@ describe("stats bar", () => {
 			<StatsBar turns={[]} />,
 		);
 		assert.match(html, /data-testid="stats-bar"/);
-		// pre-chat: no summary button, no "—" theater (the knowledge-context
-		// slider died with the injection — the left side is simply empty)
+		// Pre-chat the left side is simply empty.
 		assert.ok(!html.includes('data-testid="stats-summary"'), "no summary button pre-chat");
 		assert.ok(!html.includes('data-testid="stats-context"'), "no context figure pre-chat");
 		assert.ok(!html.includes('data-testid="stats-cost"'), "no cost figure pre-chat");
-		// no turns, no settings, catalog not loaded → both control labels
-		// "—" (the thinking button shows just the level, like the model
-		// button shows just the model name — no prefix, no dot separator)
-		assert.match(html, /data-testid="stats-model"[^>]*>\s*<span[^>]*>—<\/span>/);
-		assert.match(html, /data-testid="stats-thinking"[^>]*>\s*<span[^>]*>—<\/span>/);
+		// No catalog and no settings: both control labels read "—".
+		assert.match(html, /data-testid="stats-model"[^>]*>(?:\s*<span[^>]*>)+—<\/span>/);
+		assert.match(html, /data-testid="stats-thinking"[^>]*>(?:\s*<span[^>]*>)+—<\/span>/);
 		assert.ok(!html.includes("aria-hidden>·"), "no dot between the controls");
-		// the control reads as a button: pill border + dropdown chevron
 		assert.match(html, /data-testid="stats-model"[^>]*rounded-full[^>]*>/);
 		assert.match(html, /▾/);
 	});
@@ -53,18 +47,12 @@ describe("stats bar", () => {
 		const html = renderToStaticMarkup(
 			<StatsBar turns={[turn(), turn()]} contextTokens={11_000} pricing={sessionCost({ turns: [turn(), turn()] })} />,
 		);
-		// last turn's last call: 10k in + 1k out = 11k. The LIMIT is the
-		// live catalog's — and the bar doesn't hold the index yet (the
-		// catalog join lands with the UI chunk), so the meter renders
-		// USAGE-ONLY (owner amendment: never a fallback window).
+		// 10k in + 1k out. No catalog index here, so the meter is usage-only.
 		assert.match(html, /data-testid="stats-context">11k</);
-		// pi catalog price 0.15/0.5 per 1M (drifted in pi-ai 0.87.1):
-		// each turn 10k×0.15 + 1k×0.5 = $0.002 → two = $0.0040
+		// pi catalog: 0.15/0.5 per 1M. Each turn is $0.002; two turns = $0.0040.
 		assert.match(html, /data-testid="stats-cost">\$0\.0040</);
-		// model button label: SSR (record fetch not run yet) reads "—" —
-		// the strong slot arrives client-side via GET /api/settings; the
-		// turn log below still folds the ACTUAL models billed
-		assert.match(html, /data-testid="stats-model"[^>]*>\s*<span[^>]*>—<\/span>/);
+		// SSR reads "—" for the model; the strong slot arrives client-side.
+		assert.match(html, /data-testid="stats-model"[^>]*>(?:\s*<span[^>]*>)+—<\/span>/);
 	});
 
 	it("shows — for cost when every turn is unpriceable, never a fake $0", () => {
@@ -72,9 +60,7 @@ describe("stats bar", () => {
 			<StatsBar turns={[turn({ model: "nope/unknown" })]} contextTokens={11_000} pricing={sessionCost({ turns: [turn({ model: "nope/unknown" })] })} />,
 		);
 		assert.match(html, /data-testid="stats-cost">—</);
-		// unknown model: no catalog limit exists, but the footprint is
-		// still an honest reading — usage-only (never "—" theater over
-		// real data, never a fake window)
+		// Unknown model: no limit, but the usage is still an honest reading.
 		assert.match(html, /data-testid="stats-context">11k</);
 	});
 
@@ -90,16 +76,15 @@ describe("stats bar", () => {
 	});
 
 	it("prettyModel strips vendor + date suffix, keeps dashes", () => {
-		assert.equal(prettyModel("z-ai/glm-5.3-flash"), "glm-5.3-flash"); // dashes kept (owner round 5)
+		assert.equal(prettyModel("z-ai/glm-5.3-flash"), "glm-5.3-flash");
 		assert.equal(prettyModel("qwen/qwen3.8-max-0902"), "qwen3.8-max");
 	});
 
 	it("provider-qualified stamps (usage contract, model-slots wave)", () => {
-		// qualified: the provider rides as a quiet suffix — federation makes
-		// the same model via two providers different bookkeeping
+		// A qualified stamp shows the provider as a suffix; one model can bill via two providers.
 		assert.equal(prettyModel("openrouter:z-ai/glm-5.3-flash", true), "glm-5.3-flash · openrouter");
 		assert.equal(prettyModel("openai:gpt-5.2", true), "gpt-5.2 · openai");
-		// unqualified on a qualified stamp: provider silently dropped (old shape)
+		// Unqualified: the provider is dropped.
 		assert.equal(prettyModel("openrouter:z-ai/glm-5.3-flash"), "glm-5.3-flash");
 		// qualified on a bare id: no suffix invented
 		assert.equal(prettyModel("z-ai/glm-5.3-flash", true), "glm-5.3-flash");
@@ -107,12 +92,7 @@ describe("stats bar", () => {
 });
 
 describe("catalogLimits (the stats-bar live-limits join, pure)", () => {
-	// The client-side twin of the server's catalogContextLimits join:
-	// provider:id → contextWindow straight from the cached /api/models
-	// payload. A static render holds no catalog (the fetch is a live
-	// concern — Playwright verifies the wiring), so the pure index shape
-	// is pinned here: one entry per model, the exact key contextWindow()
-	// looks up, missing models absent (→ limit null → usage-only).
+	// Pure index: provider:id → contextWindow from the cached /api/models payload. Missing models are absent (usage-only).
 	const entry = (over: Pick<ModelCatalogEntry, "id" | "provider" | "contextWindow">): ModelCatalogEntry => ({
 		name: over.id,
 		reasoning: false,

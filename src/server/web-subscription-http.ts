@@ -2,9 +2,8 @@ import { NATIVE_SUBSCRIPTIONS } from "../core/contracts/subscriptions.ts";
 import { webSubscriptionOwner, webSubscriptionsEnabled, webSubscriptionStatus } from "./web-subscriptions.ts";
 
 const HEADERS = { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" };
-/** Same-origin browser controls, not user authentication. Web/dev deliberately
- * retains the existing shared-server/API-key trust model. Never trust forwarded
- * origins or add CORS grants here. A public deployment needs its own access gate. */
+/** Same-origin browser controls, not user authentication (web/dev shared-server trust model).
+ * Never trust forwarded origins or add CORS grants; a public deployment needs its own access gate. */
 export function subscriptionRequestOrigin(request: Request): string | undefined {
 	try {
 		const url = new URL(request.url);
@@ -51,7 +50,7 @@ export async function subscriptionControlsResponse(request: Request): Promise<Re
 		if (typeof fields.op !== "string" || !allowed.includes(fields.op)) return error("Unsupported control.", 400);
 		return Response.json(await webSubscriptionOwner().control(providerId as string, fields, subscriptionRequestOrigin(request)!), { headers: HEADERS });
 	} catch {
-		return error("The subscription connection could not be changed. Retry or reconnect in Providers.", 400);
+		return error("The subscription connection could not be changed. Retry or reconnect in Settings → Keys.", 400);
 	}
 }
 /** One-use same-origin navigation. Full provider authorization URLs go only to

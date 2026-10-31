@@ -1,24 +1,12 @@
 "use client";
 /**
- * THE SETTINGS DIALOG (settings-app wave, 2026-09-20): the thin settings
- * page graduated into the designed surface — a centered modal over
- * everything, left section nav + one scrolling content column.
+ * The settings dialog: a centered modal over whatever screen is open, with a
+ * left section nav and one scrolling content column. It is surface-agnostic:
+ * sections talk only to /api/settings* and localStorage, so it could move into
+ * its own window.
  *
- * Owner decisions this wave:
- * - Dialog, not a page: opens over whatever screen you're on (the payoff:
- *   appearance edits restyle the chat LIVE behind the dialog). Escape,
- *   backdrop, and ✕ all close. Modal-only: there is no /settings page, so
- *   nothing links to one.
- * - Left section nav in the app's mono chrome (text-only, session-list
- *   language — active = bg-accent), no icons, matching the minimal-color
- *   doctrine.
- * - The dialog is surface-agnostic by construction: the sections talk to
- *   /api/settings* and localStorage only, so this shell can be re-mounted
- *   as a true OS window in the Electron round with near-zero churn.
- *
- * The record + the single `write` seam moved here from the thin page:
- * one record instance for the whole dialog, sections write through it,
- * switching sections never refetches.
+ * One record instance serves the whole dialog. Sections write through `write`,
+ * and switching sections never refetches.
  */
 
 import {
@@ -40,7 +28,8 @@ import {
 	type UserSettings,
 } from "@/src/core";
 import { useAppearance } from "./appearance.tsx";
-import { SettingsSection } from "./controls.tsx";
+import { SettingsGroup, SettingsSection } from "./controls.tsx";
+import { LessonSoundsRow } from "./device-prefs.tsx";
 import { UpdateSettings } from "./update-settings.tsx";
 import { AgentSection } from "./agent-section.tsx";
 import type { ModelsSettings } from "@/src/core";
@@ -57,28 +46,21 @@ import { StorageSection } from "./storage-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 
-/** Owner (2026-09-20): hints earn their place — mechanics-explaining
- *  prose is out; only the keyboard note stays (storage location is a
- *  real question users ask). */
+/** The nav label is the section's heading. Ids are internal: deep links and tests use them. */
 const SECTIONS = [
-	{ id: "keys", label: "Providers" },
-	{ id: "agent", label: "Agent" },
-	{ id: "learner", label: "Learner" },
+	{ id: "keys", label: "Keys" },
+	{ id: "agent", label: "Tutor" },
+	{ id: "learner", label: "Learning" },
 	{ id: "appearance", label: "Appearance" },
-	{ id: "graph", label: "Graph" },
-	{ id: "keyboard", label: "Keyboard", hint: "Stored on this device" },
+	{ id: "graph", label: "Skill map" },
+	{ id: "keyboard", label: "Keyboard" },
 	{ id: "usage", label: "Spending" },
 	{ id: "general", label: "General" },
-	{ id: "storage", label: "Storage" },
-	{ id: "reset", label: "Reset" },
+	{ id: "data", label: "Data" },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-/** `open(section?, row?)` — the optional ROW deep-links into the Keys
- *  section with that row unfolded (zero-keys wave: the dictation error's
- *  click lands on the Deepgram row). `row` is the KEY ID (the env-var
- *  name, e.g. DEEPGRAM_API_KEY — KeysSection's openRow state), not the
- *  row's testid. */
+/** `open(section?, row?)`. `row` is the key id (the env-var name) to unfold in Keys. */
 const DialogContext = createContext<{ open: (section?: string, row?: string) => void }>({ open: () => {} });
 
 /** AppShell-level mount: the sidebar row and the mod+, chord call this.
@@ -119,12 +101,11 @@ function SettingsDialog({
 }: {
 	onClose: () => void;
 	initialSection: SectionId;
-	/** The keys-section row to unfold (see DialogContext above). */
+	/** Keys row to unfold on open. */
 	initialRow: string | null;
 }) {
 	const backdropDismiss = useBackdropDismiss(onClose);
-	// Plain dim backdrop (no blur — nothing decorative); a genuine
-	// backdrop click closes, the dialog body stops propagation.
+	// Plain dim backdrop, no blur. A backdrop click closes; the dialog body stops propagation.
 	return createPortal(
 		<div
 			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
@@ -146,8 +127,7 @@ export function SettingsDialogBody({
 }: {
 	onClose: () => void;
 	initialSection?: SectionId;
-	/** The keys row to unfold on arrival (null = none). While-open
-	 *  retargets follow it exactly like initialSection below. */
+	/** Keys row to unfold on arrival (null = none). */
 	initialRow?: string | null;
 }) {
 	const { onAppearanceChange } = useAppearance();
@@ -158,13 +138,8 @@ export function SettingsDialogBody({
 	// MenuShell open-count — drives the content column's scroll lock.
 	const [openMenus, setOpenMenus] = useState(0);
 	const contentRef = useRef<HTMLDivElement | null>(null);
-	// Scroll-lock (fix wave, owner ruling: the scrollbar MAY stay,
-	// scrolling must NOT happen, nothing may move): the content column
-	// keeps overflow-y-auto — the scrollbar and every width stay exactly
-	// as they are — and while any MenuShell is open, non-passive wheel +
-	// touchmove listeners on the column preventDefault. React attaches
-	// synthetic wheel/touch passively at the root, so this needs the
-	// native-listener ref seam.
+	// While a MenuShell is open, wheel and touchmove on the content column are blocked.
+	// The scrollbar stays, so nothing shifts. Native listeners are needed: React attaches wheel and touch passively.
 	useEffect(() => {
 		const el = contentRef.current;
 		if (!el || openMenus === 0) return;
@@ -188,18 +163,12 @@ export function SettingsDialogBody({
 		};
 	}, []);
 	const [active, setActive] = useState<SectionId>(initialSection);
-	// A deep-link fired while the dialog is ALREADY open (first exercised by
-	// the wave-6 embedding picker's "Add a provider key first…" link — the
-	// picker itself died with wave 7, the mechanism is general) changes
-	// initialSection under our feet — follow it, or the link silently does
-	// nothing.
+	// A deep link while the dialog is already open changes initialSection; follow it.
 	useEffect(() => {
 		setActive(initialSection);
 	}, [initialSection]);
 
-	// Fetch once per dialog mount. 200 {settings: null} is FIRST BOOT
-	// (no record = factory everything), not a failure — the error state is
-	// a non-200 or a network throw only.
+	// Fetch once per mount. 200 with {settings: null} is first boot, not an error.
 	useEffect(() => {
 		fetch("/api/settings")
 			.then((r) =>
@@ -211,15 +180,11 @@ export function SettingsDialogBody({
 			.catch(() => setRecord(null));
 	}, []);
 
-	// Escape closes — the layered-dismiss convention (Esc is dead for the
-	// sections' own editors while they hold focus; this listener is the
-	// dialog's outer layer).
+	// Escape closes the dialog, the outer layer. Inner editors handle Esc first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
-				// THE ONE-ESC LAW (owner, keyboard round 2026-10-06): claim
-				// at the document level — the window chain (dictation →
-				// abort) must not also act. One Esc, one action.
+				// One Esc, one action: claim it at document level so the window chain does not also act.
 				e.preventDefault();
 				e.stopPropagation();
 				onClose();
@@ -229,9 +194,7 @@ export function SettingsDialogBody({
 		return () => document.removeEventListener("keydown", onKey);
 	}, [onClose]);
 
-	/** ONE writer for the whole dialog: PUT the whole section, keep the
-	 *  record mirror in sync, surface route errors inline (a 400 is a
-	 *  schema mistake caught by the validation surface). */
+	/** The one writer: PUT the section, sync the record, show route errors inline. */
 	const write = useCallback(
 		async (
 			section: "general" | "agent" | "models" | "appearance" | "graph" | "compaction",
@@ -250,11 +213,7 @@ export function SettingsDialogBody({
 				setError(`${section}: ${detail.error ?? res.status}`);
 				return;
 			}
-			// Server truth, never the request body (fix wave, owner repro):
-			// the models section clamps pinned thinking levels on write
-			// (bd68486) — a swap that rides an unsupported level lands
-			// CLAMPED in the record, and the writing surface must show the
-			// stored value in this same interaction, not the optimistic one.
+			// Store the server's answer, not the request body: the models section clamps thinking levels on write.
 			const stored = (
 				(await res.json().catch(() => null)) as { settings?: UserSettings } | null
 			)?.settings;
@@ -278,11 +237,10 @@ export function SettingsDialogBody({
 			className="settings-dialog-pop flex h-[620px] max-h-[85vh] w-[920px] max-w-[90vw] flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl"
 			onClick={(e) => e.stopPropagation()}
 		>
-			{/* Header — the app's quiet CMU title language. */}
 			<header className="flex h-15 shrink-0 items-center gap-3 border-b border-border px-5">
 				<h2 className="font-title text-2xl tracking-tight">Settings</h2>
 				<Hint
-						// Esc closes the dialog (its own listener) — surface it.
+						// Shows the Escape shortcut.
 						label="Close"
 						binding="escape"
 						side="left"
@@ -308,8 +266,6 @@ export function SettingsDialogBody({
 			</header>
 
 			<div className="flex min-h-0 flex-1">
-				{/* Left nav — text-only, the session-list mono language,
-					    active = bg-accent. */}
 				<nav
 					aria-label="Settings sections"
 					data-testid="settings-nav"
@@ -333,12 +289,7 @@ export function SettingsDialogBody({
 					))}
 				</nav>
 
-				{/* Content column — one section at a time, this scrolls — and
-				    LOCKS while any MenuShell is open (owner ruling: no
-				    scrolling with a dropdown down; MenuShell announces
-				    open/close, the count keeps overlap honest). The lock
-				    intercepts wheel/touch instead of hiding the scrollbar —
-				    nothing may shift when the lock engages. */}
+				{/* Content column: one section at a time. Scroll locks while a MenuShell is open. */}
 				<div
 					ref={contentRef}
 					className="min-w-0 flex-1 overflow-y-auto"
@@ -368,22 +319,27 @@ export function SettingsDialogBody({
 									title="General"
 									testid="section-general"
 								>
-									<UpdateSettings
-										autoUpdate={record.general?.autoUpdate ?? true}
-										onAutoUpdateChange={(on) =>
-											void write("general", { ...record.general, autoUpdate: on })
-										}
-									/>
+									<SettingsGroup label="Updates" testid="group-updates">
+										<UpdateSettings
+											autoUpdate={record.general?.autoUpdate ?? true}
+											onAutoUpdateChange={(on) =>
+												void write("general", { ...record.general, autoUpdate: on })
+											}
+										/>
+									</SettingsGroup>
+									<SettingsGroup label="Sound" testid="group-sound">
+										<LessonSoundsRow />
+									</SettingsGroup>
 								</SettingsSection>
 							)}
 							{active === "keys" && (
-								<SettingsSection title="Providers" testid="section-keys">
+								<SettingsSection title="Keys" testid="section-keys">
 									<KeysSection initialRow={initialRow ?? undefined} />
 								</SettingsSection>
 							)}
 							{active === "agent" && (
 								<SettingsSection
-									title="Agent"
+									title="Tutor"
 									testid="section-agent"
 								>
 									<AgentSection
@@ -418,7 +374,7 @@ export function SettingsDialogBody({
 							)}
 							{active === "graph" && (
 								<SettingsSection
-									title="Graph"
+									title="Skill map"
 									testid="section-graph"
 								>
 									<GraphSection
@@ -432,7 +388,7 @@ export function SettingsDialogBody({
 							{active === "keyboard" && (
 								<SettingsSection
 									title="Keyboard"
-									hint="Stored on this device"
+									hint="Click Rebind, then press the new keys."
 									testid="section-keyboard"
 								>
 									<KeyboardSection />
@@ -440,23 +396,23 @@ export function SettingsDialogBody({
 							)}
 							{active === "learner" && (
 								<SettingsSection
-									title="Learner"
-									hint="Who is learning: the languages you bring, and where the rest of the profile lives"
+									title="Learning"
+									hint="The languages you know, and how the tutor explains things to you."
 									testid="section-learner"
 								>
 									<LearnerSection onClose={onClose} />
 								</SettingsSection>
 							)}
-							{active === "storage" && (
+							{active === "data" && (
 								<SettingsSection
-									title="Storage"
-									hint="What the app keeps on this computer. Cache can be cleared; voice clips, progress and backups stay."
+									title="Data"
+									hint="What the app keeps on this computer. The cache can be cleared; voice clips, progress and backups stay."
 									testid="section-storage"
 								>
 									<StorageSection />
 								</SettingsSection>
 							)}
-							{active === "reset" && (
+							{active === "data" && (
 								<SettingsSection title="Reset" hint="Start over from scratch" testid="section-reset">
 									<ResetSection />
 								</SettingsSection>

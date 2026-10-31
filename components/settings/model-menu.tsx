@@ -1,37 +1,48 @@
 "use client";
 /**
- * The model menu (extracted 2026-09-20 from model-picker.tsx, owner ask:
- * the agent settings' role selects use the EXACT same dropdown as the
- * chat model selector — same look, same machine). The fuzzy search +
- * arrow-walk + Enter pick machine lives here once; each mount owns only
- * the popover shell (positioning, outside-click, Esc — the chat control
- * opens UP from the bottom bar, the settings rows open DOWN inside the
- * dialog).
+ * The shared dropdown machinery for the settings menus, with the same look as
+ * the chat model selector: fuzzy search, arrow-walk and Enter to pick. Each
+ * mount owns only its popover shell (positioning, outside-click, Esc).
  *
- * The appearance wave (2026-09-26) added the reading-font picker over the
- * same machine: FontMenuList (families instead of models, plus the
- * always-offerable DEFAULT row and a custom-family escape input).
- *
- * Keyboard machine (owner polish, 2026-09-17): focus STAYS in the search
- * field — ↑/↓ walk the filtered results (clamped, no wrap), Enter picks
- * the walked row (or the first result when nothing is walked).
- * stopPropagation keeps these keys out of every other listener while the
- * menu is open.
+ * Focus stays in the search field. Arrows walk the results (clamped, no wrap),
+ * Enter picks the walked row or the first result. Keys stop propagating while
+ * the menu is open.
  */
 
 import { useEffect, useRef, useState } from "react";
 import type { ModelCatalogEntry } from "@/src/core";
 import { fuzzyScore, subscriptionLabel } from "@/src/core";
 import { formatTokens } from "@/components/usage-format";
+import { cn } from "@/lib/utils";
 
 function priceLabel(cost: ModelCatalogEntry["cost"]): string {
 	const fmt = (n: number) => `$${n < 1 ? n.toFixed(2).replace(/0$/, "") : n.toFixed(2)}`;
 	return `${fmt(cost.input)}/${fmt(cost.output)}`;
 }
 
-/** The model dropdown body — fuzzy search + ranked list. `models ===
- *  undefined` is the catalog-loading state; an empty result list gets
- *  its own quiet line. */
+/** Hover and the keyboard highlight take bg-accent. The chosen row never takes a fill; it carries a go-coloured check. */
+export function MenuOption({
+	highlighted = false,
+	className,
+	...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+	/** The keyboard highlight (the walk with the arrow keys). */
+	highlighted?: boolean;
+}) {
+	return (
+		<button
+			type="button"
+			{...props}
+			className={cn(
+				"rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent hover:text-foreground",
+				highlighted && "bg-accent text-foreground ring-1 ring-inset ring-foreground/25",
+				className,
+			)}
+		/>
+	);
+}
+
+/** The model dropdown body: fuzzy search and a ranked list. `models === undefined` is the loading state. */
 export function ModelMenuList({
 	models,
 	effectiveId,
@@ -43,10 +54,7 @@ export function ModelMenuList({
 	models: ModelCatalogEntry[] | undefined;
 	/** Currently effective id (the row gets the quiet highlight). */
 	effectiveId: string | undefined;
-	/** The effective id's provider (model-slots wave: the catalog
-	 *  federates multiple providers and ids can collide across them —
-	 *  the highlight must match BOTH coordinates or it lands on the
-	 *  wrong row). */
+	/** Provider of the effective id. The federated catalog can repeat ids, so the highlight must match both. */
 	effectiveProvider?: string;
 	/** Receives the chosen entry. */
 	onPick: (entry: ModelCatalogEntry) => void;
@@ -68,7 +76,6 @@ export function ModelMenuList({
 		listRef.current?.querySelector(`[data-idx="${menuIdx}"]`)?.scrollIntoView({ block: "nearest" });
 	}, [menuIdx]);
 
-	// The filtered, ranked model list.
 	const results = (models ?? [])
 		.map((m) => ({ m, s: fuzzyScore(query, m.provider, m.id, m.name) }))
 		.filter((r) => r.s !== null)
@@ -114,17 +121,15 @@ export function ModelMenuList({
 			<ul ref={listRef} data-testid="model-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
 				{results.map((m, i) => (
 					<li key={`${m.provider}/${m.id}`}>
-						<button
-							type="button"
+						<MenuOption
 							data-testid={`model-option-${m.id.replace(/[^a-z0-9-]/gi, "_")}`}
 							data-idx={i}
 							onClick={() => onPick(m)}
-							className={`flex w-full flex-col gap-0.5 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
-								i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
-							}${m.id === effectiveId && m.provider === (effectiveProvider ?? m.provider) && i !== menuIdx ? " bg-muted/60" : ""}`}
+							highlighted={i === menuIdx}
+							className="flex w-full flex-col gap-0.5 outline-none"
 						>
 							<span className="flex items-center justify-between gap-2">
-								<span className="truncate text-card-foreground">{m.name}</span>
+								<span className={`truncate ${m.id === effectiveId && m.provider === (effectiveProvider ?? m.provider) ? "text-go" : "text-card-foreground"}`}>{m.name}</span>
 								<span className="shrink-0 tabular-nums text-muted-foreground" title={subscriptionLabel(`${m.provider}:${m.id}`) ? "Subscription connection" : "USD per 1M tokens in/out"}>
 									{subscriptionLabel(`${m.provider}:${m.id}`) ?? priceLabel(m.cost)}
 								</span>
@@ -133,7 +138,7 @@ export function ModelMenuList({
 								<span className="truncate">{subscriptionLabel(`${m.provider}:${m.id}`) ? `${subscriptionLabel(`${m.provider}:${m.id}`)} (subscription)` : m.provider} · {m.id}</span>
 								<span className="shrink-0 tabular-nums">{formatTokens(m.contextWindow)}</span>
 							</span>
-						</button>
+						</MenuOption>
 					</li>
 				))}
 			</ul>
@@ -144,8 +149,7 @@ export function ModelMenuList({
 	);
 }
 
-/** The thinking-level dropdown body — the levels this model actually
- *  supports, ✓ on the effective one. Same shape as the chat selector's. */
+/** The thinking-level dropdown body: the levels the model supports, with a check on the effective one. */
 export function ThinkingMenuList({
 	levels,
 	effectiveLevel,
@@ -166,18 +170,15 @@ export function ThinkingMenuList({
 				<div className="px-2 py-3 text-center text-muted-foreground">{empty ?? "No thinking levels."}</div>
 			) : (
 				levels.map((level) => (
-					<button
+					<MenuOption
 						key={level}
-						type="button"
 						data-testid={`thinking-option-${level}`}
 						onClick={() => onPick(level)}
-						className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted ${
-							level === effectiveLevel ? "bg-muted/60 text-card-foreground" : "text-card-foreground"
-						}`}
+						className="flex items-center justify-between text-card-foreground"
 					>
 						<span>{level}</span>
-						{level === effectiveLevel && <span aria-hidden>✓</span>}
-					</button>
+						{level === effectiveLevel && <span aria-hidden className="text-go">✓</span>}
+					</MenuOption>
 				))
 			)}
 			{footer && (
@@ -187,11 +188,7 @@ export function ThinkingMenuList({
 	);
 }
 
-/** The provider-picker dropdown body (keys wave-5 polish, 2026-09-21:
- *  the owner wanted the Add-provider control to match the app's dropdown
- *  language) — the same fuzzy-search + arrow-walk + Enter machine over
- *  the pi-ai provider table. Rows read: provider label, its env var in
- *  quiet mono on the right. */
+/** The provider-picker body: the same search and arrow-walk machine over the provider table. */
 export function ProviderMenuList({
 	providers,
 	onPick,
@@ -262,8 +259,8 @@ export function ProviderMenuList({
 							data-testid={`provider-option-${p.id.replace(/[^a-z0-9-]/gi, "_")}`}
 							data-idx={i}
 							onClick={() => onPick(p)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
-								i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
+							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-accent hover:text-foreground ${
+								i === menuIdx ? "bg-accent text-foreground ring-1 ring-inset ring-foreground/25" : ""
 							}`}
 						>
 							<span className="truncate text-card-foreground">{p.label}</span>
@@ -276,43 +273,27 @@ export function ProviderMenuList({
 	);
 }
 
-/** The reading-font dropdown's row set — the SAME fuzzy + arrow-walk +
- *  Enter machine over font families (appearance wave, 2026-09-26). The
- *  DEFAULT row (null) is a candidate like any family: it matches empty
- *  and "source"/"sans"/"default" queries, so an unfiltered list opens
- *  with the default first and a searched list drops it honestly — Enter
- *  can never pick a row that isn't on screen. Pure — exported for
- *  tests. */
+/** Font row set. The DEFAULT row (null) is searchable like any family, so Enter never picks a row that is not on screen. */
 export function fontMenuResults(query: string, families: string[]): Array<string | null> {
 	const scored = families
 		.map((f) => ({ f, s: fuzzyScore(query, f) }))
 		.filter((r) => r.s !== null)
 		.sort((a, b) => b.s! - a.s! || a.f.localeCompare(b.f))
 		.map((r) => r.f);
-	// The default row's searchable identity: the factory family + the
-	// word "default" (the suffix it renders with).
+	// The default row matches the factory family name and the word "default".
 	const defaultScore = fuzzyScore(query, "Source Sans 3", "default");
 	if (query.trim() === "" || defaultScore !== null) return [null, ...scored];
 	return scored;
 }
 
-/** The custom-family action row's decision (pure, 2026-09-26): a typed
- *  query that matches NO family becomes the "Use '<query>'" custom pick —
- *  a matching family is the better pick, so the action row only exists
- *  when there is nothing else to pick. Exported for tests. */
+/** The custom-family row exists only when a typed query matches no family. */
 export function customFamilyFor(query: string, families: string[]): string | null {
 	const trimmed = query.trim();
 	if (trimmed === "") return null;
 	return fontMenuResults(query, families).length === 0 ? trimmed : null;
 }
 
-/** The reading-font dropdown body — ONE search field (owner ask
- *  2026-09-26: "why two?"): the fuzzy machine filters the families, and
- *  when nothing matches, a "Use '<query>'" action row commits the typed
- *  text as a custom family — the old separate custom input is gone, the
- *  search field absorbed its job. `families === undefined` is the
- *  enumerating state; the curated fallback arrives as plain families with
- *  a footer that says so honestly. */
+/** Reading-font dropdown body. One search field: when nothing matches, a "Use '<query>'" row commits the typed text as a custom family. */
 export function FontMenuList({
 	families,
 	effectiveFamily,
@@ -344,8 +325,7 @@ export function FontMenuList({
 	}, [menuIdx]);
 
 	const results = fontMenuResults(query, families ?? []);
-	// The custom-family action row: only when a typed query matches
-	// nothing (a matching family is the better pick). Enter picks it.
+	// The custom-family row shows only when nothing matches. Enter picks it.
 	const customFamily = customFamilyFor(query, families ?? []);
 	const walkable: Array<string | null> = customFamily !== null ? ["__custom__"] : results;
 
@@ -389,35 +369,35 @@ export function FontMenuList({
 						const effective = isDefault ? effectiveFamily === null : family === effectiveFamily;
 						return (
 							<li key={family ?? "__default"}>
-								<button
-									type="button"
+								<MenuOption
 									data-testid={isDefault ? "font-option-default" : `font-option-${family.replace(/[^a-z0-9-]/gi, "_")}`}
 									data-idx={i}
 									onClick={() => onPick(family)}
-									className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
-										i === menuIdx ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
-									}${effective && i !== menuIdx ? " bg-muted/60" : ""}`}
+									highlighted={i === menuIdx}
+									className="flex w-full items-center justify-between gap-3 outline-none"
+									aria-current={effective ? "true" : undefined}
 								>
 									<span className="truncate text-card-foreground">{family ?? "Source Sans 3"}</span>
-									<span className="shrink-0 text-muted-foreground">{isDefault ? "default" : effective && <span aria-hidden>✓</span>}</span>
-								</button>
+									<span className="shrink-0 text-muted-foreground">
+										{isDefault && "default"}
+										{effective && <span aria-hidden className={isDefault ? "ml-1 text-go" : "text-go"}>✓</span>}
+									</span>
+								</MenuOption>
 							</li>
 						);
 					})}
 				{families && customFamily !== null && (
 					<li>
-						<button
-							type="button"
+						<MenuOption
 							data-testid="font-option-custom"
 							data-idx={0}
 							onClick={() => onPick(customFamily)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted ${
-								menuIdx === 0 ? "bg-accent/40 ring-1 ring-inset ring-border" : ""
-							}`}
+							highlighted={menuIdx === 0}
+							className="flex w-full items-center justify-between gap-3 outline-none"
 						>
 							<span className="truncate text-card-foreground">Use “{customFamily}”</span>
 							<span className="shrink-0 text-muted-foreground">custom</span>
-						</button>
+						</MenuOption>
 					</li>
 				)}
 			</ul>

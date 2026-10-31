@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * The setup's own controls (LangHarness onboarding, 2026-10-28): chips for
- * a short choice, a stepper for a number. No native <select>: the app's
- * surfaces are its own (Xurify, 2026-10-28), and a select's popup is the
- * browser's, not ours. Everything is keyboard-reachable: chips are
- * buttons with aria-pressed, the stepper is a real number input.
+ * Setup controls: chips for a short choice, a stepper for a number. No native
+ * <select>, since its popup is styled by the browser. Chips are buttons with
+ * aria-pressed, and the stepper is a real number input.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
+import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, NEW_LANG_LEVEL, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors";
 const ON = "border-go bg-go/10 text-foreground";
@@ -42,12 +40,7 @@ export function Chips<T extends string | number>({
 	);
 }
 
-/**
- * A number with quick picks and free entry: the chips for the usual
- * values, a stepper for anything else (a power learner's three hours a
- * day is a real plan, not an outlier — the cap is 600 minutes). The
- * stepper's field is the app's own input; − and + move by `step`.
- */
+/** Quick-pick chips plus a free-entry stepper for values outside the quick list. − and + move by `step`. */
 export function NumberPicker({
 	value,
 	onChange,
@@ -112,13 +105,9 @@ export function NumberPicker({
 }
 
 /**
- * The languages the learner knows. Twenty as chips (the catalogue's
- * `primary` ones), any number pressed; everything else behind "More
- * languages", a searchable panel of the app's own (no native select, no
- * free text: Xurify, 2026-10-28). A chosen language from the panel joins
- * the chip row. Under the row, one line per chosen language says how well
- * it is known, three taps wide, so "know" has a meaning: a bit, comfortable,
- * fluent.
+ * Languages the learner knows: the primary ones as chips, the rest in a
+ * searchable "More languages" panel. A language picked in the panel joins the
+ * chip row. Each chosen language gets a three-step level row (CEFR).
  */
 export function LanguagePicker({
 	value,
@@ -131,36 +120,36 @@ export function LanguagePicker({
 	onChange: (langs: Lang[], levels: Partial<Record<Lang, LangLevel>>) => void;
 	testid?: string;
 }) {
-	// The panel works on a copy: nothing outside it (the chip row, the level
-	// rows, the explanation chips) moves until it closes, so the panel never
-	// slides out from under the pointer (Xurify: content shift on every pick).
+	// The panel edits a copy, so the chip row and level rows stay put until it closes.
 	const [pending, setPending] = useState<Lang[] | null>(null);
 	const [query, setQuery] = useState("");
 	const more = pending !== null;
 	const anchor = useRef<HTMLSpanElement>(null);
 	const chosen = pending ?? value;
-	const prune = (langs: readonly Lang[]) => {
+	// A newly added language starts at NEW_LANG_LEVEL. A saved language with no level reads DEFAULT_LANG_LEVEL.
+	const levelsFor = (langs: readonly Lang[]) => {
 		const next: Partial<Record<Lang, LangLevel>> = {};
-		for (const l of langs) if (levels[l]) next[l] = levels[l];
+		for (const l of langs) {
+			if (levels[l]) next[l] = levels[l];
+			else if (!value.includes(l)) next[l] = NEW_LANG_LEVEL;
+		}
 		return next;
 	};
 	const toggle = (id: Lang) => {
-		if (value.includes(id)) return onChange(value.filter((l) => l !== id), prune(value.filter((l) => l !== id)));
+		if (value.includes(id)) return onChange(value.filter((l) => l !== id), levelsFor(value.filter((l) => l !== id)));
 		if (value.length >= MAX_LANGUAGES) return;
-		onChange([...value, id], { ...levels });
+		onChange([...value, id], levelsFor([...value, id]));
 	};
 	const togglePending = (id: Lang) => setPending((p) => (p ? (p.includes(id) ? p.filter((l) => l !== id) : p.length >= MAX_LANGUAGES ? p : [...p, id]) : p));
 	const setLevel = (id: Lang, level: LangLevel) => onChange([...value], { ...levels, [id]: level });
 	const open = () => (setQuery(""), setPending([...value]));
 	const close = () => {
-		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l))) onChange(pending, prune(pending));
+		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l))) onChange(pending, levelsFor(pending));
 		setPending(null);
 		setQuery("");
 	};
-	// Close on a press anywhere outside the chip and panel (the page margins
-	// included) or on Escape. A backdrop element cannot do this: the step
-	// animates with a transform, which pins a fixed child to the form column
-	// (Xurify, 2026-10-28: "I click on the sides and the dropdown won't close").
+	// Close on a press outside the chip and panel, or on Escape. A backdrop element
+	// can't do this: the step's transform pins a fixed child to the form column.
 	useEffect(() => {
 		if (!more) return;
 		const onDown = (e: PointerEvent) => {

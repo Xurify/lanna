@@ -1,43 +1,29 @@
 "use client";
 /**
- * The Keys section (wave-5 polish, 2026-09-21 — owner design): a MINIMAL
- * key-value table. Provider left, masked key right, no description hints
- * (they took too much space), the "Get a key ↗" link a tiny muted guest.
- * Clicking a writable row unfolds a paste field + Save (+ Delete for a
- * file-sourced value) beneath it; Esc or a second click folds it away.
- * The Add-provider control is the LAST ROW of the table and uses the
- * app's shared dropdown look (ProviderMenuList — fuzzy search over the
- * 33 pi-ai providers).
+ * The Keys section: a minimal key-value table. Writable rows unfold an inline
+ * paste editor. Env-owned rows are read only, since a paste box there would
+ * mislead. The Add-provider control is the last row.
  *
- * Owner rulings carried in:
- *  - Env-owned rows (a real environment variable owns the name — dev
- *    .env.local or launch env) render READ-ONLY + dimmed, no paste field:
- *    a paste box on a key the UI cannot make live would mislead.
- *  - OpenRouter is NOT special: one provider among 33, a row only when
- *    stored, otherwise it lives in the Add dropdown like everyone else.
- *  - Providers groups API keys, subscriptions, dictation and search.
- *    Unknown variables stay masked/read-only at the end of Model API keys.
+ * Groups: Model API keys, Subscriptions, Speech, Dictation, Web search. Unknown
+ * variables stay masked and read only at the end of Model API keys.
  *
- * API: GET /api/keys (masked statuses + the providers array), PUT
- * /api/keys/:id (shape-gated 400s land inline), DELETE. Saves take
- * effect immediately. Plaintext never returns from the store.
+ * API: GET /api/keys, PUT /api/keys/:id (400s show inline), DELETE. Saves take
+ * effect at once; plaintext never returns from the store.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { AUTH_KEYS, type AuthKeyStatus } from "@/src/core";
+import { AUTH_KEYS, isPlainAuthSetting, type AuthKeyStatus } from "@/src/core";
 import { SettingsGroup } from "./controls.tsx";
 import { SubscriptionConnections } from "./subscription-connections.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
 
-/** One pi-ai provider with plain API-key auth (the Platform seam —
- *  derived from pi-ai's own env-key table; no drift possible). */
 /** Which settings group a service key sits in (LangHarness adds Speech). */
-function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Search" {
+function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Web search" {
 	if (id === "ELEVENLABS_API_KEY" || id.startsWith("AZURE_SPEECH_")) return "Speech";
 	if (id === "DEEPGRAM_API_KEY") return "Dictation";
-	return "Search";
+	return "Web search";
 }
 
 export interface ProviderKeyInfo {
@@ -51,23 +37,17 @@ interface KeysResponse {
 	providers?: ProviderKeyInfo[];
 }
 
-/** The curated tools group, pinned by id (the catalog owns the copy;
- *  these ids are the contract). Derived from the catalog (search wave,
- *  2026-09-20: the Google CSE pair retired, Tavily + Brave joined) — the
- *  section can never drift from core/auth-keys.ts again. */
+/** Curated tool key ids, derived from the catalog so this section cannot drift from core/auth-keys.ts. */
 const TOOL_IDS = AUTH_KEYS.map((k) => k.id) as readonly string[];
 
-/** The classification driving the table groups. Pure — exported for
- *  tests. OpenRouter is un-pinned (wave-5 owner ruling): no synthesis,
- *  no special row — it rides the same provider classification. */
+/** Splits statuses into the table groups. */
 export function classifyKeys(
 	statuses: readonly AuthKeyStatus[],
 	providers: readonly ProviderKeyInfo[] | undefined,
 ): {
 	/** Stored provider keys (env or file), in GET order. */
 	providerRows: AuthKeyStatus[];
-	/** The curated tools rows (synthesized when absent — always shown,
-	 *  they carry the docs links a first boot needs). */
+	/** Curated tool rows, synthesized when absent so their docs links always show. */
 	toolRows: AuthKeyStatus[];
 	/** Unknown file vars — preserved, read-only. */
 	unknownRows: AuthKeyStatus[];
@@ -91,8 +71,7 @@ export function classifyKeys(
 		if (isTool(s.id)) continue;
 		if (providerEnv.has(s.id) || (!s.info && providers === undefined)) providerRows.push(s);
 		else if (!s.info) unknownRows.push(s);
-		// (pre-interlude catalogs: a curated-but-unclassified status still
-		// renders as a provider row so nothing disappears)
+		// Keep unclassified statuses visible as provider rows.
 		else providerRows.push(s);
 	}
 	return {
@@ -103,9 +82,7 @@ export function classifyKeys(
 	};
 }
 
-/** The minimal status line, e.g. "…ab12 · 64 chars · saved 2026-10-28"
- *  (" · env" marks an environment-owned value — the row itself is
- *  read-only then). The date is the day the app last saved the key. Pure. */
+/** Status line such as "…ab12 · 64 chars · saved 2026-10-28". " · env" marks an env-owned value. */
 export function keyStatusLine(status: AuthKeyStatus): string {
 	if (!status.present || !status.masked) return "not set";
 	const tail = status.masked.replace(/ \((\d+) chars\)$/, "");
@@ -114,9 +91,7 @@ export function keyStatusLine(status: AuthKeyStatus): string {
 	return `${tail} · ${chars}${saved}${status.source === "env" ? " · env" : ""}`;
 }
 
-/** One table row: label left, tiny docs link + status right. Writable
- *  rows click-unfold an editor beneath (owner interaction); env-owned
- *  rows are dimmed and read-only (a paste box there would mislead). */
+/** One table row: label left, docs link and status right. Env-owned rows are dimmed and read only. */
 function KeyTableRow({
 	label,
 	docsUrl,
@@ -136,8 +111,7 @@ function KeyTableRow({
 	onToggle: () => void;
 	onSave: (value: string) => Promise<string | null>;
 	onDelete?: () => Promise<void>;
-	/** Folds the editor (owner, fix wave: the way OUT of a paste prompt
-	 *  must be visible — Cancel beside Save/Delete, not only Esc). */
+	/** Folds the editor. Cancel sits beside Save, so the way out stays visible. */
 	onCancel: () => void;
 	testid: string;
 }) {
@@ -146,8 +120,7 @@ function KeyTableRow({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [confirmDelete, setConfirmDelete] = useState(false);
-	// The pasted key stays masked until the owner asks to see it (shoulder
-	// surfing, screen shares). Folding the editor hides it again.
+	// The pasted key stays masked until revealed. Folding the editor hides it again.
 	const [reveal, setReveal] = useState(false);
 	useEffect(() => {
 		if (!expanded) setReveal(false);
@@ -163,10 +136,7 @@ function KeyTableRow({
 		setBusy(false);
 	}
 
-	// INLINE editing (owner, fix wave: "type the keys in line — more
-	// table-like"): the expanded row becomes the editor itself — label
-	// left, the paste field filling the middle, Save | Cancel (| Delete)
-	// right — instead of a second line beneath the row.
+	// The expanded row becomes the editor itself: label, paste field, then Save | Cancel | Delete.
 	if (expanded && !envOwned) {
 		return (
 			<div data-testid={testid}>
@@ -304,8 +274,90 @@ function KeyTableRow({
 	);
 }
 
-/** The Add-provider control — the table's last row, the app's shared
- *  dropdown look (portaled menu, the search + arrow-walk machine). */
+/** A plain setting stored with the keys (the Azure region): a visible text field under its key's group. Commits on blur or Enter; Escape drops the draft; empty removes it. */
+function PlainSettingRow({
+	label,
+	placeholder,
+	status,
+	onSave,
+	onClear,
+	testid,
+}: {
+	label: string;
+	placeholder: string;
+	status: AuthKeyStatus;
+	/** The keys section's saveKey: a 400's message, or null on success. */
+	onSave: (value: string) => Promise<string | null>;
+	onClear: () => Promise<void>;
+	testid: string;
+}) {
+	const envOwned = status.source === "env";
+	const stored = status.value ?? "";
+	const [draft, setDraft] = useState<string | null>(null);
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	// Escape blurs the field; the blur must not then save the draft.
+	const cancelling = useRef(false);
+
+	async function commit() {
+		if (draft === null || busy) return;
+		// Region names are lowercase with no spaces ("West Europe" → "westeurope").
+		const next = draft.trim().toLowerCase().replace(/\s+/g, "");
+		if (next === stored) {
+			setDraft(null);
+			return;
+		}
+		setBusy(true);
+		setError(null);
+		const err = next === "" ? (await onClear(), null) : await onSave(next);
+		setBusy(false);
+		if (err) setError(err);
+		else setDraft(null);
+	}
+
+	return (
+		<div data-testid={testid} className="flex flex-col pl-3">
+			<div className={`flex items-center justify-between gap-3 px-1 py-1.5 ${envOwned ? "opacity-40" : ""}`}>
+				<span className="font-ui text-xs text-foreground">{label}</span>
+				<input
+					value={draft ?? stored}
+					onChange={(e) => setDraft(e.target.value)}
+					onBlur={() => {
+						if (cancelling.current) {
+							cancelling.current = false;
+							return;
+						}
+						void commit();
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") e.currentTarget.blur();
+						if (e.key === "Escape") {
+							cancelling.current = true;
+							setDraft(null);
+							setError(null);
+							e.currentTarget.blur();
+						}
+					}}
+					disabled={envOwned}
+					placeholder={placeholder}
+					title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved value. Remove it from the environment and restart to edit it here.` : undefined}
+					aria-label={label}
+					autoComplete="off"
+					spellCheck={false}
+					data-testid={`${testid}-input`}
+					className="h-7 w-40 rounded-sm border border-border bg-background px-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
+				/>
+			</div>
+			{error && (
+				<p role="alert" data-testid={`${testid}-error`} className="px-1 text-xs text-miss">
+					{error}
+				</p>
+			)}
+		</div>
+	);
+}
+
+/** The Add-provider control: the table's last row, with the shared dropdown. */
 function AddProviderRow({
 	addable,
 	onPick,
@@ -357,8 +409,7 @@ function AddProviderRow({
 					preferredSide="down"
 					menuClass="flex w-72 flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 				>
-					{/* Close on pick (owner, fix wave): a chosen provider ends
-					    the dropdown — the paste row is the next step. */}
+					{/* Picking a provider closes the dropdown; the paste row is the next step. */}
 					<ProviderMenuList
 						providers={addable}
 						onPick={(p) => {
@@ -373,10 +424,7 @@ function AddProviderRow({
 }
 
 export function KeysSection({
-	/** A deep-linked row to unfold on arrival (zero-keys wave): the
-	 *  dictation error's click lands here on DEEPGRAM_API_KEY. Followed
-	 *  while mounted too — the settings dialog's while-open retarget
-	 *  pattern. undefined = nothing seeded. */
+	/** Row to unfold on arrival, e.g. DEEPGRAM_API_KEY from the dictation error. Followed while mounted too. */
 	initialRow,
 }: {
 	initialRow?: string;
@@ -384,17 +432,13 @@ export function KeysSection({
 	const [statuses, setStatuses] = useState<AuthKeyStatus[] | null>(null);
 	const [providers, setProviders] = useState<ProviderKeyInfo[] | undefined>(undefined);
 	const [loading, setLoading] = useState(true);
-	/** The unfolded row (its id), null = all folded. Seeded by the
-	 *  deep-link (initialRow) and re-followed when it retargets. */
+	/** Unfolded row id; null = all folded. */
 	const [openRow, setOpenRow] = useState<string | null>(initialRow ?? null);
 	/** The paste editor for a freshly chosen Add-provider target. */
 	const [adding, setAdding] = useState<ProviderKeyInfo | null>(null);
 	const [addError, setAddError] = useState<string | null>(null);
 
-	// Escape folds any open editor (unfolded row or the Add-provider paste)
-	// WITHOUT closing the dialog. Claimed at document CAPTURE phase — the
-	// only stopPropagation that outruns both the input's React handler and
-	// the dialog's window-level listener.
+	// Escape folds any open editor without closing the dialog. Capture phase, so it runs before the input's handler and the dialog's listener.
 	useEffect(() => {
 		if (openRow === null && adding === null) return;
 		const onKeyDown = (e: KeyboardEvent) => {
@@ -422,9 +466,7 @@ export function KeysSection({
 		void reload();
 	}, []);
 
-	// The deep-link follow: a retarget while the section is open (the
-	// same while-open pattern the dialog's section nav uses) unfolds the
-	// named row; a fresh mount seeds it via the useState initializer.
+	// A retarget while open unfolds the named row. A fresh mount seeds it via useState.
 	useEffect(() => {
 		if (initialRow !== undefined) setOpenRow(initialRow);
 	}, [initialRow]);
@@ -440,9 +482,7 @@ export function KeysSection({
 			return body.error ?? `Save failed (${res.status})`;
 		}
 		await reload();
-		// The cross-surface keys signal (zero-keys wave): the zero-keys pill,
-		// the setup dialog's stage advance, and any other keys reader hear
-		// that a key landed — deletions included (see deleteKey below).
+		// Cross-surface signal: other keys readers re-read here (deletes too).
 		notifySettingsSaved("keys");
 		return null;
 	}
@@ -523,33 +563,45 @@ export function KeysSection({
 				<SubscriptionConnections />
 			</SettingsGroup>
 
-			{(["Speech", "Dictation", "Search"] as const).map((label) => <SettingsGroup key={label} label={label} testid={label === "Dictation" ? "group-dictation" : label === "Speech" ? "group-speech" : "group-search"}>
-				{toolRows.filter((status) => TOOL_KEY_GROUP(status.id) === label).map((status) => (
-					<KeyTableRow
-						key={status.id}
-						label={status.info?.label ?? status.id}
-						docsUrl={status.info?.docsUrl}
-						status={status}
-						expanded={openRow === status.id}
-						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
-						onSave={async (v) => {
-							const err = await saveKey(status.id, v);
-							if (!err) setOpenRow(null);
-							return err;
-						}}
-						onCancel={() => setOpenRow(null)}
-						onDelete={() => deleteKey(status.id)}
-						testid={`key-${status.id.toLowerCase()}`}
-					/>
-				))}
+			{(["Speech", "Dictation", "Web search"] as const).map((label) => <SettingsGroup key={label} label={label} testid={label === "Dictation" ? "group-dictation" : label === "Speech" ? "group-speech" : "group-search"}>
+				{toolRows.filter((status) => TOOL_KEY_GROUP(status.id) === label).map((status) =>
+					isPlainAuthSetting(status.id) ? (
+						// The Azure region: a setting under the Azure key, not a key.
+						<PlainSettingRow
+							key={status.id}
+							label="Region"
+							placeholder="e.g. westeurope"
+							status={status}
+							onSave={(v) => saveKey(status.id, v)}
+							onClear={() => deleteKey(status.id)}
+							testid={`key-${status.id.toLowerCase()}`}
+						/>
+					) : (
+						<KeyTableRow
+							key={status.id}
+							label={status.info?.label ?? status.id}
+							docsUrl={status.info?.docsUrl}
+							status={status}
+							expanded={openRow === status.id}
+							onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
+							onSave={async (v) => {
+								const err = await saveKey(status.id, v);
+								if (!err) setOpenRow(null);
+								return err;
+							}}
+							onCancel={() => setOpenRow(null)}
+							onDelete={() => deleteKey(status.id)}
+							testid={`key-${status.id.toLowerCase()}`}
+						/>
+					),
+				)}
 			</SettingsGroup>)}
 
 		</>
 	);
 }
 
-/** The paste field for a provider chosen in the Add dropdown — rendered
- *  beneath the Add row until saved or cancelled. */
+/** Paste field for a provider chosen in the Add dropdown, until saved or cancelled. */
 function AddProviderEditor({
 	provider,
 	onSave,

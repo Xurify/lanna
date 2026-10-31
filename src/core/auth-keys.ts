@@ -1,32 +1,19 @@
 /**
- * The curated auth-key catalog + shape rules (auth-keys wave, 2026-09-19).
- * PURE, browser-safe — no fs, no env. The catalog drives the auth page's
- * key list (label, description, where-to-get docs link) and the write-side
- * shape validation (owner decision: SHAPE-ONLY validation, no live pings —
- * a revoked key looks fine until a real call fails; that trade was chosen
- * over phoning providers).
- *
- * The store itself is the long-standing flat {VAR: value} auth.json map
- * (see config.AUTH_FILE): keys are identified BY their environment-variable
- * name — the same name consumers read today (OPENROUTER_API_KEY, …), so the
- * catalog id IS the file key and the env var, one name everywhere.
- *
- * Unknown vars found in the file (outside the catalog) are PRESERVED
- * verbatim and surfaced as generic entries — forward-compat for future
- * entries (e.g. a plans-login token) without a schema change — but they
- * are not hand-writable through the curated API (only the catalog's keys
- * have shapes worth checking and docs worth showing).
+ * The curated auth-key catalog and shape rules. Pure and browser-safe.
+ * Validation is shape-only (no live provider pings).
+ * Keys are identified by their env-var name, which is also the auth.json key.
+ * Unknown file vars are preserved and shown as generic rows, but are not writable through the curated API.
  */
 
 /** One curated key entry. `id` is the env-var/file key name. */
 export interface AuthKeyInfo {
 	id: string;
-	/** Human label for the settings page. */
 	label: string;
-	/** One-sentence what-is-this-for. */
 	description: string;
-	/** Where the user gets a key (opens in the real browser via the shell). */
+	/** Where to get a key; opens in the system browser. */
 	docsUrl: string;
+	/** A plain setting, not a secret: edited as visible text and its value is shown in status. */
+	plain?: boolean;
 }
 
 export const AUTH_KEYS: readonly AuthKeyInfo[] = [
@@ -53,6 +40,7 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		label: "Azure Speech region",
 		description: "The region of your Azure Speech resource, e.g. westeurope or germanywestcentral.",
 		docsUrl: "https://learn.microsoft.com/azure/ai-services/speech-service/regions",
+		plain: true,
 	},
 	{
 		id: "TAVILY_API_KEY",
@@ -74,9 +62,11 @@ export function isKnownAuthKey(id: string): boolean {
 	return AUTH_KEY_IDS.has(id);
 }
 
-/** One model-provider key row for the settings page's dropdown: which
- *  pi-ai provider, the env var its key rides in, and the human label
- *  (pi's own Provider.name). */
+export function isPlainAuthSetting(id: string): boolean {
+	return AUTH_KEYS.some((k) => k.id === id && k.plain === true);
+}
+
+/** A model-provider key row: pi-ai provider id, its key's env var, and label. */
 export interface AuthProviderInfo {
 	id: string;
 	envVar: string;
@@ -84,23 +74,10 @@ export interface AuthProviderInfo {
 }
 
 /**
- * THE MODEL-PROVIDER KEY TABLE (provider-keys interlude, 2026-09-19):
- * every pi-ai provider that takes a PLAIN api-key env var — derived from
- * pi-ai's own provider→env-var table at generation time, so it can never
- * drift from what pi actually reads: tests/auth-provider-keys.test.ts
- * re-derives the truth from pi-ai (builtinProviders + findEnvKeys via a
- * truthy-for-every-var proxy env) and asserts EXACT equality with this
- * table — a pi-ai upgrade that adds/renames a provider key fails the gate
- * loudly instead of drifting silently.
- *
- * EXCLUDED by owner spec — providers whose auth is not a plain key this
- * wave: github-copilot (OAuth), amazon-bedrock (AWS creds), google-vertex
- * (ADC), azure (needs a base URL), the cloudflare
- * account-scoped pair. Anthropic keeps ANTHROPIC_API_KEY only — its
- * AUTH_TOKEN/OAUTH_TOKEN alternates stay env-only. openai-codex exposes
- * no env-key (naturally absent). Providers sharing one env var (moonshotai
- * / moonshotai-cn, opencode / opencode-go, the qwen-token-plan pair,
- * xiaomi variants) each keep their own row — the UI groups as it wishes.
+ * Every pi-ai provider that takes a plain api-key env var. tests/auth-provider-keys.test.ts
+ * re-derives this from pi-ai and asserts exact equality, so a pi-ai change fails loudly.
+ * Excluded (not plain keys): github-copilot, amazon-bedrock, google-vertex, azure, cloudflare.
+ * Anthropic keeps only ANTHROPIC_API_KEY. Providers sharing an env var keep separate rows.
  */
 export const AUTH_PROVIDER_KEYS: readonly AuthProviderInfo[] = [
 	{ id: "ant-ling", envVar: "ANT_LING_API_KEY", label: "Ant Ling" },
@@ -140,9 +117,7 @@ export const AUTH_PROVIDER_KEYS: readonly AuthProviderInfo[] = [
 	{ id: "zai-coding-cn", envVar: "ZAI_CODING_CN_API_KEY", label: "Z.AI Coding CN" },
 ] as const;
 
-/** Every distinct env var a model-provider key rides in (the write side's
- *  writability check — see isProviderEnvVar below; also drives which
- *  PRESENT provider vars surface as status rows). */
+/** Distinct env vars of the model-provider keys. */
 export const AUTH_PROVIDER_ENV_VARS: ReadonlySet<string> = new Set(AUTH_PROVIDER_KEYS.map((p) => p.envVar));
 
 /** Is this env-var name the key of SOME pi-ai model provider? */
@@ -154,16 +129,8 @@ export function isProviderEnvVar(envVar: string): boolean {
 export type KeyShapeResult = { ok: true } | { ok: false; error: string };
 
 /**
- * The write-side shape gate (owner decision: reject bad pastes with 400 —
- * a truncated or wrong-family key can never land in the store). Values are
- * TRIMMED first (paste hygiene); empty-after-trim always fails.
- *
- * CURATED keys carry family rules (Tavily's tvly-… prefix; Brave and
- * Deepgram publish no format — length floors + paste hygiene only).
- * MODEL-PROVIDER keys use genericProviderKeyGuard below instead (families
- * vary by provider — only paste hygiene applies; owner spec: min length
- * ~12, no whitespace). OPENROUTER_API_KEY moved to the generic guard with
- * the provider-keys interlude — no sk-or family check anymore.
+ * Write-side shape gate: bad pastes are rejected with 400 and never stored.
+ * Values are trimmed first; empty-after-trim always fails. Model-provider keys use genericProviderKeyGuard.
  */
 export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 	const value = rawValue.trim();
@@ -195,17 +162,14 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 	}
 }
 
-/** The generic truncation guard for MODEL-PROVIDER keys (families vary —
- *  only paste hygiene applies; owner spec: trim, no whitespace, min 12). */
+/** Truncation guard for model-provider keys: trimmed, no whitespace, at least 12 chars. */
 export function genericProviderKeyGuard(id: string, rawValue: string): KeyShapeResult {
 	const value = rawValue.trim();
 	if (value.length >= 12 && !/\s/.test(value)) return { ok: true };
 	return { ok: false, error: `${id} must be at least 12 characters with no whitespace` };
 }
 
-/** A masked key never leaves the server as plaintext (owner decision:
- *  last 4 chars + length — enough to identify which key is stored after
- *  rotating between several, and to spot a mis-pasted family). */
+/** Masked key for display: last 4 characters, never the plaintext. */
 export function maskKey(value: string): string {
 	const v = value.trim();
 	if (v.length <= 4) return `…${v}`; // degenerate paste — still never the whole value
@@ -227,7 +191,8 @@ export interface AuthKeyStatus {
 	/** True when the file holds a value that the environment shadows — the
 	 *  settings page explains why a saved key is not the live one. */
 	shadowedByEnv: boolean;
-	/** When the app last saved this key (ISO time), for a file-held key.
-	 *  Null for env keys and for keys saved before dates were kept. */
+	/** When the app last saved this file-held key (ISO time). Null for env keys and keys with no recorded time. */
 	savedAt?: string | null;
+	/** Live value of a plain setting (the only status carrying plaintext). Absent for secrets and unset settings. */
+	value?: string;
 }

@@ -46,7 +46,7 @@ Every practice and story session in the first week was abandoned at a field labe
 
 The original spec locked Estonian as the bridge language (Estonian cases make Slavic morphology intuitive). The rule was widened to every language the learner knows, and to up to two explanation languages, on the reasoning that the more a learner sees their languages side by side, the more they can learn.
 
-**How to apply:** every grammar unit carries bridge lines for the learner's known languages, best-known first. The tutor explains in the first explanation language and adds the key line and grammar terms in the second, never a full second copy. A language known at A1 or A2 gets short lines only. A parallel is one line in Why? and hints when a Slovak rule mirrors a known one, never a lesson in that language, and Settings → Learner can switch parallels off (PR #10).
+**How to apply:** every grammar unit carries bridge lines for the learner's known languages, best-known first. The tutor explains in the first explanation language and adds the key line and grammar terms in the second, never a full second copy. A language known at A1 or A2 gets short lines only. A parallel is one line in Why? and hints when a Slovak rule mirrors a known one, never a lesson in that language, and Settings → Learning can switch parallels off (PR #10).
 
 ### P7. Measure cheaply, spend the model on the edge (2026-10-28)
 
@@ -173,14 +173,31 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The exam, the grammar atlas, the Speak picker and the Speak script use the lesson's parts: the two-column option grid, the feedback band with Next at the bottom, one button family, and text no smaller than 12px (`text-xs`). The exam's blank stays a blank, so the options never move; the band shows the whole sentence.
 - On the Speak picker each scene is one bordered row: the scene, and beside it "Step by step" (was "Script first") for the scripted walk-through (E13). Nothing new is gated.
 
-### E16. Settings → Storage measures what is kept, and clears only the cache (2026-10-30)
+### E16. Settings → Data measures what is kept, and clears only the cache (2026-10-30)
 
 **Why:** nothing in the app showed what it kept, so a stale copy could only be fixed by hand. The one thing that is safe to clear is the copy of audio and pages the desktop app keeps for speed, which downloads again. Voice clips are generated once and kept, so clearing them would mean generating them again. Progress and backups are the learner's own work.
 
 **How to apply:**
 - `GET /api/storage` (`src/server/storage.ts`) is read-only. It measures three areas on disk: voice clips (`data/audio`), the active language's progress (its folder under `data/profiles/`) and backups (`data/backups`). Each row shows its path and size. Saved areas never offer a clear.
 - Only the desktop app clears anything, and only its HTTP cache. `electron/storage-ipc.cjs` answers `lh:storage:cache-size` and `lh:storage:clear-cache` for the app's own window. The web build cannot clear the browser's cache, so its row says where to find it.
-- The section sits between General and Reset (`components/settings/storage-section.tsx`). Reset is still the only way to start over, and it moves progress into backups rather than deleting it.
+- The section sits in Settings → Data, above Reset (`components/settings/storage-section.tsx`). Reset is still the only way to start over, and it moves progress into backups rather than deleting it.
+
+### E17. Settings names what it does, rare controls sit under Advanced, and Review holds still (2026-10-30)
+
+**Why:** The settings dialog had grown names only its author could read (Providers, Learner, Prompts). Rare knobs such as the background colour, heading weight, compaction thresholds and system prompts sat beside everyday ones. A switch that was on looked disabled, and the Azure speech region had no field. On Review the page painted a skeleton, then the card, then the mode toggle. The owner saw that as a flicker, and it counted as layout shift (CLS, E4).
+
+**How to apply:**
+- The nav reads Keys, Tutor, Learning, Appearance, Skill map, Keyboard, Spending, General, Data, in that order. Keys opens first. Storage and Reset are sections of Data.
+- Rare settings sit under a closed **Advanced** disclosure (`SettingsDisclosure` in `components/settings/controls.tsx`). Tutor has long chats and system prompts. Appearance has the background, the heading weight and the bold and italic colours. Skill map has the map update size. An empty field's hint names the factory default, never the stored value.
+- Values that are not secrets are plain settings and show in their field: the Azure speech region (`plain: true` in `src/core/auth-keys.ts`). Keys stay masked and out of chat (E5).
+- A switch is green with a white knob when on and grey when off. A choice among a few values is a segmented control (playback speed, quiz mechanics). The chosen font is marked with a tick and `aria-current`, not a fill.
+- Mode is a fact until light mode exists ("Light mode is coming soon"), so it has no control.
+- Review: the loading skeleton waits 300 ms, the last deck stays in memory for the page's life, a refresh that brings the same card keeps the typed answer, and mode and sound are read before the first paint. The header counts wait for the language.
+- Desktop: `electron/main.cjs` and the modules it loads start once. After changing them, quit the window and run `npm run desktop:dev` again (see `docs/development.md`).
+- A language added in onboarding starts at A2 and stores that level (`NEW_LANG_LEVEL` in `src/core/onboarding.ts`). `DEFAULT_LANG_LEVEL` stays B2 as the tutor's fallback for levels nobody set. The server drops values equal to the default, so showing B2 without saving it left nothing stored.
+- Repeated class strings belong in a component (`MenuOption` in `components/settings/model-menu.tsx`), not in an exported string constant.
+- Stepper buttons are inset squares inside a bordered group, so the hover fill stays inside the control.
+- A section with a size or status that loads later reserves its rows up front (Data), so the layout does not move when the value arrives.
 
 ## Working rules (how work reaches the repo)
 

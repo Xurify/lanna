@@ -1,14 +1,13 @@
 /**
- * Settings → Storage: the report's shape and the size formatter. Pure (no
- * fs): the server measures (src/server/storage.ts, GET /api/storage) and the
- * browser section shows (components/settings/storage-section.tsx).
+ * What the app keeps on this computer (Settings → Data): the report's shape,
+ * the saved areas and the size formatter. Pure: the server measures
+ * (src/server/storage.ts), the browser shows (storage-section.tsx).
  */
 
 /** One folder the app keeps for the learner, measured on disk. */
 export interface StorageArea {
 	id: "clips" | "progress" | "backups";
 	label: string;
-	/** Where it lives on this computer, so the learner can find it. */
 	path: string;
 	bytes: number;
 	files: number;
@@ -19,6 +18,13 @@ export interface StorageReport {
 	language: string;
 	areas: StorageArea[];
 }
+
+/** The saved areas in the order Settings shows them. The browser draws every row before the measure lands, so nothing shifts. */
+export const STORAGE_AREAS: readonly { id: StorageArea["id"]; label: string }[] = [
+	{ id: "clips", label: "Voice clips" },
+	{ id: "progress", label: "Learning progress" },
+	{ id: "backups", label: "Backups" },
+];
 
 /** "0 B", "512 B", "1.5 KB", "210 MB", "1.4 GB". */
 export function formatBytes(bytes: number): string {
