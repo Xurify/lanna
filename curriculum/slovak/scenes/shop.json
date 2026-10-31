@@ -1,0 +1,61 @@
+{
+	"scene": "shop",
+	"turns": [
+		{
+			"tutor": { "sk": "Dobrý deň! Čo vám dáme?", "en": "Hello! What can we get you?" },
+			"options": [
+				{ "sk": "Dobrý deň. Chcem zeleninu na polievku.", "correct": true, "lemmas": ["chcieť", "zelenina", "polievka"] },
+				{ "sk": "Dobrý deň. Ja chcieť zeleninu na polievku.", "why": "Slovak needs the conjugated verb: 'chcem' (I want), not the infinitive 'chcieť'." },
+				{ "sk": "Dobrý deň. Chcem zeleninom na polievku.", "why": "'Zeleninu' is the accusative object; 'zeleninom' is instrumental." }
+			]
+		},
+		{
+			"tutor": { "sk": "Máme zemiaky, cibuľu a papriku. Čo ešte?", "en": "We have potatoes, onions and peppers. What else?" },
+			"options": [
+				{ "sk": "Zemiaky a cibuľu, prosím.", "correct": true, "lemmas": ["zemiak", "cibuľa", "prosím"] },
+				{ "sk": "Zemiaky a cibuľom, prosím.", "why": "Both objects are accusative: 'zemiaky a cibuľu'; 'cibuľom' is instrumental." },
+				{ "sk": "Zemiak a cibuľa, prosím.", "why": "You are buying several: the plural accusative 'zemiaky'; 'zemiak a cibuľa' only names the things." }
+			]
+		},
+		{
+			"tutor": { "sk": "Koľko zemiakov chcete?", "en": "How many potatoes do you want?" },
+			"options": [
+				{ "sk": "Kilo zemiakov, prosím.", "correct": true, "lemmas": ["kilo", "zemiak", "prosím"] },
+				{ "sk": "Kilo zemiaky, prosím.", "why": "After 'kilo' the genitive plural follows: 'kilo zemiakov', not 'zemiaky'." },
+				{ "sk": "Kilo zemiakoch, prosím.", "why": "'Zemiakoch' is the locative; the weight takes the genitive: 'kilo zemiakov'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Ešte niečo? Paprika je dnes pekná.", "en": "Anything else? The peppers are nice today." },
+			"options": [
+				{ "sk": "Áno, dajte mi aj tri papriky.", "correct": true, "lemmas": ["paprika"] },
+				{ "sk": "Áno, dajte mi aj tri paprika.", "why": "With three the noun is plural: 'tri papriky', not the singular 'paprika'." },
+				{ "sk": "Áno, dá mi aj tri papriky.", "why": "'Dajte' is the polite request to you; 'dá' means he or she gives." }
+			]
+		},
+		{
+			"tutor": { "sk": "Chcete tašku?", "en": "Do you want a bag?" },
+			"options": [
+				{ "sk": "Áno, tašku, prosím.", "correct": true, "lemmas": ["taška", "prosím"] },
+				{ "sk": "Áno, taška, prosím.", "why": "You want the bag — accusative: 'tašku', not the naming form 'taška'." },
+				{ "sk": "Áno, taškou, prosím.", "why": "'Taškou' is instrumental; what you want is the accusative 'tašku'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Tak to je za všetko tri eurá a pol.", "en": "So that is three euros fifty for everything." },
+			"options": [
+				{ "sk": "Dobre, zaplatím hotovosťou.", "correct": true, "lemmas": ["zaplatiť", "hotovosť"] },
+				{ "sk": "Dobre, zaplatím hotovosti.", "why": "Paying IN cash is instrumental: 'hotovosťou'; 'hotovosti' is the locative." },
+				{ "sk": "Dobre, platiť hotovosťou.", "why": "You need the conjugated 'zaplatím' (I will pay), not the infinitive 'platiť'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Ďakujem, prídte znova!", "en": "Thank you, come again!" },
+			"options": [
+				{ "sk": "Ďakujem, dovidenia!", "correct": true, "lemmas": ["ďakujem", "dovidenia"] },
+				{ "sk": "Ďakujem, dobrý deň!", "why": "On leaving you say 'dovidenia'; 'dobrý deň' is the greeting." },
+				{ "sk": "Dakujem, dovidenia.", "why": "The Slovak word is 'ďakujem', written with ď." }
+			]
+		}
+	]
+}

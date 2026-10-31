@@ -598,17 +598,17 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 				)}
 				<div className="mt-6 grid gap-3 sm:grid-cols-2" data-testid="speak-scenes">
 					{(state?.scenes ?? []).map((s) => (
-						<button
-							key={s.id}
-							type="button"
-							disabled={!state?.canSpeak}
-							onClick={() => onPick(s.id)}
-							className={cn(
-								"rounded-2xl border-2 bg-card px-4 py-3.5 text-left shadow-[0_3px_0_0_var(--border)] transition-all hover:-translate-y-0.5 hover:border-xp/60 disabled:opacity-50",
-								s.id === sceneId && "border-xp",
-							)}
-							data-testid={`scene-${s.id}`}
-						>
+						<div key={s.id} className="flex flex-col gap-1">
+							<button
+								type="button"
+								disabled={!state?.canSpeak}
+								onClick={() => onPick(s.id)}
+								className={cn(
+									"rounded-2xl border-2 bg-card px-4 py-3.5 text-left shadow-[0_3px_0_0_var(--border)] transition-all hover:-translate-y-0.5 hover:border-xp/60 disabled:opacity-50",
+									s.id === sceneId && "border-xp",
+								)}
+								data-testid={`scene-${s.id}`}
+							>
 							<span className="flex items-baseline justify-between gap-2">
 								<span className="font-ui text-lg font-bold text-foreground" lang="sk">
 									{s.title}
@@ -617,7 +617,11 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 							</span>
 							<span className="block font-prose text-sm text-muted-foreground">{s.blurb}</span>
 							{s.done > 0 && <span className="mt-1 block font-ui text-xs text-muted-foreground">{s.done === 1 ? "once before" : `${s.done} times before`}</span>}
-						</button>
+							</button>
+							<Link href={`/speak?scene=${s.id}&mode=script`} className="self-start font-ui text-xs font-bold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" data-testid={`scene-script-${s.id}`}>
+								Script first
+							</Link>
+						</div>
 					))}
 				</div>
 				{!state && !error && (

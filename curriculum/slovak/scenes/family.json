@@ -1,0 +1,61 @@
+{
+	"scene": "family",
+	"turns": [
+		{
+			"tutor": { "sk": "Ahoj, som Miro. A ty? Čo robíš tu v Bratislave?", "en": "Hi, I'm Miro. And you? What do you do here in Bratislava?" },
+			"options": [
+				{ "sk": "Ahoj, som Tomáš. Pracujem tu a učím sa slovensky.", "correct": true, "lemmas": ["pracovať", "učiť sa", "slovensky"] },
+				{ "sk": "Ahoj, som Tomáš. Pracovať tu a učím sa slovensky.", "why": "'Pracujem' (I work), not the infinitive 'pracovať'." },
+				{ "sk": "Ahoj, som Tomáš. Pracuješ tu a učím sa slovensky.", "why": "'Pracujem' is I work; 'pracuješ' is you work." }
+			]
+		},
+		{
+			"tutor": { "sk": "Super! Máš tu rodinu?", "en": "Great! Do you have family here?" },
+			"options": [
+				{ "sk": "Nie, moja rodina býva v Anglicku.", "correct": true, "lemmas": ["rodina", "bývať"] },
+				{ "sk": "Nie, môj rodina býva v Anglicku.", "why": "'Rodina' is feminine: 'moja rodina', not 'môj'." },
+				{ "sk": "Nie, moja rodina býva v Anglicka.", "why": "After 'v' the locative follows: 'v Anglicku'." }
+			]
+		},
+		{
+			"tutor": { "sk": "A sú tam všetci? Súrodenci máš?", "en": "Is everyone there? Do you have siblings?" },
+			"options": [
+				{ "sk": "Mám jedného brata a jednu sestru.", "correct": true, "lemmas": ["mať", "brat", "sestra"] },
+				{ "sk": "Mám jeden brat a jedna sestra.", "why": "Having them takes the accusative: 'mám brata a sestru', not the naming forms." },
+				{ "sk": "Mám bratu a sestre.", "why": "'Bratu a sestre' is dative (to whom); what you HAVE is accusative: 'brata a sestru'." }
+			]
+		},
+		{
+			"tutor": { "sk": "A tvoji rodičia? Pracujú ešte?", "en": "And your parents? Do they still work?" },
+			"options": [
+				{ "sk": "Otec pracuje, mama už nie.", "correct": true, "lemmas": ["otec", "mama", "pracovať"] },
+				{ "sk": "Otec pracuje, mame už nie.", "why": "The subject is 'mama' (nominative); 'mame' is dative/locative." },
+				{ "sk": "Otec pracovať, mama už nie.", "why": "'Pracuje' (he works), not the infinitive 'pracovať'." }
+			]
+		},
+		{
+			"tutor": { "sk": "A kde bývajú? Blízko?", "en": "And where do they live? Close by?" },
+			"options": [
+				{ "sk": "Bývajú pri Londýne, v malom meste.", "correct": true, "lemmas": ["bývať", "mesto", "Londýn"] },
+				{ "sk": "Bývajú pri Londýne, v malého mesta.", "why": "'V' takes the locative: 'v malom meste'; 'malého mesta' is genitive." },
+				{ "sk": "Bývajú pri Londýn, v malom meste.", "why": "'Pri' takes the locative: 'pri Londýne', not the nominative 'Londýn'." }
+			]
+		},
+		{
+			"tutor": { "sk": "A ty? Dlho už pracuješ tu?", "en": "And you? How long have you worked here?" },
+			"options": [
+				{ "sk": "Pol roka. Bratislava sa mi páči.", "correct": true, "lemmas": ["rok"] },
+				{ "sk": "Pol rok. Bratislava sa mi páči.", "why": "'Pol' takes the genitive: 'pol roka', not 'pol rok'." },
+				{ "sk": "Pol roka. Bratislava ma sa páči.", "why": "The set order is 'sa mi páči' (it pleases me); 'ma sa' is the wrong order." }
+			]
+		},
+		{
+			"tutor": { "sk": "Krásne mesto, však? Poď, predstavím ťa ostatným!", "en": "A beautiful city, isn't it? Come, I'll introduce you to the others!" },
+			"options": [
+				{ "sk": "Ďakujem, teší ma!", "correct": true, "lemmas": ["ďakujem", "tešiť"] },
+				{ "sk": "Ďakujem, ma teší!", "why": "The set phrase is 'teší ma' (it pleases me); 'ma teší' sounds off." },
+				{ "sk": "Ďakujem, teší ma, pani Miro!", "why": "Miro is a man: 'pán Miro'; 'pani' addresses a woman." }
+			]
+		}
+	]
+}
