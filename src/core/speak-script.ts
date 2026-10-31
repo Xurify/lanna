@@ -14,7 +14,10 @@ import cafe from "../../curriculum/slovak/scenes/cafe.json";
 import colleague from "../../curriculum/slovak/scenes/colleague.json";
 import doctor from "../../curriculum/slovak/scenes/doctor.json";
 import family from "../../curriculum/slovak/scenes/family.json";
+import hotel from "../../curriculum/slovak/scenes/hotel.json";
+import restaurant from "../../curriculum/slovak/scenes/restaurant.json";
 import shop from "../../curriculum/slovak/scenes/shop.json";
+import station from "../../curriculum/slovak/scenes/station.json";
 import way from "../../curriculum/slovak/scenes/way.json";
 
 export interface SceneOption {
@@ -41,7 +44,7 @@ export interface SceneScript {
 	turns: ScriptTurn[];
 }
 
-const RAW: SceneScript[] = [cafe, colleague, doctor, family, shop, way].map((s) => s as SceneScript);
+const RAW: SceneScript[] = [cafe, colleague, doctor, family, hotel, restaurant, shop, station, way].map((s) => s as SceneScript);
 
 const BY_SCENE = new Map(RAW.map((s) => [s.scene, s]));
 

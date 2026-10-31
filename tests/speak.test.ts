@@ -224,8 +224,18 @@ test("a line the model could not answer is taken back, so a retry says it once a
 });
 
 test("transcribe refuses honestly without a key", async () => {
+	const { authStore } = await import("../src/store/auth.ts");
+	const savedEleven = authStore.authVars()["ELEVENLABS_API_KEY"];
+	const savedDeep = authStore.authVars()["DEEPGRAM_API_KEY"];
+	authStore.deleteAuthVar("ELEVENLABS_API_KEY");
+	authStore.deleteAuthVar("DEEPGRAM_API_KEY");
 	delete process.env.ELEVENLABS_API_KEY;
 	delete process.env.DEEPGRAM_API_KEY;
-	assert.equal(speak.sttEngine(), null);
-	await assert.rejects(speak.transcribe(new Uint8Array([1])), /No speech-to-text key/);
+	try {
+		assert.equal(speak.sttEngine(), null);
+		await assert.rejects(speak.transcribe(new Uint8Array([1])), /No speech-to-text key/);
+	} finally {
+		if (savedEleven) authStore.setAuthVar("ELEVENLABS_API_KEY", savedEleven);
+		if (savedDeep) authStore.setAuthVar("DEEPGRAM_API_KEY", savedDeep);
+	}
 });

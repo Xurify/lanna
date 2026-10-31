@@ -53,6 +53,9 @@ export const SPEAK_SCENES: SpeakScene[] = [
 	{ id: "shop", title: "Na trhu", blurb: "Buy vegetables at the market", brief: "a stallholder at the Miletičova market; I want vegetables and fruit for a soup, and to ask about prices", task: "Buy what you need for a soup, and ask about prices." },
 	{ id: "doctor", title: "U lekára", blurb: "Explain to a doctor what hurts", brief: "a GP in a Slovak clinic; I have a sore throat and a headache since yesterday", task: "Tell the doctor what hurts and since when." },
 	{ id: "family", title: "Rodina", blurb: "Talk about your family with a new friend", brief: "a new Slovak friend at a party who asks about my family, where they live and what they do", task: "Tell a new friend about your family." },
+	{ id: "station", title: "Na stanici", blurb: "Buy a train ticket to Poprad-Tatry", brief: "a ticket counter clerk at the main train station; I need a return ticket to Poprad-Tatry with a seat reservation", task: "Buy a return train ticket to Poprad-Tatry and ask which platform the train leaves from." },
+	{ id: "restaurant", title: "V kolibe", blurb: "Order traditional Slovak dinner at a mountain koliba", brief: "a waiter in a traditional mountain koliba; I want to try bryndzové halušky and a draft Kofola, and pay by card", task: "Order traditional sheep cheese dumplings, drink, and pay by card." },
+	{ id: "hotel", title: "V hoteli", blurb: "Check into a guest house in the High Tatras", brief: "a receptionist at a mountain guest house in Starý Smokovec; I have a reservation for two nights, need the wifi and breakfast info", task: "Check into your room, ask about breakfast times and the wifi password." },
 ];
 
 export function speakScene(id: string): SpeakScene | undefined {

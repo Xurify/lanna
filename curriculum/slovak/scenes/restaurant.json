@@ -1,0 +1,61 @@
+{
+	"scene": "restaurant",
+	"turns": [
+		{
+			"tutor": { "sk": "Dobrý večer! Vitajte v našej kolibe. Máte u nás rezerváciu?", "en": "Good evening! Welcome to our koliba. Do you have a reservation with us?" },
+			"options": [
+				{ "sk": "Dobrý večer. Nemáme rezerváciu, ale hľadáme voľný stôl.", "correct": true, "lemmas": ["večer", "stôl", "hľadať"] },
+				{ "sk": "Dobrý večer. Nemáme rezervácie pre dvom.", "why": "'Rezerváciu' should be accusative singular, and 'pre' takes the accusative: 'pre dvoch'." },
+				{ "sk": "Dobrý večer. Ja byť stôl pre dvoch.", "why": "In Slovak say 'hľadáme voľný stôl' (we are looking for a free table); 'ja byť' is broken infinitive." }
+			]
+		},
+		{
+			"tutor": { "sk": "Nech sa páči, poďte ďalej, tu je príjemné miesto pri krbe. Čo si dáte na pitie?", "en": "Please come in, here is a pleasant spot by the fireplace. What will you have to drink?" },
+			"options": [
+				{ "sk": "Dáme si jedno veľké pivo a vodu, prosím.", "correct": true, "lemmas": ["pivo", "veľký", "voda"] },
+				{ "sk": "Dáme si jedného veľkého piva.", "why": "'Pivo' is neuter inanimate, so the accusative is 'veľké pivo', not animate genitive/accusative." },
+				{ "sk": "Dáme si na pitie chlieb.", "why": "'Chlieb' is bread, not a drink; order 'pivo' or 'vodu'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Hneď to prinesiem. Vybrali ste si už aj nejaké jedlo?", "en": "I'll bring it right away. Have you already chosen some food too?" },
+			"options": [
+				{ "sk": "Máte dnes tradičné teplé jedlo so syrom?", "correct": true, "lemmas": ["jedlo", "syr", "teplý"] },
+				{ "sk": "Máte dnes tradičným teplým jedlom?", "why": "'Máte' takes direct object accusative: 'tradičné teplé jedlo', not instrumental." },
+				{ "sk": "Chcem teplé jedlo bez chuti.", "why": "'Bez chuti' means tasteless; in a restaurant ask 'so syrom' (with cheese)." }
+			]
+		},
+		{
+			"tutor": { "sk": "Pravdaže, máme čerstvé bryndzové halušky. Dáte si k nim aj dobré mlieko?", "en": "Of course, we have fresh bryndzové halušky. Will you have good milk with them?" },
+			"options": [
+				{ "sk": "Áno, dobré mlieko, to bude skvelé!", "correct": true, "lemmas": ["mlieko", "dobrý"] },
+				{ "sk": "Áno, dobrým mliekom.", "why": "'Dáte si' takes the accusative 'dobré mlieko', not instrumental 'dobrým mliekom'." },
+				{ "sk": "Nie, chcem mliekom teplé.", "why": "Adjectives precede nouns in Slovak neutral order: 'teplé mlieko'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Nech sa páči, tu je vaše jedlo. Dobrú chuť!", "en": "Here is your food. Bon appétit!" },
+			"options": [
+				{ "sk": "Ďakujem veľmi pekne, určite mi bude chutiť!", "correct": true, "lemmas": ["ďakujem", "chutiť"] },
+				{ "sk": "Ďakujem, dobrý deň!", "why": "'Dobrý deň' is a greeting when entering, not a response to 'dobrú chuť' (enjoy your meal)." },
+				{ "sk": "Ďakujeme, vyzeráte fantasticky.", "why": "'Vyzeráte' means YOU (the waiter) look fantastic; refer to the food." }
+			]
+		},
+		{
+			"tutor": { "sk": "Chutilo vám? Dáte si ešte nejaký dezert alebo kávu?", "en": "Did you enjoy it? Will you have any dessert or coffee?" },
+			"options": [
+				{ "sk": "Všetko bolo výborné. Poprosíme účet.", "correct": true, "lemmas": ["účet", "výborný"] },
+				{ "sk": "Všetko bolo výborné, poprosíme účtu.", "why": "'Poprosíme' takes the accusative: 'účet', not genitive 'účtu'." },
+				{ "sk": "Nechutilo nám, dajte nám viac jedla.", "why": "Saying 'nechutilo nám' contradicts asking for more; say 'všetko bolo výborné'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Spolu to je dvadsaťštyri eur. Budete platiť spolu alebo zvlášť?", "en": "Together it is twenty-four euros. Will you pay together or separately?" },
+			"options": [
+				{ "sk": "Zaplatíme spolu. Tu sú peniaze, ďakujeme.", "correct": true, "lemmas": ["platiť", "peniaze"] },
+				{ "sk": "Zaplatíme s peniazmi.", "why": "In cash is 'v hotovosti' or simply 'tu sú peniaze'; 's peniazmi' is unidiomatic here." },
+				{ "sk": "Zaplatíme spolu do karty.", "why": "Paying by card is 'kartou', not 'do karty'." }
+			]
+		}
+	]
+}

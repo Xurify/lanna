@@ -1,0 +1,53 @@
+{
+	"scene": "hotel",
+	"turns": [
+		{
+			"tutor": { "sk": "Dobrý deň, vitajte v našom penzióne! Ako vám môžem pomôcť?", "en": "Good day, welcome to our guest house! How can I help you?" },
+			"options": [
+				{ "sk": "Dobrý deň. Hľadám moju izbu, moje meno je Martin Kováč.", "correct": true, "lemmas": ["izba", "meno"] },
+				{ "sk": "Dobrý deň. Som rezervovaná izba pre Martina.", "why": "You are a guest looking for your room, not the room itself: 'Hľadám moju izbu'." },
+				{ "sk": "Dobrý deň. Mám u vás rezervovanom izbe.", "why": "Direct object takes the accusative: 'moju izbu', not locative 'rezervovanom izbe'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Áno, vidím to v systéme. Izba s balkónom na dve noci. Môžem poprosiť váš pas?", "en": "Yes, I see it in the system. Room with balcony for two nights. May I ask for your passport?" },
+			"options": [
+				{ "sk": "Samozrejme, tu je môj pas.", "correct": true, "lemmas": ["pas", "tu"] },
+				{ "sk": "Samozrejme, tu sú môjmu pasu.", "why": "'Tu je' + nominative: 'tu je môj pas', not dative." },
+				{ "sk": "Nemám žiadny domov, nechcem pas.", "why": "In a hotel reception hand over your passport politely: 'tu je môj pas'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Ďakujem. Vaša izba je číslo dvanásť na druhom poschodí. Výťah je vpravo za schodiskom.", "en": "Thank you. Your room is number twelve on the second floor. The elevator is on the right behind the staircase." },
+			"options": [
+				{ "sk": "Výborne. A v akom čase sa podávajú raňajky?", "correct": true, "lemmas": ["čas", "raňajky"] },
+				{ "sk": "Výborne. A v akom čase sa podáva raňajka?", "why": "'Raňajky' is a plural-only noun in Slovak, so the verb must be plural: 'podávajú raňajky'." },
+				{ "sk": "Kde je druhom poschodí?", "why": "The receptionist already told you where the room is; asking about breakfast ('raňajky') is the natural next question." }
+			]
+		},
+		{
+			"tutor": { "sk": "Raňajky sú formou bufetu v jedálni od siedmej do desiatej ráno.", "en": "Breakfast is buffet-style in the dining room from seven to ten in the morning." },
+			"options": [
+				{ "sk": "Rozumiem. Môžete mi dať kľúč a heslo na internet?", "correct": true, "lemmas": ["kľúč", "vedieť"] },
+				{ "sk": "Rozumiem. Dajte mi kľúču na internetu.", "why": "'Kľúč' is masculine inanimate accusative: 'kľúč'; 'kľúču' is dative." },
+				{ "sk": "Rozumiem. Ja neviem raňajky.", "why": "Ask for the key and internet: 'Môžete mi dať kľúč?'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Tu je kľúč od izby. Je tam aj kód od hlavného vchodu, ak sa vrátite neskoro večer.", "en": "Here is the room key. There is also the code for the main entrance if you return late in the evening." },
+			"options": [
+				{ "sk": "Skvelé, to je dobré. Kedy máme odchod v posledný deň?", "correct": true, "lemmas": ["deň", "odchod"] },
+				{ "sk": "Skvelé. Kedy musím odchodom?", "why": "'Odchod' is nominative subject: 'kedy je odchod', not instrumental 'odchodom'." },
+				{ "sk": "Nechcem kľúč od izby, ďakujem.", "why": "You need the room key; ask about checkout time instead." }
+			]
+		},
+		{
+			"tutor": { "sk": "Odchod je do desiatej dopoludnia. Keby ste niečo potrebovali, recepcia funguje nonstop.", "en": "Check-out is by ten in the morning. If you need anything, the reception operates 24/7." },
+			"options": [
+				{ "sk": "Ďakujem veľmi pekne za pomoc. Prajem vám pekný deň!", "correct": true, "lemmas": ["ďakujem", "pomoc", "deň"] },
+				{ "sk": "Ďakujem za pomoci.", "why": "'Za' in this context governs the accusative: 'za pomoc', not genitive/dative 'za pomoci'." },
+				{ "sk": "Dovidenia, idem spať na recepcii.", "why": "'Prajem vám pekný deň' (have a nice day) is the courteous closing line." }
+			]
+		}
+	]
+}

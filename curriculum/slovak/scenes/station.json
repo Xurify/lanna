@@ -1,0 +1,61 @@
+{
+	"scene": "station",
+	"turns": [
+		{
+			"tutor": { "sk": "Dobrý deň, ďalší, prosím! Kam cestujete?", "en": "Good day, next please! Where are you traveling to?" },
+			"options": [
+				{ "sk": "Dobrý deň. Prosím si jeden lístok do Popradu.", "correct": true, "lemmas": ["prosiť", "lístok"] },
+				{ "sk": "Dobrý deň. Prosím si jeden lístok do Poprade.", "why": "'Do' takes the genitive: 'do Popradu'; 'Poprade' is the locative." },
+				{ "sk": "Dobrý deň. Ja chcem lístkom do Poprad.", "why": "'Lístok' is the direct object (accusative 'lístok'), and 'do' requires the genitive 'Popradu'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Bude to jednosmerný lístok alebo spiatočný?", "en": "Will that be a one-way ticket or a return?" },
+			"options": [
+				{ "sk": "Spiatočný, prosím. Vraciam sa v nedeľu.", "correct": true, "lemmas": ["vracať", "nedeľa"] },
+				{ "sk": "Spiatočnú, prosím. Vraciam sa v nedeľu.", "why": "'Lístok' is masculine inanimate, so the adjective must be masculine: 'spiatočný', not feminine 'spiatočnú'." },
+				{ "sk": "Spiatočný, prosím. Ja vracať v nedeľu.", "why": "The verb must be conjugated and reflexive: 'vraciam sa', not infinitive 'vracať'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Chcete cestovať rýchlikom o desiatej alebo expresom o dvanástej?", "en": "Do you want to travel on the fast train at ten or the express at twelve?" },
+			"options": [
+				{ "sk": "Rýchlikom o desiatej, prosím. Je priamy?", "correct": true, "lemmas": ["vlak", "cesta"] },
+				{ "sk": "Rýchlik o desiatej, prosím. Je priamy?", "why": "Traveling BY train takes the instrumental: 'rýchlikom'; 'rýchlik' is nominative." },
+				{ "sk": "Rýchlikom o desiatej, prosím. Má priamy?", "why": "'Is it direct?' uses 'byť': 'Je priamy?'; 'má' means 'does it have'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Áno, je to priamy spoj bez prestupovania. Želáte si aj miestenku?", "en": "Yes, it is a direct connection without transfers. Would you also like a seat reservation?" },
+			"options": [
+				{ "sk": "Áno, poprosím miestenku pri okne.", "correct": true, "lemmas": ["okno", "miesto"] },
+				{ "sk": "Áno, poprosím miestenka pri oknu.", "why": "'Poprosím' takes the accusative 'miestenku', and 'pri' takes the locative 'pri okne'." },
+				{ "sk": "Áno, poprosím miestenku na okno.", "why": "'Pri okne' means by the window; 'na okno' means onto the window." }
+			]
+		},
+		{
+			"tutor": { "sk": "Máte nárok na nejakú zľavu, napríklad študentskú alebo seniorskú?", "en": "Are you entitled to any discount, for instance student or senior?" },
+			"options": [
+				{ "sk": "Nie, nemám zľavu. Platím plnú cenu.", "correct": true, "lemmas": ["platiť", "cena"] },
+				{ "sk": "Nie, neplatím zľavu.", "why": "The clerk asked if you have a discount card; 'nemám' (I don't have one) answers the question directly." },
+				{ "sk": "Nie, nemám zľavou.", "why": "'Nemať' takes the genitive: 'nemám zľavu' or 'nemám nárok'; 'zľavou' is instrumental." }
+			]
+		},
+		{
+			"tutor": { "sk": "Spolu to bude osemnásť eur a päťdesiat centov.", "en": "Together that will be eighteen euros and fifty cents." },
+			"options": [
+				{ "sk": "Môžem platiť bezkontaktne kartou?", "correct": true, "lemmas": ["platiť", "karta"] },
+				{ "sk": "Môžem platiť s kartou?", "why": "In Slovak payment method is plain instrumental: 'kartou', not 's kartou' (which sounds like 'in company with a card')." },
+				{ "sk": "Môžem platím kartou?", "why": "After the modal 'môžem', the second verb must be an infinitive: 'platiť', not 'platím'." }
+			]
+		},
+		{
+			"tutor": { "sk": "Samozrejme, priložte kartu k terminálu. Tu je váš lístok. Vlak odchádza z nástupišťa tri.", "en": "Of course, tap your card on the terminal. Here is your ticket. The train departs from platform three." },
+			"options": [
+				{ "sk": "Ďakujem veľmi pekne za informáciu. Šťastný deň!", "correct": true, "lemmas": ["ďakujem", "deň"] },
+				{ "sk": "Ďakujem veľmi pekne za informácii.", "why": "'Za' in the sense of 'for' takes the accusative: 'za informáciu', not dative 'za informácii'." },
+				{ "sk": "Ďakujem z nástupišťa.", "why": "'Ďakujem za pomoc / informáciu' is the right idiom; 'z nástupišťa' means 'from the platform'." }
+			]
+		}
+	]
+}
