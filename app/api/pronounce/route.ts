@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 	const heardRaw = form.get("heard");
 	const heard = typeof heardRaw === "string" && heardRaw.trim() ? heardRaw.slice(0, 600) : undefined;
 	try {
-		const score = await assess({ audio: new Uint8Array(await file.arrayBuffer()), mime: file.type || "audio/webm", reference, heard });
+		const score = await assess({ audio: new Uint8Array(await file.arrayBuffer()), reference, heard });
 		return Response.json({ score, engine: pronounceEngine() });
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);

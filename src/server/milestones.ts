@@ -224,7 +224,8 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 	for (const e of log) {
 		const own: SpeedSample[] = [];
 		for (const r of e.reps) {
-			if (r.ms === undefined) continue;
+			// Typed (dictation) reps measure typing, not listening: no speed sample.
+			if (r.ms === undefined || r.kind === "dictation") continue;
 			own.push({ words: r.words ?? r.sentence.split(/\s+/).length, ms: r.ms, heardMs: r.heardMs, replays: r.replays, correct: r.verdict === "exact", peeked: r.peeked, at: e.at });
 		}
 		samples.push(...own);

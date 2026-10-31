@@ -143,13 +143,13 @@ test("a scene on a scripted engine: start, two turns with a prompt and a repair,
 	assert.equal(s.turns[0]!.text, "Dobrý deň! Čo si dáte?");
 	assert.ok(fs.existsSync(path.join(PATHS.speak, `${s.id}.json`)), "the scene is on disk from the first line");
 
-	const t1 = await speak.speakTurn({ id: s.id, text: "prosím si jedna káva", via: "voice", ms: 1800, audio: { data: new Uint8Array([1, 2, 3, 4]), ext: "webm" } }, { engine, now });
+	const t1 = await speak.speakTurn({ id: s.id, text: "prosím si jedna káva", via: "voice", ms: 1800, audio: { data: new Uint8Array([1, 2, 3, 4]) } }, { engine, now });
 	assert.equal(t1.reply.prompt?.kind, "case");
 	assert.equal(t1.end, false);
 	const learner = t1.session.turns.find((t) => t.role === "learner")!;
 	assert.equal(learner.via, "voice");
-	assert.equal(learner.audio, "01.webm");
-	assert.ok(fs.existsSync(path.join(PATHS.speak, s.id, "01.webm")), "the learner's recording is kept with the scene");
+	assert.equal(learner.audio, "01.wav");
+	assert.ok(fs.existsSync(path.join(PATHS.speak, s.id, "01.wav")), "the learner's recording is kept with the scene");
 
 	const t2 = await speak.speakTurn({ id: s.id, text: "prosím si jednu kávu", via: "typed" }, { engine, now });
 	assert.equal(t2.reply.repaired, true);
@@ -227,5 +227,5 @@ test("transcribe refuses honestly without a key", async () => {
 	delete process.env.ELEVENLABS_API_KEY;
 	delete process.env.DEEPGRAM_API_KEY;
 	assert.equal(speak.sttEngine(), null);
-	await assert.rejects(speak.transcribe(new Uint8Array([1]), "audio/webm"), /No speech-to-text key/);
+	await assert.rejects(speak.transcribe(new Uint8Array([1])), /No speech-to-text key/);
 });

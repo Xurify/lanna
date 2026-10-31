@@ -18,7 +18,8 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { judgeSentence, LISTEN_COUNT, LISTEN_FLOOR, listenXp, meaningOptions, pickListen, sessionCoverage, STRETCH_MAX, understood } = await import("../src/core/listen.ts");
+const { almostCount, judgeSentence, judgeTyped, LISTEN_COUNT, LISTEN_FLOOR, listenXp, meaningOptions, pickListen, sessionCoverage, STRETCH_MAX, understood } = await import("../src/core/listen.ts");
+const { foldDiacritics } = await import("../src/core/language.ts");
 const { strandAdvice, strandBalance, STRANDS } = await import("../src/core/strands.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { knownWords, resolveWord } = await import("../src/server/reading.ts");
@@ -84,6 +85,25 @@ test("pickListen: ten sentences, one per word, each inside the band with at most
 	// Recent ids are skipped.
 	const again = pickListen(lexicon.entries, l, { seed: 11, recent: new Set(items.map((i) => i.id)) });
 	assert.ok(again.every((i) => !items.some((x) => x.id === i.id)));
+});
+
+test("judgeTyped: case, spacing and punctuation are forgiven, accents are a near miss, a missing word is wrong", () => {
+	assert.equal(judgeTyped("za internet platíme mesačne", "Za internet platíme mesačne."), "exact");
+	assert.equal(judgeTyped("Za internet, platíme mesačne", "Za internet platíme mesačne."), "exact", "a comma not heard is not a wrong word");
+	assert.equal(judgeTyped("Za  internet plati\u0301me mesačne", "Za internet platíme mesačne."), "exact", "decomposed accents read as the same letters");
+	assert.equal(judgeTyped("Za internet platime mesacne", "Za internet platíme mesačne."), "accents");
+	assert.equal(judgeTyped("Za internet platíme", "Za internet platíme mesačne."), "wrong");
+	assert.equal(judgeTyped("", "Za internet platíme mesačne."), "wrong");
+	// vina and vína differ by a mark only: a near miss, never exact.
+	assert.equal(judgeTyped("to je vina", "To je vína."), "accents");
+});
+
+test("listenXp and the typed verdicts: an accents-only answer earns half and is not understood", () => {
+	assert.equal(listenXp(2, 4, 1), 2 * 4 + 2 + 10);
+	assert.equal(listenXp(2, 4), 2 * 4 + 10, "the picks-only sum is unchanged");
+	const reps = [{ verdict: "accents" as const }, { verdict: "accents" as const, peeked: true }, { verdict: "exact" as const }];
+	assert.equal(almostCount(reps), 1, "a peeked accents answer earns nothing");
+	assert.equal(understood(reps), 1);
 });
 
 test("meaningOptions: the translation plus two others of similar length, never a duplicate", () => {
@@ -168,4 +188,51 @@ test("the server: a session for the learner's known words; finishing records the
 	// The next session skips what was just heard.
 	const next = listenFor(5);
 	assert.ok(next.items.every((i) => !plan.items.some((x) => x.id === i.id)));
+});
+
+test("typed listen: the server grades a typed sentence itself, half XP for a missing accent, logged apart as dictation", () => {
+	const plan = listenFor(9);
+	const accented = plan.items.find((i) => foldDiacritics(i.sentence) !== i.sentence);
+	assert.ok(accented, "the session has a sentence with accents");
+	const [plain, third] = plan.items.filter((i) => i !== accented);
+	const rep = (it: (typeof plan.items)[number], given: string, verdict: "exact" | "accents" | "wrong") => ({
+		itemId: it.id,
+		slug: it.slug,
+		lemma: it.lemma,
+		gloss: it.gloss,
+		sentence: it.sentence,
+		translation: it.translation,
+		given,
+		verdict,
+		answer: "type" as const,
+		stretch: it.stretch.map((w) => w.slug).filter((s): s is string => !!s),
+		words: it.words,
+	});
+	// The client's verdicts are wrong on purpose: the server must not take them.
+	const reps = [
+		rep(accented!, foldDiacritics(accented!.sentence), "exact"),
+		rep(plain!, plain!.sentence.toLowerCase(), "wrong"),
+		rep(third!, "nič také nie", "exact"),
+	];
+	const at = new Date("2026-10-29T10:00:00Z");
+	const out = recordListen({ reps, ms: 60_000, tz: 0 }, at);
+	assert.equal(out.total, 3);
+	assert.equal(out.correct, 1, "only the plain sentence is understood");
+	assert.equal(out.almost, 1, "the accented one is a near miss");
+	assert.equal(out.xp, listenXp(1, 3, 1));
+	const log = readLessonLog().find((e) => e.at === at.toISOString());
+	assert.ok(log, "logged");
+	const byId = new Map(log!.reps.map((r) => [r.itemId, r]));
+	assert.equal(byId.get(accented!.id)?.verdict, "accents");
+	assert.equal(byId.get(accented!.id)?.kind, "dictation");
+	assert.equal(byId.get(accented!.id)?.answer, accented!.sentence, "a typed rep's answer is the sentence");
+	assert.equal(byId.get(plain!.id)?.verdict, "exact");
+	assert.equal(byId.get(third!.id)?.verdict, "wrong");
+	// A picked rep keeps its kind and its options.
+	const picked = listenFor(9).items[0]!;
+	const pickOut = recordListen({ reps: [{ ...rep(picked, picked.translation, "exact"), answer: "pick", options: picked.options }], tz: 0 }, new Date("2026-10-29T11:00:00Z"));
+	assert.equal(pickOut.correct, 1);
+	const pickLog = readLessonLog().find((e) => e.at === "2026-10-29T11:00:00.000Z");
+	assert.equal(pickLog?.reps[0]?.kind, "meaning");
+	assert.deepEqual(pickLog?.reps[0]?.options, picked.options);
 });

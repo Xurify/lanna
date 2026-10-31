@@ -71,6 +71,7 @@ Unverified by the owner: Data and the cache clear in the Electron window (the cl
 
 Known: at 390px wide the settings dialog gives its content about 125px in every section, so the left section list crowds the text. This predates this branch.
 
+<<<<<<< HEAD
 ## 31 October: the first try is the measure
 
 Branch `feat/grammar-error-tracking`. Not pushed.
@@ -84,6 +85,17 @@ Branch `feat/grammar-error-tracking`. Not pushed.
 - The logs keep the evidence: lesson reps carry `gender`, `first`, `slip`; review lines carry `unit`, `gender`, `slip`; Speak corrections carry `drill`, `slip`, `gender`.
 
 Unverified by the owner: the lesson player's first-try capture (the cue flow, a reload mid-cue) and the atlas at both window sizes — typecheck, lint and the affected suites pass, but the live run on the PC has not happened. Known on this machine: the full suite has 27 environment-bound failures that reproduce on the base commit (Windows path fixtures, the local `auth.json` keys, Electron/Node drift), including `tests/speak.test.ts` "transcribe refuses honestly without a key", which assumes no ElevenLabs key is saved.
+
+## 31 October: a spoken line is WAV, and nothing is recorded as video
+
+Branch `fix/speak-recording-wav`, from `be8e859` (main).
+
+- **Speak records WAV only:** the browser's WebM/Opus → Ogg → MP4 chain is gone. Speak captures through the dictation AudioWorklet (16 kHz mono 16-bit PCM) and keeps one WAV per line (DECISIONS E19). No MediaRecorder, so no MP4 and no format guessing.
+- **Speech-to-text gets the WAV** (it got the compressed clip before), pronunciation scoring always gets the WAV (before, only when Azure was set), and the scene keeps that same WAV.
+- **File names tell the truth:** uploads are `line.wav` on the client, in `/api/speak` and in the ElevenLabs multipart part, and the scene keeps `NN.wav`. All the non-WAV handling is gone with it: the `audioExt` helper, the `audio/webm` fallbacks in `/api/stt`, `/api/speak` and `/api/pronounce`, and Azure's Ogg branch.
+- **The worklet's tail is flushed on stop** (`public/worklets/pcm-capture.js`), so a line no longer drops up to 128 ms at the end.
+
+Not verified live: no microphone in this shell, so Speak and Say it faster are covered by the new tests (`tests/speak-recorder.test.ts`), typecheck and lint only. The real WAV with an ElevenLabs or Deepgram key, and Azure's score on it, need the PC.
 
 ## Pull requests
 
@@ -100,7 +112,8 @@ Unverified by the owner: the lesson player's first-try capture (the cue flow, a 
 | #10 | `setup/parallels-and-panel-close` | Panel close, parallels wording and switch | merged by the owner |
 | #11 | `feat/weak-spots` | Weak spots on record | merged by the owner |
 | (new) | `ux/revamp-views` | UX revamp: Today, sidebar, lesson, Review, Plan | open |
-| (new) | `feat/grammar-error-tracking` | First tries and form slips (E18) | not pushed |
+| #55 | `feat/grammar-error-tracking` | First tries, form slips, targeted gender drills (E18) | open |
+| (new) | `fix/speak-recording-wav` | WAV-only Speak recording; truthful upload names | open |
 
 GitHub Actions never runs on this repo (owner-side setting); a red check there is not a code failure.
 
@@ -117,6 +130,7 @@ Their PC profile had not gone through the new setup (the home page redirects to 
 - Everything in PR #5 (difficulty rules).
 - The Spending page's totals against their own expectation.
 - The UX revamp (`ux/revamp-views`): the new Today, the sidebar and its phone drawer, the lesson leave question, and the Review card. Checked in a browser against a copy of the PC profile, not yet in the Electron window.
+- Listen's Type mode (31 October): a Pick / Type switch on `/listen`. Type asks for the Slovak as heard, graded by the server with the lesson's rules (accents-only earns half XP). Pick stays the default. Unit tests pass; the screen is not yet checked in a browser or on the PC.
 
 ## Known environment facts
 
