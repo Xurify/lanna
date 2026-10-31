@@ -22,6 +22,8 @@ export {
 	settingsStore,
 } from "../store/settings.ts";
 export { promptOverrides } from "../store/prompt-overrides.ts";
+// The progress record (the grammar atlas reads each unit's counts).
+export { progressStore } from "../store/progress.ts";
 export { isValidSegmentPath } from "../core/prompt-segments.ts";
 // The canonical segment discovery/resolution lives in the agent layer
 // (composition is an agent concern); the barrel re-exports it for the

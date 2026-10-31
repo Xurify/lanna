@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, XIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, TableIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
@@ -181,6 +181,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					testid: "mode-review",
 				},
 				{ href: `/lesson?unit=${s?.next ?? "words"}`, icon: PlayIcon, title: "Next lesson", line: next?.title ?? "First words", testid: "start-lesson" },
+				{ href: "/grammar", icon: TableIcon, title: "Grammar", line: "The six cases × three genders, with your accuracy on each", testid: "mode-grammar" },
 				{ href: "/chat/new", icon: GraduationCapIcon, title: "Ask the tutor", line: "Any question about Slovak", testid: "mode-tutor" },
 			],
 		},
