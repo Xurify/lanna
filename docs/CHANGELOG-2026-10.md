@@ -102,6 +102,7 @@ Their PC profile had not gone through the new setup (the home page redirects to 
 - Everything in PR #5 (difficulty rules).
 - The Spending page's totals against their own expectation.
 - The UX revamp (`ux/revamp-views`): the new Today, the sidebar and its phone drawer, the lesson leave question, and the Review card. Checked in a browser against a copy of the PC profile, not yet in the Electron window.
+- Listen's Type mode (31 October): a Pick / Type switch on `/listen`. Type asks for the Slovak as heard, graded by the server with the lesson's rules (accents-only earns half XP). Pick stays the default. Unit tests pass; the screen is not yet checked in a browser or on the PC.
 
 ## Known environment facts
 

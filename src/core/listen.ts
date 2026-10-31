@@ -3,7 +3,14 @@
  * built locally. Ten real sentences from the dictionary that the learner
  * can follow (95–98% of the words known), each heard first with the text
  * hidden, understood by picking its meaning, then read with its one
- * stretch word glossed. No typing, no grammar grading.
+ * stretch word glossed.
+ *
+ * Typed answers (2026-10-31, owner: pick-a-meaning was too easy at their
+ * level): the same sentence can instead be typed as Slovak, what was heard
+ * (dictation, Clozemaster-style). It is graded like a lesson's listening
+ * rep (compareAnswer: exact, accents-only, wrong), and an accents-only
+ * answer earns half XP, as in the lessons. The choice is a learner's
+ * switch (Pick / Type), not a different session. No grammar grading.
  *
  * Why (the comprehensible-input research the task comes from):
  *   - Comprehension precedes production (Lichtman & VanPatten 2021): the
@@ -24,6 +31,7 @@
 import type { LexiconEntry } from "./review.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { grammarWord, tokenize } from "./reading.ts";
+import { compareAnswer, type AnswerVerdict } from "./language.ts";
 
 export interface StretchWord {
 	/** The word as it stands in the sentence. */
@@ -89,16 +97,38 @@ export const STRETCH_MAX = 1;
 export const LISTEN_XP = 4;
 export const LISTEN_BONUS = 10;
 
-export function listenXp(correct: number, total: number): number {
-	return correct * LISTEN_XP + (total > 0 ? LISTEN_BONUS : 0);
+/** How one sentence was answered: the meaning picked from three, or the
+ *  Slovak typed (dictation). "accents" is only possible for a typed answer. */
+export type ListenAnswer = "pick" | "type";
+export type ListenVerdict = AnswerVerdict;
+
+export function listenXp(correct: number, total: number, almost = 0): number {
+	return correct * LISTEN_XP + almost * Math.ceil(LISTEN_XP / 2) + (total > 0 ? LISTEN_BONUS : 0);
 }
 
 /** A sentence counts as understood only by ear: right, and the text not
- *  shown before the pick. Peeking is allowed (after two listens) and
+ *  shown before the answer. Peeking is allowed (after two listens) and
  *  priced: that sentence earns nothing and does not count (docs/research/
  *  desirable-difficulties.md). */
-export function understood(reps: readonly { verdict: "exact" | "wrong"; peeked?: boolean }[]): number {
+export function understood(reps: readonly { verdict: ListenVerdict; peeked?: boolean }[]): number {
 	return reps.filter((r) => r.verdict === "exact" && !r.peeked).length;
+}
+
+/** A typed sentence the right letters of but missing a mark: half XP,
+ *  the same rule as the lessons (accents-only earns half). Not counted as
+ *  understood, and a peeked one earns nothing. */
+export function almostCount(reps: readonly { verdict: ListenVerdict; peeked?: boolean }[]): number {
+	return reps.filter((r) => r.verdict === "accents" && !r.peeked).length;
+}
+
+/** Strip the punctuation a dictation is not graded on: a comma the
+ *  learner did not hear is not a wrong word. */
+const bareWords = (s: string) => s.normalize("NFC").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+/** Grade a typed sentence against the one that was heard. Case, spacing
+ *  and punctuation are forgiven; accents are not (vina ≠ vína). */
+export function judgeTyped(given: string, sentence: string, tag = "sk-SK"): ListenVerdict {
+	return compareAnswer(bareWords(sentence), bareWords(given), tag);
 }
 
 /** How many times a sentence must have been heard before its text may be
