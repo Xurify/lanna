@@ -30,6 +30,7 @@ const { reviewStore } = await import("../src/store/review.ts");
 const { progressSummary } = await import("../src/server/lesson.ts");
 const { usageReport } = await import("../src/server/usage-report.ts");
 const { exportCorpus } = await import("../src/server/corpus-export.ts");
+const { CHAPTERS } = await import("../src/core/curriculum.ts");
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -335,5 +336,94 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(file.stories.length, report.stories.count);
 		assert.equal(file.readings.length, 1);
 		assert.match(fs.readFileSync(path.join(dir, "README.md"), "utf-8"), /stories\.json/);
+	});
+});
+
+
+// ─── Chapter story episodes (chapter-arc phase 2): the bible, the picker,
+// ─── the brief seeded from it, the field kept on disk ───────────────────────
+
+describe("the story bible (curriculum/slovak/world.json)", () => {
+	const bible = JSON.parse(fs.readFileSync(path.join(PATHS.curriculum, "slovak", "world.json"), "utf-8")) as {
+		cast: Array<{ name: string; gender: string; age: string; role: string }>;
+		places: Array<{ id: string; name: string; note: string }>;
+		beats: Record<string, string>;
+	};
+
+	it("carries six cast members starting with Robo, six places, and one beat per chapter", () => {
+		assert.equal(bible.cast.length, 6);
+		assert.equal(bible.cast[0]!.name, "Robo", "the lead is listed first");
+		assert.ok(bible.cast.every((c) => c.name.length > 0 && c.role.length > 0 && /^[A-ZÁÄÔĽŔŠČŤŽÝ]/.test(c.name)), "Slovak names, each with a one-line role");
+		assert.ok(bible.cast.every((c) => c.gender === "f" || c.gender === "m"));
+		assert.ok(bible.cast.every((c) => ["child", "young", "adult", "old"].includes(c.age)));
+		assert.equal(bible.places.length, 6);
+		assert.ok(bible.places.every((p) => p.id && p.name && p.note), "each place named with its note");
+		assert.deepEqual(Object.keys(bible.beats).sort(), CHAPTERS.map((c) => c.id).sort(), "one beat per chapter, keyed exactly by the chapters' ids");
+		assert.equal(Object.keys(bible.beats).length, CHAPTERS.length, "no extra or missing beats");
+		for (const beat of Object.values(bible.beats)) assert.match(beat.trim(), /\.$/, "each beat is one closed sentence");
+	});
+
+	it("seeds the Robo brief with the cast and the chapter's beat; stand-alone pieces leave it out", async () => {
+		const { loadWorld } = await import("../src/server/world.ts");
+		const world = loadWorld();
+		assert.ok(world, "the Slovak profile has a bible");
+		const brief = reading.storyBrief(reading.knownWords(), [], [], new Date(), "robo", world);
+		assert.match(brief.prompt, /Series bible, keep them as written — the cast: Robo \(man, young\) the lead/);
+		assert.match(brief.prompt, /Zuzka/);
+		assert.match(brief.prompt, /This episode's beat: "Robo arrives in Bratislava with two suitcases and meets Zuzka in the stairwell/, "the current chapter's beat (hello) is in the brief");
+		assert.match(brief.prompt, /Miletičova market/, "the bible's places are in the brief");
+		const diary = reading.storyBrief(reading.knownWords(), [], [], new Date(), "diary", world);
+		assert.doesNotMatch(diary.prompt, /Series bible/, "a stand-alone piece uses no series bible");
+		assert.doesNotMatch(diary.prompt, /beat/, "and no chapter beat");
+	});
+
+	it("the picker: the current chapter's unread episodes come first, in publication order, whatever their score", () => {
+		const mk = (id: string, chapter: string, episode: number, createdAt: string, fresh: number): StoryRecord => ({
+			id, lang: "sk", series: "robo", episode, title: id, level: "A2", chapter, theme: "t", genre: "robo", createdAt, drafts: 1, wordCount: 20, coverage: 1, recap: "", usage: { model: "m", steps: [] }, questions: [], newWords: [],
+			sentences: [{ sk: "x", en: "x", tokens: Array.from({ length: 20 }, (_, i) => ({ text: "w", word: true, slug: i < fresh ? `unk${i}` : `k${i}`, ...(i < fresh ? { fresh: true } : {}) })) }],
+		});
+		const known = new Set(Array.from({ length: 20 }, (_, i) => `k${i}`));
+		const chapterFirst = mk("ep-5", "cafe", 5, "2026-11-01T09:00:00Z", 6); // 70% known — normally not readable
+		const chapterSecond = mk("ep-6", "cafe", 6, "2026-11-02T09:00:00Z", 0);
+		const better = mk("ep-4", "hello", 4, "2026-11-03T09:00:00Z", 0); // 100% known, would outscore the hard one normally
+		const input = { level: "A2" as const, known, recentGenres: [] as const, recentTopics: [] as const, chapter: "cafe" };
+		const pick = core.pickStory([better, chapterSecond, chapterFirst], input);
+		assert.equal(pick?.story.id, "ep-5", "the chapter's first unread episode, even when it scores lower");
+		assert.equal(pick!.reason.coverage, 0.7, "it comes out even when hard: the gate that nulls other stories is bypassed");
+		const ordered = core.pickStory([chapterSecond, chapterFirst], input);
+		assert.equal(ordered?.story.id, "ep-5", "publication order (written first) decides among the chapter's episodes");
+		const other = core.pickStory([chapterFirst, better], { ...input, chapter: "offices" });
+		assert.equal(other?.story.id, "ep-4", "an episode of another chapter is not preferred: the best fit wins");
+		assert.equal(core.pickStory([chapterFirst], { level: "A2", known, recentGenres: [], recentTopics: [] }), null, "no chapter given: the old rule that nulls a 70% story holds");
+	});
+
+	it("the chapter field survives the store's round trip, record and index", () => {
+		const record: StoryRecord = { id: "round-trip-test", lang: "sk", series: "robo", episode: 900, title: "round trip", level: "A1", chapter: "offices", theme: "t", createdAt: "2026-11-01T00:00:00Z", sentences: [], questions: [], newWords: [], recap: "", coverage: 1, wordCount: 0, usage: { model: "m", steps: [] }, drafts: 1 };
+		storyStore.put(record);
+		assert.equal(storyStore.get(record.id)?.chapter, "offices", "the record keeps it");
+		assert.equal(storyStore.list().find((s) => s.id === record.id)!.chapter, "offices", "the index line keeps it");
+	});
+});
+
+describe("the chapter's episode on the shelf", () => {
+	it("a chapter without an episode gets one written before the shelf top-ups, and the picker serves it first", async () => {
+		// Move the learner on: finish Chapter 1 (Hello), so the current
+		// chapter is At the café and no episode of it exists yet.
+		const p = progressStore.read();
+		for (const id of ["words", "lx-greetings", "sounds", "lx-questions", "present", "vykanie"]) p.units[id] = { lessons: 3, reps: 30, correct: 30 };
+		progressStore.write(p);
+		const k = reading.knownWords();
+		assert.equal(k.chapter, "cafe", "the learner is now in the second chapter");
+		assert.ok(!storyStore.list().some((s) => s.chapter === "cafe"), "no episode of it exists");
+		const beforeIds = new Set(storyStore.list().map((s) => s.id));
+		const piece = (t: string) => fauxAssistantMessage(JSON.stringify({ ...EPISODE, title: t, topic: "shelf topic", cast: [{ name: "Robo", gender: "m", age: "young" }], sentences: EPISODE.sentences.map((x, i) => ({ ...x, who: i === 0 ? "narrator" : "Robo" })) }));
+		const written = await reading.fillShelf({ engine: fauxEngine([piece("Dvojkáva"), piece("Trojkáva")]), model: "faux:shelf", now: new Date("2026-10-30T09:00:00Z") });
+		const fresh = storyStore.list().filter((s) => !beforeIds.has(s.id));
+		assert.ok(written >= 1, "something was written");
+		const chapterStories = fresh.filter((s) => s.chapter === "cafe");
+		assert.equal(chapterStories.length, 1, "exactly one episode for the new chapter");
+		assert.equal(chapterStories[0]!.genre, "robo", "the chapter's episode is a Robo episode");
+		const state = reading.readingState(0, new Date("2026-10-30T09:01:00Z"));
+		assert.equal(state.current?.chapter, "cafe", "the picker serves the chapter's episode, not the unread shelf stock");
 	});
 });

@@ -231,6 +231,7 @@ export interface StoryIndexEntry {
 	title: string;
 	level: Cefr;
 	theme: string;
+	chapter?: string;
 	genre?: StoryGenre;
 	topic?: string;
 	createdAt: string;
@@ -365,31 +366,48 @@ export interface PickInput {
 	recentGenres: readonly StoryGenre[];
 	/** Topics of the last readings, newest last. */
 	recentTopics: readonly string[];
+	/** The chapter the learner is working in (the arc's story step):
+	 *  its unread episodes come first, publication order (written order). */
+	chapter?: string;
+}
+
+/** The plain score a story gets from the picker (coverage and level fit,
+ *  variety against the last few readings, the series bonus). Shared by the
+ *  normal best-fit pick and the chapter preference, which keeps the reason
+ *  honest while returning the chapter's episode whatever its score. */
+function fitScore(story: StoryRecord, input: PickInput): PickReason {
+	const genre = story.genre ?? "robo";
+	const coverage = storyCoverage(story, input.known);
+	// 0.96 is the sweet spot; each 0.01 away costs 0.08, so 0.92 → 0.68 and 0.88 → 0.36.
+	const fit = Math.max(0, 1 - Math.abs(coverage - 0.96) * 8);
+	const dist = Math.abs(levelIndex(story.level) - levelIndex(input.level));
+	const levelScore = dist === 0 ? 1 : dist === 1 ? 0.7 : 0.3;
+	const recentG = input.recentGenres.slice(-2);
+	const variety = (recentG.includes(genre) ? 0 : 0.15) + (story.topic && input.recentTopics.slice(-3).includes(story.topic) ? 0 : 0.1);
+	const series = genre === "robo" ? 0.1 : 0;
+	const score = Math.round((fit * 0.55 + levelScore * 0.25 + variety + series) * 100) / 100;
+	const line = `${Math.round(coverage * 100)} of 100 words known · ${story.level} · ${genreInfo(genre).label}${recentG.includes(genre) ? " (read lately)" : ""}`;
+	return { score, coverage, line };
 }
 
 /** The best unread story for this learner, or null when nothing on the
  *  shelf fits well enough and a new one should be written. The score
  *  weighs how many words the learner knows (the 95–98% band reads best),
  *  the level the text was written for, and variety against the last few
- *  readings; Robo episodes are offered in order. */
+ *  readings; Robo episodes are offered in order. An unread episode of the
+ *  current chapter comes first, whatever its score: the chapter's story
+ *  step is the point. */
 export function pickStory(stories: readonly StoryRecord[], input: PickInput): { story: StoryRecord; reason: PickReason } | null {
-	const unread = stories;
-	const roboNext = Math.min(...unread.filter((s) => (s.genre ?? "robo") === "robo").map((s) => s.episode), Infinity);
+	// The current chapter's unread episodes, first in publication order
+	// (written order), whatever their score.
+	const mine = input.chapter ? stories.filter((s) => s.chapter === input.chapter).sort((a, b) => a.createdAt.localeCompare(b.createdAt)) : [];
+	if (mine[0]) return { story: mine[0], reason: fitScore(mine[0], input) };
+	const roboNext = Math.min(...stories.filter((s) => (s.genre ?? "robo") === "robo").map((s) => s.episode), Infinity);
 	let best: { story: StoryRecord; reason: PickReason } | null = null;
-	for (const story of unread) {
-		const genre = story.genre ?? "robo";
-		if (genre === "robo" && story.episode > roboNext) continue; // a later episode waits for the earlier one
-		const coverage = storyCoverage(story, input.known);
-		// 0.96 is the sweet spot; each 0.01 away costs 0.08, so 0.92 → 0.68 and 0.88 → 0.36.
-		const fit = Math.max(0, 1 - Math.abs(coverage - 0.96) * 8);
-		const dist = Math.abs(levelIndex(story.level) - levelIndex(input.level));
-		const levelScore = dist === 0 ? 1 : dist === 1 ? 0.7 : 0.3;
-		const recentG = input.recentGenres.slice(-2);
-		const variety = (recentG.includes(genre) ? 0 : 0.15) + (story.topic && input.recentTopics.slice(-3).includes(story.topic) ? 0 : 0.1);
-		const series = genre === "robo" ? 0.1 : 0;
-		const score = Math.round((fit * 0.55 + levelScore * 0.25 + variety + series) * 100) / 100;
-		const line = `${Math.round(coverage * 100)} of 100 words known · ${story.level} · ${genreInfo(genre).label}${recentG.includes(genre) ? " (read lately)" : ""}`;
-		if (!best || score > best.reason.score) best = { story, reason: { score, coverage, line } };
+	for (const story of stories) {
+		if ((story.genre ?? "robo") === "robo" && story.episode > roboNext) continue; // a later episode waits for the earlier one
+		const reason = fitScore(story, input);
+		if (!best || reason.score > best.reason.score) best = { story, reason };
 	}
 	// Too hard or too easy to be worth it: write a new one instead.
 	if (best && (best.reason.score < 0.5 || best.reason.coverage < 0.86)) return null;
