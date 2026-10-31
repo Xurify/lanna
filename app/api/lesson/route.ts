@@ -2,14 +2,15 @@
  * GET /api/lesson?unit=<id> — a fresh 12-rep lesson for one unit, built
  * locally from the lexicon (no model call). ?mode=blitz — a choose-only
  * sprint across the units you have started.
- * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, detail?}], ms?, activeMs?, tz?, clientId?}
+ * POST /api/lesson {unit, mode, reps:[{itemId, slug, kind, verdict, assisted?, first?, detail?}], ms?, activeMs?, tz?, clientId?}
+ * (`first` is the answer before any cue — the first-try measure, src/core/first-try.ts.)
  * — record the finished lesson: XP, the day, the unit's level; missed
  * words go into the review deck; the whole lesson (every sentence and
  * answer, from `detail`) is appended to the lesson log. Returns the
  * outcome and a fresh summary.
  */
 
-import { isUnitId } from "@/src/core";
+import { isUnitId, type FirstAnswer } from "@/src/core";
 import { blitzFor, lessonFor, lessonWithBetterOptions, recordLesson, type RepResult } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,15 @@ function repDetail(v: unknown): RepResult["detail"] {
 }
 const VERDICTS = new Set(["exact", "accents", "wrong"]);
 
+/** The first answer to a rep, as the client saw it before any cue (src/core/first-try.ts). */
+function firstOf(v: unknown): FirstAnswer | undefined {
+	if (!v || typeof v !== "object") return undefined;
+	const f = v as Record<string, unknown>;
+	const given = str(f.given);
+	if (given === undefined || !VERDICTS.has(f.verdict as string)) return undefined;
+	return { given, verdict: f.verdict as FirstAnswer["verdict"], ...(f.peeked === true ? { peeked: true } : {}) };
+}
+
 export async function POST(req: Request) {
 	const body = (await req.json().catch(() => null)) as {
 		unit?: unknown;
@@ -61,9 +71,9 @@ export async function POST(req: Request) {
 	}
 	const reps: RepResult[] = body.reps.flatMap((r: unknown) => {
 		const x = r as Partial<RepResult> | null;
-		return x && typeof x.itemId === "string" && typeof x.slug === "string" && KINDS.has(x.kind as string) && VERDICTS.has(x.verdict as string)
-			? [{ itemId: x.itemId, slug: x.slug, kind: x.kind!, verdict: x.verdict!, ...(x.assisted === true ? { assisted: true } : {}), detail: repDetail(x.detail) }]
-			: [];
+		if (!x || typeof x.itemId !== "string" || typeof x.slug !== "string" || !KINDS.has(x.kind as string) || !VERDICTS.has(x.verdict as string)) return [];
+		const first = firstOf(x.first);
+		return [{ itemId: x.itemId, slug: x.slug, kind: x.kind!, verdict: x.verdict!, ...(x.assisted === true ? { assisted: true } : {}), ...(first ? { first } : {}), detail: repDetail(x.detail) }];
 	});
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
 	const clientId = typeof body.clientId === "string" && /^[A-Za-z0-9-]{8,64}$/.test(body.clientId) ? body.clientId : undefined;

@@ -54,6 +54,7 @@ import {
 	unitBridges,
 	unitInfo,
 	type BridgeLang,
+	type FirstAnswer,
 	type ItemKind,
 	type LessonItem,
 	type LessonPlan,
@@ -109,6 +110,8 @@ interface Rep {
 	/** Right with help: on the second try after the cue, or with the
 	 *  meaning shown early. Earns half (a priced hint). */
 	assisted?: boolean;
+	/** The answer before any cue: what the first-try measure counts. */
+	first?: FirstAnswer;
 }
 
 interface SavedLesson {
@@ -119,6 +122,9 @@ interface SavedLesson {
 	combo: number;
 	xp: number;
 	miss: string | null;
+	/** The first answer to the rep whose cue is showing (see Rep.first). */
+	first?: FirstAnswer | null;
+	peeked?: boolean;
 	relearned: number;
 	startedAt: number;
 }
@@ -180,6 +186,10 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	// more try before the answer is shown (a prompt, not a recast — making
 	// the learner find the form is what moves grammar, telling them is not).
 	const [miss, setMiss] = useState<string | null>(null);
+	// The first answer to this rep, held while the cue is showing: a miss
+	// comes back right on the second try, and the first try is what counts
+	// for the grammar atlas (src/core/first-try.ts).
+	const [firstTry, setFirstTry] = useState<FirstAnswer | null>(null);
 	// The translation asked for before the answer (hidden from the
 	// practised stage on): a priced hint, the rep earns half.
 	const [peeked, setPeeked] = useState(false);
@@ -221,6 +231,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			setCombo(saved.combo);
 			setXp(saved.xp);
 			setMiss(saved.miss);
+			setFirstTry(saved.first ?? null);
+			setPeeked(saved.peeked === true);
 			relearned.current = saved.relearned;
 			startedAt.current = saved.startedAt;
 		} catch {
@@ -229,13 +241,13 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	}, [saveKey]);
 	useEffect(() => {
 		if (!saveKey || !plan || score || restoring.current) return;
-		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, relearned: relearned.current, startedAt: startedAt.current };
+		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, first: firstTry, peeked, relearned: relearned.current, startedAt: startedAt.current };
 		try {
 			sessionStorage.setItem(saveKey, JSON.stringify(saved));
 		} catch {
 			// storage blocked: the lesson is not kept
 		}
-	}, [saveKey, plan, index, reps, current, combo, xp, miss, score]);
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, score]);
 	const forget = useCallback(() => {
 		if (!saveKey) return;
 		try {
@@ -273,6 +285,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setMiss(null);
 		relearned.current = 0;
 		setLeft(BLITZ_SECONDS);
+		setFirstTry(null);
+		setPeeked(false);
 		finishing.current = false;
 		try {
 			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}`);
@@ -326,6 +340,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				kind: r.item.kind,
 				verdict: r.verdict,
 				assisted: r.assisted === true,
+				// The answer before any cue: the server counts it as the first try.
+				...(r.first ? { first: r.first } : {}),
 				// Everything shown and answered, for the lesson log on disk.
 				detail: {
 					unit: r.item.unit,
@@ -380,17 +396,22 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const grade = (given: string, verdict: RepVerdict, reveal = false) => {
 		if (!item || current) return;
+		// The first answer to this rep, before any cue. A second try (after a
+		// miss) keeps the first one; a rep with a cue showing and no first
+		// answer held has none to count.
+		const first: FirstAnswer | undefined = firstTry ?? (miss === null ? { given, verdict, ...(peeked ? { peeked: true } : {}) } : undefined);
 		// "I don't know" (reveal) skips the cue and the second try: the answer
 		// shows at once, the rep counts as a miss and comes back at the end.
 		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind) && !reveal) {
 			setMiss(given);
+			setFirstTry(first ?? null);
 			setCombo(0);
 			sfx.wrong();
 			setShake((s) => s + 1);
 			return;
 		}
 		const assisted = mode === "lesson" && (miss !== null || peeked) && verdict !== "wrong";
-		const rep: Rep = { item, given, verdict, assisted };
+		const rep: Rep = { item, given, verdict, assisted, ...(first ? { first } : {}) };
 		const nextCombo = verdict === "wrong" ? 0 : combo + 1;
 		const gained = repXp(item.kind, verdict, nextCombo, assisted);
 		setCombo(nextCombo);
@@ -428,6 +449,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setReps(all);
 		setCurrent(null);
 		setMiss(null);
+		setFirstTry(null);
 		setPeeked(false);
 		// A miss comes back once at the end, typed (successive relearning:
 		// a retrieval that succeeds after a failure is what fixes the form).

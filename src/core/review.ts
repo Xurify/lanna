@@ -8,6 +8,7 @@
  * append-only review log per language profile.
  */
 
+import type { FormSlip } from "./form-slip.ts";
 import type { MemoryState, Rating } from "./fsrs.ts";
 
 /** One lexicon example as exported from slovak.wiki
@@ -82,6 +83,12 @@ export interface ReviewLogEntry {
 	hints?: number;
 	/** The answer was picked from four, not typed. */
 	picked?: boolean;
+	/** A form card (2026-10-31, first tries): the drill its sentence
+	 *  practises, the word's lexicon gender, and the slip a counted wrong
+	 *  first try got (src/core/form-slip.ts). */
+	unit?: string;
+	gender?: string;
+	slip?: FormSlip;
 }
 
 export interface ReviewSettings {

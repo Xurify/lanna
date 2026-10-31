@@ -10,10 +10,11 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm } from "../core/lesson.ts";
-import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewSettings } from "../core/review.ts";
+import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
+import { firstTryOf, recordFirstTry } from "../core/first-try.ts";
 
 const DAY_MS = 86_400_000;
 const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
@@ -214,6 +215,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	cards[card.id] = updated;
 	reviewStore.writeCards(cards);
 	noteWeakForm(updated, rating, now);
+	const form = noteFirstTry(card, input, verdict);
 	reviewStore.appendLog({
 		cardId: card.id,
 		rating,
@@ -224,8 +226,30 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...(input.ms !== undefined ? { ms: input.ms } : {}),
 		...(input.hints ? { hints: input.hints } : {}),
 		...(input.picked ? { picked: true } : {}),
+		...form,
 	});
 	return { verdict, rating, card: updated };
+}
+
+/** A review answer as a first try (src/core/first-try.ts) on the drill its
+ *  sentence practises, unless a hint came before the answer. Returns what
+ *  the log keeps of it: the drill, the word's gender and a counted slip. A
+ *  card with no drill (plain vocabulary) counts toward nothing. */
+function noteFirstTry(card: ReviewCard, input: ReviewAnswer, verdict: ReviewLogEntry["verdict"]): Pick<ReviewLogEntry, "unit" | "gender" | "slip"> {
+	const entry = loadLexicon()?.bySlug.get(card.slug);
+	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	if (!entry || !unit) return {};
+	const count = firstTryOf({ kind: input.picked ? "choose" : "type", unit, answer: card.answer, entry, first: { given: input.given, verdict, ...(input.hints ? { peeked: true } : {}) } }, tag());
+	try {
+		if (count) {
+			const p = progressStore.read();
+			p.units[count.unit] = recordFirstTry(p.units[count.unit] ?? { lessons: 0, reps: 0, correct: 0 }, count);
+			progressStore.write(p);
+		}
+	} catch (err) {
+		console.warn("[review] could not record the first try:", err instanceof Error ? err.message : err);
+	}
+	return { unit, ...(entry.gender ? { gender: entry.gender } : {}), ...(count?.slip ? { slip: count.slip } : {}) };
 }
 
 /** The weak-spots record (src/core/weak-spots.ts): a card whose cloze is

@@ -217,7 +217,9 @@ export function classifyAll(entry: LexiconEntry, example: { sk: string; cloze?: 
 	const lemma = entry.sk.toLowerCase();
 	const answer = c.answer.toLowerCase();
 	const prev = wordBefore(example.sk, c.at);
-	if (entry.cat === "Nouns") {
+	// Places (Bratislava, Košice, Praha…) decline like nouns, so they drill the
+	// cases too. The dictionary gives them no gender, so they fill no atlas cell.
+	if (entry.cat === "Nouns" || entry.cat === "Places") {
 		if (answer === lemma) return out;
 		const gender = entry.gender ?? "";
 		const femAcc = gender === "feminine" && lemma.endsWith("a") && answer === `${lemma.slice(0, -1)}u`;

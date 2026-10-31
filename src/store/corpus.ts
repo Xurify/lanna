@@ -27,6 +27,8 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
+import type { FirstAnswer } from "../core/first-try.ts";
+import type { FormSlip } from "../core/form-slip.ts";
 import { DATA_READMES } from "./corpus-readme.ts";
 
 // ─── Audio ───────────────────────────────────────────────────────────────────
@@ -281,6 +283,14 @@ export interface LessonLogRep {
 	replays?: number;
 	peeked?: boolean;
 	words?: number;
+	/** Form reps (2026-10-31, first tries): the word's lexicon gender, the
+	 *  first answer before any help (src/core/first-try.ts), and the slip a
+	 *  counted wrong first try got (src/core/form-slip.ts). Speak reps carry
+	 *  `drill`, the case drill the slip was on. */
+	gender?: string;
+	first?: FirstAnswer;
+	slip?: FormSlip;
+	drill?: string;
 }
 
 export interface LessonLogEntry {

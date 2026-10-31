@@ -9,6 +9,7 @@ import { test } from "node:test";
 import {
 	buildBlitz,
 	buildLesson,
+	classifyAll,
 	classifyExample,
 	repXp,
 	sameSentence,
@@ -43,6 +44,16 @@ test("classifyExample: verbs split past from present", () => {
 	const verb = { slug: "robiť", sk: "robiť", en: "do", cat: "Verbs" } as LexiconEntry;
 	assert.equal(classifyExample(verb, ex("Ja robím doma.", "robím")), "present");
 	assert.equal(classifyExample(verb, ex("Včera som robil doma.", "robil")), "past");
+});
+
+test("classifyExample: places decline like nouns (od Košíc is the genitive), and the dictionary form drills nothing", () => {
+	// Places carry no gender, so they drill the cases but fill no atlas cell.
+	const place = (sk: string) => ({ slug: sk.toLowerCase(), sk, en: sk, cat: "Places" }) as LexiconEntry;
+	assert.equal(classifyExample(place("Košice"), ex("Z Košíc do Bratislavy cestujeme vlakom.", "Košíc")), "gen");
+	assert.equal(classifyExample(place("Praha"), ex("Do Prahy ideme vlakom cez Brno.", "Prahy")), "gen");
+	assert.equal(classifyExample(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")), "loc");
+	assert.deepEqual(classifyAll(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")), ["loc", "kam-kde"], "the place and the where/where-to choice");
+	assert.equal(classifyExample(place("Bratislava"), ex("Bratislava je hlavné mesto Slovenska.", "Bratislava")), null, "the dictionary form drills nothing");
 });
 
 test("buildLesson is deterministic per seed and never repeats a word", () => {

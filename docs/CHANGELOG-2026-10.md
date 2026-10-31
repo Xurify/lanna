@@ -71,6 +71,20 @@ Unverified by the owner: Data and the cache clear in the Electron window (the cl
 
 Known: at 390px wide the settings dialog gives its content about 125px in every section, so the left section list crowds the text. This predates this branch.
 
+## 31 October: the first try is the measure
+
+Branch `feat/grammar-error-tracking`. Not pushed.
+
+- **The question:** does the app notice when the base form is right but the case is wrong — "Ako ďaleko je to od stanica?" for "stanice"? It did not: the cue brought the answer back right, and the genitive looked held.
+- **First tries (DECISIONS E18):** the first answer, before any cue, is now the measure of a form. The lesson player holds it while the cue shows (and across a reload) and sends it with the rep; lessons and Review count it on the drill the rep practised (`progress.json` units: `first`, split `byGender`), excluding peeks, meaning and build reps and the end-of-lesson retry. A Speak correction on a case form counts as a spoken slip, apart from first tries.
+- **The kind of wrong:** a wrong first try is named from the dictionary (`src/core/form-slip.ts`): *dictionary form, no ending* (stanica for stanice), *wrong ending* (stanicu), *other word*, *no answer*. Accents-only stays its own verdict, never a slip.
+- **The grammar atlas** reads first tries per case × gender: each cell's percentage is first tries right, and the rule panel lists the slips behind the wrong ones and the slips said in Speak.
+- **The tutor's** "Measured weak points" reads first tries once a unit has six, with the slips; below that it falls back to lesson answers, labelled as such. The unit's reps/correct (XP, the path, the weak-spot mend rule) still read the final answer.
+- **Places** (Bratislava, Košice — no gender in the dictionary) now drill the cases in the classifier; they fill no atlas cell.
+- The logs keep the evidence: lesson reps carry `gender`, `first`, `slip`; review lines carry `unit`, `gender`, `slip`; Speak corrections carry `drill`, `slip`, `gender`.
+
+Unverified by the owner: the lesson player's first-try capture (the cue flow, a reload mid-cue) and the atlas at both window sizes — tests and typecheck pass, but the live run on the PC has not happened. Known on this machine: `tests/speak.test.ts` "transcribe refuses honestly without a key" fails when the profile's `auth.json` holds an ElevenLabs key (the refusal test assumes none); environment-bound, predates this branch.
+
 ## Pull requests
 
 | PR | Branch | What | State |
@@ -86,6 +100,7 @@ Known: at 390px wide the settings dialog gives its content about 125px in every 
 | #10 | `setup/parallels-and-panel-close` | Panel close, parallels wording and switch | merged by the owner |
 | #11 | `feat/weak-spots` | Weak spots on record | merged by the owner |
 | (new) | `ux/revamp-views` | UX revamp: Today, sidebar, lesson, Review, Plan | open |
+| (new) | `feat/grammar-error-tracking` | First tries and form slips (E18) | not pushed |
 
 GitHub Actions never runs on this repo (owner-side setting); a red check there is not a code failure.
 

@@ -26,8 +26,11 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "../core/lesson.ts";
+import { ACTIVE_PROFILE } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
-import { dayKey } from "../core/review.ts";
+import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
+import { isLanguageId, LANGUAGES } from "../core/language.ts";
+import { dayKey, type LexiconEntry } from "../core/review.ts";
 import {
 	CEFR_ORDER,
 	curriculumState,
@@ -138,6 +141,9 @@ export interface RepResult {
 	verdict: RepVerdict;
 	/** Right on the second try, after the hint. */
 	assisted?: boolean;
+	/** The first answer, before any cue (src/core/first-try.ts): the rep's
+	 *  first try, which the grammar atlas and the tutor read. */
+	first?: FirstAnswer;
 	/** What the learner saw and wrote — kept in the lesson log
 	 *  (data/profiles/<language>/lessons/<day>.jsonl, store/corpus.ts) so a
 	 *  lesson is a record, not just a score. Absent on old clients. */
@@ -202,6 +208,13 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	if (prior) return { ...prior.outcome, duplicate: true, summary: progressSummary(input.tz, now) };
 	const day = dayOf(p, today(input.tz, now));
 	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
+	// Each rep's first try goes to the drill it practised (a mixed lesson
+	// counts toward the cases it drilled). This runs before `unit` is read:
+	// recordFirstTry returns a new record, and `unit` must be that one.
+	const tries = input.reps.map(repTry);
+	for (const { count } of tries) {
+		if (count) p.units[count.unit] = recordFirstTry(p.units[count.unit] ?? { lessons: 0, reps: 0, correct: 0 }, count);
+	}
 	const unit = (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
 	let newBest: number | undefined;
 	if (input.mode === "lesson") {
@@ -257,7 +270,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 			total,
 			perfect,
 			queued,
-			reps: input.reps.map(logRep),
+			reps: input.reps.map((r, i) => logRep(r, tries[i]!)),
 		});
 	} catch (err) {
 		console.warn("[lesson] could not append the lesson log:", err instanceof Error ? err.message : err);
@@ -265,7 +278,20 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	return { ...outcome, summary: progressSummary(input.tz, now) };
 }
 
-function logRep(r: RepResult): LessonLogRep {
+const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
+
+/** A rep's first try, located from the lexicon here: the word's entry, and
+ *  the try it counts as (null when it counts toward nothing). The slip and
+ *  the gender come from the dictionary, not from the client. */
+function repTry(r: RepResult): { entry?: LexiconEntry; count: FirstTryCount | null } {
+	const entry = loadLexicon()?.bySlug.get(r.slug);
+	const d = r.detail;
+	if (!entry || !d?.unit || d.answer === undefined) return { entry, count: null };
+	return { entry, count: firstTryOf({ kind: r.kind, unit: d.unit, again: d.again, first: r.first, answer: d.answer, entry }, tag()) };
+}
+
+/** One rep for the lesson log. A lesson rep passes its lexicon entry and first try; placement reps pass neither. */
+function logRep(r: RepResult, { entry, count }: { entry?: LexiconEntry; count?: FirstTryCount | null } = {}): LessonLogRep {
 	const d = r.detail ?? {};
 	return {
 		itemId: r.itemId,
@@ -285,6 +311,9 @@ function logRep(r: RepResult): LessonLogRep {
 		...(d.options ? { options: d.options } : {}),
 		...(d.mixed ? { mixed: true } : {}),
 		...(d.again ? { again: true } : {}),
+		...(entry?.gender ? { gender: entry.gender } : {}),
+		...(r.first ? { first: r.first } : {}),
+		...(count?.slip ? { slip: count.slip } : {}),
 	};
 }
 
@@ -675,7 +704,7 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 			total: input.reps.length,
 			perfect: false,
 			queued: [],
-			reps: input.reps.map(logRep),
+			reps: input.reps.map((r) => logRep(r)),
 		});
 	} catch (err) {
 		console.warn("[placement] could not append the lesson log:", err instanceof Error ? err.message : err);

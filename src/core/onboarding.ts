@@ -9,6 +9,8 @@
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
 import { unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { slipLine } from "./grammar.ts";
+import type { FirstTally } from "./first-try.ts";
 import { weakSpotList, weakSpotsLine, type WeakRecord } from "./weak-spots.ts";
 
 // ─── What Slovak is for ─────────────────────────────────────────────────────
@@ -717,8 +719,26 @@ const PRIOR_LINE: Record<Prior, string> = {
 	reading: "started able to read some Slovak, with shaky endings",
 };
 
-/** The learner as a short profile block for the tutor's system prompt. Null when nothing is known yet. */
-export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }): string | null {
+/** One unit's line in the tutor's "Measured weak points": its unaided first
+ *  tries when it has six (with the slips behind the wrong ones), else its
+ *  lesson answers, labelled as such. Null when neither has six reps. */
+export interface MeasuredWeak {
+	accuracy: number;
+	text: string;
+}
+
+export function measuredWeak(u: { title: string; reps: number; accuracy: number | null }, tally: FirstTally | undefined): MeasuredWeak | null {
+	if (tally && tally.reps >= 6) {
+		const accuracy = tally.right / tally.reps;
+		const slips = slipLine(tally.slips);
+		return { accuracy, text: `${u.title} ${Math.round(accuracy * 100)}% on first tries (${tally.right} of ${tally.reps} right${slips ? `; wrong: ${slips}` : ""})` };
+	}
+	if (u.reps >= 6 && u.accuracy !== null) return { accuracy: u.accuracy, text: `${u.title} ${Math.round(u.accuracy * 100)}% on lesson answers` };
+	return null;
+}
+
+/** The learner as a short profile block for the tutor's system prompt. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts). */
+export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -760,10 +780,12 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		if (cur && stage) lines.push(`- Working now at ${stage.level}, chapter "${cur.title}" (${cur.doneCount}/${cur.total} units done; ${state.done}/${state.total} on the road to the target).`);
 		const weak = state.chapters
 			.flatMap((c) => c.units)
-			.filter((u) => (u.kind === "drill" || u.kind === "words") && u.reps >= 6 && u.accuracy !== null && u.accuracy < 0.85)
-			.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0))
+			.filter((u) => u.kind === "drill" || u.kind === "words")
+			.map((u) => measuredWeak(u, tries_?.[u.id]))
+			.filter((m): m is MeasuredWeak => m !== null && m.accuracy < 0.85)
+			.sort((a, b) => a.accuracy - b.accuracy)
 			.slice(0, 5);
-		if (weak.length) lines.push(`- Measured weak points (lesson accuracy): ${weak.map((u) => `${u.title} ${Math.round((u.accuracy ?? 0) * 100)}%`).join(", ")}.`);
+		if (weak.length) lines.push(`- Measured weak points: ${weak.map((m) => m.text).join(", ")}.`);
 		const spots = weakSpotsLine(weakSpotList(weak_));
 		if (spots) lines.push(spots);
 		const done = state.chapters.flatMap((c) => c.units).filter((u) => u.status === "done" && (u.kind === "drill" || u.kind === "words"));
