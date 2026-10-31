@@ -477,8 +477,6 @@ export function formOptions(entry: LexiconEntry, answer: string, pool: readonly 
 		seen.add(k);
 		picks.push(matchCase(f, answer));
 	};
-	// A grammar rep's best distractor is the dictionary form itself (the base form),
-	// forcing the learner to choose between the inflected form and the base form.
 	if (fold(entry.sk) !== fold(answer)) add(entry.sk);
 	for (const f of shuffle(own, rand)) if (picks.length < 3) add(f);
 	// Another word's form is a give-away (only one option is this word), so

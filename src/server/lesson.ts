@@ -111,7 +111,6 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
-	// Targeted gender drills focus entirely on the requested case and gender.
 	const mix = info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
 	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
 }
