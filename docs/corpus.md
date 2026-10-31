@@ -16,7 +16,7 @@ Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor
 | `data/profiles/<lang>/review/` | FSRS-5 cloze deck and `log.jsonl` (with `hints` and `picked` since the difficulty pass) | review store |
 | `data/profiles/<lang>/stories/<id>.json` + `index.jsonl` + `reads.jsonl` | Robo in Bratislava episodes with glossed tokens, questions, cost, every read | `src/store/stories.ts` |
 | `data/profiles/<lang>/videos/<id>.json` + `index.jsonl` + `captions/` + `watches.jsonl` | Watch task: raw caption track, lines, translations, questions, every watching with per-line stats | `src/store/videos.ts` |
-| `data/profiles/<lang>/speak/<id>.json` + `<id>/NN.webm` + `index.jsonl` | Spoken scenes with the learner's own recordings | `src/store/speak.ts` |
+| `data/profiles/<lang>/speak/<id>.json` + `<id>/NN.wav` + `index.jsonl` | Spoken scenes with the learner's own recordings | `src/store/speak.ts` |
 | `data/profiles/<lang>/fluency/log.jsonl` | Say-it-faster and re-read rounds (words a minute, clarity) | `src/server/fluency.ts` |
 | `data/profiles/<lang>/milestones.json` | Custom "When can I…?" situations mapped once by the cheap slot | `src/server/milestones.ts` |
 | `data/export/<stamp>/` | `npm run corpus:export`: summary, audio, sentences, lessons, dialogues, explanations, review, stories, spoken, with a README | `src/server/corpus-export.ts` |

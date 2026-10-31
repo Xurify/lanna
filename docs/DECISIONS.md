@@ -210,7 +210,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The worklet answers a `flush` message with its trailing partial frame, then `flushed`, so a stopped line loses nothing (a frame is posted only when 2048 samples are full).
 - The worklet's per-quantum RMS is the meter and the stop-on-silence clock; the level mapping is unchanged.
 - A recording is `{ wav, ms, spokeAt }`, and `ms` comes from the samples. The WAV goes to `/api/stt`, to pronunciation scoring and with the line to `/api/speak` (kept beside the scene), so the engine and the archive see the same bytes.
-- The file name follows the clip's type through `audioExt` (`src/core/audio.ts`): the client's uploads, the scene's stored extension and the ElevenLabs multipart name. Older WebM, Ogg and MP4 clips still map correctly.
+- The file name is always `line.wav` on upload and `NN.wav` in the scene: WAV is the only format the path handles, so there is no type-to-extension mapping and no non-WAV branch left anywhere (the former `audioExt` helper is gone).
 - Azure's scoring path needs no conversion: it already asks for `audio/wav` PCM at 16 kHz.
 
 ## Working rules (how work reaches the repo)

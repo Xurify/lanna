@@ -28,7 +28,7 @@ import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SettingsLink } from "@/components/settings/settings-link";
-import { audioExt, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
 
 type SttEngine = "elevenlabs" | "deepgram";
 
@@ -185,7 +185,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 				form.set("via", via);
 				if (clip) {
 					form.set("ms", String(clip.ms));
-					form.set("audio", clip.wav, `line.${audioExt(clip.wav.type)}`);
+					form.set("audio", clip.wav, "line.wav");
 					if (clip.pron) form.set("pron", JSON.stringify(clip.pron));
 				}
 				const out = await post<{ session: SpeakSession; reply: SpeakTurn; end: boolean }>(form);

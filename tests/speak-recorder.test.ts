@@ -1,29 +1,12 @@
 /**
  * THE RECORDING'S FORMAT (Speak, 2026-10-31): a spoken line is 16 kHz mono
- * 16-bit PCM WAV, and its file name follows the clip's real type. Before
- * this, the browser could keep MP4 and every upload was called
- * `line.webm`; these tests pin the WAV header a decoder reads and the one
- * extension mapping the client and the server share.
+ * 16-bit PCM WAV. These tests pin the WAV header a decoder reads.
  */
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { audioExt } from "../src/core/audio.ts";
 import { encodeWav } from "../components/speak/recorder.ts";
-
-test("audioExt: the name follows the clip's type, never a fixed webm", () => {
-	assert.equal(audioExt("audio/wav"), "wav");
-	assert.equal(audioExt("audio/wav;codecs=1"), "wav");
-	assert.equal(audioExt("audio/x-wav"), "wav");
-	assert.equal(audioExt("audio/ogg;codecs=opus"), "ogg");
-	assert.equal(audioExt("audio/webm;codecs=opus"), "webm");
-	assert.equal(audioExt("audio/mp4"), "m4a");
-	assert.equal(audioExt("audio/x-m4a"), "m4a");
-	// An empty or unknown type keeps the historical fallback.
-	assert.equal(audioExt(""), "webm");
-	assert.equal(audioExt("application/octet-stream"), "webm");
-});
 
 test("encodeWav: a mono 16 kHz 16-bit header, and every sample intact", async () => {
 	const frames = [new Int16Array([0, 1, -1, 32767, -32768]), new Int16Array([100, -100])];

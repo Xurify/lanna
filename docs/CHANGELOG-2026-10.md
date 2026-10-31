@@ -77,7 +77,7 @@ Branch `fix/speak-recording-wav`, from `be8e859` (main).
 
 - **Speak records WAV only:** the browser's WebM/Opus → Ogg → MP4 chain is gone. Speak captures through the dictation AudioWorklet (16 kHz mono 16-bit PCM) and keeps one WAV per line (DECISIONS E18). No MediaRecorder, so no MP4 and no format guessing.
 - **Speech-to-text gets the WAV** (it got the compressed clip before), pronunciation scoring always gets the WAV (before, only when Azure was set), and the scene keeps that same WAV.
-- **File names tell the truth:** `audioExt` (`src/core/audio.ts`) names the upload by its type on the client, in `/api/speak` and in the ElevenLabs multipart part, which was always `line.webm` even for MP4.
+- **File names tell the truth:** uploads are `line.wav` on the client, in `/api/speak` and in the ElevenLabs multipart part, and the scene keeps `NN.wav`. All the non-WAV handling is gone with it: the `audioExt` helper, the `audio/webm` fallbacks in `/api/stt`, `/api/speak` and `/api/pronounce`, and Azure's Ogg branch.
 - **The worklet's tail is flushed on stop** (`public/worklets/pcm-capture.js`), so a line no longer drops up to 128 ms at the end.
 
 Not verified live: no microphone in this shell, so Speak and Say it faster are covered by the new tests (`tests/speak-recorder.test.ts`), typecheck and lint only. The real WAV with an ElevenLabs or Deepgram key, and Azure's score on it, need the PC.

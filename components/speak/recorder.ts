@@ -12,7 +12,7 @@
  * then to the scene with the line.
  */
 
-import { audioExt, type PronScore } from "@/src/core";
+import type { PronScore } from "@/src/core";
 
 export interface Recording {
 	/** 16 kHz mono 16-bit PCM WAV — the line, as recorded. */
@@ -228,7 +228,7 @@ export function encodeWav(frames: Int16Array[], rate = RATE): Blob {
  *  Null when nothing was heard; throws when no engine is set. */
 export async function scoreClip(wav: Blob, reference: string, heard?: string): Promise<PronScore | null> {
 	const form = new FormData();
-	form.set("audio", wav, `line.${audioExt(wav.type)}`);
+	form.set("audio", wav, "line.wav");
 	form.set("reference", reference);
 	if (heard) form.set("heard", heard);
 	const res = await fetch("/api/pronounce", { method: "POST", body: form });
@@ -241,7 +241,7 @@ export async function scoreClip(wav: Blob, reference: string, heard?: string): P
  *  engine is set or the engine refused. */
 export async function transcribeClip(wav: Blob): Promise<string> {
 	const form = new FormData();
-	form.set("audio", wav, `line.${audioExt(wav.type)}`);
+	form.set("audio", wav, "line.wav");
 	const res = await fetch("/api/stt", { method: "POST", body: form });
 	const data = (await res.json().catch(() => ({}))) as { text?: string; message?: string };
 	if (!res.ok) throw new Error(data.message ?? `HTTP ${res.status}`);

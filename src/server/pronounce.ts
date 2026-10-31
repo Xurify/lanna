@@ -5,8 +5,7 @@
  *
  *   azure — Azure Speech pronunciation assessment, sound by sound, when
  *           AZURE_SPEECH_KEY and AZURE_SPEECH_REGION are set (Settings →
- *           Keys). Wants 16 kHz PCM WAV (the recorder makes one next to
- *           the WebM clip) or Ogg/Opus.
+ *           Keys). Wants 16 kHz mono PCM WAV, the recorder's only format.
  *   match — otherwise, intelligibility: the speech-to-text transcript
  *           against the expected words.
  *
@@ -65,7 +64,6 @@ export function pronounceEngine(): PronEngine | null {
 
 export interface AssessInput {
 	audio: Uint8Array;
-	mime: string;
 	/** The line expected. Empty for free speech: Azure then scores what it heard. */
 	reference: string;
 	/** A transcript already made (saves a second speech-to-text call on the match engine). */
@@ -73,30 +71,27 @@ export interface AssessInput {
 	lang?: "sk" | "ru";
 }
 
-/** Score one recording. Null when nothing could be heard. Throws when the
- *  engine refused or none is set. */
+/** Score one recording (16 kHz mono WAV). Null when nothing could be heard.
+ *  Throws when the engine refused or none is set. */
 export async function assess(input: AssessInput): Promise<PronScore | null> {
 	const engine = pronounceEngine();
 	if (!engine) throw new Error("No way to score pronunciation: add an Azure Speech key (sound by sound) or a speech-to-text key in Settings → Keys.");
 	if (input.audio.byteLength === 0) return null;
 	if (scripted()) return scriptedScore(input.reference || input.heard || "", input.heard);
 	const lang = input.lang ?? LANGUAGES[ACTIVE_PROFILE].code;
-	const mime = (input.mime || "").split(";")[0]!.trim().toLowerCase();
-	const wav = mime === "audio/wav" || mime === "audio/x-wav" || mime === "audio/wave";
-	const ogg = mime === "audio/ogg";
-	if (engine === "azure" && (wav || ogg)) {
-		const score = await assessAzure(input.audio, wav ? "audio/wav; codecs=audio/pcm; samplerate=16000" : "audio/ogg; codecs=opus", input.reference, LOCALE[lang] ?? `${lang}-${lang.toUpperCase()}`);
+	if (engine === "azure") {
+		const score = await assessAzure(input.audio, input.reference, LOCALE[lang] ?? `${lang}-${lang.toUpperCase()}`);
 		if (score) return score;
 		// Nothing recognised: fall through to the transcript when there is one.
 		if (!input.heard) return null;
 	}
-	const heard = input.heard ?? (await transcribe(input.audio, input.mime, lang)).text;
+	const heard = input.heard ?? (await transcribe(input.audio, lang)).text;
 	if (!heard.trim()) return null;
 	if (!input.reference.trim()) return null;
 	return matchScore(input.reference, heard);
 }
 
-async function assessAzure(audio: Uint8Array, contentType: string, reference: string, locale: string): Promise<PronScore | null> {
+async function assessAzure(audio: Uint8Array, reference: string, locale: string): Promise<PronScore | null> {
 	const { key, region } = azureKeys()!;
 	const params = { ReferenceText: reference, GradingSystem: "HundredMark", Granularity: "Phoneme", Dimension: "Comprehensive", EnableProsodyAssessment: true, EnableMiscue: true };
 	const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${encodeURIComponent(locale)}&format=detailed`;
@@ -104,7 +99,7 @@ async function assessAzure(audio: Uint8Array, contentType: string, reference: st
 		method: "POST",
 		headers: {
 			"Ocp-Apim-Subscription-Key": key,
-			"Content-Type": contentType,
+			"Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
 			"Pronunciation-Assessment": Buffer.from(JSON.stringify(params), "utf-8").toString("base64"),
 			Accept: "application/json",
 		},
