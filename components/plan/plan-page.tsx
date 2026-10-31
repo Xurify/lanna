@@ -105,7 +105,7 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 	return (
 		<div className="relative min-h-dvh bg-background">
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
-			<header className="relative flex items-center gap-2 px-3 py-2">
+			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="plan">
