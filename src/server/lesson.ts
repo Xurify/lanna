@@ -29,6 +29,7 @@ import {
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
+import type { AtlasGender } from "../core/grammar.ts";
 import { isLanguageId, LANGUAGES } from "../core/language.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
 import {
@@ -96,7 +97,7 @@ function entries() {
  * has to be chosen from the trigger rather than assumed from the lesson's
  * title — interleaving, which is what makes the choice stick.
  */
-export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
+export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: AtlasGender }): LessonPlan {
 	const info = UNITS.find((u) => u.id === unit)!;
 	// Dvojičky build their own reps: a choice between the two twins, from
 	// pairs.json, not the cloze classifier.
@@ -110,8 +111,9 @@ export function lessonFor(unit: UnitId, seed = Date.now()): LessonPlan {
 	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
-	const mix = info.kind === "words" || info.union || info.pattern ? [] : [...contrast, ...others].slice(0, 3);
-	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
+	// Targeted gender drills focus entirely on the requested case and gender.
+	const mix = info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
+	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
 }
 
 /** Attach what the review deck knows about each item's word: its own card,

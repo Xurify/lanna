@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ATLAS_CASES, ATLAS_GENDERS, atlasCellOf, atlasUnit, caseDrill, genderColumn, grammarAtlas, slipLine } from "../src/core/grammar.ts";
+import { ATLAS_CASES, ATLAS_GENDERS, atlasCellOf, atlasUnit, caseDrill, genderColumn, genderLabel, grammarAtlas, isAtlasGender, slipLine } from "../src/core/grammar.ts";
 import { UNITS, unitInfo } from "../src/core/lesson.ts";
 
 const cell = (atlas: ReturnType<typeof grammarAtlas>, row: string, col: string) => atlas.find((c) => c.row === row && c.col === col)!;
@@ -107,6 +107,18 @@ test("a drill maps to its case, and only the case drills have one", () => {
 test("the slip line names each slip with its count, most frequent first", () => {
 	assert.equal(slipLine({}), "");
 	assert.equal(slipLine({ "same-word": 1, base: 2 }), "dictionary form, no ending (2) · wrong ending (1)");
+});
+
+test("isAtlasGender and genderLabel validate and describe Atlas genders", () => {
+	assert.equal(isAtlasGender("masc"), true);
+	assert.equal(isAtlasGender("fem"), true);
+	assert.equal(isAtlasGender("neut"), true);
+	assert.equal(isAtlasGender("plural"), false);
+	assert.equal(isAtlasGender(undefined), false);
+
+	assert.equal(genderLabel("masc"), "Masculine");
+	assert.equal(genderLabel("fem"), "Feminine");
+	assert.equal(genderLabel("neut"), "Neuter");
 });
 
 test("the core barrel exposes the atlas", async () => {

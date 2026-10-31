@@ -11,6 +11,7 @@ import {
 	buildLesson,
 	classifyAll,
 	classifyExample,
+	formOptions,
 	repXp,
 	sameSentence,
 	sentenceTokens,
@@ -211,4 +212,26 @@ test("a right answer after the hint earns half", () => {
 
 test("every grammar unit carries an Estonian bridge", () => {
 	for (const u of UNITS) if (u.kind !== "words" && u.kind !== "pairs" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
+});
+
+test("formOptions always includes base lemma as distractor when inflected", () => {
+	const entry = {
+		slug: "stanica",
+		sk: "stanica",
+		en: "station",
+		gender: "feminine",
+		forms: ["stanice", "stanici", "stanicu", "staniciach", "staniciam"],
+		examples: [],
+	};
+	const options = formOptions(entry as any, "stanice", ["vlak", "cesta"], () => 0.5);
+	assert.ok(options.includes("stanica"), "base form 'stanica' must be included as distractor");
+	assert.ok(options.includes("stanice"), "correct answer 'stanice' must be included");
+});
+
+test("buildLesson supports gender-targeted drilling", () => {
+	const plan = buildLesson(entries, "gen", { seed: 12345, gender: "fem" });
+	assert.equal(plan.gender, "fem");
+	assert.ok(plan.items.length >= 10);
+	const feminineItems = plan.items.filter((it) => it.gender === "feminine");
+	assert.ok(feminineItems.length >= 8, `Expected mostly feminine items in gen-fem drill, got ${feminineItems.length}/${plan.items.length}`);
 });

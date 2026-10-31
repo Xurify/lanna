@@ -10,7 +10,7 @@
  * outcome and a fresh summary.
  */
 
-import { isUnitId, type FirstAnswer } from "@/src/core";
+import { isAtlasGender, isUnitId, type FirstAnswer } from "@/src/core";
 import { blitzFor, lessonFor, lessonWithBetterOptions, recordLesson, type RepResult } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,9 @@ export async function GET(req: Request) {
 	if (url.searchParams.get("mode") === "blitz") return Response.json(blitzFor());
 	const unit = url.searchParams.get("unit");
 	if (!isUnitId(unit)) return Response.json({ message: "unknown unit" }, { status: 400 });
-	return Response.json(await lessonWithBetterOptions(lessonFor(unit)));
+	const rawGender = url.searchParams.get("gender");
+	const gender = isAtlasGender(rawGender) ? rawGender : undefined;
+	return Response.json(await lessonWithBetterOptions(lessonFor(unit, Date.now(), { gender })));
 }
 
 const KINDS = new Set(["meaning", "choose", "type", "build", "listen"]);

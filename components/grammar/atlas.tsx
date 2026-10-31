@@ -108,6 +108,13 @@ function CellRecord({ cell }: { cell: AtlasCell }) {
 			)}
 			{wrong && <p>Wrong on the first try: {wrong}.</p>}
 			{spoken && <p>Said wrong in Speak: {spoken}.</p>}
+			{cell.unit && (
+				<p className="mt-1">
+					<Link href={`/lesson?unit=${cell.unit}&gender=${cell.col}`} className="font-ui text-sm font-semibold text-foreground underline decoration-primary underline-offset-4 hover:text-primary">
+						Drill this form ({ATLAS_GENDERS.find((g) => g.id === cell.col)?.english ?? cell.col}) →
+					</Link>
+				</p>
+			)}
 		</div>
 	);
 }
@@ -137,7 +144,7 @@ function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean
 	return (
 		<td className="p-0 align-middle">
 			<Link
-				href={`/lesson?unit=${cell.unit}`}
+				href={`/lesson?unit=${cell.unit}&gender=${cell.col}`}
 				className={cls}
 				data-testid={`cell-${cell.row}${cell.col}`}
 				onMouseEnter={() => onSelect(cell)}

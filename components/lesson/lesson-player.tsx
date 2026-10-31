@@ -44,6 +44,8 @@ import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/componen
 import {
 	compareAnswer,
 	diacriticSlips,
+	formSlip,
+	genderLabel,
 	gradeListen,
 	LESSONS_TO_COMPLETE,
 	lessonScore,
@@ -53,6 +55,7 @@ import {
 	unitDone,
 	unitBridges,
 	unitInfo,
+	type AtlasGender,
 	type BridgeLang,
 	type FirstAnswer,
 	type ItemKind,
@@ -158,7 +161,7 @@ function kindLabel(item: LessonItem): string {
 
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
 
-export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId; mode: Mode; initialPlan?: LessonPlan | null }) {
+export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?: UnitId; mode: Mode; gender?: AtlasGender; initialPlan?: LessonPlan | null }) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
@@ -214,7 +217,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
 	// or left on purpose (X, Escape). Blitz is a 60 s sprint and is not kept.
-	const saveKey = mode === "lesson" && unit ? `lh-lesson:${unit}` : null;
+	const saveKey = mode === "lesson" && unit ? `lh-lesson:${unit}${gender ? `:${gender}` : ""}` : null;
 	const restoring = useRef(saveKey !== null);
 	useEffect(() => {
 		restoring.current = false;
@@ -289,7 +292,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setPeeked(false);
 		finishing.current = false;
 		try {
-			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}`);
+			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}${gender ? `&gender=${gender}` : ""}`);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
 			if (seq !== loadSeq.current) return;
@@ -300,7 +303,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, [mode, unit, activeTime]);
+	}, [mode, unit, gender, activeTime]);
 
 	// Fetch on mount only when the server could not build the plan.
 	const hadInitial = useRef(initialPlan !== null);
@@ -575,7 +578,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					recorded={recorded}
 					failed={saveFailed}
 					onAgain={() => void load()}
-					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}`))}
+					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}${gender ? `&gender=${gender}` : ""}`))}
 				/>
 			</Frame>
 		);
@@ -653,7 +656,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 							onPeek={() => setPeeked(true)}
 							onGrade={grade}
 							onReady={setReady}
-							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : unitInfo(item.unit).title}
+							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
 						/>
 					</div>
 				</div>
@@ -849,13 +852,40 @@ function RepView({
 function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; wasChoice: boolean }) {
 	const vocabulary = unitInfo(item.unit).kind === "words";
 	const pairs = unitInfo(item.unit).kind === "pairs";
+	const slip = !vocabulary && !pairs ? formSlip({ answer: item.answer, lemma: item.lemma, given: miss }) : undefined;
 	return (
 		<div className="lh-rise mt-8 rounded-2xl border border-warn/40 bg-warn-soft px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
 			<p className="font-ui text-base font-extrabold text-warn">
 				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
 			<div className="mt-2 flex flex-col gap-1 font-prose text-base leading-relaxed">
-				{item.trigger ? (
+				{slip === "base" ? (
+					<p className="text-foreground">
+						<span className="font-bold text-warn">“{miss}”</span> is the dictionary base form.{" "}
+						{item.trigger ? (
+							<>
+								Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it requires the inflected case form.
+							</>
+						) : item.form ? (
+							<>Wanted: <span className="font-bold">{item.form}</span>.</>
+						) : (
+							<>Remember to inflect the ending for this sentence.</>
+						)}
+					</p>
+				) : slip === "same-word" ? (
+					<p className="text-foreground">
+						<span className="font-bold text-warn">“{miss}”</span> has another ending.{" "}
+						{item.trigger ? (
+							<>
+								Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it decides the case ending.
+							</>
+						) : item.form ? (
+							<>Wanted: <span className="font-bold">{item.form}</span>.</>
+						) : (
+							<>Check which case is needed here.</>
+						)}
+					</p>
+				) : item.trigger ? (
 					<p className="text-foreground">
 						Look at{" "}
 						<span className="rounded bg-background/50 px-1 font-bold" lang="sk">

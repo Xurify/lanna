@@ -50,12 +50,16 @@ const CELL_UNITS: Record<AtlasCase, Partial<Record<AtlasGender, string>>> = {
 	I: { masc: "ins", fem: "ins", neut: "ins" },
 };
 
-const UNIT_IDS = new Set<string>(UNITS.map((u) => u.id));
+let _unitIds: Set<string> | null = null;
+function unitIds(): Set<string> {
+	if (!_unitIds) _unitIds = new Set<string>(UNITS.map((u) => u.id));
+	return _unitIds;
+}
 
 /** The cell's drill unit, or null while it is "not yet". */
 export function atlasUnit(row: AtlasCase, col: AtlasGender): UnitId | null {
 	const id = CELL_UNITS[row][col];
-	return id && UNIT_IDS.has(id) ? (id as UnitId) : null;
+	return id && unitIds().has(id) ? (id as UnitId) : null;
 }
 
 /** The atlas column a lexicon gender falls in: both masculine kinds are
@@ -65,6 +69,16 @@ export function genderColumn(gender: string | undefined): AtlasGender | null {
 	if (gender === "feminine") return "fem";
 	if (gender === "neuter") return "neut";
 	return null;
+}
+
+export function isAtlasGender(v: unknown): v is AtlasGender {
+	return v === "masc" || v === "fem" || v === "neut";
+}
+
+export function genderLabel(g: AtlasGender): string {
+	if (g === "masc") return "Masculine";
+	if (g === "fem") return "Feminine";
+	return "Neuter";
 }
 
 /** The cell a drill rep counts toward, from its drill and its word's gender.

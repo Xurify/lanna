@@ -18,6 +18,7 @@
 
 import type { LexiconEntry } from "./review.ts";
 import { foldDiacritics } from "./language.ts";
+import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 
@@ -476,6 +477,9 @@ export function formOptions(entry: LexiconEntry, answer: string, pool: readonly 
 		seen.add(k);
 		picks.push(matchCase(f, answer));
 	};
+	// A grammar rep's best distractor is the dictionary form itself (the base form),
+	// forcing the learner to choose between the inflected form and the base form.
+	if (fold(entry.sk) !== fold(answer)) add(entry.sk);
 	for (const f of shuffle(own, rand)) if (picks.length < 3) add(f);
 	// Another word's form is a give-away (only one option is this word), so
 	// the pool only tops up a word with no other verified form at all.
@@ -670,6 +674,8 @@ export interface LessonPlan {
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
+	/** If set, the lesson specifically drills candidates of this gender column. */
+	gender?: AtlasGender;
 }
 
 /**
@@ -682,7 +688,7 @@ export interface LessonPlan {
 export function buildLesson(
 	entries: readonly LexiconEntry[],
 	unit: UnitId,
-	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: UnitStage; mix?: readonly UnitId[]; pattern?: readonly ItemKind[] },
+	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: UnitStage; mix?: readonly UnitId[]; pattern?: readonly ItemKind[]; gender?: AtlasGender },
 ): LessonPlan {
 	const rand = rng(opts.seed);
 	const info = unitInfo(unit);
@@ -690,13 +696,16 @@ export function buildLesson(
 	const length = opts.length ?? LESSON_PATTERN.length;
 	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN);
 	const pattern = base.slice(0, length);
-	const sourceFor = (u: UnitId) => {
-		const top = candidatesFor(entries, u).slice(0, unitInfo(u).kind === "words" ? 400 : 160);
+	const sourceFor = (u: UnitId, filterGender?: AtlasGender) => {
+		const raw = candidatesFor(entries, u);
+		const filtered = filterGender ? raw.filter((c) => genderColumn(c.entry.gender) === filterGender) : raw;
+		const poolCandidates = filtered.length >= 4 ? filtered : raw;
+		const top = poolCandidates.slice(0, unitInfo(u).kind === "words" ? 400 : 160);
 		const fresh = top.filter((c) => !opts.recent?.has(`${c.entry.slug}#${c.index}`));
 		return { top, list: shuffle(fresh.length >= length ? fresh : top, rand) };
 	};
-	const main = sourceFor(unit);
-	const mixes = (opts.mix ?? []).filter((u) => u !== unit).map(sourceFor).filter((m) => m.list.length > 0);
+	const main = sourceFor(unit, opts.gender);
+	const mixes = (opts.mix ?? []).filter((u) => u !== unit).map((u) => sourceFor(u)).filter((m) => m.list.length > 0);
 	// Distractors: other answers of the unit (forms), or for a vocabulary
 	// unit the other words themselves, in their dictionary form.
 	const poolOf = (top: Candidate[], u: UnitId) => (unitInfo(u).kind === "words" ? [...new Set(top.map((c) => c.entry.sk))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer));
@@ -726,7 +735,7 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
-	return { unit, items, stage };
+	return { unit, items, stage, ...(opts.gender ? { gender: opts.gender } : {}) };
 }
 
 /** A Dvojičky lesson: twelve choose reps, each a verified sentence that
