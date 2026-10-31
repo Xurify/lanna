@@ -1,6 +1,6 @@
 # Chapter arc: implementation plan
 
-Status: **proposed.** Decided: keep the 19 chapters; the exam is a required gate, introduced in steps; skip-ahead comes after the gate. Still open: story bible, passport wording and calendar. Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
+Status: **proposed.** Decided: keep the 19 chapters; the exam is a required gate, introduced in steps; skip-ahead comes after the gate. Still open: story bible, the wording of the "I can" lines and calendar. Nothing here is built yet. The one shipped piece is PR #37 (settings links and the Talk duplicate), which does not depend on this plan.
 
 Date: 2026-10-30. Evidence: [../research/slovake-eu-benchmark.md](../research/slovake-eu-benchmark.md).
 
@@ -25,7 +25,7 @@ The **arc** is the fixed run of seven steps that every chapter goes through, in 
 1. **Chapters.** **Decided 2026-10-30: keep the 19 chapters and give each the arc.** Re-cutting would have changed `src/core/curriculum.ts` and the can-do goals in `src/core/onboarding.ts`, so it's off the table. **Phase 1 is unblocked.**
 2. **Exam gating.** **Decided 2026-10-30: the exam is a required gate. Passing it opens the next chapter.** It ships in steps (6a record-only, then 6b the gate), because a gate built on an unchecked exam would block learners. Open details for 6b: the pass mark and the retry rule, and whether today's "at most two units left" count still applies alongside the gate. Today a chapter opens when the one before has at most two units left (`CHAPTER_SLACK` in `src/core/curriculum.ts`). **Blocks phase 6, not phase 1.**
 3. **Story bible.** Who writes the cast and plot? I can draft it. Nothing is generated until you approve it. **Open. Blocks phase 2.**
-4. **Passport wording.** Paraphrase the CEFR "can do" descriptors with attribution, or write our own "I can" lines? **Open. Blocks phase 6a.**
+4. **"I can" wording.** Paraphrase the CEFR "can do" descriptors with attribution, or write our own "I can" lines? **Open. Blocks phase 6a.**
 5. **Calendar.** Which dates and traditions go in? Christmas, Easter and other holidays are cultural content, so this is your call. **Open. Blocks phase 8.**
 6. **Skip-ahead.** **Decided 2026-10-30: later, after the gate.** Passing a chapter's exam can open it early, without its lessons. Its rules come with phase 6c.
 
@@ -73,15 +73,15 @@ Settings links open the dialog. Talk and Story run on one screen each (E8).
 - Tests in `tests/speak.test.ts`: script grading and branch order.
 - Acceptance: the script runs with no model call. The live scene starts after it.
 
-### Phase 6: Skúška and the passport, in three steps
+### Phase 6: Skúška and the "I can" record, in three steps
 
 The exam is a required gate, but it can't block anyone until we trust it. So it ships in steps, and each step waits for the one before.
 
-**6a. Record only (first).** The exam is built from the chapter's own items: words, a form, one pair, one scene line and one listening item. Its result is recorded and fills in the passport. Nothing is blocked, so chapters open exactly as they do today.
+**6a. Record only (first).** The exam is built from the chapter's own items: words, a form, one pair, one scene line and one listening item. Its result is recorded and fills in the "I can" record. Nothing is blocked, so chapters open exactly as they do today.
 
 - `src/core/exam.ts`: composition and scoring.
-- `src/store/progress.ts`: an `exams` record per chapter, which is the evidence the passport uses.
-- `app/passport/page.tsx`: "I can" lines, each linked to the exam items that show it (decision 4).
+- `src/store/progress.ts`: an `exams` record per chapter, which is the evidence for the "I can" lines.
+- The "I can" lines on the path: each linked to the exam items that show it (decision 4).
 - Tests in `tests/exam.test.ts`: composition from the chapter, the scoring, and the record.
 - Acceptance: a failed exam records its misses. No exam result appears without its evidence (P8).
 
@@ -135,5 +135,5 @@ The exam is a required gate, but it can't block anyone until we trust it. So it 
 ## Done when
 
 - Every chapter shows its seven steps, with counters.
-- The exam is recorded (6a), gates the next chapter once trusted (6b), and the passport lists the evidence for each line.
+- The exam is recorded (6a), gates the next chapter once trusted (6b), and the record lists the evidence for each line.
 - The owner has reviewed the first two chapters end to end: story, pairs, scene and exam.

@@ -62,7 +62,7 @@ Our engine is stronger on everything the course lacks: FSRS review, the adaptive
 | Contrast pairs as steps | none | pairs are not drilled | C. Dvojičky |
 | A situational exercise | six Speak scenes (`src/core/speak.ts`), one per goal | no scripted version before the live one | D. Scripted scenes |
 | A pronunciation step per chapter | Speak and Say it faster score clarity (Azure, or transcript matching; LANGHARNESS.md) | no sound-focused item | E. Zvuk |
-| A final test | unit completion, E3 in [../DECISIONS.md](../DECISIONS.md) | no mixed chapter test | F. Skúška and passport |
+| A final test | unit completion, E3 in [../DECISIONS.md](../DECISIONS.md) | no mixed chapter test | F. Skúška and "I can" lines |
 | A grammar reference | none; `/map` is a concept graph | no reference page | G. Grammar atlas |
 | Culture texts | none | no calendar or culture content | H. Calendar |
 | Slovak interface at higher levels | English interface with bridges (P6) | not used as input | H. Calendar (quick win) |
@@ -75,7 +75,7 @@ Our engine is stronger on everything the course lacks: FSRS review, the adaptive
 - **C. Dvojičky.** Contrast pairs as their own drill: ísť/chodiť, aký/ktorý, svoj/môj, radi/rady, kam/kde. Each rep is a choice between two forms in a real sentence. Local, no model. Fits P3 (retrieval, not recognition). Plan phase 3.
 - **D. Scripted scenes.** A branching dialogue per scene, generated once and cached. The learner answers each branch, graded locally, and then the same scene runs live in Speak. This gives B1 and B2 structure instead of open chats. Plan phase 5.
 - **E. Zvuk.** One sound per chapter: soft de/te/ne, syllabic r and l, ä, vowel length, the rhythmic rule, voicing. Minimal pairs (pas/pás, rad/rád) and shadowing with the existing clarity score. Plan phase 7.
-- **F. Skúška and passport.** A short mixed exam at the end of each chapter, scored honestly. A passport of "I can" lines, paraphrased from the CEFR descriptors, each linked to the sentences that show it. This also covers what the placement audit found missing: nothing measures listening or free production. Plan phase 6.
+- **F. Skúška and "I can" lines.** A short mixed exam at the end of each chapter, scored honestly. A set of "I can" lines, paraphrased from the CEFR descriptors, each linked to the sentences that show it. This also covers what the placement audit found missing: nothing measures listening or free production. Plan phase 6.
 - **G. Grammar atlas.** A reference built from the lexicon and the learner's own sentences. Each cell of the case × gender table shows the learner's accuracy and a button to drill that cell. The rhythmic rule gets a checker. No model calls. Plan phase 4.
 - **H. Calendar and immersion.** Seasonal episodes from the Slovak calendar: Dušičky (2 November), Mikuláš, Lucia (13 December), Vianoce, Veľká noc. The interface switches its button labels to Slovak at A2 and above, with the meaning shown until the learner has seen each one a few times (E4a). Plan phase 8.
 - **Quick wins.** A counter on each step; situation titles ("Kde bývaš?") as the headline and the grammar name as the subtitle; a printable syllabus page.
