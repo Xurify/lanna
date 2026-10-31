@@ -82,7 +82,10 @@ Branch `feat/grammar-error-tracking`. Not pushed.
 - **The grammar atlas** reads first tries per case × gender: each cell's percentage is first tries right, and the rule panel lists the slips behind the wrong ones and the slips said in Speak.
 - **The tutor's** "Measured weak points" reads first tries once a unit has six, with the slips; below that it falls back to lesson answers, labelled as such. The unit's reps/correct (XP, the path, the weak-spot mend rule) still read the final answer.
 - **Places** (Bratislava, Košice — no gender in the dictionary) now drill the cases in the classifier; they fill no atlas cell.
-- The logs keep the evidence: lesson reps carry `gender`, `first`, `slip`; review lines carry `unit`, `gender`, `slip`; Speak corrections carry `drill`, `slip`, `gender`.
+- **The logs keep the evidence:** lesson reps carry `gender`, `first`, `slip`, `latencyMs`; review lines carry `unit`, `gender`, `slip`; Speak corrections carry `drill`, `slip`, `gender`.
+- **Latency & hesitation tracking:** the lesson player measures `latencyMs` from presentation to first submission; values are logged per rep to capture fluency vs hesitation without altering scoring.
+- **Adaptive weak-gender prioritization:** when drilling a unit without an explicit gender filter, `lessonFor` inspects `rec.byGender` (`weakestGender`). If one gender struggles (< 70% accuracy, >= 3 reps), `buildLesson` dynamically prioritizes candidates of that weak gender (approx 60% of the lesson) to reinforce the weak spot.
+- **Targeted drill deep-linking:** Grammar Atlas cells link directly to `/lesson?unit=${cell.unit}&gender=${cell.col}`, allowing learners to deliberately practice any specific case and gender combination. Base lemma distractors and contrast units are tailored accordingly.
 
 Unverified by the owner: the lesson player's first-try capture (the cue flow, a reload mid-cue) and the atlas at both window sizes — typecheck, lint and the affected suites pass, but the live run on the PC has not happened. Known on this machine: the full suite has 27 environment-bound failures that reproduce on the base commit (Windows path fixtures, the local `auth.json` keys, Electron/Node drift), including `tests/speak.test.ts` "transcribe refuses honestly without a key", which assumes no ElevenLabs key is saved.
 

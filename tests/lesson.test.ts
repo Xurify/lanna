@@ -235,3 +235,15 @@ test("buildLesson supports gender-targeted drilling", () => {
 	const feminineItems = plan.items.filter((it) => it.gender === "feminine");
 	assert.ok(feminineItems.length >= 8, `Expected mostly feminine items in gen-fem drill, got ${feminineItems.length}/${plan.items.length}`);
 });
+
+test("buildLesson prioritizes weakGender candidates when unit is practiced", () => {
+	const standardPlan = buildLesson(entries, "gen", { seed: 54321 });
+	const weakPlan = buildLesson(entries, "gen", { seed: 54321, weakGender: "fem" });
+
+	const standardFemCount = standardPlan.items.filter((it) => it.gender === "feminine").length;
+	const weakFemCount = weakPlan.items.filter((it) => it.gender === "feminine").length;
+
+	assert.ok(weakFemCount >= standardFemCount, `Weak plan feminine items (${weakFemCount}) should be >= standard (${standardFemCount})`);
+	assert.ok(weakFemCount >= 6, `Expected at least 6 feminine items when weakGender is fem, got ${weakFemCount}`);
+});
+

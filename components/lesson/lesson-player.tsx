@@ -115,6 +115,7 @@ interface Rep {
 	assisted?: boolean;
 	/** The answer before any cue: what the first-try measure counts. */
 	first?: FirstAnswer;
+	latencyMs?: number;
 }
 
 interface SavedLesson {
@@ -210,10 +211,13 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		);
 	}, [shake]);
 	const startedAt = useRef(Date.now());
+	const shownAt = useRef(Date.now());
+	const firstLatency = useRef<number | null>(null);
 	// The day's minutes count active time, not the wall-clock `ms` (which the
 	// lesson log keeps): the gaps between answers, each capped.
 	const activeTime = useActiveTime(mode === "blitz" ? "blitz" : "lesson", "interactive");
 	const finishing = useRef(false);
+
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
 	// or left on purpose (X, Escape). Blitz is a 60 s sprint and is not kept.
@@ -314,6 +318,11 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 
 	const item = plan?.items[index] ?? null;
 	const total = plan?.items.length ?? 0;
+
+	useEffect(() => {
+		shownAt.current = Date.now();
+		firstLatency.current = null;
+	}, [index, item?.id]);
 	// The next sentence's audio is fetched while this one is on screen, so it starts at once.
 	const nextSentence = plan?.items[index + 1]?.sentence;
 	useEffect(() => {
@@ -343,6 +352,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 				kind: r.item.kind,
 				verdict: r.verdict,
 				assisted: r.assisted === true,
+				...(r.latencyMs !== undefined ? { latencyMs: r.latencyMs } : {}),
 				// The answer before any cue: the server counts it as the first try.
 				...(r.first ? { first: r.first } : {}),
 				// Everything shown and answered, for the lesson log on disk.
@@ -358,6 +368,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 					options: r.item.options,
 					mixed: r.item.mixed === true,
 					again: r.item.again === true,
+					latencyMs: r.latencyMs,
 				},
 			})),
 			ms: Date.now() - startedAt.current,
@@ -403,6 +414,9 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		// miss) keeps the first one; a rep with a cue showing and no first
 		// answer held has none to count.
 		const first: FirstAnswer | undefined = firstTry ?? (miss === null ? { given, verdict, ...(peeked ? { peeked: true } : {}) } : undefined);
+		const elapsed = Math.max(0, Date.now() - shownAt.current);
+		if (firstLatency.current === null) firstLatency.current = elapsed;
+		const latencyMs = firstLatency.current;
 		// "I don't know" (reveal) skips the cue and the second try: the answer
 		// shows at once, the rep counts as a miss and comes back at the end.
 		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind) && !reveal) {
@@ -414,7 +428,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 			return;
 		}
 		const assisted = mode === "lesson" && (miss !== null || peeked) && verdict !== "wrong";
-		const rep: Rep = { item, given, verdict, assisted, ...(first ? { first } : {}) };
+		const rep: Rep = { item, given, verdict, assisted, ...(first ? { first } : {}), latencyMs };
 		const nextCombo = verdict === "wrong" ? 0 : combo + 1;
 		const gained = repXp(item.kind, verdict, nextCombo, assisted);
 		setCombo(nextCombo);

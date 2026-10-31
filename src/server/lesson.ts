@@ -29,7 +29,7 @@ import {
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
-import type { AtlasGender } from "../core/grammar.ts";
+import { weakestGender, type AtlasGender } from "../core/grammar.ts";
 import { isLanguageId, LANGUAGES } from "../core/language.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
 import {
@@ -112,7 +112,8 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
-	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
+	const weakGender = opts?.gender ? undefined : (weakestGender(rec?.byGender) ?? undefined);
+	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender, weakGender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -145,6 +146,8 @@ export interface RepResult {
 	/** The first answer, before any cue (src/core/first-try.ts): the rep's
 	 *  first try, which the grammar atlas and the tutor read. */
 	first?: FirstAnswer;
+	/** Time from presentation to first submission in milliseconds. */
+	latencyMs?: number;
 	/** What the learner saw and wrote — kept in the lesson log
 	 *  (data/profiles/<language>/lessons/<day>.jsonl, store/corpus.ts) so a
 	 *  lesson is a record, not just a score. Absent on old clients. */
@@ -161,6 +164,7 @@ export interface RepResult {
 		options?: string[];
 		mixed?: boolean;
 		again?: boolean;
+		latencyMs?: number;
 	};
 }
 

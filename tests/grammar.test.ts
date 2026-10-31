@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ATLAS_CASES, ATLAS_GENDERS, atlasCellOf, atlasUnit, caseDrill, genderColumn, genderLabel, grammarAtlas, isAtlasGender, slipLine } from "../src/core/grammar.ts";
+import { ATLAS_CASES, ATLAS_GENDERS, atlasCellOf, atlasUnit, caseDrill, genderColumn, genderLabel, grammarAtlas, isAtlasGender, slipLine, weakestAtlasCell, weakestGender } from "../src/core/grammar.ts";
 import { UNITS, unitInfo } from "../src/core/lesson.ts";
 
 const cell = (atlas: ReturnType<typeof grammarAtlas>, row: string, col: string) => atlas.find((c) => c.row === row && c.col === col)!;
@@ -121,8 +121,48 @@ test("isAtlasGender and genderLabel validate and describe Atlas genders", () => 
 	assert.equal(genderLabel("neut"), "Neuter");
 });
 
+test("weakestGender finds the lowest accuracy gender meeting minimum reps", () => {
+	assert.equal(weakestGender(undefined), null);
+	assert.equal(weakestGender({}), null);
+
+	const byGender = {
+		masc: { reps: 5, right: 5, accents: 0, slips: {} }, // 100%
+		fem: { reps: 6, right: 2, accents: 0, slips: { base: 4 } }, // 33.3%
+		neut: { reps: 1, right: 0, accents: 0, slips: { other: 1 } }, // < minReps (3)
+	};
+	assert.equal(weakestGender(byGender), "fem");
+
+	const strong = {
+		masc: { reps: 10, right: 9, accents: 0, slips: {} },
+		fem: { reps: 8, right: 7, accents: 0, slips: {} },
+	};
+	assert.equal(weakestGender(strong), null);
+});
+
+test("weakestAtlasCell identifies cell in need of review", () => {
+	const records = {
+		gen: {
+			lessons: 4,
+			reps: 40,
+			correct: 32,
+			byGender: {
+				fem: { reps: 10, right: 4, accents: 0, slips: {} }, // 40%
+				masc: { reps: 10, right: 9, accents: 0, slips: {} },
+			},
+		},
+	};
+	const atlas = grammarAtlas(records as any);
+	const weakCell = weakestAtlasCell(atlas);
+	assert.ok(weakCell);
+	assert.equal(weakCell?.row, "G");
+	assert.equal(weakCell?.col, "fem");
+	assert.equal(weakCell?.accuracy, 0.4);
+});
+
 test("the core barrel exposes the atlas", async () => {
 	const core = await import("../src/core/index.ts");
 	assert.equal(core.grammarAtlas, grammarAtlas);
 	assert.equal(core.atlasUnit, atlasUnit);
+	assert.equal(core.weakestGender, weakestGender);
+	assert.equal(core.weakestAtlasCell, weakestAtlasCell);
 });

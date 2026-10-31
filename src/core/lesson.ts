@@ -686,7 +686,7 @@ export interface LessonPlan {
 export function buildLesson(
 	entries: readonly LexiconEntry[],
 	unit: UnitId,
-	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: UnitStage; mix?: readonly UnitId[]; pattern?: readonly ItemKind[]; gender?: AtlasGender },
+	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: UnitStage; mix?: readonly UnitId[]; pattern?: readonly ItemKind[]; gender?: AtlasGender; weakGender?: AtlasGender },
 ): LessonPlan {
 	const rand = rng(opts.seed);
 	const info = unitInfo(unit);
@@ -694,15 +694,33 @@ export function buildLesson(
 	const length = opts.length ?? LESSON_PATTERN.length;
 	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN);
 	const pattern = base.slice(0, length);
-	const sourceFor = (u: UnitId, filterGender?: AtlasGender) => {
+	const sourceFor = (u: UnitId, filterGender?: AtlasGender, weakGender?: AtlasGender) => {
 		const raw = candidatesFor(entries, u);
 		const filtered = filterGender ? raw.filter((c) => genderColumn(c.entry.gender) === filterGender) : raw;
 		const poolCandidates = filtered.length >= 4 ? filtered : raw;
 		const top = poolCandidates.slice(0, unitInfo(u).kind === "words" ? 400 : 160);
 		const fresh = top.filter((c) => !opts.recent?.has(`${c.entry.slug}#${c.index}`));
-		return { top, list: shuffle(fresh.length >= length ? fresh : top, rand) };
+		const baseList = fresh.length >= length ? fresh : top;
+		if (weakGender && !filterGender) {
+			const weakItems = baseList.filter((c) => genderColumn(c.entry.gender) === weakGender);
+			const otherItems = baseList.filter((c) => genderColumn(c.entry.gender) !== weakGender);
+			if (weakItems.length >= 2) {
+				const mixed: Candidate[] = [];
+				const shufWeak = shuffle(weakItems, rand);
+				const shufOther = shuffle(otherItems, rand);
+				let w = 0;
+				let o = 0;
+				while (w < shufWeak.length || o < shufOther.length) {
+					if (w < shufWeak.length) mixed.push(shufWeak[w++]!);
+					if (w < shufWeak.length) mixed.push(shufWeak[w++]!);
+					if (o < shufOther.length) mixed.push(shufOther[o++]!);
+				}
+				return { top, list: mixed };
+			}
+		}
+		return { top, list: shuffle(baseList, rand) };
 	};
-	const main = sourceFor(unit, opts.gender);
+	const main = sourceFor(unit, opts.gender, opts.weakGender);
 	const mixes = (opts.mix ?? []).filter((u) => u !== unit).map((u) => sourceFor(u)).filter((m) => m.list.length > 0);
 	// Distractors: other answers of the unit (forms), or for a vocabulary
 	// unit the other words themselves, in their dictionary form.

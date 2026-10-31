@@ -152,3 +152,24 @@ export function slipLine(slips: Partial<Record<FormSlip, number>>): string {
 		.map((s) => `${FORM_SLIP_LABEL[s]} (${slips[s]})`)
 		.join(" · ");
 }
+
+export function weakestGender(byGender?: Partial<Record<AtlasGender, FirstTally>>, minReps = 3, threshold = 0.7): AtlasGender | null {
+	if (!byGender) return null;
+	const candidates: Array<{ gender: AtlasGender; accuracy: number; reps: number }> = [];
+	for (const g of ["masc", "fem", "neut"] as const) {
+		const t = byGender[g];
+		if (t && t.reps >= minReps) {
+			const acc = t.right / t.reps;
+			if (acc < threshold) candidates.push({ gender: g, accuracy: acc, reps: t.reps });
+		}
+	}
+	if (candidates.length === 0) return null;
+	return candidates.sort((a, b) => a.accuracy - b.accuracy || b.reps - a.reps)[0]!.gender;
+}
+
+export function weakestAtlasCell(atlas: AtlasCell[], minReps = 3, threshold = 0.7): AtlasCell | null {
+	const candidates = atlas.filter((c) => c.unit && c.accuracy !== null && c.reps >= minReps && c.accuracy < threshold);
+	if (candidates.length === 0) return null;
+	return candidates.sort((a, b) => a.accuracy! - b.accuracy! || b.reps - a.reps)[0]!;
+}
+
