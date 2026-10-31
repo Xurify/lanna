@@ -202,27 +202,27 @@ export const STT_MAX_BYTES = 8 * 1024 * 1024;
 /** ElevenLabs's language codes are ISO 639-3. */
 const ISO3: Record<string, string> = { sk: "slk", ru: "rus" };
 
-/** Transcribe one recording in the active language. Throws when the
- *  engine refuses; returns "" for silence. */
-export async function transcribe(audio: Uint8Array, mime: string, lang = code()): Promise<{ text: string; engine: SttEngine }> {
+/** Transcribe one recording (16 kHz mono WAV) in the active language.
+ *  Throws when the engine refuses; returns "" for silence. */
+export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ text: string; engine: SttEngine }> {
 	const engine = sttEngine();
 	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs or Deepgram key in Settings → Keys, or type your line.");
 	if (audio.byteLength === 0) return { text: "", engine };
 	if (sttScript()) return { text: sttScript()!, engine };
 	if (engine === "elevenlabs") {
 		const form = new FormData();
-		form.set("model_id", "scribe_v1");
+		form.set("model_id", "scribe_v2");
 		form.set("language_code", ISO3[lang] ?? lang);
 		form.set("tag_audio_events", "false");
 		form.set("diarize", "false");
-		form.set("file", new Blob([audio as BlobPart], { type: mime || "audio/webm" }), `line.${mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : "webm"}`);
+		form.set("file", new Blob([audio as BlobPart], { type: "audio/wav" }), "line.wav");
 		const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", { method: "POST", headers: { "xi-api-key": keyValue("ELEVENLABS_API_KEY")! }, body: form });
 		if (!res.ok) throw new Error(`ElevenLabs speech-to-text failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
 		const data = (await res.json()) as { text?: string };
 		return { text: (data.text ?? "").trim(), engine };
 	}
 	const url = `https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true`;
-	const res = await fetch(url, { method: "POST", headers: { Authorization: `Token ${keyValue("DEEPGRAM_API_KEY")!}`, "Content-Type": mime || "audio/webm" }, body: audio as BodyInit });
+	const res = await fetch(url, { method: "POST", headers: { Authorization: `Token ${keyValue("DEEPGRAM_API_KEY")!}`, "Content-Type": "audio/wav" }, body: audio as BodyInit });
 	if (!res.ok) throw new Error(`Deepgram failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
 	const data = (await res.json()) as { results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> } };
 	return { text: (data.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim(), engine };
@@ -321,8 +321,8 @@ export interface SpeakTurnInput {
 	text: string;
 	via: "voice" | "typed";
 	ms?: number;
-	/** The learner's recording, kept next to the session. */
-	audio?: { data: Uint8Array; ext: string };
+	/** The learner's recording, kept next to the session as `NN.wav`. */
+	audio?: { data: Uint8Array };
 	/** How clearly the line was said, scored by /api/pronounce on the way in. */
 	pron?: PronScore;
 }
@@ -349,7 +349,7 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 		const turn: SpeakTurn = { role: "learner", text, via: input.via, at: now.toISOString(), ...(input.ms ? { ms: input.ms } : {}), ...(input.pron ? { pron: input.pron } : {}) };
 		if (input.audio && input.audio.data.byteLength > 0) {
 			try {
-				turn.audio = speakStore.putRecording(s.id, n, input.audio.data, input.audio.ext);
+				turn.audio = speakStore.putRecording(s.id, n, input.audio.data);
 			} catch (err) {
 				console.warn("[speak] could not keep the recording:", err instanceof Error ? err.message : err);
 			}

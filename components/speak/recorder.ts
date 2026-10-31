@@ -1,30 +1,30 @@
 "use client";
 
 /**
- * The microphone (LangHarness Speak, 2026-10-28): one recording at a
- * time, as the browser captures it (Opus in WebM where it can), with a
- * loudness meter for the screen and an optional stop-on-silence so a
- * line ends when the voice does. Nothing is streamed; the clip goes to
- * /api/stt whole, then to the scene with the line. The dictation
- * component (components/dictation.tsx) streams to Deepgram for the
- * composer; this is deliberately simpler — a line is a few seconds.
+ * The microphone (LangHarness Speak, rewritten 2026-10-31): one recording
+ * at a time, kept as 16 kHz mono PCM WAV — the one format every engine we
+ * send a line to accepts (ElevenLabs, Deepgram, Azure's scoring). The
+ * browser captures through the same AudioWorklet dictation uses
+ * (public/worklets/pcm-capture.js), so there is no MediaRecorder and no
+ * container to guess: no WebM, no MP4. The worklet also posts the RMS of
+ * every render quantum, which is the loudness meter and the stop-on-
+ * silence clock. Nothing is streamed; the clip goes to /api/stt whole,
+ * then to the scene with the line.
  */
 
 import type { PronScore } from "@/src/core";
 
 export interface Recording {
-	blob: Blob;
-	mime: string;
-	/** Length of the clip. */
+	/** 16 kHz mono 16-bit PCM WAV — the line, as recorded. */
+	wav: Blob;
+	/** Length of the clip, from its samples. */
 	ms: number;
 	/** When the voice first rose above the floor, from the start (ms), or null. */
 	spokeAt: number | null;
-	/** The same take as 16 kHz mono PCM WAV, when asked for (pronunciation scoring). */
-	wav?: Blob;
 }
 
 export interface RecorderOptions {
-	/** 0..1 loudness, about 20 times a second. */
+	/** 0..1 loudness, about 120 times a second (one per render quantum). */
 	onLevel?: (level: number) => void;
 	/** Stop by itself this long after the voice goes quiet (after it was heard). */
 	silenceMs?: number;
@@ -32,189 +32,203 @@ export interface RecorderOptions {
 	maxMs?: number;
 	/** Called when the recorder stopped itself (silence or the cap). */
 	onAutoStop?: () => void;
-	/** Also capture raw samples and hand back a 16 kHz WAV (for Azure's scoring). */
-	wav?: boolean;
 }
 
-const MIMES = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+/** The capture rate, mono. */
+const RATE = 16_000;
 
 /** RMS below this is silence (about -36 dB). */
 const FLOOR = 0.016;
 
-export function micSupported(): boolean {
-	return typeof window !== "undefined" && typeof MediaRecorder !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
-}
+/** 0..1 loudness from RMS: -50 dB is 0, -10 dB is 1. */
+const levelOf = (rms: number) => Math.min(1, Math.max(0, (20 * Math.log10(rms + 1e-6) + 50) / 40));
 
-export function pickMime(): string {
-	if (typeof MediaRecorder === "undefined") return "";
-	return MIMES.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
+export function micSupported(): boolean {
+	return typeof window !== "undefined" && typeof AudioContext !== "undefined" && "audioWorklet" in AudioContext.prototype && !!navigator.mediaDevices?.getUserMedia;
 }
 
 export class Recorder {
 	private stream: MediaStream | null = null;
-	private rec: MediaRecorder | null = null;
 	private ctx: AudioContext | null = null;
-	private chunks: BlobPart[] = [];
+	private source: MediaStreamAudioSourceNode | null = null;
+	private node: AudioWorkletNode | null = null;
+	private frames: Int16Array[] = [];
 	private startedAt = 0;
 	private spokeAt: number | null = null;
 	private lastLoud = 0;
-	private timer: ReturnType<typeof setInterval> | null = null;
 	private done: Promise<Recording> | null = null;
 	private resolve: ((r: Recording) => void) | null = null;
-	private mime = "";
-	private pcm: Float32Array[] = [];
-	private pcmRate = 0;
-	private proc: ScriptProcessorNode | null = null;
+	private stopped = false;
+	private flushed: (() => void) | null = null;
+	private opts: RecorderOptions = {};
 
 	get running(): boolean {
-		return this.rec?.state === "recording";
+		return this.node !== null && !this.stopped;
 	}
 
 	/** Ask for the microphone and start. Throws when refused. */
 	async start(opts: RecorderOptions = {}): Promise<void> {
-		if (this.rec) return;
-		this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
-		this.mime = pickMime();
-		this.rec = new MediaRecorder(this.stream, this.mime ? { mimeType: this.mime } : undefined);
-		this.chunks = [];
+		if (this.node) return;
+		this.opts = opts;
+		this.frames = [];
 		this.spokeAt = null;
-		this.rec.ondataavailable = (e) => {
-			if (e.data.size > 0) this.chunks.push(e.data);
-		};
+		this.stopped = false;
 		this.done = new Promise<Recording>((res) => {
 			this.resolve = res;
 		});
-		this.rec.onstop = () => {
-			const blob = new Blob(this.chunks, { type: this.mime || "audio/webm" });
-			const ms = Math.max(0, Date.now() - this.startedAt);
-			const wav = opts.wav && this.pcm.length ? encodeWav(this.pcm, this.pcmRate, 16_000) : undefined;
-			this.teardown();
-			this.resolve?.({ blob, mime: blob.type, ms, spokeAt: this.spokeAt, ...(wav ? { wav } : {}) });
-		};
-		// The meter: an analyser on the same stream.
+		this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
 		try {
-			this.ctx = new AudioContext();
-			const src = this.ctx.createMediaStreamSource(this.stream);
-			const analyser = this.ctx.createAnalyser();
-			analyser.fftSize = 1024;
-			src.connect(analyser);
-			if (opts.wav) {
-				// Raw samples for the WAV: a processor node (its output stays silent).
-				this.pcm = [];
-				this.pcmRate = this.ctx.sampleRate;
-				this.proc = this.ctx.createScriptProcessor(4096, 1, 1);
-				this.proc.onaudioprocess = (e) => {
-					this.pcm.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-				};
-				src.connect(this.proc);
-				this.proc.connect(this.ctx.destination);
-			}
-			const buf = new Float32Array(analyser.fftSize);
-			this.timer = setInterval(() => {
-				analyser.getFloatTimeDomainData(buf);
-				let sum = 0;
-				for (let i = 0; i < buf.length; i++) sum += buf[i]! * buf[i]!;
-				const rms = Math.sqrt(sum / buf.length);
-				const now = Date.now();
-				if (rms > FLOOR) {
-					this.spokeAt ??= now - this.startedAt;
-					this.lastLoud = now;
-				}
-				opts.onLevel?.(Math.min(1, Math.max(0, (20 * Math.log10(rms + 1e-6) + 50) / 40)));
-				if (opts.silenceMs && this.spokeAt !== null && now - this.lastLoud > opts.silenceMs && this.running) {
-					this.rec?.stop();
-					opts.onAutoStop?.();
-				} else if (opts.maxMs && now - this.startedAt > opts.maxMs && this.running) {
-					this.rec?.stop();
-					opts.onAutoStop?.();
-				}
-			}, 50);
-		} catch {
-			// no meter — recording still works
+			// A context at the capture rate: the worklet's frames arrive as
+			// 16 kHz linear16, so nothing is resampled on the way in or out.
+			const ctx = new AudioContext({ sampleRate: RATE });
+			this.ctx = ctx;
+			await ctx.audioWorklet.addModule("/worklets/pcm-capture.js");
+			if (ctx.state === "suspended") await ctx.resume();
+			const source = ctx.createMediaStreamSource(this.stream);
+			this.source = source;
+			const node = new AudioWorkletNode(ctx, "pcm-capture");
+			this.node = node;
+			node.port.onmessage = (e: MessageEvent) => this.onMessage(e.data as { type?: string; rms?: number; buffer?: ArrayBuffer });
+			source.connect(node);
+			// Pull the graph. The worklet writes no output, so this is silence.
+			node.connect(ctx.destination);
+			this.startedAt = Date.now();
+			this.lastLoud = this.startedAt;
+		} catch (err) {
+			this.teardown();
+			throw err;
 		}
-		this.startedAt = Date.now();
-		this.lastLoud = this.startedAt;
-		this.rec.start();
 	}
 
 	/** Stop and get the clip. */
-	stop(): Promise<Recording> {
+	async stop(): Promise<Recording> {
 		const done = this.done;
-		if (!this.rec || !done) return Promise.resolve({ blob: new Blob([]), mime: "", ms: 0, spokeAt: null });
-		if (this.rec.state === "recording") this.rec.stop();
-		return done;
+		if (!done) return { wav: encodeWav([]), ms: 0, spokeAt: null };
+		if (this.stopped) return done;
+		this.stopped = true;
+		// Cut the input, then take the tail the worklet has not posted yet.
+		this.source?.disconnect();
+		this.source = null;
+		await this.flush();
+		const rate = this.ctx?.sampleRate || RATE;
+		const frames = this.frames;
+		const samples = frames.reduce((n, f) => n + f.length, 0);
+		const recording: Recording = { wav: encodeWav(frames, rate), ms: Math.round((samples / rate) * 1000), spokeAt: this.spokeAt };
+		this.teardown();
+		this.done = null;
+		this.resolve?.({ ...recording });
+		this.resolve = null;
+		return recording;
 	}
 
 	/** Stop and throw the clip away. */
 	cancel(): void {
-		if (this.rec?.state === "recording") {
-			this.rec.onstop = () => this.teardown();
-			this.rec.stop();
-		} else this.teardown();
+		if (!this.node) return;
+		this.stopped = true;
+		this.done = null;
+		this.resolve = null;
+		this.teardown();
+	}
+
+	private onMessage(m: { type?: string; rms?: number; buffer?: ArrayBuffer }): void {
+		if (m.type === "audio" && m.buffer) {
+			this.frames.push(new Int16Array(m.buffer));
+			return;
+		}
+		if (m.type === "flushed") {
+			this.flushed?.();
+			return;
+		}
+		if (m.type !== "level") return;
+		const rms = m.rms ?? 0;
+		const now = Date.now();
+		if (rms > FLOOR) {
+			this.spokeAt ??= now - this.startedAt;
+			this.lastLoud = now;
+		}
+		this.opts.onLevel?.(levelOf(rms));
+		if (this.stopped) return;
+		if (this.opts.silenceMs && this.spokeAt !== null && now - this.lastLoud > this.opts.silenceMs) this.autoStop();
+		else if (this.opts.maxMs && now - this.startedAt > this.opts.maxMs) this.autoStop();
+	}
+
+	private autoStop(): void {
+		const onAutoStop = this.opts.onAutoStop;
+		void this.stop().catch(() => undefined);
+		onAutoStop?.();
+	}
+
+	/** Ask the worklet for the partial frame it holds; wait for its answer. */
+	private flush(): Promise<void> {
+		const node = this.node;
+		if (!node) return Promise.resolve();
+		return new Promise<void>((res) => {
+			// The worklet always answers; the timeout is a belt for a dead
+			// audio thread, so a stop can never hang the screen.
+			const timer = setTimeout(() => {
+				this.flushed = null;
+				res();
+			}, 250);
+			this.flushed = () => {
+				clearTimeout(timer);
+				this.flushed = null;
+				res();
+			};
+			node.port.postMessage({ type: "flush" });
+		});
 	}
 
 	private teardown(): void {
-		if (this.timer) clearInterval(this.timer);
-		this.timer = null;
 		this.stream?.getTracks().forEach((t) => t.stop());
 		this.stream = null;
-		this.proc?.disconnect();
-		this.proc = null;
-		this.pcm = [];
+		this.source?.disconnect();
+		this.source = null;
+		if (this.node) {
+			this.node.port.onmessage = null;
+			this.node.disconnect();
+			this.node = null;
+		}
 		void this.ctx?.close().catch(() => undefined);
 		this.ctx = null;
-		this.rec = null;
+		this.frames = [];
 	}
 }
 
-/** Mono float samples → 16-bit PCM WAV at `outRate` (linear resampling). */
-export function encodeWav(chunks: Float32Array[], inRate: number, outRate: number): Blob {
-	let total = 0;
-	for (const c of chunks) total += c.length;
-	const all = new Float32Array(total);
-	let at = 0;
-	for (const c of chunks) {
-		all.set(c, at);
-		at += c.length;
-	}
-	const ratio = inRate / outRate;
-	const n = Math.floor(all.length / ratio);
-	const out = new DataView(new ArrayBuffer(44 + n * 2));
+/** Mono 16-bit PCM frames → a WAV blob whose header names `rate`. */
+export function encodeWav(frames: Int16Array[], rate = RATE): Blob {
+	const length = frames.reduce((n, f) => n + f.length, 0);
+	const out = new DataView(new ArrayBuffer(44 + length * 2));
 	const str = (o: number, v: string) => {
 		for (let i = 0; i < v.length; i++) out.setUint8(o + i, v.charCodeAt(i));
 	};
 	str(0, "RIFF");
-	out.setUint32(4, 36 + n * 2, true);
+	out.setUint32(4, 36 + length * 2, true);
 	str(8, "WAVE");
 	str(12, "fmt ");
 	out.setUint32(16, 16, true);
-	out.setUint16(20, 1, true);
-	out.setUint16(22, 1, true);
-	out.setUint32(24, outRate, true);
-	out.setUint32(28, outRate * 2, true);
-	out.setUint16(32, 2, true);
-	out.setUint16(34, 16, true);
+	out.setUint16(20, 1, true); // PCM
+	out.setUint16(22, 1, true); // mono
+	out.setUint32(24, rate, true);
+	out.setUint32(28, rate * 2, true); // bytes a second
+	out.setUint16(32, 2, true); // bytes a sample
+	out.setUint16(34, 16, true); // bits a sample
 	str(36, "data");
-	out.setUint32(40, n * 2, true);
-	for (let i = 0; i < n; i++) {
-		const pos = i * ratio;
-		const k = Math.floor(pos);
-		const frac = pos - k;
-		const a = all[k] ?? 0;
-		const b = all[k + 1] ?? a;
-		const v = Math.max(-1, Math.min(1, a + (b - a) * frac));
-		out.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+	out.setUint32(40, length * 2, true);
+	let at = 44;
+	for (const f of frames) {
+		for (let i = 0; i < f.length; i++) {
+			out.setInt16(at, f[i]!, true);
+			at += 2;
+		}
 	}
 	return new Blob([out.buffer], { type: "audio/wav" });
 }
 
-/** Score a clip against the line it should be, through /api/pronounce.
- *  Sends the WAV when there is one (Azure wants PCM), else the clip.
+/** Score a recording against the line it should be, through /api/pronounce.
  *  Null when nothing was heard; throws when no engine is set. */
-export async function scoreClip(clip: { blob: Blob; wav?: Blob }, reference: string, heard?: string): Promise<PronScore | null> {
+export async function scoreClip(wav: Blob, reference: string, heard?: string): Promise<PronScore | null> {
 	const form = new FormData();
-	const audio = clip.wav ?? clip.blob;
-	form.set("audio", audio, clip.wav ? "line.wav" : "line.webm");
+	form.set("audio", wav, "line.wav");
 	form.set("reference", reference);
 	if (heard) form.set("heard", heard);
 	const res = await fetch("/api/pronounce", { method: "POST", body: form });
@@ -223,11 +237,11 @@ export async function scoreClip(clip: { blob: Blob; wav?: Blob }, reference: str
 	return data.score ?? null;
 }
 
-/** Send a clip to /api/stt. Returns "" for silence; throws when no engine
- *  is set or the engine refused. */
-export async function transcribeClip(blob: Blob): Promise<string> {
+/** Send a recording to /api/stt. Returns "" for silence; throws when no
+ *  engine is set or the engine refused. */
+export async function transcribeClip(wav: Blob): Promise<string> {
 	const form = new FormData();
-	form.set("audio", blob, "line.webm");
+	form.set("audio", wav, "line.wav");
 	const res = await fetch("/api/stt", { method: "POST", body: form });
 	const data = (await res.json().catch(() => ({}))) as { text?: string; message?: string };
 	if (!res.ok) throw new Error(data.message ?? `HTTP ${res.status}`);

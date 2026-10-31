@@ -71,6 +71,17 @@ Unverified by the owner: Data and the cache clear in the Electron window (the cl
 
 Known: at 390px wide the settings dialog gives its content about 125px in every section, so the left section list crowds the text. This predates this branch.
 
+## 31 October: a spoken line is WAV, and nothing is recorded as video
+
+Branch `fix/speak-recording-wav`, from `be8e859` (main).
+
+- **Speak records WAV only:** the browser's WebM/Opus → Ogg → MP4 chain is gone. Speak captures through the dictation AudioWorklet (16 kHz mono 16-bit PCM) and keeps one WAV per line (DECISIONS E18). No MediaRecorder, so no MP4 and no format guessing.
+- **Speech-to-text gets the WAV** (it got the compressed clip before), pronunciation scoring always gets the WAV (before, only when Azure was set), and the scene keeps that same WAV.
+- **File names tell the truth:** uploads are `line.wav` on the client, in `/api/speak` and in the ElevenLabs multipart part, and the scene keeps `NN.wav`. All the non-WAV handling is gone with it: the `audioExt` helper, the `audio/webm` fallbacks in `/api/stt`, `/api/speak` and `/api/pronounce`, and Azure's Ogg branch.
+- **The worklet's tail is flushed on stop** (`public/worklets/pcm-capture.js`), so a line no longer drops up to 128 ms at the end.
+
+Not verified live: no microphone in this shell, so Speak and Say it faster are covered by the new tests (`tests/speak-recorder.test.ts`), typecheck and lint only. The real WAV with an ElevenLabs or Deepgram key, and Azure's score on it, need the PC.
+
 ## Pull requests
 
 | PR | Branch | What | State |
@@ -86,6 +97,7 @@ Known: at 390px wide the settings dialog gives its content about 125px in every 
 | #10 | `setup/parallels-and-panel-close` | Panel close, parallels wording and switch | merged by the owner |
 | #11 | `feat/weak-spots` | Weak spots on record | merged by the owner |
 | (new) | `ux/revamp-views` | UX revamp: Today, sidebar, lesson, Review, Plan | open |
+| (new) | `fix/speak-recording-wav` | WAV-only Speak recording; truthful upload names | open |
 
 GitHub Actions never runs on this repo (owner-side setting); a red check there is not a code failure.
 

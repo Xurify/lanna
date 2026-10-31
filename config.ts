@@ -115,7 +115,7 @@ export const PATHS = {
 	stories: path.join(DATA_ROOT, "stories"),
 	/** Spoken scenes for the Speak task (LangHarness, 2026-10-28):
 	 *  speak/<id>.json (every line, the prompts, the summary, cost),
-	 *  speak/<id>/<n>.webm (the learner's own recordings), speak/index.jsonl
+	 *  speak/<id>/<n>.wav (the learner's own recordings), speak/index.jsonl
 	 *  — src/store/speak.ts. */
 	speak: path.join(DATA_ROOT, "speak"),
 	/** Placement checks (LangHarness, 2026-10-28): placement/<id>.json —

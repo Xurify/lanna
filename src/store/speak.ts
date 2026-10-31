@@ -7,9 +7,9 @@
  *                         every repair prompt, the end summary, the model
  *                         and tokens it cost (src/core/speak.ts
  *                         SpeakSession). Rewritten after each turn.
- *   speak/<id>/<n>.webm   the learner's own recording of line n, as the
- *                         browser captured it — their voice in Slovak,
- *                         kept for whatever they build next.
+ *   speak/<id>/<n>.wav    the learner's own recording of line n, a 16 kHz
+ *                         mono PCM WAV — their voice in Slovak, kept for
+ *                         whatever they build next.
  *   speak/index.jsonl     one line per scene (SpeakIndexEntry), written
  *                         when the scene ends.
  *   fluency/log.jsonl     one line per timed re-read or "say it faster"
@@ -104,12 +104,11 @@ export const speakStore = {
 		return readJsonl<SpeakIndexEntry>(INDEX()).sort((a, b) => a.startedAt.localeCompare(b.startedAt));
 	},
 	/** Keep a recording of the learner's line `n`; returns the file name. */
-	putRecording(id: string, n: number, data: Uint8Array, ext: string): string {
+	putRecording(id: string, n: number, data: Uint8Array): string {
 		if (!ID.test(id)) throw new Error(`bad speak id ${id}`);
-		const safeExt = /^[a-z0-9]{1,5}$/.test(ext) ? ext : "webm";
 		const dir = path.join(PATHS.speak, id);
 		fs.mkdirSync(dir, { recursive: true });
-		const name = `${String(n).padStart(2, "0")}.${safeExt}`;
+		const name = `${String(n).padStart(2, "0")}.wav`;
 		const file = path.join(dir, name);
 		const tmp = `${file}.${process.pid}.tmp`;
 		fs.writeFileSync(tmp, data);

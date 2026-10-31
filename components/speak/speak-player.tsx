@@ -169,7 +169,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 	}, [session, phase, activeTime]);
 
 	const send = useCallback(
-		async (text: string, via: "voice" | "typed", clip?: { blob: Blob; ms: number; pron?: PronScore | null }) => {
+		async (text: string, via: "voice" | "typed", clip?: { wav: Blob; ms: number; pron?: PronScore | null }) => {
 			if (!session || sending || !text.trim()) return;
 			setSending(true);
 			setDraft("");
@@ -185,7 +185,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 				form.set("via", via);
 				if (clip) {
 					form.set("ms", String(clip.ms));
-					form.set("audio", clip.blob, "line.webm");
+					form.set("audio", clip.wav, "line.wav");
 					if (clip.pron) form.set("pron", JSON.stringify(clip.pron));
 				}
 				const out = await post<{ session: SpeakSession; reply: SpeakTurn; end: boolean }>(form);
@@ -224,7 +224,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 					setError("Nothing heard. Hold the mic and say your line.");
 					return;
 				}
-				const text = await transcribeClip(clip.blob);
+				const text = await transcribeClip(clip.wav);
 				if (!text) {
 					setError("Nothing heard. Say it once more, a little louder.");
 					return;
@@ -234,8 +234,8 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 				// words speech-to-text made of it. The transcript engine alone
 				// cannot score free speech (nothing to compare with).
 				let pron: PronScore | null = null;
-				if (state?.pron === "azure") pron = await scoreClip(clip, text, text).catch(() => null);
-				await send(text, "voice", { blob: clip.blob, ms: clip.ms, pron });
+				if (state?.pron === "azure") pron = await scoreClip(clip.wav, text, text).catch(() => null);
+				await send(text, "voice", { wav: clip.wav, ms: clip.ms, pron });
 			} catch (err) {
 				setError(err instanceof Error ? err.message : String(err));
 			} finally {
@@ -249,7 +249,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 		const rec = new Recorder();
 		recorder.current = rec;
 		try {
-			await rec.start({ onLevel: setLevel, maxMs: 30_000, onAutoStop: () => void toggleRef.current(), wav: state?.pron === "azure" });
+			await rec.start({ onLevel: setLevel, maxMs: 30_000, onAutoStop: () => void toggleRef.current() });
 			setListening(true);
 		} catch {
 			recorder.current = null;

@@ -49,7 +49,7 @@ const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : t
 
 export async function POST(req: Request) {
 	let body: Body = {};
-	let audio: { data: Uint8Array; ext: string } | undefined;
+	let audio: { data: Uint8Array } | undefined;
 	const type = req.headers.get("content-type") ?? "";
 	try {
 		if (type.startsWith("multipart/form-data")) {
@@ -57,8 +57,7 @@ export async function POST(req: Request) {
 			body = { action: form.get("action"), id: form.get("id"), text: form.get("text"), via: form.get("via"), ms: form.get("ms"), tz: form.get("tz"), pron: form.get("pron") };
 			const file = form.get("audio");
 			if (file instanceof Blob && file.size > 0 && file.size <= STT_MAX_BYTES) {
-				const mime = file.type || "audio/webm";
-				audio = { data: new Uint8Array(await file.arrayBuffer()), ext: mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : mime.includes("wav") ? "wav" : "webm" };
+				audio = { data: new Uint8Array(await file.arrayBuffer()) };
 			}
 		} else body = ((await req.json().catch(() => null)) as Body | null) ?? {};
 	} catch {
