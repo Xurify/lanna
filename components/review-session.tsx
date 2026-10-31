@@ -1,13 +1,9 @@
 "use client";
 
 /**
- * The spaced-review page (LangHarness, Phase 7): Clozemaster-style cloze
- * cards from the dictionary's sentences, one word blanked, scheduled with
- * FSRS. Type the missing word (or pick it), hear the sentence, rate.
- *
- * Grading is local and instant (core/language.ts compareAnswer — exact,
- * accents-only, wrong); the rating the learner confirms goes to
- * POST /api/review, which schedules the card.
+ * Spaced-review page: Clozemaster-style cloze cards from the dictionary's
+ * sentences, scheduled with FSRS. Grading is local and instant
+ * (core/language.ts compareAnswer); the confirmed rating goes to POST /api/review.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -44,6 +40,11 @@ interface Status {
 
 type Mode = "type" | "choice";
 const MODE_KEY = "lh-review-mode";
+/** How long the loading skeleton waits before it shows, so a deck that
+ *  lands inside this window never flashes one. */
+const SKELETON_DELAY_MS = 300;
+/** The deck as it last loaded, so a return visit starts with a card on screen. */
+let knownStatus: Status | null = null;
 
 function readPref(key: string, fallback: string): string {
 	try {
@@ -80,7 +81,7 @@ function clozeAround(before: string, after: string) {
 
 export function ReviewSession() {
 	const lang = useActiveLanguage();
-	const [status, setStatus] = useState<Status | null>(null);
+	const [status, setStatus] = useState<Status | null>(() => knownStatus);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [given, setGiven] = useState("");
 	const [verdict, setVerdict] = useState<AnswerVerdict | null>(null);
@@ -88,8 +89,9 @@ export function ReviewSession() {
 	// Hints taken on this card: 1 = the meaning, 2 = the dictionary form too.
 	// Each one is allowed and priced (caps the rating; core/review.ts).
 	const [hint, setHint] = useState(0);
-	const [mode, setMode] = useState<Mode>("type");
-	const [sound, setSound] = useState(true);
+	// Read on first render, so the card never paints the default and then flips.
+	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
+	const [sound, setSound] = useState(() => soundOn());
 	const [saving, setSaving] = useState(false);
 	const shownAt = useRef(Date.now());
 	// One card at a time: its active time (the gaps between actions, each
@@ -97,40 +99,49 @@ export function ReviewSession() {
 	const activeTime = useActiveTime("review", "interactive");
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	// The skeleton waits a beat, so a deck that lands at once never flashes one.
+	const [slow, setSlow] = useState(false);
 	useEffect(() => {
-		setMode(readPref(MODE_KEY, "type") === "choice" ? "choice" : "type");
-		setSound(soundOn());
+		const t = window.setTimeout(() => setSlow(true), SKELETON_DELAY_MS);
+		return () => window.clearTimeout(t);
 	}, []);
 
-	const load = useCallback(async () => {
-		try {
-			const res = await fetch(`/api/review?tz=${new Date().getTimezoneOffset()}`);
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const next = (await res.json()) as Status;
-			setStatus(next);
-			setGiven("");
-			setVerdict(null);
-			setHint(0);
-			shownAt.current = Date.now();
-			// A card is on screen: time it. The caught-up screen is not practice.
-			if (next.next) activeTime.restart();
-			else activeTime.finish();
-			setLoadError(null);
-		} catch (err) {
-			setLoadError(err instanceof Error ? err.message : String(err));
-		}
-	}, [activeTime]);
+	// `keepCard` is the mount's background refresh: when the same card is
+	// still due, what the learner has typed and the card's timer carry on.
+	const load = useCallback(
+		async (keepCard = false) => {
+			try {
+				const res = await fetch(`/api/review?tz=${new Date().getTimezoneOffset()}`);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const next = (await res.json()) as Status;
+				const sameCard = keepCard && !!next.next && next.next.card.id === knownStatus?.next?.card.id;
+				knownStatus = next;
+				setStatus(next);
+				if (!sameCard) {
+					setGiven("");
+					setVerdict(null);
+					setHint(0);
+					shownAt.current = Date.now();
+					// A card is on screen: time it. The caught-up screen is not practice.
+					if (next.next) activeTime.restart();
+					else activeTime.finish();
+				}
+				setLoadError(null);
+			} catch (err) {
+				setLoadError(err instanceof Error ? err.message : String(err));
+			}
+		},
+		[activeTime],
+	);
 
 	useEffect(() => {
-		void load();
+		void load(true);
 	}, [load]);
 
 	const prompt = status?.next ?? null;
 	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
 	const tag = lang?.tag ?? "sk-SK";
-	// A card already retrieved once (state "review") is always typed:
-	// choosing from four is for meeting a word, producing it is what keeps
-	// it (recall beats recognition; docs/research/desirable-difficulties.md).
+	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
 	const picks = mode === "choice" && !!prompt && prompt.card.state !== "review";
 	const help = { hints: hint, picked: picks };
 
@@ -234,7 +245,7 @@ export function ReviewSession() {
 		<div className="flex h-dvh flex-col">
 			<TopBar>
 				<h1 className="font-ui text-base font-extrabold text-foreground">Review</h1>
-				{counts && (
+				{counts && lang && (
 					<span className="ml-auto flex items-center gap-1.5 font-ui text-xs font-bold text-muted-foreground tabular-nums" data-testid="review-counts">
 						<span title="Cards due for review" className="rounded-full bg-sky/15 px-2.5 py-1 text-sky">
 							{counts.due + counts.learning} due
@@ -263,7 +274,7 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{!status && !loadError && (
+					{!loadError && slow && (!status || (prompt && !lang)) && (
 						<div className="rounded-3xl border bg-card p-6 sm:p-8" aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
 							<div className="h-3 w-20 animate-pulse rounded bg-accent" />
 							<div className="mt-7 h-9 w-full animate-pulse rounded-lg bg-accent" />
@@ -295,13 +306,13 @@ export function ReviewSession() {
 								<span className="font-ui text-sm font-semibold text-muted-foreground" id="review-new-per-day-label">
 									New words per day
 								</span>
-								<div className="flex items-center rounded-xl border-2 border-border" role="group" aria-labelledby="review-new-per-day-label">
+								<div className="flex items-center gap-1 rounded-xl border-2 border-border p-1" role="group" aria-labelledby="review-new-per-day-label">
 									<button
 										type="button"
 										onClick={() => stepNewPerDay(-5)}
 										disabled={(newPerDay ?? status.settings.newPerDay) <= 0}
 										aria-label="Five fewer new words per day"
-										className="grid size-10 place-items-center rounded-l-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+										className="grid size-9 place-items-center rounded-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
 									>
 										<MinusIcon className="size-4" />
 									</button>
@@ -313,7 +324,7 @@ export function ReviewSession() {
 										onClick={() => stepNewPerDay(5)}
 										disabled={(newPerDay ?? status.settings.newPerDay) >= 100}
 										aria-label="Five more new words per day"
-										className="grid size-10 place-items-center rounded-r-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+										className="grid size-9 place-items-center rounded-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
 									>
 										<PlusIcon className="size-4" />
 									</button>
@@ -330,7 +341,7 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{prompt && (
+					{prompt && lang && (
 						<div className="rounded-3xl border bg-card p-6 sm:p-8" data-testid="review-card">
 							{/* Card header: where this word is in the deck, then how to answer. */}
 							<div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 font-ui text-xs font-bold text-muted-foreground">
@@ -501,7 +512,7 @@ export function ReviewSession() {
 
 							{verdict && (
 								<div className="mt-6 border-t pt-5" data-testid="review-verdict">
-									{/* Header row: the verdict left, Continue right (the lesson footer's shape). */}
+									{/* Verdict left, Continue right. */}
 									<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
 										<div className="flex items-center gap-3">
 											<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", VERDICT_STYLE[verdict].badge)} aria-hidden="true">
@@ -509,8 +520,7 @@ export function ReviewSession() {
 											</span>
 											<p className={cn("font-ui text-2xl font-bold leading-tight", VERDICT_STYLE[verdict].className)}>{VERDICT_STYLE[verdict].label}</p>
 										</div>
-										{/* The checker already knows how it went: Continue schedules with
-										    the derived rating (one decision per card, not two). */}
+										{/* Continue schedules with the derived rating: one decision per card. */}
 										<button
 											type="button"
 											autoFocus
@@ -571,13 +581,13 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{prompt && !verdict && !picks && (
+					{prompt && lang && !verdict && !picks && (
 						<p className="mt-3 hidden items-center justify-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
 							{kbd("Enter")} to check
 						</p>
 					)}
 
-					{status && status.leeches.length > 0 && (
+					{status && lang && status.leeches.length > 0 && (
 						<div className="mt-10" data-testid="review-leeches">
 							<h2 className="font-ui text-sm font-extrabold text-foreground">Words that keep slipping</h2>
 							<p className="mt-0.5 text-sm text-muted-foreground">Missed again and again. A lesson on them, or a sentence of your own, often helps more than another review.</p>
@@ -597,7 +607,7 @@ export function ReviewSession() {
 						</div>
 					)}
 
-					{status?.available && <p className="mt-10 text-center text-xs text-muted-foreground">Sentences from slovak.wiki: curated examples and Tatoeba (CC BY 2.0 FR).</p>}
+					{status?.available && lang && <p className="mt-10 text-center text-xs text-muted-foreground">Sentences from slovak.wiki: curated examples and Tatoeba (CC BY 2.0 FR).</p>}
 				</div>
 			</main>
 		</div>

@@ -68,22 +68,22 @@ async function begin() { await click(byTest("chatgpt-login")); await click(byTes
 async function confirmDisconnect() { await click(byTest("chatgpt-disconnect")); await click(byTest("chatgpt-confirm-disconnect")); }
 afterEach(async () => { await act(async () => root?.unmount()); host?.remove(); root = undefined; host = undefined; delete window.lh; globalThis.fetch = originalFetch; });
 
-test("Providers is the first/default page; General, Storage and Reset close the list in order", () => {
+test("Keys is the first/default page; General and Data close the list in order", () => {
  const html = renderToStaticMarkup(<SettingsDialogBody onClose={() => {}} />);
  const ids = [...html.matchAll(/data-testid="settings-nav-([^"]+)"/g)].map((m) => m[1]);
- assert.deepEqual(ids, ["keys", "agent", "learner", "appearance", "graph", "keyboard", "usage", "general", "storage", "reset"]);
- assert.match(html, /settings-nav-keys[^>]*aria-current="true"/); assert.match(html, />Providers<\/button>/);
+ assert.deepEqual(ids, ["keys", "agent", "learner", "appearance", "graph", "keyboard", "usage", "general", "data"]);
+ assert.match(html, /settings-nav-keys[^>]*aria-current="true"/); assert.match(html, />Keys<\/button>/);
  assert.doesNotMatch(html, />Model providers<\/button>/);
 });
 
-test("Providers has exactly five ordered sections (LangHarness adds Speech); unknown variables stay masked/read-only at the end of Model API keys", async () => {
+test("Keys has exactly five ordered sections (LangHarness adds Speech); unknown variables stay masked/read-only at the end of Model API keys", async () => {
  globalThis.fetch = async (url) => {
   assert.equal(url, "/api/keys");
   return Response.json({ providers: [{ id: "openai", envVar: "OPENAI_API_KEY", label: "OpenAI" }], keys: [{ id: "FUTURE_VAR", info: null, present: true, masked: "…abcd", source: "file", shadowedByEnv: false }] });
  };
  fixture(); await mount(<KeysSection />);
  const headings = [...document.querySelectorAll('[data-testid^="group-"] > p')].map((el) => el.textContent);
- assert.deepEqual(headings, ["Model API keys", "Subscriptions", "Speech", "Dictation", "Search"]);
+ assert.deepEqual(headings, ["Model API keys", "Subscriptions", "Speech", "Dictation", "Web search"]);
  assert(byTest("key-elevenlabs_api_key").closest('[data-testid="group-speech"]'));
  assert(byTest("key-deepgram_api_key").closest('[data-testid="group-dictation"]'));
  assert(byTest("key-tavily_api_key").closest('[data-testid="group-search"]'));

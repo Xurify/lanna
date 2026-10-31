@@ -1,8 +1,6 @@
 /**
- * The settings wave's pure layers (thin settings wave): the appearance →
- * CSS-variable mapping (the section must actually DO something), the
- * dark-curve background derivation, the agent section's compose helpers
- * (the replace-whole PUT discipline), and the keyboard overrides map.
+ * Pure settings layers: appearance to CSS variables, the dark-curve palette,
+ * the agent compose helpers, and the keyboard overrides map.
  */
 
 import assert from "node:assert/strict";
@@ -179,7 +177,6 @@ describe("agent section compose helpers — the replace-whole PUT body", () => {
 		const prev: ModelsSettings = { strong: { model: { provider: "zai", id: "glm-4.7-flash" }, thinkingLevel: "high" } };
 		const after = composeSlotModel(prev, "strong", "", "", "high");
 		assert.deepEqual(after.strong, { model: { provider: "zai", id: "glm-4.7-flash" }, thinkingLevel: "high" }, "model carried, thinking kept");
-		// clearing thinking keeps the model
 		const after2 = composeSlotModel(prev, "strong", "zai", "glm-4.7-flash", "");
 		assert.deepEqual(after2.strong, { model: { provider: "zai", id: "glm-4.7-flash" } }, "thinking dropped, model kept");
 	});
@@ -231,8 +228,8 @@ describe("classifyKeys — the Keys section's two-group projection", () => {
 
 	it("OpenRouter is UN-pinned (wave-5 owner ruling): no row when absent, a row when stored", () => {
 		const none = classifyKeys([], providers);
-		assert.equal(none.providerRows.length, 0); // nothing synthesized
-		assert.ok(none.addable.some((p) => p.id === "openrouter")); // it's just an Add option
+		assert.equal(none.providerRows.length, 0);
+		assert.ok(none.addable.some((p) => p.id === "openrouter"));
 		const stored = classifyKeys([synth("OPENROUTER_API_KEY", true)], providers);
 		assert.equal(stored.providerRows.length, 1);
 		assert.equal(stored.providerRows[0]!.id, "OPENROUTER_API_KEY");
@@ -243,7 +240,6 @@ describe("classifyKeys — the Keys section's two-group projection", () => {
 		const out = classifyKeys([synth("GROQ_API_KEY", true)], providers);
 		assert.equal(out.providerRows.length, 1);
 		assert.equal(out.providerRows[0]!.id, "GROQ_API_KEY");
-		// the Add dropdown no longer offers groq
 		assert.ok(!out.addable.some((p) => p.id === "groq"));
 		assert.ok(out.addable.some((p) => p.id === "deepseek"));
 	});
@@ -322,7 +318,6 @@ describe("first-run gate — slotsConfigured + setupStage (model-slots wave)", (
 			true,
 			"all three picked",
 		);
-		// a thinking-only pin does NOT configure the slot
 		assert.equal(
 			slotsConfigured({ strong: { thinkingLevel: "low" }, cheap: { thinkingLevel: "low" }, vision: { thinkingLevel: "low" } }),
 			false,
@@ -339,8 +334,7 @@ describe("first-run gate — slotsConfigured + setupStage (model-slots wave)", (
 });
 
 describe("sectionedSegments — the prompts overhaul (2026-09-26)", () => {
-	// The server contract: BOTH per-agent lists include the shared
-	// segments (same paths) — the view must list them ONCE.
+	// Both agent lists carry the shared segments; the view lists each once.
 	const view = {
 		prober: [
 			{ path: "system-prompt.md", sourceText: "b", overrideText: null, enabled: false, shared: true },
@@ -364,7 +358,6 @@ describe("sectionedSegments — the prompts overhaul (2026-09-26)", () => {
 		const all = sectionedSegments(view).flatMap((s) => s.segments.map((seg) => seg.path));
 		assert.equal(all.filter((p) => p === "system-prompt.md").length, 1);
 		assert.equal(all.filter((p) => p === "shared/10-personality.md").length, 1);
-		// every path unique — no chunk listed twice
 		assert.equal(new Set(all).size, all.length);
 	});
 
@@ -375,17 +368,16 @@ describe("sectionedSegments — the prompts overhaul (2026-09-26)", () => {
 		assert.deepEqual(prober.segments.map((s) => s.path), ["prober/10-probe-doctrine.md"]);
 		// assembly order: the base file first, then the shared fragments
 		assert.deepEqual(shared.segments.map((s) => s.path), ["system-prompt.md", "shared/10-personality.md"]);
-		// the Shared header carries the one hint that earns its place
-		assert.equal(shared.hint, "Used by both agents");
-		assert.equal(teacher.hint, undefined);
+		// Each header carries its one-line hint.
+		assert.equal(teacher.hint, "How the tutor explains and guides a lesson");
+		assert.equal(prober.hint, "How the tutor checks what you know");
+		assert.equal(shared.hint, "Used by both");
 	});
 
 	it("the indicator copy is pinned — it states WHICH VERSION IS IN USE (refined 2026-09-26)", () => {
 		assert.equal(PROMPT_IN_USE_HINT, "Your version is in use");
 	});
 });
-
-// ─── the quizzing-mechanics segmented control (owner 2026-09-27) ───────────
 
 describe("composeQuizMechanics (the segmented control's write)", () => {
 	it("free recall writes explain:true; multiple choice writes explain:false — nothing else moves", () => {

@@ -1,12 +1,9 @@
 "use client";
 /**
- * Settings → Spending (Xurify, 2026-10-28: "are you keeping track of how
- * much everything has cost? Where can I view that myself?"). Reads
- * GET /api/usage once per open: the running total, this month, each kind
- * of session (Learn, Talk, Story, Why?, Practice), every session with its
- * own cost (the same number the chat footer shows), and the audio library.
- * Every figure is folded from the records on disk, so this is also what
- * `npm run corpus:export` puts in summary.json.
+ * Settings → Spending: the running total, this month, each kind of session,
+ * every session's cost and the audio library. Reads GET /api/usage once per
+ * open. Every figure is folded from the records on disk, the same numbers
+ * `npm run corpus:export` writes to summary.json.
  */
 
 import { useEffect, useState } from "react";
@@ -58,9 +55,9 @@ export function UsageSection() {
 					<Stat label="Tokens" value={`${formatTokens(report.tokens.input + report.tokens.cacheRead + report.tokens.cacheWrite)} in · ${formatTokens(report.tokens.output)} out`} />
 				</div>
 				<p className="text-xs text-muted-foreground">
-					Model turns {formatUsd(report.turnsUsd)}
-					{report.extractionUsd > 0 && <> · graph extraction {formatUsd(report.extractionUsd)}</>}
-					{report.jobsUsd > 0 && <> · background agents {formatUsd(report.jobsUsd)}</>}
+					Tutor replies {formatUsd(report.turnsUsd)}
+					{report.extractionUsd > 0 && <> · skill map updates {formatUsd(report.extractionUsd)}</>}
+					{report.jobsUsd > 0 && <> · background tasks {formatUsd(report.jobsUsd)}</>}
 					{report.stories.count > 0 && <> · {report.stories.count} story {report.stories.count === 1 ? "episode" : "episodes"} {formatUsd(report.storiesUsd)}</>}
 					{(report.speak?.count ?? 0) > 0 && <> · {report.speak.count} spoken {report.speak.count === 1 ? "scene" : "scenes"} {formatUsd(report.speakUsd)}</>}
 					{(report.videos?.count ?? 0) > 0 && <> · {report.videos.count} {report.videos.count === 1 ? "video" : "videos"} prepared {formatUsd(report.videosUsd)}</>}

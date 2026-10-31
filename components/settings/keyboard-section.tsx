@@ -1,19 +1,12 @@
 "use client";
 /**
- * The Keyboard section (thin settings wave): view / rebind / reset over
- * core/keyboard.ts's registry. The overrides persist in localStorage
- * (lh:keymap, overrides-only, merged over DEFAULT_BINDINGS), so rebinding
- * is INSTANT — the dispatcher reads the map per keydown, no reload.
+ * The Keyboard section: view, rebind and reset shortcuts over core/keyboard.ts.
+ * Overrides persist in localStorage (lh:keymap, overrides only, merged over
+ * DEFAULT_BINDINGS), so a rebind applies on the next keydown with no reload.
  *
- * Rebind flow: click Rebind → the row listens for the next keydown
- * (capture phase, preventDefault — nothing types anywhere), eventBinding
- * normalizes it, saveOverrides persists. Escape cancels. displayOnly
- * actions (a surface owns those keys — the question dock's row machine)
- * are listed for reading but never rebindable.
- *
- * Thin: no conflict detection — if a new binding collides with another
- * action's, the first match in registry order wins; the cheat sheet shows
- * both. Detection belongs to the designed wave.
+ * Rebind captures the next keydown (capture phase). Escape cancels. displayOnly
+ * actions belong to a surface and are listed but never rebindable. No conflict
+ * detection: on a clash, the first match in registry order wins.
  */
 
 import { useEffect, useState } from "react";
@@ -31,11 +24,10 @@ import { SettingsRow } from "./controls.tsx";
 const SCOPES: { scope: KeyScope; label: string }[] = [
 	{ scope: "global", label: "Global" },
 	{ scope: "chat", label: "Chat" },
-	{ scope: "graph", label: "Graph" },
+	{ scope: "graph", label: "Skill map" },
 ];
 
-/** The overrides map after ONE change (pure — exported for tests):
- *  binding null = reset the action to its default (key removed). */
+/** One change to the overrides map. binding null resets the action to its default. */
 export function nextOverrides(
 	current: Partial<Record<KeyAction, string>>,
 	id: KeyAction,
@@ -58,7 +50,7 @@ export function KeyboardSection() {
 		setOverrides(loadOverrides());
 	}, [nonce]);
 
-	// The capture listener — only while a rebind is armed.
+	// Capture listener, armed only while a rebind is pending.
 	useEffect(() => {
 		if (!rebinding) return;
 		const onKey = (e: KeyboardEvent) => {
@@ -68,9 +60,7 @@ export function KeyboardSection() {
 				setRebinding(null);
 				return;
 			}
-			// Modifier keydowns arrive one by one (⌘ down, then ⇧, then the
-			// key) — each is a keydown this capture listener sees. They are
-			// not bindings; keep listening for the real key.
+			// Modifier keydowns are not bindings on their own; keep listening.
 			if (e.key === "Control" || e.key === "Meta" || e.key === "Alt" || e.key === "Shift") return;
 			const binding = eventBinding(e);
 			if (!binding) return;
@@ -156,7 +146,7 @@ export function KeyboardSection() {
 				);
 			})}
 			<div className="mt-1 flex items-center justify-between">
-				<span className="text-xs text-muted-foreground">Stored on this device (lh:keymap) — overrides only.</span>
+				<span className="text-xs text-muted-foreground">Saved on this device. Only changed shortcuts are stored.</span>
 				{confirmReset ? (
 					<span className="flex items-center gap-3 text-xs" data-testid="kbd-reset-confirm">
 						<span className="text-muted-foreground">Reset every shortcut to its default?</span>

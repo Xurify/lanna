@@ -1,4 +1,4 @@
-/** Settings → Storage UI: the desktop shows the app's HTTP cache with a clear action, the browser says where its own cache lives, and saved areas are measured and never offer a clear. */
+/** Settings → Data UI: the desktop shows the app's HTTP cache with a clear action, the browser says where its own cache lives, and saved areas are measured and never offer a clear. */
 import React, { act } from "react";
 (globalThis as Record<string, unknown>).React = React;
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
@@ -35,13 +35,17 @@ function serve(storageStatus = 200) {
 }
 
 /** The desktop bridge: the cache starts at 4 MB; clearing empties it. */
-function desktop({ failClear = false } = {}) {
+function desktop({ failClear = false, failMeasure = false } = {}) {
 	const calls = { clear: 0 };
 	let cache = 4 * 1024 * 1024;
 	window.lh = {
 		expandWindow() {},
 		storage: {
-			cacheSize: async () => cache,
+			// An older desktop shell has no handler for this channel.
+			cacheSize: async () => {
+				if (failMeasure) throw new Error("No handler registered for 'lh:storage:cache-size'");
+				return cache;
+			},
 			clearCache: async () => {
 				calls.clear++;
 				if (failClear) throw new Error("raw diagnostics");
@@ -92,11 +96,22 @@ afterEach(async () => {
 });
 
 describe("Storage section", () => {
-	it("server render shows the browser cache and a measuring line, with no clear control", () => {
+	it("server render shows the browser cache and the three saved rows, with no clear control", () => {
 		const html = renderToStaticMarkup(<StorageSection />);
 		assert.ok(html.includes("Browser cache"));
 		assert.ok(!html.includes("storage-clear-cache"));
+		for (const id of ["clips", "progress", "backups"]) assert.ok(html.includes(`data-testid="storage-row-${id}"`));
 		assert.ok(html.includes("Measuring…"));
+	});
+
+	it("draws the three saved rows before the measure lands, so nothing shifts when it does", async () => {
+		globalThis.fetch = (() => new Promise(() => {})) as typeof fetch;
+		const host = await mount(<StorageSection />);
+		await settle();
+		for (const id of ["clips", "progress", "backups"]) {
+			assert.ok(q(host, `storage-row-${id}`));
+			assert.equal(q(host, `storage-size-${id}`)!.textContent, "…");
+		}
 	});
 
 	it("web: says where the browser cache lives, offers no clear, and measures the saved areas (empty backups say Empty)", async () => {
@@ -134,9 +149,20 @@ describe("Storage section", () => {
 		await click(q(host, "storage-clear-cache"));
 		await settle();
 		assert.equal(q(host, "storage-notice")!.getAttribute("role"), "alert");
-		assert.equal(q(host, "storage-notice")!.textContent, "Couldn’t clear the cache. Try again.");
+		assert.equal(q(host, "storage-notice")!.textContent, "Couldn’t clear the cache. Restart LangHarness and try again.");
 		assert.equal(q(host, "storage-cache-size")!.textContent, "4.0 MB");
 		assert.ok(!host.textContent!.includes("raw diagnostics"));
+	});
+
+	it("a bridge that cannot measure says to restart, offers no clear, and keeps the saved areas", async () => {
+		serve();
+		desktop({ failMeasure: true });
+		const host = await mount(<StorageSection />);
+		await settle();
+		assert.equal(q(host, "storage-cache-size")!.textContent, "Unavailable");
+		assert.ok(host.textContent!.includes("Restart LangHarness to measure and clear the app cache."));
+		assert.ok(q(host, "storage-clear-cache")!.hasAttribute("disabled"));
+		assert.equal(q(host, "storage-size-clips")!.textContent, "210 MB");
 	});
 
 	it("a failed measurement says so in the saved group", async () => {
@@ -146,13 +172,13 @@ describe("Storage section", () => {
 		assert.equal(q(host, "storage-saved")!.querySelector("[role='alert']")!.textContent, "Couldn’t measure storage. Refresh to try again.");
 	});
 
-	it("the settings dialog opens Storage from its nav, between General and Reset", async () => {
+	it("the settings dialog opens Data from its nav, with the storage rows", async () => {
 		serve();
 		const host = await mount(<SettingsDialogBody initialSection="general" onClose={() => {}} />);
 		await settle();
-		await click(q(host, "settings-nav-storage"));
+		await click(q(host, "settings-nav-data"));
 		await settle();
-		assert.equal(q(host, "settings-nav-storage")!.getAttribute("aria-current"), "true");
+		assert.equal(q(host, "settings-nav-data")!.getAttribute("aria-current"), "true");
 		assert.ok(q(host, "section-storage"));
 		assert.ok(q(host, "storage-row-clips"));
 	});

@@ -1,33 +1,16 @@
 "use client";
 /**
- * The Appearance + Graph sections (thin settings wave).
+ * The Appearance and Graph sections.
  *
- * Appearance controls resolve against the factory in the provider; writes
- * PUT the whole appearance section and hand the delta back so the CSS
- * variables move IMMEDIATELY (the section's whole point — it must DO
- * something). Hex inputs commit on blur/Enter; the background derives the
- * raised/accent/edge palette in code (components/settings/appearance.tsx).
- * Mode is dark-only this wave: control rendered DISABLED with a note — the
- * light palette is the design wave's work, and a lying control is worse
- * than an honest disabled one.
+ * Appearance writes PUT the whole section and hand the delta back, so the CSS
+ * variables move at once. Hex inputs commit on blur or Enter. Mode is dark only,
+ * so it shows as a disabled fact rather than a control that does nothing.
  *
- * Graph graying (owner, 2026-09-20) follows the graph viewer's render-panel
- * convention: the whole row dims when a parent is off (stored values
- * persist but resolve inert — the switch shows stored, the dim effective).
+ * The reading font lists installed families via window.queryLocalFonts in the
+ * desktop shell. In a plain browser the API is absent: a curated list shows,
+ * with a footer saying so. Never a fabricated system list.
  *
- * Reading font (appearance wave, 2026-09-26, owner ruling): a searchable
- * dropdown of the user's INSTALLED fonts (FontMenuList over model-menu's
- * machine) fed by window.queryLocalFonts() in the desktop shell — the
- * enumeration is click-bound (the API requires user activation), deduped
- * to unique families, the factory family excluded (the DEFAULT row is
- * it). In a plain dev browser the API is absent → a small curated list
- * + a footer that says exactly that — never a fabricated system list.
- * The custom-family input inside the menu is the manual escape path.
- * Empty/unset keeps meaning Source Sans 3.
- *
- * Emphasis inks (same wave): the factory tokens default to the regular
- * text color now (globals.css); the rows' empty-state labels say "same
- * as text".
+ * Graph rows dim when a parent is off; stored values persist but resolve inert.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -41,17 +24,14 @@ import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
 import { useAppearance } from "./appearance.tsx";
 import { FontMenuList } from "./model-menu";
-import { CommitInput, SettingsRow, ThinSelect, Toggle } from "./controls.tsx";
+import { CommitInput, SettingsDisclosure, SettingsRow, Toggle } from "./controls.tsx";
 
-/** The factory reading family — the DEFAULT row's identity (unset =
- *  this). Exported for tests. */
+/** Factory reading family. Unset means this. */
 export const DEFAULT_READING_FONT = "Source Sans 3";
+/** Factory dark background. A set colour must not read as the default. */
+const FACTORY_BACKGROUND = "#141414";
 
-/** The dev-browser fallback list (queryLocalFonts is absent there):
- *  the app's own knowns plus a handful of ubiquitous macOS families,
- *  honestly LABELED as common — never presented as the system's real
- *  list. The factory family is absent: the DEFAULT row is it. Exported
- *  for tests. */
+/** Dev-browser fallback when queryLocalFonts is absent. Labelled as common families, never as the system list. */
 export const CURATED_FALLBACK_FONTS: readonly string[] = [
 	"Arial",
 	"CMU Serif",
@@ -70,16 +50,13 @@ export const CURATED_FALLBACK_FONTS: readonly string[] = [
  *  caller dedupes). */
 type LocalFontsApi = () => Promise<Array<{ family: string }>>;
 
-/** The Local Font Access seam — read lazily (SSR has no window, and
- *  render-time access would evaluate the API on the server). */
+/** Read lazily: SSR has no window. */
 function localFontsApi(): LocalFontsApi | null {
 	if (typeof window === "undefined") return null;
 	return (window as unknown as { queryLocalFonts?: LocalFontsApi }).queryLocalFonts ?? null;
 }
 
-/** Compose the reading-font pick: null (or blank) = the factory
- *  Source Sans 3; otherwise the family verbatim (trimmed — the
- *  sanitizer trims again server-side). Pure — exported for tests. */
+/** null or blank = the factory Source Sans 3; otherwise the trimmed family. */
 export function composeFontFamily(
 	appearance: AppearanceSettings | undefined,
 	family: string | null,
@@ -100,24 +77,15 @@ export function AppearanceSection({
 	const { appearance: resolved } = useAppearance();
 	const md = appearance?.mdRendering;
 
-	// The font dropdown's open state + its enumeration cache. undefined =
-	// not enumerated yet (desktop: click-bound queryLocalFonts pending);
-	// null = enumeration UNAVAILABLE (the API is absent in a plain
-	// browser, rejected, or resolved EMPTY — Electron 44's local-fonts
-	// grant passes and the enumeration still yields zero fonts,
-	// reproduced 2026-09-26) → the curated fallback; a list = the deduped
-	// families. enumEmpty distinguishes WHY it fell back, for the footer.
+	// Font enumeration cache: undefined = not enumerated yet; null = unavailable (absent, rejected or empty), so the curated list shows; a list = deduped families.
+	// enumEmpty records why it fell back, for the footer.
 	const [fontMenuOpen, setFontMenuOpen] = useState(false);
 	const [localFonts, setLocalFonts] = useState<string[] | null | undefined>(undefined);
 	const [enumEmpty, setEnumEmpty] = useState(false);
 	const menuAnchorRef = useRef<HTMLSpanElement>(null);
 
-	// The enumeration runs INSIDE the trigger click — queryLocalFonts
-	// requires user activation, so it cannot be a mount effect. First
-	// open only: the families are cached for the section's life (font
-	// installs mid-dialog are not a case); ANY unavailable enumeration
-	// (absent / rejected / empty) falls back to the curated list rather
-	// than an empty picker.
+	// Enumeration runs inside the trigger click, since queryLocalFonts needs user activation.
+	// It runs once and is cached; any unavailable result falls back to the curated list.
 	const openFontMenu = () => {
 		setFontMenuOpen((open) => {
 			if (!open && localFonts === undefined) {
@@ -132,9 +100,7 @@ export function AppearanceSection({
 								.filter((f) => f !== DEFAULT_READING_FONT)
 								.sort((a, b) => a.localeCompare(b));
 							if (families.length === 0) {
-								// Resolved-but-empty: not a failure the catch sees —
-								// an honest unavailable (this Electron 44 build
-								// enumerates nothing even granted).
+								// Resolved but empty counts as unavailable (Electron 44 lists nothing even when granted).
 								setLocalFonts(null);
 								setEnumEmpty(true);
 							} else {
@@ -156,9 +122,7 @@ export function AppearanceSection({
 		onSectionChange(composeFontFamily(appearance, family));
 	};
 
-	// The dropdown contract (agent-section's, mirrored): any click
-	// outside the open menu — or an Esc — closes it. Esc is CLAIMED with
-	// stopPropagation so the settings dialog behind does NOT also close.
+	// Any click outside the open menu, or Esc, closes it. Esc stops propagation so the dialog stays open.
 	useEffect(() => {
 		if (!fontMenuOpen) return;
 		const onPointerDown = (e: PointerEvent) => {
@@ -186,23 +150,11 @@ export function AppearanceSection({
 
 	return (
 		<>
-			<SettingsRow label="Mode" hint="Coming soon" testid="row-mode" dimmed>
-				<ThinSelect value="dark" ariaLabel="mode" onChange={() => {}} testid="select-mode" disabled>
-					<option value="dark">Dark</option>
-				</ThinSelect>
-			</SettingsRow>
-			<SettingsRow
-				label="Background"
-				hint={`Empty = ${resolved.background ?? "#141414"}`}
-				testid="row-background"
-			>
-				<CommitInput
-					value={appearance?.background ?? ""}
-					placeholder="#141414"
-					ariaLabel="background hex"
-					testid="input-background"
-					onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
-				/>
+			{/* Only the dark theme exists yet, so this is a fact, not a control. */}
+			<SettingsRow label="Mode" hint="Light mode is coming soon" testid="row-mode">
+				<span className="font-ui text-sm text-muted-foreground" data-testid="mode-value">
+					Dark
+				</span>
 			</SettingsRow>
 			<SettingsRow
 				label="Reading font"
@@ -210,14 +162,7 @@ export function AppearanceSection({
 				testid="row-font"
 			>
 				<span ref={fontMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
-					{/* The MenuTrigger look (agent-section's collapsed
-					    select — it lives unexported there, so the
-					    classes ride inline; the searchable machine is
-					    the shared part). The tooltip rides the CLOSED
-					    button ONLY (owner ruling 2026-09-26: never while
-					    the dropdown is out — it popped over the open
-					    menu when the wrap covered the whole anchor
-					    span). */}
+					{/* Trigger styled like agent-section's MenuTrigger (unexported there). The tooltip shows on the closed button only. */}
 					{(() => {
 						const triggerButton = (
 							<button
@@ -275,9 +220,7 @@ export function AppearanceSection({
 					ariaLabel="prose font size"
 					testid="input-prose-size"
 					onCommit={(v) => {
-						// Empty = factory default (owner, fix wave): omit the key so the record
-						// UNSETS and the field stays empty (absence, not null, is the
-						// unset for numbers). Number("") is 0, so the old clamp wrote 12.
+						// Empty = factory default: omit the key. Absence is the unset for numbers; Number("") is 0.
 						if (v === "") {
 							onSectionChange({ ...appearance, proseFontSize: undefined });
 							return;
@@ -295,6 +238,24 @@ export function AppearanceSection({
 					onChange={(on) => onSectionChange({ ...appearance, sessionNameSerif: on })}
 				/>
 			</SettingsRow>
+			<SettingsDisclosure
+				label="Advanced"
+				hint="Colors and weights. Empty = the built-in look."
+				testid="advanced-appearance"
+			>
+			<SettingsRow
+				label="Background color"
+				hint={`Empty = ${FACTORY_BACKGROUND}`}
+				testid="row-background"
+			>
+				<CommitInput
+					value={appearance?.background ?? ""}
+					placeholder={FACTORY_BACKGROUND}
+					ariaLabel="background hex"
+					testid="input-background"
+					onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
+				/>
+			</SettingsRow>
 			<SettingsRow label="Heading weight" hint={`${resolved.mdRendering.headingWeight}`} testid="row-heading-weight">
 				<CommitInput
 					type="number"
@@ -303,8 +264,7 @@ export function AppearanceSection({
 					ariaLabel="heading weight"
 					testid="input-heading-weight"
 					onCommit={(v) => {
-						// Empty = factory default (owner, fix wave): Number("") is 0, so
-						// Absence is the unset representation — the old clamp wrote 100.
+						// Empty = factory default: absence is the unset representation (Number("") is 0).
 						if (v === "") {
 							onSectionChange({ ...appearance, mdRendering: { ...md, headingWeight: undefined } });
 							return;
@@ -318,9 +278,7 @@ export function AppearanceSection({
 					}}
 				/>
 			</SettingsRow>
-			{/* The emphasis inks default to the REGULAR TEXT COLOR now
-			    (appearance wave, 2026-09-26) — the empty-state labels say
-			    so; explicit hex overrides ride unchanged. */}
+			{/* Emphasis inks default to the regular text colour; the empty-state labels say so. */}
 			<SettingsRow label="Bold color" hint="Empty = same as text" testid="row-bold-color">
 				<CommitInput
 					value={md?.boldColor ?? ""}
@@ -339,6 +297,7 @@ export function AppearanceSection({
 					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, italicColor: v === "" ? null : v } })}
 				/>
 			</SettingsRow>
+			</SettingsDisclosure>
 		</>
 	);
 }
@@ -350,52 +309,44 @@ export function GraphSection({
 	graph: GraphSettings | undefined;
 	onSectionChange: (next: GraphSettings) => void;
 }) {
-	// Wave 7 collapse (owner ruling 2026-09-23): the section is the MASTER
-	// SWITCH — the embedding/clustering/labeling rungs are gone; clustering
-	// is the free birth-session partition derived on read, labels ARE session
-	// names. The chunk budget (2026-10-02) joined it as the section's second
-	// and only other control: it denominates the coverage ring AND gates the
-	// auto-extraction trigger (turn settle ≥ budget fires the run).
+	// The section holds the extraction master switch and the chunk budget. The budget sets the coverage ring
+	// and gates the auto-extraction trigger (turn settle >= budget fires a run).
 	//
-	// Resolved through the SAME core resolver the server's effective
-	// settings use (one source of truth, the 4096-fallback fix 2026-10-02):
-	// the hint and placeholder report exactly the number the trigger waits
-	// for — never a second hand-rolled default.
+	// Resolved through the same core resolver as the server, so the hint reports the number the trigger uses.
 	const resolved = resolveSettings(graph === undefined ? null : { version: 1, graph }).graph;
+	// The hint's "Default" is the factory budget; `resolved` is the stored one when set.
+	const factoryChunk = resolveSettings(null).graph.extractionChunkTokens;
 	return (
 		<>
-			{/* EXTRACTION (renamed, owner 2026-10-06): this switch is the DATA
-			    channel — the pipeline, the auditor, the prober's graph tools. It
-			    was born labeled "Graph" and that label lied once the rendering
-			    switch below arrived: off ≠ no graph, off = the graph stops
-			    growing. The testid keeps the old name's shape (row-enabled) so
-			    this stays one rename, not a test re-pin. */}
-			<SettingsRow label="Extraction" hint="Off = the graph stops growing" testid="graph-row-enabled">
+			{/* Extraction: the data channel (pipeline, auditor, prober's graph tools). Off means the map stops growing. */}
+			<SettingsRow label="Keep building the map" hint="Off = the map stops growing" testid="graph-row-enabled">
 				<Toggle
 					checked={graph?.enabled ?? true}
-					label="extraction enabled"
+					label="Keep building the map"
+					testid="toggle-extraction-enabled"
 					onChange={(on) =>
-						// Compose, never replace-whole (the section PUT is, but the
-					// row must not drop its sibling field — fixed with the budget
-					// row's arrival: the old { enabled: on } wiped a stored budget).
+						// Spread the stored section so the sibling chunk budget survives.
 						onSectionChange({ ...graph, enabled: on })
 					}
 				/>
 			</SettingsRow>
-			{/* GRAPH RENDERING (owner, 2026-10-06 — the release graph-controls
-			    round): display-only. Off = the home shows the chains view
-			    instead of the canvas. The ledgers, the pipeline, everything
-			    data keeps working — that is the extraction switch above. */}
-			<SettingsRow label="Graph rendering" hint="Off = home shows the chains view" testid="graph-row-rendering">
+			{/* Rendering is display only. Off shows the chains view on home; data work keeps running. */}
+			<SettingsRow label="Show the map on home" hint="Off = home shows the chains view instead" testid="graph-row-rendering">
 				<Toggle
 					checked={graph?.rendering ?? true}
-					label="graph rendering enabled"
+					label="Show the map on home"
+					testid="toggle-graph-rendering-enabled"
 					onChange={(on) => onSectionChange({ ...graph, rendering: on })}
 				/>
 			</SettingsRow>
+			<SettingsDisclosure
+				label="Advanced"
+				hint="How much conversation each map update reads. Empty = the built-in size."
+				testid="advanced-graph"
+			>
 			<SettingsRow
-				label="Extraction chunk budget"
-				hint={`${resolved.extractionChunkTokens} tok`}
+				label="Map update size"
+				hint={`Tokens of conversation per update. Default ${factoryChunk.toLocaleString("en-GB")}.`}
 				testid="graph-row-chunk-tokens"
 			>
 				<CommitInput
@@ -405,17 +356,14 @@ export function GraphSection({
 					ariaLabel="extraction chunk budget"
 					testid="input-chunk-tokens"
 					onCommit={(v) => {
-						// Empty = factory default (the fix-wave discipline): absence is
-						// the unset for numbers — Number("") is 0, so clamping would
-						// write the floor instead of unsetting.
+						// Empty = factory default. Absence is the unset for numbers; Number("") is 0.
 						if (v === "") {
 							onSectionChange({ ...graph, extractionChunkTokens: undefined });
 							return;
 						}
 						const n = Number(v);
 						if (!Number.isFinite(n) || n <= 0) return; // bad input: no write
-						// Mirror the server sanitize exactly: floor only (cost
-						// protection), no ceiling — a big budget is the user's call.
+						// Mirror the server: floor only (cost protection), no ceiling.
 						onSectionChange({
 							...graph,
 							extractionChunkTokens: Math.max(EXTRACTION_CHUNK_TOKENS_FLOOR, Math.round(n)),
@@ -423,6 +371,7 @@ export function GraphSection({
 					}}
 				/>
 			</SettingsRow>
+			</SettingsDisclosure>
 		</>
 	);
 }

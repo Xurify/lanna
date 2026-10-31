@@ -1,11 +1,8 @@
 "use client";
 /**
- * Settings → Learner (2026-10-28): the languages you know and the one the
- * tutor explains in, changeable without re-running the setup. Each click
- * saves (PUT /api/progress {goal}); the rest of the profile (what Slovak
- * is for, the level, the time) still lives in the setup, one link away.
- * Xurify: "I still would like the ability to choose other languages that
- * I know because sometimes I do want to see the Estonian way".
+ * Settings → Learning: the languages you know and the one the tutor explains
+ * in, changeable without re-running setup. Each click saves (PUT /api/progress
+ * {goal}). The rest of the profile lives in setup, one link away.
  */
 
 import { useEffect, useState } from "react";
@@ -67,7 +64,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 			<SettingsGroup label="Parallels from my languages" testid="learner-parallels">
 				<div className="flex items-center justify-between gap-4 py-1">
 					<span className="font-prose text-(length:--lh-prose-size)" data-testid="parallels-line">
-						{parallelsLine(state).replace(/ You can turn it off in Settings → Learner\.$/, "")}
+						{parallelsLine(state).replace(/ You can turn it off in Settings → Learning\.$/, "")}
 					</span>
 					<Toggle checked={state.showParallels} onChange={(showParallels) => void save({ ...state, showParallels })} label="Show parallels from my languages" />
 				</div>
@@ -76,10 +73,10 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 				<PickSome items={explainChoices(state.languages)} value={state.explainIn} onChange={(explainIn) => void save({ ...state, explainIn })} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
 				<p className="text-xs text-muted-foreground">Up to {MAX_EXPLAIN}: the tutor explains in the first and adds the key line and the terms in the second. Lesson rules stay in English for now.</p>
 			</SettingsGroup>
-			<SettingsGroup label="Goal, level and time" testid="learner-goal">
+			<SettingsGroup label="Goal and level" testid="learner-goal">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
-					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">What Slovak is for, the target level and minutes a day, or where you stand now.</span>
-					<span className="flex shrink-0 flex-wrap gap-2">
+					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">Your pace lives on the plan. The purposes, the target and your starting level live in setup.</span>
+					<span className="flex min-w-0 flex-wrap gap-2">
 						{[
 							{ id: "learner-open-plan", href: "/plan", label: "Open plan" },
 							{ id: "learner-open-setup", href: "/start?edit=1", label: "Open setup" },

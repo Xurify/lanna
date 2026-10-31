@@ -11,7 +11,7 @@ const clone = (value) => value === undefined ? undefined : JSON.parse(JSON.strin
 const MESSAGES = {
 	storage: "The saved connection could not be read or written safely. Reopen the app or reconnect after resolving the credential-file problem.",
 	login: "Sign-in did not complete. Try connecting again.",
-	refresh: "The connection could not be refreshed. Retry or reconnect in Providers.",
+	refresh: "The connection could not be refreshed. Retry or reconnect in Settings → Keys.",
 	cancel: "Sign-in cancelled.",
 	unavailable: "This subscription connection is unavailable. Reconnect or explicitly choose another connection.",
 	background: "Background use is off for this connection. Automatic follow-up remains deferred in its queue.",
@@ -19,13 +19,11 @@ const MESSAGES = {
 	interaction: "This sign-in action is no longer available.",
 };
 function publicError(error) { return MESSAGES[error?.code] ?? MESSAGES.unavailable; }
-/** Resolve the SAME SDK installation as the standalone server, through public exports. */
+/** Resolve the SDK the standalone server uses, through public exports. */
 async function loadSubscriptionSDK(baseDirectory) {
 	const resolve = createRequire(path.join(baseDirectory, "package.json"));
 	const load = (id) => {
-		// Pi exports are import-only. Resolve the public export with ESM
-		// conditions, then remove this synchronous, exact-specifier hook
-		// BEFORE evaluation; no private package path or global hook remains.
+		// Pi exports are import-only: resolve with ESM conditions, and remove the hook before evaluation.
 		const hook = registerHooks({ resolve(specifier, context, next) {
 			return next(specifier, specifier === id ? { ...context, conditions: [...context.conditions, "import"] } : context);
 		} });
@@ -108,9 +106,7 @@ function createSubscriptions(options) {
 					modify: (id, fn, operation) => serialized(entry, async () => {
 						if (id !== entry.providerId || entry.fatal || closed || paused || operation?.signal?.aborted) throw failure("unavailable");
 						const next = await fn(clone(entry.state.credential));
-						// A returned rotation must be saved even if the app paused while
-						// refresh was in flight. Admission is rechecked after resolution;
-						// queued logout deletes only after this serialized durable write.
+						// A returned rotation is saved even if paused mid-refresh; logout deletes only after this write.
 						if (next !== undefined && JSON.stringify(next) !== JSON.stringify(entry.state.credential)) {
 							try { validateCredential(id, next); } catch { storageFailed(entry); throw failure("storage"); }
 							await save(entry, { ...entry.state, credential: next });

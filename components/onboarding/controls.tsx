@@ -1,21 +1,21 @@
 "use client";
 
 /**
- * The setup's own controls (LangHarness onboarding, 2026-10-28): chips for
- * a short choice, a stepper for a number. No native <select>: the app's
- * surfaces are its own (Xurify, 2026-10-28), and a select's popup is the
- * browser's, not ours. Everything is keyboard-reachable: chips are
- * buttons with aria-pressed, the stepper is a real number input.
+ * Setup controls: chips for a short choice, a stepper for a number. No native
+ * <select>, since its popup is styled by the browser. Chips are buttons with
+ * aria-pressed, and the stepper is a real number input.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LANG_LEVEL, KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
+import { MenuShell, type MenuAlign } from "@/components/menu-shell";
+import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors";
 const ON = "border-go bg-go/10 text-foreground";
 const OFF = "border-border text-muted-foreground hover:border-foreground/40";
+const PANEL = "flex w-[22rem] max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-border bg-card p-3 shadow-xl";
 
 /** One of a few: a row of chips, one pressed. */
 export function Chips<T extends string | number>({
@@ -42,12 +42,7 @@ export function Chips<T extends string | number>({
 	);
 }
 
-/**
- * A number with quick picks and free entry: the chips for the usual
- * values, a stepper for anything else (a power learner's three hours a
- * day is a real plan, not an outlier — the cap is 600 minutes). The
- * stepper's field is the app's own input; − and + move by `step`.
- */
+/** Quick-pick chips plus a free-entry stepper for values outside the quick list. − and + move by `step`. */
 export function NumberPicker({
 	value,
 	onChange,
@@ -112,13 +107,9 @@ export function NumberPicker({
 }
 
 /**
- * The languages the learner knows. Twenty as chips (the catalogue's
- * `primary` ones), any number pressed; everything else behind "More
- * languages", a searchable panel of the app's own (no native select, no
- * free text: Xurify, 2026-10-28). A chosen language from the panel joins
- * the chip row. Under the row, one line per chosen language says how well
- * it is known, three taps wide, so "know" has a meaning: a bit, comfortable,
- * fluent.
+ * Languages the learner knows: the primary ones as chips, the rest in a
+ * searchable "More languages" panel. A language picked in the panel joins the
+ * chip row. Each chosen language gets a three-step level row (CEFR).
  */
 export function LanguagePicker({
 	value,
@@ -131,40 +122,47 @@ export function LanguagePicker({
 	onChange: (langs: Lang[], levels: Partial<Record<Lang, LangLevel>>) => void;
 	testid?: string;
 }) {
-	// The panel works on a copy: nothing outside it (the chip row, the level
-	// rows, the explanation chips) moves until it closes, so the panel never
-	// slides out from under the pointer (Xurify: content shift on every pick).
+	// The panel edits a copy, so the chip row and level rows stay put until it closes.
 	const [pending, setPending] = useState<Lang[] | null>(null);
 	const [query, setQuery] = useState("");
+	const [align, setAlign] = useState<MenuAlign>("right");
 	const more = pending !== null;
 	const anchor = useRef<HTMLSpanElement>(null);
 	const chosen = pending ?? value;
-	const prune = (langs: readonly Lang[]) => {
+	// A language has a level only once the learner presses one. Until then the tutor reads DEFAULT_LANG_LEVEL.
+	const levelsFor = (langs: readonly Lang[]) => {
 		const next: Partial<Record<Lang, LangLevel>> = {};
 		for (const l of langs) if (levels[l]) next[l] = levels[l];
 		return next;
 	};
 	const toggle = (id: Lang) => {
-		if (value.includes(id)) return onChange(value.filter((l) => l !== id), prune(value.filter((l) => l !== id)));
+		if (value.includes(id)) return onChange(value.filter((l) => l !== id), levelsFor(value.filter((l) => l !== id)));
 		if (value.length >= MAX_LANGUAGES) return;
-		onChange([...value, id], { ...levels });
+		onChange([...value, id], levelsFor([...value, id]));
 	};
 	const togglePending = (id: Lang) => setPending((p) => (p ? (p.includes(id) ? p.filter((l) => l !== id) : p.length >= MAX_LANGUAGES ? p : [...p, id]) : p));
 	const setLevel = (id: Lang, level: LangLevel) => onChange([...value], { ...levels, [id]: level });
-	const open = () => (setQuery(""), setPending([...value]));
+	// The panel lines up with the More button on the side that has room: the button sits at the end of a wrapping row.
+	const open = () => {
+		const rect = anchor.current?.getBoundingClientRect();
+		setAlign(rect && rect.left + rect.width / 2 < window.innerWidth / 2 ? "left" : "right");
+		setQuery("");
+		setPending([...value]);
+	};
 	const close = () => {
-		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l))) onChange(pending, prune(pending));
+		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l))) onChange(pending, levelsFor(pending));
 		setPending(null);
 		setQuery("");
 	};
-	// Close on a press anywhere outside the chip and panel (the page margins
-	// included) or on Escape. A backdrop element cannot do this: the step
-	// animates with a transform, which pins a fixed child to the form column
-	// (Xurify, 2026-10-28: "I click on the sides and the dropdown won't close").
+	// Close on a press outside the chip and panel, or on Escape. A backdrop element
+	// can't do this: the step's transform pins a fixed child to the form column.
+	// The panel is portaled (MenuShell), so a press inside it is matched by test id.
 	useEffect(() => {
 		if (!more) return;
 		const onDown = (e: PointerEvent) => {
-			if (!anchor.current?.contains(e.target as Node)) close();
+			const target = e.target as Node;
+			const panel = document.querySelector(`[data-testid="${testid}-panel"]`);
+			if (!anchor.current?.contains(target) && !panel?.contains(target)) close();
 		};
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") close();
@@ -191,28 +189,26 @@ export function LanguagePicker({
 						</button>
 					);
 				})}
-				<span className="relative" ref={anchor}>
+				<span ref={anchor}>
 					<button type="button" aria-expanded={more} onClick={() => (more ? close() : open())} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm", more && "border-foreground/40 text-foreground")} data-testid={`${testid}-more`}>
 						<SearchIcon className="-ml-0.5 mr-1.5 inline size-3.5" />
 						More languages
 					</button>
 					{more && (
-						<>
-							<div className="absolute left-0 top-full z-20 mt-2 w-[22rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-border bg-card p-3 shadow-xl" role="dialog" aria-label="More languages" data-testid={`${testid}-panel`}>
+						<MenuShell anchorRef={anchor} preferredSide="down" align={align} testid={`${testid}-panel`} menuClass={PANEL}>
+							<div role="dialog" aria-label="More languages" className="flex min-h-0 flex-1 flex-col" onKeyDown={(e) => e.key === "Escape" && (e.preventDefault(), e.stopPropagation(), close())}>
 								<input
-									autoFocus
 									value={query}
 									onChange={(e) => setQuery(e.target.value)}
 									onKeyDown={(e) => {
-										if (e.key === "Escape") (e.preventDefault(), close());
 										if (e.key === "Enter" && found[0]) (e.preventDefault(), togglePending(found[0].id));
 									}}
 									placeholder="Search languages"
 									aria-label="Search languages"
-									className="w-full rounded-xl border-2 border-border bg-background px-3 py-2 font-ui text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-go"
+									className="w-full shrink-0 rounded-xl border-2 border-border bg-background px-3 py-2 font-ui text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-go"
 									data-testid={`${testid}-search`}
 								/>
-								<div className="mt-2 grid max-h-64 grid-cols-2 gap-1 overflow-y-auto pr-1">
+								<div className="mt-2 grid max-h-64 min-h-0 flex-1 grid-cols-2 content-start gap-1 overflow-y-auto pr-1">
 									{found.map((l) => {
 										const on = chosen.includes(l.id);
 										return (
@@ -224,7 +220,7 @@ export function LanguagePicker({
 									})}
 									{found.length === 0 && <p className="col-span-2 px-2 py-3 font-prose text-sm text-muted-foreground">Nothing by that name. Pick the nearest relative; the tutor adapts.</p>}
 								</div>
-								<div className="mt-2 flex items-center justify-between gap-3 border-t border-border/60 pt-2">
+								<div className="mt-2 flex shrink-0 items-center justify-between gap-3 border-t border-border/60 pt-2">
 									<span className="font-ui text-xs text-muted-foreground" aria-live="polite">
 										{added === 0 ? "Pick as many as you like" : `${added} to add`}
 									</span>
@@ -233,24 +229,29 @@ export function LanguagePicker({
 									</button>
 								</div>
 							</div>
-						</>
+						</MenuShell>
 					)}
 				</span>
 			</div>
 			{value.length > 0 && (
 				<div className="mt-4 flex flex-col gap-1.5" data-testid={`${testid}-levels`}>
 					{value.map((id) => {
-						const level = normalizeLangLevel(levels[id]) ?? DEFAULT_LANG_LEVEL; // a profile from before may still say "fluent"
+						const level = normalizeLangLevel(levels[id]); // none until pressed; a profile from before may still say "fluent"
 						return (
-							<div key={id} className="flex items-center gap-2" data-testid={`level-${id}`}>
+							<div key={id} className="flex flex-wrap items-center gap-x-2 gap-y-1" data-testid={`level-${id}`}>
 								<span className="w-28 shrink-0 truncate font-ui text-sm font-bold text-foreground">{languageName(id)}</span>
-								<span className="flex shrink-0 gap-1" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
+								<span className="flex min-w-0 flex-wrap gap-1" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
 									{LANG_LEVELS.map((lv) => (
 										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("whitespace-nowrap rounded-lg border-2 py-1 font-ui text-xs font-bold tabular-nums transition-colors", lv.id === "native" ? "px-2.5" : "px-2", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
 											{lv.title}
 										</button>
 									))}
 								</span>
+								{level === undefined && (
+									<span className="font-ui text-xs text-muted-foreground" data-testid={`level-${id}-unset`}>
+										Pick a level
+									</span>
+								)}
 								<button type="button" aria-label={`Remove ${languageName(id)}`} onClick={() => toggle(id)} className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
 									<XIcon className="size-3.5" />
 								</button>

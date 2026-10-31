@@ -1,15 +1,13 @@
 /**
- * Settings → Storage, server side: measure what the app keeps on this
- * computer. Read-only on purpose. The one thing the app clears is the desktop
- * shell's HTTP cache (electron/storage-ipc.cjs). Saved voice clips, learning
- * progress and backups are never cleared from Settings.
+ * Measures what the app keeps on this computer for Settings → Data. Read-only:
+ * saved voice clips, learning progress and backups are never cleared from Settings.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 import { LANGUAGES } from "../core/language.ts";
-import type { StorageArea, StorageReport } from "../core/storage.ts";
+import { STORAGE_AREAS, type StorageArea, type StorageReport } from "../core/storage.ts";
 import { BACKUPS_DIR } from "./reset.ts";
 
 /** Size and file count of everything under `dir`. A missing folder is empty. */
@@ -43,12 +41,8 @@ export async function measureTree(dir: string): Promise<{ bytes: number; files: 
 
 /** What the app keeps for the learner, measured now. */
 export async function storageReport(): Promise<StorageReport> {
-	const folders: { id: StorageArea["id"]; label: string; path: string }[] = [
-		{ id: "clips", label: "Voice clips", path: PATHS.audio },
-		{ id: "progress", label: "Learning progress", path: PATHS.data },
-		{ id: "backups", label: "Backups", path: BACKUPS_DIR },
-	];
+	const paths: Record<StorageArea["id"], string> = { clips: PATHS.audio, progress: PATHS.data, backups: BACKUPS_DIR };
 	const areas: StorageArea[] = [];
-	for (const folder of folders) areas.push({ ...folder, ...(await measureTree(folder.path)) });
+	for (const { id, label } of STORAGE_AREAS) areas.push({ id, label, path: paths[id], ...(await measureTree(paths[id])) });
 	return { language: LANGUAGES[ACTIVE_PROFILE].english, areas };
 }

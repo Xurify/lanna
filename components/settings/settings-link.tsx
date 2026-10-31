@@ -5,9 +5,9 @@
  * There is no settings page (the dialog is modal-only, settings-dialog.tsx),
  * so these open the dialog in place.
  *
- * Model setup lands on Providers while no provider key exists (the model
- * list only offers what keys unlock), else on Agent, where the model slots
- * are. `keys` always lands on Providers, for the speech-to-text keys.
+ * Model setup lands on Keys while no provider key exists (the model list
+ * only offers what keys unlock), else on Tutor, where the model slots are.
+ * `keys` always lands on Keys, for the speech-to-text keys.
  */
 
 import type { ReactNode } from "react";

@@ -22,10 +22,10 @@ const publicError = (err) => ({
 	storage: "ChatGPT credentials could not be read or saved. Check local file access, then reconnect before making requests.",
 	identity: "ChatGPT sign-in could not be verified. Select the intended saved account and try again.",
 	scope: "ChatGPT plan permission is missing. Reconnect and authorize ChatGPT plan use.",
-	disconnected: "This ChatGPT connection is disconnected. Reconnect in Providers.",
-	background: "ChatGPT background use is off in this app. Enable Allow background use for all ChatGPT accounts in Providers, or explicitly select an API-key model for that workload.",
+	disconnected: "This ChatGPT connection is disconnected. Reconnect in Settings → Keys.",
+	background: "ChatGPT background use is off in this app. Enable Allow background use for all ChatGPT accounts in Settings → Keys, or explicitly select an API-key model for that workload.",
 	catalog: "The ChatGPT account model catalog is unavailable. Retry the connection; no API-key fallback was used.",
-	expired: "The ChatGPT session expired. Reconnect in Providers.",
+	expired: "The ChatGPT session expired. Reconnect in Settings → Keys.",
 	network: "ChatGPT could not be reached. Check your connection and try again.",
 	pending: "A ChatGPT sign-in is already pending.",
 	unavailable: "ChatGPT sign-in is unavailable in browser-only mode.",
@@ -184,9 +184,7 @@ function createChatGPT({ store, openExternal, fetch: request = globalThis.fetch,
 			allowBackgroundUse: backgroundAllowed(),
 			activeId: state?.activeId ?? null,
 			accounts: accountGroups().map((members) => {
-				// Preserve the actual active registration ID at the private transport
-				// boundary; inactive groups prefer a usable registration, then a
-				// remembered one. No credential/client records are merged or deleted.
+				// Keep the active registration ID; inactive groups prefer a usable one. Records are never merged or deleted.
 				const r = members.find((r) => r.id === state.activeId) ?? members.find((r) => !r.reconnectRequired && planScopes(r.tokens)) ?? members[0];
 				return {
 					id: r.id,
@@ -194,8 +192,7 @@ function createChatGPT({ store, openExternal, fetch: request = globalThis.fetch,
 					registration: r.clientId,
 					connected: !storageDenied && !closed && !paused && !suspended && !r.reconnectRequired && planScopes(r.tokens),
 					planEnabled: !storageDenied && !r.reconnectRequired && planScopes(r.tokens),
-					// Recovery is authorization-only, not a response to storage failure
-					// or temporary transport suspension. Never infer it from error copy.
+					// Sign-in-again is for lost authorization only, never storage failure, pause, or error copy.
 					canSignInAgain: !storageDenied && !closed && !paused && (r.reconnectRequired === true || !planScopes(r.tokens)),
 				};
 			}),
@@ -487,8 +484,7 @@ function createChatGPT({ store, openExternal, fetch: request = globalThis.fetch,
 		return revoked;
 	}
 	async function disconnect(id) {
-		// Explicit local forgetting: a visible account represents every retained
-		// registration with this exact verified issuer/subject, never its email.
+		// A visible account stands for every registration with the same verified issuer and subject (never the email).
 		pending?.cancel();
 		const initial = state?.registrations.find((r) => r.id === id);
 		let stopped = !!initial && state.registrations.some((r) => r.id === state.activeId && sameAccount(r, initial));

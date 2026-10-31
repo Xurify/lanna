@@ -185,7 +185,9 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 	assert.equal(s.goal.explainIn, undefined);
 	assert.deepEqual(s.goal.languageLevels, { et: "native" }, "Russian's level left with it");
 	s = setGoal({ languageLevels: { et: "B2" } }, 0);
-	assert.equal(s.goal.languageLevels, undefined, "the default level is not stored");
+	assert.deepEqual(s.goal.languageLevels, { et: "B2" }, "a pressed level is stored, B2 too: the picker shows what is saved");
+	s = setGoal({ languages: ["et", "sv"] }, 0);
+	assert.deepEqual(s.goal.languageLevels, { et: "B2" }, "a language added with no level stays unset");
 	s = setGoal({ languages: ["et"], explainIn: ["en"] }, 0);
 	assert.equal(s.goal.explainIn, undefined, "English alone is the default, not stored");
 	s = setGoal({ languages: ["et", "ru"], explainIn: ["ru"] }, 0);

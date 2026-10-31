@@ -96,7 +96,7 @@ declare global {
 			checkForUpdates?: () => Promise<void>;
 			installUpdate?: () => void;
 			onOpenSettings?: (cb: (section: string) => void) => () => void;
-			/** Settings → Storage: the desktop HTTP cache in bytes; clearCache resolves with the size after. */
+			/** Settings → Data: the desktop HTTP cache in bytes; clearCache resolves with the size after. */
 			storage?: {
 				cacheSize: () => Promise<number>;
 				clearCache: () => Promise<number>;

@@ -1,29 +1,10 @@
 /**
- * Onboarding (LangHarness, 2026-10-28) — how the app learns what the
- * learner wants and where they stand, without a chat.
- *
- * Why: the first version asked for the goal and the level inside a paid
- * tutor session (a question card "What do you want Slovak for?", then
- * 5–15 graded questions). A 70-minute session spent 23 minutes on that.
- * It was slow, cost tokens, and still answered "why B1?" with a verdict
- * instead of evidence. Here the three things the plan needs are three
- * cheap, structured sources:
- *
- *   purposes  — what Slovak is FOR, picked from can-do sets that map onto
- *               the map's chapters, goals and Talk scenes; the target
- *               level is derived from them (and can be overridden)
- *   placement — a staircase drill of real lexicon sentences (tiers A1a,
- *               A1b, A2, B1; two reps per unit), climbed while the learner
- *               holds ≥75%; tested-out units are done, the chapters a
- *               passed tier covers are skipped, and the evidence (the
- *               sentences) is what the result screen shows
- *   the ledger — from then on the lesson screen measures continuously;
- *               "re-check my level" reruns the staircase from the current
- *               tier
- *
- * The tutor gets all of it as a compact profile block in its system
- * prompt (learnerProfileText), so a Learn session never has to ask.
- * Pure and browser-safe.
+ * Onboarding: how the app learns what the learner wants and where they stand, without a chat.
+ * Three structured sources feed the plan:
+ *   purposes  - what Slovak is for; derives the target level (overridable)
+ *   placement - a staircase drill of lexicon sentences; passed tiers skip their chapters
+ *   the ledger - lesson-screen measurements afterwards; "re-check my level" reruns the staircase
+ * The tutor reads all of it as a profile block (learnerProfileText). Pure and browser-safe.
  */
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
@@ -113,9 +94,7 @@ export const PURPOSES: PurposeInfo[] = [
 		scenes: ["cafe", "way", "family"],
 	},
 	{
-		// Xurify (2026-10-28): "There should be an Other which gives people an
-		// option to explain." The note goes to the tutor word for word; the
-		// level is the learner's own pick (A2 until they say otherwise).
+		// Free-text catch-all: the learner's note goes to the tutor verbatim.
 		id: "other",
 		title: "Something else",
 		blurb: "Say it in a sentence; the tutor reads it",
@@ -155,11 +134,7 @@ export function suggestedLevel(purposes: readonly Purpose[], examLevel?: Cefr): 
 	return best;
 }
 
-/** What each level buys in Slovak life, in plain words: the setup's target
- *  box, the hours sheet and Today share these so a learner who meets the
- *  CEFR here for the first time can still pick (Xurify, 2026-10-28:
- *  "How else will people generally know what they want"). Phrased from
- *  the CEFR Companion Volume (2020) global scale, made concrete. */
+/** What each level buys in Slovak life, in plain words. Based on the CEFR Companion Volume (2020). */
 export const LEVEL_CAN_DO: Record<Cefr, string> = {
 	A1: "Say hello, order a coffee, count, ask the way. Set phrases and a lot of pointing; people switch to English fast.",
 	A2: "Shop, book the doctor, say what you did today, get around town. Simple talk with people who slow down for you.",
@@ -173,9 +148,7 @@ export function purposeLevel(id: Purpose, examLevel?: Cefr): Cefr {
 	return id === "exam" && examLevel ? examLevel : purposeInfo(id).level;
 }
 
-/** How a target level fits the purposes: which it already covers, and
- *  which still need a higher one. "Something else" has no level and is
- *  left out. */
+/** Which purposes a level covers and which need a higher one. "Something else" is skipped. */
 export function levelFit(level: Cefr, purposes: readonly Purpose[], examLevel?: Cefr): { covered: Purpose[]; short: Array<{ purpose: Purpose; level: Cefr }> } {
 	const covered: Purpose[] = [];
 	const short: Array<{ purpose: Purpose; level: Cefr }> = [];
@@ -206,18 +179,13 @@ export function purposeGoals(purposes: readonly Purpose[]): Set<string> {
 	return new Set(purposes.flatMap((p) => purposeInfo(p).goals));
 }
 
-/** Talk scenes the purposes call for, deduplicated, in purpose order. */
 export function purposeScenes(purposes: readonly Purpose[]): string[] {
 	return [...new Set(purposes.flatMap((p) => purposeInfo(p).scenes))];
 }
 
 // ─── What the learner brings ────────────────────────────────────────────────
 
-/** A language the learner may know. The catalogue is what the setup
- *  offers: the `primary` twenty as chips, the rest behind a searchable
- *  panel (Xurify, 2026-10-28: no free text, more languages, good UX).
- *  Knowing a language is a bridge, so the lessons and the tutor draw on
- *  every one picked, weighted by how well it is known. */
+/** A language the learner may know. The `primary` ones are chips; the rest sit behind a searchable panel. */
 export type Lang =
 	| "et" | "fi" | "ru" | "de"
 	| "cs" | "pl" | "uk" | "sl" | "hr" | "bg"
@@ -234,9 +202,7 @@ export type Prior = "none" | "words" | "sentences" | "reading";
 export type BridgeLang = "et" | "fi" | "ru" | "de";
 export const BRIDGE_LANGS: readonly BridgeLang[] = ["et", "fi", "ru", "de"];
 
-/** How well a language is known, on the CEFR (A1 to C2) plus "native".
- *  "Know" on the screen means "you can read a simple text in it"; the
- *  level says how much weight the language carries in the lessons. */
+/** CEFR level (A1 to C2) or "native". Sets how much weight the language carries in lessons. */
 export type LangLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "native";
 export const LANG_LEVELS: ReadonlyArray<{ id: LangLevel; title: string; line: string }> = [
 	{ id: "A1", title: "A1", line: "A few words and set phrases" },
@@ -247,9 +213,10 @@ export const LANG_LEVELS: ReadonlyArray<{ id: LangLevel; title: string; line: st
 	{ id: "C2", title: "C2", line: "Everything, with ease; near native" },
 	{ id: "native", title: "Native", line: "I grew up with it" },
 ];
+/** Level assumed when none is saved. */
 export const DEFAULT_LANG_LEVEL: LangLevel = "B2";
 const LEVEL_RANK: Record<LangLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5, native: 6 };
-/** The three-step scale the setup used before 2026-10-28 night, read as CEFR. */
+/** Legacy three-step levels, read as CEFR. */
 const LEGACY_LEVEL: Record<string, LangLevel> = { basic: "A2", good: "B2", fluent: "native" };
 /** A level the learner still needs a hand with: lines in it stay short. */
 export function isLowLevel(level: LangLevel): boolean {
@@ -357,12 +324,10 @@ export function languageName(id: Lang): string {
 	return languageInfo(id).title;
 }
 
-/** Before 2026-10-28 evening the setup kept one first language and a few
- *  Slavic "bridges"; a profile written then is read as the same list. */
+/** Legacy profiles kept one first language. */
 const LEGACY_FIRST: Record<string, Lang | undefined> = { et: "et", en: "en" };
 
-/** Every language the learner knows, strongest first. A profile that never
- *  said (the app's first learner) reads as Estonian and English. */
+/** Every language the learner knows, strongest first. A profile that never said reads as Estonian and English. */
 export function knownLanguages(goal: Pick<LearnerGoal, "languages" | "firstLanguage" | "bridges"> | null | undefined): Lang[] {
 	if (goal?.languages) return goal.languages;
 	if (goal?.firstLanguage || goal?.bridges?.length) {
@@ -395,25 +360,17 @@ export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | un
 	return goal?.showParallels !== false;
 }
 
-/** The setup's and Settings' one-line explanation of parallels, in the
- *  learner's own languages: "Estonian, then Czech" rather than the fixed
- *  bridge set (Xurify, 2026-10-28: "Why are there other languages randomly
- *  appearing in the lesson?"). Only the languages the lessons have a line
- *  for are named, best-known first. */
+/** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. */
 export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): string {
 	const langs = bridgeLanguages(goal);
 	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 	const example = langs[0] === "et" ? "v meste ≈ linnas" : langs[0] === "fi" ? "v meste ≈ kaupungissa" : langs[0] === "ru" ? "v meste ≈ в городе" : "v meste ≈ in der Stadt";
-	return `When a Slovak rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learner.`;
+	return `When a Slovak rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learning.`;
 }
 
-/** The languages explanations come in, in order: the first carries the
- *  explanation, the second gets the key line and the terms (Xurify,
- *  2026-10-28: "the more I see the language(s) the more I can learn").
- *  English when nothing was chosen; a profile written when this was one
- *  string reads the same. */
+/** Explanation languages in order: the first carries the explanation, the second the key line and terms. English by default. */
 export function explanationLanguages(goal: Pick<LearnerGoal, "explainIn"> | null | undefined): Lang[] {
 	const raw = goal?.explainIn;
 	const list = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter(isLang);
@@ -433,37 +390,28 @@ export function isPrior(v: unknown): v is Prior {
 
 // ─── The learner's goal record ──────────────────────────────────────────────
 
-/** What progress.json keeps under `goal` (src/store/progress.ts). The
- *  first two fields predate onboarding; the rest is what the setup writes. */
+/** The goal record kept under `goal` in progress.json (src/store/progress.ts). */
 export interface LearnerGoal {
 	level: Cefr;
 	minutesPerDay: number;
 	daysPerWeek?: number;
 	purposes?: Purpose[];
-	/** The learner's own words for "other" (or anything the cards miss). */
+	/** The learner's own words for "other". */
 	purposeNote?: string;
-	/** Languages the learner knows (catalogue ids, strongest first) and any
-	 *  others as free text. `knownLanguages()` reads either shape. */
+	/** Languages the learner knows, strongest first. */
 	languages?: Lang[];
-	/** How well each of `languages` is known, as a CEFR level or "native";
-	 *  absent = DEFAULT_LANG_LEVEL. Profiles from before 2026-10-28 night may
-	 *  still hold "basic" | "good" | "fluent"; read them through languageLevel(). */
+	/** Level per language as the learner pressed it; absent = none pressed yet (the tutor reads DEFAULT_LANG_LEVEL). Legacy "basic" | "good" | "fluent" are read via languageLevel(). */
 	languageLevels?: Partial<Record<Lang, LangLevel>>;
-	/** @deprecated Free text from the 2026-10-28 afternoon setup; still read, no longer written. */
+	/** @deprecated Legacy free text; still read, no longer written. */
 	otherLanguages?: string[];
-	/** The languages the tutor explains in, up to MAX_EXPLAIN, first one
-	 *  leading; English unless chosen. (A single string from before
-	 *  2026-10-28 evening is read as a list of one.) */
+	/** Languages the tutor explains in, up to MAX_EXPLAIN; the first leads. A single string is read as a list of one. */
 	explainIn?: Lang[] | Lang;
-	/** @deprecated The setup before 2026-10-28 evening wrote these; read through `knownLanguages()`. */
+	/** @deprecated Legacy; read through `knownLanguages()`. */
 	firstLanguage?: string;
 	/** @deprecated See `firstLanguage`. */
 	bridges?: string[];
 	prior?: Prior;
-	/** Show parallels from the learner's languages (a Slovak rule next to
-	 *  the Estonian or Czech form it mirrors) in the Why? panel and the
-	 *  tutor's hints. Absent = on. Xurify (2026-10-28 06:06Z) found the
-	 *  parallels "unrelated", so they are one tap to turn off. */
+	/** Show parallels from the learner's languages in the Why? panel and tutor hints. Absent = on. */
 	showParallels?: boolean;
 	/** ISO time the setup was completed (or skipped). Absent = first run. */
 	onboardedAt?: string;
@@ -481,8 +429,7 @@ export interface LearnerGoal {
 }
 
 export const DEFAULT_DAYS_PER_WEEK = 6;
-/** Quick picks; the setup's stepper takes any number up to MAX_MINUTES
- *  (a power learner's three hours a day is a plan, not an outlier). */
+/** Quick picks; the stepper accepts any value up to MAX_MINUTES. */
 export const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60, 90, 120] as const;
 export const MAX_MINUTES = 600;
 
@@ -512,9 +459,7 @@ export interface PlacementTier {
 	chapters: string[];
 }
 
-/** Four tiers, each the grammar of a stretch of the map. A tier is
- *  passed at PASS_SHARE of its reps; the staircase stops at the first
- *  tier not passed, and the level found is the last tier passed. */
+/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
 export const PLACEMENT_TIERS: PlacementTier[] = [
 	{ id: "a1a", level: "A1", title: "First steps", units: ["words", "present", "acc-fem", "loc"], chapters: ["hello", "cafe", "town"] },
 	{ id: "a1b", level: "A1", title: "Everyday A1", units: ["acc-people", "gen", "ins", "past"], chapters: ["family", "everyday", "yesterday"] },
@@ -592,10 +537,7 @@ export function tierNeed(reps: number): number {
 }
 
 /**
- * Fold answered reps into the outcome. Pure: the server records it.
- * `from` is the tier a re-check started at: the tiers below it were not
- * asked and count as held (bug fixed 2026-10-28: a re-check from tier 2
- * used to score no tier at all and send the learner back to A1).
+ * Fold answered reps into the outcome. Pure. Tiers below `from` (a re-check start) were not asked and count as held.
  */
 export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: number } = {}): PlacementOutcome {
 	const from = Math.max(0, Math.min(PLACEMENT_TIERS.length - 1, opts.from ?? 0));
@@ -641,13 +583,7 @@ export function tierPassed(tier: PlacementTier, reps: readonly PlacementRep[]): 
 /** One more typed rep per unit when a tier lands on the line. */
 export const EXTRA_REPS_PER_UNIT = 1;
 
-/**
- * Is the tier's verdict a close call after its base reps — a hit either
- * side of the pass line (5 or 6 of 8)? Eight answers at 75% put a learner
- * who truly knows three in four through only two times in three; a third
- * rep per unit steepens the curve where it matters, and costs nothing
- * elsewhere.
- */
+/** Is the tier a close call after its base reps (one hit either side of the pass line)? If so, a third rep per unit is asked. */
 export function tierBorderline(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
 	const mine = reps.filter((r) => r.tier === tier.id);
 	const base = tier.units.length * REPS_PER_UNIT;
@@ -781,13 +717,7 @@ const PRIOR_LINE: Record<Prior, string> = {
 	reading: "started able to read some Slovak, with shaky endings",
 };
 
-/**
- * The learner, in ten lines, for the tutor's system prompt: what Slovak is
- * for, the target and the pace, the first language and the bridges, how
- * they started, what placement and the lessons have measured since. The
- * prober fragment tells the agent to treat this as the goal and the
- * level already found. Null when nothing is known yet (first run).
- */
+/** The learner as a short profile block for the tutor's system prompt. Null when nothing is known yet. */
 export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
@@ -888,18 +818,14 @@ export function missVerdict(item: Pick<LessonItem, "answer" | "unit" | "trigger"
 
 // ─── Calm items for the check ───────────────────────────────────────────────
 
-/** Sentences about crime, violence and death are odd company for a
- *  learner's first minutes with the app ("the police caught the murderer"
- *  at A1). The check draws its items from the rest. Slovak stems and
- *  English words, both sides of every example. */
+/** Grim vocabulary (crime, violence, death) kept out of the check's items. Matches Slovak and English. */
 const GRIM = /\b(murder|kill|corpse|blood|weapon|gun|knife|war|rape|suicide|terror|bomb|hostage|victim|prison|jail|crime|criminal|thie(?:f|ves)|st(?:eal|ole|olen)|die[ds]?|dying|dead|death|police|shoot|shot|stab|attack|drugs?)\b|\b(vrah|vražd|zabi|zabíj|mŕtv|krv|zbra[ňn]|nož|vojn|znásil|samovra|teror|bomb|rukojem|obe[ťt]|väzen|väzn|zloči|trestn|zlode|ukrad|krádež|zomr|zomier|smrť|smrti|políc|strie[ľl]|zastrel|bodn|útok|útoč|drog)/iu;
 
 export function isGrim(text: string): boolean {
 	return GRIM.test(text.normalize("NFC"));
 }
 
-/** The lexicon with the grim examples left out, and entries with nothing
- *  left dropped. */
+/** The lexicon without grim examples; entries left with no examples are dropped. */
 export function calmEntries<E extends { sk: string; en: string; examples: Array<{ sk: string; en: string }> }>(entries: readonly E[]): E[] {
 	const out: E[] = [];
 	for (const e of entries) {
