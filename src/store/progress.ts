@@ -10,6 +10,7 @@
 
 import fs from "node:fs";
 import type { TimedActivity } from "../core/active-time.ts";
+import type { FirstTryStats } from "../core/first-try.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -62,7 +63,9 @@ export interface DayRecord {
  *  placement). */
 export type GoalRecord = LearnerGoal;
 
-export interface UnitRecord {
+export interface UnitRecord extends FirstTryStats {
+	/** Every rep answered: the path's evidence, the final answers (accents
+	 *  and help included). */
 	lessons: number;
 	reps: number;
 	correct: number;
@@ -70,6 +73,8 @@ export interface UnitRecord {
 	lastAt?: string;
 	/** Written by the placement drill; both reps right tests the unit out. */
 	placed?: boolean;
+	/** The unaided first tries (`first`), and on a case drill those split by
+	 *  gender column (`byGender`): FirstTryStats, src/core/first-try.ts. */
 }
 
 /** One chapter-exam attempt (Skúška, phase 6a, E14): the score, whether it

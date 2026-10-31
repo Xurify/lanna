@@ -9,7 +9,9 @@ import { test } from "node:test";
 import {
 	buildBlitz,
 	buildLesson,
+	classifyAll,
 	classifyExample,
+	formOptions,
 	repXp,
 	sameSentence,
 	sentenceTokens,
@@ -43,6 +45,16 @@ test("classifyExample: verbs split past from present", () => {
 	const verb = { slug: "robiť", sk: "robiť", en: "do", cat: "Verbs" } as LexiconEntry;
 	assert.equal(classifyExample(verb, ex("Ja robím doma.", "robím")), "present");
 	assert.equal(classifyExample(verb, ex("Včera som robil doma.", "robil")), "past");
+});
+
+test("classifyExample: places decline like nouns (od Košíc is the genitive), and the dictionary form drills nothing", () => {
+	// Places carry no gender, so they drill the cases but fill no atlas cell.
+	const place = (sk: string) => ({ slug: sk.toLowerCase(), sk, en: sk, cat: "Places" }) as LexiconEntry;
+	assert.equal(classifyExample(place("Košice"), ex("Z Košíc do Bratislavy cestujeme vlakom.", "Košíc")), "gen");
+	assert.equal(classifyExample(place("Praha"), ex("Do Prahy ideme vlakom cez Brno.", "Prahy")), "gen");
+	assert.equal(classifyExample(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")), "loc");
+	assert.deepEqual(classifyAll(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")), ["loc", "kam-kde"], "the place and the where/where-to choice");
+	assert.equal(classifyExample(place("Bratislava"), ex("Bratislava je hlavné mesto Slovenska.", "Bratislava")), null, "the dictionary form drills nothing");
 });
 
 test("buildLesson is deterministic per seed and never repeats a word", () => {
@@ -201,3 +213,37 @@ test("a right answer after the hint earns half", () => {
 test("every grammar unit carries an Estonian bridge", () => {
 	for (const u of UNITS) if (u.kind !== "words" && u.kind !== "pairs" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
 });
+
+test("formOptions always includes base lemma as distractor when inflected", () => {
+	const entry = {
+		slug: "stanica",
+		sk: "stanica",
+		en: "station",
+		gender: "feminine",
+		forms: ["stanice", "stanici", "stanicu", "staniciach", "staniciam"],
+		examples: [],
+	};
+	const options = formOptions(entry as any, "stanice", ["vlak", "cesta"], () => 0.5);
+	assert.ok(options.includes("stanica"), "base form 'stanica' must be included as distractor");
+	assert.ok(options.includes("stanice"), "correct answer 'stanice' must be included");
+});
+
+test("buildLesson supports gender-targeted drilling", () => {
+	const plan = buildLesson(entries, "gen", { seed: 12345, gender: "fem" });
+	assert.equal(plan.gender, "fem");
+	assert.ok(plan.items.length >= 10);
+	const feminineItems = plan.items.filter((it) => it.gender === "feminine");
+	assert.ok(feminineItems.length >= 8, `Expected mostly feminine items in gen-fem drill, got ${feminineItems.length}/${plan.items.length}`);
+});
+
+test("buildLesson prioritizes weakGender candidates when unit is practiced", () => {
+	const standardPlan = buildLesson(entries, "gen", { seed: 54321 });
+	const weakPlan = buildLesson(entries, "gen", { seed: 54321, weakGender: "fem" });
+
+	const standardFemCount = standardPlan.items.filter((it) => it.gender === "feminine").length;
+	const weakFemCount = weakPlan.items.filter((it) => it.gender === "feminine").length;
+
+	assert.ok(weakFemCount >= standardFemCount, `Weak plan feminine items (${weakFemCount}) should be >= standard (${standardFemCount})`);
+	assert.ok(weakFemCount >= 6, `Expected at least 6 feminine items when weakGender is fem, got ${weakFemCount}`);
+});
+

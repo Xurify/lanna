@@ -201,7 +201,19 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Stepper buttons are inset squares inside a bordered group, so the hover fill stays inside the control.
 - A section with a size or status that loads later reserves its rows up front (Data), so the layout does not move when the value arrives.
 
-### E18. A spoken line is 16 kHz mono WAV, captured through the worklet (2026-10-31)
+### E18. The first try is the measure of a form (2026-10-31)
+
+**Why:** the lesson's final verdict overstated how a form went. The cue after a first miss lets the answer come back right, and XP should reward that — but the grammar atlas and the tutor read the result as the learner's hold on the case, so "Ako ďaleko je to od stanica?" corrected to "stanice" looked like a genitive held. A wrong answer also carried no kind of wrong: the dictionary form where an inflected one was needed is a different miss from another case's ending, or another word.
+
+**How to apply:**
+- The first try is the first answer, before any help: no cue, no peek, the first ask of the sentence — never the end-of-lesson retry, and only where a form is asked (a meaning check tests the sentence, a word bank the order). `src/core/first-try.ts` is the measure; the lesson player holds the first answer while the cue shows and sends it as `first`, and lessons, Review and Speak record it on the drill the rep practised (`progress.json` units: the `first` tally and its `byGender` split). A review answer counts too, unless a hint came first; it never joins the unit's `reps`.
+- A wrong first try gets a slip named from the dictionary (`src/core/form-slip.ts`): `base` (the dictionary form, no ending), `same-word` (another ending of the same word), `other`, `blank`. The verdict does not change; accents-only is still its own verdict and never a slip.
+- The grammar atlas cell and the tutor's "Measured weak points" read first tries, with the slips behind the wrong ones; under six first tries the tutor falls back to the lesson answers, labelled as such. The unit's `reps`/`correct` — XP, the path, the weak-spot mend rule — still read the final answer. The two measures answer different questions; do not mix them.
+- A Speak correction on a case form counts as a spoken slip on its drill and atlas cell (`correctionSlip` in `src/server/speak.ts`), kept apart from first tries: it has no right answers beside it, so it never makes an accuracy.
+- Places (Bratislava, Košice) decline like nouns in the classifier, so they drill the cases; the dictionary gives them no gender, so they fill no atlas cell.
+- The logs keep the evidence: a lesson rep carries `gender`, `first`, `slip`; a review line carries `unit`, `gender`, `slip`; a Speak correction carries `drill`, `slip`, `gender`.
+
+### E19. A spoken line is 16 kHz mono WAV, captured through the worklet (2026-10-31)
 
 **Why:** Speak asked the browser for WebM/Opus and fell back to MP4, so a line could be kept as a video container, and speech-to-text always got that compressed clip — the WAV was built only when Azure scored pronunciation. Every engine a line goes to (ElevenLabs, Deepgram, Azure) accepts WAV, and a line is a few seconds (about 1 MB per 30 s, well under the 8 MB cap). The upload name was fixed at the same time: every clip was called `line.webm`, even when it was MP4.
 

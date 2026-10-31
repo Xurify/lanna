@@ -44,6 +44,8 @@ import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/componen
 import {
 	compareAnswer,
 	diacriticSlips,
+	formSlip,
+	genderLabel,
 	gradeListen,
 	LESSONS_TO_COMPLETE,
 	lessonScore,
@@ -53,7 +55,9 @@ import {
 	unitDone,
 	unitBridges,
 	unitInfo,
+	type AtlasGender,
 	type BridgeLang,
+	type FirstAnswer,
 	type ItemKind,
 	type LessonItem,
 	type LessonPlan,
@@ -109,6 +113,9 @@ interface Rep {
 	/** Right with help: on the second try after the cue, or with the
 	 *  meaning shown early. Earns half (a priced hint). */
 	assisted?: boolean;
+	/** The answer before any cue: what the first-try measure counts. */
+	first?: FirstAnswer;
+	latencyMs?: number;
 }
 
 interface SavedLesson {
@@ -119,6 +126,9 @@ interface SavedLesson {
 	combo: number;
 	xp: number;
 	miss: string | null;
+	/** The first answer to the rep whose cue is showing (see Rep.first). */
+	first?: FirstAnswer | null;
+	peeked?: boolean;
 	relearned: number;
 	startedAt: number;
 }
@@ -152,7 +162,7 @@ function kindLabel(item: LessonItem): string {
 
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
 
-export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId; mode: Mode; initialPlan?: LessonPlan | null }) {
+export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?: UnitId; mode: Mode; gender?: AtlasGender; initialPlan?: LessonPlan | null }) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
@@ -180,6 +190,10 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	// more try before the answer is shown (a prompt, not a recast — making
 	// the learner find the form is what moves grammar, telling them is not).
 	const [miss, setMiss] = useState<string | null>(null);
+	// The first answer to this rep, held while the cue is showing: a miss
+	// comes back right on the second try, and the first try is what counts
+	// for the grammar atlas (src/core/first-try.ts).
+	const [firstTry, setFirstTry] = useState<FirstAnswer | null>(null);
 	// The translation asked for before the answer (hidden from the
 	// practised stage on): a priced hint, the rep earns half.
 	const [peeked, setPeeked] = useState(false);
@@ -197,14 +211,17 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		);
 	}, [shake]);
 	const startedAt = useRef(Date.now());
+	const shownAt = useRef(Date.now());
+	const firstLatency = useRef<number | null>(null);
 	// The day's minutes count active time, not the wall-clock `ms` (which the
 	// lesson log keeps): the gaps between answers, each capped.
 	const activeTime = useActiveTime(mode === "blitz" ? "blitz" : "lesson", "interactive");
 	const finishing = useRef(false);
+
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
 	// or left on purpose (X, Escape). Blitz is a 60 s sprint and is not kept.
-	const saveKey = mode === "lesson" && unit ? `lh-lesson:${unit}` : null;
+	const saveKey = mode === "lesson" && unit ? `lh-lesson:${unit}${gender ? `:${gender}` : ""}` : null;
 	const restoring = useRef(saveKey !== null);
 	useEffect(() => {
 		restoring.current = false;
@@ -221,6 +238,8 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 			setCombo(saved.combo);
 			setXp(saved.xp);
 			setMiss(saved.miss);
+			setFirstTry(saved.first ?? null);
+			setPeeked(saved.peeked === true);
 			relearned.current = saved.relearned;
 			startedAt.current = saved.startedAt;
 		} catch {
@@ -229,13 +248,13 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 	}, [saveKey]);
 	useEffect(() => {
 		if (!saveKey || !plan || score || restoring.current) return;
-		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, relearned: relearned.current, startedAt: startedAt.current };
+		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, first: firstTry, peeked, relearned: relearned.current, startedAt: startedAt.current };
 		try {
 			sessionStorage.setItem(saveKey, JSON.stringify(saved));
 		} catch {
 			// storage blocked: the lesson is not kept
 		}
-	}, [saveKey, plan, index, reps, current, combo, xp, miss, score]);
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, score]);
 	const forget = useCallback(() => {
 		if (!saveKey) return;
 		try {
@@ -273,9 +292,11 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setMiss(null);
 		relearned.current = 0;
 		setLeft(BLITZ_SECONDS);
+		setFirstTry(null);
+		setPeeked(false);
 		finishing.current = false;
 		try {
-			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}`);
+			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}${gender ? `&gender=${gender}` : ""}`);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
 			if (seq !== loadSeq.current) return;
@@ -286,7 +307,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, [mode, unit, activeTime]);
+	}, [mode, unit, gender, activeTime]);
 
 	// Fetch on mount only when the server could not build the plan.
 	const hadInitial = useRef(initialPlan !== null);
@@ -297,6 +318,11 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const item = plan?.items[index] ?? null;
 	const total = plan?.items.length ?? 0;
+
+	useEffect(() => {
+		shownAt.current = Date.now();
+		firstLatency.current = null;
+	}, [index, item?.id]);
 	// The next sentence's audio is fetched while this one is on screen, so it starts at once.
 	const nextSentence = plan?.items[index + 1]?.sentence;
 	useEffect(() => {
@@ -326,6 +352,9 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 				kind: r.item.kind,
 				verdict: r.verdict,
 				assisted: r.assisted === true,
+				...(r.latencyMs !== undefined ? { latencyMs: r.latencyMs } : {}),
+				// The answer before any cue: the server counts it as the first try.
+				...(r.first ? { first: r.first } : {}),
 				// Everything shown and answered, for the lesson log on disk.
 				detail: {
 					unit: r.item.unit,
@@ -339,6 +368,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					options: r.item.options,
 					mixed: r.item.mixed === true,
 					again: r.item.again === true,
+					latencyMs: r.latencyMs,
 				},
 			})),
 			ms: Date.now() - startedAt.current,
@@ -380,17 +410,25 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 
 	const grade = (given: string, verdict: RepVerdict, reveal = false) => {
 		if (!item || current) return;
+		// The first answer to this rep, before any cue. A second try (after a
+		// miss) keeps the first one; a rep with a cue showing and no first
+		// answer held has none to count.
+		const first: FirstAnswer | undefined = firstTry ?? (miss === null ? { given, verdict, ...(peeked ? { peeked: true } : {}) } : undefined);
+		const elapsed = Math.max(0, Date.now() - shownAt.current);
+		if (firstLatency.current === null) firstLatency.current = elapsed;
+		const latencyMs = firstLatency.current;
 		// "I don't know" (reveal) skips the cue and the second try: the answer
 		// shows at once, the rep counts as a miss and comes back at the end.
 		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind) && !reveal) {
 			setMiss(given);
+			setFirstTry(first ?? null);
 			setCombo(0);
 			sfx.wrong();
 			setShake((s) => s + 1);
 			return;
 		}
 		const assisted = mode === "lesson" && (miss !== null || peeked) && verdict !== "wrong";
-		const rep: Rep = { item, given, verdict, assisted };
+		const rep: Rep = { item, given, verdict, assisted, ...(first ? { first } : {}), latencyMs };
 		const nextCombo = verdict === "wrong" ? 0 : combo + 1;
 		const gained = repXp(item.kind, verdict, nextCombo, assisted);
 		setCombo(nextCombo);
@@ -428,6 +466,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 		setReps(all);
 		setCurrent(null);
 		setMiss(null);
+		setFirstTry(null);
 		setPeeked(false);
 		// A miss comes back once at the end, typed (successive relearning:
 		// a retrieval that succeeds after a failure is what fixes the form).
@@ -553,7 +592,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 					recorded={recorded}
 					failed={saveFailed}
 					onAgain={() => void load()}
-					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}`))}
+					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}${gender ? `&gender=${gender}` : ""}`))}
 				/>
 			</Frame>
 		);
@@ -631,7 +670,7 @@ export function LessonPlayer({ unit, mode, initialPlan = null }: { unit?: UnitId
 							onPeek={() => setPeeked(true)}
 							onGrade={grade}
 							onReady={setReady}
-							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : unitInfo(item.unit).title}
+							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
 						/>
 					</div>
 				</div>
@@ -827,13 +866,40 @@ function RepView({
 function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; wasChoice: boolean }) {
 	const vocabulary = unitInfo(item.unit).kind === "words";
 	const pairs = unitInfo(item.unit).kind === "pairs";
+	const slip = !vocabulary && !pairs ? formSlip({ answer: item.answer, lemma: item.lemma, given: miss }) : undefined;
 	return (
 		<div className="lh-rise mt-8 rounded-2xl border border-warn/40 bg-warn-soft px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
 			<p className="font-ui text-base font-extrabold text-warn">
 				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
 			<div className="mt-2 flex flex-col gap-1 font-prose text-base leading-relaxed">
-				{item.trigger ? (
+				{slip === "base" ? (
+					<p className="text-foreground">
+						<span className="font-bold text-warn">“{miss}”</span> is the dictionary base form.{" "}
+						{item.trigger ? (
+							<>
+								Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it requires the inflected case form.
+							</>
+						) : item.form ? (
+							<>Wanted: <span className="font-bold">{item.form}</span>.</>
+						) : (
+							<>Remember to inflect the ending for this sentence.</>
+						)}
+					</p>
+				) : slip === "same-word" ? (
+					<p className="text-foreground">
+						<span className="font-bold text-warn">“{miss}”</span> has another ending.{" "}
+						{item.trigger ? (
+							<>
+								Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it decides the case ending.
+							</>
+						) : item.form ? (
+							<>Wanted: <span className="font-bold">{item.form}</span>.</>
+						) : (
+							<>Check which case is needed here.</>
+						)}
+					</p>
+				) : item.trigger ? (
 					<p className="text-foreground">
 						Look at{" "}
 						<span className="rounded bg-background/50 px-1 font-bold" lang="sk">

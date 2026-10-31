@@ -3,10 +3,11 @@
 /**
  * /grammar — the grammar atlas (LangHarness, phase 4). Six cases down the
  * side, three genders across the top; each cell is the drill that teaches
- * it, showing the learner's accuracy (or "not yet"). Pointing at a cell —
- * hover, focus or press — shows the unit's rule under the table; the cell
- * itself opens the drill. The rule panel is always on the page, so
- * pointing at cells never shifts the layout.
+ * it, showing the learner's first-try accuracy (or "not yet"). Pointing at a
+ * cell — hover, focus or press — shows the unit's rule under the table, and
+ * what the learner got wrong there; the cell itself opens the drill. The
+ * rule panel is always on the page, so pointing at cells never shifts the
+ * layout.
  */
 
 import { useState } from "react";
@@ -14,7 +15,7 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { ATLAS_CASES, ATLAS_GENDERS, unitInfo, type AtlasCell } from "@/src/core";
+import { ATLAS_CASES, ATLAS_GENDERS, slipLine, unitInfo, type AtlasCell } from "@/src/core";
 
 const cellKey = (row: AtlasCell["row"], col: AtlasCell["col"]) => `${row}-${col}`;
 
@@ -39,7 +40,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				</Link>
 				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">Grammar</h1>
 				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
-					Each cell is one drill, and the percentage is how often you were right on it. Point at a cell to read its rule, then click it to practise.{" "}
+					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practise.{" "}
 					<span className="text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
 				</p>
 
@@ -76,10 +77,11 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 
 				{/* The selected cell's rule; a fixed region, so pointing around never shifts the page. */}
 				<div className="mt-6 min-h-24 rounded-2xl border-2 border-border bg-card p-5" data-testid="grammar-rule" aria-live="polite">
-					{sel ? (
+					{sel && selected ? (
 						<>
 							<p className="font-ui text-base font-bold text-foreground">{sel.title}</p>
 							<p className="mt-1.5 font-prose text-base text-muted-foreground">{sel.rule}</p>
+							<CellRecord cell={selected} />
 						</>
 					) : (
 						<p className="font-prose text-base text-muted-foreground">No drill for this cell yet.</p>
@@ -90,8 +92,35 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 	);
 }
 
-/** One cell: a link to its drill, showing the accuracy — or "not yet",
- *  while nothing has been practised (or no drill exists). */
+/** The selected cell's first-try record: how many were right, what the wrong
+ *  ones got wrong, and what was said wrong in Speak. */
+function CellRecord({ cell }: { cell: AtlasCell }) {
+	const wrong = slipLine(cell.slips);
+	const spoken = slipLine(cell.spoken);
+	if (cell.reps === 0 && !spoken) return <p className="mt-3 font-prose text-sm text-muted-foreground">No first tries here yet.</p>;
+	return (
+		<div className="mt-3 flex flex-col gap-1 font-prose text-sm text-muted-foreground">
+			{cell.reps > 0 && (
+				<p>
+					First tries: {cell.right} of {cell.reps} right
+					{cell.accents > 0 ? `, ${cell.accents} with only an accent missing` : ""}.
+				</p>
+			)}
+			{wrong && <p>Wrong on the first try: {wrong}.</p>}
+			{spoken && <p>Said wrong in Speak: {spoken}.</p>}
+			{cell.unit && (
+				<p className="mt-1">
+					<Link href={`/lesson?unit=${cell.unit}&gender=${cell.col}`} className="font-ui text-sm font-semibold text-foreground underline decoration-primary underline-offset-4 hover:text-primary">
+						Drill this form ({ATLAS_GENDERS.find((g) => g.id === cell.col)?.english ?? cell.col}) →
+					</Link>
+				</p>
+			)}
+		</div>
+	);
+}
+
+/** One cell: a link to its drill, showing the first-try accuracy — or "not
+ *  yet", while no first try has been counted (or no drill exists). */
 function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean; onSelect: (c: AtlasCell) => void }) {
 	const inner = cell.unit ? (
 		cell.accuracy === null ? (
@@ -115,17 +144,17 @@ function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean
 	return (
 		<td className="p-0 align-middle">
 			<Link
-				href={`/lesson?unit=${cell.unit}`}
+				href={`/lesson?unit=${cell.unit}&gender=${cell.col}`}
 				className={cls}
 				data-testid={`cell-${cell.row}${cell.col}`}
 				onMouseEnter={() => onSelect(cell)}
 				onFocus={() => onSelect(cell)}
 				onTouchStart={() => onSelect(cell)}
 				onClick={() => onSelect(cell)}
-				title={cell.reps > 0 ? `${cell.correct} of ${cell.reps} right` : "No reps yet"}
+				title={cell.reps > 0 ? `${cell.right} of ${cell.reps} right on the first try` : "No first tries yet"}
 			>
 				{inner}
-				{cell.accuracy === null ? null : <span className="text-xs text-muted-foreground tabular-nums">{cell.reps} reps</span>}
+				{cell.accuracy === null ? null : <span className="text-xs text-muted-foreground tabular-nums">{cell.reps} first {cell.reps === 1 ? "try" : "tries"}</span>}
 			</Link>
 		</td>
 	);

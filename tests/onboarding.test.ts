@@ -16,6 +16,7 @@ import {
 	explanationLanguages,
 	knownLanguages,
 	learnerProfileText,
+	measuredWeak,
 	PLACEMENT_TIERS,
 	placementOutcome,
 	PURPOSES,
@@ -159,6 +160,35 @@ test("the profile block says what the tutor must not ask, and is null on a fresh
 	assert.ok(text.includes("missed"));
 	assert.ok(text.includes('chapter "Health and body"'));
 	assert.ok(text.includes("do not ask for either"));
+});
+
+test("measuredWeak: first tries once there are six, lesson answers labelled as the fallback, else nothing", () => {
+	const unit = { title: "Genitive", reps: 20, accuracy: 0.9 };
+	const m = measuredWeak(unit, { reps: 6, right: 2, accents: 1, slips: { base: 3, "same-word": 1 } })!;
+	assert.equal(m.accuracy, 2 / 6);
+	assert.equal(m.text, "Genitive 33% on first tries (2 of 6 right; wrong: dictionary form, no ending (3) · wrong ending (1))");
+	assert.deepEqual(measuredWeak(unit, { reps: 3, right: 3, accents: 0, slips: {} }), { accuracy: 0.9, text: "Genitive 90% on lesson answers" }, "fewer than six first tries: the fallback, said as such");
+	assert.deepEqual(measuredWeak(unit, undefined), { accuracy: 0.9, text: "Genitive 90% on lesson answers" });
+	assert.equal(measuredWeak({ title: "Genitive", reps: 5, accuracy: 0.4 }, undefined), null);
+	assert.equal(measuredWeak({ title: "Genitive", reps: 20, accuracy: null }, undefined), null);
+});
+
+test("the tutor's weak points read the first tries, with lesson answers labelled as the fallback", () => {
+	// gen: the lesson answers look fine (23/24), the first tries do not (3/8);
+	// the first tries govern. dat: no first tries yet, the lesson answers speak.
+	const evidence = {
+		gen: { lessons: 2, reps: 24, correct: 23 },
+		dat: { lessons: 2, reps: 10, correct: 6 },
+		present: { lessons: 1, reps: 3, correct: 1 },
+	};
+	const state = curriculumState(evidence, "B2");
+	const goal = { level: "B2" as const, minutesPerDay: 20, daysPerWeek: 5, languages: ["en" as const], onboardedAt: "2026-10-31T00:00:00Z" };
+	const text = learnerProfileText(goal, state, evidence, undefined, undefined, { gen: { reps: 8, right: 3, accents: 0, slips: { base: 5 } } })!;
+	const line = text.split("\n").find((l) => l.includes("Measured weak points"))!;
+	assert.match(line, /38% on first tries \(3 of 8 right; wrong: dictionary form, no ending \(5\)\)/, line);
+	assert.match(line, /60% on lesson answers/, line);
+	assert.ok(line.indexOf("38%") < line.indexOf("60%"), "the weakest first");
+	assert.ok(!line.includes("Present"), "three reps is no measure");
 });
 
 test("the server round trip: the wizard's PUT and the drill's POST land in progress.json and the summary", async () => {

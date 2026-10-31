@@ -116,6 +116,16 @@ test("the strand balance counts a spoken scene as output and the speed rounds as
 	assert.equal(b.minutes.fluency, STRAND_MINUTES.fast + STRAND_MINUTES.reread);
 });
 
+test("correctionSlip: a case-form slip finds its drill and atlas cell; anything else is nothing", async () => {
+	const { loadLexicon } = await import("../src/agent/lexicon.ts");
+	const lexicon = loadLexicon();
+	const hit = speak.correctionSlip({ yours: "Ako ďaleko je to od stanica?", right: "Ako ďaleko je to od stanice?", rule: "od takes the genitive", kind: "case", slug: "stanica" }, lexicon);
+	assert.deepEqual(hit, { drill: "gen", slip: "base", cell: { row: "G", col: "fem" }, gender: "feminine" });
+	assert.equal(speak.correctionSlip({ yours: "Ja robit doma.", right: "Ja robím doma.", rule: "the present ending", kind: "verb", slug: "robit" }, lexicon), null, "a verb form is not a case slip");
+	assert.equal(speak.correctionSlip({ yours: "x", right: "y", rule: "r", kind: "other" }, lexicon), null, "no slug, no lookup");
+	assert.equal(speak.correctionSlip({ yours: "Ako ďaleko je to od stanice?", right: "Ako ďaleko je to od stanice?", rule: "r", kind: "case", slug: "stanica" }, lexicon), null, "said right: no slip");
+});
+
 test("a scene on a scripted engine: start, two turns with a prompt and a repair, the end summary; everything on disk", async () => {
 	progressStore.write({ ...progressStore.read(), goal: { level: "B2", minutesPerDay: 30, purposes: ["daily"], onboardedAt: "2026-10-28T00:00:00.000Z" } });
 	const engine = fauxEngine([
@@ -166,6 +176,15 @@ test("a scene on a scripted engine: start, two turns with a prompt and a repair,
 	assert.equal(log.length, 1);
 	assert.equal(log[0]!.unit, "cafe");
 	assert.equal(log[0]!.reps[0]!.given, "prosím si jedna káva");
+	// The slip said aloud ("jedna káva" for "jednu kávu") goes to its drill
+	// and its atlas cell as a spoken slip — counted apart from first tries.
+	const accFem = progressStore.read().units["acc-fem"];
+	assert.deepEqual(accFem?.first?.spoken, { base: 1 });
+	assert.deepEqual(accFem?.byGender?.fem?.spoken, { base: 1 });
+	assert.equal(accFem?.first?.reps ?? 0, 0, "no first tries beside it");
+	assert.equal(log[0]!.reps[0]!.drill, "acc-fem");
+	assert.equal(log[0]!.reps[0]!.slip, "base");
+	assert.equal(log[0]!.reps[0]!.gender, "feminine");
 	assert.ok(fs.existsSync(path.join(PATHS.speak, "README.md")), "the folder gets its README");
 
 	// A second end is a no-op; a turn after the end refuses.

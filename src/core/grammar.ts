@@ -1,13 +1,16 @@
 /**
- * The grammar atlas (LangHarness, 2026-10-30): the six Slovak cases down
- * the side, the three genders across the top, and each cell pointing at
- * the drill that teaches it — or "not yet", while no drill exists. The
- * learner's cell comes from progress.units (accuracy = correct / reps),
- * so the same table is a reference and a map of what to drill next.
- * Pure and browser-safe: the server or the page hands in the stats.
+ * The grammar atlas (LangHarness, 2026-10-30; first tries 2026-10-31): the six
+ * Slovak cases down the side, the three genders across the top, and each cell
+ * pointing at the drill that teaches it, or "not yet" while no drill exists.
+ * A cell's percentage is its first-try accuracy for that case and gender
+ * (src/core/first-try.ts): the answers given unaided, with the slips behind
+ * the wrong ones. Pure and browser-safe: the server or the page hands in the
+ * stats.
  */
 
 import { UNITS, type UnitId } from "./lesson.ts";
+import { FORM_SLIPS, FORM_SLIP_LABEL, type FormSlip } from "./form-slip.ts";
+import type { FirstTally } from "./first-try.ts";
 
 export type AtlasCase = "N" | "G" | "D" | "A" | "L" | "I";
 export type AtlasGender = "masc" | "fem" | "neut";
@@ -47,28 +50,56 @@ const CELL_UNITS: Record<AtlasCase, Partial<Record<AtlasGender, string>>> = {
 	I: { masc: "ins", fem: "ins", neut: "ins" },
 };
 
-const UNIT_IDS = new Set<string>(UNITS.map((u) => u.id));
+let _unitIds: Set<string> | null = null;
+function unitIds(): Set<string> {
+	if (!_unitIds) _unitIds = new Set<string>(UNITS.map((u) => u.id));
+	return _unitIds;
+}
 
 /** The cell's drill unit, or null while it is "not yet". */
 export function atlasUnit(row: AtlasCase, col: AtlasGender): UnitId | null {
 	const id = CELL_UNITS[row][col];
-	return id && UNIT_IDS.has(id) ? (id as UnitId) : null;
+	return id && unitIds().has(id) ? (id as UnitId) : null;
 }
 
-/** One unit's counts from progress.units. */
+/** The atlas column a lexicon gender falls in: both masculine kinds are
+ *  "masc"; plural-only and unknown genders have no column (null). */
+export function genderColumn(gender: string | undefined): AtlasGender | null {
+	if (gender === "masculine-inanimate" || gender === "masculine-animate") return "masc";
+	if (gender === "feminine") return "fem";
+	if (gender === "neuter") return "neut";
+	return null;
+}
+
+export function isAtlasGender(v: unknown): v is AtlasGender {
+	return v === "masc" || v === "fem" || v === "neut";
+}
+
+export function genderLabel(g: AtlasGender): string {
+	if (g === "masc") return "Masculine";
+	if (g === "fem") return "Feminine";
+	return "Neuter";
+}
+
+/** The cell a drill rep counts toward, from its drill and its word's gender.
+ *  Null for a drill the atlas does not map, or a gender its cell does not hold. */
+export function atlasCellOf(unit: string, gender: string | undefined): { row: AtlasCase; col: AtlasGender } | null {
+	const col = genderColumn(gender);
+	if (!col) return null;
+	const row = ATLAS_CASES.find((c) => atlasUnit(c.case, col) === unit)?.case;
+	return row ? { row, col } : null;
+}
+
+/** The case a drill teaches, for the drills the atlas maps (null otherwise:
+ *  "kam-kde" is a place or a direction, not one case). */
+export function caseDrill(unit: string): AtlasCase | null {
+	return ATLAS_CASES.find((c) => ATLAS_GENDERS.some((g) => atlasUnit(c.case, g.id) === unit))?.case ?? null;
+}
+
+/** One drill's record as the atlas reads it (progress.json units): its first
+ *  tries split by gender column. */
 export interface AtlasStats {
-	reps: number;
-	correct: number;
-}
-
-/** The cell's accuracy (correct / reps, 0..1). No record, zero reps, or a
- *  "not yet" cell is null — the app never shows a percentage with nothing
- *  behind it. */
-export function cellAccuracy(unit: UnitId | null, units: Readonly<Record<string, AtlasStats>>): number | null {
-	if (!unit) return null;
-	const stats = units[unit];
-	if (!stats || !(stats.reps > 0)) return null;
-	return stats.correct / stats.reps;
+	byGender?: Partial<Record<AtlasGender, FirstTally>>;
 }
 
 export interface AtlasCell {
@@ -76,21 +107,69 @@ export interface AtlasCell {
 	col: AtlasGender;
 	/** The drill the cell opens, or null for "not yet". */
 	unit: UnitId | null;
+	/** First-try accuracy (right / tries, 0..1); null with no first tries yet. */
 	accuracy: number | null;
+	/** Unaided first tries in this cell, how many were right, and how many of
+	 *  the right ones only lacked an accent. */
 	reps: number;
-	correct: number;
+	right: number;
+	accents: number;
+	/** The wrong first tries by slip, and the slips said in Speak. */
+	slips: Partial<Record<FormSlip, number>>;
+	spoken: Partial<Record<FormSlip, number>>;
 }
 
 /** The whole 6 × 3 table, each cell carrying its drill and the learner's
- *  accuracy. Row by row, N first — the reading order of the table. */
-export function grammarAtlas(units: Readonly<Record<string, AtlasStats>>): AtlasCell[] {
+ *  first-try record. Row by row, N first: the reading order of the table. */
+export function grammarAtlas(units: Readonly<Record<string, AtlasStats | undefined>>): AtlasCell[] {
 	const cells: AtlasCell[] = [];
 	for (const { case: row } of ATLAS_CASES) {
 		for (const { id: col } of ATLAS_GENDERS) {
 			const unit = atlasUnit(row, col);
-			const stats = unit ? units[unit] : undefined;
-			cells.push({ row, col, unit, accuracy: cellAccuracy(unit, units), reps: stats?.reps ?? 0, correct: stats?.correct ?? 0 });
+			const tally = unit ? units[unit]?.byGender?.[col] : undefined;
+			const accuracy = tally && tally.reps > 0 ? tally.right / tally.reps : null;
+			cells.push({
+				row,
+				col,
+				unit,
+				accuracy,
+				reps: tally?.reps ?? 0,
+				right: tally?.right ?? 0,
+				accents: tally?.accents ?? 0,
+				slips: tally?.slips ?? {},
+				spoken: tally?.spoken ?? {},
+			});
 		}
 	}
 	return cells;
 }
+
+/** "dictionary form, no ending (2) · wrong ending (1)": the slips that
+ *  occurred, most frequent first; "" when none. */
+export function slipLine(slips: Partial<Record<FormSlip, number>>): string {
+	return FORM_SLIPS.filter((s) => (slips[s] ?? 0) > 0)
+		.sort((a, b) => (slips[b] ?? 0) - (slips[a] ?? 0))
+		.map((s) => `${FORM_SLIP_LABEL[s]} (${slips[s]})`)
+		.join(" · ");
+}
+
+export function weakestGender(byGender?: Partial<Record<AtlasGender, FirstTally>>, minReps = 3, threshold = 0.7): AtlasGender | null {
+	if (!byGender) return null;
+	const candidates: Array<{ gender: AtlasGender; accuracy: number; reps: number }> = [];
+	for (const g of ["masc", "fem", "neut"] as const) {
+		const t = byGender[g];
+		if (t && t.reps >= minReps) {
+			const acc = t.right / t.reps;
+			if (acc < threshold) candidates.push({ gender: g, accuracy: acc, reps: t.reps });
+		}
+	}
+	if (candidates.length === 0) return null;
+	return candidates.sort((a, b) => a.accuracy - b.accuracy || b.reps - a.reps)[0]!.gender;
+}
+
+export function weakestAtlasCell(atlas: AtlasCell[], minReps = 3, threshold = 0.7): AtlasCell | null {
+	const candidates = atlas.filter((c) => c.unit && c.accuracy !== null && c.reps >= minReps && c.accuracy < threshold);
+	if (candidates.length === 0) return null;
+	return candidates.sort((a, b) => a.accuracy! - b.accuracy! || b.reps - a.reps)[0]!;
+}
+

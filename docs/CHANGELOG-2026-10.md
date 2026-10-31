@@ -71,11 +71,29 @@ Unverified by the owner: Data and the cache clear in the Electron window (the cl
 
 Known: at 390px wide the settings dialog gives its content about 125px in every section, so the left section list crowds the text. This predates this branch.
 
+<<<<<<< HEAD
+## 31 October: the first try is the measure
+
+Branch `feat/grammar-error-tracking`. Not pushed.
+
+- **The question:** does the app notice when the base form is right but the case is wrong — "Ako ďaleko je to od stanica?" for "stanice"? It did not: the cue brought the answer back right, and the genitive looked held.
+- **First tries (DECISIONS E18):** the first answer, before any cue, is now the measure of a form. The lesson player holds it while the cue shows (and across a reload) and sends it with the rep; lessons and Review count it on the drill the rep practised (`progress.json` units: `first`, split `byGender`), excluding peeks, meaning and build reps and the end-of-lesson retry. A Speak correction on a case form counts as a spoken slip, apart from first tries.
+- **The kind of wrong:** a wrong first try is named from the dictionary (`src/core/form-slip.ts`): *dictionary form, no ending* (stanica for stanice), *wrong ending* (stanicu), *other word*, *no answer*. Accents-only stays its own verdict, never a slip.
+- **The grammar atlas** reads first tries per case × gender: each cell's percentage is first tries right, and the rule panel lists the slips behind the wrong ones and the slips said in Speak.
+- **The tutor's** "Measured weak points" reads first tries once a unit has six, with the slips; below that it falls back to lesson answers, labelled as such. The unit's reps/correct (XP, the path, the weak-spot mend rule) still read the final answer.
+- **Places** (Bratislava, Košice — no gender in the dictionary) now drill the cases in the classifier; they fill no atlas cell.
+- **The logs keep the evidence:** lesson reps carry `gender`, `first`, `slip`, `latencyMs`; review lines carry `unit`, `gender`, `slip`; Speak corrections carry `drill`, `slip`, `gender`.
+- **Latency & hesitation tracking:** the lesson player measures `latencyMs` from presentation to first submission; values are logged per rep to capture fluency vs hesitation without altering scoring.
+- **Adaptive weak-gender prioritization:** when drilling a unit without an explicit gender filter, `lessonFor` inspects `rec.byGender` (`weakestGender`). If one gender struggles (< 70% accuracy, >= 3 reps), `buildLesson` dynamically prioritizes candidates of that weak gender (approx 60% of the lesson) to reinforce the weak spot.
+- **Targeted drill deep-linking:** Grammar Atlas cells link directly to `/lesson?unit=${cell.unit}&gender=${cell.col}`, allowing learners to deliberately practice any specific case and gender combination. Base lemma distractors and contrast units are tailored accordingly.
+
+Unverified by the owner: the lesson player's first-try capture (the cue flow, a reload mid-cue) and the atlas at both window sizes — typecheck, lint and the affected suites pass, but the live run on the PC has not happened. Known on this machine: the full suite has 27 environment-bound failures that reproduce on the base commit (Windows path fixtures, the local `auth.json` keys, Electron/Node drift), including `tests/speak.test.ts` "transcribe refuses honestly without a key", which assumes no ElevenLabs key is saved.
+
 ## 31 October: a spoken line is WAV, and nothing is recorded as video
 
 Branch `fix/speak-recording-wav`, from `be8e859` (main).
 
-- **Speak records WAV only:** the browser's WebM/Opus → Ogg → MP4 chain is gone. Speak captures through the dictation AudioWorklet (16 kHz mono 16-bit PCM) and keeps one WAV per line (DECISIONS E18). No MediaRecorder, so no MP4 and no format guessing.
+- **Speak records WAV only:** the browser's WebM/Opus → Ogg → MP4 chain is gone. Speak captures through the dictation AudioWorklet (16 kHz mono 16-bit PCM) and keeps one WAV per line (DECISIONS E19). No MediaRecorder, so no MP4 and no format guessing.
 - **Speech-to-text gets the WAV** (it got the compressed clip before), pronunciation scoring always gets the WAV (before, only when Azure was set), and the scene keeps that same WAV.
 - **File names tell the truth:** uploads are `line.wav` on the client, in `/api/speak` and in the ElevenLabs multipart part, and the scene keeps `NN.wav`. All the non-WAV handling is gone with it: the `audioExt` helper, the `audio/webm` fallbacks in `/api/stt`, `/api/speak` and `/api/pronounce`, and Azure's Ogg branch.
 - **The worklet's tail is flushed on stop** (`public/worklets/pcm-capture.js`), so a line no longer drops up to 128 ms at the end.
@@ -97,6 +115,7 @@ Not verified live: no microphone in this shell, so Speak and Say it faster are c
 | #10 | `setup/parallels-and-panel-close` | Panel close, parallels wording and switch | merged by the owner |
 | #11 | `feat/weak-spots` | Weak spots on record | merged by the owner |
 | (new) | `ux/revamp-views` | UX revamp: Today, sidebar, lesson, Review, Plan | open |
+| #55 | `feat/grammar-error-tracking` | First tries, form slips, targeted gender drills (E18) | open |
 | (new) | `fix/speak-recording-wav` | WAV-only Speak recording; truthful upload names | open |
 
 GitHub Actions never runs on this repo (owner-side setting); a red check there is not a code failure.

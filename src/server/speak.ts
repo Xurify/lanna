@@ -29,6 +29,10 @@ import { purposeScenes } from "../core/onboarding.ts";
 import type { PronEngine, PronScore } from "../core/pronounce.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
+import { recordSpokenSlip, spokenSlip, type FirstTryCell } from "../core/first-try.ts";
+import type { FormSlip } from "../core/form-slip.ts";
+import { atlasCellOf } from "../core/grammar.ts";
+import type { UnitId } from "../core/lesson.ts";
 import { dayKey } from "../core/review.ts";
 import {
 	parseSummary,
@@ -434,6 +438,11 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		day.xp += xp;
 		addMinutes(day, "speak", sessionMs({ ms: s.ms, activeMs: input.activeMs }));
 		p.xp += xp;
+		// The slips on case forms, said in Speak, go to their drill and atlas cell.
+		const slips = summary.corrections.map((c) => correctionSlip(c, lexicon));
+		for (const hit of slips) {
+			if (hit) p.units[hit.drill] = recordSpokenSlip(p.units[hit.drill] ?? { lessons: 0, reps: 0, correct: 0 }, hit.cell, hit.slip);
+		}
 		progressStore.write(p);
 		try {
 			appendLessonLog({
@@ -448,27 +457,42 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 				total: counts.prompts,
 				perfect: summary.corrections.length === 0 && !summary.unreadable,
 				queued,
-				reps: summary.corrections.map((c, i) => ({
-					itemId: `${s.id}#${i}`,
-					kind: c.kind,
-					unit: s.scene,
-					slug: c.slug ?? "",
-					lemma: c.lemma ?? "",
-					gloss: "",
-					sentence: c.right,
-					translation: "",
-					answer: c.right,
-					given: c.yours,
-					verdict: "wrong",
-					assisted: false,
-					hint: c.rule,
-				})),
+				reps: summary.corrections.map((c, i) => {
+					const hit = slips[i];
+					return {
+						itemId: `${s.id}#${i}`,
+						kind: c.kind,
+						unit: s.scene,
+						slug: c.slug ?? "",
+						lemma: c.lemma ?? "",
+						gloss: "",
+						sentence: c.right,
+						translation: "",
+						answer: c.right,
+						given: c.yours,
+						verdict: "wrong",
+						assisted: false,
+						hint: c.rule,
+						...(hit ? { drill: hit.drill, slip: hit.slip, ...(hit.gender ? { gender: hit.gender } : {}) } : {}),
+					};
+				}),
 			});
 		} catch (err) {
 			console.warn("[speak] could not append the lesson log:", err instanceof Error ? err.message : err);
 		}
 		return { session: s, xp, queued, summary: progressSummary(input.tz, now), report: pronunciationReport() };
 	});
+}
+
+/** A correction's slip on a case form, located on the atlas: the drill the
+ *  phrase puts the word in, the cell its gender fills (null when the gender
+ *  has no column), and the slip. Null when the correction is not about a
+ *  case form. */
+export function correctionSlip(c: SpeakCorrection, lexicon: Lexicon | null): { drill: UnitId; slip: FormSlip; cell: FirstTryCell; gender?: string } | null {
+	const entry = c.slug ? lexicon?.bySlug.get(c.slug) : undefined;
+	const hit = entry ? spokenSlip(entry, c.yours, c.right, tag()) : undefined;
+	if (!entry || !hit) return null;
+	return { drill: hit.drill, slip: hit.slip, cell: atlasCellOf(hit.drill, entry.gender), ...(entry.gender ? { gender: entry.gender } : {}) };
 }
 
 /** The dictionary word a correction is about, so it can join the deck:

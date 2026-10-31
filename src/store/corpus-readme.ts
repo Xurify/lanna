@@ -90,10 +90,12 @@ where the format is not obvious.
 - \`fluency/\`: the speed strand's log (timed re-reads, "say it faster"). See \`fluency/README.md\`.
 - \`review/\`: the spaced-review deck. \`cards.json\` is every card with its
   FSRS memory state; \`log.jsonl\` is one line per answer (card, what you
-  typed, verdict, rating, when); \`meta.json\` holds settings and how many
-  new cards each day introduced.
+  typed, verdict, rating, when; on a form card also the drill its sentence
+  practises, the word's gender and the slip); \`meta.json\` holds settings
+  and how many new cards each day introduced.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
-  correct answers.
+  correct answers, plus the first-try tallies the grammar atlas and the
+  tutor read (\`first\`, split \`byGender\`).
 - \`graph/\`: the tutor's knowledge graph of what you know (append-only
   JSON Lines ledgers: nodes, chains, sessions, coverage; plus sources.json,
   positions.json, render-settings.json).
@@ -116,7 +118,13 @@ per finished lesson or blitz. Each holds:
   \`wrong\`), \`assisted\` (right only after the hint), \`trigger\` (the
   preposition that decides the case, when there is one), \`options\` (the
   four choices shown), \`mixed\` (from another unit), \`again\` (a miss asked
-  again at the end).
+  again at the end). On a form rep: \`gender\` (the word's dictionary
+  gender), \`first\` (the first answer, before any cue: \`given\`,
+  \`verdict\`, \`peeked\` when the translation was shown early) and \`slip\`
+  (what a counted wrong first try got wrong: \`base\` | \`same-word\` |
+  \`other\` | \`blank\`). A Speak line (\`mode: "speak"\`) is one rep per
+  correction and carries \`drill\` (the case drill the slip was on) beside
+  \`slip\` and \`gender\`.
 
 \`why-index.json\` maps a (sentence, answer) pair to the chat that explained
 it (\`chatId\`), with the answer you gave when you first asked and how often

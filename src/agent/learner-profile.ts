@@ -13,13 +13,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 import { curriculumState, type UnitEvidence } from "../core/curriculum.ts";
+import type { FirstTryStats } from "../core/first-try.ts";
 import { learnerProfileText, type LearnerGoal } from "../core/onboarding.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 
 interface ProgressFile {
-	units?: Record<string, UnitEvidence | undefined>;
+	units?: Record<string, (UnitEvidence & FirstTryStats) | undefined>;
 	goal?: LearnerGoal;
 	weak?: WeakRecord;
 	days?: Record<string, { minutes?: number } | undefined>;
@@ -47,5 +48,6 @@ export function learnerProfileSegment(): string | null {
 	const hasEvidence = Object.values(units).some((u) => u && u.reps > 0);
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
-	return learnerProfileText(goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS });
+	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
+	return learnerProfileText(goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries);
 }
