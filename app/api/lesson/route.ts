@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 	return Response.json(await lessonWithBetterOptions(lessonFor(unit)));
 }
 
-const KINDS = new Set(["choose", "type", "build", "listen"]);
+const KINDS = new Set(["meaning", "choose", "type", "build", "listen"]);
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) : undefined);
 

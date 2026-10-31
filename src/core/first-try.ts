@@ -12,6 +12,7 @@
 import { classifyAll, type RepVerdict, type UnitId } from "./lesson.ts";
 import { formSlip, isFormOf, knownForms, type FormSlip } from "./form-slip.ts";
 import { atlasCellOf, caseDrill, type AtlasCase, type AtlasGender } from "./grammar.ts";
+import { foldDiacritics } from "./language.ts";
 import type { LexiconEntry } from "./review.ts";
 
 /** The first answer to a rep, as the learner gave it. */
@@ -155,7 +156,9 @@ export function spokenSlip(entry: LexiconEntry, said: string, right: string, tag
 }
 
 function sharedPrefix(a: string, b: string): number {
+	const fa = foldDiacritics(a);
+	const fb = foldDiacritics(b);
 	let i = 0;
-	while (i < a.length && i < b.length && a[i] === b[i]) i++;
+	while (i < fa.length && i < fb.length && fa[i] === fb[i]) i++;
 	return i;
 }

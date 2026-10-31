@@ -110,6 +110,10 @@ test("spokenSlip: the word of the corrected line the learner did not say, agains
 	const wrongCase = spokenSlip(stanica, "Ako ďaleko je to od stanicu?", "Ako ďaleko je to od stanice?");
 	assert.deepEqual(wrongCase, { drill: "gen", slip: "same-word" });
 	assert.equal(spokenSlip(stanica, "Ako ďaleko je to od stanice?", "Ako ďaleko je to od stanice?"), undefined, "said right: no slip");
+	// A word whose initial letter has a diacritic (škola -> školy, spoken without háček as skola).
+	const skola: LexiconEntry = { slug: "skola", sk: "škola", en: "school", cat: "Nouns", gender: "feminine", forms: ["školy", "škole", "školu"], examples: [], related: [] };
+	const diacriticSlip = spokenSlip(skola, "Idem do skola.", "Idem do školy.");
+	assert.deepEqual(diacriticSlip, { drill: "gen", slip: "base" });
 });
 
 test("spokenSlip: a verb form is not a case slip", () => {
