@@ -211,7 +211,7 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 	if (sttScript()) return { text: sttScript()!, engine };
 	if (engine === "elevenlabs") {
 		const form = new FormData();
-		form.set("model_id", "scribe_v1");
+		form.set("model_id", "scribe_v2");
 		form.set("language_code", ISO3[lang] ?? lang);
 		form.set("tag_audio_events", "false");
 		form.set("diarize", "false");
