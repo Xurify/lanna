@@ -43,6 +43,7 @@ import {
 	type DailyPlan,
 	type Projection,
 } from "../core/curriculum.ts";
+import { examSummaries, type ExamSummary } from "../core/exam.ts";
 import {
 	DEFAULT_DAYS_PER_WEEK,
 	bridgeLanguages,
@@ -376,6 +377,8 @@ export interface ProgressSummary {
 	trajectory: TrajectoryInput;
 	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
 	weakSpots: WeakSpotSummary[];
+	/** Each chapter's exam on record (src/core/exam.ts), by chapter id. */
+	exams: Record<string, ExamSummary>;
 	/** The goal's daily minutes against what the last `windowDays` days logged. */
 	pace: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
 	/** Unfinished plan tasks from the last RECENT_DAYS days (src/core/carry-over.ts). */
@@ -534,6 +537,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			goalDays: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
 		},
 		weakSpots: weakSpotList(p.weak),
+		exams: examSummaries(p.exams),
 		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },
 		backlog,
 	};

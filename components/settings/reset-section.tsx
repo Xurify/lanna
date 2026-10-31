@@ -51,7 +51,7 @@ export function ResetSection({ language }: { language?: string }) {
 	return (
 		<div className="flex flex-col gap-3" data-testid="reset-section">
 			<p className="text-sm text-muted-foreground">
-				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking sessions and stories all go. Your provider keys, settings and the audio cache stay.
+				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking sessions and stories all go. Your provider keys, settings and voice clips stay.
 				Nothing is deleted: the data is moved into a backup folder you can put back.
 			</p>
 			{where && (

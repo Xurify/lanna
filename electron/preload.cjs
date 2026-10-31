@@ -29,6 +29,9 @@
  *
  *   window.lh.relaunch() — restart the app after a language-profile switch.
  *
+ *   window.lh.storage — Settings → Storage: the HTTP cache's size and
+ *   clearing it. Nothing else on disk is reachable from the renderer.
+ *
  * Channel names are mirrored in electron/main.cjs — keep them in sync.
  */
 const { contextBridge, ipcRenderer } = require("electron");
@@ -92,6 +95,12 @@ contextBridge.exposeInMainWorld("lh", {
 	installUpdate: () => ipcRenderer.send("lh:update-install"),
 	getUpdateState: () => ipcRenderer.invoke("lh:update:get"),
 	checkForUpdates: () => ipcRenderer.invoke("lh:update:check"),
+	/** Settings → Storage: the HTTP cache's size in bytes, and clearing it
+	 *  (clear resolves with the size after). Nothing else is cleared. */
+	storage: {
+		cacheSize: () => ipcRenderer.invoke("lh:storage:cache-size"),
+		clearCache: () => ipcRenderer.invoke("lh:storage:clear-cache"),
+	},
 	onOpenSettings: (cb) => {
 		openSettingsListener = cb;
 		if (pendingOpenSettings !== null) {

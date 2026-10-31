@@ -112,10 +112,10 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="script-done">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Speak · script · done</p>
-					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">The scene is yours</h1>
+					<p className="font-ui text-sm font-bold text-muted-foreground">Speak · step by step · done</p>
+					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">Now say it yourself</h1>
 					<p className="mt-3 max-w-md font-prose text-base text-muted-foreground">
-						You walked through all {total} lines. Now say the same scene out loud — the tutor will follow you, not the script.
+						You walked through all {total} lines. Now say the same scene out loud. The tutor will follow what you say, not the script.
 					</p>
 					<div className="mt-8 flex flex-wrap gap-3">
 						<Link href={`/speak?scene=${scene}`} className={PRIMARY} data-testid="script-live">
@@ -137,7 +137,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 
 			<div ref={listRef} className="flex flex-1 flex-col overflow-y-auto pb-6 pt-4">
 				<div className={cn(COLUMN, "flex flex-col gap-4")}>
-					<p className="font-ui text-sm font-bold text-muted-foreground">Speak · script first</p>
+					<p className="font-ui text-sm font-bold text-muted-foreground">Speak · step by step</p>
 					<ol className="flex flex-col gap-3" data-testid="script-turns" aria-live="polite">
 						{said.map((line, i) => (
 							<li key={i} className={cn("flex", line.role === "learner" ? "justify-end" : "justify-start")}>
@@ -150,7 +150,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 									<p className="font-prose text-lg text-foreground" lang="sk">
 										{line.sk}
 									</p>
-									{line.shown && <p className="mt-0.5 font-ui text-[11px] text-muted-foreground">the right line, shown</p>}
+									{line.shown && <p className="mt-0.5 font-ui text-xs text-muted-foreground">the right line, shown</p>}
 								</div>
 							</li>
 						))}
@@ -171,12 +171,12 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 									onClick={() => pick(o, i)}
 									disabled={failed}
 									className={cn(
-										"flex items-center gap-3 rounded-2xl border-2 bg-card px-4 py-3 text-left font-prose text-lg transition-all hover:border-xp/60",
-										failed ? "border-miss/50 opacity-60" : "border-border",
+										"flex items-center gap-3 rounded-xl border-2 bg-card px-4 py-3.5 text-left font-prose text-lg transition-colors",
+										failed ? "border-miss/50 opacity-60" : "border-border hover:border-foreground/40 hover:bg-accent",
 									)}
 									data-testid={`script-option-${i}`}
 								>
-									<span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted font-ui text-xs font-bold text-muted-foreground">{i + 1}</span>
+									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
 									<span lang="sk" className="text-foreground">
 										{o.sk}
 									</span>

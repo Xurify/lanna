@@ -1,6 +1,6 @@
 /**
  * The learning screens' "Set up a model" lines open the settings dialog.
- * They used to link to /settings, which only redirects (the dialog is
+ * They used to link to /settings, a page that only redirected (the dialog is
  * modal-only), so the link dead-ended on the chat. SSR pins the control;
  * the source pin keeps a /settings link from coming back.
  */
@@ -20,7 +20,7 @@ describe("SettingsLink", () => {
 		assert.ok(html.includes('type="button"'));
 		assert.ok(html.includes('class="underline"'));
 		assert.ok(html.includes(">Set up a model</button>"));
-		assert.ok(!html.includes("href"), "no href: /settings only redirects");
+		assert.ok(!html.includes("href"), "no href: there is no settings page");
 	});
 });
 

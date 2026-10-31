@@ -29,7 +29,7 @@ import { CurriculumPath } from "@/components/curriculum-path";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, ExamSummary, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
@@ -63,6 +63,7 @@ interface Summary {
 	balance?: StrandBalance;
 	trajectory?: TrajectoryInput;
 	weakSpots?: WeakSpotSummary[];
+	exams?: Record<string, ExamSummary>;
 	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
 	backlog?: number;
 }
@@ -181,7 +182,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					testid: "mode-review",
 				},
 				{ href: `/lesson?unit=${s?.next ?? "words"}`, icon: PlayIcon, title: "Next lesson", line: next?.title ?? "First words", testid: "start-lesson" },
-				{ href: "/grammar", icon: TableIcon, title: "Grammar", line: "The six cases × three genders, with your accuracy on each", testid: "mode-grammar" },
+				{ href: "/grammar", icon: TableIcon, title: "Grammar", line: "Six cases, three genders, and your score on each", testid: "mode-grammar" },
 				{ href: "/chat/new", icon: GraduationCapIcon, title: "Ask the tutor", line: "Any question about Slovak", testid: "mode-tutor" },
 			],
 		},
@@ -276,7 +277,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							)}
 						</div>
 						<div className="mt-3">
-							<CurriculumPath state={s?.curriculum ?? null} next={s?.next} goals={purposeGoals(s?.goal.purposes ?? [])} weak={s?.weakSpots ?? []} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
+							<CurriculumPath state={s?.curriculum ?? null} next={s?.next} goals={purposeGoals(s?.goal.purposes ?? [])} weak={s?.weakSpots ?? []} exams={s?.exams} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
 						</div>
 					</section>
 				</aside>

@@ -31,7 +31,7 @@ export function PronChip({ score, big = false }: { score: PronScore; big?: boole
 		.filter(Boolean)
 		.join(" · ");
 	return (
-		<span className={cn("inline-flex items-center gap-1 rounded-md font-ui font-bold tabular-nums", big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-[11px]", pronBg(score.overall))} title={title} data-testid="pron-chip">
+		<span className={cn("inline-flex items-center gap-1 rounded-md font-ui font-bold tabular-nums", big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-xs", pronBg(score.overall))} title={title} data-testid="pron-chip">
 			{pronLabel(score.overall)} · {score.overall}
 		</span>
 	);

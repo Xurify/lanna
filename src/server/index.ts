@@ -51,9 +51,12 @@ export { sessionCost } from "./pricing.ts";
 // spaced review, and the lexicon lookup the review page and tutor share.
 export * from "./language.ts";
 export * from "./reset.ts";
+export * from "./storage.ts";
 export * from "./tts.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+// The chapter exam (Skúška, phase 6a, E14): the draw and its record.
+export * from "./exam.ts";
 export * from "./why.ts";
 export * from "./reading.ts";
 export * from "./listen.ts";
