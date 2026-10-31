@@ -57,10 +57,9 @@ A narrative of the first three days, from the fork to the task-based app. Times 
 
 Branch `fix/chapter-screens-design`, stacked on PR #51 (`feat/chapter-exams`). Not pushed.
 
-- **Chapter exam on the path:** each open chapter ends with its exam row. The passport page is gone (DECISIONS E15). Record only: nothing is gated yet.
+- **Chapter exam on the path:** each open chapter ends with its exam row (DECISIONS E15). Record only: nothing is gated yet.
 - **Review card:** a period or comma next to the blank stays on the blank's line at phone width, and the typing box is the same width as the verdict box.
 - **Settings → Storage:** what the app keeps (voice clips, learning progress, backups) with folders and sizes. The desktop app can clear its HTTP cache. Saved areas are never cleared (DECISIONS E16).
-- **Dead ends removed:** the redirect-only `/passport` and `/settings` pages. A bare `/exam` is now a 404.
 - **Cleanup:** 84 generated screenshots and Playwright page snapshots deleted from `.playwright-mcp/`, `_handoff/` and `data/`.
 
 Unverified by the owner: Storage and the cache clear in the Electron window (the clear is tested with a fake session, and the page was checked in a browser with a simulated bridge). Desktop speech may sound different from the web because the saved desktop speed can be 0.75× while the web default is 1×.
