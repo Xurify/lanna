@@ -7,8 +7,8 @@
  * Owner decisions this wave:
  * - Dialog, not a page: opens over whatever screen you're on (the payoff:
  *   appearance edits restyle the chat LIVE behind the dialog). Escape,
- *   backdrop, and ✕ all close. Modal-only — /settings redirects, so
- *   nothing links into a dead surface.
+ *   backdrop, and ✕ all close. Modal-only: there is no /settings page, so
+ *   nothing links to one.
  * - Left section nav in the app's mono chrome (text-only, session-list
  *   language — active = bg-accent), no icons, matching the minimal-color
  *   doctrine.
@@ -53,6 +53,7 @@ import { KeyboardSection } from "./keyboard-section.tsx";
 import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
 import { ResetSection } from "./reset-section.tsx";
+import { StorageSection } from "./storage-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 
@@ -68,6 +69,7 @@ const SECTIONS = [
 	{ id: "keyboard", label: "Keyboard", hint: "Stored on this device" },
 	{ id: "usage", label: "Spending" },
 	{ id: "general", label: "General" },
+	{ id: "storage", label: "Storage" },
 	{ id: "reset", label: "Reset" },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
@@ -443,6 +445,15 @@ export function SettingsDialogBody({
 									testid="section-learner"
 								>
 									<LearnerSection onClose={onClose} />
+								</SettingsSection>
+							)}
+							{active === "storage" && (
+								<SettingsSection
+									title="Storage"
+									hint="What the app keeps on this computer. Cache can be cleared; voice clips, progress and backups stay."
+									testid="section-storage"
+								>
+									<StorageSection />
 								</SettingsSection>
 							)}
 							{active === "reset" && (

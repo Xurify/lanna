@@ -66,6 +66,18 @@ const VERDICT_STYLE: Record<AnswerVerdict, { label: string; className: string; b
 	wrong: { label: "Not quite", className: "text-miss", badge: "bg-miss text-background", btn: "bg-miss text-background" },
 };
 
+/**
+ * Splits the sentence around the blank. Punctuation that touches the blank
+ * ("." after it, "„" before it) comes out as lead and tail, so it renders in
+ * the same nowrap run as the highlight box. The box is an atomic inline, and
+ * a browser may break the line right after it, stranding the period below it.
+ */
+function clozeAround(before: string, after: string) {
+	const lead = /[^\s\p{L}\p{N}]*$/u.exec(before)?.[0] ?? "";
+	const tail = /^[^\s\p{L}\p{N}]*/u.exec(after)?.[0] ?? "";
+	return { before: before.slice(0, before.length - lead.length), lead, tail, after: after.slice(tail.length) };
+}
+
 export function ReviewSession() {
 	const lang = useActiveLanguage();
 	const [status, setStatus] = useState<Status | null>(null);
@@ -114,6 +126,7 @@ export function ReviewSession() {
 	}, [load]);
 
 	const prompt = status?.next ?? null;
+	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once (state "review") is always typed:
 	// choosing from four is for meeting a word, producing it is what keeps
@@ -345,7 +358,7 @@ export function ReviewSession() {
 										type="button"
 										onClick={toggleSound}
 										aria-pressed={sound}
-										className="flex items-center rounded-lg p-1.5 transition-colors hover:bg-accent hover:text-foreground"
+										className="-mr-1.5 flex items-center rounded-lg p-1.5 transition-colors hover:bg-accent hover:text-foreground"
 										title={sound ? "Sound on (speech and sounds, on every page)" : "Sound off"}
 										aria-label={sound ? "Sound on" : "Sound off"}
 										data-testid="review-sound"
@@ -363,46 +376,50 @@ export function ReviewSession() {
 								className="text-3xl leading-relaxed text-foreground"
 								lang={lang?.code}
 							>
-								<span>{prompt.before}</span>
-								<span
-									className={cn(
-										"-mx-1.5 inline-grid rounded-xl border-2 px-1.5 text-center font-bold transition-colors",
-										verdict
-											? cn("border-transparent", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)
-											: picks
-												? "border-dashed border-muted-foreground/50"
-												: "border-border bg-background focus-within:border-go",
-									)}
-								>
-									<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
-										{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
-									</span>
-									{verdict ? (
-										<span className="col-start-1 row-start-1" data-testid="review-answer">
-											{[...prompt.card.answer].map((ch, i) => (
-												<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
-													{ch}
-												</span>
-											))}
+								<span>{around.before}</span>
+								<span className="whitespace-nowrap">
+									{around.lead}
+									<span
+										className={cn(
+											"mr-0.5 inline-grid rounded-xl border-2 px-1.5 text-center font-bold transition-colors",
+											verdict
+												? cn("border-transparent", verdict === "accents" ? VERDICT_STYLE.accents.className : VERDICT_STYLE.exact.className)
+												: picks
+													? "border-dashed border-muted-foreground/50"
+													: "border-border bg-background focus-within:border-go",
+										)}
+									>
+										<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
+											{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
 										</span>
-									) : picks ? (
-										<span className="col-start-1 row-start-1" aria-label="blank" />
-									) : (
-										<input
-											ref={inputRef}
-											value={given}
-											onChange={(e) => setGiven(e.target.value)}
-											aria-label="Missing word"
-											autoComplete="off"
-											autoCorrect="off"
-											spellCheck={false}
-											size={1}
-											data-testid="review-input"
-											className="col-start-1 row-start-1 w-full min-w-0 bg-transparent text-center font-bold caret-go outline-none selection:bg-go/30"
-										/>
-									)}
+										{verdict ? (
+											<span className="col-start-1 row-start-1" data-testid="review-answer">
+												{[...prompt.card.answer].map((ch, i) => (
+													<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
+														{ch}
+													</span>
+												))}
+											</span>
+										) : picks ? (
+											<span className="col-start-1 row-start-1" aria-label="blank" />
+										) : (
+											<input
+												ref={inputRef}
+												value={given}
+												onChange={(e) => setGiven(e.target.value)}
+												aria-label="Missing word"
+												autoComplete="off"
+												autoCorrect="off"
+												spellCheck={false}
+												size={1}
+												data-testid="review-input"
+												className="col-start-1 row-start-1 w-px min-w-full bg-transparent text-center font-bold caret-go outline-none selection:bg-go/30"
+											/>
+										)}
+									</span>
+									{around.tail}
 								</span>
-								<span>{prompt.after}</span>
+								<span>{around.after}</span>
 							</form>
 
 							<div className="mt-3 flex items-center gap-2">
@@ -543,7 +560,7 @@ export function ReviewSession() {
 								<button
 									type="button"
 									onClick={() => void suspend()}
-									className="flex items-center gap-1.5 rounded-md px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
+									className="-mr-2 flex items-center gap-1.5 rounded-md px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
 									title="Never show this word again"
 									data-testid="review-suspend"
 								>

@@ -16,7 +16,7 @@
  * section, hands the new appearance here, and the vars move immediately.
  *
  * (The open-settings keyboard chord lives in components/keyboard-shortcuts.tsx
- * with the other navigations — mod+, pushes /settings from anywhere.)
+ * with the other navigations — mod+, opens the dialog from anywhere.)
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";

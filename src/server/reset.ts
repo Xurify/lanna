@@ -3,7 +3,7 @@
  * chats, review cards, skill map, speak sessions...) into
  * <data>/backups/<profile>-<stamp>/ and leave a fresh empty one. Nothing is
  * deleted, so a mistaken reset is undone by moving the folder back. Settings,
- * keys and the shared audio cache live outside the profile and are kept.
+ * keys and the shared voice clips live outside the profile and are kept.
  */
 
 import fs from "node:fs";

@@ -53,6 +53,20 @@ A narrative of the first three days, from the fork to the task-based app. Times 
 - **Logo:** the mark is two voices — a filled speech bubble answered by an outlined one, in one ink, with a transparent gap between them (the ring is an open path, not a dark outline); it replaces the spiral/orbit icon. One geometry drives `build/mark.svg`, the app icon (`build/icon-flat.svg`, with `node scripts/make-icons.mjs` now also packing the pre-Tahoe `build/icon.icns`), the Icon Composer layers, the browser favicon (`app/icon.svg`) and the sidebar mark (`components/lh-mark.tsx`). Sheet: `docs/assets/brand/logo-sheet.png`; in-app shot: `docs/assets/brand/sidebar-mark.png`.
 - **Measured minutes** (`feat/measured-minutes`, PR pending), after the owner asked whether time is tracked and what would help a learner most. Minutes were one wall-clock number a day, capped per task, so a lesson resumed after a break or a card left open counted in full (one lesson on the first profile was logged as exactly 60 minutes, 81% of the total), and the strand balance counted count × planned minutes instead. Now each task counts the time you were active and keeps it per activity (`minutesBy`); the strand balance reads those minutes and says how many of its minutes are still estimated. Time left in an unfinished lesson or card is sent when the page is left. Checked in the live app against a seeded profile: a review card left ten minutes counts 1.5 minutes (was 5), a lesson resumed after 30 minutes away 1.8 (was about 30), a Listen session with the tab hidden for seven of nine minutes 1.67 (was 8.7). Not covered live: Watch, Read, Speak, Say it faster and the level check (they need YouTube, a model or a mic; the handlers and the clock have tests), and the Electron shell. See [DECISIONS.md](DECISIONS.md) P9 and `scripts/demo-measured-minutes.ts`.
 
+## 30 October: exams on the path, Storage, review fixes
+
+Branch `fix/chapter-screens-design`, stacked on PR #51 (`feat/chapter-exams`). Not pushed.
+
+- **Chapter exam on the path:** each open chapter ends with its exam row. The passport page is gone (DECISIONS E15). Record only: nothing is gated yet.
+- **Review card:** a period or comma next to the blank stays on the blank's line at phone width, and the typing box is the same width as the verdict box.
+- **Settings → Storage:** what the app keeps (voice clips, learning progress, backups) with folders and sizes. The desktop app can clear its HTTP cache. Saved areas are never cleared (DECISIONS E16).
+- **Dead ends removed:** the redirect-only `/passport` and `/settings` pages. A bare `/exam` is now a 404.
+- **Cleanup:** 84 generated screenshots and Playwright page snapshots deleted from `.playwright-mcp/`, `_handoff/` and `data/`.
+
+Unverified by the owner: Storage and the cache clear in the Electron window (the clear is tested with a fake session, and the page was checked in a browser with a simulated bridge). Desktop speech may sound different from the web because the saved desktop speed can be 0.75× while the web default is 1×.
+
+Known: at 390px wide the settings dialog gives its content about 125px in every section, so the left section list crowds the text. This predates this branch.
+
 ## Pull requests
 
 | PR | Branch | What | State |

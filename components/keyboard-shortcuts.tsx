@@ -121,7 +121,7 @@ export function KeyboardShortcuts() {
 					break;
 				case "open-settings":
 					// Settings-app wave: the dialog is the surface, the URL is
-					// gone — /settings redirects to the draft shell.
+					// gone, so there is no settings page.
 					handlersRef.current.openSettings();
 					break;
 				case "jump-graph":

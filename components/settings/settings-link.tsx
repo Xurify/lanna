@@ -2,8 +2,8 @@
 
 /**
  * The "Set up a model" and "Settings → Keys" lines on the learning screens.
- * /settings only redirects (the dialog is modal-only, settings-dialog.tsx),
- * so a link there dead-ended on the chat. This opens the dialog instead.
+ * There is no settings page (the dialog is modal-only, settings-dialog.tsx),
+ * so these open the dialog in place.
  *
  * Model setup lands on Providers while no provider key exists (the model
  * list only offers what keys unlock), else on Agent, where the model slots
