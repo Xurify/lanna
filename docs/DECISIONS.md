@@ -201,6 +201,18 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Stepper buttons are inset squares inside a bordered group, so the hover fill stays inside the control.
 - A section with a size or status that loads later reserves its rows up front (Data), so the layout does not move when the value arrives.
 
+### E18. A spoken line is 16 kHz mono WAV, captured through the worklet (2026-10-31)
+
+**Why:** Speak asked the browser for WebM/Opus and fell back to MP4, so a line could be kept as a video container, and speech-to-text always got that compressed clip — the WAV was built only when Azure scored pronunciation. Every engine a line goes to (ElevenLabs, Deepgram, Azure) accepts WAV, and a line is a few seconds (about 1 MB per 30 s, well under the 8 MB cap). The upload name was fixed at the same time: every clip was called `line.webm`, even when it was MP4.
+
+**How to apply:**
+- `components/speak/recorder.ts` captures through the same AudioWorklet dictation uses (`public/worklets/pcm-capture.js`): 16 kHz, mono, 16-bit PCM, encoded once into a WAV. There is no MediaRecorder, no container choice and no MP4 path.
+- The worklet answers a `flush` message with its trailing partial frame, then `flushed`, so a stopped line loses nothing (a frame is posted only when 2048 samples are full).
+- The worklet's per-quantum RMS is the meter and the stop-on-silence clock; the level mapping is unchanged.
+- A recording is `{ wav, ms, spokeAt }`, and `ms` comes from the samples. The WAV goes to `/api/stt`, to pronunciation scoring and with the line to `/api/speak` (kept beside the scene), so the engine and the archive see the same bytes.
+- The file name follows the clip's type through `audioExt` (`src/core/audio.ts`): the client's uploads, the scene's stored extension and the ElevenLabs multipart name. Older WebM, Ogg and MP4 clips still map correctly.
+- Azure's scoring path needs no conversion: it already asks for `audio/wav` PCM at 16 kHz.
+
 ## Working rules (how work reaches the repo)
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)

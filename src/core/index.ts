@@ -107,6 +107,8 @@ export * from "./speak-script.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
 export * from "./pronounce.ts";
+// audio.ts: a recording's type to its file extension (Speak, 2026-10-31).
+export * from "./audio.ts";
 export * from "./watch.ts";
 export * from "./milestones.ts";
 export * from "./plan.ts";

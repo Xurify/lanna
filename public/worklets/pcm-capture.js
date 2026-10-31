@@ -19,6 +19,12 @@
  *                             needed — the 10s NET-0001 timeout only bites
  *                             a stream that stops SENDING).
  *
+ * A recorder (Speak) sends { type: "flush" } when it stops: the frame is
+ * posted only when it is full, so the last 0–127ms would otherwise be lost.
+ * The worklet answers with { type: "audio" } for the tail it holds (if any),
+ * then { type: "flushed" }, so the caller knows the recording is complete.
+ * Dictation never flushes.
+ *
  * Ships as a static file under public/ so it rides the standalone bundle.
  * Plain JS by necessity (worklets run outside the module graph).
  */
@@ -27,6 +33,16 @@ class PcmCaptureProcessor extends AudioWorkletProcessor {
 		super();
 		this.frame = new Int16Array(2048);
 		this.count = 0;
+		this.port.onmessage = (e) => {
+			if (!e.data || e.data.type !== "flush") return;
+			if (this.count > 0) {
+				const tail = this.frame.slice(0, this.count);
+				this.port.postMessage({ type: "audio", buffer: tail }, [tail.buffer]);
+				this.frame = new Int16Array(2048);
+				this.count = 0;
+			}
+			this.port.postMessage({ type: "flushed" });
+		};
 	}
 
 	process(inputs) {

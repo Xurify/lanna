@@ -525,7 +525,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				.stop()
 				.then(async (clip) => {
 					if (clip.ms < 200) return settle({});
-					const score = await scoreClip(clip, item.sentence);
+					const score = await scoreClip(clip.wav, item.sentence);
 					if (!score) return settle({ heard: "" });
 					settle({ pron: score, heard: score.heard ?? "", match: score.accuracy / 100 });
 				})
@@ -544,7 +544,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		if (useMic) {
 			const rec = new Recorder();
 			try {
-				await rec.start({ onLevel: setLevel, silenceMs: 650, maxMs: win * 3, onAutoStop: () => void endRef.current(true), wav: pron === "azure" });
+				await rec.start({ onLevel: setLevel, silenceMs: 650, maxMs: win * 3, onAutoStop: () => void endRef.current(true) });
 				recorder.current = rec;
 			} catch {
 				setUseMic(false);
@@ -557,7 +557,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		setPaused(false);
 		setElapsed(0);
 		setPhase("running");
-	}, [item, phase, useMic, win, pron]);
+	}, [item, phase, useMic, win]);
 
 	/** Pause or resume the running pass (mic off only: the recorder runs on its own clock). */
 	const togglePause = useCallback(() => {

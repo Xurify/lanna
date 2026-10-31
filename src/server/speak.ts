@@ -24,6 +24,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
+import { audioExt } from "../core/audio.ts";
 import { LANGUAGES } from "../core/language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
 import type { PronEngine, PronScore } from "../core/pronounce.ts";
@@ -215,7 +216,7 @@ export async function transcribe(audio: Uint8Array, mime: string, lang = code())
 		form.set("language_code", ISO3[lang] ?? lang);
 		form.set("tag_audio_events", "false");
 		form.set("diarize", "false");
-		form.set("file", new Blob([audio as BlobPart], { type: mime || "audio/webm" }), `line.${mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : "webm"}`);
+		form.set("file", new Blob([audio as BlobPart], { type: mime || "audio/webm" }), `line.${audioExt(mime || "audio/webm")}`);
 		const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", { method: "POST", headers: { "xi-api-key": keyValue("ELEVENLABS_API_KEY")! }, body: form });
 		if (!res.ok) throw new Error(`ElevenLabs speech-to-text failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
 		const data = (await res.json()) as { text?: string };

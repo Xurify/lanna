@@ -13,7 +13,7 @@
  * POST /api/speak {action: "drop", id} — forget a scene that never got going.
  */
 
-import { isPronScore, type PronScore } from "@/src/core";
+import { audioExt, isPronScore, type PronScore } from "@/src/core";
 import { speakDrop, speakEnd, speakStart, speakState, speakStore, speakTurn, STT_MAX_BYTES } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 			const file = form.get("audio");
 			if (file instanceof Blob && file.size > 0 && file.size <= STT_MAX_BYTES) {
 				const mime = file.type || "audio/webm";
-				audio = { data: new Uint8Array(await file.arrayBuffer()), ext: mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : mime.includes("wav") ? "wav" : "webm" };
+				audio = { data: new Uint8Array(await file.arrayBuffer()), ext: audioExt(mime) };
 			}
 		} else body = ((await req.json().catch(() => null)) as Body | null) ?? {};
 	} catch {
