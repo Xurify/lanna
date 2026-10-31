@@ -48,7 +48,6 @@ import {
 	DEFAULT_DAYS_PER_WEEK,
 	bridgeLanguages,
 	parallelsOn,
-	DEFAULT_LANG_LEVEL,
 	isLang,
 	normalizeLangLevel,
 	MAX_EXPLAIN,
@@ -578,7 +577,8 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 		const levels: Partial<Record<Lang, LangLevel>> = {};
 		for (const [k, v] of Object.entries(goal.languageLevels)) {
 			const lv = normalizeLangLevel(v);
-			if (isLang(k) && known.includes(k) && lv && lv !== DEFAULT_LANG_LEVEL) levels[k] = lv;
+			// B2 is stored when pressed: the picker shows what is saved, and an unset level reads as B2 for the tutor.
+			if (isLang(k) && known.includes(k) && lv) levels[k] = lv;
 		}
 		if (Object.keys(levels).length) next.languageLevels = levels;
 		else delete next.languageLevels;

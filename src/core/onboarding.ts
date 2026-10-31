@@ -215,8 +215,6 @@ export const LANG_LEVELS: ReadonlyArray<{ id: LangLevel; title: string; line: st
 ];
 /** Level assumed when none is saved. */
 export const DEFAULT_LANG_LEVEL: LangLevel = "B2";
-/** Starting level for a newly added language. */
-export const NEW_LANG_LEVEL: LangLevel = "A2";
 const LEVEL_RANK: Record<LangLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5, native: 6 };
 /** Legacy three-step levels, read as CEFR. */
 const LEGACY_LEVEL: Record<string, LangLevel> = { basic: "A2", good: "B2", fluent: "native" };
@@ -402,7 +400,7 @@ export interface LearnerGoal {
 	purposeNote?: string;
 	/** Languages the learner knows, strongest first. */
 	languages?: Lang[];
-	/** Level per language; absent = DEFAULT_LANG_LEVEL. Legacy "basic" | "good" | "fluent" are read via languageLevel(). */
+	/** Level per language as the learner pressed it; absent = none pressed yet (the tutor reads DEFAULT_LANG_LEVEL). Legacy "basic" | "good" | "fluent" are read via languageLevel(). */
 	languageLevels?: Partial<Record<Lang, LangLevel>>;
 	/** @deprecated Legacy free text; still read, no longer written. */
 	otherLanguages?: string[];

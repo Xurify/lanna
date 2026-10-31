@@ -1,4 +1,4 @@
-/** Languages-you-know picker: level storage and defaults. */
+/** Languages-you-know picker: a level is only what the learner presses. */
 import React, { act, useState } from "react";
 (globalThis as Record<string, unknown>).React = React;
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
@@ -10,8 +10,24 @@ import { parseHTML } from "linkedom";
 import { LanguagePicker } from "../components/onboarding/controls.tsx";
 import type { Lang, LangLevel } from "../src/core/index.ts";
 
+// The More languages panel is portaled (MenuShell): it lives on document.body, not in the host.
 const dom = parseHTML("<html><body></body></html>");
-Object.assign(globalThis, { window: dom.window, document: dom.document, CustomEvent: dom.window.CustomEvent });
+Object.assign(globalThis, {
+	window: dom.window,
+	document: dom.document,
+	Element: dom.window.Element,
+	HTMLElement: dom.window.HTMLElement,
+	HTMLInputElement: dom.window.HTMLInputElement,
+	HTMLTextAreaElement: dom.window.HTMLTextAreaElement,
+	CustomEvent: dom.window.CustomEvent,
+	requestAnimationFrame: (callback: FrameRequestCallback) => setTimeout(() => callback(performance.now()), 0),
+	cancelAnimationFrame: (id: number) => clearTimeout(id),
+});
+Object.assign(dom.window, { innerWidth: 1280, innerHeight: 800 });
+const rectProto = dom.window.HTMLElement.prototype as unknown as { getBoundingClientRect?: () => unknown; focus?: () => void };
+rectProto.getBoundingClientRect ??= () => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 });
+rectProto.focus ??= () => {};
+
 const roots: { root: Root; host: HTMLElement }[] = [];
 const q = (host: ParentNode, id: string) => host.querySelector<HTMLElement>(`[data-testid='${id}']`);
 type Levels = Partial<Record<Lang, LangLevel>>;
@@ -70,33 +86,34 @@ afterEach(async () => {
 	}
 });
 
-describe("Languages you know: a language you add", () => {
-	it("starts at A2 and shows A2 pressed, not B2", async () => {
+describe("Languages you know: a language you add has no level until you press one", () => {
+	it("shows no level pressed and asks for one", async () => {
 		const host = await mount(<Stateful initial={["et"]} initialLevels={{ et: "native" }} />);
 		await click(q(host, "languages-sv"));
-		assert.equal(pressed(host, "level-sv-A2"), "true");
-		assert.equal(pressed(host, "level-sv-B2"), "false");
+		for (const lv of ["A1", "A2", "B1", "B2", "C1", "C2", "native"]) assert.equal(pressed(host, `level-sv-${lv}`), "false", lv);
+		assert.ok(q(host, "level-sv-unset"), "the row says a level is still to pick");
 	});
 
-	it("stores A2 for the new language and leaves the others as they were", async () => {
+	it("stores no level for the new language and leaves the others as they were", async () => {
 		const { element, calls } = recorded(["et", "de"], { et: "native" });
 		const host = await mount(element);
 		await click(q(host, "languages-sv"));
-		assert.deepEqual(calls.at(-1), [["et", "de", "sv"], { et: "native", sv: "A2" }]);
+		assert.deepEqual(calls.at(-1), [["et", "de", "sv"], { et: "native" }]);
 	});
 
-	it("a language with no level saved still reads B2", async () => {
+	it("a language with no level saved shows none pressed, not B2", async () => {
 		const host = await mount(<Stateful initial={["et", "de"]} initialLevels={{ et: "native" }} />);
-		assert.equal(pressed(host, "level-de-B2"), "true");
+		assert.equal(pressed(host, "level-de-B2"), "false");
+		assert.ok(q(host, "level-de-unset"));
 	});
 
-	it("the More languages panel stores A2 for what it adds", async () => {
+	it("the More languages panel adds a language without a level", async () => {
 		const { element, calls } = recorded(["et"], { et: "native" });
 		const host = await mount(element);
 		await click(q(host, "languages-more"));
-		await click(q(host, "languages-pick-sr"));
-		await click(q(host, "languages-done"));
-		assert.deepEqual(calls.at(-1), [["et", "sr"], { et: "native", sr: "A2" }]);
+		await click(q(document, "languages-pick-sr"));
+		await click(q(document, "languages-done"));
+		assert.deepEqual(calls.at(-1), [["et", "sr"], { et: "native" }]);
 	});
 
 	it("pressing a level stores that level", async () => {
@@ -104,6 +121,13 @@ describe("Languages you know: a language you add", () => {
 		const host = await mount(element);
 		await click(q(host, "level-de-C1"));
 		assert.deepEqual(calls.at(-1), [["et", "de"], { et: "native", de: "C1" }]);
+	});
+
+	it("pressing B2 stores B2, so the choice is kept", async () => {
+		const { element, calls } = recorded(["et", "de"], { et: "native" });
+		const host = await mount(element);
+		await click(q(host, "level-de-B2"));
+		assert.deepEqual(calls.at(-1), [["et", "de"], { et: "native", de: "B2" }]);
 	});
 
 	it("removing a language drops its level with it", async () => {

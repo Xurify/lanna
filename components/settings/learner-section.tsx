@@ -76,7 +76,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 			<SettingsGroup label="Goal and level" testid="learner-goal">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
 					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">Your pace lives on the plan. The purposes, the target and your starting level live in setup.</span>
-					<span className="flex shrink-0 flex-wrap gap-2">
+					<span className="flex min-w-0 flex-wrap gap-2">
 						{[
 							{ id: "learner-open-plan", href: "/plan", label: "Open plan" },
 							{ id: "learner-open-setup", href: "/start?edit=1", label: "Open setup" },
