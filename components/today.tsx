@@ -198,7 +198,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	return (
 		<div className="relative min-h-dvh bg-background @container">
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
-			<header className="relative flex items-center gap-2 px-3 py-2">
+			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>
 
