@@ -46,8 +46,8 @@ import { type ProviderKeyInfo } from "@/components/settings/keys-section";
 import { ProviderMenuList } from "@/components/settings/model-menu";
 import { ChevronDown, SlidersIcon, XIcon } from "lucide-react";
 import { Dialog, DialogPortal, DialogOverlay, DialogContent } from "@/components/ui/dialog";
-import { ChatGPTBackgroundAccess } from "@/components/settings/chatgpt-connection";
-import { NativeSubscriptionBackgroundAccess, SubscriptionConnections } from "@/components/settings/subscription-connections";
+import { ChatGPTBackgroundAccess, ChatGPTUIProvider } from "@/components/settings/chatgpt-connection";
+import { NativeSubscriptionBackgroundAccess, NativeSubscriptionUIProvider, SubscriptionConnections } from "@/components/settings/subscription-connections";
 import { defaultOrderLevel, populateLevel, THINKING_LABEL } from "@/components/thinking-default";
 import { ThinkingMenuList } from "@/components/settings/model-menu";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
@@ -403,8 +403,12 @@ export function SetupDialog({
 		onDone(models);
 	}
 
+	if (!open) return null;
+
 	return (
-		<Dialog open={open} onClose={onClose}>
+		<ChatGPTUIProvider>
+			<NativeSubscriptionUIProvider>
+				<Dialog open={open} onClose={onClose}>
 			<DialogPortal>
 				<DialogOverlay data-testid="setup-backdrop">
 					<DialogContent
@@ -604,5 +608,7 @@ export function SetupDialog({
 				</DialogOverlay>
 			</DialogPortal>
 		</Dialog>
+			</NativeSubscriptionUIProvider>
+		</ChatGPTUIProvider>
 	);
 }

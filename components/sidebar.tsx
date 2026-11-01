@@ -816,9 +816,9 @@ function SessionsSidebar() {
 	useEffect(() => {
 		if (!visible) return;
 		void refresh();
-		// Opening + navigation refetch; while open, the events channel owns
+		// Sidebar opening refetch; while open, the events channel owns
 		// freshness (S6) — no interval, nothing standing.
-	}, [visible, pathname, refresh]);
+	}, [visible, refresh]);
 
 	return (
 		<>

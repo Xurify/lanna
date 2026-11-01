@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
+import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 
 interface ProfileInfo {
@@ -65,7 +66,10 @@ export function LanguageSwitcher() {
 
 	useEffect(() => {
 		refresh();
-	}, [pathname, refresh]);
+	}, [refresh]);
+	useEffect(() => {
+		if (open) refresh();
+	}, [open, refresh]);
 	useEffect(() => {
 		window.addEventListener("lh:review-changed", refresh);
 		return () => window.removeEventListener("lh:review-changed", refresh);
@@ -142,7 +146,7 @@ export function LanguageSwitcher() {
 						)}
 					>
 						<div className="flex min-w-0 items-center gap-2 truncate">
-							<GlobeIcon className="size-4 shrink-0 text-muted-foreground" />
+							<CountryFlag lang={activeProfile?.id ?? "slovak"} />
 							<span className="truncate">{activeProfile?.endonym ?? "Language"}</span>
 							{activeProfile && (
 								<span className="truncate text-[11px] font-normal text-muted-foreground">
@@ -194,6 +198,7 @@ export function LanguageSwitcher() {
 											)}
 										>
 											<div className="flex min-w-0 items-center gap-2 truncate">
+												<CountryFlag lang={p.id} />
 												<span className="truncate font-semibold">{p.endonym}</span>
 												<span className="truncate text-[11px] text-muted-foreground">({p.english})</span>
 											</div>
@@ -233,8 +238,8 @@ export function LanguageSwitcher() {
 						className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border bg-card p-5 shadow-2xl animate-in zoom-in-95 duration-150"
 					>
 						<div className="flex items-center gap-3">
-							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-								<GlobeIcon className="size-5" />
+							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/40">
+								<CountryFlag lang={pending.id} className="w-[30px] h-[20px] rounded-[4px]" />
 							</div>
 							<div className="min-w-0 flex-1">
 								<h3 id="switch-dialog-title" className="text-sm font-bold text-foreground">
