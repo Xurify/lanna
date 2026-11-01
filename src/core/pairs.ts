@@ -61,11 +61,11 @@ export interface PairSentence {
 function formsOfEntry(entry: LexiconEntry, tag = "sk-SK"): string[] {
 	const out = new Set<string>();
 	const lemma = entryLemma(entry);
-	for (const f of [lemma, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]) {
-		if (f) out.add(f.toLocaleLowerCase(tag));
+	for (const form of [lemma, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]) {
+		if (form) out.add(form.toLocaleLowerCase(tag));
 	}
-	for (const ex of entry.examples) {
-		if (ex.cloze && !ex.rejected) out.add(ex.cloze.answer.toLocaleLowerCase(tag));
+	for (const example of entry.examples) {
+		if (example.cloze && !example.rejected) out.add(example.cloze.answer.toLocaleLowerCase(tag));
 	}
 	return [...out].filter(Boolean);
 }
@@ -75,32 +75,32 @@ function formsOfEntry(entry: LexiconEntry, tag = "sk-SK"): string[] {
  *  first, so a form that contains another can never shadow it. */
 function formRegex(forms: readonly string[]): RegExp {
 	const escaped = [...new Set(forms)]
-		.map((f) => f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-		.sort((x, y) => y.length - x.length);
+		.map((form) => form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+		.sort((a, b) => b.length - a.length);
 	return new RegExp(`(?<![\\p{L}])(${escaped.join("|")})(?![\\p{L}])`, "iu");
 }
 
 const byLemma = (entries: readonly LexiconEntry[], lemma: string) =>
-	entries.find((e) => entryLemma(e) === lemma || e.sk === lemma);
+	entries.find((entry) => entryLemma(entry) === lemma || entry.sk === lemma);
 
 /** The verified examples of the pair's two entries that contain exactly one
  *  of the two forms. The cloze answer is the target; the other twin must
  *  not appear anywhere in the sentence. */
 export function pairSentences(entries: readonly LexiconEntry[], pair: PairDef): PairSentence[] {
-	const ea = byLemma(entries, pair.a);
-	const eb = byLemma(entries, pair.b);
-	if (!ea || !eb) return [];
-	const regexA = formRegex(formsOfEntry(ea));
-	const regexB = formRegex(formsOfEntry(eb));
+	const entryA = byLemma(entries, pair.a);
+	const entryB = byLemma(entries, pair.b);
+	if (!entryA || !entryB) return [];
+	const regexA = formRegex(formsOfEntry(entryA));
+	const regexB = formRegex(formsOfEntry(entryB));
 	const out: PairSentence[] = [];
-	for (const [entry, mine, other, member] of [
-		[ea, regexA, regexB, "a"],
-		[eb, regexB, regexA, "b"],
+	for (const [entry, ownRegex, otherRegex, member] of [
+		[entryA, regexA, regexB, "a"],
+		[entryB, regexB, regexA, "b"],
 	] as const) {
-		entry.examples.forEach((ex, index) => {
-			if (!ex.cloze || ex.rejected) return;
-			if (other.test(exampleText(ex))) return;
-			out.push({ entry, index, member, form: ex.cloze.answer, at: ex.cloze.at });
+		entry.examples.forEach((example, index) => {
+			if (!example.cloze || example.rejected) return;
+			if (otherRegex.test(exampleText(example))) return;
+			out.push({ entry, index, member, form: example.cloze.answer, at: example.cloze.at });
 		});
 	}
 	return out;

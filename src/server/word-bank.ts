@@ -25,7 +25,7 @@ import {
 	type WordBankSummary,
 	type WordLearningState,
 } from "../core/saved-phrases.ts";
-import type { LexiconEntry, ReviewCard } from "../core/review.ts";
+import { entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "../core/review.ts";
 
 function activeLang(): LanguageInfo {
 	return isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE] : LANGUAGES.slovak;
@@ -79,9 +79,9 @@ export function referenceSiteLinkFor(
 			label: site.label,
 		};
 	}
-	const q = (query ?? "").trim();
+	const trimmedQuery = (query ?? "").trim();
 	return {
-		url: q ? `${site.baseUrl}/search?q=${encodeURIComponent(q)}` : `${site.baseUrl}/dictionary`,
+		url: trimmedQuery ? `${site.baseUrl}/search?q=${encodeURIComponent(trimmedQuery)}` : `${site.baseUrl}/dictionary`,
 		label: site.label,
 	};
 }
@@ -144,15 +144,18 @@ function normalizeEnglishGloss(gloss: string): string {
 function findAffirmativeVerbBase(lexicon: Lexicon | null, entry: LexiconEntry): LexiconEntry | undefined {
 	if (!lexicon) return undefined;
 	const tag = activeLang().tag;
-	const lower = entry.sk.toLocaleLowerCase(tag);
+	const lemma = entryLemma(entry);
+	const lower = lemma.toLocaleLowerCase(tag);
 	const isVerb =
 		(entry.pos ?? entry.cat ?? "").toLowerCase() === "verb" ||
 		lower.endsWith("ť") ||
 		lower.endsWith("ť sa") ||
 		lower.endsWith("ť si");
 	if (!isVerb || !lower.startsWith("ne") || lower.length < 5) return undefined;
-	const positiveSk = lower.slice(2);
-	const candidate = lexicon.byForm.get(positiveSk)?.find((e) => e.sk.toLocaleLowerCase(tag) === positiveSk);
+	const positiveLemma = lower.slice(2);
+	const candidate = lexicon.byForm
+		.get(positiveLemma)
+		?.find((lexEntry) => entryLemma(lexEntry).toLocaleLowerCase(tag) === positiveLemma);
 	return candidate;
 }
 
@@ -173,17 +176,17 @@ function detectFormNote(
 ): string | undefined {
 	const tag = activeLang().tag;
 	const lower = surface.toLocaleLowerCase(tag);
-	const lemma = entry.lemma ?? entry.sk ?? "";
+	const lemma = entryLemma(entry);
 	const lemmaLower = lemma.toLocaleLowerCase(tag);
 	const folded = foldDiacritics(lower);
 
 	if (affirmativeBase) {
-		const affLemma = affirmativeBase.lemma ?? affirmativeBase.sk ?? "";
+		const affirmativeLemma = entryLemma(affirmativeBase);
 		const person = lower === lemmaLower ? "infinitive" : detectPersonLabel(folded);
 		if (person && person !== "infinitive") {
-			return `negative ${person} of ${affLemma} (${affirmativeBase.en})`;
+			return `negative ${person} of ${affirmativeLemma} (${affirmativeBase.en})`;
 		}
-		return `negative form of ${affLemma} (${affirmativeBase.en})`;
+		return `negative form of ${affirmativeLemma} (${affirmativeBase.en})`;
 	}
 
 	if (prefixNote) return prefixNote;
@@ -195,13 +198,13 @@ function detectFormNote(
 	}
 
 	if (entry.declension) {
-		const sgIdx = entry.declension.singular.findIndex((f) => f.toLocaleLowerCase(tag) === lower);
-		if (sgIdx >= 0 && CASE_NAMES[sgIdx]) {
-			return `${CASE_NAMES[sgIdx]} singular of ${lemma}`;
+		const singularIndex = entry.declension.singular.findIndex((form) => form.toLocaleLowerCase(tag) === lower);
+		if (singularIndex >= 0 && CASE_NAMES[singularIndex]) {
+			return `${CASE_NAMES[singularIndex]} singular of ${lemma}`;
 		}
-		const plIdx = entry.declension.plural.findIndex((f) => f.toLocaleLowerCase(tag) === lower);
-		if (plIdx >= 0 && CASE_NAMES[plIdx]) {
-			return `${CASE_NAMES[plIdx]} plural of ${lemma}`;
+		const pluralIndex = entry.declension.plural.findIndex((form) => form.toLocaleLowerCase(tag) === lower);
+		if (pluralIndex >= 0 && CASE_NAMES[pluralIndex]) {
+			return `${CASE_NAMES[pluralIndex]} plural of ${lemma}`;
 		}
 	}
 
@@ -388,18 +391,18 @@ export function lookupSelection(text: string): SelectionLookupResult {
 	}
 
 	// 2. Grammar & high-frequency inflected words table (GRAMMAR_WORDS)
-	const gHit = grammarWord(lower) ?? (() => {
-		for (const [k, v] of Object.entries(GRAMMAR_WORDS)) {
-			if (foldDiacritics(k) === folded) return { lemma: v[0], gloss: v[1] };
+	const grammarMatch = grammarWord(lower) ?? (() => {
+		for (const [grammarKey, grammarData] of Object.entries(GRAMMAR_WORDS)) {
+			if (foldDiacritics(grammarKey) === folded) return { lemma: grammarData[0], gloss: grammarData[1] };
 		}
 		return undefined;
 	})();
-	if (gHit) {
-		const lexEntry = lexicon?.byForm.get(gHit.lemma.toLocaleLowerCase(lang.tag))?.[0];
-		const slug = lexEntry?.slug ?? foldDiacritics(gHit.lemma.toLocaleLowerCase(lang.tag)).replace(/[^a-z0-9]+/g, "-");
-		const card = Object.values(cards).find((c) => c.slug === slug);
-		const isDifferent = lower !== gHit.lemma.toLocaleLowerCase(lang.tag);
-		const refLink = referenceSiteLinkFor(lexEntry?.slug, gHit.lemma, lang);
+	if (grammarMatch) {
+		const lexEntry = lexicon?.byForm.get(grammarMatch.lemma.toLocaleLowerCase(lang.tag))?.[0];
+		const slug = lexEntry?.slug ?? foldDiacritics(grammarMatch.lemma.toLocaleLowerCase(lang.tag)).replace(/[^a-z0-9]+/g, "-");
+		const card = Object.values(cards).find((cardEntry) => cardEntry.slug === slug);
+		const isDifferent = lower !== grammarMatch.lemma.toLocaleLowerCase(lang.tag);
+		const refLink = referenceSiteLinkFor(lexEntry?.slug, grammarMatch.lemma, lang);
 		return {
 			query: cleaned,
 			found: true,
@@ -407,15 +410,15 @@ export function lookupSelection(text: string): SelectionLookupResult {
 			langTag: lang.tag,
 			langEnglish: lang.english,
 			slug,
-			lemma: gHit.lemma,
-			gloss: gHit.gloss,
-			dictionaryGloss: gHit.gloss,
+			lemma: grammarMatch.lemma,
+			gloss: grammarMatch.gloss,
+			dictionaryGloss: grammarMatch.gloss,
 			referenceUrl: refLink.url,
 			referenceLabel: refLink.label,
-			slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(lexEntry?.slug, gHit.lemma),
+			slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(lexEntry?.slug, grammarMatch.lemma),
 			pos: lexEntry?.pos ?? lexEntry?.cat ?? "Grammar",
 			gender: lexEntry?.gender,
-			formNote: isDifferent ? `form of ${gHit.lemma}` : undefined,
+			formNote: isDifferent ? `form of ${grammarMatch.lemma}` : undefined,
 			source: "grammar",
 			inDeck: !!card,
 			favorite: favorites.has(slug),
@@ -447,7 +450,7 @@ export function lookupSelection(text: string): SelectionLookupResult {
 					baseEntry,
 					"stem",
 					`most / -est; ${baseEntry.en}`,
-					`superlative of ${baseEntry.lemma ?? baseEntry.sk}`,
+					`superlative of ${entryLemma(baseEntry)}`,
 				);
 			}
 		}
@@ -455,16 +458,16 @@ export function lookupSelection(text: string): SelectionLookupResult {
 
 	// 4. Check story library newWords / tokens
 	try {
-		for (const idx of storyStore.list().slice(-25)) {
-			const story = storyStore.get(idx.id);
+		for (const storySummary of storyStore.list().slice(-25)) {
+			const story = storyStore.get(storySummary.id);
 			if (!story) continue;
-			const nw = story.newWords.find(
-				(w) => foldDiacritics(w.lemma.toLocaleLowerCase(lang.tag)) === folded,
+			const matchedNewWord = story.newWords.find(
+				(word) => foldDiacritics(word.lemma.toLocaleLowerCase(lang.tag)) === folded,
 			);
-			if (nw) {
-				const slug = nw.slug ?? folded.replace(/[^a-z0-9]+/g, "-");
-				const card = Object.values(cards).find((c) => c.slug === slug);
-				const refLink = referenceSiteLinkFor(nw.slug, nw.lemma, lang);
+			if (matchedNewWord) {
+				const slug = matchedNewWord.slug ?? folded.replace(/[^a-z0-9]+/g, "-");
+				const card = Object.values(cards).find((cardEntry) => cardEntry.slug === slug);
+				const refLink = referenceSiteLinkFor(matchedNewWord.slug, matchedNewWord.lemma, lang);
 				return {
 					query: cleaned,
 					found: true,
@@ -472,9 +475,9 @@ export function lookupSelection(text: string): SelectionLookupResult {
 					langTag: lang.tag,
 					langEnglish: lang.english,
 					slug,
-					lemma: nw.lemma,
-					gloss: nw.gloss,
-					dictionaryGloss: nw.gloss,
+					lemma: matchedNewWord.lemma,
+					gloss: matchedNewWord.gloss,
+					dictionaryGloss: matchedNewWord.gloss,
 					referenceUrl: refLink.url,
 					referenceLabel: refLink.label,
 					slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(nw.slug, nw.lemma),
@@ -527,22 +530,22 @@ export function lookupSelection(text: string): SelectionLookupResult {
 		const glossParts: string[] = [];
 		let matchedCount = 0;
 
-		for (const tok of rawTokens) {
-			const sub = lookupSelection(tok);
-			if (sub.found && sub.gloss) {
+		for (const token of rawTokens) {
+			const subLookup = lookupSelection(token);
+			if (subLookup.found && subLookup.gloss) {
 				matchedCount++;
-				const baseMean = sub.dictionaryGloss ?? sub.gloss;
-				const shortGloss = sub.surfaceGloss ?? baseMean.split(/[;,]/)[0]?.trim() ?? baseMean;
+				const baseMeaning = subLookup.dictionaryGloss ?? subLookup.gloss;
+				const shortGloss = subLookup.surfaceGloss ?? baseMeaning.split(/[;,]/)[0]?.trim() ?? baseMeaning;
 				glossParts.push(shortGloss);
-				resolvedParts.push(`${tok} (${shortGloss})`);
+				resolvedParts.push(`${token} (${shortGloss})`);
 			} else {
-				glossParts.push(tok);
+				glossParts.push(token);
 			}
 		}
 
 		if (matchedCount > 0) {
 			const slug = folded.replace(/[^a-z0-9]+/g, "-");
-			const card = Object.values(cards).find((c) => c.slug === slug);
+			const card = Object.values(cards).find((cardEntry) => cardEntry.slug === slug);
 			const refLink = referenceSiteLinkFor(undefined, cleaned, lang);
 			const breakdownGloss = glossParts.join(" · ");
 			return {
@@ -594,43 +597,44 @@ export function lookupSelection(text: string): SelectionLookupResult {
  */
 async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTranslation | null> {
 	const lang = activeLang();
-	const sl = lang.code;
+	const sourceLang = lang.code;
+	const targetLang = "en";
 	const lower = cleaned.toLocaleLowerCase(lang.tag);
 	const existing = readTranslationCache()[lower];
 	if (existing) return existing;
 
 	// Tier A: translate.googleapis.com with client=dict-chrome-ex (returns both translation & dictionary POS/alternatives)
 	try {
-		const url = `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${encodeURIComponent(sl)}&tl=en&dt=t&dt=bd&q=${encodeURIComponent(cleaned)}`;
-		const res = await fetch(url, {
+		const url = `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${encodeURIComponent(sourceLang)}&tl=${encodeURIComponent(targetLang)}&dt=t&dt=bd&q=${encodeURIComponent(cleaned)}`;
+		const response = await fetch(url, {
 			headers: { "User-Agent": "Mozilla/5.0" },
 			signal: AbortSignal.timeout(2500),
 		});
-		if (res.ok) {
-			const data = (await res.json()) as unknown[];
+		if (response.ok) {
+			const data = (await response.json()) as unknown[];
 			const sentences = Array.isArray(data[0]) ? data[0] : [];
 			const translated = sentences
-				.map((s) => (Array.isArray(s) && typeof s[0] === "string" ? s[0] : ""))
+				.map((sentence) => (Array.isArray(sentence) && typeof sentence[0] === "string" ? sentence[0] : ""))
 				.join("")
 				.trim();
 
-			const dictBlocks = Array.isArray(data[1]) ? data[1] : [];
-			const firstDict = Array.isArray(dictBlocks[0]) ? dictBlocks[0] : undefined;
-			const pos = typeof firstDict?.[0] === "string" ? firstDict[0] : undefined;
-			const alternatives = Array.isArray(firstDict?.[1])
-				? (firstDict[1] as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 4)
+			const dictionaryBlocks = Array.isArray(data[1]) ? data[1] : [];
+			const firstDictionaryBlock = Array.isArray(dictionaryBlocks[0]) ? dictionaryBlocks[0] : undefined;
+			const partOfSpeech = typeof firstDictionaryBlock?.[0] === "string" ? firstDictionaryBlock[0] : undefined;
+			const alternatives = Array.isArray(firstDictionaryBlock?.[1])
+				? (firstDictionaryBlock[1] as unknown[]).filter((alternative): alternative is string => typeof alternative === "string").slice(0, 4)
 				: undefined;
 
 			if (translated) {
-				const entry: CachedTranslation = {
+				const cachedEntry: CachedTranslation = {
 					gloss: translated,
-					pos,
+					pos: partOfSpeech,
 					lemma: cleaned,
 					alternatives,
 					updatedAt: new Date().toISOString(),
 				};
-				writeTranslationCacheEntry(lower, entry);
-				return entry;
+				writeTranslationCacheEntry(lower, cachedEntry);
+				return cachedEntry;
 			}
 		}
 	} catch {
@@ -639,13 +643,13 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 
 	// Tier B: clients5.google.com/translate_a/t
 	try {
-		const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${encodeURIComponent(sl)}&tl=en&q=${encodeURIComponent(cleaned)}`;
-		const res = await fetch(url, {
+		const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${encodeURIComponent(sourceLang)}&tl=${encodeURIComponent(targetLang)}&q=${encodeURIComponent(cleaned)}`;
+		const response = await fetch(url, {
 			headers: { "User-Agent": "Mozilla/5.0" },
 			signal: AbortSignal.timeout(2500),
 		});
-		if (res.ok) {
-			const data = (await res.json()) as unknown;
+		if (response.ok) {
+			const data = (await response.json()) as unknown;
 			const translated =
 				Array.isArray(data) && typeof data[0] === "string"
 					? data[0].trim()
@@ -653,13 +657,13 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 						? data[0][0].trim()
 						: "";
 			if (translated) {
-				const entry: CachedTranslation = {
+				const cachedEntry: CachedTranslation = {
 					gloss: translated,
 					lemma: cleaned,
 					updatedAt: new Date().toISOString(),
 				};
-				writeTranslationCacheEntry(lower, entry);
-				return entry;
+				writeTranslationCacheEntry(lower, cachedEntry);
+				return cachedEntry;
 			}
 		}
 	} catch {
@@ -668,19 +672,19 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 
 	// Tier C: MyMemory translated.net API (Tatoeba/MateCat backed)
 	try {
-		const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleaned)}&langpair=${encodeURIComponent(sl)}|en`;
-		const res = await fetch(url, { signal: AbortSignal.timeout(2500) });
-		if (res.ok) {
-			const data = (await res.json()) as { responseData?: { translatedText?: string } };
+		const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleaned)}&langpair=${encodeURIComponent(sourceLang)}|${encodeURIComponent(targetLang)}`;
+		const response = await fetch(url, { signal: AbortSignal.timeout(2500) });
+		if (response.ok) {
+			const data = (await response.json()) as { responseData?: { translatedText?: string } };
 			const translated = data?.responseData?.translatedText?.trim();
 			if (translated && translated.toLocaleLowerCase(lang.tag) !== lower) {
-				const entry: CachedTranslation = {
+				const cachedEntry: CachedTranslation = {
 					gloss: translated,
 					lemma: cleaned,
 					updatedAt: new Date().toISOString(),
 				};
-				writeTranslationCacheEntry(lower, entry);
-				return entry;
+				writeTranslationCacheEntry(lower, cachedEntry);
+				return cachedEntry;
 			}
 		}
 	} catch {
@@ -954,17 +958,19 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 		}
 
 		if (searchLower) {
-			const matchSk = entry.sk.toLowerCase().includes(searchLower);
-			const matchEn = entry.en.toLowerCase().includes(searchLower);
-			const matchForms = entry.forms?.some((f) => f.toLowerCase().includes(searchLower));
-			if (!matchSk && !matchEn && !matchForms) continue;
+			const targetLemma = entryLemma(entry);
+			const matchesTargetLemma = targetLemma.toLowerCase().includes(searchLower);
+			const matchesEnglishGloss = entry.en.toLowerCase().includes(searchLower);
+			const matchesInflectedForm = entry.forms?.some((form) => form.toLowerCase().includes(searchLower));
+			if (!matchesTargetLemma && !matchesEnglishGloss && !matchesInflectedForm) continue;
 		}
 
-		const example = entry.examples?.[0] ? { sk: entry.examples[0].sk, en: entry.examples[0].en } : undefined;
+		const firstExample = entry.examples?.[0];
+		const example = firstExample ? { sk: exampleText(firstExample), en: firstExample.en } : undefined;
 
 		items.push({
 			slug: entry.slug,
-			lemma: entry.sk,
+			lemma: entryLemma(entry),
 			gloss: entry.en,
 			pos: entry.pos ?? entry.cat,
 			gender: entry.gender,

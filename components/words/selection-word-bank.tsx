@@ -361,15 +361,15 @@ export function SelectionWordBankBar() {
 			: undefined);
 
 	const encodedWord = encodeURIComponent(selection.text);
-	const refSite = activeLang?.referenceSite;
+	const referenceSite = activeLang?.referenceSite;
 	const referenceUrl =
 		lookup?.referenceUrl ??
-		(refSite
+		(referenceSite
 			? selection.isSingleWord && lookup?.slug
-				? `${refSite.baseUrl}/dictionary/${encodeURIComponent(lookup.slug)}`
-				: `${refSite.baseUrl}/search?q=${encodedWord}`
+				? `${referenceSite.baseUrl}/dictionary/${encodeURIComponent(lookup.slug)}`
+				: `${referenceSite.baseUrl}/search?q=${encodedWord}`
 			: undefined);
-	const referenceLabel = lookup?.referenceLabel ?? refSite?.label;
+	const referenceLabel = lookup?.referenceLabel ?? referenceSite?.label;
 
 	const wiktionaryUrl = `https://en.wiktionary.org/wiki/${encodedWord}#${encodeURIComponent(langEnglish)}`;
 	const googleTranslateUrl = `https://translate.google.com/?sl=${encodeURIComponent(langCode)}&tl=en&text=${encodedWord}&op=translate`;

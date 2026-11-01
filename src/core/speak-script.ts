@@ -35,8 +35,8 @@ export interface SceneOption {
 	why?: string;
 }
 
-export function sceneOptionText(opt: SceneOption): string {
-	return opt.text ?? opt.sk ?? "";
+export function sceneOptionText(option: SceneOption): string {
+	return option.text ?? option.sk ?? "";
 }
 
 export interface ScriptTurn {
@@ -53,12 +53,12 @@ export interface SceneScript {
 }
 
 const RAW_BY_LANGUAGE: Partial<Record<LanguageId, SceneScript[]>> = {
-	slovak: [cafe, colleague, doctor, family, hotel, restaurant, shop, station, way].map((s) => s as SceneScript),
+	slovak: [cafe, colleague, doctor, family, hotel, restaurant, shop, station, way].map((script) => script as SceneScript),
 };
 
 const BY_SCENE_BY_LANGUAGE = new Map<LanguageId, Map<string, SceneScript>>();
 for (const [lang, scripts] of Object.entries(RAW_BY_LANGUAGE)) {
-	BY_SCENE_BY_LANGUAGE.set(lang as LanguageId, new Map((scripts as SceneScript[]).map((s) => [s.scene, s])));
+	BY_SCENE_BY_LANGUAGE.set(lang as LanguageId, new Map((scripts as SceneScript[]).map((script) => [script.scene, script])));
 }
 
 /** The scene's script, or undefined when the scene has none. */

@@ -149,15 +149,15 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 	}, [open]);
 
 	const encodedWord = encodeURIComponent(token.text);
-	const refSite = activeLang?.referenceSite;
+	const referenceSite = activeLang?.referenceSite;
 	const referenceUrl =
 		lookupData?.referenceUrl ??
-		(refSite
+		(referenceSite
 			? resolvedSlug
-				? `${refSite.baseUrl}/dictionary/${encodeURIComponent(resolvedSlug)}`
-				: `${refSite.baseUrl}/search?q=${encodedWord}`
+				? `${referenceSite.baseUrl}/dictionary/${encodeURIComponent(resolvedSlug)}`
+				: `${referenceSite.baseUrl}/search?q=${encodedWord}`
 			: undefined);
-	const referenceLabel = lookupData?.referenceLabel ?? refSite?.label;
+	const referenceLabel = lookupData?.referenceLabel ?? referenceSite?.label;
 
 	const wiktionaryUrl = `https://en.wiktionary.org/wiki/${encodedWord}#${encodeURIComponent(langEnglish)}`;
 	const googleTranslateUrl = `https://translate.google.com/?sl=${encodeURIComponent(langCode)}&tl=en&text=${encodedWord}&op=translate`;
