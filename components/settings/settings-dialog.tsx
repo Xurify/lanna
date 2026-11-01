@@ -112,12 +112,16 @@ export function SettingsDialogProvider({
 	}, []);
 	useEffect(() => window.lh?.onOpenSettings?.((section) => open(section)), [open]);
 	return (
-		<ChatGPTUIProvider><NativeSubscriptionUIProvider><DialogContext.Provider value={{ open }}>
+		<DialogContext.Provider value={{ open }}>
 			{children}
 			{show && (
-				<SettingsDialog onClose={() => setShow(false)} initialSection={landOn} initialRow={landOnRow} />
+				<ChatGPTUIProvider>
+					<NativeSubscriptionUIProvider>
+						<SettingsDialog onClose={() => setShow(false)} initialSection={landOn} initialRow={landOnRow} />
+					</NativeSubscriptionUIProvider>
+				</ChatGPTUIProvider>
 			)}
-		</DialogContext.Provider></NativeSubscriptionUIProvider></ChatGPTUIProvider>
+		</DialogContext.Provider>
 	);
 }
 

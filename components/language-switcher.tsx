@@ -65,7 +65,10 @@ export function LanguageSwitcher() {
 
 	useEffect(() => {
 		refresh();
-	}, [pathname, refresh]);
+	}, [refresh]);
+	useEffect(() => {
+		if (open) refresh();
+	}, [open, refresh]);
 	useEffect(() => {
 		window.addEventListener("lh:review-changed", refresh);
 		return () => window.removeEventListener("lh:review-changed", refresh);
