@@ -44,7 +44,7 @@ export function useActiveLanguage(): LanguageInfo | null {
 
 // ─── Playback speed (per-viewer preference) ────────────────────────────────
 
-export const SPEEDS = [0.75, 1, 1.25] as const;
+export const SPEEDS = [0.75, 0.9, 1, 1.25] as const;
 const SPEED_KEY = "lh-tts-speed";
 const speedListeners = new Set<() => void>();
 

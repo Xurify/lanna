@@ -81,9 +81,12 @@ export interface TtsClip {
 const PACE: Record<string, number> = { wiki: 4.55, "slovak-wiki": 4.55, edge: 4.55, elevenlabs: 5 };
 /** The same, for story-character voices (an ElevenLabs id, or Edge by gender). */
 const PACE_CHARACTER = 5.7;
-/** A normal conversational pace. The owner heard 1× as slow and 1.25× as
- *  normal; 1.25 × the old wiki rate is 6.5, so 6 sits just under it. */
-const PACE_TARGET = 6;
+/** What 1× sounds like. Owner feedback, both on slovak.wiki clips: at 4.8
+ *  syllables a second "Hráš na gitare?" sounded slow, at 6.0 "Uvádza nové
+ *  produkty." sounded too fast and 4.5 sounded right. The two clips disagree,
+ *  so this sits between them at what ElevenLabs reads at unaided, and the
+ *  0.9× step covers the 4.5. Change this one number to move every voice. */
+const PACE_TARGET = 5;
 
 /** The playback rate that makes a clip sound like a normal speaker, whichever
  *  voice made it. Only measured for Slovak; other languages and unknown

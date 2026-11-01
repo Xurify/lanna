@@ -59,10 +59,10 @@ describe("wiki audio", () => {
 	});
 
 	it("paceRate brings each source to one speaking pace, for Slovak only", () => {
-		assert.equal(paceRate("sk", "wiki", "female"), 1.319);
-		assert.equal(paceRate("sk", "slovak-wiki", "female"), 1.319);
-		assert.equal(paceRate("sk", "elevenlabs", "female"), 1.2);
-		assert.equal(paceRate("sk", "elevenlabs", "YJsJ2Mt3VRr0gCiTY6DA"), 1.053, "a story character is already near a normal pace");
+		assert.equal(paceRate("sk", "wiki", "female"), 1.099);
+		assert.equal(paceRate("sk", "slovak-wiki", "female"), 1.099);
+		assert.equal(paceRate("sk", "elevenlabs", "female"), 1, "ElevenLabs already reads at the target pace");
+		assert.equal(paceRate("sk", "elevenlabs", "YJsJ2Mt3VRr0gCiTY6DA"), 0.877, "a story character reads a little faster than the target");
 		assert.equal(paceRate("sk", "unknown", "female"), 1, "clips of unknown origin play as recorded");
 		assert.equal(paceRate("ru", "edge", "female"), 1, "the paces were measured on Slovak");
 	});
@@ -71,6 +71,6 @@ describe("wiki audio", () => {
 		const clip = await synthesize({ text: "Je to dobrý človek.", lang: "sk", voice: "female" });
 		assert.equal(clip?.tier, "wiki");
 		assert.equal(clip?.baseRate, paceRate("sk", "wiki", "female"), "wiki clips are sped up to a normal pace");
-		assert.ok((clip?.baseRate ?? 0) > 1.25, "the wiki records slowly, so it needs more than the old 1.136×");
+		assert.ok((clip?.baseRate ?? 0) > 1.05, "the wiki records slowly, so it is sped up");
 	});
 });
