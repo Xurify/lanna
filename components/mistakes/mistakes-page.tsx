@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
@@ -218,7 +218,7 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 		<section className="mt-8 rounded-2xl border-2 bg-card p-5" aria-labelledby="guide-title" data-testid="mistakes-guide">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 				<h2 id="guide-title" className="flex items-center gap-1.5 font-ui text-lg font-black text-foreground">
-					<SparklesIcon className="size-4 text-gold" aria-hidden="true" />
+					<CompassIcon className="size-5 text-sky" aria-hidden="true" />
 					Your guide
 				</h2>
 				{guide && (
