@@ -60,7 +60,7 @@ export function PairForm({ next }: { next: string }) {
 							onChange={(event) => setCode(event.target.value)}
 							placeholder="000 000"
 							maxLength={9}
-							className="h-11 font-mono text-lg tracking-widest tabular-nums"
+							className="h-11 font-mono text-lg tracking-widest tabular-nums focus-visible:ring-1"
 							data-testid="pair-code"
 						/>
 					</label>
@@ -71,7 +71,7 @@ export function PairForm({ next }: { next: string }) {
 							onChange={(event) => setName(event.target.value)}
 							placeholder="iPhone"
 							maxLength={40}
-							className="h-11 text-base"
+							className="h-11 text-base focus-visible:ring-1"
 							data-testid="pair-name"
 						/>
 					</label>
