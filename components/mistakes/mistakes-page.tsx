@@ -288,6 +288,9 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 						{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
 						{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
 					</button>
+					<p className="font-prose text-xs text-muted-foreground" data-testid="guide-privacy">
+						Sends your latest wrong sentences and what you wrote to your model provider. Nothing else leaves this computer.
+					</p>
 				</div>
 			)}
 			{!ai.ready && guide && <AiCallout status={ai} title="AI is off, so this guide cannot be refreshed" adds={[]} className="mt-4" />}
