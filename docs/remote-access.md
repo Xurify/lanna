@@ -46,6 +46,7 @@ It turns remote access off and signs every paired device out. It does not touch 
 
 ## Troubleshooting
 
+- **"This computer's browser asks for a code."** It should never. Open http://localhost:3010 on the PC. A tailnet address goes through Serve, and that one asks for a code.
 - **"Remote access is off" on the phone.** Serve is running, but the switch in Settings → Devices is off. Turn it on.
 - **"This address is not allowed."** The phone used an address other than your tailnet name. Use the `https://` address from `tailscale serve status`.
 - **"That code has expired."** A code lasts five minutes and works once. Make a new one.
@@ -55,6 +56,6 @@ It turns remote access off and signs every paired device out. It does not touch 
 
 ## What is checked, and what is not
 
-Checked in the cloud sandbox with a throwaway data folder: the switch, pairing with a code and its tries and expiry, sign-out, turning off, the refusals for other host names and for proxy headers, and the recovery command.
+Checked in the cloud sandbox with a throwaway data folder: the switch, this computer's own browser at `localhost` opening the app with no code (switch on and off), pairing with a code and its tries and expiry, sign-out, turning off, the refusals for other host names and for proxy headers, and the recovery command.
 
 Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's handling of the cookie, and the Home Screen app. The owner has to check those on the devices.
