@@ -58,6 +58,8 @@ describe("CountryFlag & langToCountryCode", () => {
 		assert.ok(slovakMarkup.includes('role="img"'));
 		assert.ok(slovakMarkup.includes("<svg"));
 		assert.ok(slovakMarkup.includes("#0052B4")); // Slovak blue
+		assert.ok(slovakMarkup.includes("border-black/15")); // crisp border
+		assert.ok(slovakMarkup.includes("dark:border-white/20")); // dark mode border
 
 		const russianMarkup = renderToStaticMarkup(<CountryFlag lang="russian" className="w-[21px] h-[14px]" />);
 		assert.ok(russianMarkup.includes('data-country-code="RU"'));

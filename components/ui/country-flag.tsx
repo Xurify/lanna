@@ -261,7 +261,7 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 			title={title ?? `${c} flag`}
 			data-country-code={c}
 			className={cn(
-				"relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[3px] ring-1 ring-inset ring-black/10 dark:ring-white/10 select-none bg-muted/20 w-[21px] h-[14px]",
+				"relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[3px] select-none bg-muted/20 w-[21px] h-[14px]",
 				className,
 			)}
 		>
@@ -272,6 +272,10 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 					{c}
 				</span>
 			)}
+			<span
+				aria-hidden="true"
+				className="pointer-events-none absolute inset-0 rounded-[inherit] border border-black/15 dark:border-white/20"
+			/>
 		</span>
 	);
 }
