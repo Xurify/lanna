@@ -186,8 +186,14 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 		};
 		stopCurrent = stop;
 		audio.onended = finish;
-		audio.onerror = finish;
-		audio.play().catch(finish);
+		audio.onerror = (err) => {
+			console.warn("[Speech] audio element error:", err);
+			finish();
+		};
+		audio.play().catch((err) => {
+			console.warn("[Speech] audio play rejected:", err);
+			finish();
+		});
 	});
 }
 
