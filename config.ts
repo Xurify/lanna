@@ -70,8 +70,20 @@ export function isLanguageProfile(v: unknown): v is LanguageProfile {
 	return typeof v === "string" && (LANGUAGE_PROFILES as readonly string[]).includes(v);
 }
 
+// `next dev` evaluates this module again for each route it compiles, and
+// again after HMR, all in one process. Reading profile.json each time split
+// one server across two profiles once a switch was saved but not restarted
+// (2026-11-01: Today read Slovak while lessons were recorded into a new,
+// empty Russian profile). The first read is kept on globalThis, per data
+// folder, so every later evaluation in the process agrees with it.
+const BOOT_PROFILES = ((globalThis as { __lhBootProfiles?: Record<string, LanguageProfile> }).__lhBootProfiles ??= {});
+
 function readActiveProfile(): LanguageProfile {
 	if (isLanguageProfile(process.env.LH_PROFILE)) return process.env.LH_PROFILE;
+	return (BOOT_PROFILES[PROFILE_FILE] ??= readProfileFile());
+}
+
+function readProfileFile(): LanguageProfile {
 	try {
 		const parsed: unknown = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8"));
 		const active = parsed && typeof parsed === "object" ? (parsed as { active?: unknown }).active : undefined;
