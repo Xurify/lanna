@@ -9,6 +9,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it } from "node:test";
+import { exampleText } from "../src/core/review.ts";
 
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lang-"));
 process.env.LH_DATA_DIR = dataDir;
@@ -103,7 +104,7 @@ describe("cloze cards", () => {
 		for (const e of lexicon.entries.slice(0, 500)) {
 			for (const ex of e.examples) {
 				if (!ex.cloze) continue;
-				assert.equal(ex.sk.slice(ex.cloze.at, ex.cloze.at + ex.cloze.answer.length), ex.cloze.answer, `${e.slug}: ${ex.sk}`);
+				assert.equal(exampleText(ex).slice(ex.cloze.at, ex.cloze.at + ex.cloze.answer.length), ex.cloze.answer, `${e.slug}: ${exampleText(ex)}`);
 			}
 		}
 	});

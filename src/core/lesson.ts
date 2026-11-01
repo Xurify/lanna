@@ -16,7 +16,7 @@
  * the answer is always the token the sentence really has.
  */
 
-import type { LexiconEntry } from "./review.ts";
+import { entryLemma, exampleText, type LexiconEntry, type LexiconExample } from "./review.ts";
 import { foldDiacritics } from "./language.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
@@ -215,15 +215,15 @@ function isNomPlural(lemma: string, gender: string, answer: string, prev: string
 
 /** Every grammar unit one cloze example drills (an example can serve
  *  several: "v meste" is the locative and the kam/kde choice). Pure. */
-export function classifyAll(entry: LexiconEntry, example: { sk: string; cloze?: { answer: string; at: number } }): UnitId[] {
+export function classifyAll(entry: LexiconEntry, example: Pick<LexiconExample, "text" | "sk" | "cloze">): UnitId[] {
 	const out: UnitId[] = [];
 	const c = example.cloze;
 	if (!c) return out;
-	const n = example.sk.split(/\s+/).length;
+	const n = exampleText(example).split(/\s+/).length;
 	if (n > MAX_WORDS) return out;
-	const lemma = entry.sk.toLowerCase();
+	const lemma = entryLemma(entry).toLowerCase();
 	const answer = c.answer.toLowerCase();
-	const prev = wordBefore(example.sk, c.at);
+	const prev = wordBefore(exampleText(example), c.at);
 	// Places (Bratislava, Košice, Praha…) decline like nouns, so they drill the
 	// cases too. The dictionary gives them no gender, so they fill no atlas cell.
 	if (entry.cat === "Nouns" || entry.cat === "Places") {
@@ -247,7 +247,7 @@ export function classifyAll(entry: LexiconEntry, example: { sk: string; cloze?: 
 		return out;
 	}
 	if (entry.cat === "Verbs") {
-		const toks = example.sk.split(/\s+/).map((t) => t.toLowerCase().replace(CLEAN, ""));
+		const toks = exampleText(example).split(/\s+/).map((t) => t.toLowerCase().replace(CLEAN, ""));
 		if (answer === lemma) {
 			if (MODAL_FORMS.test(prev)) out.push("modal-inf");
 		} else {
@@ -269,33 +269,33 @@ export function classifyAll(entry: LexiconEntry, example: { sk: string; cloze?: 
 }
 
 /** The main unit one cloze example drills, or null. Pure, so tests pin it. */
-export function classifyExample(entry: LexiconEntry, example: { sk: string; cloze?: { answer: string; at: number } }): UnitId | null {
+export function classifyExample(entry: LexiconEntry, example: Pick<LexiconExample, "text" | "sk" | "cloze">): UnitId | null {
 	return classifyAll(entry, example)[0] ?? null;
 }
 
 /** "First words": the beginner set in its dictionary form. */
-function isFirstWord(entry: LexiconEntry, example: { sk: string; cloze?: { answer: string } }): boolean {
+function isFirstWord(entry: LexiconEntry, example: Pick<LexiconExample, "text" | "sk" | "cloze">): boolean {
 	if (!example.cloze || example.cloze.answer.length < 3) return false;
-	if (example.sk.split(/\s+/).length > 8) return false;
+	if (exampleText(example).split(/\s+/).length > 8) return false;
 	if (entry.origin !== "curated" && (entry.rank ?? Infinity) > 150) return false;
-	return example.cloze.answer.toLowerCase() === entry.sk.toLowerCase();
+	return example.cloze.answer.toLowerCase() === entryLemma(entry).toLowerCase();
 }
 
 const WORD_POS = new Set(["Nouns", "Verbs", "Adjectives", "Adverbs"]);
 
 /** A frequency band: the word in its dictionary form, in a short sentence. */
-function inBand(entry: LexiconEntry, band: readonly [number, number], example: { sk: string; cloze?: { answer: string } }): boolean {
+function inBand(entry: LexiconEntry, band: readonly [number, number], example: Pick<LexiconExample, "text" | "sk" | "cloze">): boolean {
 	if (!example.cloze || example.cloze.answer.length < 3 || !WORD_POS.has(entry.cat)) return false;
 	if (entry.rank === undefined || entry.rank < band[0] || entry.rank >= band[1]) return false;
-	if (example.sk.split(/\s+/).length > 9) return false;
-	return example.cloze.answer.toLowerCase() === entry.sk.toLowerCase();
+	if (exampleText(example).split(/\s+/).length > 9) return false;
+	return example.cloze.answer.toLowerCase() === entryLemma(entry).toLowerCase();
 }
 
 /** A cluster word in any short sentence; the dictionary form comes first
  *  (see candidatesFor), inflected forms only fill out a small cluster. */
-function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: { sk: string; cloze?: { answer: string } }): boolean {
-	if (!example.cloze || !lemmas.has(entry.sk.toLowerCase())) return false;
-	return example.sk.split(/\s+/).length <= 9;
+function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: Pick<LexiconExample, "text" | "sk" | "cloze">): boolean {
+	if (!example.cloze || !lemmas.has(entryLemma(entry).toLowerCase())) return false;
+	return exampleText(example).split(/\s+/).length <= 9;
 }
 
 // ─── Items ──────────────────────────────────────────────────────────────────
@@ -371,10 +371,10 @@ const CASE_OF_UNIT: Partial<Record<UnitId, string>> = {
 /** The answer's form in plain words, from the ending and the unit: who is
  *  doing a verb, which case a noun is in. Undefined when nothing safe can
  *  be said (an adverb, a phrase, a form the unit does not name). */
-export function describeForm(entry: Pick<LexiconEntry, "sk" | "pos" | "cat" | "forms" | "gender">, answer: string, unit: UnitId): string | undefined {
+export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender">, answer: string, unit: UnitId): string | undefined {
 	const isVerb = entry.pos === "verb" || entry.cat === "Verbs";
 	const a = answer.toLowerCase();
-	if (a === entry.sk.toLowerCase()) return undefined;
+	if (a === entryLemma(entry).toLowerCase()) return undefined;
 	// A verb form the dictionary lists, or any form in a verb unit (the
 	// dictionary's form lists are incomplete for prefixed verbs).
 	const verbUnit = /^(present|past|cond|core-verbs|motion|verbs-mix)/.test(unit);
@@ -428,8 +428,8 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	// sentences first — a common word in a long legal sentence is not easy.
 	// A cluster unit puts the dictionary form first: that is the word to learn.
 	const band = (e: LexiconEntry) => (e.origin === "curated" ? -1 : Math.floor((e.rank ?? 1e9) / 300));
-	const words = (c: Candidate) => c.entry.examples[c.index]!.sk.split(/\s+/).length;
-	const inflected = (c: Candidate) => (lemmas && c.entry.examples[c.index]!.cloze!.answer.toLowerCase() !== c.entry.sk.toLowerCase() ? 1 : 0);
+	const words = (c: Candidate) => exampleText(c.entry.examples[c.index]!).split(/\s+/).length;
+	const inflected = (c: Candidate) => (lemmas && c.entry.examples[c.index]!.cloze!.answer.toLowerCase() !== entryLemma(c.entry).toLowerCase() ? 1 : 0);
 	return out.sort(
 		(a, b) =>
 			inflected(a) - inflected(b) ||
@@ -475,7 +475,7 @@ function matchCase(form: string, like: string): string {
 export function formOptions(entry: LexiconEntry, answer: string, pool: readonly string[], rand: () => number): string[] {
 	const seen = new Set([fold(answer)]);
 	const picks: string[] = [];
-	const own = [entry.sk, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])];
+	const own = [entryLemma(entry), ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])];
 	const add = (f: string) => {
 		if (!f || f.includes(" ")) return;
 		const k = fold(f);
@@ -483,7 +483,7 @@ export function formOptions(entry: LexiconEntry, answer: string, pool: readonly 
 		seen.add(k);
 		picks.push(matchCase(f, answer));
 	};
-	if (fold(entry.sk) !== fold(answer)) add(entry.sk);
+	if (fold(entryLemma(entry)) !== fold(answer)) add(entryLemma(entry));
 	for (const f of shuffle(own, rand)) if (picks.length < 3) add(f);
 	// Another word's form is a give-away (only one option is this word), so
 	// the pool only tops up a word with no other verified form at all.
@@ -640,26 +640,26 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 		kind,
 		unit: c.unit,
 		slug: c.entry.slug,
-		lemma: c.entry.sk,
+		lemma: entryLemma(c.entry),
 		gloss: c.entry.en,
-		sentence: ex.sk,
+		sentence: exampleText(ex),
 		translation: ex.en,
 		answer,
-		before: ex.sk.slice(0, at),
-		after: ex.sk.slice(at + answer.length),
-		hint: vocabulary ? shortGloss(c.entry.en) : c.entry.sk,
+		before: exampleText(ex).slice(0, at),
+		after: exampleText(ex).slice(at + answer.length),
+		hint: vocabulary ? shortGloss(c.entry.en) : entryLemma(c.entry),
 	};
 	if (c.entry.rank !== undefined) item.rank = c.entry.rank;
 	if (c.entry.cat) item.cat = c.entry.cat;
 	if (c.entry.gender) item.gender = c.entry.gender;
 	const form = describeForm(c.entry, answer, c.unit);
 	if (form) item.form = form;
-	const trigger = vocabulary ? undefined : triggerOf(ex.sk, at);
+	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at);
 	if (trigger) item.trigger = trigger;
-	const options = () => (info.kind === "words" ? wordOptions(answer, c.entry.sk, pool, rand) : formOptions(c.entry, answer, pool, rand));
+	const options = () => (info.kind === "words" ? wordOptions(answer, entryLemma(c.entry), pool, rand) : formOptions(c.entry, answer, pool, rand));
 	if (kind === "choose") item.options = options();
 	if (kind === "build") {
-		const tokens = sentenceTokens(ex.sk);
+		const tokens = sentenceTokens(exampleText(ex));
 		item.tokens = tokens;
 		const extra = options()
 			.filter((o) => fold(o) !== fold(answer))
@@ -730,7 +730,7 @@ export function buildLesson(
 	const mixes = (opts.mix ?? []).filter((u) => u !== unit).map((u) => sourceFor(u)).filter((m) => m.list.length > 0);
 	// Distractors: other answers of the unit (forms), or for a vocabulary
 	// unit the other words themselves, in their dictionary form.
-	const poolOf = (top: Candidate[], u: UnitId) => (unitInfo(u).kind === "words" ? [...new Set(top.map((c) => c.entry.sk))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer));
+	const poolOf = (top: Candidate[], u: UnitId) => (unitInfo(u).kind === "words" ? [...new Set(top.map((c) => entryLemma(c.entry)))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer));
 	const pool = poolOf(main.top, unit);
 	const used = new Set<string>();
 	const keyOf = (c: Candidate) => (info.repeat ? `${c.entry.slug}#${c.index}` : c.entry.slug);
@@ -739,11 +739,11 @@ export function buildLesson(
 		// A word bank needs a short sentence; listening needs one worth hearing.
 		const fits = (c: Candidate) => {
 			const ex = c.entry.examples[c.index]!;
-			const n = ex.sk.split(/\s+/).length;
+			const n = exampleText(ex).split(/\s+/).length;
 			if (kind === "build") return n >= 3 && n <= 7;
 			if (kind === "meaning") return n >= 3;
 			// A vocabulary choice is between words, so the blank is the dictionary form.
-			if (kind === "choose" && info.kind === "words") return fold(ex.cloze!.answer) === fold(c.entry.sk);
+			if (kind === "choose" && info.kind === "words") return fold(ex.cloze!.answer) === fold(entryLemma(c.entry));
 			return true;
 		};
 		const take = (list: Candidate[]) => list.find((c) => !used.has(keyOf(c)) && fits(c)) ?? list.find((c) => !used.has(keyOf(c)));
@@ -796,14 +796,14 @@ function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId,
 		kind: "choose",
 		unit,
 		slug: s.entry.slug,
-		lemma: s.entry.sk,
+		lemma: entryLemma(s.entry),
 		gloss: s.entry.en,
-		sentence: ex.sk,
+		sentence: exampleText(ex),
 		translation: ex.en,
 		answer: s.member === "a" ? pair.a : pair.b,
 		form: s.form,
-		before: ex.sk.slice(0, s.at),
-		after: ex.sk.slice(s.at + s.form.length),
+		before: exampleText(ex).slice(0, s.at),
+		after: exampleText(ex).slice(s.at + s.form.length),
 		hint: `${pair.a} = ${gloss(pair.a)} · ${pair.b} = ${gloss(pair.b)}`,
 		options: shuffle([pair.a, pair.b], rand),
 		pair: { id: pair.id, rule: pair.rule, bridge: pair.bridge },
@@ -815,7 +815,7 @@ export function buildBlitz(entries: readonly LexiconEntry[], units: readonly Uni
 	const rand = rng(seed);
 	const per = units.map((u) => {
 		const top = candidatesFor(entries, u).slice(0, 120);
-		return { u, top, pool: unitInfo(u).kind === "words" ? [...new Set(top.map((c) => c.entry.sk))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer) };
+		return { u, top, pool: unitInfo(u).kind === "words" ? [...new Set(top.map((c) => entryLemma(c.entry)))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer) };
 	});
 	const items: LessonItem[] = [];
 	const used = new Set<string>();

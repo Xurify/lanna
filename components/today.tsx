@@ -29,13 +29,15 @@ import { CurriculumPath } from "@/components/curriculum-path";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, ExamSummary, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitState, WeakSpotSummary } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, ExamSummary, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
 	title: string;
 	tagline: string;
 	glyph: string;
+	kind?: UnitKind;
+	slovakTerm?: string;
 	lessons: number;
 	reps: number;
 	level: number;

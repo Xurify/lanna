@@ -16,7 +16,7 @@
 
 import pairsJson from "../../curriculum/slovak/pairs.json";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
-import { LANGUAGES, type LanguageId } from "./language.ts";
+import { LANGUAGE_IDS, LANGUAGES, type LanguageId } from "./language.ts";
 
 export interface PairDef {
 	id: string;
@@ -35,8 +35,9 @@ const PAIRS_BY_LANGUAGE: Partial<Record<LanguageId, PairDef[]>> = {
 	slovak: (pairsJson as { pairs: PairDef[] }).pairs,
 };
 
-export function getPairsForLanguage(lang: LanguageId = "slovak"): PairDef[] {
-	return PAIRS_BY_LANGUAGE[lang] ?? [];
+export function getPairsForLanguage(lang: string = "slovak"): PairDef[] {
+	const known = LANGUAGE_IDS.find((id) => id === lang);
+	return known ? (PAIRS_BY_LANGUAGE[known] ?? []) : [];
 }
 
 export const PAIRS: PairDef[] = (pairsJson as { pairs: PairDef[] }).pairs;

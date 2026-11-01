@@ -21,7 +21,7 @@ process.env.LH_PROFILE = "slovak";
 const { PATHS } = await import("../config.ts");
 const { FAST_COUNT, FAST_PASSES, fastWindows, fastXp, pickKnown, rereadXp, wordsPerMinute, WPM_TARGET } = await import("../src/core/fluency.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
-const { resolveWord } = await import("../src/server/reading.ts");
+const { knownWords, resolveWord, STORY_NAMES } = await import("../src/server/reading.ts");
 const fluency = await import("../src/server/fluency.ts");
 const { fluencyStore } = await import("../src/store/speak.ts");
 const { storyStore } = await import("../src/store/stories.ts");
@@ -144,8 +144,11 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 });
 
 test("a say-it-faster round: the plan from the lexicon, the practised sentences first, the record into the ledger and the logs", () => {
-	// A lesson the learner got right: its sentence should come first.
-	const l = lookup();
+	// A lesson the learner got right: its sentence should come first. The
+	// lookup is the server's own known set (knownWords, level-bounded), the
+	// one the round is judged against.
+	const k = knownWords(lexicon);
+	const l = { resolve: (form: string) => resolveWord(lexicon, form, k.known), known: k.known, names: STORY_NAMES };
 	const seedItems = pickKnown(lexicon.entries, l, { seed: 21, count: 3 });
 	appendLessonLog({
 		id: "l1",

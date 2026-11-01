@@ -8,7 +8,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { grade, scriptFor, type SceneScript } from "../src/core/speak-script.ts";
+import { grade, scriptFor, tutorLineText, type SceneScript } from "../src/core/speak-script.ts";
 import { SPEAK_SCENES } from "../src/core/speak.ts";
 
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: Array<{ sk: string }> };
@@ -24,7 +24,7 @@ test("each script has six to ten turns: a tutor line (Slovak and English), three
 		const script = scriptFor(scene.id)!;
 		assert.ok(script.turns.length >= 6 && script.turns.length <= 10, `${scene.id}: ${script.turns.length} turns`);
 		script.turns.forEach((turn, i) => {
-			assert.ok(turn.tutor.sk.length > 0, `${scene.id} turn ${i}: no Slovak tutor line`);
+			assert.ok(tutorLineText(turn.tutor).length > 0, `${scene.id} turn ${i}: no Slovak tutor line`);
 			assert.ok(turn.tutor.en.length > 0, `${scene.id} turn ${i}: no English meaning`);
 			assert.equal(turn.options.length, 3, `${scene.id} turn ${i}: ${turn.options.length} options`);
 			assert.equal(turn.options.filter((o) => o.correct).length, 1, `${scene.id} turn ${i}: not exactly one correct option`);

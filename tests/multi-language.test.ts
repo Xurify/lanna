@@ -42,8 +42,7 @@ describe("multi-language architecture", () => {
 		assert.ok(presetKeys.includes("german"));
 		assert.ok(presetKeys.includes("spanish"));
 
-		for (const key of presetKeys) {
-			const preset = LANGUAGE_PRESETS[key];
+		for (const preset of Object.values(LANGUAGE_PRESETS)) {
 			assert.ok(preset.code);
 			assert.ok(preset.tag);
 			assert.ok(preset.endonym);
@@ -99,11 +98,14 @@ describe("multi-language architecture", () => {
 		const sampleEntry = {
 			slug: "kava",
 			lemma: "káva",
+			cat: "Nouns",
 			pos: "noun",
+			related: [],
 			en: "coffee",
 			examples: [
 				{
 					text: "Mám rád černou kávu.",
+					src: "curated",
 					cloze: { answer: "kávu", at: 15 },
 					en: "I like black coffee.",
 				},
@@ -111,11 +113,11 @@ describe("multi-language architecture", () => {
 		};
 
 		assert.equal(entryLemma(sampleEntry), "káva");
-		assert.equal(exampleText(sampleEntry.examples[0]), "Mám rád černou kávu.");
+		assert.equal(exampleText(sampleEntry.examples[0]!), "Mám rád černou kávu.");
 
 		const exIndex = pickClozeExample(sampleEntry);
 		assert.equal(exIndex, 0);
-		const card = mintCard(sampleEntry, exIndex, new Date("2026-11-01T00:00:00Z"))!;
+		const card = mintCard(sampleEntry, exIndex!, new Date("2026-11-01T00:00:00Z"))!;
 		assert.equal(card.lemma, "káva");
 		assert.equal(card.answer, "kávu");
 		assert.equal(card.sentence, "Mám rád černou kávu.");

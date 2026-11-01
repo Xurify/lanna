@@ -17,8 +17,9 @@
  * 127.0.0.1 on a kernel-assigned
  * free port, NODE_ENV=production, a THROWAWAY LH_DATA_DIR and an EMPTY
  * LH_AUTH_FILE under os.tmpdir() (no real keys or data ever touch it) —
- * polls GET / until 200, then probes the GET-only API surface (graph /
- * models / settings — no side effects). Any non-200, an early server
+ * polls GET / until it answers (200, or the first-run redirect to /start
+ * that an empty profile gets), then probes the GET-only API surface (setup,
+ * graph / models / settings — no side effects). Any other status, an early server
  * exit, or a 30s boot timeout fails the gate and prints the server's own
  * log tail for diagnosis. The child is ALWAYS killed before exit — a
  * leaked server holds its port against the next run (learned the hard
@@ -42,8 +43,9 @@ const RUNTIME = ELECTRON_MODE ? createRequire(import.meta.url)("electron") : pro
 
 const POLL_MS = 500;
 const BOOT_TIMEOUT_MS = 30_000;
-/** GET-only probes — the routes that exercised today's failure class. */
-const PROBES = ["/api/graph", "/api/models", "/api/settings"];
+/** GET-only probes — the routes that exercised today's failure class. /start
+ *  is where a fresh profile lands, so the setup page must render too. */
+const PROBES = ["/start", "/api/graph", "/api/models", "/api/settings"];
 
 if (!fs.existsSync(SERVER)) {
 	console.error("[smoke-server] .next/standalone/server.js missing — run next build first.");
@@ -62,19 +64,24 @@ function freePort() {
 	});
 }
 
-/** One GET; resolves the status code (0 = connection refused/failed). */
+/** One GET; resolves the status and Location (status 0 = connection refused/failed). */
 function get(url) {
 	return new Promise((resolve) => {
 		const req = http.get(url, (res) => {
 			res.resume();
-			resolve(res.statusCode ?? 0);
+			resolve({ status: res.statusCode ?? 0, location: res.headers.location ?? "" });
 		});
-		req.on("error", () => resolve(0));
+		req.on("error", () => resolve({ status: 0, location: "" }));
 		req.setTimeout(5000, () => {
 			req.destroy();
-			resolve(0);
+			resolve({ status: 0, location: "" });
 		});
 	});
+}
+
+/** A fresh profile's GET / is the one-time setup redirect to /start (app/page.tsx). */
+function isFirstRunRedirect(res) {
+	return res.status === 307 && new URL(res.location, "http://127.0.0.1").pathname === "/start";
 }
 
 async function main() {
@@ -148,21 +155,24 @@ async function main() {
 
 	let failed = null;
 	try {
-		// 1) Boot: poll GET / until 200 (or timeout / early exit).
-		let boot = 0;
+		// 1) Boot: poll GET / until the server answers (or timeout / early exit).
+		// An empty profile is sent once through setup: that answer is a live server.
+		let boot = { status: 0, location: "" };
 		const deadline = Date.now() + BOOT_TIMEOUT_MS;
 		while (Date.now() < deadline) {
 			if (exited) throw new Error(`server exited before answering on ${url}`);
 			boot = await get(url);
-			if (boot === 200) break;
+			if (boot.status === 200 || isFirstRunRedirect(boot)) break;
 			await new Promise((r) => setTimeout(r, POLL_MS));
 		}
-		if (boot !== 200) throw new Error(`server never answered 200 on ${url} (last status: ${boot})`);
-		console.log(`[smoke-server] boot ok: GET / → 200 (${url})`);
+		if (boot.status !== 200 && !isFirstRunRedirect(boot)) {
+			throw new Error(`server never answered on ${url} (last status: ${boot.status} ${boot.location})`);
+		}
+		console.log(`[smoke-server] boot ok: GET / → ${boot.status}${boot.status === 200 ? "" : ` → ${boot.location} (first run)`} (${url})`);
 
 		// 2) API surface: every probe must be 200.
 		for (const route of PROBES) {
-			const status = await get(url + route);
+			const { status } = await get(url + route);
 			if (status !== 200) throw new Error(`GET ${route} → ${status} (expected 200)`);
 			console.log(`[smoke-server] GET ${route} → 200`);
 		}

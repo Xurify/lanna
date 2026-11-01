@@ -33,7 +33,7 @@ import { PLACEMENT_TIERS, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapt
 import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, LADDER, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
 import { grammarWord } from "../core/reading.ts";
 import type { StoryUsage } from "../core/reading.ts";
-import type { LexiconEntry } from "../core/review.ts";
+import { entryLemma, type LexiconEntry } from "../core/review.ts";
 import { makePseudowords, PSEUDO_WORDS, scoreVocab, VOCAB_BANDS, WORDS_PER_BAND, type VocabAnswer, type VocabItem } from "../core/vocab-probe.ts";
 import { rng, shuffle } from "../core/lesson.ts";
 import { placementStore, type PlacementSession } from "../store/placement.ts";
@@ -408,11 +408,11 @@ export function wordsFor(id: string, lexicon: Lexicon | null = loadLexicon()): V
 	if (!lexicon) throw new Error("No dictionary loaded.");
 	const rand = rng(s.seed + 977);
 	const order = frequencyOrder(lexicon);
-	const usable = (e: LexiconEntry | undefined): e is LexiconEntry => !!e && e.cat !== "Places" && !grammarWord(e.sk) && !e.sk.includes(" ") && e.sk.length >= 3 && e.sk.charAt(0) === e.sk.charAt(0).toLocaleLowerCase("sk-SK");
+	const usable = (e: LexiconEntry | undefined): e is LexiconEntry => !!e && e.cat !== "Places" && !grammarWord(entryLemma(e)) && !entryLemma(e).includes(" ") && entryLemma(e).length >= 3 && entryLemma(e).charAt(0) === entryLemma(e).charAt(0).toLocaleLowerCase("sk-SK");
 	const items: VocabItem[] = [];
 	for (const b of VOCAB_BANDS) {
 		const slugs = order.slice(b.from, b.to).filter((slug) => usable(lexicon.bySlug.get(slug)));
-		for (const slug of shuffle(slugs, rand).slice(0, WORDS_PER_BAND)) items.push({ id: slug, word: lexicon.bySlug.get(slug)!.sk, band: b.id });
+		for (const slug of shuffle(slugs, rand).slice(0, WORDS_PER_BAND)) items.push({ id: slug, word: entryLemma(lexicon.bySlug.get(slug)!), band: b.id });
 	}
 	const real = (w: string) => lexicon.byForm.has(w) || lexicon.byFolded.has(w) || lexicon.bySlug.has(w);
 	const source = order.slice(0, 3000).map((slug) => lexicon.bySlug.get(slug)?.sk ?? "").filter(Boolean);

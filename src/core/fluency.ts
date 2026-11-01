@@ -23,7 +23,7 @@ import type { Cefr } from "./curriculum.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { judgeSentence, type ListenLookup } from "./listen.ts";
 import type { PronScore } from "./pronounce.ts";
-import type { LexiconEntry } from "./review.ts";
+import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
 
 export type FluencyMode = "reread" | "fast";
 
@@ -164,15 +164,15 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 	const judge = (entry: LexiconEntry, i: number): Found | null => {
 		const ex = entry.examples[i];
 		if (!ex?.en || ex.rejected) return null;
-		if (usedSlug.has(entry.slug) || usedText.has(textOf(ex.sk))) return null;
-		const judged = judgeSentence(ex.sk, lookup);
+		if (usedSlug.has(entry.slug) || usedText.has(textOf(exampleText(ex)))) return null;
+		const judged = judgeSentence(exampleText(ex), lookup);
 		if (judged.words < FAST_MIN_WORDS || judged.words > FAST_MAX_WORDS || judged.stretch.length > 0) return null;
 		return { entry, index: i, hardest: judged.hardest, words: judged.words };
 	};
 	const take = (list: Found[], f: Found) => {
 		list.push(f);
 		usedSlug.add(f.entry.slug);
-		usedText.add(textOf(f.entry.examples[f.index]!.sk));
+		usedText.add(textOf(exampleText(f.entry.examples[f.index]!)));
 	};
 	// The learner's own practised sentences first: looked up by id, not
 	// found by chance in the scan.
@@ -216,8 +216,8 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 		return {
 			id: `${f.entry.slug}#${f.index}`,
 			slug: f.entry.slug,
-			lemma: f.entry.sk,
-			sentence: ex.sk,
+			lemma: entryLemma(f.entry),
+			sentence: exampleText(ex),
 			translation: ex.en,
 			words: f.words,
 			practised: opts.practised?.has(`${f.entry.slug}#${f.index}`) ?? false,
