@@ -34,7 +34,7 @@ export type Cefr = "A1" | "A2" | "B1" | "B2" | "C1";
 export const CEFR_ORDER: Cefr[] = ["A1", "A2", "B1", "B2", "C1"];
 
 /** Cumulative guided-learning hours to reach each level. A rough figure
- *  for a Slavic language learnt by an adult who already has a case
+ *  for a Slavic language learned by an adult who already has a case
  *  language (Estonian): between the Cambridge/ALTE figures for English and
  *  the FSI category-III figures. Shown to the learner as an estimate. */
 export const GUIDED_HOURS: Record<Cefr, number> = { A1: 90, A2: 200, B1: 400, B2: 650, C1: 950 };
@@ -67,7 +67,7 @@ export interface CurriculumUnit {
 	tagline: string;
 	/** lucide icon name (components/lesson/unit-icon.tsx). */
 	glyph: string;
-	/** The seed graph node it practises (curriculum/slovak/seed.json). */
+	/** The seed graph node it practices (curriculum/slovak/seed.json). */
 	node?: string;
 	/** Units that must be done before this one opens (inside an open chapter). */
 	requires?: string[];
@@ -675,7 +675,7 @@ export interface PlanInput {
 	 *  first: the Strengthen task takes the first one that can be drilled. */
 	weak?: UnitId[];
 	/** Pairs of words the learner mixes up and has not mended (src/core/mixups.ts),
-	 *  latest first: with no weak spot to drill, Strengthen practises them. */
+	 *  latest first: with no weak spot to drill, Strengthen practices them. */
 	mixups?: Array<[string, string]>;
 	/** Units whose first-try accuracy fell lately (src/core/mistakes.ts), worst
 	 *  first: with no weak spot on record, Strengthen takes the first one that
@@ -690,7 +690,7 @@ export interface PlanInput {
 	/** An episode read before today exists, so a timed re-read is possible. */
 	reread?: boolean;
 	/** Unfinished tasks from earlier days (src/core/carry-over.ts): the ones
-	 *  this plan offers again move to the top, labelled with their day. */
+	 *  this plan offers again move to the top, labeled with their day. */
 	carried?: Array<{ id: string; from: string }>;
 }
 
@@ -705,7 +705,7 @@ export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, 
  * spaced retrieval first (the review deck), then input before anything is
  * asked of you (ten sentences to listen to and understand), new ground on
  * the path (one lesson on the Continue unit), interleaved strengthening of
- * the weakest practised unit, new words in context, an episode to read at
+ * the weakest practiced unit, new words in context, an episode to read at
  * the learner's level, output with feedback (a tutor unit, else a spoken
  * scene from what Slovak is for), and three minutes of speed on what is
  * already known (a timed re-read of an episode, or "say it faster"). The
@@ -771,7 +771,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	});
 
 	// 4. Strengthen: a weak spot on record first (the check or the deck
-	//    flagged it, even with no lesson yet), else the weakest practised
+	//    flagged it, even with no lesson yet), else the weakest practiced
 	//    drill (not the Continue unit), else a blitz across the units started.
 	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
 	const worseUnit = spot ? undefined : (input.worse ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
@@ -808,7 +808,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weakClean}${weakSlovak ? ` · ${weakSlovak}` : ""}`,
-			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbours` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with its neighbours` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbours`,
+			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbors` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with its neighbors` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbors`,
 			minutes: TASK_MINUTES.strengthen,
 			done: strengthenDone,
 			unit: weak.id,

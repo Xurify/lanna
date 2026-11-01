@@ -156,21 +156,21 @@ test("a new unit's lesson opens with two meaning reps (input before output): the
 		}
 	}
 	// Once the unit holds, no meaning reps: production throughout.
-	const held = buildLesson(entries, "gen", { seed: 3, stage: "practised" });
+	const held = buildLesson(entries, "gen", { seed: 3, stage: "practiced" });
 	assert.equal(held.items.filter((i) => i.kind === "meaning").length, 0);
 	assert.ok(repXp("meaning", "exact", 1) < repXp("choose", "exact", 1), "understanding earns less than producing");
 });
 
-test("a practised unit is mostly typed; a new one recognises first", () => {
+test("a practiced unit is mostly typed; a new one recognizes first", () => {
 	const fresh = buildLesson(entries, "gen", { seed: 5 });
-	const held = buildLesson(entries, "gen", { seed: 5, stage: "practised" });
+	const held = buildLesson(entries, "gen", { seed: 5, stage: "practiced" });
 	const typed = (items: { kind: string }[]) => items.filter((i) => i.kind === "type" || i.kind === "listen").length;
 	assert.ok(typed(held.items) > typed(fresh.items));
 	assert.ok(held.items.filter((i) => i.kind === "choose").length <= 2);
 });
 
-test("mixing pulls a few reps from neighbouring units, marked and graded by their own unit", () => {
-	const plan = buildLesson(entries, "gen", { seed: 9, stage: "practised", mix: ["loc", "acc-people"] });
+test("mixing pulls a few reps from neighboring units, marked and graded by their own unit", () => {
+	const plan = buildLesson(entries, "gen", { seed: 9, stage: "practiced", mix: ["loc", "acc-people"] });
 	const mixed = plan.items.filter((i) => i.mixed);
 	assert.ok(mixed.length >= 2 && mixed.length <= 4, `mixed ${mixed.length}`);
 	assert.ok(mixed.every((i) => i.unit !== "gen"));
@@ -184,10 +184,10 @@ test("triggerOf names the case-picking preposition, nothing else", () => {
 	assert.equal(triggerOf("Pijem kávu.", "Pijem ".length), undefined);
 });
 
-test("unitStage: two lessons at 60% make a unit practised; a complete unit is strong", () => {
+test("unitStage: two lessons at 60% make a unit practiced; a complete unit is strong", () => {
 	assert.equal(unitStage(1, 0.9), "new");
 	assert.equal(unitStage(2, 0.5), "new");
-	assert.equal(unitStage(2, 0.6), "practised");
+	assert.equal(unitStage(2, 0.6), "practiced");
 	assert.equal(unitStage(3, 0.8), "strong");
 	assert.equal(unitStage(6, 0.3), "strong");
 });
@@ -196,10 +196,10 @@ test("unitStage: two lessons at 60% make a unit practised; a complete unit is st
 // difficulty rises with mastery ─────────────────────────────────────────────
 
 test("a strong unit is production only, interleaved more, and the plan says so", () => {
-	const held = buildLesson(entries, "gen", { seed: 5, stage: "practised", mix: ["loc", "acc-people"] });
+	const held = buildLesson(entries, "gen", { seed: 5, stage: "practiced", mix: ["loc", "acc-people"] });
 	const strong = buildLesson(entries, "gen", { seed: 5, stage: "strong", mix: ["loc", "acc-people"] });
 	assert.equal(strong.stage, "strong");
-	assert.equal(held.stage, "practised");
+	assert.equal(held.stage, "practiced");
 	assert.equal(strong.items.filter((i) => i.kind === "choose" || i.kind === "meaning").length, 0, "no recognition reps");
 	assert.ok(strong.items.filter((i) => i.mixed).length > held.items.filter((i) => i.mixed).length, "more of the contrast units");
 	assert.ok(strong.items.filter((i) => i.kind === "type").length >= 7);

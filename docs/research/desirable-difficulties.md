@@ -15,7 +15,7 @@ on 2026-10-28, and what changed.
 | Conditions that slow learning during practice (spacing, interleaving, testing, generating) raise long-term retention and transfer; fluent, easy practice feels good and fades. | Bjork 1994; Bjork & Bjork 2011 ("desirable difficulties") | Fast, smooth sessions are a warning sign, not a goal. |
 | Retrieving an answer strengthens memory more than re-reading it, and the effect grows with the retention interval. | Roediger & Karpicke 2006; Karpicke & Roediger 2008 | Ask before showing. Every rep is a test first. |
 | Even a **failed** retrieval, when followed by feedback, beats being shown the answer first ("pretesting", "productive failure"). | Kornell, Hays & Bjork 2009; Richland, Kornell & Kao 2009; Kapur 2008 | A wrong attempt is progress. Count it, do not hide the rep behind a hint. |
-| Producing the answer (recall) transfers better than recognising it (multiple choice); multiple choice also trains the distractors. | Glover 1989; Kang, McDermott & Roediger 2007; Roediger & Marsh 2005 | Type it where the learner can. Choose only to meet a form, never to prove it. |
+| Producing the answer (recall) transfers better than recognizing it (multiple choice); multiple choice also trains the distractors. | Glover 1989; Kang, McDermott & Roediger 2007; Roediger & Marsh 2005 | Type it where the learner can. Choose only to meet a form, never to prove it. |
 | Generating a form from a cue beats reading it (the generation effect), in L2 vocabulary too. | Slamecka & Graf 1978; Joe 1998 | Cue → produce, not show → copy. |
 | A miss that is then retrieved again later in the same session is what fixes it ("successive relearning"). | Rawson & Dunlosky 2011; Rawson, Dunlosky & Sciartelli 2013 | Every miss comes back typed before the session ends. |
 | Interleaving confusable categories beats blocking, because the learner must pick the rule, not apply the one the block implies. | Rohrer & Taylor 2007; Kornell & Bjork 2008; Pan et al. 2019 (L2 Spanish) | Mix the contrasting cases into a unit's lesson; mix more as the unit is mastered. |
@@ -35,9 +35,9 @@ What each task asked for, where it was too easy, and what changed.
 
 ### Learn lessons (`/lesson`)
 
-Already right: 12 local reps, type-heavy once a unit is practised,
+Already right: 12 local reps, type-heavy once a unit is practiced,
 hint-and-retry after a miss (a prompt, not a recast), misses asked again
-typed at the end, two neighbouring units interleaved, half XP for a
+typed at the end, two neighboring units interleaved, half XP for a
 second-try answer.
 
 Too easy:
@@ -49,18 +49,18 @@ Too easy:
    and bridges appear with the answer, after the second miss, opened
    automatically (explanatory feedback).
 2. **A missed choice was a 1-in-3 guess.** After a wrong pick the wrong
-   option was greyed and the learner picked again. *Now:* a missed
+   option was grayed and the learner picked again. *Now:* a missed
    choose rep retries **typed**. Recognition failed, so the retry is
    production.
 3. **The English was always on the screen.** Every type/choose rep showed
    the full translation before the attempt, so the Slovak sentence never
    had to be parsed; parsing speed is exactly the first learner's gap. *Now:* once a
-   unit is practised, the translation is hidden until the answer. A
+   unit is practiced, the translation is hidden until the answer. A
    "Meaning" button shows it early and halves the rep's XP (a priced
    hint), the same as the second try.
-4. **Difficulty stopped rising at "practised".** *Now* a third stage,
+4. **Difficulty stopped rising at "practiced".** *Now* a third stage,
    **strong** (the unit is complete): no choose reps at all, the mix from
-   neighbouring units rises from four reps to six, meaning hidden.
+   neighboring units rises from four reps to six, meaning hidden.
 5. **Misses read as failure.** The end screen listed them under "Worth
    another look". *Now* it is "What you worked for", because a corrected
    miss is the lesson's best rep, and the relearn cap rose from 3 to 4.

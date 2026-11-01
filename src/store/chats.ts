@@ -167,7 +167,7 @@ function saveSettings(id: string, settings: ChatSettings): void {
 	writeChat(record);
 }
 
-/** The tutor unit a chat practises, and whether its session is counted. */
+/** The tutor unit a chat practices, and whether its session is counted. */
 function setTutorUnit(id: string, unit: string): void {
 	const record = getChat(id);
 	if (!record) throw new Error(`Chat not found: ${id}`);

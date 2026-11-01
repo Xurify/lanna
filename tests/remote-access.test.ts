@@ -180,7 +180,7 @@ describe("public paths", () => {
 });
 
 describe("host and proxy helpers", () => {
-	it("recognises MagicDNS names and nothing else", () => {
+	it("recognizes MagicDNS names and nothing else", () => {
 		assert.equal(tailnetHost("pc.tail1234.ts.net"), true);
 		assert.equal(tailnetHost("pc.tail1234.ts.net:443"), true);
 		assert.equal(tailnetHost("PC.TAIL1234.TS.NET"), true);

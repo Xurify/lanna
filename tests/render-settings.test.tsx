@@ -206,13 +206,13 @@ describe("AppearanceSection (thin SSR)", () => {
 		assert.ok(!html.includes('data-testid="select-mode"'), "no select to mistake for a control");
 	});
 
-	it("the reading font trigger shows the factory family; the size reads 16px; the colours sit under Advanced", () => {
+	it("the reading font trigger shows the factory family; the size reads 16px; the colors sit under Advanced", () => {
 		// The reading font is a searchable dropdown showing the factory family.
 		const html = renderToStaticMarkup(<AppearanceSection appearance={undefined} onSectionChange={() => {}} />);
 		assert.ok(html.includes('data-testid="font-trigger"'));
 		assert.ok(html.includes("16px"));
 		assert.ok(tagOf(html, "advanced-appearance-toggle").includes('aria-expanded="false"'));
-		assert.ok(!html.includes('data-testid="input-background"'), "the colours mount on open");
+		assert.ok(!html.includes('data-testid="input-background"'), "the colors mount on open");
 	});
 });
 

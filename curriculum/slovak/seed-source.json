@@ -35,7 +35,7 @@
 			"strand": "phonetics",
 			"name": "Rytmický zákon (rhythmic law)",
 			"statement": "The rhythmic law (rytmický zákon) forbids two long syllables in a row inside one word, so an ending that is normally long becomes short after a long syllable: pekný but krásny, ženám but básňam, robím but chválim.",
-			"et": "Think of it as a length budget per two syllables: Estonian quantity also depends on the neighbouring syllable."
+			"et": "Think of it as a length budget per two syllables: Estonian quantity also depends on the neighboring syllable."
 		},
 		{
 			"key": "ph-voicing",
@@ -449,7 +449,7 @@
 		{ "key": "lx-weather", "name": "Weather", "et": "ilm", "words": [["počasie", "ilm"], ["slnko", "päike"], ["dážď", "vihm"], ["sneh", "lumi"], ["vietor", "tuul"], ["teplo", "soe (on soe)"], ["studený", "külm"], ["teplý", "soe"]] },
 		{ "key": "lx-nature", "name": "Nature", "et": "loodus", "words": [["príroda", "loodus"], ["strom", "puu"], ["les", "mets"], ["hora", "mägi"], ["rieka", "jõgi"], ["more", "meri"], ["jazero", "järv"], ["kvet", "lill"]] },
 		{ "key": "lx-animals", "name": "Animals", "et": "loomad", "words": [["pes", "koer"], ["mačka", "kass"], ["kôň", "hobune"], ["krava", "lehm"], ["vták", "lind"], ["ryba", "kala"]] },
-		{ "key": "lx-colours", "name": "Colours", "et": "värvid", "words": [["farba", "värv"], ["červený", "punane"], ["modrý", "sinine"], ["zelený", "roheline"], ["žltý", "kollane"], ["čierny", "must"], ["biely", "valge"]] },
+		{ "key": "lx-colours", "name": "Colors", "et": "värvid", "words": [["farba", "värv"], ["červený", "punane"], ["modrý", "sinine"], ["zelený", "roheline"], ["žltý", "kollane"], ["čierny", "must"], ["biely", "valge"]] },
 		{ "key": "lx-numbers", "name": "Numbers", "et": "arvud", "words": [["jeden", "üks", "one"], ["dva", "kaks", "two"], ["tri", "kolm", "three"], ["štyri", "neli", "four"], ["päť", "viis", "five"], ["desať", "kümme", "ten"], ["sto", "sada", "hundred"], ["tisíc", "tuhat", "thousand"]] },
 		{ "key": "lx-work", "name": "Work", "et": "töö", "words": [["práca", "töö"], ["kancelária", "kontor"], ["firma", "firma"], ["šéf", "ülemus"], ["pracovať", "töötama"], ["plat", "palk"], ["učiteľ", "õpetaja"]] },
 		{ "key": "lx-school", "name": "School & learning", "et": "kool ja õppimine", "words": [["škola", "kool"], ["študent", "üliõpilane"], ["učiť", "õpetama"], ["kniha", "raamat"], ["slovo", "sõna"], ["jazyk", "keel"], ["otázka", "küsimus"], ["odpoveď", "vastus"]] },

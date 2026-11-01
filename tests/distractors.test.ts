@@ -1,7 +1,7 @@
 /**
  * DISTRACTORS (LangHarness, 2026-10-30): the wrong meanings in a meaning
- * question are close to the right one. The neighbour index and the option
- * chooser (pure), then the server: a sentence with no close neighbour gets
+ * question are close to the right one. The neighbor index and the option
+ * chooser (pure), then the server: a sentence with no close neighbor gets
  * two near-misses from a scripted cheap model, kept on disk and reused
  * without a second call; a plan never waits longer than the cap.
  *
@@ -19,7 +19,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-distractors-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { buildNeighbourIndex, chooseOptions, neighbours, MIN_CLOSE } = await import("../src/core/distractors.ts");
+const { buildNeighborIndex, chooseOptions, neighbors, MIN_CLOSE } = await import("../src/core/distractors.ts");
 const { rng } = await import("../src/core/lesson.ts");
 const { betterOptions, parseNearMisses } = await import("../src/server/distractors.ts");
 const { distractorStore } = await import("../src/store/distractors.ts");
@@ -34,24 +34,24 @@ function fauxEngine(steps: FauxResponseStep[]) {
 
 const POOL = ["Do you look like an actor?", "I look like my father.", "I speak German.", "The train leaves at six.", "I'm starting a new life.", "I don't like Tom at all.", "Do I look like a doctor?", "Why is the sky blue?"];
 
-describe("neighbours", () => {
+describe("neighbors", () => {
 	it("finds close translations and never the sentence itself or its paraphrase", () => {
-		const index = buildNeighbourIndex(POOL);
-		const near = neighbours(index, "Do I look like an actor?").map((n) => n.text);
+		const index = buildNeighborIndex(POOL);
+		const near = neighbors(index, "Do I look like an actor?").map((n) => n.text);
 		assert.ok(near.includes("Do you look like an actor?"));
 		assert.ok(near.includes("Do I look like a doctor?"));
 		assert.ok(!near.includes("Why is the sky blue?"));
-		assert.ok(neighbours(index, "Do I look like an actor?").every((n) => n.score >= MIN_CLOSE));
-		assert.deepEqual(neighbours(buildNeighbourIndex(["Do I look like an actor?"]), "Do I look like an actor?"), []);
+		assert.ok(neighbors(index, "Do I look like an actor?").every((n) => n.score >= MIN_CLOSE));
+		assert.deepEqual(neighbors(buildNeighborIndex(["Do I look like an actor?"]), "Do I look like an actor?"), []);
 	});
 });
 
 describe("chooseOptions", () => {
 	const own = "Do I look like an actor?";
-	const index = buildNeighbourIndex(POOL);
+	const index = buildNeighborIndex(POOL);
 
-	it("uses cached near-misses first, then neighbours, then the old pool", () => {
-		const r = chooseOptions(own, ["Did I look like an actor?"], neighbours(index, own), POOL, rng(1));
+	it("uses cached near-misses first, then neighbors, then the old pool", () => {
+		const r = chooseOptions(own, ["Did I look like an actor?"], neighbors(index, own), POOL, rng(1));
 		assert.equal(r.options.length, 3);
 		assert.ok(r.options.includes(own) && r.options.includes("Did I look like an actor?"));
 		assert.equal(r.close, 2);

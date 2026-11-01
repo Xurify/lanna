@@ -26,7 +26,7 @@ const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "ut
 const entries = lexicon.words;
 
 const aced = (): UnitEvidence => ({ lessons: 1, reps: 12, correct: 12 });
-const practised = (): UnitEvidence => ({ lessons: 3, reps: 36, correct: 32 });
+const practiced = (): UnitEvidence => ({ lessons: 3, reps: 36, correct: 32 });
 const sessions = (n: number): UnitEvidence => ({ lessons: n, reps: 0, correct: 0 });
 
 test("the map is well-formed: every chapter ends in a goal, every unit is on exactly one chapter, every lesson unit is on the map", () => {
@@ -71,7 +71,7 @@ test("a chapter opens when the one before has at most two units left; a goal is 
 	const evidence: Record<string, UnitEvidence> = {};
 	// Everything but the goal and one more unit done: the next chapter opens, the goal is not reached.
 	const open = hello.units.filter((id) => curriculumUnit(id)!.kind !== "goal");
-	for (const id of open.slice(0, -1)) evidence[id] = curriculumUnit(id)!.kind === "tutor" ? sessions(TUTOR_SESSIONS) : practised();
+	for (const id of open.slice(0, -1)) evidence[id] = curriculumUnit(id)!.kind === "tutor" ? sessions(TUTOR_SESSIONS) : practiced();
 	let s = curriculumState(evidence, "B2");
 	assert.equal(s.chapters[1]!.open, true);
 	assert.equal(s.chapters[0]!.units.at(-1)!.status, "locked");
@@ -213,7 +213,7 @@ test("the daily plan: only a spoken scene or a tutor session ticks Speak; a weak
 	assert.equal(task(weak, "strengthen")?.unit, "lx-greetings");
 	assert.notEqual(task(weak, "words")?.unit, "lx-greetings");
 
-	// Carried tasks lead the plan, labelled; a task done today is not; the plan keeps its size.
+	// Carried tasks lead the plan, labeled; a task done today is not; the plan keeps its size.
 	const plain = dailyPlan({ ...base, day: day() });
 	const carried = dailyPlan({ ...base, carried: [{ id: "fluency", from: "2026-10-27" }, { id: "read", from: "2026-10-26" }], day: day({ reads: 1 }) });
 	assert.equal(carried.tasks[0]!.id, "fluency");

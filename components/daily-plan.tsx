@@ -13,7 +13,7 @@
  * The first task not done yet is the day's one next step: it is drawn
  * large with its Start action, and Enter on Today starts it. Every task
  * ticks itself off from the progress ledger, so there is nothing to mark
- * by hand. A task's colour is its strand (components/strand-style.ts),
+ * by hand. A task's color is its strand (components/strand-style.ts),
  * the same ink the week's balance uses.
  */
 
@@ -407,8 +407,8 @@ export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: M
 					</li>
 				)}
 			</ul>
-			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-2 pointer-coarse:min-h-11")} data-testid="mixups-practise">
-				Practise them
+			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-2 pointer-coarse:min-h-11")} data-testid="mixups-practice">
+				Practice them
 			</Link>
 			<Link href="/mistakes" className="mt-2 ml-3 inline-block font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="mixups-all">
 				All my mistakes

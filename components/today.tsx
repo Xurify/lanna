@@ -8,9 +8,9 @@
  *
  * One plan, one next step: the day's plan (components/daily-plan.tsx)
  * draws its first unfinished task large, and Enter starts it. Beside it,
- * the week (days practised, the strand balance, the goal) and the path,
+ * the week (days practiced, the strand balance, the goal) and the path,
  * folded to the current chapter (components/curriculum-path.tsx). Below,
- * every way to practise outside the plan, grouped by the same four
+ * every way to practice outside the plan, grouped by the same four
  * strands the balance measures.
  */
 
@@ -253,9 +253,9 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 
 					<DailyPlan plan={s?.plan ?? null} nextUnit={s?.next ?? "words"} pace={s?.pace} backlog={s?.backlog} busy={busy} onSpeak={speak} />
 
-					{/* Every way to practise, outside the plan */}
-					<section aria-labelledby="practise-title" data-testid="modes">
-						<h2 id="practise-title" className="px-1 text-lg font-black text-foreground">
+					{/* Every way to practice, outside the plan */}
+					<section aria-labelledby="practice-title" data-testid="modes">
+						<h2 id="practice-title" className="px-1 text-lg font-black text-foreground">
 							Practice anything
 						</h2>
 						<p className="mt-0.5 px-1 text-sm text-muted-foreground">Outside the plan, any time. Grouped by the four kinds of practice the week balances.</p>
@@ -337,13 +337,13 @@ interface PracticeItem {
 	testid: string;
 }
 
-/** One strand's ways to practise: its name and ink, then a row each. */
+/** One strand's ways to practice: its name and ink, then a row each. */
 function PracticeGroup({ strand, items, busy }: { strand: Strand; items: PracticeItem[]; busy: boolean }) {
 	const st = STRAND_STYLE[strand];
 	const meta = STRANDS.find((x) => x.id === strand)!;
 	const Icon = STRAND_ICON[strand];
 	return (
-		<div className="rounded-2xl border bg-card p-3" data-testid={`practise-${strand}`}>
+		<div className="rounded-2xl border bg-card p-3" data-testid={`practice-${strand}`}>
 			<p className={cn("flex items-center gap-1.5 px-2 pt-1 text-sm font-bold", st.text)}>
 				<Icon className="size-4" />
 				{meta.title}

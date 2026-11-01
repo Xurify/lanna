@@ -1997,7 +1997,7 @@ export const STORIES_B1: StorySource[] = [
 			{
 				"who": "Matej",
 				"sk": "Historické Slovenské národné divadlo žiarilo eleganciou devätnásteho storočia.",
-				"en": "The historical Slovak National Theatre shone with nineteenth-century elegance."
+				"en": "The historical Slovak National Theater shone with nineteenth-century elegance."
 			},
 			{
 				"who": "Zuzana",

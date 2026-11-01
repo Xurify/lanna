@@ -1,6 +1,6 @@
 /**
  * Measured minutes (LangHarness, 2026-10-29) — how long the learner was
- * actually practising, per activity, instead of one wall-clock number.
+ * actually practicing, per activity, instead of one wall-clock number.
  *
  * Two rules, because the tasks behave differently:
  *   interactive  lesson, blitz, review, placement, speak, say-it-faster:
@@ -53,7 +53,7 @@ export function sessionMs(input: { activeMs?: number; ms?: number }): number | u
 	return typeof input.ms === "number" && Number.isFinite(input.ms) && input.ms > 0 ? input.ms : undefined;
 }
 
-/** The longest stretch with no action that still counts as practising. */
+/** The longest stretch with no action that still counts as practicing. */
 export const GAP_CAP_MS = 90_000;
 /** A send under this is noise (a page opened and closed). */
 export const MIN_SEND_MS = 2_000;

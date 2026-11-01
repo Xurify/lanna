@@ -52,7 +52,7 @@ export interface ChatRecord {
 	extractions?: ExtractionRunUsage[];
 	/** Per-chat model/thinking overrides for the conversation agents. */
 	settings?: ChatSettings;
-	/** The tutor unit this chat practises (the Tutor task). */
+	/** The tutor unit this chat practices (the Tutor task). */
 	tutorUnit?: string;
 	/** The unit's session has been counted (on the learner's first typed message). */
 	tutorCounted?: boolean;

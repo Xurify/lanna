@@ -160,10 +160,10 @@ function findAffirmativeVerbBase(lexicon: Lexicon | null, entry: LexiconEntry): 
 }
 
 function detectPersonLabel(foldedSurface: string): string | undefined {
-	if (/(?:em|im|am|ujem|iem)$/.test(foldedSurface)) return "1st person sg.";
-	if (/(?:es|is|as|ujes|ies)$/.test(foldedSurface)) return "2nd person sg.";
-	if (/(?:eme|ime|ame|ujeme|ieme)$/.test(foldedSurface)) return "1st person pl.";
-	if (/(?:ete|ite|ate|ujete|iete)$/.test(foldedSurface)) return "2nd person pl.";
+	if (/(?:em|im|am|ujem|iem)$/.test(foldedSurface)) return "1st person singular";
+	if (/(?:es|is|as|ujes|ies)$/.test(foldedSurface)) return "2nd person singular";
+	if (/(?:eme|ime|ame|ujeme|ieme)$/.test(foldedSurface)) return "1st person plural";
+	if (/(?:ete|ite|ate|ujete|iete)$/.test(foldedSurface)) return "2nd person plural";
 	if (/(?:l|la|lo|li)$/.test(foldedSurface)) return "past form";
 	return undefined;
 }
@@ -218,7 +218,7 @@ function detectFormNote(
 	if (/(?:ami|mi)$/.test(folded)) return `instrumental plural of ${lemma}`;
 	if (/(?:ou)$/.test(folded)) return `instrumental singular of ${lemma}`;
 	if (/(?:ovi|emu)$/.test(folded)) return `dative singular of ${lemma}`;
-	if (/(?:eho)$/.test(folded)) return `genitive/acc. of ${lemma}`;
+	if (/(?:eho)$/.test(folded)) return `genitive or accusative of ${lemma}`;
 	return `inflected form of ${lemma}`;
 }
 
@@ -268,7 +268,7 @@ function deriveVerbSurfaceGloss(foldedSurface: string, baseEn: string, isNegativ
 	const person = detectPersonLabel(foldedSurface);
 	if (!person) return undefined;
 	if (isNegative) {
-		if (person === "1st person sg.") return `I don't ${cleanVerb}`;
+		if (person === "1st person singular") return `I don't ${cleanVerb}`;
 		if (person === "2nd person sg.") return `you don't ${cleanVerb}`;
 		if (person === "1st person pl.") return `we don't ${cleanVerb}`;
 		if (person === "2nd person pl.") return `you don't ${cleanVerb}`;

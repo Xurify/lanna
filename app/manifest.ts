@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 /**
  * The home-screen install (2026-11-01). On an iPhone or iPad, Share → Add to
- * Home Screen opens LangHarness full screen with this name, these colours and
+ * Home Screen opens LangHarness full screen with this name, these colors and
  * these icons. The PNGs are rendered by scripts/make-pwa-icons.mjs from
  * build/mark.svg, so the icon and the in-app mark are the same drawing.
  */

@@ -1,6 +1,6 @@
 /**
  * FLUENCY PINS (LangHarness, 2026-10-28): the speed strand — the known-
- * sentence picker (100% known, practised sentences first), the shrinking
+ * sentence picker (100% known, practiced sentences first), the shrinking
  * windows, words a minute and the XP rules, and the server round trips
  * (a timed re-read of a stored episode with its history; a "say it
  * faster" round into the ledger and the logs).
@@ -40,7 +40,7 @@ function lookup(bound = 800) {
 	return { resolve: (form: string) => resolveWord(lexicon, form, known), known };
 }
 
-test("pickKnown: six sentences with no stretch word at all, one per word, three to nine words, practised ones first", () => {
+test("pickKnown: six sentences with no stretch word at all, one per word, three to nine words, practiced ones first", () => {
 	const l = lookup();
 	const items = pickKnown(lexicon.entries, l, { seed: 7 });
 	assert.equal(items.length, FAST_COUNT);
@@ -49,11 +49,11 @@ test("pickKnown: six sentences with no stretch word at all, one per word, three 
 		assert.ok(i.words >= 3 && i.words <= 9, `${i.sentence}: ${i.words} words`);
 		assert.ok(i.translation.length > 0);
 	}
-	// A practised sentence (answered right in a lesson) is taken first.
+	// A practiced sentence (answered right in a lesson) is taken first.
 	const any = pickKnown(lexicon.entries, l, { seed: 3, count: 12 });
-	const practised = new Set([any[4]!.id]);
-	const again = pickKnown(lexicon.entries, l, { seed: 9, practised });
-	assert.ok(again.some((i) => i.id === any[4]!.id && i.practised), "the practised sentence is in the round");
+	const practiced = new Set([any[4]!.id]);
+	const again = pickKnown(lexicon.entries, l, { seed: 9, practiced });
+	assert.ok(again.some((i) => i.id === any[4]!.id && i.practiced), "the practiced sentence is in the round");
 	// Recent sentences are skipped while fresher ones remain.
 	const recent = new Set(items.map((i) => i.id));
 	const fresh = pickKnown(lexicon.entries, l, { seed: 7, recent });
@@ -143,7 +143,7 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 	assert.equal(planned.tasks.find((t) => t.id === "fluency")?.href, "/fluency?mode=reread");
 });
 
-test("a say-it-faster round: the plan from the lexicon, the practised sentences first, the record into the ledger and the logs", () => {
+test("a say-it-faster round: the plan from the lexicon, the practiced sentences first, the record into the ledger and the logs", () => {
 	// A lesson the learner got right: its sentence should come first. The
 	// lookup is the server's own known set (knownWords, level-bounded), the
 	// one the round is judged against.
@@ -167,7 +167,7 @@ test("a say-it-faster round: the plan from the lexicon, the practised sentences 
 	assert.equal(plan.items.length, FAST_COUNT);
 	assert.ok(plan.known > 100);
 	const mine = plan.items.find((i) => i.id === seedItems[0]!.id);
-	assert.ok(mine?.practised, "the sentence answered right in a lesson is in the round, marked practised");
+	assert.ok(mine?.practiced, "the sentence answered right in a lesson is in the round, marked practiced");
 
 	const reps = plan.items.map((i, n) => ({
 		itemId: i.id,
@@ -193,5 +193,5 @@ test("a say-it-faster round: the plan from the lexicon, the practised sentences 
 	// The next round skips what was just said.
 	const next = fluency.fastFor(6);
 	const said = new Set(plan.items.map((i) => i.id));
-	assert.ok(next.items.filter((i) => said.has(i.id) && !i.practised).length === 0, "sentences just said do not come straight back");
+	assert.ok(next.items.filter((i) => said.has(i.id) && !i.practiced).length === 0, "sentences just said do not come straight back");
 });

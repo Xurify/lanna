@@ -2,7 +2,7 @@
 
 /**
  * The lesson player (LangHarness redesign): 12 quick reps, each answered
- * in a second or two, with instant colour-and-sound feedback, a combo
+ * in a second or two, with instant color-and-sound feedback, a combo
  * meter, a progress bar and an end screen. Blitz mode is the same player
  * against a 60-second clock, choose-only, no feedback sheet.
  *
@@ -198,7 +198,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// for the grammar atlas (src/core/first-try.ts).
 	const [firstTry, setFirstTry] = useState<FirstAnswer | null>(null);
 	// The translation asked for before the answer (hidden from the
-	// practised stage on): a priced hint, the rep earns half.
+	// practiced stage on): a priced hint, the rep earns half.
 	const [peeked, setPeeked] = useState(false);
 	// Whether the rep has an answer to check (drives the footer's Check).
 	const [ready, setReady] = useState(false);
@@ -775,7 +775,7 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 /** The rep's form: the footer's Check submits it from outside. */
 const REP_FORM = "lesson-rep";
 
-/** From the practised stage on, a type or choose rep hides the English
+/** From the practiced stage on, a type or choose rep hides the English
  *  until the answer: the Slovak sentence has to be parsed to know the
  *  form (parsing at speed is the gap the lessons found), and the
  *  dictionary-form chip is cue enough. A relearn rep and a new unit keep
@@ -792,7 +792,7 @@ function hintFor(item: LessonItem): string {
 	return item.hint ?? item.lemma;
 }
 
-/** The cue under the sentence, labelled so it never reads as a stray word:
+/** The cue under the sentence, labeled so it never reads as a stray word:
  *  "means" for a vocabulary rep (the English), "base form" for a grammar
  *  rep (the dictionary form to inflect). */
 function HintChip({ item }: { item: LessonItem }) {
@@ -1128,7 +1128,7 @@ function ClozeRep({
 					<p className="mt-2 font-prose text-lg text-muted-foreground">
 						<HintChip item={item} />
 						{/* The meaning is the question, so it shows only once answered;
-						    from the practised stage on it hides until the answer, and
+						    from the practiced stage on it hides until the answer, and
 						    asking for it early halves the rep. */}
 						{meaning && !locked ? (
 							<span className="text-muted-foreground">Hear it, then pick what it means.</span>
@@ -1491,7 +1491,7 @@ function FeedbackSheet({
 
 const WHY_LABEL = "font-ui text-xs font-bold uppercase tracking-wide text-muted-foreground sm:pt-1";
 
-/** One labelled fact chip under a right answer: a small caption and the
+/** One labeled fact chip under a right answer: a small caption and the
  *  value, so the footer scans as "Form / How common / Memory". */
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
 	return (

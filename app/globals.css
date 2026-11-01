@@ -160,7 +160,7 @@ html[data-keyboard] :focus-visible {
 	   wave: toggle looked dead). Non-inline emits :root { --font-title: … }
 	   and the utility reads var(--font-title) — appearance overrides win. */
 	/* The floor was raised from 11 / 12.5 to 12 / 13 (2026-10-29): with the
-	   chrome in Nunito rather than mono, 11px grey labels were the hardest
+	   chrome in Nunito rather than mono, 11px gray labels were the hardest
 	   text in the app to read, and every hint, chip and caption sits there. */
 	--text-xs: 12px;
 	--text-xs--line-height: 1.4;
@@ -667,7 +667,7 @@ body {
 
 /* ─── Learning screens (LangHarness redesign, 2026-10-27) ────────────────
    The Today screen, lessons and blitz are the one place the app allows
-   colour: feedback must read at a glance (green right, amber accents only,
+   color: feedback must read at a glance (green right, amber accents only,
    red miss), and the fun layer (streak flame, XP, level rings) needs its
    own inks. Chrome elsewhere stays monochrome. Tokens, so a theme can
    retune them; utilities read them as bg-go, text-flame, etc. */

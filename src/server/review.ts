@@ -72,7 +72,7 @@ function distractors(card: ReviewCard): string[] {
 	const lexicon = loadLexicon();
 	const entry = lexicon?.bySlug.get(card.slug);
 	const pool = orderedLexicon().filter((e) => e.slug !== card.slug && e.cat === entry?.cat);
-	// Neighbours in frequency: plausible, not trivially wrong.
+	// Neighbors in frequency: plausible, not trivially wrong.
 	const at = Math.max(
 		0,
 		pool.findIndex((e) => (e.rank ?? 1e9) >= (entry?.rank ?? 0)),
@@ -234,7 +234,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 }
 
 /** A review answer as a first try (src/core/first-try.ts) on the drill its
- *  sentence practises, unless a hint came before the answer. Returns what
+ *  sentence practices, unless a hint came before the answer. Returns what
  *  the log keeps of it: the drill, the word's gender and a counted slip. A
  *  card with no drill (plain vocabulary) counts toward nothing. */
 function noteFirstTry(card: ReviewCard, input: ReviewAnswer, verdict: ReviewLogEntry["verdict"]): Pick<ReviewLogEntry, "unit" | "gender" | "slip"> {

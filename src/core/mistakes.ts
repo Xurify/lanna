@@ -144,10 +144,10 @@ export function wilson(right: number, n: number, z = 1.96): { low: number; high:
 	if (n <= 0) return { low: 0, high: 1 };
 	const p = right / n;
 	const z2 = z * z;
-	const centre = p + z2 / (2 * n);
+	const center = p + z2 / (2 * n);
 	const spread = z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n));
 	const div = 1 + z2 / n;
-	return { low: Math.max(0, (centre - spread) / div), high: Math.min(1, (centre + spread) / div) };
+	return { low: Math.max(0, (center - spread) / div), high: Math.min(1, (center + spread) / div) };
 }
 
 /** Better or worse only when the two windows differ by more than chance
@@ -168,7 +168,7 @@ export function guideReadiness(a: Pick<MistakeAnalysis, "reps" | "wrong">): { re
 	return { ready: a.reps >= GUIDE_MIN_REPS && a.wrong >= GUIDE_MIN_WRONG, reps: a.reps, wrong: a.wrong, needReps: GUIDE_MIN_REPS, needWrong: GUIDE_MIN_WRONG };
 }
 
-export function analyseMistakes(lessons: readonly LoggedLesson[], mixups: MixupRecord | undefined, now: Date): MistakeAnalysis {
+export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupRecord | undefined, now: Date): MistakeAnalysis {
 	const cut = now.getTime() - TREND_DAYS * DAY_MS;
 	type Tally = { reps: number; right: number; recent: { reps: number; right: number }; earlier: { reps: number; right: number }; slips: Partial<Record<FormSlip, number>> };
 	const units = new Map<string, Tally>();

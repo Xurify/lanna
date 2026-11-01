@@ -75,9 +75,9 @@ const MORE: Partial<Record<UnitId, Lines>> = {
 		de: "A stem you learn once, like wissen → ich weiß: pracovať → pracujem, and the endings are the usual -m, -š, -, -me, -te, -ú.",
 	},
 	"present-em": {
-		fi: "Like Finnish verbs whose stem shifts between forms (tulla → tulen): memorise the minä / ja form and the rest follows.",
+		fi: "Like Finnish verbs whose stem shifts between forms (tulla → tulen): memorize the minä / ja form and the rest follows.",
 		ru: "The Russian first conjugation with a stem change: писать → пишу, пишешь ≈ písať → píšem, píšeš; нести → несу ≈ niesť → nesiem.",
-		de: "Like lesen → du liest, nehmen → du nimmst: the stem shifts; memorise the ja form and the rest follows.",
+		de: "Like lesen → du liest, nehmen → du nimmst: the stem shifts; memorize the ja form and the rest follows.",
 	},
 	plural: {
 		fi: "Finnish has one plural marker -t (talot, naiset); Slovak picks the ending by gender, and male people get their own.",

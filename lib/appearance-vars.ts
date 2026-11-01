@@ -1,6 +1,6 @@
 /**
  * The appearance mapping, pure and shared: the root layout (server) applies
- * it to <html> in the first HTML so a customised background or font never
+ * it to <html> in the first HTML so a customized background or font never
  * flashes in after load; the client provider re-applies it on change.
  */
 import { FACTORY_SETTINGS, type AppearanceSettings } from "@/src/core";

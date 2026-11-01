@@ -14,7 +14,7 @@ Owner's rule: do not make this like every other language app; make something eff
 
 **Why:** the first redesign copied the Duolingo shape (streaks, XP, tiles). That made the app feel like a language app, but the research pass that followed showed form-focused drilling was taking three quarters of the planned minutes.
 
-**How to apply:** every new task starts from a research note in `docs/research/` and from the learner's own evidence (lesson log, chats), not from what another app does. Gamification stays where it costs nothing (XP, streaks), never where it changes what is practised.
+**How to apply:** every new task starts from a research note in `docs/research/` and from the learner's own evidence (lesson log, chats), not from what another app does. Gamification stays where it costs nothing (XP, streaks), never where it changes what is practiced.
 
 ### P2. Four strands, not pure comprehensible input (2026-10-28)
 
@@ -28,7 +28,7 @@ Nation's four strands: meaning-focused input, meaning-focused output, language-f
 
 Owner's rule: things should be hard and the learner should face struggle, because that is where learning happens, even though people like to think they can speedrun. Research note: [research/desirable-difficulties.md](research/desirable-difficulties.md).
 
-**How to apply:** every rep is retrieval first. Help is allowed but graded, visible and priced in XP or rating, never free. Recognition only to meet a form; production to prove it. Difficulty rises with mastery (a completed unit is practised production-only with the meaning hidden). Concretely: first miss shows the smallest cue only, rule and bridges open after the second miss; a missed choice retries typed; Review hints cap the rating; Listen shows the text only after a second listen and a peeked sentence does not count as understood; Watch shows the meaning only after the Slovak text. "I don't know" is on every lesson rep (not in the blitz sprint) and is never free: the answer shows at once, the rep counts as a miss with no XP, skips the cue, and comes back once at the end. It is the lesson's version of the Review deck's "I don't know" (2026-10-28, after the learner reported having to type random text to leave a rep they did not know).
+**How to apply:** every rep is retrieval first. Help is allowed but graded, visible and priced in XP or rating, never free. Recognition only to meet a form; production to prove it. Difficulty rises with mastery (a completed unit is practiced production-only with the meaning hidden). Concretely: first miss shows the smallest cue only, rule and bridges open after the second miss; a missed choice retries typed; Review hints cap the rating; Listen shows the text only after a second listen and a peeked sentence does not count as understood; Watch shows the meaning only after the Slovak text. "I don't know" is on every lesson rep (not in the blitz sprint) and is never free: the answer shows at once, the rep counts as a miss with no XP, skips the cue, and comes back once at the end. It is the lesson's version of the Review deck's "I don't know" (2026-10-28, after the learner reported having to type random text to leave a rep they did not know).
 
 Listen gained a typed mode on 2026-10-31: the owner found pick-a-meaning "way too easy for the level", so a Pick / Type switch asks for the Slovak as heard (dictation, graded like a lesson's listening rep, accents-only earns half XP). Pick stays the default. Typed reps are kept out of the speed measure, because typing time is not listening time.
 
@@ -40,7 +40,7 @@ A new unit's first lesson opens with two "What does it mean?" reps (sentence spo
 
 ### P5. Answer first, reasoning optional (2026-10-27)
 
-Every practice and story session in the first week was abandoned at a field labelled "Your thinking". Confidence sliders were left at the default 18 of 24 times.
+Every practice and story session in the first week was abandoned at a field labeled "Your thinking". Confidence sliders were left at the default 18 of 24 times.
 
 **How to apply:** one tap or one number key answers; confidence and thinking sit behind "Explain my reasoning". Short loops. Show evidence (the sentences behind a placement), not a verdict.
 
@@ -60,7 +60,7 @@ Goal and level discovery through tutor chats was judged ancient and inefficient.
 
 Estimates say what they assume: the hours sheet names its sources and the head start it credits; the milestones page labels an assumed speed as assumed; the placement result shows the sentences as evidence. Do not overstate dictionary accuracy either (4 words hand-checked against JÚĽŠ, 2,958 rule-generated and verified, the rest unknown).
 
-### P9. Time counts while you practise, and says what it assumed (2026-10-29)
+### P9. Time counts while you practice, and says what it assumed (2026-10-29)
 
 Minutes were one wall-clock number a day. A lesson resumed after thirty minutes away, or a card left open, counted in full up to a cap (on the first profile one lesson was logged as exactly 60 minutes, 81% of everything recorded), which made the pace and the ETA too optimistic, and the strand balance ignored measured time for count × planned-minutes guesses.
 
@@ -88,13 +88,13 @@ A unit is done after 3 lessons at 80% or better, or after 6 lessons. One lesson 
 
 No native `<select>`; chips, steppers and searchable panels instead. Sidebar state lives in a cookie, appearance variables are server-rendered on `<html>`, the Today summary is SSR'd, so there is no CLS or FOUC. Structure and alignment like Duolingo's; label every chip, because unlabelled prose lines read as unstructured. Run every screen state at both window sizes (about 1400×890 and 1133×700, or 1280 and 390 px wide, and 820 px for an iPad with touch emulation) before calling a UI pass done; the owner reviews screenshots closely.
 
-### E4a. One button family, one answer first, labelled cues (2026-10-29)
+### E4a. One button family, one answer first, labeled cues (2026-10-29)
 
 **Why:** the owner: "the UX here of our app is so freaking bad and it's hard to use the controls." Today showed the same next step three times (Continue card, plan, mode tiles), every learning screen carried its own button styles (the uppercase 3D Check on Review, small ghost links elsewhere), and cues such as a lone "still" under a lesson sentence read as stray words.
 
 **How to apply:**
 - Buttons on learning screens come from `components/ui/learn-buttons.ts` (`PRIMARY`, `SECONDARY`, `QUIET`, `SMALL`, `KBD`): flat, sentence case, 48px. No uppercase, no faux-3D bottom edge.
-- Strand colours come from `components/strand-style.ts` (input sky, output xp, form go, fluency gold), so a strand looks the same on Today, in the plan and in the week card.
+- Strand colors come from `components/strand-style.ts` (input sky, output xp, form go, fluency gold), so a strand looks the same on Today, in the plan and in the week card.
 - Today answers first: the next undone task is drawn large with one Start (Enter starts it); everything else is grouped below by strand. Only one card says what to do next.
 - Every cue chip carries a label ("means", "base form"); a key that does something is shown as a key (`Enter` to check, `1`–`4` to pick), shown only where a fine pointer is the main input (`pointer-fine:`, E20), so a touch screen never shows a key it does not have.
 - Leaving a lesson that has answers asks first (X or Escape); staying is the default.
@@ -186,13 +186,13 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 ### E17. Settings names what it does, rare controls sit under Advanced, and Review holds still (2026-10-30)
 
-**Why:** The settings dialog had grown names only its author could read (Providers, Learner, Prompts). Rare knobs such as the background colour, heading weight, compaction thresholds and system prompts sat beside everyday ones. A switch that was on looked disabled, and the Azure speech region had no field. On Review the page painted a skeleton, then the card, then the mode toggle. The owner saw that as a flicker, and it counted as layout shift (CLS, E4).
+**Why:** The settings dialog had grown names only its author could read (Providers, Learner, Prompts). Rare knobs such as the background color, heading weight, compaction thresholds and system prompts sat beside everyday ones. A switch that was on looked disabled, and the Azure speech region had no field. On Review the page painted a skeleton, then the card, then the mode toggle. The owner saw that as a flicker, and it counted as layout shift (CLS, E4).
 
 **How to apply:**
 - The nav reads Keys, Tutor, Learning, Appearance, Skill map, Keyboard, Spending, General, Data, in that order. Keys opens first. (Order and names replaced by E22.) Storage and Reset are sections of Data.
-- Rare settings sit under a closed **Advanced** disclosure (`SettingsDisclosure` in `components/settings/controls.tsx`). Tutor has long chats and system prompts. Appearance has the background, the heading weight and the bold and italic colours. Skill map has the map update size. An empty field's hint names the factory default, never the stored value.
+- Rare settings sit under a closed **Advanced** disclosure (`SettingsDisclosure` in `components/settings/controls.tsx`). Tutor has long chats and system prompts. Appearance has the background, the heading weight and the bold and italic colors. Skill map has the map update size. An empty field's hint names the factory default, never the stored value.
 - Values that are not secrets are plain settings and show in their field: the Azure speech region (`plain: true` in `src/core/auth-keys.ts`). Keys stay masked and out of chat (E5).
-- A switch is green with a white knob when on and grey when off. A choice among a few values is a segmented control (playback speed, quiz mechanics). The chosen font is marked with a tick and `aria-current`, not a fill.
+- A switch is green with a white knob when on and gray when off. A choice among a few values is a segmented control (playback speed, quiz mechanics). The chosen font is marked with a tick and `aria-current`, not a fill.
 - Mode is a fact until light mode exists ("Light mode is coming soon"), so it has no control.
 - Review: the loading skeleton waits 300 ms, the last deck stays in memory for the page's life, a refresh that brings the same card keeps the typed answer, and mode and sound are read before the first paint. The header counts wait for the language.
 - Desktop: `electron/main.cjs` and the modules it loads start once. After changing them, quit the window and run `npm run desktop:dev` again (see `docs/development.md`).
@@ -206,9 +206,9 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 **Why:** the lesson's final verdict overstated how a form went. The cue after a first miss lets the answer come back right, and XP should reward that — but the grammar atlas and the tutor read the result as the learner's hold on the case, so "Ako ďaleko je to od stanica?" corrected to "stanice" looked like a genitive held. A wrong answer also carried no kind of wrong: the dictionary form where an inflected one was needed is a different miss from another case's ending, or another word.
 
 **How to apply:**
-- The first try is the first answer, before any help: no cue, no peek, the first ask of the sentence — never the end-of-lesson retry, and only where a form is asked (a meaning check tests the sentence, a word bank the order). `src/core/first-try.ts` is the measure; the lesson player holds the first answer while the cue shows and sends it as `first`, and lessons, Review and Speak record it on the drill the rep practised (`progress.json` units: the `first` tally and its `byGender` split). A review answer counts too, unless a hint came first; it never joins the unit's `reps`.
+- The first try is the first answer, before any help: no cue, no peek, the first ask of the sentence — never the end-of-lesson retry, and only where a form is asked (a meaning check tests the sentence, a word bank the order). `src/core/first-try.ts` is the measure; the lesson player holds the first answer while the cue shows and sends it as `first`, and lessons, Review and Speak record it on the drill the rep practiced (`progress.json` units: the `first` tally and its `byGender` split). A review answer counts too, unless a hint came first; it never joins the unit's `reps`.
 - A wrong first try gets a slip named from the dictionary (`src/core/form-slip.ts`): `base` (the dictionary form, no ending), `same-word` (another ending of the same word), `other`, `blank`. The verdict does not change; accents-only is still its own verdict and never a slip.
-- The grammar atlas cell and the tutor's "Measured weak points" read first tries, with the slips behind the wrong ones; under six first tries the tutor falls back to the lesson answers, labelled as such. The unit's `reps`/`correct` — XP, the path, the weak-spot mend rule — still read the final answer. The two measures answer different questions; do not mix them.
+- The grammar atlas cell and the tutor's "Measured weak points" read first tries, with the slips behind the wrong ones; under six first tries the tutor falls back to the lesson answers, labeled as such. The unit's `reps`/`correct` — XP, the path, the weak-spot mend rule — still read the final answer. The two measures answer different questions; do not mix them.
 - A Speak correction on a case form counts as a spoken slip on its drill and atlas cell (`correctionSlip` in `src/server/speak.ts`), kept apart from first tries: it has no right answers beside it, so it never makes an accuracy.
 - Places (Bratislava, Košice) decline like nouns in the classifier, so they drill the cases; the dictionary gives them no gender, so they fill no atlas cell.
 - The logs keep the evidence: a lesson rep carries `gender`, `first`, `slip`; a review line carries `unit`, `gender`, `slip`; a Speak correction carries `drill`, `slip`, `gender`.
@@ -231,10 +231,10 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 **How to apply:**
 - One UI. Phone and tablet layouts are CSS breakpoints and pointer variants on the same components, not separate screens.
-- Choose by pointer, not by width, for touch behaviour: `pointer-coarse:` for 44 px targets and the press-and-hold microphone, `pointer-fine:` for keycap hints (E4a), and `touch-narrow:` (a coarse pointer below `lg`) for the sidebar drawer.
+- Choose by pointer, not by width, for touch behavior: `pointer-coarse:` for 44 px targets and the press-and-hold microphone, `pointer-fine:` for keycap hints (E4a), and `touch-narrow:` (a coarse pointer below `lg`) for the sidebar drawer.
 - Every tappable control is at least 44 px tall on touch (the Apple HIG minimum). The sidebar gets this from one rule in `app/globals.css` (`[data-sidebar]`); reader and lesson controls carry `pointer-coarse:min-h-11`. A word inside a sentence keeps its line height, because inline padding does not grow the line box, so its tap area is 39 px tall on a phone. Do not make it taller: the lines would move on touch.
 - Pad for the safe areas with `env(safe-area-inset-*)` on the shell, the bottom navigation and the drawer. `viewport-fit=cover` and `theme-color` come from `app/layout.tsx`.
-- Installable: `app/manifest.ts` (standalone, starts at `/`, the app's colours) and `app/apple-icon.png`, rendered from `build/mark.svg` by `scripts/make-pwa-icons.mjs`. `app/layout.tsx` sets `apple-mobile-web-app-capable` explicitly: Next 16 emits only the standard `mobile-web-app-capable`, and iOS reads the Apple name for a full-screen launch.
+- Installable: `app/manifest.ts` (standalone, starts at `/`, the app's colors) and `app/apple-icon.png`, rendered from `build/mark.svg` by `scripts/make-pwa-icons.mjs`. `app/layout.tsx` sets `apple-mobile-web-app-capable` explicitly: Next 16 emits only the standard `mobile-web-app-capable`, and iOS reads the Apple name for a full-screen launch.
 - The server stays on `127.0.0.1` in every mode. A phone reaches it only through Tailscale Serve, which connects from this computer, and only once remote access is on (E21). Do not bind it to the network: it holds the keys and the learner's data.
 - Browser storage holds only per-viewer conveniences. WebKit bug 237350 reports that iOS removes a Home Screen web app's storage after seven days unused, so progress belongs on the PC (E7).
 
@@ -263,9 +263,18 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Clips play as recorded at 1× (0.75×, 1×, 1.25× around it). Two attempts to speed the slovak.wiki clips to a "normal" pace by a fixed rate failed (1.136× sounded slow on one clip, 1.319× too fast on another, 0.99× right). The cause is the recording: slovak.wiki generates its voice with ElevenLabs speed 0.88 (`content/audio/config.json`), so its sentences are about 1.2× longer than the same voice read at default speed, and their pace varies clip to clip (3.6 to 5.6 syllables a second). No single rate fits all of them, and a slowed-in-the-model read does not become natural when sped up. Each source has a measured pace in `src/server/tts.ts` (`paceRate`): slovak.wiki and Edge 4.55, ElevenLabs 5.0, measured on the clips kept in `data/audio`. The owner heard the wiki clips at 1× as slow (they are recorded at 0.88× for learners, and slovak.wiki itself plays them as recorded).
 - Every "Settings → …" line in the app names a section that exists. The stored settings key stays `agent` (and `/api/settings/agent`) so saved data and the API do not change; only the dialog's own section id became `ai`.
 
-### E23. Mix-ups are kept per pair of words, predicted, then tested (2026-11-01)
+### E23. Full grammar words and one spelling (2026-11-01)
 
-**Why:** the owner typed "Niekto" for "Nikto" and asked whether the app keeps its mistakes, so it can find the pain points, predict similar ones and practise them. The answers were logged, but only units were measured, so a confusion between two words disappeared into an accuracy figure and the tutor never heard of it. Research note: [research/mixups.md](research/mixups.md).
+**Why:** the owner read "acc-fem is locked, I'll use loc as the weak spot" and found it unclear, and saw the same short forms around the app: N/G/D/A/L/I in the grammar atlas, "fem. G/D/L" in a rule, "1st person sg." in the word bank. The app also mixed British and American spelling ("Practise" next to "Practice").
+
+**How to apply:**
+- Anything a learner reads, and anything the tutor is given to repeat, names grammar in full words: feminine accusative, locative, genitive plural, 1st person singular. Unit ids (`acc-fem`, `loc`) are code and stay out of prose; where a model must answer with an id, give it the id and the full name side by side, and tell it to say the name.
+- The app is written in American English: practice (noun and verb), color, behavior, recognize, analyze, neighbor, favorite, gray. Stored ids keep their old spelling so saved progress does not move (`lx-colours`). `cancelled` stays: it is the one spelling the app uses, and Electron passes it as an error code.
+- The lexicon's English glosses come from slovak.wiki through `scripts/merge-lexicon.mjs`, so their spelling is fixed there, not here.
+
+### E24. Mix-ups are kept per pair of words, predicted, then tested (2026-11-01)
+
+**Why:** the owner typed "Niekto" for "Nikto" and asked whether the app keeps its mistakes, so it can find the pain points, predict similar ones and practice them. The answers were logged, but only units were measured, so a confusion between two words disappeared into an accuracy figure and the tutor never heard of it. Research note: [research/mixups.md](research/mixups.md).
 
 **How to apply:**
 - A mix-up is a wrong first try (the E18 rule) whose answer is another lexicon word, not a form of the wanted one (that is a slip). It is kept per pair of entries in progress.json (`mixups`): both lemmas, the family, the misses, the right first tries since the last miss and the last three misses as evidence. Lessons, Blitz and Review (without a hint) count. `src/core/mixups.ts` is pure; `src/server/mixups.ts` reads the answers in.
@@ -275,23 +284,23 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The Mix-ups lesson (`/lesson?mode=mixups`): open pairs typed on both sides in turn, probes as a choice, each rep a verified sentence with the pair's rule after a miss. It counts XP, the day's minutes and `day.mixups`, never a unit or the atlas. A regular lesson rep of a word in an open mix-up carries the pair's rule too, unless it names a form.
 - Today shows "Words you mix up" beside the weak spots. Strengthen takes the Mix-ups lesson when no weak spot is on record. The tutor's "This learner" block names the open pairs and their probes.
 
-### E24. My mistakes: analysed locally, saved with its time, guide on request (2026-11-01)
+### E25. My mistakes: analyzed locally, saved with its time, guide on request (2026-11-01)
 
-**Why:** after E23 the owner asked whether the analysis is batched, and where the latest results, the personal plan and the time of the last analysis can be seen.
+**Why:** after E24 the owner asked whether the analysis is batched, and where the latest results, the personal plan and the time of the last analysis can be seen.
 
 **How to apply:**
-- `/mistakes` (Today's "My mistakes" row, and "All my mistakes" under Words you mix up) reads `src/core/mistakes.ts`: first tries only (E18), per unit with a trend (last 14 days against the days before, six first tries each side, and a difference past chance), the words missed most, week by week, and the mix-ups (E23). A Mix-ups lesson, placement and Speak stay out of the unit figures.
-- Nothing is batched and no model runs for the analysis. A visit shows the saved snapshot in `analysis.json` with its time; "Analyse now" reads the lesson log again and saves a new one. The first visit takes one.
+- `/mistakes` (Today's "My mistakes" row, and "All my mistakes" under Words you mix up) reads `src/core/mistakes.ts`: first tries only (E18), per unit with a trend (last 14 days against the days before, six first tries each side, and a difference past chance), the words missed most, week by week, and the mix-ups (E24). A Mix-ups lesson, placement and Speak stay out of the unit figures.
+- Nothing is batched and no model runs for the analysis. A visit shows the saved snapshot in `analysis.json` with its time; "Analyze now" reads the lesson log again and saves a new one. The first visit takes one.
 - The guide is optional and the only model call: one Cheap-slot call from the snapshot's facts (`guideFacts`), three fixed sections, never a fact outside them. It is kept in `analysis.json` with its model and tokens (E1), reused while the facts' digest stands, and marked "your answers have changed since" when they do not. Without a model the page works and the button says what is missing.
 - The page stays out of the sidebar's four destinations (E4a).
 - Thresholds, so a handful of answers is never read as a finding (2026-11-01, after the owner saw "63% right" named as the lesson to do from eight answers). A unit's score carries its 95% Wilson range, shown under twenty first tries ("few answers, likely 31–86%"). A unit is called weak only when the top of that range is under 85%. A trend is better or worse only past a two-proportion z-test at the 5% level. A word is "missed most" from its second miss; one miss is a slip, and the lesson already sent it to review. The guide waits for 30 first tries with 5 mistakes among them, shows how far off that is, and its prompt says a pattern needs two misses behind it. A mix-up still opens on one miss: a specific wrong word is stronger evidence than a percentage, and it is mended after three right answers.
-- AI is what makes the read deeper, and the page says so (2026-11-01). The local analysis counts; the guide reads the latest 15 wrong first tries (the sentence, the form wanted, what was written) and returns JSON that the page shows as patterns (what, evidence, why, fix), guesses and a plan whose steps open the app. A reply that is not that JSON is shown as written. The same sentences the learner practised go to the Cheap-slot provider, as with Why?; nothing else leaves the machine.
+- AI is what makes the read deeper, and the page says so (2026-11-01). The local analysis counts; the guide reads the latest 15 wrong first tries (the sentence, the form wanted, what was written) and returns JSON that the page shows as patterns (what, evidence, why, fix), guesses and a plan whose steps open the app. A reply that is not that JSON is shown as written. The same sentences the learner practiced go to the Cheap-slot provider, as with Why?; nothing else leaves the machine.
 - "Is AI ready" is a slot set and the provider's key present (`src/server/ai-status.ts`); a slot with no key looks set in Settings and fails at the first call. While it is not ready, a feature that needs it shows `components/ai-callout.tsx`: what is missing, what AI adds, that the rest works without it, and a button that opens Settings on API keys or AI models. A provider's "not configured" or key-refused error is turned into the same plain message (`friendlyAiError`). Custom milestones use the same status.
 - The analysis acts on the plan (2026-11-01): a lesson renews a snapshot older than six hours, and Strengthen takes a unit whose first-try accuracy fell (trend "worse") after a weak spot on record and an open mix-up, never the Continue unit. "Do this next" on the page is worked out from the figures, not from the guide's text, so it is there without a model: the Mix-ups lesson, a lesson on the weakest or slipping unit, and "Add to review" for the words missed most (one word, or all). The guide stays text.
 
-### E25. The personal lesson: the model picks the targets, the lexicon builds the reps (2026-11-01)
+### E26. The personal lesson: the model picks the targets, the lexicon builds the reps (2026-11-01)
 
-**Why:** the owner asked whether analysing yourself with AI creates anything personal in the learning journey, and whether a stronger model should do it. It should choose and explain; it should not write the sentences a learner practises, because a wrong form in a drill is learned as right at A1–A2 (P8).
+**Why:** the owner asked whether analyzing yourself with AI creates anything personal in the learning journey, and whether a stronger model should do it. It should choose and explain; it should not write the sentences a learner practices, because a wrong form in a drill is learned as right at A1–A2 (P8).
 
 **How to apply:**
 - The guide runs on the Strong slot, else Cheap, with the slot's own thinking level (`aiStatus("strong")`). It runs a few times a week, so the cost is small and the reasoning is worth it.

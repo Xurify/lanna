@@ -5,7 +5,7 @@
  * refresh it without pulling the model code in.
  */
 
-import { analyseMistakes, digest, guideFacts, type MistakeAnalysis } from "../core/mistakes.ts";
+import { analyzeMistakes, digest, guideFacts, type MistakeAnalysis } from "../core/mistakes.ts";
 import type { UnitId } from "../core/lesson.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
@@ -32,12 +32,12 @@ export function mistakesReportOf(analysis: MistakeAnalysis, guide: GuideRecord |
 export function mistakesReport(now = new Date()): MistakesReport {
 	const saved = analysisStore.read();
 	if (saved.analysis) return mistakesReportOf(saved.analysis, saved.guide);
-	return analyseNow(now);
+	return analyzeNow(now);
 }
 
 /** Read the log again and save the snapshot with its time, keeping the guide. */
-export function analyseNow(now = new Date()): MistakesReport {
-	const analysis = analyseMistakes(readLessonLog(), progressStore.read().mixups, now);
+export function analyzeNow(now = new Date()): MistakesReport {
+	const analysis = analyzeMistakes(readLessonLog(), progressStore.read().mixups, now);
 	const { guide } = analysisStore.read();
 	analysisStore.write({ analysis, guide });
 	return mistakesReportOf(analysis, guide);
@@ -49,7 +49,7 @@ export function analyseNow(now = new Date()): MistakesReport {
 export function refreshSnapshotIfStale(now = new Date()): void {
 	try {
 		const saved = analysisStore.read().analysis;
-		if (!saved || now.getTime() - Date.parse(saved.at) >= SNAPSHOT_MAX_AGE_MS) analyseNow(now);
+		if (!saved || now.getTime() - Date.parse(saved.at) >= SNAPSHOT_MAX_AGE_MS) analyzeNow(now);
 	} catch (err) {
 		console.warn("[mistakes] could not refresh the snapshot:", err instanceof Error ? err.message : err);
 	}

@@ -1,6 +1,6 @@
 /**
  * REVIEW FIRST TRIES (LangHarness, 2026-10-31): a review answer on a form
- * card counts as a first try on the drill its sentence practises — unless
+ * card counts as a first try on the drill its sentence practices — unless
  * a hint came before the answer — and the log line carries the drill, the
  * word's gender and the slip. A card whose cloze is the dictionary form
  * drills nothing and counts toward nothing.

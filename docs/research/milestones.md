@@ -13,7 +13,7 @@ Comprehension rises roughly in a straight line with the share of running words a
 | Material | 95% of running words | 98% | Source |
 |---|---|---|---|
 | Everyday conversation | ~2,000–2,500 word families | ~6,500 | Adolphs & Schmitt 2003 (CANCODE); Nation 2006 |
-| TV programmes (incl. vlogs) | 3,000 (+ proper nouns) | 7,000 | Webb & Rodgers 2009a, 88 programmes |
+| TV programs (incl. vlogs) | 3,000 (+ proper nouns) | 7,000 | Webb & Rodgers 2009a, 88 programs |
 | Films | 3,000 | 6,000 | Webb & Rodgers 2009b, 318 films |
 | Newspapers | 4,000 | 8,000 | Nation 2006 |
 | Novels | 4,000 | 8,000–9,000 | Nation 2006 |

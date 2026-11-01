@@ -29,10 +29,10 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 	const [report, setReport] = useState<MistakesReport | null>(initial);
-	const [busy, setBusy] = useState<"analyse" | "guide" | null>(null);
+	const [busy, setBusy] = useState<"analyze" | "guide" | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const run = async (action: "analyse" | "guide", force = false) => {
+	const run = async (action: "analyze" | "guide", force = false) => {
 		setBusy(action);
 		setError(null);
 		try {
@@ -68,19 +68,19 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					<p className="font-prose text-sm text-muted-foreground">
 						{a ? (
 							<>
-								Last analysed{" "}
+								Last analyzed{" "}
 								<time dateTime={a.at} suppressHydrationWarning className="font-bold text-foreground">
 									{new Date(a.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 								</time>
 								{a.from ? ` · ${a.reps} first tries, ${a.from} to ${a.to}` : ""}
 							</>
 						) : (
-							"Not analysed yet."
+							"Not analyzed yet."
 						)}
 					</p>
-					<button type="button" onClick={() => void run("analyse")} disabled={busy !== null} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-analyse">
-						{busy === "analyse" ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RefreshCwIcon className="size-4" />}
-						Analyse now
+					<button type="button" onClick={() => void run("analyze")} disabled={busy !== null} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-analyze">
+						{busy === "analyze" ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RefreshCwIcon className="size-4" />}
+						Analyze now
 					</button>
 				</div>
 				{error && (
@@ -268,8 +268,8 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 							Built from checked sentences on: <span lang="sk">{guide.practice.shown.join(", ")}</span>
 						</p>
 					</div>
-					<Link href="/lesson?mode=personal" className={cn(PRIMARY, SMALL, "shrink-0 pointer-coarse:min-h-11")} data-testid="guide-practise">
-						Practise your plan
+					<Link href="/lesson?mode=personal" className={cn(PRIMARY, SMALL, "shrink-0 pointer-coarse:min-h-11")} data-testid="guide-practice">
+						Practice your plan
 						<ArrowRightIcon className="size-4" />
 					</Link>
 				</div>
@@ -317,7 +317,7 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 		<Section id="mistakes-next" title="Do this next" line="Worked out from the figures below.">
 			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
 				{pairs > 0 && (
-					<Step title="Practise the words you mix up" line={`${pairs} ${pairs === 1 ? "pair" : "pairs"}, typed, both sides in turn`}>
+					<Step title="Practice the words you mix up" line={`${pairs} ${pairs === 1 ? "pair" : "pairs"}, typed, both sides in turn`}>
 						<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-mixups">
 							Start
 							<ArrowRightIcon className="size-4" />
@@ -371,8 +371,8 @@ function MixupsSection({ a }: { a: MistakeAnalysis }) {
 					</li>
 				))}
 			</ul>
-			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-3 pointer-coarse:min-h-11")} data-testid="mistakes-practise">
-				Practise them
+			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-3 pointer-coarse:min-h-11")} data-testid="mistakes-practice">
+				Practice them
 				<ArrowRightIcon className="size-4" />
 			</Link>
 		</Section>

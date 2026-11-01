@@ -103,7 +103,7 @@ export interface MixupLexicon {
 	bySlug: Map<string, LexiconEntry>;
 	/** Entries that attest a lowercase form (lemma, forms, cloze answers). */
 	byForm: Map<string, LexiconEntry[]>;
-	/** Entries by lowercase lemma, for the edit-rule neighbours. */
+	/** Entries by lowercase lemma, for the edit-rule neighbors. */
 	byLemma: Map<string, LexiconEntry[]>;
 	/** Pair sentences, by key, computed once. */
 	twins: Map<string, PairSentence[]>;
@@ -239,7 +239,7 @@ function lemmaPair(lex: MixupLexicon, a: string, b: string): [string, string] {
 	return [entryLemma(lex.bySlug.get(a)!), entryLemma(lex.bySlug.get(b)!)];
 }
 
-/** Add the pairs a mix-up predicts: its family's other pairs, else the edit-rule neighbours. */
+/** Add the pairs a mix-up predicts: its family's other pairs, else the edit-rule neighbors. */
 export function predictMixups(record: MixupRecord, key: string, lex: MixupLexicon, at: string): MixupRecord {
 	const m = record[key];
 	if (!m) return record;
@@ -290,7 +290,7 @@ function capRecord(record: MixupRecord): MixupRecord {
 
 /**
  * Count answers against the record. A wrong first try that gave another
- * word opens (or reopens) the pair and predicts its neighbours; a right one
+ * word opens (or reopens) the pair and predicts its neighbors; a right one
  * counts toward every pair the wanted word is in. Returns the record and
  * the keys of the mix-ups found in these events.
  */

@@ -279,6 +279,7 @@ How you work:
 - Judge every answer: "held" (produces it and knows what decides it), "slip" (right form but shaky, or one miss then right), "gap" (cannot produce it, or a misconception). One verdict per unit; a later verdict on the same unit replaces the earlier one.
 - At most ${PROBE_TURNS} questions in all; stop as soon as the edge is clear. Do not re-ask what the drill already showed twice. Enter at the unit the brief marks first.
 - Speak to the learner in the explanation language of the profile (English unless it says otherwise); the frames in Slovak. Short: one or two sentences of feedback, then the next question.
+- Unit ids are for the JSON fields only. In "say", "prompt" and "done", name the grammar in full words ("the feminine accusative", "the locative"), never an id like acc-fem or a short form like fem. or sg.
 - Never give the level. The app computes it from your verdicts and the drill.
 
 Answer with ONE JSON object and nothing else:
@@ -288,6 +289,13 @@ Answer with ONE JSON object and nothing else:
  "done": "<when you stop: two sentences on the edge you found, in the explanation language, with the forms as evidence>" | null}
 "ask" is null only when "done" is set.`;
 
+/** A unit as the probe tutor should say it: the grammar term, then the title
+ *  ("Feminine accusative (Objects: -a → -u)"), never the bare id. */
+function unitName(id: UnitId): string {
+	const info = unitInfo(id);
+	return info.grammarTerm && info.grammarTerm !== info.title ? `${info.grammarTerm} (${info.title})` : info.title;
+}
+
 function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitId[]): string {
 	const lines: string[] = [];
 	const edge = ladderEdge(s.ladder);
@@ -295,14 +303,14 @@ function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitI
 	for (const r of s.items) {
 		if (!r.verdict) continue;
 		const tag = r.verdict === "wrong" ? "MISS" : r.verdict === "accents" ? "hit (diacritics off)" : r.judged?.accepted ? "hit (model accepted an alternative)" : "hit";
-		lines.push(`- [${r.rung ?? r.item.unit}${r.rung && r.rung !== r.item.unit ? ` · ${r.item.unit}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}", form "${r.item.answer}": ${tag}`);
+		lines.push(`- [${unitName(r.rung ?? r.item.unit)}${r.rung && r.rung !== r.item.unit ? ` · ${unitName(r.item.unit)}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}", form "${r.item.answer}": ${tag}`);
 	}
 	lines.push("");
-	lines.push("Units you may probe, most valuable first (id · what it drills · its trigger):");
+	lines.push("Units you may probe, most valuable first (id for the JSON · its grammar name and title · its trigger):");
 	for (const u of units) {
 		const info = unitInfo(u);
 		const t = s.ladder.tally[u];
-		lines.push(`- ${u} · ${info.title}: ${info.tagline}${t ? ` · drill ${t.hits}/${t.hits + t.misses}` : " · not asked by the drill"}`);
+		lines.push(`- ${u} · ${unitName(u)}: ${info.tagline}${t ? ` · drill ${t.hits}/${t.hits + t.misses}` : " · not asked by the drill"}`);
 	}
 	const tier = outcome.tiers.find((t) => !t.passed);
 	lines.push("");
@@ -316,7 +324,7 @@ function probeTranscript(s: PlacementSession): string {
 	const out: string[] = [];
 	for (const [i, t] of s.probe.turns.entries()) {
 		if (t.reply.say) out.push(`Tutor: ${t.reply.say}`);
-		if (t.reply.ask) out.push(`Tutor asks (${t.reply.ask.unit}, ${t.reply.ask.kind}): ${t.reply.ask.prompt} — ${t.reply.ask.sk}`);
+		if (t.reply.ask) out.push(`Tutor asks (${unitName(t.reply.ask.unit)}, ${t.reply.ask.kind}): ${t.reply.ask.prompt} — ${t.reply.ask.sk}`);
 		if (t.answer !== undefined) out.push(`Learner: ${t.answer || "(nothing)"}`);
 		else if (i === s.probe.turns.length - 1) out.push("Learner: (answering now)");
 	}
@@ -370,7 +378,7 @@ export async function probePlacement(input: { id: string; answer?: string }, opt
 		reply = parseProbeReply(text, s.probe.units);
 		if (!reply.ask && !reply.done && asked < PROBE_TURNS) {
 			// Neither a question about an offered unit nor a reading: once more, with the units named.
-			const nudge = `${prompt}\n\nYour last reply had no question about one of the offered units (${s.probe.units.join(", ")}) and no "done". Ask ONE question about one of those units, or set "done" with your reading.`;
+			const nudge = `${prompt}\n\nYour last reply had no question about one of the offered units (${s.probe.units.map((u) => `${u} = ${unitName(u)}`).join("; ")}) and no "done". Ask ONE question about one of those units, or set "done" with your reading.`;
 			const again = await ask(real.engine, PROBE_SYSTEM, nudge, s.usage);
 			if (process.env.LH_PLACEMENT_DEBUG) console.error("[placement/probe retry]", JSON.stringify(again).slice(0, 400));
 			reply = parseProbeReply(again, s.probe.units);

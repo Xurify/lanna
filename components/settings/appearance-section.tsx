@@ -28,10 +28,10 @@ import { CommitInput, SettingsDisclosure, SettingsRow, Toggle } from "./controls
 
 /** Factory reading family. Unset means this. */
 export const DEFAULT_READING_FONT = "Source Sans 3";
-/** Factory dark background. A set colour must not read as the default. */
+/** Factory dark background. A set color must not read as the default. */
 const FACTORY_BACKGROUND = "#141414";
 
-/** Dev-browser fallback when queryLocalFonts is absent. Labelled as common families, never as the system list. */
+/** Dev-browser fallback when queryLocalFonts is absent. Labeled as common families, never as the system list. */
 export const CURATED_FALLBACK_FONTS: readonly string[] = [
 	"Arial",
 	"CMU Serif",
@@ -278,7 +278,7 @@ export function AppearanceSection({
 					}}
 				/>
 			</SettingsRow>
-			{/* Emphasis inks default to the regular text colour; the empty-state labels say so. */}
+			{/* Emphasis inks default to the regular text color; the empty-state labels say so. */}
 			<SettingsRow label="Bold color" hint="Empty = same as text" testid="row-bold-color">
 				<CommitInput
 					value={md?.boldColor ?? ""}

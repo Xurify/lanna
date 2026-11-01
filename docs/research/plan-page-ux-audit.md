@@ -24,7 +24,7 @@ Context for every lens: desktop app, one learner, design system in play (the app
 
 ### Minor
 
-- **Microcopy.** "How long does it take?" and "When can I…?" are questions, not destinations; as links beside "Change" and "Re-check my level" the syntax was mixed (IA labelling: one syntax). On Plan the sections are nouns ("Your pace", "Hours to each level", "When can I…?" kept as the calculator's own name) and the buttons are verb + object ("Change the goal", "Re-check my level", "Apply this pace"). The hours sheet's last line now points at Plan rather than at the milestones page.
+- **Microcopy.** "How long does it take?" and "When can I…?" are questions, not destinations; as links beside "Change" and "Re-check my level" the syntax was mixed (IA labeling: one syntax). On Plan the sections are nouns ("Your pace", "Hours to each level", "When can I…?" kept as the calculator's own name) and the buttons are verb + object ("Change the goal", "Re-check my level", "Apply this pace"). The hours sheet's last line now points at Plan rather than at the milestones page.
 
 ### Working well
 
@@ -42,6 +42,6 @@ Context for every lens: desktop app, one learner, design system in play (the app
 
 ## Sources
 
-- Uxcel, 10 Usability Heuristics; Dashboard best practices; Tooltips and when to use them; Types of navigation systems; "You're here" navigation; Labelling systems; How people seek information; Saving changes; How to design useful settings pages.
+- Uxcel, 10 Usability Heuristics; Dashboard best practices; Tooltips and when to use them; Types of navigation systems; "You're here" navigation; Labeling systems; How people seek information; Saving changes; How to design useful settings pages.
 - Nielsen, J. (1994), heuristic evaluation severity (frequency × impact × persistence).
 - The dataviz skill's form, mark and interaction references (hover layer by default; thin marks; no dual axes).

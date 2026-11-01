@@ -16,7 +16,7 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { recordLesson, personalFor } = await import("../src/server/lesson.ts");
-const { analyseNow, writeGuide } = await import("../src/server/mistakes.ts");
+const { analyzeNow, writeGuide } = await import("../src/server/mistakes.ts");
 const { progressStore } = await import("../src/store/progress.ts");
 const { readLessonLog } = await import("../src/store/corpus.ts");
 const { mixupKey } = await import("../src/core/mixups.ts");
@@ -43,11 +43,11 @@ describe("the personal lesson on disk", () => {
 	it("a guide's targets are kept, its pairs become probes, and the plan offers the lesson", async () => {
 const many = [...Array.from({ length: 30 }, () => rep("Nikto", "exact")), ...Array.from({ length: 5 }, () => rep("Niekto", "wrong"))];
 		recordLesson({ unit: "words", mode: "lesson", reps: many, tz: 0 }, new Date("2026-11-01T09:00:00Z"));
-		analyseNow(NOW);
+		analyzeNow(NOW);
 		const reply = JSON.stringify({
 			patterns: [{ title: "ni- and nie- words", evidence: '"Niekto" for "Nikto"', why: "Both start the same.", fix: "Check for ne- on the verb." }],
 			next: [{ what: "kam / kde", why: "A guess." }],
-			plan: [{ step: "Practise the pairs", kind: "mixups" }],
+			plan: [{ step: "Practice the pairs", kind: "mixups" }],
 			practice: { words: ["nikto"], units: ["loc"], pairs: [["nikto", "niekto"], ["kam", "kde"]] },
 		});
 		const r = await writeGuide({ now: NOW, engine: fauxEngine(`Here it is:\n${reply}`), model: "faux:faux" });

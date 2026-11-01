@@ -3,7 +3,7 @@
  * lexicon word opens a pair, predicts its look-alikes, and the Mix-ups
  * lesson drills both. Pins: the family file, what counts as a mix-up (not a
  * form slip, a blank or a non-word), the open → mended and probe → cleared
- * rules, the edit-rule neighbours, the lesson's rep invariants and the
+ * rules, the edit-rule neighbors, the lesson's rep invariants and the
  * tutor's line.
  */
 import assert from "node:assert/strict";

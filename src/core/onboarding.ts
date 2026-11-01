@@ -723,7 +723,7 @@ const PRIOR_LINE: Record<Prior, string> = {
 
 /** One unit's line in the tutor's "Measured weak points": its unaided first
  *  tries when it has six (with the slips behind the wrong ones), else its
- *  lesson answers, labelled as such. Null when neither has six reps. */
+ *  lesson answers, labeled as such. Null when neither has six reps. */
 export interface MeasuredWeak {
 	accuracy: number;
 	text: string;
@@ -775,7 +775,7 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		const missed = placed.filter(([, e]) => e!.correct < e!.reps).map(([id, e]) => `${unitInfo(id as UnitId).title} (${e!.correct}/${e!.reps})`);
 		lines.push(`- Placement check on ${goal.placedAt.slice(0, 10)}: works at ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.${goal.placedNote ? ` The tutor's reading of the edge: ${goal.placedNote}` : ""}`);
 	}
-	if (goal?.vocabulary) lines.push(`- Vocabulary check on ${goal.vocabulary.at.slice(0, 10)}: about ${goal.vocabulary.size.toLocaleString("en-GB")} lemmas recognised${goal.vocabulary.reliable ? "" : " (over-claimed on the pseudowords: treat as generous)"}.`);
+	if (goal?.vocabulary) lines.push(`- Vocabulary check on ${goal.vocabulary.at.slice(0, 10)}: about ${goal.vocabulary.size.toLocaleString("en-GB")} lemmas recognized${goal.vocabulary.reliable ? "" : " (over-claimed on the pseudowords: treat as generous)"}.`);
 	if (state) {
 		const cur = state.chapters.find((c) => c.id === state.current);
 		const stage = STAGES.find((s) => s.id === cur?.stage);
@@ -807,14 +807,14 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 export interface MissVerdict {
 	/** "The form here is kuchára" (the form is bolded by the UI). */
 	form: string;
-	/** The judge's note, normalised: no quotes around the Slovak words, no
+	/** The judge's note, normalized: no quotes around the Slovak words, no
 	 *  semicolons, one full stop per sentence, none doubled. */
 	reason: string | null;
 	/** The unit's rule in one line, when it adds to the reason. */
 	pattern: string | null;
 }
 
-/** Normalise a model's one-line note into prose: 'ponuku' → ponuku, a
+/** Normalize a model's one-line note into prose: 'ponuku' → ponuku, a
  *  semicolon starts a new sentence, trailing punctuation is trimmed, the
  *  first letter is capitalised and exactly one full stop closes it. */
 export function cleanNote(note: string | undefined | null): string | null {

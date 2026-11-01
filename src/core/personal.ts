@@ -2,7 +2,7 @@
  * The personal lesson (LangHarness, 2026-11-01): the guide's model names
  * what to drill (words, units, pairs of words) from the learner's own
  * mistakes, and the app builds the lesson from its own verified sentences.
- * The model never writes a sentence a learner practises (P8): a target it
+ * The model never writes a sentence a learner practices (P8): a target it
  * names is kept only when the lexicon can back it, and the reps are the
  * same cloze, unit and pair reps the other lessons use.
  *

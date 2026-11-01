@@ -17,7 +17,7 @@ import { progressStore } from "../store/progress.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { aiMissing, aiSlot, aiStatus, friendlyAiError } from "./ai-status.ts";
-import { analyseNow, mistakesReportOf, type MistakesReport } from "./mistakes-snapshot.ts";
+import { analyzeNow, mistakesReportOf, type MistakesReport } from "./mistakes-snapshot.ts";
 
 const SYSTEM = `You are a Slovak teacher reading a learner's own answers. The facts below are their unit scores, trends, word mix-ups and the latest wrong first tries, each with the sentence, the form wanted and what they wrote. Find the patterns behind the mistakes and say what to do about them.
 
@@ -28,6 +28,7 @@ Rules:
 - "plan" is up to four steps the app can open: kind "mixups" (the Mix-ups lesson), "unit" (a lesson; put the unit's id, the word in [brackets] in the facts, in "unit"), "review", or "other".
 - "practice" is what the learner's personal lesson will drill. The app builds it from its own checked sentences, so name targets, never sentences: "words" are up to 6 dictionary forms (lemmas) taken from the facts, "units" up to 3 unit ids from the [brackets], "pairs" up to 3 pairs of dictionary forms the learner confuses or is likely to confuse. Pick what the patterns point at, most useful first.
 - Plain English, short sentences. Say what improved, if a trend says so.
+- In every text field, name grammar in full words (feminine accusative, locative, 1st person singular) and units by their name. The ids in [brackets] go only in "unit" and "practice.units", never in a sentence.
 
 Reply with one JSON object and nothing else:
 {"patterns":[{"title":"","evidence":"","why":"","fix":""}],"next":[{"what":"","why":""}],"plan":[{"step":"","kind":"mixups"}],"practice":{"words":[],"units":[],"pairs":[["",""]]}}
@@ -51,7 +52,7 @@ function stepOf(u: Usage) {
  *  guide at no cost; `force` writes again. */
 export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: Parameters<typeof runSubagent>[1]["engine"]; model?: string } = {}): Promise<MistakesReport> {
 	const saved = analysisStore.read();
-	const analysis = saved.analysis ?? analyseNow(opts.now).analysis;
+	const analysis = saved.analysis ?? analyzeNow(opts.now).analysis;
 	const facts = guideFacts(analysis);
 	const key = digest(facts);
 	if (saved.guide?.digest === key && !opts.force) return mistakesReportOf(analysis, saved.guide);

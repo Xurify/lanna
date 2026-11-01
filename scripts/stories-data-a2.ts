@@ -252,7 +252,7 @@ export const STORIES_A2: StorySource[] = [
 			{ who: "Lucia", sk: "S manželom a malým synom Tomáškom sme sa konečne presťahovali do nášho nového bytu v Žiline.", en: "Together with my husband and little son Tomáško we finally moved into our new apartment in Žilina." },
 			{ who: "Lucia", sk: "Už od skorého rána sme nosili kartónové škatule z tretieho poschodia starého domu.", en: "Since early morning we were carrying cardboard boxes down from the third floor of the old house." },
 			{ who: "Lucia", sk: "Môj brat Matej a otec prišli s veľkou bielou dodávkou, aby nám pomohli s ťažkým nábytkom.", en: "My brother Matej and father arrived with a large white van to help us with the heavy furniture." },
-			{ who: "Lucia", sk: "Všetko bolo starostlivo označené farebnými nálepkami: kuchyňa, spálňa, detská izba a knihy.", en: "Everything was carefully labelled with colored stickers: kitchen, bedroom, children's room and books." },
+			{ who: "Lucia", sk: "Všetko bolo starostlivo označené farebnými nálepkami: kuchyňa, spálňa, detská izba a knihy.", en: "Everything was carefully labeled with colored stickers: kitchen, bedroom, children's room and books." },
 			{ who: "Lucia", sk: "Bolo neuveriteľné vidieť, koľko vecí človek nazbiera za niekoľko rokov spoločného života.", en: "It was unbelievable to see how many things a person collects over several years of living together." },
 			{ who: "Lucia", sk: "Cesta dodávkou po diaľnici trvala necelé dve hodiny.", en: "The journey by van on the highway took under two hours." },
 			{ who: "Lucia", sk: "Náš nový byt sa nachádza v tichej štvrti na Vlčincoch, kúsok od lesoparku Chrasť.", en: "Our new apartment is located in a quiet neighborhood in Vlčince, a short walk from the Chrasť forest park." },

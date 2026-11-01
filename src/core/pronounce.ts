@@ -14,7 +14,7 @@
  *           "accent"). Needs AZURE_SPEECH_KEY + AZURE_SPEECH_REGION.
  *   match — intelligibility from speech-to-text alone: the words the
  *           engine heard against the words expected. A word that was
- *           recognised was said clearly enough; a missing one was not.
+ *           recognized was said clearly enough; a missing one was not.
  *           No sound-level detail. Always available when STT is.
  *
  * Pure and browser-safe.
@@ -53,7 +53,7 @@ export interface PronScore {
 	/** 0..100 — the one number: accuracy weighted with the rest. */
 	overall: number;
 	words: PronWord[];
-	/** What the engine recognised. */
+	/** What the engine recognized. */
 	heard?: string;
 }
 
@@ -83,7 +83,7 @@ export function passMade(inWindow: boolean, score?: Pick<PronScore, "overall"> |
 	return inWindow && (score == null || score.overall >= PRON_CLEAR);
 }
 
-/** Intelligibility from a transcript: each expected word recognised
+/** Intelligibility from a transcript: each expected word recognized
  *  scores 100, each missing one 0. */
 export function matchScore(expected: string, heard: string): PronScore {
 	const m = wordMatch(expected, heard);
@@ -127,7 +127,7 @@ const ERROR: Record<string, PronError | undefined> = { Omission: "omission", Ins
 
 const clamp = (n: unknown): number => (typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0);
 
-/** Read Azure's result. Null when nothing was recognised. */
+/** Read Azure's result. Null when nothing was recognized. */
 export function parseAzure(result: AzureResult): PronScore | null {
 	if (result.RecognitionStatus && result.RecognitionStatus !== "Success") return null;
 	const best = result.NBest?.[0];
