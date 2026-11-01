@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MenuShell, type MenuAlign } from "@/components/menu-shell";
+import { CountryFlag } from "@/components/ui/country-flag";
 import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-all";
@@ -184,8 +185,9 @@ export function LanguagePicker({
 				{shown.map((l) => {
 					const on = value.includes(l.id);
 					return (
-						<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn(CHIP, "min-w-0 px-3.5 py-1.5 text-sm", on ? ON : OFF)} data-testid={`${testid}-${l.id}`}>
-							{l.title}
+						<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn(CHIP, "min-w-0 px-3.5 py-1.5 text-sm inline-flex items-center gap-2", on ? ON : OFF)} data-testid={`${testid}-${l.id}`}>
+							<CountryFlag lang={l.id} className="w-4 h-3 rounded-[2px]" />
+							<span>{l.title}</span>
 						</button>
 					);
 				})}
@@ -214,7 +216,8 @@ export function LanguagePicker({
 										return (
 											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => togglePending(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-bold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
 												<span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3" strokeWidth={3} />}</span>
-												{l.title}
+												<CountryFlag lang={l.id} className="w-4 h-3 rounded-[2px]" />
+												<span>{l.title}</span>
 											</button>
 										);
 									})}
@@ -239,7 +242,10 @@ export function LanguagePicker({
 						const level = normalizeLangLevel(levels[id]); // none until pressed; a profile from before may still say "fluent"
 						return (
 							<div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors" data-testid={`level-${id}`}>
-								<span className="w-28 shrink-0 truncate font-ui text-sm font-semibold text-foreground">{languageName(id)}</span>
+								<span className="flex items-center gap-2 w-32 shrink-0 min-w-0">
+									<CountryFlag lang={id} className="w-4 h-3 rounded-[2px]" />
+									<span className="truncate font-ui text-sm font-semibold text-foreground">{languageName(id)}</span>
+								</span>
 								<span className="flex min-w-0 flex-wrap gap-1" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
 									{LANG_LEVELS.map((lv) => (
 										<button
@@ -322,7 +328,8 @@ export function PickSome<T extends string>({
 				return (
 					<button key={String(it.id)} type="button" aria-pressed={on} title={it.hint} onClick={() => pick(it.id)} className={cn(CHIP, "inline-flex items-center gap-2", on ? ON : OFF)} data-testid={testid ? `${testid}-${it.id}` : undefined}>
 						{on && max > 1 && <span className="flex size-5 items-center justify-center rounded-full bg-go font-ui text-[11px] font-black text-go-ink">{at + 1}</span>}
-						{it.title}
+						<CountryFlag lang={String(it.id)} className="w-4 h-3 rounded-[2px]" />
+						<span>{it.title}</span>
 					</button>
 				);
 			})}

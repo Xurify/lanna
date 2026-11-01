@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { explainChoices, LanguagePicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
+import { CountryFlag } from "@/components/ui/country-flag";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { explanationLanguages, knownLanguages, MAX_EXPLAIN, parallelsLine, parallelsOn, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
@@ -21,9 +22,24 @@ interface Langs {
 	showParallels: boolean;
 }
 
+interface ProfileInfo {
+	active: string;
+	selected: string;
+	restartRequired: boolean;
+	profiles: Array<{
+		id: string;
+		code: string;
+		tag: string;
+		endonym: string;
+		english: string;
+		description: string;
+	}>;
+}
+
 export function LearnerSection({ onClose }: { onClose: () => void }) {
 	const router = useRouter();
 	const [state, setState] = useState<Langs | null>(null);
+	const [profile, setProfile] = useState<ProfileInfo | null>(null);
 	const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error" | "failed">("idle");
 
 	useEffect(() => {
@@ -35,10 +51,37 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 				setState({ languages: knownLanguages(s.goal), languageLevels: s.goal?.languageLevels ?? {}, explainIn: explanationLanguages(s.goal), showParallels: parallelsOn(s.goal) });
 			})
 			.catch(() => !gone && setStatus("failed"));
+
+		void fetch("/api/profile")
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d: ProfileInfo | null) => {
+				if (!gone && d) setProfile(d);
+			})
+			.catch(() => undefined);
+
 		return () => {
 			gone = true;
 		};
 	}, []);
+
+	const switchProfile = async (id: string) => {
+		if (profile?.active === id) return;
+		try {
+			const res = await fetch("/api/profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ active: id }),
+			});
+			if (!res.ok) return;
+			const next: ProfileInfo = await res.json();
+			setProfile(next);
+			if (next.restartRequired) {
+				window.location.reload();
+			}
+		} catch {
+			// ignore
+		}
+	};
 
 	const save = async (next: Langs) => {
 		setState(next);
@@ -57,6 +100,35 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 
 	return (
 		<>
+			{profile && profile.profiles.length > 0 && (
+				<SettingsGroup label="Target language" testid="learner-target-language">
+					<div className="flex flex-wrap items-center gap-2 py-1">
+						{profile.profiles.map((p) => {
+							const running = p.id === profile.active;
+							return (
+								<button
+									key={p.id}
+									type="button"
+									aria-pressed={running}
+									onClick={() => void switchProfile(p.id)}
+									className={cn(
+										"flex items-center gap-2 rounded-xl border px-3.5 py-1.5 font-ui text-sm font-semibold transition-all",
+										running
+											? "border-primary/80 bg-primary/15 text-primary font-bold shadow-xs"
+											: "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground",
+									)}
+									data-testid={`target-language-${p.id}`}
+								>
+									<CountryFlag lang={p.id} className="w-4 h-3 rounded-[2px]" />
+									<span>{p.endonym}</span>
+									<span className="text-xs font-normal opacity-70">({p.english})</span>
+								</button>
+							);
+						})}
+					</div>
+					<p className="text-xs text-muted-foreground">The language you are studying in LangHarness.</p>
+				</SettingsGroup>
+			)}
 			<SettingsGroup label="Languages you know" testid="learner-languages">
 				<LanguagePicker value={state.languages} levels={state.languageLevels} onChange={(languages, languageLevels) => void save({ ...state, languages, languageLevels, explainIn: keepExplain(state.explainIn, languages) })} />
 				<p className="text-xs text-muted-foreground">Any language you can read a simple text in, and your CEFR level in it (A1 to C2, or native). The tutor uses them to understand you and to pick what to compare.</p>
