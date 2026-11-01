@@ -81,6 +81,7 @@ import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
 import { watchMinutes } from "../core/watch.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
+import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
@@ -301,6 +302,8 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	} catch (err) {
 		console.warn("[lesson] could not append the lesson log:", err instanceof Error ? err.message : err);
 	}
+	// The plan reads the saved analysis's trends, so an old snapshot is renewed.
+	refreshSnapshotIfStale(now);
 	return { ...outcome, summary: progressSummary(input.tz, now) };
 }
 
@@ -529,6 +532,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		mixups: mixupList(p.mixups)
 			.filter((m) => m.status === "active")
 			.map((m) => m.words),
+		worse: slippingUnits(),
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),

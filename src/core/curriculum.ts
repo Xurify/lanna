@@ -675,6 +675,10 @@ export interface PlanInput {
 	/** Pairs of words the learner mixes up and has not mended (src/core/mixups.ts),
 	 *  latest first: with no weak spot to drill, Strengthen practises them. */
 	mixups?: Array<[string, string]>;
+	/** Units whose first-try accuracy fell lately (src/core/mistakes.ts), worst
+	 *  first: with no weak spot on record, Strengthen takes the first one that
+	 *  can be drilled before it falls back to the weakest overall. */
+	worse?: UnitId[];
 	/** A video the learner added and has not watched yet (src/core/watch.ts):
 	 *  it joins the plan as input until it is watched. */
 	watch?: { id: string; title: string; minutes: number; coverage: number };
@@ -765,8 +769,10 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	//    flagged it, even with no lesson yet), else the weakest practised
 	//    drill (not the Continue unit), else a blitz across the units started.
 	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
+	const worseUnit = spot ? undefined : (input.worse ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
 	const weak =
 		spot ??
+		worseUnit ??
 		all
 			.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
 			.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
@@ -788,7 +794,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weakClean}${weakSlovak ? ` · ${weakSlovak}` : ""}`,
-			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbours` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbours`,
+			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbours` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with its neighbours` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbours`,
 			minutes: TASK_MINUTES.strengthen,
 			done: strengthenDone,
 			unit: weak.id,

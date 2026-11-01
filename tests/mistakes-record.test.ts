@@ -66,3 +66,17 @@ describe("my mistakes on disk", () => {
 		assert.equal(analyseNow(new Date("2026-11-01T13:00:00Z")).guideCurrent, false, "the answers changed since");
 	});
 });
+
+describe("the plan reads the saved trends", () => {
+	it("slippingUnits lists units whose trend is worse, worst first, and a stale snapshot is renewed after a lesson", async () => {
+		const { slippingUnits, refreshSnapshotIfStale } = await import("../src/server/mistakes-snapshot.ts");
+		const mk = (unit: string, recent: number) => ({ unit, title: unit, reps: 20, wrong: 5, accuracy: 0.7, recent, earlier: 0.9, trend: "worse" as const, slips: {} });
+		const analysis = { at: "2026-11-03T08:00:00.000Z", reps: 40, wrong: 10, from: null, to: null, units: [mk("loc", 0.6), mk("gen", 0.4), { ...mk("dat", 0.9), trend: "steady" as const }], slips: {}, words: [], weeks: [], mixups: [] };
+		analysisStore.write({ analysis, guide: null });
+		assert.deepEqual(slippingUnits(), ["gen", "loc"]);
+		refreshSnapshotIfStale(new Date("2026-11-03T09:00:00Z"));
+		assert.equal(analysisStore.read().analysis?.at, analysis.at, "an hour old is fresh");
+		refreshSnapshotIfStale(new Date("2026-11-03T15:00:00Z"));
+		assert.equal(analysisStore.read().analysis?.at, "2026-11-03T15:00:00.000Z", "six hours old is renewed");
+	});
+});

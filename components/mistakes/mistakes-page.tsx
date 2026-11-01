@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, ArrowRightIcon, LoaderCircleIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
@@ -98,6 +98,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 				) : (
 					a && (
 						<>
+							<NextSteps a={a} />
 							<GuideCard report={report!} busy={busy === "guide"} onWrite={(force) => void run("guide", force)} />
 							<MixupsSection a={a} />
 							<UnitsSection units={a.units} />
@@ -185,6 +186,67 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 	);
 }
 
+/** What to do about it, worked out from the figures (not from the guide's
+ *  text, so it is there without a model): each step is a button. */
+function NextSteps({ a }: { a: MistakeAnalysis }) {
+	const [added, setAdded] = useState<"adding" | "added" | "failed" | null>(null);
+	const pairs = a.mixups.length;
+	const weak = a.units.find((u) => u.trend === "worse") ?? a.units.filter((u) => u.accuracy < 0.85).sort((x, y) => x.accuracy - y.accuracy)[0];
+	const slugs = a.words.map((w) => w.slug);
+	if (!pairs && !weak && !slugs.length) return null;
+	const addWords = async () => {
+		setAdded("adding");
+		try {
+			const res = await fetch("/api/review/enqueue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slugs }) });
+			setAdded(res.ok ? "added" : "failed");
+		} catch {
+			setAdded("failed");
+		}
+	};
+	return (
+		<Section id="mistakes-next" title="Do this next" line="Worked out from the figures below.">
+			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
+				{pairs > 0 && (
+					<Step title="Practise the words you mix up" line={`${pairs} ${pairs === 1 ? "pair" : "pairs"}, typed, both sides in turn`}>
+						<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-mixups">
+							Start
+							<ArrowRightIcon className="size-4" />
+						</Link>
+					</Step>
+				)}
+				{weak && (
+					<Step title={`A lesson on ${weak.title}`} line={weak.trend === "worse" ? `Slipping lately: ${pct(weak.earlier ?? weak.accuracy)} before, ${pct(weak.recent ?? weak.accuracy)} now` : `${pct(weak.accuracy)} right on first tries`}>
+						<Link href={`/lesson?unit=${weak.unit}`} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-unit">
+							Start
+							<ArrowRightIcon className="size-4" />
+						</Link>
+					</Step>
+				)}
+				{slugs.length > 0 && (
+					<Step title="Put the words you miss into review" line={`${slugs.length} ${slugs.length === 1 ? "word" : "words"}, so they come back on a schedule`}>
+						<button type="button" disabled={added === "adding" || added === "added"} onClick={() => void addWords()} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-review">
+							{added === "added" ? <CheckIcon className="size-4" /> : added === "adding" ? <LoaderCircleIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
+							{added === "added" ? "Added" : added === "failed" ? "Try again" : "Add to review"}
+						</button>
+					</Step>
+				)}
+			</ul>
+		</Section>
+	);
+}
+
+function Step({ title, line, children }: { title: string; line: string; children: React.ReactNode }) {
+	return (
+		<li className="flex items-center justify-between gap-4 px-4 py-3">
+			<div className="min-w-0">
+				<p className="font-ui text-sm font-bold text-foreground">{title}</p>
+				<p className="font-prose text-xs text-muted-foreground">{line}</p>
+			</div>
+			<div className="shrink-0">{children}</div>
+		</li>
+	);
+}
+
 function MixupsSection({ a }: { a: MistakeAnalysis }) {
 	if (!a.mixups.length) return null;
 	return (
@@ -238,7 +300,17 @@ function UnitsSection({ units }: { units: UnitTrend[] }) {
 }
 
 function WordsSection({ a }: { a: MistakeAnalysis }) {
+	const [done, setDone] = useState<Record<string, "adding" | "added" | "failed">>({});
 	if (!a.words.length) return null;
+	const add = async (slug: string) => {
+		setDone((d) => ({ ...d, [slug]: "adding" }));
+		try {
+			const res = await fetch("/api/review/enqueue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slugs: [slug] }) });
+			setDone((d) => ({ ...d, [slug]: res.ok ? "added" : "failed" }));
+		} catch {
+			setDone((d) => ({ ...d, [slug]: "failed" }));
+		}
+	};
 	return (
 		<Section id="mistakes-words" title="Words you miss most" line="What the sentence wanted, and what you last wrote.">
 			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
@@ -248,8 +320,21 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 							<b>{w.answer}</b>
 							<span className="text-muted-foreground"> · {w.lastGiven ? `you wrote “${w.lastGiven}”` : "no answer"}</span>
 						</span>
-						<span className="shrink-0 font-ui text-xs tabular-nums text-muted-foreground">
-							{w.misses} of {w.reps}
+						<span className="flex shrink-0 items-center gap-3">
+							<span className="font-ui text-xs tabular-nums text-muted-foreground">
+								{w.misses} of {w.reps}
+							</span>
+							<button
+								type="button"
+								disabled={done[w.slug] === "adding" || done[w.slug] === "added"}
+								onClick={() => void add(w.slug)}
+								className="inline-flex h-8 items-center gap-1 rounded-lg px-2 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60 pointer-coarse:min-h-11"
+								aria-label={`Add ${w.lemma} to review`}
+								data-testid={`word-review-${w.slug}`}
+							>
+								{done[w.slug] === "added" ? <CheckIcon className="size-3.5" /> : <PlusIcon className="size-3.5" />}
+								{done[w.slug] === "added" ? "In review" : done[w.slug] === "failed" ? "Try again" : "Review"}
+							</button>
 						</span>
 					</li>
 				))}

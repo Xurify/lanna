@@ -272,6 +272,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Nothing is batched and no model runs for the analysis. A visit shows the saved snapshot in `analysis.json` with its time; "Analyse now" reads the lesson log again and saves a new one. The first visit takes one.
 - The guide is optional and the only model call: one Cheap-slot call from the snapshot's facts (`guideFacts`), three fixed sections, never a fact outside them. It is kept in `analysis.json` with its model and tokens (E1), reused while the facts' digest stands, and marked "your answers have changed since" when they do not. Without a model the page works and the button says what is missing.
 - The page stays out of the sidebar's four destinations (E4a).
+- The analysis acts on the plan (2026-11-01): a lesson renews a snapshot older than six hours, and Strengthen takes a unit whose first-try accuracy fell (trend "worse") after a weak spot on record and an open mix-up, never the Continue unit. "Do this next" on the page is worked out from the figures, not from the guide's text, so it is there without a model: the Mix-ups lesson, a lesson on the weakest or slipping unit, and "Add to review" for the words missed most (one word, or all). The guide stays text.
 
 ## Working rules (how work reaches the repo)
 
