@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
-import { prefetchSpeech, setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
@@ -1058,7 +1058,7 @@ function ClozeRep({
 					</button>
 					<button
 						type="button"
-						onClick={() => void slowSpeak(item.sentence)}
+						onClick={() => void speak(item.sentence, undefined, { slow: true })}
 						aria-label="Play slowly"
 						title="Play slowly"
 						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
@@ -1087,7 +1087,7 @@ function ClozeRep({
 					</button>
 					<button
 						type="button"
-						onClick={() => void slowSpeak(item.sentence)}
+						onClick={() => void speak(item.sentence, undefined, { slow: true })}
 						aria-label="Play slowly"
 						title="Play slowly"
 						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
@@ -1193,19 +1193,6 @@ function ClozeRep({
 			)}
 		</div>
 	);
-}
-
-async function slowSpeak(text: string) {
-	// The speed preference is global; a slow replay is a one-off.
-	let previous = 1;
-	try {
-		previous = Number(localStorage.getItem("lh-tts-speed")) || 1;
-	} catch {
-		// storage blocked
-	}
-	setSpeed(SPEEDS[0]);
-	await speak(text).catch(() => {});
-	setSpeed(previous);
 }
 
 function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked: boolean; onGrade: (given: string, verdict: RepVerdict) => void; onReady: (ready: boolean) => void }) {

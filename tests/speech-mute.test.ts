@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { setSoundOn } from "../components/lesson/sound.ts";
-import { speak, stopSpeaking } from "../components/speech.tsx";
+import { setSoundOn, setVolume } from "../components/lesson/sound.ts";
+import { setSpeed, slowRate, speak, stopSpeaking } from "../components/speech.tsx";
 
 // The sound switch is one switch for every page: when it is off, nothing
 // plays, a clip still loading is dropped, and a clip already playing stops.
@@ -10,6 +10,7 @@ import { speak, stopSpeaking } from "../components/speech.tsx";
 interface FakeAudio {
 	src: string;
 	playbackRate: number;
+	volume: number;
 	paused: boolean;
 	onended?: () => void;
 	onerror?: () => void;
@@ -35,6 +36,7 @@ Object.defineProperty(globalThis, "localStorage", {
 class FakeAudioElement implements FakeAudio {
 	src: string;
 	playbackRate = 1;
+	volume = 1;
 	paused = false;
 	onended?: () => void;
 	onerror?: () => void;
@@ -111,4 +113,34 @@ test("a newer sentence stops the one before it", async () => {
 	await waitFor(() => made.length === 2);
 	assert.equal(made[0]!.paused, true);
 	assert.equal(made[1]!.paused, false);
+});
+
+test("the snail plays slower than the speed setting, and leaves the setting alone", async () => {
+	setSoundOn(true);
+	setSpeed(1);
+	void speak("Ahoj", undefined, { slow: true });
+	await waitFor(() => made.length === 1);
+	assert.equal(made[0]!.playbackRate, 0.7);
+	// A second tap while the first is still playing used to save 0.75× as the speed for good.
+	void speak("Ahoj", undefined, { slow: true });
+	await waitFor(() => made.length === 2);
+	stopSpeaking();
+	assert.equal(store.get("lh-tts-speed"), "1");
+	void speak("Ahoj");
+	await waitFor(() => made.length === 3);
+	assert.equal(made[2]!.playbackRate, 1);
+});
+
+test("slow is always slower than the learner's own speed", () => {
+	assert.equal(slowRate(1), 0.7);
+	assert.equal(slowRate(1.25), 0.7);
+	assert.ok(slowRate(0.75) < 0.75);
+});
+
+test("the volume setting reaches the spoken clip", async () => {
+	setSoundOn(true);
+	setVolume(0.5);
+	void speak("Ahoj");
+	await waitFor(() => made.length === 1);
+	assert.equal(made[0]!.volume, 0.5);
 });

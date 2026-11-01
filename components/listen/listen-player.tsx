@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { CheckIcon, EyeIcon, HeadphonesIcon, KeyboardIcon, RepeatIcon, SnailIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { setSpeed, speak, SPEEDS, stopSpeaking } from "@/components/speech";
+import { speak, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenAnswer, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
@@ -174,7 +174,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		if (!item) return;
 		timing.current.replays++;
 		setReplays(timing.current.replays);
-		void (slow ? slowSpeak(item.sentence) : speak(item.sentence)).catch(() => {});
+		void speak(item.sentence, undefined, { slow }).catch(() => {});
 	};
 
 	const finish = useCallback(
@@ -563,18 +563,6 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 			)}
 		</>
 	);
-}
-
-async function slowSpeak(text: string) {
-	let previous = 1;
-	try {
-		previous = Number(localStorage.getItem("lh-tts-speed")) || 1;
-	} catch {
-		// storage blocked
-	}
-	setSpeed(SPEEDS[0]);
-	await speak(text).catch(() => {});
-	setSpeed(previous);
 }
 
 function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {

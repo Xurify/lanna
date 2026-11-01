@@ -1,12 +1,12 @@
 "use client";
 /**
- * Device preferences stored on this device: spoken audio speed, lesson sounds,
+ * Device preferences stored on this device: spoken audio speed, volume, lesson sounds,
  * and word lookup translation mode (Dictionary, Hybrid, or Google Translate).
  */
 
 import { useEffect, useState } from "react";
 import { SPEEDS, setSpeed, useSpeed } from "@/components/speech";
-import { setSoundOn, soundOn } from "@/components/lesson/sound";
+import { setSoundOn, setVolume, sfx, soundOn, volume, VOLUMES } from "@/components/lesson/sound";
 import { SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 
 export type WordTranslationMode = "dictionary" | "hybrid" | "google";
@@ -98,6 +98,29 @@ export function PlaybackSpeedRow() {
 				onChange={setSpeed}
 				ariaLabel="Playback speed"
 				testid="playback-speed"
+			/>
+		</SettingsRow>
+	);
+}
+
+export function VolumeRow() {
+	const [level, setLevel] = useState(() => volume());
+	return (
+		<SettingsRow
+			label="Volume"
+			hint="Spoken audio and lesson sounds, on top of your system volume. Saved on this device."
+			testid="row-volume"
+		>
+			<SettingsSegmented
+				options={VOLUMES.map((v): { value: number; label: string } => ({ value: v, label: `${v * 100}%` }))}
+				value={level}
+				onChange={(next) => {
+					setVolume(next);
+					setLevel(next);
+					sfx.tap();
+				}}
+				ariaLabel="Volume"
+				testid="volume"
 			/>
 		</SettingsRow>
 	);
