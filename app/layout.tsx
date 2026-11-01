@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { JetBrains_Mono, Nunito, Source_Sans_3 } from "next/font/google";
 import "katex/dist/katex.min.css";
@@ -24,8 +24,24 @@ const prose = Source_Sans_3({ subsets: ["latin", "latin-ext", "cyrillic"], varia
 // JetBrains Mono stays for code, numbers in tables and key hints.
 const chrome = Nunito({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-nunito" });
 
+// Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
+// (components/sidebar.tsx, components/phone-nav.tsx), and the theme colour
+// paints the status bar. viewport-fit=cover is what lets the page run under it.
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1,
+	viewportFit: "cover",
+	themeColor: "#141414",
+	colorScheme: "dark",
+};
+
 export const metadata: Metadata = {
 	title: "LangHarness",
+		applicationName: "LangHarness",
+		appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "black-translucent" },
+			// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
+			// iOS Safari still reads the Apple name to launch full screen, so both go out.
+			other: { "apple-mobile-web-app-capable": "yes" },
 	description: "A Slovak and Russian tutor with a memory: sessions, practice, spaced review, and a knowledge graph of what you know.",
 };
 

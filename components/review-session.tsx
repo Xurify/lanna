@@ -583,7 +583,7 @@ export function ReviewSession() {
 					)}
 
 					{prompt && lang && !verdict && !picks && (
-						<p className="mt-3 hidden items-center justify-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
+						<p className="mt-3 hidden items-center justify-center gap-1.5 font-ui text-sm text-muted-foreground pointer-fine:flex">
 							{kbd("Enter")} to check
 						</p>
 					)}

@@ -341,7 +341,7 @@ function TopBar({ story, step, progress, onShelf }: { story: StoryRecord; step: 
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<Link href="/" aria-label="Leave the story" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+				<Link href="/" aria-label="Leave the story" className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 					<XIcon className="size-5" />
 				</Link>
 				<div className="min-w-0 flex-1">
@@ -353,7 +353,7 @@ function TopBar({ story, step, progress, onShelf }: { story: StoryRecord; step: 
 					</div>
 				</div>
 				<SpeedPill />
-				<button type="button" onClick={onShelf} aria-label="The library" title="The library" className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="The library" title="The library" className="-mr-1.5 rounded-lg p-1.5 pointer-coarse:-mr-3 pointer-coarse:p-3 text-muted-foreground hover:bg-accent hover:text-foreground">
 					<LibraryIcon className="size-5" />
 				</button>
 			</div>
@@ -370,7 +370,7 @@ function SpeedPill() {
 			onClick={() => setSpeed(next)}
 			title="Playback speed"
 			aria-label={`Playback speed ${speed}×, click for ${next}×`}
-			className="rounded-lg px-2 py-1 font-ui text-xs font-bold tabular-nums text-muted-foreground hover:bg-accent hover:text-foreground"
+			className="rounded-lg px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3 font-ui text-xs font-bold tabular-nums text-muted-foreground hover:bg-accent hover:text-foreground"
 		>
 			{speed}×
 		</button>
@@ -587,7 +587,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							type="button"
 							onClick={() => setViewMode("flow")}
 							className={cn(
-								"rounded-lg px-3 py-1.5 transition-colors",
+								"rounded-lg px-3 py-1.5 pointer-coarse:min-h-11 transition-colors",
 								viewMode === "flow" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
 							)}
 							title="Plynulý text príbehu (Continuous reading)"
@@ -598,7 +598,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							type="button"
 							onClick={() => setViewMode("focus")}
 							className={cn(
-								"rounded-lg px-3 py-1.5 transition-colors",
+								"rounded-lg px-3 py-1.5 pointer-coarse:min-h-11 transition-colors",
 								viewMode === "focus" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
 							)}
 							title="Jedna veta (Sentence focus drill)"
@@ -613,7 +613,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							type="button"
 							onClick={() => setShowTranslation((v) => !v)}
 							className={cn(
-								"rounded-xl border px-3 py-1.5 font-ui text-xs font-bold transition-colors",
+								"rounded-xl border px-3 py-1.5 pointer-coarse:min-h-11 font-ui text-xs font-bold transition-colors",
 								showTranslation
 									? "border-primary/50 bg-primary/10 text-primary"
 									: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -626,7 +626,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						<button
 							type="button"
 							onClick={() => setFontSize((s) => (s === "normal" ? "large" : "normal"))}
-							className="rounded-xl border border-border/60 bg-accent/30 px-2.5 py-1.5 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+							className="rounded-xl border border-border/60 bg-accent/30 px-2.5 py-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
 							title="Zmeniť veľkosť písma"
 						>
 							{fontSize === "large" ? "A+" : "A"}
@@ -940,7 +940,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								type="button"
 								onClick={() => void toggleBookmark(activeSentence)}
 								className={cn(
-									"flex items-center gap-1 rounded-xl border px-2 py-1 font-ui text-xs font-semibold transition-colors",
+									"flex items-center gap-1 rounded-xl border px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 font-ui text-xs font-semibold transition-colors",
 									isBookmarked(activeSentence)
 										? "border-sky-500/40 bg-sky-500/15 text-sky-400"
 										: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -958,7 +958,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								type="button"
 								onClick={() => void playAll()}
 								className={cn(
-									"flex items-center gap-2 rounded-xl px-4 py-1.5 font-ui text-xs font-bold shadow-sm transition-all",
+									"flex items-center gap-2 rounded-xl px-4 py-1.5 pointer-coarse:min-h-11 font-ui text-xs font-bold shadow-sm transition-all",
 									all
 										? "bg-flame text-white hover:bg-flame/90"
 										: "bg-xp text-white hover:bg-xp/90",
@@ -976,7 +976,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							<button
 								type="button"
 								onClick={onDone}
-								className={cn(PRIMARY, "text-xs py-1.5 px-3 h-auto")}
+								className={cn(PRIMARY, "text-xs py-1.5 px-3 h-auto pointer-coarse:min-h-11")}
 								data-testid="read-done"
 							>
 								{story.questions.length ? `Otázky (${story.questions.length})` : "Hotovo"}

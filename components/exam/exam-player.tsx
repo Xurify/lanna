@@ -236,7 +236,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 			<div className={cn("shrink-0 border-t border-border", picked !== null && (right ? "bg-go-soft" : "bg-miss-soft"))} aria-live="polite" data-testid="exam-footer">
 				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
 					{picked === null ? (
-						<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
+						<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground pointer-fine:flex">
 							<kbd className={KBD}>1</kbd>–<kbd className={KBD}>{item!.options?.length ?? 1}</kbd> to pick
 						</p>
 					) : (

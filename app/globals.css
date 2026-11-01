@@ -2,6 +2,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Pointer variants for the phone and iPad layouts (2026-11-01). A keycap hint
+   shows only where a fine pointer is the main input (mouse, trackpad); touch
+   targets grow where the pointer is coarse; a touch screen narrower than lg
+   gets the drawer sidebar (components/sidebar.tsx). */
+@custom-variant pointer-fine (@media (pointer: fine));
+@custom-variant pointer-coarse (@media (pointer: coarse));
+@custom-variant touch-narrow (@media (pointer: coarse) and (width < 64rem));
+
+/* Touch screens: the sidebar's rows and buttons are at least 44 px tall, the
+   Apple HIG minimum for a tap (docs/research/mobile-ipad.md). */
+@media (pointer: coarse) {
+	[data-sidebar] :is(a, button, [role="button"]) {
+		min-height: 2.75rem;
+		min-width: 2.75rem;
+	}
+}
+
 /*
  * THE SKIN — wave 5. Design tokens, the single place to restyle the app.
  *

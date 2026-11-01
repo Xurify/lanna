@@ -609,7 +609,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 			    window (its buttons carve themselves out, app/globals.css). */}
 				<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 					<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-						<button type="button" aria-label="Leave the lesson" onClick={askLeave} data-testid="lesson-leave" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						<button type="button" aria-label="Leave the lesson" onClick={askLeave} data-testid="lesson-leave" className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 							<XIcon className="size-5" />
 						</button>
 						<div
@@ -697,7 +697,7 @@ const COLUMN = "mx-auto w-full max-w-3xl px-6";
 function ActionHint({ kind, options }: { kind: ItemKind; options: number }) {
 	const key = (k: string) => <kbd className={KBD}>{k}</kbd>;
 	return (
-		<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground sm:flex">
+		<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground pointer-fine:flex">
 			{kind === "type" || kind === "listen" ? (
 				<>{key("Enter")} to check</>
 			) : kind === "build" ? (
@@ -713,7 +713,7 @@ function ActionHint({ kind, options }: { kind: ItemKind; options: number }) {
 
 function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind; options: number; ready: boolean; blitz: boolean; onDontKnow: () => void }) {
 	return (
-		<div className="border-t border-border">
+		<div className="border-t border-border pb-[env(safe-area-inset-bottom)]">
 			<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
 				<ActionHint kind={kind} options={options} />
 				<div className="ml-auto flex items-center gap-2">

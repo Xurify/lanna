@@ -8,7 +8,7 @@
  * knows where the new ground is; a word looked up keeps a faint mark.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BookmarkCheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
@@ -41,6 +41,7 @@ interface LookupFallback {
 export function Word({ token, looked, open, onOpen, onClose }: { token: StoryToken; looked: boolean; open: boolean; onOpen: () => void; onClose: () => void }) {
 	const ref = useRef<HTMLSpanElement>(null);
 	const [side, setSide] = useState<"left" | "right">("left");
+	const popRef = useRef<HTMLSpanElement>(null);
 	const [placeAbove, setPlaceAbove] = useState(false);
 	const [isFav, setIsFav] = useState(false);
 	const [inDeck, setInDeck] = useState(false);
@@ -148,6 +149,24 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 		};
 	}, [open]);
 
+	// The card is wider than a phone's margins allow for a word near the middle
+	// of the line, so it is nudged inside the screen edges with a CSS translate
+	// (the open animation and the anchor word are untouched).
+	useLayoutEffect(() => {
+		const pop = popRef.current;
+		if (!open || !pop) return;
+		pop.style.translate = "";
+		const anchor = ref.current?.getBoundingClientRect();
+		if (!anchor) return;
+		// The open animation scales the card, so its size comes from the layout box
+		// and its edge from the anchor word: the card hangs off the word's left or right.
+		const width = pop.offsetWidth;
+		const r = { left: side === "left" ? anchor.left : anchor.right - width, right: side === "left" ? anchor.left + width : anchor.right };
+		const margin = 8;
+		const dx = r.right > window.innerWidth - margin ? window.innerWidth - margin - r.right : r.left < margin ? margin - r.left : 0;
+		if (dx) pop.style.translate = `${dx}px`;
+	}, [open, side, placeAbove]);
+
 	const encodedWord = encodeURIComponent(token.text);
 	const referenceSite = activeLang?.referenceSite;
 	const referenceUrl =
@@ -172,7 +191,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 				onClick={() => (open ? onClose() : onOpen())}
 				aria-expanded={open}
 				className={cn(
-					"rounded-md px-0.5 -mx-0.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-go",
+					"rounded-md px-0.5 -mx-0.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-go pointer-coarse:py-2",
 					token.fresh && "underline decoration-dotted decoration-xp decoration-2 underline-offset-[5px]",
 					looked && !token.fresh && "underline decoration-dotted decoration-foreground/30 decoration-2 underline-offset-[5px]",
 					open && "bg-accent",
@@ -182,6 +201,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 			</button>
 			{open && (
 				<span
+					ref={popRef}
 					data-word-popover
 					role="dialog"
 					aria-label={`About ${token.text}`}

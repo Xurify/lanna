@@ -301,8 +301,8 @@ function NextTask({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSp
 					About {task.minutes} min
 					{task.href && (
 						<>
-							{" · "}
-							<kbd className={KBD}>Enter</kbd> to start
+							<span className="hidden pointer-fine:inline">{" · "}
+							<kbd className={KBD}>Enter</kbd> to start</span>
 						</>
 					)}
 				</span>
