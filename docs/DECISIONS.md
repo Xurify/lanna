@@ -263,6 +263,16 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The Mix-ups lesson (`/lesson?mode=mixups`): open pairs typed on both sides in turn, probes as a choice, each rep a verified sentence with the pair's rule after a miss. It counts XP, the day's minutes and `day.mixups`, never a unit or the atlas. A regular lesson rep of a word in an open mix-up carries the pair's rule too, unless it names a form.
 - Today shows "Words you mix up" beside the weak spots. Strengthen takes the Mix-ups lesson when no weak spot is on record. The tutor's "This learner" block names the open pairs and their probes.
 
+### E23. My mistakes: analysed locally, saved with its time, guide on request (2026-11-01)
+
+**Why:** after E22 the owner asked whether the analysis is batched, and where the latest results, the personal plan and the time of the last analysis can be seen.
+
+**How to apply:**
+- `/mistakes` (Today's "My mistakes" row, and "All my mistakes" under Words you mix up) reads `src/core/mistakes.ts`: first tries only (E18), per unit with a trend (last 14 days against the days before, ten points and five first tries each side), the words missed most, week by week, and the mix-ups (E22). A Mix-ups lesson, placement and Speak stay out of the unit figures.
+- Nothing is batched and no model runs for the analysis. A visit shows the saved snapshot in `analysis.json` with its time; "Analyse now" reads the lesson log again and saves a new one. The first visit takes one.
+- The guide is optional and the only model call: one Cheap-slot call from the snapshot's facts (`guideFacts`), three fixed sections, never a fact outside them. It is kept in `analysis.json` with its model and tokens (E1), reused while the facts' digest stands, and marked "your answers have changed since" when they do not. Without a model the page works and the button says what is missing.
+- The page stays out of the sidebar's four destinations (E4a).
+
 ## Working rules (how work reaches the repo)
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)

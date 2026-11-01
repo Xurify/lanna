@@ -40,3 +40,10 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Unverified:** the PC itself (the owner needs to pull main and restart); the packaged Electron window (not launched in the cloud, though its requests take the same path); the Host header Tailscale Serve sends. If Serve rewrites Host to loopback and sends no identity header (tagged devices, Funnel), that traffic now looks like this computer. Keep Funnel off, and check the Host header on the PC.
 - **Pairing screen:** the page sat in the app shell's flex row and stayed against the left edge on a desktop. It now takes the full width, and its error line takes no space, so the heading and form are centred on both axes (measured at 1280, 820 and 390 px). The focus ring on its two inputs is 1 px, not the shared 3 px.
 - **CI:** this change adds no TypeScript errors. The 89 that had kept main's typecheck and Standalone builds red were cleared by PR #66 (see the typecheck section above).
+
+## 1 November: mix-ups and My mistakes
+
+- **Mix-ups** (`feat/mixup-tracking`, E22): a wrong first try that gives another word is kept per pair of words; families and an edit rule predict look-alikes, which are tested as a two-way choice before they are taught. New: the Mix-ups lesson, a Today card, the Strengthen task and a line in the tutor's learner block. English translations are no longer selectable for word lookup in lessons, review, exams, listen and fluency. Research: [research/mixups.md](research/mixups.md).
+- **My mistakes** (`feat/mistakes-page`, E23): `/mistakes` shows when your answers were last analysed, a trend per unit, the words missed most, week by week, and the mix-ups, with an "Analyse now" button and an optional guide on the Cheap slot.
+- **Checked:** 10 tests for the analysis and 3 for the saved snapshot and guide; the empty state in the running app. **Unverified:** the page with real answers, and writing a guide with a live model (the call is not covered by a test; a saved guide stands in). The 16 failures in the full suite are the same on main.
+

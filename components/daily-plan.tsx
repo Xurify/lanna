@@ -410,6 +410,9 @@ export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: M
 			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-2 pointer-coarse:min-h-11")} data-testid="mixups-practise">
 				Practise them
 			</Link>
+			<Link href="/mistakes" className="mt-2 ml-3 inline-block font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="mixups-all">
+				All my mistakes
+			</Link>
 		</div>
 	);
 }
