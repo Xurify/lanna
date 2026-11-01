@@ -706,7 +706,7 @@ function SessionsSidebar() {
 		setCtxChatId(chat.id);
 	};
 
-	// The menu contract (agent-section's): any pointerdown outside the menu
+	// The menu contract (ai-section's): any pointerdown outside the menu
 	// or its row closes it; Esc is CLAIMED so it never also aborts a turn
 	// or folds the sidebar. Right-clicking another row re-anchors: its
 	// pointerdown closes this menu, its contextmenu opens the next.

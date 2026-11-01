@@ -11,7 +11,7 @@ const clone = (value) => value === undefined ? undefined : JSON.parse(JSON.strin
 const MESSAGES = {
 	storage: "The saved connection could not be read or written safely. Reopen the app or reconnect after resolving the credential-file problem.",
 	login: "Sign-in did not complete. Try connecting again.",
-	refresh: "The connection could not be refreshed. Retry or reconnect in Settings → Keys.",
+	refresh: "The connection could not be refreshed. Retry or reconnect in Settings → API keys.",
 	cancel: "Sign-in cancelled.",
 	unavailable: "This subscription connection is unavailable. Reconnect or explicitly choose another connection.",
 	background: "Background use is off for this connection. Automatic follow-up remains deferred in its queue.",

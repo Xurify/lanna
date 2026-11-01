@@ -25,15 +25,15 @@ export function aiStatus(): AiStatus {
 export function aiMissing(status: AiStatus): string {
 	if (status.ready) return "";
 	return status.reason === "no-model"
-		? "No model is set. Pick one for the Cheap slot in Settings → Tutor, and add its key in Settings → Keys."
-		: `The ${status.provider} key is missing. Add it in Settings → Keys, or pick another model in Settings → Tutor.`;
+		? "No model is set. Pick one for the Cheap slot in Settings → AI models, and add its key in Settings → API keys."
+		: `The ${status.provider} key is missing. Add it in Settings → API keys, or pick another model in Settings → AI models.`;
 }
 
 /** A provider error that means "no key" in pi-ai's words, as the same plain message. */
 export function friendlyAiError(err: unknown): string {
 	const message = err instanceof Error ? err.message : String(err);
 	const m = /Provider is not configured: (\S+)/.exec(message);
-	if (m) return `The ${m[1]} key is missing. Add it in Settings → Keys, or pick another model in Settings → Tutor.`;
-	if (/\b(401|403)\b|invalid.*(api )?key|unauthori[sz]ed/i.test(message)) return "The model refused the key. Check it in Settings → Keys.";
+	if (m) return `The ${m[1]} key is missing. Add it in Settings → API keys, or pick another model in Settings → AI models.`;
+	if (/\b(401|403)\b|invalid.*(api )?key|unauthori[sz]ed/i.test(message)) return "The model refused the key. Check it in Settings → API keys.";
 	return message;
 }

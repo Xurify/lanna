@@ -183,7 +183,7 @@ export function parseAgentSettingsBody(body: unknown): SettingsBodyResult<AgentS
 			settings.search = { engine: search.engine };
 		}
 	}
-	// Prober graph tools (wave 7, owner ruling 2026-09-23): an agent-section
+	// Prober graph tools (wave 7, owner ruling 2026-09-23): an ai-section
 	// subsection, not a tool-toggles key — the mechanism is agent capability
 	// (tool registration), the subject is the graph. Strict write side:
 	// object shape only; `enabled` boolean when present. Absent = ON.

@@ -61,6 +61,5 @@ describe("wiki audio", () => {
 	it("synthesize serves the wiki clip for the default voice", async () => {
 		const clip = await synthesize({ text: "Je to dobrý človek.", lang: "sk", voice: "female" });
 		assert.equal(clip?.tier, "wiki");
-		assert.ok(Math.abs((clip?.baseRate ?? 0) * 0.88 - 1) < 0.001, "undoes the wiki's 0.88× recording speed");
 	});
 });

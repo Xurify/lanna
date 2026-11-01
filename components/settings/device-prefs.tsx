@@ -1,12 +1,14 @@
 "use client";
 /**
- * Device preferences stored on this device: spoken audio speed, lesson sounds,
+ * Device preferences stored on this device: spoken audio speed, volume, lesson sounds,
  * and word lookup translation mode (Dictionary, Hybrid, or Google Translate).
  */
 
 import { useEffect, useState } from "react";
 import { SPEEDS, setSpeed, useSpeed } from "@/components/speech";
-import { setSoundOn, soundOn } from "@/components/lesson/sound";
+import { setSoundOn, setVolume, sfx, soundOn } from "@/components/lesson/sound";
+import { useSound } from "@/components/sound-control";
+import { Slider } from "@/components/ui/slider";
 import { SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 
 export type WordTranslationMode = "dictionary" | "hybrid" | "google";
@@ -99,6 +101,22 @@ export function PlaybackSpeedRow() {
 				ariaLabel="Playback speed"
 				testid="playback-speed"
 			/>
+		</SettingsRow>
+	);
+}
+
+export function VolumeRow() {
+	const { level } = useSound();
+	return (
+		<SettingsRow
+			label="Volume"
+			hint="Spoken audio and lesson sounds, on top of your system volume. Saved on this device."
+			testid="row-volume"
+		>
+			<div className="flex w-56 shrink-0 items-center gap-3">
+				<Slider value={level} onChange={setVolume} onCommit={() => sfx.tap()} label="Volume" className="flex-1" testid="volume" />
+				<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">{Math.round(level * 100)}%</span>
+			</div>
 		</SettingsRow>
 	);
 }

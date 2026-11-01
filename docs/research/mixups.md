@@ -24,7 +24,7 @@
 - `src/core/mixups.ts`: the record, the prediction rules, the Mix-ups lesson and the tutor line. `progress.json` keeps `mixups`; the lesson log has a `mixups` mode.
 - `/lesson?mode=mixups`: the Mix-ups lesson. It moves no unit on the path.
 - Today: a "Words you mix up" card with the open pairs, the predicted ones and one "Practise them" link. The plan's Strengthen task takes the Mix-ups lesson when there is no weak spot on record.
-- Decision E22 in [../DECISIONS.md](../DECISIONS.md).
+- Decision E23 in [../DECISIONS.md](../DECISIONS.md).
 
 ## Limits
 
@@ -32,7 +32,7 @@
 - The edit rule is a heuristic. It only fires on small edits anchored by two shared letters, and only predicts; it never teaches a rule.
 - A mix-up between two forms of different words (nikoho for niekoho) is found only when the given form is in the lexicon's forms.
 - Exam picks and Speak corrections do not feed mix-ups yet.
-- The trend is a comparison of two windows of first tries, not a model of learning. It needs five first tries on each side and a ten-point change before it says better or worse. The page is E23 in [../DECISIONS.md](../DECISIONS.md).
+- The trend is a comparison of two windows of first tries, not a model of learning. It needs five first tries on each side and a ten-point change before it says better or worse. The page is E24 in [../DECISIONS.md](../DECISIONS.md).
 
 ## Sources
 

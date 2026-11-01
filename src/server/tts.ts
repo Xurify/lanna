@@ -36,7 +36,7 @@ import { chatStore } from "../store/chats.ts";
 import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { keyValue } from "./keys.ts";
-import { WIKI_BASE_RATE, wikiClip } from "./wiki-audio.ts";
+import { wikiClip } from "./wiki-audio.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
 
@@ -69,9 +69,6 @@ export interface TtsClip {
 	file: string;
 	contentType: string;
 	tier: TtsTier | "cache" | "wiki";
-	/** Playback rate that restores the voice's natural pace (wiki clips were
-	 *  recorded at 0.88×); the client multiplies the speed button by it. */
-	baseRate?: number;
 }
 
 export const TTS_MAX_CHARS = 600;
@@ -141,7 +138,7 @@ export function migrateAudioOnce(): { moved: number; matched: number } | null {
 	}
 }
 
-function cached(key: string): TtsClip | null {
+function cached(key: string, lang: string): TtsClip | null {
 	const hit = findAudioClip(key);
 	if (!hit) return null;
 	const ext = hit.file.endsWith(".wav") ? "wav" : "mp3";
@@ -249,10 +246,10 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	// slovak.wiki's own recording beats any clip made here, for the default voice.
 	if (lang.code === "sk" && (req.voice === undefined || req.voice === "female")) {
 		const wiki = await wikiClip("slovak", lang.code, req.text);
-		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki", baseRate: WIKI_BASE_RATE };
+		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki" };
 	}
 	const key = ttsCacheKey(req);
-	const hit = cached(key);
+	const hit = cached(key, lang.code);
 	if (hit) return hit;
 	for (const { tier, ext, run } of TIERS) {
 		if (req.skip?.includes(tier)) continue;

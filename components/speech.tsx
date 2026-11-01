@@ -9,7 +9,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { soundOn } from "@/components/lesson/sound";
+import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
 import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 
 // ─── The active language (fetched once per page load) ──────────────────────
@@ -102,6 +102,12 @@ export function SpeedToggle({ className }: { className?: string }) {
 
 // ─── Playing ───────────────────────────────────────────────────────────────
 
+/** The clip now playing and its loudness factor, so a volume change is heard at once. */
+let playing: { audio: HTMLAudioElement; gain: number } | null = null;
+subscribeSound(() => {
+	if (playing) playing.audio.volume = Math.min(1, volume() * playing.gain);
+});
+
 /** The sound now playing, with a way to stop it that also settles the promise
  *  its caller awaits. */
 let stopCurrent: (() => void) | null = null;
@@ -125,6 +131,7 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 		const u = new SpeechSynthesisUtterance(text);
 		u.lang = lang.tag;
 		u.rate = rate;
+		u.volume = volume();
 		const voice = window.speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang.code));
 		if (voice) u.voice = voice;
 		const finish = () => {
@@ -147,6 +154,55 @@ export interface SpeakOptions {
 	voice?: string;
 	gender?: "female" | "male";
 	style?: "narration" | "dialogue";
+	/** The snail button: this one play is slower, the speed setting stays as it is. */
+	slow?: boolean;
+}
+
+/** Always slower than the learner's own speed, but not below 0.6×, where the
+ *  browser's pitch-keeping time-stretch starts to smear the voice. */
+export function slowRate(speed: number): number {
+	return Math.max(0.6, Math.min(0.7, speed * 0.8));
+}
+
+// ─── Loudness ──────────────────────────────────────────────────────────────
+
+/** The voices differ by up to 7 dB (measured on data/audio: -15 to -22 dBFS
+ *  of speech). Louder clips are turned down to this level; the audio
+ *  element cannot go above 1, so quieter ones play as they are. */
+const TARGET_DB = -20;
+const gains = new Map<string, Promise<number>>();
+
+/** The volume factor that brings a clip to TARGET_DB, from the mean power of
+ *  its 50 ms windows within 30 dB of the loudest (pauses do not count). */
+function clipGain(key: string, blob: Blob): Promise<number> {
+	let gain = gains.get(key);
+	if (!gain) {
+		gain = measureGain(blob);
+		gains.set(key, gain);
+	}
+	return gain;
+}
+
+async function measureGain(blob: Blob): Promise<number> {
+	if (typeof OfflineAudioContext === "undefined") return 1;
+	try {
+		const buffer = await new OfflineAudioContext(1, 1, 22050).decodeAudioData(await blob.arrayBuffer());
+		const data = buffer.getChannelData(0);
+		const size = Math.round(buffer.sampleRate * 0.05);
+		const powers: number[] = [];
+		for (let i = 0; i + size <= data.length; i += size) {
+			let p = 0;
+			for (let j = i; j < i + size; j++) p += data[j]! * data[j]!;
+			powers.push(p / size);
+		}
+		const floor = Math.max(...powers) / 1000;
+		const speech = powers.filter((p) => p >= floor);
+		if (speech.length === 0) return 1;
+		const db = 10 * Math.log10(speech.reduce((a, b) => a + b, 0) / speech.length);
+		return Math.min(1, 10 ** ((TARGET_DB - db) / 20));
+	} catch {
+		return 1;
+	}
 }
 
 /** Speaks `text` in the active language (or `lang`). Resolves when playback ends; a new call stops whatever was playing. */
@@ -156,7 +212,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	if (!soundOn()) return;
 	const mine = generation;
 	const language = lang ?? (await activeLanguage());
-	const rate = currentSpeed();
+	const rate = opts.slow ? slowRate(currentSpeed()) : currentSpeed();
 	const q = new URLSearchParams({ lang: language.code, text });
 	if (opts.voice) q.set("voice", opts.voice);
 	if (opts.gender) q.set("gender", opts.gender);
@@ -168,14 +224,17 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	if (!res || res.status === 204 || !res.ok) return speakWithBrowser(text, language, rate);
 	const blob = await res.blob();
 	if (mine !== generation || !soundOn()) return;
+	const gain = await clipGain(url, blob);
+	if (mine !== generation || !soundOn()) return;
 	const src = URL.createObjectURL(blob);
 	const audio = new Audio(src);
 	audio.preload = "auto";
-	const base = Number(res.headers.get("x-tts-base-rate"));
-	audio.playbackRate = rate * (base > 0.5 && base < 2 ? base : 1);
+	audio.volume = Math.min(1, volume() * gain);
+	audio.playbackRate = rate;
 	await new Promise<void>((resolve) => {
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
+			if (playing?.audio === audio) playing = null;
 			URL.revokeObjectURL(src);
 			resolve();
 		};
@@ -185,6 +244,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 			finish();
 		};
 		stopCurrent = stop;
+		playing = { audio, gain };
 		audio.onended = finish;
 		audio.onerror = (err) => {
 			console.warn("[Speech] audio element error:", err);

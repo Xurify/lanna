@@ -36,7 +36,6 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { prettyModel } from "@/components/usage-format";
 import { cn } from "@/lib/utils";
 import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
-import { PlaybackSpeedRow } from "./device-prefs.tsx";
 import { MenuOption, ModelMenuList, ThinkingMenuList } from "./model-menu";
 import { ChatGPTBackgroundAccess } from "./chatgpt-connection";
 import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
@@ -56,7 +55,7 @@ export const TOGGLE_TOOLS = ["research", "demo", "visual", "pdf"] as const;
 
 /** Learner-facing copy. The ids stay the engine's names. */
 export const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
-	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → Keys." },
+	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
 	demo: { label: "Interactive demos", hint: "Builds small working demos for ideas that move or change." },
 	visual: { label: "Precise figures", hint: "Draws exact pictures: graphs, number lines and geometry." },
 	pdf: { label: "Read PDFs", hint: "Reads the PDFs you give it and cites their pages." },
@@ -92,6 +91,25 @@ export function composeTool(agent: AgentSettings | undefined, id: string, on: bo
 }
 
 /** Exactly one mechanic is active: `explain: true` is free recall, anything else multiple choice. `quiz` is never written here (see quizMechanics in agent/tools.ts). */
+/** Lives under Learning: it is how the learner is quizzed, stored with the tutor's tools. */
+export function QuizStyleRow({ agent, onSectionChange }: { agent: AgentSettings | undefined; onSectionChange: (next: AgentSettings) => void }) {
+	return (
+		<SettingsRow
+			label="Quiz style"
+			hint="How the tutor checks what you know. Multiple choice: pick an answer. Free recall: type it, with no options."
+			testid="quiz-mechanics-row"
+		>
+			<SettingsSegmented
+				options={QUIZ_OPTIONS}
+				value={agent?.tools?.explain === true ? "free" : "choice"}
+				onChange={(m) => onSectionChange(composeQuizMechanics(agent, m))}
+				ariaLabel="Quiz style"
+				testid="quiz-mechanics"
+			/>
+		</SettingsRow>
+	);
+}
+
 export function composeQuizMechanics(agent: AgentSettings | undefined, mechanics: "choice" | "free"): AgentSettings {
 	return { ...agent, tools: { ...agent?.tools, explain: mechanics === "free" } };
 }
@@ -217,7 +235,7 @@ function MenuTrigger({
 // The dropdowns mount the shared MenuShell, anchored to the open trigger by testid.
 // data-lh-menu marks them as exempt from the outside-click handler.
 
-export function AgentSection({
+export function AiSection({
 	agent,
 	models,
 	graph,
@@ -587,7 +605,7 @@ export function AgentSection({
 											}}
 											footer={
 												catalog && catalog.length === 0
-													? "No models — add a provider key in Settings → Keys"
+													? "No models — add a provider key in Settings → API keys"
 													: "Runs every agent of this tier"
 											}
 										/>
@@ -615,31 +633,6 @@ export function AgentSection({
 						</SettingsRow>
 					);
 				})}
-			</SettingsGroup>
-
-			<SettingsGroup label="Voice" testid="group-voice">
-				<PlaybackSpeedRow />
-			</SettingsGroup>
-
-			<SettingsGroup label="Quizzes" testid="group-quizzes">
-				{(() => {
-					const free = agent?.tools?.explain === true;
-					return (
-						<SettingsRow
-							label="Quiz style"
-							hint="How the tutor checks what you know. Multiple choice: pick an answer. Free recall: type it, with no options."
-							testid="quiz-mechanics-row"
-						>
-							<SettingsSegmented
-								options={QUIZ_OPTIONS}
-								value={free ? "free" : "choice"}
-								onChange={(m) => onSectionChange(composeQuizMechanics(agent, m))}
-								ariaLabel="Quiz style"
-								testid="quiz-mechanics"
-							/>
-						</SettingsRow>
-					);
-				})()}
 			</SettingsGroup>
 
 			<SettingsGroup label="Tools" testid="group-tools">

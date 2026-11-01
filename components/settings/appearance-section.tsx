@@ -162,7 +162,7 @@ export function AppearanceSection({
 				testid="row-font"
 			>
 				<span ref={fontMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
-					{/* Trigger styled like agent-section's MenuTrigger (unexported there). The tooltip shows on the closed button only. */}
+					{/* Trigger styled like ai-section's MenuTrigger (unexported there). The tooltip shows on the closed button only. */}
 					{(() => {
 						const triggerButton = (
 							<button

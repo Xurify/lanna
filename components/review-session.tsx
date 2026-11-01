@@ -8,14 +8,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, Volume2Icon, VolumeXIcon, XIcon } from "lucide-react";
+import { CheckIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
+import { sfx } from "@/components/lesson/sound";
+import { SoundControl } from "@/components/sound-control";
 import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
 interface Prompt {
@@ -91,7 +92,6 @@ export function ReviewSession() {
 	const [hint, setHint] = useState(0);
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
-	const [sound, setSound] = useState(() => soundOn());
 	const [saving, setSaving] = useState(false);
 	const shownAt = useRef(Date.now());
 	// One card at a time: its active time (the gaps between actions, each
@@ -231,13 +231,6 @@ export function ReviewSession() {
 		void saveNewPerDay(next);
 	};
 
-	const toggleSound = () => {
-		const next = !sound;
-		setSoundOn(next);
-		setSound(next);
-		if (!next) stopSpeaking();
-	};
-
 	const counts = status?.counts;
 	const kbd = (k: string) => <kbd className={KBD}>{k}</kbd>;
 
@@ -365,17 +358,7 @@ export function ReviewSession() {
 											</button>
 										))}
 									</div>
-									<button
-										type="button"
-										onClick={toggleSound}
-										aria-pressed={sound}
-										className="-mr-1.5 flex items-center rounded-lg p-1.5 transition-colors hover:bg-accent hover:text-foreground"
-										title={sound ? "Sound on (speech and sounds, on every page)" : "Sound off"}
-										aria-label={sound ? "Sound on" : "Sound off"}
-										data-testid="review-sound"
-									>
-										{sound ? <Volume2Icon className="size-4" aria-hidden="true" /> : <VolumeXIcon className="size-4" aria-hidden="true" />}
-									</button>
+									<SoundControl className="-mr-1.5 flex items-center transition-colors" iconClass="size-4" testid="review-sound" />
 								</div>
 							</div>
 

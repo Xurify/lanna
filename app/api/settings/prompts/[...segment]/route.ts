@@ -12,7 +12,7 @@
  *          (contract fix, interlude 2026-09-26 — overrules the 2026-09-19
  *          "switch survives a delete/re-write cycle" note). The old
  *          behavior orphaned the on-switch: the write validation then
- *          400'd every agent-section write while the UI's disabled toggle
+ *          400'd every ai-section write while the UI's disabled toggle
  *          couldn't reach the OFF escape hatch — a user stuck unable to
  *          write settings. Delete clears the switch so the route and the
  *          record agree BY CONSTRUCTION; the write path additionally heals

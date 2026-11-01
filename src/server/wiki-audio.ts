@@ -14,10 +14,6 @@ import { audioKey, findAudioClip, storeAudioClip } from "../store/corpus.ts";
 
 export const WIKI_VOICE = "slovak-wiki";
 
-/** slovak.wiki records at speed 0.88 (content/audio/config.json); 1 / 0.88
- *  plays its clips at the voice's natural pace. */
-export const WIKI_BASE_RATE = Math.round((1 / 0.88) * 1000) / 1000;
-
 interface WikiAudio {
 	base: string;
 	clips: Map<string, { kind: string; hash: string }>;

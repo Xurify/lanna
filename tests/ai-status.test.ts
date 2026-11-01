@@ -21,15 +21,15 @@ const { writeGuide, analyseNow } = await import("../src/server/mistakes.ts");
 after(() => fs.rmSync(TMP_DATA, { recursive: true, force: true }));
 
 describe("ai status", () => {
-	it("no model set: not ready, and the message names Settings → Tutor and Keys", () => {
+	it("no model set: not ready, and the message names Settings → AI models and API keys", () => {
 		const s = aiStatus();
 		assert.deepEqual(s, { ready: false, reason: "no-model" });
-		assert.match(aiMissing(s), /Settings → Tutor/);
-		assert.match(aiMissing(s), /Settings → Keys/);
+		assert.match(aiMissing(s), /Settings → AI models/);
+		assert.match(aiMissing(s), /Settings → API keys/);
 	});
 
 	it("a provider's own error becomes a plain message that says which key", () => {
-		assert.match(friendlyAiError(new Error("Provider is not configured: anthropic")), /The anthropic key is missing\. Add it in Settings → Keys/);
+		assert.match(friendlyAiError(new Error("Provider is not configured: anthropic")), /The anthropic key is missing\. Add it in Settings → API keys/);
 		assert.match(friendlyAiError(new Error("HTTP 401 Unauthorized")), /refused the key/);
 		assert.equal(friendlyAiError(new Error("socket hang up")), "socket hang up");
 	});
@@ -40,6 +40,6 @@ describe("ai status", () => {
 		const { recordLesson } = await import("../src/server/lesson.ts");
 		recordLesson({ unit: "loc", mode: "lesson", reps: [sentences], tz: 0 }, new Date("2026-11-01T09:00:00Z"));
 		analyseNow(new Date("2026-11-01T09:30:00Z"));
-		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T10:00:00Z") }), /No model is set\. Pick one for the Cheap slot in Settings → Tutor/);
+		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T10:00:00Z") }), /No model is set\. Pick one for the Cheap slot in Settings → AI models/);
 	});
 });
