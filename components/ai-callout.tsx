@@ -12,7 +12,7 @@ import { SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
-import type { AiStatus } from "@/src/server";
+import type { AiStatus } from "@/src/core";
 
 export function AiCallout({ status, title, adds, className }: { status: AiStatus; title: string; adds: string[]; className?: string }) {
 	if (status.ready) return null;

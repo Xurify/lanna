@@ -101,6 +101,7 @@ export * from "./placement-ladder.ts";
 export * from "./weak-spots.ts";
 export * from "./mixups.ts";
 export * from "./mistakes.ts";
+export * from "./ai-status.ts";
 export * from "./personal.ts";
 export * from "./vocab-probe.ts";
 export * from "./unit-bridges.ts";

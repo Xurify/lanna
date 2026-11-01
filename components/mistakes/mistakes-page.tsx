@@ -13,10 +13,9 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, type GuideData, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
-import type { MistakesReport } from "@/src/server";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-go" },
