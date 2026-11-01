@@ -23,11 +23,15 @@ const { searchFormsForLemma, formsVerified } = await lib("search/forms.ts");
 const { tokenMatchesVerbStem, verbStemForMatch } = await lib("dictionary/example-lemma-match.ts");
 
 const TOKEN_RE = /[\p{L}\p{M}]+/gu;
+// Verb forms the treebank's annotators gave each lemma (scripts/build-ud-verb-forms.mjs).
+const UD_VERB_FORMS = path.resolve("curriculum/slovak/ud-verb-forms.json");
+const udVerbForms = fs.existsSync(UD_VERB_FORMS) ? JSON.parse(fs.readFileSync(UD_VERB_FORMS, "utf8")).forms : {};
 /** The first token of `text` that is a form of the lemma — the cloze blank. */
 function findCloze(text, lemma, category, gender) {
 	const base = lemma.toLocaleLowerCase("sk").replace(/ s[ai]$/u, "");
 	if (/\s/.test(base)) return null; // multi-word lemmas are not blanked
 	const keys = new Set([base, ...searchFormsForLemma(lemma, category, gender).map((f) => f.toLocaleLowerCase("sk"))]);
+	if (category === "Verbs") for (const form of udVerbForms[base] ?? []) keys.add(form);
 	const stem = category === "Verbs" ? verbStemForMatch(base) : undefined;
 	for (const m of text.matchAll(TOKEN_RE)) {
 		const t = m[0].toLocaleLowerCase("sk");
