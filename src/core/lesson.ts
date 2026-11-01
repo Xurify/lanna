@@ -673,6 +673,8 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	return item;
 }
 
+export type LessonFocus = "mixups" | "personal";
+
 export interface LessonPlan {
 	unit: UnitId;
 	items: LessonItem[];
@@ -684,9 +686,10 @@ export interface LessonPlan {
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
 	/** If set, the lesson specifically drills candidates of this gender column. */
 	gender?: AtlasGender;
-	/** A Mix-ups lesson (src/core/mixups.ts): pairs of words, not a unit, so
-	 *  finishing it moves no unit on the path. */
-	focus?: "mixups";
+	/** A Mix-ups lesson (src/core/mixups.ts) or the personal lesson
+	 *  (src/core/personal.ts): built from targets, not a unit, so finishing it
+	 *  moves no unit on the path. */
+	focus?: LessonFocus;
 }
 
 /**

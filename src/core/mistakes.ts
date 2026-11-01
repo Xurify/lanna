@@ -215,7 +215,7 @@ export function guideFacts(a: MistakeAnalysis): string {
 	const slipLine = FORM_SLIPS.filter((s) => a.slips[s]).map((s) => `${s} ${a.slips[s]}`);
 	if (slipLine.length) lines.push(`Kinds of wrong answer: ${slipLine.join(", ")}.`);
 	for (const u of a.units.slice(0, 6)) {
-		lines.push(`Unit ${u.title}: ${pct(u.accuracy)} of ${u.reps} first tries; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`);
+		lines.push(`Unit ${u.title} [${u.unit}]: ${pct(u.accuracy)} of ${u.reps} first tries; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`);
 	}
 	for (const x of a.samples ?? []) lines.push(`Wrong: "${x.sentence}" wanted "${x.answer}", wrote "${x.given || "nothing"}" (${x.unit}${x.slip ? `, ${x.slip}` : ""}).`);
 	for (const w of a.words) lines.push(`Missed ${w.misses}×: ${w.lemma} (wanted "${w.answer}", last wrote "${w.lastGiven}").`);
@@ -241,9 +241,12 @@ export interface GuideData {
 	next: Array<{ what: string; why: string }>;
 	/** What to do this week, each tied to something the app can open. */
 	plan: Array<{ step: string; kind: "mixups" | "unit" | "review" | "other"; unit?: string }>;
+	/** What the personal lesson should drill, as the model named it; the
+	 *  server keeps only what the lexicon can back (src/server/personal.ts). */
+	practice?: { words: string[]; units: string[]; pairs: Array<[string, string]> };
 }
 
-const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.replace(/s+/g, " ").trim().slice(0, max) : "");
+const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
 
 /** The guide's JSON from the model's text, or null when it is not one: a
  *  reply wrapped in prose or fences is cut to its outermost braces; every
@@ -277,5 +280,13 @@ export function parseGuide(text: string): GuideData | null {
 			return { step: clip(p.step, 200), kind, ...(kind === "unit" ? { unit } : {}) };
 		})
 		.filter((p) => p.step);
-	return { patterns, next, plan };
+	const practiceRaw = raw.practice && typeof raw.practice === "object" ? (raw.practice as Record<string, unknown>) : {};
+	const strings = (v: unknown, cap: number) => (Array.isArray(v) ? v.map((x) => clip(x, 40)).filter(Boolean).slice(0, cap) : []);
+	const pairs = (Array.isArray(practiceRaw.pairs) ? practiceRaw.pairs : [])
+		.filter((p): p is unknown[] => Array.isArray(p) && p.length === 2)
+		.map((p) => [clip(p[0], 40), clip(p[1], 40)] as [string, string])
+		.filter(([a, b]) => a && b && a !== b)
+		.slice(0, 3);
+	const practice = { words: strings(practiceRaw.words, 6), units: strings(practiceRaw.units, 3), pairs };
+	return { patterns, next, plan, ...(practice.words.length + practice.units.length + practice.pairs.length > 0 ? { practice } : {}) };
 }

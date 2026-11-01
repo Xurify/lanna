@@ -131,7 +131,8 @@ export function mixupLexicon(entries: readonly LexiconEntry[]): MixupLexicon {
 	return lex;
 }
 
-function twinsOf(lex: MixupLexicon, a: string, b: string): PairSentence[] {
+/** The verified sentences that hold only one of the two words, computed once per pair. */
+export function twinsOf(lex: MixupLexicon, a: string, b: string): PairSentence[] {
 	const key = mixupKey(a, b);
 	const cached = lex.twins.get(key);
 	if (cached) return cached;
@@ -256,6 +257,22 @@ export function predictMixups(record: MixupRecord, key: string, lex: MixupLexico
 	return out;
 }
 
+/** The `from` of a probe the guide suggested rather than a mix-up predicted. */
+export const GUIDE_SOURCE = "guide";
+
+/** Pairs the guide named become probes, like a family's (tested before they
+ *  are taught). A pair already on record is left as it is. */
+export function addGuideProbes(record: MixupRecord, pairs: ReadonlyArray<[string, string]>, lex: MixupLexicon, at: string): MixupRecord {
+	const out = { ...record };
+	for (const [a, b] of pairs) {
+		const k = mixupKey(a, b);
+		if (out[k] || !lex.bySlug.has(a) || !lex.bySlug.has(b) || !drillable(lex, a, b)) continue;
+		const family = familyOf(a, b);
+		out[k] = { a, b, words: lemmaPair(lex, a, b), ...(family ? { family: family.id } : {}), since: at, lastAt: at, misses: 0, hits: 0, from: GUIDE_SOURCE };
+	}
+	return capRecord(out);
+}
+
 /** Drop the oldest settled pairs (mended, cleared) and then the oldest
  *  probes until the record fits. A mix-up still open is never dropped. */
 function capRecord(record: MixupRecord): MixupRecord {
@@ -340,7 +357,7 @@ export function mixupList(record: MixupRecord | undefined): MixupSummary[] {
 			status === "active"
 				? `${m.misses} ${m.misses === 1 ? "miss" : "misses"}${last ? ` · last: “${last.given}” for “${last.answer}”` : ""}${m.hits > 0 ? ` · ${m.hits} of ${MIXUP_MEND_HITS} right since` : ""}`
 				: status === "probe"
-					? `Not tested yet${source ? ` · same pattern as ${source.words.join(" / ")}` : ""}`
+					? `Not tested yet${source ? ` · same pattern as ${source.words.join(" / ")}` : m.from === GUIDE_SOURCE ? " · suggested by your guide" : ""}`
 					: `Mended · ${m.hits} right since the last miss`;
 		out.push({
 			key,
@@ -448,7 +465,8 @@ export function buildMixupLesson(entries: readonly LexiconEntry[], record: Mixup
 	return { unit: "words", items, focus: "mixups" };
 }
 
-function mixupItem(s: PairSentence, t: { key: string; m: Mixup; probe: boolean; rule: string; bridge: string }, lex: MixupLexicon, rand: () => number): LessonItem {
+/** One rep of a pair: typed when the pair is an open mix-up, a choice between the two words when it is a probe. */
+export function mixupItem(s: PairSentence, t: { key: string; m: Pick<Mixup, "a" | "b">; probe: boolean; rule: string; bridge: string }, lex: MixupLexicon, rand: () => number): LessonItem {
 	const ex = s.entry.examples[s.index]!;
 	const text = exampleText(ex);
 	const other = lex.bySlug.get(s.member === "a" ? t.m.b : t.m.a)!;

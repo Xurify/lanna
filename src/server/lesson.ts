@@ -22,6 +22,7 @@ import {
 	UNITS,
 	xpLevel,
 	type ItemKind,
+	type LessonFocus,
 	type LessonPlan,
 	type RepVerdict,
 	type UnitId,
@@ -82,6 +83,7 @@ import { videoStore } from "../store/videos.ts";
 import { watchMinutes } from "../core/watch.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
 import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
+import { personalLessonFor, personalPlanEntry } from "./personal.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
@@ -137,6 +139,11 @@ export function mixupsFor(seed = Date.now()): LessonPlan {
 	return withKnown(mixupLessonFor(seed));
 }
 
+/** The personal lesson (src/core/personal.ts), with what the deck knows of each word. */
+export function personalFor(seed = Date.now()): LessonPlan {
+	return withKnown(personalLessonFor(seed));
+}
+
 /** Blitz runs over the units you have started (at least the first three). */
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
@@ -180,8 +187,8 @@ export interface RepResult {
 export interface LessonResultInput {
 	unit: UnitId;
 	mode: "lesson" | "blitz";
-	/** A Mix-ups lesson: counts XP, the day and the mix-ups, never a unit. */
-	focus?: "mixups";
+	/** A Mix-ups or personal lesson: counts XP, the day and the mix-ups, never a unit. */
+	focus?: LessonFocus;
 	reps: RepResult[];
 	ms?: number;
 	/** Active milliseconds since the last send (src/core/active-time.ts);
@@ -224,9 +231,9 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	if (prior) return { ...prior.outcome, duplicate: true, summary: progressSummary(input.tz, now) };
 	const day = dayOf(p, today(input.tz, now));
 	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
-	// A Mix-ups lesson drills pairs of words, not a unit: its reps count
-	// toward no drill and no unit, only the day, XP and the mix-ups.
-	const focused = input.focus === "mixups";
+	// A Mix-ups or personal lesson is built from targets, not a unit: its
+	// reps count toward no drill and no unit, only the day, XP and the mix-ups.
+	const focused = input.focus !== undefined;
 	// Each rep's first try goes to the drill it practised (a mixed lesson
 	// counts toward the cases it drilled). This runs before `unit` is read:
 	// recordFirstTry returns a new record, and `unit` must be that one.
@@ -241,7 +248,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	const unit = focused ? null : (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
 	let newBest: number | undefined;
 	if (focused) {
-		if (total > 0) day.mixups = (day.mixups ?? 0) + 1;
+		if (total > 0) day[input.focus!] = (day[input.focus!] ?? 0) + 1;
 	} else if (input.mode === "lesson") {
 		if (total > 0) {
 			unit!.lessons++;
@@ -289,8 +296,8 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 			id: `lesson_${now.getTime().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
 			at: now.toISOString(),
 			day: today(input.tz, now),
-			unit: focused ? "mixups" : input.unit,
-			mode: focused ? "mixups" : input.mode,
+			unit: input.focus ?? input.unit,
+			mode: input.focus ?? input.mode,
 			ms: input.ms,
 			xp,
 			correct,
@@ -522,7 +529,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, mixups: d?.mixups ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, mixups: d?.mixups ?? 0, personal: d?.personal ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
@@ -533,6 +540,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			.filter((m) => m.status === "active")
 			.map((m) => m.words),
 		worse: slippingUnits(),
+		personal: personalPlanEntry(now) ?? undefined,
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),

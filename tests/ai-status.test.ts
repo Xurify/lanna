@@ -40,6 +40,6 @@ describe("ai status", () => {
 		const { recordLesson } = await import("../src/server/lesson.ts");
 		recordLesson({ unit: "loc", mode: "lesson", reps: [sentences], tz: 0 }, new Date("2026-11-01T09:00:00Z"));
 		analyseNow(new Date("2026-11-01T09:30:00Z"));
-		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T10:00:00Z") }), /No model is set\. Pick one for the Cheap slot in Settings → AI models/);
+		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T10:00:00Z") }), /No model is set\. Pick one in Settings → AI models/);
 	});
 });

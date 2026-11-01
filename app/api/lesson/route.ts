@@ -3,8 +3,9 @@
  * locally from the lexicon (no model call). ?mode=blitz — a choose-only
  * sprint across the units you have started. ?mode=mixups — the Mix-ups
  * lesson: the pairs of words you confuse and the pairs predicted from them.
+ * ?mode=personal — the lesson built from the guide's targets (src/core/personal.ts).
  * POST /api/lesson {unit, mode, focus?, reps:[{itemId, slug, kind, verdict, assisted?, first?, detail?}], ms?, activeMs?, tz?, clientId?}
- * (`focus: "mixups"` records a Mix-ups lesson: no unit moves.)
+ * (`focus: "mixups" | "personal"` records one of those lessons: no unit moves.)
  * (`first` is the answer before any cue — the first-try measure, src/core/first-try.ts.)
  * — record the finished lesson: XP, the day, the unit's level; missed
  * words go into the review deck; the whole lesson (every sentence and
@@ -13,7 +14,7 @@
  */
 
 import { isAtlasGender, isUnitId, type FirstAnswer } from "@/src/core";
-import { blitzFor, lessonFor, lessonWithBetterOptions, mixupsFor, recordLesson, type RepResult } from "@/src/server";
+import { blitzFor, lessonFor, lessonWithBetterOptions, mixupsFor, personalFor, recordLesson, type RepResult } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export async function GET(req: Request) {
 	const url = new URL(req.url);
 	if (url.searchParams.get("mode") === "blitz") return Response.json(blitzFor());
 	if (url.searchParams.get("mode") === "mixups") return Response.json(mixupsFor());
+	if (url.searchParams.get("mode") === "personal") return Response.json(personalFor());
 	const unit = url.searchParams.get("unit");
 	if (!isUnitId(unit)) return Response.json({ message: "unknown unit" }, { status: 400 });
 	const rawGender = url.searchParams.get("gender");
@@ -90,7 +92,7 @@ export async function POST(req: Request) {
 		recordLesson({
 			unit: body.unit,
 			mode: body.mode === "blitz" ? "blitz" : "lesson",
-			...(body.focus === "mixups" && body.mode !== "blitz" ? { focus: "mixups" as const } : {}),
+			...((body.focus === "mixups" || body.focus === "personal") && body.mode !== "blitz" ? { focus: body.focus } : {}),
 			reps,
 			ms: typeof body.ms === "number" ? body.ms : undefined,
 			activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined,

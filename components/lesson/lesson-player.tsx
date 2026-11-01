@@ -61,6 +61,7 @@ import {
 	type FirstAnswer,
 	type ItemKind,
 	type LessonItem,
+	type LessonFocus,
 	type LessonPlan,
 	type LessonScore,
 	type RepVerdict,
@@ -165,7 +166,7 @@ function kindLabel(item: LessonItem): string {
 
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
 
-export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: { unit?: UnitId; mode: Mode; gender?: AtlasGender; focus?: "mixups"; initialPlan?: LessonPlan | null }) {
+export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: { unit?: UnitId; mode: Mode; gender?: AtlasGender; focus?: LessonFocus; initialPlan?: LessonPlan | null }) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
@@ -301,7 +302,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
 			if (seq !== loadSeq.current) return;
-			if (next.items.length === 0) throw new Error(focus ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : "There are no sentences for this unit yet.");
+			if (next.items.length === 0) throw new Error(focus === "mixups" ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : focus === "personal" ? "No personal plan yet. Write your guide on My mistakes, and its practice shows up here." : "There are no sentences for this unit yet.");
 			setPlan(next);
 			startedAt.current = Date.now();
 			activeTime.restart();
@@ -659,7 +660,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 							onPeek={() => setPeeked(true)}
 							onGrade={grade}
 							onReady={setReady}
-							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus ? "Mix-ups" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
+							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
 						/>
 					</div>
 				</div>
@@ -1559,7 +1560,7 @@ function EndScreen({
 	onNext,
 }: {
 	mode: Mode;
-	focus?: "mixups";
+	focus?: LessonFocus;
 	unit: UnitId;
 	reps: Rep[];
 	score: LessonScore;
@@ -1605,10 +1606,10 @@ function EndScreen({
 				{mode === "blitz" ? <ZapIcon className="size-12" /> : <TrophyIcon className="size-12" />}
 			</div>
 			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
-				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : focus ? (perfect ? "No mix-ups!" : "Mix-ups done!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
+				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : focus === "mixups" ? (perfect ? "No mix-ups!" : "Mix-ups done!") : focus === "personal" ? (perfect ? "Perfect plan practice!" : "Plan practice done!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
 			</h1>
 			<p className="mt-2 min-h-7 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
-				{mode === "blitz" ? `${correct} right in 60 seconds` : focus ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
+				{mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
 			</p>
 			{mode === "lesson" && !focus && (
 				<ol className="mx-auto mt-3 flex h-2.5 items-center justify-center gap-2" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>

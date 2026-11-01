@@ -27,6 +27,8 @@ export interface DayRecord {
 	blitz?: number;
 	/** Mix-ups lessons finished (src/core/mixups.ts). */
 	mixups?: number;
+	/** Personal lessons finished (src/core/personal.ts). */
+	personal?: number;
 	talks?: number;
 	stories?: number;
 	/** Tutor-unit sessions started. */

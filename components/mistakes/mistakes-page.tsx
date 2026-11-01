@@ -11,7 +11,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
+import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
 import { FORM_SLIPS, FORM_SLIP_LABEL, type GuideData, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
@@ -210,6 +210,7 @@ const GUIDE_ADDS = [
 	"Explains why it happens and how to fix it, from your own wrong sentences",
 	"Guesses what may trip you next, beyond the word pairs the app already knows",
 	"Writes a plan for the week, with a button for each step",
+	"Builds a personal lesson on the words, pairs and units it picked, from the app's checked sentences",
 ];
 
 function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: boolean; onWrite: (force: boolean) => void }) {
@@ -228,10 +229,24 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 					</p>
 				)}
 			</div>
+			{guide?.practice && (
+				<div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-go/40 bg-go/10 p-4" data-testid="guide-practice">
+					<div className="min-w-0">
+						<p className="font-ui text-sm font-bold text-foreground">Your plan practice</p>
+						<p className="font-prose text-xs text-muted-foreground">
+							Built from checked sentences on: <span lang="sk">{guide.practice.shown.join(", ")}</span>
+						</p>
+					</div>
+					<Link href="/lesson?mode=personal" className={cn(PRIMARY, SMALL, "shrink-0 pointer-coarse:min-h-11")} data-testid="guide-practise">
+						Practise your plan
+						<ArrowRightIcon className="size-4" />
+					</Link>
+				</div>
+			)}
 			{guide ? (
 				<div className="mt-3">{guide.data ? <GuideBody data={guide.data} /> : <GuideText text={guide.text} />}</div>
 			) : ai.ready ? (
-				<p className="mt-2 font-prose text-sm text-muted-foreground">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Cheap model and runs once per set of answers.</p>
+				<p className="mt-2 font-prose text-sm text-muted-foreground">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Strong model (Cheap when Strong is empty) and runs once per set of answers.</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={GUIDE_ADDS} className="mt-3" />
 			)}

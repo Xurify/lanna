@@ -7,14 +7,25 @@
  * before the learner presses a button.
  */
 
+import type { ModelSlot } from "../core/settings.ts";
 import { readSettings } from "../store/settings.ts";
 import { providerKeyPresent } from "./keys.ts";
 
 export type AiStatus = { ready: true; model: string } | { ready: false; reason: "no-model" | "no-key"; provider?: string };
 
-export function aiStatus(): AiStatus {
+/** Which slot a feature asks for first: most run on Cheap, falling back to
+ *  Strong; the analysis of a learner's mistakes runs rarely and is reasoning,
+ *  so it asks for Strong first and falls back to Cheap. */
+export type SlotPreference = "cheap" | "strong";
+
+export function aiSlot(prefer: SlotPreference = "cheap"): ModelSlot | null {
 	const models = readSettings()?.models;
-	const slot = models?.cheap?.model ? models.cheap : models?.strong?.model ? models.strong : null;
+	const order = prefer === "strong" ? [models?.strong, models?.cheap] : [models?.cheap, models?.strong];
+	return order.find((slot) => slot?.model) ?? null;
+}
+
+export function aiStatus(prefer: SlotPreference = "cheap"): AiStatus {
+	const slot = aiSlot(prefer);
 	if (!slot?.model) return { ready: false, reason: "no-model" };
 	const { provider, id } = slot.model;
 	if (!providerKeyPresent(provider)) return { ready: false, reason: "no-key", provider };
@@ -25,7 +36,7 @@ export function aiStatus(): AiStatus {
 export function aiMissing(status: AiStatus): string {
 	if (status.ready) return "";
 	return status.reason === "no-model"
-		? "No model is set. Pick one for the Cheap slot in Settings → AI models, and add its key in Settings → API keys."
+		? "No model is set. Pick one in Settings → AI models, and add its key in Settings → API keys."
 		: `The ${status.provider} key is missing. Add it in Settings → API keys, or pick another model in Settings → AI models.`;
 }
 

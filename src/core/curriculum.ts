@@ -640,6 +640,8 @@ export interface DayEvidence {
 	blitz: number;
 	/** Mix-ups lessons finished today (src/core/mixups.ts). */
 	mixups?: number;
+	/** Personal lessons finished today (src/core/personal.ts). */
+	personal?: number;
 	talks: number;
 	stories: number;
 	tutors: number;
@@ -679,6 +681,9 @@ export interface PlanInput {
 	 *  first: with no weak spot on record, Strengthen takes the first one that
 	 *  can be drilled before it falls back to the weakest overall. */
 	worse?: UnitId[];
+	/** A personal lesson from a recent guide (src/core/personal.ts): with no
+	 *  weak spot on record, Strengthen takes it before anything else. */
+	personal?: { focus: string };
 	/** A video the learner added and has not watched yet (src/core/watch.ts):
 	 *  it joins the plan as input until it is watched. */
 	watch?: { id: string; title: string; minutes: number; coverage: number };
@@ -776,9 +781,18 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		all
 			.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
 			.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
-	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0) || day.blitz > 0 || (day.mixups ?? 0) > 0;
+	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0) || day.blitz > 0 || (day.mixups ?? 0) > 0 || (day.personal ?? 0) > 0;
 	const mixups = input.mixups ?? [];
-	if (!spot && mixups.length > 0) {
+	if (!spot && input.personal) {
+		tasks.push({
+			id: "strengthen",
+			title: `Strengthen: Your plan · ${input.personal.focus}`,
+			line: "Built from your own mistakes — the words, pairs and units your guide picked",
+			minutes: TASK_MINUTES.strengthen,
+			done: strengthenDone,
+			href: "/lesson?mode=personal",
+		});
+	} else if (!spot && mixups.length > 0) {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: Mix-ups · ${mixups[0]!.join(" / ")}`,

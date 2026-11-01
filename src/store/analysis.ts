@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { GuideData, MistakeAnalysis } from "../core/mistakes.ts";
+import type { PersonalPractice } from "../core/personal.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
 export interface GuideRecord {
@@ -17,6 +18,8 @@ export interface GuideRecord {
 	text: string;
 	/** The reply read as patterns, guesses and a plan (src/core/mistakes.ts parseGuide). */
 	data?: GuideData | null;
+	/** The practice targets the lexicon backs (src/core/personal.ts), for the personal lesson. */
+	practice?: PersonalPractice | null;
 	/** When it was written (ISO). */
 	at: string;
 	/** Digest of the facts it was written from (src/core/mistakes.ts guideFacts). */
