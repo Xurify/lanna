@@ -210,18 +210,31 @@ function FlagSvg({ code }: { code: string }) {
 	switch (code) {
 		case "SK":
 			return (
-				<svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden="true">
+				<svg viewBox="0 0 640 480" className="block h-full w-full" aria-hidden="true">
+					<path fill="#ee1c25" d="M0 0h640v480H0z" />
+					<path fill="#0b4ea2" d="M0 0h640v320H0z" />
 					<path fill="#ffffff" d="M0 0h640v160H0z" />
-					<path fill="#0b4ea2" d="M0 160h640v160H0z" />
-					<path fill="#ee1c25" d="M0 320h640v160H0z" />
-					<path d="M120 75h140v150c0 90-70 150-70 150s-70-60-70-150V75z" fill="#ee1c25" stroke="#ffffff" strokeWidth="12" />
-					<path d="M135 315c20-25 45-20 55 0 10-20 35-25 55 0-10-40-45-45-55-10-10-35-45-30-55 10z" fill="#0b4ea2" />
-					<path d="M184 125h12v140h-12zm-35 35h82v12h-82zm10 40h62v12h-62z" fill="#ffffff" />
+					<path
+						fill="#ffffff"
+						d="M233 370.8c-43-20.7-104.6-61.9-104.6-143.2 0-81.4 4-118.4 4-118.4h201.3s3.9 37 3.9 118.4S276 350 233 370.8"
+					/>
+					<path
+						fill="#ee1c25"
+						d="M233 360c-39.5-19-96-56.8-96-131.4s3.6-108.6 3.6-108.6h184.8s3.5 34 3.5 108.6C329 303.3 272.5 341 233 360"
+					/>
+					<path
+						fill="#ffffff"
+						d="M241.4 209c10.7.2 31.6.6 50.1-5.6 0 0-.4 6.7-.4 14.4s.5 14.4.5 14.4c-17-5.7-38.1-5.8-50.2-5.7v41.2h-16.8v-41.2c-12-.1-33.1 0-50.1 5.7 0 0 .5-6.7.5-14.4s-.5-14.4-.5-14.4c18.5 6.2 39.4 5.8 50 5.6v-25.9c-9.7 0-23.7.4-39.6 5.7 0 0 .5-6.6.5-14.4 0-7.7-.5-14.4-.5-14.4 15.9 5.3 29.9 5.8 39.6 5.7-.5-16.4-5.3-37-5.3-37s9.9.7 13.8.7 13.8-.7 13.8-.7-4.8 20.6-5.3 37c9.7.1 23.7-.4 39.6-5.7 0 0-.5 6.7-.5 14.4s.5 14.4.5 14.4a119 119 0 0 0-39.7-5.7v26z"
+					/>
+					<path
+						fill="#0b4ea2"
+						d="M233 263.3c-19.9 0-30.5 27.5-30.5 27.5s-6-13-22.2-13c-11 0-19 9.7-24.2 18.8 20 31.7 51.9 51.3 76.9 63.4 25-12 57-31.7 76.9-63.4-5.2-9-13.2-18.8-24.2-18.8-16.2 0-22.2 13-22.2 13S253 263.3 233 263.3"
+					/>
 				</svg>
 			);
 		case "RU":
 			return (
-				<svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden="true">
+				<svg viewBox="0 0 640 480" className="block h-full w-full" aria-hidden="true">
 					<path fill="#ffffff" d="M0 0h640v160H0z" />
 					<path fill="#0039a6" d="M0 160h640v160H0z" />
 					<path fill="#d52b1e" d="M0 320h640v160H0z" />
@@ -229,10 +242,10 @@ function FlagSvg({ code }: { code: string }) {
 			);
 		case "CZ":
 			return (
-				<svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden="true">
+				<svg viewBox="0 0 640 480" className="block h-full w-full" aria-hidden="true">
 					<path fill="#ffffff" d="M0 0h640v240H0z" />
 					<path fill="#d7141a" d="M0 240h640v240H0z" />
-					<path fill="#11457e" d="M0 0l320 240L0 480z" />
+					<path fill="#11457e" d="M360 240 0 0v480z" />
 				</svg>
 			);
 		case "DE":
@@ -259,12 +272,12 @@ function FlagSvg({ code }: { code: string }) {
 			);
 		case "GB":
 			return (
-				<svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden="true">
+				<svg viewBox="0 0 640 480" className="block h-full w-full" aria-hidden="true">
 					<path fill="#012169" d="M0 0h640v480H0z" />
-					<path d="M0 0l640 480M640 0L0 480" stroke="#ffffff" strokeWidth="60" />
-					<path d="M0 0l640 480M640 0L0 480" stroke="#c8102e" strokeWidth="20" />
-					<path d="M320 0v480M0 240h640" stroke="#ffffff" strokeWidth="100" />
-					<path d="M320 0v480M0 240h640" stroke="#c8102e" strokeWidth="60" />
+					<path fill="#ffffff" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-178L0 64V0z" />
+					<path fill="#c8102e" d="m424 281 216 159v40L369 281zm-184 20 6 35L54 480H0zM640 0v3L391 191l2-44L590 0zM0 0l239 176h-60L0 42z" />
+					<path fill="#ffffff" d="M241 0v480h160V0zM0 160v160h640V160z" />
+					<path fill="#c8102e" d="M0 193v96h640v-96zM273 0v480h96V0z" />
 				</svg>
 			);
 		case "FR":
@@ -481,7 +494,7 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 			title={title ?? `${c} flag`}
 			data-country-code={c}
 			className={cn(
-				"relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[2px] shadow-2xs aspect-[4/3] ring-1 ring-black/15 dark:ring-white/20 select-none bg-muted/40",
+				"relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[2px] shadow-2xs ring-1 ring-black/15 dark:ring-white/20 select-none bg-muted/40 w-5 h-[15px]",
 				className,
 			)}
 		>

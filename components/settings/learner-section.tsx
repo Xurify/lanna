@@ -119,7 +119,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 									)}
 									data-testid={`target-language-${p.id}`}
 								>
-									<CountryFlag lang={p.id} className="w-4 h-3 rounded-[2px]" />
+									<CountryFlag lang={p.id} className="w-5 h-[15px]" />
 									<span>{p.endonym}</span>
 									<span className="text-xs font-normal opacity-70">({p.english})</span>
 								</button>
