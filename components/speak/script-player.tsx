@@ -138,7 +138,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 			<div ref={listRef} className="flex flex-1 flex-col overflow-y-auto pb-6 pt-4">
 				<div className={cn(COLUMN, "flex flex-col gap-4")}>
 					<p className="font-ui text-sm font-bold text-muted-foreground">Speak · step by step</p>
-					<ol className="flex flex-col gap-3" data-testid="script-turns" aria-live="polite">
+					<ol className="flex flex-col gap-3" data-testid="script-turns" data-word-lookup-enabled="true" aria-live="polite">
 						{said.map((line, i) => (
 							<li key={i} className={cn("flex", line.role === "learner" ? "justify-end" : "justify-start")}>
 								<div
@@ -156,12 +156,12 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 						))}
 					</ol>
 
-					<p className="font-prose text-xl text-foreground" lang="sk" data-testid="script-tutor">
+					<p className="font-prose text-xl text-foreground" lang="sk" data-testid="script-tutor" data-word-lookup-enabled="true">
 						{turn.tutor.sk}
 					</p>
 					<p className="-mt-2 font-prose text-sm text-muted-foreground">{turn.tutor.en}</p>
 
-					<div className="flex flex-col gap-2" data-testid="script-options">
+					<div className="flex flex-col gap-2" data-testid="script-options" data-word-lookup-enabled="false">
 						{turn.options.map((o, i) => {
 							const failed = miss?.choice === i;
 							return (

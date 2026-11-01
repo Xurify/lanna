@@ -55,7 +55,7 @@ export function Check({ questions, answers, onAnswer }: { questions: StoryQuesti
 	return (
 		<>
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
-				<div key={i} className={cn(COLUMN, "lh-rise")} data-testid="read-question">
+				<div key={i} className={cn(COLUMN, "lh-rise")} data-testid="read-question" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 					<p className="font-ui text-sm font-bold text-muted-foreground">{QUESTION_KIND_INFO[q.kind ?? "recall"].label}</p>
 					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground" lang="sk">
 						{q.q}

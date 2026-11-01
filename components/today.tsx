@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, FlameIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, TableIcon, XIcon, ZapIcon } from "lucide-react";
+import { BlocksIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, FlameIcon, GaugeIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, RepeatIcon, TableIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
@@ -181,9 +181,17 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					badge: s && s.review.due > 0 ? String(s.review.due) : undefined,
 					testid: "mode-review",
 				},
-				{ href: `/lesson?unit=${s?.next ?? "words"}`, icon: PlayIcon, title: "Next lesson", line: next?.title ?? "First words", testid: "start-lesson" },
+				{
+					href: `/lesson?unit=${s?.next ?? "words"}`,
+					icon: next?.kind === "words" ? BookAIcon : BlocksIcon,
+					title: next?.kind === "words" ? "Words lesson" : "Grammar lesson",
+					line: next
+						? `${next.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "")}${next.slovakTerm ? ` · ${next.slovakTerm}` : ""}`
+						: "First words · Základná slovná zásoba",
+					testid: "start-lesson",
+				},
 				{ href: "/grammar", icon: TableIcon, title: "Grammar", line: "Six cases, three genders, and your score on each", testid: "mode-grammar" },
-				{ href: "/chat/new", icon: GraduationCapIcon, title: "Ask the tutor", line: "Any question about Slovak", testid: "mode-tutor" },
+				{ href: "/chat/new", icon: BotMessageSquareIcon, title: "Ask the tutor", line: "Any question about Slovak", testid: "mode-tutor" },
 			],
 		},
 		{

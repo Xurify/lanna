@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
 	BookmarkCheckIcon,
 	BookmarkIcon,
@@ -15,6 +16,65 @@ import {
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode, type WordTranslationMode } from "@/components/settings/device-prefs";
+
+/**
+ * Evaluates whether a DOM node is valid target-language learning content.
+ * Strictly adheres to an opt-in (enabled-only) mental model:
+ *
+ * 1. Word/phrase selection lookup is DISABLED by default everywhere.
+ * 2. It is ONLY enabled inside explicitly designated learning containers:
+ *    [data-word-lookup-enabled="true"], [data-selectable-words="true"],
+ *    article[data-word-lookup-enabled="true"], [data-word-column], .lh-source-passage.
+ * 3. In exercises & drills (lessons, reviews, exams, fluency, listen):
+ *    Lookup is strictly disabled before the learner answers ([data-word-lookup-enabled="false"])
+ *    to prevent cheating / giving away hints (Clozemaster rule).
+ *    Once the answer is submitted/graded, lookup becomes enabled ([data-word-lookup-enabled="true"]).
+ * 4. General app chrome, dashboard widgets, headers, navigation, buttons, and
+ *    English translations have no enabled container and are never eligible.
+ */
+export function isEligibleLearningTarget(
+	node: Node | null | undefined,
+	activeLangCode?: string,
+): boolean {
+	if (!node) return false;
+	const el = node.nodeType === 1 ? (node as Element) : node.parentElement;
+	if (!el) return false;
+	if (typeof el.isConnected === "boolean" && !el.isConnected) return false;
+
+	// 1. Strictly prohibit interactive controls, inputs, navigation, sidebars, dialogs, and popovers
+	if (
+		el.closest(
+			"input, textarea, select, [contenteditable='true'], button, [role='button'], nav, aside, [role='navigation'], [role='menu'], [role='tab'], [role='dialog'], [data-selection-bar], [data-word-popover], [data-no-word-lookup], [data-translation], [data-cue-meaning], [aria-hidden='true']",
+		)
+	) {
+		return false;
+	}
+
+	// 2. Reject if any ancestor explicitly disables lookup (e.g. an unanswered exercise or drill)
+	if (el.closest("[data-word-lookup-enabled='false'], [data-no-word-lookup='true']")) {
+		return false;
+	}
+
+	// 3. Opt-in only: Must be inside an explicitly enabled learning container
+	const lookupContainer = el.closest(
+		"[data-word-lookup-enabled='true'], [data-selectable-words='true'], [data-learning-content='true'], article, [data-word-column], .lh-source-passage",
+	);
+
+	if (!lookupContainer) {
+		return false;
+	}
+
+	// 4. Ensure we do not trigger on English translations or English UI inside the learning container
+	const rootDoc = el.ownerDocument?.documentElement;
+	const langEl = el.closest("[lang]");
+	if (langEl && langEl !== rootDoc && lookupContainer.contains(langEl)) {
+		const lang = langEl.getAttribute("lang")?.toLowerCase().trim();
+		if (lang === "en" || lang === "und") return false;
+		if (activeLangCode && lang && lang !== activeLangCode.toLowerCase()) return false;
+	}
+
+	return true;
+}
 
 interface SelectionInfo {
 	text: string;
@@ -58,6 +118,7 @@ const MODE_BADGE_LABELS: Record<WordTranslationMode, string> = {
 };
 
 export function SelectionWordBankBar() {
+	const pathname = usePathname();
 	const [selection, setSelection] = useState<SelectionInfo | null>(null);
 	const [lookup, setLookup] = useState<LookupData | null>(null);
 	const [loadingLookup, setLoadingLookup] = useState(false);
@@ -67,6 +128,61 @@ export function SelectionWordBankBar() {
 	const [translationMode, setTranslationMode] = useWordTranslationMode();
 	const activeLang = useActiveLanguage();
 	const barRef = useRef<HTMLDivElement>(null);
+	const activeRangeRef = useRef<Range | null>(null);
+
+	// Automatically dismiss popover whenever navigating or leaving a screen
+	useEffect(() => {
+		setSelection(null);
+		setLookup(null);
+		activeRangeRef.current = null;
+		try {
+			window.getSelection()?.removeAllRanges();
+		} catch {
+			// ignore
+		}
+	}, [pathname]);
+
+	// Listen to browser navigation and pagehide events
+	useEffect(() => {
+		const handleLeave = () => {
+			setSelection(null);
+			setLookup(null);
+			activeRangeRef.current = null;
+			try {
+				window.getSelection()?.removeAllRanges();
+			} catch {}
+		};
+
+		window.addEventListener("popstate", handleLeave);
+		window.addEventListener("pagehide", handleLeave);
+		return () => {
+			window.removeEventListener("popstate", handleLeave);
+			window.removeEventListener("pagehide", handleLeave);
+		};
+	}, []);
+
+	// Observe DOM mutations: if the selected element was unmounted or removed from document, dismiss immediately
+	useEffect(() => {
+		if (typeof MutationObserver === "undefined") return;
+		const observer = new MutationObserver(() => {
+			const range = activeRangeRef.current;
+			if (range) {
+				if (!range.startContainer?.isConnected || !range.endContainer?.isConnected) {
+					setSelection(null);
+					setLookup(null);
+					activeRangeRef.current = null;
+					try {
+						window.getSelection()?.removeAllRanges();
+					} catch {}
+				}
+			}
+		});
+
+		if (document.body) {
+			observer.observe(document.body, { childList: true, subtree: true });
+		}
+		return () => observer.disconnect();
+	}, []);
 
 	useEffect(() => {
 		try {
@@ -87,8 +203,6 @@ export function SelectionWordBankBar() {
 			return next;
 		});
 	};
-
-	const activeRangeRef = useRef<Range | null>(null);
 
 	const cycleTranslationMode = () => {
 		const idx = MODE_CYCLE.indexOf(translationMode);
@@ -120,17 +234,18 @@ export function SelectionWordBankBar() {
 			}
 
 			const anchor = sel.anchorNode;
-			const el = anchor instanceof HTMLElement ? anchor : anchor?.parentElement;
-			if (!el) {
+			const focus = sel.focusNode;
+			if (!anchor || !focus) {
 				setSelection(null);
 				activeRangeRef.current = null;
 				return;
 			}
 
-			// Ignore selections inside inputs, textareas, or popovers
-			if (
-				el.closest("input, textarea, [contenteditable='true'], [data-selection-bar], [data-word-popover]")
-			) {
+			// LingQ / Clozemaster scoping: only allow selections in target-language learning content
+			const activeCode = activeLang?.code;
+			if (!isEligibleLearningTarget(anchor, activeCode) || !isEligibleLearningTarget(focus, activeCode)) {
+				setSelection(null);
+				activeRangeRef.current = null;
 				return;
 			}
 
@@ -204,6 +319,7 @@ export function SelectionWordBankBar() {
 				if (!range) return;
 				if (range.startContainer && !range.startContainer.isConnected) {
 					setSelection(null);
+					setLookup(null);
 					activeRangeRef.current = null;
 					return;
 				}
@@ -233,7 +349,11 @@ export function SelectionWordBankBar() {
 		const onKeyUp = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
 				setSelection(null);
+				setLookup(null);
 				activeRangeRef.current = null;
+				try {
+					window.getSelection()?.removeAllRanges();
+				} catch {}
 				return;
 			}
 			if (e.shiftKey) {
@@ -243,10 +363,48 @@ export function SelectionWordBankBar() {
 		};
 
 		const onMouseDown = (e: MouseEvent) => {
-			if (barRef.current?.contains(e.target as Node)) return;
-			const sel = window.getSelection();
-			if (!sel || sel.isCollapsed) {
+			const target = e.target as Node;
+			if (barRef.current?.contains(target)) return;
+
+			// Dismiss immediately if clicking any interactive button, link, navigation, or control
+			const el = target.nodeType === 1 ? (target as Element) : target.parentElement;
+			if (el?.closest("button, a, [role='button'], nav, header, aside, [data-dismiss-popover]")) {
 				setSelection(null);
+				setLookup(null);
+				activeRangeRef.current = null;
+				try {
+					window.getSelection()?.removeAllRanges();
+				} catch {}
+				return;
+			}
+
+			// Dismiss if clicking outside the active selection
+			const range = activeRangeRef.current;
+			if (range && range.startContainer?.isConnected) {
+				try {
+					const common = range.commonAncestorContainer;
+					const rangeParent = common.nodeType === 1 ? (common as Element) : common.parentElement;
+					if (!rangeParent?.contains(target)) {
+						setSelection(null);
+						setLookup(null);
+						activeRangeRef.current = null;
+					}
+				} catch {
+					setSelection(null);
+					setLookup(null);
+					activeRangeRef.current = null;
+				}
+			} else {
+				setSelection(null);
+				setLookup(null);
+				activeRangeRef.current = null;
+			}
+		};
+
+		const onVisibilityChange = () => {
+			if (document.visibilityState === "hidden") {
+				setSelection(null);
+				setLookup(null);
 				activeRangeRef.current = null;
 			}
 		};
@@ -261,6 +419,8 @@ export function SelectionWordBankBar() {
 		document.addEventListener("mouseup", onMouseUp);
 		document.addEventListener("keyup", onKeyUp);
 		document.addEventListener("mousedown", onMouseDown);
+		document.addEventListener("visibilitychange", onVisibilityChange);
+		window.addEventListener("blur", onVisibilityChange);
 		window.addEventListener("scroll", syncPositionToSelection, true);
 		window.addEventListener("resize", syncPositionToSelection);
 		window.visualViewport?.addEventListener("resize", syncPositionToSelection);
@@ -272,6 +432,8 @@ export function SelectionWordBankBar() {
 			document.removeEventListener("mouseup", onMouseUp);
 			document.removeEventListener("keyup", onKeyUp);
 			document.removeEventListener("mousedown", onMouseDown);
+			document.removeEventListener("visibilitychange", onVisibilityChange);
+			window.removeEventListener("blur", onVisibilityChange);
 			window.removeEventListener("scroll", syncPositionToSelection, true);
 			window.removeEventListener("resize", syncPositionToSelection);
 			window.visualViewport?.removeEventListener("resize", syncPositionToSelection);

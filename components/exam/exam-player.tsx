@@ -148,7 +148,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved on your path." : "This attempt was not saved, so the path will not show it."}
 					</p>
 					{score.misses.length > 0 && (
-						<div className="mt-8" data-testid="exam-misses">
+						<div className="mt-8" data-testid="exam-misses" data-word-lookup-enabled="true">
 							<p className="font-ui text-sm font-bold text-muted-foreground">Missed</p>
 							<ul className="mt-3 flex flex-col gap-2">
 								{score.misses.map((id) => {
@@ -195,7 +195,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 				<div className={cn(COLUMN, "flex flex-col gap-8")}>
 					<div className="flex flex-col gap-2">
 						<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
-						<p className="font-prose text-xl text-foreground" lang="sk" data-testid="exam-sentence">
+						<p className="font-prose text-xl text-foreground" lang="sk" data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 							{item!.before}
 							<span className="rounded-md bg-accent px-1 text-muted-foreground">____</span>
 							{item!.after}

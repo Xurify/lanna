@@ -637,7 +637,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 			{/* Main Scrollable Reading Area */}
 			<div className="flex-1 overflow-y-auto pb-32 pt-6 sm:pt-10">
-				<article className="mx-auto w-full max-w-2xl px-6 sm:px-8 lh-rise" data-testid="read-text">
+				<article className="mx-auto w-full max-w-2xl px-6 sm:px-8 lh-rise" data-testid="read-text" data-word-lookup-enabled="true">
 					{/* Story Introduction Header */}
 					<div className="mb-8 border-b border-border/40 pb-6">
 						<div className="flex flex-wrap items-center gap-2">

@@ -160,6 +160,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 					void submit();
 				}}
 				className="lh-rise mt-8"
+				data-word-lookup-enabled={result !== null ? "true" : "false"}
 			>
 				<h2 className="font-prose text-2xl font-semibold text-foreground">{words ? "Type the word" : "Type the missing word"}</h2>
 				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang="sk">
@@ -344,6 +345,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 						if (!busy && answer.trim()) void step({ answer });
 					}}
 					className="lh-rise mt-8"
+					data-word-lookup-enabled="false"
 				>
 					<h2 className="font-prose text-2xl font-semibold text-foreground">{ask.prompt || (ask.kind === "why" ? "What decided that?" : "Give the form")}</h2>
 					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang="sk">

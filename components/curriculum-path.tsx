@@ -14,7 +14,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
+import { AlertTriangleIcon, BotMessageSquareIcon, ChevronDownIcon, ChevronRightIcon, FlagIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitBadge } from "@/components/unit-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -132,7 +132,7 @@ export function unitLine(u: UnitState, active: boolean): string {
 	if (u.kind === "tutor") return u.status === "done" ? `Done · ${u.lessons} sessions` : u.lessons > 0 ? `${u.lessons} of ${TUTOR_SESSIONS} sessions · ${u.tagline}` : u.tagline;
 	if (u.status === "done") return u.lessons === 0 ? `Tested out in placement${pct ? ` · ${pct}` : ""}` : `Done · ${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
 	if (u.lessons > 0) return `${u.lessons} lesson${u.lessons === 1 ? "" : "s"}${pct ? ` · ${pct}` : ""}`;
-	return active ? "Up next" : u.tagline;
+	return active ? (u.tagline ? `Up next · ${u.tagline}` : "Up next") : u.tagline;
 }
 
 const WEAK_SOURCE_NAMES: Record<string, string> = {
@@ -238,22 +238,336 @@ function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary 
 	);
 }
 
+function TutorSessionHover({ unit }: { unit: UnitState }) {
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					<span
+						role="button"
+						tabIndex={0}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+						}}
+						className="inline-flex cursor-help items-center rounded p-0.5 text-xp transition-colors hover:bg-xp/15 focus:outline-none focus:ring-1 focus:ring-xp"
+						aria-label="With the tutor"
+						data-testid={`tutor-hint-${unit.id}`}
+					>
+						<BotMessageSquareIcon className="size-3.5 shrink-0 text-xp" aria-hidden="true" />
+					</span>
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="flex items-start gap-2.5">
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-xp/15 text-xp">
+							<BotMessageSquareIcon className="size-3.5" aria-hidden="true" />
+						</div>
+						<div className="min-w-0 flex-1 space-y-1.5">
+							<div className="flex items-baseline justify-between gap-1.5">
+								<span className="text-xs font-bold text-foreground">With the Tutor</span>
+								<span className="rounded bg-xp/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-xp">
+									Guided session
+								</span>
+							</div>
+							<p className="text-xs font-semibold text-foreground">{unit.grammarTerm ?? unit.title}</p>
+							<p className="text-[11px] leading-relaxed text-muted-foreground">
+								Interactive 1-on-1 session with your Slovak tutor. Explains pronunciation rules, sentence structure, and grammar concepts aloud with examples before you drill them.
+							</p>
+							{unit.tagline && (
+								<p className="border-t border-border/50 pt-1.5 text-[10px] italic text-muted-foreground">
+									Focus: {unit.tagline}
+								</p>
+							)}
+						</div>
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
+function StarredGoalHover({ unit }: { unit: UnitState }) {
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					<span
+						role="button"
+						tabIndex={0}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+						}}
+						className="inline-flex cursor-help items-center rounded p-0.5 text-gold transition-colors hover:bg-gold/15 focus:outline-none focus:ring-1 focus:ring-gold"
+						aria-label="Priority goal"
+						data-testid={`starred-hint-${unit.id}`}
+					>
+						<StarIcon className="size-3.5 shrink-0 fill-gold text-gold" aria-hidden="true" />
+					</span>
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="flex items-start gap-2.5">
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-gold/15 text-gold">
+							<StarIcon className="size-3.5 fill-gold" aria-hidden="true" />
+						</div>
+						<div className="min-w-0 flex-1 space-y-1.5">
+							<div className="flex items-baseline justify-between gap-1.5">
+								<span className="text-xs font-bold text-foreground">Priority Goal</span>
+								<span className="rounded bg-gold/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
+									Your target
+								</span>
+							</div>
+							<p className="text-xs font-semibold text-foreground">{unit.title}</p>
+							<p className="text-[11px] leading-relaxed text-muted-foreground">
+								One of your selected can-do targets from onboarding. Lessons and drills directly leading toward this real-world target are highlighted and prioritized on your path.
+							</p>
+						</div>
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
+function CanDoGoalHover({ unit }: { unit: UnitState }) {
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					<span
+						role="button"
+						tabIndex={0}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+						}}
+						className="inline-flex cursor-help items-center rounded p-0.5 text-flame transition-colors hover:bg-flame/15 focus:outline-none focus:ring-1 focus:ring-flame"
+						aria-label="Can-do milestone"
+						data-testid={`goal-hint-${unit.id}`}
+					>
+						<FlagIcon className="size-3.5 shrink-0 text-flame" aria-hidden="true" />
+					</span>
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="flex items-start gap-2.5">
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-flame/15 text-flame">
+							<FlagIcon className="size-3.5" aria-hidden="true" />
+						</div>
+						<div className="min-w-0 flex-1 space-y-1.5">
+							<div className="flex items-baseline justify-between gap-1.5">
+								<span className="text-xs font-bold text-foreground">Can-Do Milestone</span>
+								<span className="rounded bg-flame/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-flame">
+									CEFR goal
+								</span>
+							</div>
+							<p className="text-xs font-semibold text-foreground">{unit.grammarTerm ?? unit.title}</p>
+							<p className="text-[11px] leading-relaxed text-muted-foreground">
+								A communicative milestone. Proves practical ability in a spoken or typed dialogue scenario rather than isolated grammar exercises.
+							</p>
+							{unit.tagline && (
+								<p className="border-t border-border/50 pt-1.5 text-[10px] italic text-muted-foreground">
+									Scenario: {unit.tagline}
+								</p>
+							)}
+						</div>
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
+function TermHover({ unit }: { unit: UnitState }) {
+	if (!unit.slovakTerm) return null;
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					<span
+						role="button"
+						tabIndex={0}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+						}}
+						className="inline-flex max-w-[120px] shrink truncate cursor-help items-center rounded-md bg-accent/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+						aria-label={`Linguistic term: ${unit.slovakTerm}`}
+					>
+						<span className="truncate">{unit.slovakTerm}</span>
+					</span>
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="space-y-1.5">
+						<div className="flex items-baseline justify-between gap-1.5">
+							<span className="text-xs font-bold text-foreground">{unit.slovakTerm}</span>
+							<span className="rounded bg-accent px-1 py-0.5 text-[10px] font-semibold text-muted-foreground">
+								Slovak grammar
+							</span>
+						</div>
+						{unit.grammarTerm && (
+							<p className="text-xs font-semibold text-foreground/90">{unit.grammarTerm}</p>
+						)}
+						{unit.tagline && (
+							<p className="text-[11px] leading-relaxed text-muted-foreground">
+								{unit.tagline}
+							</p>
+						)}
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
+function UnitBadgeHover({
+	unit,
+	active,
+	locked,
+	skipped,
+	tone,
+}: {
+	unit: UnitState;
+	active: boolean;
+	locked: boolean;
+	skipped: boolean;
+	tone: "go" | "xp" | "flame";
+}) {
+	const done = unit.status === "done" || skipped;
+	const statusLabel = done
+		? "Completed"
+		: locked
+			? "Locked"
+			: active
+				? "Up Next"
+				: unit.lessons > 0
+					? "In Progress"
+					: "Ready to start";
+
+	const typeName =
+		unit.kind === "tutor"
+			? "Tutor Session"
+			: unit.kind === "goal"
+				? "Can-Do Goal"
+				: unit.kind === "words"
+					? "Vocabulary Lesson"
+					: "Grammar Lesson";
+
+	const detail = done
+		? "Mastered or tested out. Tap to practice anytime."
+		: locked
+			? (unit.needs ? `Locked: ${unit.needs}.` : "Complete earlier lessons or open this chapter to unlock.")
+			: active
+				? "Current recommended unit on your path."
+				: unit.lessons > 0
+					? `${unit.lessons} lesson${unit.lessons === 1 ? "" : "s"} done (${Math.round(unit.progress * 100)}%).`
+					: "Unlocked and ready to practice.";
+
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					<span
+						className={cn("inline-flex cursor-help", skipped && "opacity-60")}
+						onClick={(e) => {
+							if (locked) {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+						}}
+					>
+						<UnitBadge glyph={unit.glyph} progress={unit.progress} done={done} active={active} locked={locked} size="sm" tone={tone} />
+					</span>
+				</TooltipTrigger>
+				<TooltipContent
+					side="right"
+					align="center"
+					sideOffset={8}
+					className="z-50 w-60 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-2.5 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="space-y-1">
+						<div className="flex items-center justify-between gap-1.5">
+							<span className="truncate text-xs font-bold text-foreground">{unit.title}</span>
+							<span
+								className={cn(
+									"shrink-0 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+									done ? "bg-gold/15 text-gold" : locked ? "bg-muted text-muted-foreground" : "bg-go/15 text-go",
+								)}
+							>
+								{statusLabel}
+							</span>
+						</div>
+						<p className="text-[10px] font-semibold text-muted-foreground">{typeName}</p>
+						<p className="text-[11px] leading-relaxed text-muted-foreground">{detail}</p>
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
 function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; weak?: WeakSpotSummary; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
 	const locked = u.status === "locked";
 	const skipped = u.status === "skipped";
 	const tone = u.kind === "tutor" ? "xp" : u.kind === "goal" ? "flame" : "go";
 	const body = (
 		<>
-			<span className={cn(skipped && "opacity-60")}>
-				<UnitBadge glyph={u.glyph} progress={u.progress} done={u.status === "done" || skipped} active={active} locked={locked} size="sm" tone={tone} />
-			</span>
+			<UnitBadgeHover unit={u} active={active} locked={locked} skipped={skipped} tone={tone} />
 			<span className="min-w-0 flex-1">
-				<span className={cn("flex items-center gap-1.5 font-ui text-sm font-bold", locked || skipped ? "text-muted-foreground" : active ? "text-go" : "text-foreground")}>
-					<span className="truncate">{u.title}</span>
-					{starred && <StarIcon className="size-3.5 shrink-0 fill-gold text-gold" aria-label="One of your goals" />}
-					{u.kind === "tutor" && <GraduationCapIcon className="size-3.5 shrink-0 text-xp" aria-label="With the tutor" />}
-					{u.kind === "goal" && <FlagIcon className="size-3.5 shrink-0 text-flame" aria-label="Can-do goal" />}
-					{weak && <WeakSpotHover unit={u} weak={weak} />}
+				<span className={cn("flex min-w-0 items-center justify-between gap-1.5 font-ui text-sm font-bold", locked || skipped ? "text-muted-foreground" : active ? "text-go" : "text-foreground")}>
+					<span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+						<span className="truncate">{u.title}</span>
+						{u.slovakTerm && <TermHover unit={u} />}
+					</span>
+					<span className="flex shrink-0 items-center gap-1">
+						{starred && <StarredGoalHover unit={u} />}
+						{u.kind === "tutor" && <TutorSessionHover unit={u} />}
+						{u.kind === "goal" && <CanDoGoalHover unit={u} />}
+						{weak && <WeakSpotHover unit={u} weak={weak} />}
+					</span>
 				</span>
 				<span className="block truncate font-ui text-xs text-muted-foreground" title={weak ? `Weak spot ${weak.line}` : undefined}>
 					{weak ? `Weak spot ${weak.line}` : unitLine(u, active)}

@@ -976,7 +976,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 					)}
 
 					{/* Both subtitles */}
-					<div className="mt-4 min-h-[7.5rem]" data-word-column data-testid="watch-subtitles">
+					<div className="mt-4 min-h-[7.5rem]" data-word-column data-word-lookup-enabled="true" data-testid="watch-subtitles">
 						{step && prev && (
 							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang="sk" aria-hidden="true">
 								{prev.sk}

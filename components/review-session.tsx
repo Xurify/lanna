@@ -386,6 +386,7 @@ export function ReviewSession() {
 								}}
 								className="text-3xl leading-relaxed text-foreground"
 								lang={lang?.code}
+								data-word-lookup-enabled={verdict !== null ? "true" : "false"}
 							>
 								<span>{around.before}</span>
 								<span className="whitespace-nowrap">

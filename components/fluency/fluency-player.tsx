@@ -262,7 +262,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 					)}
 
 					{phase === "reading" && (
-						<div data-testid="reread-text">
+						<div data-testid="reread-text" data-word-lookup-enabled="true">
 							<div className="rounded-2xl border border-border bg-card px-6 py-5">
 								{story.sentences.map((s, i) => (
 									<p key={i} className="font-prose text-[22px] leading-[1.7] text-foreground" lang="sk">
@@ -274,7 +274,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 					)}
 
 					{phase === "question" && (
-						<div data-testid="reread-question">
+						<div data-testid="reread-question" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 							<p className="font-ui text-xs font-bold uppercase tracking-wide text-muted-foreground">{QUESTION_KIND_INFO[plan.question.kind ?? "recall"].label}</p>
 							<p className="mt-1 font-prose text-2xl text-foreground" lang="sk">
 								{plan.question.q}
@@ -736,7 +736,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							<Volume2Icon className="size-7" />
 						</button>
 						<div>
-							<p className="font-prose text-[30px] leading-[1.5] text-foreground" lang="sk" data-testid="fast-sentence">
+							<p className="font-prose text-[30px] leading-[1.5] text-foreground" lang="sk" data-testid="fast-sentence" data-word-lookup-enabled={phase === "between" ? "true" : "false"}>
 								{item.sentence}
 							</p>
 							<p className="mt-1 font-prose text-lg text-muted-foreground">{item.translation}</p>

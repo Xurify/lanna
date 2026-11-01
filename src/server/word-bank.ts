@@ -480,7 +480,7 @@ export function lookupSelection(text: string): SelectionLookupResult {
 					dictionaryGloss: matchedNewWord.gloss,
 					referenceUrl: refLink.url,
 					referenceLabel: refLink.label,
-					slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(nw.slug, nw.lemma),
+					slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(matchedNewWord.slug, matchedNewWord.lemma),
 					pos: "Vocabulary",
 					source: "story",
 					inDeck: !!card,

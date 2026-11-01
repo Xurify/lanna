@@ -842,7 +842,7 @@ function RepView({
 	eyebrow: string;
 }) {
 	return (
-		<div>
+		<div data-word-lookup-enabled={locked ? "true" : "false"}>
 			<p className="font-ui text-sm font-bold text-muted-foreground first-letter:uppercase">
 				{eyebrow}
 				{item.again && <span className="text-xp"> · Once more</span>}
@@ -1356,7 +1356,7 @@ function FeedbackSheet({
 	};
 	const inDeck = marked || (item.known !== null && item.known !== undefined);
 	return (
-		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} role="status" aria-live="polite">
+		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} data-word-lookup-enabled="true" role="status" aria-live="polite">
 			<div className={cn(COLUMN, "py-5")}>
 				{/* Header row: verdict on the left, actions on the right, on one line. */}
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">

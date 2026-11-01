@@ -436,7 +436,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 
 					{/* The sentence: hidden until answered or peeked; then every word,
 					    the stretch words marked and glossed. */}
-					<div className="mt-6 min-h-[4.5rem]" data-testid="listen-sentence">
+					<div className="mt-6 min-h-[4.5rem]" data-testid="listen-sentence" data-word-lookup-enabled={current !== null || peeked ? "true" : "false"}>
 						{current || peeked ? (
 							<div className="lh-rise">
 								<p className="font-prose text-[30px] leading-[1.6] text-foreground" lang="sk">

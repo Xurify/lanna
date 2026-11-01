@@ -18,10 +18,11 @@
  */
 
 import Link from "next/link";
-import { AlertTriangleIcon, ArrowRightIcon, BookOpenIcon, BookOpenTextIcon, CheckIcon, DumbbellIcon, GaugeIcon, GraduationCapIcon, HeadphonesIcon, MicIcon, MonitorPlayIcon, PlayIcon, RepeatIcon, ZapIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowRightIcon, BlocksIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, CheckIcon, DumbbellIcon, GaugeIcon, HeadphonesIcon, MicIcon, MonitorPlayIcon, RepeatIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KBD, PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { STRAND_STYLE, taskStrand } from "@/components/strand-style";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STRANDS, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type WeakSpotSummary } from "@/src/core";
 
 export type Goal = LearnerGoal;
@@ -143,23 +144,137 @@ function PlanSkeleton() {
 const TASK_ICON: Record<PlanTask["id"], React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
 	review: RepeatIcon,
 	listen: HeadphonesIcon,
-	lesson: PlayIcon,
+	lesson: BlocksIcon,
 	strengthen: DumbbellIcon,
 	blitz: ZapIcon,
-	words: BookOpenTextIcon,
+	words: BookAIcon,
 	read: BookOpenIcon,
 	watch: MonitorPlayIcon,
 	speak: MicIcon,
 	fluency: GaugeIcon,
 };
 
+interface TaskDescription {
+	label: string;
+	strand: string;
+	description: string;
+}
+
+const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
+	review: {
+		label: "Spaced Review",
+		strand: "Retention",
+		description: "Spaced repetition (FSRS) to review words and endings just as they are about to fade.",
+	},
+	listen: {
+		label: "Comprehensible Input",
+		strand: "Listening",
+		description: "Hear real Slovak sentences at 95–98% known words. Train your ear before production.",
+	},
+	lesson: {
+		label: "Grammar & Rules",
+		strand: "Language-focused learning",
+		description: "Deliberate practice of Slovak grammar patterns, case endings, and verb conjugations.",
+	},
+	strengthen: {
+		label: "Strengthen Weak Spots",
+		strand: "Deliberate practice",
+		description: "Targeted drill on patterns where your accuracy dipped or mistakes were flagged.",
+	},
+	blitz: {
+		label: "Speed Blitz",
+		strand: "Fluency",
+		description: "Fast-paced 60-second challenge across units you have started to build quick recall.",
+	},
+	words: {
+		label: "Vocabulary Cluster",
+		strand: "Lexicon",
+		description: "New core vocabulary organized by high-frequency thematic clusters.",
+	},
+	read: {
+		label: "Extensive Reading",
+		strand: "Input",
+		description: "Graded story reading in Slovak with instant word tap-to-translate and audio.",
+	},
+	watch: {
+		label: "Authentic Video",
+		strand: "Input",
+		description: "Short authentic video clips with interactive dual subtitles.",
+	},
+	speak: {
+		label: "Spoken Practice",
+		strand: "Meaning-focused output",
+		description: "Roleplay realistic dialogue scenes with speech recognition or 1-on-1 tutor guidance.",
+	},
+	fluency: {
+		label: "Say It Faster",
+		strand: "Fluency development",
+		description: "Paul Nation's 4/3/2 fluency technique: repeat known material faster to build automaticity without hesitation.",
+	},
+};
+
 function TaskIcon({ task, large = false }: { task: PlanTask; large?: boolean }) {
-	const st = STRAND_STYLE[taskStrand(task)];
-	const Icon = task.via === "tutor" ? GraduationCapIcon : TASK_ICON[task.id];
-	return (
-		<span className={cn("flex shrink-0 items-center justify-center rounded-xl", large ? "size-12" : "size-10", task.done ? cn("bg-accent", st.text) : st.tile)}>
-			{task.done ? <CheckIcon className="size-5" strokeWidth={3} aria-label="Done" /> : <Icon className={cn(large ? "size-6" : "size-5", task.id === "lesson" && "fill-current")} />}
+	const strand = taskStrand(task);
+	const st = STRAND_STYLE[strand];
+	const isTutor = task.via === "tutor";
+	const Icon = isTutor ? BotMessageSquareIcon : TASK_ICON[task.id];
+	const detail = isTutor
+		? {
+				label: "Tutor Session",
+				strand: "Guided speaking",
+				description: "1-on-1 spoken practice with your Slovak tutor to guide pronunciation and rules.",
+		  }
+		: TASK_DETAILS[task.id];
+
+	const iconEl = (
+		<span
+			role="button"
+			tabIndex={0}
+			onClick={(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			}}
+			aria-label={`${detail.label}: ${detail.description}`}
+			className={cn(
+				"flex shrink-0 cursor-help items-center justify-center rounded-xl transition-transform hover:scale-105 focus:outline-none focus:ring-1 focus:ring-accent",
+				large ? "size-12" : "size-10",
+				task.done ? cn("bg-accent", st.text) : st.tile,
+			)}
+		>
+			{task.done ? <CheckIcon className="size-5" strokeWidth={3} aria-label="Done" /> : <Icon className={large ? "size-6" : "size-5"} />}
 		</span>
+	);
+
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					{iconEl}
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="space-y-1">
+						<div className="flex items-center justify-between gap-1.5">
+							<span className="text-xs font-bold text-foreground">{detail.label}</span>
+							<span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider", st.soft, st.text)}>
+								{detail.strand}
+							</span>
+						</div>
+						<p className="text-[11px] leading-relaxed text-muted-foreground">{detail.description}</p>
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	);
 }
 

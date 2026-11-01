@@ -642,10 +642,10 @@ export function WordBankPage() {
 												<Volume2Icon className="size-4" />
 											</button>
 											<div>
-												<p className="font-prose text-lg font-bold leading-snug text-foreground">
+												<p className="font-prose text-lg font-bold leading-snug text-foreground" lang="sk" data-word-lookup-enabled="true">
 													{phrase.text}
 												</p>
-												<p className="mt-1 font-prose text-sm text-muted-foreground">
+												<p className="mt-1 font-prose text-sm text-muted-foreground" lang="en">
 													{phrase.translation}
 												</p>
 												{phrase.context && (
