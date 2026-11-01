@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, TaskFrame, TaskTop } from "@/components/task-frame";
-import { scriptFor, grade, type SceneOption } from "@/src/core";
+import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
 export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 	const script = scriptFor(sceneId);
@@ -54,9 +54,9 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 				setDone(true);
 			} else {
 				const next = script.turns[turnIndex + 1]!;
-				setSaid((prev) => [...prev, { role: "tutor", sk: next.tutor.sk }]);
+				setSaid((prev) => [...prev, { role: "tutor", sk: tutorLineText(next.tutor) }]);
 				setTurnIndex(turnIndex + 1);
-				void speak(next.tutor.sk).catch(() => {});
+				void speak(tutorLineText(next.tutor)).catch(() => {});
 			}
 		},
 		[script, turnIndex, total],
@@ -69,7 +69,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 			if (!result) return;
 			if (result.correct) {
 				sfx.right(2);
-				advance(option.sk, false);
+				advance(sceneOptionText(option), false);
 				return;
 			}
 			if (miss) {

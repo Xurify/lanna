@@ -31,6 +31,7 @@ import path from "node:path";
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { entryLemma, exampleText } from "../core/review.ts";
 import { chatStore } from "../store/chats.ts";
 import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
@@ -105,8 +106,8 @@ function* spokenPhrases(): Generator<MigrationCandidate> {
 		const lex = loadLexicon(profile);
 		if (!lex) continue;
 		for (const e of lex.entries) {
-			yield* emit(info.code, e.sk);
-			for (const ex of e.examples) if (!ex.rejected) yield* emit(info.code, ex.sk);
+			yield* emit(info.code, entryLemma(e));
+			for (const ex of e.examples) if (!ex.rejected) yield* emit(info.code, exampleText(ex));
 		}
 	}
 	const active = LANGUAGES[ACTIVE_PROFILE].code;

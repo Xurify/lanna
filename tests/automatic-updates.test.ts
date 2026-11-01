@@ -77,6 +77,7 @@ function fixture({ packaged = true, updaterMissing = false } = {}) {
 		requestSingleInstanceLock: () => false,
 		quit() {},
 		whenReady: async () => {},
+		userAgentFallback: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) LearnHarness/0.3.7 Electron/44.0.0 Safari/537.36",
 	});
 	const electron = {
 		app, BrowserWindow: FakeWindow,

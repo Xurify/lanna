@@ -18,6 +18,7 @@ process.env.LH_DATA_DIR = TMP_DATA;
 
 const { PATHS } = await import("../config.ts");
 import type { UnitId } from "../src/core/lesson.ts";
+import { entryLemma } from "../src/core/review.ts";
 const ladder = await import("../src/core/placement-ladder.ts");
 const onboarding = await import("../src/core/onboarding.ts");
 const vocab = await import("../src/core/vocab-probe.ts");
@@ -150,7 +151,7 @@ test("the word check: bands scored with the false-alarm correction, pseudowords 
 	let seed = 5;
 	const rand = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 	const real = (w: string) => lexicon.byForm.has(w) || lexicon.byFolded.has(w) || lexicon.bySlug.has(w);
-	const ps = makePseudowords(lexicon.entries.slice(0, 2000).map((x) => x.sk), 8, rand, real);
+	const ps = makePseudowords(lexicon.entries.slice(0, 2000).map((x) => entryLemma(x)), 8, rand, real);
 	assert.equal(ps.length, 8);
 	for (const w of ps) {
 		assert.ok(!real(w), `${w} is a real word`);

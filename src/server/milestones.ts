@@ -55,7 +55,7 @@ import {
 	type TrendPoint,
 } from "../core/milestones.ts";
 import { grammarWord, tokenize } from "../core/reading.ts";
-import { dayKey, DEFAULT_REVIEW_SETTINGS, type LexiconEntry } from "../core/review.ts";
+import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
 import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
@@ -79,7 +79,7 @@ export function frequencyOrder(lexicon: Lexicon): string[] {
 	const counts = new Map<string, number>();
 	for (const e of lexicon.entries)
 		for (const ex of e.examples.filter((x) => !x.rejected))
-			for (const t of tokenize(ex.sk)) {
+			for (const t of tokenize(exampleText(ex))) {
 				if (!t.word || /^\p{N}+$/u.test(t.text)) continue;
 				const entry = resolveWord(lexicon, t.text, all, { stem: false });
 				if (entry) counts.set(entry.slug, (counts.get(entry.slug) ?? 0) + 1);
@@ -312,8 +312,8 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 			const e = lexicon.bySlug.get(slug) as LexiconEntry | undefined;
 			// Not vocabulary to learn: places, names and their adjectives
 			// (Ježišov), and the grammar words the dictionary happens to hold.
-			if (!e || e.cat === "Places" || grammarWord(e.sk) || e.sk.charAt(0) !== e.sk.charAt(0).toLocaleLowerCase("sk-SK")) continue;
-			nextWords.push({ slug, lemma: e.sk, gloss: e.en, cat: e.cat, rank: i + 1 });
+			if (!e || e.cat === "Places" || grammarWord(entryLemma(e)) || entryLemma(e).charAt(0) !== entryLemma(e).charAt(0).toLocaleLowerCase("sk-SK")) continue;
+			nextWords.push({ slug, lemma: entryLemma(e), gloss: e.en, cat: e.cat, rank: i + 1 });
 		}
 	}
 	const p = progressStore.read();

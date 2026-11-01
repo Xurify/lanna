@@ -68,7 +68,7 @@ import {
 	type StoryUsage,
 	type StoryWord,
 } from "../core/reading.ts";
-import { dayKey, type LexiconEntry } from "../core/review.ts";
+import { dayKey, entryLemma, type LexiconEntry } from "../core/review.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
@@ -220,7 +220,7 @@ function stems(lexicon: Lexicon): Map<string, Stemmed[]> {
 	if (idx) return idx;
 	idx = new Map();
 	for (const entry of lexicon.entries) {
-		const rawSk = entry.sk.toLocaleLowerCase(tag()).replace(/\s+s[ai]$/, "");
+		const rawSk = entryLemma(entry).toLocaleLowerCase(tag()).replace(/\s+s[ai]$/, "");
 		if (/\s/.test(rawSk)) continue; // multi-word phrases (other than reflexive verbs) are matched whole
 		const folded = foldDiacritics(rawSk);
 		for (const stem of stemsOf(folded, rawSk.endsWith("ť"))) {
@@ -248,7 +248,7 @@ function byStem(lexicon: Lexicon, lower: string, folded: string, known: Set<stri
 	// Longest stem (the most specific lemma) first; then the lemma whose
 	// letters WITH diacritics match furthest (chýba → chýbať, not chyba);
 	// then a known word; then the commoner one.
-	const score = (s: Stemmed) => [s.stem.length, sharedPrefix(lower, s.entry.sk.toLocaleLowerCase(tag())), known.has(s.entry.slug) ? 1 : 0, -(s.entry.rank ?? 1e9)];
+	const score = (s: Stemmed) => [s.stem.length, sharedPrefix(lower, entryLemma(s.entry).toLocaleLowerCase(tag())), known.has(s.entry.slug) ? 1 : 0, -(s.entry.rank ?? 1e9)];
 	let best: Stemmed | undefined;
 	let bestScore: number[] = [];
 	for (const s of candidates) {
@@ -289,7 +289,7 @@ export function resolveWord(lexicon: Lexicon, form: string, known: Set<string>, 
 			while (i < a.length && i < b.length && a[i] === b[i]) i++;
 			return i;
 		};
-		return shared(lower, stemmed.sk.toLocaleLowerCase(tag())) > shared(lower, loose.sk.toLocaleLowerCase(tag())) ? stemmed : loose;
+		return shared(lower, entryLemma(stemmed).toLocaleLowerCase(tag())) > shared(lower, entryLemma(loose).toLocaleLowerCase(tag())) ? stemmed : loose;
 	}
 	return loose ?? stemmed;
 }
@@ -533,7 +533,7 @@ function withKinds(questions: readonly StoryQuestion[], level: Cefr): StoryQuest
 export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, lexicon: Lexicon | null, usage: StoryUsage, drafts: number, now: Date, voices: ReadonlySet<string> | null = null): StoryRecord {
 	const newWords: StoryWord[] = d.newWords.map((w) => {
 		const entry = lexicon ? resolveWord(lexicon, w.sk, k.known) : undefined;
-		return entry ? { lemma: entry.sk, gloss: entry.en, slug: entry.slug } : { lemma: w.sk, gloss: w.en };
+		return entry ? { lemma: entryLemma(entry), gloss: entry.en, slug: entry.slug } : { lemma: w.sk, gloss: w.en };
 	});
 	const names = storyNames(d.sentences, lexicon);
 	const sentences = d.sentences.map((s) => ({ ...glossSentence(s.sk, s.en, lexicon, k.known, newWords, names), ...(s.who ? { who: s.who } : {}) }));

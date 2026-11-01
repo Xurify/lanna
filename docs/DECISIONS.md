@@ -107,7 +107,7 @@ Keys go in `.env` or environment variables, never in a thread. Each key only goe
 
 ### E6. Tests never touch the real profile (2026-10-28)
 
-A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. A few tests fail on main in the cloud regardless of changes (desktop payload trace, pi-ai package exports, one Pi loader test under Node 22); they are environment-bound, not regressions. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
+A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. The suite is green on Node 26, the version CI runs (2807 tests). Under Node 22 the pi-ai package-exports test in `tests/subscription-auth.test.ts` fails; that is environment-bound, not a regression. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
 
 ### E7. Local only, no sync (2026-10-26)
 
