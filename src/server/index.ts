@@ -77,3 +77,26 @@ export { isLanguageProfile, LANGUAGE_PROFILES, type LanguageProfile } from "../.
 export * from "./distractors.ts";
 export * from "./word-bank.ts";
 export { savedPhraseStore } from "../store/saved-phrases.ts";
+// Remote access (E21): the pairing and device-session API, for app/api/access and Settings.
+export { desktopWindowRequest } from "./desktop-access.ts";
+export {
+	DEVICE_COOKIE,
+	cleanDeviceName,
+	clearDeviceCookie,
+	deviceCookie,
+	deviceNameFromAgent,
+	formatCode,
+	listeningPort,
+	normalizeCode,
+	readCookie,
+	secureRequest,
+} from "./remote-access.ts";
+export {
+	accessStatus,
+	createPairingCode,
+	disableRemoteAccess,
+	enableRemoteAccess,
+	isPairedToken,
+	redeemPairingCode,
+	revokeDevice,
+} from "./remote-access-store.ts";

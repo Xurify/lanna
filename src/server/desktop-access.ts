@@ -6,8 +6,16 @@ export function desktopAPIAuthorized(
 	headers: Headers,
 	env: Record<string, string | undefined> = process.env,
 ): boolean {
+	if (env.LH_DESKTOP_SERVER !== "1" && !env.LH_DESKTOP_API_SECRET) return true;
+	return desktopWindowRequest(headers, env);
+}
+
+/** The packaged desktop window (E21): the per-launch secret matched, whatever LH_DESKTOP_SERVER says. Dev and browser runs have no secret, so no request is the window by this test. */
+export function desktopWindowRequest(
+	headers: Headers,
+	env: Record<string, string | undefined> = process.env,
+): boolean {
 	const expected = env.LH_DESKTOP_API_SECRET;
-	if (env.LH_DESKTOP_SERVER !== "1" && !expected) return true;
 	if (!expected || expected.length < 64) return false;
 	const supplied = headers.get("x-learnharness-desktop");
 	if (!supplied) return false;

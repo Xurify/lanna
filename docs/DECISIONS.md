@@ -235,8 +235,21 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Every tappable control is at least 44 px tall on touch (the Apple HIG minimum). The sidebar gets this from one rule in `app/globals.css` (`[data-sidebar]`); reader and lesson controls carry `pointer-coarse:min-h-11`. A word inside a sentence keeps its line height, because inline padding does not grow the line box, so its tap area is 39 px tall on a phone. Do not make it taller: the lines would move on touch.
 - Pad for the safe areas with `env(safe-area-inset-*)` on the shell, the bottom navigation and the drawer. `viewport-fit=cover` and `theme-color` come from `app/layout.tsx`.
 - Installable: `app/manifest.ts` (standalone, starts at `/`, the app's colours) and `app/apple-icon.png`, rendered from `build/mark.svg` by `scripts/make-pwa-icons.mjs`. `app/layout.tsx` sets `apple-mobile-web-app-capable` explicitly: Next 16 emits only the standard `mobile-web-app-capable`, and iOS reads the Apple name for a full-screen launch.
-- The server stays on `127.0.0.1` until a pairing step and HTTPS exist. Do not bind it to the network without authentication: it holds the keys and the learner's data.
+- The server stays on `127.0.0.1` in every mode. A phone reaches it only through Tailscale Serve, which connects from this computer, and only once remote access is on (E21). Do not bind it to the network: it holds the keys and the learner's data.
 - Browser storage holds only per-viewer conveniences. WebKit bug 237350 reports that iOS removes a Home Screen web app's storage after seven days unused, so progress belongs on the PC (E7).
+
+### E21. Remote access is off by default, and a phone pairs with a code (2026-11-01)
+
+**Why:** a phone or tablet has to reach the app without the server listening on the network. A LAN bind would send pairing codes and session cookies in clear text, and anyone on the same Wi-Fi could reach the pairing page. Tailscale Serve connects from this computer, so the server keeps its loopback bind and only signed-in tailnet devices can reach it. The options and sources are in [research/remote-access.md](research/remote-access.md); the owner's steps are in [remote-access.md](remote-access.md).
+
+**How to apply:**
+- Off is the default. `access.json` in the data root holds the switch, at most one pairing code and the paired devices; a missing file is off. While off, the app answers this computer only, and refuses any request that a proxy marked (`Forwarded`, `X-Real-IP`, a Tailscale identity header) or that names another host.
+- On: both names must be loopback or `*.ts.net`. The packaged desktop window (its per-launch secret) and a paired device pass. Anything else goes to `/pair` if it is a page, or gets `401 pairing_required` if it is the API. Public while on: `/pair`, its one POST, and the static assets.
+- Pairing: six digits, shown in Settings → Devices and typed on the phone within five minutes. Five wrong tries use the code up, and a new code replaces the old one. A paired device gets a random 180-day token in an HttpOnly, SameSite=Lax cookie (Secure over HTTPS); only its SHA-256 digest is stored. Signing out one device, or turning the switch off, takes effect on the next request.
+- Trust comes from the device cookie, never from a header. Tailscale identity headers do not grant access, because tagged devices and Funnel send none.
+- The app never runs Tailscale. The owner runs `tailscale serve --bg 3010` once. Funnel is not supported: it publishes the app to the internet.
+- Recovery: a corrupt `access.json` reads as on with no devices, so phones are refused until `npm run remote:off` writes it back to off, which also signs every device out.
+- Tests run on a scratch data folder (E6): `tests/remote-access.test.ts` covers the rules as pure functions; `tests/remote-access-store.test.ts` covers the file, codes and sessions.
 
 ## Working rules (how work reaches the repo)
 

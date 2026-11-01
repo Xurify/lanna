@@ -49,11 +49,13 @@ import {
 	KeyRoundIcon,
 	NetworkIcon,
 	PaletteIcon,
+	SmartphoneIcon,
 	SlidersHorizontalIcon,
 	SlidersIcon,
 	XIcon,
 } from "lucide-react";
 import { KeyboardSection } from "./keyboard-section.tsx";
+import { DevicesSection } from "./devices-section.tsx";
 import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
 import { ResetSection } from "./reset-section.tsx";
@@ -69,6 +71,7 @@ const SECTIONS = [
 	{ id: "appearance", label: "Appearance" },
 	{ id: "graph", label: "Skill map" },
 	{ id: "keyboard", label: "Keyboard" },
+	{ id: "devices", label: "Devices" },
 	{ id: "usage", label: "Spending" },
 	{ id: "general", label: "General" },
 	{ id: "data", label: "Data" },
@@ -82,6 +85,7 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	appearance: PaletteIcon,
 	graph: NetworkIcon,
 	keyboard: KeyboardIcon,
+	devices: SmartphoneIcon,
 	usage: CoinsIcon,
 	general: SlidersHorizontalIcon,
 	data: DatabaseIcon,
@@ -432,6 +436,15 @@ export function SettingsDialogBody({
 									testid="section-keyboard"
 								>
 									<KeyboardSection />
+								</SettingsSection>
+							)}
+							{active === "devices" && (
+								<SettingsSection
+									title="Devices"
+									hint="Use LangHarness on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
+									testid="section-devices"
+								>
+									<DevicesSection />
 								</SettingsSection>
 							)}
 							{active === "learner" && (
