@@ -9,7 +9,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { soundOn, volume } from "@/components/lesson/sound";
+import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
 import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 
 // ─── The active language (fetched once per page load) ──────────────────────
@@ -101,6 +101,12 @@ export function SpeedToggle({ className }: { className?: string }) {
 }
 
 // ─── Playing ───────────────────────────────────────────────────────────────
+
+/** The clip now playing and its loudness factor, so a volume change is heard at once. */
+let playing: { audio: HTMLAudioElement; gain: number } | null = null;
+subscribeSound(() => {
+	if (playing) playing.audio.volume = Math.min(1, volume() * playing.gain);
+});
 
 /** The sound now playing, with a way to stop it that also settles the promise
  *  its caller awaits. */
@@ -223,12 +229,13 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	const src = URL.createObjectURL(blob);
 	const audio = new Audio(src);
 	audio.preload = "auto";
-	audio.volume = volume() * gain;
+	audio.volume = Math.min(1, volume() * gain);
 	const base = Number(res.headers.get("x-tts-base-rate"));
 	audio.playbackRate = rate * (base > 0.5 && base < 2 ? base : 1);
 	await new Promise<void>((resolve) => {
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
+			if (playing?.audio === audio) playing = null;
 			URL.revokeObjectURL(src);
 			resolve();
 		};
@@ -238,6 +245,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 			finish();
 		};
 		stopCurrent = stop;
+		playing = { audio, gain };
 		audio.onended = finish;
 		audio.onerror = (err) => {
 			console.warn("[Speech] audio element error:", err);

@@ -13,7 +13,7 @@ The rules behind it are in [DECISIONS.md, E21](DECISIONS.md) and the research in
 ## Set it up (about five minutes)
 
 1. Start LangHarness on this PC with `bun run desktop:dev`. It listens on port 3010.
-2. In LangHarness, open **Settings → Phone & tablet** and turn on **Remote access**. This window is signed in automatically, as "This computer".
+2. In LangHarness, open **Settings → Devices** and turn on **Remote access**. This window is signed in automatically, as "This computer".
 3. In a terminal on this PC (PowerShell on Windows), run the command Settings shows:
 
    ```
@@ -22,7 +22,7 @@ The rules behind it are in [DECISIONS.md, E21](DECISIONS.md) and the research in
 
    `--bg` keeps it running after the terminal closes. Without it, Serve stays in the foreground. Check it with `tailscale serve status`, which prints your `https://` address. If your Tailscale version rejects `--bg`, run `tailscale serve --help` and use the form it lists.
 4. On the phone, open that `https://` address in Safari. The app sends you to **Pair this device**.
-5. On the PC, in **Settings → Phone & tablet**, choose **Make a code**. Type the six digits on the phone within five minutes, and give the device a name such as "iPhone".
+5. On the PC, in **Settings → Devices**, choose **Make a code**. Type the six digits on the phone within five minutes, and give the device a name such as "iPhone".
 6. On the iPhone or iPad, tap Share, then **Add to Home Screen**, and open LangHarness from its icon.
 
 ## Day to day
@@ -31,7 +31,7 @@ Nothing to do. The app works while this PC is awake, LangHarness is running, and
 
 ## Sign a device out, or turn everything off
 
-- **One device:** Settings → Phone & tablet, then **Sign out** beside it.
+- **One device:** Settings → Devices, then **Sign out** beside it.
 - **Everything:** turn **Remote access** off. Every device is signed out, and the app answers this PC only again. To stop Serve too, run `tailscale serve reset`.
 
 ## If every device is locked out
@@ -42,12 +42,12 @@ Run this in the project folder on this PC:
 npm run remote:off
 ```
 
-It turns remote access off and signs every paired device out. It does not touch anything else. Turn remote access on again from Settings → Phone & tablet.
+It turns remote access off and signs every paired device out. It does not touch anything else. Turn remote access on again from Settings → Devices.
 
 ## Troubleshooting
 
 - **"This computer's browser asks for a code."** It should never. Open http://localhost:3010 on the PC. A tailnet address goes through Serve, and that one asks for a code.
-- **"Remote access is off" on the phone.** Serve is running, but the switch in Settings → Phone & tablet is off. Turn it on.
+- **"Remote access is off" on the phone.** Serve is running, but the switch in Settings → Devices is off. Turn it on.
 - **"This address is not allowed."** The phone used an address other than your tailnet name. Use the `https://` address from `tailscale serve status`.
 - **"That code has expired."** A code lasts five minutes and works once. Make a new one.
 - **The Home Screen icon asks for a code again.** iOS may keep a Home Screen app's cookies apart from Safari's. This is not verified. Pair from the Home Screen icon if it asks.

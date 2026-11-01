@@ -6,7 +6,9 @@
 
 import { useEffect, useState } from "react";
 import { SPEEDS, setSpeed, useSpeed } from "@/components/speech";
-import { setSoundOn, setVolume, sfx, soundOn, volume, VOLUMES } from "@/components/lesson/sound";
+import { setSoundOn, setVolume, sfx, soundOn } from "@/components/lesson/sound";
+import { useSound } from "@/components/sound-control";
+import { Slider } from "@/components/ui/slider";
 import { SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 
 export type WordTranslationMode = "dictionary" | "hybrid" | "google";
@@ -104,24 +106,17 @@ export function PlaybackSpeedRow() {
 }
 
 export function VolumeRow() {
-	const [level, setLevel] = useState(() => volume());
+	const { level } = useSound();
 	return (
 		<SettingsRow
 			label="Volume"
 			hint="Spoken audio and lesson sounds, on top of your system volume. Saved on this device."
 			testid="row-volume"
 		>
-			<SettingsSegmented
-				options={VOLUMES.map((v): { value: number; label: string } => ({ value: v, label: `${v * 100}%` }))}
-				value={level}
-				onChange={(next) => {
-					setVolume(next);
-					setLevel(next);
-					sfx.tap();
-				}}
-				ariaLabel="Volume"
-				testid="volume"
-			/>
+			<div className="flex w-56 shrink-0 items-center gap-3">
+				<Slider value={level} onChange={setVolume} onCommit={() => sfx.tap()} label="Volume" className="flex-1" testid="volume" />
+				<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">{Math.round(level * 100)}%</span>
+			</div>
 		</SettingsRow>
 	);
 }

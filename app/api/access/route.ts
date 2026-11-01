@@ -1,5 +1,5 @@
 /**
- * GET /api/access: the remote-access state for Settings → Phone & tablet (E21).
+ * GET /api/access: the remote-access state for Settings → Devices (E21).
  * PUT turns it on or off. Turning it on hands the window that asked a session
  * as "This computer", so the computer that switched it on is not locked out of
  * its own app. Turning it off signs every device out.

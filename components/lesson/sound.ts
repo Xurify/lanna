@@ -10,7 +10,14 @@
 
 const KEY = "lh-sound";
 const VOLUME_KEY = "lh-volume";
-export const VOLUMES = [0.25, 0.5, 0.75, 1] as const;
+const listeners = new Set<() => void>();
+const changed = () => listeners.forEach((l) => l());
+
+/** For useSyncExternalStore: a change to the sound switch or the volume, from any page or control. */
+export function subscribeSound(cb: () => void): () => void {
+	listeners.add(cb);
+	return () => void listeners.delete(cb);
+}
 let ctx: AudioContext | null = null;
 
 export function soundOn(): boolean {
@@ -27,23 +34,28 @@ export function setSoundOn(on: boolean): void {
 	} catch {
 		// not remembered
 	}
+	changed();
 }
 
+/** 0 to 1, on top of the system volume. A missing or broken value reads as full. */
 export function volume(): number {
 	try {
-		const v = Number(localStorage.getItem(VOLUME_KEY));
-		return (VOLUMES as readonly number[]).includes(v) ? v : 1;
+		const raw = localStorage.getItem(VOLUME_KEY);
+		const v = raw === null ? 1 : Number(raw);
+		return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1;
 	} catch {
 		return 1;
 	}
 }
 
 export function setVolume(v: number): void {
+	const clamped = Math.round(Math.min(1, Math.max(0, v)) * 100) / 100;
 	try {
-		localStorage.setItem(VOLUME_KEY, String(v));
+		localStorage.setItem(VOLUME_KEY, String(clamped));
 	} catch {
 		// not remembered
 	}
+	changed();
 }
 
 function audio(): AudioContext | null {
@@ -58,7 +70,8 @@ function audio(): AudioContext | null {
 }
 
 function tone(freq: number, start: number, dur: number, type: OscillatorType = "sine", gain = 0.08) {
-	const a = audio();
+	const level = volume();
+	const a = level > 0 ? audio() : null;
 	if (!a) return;
 	const t = a.currentTime + start;
 	const osc = a.createOscillator();
@@ -66,7 +79,7 @@ function tone(freq: number, start: number, dur: number, type: OscillatorType = "
 	osc.type = type;
 	osc.frequency.setValueAtTime(freq, t);
 	g.gain.setValueAtTime(0, t);
-	g.gain.linearRampToValueAtTime(gain * volume(), t + 0.012);
+	g.gain.linearRampToValueAtTime(gain * level, t + 0.012);
 	g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 	osc.connect(g).connect(a.destination);
 	osc.start(t);

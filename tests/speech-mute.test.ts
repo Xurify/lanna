@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { setSoundOn, setVolume } from "../components/lesson/sound.ts";
+import { setSoundOn, setVolume, volume } from "../components/lesson/sound.ts";
 import { setSpeed, slowRate, speak, stopSpeaking } from "../components/speech.tsx";
 
 // The sound switch is one switch for every page: when it is off, nothing
@@ -143,4 +143,23 @@ test("the volume setting reaches the spoken clip", async () => {
 	void speak("Ahoj");
 	await waitFor(() => made.length === 1);
 	assert.equal(made[0]!.volume, 0.5);
+});
+
+test("a volume change reaches the clip that is already playing", async () => {
+	setSoundOn(true);
+	setVolume(1);
+	void speak("Ahoj");
+	await waitFor(() => made.length === 1);
+	setVolume(0.3);
+	assert.equal(made[0]!.volume, 0.3);
+	stopSpeaking();
+});
+
+test("volume stays between 0 and 1, and a broken value reads as full", () => {
+	setVolume(7);
+	assert.equal(volume(), 1);
+	setVolume(-1);
+	assert.equal(volume(), 0);
+	store.set("lh-volume", "loud");
+	assert.equal(volume(), 1);
 });

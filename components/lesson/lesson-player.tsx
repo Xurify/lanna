@@ -28,7 +28,6 @@ import {
 	TimerIcon,
 	TrophyIcon,
 	Volume2Icon,
-	VolumeXIcon,
 	WholeWordIcon,
 	XIcon,
 	ZapIcon,
@@ -38,7 +37,8 @@ import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
 import { prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
+import { sfx } from "@/components/lesson/sound";
+import { SoundControl } from "@/components/sound-control";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import {
@@ -183,7 +183,6 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 	const [saveFailed, setSaveFailed] = useState(false);
 	// The lesson whose save the end screen is waiting on (a new lesson clears it).
 	const pendingId = useRef<string | null>(null);
-	const [sound, setSound] = useState(true);
 	const [left, setLeft] = useState(BLITZ_SECONDS);
 	const [shake, setShake] = useState(0);
 	// The first wrong answer on this rep: the learner gets a hint and one
@@ -271,7 +270,6 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		router.push("/");
 	}, [forget, router]);
 
-	useEffect(() => setSound(soundOn()), []);
 
 	// Only the latest request may land: a slower earlier response must
 	// never replace the plan on screen.
@@ -544,14 +542,6 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		return () => window.removeEventListener("keydown", onKey, true);
 	}, [leaving]);
 
-	const toggleSound = () => {
-		const next = !sound;
-		setSoundOn(next);
-		setSound(next);
-		// Turning sound off silences a sentence that is already playing.
-		if (!next) stopSpeaking();
-	};
-
 	if (error) {
 		return (
 			<Frame>
@@ -645,14 +635,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 								</span>
 							)}
 						</div>
-						<button
-							type="button"
-							onClick={toggleSound}
-							aria-label={sound ? "Mute sound and speech" : "Turn sound and speech on"}
-							className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-						>
-							{sound ? <Volume2Icon className="size-5" /> : <VolumeXIcon className="size-5" />}
-						</button>
+						<SoundControl className="-mr-1.5" />
 					</div>
 				</div>
 

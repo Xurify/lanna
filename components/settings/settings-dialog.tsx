@@ -74,7 +74,7 @@ const SECTIONS = [
 	{ id: "appearance", label: "Appearance" },
 	{ id: "keyboard", label: "Keyboard" },
 	{ id: "graph", label: "Skill map" },
-	{ id: "devices", label: "Phone & tablet" },
+	{ id: "devices", label: "Devices" },
 	{ id: "ai", label: "AI models", divider: true },
 	{ id: "keys", label: "API keys" },
 	{ id: "usage", label: "Spending" },
@@ -463,7 +463,7 @@ export function SettingsDialogBody({
 							)}
 							{active === "devices" && (
 								<SettingsSection
-									title="Phone & tablet"
+									title="Devices"
 									hint="Use LangHarness on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
 									testid="section-devices"
 								>

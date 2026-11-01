@@ -36,7 +36,7 @@ import { chatStore } from "../store/chats.ts";
 import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { keyValue } from "./keys.ts";
-import { WIKI_BASE_RATE, wikiClip } from "./wiki-audio.ts";
+import { wikiClip } from "./wiki-audio.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
 
@@ -69,9 +69,30 @@ export interface TtsClip {
 	file: string;
 	contentType: string;
 	tier: TtsTier | "cache" | "wiki";
-	/** Playback rate that restores the voice's natural pace (wiki clips were
-	 *  recorded at 0.88×); the client multiplies the speed button by it. */
+	/** Playback rate that brings the clip to a normal speaking pace (see
+	 *  paceRate); the client multiplies the speed button by it. */
 	baseRate?: number;
+}
+
+/** Syllables a second at rate 1, the median over the Slovak clips kept in
+ *  data/audio (measured 2026-11-01 on speech from the first to the last
+ *  sound, pauses between words included). slovak.wiki records slowly (0.88×)
+ *  for learners and Edge reads slowly too; ElevenLabs is nearer a native pace. */
+const PACE: Record<string, number> = { wiki: 4.55, "slovak-wiki": 4.55, edge: 4.55, elevenlabs: 5 };
+/** The same, for story-character voices (an ElevenLabs id, or Edge by gender). */
+const PACE_CHARACTER = 5.7;
+/** A normal conversational pace. The owner heard 1× as slow and 1.25× as
+ *  normal; 1.25 × the old wiki rate is 6.5, so 6 sits just under it. */
+const PACE_TARGET = 6;
+
+/** The playback rate that makes a clip sound like a normal speaker, whichever
+ *  voice made it. Only measured for Slovak; other languages and unknown
+ *  sources play as recorded. */
+export function paceRate(lang: string, tier: string, voice: string | undefined): number {
+	if (lang !== "sk") return 1;
+	const gendered = voice === undefined || voice === "female" || voice === "male";
+	const pace = gendered ? PACE[tier] : tier === "elevenlabs" || tier === "edge" ? PACE_CHARACTER : undefined;
+	return pace ? Math.round((PACE_TARGET / pace) * 1000) / 1000 : 1;
 }
 
 export const TTS_MAX_CHARS = 600;
@@ -141,11 +162,11 @@ export function migrateAudioOnce(): { moved: number; matched: number } | null {
 	}
 }
 
-function cached(key: string): TtsClip | null {
+function cached(key: string, lang: string): TtsClip | null {
 	const hit = findAudioClip(key);
 	if (!hit) return null;
 	const ext = hit.file.endsWith(".wav") ? "wav" : "mp3";
-	return { file: hit.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache" };
+	return { file: hit.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache", baseRate: paceRate(lang, hit.tier, hit.voice) };
 }
 
 function envFor(name: string, code: string): string | undefined {
@@ -249,10 +270,10 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	// slovak.wiki's own recording beats any clip made here, for the default voice.
 	if (lang.code === "sk" && (req.voice === undefined || req.voice === "female")) {
 		const wiki = await wikiClip("slovak", lang.code, req.text);
-		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki", baseRate: WIKI_BASE_RATE };
+		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki", baseRate: paceRate(lang.code, "wiki", req.voice) };
 	}
 	const key = ttsCacheKey(req);
-	const hit = cached(key);
+	const hit = cached(key, lang.code);
 	if (hit) return hit;
 	for (const { tier, ext, run } of TIERS) {
 		if (req.skip?.includes(tier)) continue;
@@ -260,7 +281,7 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 			const audio = await run(req, lang);
 			if (audio && audio.length > 0) {
 				const stored = storeAudioClip({ key, lang: lang.code, voice: req.voice ?? "female", tier, text: req.text, ext, data: audio });
-				return { file: stored.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier };
+				return { file: stored.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier, baseRate: paceRate(lang.code, tier, req.voice) };
 			}
 		} catch (err) {
 			console.warn(`[tts] ${tier} failed, falling through:`, err instanceof Error ? err.message : err);

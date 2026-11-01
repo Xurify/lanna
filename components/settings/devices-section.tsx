@@ -1,6 +1,6 @@
 "use client";
 /**
- * Settings → Phone & tablet (E21): the remote-access switch, the pairing code, and the
+ * Settings → Devices (E21): the remote-access switch, the pairing code, and the
  * devices that may open LangHarness. Off by default. While the switch is off,
  * nothing on this screen changes what the computer does. Turning it off signs
  * every device out, so the confirmation names that first.

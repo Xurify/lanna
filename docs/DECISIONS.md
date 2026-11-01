@@ -256,9 +256,11 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 **Why:** The owner looked for a volume control and found playback speed under Tutor, next to the AI models. A learner does not know what "Tutor" or "Keys" means in settings, and the dialog opened on API keys. Three error lines also sent people to "Settings → Models", a section that did not exist.
 
 **How to apply:**
-- The nav reads General, Learning, Sound, Appearance, Keyboard, Skill map, Phone & tablet, then a divider, then AI models, API keys, Spending, Data. Settings opens on General. Setup links still open API keys directly.
+- The nav reads General, Learning, Sound, Appearance, Keyboard, Skill map, Devices, then a divider, then AI models, API keys, Spending, Data. Settings opens on General. Setup links still open API keys directly.
 - Sound holds volume, playback speed and lesson sounds. Quiz style is under Learning. AI models holds only the models, tools, long chats and prompts, the settings that need an API key. "Tutor" is a feature name (Ask the tutor), not a settings name: nothing under Sound, Learning or Appearance needs a key.
 - A setting goes where a learner would look for it, not where its value is stored: quiz style is saved with the tutor's tools but shown under Learning.
+- Volume is a slider, not steps, and the speaker button in a lesson or Review opens it on hover, focus, right-click or long press; a click still mutes. Moving it while muted turns sound back on.
+- 1× plays at a normal speaking pace (6 syllables a second). Each source has a measured pace in `src/server/tts.ts` (`paceRate`): slovak.wiki and Edge 4.55, ElevenLabs 5.0, measured on the clips kept in `data/audio`. The owner heard the wiki clips at 1× as slow (they are recorded at 0.88× for learners, and slovak.wiki itself plays them as recorded).
 - Every "Settings → …" line in the app names a section that exists. The stored settings key stays `agent` (and `/api/settings/agent`) so saved data and the API do not change; only the dialog's own section id became `ai`.
 
 ## Working rules (how work reaches the repo)
