@@ -36,25 +36,45 @@ describe("CountryFlag & langToCountryCode", () => {
 
 		assert.equal(langToCountryCode("estonian"), "EE");
 		assert.equal(langToCountryCode("et"), "EE");
+
+		// Non-latin languages from user's "More languages" dialog
+		assert.equal(langToCountryCode("arabic"), "SA");
+		assert.equal(langToCountryCode("ar"), "SA");
+		assert.equal(langToCountryCode("hebrew"), "IL");
+		assert.equal(langToCountryCode("he"), "IL");
+		assert.equal(langToCountryCode("hindi"), "IN");
+		assert.equal(langToCountryCode("hi"), "IN");
+		assert.equal(langToCountryCode("korean"), "KR");
+		assert.equal(langToCountryCode("ko"), "KR");
+		assert.equal(langToCountryCode("vietnamese"), "VN");
+		assert.equal(langToCountryCode("vi"), "VN");
+		assert.equal(langToCountryCode("thai"), "TH");
+		assert.equal(langToCountryCode("th"), "TH");
 	});
 
 	it("renders crisp SVG flag with country code dataset and role=img", () => {
-		const slovakMarkup = renderToStaticMarkup(<CountryFlag lang="slovak" className="w-4.5 h-3.5" />);
+		const slovakMarkup = renderToStaticMarkup(<CountryFlag lang="slovak" className="w-[21px] h-[14px]" />);
 		assert.ok(slovakMarkup.includes('data-country-code="SK"'));
 		assert.ok(slovakMarkup.includes('role="img"'));
 		assert.ok(slovakMarkup.includes("<svg"));
-		assert.ok(slovakMarkup.includes("#0b4ea2")); // Slovak blue
+		assert.ok(slovakMarkup.includes("#0052B4")); // Slovak blue
 
-		const russianMarkup = renderToStaticMarkup(<CountryFlag lang="russian" className="w-4.5 h-3.5" />);
+		const russianMarkup = renderToStaticMarkup(<CountryFlag lang="russian" className="w-[21px] h-[14px]" />);
 		assert.ok(russianMarkup.includes('data-country-code="RU"'));
 		assert.ok(russianMarkup.includes('role="img"'));
 		assert.ok(russianMarkup.includes("<svg"));
 		assert.ok(russianMarkup.includes("#0039a6")); // Russian blue
+
+		// Arabic renders SA SVG flag, not a text badge
+		const arabicMarkup = renderToStaticMarkup(<CountryFlag lang="arabic" />);
+		assert.ok(arabicMarkup.includes('data-country-code="SA"'));
+		assert.ok(arabicMarkup.includes("<svg"));
+		assert.ok(!arabicMarkup.includes(">SA<"));
 	});
 
 	it("respects direct code prop over lang prop", () => {
 		const markup = renderToStaticMarkup(<CountryFlag lang="slovak" code="DE" />);
 		assert.ok(markup.includes('data-country-code="DE"'));
-		assert.ok(markup.includes("#ffce00")); // German gold
+		assert.ok(markup.includes("#FFDA44")); // German gold
 	});
 });

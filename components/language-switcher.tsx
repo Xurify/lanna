@@ -146,7 +146,7 @@ export function LanguageSwitcher() {
 						)}
 					>
 						<div className="flex min-w-0 items-center gap-2 truncate">
-							<CountryFlag lang={activeProfile?.id ?? "slovak"} className="w-5 h-[15px]" />
+							<CountryFlag lang={activeProfile?.id ?? "slovak"} />
 							<span className="truncate">{activeProfile?.endonym ?? "Language"}</span>
 							{activeProfile && (
 								<span className="truncate text-[11px] font-normal text-muted-foreground">
@@ -198,7 +198,7 @@ export function LanguageSwitcher() {
 											)}
 										>
 											<div className="flex min-w-0 items-center gap-2 truncate">
-												<CountryFlag lang={p.id} className="w-5 h-[15px]" />
+												<CountryFlag lang={p.id} />
 												<span className="truncate font-semibold">{p.endonym}</span>
 												<span className="truncate text-[11px] text-muted-foreground">({p.english})</span>
 											</div>
@@ -239,7 +239,7 @@ export function LanguageSwitcher() {
 					>
 						<div className="flex items-center gap-3">
 							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/40">
-								<CountryFlag lang={pending.id} className="w-8 h-6 rounded-[3px]" />
+								<CountryFlag lang={pending.id} className="w-[30px] h-[20px] rounded-[4px]" />
 							</div>
 							<div className="min-w-0 flex-1">
 								<h3 id="switch-dialog-title" className="text-sm font-bold text-foreground">
