@@ -47,6 +47,7 @@ import {
 	formSlip,
 	genderLabel,
 	gradeListen,
+	isVariantMatch,
 	LESSONS_TO_COMPLETE,
 	lessonScore,
 	repXp,
@@ -113,6 +114,8 @@ interface Rep {
 	/** Right with help: on the second try after the cue, or with the
 	 *  meaning shown early. Earns half (a priced hint). */
 	assisted?: boolean;
+	/** Right with a recognized valid variant (e.g. zas ↔ zase). */
+	variant?: boolean;
 	/** The answer before any cue: what the first-try measure counts. */
 	first?: FirstAnswer;
 	latencyMs?: number;
@@ -427,8 +430,9 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 			setShake((s) => s + 1);
 			return;
 		}
+		const isVariant = verdict === "exact" && isVariantMatch(item.answer, given, tag, item.alternatives);
 		const assisted = mode === "lesson" && (miss !== null || peeked) && verdict !== "wrong";
-		const rep: Rep = { item, given, verdict, assisted, ...(first ? { first } : {}), latencyMs };
+		const rep: Rep = { item, given, verdict, assisted, ...(isVariant ? { variant: true } : {}), ...(first ? { first } : {}), latencyMs };
 		const nextCombo = verdict === "wrong" ? 0 : combo + 1;
 		const gained = repXp(item.kind, verdict, nextCombo, assisted);
 		setCombo(nextCombo);
@@ -981,12 +985,12 @@ function ClozeRep({
 
 	const submit = () => {
 		if (locked || !given.trim()) return;
-		onGrade(given, listen ? gradeListen(item, given, tag) : compareAnswer(item.answer, given, tag));
+		onGrade(given, listen ? gradeListen(item, given, tag) : compareAnswer(item.answer, given, tag, item.alternatives));
 	};
 
 	/** An option's verdict: a form against the answer, a meaning against
 	 *  the translation. */
-	const judge = (o: string): RepVerdict => (meaning ? (o === item.translation ? "exact" : "wrong") : compareAnswer(item.answer, o, tag));
+	const judge = (o: string): RepVerdict => (meaning ? (o === item.translation ? "exact" : "wrong") : compareAnswer(item.answer, o, tag, item.alternatives));
 
 	// 1–4 pick an option (not during a typed retry).
 	useEffect(() => {
@@ -1411,6 +1415,13 @@ function FeedbackSheet({
 								</p>
 							)}
 							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}
+						</div>
+					)}
+					{verdict === "exact" && rep.variant && (
+						<div className="rounded-xl border border-go/40 bg-go-soft/40 px-4 py-2.5 font-prose text-base" data-testid="variant-accepted">
+							<span className="font-semibold text-go">Also accepted: “{given}”</span>
+							<span className="text-muted-foreground"> · This sentence uses </span>
+							<b className="font-semibold text-foreground" lang="sk">{item.answer}</b>.
 						</div>
 					)}
 					{verdict === "exact" && item.kind !== "build" && (

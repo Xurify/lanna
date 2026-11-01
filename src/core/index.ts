@@ -84,6 +84,7 @@ export * from "./session-markdown.ts";
 // LangHarness: target languages + answer comparison, the FSRS scheduler,
 // and the cloze review model (all pure, browser-safe).
 export * from "./language.ts";
+export * from "./variants.ts";
 export * from "./fsrs.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
