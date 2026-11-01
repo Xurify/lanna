@@ -34,17 +34,33 @@ Errors are counts out of 56 auto-graded items. "Rejected correct" is the subset 
 | Sonnet high | 1 | 1 | 0 (1 doubtful line) | $0.133 |
 | Sonnet high + skill | **0** | 0 | **0** | $0.139 |
 
-**Not measured:** Haiku and Sonnet at `max`, and Sonnet `xhigh`. The key reached its spending limit while those runs were in flight ("You have reached your specified API usage limits. You will regain access on 2026-12-01"). Their partial costs are not in the table.
+**The first round hit the key's limit.** The `max` runs were in flight when the key reached its spending limit ("You have reached your specified API usage limits"), and the script then recorded cost only at the end of a config, so their partial cost is unknown. After the owner raised the limit, a second round ran with the script recording cost per call and stopping at `EVAL_BUDGET_USD=2`. It stopped at $2.30: calls already in flight carried it past the cap.
+
+| Config (second round) | Errors /56 | Rejected correct | Cost (56 items) | Seconds per answer |
+|---|---|---|---|---|
+| Haiku max | 0 | 0 | $0.077 | 12.6 |
+| Haiku max + skill | 0 | 0 | $0.093 | 12.1 |
+| Sonnet max | 0 | 0 | $0.669 | 9.4 |
+| Sonnet max + skill | 0 of 43 asked (stopped at the budget) | 0 | $0.845 | 9.4 |
 
 ## Results: hard set (3 runs each)
 
-| Config | Real errors /51 | What |
+| Config | Errors /51 | What |
 |---|---|---|
 | Haiku medium | 1 | accepted *Išiel som s sestrou* |
 | Haiku medium + skill | 3 | accepted *s sestrou* all three times, with the rule `so sestrou` in its context |
 | Haiku high | 1 | accepted *s sestrou* once |
+| Haiku high + skill | 3 | accepted *s sestrou* all three times |
+| Haiku xhigh | 2 | accepted *Páči mi sa ten film*; "three dogs" as *traja psi* |
+| Haiku xhigh + skill | 3 | accepted *s sestrou* twice; *tri psi* |
+| Haiku max | 3 | accepted *s sestrou* twice and *Páči mi sa* |
+| Haiku max + skill | 1 | *tri psi* |
+| Sonnet high | 1 | *traja psi* |
+| **Sonnet high + skill** | **0** | — |
 
-Haiku's other hard-set "misses" were the grader's fault: it corrected *k doktor* to *k lekárovi* and named *doktorovi*, which is right. The other levels and Sonnet did not run before the limit.
+Seconds per answer on the hard set: Haiku xhigh about 3.5, Haiku max about 13, Sonnet high about 2.5–2.9.
+
+The hard set's *k doktor* item was graded too strictly in the first round: Haiku corrected it to *k lekárovi* and named *doktorovi*, which is right. The key now accepts both. *tri psi* is counted wrong because the skill gives *psy*; the lexicon lists *psi* among the unverified forms of *pes*, so that one is the least certain miss.
 
 ## What the errors were
 
@@ -83,8 +99,10 @@ The model is not the main lever. The best configs measured (Haiku xhigh + skill,
    Run the checker on the tutor's corrections and on generated stories.
 2. **Never mark a learner's sentence wrong on the model's word alone.** If it matches a curated lexicon example, it is right. Otherwise, the correction must point at a form `lookup_word` confirms, or the tutor says it is unsure. Rejecting correct Slovak was the commonest misleading error.
 3. **Put the skill's production pass and "verify instead of guessing" into the Slovak prompt fragment** (`src/agent/prompts/language/10-slovak.md`). Give the tutor the unit's reference: by static routing per curriculum unit, or a `slovak_reference` tool beside `lookup_word`.
-4. **Model choice for the tutor (Strong slot):**
-   - Sonnet high + skill, or Haiku xhigh + skill at about one tenth of the price.
+4. **Model choice for the tutor (Strong slot): Sonnet high + skill.**
+   - It was the only config with no error on either set: 0 of 107 graded answers, all explanations right. It cost about $0.003–0.005 per answer here, at 2.5 s.
+   - Haiku xhigh + skill, at about a tenth of the price, was clean on the base set but missed 3 of 51 on the hard set. The checker now catches the two *s sestrou* misses; it cannot catch animal plurals (*tri psi*).
+   - `max` is not worth it. Haiku max is 4× slower than xhigh for no gain on the hard set. Sonnet max matched Sonnet high on the base set at about five times the cost.
    - Not Haiku medium without the skill: it got every explanation wrong.
    - Not Sonnet low or medium: it rejects correct sentences.
    - Keep Haiku with thinking off for stories (Cheap slot), with the checker from point 1.

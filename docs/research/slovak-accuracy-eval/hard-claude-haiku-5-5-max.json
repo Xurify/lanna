@@ -1,0 +1,785 @@
+{
+	"summary": {
+		"config": "hard-claude-haiku-5-5-max",
+		"graded": 51,
+		"errors": 3,
+		"rejectedCorrect": 0,
+		"cost": 0.0801,
+		"avgSeconds": 14.2,
+		"avgReasoning": 2874,
+		"notAsked": 0
+	},
+	"results": [
+		{
+			"id": "h-ok-pacisami",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Páči sa mi to.\", \"why\": \"The verb 'páčiť sa' takes the liked thing as its subject and the person in the dative ('mi'), so this standard sentence means 'I like it.'\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Páči sa mi to.",
+				"why": "The verb 'páčiť sa' takes the liked thing as its subject and the person in the dative ('mi'), so this standard sentence means 'I like it.'"
+			},
+			"pass": true,
+			"cost": 0.0013281,
+			"output": 2623,
+			"reasoning": 2541,
+			"ms": 12875
+		},
+		{
+			"id": "h-ok-dal-som-mu-ho",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Dal som mu ho včera.\", \"why\": \"Standard Slovak puts the dative clitic mu before the accusative clitic ho, and včera can stand at the end of the sentence.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Dal som mu ho včera.",
+				"why": "Standard Slovak puts the dative clitic mu before the accusative clitic ho, and včera can stand at the end of the sentence."
+			},
+			"pass": true,
+			"cost": 0.0022018,
+			"output": 4370,
+			"reasoning": 4295,
+			"ms": 20490
+		},
+		{
+			"id": "h-ok-vynarali",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Pri čítaní sa mi vynárali nové otázky.\", \"why\": \"The locative 'čítaní' after 'pri', the reflexive 'vynárať sa' with dative 'mi', and the plural past 'vynárali' agreeing with 'otázky' are all standard.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Pri čítaní sa mi vynárali nové otázky.",
+				"why": "The locative 'čítaní' after 'pri', the reflexive 'vynárať sa' with dative 'mi', and the plural past 'vynárali' agreeing with 'otázky' are all standard."
+			},
+			"pass": true,
+			"cost": 0.0014228,
+			"output": 2810,
+			"reasoning": 2702,
+			"ms": 14417
+		},
+		{
+			"id": "h-ok-dvoch-chlapcov",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Videl som tam dvoch chlapcov.\", \"why\": \"Both 'videl som' (past tense) and 'dvoch chlapcov' (accusative of 'dvaja' with masculine animate nouns) are correct here.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Videl som tam dvoch chlapcov.",
+				"why": "Both 'videl som' (past tense) and 'dvoch chlapcov' (accusative of 'dvaja' with masculine animate nouns) are correct here."
+			},
+			"pass": true,
+			"cost": 0.0009058,
+			"output": 1777,
+			"reasoning": 1687,
+			"ms": 9271
+		},
+		{
+			"id": "h-ok-so-susedmi",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Stretli sme sa so susedmi.\", \"why\": \"Both the reflexive past tense stretli sme sa and the instrumental plural so susedmi (from sused) are standard.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Stretli sme sa so susedmi.",
+				"why": "Both the reflexive past tense stretli sme sa and the instrumental plural so susedmi (from sused) are standard."
+			},
+			"pass": true,
+			"cost": 0.0029590999999999997,
+			"output": 5884,
+			"reasoning": 5810,
+			"ms": 26493
+		},
+		{
+			"id": "h-ok-bojim-sa-psov",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Bojím sa psov.\", \"why\": \"The verb báť sa (to be afraid of) takes the genitive, and the genitive plural of pes (dog) is psov.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Bojím sa psov.",
+				"why": "The verb báť sa (to be afraid of) takes the genitive, and the genitive plural of pes (dog) is psov."
+			},
+			"pass": true,
+			"cost": 0.0004801,
+			"output": 927,
+			"reasoning": 857,
+			"ms": 4261
+		},
+		{
+			"id": "h-err-paci-mi-sa",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Páči sa mi ten film.\", \"why\": \"In standard Slovak the reflexive 'sa' comes before the dative 'mi' ('Páči sa mi'), so 'Páči mi sa' is a non-standard order.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Páči sa mi ten film.",
+				"why": "In standard Slovak the reflexive 'sa' comes before the dative 'mi' ('Páči sa mi'), so 'Páči mi sa' is a non-standard order."
+			},
+			"pass": true,
+			"cost": 0.006121799999999999,
+			"output": 12210,
+			"reasoning": 12120,
+			"ms": 57553
+		},
+		{
+			"id": "h-err-chlapci-unavene",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Chlapci boli unavení.\", \"why\": \"'Chlapci' is a masculine animate plural noun, so the adjective needs the -í ending (unavení), not -é.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Chlapci boli unavení.",
+				"why": "'Chlapci' is a masculine animate plural noun, so the adjective needs the -í ending (unavení), not -é."
+			},
+			"pass": true,
+			"cost": 0.0006827999999999999,
+			"output": 1332,
+			"reasoning": 1260,
+			"ms": 6907
+		},
+		{
+			"id": "h-err-s-sestrou",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Išiel som so sestrou do mesta.\", \"why\": \"The preposition s changes to so before words beginning with s, such as sestrou.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Išiel som so sestrou do mesta.",
+				"why": "The preposition s changes to so before words beginning with s, such as sestrou."
+			},
+			"pass": true,
+			"cost": 0.0022392000000000002,
+			"output": 4444,
+			"reasoning": 4383,
+			"ms": 21403
+		},
+		{
+			"id": "h-err-dva-chlapci",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Videl som dvoch chlapcov.\", \"why\": \"Masculine people take dvaja (not dva), which becomes dvoch as a direct object, and the noun then takes the genitive plural chlapcov.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Videl som dvoch chlapcov.",
+				"why": "Masculine people take dvaja (not dva), which becomes dvoch as a direct object, and the noun then takes the genitive plural chlapcov."
+			},
+			"pass": true,
+			"cost": 0.0024492999999999997,
+			"output": 4865,
+			"reasoning": 4782,
+			"ms": 21807
+		},
+		{
+			"id": "h-err-k-doktor",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Musím ísť k doktorovi.\", \"why\": \"The preposition 'k' takes the dative case, so 'doktor' must change to 'doktorovi'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Musím ísť k doktorovi.",
+				"why": "The preposition 'k' takes the dative case, so 'doktor' must change to 'doktorovi'."
+			},
+			"pass": true,
+			"cost": 0.0006207999999999999,
+			"output": 1208,
+			"reasoning": 1140,
+			"ms": 5710
+		},
+		{
+			"id": "h-tr-dvoch-chlapcov",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Videl som dvoch chlapcov. (Som muž.)\"}",
+			"out": {
+				"slovak": "Videl som dvoch chlapcov. (Som muž.)"
+			},
+			"pass": true,
+			"cost": 0.0007494,
+			"output": 1473,
+			"reasoning": 1441,
+			"ms": 6744
+		},
+		{
+			"id": "h-tr-psov",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Bojím sa psov.\"}",
+			"out": {
+				"slovak": "Bojím sa psov."
+			},
+			"pass": true,
+			"cost": 0.00037899999999999994,
+			"output": 733,
+			"reasoning": 714,
+			"ms": 4970
+		},
+		{
+			"id": "h-tr-chlapci-unaveni",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Chlapci boli unavení.\"}",
+			"out": {
+				"slovak": "Chlapci boli unavení."
+			},
+			"pass": true,
+			"cost": 0.0002687,
+			"output": 513,
+			"reasoning": 492,
+			"ms": 2949
+		},
+		{
+			"id": "h-tr-so-susedmi",
+			"kind": "translate",
+			"text": "{\"slovak\": \"so susedmi\"}",
+			"out": {
+				"slovak": "so susedmi"
+			},
+			"pass": true,
+			"cost": 0.0012716,
+			"output": 2519,
+			"reasoning": 2503,
+			"ms": 13677
+		},
+		{
+			"id": "h-tr-tri-psy",
+			"kind": "translate",
+			"text": "{\"slovak\": \"tri psy\"}",
+			"out": {
+				"slovak": "tri psy"
+			},
+			"pass": true,
+			"cost": 0.0008214,
+			"output": 1619,
+			"reasoning": 1604,
+			"ms": 8325
+		},
+		{
+			"id": "h-tr-zo-skoly",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Idem domov zo školy.\"}",
+			"out": {
+				"slovak": "Idem domov zo školy."
+			},
+			"pass": true,
+			"cost": 0.0005433,
+			"output": 1062,
+			"reasoning": 1042,
+			"ms": 6057
+		},
+		{
+			"id": "h-explain-clitics",
+			"kind": "explain",
+			"text": "{\"text\": \"In Slovak, short words like 'sa' and 'mi' follow a fixed order, and 'sa' always comes before 'mi' (for example: 'Zdá sa mi,' meaning 'It seems to me'). 'Sa' belongs to the verb 'páčiť sa' (to like), and 'mi' means 'to me.' So 'Páči sa mi to' means 'I like it.'\"}",
+			"out": {
+				"text": "In Slovak, short words like 'sa' and 'mi' follow a fixed order, and 'sa' always comes before 'mi' (for example: 'Zdá sa mi,' meaning 'It seems to me'). 'Sa' belongs to the verb 'páčiť sa' (to like), and 'mi' means 'to me.' So 'Páči sa mi to' means 'I like it.'"
+			},
+			"pass": null,
+			"cost": 0.0037945,
+			"output": 7560,
+			"reasoning": 7421,
+			"ms": 34845
+		},
+		{
+			"id": "h-ok-pacisami",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Páči sa mi to.\", \"why\": \"The verb páčiť sa takes the liked thing ('to') as its subject and the person who likes it in the dative ('mi'), so the sentence is correct standard Slovak.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Páči sa mi to.",
+				"why": "The verb páčiť sa takes the liked thing ('to') as its subject and the person who likes it in the dative ('mi'), so the sentence is correct standard Slovak."
+			},
+			"pass": true,
+			"cost": 0.0007480999999999999,
+			"output": 1463,
+			"reasoning": 1377,
+			"ms": 7428
+		},
+		{
+			"id": "h-ok-dal-som-mu-ho",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Dal som mu ho včera.\", \"why\": \"The dative clitic 'mu' correctly precedes the accusative clitic 'ho', and the verb-first word order is grammatical.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Dal som mu ho včera.",
+				"why": "The dative clitic 'mu' correctly precedes the accusative clitic 'ho', and the verb-first word order is grammatical."
+			},
+			"pass": true,
+			"cost": 0.0019062999999999999,
+			"output": 3779,
+			"reasoning": 3704,
+			"ms": 18808
+		},
+		{
+			"id": "h-ok-vynarali",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Pri čítaní sa mi vynárali nové otázky.\", \"why\": \"The reflexive verb 'vynárať sa' with dative 'mi', the clitic order 'sa mi', and the plural past 'vynárali' agreeing with 'otázky' are all standard.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Pri čítaní sa mi vynárali nové otázky.",
+				"why": "The reflexive verb 'vynárať sa' with dative 'mi', the clitic order 'sa mi', and the plural past 'vynárali' agreeing with 'otázky' are all standard."
+			},
+			"pass": true,
+			"cost": 0.0026683,
+			"output": 5301,
+			"reasoning": 5195,
+			"ms": 24762
+		},
+		{
+			"id": "h-ok-dvoch-chlapcov",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Videl som tam dvoch chlapcov.\", \"why\": \"Dvoch and chlapcov are the correct accusative forms for 'two boys' (masculine animate), so nothing needs changing.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Videl som tam dvoch chlapcov.",
+				"why": "Dvoch and chlapcov are the correct accusative forms for 'two boys' (masculine animate), so nothing needs changing."
+			},
+			"pass": true,
+			"cost": 0.0012858,
+			"output": 2537,
+			"reasoning": 2457,
+			"ms": 12655
+		},
+		{
+			"id": "h-ok-so-susedmi",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Stretli sme sa so susedmi.\", \"why\": \"The reciprocal verb 'stretnúť sa' takes 'so' with the instrumental plural 'susedmi' (from 'sused'), and 'sme sa' is standard word order.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Stretli sme sa so susedmi.",
+				"why": "The reciprocal verb 'stretnúť sa' takes 'so' with the instrumental plural 'susedmi' (from 'sused'), and 'sme sa' is standard word order."
+			},
+			"pass": true,
+			"cost": 0.0017016,
+			"output": 3369,
+			"reasoning": 3273,
+			"ms": 16172
+		},
+		{
+			"id": "h-ok-bojim-sa-psov",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Bojím sa psov.\", \"why\": \"The verb 'báť sa' takes the genitive, and the genitive plural of 'pes' (dog) is 'psov'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Bojím sa psov.",
+				"why": "The verb 'báť sa' takes the genitive, and the genitive plural of 'pes' (dog) is 'psov'."
+			},
+			"pass": true,
+			"cost": 0.0005690999999999999,
+			"output": 1105,
+			"reasoning": 1034,
+			"ms": 5920
+		},
+		{
+			"id": "h-err-paci-mi-sa",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Páči sa mi ten film.\", \"why\": \"In standard Slovak the reflexive 'sa' comes before the dative 'mi' (páči sa mi), so the order here is reversed.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Páči sa mi ten film.",
+				"why": "In standard Slovak the reflexive 'sa' comes before the dative 'mi' (páči sa mi), so the order here is reversed."
+			},
+			"pass": true,
+			"cost": 0.0049608,
+			"output": 9888,
+			"reasoning": 9811,
+			"ms": 46418
+		},
+		{
+			"id": "h-err-chlapci-unavene",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Chlapci boli unavení.\", \"why\": \"The adjective must agree with the masculine animate plural subject 'chlapci', so it takes the ending -í ('unavení') rather than -é ('unavené').\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Chlapci boli unavení.",
+				"why": "The adjective must agree with the masculine animate plural subject 'chlapci', so it takes the ending -í ('unavení') rather than -é ('unavené')."
+			},
+			"pass": true,
+			"cost": 0.0007482999999999999,
+			"output": 1463,
+			"reasoning": 1379,
+			"ms": 7128
+		},
+		{
+			"id": "h-err-s-sestrou",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Išiel som s sestrou do mesta.\", \"why\": \"The sentence is grammatically correct: 'išiel som' fits a masculine speaker, 's' takes the instrumental 'sestrou', and 'do' takes the genitive 'mesta'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Išiel som s sestrou do mesta.",
+				"why": "The sentence is grammatically correct: 'išiel som' fits a masculine speaker, 's' takes the instrumental 'sestrou', and 'do' takes the genitive 'mesta'."
+			},
+			"pass": false,
+			"miss": "accepted a wrong sentence",
+			"cost": 0.0008217,
+			"output": 1609,
+			"reasoning": 1509,
+			"ms": 9024
+		},
+		{
+			"id": "h-err-dva-chlapci",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Videl som dvoch chlapcov.\", \"why\": \"The object of 'videl' must be accusative, and for masculine animate nouns that is 'dvoch chlapcov', not the nominative 'dva chlapci'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Videl som dvoch chlapcov.",
+				"why": "The object of 'videl' must be accusative, and for masculine animate nouns that is 'dvoch chlapcov', not the nominative 'dva chlapci'."
+			},
+			"pass": true,
+			"cost": 0.0011518,
+			"output": 2270,
+			"reasoning": 2182,
+			"ms": 10759
+		},
+		{
+			"id": "h-err-k-doktor",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Musím ísť k doktorovi.\", \"why\": \"The preposition 'k' (to) takes the dative case, so 'doktor' becomes 'doktorovi'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Musím ísť k doktorovi.",
+				"why": "The preposition 'k' (to) takes the dative case, so 'doktor' becomes 'doktorovi'."
+			},
+			"pass": true,
+			"cost": 0.0005528,
+			"output": 1072,
+			"reasoning": 1001,
+			"ms": 7731
+		},
+		{
+			"id": "h-tr-dvoch-chlapcov",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Videl som dvoch chlapcov. (Som muž.)\"}",
+			"out": {
+				"slovak": "Videl som dvoch chlapcov. (Som muž.)"
+			},
+			"pass": true,
+			"cost": 0.0011779,
+			"output": 2330,
+			"reasoning": 2298,
+			"ms": 11089
+		},
+		{
+			"id": "h-tr-psov",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Bojím sa psov.\"}",
+			"out": {
+				"slovak": "Bojím sa psov."
+			},
+			"pass": true,
+			"cost": 0.00032999999999999994,
+			"output": 635,
+			"reasoning": 616,
+			"ms": 3973
+		},
+		{
+			"id": "h-tr-chlapci-unaveni",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Chlapci boli unavení.\"}",
+			"out": {
+				"slovak": "Chlapci boli unavení."
+			},
+			"pass": true,
+			"cost": 0.0003207,
+			"output": 617,
+			"reasoning": 596,
+			"ms": 3561
+		},
+		{
+			"id": "h-tr-so-susedmi",
+			"kind": "translate",
+			"text": "{\"slovak\": \"so susedmi\"}",
+			"out": {
+				"slovak": "so susedmi"
+			},
+			"pass": true,
+			"cost": 0.0004741,
+			"output": 924,
+			"reasoning": 908,
+			"ms": 5447
+		},
+		{
+			"id": "h-tr-tri-psy",
+			"kind": "translate",
+			"text": "{\"slovak\": \"tri psy\"}",
+			"out": {
+				"slovak": "tri psy"
+			},
+			"pass": true,
+			"cost": 0.0016723999999999999,
+			"output": 3321,
+			"reasoning": 3306,
+			"ms": 16265
+		},
+		{
+			"id": "h-tr-zo-skoly",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Idem domov zo školy.\"}",
+			"out": {
+				"slovak": "Idem domov zo školy."
+			},
+			"pass": true,
+			"cost": 0.0005748,
+			"output": 1125,
+			"reasoning": 1105,
+			"ms": 6039
+		},
+		{
+			"id": "h-explain-clitics",
+			"kind": "explain",
+			"text": "{\"text\": \"In Slovak, short words like 'sa' and 'mi' must go in a set order, and 'sa' always comes before 'mi'. 'Sa' is part of the verb 'páčiť sa' (to like), and 'mi' means 'to me'. So just remember the order: 'Páči sa mi', with sa first, then mi.\"}",
+			"out": {
+				"text": "In Slovak, short words like 'sa' and 'mi' must go in a set order, and 'sa' always comes before 'mi'. 'Sa' is part of the verb 'páčiť sa' (to like), and 'mi' means 'to me'. So just remember the order: 'Páči sa mi', with sa first, then mi."
+			},
+			"pass": null,
+			"cost": 0.002857,
+			"output": 5685,
+			"reasoning": 5570,
+			"ms": 26737
+		},
+		{
+			"id": "h-ok-pacisami",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Páči sa mi to.\", \"why\": \"'Páčiť sa' agrees with its subject 'to' (singular, neuter), and 'mi' marks the person who likes it, so the sentence correctly means 'I like it.'\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Páči sa mi to.",
+				"why": "'Páčiť sa' agrees with its subject 'to' (singular, neuter), and 'mi' marks the person who likes it, so the sentence correctly means 'I like it.'"
+			},
+			"pass": true,
+			"cost": 0.0008556,
+			"output": 1678,
+			"reasoning": 1588,
+			"ms": 8562
+		},
+		{
+			"id": "h-ok-dal-som-mu-ho",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Dal som mu ho včera.\", \"why\": \"This is standard Slovak: 'Dal som' is the correct past tense, and the clitics 'mu ho' follow the required dative-before-accusative order.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Dal som mu ho včera.",
+				"why": "This is standard Slovak: 'Dal som' is the correct past tense, and the clitics 'mu ho' follow the required dative-before-accusative order."
+			},
+			"pass": true,
+			"cost": 0.0012938,
+			"output": 2554,
+			"reasoning": 2472,
+			"ms": 12694
+		},
+		{
+			"id": "h-ok-vynarali",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Pri čítaní sa mi vynárali nové otázky.\", \"why\": \"The verb 'vynárať sa' is used with a dative 'mi', and the plural subject 'otázky' agrees with 'vynárali' and 'nové'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Pri čítaní sa mi vynárali nové otázky.",
+				"why": "The verb 'vynárať sa' is used with a dative 'mi', and the plural subject 'otázky' agrees with 'vynárali' and 'nové'."
+			},
+			"pass": true,
+			"cost": 0.0023353,
+			"output": 4635,
+			"reasoning": 4540,
+			"ms": 21648
+		},
+		{
+			"id": "h-ok-dvoch-chlapcov",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Videl som tam dvoch chlapcov.\", \"why\": \"'Dvoch' and 'chlapcov' are the right accusative forms for two animate masculine nouns, since animate masculine accusative plurals match the genitive.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Videl som tam dvoch chlapcov.",
+				"why": "'Dvoch' and 'chlapcov' are the right accusative forms for two animate masculine nouns, since animate masculine accusative plurals match the genitive."
+			},
+			"pass": true,
+			"cost": 0.0009653,
+			"output": 1896,
+			"reasoning": 1806,
+			"ms": 8650
+		},
+		{
+			"id": "h-ok-so-susedmi",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Stretli sme sa so susedmi.\", \"why\": \"The past tense 'stretli sme sa' is standard, and 'stretnúť sa' takes 'so' plus the instrumental plural 'susedmi'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Stretli sme sa so susedmi.",
+				"why": "The past tense 'stretli sme sa' is standard, and 'stretnúť sa' takes 'so' plus the instrumental plural 'susedmi'."
+			},
+			"pass": true,
+			"cost": 0.0044266,
+			"output": 8819,
+			"reasoning": 8732,
+			"ms": 40073
+		},
+		{
+			"id": "h-ok-bojim-sa-psov",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Bojím sa psov.\", \"why\": \"The verb báť sa takes the genitive, and the genitive plural of pes (dog) is psov.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Bojím sa psov.",
+				"why": "The verb báť sa takes the genitive, and the genitive plural of pes (dog) is psov."
+			},
+			"pass": true,
+			"cost": 0.0005275999999999999,
+			"output": 1022,
+			"reasoning": 960,
+			"ms": 5545
+		},
+		{
+			"id": "h-err-paci-mi-sa",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Páči mi sa ten film.\", \"why\": \"This is grammatical and clear, though the more common word order is 'Páči sa mi ten film,' and both are acceptable.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Páči mi sa ten film.",
+				"why": "This is grammatical and clear, though the more common word order is 'Páči sa mi ten film,' and both are acceptable."
+			},
+			"pass": false,
+			"miss": "accepted a wrong sentence",
+			"cost": 0.0031688,
+			"output": 6304,
+			"reasoning": 6233,
+			"ms": 30635
+		},
+		{
+			"id": "h-err-chlapci-unavene",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Chlapci boli unavení.\", \"why\": \"Chlapci is a masculine animate plural noun, so the adjective must end in -í (unavení), not -é.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Chlapci boli unavení.",
+				"why": "Chlapci is a masculine animate plural noun, so the adjective must end in -í (unavení), not -é."
+			},
+			"pass": true,
+			"cost": 0.0007047999999999999,
+			"output": 1376,
+			"reasoning": 1308,
+			"ms": 6940
+		},
+		{
+			"id": "h-err-s-sestrou",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Išiel som s sestrou do mesta.\", \"why\": \"Everything is right: 'išiel som' fits a male speaker (a woman says 'išla som'), 's sestrou' takes the instrumental, and 'do mesta' takes the genitive.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Išiel som s sestrou do mesta.",
+				"why": "Everything is right: 'išiel som' fits a male speaker (a woman says 'išla som'), 's sestrou' takes the instrumental, and 'do mesta' takes the genitive."
+			},
+			"pass": false,
+			"miss": "accepted a wrong sentence",
+			"cost": 0.0008127,
+			"output": 1591,
+			"reasoning": 1493,
+			"ms": 7809
+		},
+		{
+			"id": "h-err-dva-chlapci",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Videl som dvoch chlapcov.\", \"why\": \"The verb 'vidieť' takes the accusative, so masculine people become 'dvoch chlapcov', not 'dva chlapci'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Videl som dvoch chlapcov.",
+				"why": "The verb 'vidieť' takes the accusative, so masculine people become 'dvoch chlapcov', not 'dva chlapci'."
+			},
+			"pass": true,
+			"cost": 0.0034617999999999997,
+			"output": 6890,
+			"reasoning": 6809,
+			"ms": 29753
+		},
+		{
+			"id": "h-err-k-doktor",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Musím ísť k doktorovi.\", \"why\": \"The preposition k takes the dative case, so doktor must change to doktorovi.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Musím ísť k doktorovi.",
+				"why": "The preposition k takes the dative case, so doktor must change to doktorovi."
+			},
+			"pass": true,
+			"cost": 0.0005888,
+			"output": 1144,
+			"reasoning": 1085,
+			"ms": 5770
+		},
+		{
+			"id": "h-tr-dvoch-chlapcov",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Videl som dvoch chlapcov. (Som muž.)\"}",
+			"out": {
+				"slovak": "Videl som dvoch chlapcov. (Som muž.)"
+			},
+			"pass": true,
+			"cost": 0.0009678999999999999,
+			"output": 1910,
+			"reasoning": 1878,
+			"ms": 8865
+		},
+		{
+			"id": "h-tr-psov",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Bojím sa psov.\"}",
+			"out": {
+				"slovak": "Bojím sa psov."
+			},
+			"pass": true,
+			"cost": 0.000494,
+			"output": 963,
+			"reasoning": 944,
+			"ms": 6662
+		},
+		{
+			"id": "h-tr-chlapci-unaveni",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Chlapci boli unavení.\"}",
+			"out": {
+				"slovak": "Chlapci boli unavení."
+			},
+			"pass": true,
+			"cost": 0.0002237,
+			"output": 423,
+			"reasoning": 402,
+			"ms": 2997
+		},
+		{
+			"id": "h-tr-so-susedmi",
+			"kind": "translate",
+			"text": "{\"slovak\": \"so susedmi\"}",
+			"out": {
+				"slovak": "so susedmi"
+			},
+			"pass": true,
+			"cost": 0.0003841,
+			"output": 744,
+			"reasoning": 728,
+			"ms": 4445
+		},
+		{
+			"id": "h-tr-tri-psy",
+			"kind": "translate",
+			"text": "{\"slovak\": \"tri psy\"}",
+			"out": {
+				"slovak": "tri psy"
+			},
+			"pass": true,
+			"cost": 0.0023179,
+			"output": 4612,
+			"reasoning": 4597,
+			"ms": 22083
+		},
+		{
+			"id": "h-tr-zo-skoly",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Idem domov zo školy.\"}",
+			"out": {
+				"slovak": "Idem domov zo školy."
+			},
+			"pass": true,
+			"cost": 0.0004638,
+			"output": 903,
+			"reasoning": 883,
+			"ms": 6000
+		},
+		{
+			"id": "h-explain-clitics",
+			"kind": "explain",
+			"text": "{\"text\": \"In Slovak, short words like 'sa' and 'mi' follow a fixed order: 'sa' comes before 'mi'. 'Sa' is part of the verb 'páčiť sa' (to like), while 'mi' means 'to me'. Just memorize the pattern: Páči sa mi to means 'I like it.'\"}",
+			"out": {
+				"text": "In Slovak, short words like 'sa' and 'mi' follow a fixed order: 'sa' comes before 'mi'. 'Sa' is part of the verb 'páčiť sa' (to like), while 'mi' means 'to me'. Just memorize the pattern: Páči sa mi to means 'I like it.'"
+			},
+			"pass": null,
+			"cost": 0.002388,
+			"output": 4747,
+			"reasoning": 4632,
+			"ms": 21311
+		}
+	]
+}
