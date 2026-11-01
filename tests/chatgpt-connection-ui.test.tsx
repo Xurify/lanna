@@ -83,7 +83,7 @@ test("Keys has exactly five ordered sections (LangHarness adds Speech); unknown 
  };
  fixture(); await mount(<KeysSection />);
  const headings = [...document.querySelectorAll('[data-testid^="group-"] > p')].map((el) => el.textContent);
- assert.deepEqual(headings, ["Model API keys", "Subscriptions", "Speech", "Dictation", "Web search"]);
+ assert.deepEqual(headings, ["Model API keys", "Subscriptions", "Speech (TTS)", "Dictation (STT)", "Web search"]);
  assert(byTest("key-elevenlabs_api_key").closest('[data-testid="group-speech"]'));
  assert(byTest("key-deepgram_api_key").closest('[data-testid="group-dictation"]'));
  assert(byTest("key-tavily_api_key").closest('[data-testid="group-search"]'));

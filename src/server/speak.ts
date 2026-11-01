@@ -186,7 +186,7 @@ async function ask(engine: PiEngine, systemPrompt: string, prompt: string, usage
 
 // ─── Speech-to-text ─────────────────────────────────────────────────────────
 
-export type SttEngine = "elevenlabs" | "deepgram";
+export type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
 /** Which speech-to-text engine a line would go to; null when neither key
  *  is set (the screen then takes typing only). */
@@ -197,6 +197,7 @@ const sttScript = () => (process.env.NODE_ENV !== "production" ? process.env.LH_
 export function sttEngine(): SttEngine | null {
 	if (sttScript()) return "elevenlabs";
 	if (keyValue("ELEVENLABS_API_KEY")) return "elevenlabs";
+	if (keyValue("GROQ_API_KEY")) return "groq";
 	if (keyValue("DEEPGRAM_API_KEY")) return "deepgram";
 	return null;
 }
@@ -210,9 +211,24 @@ const ISO3: Record<string, string> = { sk: "slk", ru: "rus" };
  *  Throws when the engine refuses; returns "" for silence. */
 export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ text: string; engine: SttEngine }> {
 	const engine = sttEngine();
-	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs or Deepgram key in Settings → Keys, or type your line.");
+	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs, Groq, or Deepgram key in Settings → Keys, or type your line.");
 	if (audio.byteLength === 0) return { text: "", engine };
 	if (sttScript()) return { text: sttScript()!, engine };
+	if (engine === "groq") {
+		const form = new FormData();
+		form.set("model", "whisper-large-v3-turbo");
+		form.set("language", lang);
+		form.set("response_format", "json");
+		form.set("file", new Blob([audio as BlobPart], { type: "audio/wav" }), "line.wav");
+		const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+			method: "POST",
+			headers: { Authorization: `Bearer ${keyValue("GROQ_API_KEY")!}` },
+			body: form,
+		});
+		if (!res.ok) throw new Error(`Groq Whisper speech-to-text failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+		const data = (await res.json()) as { text?: string };
+		return { text: (data.text ?? "").trim(), engine };
+	}
 	if (engine === "elevenlabs") {
 		const form = new FormData();
 		form.set("model_id", "scribe_v2");

@@ -27,6 +27,8 @@ import {
 	type GraphSettings,
 	type UserSettings,
 } from "@/src/core";
+import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { useAppearance } from "./appearance.tsx";
 import { SettingsGroup, SettingsSection } from "./controls.tsx";
 import { LessonSoundsRow, WordLookupModeRow } from "./device-prefs.tsx";
@@ -38,6 +40,19 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 import { KeysSection } from "./keys-section.tsx";
 import { Hint } from "@/components/ui/hint";
 import { AppearanceSection, GraphSection } from "./appearance-section.tsx";
+import {
+	BotIcon,
+	CoinsIcon,
+	DatabaseIcon,
+	GraduationCapIcon,
+	KeyboardIcon,
+	KeyRoundIcon,
+	NetworkIcon,
+	PaletteIcon,
+	SlidersHorizontalIcon,
+	SlidersIcon,
+	XIcon,
+} from "lucide-react";
 import { KeyboardSection } from "./keyboard-section.tsx";
 import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
@@ -59,6 +74,18 @@ const SECTIONS = [
 	{ id: "data", label: "Data" },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
+
+const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
+	keys: KeyRoundIcon,
+	agent: BotIcon,
+	learner: GraduationCapIcon,
+	appearance: PaletteIcon,
+	graph: NetworkIcon,
+	keyboard: KeyboardIcon,
+	usage: CoinsIcon,
+	general: SlidersHorizontalIcon,
+	data: DatabaseIcon,
+};
 
 /** `open(section?, row?)`. `row` is the key id (the env-var name) to unfold in Keys. */
 const DialogContext = createContext<{ open: (section?: string, row?: string) => void }>({ open: () => {} });
@@ -104,17 +131,14 @@ function SettingsDialog({
 	/** Keys row to unfold on open. */
 	initialRow: string | null;
 }) {
-	const backdropDismiss = useBackdropDismiss(onClose);
-	// Plain dim backdrop, no blur. A backdrop click closes; the dialog body stops propagation.
-	return createPortal(
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
-			data-testid="settings-backdrop"
-			{...backdropDismiss}
-		>
-			<SettingsDialogBody onClose={onClose} initialSection={initialSection} initialRow={initialRow} />
-		</div>,
-		document.body,
+	return (
+		<Dialog open={true} onClose={onClose}>
+			<DialogPortal>
+				<DialogOverlay data-testid="settings-backdrop">
+					<SettingsDialogBody onClose={onClose} initialSection={initialSection} initialRow={initialRow} />
+				</DialogOverlay>
+			</DialogPortal>
+		</Dialog>
 	);
 }
 
@@ -234,59 +258,64 @@ export function SettingsDialogBody({
 			aria-modal="true"
 			aria-label="Settings"
 			data-testid="settings-dialog"
-			className="settings-dialog-pop flex h-[620px] max-h-[85vh] w-[920px] max-w-[90vw] flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl"
+			className="flex h-[640px] max-h-[85vh] w-[940px] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-2xl animate-in zoom-in-95 duration-150"
 			onClick={(e) => e.stopPropagation()}
 		>
-			<header className="flex h-15 shrink-0 items-center gap-3 border-b border-border px-5">
-				<h2 className="font-title text-2xl tracking-tight">Settings</h2>
-				<Hint
-						// Shows the Escape shortcut.
-						label="Close"
-						binding="escape"
-						side="left"
-					>
-						<button
+			<header className="flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-muted/20 px-6">
+				<div className="flex items-center gap-3">
+					<div className="flex size-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+						<SlidersIcon className="size-5" />
+					</div>
+					<div>
+						<h2 className="font-ui text-base font-bold tracking-tight text-foreground">Settings</h2>
+						<p className="text-xs text-muted-foreground">Manage your workspace preferences, models, and tools</p>
+					</div>
+				</div>
+				<button
 					type="button"
 					aria-label="Close settings"
 					data-testid="settings-close"
-					className="ml-auto size-7 rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					onClick={onClose}
 				>
-					<svg
-						viewBox="0 0 16 16"
-						className="mx-auto size-3.5"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="1.5"
-					>
-						<path d="M4 4l8 8M12 4l-8 8" />
-					</svg>
+					<XIcon className="size-4" />
 				</button>
-					</Hint>
 			</header>
 
 			<div className="flex min-h-0 flex-1">
 				<nav
 					aria-label="Settings sections"
 					data-testid="settings-nav"
-					className="flex w-44 shrink-0 flex-col gap-1 border-r border-border p-2"
+					className="flex w-48 shrink-0 flex-col gap-1 border-r border-border/60 bg-muted/10 p-3"
 				>
-					{SECTIONS.map((s) => (
-						<button
-							key={s.id}
-							type="button"
-							data-testid={`settings-nav-${s.id}`}
-							aria-current={active === s.id}
-							className={`rounded-sm px-3 py-1.5 text-left font-ui text-sm transition-colors ${
-								active === s.id
-									? "bg-accent text-foreground"
-									: "text-muted-foreground hover:bg-accent hover:text-foreground"
-							}`}
-							onClick={() => setActive(s.id)}
-						>
-							{s.label}
-						</button>
-					))}
+					{SECTIONS.map((s) => {
+						const Icon = SECTION_ICONS[s.id];
+						return (
+							<button
+								key={s.id}
+								type="button"
+								data-testid={`settings-nav-${s.id}`}
+								aria-current={active === s.id}
+								className={cn(
+									"flex items-center gap-2.5 rounded-xl px-3 py-2 text-left font-ui text-sm transition-all",
+									active === s.id
+										? "border border-border/60 bg-accent/80 font-medium text-foreground shadow-2xs"
+										: "border border-transparent text-muted-foreground hover:bg-accent/30 hover:text-foreground",
+								)}
+								onClick={() => setActive(s.id)}
+							>
+								{Icon && (
+									<Icon
+										className={cn(
+											"size-4 shrink-0 transition-colors",
+											active === s.id ? "text-foreground" : "text-muted-foreground",
+										)}
+									/>
+								)}
+								{s.label}
+							</button>
+						);
+					})}
 				</nav>
 
 				{/* Content column: one section at a time. Scroll locks while a MenuShell is open. */}
@@ -317,6 +346,7 @@ export function SettingsDialogBody({
 							{active === "general" && (
 								<SettingsSection
 									title="General"
+									hint="App updates, sound effects, and translation preferences."
 									testid="section-general"
 								>
 									<SettingsGroup label="Updates" testid="group-updates">
@@ -336,13 +366,18 @@ export function SettingsDialogBody({
 								</SettingsSection>
 							)}
 							{active === "keys" && (
-								<SettingsSection title="Keys" testid="section-keys">
+								<SettingsSection
+									title="Keys"
+									hint="Manage API keys and external model subscriptions."
+									testid="section-keys"
+								>
 									<KeysSection initialRow={initialRow ?? undefined} />
 								</SettingsSection>
 							)}
 							{active === "agent" && (
 								<SettingsSection
 									title="Tutor"
+									hint="Model routing, specialized tools, and system prompt customization."
 									testid="section-agent"
 								>
 									<AgentSection
@@ -365,6 +400,7 @@ export function SettingsDialogBody({
 							{active === "appearance" && (
 								<SettingsSection
 									title="Appearance"
+									hint="Theme, typography, and reading interface customization."
 									testid="section-appearance"
 								>
 									<AppearanceSection
@@ -378,6 +414,7 @@ export function SettingsDialogBody({
 							{active === "graph" && (
 								<SettingsSection
 									title="Skill map"
+									hint="Knowledge graph extraction and concept exploration settings."
 									testid="section-graph"
 								>
 									<GraphSection

@@ -18,6 +18,7 @@ import { SubscriptionConnections } from "./subscription-connections.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
+import { ProviderIcon } from "./provider-icons.tsx";
 
 /** Which settings group a service key sits in (LangHarness adds Speech). */
 function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Web search" {
@@ -102,6 +103,7 @@ function KeyTableRow({
 	onDelete,
 	onCancel,
 	testid,
+	providerId,
 }: {
 	label: string;
 	/** The "Get a key ↗" target — curated keys carry one. */
@@ -114,6 +116,7 @@ function KeyTableRow({
 	/** Folds the editor. Cancel sits beside Save, so the way out stays visible. */
 	onCancel: () => void;
 	testid: string;
+	providerId?: string;
 }) {
 	const envOwned = status.source === "env";
 	const [value, setValue] = useState("");
@@ -140,8 +143,11 @@ function KeyTableRow({
 	if (expanded && !envOwned) {
 		return (
 			<div data-testid={testid}>
-				<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`${testid}-editor`}>
-					<span className="shrink-0 font-ui text-xs text-foreground">{label}</span>
+				<div className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-accent/25 p-2.5" data-testid={`${testid}-editor`}>
+					<span className="flex shrink-0 items-center gap-2 font-ui text-xs font-semibold text-foreground">
+						<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
+						{label}
+					</span>
 					<input
 						type={reveal ? "text" : "password"}
 						value={value}
@@ -156,7 +162,7 @@ function KeyTableRow({
 						data-testid={`${testid}-input`}
 						disabled={busy}
 						autoFocus
-						className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-muted-foreground/50"
+						className="h-8.5 min-w-0 flex-1 rounded-lg border border-border/80 bg-background/80 px-2.5 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
 					/>
 					<button
 						type="button"
@@ -165,7 +171,7 @@ function KeyTableRow({
 						aria-label={`${reveal ? "Hide" : "Show"} ${label} key`}
 						data-testid={`${testid}-reveal`}
 						disabled={busy}
-						className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						className="shrink-0 cursor-pointer rounded-lg px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					>
 						{reveal ? "Hide" : "Show"}
 					</button>
@@ -174,7 +180,7 @@ function KeyTableRow({
 						onClick={() => void save()}
 						disabled={busy || !value.trim()}
 						data-testid={`${testid}-save`}
-						className="shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
+						className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-2xs transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						Save
 					</button>
@@ -186,7 +192,7 @@ function KeyTableRow({
 						}}
 						disabled={busy}
 						data-testid={`${testid}-cancel`}
-						className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						className="shrink-0 cursor-pointer rounded-lg px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					>
 						Cancel
 					</button>
@@ -196,7 +202,7 @@ function KeyTableRow({
 							onClick={() => setConfirmDelete(true)}
 							disabled={busy}
 							data-testid={`${testid}-delete`}
-							className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-miss hover:underline"
+							className="shrink-0 cursor-pointer rounded-lg px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-miss"
 						>
 							Delete
 						</button>
@@ -212,14 +218,14 @@ function KeyTableRow({
 								}}
 								disabled={busy}
 								data-testid={`${testid}-delete-confirm-yes`}
-								className="text-miss underline-offset-2 hover:underline"
+								className="cursor-pointer font-medium text-miss underline-offset-2 hover:underline"
 							>
 								Delete
 							</button>
 							<button
 								type="button"
 								onClick={() => setConfirmDelete(false)}
-								className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+								className="cursor-pointer text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 							>
 								Keep
 							</button>
@@ -227,7 +233,7 @@ function KeyTableRow({
 					)}
 				</div>
 				{error && (
-					<p role="alert" data-testid={`${testid}-error`} className="px-1 text-xs text-miss">
+					<p role="alert" data-testid={`${testid}-error`} className="px-1 pt-1 text-xs text-miss">
 						{error}
 					</p>
 				)}
@@ -243,11 +249,14 @@ function KeyTableRow({
 				data-testid={`${testid}-row`}
 				onClick={() => !envOwned && onToggle()}
 				title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.` : undefined}
-				className={`flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-left ${
-					envOwned ? "cursor-default" : "cursor-pointer transition-colors hover:bg-accent/50"
+				className={`flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 text-left transition-all ${
+					envOwned ? "cursor-default" : "cursor-pointer hover:border-border/80 hover:bg-accent/30"
 				}`}
 			>
-				<span className="font-ui text-xs text-foreground">{label}</span>
+				<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
+					<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
+					{label}
+				</span>
 				<span className="flex items-center gap-2">
 					{docsUrl && (
 						<a
@@ -316,9 +325,13 @@ function PlainSettingRow({
 	}
 
 	return (
-		<div data-testid={testid} className="flex flex-col pl-3">
-			<div className={`flex items-center justify-between gap-3 px-1 py-1.5 ${envOwned ? "opacity-40" : ""}`}>
-				<span className="font-ui text-xs text-foreground">{label}</span>
+		<div data-testid={testid} className={envOwned ? "opacity-40" : undefined}>
+			<div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent/30">
+				<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
+					<ProviderIcon provider="azure" />
+					<span>{label}</span>
+					<span className="text-[11px] font-normal text-muted-foreground">Azure resource region</span>
+				</span>
 				<input
 					value={draft ?? stored}
 					onChange={(e) => setDraft(e.target.value)}
@@ -345,11 +358,11 @@ function PlainSettingRow({
 					autoComplete="off"
 					spellCheck={false}
 					data-testid={`${testid}-input`}
-					className="h-7 w-40 rounded-sm border border-border bg-background px-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
+					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground/60 transition-all hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
 				/>
 			</div>
 			{error && (
-				<p role="alert" data-testid={`${testid}-error`} className="px-1 text-xs text-miss">
+				<p role="alert" data-testid={`${testid}-error`} className="px-1 pt-1 text-xs text-miss">
 					{error}
 				</p>
 			)}
@@ -397,10 +410,19 @@ function AddProviderRow({
 				aria-expanded={open}
 				data-testid="add-provider"
 				onClick={() => setOpen((v) => !v)}
-				className="flex w-full items-center justify-between gap-3 rounded-sm px-1 py-1.5 text-left font-ui text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+				className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 bg-accent/10 px-3.5 py-2.5 text-left font-ui text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-accent/25 hover:text-foreground"
 			>
-				<span>+ Add provider key</span>
-				{addable.length > 0 && <span className="font-mono text-[11px]">{addable.length}</span>}
+				<span className="flex items-center gap-2.5">
+					<span className="flex size-5 items-center justify-center rounded-md bg-accent font-bold text-foreground">
+						+
+					</span>
+					<span>Add provider key</span>
+				</span>
+				{addable.length > 0 && (
+					<span className="rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+						{addable.length}
+					</span>
+				)}
 			</button>
 			{open && (
 				<MenuShell
@@ -517,25 +539,33 @@ export function KeysSection({
 
 	return (
 		<>
-			<SettingsGroup label="Model API keys" testid="group-provider-keys">
-				{providerRows.map((status) => (
-					<KeyTableRow
-						key={status.id}
-						label={providers?.find((p) => p.envVar === status.id)?.label ?? status.info?.label ?? status.id}
-						docsUrl={status.info?.docsUrl}
-						status={status}
-						expanded={openRow === status.id}
-						onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
-						onSave={async (v) => {
-							const err = await saveKey(status.id, v);
-							if (!err) setOpenRow(null); // fold on success — rest state
-							return err;
-						}}
-						onCancel={() => setOpenRow(null)}
-						onDelete={() => deleteKey(status.id)}
-						testid={`key-${status.id.toLowerCase()}`}
-					/>
-				))}
+			<SettingsGroup
+				label="Model API keys"
+				hint="Powers tutor conversations, grammar coaching, and practice drills configured in Tutor settings."
+				testid="group-provider-keys"
+			>
+				{providerRows.map((status) => {
+					const provider = providers?.find((p) => p.envVar === status.id);
+					return (
+						<KeyTableRow
+							key={status.id}
+							label={provider?.label ?? status.info?.label ?? status.id}
+							providerId={provider?.id}
+							docsUrl={status.info?.docsUrl}
+							status={status}
+							expanded={openRow === status.id}
+							onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
+							onSave={async (v) => {
+								const err = await saveKey(status.id, v);
+								if (!err) setOpenRow(null); // fold on success — rest state
+								return err;
+							}}
+							onCancel={() => setOpenRow(null)}
+							onDelete={() => deleteKey(status.id)}
+							testid={`key-${status.id.toLowerCase()}`}
+						/>
+					);
+				})}
 				{providers !== undefined && (
 					<AddProviderRow
 						addable={addable}
@@ -546,13 +576,16 @@ export function KeysSection({
 					/>
 				)}
 				{adding && (
-					<div className="flex items-center gap-2 rounded-sm px-1 py-1.5" data-testid={`key-${adding.id}-editor`}>
-						<span className="shrink-0 font-ui text-xs text-foreground">{adding.label}</span>
+					<div className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-accent/25 p-2.5" data-testid={`key-${adding.id}-editor`}>
+						<span className="flex shrink-0 items-center gap-2 font-ui text-xs font-semibold text-foreground">
+							<ProviderIcon provider={adding.id} />
+							{adding.label}
+						</span>
 						<AddProviderEditor provider={adding} onSave={(v) => void saveNewProvider(adding, v)} onCancel={() => setAdding(null)} error={addError} />
 					</div>
 				)}
-				{unknownRows.length > 0 && <div data-testid="group-unknown-keys">
-					{unknownRows.map((status) => <div key={status.id} data-testid={`unknown-${status.id}`} className="flex items-center justify-between gap-3 px-1 py-1.5 opacity-40">
+				{unknownRows.length > 0 && <div data-testid="group-unknown-keys" className="flex flex-col gap-2">
+					{unknownRows.map((status) => <div key={status.id} data-testid={`unknown-${status.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 opacity-40">
 						<span className="font-mono text-xs text-foreground">{status.id}</span>
 						<span className="font-mono text-[11px] text-muted-foreground">{status.masked}</span>
 					</div>)}
@@ -563,8 +596,12 @@ export function KeysSection({
 				<SubscriptionConnections />
 			</SettingsGroup>
 
-			{(["Speech", "Dictation", "Web search"] as const).map((label) => <SettingsGroup key={label} label={label} testid={label === "Dictation" ? "group-dictation" : label === "Speech" ? "group-speech" : "group-search"}>
-				{toolRows.filter((status) => TOOL_KEY_GROUP(status.id) === label).map((status) =>
+			{([
+				{ id: "Speech", label: "Speech (TTS)", testid: "group-speech" },
+				{ id: "Dictation", label: "Dictation (STT)", testid: "group-dictation" },
+				{ id: "Web search", label: "Web search", testid: "group-search" },
+			] as const).map(({ id, label, testid }) => <SettingsGroup key={id} label={label} testid={testid}>
+				{toolRows.filter((status) => TOOL_KEY_GROUP(status.id) === id).map((status) =>
 					isPlainAuthSetting(status.id) ? (
 						// The Azure region: a setting under the Azure key, not a key.
 						<PlainSettingRow
@@ -615,42 +652,44 @@ function AddProviderEditor({
 }) {
 	const [value, setValue] = useState("");
 	return (
-		<>
-			<input
-				type="text"
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				onKeyDown={(e) => {
-					if (e.key === "Enter" && value.trim()) onSave(value);
-				}}
-				placeholder="Paste key…"
-				aria-label={`${provider.label} key`}
-				data-testid={`key-${provider.id}-input`}
-				autoFocus
-				className="h-7 min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-muted-foreground/50"
-			/>
-			<button
-				type="button"
-				onClick={() => value.trim() && onSave(value)}
-				disabled={!value.trim()}
-				data-testid={`key-${provider.id}-save`}
-				className="shrink-0 text-xs text-foreground underline-offset-2 hover:underline disabled:text-muted-foreground/40 disabled:no-underline"
-			>
-				Save
-			</button>
-			<button
-				type="button"
-				onClick={onCancel}
-				data-testid={`key-${provider.id}-cancel`}
-				className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-			>
-				Cancel
-			</button>
+		<div className="flex min-w-0 flex-1 flex-col gap-1.5">
+			<div className="flex items-center gap-2">
+				<input
+					type="password"
+					value={value}
+					onChange={(e) => setValue(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" && value.trim()) onSave(value);
+					}}
+					placeholder="Paste API key…"
+					aria-label={`${provider.label} key`}
+					data-testid={`key-${provider.id}-input`}
+					autoFocus
+					className="h-8.5 min-w-0 flex-1 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
+				/>
+				<button
+					type="button"
+					onClick={() => value.trim() && onSave(value)}
+					disabled={!value.trim()}
+					data-testid={`key-${provider.id}-save`}
+					className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-2xs transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+				>
+					Save
+				</button>
+				<button
+					type="button"
+					onClick={onCancel}
+					data-testid={`key-${provider.id}-cancel`}
+					className="shrink-0 cursor-pointer rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+				>
+					Cancel
+				</button>
+			</div>
 			{error && (
-				<p role="alert" className="w-full pl-0 text-xs text-red-500" data-testid={`key-${provider.id}-error`}>
+				<p role="alert" className="w-full pl-0 text-xs text-miss" data-testid={`key-${provider.id}-error`}>
 					{error}
 				</p>
 			)}
-		</>
+		</div>
 	);
 }

@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 import { MenuShell, type MenuAlign } from "@/components/menu-shell";
 import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
-const CHIP = "min-w-14 rounded-xl border-2 px-4 py-2 font-ui text-base font-bold tabular-nums transition-colors";
-const ON = "border-go bg-go/10 text-foreground";
-const OFF = "border-border text-muted-foreground hover:border-foreground/40";
+const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-all";
+const ON = "border-primary/80 bg-primary/15 text-primary shadow-xs font-bold";
+const OFF = "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground";
 const PANEL = "flex w-[22rem] max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-border bg-card p-3 shadow-xl";
 
 /** One of a few: a row of chips, one pressed. */
@@ -234,27 +234,46 @@ export function LanguagePicker({
 				</span>
 			</div>
 			{value.length > 0 && (
-				<div className="mt-4 flex flex-col gap-1.5" data-testid={`${testid}-levels`}>
+				<div className="mt-4 flex flex-col gap-2" data-testid={`${testid}-levels`}>
 					{value.map((id) => {
 						const level = normalizeLangLevel(levels[id]); // none until pressed; a profile from before may still say "fluent"
 						return (
-							<div key={id} className="flex flex-wrap items-center gap-x-2 gap-y-1" data-testid={`level-${id}`}>
-								<span className="w-28 shrink-0 truncate font-ui text-sm font-bold text-foreground">{languageName(id)}</span>
+							<div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors" data-testid={`level-${id}`}>
+								<span className="w-28 shrink-0 truncate font-ui text-sm font-semibold text-foreground">{languageName(id)}</span>
 								<span className="flex min-w-0 flex-wrap gap-1" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
 									{LANG_LEVELS.map((lv) => (
-										<button key={lv.id} type="button" aria-pressed={lv.id === level} title={lv.line} onClick={() => setLevel(id, lv.id)} className={cn("whitespace-nowrap rounded-lg border-2 py-1 font-ui text-xs font-bold tabular-nums transition-colors", lv.id === "native" ? "px-2.5" : "px-2", lv.id === level ? ON : OFF)} data-testid={`level-${id}-${lv.id}`}>
+										<button
+											key={lv.id}
+											type="button"
+											aria-pressed={lv.id === level}
+											title={lv.line}
+											onClick={() => setLevel(id, lv.id)}
+											className={cn(
+												"whitespace-nowrap rounded-lg border py-1 font-ui text-xs tabular-nums transition-all",
+												lv.id === "native" ? "px-2.5" : "px-2",
+												lv.id === level ? ON : OFF,
+											)}
+											data-testid={`level-${id}-${lv.id}`}
+										>
 											{lv.title}
 										</button>
 									))}
 								</span>
-								{level === undefined && (
-									<span className="font-ui text-xs text-muted-foreground" data-testid={`level-${id}-unset`}>
-										Pick a level
-									</span>
-								)}
-								<button type="button" aria-label={`Remove ${languageName(id)}`} onClick={() => toggle(id)} className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
-									<XIcon className="size-3.5" />
-								</button>
+								<div className="ml-auto flex shrink-0 items-center gap-2.5">
+									{level === undefined && (
+										<span className="font-ui text-xs font-medium text-amber-500/90" data-testid={`level-${id}-unset`}>
+											Pick a level
+										</span>
+									)}
+									<button
+										type="button"
+										aria-label={`Remove ${languageName(id)}`}
+										onClick={() => toggle(id)}
+										className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-miss"
+									>
+										<XIcon className="size-3.5" />
+									</button>
+								</div>
 							</div>
 						);
 					})}

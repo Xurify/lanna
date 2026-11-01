@@ -22,10 +22,12 @@ export function SettingsSection({
 	testid?: string;
 }) {
 	return (
-		<section data-testid={testid} className="px-6 py-5">
-			<h2 className="font-ui text-lg font-extrabold text-foreground">{title}</h2>
-			{hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-			<div className="mt-4 flex flex-col gap-3">{children}</div>
+		<section data-testid={testid} className="p-6">
+			<div className="mb-6 flex flex-col gap-1 border-b border-border/40 pb-4">
+				<h2 className="font-ui text-lg font-bold tracking-tight text-foreground">{title}</h2>
+				{hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
+			</div>
+			<div className="flex flex-col gap-6">{children}</div>
 		</section>
 	);
 }
@@ -33,16 +35,19 @@ export function SettingsSection({
 /** A labeled sub-group inside a section. */
 export function SettingsGroup({
 	label,
+	hint,
 	children,
 	testid,
 }: {
 	label: string;
+	hint?: React.ReactNode;
 	children: React.ReactNode;
 	testid?: string;
 }) {
 	return (
-		<div data-testid={testid} className="mt-5 border-t border-border/60 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-			<p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+		<div data-testid={testid} className="flex flex-col gap-2.5">
+			<p className="font-ui text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">{label}</p>
+			{hint && <span className="-mt-1 font-ui text-xs text-muted-foreground">{hint}</span>}
 			<div className="flex flex-col gap-2">{children}</div>
 		</div>
 	);
@@ -65,10 +70,16 @@ export function SettingsRow({
 	dimmed?: boolean;
 }) {
 	return (
-		<div data-testid={testid} className={cn("flex items-center justify-between gap-4 py-1.5", dimmed && "opacity-40")}>
-			<span className="min-w-0">
-				<span className="block font-prose text-(length:--lh-prose-size)">{label}</span>
-				{hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
+		<div
+			data-testid={testid}
+			className={cn(
+				"flex items-center justify-between gap-4 rounded-xl border border-border/50 bg-accent/15 px-4 py-3 transition-colors hover:border-border/80 hover:bg-accent/25",
+				dimmed && "opacity-40",
+			)}
+		>
+			<span className="min-w-0 flex-1">
+				<span className="block font-ui text-xs font-semibold text-foreground">{label}</span>
+				{hint && <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{hint}</span>}
 			</span>
 			<div className="shrink-0">{children}</div>
 		</div>
@@ -93,21 +104,27 @@ export function SettingsDisclosure({
 	const [open, setOpen] = useState(defaultOpen);
 	const panelId = useId();
 	return (
-		<div data-testid={testid} className="mt-5 border-t border-border/60 pt-4">
+		<div data-testid={testid} className="rounded-2xl border border-border/60 bg-muted/10 p-4 transition-all">
 			<button
 				type="button"
 				aria-expanded={open}
 				aria-controls={open ? panelId : undefined}
 				data-testid={testid ? `${testid}-toggle` : undefined}
 				onClick={() => setOpen((v) => !v)}
-				className="group flex w-full items-center justify-between gap-3 text-left"
+				className="group flex w-full cursor-pointer items-center justify-between gap-3 text-left"
 			>
-				<span className="text-xs uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-foreground">{label}</span>
-				<span className="text-xs text-muted-foreground transition-colors group-hover:text-foreground">{open ? "Hide" : "Show"}</span>
+				<div className="flex flex-col">
+					<span className="font-ui text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
+						{label}
+					</span>
+					<p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+				</div>
+				<span className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-2xs transition-colors group-hover:border-border group-hover:bg-accent group-hover:text-foreground">
+					{open ? "Hide" : "Show"}
+				</span>
 			</button>
-			<p className="mt-1 text-xs text-muted-foreground">{hint}</p>
 			{open && (
-				<div id={panelId} className="mt-4 flex flex-col gap-3">
+				<div id={panelId} className="mt-4 flex flex-col gap-2.5 border-t border-border/50 pt-3">
 					{children}
 				</div>
 			)}
@@ -131,7 +148,12 @@ export function SettingsSegmented<T extends string | number>({
 	testid: string;
 }) {
 	return (
-		<div role="radiogroup" aria-label={ariaLabel} data-testid={testid} className="flex shrink-0 rounded-lg border border-border/60 bg-muted/30 p-0.5">
+		<div
+			role="radiogroup"
+			aria-label={ariaLabel}
+			data-testid={testid}
+			className="flex shrink-0 items-center gap-1 rounded-xl border border-border/70 bg-background/80 p-1 shadow-2xs"
+		>
 			{options.map((o) => {
 				const active = o.value === value;
 				return (
@@ -143,8 +165,10 @@ export function SettingsSegmented<T extends string | number>({
 						data-testid={`${testid}-${o.value}`}
 						onClick={() => onChange(o.value)}
 						className={cn(
-							"h-8 shrink-0 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors",
-							active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+							"h-7 shrink-0 whitespace-nowrap rounded-lg px-3 text-xs font-medium transition-all",
+							active
+								? "border border-border/60 bg-accent font-semibold text-foreground shadow-xs"
+								: "border border-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground",
 						)}
 					>
 						{o.label}
@@ -262,7 +286,7 @@ export function CommitInput({
 					e.currentTarget.blur();
 				}
 			}}
-			className="h-7 w-40 rounded-sm border border-border bg-background px-2 font-ui text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
+			className="h-8.5 w-44 rounded-xl border border-border/80 bg-background/80 px-3 font-ui text-xs text-foreground outline-hidden placeholder:text-muted-foreground/60 transition-all hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring"
 		/>
 	);
 }

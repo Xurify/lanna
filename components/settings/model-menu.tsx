@@ -14,6 +14,7 @@ import type { ModelCatalogEntry } from "@/src/core";
 import { fuzzyScore, subscriptionLabel } from "@/src/core";
 import { formatTokens } from "@/components/usage-format";
 import { cn } from "@/lib/utils";
+import { ProviderIcon } from "./provider-icons.tsx";
 
 function priceLabel(cost: ModelCatalogEntry["cost"]): string {
 	const fmt = (n: number) => `$${n < 1 ? n.toFixed(2).replace(/0$/, "") : n.toFixed(2)}`;
@@ -263,7 +264,10 @@ export function ProviderMenuList({
 								i === menuIdx ? "bg-accent text-foreground ring-1 ring-inset ring-foreground/25" : ""
 							}`}
 						>
-							<span className="truncate text-card-foreground">{p.label}</span>
+							<span className="flex items-center gap-2 truncate text-card-foreground">
+								<ProviderIcon provider={p.id} className="size-3.5" />
+								{p.label}
+							</span>
 							<span className="shrink-0 font-mono text-[11px] text-muted-foreground">{p.envVar}</span>
 						</button>
 					</li>

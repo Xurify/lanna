@@ -1,0 +1,188 @@
+"use client";
+
+import * as React from "react";
+import { createPortal } from "react-dom";
+import { XIcon } from "lucide-react";
+import { useBackdropDismiss } from "@/components/backdrop-dismiss";
+import { cn } from "@/lib/utils";
+
+interface DialogContextValue {
+	onClose?: () => void;
+}
+
+const DialogContext = React.createContext<DialogContextValue>({});
+
+export function Dialog({
+	open = true,
+	onClose,
+	children,
+}: {
+	open?: boolean;
+	onClose?: () => void;
+	children: React.ReactNode;
+}) {
+	if (!open) return null;
+
+	return (
+		<DialogContext.Provider value={{ onClose }}>
+			{children}
+		</DialogContext.Provider>
+	);
+}
+
+export function DialogPortal({
+	children,
+	container,
+}: {
+	children: React.ReactNode;
+	container?: Element | null;
+}) {
+	if (typeof document === "undefined") {
+		return <>{children}</>;
+	}
+	return createPortal(children, container ?? document.body);
+}
+
+export function DialogOverlay({
+	className,
+	children,
+	onClose,
+	...props
+}: React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }) {
+	const ctx = React.useContext(DialogContext);
+	const handleClose = onClose ?? ctx.onClose;
+	const backdropDismiss = useBackdropDismiss(handleClose ?? (() => {}));
+
+	return (
+		<div
+			className={cn(
+				"fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100",
+				className
+			)}
+			{...(handleClose ? backdropDismiss : {})}
+			{...props}
+		>
+			{children}
+		</div>
+	);
+}
+
+export function DialogContent({
+	className,
+	children,
+	showClose = false,
+	onClose,
+	...props
+}: React.HTMLAttributes<HTMLDivElement> & {
+	showClose?: boolean;
+	onClose?: () => void;
+}) {
+	const ctx = React.useContext(DialogContext);
+	const handleClose = onClose ?? ctx.onClose;
+
+	return (
+		<div
+			role="dialog"
+			aria-modal="true"
+			onClick={(e) => e.stopPropagation()}
+			className={cn(
+				"relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150",
+				className
+			)}
+			{...props}
+		>
+			{children}
+			{showClose && handleClose && (
+				<button
+					type="button"
+					aria-label="Close"
+					onClick={handleClose}
+					className="absolute right-5 top-5 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+				>
+					<XIcon className="size-4" />
+				</button>
+			)}
+		</div>
+	);
+}
+
+export function DialogHeader({
+	className,
+	...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+	return (
+		<div
+			className={cn("flex flex-col gap-1.5 text-left", className)}
+			{...props}
+		/>
+	);
+}
+
+export function DialogTitle({
+	className,
+	...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+	return (
+		<h2
+			className={cn(
+				"font-ui text-xl font-bold tracking-tight text-foreground",
+				className
+			)}
+			{...props}
+		/>
+	);
+}
+
+export function DialogDescription({
+	className,
+	...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+	return (
+		<p
+			className={cn("text-sm text-muted-foreground leading-relaxed", className)}
+			{...props}
+		/>
+	);
+}
+
+export function DialogFooter({
+	className,
+	...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+	return (
+		<div
+			className={cn(
+				"flex flex-wrap items-center justify-end gap-2 pt-4",
+				className
+			)}
+			{...props}
+		/>
+	);
+}
+
+export function DialogClose({
+	className,
+	children,
+	onClick,
+	...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+	const ctx = React.useContext(DialogContext);
+
+	return (
+		<button
+			type="button"
+			aria-label="Close"
+			onClick={(e) => {
+				onClick?.(e);
+				ctx.onClose?.();
+			}}
+			className={cn(
+				"rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring",
+				className
+			)}
+			{...props}
+		>
+			{children ?? <XIcon className="size-4" />}
+		</button>
+	);
+}

@@ -145,8 +145,8 @@ export function HoursSheet({
 	const ticks = [0, 300, 600, 900, 1200];
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="How long does it take?" data-testid="hours-sheet">
-			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-3xl border-2 bg-card p-6">
+		<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100 sm:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="How long does it take?" data-testid="hours-sheet">
+			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2 className="font-ui text-2xl font-black text-foreground">How long does it take?</h2>

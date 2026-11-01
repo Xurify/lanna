@@ -30,7 +30,7 @@ import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
 
-type SttEngine = "elevenlabs" | "deepgram";
+type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
 export interface SpeakState {
 	scenes: Array<SpeakScene & { suggested: boolean; done: number }>;
