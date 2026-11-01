@@ -17,7 +17,8 @@ import Link from "next/link";
 import { AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, FlagIcon, GraduationCapIcon, LockIcon, MapIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitBadge } from "@/components/unit-badge";
-import { examLine, STAGES, TUTOR_SESSIONS, type ChapterState, type CurriculumState, type ExamSummary, type UnitState, type WeakSpotSummary } from "@/src/core";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { examLine, STAGES, TUTOR_SESSIONS, weakFamily, WEAK_MEND_ACCURACY, WEAK_MEND_REPS, type ChapterState, type CurriculumState, type ExamSummary, type UnitState, type WeakSpotSummary } from "@/src/core";
 
 export function CurriculumPath({
 	state,
@@ -134,6 +135,109 @@ export function unitLine(u: UnitState, active: boolean): string {
 	return active ? "Up next" : u.tagline;
 }
 
+const WEAK_SOURCE_NAMES: Record<string, string> = {
+	check: "Level check",
+	lesson: "Lesson drill",
+	review: "Review deck lapses",
+};
+
+function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary }) {
+	const totalReps = weak.hits + weak.misses;
+	const accuracy = totalReps > 0 ? Math.round((weak.hits / totalReps) * 100) : null;
+	const fam = weakFamily(weak.unit);
+	const mendPercent = Math.round(WEAK_MEND_ACCURACY * 100);
+
+	return (
+		<TooltipProvider delayDuration={150}>
+			<Tooltip disableHoverableContent={false}>
+				<TooltipTrigger asChild>
+					<span
+						role="button"
+						tabIndex={0}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+						}}
+						className="inline-flex cursor-help items-center rounded p-0.5 text-miss transition-colors hover:bg-miss/15 focus:outline-none focus:ring-1 focus:ring-miss"
+						aria-label={`Weak spot: ${weak.title}`}
+						data-testid={`weak-mark-${unit.id}`}
+					>
+						<AlertTriangleIcon className="size-3.5 shrink-0 text-miss" aria-hidden="true" />
+					</span>
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+				>
+					<div className="flex items-start gap-2.5">
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-miss/15 text-miss">
+							<AlertTriangleIcon className="size-3.5" aria-hidden="true" />
+						</div>
+						<div className="min-w-0 flex-1 space-y-2">
+							<div>
+								<div className="flex items-baseline justify-between gap-1.5">
+									<span className="text-xs font-bold text-foreground">Weak Spot</span>
+									<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+										{WEAK_SOURCE_NAMES[weak.source] ?? weak.source}
+									</span>
+								</div>
+								<p className="text-xs font-semibold text-foreground">{weak.title}</p>
+								{(weak.tagline || unit.tagline) && (
+									<p className="mt-0.5 text-[11px] italic text-muted-foreground">
+										{weak.tagline || unit.tagline}
+									</p>
+								)}
+							</div>
+
+							{weak.note && (
+								<div className="rounded-md bg-accent/60 px-2 py-1.5 text-[11px] text-foreground/90">
+									<span className="font-semibold text-muted-foreground">Evidence: </span>
+									{weak.note}
+								</div>
+							)}
+
+							<div className="space-y-1 border-t border-border/50 pt-2 text-[11px]">
+								<div className="flex items-center justify-between text-muted-foreground">
+									<span>Practice since flagged:</span>
+									<span className="font-medium text-foreground">
+										{totalReps > 0 ? `${weak.hits}/${totalReps} right (${accuracy}%)` : "0 reps"}
+									</span>
+								</div>
+								<div className="flex items-center justify-between text-muted-foreground">
+									<span>To clear spot:</span>
+									<span className="font-medium text-foreground">
+										{WEAK_MEND_REPS} reps at ≥{mendPercent}%
+									</span>
+								</div>
+								{totalReps < WEAK_MEND_REPS && (
+									<p className="text-[10px] text-muted-foreground/80">
+										{WEAK_MEND_REPS - totalReps} more reps needed before clearing
+									</p>
+								)}
+							</div>
+
+							{fam && (
+								<div className="border-t border-border/50 pt-1.5 text-[10px] text-muted-foreground">
+									<span className="font-semibold text-foreground/80">Pattern group: </span>
+									{fam.title} ({fam.tagline})
+								</div>
+							)}
+						</div>
+					</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
 function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; weak?: WeakSpotSummary; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
 	const locked = u.status === "locked";
 	const skipped = u.status === "skipped";
@@ -149,7 +253,7 @@ function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { u
 					{starred && <StarIcon className="size-3.5 shrink-0 fill-gold text-gold" aria-label="One of your goals" />}
 					{u.kind === "tutor" && <GraduationCapIcon className="size-3.5 shrink-0 text-xp" aria-label="With the tutor" />}
 					{u.kind === "goal" && <FlagIcon className="size-3.5 shrink-0 text-flame" aria-label="Can-do goal" />}
-					{weak && <AlertTriangleIcon className="size-3.5 shrink-0 text-miss" aria-label="A weak spot" data-testid={`weak-mark-${u.id}`} />}
+					{weak && <WeakSpotHover unit={u} weak={weak} />}
 				</span>
 				<span className="block truncate font-ui text-xs text-muted-foreground" title={weak ? `Weak spot ${weak.line}` : undefined}>
 					{weak ? `Weak spot ${weak.line}` : unitLine(u, active)}
