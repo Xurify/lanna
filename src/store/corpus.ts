@@ -304,8 +304,10 @@ export interface LessonLogEntry {
 	 *  listen: the Listen task (unit "listen"), where `answer` is the
 	 *  translation picked and `given` the meaning chosen; speak: a spoken
 	 *  scene (unit = the scene id), one rep per correction; fluency: a
-	 *  "say it faster" round, one rep per sentence (unit "fast"). */
-	mode: "lesson" | "blitz" | "placement" | "listen" | "speak" | "fluency";
+	 *  "say it faster" round, one rep per sentence (unit "fast"); mixups:
+	 *  a Mix-ups lesson (unit "mixups", src/core/mixups.ts); personal: the
+ *  lesson built from the guide's targets (unit "personal", src/core/personal.ts). */
+	mode: "lesson" | "blitz" | "mixups" | "personal" | "placement" | "listen" | "speak" | "fluency";
 	ms?: number;
 	xp: number;
 	correct: number;

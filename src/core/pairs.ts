@@ -59,7 +59,7 @@ export interface PairSentence {
 /** Every string a lexicon entry attests as a form of itself: the lemma, the
  *  verified generated forms, the hand-checked paradigm, and the cloze
  *  answers of its own examples (attested in sentences). */
-function formsOfEntry(entry: LexiconEntry, tag = "sk-SK"): string[] {
+export function formsOfEntry(entry: LexiconEntry, tag = "sk-SK"): string[] {
 	const out = new Set<string>();
 	const lemma = entryLemma(entry);
 	for (const form of [lemma, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]) {
@@ -91,6 +91,12 @@ export function pairSentences(entries: readonly LexiconEntry[], pair: PairDef): 
 	const entryA = byLemma(entries, pair.a);
 	const entryB = byLemma(entries, pair.b);
 	if (!entryA || !entryB) return [];
+	return twinSentences(entryA, entryB);
+}
+
+/** The same rule for two entries already in hand (src/core/mixups.ts names
+ *  its twins by slug, because a lemma such as domov has two entries). */
+export function twinSentences(entryA: LexiconEntry, entryB: LexiconEntry): PairSentence[] {
 	const regexA = formRegex(formsOfEntry(entryA));
 	const regexB = formRegex(formsOfEntry(entryB));
 	const out: PairSentence[] = [];

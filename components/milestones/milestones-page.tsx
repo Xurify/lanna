@@ -208,7 +208,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 						<input
 							value={text}
 							onChange={(e) => setText(e.target.value.slice(0, MAX_CUSTOM_LENGTH))}
-							placeholder={modelReady ? "I want to be able to…" : "Set a model in Settings → AI models to add your own"}
+							placeholder={modelReady ? "I want to be able to…" : "Turn on AI in Settings → AI models to add your own"}
 							disabled={!modelReady || adding}
 							aria-label="Your milestone"
 							className="min-w-0 flex-1 rounded-xl border-2 border-border bg-card px-4 py-2.5 font-prose text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-go disabled:opacity-60"

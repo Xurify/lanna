@@ -13,6 +13,7 @@ import { entryLemma, exampleText } from "./review.ts";
 import { slipLine } from "./grammar.ts";
 import type { FirstTally } from "./first-try.ts";
 import { weakSpotList, weakSpotsLine, type WeakRecord } from "./weak-spots.ts";
+import { mixupList, mixupsLine, type MixupRecord } from "./mixups.ts";
 
 // ─── What Slovak is for ─────────────────────────────────────────────────────
 
@@ -738,8 +739,8 @@ export function measuredWeak(u: { title: string; reps: number; accuracy: number 
 	return null;
 }
 
-/** The learner as a short profile block for the tutor's system prompt. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts). */
-export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>): string | null {
+/** The learner as a short profile block for the tutor's system prompt. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts); `mixups_` the pairs of words they confuse (src/core/mixups.ts). */
+export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -789,6 +790,8 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 		if (weak.length) lines.push(`- Measured weak points: ${weak.map((m) => m.text).join(", ")}.`);
 		const spots = weakSpotsLine(weakSpotList(weak_));
 		if (spots) lines.push(spots);
+		const mixed = mixupsLine(mixupList(mixups_));
+		if (mixed) lines.push(mixed);
 		const done = state.chapters.flatMap((c) => c.units).filter((u) => u.status === "done" && (u.kind === "drill" || u.kind === "words"));
 		if (done.length) lines.push(`- Holds (units done on the map): ${done.slice(0, 12).map((u) => u.title).join(", ")}${done.length > 12 ? `, and ${done.length - 12} more` : ""}.`);
 	}

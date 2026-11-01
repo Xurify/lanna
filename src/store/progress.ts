@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import type { TimedActivity } from "../core/active-time.ts";
 import type { FirstTryStats } from "../core/first-try.ts";
+import type { MixupRecord } from "../core/mixups.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -24,6 +25,10 @@ export interface DayRecord {
 	/** Lessons finished that day, per unit (the daily plan's evidence). */
 	units?: Record<string, number>;
 	blitz?: number;
+	/** Mix-ups lessons finished (src/core/mixups.ts). */
+	mixups?: number;
+	/** Personal lessons finished (src/core/personal.ts). */
+	personal?: number;
 	talks?: number;
 	stories?: number;
 	/** Tutor-unit sessions started. */
@@ -104,6 +109,9 @@ export interface ProgressRecord {
 	/** Units the learner struggles with, flagged by the level check, lessons
 	 *  or review and dropped once mended (src/core/weak-spots.ts). */
 	weak?: WeakRecord;
+	/** Pairs of words the learner gives one for the other, and the pairs
+	 *  predicted from them (src/core/mixups.ts). */
+	mixups?: MixupRecord;
 	/** The latest lesson saves by the id the client sent (src/server/lesson.ts):
 	 *  a retry of one of them is answered from here, not recorded again. */
 	lessonAcks?: Array<{ id: string; outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number } }>;

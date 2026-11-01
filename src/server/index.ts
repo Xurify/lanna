@@ -55,6 +55,10 @@ export * from "./storage.ts";
 export * from "./tts.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+export * from "./mixups.ts";
+export * from "./ai-status.ts";
+export * from "./mistakes.ts";
+export * from "./personal.ts";
 // The chapter exam (Skúška, phase 6a, E14): the draw and its record.
 export * from "./exam.ts";
 export * from "./why.ts";

@@ -61,6 +61,7 @@ import {
 	type FirstAnswer,
 	type ItemKind,
 	type LessonItem,
+	type LessonFocus,
 	type LessonPlan,
 	type LessonScore,
 	type RepVerdict,
@@ -165,7 +166,7 @@ function kindLabel(item: LessonItem): string {
 
 const PRAISE = ["Výborne!", "Super!", "Presne tak!", "Skvelé!", "Bravo!", "Paráda!"];
 
-export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?: UnitId; mode: Mode; gender?: AtlasGender; initialPlan?: LessonPlan | null }) {
+export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: { unit?: UnitId; mode: Mode; gender?: AtlasGender; focus?: LessonFocus; initialPlan?: LessonPlan | null }) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
@@ -223,7 +224,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
 	// or left on purpose (X, Escape). Blitz is a 60 s sprint and is not kept.
-	const saveKey = mode === "lesson" && unit ? `lh-lesson:${unit}${gender ? `:${gender}` : ""}` : null;
+	const saveKey = mode !== "lesson" ? null : focus ? `lh-lesson:${focus}` : unit ? `lh-lesson:${unit}${gender ? `:${gender}` : ""}` : null;
 	const restoring = useRef(saveKey !== null);
 	useEffect(() => {
 		restoring.current = false;
@@ -297,18 +298,18 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		setPeeked(false);
 		finishing.current = false;
 		try {
-			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : `/api/lesson?unit=${unit}${gender ? `&gender=${gender}` : ""}`);
+			const res = await fetch(mode === "blitz" ? "/api/lesson?mode=blitz" : focus ? `/api/lesson?mode=${focus}` : `/api/lesson?unit=${unit}${gender ? `&gender=${gender}` : ""}`);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
 			if (seq !== loadSeq.current) return;
-			if (next.items.length === 0) throw new Error("There are no sentences for this unit yet.");
+			if (next.items.length === 0) throw new Error(focus === "mixups" ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : focus === "personal" ? "No personal plan yet. Write your guide on My mistakes, and its practice shows up here." : "There are no sentences for this unit yet.");
 			setPlan(next);
 			startedAt.current = Date.now();
 			activeTime.restart();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, [mode, unit, gender, activeTime]);
+	}, [mode, unit, gender, focus, activeTime]);
 
 	// Fetch on mount only when the server could not build the plan.
 	const hadInitial = useRef(initialPlan !== null);
@@ -347,6 +348,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		const entry = enqueueLesson(lang?.code ?? "sk", {
 			unit: plan.unit,
 			mode,
+			...(focus ? { focus } : {}),
 			reps: all.map((r) => ({
 				itemId: r.item.id,
 				slug: r.item.slug,
@@ -386,7 +388,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		});
 		void flushOutbox(entry.lang);
 	},
-	[plan, mode, lang, forget, activeTime],
+	[plan, mode, focus, lang, forget, activeTime],
 );
 
 	// Blitz clock.
@@ -580,6 +582,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 			<Frame>
 				<EndScreen
 					mode={mode}
+					focus={focus}
 					unit={plan.unit}
 					reps={reps}
 					score={score}
@@ -657,7 +660,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 							onPeek={() => setPeeked(true)}
 							onGrade={grade}
 							onReady={setReady}
-							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
+							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
 						/>
 					</div>
 				</div>
@@ -1214,7 +1217,7 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 	const tile = "rounded-xl border-2 border-border bg-card px-3.5 py-2 font-prose text-xl text-foreground";
 	return (
 		<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), check())}>
-			<p className="font-prose text-2xl text-foreground">“{item.translation}”</p>
+			<p data-no-word-lookup="true" className="font-prose text-2xl text-foreground">“{item.translation}”</p>
 			{/* After the answer: the sentence as one line, with a replay button
 			    (it also plays on its own when the answer lands). */}
 			{locked && (
@@ -1411,7 +1414,7 @@ function FeedbackSheet({
 									<b className={tone.ink}>{item.pair ? (item.form ?? item.answer) : item.answer}</b>
 									{item.after}
 								</p>
-								<p className="font-prose text-base text-muted-foreground">{item.translation}</p>
+								<p data-no-word-lookup="true" className="font-prose text-base text-muted-foreground">{item.translation}</p>
 							</div>
 						</div>
 					)}
@@ -1439,7 +1442,7 @@ function FeedbackSheet({
 							)}
 							{item.pair?.rule ?? info.rule}
 						</dd>
-						{item.pair ? (
+						{item.pair?.bridge ? (
 							<>
 								<dt className={WHY_LABEL}>Parallels</dt>
 								<dd className="text-foreground">{item.pair.bridge}</dd>
@@ -1466,7 +1469,7 @@ function FeedbackSheet({
 													<b>{ex.answer}</b>
 													{ex.after}
 												</span>{" "}
-												· {ex.translation}
+												<span data-no-word-lookup="true">· {ex.translation}</span>
 											</li>
 										))}
 									</ul>
@@ -1547,6 +1550,7 @@ function Pulse({ className }: { className?: string }) {
 
 function EndScreen({
 	mode,
+	focus,
 	unit,
 	reps,
 	score,
@@ -1556,6 +1560,7 @@ function EndScreen({
 	onNext,
 }: {
 	mode: Mode;
+	focus?: LessonFocus;
 	unit: UnitId;
 	reps: Rep[];
 	score: LessonScore;
@@ -1572,7 +1577,9 @@ function EndScreen({
 	// (streak, goal, unit progress) fills its slot when it lands; each slot
 	// keeps its size until then, so nothing moves.
 	const goalMet = recorded ? recorded.summary.todayXp >= recorded.summary.dailyGoal : false;
-	const here = recorded?.summary.units.find((u) => u.id === unit) ?? null;
+	// A Mix-ups lesson moves no unit, so it has no place on the path to show.
+	const here = focus ? null : (recorded?.summary.units.find((u) => u.id === unit) ?? null);
+	const pairs = new Set(reps.map((r) => r.item.pair?.id).filter(Boolean)).size;
 	const wasDone = here ? unitDone(here.lessons - 1, here.accuracy) : false;
 	const nextUnit = recorded ? (recorded.summary.units.find((u) => u.id === recorded.summary.next) ?? null) : null;
 	const stayHere = !!recorded && recorded.summary.next === unit;
@@ -1580,7 +1587,7 @@ function EndScreen({
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "Enter") return;
-			if (mode === "blitz") {
+			if (mode === "blitz" || focus) {
 				e.preventDefault();
 				onAgain();
 			} else if (recorded) {
@@ -1590,7 +1597,7 @@ function EndScreen({
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [recorded, mode, onAgain, onNext]);
+	}, [recorded, mode, focus, onAgain, onNext]);
 
 	return (
 		<div className="relative m-auto w-full max-w-xl px-5 text-center" data-testid="lesson-end">
@@ -1599,12 +1606,12 @@ function EndScreen({
 				{mode === "blitz" ? <ZapIcon className="size-12" /> : <TrophyIcon className="size-12" />}
 			</div>
 			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
-				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
+				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : focus === "mixups" ? (perfect ? "No mix-ups!" : "Mix-ups done!") : focus === "personal" ? (perfect ? "Perfect plan practice!" : "Plan practice done!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
 			</h1>
 			<p className="mt-2 min-h-7 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
-				{mode === "blitz" ? `${correct} right in 60 seconds` : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
+				{mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
 			</p>
-			{mode === "lesson" && (
+			{mode === "lesson" && !focus && (
 				<ol className="mx-auto mt-3 flex h-2.5 items-center justify-center gap-2" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
 					{!here?.done &&
 						Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
@@ -1644,7 +1651,7 @@ function EndScreen({
 									<b>{r.item.answer}</b>
 									{r.item.after}
 								</span>
-								<span className="block text-sm text-muted-foreground">{r.item.translation}</span>
+								<span data-no-word-lookup="true" className="block text-sm text-muted-foreground">{r.item.translation}</span>
 							</li>
 						))}
 					</ul>
@@ -1658,6 +1665,10 @@ function EndScreen({
 				{mode === "blitz" ? (
 					<button type="button" onClick={onAgain} className={cn(BUTTON, "bg-sky text-background hover:brightness-110")}>
 						Go again
+					</button>
+				) : focus ? (
+					<button type="button" onClick={onAgain} className={PRIMARY} data-testid="lesson-next">
+						Another round
 					</button>
 				) : (
 					<button type="button" disabled={!recorded} onClick={() => recorded && onNext(recorded.summary.next)} className={PRIMARY} data-testid="lesson-next">

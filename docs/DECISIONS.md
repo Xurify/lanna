@@ -272,6 +272,44 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The app is written in American English: practice (noun and verb), color, behavior, recognize, analyze, neighbor, favorite, gray. Stored ids keep their old spelling so saved progress does not move (`lx-colours`). `cancelled` stays: it is the one spelling the app uses, and Electron passes it as an error code.
 - The lexicon's English glosses come from slovak.wiki through `scripts/merge-lexicon.mjs`, so their spelling is fixed there, not here.
 
+### E24. Mix-ups are kept per pair of words, predicted, then tested (2026-11-01)
+
+**Why:** the owner typed "Niekto" for "Nikto" and asked whether the app keeps its mistakes, so it can find the pain points, predict similar ones and practice them. The answers were logged, but only units were measured, so a confusion between two words disappeared into an accuracy figure and the tutor never heard of it. Research note: [research/mixups.md](research/mixups.md).
+
+**How to apply:**
+- A mix-up is a wrong first try (the E18 rule) whose answer is another lexicon word, not a form of the wanted one (that is a slip). It is kept per pair of entries in progress.json (`mixups`): both lemmas, the family, the misses, the right first tries since the last miss and the last three misses as evidence. Lessons, Blitz and Review (without a hint) count. `src/core/mixups.ts` is pure; `src/server/mixups.ts` reads the answers in.
+- Families are data, not code: `curriculum/slovak/mixups.json` (id, title, one English rule, one Estonian bridge, twins by lexicon slug). A twin missing from the lexicon, or a pair with fewer than three verified sentences that hold only one twin, is dropped, as in E11.
+- A mix-up predicts up to three pairs: its family's others, else the same small edit applied to other lemmas (`ruleNeighbours`). A prediction is a probe, shown as "not tested yet", never taught as a fact. It is tested as a two-way choice; two right first tries clear it, a miss makes it a mix-up.
+- A mix-up is mended after three right first tries since its last miss; a miss opens it again. The record keeps 40 pairs at most and never drops an open one.
+- The Mix-ups lesson (`/lesson?mode=mixups`): open pairs typed on both sides in turn, probes as a choice, each rep a verified sentence with the pair's rule after a miss. It counts XP, the day's minutes and `day.mixups`, never a unit or the atlas. A regular lesson rep of a word in an open mix-up carries the pair's rule too, unless it names a form.
+- Today shows "Words you mix up" beside the weak spots. Strengthen takes the Mix-ups lesson when no weak spot is on record. The tutor's "This learner" block names the open pairs and their probes.
+
+### E25. My mistakes: analyzed locally, saved with its time, guide on request (2026-11-01)
+
+**Why:** after E24 the owner asked whether the analysis is batched, and where the latest results, the personal plan and the time of the last analysis can be seen.
+
+**How to apply:**
+- `/mistakes` (Today's "My mistakes" row, and "All my mistakes" under Words you mix up) reads `src/core/mistakes.ts`: first tries only (E18), per unit with a trend (last 14 days against the days before, six first tries each side, and a difference past chance), the words missed most, week by week, and the mix-ups (E24). A Mix-ups lesson, placement and Speak stay out of the unit figures.
+- Nothing is batched and no model runs for the analysis. A visit shows the saved snapshot in `analysis.json` with its time; "Analyze now" reads the lesson log again and saves a new one. The first visit takes one.
+- The guide is optional and the only model call: one Cheap-slot call from the snapshot's facts (`guideFacts`), three fixed sections, never a fact outside them. It is kept in `analysis.json` with its model and tokens (E1), reused while the facts' digest stands, and marked "your answers have changed since" when they do not. Without a model the page works and the button says what is missing.
+- The page stays out of the sidebar's four destinations (E4a).
+- Thresholds, so a handful of answers is never read as a finding (2026-11-01, after the owner saw "63% right" named as the lesson to do from eight answers). A unit's score carries its 95% Wilson range, shown under twenty first tries ("few answers, likely 31–86%"). A unit is called weak only when the top of that range is under 85%. A trend is better or worse only past a two-proportion z-test at the 5% level. A word is "missed most" from its second miss; one miss is a slip, and the lesson already sent it to review. The guide waits for 30 first tries with 5 mistakes among them, shows how far off that is, and its prompt says a pattern needs two misses behind it. A mix-up still opens on one miss: a specific wrong word is stronger evidence than a percentage, and it is mended after three right answers.
+- AI is what makes the read deeper, and the page says so (2026-11-01). The local analysis counts; the guide reads the latest 15 wrong first tries (the sentence, the form wanted, what was written) and returns JSON that the page shows as patterns (what, evidence, why, fix), guesses and a plan whose steps open the app. A reply that is not that JSON is shown as written. The same sentences the learner practiced go to the Cheap-slot provider, as with Why?; nothing else leaves the machine.
+- "Is AI ready" is a slot set and the provider's key present (`src/server/ai-status.ts`); a slot with no key looks set in Settings and fails at the first call. While it is not ready, a feature that needs it shows `components/ai-callout.tsx`: what is missing, what AI adds, that the rest works without it, and a button that opens Settings on API keys or AI models. A provider's "not configured" or key-refused error is turned into the same plain message (`friendlyAiError`). Custom milestones use the same status.
+- The analysis acts on the plan (2026-11-01): a lesson renews a snapshot older than six hours, and Strengthen takes a unit whose first-try accuracy fell (trend "worse") after a weak spot on record and an open mix-up, never the Continue unit. "Do this next" on the page is worked out from the figures, not from the guide's text, so it is there without a model: the Mix-ups lesson, a lesson on the weakest or slipping unit, and "Add to review" for the words missed most (one word, or all). The guide stays text.
+
+### E26. The personal lesson: the model picks the targets, the lexicon builds the reps (2026-11-01)
+
+**Why:** the owner asked whether analyzing yourself with AI creates anything personal in the learning journey, and whether a stronger model should do it. It should choose and explain; it should not write the sentences a learner practices, because a wrong form in a drill is learned as right at A1–A2 (P8).
+
+**How to apply:**
+- The guide runs on the Strong slot, else Cheap, with the slot's own thinking level (`aiStatus("strong")`). It runs a few times a week, so the cost is small and the reasoning is worth it.
+- Its reply carries `practice`: up to six words (lemmas from the facts), three unit ids and three pairs. `resolvePractice` (`src/core/personal.ts`) keeps only what the lexicon backs: a word with a verified sentence, a lesson unit with three sentences, a pair both of whose twins exist with three sentences that hold only one of them. What survives is kept with the guide in `analysis.json`.
+- The pairs become mix-up probes (`from: "guide"`, "suggested by your guide"), tested before they are taught, like a family's.
+- `/lesson?mode=personal` builds twelve reps from those targets with the existing builders: pair reps (typed when the pair is an open mix-up, a choice when not), a typed cloze per word, typed reps per unit. Targets take turns, so the lesson is interleaved. It counts XP, the day's minutes and `day.personal`, never a unit or the atlas, and logs `mode: "personal"`.
+- Strengthen takes it for seven days after the guide, after a weak spot on record and before mix-ups and slipping units: "Strengthen: Your plan · <the guide's first pattern>".
+- The model never writes a sentence for a drill. Sentences the lexicon lacks may later come from a model into a queue that a check other than the learner approves; that queue is not built.
+
 ## Working rules (how work reaches the repo)
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)

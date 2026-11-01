@@ -460,7 +460,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									</ul>
 								)}
 								{current && (
-									<p className="mt-3 font-prose text-lg text-muted-foreground" data-testid="listen-translation">
+									<p data-no-word-lookup="true" className="mt-3 font-prose text-lg text-muted-foreground" data-testid="listen-translation">
 										{item.translation}
 									</p>
 								)}
@@ -626,7 +626,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 									<p className="font-prose text-lg text-foreground" lang="sk">
 										{r.item.sentence}
 									</p>
-									<p className="font-prose text-sm text-muted-foreground">{r.item.translation}</p>
+									<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">{r.item.translation}</p>
 								</div>
 							</li>
 						))}

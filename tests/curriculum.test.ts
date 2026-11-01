@@ -229,3 +229,18 @@ test("a tutor unit's prompt carries its brief and the answer-first doctrine", ()
 	assert.match(p, /answer-first/);
 	assert.match(p, /say: spans/);
 });
+
+test("the daily plan: a slipping unit becomes Strengthen after a weak spot and a mix-up, never the Continue unit", () => {
+	const evidence: Record<string, UnitEvidence> = { present: { lessons: 3, reps: 30, correct: 28 }, loc: { lessons: 3, reps: 20, correct: 19 } };
+	const state = curriculumState(evidence, "B2");
+	const next = nextLessonUnit(state);
+	const base = { state, evidence, review: { due: 12, newLeft: 10, available: true }, minutesPerDay: 90, next, dayOfYear: 301, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } };
+	const strengthen = (over: Partial<Parameters<typeof dailyPlan>[0]> = {}) => dailyPlan({ ...base, ...over }).tasks.find((t) => t.id === "strengthen");
+
+	const slipping = strengthen({ worse: ["loc"] });
+	assert.equal(slipping?.unit, "loc");
+	assert.match(slipping?.line ?? "", /^Slipping lately/);
+	assert.equal(strengthen({ worse: [next] })?.unit === next, false, "the Continue unit is the lesson task, not this one");
+	assert.equal(strengthen({ worse: ["loc"], weak: ["present"] })?.unit, "present", "a weak spot on record comes first");
+	assert.equal(strengthen({ worse: ["loc"], mixups: [["nikto", "niekto"]] })?.href, "/lesson?mode=mixups", "an open mix-up comes before a trend");
+});

@@ -254,7 +254,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 								<p className="mt-1 font-prose text-base text-foreground" lang="sk">
 									{item!.sentence}
 								</p>
-								<p className="font-prose text-sm text-muted-foreground">{item!.translation}</p>
+								<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">{item!.translation}</p>
 							</div>
 						</div>
 					)}

@@ -418,7 +418,7 @@ export function ReviewSession() {
 							</form>
 
 							<div className="mt-3 flex items-center gap-2">
-								<p className="text-lg text-muted-foreground">{prompt.card.translation}</p>
+								<p data-no-word-lookup="true" className="text-lg text-muted-foreground">{prompt.card.translation}</p>
 								{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-sky/20 text-sky hover:bg-sky/30 hover:text-sky" label="Play the sentence" />}
 							</div>
 

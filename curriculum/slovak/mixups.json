@@ -1,0 +1,38 @@
+{
+	"language": "slovak",
+	"version": 1,
+	"families": [
+		{
+			"id": "ni-vs-nie",
+			"title": "ni- (no-) vs nie- (some-)",
+			"rule": "ni- words mean no- and the verb takes ne- as well: Nikto neprišiel (nobody came). nie- words mean some- and the verb stays plain: Niekto prišiel (somebody came).",
+			"bridge": "Estonian works the same way: keegi with ei is nobody (Keegi ei helistanud ≈ Nikto nevolal), keegi alone is somebody (Keegi helistas ≈ Niekto volal).",
+			"pairs": [
+				["nikto", "niekto"],
+				["nic", "nieco"],
+				["nikde", "niekde"],
+				["nikdy", "niekedy"],
+				["nikam", "niekam"]
+			]
+		},
+		{
+			"id": "where-to-vs-where",
+			"title": "Where to vs where",
+			"rule": "After a verb of motion the word says where to: Kam ideš? Idem domov, idem von. With byť and other verbs of staying it says where: Kde si? Som doma, som vonku.",
+			"bridge": "Estonian splits them the same way: kuhu / kus, koju / kodus, välja / väljas, siia / siin.",
+			"pairs": [
+				["kam", "kde"],
+				["domov-adv", "doma"],
+				["von", "vonku"],
+				["sem", "tu"]
+			]
+		},
+		{
+			"id": "uz-vs-este",
+			"title": "už vs ešte",
+			"rule": "už is already, and with nie it is no longer (už nie). ešte is still, and with nie it is not yet (ešte nie).",
+			"bridge": "Estonian: juba is už, veel is ešte (veel mitte ≈ ešte nie).",
+			"pairs": [["uz", "este"]]
+		}
+	]
+}

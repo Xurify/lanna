@@ -109,7 +109,10 @@ One file per local day, \`YYYY-MM-DD.jsonl\`, one JSON object per line, one
 per finished lesson or blitz. Each holds:
 
 - \`id\`, \`at\` (ISO time), \`day\`, \`unit\`, \`mode\` (\`lesson\` | \`blitz\` |
-  \`placement\` | \`listen\` | \`speak\` | \`fluency\`), \`ms\`
+  \`mixups\` | \`placement\` | \`listen\` | \`speak\` | \`fluency\`), \`ms\`.
+  A Mix-ups lesson (\`mode: "mixups"\`, \`unit: "mixups"\`) drills pairs of
+  words you gave one for the other; the pairs are kept in \`progress.json\`
+  (\`mixups\`).
 - \`xp\`, \`correct\`, \`total\`, \`perfect\`, \`queued\` (words sent to review)
 - \`reps\`: every exercise in order. Per rep: \`kind\` (\`choose\`, \`type\`,
   \`build\`, \`listen\`), \`unit\`, \`slug\`, \`lemma\`, \`gloss\`, \`sentence\`

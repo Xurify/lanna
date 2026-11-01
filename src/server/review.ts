@@ -15,6 +15,7 @@ import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
 import { firstTryOf, recordFirstTry } from "../core/first-try.ts";
+import { noteReviewMixup } from "./mixups.ts";
 
 const DAY_MS = 86_400_000;
 const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
@@ -215,6 +216,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	cards[card.id] = updated;
 	reviewStore.writeCards(cards);
 	noteWeakForm(updated, rating, now);
+	noteReviewMixup(card, input.given, verdict, input.hints, now);
 	const form = noteFirstTry(card, input, verdict);
 	reviewStore.appendLog({
 		cardId: card.id,
