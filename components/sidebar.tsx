@@ -62,12 +62,12 @@ import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/sr
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
 const SIDEBAR_AUTOCLOSE = 928;
 
-/* Phone widths in the plain browser (Tailwind's max-md): the sidebar becomes
+/* Phone widths, and touch tablets below lg, in the plain browser: the sidebar becomes
  * a drawer over the page instead of a 288px column that would leave about
  * 100px of page on a 390px phone. The drawer starts closed on every load and
  * never touches the persisted desktop preference. Electron keeps its own
  * narrow rule above. */
-const PHONE_QUERY = "(width < 48rem)";
+const PHONE_QUERY = "(width < 48rem), (pointer: coarse) and (width < 64rem)";
 
 // Module scope, guarded for SSR (the server has no navigator).
 // The preload bridge is the shell's identity: the user agent no longer
@@ -251,7 +251,7 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 	return (
 		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
-			<div className={cn("flex h-dvh", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
+			<div className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>
 	);
 }
@@ -274,11 +274,11 @@ export function SidebarToggle() {
 	return (
 		<span
 			className={cn(
-				"sidebar-motion lh-no-drag relative flex h-9 shrink-0 overflow-hidden duration-200",
+				"sidebar-motion lh-no-drag relative flex h-9 shrink-0 overflow-hidden pointer-coarse:overflow-visible duration-200",
 				open ? "w-0 -mr-3" : "w-9 mr-0 lh-closed-toggle",
 				// Phone widths follow the drawer, decided in CSS so the first
 				// paint is already right.
-				drawer ? "max-md:w-0 max-md:-mr-3" : "max-md:w-9 max-md:mr-0",
+				drawer ? "max-md:w-0 max-md:-mr-3 touch-narrow:w-0 touch-narrow:-mr-3" : "max-md:w-9 max-md:mr-0 touch-narrow:w-9 touch-narrow:mr-0",
 			)}
 		>
 			<Hint label="Open sidebar" action="toggle-sidebar">
@@ -290,9 +290,9 @@ export function SidebarToggle() {
 				tabIndex={shown ? 0 : -1}
 				onClick={toggle}
 				className={cn(
-					"sidebar-motion duration-200",
+					"sidebar-motion duration-200 pointer-coarse:size-11",
 					open ? "pointer-events-none opacity-0" : "opacity-100",
-					drawer ? "max-md:pointer-events-none max-md:opacity-0" : "max-md:pointer-events-auto max-md:opacity-100",
+					drawer ? "max-md:pointer-events-none max-md:opacity-0 touch-narrow:pointer-events-none touch-narrow:opacity-0" : "max-md:pointer-events-auto max-md:opacity-100 touch-narrow:pointer-events-auto touch-narrow:opacity-100",
 				)}
 			>
 				{/* Owner, round 6: size-4, SAME as the close glyph — the toggle
@@ -822,20 +822,20 @@ function SessionsSidebar() {
 
 	return (
 		<>
-			{drawer && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={closeDrawer} aria-hidden="true" />}
-			<aside
+			{drawer && <div className="fixed inset-0 z-40 bg-black/50" onClick={closeDrawer} aria-hidden="true" />}
+			<aside data-sidebar=""
 				className={cn(
 					"sidebar-motion shrink-0 overflow-hidden duration-200",
 					open ? "w-72" : "w-0",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
-					"max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50",
-					drawer ? "max-md:w-72 max-md:shadow-2xl" : "max-md:w-0",
+					"max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 touch-narrow:fixed touch-narrow:inset-y-0 touch-narrow:left-0 touch-narrow:z-50",
+					drawer ? "max-md:w-72 max-md:shadow-2xl touch-narrow:w-72 touch-narrow:shadow-2xl" : "max-md:w-0 touch-narrow:w-0",
 				)}
 				aria-hidden={!visible}
 			>
-				<div className="flex h-full w-72 flex-col border-r bg-background">
+				<div className="flex h-full w-72 flex-col border-r bg-background max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]">
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -944,7 +944,7 @@ function SessionsSidebar() {
 											}}
 											placeholder="Search chats"
 											aria-label="Search chats"
-											className="h-8 rounded-lg border-0 bg-card pl-8 pr-8 text-sm shadow-none placeholder:text-muted-foreground"
+											className="h-8 rounded-lg border-0 bg-card pl-8 pr-8 text-sm pointer-coarse:text-[16px] shadow-none placeholder:text-muted-foreground"
 										/>
 										<SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
 										<button
@@ -1212,7 +1212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 			{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. On phones the four main pages leave room
 			    for the bottom nav (PhoneNav) at their end. */}
-			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-16 md:pb-0")}>
+			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0")}>
 				{/* The SCROLL-PROOF window-drag strip (owner bug report,
 				    2026-10-28: "scrolled down, I can't grab the window"). The
 				    per-page strips are absolute inside the scrolling content,

@@ -32,7 +32,7 @@ export function isPhoneNavPath(pathname: string): boolean {
 export function PhoneNav({ pathname }: { pathname: string }) {
 	if (!isPhoneNavPath(pathname)) return null;
 	return (
-		<nav aria-label="Bottom navigation" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-background md:hidden">
+		<nav aria-label="Bottom navigation" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
 			{DOORS.map((d) => {
 				const Icon = d.icon;
 				const active = d.pages.includes(pathname);

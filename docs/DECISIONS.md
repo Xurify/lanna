@@ -86,7 +86,7 @@ A unit is done after 3 lessons at 80% or better, or after 6 lessons. One lesson 
 
 ### E4. Custom UI, no native widgets, no layout shift (2026-10-27)
 
-No native `<select>`; chips, steppers and searchable panels instead. Sidebar state lives in a cookie, appearance variables are server-rendered on `<html>`, the Today summary is SSR'd, so there is no CLS or FOUC. Structure and alignment like Duolingo's; label every chip, because unlabelled prose lines read as unstructured. Run every screen state at both window sizes (about 1400×890 and 1133×700, or 1280 and 390 px wide) before calling a UI pass done; the owner reviews screenshots closely.
+No native `<select>`; chips, steppers and searchable panels instead. Sidebar state lives in a cookie, appearance variables are server-rendered on `<html>`, the Today summary is SSR'd, so there is no CLS or FOUC. Structure and alignment like Duolingo's; label every chip, because unlabelled prose lines read as unstructured. Run every screen state at both window sizes (about 1400×890 and 1133×700, or 1280 and 390 px wide, and 820 px for an iPad with touch emulation) before calling a UI pass done; the owner reviews screenshots closely.
 
 ### E4a. One button family, one answer first, labelled cues (2026-10-29)
 
@@ -96,7 +96,7 @@ No native `<select>`; chips, steppers and searchable panels instead. Sidebar sta
 - Buttons on learning screens come from `components/ui/learn-buttons.ts` (`PRIMARY`, `SECONDARY`, `QUIET`, `SMALL`, `KBD`): flat, sentence case, 48px. No uppercase, no faux-3D bottom edge.
 - Strand colours come from `components/strand-style.ts` (input sky, output xp, form go, fluency gold), so a strand looks the same on Today, in the plan and in the week card.
 - Today answers first: the next undone task is drawn large with one Start (Enter starts it); everything else is grouped below by strand. Only one card says what to do next.
-- Every cue chip carries a label ("means", "base form"); a key that does something is shown as a key (`Enter` to check, `1`–`4` to pick), hidden on phone widths.
+- Every cue chip carries a label ("means", "base form"); a key that does something is shown as a key (`Enter` to check, `1`–`4` to pick), shown only where a fine pointer is the main input (`pointer-fine:`, E20), so a touch screen never shows a key it does not have.
 - Leaving a lesson that has answers asks first (X or Escape); staying is the default.
 - The sidebar is language-first: language, the four destinations, then the tutor and its chats. Search and the Learn/Practice filter sit behind one search button. Background agents show only while one runs. Below `md` in the browser the sidebar is a drawer over the page, closed on load and on navigation.
 - Minimum text size is 12px (`--text-xs`); `--text-sm` is 13px.
@@ -224,6 +224,19 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - A recording is `{ wav, ms, spokeAt }`, and `ms` comes from the samples. The WAV goes to `/api/stt`, to pronunciation scoring and with the line to `/api/speak` (kept beside the scene), so the engine and the archive see the same bytes.
 - The file name is always `line.wav` on upload and `NN.wav` in the scene: WAV is the only format the path handles, so there is no type-to-extension mapping and no non-WAV branch left anywhere (the former `audioExt` helper is gone).
 - Azure's scoring path needs no conversion: it already asks for `audio/wav` PCM at 16 kHz.
+
+### E20. Phone and iPad: a responsive installable web app, served from the PC (2026-11-01)
+
+**Why:** the owner wants LangHarness on a phone and an iPad. A store app would have to move the keys and the learner's data off the PC, needs an Apple developer account, and sits in the weakest position under App Store guideline 4.2 (a thin client to a server the owner runs). A responsive web app keeps one UI for the desktop and the tablet, and keeps the data (E7) and the keys (E5) on the PC. The route and its limits are in [research/mobile-ipad.md](research/mobile-ipad.md).
+
+**How to apply:**
+- One UI. Phone and tablet layouts are CSS breakpoints and pointer variants on the same components, not separate screens.
+- Choose by pointer, not by width, for touch behaviour: `pointer-coarse:` for 44 px targets and the press-and-hold microphone, `pointer-fine:` for keycap hints (E4a), and `touch-narrow:` (a coarse pointer below `lg`) for the sidebar drawer.
+- Every tappable control is at least 44 px tall on touch (the Apple HIG minimum). The sidebar gets this from one rule in `app/globals.css` (`[data-sidebar]`); reader and lesson controls carry `pointer-coarse:min-h-11`. A word inside a sentence keeps its line height, because inline padding does not grow the line box, so its tap area is 39 px tall on a phone. Do not make it taller: the lines would move on touch.
+- Pad for the safe areas with `env(safe-area-inset-*)` on the shell, the bottom navigation and the drawer. `viewport-fit=cover` and `theme-color` come from `app/layout.tsx`.
+- Installable: `app/manifest.ts` (standalone, starts at `/`, the app's colours) and `app/apple-icon.png`, rendered from `build/mark.svg` by `scripts/make-pwa-icons.mjs`. `app/layout.tsx` sets `apple-mobile-web-app-capable` explicitly: Next 16 emits only the standard `mobile-web-app-capable`, and iOS reads the Apple name for a full-screen launch.
+- The server stays on `127.0.0.1` until a pairing step and HTTPS exist. Do not bind it to the network without authentication: it holds the keys and the learner's data.
+- Browser storage holds only per-viewer conveniences. WebKit bug 237350 reports that iOS removes a Home Screen web app's storage after seven days unused, so progress belongs on the PC (E7).
 
 ## Working rules (how work reaches the repo)
 

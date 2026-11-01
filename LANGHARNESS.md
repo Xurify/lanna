@@ -50,6 +50,19 @@ Originals of every file the redesign changed are in
 
 | Your data, kept | Everything the app generates or you produce stays on disk in open formats, with a README in every folder: `data/README.md` is the map. Tutor chats (with token usage per turn) in `data/profiles/<language>/chats/` (deleted ones move to `chats/trash/`), every finished lesson with every answer in `lessons/<day>.jsonl`, a repeat "Why?" reopens its earlier chat (`lessons/why-index.json`), the review deck and its answer log in `review/`. `npm run corpus:export` writes a clean, app-independent snapshot to `data/export/<stamp>/` (sentences, lessons, dialogues, explanations, audio catalog, review history, usage summary). |
 
+## Phone and iPad (November 2026)
+
+The screens lay out for a phone (390 px wide) and an iPad (820 px in portrait), with touch targets at least 44 px tall. A phone or iPad cannot reach the app yet: the server listens on this computer only, on purpose, until a sign-in and HTTPS are in place. See [research/mobile-ipad.md](docs/research/mobile-ipad.md).
+
+| Area | What you get |
+|---|---|
+| Layout | Today, lessons, review, Read and Speak fit a phone and an iPad with no sideways scroll. On a phone, or a touch screen narrower than 1024 px, the sidebar is a drawer over the page, closed until you open it. |
+| Touch | Sidebar rows and buttons, the reader's header and bottom bar, and the leave buttons are at least 44 px. Keycap hints (`Enter`, `1`–`4`) show only where a fine pointer is the main input. |
+| Read | The tap-to-gloss card stays inside the screen edges on a narrow screen. |
+| Speak | On touch, press and hold the mic button to talk and let go to send. The keyboard and mouse toggle is unchanged. |
+| Home screen | The app has a web-app manifest and icons, so Share, then Add to Home Screen, opens it full screen once it can be reached. |
+| Notch and home bar | The top bar, the bottom navigation and the drawer clear the notch and the home indicator. |
+
 ## Where the thinking lives
 
 - [docs/DECISIONS.md](docs/DECISIONS.md): the principles and rules behind the app, dated, with the why.

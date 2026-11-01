@@ -31,3 +31,6 @@ langharness-2.tar.gz
 
 # Deploy leftovers from assistant threads (never needed)
 _handoff/
+
+# Desktop dev launcher log leftover in the PC folder (not part of the app)
+.desktop-dev.log.err

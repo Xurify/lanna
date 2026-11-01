@@ -66,6 +66,10 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 	const [draft, setDraft] = useState("");
 	const [sending, setSending] = useState(false);
 	const [listening, setListening] = useState(false);
+	// Press-and-hold on touch (2026-11-01): "down" while a finger holds the mic;
+	// "up" when it let go before the mic was live. A mouse or a key never sets it.
+	const holdRef = useRef<"idle" | "down" | "up">("idle");
+	const touchPressRef = useRef(false);
 	const [hearing, setHearing] = useState(false);
 	// True while the captured line is sent (the tutor answers): drives "Heard" for screen readers.
 	const [heard, setHeard] = useState(false);
@@ -258,6 +262,45 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 	}, [state, sending, hearing, phase, listening, send]);
 	const toggleRef = useRef(toggleMic);
 	toggleRef.current = toggleMic;
+		// Press-and-hold on touch (2026-11-01): the mic records while a finger holds it,
+		// and the release sends the line. A mouse keeps press-to-start, press-to-send,
+		// as the keyboard's Space does. The click a touch press leaves behind is the
+		// same press, so it is ignored.
+		const onMicDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+			touchPressRef.current = e.pointerType !== "mouse";
+			if (e.pointerType === "mouse") return;
+			e.preventDefault();
+			holdRef.current = "down";
+			try {
+				e.currentTarget.setPointerCapture(e.pointerId);
+			} catch {
+				// Capture is a nicety: the release still reaches the button on most devices.
+			}
+			if (!listening) void toggleMic();
+		};
+		const onMicUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+			if (e.pointerType === "mouse" || holdRef.current !== "down") return;
+			if (listening) {
+				holdRef.current = "idle";
+				void toggleMic();
+			} else {
+				holdRef.current = "up"; // still starting: stop as soon as the mic is live
+			}
+		};
+		const onMicClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+			if (touchPressRef.current && e.detail !== 0) {
+				touchPressRef.current = false;
+				return;
+			}
+			void toggleMic();
+		};
+		// A release that came before the mic was live stops it the moment it is.
+		useEffect(() => {
+			if (listening && holdRef.current === "up") {
+				holdRef.current = "idle";
+				void toggleRef.current();
+			}
+		}, [listening]);
 
 	// The newest line scrolls into view.
 	useEffect(() => {
@@ -423,15 +466,15 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 						<div className="flex items-center gap-4">
 							<button
 								type="button"
-								onClick={() => void toggleMic()}
+								onClick={onMicClick}
 								disabled={sending || hearing}
 								aria-pressed={listening}
 								aria-label={listening ? "Stop and send" : "Say your line"}
 								className={cn(
-									"relative flex size-16 shrink-0 items-center justify-center rounded-full text-background transition-transform active:scale-95 disabled:opacity-60",
+									"relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-background transition-transform active:scale-95 disabled:opacity-60 [-webkit-touch-callout:none]",
 									listening ? "bg-miss" : "bg-xp hover:scale-105",
 								)}
-								data-testid="speak-mic"
+								data-testid="speak-mic" onPointerDown={onMicDown} onPointerUp={onMicUp} onPointerCancel={onMicUp} onLostPointerCapture={onMicUp} onContextMenu={(e) => e.preventDefault()}
 							>
 								{listening && <span className="absolute inset-0 rounded-full bg-miss/40" style={{ transform: `scale(${1 + level * 0.6})` }} aria-hidden="true" />}
 								{hearing ? <LoaderCircleIcon className="relative size-7 animate-spin" /> : listening ? <SquareIcon className="relative size-6 fill-current" /> : <MicIcon className="relative size-7" />}
@@ -441,12 +484,12 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 									<Meter level={level} />
 								) : (
 									<p className="font-ui text-sm font-bold text-foreground" data-testid="speak-hint">
-										{hearing ? "Hearing you…" : sending ? "The tutor is answering…" : counts.learner === 0 ? "Press the mic (or Space), say your line, press again." : "Your turn. Mic or Space."}
+										{hearing ? "Hearing you…" : sending ? "The tutor is answering…" : <><span className="pointer-coarse:hidden">{counts.learner === 0 ? "Press the mic (or Space), say your line, press again." : "Your turn. Mic or Space."}</span><span className="hidden pointer-coarse:inline">{counts.learner === 0 ? "Hold the mic, say your line, let go." : "Your turn. Hold the mic."}</span></>}
 									</p>
 								)}
-								<p className="mt-0.5 font-prose text-xs text-muted-foreground">{listening ? "Press again (or Space) when you have said it · Escape throws it away" : "M shows the meaning · R replays · T types a line"}</p>
+								<p className="mt-0.5 font-prose text-xs text-muted-foreground pointer-coarse:hidden">{listening ? "Press again (or Space) when you have said it · Escape throws it away" : "M shows the meaning · R replays · T types a line"}</p>
 							</div>
-							<button type="button" onClick={() => setTyping(true)} className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Type instead" title="Type instead (T)">
+							<button type="button" onClick={() => setTyping(true)} className="rounded-lg p-2 pointer-coarse:p-3 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Type instead" title="Type instead (T)">
 								<KeyboardIcon className="size-5" />
 							</button>
 						</div>
