@@ -158,7 +158,7 @@ function buildPast(days: readonly TrajectoryDay[], snaps: ReadonlyArray<number |
 }
 
 /** Gain per practice hour from `from` on: the rises between the snapshots,
- *  over the minutes practised in the same days, placement days left out. */
+ *  over the minutes practiced in the same days, placement days left out. */
 function creditedRate(days: readonly TrajectoryDay[], snaps: ReadonlyArray<number | null>, from: number): number | null {
 	const carried = carryForward(snaps);
 	const a = carried.findIndex((v, i) => i >= from && v !== null);

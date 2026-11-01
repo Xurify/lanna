@@ -7,7 +7,7 @@
  * only have counts (how every day was recorded before minutes were
  * measured) and three newer days with minutes measured per activity, then
  * prints the same week counted both ways. Start the app against the same
- * folder (LH_DATA_DIR=<folder> npm run dev) to try the live behaviour.
+ * folder (LH_DATA_DIR=<folder> npm run dev) to try the live behavior.
  *
  * `npm run dev:sandbox -- --seed` does both steps in a throwaway folder.
  *

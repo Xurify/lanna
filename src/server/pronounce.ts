@@ -82,7 +82,7 @@ export async function assess(input: AssessInput): Promise<PronScore | null> {
 	if (engine === "azure") {
 		const score = await assessAzure(input.audio, input.reference, LOCALE[lang] ?? `${lang}-${lang.toUpperCase()}`);
 		if (score) return score;
-		// Nothing recognised: fall through to the transcript when there is one.
+		// Nothing recognized: fall through to the transcript when there is one.
 		if (!input.heard) return null;
 	}
 	const heard = input.heard ?? (await transcribe(input.audio, lang)).text;

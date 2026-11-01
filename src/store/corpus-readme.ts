@@ -28,7 +28,7 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/speak/\` | Every spoken scene from the Speak task: each line (the tutor's with its meaning, yours with how it arrived), every repair prompt, the end summary and what it cost; your own recordings in \`<id>/\`; \`index.jsonl\` lists the scenes | JSON + WAV + JSON Lines |
 | \`profiles/slovak/fluency/\` | The speed strand's log: every timed re-read (words a minute) and every "say it faster" round (each pass's time, window, what was heard, how clearly it was said) | JSON Lines |
 | \`profiles/slovak/review/\` | The spaced-review deck: \`cards.json\` (every card and its memory state), \`log.jsonl\` (every answer), \`meta.json\` (settings) | JSON + JSON Lines |
-| \`profiles/slovak/progress.json\` | XP, days practised, each unit's lessons and accuracy | JSON |
+| \`profiles/slovak/progress.json\` | XP, days practiced, each unit's lessons and accuracy | JSON |
 | \`profiles/slovak/graph/\` | The knowledge graph the tutor extracted from your sessions (nodes, chains, sources) | JSON Lines ledgers |
 | \`profiles/slovak/jobs/\` | Background agent jobs (research, extraction) and their usage | JSON |
 | \`profiles/slovak/debug/\` | Raw provider stream recordings, only when debug recording is on | JSON Lines |
@@ -91,7 +91,7 @@ where the format is not obvious.
 - \`review/\`: the spaced-review deck. \`cards.json\` is every card with its
   FSRS memory state; \`log.jsonl\` is one line per answer (card, what you
   typed, verdict, rating, when; on a form card also the drill its sentence
-  practises, the word's gender and the slip); \`meta.json\` holds settings
+  practices, the word's gender and the slip); \`meta.json\` holds settings
   and how many new cards each day introduced.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
@@ -132,7 +132,7 @@ the chat was reopened instead of regenerated. The explanation itself is in
 \`../chats/<chatId>.json\`.
 
 Lessons are built locally from the dictionary (no model call), so this log
-is a record of what you practised and how it went, not of paid content.
+is a record of what you practiced and how it went, not of paid content.
 `;
 
 const CHATS = `# chats/

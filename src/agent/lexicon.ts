@@ -104,15 +104,15 @@ export function lookupWord(query: string, profile: string = ACTIVE_PROFILE, limi
 	return { query, match: "none", entries: [] };
 }
 
-const CASES = ["N", "G", "D", "A", "L", "I"];
+const CASES = ["nominative", "genitive", "dative", "accusative", "locative", "instrumental"];
 
 /** The tool's text rendering of one entry. */
 export function formatEntry(e: LexiconEntry, examples = 3): string {
 	const lemma = entryLemma(e);
 	const lines = [`${lemma} — ${e.en} (${e.cat.toLowerCase()}${e.gender ? `, ${e.gender}` : ""}${e.register ? `, ${e.register}` : ""}${e.rank ? `, frequency rank ${e.rank}` : ""})`];
 	if (e.declension) {
-		lines.push(`  declension (checked against JÚĽŠ) sg: ${e.declension.singular.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
-		lines.push(`  pl: ${e.declension.plural.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
+		lines.push(`  declension (checked against JÚĽŠ) singular: ${e.declension.singular.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
+		lines.push(`  plural: ${e.declension.plural.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
 	} else if (e.forms?.length) {
 		lines.push(`  verified forms (unordered): ${e.forms.join(", ")}`);
 	} else {

@@ -1,7 +1,7 @@
 /**
  * Weak spots (src/core/weak-spots.ts) and the miss verdict
  * (src/core/onboarding.ts missVerdict): the record, its mending rule,
- * the families, the tutor's line, and the judge-note normaliser.
+ * the families, the tutor's line, and the judge-note normalizer.
  */
 
 import assert from "node:assert/strict";

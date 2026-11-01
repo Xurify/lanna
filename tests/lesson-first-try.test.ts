@@ -1,7 +1,7 @@
 /**
  * LESSON FIRST TRIES ON THE SERVER (LangHarness, 2026-10-31): a recorded
  * lesson counts each rep's first answer — the one before any cue — on the
- * drill the rep practised, split by the word's gender column
+ * drill the rep practiced, split by the word's gender column
  * (progress.json units: first, byGender), and the lesson log keeps the
  * gender, the first answer and the slip. Peeks, meaning and build reps,
  * and the end-of-lesson retry never count; a mixed lesson counts toward

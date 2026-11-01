@@ -98,7 +98,7 @@ describe("messageFingerprint — what changes it, what never does", () => {
 		assert.equal(
 			messageFingerprint(withMarker[0]!),
 			before,
-			"the neighbour's fingerprint is unchanged by the attach",
+			"the neighbor's fingerprint is unchanged by the attach",
 		);
 	});
 

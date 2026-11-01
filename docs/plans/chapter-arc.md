@@ -92,7 +92,7 @@ The exam is a required gate, but it can't block anyone until we trust it. So it 
 
 **6c. Skip-ahead (later, after 6b).** Passing a chapter's exam opens it without its lessons, like Duolingo's tests out of units. Decided 2026-10-30: this comes after the gate, not with it.
 
-- Needs before it's built: which chapters can be opened early (the next one only, or any later one), and how skipped lessons are labelled. The app already counts skipped units as done in its unit totals (`curriculumState`), so the labels keep the numbers honest (P8).
+- Needs before it's built: which chapters can be opened early (the next one only, or any later one), and how skipped lessons are labeled. The app already counts skipped units as done in its unit totals (`curriculumState`), so the labels keep the numbers honest (P8).
 - Acceptance: skipped lessons show as "tested out", not as studied.
 
 ### Phase 7: Zvuk (sound of the week)
@@ -129,7 +129,7 @@ The exam is a required gate, but it can't block anyone until we trust it. So it 
 - **Gate timing.** A gate on an exam we haven't checked would block learners. That's why 6b waits for 6a's results.
 - **Model cost.** Everything generated is cached under `data/` (E1), so generation runs once per item.
 - **Slovak accuracy.** Pairs and forms come from verified lexicon forms (P8). Generated scene scripts and stories are reviewed before use.
-- **Licence.** The CEFR descriptors belong to the Council of Europe. Quote them only with attribution; otherwise paraphrase (decision 4).
+- **License.** The CEFR descriptors belong to the Council of Europe. Quote them only with attribution; otherwise paraphrase (decision 4).
 - **Test isolation.** `tests/speak.test.ts` reads the repo-root `auth.json`, so it fails on a PC that has an ElevenLabs key. Fix it in a small PR before phase 5.
 
 ## Done when

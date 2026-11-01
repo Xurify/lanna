@@ -40,7 +40,7 @@ export const STORIES_A1: StorySource[] = [
 			{ who: "Matej", sk: "Potom si uvarím silnú čiernu kávu bez cukru.", en: "Then I brew strong black coffee without sugar." },
 			{ who: "Matej", sk: "Pri káve rád počúvam pokojnú akustickú hudbu.", en: "With coffee I like listening to calm acoustic music." },
 			{ who: "Matej", sk: "Popoludní často chodím na prechádzku do lesa alebo okolo hradu.", en: "In the afternoon I often go for a walk into the forest or around the castle." },
-			{ who: "Matej", sk: "Na ulici vždy pozdravím susedov a známych.", en: "On the street I always greet neighbours and acquaintances." },
+			{ who: "Matej", sk: "Na ulici vždy pozdravím susedov a známych.", en: "On the street I always greet neighbors and acquaintances." },
 			{ who: "Matej", sk: "Ľudia v našom meste sú veľmi priateľskí a milí.", en: "The people in our town are very friendly and nice." },
 			{ who: "Matej", sk: "Večer rád čítam knihy alebo varím večeru pre priateľov.", en: "In the evening I like reading books or cooking dinner for friends." },
 			{ who: "Matej", sk: "Veľmi sa teším, že sa učíte po slovensky.", en: "I am very pleased that you are learning Slovak." },
@@ -49,7 +49,7 @@ export const STORIES_A1: StorySource[] = [
 		newWords: [
 			{ sk: "historický", en: "historical" },
 			{ sk: "kresliť", en: "to draw" },
-			{ sk: "sused", en: "neighbour" },
+			{ sk: "sused", en: "neighbor" },
 			{ sk: "priateľský", en: "friendly" },
 		],
 		questions: [
@@ -317,7 +317,7 @@ export const STORIES_A1: StorySource[] = [
 			{ who: "Matej", sk: "Hlásateľ v reproduktore oznámil: 'Stanica Poprad-Tatry, konečná zastávka.'", en: "The announcer on the speaker proclaimed: 'Station Poprad-Tatry, final stop.'" },
 			{ who: "Martin", sk: "Vzali sme si batohy a vystúpili sme na perón do sviežeho horského vzduchu.", en: "We grabbed our backpacks and stepped onto the platform into crisp mountain air." },
 			{ who: "Matej", sk: "Pred nami bol celý víkend plný dobrodružstva na tatranských chodníkoch.", en: "Before us lay an entire weekend full of adventure on Tatras trails." },
-			{ who: "Martin", sk: "Cestovanie vlakom po Slovensku je naozaj pohodlné a krásne.", en: "Travelling by train through Slovakia is truly comfortable and beautiful." },
+			{ who: "Martin", sk: "Cestovanie vlakom po Slovensku je naozaj pohodlné a krásne.", en: "Traveling by train through Slovakia is truly comfortable and beautiful." },
 		],
 		newWords: [
 			{ sk: "rýchlik", en: "express train" },

@@ -194,19 +194,19 @@ describe("getWordBank", () => {
 		assert.equal(neviem.lemma, "vedieť");
 		assert.ok(neviem.gloss?.includes("I don't know"));
 		assert.ok(neviem.gloss?.includes("to not know"));
-		assert.ok(neviem.formNote?.includes("negative 1st person sg. of vedieť"));
+		assert.ok(neviem.formNote?.includes("negative 1st person singular of vedieť"));
 
 		const nepracujem = lookupSelection("nepracujem");
 		assert.equal(nepracujem.found, true);
 		assert.equal(nepracujem.lemma, "pracovať");
 		assert.ok(nepracujem.gloss?.includes("I don't work"));
-		assert.ok(nepracujem.formNote?.includes("negative 1st person sg. of pracovať"));
+		assert.ok(nepracujem.formNote?.includes("negative 1st person singular of pracovať"));
 
 		const necestujem = lookupSelection("necestujem");
 		assert.equal(necestujem.found, true);
 		assert.equal(necestujem.lemma, "cestovať");
 		assert.ok(necestujem.gloss?.includes("I don't travel"));
-		assert.ok(necestujem.formNote?.includes("negative 1st person sg. of cestovať"));
+		assert.ok(necestujem.formNote?.includes("negative 1st person singular of cestovať"));
 
 		// Even words outside the base lexicon can be added to the word bank
 		const addedCentra = addWordToBank("centra", true);

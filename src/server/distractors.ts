@@ -4,19 +4,19 @@
  * local builders with length-matched wrong meanings, which a learner can rule
  * out without knowing a word of Slovak. This swaps them for close ones:
  *
- *   cached near-miss → close dictionary neighbours → (the old options)
+ *   cached near-miss → close dictionary neighbors → (the old options)
  *
  * and, only when a sentence has fewer than two close ones, asks the cheap
  * model once for two near-misses, in one batch for the whole plan, kept on
  * disk (src/store/distractors.ts). The wait is capped; past the cap the
  * plan goes out with what the dictionary gave and the model's answer is kept
- * for next time. No model configured: dictionary neighbours only.
+ * for next time. No model configured: dictionary neighbors only.
  */
 
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
-import { buildNeighbourIndex, chooseOptions, neighbours, type NeighbourIndex } from "../core/distractors.ts";
+import { buildNeighborIndex, chooseOptions, neighbors, type NeighborIndex } from "../core/distractors.ts";
 import { rng } from "../core/lesson.ts";
 import type { ListenPlan } from "../core/listen.ts";
 import type { LessonPlan } from "../core/lesson.ts";
@@ -36,11 +36,11 @@ For each Slovak sentence you get its right English translation. Write exactly TW
 - Each must be clearly wrong for the Slovak sentence, never another valid translation of it.
 - The two wrong ones must differ from each other.`;
 
-let indexFor: { lexicon: Lexicon; index: NeighbourIndex } | null = null;
+let indexFor: { lexicon: Lexicon; index: NeighborIndex } | null = null;
 
-function neighbourIndex(lexicon: Lexicon): NeighbourIndex {
+function neighborIndex(lexicon: Lexicon): NeighborIndex {
 	if (indexFor?.lexicon !== lexicon) {
-		indexFor = { lexicon, index: buildNeighbourIndex(lexicon.entries.flatMap((e) => e.examples.filter((x) => !x.rejected).map((x) => x.en ?? ""))) };
+		indexFor = { lexicon, index: buildNeighborIndex(lexicon.entries.flatMap((e) => e.examples.filter((x) => !x.rejected).map((x) => x.en ?? ""))) };
 	}
 	return indexFor.index;
 }
@@ -106,12 +106,12 @@ async function writeNearMisses(need: readonly OptionItem[], resolved: { engine: 
 export async function betterOptions(items: readonly OptionItem[], opts: BetterOptionsOptions = {}): Promise<void> {
 	const lexicon = loadLexicon();
 	if (!lexicon || items.length === 0) return;
-	const index = neighbourIndex(lexicon);
+	const index = neighborIndex(lexicon);
 	const rand = rng(opts.seed ?? Date.now());
 	const choose = (item: OptionItem) => {
 		const near = distractorStore.get(item.sentence)?.near ?? [];
 		const wrong = (item.options ?? []).filter((o) => o.trim().toLowerCase() !== item.translation.trim().toLowerCase());
-		return chooseOptions(item.translation, near, neighbours(index, item.translation), wrong, rand);
+		return chooseOptions(item.translation, near, neighbors(index, item.translation), wrong, rand);
 	};
 	const weak = items.filter((it) => it.translation && choose(it).close < WANT_CLOSE && !distractorStore.get(it.sentence) && !inFlight.has(it.sentence));
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:faux" } : weak.length > 0 ? storyEngine() : null;

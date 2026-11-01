@@ -726,7 +726,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[8vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
 					<p className="font-ui text-sm font-bold text-muted-foreground">
-						Say it faster · pass {Math.min(pass + 1, FAST_PASSES)} of {FAST_PASSES} · {item.practised ? "a sentence you got right in a lesson" : "every word is yours"}
+						Say it faster · pass {Math.min(pass + 1, FAST_PASSES)} of {FAST_PASSES} · {item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}
 					</p>
 					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">
 						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : last?.inWindow ? "Fast, but not clear" : "Over the window"}

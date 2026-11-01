@@ -40,19 +40,22 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				</Link>
 				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">Grammar</h1>
 				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
-					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practise.{" "}
+					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practice.{" "}
 					<span className="text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
 				</p>
 
 				<table className="mt-8 w-full border-separate border-spacing-1.5 text-center" data-testid="grammar-atlas">
 					<thead>
 						<tr>
-							<th scope="col" className="w-24 p-0">
+							<th scope="col" className="w-28 p-0">
 								<span className="sr-only">Case</span>
 							</th>
 							{ATLAS_GENDERS.map((g) => (
-								<th key={g.id} scope="col" className="p-1 pb-2 font-ui text-xs font-bold text-muted-foreground" title={g.english} lang="sk">
-									{g.slovak}
+								<th key={g.id} scope="col" className="p-1 pb-2 font-ui text-xs font-bold text-foreground">
+									<span className="block capitalize">{g.english}</span>
+									<span className="block font-normal text-muted-foreground" lang="sk">
+										{g.slovak}
+									</span>
 								</th>
 							))}
 						</tr>
@@ -60,9 +63,9 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 					<tbody>
 						{ATLAS_CASES.map((row) => (
 							<tr key={row.case}>
-								<th scope="row" className="p-1 text-left align-middle" title={row.english}>
-									<span className="font-ui text-base font-black text-foreground">{row.case}</span>
-									<span className="ml-1.5 font-ui text-xs text-muted-foreground" lang="sk">
+								<th scope="row" className="p-1 text-left align-middle">
+									<span className="block font-ui text-sm font-black text-foreground capitalize">{row.english}</span>
+									<span className="block font-ui text-xs text-muted-foreground" lang="sk">
 										{row.slovak}
 									</span>
 								</th>

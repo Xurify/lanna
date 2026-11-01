@@ -39,7 +39,7 @@ export const WORD_CLUSTERS = {
 	"lx-weather": { title: "Weather", tagline: "počasie, slnko, dážď, sneh, vietor…", glyph: "cloud-sun", lemmas: ["počasie","slnko","dážď","sneh","vietor","teplo","studený","teplý"] },
 	"lx-nature": { title: "Nature", tagline: "príroda, strom, les, hora, rieka…", glyph: "tree-pine", lemmas: ["príroda","strom","les","hora","rieka","more","jazero","kvet"] },
 	"lx-animals": { title: "Animals", tagline: "pes, mačka, kôň, krava, vták…", glyph: "paw-print", lemmas: ["pes","mačka","kôň","krava","vták","ryba"] },
-	"lx-colours": { title: "Colours", tagline: "farba, červený, modrý, zelený, žltý…", glyph: "palette", lemmas: ["farba","červený","modrý","zelený","žltý","čierny","biely"] },
+	"lx-colours": { title: "Colors", tagline: "farba, červený, modrý, zelený, žltý…", glyph: "palette", lemmas: ["farba","červený","modrý","zelený","žltý","čierny","biely"] },
 	"lx-work": { title: "Work", tagline: "práca, kancelária, firma, šéf, pracovať…", glyph: "briefcase", lemmas: ["práca","kancelária","firma","šéf","pracovať","plat","učiteľ"] },
 	"lx-school": { title: "School & learning", tagline: "škola, študent, učiť, kniha, slovo…", glyph: "graduation-cap", lemmas: ["škola","študent","učiť","kniha","slovo","jazyk","otázka","odpoveď"] },
 	"lx-hobbies": { title: "Free time", tagline: "šport, futbal, hudba, film, hrať…", glyph: "gamepad-2", lemmas: ["šport","futbal","hudba","film","hrať","spievať","tancovať","čítať"] },

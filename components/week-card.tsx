@@ -2,7 +2,7 @@
 
 /**
  * This week (LangHarness, 2026-10-29) — the right-hand card on Today: the
- * days practised, the week's balance by strand, and the goal those days
+ * days practiced, the week's balance by strand, and the goal those days
  * add up to, with the door to the Plan page where the pace is set.
  */
 
@@ -54,7 +54,7 @@ export function WeekCard({
 				This week
 			</h2>
 
-			<ol className="mt-3 grid grid-cols-7 gap-1" aria-label="Days practised">
+			<ol className="mt-3 grid grid-cols-7 gap-1" aria-label="Days practiced">
 				{days.map((d, i) => {
 					const isToday = i === days.length - 1;
 					const date = /\d{4}-\d{2}-\d{2}/.test(d.day) ? new Date(`${d.day}T12:00:00`) : null;
@@ -69,7 +69,7 @@ export function WeekCard({
 								)}
 							>
 								<FlameIcon className="size-4" aria-hidden="true" />
-								<span className="sr-only">{active ? `practised, ${d.xp} XP` : "not practised"}</span>
+								<span className="sr-only">{active ? `practiced, ${d.xp} XP` : "not practiced"}</span>
 							</span>
 							<span className={cn("text-xs", isToday ? "font-bold text-foreground" : "text-muted-foreground")}>{date ? WEEKDAY[date.getDay()] : ""}</span>
 						</li>
