@@ -18,12 +18,12 @@
  */
 
 import Link from "next/link";
-import { AlertTriangleIcon, ArrowRightIcon, BlocksIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, CheckIcon, DumbbellIcon, GaugeIcon, HeadphonesIcon, MicIcon, MonitorPlayIcon, RepeatIcon, ZapIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowLeftRightIcon, ArrowRightIcon, BlocksIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, CheckIcon, DumbbellIcon, GaugeIcon, HeadphonesIcon, MicIcon, MonitorPlayIcon, RepeatIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KBD, PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { STRAND_STYLE, taskStrand } from "@/components/strand-style";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { STRANDS, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type PlanTask, type WeakSpotSummary } from "@/src/core";
+import { STRANDS, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type MixupSummary, type PlanTask, type WeakSpotSummary } from "@/src/core";
 
 export type Goal = LearnerGoal;
 
@@ -373,6 +373,43 @@ export function WeakSpots({ weak, className = "mt-4 border-t pt-4" }: { weak: We
 					</li>
 				)}
 			</ul>
+		</div>
+	);
+}
+
+/** The pairs of words the learner gives one for the other, and the
+ *  look-alikes predicted from them (src/core/mixups.ts). One link opens the
+ *  Mix-ups lesson, which takes them all. */
+export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: MixupSummary[]; className?: string }) {
+	const open = mixups.filter((m) => m.status === "active");
+	const probes = mixups.filter((m) => m.status === "probe");
+	if (!open.length && !probes.length) return null;
+	return (
+		<div className={className} data-testid="mixups">
+			<p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+				<ArrowLeftRightIcon className="size-4 text-miss" aria-hidden="true" />
+				Words you mix up
+			</p>
+			<ul className="mt-2 flex flex-col gap-0.5">
+				{open.slice(0, 4).map((m) => (
+					<li key={m.key} className="py-1.5" data-testid={`mixup-${m.key}`}>
+						<span className="block text-sm font-bold text-foreground" lang="sk">
+							{m.words.join(" / ")}
+						</span>
+						<span className="block text-xs text-muted-foreground">{m.line}</span>
+					</li>
+				))}
+				{probes.length > 0 && (
+					<li className="py-1.5 text-xs text-muted-foreground" data-testid="mixup-probes">
+						<span className="font-bold text-foreground">{open.length ? "Likely next" : "To test"}:</span>{" "}
+						<span lang="sk">{probes.slice(0, 4).map((m) => m.words.join(" / ")).join(", ")}</span>
+						{open.length ? " — the same pattern, not tested yet" : " — predicted from pairs you have mixed up"}
+					</li>
+				)}
+			</ul>
+			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-2 pointer-coarse:min-h-11")} data-testid="mixups-practise">
+				Practise them
+			</Link>
 		</div>
 	);
 }

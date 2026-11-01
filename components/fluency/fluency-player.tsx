@@ -683,7 +683,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 										<p className="font-prose text-lg text-foreground" lang="sk">
 											{r.sentence}
 										</p>
-										<p className="font-prose text-sm text-muted-foreground">{r.translation}</p>
+										<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">{r.translation}</p>
 									</div>
 									<div className="flex gap-1.5" aria-label="Passes">
 										{r.passes.map((p, i) => (
@@ -739,7 +739,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							<p className="font-prose text-[30px] leading-[1.5] text-foreground" lang="sk" data-testid="fast-sentence" data-word-lookup-enabled={phase === "between" ? "true" : "false"}>
 								{item.sentence}
 							</p>
-							<p className="mt-1 font-prose text-lg text-muted-foreground">{item.translation}</p>
+							<p data-no-word-lookup="true" className="mt-1 font-prose text-lg text-muted-foreground">{item.translation}</p>
 						</div>
 					</div>
 

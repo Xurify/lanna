@@ -99,6 +99,7 @@ export * from "./exam.ts";
 export * from "./onboarding.ts";
 export * from "./placement-ladder.ts";
 export * from "./weak-spots.ts";
+export * from "./mixups.ts";
 export * from "./vocab-probe.ts";
 export * from "./unit-bridges.ts";
 export * from "./reading.ts";

@@ -23,13 +23,13 @@ import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { DailyPlan, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
+import { DailyPlan, MixUps, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
 import { WeekCard } from "@/components/week-card";
 import { CurriculumPath } from "@/components/curriculum-path";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, ExamSummary, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
@@ -65,6 +65,7 @@ interface Summary {
 	balance?: StrandBalance;
 	trajectory?: TrajectoryInput;
 	weakSpots?: WeakSpotSummary[];
+	mixups?: MixupSummary[];
 	exams?: Record<string, ExamSummary>;
 	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
 	backlog?: number;
@@ -271,6 +272,12 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					{(s?.weakSpots?.length ?? 0) > 0 && (
 						<section className="rounded-3xl border bg-card p-5" aria-label="Your weak spots">
 							<WeakSpots weak={s?.weakSpots ?? []} className="" />
+						</section>
+					)}
+
+					{(s?.mixups ?? []).some((m) => m.status === "active" || m.status === "probe") && (
+						<section className="rounded-3xl border bg-card p-5" aria-label="Words you mix up">
+							<MixUps mixups={s?.mixups ?? []} className="" />
 						</section>
 					)}
 

@@ -80,6 +80,8 @@ import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
 import { watchMinutes } from "../core/watch.ts";
+import { mixupList, type MixupSummary } from "../core/mixups.ts";
+import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
 const RECENT_CAP = 240;
@@ -114,7 +116,7 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
 	const weakGender = opts?.gender ? undefined : (weakestGender(rec?.byGender) ?? undefined);
-	return withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender, weakGender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] });
+	return withOpenMixups(withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender, weakGender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] }));
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -127,6 +129,11 @@ function withKnown<T extends LessonPlan>(plan: T): T {
 		item.known = card ? { state: card.state, due: card.due, reps: card.reps } : null;
 	}
 	return plan;
+}
+
+/** The Mix-ups lesson (src/core/mixups.ts), with what the deck knows of each word. */
+export function mixupsFor(seed = Date.now()): LessonPlan {
+	return withKnown(mixupLessonFor(seed));
 }
 
 /** Blitz runs over the units you have started (at least the first three). */
@@ -172,6 +179,8 @@ export interface RepResult {
 export interface LessonResultInput {
 	unit: UnitId;
 	mode: "lesson" | "blitz";
+	/** A Mix-ups lesson: counts XP, the day and the mix-ups, never a unit. */
+	focus?: "mixups";
 	reps: RepResult[];
 	ms?: number;
 	/** Active milliseconds since the last send (src/core/active-time.ts);
@@ -214,18 +223,27 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	if (prior) return { ...prior.outcome, duplicate: true, summary: progressSummary(input.tz, now) };
 	const day = dayOf(p, today(input.tz, now));
 	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
+	// A Mix-ups lesson drills pairs of words, not a unit: its reps count
+	// toward no drill and no unit, only the day, XP and the mix-ups.
+	const focused = input.focus === "mixups";
 	// Each rep's first try goes to the drill it practised (a mixed lesson
 	// counts toward the cases it drilled). This runs before `unit` is read:
 	// recordFirstTry returns a new record, and `unit` must be that one.
-	const tries = input.reps.map(repTry);
+	const tries = input.reps.map((r) => (focused ? { count: null } : repTry(r)));
 	for (const { count } of tries) {
 		if (count) p.units[count.unit] = recordFirstTry(p.units[count.unit] ?? { lessons: 0, reps: 0, correct: 0 }, count);
 	}
-	const unit = (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
+	noteMixups(
+		p,
+		input.reps.flatMap((r) => lessonMixupEvent(r, now.toISOString()) ?? []),
+	);
+	const unit = focused ? null : (p.units[input.unit] ??= { lessons: 0, reps: 0, correct: 0 });
 	let newBest: number | undefined;
-	if (input.mode === "lesson") {
+	if (focused) {
+		if (total > 0) day.mixups = (day.mixups ?? 0) + 1;
+	} else if (input.mode === "lesson") {
 		if (total > 0) {
-			unit.lessons++;
+			unit!.lessons++;
 			day.lessons++;
 			day.units ??= {};
 			day.units[input.unit] = (day.units[input.unit] ?? 0) + 1;
@@ -238,12 +256,14 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 		}
 	}
 	addMinutes(day, input.mode === "blitz" ? "blitz" : "lesson", sessionMs(input));
-	unit.reps += total;
-	unit.correct += correct;
-	unit.lastAt = now.toISOString();
+	if (unit) {
+		unit.reps += total;
+		unit.correct += correct;
+		unit.lastAt = now.toISOString();
+	}
 	// The weak-spots record (src/core/weak-spots.ts): every lesson rep counts
 	// against a flagged unit, and a unit under the bar gets flagged.
-	if (input.mode === "lesson" && total > 0) {
+	if (unit && input.mode === "lesson" && total > 0) {
 		const t = tallyWeak(p.weak ?? {}, input.unit, correct, total - correct, now);
 		p.weak = t.weak;
 		// This lesson under the bar flags the unit (a lesson just mended is not re-flagged by its own reps).
@@ -268,8 +288,8 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 			id: `lesson_${now.getTime().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
 			at: now.toISOString(),
 			day: today(input.tz, now),
-			unit: input.unit,
-			mode: input.mode,
+			unit: focused ? "mixups" : input.unit,
+			mode: focused ? "mixups" : input.mode,
 			ms: input.ms,
 			xp,
 			correct,
@@ -415,6 +435,8 @@ export interface ProgressSummary {
 	trajectory: TrajectoryInput;
 	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
 	weakSpots: WeakSpotSummary[];
+	/** Pairs of words on record as mix-ups and probes (src/core/mixups.ts): open ones first. */
+	mixups: MixupSummary[];
 	/** Each chapter's exam on record (src/core/exam.ts), by chapter id. */
 	exams: Record<string, ExamSummary>;
 	/** The goal's daily minutes against what the last `windowDays` days logged. */
@@ -497,13 +519,16 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
+		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, mixups: d?.mixups ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
 		dayOfYear: dayOfYearOf(key),
 		scenes: purposeScenes(goal.purposes ?? []),
 		weak: weakSpotList(p.weak).map((w) => w.unit),
+		mixups: mixupList(p.mixups)
+			.filter((m) => m.status === "active")
+			.map((m) => m.words),
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),
@@ -577,6 +602,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			goalDays: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
 		},
 		weakSpots: weakSpotList(p.weak),
+		mixups: mixupList(p.mixups),
 		exams: examSummaries(p.exams),
 		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },
 		backlog,

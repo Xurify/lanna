@@ -638,6 +638,8 @@ export interface DayEvidence {
 	units: Record<string, number>;
 	reviews: number;
 	blitz: number;
+	/** Mix-ups lessons finished today (src/core/mixups.ts). */
+	mixups?: number;
 	talks: number;
 	stories: number;
 	tutors: number;
@@ -670,6 +672,9 @@ export interface PlanInput {
 	/** Units on record as weak spots (src/core/weak-spots.ts), most urgent
 	 *  first: the Strengthen task takes the first one that can be drilled. */
 	weak?: UnitId[];
+	/** Pairs of words the learner mixes up and has not mended (src/core/mixups.ts),
+	 *  latest first: with no weak spot to drill, Strengthen practises them. */
+	mixups?: Array<[string, string]>;
 	/** A video the learner added and has not watched yet (src/core/watch.ts):
 	 *  it joins the plan as input until it is watched. */
 	watch?: { id: string; title: string; minutes: number; coverage: number };
@@ -765,8 +770,18 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		all
 			.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
 			.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
-	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0) || day.blitz > 0;
-	if (weak) {
+	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0) || day.blitz > 0 || (day.mixups ?? 0) > 0;
+	const mixups = input.mixups ?? [];
+	if (!spot && mixups.length > 0) {
+		tasks.push({
+			id: "strengthen",
+			title: `Strengthen: Mix-ups · ${mixups[0]!.join(" / ")}`,
+			line: `${mixups.length === 1 ? "A pair of words you mix up" : `${mixups.length} pairs of words you mix up`} — typed, both sides in turn, plus the look-alikes they predict`,
+			minutes: TASK_MINUTES.strengthen,
+			done: strengthenDone,
+			href: "/lesson?mode=mixups",
+		});
+	} else if (weak) {
 		const weakInfo = isUnitId(weak.id) ? unitInfo(weak.id) : undefined;
 		const weakSlovak = weak.slovakTerm ?? weakInfo?.slovakTerm;
 		const weakClean = weak.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");

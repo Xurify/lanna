@@ -465,7 +465,7 @@ export function shuffle<T>(list: readonly T[], rand: () => number): T[] {
 
 const fold = (s: string) => foldDiacritics(s.toLowerCase());
 
-function matchCase(form: string, like: string): string {
+export function matchCase(form: string, like: string): string {
 	const capital = like.charAt(0) !== like.charAt(0).toLowerCase();
 	return capital ? form.charAt(0).toLocaleUpperCase("sk-SK") + form.slice(1) : form.toLowerCase();
 }
@@ -684,6 +684,9 @@ export interface LessonPlan {
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
 	/** If set, the lesson specifically drills candidates of this gender column. */
 	gender?: AtlasGender;
+	/** A Mix-ups lesson (src/core/mixups.ts): pairs of words, not a unit, so
+	 *  finishing it moves no unit on the path. */
+	focus?: "mixups";
 }
 
 /**
