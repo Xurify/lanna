@@ -1,0 +1,827 @@
+{
+	"summary": {
+		"config": "claude-sonnet-5-5-medium",
+		"graded": 56,
+		"errors": 3,
+		"rejectedCorrect": 0,
+		"cost": 0.0842,
+		"avgSeconds": 1.8,
+		"avgReasoning": 0
+	},
+	"results": [
+		{
+			"id": "err-do-skoly",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Idem do školy.\", \"why\": \"The preposition 'do' takes the genitive case, so the nominative 'škola' must change to the genitive 'školy'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Idem do školy.",
+				"why": "The preposition 'do' takes the genitive case, so the nominative 'škola' must change to the genitive 'školy'."
+			},
+			"pass": true,
+			"cost": 0.000998,
+			"output": 67,
+			"reasoning": 0,
+			"ms": 1397
+		},
+		{
+			"id": "err-v-bratislave",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Bývam v Bratislave.\", \"why\": \"After the preposition 'v' meaning 'in' (location), Slovak uses the locative case, so Bratislava becomes Bratislave.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Bývam v Bratislave.",
+				"why": "After the preposition 'v' meaning 'in' (location), Slovak uses the locative case, so Bratislava becomes Bratislave."
+			},
+			"pass": true,
+			"cost": 0.001106,
+			"output": 77,
+			"reasoning": 0,
+			"ms": 1457
+		},
+		{
+			"id": "err-dve-sestry",
+			"kind": "sentence",
+			"text": "In Slovak, \"sestra\" is feminine. With numerals 2-4, feminine nouns take nominative plural: \"dve sestry\". \"Dva\" is masculine form; feminine/neuter use \"dve\". So the correct form is \"Mám dve sestry.\"\n\n{\"correct\": false, \"corrected\": \"Mám dve sestry.\", \"why\": \"The numeral must agree in gender with the feminine noun 'sestra', so it is 'dve' (not masculine 'dva'); 'sestry' is already the correct plural form.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Mám dve sestry.",
+				"why": "The numeral must agree in gender with the feminine noun 'sestra', so it is 'dve' (not masculine 'dva'); 'sestry' is already the correct plural form."
+			},
+			"pass": true,
+			"cost": 0.002052,
+			"output": 172,
+			"reasoning": 0,
+			"ms": 1970
+		},
+		{
+			"id": "err-pat-sestier",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Mám päť sestier.\", \"why\": \"After numerals 5 and above, Slovak uses the genitive plural, so 'sestra' becomes 'sestier' (not the nominative singular/plural 'sestry').\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Mám päť sestier.",
+				"why": "After numerals 5 and above, Slovak uses the genitive plural, so 'sestra' becomes 'sestier' (not the nominative singular/plural 'sestry')."
+			},
+			"pass": true,
+			"cost": 0.0012020000000000002,
+			"output": 87,
+			"reasoning": 0,
+			"ms": 1425
+		},
+		{
+			"id": "err-nie-je",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Môj brat nie je doma.\", \"why\": \"In standard Slovak the negated verb 'to be' is written as two words, 'nie je', not 'nieje'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Môj brat nie je doma.",
+				"why": "In standard Slovak the negated verb 'to be' is written as two words, 'nie je', not 'nieje'."
+			},
+			"pass": true,
+			"cost": 0.001026,
+			"output": 69,
+			"reasoning": 0,
+			"ms": 1395
+		},
+		{
+			"id": "err-budem-perf",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Zajtra budem písať list.\", \"why\": \"The future of an imperfective verb is formed with 'budem' plus the infinitive of the imperfective verb ('písať'), not the perfective 'napísať'; to stress completion, use the perfective future without 'budem': 'Zajtra napíšem list.'\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Zajtra budem písať list.",
+				"why": "The future of an imperfective verb is formed with 'budem' plus the infinitive of the imperfective verb ('písať'), not the perfective 'napísať'; to stress completion, use the perfective future without 'budem': 'Zajtra napíšem list.'"
+			},
+			"pass": true,
+			"cost": 0.001508,
+			"output": 117,
+			"reasoning": 0,
+			"ms": 1710
+		},
+		{
+			"id": "err-s-kamaratkou",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Včera som išla do kina s kamarátkou.\", \"why\": \"The preposition 's' (with) takes the instrumental case, so the feminine noun 'kamarátka' must become 'kamarátkou'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Včera som išla do kina s kamarátkou.",
+				"why": "The preposition 's' (with) takes the instrumental case, so the feminine noun 'kamarátka' must become 'kamarátkou'."
+			},
+			"pass": true,
+			"cost": 0.001186,
+			"output": 84,
+			"reasoning": 0,
+			"ms": 1434
+		},
+		{
+			"id": "err-o-otcovi",
+			"kind": "sentence",
+			"text": "The preposition \"o\" meaning \"about\" takes the locative case, so \"môj otec\" (nominative) must become \"mojom otcovi\". The standard Slovak locative of \"otec\" is \"otcovi\" (or \"otci\"), and the possessive \"môj\" becomes \"mojom\".\n\n{\"correct\": false, \"corrected\": \"Hovorím o mojom otcovi.\", \"why\": \"The preposition \\\"o\\\" (about) takes the locative case, so \\\"môj otec\\\" must be \\\"o mojom otcovi\\\".\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Hovorím o mojom otcovi.",
+				"why": "The preposition \"o\" (about) takes the locative case, so \"môj otec\" must be \"o mojom otcovi\"."
+			},
+			"pass": true,
+			"cost": 0.002006,
+			"output": 167,
+			"reasoning": 0,
+			"ms": 1862
+		},
+		{
+			"id": "err-na-autobus",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Čakám na autobus.\", \"why\": \"The verb \\\"čakať na\\\" takes the accusative case, so the noun is \\\"autobus\\\" (accusative singular of an inanimate masculine noun is the same as the nominative), not \\\"autobusu\\\".\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Čakám na autobus.",
+				"why": "The verb \"čakať na\" takes the accusative case, so the noun is \"autobus\" (accusative singular of an inanimate masculine noun is the same as the nominative), not \"autobusu\"."
+			},
+			"pass": true,
+			"cost": 0.001304,
+			"output": 97,
+			"reasoning": 0,
+			"ms": 1580
+		},
+		{
+			"id": "err-deti-mile",
+			"kind": "sentence",
+			"text": "Slovak \"Tie deti\" – deti is plural (feminine-like noun pattern, but grammatically plural). Adjective agreement: \"Tie deti sú veľmi milé.\" In Slovak, deti takes plural agreement; adjectives with deti end in -é (milé). The learner wrote \"milý\" (masculine singular), which is wrong.\n\n{\"correct\": false, \"corrected\": \"Tie deti sú veľmi milé.\", \"why\": \"The adjective must agree with the plural noun 'deti', so it takes the plural ending -é: 'milé', not the singular 'milý'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Tie deti sú veľmi milé.",
+				"why": "The adjective must agree with the plural noun 'deti', so it takes the plural ending -é: 'milé', not the singular 'milý'."
+			},
+			"pass": true,
+			"cost": 0.002292,
+			"output": 195,
+			"reasoning": 0,
+			"ms": 1960
+		},
+		{
+			"id": "ok-pat-ludi",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Päť ľudí čaká pred obchodom.\", \"why\": \"The numeral päť takes the genitive plural (ľudí) and the verb stays in the 3rd person singular (čaká), and pred takes the instrumental (obchodom).\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Päť ľudí čaká pred obchodom.",
+				"why": "The numeral päť takes the genitive plural (ľudí) and the verb stays in the 3rd person singular (čaká), and pred takes the instrumental (obchodom)."
+			},
+			"pass": true,
+			"cost": 0.0012980000000000001,
+			"output": 95,
+			"reasoning": 0,
+			"ms": 1588
+		},
+		{
+			"id": "ok-dve-deti",
+			"kind": "sentence",
+			"text": "Slovak \"deti\" is a plural noun (pluralia tantum-like, from \"dieťa\"). With numerals 2-4, standard Slovak normally uses \"dve deti\" — this is indeed the standard form. \"Dve deti\" is correct: deti is grammatically neuter in origin but treated as feminine plural in agreement for numerals (\"dve deti\", \"tri deti\", \"štyri deti\"). Verb: \"sa hrajú\" plural, correct. \"v parku\" locative, correct.\n\nCheck: the sentence is commonly \"Dve deti sa hrajú v parku.\" Yes, correct.\n\n{\"correct\": true, \"corrected\": \"Dve deti sa hrajú v parku.\", \"why\": \"The sentence is correct: 'dve deti' is the standard form with the numeral two, the verb 'hrajú' is plural, and 'v parku' is the right locative.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Dve deti sa hrajú v parku.",
+				"why": "The sentence is correct: 'dve deti' is the standard form with the numeral two, the verb 'hrajú' is plural, and 'v parku' is the right locative."
+			},
+			"pass": true,
+			"cost": 0.0032040000000000003,
+			"output": 286,
+			"reasoning": 0,
+			"ms": 3492
+		},
+		{
+			"id": "ok-kavu-s-mliekom",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Mám rád kávu s mliekom.\", \"why\": \"The sentence is correct standard Slovak: 'mám rád' takes the accusative (kávu), and 's' takes the instrumental (mliekom).\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Mám rád kávu s mliekom.",
+				"why": "The sentence is correct standard Slovak: 'mám rád' takes the accusative (kávu), and 's' takes the instrumental (mliekom)."
+			},
+			"pass": true,
+			"cost": 0.001192,
+			"output": 85,
+			"reasoning": 0,
+			"ms": 1467
+		},
+		{
+			"id": "ok-nikto-nic",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Nikto nič nevidel.\", \"why\": \"Slovak uses negative concord, so nikto, nič and the negated verb nevidel all appear together, and the sentence correctly means 'Nobody saw anything.'\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Nikto nič nevidel.",
+				"why": "Slovak uses negative concord, so nikto, nič and the negated verb nevidel all appear together, and the sentence correctly means 'Nobody saw anything.'"
+			},
+			"pass": true,
+			"cost": 0.001206,
+			"output": 87,
+			"reasoning": 0,
+			"ms": 897
+		},
+		{
+			"id": "ok-pred-kinom",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Stretli sme sa pred kinom.\", \"why\": \"The sentence is correct: 'pred' takes the instrumental here (location, 'in front of'), so 'pred kinom' is right, and 'sme sa stretli' is properly formed with the reflexive 'sa' after the auxiliary 'sme'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Stretli sme sa pred kinom.",
+				"why": "The sentence is correct: 'pred' takes the instrumental here (location, 'in front of'), so 'pred kinom' is right, and 'sme sa stretli' is properly formed with the reflexive 'sa' after the auxiliary 'sme'."
+			},
+			"pass": true,
+			"cost": 0.001522,
+			"output": 118,
+			"reasoning": 0,
+			"ms": 1642
+		},
+		{
+			"id": "ok-chcela-by-som",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Chcela by som pohár vody.\", \"why\": \"The sentence is grammatically correct: the feminine past participle 'chcela' agrees with a female speaker, 'by som' forms the conditional, and 'pohár vody' correctly uses the genitive after a container noun.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Chcela by som pohár vody.",
+				"why": "The sentence is grammatically correct: the feminine past participle 'chcela' agrees with a female speaker, 'by som' forms the conditional, and 'pohár vody' correctly uses the genitive after a container noun."
+			},
+			"pass": true,
+			"cost": 0.001378,
+			"output": 104,
+			"reasoning": 0,
+			"ms": 1678
+		},
+		{
+			"id": "ok-curated-cisar",
+			"kind": "sentence",
+			"text": "The standard Slovak spelling is \"cisár\" (not \"cisár\" with a different form). Slovak uses \"cisár\" for emperor, with the older/variant form \"cisár\" being the standard one; the sentence is therefore correct.\n\nChecking the rest: \"V zámku\" is the correct locative of \"zámok\" (zámok → v zámku). \"kedysi býval\" is correct, as \"býval\" is the iterative past of \"byť\" and often used for habitual or past residence. \"cisár s rodinou\" uses the instrumental after \"s\", which is correct.\n\n```json\n{\"correct\": true, \"corrected\": \"V zámku kedysi býval cisár s rodinou.\", \"why\": \"The sentence is grammatical: locative 'v zámku', habitual past 'býval', and instrumental 's rodinou' are all correct.\"}\n```",
+			"out": {
+				"correct": true,
+				"corrected": "V zámku kedysi býval cisár s rodinou.",
+				"why": "The sentence is grammatical: locative 'v zámku', habitual past 'býval', and instrumental 's rodinou' are all correct."
+			},
+			"pass": true,
+			"cost": 0.003022,
+			"output": 267,
+			"reasoning": 0,
+			"ms": 2855
+		},
+		{
+			"id": "ok-curated-akterami",
+			"kind": "sentence",
+			"text": "Slovak \"dve deti\" is a known tricky point. In standard Slovak, \"deti\" is a plural noun (pluralia tantum-like, from \"dieťa\"). With numerals 2-4, standard Slovak uses \"dvaja chlapci\" for masculine personal, and for \"deti\" the standard form is \"dve deti\" (neuter-like numeral agreement). Yes: \"dve deti\" is standard; \"dvoje deti\" is also used (collective numeral), and both are accepted.\n\nNow \"Hlavnými aktérmi príbehu sú dve deti.\" The subject is \"dve deti\" (nominative). The predicate nominal \"Hlavnými aktérmi\" is in instrumental, which is acceptable after \"byť\" in Slovak: \"Jeho úlohou je...\" It's common for instrumental predicate nouns: \"Hlavnými aktérmi príbehu sú...\" is fine. \"Aktér\" is masculine animate; instrumental plural \"aktérmi\" is correct.\n\nAgreement: \"sú\" plural fits \"dve deti\". Good.\n\n```json\n{\"correct\": true, \"corrected\": \"Hlavnými aktérmi príbehu sú dve deti.\", \"why\": \"The sentence is grammatical: the instrumental predicate noun 'aktérmi' is fine after 'byť' and 'dve deti' is a standard form (alongside 'dvoje detí').\"}\n```\n\nWait, \"dvoje deti\" vs \"dvoje detí\": with collective numerals the noun takes genitive plural (\"dvoje detí\"). I should state it accurately, and the output must be only a JSON object.\n\n{\"correct\": true, \"corrected\": \"Hlavnými aktérmi príbehu sú dve deti.\", \"why\": \"The sentence is grammatical: the instrumental predicate noun 'aktérmi' is fine after 'byť' and 'dve deti' is a standard form (the collective alternative would be 'dvoje detí').\"}",
+			"out": null,
+			"pass": false,
+			"miss": "unreadable",
+			"cost": 0.006758,
+			"output": 640,
+			"reasoning": 0,
+			"ms": 5251
+		},
+		{
+			"id": "ok-curated-vynarali",
+			"kind": "sentence",
+			"text": "Slovak \"otázka\" is feminine, so the plural nominative is \"otázky\" and the adjective must agree: \"nové otázky\". The learner wrote \"nové otázky\", which is correct. The verb \"vynárali\" is past plural, and the plural subject \"otázky\" (feminine) takes the form \"vynárali\" (-li ending is used for feminine plural as well). In Slovak, the past tense plural ending is \"-li\" for all genders except masculine animate, which is also \"-li\". So \"vynárali\" is fine.\n\n\"Pri čítaní sa mi vynárali nové otázky.\" is correct: \"Pri čítaní\" (locative), \"sa mi\" (reflexive plus dative; the order \"sa mi\" is standard), \"vynárali\" agrees with the plural subject, and \"nové otázky\" is nominative plural feminine.\n\n```json\n{\"correct\": true, \"corrected\": \"Pri čítaní sa mi vynárali nové otázky.\", \"why\": \"The sentence is grammatical: 'otázky' is feminine plural, 'nové' agrees with it, and 'vynárali' is the correct plural past form.\"}\n```",
+			"out": {
+				"correct": true,
+				"corrected": "Pri čítaní sa mi vynárali nové otázky.",
+				"why": "The sentence is grammatical: 'otázky' is feminine plural, 'nové' agrees with it, and 'vynárali' is the correct plural past form."
+			},
+			"pass": true,
+			"cost": 0.0040160000000000005,
+			"output": 366,
+			"reasoning": 0,
+			"ms": 3305
+		},
+		{
+			"id": "ok-curated-vlakom",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Cestou vlakom ušetríme čas aj peniaze.\", \"why\": \"The sentence is grammatically correct standard Slovak: 'cestou' (instrumental of 'cesta') plus 'vlakom' (instrumental) means 'by travelling by train', and 'ušetríme' takes the accusative objects 'čas' and 'peniaze'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Cestou vlakom ušetríme čas aj peniaze.",
+				"why": "The sentence is grammatically correct standard Slovak: 'cestou' (instrumental of 'cesta') plus 'vlakom' (instrumental) means 'by travelling by train', and 'ušetríme' takes the accusative objects 'čas' and 'peniaze'."
+			},
+			"pass": true,
+			"cost": 0.001708,
+			"output": 135,
+			"reasoning": 0,
+			"ms": 1746
+		},
+		{
+			"id": "ok-curated-peciatky",
+			"kind": "sentence",
+			"text": "Sentence: \"Bez pečiatky nemáte povolený vstup do areálu.\"\n\nCheck: \"Bez pečiatky\" - bez + genitive, pečiatky is genitive of pečiatka. Correct. \"nemáte povolený vstup\" - mať povolený vstup, accusative masculine inanimate: povolený vstup. Correct. \"do areálu\" - genitive of areál, correct (areálu). Standard Slovak: \"areál\" genitive \"areálu\". Yes.\n\nSpelling: \"pečiatka\" correct. The sentence is natural.\n\n{\"correct\": true, \"corrected\": \"Bez pečiatky nemáte povolený vstup do areálu.\", \"why\": \"The sentence is grammatically correct: 'bez' and 'do' take the genitive (pečiatky, areálu), and 'povolený vstup' is a correct accusative object of 'nemáte'.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Bez pečiatky nemáte povolený vstup do areálu.",
+				"why": "The sentence is grammatically correct: 'bez' and 'do' take the genitive (pečiatky, areálu), and 'povolený vstup' is a correct accusative object of 'nemáte'."
+			},
+			"pass": true,
+			"cost": 0.0033000000000000004,
+			"output": 294,
+			"reasoning": 0,
+			"ms": 2809
+		},
+		{
+			"id": "ok-curated-bicykli",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Nevlastní auto, jazdí len na bicykli.\", \"why\": \"The sentence is not correct Slovak: 'Nevlastní' is a Czech-style spelling, and standard Slovak uses 'Nevlastní' only as an adjective meaning 'step-' (e.g. nevlastný otec), so for 'he doesn't own' you need the verb form 'Nevlastní'.\"}\n\nWait, that reasoning is muddled; here is the accurate answer:\n\n{\"correct\": false, \"corrected\": \"Nevlastní auto, jazdí len na bicykli.\", \"why\": \"I am unsure of the intended form: the verb 'vlastniť' (to own) gives 'nevlastní' (he/she doesn't own) in standard Slovak, so the sentence may already be correct.\"}\n\nFinal answer:\n\n{\"correct\": true, \"corrected\": \"Nevlastní auto, jazdí len na bicykli.\", \"why\": \"'Nevlastní' is the correct 3rd person singular of 'nevlastniť' (does not own), and the comma correctly separates the two clauses.\"}",
+			"out": null,
+			"pass": false,
+			"miss": "unreadable",
+			"cost": 0.004054,
+			"output": 370,
+			"reasoning": 0,
+			"ms": 3302
+		},
+		{
+			"id": "rule-rhythmic",
+			"kind": "choice",
+			"text": "{\"answer\": 0, \"why\": \"The Slovak rhythmic law (rytmický zákon) says that a long syllable normally does not directly follow another long syllable within a word, so the suffix shortens, as in krásny (not *krásný), with some exceptions.\"}",
+			"out": {
+				"answer": 0,
+				"why": "The Slovak rhythmic law (rytmický zákon) says that a long syllable normally does not directly follow another long syllable within a word, so the suffix shortens, as in krásny (not *krásný), with some exceptions."
+			},
+			"pass": true,
+			"cost": 0.001342,
+			"output": 87,
+			"reasoning": 0,
+			"ms": 1588
+		},
+		{
+			"id": "rule-stress",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"Slovak has fixed stress on the first syllable of a word (e.g. SLOvo, KAmarát), unlike Polish, which stresses the second-to-last syllable.\"}",
+			"out": {
+				"answer": 1,
+				"why": "Slovak has fixed stress on the first syllable of a word (e.g. SLOvo, KAmarát), unlike Polish, which stresses the second-to-last syllable."
+			},
+			"pass": true,
+			"cost": 0.001066,
+			"output": 72,
+			"reasoning": 0,
+			"ms": 995
+		},
+		{
+			"id": "rule-nie-je",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"In standard Slovak the negation of 'je' is written as two words, 'nie je' (e.g., 'Nie je doma'), while 'nieje' and 'neni' are not standard.\"}",
+			"out": {
+				"answer": 1,
+				"why": "In standard Slovak the negation of 'je' is written as two words, 'nie je' (e.g., 'Nie je doma'), while 'nieje' and 'neni' are not standard."
+			},
+			"pass": true,
+			"cost": 0.001086,
+			"output": 75,
+			"reasoning": 0,
+			"ms": 1616
+		},
+		{
+			"id": "rule-dve-zeny",
+			"kind": "choice",
+			"text": "{\"answer\": 2, \"why\": \"'Žena' is feminine, and feminine nouns take 'dve' for 'two' in the nominative, so 'dve ženy' means 'two women' (dva/dvaja are masculine forms, and dvoch is genitive/accusative/locative for masculine animate).\"}",
+			"out": {
+				"answer": 2,
+				"why": "'Žena' is feminine, and feminine nouns take 'dve' for 'two' in the nominative, so 'dve ženy' means 'two women' (dva/dvaja are masculine forms, and dvoch is genitive/accusative/locative for masculine animate)."
+			},
+			"pass": true,
+			"cost": 0.001348,
+			"output": 103,
+			"reasoning": 0,
+			"ms": 2091
+		},
+		{
+			"id": "rule-pat-genitive",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"In Slovak, numerals from 5 upward (when the phrase is the subject or in the accusative) take the counted noun in the genitive plural, e.g. päť kníh, šesť študentov.\"}",
+			"out": {
+				"answer": 1,
+				"why": "In Slovak, numerals from 5 upward (when the phrase is the subject or in the accusative) take the counted noun in the genitive plural, e.g. päť kníh, šesť študentov."
+			},
+			"pass": true,
+			"cost": 0.001136,
+			"output": 78,
+			"reasoning": 0,
+			"ms": 1653
+		},
+		{
+			"id": "rule-budem",
+			"kind": "choice",
+			"text": "{\"answer\": 0, \"why\": \"The Slovak compound future (budem + infinitive) is formed only with imperfective verbs, e.g. 'budem písať'; perfective verbs express future with their present-tense forms ('napíšem'), so *budem napísať is ungrammatical.\"}",
+			"out": {
+				"answer": 0,
+				"why": "The Slovak compound future (budem + infinitive) is formed only with imperfective verbs, e.g. 'budem písať'; perfective verbs express future with their present-tense forms ('napíšem'), so *budem napísať is ungrammatical."
+			},
+			"pass": true,
+			"cost": 0.0013100000000000002,
+			"output": 96,
+			"reasoning": 0,
+			"ms": 1786
+		},
+		{
+			"id": "rule-neg-imperative",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"In Slovak, negative imperatives normally use the imperfective verb (e.g., 'Nerob to!', 'Nechoď tam!'), since the prohibition concerns the action itself; perfective negative imperatives occur only in warnings about accidental outcomes (e.g., 'Nespadni!').\"}",
+			"out": {
+				"answer": 1,
+				"why": "In Slovak, negative imperatives normally use the imperfective verb (e.g., 'Nerob to!', 'Nechoď tam!'), since the prohibition concerns the action itself; perfective negative imperatives occur only in warnings about accidental outcomes (e.g., 'Nespadni!')."
+			},
+			"pass": true,
+			"cost": 0.001498,
+			"output": 116,
+			"reasoning": 0,
+			"ms": 1772
+		},
+		{
+			"id": "rule-v-do",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"\\\"Som v škole\\\" uses v + locative for location, and \\\"Idem do školy\\\" uses do + genitive for direction into the school.\"}",
+			"out": {
+				"answer": 1,
+				"why": "\"Som v škole\" uses v + locative for location, and \"Idem do školy\" uses do + genitive for direction into the school."
+			},
+			"pass": true,
+			"cost": 0.000908,
+			"output": 58,
+			"reasoning": 0,
+			"ms": 1760
+		},
+		{
+			"id": "form-zena-gpl",
+			"kind": "form",
+			"text": "{\"form\": \"žien\"}",
+			"out": {
+				"form": "žien"
+			},
+			"pass": true,
+			"cost": 0.000336,
+			"output": 11,
+			"reasoning": 0,
+			"ms": 1043
+		},
+		{
+			"id": "form-okno-gpl",
+			"kind": "form",
+			"text": "Genitive plural of \"okno\" (window) is \"okien\".\n\n{\"form\": \"okien\"}",
+			"out": {
+				"form": "okien"
+			},
+			"pass": true,
+			"cost": 0.000536,
+			"output": 31,
+			"reasoning": 0,
+			"ms": 1281
+		},
+		{
+			"id": "form-sestra-gpl",
+			"kind": "form",
+			"text": "Genitive plural of \"sestra\" (feminine, pattern žena): sestier? Let's check: žena → žien (stem change), ulica → ulíc, ružа → ruží, sestra → sestier. Yes, \"sestier\" is the standard form (as in \"päť sestier\"), following the pattern of \"gazdiná\"? Actually the words ending in consonant clusters with -ra take an inserted vowel: sestra → sestier, hra → hier, vedra → vedier. For feminine, \"sestra\" → \"sestier\" is correct.\n\n{\"form\": \"sestier\"}",
+			"out": {
+				"form": "sestier"
+			},
+			"pass": true,
+			"cost": 0.002108,
+			"output": 188,
+			"reasoning": 0,
+			"ms": 3132
+		},
+		{
+			"id": "form-kniha-isg",
+			"kind": "form",
+			"text": "{\"form\": \"knihou\"}",
+			"out": {
+				"form": "knihou"
+			},
+			"pass": true,
+			"cost": 0.00035,
+			"output": 12,
+			"reasoning": 0,
+			"ms": 1180
+		},
+		{
+			"id": "form-brat-dsg",
+			"kind": "form",
+			"text": "Dative singular of \"brat\" (brother) is \"bratovi\" (also \"brate\" is vocative; \"bratu\" is the standard dative as well). In Slovak, masculine animate nouns of this type take -ovi or -u in the dative. Both bratovi and bratu are correct; the most common form is \"bratovi\".\n\n{\"form\": \"bratovi\"}",
+			"out": {
+				"form": "bratovi"
+			},
+			"pass": true,
+			"cost": 0.0013740000000000002,
+			"output": 115,
+			"reasoning": 0,
+			"ms": 1959
+		},
+		{
+			"id": "form-mesto-lsg",
+			"kind": "form",
+			"text": "{\"form\": \"meste\"}",
+			"out": {
+				"form": "meste"
+			},
+			"pass": true,
+			"cost": 0.000336,
+			"output": 11,
+			"reasoning": 0,
+			"ms": 1092
+		},
+		{
+			"id": "form-dieta-npl",
+			"kind": "form",
+			"text": "The nominative plural of \"dieťa\" is \"deti\". This is a suppletive plural: the singular is \"dieťa\" and the plural is \"deti\" (the standard plural form, with \"detí\" as the genitive plural). There is also the form \"dietky\", used for little children, but the standard answer is \"deti\".\n\n{\"form\": \"deti\"}",
+			"out": {
+				"form": "deti"
+			},
+			"pass": true,
+			"cost": 0.0012900000000000001,
+			"output": 106,
+			"reasoning": 0,
+			"ms": 1247
+		},
+		{
+			"id": "form-clovek-npl",
+			"kind": "form",
+			"text": "Slovak \"človek\" has a suppletive plural: \"ľudia\" (nominative plural). The singular is človek, the plural is ľudia.\n\n{\"form\": \"ľudia\"}",
+			"out": {
+				"form": "ľudia"
+			},
+			"pass": true,
+			"cost": 0.000826,
+			"output": 60,
+			"reasoning": 0,
+			"ms": 1376
+		},
+		{
+			"id": "form-ist-past",
+			"kind": "form",
+			"text": "Past tense masculine singular of \"ísť\" is \"išiel\" (he went).\n\n{\"form\": \"išiel\"}",
+			"out": {
+				"form": "išiel"
+			},
+			"pass": true,
+			"cost": 0.0006180000000000001,
+			"output": 38,
+			"reasoning": 0,
+			"ms": 1322
+		},
+		{
+			"id": "form-moct-past",
+			"kind": "form",
+			"text": "Past tense of môcť, masculine singular: \"mohol\" (past participle, used with the auxiliary: ja som mohol, ty si mohol, on mohol).\n\n{\"form\": \"mohol\"}",
+			"out": {
+				"form": "mohol"
+			},
+			"pass": true,
+			"cost": 0.0008980000000000001,
+			"output": 66,
+			"reasoning": 0,
+			"ms": 1633
+		},
+		{
+			"id": "form-jest-3pl",
+			"kind": "form",
+			"text": "The 3rd person plural present of \"jesť\" is \"jedia\".\n\n{\"form\": \"jedia\"}",
+			"out": {
+				"form": "jedia"
+			},
+			"pass": true,
+			"cost": 0.000588,
+			"output": 34,
+			"reasoning": 0,
+			"ms": 1287
+		},
+		{
+			"id": "form-pisat-1sg",
+			"kind": "form",
+			"text": "The 1st person singular present tense of \"písať\" (to write) is \"píšem\", because the stem undergoes the consonant change s → š.\n\n{\"form\": \"píšem\"}",
+			"out": {
+				"form": "píšem"
+			},
+			"pass": true,
+			"cost": 0.000794,
+			"output": 55,
+			"reasoning": 0,
+			"ms": 1378
+		},
+		{
+			"id": "tr-dva-psy",
+			"kind": "translate",
+			"text": "{\"slovak\": \"dva psi\"}",
+			"out": {
+				"slovak": "dva psi"
+			},
+			"pass": false,
+			"miss": "wrong translation (dva psi)",
+			"cost": 0.000388,
+			"output": 15,
+			"reasoning": 0,
+			"ms": 990
+		},
+		{
+			"id": "tr-dvaja-bratia",
+			"kind": "translate",
+			"text": "Slovak \"two brothers\": \"dvaja bratia\" (masculine personal gender, nominative uses dvaja for animate masculine persons).\n\n{\"slovak\": \"dvaja bratia\"}",
+			"out": {
+				"slovak": "dvaja bratia"
+			},
+			"pass": true,
+			"cost": 0.0008880000000000001,
+			"output": 65,
+			"reasoning": 0,
+			"ms": 1310
+		},
+		{
+			"id": "tr-traja-studenti",
+			"kind": "translate",
+			"text": "Standard Slovak for \"three (male) students\" is \"traja študenti\". Slovak uses the animate masculine form of the numeral \"tri\" (traja) with male persons, and the noun takes the plural nominative \"študenti\".\n\n{\"slovak\": \"traja študenti\"}",
+			"out": {
+				"slovak": "traja študenti"
+			},
+			"pass": true,
+			"cost": 0.00112,
+			"output": 88,
+			"reasoning": 0,
+			"ms": 1783
+		},
+		{
+			"id": "tr-dve-okna",
+			"kind": "translate",
+			"text": "{\"slovak\": \"dve okná\"}",
+			"out": {
+				"slovak": "dve okná"
+			},
+			"pass": true,
+			"cost": 0.000386,
+			"output": 15,
+			"reasoning": 0,
+			"ms": 1194
+		},
+		{
+			"id": "tr-pat-zien",
+			"kind": "translate",
+			"text": "{\"slovak\": \"päť žien\"}",
+			"out": {
+				"slovak": "päť žien"
+			},
+			"pass": true,
+			"cost": 0.000384,
+			"output": 15,
+			"reasoning": 0,
+			"ms": 1070
+		},
+		{
+			"id": "tr-k-lekarovi",
+			"kind": "translate",
+			"text": "Standard Slovak: \"Idem k lekárovi.\" Also \"Idem k doktorovi.\" Both fine. \"Idem k lekárovi\" is the most neutral.\n\n{\"slovak\": \"Idem k lekárovi.\"}",
+			"out": {
+				"slovak": "Idem k lekárovi."
+			},
+			"pass": true,
+			"cost": 0.001008,
+			"output": 76,
+			"reasoning": 0,
+			"ms": 1481
+		},
+		{
+			"id": "tr-v-kosiciach",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Boli sme v Košiciach.\"}",
+			"out": {
+				"slovak": "Boli sme v Košiciach."
+			},
+			"pass": true,
+			"cost": 0.000464,
+			"output": 22,
+			"reasoning": 0,
+			"ms": 1108
+		},
+		{
+			"id": "tr-z-bratislavy",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Som z Bratislavy.\"}",
+			"out": {
+				"slovak": "Som z Bratislavy."
+			},
+			"pass": true,
+			"cost": 0.00044800000000000005,
+			"output": 20,
+			"reasoning": 0,
+			"ms": 1017
+		},
+		{
+			"id": "tr-so-sestrou",
+			"kind": "translate",
+			"text": "The speaker is a woman, so the past tense verb takes the feminine form \"išla\". \"With my sister\" is \"so sestrou\" (the preposition takes the form \"so\" before the \"s-\" cluster in \"sestrou\").\n\n{\"slovak\": \"Išla som so sestrou.\"}",
+			"out": {
+				"slovak": "Išla som so sestrou."
+			},
+			"pass": true,
+			"cost": 0.00116,
+			"output": 90,
+			"reasoning": 0,
+			"ms": 1890
+		},
+		{
+			"id": "tr-o-otcovi",
+			"kind": "translate",
+			"text": "Standard Slovak: \"Rozprávame sa o mojom otcovi.\" The preposition \"o\" takes the locative, so \"my father\" becomes \"mojom otcovi\".\n\n{\"slovak\": \"Rozprávame sa o mojom otcovi.\"}",
+			"out": {
+				"slovak": "Rozprávame sa o mojom otcovi."
+			},
+			"pass": true,
+			"cost": 0.001086,
+			"output": 84,
+			"reasoning": 0,
+			"ms": 1531
+		},
+		{
+			"id": "tr-neotvaraj",
+			"kind": "translate",
+			"text": "Slovak negative imperative uses the imperfective verb: \"Neotváraj okno!\" (ty-form, to a friend).\n\n{\"slovak\": \"Neotváraj okno!\"}",
+			"out": {
+				"slovak": "Neotváraj okno!"
+			},
+			"pass": true,
+			"cost": 0.000876,
+			"output": 62,
+			"reasoning": 0,
+			"ms": 1496
+		},
+		{
+			"id": "tr-deti-unavene",
+			"kind": "translate",
+			"text": "{\"slovak\": \"Deti boli unavené.\"}",
+			"out": {
+				"slovak": "Deti boli unavené."
+			},
+			"pass": true,
+			"cost": 0.000432,
+			"output": 19,
+			"reasoning": 0,
+			"ms": 1062
+		},
+		{
+			"id": "tr-nikoho",
+			"kind": "translate",
+			"text": "The parenthetical \"(I am a man.)\" matters because it signals gender for the past tense, which in Slovak is marked on the verb: a man says \"videl\", a woman says \"videla\".\n\nSlovak uses negative concord, so \"nikoho\" is used together with the negated verb \"nevidel\".\n\nTranslation: \"Nikoho som nevidel. (Som muž.)\"\n\n{\"slovak\": \"Nikoho som nevidel. (Som muž.)\"}",
+			"out": {
+				"slovak": "Nikoho som nevidel. (Som muž.)"
+			},
+			"pass": true,
+			"cost": 0.001732,
+			"output": 147,
+			"reasoning": 0,
+			"ms": 2100
+		},
+		{
+			"id": "tr-napisem",
+			"kind": "translate",
+			"text": "The parenthetical \"(and finish it)\" signals completion, so the perfective verb is the right choice: \"napíšem\" (I will write [and finish]).\n\n{\"slovak\": \"Zajtra napíšem list.\"}",
+			"out": {
+				"slovak": "Zajtra napíšem list."
+			},
+			"pass": true,
+			"cost": 0.0009660000000000001,
+			"output": 70,
+			"reasoning": 0,
+			"ms": 1529
+		},
+		{
+			"id": "explain-hodiny",
+			"kind": "explain",
+			"text": "{\"text\": \"In Slovak, the number decides which form of the noun you use: 2, 3 and 4 (dva, tri, štyri) take the nominative plural, so it is 'tri hodiny', while 5 and higher take the genitive plural, so it is 'päť hodín'. Think of 'päť hodín' as literally 'five of hours'. The number 1 takes the singular: 'jedna hodina'.\"}",
+			"out": {
+				"text": "In Slovak, the number decides which form of the noun you use: 2, 3 and 4 (dva, tri, štyri) take the nominative plural, so it is 'tri hodiny', while 5 and higher take the genitive plural, so it is 'päť hodín'. Think of 'päť hodín' as literally 'five of hours'. The number 1 takes the singular: 'jedna hodina'."
+			},
+			"pass": null,
+			"cost": 0.001662,
+			"output": 138,
+			"reasoning": 0,
+			"ms": 1878
+		},
+		{
+			"id": "explain-rhythmic",
+			"kind": "explain",
+			"text": "{\"text\": \"The Slovak rhythmic law (rytmický zákon) says that two long syllables cannot normally follow each other in a row inside a word, so the second long vowel is usually shortened. For example, the adjective ending -ý becomes -y after a long syllable: we say 'pekný' (nice) with a short first syllable, but 'krásny' (beautiful) with a short ending, because the first syllable 'krá' is already long. You don't need to master it now; just notice that you will rarely see two accented (long) syllables side by side in the same word.\"}",
+			"out": {
+				"text": "The Slovak rhythmic law (rytmický zákon) says that two long syllables cannot normally follow each other in a row inside a word, so the second long vowel is usually shortened. For example, the adjective ending -ý becomes -y after a long syllable: we say 'pekný' (nice) with a short first syllable, but 'krásny' (beautiful) with a short ending, because the first syllable 'krá' is already long. You don't need to master it now; just notice that you will rarely see two accented (long) syllables side by side in the same word."
+			},
+			"pass": null,
+			"cost": 0.0020700000000000002,
+			"output": 180,
+			"reasoning": 0,
+			"ms": 2490
+		},
+		{
+			"id": "explain-dva-dve",
+			"kind": "explain",
+			"text": "{\"text\": \"Use dva with masculine inanimate nouns (dva stoly, 'two tables'), dve with feminine and neuter nouns (dve ženy 'two women', dve deti 'two children'), and dvaja with masculine nouns for living people (dvaja muži, 'two men'). Masculine animals usually take dva (dva psy, 'two dogs'), while dvaja is for male persons. Just remember: dva = masculine things/animals, dve = feminine and neuter, dvaja = masculine people.\"}",
+			"out": {
+				"text": "Use dva with masculine inanimate nouns (dva stoly, 'two tables'), dve with feminine and neuter nouns (dve ženy 'two women', dve deti 'two children'), and dvaja with masculine nouns for living people (dvaja muži, 'two men'). Masculine animals usually take dva (dva psy, 'two dogs'), while dvaja is for male persons. Just remember: dva = masculine things/animals, dve = feminine and neuter, dvaja = masculine people."
+			},
+			"pass": null,
+			"cost": 0.0019960000000000004,
+			"output": 173,
+			"reasoning": 0,
+			"ms": 2137
+		}
+	]
+}
