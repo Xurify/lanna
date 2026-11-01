@@ -13,7 +13,7 @@ import { classifyAll, type RepVerdict, type UnitId } from "./lesson.ts";
 import { formSlip, isFormOf, knownForms, type FormSlip } from "./form-slip.ts";
 import { atlasCellOf, caseDrill, type AtlasCase, type AtlasGender } from "./grammar.ts";
 import { foldDiacritics } from "./language.ts";
-import type { LexiconEntry } from "./review.ts";
+import { entryLemma, type LexiconEntry } from "./review.ts";
 
 /** The first answer to a rep, as the learner gave it. */
 export interface FirstAnswer {
@@ -108,7 +108,7 @@ export interface FirstTryCount {
 export function firstTryOf(rep: FirstTryRep, tag = "sk-SK"): FirstTryCount | null {
 	if (!rep.first || !countsAsFirstTry(rep)) return null;
 	const { given, verdict } = rep.first;
-	const slip = verdict === "wrong" ? formSlip({ answer: rep.answer, lemma: rep.entry.sk, given, forms: knownForms(rep.entry) }, tag) : undefined;
+	const slip = verdict === "wrong" ? formSlip({ answer: rep.answer, lemma: entryLemma(rep.entry), given, forms: knownForms(rep.entry) }, tag) : undefined;
 	return { unit: rep.unit, cell: atlasCellOf(rep.unit, rep.entry.gender), verdict, ...(slip ? { slip } : {}) };
 }
 
@@ -144,14 +144,14 @@ export interface SpokenSlip {
 export function spokenSlip(entry: LexiconEntry, said: string, right: string, tag = "sk-SK"): SpokenSlip | undefined {
 	const heard = [...said.matchAll(/\p{L}+/gu)].map((m) => m[0].toLocaleLowerCase(tag));
 	const forms = knownForms(entry);
-	const hit = [...right.matchAll(/\p{L}+/gu)].find((m) => !heard.includes(m[0].toLocaleLowerCase(tag)) && isFormOf(m[0], entry.sk, forms, tag));
+	const hit = [...right.matchAll(/\p{L}+/gu)].find((m) => !heard.includes(m[0].toLocaleLowerCase(tag)) && isFormOf(m[0], entryLemma(entry), forms, tag));
 	if (!hit || hit.index === undefined) return undefined;
 	const answer = hit[0];
 	const drill = classifyAll(entry, { sk: right, cloze: { answer, at: hit.index } }).find((u) => caseDrill(u) !== null);
 	if (!drill) return undefined;
 	const key = answer.toLocaleLowerCase(tag);
 	const given = heard.reduce((best, w) => (sharedPrefix(w, key) > sharedPrefix(best, key) ? w : best), heard[0] ?? "");
-	const slip = formSlip({ answer, lemma: entry.sk, given, forms }, tag);
+	const slip = formSlip({ answer, lemma: entryLemma(entry), given, forms }, tag);
 	return slip ? { drill, slip } : undefined;
 }
 

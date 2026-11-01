@@ -28,7 +28,7 @@
  * known-word set and the form→entry lookup shared with the Read task.
  */
 
-import type { LexiconEntry } from "./review.ts";
+import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { grammarWord, tokenize } from "./reading.ts";
 import { compareAnswer, type AnswerVerdict } from "./language.ts";
@@ -189,7 +189,7 @@ export function judgeSentence(sentence: string, lookup: ListenLookup): Judged {
 			known++;
 			continue;
 		}
-		stretch.push(entry ? { text: t.text, lemma: entry.sk, gloss: entry.en, slug: entry.slug, ...(entry.rank !== undefined ? { rank: entry.rank } : {}) } : { text: t.text, lemma: t.text, gloss: "" });
+		stretch.push(entry ? { text: t.text, lemma: entryLemma(entry), gloss: entry.en, slug: entry.slug, ...(entry.rank !== undefined ? { rank: entry.rank } : {}) } : { text: t.text, lemma: t.text, gloss: "" });
 	}
 	return { coverage: words === 0 ? 1 : known / words, words, stretch, hardest };
 }
@@ -255,11 +255,11 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 			if (opts.recent?.has(id)) continue;
 			looked++;
 			if (looked > scan) break outer;
-			const n = ex.sk.split(/\s+/).length;
+			const n = exampleText(ex).split(/\s+/).length;
 			if (n < MIN_WORDS || n > MAX_WORDS) continue;
-			const text = ex.sk.toLocaleLowerCase("sk-SK").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+			const text = exampleText(ex).toLocaleLowerCase("sk-SK").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 			if (usedText.has(text)) continue;
-			const judged = judgeSentence(ex.sk, lookup);
+			const judged = judgeSentence(exampleText(ex), lookup);
 			if (judged.words < MIN_WORDS) continue;
 			const found = { entry, index: i, judged };
 			if (judged.stretch.length === 0) {
@@ -301,9 +301,9 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 			return {
 				id: `${f.entry.slug}#${f.index}`,
 				slug: f.entry.slug,
-				lemma: f.entry.sk,
+				lemma: entryLemma(f.entry),
 				gloss: f.entry.en,
-				sentence: ex.sk,
+				sentence: exampleText(ex),
 				translation: ex.en,
 				options: meaningOptions(ex.en, pool, rand),
 				stretch: f.judged.stretch,

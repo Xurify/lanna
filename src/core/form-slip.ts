@@ -14,6 +14,7 @@
  */
 
 import { compareAnswer, foldDiacritics, normalizeAnswer } from "./language.ts";
+import { entryLemma, type LexiconEntry } from "./review.ts";
 
 export type FormSlip = "base" | "same-word" | "other" | "blank";
 
@@ -32,8 +33,8 @@ const MAX_ENDING = 4;
 
 /** The word's other forms the dictionary vouches for: the lexicon's verified
  *  list and its noun declension, without the lemma and without phrases. */
-export function knownForms(entry: { sk: string; forms?: readonly string[]; declension?: { singular: readonly string[]; plural: readonly string[] } }): string[] {
-	const lemma = entry.sk.toLowerCase();
+export function knownForms(entry: Pick<LexiconEntry, "lemma" | "sk" | "forms" | "declension">): string[] {
+	const lemma = entryLemma(entry).toLowerCase();
 	const all = [...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])];
 	return [...new Set(all.map((f) => f.trim()).filter((f) => f && !/\s/.test(f) && f.toLowerCase() !== lemma))];
 }

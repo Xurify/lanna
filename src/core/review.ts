@@ -52,12 +52,12 @@ export interface LexiconEntry {
 }
 
 /** Target lemma helper honoring `entry.lemma` then `entry.sk`. */
-export function entryLemma(entry: LexiconEntry): string {
+export function entryLemma(entry: Pick<LexiconEntry, "lemma" | "sk">): string {
 	return entry.lemma ?? entry.sk ?? "";
 }
 
 /** Target sentence text helper honoring `ex.text` then `ex.sk`. */
-export function exampleText(example: LexiconExample): string {
+export function exampleText(example: Pick<LexiconExample, "text" | "sk">): string {
 	return example.text ?? example.sk ?? "";
 }
 

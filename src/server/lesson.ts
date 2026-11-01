@@ -29,6 +29,7 @@ import {
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
+import type { UnitKind } from "../core/lesson.ts";
 import { weakestGender, type AtlasGender } from "../core/grammar.ts";
 import { isLanguageId, LANGUAGES } from "../core/language.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
@@ -374,6 +375,10 @@ export interface UnitSummary {
 	tagline: string;
 	glyph: string;
 	rule: string;
+	/** The unit kind: grammar, words or pairs (the Today tile labels words lessons). */
+	kind?: UnitKind;
+	/** The Slovak linguistic term the unit names, when it has one. */
+	slovakTerm?: string;
 	lessons: number;
 	/** Reps answered in this unit, and the share right — the evidence the
 	 *  path shows instead of a guessed level. */
@@ -459,6 +464,8 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			tagline: u.tagline,
 			glyph: u.glyph,
 			rule: u.rule,
+			kind: u.kind,
+			slovakTerm: u.slovakTerm,
 			lessons,
 			reps: r?.reps ?? 0,
 			level: unitLevel(lessons),

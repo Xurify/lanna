@@ -137,7 +137,8 @@ Their PC profile had not gone through the new setup (the home page redirects to 
 
 ## Known environment facts
 
-- Cloud test runs: a few tests fail on main regardless (desktop payload trace, pi-ai package exports, one Pi loader test under Node 22). Environment-bound, not regressions.
+- Cloud test runs: Node 26 (CI's version) passes the full suite. Under Node 22 the pi-ai package-exports test fails (environment-bound).
+- The sandbox sets `NODE_OPTIONS=--use-openssl-ca`, which Electron's Node rejects. Run the native renderer tests with `env -u NODE_OPTIONS`.
 - Tests: `NODE_ENV=test npx tsx --test tests/<file>.test.ts` with `LH_DATA_DIR` pointed at scratch. Never the full suite against the real profile.
 - The device shell on the PC cannot reach GitHub, delete files or commit; use a Remote Control session for git on the PC. A dev server started by a Remote Control session dies with it.
 - Leftovers to delete from the PC when convenient: `.git/stale-*`, `.git/lh-xfer/`, `_handoff/`, `langharness-2.bundle`, `langharness-2.tar.gz`, `_backup-before-redesign\`, and a redundant `pre-deploy` git stash.

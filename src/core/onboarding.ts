@@ -9,6 +9,7 @@
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
 import { unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { entryLemma, exampleText } from "./review.ts";
 import { slipLine } from "./grammar.ts";
 import type { FirstTally } from "./first-try.ts";
 import { weakSpotList, weakSpotsLine, type WeakRecord } from "./weak-spots.ts";
@@ -848,11 +849,11 @@ export function isGrim(text: string): boolean {
 }
 
 /** The lexicon without grim examples; entries left with no examples are dropped. */
-export function calmEntries<E extends { sk: string; en: string; examples: Array<{ sk: string; en: string }> }>(entries: readonly E[]): E[] {
+export function calmEntries<E extends { lemma?: string; sk?: string; en: string; examples: Array<{ text?: string; sk?: string; en: string }> }>(entries: readonly E[]): E[] {
 	const out: E[] = [];
 	for (const e of entries) {
-		if (isGrim(e.sk) || isGrim(e.en)) continue;
-		const examples = e.examples.filter((x) => !isGrim(x.sk) && !isGrim(x.en));
+		if (isGrim(entryLemma(e)) || isGrim(e.en)) continue;
+		const examples = e.examples.filter((x) => !isGrim(exampleText(x)) && !isGrim(x.en));
 		if (!examples.length) continue;
 		out.push(examples.length === e.examples.length ? e : { ...e, examples });
 	}

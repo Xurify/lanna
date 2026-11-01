@@ -20,7 +20,7 @@ import shop from "../../curriculum/slovak/scenes/shop.json";
 import station from "../../curriculum/slovak/scenes/station.json";
 import way from "../../curriculum/slovak/scenes/way.json";
 
-import type { LanguageId } from "./language.ts";
+import { LANGUAGE_IDS, type LanguageId } from "./language.ts";
 
 export interface SceneOption {
 	/** Target language line. */
@@ -37,6 +37,11 @@ export interface SceneOption {
 
 export function sceneOptionText(option: SceneOption): string {
 	return option.text ?? option.sk ?? "";
+}
+
+/** The tutor line of a turn in the target language (text, else the legacy sk). */
+export function tutorLineText(tutor: ScriptTurn["tutor"]): string {
+	return tutor.text ?? tutor.sk ?? "";
 }
 
 export interface ScriptTurn {
@@ -62,8 +67,9 @@ for (const [lang, scripts] of Object.entries(RAW_BY_LANGUAGE)) {
 }
 
 /** The scene's script, or undefined when the scene has none. */
-export function scriptFor(sceneId: string, lang: LanguageId = "slovak"): SceneScript | undefined {
-	return BY_SCENE_BY_LANGUAGE.get(lang)?.get(sceneId);
+export function scriptFor(sceneId: string, lang: string = "slovak"): SceneScript | undefined {
+	const known = LANGUAGE_IDS.find((id) => id === lang);
+	return known ? BY_SCENE_BY_LANGUAGE.get(known)?.get(sceneId) : undefined;
 }
 
 /** What the grader says about one choice. */

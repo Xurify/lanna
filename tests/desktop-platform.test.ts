@@ -23,7 +23,7 @@ function windowOptions(platform: string, env: Record<string, string> = {}) {
 		once() {}
 	}
 	const electron = {
-		app: { setName() {}, getPath: () => "/fixture/LearnHarness", setPath() {}, requestSingleInstanceLock: () => false, quit() {} },
+		app: { setName() {}, getPath: () => "/fixture/LearnHarness", setPath() {}, requestSingleInstanceLock: () => false, quit() {}, commandLine: { appendSwitch() {} }, userAgentFallback: "Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36" },
 		BrowserWindow: FakeWindow,
 		session: { defaultSession: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} } },
 	};

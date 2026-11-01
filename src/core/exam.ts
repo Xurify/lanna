@@ -19,7 +19,7 @@ import { CHAPTERS } from "./curriculum.ts";
 import { chapterArc } from "./arc.ts";
 import { buildItem, buildPairsLesson, candidatesFor, rng, shuffle, unitInfo, type Candidate, type LessonItem, type UnitId } from "./lesson.ts";
 import { foldDiacritics } from "./language.ts";
-import type { LexiconEntry } from "./review.ts";
+import { entryLemma, type LexiconEntry } from "./review.ts";
 
 /** Items per exam. */
 export const EXAM_LENGTH = 8;
@@ -62,8 +62,8 @@ export function examItems(chapterId: string, seed: number, entries: readonly Lex
 			if (out.length >= n) break;
 			const info = unitInfo(unit);
 			const top = candidatesFor(entries, unit).slice(0, info.kind === "words" ? 400 : 160);
-			const fits = (c: Candidate) => info.kind !== "words" || fold(c.entry.examples[c.index]!.cloze!.answer) === fold(c.entry.sk);
-			const pool = info.kind === "words" ? [...new Set(top.map((c) => c.entry.sk))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
+			const fits = (c: Candidate) => info.kind !== "words" || fold(c.entry.examples[c.index]!.cloze!.answer) === fold(entryLemma(c.entry));
+			const pool = info.kind === "words" ? [...new Set(top.map((c) => entryLemma(c.entry)))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
 			for (const c of shuffle(top.filter(fits), rand)) {
 				if (out.length >= n) break;
 				const id = `${c.entry.slug}#${c.index}`;
