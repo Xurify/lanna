@@ -3,7 +3,7 @@ import type { PlanTask, Strand } from "@/src/core";
 /**
  * One ink per strand (Nation's four strands, src/core/strands.ts), used by
  * the plan's tasks, the practice groups and the week's balance alike, so a
- * colour on Today always means the same kind of practice.
+ * color on Today always means the same kind of practice.
  */
 export const STRAND_STYLE: Record<Strand, { text: string; bar: string; tile: string; soft: string; border: string }> = {
 	input: { text: "text-sky", bar: "bg-sky", tile: "bg-sky/15 text-sky", soft: "bg-sky/5 hover:bg-sky/10", border: "border-sky/40" },

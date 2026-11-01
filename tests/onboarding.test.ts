@@ -162,7 +162,7 @@ test("the profile block says what the tutor must not ask, and is null on a fresh
 	assert.ok(text.includes("do not ask for either"));
 });
 
-test("measuredWeak: first tries once there are six, lesson answers labelled as the fallback, else nothing", () => {
+test("measuredWeak: first tries once there are six, lesson answers labeled as the fallback, else nothing", () => {
 	const unit = { title: "Genitive", reps: 20, accuracy: 0.9 };
 	const m = measuredWeak(unit, { reps: 6, right: 2, accents: 1, slips: { base: 3, "same-word": 1 } })!;
 	assert.equal(m.accuracy, 2 / 6);
@@ -173,7 +173,7 @@ test("measuredWeak: first tries once there are six, lesson answers labelled as t
 	assert.equal(measuredWeak({ title: "Genitive", reps: 20, accuracy: null }, undefined), null);
 });
 
-test("the tutor's weak points read the first tries, with lesson answers labelled as the fallback", () => {
+test("the tutor's weak points read the first tries, with lesson answers labeled as the fallback", () => {
 	// gen: the lesson answers look fine (23/24), the first tries do not (3/8);
 	// the first tries govern. dat: no first tries yet, the lesson answers speak.
 	const evidence = {

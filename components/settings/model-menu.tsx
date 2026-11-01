@@ -21,7 +21,7 @@ function priceLabel(cost: ModelCatalogEntry["cost"]): string {
 	return `${fmt(cost.input)}/${fmt(cost.output)}`;
 }
 
-/** Hover and the keyboard highlight take bg-accent. The chosen row never takes a fill; it carries a go-coloured check. */
+/** Hover and the keyboard highlight take bg-accent. The chosen row never takes a fill; it carries a go-colored check. */
 export function MenuOption({
 	highlighted = false,
 	className,

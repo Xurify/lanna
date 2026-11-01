@@ -127,11 +127,11 @@ describe("Settings → Appearance → Advanced", () => {
 		assert.equal((host.textContent!.match(/Empty = same as text/g) ?? []).length, 2, "bold + italic rows");
 	});
 
-	it("a set background shows in its input; the hint still names the factory colour", async () => {
+	it("a set background shows in its input; the hint still names the factory color", async () => {
 		hangFetches();
 		const host = await mount(<AppearanceSection appearance={{ background: "#1a1a2e" }} onSectionChange={() => {}} />);
 		await open(host, "advanced-appearance");
 		assert.equal(q(host, "input-background")!.getAttribute("value"), "#1a1a2e");
-		assert.ok(q(host, "row-background")!.textContent!.includes("Empty = #141414"), "a set colour is not the default");
+		assert.ok(q(host, "row-background")!.textContent!.includes("Empty = #141414"), "a set color is not the default");
 	});
 });

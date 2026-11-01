@@ -13,7 +13,7 @@
  * The first task not done yet is the day's one next step: it is drawn
  * large with its Start action, and Enter on Today starts it. Every task
  * ticks itself off from the progress ledger, so there is nothing to mark
- * by hand. A task's colour is its strand (components/strand-style.ts),
+ * by hand. A task's color is its strand (components/strand-style.ts),
  * the same ink the week's balance uses.
  */
 

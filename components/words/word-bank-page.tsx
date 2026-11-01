@@ -421,7 +421,7 @@ export function WordBankPage() {
 
 													{item.gender && (
 														<span className="rounded-lg bg-accent/60 px-1.5 py-0.5 font-ui text-[11px] text-muted-foreground">
-															{item.gender}
+															{item.gender.replace("-", " ")}
 														</span>
 													)}
 

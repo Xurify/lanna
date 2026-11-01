@@ -18,16 +18,16 @@ Counts come from the course pages above. Each step shows a counter such as "0 / 
 
 ## What the course is
 
-- Partners include Comenius University in Bratislava and the JÚĽŠ institute of the Slovak Academy of Sciences. Supported by the European Commission's KA2 Lifelong Learning programme, coordinated by Education@Internet in Partizánske. It is based on Lernu.net, an Esperanto course that has run since 2002 (About page).
-- The footer says "© 2026 slovake.eu". No open licence appears on the pages read.
+- Partners include Comenius University in Bratislava and the JÚĽŠ institute of the Slovak Academy of Sciences. Supported by the European Commission's KA2 Lifelong Learning program, coordinated by Education@Internet in Partizánske. It is based on Lernu.net, an Esperanto course that has run since 2002 (About page).
+- The footer says "© 2026 slovake.eu". No open license appears on the pages read.
 
 ## What it contains
 
 | Level | Chapters | Steps | Chapter titles (examples) |
 |---|---|---|---|
-| A1 | 17 | 209 | Alphabet and pronunciation; Family; Travelling; Clothing and colours |
+| A1 | 17 | 209 | Alphabet and pronunciation; Family; Traveling; Clothing and colors |
 | A2 | 15 | 157 | Communication; Children, come play!; We are going on a trip; Customs and traditions |
-| B1 | 5 | 53 | Family; Travelling; At the doctor's, health care |
+| B1 | 5 | 53 | Family; Traveling; At the doctor's, health care |
 | B2 | 7 | 71 | Škola a práca; Ľudské práva; Ekológia naša každodenná |
 
 Total: 44 chapters and 490 steps. Steps per chapter: A1 6 to 16, A2 9 to 13, B1 10 to 11, B2 8 to 12. The grammar index links 33 pages, and the introduction 12.
@@ -38,10 +38,10 @@ Two corrections to my first answer. I said "roughly 60 chapters"; the count is 4
 
 1. **The same arc in every chapter.** Every chapter read ends the same way: new words, a story with named characters, topic vocabulary, grammar points, a situational communication exercise, pronunciation practice, "What have we learned?", and a final test. A learner always knows what comes next.
 2. **Grammar lives inside a topic.** The imperative is step 7 of "Children, come play!" (A2). The conditional is step 4 of "Health and prevention" (A2). The future of perfective verbs is step 5 of "Professions" (A2).
-3. **Contrast pairs get their own steps.** A1 "Clothing and colours": "Difference between radi – rady" (step 3) and "Difference between aký – ktorý" (step 4). A1 "Housing" repeats aký/ktorý at step 6. A2 "Slovakia's school system": "Difference between ísť and chodiť" (step 6) and "Reflexive possessive pronoun svoj" (step 7). These are the confusions that teachers of Slovak know learners make.
+3. **Contrast pairs get their own steps.** A1 "Clothing and colors": "Difference between radi – rady" (step 3) and "Difference between aký – ktorý" (step 4). A1 "Housing" repeats aký/ktorý at step 6. A2 "Slovakia's school system": "Difference between ísť and chodiť" (step 6) and "Reflexive possessive pronoun svoj" (step 7). These are the confusions that teachers of Slovak know learners make.
 4. **Culture is content, not decoration.** A2 "Castles and manor houses" (Červený kameň, the Maiden's Well in Piešťany). A2 "Customs and traditions" (Christmas, St Lucy's Day, Easter, proverbs and forecasts). A2 "Slovakia" (flag, anthem, Great Moravia). A2 "Nature" (Aesop's fables).
 5. **The interface follows the level.** The B2 step titles are in Slovak: "Nové slová", "Úvodné cvičenia", "Záverečný test".
-6. **Each step shows a size counter**, such as "0 / 40" or "0 / 160". Its unit is not labelled.
+6. **Each step shows a size counter**, such as "0 / 40" or "0 / 160". Its unit is not labeled.
 7. **A grammar reference separate from the course**, public and short. The rhythmic-rule page gives the rule and its exemption lists. The cases page gives the six cases with their question words and example sentences.
 
 ## What it doesn't do
@@ -85,7 +85,7 @@ Our engine is stronger on everything the course lacks: FSRS review, the adaptive
 - The login wall. The app is local only (E7).
 - Points as the only measure of progress (P8).
 - The interface in sixteen languages. P6 covers the explanation languages better.
-- Their texts, exercises and audio. The site has copyright notice and no open licence. This is the same reasoning that dropped Clozemaster on 2026-10-28.
+- Their texts, exercises and audio. The site has copyright notice and no open license. This is the same reasoning that dropped Clozemaster on 2026-10-28.
 
 ## What happens next
 

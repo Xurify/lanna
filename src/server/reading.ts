@@ -101,7 +101,7 @@ export interface KnownWords {
 	/** Grammar units held (titles), for the brief. */
 	grammar: string[];
 	/** Units with lessons behind them but not yet held: the i+1 grammar. */
-	practising: string[];
+	practicing: string[];
 	purposes: Purpose[];
 	/** "Something else", in the learner's own words (onboarding). */
 	note?: string;
@@ -144,7 +144,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 	if (lexicon) for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
 	const all = state.chapters.flatMap((c) => c.units);
 	const grammar = all.filter((u) => (u.kind === "drill" || u.kind === "tutor") && (u.status === "done" || u.status === "skipped")).map((u) => u.title);
-	const practising = all.filter((u) => u.kind === "drill" && u.status === "started").map((u) => u.title);
+	const practicing = all.filter((u) => u.kind === "drill" && u.status === "started").map((u) => u.title);
 	return {
 		level: at,
 		chapter: state.current,
@@ -153,7 +153,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 		known,
 		sample: sample.slice(0, 160),
 		grammar,
-		practising,
+		practicing,
 		purposes: goal.purposes ?? [],
 		note: goal.purposeNote?.trim() || undefined,
 	};
@@ -373,7 +373,7 @@ The brief says what kind of text to write (an episode of the running series abou
 Rules that matter more than the plot:
 - Write at the learner's level and ONLY with the grammar listed as held. Simple main clauses at A1; a subordinate clause with "že", "keď", "lebo" from A2.
 - Use the learner's known words. About 97 of every 100 running words must be words a learner at this level knows; the brief gives the known words to lean on. Repeat words rather than reach for new ones.
-- Introduce at most the number of new words the brief allows. Each new word appears at least three times in the text, in different sentences, so it can be learnt from context. List every new word under newWords with its dictionary form and a short English gloss.
+- Introduce at most the number of new words the brief allows. Each new word appears at least three times in the text, in different sentences, so it can be learned from context. List every new word under newWords with its dictionary form and a short English gloss.
 - Every sentence is something a Slovak would really say or write in that situation. No filler that states the obvious ("I listen and you talk", "we are a family and you are a friend"); at A1 lean on the real exchanges of the situation: greetings, asking and answering, wanting and having, liking, where and when. A line of dialogue sounds like speech: short, with a reaction to what was just said.
 - Correct Slovak spelling with all diacritics. Check case endings and verb forms; a wrong form teaches a wrong form.
 - One sentence per array item; each 4 to 14 words; the whole text within the sentence count the brief gives. Narration and speech are separate items: never put a speech tag ("he says") and the quoted line in one item — the "who" field says who speaks, so quoted lines need no quotation marks and no tags.
@@ -445,7 +445,7 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		`Length: ${len.min} to ${len.max} sentences. New words allowed: at most ${NEW_WORDS_MAX[k.level]}.`,
 		questionLine(k.level),
 		k.grammar.length ? `Grammar held (use it freely): ${k.grammar.join("; ")}.` : "Grammar held: only the present tense of common verbs, nouns in the nominative and the accusative after common verbs, and short questions.",
-		k.practising.length ? `Grammar being practised now (use it a few times, correctly): ${k.practising.join("; ")}.` : "",
+		k.practicing.length ? `Grammar being practiced now (use it a few times, correctly): ${k.practicing.join("; ")}.` : "",
 		k.sample.length ? `Known words to lean on: ${k.sample.join(", ")}.` : "The learner is at the very start: use only the most common words (greetings, family, food and drink, the home, going places, numbers to ten).",
 		k.purposes.length ? `The learner is learning Slovak for: ${k.purposes.map((p) => purposeInfo(p).title.toLowerCase()).join(", ")}.` : "",
 		k.note ? `In their own words: "${k.note.replace(/\s+/g, " ").slice(0, 300)}". Let the setting serve this when it can.` : "",

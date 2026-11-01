@@ -420,7 +420,7 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 				<p className="font-ui text-xs tabular-nums text-muted-foreground">{yes.size} ticked</p>
 			</div>
 			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="words-note">
-				Vocabulary, on its own: forty words from five frequency bands estimate how many you recognise.
+				Vocabulary, on its own: forty words from five frequency bands estimate how many you recognize.
 			</p>
 			<h2 className="mt-8 font-prose text-2xl font-semibold text-foreground">Tick every word whose meaning you know</h2>
 			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not Slovak words at all, and ticking them lowers the estimate. Two minutes.</p>

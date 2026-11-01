@@ -1,6 +1,6 @@
 /**
  * Progress persistence (LangHarness redesign) — the active profile's
- * data/profiles/<language>/progress.json: XP, the days you practised,
+ * data/profiles/<language>/progress.json: XP, the days you practiced,
  * each unit's lessons and best blitz, and the item ids of recent lessons
  * (so the next lesson picks fresh sentences). One small JSON file,
  * read-modify-write with an atomic rename like review/cards.json.
@@ -40,7 +40,7 @@ export interface DayRecord {
 	rereads?: number;
 	/** "Say it faster" rounds finished (the fluency strand). */
 	fasts?: number;
-	/** Minutes spent practising: the sum of `minutesBy` plus any older,
+	/** Minutes spent practicing: the sum of `minutesBy` plus any older,
 	 *  unattributed time (from the client's timers). */
 	minutes?: number;
 	/** The same minutes per activity, measured while the learner was

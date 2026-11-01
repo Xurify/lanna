@@ -422,7 +422,7 @@ export function ReviewSession() {
 								{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-sky/20 text-sky hover:bg-sky/30 hover:text-sky" label="Play the sentence" />}
 							</div>
 
-							{/* Hints taken, labelled the same way as the lesson's cue chip. */}
+							{/* Hints taken, labeled the same way as the lesson's cue chip. */}
 							{!verdict && hint > 0 && (
 								<p className="mt-3 flex flex-wrap gap-2 text-base" data-testid="review-hints">
 									<span className="inline-flex items-baseline gap-1.5 rounded-md bg-accent px-2 py-0.5 text-foreground">

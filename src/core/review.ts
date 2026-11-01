@@ -99,7 +99,7 @@ export interface ReviewLogEntry {
 	/** The answer was picked from four, not typed. */
 	picked?: boolean;
 	/** A form card (2026-10-31, first tries): the drill its sentence
-	 *  practises, the word's lexicon gender, and the slip a counted wrong
+	 *  practices, the word's lexicon gender, and the slip a counted wrong
 	 *  first try got (src/core/form-slip.ts). */
 	unit?: string;
 	gender?: string;

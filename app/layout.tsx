@@ -25,7 +25,7 @@ const prose = Source_Sans_3({ subsets: ["latin", "latin-ext", "cyrillic"], varia
 const chrome = Nunito({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-nunito" });
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
-// (components/sidebar.tsx, components/phone-nav.tsx), and the theme colour
+// (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
 // paints the status bar. viewport-fit=cover is what lets the page run under it.
 export const viewport: Viewport = {
 	width: "device-width",

@@ -2,7 +2,7 @@
 /**
  * The pairing screen (E21): a phone or iPad types the six-digit code shown on
  * the computer. The error line sits under the button and takes no room, so a message never
- * moves the form or the centred block. The inputs are 16 px or larger, so iOS does not zoom when they focus.
+ * moves the form or the centered block. The inputs are 16 px or larger, so iOS does not zoom when they focus.
  */
 
 import { useState, type FormEvent } from "react";

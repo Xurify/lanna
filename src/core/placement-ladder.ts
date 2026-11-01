@@ -15,7 +15,7 @@
  * right) jumps the cursor halfway to the top of the open bracket, a gap
  * (two wrong) halves it downward, one each asks a third. The bracket
  * closes when the highest unit held and the lowest unit missed are
- * neighbours — about ten to fourteen items — then one item below the
+ * neighbors — about ten to fourteen items — then one item below the
  * floor guards against a lucky run. The server judges typed misses with
  * the model (a valid alternative counts), and the Socratic stage
  * (src/core/onboarding.ts, ProbeReply) probes the edge itself.

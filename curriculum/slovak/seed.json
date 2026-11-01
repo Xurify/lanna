@@ -35,7 +35,7 @@
 			"kind": "grammar",
 			"strand": "phonetics",
 			"name": "Rytmický zákon (rhythmic law)",
-			"statement": "The rhythmic law (rytmický zákon) forbids two long syllables in a row inside one word, so an ending that is normally long becomes short after a long syllable: pekný but krásny, ženám but básňam, robím but chválim. Estonian bridge: Think of it as a length budget per two syllables: Estonian quantity also depends on the neighbouring syllable."
+			"statement": "The rhythmic law (rytmický zákon) forbids two long syllables in a row inside one word, so an ending that is normally long becomes short after a long syllable: pekný but krásny, ženám but básňam, robím but chválim. Estonian bridge: Think of it as a length budget per two syllables: Estonian quantity also depends on the neighboring syllable."
 		},
 		{
 			"key": "ph-voicing",
@@ -508,8 +508,8 @@
 		{
 			"key": "lx-colours",
 			"kind": "vocabulary",
-			"name": "Words: Colours",
-			"statement": "Core Slovak words for colours (et: värvid): farba 'color' (et: värv), červený 'red' (et: punane), modrý 'blue' (et: sinine), zelený 'green' (et: roheline), žltý 'yellow' (et: kollane), čierny 'black' (et: must), biely 'white' (et: valge)."
+			"name": "Words: Colors",
+			"statement": "Core Slovak words for colors (et: värvid): farba 'color' (et: värv), červený 'red' (et: punane), modrý 'blue' (et: sinine), zelený 'green' (et: roheline), žltý 'yellow' (et: kollane), čierny 'black' (et: must), biely 'white' (et: valge)."
 		},
 		{
 			"key": "lx-numbers",

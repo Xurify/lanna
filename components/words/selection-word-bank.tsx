@@ -580,7 +580,7 @@ export function SelectionWordBankBar() {
 							)}
 							{lookup?.gender && (
 								<span className="rounded-md bg-accent/70 px-1.5 py-0.5 font-ui text-[10px] font-semibold text-muted-foreground">
-									{lookup.gender}
+									{lookup.gender.replace("-", " ")}
 								</span>
 							)}
 						</div>

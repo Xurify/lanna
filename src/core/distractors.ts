@@ -6,7 +6,7 @@
  *
  *   1. near-misses the cheap model wrote for this exact sentence, kept on
  *      disk (src/server/distractors.ts), so a sentence is paid for once;
- *   2. neighbours: other dictionary translations that share most of their
+ *   2. neighbors: other dictionary translations that share most of their
  *      words with the right one ("Do you look like an actor?" next to "Do I
  *      look like an actor?"), found with an inverted index, free;
  *   3. the old length-matched pool, only to fill a short list.
@@ -16,9 +16,9 @@
 
 import { shuffle } from "./lesson.ts";
 
-/** Jaccard overlap below which a neighbour is just another sentence. */
+/** Jaccard overlap below which a neighbor is just another sentence. */
 export const MIN_CLOSE = 0.3;
-/** At or above it a neighbour is a paraphrase, which could also be right. */
+/** At or above it a neighbor is a paraphrase, which could also be right. */
 export const MAX_CLOSE = 0.85;
 
 const WORD = /[\p{L}\p{N}]+(?:['’][\p{L}]+)?/gu;
@@ -34,7 +34,7 @@ function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
 	return union === 0 ? 0 : inter / union;
 }
 
-export interface NeighbourIndex {
+export interface NeighborIndex {
 	sentences: string[];
 	sets: Array<Set<string>>;
 	byWord: Map<string, number[]>;
@@ -42,7 +42,7 @@ export interface NeighbourIndex {
 
 /** Index translations by word. Words in more than 4% of them (the, I, a)
  *  find nothing specific and are left out of the candidate lookup. */
-export function buildNeighbourIndex(translations: readonly string[]): NeighbourIndex {
+export function buildNeighborIndex(translations: readonly string[]): NeighborIndex {
 	const sentences = [...new Set(translations.map((t) => t.trim()).filter(Boolean))];
 	const sets = sentences.map((s) => new Set(tokens(s)));
 	const byWord = new Map<string, number[]>();
@@ -58,19 +58,19 @@ export function buildNeighbourIndex(translations: readonly string[]): NeighbourI
 	return { sentences, sets, byWord };
 }
 
-export interface Neighbour {
+export interface Neighbor {
 	text: string;
 	score: number;
 }
 
 /** Translations close to `own`, closest first, never `own` itself nor a
  *  paraphrase of it. */
-export function neighbours(index: NeighbourIndex, own: string, limit = 12): Neighbour[] {
+export function neighbors(index: NeighborIndex, own: string, limit = 12): Neighbor[] {
 	const mine = new Set(tokens(own));
 	const hits = new Map<number, number>();
 	for (const w of mine) for (const i of index.byWord.get(w) ?? []) hits.set(i, (hits.get(i) ?? 0) + 1);
 	const ownKey = own.trim().toLowerCase();
-	const scored: Neighbour[] = [];
+	const scored: Neighbor[] = [];
 	for (const [i] of [...hits].sort((a, b) => b[1] - a[1]).slice(0, 80)) {
 		const text = index.sentences[i]!;
 		if (text.toLowerCase() === ownKey) continue;
@@ -82,17 +82,17 @@ export function neighbours(index: NeighbourIndex, own: string, limit = 12): Neig
 
 export interface OptionChoice {
 	options: string[];
-	/** How many wrong options came from near-misses or close neighbours. */
+	/** How many wrong options came from near-misses or close neighbors. */
 	close: number;
 }
 
 /**
  * The right meaning plus `count - 1` wrong ones. Cached near-misses first,
- * then close neighbours (a random few of the closest, so a repeat differs),
+ * then close neighbors (a random few of the closest, so a repeat differs),
  * then the length-matched pool to fill. `close` tells the caller whether a
  * model near-miss is still worth asking for.
  */
-export function chooseOptions(own: string, near: readonly string[], close: readonly Neighbour[], fallback: readonly string[], rand: () => number, count = 3): OptionChoice {
+export function chooseOptions(own: string, near: readonly string[], close: readonly Neighbor[], fallback: readonly string[], rand: () => number, count = 3): OptionChoice {
 	const key = (s: string) => s.trim().toLowerCase();
 	const seen = new Set([key(own)]);
 	const picked: string[] = [];

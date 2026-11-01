@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import manifest from "../app/manifest";
 
 // The home-screen install (app/manifest.ts, scripts/make-pwa-icons.mjs): the
-// manifest must open full screen at the root, in the app's own colours, and
+// manifest must open full screen at the root, in the app's own colors, and
 // every icon it names must exist at the size it declares.
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -18,7 +18,7 @@ function pngSize(relativePath: string): { width: number; height: number } {
 	return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 }
 
-test("the manifest opens full screen at the root, in the app's colours", () => {
+test("the manifest opens full screen at the root, in the app's colors", () => {
 	const m = manifest();
 	assert.equal(m.start_url, "/");
 	assert.equal(m.display, "standalone");

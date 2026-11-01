@@ -79,7 +79,7 @@ export interface FastItem {
 	translation: string;
 	words: number;
 	/** The sentence was answered right in a lesson before: truly known. */
-	practised: boolean;
+	practiced: boolean;
 }
 
 export const FAST_COUNT = 6;
@@ -139,7 +139,7 @@ export interface PickKnownOptions {
 	/** Item ids used lately: skipped while fresher ones remain. */
 	recent?: ReadonlySet<string>;
 	/** Item ids the learner answered right in lessons: taken first. */
-	practised?: ReadonlySet<string>;
+	practiced?: ReadonlySet<string>;
 	scan?: number;
 }
 
@@ -155,7 +155,7 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 	const count = opts.count ?? FAST_COUNT;
 	const scan = opts.scan ?? 5000;
 	type Found = { entry: LexiconEntry; index: number; hardest: number; words: number };
-	const practised: Found[] = [];
+	const practiced: Found[] = [];
 	const rest: Found[] = [];
 	const usedSlug = new Set<string>();
 	const usedText = new Set<string>();
@@ -174,18 +174,18 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 		usedSlug.add(f.entry.slug);
 		usedText.add(textOf(exampleText(f.entry.examples[f.index]!)));
 	};
-	// The learner's own practised sentences first: looked up by id, not
+	// The learner's own practiced sentences first: looked up by id, not
 	// found by chance in the scan.
-	if (opts.practised?.size) {
+	if (opts.practiced?.size) {
 		const bySlug = new Map(entries.map((e) => [e.slug, e]));
-		for (const id of shuffle([...opts.practised], rand)) {
-			if (practised.length >= count) break;
+		for (const id of shuffle([...opts.practiced], rand)) {
+			if (practiced.length >= count) break;
 			const at = id.lastIndexOf("#");
 			const entry = bySlug.get(id.slice(0, at));
 			const i = Number(id.slice(at + 1));
 			if (!entry || !Number.isInteger(i)) continue;
 			const f = judge(entry, i);
-			if (f) take(practised, f);
+			if (f) take(practiced, f);
 		}
 	}
 	let looked = 0;
@@ -210,7 +210,7 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 		if (rest.length >= count * 3) break;
 	}
 	rest.sort((a, b) => a.hardest - b.hardest || a.words - b.words);
-	const chosen = [...practised, ...rest].slice(0, count);
+	const chosen = [...practiced, ...rest].slice(0, count);
 	return shuffle(chosen, rand).map((f) => {
 		const ex = f.entry.examples[f.index]!;
 		return {
@@ -220,7 +220,7 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 			sentence: exampleText(ex),
 			translation: ex.en,
 			words: f.words,
-			practised: opts.practised?.has(`${f.entry.slug}#${f.index}`) ?? false,
+			practiced: opts.practiced?.has(`${f.entry.slug}#${f.index}`) ?? false,
 		};
 	});
 }

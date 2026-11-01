@@ -125,7 +125,7 @@ export function strandBalance(days: readonly StrandDay[]): StrandBalance {
  *  tutor sessions have no timer; older days were never measured). */
 export function strandCaption(b: StrandBalance): string {
 	const quarter = "The line marks a quarter.";
-	if (b.total <= 0) return `Measured while you practise. ${quarter}`;
+	if (b.total <= 0) return `Measured while you practice. ${quarter}`;
 	const total = Math.round(b.total);
 	const guessed = Math.round(b.estimated);
 	if (guessed <= 0) return `${total} min this week, measured while you were active. ${quarter}`;

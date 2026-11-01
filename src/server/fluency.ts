@@ -146,8 +146,8 @@ export interface FastPlan {
 }
 
 /** Item ids the learner answered right in a lesson (any mode): their
- *  own practised sentences. */
-function practisedIds(): Set<string> {
+ *  own practiced sentences. */
+function practicedIds(): Set<string> {
 	const out = new Set<string>();
 	for (const entry of readLessonLog()) {
 		if (entry.mode !== "lesson" && entry.mode !== "blitz" && entry.mode !== "placement") continue;
@@ -165,7 +165,7 @@ export function fastFor(seed = Date.now()): FastPlan {
 	const items = pickKnown(
 		lexicon.entries,
 		{ resolve: (form) => resolveWord(lexicon, form, k.known), known: k.known, names: STORY_NAMES },
-		{ seed, recent: new Set([...recent, ...progress.recent]), practised: practisedIds() },
+		{ seed, recent: new Set([...recent, ...progress.recent]), practiced: practicedIds() },
 	);
 	return { items, known: k.known.size };
 }

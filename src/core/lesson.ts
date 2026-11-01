@@ -84,7 +84,7 @@ export interface UnitInfo {
 	rule: string;
 	/** The path icon's name (a lucide icon, resolved in the Today page). */
 	glyph: string;
-	/** The seed grammar node this unit practises (curriculum/slovak). */
+	/** The seed grammar node this unit practices (curriculum/slovak). */
 	node?: string;
 	/** The Estonian bridge (spec D3): the same idea in his first language. */
 	bridge?: string;
@@ -155,14 +155,14 @@ export const UNITS: UnitInfo[] = [
 	{ id: "modal-inf", title: "Want, can, must + verb", tagline: "chcem ísť, musím pracovať", glyph: "key", rule: "After chcieť, môcť, musieť, vedieť, smieť (and budem) the second verb stays in the infinitive -ť: Chcem ísť. Musím pracovať.", node: "n_seed_modals", bridge: "As in Estonian tahan minna, pean töötama: the second verb does not conjugate. Slovak has one infinitive where Estonian picks -da or -ma.", slovakTerm: "Modálne slovesá", grammarTerm: "Modal verbs" },
 	{ id: "kam-kde", title: "Kam? or Kde?", tagline: "v / na + accusative or locative", glyph: "signpost", rule: "v / na for a destination (kam?) take the accusative: idem na stanicu, do mesta; for a place (kde?) the locative: som na stanici, v meste.", node: "n_seed_kam_kde", bridge: "Exactly the Estonian pair jaama (sisseütlev, kuhu?) and jaamas (seesütlev, kus?).", slovakTerm: "Smer a poloha", grammarTerm: "Direction vs location (Acc / Loc)" },
 	{ id: "present-ujem", title: "-ovať verbs: -ujem", tagline: "pracovať → pracujem", glyph: "briefcase", rule: "Verbs in -ovať swap -ova- for -uj-: pracujem, pracuješ, pracuje, pracujeme, pracujete, pracujú.", node: "n_seed_v_ujem", bridge: "A fixed stem change, like õppima → õpin: learn the stem once; the endings are the usual -m, -š, -, -me, -te, -ú.", slovakTerm: "Slovesá na -ovať", grammarTerm: "-ovať verb conjugation" },
-	{ id: "present-em", title: "-em / -iem verbs", tagline: "písať → píšem, niesť → nesiem", glyph: "pen", rule: "The -em class: píšem, píšeš, píše, píšeme, píšete, píšu; nesiem, nesieš, nesie … nesú. The stem often changes (písať → píš-).", node: "n_seed_v_em", bridge: "Like Estonian verbs whose stem shifts between forms (tulema → tulen): memorise the ja form and the rest follows.", slovakTerm: "Slovesá na -eť/-sť", grammarTerm: "-em / -iem verb conjugation" },
+	{ id: "present-em", title: "-em / -iem verbs", tagline: "písať → píšem, niesť → nesiem", glyph: "pen", rule: "The -em class: píšem, píšeš, píše, píšeme, píšete, píšu; nesiem, nesieš, nesie … nesú. The stem often changes (písať → píš-).", node: "n_seed_v_em", bridge: "Like Estonian verbs whose stem shifts between forms (tulema → tulen): memorize the ja form and the rest follows.", slovakTerm: "Slovesá na -eť/-sť", grammarTerm: "-em / -iem verb conjugation" },
 	{ id: "plural", title: "More than one", tagline: "domy, ženy, mestá, bratia", glyph: "copy", rule: "Nominative plural: masculine things -y (domy), feminine -y / -e (ženy, ulice), neuter -á (mestá), male people -i / -ia / -ovia (študenti, bratia, synovia).", node: "n_seed_plural_nom", bridge: "Estonian has one plural marker -d (majad, naised); Slovak picks the ending by gender, and male people get their own.", slovakTerm: "Plurál", grammarTerm: "Nominative plural" },
 	{ id: "numbers", title: "Counting things", tagline: "dve kávy, päť káv", glyph: "hash", rule: "After 2, 3, 4 the noun is nominative plural (dve kávy, tri domy); after 5 and up, and after veľa / málo / koľko, it is genitive plural (päť káv, veľa domov, koľko ľudí).", node: "n_seed_numerals", bridge: "Estonian puts every counted noun in the singular partitive (viis kohvi); Slovak counts 2–4 as a plural and 5+ as 'of' (genitive), like 'a lot of'.", slovakTerm: "Číslovky a počítanie", grammarTerm: "Numerals & genitive counting" },
 	{ id: "cond", title: "Would: by + -l", tagline: "Chcel by som…", glyph: "wand", rule: "The conditional is the past -l form plus by (with som / si for I / you): Chcel by som kávu. Išli by sme. Keby som mal čas…", node: "n_seed_conditional", bridge: "Estonian puts -ks on the verb (tahaksin, läheksime); Slovak keeps the -l form and adds the little word by in second position.", slovakTerm: "Podmieňovací spôsob", grammarTerm: "Conditional mood" },
 	{ id: "core-verbs", title: "Irregular core verbs", tagline: "mať, ísť, chcieť, môcť, vedieť, jesť", glyph: "star", rule: "The commonest verbs follow no pattern: mám / máš / má, idem / ideš / ide, chcem / chceš / chce, môžem / môžeš / môže, viem / vieš / vie, jem / ješ / je.", node: "n_seed_v_irregular", bridge: "Like olema, minema, tulema in Estonian, which are irregular too: learn these by heart.", repeat: true, slovakTerm: "Nepravidelné slovesá", grammarTerm: "Irregular core verbs" },
 	{ id: "motion", title: "Going: ísť vs chodiť", tagline: "idem (now) vs chodím (regularly)", glyph: "footprints", rule: "ísť = one trip, now or planned (idem do školy); chodiť = repeatedly, as a habit (chodím do školy). Prefixes add direction: prísť (arrive), odísť (leave).", node: "n_seed_motion", bridge: "Estonian uses one verb (lähen kooli / käin koolis); Slovak splits the single trip from the habit.", repeat: true, slovakTerm: "Slovesá pohybu", grammarTerm: "Verbs of motion" },
 	{ id: "clitics", title: "Little words in second place", tagline: "sa, som, mi, ho… always second", glyph: "move-horizontal", rule: "Short unstressed words (sa, si, som, si, mi, ti, mu, ho, ju, by) sit in second position in the clause: Včera som sa učil. Dal mi ho.", node: "n_seed_clitics", bridge: "Estonian has no such slot: in Slovak these words come right after the first stressed phrase, whatever else moves.", pattern: "build", slovakTerm: "Príklonky", grammarTerm: "Clitics (2nd position)" },
-	{ id: "adj-cases", title: "Adjectives in other cases", tagline: "v novej škole, s dobrým kamarátom", glyph: "paintbrush", rule: "The adjective takes its noun's case: -ej (fem. G/D/L), -ú (fem. A), -ou (fem. I), -ého / -ému / -om / -ým (masc. and neut.), -ých / -ým / -ými (plural).", node: "n_seed_adj_cases", bridge: "As in Estonian, where the adjective follows the noun into every case (uues koolis, hea sõbraga); only the endings differ by gender.", slovakTerm: "Skloňovanie adjektív", grammarTerm: "Adjective case declension" },
+	{ id: "adj-cases", title: "Adjectives in other cases", tagline: "v novej škole, s dobrým kamarátom", glyph: "paintbrush", rule: "The adjective takes its noun's case. Feminine: -ej (genitive, dative, locative), -ú (accusative), -ou (instrumental). Masculine and neuter: -ého / -ému / -om / -ým. Plural: -ých / -ým / -ými.", node: "n_seed_adj_cases", bridge: "As in Estonian, where the adjective follows the noun into every case (uues koolis, hea sõbraga); only the endings differ by gender.", slovakTerm: "Skloňovanie adjektív", grammarTerm: "Adjective case declension" },
 	{ id: "cases-mix", title: "All six cases", tagline: "Mixed: read the trigger, pick the case", glyph: "shuffle", rule: "Read the word before the blank: the preposition or the verb decides the case.", node: "n_seed_case_system", union: ["acc-fem", "loc", "acc-people", "gen", "ins", "dat", "kam-kde", "plural", "numbers"], slovakTerm: "Pády súhrnne", grammarTerm: "Case system review" },
 	{ id: "verbs-mix", title: "All verb forms", tagline: "Mixed: present, past, would", glyph: "dices", rule: "Read the time words and the subject: they decide tense, person and whether by is needed.", node: "n_seed_v_present", union: ["present", "present-em", "present-ujem", "past", "cond", "core-verbs", "motion", "modal-inf"], slovakTerm: "Slovesné tvary", grammarTerm: "Verb forms review" },
 	...CLUSTER_UNITS,
@@ -530,7 +530,7 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
 	return "wrong";
 }
 
-/** The rhythm of a first lesson on a unit: recognise first, then produce,
+/** The rhythm of a first lesson on a unit: recognize first, then produce,
  *  a word bank and a listening rep to vary the work. */
 /** A new unit meets the form before it is asked for it: two reps that only
  *  ask what the sentence means (spoken, form marked), then recognition,
@@ -538,9 +538,9 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
 export const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
 
 /** Once a unit is known: production almost throughout. Picking a form from
- *  four trains recognising it; typing it trains producing it, and producing
+ *  four trains recognizing it; typing it trains producing it, and producing
  *  endings is the gap (reading is ahead of production). */
-export const PRACTISED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
+export const PRACTICED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
 
 /** Once a unit is complete (unitDone): production only. No choose rep
  *  (recognition is done teaching), more of the lesson from the units it
@@ -550,14 +550,14 @@ export const PRACTISED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", 
 export const STRONG_PATTERN: ItemKind[] = ["type", "type", "build", "type", "listen", "type", "type", "build", "type", "listen", "type", "type"];
 
 /** The placement drill (src/core/onboarding.ts): two reps a unit that
- *  measure, so they ask for the form — recognise it, then produce it. */
+ *  measure, so they ask for the form — recognize it, then produce it. */
 export const PLACEMENT_PATTERN: ItemKind[] = ["choose", "type"];
 
 /** Word-order units: rebuild the sentence, with a listening rep to vary it. */
 export const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
 
 /** Slots (by position) that take an item from another unit. */
-const MIX_SLOTS: Record<UnitStage, number[]> = { new: [5, 9], practised: [2, 5, 8, 11], strong: [1, 3, 5, 7, 9, 11] };
+const MIX_SLOTS: Record<UnitStage, number[]> = { new: [5, 9], practiced: [2, 5, 8, 11], strong: [1, 3, 5, 7, 9, 11] };
 
 /** Units that are easy to confuse with each one: the mix comes from these
  *  first, so the learner has to read the trigger to choose the case. */
@@ -583,14 +583,14 @@ export const CONTRAST: Partial<Record<UnitId, UnitId[]>> = {
 	"adj-cases": ["adj", "loc"],
 };
 
-export type UnitStage = "new" | "practised" | "strong";
+export type UnitStage = "new" | "practiced" | "strong";
 
-/** Practised when a unit has two lessons at 60% or better; strong once it
+/** Practiced when a unit has two lessons at 60% or better; strong once it
  *  is complete (unitDone). Each stage asks for more: see LESSON_PATTERN,
- *  PRACTISED_PATTERN, STRONG_PATTERN and MIX_SLOTS. */
+ *  PRACTICED_PATTERN, STRONG_PATTERN and MIX_SLOTS. */
 export function unitStage(lessons: number, accuracy: number | null): UnitStage {
 	if (unitDone(lessons, accuracy)) return "strong";
-	return lessons >= 2 && (accuracy ?? 0) >= 0.6 ? "practised" : "new";
+	return lessons >= 2 && (accuracy ?? 0) >= 0.6 ? "practiced" : "new";
 }
 
 /** The preposition before the blank, if it is one that picks a case. */
@@ -677,7 +677,7 @@ export interface LessonPlan {
 	unit: UnitId;
 	items: LessonItem[];
 	/** How far the learner is with the unit; the player hides the
-	 *  translation before the answer from "practised" on. */
+	 *  translation before the answer from "practiced" on. */
 	stage?: UnitStage;
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
@@ -702,7 +702,7 @@ export function buildLesson(
 	const info = unitInfo(unit);
 	const stage = opts.stage ?? "new";
 	const length = opts.length ?? LESSON_PATTERN.length;
-	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practised" ? PRACTISED_PATTERN : LESSON_PATTERN);
+	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practiced" ? PRACTICED_PATTERN : LESSON_PATTERN);
 	const pattern = base.slice(0, length);
 	const sourceFor = (u: UnitId, filterGender?: AtlasGender, weakGender?: AtlasGender) => {
 		const raw = candidatesFor(entries, u);
@@ -767,7 +767,7 @@ export function buildLesson(
 /** A Dvojičky lesson: twelve choose reps, each a verified sentence that
  *  uses exactly one twin of the chapter's pairs. The form stands in the
  *  sentence (item.form, marked by the player); the choice is between the
- *  two lemmas — recognising which twin the sentence really uses. Deck
+ *  two lemmas — recognizing which twin the sentence really uses. Deck
  *  order is deterministic per seed; `recent` ids go to the back while
  *  fresher sentences remain; a short deck cycles (repeat: true). */
 export function buildPairsLesson(entries: readonly LexiconEntry[], unit: UnitId, opts: { seed: number; length?: number; recent?: ReadonlySet<string> }): LessonPlan {

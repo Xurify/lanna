@@ -238,7 +238,7 @@ describe("the strand balance reads measured minutes, then the plan's estimate", 
 		assert.equal(b.estimated, STRAND_MINUTES.watch);
 	});
 
-	it("keeps the count-only behaviour for days with no measurement at all", () => {
+	it("keeps the count-only behavior for days with no measurement at all", () => {
 		assert.equal(strandMinutes({ watches: 2 }).input, 16);
 		const p = strandParts({ lessons: 3, reviews: 28 });
 		assert.equal(p.minutes.form, 3 * 3 + 28 * 0.25);
@@ -253,7 +253,7 @@ describe("the strand balance reads measured minutes, then the plan's estimate", 
 
 describe("the balance caption says how the minutes were counted", () => {
 	it("is plain before anything is counted", () => {
-		assert.match(strandCaption(strandBalance([])), /Measured while you practise/);
+		assert.match(strandCaption(strandBalance([])), /Measured while you practice/);
 	});
 	it("says measured when every minute was", () => {
 		const text = strandCaption(strandBalance([{ lessons: 1, minutesBy: { lesson: 12 } }]));

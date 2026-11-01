@@ -1,7 +1,7 @@
 "use client";
 /**
  * Settings primitives: sections, groups, rows and controls. Everything SSRs
- * clean (render tests pin the markup). A dependency-greyed row dims as a whole
+ * clean (render tests pin the markup). A dependency-grayed row dims as a whole
  * and locks its control; the row owns the dim.
  */
 
@@ -179,7 +179,7 @@ export function SettingsSegmented<T extends string | number>({
 	);
 }
 
-/** The on/off switch: a button in the switch role. On uses the go colour, so it does not read as disabled. */
+/** The on/off switch: a button in the switch role. On uses the go color, so it does not read as disabled. */
 export function Toggle({
 	checked,
 	disabled,
@@ -219,7 +219,7 @@ export function Toggle({
 			)}
 		>
 			{discIcon ? (
-				// The icon is the disc: same size, slide and colours.
+				// The icon is the disc: same size, slide and colors.
 				<span
 					className={cn(
 						"absolute left-px top-px flex size-4 items-center justify-center rounded-full transition-transform",

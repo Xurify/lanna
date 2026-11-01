@@ -92,9 +92,9 @@ function entries() {
 
 /**
  * The lesson for a unit, shaped by how far the learner is with it: a first
- * lesson recognises before it produces; once the unit holds (two lessons at
+ * lesson recognizes before it produces; once the unit holds (two lessons at
  * 60%+) almost every rep is typed. Either way some reps come from
- * neighbouring units the learner has reached (CONTRAST first), so the case
+ * neighboring units the learner has reached (CONTRAST first), so the case
  * has to be chosen from the trigger rather than assumed from the lesson's
  * title — interleaving, which is what makes the choice stick.
  */
@@ -118,7 +118,7 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
- *  else the most-practised card of the same word, else null. */
+ *  else the most-practiced card of the same word, else null. */
 function withKnown<T extends LessonPlan>(plan: T): T {
 	const cards = Object.values(reviewStore.readCards());
 	for (const item of plan.items) {
@@ -214,7 +214,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	if (prior) return { ...prior.outcome, duplicate: true, summary: progressSummary(input.tz, now) };
 	const day = dayOf(p, today(input.tz, now));
 	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
-	// Each rep's first try goes to the drill it practised (a mixed lesson
+	// Each rep's first try goes to the drill it practiced (a mixed lesson
 	// counts toward the cases it drilled). This runs before `unit` is read:
 	// recordFirstTry returns a new record, and `unit` must be that one.
 	const tries = input.reps.map(repTry);

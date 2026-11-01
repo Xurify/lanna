@@ -10,7 +10,7 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 
 - **Prompts beat recasts.** Corrective feedback that makes the learner self-repair moves grammar; recasts (the teacher just says it right) are mostly not noticed (Lyster & Ranta 1997; Lyster & Saito 2010).
 - **Fluency practice** is Nation's fourth strand: nothing new, only faster, on material the learner already knows fully. Repeated timed readings and the 4/3/2 technique (the same thing said in four, then three, then two minutes; here a shrinking window) are the standard forms.
-- **Pronunciation assessment** needs a phoneme-level engine to say anything about accent; a transcript match can only say whether the words were recognisable.
+- **Pronunciation assessment** needs a phoneme-level engine to say anything about accent; a transcript match can only say whether the words were recognizable.
 
 ## Speak (`/speak`)
 

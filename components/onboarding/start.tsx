@@ -289,7 +289,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 			<main className={cn(COLUMN, "flex-1 py-6")}>
 				{step === 1 && (
 					<section className="lh-rise" data-testid="start-purposes">
-						<Heading title="What is Slovak for?" line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practise; the tutor stops asking.`} />
+						<Heading title="What is Slovak for?" line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice; the tutor stops asking.`} />
 						<div className="mt-6 grid gap-3 sm:grid-cols-2">
 							{PURPOSES.map((p) => {
 								const on = d.purposes.includes(p.id);
@@ -596,7 +596,7 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 					<div className="rounded-2xl border bg-card p-4" data-testid="result-words">
 						<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Words</p>
 						<p className="mt-1 font-prose text-base text-foreground">
-							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognised{outcome.vocabulary.reliable ? "" : " — you ticked words that are not Slovak, so treat this as generous"}.
+							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized{outcome.vocabulary.reliable ? "" : " — you ticked words that are not Slovak, so treat this as generous"}.
 						</p>
 						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="By frequency band">
 							{outcome.vocabulary.bands.map((b) => (
