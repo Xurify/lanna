@@ -5,11 +5,19 @@
  *
  * ON, for Tailscale Serve: Serve connects from this computer, so the server
  * keeps listening on 127.0.0.1 in both states and nothing binds to the LAN.
- * Every request must then be the packaged desktop window or carry a paired
- * device's cookie. Only the pairing page, its one POST and the static assets
- * are public. Serve's identity headers are NOT proof of access: Funnel and
- * tagged-device traffic arrives without them, so a missing header grants
- * nothing (fail closed).
+ * A request that names only this computer and came through no proxy gets the
+ * same answer as with the switch off: the browser on the PC, the packaged
+ * window and the dev server pass. A request that came through the proxy (a
+ * phone over Serve) must carry a paired device's cookie, or the packaged
+ * window's secret, which a phone never has. Only the pairing page, its one POST
+ * and the static assets are public.
+ * A request is proxied when it carries a Tailscale identity header, Forwarded or
+ * X-Real-IP, or names a tailnet host in Host or X-Forwarded-Host. Such a header
+ * only makes a request stricter, never looser. Serve's identity headers are not
+ * proof of access by themselves: Funnel and tagged-device traffic may arrive
+ * without them, so the tailnet name catches them. A Serve that rewrote Host to
+ * loopback and sent no identity header would look like this computer (see
+ * docs/research/remote-access.md).
  *
  * Pure: no file and no clock here. The store (remote-access-store.ts) keeps
  * the file and the codes; the proxy and the routes call these rules.
@@ -106,21 +114,28 @@ export function publicPath(pathname: string, method: string): boolean {
 /**
  * The one decision for every page and API request.
  *
- * OFF: the rules as they were, plus two refusals. A request that a proxy
- * carried is refused (Serve running while the switch is off must not let
- * anyone in), and a non-loopback Host is refused on pages too.
+ * This computer's own request (no proxy marked it, and every name it was
+ * addressed by is loopback) gets the same answer with the switch on or off:
+ * pages pass, and the API passes when the desktop check does. Nothing asks
+ * this computer's browser for a code (E21, 2026-11-01).
  *
- * ON: the Host must be this computer or a tailnet name. Then the desktop
- * window or a paired device passes, and everything else is sent to pairing.
+ * Any other request came through a proxy or names a tailnet host. OFF: a request
+ * a proxy marked is refused (Serve running while the switch is off must not let
+ * anyone in), and so is any other name. ON: every name must be this computer or
+ * a tailnet name. Then the desktop window, the public pairing and static paths,
+ * or a paired device passes; everything else is sent to pairing.
  */
 export function decideAccess(input: AccessInput): AccessDecision {
 	const api = input.pathname === "/api" || input.pathname.startsWith("/api/");
 	const names = addressedBy(input);
-	if (!input.enabled) {
-		if (proxied(input.headers)) return { action: "refuse", message: REMOTE_OFF_MESSAGE };
-		if (!names.every((name) => loopbackHost(name))) return { action: "refuse", message: api ? ONLY_THIS_COMPUTER_API : ONLY_THIS_COMPUTER_PAGE };
+	const viaProxy = proxied(input.headers);
+	if (!viaProxy && names.every((name) => loopbackHost(name))) {
 		if (api && !input.desktopApiOk) return { action: "refuse", message: DESKTOP_ONLY_API };
 		return { action: "allow" };
+	}
+	if (!input.enabled) {
+		if (viaProxy) return { action: "refuse", message: REMOTE_OFF_MESSAGE };
+		return { action: "refuse", message: api ? ONLY_THIS_COMPUTER_API : ONLY_THIS_COMPUTER_PAGE };
 	}
 	if (!names.every((name) => loopbackHost(name) || tailnetHost(name))) return { action: "refuse", message: ADDRESS_NOT_ALLOWED };
 	if (input.desktopWindow) return { action: "allow" };

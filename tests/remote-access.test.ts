@@ -81,20 +81,69 @@ describe("remote access off (the default): the old rules, plus two refusals", ()
 	});
 });
 
-describe("remote access on: the window or a paired device, nothing else", () => {
+describe("remote access on: this computer always passes; a proxied request needs a paired device", () => {
 	const on = { enabled: true };
+	// What Tailscale Serve hands the app for a phone: a tailnet name and an identity header.
+	const phone = { ...on, host: "pc.tail1234.ts.net", headers: { "tailscale-user-login": "phone@example.test" } };
 
-	it("sends an unpaired page to pairing, and an unpaired API call to pairing too", () => {
-		assert.deepEqual(decideAccess(input({ ...on, pathname: "/" })), { action: "pair" });
-		assert.deepEqual(decideAccess(input({ ...on, pathname: "/api/chats", host: "pc.tail1234.ts.net" })), { action: "pair" });
+	it("lets this computer's own browser open pages and the API without a code", () => {
+		assert.deepEqual(decideAccess(input({ ...on, pathname: "/" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...on, pathname: "/chat/new" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...on, pathname: "/api/chats" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...on, pathname: "/api/access" })), { action: "allow" });
 	});
 
-	it("lets a paired device through, on any page and on the API", () => {
-		assert.deepEqual(decideAccess(input({ ...on, paired: true, pathname: "/api/events", host: "pc.tail1234.ts.net" })), { action: "allow" });
+	it("gives this computer the same answer with the switch on or off, on every path", () => {
+		for (const pathname of ["/", "/chat/new", "/api/settings", "/api/access", "/pair"]) {
+			for (const desktopApiOk of [true, false]) {
+				const switchOff = decideAccess(input({ pathname, desktopApiOk }));
+				const switchOn = decideAccess(input({ ...on, pathname, desktopApiOk }));
+				assert.deepEqual(switchOn, switchOff, `${pathname}, desktop check ${desktopApiOk}`);
+			}
+		}
 	});
 
-	it("lets the packaged desktop window through without a device session", () => {
+	it("lets this computer's browser through at 127.0.0.1 and [::1] as well as localhost", () => {
+		assert.deepEqual(decideAccess(input({ ...on, host: "127.0.0.1:3010", pathname: "/" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...on, host: "[::1]:3010", pathname: "/" })), { action: "allow" });
+	});
+
+	it("keeps the desktop API check for this computer, with remote access on as with it off", () => {
+		const decision = decideAccess(input({ ...on, pathname: "/api/settings", desktopApiOk: false }));
+		assert.equal(decision.action, "refuse");
+		assert.match(decision.action === "refuse" ? decision.message : "", /trusted LearnHarness window/);
+	});
+
+	it("lets the packaged desktop window through", () => {
 		assert.deepEqual(decideAccess(input({ ...on, desktopWindow: true, pathname: "/api/access" })), { action: "allow" });
+	});
+
+	it("sends a phone with no session to pairing, on a page and on the API", () => {
+		assert.deepEqual(decideAccess(input({ ...phone, pathname: "/" })), { action: "pair" });
+		assert.deepEqual(decideAccess(input({ ...phone, pathname: "/api/chats" })), { action: "pair" });
+	});
+
+	it("lets a paired phone through, on any page and on the API", () => {
+		assert.deepEqual(decideAccess(input({ ...phone, paired: true, pathname: "/api/events" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...phone, paired: true, pathname: "/" })), { action: "allow" });
+	});
+
+	it("treats a proxied request as a phone even when Serve rewrote Host to loopback", () => {
+		assert.deepEqual(decideAccess(input({ ...on, host: "127.0.0.1:3010", headers: { "tailscale-user-login": "x" } })), { action: "pair" });
+	});
+
+	it("treats a tailnet name in X-Forwarded-Host as proxied, whatever Host says", () => {
+		assert.deepEqual(decideAccess(input({ ...on, host: "127.0.0.1:3010", headers: { "x-forwarded-host": "pc.tail1234.ts.net" } })), { action: "pair" });
+	});
+
+	it("sends a tailnet name with no identity header (a tagged device, or Funnel) to pairing too", () => {
+		assert.deepEqual(decideAccess(input({ ...on, host: "pc.tail1234.ts.net" })), { action: "pair" });
+	});
+
+	it("treats any request carrying a proxy header as proxied, even on this computer's own name", () => {
+		for (const header of ["Tailscale-User-Login", "Tailscale-User-Name", "Tailscale-User-Profile-Pic", "Tailscale-App-Capabilities", "Forwarded", "X-Real-IP"]) {
+			assert.deepEqual(decideAccess(input({ ...on, headers: { [header]: "x" } })), { action: "pair" }, header);
+		}
 	});
 
 	it("accepts a tailnet name as the host, and refuses any other name", () => {
@@ -105,17 +154,17 @@ describe("remote access on: the window or a paired device, nothing else", () => 
 		});
 	});
 
-	it("keeps the pairing page, its one POST and the static assets public", () => {
-		assert.deepEqual(decideAccess(input({ ...on, pathname: "/pair", host: "pc.tail1234.ts.net" })), { action: "allow" });
-		assert.deepEqual(decideAccess(input({ ...on, pathname: "/api/access/pair", method: "POST" })), { action: "allow" });
-		assert.deepEqual(decideAccess(input({ ...on, pathname: "/_next/static/chunks/app.js" })), { action: "allow" });
-		assert.deepEqual(decideAccess(input({ ...on, pathname: "/icons/icon-192.png" })), { action: "allow" });
+	it("keeps the pairing page, its one POST and the static assets public for a phone", () => {
+		assert.deepEqual(decideAccess(input({ ...phone, pathname: "/pair" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...phone, pathname: "/api/access/pair", method: "POST" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...phone, pathname: "/_next/static/chunks/app.js" })), { action: "allow" });
+		assert.deepEqual(decideAccess(input({ ...phone, pathname: "/icons/icon-192.png" })), { action: "allow" });
 	});
 
-	it("keeps everything else behind pairing: the pairing GET, the access reads and the pairing POST", () => {
-		assert.equal(decideAccess(input({ ...on, pathname: "/api/access/pair", method: "GET" })).action, "pair");
-		assert.equal(decideAccess(input({ ...on, pathname: "/api/access" })).action, "pair");
-		assert.equal(decideAccess(input({ ...on, pathname: "/api/access/pairing", method: "POST" })).action, "pair");
+	it("keeps everything else behind pairing for a phone: the pairing GET, the access reads and the pairing POST", () => {
+		assert.equal(decideAccess(input({ ...phone, pathname: "/api/access/pair", method: "GET" })).action, "pair");
+		assert.equal(decideAccess(input({ ...phone, pathname: "/api/access" })).action, "pair");
+		assert.equal(decideAccess(input({ ...phone, pathname: "/api/access/pairing", method: "POST" })).action, "pair");
 	});
 });
 

@@ -5,7 +5,7 @@ import { readAccess, resolveDevice } from "./src/server/remote-access-store.ts";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
-/** Every page and API request (E21). Remote access off: the rules LangHarness always had, plus refusals for proxied requests and non-loopback hosts. Remote access on: the desktop window and paired devices pass, and everything else goes to /pair. Static assets are skipped by the matcher. Applies to SSE and the spending and settings routes too. No public callback or worker bypass: internal jobs call server functions, and any legitimate self-HTTP request must carry the private capability. */
+/** Every page and API request (E21). Remote access off: the rules LangHarness always had, plus refusals for proxied requests and non-loopback hosts. Remote access on: this computer's own requests get the same answer as with it off; a request that came through the proxy needs a paired device, and everything else goes to /pair. Static assets are skipped by the matcher. Applies to SSE and the spending and settings routes too. No public callback or worker bypass: internal jobs call server functions, and any legitimate self-HTTP request must carry the private capability. */
 export async function proxy(request: NextRequest) {
 	const { pathname, search } = request.nextUrl;
 	const headers = request.headers;
