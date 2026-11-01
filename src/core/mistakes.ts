@@ -48,6 +48,12 @@ export interface UnitTrend {
 	earlier: number | null;
 	trend: Trend;
 	slips: Partial<Record<FormSlip, number>>;
+	/** Where the true first-try rate likely is (95% Wilson interval). Few
+	 *  answers give a wide range; absent in snapshots from before it was kept. */
+	low?: number;
+	high?: number;
+	/** The range lies under WEAK_BAR: weak with enough answers to say so. */
+	weak?: boolean;
 }
 
 export interface MissedWord {
@@ -97,12 +103,26 @@ export interface MistakeAnalysis {
 }
 
 export const TREND_DAYS = 14;
-/** First tries a window needs before its accuracy is compared. */
-export const TREND_MIN_REPS = 5;
-/** The accuracy change that counts as a trend (ten points). */
-export const TREND_STEP = 0.1;
+/** First tries each window needs before the two are compared at all. */
+export const TREND_MIN_REPS = 6;
+/** How far apart the two windows must be, in standard errors, to call it a
+ *  trend: a two-proportion z-test at the 5% level. Below that the change is
+ *  as likely to be chance as real, and it reads "steady". */
+export const TREND_Z = 1.96;
 /** A unit is listed once it has this many first tries. */
 export const UNIT_MIN_REPS = 3;
+/** A unit is called weak only when even the top of its likely range is
+ *  under this (the lesson pass bar the weak spots use, 85%). */
+export const WEAK_BAR = 0.85;
+/** Below this many first tries the page shows a unit's range with its score. */
+export const RANGE_SHOWN_UNDER = 20;
+/** A word is listed among the most missed from its second miss: one miss is
+ *  a slip; the review deck already has it. */
+export const WORD_MIN_MISSES = 2;
+/** The guide is written only from enough evidence: patterns read from a
+ *  handful of answers are guesses dressed as findings. */
+export const GUIDE_MIN_REPS = 30;
+export const GUIDE_MIN_WRONG = 5;
 export const WORDS_SHOWN = 8;
 export const WEEKS_SHOWN = 8;
 /** Wrong first tries kept for the guide. */
@@ -117,10 +137,35 @@ function weekOf(at: number): string {
 	return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back)).toISOString().slice(0, 10);
 }
 
+/** The 95% Wilson score interval of right / n: where the true rate likely
+ *  is. It stays inside 0..1 and is honest with few answers (5 of 8 is
+ *  "somewhere between 31% and 86%", not "63%"). */
+export function wilson(right: number, n: number, z = 1.96): { low: number; high: number } {
+	if (n <= 0) return { low: 0, high: 1 };
+	const p = right / n;
+	const z2 = z * z;
+	const centre = p + z2 / (2 * n);
+	const spread = z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n));
+	const div = 1 + z2 / n;
+	return { low: Math.max(0, (centre - spread) / div), high: Math.min(1, (centre + spread) / div) };
+}
+
+/** Better or worse only when the two windows differ by more than chance
+ *  would (a two-proportion z-test); "new" when either has too few answers. */
 export function trendOf(recent: { reps: number; right: number }, earlier: { reps: number; right: number }): Trend {
 	if (recent.reps < TREND_MIN_REPS || earlier.reps < TREND_MIN_REPS) return "new";
-	const diff = recent.right / recent.reps - earlier.right / earlier.reps;
-	return diff >= TREND_STEP ? "better" : diff <= -TREND_STEP ? "worse" : "steady";
+	const p1 = recent.right / recent.reps;
+	const p2 = earlier.right / earlier.reps;
+	const pooled = (recent.right + earlier.right) / (recent.reps + earlier.reps);
+	const se = Math.sqrt(pooled * (1 - pooled) * (1 / recent.reps + 1 / earlier.reps));
+	if (se === 0) return "steady";
+	const z = (p1 - p2) / se;
+	return z >= TREND_Z ? "better" : z <= -TREND_Z ? "worse" : "steady";
+}
+
+/** Whether there is enough evidence to write the guide, and how far off. */
+export function guideReadiness(a: Pick<MistakeAnalysis, "reps" | "wrong">): { ready: boolean; reps: number; wrong: number; needReps: number; needWrong: number } {
+	return { ready: a.reps >= GUIDE_MIN_REPS && a.wrong >= GUIDE_MIN_WRONG, reps: a.reps, wrong: a.wrong, needReps: GUIDE_MIN_REPS, needWrong: GUIDE_MIN_WRONG };
 }
 
 export function analyseMistakes(lessons: readonly LoggedLesson[], mixups: MixupRecord | undefined, now: Date): MistakeAnalysis {
@@ -182,20 +227,26 @@ export function analyseMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 	}
 	const unitList: UnitTrend[] = [...units.entries()]
 		.filter(([, u]) => u.reps >= UNIT_MIN_REPS)
-		.map(([unit, u]) => ({
-			unit,
-			title: unitInfo(unit as Parameters<typeof unitInfo>[0]).title,
-			reps: u.reps,
-			wrong: u.reps - u.right,
-			accuracy: u.right / u.reps,
-			recent: u.recent.reps >= TREND_MIN_REPS ? u.recent.right / u.recent.reps : null,
-			earlier: u.earlier.reps >= TREND_MIN_REPS ? u.earlier.right / u.earlier.reps : null,
-			trend: trendOf(u.recent, u.earlier),
-			slips: u.slips,
-		}))
+		.map(([unit, u]) => {
+			const { low, high } = wilson(u.right, u.reps);
+			return {
+				unit,
+				title: unitInfo(unit as Parameters<typeof unitInfo>[0]).title,
+				reps: u.reps,
+				wrong: u.reps - u.right,
+				accuracy: u.right / u.reps,
+				recent: u.recent.reps >= TREND_MIN_REPS ? u.recent.right / u.recent.reps : null,
+				earlier: u.earlier.reps >= TREND_MIN_REPS ? u.earlier.right / u.earlier.reps : null,
+				trend: trendOf(u.recent, u.earlier),
+				slips: u.slips,
+				low,
+				high,
+				weak: high < WEAK_BAR,
+			};
+		})
 		.sort((a, b) => b.wrong - a.wrong || a.accuracy - b.accuracy);
 	const missed: MissedWord[] = [...words.values()]
-		.filter((w) => w.misses > 0)
+		.filter((w) => w.misses >= WORD_MIN_MISSES)
 		.sort((a, b) => b.misses - a.misses || b.lastAt.localeCompare(a.lastAt))
 		.slice(0, WORDS_SHOWN)
 		.map(({ right: _right, ...w }) => w);
@@ -215,7 +266,8 @@ export function guideFacts(a: MistakeAnalysis): string {
 	const slipLine = FORM_SLIPS.filter((s) => a.slips[s]).map((s) => `${s} ${a.slips[s]}`);
 	if (slipLine.length) lines.push(`Kinds of wrong answer: ${slipLine.join(", ")}.`);
 	for (const u of a.units.slice(0, 6)) {
-		lines.push(`Unit ${u.title} [${u.unit}]: ${pct(u.accuracy)} of ${u.reps} first tries; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`);
+		const range = u.low !== undefined && u.high !== undefined ? ` (likely ${pct(u.low)}–${pct(u.high)}${u.weak ? ", weak" : ", too few answers to call weak"})` : "";
+		lines.push(`Unit ${u.title} [${u.unit}]: ${pct(u.accuracy)} of ${u.reps} first tries${u.accuracy < WEAK_BAR ? range : ""}; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`);
 	}
 	for (const x of a.samples ?? []) lines.push(`Wrong: "${x.sentence}" wanted "${x.answer}", wrote "${x.given || "nothing"}" (${x.unit}${x.slip ? `, ${x.slip}` : ""}).`);
 	for (const w of a.words) lines.push(`Missed ${w.misses}×: ${w.lemma} (wanted "${w.answer}", last wrote "${w.lastGiven}").`);

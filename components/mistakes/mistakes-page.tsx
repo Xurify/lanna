@@ -13,7 +13,7 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, type GuideData, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, type GuideData, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import type { MistakesReport } from "@/src/server";
@@ -213,8 +213,39 @@ const GUIDE_ADDS = [
 	"Builds a personal lesson on the words, pairs and units it picked, from the app's checked sentences",
 ];
 
+/** How far the evidence is from enough for a guide: a pattern read from a
+ *  handful of answers would be a guess dressed as a finding. */
+function Readiness({ enough }: { enough: ReturnType<typeof guideReadiness> }) {
+	const bars = [
+		{ label: "First tries", have: enough.reps, need: enough.needReps },
+		{ label: "Mistakes among them", have: enough.wrong, need: enough.needWrong },
+	];
+	return (
+		<div className="mt-4 rounded-xl border bg-background p-4" data-testid="guide-readiness">
+			<p className="font-ui text-sm font-bold text-foreground">Needs a few more lessons first</p>
+			<p className="font-prose text-xs text-muted-foreground">With too few answers, the guide would be guessing. It unlocks at {enough.needReps} first tries with {enough.needWrong} mistakes among them.</p>
+			<dl className="mt-3 grid gap-3 sm:grid-cols-2">
+				{bars.map((b) => (
+					<div key={b.label}>
+						<div className="flex items-baseline justify-between gap-2 font-ui text-xs">
+							<dt className="font-bold text-muted-foreground">{b.label}</dt>
+							<dd className="tabular-nums text-foreground">
+								{Math.min(b.have, b.need)} of {b.need}
+							</dd>
+						</div>
+						<div className="mt-1 h-2 rounded-full bg-accent" aria-hidden="true">
+							<div className="h-2 rounded-full bg-go" style={{ width: `${Math.round(Math.min(1, b.have / b.need) * 100)}%` }} />
+						</div>
+					</div>
+				))}
+			</dl>
+		</div>
+	);
+}
+
 function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: boolean; onWrite: (force: boolean) => void }) {
 	const { guide, guideCurrent, ai } = report;
+	const enough = guideReadiness(report.analysis);
 	return (
 		<section className="mt-8 rounded-2xl border-2 bg-card p-5" aria-labelledby="guide-title" data-testid="mistakes-guide">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -250,9 +281,10 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={GUIDE_ADDS} className="mt-3" />
 			)}
+			{!enough.ready && !(guide && guideCurrent) && <Readiness enough={enough} />}
 			{ai.ready && (
 				<div className="mt-4 flex flex-wrap items-center gap-3">
-					<button type="button" disabled={busy || (!!guide && guideCurrent)} onClick={() => onWrite(false)} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-write-guide">
+					<button type="button" disabled={busy || !enough.ready || (!!guide && guideCurrent)} onClick={() => onWrite(false)} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-write-guide">
 						{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
 						{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
 					</button>
@@ -268,7 +300,8 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 function NextSteps({ a }: { a: MistakeAnalysis }) {
 	const [added, setAdded] = useState<"adding" | "added" | "failed" | null>(null);
 	const pairs = a.mixups.length;
-	const weak = a.units.find((u) => u.trend === "worse") ?? a.units.filter((u) => u.accuracy < 0.85).sort((x, y) => x.accuracy - y.accuracy)[0];
+	// A unit is named only when the evidence says so: a real drop, or a range that lies under the bar.
+	const weak = a.units.find((u) => u.trend === "worse") ?? a.units.filter((u) => u.weak).sort((x, y) => (x.high ?? 1) - (y.high ?? 1))[0];
 	const slugs = a.words.map((w) => w.slug);
 	if (!pairs && !weak && !slugs.length) return null;
 	const addWords = async () => {
@@ -292,7 +325,7 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 					</Step>
 				)}
 				{weak && (
-					<Step title={`A lesson on ${weak.title}`} line={weak.trend === "worse" ? `Slipping lately: ${pct(weak.earlier ?? weak.accuracy)} before, ${pct(weak.recent ?? weak.accuracy)} now` : `${pct(weak.accuracy)} right on first tries`}>
+					<Step title={`A lesson on ${weak.title}`} line={weak.trend === "worse" ? `Slipping lately: ${pct(weak.earlier ?? weak.accuracy)} before, ${pct(weak.recent ?? weak.accuracy)} now` : `${pct(weak.accuracy)} right on ${weak.reps} first tries, likely under ${pct(weak.high ?? weak.accuracy)}`}>
 						<Link href={`/lesson?unit=${weak.unit}`} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-unit">
 							Start
 							<ArrowRightIcon className="size-4" />
@@ -361,7 +394,9 @@ function UnitsSection({ units }: { units: UnitTrend[] }) {
 									<span className="font-ui text-sm font-black tabular-nums text-foreground">{pct(u.accuracy)}</span>
 								</div>
 								<p className="font-prose text-xs text-muted-foreground">
-									{u.wrong} wrong of {u.reps} first tries{slips.length ? ` · ${slips.join(", ")}` : ""}
+									{u.wrong} wrong of {u.reps} first tries
+								{u.reps < RANGE_SHOWN_UNDER && u.low !== undefined && u.high !== undefined ? ` · few answers, likely ${pct(u.low)}–${pct(u.high)}` : ""}
+								{slips.length ? ` · ${slips.join(", ")}` : ""}
 								</p>
 								<p className={cn("font-prose text-xs", TREND[u.trend].ink)}>
 									{TREND[u.trend].label}

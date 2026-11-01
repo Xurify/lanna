@@ -33,7 +33,7 @@
 - A mix-up between two forms of different words (nikoho for niekoho) is found only when the given form is in the lexicon's forms.
 - Exam picks and Speak corrections do not feed mix-ups yet.
 - The guide may suggest pairs no family names (E25). They enter as probes, so the same rule holds: a guess is tested before it is taught.
-- The trend is a comparison of two windows of first tries, not a model of learning. It needs five first tries on each side and a ten-point change before it says better or worse. The page is E24 in [../DECISIONS.md](../DECISIONS.md).
+- The trend is a comparison of two windows of first tries, not a model of learning. It needs six first tries on each side and a difference a two-proportion z-test would not put down to chance. A unit's score is shown with its 95% Wilson range under twenty first tries, and a unit is called weak only when that whole range is under 85%. The page is E24 in [../DECISIONS.md](../DECISIONS.md).
 
 ## Sources
 

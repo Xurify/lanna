@@ -38,7 +38,7 @@ describe("my mistakes on disk", () => {
 		assert.equal(r.analysis.at, "2026-11-01T08:00:00.000Z");
 		assert.equal(analysisStore.read().analysis?.at, r.analysis.at, "saved");
 		assert.equal(r.guide, null);
-		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T08:01:00Z") }), /no answers to learn from/i);
+		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T08:01:00Z") }), /needs at least 30 first tries with 5 mistakes among them; you have 0 and 0/);
 	});
 
 	it("a visit shows the saved time, and Analyse now reads the log again", () => {
@@ -48,7 +48,8 @@ describe("my mistakes on disk", () => {
 		assert.equal(r.analysis.at, "2026-11-01T10:00:00.000Z");
 		assert.equal(r.analysis.reps, 3);
 		assert.equal(r.analysis.wrong, 1);
-		assert.equal(r.analysis.words[0]?.lastGiven, "Niekto");
+		assert.equal(r.analysis.samples?.[0]?.given, "Niekto");
+		assert.equal(r.analysis.words.length, 0, "one miss is a slip, not a word you miss most");
 		assert.equal(r.analysis.mixups[0]?.words.join("/"), "nikto/niekto");
 	});
 

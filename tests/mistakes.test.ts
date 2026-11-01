@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { analyseMistakes, digest, guideFacts, parseGuide, SAMPLES_KEPT, trendOf, TREND_MIN_REPS, type LoggedLesson } from "../src/core/mistakes.ts";
+import { analyseMistakes, digest, GUIDE_MIN_REPS, GUIDE_MIN_WRONG, guideFacts, guideReadiness, parseGuide, SAMPLES_KEPT, trendOf, TREND_MIN_REPS, wilson, type LoggedLesson } from "../src/core/mistakes.ts";
 
 const NOW = new Date("2026-11-01T12:00:00Z");
 const day = (back: number) => new Date(NOW.getTime() - back * 86_400_000).toISOString();
@@ -63,11 +63,13 @@ test("a unit needs three first tries to be listed, and lists the most misses fir
 	assert.equal(analyseMistakes([lesson(1, many(2, 0))], undefined, NOW).units.length, 0, "two first tries is too few");
 });
 
-test("trend: better, worse, steady, or too few answers to say", () => {
+test("trend: better or worse only past chance (a two-proportion z-test), else steady, or too few answers to say", () => {
 	const mk = (reps: number, right: number) => ({ reps, right });
-	assert.equal(trendOf(mk(10, 9), mk(10, 5)), "better");
-	assert.equal(trendOf(mk(10, 4), mk(10, 8)), "worse");
+	assert.equal(trendOf(mk(20, 18), mk(20, 10)), "better");
+	assert.equal(trendOf(mk(20, 8), mk(20, 16)), "worse");
+	assert.equal(trendOf(mk(10, 9), mk(10, 5)), "steady", "90% against 50% on ten answers each could still be chance");
 	assert.equal(trendOf(mk(10, 8), mk(10, 8)), "steady");
+	assert.equal(trendOf(mk(10, 10), mk(10, 10)), "steady");
 	assert.equal(trendOf(mk(TREND_MIN_REPS - 1, 4), mk(10, 5)), "new");
 	const a = analyseMistakes([lesson(30, many(8, 4)), lesson(2, many(8, 8))], undefined, NOW);
 	const u = a.units[0]!;
@@ -89,7 +91,7 @@ test("the words missed most: counted per word, with the form wanted and what was
 	assert.equal(a.words[0]!.slug, "ruka");
 	assert.equal(a.words[0]!.misses, 2);
 	assert.equal(a.words[0]!.lastGiven, "rukou", "the latest miss wins");
-	assert.equal(a.words.length, 2);
+	assert.equal(a.words.length, 1, "dom was missed once: a slip, not listed");
 });
 
 test("weeks are Mondays, oldest first", () => {
@@ -136,4 +138,23 @@ test("the guide's reply is read as patterns, guesses and a plan; anything else i
 	const long = parseGuide(JSON.stringify({ patterns: [{ title: "t".repeat(500), why: "w".repeat(900) }] }))!;
 	assert.equal(long.patterns[0]!.title.length, 90);
 	assert.equal(long.patterns[0]!.why.length, 300);
+});
+
+test("a unit's likely range: wide on few answers, weak only when the whole range is under the bar", () => {
+	const few = wilson(5, 8);
+	assert.ok(few.low < 0.35 && few.high > 0.85, `5 of 8 is ${few.low.toFixed(2)}–${few.high.toFixed(2)}`);
+	const wide = wilson(10, 20);
+	assert.ok(wide.high < 0.85);
+	assert.deepEqual(wilson(0, 0), { low: 0, high: 1 });
+	assert.equal(wilson(8, 8).high, 1);
+	const a = analyseMistakes([lesson(1, [...many(8, 5), ...many(20, 10, { unit: "gen", slug: "ruka" })])], undefined, NOW);
+	assert.equal(a.units.find((u) => u.unit === "loc")?.weak, false, "63% on 8 is too few to call weak");
+	assert.equal(a.units.find((u) => u.unit === "gen")?.weak, true);
+	assert.match(guideFacts(a), /\[loc\]: 63% of 8 first tries \(likely \d+%–\d+%, too few answers to call weak\)/);
+});
+
+test("the guide waits for enough evidence", () => {
+	assert.equal(guideReadiness({ reps: GUIDE_MIN_REPS - 1, wrong: 10 }).ready, false);
+	assert.equal(guideReadiness({ reps: 100, wrong: GUIDE_MIN_WRONG - 1 }).ready, false, "too few mistakes to find a pattern in");
+	assert.equal(guideReadiness({ reps: GUIDE_MIN_REPS, wrong: GUIDE_MIN_WRONG }).ready, true);
 });

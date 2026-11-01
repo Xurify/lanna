@@ -41,7 +41,8 @@ const rep = (given: string, verdict: "exact" | "wrong") => ({
 
 describe("the personal lesson on disk", () => {
 	it("a guide's targets are kept, its pairs become probes, and the plan offers the lesson", async () => {
-		recordLesson({ unit: "words", mode: "lesson", reps: [rep("Niekto", "wrong"), rep("Nikto", "exact")], tz: 0 }, new Date("2026-11-01T09:00:00Z"));
+const many = [...Array.from({ length: 30 }, () => rep("Nikto", "exact")), ...Array.from({ length: 5 }, () => rep("Niekto", "wrong"))];
+		recordLesson({ unit: "words", mode: "lesson", reps: many, tz: 0 }, new Date("2026-11-01T09:00:00Z"));
 		analyseNow(NOW);
 		const reply = JSON.stringify({
 			patterns: [{ title: "ni- and nie- words", evidence: '"Niekto" for "Nikto"', why: "Both start the same.", fix: "Check for ne- on the verb." }],

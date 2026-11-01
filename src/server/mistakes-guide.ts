@@ -10,7 +10,7 @@
 import type { Usage } from "@earendil-works/pi-ai";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
-import { digest, guideFacts, parseGuide } from "../core/mistakes.ts";
+import { digest, guideFacts, guideReadiness, parseGuide } from "../core/mistakes.ts";
 import { addGuideProbes, mixupLexicon } from "../core/mixups.ts";
 import { resolvePractice } from "../core/personal.ts";
 import { progressStore } from "../store/progress.ts";
@@ -23,7 +23,7 @@ const SYSTEM = `You are a Slovak teacher reading a learner's own answers. The fa
 
 Rules:
 - Use only the facts. Never invent a mistake, a number or a sentence. Slovak examples must come from the facts' own sentences.
-- A pattern is a reason several misses share (for example: the ending after a preposition, a case mixed with another, one word taken for its look-alike). Name it, quote the evidence, say why it happens in plain words, and give one concrete fix.
+- A pattern is a reason several misses share (for example: the ending after a preposition, a case mixed with another, one word taken for its look-alike). Name it, quote the evidence, say why it happens in plain words, and give one concrete fix. A pattern needs at least two misses behind it. A unit marked "too few answers to call weak" is not a pattern by itself; a single miss is a slip, not a pattern.
 - "next" are guesses about what may trip them next, from pairs marked not tested yet and units whose trend is worse. Say they are guesses.
 - "plan" is up to four steps the app can open: kind "mixups" (the Mix-ups lesson), "unit" (a lesson; put the unit's id, the word in [brackets] in the facts, in "unit"), "review", or "other".
 - "practice" is what the learner's personal lesson will drill. The app builds it from its own checked sentences, so name targets, never sentences: "words" are up to 6 dictionary forms (lemmas) taken from the facts, "units" up to 3 unit ids from the [brackets], "pairs" up to 3 pairs of dictionary forms the learner confuses or is likely to confuse. Pick what the patterns point at, most useful first.
@@ -55,7 +55,8 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 	const facts = guideFacts(analysis);
 	const key = digest(facts);
 	if (saved.guide?.digest === key && !opts.force) return mistakesReportOf(analysis, saved.guide);
-	if (analysis.reps === 0) throw new Error("There are no answers to learn from yet. Do a lesson first.");
+	const enough = guideReadiness(analysis);
+	if (!enough.ready) throw new Error(`The guide needs at least ${enough.needReps} first tries with ${enough.needWrong} mistakes among them; you have ${enough.reps} and ${enough.wrong}. A few more lessons, then try again.`);
 	if (!opts.engine) {
 		const status = aiStatus("strong");
 		if (!status.ready) throw new Error(aiMissing(status));
