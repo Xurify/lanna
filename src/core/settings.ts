@@ -154,7 +154,7 @@ export interface ProviderKeyMissing {
 }
 /** The refusal wording's invariant tail — the matcher below keys on it
  * (the label prefix varies by provider). */
-const PROVIDER_KEY_MISSING_TAIL = "key is set — add one in Settings → Keys";
+const PROVIDER_KEY_MISSING_TAIL = "key is set — add one in Settings → API keys";
 export function providerKeyMissing(provider: string, slots: ModelSlotName[]): ProviderKeyMissing {
 	const label = AUTH_PROVIDER_KEYS.find((p) => p.id === provider)?.label ?? provider;
 	return {
@@ -520,7 +520,7 @@ function sanitizeAgent(raw: Record<string, unknown>): AgentSettings {
 		const engine = (raw.search as Record<string, unknown>).engine;
 		if (engine === "tavily" || engine === "brave") out.search = { engine };
 	}
-	// Prober graph tools (wave 7): its own agent-section subsection —
+	// Prober graph tools (wave 7): its own ai-section subsection —
 	// lenient read side (a bad shape drops the key and the default ON
 	// resumes; the write side's parser is strict).
 	if (raw.graphTools !== null && typeof raw.graphTools === "object" && !Array.isArray(raw.graphTools)) {

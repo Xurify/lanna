@@ -28,7 +28,6 @@ import {
 	TimerIcon,
 	TrophyIcon,
 	Volume2Icon,
-	VolumeXIcon,
 	WholeWordIcon,
 	XIcon,
 	ZapIcon,
@@ -37,8 +36,9 @@ import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
-import { prefetchSpeech, setSpeed, speak, SPEEDS, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { setSoundOn, sfx, soundOn } from "@/components/lesson/sound";
+import { prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { sfx } from "@/components/lesson/sound";
+import { SoundControl } from "@/components/sound-control";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import {
@@ -186,7 +186,6 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 	const [saveFailed, setSaveFailed] = useState(false);
 	// The lesson whose save the end screen is waiting on (a new lesson clears it).
 	const pendingId = useRef<string | null>(null);
-	const [sound, setSound] = useState(true);
 	const [left, setLeft] = useState(BLITZ_SECONDS);
 	const [shake, setShake] = useState(0);
 	// The first wrong answer on this rep: the learner gets a hint and one
@@ -274,7 +273,6 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		router.push("/");
 	}, [forget, router]);
 
-	useEffect(() => setSound(soundOn()), []);
 
 	// Only the latest request may land: a slower earlier response must
 	// never replace the plan on screen.
@@ -508,7 +506,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 				reuse: { sentence: current.item.sentence, answer: current.item.answer, lemma: current.item.lemma, given: current.given },
 			});
 		} catch {
-			setError("Couldn't open the tutor. Check Settings → Models.");
+			setError("Couldn't open the tutor. Check Settings → AI models.");
 		}
 	};
 
@@ -547,14 +545,6 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 		window.addEventListener("keydown", onKey, true);
 		return () => window.removeEventListener("keydown", onKey, true);
 	}, [leaving]);
-
-	const toggleSound = () => {
-		const next = !sound;
-		setSoundOn(next);
-		setSound(next);
-		// Turning sound off silences a sentence that is already playing.
-		if (!next) stopSpeaking();
-	};
 
 	if (error) {
 		return (
@@ -649,14 +639,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 								</span>
 							)}
 						</div>
-						<button
-							type="button"
-							onClick={toggleSound}
-							aria-label={sound ? "Mute sound and speech" : "Turn sound and speech on"}
-							className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-						>
-							{sound ? <Volume2Icon className="size-5" /> : <VolumeXIcon className="size-5" />}
-						</button>
+						<SoundControl className="-mr-1.5" />
 					</div>
 				</div>
 
@@ -1062,7 +1045,7 @@ function ClozeRep({
 					</button>
 					<button
 						type="button"
-						onClick={() => void slowSpeak(item.sentence)}
+						onClick={() => void speak(item.sentence, undefined, { slow: true })}
 						aria-label="Play slowly"
 						title="Play slowly"
 						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
@@ -1091,7 +1074,7 @@ function ClozeRep({
 					</button>
 					<button
 						type="button"
-						onClick={() => void slowSpeak(item.sentence)}
+						onClick={() => void speak(item.sentence, undefined, { slow: true })}
 						aria-label="Play slowly"
 						title="Play slowly"
 						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
@@ -1197,19 +1180,6 @@ function ClozeRep({
 			)}
 		</div>
 	);
-}
-
-async function slowSpeak(text: string) {
-	// The speed preference is global; a slow replay is a one-off.
-	let previous = 1;
-	try {
-		previous = Number(localStorage.getItem("lh-tts-speed")) || 1;
-	} catch {
-		// storage blocked
-	}
-	setSpeed(SPEEDS[0]);
-	await speak(text).catch(() => {});
-	setSpeed(previous);
 }
 
 function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked: boolean; onGrade: (given: string, verdict: RepVerdict) => void; onReady: (ready: boolean) => void }) {

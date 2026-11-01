@@ -541,7 +541,7 @@ export function KeysSection({
 		<>
 			<SettingsGroup
 				label="Model API keys"
-				hint="Powers tutor conversations, grammar coaching, and practice drills configured in Tutor settings."
+				hint="Powers tutor chats, grammar coaching, and practice drills. Pick the models in AI models."
 				testid="group-provider-keys"
 			>
 				{providerRows.map((status) => {

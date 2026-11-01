@@ -8,11 +8,11 @@ import { markUnadmittedUsage, type SubscriptionDispatchLifecycle } from "./subsc
 export function nativeSubscriptionError(provider: string, message: string): string {
 	const label = NATIVE_SUBSCRIPTIONS.find((p) => p.logicalId === provider)?.label ?? "Subscription";
 	const suffix = " No API-key fallback was used.";
-	if (/background/i.test(message)) return `${label} background use is off in this app. Enable it in Settings → Keys to run this work.${suffix}`;
+	if (/background/i.test(message)) return `${label} background use is off in this app. Enable it in Settings → API keys to run this work.${suffix}`;
 	if (/quota|429|limit/i.test(message)) return `${label} usage limit reached. Check your provider account and try again later.${suffix}`;
-	if (/expired|invalid_grant|401|refresh/i.test(message)) return `${label} authorization could not be refreshed. Retry or reconnect in Settings → Keys.${suffix}`;
+	if (/expired|invalid_grant|401|refresh/i.test(message)) return `${label} authorization could not be refreshed. Retry or reconnect in Settings → API keys.${suffix}`;
 	if (/cancel|abort|closed|disconnect/i.test(message)) return `${label} request cancelled or connection closed.${suffix}`;
-	if (/catalog|model|stale|changed/i.test(message)) return `The selected ${label} model or connection is unavailable. Refresh the connection in Settings → Keys and choose an available model yourself.${suffix}`;
+	if (/catalog|model|stale|changed/i.test(message)) return `The selected ${label} model or connection is unavailable. Refresh the connection in Settings → API keys and choose an available model yourself.${suffix}`;
 	return `${label} request failed. Check the connection, account access and provider limits, then retry.${suffix}`;
 }
 export function subscriptionHistory(context: TranscriptContext, logical: Model<Api>, nativeId: string): TranscriptContext {

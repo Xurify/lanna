@@ -499,7 +499,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 							<p className="font-ui text-xs text-muted-foreground">
 								Voice needs an ElevenLabs or Deepgram key —{" "}
 								<SettingsLink keys className="underline hover:text-foreground">
-									Settings → Keys
+									Settings → API keys
 								</SettingsLink>
 								. Typing works meanwhile.
 							</p>
@@ -627,7 +627,7 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 				{state && !state.canSpeak && (
 					<p className="mt-4 rounded-xl bg-gold/15 px-4 py-2 font-ui text-sm text-foreground" data-testid="speak-nomodel">
 						A scene needs a model on the cheap slot —{" "}
-						<SettingsLink className="underline">Settings → Models</SettingsLink>
+						<SettingsLink className="underline">Settings → AI models</SettingsLink>
 						.
 					</p>
 				)}
@@ -667,7 +667,7 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 				)}
 				{state && (
 					<p className="mt-6 font-ui text-xs text-muted-foreground">
-						{state.stt ? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : "Deepgram"} speech-to-text, your recordings kept with the scene.` : "No speech-to-text key yet (ElevenLabs or Deepgram in Settings → Keys): lines are typed until then."}
+						{state.stt ? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : "Deepgram"} speech-to-text, your recordings kept with the scene.` : "No speech-to-text key yet (ElevenLabs or Deepgram in Settings → API keys): lines are typed until then."}
 					</p>
 				)}
 			</div>

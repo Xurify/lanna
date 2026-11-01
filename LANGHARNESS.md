@@ -10,9 +10,9 @@ English and Estonian. Built on branch `slovak` from the plan in
 |---|---|
 | Language profiles | Slovak and Russian. Each keeps its own sessions, graph and review deck under `data/profiles/<language>/`. Switch with the toggle at the top of the sidebar. The desktop app restarts itself; under `npm run dev`, restart the server. |
 | Seeded grammar graph | A fresh Slovak profile starts with 53 grammar nodes (phonetics, cases, verbs, aspect, word order…) and 40 vocabulary clusters, linked by 57 prerequisite chains. Every grammar node carries an Estonian bridge. Seeding runs once; nodes you delete stay deleted. |
-| Prompts | `src/agent/prompts/language/10-<language>.md` joins every agent's prompt. It covers the English and Estonian bridges (with where each breaks), adaptive immersion, grading diacritic slips apart from grammar, Russian false friends, and the `lookup_word` rule. Prober, teacher and practice each get a language fragment too. Edit them all in Settings → Tutor → Advanced → System prompts. |
+| Prompts | `src/agent/prompts/language/10-<language>.md` joins every agent's prompt. It covers the English and Estonian bridges (with where each breaks), adaptive immersion, grading diacritic slips apart from grammar, Russian false friends, and the `lookup_word` rule. Prober, teacher and practice each get a language fragment too. Edit them all in Settings → AI models → Advanced → System prompts. |
 | Dictionary-checked forms | `lookup_word` searches the 7,074-word Slovak lexicon exported from slovak.wiki, by form, by unaccented spelling, or by English gloss. The tutor is told to look a word up before it states a form. |
-| Audio | Any Slovak in a tutor reply written as `` `say: Dobrý deň` `` gets a play button. Speech tries ElevenLabs, then Microsoft Edge voices, then Piper, then the browser's own voice. Every clip is kept in `data/audio/<lang>/<voice>/<text-slug>-<key>.mp3` and listed in `data/audio/index.jsonl`, so a sentence is paid for once. Speed is 0.75×, 1× or 1.25×. |
+| Audio | Any Slovak in a tutor reply written as `` `say: Dobrý deň` `` gets a play button. Speech tries ElevenLabs, then Microsoft Edge voices, then Piper, then the browser's own voice. Every clip is kept in `data/audio/<lang>/<voice>/<text-slug>-<key>.mp3` and listed in `data/audio/index.jsonl`, so a sentence is paid for once. Speed is 0.75×, 1× or 1.25×; the snail button plays one sentence slower (0.7×, or 0.6× when your speed is 0.75×) and leaves the speed setting alone. Louder voices are turned down to one level, so clips from different voices sound alike. slovak.wiki's clips play as recorded: they are made slowly on purpose, for learners. Volume is a slider in Settings → Sound; in a lesson or Review, hovering or right-clicking the speaker button (or pressing and holding it on a touch screen) drops a vertical slider, and a click still mutes. |
 | Storage | Settings → Data lists what the app keeps on this computer: voice clips, the active language's progress and the reset backups, each with its folder and size. On the desktop app, **Clear cache** empties the app's own copy of audio and pages, which downloads again when needed. Saved clips, progress and backups are never cleared from Settings. The web app cannot clear the browser's cache, so it says where to find it. |
 | Letter bar | One click types á ä č ď é í ĺ ľ ň ó ô ŕ š ť ú ý ž into whichever field you used last. Shift types the capital. It folds away. |
 | Spaced review | The **Review** page in the sidebar is a Clozemaster-style deck: a real Tatoeba sentence with one word blanked, typed or multiple choice, scheduled with FSRS-5. Missing only accents counts as Hard, not wrong. New words come in frequency order, beginner words first, 10 a day by default. The tutor can add words from a lesson to the deck (`add_to_review`) and see how the deck is going (`review_status`). |
@@ -80,9 +80,9 @@ npm install
 npm run dev          # http://localhost:3010
 ```
 
-Add a model key in Settings → Keys as in LearnHarness.
+Add a model key in Settings → API keys as in LearnHarness.
 
-Optional speech keys (Settings → Keys → Speech, or `.env.local`):
+Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 
 - `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe). Change the voice with `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`.
 - `DEEPGRAM_API_KEY`: speech-to-text for the Speak task when there is no ElevenLabs key (and the composer's dictation).

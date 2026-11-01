@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * The "Set up a model" and "Settings → Keys" lines on the learning screens.
+ * The "Set up a model" and "Settings → API keys" lines on the learning screens.
  * There is no settings page (the dialog is modal-only, settings-dialog.tsx),
  * so these open the dialog in place.
  *
  * Model setup lands on Keys while no provider key exists (the model list
- * only offers what keys unlock), else on Tutor, where the model slots are.
+ * only offers what keys unlock), else on AI models, where the model slots are.
  * `keys` always lands on Keys, for the speech-to-text keys.
  */
 
@@ -18,7 +18,7 @@ export function SettingsLink({ keys = false, className, children }: { keys?: boo
 	const { open } = useSettingsDialog();
 	const zeroKeys = useZeroKeys();
 	return (
-		<button type="button" onClick={() => open(keys || zeroKeys ? "keys" : "agent")} className={className}>
+		<button type="button" onClick={() => open(keys || zeroKeys ? "keys" : "ai")} className={className}>
 			{children}
 		</button>
 	);

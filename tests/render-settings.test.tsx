@@ -9,7 +9,7 @@ import React from "react";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { TOGGLE_TOOLS, AgentSection } from "../components/settings/agent-section.tsx";
+import { TOGGLE_TOOLS, AiSection } from "../components/settings/ai-section.tsx";
 import { AppearanceSection, GraphSection } from "../components/settings/appearance-section.tsx";
 import { KeysSection } from "../components/settings/keys-section.tsx";
 import { KeyboardSection } from "../components/settings/keyboard-section.tsx";
@@ -36,17 +36,19 @@ describe("SettingsDialog (the designed surface, SSR)", () => {
 		assert.ok(!html.includes("settings-dialog"));
 	});
 
-	it("the dialog frame: role=dialog + the ✕ + the six-section nav, Keys first and General last", () => {
+	it("the dialog frame: role=dialog + the ✕ + the nav, General first and open, AI setup below the divider", () => {
 		const html = renderToStaticMarkup(<SettingsDialogBody onClose={() => {}} />);
 		assert.ok(html.includes('role="dialog"'));
 		assert.ok(html.includes('aria-modal="true"'));
 		assert.ok(html.includes('aria-label="Close settings"'));
-		for (const id of ["general", "keys", "agent", "appearance", "graph", "keyboard"]) {
+		for (const id of ["general", "sound", "keys", "ai", "appearance", "graph", "keyboard"]) {
 			assert.ok(html.includes(`data-testid="settings-nav-${id}"`), id);
 		}
-		// Keys is the first landing section.
-		assert.ok(tagOf(html, "settings-nav-keys").includes('aria-current="true"'));
-		assert.ok(html.indexOf('data-testid="settings-nav-keys"') < html.indexOf('data-testid="settings-nav-general"'));
+		// General is the landing section; the AI setup sits after the everyday ones.
+		assert.ok(tagOf(html, "settings-nav-general").includes('aria-current="true"'));
+		assert.ok(html.indexOf('data-testid="settings-nav-sound"') < html.indexOf('role="separator"'));
+		assert.ok(html.indexOf('role="separator"') < html.indexOf('data-testid="settings-nav-ai"'));
+		assert.ok(html.includes(">AI models</button>") && html.includes(">API keys</button>"));
 		assert.ok(tagOf(html, "settings-nav-keyboard").includes('aria-current="false"'));
 		// Fetches don't run under SSR — the loading state IS the SSR state.
 		assert.ok(html.includes("Loading settings…"));
@@ -55,9 +57,9 @@ describe("SettingsDialog (the designed surface, SSR)", () => {
 	});
 });
 
-describe("AgentSection (thin SSR)", () => {
+describe("AiSection (thin SSR)", () => {
 	it("renders the three model SLOT rows (slots-only, fix wave: unpicked reads —, no Default option)", () => {
-		const html = renderToStaticMarkup(<AgentSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
+		const html = renderToStaticMarkup(<AiSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
 		for (const slot of ["strong", "cheap", "vision"]) {
 			assert.ok(html.includes(`data-testid="slot-row-${slot}"`), slot);
 			assert.ok(html.includes(`data-testid="slot-model-${slot}"`), `${slot} model trigger`);
@@ -77,20 +79,20 @@ describe("AgentSection (thin SSR)", () => {
 	});
 
 	it("the search-engine row renders with its live reason (search wave 2026-09-20)", () => {
-		const html = renderToStaticMarkup(<AgentSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
+		const html = renderToStaticMarkup(<AiSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
 		assert.ok(html.includes('data-testid="search-engine-row"'), "the row");
 		assert.ok(html.includes('data-testid="search-engine-trigger"'), "the trigger");
 		// SSR never fires /api/search, so there is no reason line yet.
 		assert.ok(html.includes("Automatic"), "unset engine reads Automatic");
 		const html2 = renderToStaticMarkup(
-			<AgentSection agent={{ search: { engine: "tavily" } }} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />,
+			<AiSection agent={{ search: { engine: "tavily" } }} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />,
 		);
 		assert.ok(html2.includes("Tavily"), "pinned engine visible in the trigger");
 	});
 
 	it("the prober graph-tools row: FIRST in the Tools group, default ON, its own key (wave 7)", () => {
 		// Graph on and graphTools absent: the row is ON with its hint.
-		const html = renderToStaticMarkup(<AgentSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
+		const html = renderToStaticMarkup(<AiSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
 		const toolsGroup = html.split('data-testid="group-tools"')[1] ?? "";
 		const rows = [...toolsGroup.matchAll(/data-testid="(graph-tools-row|tool-row-\w+)"/g)].map((m) => m[1]);
 		assert.equal(rows[0], "graph-tools-row", "graph tools is the FIRST row of the Tools group");
@@ -102,7 +104,7 @@ describe("AgentSection (thin SSR)", () => {
 
 	it("graph disabled dims the graph-tools row with the honest hint (the predicate composes)", () => {
 		const html = renderToStaticMarkup(
-			<AgentSection agent={undefined} models={undefined} graph={{ enabled: false }} onSectionChange={() => {}} onModelsChange={() => {}} />,
+			<AiSection agent={undefined} models={undefined} graph={{ enabled: false }} onSectionChange={() => {}} onModelsChange={() => {}} />,
 		);
 		const row = html.split('data-testid="graph-tools-row"')[1]?.split('data-testid="tool-row-')[0] ?? "";
 		assert.ok(row.includes("opacity-40"), "row dims when the graph is off");
@@ -112,7 +114,7 @@ describe("AgentSection (thin SSR)", () => {
 
 	it("an explicit graphTools off shows stored-off (the record never lies)", () => {
 		const html = renderToStaticMarkup(
-			<AgentSection agent={{ graphTools: { enabled: false } }} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />,
+			<AiSection agent={{ graphTools: { enabled: false } }} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />,
 		);
 		const row = html.split('data-testid="graph-tools-row"')[1] ?? "";
 		assert.ok(row.includes('aria-checked="false"'), "stored-off renders off");
@@ -120,12 +122,12 @@ describe("AgentSection (thin SSR)", () => {
 
 	it("renders the owner's FINAL tool list — research, demo, visual, pdf", () => {
 		assert.deepEqual([...TOGGLE_TOOLS], ["research", "demo", "visual", "pdf"]);
-		const html = renderToStaticMarkup(<AgentSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
+		const html = renderToStaticMarkup(<AiSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
 		for (const id of TOGGLE_TOOLS) assert.ok(html.includes(`data-testid="tool-row-${id}"`), id);
 	});
 
 	it("tools default ON (absent key = enabled)", () => {
-		const html = renderToStaticMarkup(<AgentSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
+		const html = renderToStaticMarkup(<AiSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
 		for (const id of TOGGLE_TOOLS) {
 			assert.ok(tagOf(html, `toggle-tool-${id}`).includes('aria-checked="true"'), `${id} defaults on`);
 		}
@@ -133,7 +135,7 @@ describe("AgentSection (thin SSR)", () => {
 
 	it("an overridden SLOT shows its model in the trigger, tools carry the delta", () => {
 		const html = renderToStaticMarkup(
-			<AgentSection
+			<AiSection
 				agent={{ tools: { demo: false } }}
 				models={{ strong: { model: { provider: "zai", id: "glm-4.7-flash" } } }}
 				onSectionChange={() => {}}
@@ -147,7 +149,7 @@ describe("AgentSection (thin SSR)", () => {
 	});
 
 	it("Advanced is closed under SSR: the prompts and the threshold are not in the first paint", () => {
-		const html = renderToStaticMarkup(<AgentSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
+		const html = renderToStaticMarkup(<AiSection agent={undefined} models={undefined} graph={undefined} onSectionChange={() => {}} onModelsChange={() => {}} />);
 		assert.ok(tagOf(html, "advanced-tutor-toggle").includes('aria-expanded="false"'));
 		assert.ok(!html.includes("Loading prompt segments"), "the prompts mount on open");
 	});

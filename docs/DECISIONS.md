@@ -189,7 +189,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 **Why:** The settings dialog had grown names only its author could read (Providers, Learner, Prompts). Rare knobs such as the background colour, heading weight, compaction thresholds and system prompts sat beside everyday ones. A switch that was on looked disabled, and the Azure speech region had no field. On Review the page painted a skeleton, then the card, then the mode toggle. The owner saw that as a flicker, and it counted as layout shift (CLS, E4).
 
 **How to apply:**
-- The nav reads Keys, Tutor, Learning, Appearance, Skill map, Keyboard, Spending, General, Data, in that order. Keys opens first. Storage and Reset are sections of Data.
+- The nav reads Keys, Tutor, Learning, Appearance, Skill map, Keyboard, Spending, General, Data, in that order. Keys opens first. (Order and names replaced by E22.) Storage and Reset are sections of Data.
 - Rare settings sit under a closed **Advanced** disclosure (`SettingsDisclosure` in `components/settings/controls.tsx`). Tutor has long chats and system prompts. Appearance has the background, the heading weight and the bold and italic colours. Skill map has the map update size. An empty field's hint names the factory default, never the stored value.
 - Values that are not secrets are plain settings and show in their field: the Azure speech region (`plain: true` in `src/core/auth-keys.ts`). Keys stay masked and out of chat (E5).
 - A switch is green with a white knob when on and grey when off. A choice among a few values is a segmented control (playback speed, quiz mechanics). The chosen font is marked with a tick and `aria-current`, not a fill.
@@ -250,6 +250,18 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The app never runs Tailscale. The owner runs `tailscale serve --bg 3010` once. Funnel is not supported: it publishes the app to the internet.
 - Recovery: a corrupt `access.json` reads as on with no devices, so phones are refused until `npm run remote:off` writes it back to off, which also signs every device out.
 - Tests run on a scratch data folder (E6): `tests/remote-access.test.ts` covers the rules as pure functions; `tests/remote-access-store.test.ts` covers the file, codes and sessions.
+
+### E22. Settings reads like any other app: everyday first, AI setup below (2026-11-01)
+
+**Why:** The owner looked for a volume control and found playback speed under Tutor, next to the AI models. A learner does not know what "Tutor" or "Keys" means in settings, and the dialog opened on API keys. Three error lines also sent people to "Settings → Models", a section that did not exist.
+
+**How to apply:**
+- The nav reads General, Learning, Sound, Appearance, Keyboard, Skill map, Devices, then a divider, then AI models, API keys, Spending, Data. Settings opens on General. Setup links still open API keys directly.
+- Sound holds volume, playback speed and lesson sounds. Quiz style is under Learning. AI models holds only the models, tools, long chats and prompts, the settings that need an API key. "Tutor" is a feature name (Ask the tutor), not a settings name: nothing under Sound, Learning or Appearance needs a key.
+- A setting goes where a learner would look for it, not where its value is stored: quiz style is saved with the tutor's tools but shown under Learning.
+- Volume is a slider, not steps, and the speaker button in a lesson or Review opens it on hover, focus, right-click or long press; a click still mutes. Moving it while muted turns sound back on.
+- Clips play as recorded at 1× (0.75×, 1×, 1.25× around it). Two attempts to speed the slovak.wiki clips to a "normal" pace by a fixed rate failed (1.136× sounded slow on one clip, 1.319× too fast on another, 0.99× right). The cause is the recording: slovak.wiki generates its voice with ElevenLabs speed 0.88 (`content/audio/config.json`), so its sentences are about 1.2× longer than the same voice read at default speed, and their pace varies clip to clip (3.6 to 5.6 syllables a second). No single rate fits all of them, and a slowed-in-the-model read does not become natural when sped up. Each source has a measured pace in `src/server/tts.ts` (`paceRate`): slovak.wiki and Edge 4.55, ElevenLabs 5.0, measured on the clips kept in `data/audio`. The owner heard the wiki clips at 1× as slow (they are recorded at 0.88× for learners, and slovak.wiki itself plays them as recorded).
+- Every "Settings → …" line in the app names a section that exists. The stored settings key stays `agent` (and `/api/settings/agent`) so saved data and the API do not change; only the dialog's own section id became `ai`.
 
 ## Working rules (how work reaches the repo)
 

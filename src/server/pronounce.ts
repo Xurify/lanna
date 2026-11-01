@@ -75,7 +75,7 @@ export interface AssessInput {
  *  Throws when the engine refused or none is set. */
 export async function assess(input: AssessInput): Promise<PronScore | null> {
 	const engine = pronounceEngine();
-	if (!engine) throw new Error("No way to score pronunciation: add an Azure Speech key (sound by sound) or a speech-to-text key in Settings → Keys.");
+	if (!engine) throw new Error("No way to score pronunciation: add an Azure Speech key (sound by sound) or a speech-to-text key in Settings → API keys.");
 	if (input.audio.byteLength === 0) return null;
 	if (scripted()) return scriptedScore(input.reference || input.heard || "", input.heard);
 	const lang = input.lang ?? LANGUAGES[ACTIVE_PROFILE].code;

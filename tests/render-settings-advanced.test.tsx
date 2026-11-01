@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { createRoot, type Root } from "react-dom/client";
 import { parseHTML } from "linkedom";
-import { AgentSection } from "../components/settings/agent-section.tsx";
+import { AiSection } from "../components/settings/ai-section.tsx";
 import { AppearanceSection, GraphSection } from "../components/settings/appearance-section.tsx";
 import { resolveSettings } from "../src/core/index.ts";
 
@@ -61,7 +61,7 @@ describe("Settings → Tutor → Advanced", () => {
 	it("closed at first; opened, it holds the long-chat threshold and the prompts, which wait for their fetch", async () => {
 		hangFetches();
 		const host = await mount(
-			<AgentSection
+			<AiSection
 				agent={undefined}
 				models={undefined}
 				graph={undefined}
@@ -82,7 +82,7 @@ describe("Settings → Tutor → Advanced", () => {
 	it("a stored threshold shows its value; the hint still names the factory default", async () => {
 		hangFetches();
 		const host = await mount(
-			<AgentSection
+			<AiSection
 				agent={undefined}
 				models={undefined}
 				graph={undefined}
