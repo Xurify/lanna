@@ -3,7 +3,7 @@ import React, { act } from "react";
 import assert from "node:assert/strict";
 import { it } from "node:test";
 import { parseHTML } from "linkedom";
-import { AgentSection } from "../components/settings/agent-section.tsx";
+import { AiSection } from "../components/settings/ai-section.tsx";
 import type { AgentSettings } from "../src/core/index.ts";
 
 it("keyless settings keep Research interactive while search-engine setup retains its own disabled state", async () => {
@@ -36,7 +36,7 @@ it("keyless settings keep Research interactive while search-engine setup retains
 	let written: AgentSettings | undefined;
 	try {
 		await act(async () => {
-			root.render(<AgentSection
+			root.render(<AiSection
 				agent={{ tools: { research: true } }}
 				models={undefined}
 				graph={undefined}

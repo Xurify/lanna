@@ -14,7 +14,7 @@ import {
 	composeTool,
 	composeQuizMechanics,
 	sectionedSegments,
-} from "../components/settings/agent-section.tsx";
+} from "../components/settings/ai-section.tsx";
 import { nextOverrides } from "../components/settings/keyboard-section.tsx";
 import { classifyKeys, keyStatusLine, type ProviderKeyInfo } from "../components/settings/keys-section.tsx";
 import type { AgentSettings, AuthKeyStatus, ModelsSettings } from "../src/core";

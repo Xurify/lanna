@@ -504,7 +504,7 @@ export function LessonPlayer({ unit, mode, gender, initialPlan = null }: { unit?
 				reuse: { sentence: current.item.sentence, answer: current.item.answer, lemma: current.item.lemma, given: current.given },
 			});
 		} catch {
-			setError("Couldn't open the tutor. Check Settings → Models.");
+			setError("Couldn't open the tutor. Check Settings → AI models.");
 		}
 	};
 

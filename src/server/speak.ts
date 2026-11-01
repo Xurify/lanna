@@ -157,7 +157,7 @@ function resolveEngine(opts: SpeakOptions): { engine: PiEngine; model: string } 
 	const scripted = scriptedEngine();
 	if (scripted) return scripted;
 	const real = storyEngine();
-	if (!real) throw new Error("No model is configured. Set the cheap slot in Settings → Models.");
+	if (!real) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
 	return real;
 }
 
@@ -211,7 +211,7 @@ const ISO3: Record<string, string> = { sk: "slk", ru: "rus" };
  *  Throws when the engine refuses; returns "" for silence. */
 export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ text: string; engine: SttEngine }> {
 	const engine = sttEngine();
-	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs, Groq, or Deepgram key in Settings → Keys, or type your line.");
+	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs, Groq, or Deepgram key in Settings → API keys, or type your line.");
 	if (audio.byteLength === 0) return { text: "", engine };
 	if (sttScript()) return { text: sttScript()!, engine };
 	if (engine === "groq") {

@@ -11,6 +11,7 @@
 
 import {
 	createContext,
+	Fragment,
 	useCallback,
 	useContext,
 	useEffect,
@@ -31,9 +32,9 @@ import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useAppearance } from "./appearance.tsx";
 import { SettingsGroup, SettingsSection } from "./controls.tsx";
-import { LessonSoundsRow, VolumeRow, WordLookupModeRow } from "./device-prefs.tsx";
+import { LessonSoundsRow, PlaybackSpeedRow, VolumeRow, WordLookupModeRow } from "./device-prefs.tsx";
 import { UpdateSettings } from "./update-settings.tsx";
-import { AgentSection } from "./agent-section.tsx";
+import { AiSection, QuizStyleRow } from "./ai-section.tsx";
 import type { ModelsSettings } from "@/src/core";
 import { MENU_CLOSE_EVENT, MENU_OPEN_EVENT } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
@@ -52,6 +53,7 @@ import {
 	SmartphoneIcon,
 	SlidersHorizontalIcon,
 	SlidersIcon,
+	Volume2Icon,
 	XIcon,
 } from "lucide-react";
 import { KeyboardSection } from "./keyboard-section.tsx";
@@ -63,24 +65,26 @@ import { StorageSection } from "./storage-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 
-/** The nav label is the section's heading. Ids are internal: deep links and tests use them. */
+/** The nav label is the section's heading. Ids are internal: deep links and tests use them.
+ *  Everyday settings come first; the AI setup and the app's data sit below a divider. */
 const SECTIONS = [
-	{ id: "keys", label: "Keys" },
-	{ id: "agent", label: "Tutor" },
-	{ id: "learner", label: "Learning" },
-	{ id: "appearance", label: "Appearance" },
-	{ id: "graph", label: "Skill map" },
-	{ id: "keyboard", label: "Keyboard" },
-	{ id: "devices", label: "Devices" },
-	{ id: "usage", label: "Spending" },
 	{ id: "general", label: "General" },
+	{ id: "learner", label: "Learning" },
+	{ id: "sound", label: "Sound" },
+	{ id: "appearance", label: "Appearance" },
+	{ id: "keyboard", label: "Keyboard" },
+	{ id: "graph", label: "Skill map" },
+	{ id: "devices", label: "Phone & tablet" },
+	{ id: "ai", label: "AI models", divider: true },
+	{ id: "keys", label: "API keys" },
+	{ id: "usage", label: "Spending" },
 	{ id: "data", label: "Data" },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
 const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
 	keys: KeyRoundIcon,
-	agent: BotIcon,
+	ai: BotIcon,
 	learner: GraduationCapIcon,
 	appearance: PaletteIcon,
 	graph: NetworkIcon,
@@ -88,6 +92,7 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	devices: SmartphoneIcon,
 	usage: CoinsIcon,
 	general: SlidersHorizontalIcon,
+	sound: Volume2Icon,
 	data: DatabaseIcon,
 };
 
@@ -103,10 +108,10 @@ export function SettingsDialogProvider({
 	children: React.ReactNode;
 }) {
 	const [show, setShow] = useState(false);
-	const [landOn, setLandOn] = useState<SectionId>("keys");
+	const [landOn, setLandOn] = useState<SectionId>("general");
 	const [landOnRow, setLandOnRow] = useState<string | null>(null);
 	const open = useCallback((section?: string, row?: string) => {
-		setLandOn(section ? section as SectionId : "keys");
+		setLandOn(section ? section as SectionId : "general");
 		setLandOnRow(row ?? null);
 		setShow(true);
 	}, []);
@@ -154,7 +159,7 @@ function SettingsDialog({
  *  (portals render nothing under renderToStaticMarkup). */
 export function SettingsDialogBody({
 	onClose,
-	initialSection = "keys",
+	initialSection = "general",
 	initialRow = null,
 }: {
 	onClose: () => void;
@@ -276,7 +281,7 @@ export function SettingsDialogBody({
 					</div>
 					<div>
 						<h2 className="font-ui text-base font-bold tracking-tight text-foreground">Settings</h2>
-						<p className="text-xs text-muted-foreground">Manage your workspace preferences, models, and tools</p>
+						<p className="text-xs text-muted-foreground">How LangHarness teaches, sounds and looks</p>
 					</div>
 				</div>
 				<button
@@ -299,8 +304,9 @@ export function SettingsDialogBody({
 					{SECTIONS.map((s) => {
 						const Icon = SECTION_ICONS[s.id];
 						return (
+							<Fragment key={s.id}>
+							{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border/60" />}
 							<button
-								key={s.id}
 								type="button"
 								data-testid={`settings-nav-${s.id}`}
 								aria-current={active === s.id}
@@ -322,6 +328,7 @@ export function SettingsDialogBody({
 								)}
 								{s.label}
 							</button>
+							</Fragment>
 						);
 					})}
 				</nav>
@@ -354,7 +361,7 @@ export function SettingsDialogBody({
 							{active === "general" && (
 								<SettingsSection
 									title="General"
-									hint="App updates, sound effects, and translation preferences."
+									hint="App updates and word lookup."
 									testid="section-general"
 								>
 									<SettingsGroup label="Updates" testid="group-updates">
@@ -365,31 +372,42 @@ export function SettingsDialogBody({
 											}
 										/>
 									</SettingsGroup>
-									<SettingsGroup label="Sound" testid="group-sound">
-										<VolumeRow />
-										<LessonSoundsRow />
-									</SettingsGroup>
 									<SettingsGroup label="Dictionary & word lookup" testid="group-word-lookup">
 										<WordLookupModeRow />
 									</SettingsGroup>
 								</SettingsSection>
 							)}
+							{active === "sound" && (
+								<SettingsSection
+									title="Sound"
+									hint="Volume, speech speed and lesson sounds. Saved on this device."
+									testid="section-sound"
+								>
+									<SettingsGroup label="Voice" testid="group-voice">
+										<VolumeRow />
+										<PlaybackSpeedRow />
+									</SettingsGroup>
+									<SettingsGroup label="Lessons" testid="group-sound">
+										<LessonSoundsRow />
+									</SettingsGroup>
+								</SettingsSection>
+							)}
 							{active === "keys" && (
 								<SettingsSection
-									title="Keys"
-									hint="Manage API keys and external model subscriptions."
+									title="API keys"
+									hint="The keys and subscriptions that let LangHarness use AI models and AI voices."
 									testid="section-keys"
 								>
 									<KeysSection initialRow={initialRow ?? undefined} />
 								</SettingsSection>
 							)}
-							{active === "agent" && (
+							{active === "ai" && (
 								<SettingsSection
-									title="Tutor"
-									hint="Model routing, specialized tools, and system prompt customization."
-									testid="section-agent"
+									title="AI models"
+									hint="Which AI models LangHarness uses, what they may look up, and their instructions. Needs an API key."
+									testid="section-ai"
 								>
-									<AgentSection
+									<AiSection
 										agent={record.agent}
 										models={record.models}
 										graph={record.graph}
@@ -423,7 +441,7 @@ export function SettingsDialogBody({
 							{active === "graph" && (
 								<SettingsSection
 									title="Skill map"
-									hint="Knowledge graph extraction and concept exploration settings."
+									hint="The map of what you have learned, built from your sessions."
 									testid="section-graph"
 								>
 									<GraphSection
@@ -445,7 +463,7 @@ export function SettingsDialogBody({
 							)}
 							{active === "devices" && (
 								<SettingsSection
-									title="Devices"
+									title="Phone & tablet"
 									hint="Use LangHarness on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
 									testid="section-devices"
 								>
@@ -459,6 +477,12 @@ export function SettingsDialogBody({
 									testid="section-learner"
 								>
 									<LearnerSection onClose={onClose} />
+									<SettingsGroup label="Quizzes" testid="group-quizzes">
+										<QuizStyleRow
+											agent={record.agent}
+											onSectionChange={(next: AgentSettings) => void write("agent", next)}
+										/>
+									</SettingsGroup>
 								</SettingsSection>
 							)}
 							{active === "data" && (
@@ -478,7 +502,7 @@ export function SettingsDialogBody({
 							{active === "usage" && (
 								<SettingsSection
 									title="Spending"
-									hint="What the tutor has cost so far, from the usage each session records"
+									hint="What the AI has cost so far, from the usage each session records."
 									testid="section-usage"
 								>
 									<UsageSection />

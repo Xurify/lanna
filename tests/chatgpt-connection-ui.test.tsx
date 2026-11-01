@@ -68,11 +68,11 @@ async function begin() { await click(byTest("chatgpt-login")); await click(byTes
 async function confirmDisconnect() { await click(byTest("chatgpt-disconnect")); await click(byTest("chatgpt-confirm-disconnect")); }
 afterEach(async () => { await act(async () => root?.unmount()); host?.remove(); root = undefined; host = undefined; delete window.lh; globalThis.fetch = originalFetch; });
 
-test("Keys is the first/default page; General and Data close the list in order", () => {
+test("General is the first/default page; the AI setup and Data close the list in order", () => {
  const html = renderToStaticMarkup(<SettingsDialogBody onClose={() => {}} />);
  const ids = [...html.matchAll(/data-testid="settings-nav-([^"]+)"/g)].map((m) => m[1]);
- assert.deepEqual(ids, ["keys", "agent", "learner", "appearance", "graph", "keyboard", "devices", "usage", "general", "data"]);
- assert.match(html, /settings-nav-keys[^>]*aria-current="true"/); assert.match(html, />Keys<\/button>/);
+ assert.deepEqual(ids, ["general", "learner", "sound", "appearance", "keyboard", "graph", "devices", "ai", "keys", "usage", "data"]);
+ assert.match(html, /settings-nav-general[^>]*aria-current="true"/); assert.match(html, />API keys<\/button>/);
  assert.doesNotMatch(html, />Model providers<\/button>/);
 });
 

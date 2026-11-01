@@ -481,7 +481,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		let model = opts.model;
 		if (!engine) {
 			const resolved = storyEngine();
-			if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → Models.");
+			if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
 			engine = resolved.engine;
 			model ??= resolved.model;
 		}

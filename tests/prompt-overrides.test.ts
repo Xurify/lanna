@@ -330,7 +330,7 @@ describe("composeInstructions: override honoring + the byte-identical source pat
 
 // ─── the orphan-heal contract (interlude, 2026-09-26) ────────────────────────
 // The orphan-400 trap: an ON switch whose file dies orphaned the record;
-// every agent-section write then 400'd while the disabled toggle couldn't
+// every ai-section write then 400'd while the disabled toggle couldn't
 // reach the OFF escape hatch — a user stuck unable to write settings.
 // Fix: the delete route clears the switch by construction, AND the write
 // path heals any orphan that still arises (disk wipes outside the app).

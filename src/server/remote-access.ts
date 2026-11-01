@@ -36,7 +36,7 @@ export const PAIRING_CODE_DIGITS = 6;
 /** `desktop:dev` listens here; the fallback when no port is known. */
 const DEFAULT_PORT = 3010;
 
-export const REMOTE_OFF_MESSAGE = "Remote access is off. Turn it on in Settings → Devices, on this computer.";
+export const REMOTE_OFF_MESSAGE = "Remote access is off. Turn it on in Settings → Phone & tablet, on this computer.";
 export const ONLY_THIS_COMPUTER_API = "The LangHarness API only answers this computer.";
 export const ONLY_THIS_COMPUTER_PAGE = "LangHarness only answers this computer.";
 export const DESKTOP_ONLY_API = "Desktop API access requires the trusted LearnHarness window.";

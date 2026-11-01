@@ -361,7 +361,7 @@ export async function addCustomMilestone(textRaw: string, opts: CustomOptions = 
 	}
 	const now = opts.now ?? new Date();
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:faux" } : storyEngine();
-	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → Models.");
+	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
 	const usage = { model: resolved.model, steps: [] as ReturnType<typeof stepOf>[] };
 	const { text: answer } = await runSubagent([], {
 		role: "researcher",

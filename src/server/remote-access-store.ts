@@ -237,7 +237,7 @@ export function revokeDevice(id: string): Promise<boolean> {
 	});
 }
 
-/** The Settings → Devices view. Reads only. `current` marks the device that asked. */
+/** The Settings → Phone & tablet view. Reads only. `current` marks the device that asked. */
 export function accessStatus(headers: Headers, port: number, at: Date = new Date()): AccessStatus {
 	const access = readAccess();
 	const token = readCookie(headers, DEVICE_COOKIE);
