@@ -12,7 +12,7 @@
  */
 
 import Link from "next/link";
-import { type LucideIcon, MapIcon, RepeatIcon, SunIcon, TargetIcon } from "lucide-react";
+import { BookOpenIcon, type LucideIcon, MapIcon, RepeatIcon, SunIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DOORS: { href: string; label: string; icon: LucideIcon; tint: string; testid: string; pages: readonly string[] }[] = [
@@ -20,6 +20,7 @@ const DOORS: { href: string; label: string; icon: LucideIcon; tint: string; test
 	{ href: "/plan", label: "Plan", icon: TargetIcon, tint: "text-flame", testid: "phone-plan-door", pages: ["/plan", "/milestones"] },
 	{ href: "/review", label: "Review", icon: RepeatIcon, tint: "text-sky", testid: "phone-review-door", pages: ["/review"] },
 	{ href: "/map", label: "Skill map", icon: MapIcon, tint: "text-xp", testid: "phone-map-door", pages: ["/map"] },
+	{ href: "/words", label: "Words", icon: BookOpenIcon, tint: "text-emerald", testid: "phone-words-door", pages: ["/words"] },
 ];
 
 /** True on the pages that show the bar. The app shell pads its content

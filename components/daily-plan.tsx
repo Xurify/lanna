@@ -31,9 +31,9 @@ export function nextTask(plan: Plan | null): PlanTask | null {
 	return plan?.tasks.find((t) => !t.done) ?? null;
 }
 
-/** "Tue" for a YYYY-MM-DD day key. */
+/** "Tuesday" for a YYYY-MM-DD day key. */
 function dayName(key: string): string {
-	return new Date(`${key}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short" });
+	return new Date(`${key}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" });
 }
 
 export function DailyPlan({

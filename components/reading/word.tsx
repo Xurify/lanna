@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Volume2Icon } from "lucide-react";
+import { StarIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak } from "@/components/speech";
 import type { StoryToken } from "@/src/core";
@@ -20,6 +20,34 @@ import type { StoryToken } from "@/src/core";
 export function Word({ token, looked, open, onOpen, onClose }: { token: StoryToken; looked: boolean; open: boolean; onOpen: () => void; onClose: () => void }) {
 	const ref = useRef<HTMLSpanElement>(null);
 	const [side, setSide] = useState<"left" | "right">("left");
+	const [isFav, setIsFav] = useState(false);
+
+	useEffect(() => {
+		if (!open) return;
+		const s = token.slug ?? token.lemma ?? token.text;
+		if (s) {
+			void fetch(`/api/words/favorite?slug=${encodeURIComponent(s)}`)
+				.then((r) => r.json())
+				.then((d) => {
+					if (typeof (d as { favorite?: unknown })?.favorite === "boolean") {
+						setIsFav((d as { favorite: boolean }).favorite);
+					}
+				})
+				.catch(() => {});
+		}
+	}, [open, token]);
+
+	const toggleFav = async () => {
+		const s = token.slug ?? token.lemma ?? token.text;
+		if (!s) return;
+		setIsFav((prev) => !prev);
+		await fetch("/api/words/favorite", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ slug: s }),
+		}).catch(() => {});
+	};
+
 	useEffect(() => {
 		if (!open || !ref.current) return;
 		const r = ref.current.getBoundingClientRect();
@@ -54,15 +82,27 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						<span className="font-ui text-xl font-black text-foreground" lang="sk">
 							{token.lemma ?? token.text}
 						</span>
-						<button
-							type="button"
-							onMouseDown={(e) => e.preventDefault()}
-							onClick={() => void speak(token.lemma ?? token.text).catch(() => {})}
-							aria-label="Play the word"
-							className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-						>
-							<Volume2Icon className="size-4" />
-						</button>
+						<span className="flex items-center gap-1">
+							<button
+								type="button"
+								onMouseDown={(e) => e.preventDefault()}
+								onClick={() => void toggleFav()}
+								aria-label={isFav ? "Odstrániť z obľúbených" : "Pridať k obľúbeným"}
+								title={isFav ? "Odstrániť z obľúbených" : "Pridať k obľúbeným"}
+								className={cn("rounded-md p-1 transition-colors", isFav ? "text-gold hover:bg-gold/20" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+							>
+								<StarIcon className={cn("size-4", isFav && "fill-gold")} />
+							</button>
+							<button
+								type="button"
+								onMouseDown={(e) => e.preventDefault()}
+								onClick={() => void speak(token.lemma ?? token.text).catch(() => {})}
+								aria-label="Play the word"
+								className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+							>
+								<Volume2Icon className="size-4" />
+							</button>
+						</span>
 					</span>
 					{token.lemma && token.lemma.toLocaleLowerCase("sk-SK") !== token.text.toLocaleLowerCase("sk-SK") && (
 						<span className="block font-ui text-xs text-muted-foreground">

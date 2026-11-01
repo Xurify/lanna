@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapIcon, RepeatIcon, SunIcon, TargetIcon } from "lucide-react";
+import { BookOpenIcon, MapIcon, RepeatIcon, SunIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProfileInfo {
@@ -159,6 +159,9 @@ export function LanguageSwitcher() {
 				</NavItem>
 				<NavItem href="/map" testid="map-door" active={pathname === "/map"} icon={<MapIcon className="size-[18px]" />} tint="text-xp">
 					Skill map
+				</NavItem>
+				<NavItem href="/words" testid="words-door" active={pathname === "/words"} icon={<BookOpenIcon className="size-[18px]" />} tint="text-emerald">
+					Words
 				</NavItem>
 			</nav>
 		</div>

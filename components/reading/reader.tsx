@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, ChevronLeftIcon, ChevronRightIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, RotateCcwIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { BookOpenIcon, BookmarkIcon, CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, FlameIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, RotateCcwIcon, SearchIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
@@ -31,6 +31,22 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+
+export function levelBadgeStyle(level: string): string {
+	switch (level) {
+		case "A1":
+			return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+		case "A2":
+			return "bg-sky-500/15 text-sky-400 border-sky-500/30";
+		case "B1":
+			return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+		case "B2":
+		case "C1":
+			return "bg-purple-500/15 text-purple-400 border-purple-500/30";
+		default:
+			return "bg-accent text-muted-foreground border-border/60";
+	}
+}
 
 /** What a sentence is read with: the speaker's voice for a line of
  *  dialogue, the narrator's for the rest (stories written before voices
@@ -369,10 +385,59 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 	const [all, setAll] = useState(false);
 	const [showTranslation, setShowTranslation] = useState(false);
 	const [viewMode, setViewMode] = useState<"flow" | "focus">("flow");
+	const [fontSize, setFontSize] = useState<"normal" | "large">("normal");
 	const [shown, setShown] = useState<Set<number>>(new Set());
 	const [popover, setPopover] = useState<{ sentence: number; token: number } | null>(null);
+	const [bookmarkedTexts, setBookmarkedTexts] = useState<Set<string>>(new Set());
 	const stop = useRef(false);
 	const sentenceRefs = useRef<(HTMLElement | null)[]>([]);
+
+	useEffect(() => {
+		void fetch("/api/phrases")
+			.then((r) => r.json())
+			.then((d) => {
+				if (Array.isArray((d as { phrases?: unknown })?.phrases)) {
+					const list = (d as { phrases: { text: string }[] }).phrases;
+					setBookmarkedTexts(new Set(list.map((p) => p.text.trim().toLowerCase())));
+				}
+			})
+			.catch(() => {});
+	}, []);
+
+	const isBookmarked = (sentenceIndex: number) => {
+		const s = story.sentences[sentenceIndex];
+		if (!s) return false;
+		return bookmarkedTexts.has(s.sk.trim().toLowerCase());
+	};
+
+	const toggleBookmark = async (sentenceIndex: number) => {
+		const s = story.sentences[sentenceIndex];
+		if (!s) return;
+		const norm = s.sk.trim().toLowerCase();
+		const exists = bookmarkedTexts.has(norm);
+
+		setBookmarkedTexts((prev) => {
+			const next = new Set(prev);
+			if (exists) next.delete(norm);
+			else next.add(norm);
+			return next;
+		});
+
+		if (exists) {
+			await fetch(`/api/phrases?text=${encodeURIComponent(s.sk)}`, { method: "DELETE" }).catch(() => {});
+		} else {
+			await fetch("/api/phrases", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					text: s.sk,
+					translation: s.en,
+					source: "story",
+					context: `Príbeh: ${story.title}`,
+				}),
+			}).catch(() => {});
+		}
+	};
 
 	const scrollToSentence = (i: number) => {
 		const el = sentenceRefs.current[i];
@@ -477,15 +542,25 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 			return n;
 		});
 
-	// Group contiguous narration sentences into paragraph blocks
-	const blocks: { isDialogue: boolean; sentences: { sentence: (typeof story.sentences)[0]; index: number }[] }[] = [];
+	// Group contiguous narration sentences into paragraph blocks, and contiguous dialogue by same speaker into speech turns
+	interface StoryBlock {
+		isDialogue: boolean;
+		speaker?: string;
+		sentences: { sentence: (typeof story.sentences)[0]; index: number }[];
+	}
+
+	const blocks: StoryBlock[] = [];
 	for (let i = 0; i < story.sentences.length; i++) {
 		const s = story.sentences[i]!;
 		const isDialogue = !!s.who && s.who.toLowerCase() !== "narrator";
+		const last = blocks[blocks.length - 1];
 		if (isDialogue) {
-			blocks.push({ isDialogue: true, sentences: [{ sentence: s, index: i }] });
+			if (last && last.isDialogue && last.speaker === s.who) {
+				last.sentences.push({ sentence: s, index: i });
+			} else {
+				blocks.push({ isDialogue: true, speaker: s.who, sentences: [{ sentence: s, index: i }] });
+			}
 		} else {
-			const last = blocks[blocks.length - 1];
 			if (last && !last.isDialogue) {
 				last.sentences.push({ sentence: s, index: i });
 			} else {
@@ -496,80 +571,87 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 	return (
 		<div className="flex flex-1 flex-col overflow-hidden">
-			{/* Top Control Tabs — Speakly style */}
+			{/* Top Reading Toolbar */}
 			<div className="shrink-0 border-b border-border/60 bg-background/80 px-4 py-2 backdrop-blur">
 				<div className={cn(COLUMN, "flex flex-wrap items-center justify-between gap-2")}>
-					<div className="flex items-center rounded-xl bg-accent/60 p-1 text-xs font-bold font-ui">
+					{/* Left: View Mode Pills */}
+					<div className="flex items-center gap-1 rounded-xl bg-accent/60 p-1 text-xs font-bold font-ui">
 						<button
 							type="button"
-							onClick={() => setShowTranslation(false)}
+							onClick={() => setViewMode("flow")}
 							className={cn(
 								"rounded-lg px-3 py-1.5 transition-colors",
-								!showTranslation ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+								viewMode === "flow" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
 							)}
+							title="Plynulý text príbehu (Continuous reading)"
 						>
-							Tekst (Text)
+							Príbeh
 						</button>
 						<button
 							type="button"
-							onClick={() => setShowTranslation(true)}
+							onClick={() => setViewMode("focus")}
 							className={cn(
 								"rounded-lg px-3 py-1.5 transition-colors",
-								showTranslation ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+								viewMode === "focus" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
 							)}
+							title="Jedna veta (Sentence focus drill)"
 						>
-							Preklad (Translation)
+							Veta po vete
 						</button>
 					</div>
 
+					{/* Right: Translation and Font Size Controls */}
 					<div className="flex items-center gap-2">
-						<div className="flex items-center rounded-xl bg-accent/60 p-1 text-xs font-bold font-ui">
-							<button
-								type="button"
-								onClick={() => setViewMode("flow")}
-								className={cn(
-									"rounded-lg px-2.5 py-1.5 transition-colors",
-									viewMode === "flow" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-								)}
-								title="Plynulý text (Continuous prose flow)"
-							>
-								Príbeh
-							</button>
-							<button
-								type="button"
-								onClick={() => setViewMode("focus")}
-								className={cn(
-									"rounded-lg px-2.5 py-1.5 transition-colors",
-									viewMode === "focus" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-								)}
-								title="Jedna veta (Sentence focus mode)"
-							>
-								Veta po vete
-							</button>
-						</div>
+						<button
+							type="button"
+							onClick={() => setShowTranslation((v) => !v)}
+							className={cn(
+								"rounded-xl border px-3 py-1.5 font-ui text-xs font-bold transition-colors",
+								showTranslation
+									? "border-primary/50 bg-primary/10 text-primary"
+									: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
+							)}
+							title="Zobraziť alebo skryť anglický preklad (Kláves T)"
+						>
+							Preklad {showTranslation ? "zapnutý" : "vypnutý"}
+						</button>
+
+						<button
+							type="button"
+							onClick={() => setFontSize((s) => (s === "normal" ? "large" : "normal"))}
+							className="rounded-xl border border-border/60 bg-accent/30 px-2.5 py-1.5 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+							title="Zmeniť veľkosť písma"
+						>
+							{fontSize === "large" ? "A+" : "A"}
+						</button>
 					</div>
 				</div>
 			</div>
 
 			{/* Main Scrollable Reading Area */}
-			<div className="flex-1 overflow-y-auto pb-36 pt-6">
-				<article className={cn(COLUMN, "lh-rise")} data-testid="read-text">
-					{/* Story Introduction Card */}
-					<div className="mb-8 rounded-3xl border border-border/80 bg-card/60 p-5 shadow-sm">
-						<div className="flex items-center gap-2">
-							<span className="rounded-full bg-flame/15 px-2.5 py-0.5 font-ui text-xs font-black uppercase tracking-wider text-flame">
+			<div className="flex-1 overflow-y-auto pb-32 pt-6 sm:pt-10">
+				<article className="mx-auto w-full max-w-2xl px-6 sm:px-8 lh-rise" data-testid="read-text">
+					{/* Story Introduction Header */}
+					<div className="mb-8 border-b border-border/40 pb-6">
+						<div className="flex flex-wrap items-center gap-2">
+							<span className={cn("rounded-md border px-2 py-0.5 font-ui text-xs font-bold uppercase tracking-wider", levelBadgeStyle(story.level))}>
 								{story.level}
 							</span>
-							<span className="font-ui text-xs font-bold text-muted-foreground first-letter:uppercase">
+							<span className="font-ui text-xs font-semibold text-muted-foreground first-letter:uppercase">
 								{(story.genre ?? "robo") === "robo" ? story.theme : genreInfo(story.genre!).label}
 								{story.topic ? ` · ${story.topic}` : ""}
 							</span>
+							<span className="text-xs text-muted-foreground">·</span>
+							<span className="flex items-center gap-1 font-ui text-xs text-muted-foreground">
+								<ClockIcon className="size-3.5" />
+								~{Math.max(1, Math.round(story.wordCount / 80))} min
+							</span>
 						</div>
-						<h1 className="mt-2 font-ui text-3xl font-black tracking-tight text-foreground md:text-4xl" lang="sk">
+						<h1 className="mt-3 font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl" lang="sk">
 							{story.title}
 						</h1>
 						{story.recap && (
-							<p className="mt-2 font-prose text-sm leading-relaxed text-muted-foreground">
+							<p className="mt-2.5 font-prose text-base leading-relaxed text-muted-foreground">
 								{story.recap}
 							</p>
 						)}
@@ -577,9 +659,9 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 					{/* View Mode: Sentence Focus Mode (LingQ Style) */}
 					{viewMode === "focus" && (
-						<div className="my-8 flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-border/80 bg-card p-6 text-center shadow-md">
+						<div className="my-8 flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-border/80 bg-card/60 p-6 text-center shadow-sm">
 							{story.sentences[activeSentence]?.who && (
-								<span className="mb-3 inline-block rounded-full bg-xp/15 px-3 py-1 font-ui text-xs font-bold uppercase tracking-wider text-xp" data-testid="read-speaker">
+								<span className="mb-3 inline-block font-ui text-xs font-bold uppercase tracking-wider text-muted-foreground" data-testid="read-speaker">
 									{story.sentences[activeSentence]?.who}
 								</span>
 							)}
@@ -587,7 +669,10 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								ref={(el) => {
 									sentenceRefs.current[activeSentence] = el;
 								}}
-								className="font-prose text-2xl md:text-3xl leading-relaxed text-foreground"
+								className={cn(
+									"font-prose leading-relaxed text-foreground",
+									fontSize === "large" ? "text-2xl md:text-3xl" : "text-xl md:text-2xl",
+								)}
 								lang="sk"
 								data-testid="read-sentence"
 							>
@@ -611,100 +696,65 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								)}
 							</div>
 							{(showTranslation || shown.has(activeSentence)) && (
-								<p className="mt-4 max-w-lg font-prose text-lg text-muted-foreground" data-testid="read-translation">
+								<p className="mt-4 max-w-lg font-prose text-base text-muted-foreground" data-testid="read-translation">
 									{story.sentences[activeSentence]?.en}
 								</p>
 							)}
+							<div className="mt-5 flex items-center justify-center gap-2">
+								<button
+									type="button"
+									onClick={() => void toggleBookmark(activeSentence)}
+									className={cn(
+										"flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-ui text-xs font-semibold transition-colors",
+										isBookmarked(activeSentence)
+											? "border-sky-500/40 bg-sky-500/15 text-sky-400"
+											: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
+									)}
+									title={isBookmarked(activeSentence) ? "Odstrániť z uložených fráz" : "Uložiť vetu do fráz"}
+								>
+									<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-sky-400")} />
+									<span>{isBookmarked(activeSentence) ? "Uložená vo frázach" : "Uložiť vetu"}</span>
+								</button>
+							</div>
 						</div>
 					)}
 
-					{/* View Mode: Continuous Story Flow (Speakly Style) */}
+					{/* View Mode: Continuous Story Flow (Editorial Reading View) */}
 					{viewMode === "flow" && (
-						<div className="space-y-6">
+						<div className="space-y-6 sm:space-y-7">
 							{blocks.map((block, bi) =>
 								block.isDialogue ? (
-									/* Dialogue Line */
-									<div
-										key={bi}
-										ref={(el) => {
-											sentenceRefs.current[block.sentences[0]!.index] = el;
-										}}
-										className={cn(
-											"group relative rounded-2xl border border-transparent p-3.5 transition-all duration-200",
-											playing === block.sentences[0]!.index
-												? "border-xp/40 bg-xp/10 shadow-sm"
-												: activeSentence === block.sentences[0]!.index
-													? "border-border/80 bg-accent/30"
-													: "hover:bg-accent/20",
-										)}
-										data-testid="read-sentence"
-										onClick={() => {
-											setActiveSentence(block.sentences[0]!.index);
-										}}
-									>
-										<div className="flex items-baseline gap-2">
-											<span
-												className="shrink-0 rounded-md bg-xp/15 px-2 py-0.5 font-ui text-xs font-bold uppercase tracking-wider text-xp"
-												data-testid="read-speaker"
-											>
-												{block.sentences[0]!.sentence.who}
-											</span>
-											<div className="min-w-0 flex-1 font-prose text-xl md:text-2xl leading-relaxed text-foreground" lang="sk">
-												{block.sentences[0]!.sentence.tokens.map((t, j) =>
-													t.word ? (
-														<Word
-															key={j}
-															token={t}
-															looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
-															open={popover?.sentence === block.sentences[0]!.index && popover.token === j}
-															onOpen={() => {
-																setPopover({ sentence: block.sentences[0]!.index, token: j });
-																onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
-																sfx.tap();
-															}}
-															onClose={() => setPopover(null)}
-														/>
-													) : (
-														<span key={j}>{t.text}</span>
-													),
-												)}
+									/* Dialogue Speech Turn: Grouped by speaker without borders */
+									<div key={bi} className="my-5">
+										{block.speaker && (
+											<div className="mb-1 select-none font-ui text-xs font-bold uppercase tracking-wider text-muted-foreground" data-testid="read-speaker">
+												{block.speaker}
 											</div>
-											<button
-												type="button"
-												onClick={(e) => {
-													e.stopPropagation();
-													void playOne(block.sentences[0]!.index);
-												}}
-												className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-												title="Prehrať vetu"
-											>
-												<Volume2Icon className="size-4" />
-											</button>
-										</div>
-										{(showTranslation || shown.has(block.sentences[0]!.index)) && (
-											<p className="mt-2 pl-2 font-prose text-base text-muted-foreground/90 italic" data-testid="read-translation">
-												{block.sentences[0]!.sentence.en}
-											</p>
 										)}
-									</div>
-								) : (
-									/* Narration Paragraph */
-									<div key={bi} className="rounded-2xl p-2 transition-colors">
-										<p className="font-prose text-xl md:text-2xl leading-relaxed text-foreground" lang="sk">
+										<p
+											className={cn(
+												"font-prose text-foreground leading-[1.9]",
+												fontSize === "large" ? "text-xl sm:text-2xl" : "text-lg sm:text-xl",
+											)}
+											lang="sk"
+										>
 											{block.sentences.map(({ sentence: s, index: i }) => (
 												<span
 													key={i}
 													ref={(el) => {
 														sentenceRefs.current[i] = el;
 													}}
-													onClick={() => setActiveSentence(i)}
+													onClick={() => {
+														setActiveSentence(i);
+														void playOne(i);
+													}}
 													className={cn(
-														"inline cursor-pointer rounded-lg px-1 py-0.5 transition-all duration-150",
+														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
 														playing === i
-															? "bg-xp/25 font-medium text-foreground ring-1 ring-xp/50"
+															? "bg-amber-400/25 text-foreground ring-1 ring-amber-400/40"
 															: activeSentence === i
-																? "bg-accent/60 ring-1 ring-border"
-																: "hover:bg-accent/40",
+																? "bg-accent/60"
+																: "hover:bg-accent/30",
 													)}
 													data-testid="read-sentence"
 												>
@@ -730,15 +780,68 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 												</span>
 											))}
 										</p>
-										{/* Show translations for paragraph if enabled */}
 										{showTranslation && (
-											<div className="mt-3 space-y-1 border-l-2 border-border/70 pl-3">
-												{block.sentences.map(({ sentence: s, index: i }) => (
-													<p key={i} className="font-prose text-sm text-muted-foreground leading-normal" data-testid="read-translation">
-														{s.en}
-													</p>
-												))}
-											</div>
+											<p className="mt-2 font-prose text-sm text-muted-foreground leading-relaxed select-text" data-testid="read-translation">
+												{block.sentences.map((s) => s.sentence.en).join(" ")}
+											</p>
+										)}
+									</div>
+								) : (
+									/* Narration Paragraph */
+									<div key={bi} className="my-5">
+										<p
+											className={cn(
+												"font-prose text-foreground leading-[1.9]",
+												fontSize === "large" ? "text-xl sm:text-2xl" : "text-lg sm:text-xl",
+											)}
+											lang="sk"
+										>
+											{block.sentences.map(({ sentence: s, index: i }) => (
+												<span
+													key={i}
+													ref={(el) => {
+														sentenceRefs.current[i] = el;
+													}}
+													onClick={() => {
+														setActiveSentence(i);
+														void playOne(i);
+													}}
+													className={cn(
+														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
+														playing === i
+															? "bg-amber-400/25 text-foreground ring-1 ring-amber-400/40"
+															: activeSentence === i
+																? "bg-accent/60"
+																: "hover:bg-accent/30",
+													)}
+													data-testid="read-sentence"
+												>
+													{s.tokens.map((t, j) =>
+														t.word ? (
+															<Word
+																key={j}
+																token={t}
+																looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
+																open={popover?.sentence === i && popover.token === j}
+																onOpen={() => {
+																	setPopover({ sentence: i, token: j });
+																	onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
+																	sfx.tap();
+																}}
+																onClose={() => setPopover(null)}
+															/>
+														) : (
+															<span key={j}>{t.text}</span>
+														),
+													)}
+													{" "}
+												</span>
+											))}
+										</p>
+										{showTranslation && (
+											<p className="mt-2 font-prose text-sm text-muted-foreground leading-relaxed select-text" data-testid="read-translation">
+												{block.sentences.map((s) => s.sentence.en).join(" ")}
+											</p>
 										)}
 									</div>
 								),
@@ -748,11 +851,11 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 					{/* New Words List */}
 					{story.newWords.length > 0 && (
-						<div className="mt-10 rounded-3xl border border-border/80 bg-card p-5 shadow-sm" data-testid="read-new-words">
-							<p className="font-ui text-sm font-bold text-muted-foreground">Nové slová v príbehu (New words)</p>
+						<div className="mt-12 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm" data-testid="read-new-words">
+							<p className="font-ui text-xs font-bold uppercase tracking-wider text-muted-foreground">Nové slová v príbehu (New words)</p>
 							<ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
 								{story.newWords.map((w) => (
-									<li key={w.lemma} className="font-prose text-base">
+									<li key={w.lemma} className="font-prose text-sm sm:text-base">
 										<span className="font-bold text-foreground" lang="sk">
 											{w.lemma}
 										</span>
@@ -766,50 +869,54 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 				</article>
 			</div>
 
-			{/* Docked Audio Player Bar — Speakly & LingQ Style */}
-			<div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/80 bg-background/95 shadow-2xl backdrop-blur-md">
-				<div className={cn(COLUMN, "flex flex-col gap-2 py-3 px-4")}>
+			{/* Floating Dock Audio Player Bar */}
+			<div className="fixed bottom-5 inset-x-4 z-30 mx-auto max-w-xl rounded-2xl border border-border/80 bg-background/90 shadow-2xl backdrop-blur-md px-4 py-3">
+				<div className="flex flex-col gap-2">
 					{/* Progress bar across sentences */}
 					<div className="flex items-center gap-3">
-						<span className="shrink-0 font-ui text-xs font-bold text-muted-foreground tabular-nums">
+						<span className="shrink-0 font-ui text-[11px] font-bold text-muted-foreground tabular-nums">
 							{activeSentence + 1} / {story.sentences.length}
 						</span>
-						<div className="relative h-1.5 flex-1 cursor-pointer overflow-hidden rounded-full bg-accent" onClick={(e) => {
-							const rect = e.currentTarget.getBoundingClientRect();
-							const ratio = (e.clientX - rect.left) / rect.width;
-							const idx = Math.min(story.sentences.length - 1, Math.max(0, Math.floor(ratio * story.sentences.length)));
-							setActiveSentence(idx);
-							scrollToSentence(idx);
-						}}>
+						<div
+							className="relative h-1.5 flex-1 cursor-pointer overflow-hidden rounded-full bg-accent"
+							onClick={(e) => {
+								const rect = e.currentTarget.getBoundingClientRect();
+								const pct = (e.clientX - rect.left) / rect.width;
+								const idx = Math.min(story.sentences.length - 1, Math.max(0, Math.floor(pct * story.sentences.length)));
+								setActiveSentence(idx);
+								scrollToSentence(idx);
+								if (all) void playAll(idx);
+							}}
+							title="Prejsť na vetu v príbehu"
+						>
 							<div
 								className="h-full rounded-full bg-xp transition-all duration-300"
 								style={{ width: `${((activeSentence + 1) / story.sentences.length) * 100}%` }}
 							/>
 						</div>
-						<span className="shrink-0 font-ui text-xs font-bold text-muted-foreground">
+						<span className="shrink-0 font-ui text-[11px] font-bold text-muted-foreground tabular-nums">
 							{Math.round(((activeSentence + 1) / story.sentences.length) * 100)}%
 						</span>
 					</div>
 
-					{/* Control Buttons */}
-					<div className="flex items-center justify-between gap-3 pt-1">
-						{/* Left: Speed & Step Controls */}
-						<div className="flex items-center gap-1">
+					{/* Controls Toolbar */}
+					<div className="flex items-center justify-between gap-2">
+						{/* Left: Sentence navigation & Bookmark */}
+						<div className="flex items-center gap-1 sm:gap-1.5">
 							<button
 								type="button"
 								onClick={() => stepSentence(-1)}
-								disabled={activeSentence === 0}
-								aria-label="Previous sentence"
-								className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+								disabled={activeSentence <= 0}
+								className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+								title="Predchádzajúca veta (Šípka doľava)"
 							>
-								<ChevronLeftIcon className="size-5" />
+								<ChevronLeftIcon className="size-4" />
 							</button>
 							<button
 								type="button"
 								onClick={replayCurrent}
-								aria-label="Replay current sentence"
-								title="Prehrať znova (R)"
-								className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								title="Zopakovať aktuálnu vetu (Kláves R)"
 							>
 								<RotateCcwIcon className="size-4" />
 							</button>
@@ -817,36 +924,55 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								type="button"
 								onClick={() => stepSentence(1)}
 								disabled={activeSentence >= story.sentences.length - 1}
-								aria-label="Next sentence"
-								className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+								className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+								title="Nasledujúca veta (Šípka doprava)"
 							>
-								<ChevronRightIcon className="size-5" />
+								<ChevronRightIcon className="size-4" />
+							</button>
+							<button
+								type="button"
+								onClick={() => void toggleBookmark(activeSentence)}
+								className={cn(
+									"flex items-center gap-1 rounded-xl border px-2 py-1 font-ui text-xs font-semibold transition-colors",
+									isBookmarked(activeSentence)
+										? "border-sky-500/40 bg-sky-500/15 text-sky-400"
+										: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
+								)}
+								title={isBookmarked(activeSentence) ? "Odstrániť vetu z Uložených fráz" : "Uložiť vetu do Uložených fráz"}
+							>
+								<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-sky-400")} />
+								<span className="hidden sm:inline">{isBookmarked(activeSentence) ? "Uložené" : "Uložiť"}</span>
 							</button>
 						</div>
 
-						{/* Center: Big Play / Pause Button */}
-						<div className="flex items-center gap-3">
+						{/* Center: Play All / Pause */}
+						<div className="flex items-center gap-2">
 							<button
 								type="button"
 								onClick={() => void playAll()}
-								className="flex h-12 items-center gap-2 rounded-2xl bg-xp px-5 font-ui text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+								className={cn(
+									"flex items-center gap-2 rounded-xl px-4 py-1.5 font-ui text-xs font-bold shadow-sm transition-all",
+									all
+										? "bg-flame text-white hover:bg-flame/90"
+										: "bg-xp text-white hover:bg-xp/90",
+								)}
 								data-testid="read-play-all"
 								aria-pressed={all}
 							>
-								{all ? <PauseIcon className="size-5 fill-current" /> : <PlayIcon className="size-5 fill-current" />}
-								<span>{all ? "Pozastaviť" : "Prehrať všetko"}</span>
+								{all ? <PauseIcon className="size-3.5 fill-current" /> : <PlayIcon className="size-3.5 fill-current" />}
+								<span>{all ? "Pauza" : "Prehrať"}</span>
 							</button>
 						</div>
 
 						{/* Right: Done / Check Questions Button */}
-						<div className="flex items-center gap-3">
+						<div className="flex items-center gap-2">
 							<button
 								type="button"
 								onClick={onDone}
-								className={PRIMARY}
+								className={cn(PRIMARY, "text-xs py-1.5 px-3 h-auto")}
 								data-testid="read-done"
 							>
-								{story.questions.length ? `${story.questions.length} otázok` : "Hotovo"}
+								{story.questions.length ? `Otázky (${story.questions.length})` : "Hotovo"}
 							</button>
 						</div>
 					</div>
@@ -970,60 +1096,327 @@ function Stat({ label, value, ink }: { label: string; value: string; ink: string
 // ─── The library ────────────────────────────────────────────────────────────
 
 function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen: (id: string) => void; onWrite: () => void }) {
-	const list = [...(state?.library ?? [])].reverse();
-	const unread = list.filter((s) => s.reads === 0).length;
+	const rawList = state?.library ?? [];
+	const [levelFilter, setLevelFilter] = useState<string>("all");
+	const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read">("all");
+	const [searchQuery, setSearchQuery] = useState("");
+
+	const LEVEL_RANK: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
+
+	// Level counts
+	const levelCounts = useMemo(() => {
+		const counts: Record<string, number> = { all: rawList.length, A1: 0, A2: 0, B1: 0, B2: 0, C1: 0 };
+		for (const s of rawList) {
+			counts[s.level] = (counts[s.level] ?? 0) + 1;
+		}
+		return counts;
+	}, [rawList]);
+
+	// Filter and sort: by learner level ascending (A1 first), unread prioritized
+	const filtered = useMemo(() => {
+		return rawList
+			.filter((s) => {
+				if (levelFilter !== "all" && s.level !== levelFilter) return false;
+				if (statusFilter === "unread" && s.reads > 0) return false;
+				if (statusFilter === "read" && s.reads === 0) return false;
+				if (searchQuery.trim()) {
+					const q = searchQuery.toLowerCase().trim();
+					const matchTitle = s.title.toLowerCase().includes(q);
+					const matchTopic = s.topic?.toLowerCase().includes(q);
+					const matchTheme = s.theme?.toLowerCase().includes(q);
+					const matchGenre = s.genre && genreInfo(s.genre).label.toLowerCase().includes(q);
+					if (!matchTitle && !matchTopic && !matchTheme && !matchGenre) return false;
+				}
+				return true;
+			})
+			.sort((a, b) => {
+				// Unread first
+				if (a.reads === 0 && b.reads > 0) return -1;
+				if (b.reads === 0 && a.reads > 0) return 1;
+				// Then by level ascending (A1 first)
+				const la = LEVEL_RANK[a.level] ?? 99;
+				const lb = LEVEL_RANK[b.level] ?? 99;
+				if (la !== lb) return la - lb;
+				return a.episode - b.episode;
+			});
+	}, [rawList, levelFilter, statusFilter, searchQuery]);
+
+	const unread = rawList.filter((s) => s.reads === 0).length;
+	// Featured / up next story: state.current, or first unread story, or first story in library
+	const upNext = state?.current ?? rawList.find((s) => s.reads === 0) ?? rawList[0];
+	const upNextReads = upNext ? (rawList.find((s) => s.id === upNext.id)?.reads ?? 0) : 0;
+	const upNextNewWords: string[] = upNext
+		? (upNext.newWords as Array<string | { sk: string }>).map((w) => (typeof w === "string" ? w : w.sk))
+		: [];
+
 	return (
-		<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]">
-			<div className={cn(COLUMN, "lh-rise")} data-testid="read-shelf-list">
+		<div className="flex flex-1 flex-col overflow-y-auto pb-16 pt-[4vh]">
+			<div className={cn(COLUMN, "lh-rise space-y-8")} data-testid="read-shelf-list">
+				{/* Header Section */}
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
-						<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Your library</p>
-						<h1 className="mt-1 font-ui text-3xl font-black text-foreground">Stories at your level</h1>
+						<div className="flex items-center gap-2">
+							<span className="rounded-full bg-xp/15 px-2.5 py-0.5 font-ui text-xs font-bold uppercase tracking-wider text-xp">
+								Knižnica
+							</span>
+							<span className="font-ui text-xs font-bold text-muted-foreground">
+								{rawList.length} {rawList.length === 1 ? "príbeh" : "príbehov"}
+								{unread > 0 ? ` · ${unread} neprečítaných` : ""}
+								{state?.readToday ? ` · ${state.readToday} dnes prečítaných` : ""}
+							</span>
+						</div>
+						<h1 className="mt-2 font-ui text-3xl md:text-4xl font-black text-foreground">
+							Príbehy podľa vašej úrovne
+						</h1>
 						<p className="mt-1 font-prose text-base text-muted-foreground">
-							{list.length === 0 ? "Nothing yet." : `${list.length} ${list.length === 1 ? "story" : "stories"}${unread ? ` · ${unread} unread` : ""}${state?.readToday ? ` · ${state.readToday} read today` : ""}`}
-							{state?.generating ? ` · writing ${state.generating.genre === "robo" ? "a Robo episode" : `a ${genreInfo(state.generating.genre).label.toLowerCase()}`} (${state.generating.level})…` : ""}
+							Autentické čítanie, dialógy a povesti prispôsobené vašej slovenčine.
 						</p>
-						{state?.current && state.pick && (
-							<p className="mt-1 font-prose text-sm text-muted-foreground" data-testid="read-pick">
-								Up next: <span className="text-foreground">{state.current.title}</span> · {state.pick.line}
-							</p>
-						)}
 					</div>
-					<div className="flex gap-3">
+
+					<div className="flex items-center gap-3">
 						<Link href="/" className={SECONDARY}>
-							Today
+							Dnes
 						</Link>
 						{state?.canWrite !== false && (
-							<button type="button" onClick={onWrite} className={PRIMARY} data-testid="read-write-next" title="One model call on the cheap slot">
+							<button
+								type="button"
+								onClick={onWrite}
+								className={PRIMARY}
+								data-testid="read-write-next"
+								title="Vygenerovať nový príbeh cez model"
+							>
 								<SparklesIcon className="size-4" />
-								{unread ? "Read the next" : "Write a new one"}
+								{unread ? "Ďalší príbeh" : "Nový príbeh"}
 							</button>
 						)}
 					</div>
 				</div>
-				<ol className="mt-6 flex flex-col gap-2">
-					{list.map((s) => (
-						<li key={s.id}>
-							<button type="button" onClick={() => onOpen(s.id)} className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4 text-left transition-colors hover:border-foreground/40" data-testid="read-shelf-item">
-								<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl font-ui text-xs font-black", s.reads > 0 ? "bg-accent text-muted-foreground" : "bg-flame/15 text-flame")}>{(s.genre ?? "robo") === "robo" ? s.episode : s.level}</span>
-								<span className="min-w-0 flex-1">
-									<span className="block truncate font-ui text-lg font-bold text-foreground" lang="sk">
-										{s.title}
-									</span>
-									<span className="block truncate font-prose text-sm text-muted-foreground">
-										{s.level} · {(s.genre ?? "robo") === "robo" ? `Robo · ${s.theme}` : genreInfo(s.genre!).label}{s.topic ? ` · ${s.topic}` : ""} · {s.wordCount} words{s.newWords.length ? ` · new: ${s.newWords.slice(0, 4).join(", ")}` : ""}
-									</span>
+
+				{/* Featured / Up Next Hero Card */}
+				{upNext && (
+					<div
+						className="relative overflow-hidden rounded-3xl border-2 border-border/80 bg-gradient-to-br from-card via-card to-accent/30 p-6 shadow-md transition-all hover:border-xp/50"
+						data-testid="read-pick"
+					>
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<div className="flex items-center gap-2">
+								<span className="rounded-full bg-xp/20 px-3 py-1 font-ui text-xs font-black uppercase tracking-wider text-xp">
+									{upNextReads === 0 ? "Odporúčané na čítanie" : "Pokračovať"}
 								</span>
-								<span className="shrink-0 text-right font-ui text-xs font-bold text-muted-foreground">
-									{s.reads === 0 ? <span className="text-flame">unread</span> : s.lastScore ? `${s.lastScore.correct}/${s.lastScore.total} · read ${s.reads}×` : `read ${s.reads}×`}
+								<span className={cn("rounded-full border px-2.5 py-0.5 font-ui text-xs font-black uppercase tracking-wider", levelBadgeStyle(upNext.level))}>
+									{upNext.level}
 								</span>
+								<span className="font-ui text-xs font-semibold text-muted-foreground">
+									{(upNext.genre ?? "robo") === "robo" ? upNext.theme : genreInfo(upNext.genre!).label}
+								</span>
+							</div>
+							<div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
+								<span className="flex items-center gap-1">
+									<ClockIcon className="size-3.5" />
+									~{Math.max(1, Math.round(upNext.wordCount / 80))} min čítania
+								</span>
+								<span>·</span>
+								<span>{upNext.wordCount} slov</span>
+								<span>·</span>
+								<span className="text-emerald-400 font-bold">{Math.round(upNext.coverage * 100)}% známych slov</span>
+							</div>
+						</div>
+
+						<div className="mt-4">
+							<h2 className="font-ui text-2xl md:text-3xl font-black text-foreground" lang="sk">
+								{upNext.title}
+							</h2>
+							<p className="mt-2 font-prose text-base text-muted-foreground leading-relaxed">
+								{upNext.topic ?? (upNext as unknown as { recap?: string }).recap ?? "Precvičte si čítanie s porozumením v prirodzenom kontexte."}
+								{upNextNewWords.length > 0 && ` Obsahuje nové slová: ${upNextNewWords.slice(0, 4).join(", ")}.`}
+							</p>
+						</div>
+
+						<div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+							<button
+								type="button"
+								onClick={() => onOpen(upNext.id)}
+								className={cn(PRIMARY, "gap-2 text-base px-6 py-2.5")}
+							>
+								<BookOpenIcon className="size-5" />
+								<span>{upNextReads === 0 ? "Začať čítať" : "Čítať znova"}</span>
 							</button>
-						</li>
-					))}
-				</ol>
-				{list.length === 0 && state?.canWrite === false && (
+							{state?.pick && (
+								<p className="font-prose text-xs text-muted-foreground">
+									{state.pick.line}
+								</p>
+							)}
+						</div>
+					</div>
+				)}
+
+				{/* Toolbar: Search and Filter Pills */}
+				<div className="space-y-3">
+					<div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+						{/* Level Tabs */}
+						<div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-accent/40 p-1.5">
+							{[
+								{ id: "all", label: "Všetky", count: levelCounts.all },
+								{ id: "A1", label: "A1 Začiatočník", count: levelCounts.A1 },
+								{ id: "A2", label: "A2 Základná", count: levelCounts.A2 },
+								{ id: "B1", label: "B1 Pokročilejšia", count: levelCounts.B1 },
+								{ id: "B2", label: "B2 Pokročilý", count: levelCounts.B2 },
+							].map((tab) => (
+								<button
+									key={tab.id}
+									type="button"
+									onClick={() => setLevelFilter(tab.id)}
+									className={cn(
+										"flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-bold transition-all",
+										levelFilter === tab.id
+											? "bg-background text-foreground shadow-sm"
+											: "text-muted-foreground hover:text-foreground",
+									)}
+								>
+									<span>{tab.label}</span>
+									<span className={cn(
+										"rounded-md px-1.5 py-0.5 text-[10px] tabular-nums",
+										levelFilter === tab.id ? "bg-accent text-foreground" : "bg-card text-muted-foreground"
+									)}>
+										{tab.count}
+									</span>
+								</button>
+							))}
+						</div>
+
+						{/* Read Status Filter */}
+						<div className="flex items-center gap-1 rounded-2xl bg-accent/40 p-1.5 font-ui text-xs font-bold">
+							{(["all", "unread", "read"] as const).map((st) => (
+								<button
+									key={st}
+									type="button"
+									onClick={() => setStatusFilter(st)}
+									className={cn(
+										"rounded-xl px-3 py-1.5 transition-all",
+										statusFilter === st
+											? "bg-background text-foreground shadow-sm"
+											: "text-muted-foreground hover:text-foreground",
+									)}
+								>
+									{st === "all" ? "Všetky stavy" : st === "unread" ? "Neprečítané" : "Prečítané"}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{/* Search Input */}
+					<div className="relative">
+						<SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+						<input
+							type="text"
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="Hľadať príbehy podľa názvu, témy alebo žánru..."
+							className="w-full rounded-2xl border border-border/80 bg-card py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-xp focus:outline-none focus:ring-1 focus:ring-xp"
+						/>
+						{searchQuery && (
+							<button
+								type="button"
+								onClick={() => setSearchQuery("")}
+								className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+								title="Vymazať hľadanie"
+							>
+								<XIcon className="size-3.5" />
+							</button>
+						)}
+					</div>
+				</div>
+
+				{/* Stories Grid */}
+				{filtered.length > 0 ? (
+					<ol className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						{filtered.map((s) => (
+							<li key={s.id}>
+								<button
+									type="button"
+									onClick={() => onOpen(s.id)}
+									className="group flex h-full w-full flex-col justify-between rounded-3xl border-2 border-border/70 bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-xp/50 hover:shadow-lg"
+									data-testid="read-shelf-item"
+								>
+									<div>
+										{/* Top Badges */}
+										<div className="flex items-center justify-between gap-2">
+											<div className="flex items-center gap-2">
+												<span className={cn("rounded-lg border px-2 py-0.5 font-ui text-xs font-black uppercase tracking-wider", levelBadgeStyle(s.level))}>
+													{s.level}
+												</span>
+												<span className="font-ui text-xs font-semibold text-muted-foreground">
+													{(s.genre ?? "robo") === "robo" ? `Robo · ${s.theme}` : genreInfo(s.genre!).label}
+												</span>
+											</div>
+
+											<div>
+												{s.reads === 0 ? (
+													<span className="flex items-center gap-1 rounded-full bg-flame/15 px-2.5 py-0.5 font-ui text-xs font-black text-flame">
+														<FlameIcon className="size-3" />
+														<span>Nový</span>
+													</span>
+												) : (
+													<span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-ui text-xs font-bold text-emerald-400">
+														<CheckCircle2Icon className="size-3" />
+														<span>{s.lastScore ? `${s.lastScore.correct}/${s.lastScore.total}` : `${s.reads}×`}</span>
+													</span>
+												)}
+											</div>
+										</div>
+
+										{/* Title */}
+										<h3 className="mt-3 font-ui text-lg font-bold text-foreground transition-colors group-hover:text-primary" lang="sk">
+											{s.title}
+										</h3>
+
+										{/* Topic / Snippet */}
+										<p className="mt-1 line-clamp-2 font-prose text-sm text-muted-foreground leading-relaxed">
+											{s.topic ?? "Precvičte si čítanie a porozumenie slovenského textu."}
+										</p>
+									</div>
+
+									{/* Card Footer */}
+									<div className="mt-4 flex flex-wrap items-center justify-between border-t border-border/50 pt-3 text-xs font-bold text-muted-foreground">
+										<div className="flex items-center gap-2">
+											<span className="flex items-center gap-1">
+												<ClockIcon className="size-3.5" />
+												~{Math.max(1, Math.round(s.wordCount / 80))} min
+											</span>
+											<span>·</span>
+											<span>{s.wordCount} slov</span>
+										</div>
+										{s.newWords.length > 0 && (
+											<span className="text-xp font-semibold">
+												+{s.newWords.length} nových slov
+											</span>
+										)}
+									</div>
+								</button>
+							</li>
+						))}
+					</ol>
+				) : (
+					<div className="rounded-3xl border-2 border-dashed border-border/80 p-8 text-center">
+						<p className="font-ui text-base font-bold text-foreground">Žiadne príbehy nezodpovedajú filtrom</p>
+						<p className="mt-1 font-prose text-sm text-muted-foreground">Skúste zmeniť úroveň alebo vyhľadávací výraz.</p>
+						<button
+							type="button"
+							onClick={() => {
+								setLevelFilter("all");
+								setStatusFilter("all");
+								setSearchQuery("");
+							}}
+							className="mt-4 rounded-xl bg-accent px-4 py-2 font-ui text-xs font-bold text-foreground hover:bg-accent/80 transition-colors"
+						>
+							Resetovať filtre
+						</button>
+					</div>
+				)}
+
+				{rawList.length === 0 && state?.canWrite === false && (
 					<p className="mt-6 font-prose text-base text-muted-foreground">
-						Stories are written on the cheap model slot. <SettingsLink className="underline">Set up a model</SettingsLink> to get the first episode.
+						Príbehy sa generujú pomocou lacného slotu modelu. <SettingsLink className="underline">Nastavte model</SettingsLink> a získajte prvý príbeh.
 					</p>
 				)}
 			</div>

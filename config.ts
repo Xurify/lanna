@@ -138,6 +138,8 @@ export const PATHS = {
 	distractors: path.join(DATA_ROOT, "distractors"),
 	/** Spaced-review cards and their log (src/store/review.ts). */
 	review: path.join(DATA_ROOT, "review"),
+	/** Saved phrases, bookmarks, and starred items (src/store/saved-phrases.ts). */
+	saved: path.join(DATA_ROOT, "saved"),
 	/** Chat sessions (AI SDK UIMessage transcripts, one JSON file per chat). */
 	chats: path.join(DATA_ROOT, "chats"),
 	graph: path.join(DATA_ROOT, "graph"),

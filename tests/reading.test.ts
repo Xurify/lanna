@@ -154,7 +154,7 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(brief.episode, 1);
 		assert.match(brief.prompt, /episode 1 of the Robo series/);
 		assert.match(brief.prompt, /first episode/);
-		assert.match(brief.prompt, /6 to 8 sentences/);
+		assert.match(brief.prompt, /20 to 25 sentences/);
 		const diary = reading.storyBrief(k, [{ id: "x", series: "diary", episode: 0, title: "t", level: "A2", theme: "a diary page", genre: "diary", topic: "a rainy Monday", createdAt: "", wordCount: 40, coverage: 0.95, newWords: [], model: "m" }], [], new Date(), "diary");
 		assert.equal(diary.episode, 0);
 		assert.match(diary.prompt, /diary entry/);

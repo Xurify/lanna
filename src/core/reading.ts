@@ -416,14 +416,14 @@ export function pickStory(stories: readonly StoryRecord[], input: PickInput): { 
 
 // ─── Level rules ────────────────────────────────────────────────────────────
 
-/** Sentences per episode by level: short enough to finish in one sitting
- *  at the planned pace (about four minutes with the audio). */
+/** Sentences per episode by level: optimized for extensive reading volume
+ *  to overachieve the daily incidental vocabulary learning threshold. */
 export const STORY_LENGTH: Record<Cefr, { min: number; max: number }> = {
-	A1: { min: 6, max: 8 },
-	A2: { min: 8, max: 11 },
-	B1: { min: 11, max: 14 },
-	B2: { min: 14, max: 18 },
-	C1: { min: 16, max: 20 },
+	A1: { min: 20, max: 25 },
+	A2: { min: 22, max: 28 },
+	B1: { min: 25, max: 32 },
+	B2: { min: 28, max: 36 },
+	C1: { min: 30, max: 40 },
 };
 
 /** New words an episode may bring in on purpose, by level. */
@@ -445,7 +445,7 @@ export const COVERAGE_FLOOR = 0.92;
 export const QUESTIONS_PER_STORY = QUESTION_PLAN.A1.count;
 
 /** Minutes the daily plan books for a Read task. */
-export const READ_MINUTES = 4;
+export const READ_MINUTES = 6;
 
 // ─── XP ─────────────────────────────────────────────────────────────────────
 

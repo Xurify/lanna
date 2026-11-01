@@ -189,6 +189,42 @@ html[data-keyboard] :focus-visible {
 	border-color: var(--color-border);
 }
 
+/* Contextual cursor design (Uxcel UI/UX Standards):
+   - Interactive elements (buttons, links, triggers, summaries, checkboxes, radio, options) get cursor: pointer
+   - Disabled states get cursor: not-allowed
+   - Text inputs and editable surfaces get cursor: text
+   - Draggables get cursor: grab / grabbing
+   - Plain layout and non-interactive text elements retain default/text cursor
+*/
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+select:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled),
+[data-clickable="true"],
+[data-word] {
+	cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled {
+	cursor: not-allowed;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+textarea {
+	cursor: text;
+}
+
 body {
 	background: var(--color-background);
 	color: var(--color-foreground);

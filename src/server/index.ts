@@ -75,3 +75,5 @@ export * from "./usage-report.ts";
 export { lookupWord, loadLexicon } from "../agent/lexicon.ts";
 export { isLanguageProfile, LANGUAGE_PROFILES, type LanguageProfile } from "../../config.ts";
 export * from "./distractors.ts";
+export * from "./word-bank.ts";
+export { savedPhraseStore } from "../store/saved-phrases.ts";
