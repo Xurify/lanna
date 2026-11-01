@@ -328,7 +328,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - `curriculum/slovak/ud-verb-forms.json` lists, for each verb lemma, the forms the Universal Dependencies Slovak SNK treebank gives it (`scripts/build-ud-verb-forms.mjs`). Its README says lemmas and morphology were assigned manually and only sentences where two annotators agreed are kept. A form is used only when it is a verb wherever it occurs and has one lemma.
 - The cloze step of `scripts/export-slovakwiki-lexicon.mjs` blanks a verb's sentence with those forms as well as the wiki's own.
 - `scripts/merge-lexicon.mjs` gives a blank to a shipped sentence that has none. Text, position and the rejected flag do not change. 161 sentences gained a blank, all for verbs; 28 of the 102 thin verbs now have three usable sentences.
-- The forms file is licensed CC BY-SA 4.0, the treebank's licence. It is derived data, so the share-alike term may apply to it; the owner decides whether it stays in the repo.
+- The forms file is licensed CC BY-SA 4.0, the treebank's licence, and names that licence and its source in its header. It is derived data, so the share-alike term applies to it. The owner chose to keep it in the repo (2026-11-01).
 - The other verbs stay thin until a verified source exists, for example JÚĽŠ.
 
 ## Working rules (how work reaches the repo)
