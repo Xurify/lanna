@@ -27,6 +27,8 @@ export interface LoggedLesson {
 		slug: string;
 		lemma: string;
 		answer: string;
+		/** The sentence and what was given, for the wrong first tries the guide reads. */
+		sentence?: string;
 		again?: boolean;
 		first?: { given: string; verdict: "exact" | "accents" | "wrong"; peeked?: boolean };
 		slip?: FormSlip;
@@ -59,6 +61,16 @@ export interface MissedWord {
 	lastAt: string;
 }
 
+/** One wrong first try, kept so the guide can read what was really written. */
+export interface WrongSample {
+	at: string;
+	unit: string;
+	sentence: string;
+	answer: string;
+	given: string;
+	slip?: FormSlip;
+}
+
 export interface WeekPoint {
 	/** Monday of the week, YYYY-MM-DD. */
 	week: string;
@@ -80,6 +92,8 @@ export interface MistakeAnalysis {
 	words: MissedWord[];
 	weeks: WeekPoint[];
 	mixups: MixupSummary[];
+	/** The latest wrong first tries, newest first. Absent in snapshots from before it was kept. */
+	samples?: WrongSample[];
 }
 
 export const TREND_DAYS = 14;
@@ -91,6 +105,8 @@ export const TREND_STEP = 0.1;
 export const UNIT_MIN_REPS = 3;
 export const WORDS_SHOWN = 8;
 export const WEEKS_SHOWN = 8;
+/** Wrong first tries kept for the guide. */
+export const SAMPLES_KEPT = 15;
 
 const DAY_MS = 86_400_000;
 
@@ -114,6 +130,7 @@ export function analyseMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 	const words = new Map<string, MissedWord & { right: number }>();
 	const weeks = new Map<string, { reps: number; right: number }>();
 	const slips: Partial<Record<FormSlip, number>> = {};
+	const samples: WrongSample[] = [];
 	let reps = 0;
 	let wrong = 0;
 	let from: string | null = null;
@@ -140,6 +157,7 @@ export function analyseMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 				window.right++;
 			} else {
 				const slip = r.slip ?? "other";
+				if (r.sentence) samples.push({ at: lesson.at, unit: unitInfo(r.unit).title, sentence: r.sentence, answer: r.answer, given: first.given.trim(), ...(r.slip ? { slip: r.slip } : {}) });
 				u.slips[slip] = (u.slips[slip] ?? 0) + 1;
 				slips[slip] = (slips[slip] ?? 0) + 1;
 			}
@@ -185,7 +203,7 @@ export function analyseMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 		.sort(([a], [b]) => a.localeCompare(b))
 		.slice(-WEEKS_SHOWN)
 		.map(([week, w]) => ({ week, reps: w.reps, accuracy: w.right / w.reps }));
-	return { at: now.toISOString(), reps, wrong, from, to, units: unitList, slips, words: missed, weeks: weekList, mixups: mixupList(mixups).filter((m) => m.status !== "cleared") };
+	return { at: now.toISOString(), reps, wrong, from, to, units: unitList, slips, words: missed, weeks: weekList, mixups: mixupList(mixups).filter((m) => m.status !== "cleared"), samples: samples.sort((a, b) => b.at.localeCompare(a.at)).slice(0, SAMPLES_KEPT) };
 }
 
 /** The facts the guide is written from, and what decides whether a saved
@@ -199,6 +217,7 @@ export function guideFacts(a: MistakeAnalysis): string {
 	for (const u of a.units.slice(0, 6)) {
 		lines.push(`Unit ${u.title}: ${pct(u.accuracy)} of ${u.reps} first tries; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`);
 	}
+	for (const x of a.samples ?? []) lines.push(`Wrong: "${x.sentence}" wanted "${x.answer}", wrote "${x.given || "nothing"}" (${x.unit}${x.slip ? `, ${x.slip}` : ""}).`);
 	for (const w of a.words) lines.push(`Missed ${w.misses}×: ${w.lemma} (wanted "${w.answer}", last wrote "${w.lastGiven}").`);
 	for (const m of a.mixups.slice(0, 8)) lines.push(m.status === "active" ? `Mixes up ${m.words.join(" / ")} (${m.misses} misses).` : `Not tested yet but the same pattern: ${m.words.join(" / ")}.`);
 	return lines.join("\n");
@@ -212,4 +231,51 @@ export function digest(text: string): string {
 		h = Math.imul(h, 0x01000193) >>> 0;
 	}
 	return h.toString(16).padStart(8, "0");
+}
+
+/** What the guide says, as the model returns it (src/server/mistakes-guide.ts). */
+export interface GuideData {
+	/** What keeps going wrong: the pattern behind several misses. */
+	patterns: Array<{ title: string; evidence: string; why: string; fix: string }>;
+	/** What may trip the learner next: guesses, said as guesses. */
+	next: Array<{ what: string; why: string }>;
+	/** What to do this week, each tied to something the app can open. */
+	plan: Array<{ step: string; kind: "mixups" | "unit" | "review" | "other"; unit?: string }>;
+}
+
+const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.replace(/s+/g, " ").trim().slice(0, max) : "");
+
+/** The guide's JSON from the model's text, or null when it is not one: a
+ *  reply wrapped in prose or fences is cut to its outermost braces; every
+ *  field is a bounded string and every list is capped, so a bad reply cannot
+ *  fill the page. */
+export function parseGuide(text: string): GuideData | null {
+	const from = text.indexOf("{");
+	const to = text.lastIndexOf("}");
+	if (from < 0 || to <= from) return null;
+	let raw: Record<string, unknown>;
+	try {
+		raw = JSON.parse(text.slice(from, to + 1)) as Record<string, unknown>;
+	} catch {
+		return null;
+	}
+	const list = (v: unknown): Array<Record<string, unknown>> => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : []);
+	const patterns = list(raw.patterns)
+		.slice(0, 4)
+		.map((p) => ({ title: clip(p.title, 90), evidence: clip(p.evidence, 260), why: clip(p.why, 300), fix: clip(p.fix, 300) }))
+		.filter((p) => p.title && p.why);
+	if (!patterns.length) return null;
+	const next = list(raw.next)
+		.slice(0, 4)
+		.map((n) => ({ what: clip(n.what, 90), why: clip(n.why, 240) }))
+		.filter((n) => n.what);
+	const plan = list(raw.plan)
+		.slice(0, 4)
+		.map((p) => {
+			const unit = typeof p.unit === "string" && isUnitId(p.unit) ? p.unit : undefined;
+			const kind: GuideData["plan"][number]["kind"] = p.kind === "mixups" || p.kind === "review" ? p.kind : p.kind === "unit" && unit ? "unit" : "other";
+			return { step: clip(p.step, 200), kind, ...(kind === "unit" ? { unit } : {}) };
+		})
+		.filter((p) => p.step);
+	return { patterns, next, plan };
 }

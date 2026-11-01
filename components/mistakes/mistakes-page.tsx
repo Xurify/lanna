@@ -13,7 +13,9 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, LoaderCircleIcon, PlusIcon, R
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, type GuideData, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
+import { AiCallout } from "@/components/ai-callout";
+import { SettingsLink } from "@/components/settings/settings-link";
 import type { MistakesReport } from "@/src/server";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
@@ -82,8 +84,13 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					</button>
 				</div>
 				{error && (
-					<p role="alert" className="mt-3 font-prose text-sm text-miss" data-testid="mistakes-error">
+					<p role="alert" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-prose text-sm text-miss" data-testid="mistakes-error">
 						{error}
+						{/Settings/.test(error) && (
+							<SettingsLink keys={/key/i.test(error)} className="font-ui text-xs font-bold text-foreground underline underline-offset-2">
+								Open Settings
+							</SettingsLink>
+						)}
 					</p>
 				)}
 
@@ -124,36 +131,89 @@ function Section({ id, title, line, children }: { id: string; title: string; lin
 	);
 }
 
-/** The guide is plain text in three "## " sections of "- " lines. */
-function GuideText({ text }: { text: string }) {
-	const blocks: Array<{ title?: string; lines: string[] }> = [];
-	for (const raw of text.split("\n")) {
-		const line = raw.trim();
-		if (!line) continue;
-		if (line.startsWith("## ")) blocks.push({ title: line.slice(3), lines: [] });
-		else {
-			if (!blocks.length) blocks.push({ lines: [] });
-			blocks[blocks.length - 1]!.lines.push(line.replace(/^[-*]\s+/, ""));
-		}
-	}
+const STEP_HREF = (p: GuideData["plan"][number]): string | null => (p.kind === "mixups" ? "/lesson?mode=mixups" : p.kind === "unit" && p.unit ? `/lesson?unit=${p.unit}` : p.kind === "review" ? "/review" : null);
+
+/** The guide as the model wrote it: the patterns behind the misses, what may
+ *  trip you next (said as guesses), and a plan whose steps open the app. */
+function GuideBody({ data }: { data: GuideData }) {
 	return (
-		<div className="flex flex-col gap-4">
-			{blocks.map((b, i) => (
-				<div key={i}>
-					{b.title && <h3 className="font-ui text-sm font-bold text-foreground">{b.title}</h3>}
-					<ul className="mt-1 flex list-disc flex-col gap-1 pl-5 font-prose text-base text-foreground marker:text-muted-foreground">
-						{b.lines.map((l, j) => (
-							<li key={j}>{l}</li>
+		<div className="flex flex-col gap-5" data-testid="guide-body">
+			<div className="flex flex-col gap-3">
+				<h3 className="font-ui text-sm font-bold text-foreground">What keeps going wrong</h3>
+				{data.patterns.map((p) => (
+					<article key={p.title} className="rounded-xl border bg-background p-4">
+						<h4 className="font-ui text-sm font-bold text-foreground">{p.title}</h4>
+						{p.evidence && (
+							<p className="mt-1 font-prose text-sm text-muted-foreground" lang="sk">
+								{p.evidence}
+							</p>
+						)}
+						<dl className="mt-2 grid gap-x-3 gap-y-1 font-prose text-sm text-foreground sm:grid-cols-[4rem_1fr]">
+							<dt className="font-ui text-xs font-bold text-muted-foreground">Why</dt>
+							<dd>{p.why}</dd>
+							{p.fix && (
+								<>
+									<dt className="font-ui text-xs font-bold text-muted-foreground">Fix</dt>
+									<dd>{p.fix}</dd>
+								</>
+							)}
+						</dl>
+					</article>
+				))}
+			</div>
+			{data.next.length > 0 && (
+				<div>
+					<h3 className="font-ui text-sm font-bold text-foreground">What may trip you next</h3>
+					<p className="font-prose text-xs text-muted-foreground">Guesses from your pairs and trends, not tested yet.</p>
+					<ul className="mt-2 flex list-disc flex-col gap-1 pl-5 font-prose text-sm text-foreground marker:text-muted-foreground">
+						{data.next.map((n) => (
+							<li key={n.what}>
+								<b>{n.what}</b>
+								{n.why ? ` — ${n.why}` : ""}
+							</li>
 						))}
 					</ul>
 				</div>
-			))}
+			)}
+			{data.plan.length > 0 && (
+				<div>
+					<h3 className="font-ui text-sm font-bold text-foreground">Do this week</h3>
+					<ul className="mt-2 flex flex-col divide-y rounded-xl border bg-background">
+						{data.plan.map((p) => {
+							const href = STEP_HREF(p);
+							return (
+								<li key={p.step} className="flex items-center justify-between gap-3 px-3 py-2">
+									<span className="font-prose text-sm text-foreground">{p.step}</span>
+									{href && (
+										<Link href={href} className={cn(SECONDARY, SMALL, "shrink-0 pointer-coarse:min-h-11")}>
+											Open
+											<ArrowRightIcon className="size-4" />
+										</Link>
+									)}
+								</li>
+							);
+						})}
+					</ul>
+				</div>
+			)}
 		</div>
 	);
 }
 
+/** A reply that could not be read as the three parts is shown as it came. */
+function GuideText({ text }: { text: string }) {
+	return <p className="whitespace-pre-line font-prose text-sm text-foreground">{text}</p>;
+}
+
+const GUIDE_ADDS = [
+	"Finds the pattern behind several mistakes, not just how many there were",
+	"Explains why it happens and how to fix it, from your own wrong sentences",
+	"Guesses what may trip you next, beyond the word pairs the app already knows",
+	"Writes a plan for the week, with a button for each step",
+];
+
 function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: boolean; onWrite: (force: boolean) => void }) {
-	const { guide, guideCurrent, modelReady } = report;
+	const { guide, guideCurrent, ai } = report;
 	return (
 		<section className="mt-8 rounded-2xl border-2 bg-card p-5" aria-labelledby="guide-title" data-testid="mistakes-guide">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -169,19 +229,21 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 				)}
 			</div>
 			{guide ? (
-				<div className="mt-3">
-					<GuideText text={guide.text} />
-				</div>
+				<div className="mt-3">{guide.data ? <GuideBody data={guide.data} /> : <GuideText text={guide.text} />}</div>
+			) : ai.ready ? (
+				<p className="mt-2 font-prose text-sm text-muted-foreground">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Cheap model and runs once per set of answers.</p>
 			) : (
-				<p className="mt-2 font-prose text-sm text-muted-foreground">A short plan written from the figures below: what keeps going wrong, what may trip you next, and what to do this week.</p>
+				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={GUIDE_ADDS} className="mt-3" />
 			)}
-			<div className="mt-4 flex flex-wrap items-center gap-3">
-				<button type="button" disabled={busy || !modelReady || (!!guide && guideCurrent)} onClick={() => onWrite(false)} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-write-guide">
-					{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
-					{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
-				</button>
-				{!modelReady && <p className="font-prose text-xs text-muted-foreground">A guide needs a model: set one in Settings → Keys. Everything else on this page works without one.</p>}
-			</div>
+			{ai.ready && (
+				<div className="mt-4 flex flex-wrap items-center gap-3">
+					<button type="button" disabled={busy || (!!guide && guideCurrent)} onClick={() => onWrite(false)} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-write-guide">
+						{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
+						{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
+					</button>
+				</div>
+			)}
+			{!ai.ready && guide && <AiCallout status={ai} title="AI is off, so this guide cannot be refreshed" adds={[]} className="mt-4" />}
 		</section>
 	);
 }

@@ -60,8 +60,8 @@ import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
 import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
-import { readSettings } from "../store/settings.ts";
 import { DEFAULT_DAYS_PER_WEEK } from "../core/onboarding.ts";
+import { aiMissing, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { resolveWord, storyEngine } from "./reading.ts";
 
 // ─── A unified frequency order ──────────────────────────────────────────────
@@ -361,16 +361,25 @@ export async function addCustomMilestone(textRaw: string, opts: CustomOptions = 
 	}
 	const now = opts.now ?? new Date();
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:faux" } : storyEngine();
-	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → Models.");
+	if (!opts.engine) {
+		const status = aiStatus();
+		if (!status.ready) throw new Error(aiMissing(status));
+	}
+	if (!resolved) throw new Error(aiMissing({ ready: false, reason: "no-model" }));
 	const usage = { model: resolved.model, steps: [] as ReturnType<typeof stepOf>[] };
-	const { text: answer } = await runSubagent([], {
-		role: "researcher",
-		engine: resolved.engine,
-		systemPrompt: SYSTEM,
-		prompt: `The learner wrote: "${text}"`,
-		maxTurns: 1,
-		onUsage: (u) => usage.steps.push(stepOf(u)),
-	});
+	let answer: string;
+	try {
+		({ text: answer } = await runSubagent([], {
+			role: "researcher",
+			engine: resolved.engine,
+			systemPrompt: SYSTEM,
+			prompt: `The learner wrote: "${text}"`,
+			maxTurns: 1,
+			onUsage: (u) => usage.steps.push(stepOf(u)),
+		}));
+	} catch (err) {
+		throw new Error(friendlyAiError(err));
+	}
 	const mapping: CustomMapping = parseCustomMapping(answer, text);
 	const record: CustomMilestoneRecord = { def: customMilestone(text, mapping), text, mapping, model: resolved.model, usage, createdAt: now.toISOString() };
 	milestoneStore.upsert(record);
@@ -383,6 +392,5 @@ export function removeCustomMilestone(id: string, now = new Date()): boolean {
 
 /** Whether a model is configured for the custom mapping. */
 export function customMilestonesAvailable(): boolean {
-	const models = readSettings()?.models;
-	return !!(models?.cheap?.model || models?.strong?.model);
+	return aiStatus().ready;
 }

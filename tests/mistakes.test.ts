@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { analyseMistakes, digest, guideFacts, trendOf, TREND_MIN_REPS, type LoggedLesson } from "../src/core/mistakes.ts";
+import { analyseMistakes, digest, guideFacts, parseGuide, SAMPLES_KEPT, trendOf, TREND_MIN_REPS, type LoggedLesson } from "../src/core/mistakes.ts";
 
 const NOW = new Date("2026-11-01T12:00:00Z");
 const day = (back: number) => new Date(NOW.getTime() - back * 86_400_000).toISOString();
@@ -107,4 +107,33 @@ test("the guide's digest follows its facts, not the time the snapshot was taken"
 	const c = analyseMistakes([lesson(1, many(6, 2))], undefined, NOW);
 	assert.notEqual(digest(guideFacts(a)), digest(guideFacts(c)));
 	assert.match(guideFacts(a), /Unit .*: 50% of 6 first tries/);
+});
+
+test("the wrong first tries are kept for the guide: newest first, capped, with the sentence and what was written", () => {
+	const wrong = (n: number) => rep(false, { sentence: `Veta ${n}.`, answer: `a${n}`, first: { given: `g${n}`, verdict: "wrong" } });
+	const a = analyseMistakes([lesson(3, Array.from({ length: 20 }, (_, i) => wrong(i))), lesson(1, [wrong(99), rep(false, { sentence: undefined })])], undefined, NOW);
+	assert.equal(a.samples?.length, SAMPLES_KEPT);
+	assert.equal(a.samples?.[0]?.sentence, "Veta 99.", "newest first");
+	assert.deepEqual(a.samples?.[0] && { answer: a.samples[0].answer, given: a.samples[0].given, slip: a.samples[0].slip }, { answer: "a99", given: "g99", slip: "base" });
+	assert.match(guideFacts(a), /Wrong: "Veta 99\." wanted "a99", wrote "g99" \(.*, base\)\./);
+});
+
+test("the guide's reply is read as patterns, guesses and a plan; anything else is not trusted", () => {
+	const reply = JSON.stringify({
+		patterns: [{ title: "Endings after v", evidence: '"Bývam v dom"', why: "The locative ending is dropped.", fix: "Say the -e out loud." }, { title: "", why: "x" }],
+		next: [{ what: "nič / niečo", why: "Same pattern as nikto / niekto." }],
+		plan: [{ step: "Practise pairs", kind: "mixups" }, { step: "Lesson", kind: "unit", unit: "loc" }, { step: "Bad unit", kind: "unit", unit: "nope" }, { step: "Cards", kind: "review" }, { step: "", kind: "review" }],
+	});
+	const data = parseGuide(`Here you go:\n\`\`\`json\n${reply}\n\`\`\``)!;
+	assert.equal(data.patterns.length, 1, "a pattern with no title is dropped");
+	assert.equal(data.plan.length, 4);
+	assert.deepEqual(data.plan.map((p) => p.kind), ["mixups", "unit", "other", "review"], "an unknown unit is not a link");
+	assert.equal(data.plan[1]!.unit, "loc");
+	assert.equal(data.next[0]!.what, "nič / niečo");
+	assert.equal(parseGuide("no json here"), null);
+	assert.equal(parseGuide('{"patterns":[]}'), null, "nothing to say is not a guide");
+	assert.equal(parseGuide("{broken"), null);
+	const long = parseGuide(JSON.stringify({ patterns: [{ title: "t".repeat(500), why: "w".repeat(900) }] }))!;
+	assert.equal(long.patterns[0]!.title.length, 90);
+	assert.equal(long.patterns[0]!.why.length, 300);
 });

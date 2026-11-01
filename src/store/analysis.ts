@@ -9,11 +9,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import type { MistakeAnalysis } from "../core/mistakes.ts";
+import type { GuideData, MistakeAnalysis } from "../core/mistakes.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
 export interface GuideRecord {
+	/** The model's reply as written; the page shows it when `data` could not be read from it. */
 	text: string;
+	/** The reply read as patterns, guesses and a plan (src/core/mistakes.ts parseGuide). */
+	data?: GuideData | null;
 	/** When it was written (ISO). */
 	at: string;
 	/** Digest of the facts it was written from (src/core/mistakes.ts guideFacts). */

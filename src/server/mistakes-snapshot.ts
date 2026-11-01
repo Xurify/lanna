@@ -10,27 +10,22 @@ import type { UnitId } from "../core/lesson.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
 import { progressStore } from "../store/progress.ts";
-import { readSettings } from "../store/settings.ts";
+import { aiStatus, type AiStatus } from "./ai-status.ts";
 
 export interface MistakesReport {
 	analysis: MistakeAnalysis;
 	guide: GuideRecord | null;
 	/** The guide was written from the facts the analysis has now. */
 	guideCurrent: boolean;
-	/** A model is set, so a guide can be written. */
-	modelReady: boolean;
+	/** Whether a model can be called (a slot is set and its key is there). */
+	ai: AiStatus;
 }
 
 /** The snapshot is read again after a lesson once it is this old. */
 export const SNAPSHOT_MAX_AGE_MS = 6 * 3_600_000;
 
-export function guideAvailable(): boolean {
-	const models = readSettings()?.models;
-	return !!(models?.cheap?.model || models?.strong?.model);
-}
-
 export function mistakesReportOf(analysis: MistakeAnalysis, guide: GuideRecord | null): MistakesReport {
-	return { analysis, guide, guideCurrent: !!guide && guide.digest === digest(guideFacts(analysis)), modelReady: guideAvailable() };
+	return { analysis, guide, guideCurrent: !!guide && guide.digest === digest(guideFacts(analysis)), ai: aiStatus() };
 }
 
 /** The saved snapshot; the first visit takes one. */
