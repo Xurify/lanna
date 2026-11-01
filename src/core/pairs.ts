@@ -15,7 +15,8 @@
  */
 
 import pairsJson from "../../curriculum/slovak/pairs.json";
-import type { LexiconEntry } from "./review.ts";
+import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
+import { LANGUAGES, type LanguageId } from "./language.ts";
 
 export interface PairDef {
 	id: string;
@@ -24,10 +25,18 @@ export interface PairDef {
 	b: string;
 	/** One English line, shown after a second miss. */
 	rule: string;
-	/** One Estonian line, shown after a second miss. */
+	/** One bridge line, shown after a second miss. */
 	bridge: string;
 	/** The chapter that teaches the pair (its unit sits after the forms step). */
 	chapter: string;
+}
+
+const PAIRS_BY_LANGUAGE: Partial<Record<LanguageId, PairDef[]>> = {
+	slovak: (pairsJson as { pairs: PairDef[] }).pairs,
+};
+
+export function getPairsForLanguage(lang: LanguageId = "slovak"): PairDef[] {
+	return PAIRS_BY_LANGUAGE[lang] ?? [];
 }
 
 export const PAIRS: PairDef[] = (pairsJson as { pairs: PairDef[] }).pairs;
@@ -49,13 +58,14 @@ export interface PairSentence {
 /** Every string a lexicon entry attests as a form of itself: the lemma, the
  *  verified generated forms, the hand-checked paradigm, and the cloze
  *  answers of its own examples (attested in sentences). */
-function formsOfEntry(entry: LexiconEntry): string[] {
+function formsOfEntry(entry: LexiconEntry, tag = "sk-SK"): string[] {
 	const out = new Set<string>();
-	for (const f of [entry.sk, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]) {
-		if (f) out.add(f.toLocaleLowerCase("sk-SK"));
+	const lemma = entryLemma(entry);
+	for (const f of [lemma, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]) {
+		if (f) out.add(f.toLocaleLowerCase(tag));
 	}
 	for (const ex of entry.examples) {
-		if (ex.cloze && !ex.rejected) out.add(ex.cloze.answer.toLocaleLowerCase("sk-SK"));
+		if (ex.cloze && !ex.rejected) out.add(ex.cloze.answer.toLocaleLowerCase(tag));
 	}
 	return [...out].filter(Boolean);
 }
@@ -70,7 +80,8 @@ function formRegex(forms: readonly string[]): RegExp {
 	return new RegExp(`(?<![\\p{L}])(${escaped.join("|")})(?![\\p{L}])`, "iu");
 }
 
-const byLemma = (entries: readonly LexiconEntry[], lemma: string) => entries.find((e) => e.sk === lemma);
+const byLemma = (entries: readonly LexiconEntry[], lemma: string) =>
+	entries.find((e) => entryLemma(e) === lemma || e.sk === lemma);
 
 /** The verified examples of the pair's two entries that contain exactly one
  *  of the two forms. The cloze answer is the target; the other twin must
@@ -88,7 +99,7 @@ export function pairSentences(entries: readonly LexiconEntry[], pair: PairDef): 
 	] as const) {
 		entry.examples.forEach((ex, index) => {
 			if (!ex.cloze || ex.rejected) return;
-			if (other.test(ex.sk)) return;
+			if (other.test(exampleText(ex))) return;
 			out.push({ entry, index, member, form: ex.cloze.answer, at: ex.cloze.at });
 		});
 	}

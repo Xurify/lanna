@@ -65,12 +65,12 @@ export function SettingsRow({
 	dimmed?: boolean;
 }) {
 	return (
-		<div data-testid={testid} className={cn("flex items-center justify-between gap-4 py-1", dimmed && "opacity-40")}>
+		<div data-testid={testid} className={cn("flex items-center justify-between gap-4 py-1.5", dimmed && "opacity-40")}>
 			<span className="min-w-0">
 				<span className="block font-prose text-(length:--lh-prose-size)">{label}</span>
 				{hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
 			</span>
-			{children}
+			<div className="shrink-0">{children}</div>
 		</div>
 	);
 }
@@ -131,7 +131,7 @@ export function SettingsSegmented<T extends string | number>({
 	testid: string;
 }) {
 	return (
-		<div role="radiogroup" aria-label={ariaLabel} data-testid={testid} className="flex rounded-lg border border-border/60 bg-muted/30 p-0.5">
+		<div role="radiogroup" aria-label={ariaLabel} data-testid={testid} className="flex shrink-0 rounded-lg border border-border/60 bg-muted/30 p-0.5">
 			{options.map((o) => {
 				const active = o.value === value;
 				return (
@@ -143,7 +143,7 @@ export function SettingsSegmented<T extends string | number>({
 						data-testid={`${testid}-${o.value}`}
 						onClick={() => onChange(o.value)}
 						className={cn(
-							"h-8 rounded-md px-3 text-sm font-medium transition-colors",
+							"h-8 shrink-0 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors",
 							active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
 						)}
 					>

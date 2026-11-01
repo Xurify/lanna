@@ -20,20 +20,28 @@ import shop from "../../curriculum/slovak/scenes/shop.json";
 import station from "../../curriculum/slovak/scenes/station.json";
 import way from "../../curriculum/slovak/scenes/way.json";
 
+import type { LanguageId } from "./language.ts";
+
 export interface SceneOption {
-	/** The line in Slovak. */
-	sk: string;
+	/** Target language line. */
+	text?: string;
+	/** The line in Slovak (legacy). */
+	sk?: string;
 	/** True on the one line that answers the tutor well. */
 	correct?: boolean;
-	/** On the correct option: the lexicon lemmas (their sk form) behind the key words. */
+	/** On the correct option: the lexicon lemmas behind the key words. */
 	lemmas?: string[];
 	/** On a wrong option: the one-line English explanation of the slip. */
 	why?: string;
 }
 
+export function sceneOptionText(opt: SceneOption): string {
+	return opt.text ?? opt.sk ?? "";
+}
+
 export interface ScriptTurn {
-	/** The tutor's line, in Slovak with its English meaning. */
-	tutor: { sk: string; en: string };
+	/** The tutor's line, in target language with its English meaning. */
+	tutor: { text?: string; sk?: string; en: string };
 	/** Exactly three options, exactly one correct. */
 	options: SceneOption[];
 }
@@ -44,19 +52,24 @@ export interface SceneScript {
 	turns: ScriptTurn[];
 }
 
-const RAW: SceneScript[] = [cafe, colleague, doctor, family, hotel, restaurant, shop, station, way].map((s) => s as SceneScript);
+const RAW_BY_LANGUAGE: Partial<Record<LanguageId, SceneScript[]>> = {
+	slovak: [cafe, colleague, doctor, family, hotel, restaurant, shop, station, way].map((s) => s as SceneScript),
+};
 
-const BY_SCENE = new Map(RAW.map((s) => [s.scene, s]));
+const BY_SCENE_BY_LANGUAGE = new Map<LanguageId, Map<string, SceneScript>>();
+for (const [lang, scripts] of Object.entries(RAW_BY_LANGUAGE)) {
+	BY_SCENE_BY_LANGUAGE.set(lang as LanguageId, new Map((scripts as SceneScript[]).map((s) => [s.scene, s])));
+}
 
 /** The scene's script, or undefined when the scene has none. */
-export function scriptFor(sceneId: string): SceneScript | undefined {
-	return BY_SCENE.get(sceneId);
+export function scriptFor(sceneId: string, lang: LanguageId = "slovak"): SceneScript | undefined {
+	return BY_SCENE_BY_LANGUAGE.get(lang)?.get(sceneId);
 }
 
 /** What the grader says about one choice. */
 export interface ScriptGrade {
 	correct: boolean;
-	/** The right line in Slovak — the choice itself when correct, otherwise shown after the retry. */
+	/** The right line — the choice itself when correct, otherwise shown after the retry. */
 	right: string;
 	/** On a wrong choice: the English explanation of the slip. */
 	explanation?: string;
@@ -70,7 +83,7 @@ export function grade(script: SceneScript, turn: number, choice: number): Script
 	if (!t) return undefined;
 	const picked = t.options[choice];
 	if (!picked) return undefined;
-	if (picked.correct) return { correct: true, right: picked.sk };
+	if (picked.correct) return { correct: true, right: sceneOptionText(picked) };
 	const right = t.options.find((o) => o.correct);
-	return { correct: false, right: right?.sk ?? "", explanation: picked.why };
+	return { correct: false, right: right ? sceneOptionText(right) : "", explanation: picked.why };
 }

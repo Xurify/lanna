@@ -1,13 +1,21 @@
 /**
- * GET /api/words — paginated word bank with FSRS retention, filters, and summary stats
+ * GET /api/words — paginated word bank with FSRS retention, filters, summary stats, or single word lookup
+ * POST /api/words — adds a word to the active FSRS word bank / review deck (and optionally favorites it)
  */
 
-import { getWordBank, type WordBankQuery } from "@/src/server";
+import { addWordToBank, getWordBank, lookupSelectionAsync, type WordBankQuery } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
+	const lookup = url.searchParams.get("lookup");
+	if (lookup !== null) {
+		const includeGoogleTranslate = url.searchParams.get("gt") === "1";
+		const res = await lookupSelectionAsync(lookup, { includeGoogleTranslate });
+		return Response.json(res);
+	}
+
 	const search = url.searchParams.get("search") ?? undefined;
 	const pos = url.searchParams.get("pos") ?? undefined;
 	const statusParam = url.searchParams.get("status");
@@ -37,5 +45,28 @@ export async function GET(req: Request) {
 	};
 
 	const result = getWordBank(query);
+	return Response.json(result);
+}
+
+export async function POST(req: Request) {
+	const body = (await req.json().catch(() => null)) as {
+		slug?: unknown;
+		word?: unknown;
+		gloss?: unknown;
+		favorite?: unknown;
+	} | null;
+
+	const target = typeof body?.slug === "string" && body.slug.trim()
+		? body.slug.trim()
+		: typeof body?.word === "string" && body.word.trim()
+			? body.word.trim()
+			: "";
+
+	if (!target) {
+		return Response.json({ message: "slug or word is required" }, { status: 400 });
+	}
+
+	const customGloss = typeof body?.gloss === "string" ? body.gloss.trim() : undefined;
+	const result = addWordToBank(target, body?.favorite === true, customGloss);
 	return Response.json(result);
 }

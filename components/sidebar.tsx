@@ -26,6 +26,8 @@ import { useServerEvent, useServerResync } from "@/components/server-events";
 import type { ChatListItem } from "@/src/core";
 import { kbdEventForAction } from "@/src/core";
 import { notifySettingsSaved } from "@/components/settings-signal";
+import { stopSpeaking } from "@/components/speech";
+import { SelectionWordBankBar } from "@/components/words/selection-word-bank";
 
 /**
  * Toggleable sidebar — NOT a modal drawer: no backdrop, no focus theft. It
@@ -1199,6 +1201,11 @@ function SessionsSidebar() {
 export function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const phoneNav = isPhoneNavPath(pathname);
+
+	useEffect(() => {
+		stopSpeaking();
+	}, [pathname]);
+
 	return (
 		<SettingsDialogProvider>
 			<SessionsSidebar />
@@ -1221,6 +1228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				{children}
 			</main>
 			<PhoneNav pathname={pathname} />
+			<SelectionWordBankBar />
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
 			    matters for the events it dispatches, never for DOM priority. */}

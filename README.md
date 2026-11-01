@@ -67,7 +67,11 @@ npm run dev        # http://localhost:3010
 npm test           # deterministic, no LLM, no network
 ```
 
-See the [development guide](docs/development.md), [architecture](docs/architecture.md), and [desktop release guide](docs/desktop-release.md).
+See the [development guide](docs/development.md), [adding a language guide](docs/adding-a-language.md), [architecture](docs/architecture.md), and [desktop release guide](docs/desktop-release.md).
+
+### Multi-Language Extensibility
+
+LangHarness supports learning any target language with clean data isolation (`<data>/profiles/<language>/`), FSRS-5 spaced repetition, and an extensible registry. To add a new language, see [`docs/adding-a-language.md`](docs/adding-a-language.md) or invoke the `add-language` skill. Ready-to-use presets are available for Czech, Romanian, German, Spanish, and more.
 
 Questions, bug reports, and feature requests: [GitHub Issues](https://github.com/amosblomqvist/learnharness/issues).
 

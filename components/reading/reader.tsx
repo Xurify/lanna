@@ -494,6 +494,13 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 	};
 
 	useEffect(() => {
+		return () => {
+			stop.current = true;
+			stopSpeaking();
+		};
+	}, []);
+
+	useEffect(() => {
 		if (!popover) return;
 		const close = (e: MouseEvent) => {
 			const t = e.target as HTMLElement | null;

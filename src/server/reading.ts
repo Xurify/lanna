@@ -182,10 +182,25 @@ const stemIndex = new WeakMap<Lexicon, Map<string, Stemmed[]>>();
  *  kaviareň → kaviarn-, začiatok → začiatk-). */
 function stemsOf(folded: string, infinitive: boolean): string[] {
 	const out = new Set<string>();
-	if (infinitive && folded.length > 3) out.add(folded.slice(0, -1));
-	else {
+	if (infinitive && folded.length > 3) {
+		out.add(folded.slice(0, -1));
+		// -ovať verbs conjugate with -uj- (pracovať → pracujem, potrebovať → potrebujem)
+		if (folded.endsWith("ovat") && folded.length > 5) {
+			out.add(folded.slice(0, -4) + "uj");
+		}
+		// Verb root before infinitive vowel (-iť, -ať, -ieť, -núť → robia, vidia)
+		const root = folded.replace(/(?:iet|nut|at|it|ut)$/, "");
+		if (root.length >= 3) out.add(root);
+	} else {
 		const bare = folded.replace(/[aeiouy]$/, "");
 		if (bare.length >= 2) out.add(bare);
+		// -ia / -ie nouns (reštaurácia → reštauráci-u, námestie → námest-ia)
+		const bareMulti = folded.replace(/(?:ia|ie)$/, "");
+		if (bareMulti.length >= 3) out.add(bareMulti);
+		// Latin/Greek -um loanwords (múzeum → múze-a, centrum → centr-a, štúdium → štúdi-a)
+		if (folded.endsWith("um") && folded.length > 4) {
+			out.add(folded.slice(0, -2));
+		}
 		// The fleeting vowel: kaviareň → kaviarn-e, cukor → cukr-u, pes → ps-a.
 		const m = /^(.*[^aeiouy])[eo]([^aeiouy])$/.exec(folded);
 		if (m) out.add(m[1]! + m[2]!);
@@ -205,9 +220,10 @@ function stems(lexicon: Lexicon): Map<string, Stemmed[]> {
 	if (idx) return idx;
 	idx = new Map();
 	for (const entry of lexicon.entries) {
-		if (/\s/.test(entry.sk)) continue; // phrases are matched whole, by form
-		const folded = foldDiacritics(entry.sk.toLocaleLowerCase(tag()));
-		for (const stem of stemsOf(folded, entry.sk.endsWith("ť"))) {
+		const rawSk = entry.sk.toLocaleLowerCase(tag()).replace(/\s+s[ai]$/, "");
+		if (/\s/.test(rawSk)) continue; // multi-word phrases (other than reflexive verbs) are matched whole
+		const folded = foldDiacritics(rawSk);
+		for (const stem of stemsOf(folded, rawSk.endsWith("ť"))) {
 			const key = stem.slice(0, 2);
 			const list = idx.get(key) ?? [];
 			list.push({ entry, stem, folded });

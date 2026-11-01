@@ -2,58 +2,168 @@
 
 /**
  * A tappable word (LangHarness, 2026-10-28) — shared by the Read and
- * Watch tasks. The popover under the word shows the dictionary form, the
- * form "here", the gloss, the part of speech and whether the word is new
- * to the learner. A fresh word carries a dotted underline so the eye
+ * Watch tasks. The popover under (or above) the word shows the dictionary
+ * form, the form "here", the gloss, the part of speech and whether the word
+ * is new to the learner. A fresh word carries a dotted underline so the eye
  * knows where the new ground is; a word looked up keeps a faint mark.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { StarIcon, Volume2Icon } from "lucide-react";
+import { BookmarkCheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
+import { useWordTranslationMode } from "@/components/settings/device-prefs";
 import type { StoryToken } from "@/src/core";
+
+interface LookupFallback {
+	slug?: string;
+	lemma?: string;
+	gloss?: string;
+	surfaceGloss?: string;
+	googleTranslation?: string;
+	langCode?: string;
+	langTag?: string;
+	langEnglish?: string;
+	referenceUrl?: string;
+	referenceLabel?: string;
+	slovakWikiUrl?: string;
+	pos?: string;
+	gender?: string;
+	formNote?: string;
+	source?: string;
+	favorite?: boolean;
+	inDeck?: boolean;
+}
 
 /** One tappable word. A fresh word (not met before) carries a dotted
  *  underline so the eye knows where the new ground is; a word looked up
- *  keeps a faint mark. The popover opens under the word. */
+ *  keeps a faint mark. The popover opens above or under the word depending on viewport space. */
 export function Word({ token, looked, open, onOpen, onClose }: { token: StoryToken; looked: boolean; open: boolean; onOpen: () => void; onClose: () => void }) {
 	const ref = useRef<HTMLSpanElement>(null);
 	const [side, setSide] = useState<"left" | "right">("left");
+	const [placeAbove, setPlaceAbove] = useState(false);
 	const [isFav, setIsFav] = useState(false);
+	const [inDeck, setInDeck] = useState(false);
+	const [addingToBank, setAddingToBank] = useState(false);
+	const [lookupData, setLookupData] = useState<LookupFallback | null>(null);
+	const [loadingLookup, setLoadingLookup] = useState(false);
+	const [translationMode] = useWordTranslationMode();
+	const activeLang = useActiveLanguage();
 
 	useEffect(() => {
 		if (!open) return;
-		const s = token.slug ?? token.lemma ?? token.text;
+		const s = token.text || token.slug || token.lemma;
 		if (s) {
-			void fetch(`/api/words/favorite?slug=${encodeURIComponent(s)}`)
+			setLoadingLookup(true);
+			const wantGt = translationMode !== "dictionary";
+			void fetch(`/api/words?lookup=${encodeURIComponent(s)}${wantGt ? "&gt=1" : ""}`)
 				.then((r) => r.json())
-				.then((d) => {
-					if (typeof (d as { favorite?: unknown })?.favorite === "boolean") {
-						setIsFav((d as { favorite: boolean }).favorite);
-					}
+				.then((d: LookupFallback) => {
+					setLookupData(d);
+					if (typeof d?.favorite === "boolean") setIsFav(d.favorite);
+					if (typeof d?.inDeck === "boolean") setInDeck(d.inDeck);
 				})
-				.catch(() => {});
+				.catch(() => {})
+				.finally(() => setLoadingLookup(false));
 		}
-	}, [open, token]);
+	}, [open, token, translationMode]);
+
+	const langCode = lookupData?.langCode ?? activeLang?.code ?? "sk";
+	const langTag = lookupData?.langTag ?? activeLang?.tag ?? "sk-SK";
+	const langEnglish = lookupData?.langEnglish ?? activeLang?.english ?? "Slovak";
+
+	const resolvedSlug = token.slug ?? lookupData?.slug ?? token.lemma ?? token.text;
+	const resolvedLemma = token.lemma ?? lookupData?.lemma ?? token.text;
+	const dictGloss = token.gloss ?? lookupData?.gloss;
+	const resolvedGloss =
+		translationMode === "google"
+			? lookupData?.googleTranslation ?? dictGloss
+			: dictGloss ?? lookupData?.googleTranslation;
+	const secondaryGoogleGloss =
+		translationMode === "hybrid" &&
+		lookupData?.googleTranslation &&
+		dictGloss &&
+		lookupData.googleTranslation.toLocaleLowerCase("en") !== dictGloss.toLocaleLowerCase("en") &&
+		!dictGloss.toLocaleLowerCase("en").includes(lookupData.googleTranslation.toLocaleLowerCase("en"))
+			? `Google: "${lookupData.googleTranslation}"`
+			: undefined;
+	const resolvedCat = token.cat ?? lookupData?.pos;
+	const resolvedGender = token.gender ?? lookupData?.gender;
+	const resolvedFormNote = lookupData?.formNote;
 
 	const toggleFav = async () => {
-		const s = token.slug ?? token.lemma ?? token.text;
-		if (!s) return;
+		if (!resolvedSlug) return;
 		setIsFav((prev) => !prev);
 		await fetch("/api/words/favorite", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ slug: s }),
+			body: JSON.stringify({ slug: resolvedSlug }),
 		}).catch(() => {});
+	};
+
+	const handleAddToBank = async () => {
+		if (!resolvedSlug || addingToBank) return;
+		setAddingToBank(true);
+		setInDeck(true);
+		setIsFav(true);
+		try {
+			await fetch("/api/words", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					slug: resolvedSlug,
+					word: token.text,
+					gloss: resolvedGloss ?? "",
+					favorite: true,
+				}),
+			});
+		} catch {
+			// ignore
+		} finally {
+			setAddingToBank(false);
+		}
 	};
 
 	useEffect(() => {
 		if (!open || !ref.current) return;
-		const r = ref.current.getBoundingClientRect();
-		const column = (ref.current.closest("[data-word-column]") ?? ref.current.closest("article"))?.getBoundingClientRect();
-		if (column) setSide(r.left - column.left > column.width * 0.55 ? "right" : "left");
+		const updatePosition = () => {
+			if (!ref.current) return;
+			const r = ref.current.getBoundingClientRect();
+			const column = (ref.current.closest("[data-word-column]") ?? ref.current.closest("article"))?.getBoundingClientRect();
+			if (column) setSide(r.left - column.left > column.width * 0.55 ? "right" : "left");
+			setPlaceAbove(r.bottom > window.innerHeight - 250 && r.top > 220);
+		};
+
+		updatePosition();
+		window.addEventListener("resize", updatePosition);
+		window.addEventListener("scroll", updatePosition, true);
+		window.visualViewport?.addEventListener("resize", updatePosition);
+		window.visualViewport?.addEventListener("scroll", updatePosition);
+
+		return () => {
+			window.removeEventListener("resize", updatePosition);
+			window.removeEventListener("scroll", updatePosition, true);
+			window.visualViewport?.removeEventListener("resize", updatePosition);
+			window.visualViewport?.removeEventListener("scroll", updatePosition);
+		};
 	}, [open]);
+
+	const encodedWord = encodeURIComponent(token.text);
+	const refSite = activeLang?.referenceSite;
+	const referenceUrl =
+		lookupData?.referenceUrl ??
+		(refSite
+			? resolvedSlug
+				? `${refSite.baseUrl}/dictionary/${encodeURIComponent(resolvedSlug)}`
+				: `${refSite.baseUrl}/search?q=${encodedWord}`
+			: undefined);
+	const referenceLabel = lookupData?.referenceLabel ?? refSite?.label;
+
+	const wiktionaryUrl = `https://en.wiktionary.org/wiki/${encodedWord}#${encodeURIComponent(langEnglish)}`;
+	const googleTranslateUrl = `https://translate.google.com/?sl=${encodeURIComponent(langCode)}&tl=en&text=${encodedWord}&op=translate`;
+	const deeplUrl = `https://www.deepl.com/translator#${encodeURIComponent(langCode)}/en/${encodedWord}`;
+	const forvoUrl = `https://forvo.com/word/${encodedWord}/#${encodeURIComponent(langCode)}`;
+
 	return (
 		<span ref={ref} className="relative inline">
 			<button
@@ -75,20 +185,24 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					data-word-popover
 					role="dialog"
 					aria-label={`About ${token.text}`}
-					className={cn("lh-pop absolute top-full z-10 mt-2 block w-max min-w-[13rem] max-w-[22rem] rounded-2xl border-2 bg-card p-4 text-left font-prose text-base shadow-lg", side === "left" ? "left-0" : "right-0")}
+					className={cn(
+						"lh-pop absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-2xl border-2 bg-card p-4 text-left font-prose text-base shadow-xl",
+						placeAbove ? "bottom-full mb-2" : "top-full mt-2",
+						side === "left" ? "left-0" : "right-0",
+					)}
 					data-testid="word-popover"
 				>
 					<span className="flex items-baseline justify-between gap-3">
-						<span className="font-ui text-xl font-black text-foreground" lang="sk">
-							{token.lemma ?? token.text}
+						<span className="font-ui text-xl font-black text-foreground" lang={langCode}>
+							{resolvedLemma}
 						</span>
 						<span className="flex items-center gap-1">
 							<button
 								type="button"
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={() => void toggleFav()}
-								aria-label={isFav ? "Odstrániť z obľúbených" : "Pridať k obľúbeným"}
-								title={isFav ? "Odstrániť z obľúbených" : "Pridať k obľúbeným"}
+								aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+								title={isFav ? "Remove from favorites" : "Add to favorites"}
 								className={cn("rounded-md p-1 transition-colors", isFav ? "text-gold hover:bg-gold/20" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
 							>
 								<StarIcon className={cn("size-4", isFav && "fill-gold")} />
@@ -96,7 +210,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							<button
 								type="button"
 								onMouseDown={(e) => e.preventDefault()}
-								onClick={() => void speak(token.lemma ?? token.text).catch(() => {})}
+								onClick={() => void speak(resolvedLemma).catch(() => {})}
 								aria-label="Play the word"
 								className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 							>
@@ -104,19 +218,104 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							</button>
 						</span>
 					</span>
-					{token.lemma && token.lemma.toLocaleLowerCase("sk-SK") !== token.text.toLocaleLowerCase("sk-SK") && (
+					{(resolvedLemma.toLocaleLowerCase(langTag) !== token.text.toLocaleLowerCase(langTag) || resolvedFormNote) && (
 						<span className="block font-ui text-xs text-muted-foreground">
-							here: <span lang="sk">{token.text}</span>
+							here: <span className="font-semibold text-foreground/80" lang={langCode}>{token.text}</span>
+							{resolvedFormNote ? ` (${resolvedFormNote})` : ""}
 						</span>
 					)}
-					<span className="mt-1 block leading-snug text-foreground">{token.gloss ?? "Not in the dictionary yet."}</span>
-					{(token.cat || token.gender || token.fresh) && (
+					<span className="mt-1 block leading-snug text-foreground">
+						{resolvedGloss ? (
+							<>
+								<span className="block">{resolvedGloss}</span>
+								{secondaryGoogleGloss && (
+									<span className="mt-0.5 block font-ui text-xs text-muted-foreground">
+										{secondaryGoogleGloss}
+									</span>
+								)}
+							</>
+						) : loadingLookup ? (
+							<span className="inline-block h-4 w-32 animate-pulse rounded bg-accent align-middle" />
+						) : (
+							"Tap a dictionary link below to inspect."
+						)}
+					</span>
+					{(resolvedCat || resolvedGender || token.fresh || lookupData?.source === "translated") && (
 						<span className="mt-1.5 flex flex-wrap gap-1.5">
-							{token.cat && <Tag>{token.cat.toLowerCase()}</Tag>}
-							{token.gender && <Tag>{token.gender}</Tag>}
+							{resolvedCat && <Tag>{resolvedCat.toLowerCase()}</Tag>}
+							{resolvedGender && <Tag>{resolvedGender}</Tag>}
 							{token.fresh && <Tag className="bg-xp/15 text-xp">new word</Tag>}
+							{lookupData?.source === "translated" && <Tag className="bg-sky/15 text-sky">translated</Tag>}
 						</span>
 					)}
+					<span className="mt-2 flex flex-wrap items-center gap-2 font-ui text-[11px] text-muted-foreground">
+						{referenceUrl && referenceLabel && (
+							<>
+								<a
+									href={referenceUrl}
+									target="_blank"
+									rel="noreferrer"
+									className="inline-flex items-center gap-0.5 font-semibold text-foreground/90 hover:text-foreground hover:underline"
+								>
+									{referenceLabel} <ExternalLinkIcon className="size-2.5" />
+								</a>
+								<span>·</span>
+							</>
+						)}
+						<a
+							href={wiktionaryUrl}
+							target="_blank"
+							rel="noreferrer"
+							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+						>
+							Wiktionary <ExternalLinkIcon className="size-2.5" />
+						</a>
+						<span>·</span>
+						<a
+							href={deeplUrl}
+							target="_blank"
+							rel="noreferrer"
+							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+						>
+							DeepL <ExternalLinkIcon className="size-2.5" />
+						</a>
+						<span>·</span>
+						<a
+							href={forvoUrl}
+							target="_blank"
+							rel="noreferrer"
+							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+						>
+							Forvo <ExternalLinkIcon className="size-2.5" />
+						</a>
+					</span>
+					<span className="mt-2.5 block border-t border-border/50 pt-2.5">
+						<button
+							type="button"
+							onMouseDown={(e) => e.preventDefault()}
+							onClick={() => void handleAddToBank()}
+							disabled={inDeck && isFav}
+							data-testid="word-popover-add-bank"
+							className={cn(
+								"flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-bold transition-colors",
+								inDeck && isFav
+									? "bg-go/15 text-go"
+									: "bg-accent text-foreground hover:bg-go hover:text-primary-foreground",
+							)}
+						>
+							{inDeck && isFav ? (
+								<>
+									<BookmarkCheckIcon className="size-3.5" />
+									In Word Bank
+								</>
+							) : (
+								<>
+									<PlusIcon className="size-3.5" />
+									Add to Word Bank
+								</>
+							)}
+						</button>
+					</span>
 				</span>
 			)}
 		</span>
@@ -124,6 +323,5 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 }
 
 export function Tag({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <span className={cn("rounded-full bg-accent px-2 py-0.5 font-ui text-[11px] font-bold text-muted-foreground", className)}>{children}</span>;
+	return <span className={cn(" rounded-md bg-accent px-2 py-0.5 font-ui text-xs font-semibold text-muted-foreground", className)}>{children}</span>;
 }
-

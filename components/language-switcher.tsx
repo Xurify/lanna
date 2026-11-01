@@ -7,11 +7,25 @@
  * relaunches itself; under `next dev` the learner restarts the server.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenIcon, MapIcon, RepeatIcon, SunIcon, TargetIcon } from "lucide-react";
+import {
+	BookOpenIcon,
+	CheckIcon,
+	ChevronDownIcon,
+	GlobeIcon,
+	MapIcon,
+	PlusIcon,
+	RepeatIcon,
+	SunIcon,
+	TargetIcon,
+	XIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MenuShell } from "@/components/menu-shell";
+import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 
 interface ProfileInfo {
 	active: string;
@@ -31,7 +45,12 @@ export function LanguageSwitcher() {
 	const [profile, setProfile] = useState<ProfileInfo | null>(null);
 	const [counts, setCounts] = useState<Counts | null>(null);
 	const [note, setNote] = useState<string | null>(null);
+	const [open, setOpen] = useState(false);
 	const [pending, setPending] = useState<{ id: string; label: string } | null>(null);
+	const [showAddHelp, setShowAddHelp] = useState(false);
+
+	const triggerRef = useRef<HTMLButtonElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
 
 	const refresh = useCallback(() => {
 		void fetch("/api/profile")
@@ -52,9 +71,30 @@ export function LanguageSwitcher() {
 		return () => window.removeEventListener("lh:review-changed", refresh);
 	}, [refresh]);
 
-	// Switching restarts the app, so the choice waits for an inline confirm
-	// (custom UI, no native confirm dialog).
+	// Close menu on outside click or Esc
+	useEffect(() => {
+		if (!open) return;
+		const onDown = (e: PointerEvent) => {
+			if (triggerRef.current?.contains(e.target as Node)) return;
+			if (menuRef.current?.contains(e.target as Node)) return;
+			setOpen(false);
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				e.stopPropagation();
+				setOpen(false);
+			}
+		};
+		document.addEventListener("pointerdown", onDown);
+		document.addEventListener("keydown", onKey);
+		return () => {
+			document.removeEventListener("pointerdown", onDown);
+			document.removeEventListener("keydown", onKey);
+		};
+	}, [open]);
+
 	const choose = (id: string, label: string) => {
+		setOpen(false);
 		if (!profile || id === profile.selected) return;
 		setPending({ id, label });
 	};
@@ -77,65 +117,226 @@ export function LanguageSwitcher() {
 
 	const reviewDue = counts ? counts.due + counts.learning : 0;
 	const reviewNew = counts?.newLeft ?? 0;
+	const activeProfile = profile?.profiles.find((p) => p.id === profile.active);
+	const pendingProfile = pending ? profile?.profiles.find((p) => p.id === pending.id) : null;
+
+	const modalDismiss = useBackdropDismiss(() => setPending(null));
+	const helpDismiss = useBackdropDismiss(() => setShowAddHelp(false));
 
 	return (
 		<div className="mx-3 mb-3 flex flex-col gap-3" data-testid="language-block">
 			{/* Reserved height: the profile arrives after mount, and the nav
-			    below must not jump when it does (CLS). */}
-			<div className="h-9">
+			    below must not jump when it does (CLS = 0). */}
+			<div className="relative h-9">
 				{profile ? (
-					<div className="flex h-9 items-center gap-1 rounded-xl bg-card p-1" role="radiogroup" aria-label="Language">
-						{profile.profiles.map((p) => {
-							const running = p.id === profile.active;
-							const pending = p.id === profile.selected && profile.restartRequired;
-							return (
-								<button
-									key={p.id}
-									type="button"
-									role="radio"
-									aria-checked={running}
-									data-testid={`profile-${p.id}`}
-									onClick={() => void choose(p.id, p.english)}
-									title={pending ? `${p.english} after restart` : running ? `${p.english} (running)` : `Switch to ${p.english}`}
-									className={cn(
-										"flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-semibold transition-colors",
-										running ? "bg-accent text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-										pending && "ring-1 ring-primary/50",
-									)}
-								>
-									{p.endonym}
-								</button>
-							);
-						})}
-					</div>
+					<button
+						ref={triggerRef}
+						type="button"
+						aria-haspopup="listbox"
+						aria-expanded={open}
+						data-testid="profile-trigger"
+						onClick={() => setOpen((v) => !v)}
+						className={cn(
+							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-accent/70",
+							open && "ring-1 ring-border",
+						)}
+					>
+						<div className="flex min-w-0 items-center gap-2 truncate">
+							<GlobeIcon className="size-4 shrink-0 text-muted-foreground" />
+							<span className="truncate">{activeProfile?.endonym ?? "Language"}</span>
+							{activeProfile && (
+								<span className="truncate text-[11px] font-normal text-muted-foreground">
+									({activeProfile.english})
+								</span>
+							)}
+						</div>
+						<ChevronDownIcon
+							className={cn(
+								"size-3.5 shrink-0 text-muted-foreground transition-transform duration-150",
+								open && "rotate-180",
+							)}
+						/>
+					</button>
 				) : (
 					<div className="h-9 animate-pulse rounded-xl bg-card" aria-hidden />
 				)}
+
+				{open && profile && (
+					<MenuShell
+						anchorRef={triggerRef}
+						testid="language-menu"
+						preferredSide="down"
+						align="left"
+						menuClass="flex w-60 flex-col gap-0.5 rounded-xl border bg-card p-1.5 text-xs shadow-xl"
+					>
+						<div ref={menuRef} role="listbox" aria-label="Languages" className="flex flex-col gap-0.5">
+							<div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+								Target Language
+							</div>
+							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
+								{profile.profiles.map((p) => {
+									const running = p.id === profile.active;
+									const isPending = p.id === profile.selected && profile.restartRequired;
+									return (
+										<button
+											key={p.id}
+											type="button"
+											role="option"
+											aria-selected={running}
+											data-testid={`profile-${p.id}`}
+											onClick={() => choose(p.id, p.english)}
+											className={cn(
+												"flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
+												running
+													? "bg-accent font-semibold text-foreground shadow-xs"
+													: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+												isPending && "ring-1 ring-primary/50",
+											)}
+										>
+											<div className="flex min-w-0 items-center gap-2 truncate">
+												<span className="truncate font-semibold">{p.endonym}</span>
+												<span className="truncate text-[11px] text-muted-foreground">({p.english})</span>
+											</div>
+											{running && <CheckIcon className="size-3.5 shrink-0 text-primary" />}
+										</button>
+									);
+								})}
+							</div>
+							<div className="my-1 border-t border-border/50" />
+							<button
+								type="button"
+								onClick={() => {
+									setOpen(false);
+									setShowAddHelp(true);
+								}}
+								className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+							>
+								<PlusIcon className="size-3.5" />
+								<span>Add a language...</span>
+							</button>
+						</div>
+					</MenuShell>
+				)}
 			</div>
-			{pending && (
-				<div role="group" aria-label={`Switch to ${pending.label}`} data-testid="profile-confirm" className="flex flex-col gap-2 rounded-xl bg-card p-3">
-					<p className="text-xs text-muted-foreground">
-						Switch to {pending.label}? LangHarness restarts in {pending.label}. Your {profile?.profiles.find((p) => p.id === profile.active)?.english ?? "current"} progress stays as it is.
-					</p>
-					<div className="flex items-center justify-end gap-3">
-						<button
-							type="button"
-							onClick={() => setPending(null)}
-							className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-						>
-							Cancel
-						</button>
-						<button
-							type="button"
-							onClick={() => void confirmSwitch()}
-							data-testid="profile-confirm-switch"
-							className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-						>
-							Switch
-						</button>
+
+			{/* Centered Modal Confirmation — zero layout shift on sidebar navigation */}
+			{pending && typeof document !== "undefined" && createPortal(
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+					{...modalDismiss}
+				>
+					<div
+						role="alertdialog"
+						aria-modal="true"
+						aria-labelledby="switch-dialog-title"
+						data-testid="profile-confirm"
+						className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border bg-card p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+					>
+						<div className="flex items-center gap-3">
+							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+								<GlobeIcon className="size-5" />
+							</div>
+							<div className="min-w-0 flex-1">
+								<h3 id="switch-dialog-title" className="text-sm font-bold text-foreground">
+									Switch to {pending.label}?
+								</h3>
+								<p className="text-xs text-muted-foreground">
+									LangHarness restarts in {pending.label}.
+								</p>
+							</div>
+						</div>
+						<p className="text-xs leading-relaxed text-muted-foreground">
+							Your {activeProfile?.english ?? "current"} progress stays safely as it is.
+						</p>
+						<div className="flex items-center justify-end gap-2 pt-2">
+							<button
+								type="button"
+								onClick={() => setPending(null)}
+								className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								data-testid="profile-confirm-switch"
+								onClick={() => void confirmSwitch()}
+								className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+							>
+								Switch &amp; Restart
+							</button>
+						</div>
 					</div>
-				</div>
+				</div>,
+				document.body,
 			)}
+
+			{/* Add Language Guide Modal */}
+			{showAddHelp && typeof document !== "undefined" && createPortal(
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+					{...helpDismiss}
+				>
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="add-lang-title"
+						className="flex w-full max-w-md flex-col gap-3.5 rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+					>
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-2.5">
+								<GlobeIcon className="size-5 text-primary" />
+								<h3 id="add-lang-title" className="text-base font-bold text-foreground">
+									Adding a New Language
+								</h3>
+							</div>
+							<button
+								type="button"
+								onClick={() => setShowAddHelp(false)}
+								className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+							>
+								<XIcon className="size-4" />
+							</button>
+						</div>
+						<p className="text-xs leading-relaxed text-muted-foreground">
+							LangHarness has a modular multi-language system designed to make adding any language straightforward:
+						</p>
+						<div className="flex flex-col gap-2 rounded-xl bg-accent/40 p-3 text-xs">
+							<div className="flex gap-2">
+								<span className="font-bold text-primary">1.</span>
+								<span>
+									<strong>Register profile:</strong> Add metadata to <code className="rounded bg-muted px-1 py-0.5">src/core/language.ts</code> (or pick from <code className="rounded bg-muted px-1 py-0.5">LANGUAGE_PRESETS</code>).
+								</span>
+							</div>
+							<div className="flex gap-2">
+								<span className="font-bold text-primary">2.</span>
+								<span>
+									<strong>Enable profile:</strong> Add to <code className="rounded bg-muted px-1 py-0.5">config.ts</code> <code className="rounded bg-muted px-1 py-0.5">LANGUAGE_PROFILES</code>.
+								</span>
+							</div>
+							<div className="flex gap-2">
+								<span className="font-bold text-primary">3.</span>
+								<span>
+									<strong>Curriculum assets:</strong> Provide vocabulary in <code className="rounded bg-muted px-1 py-0.5">curriculum/&lt;lang&gt;/lexicon.json</code>.
+								</span>
+							</div>
+						</div>
+						<p className="text-xs text-muted-foreground">
+							See <strong className="text-foreground">docs/adding-a-language.md</strong> or use the <code className="rounded bg-muted px-1 py-0.5 font-semibold text-foreground">add-language</code> skill for the automated walkthrough.
+						</p>
+						<div className="flex justify-end pt-1">
+							<button
+								type="button"
+								onClick={() => setShowAddHelp(false)}
+								className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90"
+							>
+								Got it
+							</button>
+						</div>
+					</div>
+				</div>,
+				document.body,
+			)}
+
 			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
 			<nav className="flex flex-col gap-0.5" aria-label="Main">
 				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />} tint="text-gold">

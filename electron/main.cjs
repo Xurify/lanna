@@ -55,6 +55,17 @@ const PRODUCT_NAME = "LangHarness";
 // "LearnHarness-dev".
 app.setName(PRODUCT_NAME);
 
+// Audio buffer hardening (Windows WASAPI & Electron Chromium audio under-run fix):
+// Chromium on Windows in Electron defaults to a low buffer (256-512 frames) and
+// an out-of-process audio service that introduces IPC jitter, resulting in
+// scratchy/crackling audio during speech playback. Increasing buffer size and
+// disabling AudioServiceOutOfProcess restores clear, glitch-free audio matching
+// standard web browsers.
+if (process.platform === "win32") {
+	app.commandLine.appendSwitch("audio-buffer-size", "2048");
+	app.commandLine.appendSwitch("disable-features", "AudioServiceOutOfProcess");
+}
+
 // Unpackaged (`npm run desktop:dev`) the process is the stock electron
 // binary, so the taskbar/dock would show Electron's atom. Packaged builds
 // embed their icon at build time (build/icon.*), so this is dev-only.
@@ -329,6 +340,7 @@ function createWindow(url) {
 			contextIsolation: true,
 			sandbox: true,
 			nodeIntegration: false,
+			backgroundThrottling: false,
 			...(process.env.LH_DEV_URL ? { additionalArguments: ["--lh-web-subscriptions"] } : {}),
 			preload: path.join(__dirname, "preload.cjs"),
 		},

@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { CheckIcon, EyeIcon, HeadphonesIcon, KeyboardIcon, RepeatIcon, SnailIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { setSpeed, speak, SPEEDS } from "@/components/speech";
+import { setSpeed, speak, SPEEDS, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenAnswer, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
@@ -147,6 +147,13 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	// look even if the switch is changed for the next one.
 	const mode: ListenAnswer = current ? current.answer : answer;
 
+	// Stop any active audio when leaving the Listen page
+	useEffect(() => {
+		return () => {
+			stopSpeaking();
+		};
+	}, []);
+
 	// Each sentence plays as it arrives: the ear meets it before the eye.
 	useEffect(() => {
 		if (!item || current) return;
@@ -158,6 +165,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				if (soundOn() && timing.current.shownAt === t0 && timing.current.heardMs === undefined) timing.current.heardMs = Date.now() - t0;
 			})
 			.catch(() => {});
+		return () => {
+			stopSpeaking();
+		};
 	}, [item, current]);
 
 	const replay = (slow = false) => {

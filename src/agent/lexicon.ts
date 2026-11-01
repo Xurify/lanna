@@ -12,8 +12,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
-import { foldDiacritics } from "../core/language.ts";
-import type { LexiconEntry } from "../core/review.ts";
+import { foldDiacritics, LANGUAGES, type LanguageId } from "../core/language.ts";
+import { entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 
 export interface Lexicon {
 	entries: LexiconEntry[];
@@ -49,13 +49,24 @@ export function loadLexicon(profile: string = ACTIVE_PROFILE): Lexicon | null {
 			source?: string;
 			license?: string;
 		};
-		const tag = profile === "russian" ? "ru-RU" : "sk-SK";
+		const tag = LANGUAGES[profile as LanguageId]?.tag ?? "sk-SK";
 		const bySlug = new Map<string, LexiconEntry>();
 		const byForm = new Map<string, LexiconEntry[]>();
 		const byFolded = new Map<string, LexiconEntry[]>();
 		for (const entry of raw.words) {
+			entry.lemma = entry.lemma ?? entry.sk ?? "";
+			entry.sk = entry.sk ?? entry.lemma;
+			for (const ex of entry.examples ?? []) {
+				ex.text = ex.text ?? ex.sk ?? "";
+				ex.sk = ex.sk ?? ex.text;
+			}
 			bySlug.set(entry.slug, entry);
-			const keys = new Set<string>([entry.sk, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]);
+			const keys = new Set<string>([
+				entry.lemma,
+				...(entry.forms ?? []),
+				...(entry.declension?.singular ?? []),
+				...(entry.declension?.plural ?? []),
+			]);
 			for (const k of keys) {
 				const lower = k.toLocaleLowerCase(tag);
 				push(byForm, lower, entry);
@@ -80,7 +91,8 @@ export interface LookupResult {
  *  letters without diacritics, then an English gloss word. */
 export function lookupWord(query: string, profile: string = ACTIVE_PROFILE, limit = 5): LookupResult {
 	const lexicon = loadLexicon(profile);
-	const q = query.trim().toLocaleLowerCase(profile === "russian" ? "ru-RU" : "sk-SK");
+	const tag = LANGUAGES[profile as LanguageId]?.tag ?? "sk-SK";
+	const q = query.trim().toLocaleLowerCase(tag);
 	if (!lexicon || !q) return { query, match: "none", entries: [] };
 	const exact = lexicon.byForm.get(q);
 	if (exact?.length) return { query, match: "exact", entries: exact.slice(0, limit) };
@@ -96,7 +108,8 @@ const CASES = ["N", "G", "D", "A", "L", "I"];
 
 /** The tool's text rendering of one entry. */
 export function formatEntry(e: LexiconEntry, examples = 3): string {
-	const lines = [`${e.sk} — ${e.en} (${e.cat.toLowerCase()}${e.gender ? `, ${e.gender}` : ""}${e.register ? `, ${e.register}` : ""}${e.rank ? `, frequency rank ${e.rank}` : ""})`];
+	const lemma = entryLemma(e);
+	const lines = [`${lemma} — ${e.en} (${e.cat.toLowerCase()}${e.gender ? `, ${e.gender}` : ""}${e.register ? `, ${e.register}` : ""}${e.rank ? `, frequency rank ${e.rank}` : ""})`];
 	if (e.declension) {
 		lines.push(`  declension (checked against JÚĽŠ) sg: ${e.declension.singular.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
 		lines.push(`  pl: ${e.declension.plural.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
@@ -105,7 +118,7 @@ export function formatEntry(e: LexiconEntry, examples = 3): string {
 	} else {
 		lines.push("  forms: not in the dictionary — do not present a form as certain without saying so");
 	}
-	for (const ex of e.examples.filter((x) => !x.rejected).slice(0, examples)) lines.push(`  e.g. ${ex.sk} — ${ex.en}`);
+	for (const ex of e.examples.filter((x) => !x.rejected).slice(0, examples)) lines.push(`  e.g. ${exampleText(ex)} — ${ex.en}`);
 	if (e.related.length) lines.push(`  related: ${e.related.slice(0, 6).join(", ")}`);
 	return lines.join("\n");
 }

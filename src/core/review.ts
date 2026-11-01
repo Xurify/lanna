@@ -14,9 +14,12 @@ import type { MemoryState, Rating } from "./fsrs.ts";
 /** One lexicon example as exported from slovak.wiki
  *  (scripts/export-slovakwiki-lexicon.mjs). */
 export interface LexiconExample {
-	sk: string;
+	/** Primary target language sentence/text. */
+	text?: string;
+	/** Legacy Slovak text alias. */
+	sk?: string;
 	en: string;
-	src: "curated" | "tatoeba";
+	src: "curated" | "tatoeba" | string;
 	tatoebaId?: number;
 	/** The token that is a form of the entry's lemma, and where it starts. */
 	cloze?: { answer: string; at: number };
@@ -26,8 +29,10 @@ export interface LexiconExample {
 
 export interface LexiconEntry {
 	slug: string;
-	/** Lemma with diacritics. */
-	sk: string;
+	/** Canonical target language lemma with diacritics. */
+	lemma?: string;
+	/** Legacy Slovak lemma alias for backwards compatibility. */
+	sk?: string;
 	en: string;
 	cat: "Nouns" | "Verbs" | "Adjectives" | "Adverbs" | "Phrases" | "Places" | string;
 	topics?: string[];
@@ -44,6 +49,16 @@ export interface LexiconEntry {
 	origin?: string;
 	examples: LexiconExample[];
 	related: string[];
+}
+
+/** Target lemma helper honoring `entry.lemma` then `entry.sk`. */
+export function entryLemma(entry: LexiconEntry): string {
+	return entry.lemma ?? entry.sk ?? "";
+}
+
+/** Target sentence text helper honoring `ex.text` then `ex.sk`. */
+export function exampleText(example: LexiconExample): string {
+	return example.text ?? example.sk ?? "";
 }
 
 export type CardState = "new" | "learning" | "review";
@@ -117,7 +132,7 @@ export function pickClozeExample(entry: LexiconEntry): number | undefined {
 	let bestScore = Infinity;
 	entry.examples.forEach((ex, i) => {
 		if (!ex.cloze || ex.rejected) return;
-		const words = ex.sk.split(/\s+/).length;
+		const words = exampleText(ex).split(/\s+/).length;
 		if (words < 2 || words > 16) return;
 		const score = (ex.src === "curated" ? 0 : 100) + Math.abs(words - 7);
 		if (score < bestScore) {
@@ -134,9 +149,9 @@ export function mintCard(entry: LexiconEntry, exampleIndex: number, now: Date): 
 	return {
 		id: `${entry.slug}#${exampleIndex}`,
 		slug: entry.slug,
-		lemma: entry.sk,
+		lemma: entryLemma(entry),
 		gloss: entry.en,
-		sentence: ex.sk,
+		sentence: exampleText(ex),
 		translation: ex.en,
 		answer: ex.cloze.answer,
 		at: ex.cloze.at,

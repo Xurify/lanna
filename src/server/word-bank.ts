@@ -7,9 +7,17 @@
  * - Favorited words and bookmarked phrases
  */
 
-import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
+import fs from "node:fs";
+import path from "node:path";
+import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+import { loadLexicon, lookupWord, type Lexicon } from "../agent/lexicon.ts";
+import { foldDiacritics, isLanguageId, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { GRAMMAR_WORDS, grammarWord } from "../core/reading.ts";
 import { reviewStore } from "../store/review.ts";
 import { savedPhraseStore } from "../store/saved-phrases.ts";
+import { storyStore } from "../store/stories.ts";
+import { resolveWord } from "./reading.ts";
+import { enqueueWords } from "./review.ts";
 import {
 	calculateRetention,
 	classifyWordState,
@@ -17,7 +25,845 @@ import {
 	type WordBankSummary,
 	type WordLearningState,
 } from "../core/saved-phrases.ts";
-import type { ReviewCard } from "../core/review.ts";
+import type { LexiconEntry, ReviewCard } from "../core/review.ts";
+
+function activeLang(): LanguageInfo {
+	return isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE] : LANGUAGES.slovak;
+}
+
+export interface SelectionLookupResult {
+	query: string;
+	found: boolean;
+	/** ISO 639-1 language code of the active profile (e.g. "sk", "ru"). */
+	langCode?: string;
+	/** BCP-47 language tag of the active profile (e.g. "sk-SK", "ru-RU"). */
+	langTag?: string;
+	/** English language name for Wiktionary anchors (e.g. "Slovak", "Russian"). */
+	langEnglish?: string;
+	slug?: string;
+	lemma?: string;
+	/** Combined or primary gloss (surface translation + base dictionary meaning). */
+	gloss?: string;
+	/** Base dictionary meaning of the lemma (e.g. "to cry"). */
+	dictionaryGloss?: string;
+	/** Inflected surface meaning (e.g. "I don't know", "why is he crying"). */
+	surfaceGloss?: string;
+	/** Cached or live Google Translate surface translation. */
+	googleTranslation?: string;
+	/** Profile-aware reference site link (e.g. slovak.wiki when active profile has a referenceSite). */
+	referenceUrl?: string;
+	/** Label for `referenceUrl` (e.g. "slovak.wiki"). */
+	referenceLabel?: string;
+	/** Kept as alias for backwards compatibility in callers/tests. */
+	slovakWikiUrl?: string;
+	pos?: string;
+	gender?: string;
+	formNote?: string;
+	source?: "lexicon" | "stem" | "grammar" | "story" | "translated";
+	alternatives?: string[];
+	inDeck?: boolean;
+	favorite?: boolean;
+	state?: WordLearningState;
+}
+
+export function referenceSiteLinkFor(
+	slug?: string,
+	query?: string,
+	lang: LanguageInfo = activeLang(),
+): { url?: string; label?: string } {
+	const site = lang.referenceSite;
+	if (!site) return {};
+	if (slug && !slug.includes(" ") && slug !== "word") {
+		return {
+			url: `${site.baseUrl}/dictionary/${encodeURIComponent(slug)}`,
+			label: site.label,
+		};
+	}
+	const q = (query ?? "").trim();
+	return {
+		url: q ? `${site.baseUrl}/search?q=${encodeURIComponent(q)}` : `${site.baseUrl}/dictionary`,
+		label: site.label,
+	};
+}
+
+export function slovakWikiUrlFor(slug?: string, query?: string): string {
+	return (
+		referenceSiteLinkFor(slug, query, LANGUAGES.slovak).url ??
+		"https://slovak.wiki/dictionary"
+	);
+}
+
+const CASE_NAMES = ["nominative", "genitive", "dative", "accusative", "locative", "instrumental"] as const;
+
+const SURFACE_GLOSS_OVERRIDES: Record<string, string> = {
+	neviem: "I don't know",
+	nevieš: "you don't know",
+	nevie: "doesn't know",
+	nevieme: "we don't know",
+	neviete: "you don't know",
+	nevedia: "they don't know",
+	nemám: "I don't have",
+	nemáš: "you don't have",
+	nemá: "doesn't have",
+	nemáme: "we don't have",
+	nemáte: "you don't have",
+	nemajú: "they don't have",
+	nemôžem: "I can't",
+	nemôžeš: "you can't",
+	nemôže: "can't",
+	nemôžeme: "we can't",
+	nemôžete: "you can't",
+	nemôžu: "they can't",
+	nechcem: "I don't want",
+	nechceš: "you don't want",
+	nechce: "doesn't want",
+	nechceme: "we don't want",
+	nechcete: "you don't want",
+	nechcú: "they don't want",
+	nerozumiem: "I don't understand",
+	nerozumieš: "you don't understand",
+	nerozumie: "doesn't understand",
+	nepoznám: "I don't know / recognize",
+	nevidím: "I don't see",
+	nepočujem: "I don't hear",
+	nemyslím: "I don't think",
+};
+
+/**
+ * Normalizes phrasing like `"not to know"` -> `"to not know"` so English infinitive
+ * glosses read naturally alongside positive base verbs.
+ */
+function normalizeEnglishGloss(gloss: string): string {
+	return gloss.replace(/\bnot to ([a-z]+)/gi, "to not $1");
+}
+
+/**
+ * If a lexicon entry is a negated verb (`nevedieť`, `nerobiť`, `nechcieť`, etc.),
+ * resolves the underlying positive verb entry (`vedieť`, `robiť`, `chcieť`) when present in the lexicon.
+ */
+function findAffirmativeVerbBase(lexicon: Lexicon | null, entry: LexiconEntry): LexiconEntry | undefined {
+	if (!lexicon) return undefined;
+	const tag = activeLang().tag;
+	const lower = entry.sk.toLocaleLowerCase(tag);
+	const isVerb =
+		(entry.pos ?? entry.cat ?? "").toLowerCase() === "verb" ||
+		lower.endsWith("ť") ||
+		lower.endsWith("ť sa") ||
+		lower.endsWith("ť si");
+	if (!isVerb || !lower.startsWith("ne") || lower.length < 5) return undefined;
+	const positiveSk = lower.slice(2);
+	const candidate = lexicon.byForm.get(positiveSk)?.find((e) => e.sk.toLocaleLowerCase(tag) === positiveSk);
+	return candidate;
+}
+
+function detectPersonLabel(foldedSurface: string): string | undefined {
+	if (/(?:em|im|am|ujem|iem)$/.test(foldedSurface)) return "1st person sg.";
+	if (/(?:es|is|as|ujes|ies)$/.test(foldedSurface)) return "2nd person sg.";
+	if (/(?:eme|ime|ame|ujeme|ieme)$/.test(foldedSurface)) return "1st person pl.";
+	if (/(?:ete|ite|ate|ujete|iete)$/.test(foldedSurface)) return "2nd person pl.";
+	if (/(?:l|la|lo|li)$/.test(foldedSurface)) return "past form";
+	return undefined;
+}
+
+function detectFormNote(
+	surface: string,
+	entry: LexiconEntry,
+	prefixNote?: string,
+	affirmativeBase?: LexiconEntry,
+): string | undefined {
+	const tag = activeLang().tag;
+	const lower = surface.toLocaleLowerCase(tag);
+	const lemma = entry.lemma ?? entry.sk ?? "";
+	const lemmaLower = lemma.toLocaleLowerCase(tag);
+	const folded = foldDiacritics(lower);
+
+	if (affirmativeBase) {
+		const affLemma = affirmativeBase.lemma ?? affirmativeBase.sk ?? "";
+		const person = lower === lemmaLower ? "infinitive" : detectPersonLabel(folded);
+		if (person && person !== "infinitive") {
+			return `negative ${person} of ${affLemma} (${affirmativeBase.en})`;
+		}
+		return `negative form of ${affLemma} (${affirmativeBase.en})`;
+	}
+
+	if (prefixNote) return prefixNote;
+	if (lower === lemmaLower) return undefined;
+	if (lower.startsWith("ne") && !lemmaLower.startsWith("ne") && lower.length >= 4) {
+		const person = detectPersonLabel(folded);
+		if (person) return `negative ${person} of ${lemma} (${entry.en})`;
+		return `negative form of ${lemma} (${entry.en})`;
+	}
+
+	if (entry.declension) {
+		const sgIdx = entry.declension.singular.findIndex((f) => f.toLocaleLowerCase(tag) === lower);
+		if (sgIdx >= 0 && CASE_NAMES[sgIdx]) {
+			return `${CASE_NAMES[sgIdx]} singular of ${lemma}`;
+		}
+		const plIdx = entry.declension.plural.findIndex((f) => f.toLocaleLowerCase(tag) === lower);
+		if (plIdx >= 0 && CASE_NAMES[plIdx]) {
+			return `${CASE_NAMES[plIdx]} plural of ${lemma}`;
+		}
+	}
+
+	if (lemmaLower.endsWith("ť") || lemmaLower.endsWith("ť sa") || lemmaLower.endsWith("ť si")) {
+		const person = detectPersonLabel(folded);
+		if (person) return `${person} of ${lemma}`;
+		return `conjugated form of ${lemma}`;
+	}
+
+	if (/(?:ach|och|iach)$/.test(folded)) return `locative plural of ${lemma}`;
+	if (/(?:ami|mi)$/.test(folded)) return `instrumental plural of ${lemma}`;
+	if (/(?:ou)$/.test(folded)) return `instrumental singular of ${lemma}`;
+	if (/(?:ovi|emu)$/.test(folded)) return `dative singular of ${lemma}`;
+	if (/(?:eho)$/.test(folded)) return `genitive/acc. of ${lemma}`;
+	return `inflected form of ${lemma}`;
+}
+
+interface CachedTranslation {
+	gloss: string;
+	pos?: string;
+	lemma?: string;
+	alternatives?: string[];
+	updatedAt: string;
+}
+
+const translationCacheFile = () => path.join(PATHS.data, "translations-cache.json");
+let memoryTranslationCache: Record<string, CachedTranslation> | null = null;
+
+function readTranslationCache(): Record<string, CachedTranslation> {
+	if (memoryTranslationCache) return memoryTranslationCache;
+	try {
+		const raw = fs.readFileSync(translationCacheFile(), "utf-8");
+		memoryTranslationCache = JSON.parse(raw) as Record<string, CachedTranslation>;
+	} catch {
+		memoryTranslationCache = {};
+	}
+	return memoryTranslationCache;
+}
+
+function writeTranslationCacheEntry(key: string, value: CachedTranslation): void {
+	const cache = readTranslationCache();
+	cache[key] = value;
+	try {
+		const file = translationCacheFile();
+		fs.mkdirSync(path.dirname(file), { recursive: true });
+		fs.writeFileSync(file, JSON.stringify(cache, null, "\t"), "utf-8");
+	} catch {
+		// ignore write errors in read-only environments
+	}
+}
+
+function deriveVerbSurfaceGloss(foldedSurface: string, baseEn: string, isNegative: boolean): string | undefined {
+	const cleanVerb = baseEn
+		.split(/[;,]/)[0]
+		?.trim()
+		.replace(/^not\s+to\s+/i, "")
+		.replace(/^to\s+not\s+/i, "")
+		.replace(/^to\s+/i, "")
+		.trim();
+	if (!cleanVerb) return undefined;
+	const person = detectPersonLabel(foldedSurface);
+	if (!person) return undefined;
+	if (isNegative) {
+		if (person === "1st person sg.") return `I don't ${cleanVerb}`;
+		if (person === "2nd person sg.") return `you don't ${cleanVerb}`;
+		if (person === "1st person pl.") return `we don't ${cleanVerb}`;
+		if (person === "2nd person pl.") return `you don't ${cleanVerb}`;
+		if (person === "past form") return `didn't ${cleanVerb}`;
+	}
+	return undefined;
+}
+
+function buildResultFromEntry(
+	cleaned: string,
+	entry: LexiconEntry,
+	source: SelectionLookupResult["source"],
+	customGloss?: string,
+	prefixNote?: string,
+): SelectionLookupResult {
+	const lang = activeLang();
+	const lexicon = loadLexicon();
+	const affirmativeBase = findAffirmativeVerbBase(lexicon, entry);
+	const canonicalEntry = affirmativeBase ?? entry;
+
+	const cards = reviewStore.readCards();
+	const card = Object.values(cards).find((c) => c.slug === canonicalEntry.slug || c.slug === entry.slug);
+	const favorites = new Set(savedPhraseStore.readFavorites());
+	const lower = cleaned.toLocaleLowerCase(lang.tag);
+	const folded = foldDiacritics(lower);
+	const canonicalLemma = canonicalEntry.lemma ?? canonicalEntry.sk ?? "";
+	const lemmaLower = canonicalLemma.toLocaleLowerCase(lang.tag);
+	const isNegated = Boolean(affirmativeBase) || (lower.startsWith("ne") && !lemmaLower.startsWith("ne") && lower.length >= 4);
+
+	const rawEntryGloss = normalizeEnglishGloss(entry.en);
+	const baseGloss = normalizeEnglishGloss(canonicalEntry.en);
+
+	// Check if we already have a cached Google Translate surface translation for this exact inflected form
+	const cachedSurface = readTranslationCache()[lower]?.gloss;
+	const surfaceOverride =
+		SURFACE_GLOSS_OVERRIDES[lower] ??
+		deriveVerbSurfaceGloss(folded, canonicalEntry.en, isNegated) ??
+		(lower !== lemmaLower ? cachedSurface : undefined);
+
+	let gloss: string;
+	if (customGloss) {
+		gloss = normalizeEnglishGloss(customGloss);
+	} else if (affirmativeBase) {
+		// e.g. Neviem -> "I don't know (to not know)"
+		const affLemma = affirmativeBase.lemma ?? affirmativeBase.sk ?? "";
+		gloss = surfaceOverride
+			? `${surfaceOverride} (${rawEntryGloss})`
+			: `${rawEntryGloss} (${affLemma} = ${baseGloss})`;
+	} else if (isNegated) {
+		const negInfinitive = baseGloss.startsWith("to ")
+			? `to not ${baseGloss.slice(3)}`
+			: `not ${baseGloss}`;
+		gloss = surfaceOverride
+			? `${surfaceOverride} (${negInfinitive})`
+			: negInfinitive;
+	} else if (
+		surfaceOverride &&
+		lower !== lemmaLower &&
+		surfaceOverride.toLowerCase() !== rawEntryGloss.toLowerCase()
+	) {
+		// Inflected form with a cached surface translation (e.g. plače -> "he cries · to cry")
+		gloss = `${surfaceOverride} · ${rawEntryGloss}`;
+	} else {
+		gloss = rawEntryGloss;
+	}
+
+	const refLink = referenceSiteLinkFor(canonicalEntry.slug, cleaned, lang);
+
+	return {
+		query: cleaned,
+		found: true,
+		langCode: lang.code,
+		langTag: lang.tag,
+		langEnglish: lang.english,
+		slug: canonicalEntry.slug,
+		lemma: canonicalLemma,
+		gloss,
+		dictionaryGloss: rawEntryGloss,
+		surfaceGloss: surfaceOverride,
+		googleTranslation: cachedSurface,
+		referenceUrl: refLink.url,
+		referenceLabel: refLink.label,
+		slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(canonicalEntry.slug, cleaned),
+		pos: canonicalEntry.pos ?? canonicalEntry.cat,
+		gender: canonicalEntry.gender,
+		formNote: detectFormNote(cleaned, entry, prefixNote, affirmativeBase),
+		source,
+		inDeck: !!card,
+		favorite: favorites.has(canonicalEntry.slug) || favorites.has(entry.slug),
+		state: card ? classifyWordState(card) : "unseen",
+	};
+}
+
+/**
+ * Synchronous Tier-1 lookup:
+ * 1. Exact/folded lexicon form match (`lookupWord`)
+ * 2. Grammar & core table (`GRAMMAR_WORDS`)
+ * 3. Morphological stemmer (`resolveWord`) + negative (`ne-`) / superlative (`naj-`) prefix stripping
+ * 4. Story library `newWords` & glossed tokens
+ * 5. Local persistent translation cache (`translations-cache.json`)
+ * 6. Multi-word token-by-token offline breakdown (e.g. `"prečo plače"` -> `"prečo (why) + plakať (to cry)"`)
+ */
+export function lookupSelection(text: string): SelectionLookupResult {
+	const lang = activeLang();
+	const cleaned = text.trim().replace(/^[.,!?;:"'„“”«»()[\]—–-]+|[.,!?;:"'„“”«»()[\]—–-]+$/g, "").trim();
+	if (!cleaned) return { query: text, found: false, langCode: lang.code, langTag: lang.tag, langEnglish: lang.english };
+
+	const lexicon = loadLexicon();
+	const lower = cleaned.toLocaleLowerCase(lang.tag);
+	const folded = foldDiacritics(lower);
+	const favorites = new Set(savedPhraseStore.readFavorites());
+	const cards = reviewStore.readCards();
+
+	// 1. Direct lexicon form/folded match (avoid English reverse-match collisions for target-language words)
+	if (lexicon) {
+		const exact = lexicon.byForm.get(lower)?.[0] ?? lexicon.byFolded.get(folded)?.[0];
+		if (exact) {
+			return buildResultFromEntry(cleaned, exact, "lexicon");
+		}
+	}
+
+	// 2. Grammar & high-frequency inflected words table (GRAMMAR_WORDS)
+	const gHit = grammarWord(lower) ?? (() => {
+		for (const [k, v] of Object.entries(GRAMMAR_WORDS)) {
+			if (foldDiacritics(k) === folded) return { lemma: v[0], gloss: v[1] };
+		}
+		return undefined;
+	})();
+	if (gHit) {
+		const lexEntry = lexicon?.byForm.get(gHit.lemma.toLocaleLowerCase(lang.tag))?.[0];
+		const slug = lexEntry?.slug ?? foldDiacritics(gHit.lemma.toLocaleLowerCase(lang.tag)).replace(/[^a-z0-9]+/g, "-");
+		const card = Object.values(cards).find((c) => c.slug === slug);
+		const isDifferent = lower !== gHit.lemma.toLocaleLowerCase(lang.tag);
+		const refLink = referenceSiteLinkFor(lexEntry?.slug, gHit.lemma, lang);
+		return {
+			query: cleaned,
+			found: true,
+			langCode: lang.code,
+			langTag: lang.tag,
+			langEnglish: lang.english,
+			slug,
+			lemma: gHit.lemma,
+			gloss: gHit.gloss,
+			dictionaryGloss: gHit.gloss,
+			referenceUrl: refLink.url,
+			referenceLabel: refLink.label,
+			slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(lexEntry?.slug, gHit.lemma),
+			pos: lexEntry?.pos ?? lexEntry?.cat ?? "Grammar",
+			gender: lexEntry?.gender,
+			formNote: isDifferent ? `form of ${gHit.lemma}` : undefined,
+			source: "grammar",
+			inDeck: !!card,
+			favorite: favorites.has(slug),
+			state: card ? classifyWordState(card) : "unseen",
+		};
+	}
+
+	// 3. Morphological stemmer + Negative (ne-) & Superlative (naj-) prefix stripping
+	if (lexicon && !/\s/.test(cleaned)) {
+		const stemmed = resolveWord(lexicon, cleaned, new Set(), { stem: true });
+		if (stemmed) {
+			return buildResultFromEntry(cleaned, stemmed, "stem");
+		}
+
+		if (lower.startsWith("ne") && lower.length >= 5) {
+			const stripped = cleaned.slice(2);
+			const baseEntry = resolveWord(lexicon, stripped, new Set(), { stem: true });
+			if (baseEntry) {
+				return buildResultFromEntry(cleaned, baseEntry, "stem");
+			}
+		}
+
+		if (lower.startsWith("naj") && lower.length >= 6) {
+			const stripped = cleaned.slice(3);
+			const baseEntry = resolveWord(lexicon, stripped, new Set(), { stem: true });
+			if (baseEntry) {
+				return buildResultFromEntry(
+					cleaned,
+					baseEntry,
+					"stem",
+					`most / -est; ${baseEntry.en}`,
+					`superlative of ${baseEntry.lemma ?? baseEntry.sk}`,
+				);
+			}
+		}
+	}
+
+	// 4. Check story library newWords / tokens
+	try {
+		for (const idx of storyStore.list().slice(-25)) {
+			const story = storyStore.get(idx.id);
+			if (!story) continue;
+			const nw = story.newWords.find(
+				(w) => foldDiacritics(w.lemma.toLocaleLowerCase(lang.tag)) === folded,
+			);
+			if (nw) {
+				const slug = nw.slug ?? folded.replace(/[^a-z0-9]+/g, "-");
+				const card = Object.values(cards).find((c) => c.slug === slug);
+				const refLink = referenceSiteLinkFor(nw.slug, nw.lemma, lang);
+				return {
+					query: cleaned,
+					found: true,
+					langCode: lang.code,
+					langTag: lang.tag,
+					langEnglish: lang.english,
+					slug,
+					lemma: nw.lemma,
+					gloss: nw.gloss,
+					dictionaryGloss: nw.gloss,
+					referenceUrl: refLink.url,
+					referenceLabel: refLink.label,
+					slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(nw.slug, nw.lemma),
+					pos: "Vocabulary",
+					source: "story",
+					inDeck: !!card,
+					favorite: favorites.has(slug),
+					state: card ? classifyWordState(card) : "unseen",
+				};
+			}
+		}
+	} catch {
+		// ignore story scan errors
+	}
+
+	// 5. Check persistent translation cache
+	const cached = readTranslationCache()[lower];
+	if (cached) {
+		const slug = folded.replace(/[^a-z0-9]+/g, "-");
+		const card = Object.values(cards).find((c) => c.slug === slug);
+		const refLink = referenceSiteLinkFor(undefined, cleaned, lang);
+		return {
+			query: cleaned,
+			found: true,
+			langCode: lang.code,
+			langTag: lang.tag,
+			langEnglish: lang.english,
+			slug,
+			lemma: cached.lemma ?? cleaned,
+			gloss: cached.gloss,
+			surfaceGloss: cached.gloss,
+			googleTranslation: cached.gloss,
+			referenceUrl: refLink.url,
+			referenceLabel: refLink.label,
+			slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
+			pos: cached.pos ?? (/\s/.test(cleaned) ? "Phrase" : "Vocabulary"),
+			alternatives: cached.alternatives,
+			source: "translated",
+			inDeck: !!card,
+			favorite: favorites.has(slug),
+			state: card ? classifyWordState(card) : "unseen",
+		};
+	}
+
+	// 6. Multi-word phrase breakdown: if user highlighted multiple words (e.g. "prečo plače"),
+	// resolve each word token locally so there is ALWAYS an immediate breakdown even offline!
+	if (/\s/.test(cleaned)) {
+		const rawTokens = cleaned.split(/\s+/).filter(Boolean).slice(0, 8);
+		const resolvedParts: string[] = [];
+		const glossParts: string[] = [];
+		let matchedCount = 0;
+
+		for (const tok of rawTokens) {
+			const sub = lookupSelection(tok);
+			if (sub.found && sub.gloss) {
+				matchedCount++;
+				const baseMean = sub.dictionaryGloss ?? sub.gloss;
+				const shortGloss = sub.surfaceGloss ?? baseMean.split(/[;,]/)[0]?.trim() ?? baseMean;
+				glossParts.push(shortGloss);
+				resolvedParts.push(`${tok} (${shortGloss})`);
+			} else {
+				glossParts.push(tok);
+			}
+		}
+
+		if (matchedCount > 0) {
+			const slug = folded.replace(/[^a-z0-9]+/g, "-");
+			const card = Object.values(cards).find((c) => c.slug === slug);
+			const refLink = referenceSiteLinkFor(undefined, cleaned, lang);
+			const breakdownGloss = glossParts.join(" · ");
+			return {
+				query: cleaned,
+				found: true,
+				langCode: lang.code,
+				langTag: lang.tag,
+				langEnglish: lang.english,
+				slug,
+				lemma: cleaned,
+				gloss: breakdownGloss,
+				dictionaryGloss: breakdownGloss,
+				formNote: resolvedParts.join(" + "),
+				referenceUrl: refLink.url,
+				referenceLabel: refLink.label,
+				slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
+				pos: "Phrase",
+				source: "grammar",
+				inDeck: !!card,
+				favorite: favorites.has(slug),
+				state: card ? classifyWordState(card) : "unseen",
+			};
+		}
+	}
+
+	// Fallback English match in lexicon if user highlighted an English word
+	const engRes = lookupWord(cleaned, undefined, 1);
+	if (engRes.entries[0]) {
+		return buildResultFromEntry(cleaned, engRes.entries[0], "lexicon");
+	}
+
+	const refLink = referenceSiteLinkFor(undefined, cleaned, lang);
+	return {
+		query: cleaned,
+		found: false,
+		langCode: lang.code,
+		langTag: lang.tag,
+		langEnglish: lang.english,
+		referenceUrl: refLink.url,
+		referenceLabel: refLink.label,
+		slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
+	};
+}
+
+/**
+ * Queries Google Translate (`dict-chrome-ex` + `clients5`) with a fallback to MyMemory
+ * using the active language profile's ISO 639-1 code (`lang.code`, e.g. `sk` or `ru`),
+ * and caches the result permanently in `translations-cache.json`.
+ */
+async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTranslation | null> {
+	const lang = activeLang();
+	const sl = lang.code;
+	const lower = cleaned.toLocaleLowerCase(lang.tag);
+	const existing = readTranslationCache()[lower];
+	if (existing) return existing;
+
+	// Tier A: translate.googleapis.com with client=dict-chrome-ex (returns both translation & dictionary POS/alternatives)
+	try {
+		const url = `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${encodeURIComponent(sl)}&tl=en&dt=t&dt=bd&q=${encodeURIComponent(cleaned)}`;
+		const res = await fetch(url, {
+			headers: { "User-Agent": "Mozilla/5.0" },
+			signal: AbortSignal.timeout(2500),
+		});
+		if (res.ok) {
+			const data = (await res.json()) as unknown[];
+			const sentences = Array.isArray(data[0]) ? data[0] : [];
+			const translated = sentences
+				.map((s) => (Array.isArray(s) && typeof s[0] === "string" ? s[0] : ""))
+				.join("")
+				.trim();
+
+			const dictBlocks = Array.isArray(data[1]) ? data[1] : [];
+			const firstDict = Array.isArray(dictBlocks[0]) ? dictBlocks[0] : undefined;
+			const pos = typeof firstDict?.[0] === "string" ? firstDict[0] : undefined;
+			const alternatives = Array.isArray(firstDict?.[1])
+				? (firstDict[1] as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 4)
+				: undefined;
+
+			if (translated) {
+				const entry: CachedTranslation = {
+					gloss: translated,
+					pos,
+					lemma: cleaned,
+					alternatives,
+					updatedAt: new Date().toISOString(),
+				};
+				writeTranslationCacheEntry(lower, entry);
+				return entry;
+			}
+		}
+	} catch {
+		// fall through to Tier B
+	}
+
+	// Tier B: clients5.google.com/translate_a/t
+	try {
+		const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${encodeURIComponent(sl)}&tl=en&q=${encodeURIComponent(cleaned)}`;
+		const res = await fetch(url, {
+			headers: { "User-Agent": "Mozilla/5.0" },
+			signal: AbortSignal.timeout(2500),
+		});
+		if (res.ok) {
+			const data = (await res.json()) as unknown;
+			const translated =
+				Array.isArray(data) && typeof data[0] === "string"
+					? data[0].trim()
+					: Array.isArray(data) && Array.isArray(data[0]) && typeof data[0][0] === "string"
+						? data[0][0].trim()
+						: "";
+			if (translated) {
+				const entry: CachedTranslation = {
+					gloss: translated,
+					lemma: cleaned,
+					updatedAt: new Date().toISOString(),
+				};
+				writeTranslationCacheEntry(lower, entry);
+				return entry;
+			}
+		}
+	} catch {
+		// fall through to Tier C
+	}
+
+	// Tier C: MyMemory translated.net API (Tatoeba/MateCat backed)
+	try {
+		const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleaned)}&langpair=${encodeURIComponent(sl)}|en`;
+		const res = await fetch(url, { signal: AbortSignal.timeout(2500) });
+		if (res.ok) {
+			const data = (await res.json()) as { responseData?: { translatedText?: string } };
+			const translated = data?.responseData?.translatedText?.trim();
+			if (translated && translated.toLocaleLowerCase(lang.tag) !== lower) {
+				const entry: CachedTranslation = {
+					gloss: translated,
+					lemma: cleaned,
+					updatedAt: new Date().toISOString(),
+				};
+				writeTranslationCacheEntry(lower, entry);
+				return entry;
+			}
+		}
+	} catch {
+		// ignore network errors
+	}
+
+	return null;
+}
+
+export interface LookupAsyncOptions {
+	/**
+	 * When true, or when the query is a multi-word phrase or inflected form, also fetches & caches
+	 * the natural Google Translate surface translation alongside the local dictionary entry.
+	 */
+	includeGoogleTranslate?: boolean;
+}
+
+/**
+ * Asynchronous hybrid lookup:
+ * 1. Runs synchronous 6-tier local lookup first (resolving lemma, grammar note, and FSRS Word Bank slug).
+ * 2. Fetches & caches the natural Google Translate surface translation whenever:
+ *    - the word wasn't found locally,
+ *    - the selection is a multi-word phrase (e.g. `"prečo plače"` -> `"why is he crying"`),
+ *    - `options.includeGoogleTranslate` is enabled (Hybrid / Google mode), or
+ *    - the surface word is an inflected form that differs from its dictionary lemma (e.g. `"plače"` vs `"plakať"`).
+ */
+export async function lookupSelectionAsync(
+	text: string,
+	options: LookupAsyncOptions = {},
+): Promise<SelectionLookupResult> {
+	const lang = activeLang();
+	const syncResult = lookupSelection(text);
+	if (!syncResult.query) {
+		return syncResult;
+	}
+
+	const cleaned = syncResult.query;
+	const lower = cleaned.toLocaleLowerCase(lang.tag);
+	const lemmaLower = (syncResult.lemma ?? cleaned).toLocaleLowerCase(lang.tag);
+	const isMultiWord = /\s/.test(cleaned);
+	const isInflected = syncResult.found && lower !== lemmaLower && !syncResult.surfaceGloss;
+	const shouldFetchGoogle =
+		!syncResult.found ||
+		isMultiWord ||
+		isInflected ||
+		Boolean(options.includeGoogleTranslate);
+
+	if (!shouldFetchGoogle) {
+		return syncResult;
+	}
+
+	const remote = await fetchAndCacheRemoteTranslation(cleaned);
+	if (!remote) {
+		return syncResult;
+	}
+
+	// If local lookup already found a lexicon/grammar/phrase breakdown, enrich it with Google Translate's natural surface translation!
+	if (syncResult.found) {
+		if (isMultiWord) {
+			return {
+				...syncResult,
+				gloss: remote.gloss,
+				surfaceGloss: remote.gloss,
+				googleTranslation: remote.gloss,
+				source: "translated",
+			};
+		}
+		const baseMean = syncResult.dictionaryGloss ?? syncResult.gloss ?? "";
+		const remoteClean = remote.gloss.trim();
+		const differsFromBase =
+			Boolean(remoteClean) &&
+			remoteClean.toLowerCase() !== baseMean.toLowerCase() &&
+			!baseMean.toLowerCase().startsWith(remoteClean.toLowerCase());
+		const combinedGloss =
+			lower !== lemmaLower && differsFromBase && !syncResult.surfaceGloss
+				? `${remoteClean} (${baseMean})`
+				: syncResult.gloss;
+		return {
+			...syncResult,
+			gloss: combinedGloss,
+			surfaceGloss: syncResult.surfaceGloss ?? (lower !== lemmaLower ? remoteClean : undefined),
+			googleTranslation: remoteClean,
+			alternatives: syncResult.alternatives ?? remote.alternatives,
+		};
+	}
+
+	const folded = foldDiacritics(lower);
+	const slug = folded.replace(/[^a-z0-9]+/g, "-") || "word";
+	const favorites = new Set(savedPhraseStore.readFavorites());
+	const cards = reviewStore.readCards();
+	const card = Object.values(cards).find((c) => c.slug === slug);
+	const refLink = referenceSiteLinkFor(undefined, cleaned, lang);
+
+	return {
+		query: cleaned,
+		found: true,
+		langCode: lang.code,
+		langTag: lang.tag,
+		langEnglish: lang.english,
+		slug,
+		lemma: cleaned,
+		gloss: remote.gloss,
+		surfaceGloss: remote.gloss,
+		googleTranslation: remote.gloss,
+		referenceUrl: refLink.url,
+		referenceLabel: refLink.label,
+		slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
+		pos: remote.pos ?? (isMultiWord ? "Phrase" : "Vocabulary"),
+		alternatives: remote.alternatives,
+		source: "translated",
+		inDeck: !!card,
+		favorite: favorites.has(slug),
+		state: card ? classifyWordState(card) : "unseen",
+	};
+}
+
+export function addWordToBank(slugOrWord: string, markFavorite = false, customGloss?: string): SelectionLookupResult {
+	const lexicon = loadLexicon();
+	const cleaned = slugOrWord.trim();
+	let entry = lexicon?.bySlug.get(cleaned);
+	if (!entry && lexicon) {
+		const res = lookupWord(cleaned, undefined, 1);
+		entry = res.entries[0] ?? resolveWord(lexicon, cleaned, new Set(), { stem: true });
+	}
+
+	if (entry) {
+		enqueueWords([entry.slug]);
+		if (markFavorite) {
+			savedPhraseStore.setFavorite(entry.slug, true);
+		}
+		const cards = reviewStore.readCards();
+		const card = Object.values(cards).find((c) => c.slug === entry!.slug);
+		const favorites = new Set(savedPhraseStore.readFavorites());
+
+		return {
+			query: slugOrWord,
+			found: true,
+			slug: entry.slug,
+			lemma: entry.sk,
+			gloss: entry.en,
+			pos: entry.pos ?? entry.cat,
+			gender: entry.gender,
+			inDeck: !!card,
+			favorite: favorites.has(entry.slug),
+			state: card ? classifyWordState(card) : "new",
+		};
+	}
+
+	// Universal fallback for words outside the base lexicon (e.g. GRAMMAR_WORDS, custom/translated words)
+	const looked = lookupSelection(cleaned);
+	const lemma = looked.lemma ?? cleaned;
+	const gloss = customGloss || looked.gloss || "";
+	const slug = looked.slug ?? (foldDiacritics(lemma.toLocaleLowerCase("sk-SK")).replace(/[^a-z0-9]+/g, "-") || "word");
+
+	if (markFavorite) {
+		savedPhraseStore.setFavorite(slug, true);
+	}
+	if (gloss) {
+		writeTranslationCacheEntry(lemma.toLocaleLowerCase("sk-SK"), {
+			gloss,
+			lemma,
+			pos: looked.pos ?? "Vocabulary",
+			updatedAt: new Date().toISOString(),
+		});
+	}
+	savedPhraseStore.savePhrase({
+		text: lemma,
+		translation: gloss,
+		source: "manual",
+	});
+
+	return {
+		query: slugOrWord,
+		found: true,
+		slug,
+		lemma,
+		gloss: gloss || undefined,
+		pos: looked.pos ?? "Vocabulary",
+		inDeck: true,
+		favorite: savedPhraseStore.isFavorite(slug),
+		state: "new",
+	};
+}
 
 export interface WordBankQuery {
 	search?: string;

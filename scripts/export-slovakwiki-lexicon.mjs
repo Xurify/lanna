@@ -49,6 +49,8 @@ const exported = words.map((w) => {
 			...(cloze ? { cloze } : {}),
 		};
 	});
+	const generatedForms = searchFormsForLemma(w.slovak, w.category, w.gender);
+	const verified = formsVerified(w.slovak, w.category, w.gender);
 	return {
 		slug: w.slug,
 		sk: w.slovak,
@@ -59,7 +61,8 @@ const exported = words.map((w) => {
 		...(w.register ? { register: w.register } : {}),
 		...(w.frequency ? { rank: w.frequency.rank, pos: w.frequency.partOfSpeech } : {}),
 		...(w.declension ? { declension: w.declension } : {}),
-		...(formsVerified(w.slovak, w.category, w.gender) ? { forms: searchFormsForLemma(w.slovak, w.category, w.gender) } : {}),
+		...(generatedForms.length > 0 ? { forms: generatedForms } : {}),
+		...(verified ? { formsVerified: true } : {}),
 		origin: w.origin,
 		examples,
 		related: w.related ?? [],

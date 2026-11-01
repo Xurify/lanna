@@ -14,7 +14,7 @@ process.env.LH_PROFILE = "slovak";
 
 const { calculateRetention, classifyWordState } = await import("../src/core/saved-phrases.ts");
 const { savedPhraseStore } = await import("../src/store/saved-phrases.ts");
-const { getWordBank } = await import("../src/server/word-bank.ts");
+const { addWordToBank, getWordBank, lookupSelection, lookupSelectionAsync } = await import("../src/server/word-bank.ts");
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -159,5 +159,79 @@ describe("getWordBank", () => {
 		const res = getWordBank({ status: "favorite" });
 		assert.ok(res.items.length >= 1);
 		assert.ok(res.items.every((i) => i.favorite === true));
+	});
+
+	it("looks up highlighted words and adds them to the word bank / FSRS deck", () => {
+		const looked = lookupSelection("  voda! ");
+		assert.equal(looked.found, true);
+		assert.ok(looked.slug);
+		assert.ok(looked.lemma);
+
+		const added = addWordToBank(looked.slug!, true);
+		assert.equal(added.found, true);
+		assert.equal(added.inDeck, true);
+		assert.equal(added.favorite, true);
+	});
+
+	it("resolves inflected, grammar, stemmed, and negated Slovak words (e.g. centra, horách, pracujem, neviem)", async () => {
+		const centra = lookupSelection("centra?");
+		assert.equal(centra.found, true);
+		assert.equal(centra.lemma, "centrum");
+		assert.ok(centra.gloss?.includes("center"));
+		assert.ok(centra.formNote?.includes("centrum"));
+
+		const horach = lookupSelection("horách.");
+		assert.equal(horach.found, true);
+		assert.equal(horach.lemma, "hora");
+		assert.ok(horach.gloss?.includes("mountain"));
+
+		const pracujem = lookupSelection("pracujem");
+		assert.equal(pracujem.found, true);
+		assert.equal(pracujem.lemma, "pracovať");
+
+		const neviem = lookupSelection("neviem");
+		assert.equal(neviem.found, true);
+		assert.equal(neviem.lemma, "vedieť");
+		assert.ok(neviem.gloss?.includes("I don't know"));
+		assert.ok(neviem.gloss?.includes("to not know"));
+		assert.ok(neviem.formNote?.includes("negative 1st person sg. of vedieť"));
+
+		const nepracujem = lookupSelection("nepracujem");
+		assert.equal(nepracujem.found, true);
+		assert.equal(nepracujem.lemma, "pracovať");
+		assert.ok(nepracujem.gloss?.includes("I don't work"));
+		assert.ok(nepracujem.formNote?.includes("negative 1st person sg. of pracovať"));
+
+		const necestujem = lookupSelection("necestujem");
+		assert.equal(necestujem.found, true);
+		assert.equal(necestujem.lemma, "cestovať");
+		assert.ok(necestujem.gloss?.includes("I don't travel"));
+		assert.ok(necestujem.formNote?.includes("negative 1st person sg. of cestovať"));
+
+		// Even words outside the base lexicon can be added to the word bank
+		const addedCentra = addWordToBank("centra", true);
+		assert.equal(addedCentra.found, true);
+		assert.equal(addedCentra.favorite, true);
+
+		// Palatalized verb form "plače" -> plakať ("to cry") + direct slovak.wiki dictionary link
+		const place = lookupSelection("plače.");
+		assert.equal(place.found, true);
+		assert.equal(place.lemma, "plakať");
+		assert.equal(place.slovakWikiUrl, "https://slovak.wiki/dictionary/plakat");
+
+		// Multi-word phrase breakdown "prečo plače" works synchronously offline AND via lookupSelectionAsync
+		const precoPlaceSync = lookupSelection("prečo plače");
+		assert.equal(precoPlaceSync.found, true);
+		assert.ok(precoPlaceSync.gloss?.toLowerCase().includes("why"));
+		assert.ok(precoPlaceSync.formNote?.includes("prečo"));
+		assert.ok(precoPlaceSync.formNote?.includes("plače"));
+		assert.equal(
+			precoPlaceSync.slovakWikiUrl,
+			"https://slovak.wiki/search?q=pre%C4%8Do%20pla%C4%8De",
+		);
+
+		const precoPlaceAsync = await lookupSelectionAsync("prečo plače");
+		assert.equal(precoPlaceAsync.found, true);
+		assert.ok(precoPlaceAsync.gloss && precoPlaceAsync.gloss.length > 0);
 	});
 });

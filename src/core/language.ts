@@ -10,12 +10,19 @@
 
 export type LanguageId = "slovak" | "russian";
 
+export interface LanguageReferenceSite {
+	/** Display label in popovers, e.g. "slovak.wiki" or "DEXonline". */
+	label: string;
+	/** Base origin, e.g. "https://slovak.wiki". */
+	baseUrl: string;
+}
+
 export interface LanguageInfo {
-	id: LanguageId;
+	id: LanguageId | string;
 	/** BCP-47 tag — TTS voices, speechSynthesis, toLocaleLowerCase. */
 	tag: string;
-	/** ISO 639-1 — the /api/tts ?lang= value. */
-	code: "sk" | "ru";
+	/** ISO 639-1 — the /api/tts ?lang= value and translation source language code. */
+	code: string;
 	/** The language's own name. */
 	endonym: string;
 	english: string;
@@ -23,6 +30,8 @@ export interface LanguageInfo {
 	specialLetters: string[];
 	/** Edge neural voices (msedge-tts), first is the default. */
 	edgeVoices: string[];
+	/** Optional dedicated reference/dictionary site for this language profile. */
+	referenceSite?: LanguageReferenceSite;
 }
 
 export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
@@ -34,6 +43,10 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 		english: "Slovak",
 		specialLetters: ["á", "ä", "č", "ď", "é", "í", "ĺ", "ľ", "ň", "ó", "ô", "ŕ", "š", "ť", "ú", "ý", "ž"],
 		edgeVoices: ["sk-SK-ViktoriaNeural", "sk-SK-LukasNeural"],
+		referenceSite: {
+			label: "slovak.wiki",
+			baseUrl: "https://slovak.wiki",
+		},
 	},
 	russian: {
 		id: "russian",
@@ -43,6 +56,69 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 		english: "Russian",
 		specialLetters: ["ё", "й", "ъ", "ь", "ы", "э", "щ", "ж", "ю", "я"],
 		edgeVoices: ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"],
+		referenceSite: {
+			label: "Wiktionary",
+			baseUrl: "https://ru.wiktionary.org",
+		},
+	},
+};
+
+/**
+ * Pre-configured presets for languages that can be plugged into LangHarness.
+ * Copy into LANGUAGES and config.ts LANGUAGE_PROFILES to activate.
+ */
+export const LANGUAGE_PRESETS: Record<string, LanguageInfo> = {
+	czech: {
+		id: "czech",
+		tag: "cs-CZ",
+		code: "cs",
+		endonym: "Čeština",
+		english: "Czech",
+		specialLetters: ["á", "č", "ď", "é", "ě", "í", "ň", "ó", "ř", "š", "ť", "ú", "ů", "ý", "ž"],
+		edgeVoices: ["cs-CZ-VlastaNeural", "cs-CZ-AntoninNeural"],
+		referenceSite: {
+			label: "Wiktionary",
+			baseUrl: "https://cs.wiktionary.org",
+		},
+	},
+	romanian: {
+		id: "romanian",
+		tag: "ro-RO",
+		code: "ro",
+		endonym: "Română",
+		english: "Romanian",
+		specialLetters: ["ă", "â", "î", "ș", "ț"],
+		edgeVoices: ["ro-RO-AlinaNeural", "ro-RO-EmilNeural"],
+		referenceSite: {
+			label: "DEXonline",
+			baseUrl: "https://dexonline.ro",
+		},
+	},
+	german: {
+		id: "german",
+		tag: "de-DE",
+		code: "de",
+		endonym: "Deutsch",
+		english: "German",
+		specialLetters: ["ä", "ö", "ü", "ß"],
+		edgeVoices: ["de-DE-KatjaNeural", "de-DE-ConradNeural"],
+		referenceSite: {
+			label: "Wiktionary",
+			baseUrl: "https://de.wiktionary.org",
+		},
+	},
+	spanish: {
+		id: "spanish",
+		tag: "es-ES",
+		code: "es",
+		endonym: "Español",
+		english: "Spanish",
+		specialLetters: ["á", "é", "í", "ó", "ú", "ü", "ñ", "¿", "¡"],
+		edgeVoices: ["es-ES-ElviraNeural", "es-ES-AlvaroNeural"],
+		referenceSite: {
+			label: "Wiktionary",
+			baseUrl: "https://es.wiktionary.org",
+		},
 	},
 };
 

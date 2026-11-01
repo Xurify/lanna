@@ -1,14 +1,88 @@
 "use client";
 /**
- * Two preferences stored on this device, not in the settings record: spoken
- * audio speed and lesson sounds. Each row writes straight to its store, so the
- * change applies on the next play.
+ * Device preferences stored on this device: spoken audio speed, lesson sounds,
+ * and word lookup translation mode (Dictionary, Hybrid, or Google Translate).
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SPEEDS, setSpeed, useSpeed } from "@/components/speech";
 import { setSoundOn, soundOn } from "@/components/lesson/sound";
 import { SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
+
+export type WordTranslationMode = "dictionary" | "hybrid" | "google";
+
+const WORD_TRANSLATION_MODE_KEY = "lh:word-translation-mode";
+const WORD_TRANSLATION_MODE_EVENT = "lh:word-translation-mode-change";
+
+export function getWordTranslationMode(): WordTranslationMode {
+	if (typeof window === "undefined") return "hybrid";
+	try {
+		const raw = localStorage.getItem(WORD_TRANSLATION_MODE_KEY);
+		if (raw === "dictionary" || raw === "hybrid" || raw === "google") {
+			return raw;
+		}
+	} catch {
+		// ignore
+	}
+	return "hybrid";
+}
+
+export function setWordTranslationMode(mode: WordTranslationMode): void {
+	if (typeof window === "undefined") return;
+	try {
+		localStorage.setItem(WORD_TRANSLATION_MODE_KEY, mode);
+		window.dispatchEvent(new CustomEvent(WORD_TRANSLATION_MODE_EVENT, { detail: mode }));
+	} catch {
+		// ignore
+	}
+}
+
+export function useWordTranslationMode(): [WordTranslationMode, (next: WordTranslationMode) => void] {
+	const [mode, setMode] = useState<WordTranslationMode>("hybrid");
+
+	useEffect(() => {
+		setMode(getWordTranslationMode());
+		const onUpdate = () => setMode(getWordTranslationMode());
+		window.addEventListener(WORD_TRANSLATION_MODE_EVENT, onUpdate);
+		window.addEventListener("storage", onUpdate);
+		return () => {
+			window.removeEventListener(WORD_TRANSLATION_MODE_EVENT, onUpdate);
+			window.removeEventListener("storage", onUpdate);
+		};
+	}, []);
+
+	const update = (next: WordTranslationMode) => {
+		setMode(next);
+		setWordTranslationMode(next);
+	};
+
+	return [mode, update];
+}
+
+const WORD_MODE_OPTIONS: readonly { value: WordTranslationMode; label: string }[] = [
+	{ value: "dictionary", label: "Dictionary" },
+	{ value: "hybrid", label: "Hybrid" },
+	{ value: "google", label: "Google Translate" },
+];
+
+export function WordLookupModeRow() {
+	const [mode, setMode] = useWordTranslationMode();
+	return (
+		<SettingsRow
+			label="Word lookup translation"
+			hint="Hybrid combines Google Translate's surface translation with local lemma & grammar resolution. Dictionary uses only the offline lexicon; Google Translate shows direct surface translations."
+			testid="row-word-lookup-mode"
+		>
+			<SettingsSegmented
+				options={WORD_MODE_OPTIONS}
+				value={mode}
+				onChange={setMode}
+				ariaLabel="Word lookup translation mode"
+				testid="word-lookup-mode"
+			/>
+		</SettingsRow>
+	);
+}
 
 export function PlaybackSpeedRow() {
 	const speed = useSpeed();
