@@ -17,7 +17,7 @@
  */
 
 import { entryLemma, exampleText, type LexiconEntry, type LexiconExample } from "./review.ts";
-import { foldDiacritics } from "./language.ts";
+import { foldDiacritics, knownVariants } from "./language.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
@@ -316,6 +316,8 @@ export interface LessonItem {
 	sentence: string;
 	translation: string;
 	answer: string;
+	/** Acceptable spelling or doublet variants that are also considered correct answers (e.g. zas ↔ zase / zasa). */
+	alternatives?: readonly string[];
 	before: string;
 	after: string;
 	/** choose: four forms including the answer; meaning: three English
@@ -654,6 +656,8 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (c.entry.gender) item.gender = c.entry.gender;
 	const form = describeForm(c.entry, answer, c.unit);
 	if (form) item.form = form;
+	const alts = knownVariants(answer);
+	if (alts.length > 0) item.alternatives = alts;
 	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at);
 	if (trigger) item.trigger = trigger;
 	const options = () => (info.kind === "words" ? wordOptions(answer, entryLemma(c.entry), pool, rand) : formOptions(c.entry, answer, pool, rand));

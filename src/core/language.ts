@@ -10,6 +10,9 @@
 
 export type LanguageId = "slovak" | "russian";
 
+import { isVariantMatch, knownVariants } from "./variants.ts";
+export { isVariantMatch, knownVariants };
+
 export interface LanguageReferenceSite {
 	/** Display label in popovers, e.g. "slovak.wiki" or "DEXonline". */
 	label: string;
@@ -152,7 +155,8 @@ export function normalizeAnswer(text: string, tag = "sk-SK"): string {
 /**
  * Grade a typed answer against the expected one.
  *
- * - "exact": same after case/space/end-punctuation normalization.
+ * - "exact": same after case/space/end-punctuation normalization, or a recognized
+ *   valid variant / alternative (e.g. zas ↔ zase / zasa).
  * - "accents": right letters, wrong or missing diacritics (dĺžeň, mäkčeň,
  *   vokáň …) — the word is known, the spelling is not yet. Drills give
  *   partial credit and show the correct spelling.
@@ -163,12 +167,26 @@ export function normalizeAnswer(text: string, tag = "sk-SK"): string {
  */
 export type AnswerVerdict = "exact" | "accents" | "wrong";
 
-export function compareAnswer(expected: string, given: string, tag = "sk-SK"): AnswerVerdict {
+export function compareAnswer(
+	expected: string,
+	given: string,
+	tag = "sk-SK",
+	alternatives: readonly string[] = [],
+): AnswerVerdict {
 	const e = normalizeAnswer(expected, tag);
 	const g = normalizeAnswer(given, tag);
 	if (!g) return "wrong";
 	if (e === g) return "exact";
 	if (foldDiacritics(e) === foldDiacritics(g)) return "accents";
+
+	const allAlts = [...alternatives, ...knownVariants(expected, tag)];
+	for (const alt of allAlts) {
+		const a = normalizeAnswer(alt, tag);
+		if (!a) continue;
+		if (a === g) return "exact";
+		if (foldDiacritics(a) === foldDiacritics(g)) return "accents";
+	}
+
 	return "wrong";
 }
 
