@@ -195,6 +195,12 @@ export const concludeInputObject = Type.Object({
 		{ description: "REQUIRED — the miss classification: cue, discrimination, execution, careless, or structural — or null = no miss (bare, no quotes)." },
 	),
 	retest: Type.Boolean({ description: "REQUIRED — true marks the problem for a fresh-surface retest before the session ends." }),
+	evidence: Type.Optional(
+		Type.Union([Type.Literal("checked"), Type.Literal("judgment")], {
+			description:
+				"What the verdict rests on, shown to the learner: checked = the checker note, check_slovak or lookup_word confirmed every form your verdict depends on in this problem; judgment = your own reading, not confirmed by a tool. When in doubt, judgment.",
+		}),
+	),
 });
 
 export type ConcludeInput = Static<typeof concludeInputObject>;

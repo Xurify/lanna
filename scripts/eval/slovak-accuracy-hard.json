@@ -11,7 +11,7 @@
 		{ "id": "h-err-chlapci-unavene", "kind": "sentence", "text": "Chlapci boli unavené.", "ok": false, "fix": "unavení", "ref": "nouns.md" },
 		{ "id": "h-err-s-sestrou", "kind": "sentence", "text": "Išiel som s sestrou do mesta.", "ok": false, "fix": "so sestrou", "ref": "orthography-and-punctuation.md" },
 		{ "id": "h-err-dva-chlapci", "kind": "sentence", "text": "Videl som dva chlapci.", "ok": false, "fix": "dvoch chlapcov", "ref": "adjectives-pronouns-numerals.md" },
-		{ "id": "h-err-k-doktor", "kind": "sentence", "text": "Musím ísť k doktor.", "ok": false, "fix": "k doktorovi", "ref": "valency-and-prepositions.md" },
+		{ "id": "h-err-k-doktor", "kind": "sentence", "text": "Musím ísť k doktor.", "ok": false, "fix": "k (doktorovi|lekárovi)", "ref": "valency-and-prepositions.md" },
 		{ "id": "h-tr-dvoch-chlapcov", "kind": "translate", "en": "I saw two boys. (I am a man.)", "check": "dvoch chlapcov", "ref": "adjectives-pronouns-numerals.md" },
 		{ "id": "h-tr-psov", "kind": "translate", "en": "I am afraid of dogs.", "check": "bojím sa psov", "ref": "nouns.md" },
 		{ "id": "h-tr-chlapci-unaveni", "kind": "translate", "en": "The boys were tired.", "check": "chlapci boli unavení", "ref": "nouns.md" },

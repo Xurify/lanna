@@ -14,6 +14,7 @@ import * as path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 import { foldDiacritics, LANGUAGES, type LanguageId } from "../core/language.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
+import type { SlovakLookup } from "../core/slovak-check.ts";
 
 export interface Lexicon {
 	entries: LexiconEntry[];
@@ -102,6 +103,28 @@ export function lookupWord(query: string, profile: string = ACTIVE_PROFILE, limi
 	const english = lexicon.entries.filter((e) => re.test(e.en)).sort((a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9));
 	if (english.length) return { query, match: "english", entries: english.slice(0, limit) };
 	return { query, match: "none", entries: [] };
+}
+
+const lookups = new Map<string, SlovakLookup | null>();
+const sentenceKey = (s: string) => s.normalize("NFC").toLocaleLowerCase("sk").replace(/[.!?…"„“]/g, "").replace(/\s+/g, " ").trim();
+
+/** The dictionary as the Slovak checker reads it (src/core/slovak-check.ts):
+ *  each noun form's genders, and the curated example sentences, which a
+ *  person checked. Null without a lexicon. */
+export function slovakLookup(profile: string = ACTIVE_PROFILE): SlovakLookup | null {
+	if (lookups.has(profile)) return lookups.get(profile)!;
+	const lexicon = loadLexicon(profile);
+	let lookup: SlovakLookup | null = null;
+	if (lexicon) {
+		const curated = new Set<string>();
+		for (const e of lexicon.entries) for (const ex of e.examples) if (ex.src === "curated" && !ex.rejected) curated.add(sentenceKey(exampleText(ex)));
+		lookup = {
+			genders: (form) => [...new Set((lexicon.byForm.get(form.toLocaleLowerCase("sk")) ?? []).filter((e) => e.pos === "noun" && e.gender).map((e) => e.gender!))],
+			isVerifiedExample: (text) => curated.has(sentenceKey(text)),
+		};
+	}
+	lookups.set(profile, lookup);
+	return lookup;
 }
 
 const CASES = ["nominative", "genitive", "dative", "accusative", "locative", "instrumental"];

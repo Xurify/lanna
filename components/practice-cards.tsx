@@ -100,8 +100,9 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 	// below in the quiz-explanation register (small, muted, low-key).
 	// Nothing collapsible. Legacy inputs (pre-slim records) that carry
 	// their own solutionReveal fall back to it.
-	const input = (part.input ?? {}) as { outcome?: string; verdict?: string; solutionReveal?: string };
+	const input = (part.input ?? {}) as { outcome?: string; verdict?: string; solutionReveal?: string; evidence?: string };
 	const outcome = typeof input.outcome === "string" ? input.outcome : "";
+	const evidence = input.evidence === "checked" || input.evidence === "judgment" ? input.evidence : null;
 	const verdict = typeof input.verdict === "string" ? input.verdict : "";
 	const reveal =
 		typeof part.reveal === "string" ? part.reveal : typeof input.solutionReveal === "string" ? input.solutionReveal : "";
@@ -126,6 +127,16 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 				{(OUTCOME_LABEL[outcome] ?? "") !== "" && outcome !== "dismissed" && (
 					<span className={cn("rounded px-1.5 py-0.5", OUTCOME_CHIP[outcome] ?? OUTCOME_CHIP.movedOn)}>
 						{OUTCOME_LABEL[outcome]}
+					</span>
+				)}
+				{/* How sure the verdict is, from what backs it rather than the model's own confidence: models were
+				    confidently wrong in docs/research/slovak-accuracy-eval.md. */}
+				{evidence && (
+					<span
+						data-testid="conclude-evidence"
+						className={cn("ml-auto rounded px-1.5 py-0.5 normal-case tracking-normal", evidence === "checked" ? "bg-sky/15 text-sky" : "bg-muted text-muted-foreground")}
+					>
+						{evidence === "checked" ? "Checked in the dictionary" : "Tutor's judgment, not checked"}
 					</span>
 				)}
 			</div>

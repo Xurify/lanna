@@ -1,7 +1,11 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
+import { ACTIVE_PROFILE, PATHS } from "../../../config.ts";
+import { checkerNote, checkSlovak } from "../../core/slovak-check.ts";
 import { serverExecute } from "../tool-execute.ts";
-import { formatEntry, loadLexicon, lookupWord } from "../lexicon.ts";
+import { formatEntry, loadLexicon, lookupWord, slovakLookup } from "../lexicon.ts";
 
 /**
  * The language tools (LangHarness) — composed into all three agents
@@ -10,6 +14,9 @@ import { formatEntry, loadLexicon, lookupWord } from "../lexicon.ts";
  * - lookup_word: the bundled dictionary (agent/lexicon.ts) as ground truth
  *   for forms, gender and examples. Always present when the active profile
  *   has a lexicon.
+ * - check_slovak / slovak_reference (Slovak only): the rules a program can
+ *   check for certain (core/slovak-check.ts), and the slovak-language skill's
+ *   chapters (docs/research/slovak-accuracy-eval.md says why).
  * - add_to_review / review_status: the spaced-review deck, through a seam
  *   the composition root injects (the agent layer never imports the
  *   store). Absent seam (tests) = absent tools.
@@ -46,6 +53,64 @@ const lookupWordTool: AgentTool<typeof lookupInput> = {
 					? "matched only after ignoring diacritics — check the spelling"
 					: "matched an English gloss";
 		return [`${result.entries.length} entr${result.entries.length === 1 ? "y" : "ies"} for "${word}" (${how}). Slug in brackets.`, ...result.entries.map((e) => `[${e.slug}] ${formatEntry(e)}`)].join("\n\n");
+	}),
+};
+
+const checkInput = Type.Object({
+	text: Type.String({ minLength: 1, maxLength: 2000, description: "Slovak text: the learner's sentence, or a correction you are about to give." }),
+});
+
+const checkSlovakTool: AgentTool<typeof checkInput> = {
+	name: "check_slovak",
+	label: "check_slovak",
+	description:
+		"Check Slovak against the rules a program can verify for certain: so/zo/ku/vo before the sounds that need them, \"nie je\", no Czech letters, budem with a perfective infinitive, dva/dve/dvaja against the noun's gender. Also says when a sentence is a curated dictionary example, which is correct Slovak. Run it before you mark a learner's sentence wrong and before you give a correction. A clean result does not prove a sentence right.",
+	parameters: checkInput,
+	executionMode: "sequential",
+	execute: serverExecute("check_slovak", checkInput, async ({ text }) => {
+		const check = checkSlovak(text, slovakLookup() ?? undefined);
+		return checkerNote(check) ?? "[Checker: none of the certain rules is broken. That does not prove the text right; use lookup_word for forms.]";
+	}),
+};
+
+/** The slovak-language skill's references (skills/slovak-language, from slovak.wiki). */
+const REFERENCE_DIR = path.join(PATHS.root, "skills", "slovak-language", "references");
+
+const REFERENCES: Record<string, string> = {
+	"grammar-core": "cases, agreement, verbs, aspect, prepositions: the overview",
+	nouns: "noun paradigms, plurals, genitive plural, names, place names",
+	"adjectives-pronouns-numerals": "adjectives, pronouns, numbers with nouns (dva/dve/dvaja, 2–4 vs 5+)",
+	"verb-forms": "conjugation, irregular verbs, past, future, imperative",
+	"aspect-and-motion": "aspect pairs, motion verbs, kde/kam/odkiaľ",
+	"valency-and-prepositions": "which case a verb or preposition takes",
+	"syntax-and-style": "clitic position, negation, word order",
+	"orthography-and-punctuation": "i/y, so/zo, capitals, commas, quotes",
+	"phonology-and-orthography": "sounds, stress, vowel length, the rhythmic law",
+	"lexical-choice-and-interference": "English and Czech traps, false friends",
+	"spoken-slovak-and-variation": "colloquial speech, register, greetings, idioms",
+	"foundations-and-core-communication": "beginner patterns with examples",
+};
+
+const referenceInput = Type.Object({
+	topic: Type.Union(
+		Object.keys(REFERENCES).map((k) => Type.Literal(k)),
+		{ description: `One of: ${Object.entries(REFERENCES).map(([k, v]) => `${k} (${v})`).join("; ")}.` },
+	),
+});
+
+const slovakReferenceTool: AgentTool<typeof referenceInput> = {
+	name: "slovak_reference",
+	label: "slovak_reference",
+	description:
+		"Read one chapter of the Slovak reference (the slovak-language skill): rules with checked examples. Read the chapter for the point you are teaching before you explain a rule you are not certain of, rather than reconstructing it from memory.",
+	parameters: referenceInput,
+	executionMode: "sequential",
+	execute: serverExecute("slovak_reference", referenceInput, async ({ topic }) => {
+		try {
+			return fs.readFileSync(path.join(REFERENCE_DIR, `${topic}.md`), "utf-8");
+		} catch {
+			return `The reference "${topic}" is not available here. Say you are not certain rather than guessing.`;
+		}
 	}),
 };
 
@@ -104,6 +169,10 @@ function reviewStatusTool(seam: ReviewSeam): AgentTool<typeof statusInput> {
 export function languageTools(review?: ReviewSeam): Record<string, AgentTool<any>> {
 	const tools: Record<string, AgentTool<any>> = {};
 	if (loadLexicon()) tools.lookup_word = lookupWordTool;
+	if (ACTIVE_PROFILE === "slovak") {
+		tools.check_slovak = checkSlovakTool;
+		tools.slovak_reference = slovakReferenceTool;
+	}
 	if (review) {
 		tools.add_to_review = addToReviewTool(review);
 		tools.review_status = reviewStatusTool(review);

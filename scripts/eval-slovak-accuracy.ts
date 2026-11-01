@@ -14,6 +14,8 @@
  * Explanation items are saved ungraded: a person reads them.
  *
  * Needs a configured key in the sandbox's auth file; it never prints it.
+ * EVAL_BUDGET_USD (default 1) caps the spend of every run into the same
+ * <out-dir> together; calls already in flight can pass it by a few cents.
  */
 
 import fs from "node:fs";
@@ -106,12 +108,34 @@ function grade(item: Item, out: Record<string, unknown> | null): { pass: boolean
 	return item.answer.map(norm).includes(form) ? { pass: true } : { pass: false, miss: `wrong form (${form || "none"})` };
 }
 
+// Every call's cost goes to spend.jsonl as it lands, so a run that is
+// stopped (or hits the key's limit) still says what it cost, and the
+// budget counts every earlier run into the same folder.
+const SPEND = path.join(outDir, "spend.jsonl");
+const BUDGET = Number(process.env.EVAL_BUDGET_USD ?? 1);
+let spent = fs.existsSync(SPEND)
+	? fs
+			.readFileSync(SPEND, "utf8")
+			.split("\n")
+			.filter(Boolean)
+			.reduce((n, l) => n + ((JSON.parse(l) as { cost: number }).cost ?? 0), 0)
+	: 0;
+let halted: string | null = null;
+
 async function ask(model: string, level: string, skill: boolean, item: Item) {
+	if (halted || spent >= BUDGET) {
+		halted ??= `budget of $${BUDGET} reached ($${spent.toFixed(4)} spent)`;
+		return { id: item.id, kind: item.kind, text: "", out: null, pass: null, miss: `skipped: ${halted}`, cost: 0, output: 0, reasoning: 0, ms: 0 };
+	}
 	const engine = piEngineForSpec({ provider: "anthropic", id: model, thinkingLevel: level as never }, true);
 	let cost = 0;
 	let output = 0;
 	let reasoning = 0;
 	const started = Date.now();
+	const record = (c: number) => {
+		spent += c;
+		fs.appendFileSync(SPEND, `${JSON.stringify({ at: new Date().toISOString(), config: `${model}:${level}${skill ? ":skill" : ""}`, id: item.id, cost: c })}\n`);
+	};
 	try {
 		const { text } = await runSubagent([], {
 			role: "researcher",
@@ -123,12 +147,16 @@ async function ask(model: string, level: string, skill: boolean, item: Item) {
 				cost += u.cost?.total ?? 0;
 				output += u.output;
 				reasoning += u.reasoning ?? 0;
+				record(u.cost?.total ?? 0);
 			},
 		});
 		const out = parse(text);
 		return { id: item.id, kind: item.kind, text, out, ...grade(item, out), cost, output, reasoning, ms: Date.now() - started };
 	} catch (err) {
-		return { id: item.id, kind: item.kind, text: "", out: null, pass: false, miss: `error: ${err instanceof Error ? err.message : String(err)}`, cost, output, reasoning, ms: Date.now() - started };
+		const message = err instanceof Error ? err.message : String(err);
+		// A spending limit or a missing key fails every call after it: stop asking.
+		if (/usage limits|credit balance|not configured|authentication/i.test(message)) halted ??= message.slice(0, 160);
+		return { id: item.id, kind: item.kind, text: "", out: null, pass: null, miss: `error: ${message}`, cost, output, reasoning, ms: Date.now() - started };
 	}
 }
 
@@ -154,6 +182,7 @@ for (const arg of configArgs) {
 	const asked = Array.from({ length: REPS }, () => items).flat();
 	const results = await pool(asked, 6, (item) => ask(model!, level!, skill, item));
 	const graded = results.filter((r) => r.pass !== null);
+	const failed = results.filter((r) => r.miss?.startsWith("error") || r.miss?.startsWith("skipped")).length;
 	const misses = graded.filter((r) => !r.pass);
 	const summary = {
 		config: name,
@@ -163,7 +192,12 @@ for (const arg of configArgs) {
 		cost: Math.round(results.reduce((n, r) => n + r.cost, 0) * 10000) / 10000,
 		avgSeconds: Math.round(results.reduce((n, r) => n + r.ms, 0) / results.length / 100) / 10,
 		avgReasoning: Math.round(results.reduce((n, r) => n + r.reasoning, 0) / results.length),
+		notAsked: failed,
 	};
 	fs.writeFileSync(path.join(outDir, `${name}.json`), JSON.stringify({ summary, results }, null, "\t"));
 	console.log(JSON.stringify(summary), misses.map((r) => `${r.id}: ${r.miss}`).join(" | "));
+	if (halted) {
+		console.error(`stopped: ${halted}. Spent so far in ${outDir}: $${spent.toFixed(4)}`);
+		break;
+	}
 }

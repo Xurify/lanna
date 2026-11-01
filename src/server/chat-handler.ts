@@ -14,7 +14,10 @@ import { SubscriptionRequestCycle, type SubscriptionDispatchLifecycle } from "..
 import { reconstructRequestCause } from "../core/native-messages.ts";
 import { createJobRunner } from "../agent/subagents/runner.ts";
 import { createExtractionPipeline } from "../agent/subagents/extraction.ts";
-import type { ModelRole } from "../../config.ts";
+import { ACTIVE_PROFILE, type ModelRole } from "../../config.ts";
+import { slovakLookup } from "../agent/lexicon.ts";
+import { checkerNote, checkSlovak } from "../core/slovak-check.ts";
+import type { LhMessage } from "../core/native-messages.ts";
 import {
 	deliverJobResult,
 	noteSteersDurable,
@@ -63,6 +66,16 @@ import { enqueueWords, reviewDigest } from "./review.ts";
 
 /** LangHarness: the spaced-review seam every agent's language tools use. */
 const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
+
+/** A practice answer in Slovak carries what the checker can say for
+ *  certain (core/slovak-check.ts) into the model's copy of it. The learner's
+ *  card reads `details.text`, so they never see the note. */
+function withSlovakEvidence(message: LhMessage): LhMessage {
+	if (ACTIVE_PROFILE !== "slovak" || message.role !== "custom" || message.customType !== "practice-thinking") return message;
+	const text = (message.details as { text?: string } | undefined)?.text;
+	const note = text ? checkerNote(checkSlovak(text, slovakLookup() ?? undefined)) : null;
+	return note ? { ...message, content: `${message.content}\n\n${note}` } : message;
+}
 
 /**
  * One chat turn over the server-owned native record. Framework-free (plain
@@ -278,7 +291,7 @@ export async function handleChatInput(
 		appends =
 			input.type === "steers"
 				? input.steers.filter((s) => !steerDelivered(record.messages, s.id))
-				: inputAppends(record, input);
+				: inputAppends(record, input).map(withSlovakEvidence);
 	} catch (err) {
 		if (err instanceof ChatInputError) {
 			return Response.json({ error: err.message }, { status: 400 });
