@@ -18,7 +18,7 @@ const LONG_PRESS_MS = 450;
 
 /** The speaker button in a lesson or Review header. A click mutes or
  *  unmutes. Hovering it, focusing it, right-clicking it or pressing and
- *  holding it on a touch screen opens a volume slider below it. */
+ *  holding it on a touch screen drops a vertical volume slider below it. */
 export function SoundControl({ className, iconClass = "size-5", testid = "sound-toggle" }: { className?: string; iconClass?: string; testid?: string }) {
 	const { on, level } = useSound();
 	const [open, setOpen] = useState(false);
@@ -114,10 +114,10 @@ export function SoundControl({ className, iconClass = "size-5", testid = "sound-
 			</button>
 			{/* Absolute, so opening it never moves the header. The padding keeps the hover alive across the gap. */}
 			{open && (
-				<div role="group" aria-label="Volume" data-testid="volume-popover" className="absolute right-0 top-full z-30 pt-2">
-					<div className="flex w-52 items-center gap-3 rounded-xl border border-border/70 bg-card px-3 py-1 shadow-lg">
-						<Slider value={on ? level : 0} onChange={move} onCommit={() => sfx.tap()} label="Volume" className="flex-1" testid="volume-slider" />
-						<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">{on ? Math.round(level * 100) : 0}%</span>
+				<div role="group" aria-label="Volume" data-testid="volume-popover" className="absolute left-1/2 top-full z-30 -translate-x-1/2 pt-2">
+					<div className="flex w-12 flex-col items-center gap-1 rounded-xl border border-border/70 bg-card py-2 shadow-lg">
+						<Slider value={on ? level : 0} onChange={move} onCommit={() => sfx.tap()} label="Volume" orientation="vertical" className="h-28 flex-none" testid="volume-slider" />
+						<span className="font-ui text-[11px] font-semibold tabular-nums text-muted-foreground">{on ? Math.round(level * 100) : 0}%</span>
 					</div>
 				</div>
 			)}

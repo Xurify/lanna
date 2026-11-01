@@ -44,7 +44,7 @@ export function useActiveLanguage(): LanguageInfo | null {
 
 // ─── Playback speed (per-viewer preference) ────────────────────────────────
 
-export const SPEEDS = [0.75, 0.9, 1, 1.25] as const;
+export const SPEEDS = [0.75, 1, 1.25] as const;
 const SPEED_KEY = "lh-tts-speed";
 const speedListeners = new Set<() => void>();
 
@@ -230,8 +230,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	const audio = new Audio(src);
 	audio.preload = "auto";
 	audio.volume = Math.min(1, volume() * gain);
-	const base = Number(res.headers.get("x-tts-base-rate"));
-	audio.playbackRate = rate * (base > 0.5 && base < 2 ? base : 1);
+	audio.playbackRate = rate;
 	await new Promise<void>((resolve) => {
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;

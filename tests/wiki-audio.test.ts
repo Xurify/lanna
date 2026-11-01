@@ -16,7 +16,7 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { wikiClip } = await import("../src/server/wiki-audio.ts");
-const { synthesize, paceRate } = await import("../src/server/tts.ts");
+const { synthesize } = await import("../src/server/tts.ts");
 const { listAudioClips } = await import("../src/store/corpus.ts");
 
 const realFetch = globalThis.fetch;
@@ -58,19 +58,8 @@ describe("wiki audio", () => {
 		assert.equal(urls.length, before);
 	});
 
-	it("paceRate brings each source to one speaking pace, for Slovak only", () => {
-		assert.equal(paceRate("sk", "wiki", "female"), 1.099);
-		assert.equal(paceRate("sk", "slovak-wiki", "female"), 1.099);
-		assert.equal(paceRate("sk", "elevenlabs", "female"), 1, "ElevenLabs already reads at the target pace");
-		assert.equal(paceRate("sk", "elevenlabs", "YJsJ2Mt3VRr0gCiTY6DA"), 0.877, "a story character reads a little faster than the target");
-		assert.equal(paceRate("sk", "unknown", "female"), 1, "clips of unknown origin play as recorded");
-		assert.equal(paceRate("ru", "edge", "female"), 1, "the paces were measured on Slovak");
-	});
-
 	it("synthesize serves the wiki clip for the default voice", async () => {
 		const clip = await synthesize({ text: "Je to dobrý človek.", lang: "sk", voice: "female" });
 		assert.equal(clip?.tier, "wiki");
-		assert.equal(clip?.baseRate, paceRate("sk", "wiki", "female"), "wiki clips are sped up to a normal pace");
-		assert.ok((clip?.baseRate ?? 0) > 1.05, "the wiki records slowly, so it is sped up");
 	});
 });

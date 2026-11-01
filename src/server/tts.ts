@@ -69,33 +69,6 @@ export interface TtsClip {
 	file: string;
 	contentType: string;
 	tier: TtsTier | "cache" | "wiki";
-	/** Playback rate that brings the clip to a normal speaking pace (see
-	 *  paceRate); the client multiplies the speed button by it. */
-	baseRate?: number;
-}
-
-/** Syllables a second at rate 1, the median over the Slovak clips kept in
- *  data/audio (measured 2026-11-01 on speech from the first to the last
- *  sound, pauses between words included). slovak.wiki records slowly (0.88×)
- *  for learners and Edge reads slowly too; ElevenLabs is nearer a native pace. */
-const PACE: Record<string, number> = { wiki: 4.55, "slovak-wiki": 4.55, edge: 4.55, elevenlabs: 5 };
-/** The same, for story-character voices (an ElevenLabs id, or Edge by gender). */
-const PACE_CHARACTER = 5.7;
-/** What 1× sounds like. Owner feedback, both on slovak.wiki clips: at 4.8
- *  syllables a second "Hráš na gitare?" sounded slow, at 6.0 "Uvádza nové
- *  produkty." sounded too fast and 4.5 sounded right. The two clips disagree,
- *  so this sits between them at what ElevenLabs reads at unaided, and the
- *  0.9× step covers the 4.5. Change this one number to move every voice. */
-const PACE_TARGET = 5;
-
-/** The playback rate that makes a clip sound like a normal speaker, whichever
- *  voice made it. Only measured for Slovak; other languages and unknown
- *  sources play as recorded. */
-export function paceRate(lang: string, tier: string, voice: string | undefined): number {
-	if (lang !== "sk") return 1;
-	const gendered = voice === undefined || voice === "female" || voice === "male";
-	const pace = gendered ? PACE[tier] : tier === "elevenlabs" || tier === "edge" ? PACE_CHARACTER : undefined;
-	return pace ? Math.round((PACE_TARGET / pace) * 1000) / 1000 : 1;
 }
 
 export const TTS_MAX_CHARS = 600;
@@ -169,7 +142,7 @@ function cached(key: string, lang: string): TtsClip | null {
 	const hit = findAudioClip(key);
 	if (!hit) return null;
 	const ext = hit.file.endsWith(".wav") ? "wav" : "mp3";
-	return { file: hit.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache", baseRate: paceRate(lang, hit.tier, hit.voice) };
+	return { file: hit.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache" };
 }
 
 function envFor(name: string, code: string): string | undefined {
@@ -273,7 +246,7 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	// slovak.wiki's own recording beats any clip made here, for the default voice.
 	if (lang.code === "sk" && (req.voice === undefined || req.voice === "female")) {
 		const wiki = await wikiClip("slovak", lang.code, req.text);
-		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki", baseRate: paceRate(lang.code, "wiki", req.voice) };
+		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki" };
 	}
 	const key = ttsCacheKey(req);
 	const hit = cached(key, lang.code);
@@ -284,7 +257,7 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 			const audio = await run(req, lang);
 			if (audio && audio.length > 0) {
 				const stored = storeAudioClip({ key, lang: lang.code, voice: req.voice ?? "female", tier, text: req.text, ext, data: audio });
-				return { file: stored.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier, baseRate: paceRate(lang.code, tier, req.voice) };
+				return { file: stored.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier };
 			}
 		} catch (err) {
 			console.warn(`[tts] ${tier} failed, falling through:`, err instanceof Error ? err.message : err);
