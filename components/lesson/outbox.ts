@@ -10,11 +10,13 @@
  * kept the moment it is finished and the end screen never waits for a request.
  */
 
-import type { UnitId } from "@/src/core";
+import type { StampState, UnitId } from "@/src/core";
 
 export interface Recorded {
 	queued: string[];
 	newBest?: number;
+	/** Stamps earned by this save (src/core/stamps.ts). */
+	newStamps?: StampState[];
 	summary: {
 		streak: { days: number; activeToday: boolean };
 		todayXp: number;

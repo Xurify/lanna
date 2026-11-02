@@ -77,6 +77,8 @@ import { carriedTasks, doneInLedger, RECENT_DAYS, type DayPlanSnapshot } from ".
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
 import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
+import { stampEvidence, syncStamps, type StampReport } from "./stamps.ts";
+import type { StampState, TrailLog } from "../core/stamps.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
@@ -208,6 +210,8 @@ export interface LessonOutcome {
 	/** Missed words now queued in the review deck. */
 	queued: string[];
 	newBest?: number;
+	/** Stamps earned by this save (src/core/stamps.ts), for the end screen. */
+	newStamps?: StampState[];
 	summary: ProgressSummary;
 	/** A retry of a save already recorded: this is the first answer, again. */
 	duplicate?: boolean;
@@ -230,6 +234,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	const prior = input.clientId ? p.lessonAcks?.find((a) => a.id === input.clientId) : undefined;
 	if (prior) return { ...prior.outcome, duplicate: true, summary: progressSummary(input.tz, now) };
 	const day = dayOf(p, today(input.tz, now));
+	const stampsBefore = { ...(p.stamps ?? {}) };
 	const { xp, correct, total, perfect } = lessonScore(input.reps, input.mode);
 	// A Mix-ups or personal lesson is built from targets, not a unit: its
 	// reps count toward no drill and no unit, only the day, XP and the mix-ups.
@@ -253,6 +258,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 		if (total > 0) {
 			unit!.lessons++;
 			day.lessons++;
+			if (perfect) day.perfect = (day.perfect ?? 0) + 1;
 			day.units ??= {};
 			day.units[input.unit] = (day.units[input.unit] ?? 0) + 1;
 		}
@@ -311,7 +317,9 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	}
 	// The plan reads the saved analysis's trends, so an old snapshot is renewed.
 	refreshSnapshotIfStale(now);
-	return { ...outcome, summary: progressSummary(input.tz, now) };
+	const summary = progressSummary(input.tz, now);
+	const newStamps = summary.stamps.all.filter((st) => st.earned && !(st.id in stampsBefore));
+	return { ...outcome, ...(newStamps.length ? { newStamps } : {}), summary };
 }
 
 const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
@@ -453,6 +461,14 @@ export interface ProgressSummary {
 	pace: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
 	/** Unfinished plan tasks from the last RECENT_DAYS days (src/core/carry-over.ts). */
 	backlog: number;
+	/** Minutes practiced today. */
+	todayMinutes: number;
+	/** Words known: review cards at 80% retention or better. */
+	wordsKnown: number;
+	/** The stamp book (src/core/stamps.ts, src/server/stamps.ts). */
+	stamps: StampReport;
+	/** The trail log: the totals, every one an outcome. */
+	log: TrailLog;
 }
 
 /** The video the daily plan should show: the one watched today (so the
@@ -587,12 +603,19 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	}
 	let loggedRecent = 0;
 	for (let i = 0; i < RECENT_DAYS; i++) loggedRecent += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
+	const streak = streakOf(active, key, Math.max(0, DAYS_IN_WEEK - (goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK)));
+	// The stamp book: judge every stamp on today's evidence and write down
+	// the ones earned since the last look (a review session or a story earns
+	// stamps too, not only a lesson).
+	const { evidence, log } = stampEvidence(p, curriculum, balance, streak.days, active);
+	const stamps = syncStamps(p, curriculum, evidence, key);
+	if (stamps.minted.length) progressStore.write(p);
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),
 		todayXp: p.days[key]?.xp ?? 0,
 		dailyGoal: p.dailyGoal,
-		streak: streakOf(active, key, Math.max(0, DAYS_IN_WEEK - (goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK))),
+		streak,
 		week,
 		units,
 		next,
@@ -618,6 +641,10 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		exams: examSummaries(p.exams),
 		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },
 		backlog,
+		todayMinutes: Math.round(p.days[key]?.minutes ?? 0),
+		wordsKnown: log.wordsKnown,
+		stamps: stamps.report,
+		log,
 	};
 }
 

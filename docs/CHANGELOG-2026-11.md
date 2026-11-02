@@ -2,7 +2,18 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
-## 2 November: the trail design (branch `feat/trail-design`, not merged)
+## 2 November: stamps, the minutes ring and the trail log (branch `feat/trail-stamps`)
+
+- **Research:** what gamification does for learning and what harms it, in [research/gamification.md](research/gamification.md); rule E31. The `gamification-loops` agent skill is installed under `.claude/skills/gamification-loops/` with its provenance in `SOURCE.md`.
+- **Stamps** (*turistické známky*): a summit stamp per level, a stamp per chapter and 42 deeds (first lesson; 7, 30, 100 and 365 days in a row; 50 to 3,000 words known; 100 to 5,000 review answers; lessons without a miss; words once missed, now known; a balanced week; stories read; scenes said aloud; listening sessions; Blitz scores; hours on the trail; chapter exams passed). Earned by outcomes on record only, dated in `progress.json`, never taken back, no XP. Judged whenever the progress summary is built.
+- **Today:** four indicators at the top (days in a row, today's minutes as a ring against the daily goal, words known, XP); a Stamps card in the side column with the last stamp earned and the three closest, each with its count and a progress bar; the This week card counts the days practiced against the goal's days a week and says "Target met" in gold.
+- **Lessons:** a stamp earned by the lesson is pressed onto the end screen (a short settle animation, none under reduced motion) with its Slovak name and what it marks.
+- **Progress:** a Trail log (hours on the trail, words known, days practiced, longest streak, lessons, review answers, stories read, scenes said aloud) and the Stamp book, in three groups: Summits, Chapters, On the trail.
+- **Record:** the day record gains `perfect` (lessons with every answer right); `progress.json` gains `stamps` (stamp id → day earned).
+- **Checked in the cloud, on a throwaway data folder:** 17 new tests (the catalog, the earning rule, what is new and what is closest, the longest streak, a lesson minting its stamps end to end and the record keeping them, the disc, the book, the Today card and the week target); typecheck and lint clean; the full suite as before (the one pi-ai package-exports failure under Node 22).
+- **Unverified:** the PC, the phone layout of the four indicators on a real device, and which stamps a real learner reaches in the first month.
+
+## 2 November: the trail design (PR #80, merged 11:59Z)
 
 - **Direction:** the app's own look instead of the best-known app's forms (E30, [research/trail-design.md](research/trail-design.md)). Slovak hiking-trail marks for the four kinds of practice (input red, speaking blue, words & rules green, speed yellow), the sun as the one action color (buttons, streak, XP, done), and the path drawn as a climb: levels as stretches of a mountain, chapters as stops on a switchback trail, read from the bottom up, gold behind, dotted ahead.
 - **Today:** the streak is a flag and a day count, XP is gold, a ridge line under the greeting shows the whole way to the target level with a marker where the learner stands, every plan task carries its trail mark, the side column shows the current stage of the climb with the current chapter's units under it.

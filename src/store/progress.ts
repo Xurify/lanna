@@ -45,6 +45,8 @@ export interface DayRecord {
 	rereads?: number;
 	/** "Say it faster" rounds finished (the fluency strand). */
 	fasts?: number;
+	/** Lessons finished with every answer right (the stamp book, src/core/stamps.ts). */
+	perfect?: number;
 	/** Minutes spent practicing: the sum of `minutesBy` plus any older,
 	 *  unattributed time (from the client's timers). */
 	minutes?: number;
@@ -112,6 +114,8 @@ export interface ProgressRecord {
 	/** Pairs of words the learner gives one for the other, and the pairs
 	 *  predicted from them (src/core/mixups.ts). */
 	mixups?: MixupRecord;
+	/** Stamps earned, by stamp id, with the day (src/core/stamps.ts; src/server/stamps.ts). */
+	stamps?: Record<string, string>;
 	/** The latest lesson saves by the id the client sent (src/server/lesson.ts):
 	 *  a retry of one of them is answered from here, not recorded again. */
 	lessonAcks?: Array<{ id: string; outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number } }>;

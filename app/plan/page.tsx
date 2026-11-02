@@ -15,5 +15,5 @@ export default function PlanRoute() {
 	} catch {
 		report = null;
 	}
-	return <PlanPage goal={summary.goal} report={report} weak={summary.weakSpots} />;
+	return <PlanPage goal={summary.goal} report={report} weak={summary.weakSpots} stamps={summary.stamps.all} log={summary.log} />;
 }
