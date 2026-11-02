@@ -549,7 +549,7 @@ function UnitBadgeHover({
 	);
 }
 
-function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; weak?: WeakSpotSummary; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
+export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { unit: UnitState; active: boolean; starred: boolean; weak?: WeakSpotSummary; busy: boolean; onTutor: (u: UnitState) => void; onScene: (scene: string, u: UnitState) => void }) {
 	const locked = u.status === "locked";
 	const skipped = u.status === "skipped";
 	const tone = u.kind === "tutor" ? "xp" : u.kind === "goal" ? "flame" : "go";
@@ -601,7 +601,7 @@ function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene }: { u
  *  only: the line says where it stands, and nothing on the path opens or
  *  closes on it. Its ring is a unit's ring: it fills to the best score,
  *  and turns gold once the exam is passed. */
-function ExamRow({ chapterId, summary }: { chapterId: string; summary: ExamSummary }) {
+export function ExamRow({ chapterId, summary }: { chapterId: string; summary: ExamSummary }) {
 	const best = summary.best;
 	return (
 		<Link href={`/exam?chapter=${chapterId}`} className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-accent" data-testid={`exam-${chapterId}`}>

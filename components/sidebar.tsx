@@ -7,7 +7,7 @@ import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { BotMessageSquareIcon, CheckIcon, DumbbellIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
+import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
@@ -422,7 +422,7 @@ export function SessionRow({
 			    was left of the name; right-aligned keeps the titles flush with
 			    the teaching rows and reads cleaner. */}
 			{(chat.kind ?? "teach") === "practice" && (
-				<DumbbellIcon className="size-3.5 shrink-0 text-muted-foreground" aria-label="Practice session" />
+				<MessagesSquareIcon className="size-3.5 shrink-0 text-muted-foreground" aria-label="Practice session" />
 			)}
 		</button>
 	);
@@ -850,7 +850,7 @@ function SessionsSidebar() {
 							</Link>
 						</Hint>
 						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
-							Lang<span className="text-go">Harness</span>
+							Lang<span className="text-sun">Harness</span>
 						</Link>
 						<Hint label="Close sidebar" action="toggle-sidebar">
 							<Button variant="ghost" size="icon" aria-label="Close sidebar" onClick={toggle} className="lh-no-drag">
@@ -887,7 +887,7 @@ function SessionsSidebar() {
 							aria-label="Practice a topic: start a new practice chat"
 							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 						>
-							<DumbbellIcon className="size-[18px]" />
+							<MessagesSquareIcon className="size-[18px]" />
 							Practice a topic
 							<PlusIcon className="ml-auto size-4 opacity-60" />
 						</button>

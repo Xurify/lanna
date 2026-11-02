@@ -4,10 +4,11 @@ import { cn } from "@/lib/utils";
  * The one button family of the learning screens: flat, sentence case, 48px
  * tall so the main action is an easy target. Today, the lessons, Review and
  * every task screen take their buttons from here, so a "Check" or a "Start"
- * looks and behaves the same wherever it appears.
+ * looks and behaves the same wherever it appears. The main action is the
+ * sun (trail design, 2026-11-02): the one gold on a screen.
  */
-export const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
-export const PRIMARY = cn(BUTTON, "bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100");
+export const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-bold transition-[filter,transform,background-color] active:scale-[0.98]";
+export const PRIMARY = cn(BUTTON, "bg-sun text-sun-ink hover:brightness-105 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100");
 export const SECONDARY = cn(BUTTON, "bg-foreground/10 px-5 text-foreground hover:bg-foreground/15 disabled:opacity-50");
 /** A quiet text action beside a primary one ("I don't know", "Skip"). */
 export const QUIET = cn(BUTTON, "px-4 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50");

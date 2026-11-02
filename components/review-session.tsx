@@ -240,7 +240,7 @@ export function ReviewSession() {
 				<h1 className="font-ui text-base font-extrabold text-foreground">Review</h1>
 				{counts && lang && (
 					<span className="ml-auto flex items-center gap-1.5 font-ui text-xs font-bold text-muted-foreground tabular-nums" data-testid="review-counts">
-						<span title="Cards due for review" className="rounded-full bg-sky/15 px-2.5 py-1 text-sky">
+						<span title="Cards due for review" className={cn("rounded-full px-2.5 py-1", counts.due + counts.learning > 0 ? "bg-sun/15 text-sun" : "bg-accent")}>
 							{counts.due + counts.learning} due
 						</span>
 						<span title="New cards left today" className="rounded-full bg-accent px-2.5 py-1">

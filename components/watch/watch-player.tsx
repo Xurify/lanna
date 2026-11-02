@@ -1142,7 +1142,7 @@ function End({ video, stats, outcome, saving, mode, onAgain, onShelf }: { video:
 				{video.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-xp" />
+				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-sun" />
 				<Stat label={mode === "step" ? "Got first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst}/${judged}` : "—") : String(video.segments.length)} ink="text-go" />
 				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-flame" />
 			</div>

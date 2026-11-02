@@ -593,7 +593,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				</div>
 			</div>
 			<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
-				<Stat label="XP" value={`+${outcome.xp}`} ink="text-xp" />
+				<Stat label="XP" value={`+${outcome.xp}`} ink="text-sun" />
 				<Stat label="New words met" value={String(words.length)} ink="text-sky" />
 				<Stat label="In your deck" value={saving ? "…" : String(outcome.queued.length)} ink="text-go" />
 			</div>

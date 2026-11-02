@@ -12,15 +12,17 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+	BookAIcon,
 	BookOpenIcon,
+	ChartNoAxesColumnIcon,
 	CheckIcon,
 	ChevronDownIcon,
 	GlobeIcon,
-	MapIcon,
+	MicIcon,
+	MountainSnowIcon,
 	PlusIcon,
 	RepeatIcon,
 	SunIcon,
-	TargetIcon,
 	XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -344,50 +346,56 @@ export function LanguageSwitcher() {
 
 			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
 			<nav className="flex flex-col gap-0.5" aria-label="Main">
-				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />} tint="text-gold">
+				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />}>
 					Today
 				</NavItem>
-				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones"} icon={<TargetIcon className="size-[18px]" />} tint="text-flame">
-					Plan
+				<NavItem href="/curriculum" testid="path-door" active={pathname === "/curriculum" || pathname === "/grammar" || pathname === "/exam"} icon={<MountainSnowIcon className="size-[18px]" />}>
+					Climb
 				</NavItem>
-				<NavItem href="/review" testid="review-door" active={pathname === "/review"} icon={<RepeatIcon className="size-[18px]" />} tint="text-sky">
+				<NavItem href="/review" testid="review-door" active={pathname === "/review"} icon={<RepeatIcon className="size-[18px]" />}>
 					Review
 					{counts && (reviewDue > 0 || reviewNew > 0) && (
 						<span
 							className={cn(
 								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
-								reviewDue > 0 ? "bg-sky/20 text-sky" : "bg-accent text-foreground",
+								reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground",
 							)}
+							data-testid="review-badge"
 						>
-							{reviewDue > 0 ? `${reviewDue} due` : `${reviewNew} new`}
+							{reviewDue > 0 ? reviewDue : `${reviewNew} new`}
 						</span>
 					)}
 				</NavItem>
-				<NavItem href="/map" testid="map-door" active={pathname === "/map"} icon={<MapIcon className="size-[18px]" />} tint="text-xp">
-					Skill map
+				<NavItem href="/read" testid="stories-door" active={pathname === "/read" || pathname === "/listen" || pathname === "/watch"} icon={<BookOpenIcon className="size-[18px]" />}>
+					Stories
 				</NavItem>
-				<NavItem href="/words" testid="words-door" active={pathname === "/words"} icon={<BookOpenIcon className="size-[18px]" />} tint="text-emerald">
+				<NavItem href="/speak" testid="speak-door" active={pathname === "/speak" || pathname === "/fluency"} icon={<MicIcon className="size-[18px]" />}>
+					Speak
+				</NavItem>
+				<NavItem href="/words" testid="words-door" active={pathname === "/words"} icon={<BookAIcon className="size-[18px]" />}>
 					Words
+				</NavItem>
+				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones" || pathname === "/map" || pathname === "/mistakes"} icon={<ChartNoAxesColumnIcon className="size-[18px]" />}>
+					Progress
 				</NavItem>
 			</nav>
 		</div>
 	);
 }
 
-/** One primary destination: icon in its own color, label in sentence case. */
+/** One primary destination: a trail-sign row. The one you are on is lit
+ *  with a sun bar at its edge and a brighter icon, no pill. */
 function NavItem({
 	href,
 	testid,
 	active,
 	icon,
-	tint,
 	children,
 }: {
 	href: string;
 	testid: string;
 	active: boolean;
 	icon: React.ReactNode;
-	tint: string;
 	children: React.ReactNode;
 }) {
 	return (
@@ -396,11 +404,12 @@ function NavItem({
 			data-testid={testid}
 			aria-current={active ? "page" : undefined}
 			className={cn(
-				"flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
+				"relative flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
 				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
 			)}
 		>
-			<span className={cn("shrink-0", active ? tint : "")}>{icon}</span>
+			{active && <span className="absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-sun" aria-hidden="true" />}
+			<span className={cn("shrink-0", active ? "text-sun" : "")}>{icon}</span>
 			{children}
 		</Link>
 	);

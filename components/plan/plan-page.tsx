@@ -113,7 +113,8 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 					<ArrowLeftIcon className="size-3.5" />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">Plan</h1>
+				<h1 className="mt-3 font-ui text-3xl font-extrabold tracking-tight text-foreground">Progress</h1>
+				<p className="mt-1 font-prose text-base text-muted-foreground">Your goal, your pace, and when the hours add up to it.</p>
 
 				{/* The goal, and where the level is checked again. */}
 				<section className={CARD} data-testid="plan-goal" aria-label="Your goal">
@@ -122,7 +123,7 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 						{/* A floor on the text: on a phone the buttons wrap below it instead of squeezing it to a column. */}
 						<div className="min-w-48 flex-1">
 							<p className="flex items-center gap-2 font-ui text-2xl font-black text-foreground">
-								<TargetIcon className="size-6 text-flame" aria-hidden="true" />
+								<TargetIcon className="size-6 text-sun" aria-hidden="true" />
 								{goal.level}
 							</p>
 							{purposes && <p className="mt-1 font-prose text-base text-foreground first-letter:uppercase">For {purposes}</p>}

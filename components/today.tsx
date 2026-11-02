@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BlocksIcon, ChartNoAxesColumnIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, FlameIcon, GaugeIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, RepeatIcon, TableIcon, XIcon, ZapIcon } from "lucide-react";
+import { BlocksIcon, ChartNoAxesColumnIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, FlagIcon, GaugeIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, RepeatIcon, TableIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
@@ -25,7 +25,8 @@ import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { DailyPlan, MixUps, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
 import { WeekCard } from "@/components/week-card";
-import { CurriculumPath } from "@/components/curriculum-path";
+import { Climb } from "@/components/climb";
+import { RidgeProgress, ridgeStops, TrailMark } from "@/components/trail";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
@@ -216,30 +217,30 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 
 			<div className="mx-auto grid w-full max-w-3xl gap-6 px-5 pb-16 @5xl:max-w-6xl @5xl:grid-cols-[minmax(0,1fr)_22rem] @5xl:gap-8" data-testid="today">
 				<div className="flex min-w-0 flex-col gap-6">
-					{/* Greeting and the day's numbers */}
+					{/* Greeting, the day's numbers, and the ridge: the whole way to the
+					    target level, with a marker where the learner stands. */}
 					<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
 						<div>
 							<p className="text-sm font-semibold text-muted-foreground first-letter:uppercase" lang="sk">
 								{new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" })}
 							</p>
-							<h1 className="mt-0.5 text-3xl font-black tracking-tight text-foreground" lang="sk">
+							<h1 className="mt-0.5 text-3xl font-extrabold tracking-tight text-foreground" lang="sk">
 								{greeting()}
 							</h1>
 						</div>
 						<div className="flex items-center gap-2">
-							<Pill className="text-flame" title={s?.streak.restUsed ? "Day streak (one rest day used)" : "Day streak"}>
-								<FlameIcon className={cn("size-4", s?.streak.activeToday && "lh-flicker")} aria-hidden="true" />
+							<Pill className="text-sun" title={s?.streak.restUsed ? "Days in a row (one rest day used)" : "Days in a row"} testid="streak-pill">
+								<FlagIcon className="size-4" aria-hidden="true" />
 								{s ? `${s.streak.days} ${s.streak.days === 1 ? "day" : "days"}` : "–"}
 							</Pill>
-							<Pill className="text-xp" title={s ? `${s.level.span - s.level.into} XP to level ${s.level.level + 1}` : "Level"}>
-								Level {s?.level.level ?? 1}
-								<span className="text-muted-foreground" aria-hidden="true">
-									·
-								</span>
-								{s?.xp ?? 0} XP
+							<Pill className="text-foreground" title={s ? `${s.level.span - s.level.into} XP to level ${s.level.level + 1}` : "Level"} testid="xp-pill">
+								<span className="text-muted-foreground">Level {s?.level.level ?? 1}</span>
+								<span className="text-sun">{s?.xp ?? 0} XP</span>
 							</Pill>
 						</div>
 					</div>
+
+					{s && <RidgeProgress done={s.curriculum.done} total={s.curriculum.total} level={s.curriculum.level} goal={s.goal.level} stops={ridgeStops(s.curriculum)} className="mb-1" />}
 
 					{failed && (
 						<p className="rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 text-sm text-foreground" role="alert">
@@ -255,10 +256,10 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 
 					{/* Every way to practice, outside the plan */}
 					<section aria-labelledby="practice-title" data-testid="modes">
-						<h2 id="practice-title" className="px-1 text-lg font-black text-foreground">
+						<h2 id="practice-title" className="px-1 text-lg font-extrabold text-foreground">
 							Practice anything
 						</h2>
-						<p className="mt-0.5 px-1 text-sm text-muted-foreground">Outside the plan, any time. Grouped by the four kinds of practice the week balances.</p>
+						<p className="mt-0.5 px-1 text-sm text-muted-foreground">Any time, outside the plan. The four marks are the four kinds of practice the week balances.</p>
 						<div className="mt-3 grid gap-3 @xl:grid-cols-2">
 							{practice.map((g) => (
 								<PracticeGroup key={g.strand} strand={g.strand} items={g.items} busy={busy} />
@@ -267,7 +268,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					</section>
 				</div>
 
-				<aside className="flex min-w-0 flex-col gap-6 @5xl:pt-1" aria-label="Your week and your path">
+				<aside className="flex min-w-0 flex-col gap-6 @5xl:pt-1" aria-label="Your week and your climb">
 					<WeekCard week={s?.week ?? []} balance={s?.balance ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} trajectory={s?.trajectory ?? null} />
 
 					{(s?.weakSpots?.length ?? 0) > 0 && (
@@ -282,20 +283,20 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						</section>
 					)}
 
-					{/* The path: the whole map, folded to the current chapter */}
-					<section aria-labelledby="path-title" data-testid="skill-path">
+					{/* The climb: the stage you are on, chapters as stops on the trail */}
+					<section aria-labelledby="climb-title" data-testid="skill-path" className="rounded-3xl border bg-card p-4">
 						<div className="flex items-baseline justify-between gap-3 px-1">
-							<h2 id="path-title" className="text-lg font-black text-foreground">
-								Your path
+							<h2 id="climb-title" className="text-lg font-extrabold text-foreground">
+								Your climb
 							</h2>
 							{s && (
-								<p className="text-sm text-muted-foreground tabular-nums">
-									{s.curriculum.done} of {s.curriculum.total} units to {s.goal.level}
+								<p className="text-sm font-semibold text-muted-foreground">
+									{s.curriculum.level} · {s.curriculum.chapters.filter((c) => c.stage === s.curriculum.chapters.find((x) => x.id === s.curriculum.current)?.stage).findIndex((c) => c.id === s.curriculum.current) + 1} of {s.curriculum.chapters.filter((c) => c.stage === s.curriculum.chapters.find((x) => x.id === s.curriculum.current)?.stage).length} chapters
 								</p>
 							)}
 						</div>
-						<div className="mt-3">
-							<CurriculumPath state={s?.curriculum ?? null} next={s?.next} goals={purposeGoals(s?.goal.purposes ?? [])} weak={s?.weakSpots ?? []} exams={s?.exams} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
+						<div className="mt-2">
+							<Climb state={s?.curriculum ?? null} next={s?.next} goalLevel={s?.goal.level ?? "B2"} goals={purposeGoals(s?.goal.purposes ?? [])} weak={s?.weakSpots ?? []} exams={s?.exams} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
 						</div>
 					</section>
 				</aside>
@@ -319,9 +320,9 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	);
 }
 
-function Pill({ children, className, title }: { children: React.ReactNode; className?: string; title?: string }) {
+function Pill({ children, className, title, testid }: { children: React.ReactNode; className?: string; title?: string; testid?: string }) {
 	return (
-		<span title={title} className={cn("flex h-9 items-center gap-1.5 rounded-full border bg-card px-3.5 text-sm font-bold tabular-nums", className)}>
+		<span title={title} data-testid={testid} className={cn("flex h-9 items-center gap-2 rounded-full border bg-card px-3.5 text-sm font-bold tabular-nums", className)}>
 			{children}
 		</span>
 	);
@@ -344,9 +345,10 @@ function PracticeGroup({ strand, items, busy }: { strand: Strand; items: Practic
 	const Icon = STRAND_ICON[strand];
 	return (
 		<div className="rounded-2xl border bg-card p-3" data-testid={`practice-${strand}`}>
-			<p className={cn("flex items-center gap-1.5 px-2 pt-1 text-sm font-bold", st.text)}>
-				<Icon className="size-4" />
+			<p className={cn("flex items-center gap-2 px-2 pt-1 text-sm font-bold", st.text)}>
+				<TrailMark strand={strand} size="md" />
 				{meta.title}
+				<Icon className="ml-auto size-4 text-muted-foreground" />
 			</p>
 			<ul className="mt-1.5 flex flex-col">
 				{items.map((it) => {
@@ -360,7 +362,7 @@ function PracticeGroup({ strand, items, busy }: { strand: Strand; items: Practic
 								<span className="block text-base font-bold text-foreground">{it.title}</span>
 								<span className="block truncate text-sm text-muted-foreground">{it.line}</span>
 							</span>
-							{it.badge && <span className="shrink-0 rounded-full bg-sky px-2 py-0.5 text-xs font-bold tabular-nums text-background">{it.badge}</span>}
+							{it.badge && <span className="shrink-0 rounded-full bg-sun px-2 py-0.5 text-xs font-bold tabular-nums text-sun-ink">{it.badge}</span>}
 						</>
 					);
 					const cls = "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-accent disabled:opacity-60";

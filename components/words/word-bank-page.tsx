@@ -6,12 +6,12 @@ import {
 	BookOpenIcon,
 	BookmarkCheckIcon,
 	BookmarkIcon,
+	CheckCheckIcon,
 	CheckIcon,
-	FlameIcon,
+	FootprintsIcon,
 	PlusIcon,
 	RepeatIcon,
 	SearchIcon,
-	SparklesIcon,
 	StarIcon,
 	Trash2Icon,
 	Volume2Icon,
@@ -238,7 +238,7 @@ export function WordBankPage() {
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">Zvládnuté</span>
-								<SparklesIcon className="size-4 text-emerald-500" />
+								<CheckCheckIcon className="size-4 text-go" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-black text-foreground">
 								{summary.wordsMastered}
@@ -249,7 +249,7 @@ export function WordBankPage() {
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">V procese</span>
-								<FlameIcon className="size-4 text-amber-500" />
+								<FootprintsIcon className="size-4 text-sun" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-black text-foreground">
 								{summary.wordsLearning}
@@ -271,7 +271,7 @@ export function WordBankPage() {
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">Uložené frázy</span>
-								<BookmarkIcon className="size-4 text-sky" />
+								<BookmarkIcon className="size-4 text-trail-blue" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-black text-foreground">
 								{summary.savedPhrasesCount}
@@ -468,9 +468,9 @@ export function WordBankPage() {
 														<span
 															className={cn(
 																item.retention >= 80
-																	? "text-emerald-500"
+																	? "text-go"
 																	: item.retention >= 40
-																		? "text-amber-500"
+																		? "text-sun"
 																		: item.retention > 0
 																			? "text-sky"
 																			: "text-muted-foreground",
@@ -490,9 +490,9 @@ export function WordBankPage() {
 															className={cn(
 																"h-full rounded-full transition-all duration-300",
 																item.retention >= 80
-																	? "bg-emerald-500"
+																	? "bg-go"
 																	: item.retention >= 40
-																		? "bg-amber-500"
+																		? "bg-sun"
 																		: item.retention > 0
 																			? "bg-sky"
 																			: "bg-transparent",
@@ -660,7 +660,7 @@ export function WordBankPage() {
 											type="button"
 											onClick={() => void handleDeletePhrase(phrase.id)}
 											title="Odstrániť frázu"
-											className="grid size-8 place-items-center rounded-xl text-muted-foreground opacity-60 transition-all hover:bg-rose-500/10 hover:text-rose-500 group-hover:opacity-100"
+											className="grid size-8 place-items-center rounded-xl text-muted-foreground opacity-60 transition-all hover:bg-miss/10 hover:text-miss group-hover:opacity-100"
 										>
 											<Trash2Icon className="size-4" />
 										</button>

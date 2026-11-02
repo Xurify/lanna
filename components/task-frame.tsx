@@ -25,8 +25,9 @@ export function TaskFrame({ children, strip = true }: { children: React.ReactNod
 	);
 }
 
-/** Exit · progress bar · count. The band drags the window. */
-export function TaskTop({ progress, label, count, ink = "bg-sky", href = "/", onLeave }: { progress: number; label: string; count: string; ink?: string; href?: string; onLeave?: () => void }) {
+/** Exit · progress bar · count. The band drags the window. Progress is gold,
+ *  the color of the stretch already walked (trail design). */
+export function TaskTop({ progress, label, count, ink = "bg-sun", href = "/", onLeave }: { progress: number; label: string; count: string; ink?: string; href?: string; onLeave?: () => void }) {
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>

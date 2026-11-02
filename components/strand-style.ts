@@ -1,15 +1,18 @@
 import type { PlanTask, Strand } from "@/src/core";
 
 /**
- * One ink per strand (Nation's four strands, src/core/strands.ts), used by
- * the plan's tasks, the practice groups and the week's balance alike, so a
- * color on Today always means the same kind of practice.
+ * One trail color per strand (Nation's four strands, src/core/strands.ts),
+ * the four colors Slovak hiking trails are blazed in: input red, speaking
+ * blue, words & rules green, speed yellow (trail design, 2026-11-02,
+ * docs/research/trail-design.md). The plan's tasks, the practice groups,
+ * the week's balance and the trail marks (components/trail.tsx) all read
+ * these, so a color on Today always means the same kind of practice.
  */
-export const STRAND_STYLE: Record<Strand, { text: string; bar: string; tile: string; soft: string; border: string }> = {
-	input: { text: "text-sky", bar: "bg-sky", tile: "bg-sky/15 text-sky", soft: "bg-sky/5 hover:bg-sky/10", border: "border-sky/40" },
-	output: { text: "text-xp", bar: "bg-xp", tile: "bg-xp/15 text-xp", soft: "bg-xp/5 hover:bg-xp/10", border: "border-xp/40" },
-	form: { text: "text-go", bar: "bg-go", tile: "bg-go/15 text-go", soft: "bg-go/5 hover:bg-go/10", border: "border-go/40" },
-	fluency: { text: "text-gold", bar: "bg-gold", tile: "bg-gold/15 text-gold", soft: "bg-gold/5 hover:bg-gold/10", border: "border-gold/40" },
+export const STRAND_STYLE: Record<Strand, { text: string; bar: string; tile: string; soft: string; border: string; stripe: string }> = {
+	input: { text: "text-trail-red", bar: "bg-trail-red", tile: "bg-trail-red/15 text-trail-red", soft: "bg-trail-red/5 hover:bg-trail-red/10", border: "border-trail-red/40", stripe: "var(--lh-trail-red)" },
+	output: { text: "text-trail-blue", bar: "bg-trail-blue", tile: "bg-trail-blue/15 text-trail-blue", soft: "bg-trail-blue/5 hover:bg-trail-blue/10", border: "border-trail-blue/40", stripe: "var(--lh-trail-blue)" },
+	form: { text: "text-trail-green", bar: "bg-trail-green", tile: "bg-trail-green/15 text-trail-green", soft: "bg-trail-green/5 hover:bg-trail-green/10", border: "border-trail-green/40", stripe: "var(--lh-trail-green)" },
+	fluency: { text: "text-trail-yellow", bar: "bg-trail-yellow", tile: "bg-trail-yellow/15 text-trail-yellow", soft: "bg-trail-yellow/5 hover:bg-trail-yellow/10", border: "border-trail-yellow/40", stripe: "var(--lh-trail-yellow)" },
 };
 
 /** The strand a plan task counts toward, as the week's balance counts it. */

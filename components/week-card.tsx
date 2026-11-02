@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRightIcon, FlameIcon, TargetIcon } from "lucide-react";
+import { ChevronRightIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoursSheet } from "@/components/hours-sheet";
 import { StrandBalance } from "@/components/strand-balance";
@@ -50,7 +50,7 @@ export function WeekCard({
 	const paceWord = pathState?.measured ? "recent" : "planned";
 	return (
 		<section className="rounded-3xl border bg-card p-5" data-testid="week-card" aria-labelledby="week-title">
-			<h2 id="week-title" className="text-lg font-black text-foreground">
+			<h2 id="week-title" className="text-lg font-extrabold text-foreground">
 				This week
 			</h2>
 
@@ -60,18 +60,21 @@ export function WeekCard({
 					const date = /\d{4}-\d{2}-\d{2}/.test(d.day) ? new Date(`${d.day}T12:00:00`) : null;
 					const active = d.xp > 0;
 					return (
-						<li key={d.day} className="flex flex-col items-center gap-1" title={date ? `${WEEKDAY_EN[date.getDay()]}: ${d.xp} XP` : undefined}>
+						<li key={d.day} className="flex justify-center" title={date ? `${WEEKDAY_EN[date.getDay()]}: ${d.xp} XP` : undefined}>
 							<span
 								className={cn(
-									"flex size-8 items-center justify-center rounded-full border-2",
-									active ? "border-flame bg-flame/15 text-flame" : "border-border text-muted-foreground/60",
-									isToday && !active && "border-dashed border-foreground/40",
+									"flex size-9 items-center justify-center rounded-full border-2 text-xs font-bold",
+									active ? "border-sun bg-sun text-sun-ink" : "border-border text-muted-foreground",
+									isToday && !active && "border-dashed border-foreground/50 text-foreground",
+									isToday && "ring-2 ring-sun/40 ring-offset-2 ring-offset-card",
 								)}
 							>
-								<FlameIcon className="size-4" aria-hidden="true" />
-								<span className="sr-only">{active ? `practiced, ${d.xp} XP` : "not practiced"}</span>
+								<span aria-hidden="true">{date ? WEEKDAY[date.getDay()] : ""}</span>
+								<span className="sr-only">
+									{date ? `${WEEKDAY_EN[date.getDay()]}, ` : ""}
+									{active ? `practiced, ${d.xp} XP` : "not practiced"}
+								</span>
 							</span>
-							<span className={cn("text-xs", isToday ? "font-bold text-foreground" : "text-muted-foreground")}>{date ? WEEKDAY[date.getDay()] : ""}</span>
 						</li>
 					);
 				})}
@@ -98,11 +101,11 @@ export function WeekCard({
 
 			<Link
 				href="/plan"
-				className="group mt-4 flex items-center gap-3 rounded-2xl border border-flame/30 bg-flame/10 p-3 transition-colors hover:border-flame/50 hover:bg-flame/15"
+				className="group mt-4 flex items-center gap-3 rounded-2xl border border-sun/30 bg-sun/10 p-3 transition-colors hover:border-sun/50 hover:bg-sun/15"
 				data-testid="goal-line"
 			>
-				<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-flame/20">
-					<TargetIcon className="size-5 text-flame" aria-hidden="true" />
+				<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sun/20">
+					<TargetIcon className="size-5 text-sun" aria-hidden="true" />
 				</span>
 				<span className="min-w-0 flex-1">
 					<span className="block text-sm font-bold text-foreground" title={LEVEL_CAN_DO[level]}>
@@ -110,10 +113,10 @@ export function WeekCard({
 						{eta && <span className="font-semibold text-muted-foreground"> · about {eta}</span>}
 					</span>
 					<span className="block text-xs text-muted-foreground group-hover:text-foreground" data-testid="goal-plan">
-						At your {paceWord} pace · hours and level check
+						At your {paceWord} pace · hours, milestones, level check
 					</span>
 				</span>
-				<ChevronRightIcon className="size-4 shrink-0 text-flame transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+				<ChevronRightIcon className="size-4 shrink-0 text-sun transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
 			</Link>
 		</section>
 	);

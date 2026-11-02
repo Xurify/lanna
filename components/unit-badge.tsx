@@ -72,12 +72,12 @@ export function UnitBadge({
 				<UnitIcon name={glyph} className={size === "lg" ? "size-8" : size === "sm" ? "size-4" : "size-5"} strokeWidth={2.25} />
 			</span>
 			{done && (
-				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-background bg-gold text-background">
+				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-gold text-background">
 					<CheckIcon className="size-3" strokeWidth={3} aria-label="Done" />
 				</span>
 			)}
 			{locked && !done && (
-				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-background bg-muted text-muted-foreground">
+				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-muted text-muted-foreground">
 					<LockIcon className="size-2.5" strokeWidth={3} aria-label="Locked" />
 				</span>
 			)}

@@ -698,7 +698,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 				</div>
 			</div>
 			<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
-				<Stat label="XP" value={`+${outcome.xp}`} ink="text-xp" />
+				<Stat label="XP" value={`+${outcome.xp}`} ink="text-sun" />
 				<Stat label="Prompts repaired" value={`${counts.repaired} of ${counts.prompts}`} ink="text-go" />
 				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= 85 ? "text-go" : s.pron.average >= 70 ? "text-gold" : "text-miss"} />}
 				<Stat label="In your deck" value={String(outcome.queued.length)} ink="text-sky" />

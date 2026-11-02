@@ -209,7 +209,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						</div>
 					</div>
 					<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
-						<Stat label="XP" value={`+${outcome.xp}`} ink="text-xp" />
+						<Stat label="XP" value={`+${outcome.xp}`} ink="text-sun" />
 						<Stat label={outcome.previousWpm !== null ? "Last time" : "Target"} value={`${outcome.targetWpm} wpm`} ink="text-muted-foreground" />
 						{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-muted-foreground" />}
 						<Stat label="The question" value={outcome.right ? "right" : "missed"} ink={outcome.right ? "text-go" : "text-miss"} />
@@ -667,7 +667,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						</div>
 					</div>
 					<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
-						<Stat label="XP" value={outcome ? `+${outcome.xp}` : "…"} ink="text-xp" />
+						<Stat label="XP" value={outcome ? `+${outcome.xp}` : "…"} ink="text-sun" />
 						<Stat label={scoredPasses.length ? "Passes in the window and clear" : "Passes in the window"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-go" />
 						{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear`} ink={avg >= 85 ? "text-go" : avg >= PRON_CLEAR ? "text-gold" : "text-miss"} />}
 					</div>

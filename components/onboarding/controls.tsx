@@ -267,7 +267,7 @@ export function LanguagePicker({
 								</span>
 								<div className="ml-auto flex shrink-0 items-center gap-2.5">
 									{level === undefined && (
-										<span className="font-ui text-xs font-medium text-amber-500/90" data-testid={`level-${id}-unset`}>
+										<span className="font-ui text-xs font-medium text-sun/90" data-testid={`level-${id}-unset`}>
 											Pick a level
 										</span>
 									)}
