@@ -288,7 +288,7 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 						{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
 					</button>
 					<p className="font-prose text-xs text-muted-foreground" data-testid="guide-privacy">
-						Sends your latest wrong sentences and what you wrote to your model provider. Nothing else leaves this computer.
+						Sends your unit scores, the words you miss or mix up, and your latest wrong sentences with what you wrote to your model provider. Nothing else leaves this computer.
 					</p>
 				</div>
 			)}
