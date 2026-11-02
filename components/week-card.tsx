@@ -48,6 +48,8 @@ export function WeekCard({
 	// The date follows the recent pace once a week of study is on record, the plan until then.
 	const eta = pathState ? (pathState.t.daysToTarget === null ? null : monthAt(pathState.now, pathState.t.daysToTarget)) : monthOf(projection?.etaPlanned ?? null);
 	const paceWord = pathState?.measured ? "recent" : "planned";
+	const activeCount = days.filter((d) => d.xp > 0).length;
+	const targetDays = goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK;
 	return (
 		<section className="rounded-3xl border bg-card p-5" data-testid="week-card" aria-labelledby="week-title">
 			<h2 id="week-title" className="text-lg font-extrabold text-foreground">
@@ -79,6 +81,15 @@ export function WeekCard({
 					);
 				})}
 			</ol>
+			<p className="mt-3 text-center font-ui text-xs font-semibold text-muted-foreground" data-testid="week-target">
+				{activeCount >= targetDays ? (
+					<span className="text-sun">Target met · {activeCount} of the last seven days</span>
+				) : (
+					<>
+						{activeCount} of {targetDays} planned days in the last seven
+					</>
+				)}
+			</p>
 
 			<div className="mt-5 border-t pt-4">
 				<StrandBalance balance={balance} />

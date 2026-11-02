@@ -25,8 +25,9 @@ import { HoursSheet } from "@/components/hours-sheet";
 import { Slider } from "@/components/plan/slider";
 import { Timeline } from "@/components/milestones/milestones-page";
 import { WeakSpots } from "@/components/daily-plan";
+import { StampBook } from "@/components/stamp";
 import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages, LEVEL_CAN_DO, levelDates, MIN_PACE_DAYS, PACE_WINDOW_DAYS, paceEta, purposePhrase, shiftLine, withPlan, type LearnerGoal, type WeakSpotSummary } from "@/src/core";
-import type { LearnerFacts, MilestoneEstimate } from "@/src/core";
+import type { LearnerFacts, MilestoneEstimate, StampState, TrailLog } from "@/src/core";
 
 /** The part of the milestones report (src/server/milestones.ts) the page reads. */
 export interface PlanReport {
@@ -58,7 +59,7 @@ const CARD = "mt-5 rounded-2xl border bg-card p-5";
 const H2 = "font-ui text-xs font-bold tracking-wide text-muted-foreground";
 const LINK_BTN = cn(SECONDARY, SMALL);
 
-export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[] }) {
+export function PlanPage({ goal, report, weak, stamps = null, log = null }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[]; stamps?: StampState[] | null; log?: TrailLog | null }) {
 	const router = useRouter();
 	const savedMinutes = goal.minutesPerDay;
 	const savedDays = goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK;
@@ -206,6 +207,39 @@ export function PlanPage({ goal, report, weak }: { goal: LearnerGoal; report: Pl
 						</p>
 					)}
 				</section>
+
+				{/* The trail log: the totals, every one an outcome (src/core/stamps.ts TrailLog). */}
+				{log && (
+					<section className={CARD} data-testid="plan-log" aria-label="Trail log">
+						<p className="font-ui text-sm font-bold text-muted-foreground">Trail log</p>
+						<dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+							{[
+								["Hours on the trail", hoursText(log.hours)],
+								["Words known", log.wordsKnown.toLocaleString("en-US")],
+								["Days practiced", String(log.daysActive)],
+								["Longest streak", `${log.longestStreak} ${log.longestStreak === 1 ? "day" : "days"}`],
+								["Lessons", log.lessons.toLocaleString("en-US")],
+								["Review answers", log.reviews.toLocaleString("en-US")],
+								["Stories read", String(log.stories)],
+								["Scenes said aloud", String(log.scenes)],
+							].map(([label, value]) => (
+								<div key={label}>
+									<dt className="font-ui text-xs text-muted-foreground">{label}</dt>
+									<dd className="mt-0.5 font-ui text-xl font-extrabold tabular-nums text-foreground">{value}</dd>
+								</div>
+							))}
+						</dl>
+					</section>
+				)}
+
+				{/* The stamp book (E31): what was done, never how long it took. */}
+				{stamps && stamps.length > 0 && (
+					<section id="stamps" className={cn(CARD, "scroll-mt-20")} data-testid="plan-stamps" aria-label="Stamp book">
+						<p className="font-ui text-sm font-bold text-muted-foreground">Stamp book</p>
+						<p className="mt-1 font-prose text-sm text-muted-foreground">Like the wooden stamps sold at every Slovak peak and hut: one for each chapter and each level, and one for each thing done on the way. A stamp marks something you can now do, never time spent.</p>
+						<StampBook stamps={stamps} className="mt-4" />
+					</section>
+				)}
 
 				{/* Hours to each level at the slider's pace. */}
 				<section className={CARD} data-testid="plan-hours" aria-label="Hours to each level">

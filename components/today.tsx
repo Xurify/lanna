@@ -26,11 +26,12 @@ import { startTutorChat } from "@/components/lesson/tutor";
 import { DailyPlan, MixUps, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
 import { WeekCard } from "@/components/week-card";
 import { Climb } from "@/components/climb";
+import { StampsCard } from "@/components/stamp";
 import { RidgeProgress, ridgeStops, TrailMark } from "@/components/trail";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, Strand, StrandBalance, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, Strand, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
 
 interface UnitSummary {
 	id: UnitId;
@@ -70,6 +71,10 @@ interface Summary {
 	exams?: Record<string, ExamSummary>;
 	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
 	backlog?: number;
+	todayMinutes?: number;
+	wordsKnown?: number;
+	stamps?: { all: StampState[]; earned: number; total: number; recent: StampState[]; next: StampState[] };
+	log?: TrailLog;
 }
 
 function greeting(now = new Date()): string {
@@ -228,10 +233,29 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								{greeting()}
 							</h1>
 						</div>
-						<div className="flex items-center gap-2">
-							<Pill className="text-sun" title={s?.streak.restUsed ? "Days in a row (one rest day used)" : "Days in a row"} testid="streak-pill">
+						{/* The four numbers at the top (docs/research/gamification.md): the
+						    streak (the habit), today's minutes against the goal (the day's
+						    loop), words known (what the work has built), the level (the
+						    long run). */}
+						<div className="flex flex-wrap items-center gap-2">
+							<Pill className="text-sun" title={s?.streak.restUsed ? "Days in a row (a rest day kept it going)" : "Days in a row"} testid="streak-pill">
 								<FlagIcon className="size-4" aria-hidden="true" />
 								{s ? `${s.streak.days} ${s.streak.days === 1 ? "day" : "days"}` : "–"}
+							</Pill>
+							<Pill className="text-foreground" title={s ? `${s.todayMinutes ?? 0} of ${goalMinutes(s)} minutes practiced today` : "Today"} testid="today-pill">
+								<MinutesRing done={s?.todayMinutes ?? 0} goal={s ? goalMinutes(s) : 30} />
+								{s ? (
+									<>
+										<span>{s.todayMinutes ?? 0}</span>
+										<span className="-ml-1 text-muted-foreground">/ {goalMinutes(s)} min</span>
+									</>
+								) : (
+									"–"
+								)}
+							</Pill>
+							<Pill className="text-foreground" title="Words known: review words at 80% retention or better" testid="words-pill">
+								<BookAIcon className="size-4 text-trail-green" aria-hidden="true" />
+								{s ? `${(s.wordsKnown ?? 0).toLocaleString("en-US")} ${s.wordsKnown === 1 ? "word" : "words"}` : "–"}
 							</Pill>
 							<Pill className="text-foreground" title={s ? `${s.level.span - s.level.into} XP to level ${s.level.level + 1}` : "Level"} testid="xp-pill">
 								<span className="text-muted-foreground">Level {s?.level.level ?? 1}</span>
@@ -270,6 +294,8 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 
 				<aside className="flex min-w-0 flex-col gap-6 @5xl:pt-1" aria-label="Your week and your climb">
 					<WeekCard week={s?.week ?? []} balance={s?.balance ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} trajectory={s?.trajectory ?? null} />
+
+					<StampsCard stamps={s?.stamps?.all ?? null} />
 
 					{(s?.weakSpots?.length ?? 0) > 0 && (
 						<section className="rounded-3xl border bg-card p-5" aria-label="Your weak spots">
@@ -317,6 +343,24 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				}}
 			/>
 		</div>
+	);
+}
+
+/** The minutes the goal asks for a day. */
+function goalMinutes(s: Summary): number {
+	return s.pace?.goalMinutes ?? s.goal.minutesPerDay;
+}
+
+/** A small ring: today's minutes against the goal. */
+function MinutesRing({ done, goal }: { done: number; goal: number }) {
+	const r = 6.5;
+	const c = 2 * Math.PI * r;
+	const p = goal > 0 ? Math.min(1, done / goal) : 0;
+	return (
+		<svg viewBox="0 0 16 16" className="size-4 shrink-0 -rotate-90" aria-hidden="true" data-testid="minutes-ring">
+			<circle cx="8" cy="8" r={r} fill="none" stroke="var(--border)" strokeWidth="3" />
+			<circle cx="8" cy="8" r={r} fill="none" stroke="var(--lh-sun)" strokeWidth="3" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - p)} />
+		</svg>
 	);
 }
 

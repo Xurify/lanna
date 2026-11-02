@@ -117,5 +117,6 @@ export * from "./saved-phrases.ts";
 export * from "./pronounce.ts";
 export * from "./watch.ts";
 export * from "./milestones.ts";
+export * from "./stamps.ts";
 export * from "./plan.ts";
 export * from "./storage.ts";

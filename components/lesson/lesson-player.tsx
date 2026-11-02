@@ -25,6 +25,7 @@ import { sfx } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
+import { StampDisc } from "@/components/stamp";
 import {
 	compareAnswer,
 	diacriticSlips,
@@ -1622,6 +1623,23 @@ function EndScreen({
 				</ol>
 			)}
 
+			{/* A stamp earned by this lesson is pressed onto the page (src/core/stamps.ts). */}
+			{recorded?.newStamps && recorded.newStamps.length > 0 && (
+				<ul className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label="New stamps" data-testid="lesson-new-stamps">
+					{recorded.newStamps.map((st) => (
+						<li key={st.id} className="flex items-center gap-3 rounded-2xl border border-sun/40 bg-sun/5 py-2 pl-2 pr-4 text-left">
+							<StampDisc state={st} size="sm" pressed />
+							<span className="min-w-0">
+								<span className="block font-ui text-xs font-bold text-sun">New stamp</span>
+								<span className="block font-ui text-sm font-bold text-foreground" lang="sk">
+									{st.name}
+								</span>
+								<span className="block font-ui text-xs text-muted-foreground">{st.line}</span>
+							</span>
+						</li>
+					))}
+				</ul>
+			)}
 			<div className="mt-8 grid grid-cols-3 gap-3">
 				<Stat label="XP" value={`+${xp}`} ink="text-sun" />
 				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-go" : "text-foreground"} />
