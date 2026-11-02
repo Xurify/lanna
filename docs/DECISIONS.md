@@ -322,7 +322,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 ### E28. Verb blanks come from the UD treebank's forms, not a dictionary's paradigm (2026-11-01)
 
-**Why:** 102 verbs had fewer than three sentences the lexicon could blank. For 79 of them the wiki had no verified forms, so the export could not blank their sentences, and Tatoeba had too few sentences per form to fill them (it matches whole words, and its Slovak corpus is thin for these verbs). A paradigm from the Hunspell spelling dictionary would have matched 300 sentences, but that dictionary is built to accept words, not to say which forms are correct: it generates impossible forms (dosiahnuc for a perfective verb).
+**Why:** 102 verbs had fewer than three sentences the lexicon could blank. For 79 of them the wiki had no verified forms, so the export could not blank their sentences, and Tatoeba had too few sentences per form to fill them (it matches whole words, and its Slovak corpus is thin for these verbs). A paradigm from the Hunspell spelling dictionary would have matched 300 sentences, but that dictionary is built to accept words, not to say which forms a learner should drill: its affix rules generate every form a verb might take, rare and bookish ones included (the transgressive dosiahnuc), while the treebank lists only forms annotators found in real sentences.
 
 **How to apply:**
 - `curriculum/slovak/ud-verb-forms.json` lists, for each verb lemma, the forms the Universal Dependencies Slovak SNK treebank gives it (`scripts/build-ud-verb-forms.mjs`). Its README says lemmas and morphology were assigned manually and only sentences where two annotators agreed are kept. A form is used only when it is a verb wherever it occurs and has one lemma.
