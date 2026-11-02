@@ -55,7 +55,7 @@ Trust comes from the device's own cookie (`lh_device`, HttpOnly, SameSite=Lax, S
 - Tailscale Serve on the owner's PC, and the headers it actually sends: the sandbox has no Tailscale, so the tests send the headers by hand.
 - The iPhone and iPad, Safari's cookie handling, and whether a Home Screen app shares cookies with Safari (the guide says so as unverified).
 - The packaged desktop app with remote access on. Its port changes on each start, so Serve needs a fixed port first (a later slice). The desktop window's own requests pass by the secret, which the code path shows but no test drives.
-- Dev hot reload through a tailnet name: Next's cross-site dev rule blocks the HMR websocket unless the name is in `allowedDevOrigins`. Pages and the API are not affected.
+- Dev through a tailnet name: Next's origin check refuses the page's scripts and the HMR socket unless the name is in `allowedDevOrigins`, so the page never starts and Pair does nothing. This corrects the earlier note that pages were not affected. The name comes from `LH_TAILNET_HOST` in `.env.local` (dev only). The check passes in Next's own function; the phone has not loaded the page since the change.
 
 ## Next steps (not built)
 

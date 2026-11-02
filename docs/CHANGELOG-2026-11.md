@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 2 November: pairing from a phone (dev origin)
+
+- **Cause:** the phone loads the app's scripts from its tailnet name. Next's dev server refuses a dev resource from an origin it does not list in `allowedDevOrigins`, so every script got a 403 and the page never started. The pairing form then did nothing. The owner's dev log has those refusals for the phone's name. The guide said only hot reload was affected; that was wrong.
+- **Fix:** `next.config.ts` lists the host in `LH_TAILNET_HOST`, read from `.env.local` (gitignored). Dev only, so a build never gets the name. The owner adds the line once and restarts `bun run desktop:dev`.
+- **Checked:** the running dev server answers 403 to a script request from the tailnet name and passes a localhost one. Next's origin check lets the phone's script through with the variable set, and refuses it without. The remote-access and desktop-API tests pass (47 of 47); typecheck and lint pass.
+- **Unverified:** the phone itself, after the restart: the pairing form, the code, and the cookie in Safari.
+
 ## 2 November: stamps, the minutes ring and the trail log (branch `feat/trail-stamps`)
 
 - **Research:** what gamification does for learning and what harms it, in [research/gamification.md](research/gamification.md); rule E31. The `gamification-loops` agent skill is installed under `.claude/skills/gamification-loops/` with its provenance in `SOURCE.md`.
