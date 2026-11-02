@@ -30,6 +30,25 @@ describe("lexicon merge", () => {
 		assert.equal(stats.examplesDroppedByWiki, 1);
 	});
 
+	it("adopts a cloze the fresh export finds for a shipped example that had none, and changes nothing else", () => {
+		const sentence = "Teplota dnes dosiahne dvadsať stupňov.";
+		const shipped = { words: [{ slug: "dosiahnut", sk: "dosiahnuť", examples: [ex(sentence)] }] };
+		const cloze = { answer: "dosiahne", at: 13 };
+		const fresh = { words: [{ slug: "dosiahnut", sk: "dosiahnuť", examples: [{ ...ex(sentence), cloze }] }] };
+		const { lexicon, stats } = mergeLexicon(shipped, fresh);
+		assert.deepEqual(lexicon.words[0].examples[0], { ...ex(sentence), cloze });
+		assert.equal(stats.clozesAdopted, 1);
+	});
+
+	it("gives no blank to a rejected example", () => {
+		const sentence = "Ponúkli mi prácu.";
+		const shipped = { words: [{ slug: "ponuknut", sk: "ponúknuť", examples: [{ ...ex(sentence), rejected: true }] }] };
+		const fresh = { words: [{ slug: "ponuknut", sk: "ponúknuť", examples: [{ ...ex(sentence), cloze: { answer: "Ponúkli", at: 0 } }] }] };
+		const { lexicon, stats } = mergeLexicon(shipped, fresh);
+		assert.equal(lexicon.words[0].examples[0].cloze, undefined);
+		assert.equal(stats.clozesAdopted, 0);
+	});
+
 	it("adds new words at the end and takes the fresh export's header", () => {
 		const shipped = { source: "old", words: [{ slug: "a", sk: "a", examples: [] }] };
 		const fresh = { source: "new", exportedAt: "2026-10-30", words: [{ slug: "a", sk: "a", examples: [] }, { slug: "dzus", sk: "dzus", examples: [ex("Dzus je dobrý.")] }] };

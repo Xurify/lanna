@@ -1,0 +1,11260 @@
+{
+ "source": "Universal Dependencies, UD_Slovak-SNK (sk_snk-ud-train/dev/test.conllu): lemmas and morphology assigned manually; only sentences where two annotators agreed are included.",
+ "license": "CC BY-SA 4.0",
+ "forms": {
+  "driemať": [
+   "driemal",
+   "driemali",
+   "drieme"
+  ],
+  "písať": [
+   "nepísali",
+   "písal",
+   "písala",
+   "písali",
+   "písalo",
+   "písať",
+   "píše",
+   "píšem",
+   "píšeme",
+   "píšu"
+  ],
+  "by": [
+   "by"
+  ],
+  "môcť": [
+   "mohla",
+   "mohli",
+   "mohlo",
+   "mohol",
+   "môcť",
+   "môže",
+   "môžem",
+   "môžeme",
+   "môžete",
+   "môžeš",
+   "môžme",
+   "môžu",
+   "nemohla",
+   "nemohli",
+   "nemohlo",
+   "nemohol",
+   "nemôže",
+   "nemôžem",
+   "nemôžeme",
+   "nemôžete",
+   "nemôžeš",
+   "nemôžu"
+  ],
+  "smiať": [
+   "nesmiala",
+   "smial",
+   "smiala",
+   "smiali",
+   "smiať"
+  ],
+  "byť": [
+   "bol",
+   "bola",
+   "boli",
+   "bolo",
+   "bude",
+   "budem",
+   "budeme",
+   "budete",
+   "budeš",
+   "budú",
+   "buďme",
+   "buďte",
+   "byť",
+   "nebol",
+   "nebola",
+   "neboli",
+   "nebolo",
+   "nebude",
+   "nebudem",
+   "nebudeme",
+   "nebudete",
+   "nebudeš",
+   "nebudú",
+   "nebuď",
+   "nebyť",
+   "niesme",
+   "niet",
+   "som",
+   "ste",
+   "sú"
+  ],
+  "obviniť": [
+   "neobvinili"
+  ],
+  "existovať": [
+   "existovali",
+   "existovať",
+   "existuje",
+   "existujú",
+   "neexistoval",
+   "neexistovali",
+   "neexistovalo",
+   "neexistuje",
+   "neexistujú"
+  ],
+  "spustiť": [
+   "spustil",
+   "spustili",
+   "spustiť",
+   "spustí"
+  ],
+  "vidieť": [
+   "nevidel",
+   "nevidela",
+   "nevidieť",
+   "nevidí",
+   "nevydeli",
+   "videl",
+   "videla",
+   "videli",
+   "videlo",
+   "vidia",
+   "vidieť",
+   "vidí",
+   "vidím",
+   "vidíte",
+   "vidíš"
+  ],
+  "dopadnúť": [
+   "dopadla",
+   "dopadlo",
+   "dopadne",
+   "dopadol"
+  ],
+  "posielať": [
+   "posiela"
+  ],
+  "čakať": [
+   "nečakal",
+   "nečakala",
+   "čakajú",
+   "čakal",
+   "čakala",
+   "čakali",
+   "čakalo",
+   "čakať",
+   "čaká",
+   "čakám"
+  ],
+  "stačiť": [
+   "nestačia",
+   "nestačil",
+   "nestačila",
+   "nestačilo",
+   "nestačí",
+   "stačil",
+   "stačila",
+   "stačili",
+   "stačilo",
+   "stačí"
+  ],
+  "chcieť": [
+   "chce",
+   "chcel",
+   "chcela",
+   "chceli",
+   "chcelo",
+   "chcem",
+   "chceme",
+   "chcete",
+   "chceš",
+   "chcieť",
+   "chcú",
+   "nechce",
+   "nechcel",
+   "nechcela",
+   "nechceli",
+   "nechcelo",
+   "nechcem",
+   "nechceme",
+   "nechceš",
+   "nechcú"
+  ],
+  "vyhrávať": [
+   "vyhrávala",
+   "vyhrávali",
+   "vyhrávam",
+   "vyhrávať"
+  ],
+  "vstupovať": [
+   "vstupovala",
+   "vstupuje"
+  ],
+  "utiahnuť": [
+   "utiahla"
+  ],
+  "nájsť": [
+   "našiel",
+   "našla",
+   "našli",
+   "našlo",
+   "nenašiel",
+   "nenašla",
+   "nenašli",
+   "nenájde",
+   "nenájdeme",
+   "nájde",
+   "nájdem",
+   "nájdeme",
+   "nájdete",
+   "nájsť"
+  ],
+  "ísť": [
+   "ide",
+   "idem",
+   "ideme",
+   "ideš",
+   "idú",
+   "išiel",
+   "išla",
+   "išli",
+   "išlo",
+   "nejdem",
+   "nejdeme",
+   "nepôjdem",
+   "nepôjdeš",
+   "nepôjdu",
+   "nešlo",
+   "poď",
+   "poďme",
+   "poďte",
+   "pôjde",
+   "pôjdem",
+   "pôjdeme",
+   "pôjdu",
+   "ísť",
+   "šiel",
+   "šlo"
+  ],
+  "cestovať": [
+   "cestoval",
+   "cestuje",
+   "cestujem",
+   "necestoval"
+  ],
+  "odlišovať": [
+   "neodlišuje",
+   "odlišovať",
+   "odlišuje",
+   "odlišujú"
+  ],
+  "vytvoriť": [
+   "vytvoria",
+   "vytvoril",
+   "vytvorila",
+   "vytvorili",
+   "vytvorilo",
+   "vytvoriť",
+   "vytvorí",
+   "vytvoríme"
+  ],
+  "napísať": [
+   "napísal",
+   "napísala",
+   "napísali",
+   "napísať",
+   "napíš",
+   "nenapísal",
+   "nenapísala"
+  ],
+  "dať": [
+   "daj",
+   "dal",
+   "dala",
+   "dali",
+   "dalo",
+   "dať",
+   "dá",
+   "dám",
+   "nedajú",
+   "nedal",
+   "nedala",
+   "nedalo",
+   "nedá",
+   "nedáte"
+  ],
+  "mať": [
+   "maj",
+   "majú",
+   "mal",
+   "mala",
+   "mali",
+   "malo",
+   "mať",
+   "má",
+   "mám",
+   "máme",
+   "máte",
+   "máš",
+   "nemaj",
+   "nemajú",
+   "nemal",
+   "nemala",
+   "nemali",
+   "nemalo",
+   "nemá",
+   "nemám",
+   "nemáme",
+   "nemáš"
+  ],
+  "zaoberať": [
+   "nezaoberal",
+   "zaoberajú",
+   "zaoberal",
+   "zaoberala",
+   "zaoberali",
+   "zaoberať",
+   "zaoberá"
+  ],
+  "uvedomiť": [
+   "uvedomil",
+   "uvedomila",
+   "uvedomiť"
+  ],
+  "prispieť": [
+   "prispeje",
+   "prispel",
+   "prispeli",
+   "prispelo"
+  ],
+  "používať": [
+   "nepoužívala",
+   "používa",
+   "používajú",
+   "používali",
+   "používať"
+  ],
+  "ohrozovať": [
+   "ohrozovala",
+   "ohrozovať"
+  ],
+  "prevziať": [
+   "prevezmem",
+   "prevzala",
+   "prevzali",
+   "prevziať"
+  ],
+  "pamätať": [
+   "nepamätal",
+   "nepamätala",
+   "nepamätá",
+   "nepamätám",
+   "pamätajte",
+   "pamätala",
+   "pamätá",
+   "pamätám"
+  ],
+  "prísť": [
+   "neprišiel",
+   "neprišla",
+   "neprišli",
+   "nepríde",
+   "neprídem",
+   "neprídeš",
+   "neprídu",
+   "prišiel",
+   "prišla",
+   "prišli",
+   "prišlo",
+   "príde",
+   "prídem",
+   "prídeme",
+   "prísť",
+   "príď"
+  ],
+  "začať": [
+   "začal",
+   "začala",
+   "začali",
+   "začalo",
+   "začať",
+   "začne",
+   "začnem",
+   "začni"
+  ],
+  "zatisnúť": [
+   "zatisli"
+  ],
+  "menovať": [
+   "menovali",
+   "menuje"
+  ],
+  "hovoriť": [
+   "hovoria",
+   "hovoril",
+   "hovorila",
+   "hovorili",
+   "hovorilo",
+   "hovoriť",
+   "hovorí",
+   "hovorím",
+   "hovoríme",
+   "hovoríte",
+   "hovoríš",
+   "nehovor",
+   "nehovoriac",
+   "nehovorili",
+   "nehovorte"
+  ],
+  "čítať": [
+   "nečítal",
+   "čítal",
+   "čítala",
+   "čítali",
+   "čítať"
+  ],
+  "ukázať": [
+   "neukázal",
+   "neukázali",
+   "ukázal",
+   "ukázala",
+   "ukázali",
+   "ukázalo",
+   "ukázať",
+   "ukáže",
+   "ukážeš",
+   "ukážme"
+  ],
+  "skrachovať": [
+   "skrachovala",
+   "skrachovali"
+  ],
+  "vyjsť": [
+   "nevyjde",
+   "nevyšiel",
+   "vyjde",
+   "vyjsť",
+   "vyšiel",
+   "vyšla",
+   "vyšli",
+   "vyšlo"
+  ],
+  "stať": [
+   "nestalo",
+   "nestanú",
+   "stal",
+   "stala",
+   "stali",
+   "stalo",
+   "stane",
+   "stanete",
+   "stanú",
+   "stať"
+  ],
+  "uvedomovať": [
+   "uvedomoval",
+   "uvedomovali",
+   "uvedomovať",
+   "uvedomuje",
+   "uvedomujem",
+   "uvedomuješ"
+  ],
+  "poznať": [
+   "nepoznal",
+   "nepoznali",
+   "nepozná",
+   "nepoznám",
+   "poznajú",
+   "poznal",
+   "poznala",
+   "poznali",
+   "poznať",
+   "pozná",
+   "poznám",
+   "poznáme",
+   "poznáte",
+   "poznáš"
+  ],
+  "vstúpiť": [
+   "nevstúpil",
+   "vstúpi",
+   "vstúpil",
+   "vstúpila",
+   "vstúpili",
+   "vstúpiť"
+  ],
+  "ozývať": [
+   "neozývali",
+   "ozýval",
+   "ozývala",
+   "ozývali",
+   "ozývalo"
+  ],
+  "odovzdať": [
+   "neodovzdala",
+   "odovzdal",
+   "odovzdali",
+   "odovzdať"
+  ],
+  "povedať": [
+   "nepovedal",
+   "nepovedala",
+   "povedal",
+   "povedala",
+   "povedali",
+   "povedalo",
+   "povedať",
+   "povedia",
+   "povediac",
+   "povedzte",
+   "povie",
+   "poviem",
+   "povieš"
+  ],
+  "rozprávať": [
+   "nerozpráva",
+   "nerozprávala",
+   "nerozprávali",
+   "rozpráva",
+   "rozprávaj",
+   "rozprával",
+   "rozprávala",
+   "rozprávali",
+   "rozprávam",
+   "rozprávať"
+  ],
+  "vyhýbať": [
+   "nevyhýbali",
+   "vyhýba",
+   "vyhýbal",
+   "vyhýbala",
+   "vyhýbali"
+  ],
+  "utkvieť": [
+   "utkveli"
+  ],
+  "dokladať": [
+   "dokladať"
+  ],
+  "pochádzať": [
+   "pochádza",
+   "pochádzajú",
+   "pochádzal",
+   "pochádzala",
+   "pochádzali"
+  ],
+  "rešpektovať": [
+   "rešpektoval",
+   "rešpektovali",
+   "rešpektovať"
+  ],
+  "dávať": [
+   "dáva",
+   "dávajte",
+   "dávajú",
+   "dával",
+   "dávala",
+   "dávali",
+   "dávam",
+   "dávať",
+   "nedávalo"
+  ],
+  "mieniť": [
+   "mieni",
+   "nemieni",
+   "nemienim"
+  ],
+  "prežívať": [
+   "neprežívam",
+   "prežíva",
+   "prežíval",
+   "prežívala",
+   "prežívali"
+  ],
+  "baviť": [
+   "bavia",
+   "bavila",
+   "bavili",
+   "bavilo",
+   "baviť",
+   "bavme",
+   "bavíte"
+  ],
+  "spať": [
+   "nespal",
+   "spal",
+   "spala",
+   "spať",
+   "spi",
+   "spí",
+   "spím"
+  ],
+  "umožniť": [
+   "neumožnili",
+   "umožnil",
+   "umožnila",
+   "umožnili",
+   "umožniť",
+   "umožní"
+  ],
+  "rozhovoriť": [
+   "rozhovoriť"
+  ],
+  "prinášať": [
+   "prináša",
+   "prinášala"
+  ],
+  "ukazovať": [
+   "okazoval",
+   "ukazovala",
+   "ukazovali",
+   "ukazovať",
+   "ukazuje",
+   "ukazujú"
+  ],
+  "povýšiť": [
+   "povýšil",
+   "povýšili"
+  ],
+  "presvedčiť": [
+   "nepresvedčil",
+   "presvedčia",
+   "presvedčil",
+   "presvedčila",
+   "presvedčiť",
+   "presvedčí"
+  ],
+  "zažiadať": [
+   "zažiadal"
+  ],
+  "dostať": [
+   "dostal",
+   "dostala",
+   "dostali",
+   "dostalo",
+   "dostane",
+   "dostanem",
+   "dostanete",
+   "dostaneš",
+   "dostať",
+   "nedostala",
+   "nedostane",
+   "nedostanem"
+  ],
+  "odísť": [
+   "neodišiel",
+   "neodišla",
+   "neodíde",
+   "odišiel",
+   "odišla",
+   "odišli",
+   "odišlo",
+   "odíde",
+   "odídem",
+   "odísť",
+   "odíď"
+  ],
+  "pustiť": [
+   "nepustí",
+   "pusti",
+   "pustil",
+   "pustila",
+   "pustili",
+   "pustite",
+   "pustiť",
+   "pustíš",
+   "pusť"
+  ],
+  "pripraviť": [
+   "pripravil",
+   "pripravila",
+   "pripravili",
+   "pripraviť",
+   "pripraví",
+   "pripravíme"
+  ],
+  "rozpútať": [
+   "rozpútal",
+   "rozpútala",
+   "rozpútali"
+  ],
+  "pokladať": [
+   "pokladal",
+   "pokladá"
+  ],
+  "určovať": [
+   "určovala",
+   "určovali",
+   "určuje",
+   "určujú"
+  ],
+  "oživiť": [
+   "oživil",
+   "oživila",
+   "oživiť"
+  ],
+  "spomenúť": [
+   "nespomenula",
+   "nespomenúť",
+   "spomeniem",
+   "spomenul",
+   "spomenula",
+   "spomenuli",
+   "spomenulo",
+   "spomenúť"
+  ],
+  "kupovať": [
+   "kupoval",
+   "kupovali"
+  ],
+  "predávať": [
+   "predávali",
+   "predávať"
+  ],
+  "musieť": [
+   "musel",
+   "musela",
+   "museli",
+   "muselo",
+   "musia",
+   "musieť",
+   "musí",
+   "musím",
+   "musíme",
+   "musíte",
+   "musíš",
+   "nemusel",
+   "nemuseli",
+   "nemuselo",
+   "nemusí",
+   "nemusím"
+  ],
+  "držať": [
+   "drž",
+   "držal",
+   "držala",
+   "držali",
+   "držať",
+   "drží",
+   "držím"
+  ],
+  "zdražovať": [
+   "zdražuje"
+  ],
+  "voliť": [
+   "voliť"
+  ],
+  "urobiť": [
+   "neurobil",
+   "neurobila",
+   "neurobím",
+   "urobia",
+   "urobil",
+   "urobila",
+   "urobili",
+   "urobilo",
+   "urobiť",
+   "urobte",
+   "urobí",
+   "urobím",
+   "urobíme",
+   "urobíte",
+   "urobíš"
+  ],
+  "vyrábať": [
+   "vyrába",
+   "vyrábali"
+  ],
+  "uvádzať": [
+   "uvádza",
+   "uvádzajú",
+   "uvádzal",
+   "uvádzalo",
+   "uvádzať"
+  ],
+  "zvíťaziť": [
+   "zvíťazia",
+   "zvíťazila",
+   "zvíťazilo",
+   "zvíťaziť",
+   "zvíťazíte"
+  ],
+  "kričať": [
+   "kričal",
+   "kričala",
+   "kričali",
+   "kričalo",
+   "kričať",
+   "kričí",
+   "nekričala"
+  ],
+  "uvidieť": [
+   "neuvidím",
+   "uvidel",
+   "uvidela",
+   "uvidia",
+   "uvidím",
+   "uvidíme",
+   "uvidíte",
+   "uvidíš"
+  ],
+  "zachrániť": [
+   "zachráni",
+   "zachránil",
+   "zachrániť",
+   "zachráňte"
+  ],
+  "priniesť": [
+   "neprinieslo",
+   "prinesie",
+   "prineste",
+   "prinesú",
+   "priniesla",
+   "priniesli",
+   "prinieslo",
+   "priniesol",
+   "priniesť"
+  ],
+  "objaviť": [
+   "neobjavil",
+   "neobjavili",
+   "objavil",
+   "objavila",
+   "objavili",
+   "objavilo",
+   "objaviť",
+   "objavíš"
+  ],
+  "zobrať": [
+   "zoberiem",
+   "zobral",
+   "zobrala",
+   "zobrali"
+  ],
+  "odrieknuť": [
+   "odriekla"
+  ],
+  "vychádzať": [
+   "vychádza",
+   "vychádzal",
+   "vychádzala",
+   "vychádzali",
+   "vychádzať"
+  ],
+  "vyzerať": [
+   "nevyzerajú",
+   "nevyzerá",
+   "nevyzerám",
+   "vyzerajú",
+   "vyzeral",
+   "vyzerala",
+   "vyzeralo",
+   "vyzerať",
+   "vyzerá",
+   "vyzeráte",
+   "vyzeráš"
+  ],
+  "režírovať": [
+   "režíruje"
+  ],
+  "hrať": [
+   "hraj",
+   "hral",
+   "hrala",
+   "hrali",
+   "hrať",
+   "hrá",
+   "hráme",
+   "hráš",
+   "nehral",
+   "nehrám"
+  ],
+  "zahrať": [
+   "nezáhráte",
+   "zahrajú",
+   "zahrať",
+   "zahrá"
+  ],
+  "spievať": [
+   "nespieva",
+   "spieva",
+   "spievajú",
+   "spievala",
+   "spievať"
+  ],
+  "pricestovať": [
+   "pricestoval",
+   "pricestuje"
+  ],
+  "vracať": [
+   "vracala",
+   "vracali",
+   "vracia",
+   "vraciame"
+  ],
+  "získať": [
+   "nezískal",
+   "nezískala",
+   "získa",
+   "získajú",
+   "získal",
+   "získala",
+   "získam",
+   "získaš",
+   "získať"
+  ],
+  "súhlasiť": [
+   "nesúhlasila",
+   "nesúhlasili",
+   "nesúhlasí",
+   "súhlasil",
+   "súhlasila",
+   "súhlasili",
+   "súhlasilo",
+   "súhlasiť",
+   "súhlasím"
+  ],
+  "prepustiť": [
+   "prepustil",
+   "prepustí"
+  ],
+  "nakrúcať": [
+   "nakrúca",
+   "nakrúcala"
+  ],
+  "odohrávať": [
+   "odohráva",
+   "odohrávajú"
+  ],
+  "snažiť": [
+   "snažia",
+   "snažil",
+   "snažila",
+   "snažili",
+   "snažilo",
+   "snaží",
+   "snažím"
+  ],
+  "dohodiť": [
+   "dohodiť"
+  ],
+  "zomrieť": [
+   "nezomrel",
+   "nezomrela",
+   "zomrel",
+   "zomrela",
+   "zomreli",
+   "zomrelo",
+   "zomrie",
+   "zomriem",
+   "zomrieť"
+  ],
+  "potopiť": [
+   "potopili"
+  ],
+  "podpísať": [
+   "podpísal",
+   "podpísali"
+  ],
+  "vzrásť": [
+   "vzrástli",
+   "vzrástol"
+  ],
+  "očakávať": [
+   "neočakávajte",
+   "očakáva",
+   "očakávajú",
+   "očakával",
+   "očakávala",
+   "očakávali"
+  ],
+  "rozviesť": [
+   "rozviedla"
+  ],
+  "obsadiť": [
+   "obsadil",
+   "obsadila",
+   "obsadili",
+   "obsadiť"
+  ],
+  "rozpisovať": [
+   "rozpisovať"
+  ],
+  "zažiť": [
+   "nezažil",
+   "zažiješ",
+   "zažil",
+   "zažila",
+   "zažili",
+   "zažilo"
+  ],
+  "vedieť": [
+   "nevedel",
+   "nevedela",
+   "nevedeli",
+   "nevedia",
+   "nevie",
+   "neviem",
+   "nevieme",
+   "neviete",
+   "nevieš",
+   "vedel",
+   "vedela",
+   "vedeli",
+   "vedia",
+   "vedieť",
+   "vie",
+   "viem",
+   "vieme",
+   "viete",
+   "vieš"
+  ],
+  "znamenať": [
+   "neznamenajú",
+   "neznamenalo",
+   "znamenal",
+   "znamenala",
+   "znamenalo",
+   "znamenať",
+   "znamená"
+  ],
+  "požiadať": [
+   "požiadal",
+   "požiadali",
+   "požiadalo",
+   "požiadate",
+   "požiadať"
+  ],
+  "odfukovať": [
+   "odfukujeme"
+  ],
+  "štartovať": [
+   "štartujeme"
+  ],
+  "pozerať": [
+   "pozeraj",
+   "pozeral",
+   "pozerala",
+   "pozerali",
+   "pozerá",
+   "pozerám",
+   "pozeráme"
+  ],
+  "dodávať": [
+   "dodáva"
+  ],
+  "stúpať": [
+   "stúpa",
+   "stúpal",
+   "stúpala",
+   "stúpali",
+   "stúpame"
+  ],
+  "mieriť": [
+   "mierime"
+  ],
+  "zastihnúť": [
+   "zastihla",
+   "zastihol"
+  ],
+  "dozvedieť": [
+   "dozvedel",
+   "dozvedela",
+   "dozvedeli",
+   "dozvedieť",
+   "dozvie",
+   "dozviete",
+   "nedozvedel",
+   "nedozvie"
+  ],
+  "uveriť": [
+   "neuverí",
+   "uveriť"
+  ],
+  "predpokladať": [
+   "predpokladajú",
+   "predpokladal",
+   "predpokladala",
+   "predpokladá",
+   "predpokladáme"
+  ],
+  "dopracovávať": [
+   "dopracovávajú"
+  ],
+  "pozdravovať": [
+   "pozdravuj",
+   "pozdravujeme"
+  ],
+  "zorganizovať": [
+   "zorganizoval",
+   "zorganizovali",
+   "zorganizovať"
+  ],
+  "chytiť": [
+   "chytia",
+   "chytil",
+   "chytila",
+   "chytí",
+   "chyť",
+   "nechytil",
+   "nechytí"
+  ],
+  "veriť": [
+   "neveril",
+   "neverila",
+   "neverí",
+   "neverím",
+   "neveríme",
+   "neveríš",
+   "ver",
+   "veria",
+   "veril",
+   "verila",
+   "verili",
+   "veriť",
+   "verte",
+   "verí",
+   "verím",
+   "veríme"
+  ],
+  "konať": [
+   "konajte",
+   "konajú",
+   "konal",
+   "konala",
+   "konalo",
+   "konať",
+   "koná",
+   "nekonajú"
+  ],
+  "ostať": [
+   "neostal",
+   "neostala",
+   "neostanú",
+   "ostal",
+   "ostala",
+   "ostali",
+   "ostalo",
+   "ostane",
+   "ostanem",
+   "ostaneme",
+   "ostaneš",
+   "ostať"
+  ],
+  "zaujať": [
+   "zaujal",
+   "zaujali",
+   "zaujalo",
+   "zaujať"
+  ],
+  "vyskúšať": [
+   "vyskúšajte",
+   "vyskúšala",
+   "vyskúšať"
+  ],
+  "vysypať": [
+   "vysypal",
+   "vysypte"
+  ],
+  "vypnúť": [
+   "vypla",
+   "vypnite",
+   "vypnúť",
+   "vypol",
+   "vypäl"
+  ],
+  "zakryť": [
+   "zakryl",
+   "zakryte",
+   "zakryť"
+  ],
+  "nechať": [
+   "nechajte",
+   "nechal",
+   "nechala",
+   "nechali",
+   "nechalo",
+   "nechať"
+  ],
+  "vychladnúť": [
+   "vychladnúť"
+  ],
+  "zmiešať": [
+   "zmiešajte",
+   "zmiešali"
+  ],
+  "obložiť": [
+   "obložte"
+  ],
+  "servírovať": [
+   "servírujte"
+  ],
+  "podariť": [
+   "nepodarilo",
+   "podaril",
+   "podarilo"
+  ],
+  "zabudnúť": [
+   "nezabudla",
+   "nezabudnite",
+   "zabudla",
+   "zabudli",
+   "zabudol"
+  ],
+  "znášať": [
+   "neznáša",
+   "neznášajú",
+   "neznášal",
+   "neznášala",
+   "neznášam",
+   "neznášate",
+   "neznášaš"
+  ],
+  "zavolať": [
+   "zavolajte",
+   "zavolal",
+   "zavolala",
+   "zavolali",
+   "zavolať",
+   "zavolá"
+  ],
+  "rezervovať": [
+   "rezervujte"
+  ],
+  "skúsiť": [
+   "skúsil",
+   "skúsiť",
+   "skúsme",
+   "skúste"
+  ],
+  "siahnuť": [
+   "siahli",
+   "siahnuť",
+   "siahol"
+  ],
+  "stiahnuť": [
+   "nestiahla",
+   "stiahla",
+   "stiahli",
+   "stiahnite",
+   "stiahnúť",
+   "stiahol"
+  ],
+  "zmestiť": [
+   "zmestí"
+  ],
+  "oceniť": [
+   "ocenila",
+   "ocení"
+  ],
+  "ubrať": [
+   "neuberie"
+  ],
+  "odporúčať": [
+   "neodporúčam",
+   "odporúča",
+   "odporúčal",
+   "odporúčali"
+  ],
+  "nasávať": [
+   "nasáva"
+  ],
+  "nafukovať": [
+   "nafukuje"
+  ],
+  "pýšiť": [
+   "pýšia"
+  ],
+  "spôsobiť": [
+   "spôsobil",
+   "spôsobila",
+   "spôsobili",
+   "spôsobilo",
+   "spôsobiť"
+  ],
+  "obsahovať": [
+   "neobsahuje",
+   "obsahoval",
+   "obsahovala",
+   "obsahovať",
+   "obsahuje",
+   "obsahujú",
+   "obsakujú"
+  ],
+  "rezať": [
+   "nerežú"
+  ],
+  "rozbiť": [
+   "rozbije",
+   "rozbil",
+   "rozbila",
+   "rozbiť"
+  ],
+  "zaručovať": [
+   "nezaručuje"
+  ],
+  "zabezpečiť": [
+   "zabezpečia",
+   "zabezpečili",
+   "zabezpečiť",
+   "zabezpečí"
+  ],
+  "potešiť": [
+   "nepotešila",
+   "potešia",
+   "potešil",
+   "potešila",
+   "potešilo",
+   "poteší"
+  ],
+  "spomínať": [
+   "nespomína",
+   "nespomínali",
+   "nespomínalo",
+   "spomína",
+   "spomínajú",
+   "spomínal",
+   "spomínala",
+   "spomínam",
+   "spomínaš"
+  ],
+  "chrániť": [
+   "chráni",
+   "chránia",
+   "chránil",
+   "chránili",
+   "chrániť"
+  ],
+  "vziať": [
+   "vezmem",
+   "vezmeš",
+   "vezmi",
+   "vzal",
+   "vzala",
+   "vzali",
+   "vzalo",
+   "vziať"
+  ],
+  "dovoliť": [
+   "dovolil",
+   "dovolila",
+   "dovoliť",
+   "dovolím",
+   "dovolíme",
+   "dovoľ",
+   "dovoľte",
+   "nedovolila",
+   "nedovolili",
+   "nedovolí",
+   "nedovolím"
+  ],
+  "tvrdiť": [
+   "trvrdia",
+   "tvrdil",
+   "tvrdila",
+   "tvrdili",
+   "tvrdiť",
+   "tvrdí",
+   "tvrdím"
+  ],
+  "fungovať": [
+   "fungoval",
+   "fungovali",
+   "fungovalo",
+   "funguje",
+   "nefungoval",
+   "nefungovalo",
+   "nefungujú"
+  ],
+  "zmanipulovať": [
+   "zmanipulovať"
+  ],
+  "obrať": [
+   "obrať"
+  ],
+  "ublížiť": [
+   "neublíži",
+   "ublížiť"
+  ],
+  "skončiť": [
+   "neskončila",
+   "neskončilo",
+   "skončil",
+   "skončila",
+   "skončili",
+   "skončilo",
+   "skončiť",
+   "skončí"
+  ],
+  "otvárať": [
+   "neotvárali",
+   "otvárajú",
+   "otváral",
+   "otvárala",
+   "otvárali",
+   "otvárať"
+  ],
+  "uvítať": [
+   "uvíta",
+   "uvítala"
+  ],
+  "poslať": [
+   "poslal",
+   "poslala",
+   "poslali",
+   "pošlem",
+   "pošli"
+  ],
+  "dospieť": [
+   "dospela",
+   "dospeli"
+  ],
+  "patriť": [
+   "nepatrí",
+   "patria",
+   "patril",
+   "patrila",
+   "patrili",
+   "patrilo",
+   "patrí",
+   "patríš"
+  ],
+  "zamyslieť": [
+   "zamyslel",
+   "zamyslela",
+   "zamyslieť"
+  ],
+  "začínať": [
+   "začína",
+   "začínal",
+   "začínali",
+   "začínalo",
+   "začínam"
+  ],
+  "zhodnúť": [
+   "zhodli"
+  ],
+  "otvoriť": [
+   "neotvoril",
+   "otvoril",
+   "otvorila",
+   "otvorili",
+   "otvorilo",
+   "otvoriť"
+  ],
+  "meniť": [
+   "menili",
+   "menilo",
+   "meniť",
+   "mení",
+   "nemenia"
+  ],
+  "platiť": [
+   "neplatilo",
+   "neplatí",
+   "platia",
+   "platili",
+   "platiť",
+   "platí"
+  ],
+  "varovať": [
+   "varoval",
+   "varovala",
+   "varovali",
+   "varovalo"
+  ],
+  "tušiť": [
+   "netušil",
+   "netušila",
+   "netušili",
+   "tušil",
+   "tušiť"
+  ],
+  "jesť": [
+   "jedia",
+   "jeme",
+   "jesť",
+   "nejedz"
+  ],
+  "žiť": [
+   "žije",
+   "žijem",
+   "žiješ",
+   "žijúc",
+   "žil",
+   "žila",
+   "žili",
+   "žilo",
+   "žiť"
+  ],
+  "prihodiť": [
+   "prihodiť"
+  ],
+  "potrebovať": [
+   "nepotreboval",
+   "nepotrebovať",
+   "nepotrebuje",
+   "nepotrebujem",
+   "nepotrebujeme",
+   "potreboval",
+   "potrebovala",
+   "potrebovali",
+   "potrebovať",
+   "potrebuje",
+   "potrebujem",
+   "potrebujeme",
+   "potrebujete",
+   "potrebujú"
+  ],
+  "odpísať": [
+   "odpísala"
+  ],
+  "zabrať": [
+   "nezabrala",
+   "zaberie",
+   "zabral",
+   "zabrať"
+  ],
+  "hanbiť": [
+   "hanbila",
+   "hanbili",
+   "hanbím"
+  ],
+  "umrieť": [
+   "umrel",
+   "umrela",
+   "umrieť"
+  ],
+  "rásť": [
+   "rastie",
+   "rastú",
+   "rástla",
+   "rástli",
+   "rástol"
+  ],
+  "páčiť": [
+   "nepáči",
+   "nepáčil",
+   "nepáčila",
+   "nepáčilo",
+   "páči",
+   "páčia",
+   "páčil",
+   "páčila",
+   "páčili",
+   "páčilo",
+   "páčim"
+  ],
+  "myslieť": [
+   "myslel",
+   "myslela",
+   "mysleli",
+   "myslia",
+   "myslieť",
+   "myslí",
+   "myslím",
+   "myslíte",
+   "myslíš",
+   "nemyslel",
+   "nemyslela",
+   "nemysleli",
+   "nemyslieť",
+   "nemyslite",
+   "nemyslím",
+   "nemyslíte",
+   "nemyslíš"
+  ],
+  "súvisieť": [
+   "nesúvisia",
+   "nesúvisí",
+   "súvisela",
+   "súviselo",
+   "súvisia",
+   "súvisieť",
+   "súvisí"
+  ],
+  "lákať": [
+   "lákal",
+   "lákali"
+  ],
+  "odrážať": [
+   "odrážal",
+   "odrážali"
+  ],
+  "ručiť": [
+   "ručím"
+  ],
+  "všimnúť": [
+   "nevšimla",
+   "nevšimol",
+   "všimla",
+   "všimli",
+   "všimne",
+   "všimnime",
+   "všimnúť",
+   "všimol"
+  ],
+  "stráviť": [
+   "strávil",
+   "strávila",
+   "strávime"
+  ],
+  "visieť": [
+   "visel",
+   "visela",
+   "viseli",
+   "visieť",
+   "visí"
+  ],
+  "vytvárať": [
+   "vytvára",
+   "vytvárala",
+   "vytvárali",
+   "vytvárať"
+  ],
+  "vrátiť": [
+   "nevrátil",
+   "vráti",
+   "vrátia",
+   "vrátil",
+   "vrátila",
+   "vrátili",
+   "vrátim",
+   "vrátime",
+   "vrátite",
+   "vrátiš",
+   "vrátiť",
+   "vráť",
+   "vráťte"
+  ],
+  "prebiehať": [
+   "prebieha",
+   "prebiehajú",
+   "prebiehala",
+   "prebiehali"
+  ],
+  "získavať": [
+   "získava",
+   "získavali",
+   "získavať"
+  ],
+  "predstaviť": [
+   "nepredstavil",
+   "predstavia",
+   "predstavila",
+   "predstaviť"
+  ],
+  "postarať": [
+   "postarajú",
+   "postaral",
+   "postarať",
+   "postará",
+   "postarám"
+  ],
+  "čudovať": [
+   "nečudovali",
+   "nečuduje",
+   "nečudujem",
+   "čudovala"
+  ],
+  "vyvíjať": [
+   "vyvíjajúc",
+   "vyvíjala",
+   "vyvíjali"
+  ],
+  "chápať": [
+   "chápal",
+   "chápať",
+   "chápem",
+   "chápete",
+   "nechápal",
+   "nechápala",
+   "nechápem",
+   "nechápeme",
+   "nechápeš"
+  ],
+  "tešiť": [
+   "netešia",
+   "netešil",
+   "netešíš",
+   "tešil",
+   "tešila",
+   "tešili",
+   "teší",
+   "teším"
+  ],
+  "liezť": [
+   "lezie"
+  ],
+  "poslúchnuť": [
+   "neposlúchol",
+   "poslúchli",
+   "poslúchnuť",
+   "poslúchol"
+  ],
+  "brať": [
+   "berie",
+   "beriem",
+   "berte",
+   "berú",
+   "bral",
+   "brať",
+   "neber",
+   "nebrali"
+  ],
+  "dorozumieť": [
+   "nedorozumiete"
+  ],
+  "podieľať": [
+   "podieľa",
+   "podieľajú",
+   "podieľal",
+   "podieľali",
+   "podieľať"
+  ],
+  "udeľovať": [
+   "udeľoval",
+   "udeľovali",
+   "udeľuje"
+  ],
+  "napĺňať": [
+   "napĺňajú"
+  ],
+  "reprezentovať": [
+   "reprezentovať",
+   "reprezentuje"
+  ],
+  "vybrať": [
+   "vyberie",
+   "vybral",
+   "vybrala",
+   "vybrali",
+   "vybrať"
+  ],
+  "bombardovať": [
+   "bombardovať",
+   "bombarduje",
+   "bombardujú"
+  ],
+  "vybaviť": [
+   "vybavila",
+   "vybaví",
+   "vybavím",
+   "vybavíme"
+  ],
+  "priznať": [
+   "priznal",
+   "priznať",
+   "prizná",
+   "priznám"
+  ],
+  "presťahovať": [
+   "nepresťahujete",
+   "presťahovala"
+  ],
+  "chovať": [
+   "chovala",
+   "chová"
+  ],
+  "vykrmovať": [
+   "vykrmovala"
+  ],
+  "zazrieť": [
+   "nezazrel",
+   "zazrel",
+   "zazrela"
+  ],
+  "sedieť": [
+   "nesedí",
+   "sedel",
+   "sedela",
+   "sedeli",
+   "sedelo",
+   "sediac",
+   "sedieť",
+   "sedí",
+   "sedím",
+   "sedíme"
+  ],
+  "utiecť": [
+   "uteč",
+   "utečú",
+   "utiecť",
+   "utiekla",
+   "utiekli",
+   "utiekol"
+  ],
+  "pridať": [
+   "pridal",
+   "pridala",
+   "pridať",
+   "pridám",
+   "pridáme"
+  ],
+  "zbaviť": [
+   "nezbavil",
+   "zbavil",
+   "zbavili",
+   "zbaviť",
+   "zbaví"
+  ],
+  "odhrnúť": [
+   "odhrnul",
+   "odhrnula",
+   "odhrnuli"
+  ],
+  "vysvetliť": [
+   "vysvetli",
+   "vysvetlil",
+   "vysvetlila",
+   "vysvetlili",
+   "vysvetliť",
+   "vysvetlíme"
+  ],
+  "poviesť": [
+   "povedie",
+   "povedú"
+  ],
+  "vymyslieť": [
+   "vymyslel",
+   "vymyslela",
+   "vymyslieť",
+   "vymyslíme"
+  ],
+  "využiť": [
+   "využije",
+   "využijúc",
+   "využil",
+   "využili",
+   "využilo",
+   "využiť"
+  ],
+  "chodiť": [
+   "chodia",
+   "chodil",
+   "chodila",
+   "chodili",
+   "chodiť",
+   "chodí",
+   "chodím",
+   "chodíš",
+   "choďte",
+   "nechodil",
+   "nechodila",
+   "nechodili",
+   "nechodím",
+   "nechoď"
+  ],
+  "nahrávať": [
+   "nahrávalo",
+   "nahrávať"
+  ],
+  "volať": [
+   "nevolal",
+   "nevolala",
+   "nevolám",
+   "volajú",
+   "volal",
+   "volala",
+   "volali",
+   "volať",
+   "volá",
+   "volám",
+   "voláte",
+   "voláš"
+  ],
+  "prepáčiť": [
+   "prepáč",
+   "prepáčila",
+   "prepáčte"
+  ],
+  "prilákať": [
+   "priláka",
+   "prilákal",
+   "prilákali"
+  ],
+  "trvať": [
+   "netrvala",
+   "netrvalo",
+   "netrvá",
+   "trval",
+   "trvala",
+   "trvať",
+   "trvá"
+  ],
+  "potrvať": [
+   "potrvá"
+  ],
+  "zvyknúť": [
+   "zvykneš",
+   "zvyknú",
+   "zvyknúť"
+  ],
+  "želať": [
+   "neželal",
+   "neželala",
+   "želal",
+   "želala",
+   "želá",
+   "želám",
+   "želáte",
+   "želáš"
+  ],
+  "pritúliť": [
+   "pritúlil",
+   "pritúľte"
+  ],
+  "zmeniť": [
+   "nezmenili",
+   "nezmenilo",
+   "nezmení",
+   "zmenil",
+   "zmenila",
+   "zmenili",
+   "zmenilo",
+   "zmeniť",
+   "zmení"
+  ],
+  "vzniknúť": [
+   "nevznikla",
+   "vznikla",
+   "vznikli",
+   "vzniklo",
+   "vzniknúť",
+   "vznikol"
+  ],
+  "uznávať": [
+   "uznáva",
+   "uznávam"
+  ],
+  "vyjadrovať": [
+   "vyjadrovali",
+   "vyjadruje"
+  ],
+  "stáť": [
+   "nestoja",
+   "stojí",
+   "stál",
+   "stála",
+   "stáli",
+   "stálo",
+   "stáť"
+  ],
+  "priať": [
+   "prajem",
+   "prajeme",
+   "prialo"
+  ],
+  "počítať": [
+   "nepočítam",
+   "počíta",
+   "počítal",
+   "počítali"
+  ],
+  "vyhrabať": [
+   "vyhrabala"
+  ],
+  "pochopiť": [
+   "pochopil",
+   "pochopila",
+   "pochopili",
+   "pochopiť",
+   "pochopí"
+  ],
+  "pomôcť": [
+   "nepomohlo",
+   "nepomôže",
+   "nepomôžeš",
+   "pomohla",
+   "pomohli",
+   "pomohol",
+   "pomôcť",
+   "pomôž",
+   "pomôže",
+   "pomôžem",
+   "pomôžeš",
+   "pomôžu"
+  ],
+  "potulovať": [
+   "potuloval",
+   "potulovali",
+   "potuluje"
+  ],
+  "robiť": [
+   "nerob",
+   "nerobil",
+   "nerobili",
+   "nerobíme",
+   "rob",
+   "robia",
+   "robil",
+   "robila",
+   "robili",
+   "robiť",
+   "robí",
+   "robíme",
+   "robíte",
+   "robíš"
+  ],
+  "napadnúť": [
+   "napadla",
+   "napadli",
+   "napadlo",
+   "napadne",
+   "napadnúť",
+   "napadol",
+   "nenapadlo"
+  ],
+  "naraziť": [
+   "narazil",
+   "narazíte"
+  ],
+  "zavesiť": [
+   "zavesil",
+   "zavesila"
+  ],
+  "hodiť": [
+   "hodil",
+   "hodila",
+   "hodili",
+   "hodilo",
+   "hodiť",
+   "nehodilo"
+  ],
+  "povysávať": [
+   "povysávala"
+  ],
+  "pokračovať": [
+   "pokračoval",
+   "pokračovala",
+   "pokračovali",
+   "pokračovať",
+   "pokračuje",
+   "pokračujem",
+   "pokračujú"
+  ],
+  "vydržať": [
+   "nevydržal",
+   "nevydržala",
+   "vydržal",
+   "vydržať",
+   "vydrží"
+  ],
+  "upozorniť": [
+   "upozornil",
+   "upozornili",
+   "upozorniť"
+  ],
+  "stihnúť": [
+   "nestihla",
+   "stihli",
+   "stihlo",
+   "stihol"
+  ],
+  "zmiznúť": [
+   "nezmizli",
+   "nezmizlo",
+   "zmizla",
+   "zmizli",
+   "zmizlo",
+   "zmizne",
+   "zmiznem",
+   "zmizni",
+   "zmiznúť",
+   "zmizol"
+  ],
+  "uprieť": [
+   "uprel",
+   "upreli"
+  ],
+  "utvrdiť": [
+   "utvrdil"
+  ],
+  "plytvať": [
+   "neplytvať"
+  ],
+  "znepokojovať": [
+   "znepokojovali",
+   "znepokojovalo",
+   "znepokojovať",
+   "znepokojuje"
+  ],
+  "pokúsiť": [
+   "pokúsil",
+   "pokúsili",
+   "pokúsime"
+  ],
+  "sfúknuť": [
+   "sfúknu",
+   "sfúknuť"
+  ],
+  "vytopiť": [
+   "vytopilo"
+  ],
+  "pomáhať": [
+   "nepomáhame",
+   "pomáha",
+   "pomáhaj",
+   "pomáhajme",
+   "pomáhajú",
+   "pomáhal",
+   "pomáhala",
+   "pomáhali",
+   "pomáhalo",
+   "pomáham",
+   "pomáhať"
+  ],
+  "oblievať": [
+   "oblievala",
+   "oblievali"
+  ],
+  "bývať": [
+   "býva",
+   "býval",
+   "bývala",
+   "bývali",
+   "bývalo",
+   "bývate",
+   "bývaš",
+   "bývať",
+   "nebýva"
+  ],
+  "zohrávať": [
+   "zohrávajú"
+  ],
+  "odpovedať": [
+   "neodpovedal",
+   "neodpovedala",
+   "neodpovedali",
+   "odpovedajú",
+   "odpovedal",
+   "odpovedala",
+   "odpovedalo",
+   "odpovedať",
+   "odpovedá"
+  ],
+  "podporiť": [
+   "podporila",
+   "podporili",
+   "podporilo",
+   "podporí",
+   "podporíme"
+  ],
+  "požierať": [
+   "požiera"
+  ],
+  "prisvojiť": [
+   "prisvojil"
+  ],
+  "brániť": [
+   "bráni",
+   "bránil",
+   "bránili",
+   "brániť",
+   "nebránil"
+  ],
+  "vyvolať": [
+   "nevyvolajú",
+   "nevyvolala",
+   "vyvolal",
+   "vyvolala",
+   "vyvolali",
+   "vyvolalo"
+  ],
+  "rozostaviť": [
+   "rozostavil"
+  ],
+  "uviaznuť": [
+   "uviazla",
+   "uviazli",
+   "uviazlo",
+   "uviazneš",
+   "uviaznu",
+   "uviazol"
+  ],
+  "tyranizovať": [
+   "tyranizuje"
+  ],
+  "zostupujúc": [
+   "zostupujúc"
+  ],
+  "obnažovať": [
+   "obnažuje"
+  ],
+  "bičovať": [
+   "bičuje"
+  ],
+  "znieť": [
+   "znel",
+   "zneli",
+   "znie",
+   "znieť"
+  ],
+  "narážať": [
+   "naráža"
+  ],
+  "odhaliť": [
+   "odhalil",
+   "odhalila",
+   "odhaliť",
+   "odhalí"
+  ],
+  "pozrieť": [
+   "pozrel",
+   "pozrela",
+   "pozreli",
+   "pozrelo",
+   "pozri",
+   "pozriem",
+   "pozrieť",
+   "pozrime",
+   "pozrite",
+   "pozrú"
+  ],
+  "opierať": [
+   "opieral",
+   "opierať"
+  ],
+  "zachytávať": [
+   "zachytáva",
+   "zachytávajú",
+   "zachytávali"
+  ],
+  "zmieňovať": [
+   "zmieňujú"
+  ],
+  "rozoznať": [
+   "rozoznala",
+   "rozoznať"
+  ],
+  "rozdrobovať": [
+   "rozdrobuje"
+  ],
+  "slúžiť": [
+   "slúži",
+   "slúžia",
+   "slúžil",
+   "slúžili",
+   "slúžiť"
+  ],
+  "rozvíjať": [
+   "nerozvíjalo",
+   "rozvíjajú",
+   "rozvíjal"
+  ],
+  "svedčiť": [
+   "svedčia",
+   "svedčilo",
+   "svedčiť",
+   "svedčí"
+  ],
+  "prejaviť": [
+   "neprejavil",
+   "prejavil",
+   "prejavila",
+   "prejavili",
+   "prejaviť"
+  ],
+  "podávať": [
+   "podáva",
+   "podávajú",
+   "podávala",
+   "podávalo",
+   "podávam"
+  ],
+  "vysvetľovať": [
+   "vysvetľoval",
+   "vysvetľovala",
+   "vysvetľovať",
+   "vysvetľuje",
+   "vysvetľujú"
+  ],
+  "zvestovať": [
+   "zvestujú"
+  ],
+  "zatláčať": [
+   "zatláča"
+  ],
+  "umožňovať": [
+   "umožňuje",
+   "umožňujú"
+  ],
+  "skompletizovať": [
+   "skompletizovať"
+  ],
+  "uchovávať": [
+   "uchovávajú"
+  ],
+  "zatieniť": [
+   "zatienil",
+   "zatienila"
+  ],
+  "založiť": [
+   "založil",
+   "založili"
+  ],
+  "zaťať": [
+   "zaťal",
+   "zaťala",
+   "zaťalo"
+  ],
+  "usilovať": [
+   "usiloval",
+   "usilovala",
+   "usilovať",
+   "usiluje",
+   "usilujem"
+  ],
+  "vládnuť": [
+   "vládla",
+   "vládne",
+   "vládnuť",
+   "vládol"
+  ],
+  "nachádzať": [
+   "nachádza",
+   "nachádzajú",
+   "nachádzal",
+   "nachádzala",
+   "nachádzali",
+   "nachádzalo",
+   "nachádzame"
+  ],
+  "uviazať": [
+   "uviazal",
+   "uviazala"
+  ],
+  "vyrásť": [
+   "vyrástla",
+   "vyrástli",
+   "vyrástlo",
+   "vyrástol"
+  ],
+  "ubližovať": [
+   "ubližovať"
+  ],
+  "tvoriť": [
+   "tvoria",
+   "tvorila",
+   "tvorili",
+   "tvorilo",
+   "tvorily",
+   "tvoriť",
+   "tvorí"
+  ],
+  "stretávať": [
+   "stretávali",
+   "stretávame"
+  ],
+  "týkať": [
+   "netýka",
+   "týka",
+   "týkajú",
+   "týkala",
+   "týkali"
+  ],
+  "zachovávať": [
+   "zachovávali"
+  ],
+  "ovplyvňovať": [
+   "ovplyvňovali",
+   "ovplyvňovať",
+   "ovplyvňuje"
+  ],
+  "miešať": [
+   "miešajú",
+   "miešala",
+   "miešali"
+  ],
+  "splývať": [
+   "splývali"
+  ],
+  "spájať": [
+   "nespájajú",
+   "spájal",
+   "spájala",
+   "spájame"
+  ],
+  "hľadať": [
+   "hľadajú",
+   "hľadajúc",
+   "hľadal",
+   "hľadala",
+   "hľadali",
+   "hľadať",
+   "hľadá",
+   "hľadáte",
+   "hľadáš",
+   "nehľadal"
+  ],
+  "vyznačovať": [
+   "vyznačovala",
+   "vyznačovali",
+   "vyznačuje",
+   "vyznačujú"
+  ],
+  "garantovať": [
+   "garantovať",
+   "garantujú"
+  ],
+  "zabezpečovať": [
+   "zabezpečovať",
+   "zabezpečujú"
+  ],
+  "pripomínať": [
+   "nepripomínala",
+   "pripomína",
+   "pripomínal",
+   "pripomínala",
+   "pripomínali",
+   "pripomínalo"
+  ],
+  "zabiť": [
+   "nezabije",
+   "nezabil",
+   "zabije",
+   "zabijú",
+   "zabil",
+   "zabila",
+   "zabili",
+   "zabiť"
+  ],
+  "zrekonštruovať": [
+   "zrekonštruovať"
+  ],
+  "nasledovať": [
+   "nasledoval",
+   "nasledovala",
+   "nasledovali",
+   "nasledovalo",
+   "nasledovať",
+   "nasleduje"
+  ],
+  "niesť": [
+   "nesiem",
+   "nesieš",
+   "niesla",
+   "nieslo",
+   "niesol",
+   "niesť"
+  ],
+  "skúmať": [
+   "skúma",
+   "skúmal",
+   "skúmali",
+   "skúmať"
+  ],
+  "nadobúdať": [
+   "nadobúda",
+   "nadobúdala"
+  ],
+  "podrobiť": [
+   "podrobiť"
+  ],
+  "viesť": [
+   "nevedie",
+   "neviedli",
+   "neviedol",
+   "vedie",
+   "vediem",
+   "vedú",
+   "viedla",
+   "viedli",
+   "viedlo",
+   "viedol",
+   "viesť"
+  ],
+  "určiť": [
+   "určia",
+   "určila",
+   "určiť",
+   "určíme"
+  ],
+  "dopĺňať": [
+   "dopĺňa",
+   "dopĺňajú"
+  ],
+  "uskutočňovať": [
+   "uskutočňoval"
+  ],
+  "vyskytovať": [
+   "vyskytovala",
+   "vyskytuje"
+  ],
+  "vykladať": [
+   "vykladala",
+   "vykladať",
+   "vykladá"
+  ],
+  "rozlíšiť": [
+   "rozlíšiť"
+  ],
+  "nazývať": [
+   "nazýva",
+   "nazývajú",
+   "nazýval",
+   "nazývala"
+  ],
+  "znemožňovať": [
+   "znemožňuje"
+  ],
+  "odhliadnuť": [
+   "odhliadnuc"
+  ],
+  "predkladať": [
+   "predkladajú"
+  ],
+  "pozostávať": [
+   "pozostáva"
+  ],
+  "preplietať": [
+   "preplieta"
+  ],
+  "spadať": [
+   "spadali",
+   "spadá"
+  ],
+  "závisieť": [
+   "nezávisí",
+   "závisela",
+   "závisia",
+   "závisí"
+  ],
+  "zjavovať": [
+   "zjavujú"
+  ],
+  "zahnať": [
+   "zahnal",
+   "zahnala",
+   "zahnať"
+  ],
+  "zachovať": [
+   "nezachoval",
+   "zachovajte",
+   "zachoval",
+   "zachovali",
+   "zachovať",
+   "zachová"
+  ],
+  "zastávať": [
+   "zastáva",
+   "zastávajú",
+   "zastával",
+   "zastávali"
+  ],
+  "vznikať": [
+   "nevznikali",
+   "vznikajú",
+   "vznikali",
+   "vznikalo",
+   "vznikať",
+   "vzniká"
+  ],
+  "skladať": [
+   "skladal",
+   "skladali"
+  ],
+  "posilňovať": [
+   "posilňovať",
+   "posilňuje"
+  ],
+  "umierať": [
+   "umiera",
+   "umierajú"
+  ],
+  "zostať": [
+   "zostal",
+   "zostala",
+   "zostali",
+   "zostalo",
+   "zostane",
+   "zostať"
+  ],
+  "prestávať": [
+   "prestáva"
+  ],
+  "dochádzať": [
+   "dochádza",
+   "nedochádzalo"
+  ],
+  "načrtnúť": [
+   "načrtneme"
+  ],
+  "pristúpiť": [
+   "pristúpil",
+   "pristúpili",
+   "pristúpiť"
+  ],
+  "vyzdvihovať": [
+   "vyzdvihuje"
+  ],
+  "všímať": [
+   "nevšímal",
+   "nevšímam",
+   "všíma"
+  ],
+  "vyslovovať": [
+   "vyslovujeme"
+  ],
+  "rozobrať": [
+   "rozobrali"
+  ],
+  "miznúť": [
+   "miznem",
+   "miznú"
+  ],
+  "vyčleniť": [
+   "vyčlenil",
+   "vyčleniť"
+  ],
+  "dostávať": [
+   "dostáva",
+   "dostávala",
+   "dostávame"
+  ],
+  "vnášať": [
+   "vnáša"
+  ],
+  "symbolizovať": [
+   "symbolizujú"
+  ],
+  "objavovať": [
+   "objavoval",
+   "objavovala",
+   "objavovali",
+   "objavuje",
+   "objavujú"
+  ],
+  "tiahnuť": [
+   "tiahne",
+   "tiahnú",
+   "tiahol"
+  ],
+  "plieniť": [
+   "plienia"
+  ],
+  "útočiť": [
+   "útočia",
+   "útočil",
+   "útočili",
+   "útočí"
+  ],
+  "klásť": [
+   "kládli",
+   "kládol",
+   "klásť"
+  ],
+  "udržať": [
+   "udržali",
+   "udržať"
+  ],
+  "prichádzať": [
+   "prichádza",
+   "prichádzajte",
+   "prichádzal",
+   "prichádzala",
+   "prichádzali"
+  ],
+  "opadnúť": [
+   "opadli"
+  ],
+  "živiť": [
+   "živiť"
+  ],
+  "modifikovať": [
+   "modifikuje"
+  ],
+  "použiť": [
+   "nepoužil",
+   "použil",
+   "použila",
+   "použili",
+   "použiť"
+  ],
+  "zamrmlať": [
+   "zamrmlal",
+   "zamrmlala"
+  ],
+  "preberať": [
+   "preberal",
+   "preberali",
+   "preberá"
+  ],
+  "prikryť": [
+   "prikryl"
+  ],
+  "cítiť": [
+   "cíti",
+   "cítiac",
+   "cítil",
+   "cítila",
+   "cítili",
+   "cítim",
+   "cítiš",
+   "cítiť",
+   "necítil",
+   "necítila"
+  ],
+  "preglgnúť": [
+   "preglgla",
+   "preglgol"
+  ],
+  "ďakovať": [
+   "neďakujte",
+   "ďakovala",
+   "ďakuje",
+   "ďakujem",
+   "ďakujeme",
+   "ďakujte"
+  ],
+  "odvetiť": [
+   "neodvetil",
+   "odvetil",
+   "odvetila",
+   "odvetilo"
+  ],
+  "vymaniť": [
+   "vymanila"
+  ],
+  "chytať": [
+   "chytala",
+   "chytá"
+  ],
+  "hrnúť": [
+   "hrnie"
+  ],
+  "spýtať": [
+   "nespýtal",
+   "nespýtala",
+   "spýtal",
+   "spýtala",
+   "spýtam",
+   "spýtať"
+  ],
+  "jachtať": [
+   "jachtala"
+  ],
+  "zavrieť": [
+   "nezavrel",
+   "nezavriem",
+   "zavrel",
+   "zavrela",
+   "zavrem",
+   "zavri"
+  ],
+  "strčiť": [
+   "strčil",
+   "strčila",
+   "strčili"
+  ],
+  "zakrútiť": [
+   "zakrútila"
+  ],
+  "pobozkať": [
+   "nepobozkala",
+   "pobozkal",
+   "pobozkala",
+   "pobozkať",
+   "pobozká"
+  ],
+  "skríknuť": [
+   "skríkla",
+   "skríkol"
+  ],
+  "zvolať": [
+   "zvolal",
+   "zvolala",
+   "zvolali"
+  ],
+  "zblázniť": [
+   "zbláznila"
+  ],
+  "zaskočiť": [
+   "zaskočil",
+   "zaskočila",
+   "zaskočilo"
+  ],
+  "položiť": [
+   "položil",
+   "položila",
+   "položili",
+   "položiť"
+  ],
+  "zdať": [
+   "nezdalo",
+   "zdajú",
+   "zdal",
+   "zdala",
+   "zdalo",
+   "zdá"
+  ],
+  "vystúpiť": [
+   "nevystúpim",
+   "vystúpi",
+   "vystúpil",
+   "vystúpila",
+   "vystúpili"
+  ],
+  "zametať": [
+   "zametať"
+  ],
+  "zmôcť": [
+   "nezmohla"
+  ],
+  "vyletieť": [
+   "vyletelo"
+  ],
+  "zareagovať": [
+   "zareagoval",
+   "zareagovala"
+  ],
+  "vyviesť": [
+   "vyviedol"
+  ],
+  "zavrtieť": [
+   "zavrtela"
+  ],
+  "snívať": [
+   "sníval",
+   "snívala",
+   "snívali",
+   "snívalo",
+   "snívam"
+  ],
+  "učiť": [
+   "učil",
+   "učila",
+   "učili",
+   "učiť",
+   "učme"
+  ],
+  "báť": [
+   "bojím",
+   "bojíš",
+   "bála",
+   "báli",
+   "báť",
+   "neboj",
+   "nebojme",
+   "nebojte",
+   "nebojí",
+   "nebojím",
+   "nebál",
+   "nebála"
+  ],
+  "vyfučať": [
+   "vyfučalo",
+   "vyfučí"
+  ],
+  "pripadať": [
+   "pripadal",
+   "pripadala",
+   "pripadali",
+   "pripadalo",
+   "pripadá"
+  ],
+  "sadnúť": [
+   "sadla",
+   "sadli",
+   "sadne",
+   "sadni",
+   "sadnúť",
+   "sadol"
+  ],
+  "pokrčiť": [
+   "pokrčil",
+   "pokrčila"
+  ],
+  "pracovať": [
+   "pracoval",
+   "pracovala",
+   "pracovali",
+   "pracovalo",
+   "pracovať",
+   "pracuje",
+   "pracujú"
+  ],
+  "zvažovať": [
+   "zvažovala"
+  ],
+  "zakrúžkovávať": [
+   "zakrúžkovávala"
+  ],
+  "rozptyľovať": [
+   "rozptyľovalo",
+   "rozptyľovať"
+  ],
+  "behať": [
+   "behajú",
+   "behal"
+  ],
+  "stvárať": [
+   "stváram"
+  ],
+  "dúfať": [
+   "dúfal",
+   "dúfala",
+   "dúfali",
+   "dúfam",
+   "nedúfala"
+  ],
+  "zbabrať": [
+   "nezbabrem",
+   "zbabrala"
+  ],
+  "preletieť": [
+   "preletel",
+   "preletela",
+   "preleteli"
+  ],
+  "nastať": [
+   "nastal",
+   "nastala",
+   "nastalo",
+   "nastať"
+  ],
+  "bežať": [
+   "bežal",
+   "bežala",
+   "bežali",
+   "bežať",
+   "bežiac",
+   "nebežal"
+  ],
+  "rozbehnúť": [
+   "rozbehla"
+  ],
+  "skočiť": [
+   "skočil",
+   "skočila",
+   "skočili",
+   "skočilo",
+   "skočiť"
+  ],
+  "rozbúriť": [
+   "rozbúrila"
+  ],
+  "zaplávať": [
+   "zaplávala",
+   "zaplávam"
+  ],
+  "kašlať": [
+   "kašlúc"
+  ],
+  "vynoriť": [
+   "vynoril",
+   "vynorila",
+   "vynorilo"
+  ],
+  "spamätať": [
+   "spamätal",
+   "spamätala",
+   "spamätali"
+  ],
+  "vyhnúť": [
+   "vyhli",
+   "vyhnem",
+   "vyhneš",
+   "vyhnú",
+   "vyhnúť",
+   "vyhol"
+  ],
+  "predstavovať": [
+   "nepredstavujú",
+   "predstavoval",
+   "predstavovala",
+   "predstavovalo",
+   "predstavovať",
+   "predstavuje",
+   "predstavujem",
+   "predstavujú"
+  ],
+  "prekonávať": [
+   "prekonávam",
+   "prekonávať"
+  ],
+  "zasmiať": [
+   "zasmial",
+   "zasmiala",
+   "zasmialo"
+  ],
+  "obdivovať": [
+   "obdivoval",
+   "obdivovala",
+   "obdivujem"
+  ],
+  "prekonať": [
+   "neprekonal",
+   "neprekoná",
+   "prekonala",
+   "prekonať",
+   "prekoná"
+  ],
+  "sledovať": [
+   "nesledoval",
+   "nesledujú",
+   "sledoval",
+   "sledovala",
+   "sledovali",
+   "sledovalo",
+   "sledovať",
+   "sleduje",
+   "sledujeme",
+   "sledujme",
+   "sledujú"
+  ],
+  "pohybovať": [
+   "pohyboval",
+   "pohybovali",
+   "pohybovať",
+   "pohybuje",
+   "pohybujú",
+   "pophyboval"
+  ],
+  "vyrušiť": [
+   "nevyrušil",
+   "vyrušil",
+   "vyrušíme"
+  ],
+  "uvažovať": [
+   "neuvažoval",
+   "uvažoval",
+   "uvažovala",
+   "uvažuje",
+   "uvažujem"
+  ],
+  "plávať": [
+   "pláva",
+   "plávajú",
+   "plával",
+   "plávala",
+   "plávali",
+   "plávať"
+  ],
+  "zacítiť": [
+   "zacítila"
+  ],
+  "dotknúť": [
+   "dotklo",
+   "dotkneš",
+   "dotkni",
+   "dotknúť",
+   "dotkol"
+  ],
+  "udrieť": [
+   "neudrela",
+   "udrel",
+   "udrela",
+   "udreli",
+   "udriem",
+   "udrieť"
+  ],
+  "priplávať": [
+   "priplával",
+   "priplávala"
+  ],
+  "ležať": [
+   "ležal",
+   "ležala",
+   "ležali",
+   "ležalo",
+   "ležať",
+   "ležiac",
+   "leží",
+   "ležím"
+  ],
+  "dívať": [
+   "díva",
+   "dívajú",
+   "díval",
+   "dívala",
+   "dívali",
+   "dívať"
+  ],
+  "smieť": [
+   "nesmeli",
+   "nesmie",
+   "nesmiem",
+   "nesmieme",
+   "nesmieš"
+  ],
+  "pošúchať": [
+   "pošúchal",
+   "pošúchala"
+  ],
+  "zapískať": [
+   "zapískal"
+  ],
+  "uvoľniť": [
+   "uvoľnil",
+   "uvoľnili",
+   "uvoľnilo",
+   "uvoľniť"
+  ],
+  "skĺznuť": [
+   "skĺzla",
+   "skĺzol"
+  ],
+  "ponoriť": [
+   "ponoril",
+   "ponorila"
+  ],
+  "zvrtnúť": [
+   "zvrtla",
+   "zvrtol"
+  ],
+  "zbadať": [
+   "zbadajú",
+   "zbadal",
+   "zbadala",
+   "zbadali",
+   "zbadá"
+  ],
+  "prekvapiť": [
+   "neprekvapil",
+   "neprekvapí",
+   "prekvapil",
+   "prekvapili",
+   "prekvapilo",
+   "prekvapiť"
+  ],
+  "vyjachtať": [
+   "vyjachtal",
+   "vyjachtala"
+  ],
+  "vstať": [
+   "vstal",
+   "vstala",
+   "vstali",
+   "vstalo",
+   "vstanú",
+   "vstať"
+  ],
+  "oprašovať": [
+   "oprašoval"
+  ],
+  "požičať": [
+   "požičal",
+   "požičala"
+  ],
+  "obrátiť": [
+   "obrátil",
+   "obrátila"
+  ],
+  "kráčať": [
+   "kráčal",
+   "kráčala",
+   "kráčali"
+  ],
+  "potlačiť": [
+   "potlačila",
+   "potlačili",
+   "potlačiť"
+  ],
+  "nastúpiť": [
+   "nastúpil",
+   "nastúpila",
+   "nastúpili"
+  ],
+  "vkĺznuť": [
+   "vkĺzla",
+   "vkĺzol"
+  ],
+  "zastať": [
+   "nezastal",
+   "zastal",
+   "zastala",
+   "zastali",
+   "zastalo"
+  ],
+  "usmiať": [
+   "usmial",
+   "usmiala",
+   "usmiali",
+   "usmialo"
+  ],
+  "oslavovať": [
+   "neoslavovali",
+   "oslavovali",
+   "oslavuj",
+   "oslavujeme"
+  ],
+  "premôcť": [
+   "premohla",
+   "premohol",
+   "premôcť"
+  ],
+  "zaplniť": [
+   "zaplniť"
+  ],
+  "zavládnuť": [
+   "zavládla",
+   "zavládlo",
+   "zavládol"
+  ],
+  "tresnúť": [
+   "tresla"
+  ],
+  "zažmurkať": [
+   "zažmurkal",
+   "zažmurkala",
+   "zažmurkali"
+  ],
+  "zaujímať": [
+   "nezaujímajú",
+   "nezaujímali",
+   "nezaujímalo",
+   "zaujíma",
+   "zaujímajú",
+   "zaujímal",
+   "zaujímala",
+   "zaujímali",
+   "zaujímame"
+  ],
+  "namietnuť": [
+   "namietla"
+  ],
+  "dosiahnuť": [
+   "dosiahla",
+   "dosiahlo",
+   "dosiahne",
+   "dosiahnete",
+   "dosiahnuť",
+   "dosiahol",
+   "nedosiahol"
+  ],
+  "záležať": [
+   "nezáleží",
+   "záleží"
+  ],
+  "zachytiť": [
+   "zachytil",
+   "zachytila",
+   "zachytili",
+   "zachytiť"
+  ],
+  "študovať": [
+   "neštudoval",
+   "študoval",
+   "študovala",
+   "študovali",
+   "študovať",
+   "študuje"
+  ],
+  "nenávidieť": [
+   "nenávidel",
+   "nenávidela",
+   "nenávidieť",
+   "nenávidí",
+   "nenávidím",
+   "nenávidíš"
+  ],
+  "navrhnúť": [
+   "navrhla",
+   "navrhli",
+   "navrhne",
+   "navrhneme",
+   "navrhnúť",
+   "navrhol"
+  ],
+  "vyhŕknuť": [
+   "vyhŕkla",
+   "vyhŕkli",
+   "vyhŕkol"
+  ],
+  "začervenať": [
+   "začervenal",
+   "začervenala"
+  ],
+  "nudiť": [
+   "nudím"
+  ],
+  "otočiť": [
+   "neotočil",
+   "otočil",
+   "otočila",
+   "otočili",
+   "otočiť",
+   "otočí",
+   "otočím"
+  ],
+  "dopovedať": [
+   "dopovedala",
+   "nedopovedal"
+  ],
+  "pokrútiť": [
+   "pokrútil",
+   "pokrútila"
+  ],
+  "rozmyslieť": [
+   "rozmyslel",
+   "rozmyslela",
+   "rozmyslieť",
+   "rozmyslím"
+  ],
+  "vravieť": [
+   "nevravel",
+   "nevravela",
+   "vravel",
+   "vravela",
+   "vraveli",
+   "vravelo",
+   "vraví",
+   "vravím"
+  ],
+  "zmocniť": [
+   "zmocnil",
+   "zmocnila",
+   "zmocnili",
+   "zmocnilo",
+   "zmocniť"
+  ],
+  "diať": [
+   "deje",
+   "diali",
+   "nedialo"
+  ],
+  "oprieť": [
+   "oprel",
+   "oprela"
+  ],
+  "zrýchliť": [
+   "zrýchlil"
+  ],
+  "venovať": [
+   "nevenoval",
+   "nevenovala",
+   "nevenuje",
+   "venoval",
+   "venovala",
+   "venovali",
+   "venovať",
+   "venuje",
+   "venujem"
+  ],
+  "prestať": [
+   "neprestal",
+   "prestal",
+   "prestala",
+   "prestali",
+   "prestalo",
+   "prestane",
+   "prestaň",
+   "prestať"
+  ],
+  "hrabať": [
+   "hrabala",
+   "hrabali"
+  ],
+  "zistiť": [
+   "nezistia",
+   "nezistí",
+   "zistil",
+   "zistila",
+   "zistili",
+   "zistiť",
+   "zistí"
+  ],
+  "postávať": [
+   "postával",
+   "postávali"
+  ],
+  "popíjať": [
+   "popíjal",
+   "popíjala",
+   "popíjali"
+  ],
+  "zaparkovať": [
+   "zaparkoval",
+   "zaparkuje"
+  ],
+  "bozkávať": [
+   "bozkáva",
+   "bozkával",
+   "bozkávala",
+   "bozkávali",
+   "bozkávať"
+  ],
+  "naskočiť": [
+   "naskočil",
+   "naskočila",
+   "naskočili",
+   "naskočilo"
+  ],
+  "uhnúť": [
+   "neuhla"
+  ],
+  "tváriť": [
+   "netvárte",
+   "tváriac",
+   "tváril",
+   "tvárila"
+  ],
+  "vyťahovať": [
+   "nevyťahoval"
+  ],
+  "odbiť": [
+   "odbila"
+  ],
+  "preskočiť": [
+   "preskočil",
+   "preskočila",
+   "preskočilo",
+   "preskočiť"
+  ],
+  "vyslať": [
+   "vyslal",
+   "vyslala",
+   "vyslať"
+  ],
+  "hovorievať": [
+   "hovorieva",
+   "hovorievala",
+   "hovorievalo"
+  ],
+  "uškrnúť": [
+   "uškrnul"
+  ],
+  "zaľúbiť": [
+   "zaľúbi",
+   "zaľúbil"
+  ],
+  "vzdať": [
+   "nevzdal",
+   "vzdaj",
+   "vzdal",
+   "vzdalo",
+   "vzdať",
+   "vzdá"
+  ],
+  "objať": [
+   "neobjal",
+   "objal",
+   "objala"
+  ],
+  "priblížiť": [
+   "nepriblížil",
+   "priblížila",
+   "priblížili",
+   "priblížiť"
+  ],
+  "uhádnuť": [
+   "uhádla"
+  ],
+  "blikať": [
+   "blikalo",
+   "bliká"
+  ],
+  "stretnúť": [
+   "nestretla",
+   "nestretol",
+   "stretla",
+   "stretli",
+   "stretne",
+   "stretnem",
+   "stretnete",
+   "stretnúť",
+   "stretol"
+  ],
+  "započúvať": [
+   "započúval",
+   "započúvala"
+  ],
+  "šiť": [
+   "šila"
+  ],
+  "ušetriť": [
+   "neušetríme",
+   "ušetrila"
+  ],
+  "poďakovať": [
+   "poďakoval",
+   "poďakovala",
+   "poďakovať",
+   "poďakuješ"
+  ],
+  "pobrať": [
+   "pobral",
+   "pobrala"
+  ],
+  "zúriť": [
+   "zúril",
+   "zúrila",
+   "zúriť"
+  ],
+  "šepkať": [
+   "šepkajúc",
+   "šepkal",
+   "šepkala"
+  ],
+  "počuť": [
+   "nepočul",
+   "nepočula",
+   "počuje",
+   "počujem",
+   "počujete",
+   "počuješ",
+   "počul",
+   "počula",
+   "počuli",
+   "počulo",
+   "počuť"
+  ],
+  "vychrliť": [
+   "vychrlila"
+  ],
+  "dokázať": [
+   "dokázal",
+   "dokázala",
+   "dokázali",
+   "dokázať",
+   "dokáže",
+   "dokážem",
+   "dokážu",
+   "nedokázal",
+   "nedokázala",
+   "nedokáže",
+   "nedokážeme"
+  ],
+  "zdôveriť": [
+   "zdôveriť"
+  ],
+  "vydýchnuť": [
+   "vydýchla",
+   "vydýchol"
+  ],
+  "vzdychnúť": [
+   "vzdychla",
+   "vzdychol"
+  ],
+  "odložiť": [
+   "odlož",
+   "odložil",
+   "odložila",
+   "odložiť"
+  ],
+  "zmeravieť": [
+   "zmeravela"
+  ],
+  "meškať": [
+   "meškal",
+   "meškáš"
+  ],
+  "trúfať": [
+   "trúfa"
+  ],
+  "pošepnúť": [
+   "pošepla",
+   "pošepol"
+  ],
+  "vytiahnuť": [
+   "vytiahla",
+   "vytiahli",
+   "vytiahol"
+  ],
+  "predstierať": [
+   "predstieral"
+  ],
+  "padať": [
+   "padajme",
+   "padal",
+   "padali",
+   "padá"
+  ],
+  "zastaviť": [
+   "nezastavil",
+   "zastav",
+   "zastavil",
+   "zastavila",
+   "zastavili",
+   "zastaviť",
+   "zastavte"
+  ],
+  "krútiť": [
+   "krútili",
+   "krútilo",
+   "krútiť"
+  ],
+  "prechádzať": [
+   "prechádza",
+   "prechádzal",
+   "prechádzala",
+   "prechádzali",
+   "prechádzam",
+   "prechádzať"
+  ],
+  "rozkrútiť": [
+   "rozkrútil"
+  ],
+  "vypytovať": [
+   "nevypytoval",
+   "vypytoval",
+   "vypytovala",
+   "vypytovali",
+   "vypytovalo",
+   "vypytovať"
+  ],
+  "zapisovať": [
+   "zapisoval"
+  ],
+  "kývnuť": [
+   "kývol"
+  ],
+  "vykríknuť": [
+   "vykríkla",
+   "vykríkol"
+  ],
+  "vládať": [
+   "nevládal",
+   "nevládala",
+   "vládala"
+  ],
+  "chýbať": [
+   "chýba",
+   "chýbajú",
+   "chýbal",
+   "chýbala",
+   "chýbali",
+   "chýbalo",
+   "chýbať",
+   "nchýbal",
+   "nechýba",
+   "nechýbal",
+   "nechýbali",
+   "nechýbalo"
+  ],
+  "počúvať": [
+   "nepočúval",
+   "počúvaj",
+   "počúvajú",
+   "počúval",
+   "počúvala",
+   "počúvali",
+   "počúvať"
+  ],
+  "pohnúť": [
+   "nepohla",
+   "nepohol",
+   "pohla",
+   "pohli",
+   "pohlo",
+   "pohnúť",
+   "pohol"
+  ],
+  "stratiť": [
+   "nestratila",
+   "stratil",
+   "stratila",
+   "stratili",
+   "stratilo",
+   "stratí",
+   "stratíte"
+  ],
+  "hrbiť": [
+   "nehrbili"
+  ],
+  "pocítiť": [
+   "pocítil",
+   "pocítila"
+  ],
+  "veštiť": [
+   "veštia"
+  ],
+  "nadvihnúť": [
+   "nadvihol"
+  ],
+  "prikývnuť": [
+   "prikývla",
+   "prikývli",
+   "prikývlo",
+   "prikývol"
+  ],
+  "oľutovať": [
+   "oľutovala",
+   "oľutuje",
+   "oľutuješ"
+  ],
+  "radiť": [
+   "radil",
+   "radila",
+   "radili"
+  ],
+  "vyspevovať": [
+   "vyspevoval",
+   "vyspevovali"
+  ],
+  "lúštiť": [
+   "lúštili"
+  ],
+  "vypadnúť": [
+   "vypadla",
+   "vypadli",
+   "vypadlo",
+   "vypadnúť"
+  ],
+  "dokončiť": [
+   "dokončil",
+   "dokončila",
+   "dokončiť",
+   "dokončí",
+   "nedokončím"
+  ],
+  "prischnúť": [
+   "prischla"
+  ],
+  "rútiť": [
+   "rútil",
+   "rútila",
+   "rútili"
+  ],
+  "pripúšťať": [
+   "pripúšťa",
+   "pripúšťam"
+  ],
+  "vliezť": [
+   "vliezla",
+   "vliezli",
+   "vliezol"
+  ],
+  "zašepkať": [
+   "zašepkal",
+   "zašepkala"
+  ],
+  "počkať": [
+   "počkaj",
+   "počkajte",
+   "počkala",
+   "počkám"
+  ],
+  "zakričať": [
+   "zakričal",
+   "zakričala",
+   "zakričí"
+  ],
+  "švihať": [
+   "švihaj"
+  ],
+  "hádať": [
+   "hádaj",
+   "hádali",
+   "hádaš"
+  ],
+  "naladiť": [
+   "naladia"
+  ],
+  "zmiasť": [
+   "zmiatla"
+  ],
+  "dýchať": [
+   "dýchal",
+   "dýchali",
+   "dýchalo",
+   "nedýchala"
+  ],
+  "plesnúť": [
+   "plesla"
+  ],
+  "pominúť": [
+   "pominul",
+   "pominula",
+   "pominulo"
+  ],
+  "hýriť": [
+   "hýrili"
+  ],
+  "pomyslieť": [
+   "nepomyslela",
+   "pomyslel",
+   "pomyslela",
+   "pomysli",
+   "pomyslieť"
+  ],
+  "stisnúť": [
+   "stisla",
+   "stisol"
+  ],
+  "zaplatiť": [
+   "zaplatiť",
+   "zaplatím",
+   "zaplať",
+   "zaplaťte"
+  ],
+  "kolovať": [
+   "kolovať"
+  ],
+  "žmurknúť": [
+   "žmurkla",
+   "žmurkol"
+  ],
+  "rozmýšľať": [
+   "rozmýšľala",
+   "rozmýšľať"
+  ],
+  "zastonať": [
+   "zastonal"
+  ],
+  "zahlásiť": [
+   "zahlásil",
+   "zahlásila"
+  ],
+  "vyhlásiť": [
+   "vyhlásil",
+   "vyhlásila",
+   "vyhlásili",
+   "vyhlásilo",
+   "vyhlásiť"
+  ],
+  "zvládnuť": [
+   "nezvládnem",
+   "nezvládneme",
+   "zvládla",
+   "zvládli",
+   "zvládnem",
+   "zvládol"
+  ],
+  "cúvať": [
+   "cúvať"
+  ],
+  "podujať": [
+   "podujala",
+   "podujali"
+  ],
+  "podísť": [
+   "podišiel",
+   "podišla",
+   "podišli"
+  ],
+  "objednať": [
+   "objednala",
+   "objednať",
+   "objedná"
+  ],
+  "žartovať": [
+   "nežartoval",
+   "žartuje",
+   "žartuješ"
+  ],
+  "odmlčať": [
+   "odmlčal",
+   "odmlčala"
+  ],
+  "červenať": [
+   "červenala",
+   "červenám"
+  ],
+  "zadívať": [
+   "zadívala"
+  ],
+  "znervóznieť": [
+   "znervóznel",
+   "znervóznela"
+  ],
+  "modliť": [
+   "modlime",
+   "modlíš"
+  ],
+  "zamračiť": [
+   "zamračil",
+   "zamračila"
+  ],
+  "opičiť": [
+   "opičí"
+  ],
+  "pretekať": [
+   "pretekáme"
+  ],
+  "deptať": [
+   "deptá"
+  ],
+  "lepiť": [
+   "nelepí"
+  ],
+  "zmocil": [
+   "zmocil"
+  ],
+  "zaznieť": [
+   "zaznel",
+   "zaznela",
+   "zazneli",
+   "zaznelo"
+  ],
+  "stíchnuť": [
+   "stíchla",
+   "stíchlo"
+  ],
+  "odraziť": [
+   "odrazil",
+   "odrazila"
+  ],
+  "vyraziť": [
+   "vyrazil",
+   "vyrazila",
+   "vyrazili",
+   "vyrazí"
+  ],
+  "povzbudzovať": [
+   "povzbudzovala",
+   "povzbudzovali",
+   "povzbudzovalo"
+  ],
+  "pulzovať": [
+   "pulzovala",
+   "pulzuje"
+  ],
+  "bolieť": [
+   "bolel",
+   "boleli",
+   "bolia",
+   "nebolelo"
+  ],
+  "vyhrať": [
+   "nevyhral",
+   "nevyhrali",
+   "nevyhralo",
+   "vyhral",
+   "vyhrala",
+   "vyhrať",
+   "vyhráš"
+  ],
+  "vyšvihnúť": [
+   "vyšvihla",
+   "vyšvihol"
+  ],
+  "usmievať": [
+   "usmieval",
+   "usmievala",
+   "usmievali",
+   "usmievalo"
+  ],
+  "blahoželať": [
+   "blahoželám"
+  ],
+  "nahnúť": [
+   "nahol"
+  ],
+  "hľadieť": [
+   "hľadel",
+   "hľadela",
+   "hľadeli",
+   "hľadí",
+   "nehľaď"
+  ],
+  "ožiariť": [
+   "ožiarilo"
+  ],
+  "zablúdiť": [
+   "zablúdil",
+   "zablúdila",
+   "zablúdili"
+  ],
+  "zvoniť": [
+   "nezvoň",
+   "zvonil"
+  ],
+  "zvýšiť": [
+   "zvýši",
+   "zvýšil",
+   "zvýšili",
+   "zvýšilo",
+   "zvýšiť"
+  ],
+  "napraviť": [
+   "napravil",
+   "napravila",
+   "napraviť"
+  ],
+  "dodať": [
+   "dodal",
+   "dodala",
+   "dodalo",
+   "dodať"
+  ],
+  "zdvihnúť": [
+   "nezdvihla",
+   "nezdvihol",
+   "zdvihla",
+   "zdvihli",
+   "zdvihni",
+   "zdvihnúť",
+   "zdvihol"
+  ],
+  "zaspať": [
+   "nezaspal",
+   "zaspal",
+   "zaspala",
+   "zaspalo",
+   "zaspať",
+   "zaspí",
+   "zaspím",
+   "zaspíš"
+  ],
+  "dopiecť": [
+   "dopečie"
+  ],
+  "rozhodnúť": [
+   "rozhodla",
+   "rozhodli",
+   "rozhodlo",
+   "rozhodnú",
+   "rozhodnúť",
+   "rozhodol"
+  ],
+  "piecť": [
+   "nepiekla",
+   "piecť",
+   "piekla",
+   "piekol"
+  ],
+  "zabrániť": [
+   "nezabráni",
+   "zabránia",
+   "zabránil",
+   "zabrániť"
+  ],
+  "prirátať": [
+   "prirátam"
+  ],
+  "zapnúť": [
+   "zapla",
+   "zapol"
+  ],
+  "spratať": [
+   "spratal",
+   "spratali"
+  ],
+  "odšuchtať": [
+   "odšuchatala"
+  ],
+  "prepínať": [
+   "prepínala"
+  ],
+  "uspať": [
+   "uspí",
+   "uspíme"
+  ],
+  "usadiť": [
+   "usadil",
+   "usadila",
+   "usadili",
+   "usadí"
+  ],
+  "zobudiť": [
+   "nezobudila",
+   "zobudil",
+   "zobudila",
+   "zobudili",
+   "zobudilo",
+   "zobudiť",
+   "zobudíš",
+   "zobuď"
+  ],
+  "pozakrývať": [
+   "pozakrývala"
+  ],
+  "odkradnúť": [
+   "odkradla"
+  ],
+  "vdychovať": [
+   "vdychovala"
+  ],
+  "povievať": [
+   "povieva",
+   "povievajú"
+  ],
+  "zabočiť": [
+   "zabočil",
+   "zabočila"
+  ],
+  "odviazať": [
+   "odviazal",
+   "odviazať"
+  ],
+  "podať": [
+   "podal",
+   "podala"
+  ],
+  "závidieť": [
+   "závidela"
+  ],
+  "považovať": [
+   "nepovažoval",
+   "nepovažovali",
+   "nepovažovalo",
+   "nepovažujem",
+   "považovala",
+   "považovali",
+   "považovalo",
+   "považovať",
+   "považuje",
+   "považujem",
+   "považujú"
+  ],
+  "nastaviť": [
+   "nastavil",
+   "nastavila",
+   "nastavme"
+  ],
+  "pomrviť": [
+   "pomrvil"
+  ],
+  "riadiť": [
+   "riadi",
+   "riadia",
+   "riadiť"
+  ],
+  "zabaliť": [
+   "zabalila",
+   "zabalili",
+   "zabalíte"
+  ],
+  "roztrhnúť": [
+   "roztrhne",
+   "roztrhol"
+  ],
+  "maznať": [
+   "nemaznal"
+  ],
+  "zmĺknuť": [
+   "zmĺkla",
+   "zmĺkli",
+   "zmĺkol"
+  ],
+  "vyliezť": [
+   "vylezie",
+   "vyliezla",
+   "vyliezli",
+   "vyliezol",
+   "vyliezť"
+  ],
+  "balansovať": [
+   "balansovala"
+  ],
+  "zliezť": [
+   "zlezie",
+   "zliezla"
+  ],
+  "prezradiť": [
+   "neprezradil",
+   "neprezradila",
+   "neprezradím",
+   "neprezradíme",
+   "prezradil",
+   "prezradila",
+   "prezradili",
+   "prezradiť",
+   "prezradím"
+  ],
+  "pootvoriť": [
+   "pootvoril"
+  ],
+  "hrýzť": [
+   "hryzú",
+   "hrýzol",
+   "nehryzie"
+  ],
+  "ochutnávať": [
+   "ochutnával"
+  ],
+  "zvaliť": [
+   "zvalil",
+   "zvalili",
+   "zvalím"
+  ],
+  "zjaviť": [
+   "nezjavil",
+   "zjavil",
+   "zjavila",
+   "zjavili",
+   "zjavilo",
+   "zjaví",
+   "zjavím"
+  ],
+  "špliechať": [
+   "špliechala"
+  ],
+  "zamočiť": [
+   "zamočila"
+  ],
+  "šliapať": [
+   "šliapal",
+   "šliapala"
+  ],
+  "smerovať": [
+   "smerovala",
+   "smerovali"
+  ],
+  "krúžiť": [
+   "krúžil",
+   "krúžila",
+   "krúžili"
+  ],
+  "vyrastať": [
+   "vyrastali"
+  ],
+  "vyzuť": [
+   "vyzul"
+  ],
+  "vyliať": [
+   "vylial"
+  ],
+  "zakrádať": [
+   "zakrádali"
+  ],
+  "skrývať": [
+   "neskrývame",
+   "skrýva",
+   "skrývajú",
+   "skrýval",
+   "skrývala",
+   "skrývali",
+   "skrývalo",
+   "skrývaš",
+   "skrývať"
+  ],
+  "prebehnúť": [
+   "prebehla",
+   "prebehli",
+   "prebehlo",
+   "prebehnúť",
+   "prebehol"
+  ],
+  "prešmyknúť": [
+   "prešmykla",
+   "prešmykli"
+  ],
+  "zakrývať": [
+   "zakrýva",
+   "zakrýval",
+   "zakrývali"
+  ],
+  "šibať": [
+   "nešibe"
+  ],
+  "blufovať": [
+   "blufovala"
+  ],
+  "ponáhľať": [
+   "neponáhľate",
+   "ponáhľal",
+   "ponáhľala",
+   "ponáhľate"
+  ],
+  "znepokojiť": [
+   "znepokojila",
+   "znepokojiť"
+  ],
+  "zoskočiť": [
+   "zoskočil",
+   "zoskočili"
+  ],
+  "šaškovať": [
+   "šaškoval"
+  ],
+  "vrhnúť": [
+   "vrhla",
+   "vrhlo",
+   "vrhne",
+   "vrhnem",
+   "vrhnúť",
+   "vrhol"
+  ],
+  "rozpleštiť": [
+   "rozpleštil"
+  ],
+  "rozbolieť": [
+   "rozbolelo"
+  ],
+  "uháňať": [
+   "uháňali"
+  ],
+  "chichúňať": [
+   "chichúňali"
+  ],
+  "spojiť": [
+   "spojil",
+   "spojili",
+   "spojilo"
+  ],
+  "postaviť": [
+   "postav",
+   "postavia",
+   "postavil",
+   "postavila",
+   "postavili",
+   "postaviť",
+   "postavíme"
+  ],
+  "zažínať": [
+   "zažínalo"
+  ],
+  "nadobudnúť": [
+   "nadobudla",
+   "nadobudol"
+  ],
+  "spadnúť": [
+   "spadla",
+   "spadlo",
+   "spadnem",
+   "spadol"
+  ],
+  "lapať": [
+   "lapali"
+  ],
+  "spoznať": [
+   "nespoznala",
+   "spoznal",
+   "spoznala",
+   "spoznali",
+   "spoznať",
+   "spoznáš"
+  ],
+  "triasť": [
+   "trasú",
+   "triasla",
+   "triasol",
+   "triasť"
+  ],
+  "blednúť": [
+   "bledne"
+  ],
+  "vyháňať": [
+   "nevyháňala",
+   "vyháňali"
+  ],
+  "poskladať": [
+   "oposkladali",
+   "poskladal",
+   "poskladali"
+  ],
+  "napchať": [
+   "napchala",
+   "napchali"
+  ],
+  "uväzovať": [
+   "uväzovali"
+  ],
+  "túžiť": [
+   "netúžil",
+   "túži",
+   "túžil",
+   "túžila",
+   "túžim",
+   "túžime"
+  ],
+  "hladkať": [
+   "hladkal",
+   "hladkala"
+  ],
+  "odtrhnúť": [
+   "odtrhli",
+   "odtrhnúť",
+   "odtrhol"
+  ],
+  "odprevadiť": [
+   "odprevadil",
+   "odprevadila",
+   "odprevadíš"
+  ],
+  "umlčať": [
+   "umlčal",
+   "umlčala"
+  ],
+  "vykloniť": [
+   "vyklonila"
+  ],
+  "dočkať": [
+   "dočkali",
+   "dočkať"
+  ],
+  "prebrať": [
+   "preber",
+   "preberieme",
+   "prebral",
+   "prebrať"
+  ],
+  "zájsť": [
+   "nezašiel",
+   "zašiel",
+   "zájdem",
+   "zájsť"
+  ],
+  "súriť": [
+   "súril",
+   "súrila"
+  ],
+  "nafučať": [
+   "nafučala"
+  ],
+  "spomaliť": [
+   "spomalila",
+   "spomalilo",
+   "spomaliť"
+  ],
+  "rozosmiať": [
+   "rozosmeje",
+   "rozosmejú",
+   "rozosmial",
+   "rozosmiala"
+  ],
+  "zatváriť": [
+   "zatváril",
+   "zatvárila"
+  ],
+  "zopakovať": [
+   "zopakoval",
+   "zopakovala"
+  ],
+  "vypáliť": [
+   "vypáli"
+  ],
+  "vchádzať": [
+   "vchádzala"
+  ],
+  "vliecť": [
+   "vlečiete",
+   "vliekla",
+   "vliekli",
+   "vliekol"
+  ],
+  "zaháňať": [
+   "zaháňala"
+  ],
+  "užiť": [
+   "uži"
+  ],
+  "prikázať": [
+   "prikázal",
+   "prikázala",
+   "prikázali",
+   "prikázať",
+   "prikáže"
+  ],
+  "ponúkať": [
+   "ponúka",
+   "ponúkal",
+   "ponúkala",
+   "ponúkali"
+  ],
+  "odmietnuť": [
+   "odmietla",
+   "odmietli",
+   "odmietnem",
+   "odmietnuť",
+   "odmietol"
+  ],
+  "pristať": [
+   "pristane",
+   "pristanú"
+  ],
+  "vyvádzať": [
+   "vyvádzali",
+   "vyvádzať"
+  ],
+  "zvŕtať": [
+   "zvŕtala"
+  ],
+  "pohladiť": [
+   "pohladila"
+  ],
+  "minúť": [
+   "minuli",
+   "minúť",
+   "neminiem"
+  ],
+  "pobaviť": [
+   "pobavilo"
+  ],
+  "ponúknuť": [
+   "ponúkla",
+   "ponúkli",
+   "ponúknuť",
+   "ponúkol"
+  ],
+  "umyť": [
+   "umyjem"
+  ],
+  "napustiť": [
+   "napustila"
+  ],
+  "šampónovať": [
+   "šampónovať"
+  ],
+  "ostriekať": [
+   "ostriekala"
+  ],
+  "zosadnúť": [
+   "zosadol"
+  ],
+  "vbehnúť": [
+   "vbehol"
+  ],
+  "ospravedlniť": [
+   "ospravedlnil",
+   "ospravedlníte"
+  ],
+  "porozprávať": [
+   "porozprávajte",
+   "porozprával",
+   "porozprávali",
+   "porozprávame",
+   "porozprávať"
+  ],
+  "odtiahnuť": [
+   "odtiahla",
+   "odtiahol"
+  ],
+  "zvoliť": [
+   "zvolil",
+   "zvolila",
+   "zvolili",
+   "zvolilo"
+  ],
+  "mlčať": [
+   "mlčal",
+   "mlčala",
+   "mlčali"
+  ],
+  "obávať": [
+   "obával",
+   "obávala",
+   "obávam"
+  ],
+  "správať": [
+   "správaj",
+   "správal",
+   "správala",
+   "správali",
+   "správať"
+  ],
+  "snoriť": [
+   "snoril",
+   "snorí"
+  ],
+  "prezerať": [
+   "prezeral"
+  ],
+  "vypátrať": [
+   "vypátral"
+  ],
+  "opraviť": [
+   "opravil",
+   "opravila",
+   "opraviť"
+  ],
+  "vložiť": [
+   "vložil",
+   "vložila"
+  ],
+  "doliať": [
+   "dolial"
+  ],
+  "dojesť": [
+   "dojedli",
+   "dojedol"
+  ],
+  "odpratať": [
+   "odpratali"
+  ],
+  "prečítať": [
+   "neprečítal",
+   "prečítal",
+   "prečítala",
+   "prečítam",
+   "prečítať"
+  ],
+  "listovať": [
+   "listujúc"
+  ],
+  "vytieňovať": [
+   "vytieňoval"
+  ],
+  "vykašlať": [
+   "vykašlala"
+  ],
+  "váhať": [
+   "neváhal",
+   "váhal",
+   "váhala"
+  ],
+  "uľahčovať": [
+   "neuľahčuje"
+  ],
+  "rátať": [
+   "nerátal",
+   "rátať"
+  ],
+  "zberať": [
+   "zberala"
+  ],
+  "sľubovať": [
+   "sľubuje",
+   "sľubujem"
+  ],
+  "presviedčať": [
+   "presviedčal"
+  ],
+  "vážiť": [
+   "vážila",
+   "vážiť"
+  ],
+  "zhodiť": [
+   "zhodil",
+   "zhodili"
+  ],
+  "prejsť": [
+   "neprešli",
+   "prejsť",
+   "prešiel",
+   "prešla",
+   "prešli",
+   "prešlo"
+  ],
+  "doliehať": [
+   "doliehala"
+  ],
+  "postáť": [
+   "postálo"
+  ],
+  "knísať": [
+   "knísal",
+   "knísala"
+  ],
+  "prebudiť": [
+   "prebudil",
+   "prebudila",
+   "prebudilo"
+  ],
+  "roztopiť": [
+   "roztopil"
+  ],
+  "vliať": [
+   "vliali"
+  ],
+  "vystrieť": [
+   "vystrel",
+   "vystrela"
+  ],
+  "čmárať": [
+   "čmáral",
+   "čmárala"
+  ],
+  "utešiť": [
+   "utešiť"
+  ],
+  "prisahať": [
+   "prisahal",
+   "prisahala",
+   "prisahám"
+  ],
+  "trénovať": [
+   "trénovala",
+   "trénovali",
+   "trénovať"
+  ],
+  "zapochybovať": [
+   "zapochybovala"
+  ],
+  "dobehnúť": [
+   "dobehnúť",
+   "dobehol"
+  ],
+  "rozoberať": [
+   "rozoberali",
+   "rozoberať",
+   "rozoberá"
+  ],
+  "zaklamať": [
+   "zaklamala"
+  ],
+  "pohrávať": [
+   "pohrával"
+  ],
+  "odviesť": [
+   "odveď",
+   "odviedla",
+   "odviedli",
+   "odviedol"
+  ],
+  "nastupovať": [
+   "nastupovali"
+  ],
+  "pristáť": [
+   "nepristálo",
+   "pristál",
+   "pristála",
+   "pristáli"
+  ],
+  "vyšplhať": [
+   "vyšplhali"
+  ],
+  "vyhodiť": [
+   "vyhodil",
+   "vyhodila"
+  ],
+  "namietať": [
+   "namietal",
+   "namietala",
+   "namietať",
+   "nenamietal",
+   "nenamietala",
+   "nenamietam"
+  ],
+  "zvierať": [
+   "zvierali",
+   "zvieralo"
+  ],
+  "rozlúčiť": [
+   "rozlúč",
+   "rozlúčil",
+   "rozlúčiť"
+  ],
+  "pozvať": [
+   "pozval",
+   "pozvala",
+   "pozvať",
+   "pozveš"
+  ],
+  "začuť": [
+   "začul",
+   "začula",
+   "začuli"
+  ],
+  "vycítiť": [
+   "vycítil",
+   "vycítili"
+  ],
+  "hnevať": [
+   "hneval",
+   "hnevala",
+   "hnevať",
+   "hnevá",
+   "nehnevám"
+  ],
+  "reagovať": [
+   "nereagoval",
+   "nereagovala",
+   "reagovať",
+   "reaguje"
+  ],
+  "zaklopať": [
+   "zaklopal"
+  ],
+  "spraviť": [
+   "spravil",
+   "spravila",
+   "spravili",
+   "spraviť",
+   "spraví"
+  ],
+  "zovrieť": [
+   "zovrel",
+   "zovrela",
+   "zovrelo"
+  ],
+  "ochrániť": [
+   "ochráni",
+   "ochrániť"
+  ],
+  "zakazovať": [
+   "zakazovať",
+   "zakazuje"
+  ],
+  "vybehnúť": [
+   "vybehla",
+   "vybehnúť",
+   "vybehol"
+  ],
+  "zablyšťať": [
+   "zablyští"
+  ],
+  "chladiť": [
+   "chladil"
+  ],
+  "zamieriť": [
+   "zamieril",
+   "zamierila"
+  ],
+  "omotať": [
+   "omotal"
+  ],
+  "prehodiť": [
+   "prehodil",
+   "prehodila",
+   "prehodili"
+  ],
+  "vyvliecť": [
+   "vyvliekla",
+   "vyvliekol"
+  ],
+  "zabrzdiť": [
+   "zabrzdila"
+  ],
+  "šmátrať": [
+   "šmátrala"
+  ],
+  "zaradiť": [
+   "zaradila",
+   "zaradili",
+   "zaradilo",
+   "zaradiť"
+  ],
+  "odpočívať": [
+   "odpočíval",
+   "odpočívala",
+   "odpočívali"
+  ],
+  "hompáľať": [
+   "hompáľala"
+  ],
+  "zarachotiť": [
+   "zarachotil"
+  ],
+  "doberať": [
+   "doberal",
+   "doberala"
+  ],
+  "preliezť": [
+   "preliezla"
+  ],
+  "rozzúriť": [
+   "rozzúrilo"
+  ],
+  "zblížiť": [
+   "zblížila",
+   "zblížilo"
+  ],
+  "vyzliecť": [
+   "vyzleč",
+   "vyzliekol"
+  ],
+  "vystupovať": [
+   "vystupoval",
+   "vystupovala",
+   "vystupovali",
+   "vystupovať"
+  ],
+  "striasť": [
+   "striaslo"
+  ],
+  "ostávať": [
+   "ostáva",
+   "ostávala",
+   "ostávalo"
+  ],
+  "hriať": [
+   "hrial",
+   "hrialo"
+  ],
+  "prezliecť": [
+   "prezliekla",
+   "prezliekol"
+  ],
+  "náhliť": [
+   "nenáhlil",
+   "náhlil",
+   "náhlila",
+   "náhlili"
+  ],
+  "obuť": [
+   "obula"
+  ],
+  "nahnevať": [
+   "nahnevala",
+   "nahnevalo",
+   "nahnevať"
+  ],
+  "lichotiť": [
+   "lichotilo"
+  ],
+  "dopočuť": [
+   "dopočuje",
+   "dopočul"
+  ],
+  "zložiť": [
+   "zložil",
+   "zložila",
+   "zložili",
+   "zložiť",
+   "zloží"
+  ],
+  "prekvapovať": [
+   "prekvapovala",
+   "prekvapuješ"
+  ],
+  "upratať": [
+   "upratala"
+  ],
+  "odkladať": [
+   "odkladal",
+   "odkladala",
+   "odkladať"
+  ],
+  "zodpovedať": [
+   "zodpovedajú",
+   "zodpovedal",
+   "zodpovedali",
+   "zodpovedať"
+  ],
+  "poškriabať": [
+   "poškriabal"
+  ],
+  "viezť": [
+   "povezie",
+   "viezli",
+   "viezol"
+  ],
+  "odvrknúť": [
+   "odvrkla",
+   "odvrkol"
+  ],
+  "oznámiť": [
+   "oznámil",
+   "oznámila",
+   "oznámili",
+   "oznámime"
+  ],
+  "zahodiť": [
+   "zahodila",
+   "zahoďte"
+  ],
+  "naznačiť": [
+   "naznačil",
+   "naznačila",
+   "naznačilo"
+  ],
+  "poskočiť": [
+   "neposkočilo",
+   "poskočila",
+   "poskočilo"
+  ],
+  "privinúť": [
+   "privinul"
+  ],
+  "ľúbiť": [
+   "ľúbil",
+   "ľúbila",
+   "ľúbim"
+  ],
+  "vystrašiť": [
+   "vystrašil",
+   "vystrašili"
+  ],
+  "zdržiavať": [
+   "nezdržiaval",
+   "zdržiaval",
+   "zdržiavala",
+   "zdržiavali"
+  ],
+  "skryť": [
+   "skry",
+   "skryl",
+   "skryla",
+   "skryli"
+  ],
+  "zatiahnuť": [
+   "zatiahla"
+  ],
+  "zaprotestovať": [
+   "zaprotestoval"
+  ],
+  "nazrieť": [
+   "nazrel",
+   "nazrela",
+   "nazri",
+   "nazriem"
+  ],
+  "biť": [
+   "bilo"
+  ],
+  "stekať": [
+   "stekal",
+   "stekali"
+  ],
+  "rozísť": [
+   "rozišli",
+   "rozísť"
+  ],
+  "zriecť": [
+   "zriecť"
+  ],
+  "odpustiť": [
+   "odpustila"
+  ],
+  "nakričať": [
+   "nakričala"
+  ],
+  "sústrediť": [
+   "sústredil",
+   "sústredila",
+   "sústrediť",
+   "sústreďte"
+  ],
+  "tlieskať": [
+   "netlieskalo",
+   "tlieskal",
+   "tlieskalo"
+  ],
+  "vyrozprávať": [
+   "vyrozprávala"
+  ],
+  "zadúšať": [
+   "zadúša",
+   "zadúšalo"
+  ],
+  "vrieť": [
+   "vreli",
+   "vrelo",
+   "vrie"
+  ],
+  "nahradiť": [
+   "nahradia",
+   "nahradil",
+   "nahradili",
+   "nahradilo",
+   "nahradí",
+   "nahradíme"
+  ],
+  "tiecť": [
+   "tečie",
+   "tiekli"
+  ],
+  "vzlykať": [
+   "vzlykala",
+   "vzlykať",
+   "vzlyká"
+  ],
+  "hojdať": [
+   "hojdala"
+  ],
+  "uchrániť": [
+   "uchrániť"
+  ],
+  "dopustiť": [
+   "dopustila",
+   "dopustili",
+   "nedopustíme"
+  ],
+  "nazúriť": [
+   "nazúri"
+  ],
+  "obliekať": [
+   "obliekal",
+   "obliekala",
+   "obliekate",
+   "obliekať"
+  ],
+  "zazvoniť": [
+   "zazvonil"
+  ],
+  "letieť": [
+   "letel",
+   "letela",
+   "leteli",
+   "letieť",
+   "letí",
+   "letím",
+   "leť",
+   "leťte",
+   "poletím",
+   "poletíš"
+  ],
+  "ozvať": [
+   "ozval",
+   "ozvala",
+   "ozvali",
+   "ozvalo"
+  ],
+  "potvrdiť": [
+   "potvrdil",
+   "potvrdila",
+   "potvrdili",
+   "potvrdilo"
+  ],
+  "rehotať": [
+   "rehotala",
+   "rehotali"
+  ],
+  "predlžovať": [
+   "predlžoval",
+   "predlžovala"
+  ],
+  "poskakovať": [
+   "poskakoval",
+   "poskakovala"
+  ],
+  "vyskočiť": [
+   "vyskočil",
+   "vyskočila",
+   "vyskočili",
+   "vyskočiť"
+  ],
+  "mariť": [
+   "marí"
+  ],
+  "opätovať": [
+   "neopätoval",
+   "opätoval"
+  ],
+  "dojať": [
+   "dojalo"
+  ],
+  "zakývať": [
+   "zakývala",
+   "zakývam"
+  ],
+  "odchádzať": [
+   "odchádza",
+   "odchádzal",
+   "odchádzala",
+   "odchádzali",
+   "odchádzam"
+  ],
+  "posedieť": [
+   "posedeli"
+  ],
+  "vojsť": [
+   "vojde",
+   "vošiel",
+   "vošla",
+   "vošli"
+  ],
+  "premeniť": [
+   "premenia",
+   "premenil",
+   "premenila",
+   "premenili",
+   "premeniť",
+   "premení"
+  ],
+  "premáhať": [
+   "premáhal",
+   "premáhať"
+  ],
+  "zatvoriť": [
+   "zatvor",
+   "zatvoril",
+   "zatvorilo",
+   "zatvorím"
+  ],
+  "kázať": [
+   "kázala",
+   "kázať"
+  ],
+  "nadýchnuť": [
+   "nadýchni",
+   "nadýchol"
+  ],
+  "napnúť": [
+   "napla",
+   "napol"
+  ],
+  "pozbierať": [
+   "pozbieral",
+   "pozbierala",
+   "pozbierať"
+  ],
+  "kamarátiť": [
+   "kamarátite"
+  ],
+  "dotlačiť": [
+   "dotlačiť"
+  ],
+  "vznášať": [
+   "vznášal",
+   "vznášali",
+   "vznášam",
+   "vznášať"
+  ],
+  "pribehnúť": [
+   "pribehla",
+   "pribehli",
+   "pribehol"
+  ],
+  "vytrhnúť": [
+   "vytrhla",
+   "vytrhli",
+   "vytrhlo",
+   "vytrhol"
+  ],
+  "odfotiť": [
+   "odfotila",
+   "odfotiť"
+  ],
+  "odolať": [
+   "neodolala",
+   "neodolali",
+   "odolať"
+  ],
+  "fotografovať": [
+   "fotografuje"
+  ],
+  "štrngnúť": [
+   "štrngli"
+  ],
+  "podeliť": [
+   "podelia",
+   "podeliť",
+   "podelíme"
+  ],
+  "zašumieť": [
+   "zašumelo"
+  ],
+  "vrznúť": [
+   "vrzlo"
+  ],
+  "vyvaliť": [
+   "vyvalila",
+   "vyvaliť",
+   "vyvalí"
+  ],
+  "prerušiť": [
+   "prerušil",
+   "prerušila",
+   "prerušilo",
+   "prerušiť"
+  ],
+  "vystrúhať": [
+   "vystrúhal"
+  ],
+  "myknúť": [
+   "mykla",
+   "myklo"
+  ],
+  "obhájiť": [
+   "obhájil"
+  ],
+  "vyprodukovať": [
+   "vyprodukoval",
+   "vyprodukovala"
+  ],
+  "vylepšiť": [
+   "vylepšil",
+   "vylepšiť",
+   "vylepší"
+  ],
+  "dlžiť": [
+   "dlžím"
+  ],
+  "pojať": [
+   "pojali"
+  ],
+  "vyplývať": [
+   "vyplýva",
+   "vyplývajú"
+  ],
+  "zaniknúť": [
+   "zanikla",
+   "zanikol"
+  ],
+  "rozrásť": [
+   "rozrástlo"
+  ],
+  "odlíšiť": [
+   "odlíšiť"
+  ],
+  "viazať": [
+   "viaže"
+  ],
+  "obnoviť": [
+   "obnovil"
+  ],
+  "požívať": [
+   "požívali"
+  ],
+  "priťahovať": [
+   "priťahoval",
+   "priťahovať",
+   "priťahuje"
+  ],
+  "podliehať": [
+   "nepodliehali",
+   "podliehajú"
+  ],
+  "vydať": [
+   "nevydalo",
+   "vydajú",
+   "vydal",
+   "vydala",
+   "vydali",
+   "vydať"
+  ],
+  "korunovať": [
+   "korunovali",
+   "korunovať"
+  ],
+  "prijať": [
+   "neprijali",
+   "prijal",
+   "prijala",
+   "prijali",
+   "prijať",
+   "prijme",
+   "príjmite"
+  ],
+  "podmieniť": [
+   "podmienil"
+  ],
+  "sprostredkovať": [
+   "sprostredkovať"
+  ],
+  "zdôrazňovať": [
+   "zdôrazňoval",
+   "zdôrazňovať",
+   "zdôrazňuje"
+  ],
+  "disponovať": [
+   "disponovali"
+  ],
+  "preukazovať": [
+   "preukazovať"
+  ],
+  "presadzovať": [
+   "presadzoval",
+   "presadzovať",
+   "presadzovť"
+  ],
+  "udeliť": [
+   "udelil",
+   "udelila"
+  ],
+  "splniť": [
+   "nesplnili",
+   "nesplnilo",
+   "splnil",
+   "splniť",
+   "splníš"
+  ],
+  "zdôrazniť": [
+   "zdôraznil"
+  ],
+  "vyžadovať": [
+   "vyžadoval",
+   "vyžadovať",
+   "vyžaduje"
+  ],
+  "vyhovieť": [
+   "vyhovejúc",
+   "vyhovel",
+   "vyhovieť"
+  ],
+  "vytrvať": [
+   "nevytrvali",
+   "vytrval",
+   "vytrvá",
+   "vytrváte"
+  ],
+  "nasvedčovať": [
+   "nasvedčuje"
+  ],
+  "doložiť": [
+   "doložiť"
+  ],
+  "zdokladovať": [
+   "zdokladovali"
+  ],
+  "zostaviť": [
+   "zostavil"
+  ],
+  "recipovať": [
+   "recipoval"
+  ],
+  "spĺňať": [
+   "nespĺňajú",
+   "spĺňal"
+  ],
+  "zakázať": [
+   "zakázala",
+   "zakázali"
+  ],
+  "opíjať": [
+   "opíjať"
+  ],
+  "vykoreniť": [
+   "vykoreniť"
+  ],
+  "ustanovovať": [
+   "ustanovuje",
+   "ustanovujú"
+  ],
+  "postihovať": [
+   "postihuje"
+  ],
+  "nastoľovať": [
+   "nastoľovali"
+  ],
+  "vymykať": [
+   "vymyká"
+  ],
+  "zahrnúť": [
+   "zahrnuli"
+  ],
+  "identifikovať": [
+   "identifikovali",
+   "identifikovať"
+  ],
+  "zahŕňať": [
+   "zahŕňa",
+   "zahŕňal",
+   "zahŕňalo"
+  ],
+  "zriaďovať": [
+   "zriaďovať"
+  ],
+  "dosadzovať": [
+   "dosadzovať"
+  ],
+  "uzurpovať": [
+   "uzurpoval"
+  ],
+  "šíriť": [
+   "šíri",
+   "šíril",
+   "šírila"
+  ],
+  "porušiť": [
+   "porušili",
+   "poruší"
+  ],
+  "uspokojiť": [
+   "neuspokojila",
+   "neuspokojme",
+   "uspokojil",
+   "uspokojila"
+  ],
+  "poukazovať": [
+   "poukazovali",
+   "poukazuje"
+  ],
+  "implikovať": [
+   "implikuje"
+  ],
+  "vykonávať": [
+   "vykonávajú",
+   "vykonávali",
+   "vykonávať"
+  ],
+  "korešpondovať": [
+   "korešponduje"
+  ],
+  "žalovať": [
+   "žaluje"
+  ],
+  "prerokovať": [
+   "prerokovať"
+  ],
+  "upravovať": [
+   "neupravuje",
+   "upravujú"
+  ],
+  "ochabnúť": [
+   "ochabli",
+   "ochabol"
+  ],
+  "aplikovať": [
+   "aplikoval"
+  ],
+  "zaslúžiť": [
+   "zaslúžil",
+   "zaslúžila"
+  ],
+  "vzťahovať": [
+   "nevzťahovala",
+   "vzťahovala"
+  ],
+  "trestať": [
+   "trestá"
+  ],
+  "nariaďovať": [
+   "nariaďuje",
+   "nariaďujú"
+  ],
+  "spočívať": [
+   "spočíva",
+   "spočívalo"
+  ],
+  "vizitovať": [
+   "vizitovať"
+  ],
+  "zúčastňovať": [
+   "nezúčastňovali",
+   "zúčastňovať"
+  ],
+  "prijímať": [
+   "prijíma",
+   "prijímal",
+   "prijímali",
+   "prijímať"
+  ],
+  "reglementovať": [
+   "reglementujú"
+  ],
+  "riešiť": [
+   "rieši",
+   "riešiť"
+  ],
+  "dozvedať": [
+   "dozvedám",
+   "dozvedáme"
+  ],
+  "dočítať": [
+   "dočítala",
+   "dočítať",
+   "nedočítal"
+  ],
+  "zaslať": [
+   "zaslal"
+  ],
+  "doniesť": [
+   "donesú",
+   "donieslo"
+  ],
+  "poskytnúť": [
+   "poskytli",
+   "poskytlo",
+   "poskytnúť",
+   "poskytol"
+  ],
+  "informovať": [
+   "informoval",
+   "informovať",
+   "informujú"
+  ],
+  "predpisovať": [
+   "predpisovali",
+   "predpisuje"
+  ],
+  "pôsobiť": [
+   "pôsobil",
+   "pôsobila",
+   "pôsobiť",
+   "pôsobí"
+  ],
+  "schváliť": [
+   "neschválil",
+   "schváli",
+   "schválil",
+   "schválila",
+   "schválilo"
+  ],
+  "postupovať": [
+   "nepostupoval",
+   "postupoval",
+   "postupovať"
+  ],
+  "povšimnúť": [
+   "povšimnúť"
+  ],
+  "opustiť": [
+   "neopustila",
+   "neopustím",
+   "opustil",
+   "opustila",
+   "opustili",
+   "opustilo",
+   "opustiť",
+   "opustí"
+  ],
+  "vykonať": [
+   "vykonal",
+   "vykonali",
+   "vykonať"
+  ],
+  "porovnávať": [
+   "porovnávame"
+  ],
+  "profitovať": [
+   "profitovať"
+  ],
+  "formulovať": [
+   "formulovali",
+   "formuluje"
+  ],
+  "vykazovať": [
+   "nevykazuje",
+   "nevykazujú",
+   "vykazoval",
+   "vykazuje"
+  ],
+  "páchnuť": [
+   "páchla",
+   "páchnu"
+  ],
+  "uzavrieť": [
+   "uzavrel",
+   "uzavreli",
+   "uzavrieť"
+  ],
+  "valiť": [
+   "valila",
+   "valilo"
+  ],
+  "meditovať": [
+   "meditoval"
+  ],
+  "chutiť": [
+   "chutila",
+   "chutilo"
+  ],
+  "ľutovať": [
+   "ľutovala",
+   "ľutujem",
+   "ľutuješ"
+  ],
+  "podotknúť": [
+   "podotkla",
+   "podotkol"
+  ],
+  "udať": [
+   "udajú",
+   "udal",
+   "udala"
+  ],
+  "vypariť": [
+   "vyparia",
+   "vyparili"
+  ],
+  "špehovať": [
+   "špehovali",
+   "špehuje"
+  ],
+  "rozrečniť": [
+   "rozrečnil"
+  ],
+  "zaznamenávať": [
+   "zaznamenával"
+  ],
+  "farbiť": [
+   "nefarbili"
+  ],
+  "opantať": [
+   "opantal"
+  ],
+  "označovať": [
+   "označovala",
+   "označovali",
+   "označuje",
+   "označujú"
+  ],
+  "komunikovať": [
+   "komunikovať",
+   "komunikuje"
+  ],
+  "posedávať": [
+   "posedával"
+  ],
+  "zízať": [
+   "zízal",
+   "zízate"
+  ],
+  "unikať": [
+   "unikali",
+   "unikalo",
+   "uniká"
+  ],
+  "vnútiť": [
+   "nevnútil",
+   "vnútil"
+  ],
+  "ponášať": [
+   "ponášali",
+   "ponášalo"
+  ],
+  "ubiehať": [
+   "ubiehali"
+  ],
+  "zapôsobiť": [
+   "nezapôsobil",
+   "zapôsobil",
+   "zapôsobila"
+  ],
+  "zhorieť": [
+   "zhorela",
+   "zhorí"
+  ],
+  "vyplácať": [
+   "vyplácali"
+  ],
+  "roztvoriť": [
+   "roztvoril",
+   "roztvorila",
+   "roztvorili"
+  ],
+  "vraziť": [
+   "vrazil",
+   "vrazili"
+  ],
+  "zoslabnúť": [
+   "zoslabol"
+  ],
+  "očervenať": [
+   "očervenala"
+  ],
+  "uchopiť": [
+   "uchopil"
+  ],
+  "postrehnúť": [
+   "nepostrehol",
+   "postrehla",
+   "postrehli"
+  ],
+  "okríknuť": [
+   "neokríkol",
+   "okríkol"
+  ],
+  "opáčiť": [
+   "opáčil"
+  ],
+  "poznamenať": [
+   "nepoznamenal",
+   "poznamenal",
+   "poznamenala",
+   "poznamenať"
+  ],
+  "rozumieť": [
+   "nerozumel",
+   "nerozumieš",
+   "rozumel",
+   "rozumelo",
+   "rozumie",
+   "rozumiem",
+   "rozumieš"
+  ],
+  "zodvihnúť": [
+   "zodvihla",
+   "zodvihol"
+  ],
+  "pookriať": [
+   "pookrial"
+  ],
+  "podopierať": [
+   "podopierali"
+  ],
+  "zakvičať": [
+   "zakvičala"
+  ],
+  "opýtať": [
+   "opýtal",
+   "opýtať"
+  ],
+  "zalievať": [
+   "zalievali",
+   "zalievalo"
+  ],
+  "vyplatiť": [
+   "vyplatil"
+  ],
+  "zasunúť": [
+   "zasunul"
+  ],
+  "vypáčiť": [
+   "nevypáčili",
+   "vypáči"
+  ],
+  "povstať": [
+   "nepovstane",
+   "povstal",
+   "povstali"
+  ],
+  "zviesť": [
+   "zviesť"
+  ],
+  "zružovieť": [
+   "zružovela"
+  ],
+  "zatvárať": [
+   "zatvárajú",
+   "zatvárala",
+   "zatvárali",
+   "zatváram"
+  ],
+  "spáchať": [
+   "spácha",
+   "spáchajú",
+   "spáchal"
+  ],
+  "padnúť": [
+   "padla",
+   "padli",
+   "padlo",
+   "padnete",
+   "padol"
+  ],
+  "zápasiť": [
+   "zápasili"
+  ],
+  "vynechávať": [
+   "vynechávalo"
+  ],
+  "predvídať": [
+   "nepredvídal",
+   "predvídať"
+  ],
+  "jestvovať": [
+   "jestvovala",
+   "jestvovali",
+   "jestvovať",
+   "jestvuje",
+   "nejestvoval",
+   "nejestvuje"
+  ],
+  "vyhladiť": [
+   "vyhladil"
+  ],
+  "nadúvať": [
+   "nadúvali"
+  ],
+  "zachvievať": [
+   "zachvievali"
+  ],
+  "čeliť": [
+   "čeliť"
+  ],
+  "zabíjať": [
+   "zabíja",
+   "zabíjali",
+   "zabíjam",
+   "zabíjať"
+  ],
+  "mučiť": [
+   "mučiť"
+  ],
+  "drúzgať": [
+   "drúzgať"
+  ],
+  "páliť": [
+   "páli",
+   "pálil",
+   "páliš"
+  ],
+  "tárať": [
+   "tára",
+   "táral"
+  ],
+  "nastavovať": [
+   "nastavovať"
+  ],
+  "podobať": [
+   "podobala",
+   "podobali",
+   "podobalo",
+   "podobá",
+   "podobám",
+   "podobáme",
+   "podobáš"
+  ],
+  "usúdiť": [
+   "usúdil",
+   "usúdila"
+  ],
+  "vítať": [
+   "vítala",
+   "vítali",
+   "vítame"
+  ],
+  "zhasínať": [
+   "zhasínala"
+  ],
+  "tuhnúť": [
+   "tuhlo",
+   "tuhnú"
+  ],
+  "civieť": [
+   "civel",
+   "civeli"
+  ],
+  "vyvrcholiť": [
+   "vyvrcholila"
+  ],
+  "doľahnúť": [
+   "doľahla"
+  ],
+  "oznamovať": [
+   "oznamoval",
+   "oznamovala",
+   "oznamovali",
+   "oznamovať",
+   "oznamuje"
+  ],
+  "klamať": [
+   "klamal",
+   "klamať",
+   "klameš",
+   "neklamali",
+   "neklamem"
+  ],
+  "ukryť": [
+   "ukryjem",
+   "ukryl",
+   "ukryla"
+  ],
+  "odriekať": [
+   "odriekala"
+  ],
+  "hulákať": [
+   "hulákaj"
+  ],
+  "rozpustiť": [
+   "rozpustil",
+   "rozpustí"
+  ],
+  "vytipovať": [
+   "vytipovať"
+  ],
+  "dôjsť": [
+   "došli"
+  ],
+  "kryť": [
+   "kryje",
+   "kryjú"
+  ],
+  "prenikať": [
+   "prenikal",
+   "prenikali",
+   "preniká"
+  ],
+  "pozorovať": [
+   "pozoroval",
+   "pozorovala",
+   "pozorovali",
+   "pozorovať"
+  ],
+  "vyhnať": [
+   "vyhnal",
+   "vyhnali",
+   "vyhnať"
+  ],
+  "nahmatať": [
+   "nahmatala"
+  ],
+  "žiariť": [
+   "žiari",
+   "žiaria",
+   "žiaril",
+   "žiarilo"
+  ],
+  "kľačať": [
+   "kľačal",
+   "kľačali"
+  ],
+  "oddeliť": [
+   "oddelili",
+   "oddeliť"
+  ],
+  "odmietať": [
+   "odmietal",
+   "odmietala",
+   "odmietali",
+   "odmietam"
+  ],
+  "debatovať": [
+   "debatujú",
+   "nedebatovali"
+  ],
+  "merať": [
+   "meral",
+   "merala",
+   "merali",
+   "meriam"
+  ],
+  "pripomenúť": [
+   "pripomenula",
+   "pripomenúť"
+  ],
+  "spozorovať": [
+   "spozoroval",
+   "spozorovať"
+  ],
+  "uskutočniť": [
+   "uskutočnil",
+   "uskutočnila",
+   "uskutočnili",
+   "uskutočnilo",
+   "uskutočniť",
+   "uskutoční"
+  ],
+  "pražiť": [
+   "pražilo"
+  ],
+  "svrbieť": [
+   "svrbel"
+  ],
+  "uprednostňovať": [
+   "uprednostňujem"
+  ],
+  "prelievať": [
+   "prelievalo"
+  ],
+  "tikať": [
+   "tikali"
+  ],
+  "lesknúť": [
+   "lesklo"
+  ],
+  "kúpiť": [
+   "kúpil",
+   "nekúpila"
+  ],
+  "zapáliť": [
+   "zapálil",
+   "zapálilo",
+   "zapáliť"
+  ],
+  "skrsnúť": [
+   "skrsla"
+  ],
+  "zrkadliť": [
+   "zrkadlilo",
+   "zrkadlí"
+  ],
+  "vyzrieť": [
+   "vyzrel",
+   "vyzrela"
+  ],
+  "vrútiť": [
+   "vrútila"
+  ],
+  "kvoknúť": [
+   "kvokol"
+  ],
+  "presadnúť": [
+   "presadni"
+  ],
+  "odohrať": [
+   "odohrala"
+  ],
+  "prekážať": [
+   "neprekážala"
+  ],
+  "zadriemať": [
+   "zadriemali"
+  ],
+  "vypínať": [
+   "nevypínajú",
+   "vypínajú"
+  ],
+  "vyvreskúvať": [
+   "vyvreskúvali"
+  ],
+  "zmocňovať": [
+   "zmocňovala",
+   "zmocňuje",
+   "zmocňujeme"
+  ],
+  "vydolovať": [
+   "vydoloval"
+  ],
+  "fabrikovať": [
+   "fabrikuje"
+  ],
+  "opakovať": [
+   "opakoval",
+   "opakovala",
+   "opakovalo",
+   "opakovať",
+   "opakuje"
+  ],
+  "pokúšať": [
+   "pokúšal",
+   "pokúšala",
+   "pokúšali",
+   "pokúšam",
+   "pokúšaš",
+   "pokúšať"
+  ],
+  "bodnúť": [
+   "bodlo"
+  ],
+  "vyčarovať": [
+   "vyčarovať"
+  ],
+  "upraviť": [
+   "upravil",
+   "upraví"
+  ],
+  "zaliať": [
+   "zalial",
+   "zaliala"
+  ],
+  "vykročiť": [
+   "vykročil"
+  ],
+  "podnietiť": [
+   "podnietil",
+   "podnietila"
+  ],
+  "splynúť": [
+   "splynuli"
+  ],
+  "tisnúť": [
+   "tisla"
+  ],
+  "skôrnatieť": [
+   "neskôrnateli"
+  ],
+  "mýliť": [
+   "mýli",
+   "mýlil",
+   "mýlila",
+   "mýlili",
+   "nemýlil"
+  ],
+  "cvaknúť": [
+   "cvaklo"
+  ],
+  "prehovoriť": [
+   "neprehovoril",
+   "neprehovorila",
+   "prehovoril",
+   "prehovorili",
+   "prehovoriť"
+  ],
+  "voňať": [
+   "vonia",
+   "voňala",
+   "voňali"
+  ],
+  "privrieť": [
+   "privrel",
+   "privrela"
+  ],
+  "obetovať": [
+   "obetovať"
+  ],
+  "vraždiť": [
+   "vraždiť"
+  ],
+  "zahundrať": [
+   "zahundrala"
+  ],
+  "povzbudiť": [
+   "povzbudil",
+   "povzbudilo",
+   "povzbudiť"
+  ],
+  "zastreliť": [
+   "zastrelia",
+   "zastrelím",
+   "zastrelíme"
+  ],
+  "postačiť": [
+   "nepostačí",
+   "postačí"
+  ],
+  "zaobstarať": [
+   "zaobstaráme"
+  ],
+  "odkázať": [
+   "odkázal",
+   "odkázať"
+  ],
+  "vrieskať": [
+   "nevrieskal",
+   "vrieskali"
+  ],
+  "rozburácať": [
+   "rozburácal"
+  ],
+  "zamestnávať": [
+   "zamestnávali"
+  ],
+  "ustať": [
+   "ustal",
+   "ustala",
+   "ustalo"
+  ],
+  "vyloviť": [
+   "vylovil"
+  ],
+  "upierať": [
+   "upierala",
+   "upierali"
+  ],
+  "prameniť": [
+   "pramenil"
+  ],
+  "nabrať": [
+   "nabral",
+   "nabrala"
+  ],
+  "zalietnuť": [
+   "zalietol"
+  ],
+  "vyprchať": [
+   "vyprchal"
+  ],
+  "odhadzovať": [
+   "odhadzovala"
+  ],
+  "opravovať": [
+   "opravoval"
+  ],
+  "znížiť": [
+   "zníži",
+   "znížil",
+   "znížilo",
+   "znížiť"
+  ],
+  "vyrobiť": [
+   "nevyrobili",
+   "vyrobili"
+  ],
+  "imitovať": [
+   "imitovať"
+  ],
+  "koordinovať": [
+   "koordinovali"
+  ],
+  "rozhodovať": [
+   "rozhodovali",
+   "rozhodovať"
+  ],
+  "sfalšovať": [
+   "sfalšuje"
+  ],
+  "uspokojovať": [
+   "uspokojovať"
+  ],
+  "rozvinúť": [
+   "nerozvinulo",
+   "rozvinul"
+  ],
+  "poškrabať": [
+   "poškrabal"
+  ],
+  "upadnúť": [
+   "upadol"
+  ],
+  "splodiť": [
+   "splodia",
+   "splodiť"
+  ],
+  "zahynúť": [
+   "zahynul",
+   "zahynuli"
+  ],
+  "pripravovať": [
+   "pripravoval",
+   "pripravovali",
+   "pripravovať",
+   "pripravuje",
+   "pripravujem",
+   "pripravujeme"
+  ],
+  "prosiť": [
+   "prosil",
+   "prosila",
+   "prosíme"
+  ],
+  "kopať": [
+   "kopú"
+  ],
+  "postrčiť": [
+   "postrčil",
+   "postrčili"
+  ],
+  "naliať": [
+   "nalej",
+   "nalial",
+   "naliali"
+  ],
+  "naberať": [
+   "naberal"
+  ],
+  "vytlačiť": [
+   "vytlačil"
+  ],
+  "vyprázdniť": [
+   "nevyprázdnili",
+   "vyprázdnila",
+   "vyprázdnili",
+   "vyprázdnilo"
+  ],
+  "otesávať": [
+   "otesávame"
+  ],
+  "ťahať": [
+   "ťahal",
+   "ťahala",
+   "ťahali",
+   "ťahalo",
+   "ťahať",
+   "ťahá"
+  ],
+  "zúžiť": [
+   "zúžili",
+   "zúžiť"
+  ],
+  "zavŕšiť": [
+   "zavŕši",
+   "zavŕšiť"
+  ],
+  "obľubovať": [
+   "neobľubuje",
+   "obľubovalo"
+  ],
+  "povrávať": [
+   "povrávalo"
+  ],
+  "vybojovať": [
+   "vybojovali"
+  ],
+  "povoliť": [
+   "povolil",
+   "povolila"
+  ],
+  "zaplaviť": [
+   "zaplavila"
+  ],
+  "ustúpiť": [
+   "ustúpil",
+   "ustúpila"
+  ],
+  "vykrúcať": [
+   "vykrúcal",
+   "vykrúcalo"
+  ],
+  "skrúcať": [
+   "skrúcal"
+  ],
+  "strácať": [
+   "nestrácal",
+   "stráca",
+   "strácal",
+   "strácala",
+   "strácať"
+  ],
+  "zdvíhať": [
+   "zdvíham"
+  ],
+  "zapichnúť": [
+   "zapichla"
+  ],
+  "zahľadieť": [
+   "zahľadel",
+   "zahľadela",
+   "zahľadeli"
+  ],
+  "potrpieť": [
+   "potrpíme"
+  ],
+  "skláňať": [
+   "skláňal",
+   "skláňala"
+  ],
+  "odvrátiť": [
+   "odvrátil",
+   "odvrátila",
+   "odvrátiť"
+  ],
+  "zlyhať": [
+   "zlyhala"
+  ],
+  "prenasledovať": [
+   "neprenasledoval",
+   "prenasledovala",
+   "prenasledovali",
+   "prenasledovať",
+   "prenasleduje"
+  ],
+  "dovoľovať": [
+   "nedovoľovala",
+   "nedovoľujeme"
+  ],
+  "odstrániť": [
+   "odstráni",
+   "odstránili",
+   "odstránime",
+   "odstrániť"
+  ],
+  "vysloviť": [
+   "nevyslovila",
+   "vyslovil",
+   "vyslovila",
+   "vyslovím"
+  ],
+  "zotrieť": [
+   "zotrieť"
+  ],
+  "ničiť": [
+   "neničíme",
+   "ničia",
+   "ničilo",
+   "ničí"
+  ],
+  "odporovať": [
+   "odporoval",
+   "odporovala",
+   "odporovať",
+   "odporuje"
+  ],
+  "obracať": [
+   "obracajú",
+   "obracala",
+   "obraciame"
+  ],
+  "pretvárať": [
+   "pretvárame"
+  ],
+  "ponaprávať": [
+   "ponaprávame"
+  ],
+  "vystreliť": [
+   "vystrelil",
+   "vystrelila",
+   "vystrelíme"
+  ],
+  "očistiť": [
+   "očistí"
+  ],
+  "skoncovať": [
+   "skoncovali",
+   "skoncuje"
+  ],
+  "deprimovať": [
+   "deprimovalo"
+  ],
+  "sprísnieť": [
+   "sprísnel"
+  ],
+  "vybočiť": [
+   "vybočil"
+  ],
+  "prisúvať": [
+   "prisúvajú"
+  ],
+  "prikvačiť": [
+   "prikvačili"
+  ],
+  "zraziť": [
+   "zrazilo"
+  ],
+  "prisvedčiť": [
+   "prisvedčil"
+  ],
+  "zhovárať": [
+   "zhovára"
+  ],
+  "narodiť": [
+   "narodil",
+   "narodila",
+   "narodili",
+   "nenarodilo"
+  ],
+  "ignorovať": [
+   "ignoroval"
+  ],
+  "odnímať": [
+   "odnímať"
+  ],
+  "vyklčovať": [
+   "vyklčujeme"
+  ],
+  "zničiť": [
+   "nezničil",
+   "zničia",
+   "zničil",
+   "zničiť",
+   "zničí",
+   "zničíme"
+  ],
+  "prežiť": [
+   "prežijú",
+   "prežil",
+   "prežila",
+   "prežili",
+   "prežilo",
+   "prežiť"
+  ],
+  "vybudovať": [
+   "vybudovali",
+   "vybudovať"
+  ],
+  "pretrvať": [
+   "nepretrvá"
+  ],
+  "poraziť": [
+   "porazil",
+   "porazili",
+   "porazilo",
+   "porazí"
+  ],
+  "ovládať": [
+   "neovláda",
+   "ovládal",
+   "ovládame",
+   "ovládať"
+  ],
+  "vyhynúť": [
+   "vyhynul"
+  ],
+  "kradnúť": [
+   "kradnúť"
+  ],
+  "falšovať": [
+   "falšovať"
+  ],
+  "rozširovať": [
+   "rozširoval",
+   "rozširovať",
+   "rozširujú"
+  ],
+  "liať": [
+   "lial",
+   "lialo",
+   "liať"
+  ],
+  "približovať": [
+   "približovala",
+   "približujú"
+  ],
+  "naháňať": [
+   "naháňa",
+   "naháňal",
+   "naháňala",
+   "naháňalo"
+  ],
+  "obopnúť": [
+   "obopol"
+  ],
+  "zlomiť": [
+   "zlomil",
+   "zlomili",
+   "zlomilo"
+  ],
+  "vypadávať": [
+   "vypadávajú"
+  ],
+  "schmatnúť": [
+   "schmatol"
+  ],
+  "donariekať": [
+   "donariekal"
+  ],
+  "zradiť": [
+   "nezradil",
+   "zradil",
+   "zradila",
+   "zradiť"
+  ],
+  "natrieť": [
+   "natreli"
+  ],
+  "uplynúť": [
+   "uplynul",
+   "uplynuli"
+  ],
+  "naučiť": [
+   "naučil",
+   "naučila",
+   "naučiť",
+   "naučím",
+   "nenaučil"
+  ],
+  "kapitulovať": [
+   "kapituloval",
+   "kapitulovalo"
+  ],
+  "zalomcovať": [
+   "zalomcoval"
+  ],
+  "explodovať": [
+   "explodujú"
+  ],
+  "zadupotať": [
+   "zadupotali"
+  ],
+  "milovať": [
+   "miloval",
+   "milovali",
+   "milovať",
+   "miluje",
+   "milujeme",
+   "nemilovali"
+  ],
+  "obžrať": [
+   "obžerie",
+   "obžrali"
+  ],
+  "zaútočiť": [
+   "zaútočia",
+   "zaútočil",
+   "zaútočili",
+   "zaútočiť"
+  ],
+  "očernieť": [
+   "očernelo"
+  ],
+  "deliť": [
+   "delil",
+   "delila"
+  ],
+  "pochytiť": [
+   "pochytila"
+  ],
+  "roztrhať": [
+   "roztrhajte"
+  ],
+  "pretínať": [
+   "pretínali"
+  ],
+  "dopadať": [
+   "dopadali",
+   "dopadalo",
+   "dopadať"
+  ],
+  "zaznievať": [
+   "zaznievala"
+  ],
+  "presúvať": [
+   "presúvala",
+   "presúvať"
+  ],
+  "objednávať": [
+   "objednávať"
+  ],
+  "preštudovať": [
+   "preštudoval"
+  ],
+  "vypočuť": [
+   "vypočujú",
+   "vypočuť"
+  ],
+  "ohúriť": [
+   "ohúril",
+   "ohúrila"
+  ],
+  "hvízdať": [
+   "hvízdal"
+  ],
+  "trápiť": [
+   "netráp",
+   "netrápi",
+   "netrápil",
+   "netrápilo",
+   "trápi",
+   "trápil",
+   "trápila",
+   "trápili",
+   "trápilo",
+   "trápiť"
+  ],
+  "presunúť": [
+   "presunie",
+   "presunula"
+  ],
+  "dodrúzgať": [
+   "dodrúzgala"
+  ],
+  "pohroziť": [
+   "pohrozia",
+   "pohrozil"
+  ],
+  "vzdorovať": [
+   "vzdorovať"
+  ],
+  "prilepiť": [
+   "prilepil"
+  ],
+  "otupovať": [
+   "otupoval"
+  ],
+  "oživovať": [
+   "oživoval"
+  ],
+  "vypiť": [
+   "nevypil",
+   "vypije",
+   "vypil",
+   "vypila",
+   "vypili",
+   "vypiť"
+  ],
+  "preťať": [
+   "preťal"
+  ],
+  "ovládnuť": [
+   "ovládli",
+   "ovládne",
+   "ovládol"
+  ],
+  "nalievať": [
+   "nalieva"
+  ],
+  "jasať": [
+   "jasal",
+   "nejasal"
+  ],
+  "priznávať": [
+   "priznával",
+   "priznávali"
+  ],
+  "obviňovať": [
+   "obviňoval",
+   "obviňujeme"
+  ],
+  "vniknúť": [
+   "vnikla",
+   "vniknúť"
+  ],
+  "pozdvihnúť": [
+   "pozdvihol"
+  ],
+  "uviesť": [
+   "uveďme",
+   "uviedla",
+   "uviedlo"
+  ],
+  "zlikvidovať": [
+   "zlikvidovali",
+   "zlikvidovať"
+  ],
+  "uctievať": [
+   "uctievajú"
+  ],
+  "vnukať": [
+   "vnuká"
+  ],
+  "pretnúť": [
+   "pretne"
+  ],
+  "zhltnúť": [
+   "zhltol"
+  ],
+  "zakončiť": [
+   "zakončilo"
+  ],
+  "vystriedať": [
+   "vystrieda",
+   "vystriedal",
+   "vystriedala"
+  ],
+  "priviesť": [
+   "priviedla",
+   "priviedli",
+   "priviedlo"
+  ],
+  "zanechať": [
+   "zanechal",
+   "zanechala"
+  ],
+  "dofajčiť": [
+   "dofajčí"
+  ],
+  "vytrúsiť": [
+   "nevytrúsiť"
+  ],
+  "odpľuť": [
+   "odpľul"
+  ],
+  "vzísť": [
+   "nevzišli",
+   "vzídu"
+  ],
+  "povoľovať": [
+   "nepovoľovala",
+   "povoľovali"
+  ],
+  "podporovať": [
+   "nepodporoval",
+   "podporoval",
+   "podporovala",
+   "podporovali",
+   "podporovať",
+   "podporuje"
+  ],
+  "povzdychnúť": [
+   "povzdychol"
+  ],
+  "dopísať": [
+   "dopísať"
+  ],
+  "prezrieť": [
+   "prezrela",
+   "prezrieť"
+  ],
+  "zháňať": [
+   "zháňali"
+  ],
+  "preťahovať": [
+   "preťahovali"
+  ],
+  "odlomiť": [
+   "odlomili"
+  ],
+  "vyhlasovať": [
+   "vyhlasoval",
+   "vyhlasovala",
+   "vyhlasovali"
+  ],
+  "oslobodiť": [
+   "oslobodila",
+   "osloboď"
+  ],
+  "zakaliť": [
+   "zakalila"
+  ],
+  "vyzývať": [
+   "vyzýva"
+  ],
+  "poprieť": [
+   "poprel",
+   "poprieť"
+  ],
+  "zopnúť": [
+   "zopäl"
+  ],
+  "zaburácať": [
+   "zaburácal",
+   "zaburácalo"
+  ],
+  "vyjadriť": [
+   "nevyjadril",
+   "nevyjadrí",
+   "vyjadril",
+   "vyjadrilo"
+  ],
+  "zbombardovať": [
+   "zbombardovali"
+  ],
+  "uderiť": [
+   "neuderil",
+   "uderiť"
+  ],
+  "blížiť": [
+   "blíži",
+   "blížil",
+   "blížila",
+   "blížilo"
+  ],
+  "pozviechať": [
+   "pozviechal",
+   "pozviechalo"
+  ],
+  "búchať": [
+   "búchalo"
+  ],
+  "dráždiť": [
+   "dráždilo",
+   "dráždiť"
+  ],
+  "žiadať": [
+   "nežiadal",
+   "nežiadala",
+   "žiada",
+   "žiadať"
+  ],
+  "pozývať": [
+   "pozýva",
+   "pozýval",
+   "pozývam"
+  ],
+  "naznačovať": [
+   "naznačoval",
+   "naznačovala",
+   "naznačovať",
+   "naznačuje",
+   "naznačujú",
+   "nenaznačovalo"
+  ],
+  "zahnúť": [
+   "zahneš",
+   "zahol"
+  ],
+  "prevládať": [
+   "prevládal"
+  ],
+  "preskúmať": [
+   "preskúmal"
+  ],
+  "mávať": [
+   "máva",
+   "mávajú",
+   "mával",
+   "mávala",
+   "mávali"
+  ],
+  "vyvolávať": [
+   "vyvoláva",
+   "vyvolávalo"
+  ],
+  "trhať": [
+   "trhal",
+   "trhala",
+   "trhalo",
+   "trhať"
+  ],
+  "miasť": [
+   "miatla"
+  ],
+  "zísť": [
+   "nezišla",
+   "nezišlo",
+   "zišiel",
+   "zišla",
+   "zišli",
+   "zišlo",
+   "zíde"
+  ],
+  "popadať": [
+   "popadali"
+  ],
+  "strhnúť": [
+   "strhla",
+   "strhne",
+   "strhol"
+  ],
+  "odhodiť": [
+   "odhodil",
+   "odhodila",
+   "odhodilo"
+  ],
+  "rozlomiť": [
+   "rozlomila"
+  ],
+  "zašuškať": [
+   "zašuškal"
+  ],
+  "nútiť": [
+   "núti",
+   "nútia",
+   "nútil"
+  ],
+  "vysedávať": [
+   "vysedávať"
+  ],
+  "vyludzovať": [
+   "vyludzovať"
+  ],
+  "premýšľať": [
+   "premýšľal",
+   "premýšľala",
+   "premýšľať"
+  ],
+  "vnímať": [
+   "vníma",
+   "vnímal",
+   "vnímalo",
+   "vnímať"
+  ],
+  "pokľaknúť": [
+   "pokľakol"
+  ],
+  "pýtať": [
+   "nepýtal",
+   "nepýtala",
+   "nepýtam",
+   "pýta",
+   "pýtajú",
+   "pýtal",
+   "pýtala",
+   "pýtate",
+   "pýtať"
+  ],
+  "pripekať": [
+   "pripekalo"
+  ],
+  "usnúť": [
+   "neusne",
+   "usnul",
+   "usnuli"
+  ],
+  "zniesť": [
+   "neznesie",
+   "neznesú",
+   "zniesol",
+   "zniesť"
+  ],
+  "vďačiť": [
+   "nevďačím",
+   "vďačí"
+  ],
+  "obklopovať": [
+   "obklopuje",
+   "obklopujú"
+  ],
+  "ubehnúť": [
+   "ubehli"
+  ],
+  "natrafiť": [
+   "natrafil",
+   "natrafí",
+   "nenatrafili"
+  ],
+  "omráčiť": [
+   "omráči",
+   "omráčila"
+  ],
+  "pritiahnuť": [
+   "pritiahlo",
+   "pritiahol"
+  ],
+  "vystrkovať": [
+   "vystrkoval"
+  ],
+  "odvážiť": [
+   "neodváži",
+   "neodvážia",
+   "neodvážil",
+   "neodvážila",
+   "neodvážili",
+   "odvážil"
+  ],
+  "upchať": [
+   "upchám"
+  ],
+  "okradnúť": [
+   "okradol"
+  ],
+  "zanariekať": [
+   "zanariekala"
+  ],
+  "prezrádzať": [
+   "prezrádza",
+   "prezrádzalo"
+  ],
+  "usínať": [
+   "usína"
+  ],
+  "vpustiť": [
+   "vpustil"
+  ],
+  "pokrývať": [
+   "pokrýval"
+  ],
+  "zapišťať": [
+   "zapišťala"
+  ],
+  "privoňať": [
+   "privoňala"
+  ],
+  "zočiť": [
+   "nezočí",
+   "zočí"
+  ],
+  "zasvätiť": [
+   "zasvätili"
+  ],
+  "udržiavať": [
+   "udržiavajú",
+   "udržiavali"
+  ],
+  "sformovať": [
+   "sformoval",
+   "sformovať"
+  ],
+  "zoradiť": [
+   "zoradil"
+  ],
+  "ochraňovať": [
+   "ochraňuj",
+   "ochraňuje",
+   "ochraňujú"
+  ],
+  "ráčiť": [
+   "ráči"
+  ],
+  "dediť": [
+   "nededí"
+  ],
+  "podrývať": [
+   "podrýva"
+  ],
+  "zaznamenať": [
+   "zaznamenať"
+  ],
+  "nazdať": [
+   "nazdala"
+  ],
+  "obopínať": [
+   "obopínal"
+  ],
+  "precitnúť": [
+   "precitnú"
+  ],
+  "odskočiť": [
+   "odskočili"
+  ],
+  "zarinčať": [
+   "zarinčalo"
+  ],
+  "prelomiť": [
+   "prelomil",
+   "prelomili"
+  ],
+  "vliezať": [
+   "vliezal"
+  ],
+  "dupotali": [
+   "dupotali"
+  ],
+  "naložiť": [
+   "naložili"
+  ],
+  "osloviť": [
+   "neoslovil",
+   "oslovil",
+   "osloviť"
+  ],
+  "vyčnievať": [
+   "vyčnievali"
+  ],
+  "zacieliť": [
+   "zacielil"
+  ],
+  "preskakovať": [
+   "preskakovali"
+  ],
+  "vyzvať": [
+   "vyzval",
+   "vyzvala"
+  ],
+  "stuhnúť": [
+   "stuhli",
+   "stuhol"
+  ],
+  "stlmiť": [
+   "stlmil"
+  ],
+  "mastiť": [
+   "mastila"
+  ],
+  "odkryť": [
+   "odkry",
+   "odkryl",
+   "odkryla"
+  ],
+  "počúvnuť": [
+   "počúvol"
+  ],
+  "kvapnúť": [
+   "kvapol"
+  ],
+  "ozelenieť": [
+   "ozelenela"
+  ],
+  "odstreliť": [
+   "odstreľte"
+  ],
+  "obesiť": [
+   "obeste"
+  ],
+  "uväzniť": [
+   "uväznil",
+   "uväznili",
+   "uväzniť"
+  ],
+  "vytknúť": [
+   "vytklo"
+  ],
+  "podľahnúť": [
+   "podľahli",
+   "podľahol"
+  ],
+  "zaprieť": [
+   "zaprel",
+   "zaprieť"
+  ],
+  "vkladať": [
+   "vkladá"
+  ],
+  "sklamať": [
+   "nesklamem",
+   "nesklamte",
+   "sklamali",
+   "sklamať"
+  ],
+  "zanikať": [
+   "zanikajú"
+  ],
+  "zapojiť": [
+   "zapojil",
+   "zapojte",
+   "zapojí"
+  ],
+  "navštevovať": [
+   "navštevoval",
+   "navštevovať",
+   "navštevujte"
+  ],
+  "poznávať": [
+   "poznáva",
+   "poznávať"
+  ],
+  "zasadať": [
+   "zasadalo"
+  ],
+  "presadiť": [
+   "presadil",
+   "presadili",
+   "presadiť"
+  ],
+  "počínať": [
+   "počínajú"
+  ],
+  "nastoliť": [
+   "nastolila",
+   "nastolíme"
+  ],
+  "boriť": [
+   "borí"
+  ],
+  "zlyhávať": [
+   "zlyhávajú"
+  ],
+  "oslovovať": [
+   "oslovuje"
+  ],
+  "poslúžiť": [
+   "poslúžil",
+   "poslúžili",
+   "poslúžilo"
+  ],
+  "definovať": [
+   "definoval",
+   "definovali",
+   "definovať"
+  ],
+  "stvoriť": [
+   "stvoril",
+   "stvoriť"
+  ],
+  "deformovať": [
+   "deformuje"
+  ],
+  "aktivovať": [
+   "aktivujú"
+  ],
+  "vyprázdňovať": [
+   "vyprázdňovať",
+   "vyprázdňujú"
+  ],
+  "zotročovať": [
+   "zotročujú"
+  ],
+  "ukladať": [
+   "ukladá"
+  ],
+  "rozožierať": [
+   "rozožiera"
+  ],
+  "dôverovať": [
+   "dôverujem"
+  ],
+  "vyznať": [
+   "vyznajme"
+  ],
+  "darovať": [
+   "daruje"
+  ],
+  "budovať": [
+   "budovali",
+   "budovať"
+  ],
+  "prihlásiť": [
+   "neprihlásil",
+   "prihlásil",
+   "prihlásila",
+   "prihlásime",
+   "prihláste"
+  ],
+  "uznať": [
+   "uznal",
+   "uznala",
+   "uznali",
+   "uznať",
+   "uznám"
+  ],
+  "prebúdzať": [
+   "prebúdza",
+   "prebúdzal"
+  ],
+  "potvrdzovať": [
+   "potvrdzuje"
+  ],
+  "topiť": [
+   "topil",
+   "topila"
+  ],
+  "zaplakať": [
+   "zaplakal"
+  ],
+  "ukončiť": [
+   "ukončil",
+   "ukončila",
+   "ukončili",
+   "ukončiť",
+   "ukončí"
+  ],
+  "načúvať": [
+   "načúvali"
+  ],
+  "sprevádzať": [
+   "sprevádza",
+   "sprevádzajú",
+   "sprevádzal",
+   "sprevádzali"
+  ],
+  "zúčastniť": [
+   "nezúčastnil",
+   "nezúčastním",
+   "zúčastnil",
+   "zúčastnili",
+   "zúčastniť"
+  ],
+  "asistovať": [
+   "asistovali"
+  ],
+  "obdarovať": [
+   "obdarovať"
+  ],
+  "rozpovedať": [
+   "rozpovedal",
+   "rozpovedať"
+  ],
+  "nadviazať": [
+   "nadviazali"
+  ],
+  "variť": [
+   "varila",
+   "varili",
+   "variť"
+  ],
+  "prospievať": [
+   "prospievajú"
+  ],
+  "obdariť": [
+   "obdaril"
+  ],
+  "rúhať": [
+   "nerúhajme"
+  ],
+  "reptať": [
+   "nereptajme",
+   "reptal"
+  ],
+  "zapadať": [
+   "zapadá"
+  ],
+  "krájať": [
+   "krájame"
+  ],
+  "previesť": [
+   "prevedie",
+   "prevediete",
+   "previedla"
+  ],
+  "zmilovať": [
+   "zmiluj"
+  ],
+  "porúčať": [
+   "porúčame"
+  ],
+  "zaväzovať": [
+   "zaväzuje"
+  ],
+  "dopracovať": [
+   "dopracuje"
+  ],
+  "predložiť": [
+   "nepredložila",
+   "predložil",
+   "predloží"
+  ],
+  "realizovať": [
+   "realizovať",
+   "realizuje"
+  ],
+  "analyzovať": [
+   "analyzovať"
+  ],
+  "spotrebovať": [
+   "nespotrebuje"
+  ],
+  "sprehľadniť": [
+   "sprehľadní"
+  ],
+  "doplniť": [
+   "doplnil",
+   "doplniť",
+   "doplní"
+  ],
+  "využívať": [
+   "nevyužívala",
+   "využíva",
+   "využívajú",
+   "využívať"
+  ],
+  "hroziť": [
+   "hrozilo",
+   "hrozí",
+   "nehrozí"
+  ],
+  "zjednodušiť": [
+   "zjednodušia"
+  ],
+  "zjednotiť": [
+   "zjednotiť",
+   "zjednotí"
+  ],
+  "zlepšovať": [
+   "zlepšovať"
+  ],
+  "prehodnotiť": [
+   "prehodnotí"
+  ],
+  "vypracovať": [
+   "vypracoval",
+   "vypracovali",
+   "vypracuje"
+  ],
+  "zlepšiť": [
+   "zlepšil",
+   "zlepšila",
+   "zlepší"
+  ],
+  "prispôsobiť": [
+   "prispôsobí"
+  ],
+  "uplatniť": [
+   "uplatní"
+  ],
+  "zriadiť": [
+   "zriadi",
+   "zriadil"
+  ],
+  "urýchliť": [
+   "urýchli",
+   "urýchlil"
+  ],
+  "zvážiť": [
+   "zváži"
+  ],
+  "požadovať": [
+   "požadovať",
+   "požaduje"
+  ],
+  "zavádzať": [
+   "zavádzajú",
+   "zavádzať"
+  ],
+  "zefektívniť": [
+   "zefektívnime"
+  ],
+  "obmedziť": [
+   "obmedzil",
+   "obmedziť",
+   "obmedzí"
+  ],
+  "posilniť": [
+   "posilnila",
+   "posilnili",
+   "posilní"
+  ],
+  "orientovať": [
+   "orientovať"
+  ],
+  "zrušiť": [
+   "zrušil",
+   "zrušilo",
+   "zrušiť",
+   "zruší"
+  ],
+  "prehĺbiť": [
+   "prehĺbi"
+  ],
+  "zaviesť": [
+   "zavedie",
+   "zavedieme",
+   "zavedú",
+   "zaviedla",
+   "zaviedol",
+   "zaviesť"
+  ],
+  "zohľadňovať": [
+   "zohľadňovať"
+  ],
+  "zvyšovať": [
+   "zvyšovať",
+   "zvyšuje"
+  ],
+  "prispievať": [
+   "prispieva",
+   "prispievajú"
+  ],
+  "zakladať": [
+   "zakladajú"
+  ],
+  "plniť": [
+   "neplnia",
+   "plnili",
+   "plniť"
+  ],
+  "nadväzovať": [
+   "nadväzovať",
+   "nadväzuje"
+  ],
+  "konkurovať": [
+   "konkurovať",
+   "konkurujú"
+  ],
+  "financovať": [
+   "financoval",
+   "financovať"
+  ],
+  "minimalizovať": [
+   "minimalizuje"
+  ],
+  "zdokonaliť": [
+   "zdokonalí"
+  ],
+  "zaťažovať": [
+   "zaťažuje"
+  ],
+  "akcentovať": [
+   "akcentovať"
+  ],
+  "dbať": [
+   "dbať",
+   "dbá",
+   "nedbal"
+  ],
+  "dokumentovať": [
+   "dokumentovať"
+  ],
+  "prizývať": [
+   "prizýva"
+  ],
+  "zamotávať": [
+   "zamotávam"
+  ],
+  "znejasňovať": [
+   "znejasňujem"
+  ],
+  "pousmiať": [
+   "pousmejú"
+  ],
+  "hltať": [
+   "hltalo"
+  ],
+  "brieždiť": [
+   "brieždilo",
+   "brieždiť"
+  ],
+  "znehybnieť": [
+   "znehybnel"
+  ],
+  "zachvieť": [
+   "zachvel",
+   "zachvela"
+  ],
+  "predpovedať": [
+   "nepredpovedal",
+   "predpovedal",
+   "predpovedali"
+  ],
+  "posadiť": [
+   "posadila"
+  ],
+  "odstraňovať": [
+   "odstraňovala"
+  ],
+  "nahromadiť": [
+   "nahromadil"
+  ],
+  "zrútiť": [
+   "zrúti",
+   "zrútil",
+   "zrútila",
+   "zrútilo"
+  ],
+  "vláčiť": [
+   "vláčil",
+   "vláčili"
+  ],
+  "upútať": [
+   "neupútať",
+   "upútala",
+   "upútalo"
+  ],
+  "odstúpiť": [
+   "odstúpil",
+   "odstúpiť"
+  ],
+  "rozčuľovať": [
+   "rozčuľovala",
+   "rozčuľovali",
+   "rozčuľovať"
+  ],
+  "absolvovať": [
+   "absolvoval"
+  ],
+  "striehnuť": [
+   "striehol"
+  ],
+  "protestovať": [
+   "neprotestoval",
+   "protestoval"
+  ],
+  "predbiehať": [
+   "nepredbiehajme",
+   "predbiehame"
+  ],
+  "klesnúť": [
+   "klesla",
+   "klesol"
+  ],
+  "odletieť": [
+   "odletel",
+   "odletela",
+   "odletieť",
+   "odletím"
+  ],
+  "odčiniť": [
+   "odčinil",
+   "odčiniť"
+  ],
+  "vyšetrovať": [
+   "vyšetroval"
+  ],
+  "odprisahať": [
+   "odprisahať"
+  ],
+  "vyľakať": [
+   "vyľakal",
+   "vyľaká"
+  ],
+  "pripisovať": [
+   "nepripisoval",
+   "pripisovala",
+   "pripisujú"
+  ],
+  "kaziť": [
+   "kazil"
+  ],
+  "uvrhnúť": [
+   "uvrhla",
+   "uvrhli",
+   "uvrhol"
+  ],
+  "pochybovať": [
+   "pochybovať"
+  ],
+  "zamotať": [
+   "zamotal",
+   "zamotala"
+  ],
+  "vyčítať": [
+   "vyčíta",
+   "vyčítal",
+   "vyčítali"
+  ],
+  "velebiť": [
+   "velebili"
+  ],
+  "prehltnúť": [
+   "neprehltol",
+   "prehltol"
+  ],
+  "pokryť": [
+   "pokryl",
+   "pokrylo"
+  ],
+  "sedávať": [
+   "sedával",
+   "sedávala",
+   "sedávame"
+  ],
+  "hrávať": [
+   "hrával",
+   "hrávali"
+  ],
+  "priviezť": [
+   "priviezol"
+  ],
+  "skloniť": [
+   "sklonila"
+  ],
+  "brávať": [
+   "brával",
+   "brávala"
+  ],
+  "spávať": [
+   "spáva",
+   "spával",
+   "spávať"
+  ],
+  "oddeľovať": [
+   "oddeľovala"
+  ],
+  "vydesiť": [
+   "nevydesilo",
+   "vydesil",
+   "vydesilo"
+  ],
+  "chodievať": [
+   "chodieval",
+   "chodievala",
+   "chodievať",
+   "nechodieval"
+  ],
+  "púšťať": [
+   "nepúšťa",
+   "púšťal",
+   "púšťali"
+  ],
+  "ujsť": [
+   "ušiel",
+   "újsť"
+  ],
+  "spresniť": [
+   "spresniť"
+  ],
+  "stlačiť": [
+   "stlačil",
+   "stlačili"
+  ],
+  "prehľadať": [
+   "prehľadaj",
+   "prehľadal",
+   "prehľadali"
+  ],
+  "konfrontovať": [
+   "konfrontovala"
+  ],
+  "zožrať": [
+   "zožral"
+  ],
+  "rozpomenúť": [
+   "rozpomenúť"
+  ],
+  "schúliť": [
+   "schúlil"
+  ],
+  "rozstrapatiť": [
+   "rozstrapatila"
+  ],
+  "zverejniť": [
+   "zverejnil",
+   "zverejnila",
+   "zverejniť"
+  ],
+  "sformulovať": [
+   "sformulovať"
+  ],
+  "nazvať": [
+   "nazvala",
+   "nazvem"
+  ],
+  "naskytnúť": [
+   "naskytla",
+   "naskytol"
+  ],
+  "odhodlať": [
+   "neodhodlal",
+   "odhodlal"
+  ],
+  "vyvinúť": [
+   "vyvinul",
+   "vyvinula",
+   "vyvinuli",
+   "vyvinulo"
+  ],
+  "ocitnúť": [
+   "ocitla",
+   "ocitli",
+   "ocitlo",
+   "ocitol"
+  ],
+  "zveriť": [
+   "zveril",
+   "zverila",
+   "zverí"
+  ],
+  "pripliesť": [
+   "priplietol"
+  ],
+  "pršať": [
+   "pršalo",
+   "pršať",
+   "prší"
+  ],
+  "poletovať": [
+   "poletoval",
+   "poletovala",
+   "poletovali",
+   "poletovať"
+  ],
+  "priložiť": [
+   "priložil",
+   "priložila"
+  ],
+  "striedať": [
+   "striedali",
+   "striedalo"
+  ],
+  "porozumieť": [
+   "porozumela"
+  ],
+  "prehliadať": [
+   "prehliadal"
+  ],
+  "konštatovať": [
+   "konštatoval"
+  ],
+  "obliať": [
+   "oblial"
+  ],
+  "poponáhľať": [
+   "poponáhľala"
+  ],
+  "plakať": [
+   "neplakala",
+   "plakala",
+   "plakať",
+   "plače"
+  ],
+  "tlačiť": [
+   "tlačil",
+   "tlačili"
+  ],
+  "zachvátiť": [
+   "zachvátil",
+   "zachvátila"
+  ],
+  "podozrievať": [
+   "podozrieva",
+   "podozrievať"
+  ],
+  "prinavrátiť": [
+   "prinavrátila"
+  ],
+  "rozhliadnuť": [
+   "rozhliadol"
+  ],
+  "zaraziť": [
+   "zarazil",
+   "zarazili",
+   "zarazilo"
+  ],
+  "zasiahnuť": [
+   "nezasiahol",
+   "zasiahla",
+   "zasiahli",
+   "zasiahne",
+   "zasiahnu",
+   "zasiahol"
+  ],
+  "dohovoriť": [
+   "dohovoril"
+  ],
+  "navštíviť": [
+   "navštívil",
+   "navštívila",
+   "navštívili",
+   "navštíviť",
+   "navštívte",
+   "nenavštívil"
+  ],
+  "rozvzlykať": [
+   "rozvzlykali"
+  ],
+  "pritisnúť": [
+   "pritisla",
+   "pritisol"
+  ],
+  "uniknúť": [
+   "neuniklo",
+   "uniklo",
+   "uniknúť"
+  ],
+  "zväzovať": [
+   "zväzuje"
+  ],
+  "rozhádzať": [
+   "rozhádzal"
+  ],
+  "dohoniť": [
+   "dohonil",
+   "dohoniť"
+  ],
+  "odhaľovať": [
+   "odhaľovala",
+   "odhaľovať"
+  ],
+  "prejavovať": [
+   "prejavoval",
+   "prejavovali"
+  ],
+  "zabodovať": [
+   "zaboduje"
+  ],
+  "špekulovať": [
+   "špekulovať"
+  ],
+  "vyzliekať": [
+   "vyzliekal"
+  ],
+  "dariť": [
+   "darilo",
+   "nedarilo",
+   "nedarí"
+  ],
+  "pretvarovať": [
+   "pretvarovala"
+  ],
+  "signalizovať": [
+   "signalizoval"
+  ],
+  "rozochvieť": [
+   "rozochvel",
+   "rozochveli",
+   "rozochvieť"
+  ],
+  "prepadnúť": [
+   "prepadla",
+   "prepadli",
+   "prepadne",
+   "prepadol"
+  ],
+  "oddávať": [
+   "oddávala"
+  ],
+  "mrzieť": [
+   "mrzí"
+  ],
+  "hasnúť": [
+   "hasnúť"
+  ],
+  "vyhľadať": [
+   "vyhľadať",
+   "vyhľadáš"
+  ],
+  "vzbudzovať": [
+   "vzbudzovala",
+   "vzbudzovalo",
+   "vzbudzuje"
+  ],
+  "premietať": [
+   "premietali"
+  ],
+  "zamknúť": [
+   "zamkla",
+   "zamkol"
+  ],
+  "sužovať": [
+   "sužovala"
+  ],
+  "ťažiť": [
+   "ťažilo"
+  ],
+  "piť": [
+   "nepije",
+   "nepila",
+   "pil",
+   "pila",
+   "pili",
+   "piť"
+  ],
+  "zblednúť": [
+   "zbledla"
+  ],
+  "vyriecť": [
+   "nevyriekla",
+   "vyriecť",
+   "vyriekol"
+  ],
+  "vystihovať": [
+   "vystihujú"
+  ],
+  "zablysnúť": [
+   "zablyslo"
+  ],
+  "vytriezvieť": [
+   "vytriezvel"
+  ],
+  "zaceriť": [
+   "zaceril"
+  ],
+  "nakrútiť": [
+   "nakrútili"
+  ],
+  "zavrhnúť": [
+   "zavrhol"
+  ],
+  "vravievať": [
+   "nevravievajú"
+  ],
+  "smrdieť": [
+   "smrdelo",
+   "smrdí"
+  ],
+  "opovrhovať": [
+   "opovrhujú"
+  ],
+  "parkovať": [
+   "parkovali"
+  ],
+  "zatúžiť": [
+   "zatúžil"
+  ],
+  "vypustiť": [
+   "vypustil",
+   "vypustiť"
+  ],
+  "poprosiť": [
+   "poprisili",
+   "poprosil",
+   "poprosila",
+   "poprosili",
+   "poprosiť",
+   "poprosím"
+  ],
+  "naštartovať": [
+   "naštartovala"
+  ],
+  "vybavovať": [
+   "vybavovala"
+  ],
+  "prihovoriť": [
+   "neprihovorím"
+  ],
+  "zhasnúť": [
+   "zhasla",
+   "zhasli"
+  ],
+  "vyzváňať": [
+   "vyzváňali",
+   "vyzváňať"
+  ],
+  "usporiadať": [
+   "usporiada",
+   "usporiadala",
+   "usporiadali",
+   "usporiadať"
+  ],
+  "tancovať": [
+   "tancoval",
+   "tancovala",
+   "tancovali",
+   "tancovalo",
+   "tancovať"
+  ],
+  "dotýkať": [
+   "dotýkal",
+   "dotýkať",
+   "nedotýka"
+  ],
+  "zabolieť": [
+   "zaboleli"
+  ],
+  "uložiť": [
+   "uložia",
+   "uložil"
+  ],
+  "nasadnúť": [
+   "nasadol"
+  ],
+  "pohltiť": [
+   "pohltila",
+   "pohltili",
+   "pohltilo"
+  ],
+  "nakloniť": [
+   "naklonil",
+   "naklonila",
+   "naklonilo"
+  ],
+  "natiahnuť": [
+   "natiahla"
+  ],
+  "trávievať": [
+   "trávieval"
+  ],
+  "márniť": [
+   "márnil"
+  ],
+  "vysielať": [
+   "vysielal",
+   "vysielala",
+   "vysielali"
+  ],
+  "spôsobovať": [
+   "spôsoboval",
+   "spôsobovali",
+   "spôsobuje"
+  ],
+  "privliecť": [
+   "privliekol"
+  ],
+  "zvrátiť": [
+   "zvrátila",
+   "zvrátiť"
+  ],
+  "roztriasť": [
+   "roztriasla",
+   "roztriasli"
+  ],
+  "ohlásiť": [
+   "ohlásil",
+   "ohlásila"
+  ],
+  "prehŕňať": [
+   "prehŕňala"
+  ],
+  "čakávať": [
+   "čakával"
+  ],
+  "zdráhať": [
+   "zdráhal",
+   "zdráhala"
+  ],
+  "vstávať": [
+   "nevstávala",
+   "vstávaj",
+   "vstávať"
+  ],
+  "namáhať": [
+   "nenamáhaj"
+  ],
+  "poučovať": [
+   "nepoučuj",
+   "poučovali"
+  ],
+  "poučiť": [
+   "poučil",
+   "poučila"
+  ],
+  "očervenieť": [
+   "očervenel",
+   "očervenela"
+  ],
+  "rozrušiť": [
+   "rozrušila"
+  ],
+  "zavyť": [
+   "zavylo"
+  ],
+  "ponechať": [
+   "ponechali"
+  ],
+  "vyniesť": [
+   "vyniesli",
+   "vyniesol",
+   "vyniesť"
+  ],
+  "klopať": [
+   "klopať"
+  ],
+  "budievať": [
+   "budievam"
+  ],
+  "hnať": [
+   "ženie"
+  ],
+  "utekať": [
+   "neutekala",
+   "utekajú",
+   "utekala",
+   "utekalo",
+   "utekať",
+   "uteká"
+  ],
+  "precediť": [
+   "precedil"
+  ],
+  "vyrážať": [
+   "vyrážať"
+  ],
+  "odbočovať": [
+   "odbočovala"
+  ],
+  "podozvedať": [
+   "podozvedala"
+  ],
+  "vídať": [
+   "vídala"
+  ],
+  "udierať": [
+   "udierali"
+  ],
+  "rozľahnúť": [
+   "rozľahol"
+  ],
+  "raziť": [
+   "razila"
+  ],
+  "nechávať": [
+   "nechávala",
+   "nenechával"
+  ],
+  "prezliekať": [
+   "prezliekala"
+  ],
+  "zbožňovať": [
+   "zbožňovala",
+   "zbožňovali"
+  ],
+  "predvolať": [
+   "nepredvolal",
+   "predvolal"
+  ],
+  "dusiť": [
+   "dusila"
+  ],
+  "rozrývať": [
+   "rozrývalo"
+  ],
+  "nadávať": [
+   "nadávali"
+  ],
+  "zvečerievať": [
+   "zvečerievalo"
+  ],
+  "odniesť": [
+   "odnesiem",
+   "odniesla",
+   "odniesli",
+   "odniesol"
+  ],
+  "zostávať": [
+   "zostáva",
+   "zostával",
+   "zostávala",
+   "zostávali",
+   "zostávalo"
+  ],
+  "zjesť": [
+   "zje",
+   "zjedla",
+   "zjedli",
+   "zjedol",
+   "zjete"
+  ],
+  "pochovať": [
+   "pochovali"
+  ],
+  "zažmúriť": [
+   "nezažmúril"
+  ],
+  "zohrať": [
+   "zohrali"
+  ],
+  "napodobniť": [
+   "napodobnil",
+   "napodobniť"
+  ],
+  "vlievať": [
+   "vlievali"
+  ],
+  "sadať": [
+   "sadal",
+   "sadala"
+  ],
+  "pobádať": [
+   "nepobádala"
+  ],
+  "robievať": [
+   "robievali"
+  ],
+  "dodržať": [
+   "dodržal",
+   "nedodržala"
+  ],
+  "stenať": [
+   "stenám"
+  ],
+  "zveličiť": [
+   "zveličil"
+  ],
+  "rozopínať": [
+   "rozopínať"
+  ],
+  "vylúčiť": [
+   "vylúčila",
+   "vylúčili"
+  ],
+  "komentovať": [
+   "komentovali"
+  ],
+  "stelesňovať": [
+   "stelesňovali"
+  ],
+  "stupňovať": [
+   "stupňuje"
+  ],
+  "škrabať": [
+   "škrabať"
+  ],
+  "prevaľovať": [
+   "prevaľoval"
+  ],
+  "zmieriť": [
+   "zmieriť"
+  ],
+  "stúpnuť": [
+   "stúpla",
+   "stúpol"
+  ],
+  "ubytovať": [
+   "ubytoval",
+   "ubytovali"
+  ],
+  "povystierať": [
+   "povystieral"
+  ],
+  "premieňať": [
+   "premieňali"
+  ],
+  "uverejniť": [
+   "neuverejnia",
+   "neuverejní",
+   "uverejnil",
+   "uverejnili",
+   "uverejní",
+   "uverejním"
+  ],
+  "naparovať": [
+   "naparovali"
+  ],
+  "zapaľovať": [
+   "zapaľoval"
+  ],
+  "pohoršiť": [
+   "pohoršiť"
+  ],
+  "staviť": [
+   "stavím"
+  ],
+  "vmietnuť": [
+   "nevmietla",
+   "vmietla"
+  ],
+  "vzrušovať": [
+   "vzrušovať"
+  ],
+  "preniknúť": [
+   "prenikla",
+   "prenikli",
+   "prenikol"
+  ],
+  "vyvierať": [
+   "vyvieral"
+  ],
+  "vymlieť": [
+   "vymlel"
+  ],
+  "porovnať": [
+   "porovnal"
+  ],
+  "zadunieť": [
+   "zaduneli"
+  ],
+  "vzbĺknuť": [
+   "vzbĺkla"
+  ],
+  "pokaziť": [
+   "pokazil",
+   "pokaziť"
+  ],
+  "zastrčiť": [
+   "zastrčila"
+  ],
+  "vylučovať": [
+   "nevylučuje",
+   "vylučovať",
+   "vylučuje"
+  ],
+  "vyhovovať": [
+   "vyhovoval"
+  ],
+  "pomilovať": [
+   "pomilovali"
+  ],
+  "ovdovieť": [
+   "ovdovel"
+  ],
+  "zaželať": [
+   "zaželala"
+  ],
+  "preložiť": [
+   "preložili"
+  ],
+  "vzbudiť": [
+   "vzbudila"
+  ],
+  "zakúsiť": [
+   "zakúsil"
+  ],
+  "trčať": [
+   "trčím"
+  ],
+  "hlásiť": [
+   "hlásil",
+   "hlásili",
+   "hlásli"
+  ],
+  "zaraďovať": [
+   "zaraďovali",
+   "zaraďujú"
+  ],
+  "odvolať": [
+   "odvolajú"
+  ],
+  "vyjasniť": [
+   "vyjasní"
+  ],
+  "vryť": [
+   "vryla"
+  ],
+  "popáliť": [
+   "popáliť"
+  ],
+  "vyskytnúť": [
+   "vyskytli",
+   "vyskytnúť"
+  ],
+  "obstáť": [
+   "obstál"
+  ],
+  "poškodiť": [
+   "poškodiť"
+  ],
+  "publikovať": [
+   "publikoval",
+   "publikovať"
+  ],
+  "slabnúť": [
+   "slabnúť"
+  ],
+  "drkotať": [
+   "drkotali"
+  ],
+  "prekladať": [
+   "prekladať",
+   "prekladá"
+  ],
+  "snežiť": [
+   "snežilo"
+  ],
+  "predstúpiť": [
+   "predstúpiť"
+  ],
+  "otáľať": [
+   "neotáľa",
+   "otáľal"
+  ],
+  "vyštverať": [
+   "vyštveral",
+   "vyštverala"
+  ],
+  "nazdávať": [
+   "nazdávala",
+   "nazdávali"
+  ],
+  "ľahnúť": [
+   "ľahla",
+   "ľahli",
+   "ľahol"
+  ],
+  "vytušiť": [
+   "vytušil",
+   "vytušila"
+  ],
+  "vyhľadávať": [
+   "vyhľadávať"
+  ],
+  "kritizovať": [
+   "kritizoval"
+  ],
+  "zoskupiť": [
+   "zoskupil"
+  ],
+  "užívať": [
+   "užíva"
+  ],
+  "ovisnúť": [
+   "ovisla"
+  ],
+  "dodržiavať": [
+   "dodržiaval",
+   "dodržiavali"
+  ],
+  "skritizovať": [
+   "skritizuje"
+  ],
+  "trpieť": [
+   "netrpel",
+   "trpel",
+   "trpí"
+  ],
+  "posmievať": [
+   "posmieval",
+   "posmievala",
+   "posmievať"
+  ],
+  "vytrpieť": [
+   "vytrpela"
+  ],
+  "šinúť": [
+   "šinul"
+  ],
+  "zosobášiť": [
+   "zosobášili"
+  ],
+  "zhromaždiť": [
+   "nezhromaždilo",
+   "zhromaždila",
+   "zhromaždili",
+   "zhromaždiť"
+  ],
+  "nosiť": [
+   "nosil",
+   "nosí",
+   "nosím"
+  ],
+  "sčervenieť": [
+   "sčervenela"
+  ],
+  "dotiahnuť": [
+   "dotiahnu",
+   "dotiahnuť"
+  ],
+  "premknúť": [
+   "premkla"
+  ],
+  "preháňať": [
+   "preháňali"
+  ],
+  "vydávať": [
+   "vydáva",
+   "vydávať"
+  ],
+  "zhrýzať": [
+   "zhrýzala"
+  ],
+  "uľaviť": [
+   "uľavil"
+  ],
+  "vymočiť": [
+   "vymočil"
+  ],
+  "zaletieť": [
+   "zaletela",
+   "zaleteli",
+   "zaletí",
+   "zaletíme"
+  ],
+  "zalietať": [
+   "nezalietala"
+  ],
+  "rozozvučať": [
+   "rozozvučal"
+  ],
+  "vyrozumieť": [
+   "vyrozumel"
+  ],
+  "vyspať": [
+   "nevyspali"
+  ],
+  "ozumieť": [
+   "nerozumela"
+  ],
+  "týčiť": [
+   "týčila"
+  ],
+  "poprechádzať": [
+   "poprechádzať"
+  ],
+  "komplikovať": [
+   "komplikoval"
+  ],
+  "privítať": [
+   "privítala",
+   "privítať"
+  ],
+  "vytočiť": [
+   "vytočil"
+  ],
+  "vymenovať": [
+   "vymenoval",
+   "vymenovali",
+   "vymenovalo"
+  ],
+  "roztiahnuť": [
+   "roztiahla",
+   "roztiahli",
+   "roztiahni",
+   "roztiahnuť"
+  ],
+  "zariadiť": [
+   "zariadime",
+   "zariadiť"
+  ],
+  "nakúpiť": [
+   "nakúpila"
+  ],
+  "dešifrovať": [
+   "dešifrovať"
+  ],
+  "rozliať": [
+   "rozlial",
+   "rozliala"
+  ],
+  "osprchovať": [
+   "osprchovala"
+  ],
+  "vyčerpať": [
+   "vyčepalo",
+   "vyčerpala",
+   "vyčerpali"
+  ],
+  "rozčúliť": [
+   "rozčúlil",
+   "rozčúlila",
+   "rozčúlili"
+  ],
+  "tlmočiť": [
+   "tlmočil"
+  ],
+  "začudovať": [
+   "začudovala"
+  ],
+  "zatemniť": [
+   "zatemnila"
+  ],
+  "pohľadať": [
+   "pohľadal",
+   "pohľadať"
+  ],
+  "prisunúť": [
+   "prisunula"
+  ],
+  "súdiť": [
+   "súdili"
+  ],
+  "zazdať": [
+   "zazdalo"
+  ],
+  "dovtípiť": [
+   "dovtíp",
+   "dovtípil"
+  ],
+  "odobriť": [
+   "odobril",
+   "odobrili"
+  ],
+  "podlomiť": [
+   "podlomili"
+  ],
+  "nahádzať": [
+   "nahádzal"
+  ],
+  "predať": [
+   "nepredá",
+   "predal",
+   "predať"
+  ],
+  "zatelefonovať": [
+   "zatelefonoval",
+   "zatelefonovali",
+   "zatelefonovať"
+  ],
+  "protirečiť": [
+   "neprotirečil"
+  ],
+  "vyriešiť": [
+   "vyriešil",
+   "vyriešili"
+  ],
+  "poobzerať": [
+   "poobzeral",
+   "poobzerala"
+  ],
+  "opisovať": [
+   "opisoval",
+   "opisovali",
+   "opisuje",
+   "opisujú"
+  ],
+  "bojovať": [
+   "bojoval",
+   "bojovať",
+   "bojuj",
+   "bojujete",
+   "bojujte"
+  ],
+  "vyplynúť": [
+   "vyplynúť"
+  ],
+  "vzdávať": [
+   "nevzdáva",
+   "vzdávam"
+  ],
+  "vychovávať": [
+   "vychovával",
+   "vychovávať"
+  ],
+  "oblizovať": [
+   "oblizoval"
+  ],
+  "ubezpečovať": [
+   "ubezpečoval",
+   "ubezpečovala",
+   "ubezpečujem"
+  ],
+  "pritlačiť": [
+   "pritlačila"
+  ],
+  "odháňať": [
+   "odháňal",
+   "odháňala"
+  ],
+  "zavrčať": [
+   "zavrčal"
+  ],
+  "vyšklbnúť": [
+   "vyšklbnúť"
+  ],
+  "túlavať": [
+   "túlavala"
+  ],
+  "obhrýzalo": [
+   "obhrýzalo"
+  ],
+  "zabávať": [
+   "zabávala"
+  ],
+  "ochutnať": [
+   "ochutnať",
+   "ochutnáš"
+  ],
+  "zazívať": [
+   "zazíval"
+  ],
+  "podniknúť": [
+   "podnikol"
+  ],
+  "maškrtiť": [
+   "maškrtil"
+  ],
+  "urážať": [
+   "urážalo"
+  ],
+  "zaštebotal": [
+   "zaštebotal"
+  ],
+  "cmukol": [
+   "cmukol"
+  ],
+  "zbiť": [
+   "zbil"
+  ],
+  "potiahnuť": [
+   "potiahlo",
+   "potiahnuť",
+   "potiahol"
+  ],
+  "kýchnuť": [
+   "kýchol"
+  ],
+  "žmúriť": [
+   "žmúril"
+  ],
+  "rozmaznávať": [
+   "rozmaznávali"
+  ],
+  "vyvesiť": [
+   "vyvesila",
+   "vyvesili"
+  ],
+  "oťažel": [
+   "oťažel"
+  ],
+  "zacinkať": [
+   "zacinkal",
+   "zacinkali"
+  ],
+  "odpútať": [
+   "odpútať"
+  ],
+  "prospieť": [
+   "prospelo"
+  ],
+  "poradiť": [
+   "neporadili",
+   "poradil",
+   "poradiť",
+   "poradím"
+  ],
+  "pripustiť": [
+   "pripustila"
+  ],
+  "upiecť": [
+   "upiekli"
+  ],
+  "zaváhať": [
+   "nezaváhal",
+   "zaváhal",
+   "zaváhala"
+  ],
+  "hádzať": [
+   "hádzalo"
+  ],
+  "súperiť": [
+   "súperili"
+  ],
+  "onemieť": [
+   "onemel",
+   "onemela",
+   "onemeli"
+  ],
+  "nanosiť": [
+   "nanosilo"
+  ],
+  "potkel": [
+   "potkla"
+  ],
+  "zaliezť": [
+   "zaliezla"
+  ],
+  "udupať": [
+   "udupe"
+  ],
+  "odplašiť": [
+   "odplašíš"
+  ],
+  "mávnuť": [
+   "mávol"
+  ],
+  "pochádzte": [
+   "pochádzte"
+  ],
+  "pohladkať": [
+   "pohladkal"
+  ],
+  "obskakovať": [
+   "obskakovali"
+  ],
+  "pokrikovať": [
+   "pokrikovali",
+   "pokrikujú"
+  ],
+  "prevracať": [
+   "prevracal"
+  ],
+  "kŕmime": [
+   "nekŕmime"
+  ],
+  "zakrádal": [
+   "zakrádal"
+  ],
+  "zakašlať": [
+   "zakašlal",
+   "zakašlala"
+  ],
+  "posadať": [
+   "posadali"
+  ],
+  "hodovať": [
+   "hodovať"
+  ],
+  "vylieziem": [
+   "nevylieziem"
+  ],
+  "zatajiť": [
+   "zatajil",
+   "zatajila"
+  ],
+  "odkašlať": [
+   "odkašlal"
+  ],
+  "rozhodiť": [
+   "rozhodila"
+  ],
+  "prehnať": [
+   "prehnala"
+  ],
+  "obehnúť": [
+   "obehla"
+  ],
+  "odhadnúť": [
+   "odhadne"
+  ],
+  "rozžiariť": [
+   "rozžiarila",
+   "rozžiarili"
+  ],
+  "štekliť": [
+   "šteklí"
+  ],
+  "oženiť": [
+   "neožení",
+   "oženil",
+   "oženiť"
+  ],
+  "sľúbiť": [
+   "sľúbil",
+   "sľúbila",
+   "sľúbili"
+  ],
+  "ukradnúť": [
+   "ukradli",
+   "ukradol"
+  ],
+  "prižmúriť": [
+   "prižmúril"
+  ],
+  "prehrabávať": [
+   "prehrabával"
+  ],
+  "uškodiť": [
+   "uškodiť"
+  ],
+  "štuchol": [
+   "štuchol"
+  ],
+  "zapýriť": [
+   "zapýril"
+  ],
+  "zháčil": [
+   "zháčil"
+  ],
+  "poodísť": [
+   "poodišiel"
+  ],
+  "najesť": [
+   "najeme"
+  ],
+  "vyveštiť": [
+   "vyveštili"
+  ],
+  "zbaliť": [
+   "zbalil"
+  ],
+  "pridátete": [
+   "nepridátete"
+  ],
+  "ustupovať": [
+   "ustupovala"
+  ],
+  "zatočiť": [
+   "zatočila"
+  ],
+  "obzerať": [
+   "obzeral",
+   "obzerala",
+   "obzerá"
+  ],
+  "núkať": [
+   "núkali"
+  ],
+  "zhúknuť": [
+   "zhúkol"
+  ],
+  "odhryznúť": [
+   "odhryznúť"
+  ],
+  "zdrapiť": [
+   "zdrapil"
+  ],
+  "kľaknúť": [
+   "kľakla"
+  ],
+  "ukloniť": [
+   "uklonila"
+  ],
+  "hrmieť": [
+   "hrmel"
+  ],
+  "obliecť": [
+   "obliecť"
+  ],
+  "spriateliť": [
+   "spriatelili"
+  ],
+  "vymýšľať": [
+   "vymýšľali"
+  ],
+  "odpočinúť": [
+   "odpočiniem",
+   "odpočinula",
+   "odpočinúť",
+   "odpočiňme"
+  ],
+  "zľaknúť": [
+   "nezľakneme",
+   "zľakla",
+   "zľakli",
+   "zľakol"
+  ],
+  "kňučať": [
+   "kňučala"
+  ],
+  "nakuknúť": [
+   "nakukla",
+   "nakukol"
+  ],
+  "zatknúť": [
+   "zatknúť"
+  ],
+  "zhroziť": [
+   "zhrozil"
+  ],
+  "vyrušovať": [
+   "vyrušujem"
+  ],
+  "roztočiť": [
+   "roztočil"
+  ],
+  "brúsiť": [
+   "brúsil"
+  ],
+  "utopiť": [
+   "utopil",
+   "utopte",
+   "utopím"
+  ],
+  "uzdraviť": [
+   "uzdravil"
+  ],
+  "priklusať": [
+   "priklusal"
+  ],
+  "hnúť": [
+   "nehol"
+  ],
+  "okovať": [
+   "okoval"
+  ],
+  "spoľahnúť": [
+   "spoľahnite"
+  ],
+  "vyjednávať": [
+   "vyjednávaš",
+   "vyjednávať"
+  ],
+  "zapierať": [
+   "zapierať"
+  ],
+  "prehlásiť": [
+   "prehlásil",
+   "prehlásila",
+   "prehlásiť"
+  ],
+  "prikloniť": [
+   "priklonil",
+   "priklonili"
+  ],
+  "jašil": [
+   "jašil"
+  ],
+  "uraziť": [
+   "urazil",
+   "urazila",
+   "urazilo"
+  ],
+  "upokojiť": [
+   "upokojil",
+   "upokojila"
+  ],
+  "zajačať": [
+   "zajačala"
+  ],
+  "utíchať": [
+   "neutíchal"
+  ],
+  "končiť": [
+   "končila",
+   "končili",
+   "končí",
+   "končím"
+  ],
+  "cvičiť": [
+   "cvičila",
+   "cvičilo",
+   "cvičíme"
+  ],
+  "radovať": [
+   "radoval"
+  ],
+  "ubrániť": [
+   "neubránili",
+   "neubránime",
+   "ubránil"
+  ],
+  "zavlniť": [
+   "zavlnila"
+  ],
+  "zaveliť": [
+   "nezavelil",
+   "zavelila"
+  ],
+  "zrevať": [
+   "zreval",
+   "zrevala"
+  ],
+  "pribúdať": [
+   "pribúdalo"
+  ],
+  "zajať": [
+   "zajali"
+  ],
+  "zliznúť": [
+   "zlizol"
+  ],
+  "veseliť": [
+   "veselili"
+  ],
+  "zapadnúť": [
+   "nezapadlo"
+  ],
+  "loviť": [
+   "lovíme"
+  ],
+  "pochytať": [
+   "pochytám"
+  ],
+  "čuť": [
+   "čujte"
+  ],
+  "vyčíňať": [
+   "vyčíňali"
+  ],
+  "uchýliť": [
+   "uchýlil"
+  ],
+  "starať": [
+   "nestaral",
+   "staraj",
+   "starajú",
+   "staral",
+   "starali"
+  ],
+  "nazlostiť": [
+   "nazlostila",
+   "nazlostili"
+  ],
+  "nadísť": [
+   "nadišiel"
+  ],
+  "lúčiť": [
+   "lúčil"
+  ],
+  "zdraviť": [
+   "zdravíš"
+  ],
+  "pliesť": [
+   "nepleť"
+  ],
+  "žiarliť": [
+   "žiarlil"
+  ],
+  "zavaliť": [
+   "zavalila",
+   "zavalíme"
+  ],
+  "zajasať": [
+   "zajasal"
+  ],
+  "stínať": [
+   "stínať"
+  ],
+  "zasypať": [
+   "zasypala"
+  ],
+  "dopáliť": [
+   "dopálilo"
+  ],
+  "vymeniť": [
+   "vymenila"
+  ],
+  "predviesť": [
+   "predvedie",
+   "predviedol"
+  ],
+  "uliať": [
+   "ulial"
+  ],
+  "donášať": [
+   "donášala"
+  ],
+  "naletieť": [
+   "naletel"
+  ],
+  "rozdvojiť": [
+   "rozdvojila"
+  ],
+  "vyslobodiť": [
+   "vyslobodil"
+  ],
+  "zahrmieť": [
+   "zahrmeli"
+  ],
+  "podriemkavať": [
+   "podriemkaval"
+  ],
+  "rozdupať": [
+   "rozdupeme"
+  ],
+  "kuť": [
+   "kul"
+  ],
+  "odväzovať": [
+   "odväzovala"
+  ],
+  "zmraziť": [
+   "zmrazil"
+  ],
+  "prosíkať": [
+   "prosíkal"
+  ],
+  "odvaliť": [
+   "odvaliť"
+  ],
+  "zračiť": [
+   "zračilo"
+  ],
+  "vynášať": [
+   "vynášal",
+   "vynášala"
+  ],
+  "zľahčiť": [
+   "zľahčiť"
+  ],
+  "počať": [
+   "počne",
+   "počnem"
+  ],
+  "chystať": [
+   "chystajú",
+   "chystal",
+   "chystala"
+  ],
+  "rozkričať": [
+   "rozkričalo"
+  ],
+  "uskočiť": [
+   "uskočil"
+  ],
+  "vytrielila": [
+   "vytrielila"
+  ],
+  "vopchať": [
+   "vopchal"
+  ],
+  "pokývať": [
+   "pokývali"
+  ],
+  "hundrať": [
+   "hundral"
+  ],
+  "zasyčať": [
+   "zasyčal"
+  ],
+  "zhypnotizovať": [
+   "zhypnotizovať"
+  ],
+  "pochodovať": [
+   "pochodoval",
+   "pochodujeme"
+  ],
+  "strpieť": [
+   "nestrpím"
+  ],
+  "objímať": [
+   "objímal"
+  ],
+  "vrieskal": [
+   "vrieskal"
+  ],
+  "strachovať": [
+   "nestrachuj"
+  ],
+  "poštekliť": [
+   "pošteklil"
+  ],
+  "nastrašiť": [
+   "nastraš"
+  ],
+  "nastražiť": [
+   "nastražil"
+  ],
+  "zvíjať": [
+   "zvíjal"
+  ],
+  "postrapatiť": [
+   "postrapatil"
+  ],
+  "skákať": [
+   "neskáč",
+   "skákali",
+   "skákať"
+  ],
+  "zabzučať": [
+   "zabzučala"
+  ],
+  "škriekala": [
+   "škriekala"
+  ],
+  "unášať": [
+   "unášajú",
+   "unášala"
+  ],
+  "zaškeriť": [
+   "zaškerili"
+  ],
+  "zazerať": [
+   "zazeral"
+  ],
+  "dohodnúť": [
+   "dohodneme",
+   "dohodnúť",
+   "dohodol"
+  ],
+  "poúčať": [
+   "poúčal"
+  ],
+  "uľahčiť": [
+   "neuľahčil"
+  ],
+  "zosmutnieť": [
+   "zosmutnel"
+  ],
+  "rozdeliť": [
+   "rozdelili",
+   "rozdeľme"
+  ],
+  "zježiť": [
+   "zježil"
+  ],
+  "obmäkčiť": [
+   "obmäkčila"
+  ],
+  "popremýšľať": [
+   "popremýšľať"
+  ],
+  "vystrčiť": [
+   "vystrčil"
+  ],
+  "popŕchať": [
+   "popŕchať"
+  ],
+  "zdržať": [
+   "zdržali",
+   "zdržalo"
+  ],
+  "narátať": [
+   "narátal",
+   "narátam"
+  ],
+  "obzrieť": [
+   "obzrel",
+   "obzrela"
+  ],
+  "zarevať": [
+   "zareval"
+  ],
+  "chichúňala": [
+   "chichúňala"
+  ],
+  "poliať": [
+   "polej"
+  ],
+  "zrieť": [
+   "zrel"
+  ],
+  "dozrieť": [
+   "dozrel"
+  ],
+  "vytrhať": [
+   "vytrhal"
+  ],
+  "zviazať": [
+   "zviazal"
+  ],
+  "máčať": [
+   "máča"
+  ],
+  "zaniesť": [
+   "zaniesol"
+  ],
+  "schnúť": [
+   "schol"
+  ],
+  "polámať": [
+   "polámal"
+  ],
+  "prečesávať": [
+   "prečesával",
+   "prečesávala"
+  ],
+  "vyčesať": [
+   "vyčesal"
+  ],
+  "priasť": [
+   "priadla",
+   "priadli",
+   "priasť"
+  ],
+  "upriasť": [
+   "upriadli"
+  ],
+  "tkať": [
+   "tkali"
+  ],
+  "kefovať": [
+   "kefovala"
+  ],
+  "kŕmiť": [
+   "kŕmila"
+  ],
+  "rozkotúľať": [
+   "rozkotúľali"
+  ],
+  "panovať": [
+   "panoval",
+   "panovalo"
+  ],
+  "vrtieť": [
+   "nevrť"
+  ],
+  "vychovať": [
+   "vychovať"
+  ],
+  "oslepiť": [
+   "oslepila",
+   "oslepili",
+   "oslepilo",
+   "oslepiť"
+  ],
+  "vzďaľovať": [
+   "vzďaľoval",
+   "vzďaľovali"
+  ],
+  "vdýchnuť": [
+   "vdýchla"
+  ],
+  "nasťahovať": [
+   "nasťahovali"
+  ],
+  "lietať": [
+   "lietal",
+   "lietam",
+   "lietame",
+   "lietať",
+   "nelietala"
+  ],
+  "zlietnuť": [
+   "zlietla"
+  ],
+  "jagať": [
+   "jagala",
+   "jagali"
+  ],
+  "umývať": [
+   "umývať"
+  ],
+  "schovať": [
+   "schovalo"
+  ],
+  "poraniť": [
+   "poraniť"
+  ],
+  "vynadať": [
+   "vynadala"
+  ],
+  "trepať": [
+   "trepal"
+  ],
+  "lapiť": [
+   "lapil",
+   "lapila"
+  ],
+  "svitnúť": [
+   "svitlo"
+  ],
+  "hučať": [
+   "hučal"
+  ],
+  "bzučať": [
+   "bzučal"
+  ],
+  "naštvať": [
+   "naštvalo"
+  ],
+  "mlieť": [
+   "melie",
+   "meliete"
+  ],
+  "presvitať": [
+   "presvitala",
+   "presvitá"
+  ],
+  "vydrhnúť": [
+   "vydrhla"
+  ],
+  "zatriasť": [
+   "zatriasla",
+   "zatriasli",
+   "zatriasol"
+  ],
+  "stavať": [
+   "stavajú",
+   "stavala",
+   "stavia"
+  ],
+  "vletieť": [
+   "vletieť"
+  ],
+  "zapliesť": [
+   "zaplietla"
+  ],
+  "tróniť": [
+   "trónila"
+  ],
+  "roniť": [
+   "ronila"
+  ],
+  "uchmatnúť": [
+   "uchmatla"
+  ],
+  "trúfnuť": [
+   "netrúfla"
+  ],
+  "kliať": [
+   "kľajúc"
+  ],
+  "zamávať": [
+   "zamával",
+   "zamávala"
+  ],
+  "vzniesť": [
+   "vzniesla",
+   "vzniesol"
+  ],
+  "priletieť": [
+   "priletela"
+  ],
+  "odradiť": [
+   "odradiť"
+  ],
+  "posúvať": [
+   "posúval",
+   "posúvalo"
+  ],
+  "pridržiavať": [
+   "pridržiaval"
+  ],
+  "odfúknuť": [
+   "neodfúkol"
+  ],
+  "škriabať": [
+   "škriabal"
+  ],
+  "nazbierať": [
+   "nazbierala",
+   "nazbierali"
+  ],
+  "rozprestrieť": [
+   "rozprestrela"
+  ],
+  "odlietať": [
+   "odlieta"
+  ],
+  "kvitnúť": [
+   "kvitli"
+  ],
+  "doletieť": [
+   "doletel",
+   "doleteli",
+   "nedoleteli"
+  ],
+  "svietiť": [
+   "svieti",
+   "svietilo"
+  ],
+  "muknúť": [
+   "nemukla"
+  ],
+  "ohlasovať": [
+   "ohlasoval"
+  ],
+  "prehrievať": [
+   "prehrieva",
+   "prehrievalo"
+  ],
+  "vyčkávať": [
+   "vyčkávali",
+   "vyčkávalo"
+  ],
+  "pobiť": [
+   "pobijeme"
+  ],
+  "nariekať": [
+   "nariekala"
+  ],
+  "vzlietnuť": [
+   "vzlietla",
+   "vzlietnuť"
+  ],
+  "zašveholiť": [
+   "zašveholila",
+   "zašveholilo"
+  ],
+  "odčerpávať": [
+   "odčerpávať"
+  ],
+  "zadusiť": [
+   "zadusím"
+  ],
+  "zdesiť": [
+   "zdesila"
+  ],
+  "preniesť": [
+   "prenesie",
+   "preniesla",
+   "preniesol",
+   "preniesť"
+  ],
+  "fúkať": [
+   "fúkal"
+  ],
+  "zalomiť": [
+   "zalomila"
+  ],
+  "rozveseliť": [
+   "rozveseliť"
+  ],
+  "odplaziť": [
+   "odplazil"
+  ],
+  "napchávať": [
+   "napchávať"
+  ],
+  "ženiť": [
+   "ženiť"
+  ],
+  "podstrčiť": [
+   "podstrčil",
+   "podstrčíš"
+  ],
+  "zaspávať": [
+   "zaspávala"
+  ],
+  "zatrepotať": [
+   "zatrepotal"
+  ],
+  "prevrhnúť": [
+   "prevrhli"
+  ],
+  "schytiť": [
+   "schytil",
+   "schytila",
+   "schytilo"
+  ],
+  "nadskočiť": [
+   "nadskočil"
+  ],
+  "metať": [
+   "metať"
+  ],
+  "okopávať": [
+   "okopával"
+  ],
+  "masírovať": [
+   "masíroval",
+   "masírovala"
+  ],
+  "burácať": [
+   "burácalo"
+  ],
+  "hýbať": [
+   "nehýbe"
+  ],
+  "rozletieť": [
+   "rozletela",
+   "rozleteli",
+   "rozletí"
+  ],
+  "ponaťahovať": [
+   "ponaťahoval"
+  ],
+  "osláviť": [
+   "oslávila",
+   "oslávili"
+  ],
+  "krepčiť": [
+   "krepčili"
+  ],
+  "krívať": [
+   "kríva"
+  ],
+  "prežúvať": [
+   "prežúvali"
+  ],
+  "zavďačiť": [
+   "zavďačili"
+  ],
+  "upozorňovať": [
+   "upozorňoval"
+  ],
+  "kuvikať": [
+   "kuvikal"
+  ],
+  "chýliť": [
+   "chýlili"
+  ],
+  "zletieť": [
+   "zletel",
+   "zletela"
+  ],
+  "zasvietiť": [
+   "zasvietila",
+   "zasvietilo"
+  ],
+  "vzchopiť": [
+   "vzchopila"
+  ],
+  "oddupkal": [
+   "oddupkal"
+  ],
+  "spozornieť": [
+   "spozornela"
+  ],
+  "zmeškať": [
+   "zmeškala"
+  ],
+  "spoznávať": [
+   "nespoznávala",
+   "spoznával"
+  ],
+  "zhotoviť": [
+   "zhotovil"
+  ],
+  "chváliť": [
+   "chválila",
+   "chválili"
+  ],
+  "lapajúc": [
+   "lapajúc"
+  ],
+  "rozhojdať": [
+   "rozhojdala"
+  ],
+  "rýpať": [
+   "rýpe"
+  ],
+  "skypriť": [
+   "skyprili"
+  ],
+  "pásť": [
+   "pásol"
+  ],
+  "kontrolovať": [
+   "kontrolovali"
+  ],
+  "pospomínať": [
+   "pospomínala"
+  ],
+  "zakopnúť": [
+   "zakopla"
+  ],
+  "vykuknúť": [
+   "vykukol",
+   "vykuli",
+   "vykúkli"
+  ],
+  "vzdialiť": [
+   "vzdialil"
+  ],
+  "vyhrýzať": [
+   "vyhrýzal"
+  ],
+  "utešovať": [
+   "utešoval",
+   "utešovali"
+  ],
+  "večerať": [
+   "večerali"
+  ],
+  "muzicírovať": [
+   "muzicírovať"
+  ],
+  "zbiehať": [
+   "zbiehať"
+  ],
+  "oddychovať": [
+   "oddychovali"
+  ],
+  "vtrhnúť": [
+   "vtrhli",
+   "vtrhlo"
+  ],
+  "znervózňovať": [
+   "znervózňovalo"
+  ],
+  "očariť": [
+   "očarili"
+  ],
+  "zakutrať": [
+   "zakutral"
+  ],
+  "narušovať": [
+   "narušovali",
+   "narušujú"
+  ],
+  "navrhovať": [
+   "navrhujem"
+  ],
+  "vrcholiť": [
+   "vrcholili"
+  ],
+  "zaumieniť": [
+   "zaumienila"
+  ],
+  "vynechať": [
+   "vynechať"
+  ],
+  "obchádzať": [
+   "obchádzala",
+   "obchádzali"
+  ],
+  "viať": [
+   "viali"
+  ],
+  "vystavovať": [
+   "vystavoval"
+  ],
+  "vymaľovať": [
+   "vymaľovali"
+  ],
+  "slziť": [
+   "slzil"
+  ],
+  "posunúť": [
+   "posunul"
+  ],
+  "premiestniť": [
+   "premiestnil",
+   "premiestnila"
+  ],
+  "vykrikovať": [
+   "vykrikovali"
+  ],
+  "zgúľať": [
+   "zgúľala"
+  ],
+  "vyzdobiť": [
+   "vyzdobili"
+  ],
+  "šantiť": [
+   "šantili"
+  ],
+  "nadhodiť": [
+   "nadhodil"
+  ],
+  "rozzvučať": [
+   "rozzvučalo"
+  ],
+  "navšítviť": [
+   "navšítvili"
+  ],
+  "vhupnúť": [
+   "vhupli"
+  ],
+  "bdieť": [
+   "bdieť"
+  ],
+  "trkotať": [
+   "trkotali"
+  ],
+  "sŕkať": [
+   "sŕkali"
+  ],
+  "zapíjať": [
+   "zapíjali"
+  ],
+  "plánovať": [
+   "plánoval",
+   "plánovali"
+  ],
+  "funieť": [
+   "funel"
+  ],
+  "poutierať": [
+   "poutierala"
+  ],
+  "roznášať": [
+   "roznášal"
+  ],
+  "zapáčiť": [
+   "zapáčila"
+  ],
+  "uzatvárať": [
+   "uzatvárali"
+  ],
+  "vymotať": [
+   "vymotal"
+  ],
+  "obývať": [
+   "obýva",
+   "obývalo"
+  ],
+  "vylepiť": [
+   "vylepil"
+  ],
+  "zmrákať": [
+   "zmrákalo"
+  ],
+  "bučať": [
+   "bučali"
+  ],
+  "zachmúriť": [
+   "zachmúril"
+  ],
+  "zaloviť": [
+   "zalovil"
+  ],
+  "mľaskať": [
+   "mľaskal"
+  ],
+  "zlostiť": [
+   "zlostil"
+  ],
+  "pochutnávať": [
+   "pochutnával"
+  ],
+  "ospravedlňovať": [
+   "ospravedlňoval",
+   "ospravedlňujem"
+  ],
+  "schrúmať": [
+   "schrúmal"
+  ],
+  "obľúbiť": [
+   "obľúbia",
+   "obľúbili"
+  ],
+  "zahučať": [
+   "zahučal",
+   "zahučala"
+  ],
+  "dupnúť": [
+   "dupol"
+  ],
+  "preľstiť": [
+   "preľstiť"
+  ],
+  "zaúčinkovať": [
+   "zaúčinkovalo"
+  ],
+  "zostavovať": [
+   "zostavovala",
+   "zostavovať"
+  ],
+  "odpískať": [
+   "odpískal"
+  ],
+  "zotmieť": [
+   "zotmelo"
+  ],
+  "kotúľať": [
+   "kotúľali"
+  ],
+  "rozplakať": [
+   "rozplakal"
+  ],
+  "silnieť": [
+   "silnel"
+  ],
+  "túliť": [
+   "túlili"
+  ],
+  "odviať": [
+   "odvial"
+  ],
+  "dovliecť": [
+   "dovliekli"
+  ],
+  "napadať": [
+   "napadá",
+   "nenapadalo"
+  ],
+  "zívnuť": [
+   "zívol"
+  ],
+  "poriadať": [
+   "poriadal"
+  ],
+  "súťažiť": [
+   "súťažiť"
+  ],
+  "pohádať": [
+   "nepohádali"
+  ],
+  "oslňovať": [
+   "oslňoval"
+  ],
+  "vykúknuť": [
+   "vykúklo"
+  ],
+  "vyložiť": [
+   "vyložili"
+  ],
+  "políhať": [
+   "políhali"
+  ],
+  "oddýchnuť": [
+   "oddýchli"
+  ],
+  "prihrať": [
+   "prihrala"
+  ],
+  "kopnúť": [
+   "kopol"
+  ],
+  "spozorvať": [
+   "spozorvali"
+  ],
+  "ošetriť": [
+   "ošetriť"
+  ],
+  "obkolesiť": [
+   "obkolesila"
+  ],
+  "odcudziť": [
+   "odcudzili"
+  ],
+  "zastupovať": [
+   "zastupoval",
+   "zastupovať"
+  ],
+  "vrzúkať": [
+   "vrzúkať"
+  ],
+  "zašušťali": [
+   "zašušťali"
+  ],
+  "presýpať": [
+   "presýpajú"
+  ],
+  "zažať": [
+   "zažal",
+   "zažala"
+  ],
+  "skotúľať": [
+   "skotúľať"
+  ],
+  "sklopiť": [
+   "sklopili"
+  ],
+  "uniesť": [
+   "uniesla"
+  ],
+  "odviezť": [
+   "odviezli",
+   "odviezť"
+  ],
+  "prevrátiť": [
+   "prevrátila",
+   "prevrátilo"
+  ],
+  "klapnúť": [
+   "klapla"
+  ],
+  "horieť": [
+   "horí"
+  ],
+  "zachraňovať": [
+   "zachraňuje"
+  ],
+  "jazdiť": [
+   "jazdil"
+  ],
+  "vydariť": [
+   "nevydarili"
+  ],
+  "prikazovať": [
+   "prikazovala",
+   "prikazujem"
+  ],
+  "zakliať": [
+   "zakliala"
+  ],
+  "odvliecť": [
+   "odvliekla"
+  ],
+  "vyšľahnúť": [
+   "vyšľahli",
+   "vyšľahol"
+  ],
+  "zmietať": [
+   "zmietal",
+   "zmietala"
+  ],
+  "zakrádala": [
+   "zakrádala"
+  ],
+  "podrásť": [
+   "podrástol"
+  ],
+  "vrčať": [
+   "vrčiac"
+  ],
+  "napiť": [
+   "napil"
+  ],
+  "zraniť": [
+   "zranil"
+  ],
+  "rozhostiť": [
+   "rozhostilo"
+  ],
+  "hniezdiť": [
+   "hniezdia"
+  ],
+  "odohnať": [
+   "odohnať"
+  ],
+  "pousádzala": [
+   "pousádzala"
+  ],
+  "slušať": [
+   "sluší"
+  ],
+  "trúsiť": [
+   "trúsi"
+  ],
+  "zbehnúť": [
+   "zbehla"
+  ],
+  "bublať": [
+   "bublali"
+  ],
+  "pridávať": [
+   "pridávala",
+   "pridávali"
+  ],
+  "priviať": [
+   "privej"
+  ],
+  "skriviť": [
+   "skrivili"
+  ],
+  "vypadať": [
+   "vypadali"
+  ],
+  "zakrákať": [
+   "zakrákala"
+  ],
+  "odkvapkať": [
+   "odkvapkal"
+  ],
+  "odfrknúť": [
+   "odfrkla"
+  ],
+  "krákať": [
+   "krákala"
+  ],
+  "zahryznúť": [
+   "zahryzla"
+  ],
+  "pomädliť": [
+   "pomädlila"
+  ],
+  "zaškriekať": [
+   "zaškriekal",
+   "zaškriekala"
+  ],
+  "sťahovať": [
+   "sťahovali",
+   "sťahuje"
+  ],
+  "zahaliť": [
+   "zahalil",
+   "zahalili"
+  ],
+  "zhíknuť": [
+   "zhíkli"
+  ],
+  "rozkazovať": [
+   "rozkazujem"
+  ],
+  "nosievať": [
+   "nosieval"
+  ],
+  "túlať": [
+   "túlal"
+  ],
+  "oboriť": [
+   "oboril"
+  ],
+  "zarehotať": [
+   "zarehotal"
+  ],
+  "zasypávať": [
+   "zasypával"
+  ],
+  "rozmliaždiť": [
+   "rozmliaždi"
+  ],
+  "škriekať": [
+   "škriekal"
+  ],
+  "fajčiť": [
+   "fajčila"
+  ],
+  "zacloniť": [
+   "zaclonila"
+  ],
+  "otráviť": [
+   "otrávte"
+  ],
+  "roztrieskať": [
+   "roztrieskajte"
+  ],
+  "zľutovať": [
+   "zľutujte"
+  ],
+  "vkročiť": [
+   "vkročí"
+  ],
+  "porátať": [
+   "porátam"
+  ],
+  "rozviazať": [
+   "rozviažte"
+  ],
+  "vyjaviť": [
+   "vyjavím"
+  ],
+  "spytovať": [
+   "spytovala"
+  ],
+  "vyčariť": [
+   "vyčarila"
+  ],
+  "zažiariť": [
+   "zažiarilo"
+  ],
+  "podhodiť": [
+   "podhodil"
+  ],
+  "zarobiť": [
+   "zarobí"
+  ],
+  "pochodiť": [
+   "pochodíme"
+  ],
+  "pozhŕňať": [
+   "pozhŕňal"
+  ],
+  "lomcovať": [
+   "lomcoval"
+  ],
+  "vyškierať": [
+   "vyškierala"
+  ],
+  "odchýliť": [
+   "odchýlil"
+  ],
+  "rozprsknúť": [
+   "rozprskli"
+  ],
+  "černieť": [
+   "černela"
+  ],
+  "vypúšťať": [
+   "vypúšťajú"
+  ],
+  "zaberať": [
+   "zaberajú",
+   "zaberalo",
+   "zaberá"
+  ],
+  "šľahať": [
+   "šľahal",
+   "šľahali"
+  ],
+  "otriasať": [
+   "otriasali"
+  ],
+  "chrliť": [
+   "chrlila"
+  ],
+  "zdobiť": [
+   "zdobia"
+  ],
+  "skoliť": [
+   "skolím"
+  ],
+  "nastoknúť": [
+   "nastoknem"
+  ],
+  "vystrojiť": [
+   "vystrojím"
+  ],
+  "vysadnúť": [
+   "vysadol"
+  ],
+  "zoťať": [
+   "zoťali"
+  ],
+  "zachrčať": [
+   "zachrčal"
+  ],
+  "zaryť": [
+   "zaryl"
+  ],
+  "zvriesknuť": [
+   "zvrieskol"
+  ],
+  "cválať": [
+   "cvála"
+  ],
+  "vztýčiť": [
+   "vztýčil",
+   "vztýčila"
+  ],
+  "vyviaznuť": [
+   "nevyviazne"
+  ],
+  "dosahovať": [
+   "dosahovala",
+   "dosahujú"
+  ],
+  "prehrať": [
+   "prehráš"
+  ],
+  "blokovať": [
+   "blokovalo"
+  ],
+  "zablokovať": [
+   "zablokovalo"
+  ],
+  "rozšíriť": [
+   "rozšíril",
+   "rozšírili",
+   "rozšíriť"
+  ],
+  "vyprofilovať": [
+   "vyprofilovať"
+  ],
+  "hlasovať": [
+   "hlasuje"
+  ],
+  "hlásať": [
+   "hlásal"
+  ],
+  "odsúhlasiť": [
+   "odsúhlasia"
+  ],
+  "zhrnúť": [
+   "zhrnúť",
+   "zhrňme"
+  ],
+  "šetriť": [
+   "nešetrila",
+   "šetrí"
+  ],
+  "prenechať": [
+   "prenechala"
+  ],
+  "odpáliť": [
+   "odpálil"
+  ],
+  "spresňovať": [
+   "spresňuje"
+  ],
+  "hladovať": [
+   "hladujú"
+  ],
+  "spláchnuť": [
+   "spláchli"
+  ],
+  "rokovať": [
+   "rokoval",
+   "rokuje"
+  ],
+  "amputovať": [
+   "amputoval"
+  ],
+  "vkrádať": [
+   "vkráda"
+  ],
+  "prinútiť": [
+   "neprinútite",
+   "prinútila",
+   "prinútilo"
+  ],
+  "prehlbovať": [
+   "prehlbovať",
+   "prehĺboval"
+  ],
+  "riskovať": [
+   "neriskujte"
+  ],
+  "nabádať": [
+   "nabáda"
+  ],
+  "vešať": [
+   "nevešajte"
+  ],
+  "oboznámiť": [
+   "oboznámiť"
+  ],
+  "zmierniť": [
+   "zmiernili",
+   "zmiernite"
+  ],
+  "zasahovať": [
+   "nezasahovala",
+   "zasahuje"
+  ],
+  "postúpiť": [
+   "postúpi"
+  ],
+  "podpáliť": [
+   "podpálili"
+  ],
+  "rozcvičovať": [
+   "rozcvičoval"
+  ],
+  "odštartovať": [
+   "odštartovala"
+  ],
+  "prevažovať": [
+   "prevažovať",
+   "prevažuje"
+  ],
+  "nainštalovať": [
+   "nainštalovali"
+  ],
+  "dominovať": [
+   "dominuje"
+  ],
+  "prepožičiavať": [
+   "prepožičiava"
+  ],
+  "uplatňovať": [
+   "uplatňoval",
+   "uplatňuje"
+  ],
+  "náležať": [
+   "náležia"
+  ],
+  "prisľúbiť": [
+   "prislúbil",
+   "prisľúbil"
+  ],
+  "predčiť": [
+   "predčil"
+  ],
+  "pobudnúť": [
+   "pobudol"
+  ],
+  "vyučovať": [
+   "vyučoval"
+  ],
+  "omilostiť": [
+   "omilostili",
+   "omilostí"
+  ],
+  "prislúchať": [
+   "prislúcha"
+  ],
+  "označiť": [
+   "označil",
+   "označila",
+   "označili"
+  ],
+  "pripísať": [
+   "pripísal"
+  ],
+  "zlúčiť": [
+   "zlúčila"
+  ],
+  "splatiť": [
+   "splatil"
+  ],
+  "kandidovať": [
+   "kandidovať"
+  ],
+  "presiahnuť": [
+   "presiahol"
+  ],
+  "skresľovať": [
+   "skresľujú"
+  ],
+  "zrealizovať": [
+   "zrealizovať"
+  ],
+  "obhajovať": [
+   "obhajoval",
+   "obhajuje"
+  ],
+  "pristupovať": [
+   "pristupoval"
+  ],
+  "zrýchľovať": [
+   "zrýchľuje"
+  ],
+  "prelínať": [
+   "prelína"
+  ],
+  "čerpať": [
+   "čerpal",
+   "čerpať"
+  ],
+  "dokazovať": [
+   "dokazuje"
+  ],
+  "preukázať": [
+   "preukázali"
+  ],
+  "sídliť": [
+   "sídli"
+  ],
+  "odkláňať": [
+   "odkláňala"
+  ],
+  "zvládať": [
+   "zvláda"
+  ],
+  "premrhať": [
+   "nepremrhám",
+   "premrhal"
+  ],
+  "dostaviť": [
+   "dostavil",
+   "dostavilo"
+  ],
+  "zaviazať": [
+   "zaviazali"
+  ],
+  "vyostriť": [
+   "vyostril"
+  ],
+  "poznačiť": [
+   "poznačilo"
+  ],
+  "zamerať": [
+   "zamerali"
+  ],
+  "presahovať": [
+   "presahovala"
+  ],
+  "hospitalizovať": [
+   "hospitalizovali"
+  ],
+  "vyčerpávať": [
+   "vyčerpávajú"
+  ],
+  "zaisťovať": [
+   "zaisťovať",
+   "zaisťujú"
+  ],
+  "umocniť": [
+   "umocní"
+  ],
+  "kolonizovať": [
+   "nekolonizovali"
+  ],
+  "presakovať": [
+   "presakuje"
+  ],
+  "vyplavovať": [
+   "vyplavuje"
+  ],
+  "prúdiť": [
+   "prúdiť"
+  ],
+  "vzplanúť": [
+   "vzplanul"
+  ],
+  "prekročiť": [
+   "neprekročiť",
+   "prekročil",
+   "prekročila",
+   "prekročiť",
+   "prekročí"
+  ],
+  "zmenšiť": [
+   "nezmenší"
+  ],
+  "ovplyvniť": [
+   "ovplyvnil",
+   "ovplyvniť"
+  ],
+  "vyžarovať": [
+   "vyžaruje"
+  ],
+  "vystopovať": [
+   "vystopovať"
+  ],
+  "dobyť": [
+   "dobyl",
+   "dobyli"
+  ],
+  "operovať": [
+   "operovali"
+  ],
+  "obliehať": [
+   "obliehali"
+  ],
+  "vypovedať": [
+   "vypovedali"
+  ],
+  "upadať": [
+   "upadať"
+  ],
+  "rodiť": [
+   "rodia"
+  ],
+  "dvíhať": [
+   "dvíhajú"
+  ],
+  "obklopiť": [
+   "obklopiť"
+  ],
+  "stávať": [
+   "stávajú",
+   "stávalo"
+  ],
+  "nadhnať": [
+   "nadženie"
+  ],
+  "usmrtiť": [
+   "usmrtil",
+   "usmrtí"
+  ],
+  "skonzumovať": [
+   "skonzumuje"
+  ],
+  "navodiť": [
+   "navodil"
+  ],
+  "vkradnúť": [
+   "vkradol"
+  ],
+  "vymrieť": [
+   "vymrie"
+  ],
+  "zmrznúť": [
+   "zmrznú"
+  ],
+  "spracúvať": [
+   "spracúva"
+  ],
+  "udávať": [
+   "udáva"
+  ],
+  "pochváliť": [
+   "pochváliť"
+  ],
+  "zhodovať": [
+   "zhodujú"
+  ],
+  "nastávať": [
+   "nastáva",
+   "nastávajú"
+  ],
+  "vyplniť": [
+   "vyplnili",
+   "vyplniť"
+  ],
+  "kolísať": [
+   "kolíše"
+  ],
+  "zväčšovať": [
+   "zväčšoval",
+   "zväčšuje"
+  ],
+  "zmenšovať": [
+   "zmenšuje"
+  ],
+  "rozpoznať": [
+   "rozpoznali"
+  ],
+  "rozlišovať": [
+   "rozlišovať"
+  ],
+  "predchádzať": [
+   "predchádza"
+  ],
+  "udiať": [
+   "udiali"
+  ],
+  "obmedzovať": [
+   "obmedzuje"
+  ],
+  "sčítavať": [
+   "sčítavajú"
+  ],
+  "prenášať": [
+   "prenáša",
+   "prenášať"
+  ],
+  "interferovať": [
+   "interferujú"
+  ],
+  "vyvodiť": [
+   "vyvodil"
+  ],
+  "odporučiť": [
+   "odporučil"
+  ],
+  "vypočítať": [
+   "vypočítať"
+  ],
+  "vysmiať": [
+   "vysmiať"
+  ],
+  "odôvodniť": [
+   "odôvodnil"
+  ],
+  "zväčšiť": [
+   "zväčšil"
+  ],
+  "rozpínať": [
+   "rozpínajú"
+  ],
+  "objasniť": [
+   "objasnili"
+  ],
+  "pripojiť": [
+   "pripojil",
+   "pripojila",
+   "pripojilo"
+  ],
+  "potácať": [
+   "potácal"
+  ],
+  "znemožniť": [
+   "znemožniť"
+  ],
+  "dohliadať": [
+   "dohliadala"
+  ],
+  "uzatvoriť": [
+   "uzatvoril",
+   "uzatvorilo"
+  ],
+  "preceňovať": [
+   "preceňovalo"
+  ],
+  "utvoriť": [
+   "utvoriť"
+  ],
+  "provokovať": [
+   "neprovokovať"
+  ],
+  "zanedbávať": [
+   "nezanedbával",
+   "zanedbávalo"
+  ],
+  "propagovať": [
+   "propagovali"
+  ],
+  "angažovať": [
+   "angažoval",
+   "neangažovali"
+  ],
+  "prepuknúť": [
+   "prepuklo"
+  ],
+  "vynútiť": [
+   "vynútil"
+  ],
+  "líšiť": [
+   "líši",
+   "líšia",
+   "líšili",
+   "líší"
+  ],
+  "vpochodovať": [
+   "vpochodoval"
+  ],
+  "vyvraždiť": [
+   "vyvraždiť"
+  ],
+  "líčiť": [
+   "líčia"
+  ],
+  "zaháľať": [
+   "nezaháľali"
+  ],
+  "vyplávať": [
+   "vyplával"
+  ],
+  "pomstiť": [
+   "pomstili",
+   "pomstiť"
+  ],
+  "produkovať": [
+   "produkujú"
+  ],
+  "štiepiť": [
+   "štiepi"
+  ],
+  "zoznámiť": [
+   "zoznámil",
+   "zoznámila",
+   "zoznámiť"
+  ],
+  "inšpirovať": [
+   "inšpiroval",
+   "inšpirovalo"
+  ],
+  "posudzovať": [
+   "posudzoval",
+   "posudzovať"
+  ],
+  "habilitovať": [
+   "habilitoval"
+  ],
+  "točiť": [
+   "točí"
+  ],
+  "otáčať": [
+   "otáča"
+  ],
+  "prestúpiť": [
+   "prestúpil"
+  ],
+  "zostrojiť": [
+   "zostrojiť"
+  ],
+  "zahĺbiť": [
+   "zahĺbil"
+  ],
+  "odsúdiť": [
+   "odsúdil",
+   "odsúdila",
+   "odsúdili",
+   "odsúdiť"
+  ],
+  "stláčať": [
+   "stláča"
+  ],
+  "skonštruovať": [
+   "skonštruoval"
+  ],
+  "zatajovať": [
+   "zatajoval"
+  ],
+  "ujať": [
+   "ujala"
+  ],
+  "rozdať": [
+   "rozdal"
+  ],
+  "zomierať": [
+   "zomiera",
+   "zomierali"
+  ],
+  "adresovať": [
+   "adresoval"
+  ],
+  "športovať": [
+   "športoval"
+  ],
+  "lyžovať": [
+   "lyžoval"
+  ],
+  "odcestovať": [
+   "odcestoval"
+  ],
+  "nariadiť": [
+   "nariadil",
+   "nariadilo"
+  ],
+  "pridŕžať": [
+   "pridŕžal"
+  ],
+  "zdieľať": [
+   "zdieľali"
+  ],
+  "predsedať": [
+   "predsedá"
+  ],
+  "zameriavať": [
+   "zameriava",
+   "zameriavala"
+  ],
+  "opevniť": [
+   "opevnili"
+  ],
+  "vzrastať": [
+   "vzrastalo"
+  ],
+  "vyústiť": [
+   "vyústili"
+  ],
+  "vplývať": [
+   "vplýval"
+  ],
+  "požičiavať": [
+   "požičiaval"
+  ],
+  "osvojiť": [
+   "osvojil"
+  ],
+  "koncentrovať": [
+   "koncentroval"
+  ],
+  "promovať": [
+   "promoval"
+  ],
+  "precestovať": [
+   "precestoval"
+  ],
+  "havarovať": [
+   "havaroval"
+  ],
+  "odplávať": [
+   "odplával"
+  ],
+  "vyplieniť": [
+   "vyplienilo"
+  ],
+  "vytýčiť": [
+   "vytýčil"
+  ],
+  "uvoľňovať": [
+   "uvoľňovať"
+  ],
+  "osamostatniť": [
+   "neosamostatní"
+  ],
+  "pociťovať": [
+   "pocitujú"
+  ],
+  "zabúdať": [
+   "nezabúdajme"
+  ],
+  "rozkladať": [
+   "rozkladá"
+  ],
+  "udusiť": [
+   "udusili",
+   "udusiť"
+  ],
+  "skracovať": [
+   "neskracuje"
+  ],
+  "ustanoviť": [
+   "ustanovil"
+  ],
+  "podnikať": [
+   "podnikali"
+  ],
+  "stabilizovať": [
+   "stabilizoval",
+   "stabilizovať"
+  ],
+  "zobrazovať": [
+   "zobrazovalo"
+  ],
+  "praktikovať": [
+   "praktizovali"
+  ],
+  "poskytovať": [
+   "poskytuje"
+  ],
+  "upevňovať": [
+   "upevňovali"
+  ],
+  "formovať": [
+   "formoval"
+  ],
+  "poháňať": [
+   "poháňa"
+  ],
+  "stagnovať": [
+   "stagnovala"
+  ],
+  "opísať": [
+   "opísal"
+  ],
+  "obiehať": [
+   "obieha"
+  ],
+  "ochladiť": [
+   "ochladil"
+  ],
+  "roztaviť": [
+   "roztavilo"
+  ],
+  "klesať": [
+   "klesali"
+  ],
+  "rozoznávať": [
+   "rozoznávame"
+  ],
+  "sprostredkovávať": [
+   "sprostredkováva"
+  ],
+  "prednášať": [
+   "prednáša"
+  ],
+  "prihovárať": [
+   "prihovárá"
+  ],
+  "vystaviť": [
+   "vystavil"
+  ],
+  "vyhrotiť": [
+   "vyhrotila"
+  ],
+  "rozsekať": [
+   "rozsekali"
+  ],
+  "poveriť": [
+   "poveril"
+  ],
+  "rozhorčiť": [
+   "rozhorčilo"
+  ],
+  "zaistiť": [
+   "zaistiť"
+  ],
+  "plynúť": [
+   "plynuli"
+  ],
+  "stroskotať": [
+   "stroskotala"
+  ],
+  "internacionalizovať": [
+   "internacionalizovať"
+  ],
+  "odobrať": [
+   "odobral"
+  ],
+  "doručiť": [
+   "doručili"
+  ],
+  "napodobňovať": [
+   "napodobňovať"
+  ],
+  "donútiť": [
+   "donútil"
+  ],
+  "stanoviť": [
+   "stanovila"
+  ],
+  "zlákať": [
+   "zláka"
+  ],
+  "podriadiť": [
+   "podriadil",
+   "podriadiť"
+  ],
+  "skoncentrovať": [
+   "skoncentroval"
+  ],
+  "popraviť": [
+   "nepopravili",
+   "popravili",
+   "popraviť"
+  ],
+  "porodiť": [
+   "porodila"
+  ],
+  "zdediť": [
+   "zdedil"
+  ],
+  "dokončovať": [
+   "dokončuje"
+  ],
+  "pretiahnuť": [
+   "pretiahli"
+  ],
+  "rozchádzať": [
+   "rozchádzajú"
+  ],
+  "abdikovať": [
+   "abdikoval"
+  ],
+  "postihnúť": [
+   "postihla"
+  ],
+  "hodlať": [
+   "nehodlal"
+  ],
+  "udomácniť": [
+   "udomácnila"
+  ],
+  "adoptovať": [
+   "adoptoval"
+  ],
+  "odkúpiť": [
+   "odkúpil"
+  ],
+  "zhrešiť": [
+   "zhrešil"
+  ],
+  "putovať": [
+   "putovať"
+  ],
+  "vyzbrojovať": [
+   "vyzbrojovať"
+  ],
+  "zhoršiť": [
+   "zhoršil"
+  ],
+  "zadovažovať": [
+   "zadovažoval"
+  ],
+  "vypĺňať": [
+   "vypĺňa"
+  ],
+  "oslabiť": [
+   "oslabili"
+  ],
+  "premiestňovať": [
+   "premiestňovala"
+  ],
+  "odhadovať": [
+   "odhadoval"
+  ],
+  "vyznávať": [
+   "vyznávali"
+  ],
+  "charakterizovať": [
+   "charakterizovalo"
+  ],
+  "zhanobiť": [
+   "zhanobili"
+  ],
+  "useknúť": [
+   "usekol"
+  ],
+  "emigrovať": [
+   "emigrovali"
+  ],
+  "redigovať": [
+   "redigoval"
+  ],
+  "zvrhnúť": [
+   "zvrhli"
+  ],
+  "zavraždiť": [
+   "zavraždili"
+  ],
+  "narukovať": [
+   "narukoval"
+  ],
+  "prepracovať": [
+   "prepracoval"
+  ],
+  "vyprchávať": [
+   "vyprcháva"
+  ],
+  "vpadnúť": [
+   "vpadlo"
+  ],
+  "spečatiť": [
+   "spečatil"
+  ],
+  "vyberať": [
+   "vyberal"
+  ],
+  "popisovať": [
+   "popisuje"
+  ],
+  "popravovať": [
+   "popravovalo"
+  ],
+  "spochybňovať": [
+   "spochybňoval",
+   "spochybňovať",
+   "spochybňuje"
+  ],
+  "zaľudniť": [
+   "zaľudniť"
+  ],
+  "rozpadnúť": [
+   "rozpadla"
+  ],
+  "prepojiť": [
+   "prepojiť"
+  ],
+  "uchytiť": [
+   "uchytiť"
+  ],
+  "vycestovať": [
+   "vycestoval"
+  ],
+  "zhŕňať": [
+   "zhŕňa"
+  ],
+  "rezonovať": [
+   "rezonovalo"
+  ],
+  "zhodnotiť": [
+   "zhodnotiť"
+  ],
+  "integrovať": [
+   "integrovať"
+  ],
+  "dopraviť": [
+   "dopravili"
+  ],
+  "snímať": [
+   "snímal"
+  ],
+  "pripadnúť": [
+   "pripadla"
+  ],
+  "stotožniť": [
+   "stotožnili"
+  ],
+  "upevniť": [
+   "upevnil",
+   "upevnila"
+  ],
+  "zbierať": [
+   "zbieral"
+  ],
+  "zrovnoprávniť": [
+   "zrovnoprávniť"
+  ],
+  "najímať": [
+   "najímali"
+  ],
+  "prerezať": [
+   "prerezali"
+  ],
+  "zaručiť": [
+   "zaručil"
+  ],
+  "reformovať": [
+   "reformovať"
+  ],
+  "zlepšit": [
+   "zlepšit"
+  ],
+  "vniesť": [
+   "vniesli"
+  ],
+  "podpisovať": [
+   "podpisoval"
+  ],
+  "debutovať": [
+   "debutoval"
+  ],
+  "posiliť": [
+   "posilili"
+  ],
+  "znižovať": [
+   "znižuje"
+  ],
+  "odovzdávať": [
+   "odovzdávajú"
+  ],
+  "zasadzovať": [
+   "zasadzoval"
+  ],
+  "rozdávať": [
+   "rozdával"
+  ]
+ }
+}

@@ -310,6 +310,27 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Strengthen takes it for seven days after the guide, after a weak spot on record and before mix-ups and slipping units: "Strengthen: Your plan · <the guide's first pattern>".
 - The model never writes a sentence for a drill. Sentences the lexicon lacks may later come from a model into a queue that a check other than the learner approves; that queue is not built.
 
+### E27. Lexicon sentences come from Tatoeba or the owner's curated text, never from a model (2026-11-01)
+
+**Why:** the mix-up families could not drill nikde, sem, aj and similar words, because slovak.wiki's frequency lists are open-class and never made them rows. Filling the gap is a data change, so it has to meet P8 and E26: no sentence a learner drills comes from a model.
+
+**How to apply:**
+- Examples are Tatoeba sentences (CC BY 2.0 FR, with the tatoebaId kept) or the owner's own curated sentences. `scripts/dictionary/tatoeba-api-examples.ts` in slovak.wiki applies the wiki's gates: the token must be the word, the sentence must pass the corpus-quality check, reviewer rejects stay rejected, and an English translation is required.
+- Verbs are not filled that way. A stem search returns homographs (the stem of vládať also gives vláda, the government), and Tatoeba has few sentences for most verbs. Verb coverage needs its own method.
+- A word the owner blocks in `src/lib/catalog/frequency/blocklist.ts` stays out, even when its sentences exist (pohlavie, členný, posledne, naviac, vše, pro, mam, cup, sex).
+- A word with fewer than three usable sentences is not a drill. It is a row, not a lesson, and the thin-word count in the lexicon says so.
+
+### E28. Verb blanks come from the UD treebank's forms, not a dictionary's paradigm (2026-11-01)
+
+**Why:** 102 verbs had fewer than three sentences the lexicon could blank. For 79 of them the wiki had no verified forms, so the export could not blank their sentences, and Tatoeba had too few sentences per form to fill them (it matches whole words, and its Slovak corpus is thin for these verbs). A paradigm from the Hunspell spelling dictionary would have matched 300 sentences, but that dictionary is built to accept words, not to say which forms a learner should drill: its affix rules generate every form a verb might take, rare and bookish ones included (the transgressive dosiahnuc), while the treebank lists only forms annotators found in real sentences.
+
+**How to apply:**
+- `curriculum/slovak/ud-verb-forms.json` lists, for each verb lemma, the forms the Universal Dependencies Slovak SNK treebank gives it (`scripts/build-ud-verb-forms.mjs`). Its README says lemmas and morphology were assigned manually and only sentences where two annotators agreed are kept. A form is used only when it is a verb wherever it occurs and has one lemma.
+- The cloze step of `scripts/export-slovakwiki-lexicon.mjs` blanks a verb's sentence with those forms as well as the wiki's own.
+- `scripts/merge-lexicon.mjs` gives a blank to a shipped sentence that has none. Text, position and the rejected flag do not change. 161 sentences gained a blank, all for verbs; 28 of the 102 thin verbs now have three usable sentences.
+- The forms file is licensed CC BY-SA 4.0, the treebank's licence, and names that licence and its source in its header. It is derived data, so the share-alike term applies to it. The owner chose to keep it in the repo (2026-11-01).
+- The other verbs stay thin until a verified source exists, for example JÚĽŠ.
+
 ### E29. Certain rules are checked in code, and every tutor verdict says what backs it (2026-11-01)
 
 **Why:** the owner wants a tutor that "very rarely misleads the student". The accuracy eval ([research/slovak-accuracy-eval.md](research/slovak-accuracy-eval.md)) found three things:

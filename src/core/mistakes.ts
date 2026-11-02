@@ -12,6 +12,9 @@
  * pairs of words, picked because they were already missed.
  */
 
+import type { AiStatus } from "./ai-status.ts";
+import type { PersonalPractice } from "./personal.ts";
+import type { StoryUsage } from "./reading.ts";
 import { countsAsFirstTry } from "./first-try.ts";
 import { FORM_SLIPS, type FormSlip } from "./form-slip.ts";
 import { isUnitId, unitInfo } from "./lesson.ts";
@@ -100,6 +103,33 @@ export interface MistakeAnalysis {
 	mixups: MixupSummary[];
 	/** The latest wrong first tries, newest first. Absent in snapshots from before it was kept. */
 	samples?: WrongSample[];
+}
+
+/** The guide as saved: the model's reply, its structured read, and what it was written from. */
+export interface GuideRecord {
+	/** The model's reply as written; the page shows it when `data` could not be read from it. */
+	text: string;
+	/** The reply read as patterns, guesses and a plan (parseGuide). */
+	data?: GuideData | null;
+	/** The practice targets the lexicon backs, for the personal lesson. */
+	practice?: PersonalPractice | null;
+	/** When it was written (ISO). */
+	at: string;
+	/** Digest of the facts it was written from (guideFacts). */
+	digest: string;
+	/** "provider:id" of the model that wrote it. */
+	model: string;
+	usage: StoryUsage;
+}
+
+/** What the My mistakes page reads: the analysis, the guide if any, and whether AI is ready. */
+export interface MistakesReport {
+	analysis: MistakeAnalysis;
+	guide: GuideRecord | null;
+	/** The guide was written from the facts the analysis has now. */
+	guideCurrent: boolean;
+	/** Whether a model can be called (a slot is set and its key is there). */
+	ai: AiStatus;
 }
 
 export const TREND_DAYS = 14;
