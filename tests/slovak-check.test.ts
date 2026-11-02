@@ -41,6 +41,7 @@ describe("the Slovak checker", () => {
 	it("knows nie je is two words and Slovak has no ř, ě, ů", () => {
 		assert.deepEqual(checkSlovak("Môj brat nieje doma.").issues[0]?.fix, "nie je");
 		assert.deepEqual(rules("To je řeka."), ["czech-letter"]);
+		assert.deepEqual(rules("Počúvam Dvořáka."), [], "a Czech name is not a Czech word");
 	});
 
 	it("flags budem with a perfective infinitive, also after a clitic, but not a modal in between", () => {
@@ -48,6 +49,12 @@ describe("the Slovak checker", () => {
 		assert.deepEqual(rules("Budem to urobiť zajtra."), ["budem-perfective"]);
 		assert.deepEqual(rules("Budem musieť urobiť úlohu."), []);
 		assert.deepEqual(rules("Zajtra budem písať list."), []);
+	});
+
+	it("leaves bude alone: its infinitive can be the subject, or follow modal dať sa", () => {
+		for (const ok of ["Najlepšie bude zavolať mu.", "Lepšie bude prísť skôr.", "Najjednoduchšie bude zobrať taxík.", "Bude sa to dať opraviť?"]) {
+			assert.deepEqual(rules(ok), [], ok);
+		}
 	});
 
 	it("checks dva/dve/dvaja against a gender the dictionary is sure of", () => {

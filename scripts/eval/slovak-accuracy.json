@@ -56,7 +56,7 @@
 		{ "id": "tr-v-kosiciach", "kind": "translate", "en": "We were in Košice.", "check": "v Košiciach", "ref": "nouns.md" },
 		{ "id": "tr-z-bratislavy", "kind": "translate", "en": "I am from Bratislava.", "check": "z Bratislavy", "ref": "valency-and-prepositions.md" },
 		{ "id": "tr-so-sestrou", "kind": "translate", "en": "I went with my sister. (I am a woman.)", "check": "so (svojou |mojou )?sestrou", "ref": "orthography-and-punctuation.md" },
-		{ "id": "tr-o-otcovi", "kind": "translate", "en": "We are talking about my father.", "check": "o (mojom|svojom) otcovi", "ref": "valency-and-prepositions.md" },
+		{ "id": "tr-o-otcovi", "kind": "translate", "en": "We are talking about my father.", "check": "o mojom otcovi", "ref": "valency-and-prepositions.md" },
 		{ "id": "tr-neotvaraj", "kind": "translate", "en": "Don't open the window! (to a friend)", "check": "neotváraj", "ref": "aspect-and-motion.md" },
 		{ "id": "tr-deti-unavene", "kind": "translate", "en": "The children were tired.", "check": "deti boli unavené", "ref": "nouns.md" },
 		{ "id": "tr-nikoho", "kind": "translate", "en": "I didn't see anyone. (I am a man.)", "check": "nikoho som nevidel|nevidel som nikoho", "ref": "syntax-and-style.md" },

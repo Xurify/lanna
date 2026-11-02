@@ -310,7 +310,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Strengthen takes it for seven days after the guide, after a weak spot on record and before mix-ups and slipping units: "Strengthen: Your plan · <the guide's first pattern>".
 - The model never writes a sentence for a drill. Sentences the lexicon lacks may later come from a model into a queue that a check other than the learner approves; that queue is not built.
 
-### E27. Certain rules are checked in code, and every tutor verdict says what backs it (2026-11-01)
+### E29. Certain rules are checked in code, and every tutor verdict says what backs it (2026-11-01)
 
 **Why:** the owner wants a tutor that "very rarely misleads the student". The accuracy eval ([research/slovak-accuracy-eval.md](research/slovak-accuracy-eval.md)) found three things:
 - Haiku accepted *s sestrou* with the `so` rule in its context.

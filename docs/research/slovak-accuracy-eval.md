@@ -75,6 +75,7 @@ Each one would mislead a learner:
 
 - **It fixed free explanations.** With the skill, every Haiku level explained the rhythmic law with *krásny*, the 2–4 / 5+ rule, and *dvaja* for male persons only. This is what the tutor actually says to a learner, and where Haiku without the skill was weakest.
 - **It did not fix mechanical forms on its own.** The `s/so` rule and its exact example were in the routed reference, and Haiku medium still accepted *s sestrou* 3 of 3 times.
+- **It did not lower Haiku's graded errors.** Without the skill, Haiku high and xhigh also made no error on the base set. With it, Haiku made more errors on the hard set at medium, high and xhigh (3, 3 and 3, against 1, 1 and 2) and fewer only at max (1 against 3). The counts are small (see Caveats), but nothing here shows the skill helping on forms.
 - **The skill's wording leaks into answers.** The numerals table labeled *dvaja* "m. anim.", and animals are masculine animate. With the skill, Haiku translated "two dogs" as *dvaja psi*, and Sonnet wrote "animate males". Fixed in this repo's copy (see `skills/slovak-language/SOURCE.md`).
 - **Routing matters.** The skill does state the clitic order (`syntax-and-style.md`), only hedged ("use idiomatic patterns rather than forcing an abstract sequence"). The item where Haiku invented "dative before reflexive" was routed to a different chapter, so the rule was not in its context. This repo's copy now adds one explicit line (`Páči sa mi`, never `*mi sa`).
 - **On *dva psi*:** the lexicon's forms for *pes* (not marked verified) include *psi*. The skill's nouns chapter gives *psy* as the standard plural. The key follows the skill. *dvaja psi* is wrong either way.
@@ -86,9 +87,9 @@ One run per config on the base set, and a handful of errors in each. A differenc
 
 ## Recommendation: what rarely misleads
 
-Points 1–3 and 5 were built the same day ([../DECISIONS.md](../DECISIONS.md) E27). The checker runs on every Slovak practice answer, and the tutor has `check_slovak` and `slovak_reference`. Every verdict now says whether a tool checked it.
+Points 1–3 and 5 were built the same day ([../DECISIONS.md](../DECISIONS.md) E29). The checker runs on every Slovak practice answer, and the tutor has `check_slovak` and `slovak_reference`. Every verdict now says whether a tool checked it.
 
-The model is not the main lever. The best configs measured (Haiku xhigh + skill, Sonnet high + skill) made no auto-graded errors on the base set. But both models invented rules in other runs, and the skill was ignored on a mechanical rule. A learner app should not rely on any one answer being right.
+The model is not the main lever. Eight configs made no auto-graded error on the base set: Haiku high, xhigh and max; Haiku xhigh + skill and max + skill; Sonnet high + skill; Sonnet max; and Sonnet max + skill on the 43 items it reached. Of those also run on the hard set, only Sonnet high + skill had no error there. But both models invented rules in other runs, and the skill was ignored on a mechanical rule. A learner app should not rely on any one answer being right.
 
 1. **Check mechanical rules in code, not in the model.** These are cheap to check without a model, deterministic, and testable:
    - `s/so` and `z/zo` before *s, z, š, ž*, and `nie je`

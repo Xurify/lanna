@@ -18,6 +18,6 @@
 		{ "id": "h-tr-so-susedmi", "kind": "translate", "en": "with the neighbors", "check": "so susedmi", "ref": "orthography-and-punctuation.md" },
 		{ "id": "h-tr-tri-psy", "kind": "translate", "en": "three dogs", "check": "tri psy", "ref": "adjectives-pronouns-numerals.md" },
 		{ "id": "h-tr-zo-skoly", "kind": "translate", "en": "I am coming home from school.", "check": "zo školy", "ref": "orthography-and-punctuation.md" },
-		{ "id": "h-explain-clitics", "kind": "explain", "question": "In 'Páči sa mi to', why does 'sa' come before 'mi'? Answer an A1 learner in at most three sentences.", "ref": "syntax-and-style.md", "rubric": "Clitics have a fixed order: the auxiliary (som, si…), then sa/si, then the dative (mi), then the accusative (to/ho). Wrong if it says the dative comes first or that the order is free." }
+		{ "id": "h-explain-clitics", "kind": "explain", "question": "In 'Páči sa mi to', why does 'sa' come before 'mi'? Answer an A1 learner in at most three sentences.", "ref": "syntax-and-style.md", "rubric": "Clitics have a fixed order: the auxiliary (som, si…), then sa/si, then the dative (mi), then other short pronouns (to, ho; in Páči sa mi to, to is the subject). Wrong if it says the dative comes first or that the order is free." }
 	]
 }

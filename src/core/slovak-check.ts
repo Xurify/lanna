@@ -51,7 +51,10 @@ const VOCALIZE: Record<string, { before: RegExp; full: string; letters: string }
 	v: { before: /^[vf]/i, full: "vo", letters: "v or f" },
 };
 
-const BUDEM = new Set(["budem", "budeš", "bude", "budeme", "budete", "budú"]);
+/** Every form but "bude": with it the infinitive can be the subject ("Najlepšie
+ *  bude zavolať mu.") or hang on modal "dať sa" ("Bude sa to dať opraviť?"),
+ *  and both are right. */
+const BUDEM = new Set(["budem", "budeš", "budeme", "budete", "budú"]);
 
 /** Common perfective infinitives (each one checked against KSSJ "dok."). */
 const PERFECTIVE = new Set([
@@ -85,7 +88,8 @@ export function checkSlovak(text: string, lookup?: SlovakLookup): SlovakCheck {
 
 	for (const w of words) if (w.toLocaleLowerCase("sk") === "nieje") issues.push({ rule: "nie-je", found: w, fix: capitalized("nie je", w), why: '"nie je" is always two words.' });
 
-	const czech = clean.match(/[řěůŘĚŮ]/u);
+	// A capitalized word after the first is a name: "Počúvam Dvořáka." is right.
+	const czech = words.find((w, i) => (i === 0 || w[0] === w[0]!.toLocaleLowerCase("sk")) && /[řěůŘĚŮ]/u.test(w))?.match(/[řěůŘĚŮ]/u);
 	if (czech) issues.push({ rule: "czech-letter", found: czech[0], why: `"${czech[0]}" is a Czech letter; Slovak has no ř, ě or ů.` });
 
 	for (let i = 0; i < words.length; i++) {
@@ -117,7 +121,7 @@ export function checkSlovak(text: string, lookup?: SlovakLookup): SlovakCheck {
 
 /** The checker's findings as one line for the tutor, or null when it has nothing to say. */
 export function checkerNote(check: SlovakCheck): string | null {
-	if (check.verified) return "[Checker: this is a verified dictionary example sentence. It is correct Slovak; do not mark it wrong.]";
+	if (check.verified) return "[Checker: this is a verified dictionary example sentence. Its Slovak is correct; do not mark its Slovak wrong. Whether it answers the task is still yours to judge.]";
 	if (check.issues.length === 0) return null;
 	const lines = check.issues.map((i) => `${i.found}${i.fix ? ` → ${i.fix}` : ""}: ${i.why}`);
 	return `[Checker, certain rules only: ${lines.join(" ")}]`;
