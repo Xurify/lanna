@@ -1,0 +1,817 @@
+{
+	"summary": {
+		"config": "claude-sonnet-5-5-max-skill",
+		"graded": 43,
+		"errors": 0,
+		"rejectedCorrect": 0,
+		"cost": 0.8447,
+		"avgSeconds": 9.4,
+		"avgReasoning": 1113,
+		"notAsked": 16
+	},
+	"results": [
+		{
+			"id": "err-do-skoly",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Idem do školy.\", \"why\": \"The preposition 'do' (movement into a place) takes the genitive, so the nominative 'škola' must become the genitive 'školy'.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Idem do školy.",
+				"why": "The preposition 'do' (movement into a place) takes the genitive, so the nominative 'škola' must become the genitive 'školy'."
+			},
+			"pass": true,
+			"cost": 0.0043665,
+			"output": 339,
+			"reasoning": 267,
+			"ms": 3277
+		},
+		{
+			"id": "err-v-bratislave",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Bývam v Bratislave.\", \"why\": \"The preposition v for location takes the locative, and feminine nouns in -a like Bratislava end in -e there (v Bratislave), not the nominative -a.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Bývam v Bratislave.",
+				"why": "The preposition v for location takes the locative, and feminine nouns in -a like Bratislava end in -e there (v Bratislave), not the nominative -a."
+			},
+			"pass": true,
+			"cost": 0.004253600000000001,
+			"output": 291,
+			"reasoning": 209,
+			"ms": 3516
+		},
+		{
+			"id": "err-dve-sestry",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Mám dve sestry.\", \"why\": \"Sestra is feminine, so the numeral 2 must be the feminine form dve, not the masculine dva, and the noun then takes the plural sestry.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Mám dve sestry.",
+				"why": "Sestra is feminine, so the numeral 2 must be the feminine form dve, not the masculine dva, and the noun then takes the plural sestry."
+			},
+			"pass": true,
+			"cost": 0.004727900000000001,
+			"output": 334,
+			"reasoning": 255,
+			"ms": 3832
+		},
+		{
+			"id": "err-pat-sestier",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Mám päť sestier.\", \"why\": \"After päť (and any number from 5 up) the noun takes the genitive plural, so sestra becomes sestier, not sestry (which is nominative plural, 2–4 only: tri sestry).\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Mám päť sestier.",
+				"why": "After päť (and any number from 5 up) the noun takes the genitive plural, so sestra becomes sestier, not sestry (which is nominative plural, 2–4 only: tri sestry)."
+			},
+			"pass": true,
+			"cost": 0.0120479,
+			"output": 1066,
+			"reasoning": 973,
+			"ms": 9989
+		},
+		{
+			"id": "err-nie-je",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Môj brat nie je doma.\", \"why\": \"The negated present tense of byť is written as two words, nie je, never as one word nieje.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Môj brat nie je doma.",
+				"why": "The negated present tense of byť is written as two words, nie je, never as one word nieje."
+			},
+			"pass": true,
+			"cost": 0.004568300000000001,
+			"output": 343,
+			"reasoning": 284,
+			"ms": 3928
+		},
+		{
+			"id": "err-budem-perf",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Zajtra napíšem list.\", \"why\": \"`budem` can only be followed by an imperfective infinitive, but `napísať` is perfective; for one completed future event use the perfective present `napíšem` (or `budem písať list` if you mean the ongoing process).\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Zajtra napíšem list.",
+				"why": "`budem` can only be followed by an imperfective infinitive, but `napísať` is perfective; for one completed future event use the perfective present `napíšem` (or `budem písať list` if you mean the ongoing process)."
+			},
+			"pass": true,
+			"cost": 0.031403,
+			"output": 768,
+			"reasoning": 666,
+			"ms": 7138
+		},
+		{
+			"id": "err-s-kamaratkou",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Včera som išla do kina s kamarátkou.\", \"why\": \"The preposition s (with) takes the instrumental, so feminine kamarátka becomes kamarátkou.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Včera som išla do kina s kamarátkou.",
+				"why": "The preposition s (with) takes the instrumental, so feminine kamarátka becomes kamarátkou."
+			},
+			"pass": true,
+			"cost": 0.008916100000000001,
+			"output": 756,
+			"reasoning": 683,
+			"ms": 6655
+		},
+		{
+			"id": "err-o-otcovi",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Hovorím o mojom otcovi.\", \"why\": \"Hovoriť o takes the locative, so \\\"môj otec\\\" must become \\\"o mojom otcovi\\\", and the e in \\\"otec\\\" drops in the oblique form.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Hovorím o mojom otcovi.",
+				"why": "Hovoriť o takes the locative, so \"môj otec\" must become \"o mojom otcovi\", and the e in \"otec\" drops in the oblique form."
+			},
+			"pass": true,
+			"cost": 0.006946500000000001,
+			"output": 596,
+			"reasoning": 506,
+			"ms": 5986
+		},
+		{
+			"id": "err-na-autobus",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Čakám na autobus.\", \"why\": \"Čakať na takes the accusative, and for an inanimate masculine noun like autobus the accusative looks like the nominative, so the genitive/dative form autobusu is wrong here.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Čakám na autobus.",
+				"why": "Čakať na takes the accusative, and for an inanimate masculine noun like autobus the accusative looks like the nominative, so the genitive/dative form autobusu is wrong here."
+			},
+			"pass": true,
+			"cost": 0.007914000000000001,
+			"output": 693,
+			"reasoning": 604,
+			"ms": 5649
+		},
+		{
+			"id": "err-deti-mile",
+			"kind": "sentence",
+			"text": "{\"correct\": false, \"corrected\": \"Tie deti sú veľmi milé.\", \"why\": \"The adjective must agree with the plural noun 'deti', so masculine singular 'milý' becomes plural 'milé', as in 'malé deti'; 'Tie deti' is already correct.\"}",
+			"out": {
+				"correct": false,
+				"corrected": "Tie deti sú veľmi milé.",
+				"why": "The adjective must agree with the plural noun 'deti', so masculine singular 'milý' becomes plural 'milé', as in 'malé deti'; 'Tie deti' is already correct."
+			},
+			"pass": true,
+			"cost": 0.0157011,
+			"output": 1435,
+			"reasoning": 1338,
+			"ms": 11143
+		},
+		{
+			"id": "ok-pat-ludi",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Päť ľudí čaká pred obchodom.\", \"why\": \"After päť the noun takes the genitive plural (ľudí) and the verb stays 3rd-person singular (čaká), and pred + instrumental (obchodom) correctly marks location.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Päť ľudí čaká pred obchodom.",
+				"why": "After päť the noun takes the genitive plural (ľudí) and the verb stays 3rd-person singular (čaká), and pred + instrumental (obchodom) correctly marks location."
+			},
+			"pass": true,
+			"cost": 0.026877900000000003,
+			"output": 2547,
+			"reasoning": 2449,
+			"ms": 21248
+		},
+		{
+			"id": "ok-dve-deti",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Dve deti sa hrajú v parku.\", \"why\": \"Nothing needs fixing: \\\"dve deti\\\" is the standard form, it takes the plural verb \\\"hrajú\\\", \\\"sa\\\" sits in second position, and \\\"v parku\\\" is the right locative (k-stems take -u).\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Dve deti sa hrajú v parku.",
+				"why": "Nothing needs fixing: \"dve deti\" is the standard form, it takes the plural verb \"hrajú\", \"sa\" sits in second position, and \"v parku\" is the right locative (k-stems take -u)."
+			},
+			"pass": true,
+			"cost": 0.0328636,
+			"output": 3151,
+			"reasoning": 3040,
+			"ms": 24168
+		},
+		{
+			"id": "ok-kavu-s-mliekom",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Mám rád kávu s mliekom.\", \"why\": \"Mať rád takes the accusative (kávu) and s takes the instrumental (mliekom); rád is masculine, so a female speaker would say rada.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Mám rád kávu s mliekom.",
+				"why": "Mať rád takes the accusative (kávu) and s takes the instrumental (mliekom); rád is masculine, so a female speaker would say rada."
+			},
+			"pass": true,
+			"cost": 0.023545500000000004,
+			"output": 550,
+			"reasoning": 466,
+			"ms": 5172
+		},
+		{
+			"id": "ok-nikto-nic",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Nikto nič nevidel.\", \"why\": \"Slovak requires negative pronouns like nikto and nič to be used with a negated verb (nevidel), so this double negation is standard and means 'Nobody saw anything.'\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Nikto nič nevidel.",
+				"why": "Slovak requires negative pronouns like nikto and nič to be used with a negated verb (nevidel), so this double negation is standard and means 'Nobody saw anything.'"
+			},
+			"pass": true,
+			"cost": 0.004342200000000001,
+			"output": 361,
+			"reasoning": 272,
+			"ms": 3154
+		},
+		{
+			"id": "ok-pred-kinom",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Stretli sme sa pred kinom.\", \"why\": \"Static location after 'pred' takes the instrumental (kino → kinom), the perfective 'stretnúť sa' suits a single meeting, and the clitics 'sme sa' are in the right order.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Stretli sme sa pred kinom.",
+				"why": "Static location after 'pred' takes the instrumental (kino → kinom), the perfective 'stretnúť sa' suits a single meeting, and the clitics 'sme sa' are in the right order."
+			},
+			"pass": true,
+			"cost": 0.006554000000000001,
+			"output": 556,
+			"reasoning": 457,
+			"ms": 4872
+		},
+		{
+			"id": "ok-chcela-by-som",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Chcela by som pohár vody.\", \"why\": \"The feminine conditional chcela by som is correctly formed (l-participle, then the clitics by som), and pohár vody correctly puts the substance in the genitive.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Chcela by som pohár vody.",
+				"why": "The feminine conditional chcela by som is correctly formed (l-participle, then the clitics by som), and pohár vody correctly puts the substance in the genitive."
+			},
+			"pass": true,
+			"cost": 0.032655500000000004,
+			"output": 819,
+			"reasoning": 734,
+			"ms": 7779
+		},
+		{
+			"id": "ok-curated-cisar",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"V zámku kedysi býval cisár s rodinou.\", \"why\": \"The sentence is already correct: `v zámku` is the right locative of `zámok` (the mobile o drops and a k-stem takes -u), `býval` is the past of `bývať` 'to live, reside', and `cisár` is the Slovak form (Czech is `císař`).\"}",
+			"out": {
+				"correct": true,
+				"corrected": "V zámku kedysi býval cisár s rodinou.",
+				"why": "The sentence is already correct: `v zámku` is the right locative of `zámok` (the mobile o drops and a k-stem takes -u), `býval` is the past of `bývať` 'to live, reside', and `cisár` is the Slovak form (Czech is `císař`)."
+			},
+			"pass": true,
+			"cost": 0.06282360000000001,
+			"output": 6146,
+			"reasoning": 6016,
+			"ms": 46165
+		},
+		{
+			"id": "ok-curated-akterami",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Hlavnými aktérmi príbehu sú dve deti.\", \"why\": \"The sentence is standard: the instrumental predicate Hlavnými aktérmi (aktérmi is the correct instrumental plural), the numeral phrase dve deti (normal with 2–4), and the plural verb sú agreeing with that subject.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Hlavnými aktérmi príbehu sú dve deti.",
+				"why": "The sentence is standard: the instrumental predicate Hlavnými aktérmi (aktérmi is the correct instrumental plural), the numeral phrase dve deti (normal with 2–4), and the plural verb sú agreeing with that subject."
+			},
+			"pass": true,
+			"cost": 0.06972110000000001,
+			"output": 6835,
+			"reasoning": 6711,
+			"ms": 50918
+		},
+		{
+			"id": "ok-curated-vynarali",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Pri čítaní sa mi vynárali nové otázky.\", \"why\": \"Nothing needs fixing: pri takes the locative (čítaní), the clitics sa mi stand in second position, and nové otázky agrees with vynárali (Slovak plural past ends in -li for all genders).\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Pri čítaní sa mi vynárali nové otázky.",
+				"why": "Nothing needs fixing: pri takes the locative (čítaní), the clitics sa mi stand in second position, and nové otázky agrees with vynárali (Slovak plural past ends in -li for all genders)."
+			},
+			"pass": true,
+			"cost": 0.060088,
+			"output": 3597,
+			"reasoning": 3485,
+			"ms": 26961
+		},
+		{
+			"id": "ok-curated-vlakom",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Cestou vlakom ušetríme čas aj peniaze.\", \"why\": \"Every form is right: instrumental cestou vlakom, accusative čas and peniaze (a plural-only noun), and perfective ušetríme as a future form; Cestovaním vlakom would be an alternative wording.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Cestou vlakom ušetríme čas aj peniaze.",
+				"why": "Every form is right: instrumental cestou vlakom, accusative čas and peniaze (a plural-only noun), and perfective ušetríme as a future form; Cestovaním vlakom would be an alternative wording."
+			},
+			"pass": true,
+			"cost": 0.20056110000000002,
+			"output": 19919,
+			"reasoning": 19806,
+			"ms": 145259
+		},
+		{
+			"id": "ok-curated-peciatky",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Bez pečiatky nemáte povolený vstup do areálu.\", \"why\": \"The sentence is already correct: bez takes the genitive (pečiatky), povolený agrees with masculine vstup, and do takes the genitive (areálu).\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Bez pečiatky nemáte povolený vstup do areálu.",
+				"why": "The sentence is already correct: bez takes the genitive (pečiatky), povolený agrees with masculine vstup, and do takes the genitive (areálu)."
+			},
+			"pass": true,
+			"cost": 0.019756500000000007,
+			"output": 1874,
+			"reasoning": 1778,
+			"ms": 13952
+		},
+		{
+			"id": "ok-curated-bicykli",
+			"kind": "sentence",
+			"text": "{\"correct\": true, \"corrected\": \"Nevlastní auto, jazdí len na bicykli.\", \"why\": \"Both clauses are standard: vlastniť takes an accusative object (nevlastní auto), and jazdiť na bicykli (na + locative) is the normal way to say you ride a bike.\"}",
+			"out": {
+				"correct": true,
+				"corrected": "Nevlastní auto, jazdí len na bicykli.",
+				"why": "Both clauses are standard: vlastniť takes an accusative object (nevlastní auto), and jazdiť na bicykli (na + locative) is the normal way to say you ride a bike."
+			},
+			"pass": true,
+			"cost": 0.075799,
+			"output": 7479,
+			"reasoning": 7377,
+			"ms": 56960
+		},
+		{
+			"id": "rule-rhythmic",
+			"kind": "choice",
+			"text": "{\"answer\": 0, \"why\": \"The rhythmic law normally prevents two long syllables in a row in native Slovak words, which is why Slovak has krásny (Czech krásný), while the other options describe things that are not this rule.\"}",
+			"out": {
+				"answer": 0,
+				"why": "The rhythmic law normally prevents two long syllables in a row in native Slovak words, which is why Slovak has krásny (Czech krásný), while the other options describe things that are not this rule."
+			},
+			"pass": true,
+			"cost": 0.0192755,
+			"output": 647,
+			"reasoning": 571,
+			"ms": 5571
+		},
+		{
+			"id": "rule-stress",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"Slovak stress is fixed on the first syllable of a word (e.g. BRAtislava, SLOvensko), and a preceding preposition can join the following word in one stress group.\"}",
+			"out": {
+				"answer": 1,
+				"why": "Slovak stress is fixed on the first syllable of a word (e.g. BRAtislava, SLOvensko), and a preceding preposition can join the following word in one stress group."
+			},
+			"pass": true,
+			"cost": 0.015998000000000002,
+			"output": 335,
+			"reasoning": 263,
+			"ms": 3140
+		},
+		{
+			"id": "rule-nie-je",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"In standard Slovak the present-tense negation of 'byť' is written as two words (nie som, nie je, nie sú), so 'nieje' is a misspelling and 'neni' is non-standard.\"}",
+			"out": {
+				"answer": 1,
+				"why": "In standard Slovak the present-tense negation of 'byť' is written as two words (nie som, nie je, nie sú), so 'nieje' is a misspelling and 'neni' is non-standard."
+			},
+			"pass": true,
+			"cost": 0.0041383,
+			"output": 300,
+			"reasoning": 221,
+			"ms": 3107
+		},
+		{
+			"id": "rule-dve-zeny",
+			"kind": "choice",
+			"text": "{\"answer\": 2, \"why\": \"Žena is feminine, so 'two' takes the feminine form dve (dve ženy); dva is masculine, dvaja is only for male persons, and dvoch is an oblique form.\"}",
+			"out": {
+				"answer": 2,
+				"why": "Žena is feminine, so 'two' takes the feminine form dve (dve ženy); dva is masculine, dvaja is only for male persons, and dvoch is an oblique form."
+			},
+			"pass": true,
+			"cost": 0.007210400000000001,
+			"output": 584,
+			"reasoning": 510,
+			"ms": 4578
+		},
+		{
+			"id": "rule-pat-genitive",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"In the nominative or accusative, numerals from 5 up take the genitive plural of the noun, e.g. päť študentov, dvadsať rokov.\"}",
+			"out": {
+				"answer": 1,
+				"why": "In the nominative or accusative, numerals from 5 up take the genitive plural of the noun, e.g. päť študentov, dvadsať rokov."
+			},
+			"pass": true,
+			"cost": 0.0076979000000000014,
+			"output": 628,
+			"reasoning": 564,
+			"ms": 6145
+		},
+		{
+			"id": "rule-budem",
+			"kind": "choice",
+			"text": "{\"answer\": 0, \"why\": \"The compound future `budem` + infinitive takes only imperfective verbs (`budem písať`), while perfective verbs express the future with their own present forms (`napíšem`).\"}",
+			"out": {
+				"answer": 0,
+				"why": "The compound future `budem` + infinitive takes only imperfective verbs (`budem písať`), while perfective verbs express the future with their own present forms (`napíšem`)."
+			},
+			"pass": true,
+			"cost": 0.006285600000000001,
+			"output": 511,
+			"reasoning": 440,
+			"ms": 3878
+		},
+		{
+			"id": "rule-neg-imperative",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"A prohibition normally uses the imperfective imperative, e.g. Nezatváraj okno. rather than *Nezavri okno; only warnings against accidents, like Nezabudni!, are an exception.\"}",
+			"out": {
+				"answer": 1,
+				"why": "A prohibition normally uses the imperfective imperative, e.g. Nezatváraj okno. rather than *Nezavri okno; only warnings against accidents, like Nezabudni!, are an exception."
+			},
+			"pass": true,
+			"cost": 0.009400599999999999,
+			"output": 824,
+			"reasoning": 742,
+			"ms": 6694
+		},
+		{
+			"id": "rule-v-do",
+			"kind": "choice",
+			"text": "{\"answer\": 1, \"why\": \"Location takes v + locative (Som v škole), while movement toward a destination takes do + genitive (Idem do školy).\"}",
+			"out": {
+				"answer": 1,
+				"why": "Location takes v + locative (Som v škole), while movement toward a destination takes do + genitive (Idem do školy)."
+			},
+			"pass": true,
+			"cost": 0.0027365000000000002,
+			"output": 176,
+			"reasoning": 122,
+			"ms": 2898
+		},
+		{
+			"id": "form-zena-gpl",
+			"kind": "form",
+			"text": "{\"form\": \"žien\"}",
+			"out": {
+				"form": "žien"
+			},
+			"pass": true,
+			"cost": 0.0023761000000000003,
+			"output": 117,
+			"reasoning": 106,
+			"ms": 2173
+		},
+		{
+			"id": "form-okno-gpl",
+			"kind": "form",
+			"text": "{\"form\": \"okien\"}",
+			"out": {
+				"form": "okien"
+			},
+			"pass": true,
+			"cost": 0.0028161,
+			"output": 161,
+			"reasoning": 150,
+			"ms": 2622
+		},
+		{
+			"id": "form-sestra-gpl",
+			"kind": "form",
+			"text": "{\"form\": \"sestier\"}",
+			"out": {
+				"form": "sestier"
+			},
+			"pass": true,
+			"cost": 0.0023986000000000003,
+			"output": 119,
+			"reasoning": 107,
+			"ms": 2555
+		},
+		{
+			"id": "form-kniha-isg",
+			"kind": "form",
+			"text": "{\"form\": \"knihou\"}",
+			"out": {
+				"form": "knihou"
+			},
+			"pass": true,
+			"cost": 0.0021711,
+			"output": 96,
+			"reasoning": 84,
+			"ms": 2024
+		},
+		{
+			"id": "form-brat-dsg",
+			"kind": "form",
+			"text": "{\"form\": \"bratovi\"}",
+			"out": {
+				"form": "bratovi"
+			},
+			"pass": true,
+			"cost": 0.0051536,
+			"output": 395,
+			"reasoning": 382,
+			"ms": 3556
+		},
+		{
+			"id": "form-mesto-lsg",
+			"kind": "form",
+			"text": "{\"form\": \"meste\"}",
+			"out": {
+				"form": "meste"
+			},
+			"pass": true,
+			"cost": 0.0030361000000000003,
+			"output": 183,
+			"reasoning": 172,
+			"ms": 3003
+		},
+		{
+			"id": "form-dieta-npl",
+			"kind": "form",
+			"text": "{\"form\": \"deti\"}",
+			"out": {
+				"form": "deti"
+			},
+			"pass": true,
+			"cost": 0.0037411000000000002,
+			"output": 253,
+			"reasoning": 242,
+			"ms": 2537
+		},
+		{
+			"id": "form-clovek-npl",
+			"kind": "form",
+			"text": "{\"form\": \"ľudia\"}",
+			"out": {
+				"form": "ľudia"
+			},
+			"pass": true,
+			"cost": 0.0029561,
+			"output": 175,
+			"reasoning": 162,
+			"ms": 2924
+		},
+		{
+			"id": "form-ist-past",
+			"kind": "form",
+			"text": "{\"form\": \"išiel\"}",
+			"out": {
+				"form": "išiel"
+			},
+			"pass": true,
+			"cost": 0.0030453,
+			"output": 198,
+			"reasoning": 186,
+			"ms": 2929
+		},
+		{
+			"id": "form-moct-past",
+			"kind": "form",
+			"text": "{\"form\": \"mohol\"}",
+			"out": {
+				"form": "mohol"
+			},
+			"pass": true,
+			"cost": 0.0025453000000000003,
+			"output": 148,
+			"reasoning": 136,
+			"ms": 2981
+		},
+		{
+			"id": "form-jest-3pl",
+			"kind": "form",
+			"text": "{\"form\": \"jedia\"}",
+			"out": {
+				"form": "jedia"
+			},
+			"pass": true,
+			"cost": 0.0024378,
+			"output": 136,
+			"reasoning": 124,
+			"ms": 2379
+		},
+		{
+			"id": "form-pisat-1sg",
+			"kind": "form",
+			"text": "{\"form\": \"píšem\"}",
+			"out": {
+				"form": "píšem"
+			},
+			"pass": true,
+			"cost": 0.0021628,
+			"output": 109,
+			"reasoning": 97,
+			"ms": 2408
+		},
+		{
+			"id": "tr-dva-psy",
+			"kind": "translate",
+			"text": "{\"slovak\": \"dva psy\"}",
+			"out": {
+				"slovak": "dva psy"
+			},
+			"pass": true,
+			"cost": 0.0206804,
+			"output": 1941,
+			"reasoning": 1926,
+			"ms": 16337
+		},
+		{
+			"id": "tr-dvaja-bratia",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-traja-studenti",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-dve-okna",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-pat-zien",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-k-lekarovi",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-v-kosiciach",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-z-bratislavy",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-so-sestrou",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-o-otcovi",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-neotvaraj",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-deti-unavene",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-nikoho",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "tr-napisem",
+			"kind": "translate",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "explain-hodiny",
+			"kind": "explain",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "explain-rhythmic",
+			"kind": "explain",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		},
+		{
+			"id": "explain-dva-dve",
+			"kind": "explain",
+			"text": "",
+			"out": null,
+			"pass": null,
+			"miss": "skipped: budget of $2 reached ($2.0008 spent)",
+			"cost": 0,
+			"output": 0,
+			"reasoning": 0,
+			"ms": 0
+		}
+	]
+}
