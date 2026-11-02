@@ -1624,7 +1624,7 @@ function EndScreen({
 
 			<div className="mt-8 grid grid-cols-3 gap-3">
 				<Stat label="XP" value={`+${xp}`} ink="text-sun" />
-				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink="text-go" />
+				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-go" : "text-foreground"} />
 				<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-foreground" icon={<FlagIcon className="size-5 text-sun" />} />
 			</div>
 

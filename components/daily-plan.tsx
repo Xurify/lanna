@@ -289,7 +289,7 @@ function NextTask({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSp
 				<TaskIcon task={task} large />
 				<span className="min-w-0 flex-1">
 					<span className={cn("flex items-center gap-1.5 text-xs font-bold", st.text)}>
-						<TrailMark strand={strand} size="sm" />
+						<TrailMark strand={strand} size="md" />
 						Up next · {STRANDS.find((s) => s.id === strand)?.title}
 					</span>
 					<span className="mt-0.5 block text-lg font-extrabold leading-tight text-foreground">{task.title}</span>
@@ -335,7 +335,6 @@ function TaskRow({ task, busy, onSpeak }: { task: PlanTask; busy: boolean; onSpe
 			</span>
 			<span className="flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums text-muted-foreground">
 				{task.done ? "Done" : `${task.minutes} min`}
-				<TrailMark strand={taskStrand(task)} size="sm" className={cn(task.done && "opacity-40")} />
 			</span>
 		</>
 	);

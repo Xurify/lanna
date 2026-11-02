@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRightIcon, FlagIcon, TargetIcon } from "lucide-react";
+import { ChevronRightIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoursSheet } from "@/components/hours-sheet";
 import { StrandBalance } from "@/components/strand-balance";
@@ -60,18 +60,21 @@ export function WeekCard({
 					const date = /\d{4}-\d{2}-\d{2}/.test(d.day) ? new Date(`${d.day}T12:00:00`) : null;
 					const active = d.xp > 0;
 					return (
-						<li key={d.day} className="flex flex-col items-center gap-1" title={date ? `${WEEKDAY_EN[date.getDay()]}: ${d.xp} XP` : undefined}>
+						<li key={d.day} className="flex justify-center" title={date ? `${WEEKDAY_EN[date.getDay()]}: ${d.xp} XP` : undefined}>
 							<span
 								className={cn(
-									"flex size-8 items-center justify-center rounded-full border-2",
-									active ? "border-sun bg-sun text-sun-ink" : "border-border text-muted-foreground/60",
-									isToday && !active && "border-dashed border-foreground/40",
+									"flex size-9 items-center justify-center rounded-full border-2 text-xs font-bold",
+									active ? "border-sun bg-sun text-sun-ink" : "border-border text-muted-foreground",
+									isToday && !active && "border-dashed border-foreground/50 text-foreground",
+									isToday && "ring-2 ring-sun/40 ring-offset-2 ring-offset-card",
 								)}
 							>
-								<FlagIcon className="size-4" aria-hidden="true" />
-								<span className="sr-only">{active ? `practiced, ${d.xp} XP` : "not practiced"}</span>
+								<span aria-hidden="true">{date ? WEEKDAY[date.getDay()] : ""}</span>
+								<span className="sr-only">
+									{date ? `${WEEKDAY_EN[date.getDay()]}, ` : ""}
+									{active ? `practiced, ${d.xp} XP` : "not practiced"}
+								</span>
 							</span>
-							<span className={cn("text-xs", isToday ? "font-bold text-foreground" : "text-muted-foreground")}>{date ? WEEKDAY[date.getDay()] : ""}</span>
 						</li>
 					);
 				})}

@@ -26,7 +26,7 @@ import { startTutorChat } from "@/components/lesson/tutor";
 import { DailyPlan, MixUps, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
 import { WeekCard } from "@/components/week-card";
 import { Climb } from "@/components/climb";
-import { RidgeProgress, TrailMark } from "@/components/trail";
+import { RidgeProgress, ridgeStops, TrailMark } from "@/components/trail";
 import { STRAND_ICON } from "@/components/strand-balance";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
@@ -240,7 +240,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 						</div>
 					</div>
 
-					{s && <RidgeProgress done={s.curriculum.done} total={s.curriculum.total} level={s.curriculum.level} goal={s.goal.level} className="mb-5" />}
+					{s && <RidgeProgress done={s.curriculum.done} total={s.curriculum.total} level={s.curriculum.level} goal={s.goal.level} stops={ridgeStops(s.curriculum)} className="mb-1" />}
 
 					{failed && (
 						<p className="rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 text-sm text-foreground" role="alert">
@@ -346,7 +346,7 @@ function PracticeGroup({ strand, items, busy }: { strand: Strand; items: Practic
 	return (
 		<div className="rounded-2xl border bg-card p-3" data-testid={`practice-${strand}`}>
 			<p className={cn("flex items-center gap-2 px-2 pt-1 text-sm font-bold", st.text)}>
-				<TrailMark strand={strand} size="sm" />
+				<TrailMark strand={strand} size="md" />
 				{meta.title}
 				<Icon className="ml-auto size-4 text-muted-foreground" />
 			</p>

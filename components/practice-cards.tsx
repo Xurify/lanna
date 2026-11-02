@@ -87,7 +87,7 @@ const OUTCOME_LABEL: Record<string, string> = {
  * (the agent's call, not a verdict against him). */
 const OUTCOME_CHIP: Record<string, string> = {
 	solved: "bg-green-500/15 text-green-500",
-	solvedWithHints: "bg-amber-500/15 text-amber-500",
+	solvedWithHints: "bg-sun/15 text-sun",
 	movedOn: "bg-muted text-muted-foreground",
 	surrendered: "bg-red-500/15 text-red-500",
 	dismissed: "bg-muted text-muted-foreground",

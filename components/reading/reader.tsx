@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, BookmarkIcon, CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, FlameIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, RotateCcwIcon, SearchIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { BookOpenIcon, BookmarkIcon, CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, RotateCcwIcon, SearchIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
@@ -35,11 +35,11 @@ import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, t
 export function levelBadgeStyle(level: string): string {
 	switch (level) {
 		case "A1":
-			return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+			return "bg-go/15 text-go border-go/30";
 		case "A2":
-			return "bg-sky-500/15 text-sky-400 border-sky-500/30";
+			return "bg-trail-blue/15 text-trail-blue border-trail-blue/30";
 		case "B1":
-			return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+			return "bg-sun/15 text-sun border-sun/30";
 		case "B2":
 		case "C1":
 			return "bg-purple-500/15 text-purple-400 border-purple-500/30";
@@ -714,12 +714,12 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 									className={cn(
 										"flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-ui text-xs font-semibold transition-colors",
 										isBookmarked(activeSentence)
-											? "border-sky-500/40 bg-sky-500/15 text-sky-400"
+											? "border-trail-blue/40 bg-trail-blue/15 text-trail-blue"
 											: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
 									)}
 									title={isBookmarked(activeSentence) ? "Odstrániť z uložených fráz" : "Uložiť vetu do fráz"}
 								>
-									<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-sky-400")} />
+									<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-trail-blue")} />
 									<span>{isBookmarked(activeSentence) ? "Uložená vo frázach" : "Uložiť vetu"}</span>
 								</button>
 							</div>
@@ -758,7 +758,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 													className={cn(
 														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
 														playing === i
-															? "bg-amber-400/25 text-foreground ring-1 ring-amber-400/40"
+															? "bg-sun/25 text-foreground ring-1 ring-sun/40"
 															: activeSentence === i
 																? "bg-accent/60"
 																: "hover:bg-accent/30",
@@ -816,7 +816,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 													className={cn(
 														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
 														playing === i
-															? "bg-amber-400/25 text-foreground ring-1 ring-amber-400/40"
+															? "bg-sun/25 text-foreground ring-1 ring-sun/40"
 															: activeSentence === i
 																? "bg-accent/60"
 																: "hover:bg-accent/30",
@@ -942,12 +942,12 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								className={cn(
 									"flex items-center gap-1 rounded-xl border px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 font-ui text-xs font-semibold transition-colors",
 									isBookmarked(activeSentence)
-										? "border-sky-500/40 bg-sky-500/15 text-sky-400"
+										? "border-trail-blue/40 bg-trail-blue/15 text-trail-blue"
 										: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
 								)}
 								title={isBookmarked(activeSentence) ? "Odstrániť vetu z Uložených fráz" : "Uložiť vetu do Uložených fráz"}
 							>
-								<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-sky-400")} />
+								<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-trail-blue")} />
 								<span className="hidden sm:inline">{isBookmarked(activeSentence) ? "Uložené" : "Uložiť"}</span>
 							</button>
 						</div>
@@ -1225,7 +1225,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 								<span>·</span>
 								<span>{upNext.wordCount} slov</span>
 								<span>·</span>
-								<span className="text-emerald-400 font-bold">{Math.round(upNext.coverage * 100)}% známych slov</span>
+								<span className="text-go font-bold">{Math.round(upNext.coverage * 100)}% známych slov</span>
 							</div>
 						</div>
 
@@ -1359,12 +1359,12 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 
 											<div>
 												{s.reads === 0 ? (
-													<span className="flex items-center gap-1 rounded-full bg-flame/15 px-2.5 py-0.5 font-ui text-xs font-black text-flame">
-														<FlameIcon className="size-3" />
+													<span className="flex items-center gap-1 rounded-full bg-sun/15 px-2.5 py-0.5 font-ui text-xs font-black text-sun">
+														<SparklesIcon className="size-3" />
 														<span>Nový</span>
 													</span>
 												) : (
-													<span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-ui text-xs font-bold text-emerald-400">
+													<span className="flex items-center gap-1 rounded-full bg-go/15 px-2.5 py-0.5 font-ui text-xs font-bold text-go">
 														<CheckCircle2Icon className="size-3" />
 														<span>{s.lastScore ? `${s.lastScore.correct}/${s.lastScore.total}` : `${s.reads}×`}</span>
 													</span>
