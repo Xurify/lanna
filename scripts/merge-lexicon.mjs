@@ -5,7 +5,8 @@
  * existing cards at other sentences. Here every example the shipped lexicon
  * has keeps its position, new examples are appended after them, and examples
  * the wiki has since dropped stay where they are, so nothing a learner has
- * seen changes meaning.
+ * seen changes meaning. A shipped example with no blank yet takes the cloze the
+ * fresh export finds in the same sentence: only the blank is added.
  *
  *   node scripts/merge-lexicon.mjs <shipped.json> <fresh.json> [out.json]
  */
@@ -17,14 +18,20 @@ const norm = (s) => s.normalize("NFC").trim();
 export function mergeLexicon(shipped, fresh) {
 	const freshBySlug = new Map(fresh.words.map((w) => [w.slug, w]));
 	const shippedBySlug = new Set(shipped.words.map((w) => w.slug));
-	const stats = { wordsAdded: 0, examplesKept: 0, examplesAdded: 0, examplesDroppedByWiki: 0 };
+	const stats = { wordsAdded: 0, examplesKept: 0, examplesAdded: 0, examplesDroppedByWiki: 0, clozesAdopted: 0 };
 	const words = [];
 
 	for (const old of shipped.words) {
 		const next = freshBySlug.get(old.slug);
 		const freshTexts = new Set((next?.examples ?? []).map((e) => norm(e.sk)));
 		const have = new Set(old.examples.map((e) => norm(e.sk)));
-		const examples = [...old.examples];
+		const freshClozes = new Map((next?.examples ?? []).filter((e) => e.cloze).map((e) => [norm(e.sk), e.cloze]));
+		const examples = old.examples.map((e) => {
+			const cloze = freshClozes.get(norm(e.sk));
+			if (e.cloze || e.rejected || !cloze) return e;
+			stats.clozesAdopted++;
+			return { ...e, cloze };
+		});
 		stats.examplesKept += old.examples.length;
 		stats.examplesDroppedByWiki += old.examples.filter((e) => !freshTexts.has(norm(e.sk))).length;
 		for (const e of next?.examples ?? []) {
