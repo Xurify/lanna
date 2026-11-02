@@ -1024,7 +1024,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 				{story.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-xp" />
+				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-sun" />
 				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-go" />
 				<Stat label="Words" value={String(story.wordCount)} ink="text-flame" />
 			</div>

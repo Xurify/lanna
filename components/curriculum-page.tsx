@@ -13,7 +13,7 @@ import { ArrowLeftIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
-import { CurriculumPath } from "@/components/curriculum-path";
+import { Climb } from "@/components/climb";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type ExamSummary, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
 
@@ -50,20 +50,21 @@ export function CurriculumPage({ initialConfigured, state, next, goal, weak = []
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>
-			<main className="mx-auto w-full max-w-3xl px-5 pb-16" data-testid="curriculum">
+			<main className="mx-auto w-full max-w-5xl px-5 pb-16 @container" data-testid="curriculum">
 				<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
 					<ArrowLeftIcon className="size-3.5" />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">Your path to {goal.level}</h1>
+				<h1 className="mt-3 font-ui text-3xl font-extrabold tracking-tight text-foreground">Your climb to {goal.level}</h1>
 				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
 					{state ? `${state.done} of ${state.total} units done. ` : ""}
-					Each chapter mixes lessons you can do on your own (built from real sentences), short sessions with the tutor for what a sentence drill cannot
-					check, and ends in something you can do. A chapter opens when the one before is nearly done; a lesson you ace in one go counts as done, so
-					you are never held in what you already know. Each chapter ends with an exam. Its scores show here, and they do not lock anything yet.
+					Read it from the bottom up: each level is a stretch of the mountain, each chapter a stop on the trail. Lessons you can do alone are built
+					from real sentences; short sessions with the tutor cover what a drill cannot check; every chapter ends in something you can do, then an
+					exam. A chapter opens when the one before is nearly done, and a lesson you ace in one go counts as done, so you are never held in what
+					you already know.
 				</p>
 				<div className="mt-8">
-					<CurriculumPath state={state} next={next} mode="full" goals={purposeGoals(goal.purposes ?? [])} weak={weak} exams={exams} busy={busy} onTutor={onTutor} onScene={onScene} />
+					<Climb state={state} next={next} mode="full" goalLevel={goal.level} goals={purposeGoals(goal.purposes ?? [])} weak={weak} exams={exams} busy={busy} onTutor={onTutor} onScene={onScene} />
 				</div>
 			</main>
 			<SetupDialog

@@ -22,8 +22,8 @@ test("the manifest opens full screen at the root, in the app's colors", () => {
 	const m = manifest();
 	assert.equal(m.start_url, "/");
 	assert.equal(m.display, "standalone");
-	assert.equal(m.background_color, "#141414");
-	assert.equal(m.theme_color, "#141414");
+	assert.equal(m.background_color, "#0f1519");
+	assert.equal(m.theme_color, "#0f1519");
 });
 
 test("every manifest icon exists at the size it declares, and one is maskable", () => {

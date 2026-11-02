@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { JetBrains_Mono, Nunito, Source_Sans_3 } from "next/font/google";
+import { Bricolage_Grotesque, JetBrains_Mono, Source_Sans_3 } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
@@ -20,9 +20,11 @@ import { OutboxFlush } from "@/components/lesson/outbox-flush";
 // LangHarness: latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä), cyrillic carries Russian.
 const ui = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains" });
 const prose = Source_Sans_3({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-sans3" });
-// LangHarness redesign: the chrome is a rounded, friendly sans (Nunito);
-// JetBrains Mono stays for code, numbers in tables and key hints.
-const chrome = Nunito({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-nunito" });
+// Trail design (2026-11-02): the chrome is Bricolage Grotesque, a grotesque
+// with an optical-size axis, so 12 px labels get its text cut and the big
+// numbers its display cut. latin-ext carries every Slovak letter; JetBrains
+// Mono stays for code and key hints.
+const chrome = Bricolage_Grotesque({ subsets: ["latin", "latin-ext"], variable: "--font-bricolage", axes: ["opsz"] });
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
@@ -31,7 +33,7 @@ export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
 	viewportFit: "cover",
-	themeColor: "#141414",
+	themeColor: "#0f1519",
 	colorScheme: "dark",
 };
 

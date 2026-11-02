@@ -850,7 +850,7 @@ function SessionsSidebar() {
 							</Link>
 						</Hint>
 						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
-							Lang<span className="text-go">Harness</span>
+							Lang<span className="text-sun">Harness</span>
 						</Link>
 						<Hint label="Close sidebar" action="toggle-sidebar">
 							<Button variant="ghost" size="icon" aria-label="Close sidebar" onClick={toggle} className="lh-no-drag">

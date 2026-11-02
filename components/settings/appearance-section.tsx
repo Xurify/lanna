@@ -29,7 +29,7 @@ import { CommitInput, SettingsDisclosure, SettingsRow, Toggle } from "./controls
 /** Factory reading family. Unset means this. */
 export const DEFAULT_READING_FONT = "Source Sans 3";
 /** Factory dark background. A set color must not read as the default. */
-const FACTORY_BACKGROUND = "#141414";
+const FACTORY_BACKGROUND = "#0f1519";
 
 /** Dev-browser fallback when queryLocalFonts is absent. Labeled as common families, never as the system list. */
 export const CURATED_FALLBACK_FONTS: readonly string[] = [

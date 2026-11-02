@@ -2,6 +2,16 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 2 November: the trail design (branch `feat/trail-design`, not merged)
+
+- **Direction:** the app's own look instead of the best-known app's forms (E30, [research/trail-design.md](research/trail-design.md)). Slovak hiking-trail marks for the four kinds of practice (input red, speaking blue, words & rules green, speed yellow), the sun as the one action color (buttons, streak, XP, done), and the path drawn as a climb: levels as stretches of a mountain, chapters as stops on a switchback trail, read from the bottom up, gold behind, dotted ahead.
+- **Today:** the streak is a flag and a day count, XP is gold, a ridge line under the greeting shows the whole way to the target level with a marker where the learner stands, every plan task carries its trail mark, the side column shows the current stage of the climb with the current chapter's units under it.
+- **Climb page** (`/curriculum`): the whole mountain, each stage with its switchbacks beside its chapters, opened at the learner's stop.
+- **Lessons:** the progress bar is a trail of marks, one per question, gold when right, red when missed; the combo is a bolt; the end screen shows a summit, XP in gold, "right" and "days in a row".
+- **Navigation:** Today, Climb, Review (due count in gold), Stories, Speak, Words, Progress in the sidebar; Today, Climb, Review, Stories, Progress in the phone tabs; the current door lit by a gold bar, no pill. "Plan" is now called Progress.
+- **Type and ground:** Bricolage Grotesque for the chrome; night slate ground `#0f1519` in the window frame, title bar and manifest.
+- **Unverified:** the PC, Safari on the phone and iPad, and a light theme (none yet). PR #79's look stays on its branch for comparison.
+
 ## 1 November: phone and iPad, first slice
 
 - **Route:** an installable responsive web app served from the PC, not a store app (E20). The reasoning, the iOS limits and the next steps are in [research/mobile-ipad.md](research/mobile-ipad.md).

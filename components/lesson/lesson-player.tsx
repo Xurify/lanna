@@ -15,23 +15,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-	BookmarkCheckIcon,
-	BookmarkIcon,
-	BrainIcon,
-	ChartColumnIcon,
-	CheckIcon,
-	FlameIcon,
-	LanguagesIcon,
-	LoaderCircleIcon,
-	SnailIcon,
-	TimerIcon,
-	TrophyIcon,
-	Volume2Icon,
-	WholeWordIcon,
-	XIcon,
-	ZapIcon,
-} from "lucide-react";
+import { BookmarkCheckIcon, BookmarkIcon, BrainIcon, ChartColumnIcon, CheckIcon, FlagIcon, LanguagesIcon, LoaderCircleIcon, MountainSnowIcon, SnailIcon, TimerIcon, Volume2Icon, WholeWordIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
@@ -609,19 +593,20 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 						<button type="button" aria-label="Leave the lesson" onClick={askLeave} data-testid="lesson-leave" className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 							<XIcon className="size-5" />
 						</button>
-						<div
-							role="progressbar"
-							aria-valuemin={0}
-							aria-valuemax={100}
-							aria-valuenow={Math.round(progress * 100)}
-							className="relative h-3 flex-1 overflow-hidden rounded-full bg-accent"
-							aria-label={mode === "blitz" ? `${left} seconds left` : `${index} of ${total} done`}
-						>
+						{mode === "blitz" ? (
 							<div
-								className={cn("h-full rounded-full transition-[width] duration-500 ease-out", mode === "blitz" ? (left <= 10 ? "bg-miss" : "bg-sky") : "bg-go")}
-								style={{ width: `${Math.max(3, progress * 100)}%` }}
-							/>
-						</div>
+								role="progressbar"
+								aria-valuemin={0}
+								aria-valuemax={100}
+								aria-valuenow={Math.round(progress * 100)}
+								className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-accent"
+								aria-label={`${left} seconds left`}
+							>
+								<div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", left <= 10 ? "bg-miss" : "bg-sun")} style={{ width: `${Math.max(3, progress * 100)}%` }} />
+							</div>
+						) : (
+							<LessonTrail reps={reps} index={index} total={total} answered={!!current} />
+						)}
 						{mode === "blitz" && (
 							<span className={cn("flex items-center gap-1 font-ui text-sm font-semibold tabular-nums", left <= 10 ? "text-miss" : "text-sky")}>
 								<TimerIcon className="size-5" />
@@ -629,15 +614,15 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 							</span>
 						)}
 						<div
-							className={cn("relative flex min-w-12 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-flame" : "text-muted-foreground")}
+							className={cn("relative flex min-w-12 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-sun" : "text-muted-foreground")}
 							data-testid="combo"
 							title="Right in a row"
 						>
-							<FlameIcon className={cn("size-5", combo >= 3 && "lh-flicker")} aria-hidden="true" />
+							<ZapIcon className={cn("size-5", combo >= 3 && "fill-sun lh-flicker")} aria-hidden="true" />
 							{combo}
 							<span className="sr-only"> right in a row</span>
 							{floater && (
-								<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-xp">
+								<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-sun">
 									{floater.text}
 								</span>
 							)}
@@ -681,6 +666,23 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 
 /** The one content column every row lines up on: top bar, rep and footer. */
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
+
+/** The lesson's progress as a trail of stops (trail design): one mark per
+ *  question, gold once answered right, red for a miss, the one in front of
+ *  you ringed, the rest ahead dotted. The bar is also the lesson's record. */
+function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: number; total: number; answered: boolean }) {
+	const n = Math.max(total, 1);
+	return (
+		<ol className="flex flex-1 items-center gap-1" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((index / n) * 100)} aria-label={`${index} of ${total} done`} data-testid="lesson-trail">
+			{Array.from({ length: n }, (_, i) => {
+				const rep = i < index ? reps[i] : i === index && answered ? reps[i] : undefined;
+				const current = i === index && !answered;
+				const tone = !rep ? (current ? "bg-foreground" : "bg-border") : rep.verdict === "wrong" ? "bg-miss" : rep.verdict === "accents" ? "bg-sun/70" : "bg-sun";
+				return <li key={i} className={cn("h-2 flex-1 rounded-full transition-colors duration-300", tone, current && "lh-pulse-ring")} />;
+			})}
+		</ol>
+	);
+}
 
 /** The keys that answer this kind of rep, shown beside the actions. Hidden
  *  on phone widths, where there is no keyboard to press. */
@@ -1517,7 +1519,7 @@ function Confetti() {
 				dx: `${(Math.random() - 0.5) * 520}px`,
 				dy: `${-120 - Math.random() * 260}px`,
 				rot: `${(Math.random() - 0.5) * 720}deg`,
-				color: ["var(--lh-go)", "var(--lh-gold)", "var(--lh-xp)", "var(--lh-sky)", "var(--lh-flame)"][i % 5],
+				color: ["var(--lh-sun)", "var(--foreground)", "var(--lh-trail-red)", "var(--lh-trail-blue)", "var(--lh-trail-green)"][i % 5],
 				delay: `${Math.random() * 120}ms`,
 			})),
 		[],
@@ -1602,10 +1604,10 @@ function EndScreen({
 	return (
 		<div className="relative m-auto w-full max-w-xl px-5 text-center" data-testid="lesson-end">
 			<Confetti />
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-gold/15 text-gold">
-				{mode === "blitz" ? <ZapIcon className="size-12" /> : <TrophyIcon className="size-12" />}
+			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-sun/15 text-sun">
+				{mode === "blitz" ? <ZapIcon className="size-12" /> : <MountainSnowIcon className="size-12" />}
 			</div>
-			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">
+			<h1 className="mt-5 font-ui text-4xl font-extrabold text-foreground">
 				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : focus === "mixups" ? (perfect ? "No mix-ups!" : "Mix-ups done!") : focus === "personal" ? (perfect ? "Perfect plan practice!" : "Plan practice done!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
 			</h1>
 			<p className="mt-2 min-h-7 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
@@ -1615,15 +1617,15 @@ function EndScreen({
 				<ol className="mx-auto mt-3 flex h-2.5 items-center justify-center gap-2" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
 					{!here?.done &&
 						Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
-							<li key={i} className={cn("h-2.5 w-8 rounded-full", !here ? "animate-pulse bg-accent" : i < here.lessons ? "bg-go" : "bg-accent")} />
+							<li key={i} className={cn("h-2.5 w-8 rounded-full", !here ? "animate-pulse bg-accent" : i < here.lessons ? "bg-sun" : "bg-accent")} />
 						))}
 				</ol>
 			)}
 
 			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={`+${xp}`} ink="text-xp" />
-				<Stat label={mode === "blitz" ? "Best" : "Accuracy"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink="text-go" />
-				<Stat label="Streak" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-flame" icon={<FlameIcon className="size-5" />} />
+				<Stat label="XP" value={`+${xp}`} ink="text-sun" />
+				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink="text-go" />
+				<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-foreground" icon={<FlagIcon className="size-5 text-sun" />} />
 			</div>
 
 			<p className="mt-4 min-h-5 font-prose text-sm text-muted-foreground" data-testid="lesson-end-recorded">
@@ -1699,9 +1701,9 @@ function whereLine(here: { title: string; lessons: number; done: boolean; accura
 
 function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink: string; icon?: React.ReactNode }) {
 	return (
-		<div className="rounded-2xl border-2 bg-card px-3 py-4">
+		<div className="rounded-2xl border bg-card px-3 py-4">
 			<p className="font-ui text-sm font-bold text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 flex h-9 items-center justify-center gap-1 font-ui text-3xl font-black tabular-nums", ink)}>
+			<p className={cn("mt-1 flex h-9 items-center justify-center gap-1.5 font-ui text-3xl font-extrabold tabular-nums", ink)}>
 				{icon}
 				{value ?? <Pulse className="h-7 w-12" />}
 			</p>

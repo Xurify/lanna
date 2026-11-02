@@ -4,19 +4,19 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { isPhoneNavPath, PhoneNav } from "@/components/phone-nav";
 
-describe("PhoneNav — the four doors on phones (below md)", () => {
-	it("shows on Today, Plan (and Milestones under it), Review and the Skill map only", () => {
-		for (const p of ["/", "/plan", "/milestones", "/review", "/map"]) assert.ok(isPhoneNavPath(p), p);
-		for (const p of ["/chat/new", "/lesson", "/listen", "/fluency", "/speak", "/watch", "/reading", "/curriculum"]) {
+describe("PhoneNav — the five doors on phones (below md)", () => {
+	it("shows on Today, the Climb, Review, Stories and Progress (with Milestones and the map under it) only", () => {
+		for (const p of ["/", "/curriculum", "/plan", "/milestones", "/review", "/map", "/read"]) assert.ok(isPhoneNavPath(p), p);
+		for (const p of ["/chat/new", "/lesson", "/listen", "/fluency", "/speak", "/watch", "/reading"]) {
 			assert.ok(!isPhoneNavPath(p), `${p} keeps its own bottom bar`);
 		}
 	});
 
-	it("renders the four doors, hidden from md up, with the active door marked", () => {
+	it("renders the five doors, hidden from md up, with the active door marked", () => {
 		const html = renderToStaticMarkup(createElement(PhoneNav, { pathname: "/review" }));
 		assert.ok(html.includes('aria-label="Bottom navigation"'));
 		assert.ok(html.includes("md:hidden"), "the bar is phone-only");
-		for (const id of ["phone-today-door", "phone-plan-door", "phone-review-door", "phone-map-door"]) {
+		for (const id of ["phone-today-door", "phone-path-door", "phone-review-door", "phone-stories-door", "phone-plan-door"]) {
 			assert.ok(html.includes(`data-testid="${id}"`), id);
 		}
 		const review = html.split('data-testid="phone-review-door"')[1]?.split("</a>")[0] ?? "";

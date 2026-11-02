@@ -1,26 +1,28 @@
 "use client";
 
 /**
- * The phone bottom nav. Below Tailwind's md breakpoint (768px) the four main
- * doors sit in a bar at the foot of the screen, so Today, Plan, Review and the
- * Skill map stay one tap away without opening the sidebar.
+ * The phone bottom nav. Below Tailwind's md breakpoint (768px) five doors sit
+ * in a bar at the foot of the screen, so Today, the Climb, Review, Stories and
+ * Progress stay one tap away without opening the sidebar (Speak and Words are
+ * a tap away on Today and in the drawer).
  *
- * It shows on those four pages only (Plan also covers Milestones, as the
- * sidebar does). Chat, lesson and player pages keep their own bottom bars
- * (composers, transport controls), so the nav never covers them. Same doors,
- * icons and active rules as the sidebar's Main list.
+ * It shows on those pages only (Progress also covers Milestones and the
+ * map, as the sidebar does). Chat, lesson and player pages keep their own
+ * bottom bars (composers, transport controls), so the nav never covers them.
+ * The current door is lit by a sun bar above it and a sun icon, no pill
+ * (trail design, 2026-11-02).
  */
 
 import Link from "next/link";
-import { BookOpenIcon, type LucideIcon, MapIcon, RepeatIcon, SunIcon, TargetIcon } from "lucide-react";
+import { BookOpenIcon, ChartNoAxesColumnIcon, type LucideIcon, MountainSnowIcon, RepeatIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const DOORS: { href: string; label: string; icon: LucideIcon; tint: string; testid: string; pages: readonly string[] }[] = [
-	{ href: "/", label: "Today", icon: SunIcon, tint: "text-gold", testid: "phone-today-door", pages: ["/"] },
-	{ href: "/plan", label: "Plan", icon: TargetIcon, tint: "text-flame", testid: "phone-plan-door", pages: ["/plan", "/milestones"] },
-	{ href: "/review", label: "Review", icon: RepeatIcon, tint: "text-sky", testid: "phone-review-door", pages: ["/review"] },
-	{ href: "/map", label: "Skill map", icon: MapIcon, tint: "text-xp", testid: "phone-map-door", pages: ["/map"] },
-	{ href: "/words", label: "Words", icon: BookOpenIcon, tint: "text-emerald", testid: "phone-words-door", pages: ["/words"] },
+const DOORS: { href: string; label: string; icon: LucideIcon; testid: string; pages: readonly string[] }[] = [
+	{ href: "/", label: "Today", icon: SunIcon, testid: "phone-today-door", pages: ["/"] },
+	{ href: "/curriculum", label: "Climb", icon: MountainSnowIcon, testid: "phone-path-door", pages: ["/curriculum"] },
+	{ href: "/review", label: "Review", icon: RepeatIcon, testid: "phone-review-door", pages: ["/review"] },
+	{ href: "/read", label: "Stories", icon: BookOpenIcon, testid: "phone-stories-door", pages: ["/read"] },
+	{ href: "/plan", label: "Progress", icon: ChartNoAxesColumnIcon, testid: "phone-plan-door", pages: ["/plan", "/milestones", "/map"] },
 ];
 
 /** True on the pages that show the bar. The app shell pads its content
@@ -43,11 +45,12 @@ export function PhoneNav({ pathname }: { pathname: string }) {
 						data-testid={d.testid}
 						aria-current={active ? "page" : undefined}
 						className={cn(
-							"flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 font-ui text-xs font-semibold transition-colors",
+							"relative flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 font-ui text-xs font-semibold transition-colors",
 							active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
 						)}
 					>
-						<Icon className={cn("size-5 shrink-0", active && d.tint)} aria-hidden="true" />
+						{active && <span className="absolute inset-x-5 top-0 h-[3px] rounded-b-full bg-sun" aria-hidden="true" />}
+						<Icon className={cn("size-5 shrink-0", active && "text-sun")} aria-hidden="true" />
 						<span className="truncate">{d.label}</span>
 					</Link>
 				);

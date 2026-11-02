@@ -121,7 +121,7 @@ describe("Settings → Appearance → Advanced", () => {
 		const host = await mount(<AppearanceSection appearance={undefined} onSectionChange={() => {}} />);
 		assert.equal(q(host, "input-background"), null, "closed by default");
 		await open(host, "advanced-appearance");
-		assert.equal(q(host, "input-background")!.getAttribute("placeholder"), "#141414");
+		assert.equal(q(host, "input-background")!.getAttribute("placeholder"), "#0f1519");
 		assert.equal(q(host, "input-bold-color")!.getAttribute("placeholder"), "same as text");
 		assert.equal(q(host, "input-italic-color")!.getAttribute("placeholder"), "same as text");
 		assert.equal((host.textContent!.match(/Empty = same as text/g) ?? []).length, 2, "bold + italic rows");
@@ -132,6 +132,6 @@ describe("Settings → Appearance → Advanced", () => {
 		const host = await mount(<AppearanceSection appearance={{ background: "#1a1a2e" }} onSectionChange={() => {}} />);
 		await open(host, "advanced-appearance");
 		assert.equal(q(host, "input-background")!.getAttribute("value"), "#1a1a2e");
-		assert.ok(q(host, "row-background")!.textContent!.includes("Empty = #141414"), "a set color is not the default");
+		assert.ok(q(host, "row-background")!.textContent!.includes("Empty = #0f1519"), "a set color is not the default");
 	});
 });
