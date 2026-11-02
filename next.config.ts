@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
 	// The dev "N" bubble sat on top of the sidebar's Settings button in
 	// desktop:dev; build errors still show as an overlay.
 	devIndicators: false,
+	// Tailscale Serve (E21): a phone loads this dev server's chunks from its tailnet
+	// name. Next refuses a dev resource from any origin not listed here, so the page
+	// never hydrates and pairing does nothing. The name lives in .env.local, which is
+	// not committed, and only the dev server reads it, so a build never carries it.
+	allowedDevOrigins: process.env.NODE_ENV === "development" && process.env.LH_TAILNET_HOST ? [process.env.LH_TAILNET_HOST] : undefined,
 	// SAFETY (empirically verified 2026-09-17): without this, output file
 	// tracing sweeps the repo's real data/ — chat records, graph ledgers —
 	// INTO the standalone bundle. A shipped desktop app would carry the

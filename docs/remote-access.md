@@ -12,7 +12,7 @@ The rules behind it are in [DECISIONS.md, E21](DECISIONS.md) and the research in
 
 ## Set it up (about five minutes)
 
-1. Start LangHarness on this PC with `bun run desktop:dev`. It listens on port 3010.
+1. Name this computer's address for the phone. In the project folder, create a file named `.env.local` with one line: `LH_TAILNET_HOST=` followed by the name in your phone's address, without `https://` and without a path. The file is never committed. Then start LangHarness on this PC with `bun run desktop:dev`. It listens on port 3010. Restart it after you change `.env.local`.
 2. In LangHarness, open **Settings → Devices** and turn on **Remote access**. This window is signed in automatically, as "This computer".
 3. In a terminal on this PC (PowerShell on Windows), run the command Settings shows:
 
@@ -52,10 +52,10 @@ It turns remote access off and signs every paired device out. It does not touch 
 - **"That code has expired."** A code lasts five minutes and works once. Make a new one.
 - **The Home Screen icon asks for a code again.** iOS may keep a Home Screen app's cookies apart from Safari's. This is not verified. Pair from the Home Screen icon if it asks.
 - **The installed (packaged) desktop app does not work here.** Its port changes on every start, and Serve needs a fixed one. Use `bun run desktop:dev` for now. A fixed port for the installed app is a later step.
-- **The PC terminal says "Blocked cross-origin request to Next.js dev resource".** Only hot reload is affected: the page still works. To allow hot reload through your tailnet name, add that name to `allowedDevOrigins` in `next.config.ts` and restart.
+- **The PC terminal says "Blocked cross-origin request to Next.js dev resource", and Pair does nothing on the phone.** The page never started, because Next refused its scripts from your tailnet name. Check that `.env.local` has `LH_TAILNET_HOST` set to that name (step 1), then restart `bun run desktop:dev`.
 
 ## What is checked, and what is not
 
 Checked in the cloud sandbox with a throwaway data folder: the switch, this computer's own browser at `localhost` opening the app with no code (switch on and off), pairing with a code and its tries and expiry, sign-out, turning off, the refusals for other host names and for proxy headers, and the recovery command.
 
-Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's handling of the cookie, and the Home Screen app. The owner has to check those on the devices.
+Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's handling of the cookie, the Home Screen app, and the phone's page after the `LH_TAILNET_HOST` fix. The owner has to check those on the devices.
