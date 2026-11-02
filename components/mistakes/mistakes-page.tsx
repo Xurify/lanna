@@ -13,10 +13,9 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, type GuideData, type MistakeAnalysis, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
-import type { MistakesReport } from "@/src/server";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-go" },
@@ -288,6 +287,9 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 						{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
 						{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
 					</button>
+					<p className="font-prose text-xs text-muted-foreground" data-testid="guide-privacy">
+						Sends your unit scores, the words you miss or mix up, and your latest wrong sentences with what you wrote to your model provider. Nothing else leaves this computer.
+					</p>
 				</div>
 			)}
 			{!ai.ready && guide && <AiCallout status={ai} title="AI is off, so this guide cannot be refreshed" adds={[]} className="mt-4" />}

@@ -11,7 +11,9 @@ import type { ModelSlot } from "../core/settings.ts";
 import { readSettings } from "../store/settings.ts";
 import { providerKeyPresent } from "./keys.ts";
 
-export type AiStatus = { ready: true; model: string } | { ready: false; reason: "no-model" | "no-key"; provider?: string };
+import type { AiStatus } from "../core/ai-status.ts";
+
+export type { AiStatus };
 
 /** Which slot a feature asks for first: most run on Cheap, falling back to
  *  Strong; the analysis of a learner's mistakes runs rarely and is reasoning,
