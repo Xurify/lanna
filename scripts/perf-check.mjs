@@ -383,15 +383,16 @@ async function interactions(browser, base) {
 						await act(page, async () => {
 							const b = await page.$('[data-testid="lesson-options"] button');
 							await b.click();
-						}, () => !!document.querySelector('[data-testid="lesson-feedback"]')),
+						}, () => !!document.querySelector('[data-testid="lesson-feedback"], [data-testid="lesson-hint"], [data-testid="lesson-peek"]')),
 					);
 				} else {
 					await page.focus('[data-testid="lesson-input"]');
 					await page.keyboard.type("x");
-					lessons.push(await act(page, click(page, '[data-testid="lesson-check"]'), () => !!document.querySelector('[data-testid="lesson-feedback"]')));
+					lessons.push(await act(page, click(page, '[data-testid="lesson-check"]'), () => !!document.querySelector('[data-testid="lesson-feedback"], [data-testid="lesson-hint"], [data-testid="lesson-peek"]')));
 				}
 				await sleep(250);
-				conts.push(await act(page, click(page, '[data-testid="lesson-continue"]'), () => !document.querySelector('[data-testid="lesson-feedback"]')));
+				// A first miss gives a second try instead of feedback; Continue is timed when feedback is up.
+				if (await page.$('[data-testid="lesson-continue"]')) conts.push(await act(page, click(page, '[data-testid="lesson-continue"]'), () => !document.querySelector('[data-testid="lesson-feedback"]')));
 			} catch (e) {
 				console.error(`  ! lesson: ${e.message.split("\n")[0]}`);
 			}
