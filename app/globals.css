@@ -692,6 +692,12 @@ body {
 .lh-electron[data-lh-platform="darwin"] .lh-lights-gutter {
 	padding-left: calc(92px / var(--lh-zoom));
 }
+/* The folded sidebar column clears the traffic lights, which sit over it. */
+@media (min-width: 768px) {
+	.lh-electron[data-lh-platform="darwin"] .lh-collapsed-col {
+		width: calc(92px / var(--lh-zoom) + 1.5rem);
+	}
+}
 .lh-electron[data-lh-platform="darwin"] .lh-closed-toggle {
 	margin-left: calc(92px / var(--lh-zoom));
 }

@@ -824,16 +824,26 @@ function SessionsSidebar() {
 			<aside data-sidebar=""
 				className={cn(
 					"sidebar-motion shrink-0 overflow-hidden duration-200",
-					open ? "w-72" : "w-0",
+					open ? "w-72" : "w-0 md:w-13",
+					collapsed && "lh-collapsed-col",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
 					"max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 touch-narrow:fixed touch-narrow:inset-y-0 touch-narrow:left-0 touch-narrow:z-50",
 					drawer ? "max-md:w-72 max-md:shadow-2xl touch-narrow:w-72 touch-narrow:shadow-2xl" : "max-md:w-0 touch-narrow:w-0",
 				)}
-				aria-hidden={!visible}
 			>
-				<div className={cn("flex h-full w-72 flex-col border-r bg-side max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]")}>
+				{/* Folded: a narrow column that holds only the button to open it. It is a real column (the page moves over), not a floating button, so nothing on the page sits under it. */}
+				{collapsed && (
+					<div className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side pt-3 md:flex" data-testid="sidebar-folded">
+						<Hint label="Open sidebar" action="toggle-sidebar" side="right">
+							<Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={toggleCollapsed} data-testid="sidebar-open" className="lh-no-drag text-ink-3 hover:text-foreground">
+								<PanelLeftOpenIcon className="size-4" />
+							</Button>
+						</Hint>
+					</div>
+				)}
+				<div aria-hidden={!visible} className={cn("flex h-full w-72 flex-col border-r bg-side max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -1191,25 +1201,6 @@ function SessionsSidebar() {
 	);
 }
 
-/** The one way back when the sidebar is folded: pinned to the top-left of the window, so it is in the same place on every page (the pages' own headers differ). On macOS the margin clears the traffic lights. */
-function OpenSidebarButton() {
-	const { collapsed, toggleCollapsed } = useSidebar();
-	if (!collapsed) return null;
-	return (
-		<Hint label="Open sidebar" action="toggle-sidebar" side="right">
-			<button
-				type="button"
-				onClick={toggleCollapsed}
-				aria-label="Open sidebar"
-				data-testid="sidebar-open"
-				className="lh-no-drag lh-closed-toggle lh-press fixed left-3 top-3 z-30 hidden size-9 items-center justify-center rounded-lg bg-card text-ink-3 shadow-raise hover:text-foreground md:flex"
-			>
-				<PanelLeftOpenIcon className="size-4" />
-			</button>
-		</Hint>
-	);
-}
-
 /** The app frame: sidebar inline + content. Rendered once in the root layout. */
 export function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
@@ -1224,7 +1215,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	return (
 		<SettingsDialogProvider>
 			<JumpProvider>
-			<OpenSidebarButton />
 			<SessionsSidebar />
 			{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. */}

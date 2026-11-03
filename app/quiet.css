@@ -106,7 +106,8 @@
 
 /* rail */
 .q-rail { background: var(--q-side); box-shadow: inset 1px 0 0 var(--q-line); display: flex; flex-direction: column; min-height: 0; }
-.q-rail-in { display: flex; flex-direction: column; height: 100%; padding: 16px 20px 18px; }
+/* The top clears the window controls Electron draws over the right edge (env() is 0 in a browser). */
+.q-rail-in { display: flex; flex-direction: column; height: 100%; padding: max(16px, calc(env(titlebar-area-height, 0px) + 10px)) 20px 18px; }
 .q-brand { display: flex; align-items: center; gap: 10px; height: 32px; }
 .q-mark .q-pie { width: 14px; height: 14px; }
 .q-mark .q-pie circle { stroke: var(--q-on-teal); }
