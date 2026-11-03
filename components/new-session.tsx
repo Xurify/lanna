@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Conversation, ConversationContent, ConversationEmptyState } from "@/components/ai-elements/conversation";
 import { Composer } from "@/components/composer";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
@@ -89,8 +88,9 @@ export function DraftShell({
 	picks = [],
 	onOpenPicker,
 	onClearPicks,
-	overlay,
-}: {
+		overlay,
+		onModeChange,
+	}: {
 	busy: boolean;
 	text: string;
 	onChange: (v: string) => void;
@@ -116,7 +116,9 @@ export function DraftShell({
 	 *  the graph view (the overlay fills its column, never the sidebar).
 	 *  Passed as a node so the pick state stays in NewSession. */
 	overlay?: ReactNode;
-}) {
+		/** When given, the start screen offers the two kinds of chat as a choice. */
+		onModeChange?: (mode: "teach" | "practice") => void;
+	}) {
 	// Voice dictation (STT wave, 2026-09-17): finals append at the end of the
 	// draft text (via the parent's onChange — the truth lives there); the
 	// strip lives in the stats bar's middle slot.
@@ -172,24 +174,25 @@ export function DraftShell({
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1">
-					{/* The pointer-events pattern (953b22b): the sticky wrapper is
-					    pointer-events-none so nothing here blocks the empty-state
-					    area; the blob and the stats row re-enable it themselves. */}
-					<div className="pointer-events-none sticky bottom-0 mt-auto w-full">
-						<Conversation className="h-full min-w-0 flex-1" initial="instant">
-							<ConversationContent className="min-h-full gap-0 p-0">
-								<ConversationEmptyState>
-									<div className="flex size-12 items-center justify-center rounded-xl bg-teal-wash text-teal" aria-hidden>
-										<QIcon name={mode === "practice" ? "review" : "tutor"} className="size-6" />
-									</div>
+						<div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-8 overflow-y-auto px-4 py-10" data-testid="draft-surface">
+						<div className="flex max-w-xl flex-col items-center gap-4 text-center">
+									{onModeChange && (
+											<div className="pointer-events-auto q-segc" role="radiogroup" aria-label="Kind of chat" data-testid="draft-mode">
+												{(["teach", "practice"] as const).map((m) => (
+													<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("min-w-24", mode === m && "on")} onClick={() => onModeChange(m)} data-testid={`draft-mode-${m}`}>
+														{m === "teach" ? "Learn" : "Practice"}
+													</button>
+												))}
+											</div>
+										)}
 									<div className="max-w-md space-y-1.5">
 										<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
 											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
 										</h3>
 										<p className="text-base text-muted-foreground">
 											{mode === "practice"
-												? "Describe it, pick skills from your map, or paste your own sentence."
-												: "Your tutor checks what you already know in a few quick questions, then teaches from there."}
+												? "Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."
+												: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
 										</p>
 									</div>
 									<div className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2" data-testid="draft-suggestions">
@@ -207,12 +210,9 @@ export function DraftShell({
 											</button>
 										))}
 									</div>
-								</ConversationEmptyState>
-							</ConversationContent>
-						</Conversation>
-						<div className="h-24" />
-						<div className="bg-background pb-4">
-							<div className={DOCK}>
+								</div>
+						<div className="w-full">
+							<div className={`${DOCK} pt-10`}>
 								<ComposerActions
 									picker={(picks.length > 0 || mode === "practice") && (
 										<NodePickerControl count={picks.length} onOpen={onOpenPicker} onClear={onClearPicks} />
@@ -259,8 +259,9 @@ export function DraftShell({
 	);
 }
 
-export function NewSession({ initialConfigured, mode = "teach" }: { initialConfigured: boolean; mode?: "teach" | "practice" }) {
+export function NewSession({ initialConfigured, mode: initialMode = "teach" }: { initialConfigured: boolean; mode?: "teach" | "practice" }) {
 	const router = useRouter();
+	const [mode, setMode] = useState<"teach" | "practice">(initialMode);
 	const [text, setText] = useState("");
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
 	 * finish-first send calls THIS send after the dictation flush — which
@@ -346,7 +347,12 @@ export function NewSession({ initialConfigured, mode = "teach" }: { initialConfi
 				text={text}
 				onChange={applyText}
 				onSend={send}
-				mode={mode}
+								mode={mode}
+				onModeChange={(m) => {
+					setMode(m);
+					// replaceState keeps the address shareable without reloading the draft.
+					window.history.replaceState(null, "", m === "practice" ? "/chat/new?mode=practice" : "/chat/new");
+				}}
 				picks={picks}
 				onOpenPicker={openPicker}
 				onClearPicks={() => applyPicks([])}

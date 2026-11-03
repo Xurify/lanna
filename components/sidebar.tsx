@@ -846,7 +846,7 @@ function SessionsSidebar() {
 					{/* The tutor: two ways to start a chat, then the chats themselves.
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
-					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-2 flex min-h-[16rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
+					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
 						<h2 id="sidebar-tutor" className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">
 							Tutor
 						</h2>
@@ -854,21 +854,11 @@ function SessionsSidebar() {
 							type="button"
 							data-testid="new-session"
 							onClick={() => void newSession()}
-							aria-label="Learn a topic: start a new teaching chat"
+							aria-label="New chat with your tutor"
 							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 						>
 							<BotMessageSquareIcon className="size-[18px]" />
-							Learn a topic
-						</button>
-						<button
-							type="button"
-							data-testid="new-session-practice"
-							onClick={() => router.push("/chat/new?mode=practice")}
-							aria-label="Practice a topic: start a new practice chat"
-							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-						>
-							<MessagesSquareIcon className="size-[18px]" />
-							Practice a topic
+							New chat
 						</button>
 
 						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
