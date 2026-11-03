@@ -174,8 +174,8 @@ export function DraftShell({
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1">
-						<div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-8 overflow-y-auto px-4 py-10" data-testid="draft-surface">
-						<div className="flex max-w-xl flex-col items-center gap-4 text-center">
+						<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">
+						<div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
 									{onModeChange && (
 											<div className="pointer-events-auto q-segc" role="radiogroup" aria-label="Kind of chat" data-testid="draft-mode">
 												{(["teach", "practice"] as const).map((m) => (
@@ -210,8 +210,8 @@ export function DraftShell({
 											</button>
 										))}
 									</div>
-								</div>
-						<div className="w-full">
+								</div></div>
+						<div className="w-full pb-4">
 							<div className={`${DOCK} pt-10`}>
 								<ComposerActions
 									picker={(picks.length > 0 || mode === "practice") && (
