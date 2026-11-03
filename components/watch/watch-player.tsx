@@ -40,7 +40,7 @@ import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
+import { captionLanguageName, coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
@@ -360,6 +360,25 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The shelf: paste a link, or pick a video ───────────────────────────────
 
+/** The video's YouTube thumbnail, loaded from YouTube's image host in the
+ *  browser; the icon stands in when YouTube has none. The box is 16:9 so the
+ *  row does not move when the image arrives. */
+function Thumb({ id, watched }: { id: string; watched: boolean }) {
+	const [missing, setMissing] = useState(false);
+	if (missing) {
+		return (
+			<span className={cn("flex h-[50px] w-[89px] shrink-0 items-center justify-center rounded-md", watched ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
+				<MonitorPlayIcon className="size-5" />
+			</span>
+		);
+	}
+	return (
+		// next/image would need YouTube's image host allowed in its config; the plain image needs no setup.
+		// eslint-disable-next-line @next/next/no-img-element
+		<img src={`https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`} alt="" loading="lazy" onError={() => setMissing(true)} className="h-[50px] w-[89px] shrink-0 rounded-md bg-well-2 object-cover" />
+	);
+}
+
 function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen: (id: string) => void; onPrepare: (url: string) => void }) {
 	const [url, setUrl] = useState("");
 	const list = [...(state?.library ?? [])].reverse();
@@ -380,7 +399,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 					Today
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Watch</h1>
-				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
+				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a Slovak YouTube link (Czech captions work too when a video has no Slovak ones, and the video is labelled Czech). You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
 
 				<form onSubmit={submit} className="q-card mt-6 flex flex-col gap-3 p-4 sm:flex-row" data-testid="watch-form">
 					<label className="sr-only" htmlFor="watch-url">
@@ -425,9 +444,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 								return (
 									<li key={v.id}>
 										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
-											<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg", v.watches > 0 ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
-												<MonitorPlayIcon className="size-5" />
-											</span>
+											<Thumb id={v.id} watched={v.watches > 0} />
 											<span className="min-w-0 flex-1">
 												<span className="block truncate font-ui text-[16px] font-[600] text-foreground" lang="sk">
 													{v.title}
@@ -474,6 +491,7 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 				<p className="font-ui text-sm font-[600] text-muted-foreground">
 					{video.channel ? `${video.channel} · ` : ""}
 					{formatClock(video.durationSec)} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
+					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang="sk">
 					{video.title}
