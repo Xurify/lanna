@@ -3,14 +3,14 @@
 /**
  * Listen (LangHarness, 2026-10-28) — the input task's screen. Ten real
  * sentences the learner can follow (src/core/listen.ts picks them at
- * 95–98% known words): each is played with the text hidden, then answered
- * one of two ways, chosen with the Pick / Type switch: pick what it meant
- * from three English meanings, or type the Slovak it said (dictation,
- * 2026-10-31). Then the Slovak appears with its one stretch word marked
- * and glossed. No grammar grading; understanding is the whole task.
+ * 95–98% known words): each is played with the text hidden, and the Slovak
+ * it said is typed (dictation). Picking one of three meanings was dropped on
+ * 2026-11-03: it was too easy at the owner's level and could not say why a
+ * sentence was missed. Then the Slovak appears with its one stretch word
+ * marked and glossed. No grammar grading; understanding is the whole task.
  *
- * Full screen like a lesson (a focus mode; Escape leaves). Keys: 1–3 pick
- * a meaning, Space plays again, Enter checks a typed sentence or continues.
+ * Full screen like a lesson (a focus mode; Escape leaves). Keys: Space plays
+ * again, Enter checks the typed sentence or continues.
  * Space types a space when the answer field has focus. Audio comes from the
  * cached library (components/speech.tsx → /api/tts), so a sentence is
  * paid for once. The research the task rests on is in src/core/listen.ts.
@@ -20,28 +20,27 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, ChevronDownIcon, EyeIcon, HeadphonesIcon, KeyboardIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
+import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenAnswer, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
+import { almostCount, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 
 interface Rep {
 	item: ListenItem;
-	/** The meaning picked, or the Slovak typed. */
+	/** The Slovak typed; empty when the learner did not catch it. */
 	given: string;
-	answer: ListenAnswer;
 	verdict: ListenVerdict;
-	/** The text was shown before the meaning was picked. */
+	/** The text was shown before the answer. */
 	peeked: boolean;
-	/** Sentence shown (audio starts) → meaning picked, for the speed model
-	 *  (src/core/milestones.ts). */
+	/** Sentence shown (audio starts) → answer checked. */
 	ms: number;
-	/** How long the first playback took, when it finished before the pick. */
+	/** How long the first playback took, when it finished before the answer; the
+	 *  speed model reads it (src/server/milestones.ts). */
 	heardMs?: number;
 	/** Plays after the first (the slow play counts). */
 	replays: number;
@@ -59,8 +58,6 @@ interface Outcome {
 
 
 const PRAISE = ["Rozumieš!", "Presne tak!", "Áno!", "Super!", "Výborne!"];
-/** The learner's answer style, remembered in this browser. */
-const ANSWER_KEY = "lh-listen-answer";
 
 export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan | null }) {
 	const router = useRouter();
@@ -70,8 +67,6 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [reps, setReps] = useState<Rep[]>([]);
 	const [current, setCurrent] = useState<Rep | null>(null);
 	const [peeked, setPeeked] = useState(false);
-	// Pick a meaning (the default) or type the Slovak that was heard.
-	const [answer, setAnswer] = useState<ListenAnswer>("pick");
 	const [draft, setDraft] = useState("");
 	// Replays of the current sentence (mirrors timing.current for the
 	// render): the text can be shown only once it has been heard twice.
@@ -119,32 +114,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		void load();
 	}, [load]);
 
-	// Read the saved answer style after mount, so the first paint matches the
-	// server render (pick) and the switch never flickers.
-	useEffect(() => {
-		try {
-			if (localStorage.getItem(ANSWER_KEY) === "type") setAnswer("type");
-		} catch {
-			// storage blocked — stays on pick
-		}
-	}, []);
-
-	const chooseAnswer = (next: ListenAnswer) => {
-		if (current || next === answer) return;
-		setAnswer(next);
-		setDraft("");
-		try {
-			localStorage.setItem(ANSWER_KEY, next);
-		} catch {
-			// not remembered
-		}
-	};
-
 	const item = plan?.items[index] ?? null;
 	const total = plan?.items.length ?? 0;
-	// The answer style in use: the open rep's own, so a finished rep keeps its
-	// look even if the switch is changed for the next one.
-	const mode: ListenAnswer = current ? current.answer : answer;
 
 	// Stop any active audio when leaving the Listen page
 	useEffect(() => {
@@ -198,10 +169,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							sentence: r.item.sentence,
 							translation: r.item.translation,
 							given: r.given,
-							answer: r.answer,
-							// The server grades typed answers itself; this verdict is for picks.
+							answer: "type",
 							verdict: r.verdict,
-							options: r.answer === "pick" ? r.item.options : undefined,
 							stretch: r.item.stretch.map((w) => w.slug).filter((s): s is string => !!s),
 							ms: r.ms,
 							heardMs: r.heardMs,
@@ -228,25 +197,26 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 
 	/** Grade and show one answer. The time since the text was first shown
 	 *  is the speed model's; the first playback's length is kept too. */
-	const answerWith = (given: string, answerKind: ListenAnswer, verdict: ListenVerdict) => {
+	const answerWith = (given: string, verdict: ListenVerdict) => {
 		if (!item || current) return;
 		if (verdict === "exact") sfx.right(1);
 		else if (verdict === "accents") sfx.almost();
 		else sfx.wrong();
 		const t = timing.current;
-		setCurrent({ item, given, answer: answerKind, verdict, peeked, ms: Date.now() - t.shownAt, heardMs: t.heardMs, replays: t.replays });
-	};
-
-	const pick = (given: string) => {
-		if (!item || current) return;
-		answerWith(given, "pick", given === item.translation ? "exact" : "wrong");
+		setCurrent({ item, given, verdict, peeked, ms: Date.now() - t.shownAt, heardMs: t.heardMs, replays: t.replays });
 	};
 
 	/** A typed sentence: the same grading the server repeats (judgeTyped). */
 	const submit = () => {
 		const given = draft.trim();
 		if (!item || current || !given) return;
-		answerWith(given, "type", judgeTyped(given, item.sentence));
+		answerWith(given, judgeTyped(given, item.sentence));
+	};
+
+	/** Nothing was caught: a miss, without typing something random to get past it. */
+	const giveUp = () => {
+		if (!item || current) return;
+		answerWith("", "wrong");
 	};
 
 	const advance = () => {
@@ -260,7 +230,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		else setIndex((i) => i + 1);
 	};
 
-	// Keys: Escape leaves, 1–3 pick, Space replays, Enter continues. While
+	// Keys: Escape leaves, Space replays, Enter continues. While
 	// the answer field has focus, only Escape and Enter reach the page: the
 	// field needs Space for a space.
 	useEffect(() => {
@@ -286,15 +256,6 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			if (!current && e.key === " ") {
 				e.preventDefault();
 				replay();
-				return;
-			}
-			if (!current && answer === "pick") {
-				const n = Number(e.key);
-				const opt = item.options[n - 1];
-				if (opt) {
-					e.preventDefault();
-					pick(opt);
-				}
 			}
 		};
 		window.addEventListener("keydown", onKey);
@@ -369,12 +330,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						title="Listen"
 						sub={`Sentence ${index + 1} of ${total}`}
 					>
-						<div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-							<p className="font-ui text-[13px] text-ink-3">{item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
-							<AnswerSwitch answer={answer} disabled={!!current} onChange={chooseAnswer} />
-						</div>
+						<p className="mb-4 font-ui text-[13px] text-ink-3">{item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
 						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
-							{!current ? (mode === "type" ? "Type what you hear" : "What does it mean?") : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : mode === "type" ? "It says…" : "It meant…"}
+							{!current ? "Type what you hear" : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : "It says…"}
 						</h2>
 
 						{/* Hear it: the big play, the slow play, and the text behind a tap. */}
@@ -417,10 +375,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							)}
 						</div>
 
-						{/* Type it: the Slovak as heard, graded letter by letter. The field is
-						    the answer, so it is locked once checked. */}
-						{mode === "type" && (
-							<div className="mt-6">
+						{/* The Slovak as heard, graded letter by letter. The field is the
+						    answer, so it is locked once checked. */}
+						<div className="mt-6">
 								<input
 									type="text"
 									lang="sk"
@@ -443,8 +400,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									data-testid="listen-input"
 								/>
 								{!current && <DiacriticBar variant="keys" className="mt-4" />}
-							</div>
-						)}
+						</div>
 
 						{/* The sentence: hidden until answered or peeked; then every word,
 						    the stretch words marked and glossed. */}
@@ -454,9 +410,15 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang="sk">
 										<Marked sentence={item.sentence} stretch={item.stretch.map((w) => w.text)} />
 									</p>
-									{current?.answer === "type" && current.verdict !== "exact" && (
+									{current && current.verdict !== "exact" && (
 										<p className="mt-2 font-prose text-base text-ink-3" data-testid="listen-typed">
-											You typed · <span lang="sk">{current.given}</span>
+											{current.given ? (
+												<>
+													You typed · <span lang="sk">{current.given}</span>
+												</>
+											) : (
+												"Not caught"
+											)}
 										</p>
 									)}
 									{item.stretch.length > 0 && (
@@ -476,25 +438,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									)}
 								</div>
 							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">Listen first. The text appears once you have {mode === "type" ? "typed what you heard" : "picked a meaning"}
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">Listen first. The text appears once you have typed what you heard
 									{peeked ? "" : replays < PEEK_AFTER_REPLAYS ? " (or after a second listen, at a price)" : ""}.</p>
 							)}
 						</div>
 
-						{/* Three meanings, stacked (English runs long). Pick mode only. */}
-						{mode === "pick" && (
-							<div className="mt-6 grid gap-2.5" data-testid="listen-options">
-								{item.options.map((o, i) => {
-									const picked = current?.given === o;
-									const right = !!current && o === item.translation;
-									return (
-										<OptionTile key={o} n={i + 1} disabled={!!current} state={right ? "right" : picked ? "wrong" : current ? "dim" : "idle"} onClick={() => pick(o)}>
-											{o}
-										</OptionTile>
-									);
-								})}
-							</div>
-						)}
 					</PracticeCard>
 				</div>
 			</div>
@@ -510,9 +458,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									? `Understood · +${LISTEN_XP} XP`
 									: current.verdict === "accents"
 										? `Almost · the letters are right, a mark is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
-										: mode === "type"
+										: current.given
 											? "Not quite"
-											: "Not that one"}
+											: "Not caught this time"}
 							</p>
 							<button type="button" onClick={advance} className={PRIMARY} data-testid="listen-continue" autoFocus>
 								{index + 1 >= total ? "Finish" : "Continue"}
@@ -521,9 +469,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								</span>
 							</button>
 						</>
-					) : mode === "type" ? (
+					) : (
 						<>
-							<p className="font-ui text-[13px] text-ink-3">Enter checks · the play button hears it again</p>
+							<button type="button" onClick={giveUp} className={SECONDARY} data-testid="listen-give-up">
+								Didn't catch it
+							</button>
 							<button type="button" onClick={submit} disabled={!draft.trim()} className={PRIMARY} data-testid="listen-check">
 								Check
 								<span className="q-kbd">
@@ -531,8 +481,6 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								</span>
 							</button>
 						</>
-					) : (
-						<p className="font-ui text-[13px] text-ink-3">Pick a meaning, or press its number · Space plays it again</p>
 					)}
 				</div>
 			</Dock>
@@ -653,36 +601,5 @@ function SentenceRows({ reps }: { reps: Rep[] }) {
 				</li>
 			))}
 		</ul>
-	);
-}
-
-/** Pick a meaning or type the Slovak. A segmented control: the chosen style
- *  is filled and marked aria-pressed; locked while a sentence is open. */
-function AnswerSwitch({ answer, disabled, onChange }: { answer: ListenAnswer; disabled: boolean; onChange: (next: ListenAnswer) => void }) {
-	const options: { id: ListenAnswer; label: string; icon: typeof KeyboardIcon }[] = [
-		{ id: "pick", label: "Pick a meaning", icon: CheckIcon },
-		{ id: "type", label: "Type it", icon: KeyboardIcon },
-	];
-	return (
-		<div role="group" aria-label="How to answer" className="q-segc" data-testid="listen-answer-switch">
-			{options.map((o) => {
-				const on = answer === o.id;
-				const Icon = o.icon;
-				return (
-					<button
-						key={o.id}
-						type="button"
-						disabled={disabled}
-						aria-pressed={on}
-						onClick={() => onChange(o.id)}
-						className={cn("flex items-center gap-1.5 whitespace-nowrap disabled:cursor-not-allowed", on && "on", disabled && !on && "opacity-50")}
-						data-testid={`listen-answer-${o.id}`}
-					>
-						<Icon className="size-4" strokeWidth={1.6} aria-hidden="true" />
-						{o.label}
-					</button>
-				);
-			})}
-		</div>
 	);
 }

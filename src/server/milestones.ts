@@ -204,8 +204,14 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 	for (const e of log) {
 		const own: SpeedSample[] = [];
 		for (const r of e.reps) {
-			// Typed (dictation) reps measure typing, not listening: no speed sample.
-			if (r.ms === undefined || r.kind === "dictation") continue;
+			// A typed sentence's answer time is mostly typing, so it is timed by the clip instead, as Watch is:
+			// understood at the clip's own pace when it took one play, at half that pace when it took two.
+			if (r.kind === "dictation") {
+				if (r.heardMs === undefined) continue;
+				own.push({ words: r.words ?? r.sentence.split(/\s+/).length, ms: r.heardMs * (1 + (r.replays ?? 0)), heardMs: r.heardMs, replays: r.replays, correct: r.verdict !== "wrong", peeked: r.peeked, at: e.at });
+				continue;
+			}
+			if (r.ms === undefined) continue;
 			own.push({ words: r.words ?? r.sentence.split(/\s+/).length, ms: r.ms, heardMs: r.heardMs, replays: r.replays, correct: r.verdict === "exact", peeked: r.peeked, at: e.at });
 		}
 		samples.push(...own);

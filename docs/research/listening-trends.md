@@ -23,15 +23,33 @@ A typed sentence is aligned with the one played, word by word (a similar word is
 | Spelling | i for y (the two sound the same in Slovak) |
 | Typing | a one-letter slip that sounds the same |
 
-Because the sentence's only unmet word is known, a difference on any other word is not a vocabulary gap, which is what makes the split honest. A picked meaning shows only whether the sentence was understood, so it counts toward accuracy and effort but has no cause: dictation ("Type it") is what feeds the causes.
+Because the sentence's only unmet word is known, a difference on any other word is not a vocabulary gap, which is what makes the split honest. A picked meaning shows only whether the sentence was understood, so it counts toward accuracy and effort but has no cause. That is why Listen became typing-only the same day: the causes need typed sentences, and the owner had already found picking too easy.
+
+Two rules keep the reading from blaming the ear for something else:
+
+- **Marks the learner does not type.** A sentence typed with no marks at all is compared without them. Otherwise a learner who types without háčky and dĺžne would see vowel length and soft consonants at the top of the list, which is a keyboard habit and says nothing about hearing. A sentence with only its marks off counts as understood.
+- **Voicing assimilation.** A voiced consonant is said unvoiced at the end of a word and takes the voice of the consonant after it (*had* sounds like [hat], *v škole* like [fškole], *kde* like [gde]). Writing it as heard is a spelling gap, not a hearing one, so a voicing difference at the end of a word or before a consonant is filed as spelling ("Written as it sounds"). One between vowels (*kosa* against *koza*) stays hearing.
 
 ## The trends
 
-The last 14 days against the days before, per 100 typed sentences, called "less often", "more often" or "about the same" only when the difference is past chance (the same two-proportion test as My mistakes). Also shown: understood by week, plays after the first, text shown before answering, and accuracy on slow against fast clips (the slovak.wiki clips run 2.3 to 5.4 syllables a second, so a fast clip is harder whatever the words; [voice-pace.md](voice-pace.md)). It is a section on My mistakes, local and free, saved with the snapshot, and the snapshot is renewed after a Listen session when it is old.
+The last 14 days against the days before, per 100 typed sentences, called "less often" or "more often" only when the difference is past chance, and "no clear change" otherwise. Also shown: understood by week, plays after the first, text shown before answering, and accuracy on slow against fast clips (the slovak.wiki clips run 2.3 to 5.4 syllables a second, so a fast clip is harder whatever the words; [voice-pace.md](voice-pace.md)). It is a section on My mistakes, local and free, saved with the snapshot, and the snapshot is renewed after a Listen session when it is old.
+
+## How much is enough
+
+The first version read causes from 20 typed sentences and compared windows of 6. Both are too few to tell a pattern from chance:
+
+- **A share from a few sentences is a wide guess.** With 20 sentences and a cause in 3 of them, the 95% range is 5% to 36%. With 50 it narrows to roughly 7% to 28% for a cause near 15%: still wide, but it separates a common cause from a rare one. So the causes wait for **50 typed sentences, 15 of them with a miss, over 3 sessions**. Sessions matter because the sentences of one session are not independent: one tired evening is one data point, not ten.
+- **A cause is listed from 4 sentences in 2 sessions.** Below that it is counted in "N more differences, not listed".
+- **The z-test needs enough in each window.** Its normal approximation is the usual rule of thumb only with about 5 expected sentences with the cause and 5 without in each window, so each window needs 30 sentences from 3 sessions and passes that check, or the trend reads "too few to compare".
+- **Many causes, many tests.** Testing a dozen causes at 5% each calls at least one change by chance about 46% of the time (1 − 0.95¹²). The causes are tested together with Holm's step-down correction, which holds that at 5% for the whole set.
+- **"No change past chance" is not "the same".** With 40 sentences a window, a halving from 30 to 15 in 100 gives z ≈ 1.6, short of significance. The page says "no clear change", so a real improvement too small to prove is never reported as standing still.
+- **Fast against slow clips** is said only when the same z-test passes with 20 sentences in each group, and a week under 10 sentences shows no share.
+
+At ten sentences a session, the causes appear after five or more sessions and the first trend after about three weeks of regular Listen.
 
 ## Limits
 
-- The causes need 20 typed sentences with their words logged; until then the page says how many there are.
+- Until the causes are ready, the page says how far each floor is.
 - A typing slip cannot be told from a hearing error by the letters alone: "slip" is one letter off in a way that sounds the same, and a hearing error that happens to be one letter will be filed there.
 - The classes are rules, not a model. An AI guide could read these patterns and say what to practice (as E25 does for lessons); it is not built.
 - Checked on synthetic logs (18 sessions over five weeks) and unit tests; not on a real learner's history.
