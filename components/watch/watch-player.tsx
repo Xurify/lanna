@@ -33,6 +33,7 @@ import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, L
 import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
+import { NavRail } from "@/components/nav-rail";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { useActiveTime } from "@/components/use-active-time";
@@ -323,10 +324,13 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 
 function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
 	return (
-		<div className="fixed inset-0 z-40 flex flex-col bg-background">
+		<>
+			<NavRail />
+			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-14">
 			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 			{children}
-		</div>
+			</div>
+		</>
 	);
 }
 

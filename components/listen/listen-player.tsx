@@ -436,7 +436,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									disabled={!!current}
 									aria-label="Type the sentence you heard"
 									placeholder="Type what you hear"
-									className="w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground outline-none transition-shadow placeholder:font-normal placeholder:text-ink-4 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-70"
+									className="w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background"
 									data-testid="listen-input"
 								/>
 								{!current && <DiacriticBar variant="keys" className="mt-4" />}

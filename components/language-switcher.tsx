@@ -134,6 +134,10 @@ export function LanguageSwitcher() {
 	// The row you pressed lights at once; the route (and a slow server render) catches up after. Cleared when the path changes.
 	const [pressed, setPressed] = useState<{ id: NavId; from: string } | null>(null);
 	const lit = pressed && pressed.from === pathname ? pressed.id : activeNav?.id;
+	// Once the route has changed the press is spent: arriving back on the page it was pressed from must not light it again.
+	useEffect(() => {
+		setPressed(null);
+	}, [pathname]);
 	const reviewDue = counts ? counts.due + counts.learning : 0;
 	const reviewNew = counts?.newLeft ?? 0;
 	const activeProfile = profile?.profiles.find((p) => p.id === profile.active);
@@ -387,7 +391,7 @@ export function LanguageSwitcher() {
 
 /** One primary destination: a trail-sign row. The one you are on is lit
  *  with a sun bar at its edge and a brighter icon, no pill. */
-const NAV_ICONS: Record<NavId, LucideIcon> = {
+export const NAV_ICONS: Record<NavId, LucideIcon> = {
 	today: SunIcon,
 	curriculum: MountainSnowIcon,
 	review: RepeatIcon,
