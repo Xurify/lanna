@@ -61,6 +61,7 @@ export function SettingsRow({
 	children,
 	testid,
 	dimmed,
+	stack,
 }: {
 	label: string;
 	hint?: ReactNode;
@@ -68,12 +69,16 @@ export function SettingsRow({
 	testid?: string;
 	/** Dims the whole row when the control is inert (parent off, no file yet). */
 	dimmed?: boolean;
+	/** Put the control under the text, full width. Default: when the hint is longer than one short line. */
+	stack?: boolean;
 }) {
+	const stacked = stack ?? (typeof hint === "string" ? hint.length > 64 : false);
 	return (
 		<div
 			data-testid={testid}
 			className={cn(
-				"flex items-center justify-between gap-4 rounded-lg bg-well px-4 py-3",
+				"flex rounded-lg bg-well px-4 py-3",
+				stacked ? "flex-col gap-3" : "items-center justify-between gap-4",
 				dimmed && "opacity-40",
 			)}
 		>
@@ -81,7 +86,7 @@ export function SettingsRow({
 				<span className="block font-ui text-sm font-medium text-foreground">{label}</span>
 				{hint && <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{hint}</span>}
 			</span>
-			<div className="shrink-0">{children}</div>
+			<div className={stacked ? "w-full" : "shrink-0"}>{children}</div>
 		</div>
 	);
 }
