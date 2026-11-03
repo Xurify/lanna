@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
+import { sharedJson } from "@/lib/shared-fetch";
 
 interface ProfileInfo {
 	active: string;
@@ -66,12 +67,10 @@ export function LanguageSwitcher() {
 	const menuRef = useRef<HTMLDivElement>(null);
 
 	const refresh = useCallback(() => {
-		void fetch("/api/profile")
-			.then((r) => r.json() as Promise<ProfileInfo>)
+		void sharedJson<ProfileInfo>("/api/profile")
 			.then(setProfile)
 			.catch(() => {});
-		void fetch(`/api/review?peek&tz=${new Date().getTimezoneOffset()}`)
-			.then((r) => r.json() as Promise<{ counts: Counts }>)
+		void sharedJson<{ counts: Counts }>(`/api/review?peek&tz=${new Date().getTimezoneOffset()}`, 300)
 			.then((s) => setCounts(s.counts))
 			.catch(() => {});
 	}, []);

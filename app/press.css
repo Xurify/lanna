@@ -1,0 +1,15 @@
+/* Taps answer at once (perf, 2026-11-02). `manipulation` turns off the double-tap-to-zoom wait that
+   delays every tap on a phone or an iPad by up to 300 ms (pan and pinch still work). A pressed
+   control dims on pointer-down, before the click and whatever it starts, so a slow action never
+   looks like a dead button. Base layer: every component's own state classes win over it. */
+@layer base {
+	html {
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
+	}
+	a[href]:active,
+	button:not(:disabled):active,
+	[role="button"]:not([aria-disabled="true"]):active {
+		opacity: 0.78;
+	}
+}

@@ -17,8 +17,8 @@ import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useRouter } from "next/navigation";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveTime } from "@/components/use-active-time";
-import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { PlayButton, prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
@@ -113,30 +113,35 @@ export function ReviewSession() {
 
 	// `keepCard` is the mount's background refresh: when the same card is
 	// still due, what the learner has typed and the card's timer carry on.
+	const show = useCallback(
+		(next: Status, keepCard = false) => {
+			const sameCard = keepCard && !!next.next && next.next.card.id === knownStatus?.next?.card.id;
+			knownStatus = next;
+			setStatus(next);
+			if (!sameCard) {
+				setGiven("");
+				setVerdict(null);
+				setHint(0);
+				shownAt.current = Date.now();
+				// A card is on screen: time it. The caught-up screen is not practice.
+				if (next.next) activeTime.restart();
+				else activeTime.finish();
+			}
+			setLoadError(null);
+		},
+		[activeTime],
+	);
 	const load = useCallback(
 		async (keepCard = false) => {
 			try {
 				const res = await fetch(`/api/review?tz=${new Date().getTimezoneOffset()}`);
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const next = (await res.json()) as Status;
-				const sameCard = keepCard && !!next.next && next.next.card.id === knownStatus?.next?.card.id;
-				knownStatus = next;
-				setStatus(next);
-				if (!sameCard) {
-					setGiven("");
-					setVerdict(null);
-					setHint(0);
-					shownAt.current = Date.now();
-					// A card is on screen: time it. The caught-up screen is not practice.
-					if (next.next) activeTime.restart();
-					else activeTime.finish();
-				}
-				setLoadError(null);
+				show((await res.json()) as Status, keepCard);
 			} catch (err) {
 				setLoadError(err instanceof Error ? err.message : String(err));
 			}
 		},
-		[activeTime],
+		[show],
 	);
 
 	useEffect(() => {
@@ -147,6 +152,12 @@ export function ReviewSession() {
 	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
+	// The sentence is spoken when the answer is checked: have its audio ready by then.
+	const sentence = prompt?.card.sentence;
+	useEffect(() => {
+		if (sentence && lang) prefetchSpeech(sentence, lang.code);
+		warmSound();
+	}, [sentence, lang]);
 	const picks = mode === "choice" && !!prompt && prompt.card.state !== "review";
 	const help = { hints: hint, picked: picks };
 
@@ -170,13 +181,16 @@ export function ReviewSession() {
 		if (!prompt || !verdict || saving) return;
 		setSaving(true);
 		try {
-			await fetch("/api/review", {
+			const res = await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks }),
+				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks, tz: new Date().getTimezoneOffset() }),
 			});
 			setLast({ before: around.before + around.lead, answer: prompt.card.answer, after: around.tail + around.after, translation: prompt.card.translation, label: `${RATING_LABELS[Math.min(rating, ratingCap(help)) as Rating]}${help.hints > 0 || help.picked ? ", with help" : ", no help"}` });
-			await load();
+			// The answer's response carries the deck as it stands now: one round trip, not two.
+			const after = res.ok ? ((await res.json().catch(() => null)) as { status?: Status } | null)?.status : undefined;
+			if (after) show(after);
+			else await load();
 			// The sidebar's due badge counts the same deck.
 			window.dispatchEvent(new Event("lh:review-changed"));
 		} finally {

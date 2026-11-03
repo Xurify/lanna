@@ -4,6 +4,7 @@ import { THEME_COOKIE, themeFromCookie } from "@/lib/theme";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
+import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
 import { readSettingsRecord } from "@/src/server";

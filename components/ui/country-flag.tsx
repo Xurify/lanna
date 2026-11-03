@@ -1,5 +1,4 @@
-import React from "react";
-import * as Flags from "country-flag-icons/react/3x2";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -250,9 +249,27 @@ export interface CountryFlagProps {
 	title?: string;
 }
 
+type FlagComponent = React.ComponentType<{ className?: string; title?: string }>;
+
+/** The flag set (about 250 flags, 350 kB of script) loads on first use instead of riding in every
+ *  page's bundle. Until it arrives the box is empty and the same size, so nothing moves. */
+let flags: Record<string, FlagComponent> | null = null;
+let loading: Promise<void> | null = null;
+
+function loadFlags(): Promise<void> {
+	loading ??= import("country-flag-icons/react/3x2").then((m) => {
+		flags = m as unknown as Record<string, FlagComponent>;
+	});
+	return loading;
+}
+
 export function CountryFlag({ lang, code, className, title }: CountryFlagProps) {
 	const c = (code ?? langToCountryCode(lang)).toUpperCase();
-	const Flag = (Flags as Record<string, React.ComponentType<{ className?: string; title?: string }>>)[c];
+	const [ready, setReady] = useState(flags !== null);
+	useEffect(() => {
+		if (!flags) void loadFlags().then(() => setReady(true));
+	}, []);
+	const Flag = ready ? flags?.[c] : undefined;
 
 	return (
 		<span
@@ -267,11 +284,11 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 		>
 			{Flag ? (
 				<Flag className="block h-full w-full object-cover" />
-			) : (
+			) : ready ? (
 				<span className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground select-none">
 					{c}
 				</span>
-			)}
+			) : null}
 			<span
 				aria-hidden="true"
 				className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-black/10 dark:ring-white/15"

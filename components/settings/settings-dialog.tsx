@@ -64,6 +64,7 @@ import { ResetSection } from "./reset-section.tsx";
 import { StorageSection } from "./storage-section.tsx";
 import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
 import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
+import { sharedJson } from "@/lib/shared-fetch";
 
 /** The nav label is the section's heading. Ids are internal: deep links and tests use them.
  *  Everyday settings come first; the AI setup and the app's data sit below a divider. */
@@ -207,11 +208,8 @@ export function SettingsDialogBody({
 
 	// Fetch once per mount. 200 with {settings: null} is first boot, not an error.
 	useEffect(() => {
-		fetch("/api/settings")
-			.then((r) =>
-				r.ok ? r.json() : Promise.reject(new Error(`status ${r.status}`)),
-			)
-			.then((body: { settings: UserSettings | null }) =>
+		sharedJson<{ settings: UserSettings | null }>("/api/settings")
+			.then((body) =>
 				setRecord(body.settings ?? { version: CURRENT_SETTINGS_VERSION }),
 			)
 			.catch(() => setRecord(null));

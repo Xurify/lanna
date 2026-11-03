@@ -22,6 +22,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { AppearanceSettings } from "@/src/core";
 import { appearanceVars, resolveAppearance, staleVarNames } from "@/lib/appearance-vars";
+import { sharedJson } from "@/lib/shared-fetch";
 
 export { appearanceVars, derivedPalette, resolveAppearance, staleVarNames } from "@/lib/appearance-vars";
 
@@ -81,9 +82,8 @@ export function AppearanceProvider({
 	// delta; resolution happens here against the compiled factory.
 	useEffect(() => {
 		let alive = true;
-		fetch("/api/settings")
-			.then((r) => r.json())
-			.then((body: { settings?: Record<string, unknown> }) => {
+		sharedJson<{ settings?: Record<string, unknown> }>("/api/settings")
+			.then((body) => {
 				if (!alive) return;
 				// The record arrives sanitized server-side; the appearance
 				// slice is unknown-shaped here, so it goes through the same

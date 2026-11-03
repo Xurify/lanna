@@ -17,7 +17,7 @@ function pages(dir: string, base = ""): string[] {
 
 const titleOf = (route: string) => {
 	const file = path.join("app", route === "/" ? "" : route, "page.tsx");
-	return /export const metadata[^=]*=\s*\{\s*title: "([^"]+)"/.exec(fs.readFileSync(file, "utf8"))?.[1];
+	return /export const metadata[^=]*=\s*\{\s*title: (?:\{ absolute: )?"([^"]+)"/.exec(fs.readFileSync(file, "utf8"))?.[1]?.replace(" · LangHarness", "");
 };
 
 describe("the app's names", () => {
