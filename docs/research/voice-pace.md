@@ -2,7 +2,11 @@
 
 **Question:** the owner asked what speed the voice runs at, whether the clip metadata agrees with the speed setting, and whether the app needs calculations to make the setting accurate.
 
-**Date:** 2026-11-03. **Decision:** E37.
+**Date:** 2026-11-03. **Decision:** E37 (not adopted: clips play as recorded).
+
+## Result
+
+The pace varies from clip to clip, and that is how the voice is made, so it is left alone. slovak.wiki generates its voice with ElevenLabs speed 0.88 (its `content/audio/config.json`, per DECISIONS and commit `6ed7944`; the owner remembered 0.85), a deliberately slow reading for learners, and the pace that comes out depends on the sentence (2.3 to 5.4 syllables a second here, 3.6 to 5.6 on the earlier measurement). Two fixed-rate attempts in November (1.136× sounded slow on one clip, 1.319× too fast on another) and a per-clip correction on 2026-11-03 all failed the same way: the correction speeds a slowly read sentence until it sounds rushed ("Čím skôr začneš, tým skôr skončíš." at 1.58× next to an untouched clip), and a slowed-in-the-model read does not become natural when sped up. Playback stays a plain multiplier (0.75×, 1×, 1.25×) around the recording, as slovak.wiki itself plays it. What remains is the measuring: `scripts/audio-pace.ts` prints the pace per engine from a profile. The rest of this note is the record of the attempt, kept so it is not tried a third time.
 
 ## What was measured
 
@@ -29,7 +33,7 @@ The audio index (`data/audio/index.jsonl`) holds text, voice, engine, bytes and 
 
 I could measure only the slovak.wiki voice here (no ElevenLabs key, and Edge's service is not reachable from the sandbox). The script above does the same for the other engines on a real profile.
 
-## What changed
+## What was tried (reverted)
 
 Each clip is nudged toward a fixed pace, 4 syllables a second (about the median above, so a typical clip stays near 1.0×), and the setting multiplies that: `rate = clamp(4 ÷ (syllables ÷ seconds), 0.8, 1.3) × setting`, with the length read from the audio element once its header has loaded and the final rate kept between 0.6× and 1.8×. The first version corrected fully (up to 1.6×); see "Correction" below for why it was cut back. A clip under 0.8 s or 3 syllables (a word) keeps the plain multiplier, because its length is mostly onset and tail. The fallback browser voice keeps the plain rate.
 

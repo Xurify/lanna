@@ -1,7 +1,7 @@
 /**
  * How fast is each voice? Reads <data>/audio/index.jsonl, measures every clip's
  * length with ffprobe, and prints the pace in syllables a second per engine and
- * voice, with the playback rate the app would use at 1x (src/core/pace.ts).
+ * voice. Measuring only: playback is not changed by it (DECISIONS E37).
  *
  *   LH_DATA_DIR=/path/to/data npx tsx scripts/audio-pace.ts      (default: ./data)
  *
@@ -11,7 +11,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { countSyllables, NORMAL_SYLLABLES_PER_SECOND, paceRate } from "../src/core/pace.ts";
+import { countSyllables } from "../src/core/pace.ts";
 
 const root = path.join(process.env.LH_DATA_DIR ?? path.join(process.cwd(), "data"), "audio");
 const index = path.join(root, "index.jsonl");
@@ -36,11 +36,10 @@ for (const line of fs.readFileSync(index, "utf8").split("\n")) {
 const median = (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)] ?? 0;
 const groups = new Map<string, Row[]>();
 for (const r of rows) groups.set(`${r.lang} ${r.tier}/${r.voice}`, [...(groups.get(`${r.lang} ${r.tier}/${r.voice}`) ?? []), r]);
-console.log(`${rows.length} clips; the app plays at ${NORMAL_SYLLABLES_PER_SECOND} syllables a second at 1x\n`);
+console.log(`${rows.length} clips\n`);
 for (const [name, g] of groups) {
 	const long = g.filter((r) => r.seconds >= 0.8 && r.syllables >= 3);
 	const pace = long.map((r) => r.syllables / r.seconds);
 	if (pace.length === 0) continue;
-	const rates = long.map((r) => paceRate(r.syllables, r.seconds, 1));
-	console.log(`${name}: ${g.length} clips (${long.length} measured)  pace median ${median(pace).toFixed(2)}, min ${Math.min(...pace).toFixed(2)}, max ${Math.max(...pace).toFixed(2)} syl/s  |  1x plays at ${Math.min(...rates).toFixed(2)}x to ${Math.max(...rates).toFixed(2)}x`);
+	console.log(`${name}: ${g.length} clips (${long.length} measured)  pace median ${median(pace).toFixed(2)}, min ${Math.min(...pace).toFixed(2)}, max ${Math.max(...pace).toFixed(2)} syl/s`);
 }

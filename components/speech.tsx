@@ -11,7 +11,7 @@ import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sharedJson } from "@/lib/shared-fetch";
 import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
-import { LANGUAGES, countSyllables, isLanguageId, paceRate, type LanguageInfo } from "@/src/core";
+import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 
 // ─── The active language (fetched once per page load) ──────────────────────
 
@@ -158,7 +158,7 @@ export interface SpeakOptions {
 	slow?: boolean;
 }
 
-/** The slow button as a multiplier: always slower than the learner's own speed, but not below 0.6×, where the
+/** Always slower than the learner's own speed, but not below 0.6×, where the
  *  browser's pitch-keeping time-stretch starts to smear the voice. */
 export function slowRate(speed: number): number {
 	return Math.max(0.6, Math.min(0.7, speed * 0.8));
@@ -170,25 +170,21 @@ export function slowRate(speed: number): number {
  *  of speech). Louder clips are turned down to this level; the audio
  *  element cannot go above 1, so quieter ones play as they are. */
 const TARGET_DB = -20;
-const clips = new Map<string, Promise<ClipInfo>>();
+const gains = new Map<string, Promise<number>>();
 
-/** What one decode of a clip tells us: the volume factor that brings it to TARGET_DB, and the seconds of actual speech in it (pauses at the ends do not count: the speech pace is measured over those, not over a clip padded with silence). `speech` is 0 when unknown. */
-interface ClipInfo {
-	gain: number;
-	speech: number;
-}
-
-function clipInfo(key: string, blob: Blob): Promise<ClipInfo> {
-	let info = clips.get(key);
-	if (!info) {
-		info = measureClip(blob);
-		clips.set(key, info);
+/** The volume factor that brings a clip to TARGET_DB, from the mean power of
+ *  its 50 ms windows within 30 dB of the loudest (pauses do not count). */
+function clipGain(key: string, blob: Blob): Promise<number> {
+	let gain = gains.get(key);
+	if (!gain) {
+		gain = measureGain(blob);
+		gains.set(key, gain);
 	}
-	return info;
+	return gain;
 }
 
-async function measureClip(blob: Blob): Promise<ClipInfo> {
-	if (typeof OfflineAudioContext === "undefined") return { gain: 1, speech: 0 };
+async function measureGain(blob: Blob): Promise<number> {
+	if (typeof OfflineAudioContext === "undefined") return 1;
 	try {
 		const buffer = await new OfflineAudioContext(1, 1, 22050).decodeAudioData(await blob.arrayBuffer());
 		const data = buffer.getChannelData(0);
@@ -199,31 +195,14 @@ async function measureClip(blob: Blob): Promise<ClipInfo> {
 			for (let j = i; j < i + size; j++) p += data[j]! * data[j]!;
 			powers.push(p / size);
 		}
-		// Within 30 dB of the loudest window is speech; the mean power of those windows is the loudness.
 		const floor = Math.max(...powers) / 1000;
 		const speech = powers.filter((p) => p >= floor);
-		if (speech.length === 0) return { gain: 1, speech: 0 };
+		if (speech.length === 0) return 1;
 		const db = 10 * Math.log10(speech.reduce((a, b) => a + b, 0) / speech.length);
-		const first = powers.findIndex((p) => p >= floor);
-		const last = powers.length - 1 - [...powers].reverse().findIndex((p) => p >= floor);
-		return { gain: Math.min(1, 10 ** ((TARGET_DB - db) / 20)), speech: (last - first + 1) * 0.05 };
+		return Math.min(1, 10 ** ((TARGET_DB - db) / 20));
 	} catch {
-		return { gain: 1, speech: 0 };
+		return 1;
 	}
-}
-
-/** A clip's length once the browser has read its header; 0 if that takes more than a second (the rate then falls back to the plain multiplier). */
-function clipSeconds(audio: HTMLAudioElement): Promise<number> {
-	if (audio.readyState >= 1 && Number.isFinite(audio.duration)) return Promise.resolve(audio.duration);
-	return new Promise((resolve) => {
-		const done = () => {
-			audio.removeEventListener("loadedmetadata", done);
-			window.clearTimeout(timer);
-			resolve(Number.isFinite(audio.duration) ? audio.duration : 0);
-		};
-		const timer = window.setTimeout(done, 1000);
-		audio.addEventListener("loadedmetadata", done);
-	});
 }
 
 /** Speaks `text` in the active language (or `lang`). Resolves when playback ends; a new call stops whatever was playing. */
@@ -245,20 +224,13 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	if (!res || res.status === 204 || !res.ok) return speakWithBrowser(text, language, rate);
 	const blob = await res.blob();
 	if (mine !== generation || !soundOn()) return;
-	const { gain, speech } = await clipInfo(url, blob);
+	const gain = await clipGain(url, blob);
 	if (mine !== generation || !soundOn()) return;
 	const src = URL.createObjectURL(blob);
 	const audio = new Audio(src);
 	audio.preload = "auto";
 	audio.volume = Math.min(1, volume() * gain);
-	// The setting is a pace, not a multiplier of whatever was recorded: each clip plays at the rate that reaches it (src/core/pace.ts).
-	const length = await clipSeconds(audio);
-	// Over the speech itself where it could be measured (a clip padded with silence would otherwise read as slow and be sped up too much); a measure under half the clip is not trusted.
-	audio.playbackRate = paceRate(countSyllables(text, language.code), speech >= length * 0.5 && speech <= length ? speech : length, rate);
-	if (mine !== generation || !soundOn()) {
-		URL.revokeObjectURL(src);
-		return;
-	}
+	audio.playbackRate = rate;
 	await new Promise<void>((resolve) => {
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
@@ -293,7 +265,7 @@ export function prefetchSpeech(text: string, code: string): void {
 	void fetch(url)
 		.then(async (r) => {
 			const blob = await r.blob();
-			if (r.ok && r.status !== 204) void clipInfo(url, blob);
+			if (r.ok && r.status !== 204) void clipGain(url, blob);
 		})
 		.catch(() => {});
 }

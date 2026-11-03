@@ -427,14 +427,13 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Every page is server-rendered per request, so `app/loading.tsx` must exist: a tab click changes the URL and shows the page's shape at once (production build; dev mode does not prefetch).
 - Judge speed on `npm run desktop:prod` or `node scripts/perf-check.mjs --cpu 4`, never on `desktop:dev`. A change that adds a large dependency to the shell shows up as long tasks in that table.
 
-### E37. The speed setting is a pace, not a multiplier (2026-11-03, branch `feat/motion-pass`)
+### E37. Clips play as recorded: the pace is not normalised at playback (2026-11-03, branch `feat/motion-pass`)
 
-**Why:** `playbackRate` was set to 0.75, 1 or 1.25 on top of clips recorded at different paces (2.3 to 5.4 syllables a second on the slovak.wiki voice, and each engine has its own base), so "1×" was a different speed on every sentence and the snail was sometimes normal. Measurements and reasoning: [research/voice-pace.md](research/voice-pace.md).
+**Why:** the owner asked what speed the voice runs at and whether the setting is accurate. On 40 slovak.wiki sentences the pace runs 2.3 to 5.4 syllables a second ([research/voice-pace.md](research/voice-pace.md)), so "1×" is not one speed. A per-clip correction toward a fixed pace was built and then reverted: the voice is generated at ElevenLabs speed 0.88 and its pace depends on the sentence, a full correction (1.58× on a slowly read proverb) made it sound rushed, and a capped one (0.8–1.3×) still fights the recording. The same approach had already failed twice in November (`6ed7944`, and the E22 note on clips).
 
 **How to apply:**
-- A clip plays at `paceRate(syllables, seconds, setting)` (`src/core/pace.ts`): the clip is nudged toward 4 syllables a second by at most 0.8–1.3× (full equalising, up to 1.6×, made a slowly recorded sentence sound rushed), the setting multiplies that, and a word (under 0.8 s or 3 syllables) keeps the plain multiplier. Do not set `audio.playbackRate` to the raw setting anywhere.
-- `NORMAL_SYLLABLES_PER_SECOND` is the one number to tune what "1×" means. `scripts/audio-pace.ts` prints the pace per engine and voice from a profile's audio index; run it after changing a voice or its rate.
-- The audio index stays as it is (E1, key stability): the length comes from the audio element in the browser.
+- `audio.playbackRate` is the setting (0.75, 1, 1.25) or the snail (`slowRate`), nothing computed from the clip. Do not add a per-clip or per-source rate; if a voice is too slow or fast, change how it is generated (the ElevenLabs speed, the Edge `EDGE_RATE`), which splits the cache key and is the owner's call.
+- `scripts/audio-pace.ts` and `countSyllables` (`src/core/pace.ts`) measure a profile's clips; they change nothing.
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 

@@ -132,7 +132,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 3 November: voice pace, sidebar, review bar
 
-- **Voice pace** (E37, [research/voice-pace.md](research/voice-pace.md)): the speed setting now means a pace. Measured on 40 slovak.wiki sentences, the voice runs 2.3 to 5.4 syllables a second, so the old 0.75/1/1.25 multiplier gave a different speed on each sentence. Each clip is nudged toward 4 syllables a second by at most 0.8–1.3× and the setting multiplies that (word-length clips keep the multiplier); a first version that corrected fully made a slowly recorded sentence sound rushed, see the research note. `scripts/audio-pace.ts` reports the pace per engine from a profile; only slovak.wiki could be measured in the cloud. **Unverified by ear.**
+- **Voice pace** (E37, [research/voice-pace.md](research/voice-pace.md)): measured, not changed. The slovak.wiki voice runs 2.3 to 5.4 syllables a second by sentence (it is generated at ElevenLabs speed 0.88); a per-clip correction was built and reverted because it made a slowly read sentence sound rushed, the third failed attempt at this. Clips play as recorded. `scripts/audio-pace.ts` reports a profile's pace per engine.
 - **Sidebar:** it folds to nothing and a single open button stays pinned at the top-left of every page; the open sidebar sits on the tinted sidebar surface. Task screens keep a 56 px rail of the same doors.
 - **Volume:** a click only mutes; the horizontal slider opens after the pointer rests on the speaker, on right-click, long press, or the arrow keys.
 - **Review:** the bar reads "39 of 46 reviews today" with what is still to do under it, and the filled cloze word lost its tick, which pushed the next word away.
