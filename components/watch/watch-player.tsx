@@ -492,6 +492,7 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 					{video.channel ? `${video.channel} · ` : ""}
 					{formatClock(video.durationSec)} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
 					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
+					{video.untranslated ? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation` : ""}
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang="sk">
 					{video.title}

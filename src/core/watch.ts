@@ -111,6 +111,9 @@ export interface VideoRecord {
 	usage: StoryUsage;
 	/** Where the English came from. */
 	translatedBy: "model" | "none";
+	/** Lines the model could not translate back into its answer: they keep
+	 *  their Slovak and have an empty English line. Absent when none. */
+	untranslated?: number;
 }
 
 export interface VideoIndexEntry {
