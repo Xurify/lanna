@@ -29,6 +29,11 @@ function orderedLexicon(): LexiconEntry[] {
 	return list;
 }
 
+/** Parse the lexicon and sort the deck order now, so the first card does not pay for it. */
+export function warmLexicon(): void {
+	orderedLexicon();
+}
+
 /** Mint the next unseen word's best sentence. Words already in the deck
  *  (any example) are skipped: one card per word until it is learned. */
 function mintNext(cards: Record<string, ReviewCard>, now: Date, preferSlugs: string[] = []): ReviewCard | undefined {

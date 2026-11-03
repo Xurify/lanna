@@ -58,6 +58,18 @@ export function setVolume(v: number): void {
 	changed();
 }
 
+/** Create the audio context ahead of the first answer. Building it inside the first tap cost that
+ *  tap about 30 ms; it starts suspended and the first sound resumes it. Only once the page has had
+ *  a gesture, because an earlier one only earns a console warning. */
+export function warmSound(): void {
+	if (typeof window === "undefined" || ctx || !soundOn() || !navigator.userActivation?.hasBeenActive) return;
+	try {
+		ctx = new AudioContext();
+	} catch {
+		// no sound
+	}
+}
+
 function audio(): AudioContext | null {
 	if (typeof window === "undefined" || !soundOn()) return null;
 	try {

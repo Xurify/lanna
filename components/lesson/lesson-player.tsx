@@ -21,7 +21,7 @@ import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
 import { prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
@@ -312,9 +312,12 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	}, [index, item?.id]);
 	// The next sentence's audio is fetched while this one is on screen, so it starts at once.
 	const nextSentence = plan?.items[index + 1]?.sentence;
+	const thisSentence = item?.sentence;
 	useEffect(() => {
+		if (thisSentence && lang) prefetchSpeech(thisSentence, lang.code);
 		if (nextSentence && lang) prefetchSpeech(nextSentence, lang.code);
-	}, [nextSentence, lang]);
+		warmSound();
+	}, [thisSentence, nextSentence, lang]);
 	const done = !!score;
 
 	const finish = useCallback(

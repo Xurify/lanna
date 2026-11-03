@@ -260,8 +260,13 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 /** Warms the browser cache with a sentence's audio, using the same request speak() makes. */
 export function prefetchSpeech(text: string, code: string): void {
 	if (!soundOn()) return;
-	void fetch(`/api/tts?${new URLSearchParams({ lang: code, text }).toString()}`)
-		.then((r) => r.blob())
+	const url = `/api/tts?${new URLSearchParams({ lang: code, text }).toString()}`;
+	// The loudness measure decodes the whole clip; doing it now keeps it off the answer's path.
+	void fetch(url)
+		.then(async (r) => {
+			const blob = await r.blob();
+			if (r.ok && r.status !== 204) void clipGain(url, blob);
+		})
 		.catch(() => {});
 }
 

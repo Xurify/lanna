@@ -14,8 +14,8 @@ import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY, SMALL } from "@/components/ui/l
 import { TopBar } from "@/components/top-bar";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveTime } from "@/components/use-active-time";
-import { PlayButton, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { PlayButton, prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 
@@ -142,6 +142,12 @@ export function ReviewSession() {
 	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
+	// The sentence is spoken when the answer is checked: have its audio ready by then.
+	const sentence = prompt?.card.sentence;
+	useEffect(() => {
+		if (sentence && lang) prefetchSpeech(sentence, lang.code);
+		warmSound();
+	}, [sentence, lang]);
 	const picks = mode === "choice" && !!prompt && prompt.card.state !== "review";
 	const help = { hints: hint, picked: picks };
 
