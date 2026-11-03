@@ -6,6 +6,7 @@
  *   node scripts/perf-check.mjs --check         # also fail when a budget in BUDGETS is broken
  *   node scripts/perf-check.mjs --json out.json # keep the raw numbers
  *   node scripts/perf-check.mjs --runs 5        # runs per measurement (median is reported)
+ *   node scripts/perf-check.mjs --light         # only the demo week (default adds scripts/perf-seed.ts: a year of reviews)
  *   node scripts/perf-check.mjs --cpu 4         # emulate a CPU four times slower (laptop on battery, phone)
  *
  * Dev mode is not representative (no minification, on-demand compile), so this
@@ -119,6 +120,11 @@ async function startServer() {
 	delete env.LH_DESKTOP_API_SECRET;
 	const seed = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")], { cwd: ROOT, env: { ...env, NODE_ENV: "development" }, encoding: "utf8" });
 	if (seed.status !== 0) throw new Error(`seed failed: ${seed.stderr || seed.stdout}`);
+	if (!flag("--light")) {
+		const heavy = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "perf-seed.ts")], { cwd: ROOT, env: { ...env, NODE_ENV: "development" }, encoding: "utf8" });
+		if (heavy.status !== 0) throw new Error(`heavy seed failed: ${heavy.stderr || heavy.stdout}`);
+		console.log(heavy.stdout.trim());
+	}
 	const port = await freePort();
 	const next = createRequire(path.join(ROOT, "package.json")).resolve("next/dist/bin/next");
 	const child = spawn(process.execPath, [next, "start", "-H", "127.0.0.1", "-p", String(port)], { cwd: ROOT, env, stdio: ["ignore", "pipe", "pipe"] });
@@ -419,7 +425,7 @@ function table(rows, head) {
 async function main() {
 	const puppeteer = loadPuppeteer();
 	const srv = await startServer();
-	console.log(`CPU x${CPU}; production build on ${srv.base}, scratch data ${srv.dir} (seeded demo week)`);
+	console.log(`CPU x${CPU}; production build on ${srv.base}, scratch data ${srv.dir} (seeded demo week${flag("--light") ? "" : " + a year of reviews"})`);
 	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: ["--no-first-run", "--disable-extensions", "--disable-background-timer-throttling", "--disable-renderer-backgrounding"] });
 	const result = { navs: [], colds: [], acts: [] };
 	try {
