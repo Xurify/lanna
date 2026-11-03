@@ -80,6 +80,7 @@ export function stampEvidence(p: ProgressRecord, curriculum: CurriculumState, ba
 	};
 	const log: TrailLog = {
 		hours,
+		minutes: Math.round(sum((d) => d.minutes)),
 		wordsKnown,
 		daysActive: activeDays.size,
 		longestStreak: Math.max(longestStreak(activeDays), streakDays),

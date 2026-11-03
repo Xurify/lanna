@@ -222,7 +222,10 @@ export function longestStreak(activeDays: ReadonlySet<string>): number {
 
 /** The trail log: the totals a learner can be proud of, all outcomes. */
 export interface TrailLog {
+	/** Guided hours the map credits: a finished unit earns its share of its stage's hours, so this stays at 0 until the first unit is done. */
 	hours: number;
+	/** Minutes measured while the learner was active, all activities. */
+	minutes: number;
 	wordsKnown: number;
 	daysActive: number;
 	longestStreak: number;

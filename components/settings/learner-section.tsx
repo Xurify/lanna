@@ -7,12 +7,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { explainChoices, LanguagePicker, PickSome } from "@/components/onboarding/controls";
+import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
+import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
-import { explanationLanguages, knownLanguages, MAX_EXPLAIN, parallelsLine, parallelsOn, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
+import { CEFR_ORDER, DEFAULT_DAYS_PER_WEEK, DEFAULT_XP_PER_HOUR, explanationLanguages, knownLanguages, MAX_EXPLAIN, MAX_MINUTES, MINUTE_CHOICES, parallelsLine, parallelsOn, xpForPlan, type Cefr, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
 import { SettingsGroup, Toggle } from "./controls.tsx";
 
 interface Langs {
@@ -20,6 +20,14 @@ interface Langs {
 	languageLevels: Partial<Record<Lang, LangLevel>>;
 	explainIn: Lang[];
 	showParallels: boolean;
+}
+
+interface Goals {
+	level: Cefr;
+	minutesPerDay: number;
+	daysPerWeek: number;
+	/** XP earned per measured hour so far; null until there is an hour of it. */
+	xpPerHour: number | null;
 }
 
 interface ProfileInfo {
@@ -37,7 +45,8 @@ interface ProfileInfo {
 }
 
 /** The last thing the tab showed, so opening it again paints at once and the fetch only corrects it. */
-let last: { state: Langs; profile: ProfileInfo | null } | null = null;
+let last: { state: Langs; goals: Goals; profile: ProfileInfo | null } | null = null;
+
 
 const BAR = "animate-pulse rounded-md bg-well-2 motion-reduce:animate-none";
 
@@ -64,6 +73,9 @@ function Placeholder() {
 export function LearnerSection({ onClose, children }: { onClose: () => void; children?: React.ReactNode }) {
 	const router = useRouter();
 	const [state, setState] = useState<Langs | null>(last?.state ?? null);
+	const [goals, setGoals] = useState<Goals | null>(last?.goals ?? null);
+	// What the goal controls show while edited: the saved goals stay as they were until Save.
+	const [draft, setDraft] = useState<Goals | null>(null);
 	const [profile, setProfile] = useState<ProfileInfo | null>(last?.profile ?? null);
 	const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error" | "failed">("idle");
 	// A click made before the refresh lands must not be overwritten by the older answer.
@@ -73,7 +85,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 		let gone = false;
 		// Both answers arrive together, so the target language never pops in above the rest after the first paint.
 		void Promise.all([
-			fetch("/api/progress").then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))) as Promise<{ goal?: LearnerGoal }>,
+			fetch("/api/progress").then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))) as Promise<{ goal?: LearnerGoal; xpPerHour?: number | null }>,
 			fetch("/api/profile")
 				.then((r) => (r.ok ? (r.json() as Promise<ProfileInfo>) : null))
 				.catch(() => null),
@@ -81,8 +93,10 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 			.then(([s, p]) => {
 				if (gone || edited.current) return;
 				const next: Langs = { languages: knownLanguages(s.goal), languageLevels: s.goal?.languageLevels ?? {}, explainIn: explanationLanguages(s.goal), showParallels: parallelsOn(s.goal) };
-				last = { state: next, profile: p };
+				const g: Goals = { level: s.goal?.level ?? "B2", minutesPerDay: s.goal?.minutesPerDay ?? 30, daysPerWeek: s.goal?.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, xpPerHour: s.xpPerHour ?? null };
+				last = { state: next, goals: g, profile: p };
 				setState(next);
+				setGoals(g);
 				setProfile(p);
 			})
 			.catch(() => !gone && !last && setStatus("failed"));
@@ -113,7 +127,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 
 	const save = async (next: Langs) => {
 		edited.current = true;
-		last = { state: next, profile: last?.profile ?? profile };
+		if (last) last = { ...last, state: next };
 		setState(next);
 		setStatus("saving");
 		try {
@@ -125,8 +139,31 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 		}
 	};
 
+	/** The goals are saved with a button, not on each click: a stray click on a number should not change the plan. The day's XP goal is not saved at all: it follows the minutes. */
+	const saveGoals = async () => {
+		if (!draft) return;
+		setStatus("saving");
+		try {
+			const res = await fetch("/api/progress", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: { level: draft.level, minutesPerDay: draft.minutesPerDay, daysPerWeek: draft.daysPerWeek } }) });
+			if (!res.ok) throw new Error(String(res.status));
+			if (last) last = { ...last, goals: draft };
+			setGoals(draft);
+			setDraft(null);
+			setStatus("saved");
+		} catch {
+			setStatus("error");
+		}
+	};
+
 	if (status === "failed") return <p className="text-sm text-muted-foreground">The profile could not be loaded — refresh to retry.</p>;
-	if (!state) return <Placeholder />;
+	if (!state || !goals) return <Placeholder />;
+	const shown = draft ?? goals;
+	const dirty = draft !== null && (draft.level !== goals.level || draft.minutesPerDay !== goals.minutesPerDay || draft.daysPerWeek !== goals.daysPerWeek);
+	const edit = (next: Goals) => {
+		setDraft(next);
+		setStatus("idle");
+	};
+	const dayXp = xpForPlan(shown.minutesPerDay, shown.xpPerHour);
 
 	return (
 		<div className="lh-rise flex flex-col gap-2">
@@ -175,9 +212,39 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 				<PickSome items={explainChoices(state.languages)} value={state.explainIn} onChange={(explainIn) => void save({ ...state, explainIn })} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
 				<p className="text-xs text-muted-foreground">Up to {MAX_EXPLAIN}: the tutor explains in the first and adds the key line and the terms in the second. Lesson rules stay in English for now.</p>
 			</SettingsGroup>
+			<SettingsGroup label="Daily goals" hint="How much you want to study. The XP that counts as a day done follows from it." testid="learner-goals">
+				<div className="flex flex-col gap-4 rounded-lg bg-well px-4 py-3.5">
+					<div className="flex flex-col gap-1.5" data-testid="goal-level">
+						<span className="font-ui text-sm font-medium text-foreground">Target level</span>
+						<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l }))} value={shown.level} onPick={(level) => edit({ ...shown, level })} label="Target level" testid="goal-level-chips" />
+					</div>
+					<div className="flex flex-col gap-1.5" data-testid="goal-minutes">
+						<span className="font-ui text-sm font-medium text-foreground">Minutes a day</span>
+						<NumberPicker value={shown.minutesPerDay} onChange={(minutesPerDay) => edit({ ...shown, minutesPerDay })} quick={MINUTE_CHOICES} min={5} max={MAX_MINUTES} step={5} unit="min" label="Minutes a day" testid="goal-minutes-picker" />
+					</div>
+					<div className="flex flex-col gap-1.5" data-testid="goal-days">
+						<span className="font-ui text-sm font-medium text-foreground">Days a week</span>
+						<Chips items={[1, 2, 3, 4, 5, 6, 7].map((d) => ({ id: d, title: String(d) }))} value={shown.daysPerWeek} onPick={(daysPerWeek) => edit({ ...shown, daysPerWeek })} label="Days a week" testid="goal-days-chips" />
+					</div>
+					<p className="text-xs leading-relaxed text-muted-foreground" data-testid="goal-xp">
+						A day counts as done at <b className="q-num font-semibold text-foreground">{dayXp} XP</b>: {shown.minutesPerDay} min at {shown.xpPerHour === null ? "a typical pace of" : "your pace of about"} {shown.xpPerHour ?? DEFAULT_XP_PER_HOUR} XP an hour{shown.xpPerHour === null ? ", until an hour of your study has been measured" : ""}.
+					</p>
+					<div className="flex items-center gap-2" data-testid="goal-actions">
+						<button type="button" onClick={() => void saveGoals()} disabled={!dirty || status === "saving"} className={cn(PRIMARY, SMALL)} data-testid="goal-save">
+							Save goals
+						</button>
+						<button type="button" onClick={() => setDraft(null)} disabled={!dirty} className={cn(SECONDARY, SMALL)} data-testid="goal-discard">
+							Discard
+						</button>
+						<span className="text-xs text-muted-foreground" aria-live="polite">
+							{dirty ? "Not saved yet" : ""}
+						</span>
+					</div>
+				</div>
+			</SettingsGroup>
 			<SettingsGroup label="Goal and level" testid="learner-goal">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
-					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">Your pace lives on the plan. The purposes, the target and your starting level live in setup.</span>
+					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">The purposes and your starting level live in setup.</span>
 					<span className="flex min-w-0 flex-wrap gap-2">
 						{[
 							{ id: "learner-open-plan", href: "/progress", label: "Open progress" },

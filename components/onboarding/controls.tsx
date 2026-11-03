@@ -73,7 +73,6 @@ export function NumberPicker({
 		if (Number.isFinite(n) && raw.trim() !== "") onChange(clamp(n));
 		else setText(String(value));
 	};
-	const custom = !quick.includes(value);
 	return (
 		<div className="flex flex-wrap items-center gap-2" role="group" aria-label={label} data-testid={testid}>
 			{quick.map((q) => (
@@ -81,7 +80,7 @@ export function NumberPicker({
 					{q}
 				</button>
 			))}
-			<div className={cn("flex items-center rounded-xl border-2", custom ? "border-go bg-go/10" : "border-border")} data-testid={testid ? `${testid}-custom` : undefined}>
+			<div className="flex items-center rounded-xl border-2 border-border focus-within:border-go" data-testid={testid ? `${testid}-custom` : undefined}>
 				<button type="button" aria-label={`Less ${unit}`} onClick={() => onChange(clamp(value - step))} className="flex size-10 items-center justify-center rounded-l-[10px] text-muted-foreground hover:bg-accent hover:text-foreground">
 					<MinusIcon className="size-4" />
 				</button>

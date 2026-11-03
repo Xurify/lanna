@@ -140,3 +140,8 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Sidebar width:** drag the sidebar's right edge between 208 and 288 px (288 is the old width), double-click for the widest, arrow keys for steps; it is kept in a cookie so the first paint has it. Today's and Review's compact headers now clear Electron's window controls.
 - **Listen, typed mode:** the Enter that sent an answer also pressed Continue (the page-level key listener is re-registered on every render, so it saw the new answer and advanced on the same keypress), so a typed answer never showed its sentence and meaning. Fixed. The end screen also kept only the sentences you missed; the ones you understood are now listed under a collapsed "Understood · N sentences".
 
+## 3 November: goals in Settings (`feat/settings-goals-and-time-studied`)
+
+- **Settings → Learning has Daily goals:** target level, minutes a day and days a week, saved on a click. The day's XP goal is not one of them: it follows the minutes at your own XP an hour (E39), so it moves with the plan instead of sitting at 50.
+- **Trail log:** "Hours on the trail" was the map's credit for finished units and read 0 after hours of study. It is "Guided hours credited" now, beside a "Time studied" taken from the measured minutes, with a line saying what each counts.
+- **Learning tab:** both fetches arrive together and a placeholder holds the space, so the tab no longer jumps twice; the effort selects are wide enough for "medium".
