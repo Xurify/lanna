@@ -32,6 +32,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 export function levelBadgeStyle(level: string): string {
 	switch (level) {
@@ -347,7 +348,7 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 						{kindOf(story)} · <span className="text-ink-3">{step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-well-2">
-						<div className="h-full rounded-full bg-teal transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
+						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
 			</div>

@@ -82,7 +82,7 @@ describe("StampsCard", () => {
 		assert.ok(next.includes("Prvé slová"), "40 of 50 words is the closest");
 		assert.ok(next.includes("40 of 50"));
 		assert.equal((next.match(/<li /g) ?? []).length, 3, "three next stamps");
-		assert.ok(next.includes("width:80%"), "the words bar is four fifths full");
+		assert.ok(next.includes("--fill:0.8"), "the words bar is four fifths full");
 	});
 
 	it("says it is loading when there are no stamps yet", () => {

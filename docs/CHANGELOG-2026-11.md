@@ -109,3 +109,13 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Verb blanks from UD** (fix/verb-cloze-ud, E28): 161 existing verb sentences gained a blank from the UD Slovak SNK treebank's forms. 28 of the 102 thin verbs now have three or more usable sentences. No sentence text or position changed.
 - **Checked:** 10 tests for the analysis and 3 for the saved snapshot and guide; the empty state in the running app. **Unverified:** the page with real answers, and writing a guide with a live model (the call is not covered by a test; a saved guide stands in). The 16 failures in the full suite are the same on main.
 
+## 3 November: the motion pass
+
+- **Feel** (`feat/motion-pass`, E35): one timing scale and one strong ease-out across the app; Today's sections arrive in 320 ms, not 500; a lesson rep and its feedback rise 8 px, not 16.
+- **Press:** buttons, answer tiles, play buttons and the Speak microphone shrink a little when pressed instead of dimming, so a press reads as pushed, not disabled.
+- **Review:** a miss shakes the sentence, a right answer pops into the blank, the verdict fades in, and the next card settles in, without remounting the input.
+- **Popovers and dialogs:** the word card in Read grows from its word; the jump palette and the leave-lesson dialog fade their backdrop and scale in from 96 %.
+- **Smoothness:** every progress bar moves by transform, not width, and fills from empty on first paint; no `transition-all` is left; the active unit's ring no longer repaints every frame; hover colours no longer stick after a tap on the iPad.
+- **Reduced motion:** honoured everywhere by a global rule.
+- **Checked:** typecheck; computed styles and a press in headless Chromium against the sandbox; screenshots of Today, Review, Milestones and a lesson miss. **Unverified:** the PC, Safari on iPhone and iPad, a frame recording on a slow device.
+

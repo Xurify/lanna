@@ -13,7 +13,7 @@ import { MenuShell, type MenuAlign } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
-const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-all";
+const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-colors";
 const ON = "border-primary/80 bg-primary/15 text-primary shadow-xs font-semibold";
 const OFF = "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground";
 const PANEL = "flex w-[22rem] max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-border bg-card p-3 shadow-xl";
@@ -255,7 +255,7 @@ export function LanguagePicker({
 											title={lv.line}
 											onClick={() => setLevel(id, lv.id)}
 											className={cn(
-												"whitespace-nowrap rounded-lg border py-1 font-ui text-xs tabular-nums transition-all",
+												"whitespace-nowrap rounded-lg border py-1 font-ui text-xs tabular-nums transition-colors",
 												lv.id === "native" ? "px-2.5" : "px-2",
 												lv.id === level ? ON : OFF,
 											)}

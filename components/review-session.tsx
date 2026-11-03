@@ -21,6 +21,8 @@ import { PlayButton, prefetchSpeech, speak, stopSpeaking, useActiveLanguage } fr
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
+import { settle, shake } from "@/components/motion";
 
 interface Prompt {
 	card: ReviewCard;
@@ -103,6 +105,8 @@ export function ReviewSession() {
 	// capped) is what the day's minutes count; `ms` stays the card's wall-clock.
 	const activeTime = useActiveTime("review", "interactive");
 	const inputRef = useRef<HTMLInputElement>(null);
+	const sentenceRef = useRef<HTMLFormElement>(null);
+	const bodyRef = useRef<HTMLDivElement>(null);
 
 	// The skeleton waits a beat, so a deck that lands at once never flashes one.
 	const [slow, setSlow] = useState(false);
@@ -149,6 +153,10 @@ export function ReviewSession() {
 	}, [load]);
 
 	const prompt = status?.next ?? null;
+	const cardId = prompt?.card.id;
+	useEffect(() => {
+		if (cardId) settle(bodyRef.current);
+	}, [cardId]);
 	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
@@ -173,7 +181,10 @@ export function ReviewSession() {
 		setSuggested(ratingFor(v, Date.now() - shownAt.current, help));
 		if (v === "exact") sfx.right();
 		else if (v === "accents") sfx.almost();
-		else sfx.wrong();
+		else {
+			sfx.wrong();
+			shake(sentenceRef.current);
+		}
 		void speak(prompt.card.sentence);
 	};
 
@@ -297,7 +308,7 @@ export function ReviewSession() {
 									)}
 								</h2>
 								<div role="progressbar" aria-label="Reviews done today" aria-valuemin={0} aria-valuemax={done + left} aria-valuenow={done} className="h-1 overflow-hidden rounded-full bg-well-2" data-testid="review-progress">
-									<div className="h-full rounded-full bg-teal transition-[width] duration-300" style={{ width: `${done + left > 0 ? Math.round((done / (done + left)) * 100) : 0}%` }} />
+									<div className="lh-fill rounded-full bg-teal" style={fillStyle(done + left > 0 ? done / (done + left) : 0)} />
 								</div>
 							</section>
 
@@ -398,8 +409,9 @@ export function ReviewSession() {
 												<SoundControl className="flex items-center transition-colors" iconClass="size-4" testid="review-sound" />
 											</span>
 										</header>
-										<div className="q-c-body !px-4 @xl:!px-7">
+										<div ref={bodyRef} className="q-c-body !px-4 @xl:!px-7">
 											<form
+												ref={sentenceRef}
 												onSubmit={(e) => {
 													e.preventDefault();
 													if (given.trim()) check(given);
@@ -424,7 +436,7 @@ export function ReviewSession() {
 															{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
 														</span>
 														{verdict ? (
-															<span className="col-start-1 row-start-1 flex items-center gap-2.5" data-testid="review-answer">
+															<span className="lh-pop origin-left col-start-1 row-start-1 flex items-center gap-2.5" data-testid="review-answer">
 																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
 																	{[...prompt.card.answer].map((ch, i) => (
 																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
@@ -464,7 +476,7 @@ export function ReviewSession() {
 													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}
 												</div>
 												{verdict && (
-													<p className={cn("q-result", verdict === "wrong" && "miss")} data-testid="review-verdict">
+													<p className={cn("q-result lh-fade", verdict === "wrong" && "miss")} data-testid="review-verdict">
 														{verdict === "wrong" ? <XIcon className="size-[15px]" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
 														{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
 														<span>{exact ? (helped ? "· help used" : "· no help used") : ""}</span>
@@ -474,7 +486,7 @@ export function ReviewSession() {
 
 											<div className="mt-3 min-h-[60px] @xl:min-h-[34px]" data-testid="review-feedback">
 												{verdict && verdict !== "exact" && (
-													<div className="q-sub !mt-0">
+													<div className="q-sub lh-fade !mt-0">
 														Correct answer: <b lang={lang?.code}>{prompt.card.answer}</b>
 														{given && (
 															<>

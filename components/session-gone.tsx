@@ -51,7 +51,7 @@ export function SessionGone({ id, trashed }: { id: string; trashed: boolean }) {
 							onClick={() => void restore()}
 							disabled={busy}
 							data-testid="session-restore"
-							className="flex h-11 items-center gap-2 rounded-xl bg-go px-5 font-ui text-sm font-bold text-go-ink transition-all hover:brightness-110 disabled:opacity-60"
+							className="flex h-11 items-center gap-2 rounded-xl bg-go px-5 font-ui text-sm font-bold text-go-ink transition-[filter,opacity] hover:brightness-110 disabled:opacity-60"
 						>
 							<ArchiveRestoreIcon className="size-4" />
 							{busy ? "Restoring…" : "Put it back"}

@@ -220,7 +220,7 @@ function MenuTrigger({
 			onClick={() => {
 				if (!disabled) onClick();
 			}}
-			className={`flex h-8.5 items-center justify-between gap-1.5 rounded-xl border border-border/80 bg-background px-2.5 font-ui text-xs text-foreground transition-all ${
+			className={`flex h-8.5 items-center justify-between gap-1.5 rounded-xl border border-border/80 bg-background px-2.5 font-ui text-xs text-foreground transition-colors ${
 				disabled ? "cursor-not-allowed opacity-50" : "hover:border-border hover:bg-background focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
 			} ${widthClass}`}
 		>

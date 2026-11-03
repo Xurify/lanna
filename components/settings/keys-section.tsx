@@ -249,7 +249,7 @@ function KeyTableRow({
 				data-testid={`${testid}-row`}
 				onClick={() => !envOwned && onToggle()}
 				title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.` : undefined}
-				className={`flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 text-left transition-all ${
+				className={`flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 text-left transition-colors ${
 					envOwned ? "cursor-default" : "cursor-pointer hover:border-border/80 hover:bg-accent/30"
 				}`}
 			>
@@ -358,7 +358,7 @@ function PlainSettingRow({
 					autoComplete="off"
 					spellCheck={false}
 					data-testid={`${testid}-input`}
-					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground/60 transition-all hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
+					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground/60 transition-[color,background-color,border-color,box-shadow] hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
 				/>
 			</div>
 			{error && (
@@ -410,7 +410,7 @@ function AddProviderRow({
 				aria-expanded={open}
 				data-testid="add-provider"
 				onClick={() => setOpen((v) => !v)}
-				className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 bg-accent/10 px-3.5 py-2.5 text-left font-ui text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-accent/25 hover:text-foreground"
+				className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 bg-accent/10 px-3.5 py-2.5 text-left font-ui text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent/25 hover:text-foreground"
 			>
 				<span className="flex items-center gap-2.5">
 					<span className="flex size-5 items-center justify-center rounded-md bg-accent font-semibold text-foreground">

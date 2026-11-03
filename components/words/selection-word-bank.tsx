@@ -565,7 +565,7 @@ export function SelectionWordBankBar() {
 			style={positionStyle}
 			className="fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
 		>
-			<div className="lh-pop flex flex-col gap-2 rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl">
+			<div className="lh-menu-in origin-top flex flex-col gap-2 rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl">
 				{/* Always-visible header: headword, POS/morphology, and translation */}
 				<div className="flex flex-col gap-1 border-b border-border/60 pb-2">
 					<div className="flex items-start justify-between gap-2">

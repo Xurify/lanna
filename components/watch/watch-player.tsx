@@ -40,6 +40,7 @@ import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
 import { coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -342,7 +343,7 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 						{video.title} <span className="text-muted-foreground">· {step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
-						<div className="h-full rounded-full bg-teal transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
+						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
 				{right}

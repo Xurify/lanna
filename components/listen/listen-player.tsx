@@ -380,7 +380,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								type="button"
 								onClick={() => replay()}
 								aria-label="Play the sentence"
-								className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-colors hover:bg-teal-2 active:translate-y-px"
+								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="listen-play"
 							>
 								<Volume2Icon className="size-6" strokeWidth={1.6} />

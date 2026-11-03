@@ -473,7 +473,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								aria-pressed={listening}
 								aria-label={listening ? "Stop and send" : "Say your line"}
 								className={cn(
-									"relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink transition-colors active:translate-y-px disabled:opacity-60 [-webkit-touch-callout:none]",
+									"lh-press relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink disabled:opacity-60 [-webkit-touch-callout:none]",
 									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
 								)}
 								data-testid="speak-mic" onPointerDown={onMicDown} onPointerUp={onMicUp} onPointerCancel={onMicUp} onLostPointerCapture={onMicUp} onContextMenu={(e) => e.preventDefault()}

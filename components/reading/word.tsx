@@ -206,9 +206,10 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					role="dialog"
 					aria-label={`About ${token.text}`}
 					className={cn(
-						"lh-pop absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-lg border bg-card p-4 text-left font-prose text-base shadow-raise-hi",
+						"lh-menu-in absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-lg border bg-card p-4 text-left font-prose text-base shadow-raise-hi",
 						placeAbove ? "bottom-full mb-2" : "top-full mt-2",
 						side === "left" ? "left-0" : "right-0",
+						placeAbove ? (side === "left" ? "origin-bottom-left" : "origin-bottom-right") : side === "left" ? "origin-top-left" : "origin-top-right",
 					)}
 					data-testid="word-popover"
 				>

@@ -627,7 +627,7 @@ function QuestionDockForm({
 									data-kbdrow={i}
 									onClick={() => pick(i)}
 									className={cn(
-										"flex items-start gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left text-[15px] outline-none shadow-[0_2px_0_0_var(--border)] transition-all active:translate-y-px active:shadow-none",
+										"flex items-start gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left text-[15px] outline-none shadow-[0_2px_0_0_var(--border)] transition-[translate,box-shadow,background-color,border-color] active:translate-y-px active:shadow-none",
 										isSel ? "border-go bg-go-soft" : "hover:border-sky/50 hover:bg-accent/50",
 										i === kbdIdx && !isSel && "ring-1 ring-border bg-accent/40",
 									)}

@@ -14,6 +14,7 @@ import { HeadphonesIcon, MessagesSquareIcon, PencilRulerIcon, ZapIcon } from "lu
 import { cn } from "@/lib/utils";
 import { STRAND_STYLE } from "@/components/strand-style";
 import { STRANDS, strandAdvice, strandCaption, type Strand, type StrandBalance as Balance } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 export const STRAND_ICON: Record<Strand, React.ComponentType<{ className?: string }>> = {
 	input: HeadphonesIcon,
@@ -40,7 +41,7 @@ export function StrandBalance({ balance }: { balance: Balance | null }) {
 								<span className="truncate">{s.title}</span>
 							</span>
 							<span className="relative h-2 overflow-hidden rounded-full bg-accent" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`${s.title}: ${pct}% of the week`}>
-								<span className={cn("absolute inset-y-0 left-0 rounded-full transition-[width] duration-700", STRAND_STYLE[s.id].bar)} style={{ width: `${Math.min(100, (share / max) * 100)}%` }} />
+								<span className={cn("lh-fill absolute inset-0 rounded-full", STRAND_STYLE[s.id].bar)} style={fillStyle(share / max)} />
 								{/* The quarter mark. */}
 								<span className="absolute inset-y-0 w-0.5 bg-foreground/50" style={{ left: `${(balance.target / max) * 100}%` }} aria-hidden="true" />
 							</span>

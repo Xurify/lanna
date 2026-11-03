@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { UnitBadge } from "@/components/unit-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { examLine, STAGES, TUTOR_SESSIONS, weakFamily, WEAK_MEND_ACCURACY, WEAK_MEND_REPS, type ChapterState, type CurriculumState, type ExamSummary, type UnitState, type WeakSpotSummary } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 export function CurriculumPath({
 	state,
@@ -69,7 +70,7 @@ export function CurriculumPath({
 							</span>
 						</div>
 						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-well-2" aria-hidden="true">
-							<div className={cn("h-full rounded-full transition-[width] duration-700", "bg-teal")} style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} />
+							<div className="lh-fill rounded-full bg-teal" style={fillStyle(total ? done / total : 0)} />
 						</div>
 						{/* Compact: a stage not reached yet is its header alone; its
 						    chapters are the full map's business. */}

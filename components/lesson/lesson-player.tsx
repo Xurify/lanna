@@ -55,6 +55,8 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
+import { shake as shakeEl } from "@/components/motion";
 
 type Mode = "lesson" | "blitz";
 
@@ -195,11 +197,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// A miss shakes the rep without remounting it (the typed text stays).
 	useEffect(() => {
 		if (shake === 0) return;
-		if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-		repBox.current?.animate?.(
-			[{ transform: "translateX(0)" }, { transform: "translateX(-8px)" }, { transform: "translateX(8px)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }],
-			{ duration: 320 },
-		);
+		shakeEl(repBox.current);
 	}, [shake]);
 	const startedAt = useRef(Date.now());
 	const shownAt = useRef(Date.now());
@@ -609,7 +607,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 								className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2"
 								aria-label={`${left} seconds left`}
 							>
-								<div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", left <= 10 ? "bg-miss" : "bg-teal")} style={{ width: `${Math.max(3, progress * 100)}%` }} />
+								<div className={cn("lh-fill rounded-full", left <= 10 ? "bg-miss" : "bg-teal")} style={fillStyle(Math.max(0.03, progress))} />
 							</div>
 						) : (
 							<LessonTrail reps={reps} index={index} total={total} answered={!!current} />
@@ -736,14 +734,14 @@ function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind
  *  does), leaving is the deliberate second choice. */
 function LeaveDialog({ answered, total, onStay, onLeave }: { answered: number; total: number; onStay: () => void; onLeave: () => void }) {
 	return (
-		<div className="fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6" onClick={onStay}>
+		<div className="lh-fade fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6" onClick={onStay}>
 			<div
 				role="alertdialog"
 				aria-modal="true"
 				aria-labelledby="lesson-leave-title"
 				aria-describedby="lesson-leave-body"
 				onClick={(e) => e.stopPropagation()}
-				className="lh-rise q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
+				className="lh-menu-in q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
 				data-testid="lesson-leave-confirm"
 			>
 				<h2 id="lesson-leave-title" className="font-ui text-xl font-semibold tracking-[-0.018em] text-foreground">
@@ -806,9 +804,9 @@ function repIcon(item: LessonItem): QIconName {
 	return unitInfo(item.unit).kind === "words" ? "words" : "grammar";
 }
 
-const PLAY_BIG = "flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-[background-color,transform] hover:bg-teal-2 active:translate-y-px";
-const PLAY_SLOW = "flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-well hover:text-ink-2";
-const PLAY_SMALL = "flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 transition-colors hover:bg-[var(--q-teal-line)]";
+const PLAY_BIG = "lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2";
+const PLAY_SLOW = "lh-press flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2";
+const PLAY_SMALL = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]";
 /** The target form in a sentence that is read, not blanked (a meaning rep, a twin). */
 const MARKED = "bg-transparent px-0.5 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]";
 /** The slot the answer sits in: the mockup's `.q-slot`, sized to the 44px sentence. */
