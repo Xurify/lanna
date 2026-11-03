@@ -79,6 +79,8 @@ contextBridge.exposeInMainWorld("lh", {
 		},
 	},
 	expandWindow: () => ipcRenderer.send("lh:expand-window"),
+	/** Tell the window frame which theme the page is in, so its background and title bar follow. */
+	setTheme: (night) => ipcRenderer.send("lh:theme", night === true),
 	/** Restart the whole app (language-profile switch). */
 	relaunch: () => ipcRenderer.send("lh:relaunch"),
 	onZoom: (cb) => {

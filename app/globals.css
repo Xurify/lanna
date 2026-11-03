@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "./quiet.css" layer(components);
 
-/* Night is marked twice: the dark class, and data-theme on <html>. React rewrites the class when the root layout re-renders (a not-found page does), and data-theme is not a prop it manages. */
+/* Night is marked by data-theme on <html> (set by components/quiet/theme-sync.tsx; React does not manage that attribute) or by the dark class; a device set to dark gets it from a media query below. */
 @custom-variant dark (&:is(.dark *, :root[data-theme="night"] *));
 
 /* Pointer variants for the phone and iPad layouts (2026-11-01). A keycap hint
@@ -160,6 +160,39 @@ html[data-keyboard] :focus-visible {
 	--q-shadow-rgb: 0 0 0;
 	--lh-ink-strong: var(--foreground);
 	--lh-ink-italic: var(--foreground);
+}
+
+/* The same Night tokens for a device set to dark while the learner has not chosen Day. They are repeated, not shared, because a media query cannot share a block with a selector; change both together. No script is needed, so nothing flashes. */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="day"]) {
+		color-scheme: dark;
+		--q-bg: #101214;
+		--q-card: #1b1e21;
+		--q-side: #16181a;
+		--q-well: #1a1d1f;
+		--q-well-2: #23272a;
+		--q-line: #26292c;
+		--q-line-2: #353a3e;
+		--q-ink: #ecedee;
+		--q-ink-2: #c3c7cb;
+		--q-ink-3: #9399a0;
+		--q-ink-4: #6e747b;
+		--q-teal: #4cbdb7;
+		--q-teal-2: #7bd3ce;
+		--q-teal-wash: #12302f;
+		--q-teal-line: #1f5552;
+		--q-bar: #7d838a;
+		--q-bar-hatch-a: #4a4f55;
+		--q-bar-hatch-b: #353a3e;
+		--q-box: #4a4f55;
+		--q-dash: #4a4f55;
+		--q-on-teal: #06201f;
+		--q-miss: #f0867b;
+		--q-miss-wash: #2d1a18;
+		--q-shadow-rgb: 0 0 0;
+		--lh-ink-strong: var(--foreground);
+		--lh-ink-italic: var(--foreground);
+	}
 }
 
 /* CMU Serif bold (titles) — bundled local file, no CDN dependency. */

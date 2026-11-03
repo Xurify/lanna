@@ -12,6 +12,7 @@ export function ThemeSync() {
 			document.documentElement.classList.toggle("dark", night);
 			document.documentElement.dataset.theme = night ? "night" : "day";
 			document.documentElement.style.colorScheme = night ? "dark" : "light";
+			window.lh?.setTheme?.(night);
 		} catch {
 			// storage blocked: the page keeps the theme it has
 		}

@@ -25,6 +25,9 @@
  */
 
 const { app, BrowserWindow, Menu, ipcMain, session, shell } = require("electron");
+
+/** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lh:theme". */
+const CHROME = { day: { color: "#ffffff", symbolColor: "#16181b" }, night: { color: "#101214", symbolColor: "#ecedee" } };
 const { createChatGPT, fileStore } = require("./chatgpt.cjs");
 const { attachChatGPTChild, trustedSender, chatGPTControl } = require("./chatgpt-ipc.cjs");
 const { createSubscriptions, loadSubscriptionSDK } = require("./subscriptions.cjs");
@@ -327,7 +330,7 @@ function createWindow(url) {
 				// height. Do not force the zoom-invariant native overlay to match
 				// the renderer's 60 CSS px bar: zooming out would cover its border.
 				// The renderer reserves the actual width via env(titlebar-area-*).
-				titleBarOverlay: { color: "#0f1519", symbolColor: "#eef2f3" },
+				titleBarOverlay: { ...CHROME.day },
 				// Keep the custom bar alone; Alt reveals the native menu.
 				autoHideMenuBar: true,
 			}),
@@ -343,10 +346,10 @@ function createWindow(url) {
 		// the native window surface changes size before Chromium's compositor
 		// has a frame at the new size, and the gap shows the window's NATIVE
 		// background — Electron's default is white, glaring on a dark app.
-		// The app background (#0f1519) fills the lag instead. `show: false` +
+		// The app background (white, or #101214 once the page reports Night) fills the lag instead. `show: false` +
 		// ready-to-show is the same treatment for first paint: the window
 		// appears only once the page has actually rendered.
-		backgroundColor: "#0f1519",
+		backgroundColor: CHROME.day.color,
 		show: false,
 		// Narrow-window behavior (owner, 2026-09-17): 640px is the floor —
 		// below it even a wrapped chrome row gets cramped and the chat header
@@ -776,6 +779,14 @@ async function main() {
 	// The renderer's first paint can race did-finish-load — it asks for
 	// the current factor itself (mirrors "lh:zoom" pushes).
 	ipcMain.handle("lh:zoom:get", (event) => BrowserWindow.fromWebContents(event.sender)?.webContents.getZoomFactor() ?? 1);
+	ipcMain.on("lh:theme", (event, night) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		if (!win) return;
+		const c = night === true ? CHROME.night : CHROME.day;
+		win.setBackgroundColor(c.color);
+		// Only the Windows and Linux frames have an overlay to recolor.
+		if (process.platform !== "darwin") win.setTitleBarOverlay?.({ ...c });
+	});
 	ipcMain.on("lh:expand-window", (event) => {
 		const win = BrowserWindow.fromWebContents(event.sender);
 		if (!win) return;

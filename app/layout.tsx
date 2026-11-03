@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
@@ -22,11 +21,6 @@ import { OutboxFlush } from "@/components/lesson/outbox-flush";
 // cyrillic carries Russian.
 const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist" });
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains" });
-
-// The theme is Day or Night, from the learner's choice (localStorage
-// "lh:theme": day, night, or absent = follow the system). The script runs
-// before paint so a Night learner never sees a Day flash.
-const THEME_SCRIPT = `try{var t=localStorage.getItem("lh:theme");var n=t==="night"||(t!=="day"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",n);document.documentElement.dataset.theme=n?"night":"day";document.documentElement.style.colorScheme=n?"dark":"light"}catch(e){}`;
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
@@ -69,8 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 			<body className="min-h-dvh antialiased">
 			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
-			<Script id="lh-theme" strategy="beforeInteractive">{THEME_SCRIPT}</Script>
-				<ServerEventsProvider>
+							<ServerEventsProvider>
 				<AppearanceProvider initialDelta={appearance}>
 					<SidebarProvider initialOpen={sidebarOpen}>
 						<ActivityProvider>
