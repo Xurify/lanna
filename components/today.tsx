@@ -157,7 +157,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				</header>
 
 				<main className="flex min-h-0 flex-col">
-					<div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 @6xl:px-0 @6xl:pt-8">
+					<div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 [mask-image:linear-gradient(to_bottom,#000_calc(100%-48px),transparent)] @6xl:px-0 @6xl:pt-8 @6xl:[mask-image:none]">
 						<div className="mx-auto w-full max-w-[720px] pb-6">
 							<header className="q-rise">
 								<p className="q-date first-letter:uppercase" lang="sk">
@@ -322,7 +322,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 										</figure>
 										{balance.total > 0 && (
 											<div>
-												<p className="q-line" data-testid="strand-advice">
+												<p className="q-line !text-[16px]" data-testid="strand-advice">
 													{strandAdvice(balance)}
 												</p>
 												{behind && (

@@ -13,6 +13,7 @@ import { ActivityProvider } from "@/components/activity-dock";
 import { ServerEventsProvider } from "@/components/server-events";
 import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
+import { ThemeSync } from "@/components/quiet/theme-sync";
 import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
 import { OutboxFlush } from "@/components/lesson/outbox-flush";
 
@@ -25,7 +26,7 @@ const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], varia
 // The theme is Day or Night, from the learner's choice (localStorage
 // "lh:theme": day, night, or absent = follow the system). The script runs
 // before paint so a Night learner never sees a Day flash.
-const THEME_SCRIPT = `try{var t=localStorage.getItem("lh:theme");var n=t==="night"||(t!=="day"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",n);document.documentElement.style.colorScheme=n?"dark":"light"}catch(e){}`;
+const THEME_SCRIPT = `try{var t=localStorage.getItem("lh:theme");var n=t==="night"||(t!=="day"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",n);document.documentElement.dataset.theme=n?"night":"day";document.documentElement.style.colorScheme=n?"dark":"light"}catch(e){}`;
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
@@ -78,7 +79,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					</SidebarProvider>
 				</AppearanceProvider>
 			</ServerEventsProvider>
-			<KeyboardFocusMode />
+			<ThemeSync />
+				<KeyboardFocusMode />
 			{/* Lessons finished but not yet recorded are sent again (components/lesson/outbox.ts). */}
 			<OutboxFlush />
 			{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}

@@ -14,7 +14,7 @@
 .q-btn.primary:hover:not(:disabled) { background: var(--q-teal-2); }
 .q-btn.primary:active:not(:disabled) { transform: translateY(0.5px); }
 .q-btn.primary .q-kbd { background: rgb(255 255 255 / 0.14); color: rgb(255 255 255 / 0.9); box-shadow: none; }
-.q-btn.sec { background: var(--q-bg); color: var(--q-ink); box-shadow: 0 0 0 1px var(--q-line-2), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05); padding: 0 14px 0 12px; }
+.q-btn.sec { background: var(--q-card); color: var(--q-ink); box-shadow: 0 0 0 1px var(--q-line-2), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05); padding: 0 14px 0 12px; }
 .q-btn.sec:hover:not(:disabled) { background: var(--q-well); }
 .q-btn.sec .q-ico { color: var(--q-ink-3); }
 .q-btn.sec.t { color: var(--q-teal-2); box-shadow: 0 0 0 1px var(--q-teal-line), 0 1px 2px rgb(10 84 82 / 0.08); }
@@ -87,7 +87,7 @@
 .q-bar.hot i { background: var(--q-teal); }
 
 /* jump bar */
-.q-jump { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px 0 14px; border-radius: 10px; background: var(--q-bg); box-shadow: var(--q-raise-hi); text-align: left; width: 100%; }
+.q-jump { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px 0 14px; border-radius: 10px; background: var(--q-card); box-shadow: var(--q-raise-hi); text-align: left; width: 100%; }
 .q-jump > .q-ico { width: 17px; height: 17px; color: var(--q-ink-3); }
 .q-jump .ph { flex: 1; font-size: 15px; color: var(--q-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .q-letter { height: 28px; min-width: 28px; padding: 0 6px; border-radius: 6px; font-size: 15px; font-weight: 500; color: var(--q-ink-2); display: grid; place-items: center; }
@@ -184,6 +184,7 @@
 .q-en p { font-size: 16px; color: var(--q-ink-2); }
 .q-result { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 550; color: var(--q-teal-2); white-space: nowrap; }
 .q-result .q-ico { width: 15px; height: 15px; stroke-width: 2; }
+.q-result.miss { color: var(--q-miss); }
 .q-result span { font-weight: 450; color: var(--q-ink-3); }
 .q-note { display: grid; grid-template-columns: 1fr 260px; background: var(--q-card); border-radius: 14px; box-shadow: var(--q-raise); overflow: hidden; }
 .q-note .main { padding: 18px 22px 18px; }
@@ -216,7 +217,7 @@
 .q-segc { display: inline-flex; padding: 2px; border-radius: 9px; background: var(--q-well-2); gap: 0; }
 .q-segc button { position: relative; height: 30px; padding: 0 14px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--q-ink-2); }
 .q-segc button + button::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--q-line-2); }
-.q-segc button.on { background: var(--q-bg); color: var(--q-teal-2); font-weight: 600; box-shadow: 0 0 0 0.5px rgb(var(--q-shadow-rgb) / 0.08), 0 1px 3px rgb(var(--q-shadow-rgb) / 0.12); }
+.q-segc button.on { background: var(--q-card); color: var(--q-teal-2); font-weight: 600; box-shadow: 0 0 0 0.5px rgb(var(--q-shadow-rgb) / 0.08), 0 1px 3px rgb(var(--q-shadow-rgb) / 0.12); }
 .q-segc button.on::before, .q-segc button.on + button::before { display: none; }
 .q-segc kbd { margin-left: 6px; height: 16px; padding: 0 4px; font-family: var(--font-ui); font-size: 10.5px; font-weight: 550; display: inline-flex; align-items: center; box-shadow: none; background: transparent; color: var(--q-ink-3); }
 .q-segc .on kbd { color: var(--q-teal-2); }

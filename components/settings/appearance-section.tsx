@@ -53,6 +53,7 @@ function applyThemeChoice(choice: ThemeChoice) {
 	}
 	const night = choice === "night" || (choice === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
 	document.documentElement.classList.toggle("dark", night);
+	document.documentElement.dataset.theme = night ? "night" : "day";
 	document.documentElement.style.colorScheme = night ? "dark" : "light";
 }
 

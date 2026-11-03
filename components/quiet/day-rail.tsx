@@ -206,9 +206,7 @@ export function DayRail({ s, keyless, busy = false, onOpen, inProgress }: { s: S
 										<i key={i} className={cn(d.xp <= 0 && "off")} />
 									))}
 								</span>
-								<b className="q-num">
-									{streak} {streak === 1 ? "day" : "days"} <span className="font-[450] text-ink-3 text-[12px]">in a row</span>
-								</b>
+								<span className="q-num"><b>{streak} {streak === 1 ? "day" : "days"}</b> <small>in a row</small></span>
 							</div>
 							<div>
 								<b>Level {s?.level.level ?? 1}</b>

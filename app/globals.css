@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "./quiet.css" layer(components);
 
-@custom-variant dark (&:is(.dark *));
+/* Night is marked twice: the dark class, and data-theme on <html>. React rewrites the class when the root layout re-renders (a not-found page does), and data-theme is not a prop it manages. */
+@custom-variant dark (&:is(.dark *, :root[data-theme="night"] *));
 
 /* Pointer variants for the phone and iPad layouts (2026-11-01). A keycap hint
    shows only where a fine pointer is the main input (mouse, trackpad); touch
@@ -130,7 +131,8 @@ html[data-keyboard] :focus-visible {
    become #26292c / #353a3e; the four ink steps invert; the teal, its wash
    and its line are re-picked so teal text on the ground keeps Day's contrast.
    Shadows stay black at the same opacities. */
-.dark {
+.dark,
+:root[data-theme="night"] {
 	color-scheme: dark;
 	--q-bg: #101214;
 	--q-card: #1b1e21;

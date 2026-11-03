@@ -473,8 +473,8 @@ export function ReviewSession() {
 													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}
 												</div>
 												{verdict && (
-													<p className="q-result" data-testid="review-verdict">
-														<QIcon name="check" />
+													<p className={cn("q-result", verdict === "wrong" && "miss")} data-testid="review-verdict">
+														{verdict === "wrong" ? <XIcon className="size-[15px]" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
 														{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
 														<span>{exact ? (helped ? "· help used" : "· no help used") : ""}</span>
 													</p>

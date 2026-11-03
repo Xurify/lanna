@@ -558,8 +558,8 @@ export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene
 			<UnitBadgeHover unit={u} active={active} locked={locked} skipped={skipped} tone={tone} />
 			<span className="min-w-0 flex-1">
 				<span className={cn("flex min-w-0 items-center justify-between gap-1.5 font-ui text-sm font-semibold", locked || skipped ? "text-muted-foreground" : active ? "text-teal-2" : "text-foreground")}>
-					<span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-						<span className="truncate">{u.title}</span>
+					<span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
+						<span>{u.title}</span>
 						{u.slovakTerm && <TermHover unit={u} />}
 					</span>
 					<span className="flex shrink-0 items-center gap-1">
