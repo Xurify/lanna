@@ -9,6 +9,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sharedJson } from "@/lib/shared-fetch";
 import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
 import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 
@@ -19,8 +20,7 @@ let profilePromise: Promise<LanguageInfo> | null = null;
 let knownLanguage: LanguageInfo | null = null;
 
 export function activeLanguage(): Promise<LanguageInfo> {
-	profilePromise ??= fetch("/api/profile")
-		.then((r) => r.json() as Promise<{ active?: string }>)
+	profilePromise ??= sharedJson<{ active?: string }>("/api/profile")
 		.then((p) => (isLanguageId(p.active) ? LANGUAGES[p.active] : LANGUAGES.slovak))
 		.catch(() => LANGUAGES.slovak)
 		.then((l) => {
