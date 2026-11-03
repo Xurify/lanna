@@ -108,30 +108,35 @@ export function ReviewSession() {
 
 	// `keepCard` is the mount's background refresh: when the same card is
 	// still due, what the learner has typed and the card's timer carry on.
+	const show = useCallback(
+		(next: Status, keepCard = false) => {
+			const sameCard = keepCard && !!next.next && next.next.card.id === knownStatus?.next?.card.id;
+			knownStatus = next;
+			setStatus(next);
+			if (!sameCard) {
+				setGiven("");
+				setVerdict(null);
+				setHint(0);
+				shownAt.current = Date.now();
+				// A card is on screen: time it. The caught-up screen is not practice.
+				if (next.next) activeTime.restart();
+				else activeTime.finish();
+			}
+			setLoadError(null);
+		},
+		[activeTime],
+	);
 	const load = useCallback(
 		async (keepCard = false) => {
 			try {
 				const res = await fetch(`/api/review?tz=${new Date().getTimezoneOffset()}`);
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const next = (await res.json()) as Status;
-				const sameCard = keepCard && !!next.next && next.next.card.id === knownStatus?.next?.card.id;
-				knownStatus = next;
-				setStatus(next);
-				if (!sameCard) {
-					setGiven("");
-					setVerdict(null);
-					setHint(0);
-					shownAt.current = Date.now();
-					// A card is on screen: time it. The caught-up screen is not practice.
-					if (next.next) activeTime.restart();
-					else activeTime.finish();
-				}
-				setLoadError(null);
+				show((await res.json()) as Status, keepCard);
 			} catch (err) {
 				setLoadError(err instanceof Error ? err.message : String(err));
 			}
 		},
-		[activeTime],
+		[show],
 	);
 
 	useEffect(() => {
@@ -171,12 +176,15 @@ export function ReviewSession() {
 		if (!prompt || !verdict || saving) return;
 		setSaving(true);
 		try {
-			await fetch("/api/review", {
+			const res = await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks }),
+				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks, tz: new Date().getTimezoneOffset() }),
 			});
-			await load();
+			// The answer's response carries the deck as it stands now: one round trip, not two.
+			const after = res.ok ? ((await res.json().catch(() => null)) as { status?: Status } | null)?.status : undefined;
+			if (after) show(after);
+			else await load();
 			// The sidebar's due badge counts the same deck.
 			window.dispatchEvent(new Event("lh:review-changed"));
 		} finally {
