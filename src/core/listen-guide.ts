@@ -52,9 +52,11 @@ export function listenGuideFacts(l: ListenAnalysis): string {
 	}
 	if (l.rare > 0) lines.push(`${l.rare} more differences had a cause seen in too few sentences to list.`);
 	if (l.kinds.length) lines.push(`Share of all differences: ${l.kinds.map((k) => `${pct(k.share)} ${k.label.toLowerCase()}`).join(", ")}.`);
-	if (l.causeWeeks.length > 1) {
+	// A snapshot saved before the weekly series existed has none.
+	const weeks = l.causeWeeks ?? [];
+	if (weeks.length > 1) {
 		lines.push("Sentences with each cause, by week (counts, small: describe them, do not call a trend from them):");
-		for (const w of l.causeWeeks) {
+		for (const w of weeks) {
 			const parts = Object.entries(w.causes)
 				.sort((a, b) => b[1] - a[1])
 				.map(([c, n]) => `${LISTEN_CAUSES[c as keyof typeof LISTEN_CAUSES].label} ${n}`);
