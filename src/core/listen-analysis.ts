@@ -90,6 +90,8 @@ export interface WordError {
 	target: string;
 	/** The word that was typed ("" for a word dropped). */
 	given: string;
+	/** Where in the words played the difference is (for a word added, where it came in). */
+	at: number;
 }
 
 export interface CauseTrend {
@@ -109,6 +111,25 @@ export interface ListenMiss {
 	sentence: string;
 	given: string;
 	errors: WordError[];
+}
+
+/** Something the figures show that no single one of them says: found by a test stricter than the trends' (INSIGHT_Z), so a handful of sentences never produces one. */
+export interface ListenInsight {
+	id: "ends" | "start" | "spillover" | "warm-up" | "tiring" | "repeat";
+	title: string;
+	/** One plain sentence, with the figures. */
+	line: string;
+}
+
+/** A word that goes wrong again and again, across sessions. */
+export interface RepeatedWord {
+	word: string;
+	/** Sentences read that had it, and how many of them it went wrong in. */
+	appeared: number;
+	missed: number;
+	sessions: number;
+	/** What was typed in its place, most common first. */
+	typedAs: string[];
 }
 
 export interface ListenWeek {
@@ -152,6 +173,10 @@ export interface ListenAnalysis {
 	length: { short: { reps: number; right: number }; long: { reps: number; right: number }; longHarder: boolean } | null;
 	/** The last weeks, each with the typed sentences read and how many had each cause: the series the deep read follows (the page shows the two-window trend). */
 	causeWeeks: Array<{ week: string; read: number; causes: Partial<Record<ListenCause, number>> }>;
+	/** What the figures show together that none shows alone (ListenInsight); empty until a test far stricter than the trends' passes. */
+	insights: ListenInsight[];
+	/** Words that go wrong again and again, worst first. */
+	repeats: RepeatedWord[];
 	/** The latest typed misses, newest first. */
 	misses: ListenMiss[];
 	/** Enough typed sentences for the causes and trends to be read as more than chance. */
@@ -187,6 +212,16 @@ export const CUT_MIN_REPS = 30;
 /** Words: a short sentence has up to this many, a long one this many or more. */
 export const SHORT_WORDS = 6;
 export const LONG_WORDS = 9;
+/** An insight needs a z of this much: a 1% two-sided test, because five are looked for at once (Bonferroni from 5%). */
+export const INSIGHT_Z = 2.58;
+/** Differences needed before the place of a miss in its sentence is read. */
+export const ENDS_MIN_DIFFS = 40;
+/** A word is "repeated" when it was in this many sentences read, went wrong in this many, in this many sessions, at this share or more. */
+export const REPEAT_MIN_APPEARED = 4;
+export const REPEAT_MIN_MISSED = 3;
+export const REPEAT_MIN_SESSIONS = 2;
+export const REPEAT_RATE = 0.4;
+export const REPEATS_KEPT = 5;
 /** Syllables a second below and above which a clip counts as slow or fast (the slovak.wiki clips run 2.3 to 5.4). */
 export const SLOW_PACE = 3.5;
 export const FAST_PACE = 4.6;
@@ -297,14 +332,101 @@ export function readTyped(sentence: string, given: string, stretch: readonly str
 	const known = new Set(stretch.map((w) => w.normalize("NFC").toLowerCase()));
 	const marks = hasMarks(given);
 	const errors: WordError[] = [];
+	let at = 0;
 	for (const o of alignWords(listenWords(sentence), listenWords(given))) {
+		if (o.op === "ins") {
+			errors.push({ cause: "extra-word", target: "", given: o.given!, at });
+			continue;
+		}
+		const here = at++;
 		if (o.op === "match") continue;
 		if (o.op === "sub" && !marks && fold(o.target!) === fold(o.given!)) continue;
-		if (o.op === "sub") errors.push({ cause: causeOfSub(o.target!, o.given!, known), target: o.target!, given: o.given! });
-		else if (o.op === "del") errors.push({ cause: known.has(o.target!) ? "new-word" : SMALL_WORDS.has(o.target!) ? "small-word" : "word-missed", target: o.target!, given: "" });
-		else errors.push({ cause: "extra-word", target: "", given: o.given! });
+		if (o.op === "sub") errors.push({ cause: causeOfSub(o.target!, o.given!, known), target: o.target!, given: o.given!, at: here });
+		else errors.push({ cause: known.has(o.target!) ? "new-word" : SMALL_WORDS.has(o.target!) ? "small-word" : "word-missed", target: o.target!, given: "", at: here });
 	}
 	return errors;
+}
+
+// ─── What the figures show together ─────────────────────────────────────────
+
+type Counted = { session: number; words: number; stretchN: number; errors: WordError[] | null; sentence: string; half: 0 | 1 | null };
+
+/** z of `hits` of `n` against a share `p0` expected by chance alone. */
+function oneProportionZ(hits: number, n: number, p0: number): number {
+	if (n === 0 || p0 <= 0 || p0 >= 1) return 0;
+	return (hits / n - p0) / Math.sqrt((p0 * (1 - p0)) / n);
+}
+
+const third = (at: number, n: number) => Math.min(2, Math.floor((at * 3) / Math.max(1, n)));
+
+/** The findings a learner would not see in the figures one at a time. Each needs INSIGHT_Z, and the sentences or differences to back it. */
+function findInsights(readable: readonly Counted[], first: { reps: number; right: number }, second: { reps: number; right: number }): ListenInsight[] {
+	const out: ListenInsight[] = [];
+	const pct = (x: number) => `${Math.round(x * 100)}%`;
+
+	// Where in the sentence the differences fall, against where the words are.
+	const exposure = [0, 0, 0];
+	const found = [0, 0, 0];
+	for (const r of readable) {
+		for (let i = 0; i < r.words; i++) exposure[third(i, r.words)]!++;
+		for (const e of r.errors ?? []) if (e.target) found[third(e.at, r.words)]!++;
+	}
+	const diffs = found[0]! + found[1]! + found[2]!;
+	const words = exposure[0]! + exposure[1]! + exposure[2]!;
+	if (diffs >= ENDS_MIN_DIFFS && words > 0) {
+		const z = (k: 0 | 2) => oneProportionZ(found[k]!, diffs, exposure[k]! / words);
+		const endShare = found[2]! / diffs;
+		const startShare = found[0]! / diffs;
+		if (z(2) >= INSIGHT_Z && z(2) >= z(0)) out.push({ id: "ends", title: "You lose the ends of sentences", line: `${pct(endShare)} of the words you miss are in the last third of a sentence, which holds ${pct(exposure[2]! / words)} of the words.` });
+		else if (z(0) >= INSIGHT_Z) out.push({ id: "start", title: "You lose the starts of sentences", line: `${pct(startShare)} of the words you miss are in the first third of a sentence, which holds ${pct(exposure[0]! / words)} of the words.` });
+	}
+
+	// A new word taking the words around it with it.
+	const withNew = readable.filter((r) => r.words >= 5 && r.stretchN > 0);
+	const without = readable.filter((r) => r.words >= 5 && r.stretchN === 0);
+	const other = (r: Counted) => (r.errors ?? []).some((e) => e.cause !== "new-word");
+	const a = withNew.filter(other).length;
+	const b = without.filter(other).length;
+	if (withNew.length >= CUT_MIN_REPS && without.length >= CUT_MIN_REPS) {
+		const z = twoProportionZ(a, withNew.length, b, without.length);
+		if (z !== null && z >= INSIGHT_Z) out.push({ id: "spillover", title: "A new word costs the words around it", line: `${pct(a / withNew.length)} of sentences with a new word had another word wrong, against ${pct(b / without.length)} of sentences with none.` });
+	}
+
+	// The two halves of a session.
+	if (first.reps >= CUT_MIN_REPS && second.reps >= CUT_MIN_REPS) {
+		const z = twoProportionZ(first.right, first.reps, second.right, second.reps);
+		if (z !== null && z <= -INSIGHT_Z) out.push({ id: "warm-up", title: "Your ear needs a few sentences to warm up", line: `${pct(second.right / second.reps)} of the second half of a session is understood, against ${pct(first.right / first.reps)} of the first.` });
+		else if (z !== null && z >= INSIGHT_Z) out.push({ id: "tiring", title: "The second half of a session goes worse", line: `${pct(second.right / second.reps)} of the second half of a session is understood, against ${pct(first.right / first.reps)} of the first.` });
+	}
+	return out;
+}
+
+/** Words that went wrong in several sessions and in a large share of the sentences they were in. Words met only as a new word are not counted: that is vocabulary, not a habit. */
+function findRepeats(readable: readonly Counted[]): RepeatedWord[] {
+	const by = new Map<string, { appeared: number; missed: number; sessions: Set<number>; typed: Map<string, number> }>();
+	for (const r of readable) {
+		const seen = new Set(listenWords(r.sentence));
+		for (const w of seen) {
+			const t = by.get(w) ?? { appeared: 0, missed: 0, sessions: new Set<number>(), typed: new Map<string, number>() };
+			t.appeared++;
+			by.set(w, t);
+		}
+		const gone = new Set<string>();
+		for (const e of r.errors ?? []) {
+			if (!e.target || e.cause === "new-word" || gone.has(e.target)) continue;
+			gone.add(e.target);
+			const t = by.get(e.target);
+			if (!t) continue;
+			t.missed++;
+			t.sessions.add(r.session);
+			if (e.given) t.typed.set(e.given, (t.typed.get(e.given) ?? 0) + 1);
+		}
+	}
+	return [...by.entries()]
+		.filter(([, t]) => t.appeared >= REPEAT_MIN_APPEARED && t.missed >= REPEAT_MIN_MISSED && t.sessions.size >= REPEAT_MIN_SESSIONS && t.missed / t.appeared >= REPEAT_RATE)
+		.sort((x, y) => y[1].missed - x[1].missed || y[1].missed / y[1].appeared - x[1].missed / x[1].appeared)
+		.slice(0, REPEATS_KEPT)
+		.map(([word, t]) => ({ word, appeared: t.appeared, missed: t.missed, sessions: t.sessions.size, typedAs: [...t.typed.entries()].sort((p, q) => q[1] - p[1]).map(([g]) => g).slice(0, 3) }));
 }
 
 // ─── The trends ─────────────────────────────────────────────────────────────
@@ -350,7 +472,7 @@ export function holm(ps: readonly number[], alpha = TREND_ALPHA): boolean[] {
 
 export function analyzeListening(lessons: readonly LoggedListen[], now: Date): ListenAnalysis {
 	const cut = now.getTime() - TREND_DAYS * DAY_MS;
-	type Rep = { at: number; day: string; session: number; half: 0 | 1 | null; words: number; typed: boolean; right: boolean; replays: number; peeked: boolean; pace: number | null; errors: WordError[] | null; sentence: string; given: string; atIso: string };
+	type Rep = { at: number; day: string; session: number; half: 0 | 1 | null; words: number; stretchN: number; typed: boolean; right: boolean; replays: number; peeked: boolean; pace: number | null; errors: WordError[] | null; sentence: string; given: string; atIso: string };
 	const reps: Rep[] = [];
 	let sessions = 0;
 	for (const lesson of lessons) {
@@ -367,7 +489,7 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 			const syl = countSyllables(r.sentence);
 			// A session of under six sentences has no first and second half worth comparing.
 			const half = lesson.reps.length >= 6 ? (i < lesson.reps.length / 2 ? 0 : 1) : null;
-			reps.push({ at, day: lesson.at.slice(0, 10), session, half, words: listenWords(r.sentence).length, typed, right, replays: r.replays ?? 0, peeked: !!r.peeked, pace: r.heardMs && r.heardMs >= 800 && syl >= 3 ? syl / (r.heardMs / 1000) : null, errors, sentence: r.sentence, given: r.given, atIso: lesson.at });
+			reps.push({ at, day: lesson.at.slice(0, 10), session, half, words: listenWords(r.sentence).length, stretchN: r.stretch?.length ?? 0, typed, right, replays: r.replays ?? 0, peeked: !!r.peeked, pace: r.heardMs && r.heardMs >= 800 && syl >= 3 ? syl / (r.heardMs / 1000) : null, errors, sentence: r.sentence, given: r.given, atIso: lesson.at });
 		}
 	}
 	reps.sort((a, b) => a.at - b.at);
@@ -455,6 +577,8 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 	const shortS = rate(reps.filter((r) => r.words > 0 && r.words <= SHORT_WORDS));
 	const longS = rate(reps.filter((r) => r.words >= LONG_WORDS));
 	const lengthZ = twoProportionZ(shortS.right, shortS.reps, longS.right, longS.reps);
+	const insights = findInsights(readable, rate(reps.filter((r) => r.half === 0)), rate(reps.filter((r) => r.half === 1)));
+	const repeats = findRepeats(readable);
 	const causeWeeks = [...new Set(readable.map((r) => weekOf(r.at)))]
 		.sort()
 		.slice(-WEEKS_KEPT)
@@ -488,6 +612,8 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 		session: firstHalf.reps >= CUT_MIN_REPS && secondHalf.reps >= CUT_MIN_REPS ? { first: firstHalf, second: secondHalf, tiring: halfZ !== null && halfZ >= TREND_Z } : null,
 		length: shortS.reps >= CUT_MIN_REPS && longS.reps >= CUT_MIN_REPS ? { short: shortS, long: longS, longHarder: lengthZ !== null && lengthZ >= TREND_Z } : null,
 		causeWeeks,
+		insights: [...insights, ...(repeats.length ? [{ id: "repeat" as const, title: "Words that keep going wrong", line: repeats.map((w) => `${w.word} (${w.missed} of ${w.appeared} sentences)`).join(", ") + "." }] : [])],
+		repeats,
 		misses: missed
 			.slice(-MISSES_KEPT)
 			.reverse()

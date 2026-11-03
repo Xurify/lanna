@@ -53,11 +53,16 @@ function CauseRow({ c }: { c: CauseTrend }) {
 const DEEP_ADDS = [
 	"Connects the figures: for example short words dropped with a worse second half, or fast clips understood less",
 	"Keeps hearing apart from grammar, spelling and typing, and sends each to the right practice",
+	"Points out what you would not see from the figures one at a time, and says when that is a guess",
 	"Reads the weekly counts for what changed, but calls a trend only where the test above did",
+	"Gives tips for this week, each tied to what it answers",
 	"Writes what to practice this week, in the app's own tasks",
 ];
 
 function DeepBody({ data }: { data: ListenGuideData }) {
+	// A read saved before these two existed has neither.
+	const noticed = data.noticed ?? [];
+	const tips = data.tips ?? [];
 	return (
 		<div className="flex flex-col gap-5" data-testid="listen-guide-body">
 			{data.summary && <p className="text-[15px] leading-relaxed text-foreground">{data.summary}</p>}
@@ -84,6 +89,31 @@ function DeepBody({ data }: { data: ListenGuideData }) {
 							</dl>
 						</article>
 					))}
+				</div>
+			)}
+			{noticed.length > 0 && (
+				<div>
+					<h4 className="q-lbl">What you may not have noticed</h4>
+					<ul className="mt-2 flex flex-col gap-2.5 text-sm text-foreground">
+						{noticed.map((n) => (
+							<li key={n.what}>
+								<b className="font-semibold">{n.what}.</b> <span className="text-ink-2">{n.why}</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
+			{tips.length > 0 && (
+				<div>
+					<h4 className="q-lbl">Tips</h4>
+					<ul className="mt-2 flex flex-col gap-2.5 text-sm text-foreground">
+						{tips.map((t) => (
+							<li key={t.tip} className="rounded-xl bg-teal-wash px-3.5 py-2.5">
+								{t.tip}
+								{t.why && <span className="mt-0.5 block text-xs text-ink-3">{t.why}</span>}
+							</li>
+						))}
+					</ul>
 				</div>
 			)}
 			{data.trends.length > 0 && (
@@ -243,6 +273,34 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 							</li>
 						) : null}
 					</ul>
+
+					{(l.insights ?? []).length > 0 && (
+						<>
+							<Heading line="Found by a test far stricter than the trends', so a few sentences never produce one.">Things you may not have noticed</Heading>
+							<ul className="q-card mt-2 divide-y divide-[var(--q-line)]" data-testid="listening-insights">
+								{l.insights.map((i) => (
+									<li key={i.id} className="px-4 py-3" data-testid={`listening-insight-${i.id}`}>
+										<p className="text-[15px] font-[550] text-foreground">{i.title}</p>
+										<p className="mt-0.5 text-[13px] leading-snug text-ink-2">{i.line}</p>
+										{i.id === "repeat" && (
+											<ul className="mt-2 flex flex-wrap gap-1.5">
+												{l.repeats.map((w) => (
+													<li key={w.word} className="q-pill grey">
+														<span lang="sk">{w.word}</span>
+														{w.typedAs.length > 0 && (
+															<>
+																{" "}→ <span lang="sk">{w.typedAs.join(", ")}</span>
+															</>
+														)}
+													</li>
+												))}
+											</ul>
+										)}
+									</li>
+								))}
+							</ul>
+						</>
+					)}
 
 					<DeepRead report={report} busy={busy} error={error} onWrite={onWrite} />
 

@@ -59,6 +59,19 @@ How it is kept from saying more than the data does:
 - **Written once per set of figures.** The facts have a digest; the same digest reuses the saved read, a new snapshot keeps it, new sentences mark it stale. It needs the same floor as the causes.
 - **What the model sees** is the figures and the latest eight misses with what was typed. The card says so before the first call.
 
+## Findings no figure shows alone
+
+The causes and the trends each answer one question. A learner would not see, from them, where in a sentence the misses fall, whether a new word drags the words next to it down, whether the ear is better at the end of a session than at the start, or which single words keep coming back. These are worked out locally (`findInsights`, `findRepeats` in `src/core/listen-analysis.ts`), because they are counting and a test, not prose:
+
+- **Ends and starts.** Each missed word is placed in the first, middle or last third of its sentence and compared with where the words are (a third of the words are not always a third of the sentence). The last or first third is named only when its share of the misses beats its share of the words at z 2.58, with 40 differences to place.
+- **A new word costs its neighbors.** Sentences with the stretch word against sentences without one: the share that had another word wrong, with 30 of each, two-proportion test at 2.58.
+- **Warm-up or tiring.** The first half of a session against the second, both directions, at 2.58 with 30 sentences a side.
+- **Words that keep going wrong.** A word in at least 4 sentences read, wrong in 3 or more and 40% or more of them, over at least 2 sessions; a word only met as the new word is not counted, since that is vocabulary. The page shows what was typed in its place.
+
+The bar is 2.58, not 1.96, because five of them are looked for at once: at 5% each, about one in four profiles would get a false finding from nothing but chance (1 − 0.95⁵ ≈ 23%). Repeated words are a rule, not a test; the thresholds are constants.
+
+The deep read is given these as facts and asked for two more things: `noticed`, the links between figures that the learner could not make alone (a link the facts do not state must say "This may be"), and `tips`, each naming the pattern, cause or finding it answers.
+
 What this does not fix: the model's reply is prose built on small samples, so it can still over-explain a pattern three misses deep. The prompt asks for at least several misses behind a pattern and a one-line statement of limits; the owner has to judge whether its patterns match what they hear.
 
 ## Limits

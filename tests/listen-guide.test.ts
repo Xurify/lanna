@@ -170,3 +170,69 @@ describe("the service", () => {
 		assert.ok(changed.listenGuide, "but it is still there");
 	});
 });
+
+describe("the findings no single figure shows", () => {
+	const NINE = "Dnes ráno som videl veľký modrý dom pri rieke.";
+	const days = ["2026-11-01", "2026-11-03", "2026-11-05", "2026-11-07"];
+	const ids = (a: ReturnType<typeof analyzeListening>) => a.insights.map((i) => i.id);
+
+	it("finds that the ends of sentences are lost, and the starts, only when the misses cluster there and there are enough", () => {
+		const endsLost = days.map((d) => session(`${d}T10:00:00Z`, Array.from({ length: 12 }, (_, i) => (i < 11 ? rep(NINE, "Dnes ráno som videl veľký modrý dom pri.") : rep(NINE, NINE)))));
+		const ends = analyzeListening(endsLost, NOW);
+		assert.ok(ids(ends).includes("ends"));
+		assert.match(ends.insights.find((i) => i.id === "ends")!.line, /of the words you miss are in the last third/);
+		const startsLost = days.map((d) => session(`${d}T10:00:00Z`, Array.from({ length: 12 }, (_, i) => (i < 11 ? rep(NINE, "ráno som videl veľký modrý dom pri rieke.") : rep(NINE, NINE)))));
+		assert.ok(ids(analyzeListening(startsLost, NOW)).includes("start"));
+		assert.deepEqual(ids(analyzeListening(endsLost.slice(0, 1), NOW)), [], "11 differences are too few to place");
+		const spread = days.map((d) => session(`${d}T10:00:00Z`, [rep(NINE, "ráno som videl veľký modrý dom pri rieke."), rep(NINE, "Dnes ráno som videl modrý dom pri rieke."), rep(NINE, "Dnes ráno som videl veľký modrý dom pri."), ...Array.from({ length: 9 }, () => rep(NINE, NINE))]));
+		assert.ok(!ids(analyzeListening(spread, NOW)).some((i) => i === "ends" || i === "start"), "misses spread over the sentence say nothing about its place");
+	});
+
+	it("finds that a new word costs the words around it, and not when sentences with and without one go alike", () => {
+		const WITH = "Na stole ležala obálka dnes ráno.";
+		const lost = (n: number, total: number, sentence: string, given: string, stretch: string[]) => Array.from({ length: total }, (_, i) => rep(sentence, i < n ? given : sentence, { stretch }));
+		const costly = [session("2026-11-01T10:00:00Z", [...lost(18, 30, WITH, "Na stole obálka dnes ráno.", ["obálka"]), ...lost(3, 30, NINE, "Dnes ráno som videl veľký modrý dom pri.", [])])];
+		const a = analyzeListening(costly, NOW);
+		assert.ok(ids(a).includes("spillover"));
+		assert.match(a.insights.find((i) => i.id === "spillover")!.line, /60% of sentences with a new word had another word wrong, against 10%/);
+		const alike = [session("2026-11-01T10:00:00Z", [...lost(6, 30, WITH, "Na stole obálka dnes ráno.", ["obálka"]), ...lost(6, 30, NINE, "Dnes ráno som videl veľký modrý dom pri.", [])])];
+		assert.ok(!ids(analyzeListening(alike, NOW)).includes("spillover"));
+	});
+
+	it("says a session warms up when its second half is understood far better, and tiring when it is far worse", () => {
+		const shape = (firstRight: number, secondRight: number) => days.map((d) => session(`${d}T10:00:00Z`, [...Array.from({ length: 10 }, (_, i) => (i < firstRight ? rep(SAID, SAID) : rep(SAID, DROPPED))), ...Array.from({ length: 10 }, (_, i) => (i < secondRight ? rep(SAID, SAID) : rep(SAID, DROPPED)))]));
+		assert.ok(ids(analyzeListening(shape(4, 9), NOW)).includes("warm-up"));
+		assert.ok(ids(analyzeListening(shape(9, 4), NOW)).includes("tiring"));
+		assert.ok(!ids(analyzeListening(shape(7, 7), NOW)).some((i) => i === "warm-up" || i === "tiring"));
+	});
+
+	it("lists a word that goes wrong again and again across sessions, with what was typed, and ignores one-off misses", () => {
+		const LINE = "Dnes jem dobrý obed.";
+		const one = (right: boolean) => rep(LINE, right ? LINE : "Dnes jem dobrý obet.");
+		const a = analyzeListening([session("2026-11-01T10:00:00Z", [one(false), one(false), one(false), one(true), one(true)]), session("2026-11-03T10:00:00Z", [one(false), one(false), one(true)])], NOW);
+		assert.equal(a.repeats[0]?.word, "obed");
+		assert.deepEqual([a.repeats[0]?.appeared, a.repeats[0]?.missed, a.repeats[0]?.sessions], [8, 5, 2]);
+		assert.deepEqual(a.repeats[0]?.typedAs, ["obet"]);
+		assert.ok(ids(a).includes("repeat"));
+		const scattered = analyzeListening([session("2026-11-01T10:00:00Z", [rep("Dnes jem dobrý obed.", "Dnes jem dobrý obet."), rep("Dnes pijem teplý čaj.", "Dnes pijem teplý čaje."), rep("Dnes čítam dlhú knihu.", "Dnes čítam dlhú knihe."), rep("Dnes jem dobrý obed.", "Dnes jem dobrý obed.")])], NOW);
+		assert.deepEqual(scattered.repeats, []);
+		const oneSession = analyzeListening([session("2026-11-01T10:00:00Z", [one(false), one(false), one(false), one(true)])], NOW);
+		assert.deepEqual(oneSession.repeats, [], "one bad session is not a habit");
+	});
+
+	it("puts the findings and the repeated words in the facts, and reads tips and noticed from a reply", () => {
+		const LINE = "Dnes jem dobrý obed.";
+		const one = (right: boolean) => rep(LINE, right ? LINE : "Dnes jem dobrý obet.");
+		const a = analyzeListening([session("2026-11-01T10:00:00Z", [one(false), one(false), one(false), one(true), one(true)]), session("2026-11-03T10:00:00Z", [one(false), one(false), one(true)])], NOW);
+		const facts = listenGuideFacts(a);
+		assert.match(facts, /Findings the app made by a test stricter than the trends'/);
+		assert.match(facts, /Keeps going wrong: "obed", wrong in 5 of 8 sentences it was in, over 2 sessions, typed as "obet"/);
+		const d = parseListenGuide(
+			JSON.stringify({ summary: "ok", patterns: [], noticed: [{ what: "Ends go first", why: "This may be the clip fading." }, { what: "", why: "x" }], tips: [{ tip: "Write the first word before replaying.", why: "Answers the dropped starts." }, { tip: "" }], trends: [], next: [], limits: "" }),
+		)!;
+		assert.equal(d.noticed.length, 1);
+		assert.equal(d.tips.length, 1);
+		assert.equal(d.tips[0]?.why, "Answers the dropped starts.");
+		assert.deepEqual(parseListenGuide('{"summary":"x","patterns":[]}')!.tips, []);
+	});
+});

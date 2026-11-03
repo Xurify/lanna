@@ -15,6 +15,10 @@ export interface ListenGuideData {
 	summary: string;
 	/** What several misses share, with the evidence and a fix. */
 	patterns: Array<{ title: string; evidence: string; why: string; fix: string }>;
+	/** What the learner would not have seen from the figures one at a time: a link between two, a finding, a contrast. A link the facts do not state is marked a guess. */
+	noticed: Array<{ what: string; why: string }>;
+	/** Things to try, each tied to a pattern, a cause or a finding. */
+	tips: Array<{ tip: string; why: string }>;
 	/** Changes over time, only those the figures call or the weekly series shows. */
 	trends: Array<{ what: string; read: string }>;
 	/** What to do this week. */
@@ -63,6 +67,12 @@ export function listenGuideFacts(l: ListenAnalysis): string {
 			lines.push(`- ${w.week} (${w.read} read): ${parts.join(", ") || "no differences"}.`);
 		}
 	}
+	const insights = l.insights ?? [];
+	if (insights.length) {
+		lines.push("Findings the app made by a test stricter than the trends' (each past chance, and none is made from a handful of sentences):");
+		for (const i of insights) lines.push(`- ${i.title}: ${i.line}`);
+	}
+	for (const w of l.repeats ?? []) lines.push(`Keeps going wrong: "${w.word}", wrong in ${w.missed} of ${w.appeared} sentences it was in, over ${w.sessions} sessions${w.typedAs.length ? `, typed as ${w.typedAs.map((t) => `"${t}"`).join(", ")}` : ""}.`);
 	if (l.pace) lines.push(`By speed of the clip: slow ${share(l.pace.slow)} understood, fast ${share(l.pace.fast)}; fast is harder past chance: ${l.pace.fastHarder ? "yes" : "no"}.`);
 	if (l.session) lines.push(`By place in the session: first half ${share(l.session.first)}, second half ${share(l.session.second)}; second half worse past chance: ${l.session.tiring ? "yes" : "no"}.`);
 	if (l.length) lines.push(`By sentence length: short ${share(l.length.short)}, long ${share(l.length.long)}; long is harder past chance: ${l.length.longHarder ? "yes" : "no"}.`);
@@ -95,6 +105,14 @@ export function parseListenGuide(text: string): ListenGuideData | null {
 		.filter((p) => p.title && p.why);
 	const summary = clip(raw.summary, 420);
 	if (!patterns.length && !summary) return null;
+	const noticed = list(raw.noticed)
+		.slice(0, 3)
+		.map((n) => ({ what: clip(n.what, 120), why: clip(n.why, 300) }))
+		.filter((n) => n.what && n.why);
+	const tips = list(raw.tips)
+		.slice(0, 4)
+		.map((t) => ({ tip: clip(t.tip, 200), why: clip(t.why, 240) }))
+		.filter((t) => t.tip);
 	const trends = list(raw.trends)
 		.slice(0, 4)
 		.map((t) => ({ what: clip(t.what, 90), read: clip(t.read, 260) }))
@@ -103,5 +121,5 @@ export function parseListenGuide(text: string): ListenGuideData | null {
 		.map((n) => clip(n, 200))
 		.filter(Boolean)
 		.slice(0, 4);
-	return { summary, patterns, trends, next, limits: clip(raw.limits, 260) };
+	return { summary, patterns, noticed, tips, trends, next, limits: clip(raw.limits, 260) };
 }
