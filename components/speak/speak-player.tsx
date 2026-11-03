@@ -719,8 +719,8 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 						{counts.learner} {counts.learner === 1 ? "line" : "lines"} said
 					</h1>
 				</div>
+			</div>
 			<Stats className="mt-6 font-ui text-sm">
-			<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
 				<Stat label="Prompts repaired" value={`${counts.repaired} of ${counts.prompts}`} ink="text-teal-2" />
 				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= 85 ? "text-teal-2" : s.pron.average >= 70 ? "text-teal-2" : "text-miss"} />}
