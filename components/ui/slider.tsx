@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 /**
  * The app's one slider, drawn by hand like every other control (no native range input).
  *
- * A 4 px track with an accent fill, a 20 px thumb with a thin outline and no glow, ticks at real values,
+ * A 3 px track with an accent fill, a 16 px thumb with a thin outline and no glow, ticks at real values,
  * and a 44 px hit area around it. With `header`, the label sits at the left and the live value at the
  * right of one line, in tabular figures. Drag, click the track, or use the keys: arrows, Page Up and
  * Page Down (ten steps), Home and End. `onChange` fires while moving; `onCommit` once when the pointer
@@ -115,7 +115,7 @@ export function Slider({
 				set(next, true);
 			}}
 		>
-			<div ref={track} className={cn("relative rounded-full bg-line-2", vertical ? "h-full w-1" : "h-1 w-full")}>
+			<div ref={track} className={cn("relative rounded-full bg-line-2", vertical ? "my-2 h-[calc(100%-1rem)] w-[3px]" : "mx-2 h-[3px] w-[calc(100%-1rem)]")}>
 				<div className={cn("absolute rounded-full bg-teal", vertical ? "inset-x-0 bottom-0" : "inset-y-0 left-0")} style={vertical ? { height: `${share * 100}%` } : { width: `${share * 100}%` }} />
 				{tickValues.map((t) => {
 					const p = ((t - min) / (max - min)) * 100;
@@ -123,7 +123,7 @@ export function Slider({
 				})}
 				<div
 					data-thumb=""
-					className={cn("absolute size-5 rounded-full bg-card shadow-[0_0_0_1.5px_var(--q-teal)]", vertical ? "left-1/2 -translate-x-1/2 translate-y-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2")}
+					className={cn("absolute size-4 rounded-full bg-card shadow-[0_0_0_1.5px_var(--q-teal)]", vertical ? "left-1/2 -translate-x-1/2 translate-y-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2")}
 					style={vertical ? { bottom: `${share * 100}%` } : { left: `${share * 100}%` }}
 					aria-hidden="true"
 				/>
