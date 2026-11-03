@@ -1,17 +1,8 @@
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { invalidInputResult, questionResult, serverExecute } from "./tool-execute.ts";
-import {
-	askInputSchema,
-	askOptionProblems,
-	explainInputBase,
-	explainInputObject,
-	explainInputProblems,
-	parseOptionsIfString,
-	probeQuizInputSchema,
-	quizInputObject,
-	quizInputProblems,
-} from "../core/question-core.ts";
+import { askOptionProblems, explainInputProblems, parseOptionsIfString, quizInputProblems } from "../core/question-core.ts";
+import { askInputSchema, explainInputBase, explainInputObject, probeQuizInputSchema, quizInputObject } from "../core/question-schemas.ts";
 import { filterEnabledTools, type EnabledTools } from "../core/pending.ts";
 import type { JobRecord } from "../core/contracts.ts";
 import type { JobStore } from "../core/ports.ts";

@@ -121,11 +121,12 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 3 November: slow tabs, Watch, keys, streak (same branch)
 
-- **Slow tabs** (E36, [research/slow-tabs.md](research/slow-tabs.md)): the owner's dev server compiles each route on first visit; the shared bundle also carried 900 KB of KaTeX and Markdown parsing. KaTeX is out of every route (`@/src/core/markdown`), a tab click now answers at once (`app/loading.tsx`), and `npm run desktop:prod` runs a build. At 4x CPU, long tasks per page load went from 620–880 ms to 66–183 ms.
+- **Slow tabs** (E36, [research/slow-tabs.md](research/slow-tabs.md)): the owner's dev server compiles each route on first visit; the shared bundle also carried 900 KB of KaTeX and Markdown parsing. KaTeX is out of every route (`@/src/core/tutor`), a tab click now answers at once (`app/loading.tsx`), and `npm run desktop:prod` runs a build. At 4x CPU, long tasks per page load went from 620–880 ms to 66–183 ms.
 - **Watch** is a page like Milestones: sidebar, "Today" back link, the same heading and cards, with the link field and the video list on cards.
 - **Letter keys** on Listen, Review and the lesson have an edge and a darker face, so each key can be told from its neighbour.
 - **The period after a word** on Review sat after the tick; the tick now follows the period.
 - **Streak calendar** followed minutes while the XP chart above it followed XP, so Monday could be filled in one and empty in the other. Inside the last seven days it now uses the same XP as the chart; older days use minutes; a legend names the three shades and each day has a name on hover.
 - **Minutes by strand** shows minutes beside the percent, and the week's total in its heading.
 - **Unverified:** the PC, and `desktop:prod` in the packaged flow (not run here).
+- **Second pass:** Next.js 16.4.4 (`next analyze` showed TypeBox, 118 KB gzipped, in every route). The schemas are split out of the shell, KaTeX loads on first use on the map, and the pressed nav row lights at once. Per-route JS fell from about 561 KB to about 480 KB gzipped. The Log page's minutes now carry their unit.
 

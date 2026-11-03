@@ -8,8 +8,8 @@ import { parseHTML } from "linkedom";
 import { MessageResponse, ToolContentResponse } from "../components/ai-elements/message.tsx";
 import { QuestionDock } from "../components/question-dock.tsx";
 import { AnsweredCard } from "../components/answered-card.tsx";
-import { buildAnswer, normalizeOptions, parseAskInput, parseExplainInput, parseQuizInput,
-	resolveCorrect, type QuestionAnswerData, type QuestionData } from "../src/core/index.ts";
+import { buildAnswer, normalizeOptions, resolveCorrect, type QuestionAnswerData, type QuestionData } from "../src/core/index.ts";
+import { parseAskInput, parseExplainInput, parseQuizInput } from "../src/core/tutor.ts";
 import { answerForPresentation } from "../src/core/answer-presentation.ts";
 import { repairMathForDisplay } from "../src/core/math-delims.ts";
 

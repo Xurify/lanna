@@ -25,12 +25,8 @@ import { describe, it } from "node:test";
 import { validateToolArguments } from "@earendil-works/pi-ai";
 import { healEncodedArguments } from "../src/core/argument-heal.ts";
 import { stripModelValueDebris } from "../src/core/value-debris.ts";
-import {
-	coerceCorrectAnswer,
-	normalizeQuizType,
-	quizInputObject,
-	quizInputProblems,
-} from "../src/core/question-core.ts";
+import { coerceCorrectAnswer, normalizeQuizType, quizInputProblems } from "../src/core/question-core.ts";
+import { quizInputObject } from "../src/core/question-schemas.ts";
 import { parseQuizInput } from "../src/core/tool-parts.ts";
 import { resolveTargetId } from "../src/core/chains.ts";
 import { bareQuestionTools } from "../src/agent/teacher-agent.ts";

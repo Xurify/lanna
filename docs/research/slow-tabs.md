@@ -14,6 +14,20 @@
 2. **KaTeX and the Markdown parsers were in every route.** `src/core/index.ts` re-exported `math-delims.ts`, which imports `content-reader.ts`, which imports KaTeX, mdast and micromark. Every client component imports that barrel (the sidebar does), so about 900 KB of JS (2.4 MB to 1.2 MB measured by coverage on `/milestones`) was parsed on every page. At 4x CPU the page-load long tasks fell from 620–880 ms to 66–183 ms, and 18 broken budgets became one.
 3. **A tab click showed nothing until the server answered.** All 18 pages are `force-dynamic` (they read the learner's files) and there was no `loading.tsx`, so the URL and the sidebar stayed put until the page's data was rendered. `app/loading.tsx` now shows at once in a production build (checked with the server's reply held back 1.5 s: the URL changed and the skeleton showed within 500 ms). Dev mode does not prefetch, so it still waits there.
 
+## Second pass (Next.js 16.4.4, `next analyze`)
+
+The app was moved to Next.js 16.4.4, whose bundle analyzer ([post](https://nextjs.org/blog/ship-less-javascript-with-ai)) lists what each route loads. In the shared client bundle:
+
+| Package | gzipped | What fixed it |
+|---|---|---|
+| `next` (framework) | 338 KB | nothing to do |
+| `typebox` | 118 KB | the tool-input schemas moved to `question-schemas.ts` and `contracts/probe-schema.ts`; the parsers (`typebox/value`) behind `@/src/core/tutor` |
+| KaTeX on `/map` | 75 KB | `LatexGlyph` loads KaTeX on first use and shows the plain character until then |
+
+Per-route JS fell from about 561 KB to about 480 KB gzipped. The chat route keeps KaTeX, Markdown and the parsers statically: its messages are on screen at once, so deferring them there would only delay the first paint, and it would break server rendering of the cards.
+
+The main nav also lights the pressed row at once. `app/loading.tsx` was measured both ways: it adds about 300 ms of long tasks to a full page load at 4x CPU (about 75 ms on a normal CPU, once, at app start) and nothing to a client navigation, where it shows the page's shape while the server renders. Kept.
+
 ## What did not need fixing
 
 Interactions in the lesson and Review (answer, Check, Continue) paint in 70–150 ms at 4x CPU, and settings open in 150 ms. The API calls a page makes on load are 12–45 ms each.

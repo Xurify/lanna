@@ -11,6 +11,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { quizInputProblems } from "../src/core/question-core.ts";
+import {  } from "../src/core/question-schemas.ts";
 import { Value } from "typebox/value";
 import { repairMathForDisplay, restoreMathEscapes } from "../src/core/math-delims.ts";
 import {
@@ -19,8 +20,8 @@ import {
 	parseQuizInput,
 	parseExplainInput,
 } from "../src/core/tool-parts.ts";
-import { quizInputSchema, probeQuizInputSchema } from "../src/core/question-core.ts";
-import { probeDoneInputSchema } from "../src/core/contracts/probe.ts";
+import { quizInputSchema, probeQuizInputSchema } from "../src/core/question-schemas.ts";
+import { probeDoneInputSchema } from "../src/core/contracts/probe-schema.ts";
 
 const TEACHER_QUIZ = {
 	question: "What does Tarski's convention-T define?",

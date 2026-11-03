@@ -29,9 +29,11 @@
 
 import { Value } from "typebox/value";
 import type { TSchema } from "typebox";
-import { quizDisplayInputSchema, askInputSchema, askOptionProblems, quizInputProblems, explainInputProblems, explainDisplayInputSchema, type AskToolInput, type QuizToolInput, type ExplainToolInput } from "./question-core.ts";
+import { askOptionProblems, quizInputProblems, explainInputProblems, type AskToolInput, type QuizToolInput, type ExplainToolInput } from "./question-core.ts";
+import { quizDisplayInputSchema, askInputSchema, explainDisplayInputSchema } from "./question-schemas.ts";
 import { healEncodedArguments } from "./argument-heal.ts";
-import { probeDoneInputSchema, type ProbeDoneInput } from "./contracts/probe.ts";
+import type { ProbeDoneInput } from "./contracts/probe.ts";
+import { probeDoneInputSchema } from "./contracts/probe-schema.ts";
 
 /** The pi-boundary parse step, mirrored here (live-smoke fix, 2026-09-26):
  *  pi-ai's validateToolArguments runs TypeBox's Value.Convert on the model's

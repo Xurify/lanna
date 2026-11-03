@@ -6,35 +6,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { Value } from "typebox/value";
 import type { TSchema } from "typebox";
-import {
-	askInputSchema,
-	quizInputBase,
-	askOptionProblems,
-	buildAnswer,
-	compactAnswerForModel,
-	dismissedAnswer,
-	coerceCorrectAnswer,
-	CONFIDENCE_STOPS,
-	DEFAULT_CONFIDENCE_INDEX,
-	isCorrect,
-	normalizeOptions,
-	quizInputProblems,
-	explainInputBase,
-	explainInputObject,
-	explainInputProblems,
-	quizInputSchema,
-	probeQuizInputSchema,
-	quizDisplayInputSchema,
-	normalizeQuizType,
-	questionNeedsReveal,
-	resolveCorrect,
-	toggleOption,
-	toggleOther,
-	emptyDockSelection,
-	shuffleOptions,
-	type QuestionData,
-	toClientQuestion,
-} from "../src/core/question-core.ts";
+import { askOptionProblems, buildAnswer, compactAnswerForModel, dismissedAnswer, coerceCorrectAnswer, CONFIDENCE_STOPS, DEFAULT_CONFIDENCE_INDEX, isCorrect, normalizeOptions, quizInputProblems, explainInputProblems, normalizeQuizType, questionNeedsReveal, resolveCorrect, toggleOption, toggleOther, emptyDockSelection, shuffleOptions, type QuestionData, toClientQuestion } from "../src/core/question-core.ts";
+import { askInputSchema, quizInputBase, explainInputBase, explainInputObject, quizInputSchema, probeQuizInputSchema, quizDisplayInputSchema } from "../src/core/question-schemas.ts";
 import { toolQuestionKind } from "../src/core/pending.ts";
 import { parseQuizInput } from "../src/core/tool-parts.ts";
 

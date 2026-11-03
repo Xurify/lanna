@@ -1,7 +1,8 @@
 "use client";
 
 import { ClipboardCheckIcon } from "lucide-react";
-import { parseProbeDoneInput, type ProbeDoneResult } from "@/src/core";
+import { type ProbeDoneResult } from "@/src/core";
+import { parseProbeDoneInput } from "@/src/core/tutor";
 
 /**
  * The probe conclusion card (docs/probe-teach-split.md §2): renders the

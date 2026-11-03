@@ -10,14 +10,12 @@ import { validateToolArguments } from "@earendil-works/pi-ai";
 import { problemInputObject } from "../src/agent/tools/practice.ts";
 import { PracticeDock } from "../components/practice-dock.tsx";
 import { QuestionDock } from "../components/question-dock.tsx";
-import { LatexGlyph } from "../components/latex-glyph.tsx";
+import { LatexGlyph, loadLatexGlyphHtml } from "../components/latex-glyph.tsx";
 import { ProblemCard, ConcludeCard } from "../components/practice-cards.tsx";
 import { MessageResponse, ToolContentResponse } from "../components/ai-elements/message.tsx";
 import { repairMathForDisplay, healOverescapedCommands, restoreMathEscapes } from "../src/core/math-delims.ts";
-import {
-	parseQuizInput, parseAskInput, parseExplainInput, activeProblemOf, projectView,
-	toLlmMessages, type LhMessage, type ArtifactPartProps,
-} from "../src/core/index.ts";
+import { activeProblemOf, projectView, toLlmMessages, type LhMessage, type ArtifactPartProps } from "../src/core/index.ts";
+import { parseQuizInput, parseAskInput, parseExplainInput } from "../src/core/tutor.ts";
 
 const tex = String.raw`\nabla f(x) \in \mathbb{R}^{m \times n}`;
 const clean = `$${tex}$`;
@@ -114,10 +112,12 @@ describe("upgraded KaTeX rendering on real question and practice surfaces", () =
 			assert.ok(parseHTML(html).document.querySelector("code")?.textContent?.includes(clean));
 		}
 	});
-	it("renders direct LatexGlyph connectors through the upgraded root", () => {
+	it("renders direct LatexGlyph connectors through the upgraded root", async () => {
 		for (const [command, glyph] of [[String.raw`\Rightarrow`, "⇒"], [String.raw`\land`, "∧"], [String.raw`\neg`, "¬"]]) {
-			const html = renderToStaticMarkup(<LatexGlyph cmd={command!} />);
-			const { document } = parseHTML(html);
+			// Server HTML and the first client render: the plain character, so nothing shifts when KaTeX arrives.
+			assert.match(renderToStaticMarkup(<LatexGlyph cmd={command!} />), new RegExp(`>${glyph}</span>`));
+			// The typeset glyph loads on demand.
+			const { document } = parseHTML(await loadLatexGlyphHtml(command!));
 			assert.equal(document.querySelectorAll(".katex-error").length, 0);
 			assert.ok(document.querySelector(".katex-base .katex-strut"));
 			assert.ok(document.querySelector(".katex-html")?.textContent?.includes(glyph!));

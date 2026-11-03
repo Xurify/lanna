@@ -7,8 +7,8 @@ import { ThinkingBlock } from "@/components/thinking-block";
 import { cn } from "@/lib/utils";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import type { QuestionAnswerData } from "@/src/core";
-import { parseAskInput, parseQuizInput } from "@/src/core";
-import { answerForPresentation } from "@/src/core/markdown";
+import { parseAskInput, parseQuizInput } from "@/src/core/tutor";
+import { answerForPresentation } from "@/src/core/tutor";
 
 /**
  * Static rendering of an answered question (tool part in `output-available`).

@@ -23,7 +23,7 @@ import {
 } from "react";
 import { Streamdown } from "streamdown";
 
-import { transformMathDelimiters } from "@/src/core/markdown";
+import { transformMathDelimiters } from "@/src/core/tutor";
 import { streamdownPlugins } from "./message";
 import { mdComponents } from "@/components/md-blocks";
 import { Shimmer } from "./shimmer";

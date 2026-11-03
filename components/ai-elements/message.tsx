@@ -34,7 +34,7 @@ import {
   type PluginConfig,
 } from "streamdown";
 import { mdComponents } from "@/components/md-blocks";
-import { repairMathForDisplay, transformMathDelimiters } from "@/src/core/markdown";
+import { repairMathForDisplay, transformMathDelimiters } from "@/src/core/tutor";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: LhViewMessage["role"];

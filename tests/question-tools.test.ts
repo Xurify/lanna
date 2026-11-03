@@ -28,7 +28,8 @@ import {
 } from "../src/agent/tools.ts";
 import { TOGGLEABLE_TOOLS } from "../src/core/pending.ts";
 import { jobStore } from "../src/store/jobs.ts";
-import { probeQuizInputSchema, quizInputObject, quizInputProblems } from "../src/core/question-core.ts";
+import { quizInputProblems } from "../src/core/question-core.ts";
+import { probeQuizInputSchema, quizInputObject } from "../src/core/question-schemas.ts";
 import { chatStore } from "../src/store/chats.ts";
 import { PATHS } from "../config.ts";
 

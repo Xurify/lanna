@@ -7,35 +7,9 @@ import { finishDictation, isDictationActive, joinDictation, useDictationTarget }
 import { useEnterSubmits } from "@/components/enter-submits";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
-import { repairMathForDisplay } from "@/src/core/markdown";
-import {
-	buildAnswer,
-	normalizeQuizType,
-	CONFIDENCE_STOPS,
-	DEFAULT_CONFIDENCE_INDEX,
-	emptyDockSelection,
-	normalizeOptions,
-	resolveCorrect,
-	seededRandom,
-	shuffleOptions,
-	toolQuestionKind,
-	parseAskInput,
-	parseQuizInput,
-	parseExplainInput,
-	toggleOption,
-	toggleOther,
-	type AnswerRequest,
-	type AskToolInput,
-	type DockSelection,
-	type ExplainToolInput,
-	type QuestionAnswerData,
-	type QuestionFormDraft,
-	type QuestionData,
-	type QuestionMode,
-	type QuizToolInput,
-	type SelectMode,
-	type Phase3,
-} from "@/src/core";
+import { repairMathForDisplay } from "@/src/core/tutor";
+import { buildAnswer, normalizeQuizType, CONFIDENCE_STOPS, DEFAULT_CONFIDENCE_INDEX, emptyDockSelection, normalizeOptions, resolveCorrect, seededRandom, shuffleOptions, toolQuestionKind, toggleOption, toggleOther, type AnswerRequest, type AskToolInput, type DockSelection, type ExplainToolInput, type QuestionAnswerData, type QuestionFormDraft, type QuestionData, type QuestionMode, type QuizToolInput, type SelectMode, type Phase3 } from "@/src/core";
+import { parseAskInput, parseQuizInput, parseExplainInput } from "@/src/core/tutor";
 import { CONFIDENCE_COLORS, confidenceRailStyle } from "@/components/confidence-rail";
 
 /**

@@ -178,7 +178,9 @@ describe("ChainTableBody — chain rows (chips + connectors)", () => {
 		assert.ok(html.includes('data-testid="chain-implies-c1"'), "the implication before the conclusion");
 		const and = html.match(/data-testid="chain-and-c1-1"[^>]*>/)?.[0] ?? "";
 		assert.match(and, /text-foreground/, "prominent — the theme's white, not dim gray");
-		assert.ok(html.includes("katex"), "a REAL KaTeX render, not a unicode arrow");
+		// KaTeX loads on demand (components/latex-glyph.tsx), so the server HTML carries the same-width plain character until the typeset glyph replaces it
+		assert.match(html, /chain-and-c1-1"[^>]*>∧</, "the land, as the plain character first");
+		assert.match(html, /chain-implies-c1"[^>]*>⟹</, "the implication, as the plain character first");
 		// the old arrow is dead as a VISIBLE connector — it survives only in
 		// the row's aria-label (formatChainLine, the plain-text form)
 		assert.doesNotMatch(html, />\s*→\s*</, "no textual arrow connector remains");
