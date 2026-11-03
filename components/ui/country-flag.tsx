@@ -1,5 +1,5 @@
-import React from "react";
-import * as Flags from "country-flag-icons/react/3x2";
+import React, { useEffect, useState } from "react";
+import { CZ, DE, EE, ES, GB, RO, RU, SK } from "country-flag-icons/react/3x2";
 import { cn } from "@/lib/utils";
 
 /**
@@ -250,9 +250,30 @@ export interface CountryFlagProps {
 	title?: string;
 }
 
+type FlagComponent = React.ComponentType<{ className?: string; title?: string }>;
+
+/** The flags every page can show are imported by name. Importing the whole set (about 250 flags,
+ *  350 kB of script) put all of it on every page for a sidebar icon; the rest load on first use,
+ *  and the box shows the country code until they do, so nothing moves when one arrives. */
+const CORE: Record<string, FlagComponent> = { SK, RU, CZ, RO, DE, ES, GB, EE };
+let rest: Record<string, FlagComponent> | null = null;
+let restLoading: Promise<void> | null = null;
+
+function loadRest(): Promise<void> {
+	restLoading ??= import("country-flag-icons/react/3x2").then((m) => {
+		rest = m as unknown as Record<string, FlagComponent>;
+	});
+	return restLoading;
+}
+
 export function CountryFlag({ lang, code, className, title }: CountryFlagProps) {
 	const c = (code ?? langToCountryCode(lang)).toUpperCase();
-	const Flag = (Flags as Record<string, React.ComponentType<{ className?: string; title?: string }>>)[c];
+	const [, loaded] = useState(rest !== null);
+	const needsRest = !CORE[c];
+	useEffect(() => {
+		if (needsRest && !rest) void loadRest().then(() => loaded(true));
+	}, [needsRest]);
+	const Flag = CORE[c] ?? rest?.[c];
 
 	return (
 		<span
