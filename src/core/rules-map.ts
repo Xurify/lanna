@@ -47,7 +47,11 @@ export function splitBridge(statement: string): { statement: string; bridge?: st
 }
 
 export function buildRulesMap(g: GraphLike): RuleArea[] {
-	const names = new Map(g.nodes.map((n) => [n.id, n.name]));
+	// The graph stores "A and B together give C" as a node of its own, named with an arrow. It is a link, not a rule to read.
+	const linkIds = new Set((g.impLinks ?? []).map((l) => l.id));
+	const isLink = (n: { id: string; name: string }) => linkIds.has(n.id) || /^[⇒⟹→]$/u.test(n.name.trim());
+	const nodes = g.nodes.filter((n) => !isLink(n));
+	const names = new Map(nodes.map((n) => [n.id, n.name]));
 	const premises = new Map<string, Set<string>>();
 	for (const l of g.impLinks ?? []) {
 		const set = premises.get(l.conclusion) ?? new Set<string>();
@@ -56,7 +60,7 @@ export function buildRulesMap(g: GraphLike): RuleArea[] {
 	}
 	const sourceOf = (id: string) => g.nodeSessions?.[id]?.[0];
 	const areas = new Map<string, RuleArea>();
-	for (const n of g.nodes) {
+	for (const n of nodes) {
 		const src = sourceOf(n.id);
 		const areaId = src ?? "notes";
 		const label = areaLabel((src && (g.fileSources?.[src] ?? g.sessions?.[src])) || "");

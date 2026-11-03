@@ -21,6 +21,13 @@ describe("the learner's map of rules", () => {
 		assert.equal(areas[0]!.rules.length, 2);
 	});
 
+	it("leaves out the graph's link nodes (named with an arrow), which are not rules to read", () => {
+		const g: GraphLike = { ...G, nodes: [...G.nodes, { id: "i1", name: "⟹", statement: "Spelling is phonetic → Dĺžeň: long vowels" }] };
+		const all = buildRulesMap(g).flatMap((a) => a.rules.map((r) => r.id));
+		assert.ok(!all.includes("i1"));
+		assert.equal(all.length, 4);
+	});
+
 	it("shows what a rule builds on, and none of the graph's machinery", () => {
 		const b = buildRulesMap(G)[0]!.rules.find((r) => r.id === "b")!;
 		assert.deepEqual(b.buildsOn, [{ id: "a", name: "Spelling is phonetic" }]);
