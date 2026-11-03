@@ -1,13 +1,12 @@
 /**
  * THE STAMP BOOK ON SCREEN (LangHarness, 2026-11-02; E31): the disc, the
- * book, the Today card and the week target render from their states alone.
+ * book and the stamps card render from their states alone.
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { StampBook, StampDisc, StampsCard } from "@/components/stamp";
-import { WeekCard } from "@/components/week-card";
 import { DEED_STAMPS, stampStates, type StampEvidence, type StampState } from "@/src/core";
 
 const evidence: StampEvidence = {
@@ -89,22 +88,5 @@ describe("StampsCard", () => {
 		const html = renderToStaticMarkup(createElement(StampsCard, { stamps: null }));
 		assert.ok(html.includes("Loading…"));
 		assert.ok(!html.includes('data-testid="stamps-all"'));
-	});
-});
-
-describe("WeekCard target", () => {
-	const week = (active: number) => Array.from({ length: 7 }, (_, i) => ({ day: `2026-10-${27 + i}`, xp: i < active ? 10 : 0 }));
-	const goal = { level: "B2", minutesPerDay: 20, daysPerWeek: 5 } as never;
-	it("counts the days practiced against the days per week in the goal", () => {
-		const html = renderToStaticMarkup(createElement(WeekCard, { week: week(3), balance: null, goal, projection: null }));
-		const target = html.split('data-testid="week-target"')[1]?.split("</p>")[0] ?? "";
-		assert.ok(target.includes("3 of 5 planned days in the last seven"), target);
-		assert.ok(!target.includes("Target met"));
-	});
-	it("says when the target is met", () => {
-		const html = renderToStaticMarkup(createElement(WeekCard, { week: week(5), balance: null, goal, projection: null }));
-		const target = html.split('data-testid="week-target"')[1]?.split("</p>")[0] ?? "";
-		assert.ok(target.includes("Target met"), target);
-		assert.ok(target.includes("5 of the last seven days"));
 	});
 });

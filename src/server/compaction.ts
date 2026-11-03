@@ -29,21 +29,7 @@
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { Usage } from "@earendil-works/pi-ai";
-import {
-	activeCompactionOf,
-	buildCompactionPrompt,
-	compactionCutIndex,
-	COMPACTION_RESERVE_TOKENS,
-	estimateContextTokens,
-	estimateTokens,
-	newCompactionMarker,
-	planTreeToText,
-	serializeForSummary,
-	toLlmMessages,
-	type CompactionDetails,
-	type LhMessage,
-	type LhMarkerMessage,
-} from "../core/index.ts";
+import { activeCompactionOf, buildCompactionPrompt, compactionCutIndex, COMPACTION_RESERVE_TOKENS, estimateContextTokens, estimateTokens, newCompactionMarker, planTreeToText, serializeForSummary, toLlmMessages, type CompactionDetails, type LhMessage } from "../core/index.ts";
 import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
 import type { PiEngine } from "../agent/models.ts";

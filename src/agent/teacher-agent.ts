@@ -3,18 +3,10 @@ import type { AgentEvent, AgentMessage, AgentTool } from "@earendil-works/pi-age
 import { invalidInputResult, questionResult } from "./tool-execute.ts";
 import { providerEventObserver } from "./provider-events.ts";
 import type { Usage } from "@earendil-works/pi-ai";
-import { PATHS } from "../../config.ts";
 import { APP_IDENTITY, piEngineFor, type PiEngine } from "./models.ts";
 import { effectivePromptSegments } from "./prompt-segments.ts";
 import { learnerProfileSegment } from "./learner-profile.ts";
-import {
-	askUserQuestionTool,
-	createProberTools,
-	createTeacherTools,
-	type ProbeDoneContext,
-	type ProberToolContext,
-	type TeacherToolContext,
-} from "./tools.ts";
+import { askUserQuestionTool, createProberTools, createTeacherTools, type ProberToolContext, type TeacherToolContext } from "./tools.ts";
 import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
 import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";

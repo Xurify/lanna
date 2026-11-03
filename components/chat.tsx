@@ -34,17 +34,7 @@ import { useFieldCycle } from "@/components/field-cycle";
 import { JobsContext } from "@/components/jobs-context";
 import { StatsBar } from "@/components/stats-bar";
 import { useServerEvent, useServerResync } from "@/components/server-events";
-import {
-	isProviderKeyRefusal,
-	firstSourceTextParts,
-	messageAnchorId,
-	textPartMessageId,
-	kbdEventForAction as kbdEventForChat,
-	type ChatInput,
-	type ChatSettings,
-	type LhMessage,
-	type ModelSlotName,
-} from "@/src/core";
+import { isProviderKeyRefusal, firstSourceTextParts, messageAnchorId, textPartMessageId, kbdEventForAction as kbdEventForChat, type LhMessage, type ModelSlotName } from "@/src/core";
 import { PlanBlock, PlanPopup, latestTree } from "@/components/plan-block";
 import { PlanMarginalia, planExists } from "@/components/plan-window";
 import { MermaidOverlay, SessionMermaidContext } from "@/components/session-overlay";

@@ -33,27 +33,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
 import { UNITS } from "../core/lesson.ts";
-import {
-	creditedSpeed,
-	customId,
-	customMilestone,
-	estimateMilestone,
-	GENRES,
-	levelVocabulary,
-	MILESTONES,
-	normalizeCustomText,
-	parseCustomMapping,
-	speedFromSamples,
-	speedTrend,
-	type CustomMapping,
-	type LearnerFacts,
-	type MilestoneDef,
-	type MilestoneEstimate,
-	type MilestonesReport,
-	type NextWord,
-	type SpeedSample,
-	type TrendPoint,
-} from "../core/milestones.ts";
+import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, levelVocabulary, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
 import { grammarWord, tokenize } from "../core/reading.ts";
 import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import { readLessonLog } from "../store/corpus.ts";

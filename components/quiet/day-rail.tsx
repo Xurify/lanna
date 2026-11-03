@@ -7,7 +7,6 @@
  */
 
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import { QIcon, QPie } from "@/components/quiet/icon";
 import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";

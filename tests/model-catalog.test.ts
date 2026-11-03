@@ -14,7 +14,6 @@ import {
 	validateModelsSettings,
 } from "../src/server/model-catalog.ts";
 import type { EffectiveSlot } from "../src/core/settings-resolution.ts";
-import type { SettingsValidation } from "../src/server/model-catalog.ts";
 import { clampThinkingLevel, getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import { DEFAULT_THINKING_ORDER } from "../src/core/settings.ts";
 import { piEngineForSpec, piModels } from "../src/agent/models.ts";

@@ -20,7 +20,7 @@ const depthMode: "off" | "vertical" | "radial" =
 import { incrementalLayout } from "../src/core/layout.ts";
 import { birthSessionPartition } from "../src/core/session-clusters.ts";
 import { deriveView, getGraph } from "../src/core/graph.ts";
-import type { GraphNode, Position } from "../src/core/contracts.ts";
+import type { Position } from "../src/core/contracts.ts";
 
 function main() {
 	const t0 = Date.now();
