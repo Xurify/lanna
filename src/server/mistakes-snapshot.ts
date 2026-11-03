@@ -5,6 +5,7 @@
  * refresh it without pulling the model code in.
  */
 
+import { analyzeListening } from "../core/listen-analysis.ts";
 import { analyzeMistakes, digest, guideFacts, type MistakeAnalysis, type MistakesReport } from "../core/mistakes.ts";
 import type { UnitId } from "../core/lesson.ts";
 import { readLessonLog } from "../store/corpus.ts";
@@ -30,7 +31,8 @@ export function mistakesReport(now = new Date()): MistakesReport {
 
 /** Read the log again and save the snapshot with its time, keeping the guide. */
 export function analyzeNow(now = new Date()): MistakesReport {
-	const analysis = analyzeMistakes(readLessonLog(), progressStore.read().mixups, now);
+	const log = readLessonLog();
+	const analysis = { ...analyzeMistakes(log, progressStore.read().mixups, now), listening: analyzeListening(log, now) };
 	const { guide } = analysisStore.read();
 	analysisStore.write({ analysis, guide });
 	return mistakesReportOf(analysis, guide);

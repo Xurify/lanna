@@ -13,6 +13,7 @@
  */
 
 import type { AiStatus } from "./ai-status.ts";
+import type { ListenAnalysis } from "./listen-analysis.ts";
 import type { PersonalPractice } from "./personal.ts";
 import type { StoryUsage } from "./reading.ts";
 import { countsAsFirstTry } from "./first-try.ts";
@@ -103,6 +104,8 @@ export interface MistakeAnalysis {
 	mixups: MixupSummary[];
 	/** The latest wrong first tries, newest first. Absent in snapshots from before it was kept. */
 	samples?: WrongSample[];
+	/** What the Listen task says about hearing (src/core/listen-analysis.ts). Absent in snapshots from before it was kept. */
+	listening?: ListenAnalysis;
 }
 
 /** The guide as saved: the model's reply, its structured read, and what it was written from. */

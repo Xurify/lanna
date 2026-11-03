@@ -435,6 +435,16 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - `audio.playbackRate` is the setting (0.75, 1, 1.25) or the snail (`slowRate`), nothing computed from the clip. Do not add a per-clip or per-source rate; if a voice is too slow or fast, change how it is generated (the ElevenLabs speed, the Edge `EDGE_RATE`), which splits the cache key and is the owner's call.
 - `scripts/audio-pace.ts` and `countSyllables` (`src/core/pace.ts`) measure a profile's clips; they change nothing.
 
+### E38. Listening is read from the typed sentence: the cause of each miss, and its trend (2026-11-03, branch `feat/listening-trends`)
+
+**Why:** the owner wants to see trends in what they cannot hear and why. Reasoning and limits: [research/listening-trends.md](research/listening-trends.md).
+
+**How to apply:**
+- Only a typed sentence (dictation) has a cause. A difference on the sentence's stretch word is vocabulary; on any other word it is hearing, grammar (the right word, the wrong ending), spelling (i and y) or typing (`src/core/listen-analysis.ts`). Add a cause there, with its label and one line, not in the page.
+- A Listen rep logs `stretch`, the unmet words as they stand in the sentence. A typed miss without it is not read.
+- `/api/listen` passes `answer` through: without it a typed sentence is not graded again, is logged as a meaning, and loses its accents-only half credit.
+- The result is `MistakeAnalysis.listening`, shown as a section on My mistakes, from the snapshot; it is local and free. The guide does not read it yet.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

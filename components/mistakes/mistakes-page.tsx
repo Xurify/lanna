@@ -16,6 +16,7 @@ import { SidebarToggle } from "@/components/sidebar";
 import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
+import { ListeningSection } from "@/components/mistakes/listening-section";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-teal-2" },
@@ -117,6 +118,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 						</>
 					)
 				)}
+				{a?.listening && <ListeningSection l={a.listening} />}
 			</main>
 		</div>
 	);

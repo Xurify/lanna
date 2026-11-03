@@ -140,3 +140,9 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Sidebar width:** drag the sidebar's right edge between 208 and 288 px (288 is the old width), double-click for the widest, arrow keys for steps; it is kept in a cookie so the first paint has it. Today's and Review's compact headers now clear Electron's window controls.
 - **Listen, typed mode:** the Enter that sent an answer also pressed Continue (the page-level key listener is re-registered on every render, so it saw the new answer and advanced on the same keypress), so a typed answer never showed its sentence and meaning. Fixed. The end screen also kept only the sentences you missed; the ones you understood are now listed under a collapsed "Understood · N sentences".
 
+## 3 November: listening trends (`feat/listening-trends`)
+
+- **Listening trends** (E38, [research/listening-trends.md](research/listening-trends.md)): My mistakes has a Listening section. A typed sentence is compared with what was played and each difference gets a cause (a word not met, vowel length, soft or hushing consonants, voicing, a short word dropped, a word not caught, a different word heard, the wrong ending, i for y, a typing slip), shown per 100 sentences lately against before with "less often / more often / about the same". Also understood by week, effort (plays, text shown first) and accuracy on slow against fast clips. It needs 20 typed sentences with their words logged. The Listen end screen links to it.
+- **Fixed on the way:** `/api/listen` dropped `answer`, so typed sentences were logged as picked meanings, not graded again, and an accents-only answer lost its half XP. Older typed sentences stay mislabelled in the log.
+- **Checked:** unit tests, and a production build against 18 synthetic sessions over five weeks (a drop of "short words dropped" from 15 to 1 in 100 showed as "less often"). **Unverified:** a real learner's history.
+

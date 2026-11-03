@@ -208,6 +208,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							replays: r.replays,
 							peeked: r.peeked,
 							words: r.item.words,
+							stretchText: r.item.stretch.map((w) => w.text),
 						})),
 						ms: Date.now() - startedAt.current,
 						activeMs: activeTime.finish(),
@@ -623,6 +624,9 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 					<RepeatIcon className="size-4" />
 					Ten more
 				</button>
+				<Link href="/mistakes#mistakes-listening" className={SECONDARY} data-testid="listen-trends">
+					How your listening is going
+				</Link>
 				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
 			</div>
 		</div>
