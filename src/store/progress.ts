@@ -98,7 +98,6 @@ export interface ExamAttempt {
 
 export interface ProgressRecord {
 	xp: number;
-	dailyGoal: number;
 	days: Record<string, DayRecord>;
 	units: Record<string, UnitRecord>;
 	/** Chapter-exam attempts, per chapter id, oldest first (the path reads
@@ -121,13 +120,12 @@ export interface ProgressRecord {
 	lessonAcks?: Array<{ id: string; outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number } }>;
 }
 
-export const DEFAULT_DAILY_GOAL = 50;
 export const DEFAULT_GOAL: GoalRecord = { level: "B2", minutesPerDay: 30 };
 
 const FILE = () => path.join(PATHS.data, "progress.json");
 
 export function emptyProgress(): ProgressRecord {
-	return { xp: 0, dailyGoal: DEFAULT_DAILY_GOAL, days: {}, units: {}, exams: {}, recent: [] };
+	return { xp: 0, days: {}, units: {}, exams: {}, recent: [] };
 }
 
 export const progressStore = {

@@ -69,6 +69,7 @@ import {
 	MAX_PURPOSES,
 	purposeScenes,
 	placementTier,
+	xpForPlan,
 	type PlacementOutcome,
 } from "../core/onboarding.ts";
 import { strandBalance, type StrandBalance } from "../core/strands.ts";
@@ -433,7 +434,7 @@ export interface ProgressSummary {
 	level: { level: number; into: number; span: number };
 	todayXp: number;
 	dailyGoal: number;
-	/** XP earned per hour of measured study, over the days that have measured minutes; null under an hour of it. */
+	/** XP earned per hour of measured study, over the days that have measured minutes; null under an hour of it. `dailyGoal` is the plan's minutes at this rate (a typical one while it is null). */
 	xpPerHour: number | null;
 	streak: { days: number; restUsed: boolean; activeToday: boolean };
 	/** The last 7 days, oldest first, for the week strip. */
@@ -619,7 +620,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		xp: p.xp,
 		level: xpLevel(p.xp),
 		todayXp: p.days[key]?.xp ?? 0,
-		dailyGoal: p.dailyGoal,
+		dailyGoal: xpForPlan(goal.minutesPerDay, xpPerHour),
 		xpPerHour,
 		streak,
 		week,
@@ -795,9 +796,3 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 	return { ...outcome, summary: progressSummary(input.tz, now) };
 }
 
-export function setDailyGoal(goal: number): ProgressSummary {
-	const p = progressStore.read();
-	if (Number.isFinite(goal)) p.dailyGoal = Math.max(10, Math.min(500, Math.round(goal)));
-	progressStore.write(p);
-	return progressSummary();
-}

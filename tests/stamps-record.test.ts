@@ -101,8 +101,13 @@ test("the trail log counts the minutes measured, apart from the guided hours the
 	assert.equal(s.log.minutes, 60);
 	assert.equal(s.log.hours, 0, "no unit is done, so the map credits nothing");
 	assert.equal(s.xpPerHour, 250, "250 XP in 60 measured minutes");
+	// The day's XP goal follows the plan's minutes at that rate; nobody sets it.
+	const minutes = s.goal.minutesPerDay;
+	assert.equal(s.dailyGoal, Math.round(((minutes / 60) * 250) / 10) * 10);
 	// Under an hour of measured study there is no rate to suggest.
 	p.days = { "2026-11-02": { xp: 150, minutes: 20 } } as never;
 	progressStore.write(p);
-	assert.equal(progressSummary(0, new Date("2026-11-02T20:00:00Z")).xpPerHour, null);
+	const thin = progressSummary(0, new Date("2026-11-02T20:00:00Z"));
+	assert.equal(thin.xpPerHour, null);
+	assert.equal(thin.dailyGoal, Math.round(((thin.goal.minutesPerDay / 60) * 120) / 10) * 10, "a typical rate until one is measured");
 });

@@ -316,5 +316,5 @@ test("xpForPlan turns a plan's minutes into the XP those minutes earn at the lea
 	assert.equal(xpForPlan(30, 198), 100);
 	assert.equal(xpForPlan(5, 40), 10, "never under the 10 XP floor");
 	assert.equal(xpForPlan(600, 400), 500, "never over the 500 XP cap");
-	assert.equal(xpForPlan(90, null), null, "no rate yet");
+	assert.equal(xpForPlan(90, null), 180, "no rate measured yet: a typical 120 XP an hour");
 });
