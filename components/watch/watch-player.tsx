@@ -360,8 +360,9 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The shelf: paste a link, or pick a video ───────────────────────────────
 
-/** The video's thumbnail from the server's copy, in a fixed 16:9 box so the
- *  row does not move when it loads; the icon stands in when there is none. */
+/** The video's YouTube thumbnail, loaded from YouTube's image host in the
+ *  browser; the icon stands in when YouTube has none. The box is 16:9 so the
+ *  row does not move when the image arrives. */
 function Thumb({ id, watched }: { id: string; watched: boolean }) {
 	const [missing, setMissing] = useState(false);
 	if (missing) {
@@ -372,9 +373,9 @@ function Thumb({ id, watched }: { id: string; watched: boolean }) {
 		);
 	}
 	return (
-		// The kept file is already small; the image optimizer would only fetch it again.
+		// next/image would need YouTube's image host allowed in its config; the plain image needs no setup.
 		// eslint-disable-next-line @next/next/no-img-element
-		<img src={`/api/watch?thumb=${encodeURIComponent(id)}`} alt="" loading="lazy" onError={() => setMissing(true)} className="h-[50px] w-[89px] shrink-0 rounded-md bg-well-2 object-cover" />
+		<img src={`https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`} alt="" loading="lazy" onError={() => setMissing(true)} className="h-[50px] w-[89px] shrink-0 rounded-md bg-well-2 object-cover" />
 	);
 }
 

@@ -345,34 +345,6 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 	throw new NoCaptionsError(`${why}${!meta || meta.tracks.length === 0 ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and a Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe);
 }
 
-// ─── The thumbnail ──────────────────────────────────────────────────────────
-
-const THUMB_MAX_BYTES = 1024 * 1024;
-
-/** The video's YouTube thumbnail, kept under the library: fetched once,
- *  then read from disk. hqdefault is 4:3 with black bars on a 16:9 video;
- *  the library crops them. Null when there is none. Never throws. */
-export async function ensureThumbnail(id: string, get: typeof fetch = fetch): Promise<string | null> {
-	const file = videoStore.thumbnailFile(id);
-	if (!file) return null;
-	if (fs.existsSync(file)) return file;
-	try {
-		const res = await get(`https://i.ytimg.com/vi/${id}/hqdefault.jpg`, { headers: { "user-agent": UA }, signal: AbortSignal.timeout(8_000) });
-		if (!res.ok || !(res.headers.get("content-type") ?? "").startsWith("image/")) return null;
-		const data = new Uint8Array(await res.arrayBuffer());
-		if (data.length === 0 || data.length > THUMB_MAX_BYTES) return null;
-		return videoStore.putThumbnail(id, data);
-	} catch {
-		return null;
-	}
-}
-
-/** The thumbnail's bytes, fetched and kept first when need be. */
-export async function thumbnailBytes(id: string): Promise<Buffer | null> {
-	const file = await ensureThumbnail(id);
-	return file ? fs.promises.readFile(file) : null;
-}
-
 // ─── Translation and questions on the cheap slot ────────────────────────────
 
 const TRANSLATE_SYSTEM = `You translate the lines of a Slovak video's subtitles into natural English for a learner who watches with both languages on screen. You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one English string per Slovak line, in the same order, the same count.
@@ -397,8 +369,6 @@ export interface PrepareOptions {
 	captions?: (id: string) => Promise<FetchedCaptions>;
 	/** Transcribe the audio when the video has no captions (yt-dlp + Deepgram). */
 	transcribe?: boolean;
-	/** Keep the video's thumbnail. Off with the captions seam, which is a test without YouTube. */
-	thumbnail?: boolean;
 	now?: Date;
 	/** Prepare again even when the video is already in the library. */
 	force?: boolean;
@@ -510,7 +480,6 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			if (kept) return kept;
 		}
 		setStage(id, "captions");
-		const thumb = (opts.thumbnail ?? !opts.captions) ? ensureThumbnail(id) : null;
 		const lexicon = loadLexicon();
 		const k = knownWords(lexicon);
 		const fetched = await (opts.captions ? opts.captions(id) : fetchCaptions(id, { transcribe: opts.transcribe, signal: opts.signal, onStage: (s) => setStage(id, s) }));
@@ -562,7 +531,6 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			translatedBy: "model",
 		};
 		videoStore.put(record);
-		await thumb;
 		ensureReadmes();
 		setStage(id, "done");
 		return record;

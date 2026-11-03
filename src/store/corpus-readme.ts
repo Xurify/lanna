@@ -253,7 +253,6 @@ everything the app made of its captions, paid for once.
   tokens the translation and questions cost).
 - \`captions/<id>.<lang>.<json|xml|vtt>\`: the caption track exactly as
   YouTube served it, so the lines can be cut again without fetching.
-- \`thumbnails/<id>.jpg\`: the video's YouTube thumbnail, kept for the library.
 - \`index.jsonl\`: one line per video (id, title, channel, length, level,
   date, coverage, word count, line count, pre-teach words, source, model).
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
