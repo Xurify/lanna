@@ -76,17 +76,30 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 		d.setDate(end.getDate() - k);
 		streakDays.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
 	}
-	const cells: Array<{ day: string; minutes: number | null; future: boolean }> = [];
+	// One truth per day, the same one the XP chart above draws: inside its seven days a cell follows that day's XP (goal met, some, none); before them only minutes were kept, so older cells follow minutes. A day with timed minutes but no XP is not practice here, so the two charts never disagree.
+	type Cell = { day: string; state: "future" | "none" | "some" | "goal"; label: string };
+	const weekByDay = new Map(data.week.map((w) => [w.day, w.xp]));
+	const cells: Cell[] = [];
 	const start = new Date(end);
 	start.setDate(end.getDate() - mondayOffset - (WEEKS - 1) * 7);
 	for (let i = 0; i < WEEKS * 7; i++) {
 		const d = new Date(start);
 		d.setDate(start.getDate() + i);
 		const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-		const future = d.getTime() > end.getTime() + 12 * 3600_000;
-		cells.push({ day: key, minutes: future ? null : Math.max(byDay.get(key) ?? 0, data.week.find((w) => w.day === key)?.xp || streakDays.has(key) ? 1 : 0, byDay.get(key) ?? 0), future });
+		const name = `${WEEKDAY_EN[d.getDay()]} ${d.getDate()} ${d.toLocaleString("en", { month: "short" })}`;
+		if (d.getTime() > end.getTime() + 12 * 3600_000) {
+			cells.push({ day: key, state: "future", label: name });
+			continue;
+		}
+		if (weekByDay.has(key)) {
+			const xp = weekByDay.get(key) ?? 0;
+			cells.push({ day: key, state: xp <= 0 ? "none" : data.dailyGoal > 0 && xp >= data.dailyGoal ? "goal" : "some", label: `${name}: ${xp} XP` });
+			continue;
+		}
+		const m = Math.max(byDay.get(key) ?? 0, streakDays.has(key) ? 1 : 0);
+		cells.push({ day: key, state: m <= 0 ? "none" : data.goalMinutes > 0 && m >= data.goalMinutes ? "goal" : "some", label: `${name}: ${m > 0 ? `${Math.round(m)} min` : "no practice"}` });
 	}
-	const active = cells.filter((c) => (c.minutes ?? 0) > 0).length;
+	const active = cells.filter((c) => c.state === "some" || c.state === "goal").length;
 	return (
 		<figure className={cn("q-well", className)} aria-label="Days practiced in the last five weeks" data-testid="streak-calendar">
 			<h4>
@@ -98,21 +111,23 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 						{w}
 					</span>
 				))}
-				{cells.map((c) => {
-					const on = (c.minutes ?? 0) > 0;
-					const full = on && data.goalMinutes > 0 && (c.minutes ?? 0) >= data.goalMinutes;
-					return (
-						<span
-							key={c.day}
-							role="gridcell"
-							title={c.future ? undefined : `${c.day}: ${c.minutes ? `${Math.round(c.minutes)} min` : "no practice"}`}
-							className={cn("mx-auto aspect-square w-full max-w-6 rounded-[5px]", c.future ? "bg-transparent shadow-[inset_0_0_0_1px_var(--q-line)]" : full ? "bg-teal" : on ? "bg-teal-line" : "bg-well-2", c.day === last && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]")}
-						/>
-					);
-				})}
+				{cells.map((c) => (
+					<span
+						key={c.day}
+						role="gridcell"
+						aria-label={c.state === "future" ? undefined : c.label}
+						title={c.state === "future" ? undefined : c.label}
+						className={cn("mx-auto aspect-square w-full max-w-6 rounded-[5px]", c.state === "future" ? "bg-transparent shadow-[inset_0_0_0_1px_var(--q-line)]" : c.state === "goal" ? "bg-teal" : c.state === "some" ? "bg-teal-line" : "bg-well-2", c.day === last && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]")}
+					/>
+				))}
 			</div>
+			<p className="q-legend" aria-hidden="true">
+				<span><i className="bg-teal" />goal met</span>
+				<span><i className="bg-teal-line" />some practice</span>
+				<span><i className="bg-well-2" />none</span>
+			</p>
 			<p className="mt-3 text-[12.5px] text-ink-3" data-testid="streak-summary">
-				{active === 0 ? "No days yet. Today is the first square." : `${active} of the last ${cells.filter((c) => !c.future).length} days practiced.`}
+				{active === 0 ? "No days yet. Today is the first square." : `${active} of the last ${cells.filter((c) => c.state !== "future").length} days practiced.`}
 				{data.streak > 0 && (
 					<>
 						{" "}
@@ -157,6 +172,13 @@ export function LevelProgress({ data, className }: { data: ChartData; className?
 }
 
 /** The week's minutes by strand: grey bars against the quarter mark; the strand furthest behind is teal. */
+/** Minutes as a learner reads them: "42 min", "1 h 05". */
+function formatMinutes(m: number): string {
+	const n = Math.round(m);
+	if (n < 60) return `${n} min`;
+	return `${Math.floor(n / 60)} h ${String(n % 60).padStart(2, "0")}`;
+}
+
 export function StrandBars({ balance, className }: { balance: StrandBalance | null; className?: string }) {
 	if (!balance || balance.total === 0) {
 		return (
@@ -172,9 +194,9 @@ export function StrandBars({ balance, className }: { balance: StrandBalance | nu
 	return (
 		<figure className={cn("q-well", className)} aria-label="This week's balance" data-testid="strand-balance">
 			<h4>
-				Minutes by strand <small>aim: about {Math.round(STRAND_TARGET * 100)}% each</small>
+				Minutes by strand <small>{formatMinutes(balance.total)} this week</small>
 			</h4>
-			<div className="q-bars">
+			<div className="q-bars with-mins">
 				{STRANDS.map((x) => {
 					const share = balance.share[x.id];
 					const pct = Math.round(share * 100);
@@ -188,6 +210,7 @@ export function StrandBars({ balance, className }: { balance: StrandBalance | nu
 								{share > balance.target && <i className="over" style={{ left: `${(balance.target / max) * 100}%`, width: `${((share - balance.target) / max) * 100}%` }} />}
 								<span className="target" style={{ left: `${(balance.target / max) * 100}%` }} aria-hidden="true" />
 							</span>
+							<span className={cn("mins q-num", hot && "hotc")}>{formatMinutes(balance.minutes[x.id])}</span>
 							<span className={cn("pct q-num", hot && "hotc")}>{pct}%</span>
 						</div>
 					);

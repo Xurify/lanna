@@ -10,7 +10,8 @@ import { askUserQuestionTool, createProberTools, createTeacherTools, type Prober
 import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
 import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";
-import { quizInputObject, quizInputProblems } from "../core/question-core.ts";
+import { quizInputProblems } from "../core/question-core.ts";
+import { quizInputObject } from "../core/question-schemas.ts";
 import { QUESTION_TOOLS, type EnabledTools } from "../core/pending.ts";
 import { toLlmMessages, nativeInputCause, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
 import type { ChatGPTRequestCycle } from "./chatgpt-request-cycle.ts";

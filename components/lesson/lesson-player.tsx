@@ -15,7 +15,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookmarkCheckIcon, BookmarkIcon, BrainIcon, ChartColumnIcon, FlagIcon, LanguagesIcon, LoaderCircleIcon, SnailIcon, TimerIcon, Volume2Icon, WholeWordIcon, XIcon, ZapIcon } from "lucide-react";
+import { BookmarkCheckIcon, BookmarkIcon, BrainIcon, ChartColumnIcon, ChevronDownIcon, FlagIcon, LanguagesIcon, LoaderCircleIcon, SnailIcon, TimerIcon, Volume2Icon, WholeWordIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
@@ -55,6 +55,8 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
+import { shake as shakeEl } from "@/components/motion";
 
 type Mode = "lesson" | "blitz";
 
@@ -195,11 +197,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// A miss shakes the rep without remounting it (the typed text stays).
 	useEffect(() => {
 		if (shake === 0) return;
-		if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-		repBox.current?.animate?.(
-			[{ transform: "translateX(0)" }, { transform: "translateX(-8px)" }, { transform: "translateX(8px)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }],
-			{ duration: 320 },
-		);
+		shakeEl(repBox.current);
 	}, [shake]);
 	const startedAt = useRef(Date.now());
 	const shownAt = useRef(Date.now());
@@ -609,7 +607,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 								className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2"
 								aria-label={`${left} seconds left`}
 							>
-								<div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", left <= 10 ? "bg-miss" : "bg-teal")} style={{ width: `${Math.max(3, progress * 100)}%` }} />
+								<div className={cn("lh-fill rounded-full", left <= 10 ? "bg-miss" : "bg-teal")} style={fillStyle(Math.max(0.03, progress))} />
 							</div>
 						) : (
 							<LessonTrail reps={reps} index={index} total={total} answered={!!current} />
@@ -736,14 +734,14 @@ function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind
  *  does), leaving is the deliberate second choice. */
 function LeaveDialog({ answered, total, onStay, onLeave }: { answered: number; total: number; onStay: () => void; onLeave: () => void }) {
 	return (
-		<div className="fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6" onClick={onStay}>
+		<div className="lh-fade fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6" onClick={onStay}>
 			<div
 				role="alertdialog"
 				aria-modal="true"
 				aria-labelledby="lesson-leave-title"
 				aria-describedby="lesson-leave-body"
 				onClick={(e) => e.stopPropagation()}
-				className="lh-rise q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
+				className="lh-menu-in q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
 				data-testid="lesson-leave-confirm"
 			>
 				<h2 id="lesson-leave-title" className="font-ui text-xl font-semibold tracking-[-0.018em] text-foreground">
@@ -806,13 +804,13 @@ function repIcon(item: LessonItem): QIconName {
 	return unitInfo(item.unit).kind === "words" ? "words" : "grammar";
 }
 
-const PLAY_BIG = "flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-[background-color,transform] hover:bg-teal-2 active:translate-y-px";
-const PLAY_SLOW = "flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-well hover:text-ink-2";
-const PLAY_SMALL = "flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 transition-colors hover:bg-[var(--q-teal-line)]";
+const PLAY_BIG = "lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2";
+const PLAY_SLOW = "lh-press flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2";
+const PLAY_SMALL = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]";
 /** The target form in a sentence that is read, not blanked (a meaning rep, a twin). */
 const MARKED = "bg-transparent px-0.5 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]";
 /** The slot the answer sits in: the mockup's `.q-slot`, sized to the 44px sentence. */
-const SLOT = "inline-flex h-12 items-center gap-2.5 px-0.5 align-baseline sm:h-[58px]";
+const SLOT = "inline-flex h-12 items-center align-baseline sm:h-[58px]";
 
 function RepView({
 	item,
@@ -1092,18 +1090,6 @@ function ClozeRep({
 				</div>
 			)}
 			<div className="relative">
-				{/* The play button hangs in the left margin, so the sentence lines
-				    up with the heading and never moves when the button appears. */}
-				{locked && !meaning && (
-					<button
-						type="button"
-						onClick={() => void speak(item.sentence)}
-						aria-label="Play the sentence"
-						className={cn("lh-pop absolute -left-12 top-3.5 max-sm:relative max-sm:left-0 max-sm:top-0 max-sm:mb-3", PLAY_SMALL)}
-						>
-							<Volume2Icon className="size-[18px]" strokeWidth={1.6} />
-					</button>
-				)}
 				<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), submit())}>
 					<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk">
 						{beforeText}
@@ -1113,13 +1099,6 @@ function ClozeRep({
 						) : locked ? (
 							<span className={cn("lh-pop", SLOT, verdictInk)}>
 									{pairsRep ? target : item.answer}
-									{result?.verdict !== "accents" && (
-										<span className="grid size-[26px] place-items-center rounded-full bg-teal" aria-hidden="true">
-											<svg viewBox="0 0 24 24" className="size-[15px] fill-none stroke-[var(--q-on-teal)]" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
-												<path d="M5.5 12.5l4 4L18.5 7.5" />
-											</svg>
-										</span>
-									)}
 								</span>
 						) : pairsRep && !typed ? (
 							// Dvojičky: the twin's form is the evidence, so it stays marked
@@ -1159,6 +1138,17 @@ function ClozeRep({
 							</button>
 						) : (
 							item.translation
+						)}
+						{locked && !meaning && (
+							<button
+								type="button"
+								onClick={() => void speak(item.sentence)}
+								aria-label="Play the sentence"
+								title="Play again"
+								className="lh-press ml-2 inline-flex size-8 translate-y-[3px] items-center justify-center rounded-full bg-well align-baseline text-ink-2 hover:bg-well-2"
+							>
+								<Volume2Icon className="size-4" strokeWidth={1.6} />
+							</button>
 						)}
 					</p>
 					{typed && !locked && <DiacriticBar variant="keys" className="mt-5" />}
@@ -1315,6 +1305,8 @@ function FeedbackSheet({
 							title: "Not quite",
 						};
 	const canExplain = item.kind !== "build";
+	const [more, setMore] = useState(false);
+	const hasMore = !!item.pair?.bridge || unitBridges(item.unit, bridgeLangs).length > 0 || examples.length > 0;
 	const [marked, setMarked] = useState(false);
 	// "Tricky": put the word in the review deck now, ahead of its turn.
 	const mark = async () => {
@@ -1340,6 +1332,7 @@ function FeedbackSheet({
 							<VerdictDisc ok={verdict === "exact"} />
 						)}
 						<p className={cn("font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]", tone.ink)}>{tone.title}</p>
+						{comesBack && <span className="font-ui text-[13px] text-ink-3">Comes back once more at the end</span>}
 					</div>
 					<div className="flex items-center gap-2">
 						{verdict === "exact" && (
@@ -1369,24 +1362,22 @@ function FeedbackSheet({
 				{/* Details, aligned under the title (past the badge). */}
 				<div className="mt-3 flex flex-col gap-3 sm:pl-9">
 					{verdict !== "exact" && (
-						<div>
-							<p className="font-prose text-[17px] text-foreground">
-								{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
-								<span className="font-semibold" lang={item.kind === "meaning" ? undefined : "sk"}>
-									{[...expected].map((ch, i) => (
-										<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
-											{ch}
-										</span>
-									))}
-								</span>
-							</p>
+						<p className="font-prose text-[17px] text-foreground">
+							{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
+							<span className="font-semibold" lang={item.kind === "meaning" ? undefined : "sk"}>
+								{[...expected].map((ch, i) => (
+									<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
+										{ch}
+									</span>
+								))}
+							</span>
 							{verdict === "wrong" && given && (
-								<p className="font-prose text-[15px] text-ink-3">
-									{item.kind === "meaning" ? "You picked" : "You wrote"} “<span lang={item.kind === "meaning" ? undefined : "sk"}>{given}</span>”
-								</p>
+								<span className="text-[15px] text-ink-3">
+									{" "}
+									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" ? undefined : "sk"}>{given}</span>”
+								</span>
 							)}
-							{comesBack && <p className="mt-1 font-prose text-[13px] text-ink-3">It comes back once more at the end.</p>}
-						</div>
+						</p>
 					)}
 					{verdict === "exact" && rep.variant && (
 						<div className="rounded-[10px] bg-card px-3.5 py-2.5 font-prose text-[15px] shadow-[inset_0_0_0_1px_var(--q-teal-line)]" data-testid="variant-accepted">
@@ -1427,9 +1418,9 @@ function FeedbackSheet({
 
 				{/* "Why?" opens here, under the verdict: the lesson stays where it is. */}
 				{open && (
-					<dl className="lh-rise mt-4 grid gap-x-6 gap-y-2 border-t border-[var(--q-line-2)] pt-4 font-prose text-[15px] leading-relaxed sm:grid-cols-[6rem_1fr]" data-testid="lesson-why-panel">
-						<dt className={WHY_LABEL}>{info.kind === "words" ? "Tip" : "Rule"}</dt>
-						<dd className="text-foreground">
+					<div className="lh-rise mt-3 sm:pl-9" data-testid="lesson-why-panel">
+						<div className="rounded-[10px] bg-card px-3.5 py-2.5 font-prose text-[15px] leading-relaxed text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)]">
+							<span className={cn(WHY_LABEL, "mr-2")}>{info.kind === "words" ? "Tip" : "Rule"}</span>
 							{item.trigger && (
 								<>
 									<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang="sk">
@@ -1439,48 +1430,58 @@ function FeedbackSheet({
 								</>
 							)}
 							{item.pair?.rule ?? info.rule}
-						</dd>
-						{item.pair?.bridge ? (
-							<>
-								<dt className={WHY_LABEL}>Parallels</dt>
-								<dd className="text-foreground">{item.pair.bridge}</dd>
-							</>
-						) : (
-							unitBridges(item.unit, bridgeLangs).length > 0 && (
+						</div>
+						{hasMore && (
+							<button type="button" onClick={() => setMore((m) => !m)} aria-expanded={more} data-testid="lesson-more" className="mt-2 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:bg-card hover:text-ink-2">
+								{more ? "Less" : "Parallels and examples"}
+								<ChevronDownIcon className={cn("size-3.5 transition-transform", more && "rotate-180")} strokeWidth={1.8} aria-hidden="true" />
+							</button>
+						)}
+						{(more || !hasMore) && (
+							<dl className="lh-rise mt-2 grid gap-x-6 gap-y-2 font-prose text-[15px] leading-relaxed sm:grid-cols-[6rem_1fr]">
+							{item.pair?.bridge ? (
 								<>
 									<dt className={WHY_LABEL}>Parallels</dt>
-									<dd className="flex flex-col gap-1">
-										<Bridges unit={item.unit} />
+									<dd className="text-foreground">{item.pair.bridge}</dd>
+								</>
+							) : (
+								unitBridges(item.unit, bridgeLangs).length > 0 && (
+									<>
+										<dt className={WHY_LABEL}>Parallels</dt>
+										<dd className="flex flex-col gap-1">
+											<Bridges unit={item.unit} />
+										</dd>
+									</>
+								)
+							)}
+							{examples.length > 0 && (
+								<>
+									<dt className={WHY_LABEL}>Same pattern</dt>
+									<dd>
+										<ul className="flex flex-col gap-0.5">
+											{examples.map((ex) => (
+												<li key={ex.id} className="text-muted-foreground">
+													<span className="text-foreground" lang="sk">
+														{ex.before}
+														<b>{ex.answer}</b>
+														{ex.after}
+													</span>{" "}
+													<span data-no-word-lookup="true">· {ex.translation}</span>
+												</li>
+											))}
+										</ul>
 									</dd>
 								</>
-							)
+							)}
+							<dt className={WHY_LABEL} />
+							<dd>
+								<button type="button" onClick={onAskTutor} className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2">
+									Still unsure? Ask the tutor (opens a chat)
+								</button>
+							</dd>
+							</dl>
 						)}
-						{examples.length > 0 && (
-							<>
-								<dt className={WHY_LABEL}>Same pattern</dt>
-								<dd>
-									<ul className="flex flex-col gap-0.5">
-										{examples.map((ex) => (
-											<li key={ex.id} className="text-muted-foreground">
-												<span className="text-foreground" lang="sk">
-													{ex.before}
-													<b>{ex.answer}</b>
-													{ex.after}
-												</span>{" "}
-												<span data-no-word-lookup="true">· {ex.translation}</span>
-											</li>
-										))}
-									</ul>
-								</dd>
-							</>
-						)}
-						<dt className={WHY_LABEL} />
-						<dd>
-							<button type="button" onClick={onAskTutor} className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2">
-								Still unsure? Ask the tutor (opens a chat)
-							</button>
-						</dd>
-					</dl>
+					</div>
 				)}
 			</div>
 		</div>

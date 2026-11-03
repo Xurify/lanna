@@ -85,7 +85,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 			// Two even rows on a narrow card, one row on a wide one: never a lone key on a second row.
 			<div
 				data-testid="diacritic-bar"
-				className={cn("grid grid-cols-[repeat(var(--half),minmax(0,1fr))] gap-1.5 font-prose @xl:grid-cols-[repeat(var(--all),minmax(0,1fr))]", className)}
+				className={cn("grid grid-cols-[repeat(var(--half),minmax(0,1fr))] gap-2 font-prose @xl:grid-cols-[repeat(var(--all),minmax(0,1fr))]", className)}
 				style={{ ["--half" as string]: Math.ceil(lang.specialLetters.length / 2), ["--all" as string]: lang.specialLetters.length }}
 				aria-label={`${lang.english} letters`}
 			>
@@ -96,7 +96,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 						onMouseDown={(e) => e.preventDefault()}
 						onClick={(e) => type(letter, e.shiftKey)}
 						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
-						className="flex h-9 min-w-0 items-center justify-center rounded-[10px] bg-card text-lg text-foreground shadow-raise transition-colors hover:bg-well active:bg-well-2"
+						className="lh-press flex h-10 min-w-0 items-center justify-center rounded-lg bg-well-2 text-lg font-medium text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_2px_0_var(--q-line-2)] hover:bg-well active:shadow-[0_0_0_1px_var(--q-line-2)]"
 					>
 						{letter}
 					</button>

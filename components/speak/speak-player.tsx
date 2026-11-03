@@ -451,7 +451,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								lang="sk"
 								placeholder="Your line in Slovak…"
 								disabled={sending || phase !== "scene"}
-								className="min-h-12 flex-1 resize-none rounded-lg bg-card px-4 py-3 font-prose text-lg text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none placeholder:text-ink-4 focus:shadow-[0_0_0_1.5px_var(--q-teal)]"
+								className="min-h-12 flex-1 resize-none rounded-lg bg-card px-4 py-3 font-prose text-lg text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] dark:bg-background"
 								data-testid="speak-input"
 							/>
 							<button type="submit" disabled={sending || !draft.trim()} className={cn(PRIMARY, "h-12 px-4")} aria-label="Send" data-testid="speak-send">
@@ -472,7 +472,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								aria-pressed={listening}
 								aria-label={listening ? "Stop and send" : "Say your line"}
 								className={cn(
-									"relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink transition-colors active:translate-y-px disabled:opacity-60 [-webkit-touch-callout:none]",
+									"lh-press relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink disabled:opacity-60 [-webkit-touch-callout:none]",
 									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
 								)}
 								data-testid="speak-mic" onPointerDown={onMicDown} onPointerUp={onMicUp} onPointerCancel={onMicUp} onLostPointerCapture={onMicUp} onContextMenu={(e) => e.preventDefault()}

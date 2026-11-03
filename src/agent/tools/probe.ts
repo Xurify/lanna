@@ -1,6 +1,7 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { serverExecute } from "../tool-execute.ts";
-import { probeDoneInputSchema, PROBE_DONE_ACK_TEXT } from "../../core/contracts.ts";
+import { PROBE_DONE_ACK_TEXT } from "../../core/contracts.ts";
+import { probeDoneInputSchema } from "../../core/contracts/probe-schema.ts";
 import { danglingQuestionOf, hasProbeDone, type LhMessage } from "../../core/native-messages.ts";
 import type { ChatStore } from "../../core/ports.ts";
 import { buildProbeHandoffSteer, type SteerMessage } from "../../core/contracts.ts";

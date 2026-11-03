@@ -20,7 +20,7 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, EyeIcon, HeadphonesIcon, KeyboardIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, EyeIcon, HeadphonesIcon, KeyboardIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { QIcon } from "@/components/quiet/icon";
 import { COLUMN, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
@@ -264,6 +264,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	// field needs Space for a space.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
+			// The Enter that sends a typed answer is already handled by the field. This listener is re-registered on every render, so it is new by the time that same keypress reaches the window with the answer in place, and it would "continue" at once: the sentence and the verdict never showed. A held key must not skip a sentence either.
+			if (e.defaultPrevented || e.repeat) return;
 			if (e.key === "Escape") {
 				router.push("/");
 				return;
@@ -380,7 +382,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								type="button"
 								onClick={() => replay()}
 								aria-label="Play the sentence"
-								className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-colors hover:bg-teal-2 active:translate-y-px"
+								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="listen-play"
 							>
 								<Volume2Icon className="size-6" strokeWidth={1.6} />
@@ -436,7 +438,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									disabled={!!current}
 									aria-label="Type the sentence you heard"
 									placeholder="Type what you hear"
-									className="w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground outline-none transition-shadow placeholder:font-normal placeholder:text-ink-4 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-70"
+									className="w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background"
 									data-testid="listen-input"
 								/>
 								{!current && <DiacriticBar variant="keys" className="mt-4" />}
@@ -561,6 +563,8 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
 	const missed = reps.filter((r) => r.verdict !== "exact");
+	// The ones that went right are kept out of sight until asked for, but never lost: the sentence you got right is one you may want to see too.
+	const understood = reps.filter((r) => r.verdict === "exact");
 	return (
 		<div className={cn(COLUMN, "my-auto py-10")} data-testid="listen-end">
 			<div className="flex items-center gap-4">
@@ -599,22 +603,17 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 			{missed.length > 0 && (
 				<div className="mt-8">
 					<p className="q-sh">Worth hearing again</p>
-					<ul className="mt-2 flex flex-col gap-2">
-						{missed.map((r) => (
-							<li key={r.item.id} className="q-card flex items-start gap-3 px-4 py-3">
-								<button type="button" onClick={() => void speak(r.item.sentence)} aria-label="Play" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2">
-									<Volume2Icon className="size-4" strokeWidth={1.6} />
-									</button>
-								<div className="min-w-0">
-									<p className="font-prose text-lg text-foreground" lang="sk">
-										{r.item.sentence}
-									</p>
-									<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">{r.item.translation}</p>
-								</div>
-							</li>
-						))}
-					</ul>
+					<SentenceRows reps={missed} />
 				</div>
+			)}
+			{understood.length > 0 && (
+				<details className="group mt-6" data-testid="listen-understood">
+					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
+						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
+						Understood · {understood.length} {understood.length === 1 ? "sentence" : "sentences"}
+					</summary>
+					<SentenceRows reps={understood} />
+				</details>
 			)}
 			<div className="mt-10 flex flex-wrap gap-3">
 				<Link href="/" className={PRIMARY} data-testid="listen-today">
@@ -627,6 +626,29 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
 			</div>
 		</div>
+	);
+}
+
+/** The sentences of a finished session, each with its play button and meaning. */
+function SentenceRows({ reps }: { reps: Rep[] }) {
+	return (
+		<ul className="mt-2 flex flex-col gap-2">
+			{reps.map((r) => (
+				<li key={r.item.id} className="q-card flex items-start gap-3 px-4 py-3">
+					<button type="button" onClick={() => void speak(r.item.sentence)} aria-label="Play" className="lh-press mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]">
+						<Volume2Icon className="size-4" strokeWidth={1.6} />
+					</button>
+					<div className="min-w-0">
+						<p className="font-prose text-lg text-foreground" lang="sk">
+							{r.item.sentence}
+						</p>
+						<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">
+							{r.item.translation}
+						</p>
+					</div>
+				</li>
+			))}
+		</ul>
 	);
 }
 

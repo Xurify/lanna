@@ -21,6 +21,8 @@ import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/componen
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
+import { settle, shake } from "@/components/motion";
 
 interface Prompt {
 	card: ReviewCard;
@@ -36,7 +38,7 @@ interface Prompt {
 interface Status {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number };
+	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number };
 	settings: { newPerDay: number; retention: number };
 	next: Prompt | null;
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
@@ -98,6 +100,8 @@ export function ReviewSession() {
 	// capped) is what the day's minutes count; `ms` stays the card's wall-clock.
 	const activeTime = useActiveTime("review", "interactive");
 	const inputRef = useRef<HTMLInputElement>(null);
+	const sentenceRef = useRef<HTMLFormElement>(null);
+	const bodyRef = useRef<HTMLDivElement>(null);
 
 	// The skeleton waits a beat, so a deck that lands at once never flashes one.
 	const [slow, setSlow] = useState(false);
@@ -144,6 +148,10 @@ export function ReviewSession() {
 	}, [load]);
 
 	const prompt = status?.next ?? null;
+	const cardId = prompt?.card.id;
+	useEffect(() => {
+		if (cardId) settle(bodyRef.current);
+	}, [cardId]);
 	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
@@ -168,7 +176,10 @@ export function ReviewSession() {
 		setSuggested(ratingFor(v, Date.now() - shownAt.current, help));
 		if (v === "exact") sfx.right();
 		else if (v === "accents") sfx.almost();
-		else sfx.wrong();
+		else {
+			sfx.wrong();
+			shake(sentenceRef.current);
+		}
 		void speak(prompt.card.sentence);
 	};
 
@@ -252,8 +263,10 @@ export function ReviewSession() {
 	const zeroKeys = useZeroKeys();
 	const strongKeyless = useStrongKeyless();
 	const keyless = zeroKeys || strongKeyless;
-	const done = counts?.reviewedToday ?? 0;
-	const left = counts ? counts.due + counts.learning + counts.newLeft : 0;
+	// The bar counts cards, not answers. A card that comes back (a miss goes into relearning) is the same card, so answering it again neither moves the bar nor grows its total; it moves when a card is seen for the first time today. Counting answers made "24 of 25" become "49 of 50" after one card was repeated. A new card on screen is already out of the new allowance and not yet answered, so it counts as still to do.
+	const done = counts?.cardsToday ?? 0;
+	const left = counts ? counts.dueUntouched + counts.newLeft + (prompt?.card.state === "new" ? 1 : 0) : 0;
+	const total = done + left;
 	const isNew = prompt?.card.state === "new";
 	const position = counts ? counts.newToday + 1 : 1;
 	const newTotal = counts ? counts.newToday + counts.newLeft : 0;
@@ -264,7 +277,7 @@ export function ReviewSession() {
 	return (
 		<div className="@container h-dvh" data-testid="review-session">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
-				<header className="relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
+				<header className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
 					<SidebarToggle />
 					<QPie frac={day.s && day.s.dailyGoal > 0 ? day.s.todayXp / day.s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-col leading-[1.2]">
@@ -287,13 +300,18 @@ export function ReviewSession() {
 									Review
 									{counts && lang && (
 										<small data-testid="review-counts">
-											{counts.due + counts.learning} due · {counts.newLeft} new · {counts.reviewedToday} done today
+											<b className="font-semibold text-ink-2 q-num">{done}</b> of <b className="font-semibold text-ink-2 q-num">{total}</b> cards today
 										</small>
 									)}
 								</h2>
-								<div role="progressbar" aria-label="Reviews done today" aria-valuemin={0} aria-valuemax={done + left} aria-valuenow={done} className="h-1 overflow-hidden rounded-full bg-well-2" data-testid="review-progress">
-									<div className="h-full rounded-full bg-teal transition-[width] duration-300" style={{ width: `${done + left > 0 ? Math.round((done / (done + left)) * 100) : 0}%` }} />
+								<div role="progressbar" aria-label="Reviews done today" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} className="h-1.5 overflow-hidden rounded-full bg-well-2" data-testid="review-progress">
+									<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
 								</div>
+								{counts && lang && (
+									<p className="mt-2 text-[12.5px] text-ink-3" data-testid="review-left">
+										{left === 0 ? (counts.due + counts.learning > 0 ? `Every card seen once today. ${counts.due + counts.learning} to repeat.` : "All done for today.") : `Still to do: ${counts.dueUntouched} due, ${counts.newLeft + (prompt?.card.state === "new" ? 1 : 0)} new${counts.due + counts.learning > counts.dueUntouched ? `, ${counts.due + counts.learning - counts.dueUntouched} to repeat` : ""}.`}
+									</p>
+								)}
 							</section>
 
 							<section className="mt-6">
@@ -393,8 +411,9 @@ export function ReviewSession() {
 												<SoundControl className="flex items-center transition-colors" iconClass="size-4" testid="review-sound" />
 											</span>
 										</header>
-										<div className="q-c-body !px-4 @xl:!px-7">
+										<div ref={bodyRef} className="q-c-body !px-4 @xl:!px-7">
 											<form
+												ref={sentenceRef}
 												onSubmit={(e) => {
 													e.preventDefault();
 													if (given.trim()) check(given);
@@ -408,7 +427,7 @@ export function ReviewSession() {
 													{around.lead}
 													<span
 														className={cn(
-															"q-slot !h-[44px] !px-2.5 @xl:!h-[58px] @xl:!px-3.5",
+															"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1",
 															!verdict && "q-write !text-foreground",
 															verdict === "wrong" && "!text-miss",
 															verdict === "accents" && "!text-foreground",
@@ -419,16 +438,13 @@ export function ReviewSession() {
 															{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
 														</span>
 														{verdict ? (
-															<span className="col-start-1 row-start-1 flex items-center gap-2.5" data-testid="review-answer">
+															<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
 																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
 																	{[...prompt.card.answer].map((ch, i) => (
 																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
 																			{ch}
 																		</span>
 																	))}
-																</span>
-																<span className={cn("ok", verdict === "wrong" && "!text-miss")}>
-																	{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={2.4} /> : <QCheck />}
 																</span>
 															</span>
 														) : picks ? (
@@ -459,7 +475,7 @@ export function ReviewSession() {
 													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}
 												</div>
 												{verdict && (
-													<p className={cn("q-result", verdict === "wrong" && "miss")} data-testid="review-verdict">
+													<p className={cn("q-result lh-fade", verdict === "wrong" && "miss")} data-testid="review-verdict">
 														{verdict === "wrong" ? <XIcon className="size-[15px]" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
 														{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
 														<span>{exact ? (helped ? "· help used" : "· no help used") : ""}</span>
@@ -469,7 +485,7 @@ export function ReviewSession() {
 
 											<div className="mt-3 min-h-[60px] @xl:min-h-[34px]" data-testid="review-feedback">
 												{verdict && verdict !== "exact" && (
-													<div className="q-sub !mt-0">
+													<div className="q-sub lh-fade !mt-0">
 														Correct answer: <b lang={lang?.code}>{prompt.card.answer}</b>
 														{given && (
 															<>

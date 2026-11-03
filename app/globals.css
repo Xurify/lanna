@@ -440,7 +440,7 @@ body {
 }
 
 .dock-variant {
-	animation: dock-variant-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	animation: dock-variant-in var(--dur-fast) var(--ease-out);
 }
 
 /* ============================================================
@@ -605,7 +605,7 @@ body {
 }
 
 .settings-dialog-pop {
-	animation: settings-pop 150ms ease-out;
+	animation: settings-pop var(--dur-fast) var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -629,7 +629,7 @@ body {
 }
 
 .graph-chrome-fade-in {
-	animation: chrome-fade-in 200ms ease-out;
+	animation: chrome-fade-in var(--dur-base) var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -692,6 +692,12 @@ body {
 .lh-electron[data-lh-platform="darwin"] .lh-lights-gutter {
 	padding-left: calc(92px / var(--lh-zoom));
 }
+/* The folded sidebar column clears the traffic lights, which sit over it. */
+@media (min-width: 768px) {
+	.lh-electron[data-lh-platform="darwin"] .lh-collapsed-col {
+		width: calc(92px / var(--lh-zoom) + 1.5rem);
+	}
+}
 .lh-electron[data-lh-platform="darwin"] .lh-closed-toggle {
 	margin-left: calc(92px / var(--lh-zoom));
 }
@@ -720,6 +726,74 @@ body {
 	--font-title: var(--font-ui);
 }
 
+/* Motion tokens (docs/research/motion.md, E35). Tailwind's stock ease-out
+   (0, 0, 0.2, 1) is too soft to read as a response: the curve below gets most
+   of the way in the first third of the duration, so a 200 ms move feels done
+   at about 70 ms. Overriding the theme's own names means every `ease-out`
+   utility and every bare `transition-*` in the app picks it up. */
+@theme {
+	--ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+	--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+	--ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+	--default-transition-duration: 160ms;
+	--default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* One timing scale: press under a frame budget the hand can feel, small
+   swaps under 200 ms, entrances near 250 ms, nothing a learner waits on past
+   400 ms. Reps change dozens of times a session from the keyboard, so their
+   motion stays at the short end. */
+:root {
+	--dur-press: 100ms;
+	--dur-fast: 160ms;
+	--dur-base: 220ms;
+	--dur-slow: 320ms;
+}
+
+/* Press: a control that is pushed gets a little smaller, which reads as
+   pressed on touch where hover does not exist. `scale` is its own property,
+   so it adds to the translate the learn buttons already use. */
+.lh-press {
+	transition-property: background-color, box-shadow, color, opacity, scale, translate, transform;
+	transition-duration: var(--dur-fast);
+	transition-timing-function: var(--ease-out);
+}
+.lh-press:not(:disabled):active {
+	scale: 0.97;
+	transition-duration: var(--dur-press);
+}
+
+/* A progress fill moved by transform, not width, so the bar animates on the
+   compositor and never reflows the row. The track clips it (overflow-hidden);
+   --fill is 0 to 1. */
+.lh-fill {
+	width: 100%;
+	height: 100%;
+	transform: translateX(calc((min(1, max(0, var(--fill, 0))) - 1) * 100%));
+	transition: transform 600ms var(--ease-out);
+}
+/* First paint draws the bar from empty, once, where the browser supports it;
+   later changes animate from the last value. */
+@starting-style {
+	.lh-fill {
+		transform: translateX(-100%);
+	}
+}
+
+/* Safety net for any motion a component forgot to gate: under reduced motion
+   everything lands in its end state at once. Components with a meaningful
+   static frame (the spinner, the ring) set their own rule below. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::before,
+	::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
 /* Card enter (owner round, 2026-10-05): the transcript cards' one-shot
    mount — a subtle fade + 4px rise, the app's motion register (150ms,
    dock-variant/settings-pop taste). Nothing on update, nothing on
@@ -737,7 +811,7 @@ body {
 }
 
 .lh-card-enter {
-	animation: lh-card-enter 120ms ease-out;
+	animation: lh-card-enter var(--dur-fast) var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -811,15 +885,16 @@ body {
 	from { stroke-dashoffset: var(--lh-trail-len, 0); }
 	to { stroke-dashoffset: 0; }
 }
-.lh-trail-draw { animation: lh-trail-draw 900ms ease-out both; }
+.lh-trail-draw { animation: lh-trail-draw 900ms var(--ease-in-out) both; }
 @media (prefers-reduced-motion: reduce) {
 	.lh-trail-draw { animation: none; }
 }
 
+/* Nothing in the real world appears from nothing: a pop starts at 0.94, not
+   0, and the overshoot comes from the curve, not an extra keyframe. */
 @keyframes lh-pop {
-	0% { transform: scale(0.85); opacity: 0; }
-	60% { transform: scale(1.06); opacity: 1; }
-	100% { transform: scale(1); }
+	from { transform: scale(0.94); opacity: 0; }
+	to { transform: none; opacity: 1; }
 }
 @keyframes lh-shake {
 	0%, 100% { transform: translateX(0); }
@@ -829,18 +904,17 @@ body {
 	80% { transform: translateX(3px); }
 }
 @keyframes lh-rise {
-	from { transform: translateY(16px); opacity: 0; }
-	to { transform: translateY(0); opacity: 1; }
+	from { transform: translateY(8px); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+@keyframes lh-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 @keyframes lh-float-up {
 	0% { transform: translateY(0); opacity: 0; }
 	20% { opacity: 1; }
 	100% { transform: translateY(-28px); opacity: 0; }
-}
-@keyframes lh-pulse-ring {
-	0% { box-shadow: 0 0 0 0 rgb(242 184 75 / 0.45); }
-	70% { box-shadow: 0 0 0 12px rgb(242 184 75 / 0); }
-	100% { box-shadow: 0 0 0 0 rgb(242 184 75 / 0); }
 }
 @keyframes lh-flicker {
 	0%, 100% { transform: scale(1) rotate(0deg); }
@@ -850,20 +924,40 @@ body {
 	0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
 	100% { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)); opacity: 0; }
 }
-.lh-pop { animation: lh-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-.lh-shake { animation: lh-shake 360ms ease-in-out; }
-.lh-rise { animation: lh-rise 220ms ease-out both; }
-.lh-float-up { animation: lh-float-up 900ms ease-out forwards; }
-.lh-pulse-ring { animation: lh-pulse-ring 1.8s ease-out infinite; }
+.lh-pop { animation: lh-pop var(--dur-base) var(--ease-spring) both; }
+.lh-shake { animation: lh-shake var(--dur-slow) var(--ease-in-out); }
+.lh-rise { animation: lh-rise var(--dur-base) var(--ease-out) both; }
+.lh-fade { animation: lh-fade var(--dur-fast) var(--ease-out) both; }
+/* A popover or dialog grows out of where it was opened: a short scale from
+   0.96 with no overshoot. The element sets its transform-origin (origin-*
+   utilities) to the side its trigger is on. */
+@keyframes lh-menu-in {
+	from { transform: scale(0.96); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+.lh-menu-in { animation: lh-menu-in var(--dur-fast) var(--ease-out) both; }
+.lh-float-up { animation: lh-float-up 800ms var(--ease-out) forwards; }
+/* The active unit's ring: a pseudo-element scaled and faded, not an animated
+   box-shadow, which repaints the badge every frame. */
+.lh-pulse-ring::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	box-shadow: 0 0 0 2px var(--q-teal);
+	animation: lh-ring 1.8s var(--ease-out) infinite;
+	pointer-events: none;
+}
 .lh-flicker { animation: lh-flicker 1.6s ease-in-out infinite; }
-.lh-confetti-bit { animation: lh-confetti 1100ms cubic-bezier(0.1, 0.7, 0.3, 1) forwards; }
+.lh-confetti-bit { animation: lh-confetti 1100ms var(--ease-out) forwards; }
 
 @media (prefers-reduced-motion: reduce) {
 	.lh-pop,
 	.lh-shake,
 	.lh-rise,
 	.lh-float-up,
-	.lh-pulse-ring,
+	.lh-fade,
+	.lh-menu-in,
 	.lh-flicker,
 	.lh-confetti-bit {
 		animation: none;
@@ -878,7 +972,7 @@ body {
 	55% { transform: scale(0.96) rotate(1.5deg); opacity: 1; }
 	100% { transform: none; opacity: 1; }
 }
-.lh-stamp { animation: lh-stamp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.lh-stamp { animation: lh-stamp 0.5s var(--ease-out) both; }
 @media (prefers-reduced-motion: reduce) {
 	.lh-stamp { animation: none; }
 }
@@ -890,8 +984,18 @@ body {
 .lh-ring {
 	transform-box: fill-box;
 	transform-origin: center;
-	animation: lh-ring 1.8s ease-out infinite;
+	animation: lh-ring 1.8s var(--ease-out) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-	.lh-ring { animation: none; opacity: 0; }
+	.lh-ring,
+	.lh-pulse-ring::after { animation: none; opacity: 0; }
+}
+
+/* While the sidebar's edge is dragged the width follows the pointer with no transition, and the text under it is not selected. */
+html[data-sidebar-resizing] {
+	cursor: col-resize;
+	user-select: none;
+}
+html[data-sidebar-resizing] .sidebar-motion {
+	transition: none !important;
 }

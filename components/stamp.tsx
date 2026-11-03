@@ -17,6 +17,7 @@ import Link from "next/link";
 import { BookAIcon, BookOpenIcon, CheckCheckIcon, FlagIcon, FootprintsIcon, GraduationCapIcon, HeadphonesIcon, HourglassIcon, MicIcon, MountainSnowIcon, RepeatIcon, RotateCcwIcon, SignpostIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { nextStamps, recentStamps, STRANDS, type StampKind, type StampState } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 const ICON: Record<Exclude<StampKind, "balance">, ComponentType<{ className?: string; strokeWidth?: number }>> = {
 	first: FootprintsIcon,
@@ -169,7 +170,7 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 								</p>
 								<p className="truncate font-ui text-xs text-muted-foreground">{s.goal > 1 ? s.line : "Next on the trail"}</p>
 								<span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-well-2" aria-hidden="true">
-									<span className="block h-full rounded-full bg-teal transition-[width] duration-700" style={{ width: `${Math.max(s.progress > 0 ? 3 : 0, Math.round(s.progress * 100))}%` }} />
+									<span className="lh-fill block rounded-full bg-teal" style={fillStyle(Math.max(s.progress > 0 ? 0.03 : 0, s.progress))} />
 								</span>
 							</div>
 						</li>

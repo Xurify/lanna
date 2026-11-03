@@ -725,7 +725,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : last?.inWindow ? "Fast, but not clear" : "Over the window"}
 					</h2>
 					<div className="flex items-start gap-3">
-						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-[background-color,transform] hover:bg-teal-2 active:translate-y-px" data-testid="fast-play">
+						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2" data-testid="fast-play">
 							<Volume2Icon className="size-6" strokeWidth={1.6} />
 						</button>
 						<div>

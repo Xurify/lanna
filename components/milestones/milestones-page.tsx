@@ -49,6 +49,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 	"monitor-play": MonitorPlayIcon,
@@ -543,7 +544,7 @@ function Meter({ label, have, need, line, binding, dim }: { label: string; have:
 				<span className="font-ui text-xs tabular-nums text-muted-foreground">{pct(share)}</span>
 			</span>
 			<span className="relative mt-1 block h-2 overflow-hidden rounded-full bg-well-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} aria-label={`${label}: ${line}`}>
-				<span className={cn("absolute inset-y-0 left-0 rounded-full transition-[width] duration-700", full ? "bg-teal" : dim ? "bg-teal/50" : "bg-teal")} style={{ width: `${share * 100}%` }} />
+				<span className={cn("lh-fill absolute inset-0 rounded-full", full ? "bg-teal" : dim ? "bg-teal/50" : "bg-teal")} style={fillStyle(share)} />
 			</span>
 			<span className="mt-1 block font-prose text-xs leading-snug text-muted-foreground">{line}</span>
 		</span>

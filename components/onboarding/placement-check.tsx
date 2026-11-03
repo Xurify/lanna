@@ -23,6 +23,7 @@ import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveLanguage } from "@/components/speech";
 import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 const INPUT = "w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-xl text-foreground caret-go outline-none focus:border-go";
 
@@ -150,7 +151,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				You get the word; type the form this sentence needs. This stage measures grammar only: words are checked on their own after.
 			</p>
 			<div className="mt-3 h-2 overflow-hidden rounded-full bg-accent" aria-hidden="true">
-				<div className="h-full rounded-full bg-go transition-[width] duration-300" style={{ width: `${Math.round(share * 100)}%` }} />
+				<div className="lh-fill rounded-full bg-go" style={fillStyle(share)} />
 			</div>
 
 			<form

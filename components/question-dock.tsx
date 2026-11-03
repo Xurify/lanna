@@ -7,35 +7,9 @@ import { finishDictation, isDictationActive, joinDictation, useDictationTarget }
 import { useEnterSubmits } from "@/components/enter-submits";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
-import {
-	buildAnswer,
-	repairMathForDisplay,
-	normalizeQuizType,
-	CONFIDENCE_STOPS,
-	DEFAULT_CONFIDENCE_INDEX,
-	emptyDockSelection,
-	normalizeOptions,
-	resolveCorrect,
-	seededRandom,
-	shuffleOptions,
-	toolQuestionKind,
-	parseAskInput,
-	parseQuizInput,
-	parseExplainInput,
-	toggleOption,
-	toggleOther,
-	type AnswerRequest,
-	type AskToolInput,
-	type DockSelection,
-	type ExplainToolInput,
-	type QuestionAnswerData,
-	type QuestionFormDraft,
-	type QuestionData,
-	type QuestionMode,
-	type QuizToolInput,
-	type SelectMode,
-	type Phase3,
-} from "@/src/core";
+import { repairMathForDisplay } from "@/src/core/tutor";
+import { buildAnswer, normalizeQuizType, CONFIDENCE_STOPS, DEFAULT_CONFIDENCE_INDEX, emptyDockSelection, normalizeOptions, resolveCorrect, seededRandom, shuffleOptions, toolQuestionKind, toggleOption, toggleOther, type AnswerRequest, type AskToolInput, type DockSelection, type ExplainToolInput, type QuestionAnswerData, type QuestionFormDraft, type QuestionData, type QuestionMode, type QuizToolInput, type SelectMode, type Phase3 } from "@/src/core";
+import { parseAskInput, parseQuizInput, parseExplainInput } from "@/src/core/tutor";
 import { CONFIDENCE_COLORS, confidenceRailStyle } from "@/components/confidence-rail";
 
 /**
@@ -627,7 +601,7 @@ function QuestionDockForm({
 									data-kbdrow={i}
 									onClick={() => pick(i)}
 									className={cn(
-										"flex items-start gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left text-[15px] outline-none shadow-[0_2px_0_0_var(--border)] transition-all active:translate-y-px active:shadow-none",
+										"flex items-start gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left text-[15px] outline-none shadow-[0_2px_0_0_var(--border)] transition-[translate,box-shadow,background-color,border-color] active:translate-y-px active:shadow-none",
 										isSel ? "border-go bg-go-soft" : "hover:border-sky/50 hover:bg-accent/50",
 										i === kbdIdx && !isSel && "ring-1 ring-border bg-accent/40",
 									)}

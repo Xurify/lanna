@@ -142,8 +142,8 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[14vh]" data-testid="jump-palette" role="dialog" aria-modal="true" aria-label="Find a word, a unit, or a task">
-			<div className="absolute inset-0 bg-ink/25" onClick={onClose} aria-hidden="true" />
-			<div className="q-card relative w-full max-w-[640px] overflow-hidden" style={{ boxShadow: "var(--q-raise-hi)" }}>
+			<div className="lh-fade absolute inset-0 bg-ink/25" onClick={onClose} aria-hidden="true" />
+			<div className="lh-menu-in origin-top q-card relative w-full max-w-[640px] overflow-hidden" style={{ boxShadow: "var(--q-raise-hi)" }}>
 				<div className="flex items-center gap-2.5 border-b border-border px-3.5" style={{ height: 52 }}>
 					<QIcon name="search" className="size-[17px] text-ink-3" />
 					<input

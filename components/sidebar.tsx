@@ -15,6 +15,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
+import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_WIDTH_COOKIE, clampSidebarWidth } from "@/lib/sidebar-size";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -111,19 +112,40 @@ const SidebarContext = createContext<{
 	phone: boolean;
 	toggle: () => void;
 	closeDrawer: () => void;
+	/** Desktop: the sidebar is folded to a narrow column. */
+	collapsed: boolean;
+	toggleCollapsed: () => void;
+	/** The open sidebar's width in px, between SIDEBAR_MIN and SIDEBAR_MAX. */
+	width: number;
+	setWidth: (px: number) => void;
 }>({
 	open: false,
 	drawer: false,
 	phone: false,
 	toggle: () => {},
 	closeDrawer: () => {},
+	collapsed: false,
+	toggleCollapsed: () => {},
+	width: 288,
+	setWidth: () => {},
 });
+
 
 export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-export function SidebarProvider({ children }: { children: React.ReactNode }) {
+export function SidebarProvider({ children, defaultCollapsed = false, defaultWidth = SIDEBAR_MAX }: { children: React.ReactNode; defaultCollapsed?: boolean; defaultWidth?: number }) {
+	const [width, setWidthState] = useState(clampSidebarWidth(defaultWidth));
+	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
+	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
+	const [collapsed, setCollapsed] = useState(defaultCollapsed);
+	const toggleCollapsed = useCallback(() => {
+		setCollapsed((c) => {
+			document.cookie = `lh-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
+			return !c;
+		});
+	}, []);
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -131,12 +153,13 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
 		return off;
 	}, []);
-	// The sidebar is a permanent column on a desktop window. It used to be
-	// collapsible, with the choice kept in a cookie, and a collapsed sidebar
-	// then stayed gone on every route and every reload (a closed default made
-	// it vanish for everyone, 2026-11-02). Only a window below the drawer
-	// breakpoint hides it, as a drawer with a menu button.
-	const open = true;
+	// The sidebar is a column on a desktop window, open by default. The fold
+	// button in its header hides it entirely, and the open button in every
+	// page header (SidebarToggle) brings it back; the choice is kept in a
+	// cookie. (It once vanished for everyone because a closed default
+	// was shared; closed is now only ever the learner's own choice, 2026-11-02.)
+	// A window below the drawer breakpoint hides it as a drawer with a menu button.
+	const open = !collapsed;
 	const [narrow, setNarrow] = useState(false);
 	const [mounted, setMounted] = useState(false);
 
@@ -211,8 +234,12 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 		}
 		// An Electron window narrower than the threshold hides the sidebar:
 		// ask the shell to widen it, and the resize listener brings it back.
-		if (narrow) window.lh?.expandWindow();
-	}, [narrow, phone]);
+		if (narrow) {
+			window.lh?.expandWindow();
+			return;
+		}
+		toggleCollapsed();
+	}, [narrow, phone, toggleCollapsed]);
 
 	// ⌘B: the global shortcut dispatches kbdEventForAction("toggle-sidebar")
 	// and the context answers on exactly that name — the shared spelling
@@ -228,7 +255,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer }}>
+		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>
@@ -254,7 +281,8 @@ export function SidebarToggle() {
 		<span
 			className={cn(
 				"sidebar-motion lh-no-drag relative flex h-9 shrink-0 overflow-hidden pointer-coarse:overflow-visible duration-200",
-				open ? "w-0 -mr-3" : "w-9 mr-0 lh-closed-toggle",
+				// On a desktop window the open button is the fixed one in AppShell; this slot is only the phone's menu button.
+				"w-0 -mr-3",
 				// Phone widths follow the drawer, decided in CSS so the first
 				// paint is already right.
 				drawer ? "max-md:w-0 max-md:-mr-3 touch-narrow:w-0 touch-narrow:-mr-3" : "max-md:w-9 max-md:mr-0 touch-narrow:w-9 touch-narrow:mr-0",
@@ -464,7 +492,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 export type SessionKindFilter = "teach" | "all" | "practice";
 
 function SessionsSidebar() {
-	const { open, drawer, phone, toggle, closeDrawer } = useSidebar();
+	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();
 	const visible = phone ? drawer : open;
 	const [chats, setChats] = useState<ChatListItem[] | null>(null);
 	const [query, setQuery] = useState("");
@@ -802,19 +830,29 @@ function SessionsSidebar() {
 	return (
 		<>
 			{drawer && <div className="fixed inset-0 z-40 bg-black/50" onClick={closeDrawer} aria-hidden="true" />}
-			<aside data-sidebar=""
+			<aside data-sidebar="" style={{ "--sw": `${width}px` } as React.CSSProperties}
 				className={cn(
-					"sidebar-motion shrink-0 overflow-hidden duration-200",
-					open ? "w-72" : "w-0",
+					"sidebar-motion shrink-0 overflow-hidden duration-200 md:relative",
+					open ? "w-72 md:w-[var(--sw)]" : "w-0 md:w-13",
+					collapsed && "lh-collapsed-col",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
 					"max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 touch-narrow:fixed touch-narrow:inset-y-0 touch-narrow:left-0 touch-narrow:z-50",
 					drawer ? "max-md:w-72 max-md:shadow-2xl touch-narrow:w-72 touch-narrow:shadow-2xl" : "max-md:w-0 touch-narrow:w-0",
 				)}
-				aria-hidden={!visible}
 			>
-				<div className="flex h-full w-72 flex-col border-r bg-background max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]">
+				{/* Folded: a narrow column that holds only the button to open it. It is a real column (the page moves over), not a floating button, so nothing on the page sits under it. */}
+				{collapsed && (
+					<div className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side pt-3 md:flex" data-testid="sidebar-folded">
+						<Hint label="Open sidebar" action="toggle-sidebar" side="right">
+							<Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={toggleCollapsed} data-testid="sidebar-open" className="lh-no-drag text-ink-3 hover:text-foreground">
+								<PanelLeftOpenIcon className="size-4" />
+							</Button>
+						</Hint>
+					</div>
+				)}
+				<div aria-hidden={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -831,6 +869,11 @@ function SessionsSidebar() {
 						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
 							Lang<span className="text-sun">Harness</span>
 						</Link>
+						<Hint label="Collapse sidebar" action="toggle-sidebar">
+							<Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleCollapsed} data-testid="sidebar-collapse" className="lh-no-drag max-md:hidden touch-narrow:hidden">
+								<PanelLeftCloseIcon className="size-4" />
+							</Button>
+						</Hint>
 						<Hint label="Close menu" action="toggle-sidebar">
 							<Button variant="ghost" size="icon" aria-label="Close menu" onClick={toggle} className="lh-no-drag md:hidden touch-narrow:inline-flex">
 								<PanelLeftCloseIcon className="size-4" />
@@ -928,7 +971,7 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<span className="px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
+										<span className="whitespace-nowrap px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
 											<Button
 												type="button"
@@ -941,7 +984,7 @@ function SessionsSidebar() {
 												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
 											>
 												<ListChecksIcon className="size-3.5" />
-												<span className="text-[12px] font-[550]">{selectMode ? "Done" : "Select"}</span>
+												<span className="hidden text-[12px] font-[550] @[15rem]:inline">{selectMode ? "Done" : "Select"}</span>
 											</Button>
 										</Hint>
 										<Hint label="Search chats" action="sessions-search" side="bottom">
@@ -1162,8 +1205,64 @@ function SessionsSidebar() {
 					onClose={() => setBulkOpen(false)}
 					onDeleted={onBulkDeleted}
 				/>
+				{open && <SidebarResizer width={width} setWidth={setWidth} />}
 			</aside>
 		</>
+	);
+}
+
+/** The drag edge on the sidebar's right side: drag to change the width between SIDEBAR_MIN and SIDEBAR_MAX, double-click for the widest, arrow keys for 16 px steps. The width is saved when the drag ends. */
+function SidebarResizer({ width, setWidth }: { width: number; setWidth: (px: number) => void }) {
+	const save = (px: number) => {
+		document.cookie = `${SIDEBAR_WIDTH_COOKIE}=${clampSidebarWidth(px)}; path=/; max-age=31536000; samesite=lax`;
+	};
+	const start = (e: React.PointerEvent<HTMLDivElement>) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		const x0 = e.clientX;
+		const w0 = width;
+		let last = w0;
+		// Without the width transition the edge follows the pointer at once.
+		document.documentElement.dataset.sidebarResizing = "1";
+		const move = (ev: PointerEvent) => {
+			last = clampSidebarWidth(w0 + ev.clientX - x0);
+			setWidth(last);
+		};
+		const end = () => {
+			window.removeEventListener("pointermove", move);
+			window.removeEventListener("pointerup", end);
+			window.removeEventListener("pointercancel", end);
+			delete document.documentElement.dataset.sidebarResizing;
+			save(last);
+		};
+		window.addEventListener("pointermove", move);
+		window.addEventListener("pointerup", end);
+		window.addEventListener("pointercancel", end);
+	};
+	return (
+		<div
+			role="separator"
+			aria-orientation="vertical"
+			aria-label="Sidebar width"
+			aria-valuemin={SIDEBAR_MIN}
+			aria-valuemax={SIDEBAR_MAX}
+			aria-valuenow={width}
+			tabIndex={0}
+			data-testid="sidebar-resizer"
+			onPointerDown={start}
+			onDoubleClick={() => {
+				setWidth(SIDEBAR_MAX);
+				save(SIDEBAR_MAX);
+			}}
+			onKeyDown={(e) => {
+				if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+				e.preventDefault();
+				const next = clampSidebarWidth(width + (e.key === "ArrowRight" ? 16 : -16));
+				setWidth(next);
+				save(next);
+			}}
+			className="lh-no-drag absolute inset-y-0 right-0 z-10 hidden w-1.5 cursor-col-resize touch-none transition-colors hover:bg-teal/30 focus-visible:bg-teal/40 active:bg-teal/50 max-md:hidden md:block"
+		/>
 	);
 }
 

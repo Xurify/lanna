@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { speak } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import type { SavedPhrase, WordBankItem, WordBankSummary } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
@@ -384,7 +385,7 @@ export function WordBankPage() {
 								return (
 									<div
 										key={item.slug}
-										className="group rounded-2xl border border-border/80 bg-card p-4 transition-all hover:border-border hover:bg-card"
+										className="group rounded-2xl border border-border/80 bg-card p-4 transition-colors hover:border-border hover:bg-card"
 									>
 										<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 											{/* Word Left side */}
@@ -493,7 +494,7 @@ export function WordBankPage() {
 													<div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
 														<div
 															className={cn(
-																"h-full rounded-full transition-all duration-300",
+																"lh-fill rounded-full",
 																item.retention >= 80
 																	? "bg-go"
 																	: item.retention >= 40
@@ -502,7 +503,7 @@ export function WordBankPage() {
 																			? "bg-sky"
 																			: "bg-transparent",
 															)}
-															style={{ width: `${item.retention}%` }}
+															style={fillStyle(item.retention / 100)}
 														/>
 													</div>
 												</div>
@@ -652,7 +653,7 @@ export function WordBankPage() {
 							{filteredPhrases.map((phrase) => (
 								<div
 									key={phrase.id}
-									className="group rounded-2xl border border-border/80 bg-card p-4 transition-all hover:border-border hover:bg-card"
+									className="group rounded-2xl border border-border/80 bg-card p-4 transition-colors hover:border-border hover:bg-card"
 								>
 									<div className="flex items-start justify-between gap-4">
 										<div className="flex items-start gap-3">
@@ -683,7 +684,7 @@ export function WordBankPage() {
 											type="button"
 											onClick={() => void handleDeletePhrase(phrase.id)}
 											title="Remove the phrase"
-											className="grid size-8 place-items-center rounded-xl text-muted-foreground opacity-60 transition-all hover:bg-miss/10 hover:text-miss group-hover:opacity-100"
+											className="grid size-8 place-items-center rounded-xl text-muted-foreground opacity-60 transition-[color,background-color,opacity] hover:bg-miss/10 hover:text-miss group-hover:opacity-100"
 										>
 											<Trash2Icon className="size-4" />
 										</button>

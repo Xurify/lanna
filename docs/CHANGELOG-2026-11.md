@@ -109,3 +109,34 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Verb blanks from UD** (fix/verb-cloze-ud, E28): 161 existing verb sentences gained a blank from the UD Slovak SNK treebank's forms. 28 of the 102 thin verbs now have three or more usable sentences. No sentence text or position changed.
 - **Checked:** 10 tests for the analysis and 3 for the saved snapshot and guide; the empty state in the running app. **Unverified:** the page with real answers, and writing a guide with a live model (the call is not covered by a test; a saved guide stands in). The 16 failures in the full suite are the same on main.
 
+## 3 November: the motion pass
+
+- **Feel** (`feat/motion-pass`, E35): one timing scale and one strong ease-out across the app; Today's sections arrive in 320 ms, not 500; a lesson rep and its feedback rise 8 px, not 16.
+- **Press:** buttons, answer tiles, play buttons and the Speak microphone shrink a little when pressed instead of dimming, so a press reads as pushed, not disabled.
+- **Review:** a miss shakes the sentence, a right answer pops into the blank, the verdict fades in, and the next card settles in, without remounting the input.
+- **Popovers and dialogs:** the word card in Read grows from its word; the jump palette and the leave-lesson dialog fade their backdrop and scale in from 96 %.
+- **Smoothness:** every progress bar moves by transform, not width, and fills from empty on first paint; no `transition-all` is left; the active unit's ring no longer repaints every frame; hover colours no longer stick after a tap on the iPad.
+- **Reduced motion:** honoured everywhere by a global rule.
+- **Checked:** typecheck; computed styles and a press in headless Chromium against the sandbox; screenshots of Today, Review, Milestones and a lesson miss. **Unverified:** the PC, Safari on iPhone and iPad, a frame recording on a slow device.
+
+## 3 November: slow tabs, Watch, keys, streak (same branch)
+
+- **Slow tabs** (E36, [research/slow-tabs.md](research/slow-tabs.md)): the owner's dev server compiles each route on first visit; the shared bundle also carried 900 KB of KaTeX and Markdown parsing. KaTeX is out of every route (`@/src/core/tutor`), a tab click now answers at once (`app/loading.tsx`), and `npm run desktop:prod` runs a build. At 4x CPU, long tasks per page load went from 620–880 ms to 66–183 ms.
+- **Watch** is a page like Milestones: sidebar, "Today" back link, the same heading and cards, with the link field and the video list on cards.
+- **Letter keys** on Listen, Review and the lesson have an edge and a darker face, so each key can be told from its neighbour.
+- **The period after a word** on Review sat after the tick; the tick now follows the period.
+- **Streak calendar** followed minutes while the XP chart above it followed XP, so Monday could be filled in one and empty in the other. Inside the last seven days it now uses the same XP as the chart; older days use minutes; a legend names the three shades and each day has a name on hover.
+- **Minutes by strand** shows minutes beside the percent, and the week's total in its heading.
+- **Unverified:** the PC, and `desktop:prod` in the packaged flow (not run here).
+- **Second pass:** Next.js 16.4.4 (`next analyze` showed TypeBox, 118 KB gzipped, in every route). The schemas are split out of the shell, KaTeX loads on first use on the map, and the pressed nav row lights at once. Per-route JS fell from about 561 KB to about 480 KB gzipped. The Log page's minutes now carry their unit.
+
+## 3 November: voice pace, sidebar, review bar
+
+- **Voice pace** (E37, [research/voice-pace.md](research/voice-pace.md)): measured, not changed. The slovak.wiki voice runs 2.3 to 5.4 syllables a second by sentence (it is generated at ElevenLabs speed 0.88); a per-clip correction was built and reverted because it made a slowly read sentence sound rushed, the third failed attempt at this. Clips play as recorded. `scripts/audio-pace.ts` reports a profile's pace per engine.
+- **Sidebar:** it folds to nothing and a single open button stays pinned at the top-left of every page; the open sidebar sits on the tinted sidebar surface. Task screens keep a 56 px rail of the same doors.
+- **Volume:** a click only mutes; the horizontal slider opens after the pointer rests on the speaker, on right-click, long press, or the arrow keys.
+- **Review:** the bar reads "39 of 46 reviews today" with what is still to do under it, and the filled cloze word lost its tick, which pushed the next word away.
+- **Review bar counts cards:** it counted answers, so one card answered again and again (relearning) turned "24 of 25" into "49 of 50". It now counts the cards seen today (`cardsToday` in the review status) over those plus what is still untouched, so a repeat changes nothing and the total stays put; the line under it names the repeats.
+- **Sidebar width:** drag the sidebar's right edge between 208 and 288 px (288 is the old width), double-click for the widest, arrow keys for steps; it is kept in a cookie so the first paint has it. Today's and Review's compact headers now clear Electron's window controls.
+- **Listen, typed mode:** the Enter that sent an answer also pressed Continue (the page-level key listener is re-registered on every render, so it saw the new answer and advanced on the same keypress), so a typed answer never showed its sentence and meaning. Fixed. The end screen also kept only the sentences you missed; the ones you understood are now listed under a collapsed "Understood · N sentences".
+

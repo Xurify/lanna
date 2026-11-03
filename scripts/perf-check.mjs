@@ -427,7 +427,7 @@ async function main() {
 	const puppeteer = loadPuppeteer();
 	const srv = await startServer();
 	console.log(`CPU x${CPU}; production build on ${srv.base}, scratch data ${srv.dir} (seeded demo week${flag("--light") ? "" : " + a year of reviews"})`);
-	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: ["--no-first-run", "--disable-extensions", "--disable-background-timer-throttling", "--disable-renderer-backgrounding"] });
+	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: ["--no-sandbox", "--no-first-run", "--disable-extensions", "--disable-background-timer-throttling", "--disable-renderer-backgrounding"] });
 	const result = { navs: [], colds: [], acts: [] };
 	try {
 		// warm the server so first-compile of a route is not counted against it

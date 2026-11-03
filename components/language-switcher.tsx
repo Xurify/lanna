@@ -131,6 +131,13 @@ export function LanguageSwitcher() {
 	};
 
 	const activeNav = navItemFor(pathname);
+	// The row you pressed lights at once; the route (and a slow server render) catches up after. Cleared when the path changes.
+	const [pressed, setPressed] = useState<{ id: NavId; from: string } | null>(null);
+	const lit = pressed && pressed.from === pathname ? pressed.id : activeNav?.id;
+	// Once the route has changed the press is spent: arriving back on the page it was pressed from must not light it again.
+	useEffect(() => {
+		setPressed(null);
+	}, [pathname]);
 	const reviewDue = counts ? counts.due + counts.learning : 0;
 	const reviewNew = counts?.newLeft ?? 0;
 	const activeProfile = profile?.profiles.find((p) => p.id === profile.active);
@@ -362,7 +369,7 @@ export function LanguageSwitcher() {
 						{group.items.map((item) => {
 							const Icon = NAV_ICONS[item.id];
 							return (
-								<NavItem key={item.id} href={item.href} testid={`${item.id}-door`} active={activeNav?.id === item.id} icon={<Icon className="size-[18px]" />}>
+								<NavItem key={item.id} href={item.href} testid={`${item.id}-door`} active={lit === item.id} onPress={() => setPressed({ id: item.id, from: pathname })} icon={<Icon className="size-[18px]" />}>
 									{item.label}
 									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
 										<span
@@ -384,7 +391,7 @@ export function LanguageSwitcher() {
 
 /** One primary destination: a trail-sign row. The one you are on is lit
  *  with a sun bar at its edge and a brighter icon, no pill. */
-const NAV_ICONS: Record<NavId, LucideIcon> = {
+export const NAV_ICONS: Record<NavId, LucideIcon> = {
 	today: SunIcon,
 	curriculum: MountainSnowIcon,
 	review: RepeatIcon,
@@ -406,12 +413,14 @@ function NavItem({
 	href,
 	testid,
 	active,
+	onPress,
 	icon,
 	children,
 }: {
 	href: string;
 	testid: string;
 	active: boolean;
+	onPress?: () => void;
 	icon: React.ReactNode;
 	children: React.ReactNode;
 }) {
@@ -419,6 +428,9 @@ function NavItem({
 		<Link
 			href={href}
 			data-testid={testid}
+			onClick={(e) => {
+				if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) onPress?.();
+			}}
 			aria-current={active ? "page" : undefined}
 			className={cn(
 				"relative flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",

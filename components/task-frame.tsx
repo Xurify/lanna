@@ -12,8 +12,10 @@
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NavRail } from "@/components/nav-rail";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
+import { fillStyle } from "@/components/ui/fill";
 
 export { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -21,10 +23,13 @@ export const COLUMN = "mx-auto w-full max-w-3xl px-6";
 
 export function TaskFrame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
 	return (
-		<div className="fixed inset-0 z-40 flex flex-col bg-background">
+		<>
+			<NavRail />
+			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-14">
 			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 			{children}
-		</div>
+			</div>
+		</>
 	);
 }
 
@@ -46,7 +51,7 @@ export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave
 					</Link>
 				)}
 				<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2" aria-label={label}>
-					<div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={{ width: `${Math.max(3, Math.min(100, progress * 100))}%` }} />
+					<div className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={fillStyle(Math.max(0.03, progress))} />
 				</div>
 				<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
 					{count}
@@ -82,7 +87,7 @@ export function OptionTile({ n, state = "idle", disabled, onClick, children, tes
 			onClick={onClick}
 			data-testid={testId}
 			className={cn(
-				"flex min-h-12 items-center gap-3 rounded-[10px] bg-card px-3.5 py-2.5 text-left font-prose text-[19px] font-medium tracking-[-0.01em] text-foreground shadow-raise transition-[background-color,box-shadow,opacity] duration-150",
+				"lh-press flex min-h-12 items-center gap-3 rounded-[10px] bg-card px-3.5 py-2.5 text-left font-prose text-[19px] font-medium tracking-[-0.01em] text-foreground shadow-raise",
 				state === "idle" && !disabled && "hover:bg-well",
 				state === "right" && "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
 				state === "wrong" && "bg-miss-soft text-miss shadow-[inset_0_0_0_1.5px_var(--q-miss)]",

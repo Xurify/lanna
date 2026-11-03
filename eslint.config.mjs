@@ -43,14 +43,14 @@ export default defineConfig([
 							target: "./components",
 							from: "./src",
 							// NOTE: the plugin resolves `except` relative to the zone's `from` path.
-							except: ["./core/index.ts"],
+							except: ["./core/index.ts", "./core/tutor.ts"],
 							message:
 								"Browser shell imports ONLY the pure core barrel: `from \"@/src/core\"` (architecture: docs/architecture.md).",
 						},
 						{
 							target: "./app",
 							from: "./src",
-							except: ["./core/index.ts", "./server/index.ts"],
+							except: ["./core/index.ts", "./core/tutor.ts", "./server/index.ts"],
 							message:
 								"app/ (transport + server components) imports ONLY the barrels: `@/src/core` and `@/src/server` (architecture: docs/architecture.md).",
 						},

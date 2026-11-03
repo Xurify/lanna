@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
+import { NavRail } from "@/components/nav-rail";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking } from "@/components/speech";
@@ -31,6 +32,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+import { fillStyle } from "@/components/ui/fill";
 
 export function levelBadgeStyle(level: string): string {
 	switch (level) {
@@ -327,10 +329,13 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 
 function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
 	return (
-		<div className="fixed inset-0 z-40 flex flex-col bg-background">
+		<>
+			<NavRail />
+			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-14">
 			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 			{children}
-		</div>
+			</div>
+		</>
 	);
 }
 
@@ -346,7 +351,7 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 						{kindOf(story)} · <span className="text-ink-3">{step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-well-2">
-						<div className="h-full rounded-full bg-teal transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
+						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
 			</div>

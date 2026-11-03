@@ -404,6 +404,37 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The names: Today, Curriculum, Review; Practice: Read, Listen, Watch, Speak, Fluency; Understand: Words, Grammar, Map; Track: Progress, Milestones, Mistakes, Log. Lesson, Exam, the Tutor chats and Set up are reached from inside other pages and keep their own one-word titles. The Curriculum page's second view is called Mountain; "Your climb to B2" is its subtitle, not its name.
 - The Progress page was `/plan`; `/plan` redirects to `/progress`. A subtitle may carry the old, longer name ("When can I…?" under Milestones).
 
+### E35. One motion system: a timing scale, transform-only, press that shrinks (2026-11-03, branch `feat/motion-pass`)
+
+**Why:** the owner asked for a drastic UX improvement guided by four animation skills. The audit ([research/motion.md](research/motion.md)) found eleven bars animating `width`, fifteen `transition-all`, a `box-shadow` animated forever, nine durations and five easings for the same kind of move, a press that looked like a disabled button, and a Review card with no motion on a verdict.
+
+**How to apply:**
+- Durations are `--dur-press` (100 ms), `--dur-fast` (160), `--dur-base` (220) and `--dur-slow` (320); the curve is `--ease-out`. Tailwind's own `ease-out` and default transition are overridden with them in `app/globals.css`, so a bare utility is already right. Nothing a learner waits on runs past 400 ms; reps and anything the keyboard triggers stay at the short end.
+- Animate `transform` and `opacity` only. A progress bar is `.lh-fill` with `fillStyle(share)` (`components/ui/fill.ts`), inside a track with `overflow-hidden`. No `transition-all`, no animated `width`, `height`, `left` or `box-shadow`; a ring or glow is a pseudo-element scaled and faded.
+- A pressed control shrinks: `.lh-press` (learn buttons, option tiles, play buttons) or `.q-btn` scale to 0.97. Links and rows dim as before.
+- A popover or dialog uses `.lh-menu-in` with an `origin-*` toward its trigger, a backdrop `.lh-fade`. No overshoot on anything that is not a result.
+- A result moves: a miss shakes, a right answer pops into its slot, new content in the same place settles (`components/motion.ts`, Web Animations, so nothing remounts).
+- Hover styles live behind `(hover: hover)`; every animation has a reduced-motion end state, and a global rule catches the ones that forget.
+
+### E36. Keep the browser bundle small, give every tab an instant response, measure a build (2026-11-03, branch `feat/motion-pass`)
+
+**Why:** the owner found clicking tabs "very very slow". The causes ([research/slow-tabs.md](research/slow-tabs.md)) were dev mode, 900 KB of KaTeX and Markdown parsing in every route, and a tab click with no response until the server finished.
+
+**How to apply:**
+- A client component imports `@/src/core` only for light things. Anything heavy lives behind `@/src/core/tutor` (KaTeX and the Markdown parsers in `math-delims` and `answer-presentation`, TypeBox's validator in `tool-parts`), which only a tutor component imports. The TypeBox schemas are in `question-schemas.ts` and `contracts/probe-schema.ts` (agent and tests only). Do not re-export any of them from `src/core/index.ts`; ESLint allows the two entry points and no other path.
+- A tab you press lights at once (`components/language-switcher.tsx`), before the route changes.
+- `app/loading.tsx` costs about 300 ms of extra long tasks on a full page load at 4x CPU (the fallback and the page hydrate separately) and nothing on a client navigation; it was kept because the click is what the owner feels. Next.js 16.4's Partial Prefetching with Cache Components was tried and not adopted: it fails on 72 `force-dynamic` exports and would bake per-request file reads into the build unless each is audited (see slow-tabs.md).
+- Every page is server-rendered per request, so `app/loading.tsx` must exist: a tab click changes the URL and shows the page's shape at once (production build; dev mode does not prefetch).
+- Judge speed on `npm run desktop:prod` or `node scripts/perf-check.mjs --cpu 4`, never on `desktop:dev`. A change that adds a large dependency to the shell shows up as long tasks in that table.
+
+### E37. Clips play as recorded: the pace is not normalised at playback (2026-11-03, branch `feat/motion-pass`)
+
+**Why:** the owner asked what speed the voice runs at and whether the setting is accurate. On 40 slovak.wiki sentences the pace runs 2.3 to 5.4 syllables a second ([research/voice-pace.md](research/voice-pace.md)), so "1×" is not one speed. A per-clip correction toward a fixed pace was built and then reverted: the voice is generated at ElevenLabs speed 0.88 and its pace depends on the sentence, a full correction (1.58× on a slowly read proverb) made it sound rushed, and a capped one (0.8–1.3×) still fights the recording. The same approach had already failed twice in November (`6ed7944`, and the E22 note on clips).
+
+**How to apply:**
+- `audio.playbackRate` is the setting (0.75, 1, 1.25) or the snail (`slowRate`), nothing computed from the clip. Do not add a per-clip or per-source rate; if a voice is too slow or fast, change how it is generated (the ElevenLabs speed, the Edge `EDGE_RATE`), which splits the cache key and is the owner's call.
+- `scripts/audio-pace.ts` and `countSyllables` (`src/core/pace.ts`) measure a profile's clips; they change nothing.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.
