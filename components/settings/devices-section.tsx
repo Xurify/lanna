@@ -159,9 +159,6 @@ export function DevicesSection() {
 
 	return (
 		<>
-			<p role={notice?.tone === "error" ? "alert" : "status"} className="min-h-5 text-xs text-muted-foreground" data-testid="devices-notice">
-				{notice?.text ?? ""}
-			</p>
 			<SettingsGroup label="Remote access" testid="devices-switch">
 				<SettingsRow
 					label={status.enabled ? "On: other devices can pair" : "Off: only this computer can open LangHarness"}
@@ -256,6 +253,10 @@ export function DevicesSection() {
 					</SettingsGroup>
 				</>
 			)}
+			{/* At the end, where its reserved line is not a gap under the title. */}
+			<p role={notice?.tone === "error" ? "alert" : "status"} className="min-h-5 text-xs text-muted-foreground" data-testid="devices-notice">
+				{notice?.text ?? ""}
+			</p>
 		</>
 	);
 }
