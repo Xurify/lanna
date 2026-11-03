@@ -39,7 +39,7 @@ import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { captionLanguageName, coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, SENTENCE_MAX_CHARS, sentenceTargets, watchXp, type PrepareStage, type SegmentStat, type SentenceTarget, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
+import { coverageBand, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
@@ -81,10 +81,38 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const startedAt = useRef(Date.now());
-	// Watching is mostly not clicking: the day's minutes count the time this
-	// tab is visible and focused while the video plays or its questions are
-	// answered (`ms` stays the wall-clock).
-	const activeTime = useActiveTime("watch", "passive", { active: stage === "watch" || stage === "questions" });
+	// The watch clock counts while the video plays, and while the learner works
+	// (a paused line, a question): after GAP_CAP_MS with no action it stops.
+	const [videoPlaying, setVideoPlaying] = useState(false);
+	const [videoReady, setVideoReady] = useState(false);
+	const [deciding, setDeciding] = useState(false);
+	const [decideCapped, setDecideCapped] = useState(false);
+	useEffect(() => {
+		setDecideCapped(false);
+		if (!deciding) return;
+		const t = window.setTimeout(() => setDecideCapped(true), LINE_DECISION_CAP_MS);
+		return () => window.clearTimeout(t);
+	}, [deciding]);
+	const [idle, setIdle] = useState(false);
+	const working = stage === "watch" || stage === "questions";
+	useEffect(() => {
+		if (!working) return;
+		setIdle(false);
+		let timer = window.setTimeout(() => setIdle(true), GAP_CAP_MS);
+		const act = () => {
+			setIdle(false);
+			window.clearTimeout(timer);
+			timer = window.setTimeout(() => setIdle(true), GAP_CAP_MS);
+		};
+		// Focus moving into the player's frame is a click on it: its own events do not reach this window.
+		const events = ["pointerdown", "keydown", "wheel", "touchstart", "blur"] as const;
+		for (const e of events) window.addEventListener(e, act, { passive: true });
+		return () => {
+			window.clearTimeout(timer);
+			for (const e of events) window.removeEventListener(e, act);
+		};
+	}, [working]);
+	const activeTime = useActiveTime("watch", "passive", { active: watchClockOn({ watching: stage === "watch", questions: stage === "questions", ready: videoReady, playing: videoPlaying, deciding, decideCapped, idle }) });
 
 	const load = useCallback(async () => {
 		try {
@@ -308,7 +336,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 				onTap={onTap}
 				onMode={setMode}
 				onShelf={() => setStage("shelf")}
-				onDone={(segStats) => {
+				onPlaying={setVideoPlaying} onReady={setVideoReady} onDeciding={setDeciding} onDone={(segStats) => {
 					setStats(segStats);
 					if (video.questions.length) setStage("questions");
 					else void finish([], segStats);
@@ -651,13 +679,17 @@ interface LineState {
 
 const fresh = (): LineState => ({ replays: 0, slow: false, revealedText: false, revealedMeaning: false });
 
-function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video: VideoRecord; mode: WatchMode; tapped: string[]; onTap: (key: string) => void; onMode: (m: WatchMode) => void; onShelf: () => void; onDone: (stats: SegmentStat[]) => void }) {
+function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying, onReady, onDeciding }: { video: VideoRecord; mode: WatchMode; tapped: string[]; onTap: (key: string) => void; onMode: (m: WatchMode) => void; onShelf: () => void; onDone: (stats: SegmentStat[]) => void; onPlaying: (on: boolean) => void; onReady: (on: boolean) => void; onDeciding: (on: boolean) => void }) {
 	const holder = useRef<HTMLDivElement>(null);
 	const player = useRef<YTPlayer | null>(null);
 	const [ready, setReady] = useState(false);
 	const [playerError, setPlayerError] = useState<string | null>(null);
 	const [idx, setIdx] = useState(0);
 	const [playing, setPlaying] = useState(false);
+	useEffect(() => {
+		onPlaying(playing);
+		return () => onPlaying(false);
+	}, [playing, onPlaying]);
 	const [atEnd, setAtEnd] = useState(false);
 	const [heard, setHeard] = useState(false);
 	const [rate, setRate] = useState(1);
@@ -949,6 +981,16 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 	const prev = idx > 0 ? segs[idx - 1] : null;
 	const words = useMemo(() => seg.tokens.filter((t) => t.word).length, [seg]);
 	const miss = line.got === "no";
+	useEffect(() => {
+		onReady(ready);
+		return () => onReady(false);
+	}, [ready, onReady]);
+	// A line waits for the learner once it has played and the video is paused.
+	const deciding = step && !playing && heard;
+	useEffect(() => {
+		onDeciding(deciding);
+		return () => onDeciding(false);
+	}, [deciding, onDeciding]);
 
 	return (
 		<>

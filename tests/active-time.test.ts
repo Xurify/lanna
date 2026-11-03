@@ -18,7 +18,20 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-active-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { ACTIVITY_CAP_MIN, addMinutes, createActiveClock, GAP_CAP_MS, isTimedActivity, MIN_SEND_MS, sessionMs, TIMED_ACTIVITIES } = await import("../src/core/active-time.ts");
+const { ACTIVITY_CAP_MIN, addMinutes, createActiveClock, GAP_CAP_MS, isTimedActivity, MIN_SEND_MS, sessionMs, TIMED_ACTIVITIES, watchClockOn } = await import("../src/core/active-time.ts");
+
+it("watchClockOn: nothing counts before the video loads; playing counts; a line waiting for the learner counts up to its cap; questions and paused time count until the gap cap", () => {
+	const watching = { watching: true, questions: false, ready: true, playing: false, deciding: false, decideCapped: false, idle: false };
+	assert.equal(watchClockOn({ ...watching, ready: false, playing: true }), false, "the video is not loaded yet");
+	assert.equal(watchClockOn({ ...watching, playing: true, idle: true }), true, "a playing video counts, even with no action");
+	assert.equal(watchClockOn({ ...watching, deciding: true, idle: true }), true, "a line waiting for Got it counts, even with no action, up to its cap");
+	assert.equal(watchClockOn({ ...watching, deciding: true, decideCapped: true, idle: true }), false, "past the line cap and idle, it stops");
+	assert.equal(watchClockOn({ ...watching, deciding: true, decideCapped: true }), true, "past the line cap, a recent action still counts");
+	assert.equal(watchClockOn({ ...watching, idle: true }), false, "paused and idle does not count");
+	assert.equal(watchClockOn({ watching: false, questions: true, ready: false, playing: false, deciding: false, decideCapped: false, idle: false }), true, "a question being answered counts");
+	assert.equal(watchClockOn({ watching: false, questions: true, ready: false, playing: false, deciding: false, decideCapped: false, idle: true }), false, "questions left idle do not count");
+	assert.equal(watchClockOn({ watching: false, questions: false, ready: true, playing: true, deciding: false, decideCapped: false, idle: false }), false, "the end card is not watching");
+});
 const { strandBalance, strandCaption, strandMinutes, strandParts, STRAND_MINUTES } = await import("../src/core/strands.ts");
 const { dayKey } = await import("../src/core/review.ts");
 const { recordActiveTime, recordLesson, recordReviewXp } = await import("../src/server/lesson.ts");

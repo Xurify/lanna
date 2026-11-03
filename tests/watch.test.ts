@@ -294,6 +294,19 @@ describe("a video on a scripted engine", () => {
 	});
 });
 
+test("recordWatch counts the measured playing time, and the log keeps the minutes the day counted", () => {
+	const v = videoStore.get("dQw4w9WgXcQ")!;
+	const answers = v.questions.map((q) => q.answer);
+	watch.recordWatch({ videoId: v.id, mode: "flow", stats: [], answers, tapped: [], ms: 60 * 60_000, activeMs: 5 * 60_000, tz: 0 }, new Date("2026-11-04T12:00:00Z"));
+	watch.recordWatch({ videoId: v.id, mode: "flow", stats: [], answers, tapped: [], ms: 4 * 3_600_000, activeMs: 3 * 3_600_000, tz: 0 }, new Date("2026-11-04T13:00:00Z"));
+	const log = videoStore.watches().filter((w) => w.day === "2026-11-04");
+	assert.deepEqual(log.map((w) => [w.activeMs, w.ms, w.minutes]), [
+		[5 * 60_000, 60 * 60_000, 5],
+		[3 * 3_600_000, 4 * 3_600_000, 75],
+	]);
+	assert.equal(progressStore.read().days["2026-11-04"]!.minutesBy!.watch, 80);
+});
+
 test("a video with only Czech captions is prepared, kept as Czech, and the translator is told it is Czech", async () => {
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
 	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);

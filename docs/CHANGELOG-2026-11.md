@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 3 November: Watch time counts the video playing (branch `fix/watch-time-logging`)
+
+- **What counted:** the day's Watch minutes counted the time the tab was visible and focused on the watch stage, so a paused video with the tab open counted as watching, with no idle limit. Now the time the video plays counts, and so does the time a paused line waits for your decision (up to 2 minutes a line), and the questions (up to 90 seconds after your last action). Nothing counts before the video is loaded. Clicks into the player's frame count as actions.
+- **What the log kept:** `watches.jsonl` stored only the wall-clock time since the start, which includes pauses and a hidden tab, and not the time the day counted. Each watching now also keeps `activeMs` (the measured time) and `minutes` (the minutes the day counted).
+- **Cap:** one send could add at most 40 minutes of Watch time, so a longer video was cut short. The cap is now 75 minutes, the longest video the app takes.
+- **Unverified:** the playing-time measure on the owner's PC with a real YouTube video (the cloud container cannot reach YouTube).
+
 ## 3 November: a translation the model miscounts no longer refuses the video (branch `feat/watch-sentences`)
 
 - **Miscounted translations:** a video failed with "the model returned 38 translations for 40 lines" when the model dropped lines twice. Now a chunk asked twice and still miscounted is split in halves, each half asked with the lines before it as context. Only a single line the model still cannot place stays in the video: it keeps its Slovak, has an empty English line, and the preview says how many lines have no English. The record stores the count as `untranslated`.
