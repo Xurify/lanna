@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type ExamSummary, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
 
-export function CurriculumPage({ initialView = "path", initialConfigured, state, next, goal, weak = [], exams = {} }: { initialView?: ClimbView; initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[]; exams?: Record<string, ExamSummary> }) {
+export function CurriculumPage({ initialView = "chapters", initialConfigured, state, next, goal, weak = [], exams = {} }: { initialView?: ClimbView; initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[]; exams?: Record<string, ExamSummary> }) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const [view, setView] = useState<ClimbView>(initialView);
@@ -28,7 +28,7 @@ export function CurriculumPage({ initialView = "path", initialConfigured, state,
 		setView(next);
 		saveClimbView(next);
 		// replaceState keeps the URL shareable without a server round trip or a scroll reset.
-		window.history.replaceState(null, "", next === "path" ? pathname : `${pathname}?view=${next}`);
+		window.history.replaceState(null, "", next === "chapters" ? pathname : `${pathname}?view=${next}`);
 	};
 	const onTabKey = (e: React.KeyboardEvent, i: number) => {
 		const to = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? CLIMB_VIEWS.length - 1 : null;
@@ -77,10 +77,7 @@ export function CurriculumPage({ initialView = "path", initialConfigured, state,
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Your climb to {goal.level}</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					{state ? `${state.done} of ${state.total} units done. ` : ""}
-					Each level is a section, each chapter a stop in it. Lessons you can do alone are built
-					from real sentences; short sessions with the tutor cover what a drill cannot check; every chapter ends in something you can do, then an
-					exam. A chapter opens when the one before is nearly done, and a lesson you ace in one go counts as done, so you are never held in what
-					you already know.
+					Each level is a stop on the way up. A chapter opens when the one before is nearly done, and a lesson you ace counts as done.
 				</p>
 				<div role="tablist" aria-label="How to read the climb" className="q-segc mt-6" data-testid="climb-views">
 					{CLIMB_VIEWS.map((v, i) => (

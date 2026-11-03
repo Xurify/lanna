@@ -8,20 +8,25 @@ import { CLIMB_VIEWS, CLIMB_VIEW_COOKIE, resolveClimbView } from "@/lib/climb-vi
 import { curriculumState } from "@/src/core";
 
 const noop = () => {};
-const render = (view: "path" | "chapters", state: ReturnType<typeof curriculumState> | null) =>
+const render = (view: "chapters" | "mountain", state: ReturnType<typeof curriculumState> | null) =>
 	renderToStaticMarkup(createElement(Climb, { view, mode: "full", state, goalLevel: "B2", onTutor: noop, onScene: noop }));
 
 describe("the climb's two views", () => {
-	it("has two real-word options and Path is the default", () => {
-		assert.deepEqual(CLIMB_VIEWS.map((v) => v.label), ["Path", "Chapters"]);
-		assert.equal(resolveClimbView(undefined, undefined), "path");
+	it("has two real-word options and Chapters is the default", () => {
+		assert.deepEqual(CLIMB_VIEWS.map((v) => v.label), ["Chapters", "Mountain"]);
+		assert.equal(resolveClimbView(undefined, undefined), "chapters");
 	});
 
 	it("the URL wins over the saved choice, and a bad value falls back", () => {
-		assert.equal(resolveClimbView("chapters", "path"), "chapters");
-		assert.equal(resolveClimbView(["path"], "chapters"), "path");
-		assert.equal(resolveClimbView(undefined, "chapters"), "chapters");
-		assert.equal(resolveClimbView("nonsense", "nonsense"), "path");
+		assert.equal(resolveClimbView("mountain", "chapters"), "mountain");
+		assert.equal(resolveClimbView(["chapters"], "mountain"), "chapters");
+		assert.equal(resolveClimbView(undefined, "mountain"), "mountain");
+		assert.equal(resolveClimbView("nonsense", "nonsense"), "chapters");
+	});
+
+	it("an old saved value still works: path was the list", () => {
+		assert.equal(resolveClimbView("path", undefined), "chapters");
+		assert.equal(resolveClimbView(undefined, "path"), "chapters");
 	});
 
 	it("the choice is saved in a cookie the server reads, with a safe fallback", () => {
@@ -33,29 +38,29 @@ describe("the climb's two views", () => {
 
 	it("both views draw the same chapters and the same unit actions from the same data", () => {
 		const state = curriculumState({});
-		const path = render("path", state);
-		const chapters = render("chapters", state);
-		assert.ok(path.includes('data-view="path"'));
-		assert.ok(chapters.includes('data-view="chapters"'));
+		const path = render("chapters", state);
+		const chapters = render("mountain", state);
+		assert.ok(path.includes('data-view="chapters"'));
+		assert.ok(chapters.includes('data-view="mountain"'));
 		for (const ch of state.chapters) {
 			assert.ok(path.includes(`data-testid="chapter-${ch.id}"`), `path lacks ${ch.id}`);
 			assert.ok(chapters.includes(`data-testid="chapter-${ch.id}"`), `chapters lacks ${ch.id}`);
-			assert.ok(chapters.includes(`data-testid="climb-${ch.id}"`), `the map lacks ${ch.id}`);
+			assert.ok(chapters.includes(`data-testid="climb-stage-${ch.stage}"`), `the mountain lacks ${ch.stage}`);
 		}
 		const current = state.chapters.find((c) => c.id === state.current)!;
 		assert.ok(path.includes(`climb-units-${current.id}`));
 		assert.ok(chapters.includes(`climb-units-${current.id}`));
 	});
 
-	it("the chapters view lists the highest level first", () => {
-		const html = render("chapters", curriculumState({}));
+	it("the mountain view lists the highest level first", () => {
+		const html = render("mountain", curriculumState({}));
 		assert.ok(html.indexOf('data-testid="stage-b2"') < html.indexOf('data-testid="stage-a1"'));
 	});
 
 	it("loading and empty states keep the shape of the page", () => {
-		assert.ok(render("path", null).includes("climb-loading"));
 		assert.ok(render("chapters", null).includes("climb-loading"));
-		assert.ok(render("chapters", { ...curriculumState({}), chapters: [] }).includes("climb-empty"));
+		assert.ok(render("mountain", null).includes("climb-loading"));
+		assert.ok(render("mountain", { ...curriculumState({}), chapters: [] }).includes("climb-empty"));
 	});
 
 	it("the switcher is a tab list with arrow-key support", () => {
