@@ -130,8 +130,8 @@ describe("the emphasis-ink factory ruling (globals.css)", () => {
 
 	it("both blocks default the inks to the regular text color", () => {
 		const css = fs.readFileSync("app/globals.css", "utf-8");
-		assert.equal((css.match(/--lh-ink-strong: var\(--foreground\)/g) ?? []).length, 2, "both theme blocks");
-		assert.equal((css.match(/--lh-ink-italic: var\(--foreground\)/g) ?? []).length, 2, "both theme blocks");
+		assert.equal((css.match(/--lh-ink-strong: var\(--foreground\)/g) ?? []).length, 3, "Day, Night and the dark-device block");
+		assert.equal((css.match(/--lh-ink-italic: var\(--foreground\)/g) ?? []).length, 3, "Day, Night and the dark-device block");
 	});
 
 	it("the emphasis inks sit under Advanced, out of the first paint", () => {

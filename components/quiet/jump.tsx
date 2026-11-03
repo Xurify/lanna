@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { QIcon } from "@/components/quiet/icon";
 import { insertAtCaret } from "@/components/diacritic-bar";
 import { useSidebar } from "@/components/sidebar";
+import { isPhoneNavPath } from "@/components/phone-nav";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import { fuzzyScore } from "@/src/core/fuzzy";
 import { cn } from "@/lib/utils";
@@ -229,7 +230,7 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 
 /** On a phone the jump bar takes the bottom nav's place on the pages that had one (Today draws its own). */
 export function PhoneDock({ pathname }: { pathname: string }) {
-	if (pathname === "/") return null;
+	if (pathname === "/" || pathname === "/review" || !isPhoneNavPath(pathname)) return null;
 	return (
 		<div className="fixed inset-x-0 bottom-0 z-30 bg-background px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:hidden" data-testid="phone-dock">
 			<JumpBar className="!h-[50px] !rounded-xl" />

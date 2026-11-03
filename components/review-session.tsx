@@ -376,8 +376,8 @@ export function ReviewSession() {
 									<article className="q-cloze" data-testid="review-card" aria-label={`Review, ${isNew ? "new word" : "card"}`}>
 										<header className="q-card-head">
 											<QIcon name="review" />
-											Review
-											<span className="font-[450] text-ink-3">{isNew ? (newTotal > 0 ? `New word ${position} of ${newTotal}` : "New word") : prompt.card.state === "learning" ? "Relearning" : "Review"}</span>
+											<span className="@max-xl:hidden">Review</span>
+											<span className="whitespace-nowrap font-[450] text-ink-3">{isNew ? (newTotal > 0 ? `New word ${position} of ${newTotal}` : "New word") : prompt.card.state === "learning" ? "Relearning" : "Review"}</span>
 											{isNew && newTotal > 0 && newTotal <= 24 && (
 												<span className="q-dots hidden @xl:flex" aria-hidden="true">
 													{Array.from({ length: newTotal }, (_, i) => (
@@ -467,7 +467,7 @@ export function ReviewSession() {
 												<span>{around.after}</span>
 											</form>
 
-											<div className="q-en">
+											<div className="q-en @max-xl:flex-col @max-xl:items-start @max-xl:gap-2">
 												<div className="flex items-center gap-2">
 													<p data-no-word-lookup="true">{prompt.card.translation}</p>
 													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}

@@ -163,7 +163,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								<p className="q-date first-letter:uppercase" lang="sk">
 									{date}
 								</p>
-								<h1 className="q-hello text-[29px] @6xl:text-[34px]" lang="sk">
+								<h1 className="q-hello @max-6xl:!mt-1 @max-6xl:!text-[29px] @max-6xl:!leading-[1.12]" lang="sk">
 									{greeting()}.{" "}
 									{streak > 0 && (
 										<>
@@ -175,13 +175,15 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 									)}
 								</h1>
 								{s && (
-									<p className="q-line dim" style={{ marginTop: 8 }} data-testid="plan-summary">
+									<p className="q-line dim @max-6xl:!text-[16px]" style={{ marginTop: 8 }} data-testid="plan-summary">
 										{done >= total && total > 0
 											? `All ${total} things are done today.`
-											: `${total} things today, ${done} done, about ${left} minutes left.`}
+											: <>
+													{total} things<span className="@max-6xl:hidden"> today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span><span className="@6xl:hidden">min</span> left.
+												</>}
 									</p>
 								)}
-								<div className="q-strip" role="img" aria-label={s ? `Plan: ${done} of ${total} done${up ? `, ${taskLabel(up)} is up next` : ""}${lockedTask ? `, ${taskLabel(lockedTask)} needs an AI key` : ""}` : "Plan"}>
+								<div className="q-strip @max-6xl:gap-[3px] @max-6xl:mt-3.5" role="img" aria-label={s ? `Plan: ${done} of ${total} done${up ? `, ${taskLabel(up)} is up next` : ""}${lockedTask ? `, ${taskLabel(lockedTask)} needs an AI key` : ""}` : "Plan"}>
 									{(s ? tasks : []).map((t) => (
 										<span
 											key={t.id}
@@ -202,11 +204,11 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 									{up && (
 										<span>
 											<i style={{ boxShadow: "inset 0 0 0 1.5px var(--q-teal)" }} />
-											{taskLabel(up)} is up next
+											{taskLabel(up)} <span className="@max-6xl:hidden">is up </span>next
 										</span>
 									)}
 									{total - done - (up ? 1 : 0) > 0 && (
-										<span>
+										<span className="@max-6xl:hidden">
 											<i style={{ boxShadow: "inset 0 0 0 1px var(--q-line-2)" }} />
 											{total - done - (up ? 1 : 0)} to go
 										</span>
@@ -233,7 +235,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							)}
 
 							{s && (
-								<section className="mt-6 q-rise" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Up next">
+								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Up next">
 									<h2 className="q-sh">
 										<QIcon name="arrow" />
 										{up ? "Up next" : "All done for today"}
@@ -243,7 +245,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							)}
 
 							{weakGroups.length > 0 && (
-								<section className="mt-6 q-rise" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
+								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
 									<h2 className="q-sh">
 										<QIcon name="chart" />
 										From your answers
@@ -272,12 +274,9 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 														<span key={m.key}>
 															{i > 0 && (i === arr.length - 1 ? " and " : ", ")}
 															<span className="q-pair" lang="sk">
-																{m.words.map((w, j) => (
-																	<span key={w}>
-																		{j > 0 && <s>/</s>}
-																		{w}
-																	</span>
-																))}
+																{m.words[0]}
+														<s>/</s>
+														{m.words[1]}
 															</span>
 														</span>
 													))}
@@ -286,18 +285,19 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 											)}
 										</p>
 									)}
-									<div className="q-acts" style={{ marginTop: 16 }}>
+									<div className="q-acts @max-xl:[&_.q-btn]:h-10" style={{ marginTop: 16 }}>
 										<Link href={`/lesson?unit=${weakGroups[0]!.unit}`} className="q-btn sec t" data-testid={`weak-spot-${weakGroups[0]!.id}`}>
 											<QIcon name="grammar" />
-											Lesson on the {bare(weakGroups[0]!.title)}
+											<span className="@max-xl:hidden">Lesson on the {bare(weakGroups[0]!.title)}</span>
+											<span className="@xl:hidden">{bare(weakGroups[0]!.title).replace(/^./, (c) => c.toUpperCase())} lesson</span>
 										</Link>
 										{openMixups.length > 0 && (
 											<Link href="/lesson?mode=mixups" className="q-btn sec" data-testid="mixups-practice">
 												<QIcon name="mix" />
-												Mix-ups lesson
+												Mix-ups<span className="@max-xl:hidden"> lesson</span>
 											</Link>
 										)}
-										<Link href="/mistakes" className="q-btn ghost">
+										<Link href="/mistakes" className="q-btn ghost @max-xl:hidden">
 											Open My mistakes <QIcon name="chev" />
 										</Link>
 									</div>
@@ -305,7 +305,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 							)}
 
 							{s && balance && (
-								<section className="mt-6 q-rise" style={{ animationDelay: ".15s" }} data-testid="week-card">
+								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".15s" }} data-testid="week-card">
 									<h2 className="q-sh">
 										<QPie frac={goalMin > 0 ? (s.pace?.dailyAverage ?? 0) / goalMin : 0} size={14} />
 										This week
@@ -379,9 +379,9 @@ function UpNext({ task, locked, busy, onOpen, meta }: { task: PlanTask; locked: 
 				{taskLabel(task)}
 				<span className="mins q-num">{task.minutes} min</span>
 			</div>
-			<div className="q-rv-body">
+			<div className="q-rv-body @max-xl:block">
 				<div className="min-w-0">
-					<h3>{w.primary}</h3>
+					<h3 className="@max-xl:text-[19px]">{w.primary}</h3>
 					{w.rest && (
 						<p className="q-rv-tease" style={{ fontSize: 15 }}>
 							{task.from ? `Left from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ` : ""}
@@ -399,8 +399,8 @@ function UpNext({ task, locked, busy, onOpen, meta }: { task: PlanTask; locked: 
 						</p>
 					)}
 				</div>
-				<button type="button" className="q-btn primary max-@xl:w-full" onClick={onOpen} disabled={busy || locked}>
-					Start
+				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy || locked}>
+					Start<span className="@xl:hidden"> {taskLabel(task)}</span>
 					<kbd className="q-kbd pointer-coarse:hidden">
 						<QIcon name="enter" />
 					</kbd>

@@ -654,7 +654,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								~{Math.max(1, Math.round(story.wordCount / 80))} min
 							</span>
 						</div>
-						<h1 className="mt-3 font-serif text-3xl font-[600] tracking-tight text-foreground sm:text-4xl" lang="sk">
+						<h1 className="mt-3 text-3xl font-[600] tracking-tight text-foreground sm:text-4xl" lang="sk">
 							{story.title}
 						</h1>
 						{story.recap && (
