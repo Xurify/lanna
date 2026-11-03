@@ -14,7 +14,7 @@
  */
 
 import type { SegmentStat, WatchMode } from "@/src/core";
-import { NoCaptionsError, prepareStage, prepareVideo, recordWatch, videoStore, watchState } from "@/src/server";
+import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, videoStore, watchState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add") {
 		if (typeof body.url !== "string" || !body.url.trim()) return Response.json({ message: "url is required" }, { status: 400 });
@@ -73,5 +73,14 @@ export async function POST(req: Request) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 		}
 	}
-	return Response.json({ message: "action must be add or finish" }, { status: 400 });
+	if (body.action === "sentence") {
+		if (typeof body.videoId !== "string" || typeof body.lemma !== "string" || typeof body.sentence !== "string") return Response.json({ message: "videoId, lemma and sentence are required" }, { status: 400 });
+		try {
+			return Response.json(await checkSentence({ videoId: body.videoId, lemma: body.lemma, sentence: body.sentence, tz: tzOf(body.tz) }));
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /is not a word|Write one sentence|not in the language|unknown video/.test(message) ? 400 : 502 });
+		}
+	}
+	return Response.json({ message: "action must be add, finish or sentence" }, { status: 400 });
 }

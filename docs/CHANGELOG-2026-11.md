@@ -2,6 +2,11 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 3 November: sentences from a video's words (branch `feat/watch-sentences`, stacked on `feat/czech-captions`)
+
+- **Use the words:** the end of a Slovak video asks for one sentence with each of up to three words: the ones tapped first, then the video's own new words. The meaning shows after the first try. A program checks the sentence first (two words or more, the word or a form of it, and the Slovak checker's certain problems); then the cheap slot judges it and the verdict is kept in `videos/sentences.jsonl`. A word earns 5 XP the first time it is accepted for a video. Plan and reasons: [plans/watch-sentences.md](plans/watch-sentences.md).
+- **Unverified:** the model's judgments on real learner sentences (the cloud run used a scripted model); the stem match on real forms; the page on the PC. Not done yet: review cards for the sentences, output minutes in the strand balance, and cost accounting for the sentence checks.
+
 ## 3 November: Czech captions for Watch (branch `feat/czech-captions`)
 
 - **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labelled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).

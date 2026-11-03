@@ -255,6 +255,7 @@ everything the app made of its captions, paid for once.
   YouTube served it, so the lines can be cut again without fetching.
 - \`index.jsonl\`: one line per video (id, title, channel, length, level,
   date, coverage, word count, line count, pre-teach words, source, model).
+- \`sentences.jsonl\`: one line per model verdict on a sentence written at the end of a video: \`videoId\`, \`lemma\`, \`sentence\`, \`ok\`, \`corrected\`, \`why\`, \`model\`, \`at\`. A program's refusal is not kept.
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
   \`ms\`, \`mode\` (\`step\` = one line at a time, \`flow\` = straight
   through), \`segments\`, \`gotFirst\` (lines understood on the first
