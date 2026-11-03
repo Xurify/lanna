@@ -15,6 +15,9 @@
  *   watches.jsonl          one line per watching (WatchLogEntry): mode,
  *                          lines got on the first listen, replays, the
  *                          check, the words tapped and queued, XP.
+ *   sentences.jsonl        one line per model verdict on a sentence the
+ *                          learner wrote for the end of a video
+ *                          (SentenceCheckEntry, docs/plans/watch-sentences.md).
  *
  * Nothing of the video itself is stored — it plays in YouTube's player.
  * Same idioms as the other stores: sync fs, small files, atomic renames,
@@ -25,9 +28,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 import { isVideoId, type VideoIndexEntry, type VideoRecord, type WatchLogEntry } from "../core/watch.ts";
+import type { SentenceCheckEntry } from "../core/watch-sentences.ts";
 
 const INDEX = () => path.join(PATHS.videos, "index.jsonl");
 const WATCHES = () => path.join(PATHS.videos, "watches.jsonl");
+const SENTENCES = () => path.join(PATHS.videos, "sentences.jsonl");
 
 function videoFile(id: string): string {
 	if (!isVideoId(id)) throw new Error(`bad video id ${id}`);
@@ -122,6 +127,14 @@ export const videoStore = {
 	},
 	appendWatch(entry: WatchLogEntry): void {
 		appendJsonl(WATCHES(), entry);
+	},
+	/** One model verdict on a sentence written for a video's sentence step. */
+	appendSentence(entry: SentenceCheckEntry): void {
+		appendJsonl(SENTENCES(), entry);
+	},
+	/** Every sentence verdict, oldest first. */
+	sentences(): SentenceCheckEntry[] {
+		return readJsonl<SentenceCheckEntry>(SENTENCES());
 	},
 	/** Every watching, oldest first. */
 	watches(): WatchLogEntry[] {

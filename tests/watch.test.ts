@@ -23,6 +23,7 @@ process.env.LH_PROFILE = "slovak";
 const { PATHS } = await import("../config.ts");
 const core = await import("../src/core/watch.ts");
 const { captionLanguageName } = await import("../src/core/language.ts");
+const sentences = await import("../src/core/watch-sentences.ts");
 const { dailyPlan, curriculumState } = await import("../src/core/curriculum.ts");
 type UnitId = import("../src/core/lesson.ts").UnitId;
 const { strandMinutes } = await import("../src/core/strands.ts");
@@ -307,4 +308,80 @@ test("a video with only Czech captions is prepared, kept as Czech, and the trans
 	assert.equal(v.source.trackLang, "cs");
 	assert.equal(v.segments.length, lines.length);
 	assert.ok(sent[0]!.includes("These subtitles are in Czech, not Slovak"), "the first call says the subtitles are Czech");
+});
+
+test("the sentence step: a model verdict is kept and reused, XP once per accepted word, the program refuses without a model, a Czech video has no step", async () => {
+	const v = videoStore.get("dQw4w9WgXcQ")!;
+	const target = v.segments.flatMap((s) => s.tokens).find((t) => t.word && t.lemma && sentences.usesLemma([t.text], t.lemma));
+	assert.ok(target, "the fixture has a word whose form the stem finds");
+	const lemma = target.lemma!;
+	const sentence = `Mám ${target.text}.`;
+	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	faux.setResponses([fauxAssistantMessage(JSON.stringify({ ok: true, corrected: sentence, why: "Correct." })), fauxAssistantMessage(JSON.stringify({ ok: true, corrected: "x", why: "Fine." }))]);
+	let calls = 0;
+	const streamFn: typeof faux.streamSimple = (...args) => {
+		calls++;
+		return faux.streamSimple(...args);
+	};
+	const engine = { model: faux.getModel(), streamFn };
+	const xpBefore = progressStore.read().xp;
+	const first = await watch.checkSentence({ videoId: v.id, lemma, sentence }, { engine, model: "faux:sentence", now: new Date("2026-11-03T12:00:00Z") });
+	assert.equal(first.ok, true);
+	assert.equal(first.cached, false);
+	assert.equal(first.xp, sentences.SENTENCE_XP);
+	assert.equal(progressStore.read().xp, xpBefore + sentences.SENTENCE_XP);
+	assert.equal(calls, 1);
+	const again = await watch.checkSentence({ videoId: v.id, lemma, sentence }, { engine });
+	assert.equal(again.cached, true, "the same sentence is answered from the kept verdict");
+	assert.equal(again.xp, 0);
+	assert.equal(calls, 1, "no second model call for the same sentence");
+	const other = await watch.checkSentence({ videoId: v.id, lemma, sentence: `${sentence} Ďakujem.` }, { engine });
+	assert.equal(other.ok, true);
+	assert.equal(other.xp, 0, "a word is worth XP once per video");
+	assert.equal(calls, 2);
+	const short = await watch.checkSentence({ videoId: v.id, lemma, sentence: lemma }, { engine });
+	assert.equal(short.ok, false);
+	assert.equal(short.cached, false);
+	assert.equal(calls, 2, "a sentence the program refuses never reaches the model");
+	await assert.rejects(watch.checkSentence({ videoId: "CZCZCZCZCZC", lemma, sentence }, { engine }), /not in the language you learn/);
+	assert.ok(videoStore.sentences().filter((s) => s.videoId === v.id && s.lemma === lemma).length >= 2, "the verdicts are kept on disk");
+});
+
+test("a translation the model miscounts twice is split in halves, each half asked on its own", async () => {
+	const half = Math.ceil(TRANSLATIONS.length / 2);
+	const engine = fauxEngine([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(1) })),
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(1) })),
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(0, half) })),
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(half) })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
+	const v = await watch.prepareVideo("https://youtu.be/BBBBBBBBBBB", { engine, model: "faux:watch", captions, now: new Date("2026-10-28T13:00:00Z") });
+	assert.deepEqual(v.segments.map((s) => s.en), TRANSLATIONS);
+	assert.equal(v.usage.steps.length, 5, "two asks for the whole, one each for the halves, one for the questions");
+});
+
+test("a line the model never translates stays in the video with no English, and is counted", async () => {
+	const bad = 2;
+	const missing = lines[bad]!.sk;
+	const base = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	const streamFn: typeof base.streamSimple = (...args) => {
+		const asked = JSON.stringify(args[1]);
+		const one = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+		if (!asked.includes("exactly one English string")) {
+			one.setResponses([fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+			return one.streamSimple(...args);
+		}
+		const [, from, to] = asked.match(/Lines (\d+)–(\d+) of/)!;
+		const out: string[] = [];
+		for (let i = Number(from); i <= Number(to); i++) if (lines[i - 1]!.sk !== missing) out.push(TRANSLATIONS[i - 1]!);
+		one.setResponses([fauxAssistantMessage(JSON.stringify({ t: out }))]);
+		return one.streamSimple(...args);
+	};
+	const v = await watch.prepareVideo("https://youtu.be/CCCCCCCCCCC", { engine: { model: base.getModel(), streamFn }, model: "faux:watch", captions, now: new Date("2026-10-28T14:00:00Z") });
+	assert.equal(v.segments.length, lines.length);
+	assert.equal(v.segments[bad]!.sk, missing);
+	assert.equal(v.segments[bad]!.en, "", "the line keeps its Slovak and has no English");
+	assert.deepEqual(v.segments.filter((_, i) => i !== bad).map((s) => s.en), TRANSLATIONS.filter((_, i) => i !== bad));
+	assert.equal(v.untranslated, 1);
 });

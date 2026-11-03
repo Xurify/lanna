@@ -40,7 +40,7 @@ import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { captionLanguageName, coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
+import { captionLanguageName, coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, SENTENCE_MAX_CHARS, sentenceTargets, watchXp, type PrepareStage, type SegmentStat, type SentenceTarget, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
@@ -295,7 +295,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End video={video} stats={stats} outcome={outcome} saving={saving} mode={mode} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
+				<End video={video} stats={stats} outcome={outcome} saving={saving} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
 			</Frame>
 		);
 	}
@@ -492,6 +492,7 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 					{video.channel ? `${video.channel} · ` : ""}
 					{formatClock(video.durationSec)} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
 					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
+					{video.untranslated ? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation` : ""}
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang="sk">
 					{video.title}
@@ -1142,12 +1143,114 @@ function Ctl({ onClick, label, keyName, icon, active, disabled, testId }: { onCl
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ video, stats, outcome, saving, mode, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; mode: WatchMode; onAgain: () => void; onShelf: () => void }) {
+/** A verdict on one sentence, as the server answers it. */
+interface SentenceReply {
+	ok: boolean;
+	corrected: string;
+	why: string;
+	cached: boolean;
+	xp: number;
+}
+
+/** The end's sentence step: one sentence for each word the video gave
+ *  (docs/plans/watch-sentences.md). The meaning shows after the first try. */
+function SentenceStep({ videoId, targets }: { videoId: string; targets: SentenceTarget[] }) {
+	return (
+		<section className="mt-10 text-left" data-testid="watch-sentences">
+			<h2 className="font-ui text-lg font-[600] text-foreground">Use the words</h2>
+			<p className="mt-1 font-prose text-sm text-muted-foreground">Write one sentence with each word, in any form. The meaning shows after your first try.</p>
+			<ol className="mt-4 flex flex-col gap-3">
+				{targets.map((t) => (
+					<SentenceRow key={t.lemma} videoId={videoId} target={t} />
+				))}
+			</ol>
+		</section>
+	);
+}
+
+function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTarget }) {
+	const [text, setText] = useState("");
+	const [busy, setBusy] = useState(false);
+	const [reply, setReply] = useState<SentenceReply | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const accepted = reply?.ok === true;
+	const submit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		const sentence = text.trim();
+		if (busy || accepted || !sentence) return;
+		setBusy(true);
+		setError(null);
+		try {
+			const res = await fetch("/api/watch", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ action: "sentence", videoId, lemma: target.lemma, sentence, tz: new Date().getTimezoneOffset() }),
+			});
+			const body = (await res.json()) as Partial<SentenceReply> & { message?: string };
+			if (!res.ok || typeof body.ok !== "boolean") throw new Error(body.message ?? `HTTP ${res.status}`);
+			setReply(body as SentenceReply);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setBusy(false);
+		}
+	};
+	return (
+		<li className="q-card px-4 py-3.5" data-testid="watch-sentence">
+			<p className="font-ui text-[17px] font-[600] text-foreground" lang="sk">
+				{target.lemma}
+			</p>
+			<p className="mt-1 font-prose text-sm text-ink-3" lang="sk">
+				From the video: {target.line}
+			</p>
+			{reply && (
+				<p className="mt-1 font-prose text-sm text-muted-foreground" data-testid="watch-sentence-meaning">
+					{target.gloss ? `Meaning: ${target.gloss}` : "No meaning in the dictionary for this word."}
+				</p>
+			)}
+			<form onSubmit={submit} className="mt-3 flex flex-col gap-2 sm:flex-row">
+				<input
+					value={text}
+					onChange={(e) => setText(e.target.value)}
+					disabled={accepted || busy}
+					lang="sk"
+					autoComplete="off"
+					spellCheck={false}
+					maxLength={SENTENCE_MAX_CHARS}
+					placeholder="Write a sentence"
+					aria-label={`A sentence with ${target.lemma}`}
+					className="h-11 min-w-0 flex-1 rounded-lg bg-well px-4 font-ui text-[15px] text-foreground outline-none transition-colors placeholder:text-ink-3 focus:bg-card focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)] disabled:opacity-60"
+					data-testid="watch-sentence-input"
+				/>
+				{!accepted && (
+					<button type="submit" disabled={busy || !text.trim()} className={cn(PRIMARY, "h-11 px-5")} data-testid="watch-sentence-check">
+						{busy ? "Checking…" : "Check"}
+					</button>
+				)}
+			</form>
+			{error && <p className="mt-2 font-prose text-sm text-muted-foreground">{error}</p>}
+			{reply && (
+				<p className="mt-2 font-prose text-sm text-foreground" data-testid="watch-sentence-result">
+					{reply.ok ? `Good.${reply.xp ? ` +${reply.xp} XP` : ""}` : `Not yet. ${reply.why}`}
+					{!reply.ok && reply.corrected && reply.corrected !== text.trim() && (
+						<>
+							<br />
+							Try: <span lang="sk">{reply.corrected}</span>
+						</>
+					)}
+				</p>
+			)}
+		</li>
+	);
+}
+
+function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
 	const speed = listeningSpeed(stats);
+	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
 	const judged = stats.length;
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome) {
+			if (e.key === "Enter" && outcome && !(e.target instanceof HTMLInputElement)) {
 				e.preventDefault();
 				onShelf();
 			}
@@ -1184,6 +1287,7 @@ function End({ video, stats, outcome, saving, mode, onAgain, onShelf }: { video:
 					{Math.round(video.coverage * 100)}% of the words were ones you knew.
 				</p>
 			)}
+			{targets.length > 0 && <SentenceStep videoId={video.id} targets={targets} />}
 			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
 				<Link href="/" className={SECONDARY}>
 					Today

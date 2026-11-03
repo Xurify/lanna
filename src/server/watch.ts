@@ -51,6 +51,7 @@ import {
 	type WatchMode,
 	type WatchState,
 } from "../core/watch.ts";
+import { parseVerdict, SENTENCE_MAX_CHARS, SENTENCE_XP, sentenceProblems, type SentenceCheckEntry } from "../core/watch-sentences.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
@@ -395,28 +396,43 @@ export async function translateLines(engine: PiEngine, lines: readonly string[],
 	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not Slovak: translate what is said.` : "";
 	for (let at = 0; at < lines.length; at += TRANSLATE_CHUNK) {
 		const chunk = lines.slice(at, at + TRANSLATE_CHUNK);
-		const before = lines.slice(Math.max(0, at - 3), at);
-		const prompt = [
-			`Video: "${title}". Lines ${at + 1}–${at + chunk.length} of ${lines.length}.`,
-			foreign,
-			before.length ? `For context, the lines just before (do not translate these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
-			`Translate these ${chunk.length} lines, one English string each, same order:\n${JSON.stringify(chunk, null, 0)}`,
-		]
-			.filter(Boolean)
-			.join("\n\n");
-		let got: string[] | null = null;
-		let lastError: unknown;
-		for (let attempt = 0; attempt < 2 && !got; attempt++) {
-			try {
-				got = parseTranslations(await ask(engine, TRANSLATE_SYSTEM, attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
-			} catch (err) {
-				lastError = err;
-			}
-		}
-		if (!got) throw lastError instanceof Error ? lastError : new Error(String(lastError));
-		out.push(...got);
+		out.push(...(await translateChunk(engine, chunk, lines.slice(Math.max(0, at - 3), at), at + 1, lines.length, title, usage, foreign)));
 	}
 	return out;
+}
+
+/** One chunk asked for as a whole, then once more. A chunk the model still
+ *  miscounts is split in two, and each half is asked on its own with the
+ *  lines just before it as context: a shorter ask miscounts less often. */
+async function translateChunk(engine: PiEngine, chunk: readonly string[], before: readonly string[], from: number, total: number, title: string, usage: StoryUsage, foreign: string): Promise<string[]> {
+	const prompt = [
+		`Video: "${title}". Lines ${from}–${from + chunk.length - 1} of ${total}.`,
+		foreign,
+		before.length ? `For context, the lines just before (do not translate these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
+		`Translate these ${chunk.length} lines, one English string each, same order:\n${JSON.stringify(chunk, null, 0)}`,
+	]
+		.filter(Boolean)
+		.join("\n\n");
+	let lastError: unknown;
+	for (let attempt = 0; attempt < 2; attempt++) {
+		try {
+			return parseTranslations(await ask(engine, TRANSLATE_SYSTEM, attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
+		} catch (err) {
+			lastError = err;
+		}
+	}
+	const failed = lastError instanceof Error ? lastError : new Error(String(lastError));
+	if (chunk.length < 2) {
+		// A line the model cannot count back into its answer stays in the
+		// video with no English, rather than refusing the whole video; the
+		// blanks are counted and shown.
+		if (/^(the model returned|the model's|no JSON)/.test(failed.message)) return chunk.map(() => "");
+		throw failed;
+	}
+	const half = Math.ceil(chunk.length / 2);
+	const first = await translateChunk(engine, chunk.slice(0, half), before, from, total, title, usage, foreign);
+	const second = await translateChunk(engine, chunk.slice(half), [...before, ...chunk.slice(0, half)].slice(-3), from + half, total, title, usage, foreign);
+	return [...first, ...second];
 }
 
 export async function questionsFor(engine: PiEngine, segments: readonly { sk: string; en: string }[], k: KnownWords, title: string, usage: StoryUsage): Promise<StoryQuestion[]> {
@@ -504,6 +520,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
 		setStage(id, "translating");
 		const en = await translateLines(engine, lines.map((l) => l.sk), usage, fetched.meta.title, fetched.source.trackLang);
+		const untranslated = en.filter((t) => t === "").length;
 		const segments = glossSegments(lines, en, lexicon, k);
 		setStage(id, "questions");
 		const questions = opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
@@ -529,6 +546,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			unknownCount: new Set(words.filter((t) => t.fresh).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
 			usage,
 			translatedBy: "model",
+			...(untranslated ? { untranslated } : {}),
 		};
 		videoStore.put(record);
 		ensureReadmes();
@@ -652,4 +670,64 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	};
 	videoStore.appendWatch(entry);
 	return { xp, correct, total, gotFirst, gotAfter, missed, queued, rewatch, summary: progressSummary(input.tz, now) };
+}
+
+// ─── The sentence step ──────────────────────────────────────────────────────
+
+const SENTENCE_SYSTEM = `You check one Slovak sentence that a beginner wrote to use a given Slovak word. You answer with ONE JSON object and nothing else: {"ok": true, "corrected": "...", "why": "..."}.
+
+Rules:
+- ok is true when the sentence is correct, standard Slovak and uses the word in any form.
+- Answer ok false only when you are sure the sentence is wrong or does not use the word. When you are unsure, answer ok true and say in "why" what to check.
+- "corrected": the sentence with the smallest fix when ok is false; otherwise the sentence as written.
+- "why": one plain English sentence for the learner, at most 25 words.
+- Nothing outside the JSON.`;
+
+export interface SentenceAnswer {
+	ok: boolean;
+	corrected: string;
+	why: string;
+	/** Answered from a verdict kept before: no model call. */
+	cached: boolean;
+	xp: number;
+}
+
+/** A learner's sentence for one word of a video's sentence step. The
+ *  program checks what it can see for certain first; the cheap slot judges
+ *  the rest and every verdict is kept. The same sentence for the same word
+ *  is answered from the kept verdict. XP the first time a word is accepted
+ *  for a video. */
+export async function checkSentence(input: { videoId: string; lemma: string; sentence: string; tz?: number }, opts: { engine?: PiEngine; model?: string; now?: Date } = {}): Promise<SentenceAnswer> {
+	const video = videoStore.get(input.videoId);
+	if (!video) throw new Error(`unknown video ${input.videoId}`);
+	if (video.source.trackLang !== video.lang) throw new Error("This video's captions are not in the language you learn, so it has no sentence step.");
+	const lemma = input.lemma.trim();
+	const sentence = input.sentence.trim();
+	const isWord = video.preTeach.some((w) => w.lemma === lemma) || video.segments.some((s) => s.tokens.some((t) => t.lemma === lemma));
+	if (!isWord) throw new Error(`"${lemma}" is not a word of this video`);
+	if (!sentence || sentence.length > SENTENCE_MAX_CHARS) throw new Error(`Write one sentence, up to ${SENTENCE_MAX_CHARS} characters.`);
+	const problems = sentenceProblems(sentence, lemma);
+	if (problems.length) return { ok: false, corrected: sentence, why: problems[0]!, cached: false, xp: 0 };
+	const earlier = videoStore.sentences().filter((s) => s.videoId === video.id && s.lemma === lemma);
+	const same = earlier.find((s) => s.sentence === sentence);
+	if (same) return { ok: same.ok, corrected: same.corrected, why: same.why, cached: true, xp: 0 };
+	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "test" } : storyEngine();
+	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+	const gloss = video.preTeach.find((w) => w.lemma === lemma)?.gloss ?? video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.gloss ?? "";
+	const usage: StoryUsage = { model: resolved.model, steps: [] };
+	const text = await ask(resolved.engine, SENTENCE_SYSTEM, `The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`, usage);
+	const verdict = parseVerdict(text, sentence);
+	if (!verdict) throw new Error("The check did not answer in the form it should. Try again.");
+	const now = opts.now ?? new Date();
+	const entry: SentenceCheckEntry = { videoId: video.id, lemma, sentence, ok: verdict.ok, corrected: verdict.corrected, why: verdict.why, model: resolved.model, at: now.toISOString() };
+	videoStore.appendSentence(entry);
+	const xp = verdict.ok && !earlier.some((s) => s.ok) ? SENTENCE_XP : 0;
+	if (xp) {
+		const p = progressStore.read();
+		const d = (p.days[dayKey(now, input.tz)] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
+		d.xp += xp;
+		p.xp += xp;
+		progressStore.write(p);
+	}
+	return { ok: verdict.ok, corrected: verdict.corrected, why: verdict.why, cached: false, xp };
 }
