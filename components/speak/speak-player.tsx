@@ -611,12 +611,11 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 						Today
 					</Link>
 				</div>
-				<p className="mt-6 font-ui text-sm font-[600] text-muted-foreground">{typed ? "Talk in writing" : "Speak"}</p>
-				<h1 className="mt-1 font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">{typed ? "Pick a scene and write it" : "Pick a scene and say it"}</h1>
+				<h1 className="mt-6 font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
 				<p className="mt-2 max-w-xl font-prose text-base text-muted-foreground">
 					{typed
-						? "The tutor plays the other person and answers out loud. Type each line and press Enter. A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."
-						: "The tutor plays the other person and answers out loud. Say your lines into the mic (press, speak, press). A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."}
+						? "Pick a scene and write it. The tutor plays the other person and answers out loud. Type each line and press Enter. A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."
+						: "Pick a scene and say it. The tutor plays the other person and answers out loud. Say your lines into the mic (press, speak, press). A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."}
 				</p>
 				{error && (
 					<p className="mt-4 rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert" data-testid="speak-error">

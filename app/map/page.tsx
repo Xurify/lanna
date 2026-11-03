@@ -2,6 +2,8 @@ import { Home } from "@/components/home";
 import { readSettingsRecord } from "@/src/server";
 import { resolveSettings, slotsConfigured } from "@/src/core";
 
+export const metadata = { title: "Map" };
+
 // The knowledge map — the graph home LearnHarness opened on. LangHarness
 // opens on Today (app/page.tsx); the map stays one click away.
 export const dynamic = "force-dynamic";

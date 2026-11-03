@@ -370,9 +370,8 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-shelf">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
-						<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Watch</p>
-						<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground">A video, with both subtitles</h1>
-						<p className="mt-1 font-prose text-base text-muted-foreground">Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
+						<h1 className="font-ui text-3xl font-[600] text-foreground">Watch</h1>
+						<p className="mt-1 font-prose text-base text-muted-foreground">A video with both subtitles. Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
 					</div>
 					<Link href="/" className={SECONDARY}>
 						Today

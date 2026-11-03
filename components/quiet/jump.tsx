@@ -46,17 +46,17 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Watch", hint: "A video with both subtitles", href: "/watch", icon: "play", words: "youtube video" },
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
 	{ title: "Talk in writing", hint: "A role-play in written Slovak", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
-	{ title: "Say it faster", hint: "Known sentences, in a shrinking window", href: "/fluency?mode=fast", icon: "fast", words: "fluency speed" },
+	{ title: "Fluency", hint: "Known sentences, said faster", href: "/fluency?mode=fast", icon: "fast", words: "say it faster speed" },
 	{ title: "Blitz", hint: "60 seconds, as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
 	{ title: "Words", hint: "Everything you have met", href: "/words", icon: "words", words: "vocabulary lexicon" },
 	{ title: "Grammar", hint: "Cases, genders, and your score on each", href: "/grammar", icon: "grammar", words: "atlas cases" },
-	{ title: "My mistakes", hint: "What goes wrong and whether it is getting better", href: "/mistakes", icon: "chart", words: "errors weak" },
+	{ title: "Mistakes", hint: "What goes wrong and whether it is getting better", href: "/mistakes", icon: "chart", words: "errors weak" },
 	{ title: "Mix-ups lesson", hint: "Words you give one for the other", href: "/lesson?mode=mixups", icon: "mix", words: "confused" },
-	{ title: "Climb", hint: "The whole path, chapter by chapter", href: "/curriculum", icon: "arrow", words: "path curriculum" },
-	{ title: "Progress", hint: "Hours, stamps, the plan's pace", href: "/plan", icon: "chart", words: "plan stamps hours" },
+	{ title: "Curriculum", hint: "Your climb, level by level and chapter by chapter", href: "/curriculum", icon: "arrow", words: "climb path levels chapters" },
+	{ title: "Progress", hint: "Hours, stamps, the plan's pace", href: "/progress", icon: "chart", words: "plan stamps hours" },
 	{ title: "Milestones", hint: "Level checks", href: "/milestones", icon: "flag", words: "level exam" },
 	{ title: "Ask the tutor", hint: "Any question about Slovak", href: "/chat/new", icon: "tutor", words: "chat" },
-	{ title: "Knowledge map", hint: "What you know, as a graph", href: "/map", icon: "chart", words: "graph" },
+	{ title: "Map", hint: "What you know, as a graph", href: "/map", icon: "chart", words: "knowledge graph" },
 ];
 
 function useUnits(active: boolean) {

@@ -838,13 +838,14 @@ function SessionsSidebar() {
 						</Hint>
 					</div>
 
-					{/* The language profile + the four main destinations. */}
+					{/* The navigation and the tutor scroll together when the window is short; the footer stays put. */}
+					<div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
 					<LanguageSwitcher />
 
 					{/* The tutor: two ways to start a chat, then the chats themselves.
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
-					<section aria-labelledby="sidebar-tutor" className="mx-3 flex min-h-0 flex-1 flex-col border-t border-border/50 pt-3">
+					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-3 flex min-h-[15rem] flex-1 flex-col border-t border-border/50 pt-3">
 						<h2 id="sidebar-tutor" className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">
 							Tutor
 						</h2>
@@ -1070,6 +1071,7 @@ function SessionsSidebar() {
 							</div>
 						)}
 					</section>
+					</div>
 
 					{/* Background agents appear only while one runs: an idle header
 					    told the learner nothing and read as machinery. */}

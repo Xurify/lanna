@@ -35,7 +35,7 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export const metadata: Metadata = {
-	title: "LangHarness",
+	title: { default: "LangHarness", template: "%s · LangHarness" },
 		applicationName: "LangHarness",
 		appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "default" },
 			// Next 16 emits the standard mobile-web-app-capable tag for capable: true;

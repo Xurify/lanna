@@ -306,7 +306,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 											</Link>
 										)}
 										<Link href="/mistakes" className="q-btn ghost @max-xl:hidden">
-											Open My mistakes <QIcon name="chev" />
+											Open Mistakes <QIcon name="chev" />
 										</Link>
 									</div>
 								</section>

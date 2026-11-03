@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /plan — everything about the road, in one place (LangHarness,
+ * /progress — everything about the road, in one place (LangHarness,
  * 2026-10-28). Xurify: the goal line on Today was crowded and its tools
  * hard to find, the date should move "seamlessly" as you tweak the time
  * you give it (the way Acorns shows when you will reach a sum), and the

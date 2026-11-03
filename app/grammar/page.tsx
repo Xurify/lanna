@@ -2,6 +2,8 @@ import { GrammarAtlas } from "@/components/grammar/atlas";
 import { progressStore } from "@/src/server";
 import { grammarAtlas } from "@/src/core";
 
+export const metadata = { title: "Grammar" };
+
 export const dynamic = "force-dynamic";
 
 /** The grammar atlas (LangHarness): every case × gender cell with the

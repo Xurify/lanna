@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HistoryIcon,
+import {
 	BookAIcon,
 	BookOpenIcon,
 	ChartNoAxesColumnIcon,
@@ -25,7 +25,16 @@ import { HistoryIcon,
 	SunIcon,
 	XIcon,
 	CircleAlertIcon,
+	ClapperboardIcon,
+	FlagIcon,
+	HeadphonesIcon,
+	HistoryIcon,
+	type LucideIcon,
+	MapIcon,
+	TableIcon,
+	ZapIcon,
 } from "lucide-react";
+import { NAV, navItemFor, type NavId } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
@@ -122,6 +131,7 @@ export function LanguageSwitcher() {
 		else setNote(`Restart LangHarness to switch to ${label}.`);
 	};
 
+	const activeNav = navItemFor(pathname);
 	const reviewDue = counts ? counts.due + counts.learning : 0;
 	const reviewNew = counts?.newLeft ?? 0;
 	const activeProfile = profile?.profiles.find((p) => p.id === profile.active);
@@ -346,45 +356,28 @@ export function LanguageSwitcher() {
 			)}
 
 			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
-			<nav className="flex flex-col gap-0.5" aria-label="Main">
-				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />}>
-					Today
-				</NavItem>
-				<NavItem href="/curriculum" testid="path-door" active={pathname === "/curriculum" || pathname === "/grammar" || pathname === "/exam"} icon={<MountainSnowIcon className="size-[18px]" />}>
-					Climb
-				</NavItem>
-				<NavItem href="/review" testid="review-door" active={pathname === "/review"} icon={<RepeatIcon className="size-[18px]" />}>
-					Review
-					{counts && (reviewDue > 0 || reviewNew > 0) && (
-						<span
-							className={cn(
-								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-								reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground",
-							)}
-							data-testid="review-badge"
-						>
-							{reviewDue > 0 ? reviewDue : `${reviewNew} new`}
-						</span>
-					)}
-				</NavItem>
-				<NavItem href="/read" testid="stories-door" active={pathname === "/read" || pathname === "/listen" || pathname === "/watch"} icon={<BookOpenIcon className="size-[18px]" />}>
-					Stories
-				</NavItem>
-				<NavItem href="/speak" testid="speak-door" active={pathname === "/speak" || pathname === "/fluency"} icon={<MicIcon className="size-[18px]" />}>
-					Speak
-				</NavItem>
-				<NavItem href="/words" testid="words-door" active={pathname === "/words"} icon={<BookAIcon className="size-[18px]" />}>
-					Words
-				</NavItem>
-				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones" || pathname === "/map"} icon={<ChartNoAxesColumnIcon className="size-[18px]" />}>
-					Progress
-				</NavItem>
-				<NavItem href="/mistakes" testid="mistakes-door" active={pathname === "/mistakes"} icon={<CircleAlertIcon className="size-[18px]" />}>
-					My mistakes
-				</NavItem>
-				<NavItem href="/log" testid="log-door" active={pathname === "/log"} icon={<HistoryIcon className="size-[18px]" />}>
-					Log
-				</NavItem>
+			<nav className="flex flex-col gap-3" aria-label="Main">
+				{NAV.map((group) => (
+					<div key={group.id} className="flex flex-col gap-0.5" role={group.label ? "group" : undefined} aria-label={group.label ?? undefined} data-testid={`nav-group-${group.id}`}>
+						{group.label && <p className="px-2.5 pb-0.5 pt-1 text-xs font-bold text-muted-foreground">{group.label}</p>}
+						{group.items.map((item) => {
+							const Icon = NAV_ICONS[item.id];
+							return (
+								<NavItem key={item.id} href={item.href} testid={`${item.id}-door`} active={activeNav?.id === item.id} icon={<Icon className="size-[18px]" />}>
+									{item.label}
+									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
+										<span
+											className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums", reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground")}
+											data-testid="review-badge"
+										>
+											{reviewDue > 0 ? reviewDue : `${reviewNew} new`}
+										</span>
+									)}
+								</NavItem>
+							);
+						})}
+					</div>
+				))}
 			</nav>
 		</div>
 	);
@@ -392,6 +385,24 @@ export function LanguageSwitcher() {
 
 /** One primary destination: a trail-sign row. The one you are on is lit
  *  with a sun bar at its edge and a brighter icon, no pill. */
+const NAV_ICONS: Record<NavId, LucideIcon> = {
+	today: SunIcon,
+	curriculum: MountainSnowIcon,
+	review: RepeatIcon,
+	read: BookOpenIcon,
+	listen: HeadphonesIcon,
+	watch: ClapperboardIcon,
+	speak: MicIcon,
+	fluency: ZapIcon,
+	words: BookAIcon,
+	grammar: TableIcon,
+	map: MapIcon,
+	progress: ChartNoAxesColumnIcon,
+	milestones: FlagIcon,
+	mistakes: CircleAlertIcon,
+	log: HistoryIcon,
+};
+
 function NavItem({
 	href,
 	testid,
@@ -411,7 +422,7 @@ function NavItem({
 			data-testid={testid}
 			aria-current={active ? "page" : undefined}
 			className={cn(
-				"relative flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
+				"relative flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
 				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
 			)}
 		>

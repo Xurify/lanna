@@ -4,6 +4,8 @@ import { CLIMB_VIEW_COOKIE, resolveClimbView } from "@/lib/climb-view";
 import { progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
+export const metadata = { title: "Curriculum" };
+
 export const dynamic = "force-dynamic";
 
 /** The whole A1→B2 map (LangHarness): every chapter open, with the

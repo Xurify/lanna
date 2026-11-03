@@ -111,7 +111,7 @@ export function WeekCard({
 			)}
 
 			<Link
-				href="/plan"
+				href="/progress"
 				className="group mt-4 flex items-center gap-3 rounded-2xl border border-sun/30 bg-sun/10 p-3 transition-colors hover:border-sun/50 hover:bg-sun/15"
 				data-testid="goal-line"
 			>

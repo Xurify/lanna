@@ -58,7 +58,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					<ArrowLeftIcon className="q-ico size-3.5" />
 					Today
 				</Link>
-				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">My mistakes</h1>
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Mistakes</h1>
 				<p className="q-line dim mt-2 max-w-2xl">Read from your first tries: the answer you gave before any hint. A miss you then got right still counts here, because that is the one to work on.</p>
 
 				<div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="mistakes-when">

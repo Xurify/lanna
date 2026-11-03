@@ -389,6 +389,12 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 ## Working rules (how work reaches the repo)
 
+### E33. One name per page: route, nav label and page title (2026-11-03, branch `feat/quiet-tool-redesign`)
+
+- A page has one name, and the route, the sidebar label and the page title all say it. The table is `lib/nav.ts`; the sidebar, the jump palette and the document titles read it, and `tests/nav.test.ts` fails when a page under `app/` is missing from it or a label and a title differ.
+- The names: Today, Curriculum, Review; Practice: Read, Listen, Watch, Speak, Fluency; Understand: Words, Grammar, Map; Track: Progress, Milestones, Mistakes, Log. Lesson, Exam, the Tutor chats and Set up are reached from inside other pages and keep their own one-word titles. The Curriculum page's second view is called Mountain; "Your climb to B2" is its subtitle, not its name.
+- The Progress page was `/plan`; `/plan` redirects to `/progress`. A subtitle may carry the old, longer name ("When can I…?" under Milestones).
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

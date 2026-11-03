@@ -1,6 +1,8 @@
 import { MilestonesPage } from "@/components/milestones/milestones-page";
 import { customMilestonesAvailable, milestonesReport, type MilestonesReport } from "@/src/server";
 
+export const metadata = { title: "Milestones" };
+
 export const dynamic = "force-dynamic";
 
 /** When can I…? The milestones calculator (LangHarness): every figure is

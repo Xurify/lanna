@@ -1,6 +1,8 @@
 import { WatchPlayer } from "@/components/watch/watch-player";
 import { videoStore, watchState } from "@/src/server";
 
+export const metadata = { title: "Watch" };
+
 export const dynamic = "force-dynamic";
 
 /** Watch (LangHarness): a YouTube video the learner chose, with both

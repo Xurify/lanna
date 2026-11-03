@@ -779,7 +779,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 				</Link>
 				<div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
 					<div>
-						<h1 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Stories</h1>
+						<h1 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Read</h1>
 						<p className="q-line dim mt-1">Short stories at your level. Tap any word for its meaning.</p>
 					</div>
 					{canWrite && list.length > 0 && (

@@ -139,7 +139,7 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 					Stamps
 				</h2>
 				{stamps && (
-					<Link href="/plan#stamps" className="font-ui text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="stamps-all">
+					<Link href="/progress#stamps" className="font-ui text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="stamps-all">
 						{earned} of {stamps.length} · all
 					</Link>
 				)}

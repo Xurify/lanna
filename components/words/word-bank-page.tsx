@@ -213,7 +213,7 @@ export function WordBankPage() {
 				<div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 					<div>
 						<h1 className="font-title text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-							Words and phrases
+							Words
 						</h1>
 						<p className="mt-1 font-prose text-sm text-muted-foreground sm:text-base">
 							Your words, the ones you know, and your saved phrases in one place.

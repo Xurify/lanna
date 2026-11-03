@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PairForm } from "@/components/pair/pair-form";
 
 export const metadata: Metadata = {
-	title: "Pair this device · LangHarness",
+	title: "Pair this device",
 	robots: { index: false, follow: false },
 };
 

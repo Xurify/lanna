@@ -150,7 +150,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">Your pace lives on the plan. The purposes, the target and your starting level live in setup.</span>
 					<span className="flex min-w-0 flex-wrap gap-2">
 						{[
-							{ id: "learner-open-plan", href: "/plan", label: "Open plan" },
+							{ id: "learner-open-plan", href: "/progress", label: "Open progress" },
 							{ id: "learner-open-setup", href: "/start?edit=1", label: "Open setup" },
 							{ id: "learner-recheck", href: "/start?edit=1&check=1", label: "Re-check my level" },
 						].map((b) => (

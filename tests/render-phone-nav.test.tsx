@@ -6,7 +6,7 @@ import { isPhoneNavPath, PhoneNav } from "@/components/phone-nav";
 
 describe("PhoneNav — the five doors on phones (below md)", () => {
 	it("shows on Today, the Climb, Review, Stories and Progress (with Milestones and the map under it) only", () => {
-		for (const p of ["/", "/curriculum", "/plan", "/milestones", "/review", "/map", "/read"]) assert.ok(isPhoneNavPath(p), p);
+		for (const p of ["/", "/curriculum", "/progress", "/milestones", "/review", "/map", "/read"]) assert.ok(isPhoneNavPath(p), p);
 		for (const p of ["/chat/new", "/lesson", "/listen", "/fluency", "/speak", "/watch", "/reading"]) {
 			assert.ok(!isPhoneNavPath(p), `${p} keeps its own bottom bar`);
 		}

@@ -172,9 +172,9 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>
-				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">When can I…?</h1>
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Milestones</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
-					Each situation asks two things of you: enough <b className="text-foreground">words</b> to cover what is said, and the <b className="text-foreground">speed</b> to turn them into meaning before the next ones arrive. The app measures both and says when they meet, at the pace you planned and at the pace you keep.
+					<b className="text-foreground">When can I…?</b> Each situation asks two things of you: enough <b className="text-foreground">words</b> to cover what is said, and the <b className="text-foreground">speed</b> to turn them into meaning before the next ones arrive. The app measures both and says when they meet, at the pace you planned and at the pace you keep.
 				</p>
 
 				{error && (

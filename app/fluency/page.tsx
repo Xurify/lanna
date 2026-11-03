@@ -2,6 +2,8 @@ import { FluencyPlayer, type FastPlan, type RereadPlan } from "@/components/flue
 import type { PronEngine } from "@/src/core";
 import { fastFor, pronounceEngine, rereadFor, sttEngine } from "@/src/server";
 
+export const metadata = { title: "Fluency" };
+
 export const dynamic = "force-dynamic";
 
 /** Fluency: ?mode=reread times an episode already read; ?mode=fast (the

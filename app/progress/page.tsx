@@ -2,6 +2,8 @@ import { PlanPage } from "@/components/plan/plan-page";
 import { chartData } from "@/components/quiet/chart-data";
 import { milestonesReport, progressSummary, type MilestonesReport } from "@/src/server";
 
+export const metadata = { title: "Progress" };
+
 export const dynamic = "force-dynamic";
 
 /** The Plan: goal, pace sliders, hours, milestones and weak spots in one

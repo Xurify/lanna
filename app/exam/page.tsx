@@ -3,6 +3,8 @@ import { ExamPlayer } from "@/components/exam/exam-player";
 import { CHAPTERS } from "@/src/core";
 import { examFor } from "@/src/server";
 
+export const metadata = { title: "Exam" };
+
 export const dynamic = "force-dynamic";
 
 /** The chapter exam (E14): ?chapter=<id> plays that chapter's exam. The path

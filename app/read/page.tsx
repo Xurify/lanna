@@ -1,6 +1,8 @@
 import { Reader } from "@/components/reading/reader";
 import { readingState, storyStore } from "@/src/server";
 
+export const metadata = { title: "Read" };
+
 export const dynamic = "force-dynamic";
 
 /** Read (LangHarness): a graded episode at the learner's level, every
