@@ -87,3 +87,22 @@ test("a stamp on record keeps its day when judged again, and syncStamps only wri
 	assert.equal(report.earned, 3);
 	assert.equal(report.recent[0]!.id, "stories-1", "newest first");
 });
+
+test("the trail log counts the minutes measured, apart from the guided hours the map credits, and the XP an hour comes from timed days only", () => {
+	const p = progressStore.read();
+	p.days = {
+		"2026-11-01": { xp: 100, minutes: 30 },
+		"2026-11-02": { xp: 150, minutes: 30 },
+		// A day with XP and no measured minutes (before minutes were measured) says nothing about the rate.
+		"2026-10-20": { xp: 900 },
+	} as never;
+	progressStore.write(p);
+	const s = progressSummary(0, new Date("2026-11-02T20:00:00Z"));
+	assert.equal(s.log.minutes, 60);
+	assert.equal(s.log.hours, 0, "no unit is done, so the map credits nothing");
+	assert.equal(s.xpPerHour, 250, "250 XP in 60 measured minutes");
+	// Under an hour of measured study there is no rate to suggest.
+	p.days = { "2026-11-02": { xp: 150, minutes: 20 } } as never;
+	progressStore.write(p);
+	assert.equal(progressSummary(0, new Date("2026-11-02T20:00:00Z")).xpPerHour, null);
+});

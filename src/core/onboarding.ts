@@ -437,6 +437,11 @@ export const DEFAULT_DAYS_PER_WEEK = 6;
 export const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60, 90, 120] as const;
 export const MAX_MINUTES = 600;
 
+/** The daily XP that matches a plan: its minutes a day at the learner's own XP an hour, to the nearest 10. Null while that rate is unknown. */
+export function xpForPlan(minutesPerDay: number, xpPerHour: number | null): number | null {
+	return xpPerHour === null ? null : Math.max(10, Math.min(500, Math.round(((minutesPerDay / 60) * xpPerHour) / 10) * 10));
+}
+
 /** Guided hours a week at the planned minutes and days. */
 export function weeklyHours(minutesPerDay: number, daysPerWeek = DEFAULT_DAYS_PER_WEEK): number {
 	return (minutesPerDay / 60) * daysPerWeek;
