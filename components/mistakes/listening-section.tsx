@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { LoaderCircleIcon, SparklesIcon } from "lucide-react";
+import { AiCallout } from "@/components/ai-callout";
 import { cn } from "@/lib/utils";
-import { CAUSE_MIN_SENTENCES, LISTEN_CAUSES, LISTEN_KIND_LABEL, LISTEN_MIN_MISSED, LISTEN_MIN_SESSIONS, LISTEN_MIN_TYPED, type CauseTrend, type ListenAnalysis, type Trend } from "@/src/core";
+import { CAUSE_MIN_SENTENCES, LISTEN_CAUSES, LISTEN_KIND_LABEL, LISTEN_MIN_MISSED, LISTEN_MIN_SESSIONS, LISTEN_MIN_TYPED, type CauseTrend, type ListenAnalysis, type ListenGuideData, type MistakesReport, type Trend } from "@/src/core";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -48,8 +50,116 @@ function CauseRow({ c }: { c: CauseTrend }) {
 	);
 }
 
-/** What the Listen task says about hearing: how it is going, why sentences were missed, and whether that is changing. Local, no model. */
-export function ListeningSection({ l }: { l: ListenAnalysis }) {
+const DEEP_ADDS = [
+	"Connects the figures: for example short words dropped with a worse second half, or fast clips understood less",
+	"Keeps hearing apart from grammar, spelling and typing, and sends each to the right practice",
+	"Reads the weekly counts for what changed, but calls a trend only where the test above did",
+	"Writes what to practice this week, in the app's own tasks",
+];
+
+function DeepBody({ data }: { data: ListenGuideData }) {
+	return (
+		<div className="flex flex-col gap-5" data-testid="listen-guide-body">
+			{data.summary && <p className="text-[15px] leading-relaxed text-foreground">{data.summary}</p>}
+			{data.patterns.length > 0 && (
+				<div className="flex flex-col gap-3">
+					<h4 className="q-lbl">What the misses share</h4>
+					{data.patterns.map((p) => (
+						<article key={p.title} className="rounded-xl bg-well p-4">
+							<h5 className="text-sm font-semibold text-foreground">{p.title}</h5>
+							{p.evidence && (
+								<p className="mt-1 text-sm text-ink-3" lang="sk">
+									{p.evidence}
+								</p>
+							)}
+							<dl className="mt-2 grid gap-x-3 gap-y-1 text-sm text-foreground sm:grid-cols-[4rem_1fr]">
+								<dt className="text-xs font-semibold text-ink-3">Why</dt>
+								<dd>{p.why}</dd>
+								{p.fix && (
+									<>
+										<dt className="text-xs font-semibold text-ink-3">Fix</dt>
+										<dd>{p.fix}</dd>
+									</>
+								)}
+							</dl>
+						</article>
+					))}
+				</div>
+			)}
+			{data.trends.length > 0 && (
+				<div>
+					<h4 className="q-lbl">Over time</h4>
+					<ul className="mt-2 flex flex-col gap-2 text-sm text-foreground">
+						{data.trends.map((t) => (
+							<li key={t.what}>
+								<b className="font-semibold">{t.what}.</b> <span className="text-ink-2">{t.read}</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
+			{data.next.length > 0 && (
+				<div>
+					<h4 className="q-lbl">This week</h4>
+					<ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-foreground marker:text-ink-4">
+						{data.next.map((n) => (
+							<li key={n}>{n}</li>
+						))}
+					</ul>
+				</div>
+			)}
+			{data.limits && <p className="text-xs leading-relaxed text-ink-3">{data.limits}</p>}
+		</div>
+	);
+}
+
+/** The deep read: one model call over the figures above, written once per set of figures. The page shows the saved one without a call. */
+function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; busy: boolean; error: string | null; onWrite: (force: boolean) => void }) {
+	const { listenGuide: guide, listenGuideCurrent: current, ai } = report;
+	return (
+		<section className="q-card mt-6 p-5" aria-labelledby="listen-guide-title" data-testid="listen-guide">
+			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+				<h3 id="listen-guide-title" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-foreground">
+					<SparklesIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
+					Deep read
+				</h3>
+				{guide && (
+					<p className="text-xs text-ink-3" suppressHydrationWarning>
+						Written {new Date(guide.at).toLocaleDateString(undefined, { dateStyle: "medium" })}
+						{current ? "" : " · your listening has changed since"}
+					</p>
+				)}
+			</div>
+			{guide ? (
+				<div className="mt-3">{guide.data ? <DeepBody data={guide.data} /> : <p className="whitespace-pre-wrap text-sm text-foreground">{guide.text}</p>}</div>
+			) : ai.ready ? (
+				<p className="mt-2 text-sm text-ink-3">An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to practice. It uses your Strong model (Cheap when Strong is empty) and runs once per set of figures.</p>
+			) : (
+				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={DEEP_ADDS} className="mt-3" />
+			)}
+			{error && (
+				<p role="alert" className="mt-3 text-sm text-miss" data-testid="listen-guide-error">
+					{error}
+				</p>
+			)}
+			{ai.ready && (
+				<div className="mt-4 flex flex-wrap items-center gap-3">
+					<button type="button" disabled={busy || (!!guide && !!current)} onClick={() => onWrite(false)} className="q-btn sec pointer-coarse:min-h-11" data-testid="listen-guide-write">
+						{busy ? <LoaderCircleIcon className="q-ico animate-spin" /> : <SparklesIcon className="q-ico" />}
+						{guide ? (current ? "Deep read is up to date" : "Read it again") : "Read my listening"}
+					</button>
+					<p className="text-xs text-ink-3" data-testid="listen-guide-privacy">
+						Sends the figures on this page and the sentences you missed, with what you typed, to your model provider. Nothing else leaves this computer.
+					</p>
+				</div>
+			)}
+			{!ai.ready && guide && <AiCallout status={ai} title="AI is off, so this read cannot be refreshed" adds={[]} className="mt-4" />}
+		</section>
+	);
+}
+
+/** What the Listen task says about hearing: how it is going, why sentences were missed, and whether that is changing. The figures are local, no model; the deep read is the optional model call. */
+export function ListeningSection({ l, report, busy, error, onWrite }: { l: ListenAnalysis; report: MistakesReport; busy: boolean; error: string | null; onWrite: (force: boolean) => void }) {
 	if (l.sentences === 0) return null;
 	const from = l.from === l.to ? l.from : `${l.from} to ${l.to}`;
 	return (
@@ -133,6 +243,8 @@ export function ListeningSection({ l }: { l: ListenAnalysis }) {
 							</li>
 						) : null}
 					</ul>
+
+					<DeepRead report={report} busy={busy} error={error} onWrite={onWrite} />
 
 					{l.misses.length > 0 && (
 						<>

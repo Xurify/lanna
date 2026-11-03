@@ -29,10 +29,10 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 	const [report, setReport] = useState<MistakesReport | null>(initial);
-	const [busy, setBusy] = useState<"analyze" | "guide" | null>(null);
+	const [busy, setBusy] = useState<"analyze" | "guide" | "listen-guide" | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const run = async (action: "analyze" | "guide", force = false) => {
+	const run = async (action: "analyze" | "guide" | "listen-guide", force = false) => {
 		setBusy(action);
 		setError(null);
 		try {
@@ -118,7 +118,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 						</>
 					)
 				)}
-				{a?.listening && <ListeningSection l={a.listening} />}
+				{a?.listening && report && <ListeningSection l={a.listening} report={report} busy={busy === "listen-guide"} onWrite={(force) => void run("listen-guide", force)} error={busy === null ? error : null} />}
 			</main>
 		</div>
 	);

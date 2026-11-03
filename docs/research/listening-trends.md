@@ -47,9 +47,23 @@ The first version read causes from 20 typed sentences and compared windows of 6.
 
 At ten sentences a session, the causes appear after five or more sessions and the first trend after about three weeks of regular Listen.
 
+## The deep read
+
+The causes and trends are rules and tests, so the figures cannot be wrong in the way a model's prose can. What they cannot do is connect two findings or say what to practice. The deep read is a model call over those figures and nothing else (`src/core/listen-guide.ts`, `src/server/listen-guide.ts`).
+
+How it is kept from saying more than the data does:
+
+- **It is handed called trends, not raw series.** Each cause arrives with "less often (called)", "more often (called)" or "no clear change", from the same Holm-corrected test as the page. The prompt forbids reading "no clear change" as "the same" and forbids calling a trend from the weekly counts, which are shown to it only so it can describe them.
+- **Hearing is kept apart.** A word not met is vocabulary, a wrong ending is grammar, a consonant written as said and i against y are spelling, a one-letter slip may be typing. The read must say which a pattern is and, where it is not hearing, send it to the practice that fits.
+- **Three more cuts** are worked out locally for it, each said only past chance and with 30 sentences a side: the first half of a session against the second (tiring), short sentences (up to 6 words) against long (9 and more), and the sentences with each cause by week.
+- **Written once per set of figures.** The facts have a digest; the same digest reuses the saved read, a new snapshot keeps it, new sentences mark it stale. It needs the same floor as the causes.
+- **What the model sees** is the figures and the latest eight misses with what was typed. The card says so before the first call.
+
+What this does not fix: the model's reply is prose built on small samples, so it can still over-explain a pattern three misses deep. The prompt asks for at least several misses behind a pattern and a one-line statement of limits; the owner has to judge whether its patterns match what they hear.
+
 ## Limits
 
 - Until the causes are ready, the page says how far each floor is.
 - A typing slip cannot be told from a hearing error by the letters alone: "slip" is one letter off in a way that sounds the same, and a hearing error that happens to be one letter will be filed there.
-- The classes are rules, not a model. An AI guide could read these patterns and say what to practice (as E25 does for lessons); it is not built.
+- The classes are rules, not a model. The deep read (above) is the model call that reads their figures; it is optional.
 - Checked on synthetic logs (18 sessions over five weeks) and unit tests; not on a real learner's history.

@@ -146,6 +146,12 @@ export interface ListenAnalysis {
 	peeked: { recent: number | null; earlier: number | null };
 	/** Accuracy by how fast the clip was spoken, when each group has enough sentences. */
 	pace: { slow: { reps: number; right: number }; fast: { reps: number; right: number }; slowBelow: number; fastAbove: number; fastHarder: boolean } | null;
+	/** Accuracy by place in a session: the first half against the second. Null without enough sentences in each. */
+	session: { first: { reps: number; right: number }; second: { reps: number; right: number }; tiring: boolean } | null;
+	/** Accuracy by sentence length: short (up to SHORT_WORDS words) against long (LONG_WORDS and up). Null without enough in each. */
+	length: { short: { reps: number; right: number }; long: { reps: number; right: number }; longHarder: boolean } | null;
+	/** The last weeks, each with the typed sentences read and how many had each cause: the series the deep read follows (the page shows the two-window trend). */
+	causeWeeks: Array<{ week: string; read: number; causes: Partial<Record<ListenCause, number>> }>;
 	/** The latest typed misses, newest first. */
 	misses: ListenMiss[];
 	/** Enough typed sentences for the causes and trends to be read as more than chance. */
@@ -176,6 +182,11 @@ export const PACE_MIN_REPS = 20;
 export const EFFORT_MIN_REPS = 30;
 /** A week with fewer sentences is shown without its share. */
 export const WEEK_MIN_REPS = 10;
+/** Sentences each half of a session, and each length group, needs before the two are compared. */
+export const CUT_MIN_REPS = 30;
+/** Words: a short sentence has up to this many, a long one this many or more. */
+export const SHORT_WORDS = 6;
+export const LONG_WORDS = 9;
 /** Syllables a second below and above which a clip counts as slow or fast (the slovak.wiki clips run 2.3 to 5.4). */
 export const SLOW_PACE = 3.5;
 export const FAST_PACE = 4.6;
@@ -339,7 +350,7 @@ export function holm(ps: readonly number[], alpha = TREND_ALPHA): boolean[] {
 
 export function analyzeListening(lessons: readonly LoggedListen[], now: Date): ListenAnalysis {
 	const cut = now.getTime() - TREND_DAYS * DAY_MS;
-	type Rep = { at: number; day: string; session: number; typed: boolean; right: boolean; replays: number; peeked: boolean; pace: number | null; errors: WordError[] | null; sentence: string; given: string; atIso: string };
+	type Rep = { at: number; day: string; session: number; half: 0 | 1 | null; words: number; typed: boolean; right: boolean; replays: number; peeked: boolean; pace: number | null; errors: WordError[] | null; sentence: string; given: string; atIso: string };
 	const reps: Rep[] = [];
 	let sessions = 0;
 	for (const lesson of lessons) {
@@ -347,14 +358,16 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 		const at = Date.parse(lesson.at);
 		if (!Number.isFinite(at)) continue;
 		const session = sessions++;
-		for (const r of lesson.reps) {
+		for (const [i, r] of lesson.reps.entries()) {
 			const typed = r.kind === "dictation";
 			// The words were heard: only the marks are off. Understood by ear, as long as the text was not shown first.
 			const right = r.verdict !== "wrong" && !r.peeked;
 			// Causes need the stretch word as logged; an older typed miss without it, or a copied one, is not read.
 			const errors = typed && !r.peeked && r.stretch !== undefined ? (r.verdict === "exact" ? [] : readTyped(r.sentence, r.given, r.stretch)) : null;
 			const syl = countSyllables(r.sentence);
-			reps.push({ at, day: lesson.at.slice(0, 10), session, typed, right, replays: r.replays ?? 0, peeked: !!r.peeked, pace: r.heardMs && r.heardMs >= 800 && syl >= 3 ? syl / (r.heardMs / 1000) : null, errors, sentence: r.sentence, given: r.given, atIso: lesson.at });
+			// A session of under six sentences has no first and second half worth comparing.
+			const half = lesson.reps.length >= 6 ? (i < lesson.reps.length / 2 ? 0 : 1) : null;
+			reps.push({ at, day: lesson.at.slice(0, 10), session, half, words: listenWords(r.sentence).length, typed, right, replays: r.replays ?? 0, peeked: !!r.peeked, pace: r.heardMs && r.heardMs >= 800 && syl >= 3 ? syl / (r.heardMs / 1000) : null, errors, sentence: r.sentence, given: r.given, atIso: lesson.at });
 		}
 	}
 	reps.sort((a, b) => a.at - b.at);
@@ -435,6 +448,22 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 	const fastRight = fast.filter((r) => r.right).length;
 	const paceZ = twoProportionZ(slowRight, slow.length, fastRight, fast.length);
 	const rightN = reps.filter((r) => r.right).length;
+	const rate = (rs: readonly Rep[]) => ({ reps: rs.length, right: rs.filter((r) => r.right).length });
+	const firstHalf = rate(reps.filter((r) => r.half === 0));
+	const secondHalf = rate(reps.filter((r) => r.half === 1));
+	const halfZ = twoProportionZ(firstHalf.right, firstHalf.reps, secondHalf.right, secondHalf.reps);
+	const shortS = rate(reps.filter((r) => r.words > 0 && r.words <= SHORT_WORDS));
+	const longS = rate(reps.filter((r) => r.words >= LONG_WORDS));
+	const lengthZ = twoProportionZ(shortS.right, shortS.reps, longS.right, longS.reps);
+	const causeWeeks = [...new Set(readable.map((r) => weekOf(r.at)))]
+		.sort()
+		.slice(-WEEKS_KEPT)
+		.map((week) => {
+			const inWeek = readable.filter((r) => weekOf(r.at) === week);
+			const causes: Partial<Record<ListenCause, number>> = {};
+			for (const r of inWeek) for (const c of new Set(r.errors!.map((e) => e.cause))) causes[c] = (causes[c] ?? 0) + 1;
+			return { week, read: inWeek.length, causes };
+		});
 	return {
 		sentences: reps.length,
 		typed: typedReps.length,
@@ -456,6 +485,9 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 			slow.length >= PACE_MIN_REPS && fast.length >= PACE_MIN_REPS
 				? { slow: { reps: slow.length, right: slowRight }, fast: { reps: fast.length, right: fastRight }, slowBelow: SLOW_PACE, fastAbove: FAST_PACE, fastHarder: paceZ !== null && paceZ >= TREND_Z }
 				: null,
+		session: firstHalf.reps >= CUT_MIN_REPS && secondHalf.reps >= CUT_MIN_REPS ? { first: firstHalf, second: secondHalf, tiring: halfZ !== null && halfZ >= TREND_Z } : null,
+		length: shortS.reps >= CUT_MIN_REPS && longS.reps >= CUT_MIN_REPS ? { short: shortS, long: longS, longHarder: lengthZ !== null && lengthZ >= TREND_Z } : null,
+		causeWeeks,
 		misses: missed
 			.slice(-MISSES_KEPT)
 			.reverse()

@@ -6,9 +6,11 @@
  * save a new snapshot with its time; no model call.
  * POST /api/mistakes {action: "guide", force?} — write the guide from the
  * saved analysis on the cheap model slot; the same facts reuse the saved one.
+ * POST /api/mistakes {action: "listen-guide", force?} — the deep read of the
+ * listening, written from the same saved analysis and kept apart from the guide.
  */
 
-import { analyzeNow, mistakesReport, writeGuide } from "@/src/server";
+import { analyzeNow, mistakesReport, writeGuide, writeListenGuide } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +23,9 @@ export async function POST(req: Request) {
 	try {
 		if (body?.action === "analyze") return Response.json(analyzeNow());
 		if (body?.action === "guide") return Response.json(await writeGuide({ force: body.force === true }));
+		if (body?.action === "listen-guide") return Response.json(await writeListenGuide({ force: body.force === true }));
 	} catch (err) {
 		return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 422 });
 	}
-	return Response.json({ message: 'action must be "analyze" or "guide"' }, { status: 400 });
+	return Response.json({ message: 'action must be "analyze", "guide" or "listen-guide"' }, { status: 400 });
 }

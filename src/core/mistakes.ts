@@ -14,6 +14,7 @@
 
 import type { AiStatus } from "./ai-status.ts";
 import type { ListenAnalysis } from "./listen-analysis.ts";
+import type { ListenGuideRecord } from "./listen-guide.ts";
 import type { PersonalPractice } from "./personal.ts";
 import type { StoryUsage } from "./reading.ts";
 import { countsAsFirstTry } from "./first-try.ts";
@@ -131,6 +132,9 @@ export interface MistakesReport {
 	guide: GuideRecord | null;
 	/** The guide was written from the facts the analysis has now. */
 	guideCurrent: boolean;
+	/** The deep read of the listening (src/core/listen-guide.ts) and whether it was written from the facts the analysis has now. Absent in reports from before it existed. */
+	listenGuide?: ListenGuideRecord | null;
+	listenGuideCurrent?: boolean;
 	/** Whether a model can be called (a slot is set and its key is there). */
 	ai: AiStatus;
 }

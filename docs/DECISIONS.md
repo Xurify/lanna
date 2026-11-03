@@ -447,13 +447,23 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Nothing is called from a handful of sentences (owner, 2026-11-03: "make sure we have enough data points before analysis"). The causes wait for 50 typed sentences, 15 of them missed, over 3 sessions. A cause is listed from 4 sentences in 2 sessions. A trend needs 30 sentences from 3 sessions in each window and 5 expected sentences with and without the cause, and must pass Holm's correction across all the causes tested together. A change that does not pass reads "no clear change", never "about the same". Fast against slow clips is said only when the z-test passes with 20 sentences in each group; a week under 10 sentences shows no share. The numbers are constants at the top of `src/core/listen-analysis.ts`.
 - A Listen rep logs `stretch`, the unmet words as they stand in the sentence. A typed miss without it is not read.
 - `/api/listen` passes `answer` through: without it a typed sentence is not graded again, is logged as a meaning, and loses its accents-only half credit.
-- The result is `MistakeAnalysis.listening`, shown as a section on My mistakes, from the snapshot; it is local and free. The guide does not read it yet.
+- The result is `MistakeAnalysis.listening`, shown as a section on My mistakes, from the snapshot; it is local and free. The optional deep read (E40) is the one model call over it.
 
 ### E39. The XP goal is not a setting: it follows the minutes (2026-11-03, branch `feat/settings-goals-and-time-studied`)
 
 **Why:** the learner picks how long to study. The XP goal was a second number, fixed at 50 with no screen to change it, and one lesson cleared it against a plan of 90 minutes, so "goal met" said nothing. The owner: it should be calculated from what the learner already chose.
 
 **How to apply:** `dailyGoal` in the progress summary is the plan's `minutesPerDay` at the learner's own XP an hour (`xpForPlan`, `src/core/onboarding.ts`), to the nearest 10 between 10 and 500. The rate is measured: XP over the days that have measured minutes, once there is an hour of them, else 120 XP an hour (`DEFAULT_XP_PER_HOUR`). It is not stored, `PUT /api/progress {dailyGoal}` is gone, and Settings → Learning shows the number as a line under the minutes. A change to the minutes moves it at once.
+
+### E40. A deep read of the listening: the model explains the figures, it adds none (2026-11-03, branch `feat/listening-trends`)
+
+**Why:** the owner wants a deeper analysis and better trends. The causes and their trends are rules and tests, which is what keeps them honest, but they cannot connect two findings (short words dropped and a worse second half) or say what to practice. A model can, if it is held to the figures. Reasoning and limits: [research/listening-trends.md](research/listening-trends.md).
+
+**How to apply:**
+- The deep read is one optional model call (Strong slot, else Cheap) from `listenGuideFacts` in `src/core/listen-guide.ts`. It is written to `analysis.json` beside the guide, reused until the figures change (digest), kept by a new snapshot, and shown stale, not dropped, when new sentences arrive. It needs the same floor as the causes (`analysis.listening.ready`).
+- Every trend in the facts is already called, or not, by the page's test. The prompt says "no clear change" is never "the same", weekly counts are described and never called, and hearing is kept apart from grammar, spelling and typing, so a miss that is not the ear is sent to the practice that fits it.
+- `analyzeListening` keeps three more cuts for it, each past chance or silent: first against second half of a session, short against long sentences (`SHORT_WORDS`, `LONG_WORDS`), and the sentences with each cause by week. The page shows the cuts only through the deep read.
+- It sends the figures and the latest typed misses with what was typed to the model provider, and the card says so. `writeListenGuide` takes a `say` function in place of the model for tests.
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
