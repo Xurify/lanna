@@ -40,7 +40,7 @@ import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
+import { captionLanguageName, coverageBand, formatClock, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
@@ -380,7 +380,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 					Today
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Watch</h1>
-				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
+				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a Slovak YouTube link (Czech captions work too when a video has no Slovak ones, and the video is labelled Czech). You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
 
 				<form onSubmit={submit} className="q-card mt-6 flex flex-col gap-3 p-4 sm:flex-row" data-testid="watch-form">
 					<label className="sr-only" htmlFor="watch-url">
@@ -474,6 +474,7 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 				<p className="font-ui text-sm font-[600] text-muted-foreground">
 					{video.channel ? `${video.channel} · ` : ""}
 					{formatClock(video.durationSec)} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
+					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang="sk">
 					{video.title}

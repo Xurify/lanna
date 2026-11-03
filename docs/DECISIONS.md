@@ -467,6 +467,16 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The deep read also gives `noticed` (links between figures the learner could not see one at a time; a link the facts do not state must be marked a guess) and `tips` (things to try, each saying which pattern, cause or finding it answers; ordinary listening technique is allowed, a promised result or an invented number is not).
 - It sends the figures and the latest typed misses with what was typed to the model provider, and the card says so. `writeListenGuide` takes a `say` function in place of the model for tests.
 
+### E41. Watch takes Czech captions when a video has no Slovak ones (2026-11-03, branch `feat/czech-captions`)
+
+**Why:** the owner pasted a Czech cooking video into Watch and got "This video has captions in cs but none in Slovak." Czech is near enough to Slovak to follow, and many useful videos have no Slovak track at all. The owner asked to allow it.
+
+**How to apply:**
+- Slovak always comes first, in any form (made by people or automatic). Czech is used only when the video has no Slovak track, and a human Czech track beats an automatic one, as for Slovak. The order is `captionFallbacks` on the profile in `src/core/language.ts`; a language is added there, not in the Watch code.
+- The track's language is kept in `source.trackLang`; the record's `lang` stays the learner's (`sk`). The preview names the language ("YouTube's automatic captions in Czech"), the translation prompt says the subtitles are Czech, and the error names every language tried ("none in Slovak or Czech").
+- The on-screen labels "Slovak" (show the Slovak, T) and the Slovak word tags stay as they are. On a Czech video they show Czech text; the preview names the language so the learner knows which it is.
+- Open, not decided here: Czech words are read against the Slovak lexicon, so a tapped Czech word can be queued into the Slovak deck, and a Czech watching counts toward the Slovak listening speed. See the November changelog.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

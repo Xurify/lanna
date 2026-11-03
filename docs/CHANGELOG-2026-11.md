@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 3 November: Czech captions for Watch (branch `feat/czech-captions`)
+
+- **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labelled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).
+- **Error text:** "none in Slovak or Czech" instead of "none in Slovak".
+- **Unverified:** fetching a Czech track from YouTube (the cloud container cannot reach YouTube; the tests use a scripted track). The owner should paste a Czech video with no Slovak captions and check the preview and the lines.
+- **Open:** a Czech word tapped on Watch can be queued into the Slovak deck; a Czech watching counts toward the Slovak listening speed on the milestones page. Neither is filtered yet.
+- **Open, possibly already true for Slovak:** when the yt-dlp path runs (every video without a Slovak track, including English ones), yt-dlp may return YouTube's machine translation of a track rather than the speaker's language. Not checked against a live video.
+
 ## 2 November: Quiet tool redesign (branch `feat/quiet-tool-redesign`, not merged)
 
 - **Owner changes after the first pass (the mockups no longer bind where they conflict):** Today has no strip of seven icons and no legend; it is the plain plan, a list with each task's word label, minutes and state, and the next task as one large card with one Start (Enter starts it). Tasks that need a tutor chat are left out of the plan while no AI key is set, so Review and Today show no "Needs an AI key" item. The rail (and, on a phone, the end of Today) holds real charts: XP per day against the goal, a five-week streak calendar, level progress with the XP to the next level, and minutes by strand. The same charts open the Progress page. An empty week or a new learner gets a sentence in place of the chart. Read has no "line by line" (Veta po vete) mode: only the episode, tap-to-gloss and its questions.

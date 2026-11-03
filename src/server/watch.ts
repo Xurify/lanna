@@ -25,7 +25,7 @@ import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
-import { LANGUAGES } from "../core/language.ts";
+import { captionLanguageName, LANGUAGES } from "../core/language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
@@ -61,6 +61,8 @@ import { enqueueWords } from "./review.ts";
 
 const run = promisify(execFile);
 const code = () => LANGUAGES[ACTIVE_PROFILE].code;
+/** The caption languages taken, the learner's own first. */
+const captionLangs = (): string[] => [code(), ...(LANGUAGES[ACTIVE_PROFILE].captionFallbacks ?? []).map((f) => f.code)];
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 const ANDROID_VERSION = "20.10.38";
 
@@ -164,11 +166,16 @@ async function metaFromWatchPage(id: string, signal?: AbortSignal): Promise<Vide
 	return metaOf(extractJsonAfter(html, /ytInitialPlayerResponse\s*=\s*/), id, "watch-page");
 }
 
-/** The Slovak track to use: a human-made one first, then YouTube's
- *  automatic one. Null when the video has none. */
-export function pickTrack(tracks: readonly CaptionTrack[], lang: string = code()): CaptionTrack | null {
-	const of = (t: CaptionTrack) => t.languageCode.toLowerCase().split("-")[0] === lang;
-	return tracks.find((t) => of(t) && t.kind !== "asr") ?? tracks.find((t) => of(t)) ?? null;
+/** The track to use, in the order of `langs`: for each language a
+ *  human-made track first, then YouTube's automatic one. Null when the
+ *  video has none in any of them. */
+export function pickTrack(tracks: readonly CaptionTrack[], langs: readonly string[] = captionLangs()): CaptionTrack | null {
+	for (const lang of langs) {
+		const of = (t: CaptionTrack) => t.languageCode.toLowerCase().split("-")[0] === lang;
+		const track = tracks.find((t) => of(t) && t.kind !== "asr") ?? tracks.find((t) => of(t));
+		if (track) return track;
+	}
+	return null;
 }
 
 async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
@@ -214,28 +221,33 @@ export function ytDlpPath(): string | null {
 }
 
 /** The captions through yt-dlp: it keeps up with YouTube's changes better
- *  than any hand-written fetch. Subtitles only; nothing else is written. */
-async function captionsViaYtDlp(id: string, lang: string, signal?: AbortSignal): Promise<FetchedCaptions | null> {
+ *  than any hand-written fetch. Subtitles only; nothing else is written.
+ *  The first of `langs` the video has captions in wins. */
+async function captionsViaYtDlp(id: string, langs: readonly string[], signal?: AbortSignal): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin) return null;
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-captions-"));
 	try {
-		const { stdout } = await run(bin, ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", `${lang},${lang}-orig,${lang}.*`, "--sub-format", "json3/srv3/vtt/best", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 120_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true });
+		const subLangs = langs.map((lang) => `${lang},${lang}-orig,${lang}.*`).join(",");
+		const { stdout } = await run(bin, ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", subLangs, "--sub-format", "json3/srv3/vtt/best", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 120_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true });
 		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number; subtitles?: Record<string, unknown>; automatic_captions?: Record<string, unknown> };
 		const files = fs.readdirSync(dir).filter((f) => f.startsWith(`${id}.`) && /\.(json3|srv3|xml|vtt)$/.test(f));
-		const file = files.find((f) => !/\.(?:[a-z]{2,3}(?:-[A-Za-z]+)?)\.(?:json3|srv3|xml|vtt)$/.test(f) || f.includes(`.${lang}`)) ?? files[0];
-		if (!file) return null;
-		const text = fs.readFileSync(path.join(dir, file), "utf-8");
-		const cues = parseCaptions(text);
-		if (!cues.length) return null;
-		const ext = file.endsWith(".json3") ? "json" : file.endsWith(".vtt") ? "vtt" : "xml";
-		const manual = Object.keys(info.subtitles ?? {}).some((k) => k.split("-")[0] === lang);
-		return {
-			meta: { id, title: info.title?.trim() || `YouTube ${id}`, ...(info.channel || info.uploader ? { channel: (info.channel ?? info.uploader)! } : {}), durationSec: Number(info.duration) || 0 },
-			cues,
-			source: { kind: manual ? "captions" : "auto-captions", trackLang: lang, via: "yt-dlp" },
-			raw: { ext, text },
-		};
+		for (const lang of langs) {
+			const file = files.find((f) => f.startsWith(`${id}.${lang}.`) || f.startsWith(`${id}.${lang}-`));
+			if (!file) continue;
+			const text = fs.readFileSync(path.join(dir, file), "utf-8");
+			const cues = parseCaptions(text);
+			if (!cues.length) continue;
+			const ext = file.endsWith(".json3") ? "json" : file.endsWith(".vtt") ? "vtt" : "xml";
+			const manual = Object.keys(info.subtitles ?? {}).some((k) => k.split("-")[0] === lang);
+			return {
+				meta: { id, title: info.title?.trim() || `YouTube ${id}`, ...(info.channel || info.uploader ? { channel: (info.channel ?? info.uploader)! } : {}), durationSec: Number(info.duration) || 0 },
+				cues,
+				source: { kind: manual ? "captions" : "auto-captions", trackLang: lang, via: "yt-dlp" },
+				raw: { ext, text },
+			};
+		}
+		return null;
 	} finally {
 		fs.rmSync(dir, { recursive: true, force: true });
 	}
@@ -287,18 +299,20 @@ export class NoCaptionsError extends Error {
 	}
 }
 
-/** The Slovak captions of a video, from the first source that has them:
- *  YouTube's player API, the watch page, yt-dlp; then, only when asked,
- *  a transcription of the audio. A kept track is reused. */
+/** The captions of a video in the first of the caption languages it has
+ *  (Slovak, then Czech), from the first source that has them: YouTube's
+ *  player API, the watch page, yt-dlp; then, only when asked, a
+ *  transcription of the audio in the first language. A kept track is reused. */
 export async function fetchCaptions(id: string, opts: { transcribe?: boolean; lang?: string; signal?: AbortSignal; onStage?: (s: PrepareStage) => void } = {}): Promise<FetchedCaptions> {
-	const lang = opts.lang ?? code();
+	const langs = opts.lang ? [opts.lang] : captionLangs();
+	const lang = langs[0]!;
 	let meta: VideoMeta | null = null;
 	const errors: string[] = [];
 	for (const get of [metaFromInnertube, metaFromWatchPage]) {
 		try {
 			meta = await get(id, opts.signal);
 			if (meta) {
-				const track = pickTrack(meta.tracks, lang);
+				const track = pickTrack(meta.tracks, langs);
 				if (track) {
 					const got = await fetchTrack(track, opts.signal);
 					if (got) return { meta: { id, title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec }, cues: got.cues, source: { kind: track.kind === "asr" ? "auto-captions" : "captions", trackLang: track.languageCode, ...(track.name ? { trackName: track.name } : {}), via: meta.via }, raw: { ext: got.ext, text: got.text } };
@@ -314,7 +328,7 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 		}
 	}
 	try {
-		const viaDlp = await captionsViaYtDlp(id, lang, opts.signal);
+		const viaDlp = await captionsViaYtDlp(id, langs, opts.signal);
 		if (viaDlp) return viaDlp;
 	} catch (err) {
 		errors.push(`yt-dlp: ${err instanceof Error ? err.message : String(err)}`);
@@ -326,8 +340,8 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 		if (got) return got;
 		errors.push("deepgram: no speech found");
 	}
-	const name = LANGUAGES[ACTIVE_PROFILE].english;
-	const why = meta ? (meta.tracks.length ? `This video has captions in ${[...new Set(meta.tracks.map((t) => t.languageCode))].join(", ")} but none in ${name}.` : `This video has no captions at all.`) : `YouTube did not answer for this video${errors.length ? ` (${errors[errors.length - 1]})` : ""}.`;
+	const wanted = langs.map(captionLanguageName).join(" or ");
+	const why = meta ? (meta.tracks.length ? `This video has captions in ${[...new Set(meta.tracks.map((t) => t.languageCode))].join(", ")} but none in ${wanted}.` : `This video has no captions at all.`) : `YouTube did not answer for this video${errors.length ? ` (${errors[errors.length - 1]})` : ""}.`;
 	throw new NoCaptionsError(`${why}${!meta || meta.tracks.length === 0 ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and a Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe);
 }
 
@@ -376,13 +390,15 @@ async function ask(engine: PiEngine, system: string, prompt: string, usage: Stor
  *  enough that a miscount is cheap to redo. */
 export const TRANSLATE_CHUNK = 40;
 
-export async function translateLines(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string): Promise<string[]> {
+export async function translateLines(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, trackLang: string = code()): Promise<string[]> {
 	const out: string[] = [];
+	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not Slovak: translate what is said.` : "";
 	for (let at = 0; at < lines.length; at += TRANSLATE_CHUNK) {
 		const chunk = lines.slice(at, at + TRANSLATE_CHUNK);
 		const before = lines.slice(Math.max(0, at - 3), at);
 		const prompt = [
 			`Video: "${title}". Lines ${at + 1}–${at + chunk.length} of ${lines.length}.`,
+			foreign,
 			before.length ? `For context, the lines just before (do not translate these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
 			`Translate these ${chunk.length} lines, one English string each, same order:\n${JSON.stringify(chunk, null, 0)}`,
 		]
@@ -487,7 +503,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		}
 		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
 		setStage(id, "translating");
-		const en = await translateLines(engine, lines.map((l) => l.sk), usage, fetched.meta.title);
+		const en = await translateLines(engine, lines.map((l) => l.sk), usage, fetched.meta.title, fetched.source.trackLang);
 		const segments = glossSegments(lines, en, lexicon, k);
 		setStage(id, "questions");
 		const questions = opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);

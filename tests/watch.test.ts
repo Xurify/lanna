@@ -22,6 +22,7 @@ process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const core = await import("../src/core/watch.ts");
+const { captionLanguageName } = await import("../src/core/language.ts");
 const { dailyPlan, curriculumState } = await import("../src/core/curriculum.ts");
 type UnitId = import("../src/core/lesson.ts").UnitId;
 const { strandMinutes } = await import("../src/core/strands.ts");
@@ -155,6 +156,24 @@ test("extractJsonAfter reads a player response out of a watch page whole", () =>
 	assert.equal(watch.pickTrack([{ baseUrl: "a", languageCode: "en" }]), null);
 });
 
+test("pickTrack: Slovak first, Czech only when there is no Slovak, a human track before an automatic one in each language", () => {
+	const csHuman = { baseUrl: "cs", languageCode: "cs" };
+	const csAsr = { baseUrl: "cs-asr", languageCode: "cs", kind: "asr" };
+	const skAsr = { baseUrl: "sk-asr", languageCode: "sk", kind: "asr" };
+	const en = { baseUrl: "en", languageCode: "en" };
+	assert.equal(watch.pickTrack([csHuman, skAsr], ["sk", "cs"])!.baseUrl, "sk-asr");
+	assert.equal(watch.pickTrack([csAsr, csHuman, en], ["sk", "cs"])!.baseUrl, "cs");
+	assert.equal(watch.pickTrack([en, csAsr], ["sk", "cs"])!.baseUrl, "cs-asr");
+	assert.equal(watch.pickTrack([csHuman]), csHuman, "the default list takes Czech after Slovak");
+	assert.equal(watch.pickTrack([csHuman], ["sk"]), null);
+});
+
+test("captionLanguageName: the profile's language and its Czech fallback by name, anything else by code", () => {
+	assert.equal(captionLanguageName("sk"), "Slovak");
+	assert.equal(captionLanguageName("cs"), "Czech");
+	assert.equal(captionLanguageName("de"), "de");
+});
+
 // ─── The record, on a scripted engine ───────────────────────────────────────
 
 const lines = core.segmentCues(core.parseJson3(FIXTURE));
@@ -272,4 +291,20 @@ describe("a video on a scripted engine", () => {
 		assert.equal(twice.rewatch, true);
 		assert.equal(twice.xp, v.questions.length * 5);
 	});
+});
+
+test("a video with only Czech captions is prepared, kept as Czech, and the translator is told it is Czech", async () => {
+	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const sent: string[] = [];
+	const streamFn: typeof faux.streamSimple = (...args) => {
+		sent.push(JSON.stringify(args[1]));
+		return faux.streamSimple(...args);
+	};
+	const czech = async (id: string) => ({ ...(await captions(id)), source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const } });
+	const v = await watch.prepareVideo("https://youtu.be/CZCZCZCZCZC", { engine: { model: faux.getModel(), streamFn }, model: "faux:watch", captions: czech, now: new Date("2026-11-03T10:00:00Z") });
+	assert.equal(v.lang, "sk", "the video belongs to the Slovak profile");
+	assert.equal(v.source.trackLang, "cs");
+	assert.equal(v.segments.length, lines.length);
+	assert.ok(sent[0]!.includes("These subtitles are in Czech, not Slovak"), "the first call says the subtitles are Czech");
 });

@@ -35,6 +35,10 @@ export interface LanguageInfo {
 	edgeVoices: string[];
 	/** Optional dedicated reference/dictionary site for this language profile. */
 	referenceSite?: LanguageReferenceSite;
+	/** Other languages a Watch video may be captioned in when it has none in
+	 *  this one, most preferred first. Czech is near enough to Slovak to
+	 *  follow; the video is labelled with the language it is in. */
+	captionFallbacks?: Array<{ code: string; english: string }>;
 }
 
 export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
@@ -50,6 +54,7 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 			label: "slovak.wiki",
 			baseUrl: "https://slovak.wiki",
 		},
+		captionFallbacks: [{ code: "cs", english: "Czech" }],
 	},
 	russian: {
 		id: "russian",
@@ -65,6 +70,17 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 		},
 	},
 };
+
+/** The English name of a caption language: a profile's own, or one of its
+ *  fallbacks. Unknown codes come back as they are. */
+export function captionLanguageName(code: string): string {
+	for (const info of Object.values(LANGUAGES)) {
+		if (info.code === code) return info.english;
+		const fallback = info.captionFallbacks?.find((f) => f.code === code);
+		if (fallback) return fallback.english;
+	}
+	return code;
+}
 
 /**
  * Pre-configured presets for languages that can be plugged into LangHarness.

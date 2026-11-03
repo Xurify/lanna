@@ -241,7 +241,7 @@ everything the app made of its captions, paid for once.
 - \`<id>.json\` (the YouTube video id): \`title\`, \`channel\`, \`url\`,
   \`durationSec\`, \`source\` (\`captions\` = made by people,
   \`auto-captions\` = YouTube's automatic ones, \`transcription\` = the
-  audio transcribed because the video had none; and how it was fetched),
+  audio transcribed because the video had none; and how it was fetched; \`trackLang\` is the caption language, \`cs\` when the video had no Slovak),
   \`level\` (yours when it was prepared); \`segments[]\`: every line with
   \`start\`/\`end\` (seconds), \`sk\`, \`en\` (the translation) and
   \`tokens[]\` (every word with the dictionary's \`slug\`, \`lemma\`,
