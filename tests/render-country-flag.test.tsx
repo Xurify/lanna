@@ -2,11 +2,14 @@ import React from "react";
 (globalThis as Record<string, unknown>).React = React;
 
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { CountryFlag, langToCountryCode } from "../components/ui/country-flag.tsx";
+import { CountryFlag, langToCountryCode, loadFlags } from "../components/ui/country-flag.tsx";
 
 describe("CountryFlag & langToCountryCode", () => {
+	// The flag set loads on first use, and renderToStaticMarkup never runs the effect that starts it.
+	before(() => loadFlags());
+
 	it("maps language identifiers and BCP-47 tags to correct ISO-2 country codes", () => {
 		assert.equal(langToCountryCode("slovak"), "SK");
 		assert.equal(langToCountryCode("sk"), "SK");

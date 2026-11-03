@@ -242,7 +242,7 @@ test("account catalog is scoped, visibility filtered, and cleared on disconnect"
 	} finally { f.service.close(); }
 });
 
-test("private JSON file round-trips global state; creation and atomic replacement are owner-only", async () => {
+test("private JSON file round-trips global state; creation and atomic replacement are owner-only", { skip: process.platform === "win32" && "Windows has no POSIX file modes" }, async () => {
 	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lh-chatgpt-storage-"));
 	const file = path.join(dir, "private", "chatgpt-credentials.json");
 	try {
@@ -611,6 +611,11 @@ test("disconnect persistence failure is not reported as local forgetting and lea
 	} finally { f.service.close(); }
 });
 
+// Completion waits on the credential file write; setImmediate turns can end before it lands.
+async function settle(service: { status(): Promise<{ pending: boolean }> }) {
+	for (let i = 0; i < 500 && (await service.status()).pending; i++) await new Promise((r) => setTimeout(r, 10));
+}
+
 test("one app-wide background preference defaults ON over legacy OFF, persists with zero accounts, and never changes on auth/account operations", async () => {
 	const first = await loggedIn(); first.service.close();
 	const legacy = structuredClone(first.saved); legacy.registrations[0].background = false;
@@ -625,7 +630,7 @@ test("one app-wide background preference defaults ON over legacy OFF, persists w
 		const id = f.saved.activeId;
 		await f.service.select(id); assert.equal((await f.service.status()).allowBackgroundUse, false);
 		await f.service.login(id); await f.callback();
-		for (let i = 0; i < 100 && (await f.service.status()).pending; i++) await new Promise((r) => setImmediate(r));
+		await settle(f.service);
 		assert.equal(f.saved.allowBackgroundUse, false, "reconnecting cannot overwrite app preference");
 		assert.equal(f.saved.registrations[0].background, undefined, "new verified registrations omit obsolete per-account preference");
 		await f.service.disconnect(f.saved.activeId);
@@ -634,7 +639,7 @@ test("one app-wide background preference defaults ON over legacy OFF, persists w
 		try {
 			assert.equal((await restarted.service.status()).allowBackgroundUse, false, "zero-account restart preserves global OFF");
 			await restarted.service.login(); await restarted.callback();
-			for (let i = 0; i < 100 && (await restarted.service.status()).pending; i++) await new Promise((r) => setImmediate(r));
+			await settle(restarted.service);
 			assert.equal(restarted.saved.allowBackgroundUse, false);
 			await restarted.service.consent(true); assert.equal(restarted.saved.allowBackgroundUse, true);
 		} finally { restarted.service.close(); }

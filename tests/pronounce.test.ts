@@ -17,6 +17,8 @@ import { after, test } from "node:test";
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-pron-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
+// A speech key in this machine's environment would make the engine the test expects to be none.
+for (const id of ["ELEVENLABS_API_KEY", "GROQ_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION"]) delete process.env[id];
 
 const { isPronScore, matchScore, parseAzure, passMade, PRON_CLEAR, pronLabel, pronReport } = await import("../src/core/pronounce.ts");
 type PronScore = import("../src/core/pronounce.ts").PronScore;
