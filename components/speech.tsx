@@ -11,7 +11,7 @@ import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sharedJson } from "@/lib/shared-fetch";
 import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
-import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
+import { LANGUAGES, countSyllables, isLanguageId, paceRate, type LanguageInfo } from "@/src/core";
 
 // ─── The active language (fetched once per page load) ──────────────────────
 
@@ -158,7 +158,7 @@ export interface SpeakOptions {
 	slow?: boolean;
 }
 
-/** Always slower than the learner's own speed, but not below 0.6×, where the
+/** The slow button as a multiplier: always slower than the learner's own speed, but not below 0.6×, where the
  *  browser's pitch-keeping time-stretch starts to smear the voice. */
 export function slowRate(speed: number): number {
 	return Math.max(0.6, Math.min(0.7, speed * 0.8));
@@ -205,6 +205,20 @@ async function measureGain(blob: Blob): Promise<number> {
 	}
 }
 
+/** A clip's length once the browser has read its header; 0 if that takes more than a second (the rate then falls back to the plain multiplier). */
+function clipSeconds(audio: HTMLAudioElement): Promise<number> {
+	if (audio.readyState >= 1 && Number.isFinite(audio.duration)) return Promise.resolve(audio.duration);
+	return new Promise((resolve) => {
+		const done = () => {
+			audio.removeEventListener("loadedmetadata", done);
+			window.clearTimeout(timer);
+			resolve(Number.isFinite(audio.duration) ? audio.duration : 0);
+		};
+		const timer = window.setTimeout(done, 1000);
+		audio.addEventListener("loadedmetadata", done);
+	});
+}
+
 /** Speaks `text` in the active language (or `lang`). Resolves when playback ends; a new call stops whatever was playing. */
 export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOptions = {}): Promise<void> {
 	stopSpeaking();
@@ -230,7 +244,12 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	const audio = new Audio(src);
 	audio.preload = "auto";
 	audio.volume = Math.min(1, volume() * gain);
-	audio.playbackRate = rate;
+	// The setting is a pace, not a multiplier of whatever was recorded: each clip plays at the rate that reaches it (src/core/pace.ts).
+	audio.playbackRate = paceRate(countSyllables(text, language.code), await clipSeconds(audio), rate);
+	if (mine !== generation || !soundOn()) {
+		URL.revokeObjectURL(src);
+		return;
+	}
 	await new Promise<void>((resolve) => {
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;

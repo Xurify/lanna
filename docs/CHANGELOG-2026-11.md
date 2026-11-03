@@ -130,3 +130,10 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Unverified:** the PC, and `desktop:prod` in the packaged flow (not run here).
 - **Second pass:** Next.js 16.4.4 (`next analyze` showed TypeBox, 118 KB gzipped, in every route). The schemas are split out of the shell, KaTeX loads on first use on the map, and the pressed nav row lights at once. Per-route JS fell from about 561 KB to about 480 KB gzipped. The Log page's minutes now carry their unit.
 
+## 3 November: voice pace, sidebar, review bar
+
+- **Voice pace** (E37, [research/voice-pace.md](research/voice-pace.md)): the speed setting now means a pace. Measured on 40 slovak.wiki sentences, the voice runs 2.3 to 5.4 syllables a second, so the old 0.75/1/1.25 multiplier gave a different speed on each sentence. Each clip now plays at the rate that reaches 4 syllables a second times the setting (word-length clips keep the multiplier). `scripts/audio-pace.ts` reports the pace per engine from a profile; only slovak.wiki could be measured in the cloud. **Unverified by ear.**
+- **Sidebar:** it folds to nothing and a single open button stays pinned at the top-left of every page; the open sidebar sits on the tinted sidebar surface. Task screens keep a 56 px rail of the same doors.
+- **Volume:** a click only mutes; the horizontal slider opens after the pointer rests on the speaker, on right-click, long press, or the arrow keys.
+- **Review:** the bar reads "39 of 46 reviews today" with what is still to do under it, and the filled cloze word lost its tick, which pushed the next word away.
+

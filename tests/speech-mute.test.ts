@@ -33,8 +33,15 @@ Object.defineProperty(globalThis, "localStorage", {
 	},
 });
 
+let clipSecondsNext = 0.5;
+
 class FakeAudioElement implements FakeAudio {
 	src: string;
+	// A loaded clip: its length is known at once. The default is a word's length, which keeps the plain multiplier.
+	readyState = 4;
+	duration = clipSecondsNext;
+	addEventListener(): void {}
+	removeEventListener(): void {}
 	playbackRate = 1;
 	volume = 1;
 	paused = false;
@@ -72,6 +79,7 @@ async function waitFor(check: () => boolean): Promise<void> {
 beforeEach(() => {
 	store.clear();
 	made.length = 0;
+	clipSecondsNext = 0.5;
 	voiceCalls = 0;
 	holdVoice = false;
 	releases = [];
@@ -129,6 +137,26 @@ test("the snail plays slower than the speed setting, and leaves the setting alon
 	void speak("Ahoj");
 	await waitFor(() => made.length === 3);
 	assert.equal(made[2]!.playbackRate, 1);
+});
+
+test("a sentence plays at the rate that reaches the setting's pace, whatever it was recorded at", async () => {
+	setSoundOn(true);
+	setSpeed(1);
+	// Nine syllables in 3 s is 3 a second; 1x is 4 a second, so it is sped up by a third.
+	clipSecondsNext = 3;
+	void speak("Na námestí je veľa ľudí.");
+	await waitFor(() => made.length === 1);
+	assert.ok(Math.abs(made[0]!.playbackRate - 4 / 3) < 1e-9);
+	// The same sentence recorded faster (2 s, 4.5 a second) is slowed instead.
+	clipSecondsNext = 2;
+	void speak("Na námestí je veľa ľudí.");
+	await waitFor(() => made.length === 2);
+	assert.ok(Math.abs(made[1]!.playbackRate - 4 / 4.5) < 1e-9);
+	// The snail is a slower pace, not a fraction of whatever was recorded.
+	clipSecondsNext = 3;
+	void speak("Na námestí je veľa ľudí.", undefined, { slow: true });
+	await waitFor(() => made.length === 3);
+	assert.ok(Math.abs(made[2]!.playbackRate - 0.7 * 4 / 3) < 1e-9);
 });
 
 test("slow is always slower than the learner's own speed", () => {
