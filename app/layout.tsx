@@ -26,7 +26,7 @@ const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains", preload: false });
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
-// (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
+// (components/sidebar.tsx), and the theme color
 // paints the status bar. viewport-fit=cover is what lets the page run under it.
 export async function generateViewport(): Promise<Viewport> {
 	// An explicit Day or Night paints the status bar in that mode whatever the system is set to; "system" lets the system decide.

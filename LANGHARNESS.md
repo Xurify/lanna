@@ -62,7 +62,7 @@ The screens lay out for a phone (390 px wide) and an iPad (820 px in portrait), 
 | Read | The tap-to-gloss card stays inside the screen edges on a narrow screen. |
 | Speak | On touch, press and hold the mic button to talk and let go to send. The keyboard and mouse toggle is unchanged. |
 | Home screen | The app has a web-app manifest and icons, so Share, then Add to Home Screen, opens it full screen. From a phone it works once the device is paired (see Devices). |
-| Notch and home bar | The top bar, the bottom navigation and the drawer clear the notch and the home indicator. |
+| Notch and home bar | The top bar and the drawer clear the notch and the home indicator. |
 | Devices (Settings → Devices) | Off by default. Turn on **Remote access**, run `tailscale serve --bg 3010` once on this computer (Tailscale signed in, HTTPS certificates on), then choose **Make a code** and type the six digits on the phone within five minutes. Each paired device is listed with its last use and can be signed out on its own; turning remote access off signs out every device. This computer's own browser never asks for a code. Funnel stays off. Steps: [docs/remote-access.md](docs/remote-access.md). |
 
 ## Where the thinking lives

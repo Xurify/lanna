@@ -2,7 +2,7 @@
 
 Written 2026-11-02 on `refactor/remove-unused-fork-code`. Nothing here was deleted. Each item is either a whole user-facing feature, touches `data/` formats, or sits in auth, pairing, remote access, the Electron release pipeline or the Slovak/Russian code, so it needs a yes first.
 
-Already removed (Tier 1, see the commits on the branch): 11 unused packages, `components/ui/textarea.tsx`, `GET /api/lexicon`, and the upstream `skills/learnharness` data skill with its Python tests.
+Already removed (Tier 1, see the commits on the branch): 11 unused packages, `components/ui/textarea.tsx`, `GET /api/lexicon`, and the upstream `skills/learnharness` data skill with its Python tests. Also removed on 2026-11-03, after the owner's approval: `lib/sidebar-cookie.ts`, `components/week-card.tsx`, `components/strand-balance.tsx`, `components/phone-nav.tsx` and `tests/render-phone-nav.test.tsx`.
 
 How to read the size column: files and lines are from `git ls-files` at the time of writing, including that feature's tests where they are named after it.
 
