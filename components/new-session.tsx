@@ -175,7 +175,7 @@ export function DraftShell({
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1">
 						<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">
-						<div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
+						<div className="flex min-h-0 flex-1 items-end justify-center overflow-y-auto px-4 pb-10 pt-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
 									{onModeChange && (
 											<div className="pointer-events-auto q-segc" role="radiogroup" aria-label="Kind of chat" data-testid="draft-mode">
 												{(["teach", "practice"] as const).map((m) => (
@@ -211,8 +211,8 @@ export function DraftShell({
 										))}
 									</div>
 								</div></div>
-						<div className="w-full pb-4">
-							<div className={`${DOCK} pt-10`}>
+						<div className="w-full pb-3">
+							<div className={cn(DOCK, (picks.length > 0 || mode === "practice" || setupCta) ? "pt-9" : "pt-1")}>
 								<ComposerActions
 									picker={(picks.length > 0 || mode === "practice") && (
 										<NodePickerControl count={picks.length} onOpen={onOpenPicker} onClear={onClearPicks} />
