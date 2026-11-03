@@ -3,7 +3,8 @@
  * video's watchings, whether a model is set (translation, questions),
  * whether audio can be transcribed, and what is being prepared.
  * ?id=<videoId> — one prepared video. ?status=<videoId> — the step a
- * preparation is at.
+ * preparation is at. ?thumb=<videoId> — the video's thumbnail (a JPEG),
+ * fetched and kept on first use.
  * POST /api/watch {action: "add", url, transcribe?} — prepare a video
  * from a YouTube link (src/server/watch.ts): captions fetched, cut into
  * lines, translated on the cheap slot, glossed, questioned, kept under
@@ -14,7 +15,7 @@
  */
 
 import type { SegmentStat, WatchMode } from "@/src/core";
-import { NoCaptionsError, prepareStage, prepareVideo, recordWatch, videoStore, watchState } from "@/src/server";
+import { NoCaptionsError, prepareStage, prepareVideo, recordWatch, thumbnailBytes, videoStore, watchState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ function tzOf(v: unknown): number | undefined {
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
+	const thumb = url.searchParams.get("thumb");
+	if (thumb) {
+		const bytes = await thumbnailBytes(thumb);
+		return bytes ? new Response(new Uint8Array(bytes), { headers: { "content-type": "image/jpeg", "cache-control": "private, max-age=86400" } }) : Response.json({ message: "no thumbnail" }, { status: 404 });
+	}
 	const id = url.searchParams.get("id");
 	if (id) {
 		const video = videoStore.get(id);

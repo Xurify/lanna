@@ -308,3 +308,23 @@ test("a video with only Czech captions is prepared, kept as Czech, and the trans
 	assert.equal(v.segments.length, lines.length);
 	assert.ok(sent[0]!.includes("These subtitles are in Czech, not Slovak"), "the first call says the subtitles are Czech");
 });
+
+test("ensureThumbnail: fetched once from YouTube's image host, kept on disk, nothing kept when YouTube has none", async () => {
+	const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+	const asked: string[] = [];
+	const get = (async (url: string | URL | Request) => {
+		asked.push(String(url));
+		return new Response(jpeg, { headers: { "content-type": "image/jpeg" } });
+	}) as typeof fetch;
+	const file = await watch.ensureThumbnail("CZCZCZCZCZC", get);
+	assert.ok(file && fs.existsSync(file), "the thumbnail is on disk");
+	assert.deepEqual([...fs.readFileSync(file!)], [...jpeg]);
+	assert.equal(asked[0], "https://i.ytimg.com/vi/CZCZCZCZCZC/hqdefault.jpg");
+	assert.equal(await watch.ensureThumbnail("CZCZCZCZCZC", get), file);
+	assert.equal(asked.length, 1, "a kept thumbnail is not fetched again");
+	assert.deepEqual([...(await watch.thumbnailBytes("CZCZCZCZCZC"))!], [...jpeg]);
+	const missing = (async () => new Response("not found", { status: 404 })) as typeof fetch;
+	assert.equal(await watch.ensureThumbnail("MISSINGMIS1", missing), null);
+	assert.equal(fs.existsSync(videoStore.thumbnailFile("MISSINGMIS1")!), false);
+	assert.equal(await watch.ensureThumbnail("not an id", get), null);
+});

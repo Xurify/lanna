@@ -360,6 +360,24 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The shelf: paste a link, or pick a video ───────────────────────────────
 
+/** The video's thumbnail from the server's copy, in a fixed 16:9 box so the
+ *  row does not move when it loads; the icon stands in when there is none. */
+function Thumb({ id, watched }: { id: string; watched: boolean }) {
+	const [missing, setMissing] = useState(false);
+	if (missing) {
+		return (
+			<span className={cn("flex h-[50px] w-[89px] shrink-0 items-center justify-center rounded-md", watched ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
+				<MonitorPlayIcon className="size-5" />
+			</span>
+		);
+	}
+	return (
+		// The kept file is already small; the image optimizer would only fetch it again.
+		// eslint-disable-next-line @next/next/no-img-element
+		<img src={`/api/watch?thumb=${encodeURIComponent(id)}`} alt="" loading="lazy" onError={() => setMissing(true)} className="h-[50px] w-[89px] shrink-0 rounded-md bg-well-2 object-cover" />
+	);
+}
+
 function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen: (id: string) => void; onPrepare: (url: string) => void }) {
 	const [url, setUrl] = useState("");
 	const list = [...(state?.library ?? [])].reverse();
@@ -425,9 +443,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 								return (
 									<li key={v.id}>
 										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
-											<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg", v.watches > 0 ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
-												<MonitorPlayIcon className="size-5" />
-											</span>
+											<Thumb id={v.id} watched={v.watches > 0} />
 											<span className="min-w-0 flex-1">
 												<span className="block truncate font-ui text-[16px] font-[600] text-foreground" lang="sk">
 													{v.title}

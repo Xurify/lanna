@@ -11,6 +11,8 @@
  *                          the caption track exactly as fetched (json3,
  *                          xml or vtt), so the lines can be cut again
  *                          without going back to YouTube.
+ *   thumbnails/<id>.jpg    the video's YouTube thumbnail, kept for the
+ *                          library (fetched once, then read from disk).
  *   index.jsonl            one line per video (VideoIndexEntry).
  *   watches.jsonl          one line per watching (WatchLogEntry): mode,
  *                          lines got on the first listen, replays, the
@@ -105,6 +107,21 @@ export const videoStore = {
 		const file = path.join(PATHS.videos, "captions", `${id}.${lang.replace(/[^a-zA-Z-]/g, "")}.${ext}`);
 		fs.mkdirSync(path.dirname(file), { recursive: true });
 		fs.writeFileSync(file, text, "utf-8");
+		return file;
+	},
+	/** Where the thumbnail is kept, or null for a bad id. */
+	thumbnailFile(id: string): string | null {
+		if (!isVideoId(id)) return null;
+		return path.join(PATHS.videos, "thumbnails", `${id}.jpg`);
+	},
+	/** Keep the thumbnail; returns the file. */
+	putThumbnail(id: string, data: Uint8Array): string {
+		const file = videoStore.thumbnailFile(id);
+		if (!file) throw new Error(`bad video id ${id}`);
+		fs.mkdirSync(path.dirname(file), { recursive: true });
+		const tmp = `${file}.${process.pid}.tmp`;
+		fs.writeFileSync(tmp, data);
+		fs.renameSync(tmp, file);
 		return file;
 	},
 	/** A kept caption track, when one exists. */

@@ -6,7 +6,8 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 - **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labelled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).
 - **Error text:** "none in Slovak or Czech" instead of "none in Slovak".
-- **Unverified:** fetching a Czech track from YouTube (the cloud container cannot reach YouTube; the tests use a scripted track). The owner should paste a Czech video with no Slovak captions and check the preview and the lines.
+- **Thumbnails saved:** the library showed a placeholder icon for every video. Now each video's YouTube thumbnail (`hqdefault.jpg`) is kept under `videos/thumbnails/<id>.jpg` when the video is prepared, and a video prepared before this is fetched on first view and kept (`GET /api/watch?thumb=<id>`). The card keeps a fixed 16:9 box, and the icon stands in when YouTube has no thumbnail.
+- **Unverified:** fetching a Czech track and a thumbnail from YouTube (the cloud container cannot reach YouTube; the tests use a scripted track and a stub image). The owner should paste a Czech video with no Slovak captions and check the preview and the lines.
 - **Open:** a Czech word tapped on Watch can be queued into the Slovak deck; a Czech watching counts toward the Slovak listening speed on the milestones page. Neither is filtered yet.
 - **Open, possibly already true for Slovak:** when the yt-dlp path runs (every video without a Slovak track, including English ones), yt-dlp may return YouTube's machine translation of a track rather than the speaker's language. Not checked against a live video.
 
