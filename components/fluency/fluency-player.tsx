@@ -19,6 +19,7 @@
  * Full screen like a lesson; Escape leaves. No model call anywhere.
  */
 
+import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -600,17 +601,33 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	if (error && !plan) {
 		return (
 			<TaskFrame>
-				<Centered testId="fast-error">
-					<p className="font-prose text-lg text-foreground">{error}</p>
-					<div className="mt-6 flex flex-wrap justify-center gap-3">
-						<button type="button" onClick={() => void load()} className={PRIMARY}>
-							Try again
-						</button>
-						<Link href="/" className={SECONDARY}>
-							Today
-						</Link>
-					</div>
-				</Centered>
+				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
+					<EmptyState
+						testid="fast-error"
+						title={/yet/i.test(error) ? "No sentences to say faster yet" : "Say it faster could not start"}
+						action={
+							/yet/i.test(error) ? (
+								<Link href="/" className="q-btn primary">
+									Go to Today
+								</Link>
+							) : (
+								<button type="button" onClick={() => void load()} className="q-btn primary">
+									Try again
+								</button>
+							)
+						}
+						secondary={/yet/i.test(error) ? undefined : <Link href="/" className="q-btn ghost">Back to Today</Link>}
+					>
+						{/yet/i.test(error) ? (
+							<>
+								<p>Say it faster uses sentences built from words you have met, so it opens after your first lessons.</p>
+								<p>It needs no AI key.</p>
+							</>
+						) : (
+							<p>{error}</p>
+						)}
+					</EmptyState>
+				</div>
 			</TaskFrame>
 		);
 	}

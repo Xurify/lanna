@@ -73,7 +73,7 @@ export function KnowledgeSummary({
 			</p>
 			{empty && (
 				<p className="pt-2 font-ui text-xs text-muted-foreground">
-					Nothing here yet — import notes to begin building the graph.
+					Nothing here yet. Your chats with the tutor and the notes you import build this map of what you know.
 				</p>
 			)}
 		</div>

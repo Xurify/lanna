@@ -30,6 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
@@ -225,32 +226,33 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	if (stage === "error") {
 		return (
 			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="watch-error">
-					{error?.meta?.title && (
-						<p className="font-ui text-sm font-[600] text-muted-foreground" lang="sk">
-							{error.meta.title}
-						</p>
-					)}
-					<p className="mt-1 font-prose text-lg text-foreground">{error?.message ?? "Something went wrong."}</p>
-					<div className="mt-6 flex flex-wrap justify-center gap-3">
-						{error?.noCaptions && error.canTranscribe && pending && (
-							<button type="button" onClick={() => void prepare(pending, true)} className={PRIMARY} data-testid="watch-transcribe">
-								Transcribe the audio
+				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
+					<EmptyState
+						testid="watch-error"
+						title="This video could not be prepared"
+						action={
+							error?.noCaptions && error.canTranscribe && pending ? (
+								<button type="button" onClick={() => void prepare(pending, true)} className="q-btn primary" data-testid="watch-transcribe">
+									Transcribe the audio
+								</button>
+							) : state?.canPrepare === false ? (
+								<AddKeyButton />
+							) : pending ? (
+								<button type="button" onClick={() => void prepare(pending)} className="q-btn primary">
+									Try again
+								</button>
+							) : undefined
+						}
+						secondary={
+							<button type="button" onClick={() => setStage("shelf")} className="q-btn ghost">
+								Pick another video
 							</button>
-						)}
-						{!error?.noCaptions && pending && state?.canPrepare !== false && (
-							<button type="button" onClick={() => void prepare(pending)} className={PRIMARY}>
-								Try again
-							</button>
-						)}
-						{state?.canPrepare === false && <SettingsLink className={PRIMARY}>Set up a model</SettingsLink>}
-						<button type="button" onClick={() => setStage("shelf")} className={SECONDARY}>
-							Another video
-						</button>
-						<Link href="/" className={SECONDARY}>
-							Today
-						</Link>
-					</div>
+						}
+					>
+						{error?.meta?.title && <p lang="sk">{error.meta.title}</p>}
+						<p>{error?.message ?? "Something went wrong."}</p>
+						<p>Videos you have already prepared still play from your list.</p>
+					</EmptyState>
 				</div>
 			</Frame>
 		);
@@ -397,15 +399,13 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						Prepare it
 					</button>
 				</form>
-				<p className="mt-2 font-prose text-xs text-muted-foreground">
-					{state?.canPrepare === false ? (
-						<>
-							Translating needs a model on the cheap slot. <SettingsLink className="underline">Set one up</SettingsLink>.
-						</>
-					) : (
-						<>The captions come from YouTube (made by people, or its automatic ones); translating a video is one or two calls on the cheap model slot, paid once. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</>
-					)}
-				</p>
+				{state?.canPrepare === false ? (
+					<div className="mt-3">
+						<KeyNote>Preparing a new video needs an AI key, for the English translation. Videos you have already prepared play without one.</KeyNote>
+					</div>
+				) : (
+					<p className="mt-2 font-prose text-xs text-muted-foreground">The captions come from YouTube (made by people, or its automatic ones). Translating a video takes one or two short requests to your AI provider, once, and it is kept. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</p>
+				)}
 
 				{list.length > 0 && (
 					<>

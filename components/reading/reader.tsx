@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpenIcon, BookmarkIcon, CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, RotateCcwIcon, SearchIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
@@ -82,8 +83,8 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	// The library shows first when today's episode is already read and
 	// nothing new is waiting: another episode costs a model call, so it is
 	// a choice, not a side effect of opening the page.
-	const [stage, setStage] = useState<Stage>(initialStory ?? initial?.current ? "reading" : initial && !initial.canWrite ? "error" : initial && initial.readToday > 0 ? "shelf" : "writing");
-	const [error, setError] = useState<string | null>(initial && !initial.canWrite && !initial.current && !initialStory ? "No model is set up yet. Stories are written on the cheap model slot." : null);
+	const [stage, setStage] = useState<Stage>(initialStory ?? initial?.current ? "reading" : initial && !initial.canWrite ? "shelf" : initial && initial.readToday > 0 ? "shelf" : "writing");
+	const [error, setError] = useState<string | null>(null);
 	const [tapped, setTapped] = useState<string[]>([]);
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -193,26 +194,24 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "error") {
 		return (
 			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="read-error">
-					<p className="font-prose text-lg text-foreground">{error ?? "Something went wrong."}</p>
-					<div className="mt-6 flex flex-wrap justify-center gap-3">
-						{state?.canWrite !== false && (
-							<button type="button" onClick={() => void next()} className={PRIMARY}>
+				<div className={cn(COLUMN, "pt-[8vh]")}>
+					<EmptyState
+						testid="read-error"
+						title="The episode could not be written"
+						action={
+							<button type="button" onClick={() => void next()} className="q-btn primary">
 								Try again
 							</button>
-						)}
-						{state?.canWrite === false && (
-							<SettingsLink className={PRIMARY}>Set up a model</SettingsLink>
-						)}
-						{(state?.library.length ?? 0) > 0 && (
-							<button type="button" onClick={() => setStage("shelf")} className={SECONDARY}>
-								The library
+						}
+						secondary={
+							<button type="button" onClick={() => setStage("shelf")} className="q-btn ghost">
+								Back to the library
 							</button>
-						)}
-						<Link href="/" className={SECONDARY}>
-							Today
-						</Link>
-					</div>
+						}
+					>
+						<p>{error ?? "Something went wrong."}</p>
+						<p>Episodes you have already read are still in the library.</p>
+					</EmptyState>
 				</div>
 			</Frame>
 		);
@@ -829,7 +828,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								title="Zopakovať aktuálnu vetu (Kláves R)"
 							>
 								<RotateCcwIcon className="size-4" />
-								<span className="text-[12px] font-[550]">Repeat</span>
+								<span className="text-[12px] font-[550] max-sm:hidden">Repeat</span>
 							</button>
 							<button
 								type="button"
@@ -1102,6 +1101,19 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						)}
 					</div>
 				</div>
+
+				{rawList.length === 0 && (
+					<EmptyState
+						testid="read-empty"
+						title="No episodes yet"
+						action={state?.canWrite === false ? <AddKeyButton /> : <button type="button" onClick={onWrite} className="q-btn primary">Write the first episode</button>}
+						secondary={<Link href="/" className="q-btn ghost">Back to Today</Link>}
+					>
+						<p>Episodes are short stories at your level, with every word tappable.</p>
+						<p>{state?.canWrite === false ? "They are written with an AI key. Once you add one, your first episode is ready in about a minute." : "The first one takes about a minute to write, then it is kept here."}</p>
+					</EmptyState>
+				)}
+				{rawList.length > 0 && state?.canWrite === false && <KeyNote>The episodes below are yours to read without a key. New episodes are written with an AI key.</KeyNote>}
 
 				{/* Featured / Up Next Hero Card */}
 				{upNext && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -555,10 +556,25 @@ export function WordBankPage() {
 							})}
 
 							{words.length === 0 && !loadingWords && (
-								<div className="rounded-2xl border border-dashed border-border/80 p-12 text-center text-muted-foreground">
-									<BookOpenIcon className="mx-auto mb-3 size-8 opacity-40" />
-									<p className="font-ui text-sm font-semibold">Žiadne slová nevyhovujú filtru.</p>
-								</div>
+								<EmptyState
+									testid="words-empty"
+									title="Žiadne slová nevyhovujú filtru"
+									action={
+										<button
+											type="button"
+											className="q-btn primary"
+											onClick={() => {
+												setSearchQuery("");
+												setStatusFilter("all");
+												setPosFilter("all");
+											}}
+										>
+											Zrušiť filtre
+										</button>
+									}
+								>
+									<p>Skúste iné hľadanie alebo zrušte filtre. Všetky vaše slová sú stále v slovníku.</p>
+								</EmptyState>
 							)}
 
 							{/* Load More Button */}
@@ -677,10 +693,9 @@ export function WordBankPage() {
 							))}
 
 							{filteredPhrases.length === 0 && !loadingPhrases && (
-								<div className="rounded-2xl border border-dashed border-border/80 p-12 text-center text-muted-foreground">
-									<BookmarkIcon className="mx-auto mb-3 size-8 opacity-40" />
-									<p className="font-ui text-sm font-semibold">Žiadne uložené frázy.</p>
-								</div>
+								<EmptyState testid="phrases-empty" title="Zatiaľ žiadne uložené frázy">
+									<p>Frázy si ukladáte tlačidlom Uložiť pri čítaní príbehov a v lekciách. Nepotrebuje kľúč AI.</p>
+								</EmptyState>
 							)}
 						</div>
 					</div>

@@ -10,6 +10,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
+import { EmptyState } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
@@ -91,13 +92,19 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 				)}
 
 				{a && a.reps === 0 ? (
-					<section className="q-card mt-8 p-5" data-testid="mistakes-empty">
-						<p className="text-base text-foreground">There are no answers to read yet.</p>
-						<p className="mt-1 text-sm text-ink-3">Finish a lesson and come back: your first tries show up here.</p>
-						<Link href="/" className="q-btn sec mt-3 pointer-coarse:min-h-11">
-							Go to Today
-						</Link>
-					</section>
+					<EmptyState
+						className="mt-8"
+						testid="mistakes-empty"
+						title="No answers to read yet"
+						action={
+							<Link href="/" className="q-btn primary pointer-coarse:min-h-11">
+								Go to Today
+							</Link>
+						}
+					>
+						<p>This page reads your first try on every answer in lessons and Review, then shows which words and endings to work on.</p>
+						<p>It fills in after your first lesson. It needs no AI key.</p>
+					</EmptyState>
 				) : (
 					a && (
 						<>

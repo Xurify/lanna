@@ -16,6 +16,7 @@
  * paid for once. The research the task rests on is in src/core/listen.ts.
  */
 
+import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -300,16 +301,32 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	if (error) {
 		return (
 			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="listen-error">
-					<p className="font-prose text-lg text-foreground">{error}</p>
-					<div className="mt-6 flex flex-wrap justify-center gap-3">
-						<button type="button" onClick={() => void load()} className={PRIMARY}>
-							Try again
-						</button>
-						<Link href="/" className={SECONDARY}>
-							Today
-						</Link>
-					</div>
+				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
+					<EmptyState
+						testid="listen-error"
+						title={/yet/i.test(error) ? "Nothing to listen to yet" : "Listen could not start"}
+						action={
+							/yet/i.test(error) ? (
+								<Link href="/" className="q-btn primary">
+									Go to Today
+								</Link>
+							) : (
+								<button type="button" onClick={() => void load()} className="q-btn primary">
+									Try again
+								</button>
+							)
+						}
+						secondary={/yet/i.test(error) ? undefined : <Link href="/" className="q-btn ghost">Back to Today</Link>}
+					>
+						{/yet/i.test(error) ? (
+							<>
+								<p>Listen uses sentences built from words you have met, so it opens after your first lessons.</p>
+								<p>It needs no AI key.</p>
+							</>
+						) : (
+							<p>{error}</p>
+						)}
+					</EmptyState>
 				</div>
 			</Frame>
 		);

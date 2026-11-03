@@ -1659,7 +1659,7 @@ export function Chat({
 										onClick={() => setSetupOpen(true)}
 										className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
 									>
-										Set up your models
+										Add an AI key
 									</button>
 								</div>
 								</div>

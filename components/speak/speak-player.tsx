@@ -20,6 +20,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
+import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, SpeedToggle } from "@/components/speech";
@@ -626,33 +627,10 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 					</p>
 				)}
 				{state && !state.canSpeak && (
-					<div className="q-card mt-5 px-5 py-4" data-testid="speak-nomodel">
-						<h2 className="font-ui text-[17px] font-[600] tracking-[-0.015em] text-foreground">Speak needs someone to talk to.</h2>
-						<p className="mt-1 font-ui text-[13.5px] leading-relaxed text-ink-3">
-							In a scene the tutor plays the other person and answers what you say. That takes an AI key. Step by step works without one.
-						</p>
-						<ul className="mt-3 divide-y divide-border font-ui text-[13.5px]">
-							<li className="flex items-center justify-between gap-3 py-2.5">
-								<span className="flex items-center gap-2.5 text-foreground">
-									<QIcon name="key" className="size-4 text-ink-3" />
-									AI key
-								</span>
-								<span className="q-pill grey">Needed</span>
-							</li>
-							<li className="flex items-center justify-between gap-3 py-2.5">
-								<span className="flex flex-wrap items-center gap-x-2.5 text-foreground">
-									<QIcon name="speak" className="size-4 text-ink-3" />
-									Speech-to-text key
-									<span className="text-ink-3">ElevenLabs or Deepgram</span>
-								</span>
-								<span className="q-pill grey">{state.stt ? "Set" : "Optional"}</span>
-							</li>
-						</ul>
-						<p className="q-needs mt-3">
-							<QIcon name="key" />
-							Needs an AI key · <SettingsLink keys>Settings → API keys</SettingsLink>
-						</p>
-					</div>
+					<EmptyState className="mt-6" testid="speak-nomodel" title="Say a scene out loud with a tutor" action={<AddKeyButton />}>
+						<p>In a scene the tutor plays the other person and answers what you say. That needs an AI key.</p>
+						<p>Step by step works without one: pick a scene below and walk through it line by line.{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}</p>
+					</EmptyState>
 				)}
 				{state?.unfinished && (
 					<button type="button" onClick={() => onResume(state.unfinished!.id)} className="q-card mt-5 flex items-center gap-3 px-4 py-3 text-left shadow-[0_0_0_1px_var(--q-teal-line)] hover:bg-teal-wash" data-testid="speak-resume">
