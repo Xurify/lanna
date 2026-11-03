@@ -515,7 +515,7 @@ export function WordBankPage() {
 														onClick={() => void handleToggleFavorite(item.slug)}
 														title={item.favorite ? "Odstrániť z obľúbených" : "Pridať k obľúbeným"}
 														className={cn(
-															"grid size-8 place-items-center rounded-xl transition-colors",
+															"flex h-8 items-center gap-1.5 rounded-xl px-2 transition-colors",
 															item.favorite
 																? "bg-gold/20 text-gold"
 																: "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -524,24 +524,27 @@ export function WordBankPage() {
 														<StarIcon
 															className={cn("size-4", item.favorite && "fill-gold")}
 														/>
+														<span className="text-xs font-semibold">{item.favorite ? "Favorite" : "Add to favorites"}</span>
 													</button>
 
 													{/* In review deck button */}
 													{item.inDeck ? (
 														<span
 															title="Slovo je v precvičovacom balíčku"
-															className="grid size-8 place-items-center text-sky"
+															className="flex h-8 items-center gap-1.5 px-2 text-teal-2"
 														>
 															<BookmarkCheckIcon className="size-4" />
+															<span className="text-xs font-semibold">In Review</span>
 														</span>
 													) : (
 														<button
 															type="button"
 															onClick={() => void handleEnqueueReview(item.slug)}
 															title="Pridať do opakovania (Review deck)"
-															className="grid size-8 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+															className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 														>
 															<BookmarkIcon className="size-4" />
+															<span className="text-xs font-semibold">Add to Review</span>
 														</button>
 													)}
 												</div>

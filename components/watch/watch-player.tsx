@@ -344,8 +344,9 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 					</div>
 				</div>
 				{right}
-				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 flex items-center gap-1.5 rounded-lg p-1.5 text-[13px] font-[550] text-muted-foreground hover:bg-accent hover:text-foreground">
 					<LibraryIcon className="size-5" />
+					<span className="max-sm:hidden">Videos</span>
 				</button>
 			</div>
 		</div>

@@ -353,8 +353,9 @@ function TopBar({ story, step, progress, onShelf }: { story: StoryRecord; step: 
 					</div>
 				</div>
 				<SpeedPill />
-				<button type="button" onClick={onShelf} aria-label="The library" title="The library" className="-mr-1.5 rounded-lg p-1.5 pointer-coarse:-mr-3 pointer-coarse:p-3 text-muted-foreground hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="The library" title="The library" className="-mr-1.5 flex items-center gap-1.5 rounded-lg p-1.5 text-[13px] font-[550] pointer-coarse:-mr-3 pointer-coarse:p-3 text-muted-foreground hover:bg-accent hover:text-foreground">
 					<LibraryIcon className="size-5" />
+					<span className="max-sm:hidden">Library</span>
 				</button>
 			</div>
 		</div>
@@ -824,10 +825,11 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							<button
 								type="button"
 								onClick={replayCurrent}
-								className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className="flex items-center gap-1.5 rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 								title="Zopakovať aktuálnu vetu (Kláves R)"
 							>
 								<RotateCcwIcon className="size-4" />
+								<span className="text-[12px] font-[550]">Repeat</span>
 							</button>
 							<button
 								type="button"

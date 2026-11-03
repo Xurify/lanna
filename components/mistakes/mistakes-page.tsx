@@ -462,7 +462,7 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 								data-testid={`word-review-${w.slug}`}
 							>
 								{done[w.slug] === "added" ? <CheckIcon className="size-3.5" strokeWidth={1.6} /> : <PlusIcon className="size-3.5" strokeWidth={1.6} />}
-								{done[w.slug] === "added" ? "In review" : done[w.slug] === "failed" ? "Try again" : "Review"}
+								{done[w.slug] === "added" ? "In Review" : done[w.slug] === "failed" ? "Try again" : "Add to Review"}
 							</button>
 						</span>
 					</li>

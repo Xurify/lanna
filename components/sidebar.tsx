@@ -7,7 +7,7 @@ import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
+import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
@@ -858,7 +858,6 @@ function SessionsSidebar() {
 						>
 							<BotMessageSquareIcon className="size-[18px]" />
 							Learn a topic
-							<PlusIcon className="ml-auto size-4 opacity-60" />
 						</button>
 						<button
 							type="button"
@@ -869,7 +868,6 @@ function SessionsSidebar() {
 						>
 							<MessagesSquareIcon className="size-[18px]" />
 							Practice a topic
-							<PlusIcon className="ml-auto size-4 opacity-60" />
 						</button>
 
 						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
@@ -944,7 +942,7 @@ function SessionsSidebar() {
 											<Button
 												type="button"
 												variant="ghost"
-												size="icon-sm"
+												size="sm"
 												aria-label={selectMode ? "Done selecting" : "Select chats"}
 												aria-pressed={selectMode}
 												data-testid="session-select-toggle"
@@ -952,6 +950,7 @@ function SessionsSidebar() {
 												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
 											>
 												<ListChecksIcon className="size-3.5" />
+												<span className="text-[12px] font-[550]">{selectMode ? "Done" : "Select"}</span>
 											</Button>
 										</Hint>
 										<Hint label="Search chats" action="sessions-search" side="bottom">

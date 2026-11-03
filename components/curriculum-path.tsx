@@ -164,11 +164,12 @@ function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary 
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-miss transition-colors hover:bg-[var(--q-miss-wash)] focus:outline-none focus:ring-1 focus:ring-miss"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-miss transition-colors hover:bg-[var(--q-miss-wash)] focus:outline-none focus:ring-1 focus:ring-miss"
 						aria-label={`Weak spot: ${weak.title}`}
 						data-testid={`weak-mark-${unit.id}`}
 					>
 						<AlertTriangleIcon className="size-3.5 shrink-0 text-miss" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Weak spot</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
@@ -256,11 +257,12 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-xp transition-colors hover:bg-xp/15 focus:outline-none focus:ring-1 focus:ring-xp"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-xp transition-colors hover:bg-xp/15 focus:outline-none focus:ring-1 focus:ring-xp"
 						aria-label="With the tutor"
 						data-testid={`tutor-hint-${unit.id}`}
 					>
 						<BotMessageSquareIcon className="size-3.5 shrink-0 text-xp" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Tutor</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
@@ -315,11 +317,12 @@ function StarredGoalHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-teal transition-colors hover:bg-teal-wash focus:outline-none focus:ring-1 focus:ring-teal"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-teal transition-colors hover:bg-teal-wash focus:outline-none focus:ring-1 focus:ring-teal"
 						aria-label="Priority goal"
 						data-testid={`starred-hint-${unit.id}`}
 					>
 						<StarIcon className="size-3.5 shrink-0 fill-teal text-teal" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Priority</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
@@ -369,11 +372,12 @@ function CanDoGoalHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-ink-2 transition-colors hover:bg-well focus:outline-none focus:ring-1 focus:ring-ink-3"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-ink-2 transition-colors hover:bg-well focus:outline-none focus:ring-1 focus:ring-ink-3"
 						aria-label="Can-do milestone"
 						data-testid={`goal-hint-${unit.id}`}
 					>
 						<FlagIcon className="size-3.5 shrink-0 text-ink-2" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Goal</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent

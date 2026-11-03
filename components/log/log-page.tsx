@@ -65,6 +65,7 @@ export function LogPage() {
 				<div className="mt-6 flex items-center gap-2" data-testid="log-switcher">
 					<button type="button" className="q-btn sec !px-2.5" onClick={() => setI((n) => Math.min(list.length - 1, n + 1))} disabled={i >= list.length - 1} aria-label="Earlier day">
 						<ChevronLeftIcon className="size-4" strokeWidth={1.6} />
+						<span className="max-sm:hidden">Earlier</span>
 					</button>
 					<div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto py-1" role="tablist" aria-label="Days">
 						{list.map((d, n) => (
@@ -81,6 +82,7 @@ export function LogPage() {
 						))}
 					</div>
 					<button type="button" className="q-btn sec !px-2.5" onClick={() => setI((n) => Math.max(0, n - 1))} disabled={i <= 0} aria-label="Later day">
+						<span className="max-sm:hidden">Later</span>
 						<ChevronRightIcon className="size-4" strokeWidth={1.6} />
 					</button>
 				</div>

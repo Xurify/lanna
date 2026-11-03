@@ -373,9 +373,10 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								onClick={() => replay(true)}
 								aria-label="Play slowly"
 								title="Play slowly"
-								className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-teal-wash text-teal-2 transition-colors hover:bg-well-2"
+								className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 transition-colors hover:bg-well-2"
 							>
 								<SnailIcon className="size-5" strokeWidth={1.6} />
+								Slowly
 							</button>
 							{/* The text, only after two listens, and it costs the sentence:
 							    the ear has to try first (docs/research/desirable-difficulties.md). */}
