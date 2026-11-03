@@ -263,8 +263,10 @@ export function ReviewSession() {
 	const zeroKeys = useZeroKeys();
 	const strongKeyless = useStrongKeyless();
 	const keyless = zeroKeys || strongKeyless;
+	// The bar is the day: answers given today over those plus what is still to do. A new card on screen is already out of the new allowance and not yet answered, so it counts as still to do.
 	const done = counts?.reviewedToday ?? 0;
-	const left = counts ? counts.due + counts.learning + counts.newLeft : 0;
+	const left = counts ? counts.due + counts.learning + counts.newLeft + (prompt?.card.state === "new" ? 1 : 0) : 0;
+	const total = done + left;
 	const isNew = prompt?.card.state === "new";
 	const position = counts ? counts.newToday + 1 : 1;
 	const newTotal = counts ? counts.newToday + counts.newLeft : 0;
@@ -298,13 +300,18 @@ export function ReviewSession() {
 									Review
 									{counts && lang && (
 										<small data-testid="review-counts">
-											{counts.due + counts.learning} due · {counts.newLeft} new · {counts.reviewedToday} done today
+											<b className="font-semibold text-ink-2 q-num">{done}</b> of <b className="font-semibold text-ink-2 q-num">{total}</b> reviews today
 										</small>
 									)}
 								</h2>
-								<div role="progressbar" aria-label="Reviews done today" aria-valuemin={0} aria-valuemax={done + left} aria-valuenow={done} className="h-1 overflow-hidden rounded-full bg-well-2" data-testid="review-progress">
-									<div className="lh-fill rounded-full bg-teal" style={fillStyle(done + left > 0 ? done / (done + left) : 0)} />
+								<div role="progressbar" aria-label="Reviews done today" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} className="h-1.5 overflow-hidden rounded-full bg-well-2" data-testid="review-progress">
+									<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
 								</div>
+								{counts && lang && (
+									<p className="mt-2 text-[12.5px] text-ink-3" data-testid="review-left">
+										{left === 0 ? "All done for today." : `Still to do: ${counts.due + counts.learning} due, ${counts.newLeft + (prompt?.card.state === "new" ? 1 : 0)} new.`}
+									</p>
+								)}
 							</section>
 
 							<section className="mt-6">
@@ -420,7 +427,7 @@ export function ReviewSession() {
 													{around.lead}
 													<span
 														className={cn(
-															"q-slot !h-[44px] !px-2.5 @xl:!h-[58px] @xl:!px-3.5",
+															"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1",
 															!verdict && "q-write !text-foreground",
 															verdict === "wrong" && "!text-miss",
 															verdict === "accents" && "!text-foreground",
@@ -431,19 +438,13 @@ export function ReviewSession() {
 															{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
 														</span>
 														{verdict ? (
-															<span className="lh-pop origin-left col-start-1 row-start-1 flex items-center gap-2.5" data-testid="review-answer">
-																<span>
-																	<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
-																		{[...prompt.card.answer].map((ch, i) => (
-																			<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
-																				{ch}
-																			</span>
-																		))}
-																	</span>
-																	{around.tail}
-																</span>
-																<span className={cn("ok", verdict === "wrong" && "!text-miss")}>
-																	{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={2.4} /> : <QCheck />}
+															<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
+																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
+																	{[...prompt.card.answer].map((ch, i) => (
+																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
+																			{ch}
+																		</span>
+																	))}
 																</span>
 															</span>
 														) : picks ? (
@@ -463,7 +464,7 @@ export function ReviewSession() {
 															/>
 														)}
 													</span>
-													{!verdict && around.tail}
+													{around.tail}
 												</span>
 												<span>{around.after}</span>
 											</form>

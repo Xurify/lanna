@@ -15,6 +15,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
+import { NavRail } from "@/components/nav-rail";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -111,19 +112,32 @@ const SidebarContext = createContext<{
 	phone: boolean;
 	toggle: () => void;
 	closeDrawer: () => void;
+	/** Desktop: the sidebar is folded to a 56 px rail of icons. */
+	collapsed: boolean;
+	toggleCollapsed: () => void;
 }>({
 	open: false,
 	drawer: false,
 	phone: false,
 	toggle: () => {},
 	closeDrawer: () => {},
+	collapsed: false,
+	toggleCollapsed: () => {},
 });
 
 export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-export function SidebarProvider({ children }: { children: React.ReactNode }) {
+export function SidebarProvider({ children, defaultCollapsed = false }: { children: React.ReactNode; defaultCollapsed?: boolean }) {
+	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
+	const [collapsed, setCollapsed] = useState(defaultCollapsed);
+	const toggleCollapsed = useCallback(() => {
+		setCollapsed((c) => {
+			document.cookie = `lh-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
+			return !c;
+		});
+	}, []);
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -211,8 +225,12 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 		}
 		// An Electron window narrower than the threshold hides the sidebar:
 		// ask the shell to widen it, and the resize listener brings it back.
-		if (narrow) window.lh?.expandWindow();
-	}, [narrow, phone]);
+		if (narrow) {
+			window.lh?.expandWindow();
+			return;
+		}
+		toggleCollapsed();
+	}, [narrow, phone, toggleCollapsed]);
 
 	// ⌘B: the global shortcut dispatches kbdEventForAction("toggle-sidebar")
 	// and the context answers on exactly that name — the shared spelling
@@ -228,7 +246,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer }}>
+		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>
@@ -464,7 +482,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 export type SessionKindFilter = "teach" | "all" | "practice";
 
 function SessionsSidebar() {
-	const { open, drawer, phone, toggle, closeDrawer } = useSidebar();
+	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed } = useSidebar();
 	const visible = phone ? drawer : open;
 	const [chats, setChats] = useState<ChatListItem[] | null>(null);
 	const [query, setQuery] = useState("");
@@ -805,7 +823,7 @@ function SessionsSidebar() {
 			<aside data-sidebar=""
 				className={cn(
 					"sidebar-motion shrink-0 overflow-hidden duration-200",
-					open ? "w-72" : "w-0",
+					open ? (collapsed ? "w-14" : "w-72") : "w-0",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
@@ -814,7 +832,8 @@ function SessionsSidebar() {
 				)}
 				aria-hidden={!visible}
 			>
-				<div className="flex h-full w-72 flex-col border-r bg-background max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]">
+				{collapsed && <NavRail onExpand={toggleCollapsed} onSettings={() => openSettings()} />}
+				<div className={cn("flex h-full w-72 flex-col border-r bg-background max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -831,6 +850,11 @@ function SessionsSidebar() {
 						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
 							Lang<span className="text-sun">Harness</span>
 						</Link>
+						<Hint label="Collapse sidebar" action="toggle-sidebar">
+							<Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleCollapsed} data-testid="sidebar-collapse" className="lh-no-drag max-md:hidden touch-narrow:hidden">
+								<PanelLeftCloseIcon className="size-4" />
+							</Button>
+						</Hint>
 						<Hint label="Close menu" action="toggle-sidebar">
 							<Button variant="ghost" size="icon" aria-label="Close menu" onClick={toggle} className="lh-no-drag md:hidden touch-narrow:inline-flex">
 								<PanelLeftCloseIcon className="size-4" />
