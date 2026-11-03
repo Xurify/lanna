@@ -153,7 +153,7 @@ export function LanguageSwitcher() {
 						data-testid="profile-trigger"
 						onClick={() => setOpen((v) => !v)}
 						className={cn(
-							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-accent/70",
+							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-accent/70",
 							open && "ring-1 ring-border",
 						)}
 					>
@@ -174,7 +174,7 @@ export function LanguageSwitcher() {
 						/>
 					</button>
 				) : (
-					<div className="h-9 animate-pulse rounded-xl bg-card" aria-hidden />
+					<div className="h-9 animate-pulse rounded-xl bg-card shadow-[inset_0_0_0_1px_var(--q-line-2)]" aria-hidden />
 				)}
 
 				{open && profile && (
