@@ -67,7 +67,7 @@ export interface ReviewPrompt {
 export interface ReviewStatus {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number };
+	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
 	leeches: Array<Pick<ReviewCard, "id" | "lemma" | "gloss" | "lapses">>;
@@ -167,6 +167,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 	const list = Object.values(cards);
 	const due = dueCards(list, now);
 	const answeredToday = reviewedOn(today, now, tzOffset);
+	const endOfDay = Date.parse(`${today}T00:00:00Z`) + (tzOffset ?? now.getTimezoneOffset()) * 60_000 + DAY_MS;
 	const reviewedToday = answeredToday.answers;
 	let next: ReviewCard | undefined = due[0];
 	// Pending new cards first-come: a card minted but not yet answered.
@@ -194,6 +195,10 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 			// Distinct cards, not answers: a card answered three times today is one card, so the day's bar does not grow every time one comes back.
 			cardsToday: answeredToday.cards.size,
 			dueUntouched: due.filter((c) => !answeredToday.cards.has(c.id)).length,
+			// New cards that already exist and have not been answered (minted just now, or put in the deck by a lesson, Listen or Read), which the daily budget does not count.
+			pendingNew: Object.values(cards).filter((c) => c.state === "new" && !c.suspended).length,
+			// Cards not seen today that fall due before the local day ends: the day's work that has not come due yet.
+			dueLater: list.filter((c) => !c.suspended && c.state !== "new" && !answeredToday.cards.has(c.id) && Date.parse(c.due) > now.getTime() && Date.parse(c.due) < endOfDay).length,
 		},
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings) : null,
