@@ -33,6 +33,12 @@ I could measure only the slovak.wiki voice here (no ElevenLabs key, and Edge's s
 
 The setting is now a multiplier of a fixed pace, 4 syllables a second (about the median above, so a typical clip still plays at about 1.0×): 0.75× is 3, 1× is 4, 1.25× is 5, the snail 2.4 to 2.8. Each clip is played at the rate that reaches it: `rate = 4 × setting ÷ (syllables ÷ seconds)`, with the length read from the audio element once its header has loaded, kept between 0.6× and 1.6× (below that the browser's time-stretch smears the voice, above it chatters). A clip under 0.8 s or 3 syllables (a word) keeps the plain multiplier, because its length is mostly onset and tail. The fallback browser voice keeps the plain rate.
 
+## Checked afterwards (2026-11-03)
+
+- **The pace after correction:** the 40 clips rendered at the rate the app picks (ffmpeg `atempo`, pitch kept, as the browser does) and measured with `ffprobe`: 39 play at 4.04–4.18 syllables a second (target 4.00; the spread is `atempo` rounding), one hit the 0.6–1.6 limit.
+- **The browser applies the rate:** one clip played at 1×, 1.3× and 0.8× in headless Chromium took 1.80 s, 1.36 s and 2.14 s against an expected 1.68, 1.29 and 2.10 (about 0.05–0.12 s of start-up).
+- **Silence in the clip would bias the rate.** The pace is read over a clip's length, so a clip padded with 0.5 s of silence at each end reads slow and gets sped up too much (9 syllables, 2.12 s of speech: 0.94× is right, 1.39× from the padded length plays the speech at 5.9 syllables a second). The slovak.wiki clips have no padding, but the other engines may, and I could not measure them. The rate is therefore taken over the speech itself: the same decode that sets the loudness (`measureClip` in `components/speech.tsx`) finds the first and last 50 ms window within 30 dB of the loudest, and that length is used when it is at least half the clip. Not exercised on a padded real clip.
+
 ## Open
 
 - Unverified by ear: whether evening the tempo sounds natural at the extremes (a 2.3 syllable-a-second clip is stretched by the 1.6× cap, to 3.7). Slow recordings were presumably slow on purpose; if they sound rushed, narrow the cap.
