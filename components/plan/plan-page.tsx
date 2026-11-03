@@ -17,11 +17,11 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, FlagIcon, LoaderCircleIcon, TargetIcon } from "lucide-react";
+import { ArrowLeftIcon, FlagIcon, LoaderCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { HoursSheet } from "@/components/hours-sheet";
-import { Slider } from "@/components/plan/slider";
+import { Slider } from "@/components/ui/slider";
 import { Timeline } from "@/components/milestones/milestones-page";
 import { WeakSpots } from "@/components/daily-plan";
 import { StampBook } from "@/components/stamp";
@@ -58,7 +58,6 @@ function hoursText(h: number): string {
 
 const CARD = "q-card mt-5 p-5";
 const H2 = "text-[13px] font-semibold text-ink-2";
-const LINK_BTN = "q-btn sec";
 
 export function PlanPage({ goal, report, weak, stamps = null, log = null, charts = null }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[]; stamps?: StampState[] | null; log?: TrailLog | null; charts?: ChartData | null }) {
 	const router = useRouter();
@@ -131,33 +130,25 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				)}
 
 				{/* The goal, and where the level is checked again. */}
-				<section className={CARD} data-testid="plan-goal" aria-label="Your goal">
-					<h2 className={H2}>Your goal</h2>
-					<div className="mt-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-						{/* A floor on the text: on a phone the buttons wrap below it instead of squeezing it to a column. */}
-						<div className="min-w-48 flex-1">
-							<p className="flex items-center gap-2 text-2xl font-semibold tracking-[-0.022em] text-foreground">
-								<TargetIcon className="size-6 text-teal" strokeWidth={1.6} aria-hidden="true" />
-								{goal.level}
-							</p>
-							{purposes && <p className="mt-1 text-base text-foreground first-letter:uppercase">For {purposes}</p>}
-							<p className="mt-1 text-sm text-ink-3">{LEVEL_CAN_DO[goal.level]}</p>
-						</div>
-						<div className="flex flex-wrap gap-2">
-							<Link href="/start?edit=1" className={LINK_BTN} data-testid="plan-change-goal">
-								Change goal
-							</Link>
-							<Link href="/start?edit=1&check=1" className={LINK_BTN} data-testid="plan-recheck">
-								Re-check my level
-							</Link>
-						</div>
+				<section className="mt-10" data-testid="plan-goal" aria-label="Your goal">
+					<h2 className="q-sh">Your goal</h2>
+					<p className="text-[28px] font-semibold leading-[1.15] tracking-[-0.022em] text-foreground">{goal.level}</p>
+					{purposes && <p className="mt-1 text-base text-foreground first-letter:uppercase">For {purposes}</p>}
+					<p className="mt-1 max-w-[60ch] text-sm text-ink-3">{LEVEL_CAN_DO[goal.level]}</p>
+					<div className="q-acts" style={{ marginTop: 14 }}>
+						<Link href="/start?edit=1" className="q-btn sec" data-testid="plan-change-goal">
+							Change goal
+						</Link>
+						<Link href="/start?edit=1&check=1" className="q-btn sec" data-testid="plan-recheck">
+							Re-check my level
+						</Link>
 					</div>
 					<p className="mt-3 text-xs text-ink-3">{goal.placedAt ? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.` : "No level check yet; the map credits hours as you finish units."}</p>
 				</section>
 
 				{/* The sliders: every date below moves as they do. */}
-				<section className={CARD} data-testid="plan-pace" aria-label="Your pace">
-					<h2 className={H2}>Your pace</h2>
+				<section className="mt-10" data-testid="plan-pace" aria-label="Your pace">
+					<h2 className="q-sh">Your pace</h2>
 					<p className="mt-2 text-3xl font-semibold tracking-[-0.028em] text-foreground" aria-live="polite" data-testid="plan-eta">
 						{target.days === 0 ? `${goal.level} is within reach now` : target.date ? `${goal.level} around ${monthOf(target.date)}` : "Set some minutes to see a date"}
 					</p>
@@ -170,25 +161,9 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 						</p>
 					)}
 
-					<div className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
-						<div>
-							<div className="flex items-baseline justify-between">
-								<span className="text-sm font-semibold text-foreground">Minutes a day</span>
-								<span className="q-num text-sm font-semibold text-foreground" data-testid="plan-minutes-value">
-									{clock(minutes)}
-								</span>
-							</div>
-							<Slider value={minutes} min={5} max={maxMinutes} step={5} onChange={setMinutes} label="Minutes a day" valueText={clock(minutes)} testid="plan-minutes" />
-						</div>
-						<div>
-							<div className="flex items-baseline justify-between">
-								<span className="text-sm font-semibold text-foreground">Days a week</span>
-								<span className="q-num text-sm font-semibold text-foreground" data-testid="plan-days-value">
-									{days}
-								</span>
-							</div>
-							<Slider value={days} min={1} max={7} step={1} onChange={setDays} label="Days a week" valueText={`${days} days`} testid="plan-days" />
-						</div>
+					<div className="mt-4 grid gap-x-10 gap-y-3 sm:grid-cols-2">
+						<Slider header value={minutes} min={5} max={maxMinutes} step={5} onChange={setMinutes} label="Minutes a day" valueText={clock(minutes)} ticks={[15, 30, 45, 60, 90, 120, 180, 240]} testid="plan-minutes" valueTestid="plan-minutes-value" />
+						<Slider header value={days} min={1} max={7} step={1} onChange={setDays} label="Days a week" valueText={`${days} ${days === 1 ? "day" : "days"}`} ticks testid="plan-days" valueTestid="plan-days-value" />
 					</div>
 
 					<div className="mt-3 flex min-h-10 flex-wrap items-center justify-between gap-3">
