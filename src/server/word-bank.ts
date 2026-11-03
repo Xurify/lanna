@@ -25,6 +25,7 @@ import {
 	type WordBankSummary,
 	type WordLearningState,
 } from "../core/saved-phrases.ts";
+import { compareMatches, matchWord, type WordSearchMatch } from "../core/word-search.ts";
 import { entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "../core/review.ts";
 
 function activeLang(): LanguageInfo {
@@ -883,6 +884,8 @@ export interface WordBankResult {
 	summary: WordBankSummary;
 }
 
+const RANK = { start: 1, contains: 2, form: 3, meaning: 4, example: 5 } as const;
+
 export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBankResult {
 	const lexicon = loadLexicon();
 	const cards = reviewStore.readCards();
@@ -906,7 +909,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 	let totalRetentionSum = 0;
 	let cardsReviewedCount = 0;
 
-	const searchLower = query.search?.trim().toLowerCase();
+	const searchText = query.search?.trim();
 	const posFilter = query.pos?.trim().toLowerCase();
 
 	for (const entry of entries) {
@@ -957,12 +960,10 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 			if (!entryPos.includes(posFilter)) continue;
 		}
 
-		if (searchLower) {
-			const targetLemma = entryLemma(entry);
-			const matchesTargetLemma = targetLemma.toLowerCase().includes(searchLower);
-			const matchesEnglishGloss = entry.en.toLowerCase().includes(searchLower);
-			const matchesInflectedForm = entry.forms?.some((form) => form.toLowerCase().includes(searchLower));
-			if (!matchesTargetLemma && !matchesEnglishGloss && !matchesInflectedForm) continue;
+		let match: WordSearchMatch | null = null;
+		if (searchText) {
+			match = matchWord(searchText, { lemma: entryLemma(entry), gloss: entry.en, forms: entry.forms, examples: (entry.examples ?? []).map((e) => ({ sk: exampleText(e), en: e.en })) });
+			if (!match) continue;
 		}
 
 		const firstExample = entry.examples?.[0];
@@ -986,6 +987,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 			example,
 			favorite,
 			inDeck,
+			...(match ? { match: { kind: match.kind, span: match.span, via: match.via } } : {}),
 		});
 	}
 
@@ -993,6 +995,8 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 	// 1. Favorites and cards in deck come first if no explicit query
 	// 2. Otherwise sort by frequency rank (lower rank = commoner)
 	items.sort((a, b) => {
+		// A search is ranked by how well it matched, then by frequency; with no search, your own words first.
+		if (a.match && b.match) return compareMatches({ match: { ...a.match, rank: RANK[a.match.kind] }, rank: a.rank }, { match: { ...b.match, rank: RANK[b.match.kind] }, rank: b.rank });
 		if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
 		if (a.inDeck !== b.inDeck) return a.inDeck ? -1 : 1;
 		const rankA = a.rank ?? 99999;

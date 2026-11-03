@@ -415,7 +415,15 @@ export function WordBankPage() {
 													</button>
 
 													<span className="font-prose text-xl font-semibold text-foreground">
-														{item.lemma}
+														{item.match?.span ? (
+															<>
+																{item.lemma.slice(0, item.match.span[0])}
+																<mark className="bg-transparent font-bold text-teal-2 underline decoration-teal decoration-2 underline-offset-4">{item.lemma.slice(item.match.span[0], item.match.span[1])}</mark>
+																{item.lemma.slice(item.match.span[1])}
+															</>
+														) : (
+															item.lemma
+														)}
 													</span>
 
 													{/* Badges */}
@@ -442,6 +450,11 @@ export function WordBankPage() {
 												<p className="mt-1.5 pl-10 font-prose text-sm font-medium text-muted-foreground">
 													{item.gloss}
 												</p>
+												{item.match?.via && (
+													<p className="mt-0.5 pl-10 font-ui text-xs text-ink-3" data-testid="word-match-kind">
+														{item.match.kind === "meaning" ? `Matches meaning: ${item.match.via}` : item.match.kind === "form" ? `Matches the form: ${item.match.via}` : `Matches an example: ${item.match.via}`}
+													</p>
+												)}
 
 												{/* Example Sentence */}
 												{item.example && (
@@ -573,7 +586,7 @@ export function WordBankPage() {
 										</button>
 									}
 								>
-									<p>Try another search or clear the filters. All your words are still here.</p>
+									<p>{searchQuery.trim() ? "Search by how a word starts, or by its English meaning. Accents are optional: c finds čas. A longer search also looks in example sentences." : "Try another filter. All your words are still here."}</p>
 								</EmptyState>
 							)}
 
