@@ -156,6 +156,8 @@ html[data-keyboard] :focus-visible {
 	--q-miss: #f0867b;
 	--q-miss-wash: #2d1a18;
 	--q-shadow-rgb: 0 0 0;
+	--lh-ink-strong: var(--foreground);
+	--lh-ink-italic: var(--foreground);
 }
 
 /* CMU Serif bold (titles) — bundled local file, no CDN dependency. */

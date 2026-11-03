@@ -2,6 +2,17 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 2 November: Quiet tool redesign (branch `feat/quiet-tool-redesign`, not merged)
+
+- **What:** every route restyled in the Quiet tool look from the mockups in `r3-3-quiet`. Decision and rules: E32 in [DECISIONS.md](DECISIONS.md).
+- **Built from a mockup:** Today (desktop with the rail, phone with the top bar), the Review card (typing, verdict, rating, the collapsed last rep, the rail "in progress" row), the jump bar and its palette, Speak with and without an AI key and My mistakes (content only, from `r2-hl-practice`), Listen and Read (content only, from `r2-hl-input`).
+- **Night mode:** derived from Day (tokens listed in `app/globals.css`, `.dark`). The mockups have only Day.
+- **Extended from the same components, no mockup:** the lesson question, verdict and end screens; Exam; Say it faster and Blitz; Listen end screen; Read library, reader and check; Watch; Speak scene, end screen and script player; Grammar atlas; Progress and "When can I…?"; Curriculum (now a calm list: stage rule heading, chapter strip, chapter cards; the mountain is gone and stages run A1 first); Milestones; Stamp book; the knowledge map (/map, canvas colors read from tokens); Words; Chat (new session, transcript, composer, question dock); Settings (every section; Mode is now System, Day or Night); first-run /start; /pair; dialogs, banners and the model picker; not-found.
+- **Left out because the app cannot back it:** the Review sample sentence and rule note, the Estonian bridge card, "Why? Ask the tutor" on Review, "Add 3 minutes of Say it faster" and "Not today" on Today, the waveform and folded-text strip on Listen, the "Meanwhile, without AI" cards on Speak, mix-up swap cards and look-alike tiles on My mistakes. Today's weekly offer links to the strand's door instead.
+- **Changed behavior:** keys 1 to 4 on Review now choose a rating and Enter or Continue confirms it (before, a key rated at once). The sidebar starts closed on a first visit. The factory heading weight is 600 (was 900) and the reading font is Geist, so `tests/settings*.ts` and the font-menu tests changed.
+- **Not changed:** the Electron title bar overlay and window background still use the old dark ground; the plain-browser theme color follows Day and Night. Native selects remain in the ChatGPT and subscription connection panels, and native range, checkbox and select inputs in the map's settings.
+- **Unverified:** Safari, a real phone, Night at 390 px on most screens, My mistakes with data, the Speak scene and Read gloss with an AI key, and Watch playing a video. One dev-only React warning ("script tag while rendering") appears on /curriculum.
+
 ## 2 November: pairing from a phone (dev origin)
 
 - **Cause:** the phone loads the app's scripts from its tailnet name. Next's dev server refuses a dev resource from an origin it does not list in `allowedDevOrigins`, so every script got a 403 and the page never started. The pairing form then did nothing. The owner's dev log has those refusals for the phone's name. The guide said only hot reload was affected; that was wrong.

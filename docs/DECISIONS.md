@@ -373,6 +373,18 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The This week card names the target (the goal's days a week) and says when it is met; rest days inside it are not failures.
 - No leaderboards, leagues, hearts, lives, currency, chests, variable rewards, purchasable streak freezes, confetti or notifications. Any new reward mechanic is checked against `.claude/skills/gamification-loops/references/validations.md` and recorded in the research note before it is built.
 
+### E32. The Quiet tool design: one teal, Geist, a rail and a jump bar (2026-11-02, branch `feat/quiet-tool-redesign`)
+
+**Why:** the owner compared three full-app redesigns, each built from concept mockups. This one is the "Quiet tool" (mockups in `r3-3-quiet`: Today on desktop and phone, and a Review screen). It is a calm, dense tool look with one accent.
+
+**How to apply:**
+- Tokens are the mockup's own. Day values are copied from its `base.css` into `app/globals.css` as `--q-*`; the old semantic tokens (`--background`, `--card`, `--sun`, `--lh-go`…) map onto them, so older classes keep working. Night is derived from Day (grounds swap to near-black at the same gaps, ink steps invert, teal lifted for the same contrast, shadows black). `--q-card` is the raised surface: white in Day, a lighter step in Night.
+- Day or Night follows the system unless Settings → Appearance → Mode says otherwise (`localStorage` key `lh:theme`; a script in `app/layout.tsx` sets the `dark` class before paint).
+- The mockup's component CSS is `app/quiet.css` (in the `components` layer, so utilities override it): `.q-btn`, `.q-card`, `.q-sh`, `.q-well`, `.q-segc`, `.q-jump`, the rail, and the practice-screen pieces. Icons are the mockup's set (`components/quiet/icon.tsx`).
+- One font: Geist (JetBrains Mono for code). The four strands are told apart by icon, not color, so the four trail colors are one neutral grey. Done and right are teal; wrong is a muted red (`--q-miss`), which the mockups never draw.
+- Navigation is the jump bar (Ctrl or Cmd K, the search field at the foot of Today and Review): every route, every curriculum unit, Settings, the sidebar, and the Slovak letters. The sidebar of tutor chats starts closed. On a phone the jump bar replaces the bottom tabs.
+- Mockup copy the app cannot back does not ship: the sample sentence and the rule note with the Estonian bridge on the Review card, "Add 3 minutes of Say it faster", "Not today", "Why? Ask the tutor", and invented shortcuts.
+
 ## Working rules (how work reaches the repo)
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)

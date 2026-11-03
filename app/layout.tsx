@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import Script from "next/script";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
@@ -64,13 +65,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const vars = appearanceVars(resolveAppearance(appearance));
 	return (
 		<html lang="en" className={`${geist.variable} ${mono.variable}`} style={vars as React.CSSProperties} suppressHydrationWarning>
-			<head>
-				<script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-			</head>
 			<body className="min-h-dvh antialiased">
 			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
-			<ServerEventsProvider>
+			<Script id="lh-theme" strategy="beforeInteractive">{THEME_SCRIPT}</Script>
+				<ServerEventsProvider>
 				<AppearanceProvider initialDelta={appearance}>
 					<SidebarProvider initialOpen={sidebarOpen}>
 						<ActivityProvider>
