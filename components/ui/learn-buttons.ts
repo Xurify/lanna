@@ -1,18 +1,18 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The one button family of the learning screens: flat, sentence case, 48px
- * tall so the main action is an easy target. Today, the lessons, Review and
- * every task screen take their buttons from here, so a "Check" or a "Start"
- * looks and behaves the same wherever it appears. The main action is the
- * sun (trail design, 2026-11-02): the one gold on a screen.
+ * The one button family of the learning screens, in the Quiet tool look
+ * (copied from the mockup's `.btn`): 36px tall, 8px radius, 14px / 550. Today,
+ * the lessons, Review and every task screen take their buttons from here, so a
+ * "Check" or a "Start" looks and behaves the same wherever it appears. The main
+ * action is the teal: one filled button per screen.
  */
-export const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-bold transition-[filter,transform,background-color] active:scale-[0.98]";
-export const PRIMARY = cn(BUTTON, "bg-sun text-sun-ink hover:brightness-105 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100");
-export const SECONDARY = cn(BUTTON, "bg-foreground/10 px-5 text-foreground hover:bg-foreground/15 disabled:opacity-50");
+export const BUTTON = "inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 font-ui text-sm font-[550] tracking-[-0.005em] transition-[background-color,box-shadow,transform] duration-150 active:translate-y-px";
+export const PRIMARY = cn(BUTTON, "bg-sun text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-sun disabled:active:translate-y-0");
+export const SECONDARY = cn(BUTTON, "bg-background px-3.5 text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)] hover:bg-well disabled:opacity-50");
 /** A quiet text action beside a primary one ("I don't know", "Skip"). */
-export const QUIET = cn(BUTTON, "px-4 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50");
+export const QUIET = cn(BUTTON, "px-2.5 text-muted-foreground hover:bg-well hover:text-ink-2 disabled:opacity-50");
 /** The compact size, for actions inside a card or a row. */
-export const SMALL = "h-10 rounded-lg px-4 text-sm";
+export const SMALL = "h-8 rounded-md px-3 text-[13px]";
 /** A key name shown next to the action it triggers. */
-export const KBD = "rounded-md border border-border bg-background px-1.5 py-0.5 font-ui text-xs font-bold text-muted-foreground";
+export const KBD = "inline-flex h-5 items-center rounded-[5px] bg-background px-1.5 font-ui text-[11.5px] font-[550] text-ink-3 shadow-[0_0_0_1px_var(--q-line-2),0_1px_0_var(--q-line-2)]";

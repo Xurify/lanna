@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { Bricolage_Grotesque, JetBrains_Mono, Source_Sans_3 } from "next/font/google";
+import { Geist, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
@@ -15,16 +15,16 @@ import UpdateBanner from "@/components/update-banner";
 import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
 import { OutboxFlush } from "@/components/lesson/outbox-flush";
 
-// Chrome = JetBrains Mono, teaching prose = Source Sans 3, titles = CMU
-// Serif (the bundled lh-cmu @font-face in globals.css — no CDN).
-// LangHarness: latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä), cyrillic carries Russian.
-const ui = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains" });
-const prose = Source_Sans_3({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-sans3" });
-// Trail design (2026-11-02): the chrome is Bricolage Grotesque, a grotesque
-// with an optical-size axis, so 12 px labels get its text cut and the big
-// numbers its display cut. latin-ext carries every Slovak letter; JetBrains
-// Mono stays for code and key hints.
-const chrome = Bricolage_Grotesque({ subsets: ["latin", "latin-ext"], variable: "--font-bricolage", axes: ["opsz"] });
+// Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
+// JetBrains Mono stays for code. latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä),
+// cyrillic carries Russian.
+const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist" });
+const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains" });
+
+// The theme is Day or Night, from the learner's choice (localStorage
+// "lh:theme": day, night, or absent = follow the system). The script runs
+// before paint so a Night learner never sees a Day flash.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("lh:theme");var n=t==="night"||(t!=="day"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",n);document.documentElement.style.colorScheme=n?"dark":"light"}catch(e){}`;
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
@@ -33,14 +33,17 @@ export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
 	viewportFit: "cover",
-	themeColor: "#0f1519",
-	colorScheme: "dark",
+	themeColor: [
+		{ media: "(prefers-color-scheme: light)", color: "#ffffff" },
+		{ media: "(prefers-color-scheme: dark)", color: "#101214" },
+	],
+	colorScheme: "light dark",
 };
 
 export const metadata: Metadata = {
 	title: "LangHarness",
 		applicationName: "LangHarness",
-		appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "black-translucent" },
+		appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "default" },
 			// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
 			// iOS Safari still reads the Apple name to launch full screen, so both go out.
 			other: { "apple-mobile-web-app-capable": "yes" },
@@ -60,7 +63,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	}
 	const vars = appearanceVars(resolveAppearance(appearance));
 	return (
-		<html lang="en" className={`dark ${ui.variable} ${prose.variable} ${chrome.variable}`} style={vars as React.CSSProperties}>
+		<html lang="en" className={`${geist.variable} ${mono.variable}`} style={vars as React.CSSProperties} suppressHydrationWarning>
+			<head>
+				<script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+			</head>
 			<body className="min-h-dvh antialiased">
 			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}

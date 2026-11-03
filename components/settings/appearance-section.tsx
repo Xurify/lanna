@@ -27,7 +27,7 @@ import { FontMenuList } from "./model-menu";
 import { CommitInput, SettingsDisclosure, SettingsRow, Toggle } from "./controls.tsx";
 
 /** Factory reading family. Unset means this. */
-export const DEFAULT_READING_FONT = "Source Sans 3";
+export const DEFAULT_READING_FONT = "Geist";
 /** Factory dark background. A set color must not read as the default. */
 const FACTORY_BACKGROUND = "#0f1519";
 
@@ -56,7 +56,7 @@ function localFontsApi(): LocalFontsApi | null {
 	return (window as unknown as { queryLocalFonts?: LocalFontsApi }).queryLocalFonts ?? null;
 }
 
-/** null or blank = the factory Source Sans 3; otherwise the trimmed family. */
+/** null or blank = the factory Geist; otherwise the trimmed family. */
 export function composeFontFamily(
 	appearance: AppearanceSettings | undefined,
 	family: string | null,

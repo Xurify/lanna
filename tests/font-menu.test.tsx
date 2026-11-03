@@ -110,7 +110,7 @@ describe("the appearance section's font control (thin SSR)", () => {
 		assert.ok(html.includes(DEFAULT_READING_FONT), "unset shows the factory family");
 		assert.ok(html.includes('aria-expanded="false"'), "the collapsed state");
 		assert.ok(!html.includes('data-testid="input-font"'));
-		assert.ok(!html.includes('placeholder="Source Sans 3"'));
+		assert.ok(!html.includes('placeholder="Geist"'));
 	});
 
 	it("a stored family shows in the trigger (the record never lies)", () => {
