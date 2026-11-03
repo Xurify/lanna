@@ -196,7 +196,7 @@ export function StrandBars({ balance, className }: { balance: StrandBalance | nu
 			<h4>
 				Minutes by strand <small>{formatMinutes(balance.total)} this week</small>
 			</h4>
-			<div className="q-bars">
+			<div className="q-bars with-mins">
 				{STRANDS.map((x) => {
 					const share = balance.share[x.id];
 					const pct = Math.round(share * 100);

@@ -141,7 +141,7 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 					)}
 				</h3>
 				{total > 0 ? (
-					<div className="q-bars" style={{ marginTop: 0 }}>
+					<div className="q-bars with-mins" style={{ marginTop: 0 }}>
 						{STRANDS.map((s) => {
 							const m = log.strands.minutes[s.id];
 							return (
@@ -150,7 +150,8 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 									<span className="q-bar" role="meter" aria-valuemin={0} aria-valuemax={max} aria-valuenow={m} aria-label={`${s.title}: ${Math.round(m)} minutes`}>
 										<i style={{ width: `${(m / max) * 100}%` }} />
 									</span>
-									<span className={cn("pct q-num", m === 0 && "text-ink-4")}>{Math.round(m)}</span>
+									<span className={cn("mins q-num", m === 0 && "text-ink-4")}>{Math.round(m)} min</span>
+									<span className={cn("pct q-num", m === 0 && "text-ink-4")}>{total > 0 ? Math.round((m / total) * 100) : 0}%</span>
 								</div>
 							);
 						})}
