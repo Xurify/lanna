@@ -13,8 +13,8 @@ import { QuestionDock } from "../components/question-dock.tsx";
 import { LatexGlyph } from "../components/latex-glyph.tsx";
 import { ProblemCard, ConcludeCard } from "../components/practice-cards.tsx";
 import { MessageResponse, ToolContentResponse } from "../components/ai-elements/message.tsx";
+import { repairMathForDisplay, healOverescapedCommands, restoreMathEscapes } from "../src/core/math-delims.ts";
 import {
-	repairMathForDisplay, healOverescapedCommands, restoreMathEscapes,
 	parseQuizInput, parseAskInput, parseExplainInput, activeProblemOf, projectView,
 	toLlmMessages, type LhMessage, type ArtifactPartProps,
 } from "../src/core/index.ts";

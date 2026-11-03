@@ -437,12 +437,15 @@ export function ReviewSession() {
 														</span>
 														{verdict ? (
 															<span className="lh-pop origin-left col-start-1 row-start-1 flex items-center gap-2.5" data-testid="review-answer">
-																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
-																	{[...prompt.card.answer].map((ch, i) => (
-																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
-																			{ch}
-																		</span>
-																	))}
+																<span>
+																	<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
+																		{[...prompt.card.answer].map((ch, i) => (
+																			<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
+																				{ch}
+																			</span>
+																		))}
+																	</span>
+																	{around.tail}
 																</span>
 																<span className={cn("ok", verdict === "wrong" && "!text-miss")}>
 																	{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={2.4} /> : <QCheck />}
@@ -465,7 +468,7 @@ export function ReviewSession() {
 															/>
 														)}
 													</span>
-													{around.tail}
+													{!verdict && around.tail}
 												</span>
 												<span>{around.after}</span>
 											</form>

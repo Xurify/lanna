@@ -416,6 +416,15 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - A result moves: a miss shakes, a right answer pops into its slot, new content in the same place settles (`components/motion.ts`, Web Animations, so nothing remounts).
 - Hover styles live behind `(hover: hover)`; every animation has a reduced-motion end state, and a global rule catches the ones that forget.
 
+### E36. Keep the browser bundle small, give every tab an instant response, measure a build (2026-11-03, branch `feat/motion-pass`)
+
+**Why:** the owner found clicking tabs "very very slow". The causes ([research/slow-tabs.md](research/slow-tabs.md)) were dev mode, 900 KB of KaTeX and Markdown parsing in every route, and a tab click with no response until the server finished.
+
+**How to apply:**
+- A client component imports `@/src/core` only for light things. Anything that pulls KaTeX, mdast or micromark (`math-delims`, `answer-presentation`) lives behind `@/src/core/markdown`, which only a component that renders Markdown imports. Do not re-export it from `src/core/index.ts`; ESLint allows both entry points and no other path.
+- Every page is server-rendered per request, so `app/loading.tsx` must exist: a tab click changes the URL and shows the page's shape at once (production build; dev mode does not prefetch).
+- Judge speed on `npm run desktop:prod` or `node scripts/perf-check.mjs --cpu 4`, never on `desktop:dev`. A change that adds a large dependency to the shell shows up as long tasks in that table.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

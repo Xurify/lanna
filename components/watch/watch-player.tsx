@@ -29,7 +29,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
@@ -261,9 +262,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Frame>
-				<Shelf state={state} onOpen={open} onPrepare={(url) => void prepare(url)} />
-			</Frame>
+			<Shelf state={state} onOpen={open} onPrepare={(url) => void prepare(url)} />
 		);
 	}
 
@@ -367,19 +366,20 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 		if (valid) onPrepare(url.trim());
 	};
 	return (
-		<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]">
-			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-shelf">
-				<div className="flex flex-wrap items-end justify-between gap-4">
-					<div>
-						<h1 className="font-ui text-3xl font-[600] text-foreground">Watch</h1>
-						<p className="mt-1 font-prose text-base text-muted-foreground">A video with both subtitles. Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
-					</div>
-					<Link href="/" className={SECONDARY}>
-						Today
-					</Link>
-				</div>
+		<div className="relative min-h-dvh bg-background">
+			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
+				<SidebarToggle />
+			</header>
+			<main className="lh-rise mx-auto w-full max-w-3xl px-5 pb-20" data-testid="watch-shelf">
+				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
+					Today
+				</Link>
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Watch</h1>
+				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
 
-				<form onSubmit={submit} className="mt-6 flex flex-col gap-3 sm:flex-row" data-testid="watch-form">
+				<form onSubmit={submit} className="q-card mt-6 flex flex-col gap-3 p-4 sm:flex-row" data-testid="watch-form">
 					<label className="sr-only" htmlFor="watch-url">
 						YouTube link
 					</label>
@@ -391,10 +391,10 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
-						className="h-12 min-w-0 flex-1 rounded-xl border bg-card px-4 font-ui text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-teal"
+						className="h-11 min-w-0 flex-1 rounded-lg bg-well px-4 font-ui text-[15px] text-foreground outline-none transition-colors placeholder:text-ink-3 focus:bg-card focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
 						data-testid="watch-url"
 					/>
-					<button type="submit" disabled={!valid || state?.canPrepare === false} className={PRIMARY} data-testid="watch-prepare">
+					<button type="submit" disabled={!valid || state?.canPrepare === false} className={cn(PRIMARY, "h-11 px-5")} data-testid="watch-prepare">
 						<SparklesIcon className="size-4" />
 						Prepare it
 					</button>
@@ -404,34 +404,37 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						<KeyNote>Preparing a new video needs an AI key, for the English translation. Videos you have already prepared play without one.</KeyNote>
 					</div>
 				) : (
-					<p className="mt-2 font-prose text-xs text-muted-foreground">The captions come from YouTube (made by people, or its automatic ones). Translating a video takes one or two short requests to your AI provider, once, and it is kept. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</p>
+					<p className="mt-3 font-prose text-[13px] leading-relaxed text-ink-3">The captions come from YouTube (made by people, or its automatic ones). Translating a video takes one or two short requests to your AI provider, once, and it is kept. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</p>
 				)}
 
 				{list.length > 0 && (
 					<>
-						<p className="mt-8 font-ui text-xs font-[600] tracking-wide text-muted-foreground">
-							Your videos · {list.length}
-							{state?.watchedToday ? ` · ${state.watchedToday} watched today` : ""}
-						</p>
-						<ol className="mt-2 flex flex-col gap-2">
+						<h2 className="q-sh mt-10">
+							Your videos
+							<small>
+								{list.length}
+								{state?.watchedToday ? ` · ${state.watchedToday} watched today` : ""}
+							</small>
+						</h2>
+						<ol className="flex flex-col gap-2">
 							{list.map((v) => {
 								const band = coverageBand(v.coverage);
 								return (
 									<li key={v.id}>
-										<button type="button" onClick={() => onOpen(v.id)} className="flex w-full items-center gap-4 rounded-lg border bg-card px-5 py-4 text-left transition-colors hover:shadow-raise-hi" data-testid="watch-shelf-item">
-											<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", v.watches > 0 ? "bg-accent text-muted-foreground" : "bg-teal-wash text-teal-2")}>
+										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
+											<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg", v.watches > 0 ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
 												<MonitorPlayIcon className="size-5" />
 											</span>
 											<span className="min-w-0 flex-1">
-												<span className="block truncate font-ui text-lg font-[600] text-foreground" lang="sk">
+												<span className="block truncate font-ui text-[16px] font-[600] text-foreground" lang="sk">
 													{v.title}
 												</span>
-												<span className="block truncate font-prose text-sm text-muted-foreground">
+												<span className="block truncate font-prose text-[13px] text-ink-3">
 													{v.channel ? `${v.channel} · ` : ""}
 													{formatClock(v.durationSec)} · {v.segments} lines · {Math.round(v.coverage * 100)}% known ({band.title.toLowerCase()})
 												</span>
 											</span>
-											<span className="shrink-0 text-right font-ui text-xs font-[600] text-muted-foreground">
+											<span className="shrink-0 text-right font-ui text-xs font-[600] text-ink-3">
 												{v.watches === 0 ? <span className="text-teal-2">new</span> : v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : `watched ${v.watches}×`}
 											</span>
 										</button>
@@ -441,7 +444,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						</ol>
 					</>
 				)}
-			</div>
+			</main>
 		</div>
 	);
 }

@@ -8,8 +8,10 @@ import { parseHTML } from "linkedom";
 import { MessageResponse, ToolContentResponse } from "../components/ai-elements/message.tsx";
 import { QuestionDock } from "../components/question-dock.tsx";
 import { AnsweredCard } from "../components/answered-card.tsx";
-import { answerForPresentation, buildAnswer, normalizeOptions, parseAskInput, parseExplainInput, parseQuizInput,
-	repairMathForDisplay, resolveCorrect, type QuestionAnswerData, type QuestionData } from "../src/core/index.ts";
+import { buildAnswer, normalizeOptions, parseAskInput, parseExplainInput, parseQuizInput,
+	resolveCorrect, type QuestionAnswerData, type QuestionData } from "../src/core/index.ts";
+import { answerForPresentation } from "../src/core/answer-presentation.ts";
+import { repairMathForDisplay } from "../src/core/math-delims.ts";
 
 const fixtures = JSON.parse(readFileSync(new URL("./fixtures/tool-rendering/matrix-regressions.json", import.meta.url), "utf8")) as {
 	cases: Array<{ chatId: string; source: string; raw: string; oldDisplay: string }>;

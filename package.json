@@ -23,6 +23,7 @@
 		"seed:build": "tsx scripts/build-seed.ts slovak",
 		"corpus:export": "tsx scripts/corpus-export.ts",
 		"desktop:dev": "node scripts/desktop-dev.mjs",
+		"desktop:prod": "node scripts/desktop-dev.mjs --prod",
 		"dev:fresh": "bash scripts/dev-fresh.sh",
 		"dev:sandbox": "tsx scripts/dev-sandbox.ts",
 		"skill:sync": "tsx scripts/sync-slovak-skill.ts",
