@@ -16,6 +16,7 @@ import { SidebarToggle } from "@/components/sidebar";
 import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
+import { ListeningSection } from "@/components/mistakes/listening-section";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-teal-2" },
@@ -28,10 +29,10 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 	const [report, setReport] = useState<MistakesReport | null>(initial);
-	const [busy, setBusy] = useState<"analyze" | "guide" | null>(null);
+	const [busy, setBusy] = useState<"analyze" | "guide" | "listen-guide" | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const run = async (action: "analyze" | "guide", force = false) => {
+	const run = async (action: "analyze" | "guide" | "listen-guide", force = false) => {
 		setBusy(action);
 		setError(null);
 		try {
@@ -117,6 +118,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 						</>
 					)
 				)}
+				{a?.listening && report && <ListeningSection l={a.listening} report={report} busy={busy === "listen-guide"} onWrite={(force) => void run("listen-guide", force)} error={busy === null ? error : null} />}
 			</main>
 		</div>
 	);

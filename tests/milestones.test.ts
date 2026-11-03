@@ -350,3 +350,12 @@ test("appendLessonLog keeps the timing fields a Listen rep carries", () => {
 	const f = learnerFacts(loadLexicon(), NOW, 0);
 	assert.ok(f.listen.sessions >= 2);
 });
+
+test("a typed Listen sentence is timed by its clip, not by the typing", () => {
+	const before = learnerFacts(loadLexicon(), NOW, 0).listen.reading;
+	const typed = { itemId: "b#0", kind: "dictation", unit: "listen", slug: "b", lemma: "b", gloss: "", sentence: "E f g h.", translation: "y", answer: "E f g h.", given: "e f g h", verdict: "exact" as const, assisted: false, ms: 20_000, heardMs: 2000, replays: 0, peeked: false, words: 4 };
+	appendLessonLog({ id: "t2", at: NOW.toISOString(), day: "2026-10-28", unit: "listen", mode: "listen", xp: 0, correct: 1, total: 1, perfect: true, queued: [], reps: [typed, { ...typed, itemId: "c#0", heardMs: undefined }, { ...typed, itemId: "d#0", verdict: "wrong" as const }] });
+	const after = learnerFacts(loadLexicon(), NOW, 0).listen.reading!;
+	assert.equal(after.samples, (before?.samples ?? 0) + 1, "one usable sample: the one without a clip length and the wrong one do not count");
+	assert.equal(after.words, (before?.words ?? 0) + 4);
+});

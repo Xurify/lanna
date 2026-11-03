@@ -20,6 +20,7 @@ import { progressStore } from "../store/progress.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { knownWords, resolveWord, STORY_NAMES } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
+import { refreshSnapshotIfStale } from "./mistakes-snapshot.ts";
 
 const RECENT_CAP = 240;
 
@@ -64,6 +65,8 @@ export interface ListenRep {
 	replays?: number;
 	peeked?: boolean;
 	words?: number;
+	/** The stretch words as they stand in the sentence (the slugs are `stretch`). */
+	stretchText?: string[];
 }
 
 export interface ListenResultInput {
@@ -141,10 +144,13 @@ export function recordListen(input: ListenResultInput, now = new Date()): Listen
 				...(r.replays !== undefined ? { replays: r.replays } : {}),
 				...(r.peeked !== undefined ? { peeked: r.peeked } : {}),
 				...(r.words !== undefined ? { words: r.words } : {}),
+				...(r.stretchText !== undefined ? { stretch: r.stretchText } : {}),
 			})),
 		});
 	} catch (err) {
 		console.warn("[listen] could not append the lesson log:", err instanceof Error ? err.message : err);
 	}
+	// The listening trends on My mistakes read the log, so the saved snapshot is renewed when it is old.
+	refreshSnapshotIfStale(now);
 	return { xp, correct, almost, total, queued, summary: progressSummary(input.tz, now) };
 }

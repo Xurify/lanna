@@ -283,6 +283,8 @@ export interface LessonLogRep {
 	replays?: number;
 	peeked?: boolean;
 	words?: number;
+	/** Listen reps (2026-11-03): the words the learner had not met, as they stand in the sentence, so a typed miss can be told from a gap in vocabulary (src/core/listen-analysis.ts). */
+	stretch?: string[];
 	/** Form reps (2026-10-31, first tries): the word's lexicon gender, the
 	 *  first answer before any help (src/core/first-try.ts), and the slip a
 	 *  counted wrong first try got (src/core/form-slip.ts). Speak reps carry

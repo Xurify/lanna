@@ -55,7 +55,7 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 	const analysis = saved.analysis ?? analyzeNow(opts.now).analysis;
 	const facts = guideFacts(analysis);
 	const key = digest(facts);
-	if (saved.guide?.digest === key && !opts.force) return mistakesReportOf(analysis, saved.guide);
+	if (saved.guide?.digest === key && !opts.force) return mistakesReportOf(analysis, saved.guide, saved.listenGuide ?? null);
 	const enough = guideReadiness(analysis);
 	if (!enough.ready) throw new Error(`The guide needs at least ${enough.needReps} first tries with ${enough.needWrong} mistakes among them; you have ${enough.reps} and ${enough.wrong}. A few more lessons, then try again.`);
 	if (!opts.engine) {
@@ -82,6 +82,6 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 		progressStore.write(p);
 	}
 	const guide: GuideRecord = { text: text.trim(), data, practice, at: (opts.now ?? new Date()).toISOString(), digest: key, model: resolved.model, usage: { model: resolved.model, steps } };
-	analysisStore.write({ analysis, guide });
-	return mistakesReportOf(analysis, guide);
+	analysisStore.write({ analysis, guide, listenGuide: saved.listenGuide ?? null });
+	return mistakesReportOf(analysis, guide, saved.listenGuide ?? null);
 }

@@ -29,6 +29,8 @@ export async function POST(req: Request) {
 		sentence: str(r.sentence),
 		translation: str(r.translation),
 		given: str(r.given),
+		// Without this a typed sentence was taken for a picked meaning: not graded again here, logged as a meaning, and an accents-only answer counted as wrong.
+		answer: r.answer === "type" ? "type" : "pick",
 		verdict: r.verdict === "exact" ? "exact" : "wrong",
 		options: Array.isArray(r.options) ? r.options.filter((o): o is string => typeof o === "string").slice(0, 4) : undefined,
 		stretch: Array.isArray(r.stretch) ? r.stretch.filter((s): s is string => typeof s === "string").slice(0, 4) : [],
@@ -37,6 +39,7 @@ export async function POST(req: Request) {
 		...(num(r.replays) !== undefined ? { replays: num(r.replays) } : {}),
 		...(typeof r.peeked === "boolean" ? { peeked: r.peeked } : {}),
 		...(num(r.words) !== undefined ? { words: num(r.words) } : {}),
+		...(Array.isArray(r.stretchText) ? { stretchText: r.stretchText.filter((w): w is string => typeof w === "string").map((w) => w.slice(0, 60)).slice(0, 4) } : {}),
 	}));
 	const tz = Number(body.tz);
 	return Response.json(recordListen({ reps, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: Number.isFinite(tz) && Math.abs(tz) <= 840 ? tz : undefined }));
