@@ -1,11 +1,10 @@
 "use client";
 
 /**
- * The jump bar and its palette (Quiet tool). The mockup has no sidebar and no
- * tab bar: every door is one search away, "Find a word, a unit, or a task…",
- * opened by a click or Ctrl/Cmd K. The palette lists every place in the app,
- * the curriculum's units once the progress summary has loaded, and the
- * Slovak letters a keyboard may lack (the "ä" button).
+ * The jump palette (Quiet tool), opened with Ctrl or Cmd K. It lists every place in the app, the
+ * curriculum's units once the progress summary has loaded, and the Slovak letters a keyboard may lack.
+ * There is no search bar on any screen; the keys for those letters sit inside the exercises that need
+ * them (components/diacritic-bar.tsx).
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -13,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { QIcon } from "@/components/quiet/icon";
 import { insertAtCaret } from "@/components/diacritic-bar";
 import { useSidebar } from "@/components/sidebar";
-import { isPhoneNavPath } from "@/components/phone-nav";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import { fuzzyScore } from "@/src/core";
 import { cn } from "@/lib/utils";
@@ -100,29 +98,6 @@ export function JumpProvider({ children }: { children: React.ReactNode }) {
 			{children}
 			{shown && <JumpPalette letters={letters} onClose={() => setShown(false)} />}
 		</JumpContext.Provider>
-	);
-}
-
-/** The bar itself, as drawn in the mockup's dock. */
-export function JumpBar({ className }: { className?: string }) {
-	const { open } = useJump();
-	return (
-		<div className={cn("q-jump", className)} data-testid="jump-bar" role="button" tabIndex={0} aria-label="Find a word, a unit, or a task" onClick={() => open()} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), open())}>
-			<QIcon name="search" />
-			<span className="ph">Find a word, a unit, or a task…</span>
-			<button
-				type="button"
-				className="q-letter"
-				aria-label="Slovak letters"
-				onClick={(e) => {
-					e.stopPropagation();
-					open(true);
-				}}
-			>
-				ä
-			</button>
-			<kbd className="q-kbd pointer-coarse:hidden">Ctrl K</kbd>
-		</div>
 	);
 }
 
@@ -224,16 +199,6 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 					))}
 				</ul>
 			</div>
-		</div>
-	);
-}
-
-/** On a phone the jump bar takes the bottom nav's place on the pages that had one (Today draws its own). */
-export function PhoneDock({ pathname }: { pathname: string }) {
-	if (pathname === "/" || pathname === "/review" || !isPhoneNavPath(pathname)) return null;
-	return (
-		<div className="fixed inset-x-0 bottom-0 z-30 bg-background px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:hidden" data-testid="phone-dock">
-			<JumpBar className="!h-[50px] !rounded-xl" />
 		</div>
 	);
 }

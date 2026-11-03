@@ -373,7 +373,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The This week card names the target (the goal's days a week) and says when it is met; rest days inside it are not failures.
 - No leaderboards, leagues, hearts, lives, currency, chests, variable rewards, purchasable streak freezes, confetti or notifications. Any new reward mechanic is checked against `.claude/skills/gamification-loops/references/validations.md` and recorded in the research note before it is built.
 
-### E32. The Quiet tool design: one teal, Geist, a rail and a jump bar (2026-11-02, branch `feat/quiet-tool-redesign`)
+### E32. The Quiet tool design: one teal, Geist and a rail (2026-11-02, branch `feat/quiet-tool-redesign`)
 
 **Why:** the owner compared three full-app redesigns, each built from concept mockups. This one is the "Quiet tool" (mockups in `r3-3-quiet`: Today on desktop and phone, and a Review screen). It is a calm, dense tool look with one accent.
 
@@ -382,7 +382,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Day or Night follows the system unless Settings → Appearance → Mode says otherwise (`localStorage` key `lh:theme`; a script in `app/layout.tsx` sets the `dark` class before paint).
 - The mockup's component CSS is `app/quiet.css` (in the `components` layer, so utilities override it): `.q-btn`, `.q-card`, `.q-sh`, `.q-well`, `.q-segc`, `.q-jump`, the rail, and the practice-screen pieces. Icons are the mockup's set (`components/quiet/icon.tsx`).
 - One font: Geist (JetBrains Mono for code). The four strands are told apart by icon, not color, so the four trail colors are one neutral grey. Done and right are teal; wrong is a muted red (`--q-miss`), which the mockups never draw.
-- Navigation is the jump bar (Ctrl or Cmd K, the search field at the foot of Today and Review): every route, every curriculum unit, Settings, the sidebar, and the Slovak letters. The sidebar is a permanent column from 768 px up, with no collapse; below that it is a drawer opened by a menu button. On a phone the jump bar replaces the bottom tabs.
+- There is no search bar on any screen (owner, 2026-11-03: it was not useful). Ctrl or Cmd K still opens a palette of every route and curriculum unit; the Slovak letter keys sit inside the exercises that need them, not in a pinned bar. The sidebar is a permanent column from 768 px up, with no collapse; below that it is a drawer opened by a menu button. On a phone the jump bar replaces the bottom tabs.
 - Today is a plan, not a strip: one list of tasks with a word label, minutes and state, the next one large with one Start. Charts (`components/quiet/charts.tsx`) read only the progress summary and draw an intentional empty state, never invented figures. Tutor tasks are hidden while no AI key is set. Read is the episode only; there is no sentence-by-sentence mode.
 - No word is marked with a tinted pill or a curved underline. A blank is a straight writing line (`.q-blank`, `.q-write`); a marked or answered word is weight and color with a straight text underline (`text-decoration`, 2 px, offset 6 to 8 px). No frosted glass (`backdrop-blur`) and no all-caps labels.
 - Mockup copy the app cannot back does not ship: the sample sentence and the rule note with the Estonian bridge on the Review card, "Add 3 minutes of Say it faster", "Not today", "Why? Ask the tutor", and invented shortcuts.

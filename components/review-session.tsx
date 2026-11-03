@@ -11,7 +11,6 @@ import Link from "next/link";
 import { EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
-import { JumpBar } from "@/components/quiet/jump";
 import { SidebarToggle } from "@/components/sidebar";
 import { DayRail, greeting, todayDate, useDaySummary } from "@/components/quiet/day-rail";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
@@ -625,7 +624,6 @@ export function ReviewSession() {
 									)}
 								</div>
 							)}
-							<JumpBar />
 						</div>
 					</div>
 				</main>

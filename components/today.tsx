@@ -22,7 +22,6 @@ import { chartData } from "@/components/quiet/chart-data";
 import { EntryRow } from "@/components/log/day-log-view";
 import type { DayLog } from "@/src/core";
 import { DayRail, greeting, todayDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
-import { JumpBar } from "@/components/quiet/jump";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
@@ -164,8 +163,8 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				</header>
 
 				<main className="flex min-h-0 flex-col">
-					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 pt-4 [mask-image:linear-gradient(to_bottom,#000_calc(100%-48px),transparent)] @6xl:px-0 @6xl:pt-8 @6xl:[mask-image:none]">
-						<div className="mx-auto w-full max-w-[720px] pb-6">
+					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 pt-4 @6xl:px-0 @6xl:pt-8">
+						<div className="mx-auto w-full max-w-[720px] pb-8">
 							<header className="q-rise">
 								<p className="q-date first-letter:uppercase">
 									{date}
@@ -323,12 +322,6 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 									<ProgressPanel data={chartData(s)} />
 								</section>
 							)}
-						</div>
-					</div>
-
-					<div className="px-4 pb-3 pt-2 @6xl:px-0 @6xl:pb-5 @6xl:pt-3">
-						<div className="mx-auto w-full max-w-[720px]">
-							<JumpBar />
 						</div>
 					</div>
 				</main>

@@ -89,7 +89,7 @@
 .q-bars .hotc { color: var(--q-teal-2); font-weight: 600; }
 .q-bar.hot i { background: var(--q-teal); }
 
-/* jump bar */
+/* search field */
 .q-jump { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px 0 14px; border-radius: 10px; background: var(--q-card); box-shadow: var(--q-raise-hi); text-align: left; width: 100%; }
 .q-jump > .q-ico { width: 17px; height: 17px; color: var(--q-ink-3); }
 .q-jump .ph { flex: 1; font-size: 15px; color: var(--q-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

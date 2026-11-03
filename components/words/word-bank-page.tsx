@@ -586,7 +586,7 @@ export function WordBankPage() {
 										</button>
 									}
 								>
-									<p>{searchQuery.trim() ? "Search by how a word starts, or by its English meaning. Accents are optional: c finds čas. A longer search also looks in example sentences." : "Try another filter. All your words are still here."}</p>
+									<p>{searchQuery.trim() ? "Search by how a word starts, or by its English meaning. Accents are optional. A longer search also looks in example sentences." : "Try another filter. All your words are still here."}</p>
 								</EmptyState>
 							)}
 

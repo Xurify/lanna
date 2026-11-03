@@ -14,8 +14,7 @@ import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
-import { isPhoneNavPath } from "@/components/phone-nav";
-import { JumpProvider, PhoneDock } from "@/components/quiet/jump";
+import { JumpProvider } from "@/components/quiet/jump";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -1179,7 +1178,6 @@ function SessionsSidebar() {
 /** The app frame: sidebar inline + content. Rendered once in the root layout. */
 export function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
-	const phoneNav = isPhoneNavPath(pathname);
 
 	useEffect(() => {
 		stopSpeaking();
@@ -1193,9 +1191,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 			<JumpProvider>
 			<SessionsSidebar />
 			{/* The frame is one viewport tall; the content scrolls inside it so
-			    the sidebar stays put. On phones the four main pages leave room
-			    for the bottom nav (PhoneNav) at their end. */}
-			<main className={cn("min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]", phoneNav && "pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0")}>
+			    the sidebar stays put. */}
+			<main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
 				{/* The SCROLL-PROOF window-drag strip (owner bug report,
 				    2026-10-28: "scrolled down, I can't grab the window"). The
 				    per-page strips are absolute inside the scrolling content,
@@ -1210,7 +1207,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
 				{children}
 			</main>
-			<PhoneDock pathname={pathname} />
 			<SelectionWordBankBar />
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
