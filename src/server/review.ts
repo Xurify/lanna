@@ -135,6 +135,21 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 	};
 }
 
+/** Reviews logged on a local day. The log is chronological, so walk back from the newest line and
+ *  stop two days short of now (no time zone is further off than 14 hours): the whole log is not scanned. */
+function reviewedOn(today: string, now: Date, tzOffset?: number): number {
+	const log = reviewStore.readLog();
+	const floor = now.getTime() - 2 * DAY_MS;
+	let n = 0;
+	for (let i = log.length - 1; i >= 0; i--) {
+		const at = Date.parse(log[i]?.reviewedAt ?? "");
+		if (Number.isNaN(at)) continue;
+		if (at < floor) break;
+		if (dayKey(new Date(at), tzOffset) === today) n++;
+	}
+	return n;
+}
+
 export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?: boolean } = {}): ReviewStatus {
 	const cards = reviewStore.readCards();
 	const meta = reviewStore.readMeta();
@@ -142,7 +157,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 	const introduced = meta.introduced[today] ?? 0;
 	const list = Object.values(cards);
 	const due = dueCards(list, now);
-	const reviewedToday = reviewStore.readLog().filter((l) => dayKey(new Date(l.reviewedAt), tzOffset) === today).length;
+	const reviewedToday = reviewedOn(today, now, tzOffset);
 	let next: ReviewCard | undefined = due[0];
 	// Pending new cards first-come: a card minted but not yet answered.
 	if (!next) next = list.find((c) => c.state === "new" && !c.suspended);
