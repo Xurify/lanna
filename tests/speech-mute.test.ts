@@ -139,24 +139,24 @@ test("the snail plays slower than the speed setting, and leaves the setting alon
 	assert.equal(made[2]!.playbackRate, 1);
 });
 
-test("a sentence plays at the rate that reaches the setting's pace, whatever it was recorded at", async () => {
+test("a sentence is nudged toward the setting's pace, by at most a third, whatever it was recorded at", async () => {
 	setSoundOn(true);
 	setSpeed(1);
-	// Nine syllables in 3 s is 3 a second; 1x is 4 a second, so it is sped up by a third.
-	clipSecondsNext = 3;
+	// Nine syllables in 2.4 s is 3.75 a second; 1x is 4, so it is sped up a little.
+	clipSecondsNext = 2.4;
 	void speak("Na námestí je veľa ľudí.");
 	await waitFor(() => made.length === 1);
-	assert.ok(Math.abs(made[0]!.playbackRate - 4 / 3) < 1e-9);
-	// The same sentence recorded faster (2 s, 4.5 a second) is slowed instead.
-	clipSecondsNext = 2;
+	assert.ok(Math.abs(made[0]!.playbackRate - 4 / 3.75) < 1e-9);
+	// Recorded at 3 a second it would need 1.33x: the correction stops at 1.3x.
+	clipSecondsNext = 3;
 	void speak("Na námestí je veľa ľudí.");
 	await waitFor(() => made.length === 2);
-	assert.ok(Math.abs(made[1]!.playbackRate - 4 / 4.5) < 1e-9);
-	// The snail is a slower pace, not a fraction of whatever was recorded.
-	clipSecondsNext = 3;
+	assert.equal(made[1]!.playbackRate, 1.3);
+	// The snail multiplies the correction, so it is slower than the setting on every clip.
+	clipSecondsNext = 2.4;
 	void speak("Na námestí je veľa ľudí.", undefined, { slow: true });
 	await waitFor(() => made.length === 3);
-	assert.ok(Math.abs(made[2]!.playbackRate - 0.7 * 4 / 3) < 1e-9);
+	assert.ok(Math.abs(made[2]!.playbackRate - 0.7 * 4 / 3.75) < 1e-9);
 });
 
 test("slow is always slower than the learner's own speed", () => {

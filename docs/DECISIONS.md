@@ -432,7 +432,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 **Why:** `playbackRate` was set to 0.75, 1 or 1.25 on top of clips recorded at different paces (2.3 to 5.4 syllables a second on the slovak.wiki voice, and each engine has its own base), so "1×" was a different speed on every sentence and the snail was sometimes normal. Measurements and reasoning: [research/voice-pace.md](research/voice-pace.md).
 
 **How to apply:**
-- A clip plays at `paceRate(syllables, seconds, setting)` (`src/core/pace.ts`): the target is 4 syllables a second times the setting, the rate is clamped to 0.6–1.6, and a word (under 0.8 s or 3 syllables) keeps the plain multiplier. Do not set `audio.playbackRate` to the raw setting anywhere.
+- A clip plays at `paceRate(syllables, seconds, setting)` (`src/core/pace.ts`): the clip is nudged toward 4 syllables a second by at most 0.8–1.3× (full equalising, up to 1.6×, made a slowly recorded sentence sound rushed), the setting multiplies that, and a word (under 0.8 s or 3 syllables) keeps the plain multiplier. Do not set `audio.playbackRate` to the raw setting anywhere.
 - `NORMAL_SYLLABLES_PER_SECOND` is the one number to tune what "1×" means. `scripts/audio-pace.ts` prints the pace per engine and voice from a profile's audio index; run it after changing a voice or its rate.
 - The audio index stays as it is (E1, key stability): the length comes from the audio element in the browser.
 
