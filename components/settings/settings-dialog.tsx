@@ -476,13 +476,14 @@ export function SettingsDialogBody({
 									hint="The languages you know, and how the tutor explains things to you."
 									testid="section-learner"
 								>
-									<LearnerSection onClose={onClose} />
-									<SettingsGroup label="Quizzes" testid="group-quizzes">
-										<QuizStyleRow
-											agent={record.agent}
-											onSectionChange={(next: AgentSettings) => void write("agent", next)}
-										/>
-									</SettingsGroup>
+									<LearnerSection onClose={onClose}>
+										<SettingsGroup label="Quizzes" testid="group-quizzes">
+											<QuizStyleRow
+												agent={record.agent}
+												onSectionChange={(next: AgentSettings) => void write("agent", next)}
+											/>
+										</SettingsGroup>
+									</LearnerSection>
 								</SettingsSection>
 							)}
 							{active === "data" && (

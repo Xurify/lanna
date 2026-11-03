@@ -2,7 +2,6 @@
  * GET /api/progress?tz=<minutes> — the Today screen's numbers: XP and
  * level, today's XP against the daily goal, the streak and week strip,
  * every unit's level on the skill path, and the review deck's counts.
- * PUT /api/progress {dailyGoal} — change the daily XP goal;
  * PUT /api/progress {goal: {level?, minutesPerDay?, daysPerWeek?, purposes?, purposeNote?,
  * languages?, languageLevels?, explainIn?, prior?, onboarded?}} — the goal and profile
  * the setup wizard writes (src/core/onboarding.ts); the daily plan, the
@@ -11,7 +10,7 @@
  * session started from the Today page, for the day's speaking task.
  */
 
-import { progressSummary, recordActivity, setDailyGoal, setGoal } from "@/src/server";
+import { progressSummary, recordActivity, setGoal } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +24,7 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-	const body = (await req.json().catch(() => null)) as { dailyGoal?: unknown; goal?: Record<string, unknown> } | null;
+	const body = (await req.json().catch(() => null)) as { goal?: Record<string, unknown> } | null;
 	if (body?.goal && typeof body.goal === "object") {
 		const g = body.goal;
 		const level = typeof g.level === "string" ? (g.level as "A1" | "A2" | "B1" | "B2" | "C1") : undefined;
@@ -51,8 +50,7 @@ export async function PUT(req: Request) {
 			),
 		);
 	}
-	if (typeof body?.dailyGoal !== "number") return Response.json({ message: "dailyGoal must be a number" }, { status: 400 });
-	return Response.json(setDailyGoal(body.dailyGoal));
+	return Response.json({ message: "goal must be an object" }, { status: 400 });
 }
 
 const ACTIVITIES = new Set(["talk", "story", "tutor"]);

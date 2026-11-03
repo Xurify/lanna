@@ -588,7 +588,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 				</article>
 			</div>
 
-			<div className="fixed inset-x-0 bottom-0 z-30 bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-1px_0_var(--q-line)]">
+			<div className="absolute inset-x-0 bottom-0 z-30 bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-1px_0_var(--q-line)]">
 				<div className="mx-auto flex w-full max-w-[40rem] items-center justify-center gap-2">
 					<button type="button" onClick={() => void playAll()} className="q-btn sec" data-testid="read-play-all" aria-pressed={all}>
 						{all ? <PauseIcon className="size-4 fill-current" /> : <PlayIcon className="size-4 fill-current" />}

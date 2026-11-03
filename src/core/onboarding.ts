@@ -437,6 +437,14 @@ export const DEFAULT_DAYS_PER_WEEK = 6;
 export const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60, 90, 120] as const;
 export const MAX_MINUTES = 600;
 
+/** XP an hour before there is an hour of measured study to read it from: the first days of a real profile ran 105 to 160. */
+export const DEFAULT_XP_PER_HOUR = 120;
+
+/** The XP that counts as a day done: the plan's minutes a day at the learner's own XP an hour (a typical one until it is measured), to the nearest 10. The learner picks how long to study; this follows. */
+export function xpForPlan(minutesPerDay: number, xpPerHour: number | null): number {
+	return Math.max(10, Math.min(500, Math.round(((minutesPerDay / 60) * (xpPerHour ?? DEFAULT_XP_PER_HOUR)) / 10) * 10));
+}
+
 /** Guided hours a week at the planned minutes and days. */
 export function weeklyHours(minutesPerDay: number, daysPerWeek = DEFAULT_DAYS_PER_WEEK): number {
 	return (minutesPerDay / 60) * daysPerWeek;

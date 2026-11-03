@@ -200,9 +200,10 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				{log && (
 					<section className={CARD} data-testid="plan-log" aria-label="Trail log">
 						<h2 className={H2}>Trail log</h2>
-						<dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+						<dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
 							{[
-								["Hours on the trail", hoursText(log.hours)],
+								["Time studied", clock(log.minutes)],
+								["Guided hours credited", hoursText(log.hours)],
 								["Words known", log.wordsKnown.toLocaleString("en-US")],
 								["Days practiced", String(log.daysActive)],
 								["Longest streak", `${log.longestStreak} ${log.longestStreak === 1 ? "day" : "days"}`],
@@ -217,6 +218,9 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 								</div>
 							))}
 						</dl>
+						<p className="mt-4 text-[12.5px] leading-relaxed text-ink-3" data-testid="plan-log-hours-note">
+							Time studied is what was measured while you were active. Guided hours are the map&apos;s own clock: each stage of the road is worth some (A1 {GUIDED_HOURS.A1}, A2 {GUIDED_HOURS.A2}, B1 {GUIDED_HOURS.B1}, B2 {GUIDED_HOURS.B2}), and a unit you finish credits its share, after three lessons at the bar or one ace. They differ on purpose, so the credit stays at 0 until the first unit is done.
+						</p>
 					</section>
 				)}
 

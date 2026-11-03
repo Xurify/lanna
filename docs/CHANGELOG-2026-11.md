@@ -149,3 +149,8 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Enough data before a finding.** The causes wait for 50 typed sentences, 15 missed, over 3 sessions; a cause is listed from 4 sentences in 2 sessions; a trend needs 30 sentences from 3 sessions in each window and must pass Holm's correction across the causes; "about the same" became "no clear change". Fast against slow clips is said only when it is past chance.
 - **Fairer causes.** A sentence typed without any marks is not read for missing marks, a marks-only sentence counts as understood, a peeked sentence is neither understood nor read, and a consonant written as it is said (*hat* for *had*, *f škole*) is spelling, not hearing.
 
+## 3 November: goals in Settings (`feat/settings-goals-and-time-studied`)
+
+- **Settings → Learning has Daily goals:** target level, minutes a day and days a week, saved on a click. The day's XP goal is not one of them: it follows the minutes at your own XP an hour (E39), so it moves with the plan instead of sitting at 50.
+- **Trail log:** "Hours on the trail" was the map's credit for finished units and read 0 after hours of study. It is "Guided hours credited" now, beside a "Time studied" taken from the measured minutes, with a line saying what each counts.
+- **Learning tab:** both fetches arrive together and a placeholder holds the space, so the tab no longer jumps twice; the effort selects are wide enough for "medium".

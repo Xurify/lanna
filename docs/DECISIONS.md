@@ -449,6 +449,12 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - `/api/listen` passes `answer` through: without it a typed sentence is not graded again, is logged as a meaning, and loses its accents-only half credit.
 - The result is `MistakeAnalysis.listening`, shown as a section on My mistakes, from the snapshot; it is local and free. The guide does not read it yet.
 
+### E39. The XP goal is not a setting: it follows the minutes (2026-11-03, branch `feat/settings-goals-and-time-studied`)
+
+**Why:** the learner picks how long to study. The XP goal was a second number, fixed at 50 with no screen to change it, and one lesson cleared it against a plan of 90 minutes, so "goal met" said nothing. The owner: it should be calculated from what the learner already chose.
+
+**How to apply:** `dailyGoal` in the progress summary is the plan's `minutesPerDay` at the learner's own XP an hour (`xpForPlan`, `src/core/onboarding.ts`), to the nearest 10 between 10 and 500. The rate is measured: XP over the days that have measured minutes, once there is an hour of them, else 120 XP an hour (`DEFAULT_XP_PER_HOUR`). It is not stored, `PUT /api/progress {dailyGoal}` is gone, and Settings → Learning shows the number as a line under the minutes. A change to the minutes moves it at once.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.
