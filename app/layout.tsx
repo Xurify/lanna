@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
-import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
 import { readSettingsRecord } from "@/src/server";
 import type { AppearanceSettings } from "@/src/core";
@@ -46,8 +44,7 @@ export const metadata: Metadata = {
 	description: "A Slovak and Russian tutor with a memory: sessions, practice, spaced review, and a knowledge graph of what you know.",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-	const sidebarOpen = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
+export default function RootLayout({ children }: { children: React.ReactNode }) {
 	// Saved appearance goes into the first HTML (no flash of the factory
 	// palette or font before the client provider would have applied it).
 	let appearance: AppearanceSettings | undefined;
@@ -65,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
 							<ServerEventsProvider>
 				<AppearanceProvider initialDelta={appearance}>
-					<SidebarProvider initialOpen={sidebarOpen}>
+					<SidebarProvider>
 						<ActivityProvider>
 							<AppShell>{children}</AppShell>
 						</ActivityProvider>

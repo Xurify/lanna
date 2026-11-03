@@ -12,6 +12,7 @@ import { EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { JumpBar } from "@/components/quiet/jump";
+import { SidebarToggle } from "@/components/sidebar";
 import { DayRail, greeting, skDate, useDaySummary } from "@/components/quiet/day-rail";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useRouter } from "next/navigation";
@@ -256,6 +257,7 @@ export function ReviewSession() {
 		<div className="@container h-dvh" data-testid="review-session">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				<header className="relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
+					<SidebarToggle />
 					<QPie frac={day.s && day.s.dailyGoal > 0 ? day.s.todayXp / day.s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-col leading-[1.2]">
 						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">

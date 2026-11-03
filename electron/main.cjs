@@ -44,7 +44,7 @@ const path = require("node:path");
 
 // Mirrors SIDEBAR_AUTOCLOSE in components/sidebar.tsx — keep in sync (the
 // renderer owns the number; this is the IPC widen target).
-const SIDEBAR_AUTOCLOSE = 928;
+const SIDEBAR_AUTOCLOSE = 900;
 
 // LangHarness fork: its own name, so it never shares userData (chats,
 // keys, graph) with an installed upstream LearnHarness.

@@ -21,7 +21,6 @@ import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { fuzzyScore } from "@/src/core";
 import { useServerEvent, useServerResync } from "@/components/server-events";
 import type { ChatListItem } from "@/src/core";
@@ -37,11 +36,6 @@ import { SelectionWordBankBar } from "@/components/words/selection-word-bank";
  * layout) and across reloads (localStorage).
  */
 
-const STORAGE_KEY = "lh:sidebar-open";
-function persistOpen(v: boolean) {
-	localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
-	document.cookie = `${SIDEBAR_COOKIE}=${v ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
-}
 
 /*
  * Narrow-window behavior (owner, 2026-09-17): below SIDEBAR_AUTOCLOSE the
@@ -61,7 +55,7 @@ function persistOpen(v: boolean) {
  */
 import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/src/core";
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
-const SIDEBAR_AUTOCLOSE = 928;
+const SIDEBAR_AUTOCLOSE = 900;
 
 /* Phone widths, and touch tablets below lg, in the plain browser: the sidebar becomes
  * a drawer over the page instead of a 288px column that would leave about
@@ -130,7 +124,7 @@ export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-export function SidebarProvider({ children, initialOpen = true }: { children: React.ReactNode; initialOpen?: boolean }) {
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -138,9 +132,12 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
 		return off;
 	}, []);
-	// The server read the cookie, so server and first client render agree
-	// AND match the stored preference: no hydration mismatch, no slide-in.
-	const [open, setOpen] = useState(initialOpen);
+	// The sidebar is a permanent column on a desktop window. It used to be
+	// collapsible, with the choice kept in a cookie, and a collapsed sidebar
+	// then stayed gone on every route and every reload (a closed default made
+	// it vanish for everyone, 2026-11-02). Only a window below the drawer
+	// breakpoint hides it, as a drawer with a menu button.
+	const open = true;
 	const [narrow, setNarrow] = useState(false);
 	const [mounted, setMounted] = useState(false);
 
@@ -165,14 +162,6 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 		const off = window.lh?.onZoom?.(setZoomVar);
 		void window.lh?.getZoom?.().then(setZoomVar);
 
-		// Migrate a localStorage-only preference into the cookie once (the
-		// cookie wins from then on). Default: open.
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (!String(document.cookie ?? "").includes(`${SIDEBAR_COOKIE}=`)) {
-			const v = stored === "1";
-			persistOpen(v);
-			setOpen(v);
-		}
 		// Arm the width transition only after the first frames have painted,
 		// so nothing applied at mount animates.
 		// (setTimeout fallback: test DOMs have no requestAnimationFrame.)
@@ -221,22 +210,10 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 			setDrawer((v) => !v);
 			return;
 		}
-		// Opening while narrow (auto-closed, or the user's own closed-at-
-		// narrow): ask the shell to widen to the threshold — the resize
-		// listener flips `narrow` and the sidebar appears. The preference
-		// persists like any other open, so a restart at a narrow width
-		// still auto-restores when widened.
-		if (narrow && !open) {
-			persistOpen(true);
-			setOpen(true);
-			window.lh?.expandWindow();
-			return;
-		}
-		setOpen((v) => {
-			persistOpen(!v);
-			return !v;
-		});
-	}, [narrow, open, phone]);
+		// An Electron window narrower than the threshold hides the sidebar:
+		// ask the shell to widen it, and the resize listener brings it back.
+		if (narrow) window.lh?.expandWindow();
+	}, [narrow, phone]);
 
 	// ⌘B: the global shortcut dispatches kbdEventForAction("toggle-sidebar")
 	// and the context answers on exactly that name — the shared spelling
@@ -855,8 +832,8 @@ function SessionsSidebar() {
 						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
 							Lang<span className="text-sun">Harness</span>
 						</Link>
-						<Hint label="Close sidebar" action="toggle-sidebar">
-							<Button variant="ghost" size="icon" aria-label="Close sidebar" onClick={toggle} className="lh-no-drag">
+						<Hint label="Close menu" action="toggle-sidebar">
+							<Button variant="ghost" size="icon" aria-label="Close menu" onClick={toggle} className="lh-no-drag md:hidden touch-narrow:inline-flex">
 								<PanelLeftCloseIcon className="size-4" />
 							</Button>
 						</Hint>
