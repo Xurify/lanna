@@ -203,7 +203,7 @@ export function DeleteNodeDialog({
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 			{...backdropDismiss}
 		>
 			<DeleteNodeBody

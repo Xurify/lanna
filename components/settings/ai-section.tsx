@@ -220,7 +220,7 @@ function MenuTrigger({
 			onClick={() => {
 				if (!disabled) onClick();
 			}}
-			className={`flex h-8.5 items-center justify-between gap-1.5 rounded-xl border border-border/80 bg-background/80 px-2.5 font-ui text-xs text-foreground transition-all ${
+			className={`flex h-8.5 items-center justify-between gap-1.5 rounded-xl border border-border/80 bg-background px-2.5 font-ui text-xs text-foreground transition-all ${
 				disabled ? "cursor-not-allowed opacity-50" : "hover:border-border hover:bg-background focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
 			} ${widthClass}`}
 		>
@@ -452,7 +452,7 @@ export function AiSection({
 				{open && (
 					<div className="mt-1 flex flex-col gap-2">
 						<div>
-							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Source</p>
+							<p className="mb-1 text-xs text-muted-foreground">Source</p>
 							<textarea
 								readOnly
 								value={info.sourceText}
@@ -461,7 +461,7 @@ export function AiSection({
 							/>
 						</div>
 						<div>
-							<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Override</p>
+							<p className="mb-1 text-xs text-muted-foreground">Override</p>
 							<textarea
 								value={segmentDraft[info.path] ?? info.overrideText ?? ""}
 								onChange={(e) => setSegmentDraft({ ...segmentDraft, [info.path]: e.target.value })}
@@ -760,7 +760,7 @@ export function AiSection({
 					<div className="flex flex-col gap-4">
 						{sectionedSegments(prompts).map((section) => (
 							<div key={section.id} data-testid={`prompt-section-${section.id}`}>
-								<p className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">
+								<p className="mb-1 text-xs text-muted-foreground">
 									{section.label}
 								</p>
 								{section.hint && (

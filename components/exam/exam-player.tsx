@@ -196,7 +196,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 					<PracticeCard icon="grammar" title={`Chapter exam · ${title}`} right={`${index + 1} of ${items.length}`}>
 						<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk" data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 							{item!.before}
-							<span className="mx-0.5 inline-block h-[0.9em] w-[5ch] translate-y-[0.1em] rounded-[10px] bg-well-2 shadow-[inset_0_-2px_0_var(--q-ink-4)]" aria-label="blank" />
+							<span className="q-blank mx-0.5 w-[5ch]" aria-label="blank" />
 							{item!.after}
 						</p>
 						<p className="mt-3 font-prose text-base text-ink-2">{item!.hint}</p>

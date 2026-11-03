@@ -696,7 +696,7 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 					data-testid="dictation-toggle"
 				// Same blurring as the floating chrome (owner, fix wave round 3),
 			// but lower opacity — the mic stays quieter than the model pills.
-			className="flex h-7 w-full items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card/50 text-xs text-muted-foreground shadow-raise backdrop-blur transition-colors hover:border-border hover:text-foreground"
+			className="flex h-7 w-full items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card text-xs text-muted-foreground shadow-raise transition-colors hover:border-border hover:text-foreground"
 			>
 					<MicIcon className="size-3.5" />
 					<span className="max-w-full truncate">{error ?? "Dictate"}</span>

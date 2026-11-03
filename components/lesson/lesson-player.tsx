@@ -807,9 +807,9 @@ const PLAY_BIG = "flex size-14 shrink-0 items-center justify-center rounded-xl b
 const PLAY_SLOW = "flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-well hover:text-ink-2";
 const PLAY_SMALL = "flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 transition-colors hover:bg-[var(--q-teal-line)]";
 /** The target form in a sentence that is read, not blanked (a meaning rep, a twin). */
-const MARKED = "rounded-[10px] bg-teal-wash px-2 font-semibold text-teal-2 shadow-[inset_0_-2px_0_var(--q-teal)]";
+const MARKED = "bg-transparent px-0.5 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]";
 /** The slot the answer sits in: the mockup's `.q-slot`, sized to the 44px sentence. */
-const SLOT = "inline-flex h-12 items-center gap-2.5 rounded-[10px] px-3 align-baseline sm:h-[58px] sm:px-3.5";
+const SLOT = "inline-flex h-12 items-center gap-2.5 px-0.5 align-baseline sm:h-[58px]";
 
 function RepView({
 	item,
@@ -997,7 +997,7 @@ function ClozeRep({
 
 	// The filled-in word is the right form, so it reads as right (green) even
 	// after a miss; the bar below says what was wrong.
-	const verdictInk = result ? (result.verdict === "accents" ? "bg-well-2 text-ink-2 shadow-[inset_0_-2px_0_var(--q-ink-3)]" : "bg-teal-wash text-teal-2 shadow-[inset_0_-2px_0_var(--q-teal)]") : "";
+	const verdictInk = result ? (result.verdict === "accents" ? "text-ink-2 underline decoration-ink-3 decoration-2 underline-offset-[8px]" : "text-teal-2 underline decoration-teal decoration-2 underline-offset-[8px]") : "";
 	// During the retry the trigger word is underlined: noticing it is the skill.
 	const triggerAt = miss !== null && item.trigger ? item.before.trimEnd().lastIndexOf(" ") + 1 : -1;
 	const beforeText =
@@ -1129,10 +1129,10 @@ function ClozeRep({
 								<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre px-3.5 font-semibold">
 									{given || " "}
 								</span>
-								{input("col-start-1 row-start-1 h-12 w-full min-w-0 self-center bg-teal-wash px-3.5 py-0 font-semibold text-teal-2 shadow-[inset_0_-2px_0_var(--q-teal)] sm:h-[58px]")}
+								{input("q-write col-start-1 row-start-1 h-12 w-px min-w-full self-center px-1 py-0 font-semibold text-foreground outline-none sm:h-[58px]")}
 							</span>
 						) : (
-							<span className="mx-1 inline-block h-[0.9em] w-[5ch] translate-y-[0.1em] rounded-[10px] bg-well-2 shadow-[inset_0_-2px_0_var(--q-ink-4)]" aria-label="blank" />
+							<span className="q-blank mx-1 w-[5ch]" aria-label="blank" />
 						)}
 						<span>{item.after}</span>
 					</p>

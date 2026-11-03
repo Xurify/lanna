@@ -516,7 +516,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 				</div>
 			</div>
 			{phase === "ending" && (
-				<div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80" data-testid="speak-ending">
+				<div className="absolute inset-0 z-10 flex items-center justify-center bg-background" data-testid="speak-ending">
 					<p className="flex items-center gap-3 font-ui text-sm text-muted-foreground">
 						<LoaderCircleIcon className="size-5 animate-spin" />
 						Looking back over what you said…
@@ -544,7 +544,7 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 		<div className="max-w-[85%]">
 			{turn.prompt && (
 				<div className="mb-1.5 inline-flex max-w-full flex-wrap items-baseline gap-x-2 rounded-xl border border-teal-line bg-teal-wash px-3 py-1.5 font-prose text-base" data-testid="speak-prompt">
-					<span className="font-ui text-xs font-[600] uppercase tracking-wide text-foreground">Fix the {SLIP_LABEL[turn.prompt.kind]}</span>
+					<span className="font-ui text-xs font-[600] text-foreground">Fix the {SLIP_LABEL[turn.prompt.kind]}</span>
 					<span className="text-muted-foreground line-through decoration-2" lang="sk">
 						{turn.prompt.yours}
 					</span>
@@ -739,7 +739,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 					<ul className="mt-2 flex flex-col gap-2" data-testid="speak-corrections">
 						{sum.corrections.map((c, i) => (
 							<li key={i} className="q-card px-4 py-3">
-								<p className="font-ui text-xs font-[600] uppercase tracking-wide text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
+								<p className="font-ui text-xs font-[600] text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
 								<p className="mt-1 font-prose text-base text-muted-foreground line-through decoration-2" lang="sk">
 									{c.yours}
 								</p>

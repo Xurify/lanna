@@ -191,10 +191,10 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 				onClick={() => (open ? onClose() : onOpen())}
 				aria-expanded={open}
 				className={cn(
-					"rounded-md px-0.5 -mx-0.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-go pointer-coarse:py-2",
+					"transition-colors hover:text-teal-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-go pointer-coarse:py-2",
 					token.fresh && "underline decoration-dotted decoration-xp decoration-2 underline-offset-[5px]",
 					looked && !token.fresh && "underline decoration-dotted decoration-foreground/30 decoration-2 underline-offset-[5px]",
-					open && "bg-accent",
+					open && "text-teal-2 underline decoration-teal decoration-2 underline-offset-[5px]",
 				)}
 			>
 				{token.text}

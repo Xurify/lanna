@@ -229,7 +229,7 @@ export function LanguageSwitcher() {
 			{/* Centered Modal Confirmation — zero layout shift on sidebar navigation */}
 			{pending && typeof document !== "undefined" && createPortal(
 				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 					{...modalDismiss}
 				>
 					<div
@@ -280,7 +280,7 @@ export function LanguageSwitcher() {
 			{/* Add Language Guide Modal */}
 			{showAddHelp && typeof document !== "undefined" && createPortal(
 				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 					{...helpDismiss}
 				>
 					<div

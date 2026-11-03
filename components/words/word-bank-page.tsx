@@ -236,7 +236,7 @@ export function WordBankPage() {
 				{/* Lingvist / Speakly Style Metrics Ribbon */}
 				{summary && (
 					<div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
+						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">Zvládnuté</span>
 								<CheckCheckIcon className="size-4 text-go" />
@@ -247,7 +247,7 @@ export function WordBankPage() {
 							<p className="text-[11px] text-muted-foreground">Retencia ≥ 80%</p>
 						</div>
 
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
+						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">V procese</span>
 								<FootprintsIcon className="size-4 text-sun" />
@@ -258,7 +258,7 @@ export function WordBankPage() {
 							<p className="text-[11px] text-muted-foreground">V precvičovaní</p>
 						</div>
 
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
+						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">Obľúbené slová</span>
 								<StarIcon className="size-4 fill-gold text-gold" />
@@ -269,7 +269,7 @@ export function WordBankPage() {
 							<p className="text-[11px] text-muted-foreground">Označené hviezdičkou</p>
 						</div>
 
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur">
+						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">Uložené frázy</span>
 								<BookmarkIcon className="size-4 text-trail-blue" />
@@ -394,7 +394,7 @@ export function WordBankPage() {
 								return (
 									<div
 										key={item.slug}
-										className="group rounded-2xl border border-border/80 bg-card/50 p-4 transition-all hover:border-border hover:bg-card/90"
+										className="group rounded-2xl border border-border/80 bg-card p-4 transition-all hover:border-border hover:bg-card"
 									>
 										<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 											{/* Word Left side */}
@@ -631,7 +631,7 @@ export function WordBankPage() {
 							{filteredPhrases.map((phrase) => (
 								<div
 									key={phrase.id}
-									className="group rounded-2xl border border-border/80 bg-card/50 p-4 transition-all hover:border-border hover:bg-card/90"
+									className="group rounded-2xl border border-border/80 bg-card p-4 transition-all hover:border-border hover:bg-card"
 								>
 									<div className="flex items-start justify-between gap-4">
 										<div className="flex items-start gap-3">
@@ -682,7 +682,7 @@ export function WordBankPage() {
 
 				{/* Add Phrase Modal Dialog */}
 				{showAddModal && (
-					<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+					<div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4">
 						<div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl">
 							<div className="mb-4 flex items-center justify-between">
 								<h2 className="font-title text-xl font-semibold text-foreground">

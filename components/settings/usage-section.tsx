@@ -159,7 +159,7 @@ export function UsageSection() {
 function Stat({ label, value, testid }: { label: string; value: string; testid?: string }) {
 	return (
 		<div data-testid={testid}>
-			<p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+			<p className="text-xs text-muted-foreground">{label}</p>
 			<p className="font-ui text-xl font-semibold tabular-nums text-foreground">{value}</p>
 		</div>
 	);

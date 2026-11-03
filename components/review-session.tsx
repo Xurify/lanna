@@ -425,9 +425,9 @@ export function ReviewSession() {
 													<span
 														className={cn(
 															"q-slot !h-[44px] !px-2.5 @xl:!h-[58px] @xl:!px-3.5",
-															!verdict && "!bg-well-2 !text-foreground !shadow-[inset_0_-2px_0_var(--q-ink-4)] focus-within:!shadow-[inset_0_-2px_0_var(--q-teal)]",
-															verdict === "wrong" && "!bg-miss-soft !text-miss !shadow-[inset_0_-2px_0_var(--q-miss)]",
-															verdict === "accents" && "!bg-well-2 !text-foreground !shadow-[inset_0_-2px_0_var(--q-ink-2)]",
+															!verdict && "q-write !text-foreground",
+															verdict === "wrong" && "!text-miss",
+															verdict === "accents" && "!text-foreground",
 														)}
 														style={{ display: "inline-grid", gridTemplateColumns: "auto" }}
 													>
@@ -436,15 +436,15 @@ export function ReviewSession() {
 														</span>
 														{verdict ? (
 															<span className="col-start-1 row-start-1 flex items-center gap-2.5" data-testid="review-answer">
-																<span>
+																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
 																	{[...prompt.card.answer].map((ch, i) => (
 																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
 																			{ch}
 																		</span>
 																	))}
 																</span>
-																<span className={cn("ok !size-[22px] @xl:!size-[26px]", verdict === "wrong" && "!bg-miss")}>
-																	{verdict === "wrong" ? <XIcon className="size-3.5 text-background" strokeWidth={3} /> : <QCheck />}
+																<span className={cn("ok", verdict === "wrong" && "!text-miss")}>
+																	{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={2.4} /> : <QCheck />}
 																</span>
 															</span>
 														) : picks ? (

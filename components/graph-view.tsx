@@ -304,7 +304,7 @@ function GraphCostPanel({ costs }: { costs: GraphCostSummary }) {
 	return (
 		<div className="w-80 max-w-[calc(100vw-1.5rem)] rounded-xl bg-card p-3 text-xs shadow-raise-hi">
 			<div className="mb-2 flex items-baseline justify-between">
-				<span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+				<span className="text-xs font-medium text-muted-foreground">
 					Graph pipeline costs
 				</span>
 				<span className="text-foreground tabular-nums">
@@ -441,7 +441,7 @@ function GraphSettingsControl({
 							/>
 							{/* Blurred cluster tints. The enable switch is a compute switch: off skips the whole build, not just the paint. */}
 						<div className="mt-1.5 flex flex-col gap-1.5 border-t pt-1.5">
-							<span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							<span className="text-xs font-medium text-muted-foreground">
 								Regions
 							</span>
 							<label className="flex cursor-pointer items-center justify-between text-[11px] text-muted-foreground">
@@ -549,7 +549,7 @@ function GraphSettingsControl({
 						</div>
 						{/* Live sim forces, the same engine the server settle runs. Each change rebuilds the sim in place; pins survive. Repulsion shows as the negative it is. */}
 						<div className="mt-1.5 flex flex-col gap-1.5 border-t pt-1.5">
-							<span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							<span className="text-xs font-medium text-muted-foreground">
 								Physics
 							</span>
 							<SettingSlider

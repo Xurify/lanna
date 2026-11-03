@@ -185,7 +185,7 @@ function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary 
 							<div>
 								<div className="flex items-baseline justify-between gap-1.5">
 									<span className="text-xs font-semibold text-foreground">Weak Spot</span>
-									<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+									<span className="text-[10px] font-semibold text-muted-foreground">
 										{WEAK_SOURCE_NAMES[weak.source] ?? weak.source}
 									</span>
 								</div>
@@ -276,7 +276,7 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
 								<span className="text-xs font-semibold text-foreground">With the Tutor</span>
-								<span className="rounded bg-xp/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-xp">
+								<span className="rounded bg-xp/10 px-1 py-0.5 text-[10px] font-semibold text-xp">
 									Guided session
 								</span>
 							</div>
@@ -335,7 +335,7 @@ function StarredGoalHover({ unit }: { unit: UnitState }) {
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
 								<span className="text-xs font-semibold text-foreground">Priority Goal</span>
-								<span className="rounded bg-teal-wash px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-teal-2">
+								<span className="rounded bg-teal-wash px-1 py-0.5 text-[10px] font-semibold text-teal-2">
 									Your target
 								</span>
 							</div>
@@ -389,7 +389,7 @@ function CanDoGoalHover({ unit }: { unit: UnitState }) {
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
 								<span className="text-xs font-semibold text-foreground">Can-Do Milestone</span>
-								<span className="rounded bg-well px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-2">
+								<span className="rounded bg-well px-1 py-0.5 text-[10px] font-semibold text-ink-2">
 									CEFR goal
 								</span>
 							</div>
@@ -533,7 +533,7 @@ function UnitBadgeHover({
 							<span className="truncate text-xs font-semibold text-foreground">{unit.title}</span>
 							<span
 								className={cn(
-									"shrink-0 rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+									"shrink-0 rounded px-1 py-0.5 text-[9px] font-semibold",
 									done ? "bg-teal-wash text-teal-2" : locked ? "bg-muted text-muted-foreground" : "bg-teal-wash text-teal-2",
 								)}
 							>

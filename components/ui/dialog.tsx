@@ -56,7 +56,7 @@ export function DialogOverlay({
 	return (
 		<div
 			className={cn(
-				"fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100",
+				"fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100",
 				className
 			)}
 			{...(handleClose ? backdropDismiss : {})}

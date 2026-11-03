@@ -578,7 +578,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 	return (
 		<div className="flex flex-1 flex-col overflow-hidden">
 			{/* Top Reading Toolbar */}
-			<div className="shrink-0 border-b border-border/60 bg-background/80 px-4 py-2 backdrop-blur">
+			<div className="shrink-0 border-b border-border/60 bg-background px-4 py-2">
 				<div className={cn(COLUMN, "flex flex-wrap items-center justify-end gap-2")}>
 
 					{/* Right: Translation and Font Size Controls */}
@@ -667,12 +667,8 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 														void playOne(i);
 													}}
 													className={cn(
-														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
-														playing === i
-															? "bg-teal-wash text-foreground ring-1 ring-teal-line"
-															: activeSentence === i
-																? "bg-accent/60"
-																: "hover:bg-accent/30",
+														"inline cursor-pointer transition-colors duration-150",
+														playing === i ? "text-teal-2" : "hover:text-foreground",
 													)}
 													data-testid="read-sentence"
 												>
@@ -725,12 +721,8 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 														void playOne(i);
 													}}
 													className={cn(
-														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
-														playing === i
-															? "bg-teal-wash text-foreground ring-1 ring-teal-line"
-															: activeSentence === i
-																? "bg-accent/60"
-																: "hover:bg-accent/30",
+														"inline cursor-pointer transition-colors duration-150",
+														playing === i ? "text-teal-2" : "hover:text-foreground",
 													)}
 													data-testid="read-sentence"
 												>
@@ -787,7 +779,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 			</div>
 
 			{/* Floating Dock Audio Player Bar */}
-			<div className="fixed bottom-5 inset-x-4 z-30 mx-auto max-w-xl rounded-lg border border-border/80 bg-card/90 shadow-raise-hi backdrop-blur-md px-4 py-3">
+			<div className="fixed bottom-5 inset-x-4 z-30 mx-auto max-w-xl rounded-lg border border-border/80 bg-card shadow-raise-hi px-4 py-3">
 				<div className="flex flex-col gap-2">
 					{/* Progress bar across sentences */}
 					<div className="flex items-center gap-3">

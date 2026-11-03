@@ -528,7 +528,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 		<>
 			{parts.map((p, i) =>
 				set.has(p.toLocaleLowerCase("sk-SK")) ? (
-					<mark key={i} className="rounded-md bg-teal-wash px-1 text-teal-2 underline decoration-teal-line decoration-2 underline-offset-[6px]">
+					<mark key={i} className="bg-transparent px-0 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]">
 						{p}
 					</mark>
 				) : (
