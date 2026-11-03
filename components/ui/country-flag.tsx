@@ -256,7 +256,7 @@ type FlagComponent = React.ComponentType<{ className?: string; title?: string }>
 let flags: Record<string, FlagComponent> | null = null;
 let loading: Promise<void> | null = null;
 
-function loadFlags(): Promise<void> {
+export function loadFlags(): Promise<void> {
 	loading ??= import("country-flag-icons/react/3x2").then((m) => {
 		flags = m as unknown as Record<string, FlagComponent>;
 	});
