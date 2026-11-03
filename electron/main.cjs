@@ -25,6 +25,26 @@
  */
 
 const { app, BrowserWindow, Menu, ipcMain, session, shell } = require("electron");
+
+/** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lh:theme". */
+/** Whether the last session ended in Night, kept beside the window state so the window is the right color from its first frame. */
+function savedNight() {
+	try {
+		const raw = JSON.parse(require("node:fs").readFileSync(require("node:path").join(app.getPath("userData"), "theme.json"), "utf8"));
+		return raw.night === true;
+	} catch {
+		return false;
+	}
+}
+function saveNight(night) {
+	try {
+		require("node:fs").writeFileSync(require("node:path").join(app.getPath("userData"), "theme.json"), JSON.stringify({ night }));
+	} catch {
+		// the next start opens in Day and the page corrects it
+	}
+}
+
+const CHROME = { day: { color: "#ffffff", symbolColor: "#16181b" }, night: { color: "#101214", symbolColor: "#ecedee" } };
 const { createChatGPT, fileStore } = require("./chatgpt.cjs");
 const { attachChatGPTChild, trustedSender, chatGPTControl } = require("./chatgpt-ipc.cjs");
 const { createSubscriptions, loadSubscriptionSDK } = require("./subscriptions.cjs");
@@ -41,7 +61,7 @@ const path = require("node:path");
 
 // Mirrors SIDEBAR_AUTOCLOSE in components/sidebar.tsx — keep in sync (the
 // renderer owns the number; this is the IPC widen target).
-const SIDEBAR_AUTOCLOSE = 928;
+const SIDEBAR_AUTOCLOSE = 900;
 
 // LangHarness fork: its own name, so it never shares userData (chats,
 // keys, graph) with an installed upstream LearnHarness.
@@ -327,7 +347,7 @@ function createWindow(url) {
 				// height. Do not force the zoom-invariant native overlay to match
 				// the renderer's 60 CSS px bar: zooming out would cover its border.
 				// The renderer reserves the actual width via env(titlebar-area-*).
-				titleBarOverlay: { color: "#0f1519", symbolColor: "#eef2f3" },
+				titleBarOverlay: { ...(savedNight() ? CHROME.night : CHROME.day) },
 				// Keep the custom bar alone; Alt reveals the native menu.
 				autoHideMenuBar: true,
 			}),
@@ -343,10 +363,10 @@ function createWindow(url) {
 		// the native window surface changes size before Chromium's compositor
 		// has a frame at the new size, and the gap shows the window's NATIVE
 		// background — Electron's default is white, glaring on a dark app.
-		// The app background (#0f1519) fills the lag instead. `show: false` +
+		// The app background (white, or #101214 once the page reports Night) fills the lag instead. `show: false` +
 		// ready-to-show is the same treatment for first paint: the window
 		// appears only once the page has actually rendered.
-		backgroundColor: "#0f1519",
+		backgroundColor: (savedNight() ? CHROME.night : CHROME.day).color,
 		show: false,
 		// Narrow-window behavior (owner, 2026-09-17): 640px is the floor —
 		// below it even a wrapped chrome row gets cramped and the chat header
@@ -776,6 +796,15 @@ async function main() {
 	// The renderer's first paint can race did-finish-load — it asks for
 	// the current factor itself (mirrors "lh:zoom" pushes).
 	ipcMain.handle("lh:zoom:get", (event) => BrowserWindow.fromWebContents(event.sender)?.webContents.getZoomFactor() ?? 1);
+	ipcMain.on("lh:theme", (event, night) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		if (!win) return;
+		const c = night === true ? CHROME.night : CHROME.day;
+		saveNight(night === true);
+		win.setBackgroundColor(c.color);
+		// Only the Windows and Linux frames have an overlay to recolor.
+		if (process.platform !== "darwin") win.setTitleBarOverlay?.({ ...c });
+	});
 	ipcMain.on("lh:expand-window", (event) => {
 		const win = BrowserWindow.fromWebContents(event.sender);
 		if (!win) return;

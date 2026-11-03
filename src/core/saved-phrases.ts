@@ -40,6 +40,8 @@ export interface WordBankItem {
 	example?: { sk: string; en: string };
 	favorite: boolean;
 	inDeck: boolean;
+	/** Set only while searching: how the word matched (see word-search.ts). */
+	match?: { kind: "start" | "contains" | "form" | "meaning" | "example"; span?: [number, number]; via?: string };
 }
 
 export interface WordBankSummary {

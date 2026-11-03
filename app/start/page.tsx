@@ -2,6 +2,8 @@ import { Start } from "@/components/onboarding/start";
 import { hoursDone, type LearnerGoal } from "@/src/core";
 import { progressSummary } from "@/src/server";
 
+export const metadata = { title: "Set up" };
+
 export const dynamic = "force-dynamic";
 
 /** Setup: the minute that replaces the placement chat (?edit=1 reopens it

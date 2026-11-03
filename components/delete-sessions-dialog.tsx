@@ -94,14 +94,14 @@ export function DeleteSessionsDialog({
 	if (!open) return null;
 
 	return createPortal(
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100" {...backdropDismiss}>
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...backdropDismiss}>
 			<div
 				role="dialog"
 				aria-modal="true"
 				aria-label="Delete sessions"
 				data-testid="delete-sessions-dialog"
 				onClick={(e) => e.stopPropagation()}
-				className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+				className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 			>
 				<h2 className="text-sm font-semibold text-destructive">
 					Delete {chats.length} {chats.length === 1 ? "session" : "sessions"}?

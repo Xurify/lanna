@@ -262,12 +262,12 @@ function TaskIcon({ task, large = false }: { task: PlanTask; large?: boolean }) 
 					side="top"
 					align="start"
 					sideOffset={6}
-					className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover p-3 text-left font-ui shadow-xl"
 				>
 					<div className="space-y-1">
 						<div className="flex items-center justify-between gap-1.5">
 							<span className="text-xs font-bold text-foreground">{detail.label}</span>
-							<span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider", st.soft, st.text)}>
+							<span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold", st.soft, st.text)}>
 								{detail.strand}
 							</span>
 						</div>

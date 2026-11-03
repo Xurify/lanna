@@ -2,7 +2,7 @@
 
 /**
  * The phone bottom nav. Below Tailwind's md breakpoint (768px) five doors sit
- * in a bar at the foot of the screen, so Today, the Climb, Review, Stories and
+ * in a bar at the foot of the screen, so Today, the Curriculum, Review, Read and
  * Progress stay one tap away without opening the sidebar (Speak and Words are
  * a tap away on Today and in the drawer).
  *
@@ -19,10 +19,10 @@ import { cn } from "@/lib/utils";
 
 const DOORS: { href: string; label: string; icon: LucideIcon; testid: string; pages: readonly string[] }[] = [
 	{ href: "/", label: "Today", icon: SunIcon, testid: "phone-today-door", pages: ["/"] },
-	{ href: "/curriculum", label: "Climb", icon: MountainSnowIcon, testid: "phone-path-door", pages: ["/curriculum"] },
+	{ href: "/curriculum", label: "Curriculum", icon: MountainSnowIcon, testid: "phone-path-door", pages: ["/curriculum"] },
 	{ href: "/review", label: "Review", icon: RepeatIcon, testid: "phone-review-door", pages: ["/review"] },
-	{ href: "/read", label: "Stories", icon: BookOpenIcon, testid: "phone-stories-door", pages: ["/read"] },
-	{ href: "/plan", label: "Progress", icon: ChartNoAxesColumnIcon, testid: "phone-plan-door", pages: ["/plan", "/milestones", "/map"] },
+	{ href: "/read", label: "Read", icon: BookOpenIcon, testid: "phone-stories-door", pages: ["/read"] },
+	{ href: "/progress", label: "Progress", icon: ChartNoAxesColumnIcon, testid: "phone-plan-door", pages: ["/progress", "/milestones", "/map"] },
 ];
 
 /** True on the pages that show the bar. The app shell pads its content

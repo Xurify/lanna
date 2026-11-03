@@ -105,3 +105,4 @@ export {
 	redeemPairingCode,
 	revokeDevice,
 } from "./remote-access-store.ts";
+export * from "./daylog.ts";

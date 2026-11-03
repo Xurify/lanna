@@ -47,21 +47,21 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 	const edited = override !== null && override !== pace.minutesPerDay;
 
 	return (
-		<section className="mt-5 rounded-2xl border bg-background/40 p-4" aria-labelledby="heading-title" data-testid="trajectory-section">
+		<section className="mt-5 rounded-xl bg-well p-4" aria-labelledby="heading-title" data-testid="trajectory-section">
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h3 id="heading-title" className="font-ui text-base font-black text-foreground">
+				<h3 id="heading-title" className="font-ui text-base font-semibold text-foreground">
 					Where you&apos;re heading
 				</h3>
-				<div className="flex rounded-lg border p-0.5" role="group" aria-label="Measure">
+				<div className="q-segc" role="group" aria-label="Measure">
 					{TRAJECTORY_METRICS.map((m) => (
-						<button key={m.id} type="button" aria-pressed={metric === m.id} onClick={() => setMetric(m.id)} className={cn("rounded-md px-2.5 py-1 font-ui text-xs font-bold", metric === m.id ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground")} data-testid={`trajectory-${m.id}`}>
+						<button key={m.id} type="button" aria-pressed={metric === m.id} onClick={() => setMetric(m.id)} className={cn(metric === m.id && "on")} data-testid={`trajectory-${m.id}`}>
 							{m.title}
 						</button>
 					))}
 				</div>
 			</div>
 
-			<p className="mt-2 font-ui text-xl font-black text-foreground" data-testid="trajectory-headline">
+			<p className="mt-2 font-ui text-xl font-semibold text-foreground" data-testid="trajectory-headline">
 				{trajectoryHeadline(main, now, target)}
 			</p>
 			<p className="font-prose text-sm text-muted-foreground">
@@ -79,16 +79,16 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 					<TrajectoryChart t={main} now={now} scenarios={scenarios} targetLevel={target} />
 				</div>
 			) : (
-				<p className="mt-3 rounded-xl bg-accent/60 px-4 py-6 text-center font-prose text-sm text-muted-foreground" role="status">
+				<p className="mt-3 rounded-xl bg-well-2 px-4 py-6 text-center font-prose text-sm text-muted-foreground" role="status">
 					{metric === "words" ? `Word counts are saved once a day from now on: ${Math.min(snapshots, MIN_WORD_SNAPSHOTS)} of ${MIN_WORD_SNAPSHOTS} days so far. The line appears when there are enough.` : "No lessons on record yet. Finish one and the line starts."}
 				</p>
 			)}
 
 			<div className="mt-3 flex flex-wrap items-center gap-3">
-				<label htmlFor="trajectory-minutes" className="font-ui text-sm font-bold text-foreground">
+				<label htmlFor="trajectory-minutes" className="font-ui text-sm font-semibold text-foreground">
 					What if I did
 				</label>
-				<input id="trajectory-minutes" type="range" min={5} max={maxSlider} step={5} value={Math.min(maxSlider, minutes)} onChange={(e) => setOverride(Number(e.target.value))} className="min-w-40 flex-1 accent-[var(--lh-go)]" data-testid="trajectory-slider" />
+				<input id="trajectory-minutes" type="range" min={5} max={maxSlider} step={5} value={Math.min(maxSlider, minutes)} onChange={(e) => setOverride(Number(e.target.value))} className="min-w-40 flex-1 accent-[var(--q-teal)]" data-testid="trajectory-slider" />
 				<span className="w-24 font-ui text-sm tabular-nums text-foreground">{minutes} min a day</span>
 				{edited && (
 					<button type="button" onClick={() => setOverride(null)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">

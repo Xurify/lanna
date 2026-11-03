@@ -1,6 +1,8 @@
 import { MistakesPage } from "@/components/mistakes/mistakes-page";
 import { mistakesReport, type MistakesReport } from "@/src/server";
 
+export const metadata = { title: "Mistakes" };
+
 export const dynamic = "force-dynamic";
 
 /** My mistakes: the analysis is read here, with the page, so the first HTML

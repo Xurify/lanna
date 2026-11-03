@@ -130,6 +130,9 @@ async function main(): Promise<void> {
 	if (args.includes("--seed")) {
 		const seed = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")], { cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: "inherit" });
 		if (seed.status !== 0) process.exit(seed.status ?? 1);
+		// Four hand-made episodes for the Read screens (scripts/fixtures/robo-episodes.ts).
+		const stories = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "seed-stories.ts")], { cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: "inherit" });
+		if (stories.status !== 0) process.exit(stories.status ?? 1);
 	}
 
 	const next = createRequire(import.meta.url).resolve("next/dist/bin/next");

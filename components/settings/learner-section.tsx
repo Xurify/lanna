@@ -114,7 +114,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 									className={cn(
 										"flex items-center gap-2 rounded-xl border px-3.5 py-1.5 font-ui text-sm font-semibold transition-all",
 										running
-											? "border-primary/80 bg-primary/15 text-primary font-bold shadow-xs"
+											? "border-primary/80 bg-primary/15 text-primary font-semibold shadow-xs"
 											: "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground",
 									)}
 									data-testid={`target-language-${p.id}`}
@@ -150,7 +150,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">Your pace lives on the plan. The purposes, the target and your starting level live in setup.</span>
 					<span className="flex min-w-0 flex-wrap gap-2">
 						{[
-							{ id: "learner-open-plan", href: "/plan", label: "Open plan" },
+							{ id: "learner-open-plan", href: "/progress", label: "Open progress" },
 							{ id: "learner-open-setup", href: "/start?edit=1", label: "Open setup" },
 							{ id: "learner-recheck", href: "/start?edit=1&check=1", label: "Re-check my level" },
 						].map((b) => (

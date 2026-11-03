@@ -112,8 +112,8 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="script-done">
-					<p className="font-ui text-sm font-bold text-muted-foreground">Speak · step by step · done</p>
-					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">Now say it yourself</h1>
+					<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · step by step · done</p>
+					<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground">Now say it yourself</h1>
 					<p className="mt-3 max-w-md font-prose text-base text-muted-foreground">
 						You walked through all {total} lines. Now say the same scene out loud. The tutor will follow what you say, not the script.
 					</p>
@@ -133,18 +133,18 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 
 	return (
 		<TaskFrame>
-			<TaskTop progress={turnIndex / total} label={`line ${turnIndex + 1} of ${total}`} count={`${turnIndex + 1}/${total}`} ink="bg-xp" href="/speak" />
+			<TaskTop progress={turnIndex / total} label={`line ${turnIndex + 1} of ${total}`} count={`${turnIndex + 1}/${total}`} ink="bg-teal" href="/speak" />
 
 			<div ref={listRef} className="flex flex-1 flex-col overflow-y-auto pb-6 pt-4">
 				<div className={cn(COLUMN, "flex flex-col gap-4")}>
-					<p className="font-ui text-sm font-bold text-muted-foreground">Speak · step by step</p>
+					<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · step by step</p>
 					<ol className="flex flex-col gap-3" data-testid="script-turns" data-word-lookup-enabled="true" aria-live="polite">
 						{said.map((line, i) => (
 							<li key={i} className={cn("flex", line.role === "learner" ? "justify-end" : "justify-start")}>
 								<div
 									className={cn(
-										"max-w-[85%] rounded-2xl px-4 py-3",
-										line.role === "learner" ? "rounded-br-md bg-xp/15" : "rounded-bl-md bg-card",
+										"max-w-[85%] rounded-lg px-4 py-3",
+										line.role === "learner" ? "rounded-br-md bg-teal-wash" : "rounded-bl-md bg-card",
 									)}
 								>
 									<p className="font-prose text-lg text-foreground" lang="sk">
@@ -171,8 +171,8 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 									onClick={() => pick(o, i)}
 									disabled={failed}
 									className={cn(
-										"flex items-center gap-3 rounded-xl border-2 bg-card px-4 py-3.5 text-left font-prose text-lg transition-colors",
-										failed ? "border-miss/50 opacity-60" : "border-border hover:border-foreground/40 hover:bg-accent",
+										"flex items-center gap-3 rounded-xl border bg-card px-4 py-3.5 text-left font-prose text-lg transition-colors",
+										failed ? "border-miss/50 opacity-60" : "border-border hover:shadow-raise-hi hover:bg-accent",
 									)}
 									data-testid={`script-option-${i}`}
 								>

@@ -12,11 +12,11 @@ import { speak } from "@/components/speech";
 import { PRON_CLEAR, PRON_GOOD, pronLabel, type PronReport, type PronScore } from "@/src/core";
 
 export function pronInk(overall: number): string {
-	return overall >= PRON_GOOD ? "text-go" : overall >= PRON_CLEAR ? "text-gold" : "text-miss";
+	return overall >= PRON_GOOD ? "text-teal-2" : overall >= PRON_CLEAR ? "text-teal-2" : "text-miss";
 }
 
 export function pronBg(overall: number): string {
-	return overall >= PRON_GOOD ? "bg-go-soft text-go" : overall >= PRON_CLEAR ? "bg-gold/15 text-foreground" : "bg-miss-soft text-miss";
+	return overall >= PRON_GOOD ? "bg-teal-wash text-teal-2" : overall >= PRON_CLEAR ? "bg-teal-wash text-foreground" : "bg-miss-soft text-miss";
 }
 
 /** "Clear · 92" with the weak words in the title. */
@@ -31,7 +31,7 @@ export function PronChip({ score, big = false }: { score: PronScore; big?: boole
 		.filter(Boolean)
 		.join(" · ");
 	return (
-		<span className={cn("inline-flex items-center gap-1 rounded-md font-ui font-bold tabular-nums", big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-xs", pronBg(score.overall))} title={title} data-testid="pron-chip">
+		<span className={cn("inline-flex items-center gap-1 rounded-md font-ui font-[600] tabular-nums", big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-xs", pronBg(score.overall))} title={title} data-testid="pron-chip">
 			{pronLabel(score.overall)} · {score.overall}
 		</span>
 	);
@@ -42,12 +42,12 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 	if (!report || (report.sounds.length === 0 && report.words.length === 0)) return null;
 	return (
 		<div className={cn("mt-8", className)} data-testid="pron-workon">
-			<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">{report.sounds.length && report.words.length ? "Sounds and words to work on" : report.sounds.length ? "Sounds to work on" : "Words to work on"}</p>
+			<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">{report.sounds.length && report.words.length ? "Sounds and words to work on" : report.sounds.length ? "Sounds to work on" : "Words to work on"}</p>
 			{report.sounds.length > 0 && (
 				<ul className="mt-2 flex flex-wrap gap-2">
 					{report.sounds.map((s) => (
 						<li key={s.p} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" title={`${s.score} on average over ${s.n} times${s.in.length ? ` · in ${s.in.join(", ")}` : ""}`}>
-							<span className={cn("font-ui font-black", pronInk(s.score))} lang="sk">
+							<span className={cn("font-ui font-[600]", pronInk(s.score))} lang="sk">
 								{s.p}
 							</span>
 							{s.in.length > 0 && <span className="font-ui text-xs text-muted-foreground">in {s.in.join(", ")}</span>}

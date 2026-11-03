@@ -3,6 +3,8 @@ import { ScriptPlayer } from "@/components/speak/script-player";
 import { scriptFor } from "@/src/core";
 import { speakState } from "@/src/server";
 
+export const metadata = { title: "Speak" };
+
 export const dynamic = "force-dynamic";
 
 /** Speak: a scene said out loud with the tutor. ?scene=<id> opens that

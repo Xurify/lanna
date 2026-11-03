@@ -285,7 +285,7 @@ export function fontMenuResults(query: string, families: string[]): Array<string
 		.sort((a, b) => b.s! - a.s! || a.f.localeCompare(b.f))
 		.map((r) => r.f);
 	// The default row matches the factory family name and the word "default".
-	const defaultScore = fuzzyScore(query, "Source Sans 3", "default");
+	const defaultScore = fuzzyScore(query, "Geist", "default");
 	if (query.trim() === "" || defaultScore !== null) return [null, ...scored];
 	return scored;
 }
@@ -307,7 +307,7 @@ export function FontMenuList({
 	/** Enumerated font families (already deduped/sorted by the caller);
 	 *  undefined while the enumeration runs. */
 	families: string[] | undefined;
-	/** The stored override (null = the factory Source Sans 3). */
+	/** The stored override (null = the factory Geist). */
 	effectiveFamily: string | null;
 	/** Receives the pick: a family string, or null for the default. */
 	onPick: (family: string | null) => void;
@@ -381,7 +381,7 @@ export function FontMenuList({
 									className="flex w-full items-center justify-between gap-3 outline-none"
 									aria-current={effective ? "true" : undefined}
 								>
-									<span className="truncate text-card-foreground">{family ?? "Source Sans 3"}</span>
+									<span className="truncate text-card-foreground">{family ?? "Geist"}</span>
 									<span className="shrink-0 text-muted-foreground">
 										{isDefault && "default"}
 										{effective && <span aria-hidden className={isDefault ? "ml-1 text-go" : "text-go"}>✓</span>}

@@ -25,7 +25,7 @@ describe("fontMenuResults — the DEFAULT row is a candidate, never a ghost pick
 	it("the default row matches its own identity (source/sans/default), not everything", () => {
 		assert.deepEqual(fontMenuResults("georgia", families), ["Georgia"]);
 		assert.deepEqual(fontMenuResults("menlo", families), ["Menlo"]);
-		assert.deepEqual(fontMenuResults("source", families)[0], null);
+		assert.deepEqual(fontMenuResults("geist", families)[0], null);
 		assert.ok(fontMenuResults("default", families).includes(null));
 		assert.ok(!fontMenuResults("georgia", families).includes(null));
 	});
@@ -110,7 +110,7 @@ describe("the appearance section's font control (thin SSR)", () => {
 		assert.ok(html.includes(DEFAULT_READING_FONT), "unset shows the factory family");
 		assert.ok(html.includes('aria-expanded="false"'), "the collapsed state");
 		assert.ok(!html.includes('data-testid="input-font"'));
-		assert.ok(!html.includes('placeholder="Source Sans 3"'));
+		assert.ok(!html.includes('placeholder="Geist"'));
 	});
 
 	it("a stored family shows in the trigger (the record never lies)", () => {
@@ -130,8 +130,8 @@ describe("the emphasis-ink factory ruling (globals.css)", () => {
 
 	it("both blocks default the inks to the regular text color", () => {
 		const css = fs.readFileSync("app/globals.css", "utf-8");
-		assert.equal((css.match(/--lh-ink-strong: var\(--foreground\)/g) ?? []).length, 2, "both theme blocks");
-		assert.equal((css.match(/--lh-ink-italic: var\(--foreground\)/g) ?? []).length, 2, "both theme blocks");
+		assert.equal((css.match(/--lh-ink-strong: var\(--foreground\)/g) ?? []).length, 3, "Day, Night and the dark-device block");
+		assert.equal((css.match(/--lh-ink-italic: var\(--foreground\)/g) ?? []).length, 3, "Day, Night and the dark-device block");
 	});
 
 	it("the emphasis inks sit under Advanced, out of the first paint", () => {
@@ -154,8 +154,8 @@ describe("customFamilyFor — the single-field custom escape (2026-09-26)", () =
 
 	it("a matching family is the better pick — no action row", () => {
 		assert.equal(customFamilyFor("georgia", families), null);
-		// the default row matches too — "source"/"sans"/"default" queries pick it
-		assert.equal(customFamilyFor("source", families), null);
+		// the default row matches too — "geist"/"default" queries pick it
+		assert.equal(customFamilyFor("geist", families), null);
 	});
 
 	it("an empty query is never a custom pick", () => {

@@ -74,7 +74,7 @@ describe("StampsCard", () => {
 	it("shows the last stamp earned, the three closest, and the door to the book", () => {
 		const html = renderToStaticMarkup(createElement(StampsCard, { stamps: all }));
 		assert.ok(html.includes('data-testid="stamps-card"'));
-		assert.ok(html.includes('href="/plan#stamps"'));
+		assert.ok(html.includes('href="/progress#stamps"'));
 		assert.ok(html.includes(`1 of ${all.length} · all`));
 		const recent = html.split('data-testid="stamps-recent"')[1]?.split("</div>")[0] ?? "";
 		assert.ok(recent.includes("Prvý krok"), "the first step is the last earned");

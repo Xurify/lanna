@@ -413,7 +413,7 @@ function AddProviderRow({
 				className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 bg-accent/10 px-3.5 py-2.5 text-left font-ui text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-accent/25 hover:text-foreground"
 			>
 				<span className="flex items-center gap-2.5">
-					<span className="flex size-5 items-center justify-center rounded-md bg-accent font-bold text-foreground">
+					<span className="flex size-5 items-center justify-center rounded-md bg-accent font-semibold text-foreground">
 						+
 					</span>
 					<span>Add provider key</span>

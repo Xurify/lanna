@@ -15,7 +15,7 @@ import { StrandBalance } from "@/components/strand-balance";
 import { monthAt, TrajectoryChart, trajectoryHeadline } from "@/components/trajectory-chart";
 import { DEFAULT_DAYS_PER_WEEK, knownLanguages, LEVEL_CAN_DO, measuredPace, trajectory as projectTrajectory, type LearnerGoal, type Projection, type StrandBalance as Balance, type TrajectoryInput } from "@/src/core";
 
-const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
+const WEEKDAY = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const WEEKDAY_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function monthOf(iso: string | null): string | null {
@@ -111,7 +111,7 @@ export function WeekCard({
 			)}
 
 			<Link
-				href="/plan"
+				href="/progress"
 				className="group mt-4 flex items-center gap-3 rounded-2xl border border-sun/30 bg-sun/10 p-3 transition-colors hover:border-sun/50 hover:bg-sun/15"
 				data-testid="goal-line"
 			>

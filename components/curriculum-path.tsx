@@ -60,34 +60,34 @@ export function CurriculumPath({
 				return (
 					<section key={stage.id} className={cn("mt-5 first:mt-0", !reached && mode === "compact" && "opacity-70")} data-testid={`stage-${stage.id}`}>
 						<div className="flex items-center gap-3">
-							<span className={cn("rounded-lg px-2 py-0.5 font-ui text-xs font-black", current ? "bg-go text-go-ink" : done >= total && total > 0 ? "bg-gold text-background" : "bg-accent text-foreground/80")}>{stage.level}</span>
+							<span className={cn("rounded-lg px-2 py-0.5 font-ui text-xs font-semibold", current || (done >= total && total > 0) ? "bg-teal text-[var(--q-on-teal)]" : "bg-well-2 text-ink-2")}>{stage.level}</span>
 							<span className="min-w-0 flex-1">
-								<span className="block font-ui text-base font-bold text-foreground">{stage.title}</span>
+								<span className="block font-ui text-base font-semibold text-foreground">{stage.title}</span>
 								<span className="block font-ui text-xs text-muted-foreground">
 									{done}/{total} units{mode === "full" && ` · ${stage.blurb}`}
 								</span>
 							</span>
 						</div>
-						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-accent" aria-hidden="true">
-							<div className={cn("h-full rounded-full transition-[width] duration-700", done >= total && total > 0 ? "bg-gold" : "bg-go")} style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} />
+						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-well-2" aria-hidden="true">
+							<div className={cn("h-full rounded-full transition-[width] duration-700", "bg-teal")} style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} />
 						</div>
 						{/* Compact: a stage not reached yet is its header alone; its
 						    chapters are the full map's business. */}
 						{(reached || mode === "full") && (
 							<ol className="mt-3 flex flex-col gap-2">
 								{chapters.map((ch, i) => (
-									<li key={ch.id} className={cn("rounded-2xl border", ch.id === state.current ? "border-go/50 bg-go/5" : "bg-card")} data-testid={`chapter-${ch.id}`}>
+									<li key={ch.id} className={cn("q-card", ch.id === state.current && "shadow-[var(--q-raise),inset_0_0_0_1.5px_var(--q-teal-line)]")} data-testid={`chapter-${ch.id}`}>
 										<button
 											type="button"
 											onClick={() => mode === "compact" && toggle(ch.id)}
-											className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left", mode === "compact" && "hover:bg-accent/60 rounded-2xl")}
+											className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left", mode === "compact" && "rounded-xl hover:bg-well")}
 											aria-expanded={isOpen(ch)}
 										>
-											<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-black", ch.done ? "bg-gold text-background" : ch.open ? "bg-go/20 text-go" : "bg-accent text-muted-foreground")}>
+											<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-semibold", ch.done ? "bg-teal text-[var(--q-on-teal)]" : ch.open ? "bg-teal-wash text-teal-2" : "bg-well-2 text-ink-3")}>
 												{ch.done ? "✓" : ch.open ? ch.doneCount : <LockIcon className="size-3" />}
 											</span>
 											<span className="min-w-0 flex-1">
-												<span className={cn("block font-ui text-sm font-bold", ch.open ? "text-foreground" : "text-muted-foreground")}>{ch.title}</span>
+												<span className={cn("block font-ui text-sm font-semibold", ch.open ? "text-foreground" : "text-muted-foreground")}>{ch.title}</span>
 												<span className="block truncate font-ui text-xs text-muted-foreground">{ch.open ? `${ch.doneCount}/${ch.total} · ${ch.tagline}` : chapters[i - 1]?.open ? `Opens when “${chapters[i - 1]!.title}” is nearly done` : ch.tagline}</span>
 											</span>
 											{mode === "compact" && (isOpen(ch) ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />)}
@@ -164,28 +164,29 @@ function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary 
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-miss transition-colors hover:bg-miss/15 focus:outline-none focus:ring-1 focus:ring-miss"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-miss transition-colors hover:bg-[var(--q-miss-wash)] focus:outline-none focus:ring-1 focus:ring-miss"
 						aria-label={`Weak spot: ${weak.title}`}
 						data-testid={`weak-mark-${unit.id}`}
 					>
 						<AlertTriangleIcon className="size-3.5 shrink-0 text-miss" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Weak spot</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
 					side="top"
 					align="start"
 					sideOffset={6}
-					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl bg-popover p-3 text-left shadow-raise-hi"
 				>
 					<div className="flex items-start gap-2.5">
-						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-miss/15 text-miss">
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-[var(--q-miss-wash)] text-miss">
 							<AlertTriangleIcon className="size-3.5" aria-hidden="true" />
 						</div>
 						<div className="min-w-0 flex-1 space-y-2">
 							<div>
 								<div className="flex items-baseline justify-between gap-1.5">
-									<span className="text-xs font-bold text-foreground">Weak Spot</span>
-									<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+									<span className="text-xs font-semibold text-foreground">Weak Spot</span>
+									<span className="text-[10px] font-semibold text-muted-foreground">
 										{WEAK_SOURCE_NAMES[weak.source] ?? weak.source}
 									</span>
 								</div>
@@ -256,18 +257,19 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-xp transition-colors hover:bg-xp/15 focus:outline-none focus:ring-1 focus:ring-xp"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-xp transition-colors hover:bg-xp/15 focus:outline-none focus:ring-1 focus:ring-xp"
 						aria-label="With the tutor"
 						data-testid={`tutor-hint-${unit.id}`}
 					>
 						<BotMessageSquareIcon className="size-3.5 shrink-0 text-xp" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Tutor</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
 					side="top"
 					align="start"
 					sideOffset={6}
-					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl bg-popover p-3 text-left shadow-raise-hi"
 				>
 					<div className="flex items-start gap-2.5">
 						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-xp/15 text-xp">
@@ -275,8 +277,8 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 						</div>
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
-								<span className="text-xs font-bold text-foreground">With the Tutor</span>
-								<span className="rounded bg-xp/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-xp">
+								<span className="text-xs font-semibold text-foreground">With the Tutor</span>
+								<span className="rounded bg-xp/10 px-1 py-0.5 text-[10px] font-semibold text-xp">
 									Guided session
 								</span>
 							</div>
@@ -315,27 +317,28 @@ function StarredGoalHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-gold transition-colors hover:bg-gold/15 focus:outline-none focus:ring-1 focus:ring-gold"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-teal transition-colors hover:bg-teal-wash focus:outline-none focus:ring-1 focus:ring-teal"
 						aria-label="Priority goal"
 						data-testid={`starred-hint-${unit.id}`}
 					>
-						<StarIcon className="size-3.5 shrink-0 fill-gold text-gold" aria-hidden="true" />
+						<StarIcon className="size-3.5 shrink-0 fill-teal text-teal" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Priority</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
 					side="top"
 					align="start"
 					sideOffset={6}
-					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl bg-popover p-3 text-left shadow-raise-hi"
 				>
 					<div className="flex items-start gap-2.5">
-						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-gold/15 text-gold">
-							<StarIcon className="size-3.5 fill-gold" aria-hidden="true" />
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-teal-wash text-teal-2">
+							<StarIcon className="size-3.5 fill-teal" aria-hidden="true" />
 						</div>
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
-								<span className="text-xs font-bold text-foreground">Priority Goal</span>
-								<span className="rounded bg-gold/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
+								<span className="text-xs font-semibold text-foreground">Priority Goal</span>
+								<span className="rounded bg-teal-wash px-1 py-0.5 text-[10px] font-semibold text-teal-2">
 									Your target
 								</span>
 							</div>
@@ -369,27 +372,28 @@ function CanDoGoalHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex cursor-help items-center rounded p-0.5 text-flame transition-colors hover:bg-flame/15 focus:outline-none focus:ring-1 focus:ring-flame"
+						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-ink-2 transition-colors hover:bg-well focus:outline-none focus:ring-1 focus:ring-ink-3"
 						aria-label="Can-do milestone"
 						data-testid={`goal-hint-${unit.id}`}
 					>
-						<FlagIcon className="size-3.5 shrink-0 text-flame" aria-hidden="true" />
+						<FlagIcon className="size-3.5 shrink-0 text-ink-2" aria-hidden="true" />
+						<span className="text-[12px] font-[550]">Goal</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
 					side="top"
 					align="start"
 					sideOffset={6}
-					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl bg-popover p-3 text-left shadow-raise-hi"
 				>
 					<div className="flex items-start gap-2.5">
-						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-flame/15 text-flame">
+						<div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-well text-ink-2">
 							<FlagIcon className="size-3.5" aria-hidden="true" />
 						</div>
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
-								<span className="text-xs font-bold text-foreground">Can-Do Milestone</span>
-								<span className="rounded bg-flame/10 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-flame">
+								<span className="text-xs font-semibold text-foreground">Can-Do Milestone</span>
+								<span className="rounded bg-well px-1 py-0.5 text-[10px] font-semibold text-ink-2">
 									CEFR goal
 								</span>
 							</div>
@@ -429,7 +433,7 @@ function TermHover({ unit }: { unit: UnitState }) {
 								e.stopPropagation();
 							}
 						}}
-						className="inline-flex max-w-[120px] shrink truncate cursor-help items-center rounded-md bg-accent/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+						className="inline-flex max-w-[120px] shrink truncate cursor-help items-center rounded-md bg-accent/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-well hover:text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
 						aria-label={`Linguistic term: ${unit.slovakTerm}`}
 					>
 						<span className="truncate">{unit.slovakTerm}</span>
@@ -439,11 +443,11 @@ function TermHover({ unit }: { unit: UnitState }) {
 					side="top"
 					align="start"
 					sideOffset={6}
-					className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-3 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl bg-popover p-3 text-left shadow-raise-hi"
 				>
 					<div className="space-y-1.5">
 						<div className="flex items-baseline justify-between gap-1.5">
-							<span className="text-xs font-bold text-foreground">{unit.slovakTerm}</span>
+							<span className="text-xs font-semibold text-foreground">{unit.slovakTerm}</span>
 							<span className="rounded bg-accent px-1 py-0.5 text-[10px] font-semibold text-muted-foreground">
 								Slovak grammar
 							</span>
@@ -526,15 +530,15 @@ function UnitBadgeHover({
 					side="right"
 					align="center"
 					sideOffset={8}
-					className="z-50 w-60 max-w-[calc(100vw-2rem)] rounded-xl border border-border/80 bg-popover/95 p-2.5 text-left font-ui shadow-xl backdrop-blur-md"
+					className="z-50 w-60 max-w-[calc(100vw-2rem)] rounded-xl bg-popover p-2.5 text-left shadow-raise-hi"
 				>
 					<div className="space-y-1">
 						<div className="flex items-center justify-between gap-1.5">
-							<span className="truncate text-xs font-bold text-foreground">{unit.title}</span>
+							<span className="truncate text-xs font-semibold text-foreground">{unit.title}</span>
 							<span
 								className={cn(
-									"shrink-0 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-									done ? "bg-gold/15 text-gold" : locked ? "bg-muted text-muted-foreground" : "bg-go/15 text-go",
+									"shrink-0 rounded px-1 py-0.5 text-[9px] font-semibold",
+									done ? "bg-teal-wash text-teal-2" : locked ? "bg-muted text-muted-foreground" : "bg-teal-wash text-teal-2",
 								)}
 							>
 								{statusLabel}
@@ -557,9 +561,9 @@ export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene
 		<>
 			<UnitBadgeHover unit={u} active={active} locked={locked} skipped={skipped} tone={tone} />
 			<span className="min-w-0 flex-1">
-				<span className={cn("flex min-w-0 items-center justify-between gap-1.5 font-ui text-sm font-bold", locked || skipped ? "text-muted-foreground" : active ? "text-go" : "text-foreground")}>
-					<span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-						<span className="truncate">{u.title}</span>
+				<span className={cn("flex min-w-0 items-center justify-between gap-1.5 font-ui text-sm font-semibold", locked || skipped ? "text-muted-foreground" : active ? "text-teal-2" : "text-foreground")}>
+					<span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
+						<span>{u.title}</span>
 						{u.slovakTerm && <TermHover unit={u} />}
 					</span>
 					<span className="flex shrink-0 items-center gap-1">
@@ -575,7 +579,7 @@ export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene
 			</span>
 		</>
 	);
-	const cls = cn("flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left", !locked && "hover:bg-accent", locked && "cursor-default");
+	const cls = cn("flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left", !locked && "hover:bg-well", locked && "cursor-default");
 	if (locked || (u.kind === "goal" && !u.scene)) {
 		return (
 			<div className={cls} data-testid={`unit-${u.id}`} aria-disabled="true">
@@ -600,14 +604,14 @@ export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene
 /** A chapter's exam, the last row of its open units (E14, E15). Record
  *  only: the line says where it stands, and nothing on the path opens or
  *  closes on it. Its ring is a unit's ring: it fills to the best score,
- *  and turns gold once the exam is passed. */
+ *  and turns teal once the exam is passed. */
 export function ExamRow({ chapterId, summary }: { chapterId: string; summary: ExamSummary }) {
 	const best = summary.best;
 	return (
-		<Link href={`/exam?chapter=${chapterId}`} className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-accent" data-testid={`exam-${chapterId}`}>
+		<Link href={`/exam?chapter=${chapterId}`} className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-well" data-testid={`exam-${chapterId}`}>
 			<UnitBadge glyph="clipboard-check" progress={best ? best.score / best.total : 0} done={best?.passed ?? false} size="sm" tone="go" />
 			<span className="min-w-0 flex-1">
-				<span className="block font-ui text-sm font-bold text-foreground">Chapter exam</span>
+				<span className="block font-ui text-sm font-semibold text-foreground">Chapter exam</span>
 				<span className="block truncate font-ui text-xs text-muted-foreground">{examLine(summary)}</span>
 			</span>
 		</Link>

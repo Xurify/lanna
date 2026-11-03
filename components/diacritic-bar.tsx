@@ -82,7 +82,13 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 
 	if (variant === "keys") {
 		return (
-			<div data-testid="diacritic-bar" className={cn("flex flex-wrap gap-1.5 font-prose", className)} aria-label={`${lang.english} letters`}>
+			// Two even rows on a narrow card, one row on a wide one: never a lone key on a second row.
+			<div
+				data-testid="diacritic-bar"
+				className={cn("grid grid-cols-[repeat(var(--half),minmax(0,1fr))] gap-1.5 font-prose @xl:grid-cols-[repeat(var(--all),minmax(0,1fr))]", className)}
+				style={{ ["--half" as string]: Math.ceil(lang.specialLetters.length / 2), ["--all" as string]: lang.specialLetters.length }}
+				aria-label={`${lang.english} letters`}
+			>
 				{lang.specialLetters.map((letter) => (
 					<button
 						key={letter}
@@ -90,7 +96,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 						onMouseDown={(e) => e.preventDefault()}
 						onClick={(e) => type(letter, e.shiftKey)}
 						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
-						className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-lg text-foreground transition-colors hover:border-foreground/40 hover:bg-accent active:bg-background"
+						className="flex h-9 min-w-0 items-center justify-center rounded-[10px] bg-card text-lg text-foreground shadow-raise transition-colors hover:bg-well active:bg-well-2"
 					>
 						{letter}
 					</button>
@@ -116,7 +122,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 						onMouseDown={(e) => e.preventDefault()}
 						onClick={(e) => type(letter, e.shiftKey)}
 						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
-						className="min-w-6 shrink-0 rounded-sm px-1 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						className="min-w-6 shrink-0 rounded-sm px-1 py-0.5 text-sm text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
 					>
 						{letter}
 					</button>
@@ -128,7 +134,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 				onClick={toggle}
 				aria-label={open ? "Hide letter bar" : "Show letter bar"}
 				title={open ? "Hide letter bar" : `${lang.english} letters`}
-				className="ml-0.5 flex shrink-0 items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+				className="ml-0.5 flex shrink-0 items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
 			>
 				{open ? <ChevronDownIcon className="size-3" /> : <>{lang.specialLetters.slice(0, 3).join(" ")} <ChevronUpIcon className="size-3" /></>}
 			</button>

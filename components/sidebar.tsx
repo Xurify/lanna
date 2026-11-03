@@ -7,20 +7,19 @@ import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
-import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
+import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
-import { PhoneNav, isPhoneNavPath } from "@/components/phone-nav";
+import { JumpProvider } from "@/components/quiet/jump";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { fuzzyScore } from "@/src/core";
 import { useServerEvent, useServerResync } from "@/components/server-events";
 import type { ChatListItem } from "@/src/core";
@@ -36,11 +35,6 @@ import { SelectionWordBankBar } from "@/components/words/selection-word-bank";
  * layout) and across reloads (localStorage).
  */
 
-const STORAGE_KEY = "lh:sidebar-open";
-function persistOpen(v: boolean) {
-	localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
-	document.cookie = `${SIDEBAR_COOKIE}=${v ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
-}
 
 /*
  * Narrow-window behavior (owner, 2026-09-17): below SIDEBAR_AUTOCLOSE the
@@ -60,7 +54,7 @@ function persistOpen(v: boolean) {
  */
 import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/src/core";
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
-const SIDEBAR_AUTOCLOSE = 928;
+const SIDEBAR_AUTOCLOSE = 900;
 
 /* Phone widths, and touch tablets below lg, in the plain browser: the sidebar becomes
  * a drawer over the page instead of a 288px column that would leave about
@@ -86,6 +80,8 @@ declare global {
 			chatgpt?: ChatGPTControlBridge;
 			subscriptions?: NativeSubscriptionControlBridge;
 			expandWindow: () => void;
+			/** Tells the Electron frame which theme the page is in. */
+			setTheme?: (night: boolean) => void;
 			/** LangHarness: restart the app (language-profile switch). */
 			relaunch?: () => void;
 			/** The zoom truth (owner round 7): subscribes to "lh:zoom" pushes; returns unsubscribe. */
@@ -127,7 +123,7 @@ export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-export function SidebarProvider({ children, initialOpen = true }: { children: React.ReactNode; initialOpen?: boolean }) {
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -135,9 +131,12 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
 		return off;
 	}, []);
-	// The server read the cookie, so server and first client render agree
-	// AND match the stored preference: no hydration mismatch, no slide-in.
-	const [open, setOpen] = useState(initialOpen);
+	// The sidebar is a permanent column on a desktop window. It used to be
+	// collapsible, with the choice kept in a cookie, and a collapsed sidebar
+	// then stayed gone on every route and every reload (a closed default made
+	// it vanish for everyone, 2026-11-02). Only a window below the drawer
+	// breakpoint hides it, as a drawer with a menu button.
+	const open = true;
 	const [narrow, setNarrow] = useState(false);
 	const [mounted, setMounted] = useState(false);
 
@@ -162,14 +161,6 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 		const off = window.lh?.onZoom?.(setZoomVar);
 		void window.lh?.getZoom?.().then(setZoomVar);
 
-		// Migrate a localStorage-only preference into the cookie once (the
-		// cookie wins from then on). Default: open.
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (!String(document.cookie ?? "").includes(`${SIDEBAR_COOKIE}=`)) {
-			const v = stored === null ? true : stored === "1";
-			persistOpen(v);
-			setOpen(v);
-		}
 		// Arm the width transition only after the first frames have painted,
 		// so nothing applied at mount animates.
 		// (setTimeout fallback: test DOMs have no requestAnimationFrame.)
@@ -218,22 +209,10 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 			setDrawer((v) => !v);
 			return;
 		}
-		// Opening while narrow (auto-closed, or the user's own closed-at-
-		// narrow): ask the shell to widen to the threshold — the resize
-		// listener flips `narrow` and the sidebar appears. The preference
-		// persists like any other open, so a restart at a narrow width
-		// still auto-restores when widened.
-		if (narrow && !open) {
-			persistOpen(true);
-			setOpen(true);
-			window.lh?.expandWindow();
-			return;
-		}
-		setOpen((v) => {
-			persistOpen(!v);
-			return !v;
-		});
-	}, [narrow, open, phone]);
+		// An Electron window narrower than the threshold hides the sidebar:
+		// ask the shell to widen it, and the resize listener brings it back.
+		if (narrow) window.lh?.expandWindow();
+	}, [narrow, phone]);
 
 	// ⌘B: the global shortcut dispatches kbdEventForAction("toggle-sidebar")
 	// and the context answers on exactly that name — the shared spelling
@@ -852,20 +831,22 @@ function SessionsSidebar() {
 						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
 							Lang<span className="text-sun">Harness</span>
 						</Link>
-						<Hint label="Close sidebar" action="toggle-sidebar">
-							<Button variant="ghost" size="icon" aria-label="Close sidebar" onClick={toggle} className="lh-no-drag">
+						<Hint label="Close menu" action="toggle-sidebar">
+							<Button variant="ghost" size="icon" aria-label="Close menu" onClick={toggle} className="lh-no-drag md:hidden touch-narrow:inline-flex">
 								<PanelLeftCloseIcon className="size-4" />
 							</Button>
 						</Hint>
 					</div>
 
-					{/* The language profile + the four main destinations. */}
+					{/* On a short window the navigation scrolls on its own; the tutor below keeps a reserved height, so the chats are never squeezed or pushed out of sight. */}
+					<div className="min-h-0 overflow-y-auto pt-1 [scrollbar-gutter:stable]" data-testid="sidebar-nav-scroll">
 					<LanguageSwitcher />
+					</div>
 
 					{/* The tutor: two ways to start a chat, then the chats themselves.
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
-					<section aria-labelledby="sidebar-tutor" className="mx-3 flex min-h-0 flex-1 flex-col border-t border-border/50 pt-3">
+					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
 						<h2 id="sidebar-tutor" className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">
 							Tutor
 						</h2>
@@ -873,23 +854,11 @@ function SessionsSidebar() {
 							type="button"
 							data-testid="new-session"
 							onClick={() => void newSession()}
-							aria-label="Learn a topic: start a new teaching chat"
+							aria-label="New chat with your tutor"
 							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 						>
 							<BotMessageSquareIcon className="size-[18px]" />
-							Learn a topic
-							<PlusIcon className="ml-auto size-4 opacity-60" />
-						</button>
-						<button
-							type="button"
-							data-testid="new-session-practice"
-							onClick={() => router.push("/chat/new?mode=practice")}
-							aria-label="Practice a topic: start a new practice chat"
-							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-						>
-							<MessagesSquareIcon className="size-[18px]" />
-							Practice a topic
-							<PlusIcon className="ml-auto size-4 opacity-60" />
+							New chat
 						</button>
 
 						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
@@ -964,7 +933,7 @@ function SessionsSidebar() {
 											<Button
 												type="button"
 												variant="ghost"
-												size="icon-sm"
+												size="sm"
 												aria-label={selectMode ? "Done selecting" : "Select chats"}
 												aria-pressed={selectMode}
 												data-testid="session-select-toggle"
@@ -972,6 +941,7 @@ function SessionsSidebar() {
 												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
 											>
 												<ListChecksIcon className="size-3.5" />
+												<span className="text-[12px] font-[550]">{selectMode ? "Done" : "Select"}</span>
 											</Button>
 										</Hint>
 										<Hint label="Search chats" action="sessions-search" side="bottom">
@@ -1200,7 +1170,6 @@ function SessionsSidebar() {
 /** The app frame: sidebar inline + content. Rendered once in the root layout. */
 export function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
-	const phoneNav = isPhoneNavPath(pathname);
 
 	useEffect(() => {
 		stopSpeaking();
@@ -1211,11 +1180,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 	return (
 		<SettingsDialogProvider>
+			<JumpProvider>
 			<SessionsSidebar />
 			{/* The frame is one viewport tall; the content scrolls inside it so
-			    the sidebar stays put. On phones the four main pages leave room
-			    for the bottom nav (PhoneNav) at their end. */}
-			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0")}>
+			    the sidebar stays put. */}
+			<main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
 				{/* The SCROLL-PROOF window-drag strip (owner bug report,
 				    2026-10-28: "scrolled down, I can't grab the window"). The
 				    per-page strips are absolute inside the scrolling content,
@@ -1230,12 +1199,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
 				{children}
 			</main>
-			<PhoneNav pathname={pathname} />
 			<SelectionWordBankBar />
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
 			    matters for the events it dispatches, never for DOM priority. */}
 			<KeyboardShortcuts />
+			</JumpProvider>
 		</SettingsDialogProvider>
 	);
 }

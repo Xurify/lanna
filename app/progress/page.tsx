@@ -1,5 +1,8 @@
 import { PlanPage } from "@/components/plan/plan-page";
+import { chartData } from "@/components/quiet/chart-data";
 import { milestonesReport, progressSummary, type MilestonesReport } from "@/src/server";
+
+export const metadata = { title: "Progress" };
 
 export const dynamic = "force-dynamic";
 
@@ -15,5 +18,5 @@ export default function PlanRoute() {
 	} catch {
 		report = null;
 	}
-	return <PlanPage goal={summary.goal} report={report} weak={summary.weakSpots} stamps={summary.stamps.all} log={summary.log} />;
+	return <PlanPage goal={summary.goal} report={report} weak={summary.weakSpots} stamps={summary.stamps.all} log={summary.log} charts={chartData(summary)} />;
 }

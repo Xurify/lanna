@@ -119,7 +119,7 @@ export function DeleteSessionDialog({
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 			{...backdropDismiss}
 		>
 			<DeleteSessionBody
@@ -163,7 +163,7 @@ export function DeleteSessionBody({
 			aria-label="Delete session"
 			data-testid="delete-session-dialog"
 			onClick={(e) => e.stopPropagation()}
-			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 		>
 			<h2 className="text-sm font-semibold text-destructive">Delete session?</h2>
 			{/* The session name below the title in JetBrains Mono (owner,

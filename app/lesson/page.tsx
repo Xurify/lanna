@@ -2,6 +2,8 @@ import { LessonPlayer } from "@/components/lesson/lesson-player";
 import { isAtlasGender, isUnitId, type LessonPlan } from "@/src/core";
 import { blitzFor, lessonFor, lessonWithBetterOptions, mixupsFor, personalFor } from "@/src/server";
 
+export const metadata = { title: "Lesson" };
+
 export const dynamic = "force-dynamic";
 
 /** A lesson (?unit=<id>), a blitz (?mode=blitz), the Mix-ups lesson

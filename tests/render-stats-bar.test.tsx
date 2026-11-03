@@ -35,9 +35,9 @@ describe("stats bar", () => {
 		assert.ok(!html.includes('data-testid="stats-summary"'), "no summary button pre-chat");
 		assert.ok(!html.includes('data-testid="stats-context"'), "no context figure pre-chat");
 		assert.ok(!html.includes('data-testid="stats-cost"'), "no cost figure pre-chat");
-		// No catalog and no settings: both control labels read "—".
-		assert.match(html, /data-testid="stats-model"[^>]*>(?:\s*<span[^>]*>)+—<\/span>/);
-		assert.match(html, /data-testid="stats-thinking"[^>]*>(?:\s*<span[^>]*>)+—<\/span>/);
+		// No catalog and no settings: the controls read "Model" and "Thinking off".
+		assert.match(html, /data-testid="stats-model"[^>]*>(?:\s*<span[^>]*>)+Model<\/span>/);
+		assert.match(html, /data-testid="stats-thinking"[^>]*>(?:\s*<span[^>]*>)+Thinking off<\/span>/);
 		assert.ok(!html.includes("aria-hidden>·"), "no dot between the controls");
 		assert.match(html, /data-testid="stats-model"[^>]*rounded-full[^>]*>/);
 		assert.match(html, /▾/);
@@ -51,8 +51,8 @@ describe("stats bar", () => {
 		assert.match(html, /data-testid="stats-context">11k</);
 		// pi catalog: 0.15/0.5 per 1M. Each turn is $0.002; two turns = $0.0040.
 		assert.match(html, /data-testid="stats-cost">\$0\.0040</);
-		// SSR reads "—" for the model; the strong slot arrives client-side.
-		assert.match(html, /data-testid="stats-model"[^>]*>(?:\s*<span[^>]*>)+—<\/span>/);
+		// SSR reads "Model"; the strong slot arrives client-side.
+		assert.match(html, /data-testid="stats-model"[^>]*>(?:\s*<span[^>]*>)+Model<\/span>/);
 	});
 
 	it("shows — for cost when every turn is unpriceable, never a fake $0", () => {

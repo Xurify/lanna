@@ -47,7 +47,6 @@ import {
 	XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
 import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
 
@@ -102,10 +101,10 @@ function when(days: number | null, iso: string | null): string {
 }
 
 const STATUS: Record<MilestoneEstimate["status"], { label: string; cls: string }> = {
-	reached: { label: "Reached", cls: "bg-go/15 text-go" },
-	close: { label: "Close", cls: "bg-gold/20 text-foreground" },
-	"on-the-way": { label: "On the way", cls: "bg-sky/15 text-sky" },
-	far: { label: "A long road", cls: "bg-accent text-muted-foreground" },
+	reached: { label: "Reached", cls: "bg-teal-wash text-teal-2" },
+	close: { label: "Close", cls: "bg-well text-foreground" },
+	"on-the-way": { label: "On the way", cls: "bg-teal-wash text-teal-2" },
+	far: { label: "A long road", cls: "bg-well-2 text-ink-2" },
 };
 
 export function MilestonesPage({ initialReport, modelReady }: { initialReport: MilestonesReport | null; modelReady: boolean }) {
@@ -169,17 +168,17 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="milestones">
-				<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
-					<ArrowLeftIcon className="size-3.5" />
+				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">When can I…?</h1>
-				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
-					Each situation asks two things of you: enough <b className="text-foreground">words</b> to cover what is said, and the <b className="text-foreground">speed</b> to turn them into meaning before the next ones arrive. The app measures both and says when they meet, at the pace you planned and at the pace you keep.
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Milestones</h1>
+				<p className="q-line dim mt-2 max-w-2xl">
+					<b className="text-foreground">When can I…?</b> Each situation asks two things of you: enough <b className="text-foreground">words</b> to cover what is said, and the <b className="text-foreground">speed</b> to turn them into meaning before the next ones arrive. The app measures both and says when they meet, at the pace you planned and at the pace you keep.
 				</p>
 
 				{error && (
-					<p className="mt-4 rounded-xl border border-flame/40 bg-flame/10 px-4 py-3 font-ui text-sm text-foreground" role="alert" data-testid="milestones-error">
+					<p className="mt-4 rounded-xl bg-[var(--q-miss-wash)] px-4 py-3 text-sm text-foreground" role="alert" data-testid="milestones-error">
 						{error}
 					</p>
 				)}
@@ -195,8 +194,8 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 				</ol>
 
 				{/* Your own milestone, in your words. */}
-				<section className="mt-6 rounded-2xl border-2 border-dashed border-border p-4" data-testid="milestone-add">
-					<h2 className="font-ui text-sm font-bold text-foreground">Add your own</h2>
+				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="milestone-add">
+					<h2 className="font-ui text-sm font-semibold text-foreground">Add your own</h2>
 					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch Slovak let's plays”. The tutor's cheap model maps it to the kind of language it needs, once, and keeps the answer.</p>
 					<form
 						className="mt-3 flex flex-wrap items-stretch gap-2"
@@ -211,11 +210,11 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 							placeholder={modelReady ? "I want to be able to…" : "Turn on AI in Settings → AI models to add your own"}
 							disabled={!modelReady || adding}
 							aria-label="Your milestone"
-							className="min-w-0 flex-1 rounded-xl border-2 border-border bg-card px-4 py-2.5 font-prose text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-go disabled:opacity-60"
+							className="min-h-11 min-w-0 flex-1 rounded-lg bg-card px-4 py-2.5 text-base text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-60"
 							data-testid="milestone-input"
 						/>
-						<button type="submit" disabled={!modelReady || adding || text.trim().length < 3} className="inline-flex h-12 items-center gap-2 rounded-xl bg-go px-5 font-ui text-base font-extrabold text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100" data-testid="milestone-submit">
-							<PlusIcon className="size-5" />
+						<button type="submit" disabled={!modelReady || adding || text.trim().length < 3} className="q-btn primary h-11" data-testid="milestone-submit">
+							<PlusIcon className="q-ico" />
 							{adding ? "Estimating…" : "Estimate"}
 						</button>
 					</form>
@@ -226,7 +225,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 				{/* The assumptions and the studies. */}
 				<section className="mt-8 border-t pt-5" data-testid="milestone-sources">
 					<button type="button" onClick={() => setSourcesOpen((o) => !o)} aria-expanded={sourcesOpen} className="flex w-full items-center justify-between gap-3 text-left">
-						<span className="font-ui text-xs font-bold tracking-wide text-muted-foreground">How the numbers are made, and the studies behind them</span>
+						<span className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">How the numbers are made, and the studies behind them</span>
 						<ChevronDownIcon className={cn("size-4 text-muted-foreground transition-transform", sourcesOpen && "rotate-180")} />
 					</button>
 					{sourcesOpen && (
@@ -243,7 +242,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 							<ol className="flex flex-col gap-3">
 								{MILESTONE_SOURCES.map((s) => (
 									<li key={s.who}>
-										<span className="block font-ui text-sm font-bold text-foreground">
+										<span className="block font-ui text-sm font-semibold text-foreground">
 											{s.what} <span className="font-normal text-muted-foreground">· {s.who}</span>
 										</span>
 										<span>{s.line}</span>
@@ -270,9 +269,9 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 					? `from ${facts.watch?.segments ?? 0} video segments`
 					: `from Listen and Watch together`;
 	return (
-		<section className="mt-6 rounded-2xl border-2 bg-card p-4" data-testid="milestone-evidence" aria-label="What the app knows about you">
+		<section className="mt-6 q-card p-4" data-testid="milestone-evidence" aria-label="What the app knows about you">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-				<h2 className="font-ui text-xs font-bold tracking-wide text-muted-foreground">What the app knows about you</h2>
+				<h2 className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">What the app knows about you</h2>
 				<p className="font-ui text-xs text-muted-foreground">
 					level from the map ·{" "}
 					<Link href="/start?edit=1&check=1" className="underline hover:text-foreground">
@@ -298,8 +297,8 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 function Fact({ label, value, line, dim }: { label: string; value: string; line: string; dim?: boolean }) {
 	return (
 		<div className="min-w-0">
-			<dt className="font-ui text-xs font-bold tracking-wide text-muted-foreground">{label}</dt>
-			<dd className={cn("mt-0.5 font-ui text-2xl font-black tabular-nums", dim ? "text-muted-foreground" : "text-foreground")}>{value}</dd>
+			<dt className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">{label}</dt>
+			<dd className={cn("mt-0.5 font-ui text-2xl font-semibold tabular-nums", dim ? "text-muted-foreground" : "text-foreground")}>{value}</dd>
 			<dd className="mt-0.5 font-prose text-xs leading-snug text-muted-foreground">{line}</dd>
 		</div>
 	);
@@ -358,10 +357,10 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 							<text x={left - 10} y={cy + 3.5} textAnchor="end" className="fill-foreground font-ui" fontSize={11} fontWeight={700}>
 								{title}
 							</text>
-							<line x1={x(0)} x2={x(d)} y1={cy} y2={cy} className={reached ? "stroke-go" : "stroke-sky"} strokeWidth={2} />
-							{showPace && <line x1={x(d)} x2={x(paceOf(m))} y1={cy} y2={cy} className="stroke-sky" strokeWidth={2} strokeOpacity={0.4} strokeDasharray="3 3" />}
-							{showPace && <circle cx={x(paceOf(m))} cy={cy} r={4} fill="var(--background)" className="stroke-sky" strokeWidth={2} />}
-							<circle cx={x(d)} cy={cy} r={5} className={reached ? "fill-go" : "fill-sky"} />
+							<line x1={x(0)} x2={x(d)} y1={cy} y2={cy} className="stroke-teal" strokeWidth={2} />
+							{showPace && <line x1={x(d)} x2={x(paceOf(m))} y1={cy} y2={cy} className="stroke-teal" strokeWidth={2} strokeOpacity={0.4} strokeDasharray="3 3" />}
+							{showPace && <circle cx={x(paceOf(m))} cy={cy} r={4} fill="var(--background)" className="stroke-teal" strokeWidth={2} />}
+							<circle cx={x(d)} cy={cy} r={5} className="fill-teal" />
 							<text x={x(d) + (reached ? 9 : 0)} y={reached ? cy + 3.5 : cy - 7} textAnchor={reached ? "start" : "middle"} className="fill-muted-foreground font-ui" fontSize={10}>
 								{reached ? "now" : (monthOf(m.eta.planned) ?? "")}
 							</text>
@@ -376,8 +375,8 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 					const d = m.eta.daysPlanned ?? 0;
 					const level = m.def.cefr?.split(":")[0];
 					return (
-						<li key={m.def.id} className="rounded-xl border bg-card px-3 py-2" data-testid={`timeline-list-${m.def.id}`}>
-							<p className="font-ui text-sm font-bold text-foreground">{m.def.title}</p>
+						<li key={m.def.id} className="q-card px-3 py-2" data-testid={`timeline-list-${m.def.id}`}>
+							<p className="font-ui text-sm font-semibold text-foreground">{m.def.title}</p>
 							{level && <p className="font-ui text-xs text-muted-foreground">Target: {level}</p>}
 							<p className="mt-1 font-ui text-xs text-foreground">{reached ? "Within reach now." : `At your plan: ${when(d, m.eta.planned)}`}</p>
 							{!reached && <p className="font-ui text-xs text-muted-foreground">{!paceKnown ? "Real pace: not enough data yet." : m.eta.daysPace === null ? "Real pace: no date yet." : `At your real pace: ${when(m.eta.daysPace, m.eta.pace)}`}</p>}
@@ -397,10 +396,10 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 					<div
 						role="tooltip"
 						data-testid="timeline-tip"
-						className="pointer-events-none absolute z-10 w-72 max-w-[85%] rounded-xl border bg-popover px-3 py-2 font-ui text-xs text-popover-foreground shadow-lg"
+						className="pointer-events-none absolute z-10 w-72 max-w-[85%] rounded-xl bg-popover px-3 py-2 text-xs text-popover-foreground shadow-raise-hi"
 						style={{ top: `calc(${(cy / H) * 100}% + 14px)`, left: `${Math.min(Math.max(anchor * 100, 22), 78)}%`, transform: "translateX(-50%)" }}
 					>
-						<p className="text-sm font-bold text-foreground">{m.def.title}</p>
+						<p className="text-sm font-semibold text-foreground">{m.def.title}</p>
 						{m.def.line && <p className="mt-0.5 text-muted-foreground">{m.def.line}</p>}
 						<p className="mt-1.5 text-foreground">{reached ? "Within reach now." : `${when(m.eta.daysPlanned, m.eta.planned)} at your plan.`}</p>
 						{!reached && <p className="text-muted-foreground">{!paceKnown ? "Real pace: not enough data yet." : m.eta.daysPace === null ? "Real pace: no date yet." : `${when(m.eta.daysPace, m.eta.pace)} at your real pace.`}</p>}
@@ -424,16 +423,16 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 	const genre = GENRES[m.def.genre];
 	const lemmas = genreLemmas(genre);
 	return (
-		<li className="rounded-2xl border-2 bg-card" data-testid={`milestone-${m.def.id}`}>
+		<li className="q-card" data-testid={`milestone-${m.def.id}`}>
 			<button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-start gap-4 p-4 text-left">
-				<span className={cn("mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl", m.status === "reached" ? "bg-go/15 text-go" : "bg-sky/15 text-sky")}>
+				<span className={cn("mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl", m.status === "reached" ? "bg-teal-wash text-teal-2" : "bg-well text-ink-2")}>
 					<Icon name={m.def.icon} className="size-6" />
 				</span>
 				<span className="min-w-0 flex-1">
 					<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-						<span className="font-ui text-lg font-black text-foreground">{m.def.title}</span>
-						<span className={cn("rounded-md px-1.5 py-0.5 font-ui text-[11px] font-bold", st.cls)}>{st.label}</span>
-						{m.def.custom && <span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-bold text-muted-foreground">yours</span>}
+						<span className="font-ui text-lg font-semibold text-foreground">{m.def.title}</span>
+						<span className={cn("rounded-md px-1.5 py-0.5 font-ui text-[11px] font-semibold", st.cls)}>{st.label}</span>
+						{m.def.custom && <span className="rounded-md bg-well-2 px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">yours</span>}
 					</span>
 					<span className="mt-0.5 block font-prose text-sm text-muted-foreground">{m.def.line}</span>
 					<span className="mt-2 block font-ui text-sm text-foreground" data-testid={`milestone-${m.def.id}-eta`}>
@@ -486,7 +485,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 					</dl>
 					{m.def.goals && m.def.goals.some((g) => goals[g]) && (
 						<p className="mt-3">
-							<span className="font-ui text-xs font-bold text-foreground">On the map: </span>
+							<span className="font-ui text-xs font-semibold text-foreground">On the map: </span>
 							{m.def.goals
 								.filter((g) => goals[g])
 								.map((g) => `${goals[g]!.title} (${goals[g]!.done ? "done" : goals[g]!.open ? "open" : "ahead"})`)
@@ -494,7 +493,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 						</p>
 					)}
 					<p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-ui text-xs">
-						<span className="font-bold text-foreground">What moves it:</span>
+						<span className="font-semibold text-foreground">What moves it:</span>
 						<Link href="/listen" className="underline hover:text-foreground">
 							Listen
 						</Link>
@@ -509,7 +508,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 					</p>
 					<p className="mt-2 font-ui text-xs text-muted-foreground/80">Source for this kind of language: {genre.source}.</p>
 					{onRemove && (
-						<button type="button" onClick={onRemove} className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-bold text-muted-foreground hover:bg-flame/10 hover:text-flame" data-testid={`milestone-${m.def.id}-remove`}>
+						<button type="button" onClick={onRemove} className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-[var(--q-miss-wash)] hover:text-miss" data-testid={`milestone-${m.def.id}-remove`}>
 							<XIcon className="size-3.5" />
 							Remove this milestone
 						</button>
@@ -523,7 +522,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 function Row({ k, v }: { k: string; v: string }) {
 	return (
 		<div className="min-w-0">
-			<dt className="font-bold text-muted-foreground">{k}</dt>
+			<dt className="font-semibold text-muted-foreground">{k}</dt>
 			<dd className="text-foreground">{v}</dd>
 		</div>
 	);
@@ -537,14 +536,14 @@ function Meter({ label, have, need, line, binding, dim }: { label: string; have:
 	return (
 		<span className="block min-w-0">
 			<span className="flex items-baseline justify-between gap-2">
-				<span className={cn("font-ui text-xs font-bold", binding ? "text-foreground" : "text-muted-foreground")}>
+				<span className={cn("font-ui text-xs font-semibold", binding ? "text-foreground" : "text-muted-foreground")}>
 					{label}
-					{binding && <span className="ml-1.5 rounded bg-foreground/10 px-1 py-px text-xs font-bold text-foreground">the gap</span>}
+					{binding && <span className="ml-1.5 rounded bg-foreground/10 px-1 py-px text-xs font-semibold text-foreground">the gap</span>}
 				</span>
 				<span className="font-ui text-xs tabular-nums text-muted-foreground">{pct(share)}</span>
 			</span>
-			<span className="relative mt-1 block h-2 overflow-hidden rounded-full bg-accent" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} aria-label={`${label}: ${line}`}>
-				<span className={cn("absolute inset-y-0 left-0 rounded-full transition-[width] duration-700", full ? "bg-go" : dim ? "bg-sky/50" : "bg-sky")} style={{ width: `${share * 100}%` }} />
+			<span className="relative mt-1 block h-2 overflow-hidden rounded-full bg-well-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} aria-label={`${label}: ${line}`}>
+				<span className={cn("absolute inset-y-0 left-0 rounded-full transition-[width] duration-700", full ? "bg-teal" : dim ? "bg-teal/50" : "bg-teal")} style={{ width: `${share * 100}%` }} />
 			</span>
 			<span className="mt-1 block font-prose text-xs leading-snug text-muted-foreground">{line}</span>
 		</span>
@@ -556,20 +555,20 @@ function Meter({ label, have, need, line, binding, dim }: { label: string; have:
 function NextWords({ words, queued, onQueue }: { words: NextWord[]; queued: Set<string>; onQueue: (slugs: string[]) => void }) {
 	const left = words.filter((w) => !queued.has(w.slug));
 	return (
-		<section className="mt-6 rounded-2xl border-2 bg-card p-4" data-testid="milestone-next-words">
+		<section className="mt-6 q-card p-4" data-testid="milestone-next-words">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-				<h2 className="font-ui text-sm font-bold text-foreground">The next words that pay most</h2>
+				<h2 className="font-ui text-sm font-semibold text-foreground">The next words that pay most</h2>
 				<p className="font-ui text-xs text-muted-foreground">commonest in the dictionary's sentences, not yet yours</p>
 			</div>
 			<ul className="mt-3 flex flex-wrap gap-2">
 				{words.map((w) => (
-					<li key={w.slug} className={cn("rounded-xl border-2 px-3 py-1.5 font-prose text-sm", queued.has(w.slug) ? "border-go/50 bg-go/10 text-foreground" : "border-border text-foreground")} title={`${w.cat} · #${w.rank} by frequency`}>
+					<li key={w.slug} className={cn("rounded-lg px-3 py-1.5 text-sm text-foreground", queued.has(w.slug) ? "bg-teal-wash shadow-[inset_0_0_0_1px_var(--q-teal-line)]" : "bg-well")} title={`${w.cat} · #${w.rank} by frequency`}>
 						<b>{w.lemma}</b> <span className="text-muted-foreground">{w.gloss}</span>
 					</li>
 				))}
 			</ul>
 			<div className="mt-3 flex flex-wrap items-center gap-3">
-				<button type="button" onClick={() => onQueue(left.slice(0, 10).map((w) => w.slug))} disabled={left.length === 0} className={cn(SECONDARY, SMALL, "disabled:cursor-not-allowed")} data-testid="milestone-queue">
+				<button type="button" onClick={() => onQueue(left.slice(0, 10).map((w) => w.slug))} disabled={left.length === 0} className="q-btn sec t" data-testid="milestone-queue">
 					<PlusIcon className="size-4" />
 					{left.length === 0 ? "All in the deck" : `Put the next ${Math.min(10, left.length)} in Review`}
 				</button>

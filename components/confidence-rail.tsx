@@ -35,11 +35,11 @@ export const CONFIDENCE_COLORS: readonly string[] = [
 export function confidenceRailStyle(value: number): CSSProperties {
 	const color = CONFIDENCE_COLORS[CONFIDENCE_STOPS.indexOf(value)] ?? CONFIDENCE_COLORS[2]!;
 	return {
-		backgroundColor: "#141414",
+		backgroundColor: "var(--q-well-2)",
 		backgroundImage: [
 			`linear-gradient(90deg, ${color} 0%, ${color} ${value}%, transparent ${value}%, transparent 100%)`,
 			...[30, 50, 70, 90].map(
-				() => "linear-gradient(90deg, rgba(230,230,230,0.35), rgba(230,230,230,0.35))",
+				() => "linear-gradient(90deg, var(--q-line-2), var(--q-line-2))",
 			),
 		].join(", "),
 		backgroundSize: ["100% 100%", "1px 100%", "1px 100%", "1px 100%", "1px 100%"].join(", "),
@@ -54,7 +54,7 @@ export function ConfidenceRail({ value, className }: { value: number; className?
 		<div
 			aria-hidden
 			data-testid="confidence-rail"
-			className={cn("h-1.5 w-full rounded-full border border-border", className)}
+			className={cn("h-1.5 w-full rounded-full", className)}
 			style={confidenceRailStyle(value)}
 		/>
 	);

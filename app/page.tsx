@@ -3,6 +3,8 @@ import { Today } from "@/components/today";
 import { prepareCorpus, progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
+export const metadata = { title: { absolute: "Today · LangHarness" } };
+
 // Dynamic: the configured state is server-rendered into the page (Talk and
 // Story need a model; without one they open the setup dialog first).
 export const dynamic = "force-dynamic";

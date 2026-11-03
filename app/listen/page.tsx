@@ -2,6 +2,8 @@ import { ListenPlayer } from "@/components/listen/listen-player";
 import type { ListenPlan } from "@/src/core";
 import { listenFor, listenWithBetterOptions } from "@/src/server";
 
+export const metadata = { title: "Listen" };
+
 export const dynamic = "force-dynamic";
 
 /** Listen: ten sentences the learner can follow, heard first, understood

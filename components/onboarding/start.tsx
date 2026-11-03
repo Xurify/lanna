@@ -278,9 +278,9 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 						<li key={i} className={cn("h-2 flex-1 rounded-full transition-colors", i <= progress ? "bg-go" : "bg-accent")} />
 					))}
 				</ol>
-				<span className="font-ui text-xs font-bold tabular-nums text-muted-foreground">{step} of 4</span>
+				<span className="font-ui text-xs font-semibold tabular-nums text-muted-foreground">{step} of 4</span>
 				{!edit && !outcome && (
-					<button type="button" onClick={() => void skipAll()} className="lh-no-drag font-ui text-xs font-bold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" data-testid="start-skip">
+					<button type="button" onClick={() => void skipAll()} className="lh-no-drag font-ui text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" data-testid="start-skip">
 						Skip for now
 					</button>
 				)}
@@ -312,9 +312,9 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 											<UnitIcon name={p.glyph} className="size-5" />
 										</span>
 										<span className="min-w-0">
-											<span className="flex items-center gap-2 font-ui text-base font-bold text-foreground">
+											<span className="flex items-center gap-2 font-ui text-base font-semibold text-foreground">
 												{p.title}
-												{p.id !== "other" && <span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-black text-muted-foreground">{p.level}</span>}
+												{p.id !== "other" && <span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-semibold text-muted-foreground">{p.level}</span>}
 											</span>
 											<span className="block font-prose text-sm text-muted-foreground">{p.blurb}</span>
 										</span>
@@ -379,7 +379,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 						<div className="mt-8 rounded-2xl border bg-card px-5 py-4" data-testid="start-target">
 							<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 								<FlagIcon className="size-4 text-flame" />
-								<p className="font-ui text-base font-bold text-foreground">
+								<p className="font-ui text-base font-semibold text-foreground">
 									Target {level}
 									<span className="font-normal text-muted-foreground"> · about {GUIDED_HOURS[level]} guided hours · at this pace around </span>
 									{monthOf(eta)}
@@ -498,7 +498,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 function Heading({ title, line }: { title: string; line: string }) {
 	return (
 		<div>
-			<h1 className="font-ui text-3xl font-black tracking-tight text-foreground sm:text-4xl">{title}</h1>
+			<h1 className="font-ui text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{title}</h1>
 			<p className="mt-2 font-prose text-lg text-muted-foreground">{line}</p>
 		</div>
 	);
@@ -507,7 +507,7 @@ function Heading({ title, line }: { title: string; line: string }) {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
 	return (
 		<div className="mt-7">
-			<p className="mb-3 font-ui text-xs font-bold tracking-wide first-letter:uppercase text-muted-foreground">
+			<p className="mb-3 font-ui text-xs font-semibold tracking-wide first-letter:uppercase text-muted-foreground">
 				{label}
 				{hint && <span className="font-normal"> · {hint}</span>}
 			</p>
@@ -525,7 +525,7 @@ function Choices<T extends string>({ items, value, onPick }: { items: ReadonlyAr
 					<button key={it.id} type="button" role="radio" aria-checked={on} onClick={() => onPick(it.id)} className={cn("flex items-center gap-3 rounded-2xl border-2 bg-card px-4 py-3 text-left transition-colors", on ? "border-go bg-go/10" : "border-border hover:border-foreground/40")} data-testid={`choice-${it.id}`}>
 						<span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-4" strokeWidth={3} />}</span>
 						<span className="min-w-0">
-							<span className="block font-ui text-base font-bold text-foreground">{it.title}</span>
+							<span className="block font-ui text-base font-semibold text-foreground">{it.title}</span>
 							<span className="block font-prose text-sm text-muted-foreground">{it.line}</span>
 						</span>
 					</button>
@@ -557,7 +557,7 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 			<div className="lh-pop mx-auto flex size-20 items-center justify-center rounded-full bg-gold/15 text-gold">
 				<FlagIcon className="size-10" />
 			</div>
-			<h1 className="mt-5 text-center font-ui text-4xl font-black text-foreground">{skipped === 0 ? "Starting at the beginning" : outcome.ceiling ? "Beyond the check" : `You start at ${outcome.level}`}</h1>
+			<h1 className="mt-5 text-center font-ui text-4xl font-semibold text-foreground">{skipped === 0 ? "Starting at the beginning" : outcome.ceiling ? "Beyond the check" : `You start at ${outcome.level}`}</h1>
 			<p className="mt-2 text-center font-prose text-lg text-muted-foreground">
 				{outcome.ceiling ? `The check stops at B1 grammar and you held all of it, so you start in “${chapter?.title ?? outcome.startChapter}” (${outcome.level}); the lessons measure you from here` : chapter ? `You start in “${chapter.title}”` : "You start at the top"}
 				{skipped > 0 && ` · ${skipped} chapter${skipped === 1 ? "" : "s"} behind you, open to revisit`}
@@ -566,8 +566,8 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 			<ol className="mt-6 flex flex-col gap-1 rounded-2xl border bg-card p-3" aria-label="Tiers">
 				{outcome.tiers.map((t) => (
 					<li key={t.id} className="flex items-center gap-3 px-2 py-1.5">
-						<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-black", t.passed ? "bg-go text-go-ink" : "bg-accent text-muted-foreground")}>{t.passed ? <CheckIcon className="size-4" strokeWidth={3} /> : t.level}</span>
-						<span className="min-w-0 flex-1 font-ui text-sm font-bold text-foreground">
+						<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-semibold", t.passed ? "bg-go text-go-ink" : "bg-accent text-muted-foreground")}>{t.passed ? <CheckIcon className="size-4" strokeWidth={3} /> : t.level}</span>
+						<span className="min-w-0 flex-1 font-ui text-sm font-semibold text-foreground">
 							{t.level} · {t.title}
 						</span>
 						<span className="font-ui text-xs tabular-nums text-muted-foreground">{t.held ? "held from before · not asked again" : t.reps === 0 ? (t.passed ? "held · below where you entered" : "not reached") : `${t.correct}/${t.reps} ${t.passed ? "· passed" : "· your edge"}`}</span>
@@ -577,12 +577,12 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 
 			{(outcome.probe.summary || outcome.probe.verdicts.length > 0) && (
 				<div className="mt-4 rounded-2xl border bg-card p-4 text-left" data-testid="result-edge">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">The tutor's reading of your edge</p>
+					<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">The tutor's reading of your edge</p>
 					{outcome.probe.summary && <p className="mt-1 font-prose text-base text-foreground">{outcome.probe.summary}</p>}
 					{outcome.probe.verdicts.length > 0 && (
 						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Verdicts">
 							{outcome.probe.verdicts.map((v, i) => (
-								<li key={i} className={cn("rounded-md px-2 py-0.5 font-ui text-xs font-bold", RESULT_INK[v.result])} title={v.note}>
+								<li key={i} className={cn("rounded-md px-2 py-0.5 font-ui text-xs font-semibold", RESULT_INK[v.result])} title={v.note}>
 									{title(v.unit)}: {v.result}
 								</li>
 							))}
@@ -594,7 +594,7 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 			<div className="mt-4 grid gap-3 sm:grid-cols-2">
 				{outcome.vocabulary && (
 					<div className="rounded-2xl border bg-card p-4" data-testid="result-words">
-						<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Words</p>
+						<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">Words</p>
 						<p className="mt-1 font-prose text-base text-foreground">
 							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized{outcome.vocabulary.reliable ? "" : " — you ticked words that are not Slovak, so treat this as generous"}.
 						</p>
@@ -609,13 +609,13 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 				)}
 				{outcome.testedOut.length > 0 && (
 					<div className="rounded-2xl border bg-card p-4">
-						<p className="font-ui text-xs font-bold tracking-wide text-go">Tested out</p>
+						<p className="font-ui text-xs font-semibold tracking-wide text-go">Tested out</p>
 						<p className="mt-1 font-prose text-sm text-foreground">{outcome.testedOut.map(title).join(", ")}</p>
 					</div>
 				)}
 				{outcome.weak.length > 0 && (
 					<div className="rounded-2xl border bg-card p-4">
-						<p className="font-ui text-xs font-bold tracking-wide text-flame">First in your plan</p>
+						<p className="font-ui text-xs font-semibold tracking-wide text-flame">First in your plan</p>
 						<p className="mt-1 font-prose text-sm text-foreground">{outcome.weak.map(title).join(", ")}</p>
 					</div>
 				)}
@@ -623,7 +623,7 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 
 			{missed.length > 0 && (
 				<div className="mt-4 rounded-2xl border bg-card p-4 text-left">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">The evidence</p>
+					<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">The evidence</p>
 					<ul className="mt-2 flex flex-col gap-2">
 						{missed.slice(0, 6).map((r, i) => (
 							<li key={i} className="font-prose text-base leading-snug">

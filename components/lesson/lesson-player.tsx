@@ -15,7 +15,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookmarkCheckIcon, BookmarkIcon, BrainIcon, ChartColumnIcon, CheckIcon, FlagIcon, LanguagesIcon, LoaderCircleIcon, MountainSnowIcon, SnailIcon, TimerIcon, Volume2Icon, WholeWordIcon, XIcon, ZapIcon } from "lucide-react";
+import { BookmarkCheckIcon, BookmarkIcon, BrainIcon, ChartColumnIcon, FlagIcon, LanguagesIcon, LoaderCircleIcon, SnailIcon, TimerIcon, Volume2Icon, WholeWordIcon, XIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { BUTTON, KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
@@ -23,6 +23,9 @@ import { useActiveTime } from "@/components/use-active-time";
 import { prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
+import { QIcon } from "@/components/quiet/icon";
+import type { QIconName } from "@/components/quiet/icon-paths";
+import { COLUMN, Dock, OptionTile, PracticeCard, Pulse, Stat, Stats, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { StampDisc } from "@/components/stamp";
@@ -541,7 +544,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 			<Frame>
 				<div className="m-auto max-w-md text-center">
 					<p className="font-prose text-lg text-foreground">{error}</p>
-					<div className="mt-6 flex justify-center gap-3">
+					<div className="mt-6 flex justify-center gap-2">
 						<button type="button" onClick={() => void load()} className={PRIMARY}>
 							Try again
 						</button>
@@ -557,8 +560,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	if (!plan || !item) {
 		return (
 			<Frame>
-				<div className="m-auto flex items-center gap-3 text-muted-foreground" data-testid="lesson-loading">
-					<LoaderCircleIcon className="size-5 animate-spin" />
+				<div className="m-auto flex items-center gap-3 text-ink-3" data-testid="lesson-loading">
+					<LoaderCircleIcon className="size-5 animate-spin" strokeWidth={1.6} />
 					<span className="font-prose">Picking your sentences…</span>
 				</div>
 			</Frame>
@@ -594,8 +597,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 			    window (its buttons carve themselves out, app/globals.css). */}
 				<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 					<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-						<button type="button" aria-label="Leave the lesson" onClick={askLeave} data-testid="lesson-leave" className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-							<XIcon className="size-5" />
+						<button type="button" aria-label="Leave the lesson" onClick={askLeave} data-testid="lesson-leave" className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-ink-3 transition-colors hover:bg-well hover:text-ink-2">
+								<XIcon className="size-5" strokeWidth={1.6} />
 						</button>
 						{mode === "blitz" ? (
 							<div
@@ -603,30 +606,30 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 								aria-valuemin={0}
 								aria-valuemax={100}
 								aria-valuenow={Math.round(progress * 100)}
-								className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-accent"
+								className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2"
 								aria-label={`${left} seconds left`}
 							>
-								<div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", left <= 10 ? "bg-miss" : "bg-sun")} style={{ width: `${Math.max(3, progress * 100)}%` }} />
+								<div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", left <= 10 ? "bg-miss" : "bg-teal")} style={{ width: `${Math.max(3, progress * 100)}%` }} />
 							</div>
 						) : (
 							<LessonTrail reps={reps} index={index} total={total} answered={!!current} />
 						)}
 						{mode === "blitz" && (
-							<span className={cn("flex items-center gap-1 font-ui text-sm font-semibold tabular-nums", left <= 10 ? "text-miss" : "text-sky")}>
-								<TimerIcon className="size-5" />
+							<span className={cn("flex items-center gap-1 font-ui text-[13px] font-[550] tabular-nums", left <= 10 ? "text-miss" : "text-ink-2")}>
+									<TimerIcon className="size-4" strokeWidth={1.6} />
 								{left}s
 							</span>
 						)}
 						<div
-							className={cn("relative flex min-w-12 items-center gap-1 font-ui text-sm font-semibold tabular-nums", combo >= 3 ? "text-sun" : "text-muted-foreground")}
+							className={cn("relative flex min-w-12 items-center gap-1 font-ui text-[13px] font-[550] tabular-nums", combo >= 3 ? "text-teal-2" : "text-ink-3")}
 							data-testid="combo"
 							title="Right in a row"
 						>
-							<ZapIcon className={cn("size-5", combo >= 3 && "fill-sun lh-flicker")} aria-hidden="true" />
+							<ZapIcon className={cn("size-4", combo >= 3 && "fill-teal lh-flicker")} strokeWidth={1.6} aria-hidden="true" />
 							{combo}
 							<span className="sr-only"> right in a row</span>
 							{floater && (
-								<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-bold text-sun">
+								<span key={floater.key} className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-[550] text-teal-2">
 									{floater.text}
 								</span>
 							)}
@@ -636,7 +639,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 				</div>
 
 				{/* The rep */}
-				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
+				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 					<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lh-rise")}>
 						<RepView
 							key={`${item.id}-${index}`}
@@ -649,7 +652,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 							onPeek={() => setPeeked(true)}
 							onGrade={grade}
 							onReady={setReady}
-							eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
+															place={mode === "blitz" ? undefined : `${index + 1} of ${total}`}
+								eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
 						/>
 					</div>
 				</div>
@@ -668,12 +672,9 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	);
 }
 
-/** The one content column every row lines up on: top bar, rep and footer. */
-const COLUMN = "mx-auto w-full max-w-3xl px-6";
-
-/** The lesson's progress as a trail of stops (trail design): one mark per
- *  question, gold once answered right, red for a miss, the one in front of
- *  you ringed, the rest ahead dotted. The bar is also the lesson's record. */
+/** The lesson's progress as one dash per question (the mockup's dots): teal
+ *  once answered right, red for a miss, the one in front of you pale teal,
+ *  the rest ahead grey. The bar is also the lesson's record. */
 function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: number; total: number; answered: boolean }) {
 	const n = Math.max(total, 1);
 	return (
@@ -681,8 +682,8 @@ function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: num
 			{Array.from({ length: n }, (_, i) => {
 				const rep = i < index ? reps[i] : i === index && answered ? reps[i] : undefined;
 				const current = i === index && !answered;
-				const tone = !rep ? (current ? "bg-foreground" : "bg-border") : rep.verdict === "wrong" ? "bg-miss" : rep.verdict === "accents" ? "bg-sun/70" : "bg-sun";
-				return <li key={i} className={cn("h-2 flex-1 rounded-full transition-colors duration-300", tone, current && "lh-pulse-ring")} />;
+				const tone = !rep ? (current ? "bg-teal-line" : "bg-well-2") : rep.verdict === "wrong" ? "bg-miss" : rep.verdict === "accents" ? "bg-teal/60" : "bg-teal";
+					return <li key={i} className={cn("h-1 flex-1 rounded-full transition-colors duration-300", tone)} />;
 			})}
 		</ol>
 	);
@@ -693,7 +694,7 @@ function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: num
 function ActionHint({ kind, options }: { kind: ItemKind; options: number }) {
 	const key = (k: string) => <kbd className={KBD}>{k}</kbd>;
 	return (
-		<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground pointer-fine:flex">
+		<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 pointer-fine:flex">
 			{kind === "type" || kind === "listen" ? (
 				<>{key("Enter")} to check</>
 			) : kind === "build" ? (
@@ -709,8 +710,8 @@ function ActionHint({ kind, options }: { kind: ItemKind; options: number }) {
 
 function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind; options: number; ready: boolean; blitz: boolean; onDontKnow: () => void }) {
 	return (
-		<div className="border-t border-border pb-[env(safe-area-inset-bottom)]">
-			<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
+		<Dock>
+			<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 				<ActionHint kind={kind} options={options} />
 				<div className="ml-auto flex items-center gap-2">
 					{/* Always there, even before anything is typed: a learner who does
@@ -726,8 +727,8 @@ function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind
 						</button>
 					)}
 				</div>
-			</div>
-		</div>
+						</div>
+		</Dock>
 	);
 }
 
@@ -735,21 +736,21 @@ function ActionBar({ kind, options, ready, blitz, onDontKnow }: { kind: ItemKind
  *  does), leaving is the deliberate second choice. */
 function LeaveDialog({ answered, total, onStay, onLeave }: { answered: number; total: number; onStay: () => void; onLeave: () => void }) {
 	return (
-		<div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-6" onClick={onStay}>
+		<div className="fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6" onClick={onStay}>
 			<div
 				role="alertdialog"
 				aria-modal="true"
 				aria-labelledby="lesson-leave-title"
 				aria-describedby="lesson-leave-body"
 				onClick={(e) => e.stopPropagation()}
-				className="lh-rise w-full max-w-sm rounded-2xl border bg-card p-6 text-center shadow-2xl"
+				className="lh-rise q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
 				data-testid="lesson-leave-confirm"
 			>
-				<h2 id="lesson-leave-title" className="font-ui text-xl font-extrabold text-foreground">
+				<h2 id="lesson-leave-title" className="font-ui text-xl font-semibold tracking-[-0.018em] text-foreground">
 					Leave this lesson?
 				</h2>
-				<p id="lesson-leave-body" className="mt-2 font-prose text-base text-muted-foreground">
-					You have answered {answered} of {total}. If you leave now, {answered === 1 ? "that answer is" : "those answers are"} dropped and the lesson does not count.
+				<p id="lesson-leave-body" className="mt-2 font-prose text-[15px] leading-relaxed text-ink-3">
+						You have answered {answered} of {total}. If you leave now, {answered === 1 ? "that answer is" : "those answers are"} dropped and the lesson does not count.
 				</p>
 				<div className="mt-6 flex flex-col gap-2">
 					<button type="button" autoFocus onClick={onStay} className={PRIMARY} data-testid="lesson-leave-stay">
@@ -760,18 +761,6 @@ function LeaveDialog({ answered, total, onStay, onLeave }: { answered: number; t
 					</button>
 				</div>
 			</div>
-		</div>
-	);
-}
-
-function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	// Full screen, over the sidebar: a lesson is a focus mode (Esc leaves).
-	// It covers the app's own title bar, so it brings a drag band: the top
-	// bar is one, and the other states (loading, end) get a plain strip.
-	return (
-		<div className="fixed inset-0 z-40 flex flex-col bg-background">
-			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
-			{children}
 		</div>
 	);
 }
@@ -805,14 +794,25 @@ function HintChip({ item }: { item: LessonItem }) {
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
 	return (
-		<span className="mr-2 inline-flex items-baseline gap-1.5 rounded-md bg-accent px-2 py-0.5 text-foreground" data-testid="lesson-hint-chip">
-			<span className="font-ui text-xs font-bold text-muted-foreground">{pairs ? "twins" : meaning ? "means" : "base form"}</span>
-			<span className="font-medium" lang={meaning && !pairs ? undefined : "sk"}>
-				{hintFor(item)}
-			</span>
+		<span className="q-pair mr-2" data-testid="lesson-hint-chip">
+			<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
+			<span lang={meaning && !pairs ? undefined : "sk"}>{hintFor(item)}</span>
 		</span>
 	);
 }
+
+function repIcon(item: LessonItem): QIconName {
+	if (item.kind === "listen" || item.kind === "meaning") return "listen";
+	return unitInfo(item.unit).kind === "words" ? "words" : "grammar";
+}
+
+const PLAY_BIG = "flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-[background-color,transform] hover:bg-teal-2 active:translate-y-px";
+const PLAY_SLOW = "flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-well hover:text-ink-2";
+const PLAY_SMALL = "flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 transition-colors hover:bg-[var(--q-teal-line)]";
+/** The target form in a sentence that is read, not blanked (a meaning rep, a twin). */
+const MARKED = "bg-transparent px-0.5 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]";
+/** The slot the answer sits in: the mockup's `.q-slot`, sized to the 44px sentence. */
+const SLOT = "inline-flex h-12 items-center gap-2.5 px-0.5 align-baseline sm:h-[58px]";
 
 function RepView({
 	item,
@@ -823,9 +823,10 @@ function RepView({
 	hideMeaning,
 	onPeek,
 	onGrade,
-	onReady,
-	eyebrow,
-}: {
+		onReady,
+		eyebrow,
+		place,
+	}: {
 	item: LessonItem;
 	tag: string;
 	locked: boolean;
@@ -835,22 +836,20 @@ function RepView({
 	onPeek: () => void;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
-	eyebrow: string;
-}) {
-	return (
-		<div data-word-lookup-enabled={locked ? "true" : "false"}>
-			<p className="font-ui text-sm font-bold text-muted-foreground first-letter:uppercase">
-				{eyebrow}
-				{item.again && <span className="text-xp"> · Once more</span>}
-			</p>
-			<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">{miss !== null && item.kind === "choose" ? kindLabel({ ...item, kind: "type" }) : kindLabel(item)}</h2>
-			{item.kind === "build" ? (
-				<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
-			) : (
-				<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} hideMeaning={hideMeaning} onPeek={onPeek} onGrade={onGrade} onReady={onReady} />
-			)}
-		</div>
-	);
+			eyebrow: string;
+		place?: string;
+	}) {
+		return (
+			<div data-word-lookup-enabled={locked ? "true" : "false"}>
+				<PracticeCard icon={repIcon(item)} title={item.again ? `${eyebrow} · Once more` : eyebrow} sub={miss !== null && item.kind === "choose" ? kindLabel({ ...item, kind: "type" }) : kindLabel(item)} right={place}>
+					{item.kind === "build" ? (
+						<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
+					) : (
+						<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} hideMeaning={hideMeaning} onPeek={onPeek} onGrade={onGrade} onReady={onReady} />
+					)}
+				</PracticeCard>
+			</div>
+		);
 }
 
 /** After a first miss: the smallest cue and one more try. The trigger word
@@ -864,33 +863,33 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const slip = !vocabulary && !pairs ? formSlip({ answer: item.answer, lemma: item.lemma, given: miss }) : undefined;
 	return (
-		<div className="lh-rise mt-8 rounded-2xl border border-warn/40 bg-warn-soft px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
-			<p className="font-ui text-base font-extrabold text-warn">
+		<div className="lh-rise mt-6 rounded-[14px] bg-well px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
+			<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">
 				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
-			<div className="mt-2 flex flex-col gap-1 font-prose text-base leading-relaxed">
+			<div className="mt-2 flex flex-col gap-1 font-prose text-[15px] leading-relaxed">
 				{slip === "base" ? (
 					<p className="text-foreground">
-						<span className="font-bold text-warn">“{miss}”</span> is the dictionary base form.{" "}
+						<span className="font-semibold text-miss">“{miss}”</span> is the dictionary base form.{" "}
 						{item.trigger ? (
 							<>
-								Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it requires the inflected case form.
+								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang="sk">{item.trigger}</span>: it requires the inflected case form.
 							</>
 						) : item.form ? (
-							<>Wanted: <span className="font-bold">{item.form}</span>.</>
+							<>Wanted: <span className="font-semibold">{item.form}</span>.</>
 						) : (
 							<>Remember to inflect the ending for this sentence.</>
 						)}
 					</p>
 				) : slip === "same-word" ? (
 					<p className="text-foreground">
-						<span className="font-bold text-warn">“{miss}”</span> has another ending.{" "}
+						<span className="font-semibold text-miss">“{miss}”</span> has another ending.{" "}
 						{item.trigger ? (
 							<>
-								Look at <span className="rounded bg-background/50 px-1 font-bold" lang="sk">{item.trigger}</span>: it decides the case ending.
+								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang="sk">{item.trigger}</span>: it decides the case ending.
 							</>
 						) : item.form ? (
-							<>Wanted: <span className="font-bold">{item.form}</span>.</>
+							<>Wanted: <span className="font-semibold">{item.form}</span>.</>
 						) : (
 							<>Check which case is needed here.</>
 						)}
@@ -898,7 +897,7 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 				) : item.trigger ? (
 					<p className="text-foreground">
 						Look at{" "}
-						<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
+						<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang="sk">
 							{item.trigger}
 						</span>
 						: it decides the form.
@@ -1001,7 +1000,7 @@ function ClozeRep({
 
 	// The filled-in word is the right form, so it reads as right (green) even
 	// after a miss; the bar below says what was wrong.
-	const verdictInk = result ? (result.verdict === "accents" ? "text-warn" : "text-go") : "";
+	const verdictInk = result ? (result.verdict === "accents" ? "text-ink-2 underline decoration-ink-3 decoration-2 underline-offset-[8px]" : "text-teal-2 underline decoration-teal decoration-2 underline-offset-[8px]") : "";
 	// During the retry the trigger word is underlined: noticing it is the skill.
 	const triggerAt = miss !== null && item.trigger ? item.before.trimEnd().lastIndexOf(" ") + 1 : -1;
 	const beforeText =
@@ -1013,7 +1012,7 @@ function ClozeRep({
 			.replace(/^[„“"'(]+/, "") === item.trigger ? (
 			<span>
 				{item.before.slice(0, triggerAt)}
-				<span className="underline decoration-warn decoration-[3px] underline-offset-[6px]">{item.before.trimEnd().slice(triggerAt)}</span>
+				<span className="underline decoration-teal decoration-[3px] underline-offset-[8px]">{item.before.trimEnd().slice(triggerAt)}</span>
 				{item.before.slice(item.before.trimEnd().length)}
 			</span>
 		) : (
@@ -1033,7 +1032,7 @@ function ClozeRep({
 			autoCapitalize="off"
 			spellCheck={false}
 			className={cn(
-				"rounded-xl border-2 border-border bg-card text-foreground caret-go outline-none transition-colors selection:bg-go/30 placeholder:font-normal placeholder:text-muted-foreground focus:border-go",
+								"rounded-[10px] caret-teal outline-none transition-shadow selection:bg-teal/25 placeholder:font-normal placeholder:text-ink-4",
 				className,
 			)}
 		/>
@@ -1048,21 +1047,21 @@ function ClozeRep({
 						type="button"
 						onClick={() => void speak(item.sentence)}
 						aria-label="Play the sentence"
-						className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
-					>
-						<Volume2Icon className="size-8" />
+						className={PLAY_BIG}
+						>
+							<Volume2Icon className="size-6" strokeWidth={1.6} />
 					</button>
 					<button
 						type="button"
 						onClick={() => void speak(item.sentence, undefined, { slow: true })}
 						aria-label="Play slowly"
 						title="Play slowly"
-						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
-					>
-						<SnailIcon className="size-6" />
+						className={PLAY_SLOW}
+						>
+							<SnailIcon className="size-5" strokeWidth={1.6} />
 					</button>
 				</div>
-				{input("mt-6 block w-full px-4 py-3 font-prose text-2xl font-semibold")}
+				{input("mt-6 block h-14 w-full bg-card px-4 font-prose text-2xl font-medium tracking-[-0.01em] text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)]")}
 				<DiacriticBar variant="keys" className="mt-4" />
 				{miss !== null && <HintPanel item={item} miss={miss} wasChoice={false} />}
 			</form>
@@ -1077,18 +1076,18 @@ function ClozeRep({
 						type="button"
 						onClick={() => void speak(item.sentence)}
 						aria-label="Play the sentence"
-						className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
-					>
-						<Volume2Icon className="size-8" />
+						className={PLAY_BIG}
+						>
+							<Volume2Icon className="size-6" strokeWidth={1.6} />
 					</button>
 					<button
 						type="button"
 						onClick={() => void speak(item.sentence, undefined, { slow: true })}
 						aria-label="Play slowly"
 						title="Play slowly"
-						className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
-					>
-						<SnailIcon className="size-6" />
+						className={PLAY_SLOW}
+						>
+							<SnailIcon className="size-5" strokeWidth={1.6} />
 					</button>
 				</div>
 			)}
@@ -1100,89 +1099,84 @@ function ClozeRep({
 						type="button"
 						onClick={() => void speak(item.sentence)}
 						aria-label="Play the sentence"
-						className="lh-pop absolute -left-14 top-2.5 flex size-10 items-center justify-center rounded-xl bg-sky text-background transition-transform hover:scale-105 active:scale-95 max-sm:relative max-sm:left-0 max-sm:top-0 max-sm:mb-3"
-					>
-						<Volume2Icon className="size-5" />
+						className={cn("lh-pop absolute -left-12 top-3.5 max-sm:relative max-sm:left-0 max-sm:top-0 max-sm:mb-3", PLAY_SMALL)}
+						>
+							<Volume2Icon className="size-[18px]" strokeWidth={1.6} />
 					</button>
 				)}
 				<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), submit())}>
-					<p className="font-prose text-[30px] leading-[1.6] text-foreground" lang="sk">
+					<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk">
 						{beforeText}
 						{meaning ? (
 							// Input: the form is there to be met, not produced — marked, never blanked.
-							<mark className="rounded-lg bg-xp/20 px-1 font-bold text-foreground underline decoration-xp decoration-[3px] underline-offset-[6px]">{item.answer}</mark>
+							<mark className={MARKED}>{item.answer}</mark>
 						) : locked ? (
-							<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", verdictInk, result?.verdict === "accents" ? "bg-warn-soft" : "bg-go-soft")}>{pairsRep ? target : item.answer}</span>
+							<span className={cn("lh-pop", SLOT, verdictInk)}>
+									{pairsRep ? target : item.answer}
+									{result?.verdict !== "accents" && (
+										<span className="grid size-[26px] place-items-center rounded-full bg-teal" aria-hidden="true">
+											<svg viewBox="0 0 24 24" className="size-[15px] fill-none stroke-[var(--q-on-teal)]" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+												<path d="M5.5 12.5l4 4L18.5 7.5" />
+											</svg>
+										</span>
+									)}
+								</span>
 						) : pairsRep && !typed ? (
 							// Dvojičky: the twin's form is the evidence, so it stays marked
 							// and the choice between the two lemmas is the question.
-							<mark className="rounded-lg bg-xp/20 px-1 font-bold text-foreground underline decoration-xp decoration-[3px] underline-offset-[6px]">{target}</mark>
+							<mark className={MARKED}>{target}</mark>
 						) : typed ? (
 							// Grows with what is typed (a hidden twin sizes it), so a long
 							// answer is never clipped.
 							<span className="mx-1 inline-grid max-w-full align-baseline" style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}>
-								<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre border-2 px-3 font-bold">
+								<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre px-3.5 font-semibold">
 									{given || " "}
 								</span>
-								{input("col-start-1 row-start-1 w-full min-w-0 px-3 py-0 font-bold")}
+								{input("q-write col-start-1 row-start-1 h-12 w-px min-w-full self-center px-1 py-0 font-semibold text-foreground outline-none sm:h-[58px]")}
 							</span>
 						) : (
-							<span className="mx-1 inline-block h-[1.1em] w-[5ch] translate-y-[0.2em] rounded-lg border-2 border-dashed border-muted-foreground/50" aria-label="blank" />
+							<span className="q-blank mx-1 w-[5ch]" aria-label="blank" />
 						)}
 						<span>{item.after}</span>
 					</p>
-					<p className="mt-2 font-prose text-lg text-muted-foreground">
-						<HintChip item={item} />
+					<p className="mt-3 font-prose text-base text-ink-2">
+							<HintChip item={item} />
 						{/* The meaning is the question, so it shows only once answered;
 						    from the practiced stage on it hides until the answer, and
 						    asking for it early halves the rep. */}
 						{meaning && !locked ? (
-							<span className="text-muted-foreground">Hear it, then pick what it means.</span>
+							<span className="text-ink-3">Hear it, then pick what it means.</span>
 						) : hideMeaning && !locked ? (
 							<button
 								type="button"
 								onClick={onPeek}
-								className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-ui text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground"
-								data-testid="lesson-peek"
+								className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-ui text-[13px] font-[550] text-ink-3 hover:bg-well hover:text-ink-2"
+									data-testid="lesson-peek"
 								title="Show the English sentence. This answer then earns half XP."
 							>
-								<LanguagesIcon className="size-4" aria-hidden="true" />
+								<LanguagesIcon className="size-4" strokeWidth={1.6} aria-hidden="true" />
 								Show translation · half XP
 							</button>
 						) : (
 							item.translation
 						)}
 					</p>
-					{typed && !locked && <DiacriticBar variant="keys" className="mt-6" />}
+					{typed && !locked && <DiacriticBar variant="keys" className="mt-5" />}
 				</form>
 			</div>
 
 			{miss !== null && !locked && <HintPanel item={item} miss={miss} wasChoice={retypes} />}
 
 			{(item.kind === "choose" || meaning) && !retypes && (
-				<div className={cn("mt-8 grid gap-3", meaning ? "grid-cols-1" : "grid-cols-2")} data-testid="lesson-options">
+				<div className={cn("mt-7 grid gap-3", meaning ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")} data-testid="lesson-options">
 					{item.options!.map((o, i) => {
 						const picked = result?.given === o;
 						const right = locked && judge(o) === "exact";
 						const ruledOut = !locked && miss === o;
 						return (
-							<button
-								key={o}
-								type="button"
-								disabled={locked || ruledOut}
-								onClick={() => onGrade(o, judge(o))}
-								className={cn(
-									"flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3.5 text-left font-prose text-xl text-foreground transition-colors",
-									!locked && !ruledOut && "hover:border-foreground/40 hover:bg-accent",
-									right && "border-go bg-go-soft",
-									picked && !right && "border-miss bg-miss-soft",
-									locked && !right && !picked && "opacity-50",
-									ruledOut && "border-miss/40 bg-transparent line-through opacity-50",
-								)}
-							>
-								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
-								<span lang={meaning ? undefined : "sk"}>{o}</span>
-							</button>
+							<OptionTile key={o} n={i + 1} lang={meaning ? undefined : "sk"} disabled={locked || ruledOut} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : ruledOut ? "ruled-out" : "idle"}>
+								{o}
+							</OptionTile>
 						);
 					})}
 				</div>
@@ -1220,10 +1214,10 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const tile = "rounded-xl border-2 border-border bg-card px-3.5 py-2 font-prose text-xl text-foreground";
+	const tile = "rounded-[10px] bg-card px-3.5 py-2 font-prose text-xl font-medium tracking-[-0.01em] text-foreground shadow-raise";
 	return (
 		<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), check())}>
-			<p data-no-word-lookup="true" className="font-prose text-2xl text-foreground">“{item.translation}”</p>
+			<p data-no-word-lookup="true" className="font-prose text-[22px] font-medium leading-snug tracking-[-0.018em] text-foreground">“{item.translation}”</p>
 			{/* After the answer: the sentence as one line, with a replay button
 			    (it also plays on its own when the answer lands). */}
 			{locked && (
@@ -1232,16 +1226,16 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 						type="button"
 						onClick={() => void speak(item.sentence)}
 						aria-label="Play the sentence"
-						className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
-					>
-						<Volume2Icon className="size-5" />
+						className={PLAY_SMALL}
+						>
+							<Volume2Icon className="size-[18px]" strokeWidth={1.6} />
 					</button>
-					<p className="font-prose text-2xl text-foreground" lang="sk">
-						{item.sentence}
+					<p className="font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground" lang="sk">
+							{item.sentence}
 					</p>
 				</div>
 			)}
-			<div className="mt-6 flex min-h-[4.5rem] flex-wrap items-center gap-2 border-b-2 border-border pb-3" data-testid="build-answer">
+			<div className="mt-6 flex min-h-[4.5rem] flex-wrap items-center gap-2 rounded-[10px] bg-well p-3" data-testid="build-answer">
 				{picked.map((bi, k) => (
 					<button key={`${bi}-${k}`} type="button" disabled={locked} onClick={() => setPicked((p) => p.filter((_, j) => j !== k))} className={cn("lh-pop", tile)} lang="sk">
 						{bank[bi]}
@@ -1260,7 +1254,7 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 								sfx.tap();
 								setPicked((p) => [...p, bi]);
 							}}
-							className={cn(tile, "transition-colors", used ? "border-transparent bg-accent text-transparent" : "hover:border-foreground/40 hover:bg-accent")}
+							className={cn(tile, "transition-colors", used ? "bg-well-2 text-transparent shadow-none" : "hover:bg-well")}
 							lang="sk"
 						>
 							{w}
@@ -1305,27 +1299,21 @@ function FeedbackSheet({
 	const tone =
 		verdict === "exact"
 			? {
-					bg: "bg-go-soft",
-					ink: "text-go",
-					badge: "bg-go text-go-ink",
-					btn: "bg-go text-go-ink",
-					title: rep.assisted ? "Got it, with help" : praise,
-				}
+						bg: "bg-teal-wash",
+						ink: "text-teal-2",
+						title: rep.assisted ? "Got it, with help" : praise,
+					}
 			: verdict === "accents"
 				? {
-						bg: "bg-warn-soft",
-						ink: "text-warn",
-						badge: "bg-warn text-background",
-						btn: "bg-warn text-background",
-						title: "Almost! Check the accents",
-					}
+							bg: "bg-well",
+							ink: "text-ink-2",
+							title: "Almost! Check the accents",
+						}
 				: {
-						bg: "bg-miss-soft",
-						ink: "text-miss",
-						badge: "bg-miss text-background",
-						btn: "bg-miss text-background",
-						title: "Not quite",
-					};
+							bg: "bg-miss-soft",
+							ink: "text-miss",
+							title: "Not quite",
+						};
 	const canExplain = item.kind !== "build";
 	const [marked, setMarked] = useState(false);
 	// "Tricky": put the word in the review deck now, ahead of its turn.
@@ -1339,15 +1327,19 @@ function FeedbackSheet({
 	};
 	const inDeck = marked || (item.known !== null && item.known !== undefined);
 	return (
-		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} data-word-lookup-enabled="true" role="status" aria-live="polite">
-			<div className={cn(COLUMN, "py-5")}>
+		<div className={cn("lh-rise shadow-[0_-1px_0_var(--q-line)]", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} data-word-lookup-enabled="true" role="status" aria-live="polite">
+			<div className={cn(COLUMN, "py-4")}>
 				{/* Header row: verdict on the left, actions on the right, on one line. */}
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
 					<div className="flex items-center gap-3">
-						<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", tone.badge)} aria-hidden="true">
-							{verdict === "wrong" ? <XIcon className="size-5" strokeWidth={3} /> : <CheckIcon className="size-5" strokeWidth={3} />}
-						</span>
-						<p className={cn("font-ui text-2xl font-bold leading-tight", tone.ink)}>{tone.title}</p>
+						{verdict === "accents" ? (
+							<span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-ink-3 font-ui text-xs font-semibold text-[var(--q-bg)]" aria-hidden="true">
+								!
+							</span>
+						) : (
+							<VerdictDisc ok={verdict === "exact"} />
+						)}
+						<p className={cn("font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]", tone.ink)}>{tone.title}</p>
 					</div>
 					<div className="flex items-center gap-2">
 						{verdict === "exact" && (
@@ -1359,7 +1351,7 @@ function FeedbackSheet({
 								data-testid="lesson-tricky"
 								title={inDeck ? "This word is in your review deck" : "Add this word to your review deck"}
 							>
-								{inDeck ? <BookmarkCheckIcon className="size-4" /> : <BookmarkIcon className="size-4" />}
+								{inDeck ? <BookmarkCheckIcon className="size-4" strokeWidth={1.6} /> : <BookmarkIcon className="size-4" strokeWidth={1.6} />}
 								{inDeck ? "In your deck" : "Tricky"}
 							</button>
 						)}
@@ -1368,19 +1360,19 @@ function FeedbackSheet({
 								{open ? "Hide" : "Why?"}
 							</button>
 						)}
-						<button type="button" autoFocus onClick={onContinue} data-testid="lesson-continue" className={cn(BUTTON, "hover:brightness-110", tone.btn)}>
+						<button type="button" autoFocus onClick={onContinue} data-testid="lesson-continue" className={PRIMARY}>
 							{last ? "Finish" : "Continue"}
 						</button>
 					</div>
 				</div>
 
 				{/* Details, aligned under the title (past the badge). */}
-				<div className="mt-3 flex flex-col gap-3 sm:pl-12">
+				<div className="mt-3 flex flex-col gap-3 sm:pl-9">
 					{verdict !== "exact" && (
 						<div>
-							<p className="font-prose text-lg text-foreground">
+							<p className="font-prose text-[17px] text-foreground">
 								{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
-								<span className="font-bold" lang={item.kind === "meaning" ? undefined : "sk"}>
+								<span className="font-semibold" lang={item.kind === "meaning" ? undefined : "sk"}>
 									{[...expected].map((ch, i) => (
 										<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
 											{ch}
@@ -1389,16 +1381,16 @@ function FeedbackSheet({
 								</span>
 							</p>
 							{verdict === "wrong" && given && (
-								<p className="font-prose text-base text-muted-foreground">
+								<p className="font-prose text-[15px] text-ink-3">
 									{item.kind === "meaning" ? "You picked" : "You wrote"} “<span lang={item.kind === "meaning" ? undefined : "sk"}>{given}</span>”
 								</p>
 							)}
-							{comesBack && <p className="mt-1 font-prose text-sm text-muted-foreground">It comes back once more at the end.</p>}
+							{comesBack && <p className="mt-1 font-prose text-[13px] text-ink-3">It comes back once more at the end.</p>}
 						</div>
 					)}
 					{verdict === "exact" && rep.variant && (
-						<div className="rounded-xl border border-go/40 bg-go-soft/40 px-4 py-2.5 font-prose text-base" data-testid="variant-accepted">
-							<span className="font-semibold text-go">Also accepted: “{given}”</span>
+						<div className="rounded-[10px] bg-card px-3.5 py-2.5 font-prose text-[15px] shadow-[inset_0_0_0_1px_var(--q-teal-line)]" data-testid="variant-accepted">
+						<span className="font-semibold text-teal-2">Also accepted: “{given}”</span>
 							<span className="text-muted-foreground"> · This sentence uses </span>
 							<b className="font-semibold text-foreground" lang="sk">{item.answer}</b>.
 						</div>
@@ -1408,39 +1400,39 @@ function FeedbackSheet({
 							<button
 								type="button"
 								onClick={() => void speak(item.sentence)}
-								className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-sky/20 text-sky transition-colors hover:bg-sky/30"
+								className={cn("mt-0.5", PLAY_SMALL)}
 								aria-label="Play the sentence again"
 								title="Play again"
 							>
-								<Volume2Icon className="size-4" />
+								<Volume2Icon className="size-4" strokeWidth={1.6} />
 							</button>
 							<div className="min-w-0">
-								<p className="font-prose text-lg leading-snug text-foreground" lang="sk">
+								<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang="sk">
 									{item.before}
 									<b className={tone.ink}>{item.pair ? (item.form ?? item.answer) : item.answer}</b>
 									{item.after}
 								</p>
-								<p data-no-word-lookup="true" className="font-prose text-base text-muted-foreground">{item.translation}</p>
+								<p data-no-word-lookup="true" className="font-prose text-[15px] text-ink-3">{item.translation}</p>
 							</div>
 						</div>
 					)}
 					{verdict === "exact" && (
 						<dl className="flex flex-wrap gap-2" data-testid="right-meta">
-							<Fact icon={<WholeWordIcon className="size-4" />} label={item.form ? "Form" : "Word"} value={item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`} />
-							{rankLabel(item.rank, item.cat) && <Fact icon={<ChartColumnIcon className="size-4" />} label="How common" value={rankLabel(item.rank, item.cat)!} />}
-							<Fact icon={<BrainIcon className="size-4" />} label="Memory" value={knownLine(item.known)!} />
+							<Fact icon={<WholeWordIcon className="size-4" strokeWidth={1.6} />} label={item.form ? "Form" : "Word"} value={item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`} />
+							{rankLabel(item.rank, item.cat) && <Fact icon={<ChartColumnIcon className="size-4" strokeWidth={1.6} />} label="How common" value={rankLabel(item.rank, item.cat)!} />}
+							<Fact icon={<BrainIcon className="size-4" strokeWidth={1.6} />} label="Memory" value={knownLine(item.known)!} />
 						</dl>
 					)}
 				</div>
 
 				{/* "Why?" opens here, under the verdict: the lesson stays where it is. */}
 				{open && (
-					<dl className="lh-rise mt-4 grid gap-x-6 gap-y-2 border-t border-foreground/10 pt-4 font-prose text-base leading-relaxed sm:grid-cols-[6rem_1fr]" data-testid="lesson-why-panel">
+					<dl className="lh-rise mt-4 grid gap-x-6 gap-y-2 border-t border-[var(--q-line-2)] pt-4 font-prose text-[15px] leading-relaxed sm:grid-cols-[6rem_1fr]" data-testid="lesson-why-panel">
 						<dt className={WHY_LABEL}>{info.kind === "words" ? "Tip" : "Rule"}</dt>
 						<dd className="text-foreground">
 							{item.trigger && (
 								<>
-									<span className="rounded bg-background/50 px-1 font-bold" lang="sk">
+									<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang="sk">
 										{item.trigger}
 									</span>{" "}
 									decides the form here.{" "}
@@ -1484,7 +1476,7 @@ function FeedbackSheet({
 						)}
 						<dt className={WHY_LABEL} />
 						<dd>
-							<button type="button" onClick={onAskTutor} className="font-ui text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground">
+							<button type="button" onClick={onAskTutor} className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2">
 								Still unsure? Ask the tutor (opens a chat)
 							</button>
 						</dd>
@@ -1495,64 +1487,25 @@ function FeedbackSheet({
 	);
 }
 
-const WHY_LABEL = "font-ui text-xs font-bold uppercase tracking-wide text-muted-foreground sm:pt-1";
+const WHY_LABEL = "font-ui text-[12.5px] font-semibold text-ink-3 sm:pt-0.5";
 
 /** One labeled fact chip under a right answer: a small caption and the
  *  value, so the footer scans as "Form / How common / Memory". */
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
 	return (
-		<div className="flex items-center gap-2.5 rounded-xl bg-background/40 py-1.5 pl-2.5 pr-3.5">
-			<span className="text-muted-foreground" aria-hidden="true">
+		<div className="flex items-center gap-2.5 rounded-[10px] bg-card py-1.5 pl-2.5 pr-3.5 shadow-raise">
+			<span className="text-ink-3" aria-hidden="true">
 				{icon}
 			</span>
 			<div className="min-w-0">
-				<dt className="font-ui text-xs font-bold text-muted-foreground">{label}</dt>
-				<dd className="font-prose text-sm leading-tight text-foreground">{value}</dd>
+				<dt className="font-ui text-xs text-ink-3">{label}</dt>
+				<dd className="font-prose text-sm font-medium leading-tight text-foreground">{value}</dd>
 			</div>
 		</div>
 	);
 }
 
 // ─── End screen ─────────────────────────────────────────────────────────────
-
-function Confetti() {
-	const bits = useMemo(
-		() =>
-			Array.from({ length: 36 }, (_, i) => ({
-				i,
-				dx: `${(Math.random() - 0.5) * 520}px`,
-				dy: `${-120 - Math.random() * 260}px`,
-				rot: `${(Math.random() - 0.5) * 720}deg`,
-				color: ["var(--lh-sun)", "var(--foreground)", "var(--lh-trail-red)", "var(--lh-trail-blue)", "var(--lh-trail-green)"][i % 5],
-				delay: `${Math.random() * 120}ms`,
-			})),
-		[],
-	);
-	return (
-		<div className="pointer-events-none absolute left-1/2 top-1/3" aria-hidden="true">
-			{bits.map((b) => (
-				<span
-					key={b.i}
-					className="lh-confetti-bit absolute block h-2.5 w-1.5 rounded-sm"
-					style={
-						{
-							background: b.color,
-							animationDelay: b.delay,
-							["--dx" as string]: b.dx,
-							["--dy" as string]: b.dy,
-							["--rot" as string]: b.rot,
-						} as React.CSSProperties
-					}
-				/>
-			))}
-		</div>
-	);
-}
-
-/** A placeholder in the shape of what is coming, so its slot keeps its size. */
-function Pulse({ className }: { className?: string }) {
-	return <span aria-hidden="true" className={cn("inline-block animate-pulse rounded-md bg-accent motion-reduce:animate-none", className)} />;
-}
 
 function EndScreen({
 	mode,
@@ -1605,51 +1558,52 @@ function EndScreen({
 		return () => window.removeEventListener("keydown", onKey);
 	}, [recorded, mode, focus, onAgain, onNext]);
 
+	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
+	const where = mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title;
+
 	return (
-		<div className="relative m-auto w-full max-w-xl px-5 text-center" data-testid="lesson-end">
-			<Confetti />
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-sun/15 text-sun">
-				{mode === "blitz" ? <ZapIcon className="size-12" /> : <MountainSnowIcon className="size-12" />}
-			</div>
-			<h1 className="mt-5 font-ui text-4xl font-extrabold text-foreground">
-				{mode === "blitz" ? (recorded?.newBest ? "New best!" : "Time!") : focus === "mixups" ? (perfect ? "No mix-ups!" : "Mix-ups done!") : focus === "personal" ? (perfect ? "Perfect plan practice!" : "Plan practice done!") : here?.done && !wasDone ? "Unit complete!" : perfect ? "Perfect lesson!" : "Lesson complete!"}
-			</h1>
-			<p className="mt-2 min-h-7 font-prose text-lg text-muted-foreground" data-testid="lesson-end-where">
-				{mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title}
+		<div className="q-rise m-auto w-full max-w-xl px-5" data-testid="lesson-end">
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name={mode === "blitz" ? "fast" : "check"} className="text-teal" />
+				{mode === "blitz" ? "Blitz" : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : unitInfo(unit).title}
+			</p>
+			<h1 className="q-hello">{title}</h1>
+			<p className="q-line dim mt-2 min-h-7" data-testid="lesson-end-where">
+				{where}
 			</p>
 			{mode === "lesson" && !focus && (
-				<ol className="mx-auto mt-3 flex h-2.5 items-center justify-center gap-2" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
+				<ol className="q-dots mt-3 ml-0" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
 					{!here?.done &&
 						Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
-							<li key={i} className={cn("h-2.5 w-8 rounded-full", !here ? "animate-pulse bg-accent" : i < here.lessons ? "bg-sun" : "bg-accent")} />
+							<li key={i} className={cn("h-1 w-8 rounded-full", !here ? "animate-pulse bg-well-2" : i < here.lessons ? "bg-teal" : "bg-well-2")} />
 						))}
 				</ol>
 			)}
 
 			{/* A stamp earned by this lesson is pressed onto the page (src/core/stamps.ts). */}
 			{recorded?.newStamps && recorded.newStamps.length > 0 && (
-				<ul className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label="New stamps" data-testid="lesson-new-stamps">
+				<ul className="mt-6 flex flex-col gap-2" aria-label="New stamps" data-testid="lesson-new-stamps">
 					{recorded.newStamps.map((st) => (
-						<li key={st.id} className="flex items-center gap-3 rounded-2xl border border-sun/40 bg-sun/5 py-2 pl-2 pr-4 text-left">
+						<li key={st.id} className="q-card flex items-center gap-3 py-2 pl-2 pr-4 text-left">
 							<StampDisc state={st} size="sm" pressed />
 							<span className="min-w-0">
-								<span className="block font-ui text-xs font-bold text-sun">New stamp</span>
-								<span className="block font-ui text-sm font-bold text-foreground" lang="sk">
+								<span className="block font-ui text-xs font-semibold text-teal-2">New stamp</span>
+								<span className="block font-ui text-sm font-semibold text-foreground" lang="sk">
 									{st.name}
 								</span>
-								<span className="block font-ui text-xs text-muted-foreground">{st.line}</span>
+								<span className="block font-ui text-xs text-ink-3">{st.line}</span>
 							</span>
 						</li>
 					))}
 				</ul>
 			)}
-			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={`+${xp}`} ink="text-sun" />
-				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-go" : "text-foreground"} />
-				<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-foreground" icon={<FlagIcon className="size-5 text-sun" />} />
-			</div>
+			<Stats className="mt-6">
+				<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
+				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-teal-2" : "text-foreground"} />
+				<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-foreground" icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
+			</Stats>
 
-			<p className="mt-4 min-h-5 font-prose text-sm text-muted-foreground" data-testid="lesson-end-recorded">
+			<p className="mt-3 min-h-5 font-prose text-[13px] text-ink-3" data-testid="lesson-end-recorded">
 				{recorded ? (
 					<>
 						{goalMet ? "Daily XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
@@ -1663,30 +1617,33 @@ function EndScreen({
 			</p>
 
 			{missed.length > 0 && (
-				<div className="mt-6 rounded-2xl border bg-card p-4 text-left">
-					<p className="font-ui text-sm font-bold text-muted-foreground">What you worked for</p>
-					<p className="mt-0.5 font-prose text-sm text-muted-foreground">A miss you then got right is the rep that sticks.</p>
-					<ul className="mt-2 flex flex-col gap-2">
+				<div className="q-card mt-6 px-[22px] py-[18px] text-left">
+					<p className="q-lbl">
+						<QIcon name="rule" />
+						What you worked for
+					</p>
+					<p className="mt-1 font-prose text-[13px] text-ink-3">A miss you then got right is the rep that sticks.</p>
+					<ul className="mt-3 flex flex-col gap-2.5">
 						{missed.slice(0, 5).map((r, i) => (
 							<li key={i} className="font-prose text-base leading-snug">
 								<span className="text-foreground" lang="sk">
 									{r.item.before}
-									<b>{r.item.answer}</b>
+									<b className="font-semibold text-teal-2">{r.item.answer}</b>
 									{r.item.after}
 								</span>
-								<span data-no-word-lookup="true" className="block text-sm text-muted-foreground">{r.item.translation}</span>
+								<span data-no-word-lookup="true" className="block text-sm text-ink-3">{r.item.translation}</span>
 							</li>
 						))}
 					</ul>
 				</div>
 			)}
 
-			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+			<div className="q-acts mt-6">
 				<Link href="/" className={SECONDARY}>
 					Today
 				</Link>
 				{mode === "blitz" ? (
-					<button type="button" onClick={onAgain} className={cn(BUTTON, "bg-sky text-background hover:brightness-110")}>
+					<button type="button" onClick={onAgain} className={PRIMARY}>
 						Go again
 					</button>
 				) : focus ? (
@@ -1718,16 +1675,4 @@ function whereLine(here: { title: string; lessons: number; done: boolean; accura
 	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} in ${here.title}`;
 	if (here.lessons === LESSONS_TO_COMPLETE || !next || next.title === here.title) return `${here.title} · ${here.lessons} lessons · ${Math.round((here.accuracy ?? 0) * 100)}% right`;
 	return `${here.title} is done. Up next: ${next.title}`;
-}
-
-function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink: string; icon?: React.ReactNode }) {
-	return (
-		<div className="rounded-2xl border bg-card px-3 py-4">
-			<p className="font-ui text-sm font-bold text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 flex h-9 items-center justify-center gap-1.5 font-ui text-3xl font-extrabold tabular-nums", ink)}>
-				{icon}
-				{value ?? <Pulse className="h-7 w-12" />}
-			</p>
-		</div>
-	);
 }

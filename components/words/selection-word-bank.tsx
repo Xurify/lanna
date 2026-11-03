@@ -565,16 +565,16 @@ export function SelectionWordBankBar() {
 			style={positionStyle}
 			className="fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
 		>
-			<div className="lh-pop flex flex-col gap-2 rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl backdrop-blur-md">
+			<div className="lh-pop flex flex-col gap-2 rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl">
 				{/* Always-visible header: headword, POS/morphology, and translation */}
 				<div className="flex flex-col gap-1 border-b border-border/60 pb-2">
 					<div className="flex items-start justify-between gap-2">
 						<div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
-							<span className="font-ui text-base font-black text-foreground break-words" lang={langCode}>
+							<span className="font-ui text-base font-semibold text-foreground break-words" lang={langCode}>
 								{displayHeadword}
 							</span>
 							{lookup?.pos && (
-								<span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+								<span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[10px] font-semibold text-muted-foreground">
 									{lookup.pos.toLowerCase()}
 								</span>
 							)}
@@ -593,7 +593,7 @@ export function SelectionWordBankBar() {
 								title={`Translation mode: ${translationMode} (click to switch between Dictionary, Hybrid, and Google)`}
 								data-testid="selection-mode-toggle"
 								className={cn(
-									"rounded-md px-1.5 py-0.5 font-ui text-[10px] font-bold transition-colors",
+									"rounded-md px-1.5 py-0.5 font-ui text-[10px] font-semibold transition-colors",
 									translationMode === "google"
 										? "bg-sky/15 text-sky"
 										: translationMode === "hybrid"
@@ -743,7 +743,7 @@ export function SelectionWordBankBar() {
 							disabled={wordSaved}
 							data-testid="selection-add-word"
 							className={cn(
-								"flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-bold transition-colors whitespace-nowrap",
+								"flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-semibold transition-colors whitespace-nowrap",
 								wordSaved
 									? "bg-go/15 text-go"
 									: "bg-go text-primary-foreground hover:brightness-105",
@@ -770,7 +770,7 @@ export function SelectionWordBankBar() {
 						disabled={phraseSaved}
 						data-testid="selection-save-phrase"
 						className={cn(
-							"flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-bold transition-colors whitespace-nowrap",
+							"flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-semibold transition-colors whitespace-nowrap",
 							phraseSaved
 								? "bg-xp/15 text-xp"
 								: selection.isSingleWord

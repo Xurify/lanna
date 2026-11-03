@@ -1,6 +1,8 @@
 @import "tailwindcss";
+@import "./quiet.css" layer(components);
 
-@custom-variant dark (&:is(.dark *));
+/* Night is marked by data-theme on <html> (set by components/quiet/theme-sync.tsx; React does not manage that attribute) or by the dark class; a device set to dark gets it from a media query below. */
+@custom-variant dark (&:is(.dark *, :root[data-theme="night"] *));
 
 /* Pointer variants for the phone and iPad layouts (2026-11-01). A keycap hint
    shows only where a fine pointer is the main input (mouse, trackpad); touch
@@ -51,37 +53,67 @@ html[data-keyboard] :focus-visible {
 	outline-offset: 2px;
 }
 
-/* Palette: the trail design (2026-11-02, docs/research/trail-design.md).
-   Night slate for the ground, three tonal steps up (card, raised, edge),
-   snow for text. The one action color is the sun (gold), which is also
-   "done" on the climb and the streak. The four kinds of practice take the
-   four Slovak trail-mark colors (red, blue, green, yellow), see the
-   --lh-trail-* tokens below. --primary stays an ink button for the
-   tutor's chat chrome; learning screens use --lh-sun (learn-buttons.ts). */
+/* Palette: the Quiet tool design (2026-11-02, docs/research/quiet-tool.md).
+   Day is the ground the mockup was drawn on; every Day value below is copied
+   from its base.css. Night is derived from Day, step for step: the grounds
+   swap to near-black at the same tonal gaps, the ink steps invert, and the
+   teal is lifted to the lightness that keeps the Day contrast against its
+   ground. One accent, teal, is the action color, "done" and "right". The four
+   kinds of practice are told apart by their icons, not by color, so the trail
+   colors further down are neutral greys. A miss keeps a muted red (the
+   mockups have no wrong answer to copy; see CHANGELOG-2026-11.md). */
 :root {
-	color-scheme: dark;
+	color-scheme: light;
+	--q-bg: #ffffff;
+	/* The raised surface: a card, the rail's score, a practice card. Day draws it on the same white as the ground and lets the shadow lift it; Night needs a lighter step to be seen. */
+	--q-card: #ffffff;
+	--q-side: #f6f6f4;
+	--q-well: #f5f5f3;
+	--q-well-2: #ededea;
+	--q-line: #e8e8e5;
+	--q-line-2: #d8d9d5;
+	--q-ink: #16181b;
+	--q-ink-2: #3f444a;
+	--q-ink-3: #656b72;
+	--q-ink-4: #8c9197;
+	--q-teal: #0d6764;
+	--q-teal-2: #0a5452;
+	--q-teal-wash: #e8f2f1;
+	--q-teal-line: #bcd8d5;
+	/* The mockup's literal greys for bars, checkboxes and dashed outlines. */
+	--q-bar: #7d838a;
+	--q-bar-hatch-a: #a9aeb3;
+	--q-bar-hatch-b: #c7cbcf;
+	--q-box: #c3c6c9;
+	--q-dash: #b9bcc0;
+	--q-on-teal: #ffffff;
+	--q-miss: #b42318;
+	--q-miss-wash: #fbeceb;
+	--q-shadow-rgb: 22 24 27;
+	--q-hair: 0 0 0 1px var(--q-line);
+	--q-raise: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 6px 16px -8px rgb(var(--q-shadow-rgb) / 0.1);
+	--q-raise-hi: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 16px 36px -14px rgb(var(--q-shadow-rgb) / 0.16);
+	--q-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
 	--radius: 8px;
-	--background: #0f1519;
-	--foreground: #eef2f3;
-	--card: #161e24;
-	--card-foreground: #eef2f3;
-	--popover: #161e24;
-	--popover-foreground: #eef2f3;
-	--primary: #eef2f3;
-	--primary-foreground: #0f1519;
-	--secondary: #161e24;
-	--secondary-foreground: #eef2f3;
-	--muted: #161e24;
-	--muted-foreground: #93a2aa;
-	--accent: #1f2a31;
-	--accent-foreground: #eef2f3;
-	--destructive: #ea5f4f;
-	--border: #2b3842;
-	--input: #2b3842;
-	--ring: #93a2aa;
-	/* Emphasis inks default to the REGULAR TEXT COLOR (owner ruling,
-	   appearance wave 2026-09-26). Explicit overrides land via the
-	   appearance settings vars. */
+	--background: var(--q-bg);
+	--foreground: var(--q-ink);
+	--card: var(--q-card);
+	--card-foreground: var(--q-ink);
+	--popover: var(--q-card);
+	--popover-foreground: var(--q-ink);
+	--primary: var(--q-teal);
+	--primary-foreground: var(--q-on-teal);
+	--secondary: var(--q-well);
+	--secondary-foreground: var(--q-ink);
+	--muted: var(--q-well);
+	--muted-foreground: var(--q-ink-3);
+	--accent: var(--q-well);
+	--accent-foreground: var(--q-ink);
+	--destructive: var(--q-miss);
+	--border: var(--q-line);
+	--input: var(--q-line-2);
+	--ring: var(--q-teal);
 	--lh-ink-strong: var(--foreground);
 	--lh-ink-italic: var(--foreground);
 	/* THE READING SIZE = the ladder's 16px rung (--text-lg). Can't be
@@ -90,36 +122,77 @@ html[data-keyboard] :focus-visible {
 	   change one, change both. */
 	--lh-prose-size: 16px;
 	--lh-prose-leading: 1.5;
-	/* Markdown heading weight (appearance settings; 900 = the Black cut). */
-	--lh-heading-weight: 900;
+	/* Markdown heading weight: Geist's 600, the weight the mockup's headings use. */
+	--lh-heading-weight: 600;
 }
 
-/* The app is always dark (<html class="dark">); mirror the same values so
-   the block stays coherent under Tailwind's variant. */
-.dark {
-	--background: #0f1519;
-	--foreground: #eef2f3;
-	--card: #161e24;
-	--card-foreground: #eef2f3;
-	--popover: #161e24;
-	--popover-foreground: #eef2f3;
-	--primary: #eef2f3;
-	--primary-foreground: #0f1519;
-	--secondary: #161e24;
-	--secondary-foreground: #eef2f3;
-	--muted: #161e24;
-	--muted-foreground: #93a2aa;
-	--accent: #1f2a31;
-	--accent-foreground: #eef2f3;
-	--destructive: #ea5f4f;
-	--border: #2b3842;
-	--input: #2b3842;
-	--ring: #93a2aa;
+/* Night, derived from Day. Grounds #ffffff / #f6f6f4 / #f5f5f3 / #ededea
+   become #101214 / #16181a / #1a1d1f / #23272a; lines #e8e8e5 / #d8d9d5
+   become #26292c / #353a3e; the four ink steps invert; the teal, its wash
+   and its line are re-picked so teal text on the ground keeps Day's contrast.
+   Shadows stay black at the same opacities. */
+.dark,
+:root[data-theme="night"] {
+	color-scheme: dark;
+	--q-bg: #101214;
+	--q-card: #1b1e21;
+	--q-side: #16181a;
+	--q-well: #1a1d1f;
+	--q-well-2: #23272a;
+	--q-line: #26292c;
+	--q-line-2: #353a3e;
+	--q-ink: #ecedee;
+	--q-ink-2: #c3c7cb;
+	--q-ink-3: #9399a0;
+	--q-ink-4: #6e747b;
+	--q-teal: #4cbdb7;
+	--q-teal-2: #7bd3ce;
+	--q-teal-wash: #12302f;
+	--q-teal-line: #1f5552;
+	--q-bar: #7d838a;
+	--q-bar-hatch-a: #4a4f55;
+	--q-bar-hatch-b: #353a3e;
+	--q-box: #4a4f55;
+	--q-dash: #4a4f55;
+	--q-on-teal: #06201f;
+	--q-miss: #f0867b;
+	--q-miss-wash: #2d1a18;
+	--q-shadow-rgb: 0 0 0;
 	--lh-ink-strong: var(--foreground);
 	--lh-ink-italic: var(--foreground);
-	--lh-prose-size: 16px;
-	--lh-prose-leading: 1.5;
-	--lh-heading-weight: 900;
+}
+
+/* The same Night tokens for a device set to dark while the learner has not chosen Day. They are repeated, not shared, because a media query cannot share a block with a selector; change both together. No script is needed, so nothing flashes. */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="day"]) {
+		color-scheme: dark;
+		--q-bg: #101214;
+		--q-card: #1b1e21;
+		--q-side: #16181a;
+		--q-well: #1a1d1f;
+		--q-well-2: #23272a;
+		--q-line: #26292c;
+		--q-line-2: #353a3e;
+		--q-ink: #ecedee;
+		--q-ink-2: #c3c7cb;
+		--q-ink-3: #9399a0;
+		--q-ink-4: #6e747b;
+		--q-teal: #4cbdb7;
+		--q-teal-2: #7bd3ce;
+		--q-teal-wash: #12302f;
+		--q-teal-line: #1f5552;
+		--q-bar: #7d838a;
+		--q-bar-hatch-a: #4a4f55;
+		--q-bar-hatch-b: #353a3e;
+		--q-box: #4a4f55;
+		--q-dash: #4a4f55;
+		--q-on-teal: #06201f;
+		--q-miss: #f0867b;
+		--q-miss-wash: #2d1a18;
+		--q-shadow-rgb: 0 0 0;
+		--lh-ink-strong: var(--foreground);
+		--lh-ink-italic: var(--foreground);
+	}
 }
 
 /* CMU Serif bold (titles) — bundled local file, no CDN dependency. */
@@ -139,10 +212,10 @@ html[data-keyboard] :focus-visible {
 	   fonts: `font-mono`/`font-sans` utilities would otherwise fall to the
 	   SYSTEM stacks — a fourth font the app never chose — and streamdown's
 	   code-block chrome + mermaid-error + demo-card all use them. */
-	--font-ui: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-	--font-prose: var(--font-sans3), ui-sans-serif, system-ui, sans-serif;
+	--font-ui: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+	--font-prose: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
-	--font-sans: var(--font-sans3), ui-sans-serif, system-ui, sans-serif;
+	--font-sans: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 	/* The modular type ladder — each size carries its own line-height.
 	   Component sizes must pull from this ladder. (owner, typography
 	   round 4: the 10px rung is merged into 11 — one pixel apart was a
@@ -171,14 +244,26 @@ html[data-keyboard] :focus-visible {
 	--text-xl--line-height: 1.4;
 	--text-2xl: 25px;
 	--text-2xl--line-height: 1.3;
-	--text-3xl: 32px;
-	--text-3xl--line-height: 1.25;
+	--text-3xl: 34px;
+	--text-3xl--line-height: 1.15;
 	/* Radii ladder — 4/8/12/16 multiples of the 4px base. */
-	--radius-sm: 4px;
+	--radius-sm: 6px;
 	--radius-md: 8px;
 	--radius-lg: 12px;
-	--radius-xl: 16px;
-	--radius: 8px;
+	--radius-xl: 14px;
+	--shadow-raise: var(--q-raise);
+	--shadow-raise-hi: var(--q-raise-hi);
+	--color-side: var(--q-side);
+	--color-well: var(--q-well);
+	--color-well-2: var(--q-well-2);
+	--color-line-2: var(--q-line-2);
+	--color-ink-2: var(--q-ink-2);
+	--color-ink-3: var(--q-ink-3);
+	--color-ink-4: var(--q-ink-4);
+	--color-teal: var(--q-teal);
+	--color-teal-2: var(--q-teal-2);
+	--color-teal-wash: var(--q-teal-wash);
+	--color-teal-line: var(--q-teal-line);
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-card: var(--card);
@@ -243,6 +328,15 @@ body {
 	background: var(--color-background);
 	color: var(--color-foreground);
 	font-family: var(--font-ui);
+	font-size: 15px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	/* Geist stylistic sets the mockup turns on. */
+	font-feature-settings: "ss01", "cv11";
+}
+
+.num {
+	font-variant-numeric: tabular-nums;
 }
 
 /* Teaching prose (the markdown renderer's container gets .lh-prose):
@@ -261,7 +355,7 @@ body {
    font takes it, and CMU (a single 700 face) snaps to its nearest
    available weight — the same rendering it already had. */
 .font-title {
-	font-weight: 900;
+	font-weight: 600;
 }
 
 .lh-prose :where(strong, b) {
@@ -290,7 +384,7 @@ body {
    :where keeps specificity zero. Chrome titles (CMU Serif) don't live
    under .lh-prose and stay untouched. */
 .lh-prose :where(h1, h2, h3, h4, h5, h6) {
-	font-weight: var(--lh-heading-weight, 900);
+	font-weight: var(--lh-heading-weight, 600);
 }
 
 /* lh-input (owner, typography round 2): lh-prose's 1.5 READING leading
@@ -623,7 +717,7 @@ body {
    session-name-serif toggle overrides this var at runtime, so the
    .font-title utility must read it through var(), not carry a baked copy. */
 @theme {
-	--font-title: "lh-cmu", serif;
+	--font-title: var(--font-ui);
 }
 
 /* Card enter (owner round, 2026-10-05): the transcript cards' one-shot
@@ -662,36 +756,32 @@ body {
 	border-radius: 0.25rem;
 }
 
-/* ─── Learning colors: the trail marks (trail design, 2026-11-02) ──────
-   Slovak hiking trails are blazed in four colors — red, blue, green and
-   yellow, each a stripe between two white ones. The app's four kinds of
-   practice (Nation's strands, src/core/strands.ts) take those four:
-   input red, speaking blue, words & rules green, speed yellow. The yellow
-   is also the sun: the one action color, the streak and XP, and the
-   stretch of the climb already done. Right answers are the green, wrong
-   ones the red. The older token names stay as aliases so every screen
-   keeps its meaning (go = right, miss = wrong, warn = almost, gold =
-   done, flame = streak, xp and sky = blue). */
+/* ─── Learning colors (Quiet tool) ──────────────────────────────────────
+   The four kinds of practice (Nation's strands, src/core/strands.ts) are
+   told apart by icon, so the four --lh-trail-* tokens are one neutral grey.
+   The action color, XP, the streak and "done" are the teal; a right answer
+   is the teal, a wrong one the muted red. The older token names stay as
+   aliases so every screen keeps its meaning. */
 :root,
 .dark {
-	--lh-sun: #f2b84b;
-	--lh-sun-ink: #1a1406;
-	--lh-sun-soft: rgb(242 184 75 / 0.14);
-	--lh-trail-red: #ea5f4f;
-	--lh-trail-blue: #4fa3e3;
-	--lh-trail-green: #4cc47c;
-	--lh-trail-yellow: var(--lh-sun);
-	--lh-go: var(--lh-trail-green);
-	--lh-go-soft: rgb(76 196 124 / 0.14);
-	--lh-go-ink: #052012;
-	--lh-warn: var(--lh-sun);
-	--lh-warn-soft: var(--lh-sun-soft);
-	--lh-miss: var(--lh-trail-red);
-	--lh-miss-soft: rgb(234 95 79 / 0.13);
-	--lh-flame: var(--lh-sun);
-	--lh-xp: var(--lh-trail-blue);
-	--lh-sky: var(--lh-trail-blue);
-	--lh-gold: var(--lh-sun);
+	--lh-sun: var(--q-teal);
+	--lh-sun-ink: var(--q-on-teal);
+	--lh-sun-soft: var(--q-teal-wash);
+	--lh-trail-red: var(--q-ink-3);
+	--lh-trail-blue: var(--q-ink-3);
+	--lh-trail-green: var(--q-ink-3);
+	--lh-trail-yellow: var(--q-ink-3);
+	--lh-go: var(--q-teal);
+	--lh-go-soft: var(--q-teal-wash);
+	--lh-go-ink: var(--q-on-teal);
+	--lh-warn: var(--q-ink-2);
+	--lh-warn-soft: var(--q-well-2);
+	--lh-miss: var(--q-miss);
+	--lh-miss-soft: var(--q-miss-wash);
+	--lh-flame: var(--q-teal);
+	--lh-xp: var(--q-teal);
+	--lh-sky: var(--q-teal);
+	--lh-gold: var(--q-teal);
 }
 
 @theme inline {

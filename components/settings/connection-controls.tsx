@@ -63,7 +63,7 @@ export function ConnectionDialog({ children, onClose, busy, label, testid, backd
 	}, []);
 	return createPortal(
 		<div
-			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 			data-testid={backdropTestid}
 			{...backdropDismiss}
 		>

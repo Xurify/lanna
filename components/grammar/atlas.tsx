@@ -34,14 +34,14 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-16" data-testid="grammar">
-				<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
-					<ArrowLeftIcon className="size-3.5" />
+				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">Grammar</h1>
-				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Grammar</h1>
+				<p className="q-line dim mt-2 max-w-2xl">
 					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practice.{" "}
-					<span className="text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
+					<span className="font-semibold text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
 				</p>
 
 				<table className="mt-8 w-full border-separate border-spacing-1.5 text-center" data-testid="grammar-atlas">
@@ -51,9 +51,9 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 								<span className="sr-only">Case</span>
 							</th>
 							{ATLAS_GENDERS.map((g) => (
-								<th key={g.id} scope="col" className="p-1 pb-2 font-ui text-xs font-bold text-foreground">
+								<th key={g.id} scope="col" className="p-1 pb-2 text-xs font-semibold text-ink-2">
 									<span className="block capitalize">{g.english}</span>
-									<span className="block font-normal text-muted-foreground" lang="sk">
+									<span className="block font-normal text-ink-3" lang="sk">
 										{g.slovak}
 									</span>
 								</th>
@@ -64,8 +64,8 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 						{ATLAS_CASES.map((row) => (
 							<tr key={row.case}>
 								<th scope="row" className="p-1 text-left align-middle">
-									<span className="block font-ui text-sm font-black text-foreground capitalize">{row.english}</span>
-									<span className="block font-ui text-xs text-muted-foreground" lang="sk">
+									<span className="block text-sm font-semibold text-foreground capitalize">{row.english}</span>
+									<span className="block text-xs text-ink-3" lang="sk">
 										{row.slovak}
 									</span>
 								</th>
@@ -79,15 +79,15 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				</table>
 
 				{/* The selected cell's rule; a fixed region, so pointing around never shifts the page. */}
-				<div className="mt-6 min-h-24 rounded-2xl border-2 border-border bg-card p-5" data-testid="grammar-rule" aria-live="polite">
+				<div className="q-card mt-6 min-h-24 p-5" data-testid="grammar-rule" aria-live="polite">
 					{sel && selected ? (
 						<>
-							<p className="font-ui text-base font-bold text-foreground">{sel.title}</p>
-							<p className="mt-1.5 font-prose text-base text-muted-foreground">{sel.rule}</p>
+							<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground">{sel.title}</p>
+							<p className="mt-1.5 text-base text-ink-2">{sel.rule}</p>
 							<CellRecord cell={selected} />
 						</>
 					) : (
-						<p className="font-prose text-base text-muted-foreground">No drill for this cell yet.</p>
+						<p className="text-base text-ink-3">No drill for this cell yet.</p>
 					)}
 				</div>
 			</main>
@@ -100,9 +100,9 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 function CellRecord({ cell }: { cell: AtlasCell }) {
 	const wrong = slipLine(cell.slips);
 	const spoken = slipLine(cell.spoken);
-	if (cell.reps === 0 && !spoken) return <p className="mt-3 font-prose text-sm text-muted-foreground">No first tries here yet.</p>;
+	if (cell.reps === 0 && !spoken) return <p className="mt-3 text-sm text-ink-3">No first tries here yet.</p>;
 	return (
-		<div className="mt-3 flex flex-col gap-1 font-prose text-sm text-muted-foreground">
+		<div className="mt-3 flex flex-col gap-1 text-sm text-ink-3">
 			{cell.reps > 0 && (
 				<p>
 					First tries: {cell.right} of {cell.reps} right
@@ -113,7 +113,7 @@ function CellRecord({ cell }: { cell: AtlasCell }) {
 			{spoken && <p>Said wrong in Speak: {spoken}.</p>}
 			{cell.unit && (
 				<p className="mt-1">
-					<Link href={`/lesson?unit=${cell.unit}&gender=${cell.col}`} className="font-ui text-sm font-semibold text-foreground underline decoration-primary underline-offset-4 hover:text-primary">
+					<Link href={`/lesson?unit=${cell.unit}&gender=${cell.col}`} className="text-sm font-semibold text-teal-2 underline decoration-teal-line underline-offset-4 hover:text-teal">
 						Drill this form ({ATLAS_GENDERS.find((g) => g.id === cell.col)?.english ?? cell.col}) →
 					</Link>
 				</p>
@@ -127,14 +127,14 @@ function CellRecord({ cell }: { cell: AtlasCell }) {
 function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean; onSelect: (c: AtlasCell) => void }) {
 	const inner = cell.unit ? (
 		cell.accuracy === null ? (
-			<span className="text-sm text-muted-foreground">not yet</span>
+			<span className="text-sm text-ink-3">not yet</span>
 		) : (
-			<span className={cn("text-sm font-bold tabular-nums", cell.accuracy >= 0.8 ? "text-go" : "text-foreground")}>{Math.round(cell.accuracy * 100)}%</span>
+			<span className={cn("text-sm font-bold tabular-nums", cell.accuracy >= 0.8 ? "text-teal-2" : "text-foreground")}>{Math.round(cell.accuracy * 100)}%</span>
 		)
 	) : (
-		<span className="text-sm text-muted-foreground/60">not yet</span>
+		<span className="text-sm text-ink-4">not yet</span>
 	);
-	const cls = cn("flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2 transition-colors", selected ? "border-foreground/40 bg-accent" : "bg-card hover:bg-accent");
+	const cls = cn("flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 transition-colors", selected ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-card shadow-raise hover:bg-well");
 	if (!cell.unit) {
 		return (
 			<td className="p-0 align-middle">
@@ -157,7 +157,7 @@ function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean
 				title={cell.reps > 0 ? `${cell.right} of ${cell.reps} right on the first try` : "No first tries yet"}
 			>
 				{inner}
-				{cell.accuracy === null ? null : <span className="text-xs text-muted-foreground tabular-nums">{cell.reps} first {cell.reps === 1 ? "try" : "tries"}</span>}
+				{cell.accuracy === null ? null : <span className="text-xs text-ink-3 tabular-nums">{cell.reps} first {cell.reps === 1 ? "try" : "tries"}</span>}
 			</Link>
 		</td>
 	);

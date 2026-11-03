@@ -24,7 +24,17 @@ import {
 	RepeatIcon,
 	SunIcon,
 	XIcon,
+	CircleAlertIcon,
+	ClapperboardIcon,
+	FlagIcon,
+	HeadphonesIcon,
+	HistoryIcon,
+	type LucideIcon,
+	MapIcon,
+	TableIcon,
+	ZapIcon,
 } from "lucide-react";
+import { NAV, navItemFor, type NavId } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
@@ -120,6 +130,7 @@ export function LanguageSwitcher() {
 		else setNote(`Restart LangHarness to switch to ${label}.`);
 	};
 
+	const activeNav = navItemFor(pathname);
 	const reviewDue = counts ? counts.due + counts.learning : 0;
 	const reviewNew = counts?.newLeft ?? 0;
 	const activeProfile = profile?.profiles.find((p) => p.id === profile.active);
@@ -142,7 +153,7 @@ export function LanguageSwitcher() {
 						data-testid="profile-trigger"
 						onClick={() => setOpen((v) => !v)}
 						className={cn(
-							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-accent/70",
+							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-accent/70",
 							open && "ring-1 ring-border",
 						)}
 					>
@@ -163,7 +174,7 @@ export function LanguageSwitcher() {
 						/>
 					</button>
 				) : (
-					<div className="h-9 animate-pulse rounded-xl bg-card" aria-hidden />
+					<div className="h-9 animate-pulse rounded-xl bg-card shadow-[inset_0_0_0_1px_var(--q-line-2)]" aria-hidden />
 				)}
 
 				{open && profile && (
@@ -175,7 +186,7 @@ export function LanguageSwitcher() {
 						menuClass="flex w-60 flex-col gap-0.5 rounded-xl border bg-card p-1.5 text-xs shadow-xl"
 					>
 						<div ref={menuRef} role="listbox" aria-label="Languages" className="flex flex-col gap-0.5">
-							<div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+							<div className="px-2 py-1 text-[10px] font-boldr text-muted-foreground/70">
 								Target Language
 							</div>
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
@@ -228,7 +239,7 @@ export function LanguageSwitcher() {
 			{/* Centered Modal Confirmation — zero layout shift on sidebar navigation */}
 			{pending && typeof document !== "undefined" && createPortal(
 				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 					{...modalDismiss}
 				>
 					<div
@@ -236,14 +247,14 @@ export function LanguageSwitcher() {
 						aria-modal="true"
 						aria-labelledby="switch-dialog-title"
 						data-testid="profile-confirm"
-						className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border bg-card p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+						className="flex w-full max-w-sm flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
 					>
 						<div className="flex items-center gap-3">
 							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/40">
 								<CountryFlag lang={pending.id} className="w-[30px] h-[20px] rounded-[4px]" />
 							</div>
 							<div className="min-w-0 flex-1">
-								<h3 id="switch-dialog-title" className="text-sm font-bold text-foreground">
+								<h3 id="switch-dialog-title" className="text-sm font-semibold text-foreground">
 									Switch to {pending.label}?
 								</h3>
 								<p className="text-xs text-muted-foreground">
@@ -279,19 +290,19 @@ export function LanguageSwitcher() {
 			{/* Add Language Guide Modal */}
 			{showAddHelp && typeof document !== "undefined" && createPortal(
 				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100"
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 					{...helpDismiss}
 				>
 					<div
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="add-lang-title"
-						className="flex w-full max-w-md flex-col gap-3.5 rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+						className="flex w-full max-w-md flex-col gap-3.5 rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 					>
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-2.5">
 								<GlobeIcon className="size-5 text-primary" />
-								<h3 id="add-lang-title" className="text-base font-bold text-foreground">
+								<h3 id="add-lang-title" className="text-base font-semibold text-foreground">
 									Adding a New Language
 								</h3>
 							</div>
@@ -308,19 +319,19 @@ export function LanguageSwitcher() {
 						</p>
 						<div className="flex flex-col gap-2 rounded-xl bg-accent/40 p-3 text-xs">
 							<div className="flex gap-2">
-								<span className="font-bold text-primary">1.</span>
+								<span className="font-semibold text-primary">1.</span>
 								<span>
 									<strong>Register profile:</strong> Add metadata to <code className="rounded bg-muted px-1 py-0.5">src/core/language.ts</code> (or pick from <code className="rounded bg-muted px-1 py-0.5">LANGUAGE_PRESETS</code>).
 								</span>
 							</div>
 							<div className="flex gap-2">
-								<span className="font-bold text-primary">2.</span>
+								<span className="font-semibold text-primary">2.</span>
 								<span>
 									<strong>Enable profile:</strong> Add to <code className="rounded bg-muted px-1 py-0.5">config.ts</code> <code className="rounded bg-muted px-1 py-0.5">LANGUAGE_PROFILES</code>.
 								</span>
 							</div>
 							<div className="flex gap-2">
-								<span className="font-bold text-primary">3.</span>
+								<span className="font-semibold text-primary">3.</span>
 								<span>
 									<strong>Curriculum assets:</strong> Provide vocabulary in <code className="rounded bg-muted px-1 py-0.5">curriculum/&lt;lang&gt;/lexicon.json</code>.
 								</span>
@@ -344,39 +355,28 @@ export function LanguageSwitcher() {
 			)}
 
 			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
-			<nav className="flex flex-col gap-0.5" aria-label="Main">
-				<NavItem href="/" testid="today-door" active={pathname === "/"} icon={<SunIcon className="size-[18px]" />}>
-					Today
-				</NavItem>
-				<NavItem href="/curriculum" testid="path-door" active={pathname === "/curriculum" || pathname === "/grammar" || pathname === "/exam"} icon={<MountainSnowIcon className="size-[18px]" />}>
-					Climb
-				</NavItem>
-				<NavItem href="/review" testid="review-door" active={pathname === "/review"} icon={<RepeatIcon className="size-[18px]" />}>
-					Review
-					{counts && (reviewDue > 0 || reviewNew > 0) && (
-						<span
-							className={cn(
-								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
-								reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground",
-							)}
-							data-testid="review-badge"
-						>
-							{reviewDue > 0 ? reviewDue : `${reviewNew} new`}
-						</span>
-					)}
-				</NavItem>
-				<NavItem href="/read" testid="stories-door" active={pathname === "/read" || pathname === "/listen" || pathname === "/watch"} icon={<BookOpenIcon className="size-[18px]" />}>
-					Stories
-				</NavItem>
-				<NavItem href="/speak" testid="speak-door" active={pathname === "/speak" || pathname === "/fluency"} icon={<MicIcon className="size-[18px]" />}>
-					Speak
-				</NavItem>
-				<NavItem href="/words" testid="words-door" active={pathname === "/words"} icon={<BookAIcon className="size-[18px]" />}>
-					Words
-				</NavItem>
-				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones" || pathname === "/map" || pathname === "/mistakes"} icon={<ChartNoAxesColumnIcon className="size-[18px]" />}>
-					Progress
-				</NavItem>
+			<nav className="flex flex-col gap-3" aria-label="Main">
+				{NAV.map((group) => (
+					<div key={group.id} className="flex flex-col gap-0.5" role={group.label ? "group" : undefined} aria-label={group.label ?? undefined} data-testid={`nav-group-${group.id}`}>
+						{group.label && <p className="px-2.5 pb-0.5 pt-1 text-xs font-bold text-muted-foreground">{group.label}</p>}
+						{group.items.map((item) => {
+							const Icon = NAV_ICONS[item.id];
+							return (
+								<NavItem key={item.id} href={item.href} testid={`${item.id}-door`} active={activeNav?.id === item.id} icon={<Icon className="size-[18px]" />}>
+									{item.label}
+									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
+										<span
+											className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums", reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground")}
+											data-testid="review-badge"
+										>
+											{reviewDue > 0 ? reviewDue : `${reviewNew} new`}
+										</span>
+									)}
+								</NavItem>
+							);
+						})}
+					</div>
+				))}
 			</nav>
 		</div>
 	);
@@ -384,6 +384,24 @@ export function LanguageSwitcher() {
 
 /** One primary destination: a trail-sign row. The one you are on is lit
  *  with a sun bar at its edge and a brighter icon, no pill. */
+const NAV_ICONS: Record<NavId, LucideIcon> = {
+	today: SunIcon,
+	curriculum: MountainSnowIcon,
+	review: RepeatIcon,
+	read: BookOpenIcon,
+	listen: HeadphonesIcon,
+	watch: ClapperboardIcon,
+	speak: MicIcon,
+	fluency: ZapIcon,
+	words: BookAIcon,
+	grammar: TableIcon,
+	map: MapIcon,
+	progress: ChartNoAxesColumnIcon,
+	milestones: FlagIcon,
+	mistakes: CircleAlertIcon,
+	log: HistoryIcon,
+};
+
 function NavItem({
 	href,
 	testid,
@@ -403,7 +421,7 @@ function NavItem({
 			data-testid={testid}
 			aria-current={active ? "page" : undefined}
 			className={cn(
-				"relative flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
+				"relative flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
 				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
 			)}
 		>

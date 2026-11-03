@@ -30,6 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
@@ -208,10 +209,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 		return (
 			<Frame>
 				<div className="m-auto max-w-md text-center" data-testid="watch-preparing">
-					<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-go/15 text-go">
+					<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-teal-wash text-teal-2">
 						<MonitorPlayIcon className="size-9 lh-flicker" />
 					</div>
-					<h1 className="mt-5 font-ui text-3xl font-black text-foreground">Preparing the video…</h1>
+					<h1 className="mt-5 font-ui text-3xl font-[600] text-foreground">Preparing the video…</h1>
 					<p className="mt-2 font-prose text-lg text-muted-foreground">The captions are fetched, cut into lines, translated and glossed once. It is kept, so the next time is free.</p>
 					<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground" data-testid="watch-stage">
 						<LoaderCircleIcon className="size-4 animate-spin" />
@@ -225,32 +226,33 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	if (stage === "error") {
 		return (
 			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="watch-error">
-					{error?.meta?.title && (
-						<p className="font-ui text-sm font-bold text-muted-foreground" lang="sk">
-							{error.meta.title}
-						</p>
-					)}
-					<p className="mt-1 font-prose text-lg text-foreground">{error?.message ?? "Something went wrong."}</p>
-					<div className="mt-6 flex flex-wrap justify-center gap-3">
-						{error?.noCaptions && error.canTranscribe && pending && (
-							<button type="button" onClick={() => void prepare(pending, true)} className={PRIMARY} data-testid="watch-transcribe">
-								Transcribe the audio
+				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
+					<EmptyState
+						testid="watch-error"
+						title="This video could not be prepared"
+						action={
+							error?.noCaptions && error.canTranscribe && pending ? (
+								<button type="button" onClick={() => void prepare(pending, true)} className="q-btn primary" data-testid="watch-transcribe">
+									Transcribe the audio
+								</button>
+							) : state?.canPrepare === false ? (
+								<AddKeyButton />
+							) : pending ? (
+								<button type="button" onClick={() => void prepare(pending)} className="q-btn primary">
+									Try again
+								</button>
+							) : undefined
+						}
+						secondary={
+							<button type="button" onClick={() => setStage("shelf")} className="q-btn ghost">
+								Pick another video
 							</button>
-						)}
-						{!error?.noCaptions && pending && state?.canPrepare !== false && (
-							<button type="button" onClick={() => void prepare(pending)} className={PRIMARY}>
-								Try again
-							</button>
-						)}
-						{state?.canPrepare === false && <SettingsLink className={PRIMARY}>Set up a model</SettingsLink>}
-						<button type="button" onClick={() => setStage("shelf")} className={SECONDARY}>
-							Another video
-						</button>
-						<Link href="/" className={SECONDARY}>
-							Today
-						</Link>
-					</div>
+						}
+					>
+						{error?.meta?.title && <p lang="sk">{error.meta.title}</p>}
+						<p>{error?.message ?? "Something went wrong."}</p>
+						<p>Videos you have already prepared still play from your list.</p>
+					</EmptyState>
 				</div>
 			</Frame>
 		);
@@ -336,16 +338,17 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 					<XIcon className="size-5" />
 				</Link>
 				<div className="min-w-0 flex-1">
-					<p className="truncate font-ui text-sm font-bold text-foreground" lang="sk">
+					<p className="truncate font-ui text-sm font-[600] text-foreground" lang="sk">
 						{video.title} <span className="text-muted-foreground">· {step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
-						<div className="h-full rounded-full bg-xp transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
+						<div className="h-full rounded-full bg-teal transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
 					</div>
 				</div>
 				{right}
-				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 flex items-center gap-1.5 rounded-lg p-1.5 text-[13px] font-[550] text-muted-foreground hover:bg-accent hover:text-foreground">
 					<LibraryIcon className="size-5" />
+					<span className="max-sm:hidden">Videos</span>
 				</button>
 			</div>
 		</div>
@@ -367,9 +370,8 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-shelf">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
-						<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Watch</p>
-						<h1 className="mt-1 font-ui text-3xl font-black text-foreground">A video, with both subtitles</h1>
-						<p className="mt-1 font-prose text-base text-muted-foreground">Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
+						<h1 className="font-ui text-3xl font-[600] text-foreground">Watch</h1>
+						<p className="mt-1 font-prose text-base text-muted-foreground">A video with both subtitles. Paste a Slovak YouTube link. You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
 					</div>
 					<Link href="/" className={SECONDARY}>
 						Today
@@ -388,7 +390,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
-						className="h-12 min-w-0 flex-1 rounded-xl border-2 bg-card px-4 font-ui text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-go"
+						className="h-12 min-w-0 flex-1 rounded-xl border bg-card px-4 font-ui text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-teal"
 						data-testid="watch-url"
 					/>
 					<button type="submit" disabled={!valid || state?.canPrepare === false} className={PRIMARY} data-testid="watch-prepare">
@@ -396,19 +398,17 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 						Prepare it
 					</button>
 				</form>
-				<p className="mt-2 font-prose text-xs text-muted-foreground">
-					{state?.canPrepare === false ? (
-						<>
-							Translating needs a model on the cheap slot. <SettingsLink className="underline">Set one up</SettingsLink>.
-						</>
-					) : (
-						<>The captions come from YouTube (made by people, or its automatic ones); translating a video is one or two calls on the cheap model slot, paid once. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</>
-					)}
-				</p>
+				{state?.canPrepare === false ? (
+					<div className="mt-3">
+						<KeyNote>Preparing a new video needs an AI key, for the English translation. Videos you have already prepared play without one.</KeyNote>
+					</div>
+				) : (
+					<p className="mt-2 font-prose text-xs text-muted-foreground">The captions come from YouTube (made by people, or its automatic ones). Translating a video takes one or two short requests to your AI provider, once, and it is kept. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</p>
+				)}
 
 				{list.length > 0 && (
 					<>
-						<p className="mt-8 font-ui text-xs font-bold tracking-wide text-muted-foreground">
+						<p className="mt-8 font-ui text-xs font-[600] tracking-wide text-muted-foreground">
 							Your videos · {list.length}
 							{state?.watchedToday ? ` · ${state.watchedToday} watched today` : ""}
 						</p>
@@ -417,12 +417,12 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 								const band = coverageBand(v.coverage);
 								return (
 									<li key={v.id}>
-										<button type="button" onClick={() => onOpen(v.id)} className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4 text-left transition-colors hover:border-foreground/40" data-testid="watch-shelf-item">
-											<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", v.watches > 0 ? "bg-accent text-muted-foreground" : "bg-go/15 text-go")}>
+										<button type="button" onClick={() => onOpen(v.id)} className="flex w-full items-center gap-4 rounded-lg border bg-card px-5 py-4 text-left transition-colors hover:shadow-raise-hi" data-testid="watch-shelf-item">
+											<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", v.watches > 0 ? "bg-accent text-muted-foreground" : "bg-teal-wash text-teal-2")}>
 												<MonitorPlayIcon className="size-5" />
 											</span>
 											<span className="min-w-0 flex-1">
-												<span className="block truncate font-ui text-lg font-bold text-foreground" lang="sk">
+												<span className="block truncate font-ui text-lg font-[600] text-foreground" lang="sk">
 													{v.title}
 												</span>
 												<span className="block truncate font-prose text-sm text-muted-foreground">
@@ -430,8 +430,8 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 													{formatClock(v.durationSec)} · {v.segments} lines · {Math.round(v.coverage * 100)}% known ({band.title.toLowerCase()})
 												</span>
 											</span>
-											<span className="shrink-0 text-right font-ui text-xs font-bold text-muted-foreground">
-												{v.watches === 0 ? <span className="text-go">new</span> : v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : `watched ${v.watches}×`}
+											<span className="shrink-0 text-right font-ui text-xs font-[600] text-muted-foreground">
+												{v.watches === 0 ? <span className="text-teal-2">new</span> : v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : `watched ${v.watches}×`}
 											</span>
 										</button>
 									</li>
@@ -450,7 +450,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: WatchMode) => void }) {
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
-	const tone = band.band === "comfortable" ? "text-go" : band.band === "stretch" ? "text-gold" : "text-miss";
+	const tone = band.band === "comfortable" ? "text-teal-2" : band.band === "stretch" ? "text-teal-2" : "text-miss";
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) {
@@ -464,23 +464,23 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[4vh]">
 			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-preview">
-				<p className="font-ui text-sm font-bold text-muted-foreground">
+				<p className="font-ui text-sm font-[600] text-muted-foreground">
 					{video.channel ? `${video.channel} · ` : ""}
 					{formatClock(video.durationSec)} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
 				</p>
-				<h1 className="mt-1 font-ui text-3xl font-black text-foreground" lang="sk">
+				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang="sk">
 					{video.title}
 				</h1>
 
 				<div className="mt-6 grid gap-4 sm:grid-cols-[auto_1fr]">
-					<div className="flex items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4" data-testid="watch-coverage">
+					<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
 						<Ring value={video.coverage} floor={LISTEN_FLOOR} tone={tone} />
 						<div>
-							<p className={cn("font-ui text-2xl font-black", tone)}>{band.title}</p>
-							<p className="font-ui text-sm font-bold text-muted-foreground">{pct} of every 100 words known</p>
+							<p className={cn("font-ui text-2xl font-[600]", tone)}>{band.title}</p>
+							<p className="font-ui text-sm font-[600] text-muted-foreground">{pct} of every 100 words known</p>
 						</div>
 					</div>
-					<div className="rounded-2xl border-2 bg-card px-5 py-4">
+					<div className="rounded-lg border bg-card px-5 py-4">
 						<p className="font-prose text-base leading-snug text-foreground">{band.line}</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
 							{video.wordCount} words · {video.unknownCount} you have not met · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
@@ -490,16 +490,16 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 
 				{video.preTeach.length > 0 && (
 					<div className="mt-6" data-testid="watch-preteach">
-						<p className="font-ui text-sm font-bold text-muted-foreground">Meet these first — they come up in the video and you have not met them</p>
+						<p className="font-ui text-sm font-[600] text-muted-foreground">Meet these first — they come up in the video and you have not met them</p>
 						<ul className="mt-2 grid gap-2 sm:grid-cols-2">
 							{video.preTeach.map((w) => (
-								<li key={w.slug ?? w.lemma} className="flex items-start gap-3 rounded-2xl border bg-card px-4 py-3">
+								<li key={w.slug ?? w.lemma} className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3">
 									<button type="button" onClick={() => void speak(w.lemma).catch(() => {})} aria-label={`Play ${w.lemma}`} className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 										<Volume2Icon className="size-4" />
 									</button>
 									<span className="min-w-0 flex-1">
 										<span className="flex flex-wrap items-baseline gap-x-2">
-											<span className="font-ui text-lg font-black text-foreground" lang="sk">
+											<span className="font-ui text-lg font-[600] text-foreground" lang="sk">
 												{w.lemma}
 											</span>
 											<span className="font-prose text-base text-foreground">{w.gloss}</span>
@@ -519,16 +519,16 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 				)}
 
 				<div className="mt-8 grid gap-3 sm:grid-cols-2">
-					<button type="button" onClick={() => onStart("step")} className="group rounded-2xl border-2 border-go bg-go-soft p-5 text-left transition-colors hover:brightness-105" data-testid="watch-start-step">
-						<span className="flex items-center gap-2 font-ui text-lg font-black text-foreground">
-							<PlayIcon className="size-5 fill-current text-go" />
+					<button type="button" onClick={() => onStart("step")} className="group rounded-lg border border-teal bg-teal-wash p-5 text-left transition-colors hover:brightness-105" data-testid="watch-start-step">
+						<span className="flex items-center gap-2 font-ui text-lg font-[600] text-foreground">
+							<PlayIcon className="size-5 fill-current text-teal-2" />
 							Line by line
-							<kbd className="ml-auto rounded-md border bg-background px-1.5 font-ui text-xs font-bold text-muted-foreground">Enter</kbd>
+							<kbd className="ml-auto rounded-md border bg-card px-1.5 font-ui text-xs font-[600] text-muted-foreground">Enter</kbd>
 						</span>
 						<span className="mt-1 block font-prose text-sm text-foreground/80">Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. The one for assembling meaning at speed.</span>
 					</button>
-					<button type="button" onClick={() => onStart("flow")} className="rounded-2xl border-2 bg-card p-5 text-left transition-colors hover:border-foreground/40" data-testid="watch-start-flow">
-						<span className="flex items-center gap-2 font-ui text-lg font-black text-foreground">
+					<button type="button" onClick={() => onStart("flow")} className="rounded-lg border bg-card p-5 text-left transition-colors hover:shadow-raise-hi" data-testid="watch-start-flow">
+						<span className="flex items-center gap-2 font-ui text-lg font-[600] text-foreground">
 							<ListIcon className="size-5 text-muted-foreground" />
 							Straight through
 						</span>
@@ -553,7 +553,7 @@ function Ring({ value, floor, tone }: { value: number; floor: number; tone: stri
 			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-accent" />
 			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className={tone} strokeDasharray={`${c * Math.max(0.01, value)} ${c}`} transform="rotate(-90 32 32)" />
 			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" className="text-foreground/50" />
-			<text x="32" y="36" textAnchor="middle" className="fill-current font-ui text-[15px] font-black text-foreground">
+			<text x="32" y="36" textAnchor="middle" className="fill-current font-ui text-[15px] font-[600] text-foreground">
 				{Math.round(value * 100)}%
 			</text>
 		</svg>
@@ -933,11 +933,11 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 				progress={(idx + (atEnd ? 1 : 0)) / segs.length}
 				onShelf={onShelf}
 				right={
-					<div className="flex items-center rounded-lg bg-accent p-0.5 font-ui text-xs font-bold" role="group" aria-label="Mode">
-						<button type="button" onClick={() => switchMode("step")} aria-pressed={step} className={cn("rounded-md px-2 py-1 transition-colors", step ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")} data-testid="watch-mode-step">
+					<div className="flex items-center rounded-lg bg-accent p-0.5 font-ui text-xs font-[600]" role="group" aria-label="Mode">
+						<button type="button" onClick={() => switchMode("step")} aria-pressed={step} className={cn("rounded-md px-2 py-1 transition-colors", step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground")} data-testid="watch-mode-step">
 							Line by line
 						</button>
-						<button type="button" onClick={() => switchMode("flow")} aria-pressed={!step} className={cn("rounded-md px-2 py-1 transition-colors", !step ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")} data-testid="watch-mode-flow">
+						<button type="button" onClick={() => switchMode("flow")} aria-pressed={!step} className={cn("rounded-md px-2 py-1 transition-colors", !step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground")} data-testid="watch-mode-flow">
 							Straight through
 						</button>
 					</div>
@@ -947,7 +947,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 			<div className="flex flex-1 flex-col overflow-y-auto">
 				<div className={cn(COLUMN, "pt-1")}>
 					{/* The player keeps its box from the first paint. */}
-					<div className="relative mx-auto aspect-video w-full overflow-hidden rounded-2xl bg-black" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player">
+					<div className="relative mx-auto aspect-video w-full overflow-hidden rounded-lg bg-black" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player">
 						<div ref={holder} className="absolute inset-0 [&>iframe]:size-full" />
 						{/* In step mode the lines are ours to show, one at a time:
 						    this band covers YouTube's own subtitles for the whole
@@ -956,11 +956,11 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 						    already show the next line). Clicks pass through. */}
 						{ready && !playerError && step && (
 							<div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[26%] items-end justify-center bg-black pb-2" aria-hidden data-testid="watch-caption-cover">
-								<span className="font-ui text-[11px] font-bold text-white/40">{textShown ? "the line is below" : "subtitles covered · T to reveal"}</span>
+								<span className="font-ui text-[11px] font-[600] text-sun-ink/40">{textShown ? "the line is below" : "subtitles covered · T to reveal"}</span>
 							</div>
 						)}
 						{!ready && !playerError && (
-							<div className="absolute inset-0 flex items-center justify-center text-white/70">
+							<div className="absolute inset-0 flex items-center justify-center text-sun-ink/70">
 								<LoaderCircleIcon className="size-8 animate-spin" />
 							</div>
 						)}
@@ -982,7 +982,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 								{prev.sk}
 							</p>
 						)}
-						<div className={cn("rounded-2xl border-2 px-5 py-4 transition-colors", miss ? "border-miss bg-miss-soft" : atEnd && step ? "border-go/60 bg-card" : "bg-card")}>
+						<div className={cn("rounded-lg border px-5 py-4 transition-colors", miss ? "border-miss bg-miss-soft" : atEnd && step ? "border-teal-line bg-card" : "bg-card")}>
 							{textShown ? (
 								<p className="font-prose text-[1.5rem] leading-[1.5] text-foreground" lang="sk" data-testid="watch-sk">
 									{seg.tokens.map((t, j) =>
@@ -1011,7 +1011,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 											<span key={k} className={cn("h-3 rounded-full bg-foreground/15", k % 3 === 0 ? "w-8" : k % 3 === 1 ? "w-5" : "w-6")} />
 										))}
 									</span>
-									<span className="font-ui text-sm font-bold">{playing ? "Listen…" : atEnd ? "Did you get it?" : heard ? "Paused" : "Starting…"}</span>
+									<span className="font-ui text-sm font-[600]">{playing ? "Listen…" : atEnd ? "Did you get it?" : heard ? "Paused" : "Starting…"}</span>
 								</p>
 							)}
 							<p className={cn("mt-1 font-prose text-base", meaningShown ? "text-muted-foreground" : "select-none text-transparent")} data-testid="watch-en" aria-hidden={!meaningShown}>
@@ -1028,12 +1028,12 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone }: { video
 									<button
 										type="button"
 										onClick={() => goTo(s.i)}
-										className={cn("flex w-full items-baseline gap-3 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-accent", s.i === idx && "bg-xp/10")}
+										className={cn("flex w-full items-baseline gap-3 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-accent", s.i === idx && "bg-teal-wash")}
 										ref={(el) => {
 											if (s.i === idx && el) el.scrollIntoView({ block: "nearest" });
 										}}
 									>
-										<span className="w-12 shrink-0 font-ui text-xs font-bold tabular-nums text-muted-foreground">{formatClock(s.start)}</span>
+										<span className="w-12 shrink-0 font-ui text-xs font-[600] tabular-nums text-muted-foreground">{formatClock(s.start)}</span>
 										<span className="min-w-0 flex-1">
 											<span className={cn("block font-prose text-base", s.i === idx ? "text-foreground" : "text-foreground/80")} lang="sk">
 												{s.sk}
@@ -1105,12 +1105,12 @@ function Ctl({ onClick, label, keyName, icon, active, disabled, testId }: { onCl
 			disabled={disabled}
 			aria-pressed={active}
 			title={`${label} (${keyName})`}
-			className={cn("inline-flex h-10 items-center gap-1.5 rounded-xl border-2 px-3 font-ui text-sm font-bold transition-colors hover:bg-foreground/5 disabled:cursor-default disabled:opacity-50", active ? "border-foreground/60 text-foreground" : "border-foreground/15 text-foreground/80")}
+			className={cn("inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 font-ui text-sm font-[600] transition-colors hover:bg-foreground/5 disabled:cursor-default disabled:opacity-50", active ? "border-foreground/60 text-foreground" : "border-foreground/15 text-foreground/80")}
 			data-testid={testId}
 		>
 			{icon}
 			<span className="hidden sm:inline">{label}</span>
-			<kbd className="hidden rounded border bg-background px-1 font-ui text-xs font-bold text-muted-foreground lg:inline">{keyName}</kbd>
+			<kbd className="hidden rounded border bg-card px-1 font-ui text-xs font-[600] text-muted-foreground lg:inline">{keyName}</kbd>
 		</button>
 	);
 }
@@ -1134,17 +1134,17 @@ function End({ video, stats, outcome, saving, mode, onAgain, onShelf }: { video:
 	const gotFirst = outcome?.gotFirst ?? stats.filter((s) => s.got === "first").length;
 	return (
 		<div className="m-auto w-full max-w-xl px-5 text-center" data-testid="watch-end">
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-go/15 text-go">
+			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-teal-wash text-teal-2">
 				<MonitorPlayIcon className="size-12" />
 			</div>
-			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
+			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
 			<p className="mt-2 font-prose text-lg text-muted-foreground" lang="sk">
 				{video.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-sun" />
-				<Stat label={mode === "step" ? "Got first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst}/${judged}` : "—") : String(video.segments.length)} ink="text-go" />
-				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-flame" />
+				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label={mode === "step" ? "Got first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst}/${judged}` : "—") : String(video.segments.length)} ink="text-teal-2" />
+				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
 			</div>
 			{mode === "step" && judged > 0 && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="watch-speed">
@@ -1176,9 +1176,9 @@ function End({ video, stats, outcome, saving, mode, onAgain, onShelf }: { video:
 
 function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
 	return (
-		<div className="rounded-2xl border-2 bg-card px-3 py-4">
-			<p className="font-ui text-sm font-bold text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 font-ui text-3xl font-black tabular-nums", ink)}>{value}</p>
+		<div className="rounded-lg border bg-card px-3 py-4">
+			<p className="font-ui text-sm font-[600] text-muted-foreground">{label}</p>
+			<p className={cn("mt-1 font-ui text-3xl font-[600] tabular-nums", ink)}>{value}</p>
 		</div>
 	);
 }

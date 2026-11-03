@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { WordBankPage } from "@/components/words/word-bank-page";
 
 export const metadata: Metadata = {
-	title: "Slovník & Frázy · LangHarness",
-	description: "Osobný slovník, zvládnuté slová a uložené frázy.",
+	title: "Words",
+	description: "Your words, the ones you know, and your saved phrases.",
 };
 
 export default function Page() {
