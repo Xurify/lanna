@@ -6,6 +6,7 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
+import { SIDEBAR_MAX, SIDEBAR_WIDTH_COOKIE } from "@/lib/sidebar-size";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
 import { readSettingsRecord } from "@/src/server";
 import type { AppearanceSettings } from "@/src/core";
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const jar = await cookies();
 	const theme = themeFromCookie(jar.get(THEME_COOKIE)?.value);
 	const sidebarCollapsed = jar.get("lh-sidebar")?.value === "collapsed";
+	const sidebarWidth = Number(jar.get(SIDEBAR_WIDTH_COOKIE)?.value) || SIDEBAR_MAX;
 	// Saved appearance goes into the first HTML (no flash of the factory
 	// palette or font before the client provider would have applied it).
 	let appearance: AppearanceSettings | undefined;
@@ -67,7 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
 							<ServerEventsProvider>
 				<AppearanceProvider initialDelta={appearance}>
-					<SidebarProvider defaultCollapsed={sidebarCollapsed}>
+					<SidebarProvider defaultCollapsed={sidebarCollapsed} defaultWidth={sidebarWidth}>
 						<ActivityProvider>
 							<AppShell>{children}</AppShell>
 						</ActivityProvider>

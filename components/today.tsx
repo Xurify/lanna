@@ -138,7 +138,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		<div className="@container h-dvh" data-testid="today">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				{/* Phone and tablet: the score is a top bar, since the rail is not there. */}
-				<header className="relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden" data-testid="today-topbar">
+				<header className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden" data-testid="today-topbar">
 					<SidebarToggle />
 					<QPie frac={s && s.dailyGoal > 0 ? s.todayXp / s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-col leading-[1.2]">

@@ -136,4 +136,6 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Sidebar:** it folds to nothing and a single open button stays pinned at the top-left of every page; the open sidebar sits on the tinted sidebar surface. Task screens keep a 56 px rail of the same doors.
 - **Volume:** a click only mutes; the horizontal slider opens after the pointer rests on the speaker, on right-click, long press, or the arrow keys.
 - **Review:** the bar reads "39 of 46 reviews today" with what is still to do under it, and the filled cloze word lost its tick, which pushed the next word away.
+- **Review bar counts cards:** it counted answers, so one card answered again and again (relearning) turned "24 of 25" into "49 of 50". It now counts the cards seen today (`cardsToday` in the review status) over those plus what is still untouched, so a repeat changes nothing and the total stays put; the line under it names the repeats.
+- **Sidebar width:** drag the sidebar's right edge between 208 and 288 px (288 is the old width), double-click for the widest, arrow keys for steps; it is kept in a cookie so the first paint has it. Today's and Review's compact headers now clear Electron's window controls.
 

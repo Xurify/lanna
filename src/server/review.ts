@@ -67,7 +67,7 @@ export interface ReviewPrompt {
 export interface ReviewStatus {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number };
+	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number };
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
 	leeches: Array<Pick<ReviewCard, "id" | "lemma" | "gloss" | "lapses">>;
@@ -142,17 +142,21 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 
 /** Reviews logged on a local day. The log is chronological, so walk back from the newest line and
  *  stop two days short of now (no time zone is further off than 14 hours): the whole log is not scanned. */
-function reviewedOn(today: string, now: Date, tzOffset?: number): number {
+function reviewedOn(today: string, now: Date, tzOffset?: number): { answers: number; cards: Set<string> } {
 	const log = reviewStore.readLog();
 	const floor = now.getTime() - 2 * DAY_MS;
-	let n = 0;
+	let answers = 0;
+	const cards = new Set<string>();
 	for (let i = log.length - 1; i >= 0; i--) {
 		const at = Date.parse(log[i]?.reviewedAt ?? "");
 		if (Number.isNaN(at)) continue;
 		if (at < floor) break;
-		if (dayKey(new Date(at), tzOffset) === today) n++;
+		if (dayKey(new Date(at), tzOffset) === today) {
+			answers++;
+			cards.add(log[i]!.cardId);
+		}
 	}
-	return n;
+	return { answers, cards };
 }
 
 export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?: boolean } = {}): ReviewStatus {
@@ -162,7 +166,8 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 	const introduced = meta.introduced[today] ?? 0;
 	const list = Object.values(cards);
 	const due = dueCards(list, now);
-	const reviewedToday = reviewedOn(today, now, tzOffset);
+	const answeredToday = reviewedOn(today, now, tzOffset);
+	const reviewedToday = answeredToday.answers;
 	let next: ReviewCard | undefined = due[0];
 	// Pending new cards first-come: a card minted but not yet answered.
 	if (!next) next = list.find((c) => c.state === "new" && !c.suspended);
@@ -186,6 +191,9 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 			newLeft: Math.max(0, meta.settings.newPerDay - (meta.introduced[today] ?? 0)),
 			total: list.length,
 			reviewedToday,
+			// Distinct cards, not answers: a card answered three times today is one card, so the day's bar does not grow every time one comes back.
+			cardsToday: answeredToday.cards.size,
+			dueUntouched: due.filter((c) => !answeredToday.cards.has(c.id)).length,
 		},
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings) : null,

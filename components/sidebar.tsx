@@ -15,6 +15,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
+import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_WIDTH_COOKIE, clampSidebarWidth } from "@/lib/sidebar-size";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -111,9 +112,12 @@ const SidebarContext = createContext<{
 	phone: boolean;
 	toggle: () => void;
 	closeDrawer: () => void;
-	/** Desktop: the sidebar is folded to a 56 px rail of icons. */
+	/** Desktop: the sidebar is folded to a narrow column. */
 	collapsed: boolean;
 	toggleCollapsed: () => void;
+	/** The open sidebar's width in px, between SIDEBAR_MIN and SIDEBAR_MAX. */
+	width: number;
+	setWidth: (px: number) => void;
 }>({
 	open: false,
 	drawer: false,
@@ -122,13 +126,18 @@ const SidebarContext = createContext<{
 	closeDrawer: () => {},
 	collapsed: false,
 	toggleCollapsed: () => {},
+	width: 288,
+	setWidth: () => {},
 });
+
 
 export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-export function SidebarProvider({ children, defaultCollapsed = false }: { children: React.ReactNode; defaultCollapsed?: boolean }) {
+export function SidebarProvider({ children, defaultCollapsed = false, defaultWidth = SIDEBAR_MAX }: { children: React.ReactNode; defaultCollapsed?: boolean; defaultWidth?: number }) {
+	const [width, setWidthState] = useState(clampSidebarWidth(defaultWidth));
+	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
 	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
 	const [collapsed, setCollapsed] = useState(defaultCollapsed);
 	const toggleCollapsed = useCallback(() => {
@@ -246,7 +255,7 @@ export function SidebarProvider({ children, defaultCollapsed = false }: { childr
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed }}>
+		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>
@@ -483,7 +492,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 export type SessionKindFilter = "teach" | "all" | "practice";
 
 function SessionsSidebar() {
-	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed } = useSidebar();
+	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();
 	const visible = phone ? drawer : open;
 	const [chats, setChats] = useState<ChatListItem[] | null>(null);
 	const [query, setQuery] = useState("");
@@ -821,10 +830,10 @@ function SessionsSidebar() {
 	return (
 		<>
 			{drawer && <div className="fixed inset-0 z-40 bg-black/50" onClick={closeDrawer} aria-hidden="true" />}
-			<aside data-sidebar=""
+			<aside data-sidebar="" style={{ "--sw": `${width}px` } as React.CSSProperties}
 				className={cn(
-					"sidebar-motion shrink-0 overflow-hidden duration-200",
-					open ? "w-72" : "w-0 md:w-13",
+					"sidebar-motion shrink-0 overflow-hidden duration-200 md:relative",
+					open ? "w-72 md:w-[var(--sw)]" : "w-0 md:w-13",
 					collapsed && "lh-collapsed-col",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
@@ -843,7 +852,7 @@ function SessionsSidebar() {
 						</Hint>
 					</div>
 				)}
-				<div aria-hidden={!visible} className={cn("flex h-full w-72 flex-col border-r bg-side max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
+				<div aria-hidden={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -962,7 +971,7 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<span className="px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
+										<span className="whitespace-nowrap px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
 											<Button
 												type="button"
@@ -975,7 +984,7 @@ function SessionsSidebar() {
 												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
 											>
 												<ListChecksIcon className="size-3.5" />
-												<span className="text-[12px] font-[550]">{selectMode ? "Done" : "Select"}</span>
+												<span className="hidden text-[12px] font-[550] @[15rem]:inline">{selectMode ? "Done" : "Select"}</span>
 											</Button>
 										</Hint>
 										<Hint label="Search chats" action="sessions-search" side="bottom">
@@ -1196,8 +1205,64 @@ function SessionsSidebar() {
 					onClose={() => setBulkOpen(false)}
 					onDeleted={onBulkDeleted}
 				/>
+				{open && <SidebarResizer width={width} setWidth={setWidth} />}
 			</aside>
 		</>
+	);
+}
+
+/** The drag edge on the sidebar's right side: drag to change the width between SIDEBAR_MIN and SIDEBAR_MAX, double-click for the widest, arrow keys for 16 px steps. The width is saved when the drag ends. */
+function SidebarResizer({ width, setWidth }: { width: number; setWidth: (px: number) => void }) {
+	const save = (px: number) => {
+		document.cookie = `${SIDEBAR_WIDTH_COOKIE}=${clampSidebarWidth(px)}; path=/; max-age=31536000; samesite=lax`;
+	};
+	const start = (e: React.PointerEvent<HTMLDivElement>) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		const x0 = e.clientX;
+		const w0 = width;
+		let last = w0;
+		// Without the width transition the edge follows the pointer at once.
+		document.documentElement.dataset.sidebarResizing = "1";
+		const move = (ev: PointerEvent) => {
+			last = clampSidebarWidth(w0 + ev.clientX - x0);
+			setWidth(last);
+		};
+		const end = () => {
+			window.removeEventListener("pointermove", move);
+			window.removeEventListener("pointerup", end);
+			window.removeEventListener("pointercancel", end);
+			delete document.documentElement.dataset.sidebarResizing;
+			save(last);
+		};
+		window.addEventListener("pointermove", move);
+		window.addEventListener("pointerup", end);
+		window.addEventListener("pointercancel", end);
+	};
+	return (
+		<div
+			role="separator"
+			aria-orientation="vertical"
+			aria-label="Sidebar width"
+			aria-valuemin={SIDEBAR_MIN}
+			aria-valuemax={SIDEBAR_MAX}
+			aria-valuenow={width}
+			tabIndex={0}
+			data-testid="sidebar-resizer"
+			onPointerDown={start}
+			onDoubleClick={() => {
+				setWidth(SIDEBAR_MAX);
+				save(SIDEBAR_MAX);
+			}}
+			onKeyDown={(e) => {
+				if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+				e.preventDefault();
+				const next = clampSidebarWidth(width + (e.key === "ArrowRight" ? 16 : -16));
+				setWidth(next);
+				save(next);
+			}}
+			className="lh-no-drag absolute inset-y-0 right-0 z-10 hidden w-1.5 cursor-col-resize touch-none transition-colors hover:bg-teal/30 focus-visible:bg-teal/40 active:bg-teal/50 max-md:hidden md:block"
+		/>
 	);
 }
 

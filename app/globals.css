@@ -990,3 +990,12 @@ body {
 	.lh-ring,
 	.lh-pulse-ring::after { animation: none; opacity: 0; }
 }
+
+/* While the sidebar's edge is dragged the width follows the pointer with no transition, and the text under it is not selected. */
+html[data-sidebar-resizing] {
+	cursor: col-resize;
+	user-select: none;
+}
+html[data-sidebar-resizing] .sidebar-motion {
+	transition: none !important;
+}

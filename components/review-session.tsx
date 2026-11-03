@@ -38,7 +38,7 @@ interface Prompt {
 interface Status {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number };
+	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number };
 	settings: { newPerDay: number; retention: number };
 	next: Prompt | null;
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
@@ -263,9 +263,9 @@ export function ReviewSession() {
 	const zeroKeys = useZeroKeys();
 	const strongKeyless = useStrongKeyless();
 	const keyless = zeroKeys || strongKeyless;
-	// The bar is the day: answers given today over those plus what is still to do. A new card on screen is already out of the new allowance and not yet answered, so it counts as still to do.
-	const done = counts?.reviewedToday ?? 0;
-	const left = counts ? counts.due + counts.learning + counts.newLeft + (prompt?.card.state === "new" ? 1 : 0) : 0;
+	// The bar counts cards, not answers. A card that comes back (a miss goes into relearning) is the same card, so answering it again neither moves the bar nor grows its total; it moves when a card is seen for the first time today. Counting answers made "24 of 25" become "49 of 50" after one card was repeated. A new card on screen is already out of the new allowance and not yet answered, so it counts as still to do.
+	const done = counts?.cardsToday ?? 0;
+	const left = counts ? counts.dueUntouched + counts.newLeft + (prompt?.card.state === "new" ? 1 : 0) : 0;
 	const total = done + left;
 	const isNew = prompt?.card.state === "new";
 	const position = counts ? counts.newToday + 1 : 1;
@@ -277,7 +277,7 @@ export function ReviewSession() {
 	return (
 		<div className="@container h-dvh" data-testid="review-session">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
-				<header className="relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
+				<header className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
 					<SidebarToggle />
 					<QPie frac={day.s && day.s.dailyGoal > 0 ? day.s.todayXp / day.s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-col leading-[1.2]">
@@ -300,7 +300,7 @@ export function ReviewSession() {
 									Review
 									{counts && lang && (
 										<small data-testid="review-counts">
-											<b className="font-semibold text-ink-2 q-num">{done}</b> of <b className="font-semibold text-ink-2 q-num">{total}</b> reviews today
+											<b className="font-semibold text-ink-2 q-num">{done}</b> of <b className="font-semibold text-ink-2 q-num">{total}</b> cards today
 										</small>
 									)}
 								</h2>
@@ -309,7 +309,7 @@ export function ReviewSession() {
 								</div>
 								{counts && lang && (
 									<p className="mt-2 text-[12.5px] text-ink-3" data-testid="review-left">
-										{left === 0 ? "All done for today." : `Still to do: ${counts.due + counts.learning} due, ${counts.newLeft + (prompt?.card.state === "new" ? 1 : 0)} new.`}
+										{left === 0 ? (counts.due + counts.learning > 0 ? `Every card seen once today. ${counts.due + counts.learning} to repeat.` : "All done for today.") : `Still to do: ${counts.dueUntouched} due, ${counts.newLeft + (prompt?.card.state === "new" ? 1 : 0)} new${counts.due + counts.learning > counts.dueUntouched ? `, ${counts.due + counts.learning - counts.dueUntouched} to repeat` : ""}.`}
 									</p>
 								)}
 							</section>

@@ -53,3 +53,13 @@ test("reviewedToday counts only the learner's local day, from the newest lines",
 	// Seven hours ahead of UTC (offset -420), at 03:00 local on 2 November: the 09:00Z and 10:00Z lines are 2 November there too.
 	assert.equal(reviewStatus(new Date("2026-11-01T20:00:00Z"), -420, { mint: false }).counts.reviewedToday, 2);
 });
+
+test("cardsToday counts a card once however often it was answered, so the day's bar does not grow when a card comes back", () => {
+	fs.writeFileSync(LOG(), "", "utf-8");
+	const now = new Date("2026-11-02T15:00:00Z");
+	const at = (hour: number, cardId: string): ReviewLogEntry => ({ ...entry(`2026-11-02T${String(hour).padStart(2, "0")}:00:00Z`), cardId });
+	for (const e of [at(8, "a"), at(9, "a"), at(10, "a"), at(11, "b")]) reviewStore.appendLog(e);
+	const { counts } = reviewStatus(now, 0, { mint: false });
+	assert.equal(counts.reviewedToday, 4, "four answers");
+	assert.equal(counts.cardsToday, 2, "two cards");
+});
