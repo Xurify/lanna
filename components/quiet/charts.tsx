@@ -12,7 +12,7 @@ import { QPie } from "@/components/quiet/icon";
 import { STRAND_TARGET, STRANDS, type StrandBalance } from "@/src/core";
 import type { ChartData } from "@/components/quiet/chart-data";
 
-const WEEKDAY = ["Ne", "Po", "Ut", "St", "Št", "Pi", "So"];
+const WEEKDAY = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const WEEKDAY_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function dow(day: string): number {
@@ -93,7 +93,7 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 				Streak <small>last 5 weeks</small>
 			</h4>
 			<div className="mt-3 grid grid-cols-7 gap-1.5" role="grid">
-				{["Po", "Ut", "St", "Št", "Pi", "So", "Ne"].map((w) => (
+				{["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((w) => (
 					<span key={w} className="text-center text-[11px] text-ink-3">
 						{w}
 					</span>

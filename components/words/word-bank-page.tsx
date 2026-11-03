@@ -252,7 +252,7 @@ export function WordBankPage() {
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">V procese</span>
+								<span className="font-ui text-xs font-semibold">In progress</span>
 								<FootprintsIcon className="size-4 text-sun" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
@@ -316,7 +316,7 @@ export function WordBankPage() {
 						)}
 					>
 						<BookmarkIcon className="size-4" />
-						<span>Saved phrases (Saved Phrases)</span>
+						<span>Saved phrases</span>
 						<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
 							{phrases.length}
 						</span>
@@ -372,7 +372,7 @@ export function WordBankPage() {
 								{ id: "all", label: "All" },
 								{ id: "favorite", label: "Favorites" },
 								{ id: "mastered", label: "Known (≥80%)" },
-								{ id: "learning", label: "V procese" },
+								{ id: "learning", label: "In progress" },
 								{ id: "due", label: "Due for review" },
 								{ id: "new", label: "New in the deck" },
 							].map((tab) => (
@@ -485,7 +485,7 @@ export function WordBankPage() {
 															{item.retention >= 80
 																? "Known"
 																: item.retention > 0
-																	? "V procese"
+																	? "In progress"
 																	: "New"}
 														</span>
 														<span className="text-foreground">{item.retention}%</span>

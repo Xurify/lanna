@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { JumpBar } from "@/components/quiet/jump";
 import { SidebarToggle } from "@/components/sidebar";
-import { DayRail, greeting, skDate, useDaySummary } from "@/components/quiet/day-rail";
+import { DayRail, greeting, todayDate, useDaySummary } from "@/components/quiet/day-rail";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useRouter } from "next/navigation";
 import { DiacriticBar } from "@/components/diacritic-bar";
@@ -275,8 +275,8 @@ export function ReviewSession() {
 						<div className="mx-auto w-full max-w-[720px] pt-8">
 							{/* The date and greeting are known at once; the day's counts join the line when the summary arrives, in space already held for two lines on a phone. */}
 							<section className="opacity-50">
-								<p className="q-date first-letter:uppercase" lang="sk" suppressHydrationWarning>
-									{skDate()}
+								<p className="q-date first-letter:uppercase" suppressHydrationWarning>
+									{todayDate()}
 								</p>
 								<p className="q-line mt-0.5 min-h-[30px] text-[20px] font-semibold tracking-[-0.02em] @max-xl:min-h-[60px]" suppressHydrationWarning>
 									{greeting()}.{day.s ? `${day.s.streak.days > 0 ? ` Day ${day.s.streak.days} in a row.` : ""} ${day.s.plan.total} things today, ${day.s.plan.done} done.` : ""}

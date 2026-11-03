@@ -14,18 +14,18 @@ import { SidebarToggle } from "@/components/sidebar";
 import { DayLogView } from "@/components/log/day-log-view";
 import type { DayLog } from "@/src/core";
 
-const WEEKDAY = ["Nedeľa", "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota"];
-const MONTH = ["januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra"];
+const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-/** "Pondelok 2. novembra" for a YYYY-MM-DD key. */
+/** "Monday, November 2" for a YYYY-MM-DD key. */
 export function dayTitle(day: string): string {
 	const d = new Date(`${day}T12:00:00`);
-	return `${WEEKDAY[d.getDay()]} ${d.getDate()}. ${MONTH[d.getMonth()]}`;
+	return `${WEEKDAY[d.getDay()]}, ${MONTH[d.getMonth()]} ${d.getDate()}`;
 }
 
 function shortDay(day: string): string {
 	const d = new Date(`${day}T12:00:00`);
-	return `${WEEKDAY[d.getDay()]!.slice(0, 2)} ${d.getDate()}.${d.getMonth() + 1}.`;
+	return `${WEEKDAY[d.getDay()]!.slice(0, 3)} ${d.getDate()}`;
 }
 
 export function LogPage() {

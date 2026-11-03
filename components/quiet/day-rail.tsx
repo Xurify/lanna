@@ -63,9 +63,9 @@ export interface Summary {
 
 export function greeting(now = new Date()): string {
 	const h = now.getHours();
-	if (h < 10) return "Dobré ráno";
-	if (h < 18) return "Dobrý deň";
-	return "Dobrý večer";
+	if (h < 10) return "Good morning";
+	if (h < 18) return "Good afternoon";
+	return "Good evening";
 }
 
 export const TASK_LABEL: Record<PlanTask["id"], string> = {
@@ -143,14 +143,14 @@ export function taskLocked(t: PlanTask, keyless: boolean): boolean {
 }
 
 /** The date the screens show, in Slovak: "Pondelok 2. novembra". */
-export function skDate(): string {
-	return new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" });
+export function todayDate(): string {
+	return new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 }
 
 /** The rail beside Today and Review: the brand, the day's date, the charts and the goal. */
 export function DayRail({ s }: { s: Summary | null }) {
 	const settings = useSettingsDialog();
-	const date = skDate();
+	const date = todayDate();
 	return (
 		<div className="hidden min-h-0 @6xl:block">
 			<aside className="q-rail h-full" aria-label="Your progress">
@@ -160,7 +160,7 @@ export function DayRail({ s }: { s: Summary | null }) {
 							<QPie frac={0.7} size={14} className="mk" />
 						</span>
 						<b>LangHarness</b>
-						<small>Slovenčina</small>
+						<small>Slovak</small>
 						<button type="button" className="gear" aria-label="Settings" onClick={() => settings.open()}>
 							<QIcon name="gear" className="size-4" />
 						</button>

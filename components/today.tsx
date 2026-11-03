@@ -21,7 +21,7 @@ import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
 import { EntryRow } from "@/components/log/day-log-view";
 import type { DayLog } from "@/src/core";
-import { DayRail, greeting, skDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
+import { DayRail, greeting, todayDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
 import { JumpBar } from "@/components/quiet/jump";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
@@ -134,7 +134,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	const done = tasks.filter((t) => t.done).length;
 	const total = tasks.length;
 	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
-	const date = skDate();
+	const date = todayDate();
 	const toGoal = s ? Math.max(0, s.dailyGoal - s.todayXp) : 0;
 	const streak = s?.streak.days ?? 0;
 
@@ -167,10 +167,10 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 pt-4 [mask-image:linear-gradient(to_bottom,#000_calc(100%-48px),transparent)] @6xl:px-0 @6xl:pt-8 @6xl:[mask-image:none]">
 						<div className="mx-auto w-full max-w-[720px] pb-6">
 							<header className="q-rise">
-								<p className="q-date first-letter:uppercase" lang="sk">
+								<p className="q-date first-letter:uppercase">
 									{date}
 								</p>
-								<h1 className="q-hello @max-6xl:!mt-1 @max-6xl:!text-[29px] @max-6xl:!leading-[1.12]" lang="sk">
+								<h1 className="q-hello @max-6xl:!mt-1 @max-6xl:!text-[29px] @max-6xl:!leading-[1.12]">
 									{greeting()}.{" "}
 									{streak > 0 && (
 										<>
