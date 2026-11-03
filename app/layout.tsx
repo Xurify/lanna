@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Bricolage_Grotesque, JetBrains_Mono, Source_Sans_3 } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
+import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
 import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
