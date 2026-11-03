@@ -122,3 +122,4 @@ export * from "./stamps.ts";
 export * from "./plan.ts";
 export * from "./storage.ts";
 export * from "./daylog.ts";
+export * from "./rules-map.ts";

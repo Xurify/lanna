@@ -1,15 +1,16 @@
-import { Home } from "@/components/home";
+import { MapPage } from "@/components/map/map-page";
 import { readSettingsRecord } from "@/src/server";
 import { resolveSettings, slotsConfigured } from "@/src/core";
 
 export const metadata = { title: "Map" };
 
-// The knowledge map — the graph home LearnHarness opened on. LangHarness
-// opens on Today (app/page.tsx); the map stays one click away.
+// The Map: the rules the lessons teach, by area (first view), and the
+// knowledge graph LearnHarness opened on (second view).
 export const dynamic = "force-dynamic";
 
-export default function MapPage() {
+export default async function MapRoute({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+	const { view } = await searchParams;
 	const record = readSettingsRecord();
 	const rendering = resolveSettings(record ?? null).graph.rendering;
-	return <Home initialConfigured={slotsConfigured(record?.models)} rendering={rendering} />;
+	return <MapPage initialView={view === "graph" ? "graph" : "rules"} initialConfigured={slotsConfigured(record?.models)} rendering={rendering} />;
 }
