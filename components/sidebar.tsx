@@ -118,6 +118,8 @@ const SidebarContext = createContext<{
 	/** The open sidebar's width in px, between SIDEBAR_MIN and SIDEBAR_MAX. */
 	width: number;
 	setWidth: (px: number) => void;
+	/** A full-screen task page holds the sidebar folded (see useFoldedSidebar). */
+	setForcedFolded: (on: boolean) => void;
 }>({
 	open: false,
 	drawer: false,
@@ -128,6 +130,7 @@ const SidebarContext = createContext<{
 	toggleCollapsed: () => {},
 	width: 288,
 	setWidth: () => {},
+	setForcedFolded: () => {},
 });
 
 
@@ -135,17 +138,36 @@ export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
+/** A full-screen task page calls this: the sidebar folds to its narrow column
+ *  and the page sits beside it (`--sidebar-cols`), the same as any page with a
+ *  collapsed sidebar. The column's open button shows the sidebar until the page changes. */
+export function useFoldedSidebar(): void {
+	const { setForcedFolded } = useSidebar();
+	useEffect(() => {
+		setForcedFolded(true);
+		return () => setForcedFolded(false);
+	}, [setForcedFolded]);
+}
+
 export function SidebarProvider({ children, defaultCollapsed = false, defaultWidth = SIDEBAR_MAX }: { children: React.ReactNode; defaultCollapsed?: boolean; defaultWidth?: number }) {
 	const [width, setWidthState] = useState(clampSidebarWidth(defaultWidth));
 	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
 	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
 	const [collapsed, setCollapsed] = useState(defaultCollapsed);
+	const [forcedFolded, setForcedFolded] = useState(false);
+	const [revealed, setRevealed] = useState(false);
+	const pathname = usePathname();
+	useEffect(() => setRevealed(false), [pathname]);
 	const toggleCollapsed = useCallback(() => {
+		if (forcedFolded) {
+			setRevealed((r) => !r);
+			return;
+		}
 		setCollapsed((c) => {
 			document.cookie = `lh-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
 			return !c;
 		});
-	}, []);
+	}, [forcedFolded]);
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -159,9 +181,12 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	// cookie. (It once vanished for everyone because a closed default
 	// was shared; closed is now only ever the learner's own choice, 2026-11-02.)
 	// A window below the drawer breakpoint hides it as a drawer with a menu button.
-	const open = !collapsed;
 	const [narrow, setNarrow] = useState(false);
 	const [mounted, setMounted] = useState(false);
+	// Folded: the column only. A narrow Electron window folds too, and a task page
+	// folds until its open button is pressed (revealed); otherwise the preference decides.
+	const folded = narrow || (forcedFolded ? !revealed : collapsed);
+	const open = !folded;
 
 	useEffect(() => {
 		// Electron shell detection (merged chrome, 2026-09-17): keys the
@@ -255,9 +280,9 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth }}>
+		<SidebarContext.Provider value={{ open, drawer, phone, toggle, closeDrawer, collapsed: folded, toggleCollapsed, width, setWidth, setForcedFolded }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
-			<div className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
+			<div style={{ "--sidebar-cols": folded ? "3.25rem" : `${width}px` } as React.CSSProperties} className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>
 	);
 }
@@ -846,7 +871,7 @@ function SessionsSidebar() {
 				{collapsed && (
 					<div className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side pt-3 md:flex" data-testid="sidebar-folded">
 						<Hint label="Open sidebar" action="toggle-sidebar" side="right">
-							<Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={toggleCollapsed} data-testid="sidebar-open" className="lh-no-drag text-ink-3 hover:text-foreground">
+							<Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={toggle} data-testid="sidebar-open" className="lh-no-drag text-ink-3 hover:text-foreground">
 								<PanelLeftOpenIcon className="size-4" />
 							</Button>
 						</Hint>
