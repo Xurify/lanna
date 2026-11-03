@@ -15,7 +15,7 @@ import { insertAtCaret } from "@/components/diacritic-bar";
 import { useSidebar } from "@/components/sidebar";
 import { isPhoneNavPath } from "@/components/phone-nav";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
-import { fuzzyScore } from "@/src/core/fuzzy";
+import { fuzzyScore } from "@/src/core";
 import { cn } from "@/lib/utils";
 
 interface JumpApi {

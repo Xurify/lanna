@@ -25,6 +25,8 @@ import { Slider } from "@/components/plan/slider";
 import { Timeline } from "@/components/milestones/milestones-page";
 import { WeakSpots } from "@/components/daily-plan";
 import { StampBook } from "@/components/stamp";
+import { LevelProgress, StrandBars, StreakCalendar, WeekXpChart } from "@/components/quiet/charts";
+import type { ChartData } from "@/components/quiet/chart-data";
 import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages, LEVEL_CAN_DO, levelDates, MIN_PACE_DAYS, PACE_WINDOW_DAYS, paceEta, purposePhrase, shiftLine, withPlan, type LearnerGoal, type WeakSpotSummary } from "@/src/core";
 import type { LearnerFacts, MilestoneEstimate, StampState, TrailLog } from "@/src/core";
 
@@ -58,7 +60,7 @@ const CARD = "q-card mt-5 p-5";
 const H2 = "text-[13px] font-semibold text-ink-2";
 const LINK_BTN = "q-btn sec";
 
-export function PlanPage({ goal, report, weak, stamps = null, log = null }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[]; stamps?: StampState[] | null; log?: TrailLog | null }) {
+export function PlanPage({ goal, report, weak, stamps = null, log = null, charts = null }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[]; stamps?: StampState[] | null; log?: TrailLog | null; charts?: ChartData | null }) {
 	const router = useRouter();
 	const savedMinutes = goal.minutesPerDay;
 	const savedDays = goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK;
@@ -115,6 +117,18 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Progress</h1>
 				<p className="q-line dim mt-1">Your goal, your pace, and when the hours add up to it.</p>
+
+				{charts && (
+					<section className="mt-6" data-testid="plan-charts" aria-label="This week">
+						<h2 className="q-sh">This week</h2>
+						<div className="grid gap-3 sm:grid-cols-2">
+							<WeekXpChart data={charts} className="sm:col-span-2" />
+							<LevelProgress data={charts} className="!mt-0 self-start" />
+							<StreakCalendar data={charts} />
+							<StrandBars balance={charts.balance} className="sm:col-span-2" />
+						</div>
+					</section>
+				)}
 
 				{/* The goal, and where the level is checked again. */}
 				<section className={CARD} data-testid="plan-goal" aria-label="Your goal">

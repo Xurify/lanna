@@ -8,9 +8,10 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
+import { QIcon, QPie } from "@/components/quiet/icon";
+import { ProgressPanel } from "@/components/quiet/charts";
+import { chartData } from "@/components/quiet/chart-data";
 import type { QIconName } from "@/components/quiet/icon-paths";
-import { SettingsLink } from "@/components/settings/settings-link";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import type { Goal } from "@/components/daily-plan";
 import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
@@ -132,7 +133,6 @@ export function useDaySummary(initial: Summary | null = null) {
 			})
 			.catch(() => setFailed(true));
 	};
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(load, []);
 	return { s, failed, load };
 }
@@ -147,29 +147,13 @@ export function skDate(): string {
 	return new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" });
 }
 
-/** A task that is under way, shown in the rail's plan instead of its first line. */
-export interface InProgress {
-	id: PlanTask["id"];
-	title: string;
-	done: number;
-	total: number;
-}
-
-export function DayRail({ s, keyless, busy = false, onOpen, inProgress }: { s: Summary | null; keyless: boolean; busy?: boolean; onOpen: (t: PlanTask) => void; inProgress?: InProgress }) {
+/** The rail beside Today and Review: the brand, the day's date, the charts and the goal. */
+export function DayRail({ s }: { s: Summary | null }) {
 	const settings = useSettingsDialog();
-	const tasks = s?.plan.tasks ?? [];
-	const done = s?.plan.done ?? 0;
-	const total = s?.plan.total ?? 0;
-	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
-	const up = tasks.find((t) => !t.done) ?? null;
 	const date = skDate();
-	const toGoal = s ? Math.max(0, s.dailyGoal - s.todayXp) : 0;
-	const streak = s?.streak.days ?? 0;
-	const open = onOpen;
-	const locked = (t: PlanTask) => taskLocked(t, keyless);
 	return (
 		<div className="hidden min-h-0 @6xl:block">
-			<aside className="q-rail h-full" aria-label="Your day">
+			<aside className="q-rail h-full" aria-label="Your progress">
 				<div className="q-rail-in overflow-y-auto">
 					<div className="q-brand">
 						<span className="q-mark">
@@ -183,90 +167,20 @@ export function DayRail({ s, keyless, busy = false, onOpen, inProgress }: { s: S
 					</div>
 
 					<div className="q-r-today">
-						<h2>Today</h2>
+						<h2>Progress</h2>
 						<p className="first-letter:uppercase" lang="sk">
 							{date}
 						</p>
 					</div>
 
-					<div className="q-score">
-						<div className="q-xp" data-testid="xp-pill">
-							<QPie frac={s && s.dailyGoal > 0 ? s.todayXp / s.dailyGoal : 0} size={36} />
-							<div className="v">
-								<b className="q-num">
-									{s?.todayXp ?? 0} <span>/ {s?.dailyGoal ?? 50} XP</span>
-								</b>
-								<small>{s ? (toGoal > 0 ? `${toGoal} to today's goal` : "Today's goal is met") : " "}</small>
-							</div>
-						</div>
-						<div className="q-two">
-							<div data-testid="streak-pill">
-								<span className="q-week" aria-hidden="true">
-									{(s?.week.length ? s.week : Array.from({ length: 7 }, () => ({ day: "", xp: 0 }))).map((d, i) => (
-										<i key={i} className={cn(d.xp <= 0 && "off")} />
-									))}
-								</span>
-								<span className="q-num"><b>{streak} {streak === 1 ? "day" : "days"}</b> <small>in a row</small></span>
-							</div>
-							<div>
-								<b>Level {s?.level.level ?? 1}</b>
-								<small>{s ? `${s.level.span - s.level.into} XP to level ${s.level.level + 1}` : " "}</small>
-							</div>
-						</div>
-					</div>
-
-					<div className="q-tl-head">
-						The plan
-						<span className="q-num">{s ? (inProgress ? `${done} of ${total} done · in ${TASK_LABEL[inProgress.id]}` : done >= total && total > 0 ? `All ${total} done` : `${done} of ${total} done · about ${left} min left`) : " "}</span>
-					</div>
-					<ol className="q-tl" data-testid="plan-tasks">
-						{tasks.map((t) => {
-							const lk = locked(t);
-							const mine = inProgress?.id === t.id;
-							const state = t.done ? "done" : lk ? "locked" : t === up || mine ? "next" : "";
-							return (
-								<li key={t.id} className={state} data-testid={`plan-${t.id}`} {...(t === up || mine ? { "data-next": "true" } : {})}>
-									<span className="q-cb">{t.done && <QCheck />}</span>
-									<div className="min-w-0">
-										<button type="button" className="k1 block w-full text-left" onClick={() => open(t)} disabled={busy || lk}>
-											{mine ? inProgress.title : words(t).primary}
-										</button>
-										<div className="k2">
-											<QIcon name={taskIcon(t)} />
-											{words(t).kind}
-											{(t === up || mine) && <span className="now">· {mine ? "In progress" : "Up next"}</span>}
-											{t.from && <span>· Left from {new Date(`${t.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}</span>}
-										</div>
-										{mine && (
-											<div className="q-mini" aria-hidden="true">
-												{Array.from({ length: Math.min(9, inProgress.total) }, (_, j) => (
-													<i key={j} className={j < inProgress.done ? "d" : j === inProgress.done ? "c" : undefined} />
-												))}
-											</div>
-										)}
-										{lk && (
-											<div className="lockline">
-												<QIcon name="key" />
-												Needs an AI key ·{" "}
-												<SettingsLink keys className="text-ink-2 underline decoration-line-2 underline-offset-[3px]">
-													Settings → API keys
-												</SettingsLink>
-											</div>
-										)}
-									</div>
-									<span className="m q-num">{t.minutes} min</span>
-								</li>
-							);
-						})}
-					</ol>
+					<div className="mt-3">{s ? <ProgressPanel data={chartData(s)} /> : <div className="q-well h-64 animate-pulse" aria-hidden="true" />}</div>
 
 					{s?.projection && (
-						<div className="q-goal" data-testid="goal-line">
+						<div className="q-goal mt-4" data-testid="goal-line">
 							<QIcon name="flag" />
 							<p data-testid="goal-plan">{goalLine(s)}</p>
 						</div>
 					)}
-					
 				</div>
 			</aside>
 		</div>

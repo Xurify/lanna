@@ -384,7 +384,6 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 	const [activeSentence, setActiveSentence] = useState<number>(0);
 	const [all, setAll] = useState(false);
 	const [showTranslation, setShowTranslation] = useState(false);
-	const [viewMode, setViewMode] = useState<"flow" | "focus">("flow");
 	const [fontSize, setFontSize] = useState<"normal" | "large">("normal");
 	const [shown, setShown] = useState<Set<number>>(new Set());
 	const [popover, setPopover] = useState<{ sentence: number; token: number } | null>(null);
@@ -580,32 +579,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 		<div className="flex flex-1 flex-col overflow-hidden">
 			{/* Top Reading Toolbar */}
 			<div className="shrink-0 border-b border-border/60 bg-background/80 px-4 py-2 backdrop-blur">
-				<div className={cn(COLUMN, "flex flex-wrap items-center justify-between gap-2")}>
-					{/* Left: View Mode Pills */}
-					<div className="flex items-center gap-1 rounded-xl bg-accent/60 p-1 text-xs font-[600] font-ui">
-						<button
-							type="button"
-							onClick={() => setViewMode("flow")}
-							className={cn(
-								"rounded-lg px-3 py-1.5 pointer-coarse:min-h-11 transition-colors",
-								viewMode === "flow" ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
-							)}
-							title="Plynulý text príbehu (Continuous reading)"
-						>
-							Príbeh
-						</button>
-						<button
-							type="button"
-							onClick={() => setViewMode("focus")}
-							className={cn(
-								"rounded-lg px-3 py-1.5 pointer-coarse:min-h-11 transition-colors",
-								viewMode === "focus" ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
-							)}
-							title="Jedna veta (Sentence focus drill)"
-						>
-							Veta po vete
-						</button>
-					</div>
+				<div className={cn(COLUMN, "flex flex-wrap items-center justify-end gap-2")}>
 
 					{/* Right: Translation and Font Size Controls */}
 					<div className="flex items-center gap-2">
@@ -664,70 +638,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						)}
 					</div>
 
-					{/* View Mode: Sentence Focus Mode (LingQ Style) */}
-					{viewMode === "focus" && (
-						<div className="my-8 flex min-h-[260px] flex-col items-center justify-center rounded-lg border border-border/80 bg-card/60 p-6 text-center shadow-raise">
-							{story.sentences[activeSentence]?.who && (
-								<span className="mb-3 inline-block font-ui text-xs font-[600] text-muted-foreground" data-testid="read-speaker">
-									{story.sentences[activeSentence]?.who}
-								</span>
-							)}
-							<div
-								ref={(el) => {
-									sentenceRefs.current[activeSentence] = el;
-								}}
-								className={cn(
-									"font-prose leading-relaxed text-foreground",
-									fontSize === "large" ? "text-2xl md:text-3xl" : "text-xl md:text-2xl",
-								)}
-								lang="sk"
-								data-testid="read-sentence"
-							>
-								{story.sentences[activeSentence]?.tokens.map((t, j) =>
-									t.word ? (
-										<Word
-											key={j}
-											token={t}
-											looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
-											open={popover?.sentence === activeSentence && popover.token === j}
-											onOpen={() => {
-												setPopover({ sentence: activeSentence, token: j });
-												onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
-												sfx.tap();
-											}}
-											onClose={() => setPopover(null)}
-										/>
-									) : (
-										<span key={j}>{t.text}</span>
-									),
-								)}
-							</div>
-							{(showTranslation || shown.has(activeSentence)) && (
-								<p className="mt-4 max-w-lg font-prose text-base text-muted-foreground" data-testid="read-translation">
-									{story.sentences[activeSentence]?.en}
-								</p>
-							)}
-							<div className="mt-5 flex items-center justify-center gap-2">
-								<button
-									type="button"
-									onClick={() => void toggleBookmark(activeSentence)}
-									className={cn(
-										"flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-ui text-xs font-semibold transition-colors",
-										isBookmarked(activeSentence)
-											? "border-teal-line bg-teal-wash text-teal-2"
-											: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
-									)}
-									title={isBookmarked(activeSentence) ? "Odstrániť z uložených fráz" : "Uložiť vetu do fráz"}
-								>
-									<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-teal")} />
-									<span>{isBookmarked(activeSentence) ? "Uložená vo frázach" : "Uložiť vetu"}</span>
-								</button>
-							</div>
-						</div>
-					)}
-
 					{/* View Mode: Continuous Story Flow (Editorial Reading View) */}
-					{viewMode === "flow" && (
 						<div className="space-y-6 sm:space-y-7">
 							{blocks.map((block, bi) =>
 								block.isDialogue ? (
@@ -854,7 +765,6 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								),
 							)}
 						</div>
-					)}
 
 					{/* New Words List */}
 					{story.newWords.length > 0 && (

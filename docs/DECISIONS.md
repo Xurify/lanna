@@ -383,6 +383,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The mockup's component CSS is `app/quiet.css` (in the `components` layer, so utilities override it): `.q-btn`, `.q-card`, `.q-sh`, `.q-well`, `.q-segc`, `.q-jump`, the rail, and the practice-screen pieces. Icons are the mockup's set (`components/quiet/icon.tsx`).
 - One font: Geist (JetBrains Mono for code). The four strands are told apart by icon, not color, so the four trail colors are one neutral grey. Done and right are teal; wrong is a muted red (`--q-miss`), which the mockups never draw.
 - Navigation is the jump bar (Ctrl or Cmd K, the search field at the foot of Today and Review): every route, every curriculum unit, Settings, the sidebar, and the Slovak letters. The sidebar of tutor chats starts closed. On a phone the jump bar replaces the bottom tabs.
+- Today is a plan, not a strip: one list of tasks with a word label, minutes and state, the next one large with one Start. Charts (`components/quiet/charts.tsx`) read only the progress summary and draw an intentional empty state, never invented figures. Tutor tasks are hidden while no AI key is set. Read is the episode only; there is no sentence-by-sentence mode.
 - Mockup copy the app cannot back does not ship: the sample sentence and the rule note with the Estonian bridge on the Review card, "Add 3 minutes of Say it faster", "Not today", "Why? Ask the tutor", and invented shortcuts.
 
 ## Working rules (how work reaches the repo)

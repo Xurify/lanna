@@ -16,7 +16,9 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { QIcon, QPie } from "@/components/quiet/icon";
+import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
+import { ProgressPanel } from "@/components/quiet/charts";
+import { chartData } from "@/components/quiet/chart-data";
 import { DayRail, greeting, skDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
 import { JumpBar } from "@/components/quiet/jump";
 import { SetupDialog } from "@/components/setup-dialog";
@@ -24,7 +26,6 @@ import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { nextTask, type Goal } from "@/components/daily-plan";
 import { curriculumUnit, speakScene, STRAND_TARGET, STRANDS, strandAdvice, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
 import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, Strand, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
 
@@ -70,7 +71,9 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		load();
 	}, [load]);
 
-	const up = nextTask(s?.plan ?? null);
+	const hidden = (t: PlanTask) => t.via === "tutor" && keyless && !t.done;
+	const tasks = (s?.plan.tasks ?? []).filter((t) => !hidden(t));
+	const up = tasks.find((t) => !t.done) ?? null;
 	// Enter starts the day's next step (a lesson once the plan is done).
 	// Tasks that open a tutor chat start a model turn, so they wait for a click.
 	const enterHref = s ? (up ? up.href : `/lesson?unit=${s.next}`) : undefined;
@@ -119,25 +122,19 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		else settings.open("keys");
 	};
 
-	const tasks = s?.plan.tasks ?? [];
-	const done = s?.plan.done ?? 0;
-	const total = s?.plan.total ?? 0;
+	const done = tasks.filter((t) => t.done).length;
+	const total = tasks.length;
 	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
-	const locked = (t: PlanTask) => !t.done && t.via === "tutor" && keyless;
-	const lockedTask = tasks.find(locked);
-	const goalMin = s ? (s.pace?.goalMinutes ?? s.goal.minutesPerDay) : 30;
-	const date = new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" });
+	const date = skDate();
 	const toGoal = s ? Math.max(0, s.dailyGoal - s.todayXp) : 0;
 	const streak = s?.streak.days ?? 0;
 
 	const weakGroups = weakSpotGroups(s?.weakSpots ?? []);
 	const openMixups = (s?.mixups ?? []).filter((m) => m.status === "active");
-	const balance = s?.balance ?? null;
-	const behind = balance?.behind ? STRANDS.find((x) => x.id === balance.behind) : null;
 
 	return (
 		<div className="@container h-dvh" data-testid="today">
-			<div className="grid h-full grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
+			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				{/* Phone and tablet: the score is a top bar, since the rail is not there. */}
 				<header className="relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden" data-testid="today-topbar">
 					<QPie frac={s && s.dailyGoal > 0 ? s.todayXp / s.dailyGoal : 0} size={28} />
@@ -176,52 +173,16 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								</h1>
 								{s && (
 									<p className="q-line dim @max-6xl:!text-[16px]" style={{ marginTop: 8 }} data-testid="plan-summary">
-										{done >= total && total > 0
-											? `All ${total} things are done today.`
-											: <>
-													{total} things<span className="@max-6xl:hidden"> today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span><span className="@6xl:hidden">min</span> left.
-												</>}
+										{total > 0 && done >= total ? (
+											`All ${total} things are done today.`
+										) : (
+											<>
+												{total} things<span className="@max-6xl:hidden"> today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
+												<span className="@6xl:hidden">min</span> left.
+											</>
+										)}
 									</p>
 								)}
-								<div className="q-strip @max-6xl:gap-[3px] @max-6xl:mt-3.5" role="img" aria-label={s ? `Plan: ${done} of ${total} done${up ? `, ${taskLabel(up)} is up next` : ""}${lockedTask ? `, ${taskLabel(lockedTask)} needs an AI key` : ""}` : "Plan"}>
-									{(s ? tasks : []).map((t) => (
-										<span
-											key={t.id}
-											className={cn("q-seg", t.done ? "done" : locked(t) ? "locked" : t === up && "next")}
-											style={{ flex: `${t.minutes} 1 0` }}
-											title={t.title}
-										>
-											<QIcon name={t.done ? "check" : taskIcon(t)} />
-										</span>
-									))}
-									{!s && <span className="q-seg" style={{ flex: 1 }} />}
-								</div>
-								<div className="q-legend">
-									<span>
-										<i style={{ background: "var(--q-teal)" }} />
-										{done} done
-									</span>
-									{up && (
-										<span>
-											<i style={{ boxShadow: "inset 0 0 0 1.5px var(--q-teal)" }} />
-											{taskLabel(up)} <span className="@max-6xl:hidden">is up </span>next
-										</span>
-									)}
-									{total - done - (up ? 1 : 0) > 0 && (
-										<span className="@max-6xl:hidden">
-											<i style={{ boxShadow: "inset 0 0 0 1px var(--q-line-2)" }} />
-											{total - done - (up ? 1 : 0)} to go
-										</span>
-									)}
-									{lockedTask && (
-										<span>
-											<i style={{ background: "repeating-linear-gradient(135deg,var(--q-well) 0 2px,var(--q-bar-hatch-b) 2px 3px)" }} />
-											<em style={{ fontStyle: "normal" }}>
-												<b>{taskLabel(lockedTask)}</b> needs an AI key
-											</em>
-										</span>
-									)}
-								</div>
 							</header>
 
 							{failed && (
@@ -234,15 +195,30 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								</p>
 							)}
 
-							{s && (
-								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Up next">
-									<h2 className="q-sh">
-										<QIcon name="arrow" />
-										{up ? "Up next" : "All done for today"}
-									</h2>
-									{up ? <UpNext task={up} locked={locked(up)} busy={busy} onOpen={() => open(up)} meta={up.id === "review" ? reviewMeta(s) : null} /> : <AllDone minutes={s.plan.minutes} goal={goalMin} next={s.next} />}
-								</section>
-							)}
+							<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Today's plan">
+								<h2 className="q-sh">
+									<QIcon name="arrow" />
+									Today&apos;s plan
+								</h2>
+								{!s && <PlanSkeleton />}
+								{s && total === 0 && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} />}
+								{s && total > 0 && (
+									<ol className="flex flex-col gap-2" data-testid="plan-tasks">
+										{tasks.map((t) =>
+											t === up ? (
+												<li key={t.id} data-testid={`plan-${t.id}`} data-next="true">
+													<UpNext task={t} busy={busy} onOpen={() => open(t)} meta={t.id === "review" ? reviewMeta(s) : null} />
+												</li>
+											) : (
+												<li key={t.id} data-testid={`plan-${t.id}`}>
+													<PlanRow task={t} busy={busy} onOpen={() => open(t)} />
+												</li>
+											),
+										)}
+									</ol>
+								)}
+								{s && total > 0 && done >= total && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} className="mt-2" />}
+							</section>
 
 							{weakGroups.length > 0 && (
 								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
@@ -275,8 +251,8 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 															{i > 0 && (i === arr.length - 1 ? " and " : ", ")}
 															<span className="q-pair" lang="sk">
 																{m.words[0]}
-														<s>/</s>
-														{m.words[1]}
+																<s>/</s>
+																{m.words[1]}
 															</span>
 														</span>
 													))}
@@ -294,7 +270,9 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 										{openMixups.length > 0 && (
 											<Link href="/lesson?mode=mixups" className="q-btn sec" data-testid="mixups-practice">
 												<QIcon name="mix" />
-												Mix-ups<span className="@max-xl:hidden"> lesson</span>
+												<span>
+													Mix-ups<span className="@max-xl:hidden"> lesson</span>
+												</span>
 											</Link>
 										)}
 										<Link href="/mistakes" className="q-btn ghost @max-xl:hidden">
@@ -304,38 +282,14 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								</section>
 							)}
 
-							{s && balance && (
-								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".15s" }} data-testid="week-card">
+							{/* On a phone the rail is not there, so its charts follow the plan. */}
+							{s && (
+								<section className="mt-6 q-rise @6xl:hidden" style={{ animationDelay: ".15s" }} data-testid="week-card">
 									<h2 className="q-sh">
-										<QPie frac={goalMin > 0 ? (s.pace?.dailyAverage ?? 0) / goalMin : 0} size={14} />
-										This week
-										<small>
-											{s.pace?.dailyAverage ?? 0} of {goalMin} min a day
-										</small>
+										<QPie frac={s.level.span > 0 ? s.level.into / s.level.span : 0} size={14} />
+										Your progress
 									</h2>
-									<div className="grid gap-4 @2xl:grid-cols-[344px_1fr] @2xl:items-center @2xl:gap-7">
-										<figure className="q-well" style={{ padding: "14px 16px 16px" }} aria-label="This week's balance" data-testid="strand-balance">
-											<h4>
-												Minutes by strand <small>aim: about {Math.round(STRAND_TARGET * 100)}% each</small>
-											</h4>
-											<Bars balance={balance} />
-										</figure>
-										{balance.total > 0 && (
-											<div>
-												<p className="q-line !text-[16px]" data-testid="strand-advice">
-													{strandAdvice(balance)}
-												</p>
-												{behind && (
-													<div className="q-acts" style={{ marginTop: 12 }}>
-														<Link href={STRAND_DOOR[behind.id].href} className="q-btn sec t">
-															<QIcon name="plus" />
-															Open {STRAND_DOOR[behind.id].label}
-														</Link>
-													</div>
-												)}
-											</div>
-										)}
-									</div>
+									<ProgressPanel data={chartData(s)} />
 								</section>
 							)}
 						</div>
@@ -348,7 +302,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 					</div>
 				</main>
 
-				<DayRail s={s} keyless={keyless} busy={busy} onOpen={open} />
+				<DayRail s={s} />
 			</div>
 
 			<SetupDialog
@@ -369,8 +323,35 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	);
 }
 
+/** The plan's other tasks: a state box, what to do, its kind as a word, the minutes. */
+function PlanRow({ task, busy, onOpen }: { task: PlanTask; busy: boolean; onOpen: () => void }) {
+	const w = words(task);
+	return (
+		<button type="button" onClick={onOpen} disabled={busy} className={cn("flex w-full items-center gap-3 rounded-[10px] px-3.5 py-2.5 text-left", task.done ? "bg-transparent" : "bg-well hover:bg-well-2")}>
+			<span className={cn("q-cb !mt-0 shrink-0", task.done && "!bg-teal !shadow-none")}>{task.done && <QCheck />}</span>
+			<span className="min-w-0 flex-1">
+				<span className={cn("block truncate text-[15px] tracking-[-0.006em]", task.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground")}>{w.primary}</span>
+			</span>
+			<span className="q-pill grey shrink-0">{taskLabel(task)}</span>
+			<span className="q-num w-12 shrink-0 text-right text-[12.5px] text-ink-3">{task.minutes} min</span>
+			<span className={cn("hidden w-12 shrink-0 text-right text-[12px] @xl:block", task.done ? "font-[550] text-teal-2" : "text-ink-4")}>{task.done ? "Done" : "To do"}</span>
+		</button>
+	);
+}
+
+function PlanSkeleton() {
+	return (
+		<div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading today's plan">
+			<div className="q-card h-[150px] animate-pulse" />
+			{[0, 1, 2].map((i) => (
+				<div key={i} className="h-11 animate-pulse rounded-[10px] bg-well" />
+			))}
+		</div>
+	);
+}
+
 /** The next task as a card: its kind, its minutes, what it is, and Start. */
-function UpNext({ task, locked, busy, onOpen, meta }: { task: PlanTask; locked: boolean; busy: boolean; onOpen: () => void; meta: React.ReactNode }) {
+function UpNext({ task, busy, onOpen, meta }: { task: PlanTask; busy: boolean; onOpen: () => void; meta: React.ReactNode }) {
 	const w = words(task);
 	return (
 		<article className="q-card" data-testid={`plan-next-${task.id}`}>
@@ -389,17 +370,8 @@ function UpNext({ task, locked, busy, onOpen, meta }: { task: PlanTask; locked: 
 						</p>
 					)}
 					{meta && <p className="q-rv-meta">{meta}</p>}
-					{locked && (
-						<p className="q-needs mt-2">
-							<QIcon name="key" />
-							Needs an AI key ·{" "}
-							<SettingsLink keys className="text-ink-2 underline decoration-line-2 underline-offset-[3px]">
-								Settings → API keys
-							</SettingsLink>
-						</p>
-					)}
 				</div>
-				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy || locked}>
+				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy}>
 					Start<span className="@xl:hidden"> {taskLabel(task)}</span>
 					<kbd className="q-kbd pointer-coarse:hidden">
 						<QIcon name="enter" />
@@ -420,9 +392,9 @@ function reviewMeta(s: Summary): React.ReactNode {
 	);
 }
 
-function AllDone({ minutes, goal, next }: { minutes: number; goal: number; next: string }) {
+function AllDone({ minutes, goal, next, className }: { minutes: number; goal: number; next: string; className?: string }) {
 	return (
-		<article className="q-card" data-testid="plan-complete">
+		<article className={cn("q-card", className)} data-testid="plan-complete">
 			<div className="q-rv-body">
 				<div>
 					<h3>All done for today. Pekne!</h3>
@@ -437,30 +409,3 @@ function AllDone({ minutes, goal, next }: { minutes: number; goal: number; next:
 		</article>
 	);
 }
-
-/** The week's minutes by strand: grey bars against the quarter mark; the strand furthest behind is teal. */
-function Bars({ balance }: { balance: StrandBalance }) {
-	const max = Math.max(balance.target * 2, ...STRANDS.map((x) => balance.share[x.id]));
-	return (
-		<div className="q-bars">
-			{STRANDS.map((x) => {
-				const share = balance.share[x.id];
-				const pct = Math.round(share * 100);
-				const hot = balance.behind === x.id;
-				const solid = Math.min(share, balance.target);
-				return (
-					<div key={x.id} className="contents" title={`${x.title}: ${x.line} · ${balance.minutes[x.id]} min`}>
-						<span className={cn("lab", hot && "hotc")}>{x.title}</span>
-						<span className={cn("q-bar", hot && "hot")} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`${x.title}: ${pct}% of the week`}>
-							<i style={{ width: `${(solid / max) * 100}%` }} />
-							{share > balance.target && <i className="over" style={{ left: `${(balance.target / max) * 100}%`, width: `${((share - balance.target) / max) * 100}%` }} />}
-							<span className="target" style={{ left: `${(balance.target / max) * 100}%` }} aria-hidden="true" />
-						</span>
-						<span className={cn("pct q-num", hot && "hotc")}>{pct}%</span>
-					</div>
-				);
-			})}
-		</div>
-	);
-}
-
