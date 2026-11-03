@@ -11,21 +11,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import type { AssistantMessage, ToolResultMessage } from "@earendil-works/pi-ai";
-import {
-	activeProblemOf,
-	asAgentMessages,
-	concludedByDismissalPair,
-	newProblemDismissedMarker,
-	newNextMessage,
-	newThinkingMessage,
-	needsContinuation,
-	newUserMessage,
-	pendingProblemDismissalOf,
-	toLlmMessages,
-	PRACTICE_CONCLUDE_TOOL,
-	PRACTICE_PROBLEM_TOOL,
-	type LhMessage,
-} from "../src/core/native-messages.ts";
+import { activeProblemOf, asAgentMessages, concludedByDismissalPair, newProblemDismissedMarker, newNextMessage, newThinkingMessage, needsContinuation, pendingProblemDismissalOf, toLlmMessages, PRACTICE_CONCLUDE_TOOL, PRACTICE_PROBLEM_TOOL, type LhMessage } from "../src/core/native-messages.ts";
 import { CONCLUDE_ACK_TEXT } from "../src/core/contracts/chat.ts";
 import { dismissAppends, inputAppends, parseChatInput, parseDismissInput } from "../src/core/input-events.ts";
 import { modelSolutionForConclude } from "../src/core/native-messages.ts";

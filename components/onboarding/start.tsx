@@ -33,39 +33,7 @@ import { startTutorChat } from "@/components/lesson/tutor";
 import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
-import {
-	CEFR_ORDER,
-	CHAPTERS,
-	DEFAULT_DAYS_PER_WEEK,
-	etaFromScratch,
-	explanationLanguages,
-	GUIDED_HOURS,
-	knownLanguages,
-	MAX_EXPLAIN,
-	MAX_PURPOSE_NOTE,
-	MAX_PURPOSES,
-	MINUTE_CHOICES,
-	MAX_MINUTES,
-	PRIORS,
-	PURPOSES,
-	purposePhrase,
-	suggestedLevel,
-	LEVEL_CAN_DO,
-	levelFitLine,
-	parallelsLine,
-	unitInfo,
-	type Cefr,
-	type Lang,
-	type LangLevel,
-	type LearnerGoal,
-	type LessonItem,
-	type PlacementOutcome,
-	type Prior,
-	type ProbeVerdict,
-	type Purpose,
-	type UnitId,
-	type VocabEstimate,
-} from "@/src/core";
+import { CEFR_ORDER, CHAPTERS, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, PRIORS, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
 
 type Step = 1 | 2 | 3 | 4;
 

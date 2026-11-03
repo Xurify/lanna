@@ -7,15 +7,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { LANGUAGE_PROFILES } from "../config.ts";
-import {
-	compareAnswer,
-	diacriticSlips,
-	foldDiacritics,
-	LANGUAGES,
-	LANGUAGE_IDS,
-	LANGUAGE_PRESETS,
-	type LanguageId,
-} from "../src/core/language.ts";
+import { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS, LANGUAGE_PRESETS } from "../src/core/language.ts";
 import { loadLexicon, lookupWord } from "../src/agent/lexicon.ts";
 import { entryLemma, exampleText, pickClozeExample, mintCard } from "../src/core/review.ts";
 import { getPairsForLanguage } from "../src/core/pairs.ts";

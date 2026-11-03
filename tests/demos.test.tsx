@@ -32,19 +32,11 @@ import { Value } from "typebox/value";
 import { createFauxCore, fauxAssistantMessage, fauxToolCall, type FauxResponseStep, type ToolCall } from "@earendil-works/pi-ai";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PATHS } from "../config.ts";
-import {
-	buildDemoSrcDoc,
-	DEMO_BRIDGE_SCRIPT,
-	DemoCard,
-	DemoErrorChip,
-	INITIAL_DEMO_BRIDGE_STATE,
-	reduceDemoBridgeState,
-} from "../components/artifacts/demo-card.tsx";
+import { buildDemoSrcDoc, DEMO_BRIDGE_SCRIPT, DemoCard, INITIAL_DEMO_BRIDGE_STATE, reduceDemoBridgeState } from "../components/artifacts/demo-card.tsx";
 import { svgNaturalWidth, VisualCard, VisualOutputCard } from "../components/artifacts/visual-card.tsx";
 import { slugFilename } from "../components/artifacts/download.ts";
 import { chartSize } from "../components/session-overlay.tsx";
 import { SubagentSteerCard } from "../components/artifacts/steer-card.tsx";
-import { DispatchCard } from "../components/artifacts/dispatch-card.tsx";
 import { JobCard, PdfJobCard } from "../components/artifacts/job-card.tsx";
 import { ToolCallCard } from "../components/artifacts/tool-call-card.tsx";
 import { JobsContext } from "../components/jobs-context.ts";
@@ -244,9 +236,6 @@ describe("demo bridge", () => {
 
 const DEMO_HTML = "<!doctype html><html><body><h1>oscillator</h1><script>let t=0;</script></body></html>";
 
-function part(state: string, output?: unknown) {
-	return { type: "tool-demo", state, toolCallId: "call-1", input: { title: "Oscillator", brief: "b" }, output };
-}
 
 describe("dispatch card rendering (the tool-call ack box)", () => {
 	const ackPart = { type: "tool-research", state: "output-available", toolCallId: "call-1", input: { question: "q" }, output: "Dispatched (job j1)." };
@@ -773,10 +762,6 @@ function waitFor(cond: () => boolean, timeoutMs = 5000, what = "condition"): Pro
 	});
 }
 
-async function drain(res: Response): Promise<string> {
-	if (res.status !== 200) assert.fail(`expected 200, got ${res.status}: ${await res.text()}`);
-	return res.text();
-}
 
 /** CONNECTION DIET B (owner, 2026-10-10): the POST acks and closes; drain
  *  the turn's wire through the reattach stream instead (settle-tolerant:

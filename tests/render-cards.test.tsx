@@ -23,13 +23,7 @@ import { JobsContext } from "../components/jobs-context.ts";
 import { ChatActionsContext } from "../components/chat.tsx";
 import type { JobRecord } from "../src/core/contracts.ts";
 import { AnsweredCard } from "../components/answered-card.tsx";
-import {
-	buildAnswer,
-	normalizeOptions,
-	resolveCorrect,
-	questionNeedsReveal,
-	type QuestionData,
-} from "../src/core/question-core.ts";
+import { buildAnswer, normalizeOptions, resolveCorrect, type QuestionData } from "../src/core/question-core.ts";
 
 const quizInput = {
 	question: "Which planet is closest to the sun?",

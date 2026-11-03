@@ -6,7 +6,6 @@ import {
 	stores,
 	validateChatSettings,
 } from "@/src/server";
-import type { ChatSettings } from "@/src/core";
 
 /**
  * The per-chat model control (model-control wave): replace-whole settings —

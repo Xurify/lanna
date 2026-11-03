@@ -7,40 +7,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it as test } from "node:test";
-import {
-	ARROW_LENGTH_LADDER,
-	CHARGE_RANGE,
-	CLUSTER_LABEL_SIZE_LADDER,
-	CLUSTER_PULL_RANGE,
-	DEFAULT_RENDER_SETTINGS,
-	DEPTH_BASE_RADIUS_RANGE,
-	DEPTH_SPACING_RANGE,
-	DEPTH_STRENGTH_RANGE,
-	EDGE_WIDTH_LADDER,
-	GRAVITY_RANGE,
-	LABEL_SIZE_LADDER,
-	LABEL_ZOOM_LADDER,
-	LINK_DISTANCE_RANGE,
-	LINK_STRENGTH_RANGE,
-	NODE_SIZE_LADDER,
-	REGION_BLUR_LADDER,
-	sanitizeRegionTuning,
-	REGION_DILATION_LADDER,
-	REGION_EDGE_ALPHA_LADDER,
-	VELOCITY_DECAY_RANGE,
-	DEFAULT_PHYSICS_TUNING,
-	DEFAULT_REGION_TUNING,
-	fromLadderPosition,
-	fromOffSliderPosition,
-	fromSliderPosition,
-	labelZoomDisplay,
-	ladderIndex,
-	sanitizeRenderSettings,
-	snapToLadder,
-	toLadderPosition,
-	toOffSliderPosition,
-	toSliderPosition,
-} from "../src/core/render-settings.ts";
+import { ARROW_LENGTH_LADDER, CHARGE_RANGE, CLUSTER_LABEL_SIZE_LADDER, CLUSTER_PULL_RANGE, DEFAULT_RENDER_SETTINGS, DEPTH_BASE_RADIUS_RANGE, DEPTH_SPACING_RANGE, DEPTH_STRENGTH_RANGE, EDGE_WIDTH_LADDER, GRAVITY_RANGE, LABEL_SIZE_LADDER, LABEL_ZOOM_LADDER, LINK_DISTANCE_RANGE, LINK_STRENGTH_RANGE, NODE_SIZE_LADDER, REGION_BLUR_LADDER, sanitizeRegionTuning, REGION_DILATION_LADDER, REGION_EDGE_ALPHA_LADDER, VELOCITY_DECAY_RANGE, DEFAULT_PHYSICS_TUNING, DEFAULT_REGION_TUNING, fromLadderPosition, fromOffSliderPosition, labelZoomDisplay, ladderIndex, sanitizeRenderSettings, snapToLadder, toLadderPosition, toOffSliderPosition, toSliderPosition } from "../src/core/render-settings.ts";
 
 describe("sanitizeRenderSettings", () => {
 	test("garbage in → full defaults out", () => {

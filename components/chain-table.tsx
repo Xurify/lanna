@@ -55,18 +55,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import {
-	ChevronDownIcon,
-	ChevronRightIcon,
-	ChevronUpIcon,
-	DumbbellIcon,
-	FolderIcon,
-	FolderOpenIcon,
-	Trash2Icon,
-	ListTreeIcon,
-	SearchIcon,
-	XIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, DumbbellIcon, FolderIcon, FolderOpenIcon, Trash2Icon, SearchIcon, XIcon } from "lucide-react";
 import { chainsForSelection, formatChainLine, fuzzyScore } from "@/src/core";
 import type { GraphChain, GraphNode } from "@/src/core";
 import { TopBar } from "@/components/top-bar";

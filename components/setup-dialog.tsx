@@ -39,7 +39,6 @@ import { prettyModel } from "@/components/usage-format";
 import { ModelMenuList } from "@/components/settings/model-menu";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved, useSettingsSaved } from "@/components/settings-signal";
-import { Hint } from "@/components/ui/hint";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type ProviderKeyInfo } from "@/components/settings/keys-section";
@@ -48,7 +47,7 @@ import { ChevronDown, SlidersIcon, XIcon } from "lucide-react";
 import { Dialog, DialogPortal, DialogOverlay, DialogContent } from "@/components/ui/dialog";
 import { ChatGPTBackgroundAccess, ChatGPTUIProvider } from "@/components/settings/chatgpt-connection";
 import { NativeSubscriptionBackgroundAccess, NativeSubscriptionUIProvider, SubscriptionConnections } from "@/components/settings/subscription-connections";
-import { defaultOrderLevel, populateLevel, THINKING_LABEL } from "@/components/thinking-default";
+import { populateLevel, THINKING_LABEL } from "@/components/thinking-default";
 import { ThinkingMenuList } from "@/components/settings/model-menu";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 

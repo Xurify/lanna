@@ -9,7 +9,7 @@ import {
 	providerKeyMissing,
 	PROVIDER_KEY_MISSING_CODE,
 } from "../src/core/settings.ts";
-import type { ModelCatalogEntry, ModelSlotName } from "../src/core/index.ts";
+import type { ModelCatalogEntry } from "../src/core/index.ts";
 
 /**
  * The BYOK universal gate rendered honestly (owner, 2026-09-22): the server

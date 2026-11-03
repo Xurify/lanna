@@ -18,18 +18,7 @@ import { ACTIVE_PROFILE, type ModelRole } from "../../config.ts";
 import { slovakLookup } from "../agent/lexicon.ts";
 import { checkerNote, checkSlovak } from "../core/slovak-check.ts";
 import type { LhMessage } from "../core/native-messages.ts";
-import {
-	deliverJobResult,
-	noteSteersDurable,
-	reconcileUserSteers,
-	registerLiveAgent,
-	restoreUncommittedAutomatic,
-	setJobRespawn,
-	setTurnRunner,
-	settleSteers,
-	steerLiveChat,
-	unregisterLiveAgent,
-} from "./jobs.ts";
+import { deliverJobResult, noteSteersDurable, reconcileUserSteers, registerLiveAgent, restoreUncommittedAutomatic, setJobRespawn, setTurnRunner, settleSteers, unregisterLiveAgent } from "./jobs.ts";
 import { runPiTurn } from "./pi/ui-stream.ts";
 import { collectToolCallIds } from "./pi/call-ids.ts";
 import { providerEventNote } from "../agent/provider-events.ts";
@@ -42,7 +31,7 @@ import {
 	resolveConversationSpec,
 	resolveRoleSpec,
 } from "../core/settings-resolution.ts";
-import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope, type ProviderKeyMissing } from "../core/settings.ts";
+import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope } from "../core/settings.ts";
 import { beginTurn, endTurn } from "./turn-liveness.ts";
 import { applyParkedDismissal } from "./dismissal-park.ts";
 import { registerTurn, rememberTurnFailure, unregisterTurn } from "./turn-runs.ts";
