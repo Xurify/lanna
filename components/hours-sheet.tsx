@@ -146,13 +146,13 @@ export function HoursSheet({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-100 sm:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="How long does it take?" data-testid="hours-sheet">
-			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150">
+			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150">
 				<div className="flex items-start justify-between gap-4">
 					<div>
-						<h2 className="font-ui text-2xl font-black text-foreground">How long does it take?</h2>
+						<h2 className="text-2xl font-semibold tracking-[-0.022em] text-foreground">How long does it take?</h2>
 						<p className="mt-1 font-prose text-base text-muted-foreground">Guided hours to each level: this app&apos;s estimate for Slovak next to the usual figures for English, and the FSI yardstick for a language in Slovak&apos;s category.</p>
 					</div>
-					<button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+					<button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-well hover:text-ink-2">
 						<XIcon className="size-5" />
 					</button>
 				</div>
@@ -162,21 +162,21 @@ export function HoursSheet({
 				<div className="mt-4 flex items-center justify-between gap-3">
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground" aria-label="Legend">
 						<span className="flex items-center gap-1.5">
-							<span className="inline-block size-2.5 rounded-sm bg-go" aria-hidden="true" />
+							<span className="inline-block size-2.5 rounded-sm bg-teal" aria-hidden="true" />
 							This app · Slovak
 						</span>
 						<span className="flex items-center gap-1.5">
-							<span className="inline-block size-2.5 rounded-sm bg-muted-foreground/50" aria-hidden="true" />
+							<span className="inline-block size-2.5 rounded-sm bg-ink-4" aria-hidden="true" />
 							Cambridge · English
 						</span>
 						<span className="flex items-center gap-1.5">
-							<span className="inline-block h-3 w-0.5 bg-flame" aria-hidden="true" />
+							<span className="inline-block h-3 w-0.5 bg-ink-3" aria-hidden="true" />
 							FSI · category III (1,100 h)
 						</span>
 					</div>
-					<div className="flex rounded-lg border p-0.5" role="group" aria-label="View">
+					<div className="q-segc" role="group" aria-label="View">
 						{(["chart", "table"] as const).map((v) => (
-							<button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={cn("rounded-md px-2.5 py-1 font-ui text-xs font-bold capitalize", view === v ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground")}>
+							<button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={cn("capitalize", view === v && "on")}>
 								{v}
 							</button>
 						))}
@@ -195,8 +195,8 @@ export function HoursSheet({
 								</g>
 							))}
 							{/* FSI reference */}
-							<line x1={x(FSI_CAT3)} x2={x(FSI_CAT3)} y1={top - 6} y2={H - 24} stroke="var(--lh-flame)" strokeWidth={2} />
-							<line x1={x(FSI_CAT1)} x2={x(FSI_CAT1)} y1={top - 6} y2={H - 24} stroke="var(--lh-flame)" strokeWidth={1} strokeOpacity={0.45} />
+							<line x1={x(FSI_CAT3)} x2={x(FSI_CAT3)} y1={top - 6} y2={H - 24} stroke="var(--q-ink-3)" strokeWidth={2} />
+							<line x1={x(FSI_CAT1)} x2={x(FSI_CAT1)} y1={top - 6} y2={H - 24} stroke="var(--q-ink-3)" strokeWidth={1} strokeOpacity={0.45} />
 							<text x={x(FSI_CAT1) - 4} y={top - 8} textAnchor="end" className="fill-muted-foreground font-ui" fontSize={10}>
 								FSI cat. I
 							</text>
@@ -212,16 +212,16 @@ export function HoursSheet({
 									<g key={lv} opacity={dim ? 0.45 : 1} className="transition-opacity" onMouseLeave={() => setHover(null)}>
 										{/* One hit area for the whole row, gap between the two bars included, so the pointer never leaves it mid-row. */}
 										<rect x={0} y={y0 - (rowH - bar * 2 - gap) / 2} width={W} height={rowH} fill="transparent" onMouseEnter={() => setHover((h) => (h?.level === lv ? h : { level: lv, series: "app" }))} />
-										<text x={left - 10} y={y0 + bar + gap + 4} textAnchor="end" className="fill-foreground font-ui" fontSize={13} fontWeight={800}>
+										<text x={left - 10} y={y0 + bar + gap + 4} textAnchor="end" className="fill-foreground font-ui" fontSize={13} fontWeight={600}>
 											{lv}
 										</text>
-										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-go" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })}>
+										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-teal" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })}>
 											<title>{`${lv}: about ${app} guided hours (this app, Slovak)`}</title>
 										</rect>
-										<text x={x(app) + 6} y={y0 + bar - 3} className="fill-foreground font-ui" fontSize={11} fontWeight={700}>
+										<text x={x(app) + 6} y={y0 + bar - 3} className="fill-foreground font-ui" fontSize={11} fontWeight={600}>
 											{app}
 										</text>
-										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-muted-foreground/50" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })}>
+										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-ink-4" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })}>
 											<title>{`${lv}: about ${en} guided hours (Cambridge, English)`}</title>
 										</rect>
 										{lv === target && (
@@ -248,15 +248,15 @@ export function HoursSheet({
 					<table className="mt-3 w-full font-ui text-sm">
 						<thead>
 							<tr className="text-left text-xs text-muted-foreground">
-								<th className="py-1 font-bold">Level</th>
-								<th className="py-1 font-bold">This app (Slovak)</th>
-								<th className="py-1 font-bold">Cambridge (English)</th>
-								<th className="py-1 font-bold">At your {paceWord} pace</th>
+								<th className="py-1 font-semibold">Level</th>
+								<th className="py-1 font-semibold">This app (Slovak)</th>
+								<th className="py-1 font-semibold">Cambridge (English)</th>
+								<th className="py-1 font-semibold">At your {paceWord} pace</th>
 							</tr>
 						</thead>
 						<tbody>
 							{CEFR_ORDER.map((lv) => (
-								<tr key={lv} className={cn("border-t", lv === target && "text-foreground font-bold")}>
+								<tr key={lv} className={cn("border-t", lv === target && "text-foreground font-semibold")}>
 									<td className="py-1.5">
 										{lv}
 										<span className="block max-w-[22rem] font-normal text-muted-foreground">{LEVEL_CAN_DO[lv]}</span>
@@ -274,15 +274,15 @@ export function HoursSheet({
 					{headStartLine(languages)}
 				</p>
 
-				<p className="mt-3 rounded-xl bg-accent/60 px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
+				<p className="mt-3 rounded-xl bg-well px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
 					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about <b>{Math.round(yearly)} hours of the map a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.
 				</p>
 
-				<h3 className="mt-5 font-ui text-xs font-bold tracking-wide text-muted-foreground">The studies behind the numbers</h3>
+				<h3 className="mt-5 font-ui text-xs font-semibold tracking-wide text-muted-foreground">The studies behind the numbers</h3>
 				<ol className="mt-2 flex flex-col gap-3">
 					{STUDIES.map((s) => (
 						<li key={s.who} className="font-prose text-sm leading-relaxed">
-							<span className="block font-ui text-sm font-bold text-foreground">
+							<span className="block font-ui text-sm font-semibold text-foreground">
 								{s.what} <span className="font-normal text-muted-foreground">· {s.who}</span>
 							</span>
 							<span className="text-muted-foreground">{s.line}</span>

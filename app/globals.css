@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./quiet.css";
+@import "./quiet.css" layer(components);
 
 @custom-variant dark (&:is(.dark *));
 
@@ -64,6 +64,8 @@ html[data-keyboard] :focus-visible {
 :root {
 	color-scheme: light;
 	--q-bg: #ffffff;
+	/* The raised surface: a card, the rail's score, a practice card. Day draws it on the same white as the ground and lets the shadow lift it; Night needs a lighter step to be seen. */
+	--q-card: #ffffff;
 	--q-side: #f6f6f4;
 	--q-well: #f5f5f3;
 	--q-well-2: #ededea;
@@ -95,9 +97,9 @@ html[data-keyboard] :focus-visible {
 	--radius: 8px;
 	--background: var(--q-bg);
 	--foreground: var(--q-ink);
-	--card: var(--q-bg);
+	--card: var(--q-card);
 	--card-foreground: var(--q-ink);
-	--popover: var(--q-bg);
+	--popover: var(--q-card);
 	--popover-foreground: var(--q-ink);
 	--primary: var(--q-teal);
 	--primary-foreground: var(--q-on-teal);
@@ -131,6 +133,7 @@ html[data-keyboard] :focus-visible {
 .dark {
 	color-scheme: dark;
 	--q-bg: #101214;
+	--q-card: #1b1e21;
 	--q-side: #16181a;
 	--q-well: #1a1d1f;
 	--q-well-2: #23272a;

@@ -11,17 +11,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
-	better: { label: "Getting better", ink: "text-go" },
+	better: { label: "Getting better", ink: "text-teal-2" },
 	worse: { label: "Getting worse", ink: "text-miss" },
-	steady: { label: "Steady", ink: "text-muted-foreground" },
-	new: { label: "Too few answers to say", ink: "text-muted-foreground" },
+	steady: { label: "Steady", ink: "text-ink-3" },
+	new: { label: "Too few answers to say", ink: "text-ink-3" },
 };
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -54,21 +53,19 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="mistakes">
-				<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
-					<ArrowLeftIcon className="size-3.5" />
+				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+					<ArrowLeftIcon className="q-ico size-3.5" />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-black tracking-tight text-foreground">My mistakes</h1>
-				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
-					Read from your first tries: the answer you gave before any hint. A miss you then got right still counts here, because that is the one to work on.
-				</p>
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">My mistakes</h1>
+				<p className="q-line dim mt-2 max-w-2xl">Read from your first tries: the answer you gave before any hint. A miss you then got right still counts here, because that is the one to work on.</p>
 
 				<div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="mistakes-when">
-					<p className="font-prose text-sm text-muted-foreground">
+					<p className="q-date">
 						{a ? (
 							<>
 								Last analyzed{" "}
-								<time dateTime={a.at} suppressHydrationWarning className="font-bold text-foreground">
+								<time dateTime={a.at} suppressHydrationWarning className="font-semibold text-ink-2">
 									{new Date(a.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 								</time>
 								{a.from ? ` · ${a.reps} first tries, ${a.from} to ${a.to}` : ""}
@@ -77,16 +74,16 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 							"Not analyzed yet."
 						)}
 					</p>
-					<button type="button" onClick={() => void run("analyze")} disabled={busy !== null} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-analyze">
-						{busy === "analyze" ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RefreshCwIcon className="size-4" />}
+					<button type="button" onClick={() => void run("analyze")} disabled={busy !== null} className="q-btn sec pointer-coarse:min-h-11" data-testid="mistakes-analyze">
+						{busy === "analyze" ? <LoaderCircleIcon className="q-ico animate-spin" /> : <RefreshCwIcon className="q-ico" />}
 						Analyze now
 					</button>
 				</div>
 				{error && (
-					<p role="alert" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-prose text-sm text-miss" data-testid="mistakes-error">
+					<p role="alert" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-miss" data-testid="mistakes-error">
 						{error}
 						{/Settings/.test(error) && (
-							<SettingsLink keys={/key/i.test(error)} className="font-ui text-xs font-bold text-foreground underline underline-offset-2">
+							<SettingsLink keys={/key/i.test(error)} className="text-xs font-semibold text-ink-2 underline underline-offset-2">
 								Open Settings
 							</SettingsLink>
 						)}
@@ -94,10 +91,10 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 				)}
 
 				{a && a.reps === 0 ? (
-					<section className="mt-8 rounded-2xl border-2 bg-card p-5" data-testid="mistakes-empty">
-						<p className="font-prose text-base text-foreground">There are no answers to read yet.</p>
-						<p className="mt-1 font-prose text-sm text-muted-foreground">Finish a lesson and come back: your first tries show up here.</p>
-						<Link href="/" className={cn(SECONDARY, SMALL, "mt-3")}>
+					<section className="q-card mt-8 p-5" data-testid="mistakes-empty">
+						<p className="text-base text-foreground">There are no answers to read yet.</p>
+						<p className="mt-1 text-sm text-ink-3">Finish a lesson and come back: your first tries show up here.</p>
+						<Link href="/" className="q-btn sec mt-3 pointer-coarse:min-h-11">
 							Go to Today
 						</Link>
 					</section>
@@ -120,12 +117,12 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 
 function Section({ id, title, line, children }: { id: string; title: string; line?: string; children: React.ReactNode }) {
 	return (
-		<section className="mt-8" aria-labelledby={`${id}-title`} data-testid={id}>
-			<h2 id={`${id}-title`} className="font-ui text-lg font-black text-foreground">
+		<section className="mt-9" aria-labelledby={`${id}-title`} data-testid={id}>
+			<h2 id={`${id}-title`} className="q-sh">
 				{title}
 			</h2>
-			{line && <p className="mt-0.5 font-prose text-sm text-muted-foreground">{line}</p>}
-			<div className="mt-3">{children}</div>
+			{line && <p className="-mt-1 mb-3 text-[13px] text-ink-3">{line}</p>}
+			<div>{children}</div>
 		</section>
 	);
 }
@@ -138,21 +135,21 @@ function GuideBody({ data }: { data: GuideData }) {
 	return (
 		<div className="flex flex-col gap-5" data-testid="guide-body">
 			<div className="flex flex-col gap-3">
-				<h3 className="font-ui text-sm font-bold text-foreground">What keeps going wrong</h3>
+				<h3 className="q-lbl">What keeps going wrong</h3>
 				{data.patterns.map((p) => (
-					<article key={p.title} className="rounded-xl border bg-background p-4">
-						<h4 className="font-ui text-sm font-bold text-foreground">{p.title}</h4>
+					<article key={p.title} className="rounded-xl bg-well p-4">
+						<h4 className="text-sm font-semibold text-foreground">{p.title}</h4>
 						{p.evidence && (
-							<p className="mt-1 font-prose text-sm text-muted-foreground" lang="sk">
+							<p className="mt-1 text-sm text-ink-3" lang="sk">
 								{p.evidence}
 							</p>
 						)}
-						<dl className="mt-2 grid gap-x-3 gap-y-1 font-prose text-sm text-foreground sm:grid-cols-[4rem_1fr]">
-							<dt className="font-ui text-xs font-bold text-muted-foreground">Why</dt>
+						<dl className="mt-2 grid gap-x-3 gap-y-1 text-sm text-foreground sm:grid-cols-[4rem_1fr]">
+							<dt className="text-xs font-semibold text-ink-3">Why</dt>
 							<dd>{p.why}</dd>
 							{p.fix && (
 								<>
-									<dt className="font-ui text-xs font-bold text-muted-foreground">Fix</dt>
+									<dt className="text-xs font-semibold text-ink-3">Fix</dt>
 									<dd>{p.fix}</dd>
 								</>
 							)}
@@ -162,9 +159,9 @@ function GuideBody({ data }: { data: GuideData }) {
 			</div>
 			{data.next.length > 0 && (
 				<div>
-					<h3 className="font-ui text-sm font-bold text-foreground">What may trip you next</h3>
-					<p className="font-prose text-xs text-muted-foreground">Guesses from your pairs and trends, not tested yet.</p>
-					<ul className="mt-2 flex list-disc flex-col gap-1 pl-5 font-prose text-sm text-foreground marker:text-muted-foreground">
+					<h3 className="q-lbl">What may trip you next</h3>
+					<p className="mt-1 text-xs text-ink-3">Guesses from your pairs and trends, not tested yet.</p>
+					<ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-foreground marker:text-ink-4">
 						{data.next.map((n) => (
 							<li key={n.what}>
 								<b>{n.what}</b>
@@ -176,17 +173,17 @@ function GuideBody({ data }: { data: GuideData }) {
 			)}
 			{data.plan.length > 0 && (
 				<div>
-					<h3 className="font-ui text-sm font-bold text-foreground">Do this week</h3>
-					<ul className="mt-2 flex flex-col divide-y rounded-xl border bg-background">
+					<h3 className="q-lbl">Do this week</h3>
+					<ul className="mt-2 flex flex-col divide-y divide-border rounded-xl bg-well">
 						{data.plan.map((p) => {
 							const href = STEP_HREF(p);
 							return (
 								<li key={p.step} className="flex items-center justify-between gap-3 px-3 py-2">
-									<span className="font-prose text-sm text-foreground">{p.step}</span>
+									<span className="text-sm text-foreground">{p.step}</span>
 									{href && (
-										<Link href={href} className={cn(SECONDARY, SMALL, "shrink-0 pointer-coarse:min-h-11")}>
+										<Link href={href} className="q-btn sec shrink-0 pointer-coarse:min-h-11">
 											Open
-											<ArrowRightIcon className="size-4" />
+											<ArrowRightIcon className="q-ico" />
 										</Link>
 									)}
 								</li>
@@ -201,7 +198,7 @@ function GuideBody({ data }: { data: GuideData }) {
 
 /** A reply that could not be read as the three parts is shown as it came. */
 function GuideText({ text }: { text: string }) {
-	return <p className="whitespace-pre-line font-prose text-sm text-foreground">{text}</p>;
+	return <p className="whitespace-pre-line text-sm text-foreground">{text}</p>;
 }
 
 const GUIDE_ADDS = [
@@ -220,20 +217,22 @@ function Readiness({ enough }: { enough: ReturnType<typeof guideReadiness> }) {
 		{ label: "Mistakes among them", have: enough.wrong, need: enough.needWrong },
 	];
 	return (
-		<div className="mt-4 rounded-xl border bg-background p-4" data-testid="guide-readiness">
-			<p className="font-ui text-sm font-bold text-foreground">Needs a few more lessons first</p>
-			<p className="font-prose text-xs text-muted-foreground">With too few answers, the guide would be guessing. It unlocks at {enough.needReps} first tries with {enough.needWrong} mistakes among them.</p>
+		<div className="q-well mt-4" data-testid="guide-readiness">
+			<p className="text-[13px] font-semibold text-ink-2">Needs a few more lessons first</p>
+			<p className="mt-1 text-xs text-ink-3">
+				With too few answers, the guide would be guessing. It unlocks at {enough.needReps} first tries with {enough.needWrong} mistakes among them.
+			</p>
 			<dl className="mt-3 grid gap-3 sm:grid-cols-2">
 				{bars.map((b) => (
 					<div key={b.label}>
-						<div className="flex items-baseline justify-between gap-2 font-ui text-xs">
-							<dt className="font-bold text-muted-foreground">{b.label}</dt>
-							<dd className="tabular-nums text-foreground">
+						<div className="flex items-baseline justify-between gap-2 text-xs">
+							<dt className="font-semibold text-ink-3">{b.label}</dt>
+							<dd className="tabular-nums text-ink-2">
 								{Math.min(b.have, b.need)} of {b.need}
 							</dd>
 						</div>
-						<div className="mt-1 h-2 rounded-full bg-accent" aria-hidden="true">
-							<div className="h-2 rounded-full bg-go" style={{ width: `${Math.round(Math.min(1, b.have / b.need) * 100)}%` }} />
+						<div className="q-bar mt-1.5" aria-hidden="true">
+							<i style={{ width: `${Math.round(Math.min(1, b.have / b.need) * 100)}%`, background: "var(--q-teal)" }} />
 						</div>
 					</div>
 				))}
@@ -246,48 +245,48 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 	const { guide, guideCurrent, ai } = report;
 	const enough = guideReadiness(report.analysis);
 	return (
-		<section className="mt-8 rounded-2xl border-2 bg-card p-5" aria-labelledby="guide-title" data-testid="mistakes-guide">
+		<section className="q-card mt-9 p-5" aria-labelledby="guide-title" data-testid="mistakes-guide">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-				<h2 id="guide-title" className="flex items-center gap-1.5 font-ui text-lg font-black text-foreground">
-					<CompassIcon className="size-5 text-sky" aria-hidden="true" />
+				<h2 id="guide-title" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-foreground">
+					<CompassIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
 					Your guide
 				</h2>
 				{guide && (
-					<p className="font-prose text-xs text-muted-foreground" suppressHydrationWarning>
+					<p className="text-xs text-ink-3" suppressHydrationWarning>
 						Written {new Date(guide.at).toLocaleDateString(undefined, { dateStyle: "medium" })}
 						{guideCurrent ? "" : " · your answers have changed since"}
 					</p>
 				)}
 			</div>
 			{guide?.practice && (
-				<div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-go/40 bg-go/10 p-4" data-testid="guide-practice">
+				<div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-teal-wash p-4" data-testid="guide-practice">
 					<div className="min-w-0">
-						<p className="font-ui text-sm font-bold text-foreground">Your plan practice</p>
-						<p className="font-prose text-xs text-muted-foreground">
+						<p className="text-sm font-semibold text-teal-2">Your plan practice</p>
+						<p className="text-xs text-ink-3">
 							Built from checked sentences on: <span lang="sk">{guide.practice.shown.join(", ")}</span>
 						</p>
 					</div>
-					<Link href="/lesson?mode=personal" className={cn(PRIMARY, SMALL, "shrink-0 pointer-coarse:min-h-11")} data-testid="guide-practice">
+					<Link href="/lesson?mode=personal" className="q-btn primary shrink-0 pointer-coarse:min-h-11" data-testid="guide-practice">
 						Practice your plan
-						<ArrowRightIcon className="size-4" />
+						<ArrowRightIcon className="q-ico" />
 					</Link>
 				</div>
 			)}
 			{guide ? (
 				<div className="mt-3">{guide.data ? <GuideBody data={guide.data} /> : <GuideText text={guide.text} />}</div>
 			) : ai.ready ? (
-				<p className="mt-2 font-prose text-sm text-muted-foreground">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Strong model (Cheap when Strong is empty) and runs once per set of answers.</p>
+				<p className="mt-2 text-sm text-ink-3">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Strong model (Cheap when Strong is empty) and runs once per set of answers.</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={GUIDE_ADDS} className="mt-3" />
 			)}
 			{!enough.ready && !(guide && guideCurrent) && <Readiness enough={enough} />}
 			{ai.ready && (
 				<div className="mt-4 flex flex-wrap items-center gap-3">
-					<button type="button" disabled={busy || !enough.ready || (!!guide && guideCurrent)} onClick={() => onWrite(false)} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="mistakes-write-guide">
-						{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
+					<button type="button" disabled={busy || !enough.ready || (!!guide && guideCurrent)} onClick={() => onWrite(false)} className="q-btn sec pointer-coarse:min-h-11" data-testid="mistakes-write-guide">
+						{busy ? <LoaderCircleIcon className="q-ico animate-spin" /> : <SparklesIcon className="q-ico" />}
 						{guide ? (guideCurrent ? "Guide is up to date" : "Write it again") : "Write my guide"}
 					</button>
-					<p className="font-prose text-xs text-muted-foreground" data-testid="guide-privacy">
+					<p className="text-xs text-ink-3" data-testid="guide-privacy">
 						Sends your unit scores, the words you miss or mix up, and your latest wrong sentences with what you wrote to your model provider. Nothing else leaves this computer.
 					</p>
 				</div>
@@ -317,27 +316,27 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 	};
 	return (
 		<Section id="mistakes-next" title="Do this next" line="Worked out from the figures below.">
-			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
+			<ul className="q-card flex flex-col divide-y divide-border">
 				{pairs > 0 && (
 					<Step title="Practice the words you mix up" line={`${pairs} ${pairs === 1 ? "pair" : "pairs"}, typed, both sides in turn`}>
-						<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-mixups">
+						<Link href="/lesson?mode=mixups" className="q-btn primary pointer-coarse:min-h-11" data-testid="step-mixups">
 							Start
-							<ArrowRightIcon className="size-4" />
+							<ArrowRightIcon className="q-ico" />
 						</Link>
 					</Step>
 				)}
 				{weak && (
 					<Step title={`A lesson on ${weak.title}`} line={weak.trend === "worse" ? `Slipping lately: ${pct(weak.earlier ?? weak.accuracy)} before, ${pct(weak.recent ?? weak.accuracy)} now` : `${pct(weak.accuracy)} right on ${weak.reps} first tries, likely under ${pct(weak.high ?? weak.accuracy)}`}>
-						<Link href={`/lesson?unit=${weak.unit}`} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-unit">
+						<Link href={`/lesson?unit=${weak.unit}`} className="q-btn sec t pointer-coarse:min-h-11" data-testid="step-unit">
 							Start
-							<ArrowRightIcon className="size-4" />
+							<ArrowRightIcon className="q-ico" />
 						</Link>
 					</Step>
 				)}
 				{slugs.length > 0 && (
 					<Step title="Put the words you miss into review" line={`${slugs.length} ${slugs.length === 1 ? "word" : "words"}, so they come back on a schedule`}>
-						<button type="button" disabled={added === "adding" || added === "added"} onClick={() => void addWords()} className={cn(SECONDARY, SMALL, "pointer-coarse:min-h-11")} data-testid="step-review">
-							{added === "added" ? <CheckIcon className="size-4" /> : added === "adding" ? <LoaderCircleIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
+						<button type="button" disabled={added === "adding" || added === "added"} onClick={() => void addWords()} className="q-btn sec pointer-coarse:min-h-11" data-testid="step-review">
+							{added === "added" ? <CheckIcon className="q-ico" /> : added === "adding" ? <LoaderCircleIcon className="q-ico animate-spin" /> : <PlusIcon className="q-ico" />}
 							{added === "added" ? "Added" : added === "failed" ? "Try again" : "Add to review"}
 						</button>
 					</Step>
@@ -351,8 +350,8 @@ function Step({ title, line, children }: { title: string; line: string; children
 	return (
 		<li className="flex items-center justify-between gap-4 px-4 py-3">
 			<div className="min-w-0">
-				<p className="font-ui text-sm font-bold text-foreground">{title}</p>
-				<p className="font-prose text-xs text-muted-foreground">{line}</p>
+				<p className="text-sm font-semibold text-foreground">{title}</p>
+				<p className="text-xs text-ink-3">{line}</p>
 			</div>
 			<div className="shrink-0">{children}</div>
 		</li>
@@ -363,47 +362,63 @@ function MixupsSection({ a }: { a: MistakeAnalysis }) {
 	if (!a.mixups.length) return null;
 	return (
 		<Section id="mistakes-mixups" title="Words you mix up" line="One word given where another was wanted. Not tested yet means the same pattern, guessed from a pair you missed.">
-			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
+			<ul className="q-card flex flex-col divide-y divide-border">
 				{a.mixups.map((m) => (
 					<li key={m.key} className="px-4 py-3" data-testid={`mistakes-mixup-${m.key}`}>
-						<p className="font-ui text-sm font-bold text-foreground" lang="sk">
+						<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground" lang="sk">
 							{m.words.join(" / ")}
 						</p>
-						<p className="font-prose text-xs text-muted-foreground">{m.line}</p>
+						<p className="mt-0.5 text-xs text-ink-3">{m.line}</p>
 					</li>
 				))}
 			</ul>
-			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-3 pointer-coarse:min-h-11")} data-testid="mistakes-practice">
+			<Link href="/lesson?mode=mixups" className="q-btn sec t mt-3 pointer-coarse:min-h-11" data-testid="mistakes-practice">
 				Practice them
-				<ArrowRightIcon className="size-4" />
+				<ArrowRightIcon className="q-ico" />
 			</Link>
 		</Section>
+	);
+}
+
+/** A unit's likely range on a 0 to 100 track, the dot at what you got, and a
+ *  tick at the bar under which a unit counts as weak. */
+function RangeBand({ u }: { u: UnitTrend }) {
+	const lo = (u.low ?? u.accuracy) * 100;
+	const hi = (u.high ?? u.accuracy) * 100;
+	return (
+		<span className="relative block h-5 w-full" aria-hidden="true">
+			<span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line-2" />
+			<span className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-teal-wash" style={{ left: `${lo}%`, width: `${Math.max(1, hi - lo)}%`, boxShadow: "inset 0 0 0 1px var(--q-teal-line)" }} />
+			<span className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal" style={{ left: `${u.accuracy * 100}%`, boxShadow: "0 0 0 2px var(--q-bg)" }} />
+			<span className="absolute inset-y-0 w-px bg-ink-3" style={{ left: `${WEAK_BAR * 100}%` }} />
+		</span>
 	);
 }
 
 function UnitsSection({ units }: { units: UnitTrend[] }) {
 	if (!units.length) return null;
 	return (
-		<Section id="mistakes-units" title="By unit" line="Most misses first. The trend compares the last 14 days with the days before.">
-			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
+		<Section id="mistakes-units" title="By unit" line="Most misses first. The dot is your share right, the band is the likely range, the tick is the 85% bar. The trend compares the last 14 days with the days before.">
+			<ul className="q-card flex flex-col divide-y divide-border">
 				{units.slice(0, 8).map((u) => {
 					const slips = FORM_SLIPS.filter((s) => u.slips[s]).map((s) => `${FORM_SLIP_LABEL[s]} ${u.slips[s]}`);
 					return (
-						<li key={u.unit} className="px-4 py-3">
-							<Link href={`/lesson?unit=${u.unit}`} className="group block">
-								<div className="flex items-baseline justify-between gap-3">
-									<span className="font-ui text-sm font-bold text-foreground group-hover:text-go">{u.title}</span>
-									<span className="font-ui text-sm font-black tabular-nums text-foreground">{pct(u.accuracy)}</span>
+						<li key={u.unit}>
+							<Link href={`/lesson?unit=${u.unit}`} className="group grid gap-x-5 gap-y-2 px-4 py-3 hover:bg-well sm:grid-cols-[1fr_minmax(0,9rem)_auto] sm:items-center">
+								<div className="min-w-0">
+									<span className="text-sm font-semibold text-foreground group-hover:text-teal-2">{u.title}</span>
+									<p className="text-xs text-ink-3">
+										{u.wrong} wrong of {u.reps} first tries
+										{u.reps < RANGE_SHOWN_UNDER && u.low !== undefined && u.high !== undefined ? ` · few answers, likely ${pct(u.low)}–${pct(u.high)}` : ""}
+										{slips.length ? ` · ${slips.join(", ")}` : ""}
+									</p>
+									<p className={cn("text-xs", TREND[u.trend].ink)}>
+										{TREND[u.trend].label}
+										{u.recent !== null && u.earlier !== null ? ` · ${pct(u.earlier)} before, ${pct(u.recent)} lately` : ""}
+									</p>
 								</div>
-								<p className="font-prose text-xs text-muted-foreground">
-									{u.wrong} wrong of {u.reps} first tries
-								{u.reps < RANGE_SHOWN_UNDER && u.low !== undefined && u.high !== undefined ? ` · few answers, likely ${pct(u.low)}–${pct(u.high)}` : ""}
-								{slips.length ? ` · ${slips.join(", ")}` : ""}
-								</p>
-								<p className={cn("font-prose text-xs", TREND[u.trend].ink)}>
-									{TREND[u.trend].label}
-									{u.recent !== null && u.earlier !== null ? ` · ${pct(u.earlier)} before, ${pct(u.recent)} lately` : ""}
-								</p>
+								<RangeBand u={u} />
+								<span className="q-num text-[15px] font-semibold text-foreground sm:text-right">{pct(u.accuracy)}</span>
 							</Link>
 						</li>
 					);
@@ -427,26 +442,26 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 	};
 	return (
 		<Section id="mistakes-words" title="Words you miss most" line="What the sentence wanted, and what you last wrote.">
-			<ul className="flex flex-col divide-y rounded-2xl border-2 bg-card">
+			<ul className="q-card flex flex-col divide-y divide-border">
 				{a.words.map((w) => (
 					<li key={w.slug} className="flex items-baseline justify-between gap-3 px-4 py-3">
-						<span className="min-w-0 font-prose text-base text-foreground" lang="sk">
-							<b>{w.answer}</b>
-							<span className="text-muted-foreground"> · {w.lastGiven ? `you wrote “${w.lastGiven}”` : "no answer"}</span>
+						<span className="min-w-0 text-base text-foreground" lang="sk">
+							<b className="font-semibold">{w.answer}</b>
+							<span className="text-ink-3"> · {w.lastGiven ? `you wrote “${w.lastGiven}”` : "no answer"}</span>
 						</span>
 						<span className="flex shrink-0 items-center gap-3">
-							<span className="font-ui text-xs tabular-nums text-muted-foreground">
+							<span className="q-num text-xs text-ink-3">
 								{w.misses} of {w.reps}
 							</span>
 							<button
 								type="button"
 								disabled={done[w.slug] === "adding" || done[w.slug] === "added"}
 								onClick={() => void add(w.slug)}
-								className="inline-flex h-8 items-center gap-1 rounded-lg px-2 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60 pointer-coarse:min-h-11"
+								className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-3 hover:bg-well hover:text-ink-2 disabled:opacity-60 pointer-coarse:min-h-11"
 								aria-label={`Add ${w.lemma} to review`}
 								data-testid={`word-review-${w.slug}`}
 							>
-								{done[w.slug] === "added" ? <CheckIcon className="size-3.5" /> : <PlusIcon className="size-3.5" />}
+								{done[w.slug] === "added" ? <CheckIcon className="size-3.5" strokeWidth={1.6} /> : <PlusIcon className="size-3.5" strokeWidth={1.6} />}
 								{done[w.slug] === "added" ? "In review" : done[w.slug] === "failed" ? "Try again" : "Review"}
 							</button>
 						</span>
@@ -461,14 +476,14 @@ function WeeksSection({ a }: { a: MistakeAnalysis }) {
 	if (a.weeks.length < 2) return null;
 	return (
 		<Section id="mistakes-weeks" title="Week by week" line="Share of first tries right.">
-			<ol className="flex items-end gap-2 rounded-2xl border-2 bg-card p-4" aria-label="First-try accuracy by week">
+			<ol className="q-card flex items-end gap-2 p-4" aria-label="First-try accuracy by week">
 				{a.weeks.map((w) => (
 					<li key={w.week} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-						<span className="font-ui text-xs font-bold tabular-nums text-foreground">{pct(w.accuracy)}</span>
-						<span className="flex h-20 w-full items-end rounded-md bg-accent">
-							<span className="w-full rounded-md bg-go" style={{ height: `${Math.max(4, Math.round(w.accuracy * 100))}%` }} />
+						<span className="q-num text-xs font-semibold text-ink-2">{pct(w.accuracy)}</span>
+						<span className="flex h-20 w-full items-end rounded-md bg-well-2">
+							<span className="w-full rounded-md bg-teal" style={{ height: `${Math.max(4, Math.round(w.accuracy * 100))}%` }} />
 						</span>
-						<span className="font-ui text-xs text-muted-foreground" title={`${w.reps} first tries`}>
+						<span className="text-xs text-ink-3" title={`${w.reps} first tries`}>
 							{w.week.slice(5)}
 						</span>
 					</li>

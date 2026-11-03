@@ -20,6 +20,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckIcon, EyeIcon, HeadphonesIcon, KeyboardIcon, RepeatIcon, SnailIcon, Volume2Icon, XIcon } from "lucide-react";
+import { QIcon } from "@/components/quiet/icon";
+import { COLUMN, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking } from "@/components/speech";
@@ -54,10 +56,6 @@ interface Outcome {
 	summary: { todayXp: number; dailyGoal: number; streak: { days: number } };
 }
 
-const COLUMN = "mx-auto w-full max-w-3xl px-6";
-const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 font-ui text-base font-extrabold transition-[filter,transform,background-color] active:scale-[0.98]";
-const PRIMARY = cn(BUTTON, "bg-go text-go-ink hover:brightness-110 disabled:cursor-not-allowed disabled:bg-accent disabled:text-muted-foreground disabled:hover:brightness-100 disabled:active:scale-100");
-const SECONDARY = cn(BUTTON, "bg-foreground/10 px-5 text-foreground hover:bg-foreground/15");
 
 const PRAISE = ["Rozumieš!", "Presne tak!", "Áno!", "Super!", "Výborne!"];
 /** The learner's answer style, remembered in this browser. */
@@ -338,176 +336,155 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 
 	const progress = (index + (current ? 1 : 0)) / total;
 	const praise = PRAISE[index % PRAISE.length]!;
+	const tone = !current ? "plain" : current.verdict === "wrong" ? "miss" : current.verdict === "exact" ? "right" : "wait";
 
 	return (
 		<Frame strip={false}>
-			{/* Top bar: exit · progress · count. The band drags the window. */}
-			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
-				<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-					<Link href="/" aria-label="Leave" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-						<XIcon className="size-5" />
-					</Link>
-					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-3 flex-1 overflow-hidden rounded-full bg-accent" aria-label={`${index} of ${total} heard`}>
-						<div className="h-full rounded-full bg-sky transition-[width] duration-500 ease-out" style={{ width: `${Math.max(3, progress * 100)}%` }} />
-					</div>
-					<span className="font-ui text-sm font-semibold tabular-nums text-muted-foreground" data-testid="listen-count">
-						{index + 1}/{total}
-					</span>
-				</div>
-			</div>
+			<TaskTop progress={progress} label={`${index} of ${total} heard`} count={`${index + 1}/${total}`} />
 
-			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
+			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<p className="font-ui text-sm font-bold text-muted-foreground">
-							Listen · {item.stretch.length === 0 ? "every word is yours" : item.stretch.length === 1 ? "one new word" : `${item.stretch.length} new words`}
-						</p>
-						<AnswerSwitch answer={answer} disabled={!!current} onChange={chooseAnswer} />
-					</div>
-					<h2 className="mb-6 mt-1 font-prose text-2xl font-semibold text-foreground">
-						{!current ? (mode === "type" ? "Type what you hear" : "What does it mean?") : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : mode === "type" ? "It says…" : "It meant…"}
-					</h2>
+					<PracticeCard
+						icon="listen"
+						title="Listen"
+						sub={`Sentence ${index + 1} of ${total}`}
+					>
+						<div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+							<p className="font-ui text-[13px] text-ink-3">{item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
+							<AnswerSwitch answer={answer} disabled={!!current} onChange={chooseAnswer} />
+						</div>
+						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+							{!current ? (mode === "type" ? "Type what you hear" : "What does it mean?") : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : mode === "type" ? "It says…" : "It meant…"}
+						</h2>
 
-					{/* Hear it: the big play, the slow play, and the text behind a tap. */}
-					<div className="flex flex-wrap items-center gap-3">
-						<button
-							type="button"
-							onClick={() => replay()}
-							aria-label="Play the sentence"
-							className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-sky text-background transition-transform hover:scale-105 active:scale-95"
-							data-testid="listen-play"
-						>
-							<Volume2Icon className="size-8" />
-						</button>
-						<button
-							type="button"
-							onClick={() => replay(true)}
-							aria-label="Play slowly"
-							title="Play slowly"
-							className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky/15 text-sky transition-transform hover:scale-105"
-						>
-							<SnailIcon className="size-6" />
-						</button>
-						{/* The text, only after two listens, and it costs the sentence:
-						    the ear has to try first (docs/research/desirable-difficulties.md). */}
-						{!current && !peeked && (
+						{/* Hear it: the big play, the slow play, and the text behind a tap. */}
+						<div className="flex flex-wrap items-center gap-3">
 							<button
 								type="button"
-								onClick={() => setPeeked(true)}
-								disabled={replays < PEEK_AFTER_REPLAYS}
-								title={replays < PEEK_AFTER_REPLAYS ? "Listen once more first" : "Show the text — this sentence then does not count as understood"}
-								className="ml-auto flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
-								data-testid="listen-peek"
+								onClick={() => replay()}
+								aria-label="Play the sentence"
+								className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] transition-colors hover:bg-teal-2 active:translate-y-px"
+								data-testid="listen-play"
 							>
-								<EyeIcon className="size-4" />
-								{replays < PEEK_AFTER_REPLAYS ? "Text · listen again first" : "Show the text · not counted"}
+								<Volume2Icon className="size-6" strokeWidth={1.6} />
 							</button>
-						)}
-					</div>
-
-					{/* Type it: the Slovak as heard, graded letter by letter. The field is
-					    the answer, so it is locked once checked. */}
-					{mode === "type" && (
-						<div className="mt-6">
-							<input
-								type="text"
-								lang="sk"
-								autoComplete="off"
-								autoCapitalize="off"
-								spellCheck={false}
-								autoFocus
-								value={draft}
-								onChange={(e) => setDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										e.preventDefault();
-										submit();
-									}
-								}}
-								disabled={!!current}
-								aria-label="Type the sentence you heard"
-								placeholder="Type what you hear"
-								className="w-full rounded-xl border-2 border-border bg-card px-4 py-3.5 font-prose text-[26px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-sky disabled:opacity-70"
-								data-testid="listen-input"
-							/>
-							{!current && <DiacriticBar variant="keys" className="mt-4" />}
-						</div>
-					)}
-
-					{/* The sentence: hidden until answered or peeked; then every word,
-					    the stretch words marked and glossed. */}
-					<div className="mt-6 min-h-[4.5rem]" data-testid="listen-sentence" data-word-lookup-enabled={current !== null || peeked ? "true" : "false"}>
-						{current || peeked ? (
-							<div className="lh-rise">
-								<p className="font-prose text-[30px] leading-[1.6] text-foreground" lang="sk">
-									<Marked sentence={item.sentence} stretch={item.stretch.map((w) => w.text)} />
-								</p>
-								{current?.answer === "type" && current.verdict !== "exact" && (
-									<p className="mt-2 font-prose text-base text-muted-foreground" data-testid="listen-typed">
-										You typed · <span lang="sk">{current.given}</span>
-									</p>
-								)}
-								{item.stretch.length > 0 && (
-									<ul className="mt-2 flex flex-wrap gap-2" aria-label="New words">
-										{item.stretch.map((w) => (
-											<li key={w.text} className="rounded-lg bg-xp/15 px-2.5 py-1 font-prose text-base text-foreground">
-												<span className="font-bold" lang="sk">
-													{w.lemma}
-												</span>
-												{w.gloss && <span className="text-muted-foreground"> · {w.gloss}</span>}
-											</li>
-										))}
-									</ul>
-								)}
-								{current && (
-									<p data-no-word-lookup="true" className="mt-3 font-prose text-lg text-muted-foreground" data-testid="listen-translation">
-										{item.translation}
-									</p>
-								)}
-							</div>
-						) : (
-							<p className="font-ui text-sm text-muted-foreground">Listen first. The text appears once you have {mode === "type" ? "typed what you heard" : "picked a meaning"}
-								{peeked ? "" : replays < PEEK_AFTER_REPLAYS ? " (or after a second listen, at a price)" : ""}.</p>
-						)}
-					</div>
-
-					{/* Three meanings, stacked (English runs long). Pick mode only. */}
-					{mode === "pick" && (
-					<div className="mt-6 grid gap-3" data-testid="listen-options">
-						{item.options.map((o, i) => {
-							const picked = current?.given === o;
-							const right = !!current && o === item.translation;
-							return (
+							<button
+								type="button"
+								onClick={() => replay(true)}
+								aria-label="Play slowly"
+								title="Play slowly"
+								className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-teal-wash text-teal-2 transition-colors hover:bg-well-2"
+							>
+								<SnailIcon className="size-5" strokeWidth={1.6} />
+							</button>
+							{/* The text, only after two listens, and it costs the sentence:
+							    the ear has to try first (docs/research/desirable-difficulties.md). */}
+							{!current && !peeked && (
 								<button
-									key={o}
 									type="button"
-									disabled={!!current}
-									onClick={() => pick(o)}
-									className={cn(
-										"flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3.5 text-left font-prose text-xl text-foreground transition-colors",
-										!current && "hover:border-foreground/40 hover:bg-accent",
-										right && "border-go bg-go-soft",
-										picked && !right && "border-miss bg-miss-soft",
-										current && !right && !picked && "opacity-50",
-									)}
+									onClick={() => setPeeked(true)}
+									disabled={replays < PEEK_AFTER_REPLAYS}
+									title={replays < PEEK_AFTER_REPLAYS ? "Listen once more first" : "Show the text — this sentence then does not count as understood"}
+									className="q-why-off ml-auto !mt-0"
+									data-testid="listen-peek"
 								>
-									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
-									<span>{o}</span>
-									{right && <CheckIcon className="ml-auto size-5 shrink-0 text-go" strokeWidth={3} />}
+									<span className={cn("w", replays >= PEEK_AFTER_REPLAYS && "!text-ink-2")}>
+										<EyeIcon className="size-3.5" strokeWidth={1.6} />
+										{replays < PEEK_AFTER_REPLAYS ? "Text · listen again first" : "Show the text · not counted"}
+									</span>
 								</button>
-							);
-						})}
-					</div>
-					)}
+							)}
+						</div>
+
+						{/* Type it: the Slovak as heard, graded letter by letter. The field is
+						    the answer, so it is locked once checked. */}
+						{mode === "type" && (
+							<div className="mt-6">
+								<input
+									type="text"
+									lang="sk"
+									autoComplete="off"
+									autoCapitalize="off"
+									spellCheck={false}
+									autoFocus
+									value={draft}
+									onChange={(e) => setDraft(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											e.preventDefault();
+											submit();
+										}
+									}}
+									disabled={!!current}
+									aria-label="Type the sentence you heard"
+									placeholder="Type what you hear"
+									className="w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground outline-none transition-shadow placeholder:font-normal placeholder:text-ink-4 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-70"
+									data-testid="listen-input"
+								/>
+								{!current && <DiacriticBar variant="keys" className="mt-4" />}
+							</div>
+						)}
+
+						{/* The sentence: hidden until answered or peeked; then every word,
+						    the stretch words marked and glossed. */}
+						<div className="mt-6 min-h-[4.5rem]" data-testid="listen-sentence" data-word-lookup-enabled={current !== null || peeked ? "true" : "false"}>
+							{current || peeked ? (
+								<div className="lh-rise">
+									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang="sk">
+										<Marked sentence={item.sentence} stretch={item.stretch.map((w) => w.text)} />
+									</p>
+									{current?.answer === "type" && current.verdict !== "exact" && (
+										<p className="mt-2 font-prose text-base text-ink-3" data-testid="listen-typed">
+											You typed · <span lang="sk">{current.given}</span>
+										</p>
+									)}
+									{item.stretch.length > 0 && (
+										<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
+											{item.stretch.map((w) => (
+												<li key={w.text} className="q-ex">
+													<u lang="sk">{w.lemma}</u>
+													{w.gloss && <span className="ml-1.5 font-normal text-ink-3">· {w.gloss}</span>}
+												</li>
+											))}
+										</ul>
+									)}
+									{current && (
+										<p data-no-word-lookup="true" className="mt-3 font-prose text-base text-ink-2" data-testid="listen-translation">
+											{item.translation}
+										</p>
+									)}
+								</div>
+							) : (
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">Listen first. The text appears once you have {mode === "type" ? "typed what you heard" : "picked a meaning"}
+									{peeked ? "" : replays < PEEK_AFTER_REPLAYS ? " (or after a second listen, at a price)" : ""}.</p>
+							)}
+						</div>
+
+						{/* Three meanings, stacked (English runs long). Pick mode only. */}
+						{mode === "pick" && (
+							<div className="mt-6 grid gap-2.5" data-testid="listen-options">
+								{item.options.map((o, i) => {
+									const picked = current?.given === o;
+									const right = !!current && o === item.translation;
+									return (
+										<OptionTile key={o} n={i + 1} disabled={!!current} state={right ? "right" : picked ? "wrong" : current ? "dim" : "idle"} onClick={() => pick(o)}>
+											{o}
+										</OptionTile>
+									);
+								})}
+							</div>
+						)}
+					</PracticeCard>
 				</div>
 			</div>
 
 			{/* One bar at the bottom: the hint and Check before, the verdict and Continue after. */}
-			<div className={cn("border-t border-border", current && (current.verdict === "exact" ? "bg-go-soft" : current.verdict === "accents" ? "bg-warn-soft" : "bg-miss-soft"))}>
-				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
+			<Dock tone={tone} live>
+				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{current ? (
 						<>
-							<p className={cn("font-ui text-lg font-extrabold", current.verdict === "exact" ? "text-go" : current.verdict === "accents" ? "text-warn" : "text-miss")} data-testid="listen-verdict">
+							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", current.verdict === "exact" ? "text-teal-2" : current.verdict === "accents" ? "text-ink-2" : "text-miss")} data-testid="listen-verdict">
+								<VerdictDisc ok={current.verdict !== "wrong"} />
 								{current.verdict === "exact"
 									? `Understood · +${LISTEN_XP} XP`
 									: current.verdict === "accents"
@@ -516,31 +493,28 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 											? "Not quite"
 											: "Not that one"}
 							</p>
-							<button
-								type="button"
-								onClick={advance}
-								className={cn(BUTTON, current.verdict === "exact" ? "bg-go text-go-ink" : current.verdict === "accents" ? "bg-warn text-background" : "bg-miss text-background")}
-								data-testid="listen-continue"
-								autoFocus
-							>
+							<button type="button" onClick={advance} className={PRIMARY} data-testid="listen-continue" autoFocus>
 								{index + 1 >= total ? "Finish" : "Continue"}
+								<span className="q-kbd">
+									<QIcon name="enter" />
+								</span>
 							</button>
 						</>
 					) : mode === "type" ? (
 						<>
-							<p className="font-prose text-sm text-muted-foreground">
-								<KeyboardIcon className="mr-1.5 inline size-4 align-[-2px]" aria-hidden="true" />
-								Enter checks · the play button hears it again
-							</p>
+							<p className="font-ui text-[13px] text-ink-3">Enter checks · the play button hears it again</p>
 							<button type="button" onClick={submit} disabled={!draft.trim()} className={PRIMARY} data-testid="listen-check">
 								Check
+								<span className="q-kbd">
+									<QIcon name="enter" />
+								</span>
 							</button>
 						</>
 					) : (
-						<p className="font-prose text-sm text-muted-foreground">Pick a meaning, or press its number · Space plays it again</p>
+						<p className="font-ui text-[13px] text-ink-3">Pick a meaning, or press its number · Space plays it again</p>
 					)}
 				</div>
-			</div>
+			</Dock>
 		</Frame>
 	);
 }
@@ -554,7 +528,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 		<>
 			{parts.map((p, i) =>
 				set.has(p.toLocaleLowerCase("sk-SK")) ? (
-					<mark key={i} className="rounded-lg bg-xp/20 px-1 font-bold text-foreground underline decoration-xp decoration-[3px] underline-offset-[6px]">
+					<mark key={i} className="rounded-md bg-teal-wash px-1 text-teal-2 underline decoration-teal-line decoration-2 underline-offset-[6px]">
 						{p}
 					</mark>
 				) : (
@@ -565,15 +539,6 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 	);
 }
 
-function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	return (
-		<div className="fixed inset-0 z-40 flex flex-col bg-background">
-			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
-			{children}
-		</div>
-	);
-}
-
 function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps: Rep[]; saving: boolean; onAgain: () => void }) {
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
@@ -581,29 +546,29 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 	return (
 		<div className={cn(COLUMN, "my-auto py-10")} data-testid="listen-end">
 			<div className="flex items-center gap-4">
-				<span className="flex size-16 items-center justify-center rounded-2xl bg-sky/15 text-sky">
-					<HeadphonesIcon className="size-8" />
+				<span className="flex size-14 items-center justify-center rounded-xl bg-teal-wash text-teal-2">
+						<HeadphonesIcon className="size-6" strokeWidth={1.6} />
 				</span>
 				<div>
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Listen · done</p>
-					<h1 className="font-ui text-3xl font-black text-foreground">
+					<p className="font-ui text-[13px] font-[550] text-ink-3">Listen · done</p>
+						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
 						{outcome.correct} of {outcome.total} understood by ear
 					</h1>
-					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-warn">{outcome.almost} typed with only a missing accent (half XP)</p>}
+					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-ink-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
 				</div>
 			</div>
-			<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
-				<Stat label="XP" value={`+${outcome.xp}`} ink="text-sun" />
-				<Stat label="New words met" value={String(words.length)} ink="text-sky" />
-				<Stat label="In your deck" value={saving ? "…" : String(outcome.queued.length)} ink="text-go" />
-			</div>
+			<Stats className="mt-6">
+				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label="New words met" value={String(words.length)} ink="text-foreground" />
+				<Stat label="In your deck" value={saving ? "…" : String(outcome.queued.length)} ink="text-foreground" />
+			</Stats>
 			{words.length > 0 && (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Words you met today</p>
+					<p className="q-sh">Words you met today</p>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{words.map((w) => (
-							<li key={w.lemma} className="rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base">
-								<span className="font-bold" lang="sk">
+							<li key={w.lemma} className="rounded-md bg-well px-2.5 py-1 font-prose text-[14px]">
+									<span className="font-[600] text-teal-2" lang="sk">
 									{w.lemma}
 								</span>
 								{w.gloss && <span className="text-muted-foreground"> · {w.gloss}</span>}
@@ -615,13 +580,13 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 			)}
 			{missed.length > 0 && (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Worth hearing again</p>
+					<p className="q-sh">Worth hearing again</p>
 					<ul className="mt-2 flex flex-col gap-2">
 						{missed.map((r) => (
-							<li key={r.item.id} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
-								<button type="button" onClick={() => void speak(r.item.sentence)} aria-label="Play" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-sky/20 text-sky hover:bg-sky/30">
-									<Volume2Icon className="size-4" />
-								</button>
+							<li key={r.item.id} className="q-card flex items-start gap-3 px-4 py-3">
+								<button type="button" onClick={() => void speak(r.item.sentence)} aria-label="Play" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2">
+									<Volume2Icon className="size-4" strokeWidth={1.6} />
+									</button>
 								<div className="min-w-0">
 									<p className="font-prose text-lg text-foreground" lang="sk">
 										{r.item.sentence}
@@ -655,7 +620,7 @@ function AnswerSwitch({ answer, disabled, onChange }: { answer: ListenAnswer; di
 		{ id: "type", label: "Type it", icon: KeyboardIcon },
 	];
 	return (
-		<div role="group" aria-label="How to answer" className="inline-flex rounded-xl bg-accent p-1 font-ui text-sm font-bold" data-testid="listen-answer-switch">
+		<div role="group" aria-label="How to answer" className="q-segc" data-testid="listen-answer-switch">
 			{options.map((o) => {
 				const on = answer === o.id;
 				const Icon = o.icon;
@@ -666,23 +631,14 @@ function AnswerSwitch({ answer, disabled, onChange }: { answer: ListenAnswer; di
 						disabled={disabled}
 						aria-pressed={on}
 						onClick={() => onChange(o.id)}
-						className={cn("flex h-9 items-center gap-1.5 rounded-lg px-3 transition-colors disabled:cursor-not-allowed", on ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground", disabled && !on && "opacity-50")}
+						className={cn("flex items-center gap-1.5 whitespace-nowrap disabled:cursor-not-allowed", on && "on", disabled && !on && "opacity-50")}
 						data-testid={`listen-answer-${o.id}`}
 					>
-						<Icon className="size-4" aria-hidden="true" />
+						<Icon className="size-4" strokeWidth={1.6} aria-hidden="true" />
 						{o.label}
 					</button>
 				);
 			})}
-		</div>
-	);
-}
-
-function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
-	return (
-		<div>
-			<p className="text-xs font-bold tracking-wide text-muted-foreground">{label}</p>
-			<p className={cn("text-2xl font-black tabular-nums", ink)}>{value}</p>
 		</div>
 	);
 }

@@ -1245,7 +1245,7 @@ export function Chat({
 								spellCheck={false}
 								aria-label="Session title"
 								title="Rename this session"
-								className="lh-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-extrabold tracking-tight caret-current outline-none [field-sizing:content]"
+								className="lh-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
 							/>
 							{/* flex-1 spacer during rename too, so the chips stay at
 							    the right edge; clicks here commit via the header
@@ -1266,7 +1266,7 @@ export function Chat({
 								setTitleDraft(titleText);
 								setRenaming(true);
 							}}
-							className="lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left font-title text-2xl font-extrabold tracking-tight transition-colors hover:bg-accent"
+							className="lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left font-title text-2xl font-semibold tracking-tight transition-colors hover:bg-accent"
 						>
 							{titleText}
 							</button>
@@ -1288,7 +1288,7 @@ export function Chat({
 								blurAfterPointerClick(e);
 								setPlanOpen(true);
 							}}
-							className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+							className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
 						>
 							<WaypointsIcon className="size-3.5 text-primary" aria-hidden />
 							Plan
@@ -1307,7 +1307,7 @@ export function Chat({
 								setShowWorking(!showWorking);
 							}}
 							className={cn(
-								"lh-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider transition-colors hover:text-foreground",
+								"lh-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
 								showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
 							)}
 						>
@@ -1330,7 +1330,7 @@ export function Chat({
 							data-testid="phase-chip"
 							data-phase="practice"
 							aria-hidden="true"
-							className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground"
+							className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-semibold text-muted-foreground"
 						>
 							<DumbbellIcon className="size-3" />
 							Practice
@@ -1397,7 +1397,7 @@ export function Chat({
 													<div
 														key={pi}
 														data-testid="practice-next-line"
-														className="my-4 flex items-center justify-center gap-1.5 font-ui text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground"
+														className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-semibold text-muted-foreground"
 													>
 														<ArrowRightIcon className="size-3" />
 														Next problem
@@ -1454,7 +1454,7 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className="my-3 ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-sky/15 px-4 py-2.5 font-ui text-xs"
+										className="my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
@@ -1592,13 +1592,13 @@ export function Chat({
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
 							{compacting && (
-								<span className="flex items-center gap-2 font-ui text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Compacting context" />
 									<Shimmer duration={1}>COMPACTING CONTEXT…</Shimmer>
 								</span>
 							)}
 							{(status === "submitted" || turnInFlight) && (
-								<span className="flex items-center gap-2 font-ui text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Thinking" />
 									<Shimmer duration={1}>
 										THINKING…
@@ -1657,7 +1657,7 @@ export function Chat({
 										type="button"
 										data-testid="setup-cta"
 										onClick={() => setSetupOpen(true)}
-										className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-bold")}
+										className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
 									>
 										Set up your models
 									</button>
@@ -2304,8 +2304,8 @@ function DockOverlay({
 
 	return (
 		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: sbInset }}>
-			<div className="h-24 bg-gradient-to-t from-background via-background/85 to-transparent" />
-			<div ref={blockRef} className="relative bg-background pb-5" style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
+			<div className="h-24" />
+			<div ref={blockRef} className="relative bg-background pb-5 shadow-[0_-1px_0_var(--q-line)]" style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
 				<div className={DOCK}>
 					{setupCta}
 					{/* The queued-steer indicator (owner spec 2026-10-03): quiet
@@ -2337,7 +2337,7 @@ function DockOverlay({
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
 					<DiacriticBar />
-					<div ref={shellRef} className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-lg">
+					<div ref={shellRef} className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
 						<div
 						ref={contentRef}
 						key={mode}

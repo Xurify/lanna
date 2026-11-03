@@ -45,7 +45,7 @@ export function PairForm({ next }: { next: string }) {
 	return (
 		<main className="flex min-h-dvh w-full items-center justify-center px-4 py-10 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
 			<div className="w-full max-w-sm">
-				<h1 className="font-ui text-2xl font-bold tracking-tight text-foreground">Pair this device</h1>
+				<h1 className="font-ui text-2xl font-semibold tracking-tight text-foreground">Pair this device</h1>
 				<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
 					On the computer, open Settings, then Devices, and choose Make a code. The code works for five minutes, and only once.
 				</p>

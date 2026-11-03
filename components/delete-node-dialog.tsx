@@ -53,7 +53,7 @@ export function DeleteNodeBody({
 			aria-label="Delete node"
 			data-testid="delete-node-dialog"
 			onClick={(e) => e.stopPropagation()}
-			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 		>
 			<h2 className="text-sm font-semibold text-destructive">
 				{nodes.length === 1 ? "Delete node?" : `Delete ${nodes.length} nodes?`}

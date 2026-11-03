@@ -14,7 +14,8 @@ import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
-import { PhoneNav, isPhoneNavPath } from "@/components/phone-nav";
+import { isPhoneNavPath } from "@/components/phone-nav";
+import { JumpProvider, PhoneDock } from "@/components/quiet/jump";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -166,7 +167,7 @@ export function SidebarProvider({ children, initialOpen = true }: { children: Re
 		// cookie wins from then on). Default: open.
 		const stored = localStorage.getItem(STORAGE_KEY);
 		if (!String(document.cookie ?? "").includes(`${SIDEBAR_COOKIE}=`)) {
-			const v = stored === null ? true : stored === "1";
+			const v = stored === "1";
 			persistOpen(v);
 			setOpen(v);
 		}
@@ -1211,6 +1212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 	return (
 		<SettingsDialogProvider>
+			<JumpProvider>
 			<SessionsSidebar />
 			{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. On phones the four main pages leave room
@@ -1230,12 +1232,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
 				{children}
 			</main>
-			<PhoneNav pathname={pathname} />
+			<PhoneDock pathname={pathname} />
 			<SelectionWordBankBar />
 			{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
 			    matters for the events it dispatches, never for DOM priority. */}
 			<KeyboardShortcuts />
+			</JumpProvider>
 		</SettingsDialogProvider>
 	);
 }

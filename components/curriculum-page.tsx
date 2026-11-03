@@ -51,14 +51,14 @@ export function CurriculumPage({ initialConfigured, state, next, goal, weak = []
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-5xl px-5 pb-16 @container" data-testid="curriculum">
-				<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
-					<ArrowLeftIcon className="size-3.5" />
+				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-extrabold tracking-tight text-foreground">Your climb to {goal.level}</h1>
-				<p className="mt-2 max-w-2xl font-prose text-base text-muted-foreground">
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Your climb to {goal.level}</h1>
+				<p className="q-line dim mt-2 max-w-2xl">
 					{state ? `${state.done} of ${state.total} units done. ` : ""}
-					Read it from the bottom up: each level is a stretch of the mountain, each chapter a stop on the trail. Lessons you can do alone are built
+					Read it from the top down: each level is a section, each chapter a stop in it. Lessons you can do alone are built
 					from real sentences; short sessions with the tutor cover what a drill cannot check; every chapter ends in something you can do, then an
 					exam. A chapter opens when the one before is nearly done, and a lesson you ace in one go counts as done, so you are never held in what
 					you already know.

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  */
 export const BUTTON = "inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 font-ui text-sm font-[550] tracking-[-0.005em] transition-[background-color,box-shadow,transform] duration-150 active:translate-y-px";
 export const PRIMARY = cn(BUTTON, "bg-sun text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-sun disabled:active:translate-y-0");
-export const SECONDARY = cn(BUTTON, "bg-background px-3.5 text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)] hover:bg-well disabled:opacity-50");
+export const SECONDARY = cn(BUTTON, "bg-card px-3.5 text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)] hover:bg-well disabled:opacity-50");
 /** A quiet text action beside a primary one ("I don't know", "Skip"). */
 export const QUIET = cn(BUTTON, "px-2.5 text-muted-foreground hover:bg-well hover:text-ink-2 disabled:opacity-50");
 /** The compact size, for actions inside a card or a row. */

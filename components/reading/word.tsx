@@ -206,14 +206,14 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					role="dialog"
 					aria-label={`About ${token.text}`}
 					className={cn(
-						"lh-pop absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-2xl border-2 bg-card p-4 text-left font-prose text-base shadow-xl",
+						"lh-pop absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-lg border bg-card p-4 text-left font-prose text-base shadow-raise-hi",
 						placeAbove ? "bottom-full mb-2" : "top-full mt-2",
 						side === "left" ? "left-0" : "right-0",
 					)}
 					data-testid="word-popover"
 				>
 					<span className="flex items-baseline justify-between gap-3">
-						<span className="font-ui text-xl font-black text-foreground" lang={langCode}>
+						<span className="font-ui text-xl font-[600] text-foreground" lang={langCode}>
 							{resolvedLemma}
 						</span>
 						<span className="flex items-center gap-1">
@@ -223,7 +223,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 								onClick={() => void toggleFav()}
 								aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
 								title={isFav ? "Remove from favorites" : "Add to favorites"}
-								className={cn("rounded-md p-1 transition-colors", isFav ? "text-gold hover:bg-gold/20" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+								className={cn("rounded-md p-1 transition-colors", isFav ? "text-teal-2 hover:bg-teal-wash" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
 							>
 								<StarIcon className={cn("size-4", isFav && "fill-gold")} />
 							</button>
@@ -264,8 +264,8 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						<span className="mt-1.5 flex flex-wrap gap-1.5">
 							{resolvedCat && <Tag>{resolvedCat.toLowerCase()}</Tag>}
 							{resolvedGender && <Tag>{resolvedGender}</Tag>}
-							{token.fresh && <Tag className="bg-xp/15 text-xp">new word</Tag>}
-							{lookupData?.source === "translated" && <Tag className="bg-sky/15 text-sky">translated</Tag>}
+							{token.fresh && <Tag className="bg-teal-wash text-teal-2">new word</Tag>}
+							{lookupData?.source === "translated" && <Tag className="bg-teal-wash text-teal-2">translated</Tag>}
 						</span>
 					)}
 					<span className="mt-2 flex flex-wrap items-center gap-2 font-ui text-[11px] text-muted-foreground">
@@ -317,10 +317,10 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							disabled={inDeck && isFav}
 							data-testid="word-popover-add-bank"
 							className={cn(
-								"flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-bold transition-colors",
+								"flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-[600] transition-colors",
 								inDeck && isFav
-									? "bg-go/15 text-go"
-									: "bg-accent text-foreground hover:bg-go hover:text-primary-foreground",
+									? "bg-teal-wash text-teal-2"
+									: "bg-accent text-foreground hover:bg-teal-2 hover:text-primary-foreground",
 							)}
 						>
 							{inDeck && isFav ? (

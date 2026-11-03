@@ -19,7 +19,7 @@ export function AiCallout({ status, title, adds, className }: { status: AiStatus
 	const missing = status.reason === "no-model" ? "No model is set." : `The ${status.provider} key is missing.`;
 	return (
 		<div className={cn("rounded-xl border border-gold/40 bg-gold/10 p-4", className)} data-testid="ai-callout">
-			<p className="flex items-center gap-1.5 font-ui text-sm font-bold text-foreground">
+			<p className="flex items-center gap-1.5 font-ui text-sm font-semibold text-foreground">
 				<SparklesIcon className="size-4 text-gold" aria-hidden="true" />
 				{title}
 			</p>

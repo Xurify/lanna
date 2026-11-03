@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-	const sidebarOpen = (await cookies()).get(SIDEBAR_COOKIE)?.value !== "0";
+	const sidebarOpen = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
 	// Saved appearance goes into the first HTML (no flash of the factory
 	// palette or font before the client provider would have applied it).
 	let appearance: AppearanceSettings | undefined;

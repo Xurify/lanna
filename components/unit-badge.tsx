@@ -32,11 +32,11 @@ export function UnitBadge({
 	const stroke = size === "lg" ? 7 : size === "sm" ? 4 : 5;
 	const r = (px - stroke) / 2;
 	const c = 2 * Math.PI * r;
-	const ring = done ? "var(--lh-gold)" : tone === "xp" ? "var(--lh-xp)" : tone === "flame" ? "var(--lh-flame)" : "var(--lh-go)";
+	const ring = "var(--q-teal)";
 	return (
 		<span className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-pulse-ring")} style={{ width: px, height: px }}>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
-				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke} />
+				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--q-well-2)" strokeWidth={stroke} />
 				<circle
 					cx={px / 2}
 					cy={px / 2}
@@ -55,29 +55,25 @@ export function UnitBadge({
 					"flex items-center justify-center rounded-full",
 					size === "lg" ? "size-[66px]" : size === "sm" ? "size-[32px]" : "size-[40px]",
 					active
-						? tone === "xp"
-							? "bg-xp text-background"
-							: tone === "flame"
-								? "bg-flame text-background"
-								: "bg-go text-go-ink"
+						? "bg-teal text-[var(--q-on-teal)]"
 						: done
-							? "bg-gold/15 text-gold"
+							? "bg-teal-wash text-teal-2"
 							: locked
-								? "bg-accent/60 text-muted-foreground"
+								? "bg-well text-ink-4"
 								: progress > 0
-									? "bg-card text-foreground"
-									: "bg-accent text-foreground/70",
+									? "bg-card text-ink-2 shadow-raise"
+									: "bg-well text-ink-3",
 				)}
 			>
-				<UnitIcon name={glyph} className={size === "lg" ? "size-8" : size === "sm" ? "size-4" : "size-5"} strokeWidth={2.25} />
+				<UnitIcon name={glyph} className={size === "lg" ? "size-8" : size === "sm" ? "size-4" : "size-5"} strokeWidth={1.6} />
 			</span>
 			{done && (
-				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-gold text-background">
+				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-teal text-[var(--q-on-teal)]">
 					<CheckIcon className="size-3" strokeWidth={3} aria-label="Done" />
 				</span>
 			)}
 			{locked && !done && (
-				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-muted text-muted-foreground">
+				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-well-2 text-ink-3">
 					<LockIcon className="size-2.5" strokeWidth={3} aria-label="Locked" />
 				</span>
 			)}

@@ -221,7 +221,7 @@ export function DevicesSection() {
 						{/* Holds its height with or without a code, so the list below never moves. */}
 						<div className="flex min-h-14 items-center" aria-live="polite">
 							{code && left > 0 && (
-								<span className="font-mono text-3xl font-bold tracking-[0.2em] text-foreground tabular-nums" data-testid="devices-code">
+								<span className="font-mono text-3xl font-semibold tracking-[0.2em] text-foreground tabular-nums" data-testid="devices-code">
 									{code.code}
 								</span>
 							)}

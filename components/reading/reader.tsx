@@ -35,11 +35,11 @@ import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, t
 export function levelBadgeStyle(level: string): string {
 	switch (level) {
 		case "A1":
-			return "bg-go/15 text-go border-go/30";
+			return "bg-teal-wash text-teal-2 border-teal-line";
 		case "A2":
-			return "bg-trail-blue/15 text-trail-blue border-trail-blue/30";
+			return "bg-teal-wash text-teal-2 border-teal-line";
 		case "B1":
-			return "bg-sun/15 text-sun border-sun/30";
+			return "bg-teal-wash text-teal-2 border-teal-line";
 		case "B2":
 		case "C1":
 			return "bg-purple-500/15 text-purple-400 border-purple-500/30";
@@ -292,11 +292,11 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 			<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]">
 				<div className={cn(COLUMN, lines.length === 0 && "m-auto max-w-md text-center")} data-testid="read-writing">
 					<div className={cn("flex items-center gap-4", lines.length === 0 && "flex-col")}>
-						<div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-flame/15 text-flame">
+						<div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2">
 							<SparklesIcon className="size-7 lh-flicker" />
 						</div>
 						<div>
-							<h1 className="font-ui text-2xl font-black text-foreground">Writing {label}…</h1>
+							<h1 className="font-ui text-2xl font-[600] text-foreground">Writing {label}…</h1>
 							<p className="mt-1 font-prose text-base text-muted-foreground">
 								{progress ? `${progress.level} · from the words you know` : "At your level, from the words you know"} · kept in your library, so it is written once.
 							</p>
@@ -345,11 +345,11 @@ function TopBar({ story, step, progress, onShelf }: { story: StoryRecord; step: 
 					<XIcon className="size-5" />
 				</Link>
 				<div className="min-w-0 flex-1">
-					<p className="truncate font-ui text-sm font-bold text-foreground">
+					<p className="truncate font-ui text-sm font-[600] text-foreground">
 						{kindOf(story)} · <span className="text-muted-foreground">{step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
-						<div className="h-full rounded-full bg-xp transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
+						<div className="h-full rounded-full bg-teal transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, progress * 100)}%` }} />
 					</div>
 				</div>
 				<SpeedPill />
@@ -370,7 +370,7 @@ function SpeedPill() {
 			onClick={() => setSpeed(next)}
 			title="Playback speed"
 			aria-label={`Playback speed ${speed}×, click for ${next}×`}
-			className="rounded-lg px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3 font-ui text-xs font-bold tabular-nums text-muted-foreground hover:bg-accent hover:text-foreground"
+			className="rounded-lg px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3 font-ui text-xs font-[600] tabular-nums text-muted-foreground hover:bg-accent hover:text-foreground"
 		>
 			{speed}×
 		</button>
@@ -582,13 +582,13 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 			<div className="shrink-0 border-b border-border/60 bg-background/80 px-4 py-2 backdrop-blur">
 				<div className={cn(COLUMN, "flex flex-wrap items-center justify-between gap-2")}>
 					{/* Left: View Mode Pills */}
-					<div className="flex items-center gap-1 rounded-xl bg-accent/60 p-1 text-xs font-bold font-ui">
+					<div className="flex items-center gap-1 rounded-xl bg-accent/60 p-1 text-xs font-[600] font-ui">
 						<button
 							type="button"
 							onClick={() => setViewMode("flow")}
 							className={cn(
 								"rounded-lg px-3 py-1.5 pointer-coarse:min-h-11 transition-colors",
-								viewMode === "flow" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+								viewMode === "flow" ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
 							)}
 							title="Plynulý text príbehu (Continuous reading)"
 						>
@@ -599,7 +599,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							onClick={() => setViewMode("focus")}
 							className={cn(
 								"rounded-lg px-3 py-1.5 pointer-coarse:min-h-11 transition-colors",
-								viewMode === "focus" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+								viewMode === "focus" ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
 							)}
 							title="Jedna veta (Sentence focus drill)"
 						>
@@ -613,7 +613,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							type="button"
 							onClick={() => setShowTranslation((v) => !v)}
 							className={cn(
-								"rounded-xl border px-3 py-1.5 pointer-coarse:min-h-11 font-ui text-xs font-bold transition-colors",
+								"rounded-xl border px-3 py-1.5 pointer-coarse:min-h-11 font-ui text-xs font-[600] transition-colors",
 								showTranslation
 									? "border-primary/50 bg-primary/10 text-primary"
 									: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -626,7 +626,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						<button
 							type="button"
 							onClick={() => setFontSize((s) => (s === "normal" ? "large" : "normal"))}
-							className="rounded-xl border border-border/60 bg-accent/30 px-2.5 py-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 font-ui text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+							className="rounded-xl border border-border/60 bg-accent/30 px-2.5 py-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 font-ui text-xs font-[600] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
 							title="Zmeniť veľkosť písma"
 						>
 							{fontSize === "large" ? "A+" : "A"}
@@ -641,7 +641,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 					{/* Story Introduction Header */}
 					<div className="mb-8 border-b border-border/40 pb-6">
 						<div className="flex flex-wrap items-center gap-2">
-							<span className={cn("rounded-md border px-2 py-0.5 font-ui text-xs font-bold uppercase tracking-wider", levelBadgeStyle(story.level))}>
+							<span className={cn("rounded-md border px-2 py-0.5 font-ui text-xs font-[600] ", levelBadgeStyle(story.level))}>
 								{story.level}
 							</span>
 							<span className="font-ui text-xs font-semibold text-muted-foreground first-letter:uppercase">
@@ -654,7 +654,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								~{Math.max(1, Math.round(story.wordCount / 80))} min
 							</span>
 						</div>
-						<h1 className="mt-3 font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl" lang="sk">
+						<h1 className="mt-3 font-serif text-3xl font-[600] tracking-tight text-foreground sm:text-4xl" lang="sk">
 							{story.title}
 						</h1>
 						{story.recap && (
@@ -666,9 +666,9 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 					{/* View Mode: Sentence Focus Mode (LingQ Style) */}
 					{viewMode === "focus" && (
-						<div className="my-8 flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-border/80 bg-card/60 p-6 text-center shadow-sm">
+						<div className="my-8 flex min-h-[260px] flex-col items-center justify-center rounded-lg border border-border/80 bg-card/60 p-6 text-center shadow-raise">
 							{story.sentences[activeSentence]?.who && (
-								<span className="mb-3 inline-block font-ui text-xs font-bold uppercase tracking-wider text-muted-foreground" data-testid="read-speaker">
+								<span className="mb-3 inline-block font-ui text-xs font-[600] text-muted-foreground" data-testid="read-speaker">
 									{story.sentences[activeSentence]?.who}
 								</span>
 							)}
@@ -714,12 +714,12 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 									className={cn(
 										"flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-ui text-xs font-semibold transition-colors",
 										isBookmarked(activeSentence)
-											? "border-trail-blue/40 bg-trail-blue/15 text-trail-blue"
+											? "border-teal-line bg-teal-wash text-teal-2"
 											: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
 									)}
 									title={isBookmarked(activeSentence) ? "Odstrániť z uložených fráz" : "Uložiť vetu do fráz"}
 								>
-									<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-trail-blue")} />
+									<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-teal")} />
 									<span>{isBookmarked(activeSentence) ? "Uložená vo frázach" : "Uložiť vetu"}</span>
 								</button>
 							</div>
@@ -734,7 +734,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 									/* Dialogue Speech Turn: Grouped by speaker without borders */
 									<div key={bi} className="my-5">
 										{block.speaker && (
-											<div className="mb-1 select-none font-ui text-xs font-bold uppercase tracking-wider text-muted-foreground" data-testid="read-speaker">
+											<div className="mb-1 select-none font-ui text-xs font-[600] text-muted-foreground" data-testid="read-speaker">
 												{block.speaker}
 											</div>
 										)}
@@ -758,7 +758,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 													className={cn(
 														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
 														playing === i
-															? "bg-sun/25 text-foreground ring-1 ring-sun/40"
+															? "bg-teal-wash text-foreground ring-1 ring-teal-line"
 															: activeSentence === i
 																? "bg-accent/60"
 																: "hover:bg-accent/30",
@@ -816,7 +816,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 													className={cn(
 														"inline cursor-pointer rounded px-1 -mx-0.5 transition-colors duration-150",
 														playing === i
-															? "bg-sun/25 text-foreground ring-1 ring-sun/40"
+															? "bg-teal-wash text-foreground ring-1 ring-teal-line"
 															: activeSentence === i
 																? "bg-accent/60"
 																: "hover:bg-accent/30",
@@ -858,12 +858,12 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 					{/* New Words List */}
 					{story.newWords.length > 0 && (
-						<div className="mt-12 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm" data-testid="read-new-words">
-							<p className="font-ui text-xs font-bold uppercase tracking-wider text-muted-foreground">Nové slová v príbehu (New words)</p>
+						<div className="mt-12 rounded-lg border border-border/70 bg-card/60 p-5 shadow-raise" data-testid="read-new-words">
+							<p className="font-ui text-xs font-[600] text-muted-foreground">Nové slová v príbehu (New words)</p>
 							<ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
 								{story.newWords.map((w) => (
 									<li key={w.lemma} className="font-prose text-sm sm:text-base">
-										<span className="font-bold text-foreground" lang="sk">
+										<span className="font-[600] text-foreground" lang="sk">
 											{w.lemma}
 										</span>
 										{" — "}
@@ -877,11 +877,11 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 			</div>
 
 			{/* Floating Dock Audio Player Bar */}
-			<div className="fixed bottom-5 inset-x-4 z-30 mx-auto max-w-xl rounded-2xl border border-border/80 bg-background/90 shadow-2xl backdrop-blur-md px-4 py-3">
+			<div className="fixed bottom-5 inset-x-4 z-30 mx-auto max-w-xl rounded-lg border border-border/80 bg-card/90 shadow-raise-hi backdrop-blur-md px-4 py-3">
 				<div className="flex flex-col gap-2">
 					{/* Progress bar across sentences */}
 					<div className="flex items-center gap-3">
-						<span className="shrink-0 font-ui text-[11px] font-bold text-muted-foreground tabular-nums">
+						<span className="shrink-0 font-ui text-[11px] font-[600] text-muted-foreground tabular-nums">
 							{activeSentence + 1} / {story.sentences.length}
 						</span>
 						<div
@@ -897,11 +897,11 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							title="Prejsť na vetu v príbehu"
 						>
 							<div
-								className="h-full rounded-full bg-xp transition-all duration-300"
+								className="h-full rounded-full bg-teal transition-all duration-300"
 								style={{ width: `${((activeSentence + 1) / story.sentences.length) * 100}%` }}
 							/>
 						</div>
-						<span className="shrink-0 font-ui text-[11px] font-bold text-muted-foreground tabular-nums">
+						<span className="shrink-0 font-ui text-[11px] font-[600] text-muted-foreground tabular-nums">
 							{Math.round(((activeSentence + 1) / story.sentences.length) * 100)}%
 						</span>
 					</div>
@@ -942,12 +942,12 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								className={cn(
 									"flex items-center gap-1 rounded-xl border px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 font-ui text-xs font-semibold transition-colors",
 									isBookmarked(activeSentence)
-										? "border-trail-blue/40 bg-trail-blue/15 text-trail-blue"
+										? "border-teal-line bg-teal-wash text-teal-2"
 										: "border-border/60 bg-accent/30 text-muted-foreground hover:bg-accent hover:text-foreground",
 								)}
 								title={isBookmarked(activeSentence) ? "Odstrániť vetu z Uložených fráz" : "Uložiť vetu do Uložených fráz"}
 							>
-								<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-trail-blue")} />
+								<BookmarkIcon className={cn("size-3.5", isBookmarked(activeSentence) && "fill-teal")} />
 								<span className="hidden sm:inline">{isBookmarked(activeSentence) ? "Uložené" : "Uložiť"}</span>
 							</button>
 						</div>
@@ -958,10 +958,10 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 								type="button"
 								onClick={() => void playAll()}
 								className={cn(
-									"flex items-center gap-2 rounded-xl px-4 py-1.5 pointer-coarse:min-h-11 font-ui text-xs font-bold shadow-sm transition-all",
+									"flex items-center gap-2 rounded-xl px-4 py-1.5 pointer-coarse:min-h-11 font-ui text-xs font-[600] shadow-raise transition-all",
 									all
-										? "bg-flame text-white hover:bg-flame/90"
-										: "bg-xp text-white hover:bg-xp/90",
+										? "bg-teal text-sun-ink hover:bg-teal-2"
+										: "bg-teal text-sun-ink hover:bg-teal-wash",
 								)}
 								data-testid="read-play-all"
 								aria-pressed={all}
@@ -1016,17 +1016,17 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 	const total = outcome?.total ?? story.questions.length;
 	return (
 		<div className="m-auto w-full max-w-xl px-5 text-center" data-testid="read-end">
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-flame/15 text-flame">
+			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-teal-wash text-teal-2">
 				<BookOpenIcon className="size-12" />
 			</div>
-			<h1 className="mt-5 font-ui text-4xl font-black text-foreground">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
+			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
 			<p className="mt-2 font-prose text-lg text-muted-foreground" lang="sk">
 				{story.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-sun" />
-				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-go" />
-				<Stat label="Words" value={String(story.wordCount)} ink="text-flame" />
+				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
+				<Stat label="Words" value={String(story.wordCount)} ink="text-teal-2" />
 			</div>
 			{outcome && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground">
@@ -1037,12 +1037,12 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 			{(story.newWords.length > 0 || looked.length > 0) && (
 				<div className="mt-6 grid gap-3 text-left sm:grid-cols-2">
 					{story.newWords.length > 0 && (
-						<div className="rounded-2xl border bg-card p-4">
-							<p className="font-ui text-sm font-bold text-muted-foreground">New words</p>
+						<div className="rounded-lg border bg-card p-4">
+							<p className="font-ui text-sm font-[600] text-muted-foreground">New words</p>
 							<ul className="mt-2 flex flex-col gap-1">
 								{story.newWords.slice(0, 8).map((w) => (
 									<li key={w.lemma} className="font-prose text-base leading-snug">
-										<span className="font-bold text-foreground" lang="sk">
+										<span className="font-[600] text-foreground" lang="sk">
 											{w.lemma}
 										</span>{" "}
 										<span className="text-muted-foreground">{w.gloss}</span>
@@ -1052,12 +1052,12 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 						</div>
 					)}
 					{looked.length > 0 && (
-						<div className="rounded-2xl border bg-card p-4">
-							<p className="font-ui text-sm font-bold text-muted-foreground">You looked up</p>
+						<div className="rounded-lg border bg-card p-4">
+							<p className="font-ui text-sm font-[600] text-muted-foreground">You looked up</p>
 							<ul className="mt-2 flex flex-col gap-1">
 								{looked.slice(0, 8).map((t) => (
 									<li key={t.slug ?? t.text} className="font-prose text-base leading-snug">
-										<span className="font-bold text-foreground" lang="sk">
+										<span className="font-[600] text-foreground" lang="sk">
 											{t.lemma ?? t.text}
 										</span>{" "}
 										<span className="text-muted-foreground">{t.gloss ?? ""}</span>
@@ -1093,9 +1093,9 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 
 function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
 	return (
-		<div className="rounded-2xl border-2 bg-card px-3 py-4">
-			<p className="font-ui text-sm font-bold text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 font-ui text-3xl font-black tabular-nums", ink)}>{value}</p>
+		<div className="rounded-lg border bg-card px-3 py-4">
+			<p className="font-ui text-sm font-[600] text-muted-foreground">{label}</p>
+			<p className={cn("mt-1 font-ui text-3xl font-[600] tabular-nums", ink)}>{value}</p>
 		</div>
 	);
 }
@@ -1163,16 +1163,16 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
 						<div className="flex items-center gap-2">
-							<span className="rounded-full bg-xp/15 px-2.5 py-0.5 font-ui text-xs font-bold uppercase tracking-wider text-xp">
+							<span className="rounded-full bg-teal-wash px-2.5 py-0.5 font-ui text-xs font-[600] text-teal-2">
 								Knižnica
 							</span>
-							<span className="font-ui text-xs font-bold text-muted-foreground">
+							<span className="font-ui text-xs font-[600] text-muted-foreground">
 								{rawList.length} {rawList.length === 1 ? "príbeh" : "príbehov"}
 								{unread > 0 ? ` · ${unread} neprečítaných` : ""}
 								{state?.readToday ? ` · ${state.readToday} dnes prečítaných` : ""}
 							</span>
 						</div>
-						<h1 className="mt-2 font-ui text-3xl md:text-4xl font-black text-foreground">
+						<h1 className="mt-2 font-ui text-3xl md:text-4xl font-[600] text-foreground">
 							Príbehy podľa vašej úrovne
 						</h1>
 						<p className="mt-1 font-prose text-base text-muted-foreground">
@@ -1202,22 +1202,22 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 				{/* Featured / Up Next Hero Card */}
 				{upNext && (
 					<div
-						className="relative overflow-hidden rounded-3xl border-2 border-border/80 bg-gradient-to-br from-card via-card to-accent/30 p-6 shadow-md transition-all hover:border-xp/50"
+						className="relative overflow-hidden rounded-xl border border-border/80 bg-card p-6 shadow-raise transition-all hover:shadow-raise-hi"
 						data-testid="read-pick"
 					>
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div className="flex items-center gap-2">
-								<span className="rounded-full bg-xp/20 px-3 py-1 font-ui text-xs font-black uppercase tracking-wider text-xp">
+								<span className="rounded-full bg-teal-wash px-3 py-1 font-ui text-xs font-[600] text-teal-2">
 									{upNextReads === 0 ? "Odporúčané na čítanie" : "Pokračovať"}
 								</span>
-								<span className={cn("rounded-full border px-2.5 py-0.5 font-ui text-xs font-black uppercase tracking-wider", levelBadgeStyle(upNext.level))}>
+								<span className={cn("rounded-full border px-2.5 py-0.5 font-ui text-xs font-[600] ", levelBadgeStyle(upNext.level))}>
 									{upNext.level}
 								</span>
 								<span className="font-ui text-xs font-semibold text-muted-foreground">
 									{(upNext.genre ?? "robo") === "robo" ? upNext.theme : genreInfo(upNext.genre!).label}
 								</span>
 							</div>
-							<div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
+							<div className="flex items-center gap-3 text-xs font-[600] text-muted-foreground">
 								<span className="flex items-center gap-1">
 									<ClockIcon className="size-3.5" />
 									~{Math.max(1, Math.round(upNext.wordCount / 80))} min čítania
@@ -1225,12 +1225,12 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 								<span>·</span>
 								<span>{upNext.wordCount} slov</span>
 								<span>·</span>
-								<span className="text-go font-bold">{Math.round(upNext.coverage * 100)}% známych slov</span>
+								<span className="text-teal-2 font-[600]">{Math.round(upNext.coverage * 100)}% známych slov</span>
 							</div>
 						</div>
 
 						<div className="mt-4">
-							<h2 className="font-ui text-2xl md:text-3xl font-black text-foreground" lang="sk">
+							<h2 className="font-ui text-2xl md:text-3xl font-[600] text-foreground" lang="sk">
 								{upNext.title}
 							</h2>
 							<p className="mt-2 font-prose text-base text-muted-foreground leading-relaxed">
@@ -1261,7 +1261,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 				<div className="space-y-3">
 					<div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
 						{/* Level Tabs */}
-						<div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-accent/40 p-1.5">
+						<div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-accent/40 p-1.5">
 							{[
 								{ id: "all", label: "Všetky", count: levelCounts.all },
 								{ id: "A1", label: "A1 Začiatočník", count: levelCounts.A1 },
@@ -1274,9 +1274,9 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 									type="button"
 									onClick={() => setLevelFilter(tab.id)}
 									className={cn(
-										"flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-bold transition-all",
+										"flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-[600] transition-all",
 										levelFilter === tab.id
-											? "bg-background text-foreground shadow-sm"
+											? "bg-card text-foreground shadow-raise"
 											: "text-muted-foreground hover:text-foreground",
 									)}
 								>
@@ -1292,7 +1292,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						</div>
 
 						{/* Read Status Filter */}
-						<div className="flex items-center gap-1 rounded-2xl bg-accent/40 p-1.5 font-ui text-xs font-bold">
+						<div className="flex items-center gap-1 rounded-lg bg-accent/40 p-1.5 font-ui text-xs font-[600]">
 							{(["all", "unread", "read"] as const).map((st) => (
 								<button
 									key={st}
@@ -1301,7 +1301,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 									className={cn(
 										"rounded-xl px-3 py-1.5 transition-all",
 										statusFilter === st
-											? "bg-background text-foreground shadow-sm"
+											? "bg-card text-foreground shadow-raise"
 											: "text-muted-foreground hover:text-foreground",
 									)}
 								>
@@ -1319,7 +1319,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Hľadať príbehy podľa názvu, témy alebo žánru..."
-							className="w-full rounded-2xl border border-border/80 bg-card py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-xp focus:outline-none focus:ring-1 focus:ring-xp"
+							className="w-full rounded-lg border border-border/80 bg-card py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
 						/>
 						{searchQuery && (
 							<button
@@ -1342,14 +1342,14 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 								<button
 									type="button"
 									onClick={() => onOpen(s.id)}
-									className="group flex h-full w-full flex-col justify-between rounded-3xl border-2 border-border/70 bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-xp/50 hover:shadow-lg"
+									className="group flex h-full w-full flex-col justify-between rounded-xl border border-border/70 bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raise-hi hover:shadow-raise"
 									data-testid="read-shelf-item"
 								>
 									<div>
 										{/* Top Badges */}
 										<div className="flex items-center justify-between gap-2">
 											<div className="flex items-center gap-2">
-												<span className={cn("rounded-lg border px-2 py-0.5 font-ui text-xs font-black uppercase tracking-wider", levelBadgeStyle(s.level))}>
+												<span className={cn("rounded-lg border px-2 py-0.5 font-ui text-xs font-[600] ", levelBadgeStyle(s.level))}>
 													{s.level}
 												</span>
 												<span className="font-ui text-xs font-semibold text-muted-foreground">
@@ -1359,12 +1359,12 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 
 											<div>
 												{s.reads === 0 ? (
-													<span className="flex items-center gap-1 rounded-full bg-sun/15 px-2.5 py-0.5 font-ui text-xs font-black text-sun">
+													<span className="flex items-center gap-1 rounded-full bg-teal-wash px-2.5 py-0.5 font-ui text-xs font-[600] text-teal-2">
 														<SparklesIcon className="size-3" />
 														<span>Nový</span>
 													</span>
 												) : (
-													<span className="flex items-center gap-1 rounded-full bg-go/15 px-2.5 py-0.5 font-ui text-xs font-bold text-go">
+													<span className="flex items-center gap-1 rounded-full bg-teal-wash px-2.5 py-0.5 font-ui text-xs font-[600] text-teal-2">
 														<CheckCircle2Icon className="size-3" />
 														<span>{s.lastScore ? `${s.lastScore.correct}/${s.lastScore.total}` : `${s.reads}×`}</span>
 													</span>
@@ -1373,7 +1373,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 										</div>
 
 										{/* Title */}
-										<h3 className="mt-3 font-ui text-lg font-bold text-foreground transition-colors group-hover:text-primary" lang="sk">
+										<h3 className="mt-3 font-ui text-lg font-[600] text-foreground transition-colors group-hover:text-primary" lang="sk">
 											{s.title}
 										</h3>
 
@@ -1384,7 +1384,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 									</div>
 
 									{/* Card Footer */}
-									<div className="mt-4 flex flex-wrap items-center justify-between border-t border-border/50 pt-3 text-xs font-bold text-muted-foreground">
+									<div className="mt-4 flex flex-wrap items-center justify-between border-t border-border/50 pt-3 text-xs font-[600] text-muted-foreground">
 										<div className="flex items-center gap-2">
 											<span className="flex items-center gap-1">
 												<ClockIcon className="size-3.5" />
@@ -1394,7 +1394,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 											<span>{s.wordCount} slov</span>
 										</div>
 										{s.newWords.length > 0 && (
-											<span className="text-xp font-semibold">
+											<span className="text-teal-2 font-semibold">
 												+{s.newWords.length} nových slov
 											</span>
 										)}
@@ -1404,8 +1404,8 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						))}
 					</ol>
 				) : (
-					<div className="rounded-3xl border-2 border-dashed border-border/80 p-8 text-center">
-						<p className="font-ui text-base font-bold text-foreground">Žiadne príbehy nezodpovedajú filtrom</p>
+					<div className="rounded-xl border border-dashed border-border/80 p-8 text-center">
+						<p className="font-ui text-base font-[600] text-foreground">Žiadne príbehy nezodpovedajú filtrom</p>
 						<p className="mt-1 font-prose text-sm text-muted-foreground">Skúste zmeniť úroveň alebo vyhľadávací výraz.</p>
 						<button
 							type="button"
@@ -1414,7 +1414,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 								setStatusFilter("all");
 								setSearchQuery("");
 							}}
-							className="mt-4 rounded-xl bg-accent px-4 py-2 font-ui text-xs font-bold text-foreground hover:bg-accent/80 transition-colors"
+							className="mt-4 rounded-xl bg-accent px-4 py-2 font-ui text-xs font-[600] text-foreground hover:bg-accent/80 transition-colors"
 						>
 							Resetovať filtre
 						</button>

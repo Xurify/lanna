@@ -271,16 +271,16 @@ export function SettingsDialogBody({
 			aria-modal="true"
 			aria-label="Settings"
 			data-testid="settings-dialog"
-			className="flex h-[640px] max-h-[85vh] w-[940px] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-2xl animate-in zoom-in-95 duration-150"
+			className="flex h-[640px] max-h-[85vh] w-[940px] max-w-[92vw] flex-col overflow-hidden rounded-xl bg-card shadow-raise-hi animate-in zoom-in-95 duration-150"
 			onClick={(e) => e.stopPropagation()}
 		>
-			<header className="flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-muted/20 px-6">
+			<header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
 				<div className="flex items-center gap-3">
-					<div className="flex size-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+					<div className="flex size-9 items-center justify-center rounded-lg bg-teal-wash text-teal">
 						<SlidersIcon className="size-5" />
 					</div>
 					<div>
-						<h2 className="font-ui text-base font-bold tracking-tight text-foreground">Settings</h2>
+						<h2 className="font-ui text-base font-semibold tracking-[-0.01em] text-foreground">Settings</h2>
 						<p className="text-xs text-muted-foreground">How LangHarness teaches, sounds and looks</p>
 					</div>
 				</div>
@@ -288,7 +288,7 @@ export function SettingsDialogBody({
 					type="button"
 					aria-label="Close settings"
 					data-testid="settings-close"
-					className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className="rounded-md p-1.5 text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
 					onClick={onClose}
 				>
 					<XIcon className="size-4" />
@@ -299,22 +299,22 @@ export function SettingsDialogBody({
 				<nav
 					aria-label="Settings sections"
 					data-testid="settings-nav"
-					className="flex w-48 shrink-0 flex-col gap-1 border-r border-border/60 bg-muted/10 p-3"
+					className="flex w-48 shrink-0 flex-col gap-1 bg-side p-3 shadow-[inset_-1px_0_0_var(--q-line)]"
 				>
 					{SECTIONS.map((s) => {
 						const Icon = SECTION_ICONS[s.id];
 						return (
 							<Fragment key={s.id}>
-							{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border/60" />}
+							{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border" />}
 							<button
 								type="button"
 								data-testid={`settings-nav-${s.id}`}
 								aria-current={active === s.id}
 								className={cn(
-									"flex items-center gap-2.5 rounded-xl px-3 py-2 text-left font-ui text-sm transition-all",
+									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-left font-ui text-sm transition-colors",
 									active === s.id
-										? "border border-border/60 bg-accent/80 font-medium text-foreground shadow-2xs"
-										: "border border-transparent text-muted-foreground hover:bg-accent/30 hover:text-foreground",
+										? "bg-card font-semibold text-teal-2 shadow-raise"
+										: "text-ink-2 hover:bg-well-2 hover:text-foreground",
 								)}
 								onClick={() => setActive(s.id)}
 							>
@@ -322,7 +322,7 @@ export function SettingsDialogBody({
 									<Icon
 										className={cn(
 											"size-4 shrink-0 transition-colors",
-											active === s.id ? "text-foreground" : "text-muted-foreground",
+											active === s.id ? "text-teal" : "text-ink-3",
 										)}
 									/>
 								)}

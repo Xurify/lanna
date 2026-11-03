@@ -214,7 +214,7 @@ export function SetupKeysBody({
 				)}
 			</div>
 			<div className="mt-2 border-t border-border/60 pt-4">
-				<h3 className="mb-3 font-ui text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+				<h3 className="mb-3 font-ui text-xs font-semiboldr text-muted-foreground">
 					Subscriptions
 				</h3>
 				<SubscriptionConnections setup />
@@ -422,7 +422,7 @@ export function SetupDialog({
 									<SlidersIcon className="size-5" />
 								</div>
 								<div>
-									<h2 className="font-ui text-lg font-bold tracking-tight text-foreground">
+									<h2 className="font-ui text-lg font-semibold tracking-tight text-foreground">
 										Set up your models
 									</h2>
 									<p className="text-xs text-muted-foreground">

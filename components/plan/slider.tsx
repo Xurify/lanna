@@ -57,9 +57,9 @@ export function Slider({ value, min, max, step = 1, onChange, label, valueText, 
 				}
 			}}
 		>
-			<span className="h-2 w-full rounded-full bg-accent" aria-hidden="true" />
-			<span className="absolute left-0 h-2 rounded-full bg-go" style={{ width: `${share * 100}%` }} aria-hidden="true" />
-			<span className={cn("absolute size-5 -translate-x-1/2 rounded-full border-2 border-background bg-go shadow transition-transform group-hover:scale-110 group-focus-visible:ring-2 group-focus-visible:ring-go/50")} style={{ left: `${share * 100}%` }} aria-hidden="true" />
+			<span className="h-1.5 w-full rounded-full bg-well-2" aria-hidden="true" />
+			<span className="absolute left-0 h-1.5 rounded-full bg-teal" style={{ width: `${share * 100}%` }} aria-hidden="true" />
+			<span className={cn("absolute size-5 -translate-x-1/2 rounded-full bg-card shadow-[0_0_0_1.5px_var(--q-teal),0_1px_3px_rgb(var(--q-shadow-rgb)/0.2)] transition-transform group-hover:scale-110 group-focus-visible:shadow-[0_0_0_1.5px_var(--q-teal),0_0_0_4px_var(--q-teal-line)]")} style={{ left: `${share * 100}%` }} aria-hidden="true" />
 		</div>
 	);
 }

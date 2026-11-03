@@ -3,8 +3,8 @@
  * The Appearance and Graph sections.
  *
  * Appearance writes PUT the whole section and hand the delta back, so the CSS
- * variables move at once. Hex inputs commit on blur or Enter. Mode is dark only,
- * so it shows as a disabled fact rather than a control that does nothing.
+ * variables move at once. Hex inputs commit on blur or Enter. Mode (System, Day, Night)
+ * is per device: it lives in localStorage "lh:theme", not in the settings record.
  *
  * The reading font lists installed families via window.queryLocalFonts in the
  * desktop shell. In a plain browser the API is absent: a curated list shows,
@@ -24,7 +24,37 @@ import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
 import { useAppearance } from "./appearance.tsx";
 import { FontMenuList } from "./model-menu";
-import { CommitInput, SettingsDisclosure, SettingsRow, Toggle } from "./controls.tsx";
+import { CommitInput, SettingsDisclosure, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
+
+export type ThemeChoice = "system" | "day" | "night";
+const THEME_KEY = "lh:theme";
+const MODE_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
+	{ value: "system", label: "System" },
+	{ value: "day", label: "Day" },
+	{ value: "night", label: "Night" },
+];
+
+function readThemeChoice(): ThemeChoice {
+	try {
+		const t = localStorage.getItem(THEME_KEY);
+		return t === "day" || t === "night" ? t : "system";
+	} catch {
+		return "system";
+	}
+}
+
+/** Same rule as the inline script in app/layout.tsx. */
+function applyThemeChoice(choice: ThemeChoice) {
+	try {
+		if (choice === "system") localStorage.removeItem(THEME_KEY);
+		else localStorage.setItem(THEME_KEY, choice);
+	} catch {
+		// Storage blocked: the choice still applies for this page view.
+	}
+	const night = choice === "night" || (choice === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+	document.documentElement.classList.toggle("dark", night);
+	document.documentElement.style.colorScheme = night ? "dark" : "light";
+}
 
 /** Factory reading family. Unset means this. */
 export const DEFAULT_READING_FONT = "Geist";
@@ -76,6 +106,9 @@ export function AppearanceSection({
 }) {
 	const { appearance: resolved } = useAppearance();
 	const md = appearance?.mdRendering;
+	// Read after mount so the server render and first client render agree.
+	const [mode, setMode] = useState<ThemeChoice>("system");
+	useEffect(() => setMode(readThemeChoice()), []);
 
 	// Font enumeration cache: undefined = not enumerated yet; null = unavailable (absent, rejected or empty), so the curated list shows; a list = deduped families.
 	// enumEmpty records why it fell back, for the footer.
@@ -150,11 +183,17 @@ export function AppearanceSection({
 
 	return (
 		<>
-			{/* Only the dark theme exists yet, so this is a fact, not a control. */}
-			<SettingsRow label="Mode" hint="Light mode is coming soon" testid="row-mode">
-				<span className="font-ui text-sm text-muted-foreground" data-testid="mode-value">
-					Dark
-				</span>
+			<SettingsRow label="Mode" hint="System follows your device" testid="row-mode">
+				<SettingsSegmented
+					options={MODE_OPTIONS}
+					value={mode}
+					ariaLabel="Mode"
+					testid="mode-value"
+					onChange={(next) => {
+						setMode(next);
+						applyThemeChoice(next);
+					}}
+				/>
 			</SettingsRow>
 			<SettingsRow
 				label="Reading font"
@@ -171,7 +210,7 @@ export function AppearanceSection({
 								aria-expanded={fontMenuOpen}
 								data-testid="font-trigger"
 								onClick={openFontMenu}
-								className="flex h-8.5 min-w-24 items-center justify-between gap-2 rounded-xl border border-border/80 bg-background/80 px-2.5 font-ui text-xs text-foreground transition-all hover:border-border hover:bg-background focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+								className="flex h-9 min-w-24 items-center justify-between gap-2 rounded-md bg-card px-2.5 font-ui text-sm text-foreground ring-1 ring-line-2 transition-shadow hover:bg-well focus-visible:ring-2 focus-visible:ring-teal"
 							>
 								<span className="min-w-0 flex-1 truncate text-left">{appearance?.fontFamily || DEFAULT_READING_FONT}</span>
 								<span aria-hidden className="text-muted-foreground">
@@ -192,7 +231,7 @@ export function AppearanceSection({
 							preferredSide="down"
 							anchorTestid="font-trigger"
 							testid="font-menu"
-							menuClass="flex w-[18rem] flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+							menuClass="flex w-[18rem] flex-col gap-0.5 rounded-lg bg-card p-2 text-xs shadow-raise-hi"
 						>
 							<FontMenuList
 								families={localFonts === undefined ? undefined : (localFonts ?? [...CURATED_FALLBACK_FONTS])}

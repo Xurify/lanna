@@ -9,7 +9,7 @@
  * src/core/trajectory.ts; this only draws it.
  */
 
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CEFR_ORDER, GUIDED_HOURS, type Cefr, type Trajectory, type TrajectoryMetric, type TrajectoryPoint } from "@/src/core";
 
@@ -73,7 +73,6 @@ export function TrajectoryChart({
 	scenarios?: readonly Scenario[];
 	targetLevel: Cefr;
 }) {
-	const gid = useId();
 	const compact = variant === "compact";
 	const [hover, setHover] = useState<number | null>(null);
 	const W = 560;
@@ -122,25 +121,18 @@ export function TrajectoryChart({
 				onPointerLeave={compact ? undefined : () => setHover(null)}
 				data-testid={compact ? "trajectory-compact" : "trajectory-full"}
 			>
-				<defs>
-					<linearGradient id={`${gid}-fill`} x1="0" x2="0" y1="0" y2="1">
-						<stop offset="0%" stopColor="var(--lh-go, currentColor)" stopOpacity={0.22} />
-						<stop offset="100%" stopColor="var(--lh-go, currentColor)" stopOpacity={0} />
-					</linearGradient>
-				</defs>
-
 				{!compact &&
 					marks.map((m) => (
 						<g key={m.label}>
 							<line x1={pad.l} x2={W - pad.r} y1={y(m.value)} y2={y(m.value)} stroke="var(--border)" strokeWidth={m.on ? 1.5 : 1} strokeDasharray={m.on ? undefined : "2 4"} />
-							<text x={pad.l - 6} y={y(m.value) + 4} textAnchor="end" className={cn("font-ui", m.on ? "fill-foreground" : "fill-muted-foreground")} fontSize={11} fontWeight={m.on ? 800 : 600}>
+							<text x={pad.l - 6} y={y(m.value) + 4} textAnchor="end" className={cn("font-ui", m.on ? "fill-foreground" : "fill-muted-foreground")} fontSize={11} fontWeight={m.on ? 600 : 500}>
 								{m.label}
 							</text>
 						</g>
 					))}
 				{compact && t.metric === "hours" && marks.filter((m) => m.on).map((m) => <line key={m.label} x1={pad.l} x2={W - pad.r} y1={y(m.value)} y2={y(m.value)} stroke="var(--border)" strokeWidth={1.5} strokeDasharray="3 4" />)}
 
-				{t.ready && t.future.length > 1 && <path d={`${line(t.future)} L${x(t.future.at(-1)!.day).toFixed(1)} ${y(0)} L${nowX.toFixed(1)} ${y(0)} Z`} fill={`url(#${gid}-fill)`} />}
+				{t.ready && t.future.length > 1 && <path d={`${line(t.future)} L${x(t.future.at(-1)!.day).toFixed(1)} ${y(0)} L${nowX.toFixed(1)} ${y(0)} Z`} fill="var(--q-teal-wash)" />}
 
 				{scenarios.map((s) =>
 					s.t.future.length > 1 ? (
@@ -155,11 +147,11 @@ export function TrajectoryChart({
 					) : null,
 				)}
 
-				{t.ready && t.future.length > 1 && <path d={line(t.future)} fill="none" className="stroke-go" strokeWidth={compact ? 2 : 2.5} strokeDasharray="6 5" strokeLinecap="round" />}
-				{t.past.length > 1 && <path d={line(t.past)} fill="none" className="stroke-go" strokeWidth={compact ? 2.5 : 3} strokeLinecap="round" strokeLinejoin="round" />}
+				{t.ready && t.future.length > 1 && <path d={line(t.future)} fill="none" className="stroke-teal" strokeWidth={compact ? 2 : 2.5} strokeDasharray="6 5" strokeLinecap="round" />}
+				{t.past.length > 1 && <path d={line(t.past)} fill="none" className="stroke-teal" strokeWidth={compact ? 2.5 : 3} strokeLinecap="round" strokeLinejoin="round" />}
 
 				<line x1={nowX} x2={nowX} y1={pad.t} y2={H - pad.b} stroke="var(--border)" strokeWidth={1} />
-				<circle cx={nowX} cy={y(t.now)} r={compact ? 4 : 5} className="fill-go" stroke="var(--card)" strokeWidth={2} />
+				<circle cx={nowX} cy={y(t.now)} r={compact ? 4 : 5} className="fill-teal" stroke="var(--q-card)" strokeWidth={2} />
 
 				{!compact &&
 					ticks.map((d) => (

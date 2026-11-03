@@ -198,12 +198,13 @@ describe("KeysSection (thin SSR)", () => {
 });
 
 describe("AppearanceSection (thin SSR)", () => {
-	it("mode is a fact, not a control: it reads Dark and names the light mode that is coming", () => {
+	it("mode is a System, Day, Night control that starts on System", () => {
 		const html = renderToStaticMarkup(<AppearanceSection appearance={undefined} onSectionChange={() => {}} />);
 		assert.ok(html.includes('data-testid="mode-value"'));
-		assert.ok(html.includes(">Dark</span>"), "the only mode is Dark");
-		assert.ok(html.includes("Light mode is coming soon"));
-		assert.ok(!html.includes('data-testid="select-mode"'), "no select to mistake for a control");
+		for (const v of ["system", "day", "night"]) assert.ok(html.includes(`data-testid="mode-value-${v}"`), v);
+		assert.ok(tagOf(html, "mode-value-system").includes('aria-checked="true"'));
+		assert.ok(!html.includes("coming soon"));
+		assert.ok(!html.includes('data-testid="select-mode"'), "no native select");
 	});
 
 	it("the reading font trigger shows the factory family; the size reads 16px; the colors sit under Advanced", () => {

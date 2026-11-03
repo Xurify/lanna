@@ -14,11 +14,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckIcon, RotateCcwIcon, XIcon } from "lucide-react";
+import { RotateCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, Stat, TaskFrame, TaskTop } from "@/components/task-frame";
-import { BUTTON, KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { COLUMN, Dock, OptionTile, PracticeCard, Stat, Stats, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
 
 type Phase = { state: "playing" } | { state: "saving"; score: ExamScore } | { state: "result"; score: ExamScore; recorded: boolean };
@@ -108,18 +108,18 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto py-10")}>
-					<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
-					<h1 className="mt-1 font-ui text-3xl font-black text-foreground">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
-					<p className="mt-3 max-w-md font-prose text-base text-muted-foreground">
+					<p className="q-date">Chapter exam · {title}</p>
+						<h1 className="q-hello">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
+						<p className="q-sub max-w-md">
 						{draw ? "This chapter has no words or drills to draw from. The rest of the path still works." : "Check the connection, then try again."}
 					</p>
 					{error && (
 						<p className="mt-3 font-ui text-sm text-miss" role="alert">
-							{error}
-						</p>
-					)}
-					<div className="mt-8 flex flex-wrap gap-3">
-						{!draw && (
+								{error}
+							</p>
+						)}
+						<div className="q-acts mt-6">
+							{!draw && (
 							<button type="button" onClick={retry} disabled={drawing} className={PRIMARY}>
 								Try again
 							</button>
@@ -138,29 +138,29 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		return (
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="exam-result">
-					<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
-					<h1 className={cn("mt-1 font-ui text-3xl font-black", score.passed ? "text-go" : "text-foreground")}>{score.passed ? "Passed" : "Not passed"}</h1>
-					<div className="mt-6 flex flex-wrap gap-8">
-						<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-go" : "text-foreground"} />
-						<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-muted-foreground" />
-					</div>
-					<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="exam-saved">
+					<p className="q-date">Chapter exam · {title}</p>
+						<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
+						<Stats className="mt-6 max-w-sm">
+							<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-teal-2" : "text-foreground"} />
+							<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-ink-2" />
+						</Stats>
+						<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
 						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved on your path." : "This attempt was not saved, so the path will not show it."}
 					</p>
 					{score.misses.length > 0 && (
 						<div className="mt-8" data-testid="exam-misses" data-word-lookup-enabled="true">
-							<p className="font-ui text-sm font-bold text-muted-foreground">Missed</p>
-							<ul className="mt-3 flex flex-col gap-2">
+								<p className="q-sh">Missed</p>
+								<ul className="flex flex-col gap-2">
 								{score.misses.map((id) => {
 									const missed = items.find((i) => i.id === id);
 									if (!missed) return null;
 									return (
-										<li key={id} className="rounded-xl border-2 border-border bg-card px-4 py-3">
+										<li key={id} className="q-card px-4 py-3">
 											<p className="font-prose text-base text-foreground" lang="sk">
 												{missed.sentence}
 											</p>
-											<p className="mt-0.5 font-prose text-sm text-muted-foreground">
-												The answer is <span className="font-bold text-foreground" lang="sk">{missed.answer}</span>. {missed.translation}
+											<p className="mt-0.5 font-prose text-sm text-ink-3">
+													The answer is <span className="font-semibold text-teal-2" lang="sk">{missed.answer}</span>. {missed.translation}
 											</p>
 										</li>
 									);
@@ -173,9 +173,9 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							{error}
 						</p>
 					)}
-					<div className="mt-8 flex flex-wrap gap-3">
-						<button type="button" onClick={retry} disabled={drawing} className={PRIMARY} data-testid="exam-retry">
-							<RotateCcwIcon className="size-4" />
+					<div className="q-acts mt-6">
+							<button type="button" onClick={retry} disabled={drawing} className={PRIMARY} data-testid="exam-retry">
+								<RotateCcwIcon className="size-4" strokeWidth={1.6} />
 							Try again
 						</button>
 						<Link href="/curriculum" className={SECONDARY}>
@@ -190,81 +190,66 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	// ── playing ──
 	return (
 		<TaskFrame>
-			<TaskTop progress={(index + (picked !== null ? 1 : 0)) / items.length} label={`Question ${index + 1} of ${items.length}`} count={`${index + 1}/${items.length}`} ink="bg-xp" href="/curriculum" />
+			<TaskTop progress={(index + (picked !== null ? 1 : 0)) / items.length} label={`Question ${index + 1} of ${items.length}`} count={`${index + 1}/${items.length}`}  href="/curriculum" />
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
-				<div className={cn(COLUMN, "flex flex-col gap-8")}>
-					<div className="flex flex-col gap-2">
-						<p className="font-ui text-sm font-bold text-muted-foreground">Chapter exam · {title}</p>
-						<p className="font-prose text-xl text-foreground" lang="sk" data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
+				<div className={COLUMN}>
+					<PracticeCard icon="grammar" title={`Chapter exam · ${title}`} right={`${index + 1} of ${items.length}`}>
+						<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk" data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 							{item!.before}
-							<span className="rounded-md bg-accent px-1 text-muted-foreground">____</span>
+							<span className="mx-0.5 inline-block h-[0.9em] w-[5ch] translate-y-[0.1em] rounded-[10px] bg-well-2 shadow-[inset_0_-2px_0_var(--q-ink-4)]" aria-label="blank" />
 							{item!.after}
 						</p>
-						<p className="font-ui text-sm text-muted-foreground">{item!.hint}</p>
-					</div>
-					<div className="grid grid-cols-2 gap-3" data-testid="exam-options">
-						{item!.options?.map((o, i) => {
-							const chosen = picked === i;
-							const isAnswer = o === item!.answer;
-							return (
-								<button
-									key={i}
-									type="button"
-									onClick={() => pick(i)}
-									disabled={picked !== null}
-									className={cn(
-										"flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3.5 text-left font-prose text-xl text-foreground transition-colors",
-										picked === null && "hover:border-foreground/40 hover:bg-accent",
-										picked !== null && isAnswer && "border-go bg-go-soft",
-										chosen && !isAnswer && "border-miss bg-miss-soft",
-										picked !== null && !isAnswer && !chosen && "opacity-50",
-									)}
-									data-testid={`exam-option-${i}`}
-								>
-									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
-									<span lang="sk">{o}</span>
-								</button>
-							);
-						})}
-					</div>
+						<p className="mt-3 font-prose text-base text-ink-2">{item!.hint}</p>
+						<div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2" data-testid="exam-options">
+							{item!.options?.map((o, i) => {
+								const chosen = picked === i;
+								const isAnswer = o === item!.answer;
+								return (
+									<OptionTile key={i} n={i + 1} lang="sk" testId={`exam-option-${i}`} disabled={picked !== null} onClick={() => pick(i)} state={picked === null ? "idle" : isAnswer ? "right" : chosen ? "wrong" : "dim"}>
+										{o}
+									</OptionTile>
+								);
+							})}
+						</div>
+					</PracticeCard>
 				</div>
 			</div>
 			{/* One bar at the bottom, in the same place for every item: the keys
 			    before an answer, the verdict and Next after it (the lesson's
 			    layout). The sentence is shown whole here, so the question above
 			    never has to change. */}
-			<div className={cn("shrink-0 border-t border-border", picked !== null && (right ? "bg-go-soft" : "bg-miss-soft"))} aria-live="polite" data-testid="exam-footer">
-				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
+			<Dock tone={picked === null ? "plain" : right ? "right" : "miss"} live testId="exam-footer">
+				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{picked === null ? (
-						<p className="hidden items-center gap-1.5 font-ui text-sm text-muted-foreground pointer-fine:flex">
+						<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 pointer-fine:flex">
 							<kbd className={KBD}>1</kbd>–<kbd className={KBD}>{item!.options?.length ?? 1}</kbd> to pick
 						</p>
 					) : (
 						<div className="flex min-w-0 items-start gap-3" data-testid="exam-feedback">
-							<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", right ? "bg-go text-go-ink" : "bg-miss text-background")} aria-hidden="true">
-								{right ? <CheckIcon className="size-5" strokeWidth={3} /> : <XIcon className="size-5" strokeWidth={3} />}
+							<span className="mt-0.5">
+								<VerdictDisc ok={right} />
 							</span>
 							<div className="min-w-0">
-								<p className={cn("font-ui text-2xl font-bold leading-tight", right ? "text-go" : "text-miss")}>{right ? "Right" : "Not quite"}</p>
+								<p className={cn("font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]", right ? "text-teal-2" : "text-miss")}>{right ? "Right" : "Not quite"}</p>
 								{!right && (
-									<p className="mt-1 font-prose text-base text-foreground">
-										The answer is <span className="font-bold" lang="sk">{item!.answer}</span>.
+									<p className="mt-1 font-prose text-[15px] text-foreground">
+										The answer is <span className="font-semibold" lang="sk">{item!.answer}</span>.
 									</p>
 								)}
-								<p className="mt-1 font-prose text-base text-foreground" lang="sk">
+								<p className="mt-1 font-prose text-[15px] text-foreground" lang="sk">
 									{item!.sentence}
 								</p>
-								<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">{item!.translation}</p>
+								<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">{item!.translation}</p>
 							</div>
 						</div>
 					)}
 					{picked !== null && (
-						<button type="button" onClick={next} className={cn(BUTTON, "shrink-0 hover:brightness-110", right ? "bg-go text-go-ink" : "bg-miss text-background")} data-testid="exam-next">
+						<button type="button" onClick={next} className={cn(PRIMARY, "shrink-0")} data-testid="exam-next">
 							{index + 1 < items.length ? "Next" : "Finish"}
 						</button>
 					)}
 				</div>
-			</div>
-		</TaskFrame>
+			</Dock>
+			</TaskFrame>
 	);
 }

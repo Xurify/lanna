@@ -114,7 +114,7 @@ export function LearnerSection({ onClose }: { onClose: () => void }) {
 									className={cn(
 										"flex items-center gap-2 rounded-xl border px-3.5 py-1.5 font-ui text-sm font-semibold transition-all",
 										running
-											? "border-primary/80 bg-primary/15 text-primary font-bold shadow-xs"
+											? "border-primary/80 bg-primary/15 text-primary font-semibold shadow-xs"
 											: "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground",
 									)}
 									data-testid={`target-language-${p.id}`}

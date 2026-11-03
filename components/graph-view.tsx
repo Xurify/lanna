@@ -302,7 +302,7 @@ function GraphCostPanel({ costs }: { costs: GraphCostSummary }) {
 	];
 	const { unpricedRuns } = displayCostTotals(costs);
 	return (
-		<div className="w-80 max-w-[calc(100vw-1.5rem)] rounded-xl border bg-card/95 p-3 text-xs shadow-lg backdrop-blur">
+		<div className="w-80 max-w-[calc(100vw-1.5rem)] rounded-xl bg-card p-3 text-xs shadow-raise-hi">
 			<div className="mb-2 flex items-baseline justify-between">
 				<span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
 					Graph pipeline costs
@@ -376,7 +376,7 @@ function GraphSettingsControl({
 				type="button"
 				aria-expanded={open}
 				onClick={() => setOpen((o) => !o)}
-				className={`flex size-9 items-center justify-center rounded-xl border bg-card/85 shadow-lg backdrop-blur transition-colors hover:bg-accent ${
+				className={`flex size-9 items-center justify-center rounded-xl bg-card shadow-raise-hi transition-colors hover:bg-accent ${
 					open ? "text-foreground" : "text-muted-foreground hover:text-foreground"
 				}`}
 			>
@@ -385,7 +385,7 @@ function GraphSettingsControl({
 			</Hint>
 			{open && (
 				// Viewport-capped and scrollable, so the panel never stretches the page.
-				<div className="absolute right-0 top-full mt-2 flex max-h-[60vh] w-72 flex-col rounded-xl border bg-card/85 p-2.5 shadow-lg backdrop-blur">
+				<div className="absolute right-0 top-full mt-2 flex max-h-[60vh] w-72 flex-col rounded-xl bg-card p-2.5 shadow-raise-hi">
 					<div className="flex flex-col gap-2 overflow-y-auto pr-2.5">
 							{/* Ladder-mapped 0-100 sliders, step 10; defaults sit at 50. */}
 							<SettingSlider
@@ -740,7 +740,7 @@ export function GraphChromeRow({
 			{/* Empty graph: gated controls keep a blank slot, so Import never shifts. */}
 			{isEmpty && <div aria-hidden data-testid="chrome-slot" className="h-11 w-40 min-w-0 shrink sm:h-9 sm:w-56" />}
 			{!isEmpty && (
-				<div className="graph-chrome-fade-in w-40 min-w-0 shrink rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur sm:w-56">
+				<div className="graph-chrome-fade-in w-40 min-w-0 shrink rounded-xl bg-card px-1 py-[3px] shadow-raise-hi sm:w-56">
 					<Hint
 						label="Search nodes"
 						action="find"
@@ -785,7 +785,7 @@ export function GraphChromeRow({
 			{isEmpty && <div aria-hidden data-testid="chrome-slot" className="h-11 w-24 shrink-0 sm:h-9" />}
 			{/* Chains button: its own 36px container, between search and Import. */}
 			{!isEmpty && (
-				<div className="graph-chrome-fade-in w-24 shrink-0 rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur">
+				<div className="graph-chrome-fade-in w-24 shrink-0 rounded-xl bg-card px-1 py-[3px] shadow-raise-hi">
 					<Hint label="Every reasoning chain" side="bottom">
 						<button
 							type="button"
@@ -800,7 +800,7 @@ export function GraphChromeRow({
 				</div>
 			)}
 			{/* Import notes: always rendered, since it is the empty-graph entry point. */}
-			<div className="shrink-0 rounded-xl border bg-card/85 px-1 py-[3px] shadow-lg backdrop-blur">
+			<div className="shrink-0 rounded-xl bg-card px-1 py-[3px] shadow-raise-hi">
 				<input
 					ref={fileInputRef}
 					type="file"
@@ -934,6 +934,13 @@ export function GraphView({
 
 	// Bumped when a pipeline run finishes, so the snapshot refetches.
 	const [refreshTick, setRefreshTick] = useState(0);
+	const [themeTick, setThemeTick] = useState(0);
+	// Canvas colors are read once per data feed, so a Day/Night switch has to re-feed them.
+	useEffect(() => {
+		const obs = new MutationObserver(() => setThemeTick((t) => t + 1));
+		obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+		return () => obs.disconnect();
+	}, []);
 	// Browsing surface, kept out of graph state.
 	const [chainsOpen, setChainsOpen] = useState(false);
 	// The parent's chip drives select mode. Closing reports back so both stay in sync.
@@ -1210,13 +1217,14 @@ export function GraphView({
 			clusters: snapshot.clusters.map((c) => ({ id: c.id, label: regionName(c.label), members: c.members })),
 			colors: {
 				node: tokenHex(NODE_COLOR_TOKEN),
-				edge: tokenHex("--ring"),
-				label: tokenHex("--muted-foreground"),
-				hoverText: tokenHex("--foreground"),
+				edge: tokenHex("--q-ink-4"),
+				label: tokenHex("--q-ink-3"),
+				hoverText: tokenHex("--q-ink"),
+				region: tokenHex("--q-teal"),
 			},
 			fontFamily: getComputedStyle(document.body).fontFamily,
 		});
-	}, [snapshot, isEmpty]);
+	}, [snapshot, isEmpty, themeTick]);
 
 	// Feed #2 (settings): marks the frame dirty. No rebuild, no re-layout, no camera move.
 	const deferredSettings = useDeferredValue(settings);
@@ -1311,7 +1319,7 @@ export function GraphView({
 					anchorRef={ctxAnchorRef}
 					testid="node-context-menu"
 					preferredSide="down"
-					menuClass="flex w-fit flex-col gap-0.5 rounded-xl border bg-card p-2 text-xs shadow-xl"
+					menuClass="flex w-fit flex-col gap-0.5 q-card p-2 text-xs shadow-xl"
 				>
 					<button
 						type="button"
@@ -1369,7 +1377,7 @@ export function GraphView({
 			{pipelineRuns.map((run) => (
 				<div
 					key={run.id}
-					className="flex items-center gap-2 rounded-full border bg-card/85 px-3 py-1.5 text-xs text-muted-foreground shadow-lg backdrop-blur"
+					className="flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-raise-hi"
 				>
 					<Loader2Icon className="size-3.5 shrink-0 animate-spin" />
 					<span className="capitalize">{run.phase}</span>
@@ -1385,7 +1393,7 @@ export function GraphView({
 					// Placed imperatively in the layout effect; hidden until then so a flip never flashes.
 					style={{ visibility: "hidden", left: 0, top: 0 }}
 					// lh-no-drag: stays interactive when it lands over the top drag strip.
-					className="lh-no-drag absolute z-10 w-80 max-w-[calc(100%-1rem)] rounded-xl border bg-card p-4 text-left shadow-lg"
+					className="lh-no-drag absolute z-10 w-80 max-w-[calc(100%-1rem)] rounded-xl bg-card p-4 text-left shadow-raise-hi"
 				>
 					<div className="text-sm font-medium leading-snug">{selected.node.name}</div>
 					<div className="mt-1 text-xs leading-relaxed text-muted-foreground">{selected.node.statement}</div>

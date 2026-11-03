@@ -63,8 +63,8 @@ export function ProblemCard({ part }: ArtifactPartProps) {
 	const input = (part.input ?? {}) as { statement?: string };
 	const statement = typeof input.statement === "string" ? input.statement : "";
 	return (
-		<div data-testid="problem-card" className="lh-card-enter my-1 rounded-xl border bg-card p-4">
-			<div className="mb-1 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Problem</div>
+		<div data-testid="problem-card" className="lh-card-enter my-1 q-card p-4">
+			<div className="mb-1 text-[12.5px] font-semibold text-ink-3">Problem</div>
 			<div className="lh-prose text-[15px]">
 				<ToolContentResponse>{statement}</ToolContentResponse>
 			</div>
@@ -86,11 +86,11 @@ const OUTCOME_LABEL: Record<string, string> = {
  * cost), surrendered red (the problem beat the learner), moved on muted
  * (the agent's call, not a verdict against him). */
 const OUTCOME_CHIP: Record<string, string> = {
-	solved: "bg-green-500/15 text-green-500",
-	solvedWithHints: "bg-sun/15 text-sun",
-	movedOn: "bg-muted text-muted-foreground",
-	surrendered: "bg-red-500/15 text-red-500",
-	dismissed: "bg-muted text-muted-foreground",
+	solved: "bg-teal-wash text-teal-2",
+	solvedWithHints: "bg-teal-wash text-teal-2",
+	movedOn: "bg-well-2 text-ink-3",
+	surrendered: "bg-miss-soft text-miss",
+	dismissed: "bg-well-2 text-ink-3",
 };
 
 export function ConcludeCard({ part }: ArtifactPartProps) {
@@ -118,11 +118,11 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 	}
 
 	return (
-		<div data-testid="conclude-card" className="lh-card-enter relative my-1 rounded-xl border bg-card p-4">
+		<div data-testid="conclude-card" className="lh-card-enter relative my-1 q-card p-4">
 			{/* The heading row (owner round 3, 2026-10-05): plain 'Concluded'
 			    eyebrow + the outcome in the quiz cards' EXACT chip register —
 			    no more two same-weight headings stacked. */}
-			<div className="mb-1 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+			<div className="mb-1 flex items-center gap-2 text-[12.5px] font-semibold text-ink-3">
 				Concluded
 				{(OUTCOME_LABEL[outcome] ?? "") !== "" && outcome !== "dismissed" && (
 					<span className={cn("rounded px-1.5 py-0.5", OUTCOME_CHIP[outcome] ?? OUTCOME_CHIP.movedOn)}>
@@ -134,7 +134,7 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 				{evidence && (
 					<span
 						data-testid="conclude-evidence"
-						className={cn("ml-auto rounded px-1.5 py-0.5 normal-case tracking-normal", evidence === "checked" ? "bg-sky/15 text-sky" : "bg-muted text-muted-foreground")}
+						className={cn("ml-auto rounded px-1.5 py-0.5 normal-case tracking-normal", evidence === "checked" ? "bg-teal-wash text-teal-2" : "bg-well-2 text-ink-3")}
 					>
 						{evidence === "checked" ? "Checked in the dictionary" : "Tutor's judgment, not checked"}
 					</span>
@@ -153,7 +153,7 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 				<>
 					<div className="my-3 border-t" />
 					<div>
-						<div className="mb-0.5 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Model solution</div>
+						<div className="mb-0.5 text-[12.5px] font-semibold text-ink-3">Model solution</div>
 						<div className="lh-prose text-[15px]">
 							<ToolContentResponse>{reveal}</ToolContentResponse>
 						</div>
@@ -248,7 +248,7 @@ function MetadataPopover({
 					});
 				}}
 				aria-expanded={open}
-				className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+				className="flex items-center gap-1 text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-foreground"
 			>
 				Metadata
 			</button>
@@ -264,7 +264,7 @@ function MetadataPopover({
 						// EVERYTHING, the dialogs' law. Node-card info-box register;
 						// opening BELOW the trigger — always.
 						style={{ position: "fixed", top: anchor.top, left: anchor.left }}
-						className="z-50 w-80 max-w-[calc(100vw-1rem)] rounded-xl border bg-card p-4 text-left shadow-lg"
+						className="z-50 w-80 max-w-[calc(100vw-1rem)] q-card p-4 text-left shadow-raise-hi"
 					>
 				<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
 						<dt className="text-muted-foreground">Mode</dt>

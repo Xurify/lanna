@@ -138,7 +138,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 	return (
 		<div data-testid="placement-ladder">
 			<div className="flex items-center justify-between gap-4">
-				<p className="font-ui text-sm font-bold text-muted-foreground">
+				<p className="font-ui text-sm font-semibold text-muted-foreground">
 					{progress.tier && <span className="rounded-md bg-accent px-2 py-0.5 text-foreground">{progress.tier.level}</span>} {progress.tier?.title}
 					<span className="text-muted-foreground"> · {unitInfo(item.unit).title}</span>
 				</p>
@@ -166,10 +166,10 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang="sk">
 					<span>{item.before}</span>
 					{result ? (
-						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-bold", ink)}>{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}</span>
+						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}</span>
 					) : (
 						<span className="mx-1 inline-grid max-w-full align-baseline" style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}>
-							<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre border-2 px-3 font-bold">
+							<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre border-2 px-3 font-semibold">
 								{given || " "}
 							</span>
 							<input
@@ -183,7 +183,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 								autoCapitalize="off"
 								spellCheck={false}
 								disabled={checking}
-								className="col-start-1 row-start-1 w-full min-w-0 rounded-xl border-2 border-border bg-card px-3 py-0 font-bold text-foreground caret-go outline-none focus:border-go"
+								className="col-start-1 row-start-1 w-full min-w-0 rounded-xl border-2 border-border bg-card px-3 py-0 font-semibold text-foreground caret-go outline-none focus:border-go"
 							/>
 						</span>
 					)}
@@ -220,7 +220,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 									{item.trigger && (
 										<>
 											{" "}
-											— decided by <span lang="sk" className="font-bold">{item.trigger}</span>
+											— decided by <span lang="sk" className="font-semibold">{item.trigger}</span>
 										</>
 									)}
 									.{v.reason ? ` ${v.reason}` : ""}
@@ -308,7 +308,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 	return (
 		<div data-testid="placement-edge">
 			<div className="flex items-center justify-between gap-4">
-				<p className="font-ui text-sm font-bold text-muted-foreground">
+				<p className="font-ui text-sm font-semibold text-muted-foreground">
 					<span className="rounded-md bg-accent px-2 py-0.5 text-foreground">The edge</span> the tutor's questions
 					{ask && <span className="text-muted-foreground"> · {unitInfo(ask.unit).title}</span>}
 				</p>
@@ -324,7 +324,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 				<ol className="mt-5 flex flex-col gap-2" aria-label="So far">
 					{log.slice(-3).map((l, i) => (
 						<li key={i} className="font-prose text-base text-muted-foreground">
-							{l.verdict && <span className={cn("mr-2 rounded-md px-1.5 py-0.5 font-ui text-xs font-bold", RESULT_INK[l.verdict.result])}>{unitInfo(l.verdict.unit).title}: {RESULT_WORD[l.verdict.result]}</span>}
+							{l.verdict && <span className={cn("mr-2 rounded-md px-1.5 py-0.5 font-ui text-xs font-semibold", RESULT_INK[l.verdict.result])}>{unitInfo(l.verdict.unit).title}: {RESULT_WORD[l.verdict.result]}</span>}
 							{l.say}
 						</li>
 					))}
@@ -414,7 +414,7 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 	return (
 		<div data-testid="placement-words">
 			<div className="flex items-center justify-between gap-4">
-				<p className="font-ui text-sm font-bold text-muted-foreground">
+				<p className="font-ui text-sm font-semibold text-muted-foreground">
 					<span className="rounded-md bg-accent px-2 py-0.5 text-foreground">Words</span> how many do you know?
 				</p>
 				<p className="font-ui text-xs tabular-nums text-muted-foreground">{yes.size} ticked</p>

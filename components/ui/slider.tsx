@@ -52,7 +52,7 @@ export function Slider({
 			data-testid={testid}
 			// A tall, invisible hit area around a thin track: easy to grab on a phone.
 			className={cn(
-				"group relative flex cursor-pointer touch-none select-none items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+				"group relative flex cursor-pointer touch-none select-none items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-teal/50",
 				vertical ? "h-full min-h-24 w-8 flex-col" : "h-8 min-w-24",
 				className,
 			)}
@@ -81,11 +81,11 @@ export function Slider({
 				onCommit?.(next);
 			}}
 		>
-			<div ref={track} className={cn("relative rounded-full bg-border", vertical ? "h-full w-1.5" : "h-1.5 w-full")}>
-				<div className={cn("absolute rounded-full bg-go", vertical ? "inset-x-0 bottom-0" : "inset-y-0 left-0")} style={vertical ? { height: `${percent}%` } : { width: `${percent}%` }} />
+			<div ref={track} className={cn("relative rounded-full bg-line-2", vertical ? "h-full w-1.5" : "h-1.5 w-full")}>
+				<div className={cn("absolute rounded-full bg-teal", vertical ? "inset-x-0 bottom-0" : "inset-y-0 left-0")} style={vertical ? { height: `${percent}%` } : { width: `${percent}%` }} />
 				<div
 					className={cn(
-						"absolute size-4 rounded-full border border-border bg-foreground shadow-xs transition-transform",
+						"absolute size-4 rounded-full bg-card shadow-raise-hi transition-transform",
 						vertical ? "left-1/2 -translate-x-1/2 translate-y-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2",
 						dragging && "scale-110",
 						"group-hover:scale-110",

@@ -106,7 +106,7 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 			    markdown + LaTeX rendered, capped by the measured column
 			    (--dock-max-h; the old fixed 40vh cut long problems short). */}
 			<div className="max-h-[var(--dock-max-h,40vh)] overflow-y-auto px-4 pt-3 pb-2">
-				<div className="mb-1 font-ui text-xs font-extrabold text-go">Problem</div>
+				<div className="mb-1 font-ui text-xs font-semibold text-teal-2">Problem</div>
 				<div className="lh-prose text-[15px]">
 					<ToolContentResponse>{input.statement}</ToolContentResponse>
 				</div>
@@ -116,9 +116,9 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 			    Shift+Enter makes a newline — less to decide about. */}
 			<div
 				data-testid="practice-thinking-field"
-				className="m-1.5 rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
+				className="m-1.5 rounded-[10px] bg-card shadow-[inset_0_0_0_1px_var(--q-line-2)] transition-shadow focus-within:shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
 			>
-				<div className="px-2.5 pt-2 font-ui text-xs font-extrabold text-muted-foreground">
+				<div className="px-2.5 pt-2 font-ui text-xs font-semibold text-ink-3">
 					Your answer
 				</div>
 				<textarea
@@ -162,7 +162,7 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 						data-testid="practice-send"
 						disabled={thinking.trim().length === 0 || compactionRunning}
 						onClick={() => submit()}
-						className="ml-auto h-9 rounded-[6px] bg-go px-4 font-ui text-sm font-extrabold text-go-ink hover:bg-go/90"
+						className="ml-auto h-9 rounded-[6px] bg-teal px-4 font-ui text-sm font-[550] text-[var(--q-on-teal)] hover:bg-teal-2"
 					>
 						Check
 					</Button>

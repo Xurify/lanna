@@ -53,7 +53,7 @@ export function ZeroKeysPill({ onOpen, inline = false }: { onOpen: () => void; i
 			type="button"
 			data-testid="setup-cta-keys"
 			onClick={onOpen}
-			className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-bold")}
+			className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
 		>
 			Add a provider key
 		</button>

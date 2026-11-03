@@ -115,7 +115,7 @@ export function SoundControl({ className, iconClass = "size-5", testid = "sound-
 			{/* Absolute, so opening it never moves the header. The padding keeps the hover alive across the gap. */}
 			{open && (
 				<div role="group" aria-label="Volume" data-testid="volume-popover" className="absolute left-1/2 top-full z-30 -translate-x-1/2 pt-2">
-					<div className="flex w-12 flex-col items-center gap-1 rounded-xl border border-border/70 bg-card py-2 shadow-lg">
+					<div className="flex w-12 flex-col items-center gap-1 rounded-xl border border-border/70 bg-card py-2 shadow-raise">
 						<Slider value={on ? level : 0} onChange={move} onCommit={() => sfx.tap()} label="Volume" orientation="vertical" className="h-28 flex-none" testid="volume-slider" />
 						<span className="font-ui text-[11px] font-semibold tabular-nums text-muted-foreground">{on ? Math.round(level * 100) : 0}%</span>
 					</div>

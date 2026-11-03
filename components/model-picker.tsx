@@ -260,7 +260,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				onClick={() => openMenu("model")}
 				aria-expanded={open === "model"}
 				// Matches the graph's floating buttons, so the graph does not bleed through.
-				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-2.5 py-1 shadow-lg backdrop-blur transition-colors hover:border-border hover:bg-muted"
+				className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
 			>
 				<span className="text-card-foreground"><span className="inline-block min-w-[6.5rem] text-center">{effectiveId ? prettyModel(effectiveId) : "—"}</span></span>
 				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
@@ -282,7 +282,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				}}
 				aria-expanded={open === "thinking"}
 				// Matches the graph's floating buttons, so the graph does not bleed through.
-				className="flex items-center gap-1.5 rounded-full border bg-card/85 px-2.5 py-1 shadow-lg backdrop-blur transition-colors hover:border-border hover:bg-muted"
+				className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
 			>
 				{/* Just the level, as the model button shows just the model name. */}
 				<span className="text-card-foreground">

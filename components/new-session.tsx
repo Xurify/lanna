@@ -14,6 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChainTableOverlay } from "@/components/chain-table.tsx";
 import { ComposerActions, NodePickerControl } from "@/components/composer-actions";
+import { QIcon } from "@/components/quiet/icon";
 import type { ChatSettings, GraphSnapshot } from "@/src/core";
 
 /** The draft's pick set (owner round 10): the SAME shape the home pick
@@ -178,11 +179,11 @@ export function DraftShell({
 						<Conversation className="h-full min-w-0 flex-1" initial="instant">
 							<ConversationContent className="min-h-full gap-0 p-0">
 								<ConversationEmptyState>
-									<div className="flex size-16 items-center justify-center rounded-3xl bg-go-soft text-3xl" aria-hidden>
-										{mode === "practice" ? "🏋️" : "🎓"}
+									<div className="flex size-12 items-center justify-center rounded-xl bg-teal-wash text-teal" aria-hidden>
+										<QIcon name={mode === "practice" ? "review" : "tutor"} className="size-6" />
 									</div>
 									<div className="max-w-md space-y-1.5">
-										<h3 className="font-ui text-3xl font-black tracking-tight text-foreground">
+										<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
 											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
 										</h3>
 										<p className="text-base text-muted-foreground">
@@ -200,7 +201,7 @@ export function DraftShell({
 													onChange(idea);
 													composerInputRef.current?.focus();
 												}}
-												className="rounded-full border-2 bg-card px-4 py-2 font-ui text-sm font-bold text-foreground shadow-[0_3px_0_0_var(--border)] transition-all hover:border-go/60 active:translate-y-0.5 active:shadow-none"
+												className="rounded-full bg-card px-4 py-2 font-ui text-sm font-medium text-foreground shadow-raise transition-colors hover:bg-well"
 											>
 												{idea}
 											</button>
@@ -209,7 +210,7 @@ export function DraftShell({
 								</ConversationEmptyState>
 							</ConversationContent>
 						</Conversation>
-						<div className="h-24 bg-gradient-to-t from-background via-background/85 to-transparent" />
+						<div className="h-24" />
 						<div className="bg-background pb-4">
 							<div className={DOCK}>
 								<ComposerActions
@@ -218,7 +219,7 @@ export function DraftShell({
 									)}
 									setup={setupCta}
 								/>
-								<div className="pointer-events-auto overflow-hidden rounded-2xl border bg-card shadow-lg">
+								<div className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
 									<Composer
 										busy={busy}
 										value={text}
@@ -383,7 +384,7 @@ export function NewSession({ initialConfigured, mode = "teach" }: { initialConfi
 								type="button"
 								data-testid="setup-cta"
 								onClick={() => setSetupOpen(true)}
-								className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-bold")}
+								className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
 							>
 								Set up your models
 							</button>

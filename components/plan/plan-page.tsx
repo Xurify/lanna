@@ -19,7 +19,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, FlagIcon, LoaderCircleIcon, TargetIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SidebarToggle } from "@/components/sidebar";
 import { HoursSheet } from "@/components/hours-sheet";
 import { Slider } from "@/components/plan/slider";
@@ -55,9 +54,9 @@ function hoursText(h: number): string {
 	return h < 10 ? String(Math.round(h * 10) / 10) : String(Math.round(h));
 }
 
-const CARD = "mt-5 rounded-2xl border bg-card p-5";
-const H2 = "font-ui text-xs font-bold tracking-wide text-muted-foreground";
-const LINK_BTN = cn(SECONDARY, SMALL);
+const CARD = "q-card mt-5 p-5";
+const H2 = "text-[13px] font-semibold text-ink-2";
+const LINK_BTN = "q-btn sec";
 
 export function PlanPage({ goal, report, weak, stamps = null, log = null }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[]; stamps?: StampState[] | null; log?: TrailLog | null }) {
 	const router = useRouter();
@@ -110,12 +109,12 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="plan">
-				<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
-					<ArrowLeftIcon className="size-3.5" />
+				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>
-				<h1 className="mt-3 font-ui text-3xl font-extrabold tracking-tight text-foreground">Progress</h1>
-				<p className="mt-1 font-prose text-base text-muted-foreground">Your goal, your pace, and when the hours add up to it.</p>
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Progress</h1>
+				<p className="q-line dim mt-1">Your goal, your pace, and when the hours add up to it.</p>
 
 				{/* The goal, and where the level is checked again. */}
 				<section className={CARD} data-testid="plan-goal" aria-label="Your goal">
@@ -123,12 +122,12 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 					<div className="mt-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
 						{/* A floor on the text: on a phone the buttons wrap below it instead of squeezing it to a column. */}
 						<div className="min-w-48 flex-1">
-							<p className="flex items-center gap-2 font-ui text-2xl font-black text-foreground">
-								<TargetIcon className="size-6 text-sun" aria-hidden="true" />
+							<p className="flex items-center gap-2 text-2xl font-semibold tracking-[-0.022em] text-foreground">
+								<TargetIcon className="size-6 text-teal" strokeWidth={1.6} aria-hidden="true" />
 								{goal.level}
 							</p>
-							{purposes && <p className="mt-1 font-prose text-base text-foreground first-letter:uppercase">For {purposes}</p>}
-							<p className="mt-1 font-prose text-sm text-muted-foreground">{LEVEL_CAN_DO[goal.level]}</p>
+							{purposes && <p className="mt-1 text-base text-foreground first-letter:uppercase">For {purposes}</p>}
+							<p className="mt-1 text-sm text-ink-3">{LEVEL_CAN_DO[goal.level]}</p>
 						</div>
 						<div className="flex flex-wrap gap-2">
 							<Link href="/start?edit=1" className={LINK_BTN} data-testid="plan-change-goal">
@@ -139,20 +138,20 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 							</Link>
 						</div>
 					</div>
-					<p className="mt-3 font-ui text-xs text-muted-foreground">{goal.placedAt ? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.` : "No level check yet; the map credits hours as you finish units."}</p>
+					<p className="mt-3 text-xs text-ink-3">{goal.placedAt ? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.` : "No level check yet; the map credits hours as you finish units."}</p>
 				</section>
 
 				{/* The sliders: every date below moves as they do. */}
 				<section className={CARD} data-testid="plan-pace" aria-label="Your pace">
 					<h2 className={H2}>Your pace</h2>
-					<p className="mt-2 font-ui text-3xl font-black tracking-tight text-foreground" aria-live="polite" data-testid="plan-eta">
+					<p className="mt-2 text-3xl font-semibold tracking-[-0.028em] text-foreground" aria-live="polite" data-testid="plan-eta">
 						{target.days === 0 ? `${goal.level} is within reach now` : target.date ? `${goal.level} around ${monthOf(target.date)}` : "Set some minutes to see a date"}
 					</p>
-					<p className="mt-1 min-h-5 font-ui text-sm text-muted-foreground" aria-live="polite">
+					<p className="mt-1 min-h-5 text-sm text-ink-3" aria-live="polite">
 						{shift ?? (dirty ? "About the same as your saved plan." : `${hoursText(hoursDone)} of ~${topHours} guided hours done · at ${clock(savedMinutes)} × ${savedDays} days a week`)}
 					</p>
 					{facts && (
-						<p className="mt-2 font-ui text-sm font-semibold text-foreground" data-testid="plan-gap">
+						<p className="mt-2 text-sm font-semibold text-ink-2" data-testid="plan-gap">
 							You planned {clock(savedMinutes)} a day. The last {PACE_WINDOW_DAYS} days averaged {clock(Math.round(facts.paceMinutes))} a day.
 						</p>
 					)}
@@ -160,8 +159,8 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 					<div className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
 						<div>
 							<div className="flex items-baseline justify-between">
-								<span className="font-ui text-sm font-bold text-foreground">Minutes a day</span>
-								<span className="font-ui text-sm font-bold tabular-nums text-foreground" data-testid="plan-minutes-value">
+								<span className="text-sm font-semibold text-foreground">Minutes a day</span>
+								<span className="q-num text-sm font-semibold text-foreground" data-testid="plan-minutes-value">
 									{clock(minutes)}
 								</span>
 							</div>
@@ -169,8 +168,8 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 						</div>
 						<div>
 							<div className="flex items-baseline justify-between">
-								<span className="font-ui text-sm font-bold text-foreground">Days a week</span>
-								<span className="font-ui text-sm font-bold tabular-nums text-foreground" data-testid="plan-days-value">
+								<span className="text-sm font-semibold text-foreground">Days a week</span>
+								<span className="q-num text-sm font-semibold text-foreground" data-testid="plan-days-value">
 									{days}
 								</span>
 							</div>
@@ -179,7 +178,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 					</div>
 
 					<div className="mt-3 flex min-h-10 flex-wrap items-center justify-between gap-3">
-						<p className="font-ui text-xs text-muted-foreground" data-testid="plan-real-pace">
+						<p className="text-xs text-ink-3" data-testid="plan-real-pace">
 							{paceKnown ? (paceDate ? `At your real pace (${facts!.paceMinutes} min a day over the last two weeks): ${monthOf(paceDate)}.` : "At your real pace: no date yet.") : `At your real pace: not enough data yet (${facts?.paceDays ?? 0} of the ${MIN_PACE_DAYS} study days it needs, out of the last ${PACE_WINDOW_DAYS}).`}
 						</p>
 						{dirty && (
@@ -190,11 +189,11 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 										setMinutes(savedMinutes);
 										setDays(savedDays);
 									}}
-									className="font-ui text-xs font-bold text-muted-foreground underline underline-offset-2 hover:text-foreground"
+									className="text-xs font-semibold text-ink-3 underline underline-offset-2 hover:text-ink-2"
 								>
 									Reset
 								</button>
-								<button type="button" onClick={() => void save()} disabled={saving === "saving"} className={cn(PRIMARY, SMALL)} data-testid="plan-save">
+								<button type="button" onClick={() => void save()} disabled={saving === "saving"} className="q-btn primary" data-testid="plan-save">
 									{saving === "saving" && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
 									Make this my plan
 								</button>
@@ -202,7 +201,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 						)}
 					</div>
 					{saving === "error" && (
-						<p className="font-ui text-xs text-miss" role="alert">
+						<p className="text-xs text-miss" role="alert">
 							Couldn&apos;t save. Try again.
 						</p>
 					)}
@@ -211,7 +210,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 				{/* The trail log: the totals, every one an outcome (src/core/stamps.ts TrailLog). */}
 				{log && (
 					<section className={CARD} data-testid="plan-log" aria-label="Trail log">
-						<p className="font-ui text-sm font-bold text-muted-foreground">Trail log</p>
+						<h2 className={H2}>Trail log</h2>
 						<dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
 							{[
 								["Hours on the trail", hoursText(log.hours)],
@@ -224,8 +223,8 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 								["Scenes said aloud", String(log.scenes)],
 							].map(([label, value]) => (
 								<div key={label}>
-									<dt className="font-ui text-xs text-muted-foreground">{label}</dt>
-									<dd className="mt-0.5 font-ui text-xl font-extrabold tabular-nums text-foreground">{value}</dd>
+									<dt className="text-xs text-ink-3">{label}</dt>
+									<dd className="q-num mt-0.5 text-xl font-semibold tracking-[-0.015em] text-foreground">{value}</dd>
 								</div>
 							))}
 						</dl>
@@ -235,8 +234,8 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 				{/* The stamp book (E31): what was done, never how long it took. */}
 				{stamps && stamps.length > 0 && (
 					<section id="stamps" className={cn(CARD, "scroll-mt-20")} data-testid="plan-stamps" aria-label="Stamp book">
-						<p className="font-ui text-sm font-bold text-muted-foreground">Stamp book</p>
-						<p className="mt-1 font-prose text-sm text-muted-foreground">Like the wooden stamps sold at every Slovak peak and hut: one for each chapter and each level, and one for each thing done on the way. A stamp marks something you can now do, never time spent.</p>
+						<h2 className={H2}>Stamp book</h2>
+						<p className="mt-1 text-sm text-ink-3">Like the wooden stamps sold at every Slovak peak and hut: one for each chapter and each level, and one for each thing done on the way. A stamp marks something you can now do, never time spent.</p>
 						<StampBook stamps={stamps} className="mt-4" />
 					</section>
 				)}
@@ -245,7 +244,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 				<section className={CARD} data-testid="plan-hours" aria-label="Hours to each level">
 					<div className="flex items-baseline justify-between gap-3">
 						<h2 className={H2}>Guided hours to each level</h2>
-						<button type="button" onClick={() => setHoursOpen(true)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="plan-hours-sheet">
+						<button type="button" onClick={() => setHoursOpen(true)} className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2" data-testid="plan-hours-sheet">
 							How long does it take?
 						</button>
 					</div>
@@ -255,20 +254,20 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 							const isGoal = l.level === goal.level;
 							return (
 								<li key={l.level} className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-3" title={`${l.level}: about ${l.hours} guided hours from zero. ${l.days === 0 ? "Reached." : l.date ? `At this pace, around ${monthOf(l.date)}.` : ""}`}>
-									<span className={cn("font-ui text-sm font-black", isGoal ? "text-foreground" : "text-muted-foreground")}>{l.level}</span>
-									<span className="relative h-3 overflow-hidden rounded-full bg-accent" style={{ width: `${Math.max(12, (l.hours / topHours) * 100)}%` }}>
-										<span className={cn("absolute inset-y-0 left-0 rounded-full", done >= 1 ? "bg-go" : "bg-sky")} style={{ width: `${done * 100}%` }} />
+									<span className={cn("text-sm font-semibold", isGoal ? "text-foreground" : "text-ink-3")}>{l.level}</span>
+									<span className="relative h-2 overflow-hidden rounded-full bg-well-2" style={{ width: `${Math.max(12, (l.hours / topHours) * 100)}%` }}>
+										<span className={cn("absolute inset-y-0 left-0 rounded-full", "bg-teal")} style={{ width: `${done * 100}%` }} />
 									</span>
-									<span className="font-ui text-xs tabular-nums text-muted-foreground">
+									<span className="q-num text-xs text-ink-3">
 										{l.hours} h · {l.days === 0 ? "reached" : (monthOf(l.date) ?? "—")}
 									</span>
 								</li>
 							);
 						})}
 					</ol>
-					<p className="mt-3 font-ui text-xs text-muted-foreground">
-						<FlagIcon className="mr-1 inline size-3 align-[-1px] text-flame" />
-						The blue part is what the map credits so far: {hoursText(hoursDone)} h.
+					<p className="mt-3 text-xs text-ink-3">
+						<FlagIcon className="mr-1 inline size-3 align-[-1px] text-teal" strokeWidth={1.6} />
+						The filled part is what the map credits so far: {hoursText(hoursDone)} h.
 					</p>
 				</section>
 
@@ -277,7 +276,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null }: { go
 					<section className={CARD} data-testid="plan-milestones" aria-label="When can I…?">
 						<div className="flex items-baseline justify-between gap-3">
 							<h2 className={H2}>When can I…?</h2>
-							<Link href="/milestones" className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="plan-milestones-link">
+							<Link href="/milestones" className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2" data-testid="plan-milestones-link">
 								Details, and add your own
 							</Link>
 						</div>

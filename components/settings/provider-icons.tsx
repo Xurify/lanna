@@ -521,7 +521,7 @@ export function ProviderIcon({
 	return (
 		<div
 			className={cn(
-				"flex size-4 shrink-0 items-center justify-center rounded-md font-mono text-[10px] font-bold text-muted-foreground",
+				"flex size-4 shrink-0 items-center justify-center rounded-md font-mono text-[10px] font-semibold text-muted-foreground",
 				className,
 			)}
 		>

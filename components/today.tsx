@@ -1,87 +1,43 @@
 "use client";
 
 /**
- * Today — the LangHarness front page (redesign 2026-10-27; one-plan layout
- * 2026-10-29). It replaces the knowledge-graph home (now at /map), because
- * a language app opens on what to do next, not on a blank "What do you
- * want to learn?".
+ * Today — the LangHarness front page, in the Quiet tool layout (redesign
+ * 2026-11-02, from the mockup r3-3-quiet/home-desktop and home-phone).
  *
- * One plan, one next step: the day's plan (components/daily-plan.tsx)
- * draws its first unfinished task large, and Enter starts it. Beside it,
- * the week (days practiced, the strand balance, the goal) and the path,
- * folded to the current chapter (components/curriculum-path.tsx). Below,
- * every way to practice outside the plan, grouped by the same four
- * strands the balance measures.
+ * A main column and a rail. The column says how the day stands (greeting,
+ * a strip with one segment per task), draws the next task as a card with
+ * Start (Enter starts it), says what the answers show is weakest, and shows
+ * the week's balance. The rail keeps the score and the plan as a checklist.
+ * Every other door is one search away: the jump bar at the foot of the
+ * column (components/quiet/jump.tsx).
  */
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BlocksIcon, ChartNoAxesColumnIcon, BookAIcon, BookOpenIcon, BotMessageSquareIcon, FlagIcon, GaugeIcon, HeadphonesIcon, MessagesSquareIcon, MicIcon, MonitorPlayIcon, RepeatIcon, TableIcon, ZapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SidebarToggle } from "@/components/sidebar";
+import { QIcon, QPie } from "@/components/quiet/icon";
+import { DayRail, greeting, skDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
+import { JumpBar } from "@/components/quiet/jump";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
+import { SettingsLink } from "@/components/settings/settings-link";
+import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { DailyPlan, MixUps, nextTask, WeakSpots, type Goal } from "@/components/daily-plan";
-import { WeekCard } from "@/components/week-card";
-import { Climb } from "@/components/climb";
-import { StampsCard } from "@/components/stamp";
-import { RidgeProgress, ridgeStops, TrailMark } from "@/components/trail";
-import { STRAND_ICON } from "@/components/strand-balance";
-import { STRAND_STYLE } from "@/components/strand-style";
-import { curriculumUnit, purposeGoals, speakScene, STRANDS, tutorUnitPrompt } from "@/src/core";
+import { nextTask, type Goal } from "@/components/daily-plan";
+import { curriculumUnit, speakScene, STRAND_TARGET, STRANDS, strandAdvice, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
 import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, Strand, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
 
-interface UnitSummary {
-	id: UnitId;
-	title: string;
-	tagline: string;
-	glyph: string;
-	kind?: UnitKind;
-	slovakTerm?: string;
-	lessons: number;
-	reps: number;
-	level: number;
-	/** 0..1 toward completion. */
-	progress: number;
-	done: boolean;
-	accuracy: number | null;
-}
+const STRAND_DOOR: Record<Strand, { href: string; label: string }> = {
+	input: { href: "/listen", label: "Listen" },
+	output: { href: "/speak", label: "Speak" },
+	form: { href: "/review", label: "Review" },
+	fluency: { href: "/fluency?mode=fast", label: "Say it faster" },
+};
 
-interface Summary {
-	xp: number;
-	level: { level: number; into: number; span: number };
-	todayXp: number;
-	dailyGoal: number;
-	streak: { days: number; restUsed: boolean; activeToday: boolean };
-	week: Array<{ day: string; xp: number }>;
-	units: UnitSummary[];
-	next: UnitId;
-	bestBlitz: number;
-	review: { due: number; newLeft: number; total: number; available: boolean };
-	curriculum: CurriculumState;
-	plan: Plan;
-	goal: Goal;
-	projection: Projection;
-	balance?: StrandBalance;
-	trajectory?: TrajectoryInput;
-	weakSpots?: WeakSpotSummary[];
-	mixups?: MixupSummary[];
-	exams?: Record<string, ExamSummary>;
-	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };
-	backlog?: number;
-	todayMinutes?: number;
-	wordsKnown?: number;
-	stamps?: { all: StampState[]; earned: number; total: number; recent: StampState[]; next: StampState[] };
-	log?: TrailLog;
-}
-
-function greeting(now = new Date()): string {
-	const h = now.getHours();
-	if (h < 10) return "Dobré ráno";
-	if (h < 18) return "Dobrý deň";
-	return "Dobrý večer";
+/** "Verb forms" from "Grammar: Verb forms": the unit's name without its kind. */
+function bare(title: string): string {
+	return title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 }
 
 export function Today({ initialConfigured, initialSummary = null }: { initialConfigured: boolean; initialSummary?: Summary | null }) {
@@ -94,6 +50,8 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	const [busy, setBusy] = useState(false);
 	const zeroKeys = useZeroKeys();
 	const strongKeyless = useStrongKeyless();
+	const settings = useSettingsDialog();
+	const keyless = !configured || zeroKeys || strongKeyless;
 
 	const load = useCallback(() => {
 		void fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`)
@@ -122,7 +80,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 			if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 			const t = e.target as HTMLElement | null;
 			// A focused control answers Enter itself.
-			if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "BUTTON" || t.tagName === "A" || t.isContentEditable)) return;
+			if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "BUTTON" || t.tagName === "A" || t.isContentEditable || t.getAttribute("role") === "button")) return;
 			e.preventDefault();
 			router.push(enterHref);
 		};
@@ -132,7 +90,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 
 	/** Tutor chats need a model; without one, the setup dialog comes first. */
 	const withTutor = (run: () => Promise<void>) => {
-		if (!configured || zeroKeys || strongKeyless) {
+		if (keyless) {
 			setPending(() => run);
 			setSetupOpen(true);
 			return;
@@ -147,10 +105,6 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		if (!unit) return;
 		withTutor(() => startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }));
 	};
-	/** A goal's scene, by scene id: the same spoken scene the plan's Speak task opens. */
-	const sceneById = (id: string) => {
-		if (speakScene(id)) router.push(`/speak?scene=${id}`);
-	};
 	/** The plan's speaking task: a tutor unit, or a spoken scene (/speak, a
 	 *  link the row follows itself). */
 	const speak = (task: PlanTask) => {
@@ -159,173 +113,242 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 			if (u) tutorUnit(u);
 		} else if (task.via === "speak") router.push(task.href ?? (task.unit ? `/speak?scene=${task.unit}` : "/speak"));
 	};
+	const open = (t: PlanTask) => {
+		if (t.href) router.push(t.href);
+		else if (!(t.via === "tutor" && keyless)) speak(t);
+		else settings.open("keys");
+	};
 
-	const next = s?.units.find((u) => u.id === s.next);
-	const doneToday = (id: PlanTask["id"]) => s?.plan.tasks.some((t) => t.id === id && t.done) ?? false;
+	const tasks = s?.plan.tasks ?? [];
+	const done = s?.plan.done ?? 0;
+	const total = s?.plan.total ?? 0;
+	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
+	const locked = (t: PlanTask) => !t.done && t.via === "tutor" && keyless;
+	const lockedTask = tasks.find(locked);
+	const goalMin = s ? (s.pace?.goalMinutes ?? s.goal.minutesPerDay) : 30;
+	const date = new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" });
+	const toGoal = s ? Math.max(0, s.dailyGoal - s.todayXp) : 0;
+	const streak = s?.streak.days ?? 0;
 
-	const practice: Array<{ strand: Strand; items: PracticeItem[] }> = [
-		{
-			strand: "input",
-			items: [
-				{ href: "/listen", icon: HeadphonesIcon, title: "Listen", line: doneToday("listen") ? "Ten more sentences" : "Ten sentences you can follow", testid: "mode-listen" },
-				{ href: "/read", icon: BookOpenIcon, title: "Read", line: doneToday("read") ? "Today's episode is read. Open the library" : "Today's episode, every word tappable", testid: "mode-read" },
-				{ href: "/watch", icon: MonitorPlayIcon, title: "Watch", line: s?.plan.tasks.some((t) => t.id === "watch" && !t.done) ? "A video is waiting for you" : "A YouTube video with both subtitles", testid: "mode-watch" },
-			],
-		},
-		{
-			strand: "output",
-			items: [
-				{ href: "/speak", icon: MicIcon, title: "Speak", line: doneToday("speak") ? "One scene said today. Another?" : "A real scene, said out loud", testid: "mode-speak" },
-				{ href: "/speak?mode=typed", icon: MessagesSquareIcon, title: "Talk in writing", line: "A role-play in written Slovak", testid: "mode-talk" },
-			],
-		},
-		{
-			strand: "form",
-			items: [
-				{
-					href: "/review",
-					icon: RepeatIcon,
-					title: "Review",
-					line: s ? (s.review.due > 0 ? `${s.review.due} ${s.review.due === 1 ? "card" : "cards"} due now` : s.review.newLeft > 0 ? `${s.review.newLeft} new words today` : "All caught up") : "Your word deck",
-					badge: s && s.review.due > 0 ? String(s.review.due) : undefined,
-					testid: "mode-review",
-				},
-				{
-					href: `/lesson?unit=${s?.next ?? "words"}`,
-					icon: next?.kind === "words" ? BookAIcon : BlocksIcon,
-					title: next?.kind === "words" ? "Words lesson" : "Grammar lesson",
-					line: next
-						? `${next.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "")}${next.slovakTerm ? ` · ${next.slovakTerm}` : ""}`
-						: "First words · Základná slovná zásoba",
-					testid: "start-lesson",
-				},
-				{ href: "/grammar", icon: TableIcon, title: "Grammar", line: "Six cases, three genders, and your score on each", testid: "mode-grammar" },
-				{ href: "/mistakes", icon: ChartNoAxesColumnIcon, title: "My mistakes", line: "What goes wrong, whether it is getting better, and your guide", testid: "mode-mistakes" },
-				{ href: "/chat/new", icon: BotMessageSquareIcon, title: "Ask the tutor", line: "Any question about Slovak", testid: "mode-tutor" },
-			],
-		},
-		{
-			strand: "fluency",
-			items: [
-				{ href: "/fluency?mode=fast", icon: GaugeIcon, title: "Say it faster", line: "Known sentences, in a shrinking window", testid: "mode-fast" },
-				{ href: "/lesson?mode=blitz", icon: ZapIcon, title: "Blitz", line: s && s.bestBlitz > 0 ? `60 seconds · your best is ${s.bestBlitz}` : "60 seconds, as many as you can", testid: "mode-blitz" },
-			],
-		},
-	];
+	const weakGroups = weakSpotGroups(s?.weakSpots ?? []);
+	const openMixups = (s?.mixups ?? []).filter((m) => m.status === "active");
+	const balance = s?.balance ?? null;
+	const behind = balance?.behind ? STRANDS.find((x) => x.id === balance.behind) : null;
 
 	return (
-		<div className="relative min-h-dvh bg-background @container">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
-			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
-				<SidebarToggle />
-			</header>
+		<div className="@container h-dvh" data-testid="today">
+			<div className="grid h-full grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
+				{/* Phone and tablet: the score is a top bar, since the rail is not there. */}
+				<header className="relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden" data-testid="today-topbar">
+					<QPie frac={s && s.dailyGoal > 0 ? s.todayXp / s.dailyGoal : 0} size={28} />
+					<div className="flex min-w-0 flex-col leading-[1.2]">
+						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">
+							{s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {s?.dailyGoal ?? 50} XP</span>
+						</b>
+						<small className="text-xs text-ink-3">{s ? (toGoal > 0 ? `${toGoal} to today's goal` : "Today's goal is met") : " "}</small>
+					</div>
+					<div className="ml-auto flex items-center rounded-[9px] bg-well-2 p-0.5" aria-label={`${streak} days in a row, level ${s?.level.level ?? 1}`}>
+						<span className="inline-flex h-7 items-center gap-1.5 px-2.5 text-[13px] font-[550] text-ink-2">
+							<i className="size-[9px] rounded-[3px] bg-teal" aria-hidden="true" />
+							{streak} {streak === 1 ? "day" : "days"}
+						</span>
+						<span className="inline-flex h-7 items-center rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)]">Level {s?.level.level ?? 1}</span>
+					</div>
+				</header>
 
-			<div className="mx-auto grid w-full max-w-3xl gap-6 px-5 pb-16 @5xl:max-w-6xl @5xl:grid-cols-[minmax(0,1fr)_22rem] @5xl:gap-8" data-testid="today">
-				<div className="flex min-w-0 flex-col gap-6">
-					{/* Greeting, the day's numbers, and the ridge: the whole way to the
-					    target level, with a marker where the learner stands. */}
-					<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-						<div>
-							<p className="text-sm font-semibold text-muted-foreground first-letter:uppercase" lang="sk">
-								{new Date().toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long" })}
-							</p>
-							<h1 className="mt-0.5 text-3xl font-extrabold tracking-tight text-foreground" lang="sk">
-								{greeting()}
-							</h1>
-						</div>
-						{/* The four numbers at the top (docs/research/gamification.md): the
-						    streak (the habit), today's minutes against the goal (the day's
-						    loop), words known (what the work has built), the level (the
-						    long run). */}
-						<div className="flex flex-wrap items-center gap-2">
-							<Pill className="text-sun" title={s?.streak.restUsed ? "Days in a row (a rest day kept it going)" : "Days in a row"} testid="streak-pill">
-								<FlagIcon className="size-4" aria-hidden="true" />
-								{s ? `${s.streak.days} ${s.streak.days === 1 ? "day" : "days"}` : "–"}
-							</Pill>
-							<Pill className="text-foreground" title={s ? `${s.todayMinutes ?? 0} of ${goalMinutes(s)} minutes practiced today` : "Today"} testid="today-pill">
-								<MinutesRing done={s?.todayMinutes ?? 0} goal={s ? goalMinutes(s) : 30} />
-								{s ? (
-									<>
-										<span>{s.todayMinutes ?? 0}</span>
-										<span className="-ml-1 text-muted-foreground">/ {goalMinutes(s)} min</span>
-									</>
-								) : (
-									"–"
+				<main className="flex min-h-0 flex-col">
+					<div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 @6xl:px-0 @6xl:pt-8">
+						<div className="mx-auto w-full max-w-[720px] pb-6">
+							<header className="q-rise">
+								<p className="q-date first-letter:uppercase" lang="sk">
+									{date}
+								</p>
+								<h1 className="q-hello text-[29px] @6xl:text-[34px]" lang="sk">
+									{greeting()}.{" "}
+									{streak > 0 && (
+										<>
+											<br className="@6xl:hidden" />
+											<em lang="en">
+												Day {streak} in a row.
+											</em>
+										</>
+									)}
+								</h1>
+								{s && (
+									<p className="q-line dim" style={{ marginTop: 8 }} data-testid="plan-summary">
+										{done >= total && total > 0
+											? `All ${total} things are done today.`
+											: `${total} things today, ${done} done, about ${left} minutes left.`}
+									</p>
 								)}
-							</Pill>
-							<Pill className="text-foreground" title="Words known: review words at 80% retention or better" testid="words-pill">
-								<BookAIcon className="size-4 text-trail-green" aria-hidden="true" />
-								{s ? `${(s.wordsKnown ?? 0).toLocaleString("en-US")} ${s.wordsKnown === 1 ? "word" : "words"}` : "–"}
-							</Pill>
-							<Pill className="text-foreground" title={s ? `${s.level.span - s.level.into} XP to level ${s.level.level + 1}` : "Level"} testid="xp-pill">
-								<span className="text-muted-foreground">Level {s?.level.level ?? 1}</span>
-								<span className="text-sun">{s?.xp ?? 0} XP</span>
-							</Pill>
+								<div className="q-strip" role="img" aria-label={s ? `Plan: ${done} of ${total} done${up ? `, ${taskLabel(up)} is up next` : ""}${lockedTask ? `, ${taskLabel(lockedTask)} needs an AI key` : ""}` : "Plan"}>
+									{(s ? tasks : []).map((t) => (
+										<span
+											key={t.id}
+											className={cn("q-seg", t.done ? "done" : locked(t) ? "locked" : t === up && "next")}
+											style={{ flex: `${t.minutes} 1 0` }}
+											title={t.title}
+										>
+											<QIcon name={t.done ? "check" : taskIcon(t)} />
+										</span>
+									))}
+									{!s && <span className="q-seg" style={{ flex: 1 }} />}
+								</div>
+								<div className="q-legend">
+									<span>
+										<i style={{ background: "var(--q-teal)" }} />
+										{done} done
+									</span>
+									{up && (
+										<span>
+											<i style={{ boxShadow: "inset 0 0 0 1.5px var(--q-teal)" }} />
+											{taskLabel(up)} is up next
+										</span>
+									)}
+									{total - done - (up ? 1 : 0) > 0 && (
+										<span>
+											<i style={{ boxShadow: "inset 0 0 0 1px var(--q-line-2)" }} />
+											{total - done - (up ? 1 : 0)} to go
+										</span>
+									)}
+									{lockedTask && (
+										<span>
+											<i style={{ background: "repeating-linear-gradient(135deg,var(--q-well) 0 2px,var(--q-bar-hatch-b) 2px 3px)" }} />
+											<em style={{ fontStyle: "normal" }}>
+												<b>{taskLabel(lockedTask)}</b> needs an AI key
+											</em>
+										</span>
+									)}
+								</div>
+							</header>
+
+							{failed && (
+								<p className="mt-6 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground" role="alert">
+									Unable to load your progress. Check that LangHarness is still running, then{" "}
+									<button type="button" className="font-[550] underline underline-offset-2" onClick={load}>
+										try again
+									</button>
+									.
+								</p>
+							)}
+
+							{s && (
+								<section className="mt-6 q-rise" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Up next">
+									<h2 className="q-sh">
+										<QIcon name="arrow" />
+										{up ? "Up next" : "All done for today"}
+									</h2>
+									{up ? <UpNext task={up} locked={locked(up)} busy={busy} onOpen={() => open(up)} meta={up.id === "review" ? reviewMeta(s) : null} /> : <AllDone minutes={s.plan.minutes} goal={goalMin} next={s.next} />}
+								</section>
+							)}
+
+							{weakGroups.length > 0 && (
+								<section className="mt-6 q-rise" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
+									<h2 className="q-sh">
+										<QIcon name="chart" />
+										From your answers
+									</h2>
+									<p className="q-line">
+										Your weakest unit right now is the <b className="q-sk">{bare(weakGroups[0]!.title)}</b>.
+									</p>
+									{(weakGroups.length > 1 || openMixups.length > 0) && (
+										<p className="q-sub">
+											{weakGroups.length > 1 && (
+												<>
+													Also weak:{" "}
+													{weakGroups.slice(1, 3).map((g, i) => (
+														<span key={g.id}>
+															{i > 0 && ", "}
+															<b>{bare(g.title)}</b>
+														</span>
+													))}
+													.{" "}
+												</>
+											)}
+											{openMixups.length > 0 && (
+												<span data-testid="mixups">
+													You mix up{" "}
+													{openMixups.slice(0, 3).map((m, i, arr) => (
+														<span key={m.key}>
+															{i > 0 && (i === arr.length - 1 ? " and " : ", ")}
+															<span className="q-pair" lang="sk">
+																{m.words.map((w, j) => (
+																	<span key={w}>
+																		{j > 0 && <s>/</s>}
+																		{w}
+																	</span>
+																))}
+															</span>
+														</span>
+													))}
+													.
+												</span>
+											)}
+										</p>
+									)}
+									<div className="q-acts" style={{ marginTop: 16 }}>
+										<Link href={`/lesson?unit=${weakGroups[0]!.unit}`} className="q-btn sec t" data-testid={`weak-spot-${weakGroups[0]!.id}`}>
+											<QIcon name="grammar" />
+											Lesson on the {bare(weakGroups[0]!.title)}
+										</Link>
+										{openMixups.length > 0 && (
+											<Link href="/lesson?mode=mixups" className="q-btn sec" data-testid="mixups-practice">
+												<QIcon name="mix" />
+												Mix-ups lesson
+											</Link>
+										)}
+										<Link href="/mistakes" className="q-btn ghost">
+											Open My mistakes <QIcon name="chev" />
+										</Link>
+									</div>
+								</section>
+							)}
+
+							{s && balance && (
+								<section className="mt-6 q-rise" style={{ animationDelay: ".15s" }} data-testid="week-card">
+									<h2 className="q-sh">
+										<QPie frac={goalMin > 0 ? (s.pace?.dailyAverage ?? 0) / goalMin : 0} size={14} />
+										This week
+										<small>
+											{s.pace?.dailyAverage ?? 0} of {goalMin} min a day
+										</small>
+									</h2>
+									<div className="grid gap-4 @2xl:grid-cols-[344px_1fr] @2xl:items-center @2xl:gap-7">
+										<figure className="q-well" style={{ padding: "14px 16px 16px" }} aria-label="This week's balance" data-testid="strand-balance">
+											<h4>
+												Minutes by strand <small>aim: about {Math.round(STRAND_TARGET * 100)}% each</small>
+											</h4>
+											<Bars balance={balance} />
+										</figure>
+										{balance.total > 0 && (
+											<div>
+												<p className="q-line" data-testid="strand-advice">
+													{strandAdvice(balance)}
+												</p>
+												{behind && (
+													<div className="q-acts" style={{ marginTop: 12 }}>
+														<Link href={STRAND_DOOR[behind.id].href} className="q-btn sec t">
+															<QIcon name="plus" />
+															Open {STRAND_DOOR[behind.id].label}
+														</Link>
+													</div>
+												)}
+											</div>
+										)}
+									</div>
+								</section>
+							)}
 						</div>
 					</div>
 
-					{s && <RidgeProgress done={s.curriculum.done} total={s.curriculum.total} level={s.curriculum.level} goal={s.goal.level} stops={ridgeStops(s.curriculum)} className="mb-1" />}
-
-					{failed && (
-						<p className="rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 text-sm text-foreground" role="alert">
-							Unable to load your progress. Check that LangHarness is still running, then{" "}
-							<button type="button" className="font-bold underline underline-offset-2" onClick={load}>
-								try again
-							</button>
-							.
-						</p>
-					)}
-
-					<DailyPlan plan={s?.plan ?? null} nextUnit={s?.next ?? "words"} pace={s?.pace} backlog={s?.backlog} busy={busy} onSpeak={speak} />
-
-					{/* Every way to practice, outside the plan */}
-					<section aria-labelledby="practice-title" data-testid="modes">
-						<h2 id="practice-title" className="px-1 text-lg font-extrabold text-foreground">
-							Practice anything
-						</h2>
-						<p className="mt-0.5 px-1 text-sm text-muted-foreground">Any time, outside the plan. The four marks are the four kinds of practice the week balances.</p>
-						<div className="mt-3 grid gap-3 @xl:grid-cols-2">
-							{practice.map((g) => (
-								<PracticeGroup key={g.strand} strand={g.strand} items={g.items} busy={busy} />
-							))}
+					<div className="px-4 pb-3 pt-2 @6xl:px-0 @6xl:pb-5 @6xl:pt-3">
+						<div className="mx-auto w-full max-w-[720px]">
+							<JumpBar />
 						</div>
-					</section>
-				</div>
+					</div>
+				</main>
 
-				<aside className="flex min-w-0 flex-col gap-6 @5xl:pt-1" aria-label="Your week and your climb">
-					<WeekCard week={s?.week ?? []} balance={s?.balance ?? null} goal={s?.goal ?? null} projection={s?.projection ?? null} trajectory={s?.trajectory ?? null} />
-
-					<StampsCard stamps={s?.stamps?.all ?? null} />
-
-					{(s?.weakSpots?.length ?? 0) > 0 && (
-						<section className="rounded-3xl border bg-card p-5" aria-label="Your weak spots">
-							<WeakSpots weak={s?.weakSpots ?? []} className="" />
-						</section>
-					)}
-
-					{(s?.mixups ?? []).some((m) => m.status === "active" || m.status === "probe") && (
-						<section className="rounded-3xl border bg-card p-5" aria-label="Words you mix up">
-							<MixUps mixups={s?.mixups ?? []} className="" />
-						</section>
-					)}
-
-					{/* The climb: the stage you are on, chapters as stops on the trail */}
-					<section aria-labelledby="climb-title" data-testid="skill-path" className="rounded-3xl border bg-card p-4">
-						<div className="flex items-baseline justify-between gap-3 px-1">
-							<h2 id="climb-title" className="text-lg font-extrabold text-foreground">
-								Your climb
-							</h2>
-							{s && (
-								<p className="text-sm font-semibold text-muted-foreground">
-									{s.curriculum.level} · {s.curriculum.chapters.filter((c) => c.stage === s.curriculum.chapters.find((x) => x.id === s.curriculum.current)?.stage).findIndex((c) => c.id === s.curriculum.current) + 1} of {s.curriculum.chapters.filter((c) => c.stage === s.curriculum.chapters.find((x) => x.id === s.curriculum.current)?.stage).length} chapters
-								</p>
-							)}
-						</div>
-						<div className="mt-2">
-							<Climb state={s?.curriculum ?? null} next={s?.next} goalLevel={s?.goal.level ?? "B2"} goals={purposeGoals(s?.goal.purposes ?? [])} weak={s?.weakSpots ?? []} exams={s?.exams} busy={busy} onTutor={tutorUnit} onScene={sceneById} />
-						</div>
-					</section>
-				</aside>
+				<DayRail s={s} keyless={keyless} busy={busy} onOpen={open} />
 			</div>
 
 			<SetupDialog
@@ -346,85 +369,98 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	);
 }
 
-/** The minutes the goal asks for a day. */
-function goalMinutes(s: Summary): number {
-	return s.pace?.goalMinutes ?? s.goal.minutesPerDay;
-}
-
-/** A small ring: today's minutes against the goal. */
-function MinutesRing({ done, goal }: { done: number; goal: number }) {
-	const r = 6.5;
-	const c = 2 * Math.PI * r;
-	const p = goal > 0 ? Math.min(1, done / goal) : 0;
+/** The next task as a card: its kind, its minutes, what it is, and Start. */
+function UpNext({ task, locked, busy, onOpen, meta }: { task: PlanTask; locked: boolean; busy: boolean; onOpen: () => void; meta: React.ReactNode }) {
+	const w = words(task);
 	return (
-		<svg viewBox="0 0 16 16" className="size-4 shrink-0 -rotate-90" aria-hidden="true" data-testid="minutes-ring">
-			<circle cx="8" cy="8" r={r} fill="none" stroke="var(--border)" strokeWidth="3" />
-			<circle cx="8" cy="8" r={r} fill="none" stroke="var(--lh-sun)" strokeWidth="3" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - p)} />
-		</svg>
+		<article className="q-card" data-testid={`plan-next-${task.id}`}>
+			<div className="q-card-head">
+				<QIcon name={taskIcon(task)} />
+				{taskLabel(task)}
+				<span className="mins q-num">{task.minutes} min</span>
+			</div>
+			<div className="q-rv-body">
+				<div className="min-w-0">
+					<h3>{w.primary}</h3>
+					{w.rest && (
+						<p className="q-rv-tease" style={{ fontSize: 15 }}>
+							{task.from ? `Left from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ` : ""}
+							{w.rest}
+						</p>
+					)}
+					{meta && <p className="q-rv-meta">{meta}</p>}
+					{locked && (
+						<p className="q-needs mt-2">
+							<QIcon name="key" />
+							Needs an AI key ·{" "}
+							<SettingsLink keys className="text-ink-2 underline decoration-line-2 underline-offset-[3px]">
+								Settings → API keys
+							</SettingsLink>
+						</p>
+					)}
+				</div>
+				<button type="button" className="q-btn primary max-@xl:w-full" onClick={onOpen} disabled={busy || locked}>
+					Start
+					<kbd className="q-kbd pointer-coarse:hidden">
+						<QIcon name="enter" />
+					</kbd>
+				</button>
+			</div>
+		</article>
 	);
 }
 
-function Pill({ children, className, title, testid }: { children: React.ReactNode; className?: string; title?: string; testid?: string }) {
+/** What the Review card says under its title: the mockup's line, with the deck's own numbers. */
+function reviewMeta(s: Summary): React.ReactNode {
+	const known = s.wordsKnown ?? 0;
 	return (
-		<span title={title} data-testid={testid} className={cn("flex h-9 items-center gap-2 rounded-full border bg-card px-3.5 text-sm font-bold tabular-nums", className)}>
-			{children}
-		</span>
+		<>
+			Type it, don&apos;t pick it. <b>{s.review.due} due</b>, {known} {known === 1 ? "word" : "words"} known so far.
+		</>
 	);
 }
 
-interface PracticeItem {
-	href?: string;
-	onClick?: () => void;
-	icon: React.ComponentType<{ className?: string }>;
-	title: string;
-	line: string;
-	badge?: string;
-	testid: string;
+function AllDone({ minutes, goal, next }: { minutes: number; goal: number; next: string }) {
+	return (
+		<article className="q-card" data-testid="plan-complete">
+			<div className="q-rv-body">
+				<div>
+					<h3>All done for today. Pekne!</h3>
+					<p className="q-rv-tease" style={{ fontSize: 15 }}>
+						That is {minutes} of your {goal} min goal.
+					</p>
+				</div>
+				<Link href={`/lesson?unit=${next}`} className="q-btn sec" data-testid="plan-one-more">
+					One more lesson
+				</Link>
+			</div>
+		</article>
+	);
 }
 
-/** One strand's ways to practice: its name and ink, then a row each. */
-function PracticeGroup({ strand, items, busy }: { strand: Strand; items: PracticeItem[]; busy: boolean }) {
-	const st = STRAND_STYLE[strand];
-	const meta = STRANDS.find((x) => x.id === strand)!;
-	const Icon = STRAND_ICON[strand];
+/** The week's minutes by strand: grey bars against the quarter mark; the strand furthest behind is teal. */
+function Bars({ balance }: { balance: StrandBalance }) {
+	const max = Math.max(balance.target * 2, ...STRANDS.map((x) => balance.share[x.id]));
 	return (
-		<div className="rounded-2xl border bg-card p-3" data-testid={`practice-${strand}`}>
-			<p className={cn("flex items-center gap-2 px-2 pt-1 text-sm font-bold", st.text)}>
-				<TrailMark strand={strand} size="md" />
-				{meta.title}
-				<Icon className="ml-auto size-4 text-muted-foreground" />
-			</p>
-			<ul className="mt-1.5 flex flex-col">
-				{items.map((it) => {
-					const ItemIcon = it.icon;
-					const body = (
-						<>
-							<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", st.tile)}>
-								<ItemIcon className="size-[18px]" />
-							</span>
-							<span className="min-w-0 flex-1">
-								<span className="block text-base font-bold text-foreground">{it.title}</span>
-								<span className="block truncate text-sm text-muted-foreground">{it.line}</span>
-							</span>
-							{it.badge && <span className="shrink-0 rounded-full bg-sun px-2 py-0.5 text-xs font-bold tabular-nums text-sun-ink">{it.badge}</span>}
-						</>
-					);
-					const cls = "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-accent disabled:opacity-60";
-					return (
-						<li key={it.title}>
-							{it.href ? (
-								<Link href={it.href} className={cls} data-testid={it.testid}>
-									{body}
-								</Link>
-							) : (
-								<button type="button" onClick={it.onClick} disabled={busy} className={cls} data-testid={it.testid}>
-									{body}
-								</button>
-							)}
-						</li>
-					);
-				})}
-			</ul>
+		<div className="q-bars">
+			{STRANDS.map((x) => {
+				const share = balance.share[x.id];
+				const pct = Math.round(share * 100);
+				const hot = balance.behind === x.id;
+				const solid = Math.min(share, balance.target);
+				return (
+					<div key={x.id} className="contents" title={`${x.title}: ${x.line} · ${balance.minutes[x.id]} min`}>
+						<span className={cn("lab", hot && "hotc")}>{x.title}</span>
+						<span className={cn("q-bar", hot && "hot")} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`${x.title}: ${pct}% of the week`}>
+							<i style={{ width: `${(solid / max) * 100}%` }} />
+							{share > balance.target && <i className="over" style={{ left: `${(balance.target / max) * 100}%`, width: `${((share - balance.target) / max) * 100}%` }} />}
+							<span className="target" style={{ left: `${(balance.target / max) * 100}%` }} aria-hidden="true" />
+						</span>
+						<span className={cn("pct q-num", hot && "hotc")}>{pct}%</span>
+					</div>
+				);
+			})}
 		</div>
 	);
 }
+

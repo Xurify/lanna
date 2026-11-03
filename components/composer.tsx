@@ -137,7 +137,7 @@ export function Composer({
 						type="submit"
 						data-testid="next-problem-button"
 						aria-label="Next problem"
-						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-green-600 px-4 font-ui text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-green-500"
+						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-teal px-4 font-ui text-sm font-[550] text-primary-foreground transition-colors hover:bg-teal-2"
 					>
 						Next problem
 						<ArrowRightIcon className="size-4" />
@@ -148,10 +148,10 @@ export function Composer({
 						aria-label={busy && !canSend ? "Stop" : "Send"}
 						disabled={!busy && !canSend}
 						className={cn(
-							"flex size-10 shrink-0 items-center justify-center rounded-[10px] transition-colors",
+							"flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors",
 							busy && !canSend
-								? "bg-secondary text-foreground hover:bg-accent"
-								: "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40",
+								? "bg-well-2 text-foreground hover:bg-well"
+								: "bg-teal text-primary-foreground hover:bg-teal-2 disabled:opacity-40",
 						)}
 					>
 						{busy && !canSend ? <SquareIcon className="size-4" /> : <CornerDownLeftIcon className="size-5" />}

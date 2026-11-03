@@ -176,7 +176,7 @@ export function LanguageSwitcher() {
 						menuClass="flex w-60 flex-col gap-0.5 rounded-xl border bg-card p-1.5 text-xs shadow-xl"
 					>
 						<div ref={menuRef} role="listbox" aria-label="Languages" className="flex flex-col gap-0.5">
-							<div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+							<div className="px-2 py-1 text-[10px] font-boldr text-muted-foreground/70">
 								Target Language
 							</div>
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
@@ -237,14 +237,14 @@ export function LanguageSwitcher() {
 						aria-modal="true"
 						aria-labelledby="switch-dialog-title"
 						data-testid="profile-confirm"
-						className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border bg-card p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+						className="flex w-full max-w-sm flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
 					>
 						<div className="flex items-center gap-3">
 							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/40">
 								<CountryFlag lang={pending.id} className="w-[30px] h-[20px] rounded-[4px]" />
 							</div>
 							<div className="min-w-0 flex-1">
-								<h3 id="switch-dialog-title" className="text-sm font-bold text-foreground">
+								<h3 id="switch-dialog-title" className="text-sm font-semibold text-foreground">
 									Switch to {pending.label}?
 								</h3>
 								<p className="text-xs text-muted-foreground">
@@ -287,12 +287,12 @@ export function LanguageSwitcher() {
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="add-lang-title"
-						className="flex w-full max-w-md flex-col gap-3.5 rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+						className="flex w-full max-w-md flex-col gap-3.5 rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 					>
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-2.5">
 								<GlobeIcon className="size-5 text-primary" />
-								<h3 id="add-lang-title" className="text-base font-bold text-foreground">
+								<h3 id="add-lang-title" className="text-base font-semibold text-foreground">
 									Adding a New Language
 								</h3>
 							</div>
@@ -309,19 +309,19 @@ export function LanguageSwitcher() {
 						</p>
 						<div className="flex flex-col gap-2 rounded-xl bg-accent/40 p-3 text-xs">
 							<div className="flex gap-2">
-								<span className="font-bold text-primary">1.</span>
+								<span className="font-semibold text-primary">1.</span>
 								<span>
 									<strong>Register profile:</strong> Add metadata to <code className="rounded bg-muted px-1 py-0.5">src/core/language.ts</code> (or pick from <code className="rounded bg-muted px-1 py-0.5">LANGUAGE_PRESETS</code>).
 								</span>
 							</div>
 							<div className="flex gap-2">
-								<span className="font-bold text-primary">2.</span>
+								<span className="font-semibold text-primary">2.</span>
 								<span>
 									<strong>Enable profile:</strong> Add to <code className="rounded bg-muted px-1 py-0.5">config.ts</code> <code className="rounded bg-muted px-1 py-0.5">LANGUAGE_PROFILES</code>.
 								</span>
 							</div>
 							<div className="flex gap-2">
-								<span className="font-bold text-primary">3.</span>
+								<span className="font-semibold text-primary">3.</span>
 								<span>
 									<strong>Curriculum assets:</strong> Provide vocabulary in <code className="rounded bg-muted px-1 py-0.5">curriculum/&lt;lang&gt;/lexicon.json</code>.
 								</span>
@@ -357,7 +357,7 @@ export function LanguageSwitcher() {
 					{counts && (reviewDue > 0 || reviewNew > 0) && (
 						<span
 							className={cn(
-								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
+								"ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
 								reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground",
 							)}
 							data-testid="review-badge"

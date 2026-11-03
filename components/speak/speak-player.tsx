@@ -24,10 +24,11 @@ import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, SpeedToggle } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, PRIMARY, SECONDARY, Stat, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
+import { COLUMN, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SettingsLink } from "@/components/settings/settings-link";
+import { QIcon } from "@/components/quiet/icon";
 import { pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
 
 type SttEngine = "elevenlabs" | "deepgram" | "groq";
@@ -380,7 +381,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 				progress={Math.min(1, counts.learner / SPEAK_TURNS)}
 				label={`${counts.learner} of ${SPEAK_TURNS} lines said`}
 				count={`${Math.min(counts.learner + 1, SPEAK_TURNS)}/${SPEAK_TURNS}`}
-				ink="bg-xp"
+				ink="bg-teal"
 				onLeave={() => {
 					recorder.current?.cancel();
 					if (counts.learner === 0) void post({ action: "drop", id: session.id }).catch(() => undefined);
@@ -392,7 +393,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 				<div className={cn(COLUMN, "flex flex-col gap-4")}>
 					<div className="flex flex-wrap items-baseline justify-between gap-2">
 						<div>
-							<p className="font-ui text-sm font-bold text-muted-foreground">Speak · {scene?.blurb ?? session.sceneTitle}</p>
+							<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · {scene?.blurb ?? session.sceneTitle}</p>
 							<h2 className="font-prose text-2xl font-semibold text-foreground" lang="sk">
 								{session.sceneTitle}
 							</h2>
@@ -408,7 +409,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 						))}
 						{sending && (
 							<li className="flex justify-start" data-testid="speak-thinking">
-								<span className="inline-flex items-center gap-2 rounded-2xl rounded-bl-md bg-card px-4 py-3 font-ui text-sm text-muted-foreground">
+								<span className="inline-flex items-center gap-2 rounded-lg rounded-bl-md bg-well px-4 py-3 font-ui text-sm text-muted-foreground">
 									<LoaderCircleIcon className="size-4 animate-spin" />…
 								</span>
 							</li>
@@ -423,7 +424,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 			</div>
 
 			{/* The bottom bar: the mic (or the keyboard), what it hears, Koniec. */}
-			<div className={cn("border-t border-border", listening && "bg-xp/5")}>
+			<div className={cn("border-t border-border", listening && "bg-teal-wash")}>
 				<p role="status" aria-live="polite" className="sr-only">
 					{listening ? "Listening" : heard ? "Heard" : hearing ? "Hearing you" : ""}
 				</p>
@@ -450,7 +451,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								lang="sk"
 								placeholder="Your line in Slovak…"
 								disabled={sending || phase !== "scene"}
-								className="min-h-12 flex-1 resize-none rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-lg text-foreground outline-none focus:border-xp"
+								className="min-h-12 flex-1 resize-none rounded-lg bg-card px-4 py-3 font-prose text-lg text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none placeholder:text-ink-4 focus:shadow-[0_0_0_1.5px_var(--q-teal)]"
 								data-testid="speak-input"
 							/>
 							<button type="submit" disabled={sending || !draft.trim()} className={cn(PRIMARY, "h-12 px-4")} aria-label="Send" data-testid="speak-send">
@@ -471,8 +472,8 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								aria-pressed={listening}
 								aria-label={listening ? "Stop and send" : "Say your line"}
 								className={cn(
-									"relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-background transition-transform active:scale-95 disabled:opacity-60 [-webkit-touch-callout:none]",
-									listening ? "bg-miss" : "bg-xp hover:scale-105",
+									"relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink transition-colors active:translate-y-px disabled:opacity-60 [-webkit-touch-callout:none]",
+									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
 								)}
 								data-testid="speak-mic" onPointerDown={onMicDown} onPointerUp={onMicUp} onPointerCancel={onMicUp} onLostPointerCapture={onMicUp} onContextMenu={(e) => e.preventDefault()}
 							>
@@ -483,13 +484,13 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								{listening ? (
 									<Meter level={level} />
 								) : (
-									<p className="font-ui text-sm font-bold text-foreground" data-testid="speak-hint">
+									<p className="font-ui text-sm font-[600] text-foreground" data-testid="speak-hint">
 										{hearing ? "Hearing you…" : sending ? "The tutor is answering…" : <><span className="pointer-coarse:hidden">{counts.learner === 0 ? "Press the mic (or Space), say your line, press again." : "Your turn. Mic or Space."}</span><span className="hidden pointer-coarse:inline">{counts.learner === 0 ? "Hold the mic, say your line, let go." : "Your turn. Hold the mic."}</span></>}
 									</p>
 								)}
 								<p className="mt-0.5 font-prose text-xs text-muted-foreground pointer-coarse:hidden">{listening ? "Press again (or Space) when you have said it · Escape throws it away" : "M shows the meaning · R replays · T types a line"}</p>
 							</div>
-							<button type="button" onClick={() => setTyping(true)} className="rounded-lg p-2 pointer-coarse:p-3 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Type instead" title="Type instead (T)">
+							<button type="button" onClick={() => setTyping(true)} className="rounded-md p-2 pointer-coarse:p-3 text-ink-3 hover:bg-well hover:text-foreground" aria-label="Type instead" title="Type instead (T)">
 								<KeyboardIcon className="size-5" />
 							</button>
 						</div>
@@ -532,7 +533,7 @@ function Meter({ level }: { level: number }) {
 	return (
 		<div className="flex h-6 items-center gap-0.5" aria-label="Microphone level" data-testid="speak-meter">
 			{Array.from({ length: cells }, (_, i) => (
-				<span key={i} className={cn("w-1.5 rounded-sm transition-[height] duration-75", i < lit ? "bg-xp" : "bg-accent")} style={{ height: `${6 + (i < lit ? 14 * Math.min(1, (i + 1) / cells + 0.3) : 0)}px` }} />
+				<span key={i} className={cn("w-1.5 rounded-sm transition-[height] duration-75", i < lit ? "bg-teal" : "bg-accent")} style={{ height: `${6 + (i < lit ? 14 * Math.min(1, (i + 1) / cells + 0.3) : 0)}px` }} />
 			))}
 		</div>
 	);
@@ -542,26 +543,26 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 	return (
 		<div className="max-w-[85%]">
 			{turn.prompt && (
-				<div className="mb-1.5 inline-flex max-w-full flex-wrap items-baseline gap-x-2 rounded-xl border-2 border-gold/60 bg-gold/10 px-3 py-1.5 font-prose text-base" data-testid="speak-prompt">
-					<span className="font-ui text-xs font-bold uppercase tracking-wide text-foreground">Fix the {SLIP_LABEL[turn.prompt.kind]}</span>
+				<div className="mb-1.5 inline-flex max-w-full flex-wrap items-baseline gap-x-2 rounded-xl border border-teal-line bg-teal-wash px-3 py-1.5 font-prose text-base" data-testid="speak-prompt">
+					<span className="font-ui text-xs font-[600] uppercase tracking-wide text-foreground">Fix the {SLIP_LABEL[turn.prompt.kind]}</span>
 					<span className="text-muted-foreground line-through decoration-2" lang="sk">
 						{turn.prompt.yours}
 					</span>
-					<span className="font-bold text-foreground" lang="sk">
+					<span className="font-[600] text-foreground" lang="sk">
 						{turn.prompt.hint}
 					</span>
 				</div>
 			)}
 			{turn.repaired && (
-				<p className="mb-1.5 inline-flex items-center gap-1.5 rounded-xl bg-go-soft px-3 py-1 font-ui text-sm font-bold text-go" data-testid="speak-repaired">
+				<p className="mb-1.5 inline-flex items-center gap-1.5 rounded-xl bg-teal-wash px-3 py-1 font-ui text-sm font-[600] text-teal-2" data-testid="speak-repaired">
 					<CheckIcon className="size-4" strokeWidth={3} />
 					Repaired · +{SPEAK_REPAIR_XP} XP
 				</p>
 			)}
-			<div className={cn("rounded-2xl rounded-bl-md bg-card px-4 py-3", last && "lh-rise border-2 border-xp/40")}>
+			<div className={cn("rounded-lg rounded-bl-md bg-well px-4 py-3", last && "lh-rise shadow-[0_0_0_1.5px_var(--q-teal)]")}>
 				<div className="flex items-start gap-2">
-					<button type="button" onClick={() => void speak(turn.text).catch(() => {})} aria-label="Play" className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-xp/15 text-xp hover:bg-xp/25">
-						<Volume2Icon className="size-4" />
+					<button type="button" onClick={() => void speak(turn.text).catch(() => {})} aria-label="Play" className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2">
+							<Volume2Icon className="size-4" strokeWidth={1.6} />
 					</button>
 					<p className={cn("font-prose text-foreground", last ? "text-2xl leading-snug" : "text-lg")} lang="sk">
 						{turn.text}
@@ -574,7 +575,7 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 								{turn.en}
 							</p>
 						) : last ? (
-							<button type="button" onClick={onMeaning} className="font-ui text-xs font-bold text-muted-foreground hover:text-foreground">
+							<button type="button" onClick={onMeaning} className="font-ui text-xs font-[600] text-muted-foreground hover:text-foreground">
 								Show the meaning (M)
 							</button>
 						) : null}
@@ -587,7 +588,7 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 
 function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 	return (
-		<div className="max-w-[85%] rounded-2xl rounded-br-md bg-xp/15 px-4 py-3">
+		<div className="max-w-[85%] rounded-lg rounded-br-md bg-teal-wash px-4 py-3">
 			<p className="font-prose text-lg text-foreground" lang="sk">
 				{turn.text}
 			</p>
@@ -609,8 +610,8 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 						Today
 					</Link>
 				</div>
-				<p className="mt-6 font-ui text-sm font-bold text-muted-foreground">{typed ? "Talk in writing" : "Speak"}</p>
-				<h1 className="mt-1 font-ui text-3xl font-black text-foreground">{typed ? "Pick a scene and write it" : "Pick a scene and say it"}</h1>
+				<p className="mt-6 font-ui text-sm font-[600] text-muted-foreground">{typed ? "Talk in writing" : "Speak"}</p>
+				<h1 className="mt-1 font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">{typed ? "Pick a scene and write it" : "Pick a scene and say it"}</h1>
 				<p className="mt-2 max-w-xl font-prose text-base text-muted-foreground">
 					{typed
 						? "The tutor plays the other person and answers out loud. Type each line and press Enter. A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."
@@ -625,36 +626,58 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 					</p>
 				)}
 				{state && !state.canSpeak && (
-					<p className="mt-4 rounded-xl bg-gold/15 px-4 py-2 font-ui text-sm text-foreground" data-testid="speak-nomodel">
-						A scene needs a model on the cheap slot —{" "}
-						<SettingsLink className="underline">Settings → AI models</SettingsLink>
-						.
-					</p>
+					<div className="q-card mt-5 px-5 py-4" data-testid="speak-nomodel">
+						<h2 className="font-ui text-[17px] font-[600] tracking-[-0.015em] text-foreground">Speak needs someone to talk to.</h2>
+						<p className="mt-1 font-ui text-[13.5px] leading-relaxed text-ink-3">
+							In a scene the tutor plays the other person and answers what you say. That takes an AI key. Step by step works without one.
+						</p>
+						<ul className="mt-3 divide-y divide-border font-ui text-[13.5px]">
+							<li className="flex items-center justify-between gap-3 py-2.5">
+								<span className="flex items-center gap-2.5 text-foreground">
+									<QIcon name="key" className="size-4 text-ink-3" />
+									AI key
+								</span>
+								<span className="q-pill grey">Needed</span>
+							</li>
+							<li className="flex items-center justify-between gap-3 py-2.5">
+								<span className="flex flex-wrap items-center gap-x-2.5 text-foreground">
+									<QIcon name="speak" className="size-4 text-ink-3" />
+									Speech-to-text key
+									<span className="text-ink-3">ElevenLabs or Deepgram</span>
+								</span>
+								<span className="q-pill grey">{state.stt ? "Set" : "Optional"}</span>
+							</li>
+						</ul>
+						<p className="q-needs mt-3">
+							<QIcon name="key" />
+							Needs an AI key · <SettingsLink keys>Settings → API keys</SettingsLink>
+						</p>
+					</div>
 				)}
 				{state?.unfinished && (
-					<button type="button" onClick={() => onResume(state.unfinished!.id)} className="mt-5 flex items-center gap-3 rounded-2xl border-2 border-xp/50 bg-xp/10 px-4 py-3 text-left hover:bg-xp/15" data-testid="speak-resume">
-						<RepeatIcon className="size-5 text-xp" />
+					<button type="button" onClick={() => onResume(state.unfinished!.id)} className="q-card mt-5 flex items-center gap-3 px-4 py-3 text-left shadow-[0_0_0_1px_var(--q-teal-line)] hover:bg-teal-wash" data-testid="speak-resume">
+						<RepeatIcon className="size-5 text-teal-2" />
 						<span>
-							<span className="block font-ui text-base font-bold text-foreground">Carry on: {state.unfinished.sceneTitle}</span>
+							<span className="block font-ui text-base font-[600] text-foreground">Carry on: {state.unfinished.sceneTitle}</span>
 							<span className="block font-prose text-sm text-muted-foreground">{state.unfinished.turns} lines said</span>
 						</span>
 					</button>
 				)}
 				<div className="mt-6 grid gap-3 sm:grid-cols-2" data-testid="speak-scenes">
 					{(state?.scenes ?? []).map((s) => (
-						<div key={s.id} className={cn("flex items-stretch rounded-2xl border-2 bg-card transition-colors hover:border-xp/60", s.id === sceneId ? "border-xp" : "border-border")}>
-							<button type="button" disabled={!state?.canSpeak} onClick={() => onPick(s.id)} className="flex min-w-0 flex-1 flex-col gap-1 rounded-l-2xl px-4 py-3.5 text-left disabled:opacity-50" data-testid={`scene-${s.id}`}>
+						<div key={s.id} className={cn("q-card flex items-stretch transition-shadow hover:shadow-raise-hi", s.id === sceneId && "ring-1 ring-teal")}>
+							<button type="button" disabled={!state?.canSpeak} onClick={() => onPick(s.id)} className="flex min-w-0 flex-1 flex-col gap-1 rounded-l-lg px-4 py-3.5 text-left disabled:opacity-50" data-testid={`scene-${s.id}`}>
 								<span className="flex items-baseline justify-between gap-2">
-									<span className="font-ui text-lg font-bold text-foreground" lang="sk">
+									<span className="font-ui text-lg font-[600] text-foreground" lang="sk">
 										{s.title}
 									</span>
-									{s.suggested && <span className="shrink-0 rounded-md bg-xp/15 px-1.5 py-0.5 font-ui text-xs font-bold text-xp">for you</span>}
+									{s.suggested && <span className="shrink-0 rounded-md bg-teal-wash px-1.5 py-0.5 font-ui text-xs font-[600] text-teal-2">for you</span>}
 								</span>
 								<span className="block font-prose text-sm text-muted-foreground">{s.blurb}</span>
 								{s.done > 0 && <span className="mt-1 block font-ui text-xs text-muted-foreground">{s.done === 1 ? "once before" : `${s.done} times before`}</span>}
 							</button>
 							{/* The step-by-step walk-through (E13) sits beside the scene, its own target and not nested in the button. */}
-							<Link href={`/speak?scene=${s.id}&mode=script`} className="flex shrink-0 items-center rounded-r-2xl border-l-2 border-border px-4 font-ui text-sm font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid={`scene-script-${s.id}`}>
+							<Link href={`/speak?scene=${s.id}&mode=script`} className="flex shrink-0 items-center rounded-r-lg border-l border-border px-4 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid={`scene-script-${s.id}`}>
 								Step by step
 							</Link>
 						</div>
@@ -686,23 +709,23 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 	return (
 		<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="speak-end">
 			<div className="flex items-center gap-4">
-				<span className="flex size-16 items-center justify-center rounded-2xl bg-xp/15 text-xp">
+				<span className="flex size-16 items-center justify-center rounded-lg bg-teal-wash text-teal-2">
 					<MicIcon className="size-8" />
 				</span>
 				<div>
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Speak · {s.sceneTitle} · done</p>
-					<h1 className="font-ui text-3xl font-black text-foreground">
-						{praise}
+					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Speak · {s.sceneTitle} · done</p>
+					<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
+							{praise}
 						{counts.learner} {counts.learner === 1 ? "line" : "lines"} said
 					</h1>
 				</div>
-			</div>
+			<Stats className="mt-6 font-ui text-sm">
 			<div className="mt-6 flex flex-wrap gap-6 font-ui text-sm">
-				<Stat label="XP" value={`+${outcome.xp}`} ink="text-sun" />
-				<Stat label="Prompts repaired" value={`${counts.repaired} of ${counts.prompts}`} ink="text-go" />
-				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= 85 ? "text-go" : s.pron.average >= 70 ? "text-gold" : "text-miss"} />}
-				<Stat label="In your deck" value={String(outcome.queued.length)} ink="text-sky" />
-			</div>
+				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label="Prompts repaired" value={`${counts.repaired} of ${counts.prompts}`} ink="text-teal-2" />
+				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= 85 ? "text-teal-2" : s.pron.average >= 70 ? "text-teal-2" : "text-miss"} />}
+				<Stat label="In your deck" value={String(outcome.queued.length)} ink="text-teal-2" />
+			</Stats>
 			{s.pron && (
 				<p className="mt-2 font-prose text-sm text-muted-foreground" data-testid="speak-pron">
 					{s.pron.clear} of {s.pron.lines} spoken {s.pron.lines === 1 ? "line" : "lines"} said clearly (+{SPEAK_CLEAR_XP} XP each){s.pron.engine === "azure" ? ", scored sound by sound" : ""}.
@@ -712,16 +735,16 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			{sum?.note && <p className="mt-6 font-prose text-base text-foreground">{sum.note}</p>}
 			{sum && sum.corrections.length > 0 ? (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Worth fixing</p>
+					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth fixing</p>
 					<ul className="mt-2 flex flex-col gap-2" data-testid="speak-corrections">
 						{sum.corrections.map((c, i) => (
-							<li key={i} className="rounded-xl border border-border bg-card px-4 py-3">
-								<p className="font-ui text-xs font-bold uppercase tracking-wide text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
+							<li key={i} className="q-card px-4 py-3">
+								<p className="font-ui text-xs font-[600] uppercase tracking-wide text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
 								<p className="mt-1 font-prose text-base text-muted-foreground line-through decoration-2" lang="sk">
 									{c.yours}
 								</p>
 								<p className="flex items-start gap-2 font-prose text-xl text-foreground" lang="sk">
-									<button type="button" onClick={() => void speak(c.right).catch(() => {})} aria-label="Play" className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-go-soft text-go hover:brightness-110">
+									<button type="button" onClick={() => void speak(c.right).catch(() => {})} aria-label="Play" className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:brightness-110">
 										<Volume2Icon className="size-4" />
 									</button>
 									<span>{c.right}</span>
@@ -735,21 +758,21 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			) : (
 				sum &&
 				(sum.unreadable ? (
-					<p className="mt-6 rounded-xl bg-muted px-4 py-3 font-ui text-sm font-bold text-muted-foreground" data-testid="speak-unreadable">
+					<p className="mt-6 rounded-xl bg-muted px-4 py-3 font-ui text-sm font-[600] text-muted-foreground" data-testid="speak-unreadable">
 						The summary could not be read, so no fixes are listed.
 					</p>
 				) : (
-					<p className="mt-6 rounded-xl bg-go-soft px-4 py-3 font-ui text-sm font-bold text-go" data-testid="speak-clean">
+					<p className="mt-6 rounded-xl bg-teal-wash px-4 py-3 font-ui text-sm font-[600] text-teal-2" data-testid="speak-clean">
 						Nothing to fix this time.
 					</p>
 				))
 			)}
 			{sum && sum.keep.length > 0 && (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-bold tracking-wide text-muted-foreground">Worth keeping</p>
+					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth keeping</p>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{sum.keep.map((k) => (
-							<li key={k} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" lang="sk">
+							<li key={k} className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base" lang="sk">
 								<span>{k}</span>
 								<button type="button" onClick={() => void speak(k).catch(() => {})} aria-label="Play" className="flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
 									<Volume2Icon className="size-3.5" />

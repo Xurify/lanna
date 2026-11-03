@@ -317,7 +317,7 @@ describe("render smoke tests", () => {
 		const answer = buildAnswer(askQD(), { other: "Fairly confident — but shaky on applications" });
 		const html = renderToStaticMarkup(<AnsweredCard answer={answer} />);
 		assert.ok(html.includes('data-testid="answered-other"'), "the Other answer is an option row");
-		assert.match(html, /border-primary bg-accent/, "styled like its selected siblings");
+		assert.ok(html.includes("bg-teal-wash px-3 py-1.5 shadow-[inset_0_0_0_1.5px_var(--q-teal)]"), "styled like its selected siblings");
 		assert.match(html, /shaky on applications/, "the typed words render");
 		// Inside the options container — same list, not a loose quote outside it.
 		assert.ok(

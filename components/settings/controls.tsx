@@ -23,11 +23,11 @@ export function SettingsSection({
 }) {
 	return (
 		<section data-testid={testid} className="p-6">
-			<div className="mb-6 flex flex-col gap-1 border-b border-border/40 pb-4">
-				<h2 className="font-ui text-lg font-bold tracking-tight text-foreground">{title}</h2>
+			<div className="mb-5 flex flex-col gap-1 border-b border-border pb-4">
+				<h2 className="font-ui text-xl font-semibold tracking-[-0.02em] text-foreground">{title}</h2>
 				{hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
 			</div>
-			<div className="flex flex-col gap-6">{children}</div>
+			<div className="flex flex-col gap-2">{children}</div>
 		</section>
 	);
 }
@@ -46,7 +46,7 @@ export function SettingsGroup({
 }) {
 	return (
 		<div data-testid={testid} className="flex flex-col gap-2.5">
-			<p className="font-ui text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">{label}</p>
+			<p className="font-ui text-[13px] font-semibold tracking-[-0.003em] text-ink-2">{label}</p>
 			{hint && <span className="-mt-1 font-ui text-xs text-muted-foreground">{hint}</span>}
 			<div className="flex flex-col gap-2">{children}</div>
 		</div>
@@ -73,12 +73,12 @@ export function SettingsRow({
 		<div
 			data-testid={testid}
 			className={cn(
-				"flex items-center justify-between gap-4 rounded-xl border border-border/50 bg-accent/15 px-4 py-3 transition-colors hover:border-border/80 hover:bg-accent/25",
+				"flex items-center justify-between gap-4 rounded-lg bg-well px-4 py-3",
 				dimmed && "opacity-40",
 			)}
 		>
 			<span className="min-w-0 flex-1">
-				<span className="block font-ui text-xs font-semibold text-foreground">{label}</span>
+				<span className="block font-ui text-sm font-medium text-foreground">{label}</span>
 				{hint && <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{hint}</span>}
 			</span>
 			<div className="shrink-0">{children}</div>
@@ -104,7 +104,7 @@ export function SettingsDisclosure({
 	const [open, setOpen] = useState(defaultOpen);
 	const panelId = useId();
 	return (
-		<div data-testid={testid} className="rounded-2xl border border-border/60 bg-muted/10 p-4 transition-all">
+		<div data-testid={testid} className="rounded-lg bg-card p-4 shadow-raise">
 			<button
 				type="button"
 				aria-expanded={open}
@@ -114,17 +114,17 @@ export function SettingsDisclosure({
 				className="group flex w-full cursor-pointer items-center justify-between gap-3 text-left"
 			>
 				<div className="flex flex-col">
-					<span className="font-ui text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
+					<span className="font-ui text-[13px] font-semibold text-ink-2 transition-colors group-hover:text-foreground">
 						{label}
 					</span>
 					<p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
 				</div>
-				<span className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-2xs transition-colors group-hover:border-border group-hover:bg-accent group-hover:text-foreground">
+				<span className="rounded-md bg-card px-2.5 py-1 text-xs font-medium text-ink-2 ring-1 ring-line-2 transition-colors group-hover:bg-well">
 					{open ? "Hide" : "Show"}
 				</span>
 			</button>
 			{open && (
-				<div id={panelId} className="mt-4 flex flex-col gap-2.5 border-t border-border/50 pt-3">
+				<div id={panelId} className="mt-4 flex flex-col gap-2.5 border-t border-border pt-3">
 					{children}
 				</div>
 			)}
@@ -152,7 +152,7 @@ export function SettingsSegmented<T extends string | number>({
 			role="radiogroup"
 			aria-label={ariaLabel}
 			data-testid={testid}
-			className="flex shrink-0 items-center gap-1 rounded-xl border border-border/70 bg-background/80 p-1 shadow-2xs"
+			className="q-segc shrink-0"
 		>
 			{options.map((o) => {
 				const active = o.value === value;
@@ -164,12 +164,7 @@ export function SettingsSegmented<T extends string | number>({
 						aria-checked={active}
 						data-testid={`${testid}-${o.value}`}
 						onClick={() => onChange(o.value)}
-						className={cn(
-							"h-7 shrink-0 whitespace-nowrap rounded-lg px-3 text-xs font-medium transition-all",
-							active
-								? "border border-border/60 bg-accent font-semibold text-foreground shadow-xs"
-								: "border border-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground",
-						)}
+						className={cn("whitespace-nowrap", active && "on")}
 					>
 						{o.label}
 					</button>
@@ -214,7 +209,7 @@ export function Toggle({
 			onClick={() => onChange(!checked)}
 			className={cn(
 				"relative h-5 w-9 shrink-0 rounded-full border transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-				checked ? "border-go bg-go" : "border-border bg-accent",
+				checked ? "border-transparent bg-teal" : "border-transparent bg-line-2",
 				disabled && "cursor-not-allowed opacity-50",
 			)}
 		>
@@ -233,7 +228,7 @@ export function Toggle({
 				<span
 					className={cn(
 						"absolute left-px top-px size-4 rounded-full shadow-sm transition-transform",
-						checked ? "translate-x-4 bg-white" : "translate-x-0 bg-muted-foreground",
+						"bg-white", checked ? "translate-x-4" : "translate-x-0",
 					)}
 				/>
 			)}
@@ -286,7 +281,7 @@ export function CommitInput({
 					e.currentTarget.blur();
 				}
 			}}
-			className="h-8.5 w-44 rounded-xl border border-border/80 bg-background/80 px-3 font-ui text-xs text-foreground outline-hidden placeholder:text-muted-foreground/60 transition-all hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring"
+			className="h-9 w-44 rounded-md bg-card px-3 font-ui text-sm text-foreground outline-hidden ring-1 ring-line-2 placeholder:text-ink-4 transition-shadow focus:ring-2 focus:ring-teal"
 		/>
 	);
 }

@@ -74,7 +74,7 @@ export function AbortTurnBody({
 			{...backdropDismiss}
 		>
 			<div
-				className="mx-4 w-full max-w-sm rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+				className="mx-4 w-full max-w-sm rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<h2 className="text-sm font-semibold text-card-foreground" data-testid="abort-turn-title">

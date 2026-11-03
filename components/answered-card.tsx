@@ -24,7 +24,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 	const [whyOpen, setWhyOpen] = useState(false); // the tucked explanation (predictions, owner 2026-10-03)
 	if (answer.dismissed) {
 		return (
-			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="q-card p-4 text-sm text-ink-3">
 				<span className="font-medium">{answer.questionText}</span> — skipped
 			</div>
 		);
@@ -59,10 +59,10 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 		    p-4 into a 28px void below (12px above); the card's own padding is
 		    the bottom rhythm when a row ends the card. */}
 		<div
-			className="rounded-xl border bg-card p-4 text-card-foreground [&>*:last-child]:mb-0"
+			className="q-card p-4 text-card-foreground [&>*:last-child]:mb-0"
 			data-testid="answered-card"
 		>
-			<div className="mb-1 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+			<div className="mb-1 flex items-center gap-2 text-[12.5px] font-semibold text-ink-3">
 				{/* The tool's OWN name first (owner 2026-10-09): probe-phase
 			    cards label Probe/Recall — the phase boundary visible in the
 			    transcript. No `tool` on old records: kind labels as before. */}
@@ -79,11 +79,11 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 											: "Question"}
 				{isQuiz &&
 					(answer.dontKnow ? (
-						<span className="rounded bg-muted px-1.5 py-0.5">didn't know</span>
+						<span className="rounded bg-well-2 px-1.5 py-0.5">didn't know</span>
 					) : answer.correct ? (
-						<span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-500">correct</span>
+						<span className="rounded bg-teal-wash px-1.5 py-0.5 text-teal-2">correct</span>
 					) : (
-						<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-500">incorrect</span>
+						<span className="rounded bg-miss-soft px-1.5 py-0.5 text-miss">incorrect</span>
 					))}
 			</div>
 			<div className="mb-3 font-medium">
@@ -106,11 +106,11 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 							<div
 								key={opt.index}
 								className={cn(
-									"flex items-center gap-2 rounded-lg border px-3 py-1.5",
-									sel && key && "border-green-500/60 bg-green-500/10",
-									sel && !key && isQuiz && "border-red-500/60 bg-red-500/10",
-									sel && !isQuiz && "border-primary bg-accent",
-									!sel && key && "border-green-500/40",
+									"flex items-center gap-2 rounded-[10px] bg-card px-3 py-1.5 shadow-[inset_0_0_0_1px_var(--q-line-2)]",
+									sel && key && "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
+									sel && !key && isQuiz && "bg-miss-soft shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
+									sel && !isQuiz && "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
+									!sel && key && "shadow-[inset_0_0_0_1px_var(--q-teal-line)]",
 								)}
 							>
 								{isQuiz && (
@@ -121,9 +121,9 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 										data-mark={sel && key ? "check" : sel && !key ? "x" : !sel && key ? "check" : undefined}
 										className={cn(
 											"flex shrink-0 items-center",
-											sel && key && "text-green-500",
-											sel && !key && "text-red-500",
-											!sel && key && "text-green-500",
+											sel && key && "text-teal",
+											sel && !key && "text-miss",
+											!sel && key && "text-teal",
 										)}
 									>
 										{/* Owner round 8: a touch smaller than the text (size-4→size-3.5,
@@ -151,7 +151,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 					{answer.other && (
 						<div
 							data-testid="answered-other"
-							className="flex items-center gap-2 rounded-lg border border-primary bg-accent px-3 py-1.5"
+							className="flex items-center gap-2 rounded-[10px] bg-teal-wash px-3 py-1.5 shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
 						>
 							<span>“{answer.other}”</span>
 						</div>
@@ -210,7 +210,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 						{whyOpen ? "Hide why" : "Why"}
 					</button>
 					{whyOpen && (
-						<div className="mt-1.5 rounded-lg bg-muted py-2 text-sm text-foreground/50">
+						<div className="mt-1.5 rounded-[10px] bg-well px-3 py-2 text-sm text-foreground/50">
 							<span className="font-medium text-muted-foreground">Why: </span>
 							{/* Keep the first paragraph beside the label, not every paragraph:
 							   later paragraphs must retain their recovered document structure. */}
@@ -224,7 +224,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 			    — one field, reasoning included — shown on submit; no verdict,
 			    the model's next reply IS the grading. */}
 			{isExplain && answer.committed && (
-				<div className="mt-3 rounded-lg bg-muted py-2 text-sm text-muted-foreground">
+				<div className="mt-3 rounded-[10px] bg-well px-3 py-2 text-sm text-muted-foreground">
 					<span className="font-medium text-foreground">The answer: </span>
 					<ToolContentResponse className="inline [&>p:first-child]:inline [&>p:first-child]:m-0">{answer.committed}</ToolContentResponse>
 				</div>

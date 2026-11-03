@@ -86,7 +86,7 @@ export function DialogContent({
 			aria-modal="true"
 			onClick={(e) => e.stopPropagation()}
 			className={cn(
-				"relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150",
+				"relative flex w-full max-w-lg flex-col overflow-hidden rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150",
 				className
 			)}
 			{...props}
@@ -97,7 +97,7 @@ export function DialogContent({
 					type="button"
 					aria-label="Close"
 					onClick={handleClose}
-					className="absolute right-5 top-5 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+					className="absolute right-5 top-5 rounded-md p-1 text-muted-foreground transition-colors hover:bg-well hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal"
 				>
 					<XIcon className="size-4" />
 				</button>
@@ -177,7 +177,7 @@ export function DialogClose({
 				ctx.onClose?.();
 			}}
 			className={cn(
-				"rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring",
+				"rounded-md p-1 text-muted-foreground transition-colors hover:bg-well hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal",
 				className
 			)}
 			{...props}

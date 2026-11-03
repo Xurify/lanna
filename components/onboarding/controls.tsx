@@ -14,7 +14,7 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-all";
-const ON = "border-primary/80 bg-primary/15 text-primary shadow-xs font-bold";
+const ON = "border-primary/80 bg-primary/15 text-primary shadow-xs font-semibold";
 const OFF = "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground";
 const PANEL = "flex w-[22rem] max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-border bg-card p-3 shadow-xl";
 
@@ -96,7 +96,7 @@ export function NumberPicker({
 					onBlur={(e) => commit(e.target.value)}
 					onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit((e.target as HTMLInputElement).value))}
 					aria-label={`${label}, any number`}
-					className="w-16 bg-transparent text-center font-ui text-base font-bold tabular-nums text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					className="w-16 bg-transparent text-center font-ui text-base font-semibold tabular-nums text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				<span className="pr-1 font-ui text-xs text-muted-foreground">{unit}</span>
 				<button type="button" aria-label={`More ${unit}`} onClick={() => onChange(clamp(value + step))} className="flex size-10 items-center justify-center rounded-r-[10px] text-muted-foreground hover:bg-accent hover:text-foreground">
@@ -207,14 +207,14 @@ export function LanguagePicker({
 									}}
 									placeholder="Search languages"
 									aria-label="Search languages"
-									className="w-full shrink-0 rounded-xl border-2 border-border bg-background px-3 py-2 font-ui text-sm font-bold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-go"
+									className="w-full shrink-0 rounded-xl border-2 border-border bg-background px-3 py-2 font-ui text-sm font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-go"
 									data-testid={`${testid}-search`}
 								/>
 								<div className="mt-2 grid max-h-64 min-h-0 flex-1 grid-cols-2 content-start gap-1 overflow-y-auto pr-1">
 									{found.map((l) => {
 										const on = chosen.includes(l.id);
 										return (
-											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => togglePending(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-bold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
+											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => togglePending(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-semibold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
 												<span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3" strokeWidth={3} />}</span>
 												<CountryFlag lang={l.id} className="w-6 h-4 rounded-[3px]" />
 												<span>{l.title}</span>
@@ -227,7 +227,7 @@ export function LanguagePicker({
 									<span className="font-ui text-xs text-muted-foreground" aria-live="polite">
 										{added === 0 ? "Pick as many as you like" : `${added} to add`}
 									</span>
-									<button type="button" onClick={close} className="rounded-lg bg-go px-3 py-1.5 font-ui text-xs font-extrabold text-go-ink hover:brightness-110" data-testid={`${testid}-done`}>
+									<button type="button" onClick={close} className="rounded-lg bg-go px-3 py-1.5 font-ui text-xs font-semibold text-go-ink hover:brightness-110" data-testid={`${testid}-done`}>
 										Done
 									</button>
 								</div>
@@ -327,7 +327,7 @@ export function PickSome<T extends string>({
 				const on = at >= 0;
 				return (
 					<button key={String(it.id)} type="button" aria-pressed={on} title={it.hint} onClick={() => pick(it.id)} className={cn(CHIP, "inline-flex items-center gap-2", on ? ON : OFF)} data-testid={testid ? `${testid}-${it.id}` : undefined}>
-						{on && max > 1 && <span className="flex size-5 items-center justify-center rounded-full bg-go font-ui text-[11px] font-black text-go-ink">{at + 1}</span>}
+						{on && max > 1 && <span className="flex size-5 items-center justify-center rounded-full bg-go font-ui text-[11px] font-semibold text-go-ink">{at + 1}</span>}
 						<CountryFlag lang={String(it.id)} className="w-6 h-4 rounded-[3px]" />
 						<span>{it.title}</span>
 					</button>

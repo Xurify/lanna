@@ -59,7 +59,7 @@
 .q-legend b { font-weight: 550; color: var(--q-ink-2); }
 
 /* card */
-.q-card { background: var(--q-bg); border-radius: var(--radius-lg); box-shadow: var(--q-raise); }
+.q-card { background: var(--q-card); border-radius: var(--radius-lg); box-shadow: var(--q-raise); }
 .q-card-head { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 18px; font-size: 13px; font-weight: 550; color: var(--q-ink-2); border-bottom: 1px solid var(--q-line); }
 .q-card-head .q-ico { color: var(--q-ink-3); }
 .q-card-head .mins { margin-left: auto; color: var(--q-ink-3); font-weight: 450; }
@@ -102,6 +102,9 @@
 .q-rail { background: var(--q-side); box-shadow: inset 1px 0 0 var(--q-line); display: flex; flex-direction: column; min-height: 0; }
 .q-rail-in { display: flex; flex-direction: column; height: 100%; padding: 16px 20px 18px; }
 .q-brand { display: flex; align-items: center; gap: 10px; height: 32px; }
+.q-mark .q-pie { width: 14px; height: 14px; }
+.q-mark .q-pie circle { stroke: var(--q-on-teal); }
+.q-mark .q-pie path, .q-mark .q-pie circle[fill="var(--q-teal)"] { fill: var(--q-on-teal); }
 .q-mark { width: 24px; height: 24px; border-radius: 7px; background: var(--q-teal); color: var(--q-on-teal); display: grid; place-items: center; font-size: 14px; font-weight: 600; line-height: 1; box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.18); }
 .q-brand b { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
 .q-brand small { font-size: 12px; color: var(--q-ink-3); font-weight: 450; }
@@ -110,7 +113,7 @@
 .q-r-today { margin-top: 24px; display: flex; align-items: baseline; justify-content: space-between; }
 .q-r-today h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.022em; line-height: 1.2; }
 .q-r-today p { font-size: 13px; color: var(--q-ink-3); }
-.q-score { margin-top: 12px; background: var(--q-bg); border-radius: var(--radius-lg); box-shadow: var(--q-raise); }
+.q-score { margin-top: 12px; background: var(--q-card); border-radius: var(--radius-lg); box-shadow: var(--q-raise); }
 .q-xp { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
 .q-xp .q-pie { width: 36px; height: 36px; }
 .q-xp .v { display: flex; flex-direction: column; line-height: 1.25; }
@@ -135,7 +138,7 @@
 .q-tl .done .q-cb { background: var(--q-teal); box-shadow: none; }
 .q-tl .next .q-cb { box-shadow: inset 0 0 0 1.5px var(--q-teal); }
 .q-tl .locked .q-cb { background: transparent; box-shadow: none; outline: 1.5px dashed var(--q-dash); outline-offset: -1.5px; }
-.q-tl .next { background: var(--q-bg); box-shadow: var(--q-raise); }
+.q-tl .next { background: var(--q-card); box-shadow: var(--q-raise); }
 .q-tl .k1 { font-size: 14px; line-height: 20px; color: var(--q-ink); letter-spacing: -0.006em; }
 .q-tl .k2 { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 16px; color: var(--q-ink-3); margin-top: 1px; }
 .q-tl .k2 .q-ico { width: 12px; height: 12px; }
@@ -165,7 +168,7 @@
 .q-rep .s em { font-style: normal; color: var(--q-teal-2); font-weight: 600; }
 .q-rep .e { font-size: 13px; color: var(--q-ink-3); }
 .q-rep .r { margin-left: auto; font-size: 12.5px; color: var(--q-ink-3); }
-.q-cloze { background: var(--q-bg); border-radius: 14px; box-shadow: var(--q-raise-hi); }
+.q-cloze { background: var(--q-card); border-radius: 14px; box-shadow: var(--q-raise-hi); }
 .q-cloze .q-card-head { height: 46px; }
 .q-dots { display: flex; gap: 3px; margin-left: 6px; }
 .q-dots i { width: 16px; height: 4px; border-radius: 2px; background: var(--q-well-2); }
@@ -182,7 +185,7 @@
 .q-result { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 550; color: var(--q-teal-2); white-space: nowrap; }
 .q-result .q-ico { width: 15px; height: 15px; stroke-width: 2; }
 .q-result span { font-weight: 450; color: var(--q-ink-3); }
-.q-note { display: grid; grid-template-columns: 1fr 260px; background: var(--q-bg); border-radius: 14px; box-shadow: var(--q-raise); overflow: hidden; }
+.q-note { display: grid; grid-template-columns: 1fr 260px; background: var(--q-card); border-radius: 14px; box-shadow: var(--q-raise); overflow: hidden; }
 .q-note .main { padding: 18px 22px 18px; }
 .q-lbl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--q-ink-3); }
 .q-lbl .q-ico { width: 14px; height: 14px; color: var(--q-teal); }
