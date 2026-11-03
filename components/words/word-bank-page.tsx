@@ -234,8 +234,10 @@ export function WordBankPage() {
 				</div>
 
 				{/* Lingvist / Speakly Style Metrics Ribbon */}
+				{/* The four cards arrive with the summary; their height is held (2 rows on a phone, 1 from sm up) so the tabs and the list below never move. */}
+				<div className="mb-8 min-h-[228px] sm:min-h-[108px]">
 				{summary && (
-					<div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
 								<span className="font-ui text-xs font-semibold">Zvládnuté</span>
@@ -281,6 +283,7 @@ export function WordBankPage() {
 						</div>
 					</div>
 				)}
+				</div>
 
 				{/* Primary Tab Selector */}
 				<div className="mb-6 flex border-b border-border/80">

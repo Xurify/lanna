@@ -164,7 +164,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				</header>
 
 				<main className="flex min-h-0 flex-col">
-					<div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 [mask-image:linear-gradient(to_bottom,#000_calc(100%-48px),transparent)] @6xl:px-0 @6xl:pt-8 @6xl:[mask-image:none]">
+					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 pt-4 [mask-image:linear-gradient(to_bottom,#000_calc(100%-48px),transparent)] @6xl:px-0 @6xl:pt-8 @6xl:[mask-image:none]">
 						<div className="mx-auto w-full max-w-[720px] pb-6">
 							<header className="q-rise">
 								<p className="q-date first-letter:uppercase" lang="sk">

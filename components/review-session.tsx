@@ -271,19 +271,17 @@ export function ReviewSession() {
 				</header>
 
 				<main className="flex min-h-0 flex-col">
-					<div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-1 [mask-image:linear-gradient(to_bottom,transparent_0,#000_120px)] @6xl:px-0">
+					<div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto [scrollbar-gutter:stable] px-4 pb-1 [mask-image:linear-gradient(to_bottom,transparent_0,#000_120px)] @6xl:px-0">
 						<div className="mx-auto w-full max-w-[720px] pt-8">
-							{!day.s && <div className="h-[62px]" aria-hidden="true" />}
-							{day.s && (
-								<section className="opacity-50">
-									<p className="q-date first-letter:uppercase" lang="sk">
-										{skDate()}
-									</p>
-									<p className="q-line mt-0.5 text-[20px] font-semibold tracking-[-0.02em]">
-										{greeting()}.{day.s.streak.days > 0 ? ` Day ${day.s.streak.days} in a row.` : ""} {day.s.plan.total} things today, {day.s.plan.done} done.
-									</p>
-								</section>
-							)}
+							{/* The date and greeting are known at once; the day's counts join the line when the summary arrives, in space already held for two lines on a phone. */}
+							<section className="opacity-50">
+								<p className="q-date first-letter:uppercase" lang="sk" suppressHydrationWarning>
+									{skDate()}
+								</p>
+								<p className="q-line mt-0.5 min-h-[30px] text-[20px] font-semibold tracking-[-0.02em] @max-xl:min-h-[60px]" suppressHydrationWarning>
+									{greeting()}.{day.s ? `${day.s.streak.days > 0 ? ` Day ${day.s.streak.days} in a row.` : ""} ${day.s.plan.total} things today, ${day.s.plan.done} done.` : ""}
+								</p>
+							</section>
 
 							<section className="mt-5">
 								<h2 className="q-sh">

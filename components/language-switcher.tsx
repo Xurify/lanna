@@ -24,6 +24,7 @@ import { HistoryIcon,
 	RepeatIcon,
 	SunIcon,
 	XIcon,
+	CircleAlertIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
@@ -375,8 +376,11 @@ export function LanguageSwitcher() {
 				<NavItem href="/words" testid="words-door" active={pathname === "/words"} icon={<BookAIcon className="size-[18px]" />}>
 					Words
 				</NavItem>
-				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones" || pathname === "/map" || pathname === "/mistakes"} icon={<ChartNoAxesColumnIcon className="size-[18px]" />}>
+				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones" || pathname === "/map"} icon={<ChartNoAxesColumnIcon className="size-[18px]" />}>
 					Progress
+				</NavItem>
+				<NavItem href="/mistakes" testid="mistakes-door" active={pathname === "/mistakes"} icon={<CircleAlertIcon className="size-[18px]" />}>
+					My mistakes
 				</NavItem>
 				<NavItem href="/log" testid="log-door" active={pathname === "/log"} icon={<HistoryIcon className="size-[18px]" />}>
 					Log

@@ -1196,7 +1196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 			{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. On phones the four main pages leave room
 			    for the bottom nav (PhoneNav) at their end. */}
-			<main className={cn("min-w-0 flex-1 overflow-y-auto", phoneNav && "pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0")}>
+			<main className={cn("min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]", phoneNav && "pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0")}>
 				{/* The SCROLL-PROOF window-drag strip (owner bug report,
 				    2026-10-28: "scrolled down, I can't grab the window"). The
 				    per-page strips are absolute inside the scrolling content,
