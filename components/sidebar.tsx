@@ -15,7 +15,6 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
-import { NavRail } from "@/components/nav-rail";
 import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
@@ -145,12 +144,13 @@ export function SidebarProvider({ children, defaultCollapsed = false }: { childr
 		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
 		return off;
 	}, []);
-	// The sidebar is a permanent column on a desktop window. It used to be
-	// collapsible, with the choice kept in a cookie, and a collapsed sidebar
-	// then stayed gone on every route and every reload (a closed default made
-	// it vanish for everyone, 2026-11-02). Only a window below the drawer
-	// breakpoint hides it, as a drawer with a menu button.
-	const open = true;
+	// The sidebar is a column on a desktop window, open by default. The fold
+	// button in its header hides it entirely, and the open button in every
+	// page header (SidebarToggle) brings it back; the choice is kept in a
+	// cookie. (It once vanished for everyone because a closed default
+	// was shared; closed is now only ever the learner's own choice, 2026-11-02.)
+	// A window below the drawer breakpoint hides it as a drawer with a menu button.
+	const open = !collapsed;
 	const [narrow, setNarrow] = useState(false);
 	const [mounted, setMounted] = useState(false);
 
@@ -272,7 +272,8 @@ export function SidebarToggle() {
 		<span
 			className={cn(
 				"sidebar-motion lh-no-drag relative flex h-9 shrink-0 overflow-hidden pointer-coarse:overflow-visible duration-200",
-				open ? "w-0 -mr-3" : "w-9 mr-0 lh-closed-toggle",
+				// On a desktop window the open button is the fixed one in AppShell; this slot is only the phone's menu button.
+				"w-0 -mr-3",
 				// Phone widths follow the drawer, decided in CSS so the first
 				// paint is already right.
 				drawer ? "max-md:w-0 max-md:-mr-3 touch-narrow:w-0 touch-narrow:-mr-3" : "max-md:w-9 max-md:mr-0 touch-narrow:w-9 touch-narrow:mr-0",
@@ -823,7 +824,7 @@ function SessionsSidebar() {
 			<aside data-sidebar=""
 				className={cn(
 					"sidebar-motion shrink-0 overflow-hidden duration-200",
-					open ? (collapsed ? "w-14" : "w-72") : "w-0",
+					open ? "w-72" : "w-0",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
@@ -832,8 +833,7 @@ function SessionsSidebar() {
 				)}
 				aria-hidden={!visible}
 			>
-				{collapsed && <NavRail onExpand={toggleCollapsed} onSettings={() => openSettings()} />}
-				<div className={cn("flex h-full w-72 flex-col border-r bg-background max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
+				<div className={cn("flex h-full w-72 flex-col border-r bg-side max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -1191,6 +1191,25 @@ function SessionsSidebar() {
 	);
 }
 
+/** The one way back when the sidebar is folded: pinned to the top-left of the window, so it is in the same place on every page (the pages' own headers differ). On macOS the margin clears the traffic lights. */
+function OpenSidebarButton() {
+	const { collapsed, toggleCollapsed } = useSidebar();
+	if (!collapsed) return null;
+	return (
+		<Hint label="Open sidebar" action="toggle-sidebar" side="right">
+			<button
+				type="button"
+				onClick={toggleCollapsed}
+				aria-label="Open sidebar"
+				data-testid="sidebar-open"
+				className="lh-no-drag lh-closed-toggle lh-press fixed left-3 top-3 z-30 hidden size-9 items-center justify-center rounded-lg bg-card text-ink-3 shadow-raise hover:text-foreground md:flex"
+			>
+				<PanelLeftOpenIcon className="size-4" />
+			</button>
+		</Hint>
+	);
+}
+
 /** The app frame: sidebar inline + content. Rendered once in the root layout. */
 export function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
@@ -1205,6 +1224,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	return (
 		<SettingsDialogProvider>
 			<JumpProvider>
+			<OpenSidebarButton />
 			<SessionsSidebar />
 			{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. */}

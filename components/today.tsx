@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { HistoryIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { ProgressPanel } from "@/components/quiet/charts";
@@ -227,7 +228,8 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 									<h2 className="q-sh">
 										<QIcon name="check" />
 										Today so far
-										<Link href="/log" className="order-3 text-[12.5px] font-[450] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2">
+										<Link href="/log" data-testid="open-log" className="lh-press order-3 -my-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground">
+											<HistoryIcon className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
 											Open the log
 										</Link>
 									</h2>

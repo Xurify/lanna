@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { PanelLeftOpenIcon, SettingsIcon } from "lucide-react";
 import { NAV, navItemFor } from "@/lib/nav";
 import { NAV_ICONS } from "@/components/language-switcher";
 
@@ -15,18 +14,11 @@ import { NAV_ICONS } from "@/components/language-switcher";
  * its focus. Names are in the tooltip and the accessible label. From 768 px up;
  * a phone keeps the drawer and the screens' own X.
  */
-export function NavRail({ onExpand, onSettings }: { onExpand?: () => void; onSettings?: () => void } = {}) {
-	// With onExpand it is the collapsed sidebar itself (in the layout, with a way back); without it, the strip beside a task screen.
-	const inline = !!onExpand;
+export function NavRail() {
 	const pathname = usePathname();
 	const active = navItemFor(pathname)?.id;
 	return (
-		<nav aria-label="Pages" data-testid={inline ? "sidebar-rail" : "nav-rail"} className={cn("lh-no-drag flex-col items-center gap-1 overflow-y-auto bg-side pb-3 pt-14 shadow-[inset_-1px_0_0_var(--q-line)]", inline ? "hidden h-full w-14 shrink-0 md:flex" : "fixed inset-y-0 left-0 z-40 hidden w-14 md:flex")}>
-			{inline && (
-				<button type="button" onClick={onExpand} title="Expand sidebar" aria-label="Expand sidebar" data-testid="sidebar-expand" className="lh-press mb-2 flex size-10 items-center justify-center rounded-lg text-ink-3 hover:bg-accent/60 hover:text-foreground">
-					<PanelLeftOpenIcon className="size-[18px]" />
-				</button>
-			)}
+		<nav aria-label="Pages" data-testid="nav-rail" className={cn("lh-no-drag flex-col items-center gap-1 overflow-y-auto bg-side pb-3 pt-14 shadow-[inset_-1px_0_0_var(--q-line)]", "fixed inset-y-0 left-0 z-40 hidden w-14 md:flex")}>
 			{NAV.map((group, g) => (
 				<div key={group.id} className={cn("flex flex-col items-center gap-1", g > 0 && "mt-2 border-t border-border pt-2")}>
 					{group.items.map((item) => {
@@ -49,11 +41,6 @@ export function NavRail({ onExpand, onSettings }: { onExpand?: () => void; onSet
 					})}
 				</div>
 			))}
-			{inline && onSettings && (
-				<button type="button" onClick={onSettings} title="Settings" aria-label="Settings" className="lh-press mt-auto flex size-10 items-center justify-center rounded-lg text-ink-3 hover:bg-accent/60 hover:text-foreground">
-					<SettingsIcon className="size-[18px]" />
-				</button>
-			)}
 		</nav>
 	);
 }
