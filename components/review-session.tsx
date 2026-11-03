@@ -273,6 +273,7 @@ export function ReviewSession() {
 				<main className="flex min-h-0 flex-col">
 					<div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-1 [mask-image:linear-gradient(to_bottom,transparent_0,#000_120px)] @6xl:px-0">
 						<div className="mx-auto w-full max-w-[720px] pt-8">
+							{!day.s && <div className="h-[62px]" aria-hidden="true" />}
 							{day.s && (
 								<section className="opacity-50">
 									<p className="q-date first-letter:uppercase" lang="sk">
@@ -294,7 +295,7 @@ export function ReviewSession() {
 										</small>
 									)}
 								</h2>
-								{prompt && <p className="q-line dim opacity-75">Type each one. Help is there, and it costs a little.</p>}
+								<p className={cn("q-line dim min-h-[26px] opacity-75", !prompt && "invisible")}>Type each one. Help is there, and it costs a little.</p>
 							</section>
 
 							{last && prompt && (
@@ -322,8 +323,9 @@ export function ReviewSession() {
 									</div>
 								)}
 
-								{!loadError && slow && (!status || (prompt && !lang)) && (
-									<div className="q-cloze p-7" aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
+								{/* The page is bottom-aligned, so a card that arrives late would push everything above it up: its space is held from the first frame, drawn only after the skeleton delay. */}
+								{!loadError && (!status || (prompt && !lang)) && (
+									<div className={cn("q-cloze min-h-[300px] p-7", !slow && "invisible")} aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
 										<div className="h-3 w-20 animate-pulse rounded bg-well-2" />
 										<div className="mt-7 h-12 w-full animate-pulse rounded-lg bg-well-2" />
 										<div className="mt-3 h-12 w-2/3 animate-pulse rounded-lg bg-well-2" />
@@ -562,6 +564,7 @@ export function ReviewSession() {
 
 					<div className="px-4 pb-3 pt-3 @6xl:px-0 @6xl:pb-5">
 						<div className="mx-auto w-full max-w-[720px]">
+							{!(prompt && lang) && <div className="mb-3 h-[34px]" aria-hidden="true" />}
 							{prompt && lang && (
 								<div className="q-decide flex-wrap" data-testid="review-dock">
 									{!verdict ? (

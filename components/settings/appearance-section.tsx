@@ -4,7 +4,7 @@
  *
  * Appearance writes PUT the whole section and hand the delta back, so the CSS
  * variables move at once. Hex inputs commit on blur or Enter. Mode (System, Day, Night)
- * is per device: it lives in localStorage "lh:theme", not in the settings record.
+ * is per device: it lives in the "lh-theme" cookie (lib/theme.ts), which the server reads into the first HTML, not in the settings record.
  *
  * The reading font lists installed families via window.queryLocalFonts in the
  * desktop shell. In a plain browser the API is absent: a curated list shows,
@@ -21,41 +21,21 @@ import {
 	type GraphSettings,
 } from "@/src/core";
 import { MenuShell } from "@/components/menu-shell";
+import { applyTheme, readThemeChoice, type ThemeChoice } from "@/lib/theme";
 import { Hint } from "@/components/ui/hint";
 import { useAppearance } from "./appearance.tsx";
 import { FontMenuList } from "./model-menu";
 import { CommitInput, SettingsDisclosure, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 
-export type ThemeChoice = "system" | "day" | "night";
-const THEME_KEY = "lh:theme";
+export type { ThemeChoice };
 const MODE_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
 	{ value: "system", label: "System" },
 	{ value: "day", label: "Day" },
 	{ value: "night", label: "Night" },
 ];
 
-function readThemeChoice(): ThemeChoice {
-	try {
-		const t = localStorage.getItem(THEME_KEY);
-		return t === "day" || t === "night" ? t : "system";
-	} catch {
-		return "system";
-	}
-}
-
-/** Same rule as the inline script in app/layout.tsx. */
 function applyThemeChoice(choice: ThemeChoice) {
-	try {
-		if (choice === "system") localStorage.removeItem(THEME_KEY);
-		else localStorage.setItem(THEME_KEY, choice);
-	} catch {
-		// Storage blocked: the choice still applies for this page view.
-	}
-	const night = choice === "night" || (choice === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-	document.documentElement.classList.toggle("dark", night);
-	document.documentElement.dataset.theme = night ? "night" : "day";
-	window.lh?.setTheme?.(night);
-	document.documentElement.style.colorScheme = night ? "dark" : "light";
+	applyTheme(choice);
 }
 
 /** Factory reading family. Unset means this. */

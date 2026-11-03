@@ -1,21 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
+import { applyTheme, readThemeChoice } from "@/lib/theme";
 
-/** Applies the saved theme after mount. The inline script in app/layout.tsx does it before paint,
- *  but a page that throws notFound() is served in a shell where that script never ran. */
+/**
+ * Keeps <html> in step with the theme after the page is up. The first HTML already carries the
+ * saved choice (app/layout.tsx reads the cookie); this adds what only the browser knows: the
+ * dark class while the system is dark, an older localStorage choice moved into the cookie, the
+ * Electron frame, and the system's own switch between Day and Night while the choice is "system".
+ */
 export function ThemeSync() {
 	useEffect(() => {
-		try {
-			const t = localStorage.getItem("lh:theme");
-			const night = t === "night" || (t !== "day" && matchMedia("(prefers-color-scheme: dark)").matches);
-			document.documentElement.classList.toggle("dark", night);
-			document.documentElement.dataset.theme = night ? "night" : "day";
-			document.documentElement.style.colorScheme = night ? "dark" : "light";
-			window.lh?.setTheme?.(night);
-		} catch {
-			// storage blocked: the page keeps the theme it has
-		}
+		const choice = readThemeChoice();
+		applyTheme(choice);
+		if (choice !== "system") return;
+		const mq = matchMedia("(prefers-color-scheme: dark)");
+		const follow = () => applyTheme("system", false);
+		mq.addEventListener("change", follow);
+		return () => mq.removeEventListener("change", follow);
 	}, []);
 	return null;
 }

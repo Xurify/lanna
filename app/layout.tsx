@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { THEME_COOKIE, themeFromCookie } from "@/lib/theme";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
@@ -17,22 +19,20 @@ import { OutboxFlush } from "@/components/lesson/outbox-flush";
 // Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
 // JetBrains Mono stays for code. latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä),
 // cyrillic carries Russian.
-const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist" });
-const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains" });
+// display: optional keeps the page on the size-matched fallback if Geist is not ready in the first ~100 ms, so the text never swaps and shifts; the font is preloaded, so on a normal load it is there for the first paint.
+const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist", display: "optional" });
+// Code only: not preloaded, so it never competes with Geist for the first paint.
+const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains", preload: false });
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx, components/phone-nav.tsx), and the theme color
 // paints the status bar. viewport-fit=cover is what lets the page run under it.
-export const viewport: Viewport = {
-	width: "device-width",
-	initialScale: 1,
-	viewportFit: "cover",
-	themeColor: [
-		{ media: "(prefers-color-scheme: light)", color: "#ffffff" },
-		{ media: "(prefers-color-scheme: dark)", color: "#101214" },
-	],
-	colorScheme: "light dark",
-};
+export async function generateViewport(): Promise<Viewport> {
+	// An explicit Day or Night paints the status bar in that mode whatever the system is set to; "system" lets the system decide.
+	const theme = themeFromCookie((await cookies()).get(THEME_COOKIE)?.value);
+	const themeColor = theme === "day" ? "#ffffff" : theme === "night" ? "#101214" : [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#101214" }];
+	return { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor, colorScheme: theme === "system" ? "light dark" : theme === "night" ? "dark" : "light" };
+}
 
 export const metadata: Metadata = {
 	title: "LangHarness",
@@ -44,7 +44,9 @@ export const metadata: Metadata = {
 	description: "A Slovak and Russian tutor with a memory: sessions, practice, spaced review, and a knowledge graph of what you know.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+	// The saved theme goes into the first HTML, so a Night learner never sees a Day frame (or the reverse) while the scripts load.
+	const theme = themeFromCookie((await cookies()).get(THEME_COOKIE)?.value);
 	// Saved appearance goes into the first HTML (no flash of the factory
 	// palette or font before the client provider would have applied it).
 	let appearance: AppearanceSettings | undefined;
@@ -56,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	}
 	const vars = appearanceVars(resolveAppearance(appearance));
 	return (
-		<html lang="en" className={`${geist.variable} ${mono.variable}`} style={vars as React.CSSProperties} suppressHydrationWarning>
+		<html lang="en" className={`${geist.variable} ${mono.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} style={vars as React.CSSProperties} suppressHydrationWarning>
 			<body className="min-h-dvh antialiased">
 			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
