@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
+import { HistoryIcon,
 	BookAIcon,
 	BookOpenIcon,
 	ChartNoAxesColumnIcon,
@@ -377,6 +377,9 @@ export function LanguageSwitcher() {
 				</NavItem>
 				<NavItem href="/plan" testid="plan-door" active={pathname === "/plan" || pathname === "/milestones" || pathname === "/map" || pathname === "/mistakes"} icon={<ChartNoAxesColumnIcon className="size-[18px]" />}>
 					Progress
+				</NavItem>
+				<NavItem href="/log" testid="log-door" active={pathname === "/log"} icon={<HistoryIcon className="size-[18px]" />}>
+					Log
 				</NavItem>
 			</nav>
 		</div>

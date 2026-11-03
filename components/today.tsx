@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
+import { EntryRow } from "@/components/log/day-log-view";
+import type { DayLog } from "@/src/core";
 import { DayRail, greeting, skDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
 import { JumpBar } from "@/components/quiet/jump";
 import { SidebarToggle } from "@/components/sidebar";
@@ -46,6 +48,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 	const router = useRouter();
 	const [s, setS] = useState<Summary | null>(initialSummary);
 	const [failed, setFailed] = useState(false);
+	const [dayLog, setDayLog] = useState<DayLog | null>(null);
 	const [configured, setConfigured] = useState(initialConfigured);
 	const [setupOpen, setSetupOpen] = useState(false);
 	const [pending, setPending] = useState<null | (() => Promise<void>)>(null);
@@ -66,6 +69,11 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				setFailed(false);
 			})
 			.catch(() => setFailed(true));
+		// Today so far: the same log the Log page shows, for today only.
+		void fetch(`/api/daylog?tz=${new Date().getTimezoneOffset()}`)
+			.then((r) => (r.ok ? (r.json() as Promise<DayLog>) : null))
+			.then((x) => x && setDayLog(x))
+			.catch(() => {});
 	}, []);
 
 	useEffect(() => {
@@ -221,6 +229,27 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								)}
 								{s && total > 0 && done >= total && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} className="mt-2" />}
 							</section>
+
+							{s && (
+								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".08s" }} data-testid="today-so-far" aria-label="Today so far">
+									<h2 className="q-sh">
+										<QIcon name="check" />
+										Today so far
+										<Link href="/log" className="order-3 text-[12.5px] font-[450] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2">
+											Open the log
+										</Link>
+									</h2>
+									{dayLog && dayLog.entries.length > 0 ? (
+										<ol className="divide-y divide-[var(--q-line)]">
+											{dayLog.entries.slice(-4).map((e) => (
+												<EntryRow key={`${e.at}-${e.kind}-${e.title}`} e={e} />
+											))}
+										</ol>
+									) : (
+										<p className="text-[14px] text-ink-3">{dayLog ? "Nothing finished yet today. Each finished task shows here with its time." : "\u00a0"}</p>
+									)}
+								</section>
+							)}
 
 							{weakGroups.length > 0 && (
 								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
