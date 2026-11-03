@@ -28,6 +28,16 @@ Per-route JS fell from about 561 KB to about 480 KB gzipped. The chat route keep
 
 The main nav also lights the pressed row at once. `app/loading.tsx` was measured both ways: it adds about 300 ms of long tasks to a full page load at 4x CPU (about 75 ms on a normal CPU, once, at app start) and nothing to a client navigation, where it shows the page's shape while the server renders. Kept.
 
+## Partial Prefetching: tried, not adopted (2026-11-03)
+
+Next.js 16.4's [Partial Prefetching](https://nextjs.org/docs/app/guides/instant-navigation) needs `cacheComponents: true`. Turning both on and building fails at once: 72 files export `dynamic = "force-dynamic"` (19 pages and 53 route handlers), and that segment config is not allowed with Cache Components, plus two `runtime = "nodejs"`. The migration is not a flag:
+
+- **Pages (19):** each reads the learner's files with synchronous `fs` calls, which Next cannot see. Without `force-dynamic` they would be prerendered at build time with the developer's data in them, so each needs an explicit `await connection()` inside a `<Suspense>` boundary, and so does the root layout (it reads cookies and the settings file).
+- **Route handlers (53):** a `GET` that does not read its request would also be baked at build time. Every one has to be audited by hand.
+- **Payoff:** the App Shell of these pages would be their skeleton, because all their content is per-request. `app/loading.tsx` already gives that shell on a client navigation. What Partial Prefetching adds is prefetching URL-specific content, which these pages do not have.
+
+So the cost is high and the risk is stale data in a learning app, for a result `loading.tsx` mostly gives already. Not adopted. Revisit if pages move to cached reads (a cache keyed on file mtime would make `"use cache"` honest), which would also speed the server render itself.
+
 ## What did not need fixing
 
 Interactions in the lesson and Review (answer, Check, Continue) paint in 70–150 ms at 4x CPU, and settings open in 150 ms. The API calls a page makes on load are 12–45 ms each.
