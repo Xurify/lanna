@@ -19,8 +19,8 @@ import { OutboxFlush } from "@/components/lesson/outbox-flush";
 // Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
 // JetBrains Mono stays for code. latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä),
 // cyrillic carries Russian.
-// display: optional keeps the page on the size-matched fallback if Geist is not ready in the first ~100 ms, so the text never swaps and shifts; the font is preloaded, so on a normal load it is there for the first paint.
-const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist", display: "optional" });
+// Geist is preloaded and the fallback is size-matched, so a late font swaps in without moving the text. (display: optional was tried: the dev server does not preload fonts, so it left whole page views in the fallback face, and next/font accepts only literal option values, so it cannot be limited to production.)
+const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist", display: "swap" });
 // Code only: not preloaded, so it never competes with Geist for the first paint.
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains", preload: false });
 

@@ -375,6 +375,11 @@ export function SettingsDialogBody({
 									<SettingsGroup label="Dictionary & word lookup" testid="group-word-lookup">
 										<WordLookupModeRow />
 									</SettingsGroup>
+									<SettingsGroup label="Credits" testid="group-credits">
+										<p className="text-[13px] text-muted-foreground" data-testid="credits-sentences">
+											Sentences from slovak.wiki: curated examples and Tatoeba (CC BY 2.0 FR).
+										</p>
+									</SettingsGroup>
 								</SettingsSection>
 							)}
 							{active === "sound" && (

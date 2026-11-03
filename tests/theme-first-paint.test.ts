@@ -26,9 +26,9 @@ describe("the theme is right in the first HTML", () => {
 		assert.match(css, /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme="day"\]\)/);
 	});
 
-	it("fonts: Geist is preloaded and never swaps late; the code font is not preloaded", () => {
+	it("fonts: Geist is preloaded with a size-matched fallback; the code font is not preloaded", () => {
 		const layout = fs.readFileSync("app/layout.tsx", "utf-8");
-		assert.match(layout, /Geist\(\{[^}]*display: "optional"/);
+		assert.match(layout, /Geist\(\{[^}]*display: "swap"/);
 		assert.match(layout, /JetBrains_Mono\(\{[^}]*preload: false/);
 	});
 });

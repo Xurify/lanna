@@ -555,7 +555,6 @@ export function ReviewSession() {
 									</div>
 								)}
 
-								{status?.available && lang && <p className="mt-6 text-center text-[12px] text-ink-3">Sentences from slovak.wiki: curated examples and Tatoeba (CC BY 2.0 FR).</p>}
 							</section>
 						</div>
 					</div>

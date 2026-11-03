@@ -176,7 +176,7 @@ export function WordBankPage() {
 				body: JSON.stringify({
 					text: newPhraseText.trim(),
 					translation: newPhraseTrans.trim(),
-					context: newPhraseContext.trim() || "Vlastná fráza (Custom)",
+					context: newPhraseContext.trim() || "Your own phrase",
 					source: "manual",
 				}),
 			});
@@ -213,10 +213,10 @@ export function WordBankPage() {
 				<div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 					<div>
 						<h1 className="font-title text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-							Slovník a frázy
+							Words and phrases
 						</h1>
 						<p className="mt-1 font-prose text-sm text-muted-foreground sm:text-base">
-							Váš osobný slovník, zvládnuté slová a uložené frázy na jednom mieste.
+							Your words, the ones you know, and your saved phrases in one place.
 						</p>
 					</div>
 
@@ -228,7 +228,7 @@ export function WordBankPage() {
 								className="flex items-center gap-1.5 rounded-xl bg-sky/15 px-3.5 py-2 text-xs font-semibold text-sky transition-colors hover:bg-sky/25"
 							>
 								<RepeatIcon className="size-4" />
-								<span>{summary.wordsDue} na opakovanie</span>
+								<span>{summary.wordsDue} due for review</span>
 							</Link>
 						)}
 					</div>
@@ -241,13 +241,13 @@ export function WordBankPage() {
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Zvládnuté</span>
+								<span className="font-ui text-xs font-semibold">Known</span>
 								<CheckCheckIcon className="size-4 text-go" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.wordsMastered}
 							</p>
-							<p className="text-[11px] text-muted-foreground">Retencia ≥ 80%</p>
+							<p className="text-[11px] text-muted-foreground">80% retention or better</p>
 						</div>
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
@@ -258,29 +258,29 @@ export function WordBankPage() {
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.wordsLearning}
 							</p>
-							<p className="text-[11px] text-muted-foreground">V precvičovaní</p>
+							<p className="text-[11px] text-muted-foreground">Practicing</p>
 						</div>
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Obľúbené slová</span>
+								<span className="font-ui text-xs font-semibold">Favorite words</span>
 								<StarIcon className="size-4 fill-gold text-gold" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.wordsFavorited}
 							</p>
-							<p className="text-[11px] text-muted-foreground">Označené hviezdičkou</p>
+							<p className="text-[11px] text-muted-foreground">Marked with a star</p>
 						</div>
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
 							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Uložené frázy</span>
+								<span className="font-ui text-xs font-semibold">Saved phrases</span>
 								<BookmarkIcon className="size-4 text-trail-blue" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.savedPhrasesCount}
 							</p>
-							<p className="text-[11px] text-muted-foreground">Z príbehov a lekcií</p>
+							<p className="text-[11px] text-muted-foreground">From stories and lessons</p>
 						</div>
 					</div>
 				)}
@@ -299,7 +299,7 @@ export function WordBankPage() {
 						)}
 					>
 						<BookOpenIcon className="size-4" />
-						<span>Slovník (Word Bank)</span>
+						<span>Words</span>
 						<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
 							{totalWords}
 						</span>
@@ -316,7 +316,7 @@ export function WordBankPage() {
 						)}
 					>
 						<BookmarkIcon className="size-4" />
-						<span>Uložené frázy (Saved Phrases)</span>
+						<span>Saved phrases (Saved Phrases)</span>
 						<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
 							{phrases.length}
 						</span>
@@ -333,7 +333,7 @@ export function WordBankPage() {
 								<SearchIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 								<input
 									type="text"
-									placeholder="Hľadať slovo alebo význam (napr. chlieb, bread)..."
+									placeholder="Search a word or its meaning (for example chlieb, bread)"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
 									className="w-full rounded-2xl border border-border/80 bg-accent/30 py-2.5 pl-10 pr-4 font-prose text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-background"
@@ -353,15 +353,15 @@ export function WordBankPage() {
 							<ChoiceMenu
 								value={posFilter}
 								onChange={setPosFilter}
-								ariaLabel="Filter podľa slovného druhu"
+								ariaLabel="Filter by part of speech"
 								className="w-56 shrink-0"
 								options={[
-									{ value: "all", label: "Všetky slovné druhy" },
-									{ value: "noun", label: "Podstatné mená (Nouns)" },
-									{ value: "verb", label: "Slovesá (Verbs)" },
-									{ value: "adj", label: "Prídavné mená (Adjectives)" },
-									{ value: "adv", label: "Príslovky (Adverbs)" },
-									{ value: "phrase", label: "Frázy (Phrases)" },
+									{ value: "all", label: "All parts of speech" },
+									{ value: "noun", label: "Nouns" },
+									{ value: "verb", label: "Verbs" },
+									{ value: "adj", label: "Adjectives" },
+									{ value: "adv", label: "Adverbs" },
+									{ value: "phrase", label: "Phrases" },
 								]}
 							/>
 						</div>
@@ -369,12 +369,12 @@ export function WordBankPage() {
 						{/* Status Filters Bar */}
 						<div className="flex flex-wrap items-center gap-1.5 font-ui text-xs font-semibold">
 							{[
-								{ id: "all", label: "Všetky" },
-								{ id: "favorite", label: "★ Obľúbené" },
-								{ id: "mastered", label: "Zvládnuté (≥80%)" },
+								{ id: "all", label: "All" },
+								{ id: "favorite", label: "Favorites" },
+								{ id: "mastered", label: "Known (≥80%)" },
 								{ id: "learning", label: "V procese" },
-								{ id: "due", label: "Na opakovanie" },
-								{ id: "new", label: "Nové v balíčku" },
+								{ id: "due", label: "Due for review" },
+								{ id: "new", label: "New in the deck" },
 							].map((tab) => (
 								<button
 									key={tab.id}
@@ -408,7 +408,7 @@ export function WordBankPage() {
 													<button
 														type="button"
 														onClick={() => void speak(item.lemma).catch(() => {})}
-														title="Vysloviť slovo"
+														title="Say the word"
 														className="grid size-8 shrink-0 place-items-center rounded-full bg-accent/80 text-foreground transition-transform hover:scale-105 active:scale-95"
 													>
 														<Volume2Icon className="size-4" />
@@ -451,7 +451,7 @@ export function WordBankPage() {
 																type="button"
 																onClick={() => void speak(item.example!.sk).catch(() => {})}
 																className="text-muted-foreground hover:text-foreground"
-																title="Prehrať vetu"
+																title="Play the sentence"
 															>
 																<Volume2Icon className="size-3.5" />
 															</button>
@@ -483,10 +483,10 @@ export function WordBankPage() {
 															)}
 														>
 															{item.retention >= 80
-																? "Zvládnuté"
+																? "Known"
 																: item.retention > 0
 																	? "V procese"
-																	: "Nové"}
+																	: "New"}
 														</span>
 														<span className="text-foreground">{item.retention}%</span>
 													</div>
@@ -514,7 +514,7 @@ export function WordBankPage() {
 													<button
 														type="button"
 														onClick={() => void handleToggleFavorite(item.slug)}
-														title={item.favorite ? "Odstrániť z obľúbených" : "Pridať k obľúbeným"}
+														title={item.favorite ? "Remove from favorites" : "Add to favorites"}
 														className={cn(
 															"flex h-8 items-center gap-1.5 rounded-xl px-2 transition-colors",
 															item.favorite
@@ -531,7 +531,7 @@ export function WordBankPage() {
 													{/* In review deck button */}
 													{item.inDeck ? (
 														<span
-															title="Slovo je v precvičovacom balíčku"
+															title="The word is in your Review deck"
 															className="flex h-8 items-center gap-1.5 px-2 text-teal-2"
 														>
 															<BookmarkCheckIcon className="size-4" />
@@ -541,7 +541,7 @@ export function WordBankPage() {
 														<button
 															type="button"
 															onClick={() => void handleEnqueueReview(item.slug)}
-															title="Pridať do opakovania (Review deck)"
+															title="Add to Review"
 															className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 														>
 															<BookmarkIcon className="size-4" />
@@ -558,7 +558,7 @@ export function WordBankPage() {
 							{words.length === 0 && !loadingWords && (
 								<EmptyState
 									testid="words-empty"
-									title="Žiadne slová nevyhovujú filtru"
+									title="No words match"
 									action={
 										<button
 											type="button"
@@ -569,11 +569,11 @@ export function WordBankPage() {
 												setPosFilter("all");
 											}}
 										>
-											Zrušiť filtre
+											Clear the filters
 										</button>
 									}
 								>
-									<p>Skúste iné hľadanie alebo zrušte filtre. Všetky vaše slová sú stále v slovníku.</p>
+									<p>Try another search or clear the filters. All your words are still here.</p>
 								</EmptyState>
 							)}
 
@@ -589,7 +589,7 @@ export function WordBankPage() {
 										disabled={loadingWords}
 										className="rounded-2xl bg-accent px-6 py-2.5 font-ui text-xs font-semibold text-foreground transition-colors hover:bg-accent/80 disabled:opacity-50"
 									>
-										{loadingWords ? "Načítavam..." : "Načítať ďalšie slová"}
+										{loadingWords ? "Loading…" : "Show more words"}
 									</button>
 								</div>
 							)}
@@ -606,7 +606,7 @@ export function WordBankPage() {
 								<SearchIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 								<input
 									type="text"
-									placeholder="Hľadať v uložených frázach..."
+									placeholder="Search your saved phrases"
 									value={phraseSearch}
 									onChange={(e) => setPhraseSearch(e.target.value)}
 									className="w-full rounded-2xl border border-border/80 bg-accent/30 py-2.5 pl-10 pr-4 font-prose text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-background"
@@ -619,18 +619,18 @@ export function WordBankPage() {
 								className="flex items-center justify-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 font-ui text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
 							>
 								<PlusIcon className="size-4" />
-								<span>Pridať vlastnú frázu</span>
+								<span>Add your own phrase</span>
 							</button>
 						</div>
 
 						{/* Source Filters */}
 						<div className="flex flex-wrap items-center gap-1.5 font-ui text-xs font-semibold">
 							{[
-								{ id: "all", label: "Všetky" },
-								{ id: "story", label: "Z príbehov (Stories)" },
-								{ id: "speak", label: "Z dialógov (Scenes)" },
-								{ id: "lesson", label: "Z lekcií (Lessons)" },
-								{ id: "manual", label: "Vlastné frázy" },
+								{ id: "all", label: "All" },
+								{ id: "story", label: "From stories" },
+								{ id: "speak", label: "From scenes" },
+								{ id: "lesson", label: "From lessons" },
+								{ id: "manual", label: "Your own phrases" },
 							].map((tab) => (
 								<button
 									key={tab.id}
@@ -660,7 +660,7 @@ export function WordBankPage() {
 											<button
 												type="button"
 												onClick={() => void speak(phrase.text).catch(() => {})}
-												title="Prehrať výslovnosť"
+												title="Play the pronunciation"
 												className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-accent/80 text-foreground transition-transform hover:scale-105 active:scale-95"
 											>
 												<Volume2Icon className="size-4" />
@@ -683,7 +683,7 @@ export function WordBankPage() {
 										<button
 											type="button"
 											onClick={() => void handleDeletePhrase(phrase.id)}
-											title="Odstrániť frázu"
+											title="Remove the phrase"
 											className="grid size-8 place-items-center rounded-xl text-muted-foreground opacity-60 transition-all hover:bg-miss/10 hover:text-miss group-hover:opacity-100"
 										>
 											<Trash2Icon className="size-4" />
@@ -693,8 +693,8 @@ export function WordBankPage() {
 							))}
 
 							{filteredPhrases.length === 0 && !loadingPhrases && (
-								<EmptyState testid="phrases-empty" title="Zatiaľ žiadne uložené frázy">
-									<p>Frázy si ukladáte tlačidlom Uložiť pri čítaní príbehov a v lekciách. Nepotrebuje kľúč AI.</p>
+								<EmptyState testid="phrases-empty" title="No saved phrases yet">
+									<p>You save phrases with Save while reading stories and in lessons. It needs no AI key.</p>
 								</EmptyState>
 							)}
 						</div>
@@ -707,7 +707,7 @@ export function WordBankPage() {
 						<div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl">
 							<div className="mb-4 flex items-center justify-between">
 								<h2 className="font-title text-xl font-semibold text-foreground">
-									Pridať novú frázu
+									Add a phrase
 								</h2>
 								<button
 									type="button"
@@ -721,13 +721,13 @@ export function WordBankPage() {
 							<form onSubmit={handleAddPhrase} className="space-y-4">
 								<div>
 									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										Slovenská fráza *
+										Slovak phrase *
 									</label>
 									<input
 										type="text"
 										required
 										autoFocus
-										placeholder="napr. Dnes je krásny slnečný deň."
+										placeholder="for example Dnes je pekne."
 										value={newPhraseText}
 										onChange={(e) => setNewPhraseText(e.target.value)}
 										className="mt-1 w-full rounded-xl border border-border bg-accent/40 px-3.5 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
@@ -736,7 +736,7 @@ export function WordBankPage() {
 
 								<div>
 									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										Anglický preklad
+										English translation
 									</label>
 									<input
 										type="text"
@@ -749,11 +749,11 @@ export function WordBankPage() {
 
 								<div>
 									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										Kontext / Poznámka
+										Context or note
 									</label>
 									<input
 										type="text"
-										placeholder="napr. Počasie / Dovolenka"
+										placeholder="for example Weather"
 										value={newPhraseContext}
 										onChange={(e) => setNewPhraseContext(e.target.value)}
 										className="mt-1 w-full rounded-xl border border-border bg-accent/40 px-3.5 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
@@ -766,13 +766,13 @@ export function WordBankPage() {
 										onClick={() => setShowAddModal(false)}
 										className="rounded-xl px-4 py-2 font-ui text-xs font-semibold text-muted-foreground hover:text-foreground"
 									>
-										Zrušiť
+										Cancel
 									</button>
 									<button
 										type="submit"
 										className="rounded-xl bg-primary px-5 py-2 font-ui text-xs font-semibold text-primary-foreground hover:bg-primary/90"
 									>
-										Uložiť frázu
+										Save phrase
 									</button>
 								</div>
 							</form>
