@@ -1,9 +1,9 @@
 /**
  * GET /api/review[?tz=<minutes>][&peek] — the deck's counts and the next card
  * (minting today's new cards as needed; ?peek never mints).
- * POST /api/review {cardId, given, ms?, activeMs?, rating?, hints?, picked?} — grade one answer and
+ * POST /api/review {cardId, given, ms?, activeMs?, rating?, hints?, picked?, tz?} — grade one answer and
  * schedule the card (FSRS). Returns the verdict, the rating used and the
- * updated card, plus the XP the answer earned.
+ * updated card, the XP the answer earned and `status`, the deck as GET returns it.
  */
 
 import { answerReview, recordReviewXp, reviewStatus } from "@/src/server";
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; activeMs?: unknown; rating?: unknown; hints?: unknown; picked?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; activeMs?: unknown; rating?: unknown; hints?: unknown; picked?: unknown; tz?: unknown } | null;
 	if (typeof body?.cardId !== "string" || typeof body.given !== "string") {
 		return Response.json({ message: "cardId and given are required strings" }, { status: 400 });
 	}
@@ -34,7 +34,8 @@ export async function POST(req: Request) {
 		// Reviews count toward the day's XP and the streak (Today screen).
 		const activeMs = typeof body.activeMs === "number" && Number.isFinite(body.activeMs) ? body.activeMs : undefined;
 		const xp = recordReviewXp(outcome.verdict, tzOf(req), new Date(), ms, activeMs);
-		return Response.json({ ...outcome, xp });
+		// The deck after this answer rides along, so the next card needs no second request.
+		return Response.json({ ...outcome, xp, status: reviewStatus(new Date(), tzOf(req) ?? (typeof body.tz === "number" ? body.tz : undefined), { mint: true }) });
 	} catch (err) {
 		return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 	}

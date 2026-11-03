@@ -46,6 +46,17 @@ function writeJsonAtomic(file: string, value: unknown): void {
 	fs.renameSync(tmp, file);
 }
 
+function statOf(file: string): { size: number; mtimeMs: number } | null {
+	try {
+		const st = fs.statSync(file);
+		return { size: st.size, mtimeMs: st.mtimeMs };
+	} catch {
+		return null;
+	}
+}
+
+let logCache: { file: string; size: number; mtimeMs: number; entries: ReviewLogEntry[] } | null = null;
+
 export const reviewStore = {
 	readCards(): Record<string, ReviewCard> {
 		return readJson<Record<string, ReviewCard>>(CARDS_FILE(), {});
@@ -55,12 +66,27 @@ export const reviewStore = {
 	},
 	appendLog(entry: ReviewLogEntry): void {
 		fs.mkdirSync(PATHS.review, { recursive: true });
-		fs.appendFileSync(LOG_FILE(), `${JSON.stringify(entry)}\n`, "utf-8");
+		const file = LOG_FILE();
+		const before = statOf(file);
+		fs.appendFileSync(file, `${JSON.stringify(entry)}\n`, "utf-8");
+		// Keep the parsed log current instead of re-reading a file that only grows.
+		if (logCache && logCache.file === file && before && logCache.size === before.size && logCache.mtimeMs === before.mtimeMs) {
+			const after = statOf(file);
+			if (after) logCache = { file, size: after.size, mtimeMs: after.mtimeMs, entries: [...logCache.entries, entry] };
+			else logCache = null;
+		} else logCache = null;
 	},
-	readLog(): ReviewLogEntry[] {
+	/** Every review, oldest first. The result is shared: do not change it. The parse (the log is the
+	 *  evidence and grows for the life of the profile) is kept until the file changes. */
+	readLog(): readonly ReviewLogEntry[] {
+		const file = LOG_FILE();
+		const st = statOf(file);
+		if (!st) return [];
+		if (logCache && logCache.file === file && logCache.size === st.size && logCache.mtimeMs === st.mtimeMs) return logCache.entries;
+		let entries: ReviewLogEntry[] = [];
 		try {
-			return fs
-				.readFileSync(LOG_FILE(), "utf-8")
+			entries = fs
+				.readFileSync(file, "utf-8")
 				.split("\n")
 				.filter(Boolean)
 				.flatMap((line) => {
@@ -73,6 +99,8 @@ export const reviewStore = {
 		} catch {
 			return [];
 		}
+		logCache = { file, size: st.size, mtimeMs: st.mtimeMs, entries };
+		return entries;
 	},
 	readMeta(): ReviewMeta {
 		const meta = readJson<Partial<ReviewMeta>>(META_FILE(), {});

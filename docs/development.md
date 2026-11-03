@@ -191,6 +191,12 @@ Anything that starts the app to look at it, screenshot it or drive it (a demo, a
 
 It never edits a tracked file and never deletes anything; the folder is printed and is yours to delete. Next locks the checkout's `.next` folder, so while your own `npm run dev` is running here the sandbox cannot start (it says so and prints the worktree recipe: `git worktree add ..\<name>-sandbox`, install, run it there). A different build folder is not the answer: Next then rewrites the tracked `tsconfig.json` and `next-env.d.ts` (checked 2026-10-29). `dev:fresh` is the older new-user simulator; it ends in `npm run dev`, whose `-p 3010` beats the `PORT` it exports, so it does not move off the real port.
 
+## Performance: measure the production build
+
+`node scripts/perf-check.mjs` (after `npm run build`) serves the build with `next start` on a free port and a seeded scratch profile (the demo week plus a year of reviews, `scripts/perf-seed.ts`), drives headless Edge through puppeteer-core and prints four tables: sidebar click to the new page, a full page load with its JS size and long tasks, the API calls each page makes on load, and the main interactions (pointer-down to the next painted frame, and to the result on screen). `--cpu 4` emulates a CPU four times slower (a laptop on battery, a phone over the tailnet), `--light` skips the year of reviews, `--json file` keeps the numbers, `--check` exits 1 when a budget in `BUDGETS` is broken. Dev mode is not representative (no minification, routes compile on demand); use it only for the shape of a problem.
+
+What the numbers taught (2026-11-02): the demo week hides the cost that matters. The server reads files synchronously on one thread, so a request that parses a growing file (the review log was re-parsed on every sidebar load and every Today load, about 100 ms at 21,000 lines) delays every other request queued behind it. Cache what only grows (keyed on the file's size and mtime, updated on append), and measure with the heavy profile.
+
 ## Testing
 
 Run the suite with `NODE_ENV=test` set. It is the fence that sends the data folder to a temp dir (`config.ts`, E6); without it the tests write their fixtures into your real `data/`. `npm test` sets it with `NODE_ENV=test tsx --test ...`, which Windows `cmd.exe` rejects ("'NODE_ENV' is not recognized"), so on Windows set it yourself first (`$env:NODE_ENV="test"` in PowerShell) and never run `tsx --test` or `node --test` bare.
