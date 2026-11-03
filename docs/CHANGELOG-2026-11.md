@@ -2,7 +2,7 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
-## 3 November: a translation the model miscounts no longer refuses the video (branch `fix/watch-translation-count`)
+## 3 November: a translation the model miscounts no longer refuses the video (branch `feat/watch-sentences`)
 
 - **Miscounted translations:** a video failed with "the model returned 38 translations for 40 lines" when the model dropped lines twice. Now a chunk asked twice and still miscounted is split in halves, each half asked with the lines before it as context. Only a single line the model still cannot place stays in the video: it keeps its Slovak, has an empty English line, and the preview says how many lines have no English. The record stores the count as `untranslated`.
 - **Unverified:** the owner's PC on the video that failed (the cloud container cannot reach YouTube); how often the model keeps miscounting after the split.
