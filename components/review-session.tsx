@@ -38,7 +38,7 @@ interface Prompt {
 interface Status {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number };
+	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
 	settings: { newPerDay: number; retention: number };
 	next: Prompt | null;
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
@@ -263,10 +263,12 @@ export function ReviewSession() {
 	const zeroKeys = useZeroKeys();
 	const strongKeyless = useStrongKeyless();
 	const keyless = zeroKeys || strongKeyless;
-	// The bar counts cards, not answers. A card that comes back (a miss goes into relearning) is the same card, so answering it again neither moves the bar nor grows its total; it moves when a card is seen for the first time today. Counting answers made "24 of 25" become "49 of 50" after one card was repeated. A new card on screen is already out of the new allowance and not yet answered, so it counts as still to do.
+	// The bar counts cards, not answers. A card that comes back (a miss goes into relearning) is the same card, so answering it again neither moves the bar nor grows its total; it moves when a card is seen for the first time today. Counting answers made "24 of 25" become "49 of 50" after one card was repeated. The total holds the whole day, so it does not grow while the day goes on: new cards that already exist (the one on screen included, and the ones lessons put in the deck), and cards that fall due later today, are in it from the start. Without them "26 of 26" turned into "45 of 45" by evening.
 	const done = counts?.cardsToday ?? 0;
-	const left = counts ? counts.dueUntouched + counts.newLeft + (prompt?.card.state === "new" ? 1 : 0) : 0;
-	const total = done + left;
+	const newLeft = counts ? counts.newLeft + counts.pendingNew : 0;
+	const left = counts ? counts.dueUntouched + newLeft : 0;
+	const later = counts?.dueLater ?? 0;
+	const total = done + left + later;
 	const isNew = prompt?.card.state === "new";
 	const position = counts ? counts.newToday + 1 : 1;
 	const newTotal = counts ? counts.newToday + counts.newLeft : 0;
@@ -309,7 +311,7 @@ export function ReviewSession() {
 								</div>
 								{counts && lang && (
 									<p className="mt-2 text-[12.5px] text-ink-3" data-testid="review-left">
-										{left === 0 ? (counts.due + counts.learning > 0 ? `Every card seen once today. ${counts.due + counts.learning} to repeat.` : "All done for today.") : `Still to do: ${counts.dueUntouched} due, ${counts.newLeft + (prompt?.card.state === "new" ? 1 : 0)} new${counts.due + counts.learning > counts.dueUntouched ? `, ${counts.due + counts.learning - counts.dueUntouched} to repeat` : ""}.`}
+										{left === 0 ? (counts.due + counts.learning > 0 ? `Every card seen once today. ${counts.due + counts.learning} to repeat.` : later > 0 ? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.` : "All done for today.") : `Still to do: ${counts.dueUntouched} due, ${newLeft} new${counts.due + counts.learning > counts.dueUntouched ? `, ${counts.due + counts.learning - counts.dueUntouched} to repeat` : ""}${later > 0 ? `, ${later} more due later today` : ""}.`}
 									</p>
 								)}
 							</section>

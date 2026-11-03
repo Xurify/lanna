@@ -63,3 +63,26 @@ test("cardsToday counts a card once however often it was answered, so the day's 
 	assert.equal(counts.reviewedToday, 4, "four answers");
 	assert.equal(counts.cardsToday, 2, "two cards");
 });
+
+test("the day's total holds still: unanswered new cards and cards due later today are counted from the morning", () => {
+	fs.writeFileSync(LOG(), "", "utf-8");
+	const card = (id: string, state: "new" | "review", due: string, extra: object = {}) => ({ id, slug: id, lemma: id, gloss: "", sentence: "x", translation: "", answer: "x", at: 0, state, due, reps: 0, lapses: 0, createdAt: "2026-11-01T00:00:00Z", ...extra });
+	reviewStore.writeCards({
+		queued: card("queued", "new", "2026-11-02T08:00:00Z"),
+		now: card("now", "review", "2026-11-02T07:00:00Z"),
+		afternoon: card("afternoon", "review", "2026-11-02T16:00:00Z"),
+		tomorrow: card("tomorrow", "review", "2026-11-03T09:00:00Z"),
+		parked: card("parked", "review", "2026-11-02T16:00:00Z", { suspended: true }),
+	} as never);
+	const { counts } = reviewStatus(new Date("2026-11-02T09:00:00Z"), 0, { mint: false });
+	assert.equal(counts.dueUntouched, 1, "one is due now");
+	assert.equal(counts.pendingNew, 1, "the card a lesson put in the deck");
+	assert.equal(counts.dueLater, 1, "the afternoon card, not tomorrow's and not the suspended one");
+	// Seen in the morning, a card is in the bar's done and no longer later work.
+	reviewStore.appendLog({ ...entry("2026-11-02T08:30:00Z"), cardId: "afternoon" });
+	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 0, { mint: false }).counts.dueLater, 0);
+	// Five hours behind UTC the local day ends at 05:00Z on 3 November, so a card due at 04:00Z that day is still today's there and tomorrow's at 09:00Z is not.
+	reviewStore.writeCards({ ...reviewStore.readCards(), lateNight: card("lateNight", "review", "2026-11-03T04:00:00Z") } as never);
+	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 300, { mint: false }).counts.dueLater, 1);
+	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 0, { mint: false }).counts.dueLater, 0);
+});
