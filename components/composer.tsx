@@ -2,7 +2,6 @@
 
 import { ArrowRightIcon, CornerDownLeftIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Hint } from "@/components/ui/hint";
 
 /**
  * The chat composer — content row ONLY (the persistent rounded shell lives in

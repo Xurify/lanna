@@ -1,6 +1,5 @@
-import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { invalidInputResult, questionResult, serverExecute } from "./tool-execute.ts";
+import { invalidInputResult, questionResult } from "./tool-execute.ts";
 import { askOptionProblems, explainInputProblems, parseOptionsIfString, quizInputProblems } from "../core/question-core.ts";
 import { askInputSchema, explainInputBase, explainInputObject, probeQuizInputSchema, quizInputObject } from "../core/question-schemas.ts";
 import { filterEnabledTools, type EnabledTools } from "../core/pending.ts";

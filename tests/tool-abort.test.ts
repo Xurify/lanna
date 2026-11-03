@@ -11,13 +11,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { Type } from "typebox";
-import {
-	questionResult,
-	serverExecute,
-	toolTimeoutMs,
-	toToolResult,
-	type ToolExecuteContext,
-} from "../src/agent/tool-execute.ts";
+import { serverExecute, toolTimeoutMs, toToolResult, type ToolExecuteContext } from "../src/agent/tool-execute.ts";
 import { askUserQuestionTool } from "../src/agent/tools.ts";
 
 const DEFAULT_TIMEOUT_MS = 30_000;

@@ -6,7 +6,7 @@ import { sessionCost } from "../src/server/pricing.ts";
 import { catalogLimits } from "../components/model-picker.tsx";
 import type { ModelCatalogEntry, ModelCatalogResponse } from "../src/core/contracts.ts";
 import { prettyModel } from "../components/usage-format.ts";
-import type { ChatSettings, TurnUsage } from "../src/core/contracts.ts";
+import type { TurnUsage } from "../src/core/contracts.ts";
 
 // Stats bar: folds turn usage, shows "—" for absent data, never a fake $0.
 

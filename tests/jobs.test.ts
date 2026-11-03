@@ -29,21 +29,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, afterEach, before, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, fauxText, fauxToolCall, type AssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
-import {
-	accumulateJobUsage,
-	buildAbortSteer,
-	buildSubagentSteer,
-	isSubagentFailure,
-	steerDelivered,
-	type DemoResult,
-	type JobUsage,
-	type PdfResult,
-	type ResearchResult,
-	type SubagentArtifactData,
-	type SteerMessage,
-	type VisualResult,
-	buildProbeHandoffSteer,
-} from "../src/core/contracts.ts";
+import { accumulateJobUsage, buildAbortSteer, buildSubagentSteer, isSubagentFailure, steerDelivered, type DemoResult, type JobUsage, type PdfResult, type ResearchResult, type SteerMessage, type VisualResult, buildProbeHandoffSteer } from "../src/core/contracts.ts";
 import { composeInstructions, createTeacherAgent } from "../src/agent/teacher-agent.ts";
 import { createTeacherTools } from "../src/agent/tools.ts";
 import { webTools } from "../src/agent/tools/web.ts";
@@ -64,8 +50,8 @@ import {
 	steerLiveChat,
 	unregisterLiveAgent,
 } from "../src/server/jobs.ts";
-import { isJobLive, registerJobAbort, unregisterJobAbort } from "../src/agent/subagents/aborts.ts";
-import { beginTurn, endTurn, isTurnRunning } from "../src/server/turn-liveness.ts";
+import { registerJobAbort, unregisterJobAbort } from "../src/agent/subagents/aborts.ts";
+import { beginTurn, endTurn } from "../src/server/turn-liveness.ts";
 import { persistTurn } from "../src/server/turn-service.ts";
 import { chatStore } from "../src/store/chats.ts";
 import { jobStore } from "../src/store/jobs.ts";
@@ -77,7 +63,7 @@ import { PATHS } from "../config.ts";
 import { projectView as projectNative } from "../src/core/view.ts";
 import { subscribe } from "../src/core/events.ts";
 import type { LhMessage } from "../src/core/native-messages.ts";
-import type { SteerInput, TurnInput } from "../src/core/input-events.ts";
+import type { SteerInput } from "../src/core/input-events.ts";
 
 const JOBS_DIR = path.join(PATHS.data, "jobs");
 
@@ -200,12 +186,6 @@ function abortableFactory(): FauxResponseStep {
 	return factory as unknown as FauxResponseStep;
 }
 
-async function drain(res: Response): Promise<string> {
-	if (res.status !== 200) {
-		assert.fail(`expected 200, got ${res.status}: ${await res.text()}`);
-	}
-	return res.text();
-}
 
 /** CONNECTION DIET B (owner, 2026-10-10): the POST acks and closes; drain
  *  the turn's wire through the reattach stream instead. */

@@ -26,22 +26,7 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { ModelRole } from "../../config.ts";
 import type { ChatSettings } from "./contracts/chat.ts";
 import type { SearchEngineId } from "./search.ts";
-import {
-	BACKGROUND_MODEL_ROLES,
-	FACTORY_SETTINGS,
-	MODEL_SLOTS,
-	ROLE_SLOT,
-	type AgentSettings,
-	type BackgroundModelRole,
-	type FactorySettings,
-	type GeneralSettings,
-	type CompactionSettings,
-	type GraphSettings,
-	type ModelSlot,
-	type ModelSlotName,
-	type RoleModelOverride,
-	type UserSettings,
-} from "./settings.ts";
+import { BACKGROUND_MODEL_ROLES, FACTORY_SETTINGS, ROLE_SLOT, type BackgroundModelRole, type FactorySettings, type GeneralSettings, type CompactionSettings, type GraphSettings, type ModelSlot, type ModelSlotName, type RoleModelOverride, type UserSettings } from "./settings.ts";
 
 /** A configured model slot: the tier's concrete model, with its optional
  *  thinking level. UNSET level is legal — the engine build resolves it

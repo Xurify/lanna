@@ -21,14 +21,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, BookmarkIcon, CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, LanguagesIcon, LibraryIcon, LoaderCircleIcon, PauseIcon, PlayIcon, RotateCcwIcon, SearchIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { NavRail } from "@/components/nav-rail";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { SettingsLink } from "@/components/settings/settings-link";
 import { useActiveTime } from "@/components/use-active-time";
-import { setSpeed, speak, SPEEDS, stopSpeaking, useSpeed } from "@/components/speech";
+import { speak, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
@@ -360,21 +359,6 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 	);
 }
 
-function SpeedPill() {
-	const speed = useSpeed();
-	const next = SPEEDS[(SPEEDS.indexOf(speed as (typeof SPEEDS)[number]) + 1) % SPEEDS.length] ?? 1;
-	return (
-		<button
-			type="button"
-			onClick={() => setSpeed(next)}
-			title="Playback speed"
-			aria-label={`Playback speed ${speed}×, click for ${next}×`}
-			className="rounded-lg px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3 font-ui text-xs font-[600] tabular-nums text-muted-foreground hover:bg-accent hover:text-foreground"
-		>
-			{speed}×
-		</button>
-	);
-}
 
 // ─── The text ───────────────────────────────────────────────────────────────
 

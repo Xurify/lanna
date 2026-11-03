@@ -3,21 +3,7 @@
 import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import {
-	BookOpenIcon,
-	BookmarkCheckIcon,
-	BookmarkIcon,
-	CheckCheckIcon,
-	CheckIcon,
-	FootprintsIcon,
-	PlusIcon,
-	RepeatIcon,
-	SearchIcon,
-	StarIcon,
-	Trash2Icon,
-	Volume2Icon,
-	XIcon,
-} from "lucide-react";
+import { BookOpenIcon, BookmarkCheckIcon, BookmarkIcon, CheckCheckIcon, FootprintsIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";

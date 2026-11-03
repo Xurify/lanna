@@ -16,7 +16,7 @@
 
 import pairsJson from "../../curriculum/slovak/pairs.json";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
-import { LANGUAGE_IDS, LANGUAGES, type LanguageId } from "./language.ts";
+import { LANGUAGE_IDS, type LanguageId } from "./language.ts";
 
 export interface PairDef {
 	id: string;

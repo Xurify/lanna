@@ -35,7 +35,6 @@ import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-stat
 import { cn } from "@/lib/utils";
 import { NavRail } from "@/components/nav-rail";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { SettingsLink } from "@/components/settings/settings-link";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";

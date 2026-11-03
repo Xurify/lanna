@@ -55,23 +55,7 @@ import { select } from "d3-selection";
 import { zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from "d3-zoom";
 import type { Simulation, SimulationLinkDatum } from "d3-force";
 import { clusterHue, type Pt } from "./cluster-geometry.ts";
-import {
-	CHARGE_STRENGTH,
-	CLUSTER_PULL_STRENGTH,
-	createGraphSimulation,
-	DEFAULT_PHYSICS_TUNING,
-	DEFAULT_REGION_TUNING,
-	sanitizePhysicsTuning,
-	sanitizeRegionTuning,
-	type PhysicsTuning,
-	type RegionTuning,
-	INCREMENTAL_GRAVITY,
-	LINK_DISTANCE,
-	type DepthAnchorMode,
-	type GraphRenderSettings,
-	type LayoutNode,
-	type Position,
-} from "@/src/core";
+import { createGraphSimulation, DEFAULT_PHYSICS_TUNING, DEFAULT_REGION_TUNING, sanitizePhysicsTuning, sanitizeRegionTuning, type PhysicsTuning, type RegionTuning, type GraphRenderSettings, type LayoutNode, type Position } from "@/src/core";
 
 export type { GraphRenderSettings };
 

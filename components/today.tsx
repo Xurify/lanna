@@ -21,22 +21,15 @@ import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
 import { EntryRow } from "@/components/log/day-log-view";
 import type { DayLog } from "@/src/core";
-import { DayRail, greeting, todayDate, taskIcon, taskLabel, taskLocked, words, TASK_LABEL, type Summary } from "@/components/quiet/day-rail";
+import { DayRail, greeting, todayDate, taskIcon, taskLabel, words, type Summary } from "@/components/quiet/day-rail";
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
-import { SettingsLink } from "@/components/settings/settings-link";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { curriculumUnit, speakScene, STRAND_TARGET, STRANDS, strandAdvice, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
-import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, Strand, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, UnitState, WeakSpotSummary } from "@/src/core";
+import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
+import type { PlanTask, UnitState } from "@/src/core";
 
-const STRAND_DOOR: Record<Strand, { href: string; label: string }> = {
-	input: { href: "/listen", label: "Listen" },
-	output: { href: "/speak", label: "Speak" },
-	form: { href: "/review", label: "Review" },
-	fluency: { href: "/fluency?mode=fast", label: "Say it faster" },
-};
 
 /** "Verb forms" from "Grammar: Verb forms": the unit's name without its kind. */
 function bare(title: string): string {

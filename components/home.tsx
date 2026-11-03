@@ -211,8 +211,6 @@ export function Home({
 			    OVER the graph (no gradient: the graph runs clean under it to the
 			    bottom edge). Matches chat.tsx's DOCK geometry (max-w-[46rem]
 			    px-4) so nothing shifts when a session starts (owner). */}
-			{/* On phones the Skill map page shows the bottom nav (PhoneNav, h-14),
-			    so the dock lifts clear of it below md. */}
 			<div className="pointer-events-none absolute inset-x-0 bottom-16 pb-5 md:bottom-0">
 				<div className="pointer-events-auto mx-auto w-full max-w-[46rem] px-4">
 					{/* The pick bar (owner vision, 2026-10-04): the chain

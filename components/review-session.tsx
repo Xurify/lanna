@@ -12,12 +12,12 @@ import { EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
-import { DayRail, greeting, todayDate, useDaySummary } from "@/components/quiet/day-rail";
+import { DayRail, useDaySummary } from "@/components/quiet/day-rail";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useRouter } from "next/navigation";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveTime } from "@/components/use-active-time";
-import { PlayButton, prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
@@ -67,11 +67,6 @@ function writePref(key: string, value: string) {
 	}
 }
 
-const VERDICT_STYLE: Record<AnswerVerdict, { label: string; className: string; badge: string; btn: string }> = {
-	exact: { label: "Correct", className: "text-go", badge: "bg-go text-go-ink", btn: "bg-go text-go-ink" },
-	accents: { label: "Almost! Check the accents", className: "text-warn", badge: "bg-warn text-background", btn: "bg-warn text-background" },
-	wrong: { label: "Not quite", className: "text-miss", badge: "bg-miss text-background", btn: "bg-miss text-background" },
-};
 
 /**
  * Splits the sentence around the blank. Punctuation that touches the blank
