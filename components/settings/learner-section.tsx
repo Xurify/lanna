@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
+import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { CEFR_ORDER, DEFAULT_DAYS_PER_WEEK, DEFAULT_XP_PER_HOUR, explanationLanguages, knownLanguages, MAX_EXPLAIN, MAX_MINUTES, MINUTE_CHOICES, parallelsLine, parallelsOn, xpForPlan, type Cefr, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
 import { SettingsGroup, Toggle } from "./controls.tsx";
@@ -74,6 +74,8 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	const router = useRouter();
 	const [state, setState] = useState<Langs | null>(last?.state ?? null);
 	const [goals, setGoals] = useState<Goals | null>(last?.goals ?? null);
+	// What the goal controls show while edited: the saved goals stay as they were until Save.
+	const [draft, setDraft] = useState<Goals | null>(null);
 	const [profile, setProfile] = useState<ProfileInfo | null>(last?.profile ?? null);
 	const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error" | "failed">("idle");
 	// A click made before the refresh lands must not be overwritten by the older answer.
@@ -137,15 +139,16 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 		}
 	};
 
-	/** One goal changes. The day's XP goal is not saved: it follows the minutes. */
-	const saveGoals = async (next: Goals) => {
-		edited.current = true;
-		if (last) last = { ...last, goals: next };
-		setGoals(next);
+	/** The goals are saved with a button, not on each click: a stray click on a number should not change the plan. The day's XP goal is not saved at all: it follows the minutes. */
+	const saveGoals = async () => {
+		if (!draft) return;
 		setStatus("saving");
 		try {
-			const res = await fetch("/api/progress", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: { level: next.level, minutesPerDay: next.minutesPerDay, daysPerWeek: next.daysPerWeek } }) });
+			const res = await fetch("/api/progress", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: { level: draft.level, minutesPerDay: draft.minutesPerDay, daysPerWeek: draft.daysPerWeek } }) });
 			if (!res.ok) throw new Error(String(res.status));
+			if (last) last = { ...last, goals: draft };
+			setGoals(draft);
+			setDraft(null);
 			setStatus("saved");
 		} catch {
 			setStatus("error");
@@ -154,7 +157,13 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 
 	if (status === "failed") return <p className="text-sm text-muted-foreground">The profile could not be loaded — refresh to retry.</p>;
 	if (!state || !goals) return <Placeholder />;
-	const dayXp = xpForPlan(goals.minutesPerDay, goals.xpPerHour);
+	const shown = draft ?? goals;
+	const dirty = draft !== null && (draft.level !== goals.level || draft.minutesPerDay !== goals.minutesPerDay || draft.daysPerWeek !== goals.daysPerWeek);
+	const edit = (next: Goals) => {
+		setDraft(next);
+		setStatus("idle");
+	};
+	const dayXp = xpForPlan(shown.minutesPerDay, shown.xpPerHour);
 
 	return (
 		<div className="lh-rise flex flex-col gap-2">
@@ -207,19 +216,30 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 				<div className="flex flex-col gap-4 rounded-lg bg-well px-4 py-3.5">
 					<div className="flex flex-col gap-1.5" data-testid="goal-level">
 						<span className="font-ui text-sm font-medium text-foreground">Target level</span>
-						<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l }))} value={goals.level} onPick={(level) => void saveGoals({ ...goals, level })} label="Target level" testid="goal-level-chips" />
+						<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l }))} value={shown.level} onPick={(level) => edit({ ...shown, level })} label="Target level" testid="goal-level-chips" />
 					</div>
 					<div className="flex flex-col gap-1.5" data-testid="goal-minutes">
 						<span className="font-ui text-sm font-medium text-foreground">Minutes a day</span>
-						<NumberPicker value={goals.minutesPerDay} onChange={(minutesPerDay) => void saveGoals({ ...goals, minutesPerDay })} quick={MINUTE_CHOICES} min={5} max={MAX_MINUTES} step={5} unit="min" label="Minutes a day" testid="goal-minutes-picker" />
+						<NumberPicker value={shown.minutesPerDay} onChange={(minutesPerDay) => edit({ ...shown, minutesPerDay })} quick={MINUTE_CHOICES} min={5} max={MAX_MINUTES} step={5} unit="min" label="Minutes a day" testid="goal-minutes-picker" />
 					</div>
 					<div className="flex flex-col gap-1.5" data-testid="goal-days">
 						<span className="font-ui text-sm font-medium text-foreground">Days a week</span>
-						<Chips items={[1, 2, 3, 4, 5, 6, 7].map((d) => ({ id: d, title: String(d) }))} value={goals.daysPerWeek} onPick={(daysPerWeek) => void saveGoals({ ...goals, daysPerWeek })} label="Days a week" testid="goal-days-chips" />
+						<Chips items={[1, 2, 3, 4, 5, 6, 7].map((d) => ({ id: d, title: String(d) }))} value={shown.daysPerWeek} onPick={(daysPerWeek) => edit({ ...shown, daysPerWeek })} label="Days a week" testid="goal-days-chips" />
 					</div>
 					<p className="text-xs leading-relaxed text-muted-foreground" data-testid="goal-xp">
-						A day counts as done at <b className="q-num font-semibold text-foreground">{dayXp} XP</b>: {goals.minutesPerDay} min at {goals.xpPerHour === null ? "a typical pace of" : "your pace of about"} {goals.xpPerHour ?? DEFAULT_XP_PER_HOUR} XP an hour{goals.xpPerHour === null ? ", until an hour of your study has been measured" : ""}.
+						A day counts as done at <b className="q-num font-semibold text-foreground">{dayXp} XP</b>: {shown.minutesPerDay} min at {shown.xpPerHour === null ? "a typical pace of" : "your pace of about"} {shown.xpPerHour ?? DEFAULT_XP_PER_HOUR} XP an hour{shown.xpPerHour === null ? ", until an hour of your study has been measured" : ""}.
 					</p>
+					<div className="flex items-center gap-2" data-testid="goal-actions">
+						<button type="button" onClick={() => void saveGoals()} disabled={!dirty || status === "saving"} className={cn(PRIMARY, SMALL)} data-testid="goal-save">
+							Save goals
+						</button>
+						<button type="button" onClick={() => setDraft(null)} disabled={!dirty} className={cn(SECONDARY, SMALL)} data-testid="goal-discard">
+							Discard
+						</button>
+						<span className="text-xs text-muted-foreground" aria-live="polite">
+							{dirty ? "Not saved yet" : ""}
+						</span>
+					</div>
 				</div>
 			</SettingsGroup>
 			<SettingsGroup label="Goal and level" testid="learner-goal">
