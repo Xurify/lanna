@@ -146,5 +146,27 @@
 			"bridge": "Estonian milline covers both: Aký je? asks what it is like, Ktorý? picks one of a set (kumb?).",
 			"chapter": "opinions"
 		}
+	],
+	"excluded": [
+		{
+			"slug": "pisat",
+			"sk": "Zvykol som si písať denník.",
+			"why": "Means \"I got used to\", not \"I used to\" (verifier)."
+		},
+		{
+			"slug": "napisat",
+			"sk": "Neviem ako na tejto klávesnici napísať obrátený otáznik.",
+			"why": "Needs a comma: \"Neviem, ako…\" (verifier)."
+		},
+		{
+			"slug": "urobit",
+			"sk": "Tomáš nemá poňatia, čo urobiť so všetkými nepotrebnými vecami v jeho garáži.",
+			"why": "Should be \"vo svojej garáži\" (verifier)."
+		},
+		{
+			"slug": "kupit",
+			"sk": "Tomáš by zmeškal vlak, ak by sa zastavil kúpiť si čokoládu.",
+			"why": "English and Slovak tenses do not match (verifier)."
+		}
 	]
 }

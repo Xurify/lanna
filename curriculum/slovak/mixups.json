@@ -8,11 +8,26 @@
 			"rule": "ni- words mean no- and the verb takes ne- as well: Nikto neprišiel (nobody came). nie- words mean some- and the verb stays plain: Niekto prišiel (somebody came).",
 			"bridge": "Estonian works the same way: keegi with ei is nobody (Keegi ei helistanud ≈ Nikto nevolal), keegi alone is somebody (Keegi helistas ≈ Niekto volal).",
 			"pairs": [
-				["nikto", "niekto"],
-				["nic", "nieco"],
-				["nikde", "niekde"],
-				["nikdy", "niekedy"],
-				["nikam", "niekam"]
+				[
+					"nikto",
+					"niekto"
+				],
+				[
+					"nic",
+					"nieco"
+				],
+				[
+					"nikde",
+					"niekde"
+				],
+				[
+					"nikdy",
+					"niekedy"
+				],
+				[
+					"nikam",
+					"niekam"
+				]
 			]
 		},
 		{
@@ -21,10 +36,22 @@
 			"rule": "After a verb of motion the word says where to: Kam ideš? Idem domov, idem von. With byť and other verbs of staying it says where: Kde si? Som doma, som vonku.",
 			"bridge": "Estonian splits them the same way: kuhu / kus, koju / kodus, välja / väljas, siia / siin.",
 			"pairs": [
-				["kam", "kde"],
-				["domov-adv", "doma"],
-				["von", "vonku"],
-				["sem", "tu"]
+				[
+					"kam",
+					"kde"
+				],
+				[
+					"domov-adv",
+					"doma"
+				],
+				[
+					"von",
+					"vonku"
+				],
+				[
+					"sem",
+					"tu"
+				]
 			]
 		},
 		{
@@ -32,7 +59,484 @@
 			"title": "už vs ešte",
 			"rule": "už is already, and with nie it is no longer (už nie). ešte is still, and with nie it is not yet (ešte nie).",
 			"bridge": "Estonian: juba is už, veel is ešte (veel mitte ≈ ešte nie).",
-			"pairs": [["uz", "este"]]
+			"pairs": [
+				[
+					"uz",
+					"este"
+				]
+			]
+		},
+		{
+			"id": "aspect",
+			"title": "Aspect: one act, or the process",
+			"rule": "The imperfective (robiť, písať, čítať, kupovať) is the process, a habit or the act itself; the perfective (urobiť, napísať, prečítať, kúpiť) is one act seen as finished, with a result. The English tense does not decide it.",
+			"bridge": "Estonian shows it with the object: lugesin raamatut (partial, still going) ≈ čítal som knihu; lugesin raamatu läbi (total, finished) ≈ prečítal som knihu.",
+			"cue": "What decided the form: a result, or a process?",
+			"pairs": [
+				[
+					"vstavat",
+					"vstat"
+				],
+				[
+					"pripravovat",
+					"pripravit"
+				],
+				[
+					"pomahat",
+					"pomoct"
+				],
+				[
+					"brat",
+					"vziat"
+				],
+				[
+					"kupovat",
+					"kupit"
+				],
+				[
+					"predavat",
+					"predat"
+				],
+				[
+					"pisat",
+					"napisat"
+				],
+				[
+					"citat",
+					"precitat"
+				],
+				[
+					"robit",
+					"urobit"
+				],
+				[
+					"davat",
+					"dat"
+				],
+				[
+					"vidiet",
+					"uvidiet"
+				],
+				[
+					"hovorit",
+					"povedat"
+				]
+			],
+			"probeForm": "parallel",
+			"licence": {
+				"first": [
+					"budem + inf",
+					"začať/prestať + inf",
+					"duration + past",
+					"habit: activity or manner",
+					"habit: shop offer",
+					"habit: generic availability"
+				],
+				"second": [
+					"za + time span",
+					"nakoniec/konečne + past"
+				]
+			},
+			"probes": [
+				{
+					"slug": "pripravit",
+					"sk": "Svadbu pripravili narýchlo, za necelý mesiac.",
+					"form": "pripravili",
+					"at": 7,
+					"type": "za + time span",
+					"phrase": "za + time span",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 6",
+					"en": "They organised the wedding in a hurry, in less than a month."
+				},
+				{
+					"slug": "brat",
+					"sk": "Po porade s lekárom prestal brať lieky.",
+					"form": "brať",
+					"at": 28,
+					"type": "začať/prestať + inf",
+					"phrase": "prestať + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 13",
+					"en": "After consulting his doctor he stopped taking the medication."
+				},
+				{
+					"slug": "kupit",
+					"sk": "Dlho som odolával, ale nakoniec som si kúpil nový telefón.",
+					"form": "kúpil",
+					"at": 39,
+					"type": "nakoniec/konečne + past",
+					"phrase": "nakoniec + past",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 21",
+					"en": "I held out for a long time, but in the end I bought a new phone."
+				},
+				{
+					"slug": "predavat",
+					"sk": "Lokálny obchod predáva čerstvé pečivo každé ráno.",
+					"form": "predáva",
+					"at": 15,
+					"type": "habit: shop offer",
+					"phrase": "shop offer",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 24",
+					"en": "The local shop sells fresh baked goods every morning."
+				},
+				{
+					"slug": "predavat",
+					"sk": "Toto ovocie sa bežne predáva v každom obchode.",
+					"form": "predáva",
+					"at": 21,
+					"type": "habit: generic availability",
+					"phrase": "generic availability",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 25",
+					"en": "This fruit is commonly sold in every shop."
+				},
+				{
+					"slug": "predavat",
+					"sk": "Stieracie žreby predávajú v každej trafike.",
+					"form": "predávajú",
+					"at": 16,
+					"type": "habit: generic availability",
+					"phrase": "generic availability",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 26",
+					"en": "Scratch cards are sold at every newsagent's."
+				},
+				{
+					"slug": "pisat",
+					"sk": "Tom bude písať list.",
+					"form": "písať",
+					"at": 9,
+					"type": "budem + inf",
+					"phrase": "budem + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 27",
+					"en": "Tom will be writing a letter."
+				},
+				{
+					"slug": "pisat",
+					"sk": "Učiteľka vymazala tabuľu a začala písať.",
+					"form": "písať",
+					"at": 34,
+					"type": "začať/prestať + inf",
+					"phrase": "začať + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 31",
+					"en": "The teacher wiped the board and started writing."
+				},
+				{
+					"slug": "citat",
+					"sk": "Román o vojne čítala celú noc.",
+					"form": "čítala",
+					"at": 14,
+					"type": "duration + past",
+					"phrase": "celú noc + past",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 33",
+					"en": "She read the novel about the war all night."
+				},
+				{
+					"slug": "citat",
+					"sk": "Zodpovední rodičia čítajú deťom každý večer.",
+					"form": "čítajú",
+					"at": 19,
+					"type": "habit: activity or manner",
+					"phrase": "habit, no object",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 34",
+					"en": "Responsible parents read to children every evening."
+				},
+				{
+					"slug": "citat",
+					"sk": "Náhodne otvoril knihu a začal čítať.",
+					"form": "čítať",
+					"at": 30,
+					"type": "začať/prestať + inf",
+					"phrase": "začať + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 37",
+					"en": "He opened the book at random and started reading."
+				},
+				{
+					"slug": "robit",
+					"sk": "Ach, zabudla som kúpiť kapustu. Čo budeme robiť?",
+					"form": "robiť",
+					"at": 42,
+					"type": "budem + inf",
+					"phrase": "budem + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 42",
+					"en": "What are we going to do?"
+				},
+				{
+					"slug": "vidiet",
+					"sk": "Sadni si dopredu, budeš lepšie vidieť.",
+					"form": "vidieť",
+					"at": 31,
+					"type": "budem + inf",
+					"phrase": "budem + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 52",
+					"en": "Sit at the front, you'll see better."
+				},
+				{
+					"slug": "hovorit",
+					"sk": "Hovorím po francúzsky každý deň v práci.",
+					"form": "Hovorím",
+					"at": 0,
+					"type": "habit: activity or manner",
+					"phrase": "speaking a language",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 53",
+					"en": "I speak French every day at work."
+				},
+				{
+					"slug": "hovorit",
+					"sk": "Starý otec vždy hovoril múdro a pokojne.",
+					"form": "hovoril",
+					"at": 16,
+					"type": "habit: activity or manner",
+					"phrase": "vždy + manner",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 56",
+					"en": "Grandfather always spoke wisely and calmly."
+				},
+				{
+					"slug": "hovorit",
+					"sk": "Budete hovoriť plynule po anglicky!",
+					"form": "hovoriť",
+					"at": 7,
+					"type": "budem + inf",
+					"phrase": "budem + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 57",
+					"en": "You're going to speak English fluently!"
+				},
+				{
+					"slug": "hovorit",
+					"sk": "O susedoch vždy hovorila pohŕdavo.",
+					"form": "hovorila",
+					"at": 16,
+					"type": "habit: activity or manner",
+					"phrase": "vždy + manner",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 58",
+					"en": "She always spoke contemptuously about the neighbours."
+				},
+				{
+					"slug": "hovorit",
+					"sk": "Nervozita z neho opadla, keď začal hovoriť.",
+					"form": "hovoriť",
+					"at": 35,
+					"type": "začať/prestať + inf",
+					"phrase": "začať + inf",
+					"src": "verified-pool",
+					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 60",
+					"en": "His nervousness wore off once he started speaking."
+				}
+			],
+			"explain": {
+				"contrast": {
+					"first": {
+						"sk": "Čítam knihu.",
+						"en": "I'm reading a book.",
+						"form": "Čítam"
+					},
+					"second": {
+						"sk": "Prečítam knihu.",
+						"en": "I'll read the book through.",
+						"form": "Prečítam"
+					},
+					"note": "Same book. Čítam is the reading going on; prečítam is the book read through to its end."
+				},
+				"timeline": {
+					"imperfective": "čítať (imperfective): a line with no end point. The reading goes on, repeats, or is the act itself.",
+					"perfective": "prečítať (perfective): a line that ends at a result. The book is read through."
+				},
+				"trap": "The English \"read\" does not say which twin. Ask whether the act is finished with a result (perfective) or going on, repeated or in general (imperfective).",
+				"wiki": "https://slovak.wiki/grammar/aspect",
+				"points": [
+					"The English tense does not decide the aspect: 'I read' can be čítam (going on) or prečítam (finished).",
+					"A perfective present means the future, not a habit: prečítam = I will read it through.",
+					"The imperfective future is budem + infinitive: budem čítať = I will be reading."
+				],
+				"checked": "pending verifier"
+			}
+		},
+		{
+			"id": "this-vs-that",
+			"title": "tento (this) vs ten (that)",
+			"rule": "tento is 'this', near the speaker; ten is 'that', or the plain 'the'. The English decides which one a sentence means.",
+			"bridge": "Estonian uses see for both: tento presses 'this one here' (see siin), ten is the plain one (see seal).",
+			"cue": "Is the thing near you, here (this), or not (that)?",
+			"pairs": [
+				[
+					"tento",
+					"ten"
+				]
+			],
+			"probeForm": "lemma",
+			"licence": {
+				"first": [
+					"gloss"
+				],
+				"second": [
+					"gloss"
+				]
+			},
+			"probes": [],
+			"explain": {
+				"contrast": {
+					"first": {
+						"sk": "Tento dom je starý.",
+						"en": "This house is old.",
+						"form": "Tento"
+					},
+					"second": {
+						"sk": "Ten muž je učiteľ.",
+						"en": "That man is a teacher.",
+						"form": "Ten"
+					},
+					"note": "The English decides it: this is tento; that (and plain 'the') is ten."
+				},
+				"tables": [
+					{
+						"title": "ten (that, the)",
+						"cols": [
+							"m. sg.",
+							"f. sg.",
+							"n. sg.",
+							"pl."
+						],
+						"rows": [
+							{
+								"case": "N",
+								"cells": [
+									"ten",
+									"tá",
+									"to",
+									"tí (m. anim.) / tie"
+								]
+							},
+							{
+								"case": "G",
+								"cells": [
+									"toho",
+									"tej",
+									"toho",
+									"tých"
+								]
+							},
+							{
+								"case": "D",
+								"cells": [
+									"tomu",
+									"tej",
+									"tomu",
+									"tým"
+								]
+							},
+							{
+								"case": "A",
+								"cells": [
+									"toho (anim.) / ten",
+									"tú",
+									"to",
+									"tých (m. anim.) / tie"
+								]
+							},
+							{
+								"case": "L",
+								"cells": [
+									"tom",
+									"tej",
+									"tom",
+									"tých"
+								]
+							},
+							{
+								"case": "I",
+								"cells": [
+									"tým",
+									"tou",
+									"tým",
+									"tými"
+								]
+							}
+						]
+					},
+					{
+						"title": "tento (this): a form is shown when the reference names it or a verified sentence has it; the rest is not yet",
+						"cols": [
+							"m. sg.",
+							"f. sg.",
+							"n. sg.",
+							"pl."
+						],
+						"rows": [
+							{
+								"case": "N",
+								"cells": [
+									"tento",
+									"táto",
+									"toto",
+									"títo / tieto"
+								]
+							},
+							{
+								"case": "G",
+								"cells": [
+									"tohto",
+									"tejto",
+									"tohto",
+									"týchto"
+								]
+							},
+							{
+								"case": "D",
+								"cells": [
+									"tomuto",
+									"tejto",
+									"tomuto",
+									"not yet"
+								]
+							},
+							{
+								"case": "A",
+								"cells": [
+									"tohto (anim.) / tento",
+									"túto",
+									"toto",
+									"týchto (anim.) / tieto"
+								]
+							},
+							{
+								"case": "L",
+								"cells": [
+									"tomto",
+									"tejto",
+									"tomto",
+									"týchto"
+								]
+							},
+							{
+								"case": "I",
+								"cells": [
+									"týmto",
+									"touto",
+									"týmto",
+									"týmito"
+								]
+							}
+						]
+					}
+				],
+				"trap": "Slovak ten also means plain 'the', which English does not need. Check the English gloss before choosing: this is tento, that is ten.",
+				"wiki": "https://slovak.wiki/demonstratives",
+				"checked": "pending verifier"
+			}
 		}
 	]
 }
