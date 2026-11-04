@@ -90,7 +90,7 @@ describe("the grid task (N1, N7, N8): the forms are hidden until answered, and t
 		const task = firstGrid();
 		const hidden = renderToStaticMarkup(<TaskGrid task={task} revealed={false} />);
 		const shown = renderToStaticMarkup(<TaskGrid task={task} revealed={true} />);
-		assert.ok(!hidden.includes("no such form"));
-		assert.match(shown, /no such form: the perfective future is the present form/);
+		assert.ok(!hidden.includes("perfective future: no such form"));
+		assert.match(shown, /\p{L}+: present form = future meaning · perfective future: no such form/u, "each note starts with the form it describes");
 	});
 });

@@ -1218,7 +1218,7 @@ function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: 
 				</>
 			) : (
 				<>
-					<p className="font-ui text-[14px] text-ink-3">Which word decided the form?</p>
+					<p className="font-ui text-[14px] text-ink-3">{task.question}</p>
 					<p className="mt-3 font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk">
 						{item.sentence}
 					</p>

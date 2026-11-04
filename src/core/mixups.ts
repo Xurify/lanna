@@ -86,6 +86,11 @@ export interface MixupProbe {
 	/** The cue word or phrase that decides the form (a span of `sk`): the
 	 *  form-reading task asks which word it is. */
 	span?: string;
+	/** The row's keep list: words of `sk` that the cue-word drop does not
+	 *  remove from the cue windows (for the other drops, see cueWindowReport). */
+	cueKeep?: string[];
+	/** Who ruled on the keep list, and why (a note for the data's reader). */
+	cueKeepBy?: string;
 }
 
 export const MIXUP_FAMILIES: MixupFamily[] = (mixupsJson as unknown as { families: MixupFamily[] }).families;

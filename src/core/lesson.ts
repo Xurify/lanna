@@ -347,6 +347,8 @@ export type LessonTask =
 			span: string;
 			/** The cue type, as the row names it ("prestať + inf"). */
 			phrase: string;
+			/** The question, naming the row's verb and its twin ("Which word made it robiť and not urobiť?"). */
+			question: string;
 	  };
 
 export interface LessonItem {

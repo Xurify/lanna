@@ -14,7 +14,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { aspectPairInfo, aspectTasks, cueWindowReport, cueWindows, gridCells, pairsLessonFor, STOPWORDS } from "../src/core/aspect-tasks.ts";
+import { aspectPairInfo, aspectTasks, cueQuestion, cueWindowReport, cueWindows, gridCells, pairsLessonFor, spanCueGroups, STOPWORDS } from "../src/core/aspect-tasks.ts";
 import { PAIRS_TASK_SLOTS, patternExamples, type LessonItem, type UnitId } from "../src/core/lesson.ts";
 import { chapterPairs, twinSentences, PAIRS } from "../src/core/pairs.ts";
 import {
@@ -75,8 +75,9 @@ test("the grid's forms are the paradigm's own: present and past from the lists, 
 
 test("the grid labels the perfective present as the future meaning, and the perfective future as no form", () => {
 	const cells = gridCells(E("pisat"), E("napisat"), accepted)!;
-	assert.equal(cells.find((c) => c.row === 1 && c.col === 1)!.note, "present form = future meaning");
-	assert.match(cells.find((c) => c.row === 1 && c.col === 2)!.note ?? "", /no such form/);
+	const present = cells.find((c) => c.row === 1 && c.col === 1)!;
+	assert.equal(present.note, `${present.form}: present form = future meaning`, "the note starts with the form it describes");
+	assert.equal(cells.find((c) => c.row === 1 && c.col === 2)!.note, "perfective future: no such form");
 });
 
 test("the grid is refused for a pair whose paradigm is not verified and not accepted", () => {
@@ -155,9 +156,94 @@ function reason2(sentence: string, span: string, form: string | undefined, text:
 	return cueWindowReport(sentence, span, form).dropped.find((d) => d.text === text)?.reason;
 }
 
+test("the second pass of cue words: time nouns after za, the units of a number, celý with any time noun, prestaň and končiť, podaril, podarí and stih- (N9)", () => {
+	// za with a time noun next (genitive plurals, chvíľu, polhodinu): a perfective cue
+	for (const [sentence, span] of [
+		["Vrátil sa za dní domov.", "domov"],
+		["Vrátil sa za týždňov domov.", "domov"],
+		["Vrátil sa za mesiacov domov.", "domov"],
+		["Vrátil sa za rokov domov.", "domov"],
+		["Vrátil sa za sekúnd domov.", "domov"],
+		["Vrátil sa za chvíľu domov.", "domov"],
+		["Vrátil sa za polhodinu domov.", "domov"],
+	] as const) {
+		assert.equal(reason2(sentence, span, undefined, "za"), "a perfective cue", sentence);
+	}
+	// A number before a unit (minúty, dní, dni, and hodinu with a digit): a duration cue
+	assert.equal(reason2("Čakal dve minúty na vlak.", "vlak", undefined, "dve"), "a duration cue");
+	assert.equal(reason2("Čakal dve minúty na vlak.", "vlak", undefined, "minúty"), "a duration cue");
+	assert.equal(reason2("Čakal päť dní na vlak.", "vlak", undefined, "päť"), "a duration cue");
+	assert.equal(reason2("Čakal päť dní na vlak.", "vlak", undefined, "dní"), "a duration cue");
+	assert.equal(reason2("Čakal 1 hodinu na vlak.", "vlak", undefined, "hodinu"), "a duration cue", "the unit after a digit");
+	// celý, celú, celé count with any time noun next, not only noc
+	assert.equal(reason2("Pracoval celý deň v kancelárii.", "kancelárii", undefined, "celý"), "a duration cue");
+	assert.equal(reason2("Pracoval celý deň v kancelárii.", "kancelárii", undefined, "deň"), "a duration cue", "the time noun too");
+	assert.equal(reason2("Čakal celé ráno na vlak.", "vlak", undefined, "celé"), "a duration cue");
+	assert.equal(reason2("Mal celý život pred sebou.", "sebou", undefined, "celý"), undefined, "celý with a noun that is no time noun is kept");
+	// prestaň (the ň) and končiť, končí, končil (the stem konč) are phase verbs
+	assert.equal(reason2("Prestaň kričať, prosím.", "prosím", undefined, "Prestaň"), "a phase verb");
+	assert.equal(reason2("Film končí o desiatej.", "desiatej", undefined, "končí"), "a phase verb");
+	assert.equal(reason2("Chcel som končiť prácu.", "prácu", undefined, "končiť"), "a phase verb");
+	// podaril-, podarí and stih- (stihne, stihnú, stihnúť) are perfective cues
+	assert.equal(reason2("Podaril sa mu to.", "to", undefined, "Podaril"), "a perfective cue");
+	assert.equal(reason2("Podarila sa mu to.", "to", undefined, "Podarila"), "a perfective cue");
+	assert.equal(reason2("Podarí sa mu to.", "to", undefined, "Podarí"), "a perfective cue");
+	assert.equal(reason2("Stihne domov včas.", "včas", undefined, "Stihne"), "a perfective cue");
+	assert.equal(reason2("Stihnú to včas.", "včas", undefined, "Stihnú"), "a perfective cue");
+	assert.equal(reason2("Stihnúť to včas nebude.", "včas", undefined, "Stihnúť"), "a perfective cue");
+});
+
+test("the cue prompt names the row's verb and its twin: a finite row the parallel form, an infinitive row the two lemmas (N10)", () => {
+	const bySk = (part: string) => {
+		const hits = aspect.probes!.filter((r) => r.sk.includes(part));
+		assert.equal(hits.length, 1, `${part}: one row`);
+		return hits[0]!;
+	};
+	// Row 42 has three verbs (zabudla, kúpiť, robiť); the prompt names only the answer's verb and its twin
+	const row42 = bySk("Čo budeme robiť");
+	assert.equal(cueQuestion(entries, aspect, row42), "Which word made it robiť and not urobiť?");
+	const q42 = cueQuestion(entries, aspect, row42)!;
+	assert.ok(!q42.includes("zabudla") && !q42.includes("kúpiť"), "the other verbs of row 42 are not named");
+	// Row 21 has two verbs (odolával, kúpil); the finite row names its parallel form
+	const row21 = bySk("nakoniec som si kúpil");
+	assert.equal(cueQuestion(entries, aspect, row21), "Which word made it kúpil and not kupoval?");
+	// The pool carries the same question on each cue rep
+	const pool = aspectTasks(entries, PAIRS, "pairs-plans", 5);
+	const idOf = (r: typeof row42) => `${r.slug}#task-cue-${aspect.probes!.indexOf(r)}`;
+	const questionOf = (id: string) => {
+		const task = pool.find((i) => i.id === id)?.task;
+		return task?.kind === "cue" ? task.question : undefined;
+	};
+	assert.equal(questionOf(idOf(row42)), "Which word made it robiť and not urobiť?");
+	assert.equal(questionOf(idOf(row21)), "Which word made it kúpil and not kupoval?");
+	// Every usable cue row has a prompt
+	for (const r of aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3)) {
+		assert.ok(cueQuestion(entries, aspect, r), `${r.sk} has a prompt`);
+	}
+});
+
+test("the keep list: Dlho is kept as a window of row 21 only through its keep list, and the other drops still apply (N11)", () => {
+	const s = "Dlho som odolával, ale nakoniec som si kúpil nový telefón.";
+	assert.equal(cueWindowReport(s, "nakoniec", "kúpil").dropped.find((d) => d.text === "Dlho")?.reason, "a duration cue");
+	assert.deepEqual(cueWindows(s, "nakoniec", "kúpil", ["Dlho"]), ["Dlho", "odolával", "telefón"], "with the keep list, three windows");
+	assert.ok(!cueWindows(s, "nakoniec", "kúpil", ["Dlho", "som"]).includes("som"), "a keep list skips the cue-word drop only: function words still drop");
+	const kept = aspect.probes!.filter((r) => r.cueKeep && r.cueKeep.length > 0);
+	assert.equal(kept.length, 1, "one row has a keep list");
+	assert.equal(kept[0]!.span, "nakoniec");
+	assert.deepEqual(kept[0]!.cueKeep, ["Dlho"]);
+	assert.match(kept[0]!.cueKeepBy ?? "", /governs odolával, not kúpil/);
+});
+
+test("one perfective cue rep: of the six cue spans, only nakoniec is a perfective cue (N11)", () => {
+	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3);
+	assert.equal(cueRows.length, 6);
+	const perfective = cueRows.filter((r) => spanCueGroups(r.sk, r.span!).includes("perfective"));
+	assert.deepEqual(perfective.map((r) => r.span), ["nakoniec"]);
+});
+
 test("the cue reps: one per approved row whose span has three windows, each a substring of its sentence", () => {
 	const tasks = aspectTasks(entries, PAIRS, "pairs-plans", 5).filter((i) => i.task?.kind === "cue");
-	const usable = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length >= 3);
+	const usable = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3);
 	assert.equal(tasks.length, usable.length, "every usable approved row gives one cue rep");
 	for (const item of tasks) {
 		assert.equal(item.kind, "choose");
@@ -184,13 +270,13 @@ test("the verifier's span corrections hold: po francúzsky and pohŕdavo are the
 	assert.equal(row("Starý otec vždy hovoril múdro a pokojne").span, undefined, "no single span: no cue rep");
 	assert.equal(row("Lokálny obchod predáva čerstvé pečivo každé ráno").span, undefined, "the ongoing offer is no span");
 	assert.equal(row("Zodpovední rodičia čítajú deťom každý večer").span, undefined, "no object shows no span");
-	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length >= 3);
-	assert.equal(cueRows.length, 5, "five rows make cue reps: the form's neighbours and the cue words are dropped, and row 53 is withdrawn");
+	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3);
+	assert.equal(cueRows.length, 6, "six rows make cue reps: row 53 is withdrawn, and row 21 keeps Dlho (its keep list), so it has three windows");
 });
 
 test("the rows with fewer than three windows give no cue rep, and are named (N3)", () => {
-	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length < 3).map((r) => r.span);
-	assert.deepEqual([...short].sort(), ["Budete", "bude", "budeš", "celú noc", "nakoniec", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort());
+	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length < 3).map((r) => r.span);
+	assert.deepEqual([...short].sort(), ["Budete", "bude", "budeš", "celú noc", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort());
 });
 
 test("cue reps and grid reps are tasks: they carry the family's cue and explanation, and never a first try", () => {
@@ -204,11 +290,11 @@ test("cue reps and grid reps are tasks: they carry the family's cue and explanat
 	}
 });
 
-test("the task pool: sixty grid tasks and five cue tasks across the twelve pairs (66 is withdrawn; 65 in all)", () => {
+test("the task pool: sixty grid tasks and six cue tasks across the twelve pairs (66 in all)", () => {
 	const pool = aspectTasks(entries, PAIRS, "pairs-plans", 5);
 	assert.equal(pool.filter((i) => i.task?.kind === "grid").length, 60, "five formed cells in each of twelve pairs");
-	assert.equal(pool.filter((i) => i.task?.kind === "cue").length, 5, "five rows with three windows");
-	assert.equal(pool.length, 65, "sixty-five tasks in all");
+	assert.equal(pool.filter((i) => i.task?.kind === "cue").length, 6, "six rows with three windows");
+	assert.equal(pool.length, 66, "sixty-six tasks in all");
 	assert.equal(new Set(pool.map((i) => i.id)).size, pool.length, "every task has its own id");
 });
 

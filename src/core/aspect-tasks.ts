@@ -25,7 +25,7 @@
  * Pure and browser-safe: the family file is bundled, no fs.
  */
 
-import { MIXUP_FAMILIES, mixupKey, type MixupFamily, type MixupProbe } from "./mixups.ts";
+import { MIXUP_FAMILIES, mixupKey, parallelForm, type MixupFamily, type MixupProbe } from "./mixups.ts";
 import { buildPairsLesson, rng, shuffle, type LessonExplain, type LessonItem, type LessonPlan, type LessonTask, type UnitId } from "./lesson.ts";
 import { chapterPairs, pairMembers, type PairDef } from "./pairs.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
@@ -36,7 +36,7 @@ export const ASPECT_FAMILY_ID = "aspect";
 const CELL_ROWS = ["imperfective", "perfective"];
 const CELL_COLS = ["past", "present", "future"];
 const PERFECTIVE_PRESENT_NOTE = "present form = future meaning";
-const PERFECTIVE_FUTURE_NOTE = "no such form: the perfective future is the present form";
+const PERFECTIVE_FUTURE_NOTE = "perfective future: no such form";
 
 /** Function words and clitics a cue window is never made of alone (lowercase). */
 export const STOPWORDS: ReadonlySet<string> = new Set([
@@ -74,7 +74,7 @@ export function gridCells(imp: LexiconEntry, perf: LexiconEntry, accepted: Reado
 		{ row: 0, col: 1, form: presentImp },
 		{ row: 0, col: 2, form: `budem ${entryLemma(imp)}` },
 		{ row: 1, col: 0, form: pastPerf },
-		{ row: 1, col: 1, form: presentPerf, note: PERFECTIVE_PRESENT_NOTE },
+		{ row: 1, col: 1, form: presentPerf, note: `${presentPerf}: ${PERFECTIVE_PRESENT_NOTE}` },
 		{ row: 1, col: 2, form: null, note: PERFECTIVE_FUTURE_NOTE },
 	];
 }
@@ -141,17 +141,20 @@ function wordsOf(text: string): Array<{ start: number; end: number }> {
 const HABIT_WORDS: ReadonlySet<string> = new Set(["každý", "každá", "každé", "každú", "každoročne", "denne", "vždy", "často", "zvyčajne", "obvykle", "bežne", "občas"]);
 /** "každom" counts only with a time noun next. */
 const EACH_IN_TIME = "každom";
-const TIME_NOUNS: ReadonlySet<string> = new Set(["deň", "dni", "týždeň", "týždňa", "týždni", "týždne", "mesiac", "mesiaca", "mesiaci", "mesiace", "rok", "roku", "roky", "večer", "ráno", "noc", "hodinu", "hodine", "hodiny", "hodín", "minútu", "minúty", "minút"]);
+const TIME_NOUNS: ReadonlySet<string> = new Set(["deň", "dni", "dní", "týždeň", "týždňa", "týždni", "týždne", "týždňov", "mesiac", "mesiaca", "mesiaci", "mesiace", "mesiacov", "rok", "roku", "roky", "rokov", "večer", "ráno", "noc", "hodinu", "hodine", "hodiny", "hodín", "minútu", "minúty", "minút", "sekúnd", "chvíľu", "polhodinu"]);
 const DURATION_WORDS: ReadonlySet<string> = new Set(["dlho"]);
-/** "celý", "celú", "celé" count with noc next. */
+/** "celý", "celú", "celé" count with a time noun next (celý deň, celé ráno, celú noc). */
 const WHOLE_WORDS: ReadonlySet<string> = new Set(["celý", "celú", "celé"]);
 const NUMBER_WORDS: ReadonlySet<string> = new Set(["jeden", "jedna", "jedno", "dva", "dve", "tri", "štyri", "päť", "šesť", "sedem", "osem", "deväť", "desať", "jedenásť", "dvanásť", "pätnásť", "dvadsať", "tridsať", "štyridsať", "päťdesiat", "šesťdesiat", "sedemdesiat", "osemdesiat", "deväťdesiat", "sto"]);
 /** A number before one of these is a duration. */
-const HOUR_MINUTE_WORDS: ReadonlySet<string> = new Set(["hodiny", "hodín", "minút"]);
+const HOUR_MINUTE_WORDS: ReadonlySet<string> = new Set(["hodiny", "hodín", "minút", "minúty", "hodinu", "dni", "dní"]);
 const PHASE_WORDS: ReadonlySet<string> = new Set(["budem", "budeš", "bude", "budeme", "budete", "budú"]);
 /** Every form of začať, prestať and skončiť, by its stem. */
-const PHASE_STEMS = ["začn", "začal", "začať", "začín", "prestan", "prestal", "prestať", "prestá", "skonč"];
-const PERFECTIVE_WORDS: ReadonlySet<string> = new Set(["nakoniec", "konečne", "podarilo", "podarí", "stihol", "stihla", "stihli", "stihnem"]);
+const PHASE_STEMS = ["začn", "začal", "začať", "začín", "prestan", "prestaň", "prestal", "prestať", "prestá", "skonč", "konč"];
+/** The perfective cue words that are whole words. */
+const PERFECTIVE_WORDS: ReadonlySet<string> = new Set(["nakoniec", "konečne"]);
+/** podaril-, podarí and stihol, stihne, stihnú, stihnúť by stem. "podari" alone misses the accented podarí, so both are listed. */
+const PERFECTIVE_STEMS = ["podari", "podarí", "stih"];
 /** "za" counts with a time noun within the next two words. */
 const FOR_WORD = "za";
 const PRESENT_WORDS: ReadonlySet<string> = new Set(["práve"]);
@@ -180,7 +183,7 @@ function cueMarks(sentence: string, tokens: ReadonlyArray<{ start: number; end: 
 		if (HABIT_WORDS.has(w)) mark(i, "habit");
 		if (w === EACH_IN_TIME && next !== undefined && TIME_NOUNS.has(next)) mark(i, "habit");
 		if (DURATION_WORDS.has(w)) mark(i, "duration");
-		if (WHOLE_WORDS.has(w) && next === "noc") {
+		if (WHOLE_WORDS.has(w) && TIME_NOUNS.has(next ?? "")) {
 			mark(i, "duration");
 			mark(i + 1, "duration");
 		}
@@ -189,7 +192,7 @@ function cueMarks(sentence: string, tokens: ReadonlyArray<{ start: number; end: 
 			mark(i, "duration");
 		}
 		if (PHASE_WORDS.has(w) || PHASE_STEMS.some((stem) => w.startsWith(stem))) mark(i, "phase");
-		if (PERFECTIVE_WORDS.has(w)) mark(i, "perfective");
+		if (PERFECTIVE_WORDS.has(w) || PERFECTIVE_STEMS.some((stem) => w.startsWith(stem))) mark(i, "perfective");
 		if (w === FOR_WORD && (TIME_NOUNS.has(next ?? "") || TIME_NOUNS.has(words[i + 2] ?? ""))) mark(i, "perfective");
 		if (PRESENT_WORDS.has(w)) mark(i, "present");
 	});
@@ -216,8 +219,10 @@ export type WindowDrop = {
 
 /** The cue windows of a sentence: the same number of words as the span, each
  *  kept or dropped with its reason. `form` is the verb form the row names (its
- *  first and last words are read from the sentence; none when absent). */
-export function cueWindowReport(sentence: string, span: string, form?: string): { kept: string[]; dropped: WindowDrop[] } {
+ *  first and last words are read from the sentence; none when absent). `keep`
+ *  is the row's keep list: a window that is exactly one of its words skips the
+ *  cue-word drop only (the other drops still apply). */
+export function cueWindowReport(sentence: string, span: string, form?: string, keep: readonly string[] = []): { kept: string[]; dropped: WindowDrop[] } {
 	const none = { kept: [] as string[], dropped: [] as WindowDrop[] };
 	const at = sentence.indexOf(span);
 	if (at < 0 || span.length === 0) return none;
@@ -249,7 +254,7 @@ export function cueWindowReport(sentence: string, span: string, form?: string): 
 		else if (formFirst >= 0 && a <= formLast && b >= formFirst) drop("contains the form");
 		else if (formFirst >= 0 && (b === formFirst - 1 || a === formLast + 1)) drop("touches the form");
 		else if (text.includes(",")) drop("crosses a comma");
-		else if (cue !== undefined) drop(GROUP_REASON[cue]);
+		else if (cue !== undefined && !keep.includes(text)) drop(GROUP_REASON[cue]);
 		else if (wordsOf(text).every((w) => STOPWORDS.has(text.slice(w.start, w.end).toLocaleLowerCase("sk-SK")))) drop("only function words");
 		else if (kept.includes(text)) drop("repeats another window");
 		else kept.push(text);
@@ -258,8 +263,42 @@ export function cueWindowReport(sentence: string, span: string, form?: string): 
 }
 
 /** The windows a cue offers (see cueWindowReport). */
-export function cueWindows(sentence: string, span: string, form?: string): string[] {
-	return cueWindowReport(sentence, span, form).kept;
+export function cueWindows(sentence: string, span: string, form?: string, keep: readonly string[] = []): string[] {
+	return cueWindowReport(sentence, span, form, keep).kept;
+}
+
+/** The cue groups the span's own words belong to (habit, duration, phase,
+ *  perfective, present), so a test can name which kind of cue a row is. */
+export function spanCueGroups(sentence: string, span: string): CueGroup[] {
+	const at = sentence.indexOf(span);
+	if (at < 0 || span.length === 0) return [];
+	const tokens = wordsOf(sentence);
+	const first = tokens.findIndex((t) => t.start === at);
+	const last = tokens.findIndex((t) => t.end === at + span.length);
+	if (first < 0 || last < first) return [];
+	const marks = cueMarks(sentence, tokens);
+	const groups = new Set<CueGroup>();
+	for (let i = first; i <= last; i++) {
+		const g = marks.get(i);
+		if (g !== undefined) groups.add(g);
+	}
+	return [...groups];
+}
+
+/** The cue rep's question, built from the row: the verb the sentence holds and
+ *  its twin, so a cue word on another verb cannot be mistaken for the answer
+ *  (N10). A finite row names the parallel form ("kúpil and not kupoval"); an
+ *  infinitive row names the two lemmas ("robiť and not urobiť"). Null when the
+ *  twin's form cannot be found. */
+export function cueQuestion(entries: readonly LexiconEntry[], family: MixupFamily, row: MixupProbe): string | null {
+	const entry = entries.find((e) => e.slug === row.slug);
+	const pair = family.pairs.find(([x, y]) => x === row.slug || y === row.slug);
+	if (!entry || !pair || !row.form) return null;
+	const twin = entries.find((e) => e.slug === (pair[0] === row.slug ? pair[1] : pair[0]));
+	if (!twin) return null;
+	const theirs = row.form === entryLemma(entry) ? entryLemma(twin) : parallelForm(entry, twin, row.form, new Set(family.formsAccepted ?? []));
+	if (theirs === null) return null;
+	return `Which word made it ${row.form} and not ${theirs}?`;
 }
 
 /** One cue rep per approved row of the chapter's aspect twins that has a span
@@ -271,8 +310,10 @@ function cueTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: U
 		const entry = entries.find((e) => e.slug === row.slug);
 		const pair = family.pairs.find(([x, y]) => x === row.slug || y === row.slug);
 		if (!entry || !pair) return;
-		const windows = cueWindows(row.sk, row.span, row.form);
+		const windows = cueWindows(row.sk, row.span, row.form, row.cueKeep ?? []);
 		if (windows.length < 3) return;
+		const question = cueQuestion(entries, family, row);
+		if (question === null) return;
 		const translation = row.en ?? entry.examples.find((x) => exampleText(x) === row.sk)?.en ?? "";
 		out.push({
 			id: `${entry.slug}#task-cue-${index}`,
@@ -286,9 +327,9 @@ function cueTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: U
 			answer: row.span,
 			before: "",
 			after: "",
-			hint: "Which word decided the form?",
+			hint: question,
 			options: shuffle([row.span, ...shuffle(windows, rand).slice(0, 3)], rand),
-			task: { kind: "cue", span: row.span, phrase: row.phrase ?? row.type },
+			task: { kind: "cue", span: row.span, phrase: row.phrase ?? row.type, question },
 			pair: pairOf(family, pair[0], pair[1], ids),
 		});
 	});
