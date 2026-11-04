@@ -36,7 +36,7 @@ Add families to `curriculum/slovak/mixups.json`, one per context where aspect is
 - Twins: the imperfective and perfective of one verb (písať / napísať, čítať / prečítať, robiť / urobiť, kupovať / kúpiť).
 - Rule, one English line: imperfective for a process, a habit or the action itself; perfective for one act seen as finished, with a result. The English tense does not decide it.
 - Bridge: the Estonian total and partial object (`lugesin raamatut` / `lugesin raamatu läbi`, from `curriculum/slovak/seed.json`).
-- Probe: a two-way choice in a verified sentence whose context makes the aspect clear (a time phrase, a result, `už`). Each sentence holds exactly one twin, as E11 requires; the existing filter enforces this.
+- Probe: a two-way choice in a verified sentence whose context makes the aspect clear (a time phrase or a result; the licensed cue types are in `curriculum/slovak/mixups.json`). Each sentence holds exactly one twin, as E11 requires; the existing filter enforces this.
 - Measure: the mix-up record (first tries, misses, mended after three right first tries) already does this.
 - Later, a typed variant: the English meaning is shown, the learner types the Slovak form, and the dictionary-expected form is the answer. The Cheap slot judges only typed answers the dictionary did not expect (P7, E27).
 
@@ -77,7 +77,7 @@ Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 in `docs/D
 | U2 Twins | DONE | 12 pairs, including pisat/napisat, citat/precitat, robit/urobit, kupovat/kupit. `tests/aspect-families.test.ts` "lists twelve pairs". |
 | U3 Rule | DONE | The family's `rule`: one English line, the tense does not decide it. |
 | U4 Bridge | DONE | `lugesin raamatut` / `lugesin raamatu läbi` checked against `curriculum/slovak/seed-source.json` line 290. |
-| U5 Probe | DONE for the mechanism; BLOCKED for supply | 18 verifier-approved rows only; 9 of 12 pairs have one; none has both aspects, so no pair is drilled (D2). |
+| U5 Probe | DONE for the mechanism; BLOCKED for supply | 18 verifier-approved rows only, all with a parallel form (infinitives pair by lemma; see E42); 9 of 12 pairs have one; none has both aspects, so no pair is drilled (D2). |
 | U6 Measure | DONE for the mechanism | Balance gate, mend and clear across both aspects, record gate: `tests/aspect-families.test.ts`. The record never gets an aspect pair until D2. |
 | U7 Typed variant | DEFERRED | Typed reps exist for open mix-ups, graded deterministically. The Cheap-slot judge runs only in placement, after a string miss; a lesson judge is a new path, and no aspect pair can reach a typed rep yet. |
 | U8 tento/ten family | BLOCKED | `this-vs-that` has 4 + 4 whole-word sentences, but no approved rows, and the English gloss must decide: the verifier has approved none (D2). |

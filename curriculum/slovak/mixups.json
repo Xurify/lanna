@@ -147,7 +147,8 @@
 					"phrase": "za + time span",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 6",
-					"en": "They organised the wedding in a hurry, in less than a month."
+					"en": "They organised the wedding in a hurry, in less than a month.",
+					"span": "za necelý mesiac"
 				},
 				{
 					"slug": "brat",
@@ -158,7 +159,8 @@
 					"phrase": "prestať + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 13",
-					"en": "After consulting his doctor he stopped taking the medication."
+					"en": "After consulting his doctor he stopped taking the medication.",
+					"span": "prestal"
 				},
 				{
 					"slug": "kupit",
@@ -169,7 +171,8 @@
 					"phrase": "nakoniec + past",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 21",
-					"en": "I held out for a long time, but in the end I bought a new phone."
+					"en": "I held out for a long time, but in the end I bought a new phone.",
+					"span": "nakoniec"
 				},
 				{
 					"slug": "predavat",
@@ -180,7 +183,8 @@
 					"phrase": "shop offer",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 24",
-					"en": "The local shop sells fresh baked goods every morning."
+					"en": "The local shop sells fresh baked goods every morning.",
+					"span": "každé ráno"
 				},
 				{
 					"slug": "predavat",
@@ -191,7 +195,8 @@
 					"phrase": "generic availability",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 25",
-					"en": "This fruit is commonly sold in every shop."
+					"en": "This fruit is commonly sold in every shop.",
+					"span": "bežne"
 				},
 				{
 					"slug": "predavat",
@@ -202,7 +207,8 @@
 					"phrase": "generic availability",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 26",
-					"en": "Scratch cards are sold at every newsagent's."
+					"en": "Scratch cards are sold at every newsagent's.",
+					"span": "v každej trafike"
 				},
 				{
 					"slug": "pisat",
@@ -213,7 +219,8 @@
 					"phrase": "budem + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 27",
-					"en": "Tom will be writing a letter."
+					"en": "Tom will be writing a letter.",
+					"span": "bude"
 				},
 				{
 					"slug": "pisat",
@@ -224,7 +231,8 @@
 					"phrase": "začať + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 31",
-					"en": "The teacher wiped the board and started writing."
+					"en": "The teacher wiped the board and started writing.",
+					"span": "začala"
 				},
 				{
 					"slug": "citat",
@@ -235,7 +243,8 @@
 					"phrase": "celú noc + past",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 33",
-					"en": "She read the novel about the war all night."
+					"en": "She read the novel about the war all night.",
+					"span": "celú noc"
 				},
 				{
 					"slug": "citat",
@@ -246,7 +255,8 @@
 					"phrase": "habit, no object",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 34",
-					"en": "Responsible parents read to children every evening."
+					"en": "Responsible parents read to children every evening.",
+					"span": "každý večer"
 				},
 				{
 					"slug": "citat",
@@ -257,7 +267,8 @@
 					"phrase": "začať + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 37",
-					"en": "He opened the book at random and started reading."
+					"en": "He opened the book at random and started reading.",
+					"span": "začal"
 				},
 				{
 					"slug": "robit",
@@ -268,7 +279,8 @@
 					"phrase": "budem + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 42",
-					"en": "What are we going to do?"
+					"en": "Oh, I forgot to buy the cabbage. What are we going to do?",
+					"span": "budeme"
 				},
 				{
 					"slug": "vidiet",
@@ -279,7 +291,8 @@
 					"phrase": "budem + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 52",
-					"en": "Sit at the front, you'll see better."
+					"en": "Sit at the front, you'll see better.",
+					"span": "budeš"
 				},
 				{
 					"slug": "hovorit",
@@ -290,7 +303,8 @@
 					"phrase": "speaking a language",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 53",
-					"en": "I speak French every day at work."
+					"en": "I speak French every day at work.",
+					"span": "každý deň"
 				},
 				{
 					"slug": "hovorit",
@@ -301,7 +315,8 @@
 					"phrase": "vždy + manner",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 56",
-					"en": "Grandfather always spoke wisely and calmly."
+					"en": "Grandfather always spoke wisely and calmly.",
+					"span": "vždy"
 				},
 				{
 					"slug": "hovorit",
@@ -312,7 +327,8 @@
 					"phrase": "budem + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 57",
-					"en": "You're going to speak English fluently!"
+					"en": "You're going to speak English fluently!",
+					"span": "Budete"
 				},
 				{
 					"slug": "hovorit",
@@ -323,7 +339,8 @@
 					"phrase": "vždy + manner",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 58",
-					"en": "She always spoke contemptuously about the neighbours."
+					"en": "She always spoke contemptuously about the neighbours.",
+					"span": "vždy"
 				},
 				{
 					"slug": "hovorit",
@@ -334,22 +351,23 @@
 					"phrase": "začať + inf",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 60",
-					"en": "His nervousness wore off once he started speaking."
+					"en": "His nervousness wore off once he started speaking.",
+					"span": "začal"
 				}
 			],
 			"explain": {
 				"contrast": {
 					"first": {
-						"sk": "Čítam knihu.",
-						"en": "I'm reading a book.",
-						"form": "Čítam"
+						"sk": "Čítal som knihu.",
+						"en": "I was reading the book, or I read some of it.",
+						"form": "Čítal"
 					},
 					"second": {
-						"sk": "Prečítam knihu.",
-						"en": "I'll read the book through.",
-						"form": "Prečítam"
+						"sk": "Prečítal som knihu.",
+						"en": "I read the book through.",
+						"form": "Prečítal"
 					},
-					"note": "Same book. Čítam is the reading going on; prečítam is the book read through to its end."
+					"note": "Same book, same past tense. Čítal som is the reading going on; prečítal som is the book read through to its end."
 				},
 				"timeline": {
 					"imperfective": "čítať (imperfective): a line with no end point. The reading goes on, repeats, or is the act itself.",
@@ -358,12 +376,18 @@
 				"trap": "The English \"read\" does not say which twin. Ask whether the act is finished with a result (perfective) or going on, repeated or in general (imperfective).",
 				"wiki": "https://slovak.wiki/grammar/aspect",
 				"points": [
-					"The English tense does not decide the aspect: 'I read' can be čítam (going on) or prečítam (finished).",
-					"A perfective present means the future, not a habit: prečítam = I will read it through.",
+					"The English tense does not decide the aspect: 'I read' (past) can be čítal som (the reading went on) or prečítal som (read through to the end).",
+					"A perfective verb has no present meaning: prečítam means I will read it through, never I am reading.",
 					"The imperfective future is budem + infinitive: budem čítať = I will be reading."
 				],
 				"checked": "pending verifier"
-			}
+			},
+			"formsAccepted": [
+				"citat",
+				"precitat",
+				"pomahat"
+			],
+			"formsAcceptedBy": "The verifier accepts every listed form of čítať, prečítať and pomáhať as its paradigm (verifier-rows-1.md, 2026-11-04, and the verifier's message on the critic's blockers). These three entries have no formsVerified flag in lexicon.json; the family records the acceptance instead."
 		},
 		{
 			"id": "this-vs-that",
@@ -468,7 +492,7 @@
 						]
 					},
 					{
-						"title": "tento (this): a form is shown when the reference names it or a verified sentence has it; the rest is not yet",
+						"title": "tento (this)",
 						"cols": [
 							"m. sg.",
 							"f. sg.",
@@ -482,7 +506,7 @@
 									"tento",
 									"táto",
 									"toto",
-									"títo / tieto"
+									"títo (m. anim.) / tieto"
 								]
 							},
 							{
@@ -500,7 +524,7 @@
 									"tomuto",
 									"tejto",
 									"tomuto",
-									"not yet"
+									"týmto"
 								]
 							},
 							{
@@ -509,7 +533,7 @@
 									"tohto (anim.) / tento",
 									"túto",
 									"toto",
-									"týchto (anim.) / tieto"
+									"týchto (m. anim.) / tieto"
 								]
 							},
 							{
@@ -533,8 +557,8 @@
 						]
 					}
 				],
-				"trap": "Slovak ten also means plain 'the', which English does not need. Check the English gloss before choosing: this is tento, that is ten.",
-				"wiki": "https://slovak.wiki/demonstratives",
+				"trap": "Slovak has no articles. ten points to a thing already known or mentioned, where English often says 'the' or 'that'; most nouns need nothing: Kniha je na stole = The book is on the table. Check the English: this is tento, that is ten.",
+				"wiki": "https://slovak.wiki/grammar/demonstratives",
 				"checked": "pending verifier"
 			}
 		}
