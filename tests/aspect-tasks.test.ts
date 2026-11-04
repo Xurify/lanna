@@ -505,3 +505,9 @@ test("the fixture lesson never repeats a sentence", () => {
 	const ids = plan.items.map((i) => i.id);
 	assert.equal(new Set(ids).size, ids.length, "no repeated sentence in one lesson");
 });
+
+test("jednu, the accusative of jeden, is a number before a duration unit: Čítal som jednu hodinu is a duration cue (verifier, N9)", () => {
+	assert.equal(reason2("Čítal som jednu hodinu v kaviarni.", "kaviarni", undefined, "jednu"), "a duration cue");
+	assert.equal(reason2("Čítal som jednu hodinu v kaviarni.", "kaviarni", undefined, "hodinu"), "a duration cue", "the unit after jednu");
+	assert.equal(reason2("Čítal som jednu knihu v kaviarni.", "kaviarni", undefined, "jednu"), undefined, "jednu before a noun that is no unit is kept");
+});

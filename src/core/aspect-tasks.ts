@@ -145,7 +145,7 @@ const TIME_NOUNS: ReadonlySet<string> = new Set(["deň", "dni", "dní", "týžde
 const DURATION_WORDS: ReadonlySet<string> = new Set(["dlho"]);
 /** "celý", "celú", "celé" count with a time noun next (celý deň, celé ráno, celú noc). */
 const WHOLE_WORDS: ReadonlySet<string> = new Set(["celý", "celú", "celé"]);
-const NUMBER_WORDS: ReadonlySet<string> = new Set(["jeden", "jedna", "jedno", "dva", "dve", "tri", "štyri", "päť", "šesť", "sedem", "osem", "deväť", "desať", "jedenásť", "dvanásť", "pätnásť", "dvadsať", "tridsať", "štyridsať", "päťdesiat", "šesťdesiat", "sedemdesiat", "osemdesiat", "deväťdesiat", "sto"]);
+const NUMBER_WORDS: ReadonlySet<string> = new Set(["jeden", "jedna", "jedno", "jednu", "dva", "dve", "tri", "štyri", "päť", "šesť", "sedem", "osem", "deväť", "desať", "jedenásť", "dvanásť", "pätnásť", "dvadsať", "tridsať", "štyridsať", "päťdesiat", "šesťdesiat", "sedemdesiat", "osemdesiat", "deväťdesiat", "sto"]);
 /** A number before one of these is a duration. */
 const HOUR_MINUTE_WORDS: ReadonlySet<string> = new Set(["hodiny", "hodín", "minút", "minúty", "hodinu", "dni", "dní"]);
 const PHASE_WORDS: ReadonlySet<string> = new Set(["budem", "budeš", "bude", "budeme", "budete", "budú"]);
