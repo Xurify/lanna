@@ -14,8 +14,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { aspectPairInfo, aspectTasks, cueWindows, gridCells, pairsLessonFor } from "../src/core/aspect-tasks.ts";
-import { PAIRS_TASK_SLOTS, type LessonItem, type UnitId } from "../src/core/lesson.ts";
+import { aspectPairInfo, aspectTasks, cueWindowReport, cueWindows, gridCells, pairsLessonFor } from "../src/core/aspect-tasks.ts";
+import { PAIRS_TASK_SLOTS, patternExamples, type LessonItem, type UnitId } from "../src/core/lesson.ts";
 import { chapterPairs, twinSentences, PAIRS } from "../src/core/pairs.ts";
 import {
 	buildMixupLesson,
@@ -100,9 +100,24 @@ test("a cue window is a same-length run of words of the sentence, never the span
 	assert.deepEqual(cueWindows(sentence, "absent"), []);
 });
 
+test("a cue window the row's form touches or contains is dropped, with its reason (N3)", () => {
+	const drops = (sentence: string, span: string, form?: string) => cueWindowReport(sentence, span, form).dropped;
+	const reason = (sentence: string, span: string, form: string | undefined, text: string) => drops(sentence, span, form).find((d) => d.text === text)?.reason;
+	assert.equal(reason("Román o vojne čítala celú noc.", "celú noc", "čítala", "vojne čítala"), "contains the form", "'vojne čítala' holds the twin form");
+	assert.equal(reason("Román o vojne čítala celú noc.", "celú noc", "čítala", "o vojne"), "touches the form");
+	assert.equal(reason("Náhodne otvoril knihu a začal čítať.", "začal", "čítať", "čítať"), "contains the form", "'čítať' is the twin form for začal");
+	assert.equal(reason("Náhodne otvoril knihu a začal čítať.", "začal", "čítať", "a"), "only function words");
+	assert.equal(reason("Tom bude písať list.", "bude", "písať", "list"), "touches the form");
+	assert.equal(reason("Po porade s lekárom prestal brať lieky.", "prestal", "brať", "Po"), "only function words");
+	assert.equal(reason("Po porade s lekárom prestal brať lieky.", "prestal", "brať", "lieky"), "touches the form");
+	assert.ok(drops("Ona bežne pracuje a bežne číta knihy.", "bežne", "pracuje").some((d) => d.text === "bežne" && d.reason === "repeats the cue"), "the same word elsewhere in the sentence is not a window");
+	assert.equal(reason("Pracuje tvrdo, tvrdo pracuje.", "Pracuje", undefined, "tvrdo"), "repeats another window");
+	assert.deepEqual(cueWindowReport("Román o vojne čítala celú noc.", "celú noc", "čítala").kept, ["Román o"], "the kept window is the one the rules allow");
+});
+
 test("the cue reps: one per approved row whose span has three windows, each a substring of its sentence", () => {
 	const tasks = aspectTasks(entries, PAIRS, "pairs-plans", 5).filter((i) => i.task?.kind === "cue");
-	const usable = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span).length >= 3);
+	const usable = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length >= 3);
 	assert.equal(tasks.length, usable.length, "every usable approved row gives one cue rep");
 	for (const item of tasks) {
 		assert.equal(item.kind, "choose");
@@ -130,13 +145,13 @@ test("the verifier's span corrections hold: po francúzsky and pohŕdavo are the
 	assert.equal(row("Starý otec vždy hovoril múdro a pokojne").span, undefined, "no single span: no cue rep");
 	assert.equal(row("Lokálny obchod predáva čerstvé pečivo každé ráno").span, undefined, "the ongoing offer is no span");
 	assert.equal(row("Zodpovední rodičia čítajú deťom každý večer").span, undefined, "no object shows no span");
-	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span).length >= 3);
-	assert.equal(cueRows.length, 13, "thirteen rows make cue reps");
+	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length >= 3);
+	assert.equal(cueRows.length, 7, "seven rows make cue reps once the form's neighbours are dropped");
 });
 
-test("the two rows too short for three same-length windows give no cue rep (and are named)", () => {
-	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span).length < 3).map((r) => r.span);
-	assert.deepEqual(short.sort(), ["v každej trafike", "za necelý mesiac"]);
+test("the rows with fewer than three windows give no cue rep, and are named (N3)", () => {
+	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length < 3).map((r) => r.span);
+	assert.deepEqual([...short].sort(), ["Budete", "bude", "budeš", "celú noc", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort());
 });
 
 test("cue reps and grid reps are tasks: they carry the family's cue and explanation, and never a first try", () => {
@@ -148,6 +163,22 @@ test("cue reps and grid reps are tasks: they carry the family's cue and explanat
 		assert.ok(i.pair?.explain, "the explanation is attached");
 		assert.equal(lessonMixupEvent({ slug: i.slug, kind: i.kind, first: { given: "x", verdict: "wrong" }, detail: { answer: i.answer, unit: i.unit, task: i.task!.kind } }, at(1)), null, "a task is no mix-up event");
 	}
+});
+
+test("the task pool: sixty grid tasks and seven cue tasks across the twelve pairs (N4 numbers)", () => {
+	const pool = aspectTasks(entries, PAIRS, "pairs-plans", 5);
+	assert.equal(pool.filter((i) => i.task?.kind === "grid").length, 60, "five formed cells in each of twelve pairs");
+	assert.equal(pool.filter((i) => i.task?.kind === "cue").length, 7, "seven rows with three windows");
+	assert.equal(new Set(pool.map((i) => i.id)).size, pool.length, "every task has its own id");
+});
+
+test("a task seen in the last lesson goes to the back of the pool, the rest keep their order (N4)", () => {
+	const ids = aspectTasks(entries, PAIRS, "pairs-plans", 5).map((i) => i.id);
+	const seen = ids[0]!;
+	const after = aspectTasks(entries, PAIRS, "pairs-plans", 5, new Set([seen])).map((i) => i.id);
+	assert.equal(after.length, ids.length, "no task is dropped");
+	assert.equal(after.at(-1), seen, "the recent task is last");
+	assert.deepEqual(after.slice(0, -1), ids.slice(1), "the fresh tasks keep their order");
 });
 
 // ─── The Dvojičky lesson with tasks ─────────────────────────────────────────
@@ -327,6 +358,16 @@ test("shadow ids: a probe row past the entry's own examples has a `#p` id that i
 	const drilledShadow = shadow.find((i) => i.sentence === synthetic.sk);
 	assert.ok(drilledShadow, "the synthetic row is drilled with its own id");
 	assert.equal(drilledShadow!.id, `kupovat#p${own}`, "its id is past the entry's own examples");
+});
+
+test("the Same pattern examples never show a form-reading task, and a task rep shows none (N2)", () => {
+	const plan = pairsLessonFor(entries, "pairs-plans", { seed: 4 });
+	const task = plan.items.find((i) => i.task);
+	assert.ok(task, "the plans lesson has a task");
+	assert.deepEqual(patternExamples(plan.items, task), [], "a task rep shows no examples");
+	const [a, b] = plan.items.filter((i) => !i.task);
+	assert.deepEqual(patternExamples([task!, a!, b!], b).map((i) => i.id), [a!.id], "the task before them is not an example");
+	assert.ok(patternExamples(plan.items, a).every((o) => !o.task), "no task among a pair rep's examples");
 });
 
 test("the task slots are three, at 3, 7 and 11 of a twelve-rep lesson", () => {

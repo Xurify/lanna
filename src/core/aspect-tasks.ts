@@ -4,19 +4,21 @@
  * reach them in the shipped state (the aspect pairs have no two-sided deck
  * yet, so the drills do not):
  *
- * - grid: the forms of one aspect pair in a 2×3 grid (past, present, future
- *   by imperfective and perfective). The question names one form; the answer
- *   is the cell it sits in. The perfective present is labelled "present form =
- *   future meaning". The perfective future cell has no form: budem + a
- *   perfective infinitive is never offered.
+ * - grid: one aspect pair's grid (past, present, future by imperfective and
+ *   perfective) with its cells labelled and empty. The question names a form,
+ *   and the learner places it: picks the label of the cell it belongs in. The
+ *   cells fill, with their notes, once the rep is answered. The perfective
+ *   future cell has no form: budem + a perfective is never offered. Each formed
+ *   cell of each pair is one task: five per pair, sixty in all.
  * - cue: an approved row's own sentence, with the word or phrase that decided
- *   its form (the row's span) among three windows of the same length from the
- *   same sentence. No new sentences: every row is a verified sentence.
+ *   its form (the row's span) among same-length windows of the same sentence.
+ *   A window is dropped when it overlaps the span, repeats it, contains the
+ *   form, touches the form, or is made only of function words (STOPWORDS). A
+ *   row with fewer than three windows left gives no cue rep.
  *
  * Neither is a drill for the first-try measure or the mix-up record (the
- * player and the server read `task` and skip them). The grid's forms come from
- * the paradigms, so a pair with an unverified list (unless the family accepts
- * it) gets no grid.
+ * player and the server read `task`). The grid's forms come from the paradigms,
+ * so a pair with an unverified list (unless the family accepts it) gets no grid.
  *
  * Pure and browser-safe: the family file is bundled, no fs.
  */
@@ -34,6 +36,13 @@ const CELL_COLS = ["past", "present", "future"];
 const PERFECTIVE_PRESENT_NOTE = "present form = future meaning";
 const PERFECTIVE_FUTURE_NOTE = "no such form: the perfective future is the present form";
 
+/** Function words and clitics a cue window is never made of alone (lowercase). */
+export const STOPWORDS: ReadonlySet<string> = new Set([
+	"a", "i", "o", "u", "v", "vo", "s", "so", "z", "zo", "na", "do", "od", "po", "za", "pre", "pri", "pod", "nad", "bez", "k", "ku", "o",
+	"ani", "aj", "ale", "že", "aby", "ak", "ako", "lebo", "keď", "tak", "len", "tiež", "ešte", "už", "veľmi", "tu", "tam", "ten", "tá", "to", "toto",
+	"sa", "si", "som", "sme", "ste", "je", "sú", "bol", "bola", "boli", "mi", "ti", "mu", "ho", "ju", "ich", "im", "ma", "nás", "vás", "ťa",
+]);
+
 const aspectFamily = (): MixupFamily | undefined => MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID);
 
 /** The masculine singular past (bral, čítal): the only past form the grid reads. */
@@ -43,7 +52,7 @@ const isPastMasc = (form: string) => /l$/iu.test(form.trim());
 const verified = (e: LexiconEntry, accepted: ReadonlySet<string>) => (e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
 
 /** The family's pair as [imperfective, perfective] entries, or null when either is missing. */
-function aspectTwins(entries: readonly LexiconEntry[], family: MixupFamily, pair: [string, string]): [LexiconEntry, LexiconEntry] | null {
+function aspectTwins(entries: readonly LexiconEntry[], pair: [string, string]): [LexiconEntry, LexiconEntry] | null {
 	const imp = entries.find((e) => e.slug === pair[0]);
 	const perf = entries.find((e) => e.slug === pair[1]);
 	return imp && perf ? [imp, perf] : null;
@@ -84,38 +93,39 @@ const pairOf = (family: MixupFamily, imp: string, perf: string, ids: ReadonlyMap
 	...explainFor(family),
 });
 
-/** One grid rep for an aspect pair: the question names one form and the
- *  options are three cell labels, the answer among them. */
-function gridTask(entries: readonly LexiconEntry[], family: MixupFamily, unit: UnitId, rand: () => number, pair: [string, string], ids: ReadonlyMap<string, string>): LessonItem | null {
+/** The grid tasks of one aspect pair: one per formed cell. The question names
+ *  the cell's form and the options are three cell labels, the answer among them. */
+function gridTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: UnitId, rand: () => number, pair: [string, string], ids: ReadonlyMap<string, string>): LessonItem[] {
 	const accepted = new Set(family.formsAccepted ?? []);
-	const twins = aspectTwins(entries, family, pair);
-	if (!twins) return null;
+	const twins = aspectTwins(entries, pair);
+	if (!twins) return [];
 	const [imp, perf] = twins;
 	const cells = gridCells(imp, perf, accepted);
-	if (!cells) return null;
+	if (!cells) return [];
 	const askable = cells.filter((c) => c.form !== null);
-	const target = askable[Math.floor(rand() * askable.length)]!;
-	const others = shuffle(askable.filter((c) => c !== target), rand).slice(0, 2);
-	const answer = cellLabel(target.row, target.col);
-	const task: LessonTask = { kind: "grid", form: target.form!, rows: CELL_ROWS, cols: CELL_COLS, cells, target: { row: target.row, col: target.col } };
-	const holder = target.row === 0 ? imp : perf;
-	return {
-		id: `${holder.slug}#task-grid-${target.row}${target.col}`,
-		kind: "choose",
-		unit,
-		slug: holder.slug,
-		lemma: entryLemma(holder),
-		gloss: holder.en,
-		sentence: "",
-		translation: "",
-		answer,
-		before: "",
-		after: "",
-		hint: "Which cell of the grid holds this form?",
-		options: shuffle([answer, ...others.map((c) => cellLabel(c.row, c.col))], rand),
-		task,
-		pair: pairOf(family, imp.slug, perf.slug, ids),
-	};
+	return askable.map((target) => {
+		const others = shuffle(askable.filter((c) => c !== target), rand).slice(0, 2);
+		const answer = cellLabel(target.row, target.col);
+		const task: LessonTask = { kind: "grid", form: target.form!, rows: CELL_ROWS, cols: CELL_COLS, cells, target: { row: target.row, col: target.col } };
+		const holder = target.row === 0 ? imp : perf;
+		return {
+			id: `${holder.slug}#task-grid-${target.row}${target.col}`,
+			kind: "choose",
+			unit,
+			slug: holder.slug,
+			lemma: entryLemma(holder),
+			gloss: holder.en,
+			sentence: "",
+			translation: "",
+			answer,
+			before: "",
+			after: "",
+			hint: "Which cell of the grid does this form belong in?",
+			options: shuffle([answer, ...others.map((c) => cellLabel(c.row, c.col))], rand),
+			task,
+			pair: pairOf(family, imp.slug, perf.slug, ids),
+		};
+	});
 }
 
 /** Word tokens of a sentence, with where each starts and ends. */
@@ -124,24 +134,50 @@ function wordsOf(text: string): Array<{ start: number; end: number }> {
 	return [...text.matchAll(WORD)].map((m) => ({ start: m.index!, end: m.index! + m[0].length }));
 }
 
-/** The windows of the sentence the same number of words as the span, not
- *  touching it, and not the span's own text. Empty when the span is not a
- *  whole run of words of the sentence. */
-export function cueWindows(sentence: string, span: string): string[] {
+/** Why a candidate window was not offered as a cue option. */
+export type WindowDrop = { text: string; reason: "overlaps the cue" | "repeats the cue" | "contains the form" | "touches the form" | "only function words" | "repeats another window" };
+
+/** The cue windows of a sentence: the same number of words as the span, each
+ *  kept or dropped with its reason. `form` is the verb form the row names (its
+ *  first and last words are read from the sentence; none when absent). */
+export function cueWindowReport(sentence: string, span: string, form?: string): { kept: string[]; dropped: WindowDrop[] } {
+	const none = { kept: [] as string[], dropped: [] as WindowDrop[] };
 	const at = sentence.indexOf(span);
-	if (at < 0 || span.length === 0) return [];
+	if (at < 0 || span.length === 0) return none;
 	const tokens = wordsOf(sentence);
 	const first = tokens.findIndex((t) => t.start === at);
 	const last = tokens.findIndex((t) => t.end === at + span.length);
-	if (first < 0 || last < first || sentence.slice(tokens[first]!.start, tokens[last]!.end) !== span) return [];
+	if (first < 0 || last < first || sentence.slice(tokens[first]!.start, tokens[last]!.end) !== span) return none;
 	const n = last - first + 1;
-	const out: string[] = [];
-	for (let k = 0; k + n <= tokens.length; k++) {
-		if (k <= last && k + n - 1 >= first) continue;
-		const text = sentence.slice(tokens[k]!.start, tokens[k + n - 1]!.end);
-		if (text !== span && !out.includes(text)) out.push(text);
+	let formFirst = -1;
+	let formLast = -1;
+	if (form) {
+		const fa = sentence.indexOf(form);
+		const fi = fa < 0 ? -1 : tokens.findIndex((t) => t.start === fa);
+		const fl = fa < 0 ? -1 : tokens.findIndex((t) => t.end === fa + form.length);
+		if (fi >= 0 && fl >= fi) [formFirst, formLast] = [fi, fl];
 	}
-	return out;
+	const kept: string[] = [];
+	const dropped: WindowDrop[] = [];
+	for (let k = 0; k + n <= tokens.length; k++) {
+		const a = k;
+		const b = k + n - 1;
+		const text = sentence.slice(tokens[a]!.start, tokens[b]!.end);
+		const drop = (reason: WindowDrop["reason"]) => dropped.push({ text, reason });
+		if (a <= last && b >= first) drop("overlaps the cue");
+		else if (text === span) drop("repeats the cue");
+		else if (formFirst >= 0 && a <= formLast && b >= formFirst) drop("contains the form");
+		else if (formFirst >= 0 && (b === formFirst - 1 || a === formLast + 1)) drop("touches the form");
+		else if (wordsOf(text).every((w) => STOPWORDS.has(text.slice(w.start, w.end).toLocaleLowerCase("sk-SK")))) drop("only function words");
+		else if (kept.includes(text)) drop("repeats another window");
+		else kept.push(text);
+	}
+	return { kept, dropped };
+}
+
+/** The windows a cue offers (see cueWindowReport). */
+export function cueWindows(sentence: string, span: string, form?: string): string[] {
+	return cueWindowReport(sentence, span, form).kept;
 }
 
 /** One cue rep per approved row of the chapter's aspect twins that has a span
@@ -153,7 +189,7 @@ function cueTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: U
 		const entry = entries.find((e) => e.slug === row.slug);
 		const pair = family.pairs.find(([x, y]) => x === row.slug || y === row.slug);
 		if (!entry || !pair) return;
-		const windows = cueWindows(row.sk, row.span);
+		const windows = cueWindows(row.sk, row.span, row.form);
 		if (windows.length < 3) return;
 		const translation = row.en ?? entry.examples.find((x) => exampleText(x) === row.sk)?.en ?? "";
 		out.push({
@@ -177,9 +213,10 @@ function cueTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: U
 	return out;
 }
 
-/** The form-reading tasks of a chapter's aspect pairs, shuffled (empty when
- *  the chapter has no aspect pair). */
-export function aspectTasks(entries: readonly LexiconEntry[], pairs: readonly PairDef[], unit: UnitId, seed: number): LessonItem[] {
+/** The form-reading tasks of a chapter's aspect pairs: every grid and cue task
+ *  in a shuffled order, the tasks not seen in the last lessons first (`recent`
+ *  holds the rep ids). Empty when the chapter has no aspect pair. */
+export function aspectTasks(entries: readonly LexiconEntry[], pairs: readonly PairDef[], unit: UnitId, seed: number, recent?: ReadonlySet<string>): LessonItem[] {
 	const family = aspectFamily();
 	if (!family) return [];
 	const rand = rng(seed);
@@ -195,9 +232,10 @@ export function aspectTasks(entries: readonly LexiconEntry[], pairs: readonly Pa
 		ids.set(key, p.id);
 	}
 	if (twins.length === 0) return [];
-	const grids = twins.flatMap((pair) => gridTask(entries, family, unit, rand, pair, ids) ?? []);
+	const grids = twins.flatMap((pair) => gridTasks(entries, family, unit, rand, pair, ids));
 	const slugs = new Set(twins.flat());
-	return shuffle([...grids, ...cueTasks(entries, family, unit, rand, slugs, ids)], rand);
+	const pool = shuffle([...grids, ...cueTasks(entries, family, unit, rand, slugs, ids)], rand);
+	return [...pool.filter((t) => !recent?.has(t.id)), ...pool.filter((t) => recent?.has(t.id))];
 }
 
 /** The cue and explanation an aspect pair's Dvojičky reps carry; none for other pairs. */
@@ -215,6 +253,6 @@ export function aspectPairInfo(entries: readonly LexiconEntry[]): (pair: PairDef
  *  A chapter with no aspect pair is the plain Dvojičky lesson. */
 export function pairsLessonFor(entries: readonly LexiconEntry[], unit: UnitId, opts: { seed: number; recent?: ReadonlySet<string> }): LessonPlan {
 	const chapter = unit.startsWith("pairs-") ? unit.slice("pairs-".length) : unit;
-	const tasks = aspectTasks(entries, chapterPairs(chapter), unit, opts.seed);
+	const tasks = aspectTasks(entries, chapterPairs(chapter), unit, opts.seed, opts.recent);
 	return buildPairsLesson(entries, unit, { seed: opts.seed, recent: opts.recent, tasks, pairInfo: aspectPairInfo(entries) });
 }

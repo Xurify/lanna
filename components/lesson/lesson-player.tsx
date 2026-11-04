@@ -28,6 +28,7 @@ import type { QIconName } from "@/components/quiet/icon-paths";
 import { COLUMN, Dock, OptionTile, PracticeCard, Pulse, Stat, Stats, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
+import { TaskGrid } from "@/components/lesson/task-grid";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { StampDisc } from "@/components/stamp";
 import {
@@ -39,6 +40,7 @@ import {
 	isVariantMatch,
 	LESSONS_TO_COMPLETE,
 	lessonScore,
+	patternExamples,
 	repXp,
 	sameSentence,
 	rankLabel,
@@ -589,7 +591,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 
 	const progress = mode === "blitz" ? left / BLITZ_SECONDS : (index + (current ? 1 : 0)) / total;
 	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && !NO_RETRY.has(current.item.kind) && !current.item.task && relearned.current < RELEARN_MAX;
-	const examples = current ? plan.items.filter((o) => o.unit === current.item.unit && o.sentence !== current.item.sentence && !o.again).slice(0, 2) : [];
+	const examples = patternExamples(plan.items, current?.item);
 
 	return (
 		<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
@@ -1210,42 +1212,9 @@ function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: 
 			{task.kind === "grid" ? (
 				<>
 					<p className="font-prose text-xl leading-snug text-foreground">
-						Which cell holds <span className="font-semibold" lang="sk">{task.form}</span>?
+						Which cell does <span className="font-semibold" lang="sk">{task.form}</span> belong in?
 					</p>
-					<div className="mt-5 overflow-x-auto">
-						<table className="w-full border-separate border-spacing-1.5 text-left" data-testid="task-grid">
-							<thead>
-								<tr>
-									<th scope="col" className="sr-only">
-										Aspect
-									</th>
-									{task.cols.map((col) => (
-										<th key={col} scope="col" className="px-2 pb-1 font-ui text-[13px] font-[550] capitalize text-ink-3">
-											{col}
-										</th>
-									))}
-								</tr>
-							</thead>
-							<tbody>
-								{task.rows.map((row, r) => (
-									<tr key={row}>
-										<th scope="row" className="px-2 py-2.5 align-top font-ui text-[13px] font-[550] capitalize text-ink-3">
-											{row}
-										</th>
-										{task.cols.map((_, c) => {
-											const cell = task.cells.find((x) => x.row === r && x.col === c);
-											return (
-												<td key={c} className="rounded-[10px] bg-well px-3 py-2.5 align-top">
-													{cell?.form ? <span className="font-prose text-[18px] font-semibold text-foreground" lang="sk">{cell.form}</span> : <span className="text-ink-4">—</span>}
-													{cell?.note && <span className="mt-1 block font-ui text-[12px] leading-snug text-ink-3">{cell.note}</span>}
-												</td>
-											);
-										})}
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+					<TaskGrid task={task} revealed={locked} />
 				</>
 			) : (
 				<>

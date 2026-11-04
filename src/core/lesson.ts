@@ -887,6 +887,14 @@ function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId,
 	};
 }
 
+/** The "Same pattern" examples a Why? panel shows for a rep: other sentences of
+ *  its unit, never a form-reading task (a grid or a cue rep, whose sentence is
+ *  empty or a bare span), and none at all for a task rep itself (N2). */
+export function patternExamples(items: readonly LessonItem[], current: LessonItem | undefined, limit = 2): LessonItem[] {
+	if (!current || current.task) return [];
+	return items.filter((o) => !o.task && o.unit === current.unit && o.sentence !== current.sentence && !o.again).slice(0, limit);
+}
+
 /** Blitz: choose-only reps across the given units, as many as a minute holds. */
 export function buildBlitz(entries: readonly LexiconEntry[], units: readonly UnitId[], seed: number, count = 40): LessonPlan & { units: UnitId[] } {
 	const rand = rng(seed);
