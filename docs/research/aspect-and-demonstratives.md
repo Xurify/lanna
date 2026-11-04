@@ -69,4 +69,37 @@ Prompts beat recasts (`docs/research/desirable-difficulties.md`, citing Lyster &
 
 ## Changes
 
-None yet. This note proposes the changes. Step 1 is data plus the existing mix-up code; it needs the owner's go-ahead for the family list.
+Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 in `docs/DECISIONS.md`). The rules that set the limits are P8, E26 and E27; the verifier reviewed the rows (`/mnt/project-files/council/verifier-rows-1.md`). The status of each item:
+
+| Item | Status | Evidence or reason |
+|---|---|---|
+| U1 Aspect families | DONE | One family `aspect` covers the 12 pairs (not one per chapter: the twins span chapters). `curriculum/slovak/mixups.json`. |
+| U2 Twins | DONE | 12 pairs, including pisat/napisat, citat/precitat, robit/urobit, kupovat/kupit. `tests/aspect-families.test.ts` "lists twelve pairs". |
+| U3 Rule | DONE | The family's `rule`: one English line, the tense does not decide it. |
+| U4 Bridge | DONE | `lugesin raamatut` / `lugesin raamatu läbi` checked against `curriculum/slovak/seed-source.json` line 290. |
+| U5 Probe | DONE for the mechanism; BLOCKED for supply | 18 verifier-approved rows only; 9 of 12 pairs have one; none has both aspects, so no pair is drilled (D2). |
+| U6 Measure | DONE for the mechanism | Balance gate, mend and clear across both aspects, record gate: `tests/aspect-families.test.ts`. The record never gets an aspect pair until D2. |
+| U7 Typed variant | DEFERRED | Typed reps exist for open mix-ups, graded deterministically. The Cheap-slot judge runs only in placement, after a string miss; a lesson judge is a new path, and no aspect pair can reach a typed rep yet. |
+| U8 tento/ten family | BLOCKED | `this-vs-that` has 4 + 4 whole-word sentences, but no approved rows, and the English gloss must decide: the verifier has approved none (D2). |
+| U9 More curated sentences | BLOCKED | Tatoeba is not reachable from the build container. Per-cell counts are in the PR; the verifier has approved no demonstrative row (D2). |
+| U10 Form-level atlas drill | DEFERRED | Needs approved demonstrative rows per form and atlas cells of three or more (`src/core/grammar.ts` ties a cell to a learner's stats). The grid explanation is built as a static table instead. |
+| U11 First tries in atlas cells | DEFERRED | Depends on U10. |
+| U12 Explain on request | DONE | `components/lesson/grammar-explain.tsx`, shown in the Why? panel under "Parallels and examples"; a render test. Reachable only once a pair is drillable. |
+| U13 One question after a miss | DONE | The family `cue`, shown after a miss by the lesson player's hint panel (`components/lesson/lesson-player.tsx`, the `pair.cue` branch). No model call; E18 unchanged. |
+| U14 Typed answers | DONE (verified, unchanged) | Lessons grade typed answers with `compareAnswer`; the model judge runs only in placement, after a string miss. No model call added. |
+| U15 Tutor units | DONE (left unchanged) | `tutor("aspect")` and `tutor("gender-this-my")` are untouched (D1). They still write practice in tutor chats. |
+| R1 DECISIONS entry | DONE | E42. |
+| R2 This note | DONE | This section; the research facts are unchanged. |
+| R3 Changelog | DONE | `docs/CHANGELOG-2026-11.md`, 4 November section. |
+| R4 Tests, typecheck, lint | DONE | Run on the branch; the counts are in the PR. |
+
+Also built: the three cue points and a case grid for the explanations, a page-level slovak.wiki allowlist, the excluded sentences (four, with reasons), the `vtomto` typo in `reading.ts`, the empty frame file with its switch (`curriculum/slovak/aspect-frames.json`, `src/server/aspect-frames.ts`), and a simulator in the tests. Not built: the form-reading grid and the "pick the word that decided it" task (new rep kinds with nothing drillable to show them), Playwright screenshots (no lesson reaches the explanation in the shipped state), and any change to the Dvojičky pairs step, which still uses the recognition choice for aspect pairs (an owner decision).
+
+Item bank: 18 rows give 18 unique items and 16 distinct (pair, cue type, phrase). The first repeat comes at the 19th choice rep, about 3 minutes (10 s a rep) or about 6 minutes typed (20 s, an assumption). An hour without a repeat needs about 360 distinct rows. The shipped state gives 0 sentences in 50 seeds.
+
+## Owner decisions
+
+- D1 The `aspect` and `gender-this-my` tutor units: keep them unchanged until the families have run in use (recommended). Open.
+- D2 Who writes the curated sentences: the aspect sentences (9 pairs have one aspect, 3 have none, and none has both), and the demonstrative sentences. Open; blocks U5, U8, U9, U10.
+- D3 Aspect families open earlier for A1 learners? Not decided; chapter placement unchanged. Open.
+- D4 Authored cue frames. Recommendation: no frames until D2 is answered. If the owner wants them, each row needs the owner's approval and a verifier approval, and it counts apart from the verified pool. The mechanism is in place and holds no rows. Open.

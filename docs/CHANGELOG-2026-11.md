@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 4 November: aspect and demonstrative drills, built but inert (branch `feat/aspect-demonstrative-drills`, E42)
+
+- **What was built:** aspect is a mix-up family of 12 pairs (`curriculum/slovak/mixups.json`), drilled only from 18 verifier-approved verified-lexicon rows; a pair is drilled and recorded only with rows of both aspects, and it mends only after right first tries on both. Each family has a static explanation (contrast, timeline or case grid, cue points, trap, one slovak.wiki page link) under the Why? panel after a miss. The lesson's cue question after a miss is the family's own line. Demonstratives (tento/ten) have their grid and explanation, but no approved rows, so nothing is drilled.
+- **What it does today:** nothing new is drilled. No aspect pair has rows on both sides, so the drill and the record stay empty until the owner supplies sentences (D2). `tutor("aspect")` and `tutor("gender-this-my")` are unchanged (D1).
+- **Also fixed:** `vtomto` is now `tomto` in `src/core/reading.ts`; four verifier-rejected sentences are excluded from every pair (`curriculum/slovak/pairs.json`).
+- **Unverified:** every Slovak line in the explanations is pending the verifier (`checked: "pending verifier"`); the slovak.wiki page paths are unverified because the build container could not reach the site; the Why? visuals have not been seen on a phone, since no lesson reaches them yet.
+
 ## 3 November: Watch time counts the video playing (branch `fix/watch-time-logging`)
 
 - **What counted:** the day's Watch minutes counted the time the tab was visible and focused on the watch stage, so a paused video with the tab open counted as watching, with no idle limit. Now the time the video plays counts, and so does the time a paused line waits for your decision (up to 2 minutes a line), and the questions (up to 90 seconds after your last action). Nothing counts before the video is loaded. Clicks into the player's frame count as actions.
