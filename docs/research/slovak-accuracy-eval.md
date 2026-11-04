@@ -9,7 +9,7 @@ Date: 2026-11-01. Question from the owner: could the slovak.wiki `slovak-languag
 - **Base set** (`scripts/eval/slovak-accuracy.json`): 59 items. 22 learner sentences (10 with one error, 12 correct; 6 of the correct ones are curated examples from `curriculum/slovak/lexicon.json`), 8 rule questions with four options, 12 inflected forms, 14 short translations with a checked key form, and 3 free explanations for an A1 learner. 56 are graded by the script. The 3 explanations were graded by hand.
 - **Hard set** (`scripts/eval/slovak-accuracy-hard.json`): 18 items aimed at known weak spots (clitic order, `s/so` and `z/zo`, masculine-person plurals, numerals with people, animals in the plural), each asked 3 times.
 
-The answers were checked against the skill's own references (`skills/slovak-language/references`), which state each rule tested here.
+The answers were checked against the skill's own references (`.claude/skills/slovak-language/references`), which state each rule tested here.
 
 "With skill" means the system prompt carried `SKILL.md` and the one reference file a tutor would read for that item, routed by hand per item (about 6–9k extra input tokens). The models answered as JSON. The prompt told them that a wrong correction is worse than saying they are unsure.
 
@@ -76,7 +76,7 @@ Each one would mislead a learner:
 - **It fixed free explanations.** With the skill, every Haiku level explained the rhythmic law with *krásny*, the 2–4 / 5+ rule, and *dvaja* for male persons only. This is what the tutor actually says to a learner, and where Haiku without the skill was weakest.
 - **It did not fix mechanical forms on its own.** The `s/so` rule and its exact example were in the routed reference, and Haiku medium still accepted *s sestrou* 3 of 3 times.
 - **It did not lower Haiku's graded errors.** Without the skill, Haiku high and xhigh also made no error on the base set. With it, Haiku made more errors on the hard set at medium, high and xhigh (3, 3 and 3, against 1, 1 and 2) and fewer only at max (1 against 3). The counts are small (see Caveats), but nothing here shows the skill helping on forms.
-- **The skill's wording leaks into answers.** The numerals table labeled *dvaja* "m. anim.", and animals are masculine animate. With the skill, Haiku translated "two dogs" as *dvaja psi*, and Sonnet wrote "animate males". Fixed in this repo's copy (see `skills/slovak-language/SOURCE.md`).
+- **The skill's wording leaks into answers.** The numerals table labeled *dvaja* "m. anim.", and animals are masculine animate. With the skill, Haiku translated "two dogs" as *dvaja psi*, and Sonnet wrote "animate males". Fixed in this repo's copy (see `.claude/skills/slovak-language/SOURCE.md`).
 - **Routing matters.** The skill does state the clitic order (`syntax-and-style.md`), only hedged ("use idiomatic patterns rather than forcing an abstract sequence"). The item where Haiku invented "dative before reflexive" was routed to a different chapter, so the rule was not in its context. This repo's copy now adds one explicit line (`Páči sa mi`, never `*mi sa`).
 - **On *dva psi*:** the lexicon's forms for *pes* (not marked verified) include *psi*. The skill's nouns chapter gives *psy* as the standard plural. The key follows the skill. *dvaja psi* is wrong either way.
 - **Cost:** 2–3× the input of a bare prompt for Haiku. Most of it is cacheable when the core is a fixed prefix.
@@ -107,7 +107,7 @@ The model is not the main lever. Eight configs made no auto-graded error on the 
    - Not Haiku medium without the skill: it got every explanation wrong.
    - Not Sonnet low or medium: it rejects correct sentences.
    - Keep Haiku with thinking off for stories (Cheap slot), with the checker from point 1.
-5. **Fix the two skill gaps upstream in slovak.wiki first,** then copy (see [../../skills/slovak-language/SOURCE.md](../../skills/slovak-language/SOURCE.md)): label *dvaja* "male persons" with *dva psy* in the table, and state the clitic order (auxiliary or *by* → *sa/si* → dative → accusative).
+5. **Fix the two skill gaps upstream in slovak.wiki first,** then copy (see [../../.claude/skills/slovak-language/SOURCE.md](../../.claude/skills/slovak-language/SOURCE.md)): label *dvaja* "male persons" with *dva psy* in the table, and state the clitic order (auxiliary or *by* → *sa/si* → dative → accusative).
 6. **Measure again when the key works:**
    - `max` for both models, and Opus 5.5
    - three runs of every config
@@ -119,4 +119,4 @@ The model is not the main lever. Eight configs made no auto-graded error on the 
 - **Judges.** The placement Socratic stage and typed answers the dictionary did not expect: give the judge the reference for accepted alternatives (`slovak-wiki-authoring.md` covers `acceptedAnswers`).
 - **Distractors and contrast pairs.** The authoring rules for options that are really wrong.
 - **Mistake analysis.** The error categories in `practice-and-progression.md` (case frame, agreement, aspect, verb form, word order/clitic, orthography, register, lexis).
-- **Agents writing curriculum or lexicon content in this repo** use `skills/slovak-language` directly.
+- **Agents writing curriculum or lexicon content in this repo** use `.claude/skills/slovak-language` directly.

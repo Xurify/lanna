@@ -348,7 +348,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
   A sentence equal to a curated lexicon example is verified correct. Every rule has a test against the correct sentences models rejected.
 - **Every Slovak practice answer reaches the model with a `[Checker …]` note** when the checker has something certain to say (`withSlovakEvidence`, `src/server/chat-handler.ts`). The learner's card shows only what they typed.
-- **The tutor has `check_slovak` and `slovak_reference`** (the slovak-language skill's chapters, `skills/slovak-language`) beside `lookup_word`. `prompts/language/10-slovak.md` tells it to check before marking Slovak wrong, and never to fix a correct alternative.
+- **The tutor has `check_slovak` and `slovak_reference`** (the slovak-language skill's chapters, `.claude/skills/slovak-language`) beside `lookup_word`. `prompts/language/10-slovak.md` tells it to check before marking Slovak wrong, and never to fix a correct alternative.
 - **`conclude` carries `evidence`.** `checked` means a tool confirmed the forms the verdict rests on; `judgment` means the tutor's reading, said in the verdict. The concluded card shows "Checked in the dictionary" or "Tutor's judgment, not checked". The label comes from what backs the verdict, never from the model's own confidence.
 
 ### E30. The trail design: four marks, one gold, a climb (2026-11-02)

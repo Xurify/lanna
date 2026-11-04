@@ -8,7 +8,7 @@
  *
  * Asks every item in scripts/eval/slovak-accuracy.json once per config and
  * grades it against the item's checked answer. With `:skill` the system
- * prompt carries skills/slovak-language/SKILL.md plus the one reference the
+ * prompt carries .claude/skills/slovak-language/SKILL.md plus the one reference the
  * item names, the way a tutor prompt would route it. Writes one JSON file
  * per config to <out-dir> (raw answers, grades, cost) and prints a table.
  * Explanation items are saved ungraded: a person reads them.
@@ -46,7 +46,7 @@ type Item =
 const SET = process.env.EVAL_SET ?? "base";
 const REPS = Math.max(1, Number(process.env.EVAL_REPS ?? 1));
 const items = (JSON.parse(fs.readFileSync(path.join(ROOT, `scripts/eval/slovak-accuracy${SET === "base" ? "" : `-${SET}`}.json`), "utf8")) as { items: Item[] }).items;
-const SKILL_DIR = path.join(ROOT, "skills/slovak-language");
+const SKILL_DIR = path.join(ROOT, ".claude/skills/slovak-language");
 const skillCore = fs.readFileSync(path.join(SKILL_DIR, "SKILL.md"), "utf8").replace(/^---[\s\S]*?---\s*/, "");
 const reference = (name: string) => fs.readFileSync(path.join(SKILL_DIR, "references", name), "utf8");
 
