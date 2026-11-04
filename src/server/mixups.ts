@@ -18,12 +18,14 @@ function entries() {
 
 /** A lesson rep as the mix-up rules read it, or null when it does not count. */
 export function lessonMixupEvent(
-	rep: { slug: string; kind: string; first?: { given: string; verdict: RepVerdict; peeked?: boolean }; detail?: { answer?: string; sentence?: string; again?: boolean } },
+	rep: { slug: string; kind: string; first?: { given: string; verdict: RepVerdict; peeked?: boolean }; detail?: { answer?: string; sentence?: string; again?: boolean; unit?: string; task?: string } },
 	at: string,
 ): MixupEvent | null {
 	const d = rep.detail;
-	if (!d?.answer || !rep.first || !mixupEventOf({ kind: rep.kind, again: d.again, first: rep.first })) return null;
-	return { slug: rep.slug, answer: d.answer, given: rep.first.given, verdict: rep.first.verdict, sentence: d.sentence ?? "", at };
+	if (!d?.answer || d.task || !rep.first || !mixupEventOf({ kind: rep.kind, again: d.again, first: rep.first })) return null;
+	// A Dvojičky pick shows both words: a miss on it counts even where the family cannot drill the pair yet.
+	const visible = d.unit?.startsWith("pairs-") === true;
+	return { slug: rep.slug, answer: d.answer, given: rep.first.given, verdict: rep.first.verdict, sentence: d.sentence ?? "", at, ...(visible ? { visible: true } : {}) };
 }
 
 /** Count events into a progress record in place (the caller writes it). */

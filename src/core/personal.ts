@@ -10,7 +10,7 @@
  */
 
 import { buildItem, buildLesson, candidatesFor, classifyExample, isUnitId, rng, shuffle, unitInfo, type LessonItem, type LessonPlan, type UnitId } from "./lesson.ts";
-import { drillable, mixupItem, mixupKey, mixupLexicon, mixupRule, mixupStatus, NO_FRAMES, twinsOf, type MixupLexicon, type MixupProbe, type MixupRecord } from "./mixups.ts";
+import { drillable, mixupItem, mixupKey, mixupLexicon, mixupRule, mixupStatus, NO_FRAMES, pairSentenceId, twinsOf, type MixupLexicon, type MixupProbe, type MixupRecord } from "./mixups.ts";
 import { entryLemma, type LexiconEntry } from "./review.ts";
 
 /** The targets, as the lexicon backs them. */
@@ -77,7 +77,7 @@ export function buildPersonalLesson(entries: readonly LexiconEntry[], practice: 
 		const m = record?.[key];
 		const open = !!m && mixupStatus(m) === "active";
 		const rule = mixupRule(m ?? { a, b }, lex);
-		const sentences = fresh(shuffle(twinsOf(lex, a, b), rand), (x) => `${x.entry.slug}#${x.index}`);
+		const sentences = fresh(shuffle(twinsOf(lex, a, b), rand), pairSentenceId);
 		const sides = [sentences.filter((x) => x.member === "a"), sentences.filter((x) => x.member === "b")];
 		const turns: LessonItem[] = [];
 		for (let i = 0; turns.length < 4 && (sides[0]!.length || sides[1]!.length); i++) {
