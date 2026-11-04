@@ -149,6 +149,7 @@ const KIND_LABEL: Record<ItemKind, string> = {
 
 /** A vocabulary rep blanks the word itself, so the ask is the word, not a form. */
 function kindLabel(item: LessonItem): string {
+	if (item.task) return item.task.kind === "grid" ? "Read the grid" : "Find the cue";
 	if (item.kind === "choose" && unitInfo(item.unit).kind === "words") return "Choose the word";
 	if (item.kind === "choose" && unitInfo(item.unit).kind === "pairs") return "Choose the twin";
 	if (item.kind === "type" && unitInfo(item.unit).kind === "words") return "Type the word";
@@ -361,6 +362,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 					options: r.item.options,
 					mixed: r.item.mixed === true,
 					again: r.item.again === true,
+					...(r.item.task ? { task: r.item.task.kind } : {}),
 					latencyMs: r.latencyMs,
 				},
 			})),
@@ -412,7 +414,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 		const latencyMs = firstLatency.current;
 		// "I don't know" (reveal) skips the cue and the second try: the answer
 		// shows at once, the rep counts as a miss and comes back at the end.
-		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind) && !reveal) {
+		if (mode === "lesson" && verdict === "wrong" && miss === null && !NO_RETRY.has(item.kind) && !item.task && !reveal) {
 			setMiss(given);
 			setFirstTry(first ?? null);
 			setCombo(0);
@@ -586,7 +588,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	}
 
 	const progress = mode === "blitz" ? left / BLITZ_SECONDS : (index + (current ? 1 : 0)) / total;
-	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && !NO_RETRY.has(current.item.kind) && relearned.current < RELEARN_MAX;
+	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && !NO_RETRY.has(current.item.kind) && !current.item.task && relearned.current < RELEARN_MAX;
 	const examples = current ? plan.items.filter((o) => o.unit === current.item.unit && o.sentence !== current.item.sentence && !o.again).slice(0, 2) : [];
 
 	return (
@@ -841,7 +843,9 @@ function RepView({
 		return (
 			<div data-word-lookup-enabled={locked ? "true" : "false"}>
 				<PracticeCard icon={repIcon(item)} title={item.again ? `${eyebrow} · Once more` : eyebrow} sub={miss !== null && item.kind === "choose" ? kindLabel({ ...item, kind: "type" }) : kindLabel(item)} right={place}>
-					{item.kind === "build" ? (
+					{item.task ? (
+						<TaskRep item={item} locked={locked} result={result} onGrade={onGrade} />
+					) : item.kind === "build" ? (
 						<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
 					) : (
 						<ClozeRep item={item} tag={tag} locked={locked} result={result} miss={miss} hideMeaning={hideMeaning} onPeek={onPeek} onGrade={onGrade} onReady={onReady} />
@@ -1178,6 +1182,94 @@ function ClozeRep({
 	);
 }
 
+/** A form-reading task (aspect chapters, src/core/aspect-tasks.ts). A grid
+ *  shows its forms and asks which cell holds one; a cue shows the sentence and
+ *  asks which word decided its form. Both are a choice, never typed and never
+ *  retried; the answer and the Why? panel follow the choice. */
+function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: boolean; result: Rep | null; onGrade: (given: string, verdict: RepVerdict) => void }) {
+	const task = item.task!;
+	const options = item.options ?? [];
+	const grid = task.kind === "grid";
+	const judge = (o: string): RepVerdict => (o === item.answer ? "exact" : "wrong");
+
+	useEffect(() => {
+		if (locked) return;
+		const onKey = (e: KeyboardEvent) => {
+			const opt = options[Number(e.key) - 1];
+			if (opt) {
+				e.preventDefault();
+				onGrade(opt, judge(opt));
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
+
+	return (
+		<div>
+			{task.kind === "grid" ? (
+				<>
+					<p className="font-prose text-xl leading-snug text-foreground">
+						Which cell holds <span className="font-semibold" lang="sk">{task.form}</span>?
+					</p>
+					<div className="mt-5 overflow-x-auto">
+						<table className="w-full border-separate border-spacing-1.5 text-left" data-testid="task-grid">
+							<thead>
+								<tr>
+									<th scope="col" className="sr-only">
+										Aspect
+									</th>
+									{task.cols.map((col) => (
+										<th key={col} scope="col" className="px-2 pb-1 font-ui text-[13px] font-[550] capitalize text-ink-3">
+											{col}
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody>
+								{task.rows.map((row, r) => (
+									<tr key={row}>
+										<th scope="row" className="px-2 py-2.5 align-top font-ui text-[13px] font-[550] capitalize text-ink-3">
+											{row}
+										</th>
+										{task.cols.map((_, c) => {
+											const cell = task.cells.find((x) => x.row === r && x.col === c);
+											return (
+												<td key={c} className="rounded-[10px] bg-well px-3 py-2.5 align-top">
+													{cell?.form ? <span className="font-prose text-[18px] font-semibold text-foreground" lang="sk">{cell.form}</span> : <span className="text-ink-4">—</span>}
+													{cell?.note && <span className="mt-1 block font-ui text-[12px] leading-snug text-ink-3">{cell.note}</span>}
+												</td>
+											);
+										})}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</>
+			) : (
+				<>
+					<p className="font-ui text-[14px] text-ink-3">Which word decided the form?</p>
+					<p className="mt-3 font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk">
+						{item.sentence}
+					</p>
+				</>
+			)}
+			<div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2" data-testid="lesson-options">
+				{options.map((o, i) => {
+					const picked = result?.given === o;
+					const right = locked && judge(o) === "exact";
+					return (
+						<OptionTile key={o} n={i + 1} lang={grid ? undefined : "sk"} disabled={locked} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : "idle"}>
+							{o}
+						</OptionTile>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
 function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked: boolean; onGrade: (given: string, verdict: RepVerdict) => void; onReady: (ready: boolean) => void }) {
 	// Bank entries by position (words can repeat in a sentence).
 	const [picked, setPicked] = useState<number[]>([]);
@@ -1367,7 +1459,7 @@ function FeedbackSheet({
 					{verdict !== "exact" && (
 						<p className="font-prose text-[17px] text-foreground">
 							{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
-							<span className="font-semibold" lang={item.kind === "meaning" ? undefined : "sk"}>
+							<span className="font-semibold" lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : "sk"}>
 								{[...expected].map((ch, i) => (
 									<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
 										{ch}
@@ -1377,7 +1469,7 @@ function FeedbackSheet({
 							{verdict === "wrong" && given && (
 								<span className="text-[15px] text-ink-3">
 									{" "}
-									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" ? undefined : "sk"}>{given}</span>”
+									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : "sk"}>{given}</span>”
 								</span>
 							)}
 						</p>

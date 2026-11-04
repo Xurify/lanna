@@ -69,6 +69,7 @@ function Timeline({ t }: { t: NonNullable<LessonExplain["timeline"]> }) {
 				</text>
 			</svg>
 			<figcaption className="flex flex-col gap-1 text-foreground">
+				<span className="font-ui text-[12px] text-ink-3">Example: a sketch of the two lines, not to scale.</span>
 				<span>{t.imperfective}</span>
 				<span>{t.perfective}</span>
 			</figcaption>

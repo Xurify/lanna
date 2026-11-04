@@ -1,8 +1,8 @@
 /**
  * The slovak.wiki pages a static explanation may link to (page level only).
- * The sandbox that wrote these could not reach slovak.wiki, so no deeper URL
- * is used: each slug below is a page the owner named, and the deeper paths
- * are unverified. tests/aspect-families.test.ts holds every explanation link
+ * Every slug is under /grammar/, the path the live pages use (fetched
+ * 2026-11-04: /grammar/aspect and /grammar/demonstratives; the index lists the
+ * other three). No deeper URL is used. tests/aspect-families.test.ts holds every explanation link
  * in curriculum/slovak/mixups.json to this list and to the Slovak base URL.
  *
  * Pure: the base comes from the language table, no network.
@@ -12,10 +12,10 @@ import { LANGUAGES } from "./language.ts";
 
 export const REFERENCE_PAGES: readonly string[] = [
 	"/grammar/aspect",
-	"/demonstratives",
-	"/motion-verbs",
-	"/future-tense",
-	"/cases-overview",
+	"/grammar/demonstratives",
+	"/grammar/motion-verbs",
+	"/grammar/future-tense",
+	"/grammar/cases-overview",
 ];
 
 /** The allowed page URL for a slug, or null when the slug is not on the list. */

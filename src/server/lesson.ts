@@ -10,7 +10,6 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import {
 	buildBlitz,
 	buildLesson,
-	buildPairsLesson,
 	CONTRAST,
 	lessonScore,
 	streakOf,
@@ -29,6 +28,7 @@ import {
 } from "../core/lesson.ts";
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
+import { pairsLessonFor } from "../core/aspect-tasks.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
 import type { UnitKind } from "../core/lesson.ts";
 import { weakestGender, type AtlasGender } from "../core/grammar.ts";
@@ -110,7 +110,7 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	const info = UNITS.find((u) => u.id === unit)!;
 	// Dvojičky build their own reps: a choice between the two twins, from
 	// pairs.json, not the cloze classifier.
-	if (info.kind === "pairs") return withKnown(buildPairsLesson(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
+	if (info.kind === "pairs") return withKnown(pairsLessonFor(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
 	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
@@ -172,6 +172,8 @@ export interface RepResult {
 	 *  lesson is a record, not just a score. Absent on old clients. */
 	detail?: {
 		unit?: string;
+		/** A form-reading task (grid, cue): no first try and no mix-up. */
+		task?: "grid" | "cue";
 		lemma?: string;
 		gloss?: string;
 		sentence?: string;
@@ -331,7 +333,7 @@ const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag 
 function repTry(r: RepResult): { entry?: LexiconEntry; count: FirstTryCount | null } {
 	const entry = loadLexicon()?.bySlug.get(r.slug);
 	const d = r.detail;
-	if (!entry || !d?.unit || d.answer === undefined) return { entry, count: null };
+	if (!entry || !d?.unit || d.answer === undefined || d.task) return { entry, count: null };
 	return { entry, count: firstTryOf({ kind: r.kind, unit: d.unit, again: d.again, first: r.first, answer: d.answer, entry }, tag()) };
 }
 
