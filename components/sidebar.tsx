@@ -115,6 +115,8 @@ const SidebarContext = createContext<{
 	/** Desktop: the sidebar is folded to a narrow column. */
 	collapsed: boolean;
 	toggleCollapsed: () => void;
+	/** A task screen (a lesson, Listen, Read…) is open: the sidebar shows folded there until the learner expands it, without changing the saved choice. Returns the call that ends it. */
+	focusScreen: () => () => void;
 	/** The open sidebar's width in px, between SIDEBAR_MIN and SIDEBAR_MAX. */
 	width: number;
 	setWidth: (px: number) => void;
@@ -126,6 +128,7 @@ const SidebarContext = createContext<{
 	closeDrawer: () => {},
 	collapsed: false,
 	toggleCollapsed: () => {},
+	focusScreen: () => () => {},
 	width: 288,
 	setWidth: () => {},
 });
@@ -139,12 +142,27 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	const [width, setWidthState] = useState(clampSidebarWidth(defaultWidth));
 	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
 	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
-	const [collapsed, setCollapsed] = useState(defaultCollapsed);
+	const [saved, setSaved] = useState(defaultCollapsed);
+	// On a task screen the sidebar starts folded and the open button expands it for as long as the screen is open; the saved choice stays as it was.
+	const [focus, setFocus] = useState(0);
+	const [peek, setPeek] = useState(false);
+	const collapsed = focus > 0 ? !peek : saved;
 	const toggleCollapsed = useCallback(() => {
-		setCollapsed((c) => {
+		if (focus > 0) {
+			setPeek((p) => !p);
+			return;
+		}
+		setSaved((c) => {
 			document.cookie = `lh-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
 			return !c;
 		});
+	}, [focus]);
+	const focusScreen = useCallback(() => {
+		setFocus((n) => n + 1);
+		return () => {
+			setFocus((n) => n - 1);
+			setPeek(false);
+		};
 	}, []);
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
@@ -255,7 +273,7 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth }}>
+		<SidebarContext.Provider value={{ open: open && !narrow, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, focusScreen, width, setWidth }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>

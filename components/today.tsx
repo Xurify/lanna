@@ -24,7 +24,6 @@ import { EntryRow } from "@/components/log/day-log-view";
 import type { DayLog } from "@/src/core";
 import { DayRail, greeting, todayDate, taskIcon, taskLabel, words, type Summary } from "@/components/quiet/day-rail";
 import { SidebarToggle } from "@/components/sidebar";
-import { ZoneSection } from "@/components/flow/zone-section";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
@@ -245,8 +244,6 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 									)}
 								</section>
 							)}
-
-							{s?.flow && <ZoneSection flow={s.flow} titles={Object.fromEntries(s.units.map((u) => [u.id, u.title]))} />}
 
 							{weakGroups.length > 0 && (
 								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".1s" }} data-testid="weak-spots">

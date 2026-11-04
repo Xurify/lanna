@@ -681,12 +681,6 @@ export interface PlanInput {
 	 *  first: with no weak spot on record, Strengthen takes the first one that
 	 *  can be drilled before it falls back to the weakest overall. */
 	worse?: UnitId[];
-	/** Units whose first tries sit below / above the zone (src/core/flow.ts),
-	 *  most clearly first. A unit below it is taken by Strengthen after a weak
-	 *  spot on record; both change the Continue lesson's line, because the
-	 *  lesson itself starts easier or asks for more (src/server/lesson.ts). */
-	hard?: UnitId[];
-	easy?: UnitId[];
 	/** A personal lesson from a recent guide (src/core/personal.ts): with no
 	 *  weak spot on record, Strengthen takes it before anything else. */
 	personal?: { focus: string };
@@ -766,12 +760,10 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		return !!u && (u.kind === "drill" || u.kind === "words") && lessonsBeforeToday(id) < 3 && (day.units[id] ?? 0) > 0;
 	});
 	const nextClean = next ? next.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "") : "";
-	// The lesson itself steps up or down with the zone (src/server/lesson.ts); say so here.
-	const zoneNote = (input.easy ?? []).includes(input.next) ? " · above your zone, so it asks for more" : (input.hard ?? []).includes(input.next) ? " · below your zone, so it starts easier" : "";
 	tasks.push({
 		id: "lesson",
 		title: next ? `${prefix}: ${nextClean}${termSuffix}` : "Grammar Lesson",
-		line: next ? `${next.lessons > 0 ? `Lesson ${next.lessons + 1}` : "New"} · ${lineGrammar}${next.tagline}${zoneNote}` : "The next step on your path",
+		line: next ? (next.lessons > 0 ? `Lesson ${next.lessons + 1} · ${lineGrammar}${next.tagline}` : `New · ${lineGrammar}${next.tagline}`) : "The next step on your path",
 		minutes: TASK_MINUTES.lesson,
 		done: newGroundDone,
 		unit: input.next,
@@ -782,12 +774,9 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	//    flagged it, even with no lesson yet), else the weakest practiced
 	//    drill (not the Continue unit), else a blitz across the units started.
 	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
-	const canDrill = (u: UnitState | undefined) => !!u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked";
-	const hardUnit = spot ? undefined : (input.hard ?? []).map((id) => byId.get(id)).find(canDrill);
-	const worseUnit = spot || hardUnit ? undefined : (input.worse ?? []).map((id) => byId.get(id)).find(canDrill);
+	const worseUnit = spot ? undefined : (input.worse ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
 	const weak =
 		spot ??
-		hardUnit ??
 		worseUnit ??
 		all
 			.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
@@ -819,7 +808,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weakClean}${weakSlovak ? ` · ${weakSlovak}` : ""}`,
-			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbors` : hardUnit ? `Below your zone — it starts easier, with the meaning in view, mixed with its neighbors` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with its neighbors` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbors`,
+			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbors` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with its neighbors` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbors`,
 			minutes: TASK_MINUTES.strengthen,
 			done: strengthenDone,
 			unit: weak.id,

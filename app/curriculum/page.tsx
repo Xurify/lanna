@@ -28,7 +28,6 @@ export default async function CurriculumRoute({ searchParams }: { searchParams: 
 			goal={summary?.goal ?? { level: "B2", minutesPerDay: 30 }}
 			weak={summary?.weakSpots ?? []}
 			exams={summary?.exams ?? {}}
-			zones={summary?.flow.units ?? {}}
 		/>
 	);
 }

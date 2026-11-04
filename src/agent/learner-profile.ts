@@ -17,9 +17,7 @@ import type { FirstTryStats } from "../core/first-try.ts";
 import { learnerProfileText, type LearnerGoal } from "../core/onboarding.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
-import { unitZones, type UnitZone } from "../core/flow.ts";
 import type { MixupRecord } from "../core/mixups.ts";
-import type { MistakeAnalysis } from "../core/mistakes.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 
 interface ProgressFile {
@@ -35,16 +33,6 @@ function recentAverage(days: ProgressFile["days"], now = new Date()): number {
 	let total = 0;
 	for (let i = 0; i < RECENT_DAYS; i++) total += days?.[dayKey(new Date(now.getTime() - i * 86_400_000))]?.minutes ?? 0;
 	return Math.round(total / RECENT_DAYS);
-}
-
-/** Where each unit's first tries sit against the zone, from the saved analysis (analysis.json); empty when there is none. */
-function readZones(): Record<string, UnitZone> {
-	try {
-		const raw = JSON.parse(fs.readFileSync(path.join(PATHS.data, "analysis.json"), "utf-8")) as { analysis?: Pick<MistakeAnalysis, "units"> | null };
-		return unitZones(raw.analysis?.units ?? []);
-	} catch {
-		return {};
-	}
 }
 
 /** The profile block, or null when nothing is known yet (a fresh profile
@@ -63,5 +51,5 @@ export function learnerProfileSegment(): string | null {
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
 	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
-	return learnerProfileText(goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups, readZones());
+	return learnerProfileText(goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups);
 }

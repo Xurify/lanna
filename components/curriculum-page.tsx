@@ -17,10 +17,9 @@ import { Climb } from "@/components/climb";
 import { CLIMB_VIEWS, saveClimbView, type ClimbView } from "@/lib/climb-view";
 import { cn } from "@/lib/utils";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { FlowZonesProvider } from "@/components/flow/flow-context";
-import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type ExamSummary, type LearnerGoal, type UnitState, type UnitZone, type WeakSpotSummary } from "@/src/core";
+import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type ExamSummary, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
 
-export function CurriculumPage({ initialView = "chapters", initialConfigured, state, next, goal, weak = [], exams = {}, zones = {} }: { zones?: Record<string, UnitZone>; initialView?: ClimbView; initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[]; exams?: Record<string, ExamSummary> }) {
+export function CurriculumPage({ initialView = "chapters", initialConfigured, state, next, goal, weak = [], exams = {} }: { initialView?: ClimbView; initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[]; exams?: Record<string, ExamSummary> }) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const [view, setView] = useState<ClimbView>(initialView);
@@ -103,9 +102,7 @@ export function CurriculumPage({ initialView = "chapters", initialConfigured, st
 					))}
 				</div>
 				<div className="mt-6" role="tabpanel" id="climb-panel" aria-labelledby={`climb-tab-${view}`}>
-					<FlowZonesProvider value={zones}>
-						<Climb view={view} state={state} next={next} mode="full" goalLevel={goal.level} goals={purposeGoals(goal.purposes ?? [])} weak={weak} exams={exams} busy={busy} onTutor={onTutor} onScene={onScene} />
-					</FlowZonesProvider>
+					<Climb view={view} state={state} next={next} mode="full" goalLevel={goal.level} goals={purposeGoals(goal.purposes ?? [])} weak={weak} exams={exams} busy={busy} onTutor={onTutor} onScene={onScene} />
 				</div>
 			</main>
 			<SetupDialog

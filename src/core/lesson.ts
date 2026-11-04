@@ -681,10 +681,6 @@ export interface LessonPlan {
 	/** How far the learner is with the unit; the player hides the
 	 *  translation before the answer from "practiced" on. */
 	stage?: UnitStage;
-	/** The zone moved `stage` one step (src/core/flow.ts): up when the unit's
-	 *  first tries sit above the target band, down when below it. Absent when
-	 *  the stage stands as the unit's lessons set it. */
-	flow?: { zone: "easy" | "hard"; shift: "up" | "down"; from: UnitStage };
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
 	bridges?: Array<"et" | "fi" | "ru" | "de">;

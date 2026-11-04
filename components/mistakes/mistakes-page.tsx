@@ -13,12 +13,10 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon
 import { EmptyState } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, unitZone, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { ListeningSection } from "@/components/mistakes/listening-section";
-import { ZoneGauge } from "@/components/flow/zone-gauge";
-import { ZoneWord } from "@/components/flow/zone-word";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-teal-2" },
@@ -391,16 +389,25 @@ function MixupsSection({ a }: { a: MistakeAnalysis }) {
 	);
 }
 
-/** A unit's likely range on a 0 to 100 track, the dot at what you got, and
- *  the zone drawn as a block (src/core/flow.ts). */
+/** A unit's likely range on a 0 to 100 track, the dot at what you got, and a
+ *  tick at the bar under which a unit counts as weak. */
 function RangeBand({ u }: { u: UnitTrend }) {
-	return <ZoneGauge accuracy={u.accuracy} low={u.low} high={u.high} />;
+	const lo = (u.low ?? u.accuracy) * 100;
+	const hi = (u.high ?? u.accuracy) * 100;
+	return (
+		<span className="relative block h-5 w-full" aria-hidden="true">
+			<span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line-2" />
+			<span className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-teal-wash" style={{ left: `${lo}%`, width: `${Math.max(1, hi - lo)}%`, boxShadow: "inset 0 0 0 1px var(--q-teal-line)" }} />
+			<span className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal" style={{ left: `${u.accuracy * 100}%`, boxShadow: "0 0 0 2px var(--q-bg)" }} />
+			<span className="absolute inset-y-0 w-px bg-ink-3" style={{ left: `${WEAK_BAR * 100}%` }} />
+		</span>
+	);
 }
 
 function UnitsSection({ units }: { units: UnitTrend[] }) {
 	if (!units.length) return null;
 	return (
-		<Section id="mistakes-units" title="By unit" line="Most misses first. The dot is your share right, the bar is the likely range, the block is your zone (65–85%). The trend compares the last 14 days with the days before.">
+		<Section id="mistakes-units" title="By unit" line="Most misses first. The dot is your share right, the band is the likely range, the tick is the 85% bar. The trend compares the last 14 days with the days before.">
 			<ul className="q-card flex flex-col divide-y divide-border">
 				{units.slice(0, 8).map((u) => {
 					const slips = FORM_SLIPS.filter((s) => u.slips[s]).map((s) => `${FORM_SLIP_LABEL[s]} ${u.slips[s]}`);
@@ -417,12 +424,6 @@ function UnitsSection({ units }: { units: UnitTrend[] }) {
 									<p className={cn("text-xs", TREND[u.trend].ink)}>
 										{TREND[u.trend].label}
 										{u.recent !== null && u.earlier !== null ? ` · ${pct(u.earlier)} before, ${pct(u.recent)} lately` : ""}
-											{unitZone(u).zone !== "new" && (
-												<>
-													{" · "}
-													<ZoneWord zone={unitZone(u).zone} />
-												</>
-											)}
 									</p>
 								</div>
 								<RangeBand u={u} />

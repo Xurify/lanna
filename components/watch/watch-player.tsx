@@ -33,7 +33,7 @@ import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, L
 import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
-import { NavRail } from "@/components/nav-rail";
+import { TaskFrame as Frame } from "@/components/task-frame";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak } from "@/components/speech";
@@ -320,18 +320,6 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 }
 
 // ─── Chrome ─────────────────────────────────────────────────────────────────
-
-function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	return (
-		<>
-			<NavRail />
-			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-14">
-			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
-			{children}
-			</div>
-		</>
-	);
-}
 
 function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord; step: string; progress: number; onShelf: () => void; right?: React.ReactNode }) {
 	return (

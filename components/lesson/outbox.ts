@@ -10,7 +10,7 @@
  * kept the moment it is finished and the end screen never waits for a request.
  */
 
-import type { StampState, UnitId, UnitZone } from "@/src/core";
+import type { StampState, UnitId } from "@/src/core";
 
 export interface Recorded {
 	queued: string[];
@@ -24,8 +24,6 @@ export interface Recorded {
 		next: UnitId;
 		bestBlitz: number;
 		units: Array<{ id: UnitId; title: string; lessons: number; done: boolean; accuracy: number | null }>;
-		/** Where each unit's first tries sit against the zone (src/core/flow.ts). */
-		flow?: { units: Record<string, UnitZone> };
 	};
 }
 

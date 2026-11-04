@@ -4,7 +4,7 @@ Date: 2026-11-03. Question: which ideas from a genre-agnostic game design skill 
 
 Source: `skills/game-design-fundamentals/SKILL.md` and `templates/player-motivation-worksheet.md` in [fcsouza/agent-skills](https://github.com/fcsouza/agent-skills). The skills.sh page shows only the header, so the full text was read in the GitHub repo. Read only; nothing was installed. The book and paper citations below come from the skill and were not checked against the sources in this pass.
 
-The first pass only read and mapped. Proposal 1 was then built as the zone (E42, `src/core/flow.ts`); the others are still for the owner to decide.
+The first pass only read and mapped. Proposal 1, the first-try band, was then built and **removed on 2026-11-04**: the owner found the new word "zone" and its gauge more confusing than helpful, and the change underneath (an easier or harder start to a lesson) was too subtle to feel. The lesson: this app's learner wants fewer things to decode (P5, E30), so a game design idea earns a place only if it works without a new concept on screen. The other proposals are still open.
 
 ## What the skill covers
 
@@ -66,9 +66,9 @@ The skill says to pick two or three aesthetics and let every mechanic serve them
 
 Speak (Expression) is in the app but outside the top three. Streak and XP serve no chosen aesthetic. They stay as cheap, optional signals, as E31 says.
 
-## Proposals, ranked (1 built)
+## Proposals, ranked (1 built and removed)
 
-1. **First-try flow band. Built (E42, 2026-11-03).** The band is 65% to 85%, a unit is placed after 12 first tries by a one-sided 95% Wilson test, and the zone steers the next lesson one stage, the plan's Strengthen, Today, the path, the lesson's end screen, My mistakes and the tutor's profile. The original proposal: set a target band for first-try accuracy per unit, for example 65% to 85%. Above the band after enough tries: a boredom signal, so offer the strong stage or a Mix-ups lesson. Below the band: an anxiety signal, so offer a cue or an earlier unit. Follow the E25 rules: no reading under 30 first tries, and use the Wilson range. The owner picks the band after a research pass. Do not copy the skill's `getDifficultyMultiplier` formula. The app chooses units, not a multiplier, and a formula would fix a number before there is evidence (P8).
+1. **First-try flow band. Built, then removed (2026-11-04).** The original proposal: set a target band for first-try accuracy per unit, for example 65% to 85%. Above the band after enough tries: a boredom signal, so offer the strong stage or a Mix-ups lesson. Below the band: an anxiety signal, so offer a cue or an earlier unit. Follow the E25 rules: no reading under 30 first tries, and use the Wilson range. The owner picks the band after a research pass. Do not copy the skill's `getDifficultyMultiplier` formula. The app chooses units, not a multiplier, and a formula would fix a number before there is evidence (P8).
 2. **Stamp inflation check.** Count the stamps a fresh profile earns in its first week, on a scratch folder (E6). If it is more than a few, raise the bar on the cheapest deeds. Measure first.
 3. **Relatedness, a question for the owner.** Should the Robo cast become recurring characters the learner meets in Read and Speak? It already exists in `world.json`. Social features would conflict with E7.
 4. **Shake on a miss.** Review it at both window sizes (E4) and check that it reads as feedback, not a penalty.

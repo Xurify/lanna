@@ -20,8 +20,6 @@ import { UnitBadge } from "@/components/unit-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { examLine, STAGES, TUTOR_SESSIONS, weakFamily, WEAK_MEND_ACCURACY, WEAK_MEND_REPS, type ChapterState, type CurriculumState, type ExamSummary, type UnitState, type WeakSpotSummary } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
-import { useUnitZone } from "@/components/flow/flow-context";
-import { ZoneWord } from "@/components/flow/zone-word";
 
 export function CurriculumPath({
 	state,
@@ -560,7 +558,6 @@ export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene
 	const locked = u.status === "locked";
 	const skipped = u.status === "skipped";
 	const tone = u.kind === "tutor" ? "xp" : u.kind === "goal" ? "flame" : "go";
-	const zone = useUnitZone(u.id);
 	const body = (
 		<>
 			<UnitBadgeHover unit={u} active={active} locked={locked} skipped={skipped} tone={tone} />
@@ -579,12 +576,6 @@ export function UnitRow({ unit: u, active, starred, weak, busy, onTutor, onScene
 				</span>
 				<span className="block truncate font-ui text-xs text-muted-foreground" title={weak ? `Weak spot ${weak.line}` : undefined}>
 					{weak ? `Weak spot ${weak.line}` : unitLine(u, active)}
-					{zone && !weak && !locked && (
-						<>
-							{" · "}
-							<ZoneWord zone={zone.zone} />
-						</>
-					)}
 				</span>
 			</span>
 		</>
