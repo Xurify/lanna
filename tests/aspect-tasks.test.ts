@@ -14,7 +14,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { aspectPairInfo, aspectTasks, cueWindowReport, cueWindows, gridCells, pairsLessonFor } from "../src/core/aspect-tasks.ts";
+import { aspectPairInfo, aspectTasks, cueWindowReport, cueWindows, gridCells, pairsLessonFor, STOPWORDS } from "../src/core/aspect-tasks.ts";
 import { PAIRS_TASK_SLOTS, patternExamples, type LessonItem, type UnitId } from "../src/core/lesson.ts";
 import { chapterPairs, twinSentences, PAIRS } from "../src/core/pairs.ts";
 import {
@@ -115,6 +115,46 @@ test("a cue window the row's form touches or contains is dropped, with its reaso
 	assert.deepEqual(cueWindowReport("Román o vojne čítala celú noc.", "celú noc", "čítala").kept, ["Román o"], "the kept window is the one the rules allow");
 });
 
+test("the cue-word groups: a window holding one is dropped with its group's reason, and the span itself is never dropped (N9)", () => {
+	const reason = (sentence: string, span: string, form: string | undefined, text: string) => cueWindowReport(sentence, span, form).dropped.find((d) => d.text === text)?.reason;
+	// Habit and frequency: každý, vždy, často, … and každom only with a time noun next
+	assert.equal(reason("Pes štekal často, ale mačka spala v kúte.", "spala", undefined, "často"), "a habit cue");
+	assert.equal(reason("Každý deň chodím do parku.", "chodím", undefined, "Každý"), "a habit cue");
+	assert.equal(reason("Chodí do školy každom roku.", "Chodí", undefined, "každom"), "a habit cue", "každom with a time noun");
+	assert.equal(reason("Chodí v každom obchode.", "Chodí", undefined, "každom"), undefined, "každom with no time noun is kept");
+	// Duration: dlho; celý, celú, celé with noc; a number with hodiny, hodín or minút
+	assert.equal(reason("Čakal dlho na vlak.", "Čakal", undefined, "dlho"), "a duration cue");
+	assert.equal(reason("Čítal celú noc knihu.", "Čítal", undefined, "celú"), "a duration cue");
+	assert.equal(reason("Čítal celú noc knihu.", "Čítal", undefined, "noc"), "a duration cue", "the noc of the phrase too");
+	assert.equal(reason("Čakal dve hodiny na vlak.", "Čakal", undefined, "dve"), "a duration cue", "the number");
+	assert.equal(reason("Čakal dve hodiny na vlak.", "Čakal", undefined, "hodiny"), "a duration cue", "the unit");
+	// Phase verbs: budem, budeš, bude, budeme, budete, budú; every form of začať, prestať, skončiť
+	assert.equal(reason("Tom bude písať list.", "Tom", undefined, "bude"), "a phase verb");
+	assert.equal(reason("Začal čítať knihu.", "knihu", undefined, "Začal"), "a phase verb", "začať by stem");
+	assert.equal(reason("Prestal som fajčiť.", "fajčiť", undefined, "Prestal"), "a phase verb", "prestať by stem");
+	assert.equal(reason("Skončil včera prácu.", "prácu", undefined, "Skončil"), "a phase verb", "skončiť by stem");
+	// Perfective cues: nakoniec, konečne; za with a time noun; podarilo, podarí; stihol, stihla, stihli, stihnem
+	assert.equal(reason("Nakoniec ju našiel doma.", "doma", undefined, "Nakoniec"), "a perfective cue");
+	assert.equal(reason("Vrátil sa za hodinu domov.", "domov", undefined, "za"), "a perfective cue", "za with a time noun");
+	assert.equal(reason("Podarilo sa mu to.", "to", undefined, "Podarilo"), "a perfective cue");
+	assert.equal(reason("Stihol včas prísť domov.", "domov", undefined, "Stihol"), "a perfective cue");
+	// Present moment: práve
+	assert.equal(reason("Práve čítam knihu.", "knihu", undefined, "Práve"), "the present-moment cue");
+	// The span is the answer, so it is never a dropped window and never a cue of its own
+	assert.deepEqual(cueWindowReport("Každý deň čítam knihu.", "Každý deň", undefined).kept, ["čítam knihu"], "the span is not a window");
+});
+
+test("a window that crosses a comma is dropped; ach and čo are filler, so they are only function words (N9)", () => {
+	assert.equal(reason2("Dom stojí, a záhrada kvitne.", "záhrada kvitne", undefined, "stojí, a"), "crosses a comma");
+	assert.equal(reason2("Ach, zabudla som kúpiť kapustu. Čo budeme robiť?", "budeme", "robiť", "Ach"), "only function words");
+	assert.equal(reason2("Ach, zabudla som kúpiť kapustu. Čo budeme robiť?", "budeme", "robiť", "Čo"), "only function words");
+	assert.ok(STOPWORDS.has("ach") && STOPWORDS.has("čo"), "ach and čo are stopwords");
+});
+
+function reason2(sentence: string, span: string, form: string | undefined, text: string) {
+	return cueWindowReport(sentence, span, form).dropped.find((d) => d.text === text)?.reason;
+}
+
 test("the cue reps: one per approved row whose span has three windows, each a substring of its sentence", () => {
 	const tasks = aspectTasks(entries, PAIRS, "pairs-plans", 5).filter((i) => i.task?.kind === "cue");
 	const usable = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length >= 3);
@@ -137,21 +177,20 @@ test("the verifier's span corrections hold: po francúzsky and pohŕdavo are the
 		return hits[0]!;
 	};
 	const francuzsky = row("Hovorím po francúzsky každý deň");
-	assert.equal(francuzsky.span, "po francúzsky", "the cue is po francúzsky, not každý deň");
-	const windows = cueWindows(francuzsky.sk, "po francúzsky");
-	assert.ok(windows.length >= 3, "three windows to offer");
-	assert.ok(!windows.includes("po francúzsky"), "the span is never also a wrong window");
+	assert.equal(francuzsky.approved !== undefined && francuzsky.span, undefined, "row 53 stays an approved probe row with no cue span (its každý deň is a second answer)");
+	const why = cueWindowReport(francuzsky.sk, "po francúzsky", francuzsky.form).dropped.find((d) => d.text === "každý deň");
+	assert.equal(why?.reason, "a habit cue", "as a window, každý deň would be a second answer: the rule drops it");
 	assert.equal(row("O susedoch vždy hovorila pohŕdavo").span, "pohŕdavo", "the cue is pohŕdavo");
 	assert.equal(row("Starý otec vždy hovoril múdro a pokojne").span, undefined, "no single span: no cue rep");
 	assert.equal(row("Lokálny obchod predáva čerstvé pečivo každé ráno").span, undefined, "the ongoing offer is no span");
 	assert.equal(row("Zodpovední rodičia čítajú deťom každý večer").span, undefined, "no object shows no span");
 	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length >= 3);
-	assert.equal(cueRows.length, 7, "seven rows make cue reps once the form's neighbours are dropped");
+	assert.equal(cueRows.length, 5, "five rows make cue reps: the form's neighbours and the cue words are dropped, and row 53 is withdrawn");
 });
 
 test("the rows with fewer than three windows give no cue rep, and are named (N3)", () => {
 	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form).length < 3).map((r) => r.span);
-	assert.deepEqual([...short].sort(), ["Budete", "bude", "budeš", "celú noc", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort());
+	assert.deepEqual([...short].sort(), ["Budete", "bude", "budeš", "celú noc", "nakoniec", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort());
 });
 
 test("cue reps and grid reps are tasks: they carry the family's cue and explanation, and never a first try", () => {
@@ -165,10 +204,11 @@ test("cue reps and grid reps are tasks: they carry the family's cue and explanat
 	}
 });
 
-test("the task pool: sixty grid tasks and seven cue tasks across the twelve pairs (N4 numbers)", () => {
+test("the task pool: sixty grid tasks and five cue tasks across the twelve pairs (66 is withdrawn; 65 in all)", () => {
 	const pool = aspectTasks(entries, PAIRS, "pairs-plans", 5);
 	assert.equal(pool.filter((i) => i.task?.kind === "grid").length, 60, "five formed cells in each of twelve pairs");
-	assert.equal(pool.filter((i) => i.task?.kind === "cue").length, 7, "seven rows with three windows");
+	assert.equal(pool.filter((i) => i.task?.kind === "cue").length, 5, "five rows with three windows");
+	assert.equal(pool.length, 65, "sixty-five tasks in all");
 	assert.equal(new Set(pool.map((i) => i.id)).size, pool.length, "every task has its own id");
 });
 

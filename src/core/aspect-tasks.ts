@@ -13,8 +13,10 @@
  * - cue: an approved row's own sentence, with the word or phrase that decided
  *   its form (the row's span) among same-length windows of the same sentence.
  *   A window is dropped when it overlaps the span, repeats it, contains the
- *   form, touches the form, or is made only of function words (STOPWORDS). A
- *   row with fewer than three windows left gives no cue rep.
+ *   form, touches the form, crosses a comma, holds a cue word of the verifier's
+ *   list (habit, duration, phase verb, perfective, present moment: cueMarks),
+ *   or is made only of function words (STOPWORDS). A row with fewer than three
+ *   windows left gives no cue rep.
  *
  * Neither is a drill for the first-try measure or the mix-up record (the
  * player and the server read `task`). The grid's forms come from the paradigms,
@@ -39,7 +41,7 @@ const PERFECTIVE_FUTURE_NOTE = "no such form: the perfective future is the prese
 /** Function words and clitics a cue window is never made of alone (lowercase). */
 export const STOPWORDS: ReadonlySet<string> = new Set([
 	"a", "i", "o", "u", "v", "vo", "s", "so", "z", "zo", "na", "do", "od", "po", "za", "pre", "pri", "pod", "nad", "bez", "k", "ku", "o",
-	"ani", "aj", "ale", "že", "aby", "ak", "ako", "lebo", "keď", "tak", "len", "tiež", "ešte", "už", "veľmi", "tu", "tam", "ten", "tá", "to", "toto",
+	"ani", "aj", "ale", "že", "aby", "ak", "ako", "lebo", "keď", "tak", "len", "tiež", "ešte", "už", "veľmi", "tu", "tam", "ten", "tá", "to", "toto", "ach", "čo",
 	"sa", "si", "som", "sme", "ste", "je", "sú", "bol", "bola", "boli", "mi", "ti", "mu", "ho", "ju", "ich", "im", "ma", "nás", "vás", "ťa",
 ]);
 
@@ -134,8 +136,83 @@ function wordsOf(text: string): Array<{ start: number; end: number }> {
 	return [...text.matchAll(WORD)].map((m) => ({ start: m.index!, end: m.index! + m[0].length }));
 }
 
+/* The cue words a window may not hold (N9; the verifier's list, lowercase). A
+ * window that holds one is dropped, unless it is the row's span. */
+const HABIT_WORDS: ReadonlySet<string> = new Set(["každý", "každá", "každé", "každú", "každoročne", "denne", "vždy", "často", "zvyčajne", "obvykle", "bežne", "občas"]);
+/** "každom" counts only with a time noun next. */
+const EACH_IN_TIME = "každom";
+const TIME_NOUNS: ReadonlySet<string> = new Set(["deň", "dni", "týždeň", "týždňa", "týždni", "týždne", "mesiac", "mesiaca", "mesiaci", "mesiace", "rok", "roku", "roky", "večer", "ráno", "noc", "hodinu", "hodine", "hodiny", "hodín", "minútu", "minúty", "minút"]);
+const DURATION_WORDS: ReadonlySet<string> = new Set(["dlho"]);
+/** "celý", "celú", "celé" count with noc next. */
+const WHOLE_WORDS: ReadonlySet<string> = new Set(["celý", "celú", "celé"]);
+const NUMBER_WORDS: ReadonlySet<string> = new Set(["jeden", "jedna", "jedno", "dva", "dve", "tri", "štyri", "päť", "šesť", "sedem", "osem", "deväť", "desať", "jedenásť", "dvanásť", "pätnásť", "dvadsať", "tridsať", "štyridsať", "päťdesiat", "šesťdesiat", "sedemdesiat", "osemdesiat", "deväťdesiat", "sto"]);
+/** A number before one of these is a duration. */
+const HOUR_MINUTE_WORDS: ReadonlySet<string> = new Set(["hodiny", "hodín", "minút"]);
+const PHASE_WORDS: ReadonlySet<string> = new Set(["budem", "budeš", "bude", "budeme", "budete", "budú"]);
+/** Every form of začať, prestať and skončiť, by its stem. */
+const PHASE_STEMS = ["začn", "začal", "začať", "začín", "prestan", "prestal", "prestať", "prestá", "skonč"];
+const PERFECTIVE_WORDS: ReadonlySet<string> = new Set(["nakoniec", "konečne", "podarilo", "podarí", "stihol", "stihla", "stihli", "stihnem"]);
+/** "za" counts with a time noun within the next two words. */
+const FOR_WORD = "za";
+const PRESENT_WORDS: ReadonlySet<string> = new Set(["práve"]);
+
+export type CueGroup = "habit" | "duration" | "phase" | "perfective" | "present";
+
+const GROUP_REASON: Record<CueGroup, WindowDrop["reason"]> = {
+	habit: "a habit cue",
+	duration: "a duration cue",
+	phase: "a phase verb",
+	perfective: "a perfective cue",
+	present: "the present-moment cue",
+};
+
+const isNumberWord = (w: string) => /^\p{N}+$/u.test(w) || NUMBER_WORDS.has(w);
+
+/** The cue-word tokens of a sentence, by token index, each with its group. */
+function cueMarks(sentence: string, tokens: ReadonlyArray<{ start: number; end: number }>): Map<number, CueGroup> {
+	const words = tokens.map((t) => sentence.slice(t.start, t.end).toLocaleLowerCase("sk-SK"));
+	const marks = new Map<number, CueGroup>();
+	const mark = (i: number, group: CueGroup) => {
+		if (!marks.has(i)) marks.set(i, group);
+	};
+	words.forEach((w, i) => {
+		const next = words[i + 1];
+		if (HABIT_WORDS.has(w)) mark(i, "habit");
+		if (w === EACH_IN_TIME && next !== undefined && TIME_NOUNS.has(next)) mark(i, "habit");
+		if (DURATION_WORDS.has(w)) mark(i, "duration");
+		if (WHOLE_WORDS.has(w) && next === "noc") {
+			mark(i, "duration");
+			mark(i + 1, "duration");
+		}
+		if (HOUR_MINUTE_WORDS.has(w) && i > 0 && isNumberWord(words[i - 1]!)) {
+			mark(i - 1, "duration");
+			mark(i, "duration");
+		}
+		if (PHASE_WORDS.has(w) || PHASE_STEMS.some((stem) => w.startsWith(stem))) mark(i, "phase");
+		if (PERFECTIVE_WORDS.has(w)) mark(i, "perfective");
+		if (w === FOR_WORD && (TIME_NOUNS.has(next ?? "") || TIME_NOUNS.has(words[i + 2] ?? ""))) mark(i, "perfective");
+		if (PRESENT_WORDS.has(w)) mark(i, "present");
+	});
+	return marks;
+}
+
 /** Why a candidate window was not offered as a cue option. */
-export type WindowDrop = { text: string; reason: "overlaps the cue" | "repeats the cue" | "contains the form" | "touches the form" | "only function words" | "repeats another window" };
+export type WindowDrop = {
+	text: string;
+	reason:
+		| "overlaps the cue"
+		| "repeats the cue"
+		| "contains the form"
+		| "touches the form"
+		| "crosses a comma"
+		| "a habit cue"
+		| "a duration cue"
+		| "a phase verb"
+		| "a perfective cue"
+		| "the present-moment cue"
+		| "only function words"
+		| "repeats another window";
+};
 
 /** The cue windows of a sentence: the same number of words as the span, each
  *  kept or dropped with its reason. `form` is the verb form the row names (its
@@ -157,6 +234,7 @@ export function cueWindowReport(sentence: string, span: string, form?: string): 
 		const fl = fa < 0 ? -1 : tokens.findIndex((t) => t.end === fa + form.length);
 		if (fi >= 0 && fl >= fi) [formFirst, formLast] = [fi, fl];
 	}
+	const marks = cueMarks(sentence, tokens);
 	const kept: string[] = [];
 	const dropped: WindowDrop[] = [];
 	for (let k = 0; k + n <= tokens.length; k++) {
@@ -164,10 +242,14 @@ export function cueWindowReport(sentence: string, span: string, form?: string): 
 		const b = k + n - 1;
 		const text = sentence.slice(tokens[a]!.start, tokens[b]!.end);
 		const drop = (reason: WindowDrop["reason"]) => dropped.push({ text, reason });
+		let cue: CueGroup | undefined;
+		for (let i = a; i <= b && cue === undefined; i++) cue = marks.get(i);
 		if (a <= last && b >= first) drop("overlaps the cue");
 		else if (text === span) drop("repeats the cue");
 		else if (formFirst >= 0 && a <= formLast && b >= formFirst) drop("contains the form");
 		else if (formFirst >= 0 && (b === formFirst - 1 || a === formLast + 1)) drop("touches the form");
+		else if (text.includes(",")) drop("crosses a comma");
+		else if (cue !== undefined) drop(GROUP_REASON[cue]);
 		else if (wordsOf(text).every((w) => STOPWORDS.has(text.slice(w.start, w.end).toLocaleLowerCase("sk-SK")))) drop("only function words");
 		else if (kept.includes(text)) drop("repeats another window");
 		else kept.push(text);
