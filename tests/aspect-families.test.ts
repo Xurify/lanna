@@ -31,6 +31,7 @@ import {
 } from "../src/core/mixups.ts";
 import { isAllowedReferenceUrl, REFERENCE_PAGES, referencePageUrl } from "../src/core/reference-pages.ts";
 import { aspectFrames, parseFrameRows } from "../src/server/aspect-frames.ts";
+import { GRAMMAR_WORDS } from "../src/core/reading.ts";
 
 const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] }).words;
 const lex = mixupLexicon(entries);
@@ -44,6 +45,9 @@ const thisThat = MIXUP_FAMILIES.find((f) => f.id === "this-vs-that") as MixupFam
 const pairsFile = JSON.parse(fs.readFileSync("curriculum/slovak/pairs.json", "utf-8")) as { excluded: Array<{ slug: string; sk: string; why: string }> };
 
 const rows = aspect.probes ?? [];
+/** The slugs the verifier accepted without a formsVerified flag (family data). */
+const accepted = new Set(aspect.formsAccepted ?? []);
+const verifiedOrAccepted = (e: LexiconEntry) => (e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
 const perfectiveOf = (pair: [string, string]) => pair[1];
 const at = (n: number) => new Date(Date.UTC(2026, 10, 4, 9, n)).toISOString();
 
@@ -122,11 +126,15 @@ test("the mend rule: three right first tries on one aspect do not mend; both asp
 });
 
 test("the mend and clear rules use both aspects when a family lists probes, and one aspect otherwise", () => {
-	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat"] }), "active");
-	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat", "napisat"] }), "mended");
-	assert.equal(mixupStatus({ misses: 1, hits: 3 }), "mended", "a family without probes keeps the old rule");
-	assert.equal(mixupStatus({ misses: 0, hits: 2, won: ["pisat"] }), "probe");
-	assert.equal(mixupStatus({ misses: 0, hits: 2, won: ["pisat", "napisat"] }), "cleared");
+	const family = "aspect";
+	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat"], family }), "active");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat", "napisat"], family }), "mended");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat", "pisat"], family }), "active", "one aspect twice is still one side");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, family }), "active", "S2: a probe family with no won counts as empty, not as both sides");
+	assert.equal(mixupStatus({ misses: 1, hits: 3 }), "mended", "a pair outside a probe family keeps the old rule");
+	assert.equal(mixupStatus({ misses: 0, hits: 2, won: ["pisat"], family }), "probe");
+	assert.equal(mixupStatus({ misses: 0, hits: 2, won: ["pisat", "napisat"], family }), "cleared");
+	assert.equal(mixupStatus({ misses: 0, hits: 2, family }), "probe", "S2: no won, no clear");
 });
 
 test("the lesson for an undrillable aspect pair has no items, for every seed", () => {
@@ -136,11 +144,75 @@ test("the lesson for an undrillable aspect pair has no items, for every seed", (
 	}
 });
 
-test("the parallel form pairs písal with napísal; unverified paradigms give none", () => {
+test("the parallel form: index pairs the paradigm, the lemma pairs the infinitive, unverified lists give none", () => {
 	assert.equal(parallelForm(E("pisat"), E("napisat"), "písal"), "napísal");
-	assert.equal(parallelForm(E("pisat"), E("napisat"), "písať"), null, "an infinitive is not in the paradigm list");
-	assert.equal(parallelForm(E("citat"), E("precitat"), "čítal"), null, "citat has no verified paradigm");
-	assert.equal(parallelForm(E("pomahat"), E("pomoct"), "pomáhal"), null, "pomahat has no verified paradigm");
+	assert.equal(parallelForm(E("pisat"), E("napisat"), "písať"), "napísať", "the infinitive pairs with the other lemma");
+	assert.equal(parallelForm(E("citat"), E("precitat"), "čítal", accepted), "prečítal", "citat's paradigm is accepted by the family");
+	assert.equal(parallelForm(E("pomahat"), E("pomoct"), "pomáhal", accepted), "pomohol", "pomahat's paradigm is accepted by the family");
+	assert.equal(parallelForm(E("citat"), E("precitat"), "čítal"), null, "without the family's acceptance an unverified list gives none");
+	assert.equal(parallelForm({ ...E("citat"), formsVerified: undefined } as LexiconEntry, E("precitat"), "čítal", accepted), "prečítal");
+	assert.equal(parallelForm({ ...E("citat"), formsVerified: undefined } as LexiconEntry, E("precitat"), "čítal", new Set()), null, "an unverified list gives none");
+});
+
+test("brať and vziať pair by slot: the imperatives and the past line up (bral is not paired with vzalo)", () => {
+	const brat = E("brat");
+	const vziat = E("vziat");
+	assert.equal(brat.forms!.length, vziat.forms!.length, "the same number of slots");
+	assert.equal(parallelForm(brat, vziat, "bral"), "vzal");
+	assert.equal(parallelForm(brat, vziat, "brala"), "vzala");
+	assert.equal(parallelForm(brat, vziat, "ber"), "vezmi", "the 2sg imperative");
+	assert.equal(parallelForm(brat, vziat, "berte"), "vezmite", "the 2pl imperative");
+	assert.equal(parallelForm(brat, vziat, "brať"), "vziať", "the infinitive");
+	assert.equal(parallelForm(E("pisat"), E("napisat"), "píš"), "napíš", "the 2sg imperative of písať");
+	assert.equal(parallelForm(E("pisat"), E("napisat"), "píšte"), "napíšte", "the 2pl imperative of písať");
+});
+
+test("alignment over all twelve aspect pairs: every slot pairs with the same slot, the past sits in the same slots, and unequal lists give null", () => {
+	const isPast = (f: string) => /l(?:a|o|i)?$/iu.test(f);
+	const checked: string[] = [];
+	for (const [a, b] of aspect.pairs) {
+		const ea = E(a);
+		const eb = E(b);
+		assert.ok(verifiedOrAccepted(ea) && verifiedOrAccepted(eb), `${a}/${b}: both paradigms are verified or accepted by the family`);
+		const fa = ea.forms!;
+		const fb = eb.forms!;
+		assert.equal(fa.length, fb.length, `${a}/${b}: the same number of slots`);
+		assert.deepEqual(fa.map(isPast), fb.map(isPast), `${a}/${b}: the past is in the same slots`);
+		for (let i = 0; i < fa.length; i++) {
+			if (fa.indexOf(fa[i]!) !== i) continue;
+			assert.equal(parallelForm(ea, eb, fa[i]!, accepted), fb[i], `${a}/${b}: slot ${i} (${fa[i]})`);
+		}
+		checked.push(`${a}/${b}`);
+	}
+	assert.equal(checked.length, 12, "all twelve pairs are checked");
+	const short = { ...E("citat"), forms: E("citat").forms!.slice(0, 9) } as LexiconEntry;
+	assert.equal(parallelForm(short, E("precitat"), "čítal", accepted), null, "unequal lists give null");
+});
+
+test("a misaligned pairing is refused: the past must sit in the same slots on both sides", () => {
+	const make = (forms: string[]) => ({ slug: "x", sk: "x", lemma: "x", forms, formsVerified: true, examples: [] }) as unknown as LexiconEntry;
+	const present = ["p1", "p2", "p3", "p4", "p5", "p6"];
+	const twoImperatives = make([...present, "imp1", "imp2", "bral", "brala", "bralo", "brali"]);
+	const pastEarly = make([...present, "vzal", "vzala", "vzalo", "vzali", "imp1", "imp2"]);
+	const pastSame = make([...present, "imp1", "imp2", "vzal", "vzala", "vzalo", "vzali"]);
+	assert.equal(parallelForm(twoImperatives, pastEarly, "bral"), null, "the past is in other slots: no distractor");
+	assert.equal(parallelForm(twoImperatives, pastSame, "bral"), "vzal", "the same slots: the parallel is given");
+});
+
+test("every approved row has a parallel form, so every row can be drilled", () => {
+	for (const row of rows) {
+		const pair = aspect.pairs.find((p) => p.includes(row.slug))!;
+		const other = pair[0] === row.slug ? pair[1] : pair[0];
+		assert.ok(parallelForm(E(row.slug), E(other), row.form!, accepted) !== null, `${row.slug}: ${row.form} has a parallel form`);
+	}
+});
+
+test("the reading map names every tento and tamten form", () => {
+	const tento = { tomuto: "tento", túto: "tento", touto: "tento", týchto: "tento", týmito: "tento", týmto: "tento", tohto: "tento" };
+	for (const [form, lemma] of Object.entries(tento)) assert.equal(GRAMMAR_WORDS[form]?.[0], lemma, form);
+	const tamten = ["tamten", "tamtá", "tamto", "tamtí", "tamtie", "tamtoho", "tamtej", "tamtomu", "tamtom", "tamtým", "tamtú", "tamtou", "tamtých", "tamtými"];
+	for (const form of tamten) assert.equal(GRAMMAR_WORDS[form]?.[0], "tamten", form);
+	assert.equal(GRAMMAR_WORDS.vtomto, undefined, "the typo is gone");
 });
 
 test("the pinned perfective futures are verified forms of their twins", () => {
@@ -219,6 +291,16 @@ test("every explanation link is a page-level slovak.wiki page on the allowlist",
 	assert.ok(REFERENCE_PAGES.every((p) => p.startsWith("/") && !p.endsWith("/")));
 });
 
+test("every allowed reference slug starts with /grammar/, and every explanation's link is one of them (B2)", () => {
+	for (const slug of REFERENCE_PAGES) assert.ok(slug.startsWith("/grammar/"), `${slug} is under /grammar/`);
+	assert.ok(REFERENCE_PAGES.includes("/grammar/aspect") && REFERENCE_PAGES.includes("/grammar/demonstratives"));
+	for (const f of MIXUP_FAMILIES.filter((x) => x.explain)) {
+		const slug = new URL(f.explain!.wiki).pathname;
+		assert.ok(slug.startsWith("/grammar/"), `${f.id}: ${slug} is under /grammar/`);
+		assert.ok(REFERENCE_PAGES.includes(slug), `${f.id}: ${slug} is on the list`);
+	}
+});
+
 test("the explanations are marked pending verifier until the verifier signs them off", () => {
 	assert.equal(aspect.explain?.checked, "pending verifier");
 	assert.equal(thisThat.explain?.checked, "pending verifier");
@@ -233,12 +315,14 @@ test("the explanations' example sentences are never drill sentences or approved 
 	}
 });
 
-test("the demonstrative tables have one cell per column and name every missing form", () => {
+test("the demonstrative tables have one cell per column", () => {
 	for (const grid of thisThat.explain!.tables!) {
 		for (const row of grid.rows) assert.equal(row.cells.length, grid.cols.length, `${grid.title}: ${row.case}`);
 	}
 	const tento = thisThat.explain!.tables![1]!;
-	assert.equal(tento.rows[2]!.cells[3], "not yet", "a form neither the reference nor a verified sentence has is never filled in");
+	assert.equal(tento.title, "tento (this)");
+	assert.equal(tento.rows[2]!.cells[3], "týmto", "the D plural: tým + -to");
+	assert.ok(!tento.rows.some((row) => row.cells.includes("not yet")), "every tento cell is a form the reference or a verified sentence has");
 });
 
 test("every filled demonstrative cell is a form the reference names or a verified sentence has", () => {
@@ -260,8 +344,15 @@ test("simulator: the eighteen rows' supply, sessions of twelve, and minutes unti
 	const LESSON = 12;
 	const CHOICE_SECONDS = 10;
 	const TYPED_SECONDS = 20;
-	const unique = new Set(rows.map((r) => `${r.slug}|${r.sk}`)).size;
-	const triples = new Set(rows.map((r) => `${mixupKey(...(aspect.pairs.find((p) => p.includes(r.slug)) as [string, string]))}|${r.type}|${r.phrase}`)).size;
+	// Only rows with a parallel form can be drilled: the supply is the usable rows.
+	const usable = rows.filter((r) => {
+		const pair = aspect.pairs.find((p) => p.includes(r.slug))!;
+		const other = pair[0] === r.slug ? pair[1] : pair[0];
+		return parallelForm(E(r.slug), E(other), r.form!, accepted) !== null;
+	});
+	assert.equal(usable.length, rows.length, "every approved row is usable");
+	const unique = new Set(usable.map((r) => `${r.slug}|${r.sk}`)).size;
+	const triples = new Set(usable.map((r) => `${mixupKey(...(aspect.pairs.find((p) => p.includes(r.slug)) as [string, string]))}|${r.type}|${r.phrase}`)).size;
 	assert.equal(unique, 18, "expected unique items");
 	// Two pairs of rows share a triple (predávajú / predáva generic; hovoril / hovorila "vždy + manner").
 	assert.equal(triples, 16, "distinct (pair, cue type, phrase)");

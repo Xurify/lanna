@@ -16,7 +16,7 @@ describe("the grammar explanation (static, worked examples; never a drill)", () 
 	it("shows the contrast with its form in bold, and the note", () => {
 		const html = renderToStaticMarkup(<GrammarExplain explain={aspect} />);
 		assert.ok(html.includes('data-testid="explain-contrast"'));
-		assert.ok(html.includes("<b") && html.includes(">Čítam</b>"), "the imperfective form is bold in its sentence");
+		assert.ok(html.includes(`>${aspect.contrast.first.form}</b>`), "the imperfective form is bold in its sentence");
 		assert.ok(html.includes(aspect.contrast.note));
 	});
 
@@ -33,12 +33,14 @@ describe("the grammar explanation (static, worked examples; never a drill)", () 
 		assert.equal((html.match(/<li>/g) ?? []).length, 3);
 	});
 
-	it("renders the case grid with 'not yet' cells as text, never filled in", () => {
-		const html = renderToStaticMarkup(<GrammarExplain explain={thisThat} />);
+	it("renders a case grid's 'not yet' cells as text, never filled in; the shipped tento grid has none", () => {
+		const gap = { ...thisThat, tables: [{ title: "gap", cols: ["m. sg."], rows: [{ case: "N", cells: ["not yet"] }] }] };
+		const html = renderToStaticMarkup(<GrammarExplain explain={gap} />);
 		assert.ok(html.includes('data-testid="explain-table"'));
 		assert.ok(html.includes("not yet"));
-		assert.ok(html.includes("<th scope=\"col\""), "the columns are headers");
-		assert.ok(html.includes("<th scope=\"row\""), "the cases are row headers");
+		assert.ok(html.includes('<th scope="col"'), "the columns are headers");
+		assert.ok(html.includes('<th scope="row"'), "the cases are row headers");
+		assert.equal(renderToStaticMarkup(<GrammarExplain explain={thisThat} />).includes("not yet"), false);
 	});
 
 	it("links only to an allowlisted slovak.wiki page", () => {
