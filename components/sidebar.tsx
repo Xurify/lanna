@@ -118,8 +118,6 @@ const SidebarContext = createContext<{
 	/** The open sidebar's width in px, between SIDEBAR_MIN and SIDEBAR_MAX. */
 	width: number;
 	setWidth: (px: number) => void;
-	/** A full-screen task page holds the sidebar folded (see useFoldedSidebar). */
-	setForcedFolded: (on: boolean) => void;
 }>({
 	open: false,
 	drawer: false,
@@ -130,7 +128,6 @@ const SidebarContext = createContext<{
 	toggleCollapsed: () => {},
 	width: 288,
 	setWidth: () => {},
-	setForcedFolded: () => {},
 });
 
 
@@ -138,15 +135,13 @@ export function useSidebar() {
 	return useContext(SidebarContext);
 }
 
-/** A full-screen task page calls this: the sidebar folds to its narrow column
- *  and the page sits beside it (`--sidebar-cols`), the same as any page with a
- *  collapsed sidebar. The column's open button shows the sidebar until the page changes. */
-export function useFoldedSidebar(): void {
-	const { setForcedFolded } = useSidebar();
-	useEffect(() => {
-		setForcedFolded(true);
-		return () => setForcedFolded(false);
-	}, [setForcedFolded]);
+/** The full-screen task pages. They fold the sidebar from the route itself, so
+ *  the fold starts on the click, not once the page has rendered and hydrated. */
+const TASK_ROUTES = ["/lesson", "/exam", "/listen", "/speak", "/fluency", "/read", "/watch"];
+
+function isTaskRoute(pathname: string | null): boolean {
+	if (!pathname) return false;
+	return TASK_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 }
 
 export function SidebarProvider({ children, defaultCollapsed = false, defaultWidth = SIDEBAR_MAX }: { children: React.ReactNode; defaultCollapsed?: boolean; defaultWidth?: number }) {
@@ -154,20 +149,21 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
 	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
 	const [collapsed, setCollapsed] = useState(defaultCollapsed);
-	const [forcedFolded, setForcedFolded] = useState(false);
-	const [revealed, setRevealed] = useState(false);
 	const pathname = usePathname();
-	useEffect(() => setRevealed(false), [pathname]);
+	const forcedFolded = isTaskRoute(pathname);
+	// The open button shows the sidebar on the page it was pressed on only; another page folds again.
+	const [revealedOn, setRevealedOn] = useState<string | null>(null);
+	const revealed = revealedOn === pathname;
 	const toggleCollapsed = useCallback(() => {
 		if (forcedFolded) {
-			setRevealed((r) => !r);
+			setRevealedOn((r) => (r === pathname ? null : pathname));
 			return;
 		}
 		setCollapsed((c) => {
 			document.cookie = `lh-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
 			return !c;
 		});
-	}, [forcedFolded]);
+	}, [forcedFolded, pathname]);
 	useEffect(() => {
 		const bridge = window.lh?.chatgpt;
 		if (!bridge) return;
@@ -280,7 +276,7 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open, drawer, phone, toggle, closeDrawer, collapsed: folded, toggleCollapsed, width, setWidth, setForcedFolded }}>
+		<SidebarContext.Provider value={{ open, drawer, phone, toggle, closeDrawer, collapsed: folded, toggleCollapsed, width, setWidth }}>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div style={{ "--sidebar-cols": folded ? "3.25rem" : `${width}px` } as React.CSSProperties} className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
 		</SidebarContext.Provider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
 	BookmarkCheckIcon,
@@ -14,6 +14,7 @@ import {
 	XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fitPopoverTop, POPOVER_EDGE, POPOVER_GAP } from "@/components/words/popover-fit";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode, type WordTranslationMode } from "@/components/settings/device-prefs";
 
@@ -463,6 +464,30 @@ export function SelectionWordBankBar() {
 		};
 	}, [selection?.text, selection?.isSingleWord, translationMode]);
 
+	// The card's real height is only known once it is drawn, so its top is fitted
+	// after layout and again whenever it resizes (the lookup arrives, a section opens):
+	// above the word when it fits under the top edge, else below it, else held inside the window.
+	const [fitTop, setFitTop] = useState<number | null>(null);
+	const floating = !!selection && !docked;
+	const selTop = selection?.top;
+	const selBottom = selection?.bottom;
+	useLayoutEffect(() => {
+		const el = barRef.current;
+		if (!floating || !el || selTop === undefined || selBottom === undefined) {
+			setFitTop(null);
+			return;
+		}
+		const fit = () => {
+			const vh = window.visualViewport?.height ?? window.innerHeight;
+			const top = fitPopoverTop(selTop, selBottom, el.offsetHeight, vh);
+			setFitTop(Math.round(top));
+		};
+		fit();
+		const observer = new ResizeObserver(fit);
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [floating, selTop, selBottom]);
+
 	if (!selection) return null;
 
 	const langCode = lookup?.langCode ?? activeLang?.code ?? "sk";
@@ -545,17 +570,12 @@ export function SelectionWordBankBar() {
 				right: "20px",
 				bottom: "20px",
 			}
-		: selection.placeAbove
-			? {
-					left: `${selection.x}px`,
-					bottom: `${Math.max(16, viewportHeight - selection.top + 14)}px`,
-					transform: "translateX(-50%)",
-				}
-			: {
-					left: `${selection.x}px`,
-					top: `${Math.min(viewportHeight - 160, Math.max(16, selection.bottom + 14))}px`,
-					transform: "translateX(-50%)",
-				};
+		: fitTop !== null
+			? { left: `${selection.x}px`, top: `${fitTop}px`, transform: "translateX(-50%)" }
+			: // First paint, before the card is measured: the old estimate, replaced before it shows.
+				selection.placeAbove
+				? { left: `${selection.x}px`, bottom: `${Math.max(POPOVER_EDGE, viewportHeight - selection.top + POPOVER_GAP)}px`, transform: "translateX(-50%)" }
+				: { left: `${selection.x}px`, top: `${Math.max(POPOVER_EDGE, selection.bottom + POPOVER_GAP)}px`, transform: "translateX(-50%)" };
 
 	return (
 		<div
@@ -563,9 +583,9 @@ export function SelectionWordBankBar() {
 			data-selection-bar
 			data-testid="selection-word-bank-bar"
 			style={positionStyle}
-			className="fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
+			className="lh-no-drag fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
 		>
-			<div className="lh-menu-in origin-top flex flex-col gap-2 rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl">
+			<div className="lh-menu-in origin-top flex flex-col gap-2 overflow-y-auto rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl" style={{ maxHeight: `calc(100dvh - ${POPOVER_EDGE * 2}px)` }}>
 				{/* Always-visible header: headword, POS/morphology, and translation */}
 				<div className="flex flex-col gap-1 border-b border-border/60 pb-2">
 					<div className="flex items-start justify-between gap-2">
