@@ -597,31 +597,54 @@ export function jointGloss(lex: MixupLexicon, a: string, b: string): string {
 	return [...new Set(glosses)].join(" / ");
 }
 
-/** A past form (bral, brala, bralo, brali). Read only to check that two
- *  paradigms mark the past in the same slots; no other tag is read. */
+/** A past form (bral, brala, bralo, brali). Read only to tag a paradigm's slots;
+ *  no other tag is read. */
 const isPastForm = (form: string) => /l(?:a|o|i)?$/iu.test(form.trim());
 
-/** `P` where the paradigm's form is past, `N` where it is not: the shape of a list. */
-const pastSlots = (forms: readonly string[]) => forms.map((f) => (isPastForm(f) ? "P" : "N")).join("");
+/** The grammatical tag of a paradigm's slot: `past` by form; of the rest, the
+ *  first six are `present` (the six person forms) and the others `imperative`
+ *  (the lexicon lists the present, then the imperatives, then the past). */
+type SlotTag = "present" | "imperative" | "past";
+const TAG_RANK: Record<SlotTag, number> = { present: 0, imperative: 1, past: 2 };
 
-/** The other twin's form in the same slot. Two rules keep the pairing honest.
- *  The infinitive is not in a paradigm list, so the lemma is its slot
- *  (písať ↔ napísať). Otherwise the lists must have the same length and mark
- *  the past in the same slots (a list with two imperatives more than its twin
- *  would pair bral with vzalo), and the form at the same index is its parallel
- *  (písal ↔ napísal). A twin is verified when the lexicon says so or the family
- *  accepts it (`accepted`, slugs). Null when either list is not verified, or
- *  in any other case. */
+/** Each form with its tag, and its ordinal among the forms of that tag. */
+function taggedSlots(forms: readonly string[]): Array<{ form: string; tag: SlotTag; n: number }> {
+	const counts: Record<SlotTag, number> = { present: 0, imperative: 0, past: 0 };
+	let nonPast = 0;
+	return forms.map((form) => {
+		let tag: SlotTag;
+		if (isPastForm(form)) tag = "past";
+		else tag = nonPast++ < 6 ? "present" : "imperative";
+		return { form, tag, n: counts[tag]++ };
+	});
+}
+
+/** A paradigm is in the lexicon's order (present, then imperatives, then past)
+ *  and its present and past sit in the same slots as the twin's: the shape
+ *  that the pairing by tag reads. */
+const inOrder = (slots: ReturnType<typeof taggedSlots>) => slots.every((s, i) => i === 0 || TAG_RANK[slots[i - 1]!.tag] <= TAG_RANK[s.tag]);
+const sharedShape = (slots: ReturnType<typeof taggedSlots>) => slots.filter((s) => s.tag !== "imperative").map((s) => (s.tag === "past" ? "P" : "N")).join("");
+
+/** The other twin's form with the same grammatical tag and ordinal. Two rules
+ *  keep the pairing honest. The infinitive is not in a paradigm list, so the
+ *  lemma is its slot (písať ↔ napísať). Otherwise both lists must be in the
+ *  lexicon's order and share the present and past slots (a list with its past
+ *  before its imperatives would pair bral with vzalo), and a form pairs with the
+ *  twin's form of the same tag and ordinal (písal ↔ napísal). An imperative with
+ *  no counterpart (ber, on brať, where vziať has none) gives null: it is dropped.
+ *  A twin is verified when the lexicon says so or the family accepts it
+ *  (`accepted`, slugs). Null when either list is not verified, or in any other case. */
 export function parallelForm(from: LexiconEntry, to: LexiconEntry, form: string, accepted: ReadonlySet<string> = new Set()): string | null {
 	const verified = (e: LexiconEntry) => (e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
 	if (!verified(from) || !verified(to)) return null;
 	const want = form.toLocaleLowerCase("sk-SK");
 	if (want === entryLemma(from).toLocaleLowerCase("sk-SK")) return entryLemma(to) || null;
-	const own = from.forms ?? [];
-	const other = to.forms ?? [];
-	if (own.length === 0 || own.length !== other.length || pastSlots(own) !== pastSlots(other)) return null;
-	const i = own.findIndex((f) => f.toLocaleLowerCase("sk-SK") === want);
-	return i < 0 ? null : (other[i] ?? null);
+	const own = taggedSlots(from.forms ?? []);
+	const other = taggedSlots(to.forms ?? []);
+	if (own.length === 0 || !inOrder(own) || !inOrder(other) || sharedShape(own) !== sharedShape(other)) return null;
+	const slot = own.find((s) => s.form.toLocaleLowerCase("sk-SK") === want);
+	if (!slot) return null;
+	return other.find((s) => s.tag === slot.tag && s.n === slot.n)?.form ?? null;
 }
 
 /** The word a probe offers in this sentence's place: the other twin's form in

@@ -154,21 +154,37 @@ test("the parallel form: index pairs the paradigm, the lemma pairs the infinitiv
 	assert.equal(parallelForm({ ...E("citat"), formsVerified: undefined } as LexiconEntry, E("precitat"), "čítal", new Set()), null, "an unverified list gives none");
 });
 
-test("brať and vziať pair by slot: the imperatives and the past line up (bral is not paired with vzalo)", () => {
+test("brať and vziať pair by grammatical tag: the present and the past line up (bral is paired with vzal, not vzalo)", () => {
 	const brat = E("brat");
 	const vziat = E("vziat");
-	assert.equal(brat.forms!.length, vziat.forms!.length, "the same number of slots");
+	assert.equal(brat.forms!.length, 12, "brať lists two imperatives");
+	assert.equal(vziat.forms!.length, 10, "vziať lists none (the lexicon is not edited for it)");
 	assert.equal(parallelForm(brat, vziat, "bral"), "vzal");
 	assert.equal(parallelForm(brat, vziat, "brala"), "vzala");
-	assert.equal(parallelForm(brat, vziat, "ber"), "vezmi", "the 2sg imperative");
-	assert.equal(parallelForm(brat, vziat, "berte"), "vezmite", "the 2pl imperative");
+	assert.equal(parallelForm(vziat, brat, "vzal"), "bral", "and the other way round");
+	assert.equal(parallelForm(vziat, brat, "vzalo"), "bralo");
+	assert.equal(parallelForm(brat, vziat, "beriem"), "vezmem", "the 1sg present pairs with the 1sg present");
 	assert.equal(parallelForm(brat, vziat, "brať"), "vziať", "the infinitive");
 	assert.equal(parallelForm(E("pisat"), E("napisat"), "píš"), "napíš", "the 2sg imperative of písať");
 	assert.equal(parallelForm(E("pisat"), E("napisat"), "píšte"), "napíšte", "the 2pl imperative of písať");
 });
 
-test("alignment over all twelve aspect pairs: every slot pairs with the same slot, the past sits in the same slots, and unequal lists give null", () => {
+test("the unmatched imperatives are dropped: ber and berte have no counterpart on vziať, so they give no parallel", () => {
+	const brat = E("brat");
+	const vziat = E("vziat");
+	assert.ok(brat.forms!.includes("ber") && brat.forms!.includes("berte"), "brať lists both imperatives");
+	assert.equal(parallelForm(brat, vziat, "ber"), null, "ber is dropped");
+	assert.equal(parallelForm(brat, vziat, "berte"), null, "berte is dropped");
+	assert.equal(parallelForm(brat, vziat, "beriu"), null, "a form not in the list gives none");
+});
+
+test("alignment over all twelve aspect pairs: each form pairs with the twin's form of the same tag and ordinal, an imperative with no counterpart is dropped, and a short list gives null", () => {
 	const isPast = (f: string) => /l(?:a|o|i)?$/iu.test(f);
+	/** The tag a slot has in the lexicon's order: past by form, then the first six non-past are present, the rest imperative. */
+	const tagsOf = (forms: string[]) => {
+		let nonPast = 0;
+		return forms.map((f) => (isPast(f) ? "past" : nonPast++ < 6 ? "present" : "imperative"));
+	};
 	const checked: string[] = [];
 	for (const [a, b] of aspect.pairs) {
 		const ea = E(a);
@@ -176,17 +192,23 @@ test("alignment over all twelve aspect pairs: every slot pairs with the same slo
 		assert.ok(verifiedOrAccepted(ea) && verifiedOrAccepted(eb), `${a}/${b}: both paradigms are verified or accepted by the family`);
 		const fa = ea.forms!;
 		const fb = eb.forms!;
-		assert.equal(fa.length, fb.length, `${a}/${b}: the same number of slots`);
-		assert.deepEqual(fa.map(isPast), fb.map(isPast), `${a}/${b}: the past is in the same slots`);
+		const ta = tagsOf(fa);
+		const tb = tagsOf(fb);
+		assert.equal(ta.filter((t) => t === "present").length, tb.filter((t) => t === "present").length, `${a}/${b}: the same present slots`);
+		assert.equal(ta.filter((t) => t === "past").length, tb.filter((t) => t === "past").length, `${a}/${b}: the same past slots`);
+		assert.deepEqual(ta.filter((t) => t !== "imperative"), tb.filter((t) => t !== "imperative"), `${a}/${b}: present and past sit in the same order`);
 		for (let i = 0; i < fa.length; i++) {
 			if (fa.indexOf(fa[i]!) !== i) continue;
-			assert.equal(parallelForm(ea, eb, fa[i]!, accepted), fb[i], `${a}/${b}: slot ${i} (${fa[i]})`);
+			const ordinal = ta.slice(0, i).filter((t) => t === ta[i]).length;
+			const counterpart = tb.flatMap((t, j) => (t === ta[i] ? [j] : []))[ordinal];
+			const expected = counterpart === undefined ? null : fb[counterpart]!;
+			assert.equal(parallelForm(ea, eb, fa[i]!, accepted), expected, `${a}/${b}: slot ${i} (${fa[i]}) pairs with ${expected ?? "nothing"}`);
 		}
 		checked.push(`${a}/${b}`);
 	}
 	assert.equal(checked.length, 12, "all twelve pairs are checked");
 	const short = { ...E("citat"), forms: E("citat").forms!.slice(0, 9) } as LexiconEntry;
-	assert.equal(parallelForm(short, E("precitat"), "čítal", accepted), null, "unequal lists give null");
+	assert.equal(parallelForm(short, E("precitat"), "čítal", accepted), null, "a short list is out of shape: null");
 });
 
 test("a misaligned pairing is refused: the past must sit in the same slots on both sides", () => {
@@ -194,9 +216,12 @@ test("a misaligned pairing is refused: the past must sit in the same slots on bo
 	const present = ["p1", "p2", "p3", "p4", "p5", "p6"];
 	const twoImperatives = make([...present, "imp1", "imp2", "bral", "brala", "bralo", "brali"]);
 	const pastEarly = make([...present, "vzal", "vzala", "vzalo", "vzali", "imp1", "imp2"]);
+	const misordered = make([...present, "imp1", "vzal", "imp2", "vzala", "vzalo", "vzali"]);
 	const pastSame = make([...present, "imp1", "imp2", "vzal", "vzala", "vzalo", "vzali"]);
 	assert.equal(parallelForm(twoImperatives, pastEarly, "bral"), null, "the past is in other slots: no distractor");
 	assert.equal(parallelForm(twoImperatives, pastSame, "bral"), "vzal", "the same slots: the parallel is given");
+	assert.equal(parallelForm(twoImperatives, misordered, "bral"), null, "a past between imperatives is out of order: refused");
+	assert.equal(parallelForm(pastEarly, twoImperatives, "vzal"), null, "and from the other side");
 });
 
 test("every approved row has a parallel form, so every row can be drilled", () => {
