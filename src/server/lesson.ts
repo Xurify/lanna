@@ -85,7 +85,8 @@ import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
 import { watchMinutes } from "../core/watch.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
-import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
+import { refreshSnapshotIfStale, slippingUnits, unitZoneMap } from "./mistakes-snapshot.ts";
+import { easyUnits, flowSummary, hardUnits, steppedStage, type FlowSummary } from "../core/flow.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
@@ -113,7 +114,11 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	if (info.kind === "pairs") return withKnown(buildPairsLesson(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
-	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
+	const base = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
+	// The zone steps the stage once: an easy unit asks for more, a hard one starts easier (E42).
+	const zone = unitZoneMap()[unit]?.zone;
+	const { stage, shift } = steppedStage(base, zone);
+	const flow = shift && (zone === "easy" || zone === "hard") ? { zone, shift, from: base } : undefined;
 	const grammar = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
 	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || grammar.indexOf(u) < grammar.indexOf(unit);
 	const contrast = (CONTRAST[unit] ?? []).filter(reached);
@@ -122,7 +127,7 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	// the first two are a different kind of rep, the third is the mix itself.
 	const mix = info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
 	const weakGender = opts?.gender ? undefined : (weakestGender(rec?.byGender) ?? undefined);
-	return withOpenMixups(withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender, weakGender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] }));
+	return withOpenMixups(withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender, weakGender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [], ...(flow ? { flow } : {}) }));
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -456,6 +461,8 @@ export interface ProgressSummary {
 	trajectory: TrajectoryInput;
 	/** The units on record as weak spots (src/core/weak-spots.ts), most urgent first. */
 	weakSpots: WeakSpotSummary[];
+	/** Where each unit's first tries sit against the zone (src/core/flow.ts), from the saved analysis. */
+	flow: FlowSummary;
 	/** Pairs of words on record as mix-ups and probes (src/core/mixups.ts): open ones first. */
 	mixups: MixupSummary[];
 	/** Each chapter's exam on record (src/core/exam.ts), by chapter id. */
@@ -545,6 +552,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		if (record?.planned) earlier.push({ day, tasks: record.planned.map((t) => ({ ...t, done: t.done || doneInLedger(t.id, record) })) });
 	}
 	const carried = carriedTasks(earlier, key, new Set());
+	const zones = unitZoneMap();
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
@@ -559,6 +567,8 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			.filter((m) => m.status === "active")
 			.map((m) => m.words),
 		worse: slippingUnits(),
+		hard: hardUnits(zones) as UnitId[],
+		easy: easyUnits(zones) as UnitId[],
 		personal: personalPlanEntry(now) ?? undefined,
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
@@ -644,6 +654,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 			goalDays: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
 		},
 		weakSpots: weakSpotList(p.weak),
+		flow: flowSummary(zones),
 		mixups: mixupList(p.mixups),
 		exams: examSummaries(p.exams),
 		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },

@@ -6,6 +6,7 @@
  */
 
 import { analyzeListening } from "../core/listen-analysis.ts";
+import { unitZones, type UnitZone } from "../core/flow.ts";
 import { listenGuideFacts, type ListenGuideRecord } from "../core/listen-guide.ts";
 import { analyzeMistakes, digest, guideFacts, type MistakeAnalysis, type MistakesReport } from "../core/mistakes.ts";
 import type { UnitId } from "../core/lesson.ts";
@@ -56,6 +57,11 @@ export function refreshSnapshotIfStale(now = new Date()): void {
 	} catch (err) {
 		console.warn("[mistakes] could not refresh the snapshot:", err instanceof Error ? err.message : err);
 	}
+}
+
+/** Where each analyzed unit's first tries sit against the zone (src/core/flow.ts), from the saved snapshot. */
+export function unitZoneMap(): Record<string, UnitZone> {
+	return unitZones(analysisStore.read().analysis?.units ?? []);
 }
 
 /** The units the saved snapshot says are slipping, worst first. */

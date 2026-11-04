@@ -59,6 +59,8 @@ export interface UnitTrend {
 	high?: number;
 	/** The range lies under WEAK_BAR: weak with enough answers to say so. */
 	weak?: boolean;
+	/** The last TREND_DAYS days' first tries, for the zone (src/core/flow.ts). Absent in older snapshots. */
+	lately?: { reps: number; right: number };
 }
 
 export interface MissedWord {
@@ -279,6 +281,7 @@ export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 				low,
 				high,
 				weak: high < WEAK_BAR,
+				lately: { reps: u.recent.reps, right: u.recent.right },
 			};
 		})
 		.sort((a, b) => b.wrong - a.wrong || a.accuracy - b.accuracy);

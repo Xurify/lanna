@@ -13,7 +13,7 @@ import { chartData } from "@/components/quiet/chart-data";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import type { Goal } from "@/components/daily-plan";
-import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
+import type { CurriculumState, DailyPlan as Plan, ExamSummary, FlowSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
 
 export interface UnitSummary {
 	id: UnitId;
@@ -49,6 +49,7 @@ export interface Summary {
 	balance?: StrandBalance;
 	trajectory?: TrajectoryInput;
 	weakSpots?: WeakSpotSummary[];
+	flow?: FlowSummary;
 	mixups?: MixupSummary[];
 	exams?: Record<string, ExamSummary>;
 	pace?: { goalMinutes: number; plannedMinutes: number; logged: number; windowDays: number; dailyAverage: number };

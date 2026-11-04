@@ -133,14 +133,14 @@ export function Pulse({ className }: { className?: string }) {
 /** Numbers on an end screen, in one card divided into cells (the mockup's
  *  score card). */
 export function Stats({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <div className={cn("q-card grid grid-flow-col auto-cols-fr divide-x divide-[var(--q-line)] overflow-hidden text-left", className)}>{children}</div>;
+	return <div className={cn("flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-y border-[var(--q-line)] text-left", className)}>{children}</div>;
 }
 
 export function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink?: string; icon?: React.ReactNode }) {
 	return (
-		<div className="flex min-w-0 flex-col gap-1.5 px-4 py-3.5">
-			<p className="text-xs text-ink-3">{label}</p>
-			<p className={cn("flex h-6 items-center gap-1.5 font-ui text-[17px] font-semibold tracking-[-0.015em] tabular-nums", ink ?? "text-foreground")}>
+		<div className="flex min-h-11 items-center justify-between gap-4 py-2">
+			<p className="min-w-0 text-[14px] text-ink-3">{label}</p>
+			<p className={cn("flex h-6 shrink-0 items-center gap-1.5 font-ui text-[16px] font-semibold tracking-[-0.01em] tabular-nums", ink ?? "text-foreground")}>
 				{icon}
 				{value ?? <Pulse className="h-4 w-12" />}
 			</p>

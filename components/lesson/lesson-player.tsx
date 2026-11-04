@@ -31,7 +31,11 @@ import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/componen
 import { StampDisc } from "@/components/stamp";
 import {
 	compareAnswer,
+	bandPosition,
+	countsAsFirstTry,
 	diacriticSlips,
+	FLOW_HIGH,
+	FLOW_LOW,
 	formSlip,
 	genderLabel,
 	gradeListen,
@@ -57,6 +61,8 @@ import {
 } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { shake as shakeEl } from "@/components/motion";
+import { ZoneGauge } from "@/components/flow/zone-gauge";
+import { ZoneWord } from "@/components/flow/zone-word";
 
 type Mode = "lesson" | "blitz";
 
@@ -587,6 +593,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	const progress = mode === "blitz" ? left / BLITZ_SECONDS : (index + (current ? 1 : 0)) / total;
 	const comesBack = !!current && (current.verdict === "wrong" || !!current.assisted) && !current.item.again && !NO_RETRY.has(current.item.kind) && relearned.current < RELEARN_MAX;
 	const examples = current ? plan.items.filter((o) => o.unit === current.item.unit && o.sentence !== current.item.sentence && !o.again).slice(0, 2) : [];
+	// The zone moved this lesson's stage (E42): say so beside the unit's name, in the same place on every rep.
+	const flowNote = mode === "lesson" && !focus && plan.flow && item.unit === plan.unit ? (plan.flow.shift === "down" ? " · easier start" : " · stepped up") : "";
 
 	return (
 		<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
@@ -651,7 +659,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 							onGrade={grade}
 							onReady={setReady}
 															place={mode === "blitz" ? undefined : `${index + 1} of ${total}`}
-								eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : unitInfo(item.unit).title}
+								eyebrow={mode === "blitz" ? `Blitz · ${reps.filter((r) => r.verdict !== "wrong").length} right` : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : plan.gender ? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}` : `${unitInfo(item.unit).title}${flowNote}`}
 						/>
 					</div>
 				</div>
@@ -1543,6 +1551,10 @@ function EndScreen({
 	const wasDone = here ? unitDone(here.lessons - 1, here.accuracy) : false;
 	const nextUnit = recorded ? (recorded.summary.units.find((u) => u.id === recorded.summary.next) ?? null) : null;
 	const stayHere = !!recorded && recorded.summary.next === unit;
+	// First tries are the zone's measure (src/core/flow.ts): this lesson's, then where the unit sits.
+	const tries = reps.filter((r) => countsAsFirstTry({ kind: r.item.kind, again: r.item.again, first: r.first }));
+	const triesRight = tries.filter((r) => r.first!.verdict !== "wrong").length;
+	const unitZone = recorded?.summary.flow?.units[unit];
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -1600,9 +1612,31 @@ function EndScreen({
 			)}
 			<Stats className="mt-6">
 				<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
-				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-teal-2" : "text-foreground"} />
+				<Stat label={mode === "blitz" ? "Best" : "Right in the end"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-teal-2" : "text-foreground"} />
 				<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-foreground" icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
 			</Stats>
+
+			{mode === "lesson" && !focus && tries.length >= 4 && (
+				<div className="mt-6 max-w-sm text-left" data-testid="lesson-end-zone">
+					<p className="q-lbl">
+						<QIcon name="chart" />
+						First tries
+					</p>
+					<p className="mt-1.5 font-ui text-[16px] font-semibold tabular-nums text-foreground">
+						{triesRight} of {tries.length} right <span className="font-normal text-ink-3">· {Math.round((triesRight / tries.length) * 100)}%</span>
+					</p>
+					<ZoneGauge accuracy={triesRight / tries.length} className="mt-1" />
+					<p className="mt-1 min-h-[3.75rem] font-prose text-[13px] leading-snug text-ink-3">
+						{{ above: "A bit above your zone: easy this time.", in: "In your zone.", below: "Below your zone: hard this time." }[bandPosition(triesRight / tries.length)]} Your zone is {Math.round(FLOW_LOW * 100)}–{Math.round(FLOW_HIGH * 100)}% right on the first try: hard enough to learn from, easy enough to keep going.
+						{unitZone && unitZone.zone !== "new" && (
+							<>
+								{" "}
+								Over the last two weeks this unit is <ZoneWord zone={unitZone.zone} lower className="font-[550]" />.
+							</>
+						)}
+					</p>
+				</div>
+			)}
 
 			<p className="mt-3 min-h-5 font-prose text-[13px] text-ink-3" data-testid="lesson-end-recorded">
 				{recorded ? (
