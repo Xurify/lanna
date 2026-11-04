@@ -25,7 +25,9 @@ export function isTimedActivity(v: unknown): v is TimedActivity {
 
 /** The most one send may add, in minutes: a safety net against a forgotten
  *  tab, not the measurement itself. */
-export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, listen: 20, read: 20, watch: 40, speak: 20, reread: 10, fast: 10 };
+/** Watch's cap is the longest video the app takes (75 min): a watching counts the
+ *  video's playing time, so one send can never be longer than the video. */
+export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, listen: 20, read: 20, watch: 75, speak: 20, reread: 10, fast: 10 };
 
 /** What a day's ledger holds (src/store/progress.ts DayRecord). */
 export interface MinutesLedger {
@@ -57,6 +59,22 @@ export function sessionMs(input: { activeMs?: number; ms?: number }): number | u
 export const GAP_CAP_MS = 90_000;
 /** A send under this is noise (a page opened and closed). */
 export const MIN_SEND_MS = 2_000;
+
+/** How long one line may wait for the learner's decision and still count: a line
+ *  is a few seconds of speech, so past this the learner has left the desk. */
+export const LINE_DECISION_CAP_MS = 120_000;
+
+/** Whether Watch's clock runs. Nothing counts before the video is loaded. A
+ *  playing video counts. A line waiting for "Got it" counts up to its cap, then
+ *  the gap rule applies. Questions and paused time count until the gap cap with
+ *  no action. */
+export function watchClockOn(s: { watching: boolean; questions: boolean; ready: boolean; playing: boolean; deciding: boolean; decideCapped: boolean; idle: boolean }): boolean {
+	if (!s.watching && !s.questions) return false;
+	if (s.watching && !s.ready) return false;
+	if (s.playing) return true;
+	if (s.watching && s.deciding && !s.decideCapped) return true;
+	return !s.idle;
+}
 
 export interface ActiveClock {
 	/** The learner did something: the time since the last action counts, up to the gap cap. */

@@ -645,7 +645,7 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	const d = (p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	d.watches = (d.watches ?? 0) + 1;
 	d.xp += xp;
-	addMinutes(d, "watch", sessionMs(input));
+	const counted = addMinutes(d, "watch", sessionMs(input));
 	p.xp += xp;
 	progressStore.write(p);
 	const entry: WatchLogEntry = {
@@ -653,6 +653,8 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 		at: now.toISOString(),
 		day,
 		...(input.ms ? { ms: input.ms } : {}),
+		...(input.activeMs !== undefined ? { activeMs: input.activeMs } : {}),
+		minutes: Math.round(counted * 100) / 100,
 		mode: input.mode,
 		segments: video.segments.length,
 		gotFirst,

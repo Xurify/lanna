@@ -9,44 +9,27 @@
  * stat row the end screens use.
  */
 
-import { useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFoldedSidebar } from "@/components/sidebar";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
-import { useSidebar } from "@/components/sidebar";
 
 export { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
 export const COLUMN = "mx-auto w-full max-w-3xl px-6";
 
-/** The task screens sit beside the real sidebar, folded or open (its own open
- *  button expands it, as on every page), so the frame starts where the sidebar ends. */
-function useSidebarEdge(): number | null {
-	const [edge, setEdge] = useState<number | null>(null);
-	useLayoutEffect(() => {
-		const el = document.querySelector<HTMLElement>("[data-sidebar]");
-		if (!el) return;
-		const sync = () => setEdge(Math.round(el.getBoundingClientRect().width));
-		sync();
-		const observer = new ResizeObserver(sync);
-		observer.observe(el);
-		return () => observer.disconnect();
-	}, []);
-	return edge;
-}
-
 export function TaskFrame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	const { focusScreen } = useSidebar();
-	useLayoutEffect(() => focusScreen(), [focusScreen]);
-	const edge = useSidebarEdge();
+	useFoldedSidebar();
 	return (
-		<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--frame-left,3.25rem)]" style={edge === null ? undefined : ({ "--frame-left": `${edge}px` } as React.CSSProperties)}>
+		<>
+			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
 			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 			{children}
-		</div>
+			</div>
+		</>
 	);
 }
 

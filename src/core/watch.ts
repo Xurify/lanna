@@ -153,6 +153,10 @@ export type WatchMode = "step" | "flow";
  *  reads `stats` for its listening-speed estimate: words per second of
  *  the lines got on the first listen. Keep the shape stable. */
 export interface WatchLogEntry {
+	/** The minutes the day counted for this watching: the measured playing time, capped. */
+	minutes?: number;
+	/** The playing time the client measured, in ms (`ms` is the wall-clock time since the start). */
+	activeMs?: number;
 	videoId: string;
 	at: string;
 	day: string;

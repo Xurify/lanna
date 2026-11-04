@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 3 November: Watch time counts the video playing (branch `fix/watch-time-logging`)
+
+- **What counted:** the day's Watch minutes counted the time the tab was visible and focused on the watch stage, so a paused video with the tab open counted as watching, with no idle limit. Now the time the video plays counts, and so does the time a paused line waits for your decision (up to 2 minutes a line), and the questions (up to 90 seconds after your last action). Nothing counts before the video is loaded. Clicks into the player's frame count as actions.
+- **What the log kept:** `watches.jsonl` stored only the wall-clock time since the start, which includes pauses and a hidden tab, and not the time the day counted. Each watching now also keeps `activeMs` (the measured time) and `minutes` (the minutes the day counted).
+- **Cap:** one send could add at most 40 minutes of Watch time, so a longer video was cut short. The cap is now 75 minutes, the longest video the app takes.
+- **Unverified:** the playing-time measure on the owner's PC with a real YouTube video (the cloud container cannot reach YouTube).
+
 ## 3 November: a translation the model miscounts no longer refuses the video (branch `feat/watch-sentences`)
 
 - **Miscounted translations:** a video failed with "the model returned 38 translations for 40 lines" when the model dropped lines twice. Now a chunk asked twice and still miscounted is split in halves, each half asked with the lines before it as context. Only a single line the model still cannot place stays in the video: it keeps its Slovak, has an empty English line, and the preview says how many lines have no English. The record stores the count as `untranslated`.
@@ -175,7 +182,6 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **The zone was built and removed.** A 65 to 85 percent band for first tries steered the next lesson and drew a gauge in four places; the owner found it confusing and asked for it out. It is in the history (`866b64ed`) and the research note says why it was dropped.
 - **Word card:** the card shown when a word is tapped or selected was placed from a guessed height of 170 px, so on a short window it ran off the top and its pin and close buttons could not be pressed. It is now measured after it draws and again when it resizes: above the word if it fits, else below it, else held inside the window, with its own scroll if the window is shorter than the card; it also opts out of the window-drag band (`components/words/popover-fit.ts`). Checked at 400 and 300 px high in a sandbox. **Unverified:** the packaged desktop window.
 - **End screens:** the stats on every end screen (lesson, exam, listen, speak, fluency) are a plain list of label and value, not a row of big numbers in a box (a tell in `.claude/skills/anti-slop-design`). **Unverified:** how it looks on the PC at full size.
-- **Task screens use the real sidebar:** the lesson, Listen, Speak, Fluency, Read and Watch screens had their own 56 px column of fourteen door icons, unlike the folded sidebar everywhere else. That rail is gone: the screen's frame starts where the real sidebar ends. A task screen opens with the sidebar folded to its one open button, and the button expands it as on every page, for as long as the screen is open; the saved open or folded choice is not changed. Reader and Watch use the shared `TaskFrame` instead of their own copies. **Unverified:** macOS, a touch iPad, the expand animation in the desktop window.
 
 ## 3 November: goals in Settings (`feat/settings-goals-and-time-studied`)
 

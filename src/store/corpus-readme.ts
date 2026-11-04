@@ -257,7 +257,9 @@ everything the app made of its captions, paid for once.
   date, coverage, word count, line count, pre-teach words, source, model).
 - \`sentences.jsonl\`: one line per model verdict on a sentence written at the end of a video: \`videoId\`, \`lemma\`, \`sentence\`, \`ok\`, \`corrected\`, \`why\`, \`model\`, \`at\`. A program's refusal is not kept.
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
-  \`ms\`, \`mode\` (\`step\` = one line at a time, \`flow\` = straight
+  \`ms\` (the wall-clock time since the start), \`activeMs\` (the playing
+  time the client measured, when it sent it), \`minutes\` (the minutes the
+  day counted for this watching), \`mode\` (\`step\` = one line at a time, \`flow\` = straight
   through), \`segments\`, \`gotFirst\` (lines understood on the first
   unaided listen), \`gotAfter\` (after a replay, slow-down or the text),
   \`missed\`, \`replays\`, \`slowed\`, \`correct\`/\`total\` on the check,
