@@ -30,7 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
-import { SidebarToggle, useFoldedSidebar } from "@/components/sidebar";
+import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
@@ -349,7 +349,6 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 // ─── Chrome ─────────────────────────────────────────────────────────────────
 
 function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	useFoldedSidebar();
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">

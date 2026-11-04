@@ -24,7 +24,6 @@ import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
-import { useFoldedSidebar } from "@/components/sidebar";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking } from "@/components/speech";
@@ -328,7 +327,6 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 // ─── Chrome ─────────────────────────────────────────────────────────────────
 
 function Frame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	useFoldedSidebar();
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">

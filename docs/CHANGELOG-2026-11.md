@@ -180,6 +180,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 ## 4 November: fixes (`fix/word-card-and-task-sidebar`)
 
 - **Word card:** the card shown when a word is tapped or selected was placed from a guessed height of 170 px, so on a short window it ran off the top and its pin and close buttons could not be pressed. It is now measured after it draws and again when it resizes: above the word if it fits, else below it, else held inside the window, with its own scroll if the window is shorter than the card; it also opts out of the window-drag band (`components/words/popover-fit.ts`). Checked at 400 and 300 px high in a sandbox. **Unverified:** the packaged desktop window.
+- **Task screens fold the sidebar on the click:** the fold used to wait until the task page had rendered and hydrated (about 2 s on a lesson). The route now decides it, so the sidebar folds as the page appears. The open button still expands it on that page, and the saved open or folded choice is not changed.
 - **End screens:** the stats on every end screen (lesson, exam, listen, speak, fluency) are a plain list of label and value, not a row of big numbers in a box (a tell in `.claude/skills/anti-slop-design`). **Unverified:** how it looks on the PC at full size.
 
 ## 3 November: goals in Settings (`feat/settings-goals-and-time-studied`)

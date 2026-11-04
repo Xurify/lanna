@@ -12,7 +12,6 @@
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useFoldedSidebar } from "@/components/sidebar";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
@@ -22,7 +21,6 @@ export { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 export const COLUMN = "mx-auto w-full max-w-3xl px-6";
 
 export function TaskFrame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
-	useFoldedSidebar();
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
