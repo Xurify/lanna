@@ -495,7 +495,6 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 
 ## Dropped or deferred
 
-- **The zone (built and removed 2026-11-04, branch `fix/word-card-and-task-sidebar`).** A 65–85% band for first tries that steered the next lesson and drew a gauge on Today, the path, the lesson end and My mistakes. The owner found it more confusing than helpful: a new word ("zone") and a new gauge to decode, against P5 and E30, for a change they could not feel. Nothing else in the app read it. Reasoning and the original proposals stay in [research/game-design-fundamentals.md](research/game-design-fundamentals.md).
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
 - **Russian profile.** Prompts and a profile exist; no lexicon, seed or review deck. Not started.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.

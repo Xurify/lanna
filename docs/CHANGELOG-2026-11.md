@@ -179,7 +179,6 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 4 November: fixes (`fix/word-card-and-task-sidebar`)
 
-- **The zone was built and removed.** A 65 to 85 percent band for first tries steered the next lesson and drew a gauge in four places; the owner found it confusing and asked for it out. It is in the history (`866b64ed`) and the research note says why it was dropped.
 - **Word card:** the card shown when a word is tapped or selected was placed from a guessed height of 170 px, so on a short window it ran off the top and its pin and close buttons could not be pressed. It is now measured after it draws and again when it resizes: above the word if it fits, else below it, else held inside the window, with its own scroll if the window is shorter than the card; it also opts out of the window-drag band (`components/words/popover-fit.ts`). Checked at 400 and 300 px high in a sandbox. **Unverified:** the packaged desktop window.
 - **End screens:** the stats on every end screen (lesson, exam, listen, speak, fluency) are a plain list of label and value, not a row of big numbers in a box (a tell in `.claude/skills/anti-slop-design`). **Unverified:** how it looks on the PC at full size.
 
