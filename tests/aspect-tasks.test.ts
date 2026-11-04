@@ -115,6 +115,25 @@ test("the cue reps: one per approved row whose span has three windows, each a su
 	}
 });
 
+test("the verifier's span corrections hold: po francúzsky and pohŕdavo are the cues; the three rows that show no single cue give none", () => {
+	const row = (part: string) => {
+		const hits = aspect.probes!.filter((r) => r.sk.includes(part));
+		assert.equal(hits.length, 1, `${part}: one row`);
+		return hits[0]!;
+	};
+	const francuzsky = row("Hovorím po francúzsky každý deň");
+	assert.equal(francuzsky.span, "po francúzsky", "the cue is po francúzsky, not každý deň");
+	const windows = cueWindows(francuzsky.sk, "po francúzsky");
+	assert.ok(windows.length >= 3, "three windows to offer");
+	assert.ok(!windows.includes("po francúzsky"), "the span is never also a wrong window");
+	assert.equal(row("O susedoch vždy hovorila pohŕdavo").span, "pohŕdavo", "the cue is pohŕdavo");
+	assert.equal(row("Starý otec vždy hovoril múdro a pokojne").span, undefined, "no single span: no cue rep");
+	assert.equal(row("Lokálny obchod predáva čerstvé pečivo každé ráno").span, undefined, "the ongoing offer is no span");
+	assert.equal(row("Zodpovední rodičia čítajú deťom každý večer").span, undefined, "no object shows no span");
+	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span).length >= 3);
+	assert.equal(cueRows.length, 13, "thirteen rows make cue reps");
+});
+
 test("the two rows too short for three same-length windows give no cue rep (and are named)", () => {
 	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span).length < 3).map((r) => r.span);
 	assert.deepEqual(short.sort(), ["v každej trafike", "za necelý mesiac"]);

@@ -183,8 +183,7 @@
 					"phrase": "shop offer",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 24",
-					"en": "The local shop sells fresh baked goods every morning.",
-					"span": "každé ráno"
+					"en": "The local shop sells fresh baked goods every morning."
 				},
 				{
 					"slug": "predavat",
@@ -255,8 +254,7 @@
 					"phrase": "habit, no object",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 34",
-					"en": "Responsible parents read to children every evening.",
-					"span": "každý večer"
+					"en": "Responsible parents read to children every evening."
 				},
 				{
 					"slug": "citat",
@@ -304,7 +302,7 @@
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 53",
 					"en": "I speak French every day at work.",
-					"span": "každý deň"
+					"span": "po francúzsky"
 				},
 				{
 					"slug": "hovorit",
@@ -315,8 +313,7 @@
 					"phrase": "vždy + manner",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 56",
-					"en": "Grandfather always spoke wisely and calmly.",
-					"span": "vždy"
+					"en": "Grandfather always spoke wisely and calmly."
 				},
 				{
 					"slug": "hovorit",
@@ -340,7 +337,7 @@
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 58",
 					"en": "She always spoke contemptuously about the neighbours.",
-					"span": "vždy"
+					"span": "pohŕdavo"
 				},
 				{
 					"slug": "hovorit",
