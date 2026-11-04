@@ -27,6 +27,7 @@ import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { COLUMN, Dock, OptionTile, PracticeCard, Pulse, Stat, Stats, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
+import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { StampDisc } from "@/components/stamp";
 import {
@@ -866,7 +867,9 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 				Not “<span lang="sk">{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
 			<div className="mt-2 flex flex-col gap-1 font-prose text-[15px] leading-relaxed">
-				{slip === "base" ? (
+				{item.pair?.cue ? (
+					<p className="text-foreground">{item.pair.cue}</p>
+				) : slip === "base" ? (
 					<p className="text-foreground">
 						<span className="font-semibold text-miss">“{miss}”</span> is the dictionary base form.{" "}
 						{item.trigger ? (
@@ -1306,7 +1309,7 @@ function FeedbackSheet({
 						};
 	const canExplain = item.kind !== "build";
 	const [more, setMore] = useState(false);
-	const hasMore = !!item.pair?.bridge || unitBridges(item.unit, bridgeLangs).length > 0 || examples.length > 0;
+	const hasMore = !!item.pair?.bridge || !!item.pair?.explain || unitBridges(item.unit, bridgeLangs).length > 0 || examples.length > 0;
 	const [marked, setMarked] = useState(false);
 	// "Tricky": put the word in the review deck now, ahead of its turn.
 	const mark = async () => {
@@ -1438,7 +1441,9 @@ function FeedbackSheet({
 							</button>
 						)}
 						{(more || !hasMore) && (
-							<dl className="lh-rise mt-2 grid gap-x-6 gap-y-2 font-prose text-[15px] leading-relaxed sm:grid-cols-[6rem_1fr]">
+							<div className="lh-rise mt-2 flex flex-col gap-4">
+							{item.pair?.explain && <GrammarExplain explain={item.pair.explain} />}
+							<dl className="grid gap-x-6 gap-y-2 font-prose text-[15px] leading-relaxed sm:grid-cols-[6rem_1fr]">
 							{item.pair?.bridge ? (
 								<>
 									<dt className={WHY_LABEL}>Parallels</dt>
@@ -1480,6 +1485,7 @@ function FeedbackSheet({
 								</button>
 							</dd>
 							</dl>
+							</div>
 						)}
 					</div>
 				)}

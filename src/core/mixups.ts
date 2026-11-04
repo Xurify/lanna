@@ -23,7 +23,7 @@
 
 import mixupsJson from "../../curriculum/slovak/mixups.json";
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
-import { matchCase, rng, shortGloss, shuffle, type ItemKind, type LessonItem, type LessonPlan, type RepVerdict } from "./lesson.ts";
+import { matchCase, rng, shortGloss, shuffle, type ItemKind, type LessonExplain, type LessonItem, type LessonPlan, type RepVerdict } from "./lesson.ts";
 import { formsOfEntry, MIN_PAIR_SENTENCES, PAIRS, twinSentences, type PairSentence } from "./pairs.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
 
@@ -36,6 +36,47 @@ export interface MixupFamily {
 	bridge: string;
 	/** The twins, by lexicon slug (a lemma such as domov has two entries). */
 	pairs: Array<[string, string]>;
+	/** One question shown after a miss, naming the cue that decides the form
+	 *  (deterministic, no model). Optional: a family without one shows its rule. */
+	cue?: string;
+	/** The verified sentences a probe may use, each with the cue that forces
+	 *  its form. When listed, only these are drilled (the aspect and
+	 *  demonstrative families); a family without the list drills every
+	 *  verified sentence that holds one twin. */
+	probes?: MixupProbe[];
+	/** Cue types a twin's probes may use: `first` is the pair's first twin (the
+	 *  imperfective, for an aspect pair), `second` the other. */
+	licence?: { first?: string[]; second?: string[] };
+	/** `parallel`: the blank is a verb form and the choice is the other twin's
+	 *  form in the same slot; `lemma` (the default): the choice is the two
+	 *  dictionary words. */
+	probeForm?: "parallel" | "lemma";
+	/** Static explanation shown with a miss on this family (a worked example,
+	 *  never a drill item; it does not touch the first try or the record). */
+	explain?: LessonExplain;
+}
+
+/** One row of a family's allowlist: a verified sentence, the cue type that
+ *  forces its form, the cue phrase (for novelty counts), and who approved the
+ *  row. A row with no approval is never drilled. */
+export interface MixupProbe {
+	/** The twin whose form the sentence holds (its lexicon slug). */
+	slug: string;
+	/** The verified sentence, as the lexicon has it. */
+	sk: string;
+	/** The form in the sentence, and where it starts. */
+	form?: string;
+	at?: number;
+	/** The cue type (licence) and the cue phrase, as it reads in the sentence (novelty counts). */
+	type: string;
+	phrase?: string;
+	/** The English line, when the verifier corrected the gloss. */
+	en?: string;
+	/** Where the sentence comes from: "verified-pool" (a lexicon example of any
+	 *  entry) or "frame" (an authored frame, src must be "frame"). */
+	src?: string;
+	/** Who approved the row. Null: never drilled. */
+	approved: string | null;
 }
 
 export const MIXUP_FAMILIES: MixupFamily[] = (mixupsJson as unknown as { families: MixupFamily[] }).families;
@@ -65,6 +106,9 @@ export interface Mixup {
 	seen?: MixupSeen[];
 	/** Predicted from this mix-up (its key) and not missed yet. */
 	from?: string;
+	/** A family that lists probes (aspect): the words with a right first try
+	 *  since the last miss. Mended or cleared only when both have one. */
+	won?: string[];
 }
 
 export type MixupRecord = Record<string, Mixup>;
@@ -87,9 +131,12 @@ export function mixupKey(a: string, b: string): string {
 
 export type MixupStatus = "active" | "mended" | "probe" | "cleared";
 
-export function mixupStatus(m: Pick<Mixup, "misses" | "hits">): MixupStatus {
-	if (m.misses > 0) return m.hits >= MIXUP_MEND_HITS ? "mended" : "active";
-	return m.hits >= PROBE_CLEAR_HITS ? "cleared" : "probe";
+export function mixupStatus(m: Pick<Mixup, "misses" | "hits" | "won">): MixupStatus {
+	// A probe family needs a right first try on both of its aspects, not
+	// three on one side: a learner who always picks the imperfective is not mended.
+	const bothSides = !m.won || m.won.length >= 2;
+	if (m.misses > 0) return m.hits >= MIXUP_MEND_HITS && bothSides ? "mended" : "active";
+	return m.hits >= PROBE_CLEAR_HITS && bothSides ? "cleared" : "probe";
 }
 
 export function familyOf(a: string, b: string): MixupFamily | undefined {
@@ -107,7 +154,14 @@ export interface MixupLexicon {
 	byLemma: Map<string, LexiconEntry[]>;
 	/** Pair sentences, by key, computed once. */
 	twins: Map<string, PairSentence[]>;
+	/** Approved authored frames by twin slug (empty unless the frame file has rows). */
+	frames: Map<string, MixupProbe[]>;
+	/** The frame list this lexicon was built with (a cache key). */
+	source: readonly MixupProbe[];
 }
+
+/** The frame list when none is given (the shared empty list, for the lexicon cache). */
+export const NO_FRAMES: readonly MixupProbe[] = [];
 
 const lexicons = new WeakMap<readonly LexiconEntry[], MixupLexicon>();
 
@@ -117,10 +171,11 @@ function push(map: Map<string, LexiconEntry[]>, key: string, entry: LexiconEntry
 	else if (!list.includes(entry)) list.push(entry);
 }
 
-export function mixupLexicon(entries: readonly LexiconEntry[]): MixupLexicon {
+export function mixupLexicon(entries: readonly LexiconEntry[], frames: readonly MixupProbe[] = NO_FRAMES): MixupLexicon {
 	const known = lexicons.get(entries);
-	if (known) return known;
-	const lex: MixupLexicon = { bySlug: new Map(), byForm: new Map(), byLemma: new Map(), twins: new Map() };
+	if (known && known.source === frames) return known;
+	const lex: MixupLexicon = { bySlug: new Map(), byForm: new Map(), byLemma: new Map(), twins: new Map(), frames: new Map(), source: frames };
+	for (const f of frames) if (f.src === "frame" && f.approved) push2(lex.frames, f.slug, f);
 	for (const entry of entries) {
 		lex.bySlug.set(entry.slug, entry);
 		const lemma = entryLemma(entry).toLocaleLowerCase("sk-SK");
@@ -131,14 +186,47 @@ export function mixupLexicon(entries: readonly LexiconEntry[]): MixupLexicon {
 	return lex;
 }
 
+function push2(map: Map<string, MixupProbe[]>, key: string, row: MixupProbe) {
+	const list = map.get(key);
+	if (list) list.push(row);
+	else map.set(key, [row]);
+}
+
+/** The entry with a family's approved rows and its approved frames appended as
+ *  examples, after its own, so an id never clashes. A row whose sentence is
+ *  already an own example only changes that example's English. */
+function shadowEntry(entry: LexiconEntry, lex: MixupLexicon, family: MixupFamily | undefined): LexiconEntry {
+	const rows = [...(family?.probes ?? []), ...(lex.frames.get(entry.slug) ?? [])].filter((r) => r.slug === entry.slug && !!r.approved && !!r.form);
+	if (rows.length === 0) return entry;
+	const examples = entry.examples.map((x) => {
+		const row = rows.find((r) => r.sk === exampleText(x) && !!r.en);
+		return row ? ({ ...x, en: row.en! } as typeof x) : x;
+	});
+	for (const r of rows) {
+		if (examples.some((x) => exampleText(x) === r.sk)) continue;
+		const at = r.at ?? r.sk.indexOf(r.form!);
+		if (at < 0) continue;
+		examples.push({ sk: r.sk, en: r.en ?? "", cloze: { answer: r.form!, at }, src: r.src ?? "frame" } as unknown as (typeof examples)[number]);
+	}
+	return { ...entry, examples };
+}
+
 /** The verified sentences that hold only one of the two words, computed once per pair. */
 export function twinsOf(lex: MixupLexicon, a: string, b: string): PairSentence[] {
+	return twinsOfFamily(lex, a, b);
+}
+
+function twinsOfFamily(lex: MixupLexicon, a: string, b: string): PairSentence[] {
 	const key = mixupKey(a, b);
 	const cached = lex.twins.get(key);
 	if (cached) return cached;
 	const ea = lex.bySlug.get(a);
 	const eb = lex.bySlug.get(b);
-	const out = ea && eb ? twinSentences(ea, eb) : [];
+	const family = familyOf(a, b);
+	const sa = ea ? shadowEntry(ea, lex, family) : undefined;
+	const sb = eb ? shadowEntry(eb, lex, family) : undefined;
+	const raw = sa && sb ? twinSentences(sa, sb) : [];
+	const out = sa && sb ? probeSentences(lex, family, a, b, raw) : [];
 	lex.twins.set(key, out);
 	return out;
 }
@@ -303,11 +391,13 @@ export function tallyMixups(record: MixupRecord, events: readonly MixupEvent[], 
 		if (e.verdict === "wrong") {
 			const other = wordGiven(lex, wanted, e.given);
 			if (!other) continue;
+			// A family that names probes records only the pairs it can drill on both sides.
+			if (familyOf(wanted.slug, other.slug)?.probes && twinsOfFamily(lex, wanted.slug, other.slug).length === 0) continue;
 			const key = mixupKey(wanted.slug, other.slug);
 			const prev = out[key];
 			const seen = [...(prev?.seen ?? []), { at: e.at, sentence: e.sentence, answer: e.answer, given: e.given.trim() }].slice(-SEEN_CAP);
 			if (prev) {
-				const { from: _from, ...rest } = prev;
+				const { from: _from, won: _won, ...rest } = prev;
 				out[key] = { ...rest, misses: prev.misses + 1, hits: 0, lastAt: e.at, seen };
 			} else {
 				const family = familyOf(wanted.slug, other.slug);
@@ -317,7 +407,9 @@ export function tallyMixups(record: MixupRecord, events: readonly MixupEvent[], 
 			out = predictMixups(out, key, lex, e.at);
 		} else {
 			for (const [k, m] of Object.entries(out)) {
-				if (m.a === e.slug || m.b === e.slug) out[k] = { ...m, hits: m.hits + 1, lastAt: e.at };
+				if (m.a !== e.slug && m.b !== e.slug) continue;
+				const won = familyOf(m.a, m.b)?.probes ? [...new Set([...(m.won ?? []), e.slug])] : undefined;
+				out[k] = { ...m, hits: m.hits + 1, lastAt: e.at, ...(won ? { won } : {}) };
 			}
 		}
 	}
@@ -389,9 +481,9 @@ export function mixupsLine(list: readonly MixupSummary[]): string | null {
 
 /** The rule and bridge shown after a miss on a pair: its family's, else a
  *  Dvojičky pair's, else the two meanings side by side. */
-export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexicon): { rule: string; bridge: string } {
+export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexicon): { rule: string; bridge: string; cue?: string; explain?: LessonExplain } {
 	const family = m.family ? MIXUP_FAMILIES.find((f) => f.id === m.family) : undefined;
-	if (family) return { rule: family.rule, bridge: family.bridge };
+	if (family) return { rule: family.rule, bridge: family.bridge, ...(family.cue ? { cue: family.cue } : {}), ...(family.explain ? { explain: family.explain } : {}) };
 	const ea = lex.bySlug.get(m.a);
 	const eb = lex.bySlug.get(m.b);
 	const la = ea ? entryLemma(ea) : m.a;
@@ -426,10 +518,10 @@ const fold = (s: string) => foldDiacritics(s.toLowerCase());
  * verified sentence that holds only one of the two words (twinSentences).
  * `recent` sentence ids go to the back while fresher ones remain.
  */
-export function buildMixupLesson(entries: readonly LexiconEntry[], record: MixupRecord | undefined, opts: { seed: number; length?: number; recent?: ReadonlySet<string> }): LessonPlan {
+export function buildMixupLesson(entries: readonly LexiconEntry[], record: MixupRecord | undefined, opts: { seed: number; length?: number; recent?: ReadonlySet<string>; frames?: readonly MixupProbe[] }): LessonPlan {
 	const rand = rng(opts.seed);
 	const length = opts.length ?? 12;
-	const lex = mixupLexicon(entries);
+	const lex = mixupLexicon(entries, opts.frames ?? NO_FRAMES);
 	const list = mixupList(record);
 	const active = list.filter((m) => m.status === "active").slice(0, MIXUP_LESSON_PAIRS - 1);
 	const probes = list.filter((m) => m.status === "probe").slice(0, Math.max(1, MIXUP_LESSON_PAIRS - active.length));
@@ -465,15 +557,63 @@ export function buildMixupLesson(entries: readonly LexiconEntry[], record: Mixup
 	return { unit: "words", items, focus: "mixups" };
 }
 
+/** The two twins' English, each first sense, without repeats: "to read / to
+ *  read through". A rep shows both, so the English never names the answer
+ *  (the chip would otherwise give it away, and the sentence must decide). */
+export function jointGloss(lex: MixupLexicon, a: string, b: string): string {
+	const glosses = [a, b].map((slug) => lex.bySlug.get(slug)).map((e) => (e ? shortGloss(e.en) : "?"));
+	return [...new Set(glosses)].join(" / ");
+}
+
+/** The other twin's form in the same slot. A lexicon entry's `forms` are one
+ *  paradigm in one order (present, imperative, past), so the form at the same
+ *  index is its parallel (písal ↔ napísal). Null when either list is not
+ *  verified, the lists differ in length, or the form is not in the list. */
+export function parallelForm(from: LexiconEntry, to: LexiconEntry, form: string): string | null {
+	if ((from as { formsVerified?: boolean }).formsVerified !== true || (to as { formsVerified?: boolean }).formsVerified !== true) return null;
+	const own = from.forms ?? [];
+	const other = to.forms ?? [];
+	if (own.length === 0 || own.length !== other.length) return null;
+	const i = own.findIndex((f) => f.toLocaleLowerCase("sk-SK") === form.toLocaleLowerCase("sk-SK"));
+	return i < 0 ? null : (other[i] ?? null);
+}
+
+/** The sentences a family drills for a pair. A family that lists its probes
+ *  drills only rows that are approved, match a verified sentence of this pair,
+ *  carry a cue type the licence allows for that twin, and (for parallel probes)
+ *  have a parallel form. Otherwise every verified twin sentence counts. */
+export function probeSentences(lex: MixupLexicon, family: MixupFamily | undefined, a: string, b: string, raw: PairSentence[]): PairSentence[] {
+	if (!family?.probes) return raw;
+	const probes = [...family.probes, ...(lex.frames.get(a) ?? []), ...(lex.frames.get(b) ?? [])];
+	const usable = raw.filter((s) => {
+		const text = exampleText(s.entry.examples[s.index]!);
+		const row = probes.find((p) => p.slug === s.entry.slug && p.sk === text);
+		if (!row || !row.approved) return false;
+		const side = s.member === "a" ? "first" : "second";
+		if (family.licence && !(family.licence[side] ?? []).includes(row.type)) return false;
+		if (family.probeForm === "parallel") {
+			const other = lex.bySlug.get(s.member === "a" ? b : a);
+			if (!other || parallelForm(s.entry, other, s.form) === null) return false;
+		}
+		return true;
+	});
+	// A pair is drilled, and recorded, only with approved rows of both aspects:
+	// a one-sided deck scores a learner who always picks one side.
+	const sides = new Set(usable.map((s) => s.member));
+	return sides.size === 2 ? usable : [];
+}
+
 /** One rep of a pair: typed when the pair is an open mix-up, a choice between the two words when it is a probe. */
-export function mixupItem(s: PairSentence, t: { key: string; m: Pick<Mixup, "a" | "b">; probe: boolean; rule: string; bridge: string }, lex: MixupLexicon, rand: () => number): LessonItem {
+export function mixupItem(s: PairSentence, t: { key: string; m: Pick<Mixup, "a" | "b">; probe: boolean; rule: string; bridge: string; cue?: string; explain?: LessonExplain }, lex: MixupLexicon, rand: () => number): LessonItem {
 	const ex = s.entry.examples[s.index]!;
 	const text = exampleText(ex);
 	const other = lex.bySlug.get(s.member === "a" ? t.m.b : t.m.a)!;
 	// A choice needs the other word in the same shape; that is only sure
 	// when the sentence uses the dictionary form (nikto, not nikoho).
 	const plain = fold(s.form) === fold(entryLemma(s.entry));
-	const kind: ItemKind = t.probe && plain ? "choose" : "type";
+	const family = familyOf(s.entry.slug, other.slug);
+	const parallel = family?.probeForm === "parallel" ? parallelForm(s.entry, other, s.form) : null;
+	const kind: ItemKind = t.probe && (parallel !== null || plain) ? "choose" : "type";
 	const item: LessonItem = {
 		id: `${s.entry.slug}#${s.index}`,
 		kind,
@@ -486,11 +626,11 @@ export function mixupItem(s: PairSentence, t: { key: string; m: Pick<Mixup, "a" 
 		answer: s.form,
 		before: text.slice(0, s.at),
 		after: text.slice(s.at + s.form.length),
-		hint: shortGloss(s.entry.en),
-		pair: { id: t.key, rule: t.rule, bridge: t.bridge },
+		hint: jointGloss(lex, t.m.a, t.m.b),
+		pair: { id: t.key, rule: t.rule, bridge: t.bridge, ...(t.cue ? { cue: t.cue } : {}), ...(t.explain ? { explain: t.explain } : {}) },
 	};
 	if (s.entry.rank !== undefined) item.rank = s.entry.rank;
 	if (s.entry.cat) item.cat = s.entry.cat;
-	if (kind === "choose") item.options = shuffle([s.form, matchCase(entryLemma(other), s.form)], rand);
+	if (kind === "choose") item.options = shuffle([s.form, matchCase(parallel ?? entryLemma(other), s.form)], rand);
 	return item;
 }

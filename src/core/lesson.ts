@@ -305,6 +305,29 @@ function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: Pi
  *  precedes production): the first two reps of a new unit. */
 export type ItemKind = "meaning" | "choose" | "type" | "build" | "listen";
 
+/** A static, worked explanation of a contrast (curriculum/slovak/mixups.json,
+ *  `explain`). Shown in the Why? panel after a miss; never a drill item and
+ *  never part of the first-try measure or the mix-up record. Every Slovak
+ *  line is for the verifier; `wiki` is a page-level slovak.wiki link. */
+export interface LessonExplain {
+	contrast: {
+		first: { sk: string; en: string; form: string };
+		second: { sk: string; en: string; form: string };
+		note: string;
+	};
+	/** Aspect only: one line per twin, drawn as a timeline. */
+	timeline?: { imperfective: string; perfective: string };
+	/** Aspect only: the three points, one per cue type that needs one. */
+	points?: string[];
+	/** Demonstratives only: case-by-gender grids, cells as written. */
+	tables?: Array<{ title: string; cols: string[]; rows: Array<{ case: string; cells: string[] }> }>;
+	trap: string;
+	/** A page-level slovak.wiki link (src/core/reference-pages.ts); shown only when allowed. */
+	wiki: string;
+	/** Who has checked the Slovak in this block. "pending verifier": not yet approved. */
+	checked?: string;
+}
+
 export interface LessonItem {
 	/** "<slug>#<exampleIndex>" — the same id the review deck uses. */
 	id: string;
@@ -348,7 +371,7 @@ export interface LessonItem {
 	/** pairs: the contrast pair behind this rep. The form in the sentence is
 	 *  the pair member's (item.form); the rule and the Estonian bridge are
 	 *  the pair's own, shown after a miss in place of the unit's. */
-	pair?: { id: string; rule: string; bridge: string };
+	pair?: { id: string; rule: string; bridge: string; cue?: string; explain?: LessonExplain };
 	/** The review deck's memory of this word, attached by the server. */
 	known?: WordKnown | null;
 }

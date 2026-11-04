@@ -10,6 +10,7 @@ import type { LessonPlan, RepVerdict } from "../core/lesson.ts";
 import { buildMixupLesson, mixupEventOf, mixupLexicon, mixupRule, openMixupFor, tallyMixups, type MixupEvent } from "../core/mixups.ts";
 import type { ReviewCard } from "../core/review.ts";
 import { progressStore, type ProgressRecord } from "../store/progress.ts";
+import { aspectFrames } from "./aspect-frames.ts";
 
 function entries() {
 	return loadLexicon()?.entries ?? [];
@@ -30,7 +31,7 @@ export function noteMixups(p: ProgressRecord, events: readonly MixupEvent[]): st
 	if (events.length === 0) return [];
 	const list = entries();
 	if (list.length === 0) return [];
-	const { record, found } = tallyMixups(p.mixups ?? {}, events, mixupLexicon(list));
+	const { record, found } = tallyMixups(p.mixups ?? {}, events, mixupLexicon(list, aspectFrames()));
 	p.mixups = record;
 	return found;
 }
@@ -51,7 +52,7 @@ export function noteReviewMixup(card: ReviewCard, given: string, verdict: RepVer
 /** The Mix-ups lesson: the open mix-ups and the probes on record. */
 export function mixupLessonFor(seed = Date.now()): LessonPlan {
 	const p = progressStore.read();
-	return buildMixupLesson(entries(), p.mixups, { seed, recent: new Set(p.recent) });
+	return buildMixupLesson(entries(), p.mixups, { seed, recent: new Set(p.recent), frames: aspectFrames() });
 }
 
 /** An open mix-up's rule on each regular rep of its words that has none, so
@@ -61,7 +62,7 @@ export function mixupLessonFor(seed = Date.now()): LessonPlan {
 export function withOpenMixups<T extends LessonPlan>(plan: T): T {
 	const record = progressStore.read().mixups;
 	if (!record || plan.focus === "mixups") return plan;
-	const lex = mixupLexicon(entries());
+	const lex = mixupLexicon(entries(), aspectFrames());
 	for (const item of plan.items) {
 		if (item.pair || item.form) continue;
 		const open = openMixupFor(record, item.slug);

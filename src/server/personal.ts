@@ -10,6 +10,7 @@ import type { LessonPlan } from "../core/lesson.ts";
 import { buildPersonalLesson, type PersonalPractice } from "../core/personal.ts";
 import { analysisStore } from "../store/analysis.ts";
 import { progressStore } from "../store/progress.ts";
+import { aspectFrames } from "./aspect-frames.ts";
 
 /** The daily plan offers the personal lesson this long after the guide was written. */
 export const PERSONAL_PLAN_DAYS = 7;
@@ -28,5 +29,5 @@ export function personalPlanEntry(now = new Date()): { focus: string } | null {
 
 export function personalLessonFor(seed = Date.now()): LessonPlan {
 	const p = progressStore.read();
-	return buildPersonalLesson(loadLexicon()?.entries ?? [], personalPractice(), p.mixups, { seed, recent: new Set(p.recent) });
+	return buildPersonalLesson(loadLexicon()?.entries ?? [], personalPractice(), p.mixups, { seed, recent: new Set(p.recent), frames: aspectFrames() });
 }

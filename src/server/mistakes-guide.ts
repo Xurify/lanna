@@ -15,6 +15,7 @@ import { addGuideProbes, mixupLexicon } from "../core/mixups.ts";
 import { resolvePractice } from "../core/personal.ts";
 import { progressStore } from "../store/progress.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
+import { aspectFrames } from "./aspect-frames.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { aiMissing, aiSlot, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { analyzeNow, mistakesReportOf, type MistakesReport } from "./mistakes-snapshot.ts";
@@ -74,11 +75,11 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 	const data = parseGuide(text);
 	const at = (opts.now ?? new Date()).toISOString();
 	const entries = loadLexicon()?.entries ?? [];
-	const practice = resolvePractice(data?.practice, data?.patterns.map((p) => p.title) ?? [], entries);
+	const practice = resolvePractice(data?.practice, data?.patterns.map((p) => p.title) ?? [], entries, aspectFrames());
 	// The pairs the guide named are tested before they are taught, like a family's.
 	if (practice?.pairs.length) {
 		const p = progressStore.read();
-		p.mixups = addGuideProbes(p.mixups ?? {}, practice.pairs, mixupLexicon(entries), at);
+		p.mixups = addGuideProbes(p.mixups ?? {}, practice.pairs, mixupLexicon(entries, aspectFrames()), at);
 		progressStore.write(p);
 	}
 	const guide: GuideRecord = { text: text.trim(), data, practice, at: (opts.now ?? new Date()).toISOString(), digest: key, model: resolved.model, usage: { model: resolved.model, steps } };
