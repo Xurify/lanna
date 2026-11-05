@@ -382,6 +382,27 @@ test("a translation the model miscounts twice is split in halves, each half aske
 	assert.equal(v.usage.steps.length, 5, "two asks for the whole, one each for the halves, one for the questions");
 });
 
+test("a translation chunk is asked with the lines on both sides as context", async () => {
+	const many = Array.from({ length: 43 }, (_, i) => `riadok${i + 1}`);
+	const base = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	const asks: string[] = [];
+	const streamFn: typeof base.streamSimple = (...args) => {
+		const asked = JSON.stringify(args[1]);
+		asks.push(asked);
+		const [, from, to] = asked.match(/Lines (\d+)–(\d+) of/)!;
+		const one = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+		one.setResponses([fauxAssistantMessage(JSON.stringify({ t: Array.from({ length: Number(to) - Number(from) + 1 }, (_, i) => `line ${Number(from) + i}`) }))]);
+		return one.streamSimple(...args);
+	};
+	const out = await watch.translateLines({ model: base.getModel(), streamFn }, many, { model: "faux:watch", steps: [] }, "Test");
+	assert.equal(out.length, 43);
+	assert.equal(asks.length, 2);
+	assert.match(asks[0]!, /lines just after[\s\S]*riadok41[\s\S]*riadok43/);
+	assert.doesNotMatch(asks[0]!, /lines just before/);
+	assert.match(asks[1]!, /lines just before[\s\S]*riadok38[\s\S]*riadok40/);
+	assert.doesNotMatch(asks[1]!, /lines just after/);
+});
+
 test("a line the model never translates stays in the video with no English, and is counted", async () => {
 	const bad = 2;
 	const missing = lines[bad]!.sk;

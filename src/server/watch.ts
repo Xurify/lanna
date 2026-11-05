@@ -351,8 +351,9 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 const TRANSLATE_SYSTEM = `You translate the lines of a Slovak video's subtitles into natural English for a learner who watches with both languages on screen. You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one English string per Slovak line, in the same order, the same count.
 
 Rules:
-- Translate meaning, line by line; keep each line's own content on its own line even when a sentence runs across lines.
-- Automatic captions have no punctuation and sometimes a wrong word: translate what was most likely said.
+- One English string per line, covering only that line's own words: never pull in words from the next line or repeat the previous one.
+- Lines are cut by length, so a sentence often runs across lines. Read the lines around each one to see what it means, then write the line as natural English for its own words. A line that stops mid-sentence ends with "…", and the line that carries on starts with "…".
+- Automatic captions have no punctuation, wrong words, false starts and repeats ("tak, tak", "ktoré to nie sú veci, ktoré to nie sú"): translate what the speaker most likely meant, and say a repeat or false start once.
 - Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
 
 const QUESTIONS_SYSTEM = `You write comprehension questions in Slovak about a video, for one learner inside a language app. You answer with ONE JSON object and nothing else: {"questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}]}.
@@ -396,19 +397,20 @@ export async function translateLines(engine: PiEngine, lines: readonly string[],
 	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not Slovak: translate what is said.` : "";
 	for (let at = 0; at < lines.length; at += TRANSLATE_CHUNK) {
 		const chunk = lines.slice(at, at + TRANSLATE_CHUNK);
-		out.push(...(await translateChunk(engine, chunk, lines.slice(Math.max(0, at - 3), at), at + 1, lines.length, title, usage, foreign)));
+		out.push(...(await translateChunk(engine, chunk, lines.slice(Math.max(0, at - 3), at), lines.slice(at + chunk.length, at + chunk.length + 3), at + 1, lines.length, title, usage, foreign)));
 	}
 	return out;
 }
 
 /** One chunk asked for as a whole, then once more. A chunk the model still
  *  miscounts is split in two, and each half is asked on its own with the
- *  lines just before it as context: a shorter ask miscounts less often. */
-async function translateChunk(engine: PiEngine, chunk: readonly string[], before: readonly string[], from: number, total: number, title: string, usage: StoryUsage, foreign: string): Promise<string[]> {
+ *  lines around it as context: a shorter ask miscounts less often. */
+async function translateChunk(engine: PiEngine, chunk: readonly string[], before: readonly string[], after: readonly string[], from: number, total: number, title: string, usage: StoryUsage, foreign: string): Promise<string[]> {
 	const prompt = [
 		`Video: "${title}". Lines ${from}–${from + chunk.length - 1} of ${total}.`,
 		foreign,
 		before.length ? `For context, the lines just before (do not translate these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
+		after.length ? `For context, the lines just after (do not translate these):\n${after.map((l) => `  ${l}`).join("\n")}` : "",
 		`Translate these ${chunk.length} lines, one English string each, same order:\n${JSON.stringify(chunk, null, 0)}`,
 	]
 		.filter(Boolean)
@@ -430,8 +432,8 @@ async function translateChunk(engine: PiEngine, chunk: readonly string[], before
 		throw failed;
 	}
 	const half = Math.ceil(chunk.length / 2);
-	const first = await translateChunk(engine, chunk.slice(0, half), before, from, total, title, usage, foreign);
-	const second = await translateChunk(engine, chunk.slice(half), [...before, ...chunk.slice(0, half)].slice(-3), from + half, total, title, usage, foreign);
+	const first = await translateChunk(engine, chunk.slice(0, half), before, [...chunk.slice(half), ...after].slice(0, 3), from, total, title, usage, foreign);
+	const second = await translateChunk(engine, chunk.slice(half), [...before, ...chunk.slice(0, half)].slice(-3), after, from + half, total, title, usage, foreign);
 	return [...first, ...second];
 }
 
