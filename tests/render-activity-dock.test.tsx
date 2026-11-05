@@ -1,7 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { ActivitySection, formatElapsed, toBlobs, type ActivityFeed, type FeedExtraction } from "../components/activity-dock.tsx";
+import { ActivitySection, formatElapsed, toBlobs, type ActivityFeed, type FeedExtraction, type FeedTask } from "../components/activity-dock.tsx";
+import { TaskNotice } from "../components/task-notice.tsx";
 import { formatTokens, formatUsd } from "../components/usage-format.ts";
 import { jobCost } from "../src/server/pricing.ts";
 
@@ -38,6 +39,7 @@ describe("activity dock pure layer", () => {
 		const feed: ActivityFeed = {
 			jobs: [job({ id: "new", createdAt: new Date(NOW - 10_000).toISOString() })],
 			extractions: [{ id: "cx", chatId: "cx", title: "Old lesson", phase: "auditing", startedAt: NOW - 100_000 }],
+			tasks: [],
 		};
 		const blobs = toBlobs(feed);
 		assert.equal(blobs.length, 2);
@@ -53,7 +55,7 @@ describe("activity dock pure layer", () => {
 			{ id: "src_a#1", chatId: "src_a", part: { i: 1, n: 2 }, title: "notes.md · 1/2", phase: "extracting", startedAt: NOW - 1000 },
 			{ id: "src_a#2", chatId: "src_a", part: { i: 2, n: 2 }, title: "notes.md · 2/2", phase: "queued", startedAt: NOW - 500 },
 		] as FeedExtraction[];
-		const blobs = toBlobs({ jobs: [], extractions: rows });
+		const blobs = toBlobs({ jobs: [], extractions: rows, tasks: [] });
 		assert.equal(blobs.length, 2, "one blob per chunk job");
 		assert.deepEqual(blobs.map((b) => b.id), ["src_a#1", "src_a#2"], "unique row ids — no duplicate React keys");
 		assert.ok(blobs.every((b) => b.chatId === "src_a"), "abort/link identity stays source-scoped");
@@ -71,12 +73,12 @@ describe("activity dock pure layer", () => {
 				steps: 2,
 			},
 		});
-		const blob = toBlobs({ jobs: [priced], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [priced], extractions: [], tasks: [] })[0]!;
 		// Pi-normalized fresh input is priced directly, never reduced by reads.
 		assert.equal(blob.cost, 0.00215);
-		const missingProjection = toBlobs({ jobs: [{ ...priced, costUsd: undefined }], extractions: [] })[0]!;
+		const missingProjection = toBlobs({ jobs: [{ ...priced, costUsd: undefined }], extractions: [], tasks: [] })[0]!;
 		assert.equal(missingProjection.cost, null, "the browser must not invent a fallback price");
-		const absent = toBlobs({ jobs: [job()], extractions: [] })[0]!;
+		const absent = toBlobs({ jobs: [job()], extractions: [], tasks: [] })[0]!;
 		assert.equal(absent.cost, null);
 	});
 
@@ -87,7 +89,7 @@ describe("activity dock pure layer", () => {
 			// the runner composes the envelope's error verbatim (invariant tail)
 			error: "No OpenRouter key is set — add one in Settings → API keys",
 		});
-		const blob = toBlobs({ jobs: [refused], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [refused], extractions: [], tasks: [] })[0]!;
 		assert.equal(blob.activity, "needs a provider key");
 	});
 
@@ -97,11 +99,11 @@ describe("activity dock pure layer", () => {
 			activity: "failed",
 			error: "No model configured — set up your models first (missing: vision)",
 		});
-		const blob = toBlobs({ jobs: [refused], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [refused], extractions: [], tasks: [] })[0]!;
 		assert.equal(blob.activity, "needs model setup");
 		// A real failure keeps the runner's honest wording.
 		const crashed = job({ status: "error", activity: "failed", error: "FAILED: headless crashed" });
-		const real = toBlobs({ jobs: [crashed], extractions: [] })[0]!;
+		const real = toBlobs({ jobs: [crashed], extractions: [], tasks: [] })[0]!;
 		assert.equal(real.activity, "failed");
 	});
 
@@ -121,17 +123,18 @@ describe("activity dock pure layer", () => {
 			// live-catalog join riding the feed — the dock never resolves it.
 			contextLimit: 131_072,
 		});
-		const blob = toBlobs({ jobs: [withLast], extractions: [] })[0]!;
+		const blob = toBlobs({ jobs: [withLast], extractions: [], tasks: [] })[0]!;
 		assert.equal(blob.context?.used, 92_000);
 		assert.equal(blob.context?.limit, 131_072);
 		// No lastStep yet (capture pending) → "—", even though usage exists.
-		const stripped = toBlobs({ jobs: [job({ usage: { ...base } })], extractions: [] })[0]!;
+		const stripped = toBlobs({ jobs: [job({ usage: { ...base } })], extractions: [], tasks: [] })[0]!;
 		assert.equal(stripped.context, null);
 		// Model missing from the live catalog (historical session,
 		// package update) → the feed carries null → no context line.
 		const uncatalogued = toBlobs({
 			jobs: [job({ usage: { ...base, model: "nope/unknown", lastStep: step(5, 5), } })],
 			extractions: [],
+			tasks: [],
 		})[0]!;
 		assert.equal(uncatalogued.context, null);
 		// The numerator is the same cache-inclusive fold the session meter
@@ -155,6 +158,7 @@ describe("activity dock pure layer", () => {
 				}),
 			],
 			extractions: [],
+			tasks: [],
 		})[0]!;
 		assert.equal(cached.context?.used, 160_500);
 		assert.equal(cached.context?.limit, 200_000);
@@ -164,6 +168,7 @@ describe("activity dock pure layer", () => {
 		const blob = toBlobs({
 			jobs: [],
 			extractions: [{ id: "cx", chatId: "cx", title: "T", phase: "extracting", startedAt: NOW }],
+			tasks: [],
 		})[0]!;
 		assert.equal(blob.cost, null);
 		assert.equal(blob.context, null);
@@ -189,9 +194,9 @@ describe("activity dock pure layer", () => {
 
 describe("activity section render", () => {
 	it("renders the ALWAYS-PRESENT header when idle — empty means empty, nothing hides", () => {
-		const html = renderToStaticMarkup(<ActivitySection feed={{ jobs: [], extractions: [] }} />);
+		const html = renderToStaticMarkup(<ActivitySection feed={{ jobs: [], extractions: [], tasks: [] }} />);
 		assert.match(html, /data-testid="activity-section"/);
-		assert.match(html, /Background agents/);
+		assert.match(html, /Background/);
 		assert.doesNotMatch(html, /activity-blob-(job|extraction)/, "no rows while idle");
 		assert.doesNotMatch(html, /activity-total-cost/, "the cost span is population, not decoration");
 	});
@@ -202,6 +207,7 @@ describe("activity section render", () => {
 				feed={{
 					jobs: [job({ id: "j1", kind: "demo", activity: "building sandbox…", title: "Chain-rule demo" })],
 					extractions: [{ id: "cx", chatId: "cx", title: "Old lesson", phase: "merging", startedAt: NOW - 60_000 }],
+					tasks: [],
 				}}
 			/>,
 		);
@@ -215,7 +221,7 @@ describe("activity section render", () => {
 		assert.match(html, /activity-blob-cost[^>]*>—</);
 		assert.match(html, /data-testid="activity-abort"/, "END on the blob face, popover-independent");
 		assert.match(html, /\bEnd\b/, "the explicit END button");
-		assert.match(html, /Background agents/);
+		assert.match(html, /Background/);
 		// Total cost: nothing priced → "—" in the header.
 		assert.match(html, /activity-total-cost[^>]*>—</);
 		// Truncation-reveals KEEP native title (tooltip wave mechanism rule):
@@ -243,11 +249,42 @@ describe("activity section render", () => {
 						job({ id: "b", usage, createdAt: new Date(NOW - 20_000).toISOString() }),
 					],
 					extractions: [],
+					tasks: [],
 				}}
 			/>,
 		);
 		// two identical priced jobs → 2 × $0.002 = $0.0040 total (pi prices,
 		// glm-5.3-flash drifted in pi-ai 0.87.1)
 		assert.match(html, /activity-total-cost[^>]*>\$0\.0040</);
+	});
+});
+describe("background tasks in the dock and the notice", () => {
+	const task = (over: Partial<FeedTask> = {}): FeedTask => ({ id: "video:aaaaaaaaaaa", kind: "video", title: "Bratislava za jeden deň", step: "Translating", status: "running", startedAt: NOW - 20_000, ...over });
+
+	it("a running task is a blob with its step; a finished one is not", () => {
+		const blobs = toBlobs({ jobs: [job()], extractions: [], tasks: [task(), task({ id: "video:bbbbbbbbbbb", status: "done" })] });
+		assert.deepEqual(blobs.map((b) => b.process), ["job", "task"], "oldest first");
+		assert.equal(blobs[1]!.activity, "Translating");
+		assert.equal(blobs[1]!.cost, null);
+	});
+
+	it("the section lists the task with an end control and no session link or cost", () => {
+		const html = renderToStaticMarkup(<ActivitySection feed={{ jobs: [], extractions: [], tasks: [task()] }} />);
+		assert.match(html, /data-testid="activity-blob-task"/);
+		assert.match(html, /Bratislava za jeden deň/);
+		assert.match(html, /Translating/);
+		assert.match(html, /data-testid="activity-abort"/);
+		assert.doesNotMatch(html, /activity-blob-cost/);
+	});
+
+	it("the notice shows a finished video with Open, a failure with its reason and retry, and nothing for a running task", () => {
+		assert.equal(renderToStaticMarkup(<TaskNotice tasks={[task()]} />), "");
+		const done = renderToStaticMarkup(<TaskNotice tasks={[task({ status: "done", href: "/watch?id=aaaaaaaaaaa", step: "Ready" })]} />);
+		assert.match(done, /Video ready/);
+		assert.match(done, /href="\/watch\?id=aaaaaaaaaaa"/);
+		const failed = renderToStaticMarkup(<TaskNotice tasks={[task({ status: "error", error: "No captions.", retry: { label: "Transcribe the audio", url: "u", transcribe: true } })]} />);
+		assert.match(failed, /No captions\./);
+		assert.match(failed, /Transcribe the audio/);
+		assert.doesNotMatch(failed, /task-notice-open/);
 	});
 });

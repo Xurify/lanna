@@ -9,6 +9,9 @@
  * lines, translated on the cheap slot, glossed, questioned, kept under
  * data/profiles/<language>/videos/. Reused when already there, unless
  * force is true (regenerate: captions fetched and lines translated again).
+ * With background: true it answers 202 {id} at once and the work runs as a
+ * task (src/server/tasks.ts, listed in GET /api/activity); a video already
+ * kept is returned whole, as without it.
  * POST /api/watch {action: "delete", videoId} — take a video out of the
  * library (its watchings stay).
  * POST /api/watch {action: "finish", videoId, mode, stats, answers,
@@ -16,8 +19,8 @@
  * to the review deck, a fresh summary.
  */
 
-import { isVideoId, type SegmentStat, type WatchMode } from "@/src/core";
-import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, videoStore, watchState } from "@/src/server";
+import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
+import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, storyEngine, videoStore, watchState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +42,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add") {
 		if (typeof body.url !== "string" || !body.url.trim()) return Response.json({ message: "url is required" }, { status: 400 });

@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: Watch prepares videos in the background (branch `fix/watch-known-grammar-words`)
+
+- **Background tasks:** preparing or regenerating a video no longer holds the page. The shelf comes back at once with the video listed as running; the sidebar's Background section lists it with its step and a stop button; when it ends, a card (any page) says "Video ready" with Open, or why it failed. The card stays until dismissed. `src/server/tasks.ts` is the registry (in memory, so a restart drops the list, not the saved videos); the next AI jobs (stories, lessons) can register the same way.
+- **Transcribing:** a video with no captions that can be transcribed shows "Transcribe the audio" on its failure card.
+- **Tooltips** keep 12 px from the window edge.
+- **Unverified:** the flow in the live app (the checks were unit tests and the render tests), and whether a real model's new translations read better.
+
 ## 4 November: aspect and demonstrative drills, built but inert (branch `feat/aspect-demonstrative-drills`, E42)
 
 - **What was built:** aspect is a mix-up family of 12 pairs (`curriculum/slovak/mixups.json`), drilled only from 18 verifier-approved verified-lexicon rows; a pair is drilled and recorded only with rows of both aspects, and it mends only after right first tries on both. Each family has a static explanation (contrast, timeline or case grid, cue points, trap, one slovak.wiki page link) under the Why? panel after a miss. The lesson's cue question after a miss is the family's own line. Demonstratives (tento/ten) have their grid and explanation, but no approved rows, so nothing is drilled.

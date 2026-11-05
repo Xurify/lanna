@@ -35,6 +35,7 @@ import {
 	parseCaptions,
 	parseTranslations,
 	parseVideoUrl,
+	PREPARE_STAGE_LINE,
 	pickPreTeach,
 	segmentCues,
 	videoCoverage,
@@ -59,6 +60,7 @@ import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
+import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
 const run = promisify(execFile);
 const code = () => LANGUAGES[ACTIVE_PROFILE].code;
@@ -467,8 +469,11 @@ export function prepareStage(id: string): { stage: PrepareStage; error?: string 
 	return s ? { stage: s.stage, ...(s.error ? { error: s.error } : {}) } : null;
 }
 
+const taskIdOf = (id: string) => `video:${id}`;
+
 function setStage(id: string, stage: PrepareStage, error?: string) {
 	stages.set(id, { stage, ...(error ? { error } : {}), at: Date.now() });
+	if (stage !== "done" && stage !== "error") updateTask(taskIdOf(id), { step: PREPARE_STAGE_LINE[stage] });
 	// Finished entries fade after a minute, so the library's "preparing"
 	// list stays honest.
 	if (stage === "done" || stage === "error") setTimeout(() => stages.get(id)?.stage === stage && stages.delete(id), 60_000).unref?.();
@@ -497,11 +502,15 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			const kept = videoStore.get(id);
 			if (kept) return kept;
 		}
+		const task = startTask({ id: taskIdOf(id), kind: "video", title: videoStore.get(id)?.title ?? `Video ${id}`, step: PREPARE_STAGE_LINE.captions });
+		const signal = opts.signal ? AbortSignal.any([opts.signal, task.signal]) : task.signal;
 		setStage(id, "captions");
 		const lexicon = loadLexicon();
 		const k = knownWords(lexicon);
-		const fetched = await (opts.captions ? opts.captions(id) : fetchCaptions(id, { transcribe: opts.transcribe, signal: opts.signal, onStage: (s) => setStage(id, s) }));
+		const fetched = await (opts.captions ? opts.captions(id) : fetchCaptions(id, { transcribe: opts.transcribe, signal, onStage: (s) => setStage(id, s) }));
 		if (fetched.meta.durationSec > MAX_VIDEO_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`);
+		signal.throwIfAborted();
+		updateTask(taskIdOf(id), { title: fetched.meta.title });
 		const lines = segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
 		if (lines.length === 0) throw new Error("The captions are empty.");
 		if (fetched.raw) {
@@ -522,6 +531,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
 		setStage(id, "translating");
 		const en = await translateLines(engine, lines.map((l) => l.sk), usage, fetched.meta.title, fetched.source.trackLang);
+		signal.throwIfAborted();
 		const untranslated = en.filter((t) => t === "").length;
 		const segments = glossSegments(lines, en, lexicon, k);
 		setStage(id, "questions");
@@ -550,15 +560,19 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			translatedBy: "model",
 			...(untranslated ? { untranslated } : {}),
 		};
+		signal.throwIfAborted();
 		videoStore.put(record);
 		ensureReadmes();
 		setStage(id, "done");
+		finishTask(taskIdOf(id), { title: record.title, href: `/watch?id=${id}` });
 		return record;
 	})();
 	inFlight.set(id, job);
 	return job
 		.catch((err) => {
-			setStage(id, "error", err instanceof Error ? err.message : String(err));
+			const message = err instanceof Error && err.name === "AbortError" ? "Stopped." : err instanceof Error ? err.message : String(err);
+			setStage(id, "error", message);
+			failTask(taskIdOf(id), message, err instanceof NoCaptionsError && err.canTranscribe ? { label: "Transcribe the audio", url, transcribe: true } : undefined);
 			throw err;
 		})
 		.finally(() => inFlight.delete(id));

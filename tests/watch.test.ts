@@ -446,3 +446,34 @@ test("a line the model never translates stays in the video with no English, and 
 	assert.deepEqual(v.segments.filter((_, i) => i !== bad).map((s) => s.en), TRANSLATIONS.filter((_, i) => i !== bad));
 	assert.equal(v.untranslated, 1);
 });
+
+test("a preparation is a background task: running with its step, done with where to open it, failed with why", async () => {
+	const { listTasks, resetTasks, abortTask } = await import("../src/server/tasks.ts");
+	resetTasks();
+	const url = "https://youtu.be/EEEEEEEEEEE";
+	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const slow = watch.prepareVideo(url, { engine, model: "faux:watch", captions: async (id) => ({ ...(await captions(id)), meta: { id, title: "Slow one", durationSec: 58 } }), now: new Date("2026-11-05T09:00:00Z") });
+	const [running] = listTasks();
+	assert.equal(running!.id, "video:EEEEEEEEEEE");
+	assert.equal(running!.status, "running");
+	const v = await slow;
+	const [done] = listTasks();
+	assert.deepEqual({ status: done!.status, title: done!.title, href: done!.href }, { status: "done", title: "Slow one", href: `/watch?id=${v.id}` });
+
+	const failing = watch.prepareVideo("https://youtu.be/FFFFFFFFFFF", { engine: fauxEngine([]), model: "faux:watch", captions: async () => Promise.reject(new Error("YouTube said no.")) });
+	await assert.rejects(failing, /YouTube said no/);
+	const failed = listTasks().find((t) => t.id === "video:FFFFFFFFFFF")!;
+	assert.deepEqual({ status: failed.status, error: failed.error }, { status: "error", error: "YouTube said no." });
+
+	const stopped = watch.prepareVideo("https://youtu.be/GGGGGGGGGGG", {
+		engine: fauxEngine([]),
+		model: "faux:watch",
+		captions: async (id) => {
+			assert.equal(abortTask(`video:${id}`), true);
+			return captions(id);
+		},
+	});
+	await assert.rejects(stopped);
+	assert.equal(listTasks().find((t) => t.id === "video:GGGGGGGGGGG")!.error, "Stopped.");
+	assert.equal(videoStore.get("GGGGGGGGGGG"), null, "a stopped preparation keeps nothing");
+});

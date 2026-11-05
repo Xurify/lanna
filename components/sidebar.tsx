@@ -1127,7 +1127,7 @@ function SessionsSidebar() {
 						)}
 					</section>
 
-					{/* Background agents appear only while one runs: an idle header
+					{/* Background work (agents, extraction, tasks) appears only while some runs: an idle header
 					    told the learner nothing and read as machinery. */}
 					{agentsRunning && <ActivitySection />}
 

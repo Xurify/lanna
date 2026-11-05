@@ -31,6 +31,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
+import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
@@ -39,7 +40,7 @@ import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type PrepareStage, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
+import { coverageBand, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
@@ -72,7 +73,6 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	const [video, setVideo] = useState<VideoRecord | null>(initialVideo ?? null);
 	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : initialUrl ? "preparing" : "shelf");
 	const [error, setError] = useState<PrepareError | null>(null);
-	const [prepStage, setPrepStage] = useState<PrepareStage>("captions");
 	const [pending, setPending] = useState<string | null>(initialUrl ?? null);
 	const [mode, setMode] = useState<WatchMode>("step");
 	const [tapped, setTapped] = useState<string[]>([]);
@@ -114,6 +114,12 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	}, [working]);
 	const activeTime = useActiveTime("watch", "passive", { active: watchClockOn({ watching: stage === "watch", questions: stage === "questions", ready: videoReady, playing: videoPlaying, deciding, decideCapped, idle }) });
 
+	const { feed } = useActivity();
+	const running = feed.tasks.filter((t) => t.kind === "video" && t.status === "running");
+	// The library follows the background tasks: a video that finished is on the shelf without a reload.
+	const taskSig = feed.tasks.filter((t) => t.kind === "video").map((t) => `${t.id}:${t.status}`).join("|");
+	const seenSig = useRef(taskSig);
+
 	const load = useCallback(async () => {
 		try {
 			const res = await fetch(`/api/watch?tz=${new Date().getTimezoneOffset()}`);
@@ -123,8 +129,9 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 		}
 	}, []);
 
-	/** Prepare a pasted link: the server fetches, translates and keeps it;
-	 *  the step it is at is polled while it works. */
+	/** Prepare a pasted link. The server fetches, translates and keeps it as a
+	 *  background task (the sidebar lists it, a notice says when it is ready),
+	 *  so the learner is back on the shelf at once. A video already kept opens. */
 	const prepare = useCallback(
 		async (url: string, transcribe = false, force = false) => {
 			const id = parseVideoUrl(url);
@@ -135,18 +142,18 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 			}
 			setPending(url);
 			setError(null);
-			setPrepStage("captions");
 			setStage("preparing");
-			const poll = setInterval(() => {
-				void fetch(`/api/watch?status=${id}`)
-					.then((r) => (r.ok ? (r.json() as Promise<{ stage: PrepareStage }>) : null))
-					.then((s) => s && setPrepStage(s.stage))
-					.catch(() => {});
-			}, 900);
 			try {
-				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force }) });
-				const body = (await res.json()) as VideoRecord | PrepareError;
-				if (!res.ok || !("segments" in body)) throw body;
+				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true }) });
+				const body = (await res.json()) as VideoRecord | PrepareError | { background: true };
+				if (!res.ok) throw body;
+				if ("background" in body) {
+					setPending(null);
+					setStage("shelf");
+					void load();
+					return;
+				}
+				if (!("segments" in body)) throw body;
 				setVideo(body);
 				setTapped([]);
 				setAnswers([]);
@@ -158,12 +165,16 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 				const e = err && typeof err === "object" && "message" in err ? (err as PrepareError) : { message: err instanceof Error ? err.message : String(err) };
 				setError(e);
 				setStage("error");
-			} finally {
-				clearInterval(poll);
 			}
 		},
 		[load],
 	);
+
+	useEffect(() => {
+		if (seenSig.current === taskSig) return;
+		seenSig.current = taskSig;
+		void load();
+	}, [taskSig, load]);
 
 	const kicked = useRef(false);
 	useEffect(() => {
@@ -253,11 +264,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 					<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-teal-wash text-teal-2">
 						<MonitorPlayIcon className="size-9 lh-flicker" />
 					</div>
-					<h1 className="mt-5 font-ui text-3xl font-[600] text-foreground">Preparing the video…</h1>
-					<p className="mt-2 font-prose text-lg text-muted-foreground">The captions are fetched, cut into lines, translated and glossed once. It is kept, so the next time is free.</p>
+					<h1 className="mt-5 font-ui text-3xl font-[600] text-foreground">Starting…</h1>
+					<p className="mt-2 font-prose text-lg text-muted-foreground">The video is prepared in the background. You can leave this page; a notice shows when it is ready.</p>
 					<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground" data-testid="watch-stage">
 						<LoaderCircleIcon className="size-4 animate-spin" />
-						{PREPARE_STAGE_LINE[prepStage]}
 					</p>
 				</div>
 			</Frame>
@@ -301,7 +311,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} onOpen={open} onPrepare={(url) => void prepare(url)} onDelete={(id) => void remove(id)} />
+			<Shelf state={state} running={running} onOpen={open} onPrepare={(url) => void prepare(url)} onDelete={(id) => void remove(id)} />
 		);
 	}
 
@@ -417,7 +427,7 @@ function Thumb({ id, watched }: { id: string; watched: boolean }) {
 	);
 }
 
-function Shelf({ state, onOpen, onPrepare, onDelete }: { state: WatchState | null; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
+function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
 	const [url, setUrl] = useState("");
 	const [confirming, setConfirming] = useState<string | null>(null);
 	const list = [...(state?.library ?? [])].reverse();
@@ -466,6 +476,20 @@ function Shelf({ state, onOpen, onPrepare, onDelete }: { state: WatchState | nul
 					</div>
 				) : (
 					<p className="mt-3 font-prose text-[13px] leading-relaxed text-ink-3">The captions come from YouTube (made by people, or its automatic ones). Translating a video takes one or two short requests to your AI provider, once, and it is kept. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</p>
+				)}
+
+				{running.length > 0 && (
+					<ul className="mt-4 flex flex-col gap-2" data-testid="watch-running">
+						{running.map((t) => (
+							<li key={t.id} className="q-card flex items-center gap-3 px-4 py-3">
+								<LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" />
+								<span className="min-w-0 flex-1">
+									<span className="block truncate font-ui text-[15px] text-foreground">{t.title}</span>
+									<span className="block truncate font-ui text-[13px] text-ink-3">{t.step}. It keeps going if you leave this page.</span>
+								</span>
+							</li>
+						))}
+					</ul>
 				)}
 
 				{list.length > 0 && (

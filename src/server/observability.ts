@@ -25,6 +25,7 @@ import { graphRevision } from "./graph.ts";
 import { catalogContextLimits } from "./model-catalog.ts";
 import { listJobs } from "./jobs.ts";
 import { jobCost } from "./pricing.ts";
+import { listTasks, type TaskRecord } from "./tasks.ts";
 import type { JobRecord } from "../core/contracts.ts";
 
 export { abortExtraction, extractionStatuses, type ExtractionPhase, type RunningExtraction } from "../agent/subagents/extraction.ts";
@@ -69,6 +70,7 @@ export interface ActivityExtraction {
 export function activityFeed(): {
 	jobs: ActivityJob[];
 	extractions: ActivityExtraction[];
+	tasks: TaskRecord[];
 	graphRevision: number;
 } {
 	const chats = chatStore.listChats();
@@ -104,6 +106,7 @@ export function activityFeed(): {
 	return {
 		jobs,
 		extractions: extractions.sort((a, b) => a.startedAt - b.startedAt),
+		tasks: listTasks(),
 		graphRevision: graphRevision(),
 	};
 }

@@ -11,6 +11,7 @@ import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
 import { readSettingsRecord } from "@/src/server";
 import type { AppearanceSettings } from "@/src/core";
 import { ActivityProvider } from "@/components/activity-dock";
+import { TaskNotice } from "@/components/task-notice";
 import { ServerEventsProvider } from "@/components/server-events";
 import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
@@ -72,6 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					<SidebarProvider defaultCollapsed={sidebarCollapsed} defaultWidth={sidebarWidth}>
 						<ActivityProvider>
 							<AppShell>{children}</AppShell>
+							<TaskNotice />
 						</ActivityProvider>
 					</SidebarProvider>
 				</AppearanceProvider>
