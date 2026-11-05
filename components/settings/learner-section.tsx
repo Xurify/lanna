@@ -171,7 +171,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 									</span>
 									{!running && (
 										<button type="button" onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-switch-${p.id}`}>
-											Switch
+											{p.ready === false ? "Finish" : "Switch"}
 										</button>
 									)}
 									{p.removable ? (
@@ -193,7 +193,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 						})}
 					</ul>
 					<div className="flex flex-wrap items-center gap-3">
-						<button type="button" onClick={languages.openAdd} className={cn(SECONDARY, SMALL)} data-testid="target-language-add">
+						<button type="button" onClick={() => languages.openAdd()} className={cn(SECONDARY, SMALL)} data-testid="target-language-add">
 							<PlusIcon className="size-4" />
 							Add a language
 						</button>

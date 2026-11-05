@@ -33,15 +33,20 @@ export interface ProfileInfo {
 export function useLanguageActions({ profile, onChanged }: { profile: ProfileInfo | null; onChanged: (next?: ProfileInfo) => void }) {
 	const [pending, setPending] = useState<ProfileEntry | null>(null);
 	const [removing, setRemoving] = useState<ProfileEntry | null>(null);
-	const [adding, setAdding] = useState(false);
+	// The language the Add dialog opens on, or true for none.
+	const [adding, setAdding] = useState<string | boolean>(false);
 	const [note, setNote] = useState<string | null>(null);
 
-	/** Pick a language: switching restarts the app, so it asks first. */
+	/** Pick a language: switching restarts the app, so it asks first. One
+	 *  without its course opens Add a language on it instead, since running
+	 *  it would show another language's lessons. */
 	const choose = (id: string) => {
 		if (!profile || id === profile.active) return;
 		setNote(null);
 		const entry = profile.profiles.find((p) => p.id === id);
-		if (entry) setPending(entry);
+		if (!entry) return;
+		if (entry.ready === false) setAdding(entry.id);
+		else setPending(entry);
 	};
 
 	const confirmSwitch = async () => {
@@ -67,10 +72,7 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 					flag={pending.id}
 					lead={`LangHarness restarts in ${pending.english}.`}
 					body={
-						<>
-							Your {profile.profiles.find((p) => p.id === profile.active)?.english ?? "current"} progress stays as it is.
-							{pending.ready === false && ` ${pending.english} has no course yet, so its lessons stay empty until you finish it from Add a language.`}
-						</>
+						<>Your {profile.profiles.find((p) => p.id === profile.active)?.english ?? "current"} progress stays as it is.</>
 					}
 					confirm="Switch and restart"
 					onConfirm={() => void confirmSwitch()}
@@ -89,6 +91,7 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 			)}
 			{adding && (
 				<AddLanguageDialog
+					initial={typeof adding === "string" ? adding : undefined}
 					onClose={() => setAdding(false)}
 					onStarted={() => {
 						setAdding(false);
@@ -105,7 +108,7 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 			setNote(null);
 			setRemoving(entry);
 		},
-		openAdd: () => setAdding(true),
+		openAdd: (id?: string) => setAdding(id ?? true),
 		note,
 		dialogs,
 	};

@@ -1,6 +1,7 @@
 import { LessonPlayer } from "@/components/lesson/lesson-player";
 import { isAtlasGender, isUnitId, type LessonPlan } from "@/src/core";
-import { blitzFor, lessonFor, lessonWithBetterOptions, mixupsFor, personalFor } from "@/src/server";
+import { NoCourse } from "@/components/no-course";
+import { blitzFor, lessonFor, lessonWithBetterOptions, missingCourse, mixupsFor, personalFor, profileStatus } from "@/src/server";
 
 export const metadata = { title: "Lesson" };
 
@@ -11,6 +12,8 @@ export const dynamic = "force-dynamic";
  *  the page, so the first question is in the first HTML and never swaps
  *  after load. */
 export default async function LessonPage({ searchParams }: { searchParams: Promise<{ unit?: string; mode?: string; gender?: string }> }) {
+	const missing = missingCourse();
+	if (missing) return <NoCourse language={missing} initialProfile={profileStatus()} />;
 	const { unit, mode, gender } = await searchParams;
 	const id = isUnitId(unit) ? unit : "words";
 	const gen = isAtlasGender(gender) ? gender : undefined;

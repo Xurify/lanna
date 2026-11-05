@@ -67,6 +67,15 @@ export function selectProfile(profile: LanguageProfile): ProfileStatus {
 	return profileStatus();
 }
 
+/** The running language when it has no course yet, else null. Without a
+ *  course the core falls back to Slovak's units (src/core/course.ts), which
+ *  then drill this language's words under Slovak titles, so the pages that
+ *  teach from the course ask to finish it instead. */
+export function missingCourse(): { id: string; english: string } | null {
+	if (languageReady(ACTIVE_PROFILE)) return null;
+	return { id: ACTIVE_PROFILE, english: activeLanguage().english };
+}
+
 interface SeedFile {
 	language: string;
 	version: number;

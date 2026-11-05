@@ -53,9 +53,9 @@ function basisLine(e: Estimate): string {
 	return e.measured > 0 ? `From ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model.` : "A first guess: no course has been written on this model yet.";
 }
 
-export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void; onStarted: () => void }) {
+export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: () => void; onStarted: () => void; initial?: string }) {
 	const [rows, setRows] = useState<CatalogRow[] | null>(null);
-	const [picked, setPicked] = useState<string | null>(null);
+	const [picked, setPicked] = useState<string | null>(initial ?? null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [writers, setWriters] = useState<Estimate[]>([]);
@@ -106,6 +106,20 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 		}
 	};
 
+	const statusOf = (r: CatalogRow) =>
+		r.ready ? (
+			<span className="inline-flex items-center gap-1">
+				<CheckIcon className="size-3.5" />
+				Added
+			</span>
+		) : r.adding ? (
+			"Adding…"
+		) : r.restoreOnly ? (
+			"Removed"
+		) : r.started ? (
+			"Needs its course"
+		) : null;
+
 	return createPortal(
 		<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...dismiss}>
 			<div
@@ -113,9 +127,9 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				aria-modal="true"
 				aria-labelledby="add-lang-title"
 				data-testid="add-language-dialog"
-				className="flex max-h-[min(40rem,calc(100dvh-2rem))] w-full max-w-md flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
+				className="flex max-h-[min(44rem,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-xl bg-card shadow-raise-hi animate-in zoom-in-95 duration-150"
 			>
-				<div className="flex items-start justify-between gap-3">
+				<div className="flex shrink-0 items-start justify-between gap-3 px-5 pt-5 pb-3">
 					<div>
 						<h3 id="add-lang-title" className="text-base font-semibold text-foreground">
 							Add a language
@@ -129,100 +143,93 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 					</button>
 				</div>
 
-				<div role="listbox" aria-label="Languages you can add" className="-mx-1 min-h-48 flex-1 overflow-y-auto px-1" data-testid="add-language-list">
-					{rows === null && !error && <p className="px-2 py-3 text-xs text-muted-foreground">Loading…</p>}
-					{rows?.map((r) => {
-						const unavailable = r.ready || r.adding;
-						const selected = picked === r.id;
-						return (
-							<button
-								key={r.id}
-								type="button"
-								role="option"
-								aria-selected={selected}
-								aria-disabled={unavailable}
-								disabled={unavailable}
-								data-testid={`add-language-${r.id}`}
-								onClick={() => setPicked(r.id)}
-								className={cn(
-									"flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-									selected ? "bg-accent font-semibold text-foreground ring-1 ring-primary/50" : "text-foreground hover:bg-accent/60",
-									unavailable && "cursor-default text-muted-foreground hover:bg-transparent",
-								)}
-							>
-								<CountryFlag lang={r.id} />
-								<span className="truncate">{r.endonym}</span>
-								<span className="truncate text-xs text-muted-foreground">({r.english})</span>
-								<span className="ml-auto shrink-0 text-xs text-muted-foreground">
-									{r.ready ? (
-										<span className="inline-flex items-center gap-1">
-											<CheckIcon className="size-3.5" />
-											Added
-										</span>
-									) : r.adding ? (
-										"Adding…"
-									) : r.restoreOnly ? (
-										"Removed"
-									) : r.started ? (
-										"Needs its course"
-									) : null}
-								</span>
-							</button>
-						);
-					})}
-				</div>
-
-				<p className="text-xs leading-relaxed text-muted-foreground">
-					The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons from the dictionary for free.
-				</p>
-				{writers.length > 0 && !choice?.restoreOnly && (
-					<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1" data-testid="add-language-writers">
-						<p className="text-xs font-semibold text-foreground">Written by</p>
-						{writers.map((w) => {
-							const on = w.slot === writer;
+				{/* One scroll for the whole middle: the title and the buttons stay in view, and no list scrolls inside another. */}
+				<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-1">
+					<div role="listbox" aria-label="Languages you can add" className={cn("flex flex-col gap-0.5", rows === null && "min-h-[17rem]")} data-testid="add-language-list">
+						{rows === null && !error && <p className="px-2.5 py-2 text-xs text-muted-foreground">Loading…</p>}
+						{rows?.map((r) => {
+							const unavailable = r.ready || r.adding;
+							const selected = picked === r.id;
 							return (
 								<button
-									key={w.slot}
+									key={r.id}
 									type="button"
-									role="radio"
-									aria-checked={on}
-									data-testid={`add-language-writer-${w.slot}`}
-									onClick={() => setWriter(w.slot)}
+									role="option"
+									aria-selected={selected}
+									aria-disabled={unavailable}
+									disabled={unavailable}
+									data-testid={`add-language-${r.id}`}
+									onClick={() => setPicked(r.id)}
 									className={cn(
-										"flex w-full items-baseline justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
-										on ? "bg-accent text-foreground ring-1 ring-primary/50" : "text-muted-foreground hover:bg-accent/60",
+										"flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+										selected ? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50" : "text-foreground hover:bg-accent/60",
+										unavailable && "cursor-default text-muted-foreground hover:bg-transparent",
 									)}
 								>
-									<span className="min-w-0">
-										<span className="block truncate font-semibold">{w.name}</span>
-										<span className="block truncate text-muted-foreground">
-											{w.slot === "dictionary" ? basisLine(w) : <>{w.slot === "strong" ? "Strong" : "Cheap"} slot · {w.level} thinking · {basisLine(w)}</>}
-										</span>
-									</span>
-									<span className="shrink-0 tabular-nums font-semibold">{priceLine(w)}</span>
+									<CountryFlag lang={r.id} />
+									<span className="truncate">{r.endonym}</span>
+									<span className="truncate text-xs font-normal text-muted-foreground">({r.english})</span>
+									<span className="ml-auto shrink-0 text-xs font-normal text-muted-foreground">{statusOf(r)}</span>
 								</button>
 							);
 						})}
 					</div>
-				)}
-				{error && (
-					<p className="text-xs text-destructive" role="alert">
-						{error}
+
+					<p className="text-xs leading-relaxed text-muted-foreground">
+						The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons from the dictionary for free.
 					</p>
-				)}
-				<div className="flex items-center justify-end gap-2">
-					<button type="button" onClick={onClose} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-						Cancel
-					</button>
-					<button
-						type="button"
-						data-testid="add-language-start"
-						disabled={!choice || busy || (anyAdding && !choice.restoreOnly)}
-						onClick={() => void start()}
-						className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
-					>
-						{choice?.restoreOnly ? `Put ${choice.english} back` : anyAdding ? "Another language is being added" : choice ? `${choice.started ? "Finish" : "Add"} ${choice.english}` : "Pick a language"}
-					</button>
+					{writers.length > 0 && !choice?.restoreOnly && (
+						<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1 pb-3" data-testid="add-language-writers">
+							<p className="pb-1 text-xs font-semibold text-foreground">Written by</p>
+							{writers.map((w) => {
+								const on = w.slot === writer;
+								return (
+									<button
+										key={w.slot}
+										type="button"
+										role="radio"
+										aria-checked={on}
+										data-testid={`add-language-writer-${w.slot}`}
+										onClick={() => setWriter(w.slot)}
+										className={cn(
+											"flex w-full items-start justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
+											on ? "bg-accent text-foreground ring-1 ring-inset ring-primary/50" : "text-muted-foreground hover:bg-accent/60",
+										)}
+									>
+										<span className="min-w-0">
+											<span className="block font-semibold">{w.name}</span>
+											<span className="mt-0.5 block leading-relaxed text-muted-foreground">
+												{w.slot === "dictionary" ? basisLine(w) : <>{w.slot === "strong" ? "Strong" : "Cheap"} slot · {w.level} thinking · {basisLine(w)}</>}
+											</span>
+										</span>
+										<span className="shrink-0 tabular-nums font-semibold">{priceLine(w)}</span>
+									</button>
+								);
+							})}
+						</div>
+					)}
+				</div>
+
+				<div className="flex shrink-0 flex-col gap-2 border-t border-border/60 px-5 py-4">
+					{error && (
+						<p className="text-xs text-destructive" role="alert">
+							{error}
+						</p>
+					)}
+					<div className="flex items-center justify-end gap-2">
+						<button type="button" onClick={onClose} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+							Cancel
+						</button>
+						<button
+							type="button"
+							data-testid="add-language-start"
+							disabled={!choice || busy || (anyAdding && !choice.restoreOnly)}
+							onClick={() => void start()}
+							className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
+						>
+							{choice?.restoreOnly ? `Put ${choice.english} back` : anyAdding ? "Another language is being added" : choice ? `${choice.started ? "Finish" : "Add"} ${choice.english}` : "Pick a language"}
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>,
