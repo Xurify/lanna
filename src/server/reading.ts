@@ -32,7 +32,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { curriculumState, CHAPTERS, STAGES, type Cefr } from "../core/curriculum.ts";
-import { foldDiacritics, LANGUAGES } from "../core/language.ts";
+import { countryOf, foldDiacritics, LANGUAGES, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { UNITS } from "../core/lesson.ts";
 import { purposeInfo, type Purpose } from "../core/onboarding.ts";
@@ -370,51 +370,63 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 
 // ─── The brief ──────────────────────────────────────────────────────────────
 
-const SYSTEM = `You write graded Slovak reading texts for one learner inside a language app. You answer with ONE JSON object and nothing else: no prose, no code fences.
+/** The writer's instructions, for the running language and its story bible. */
+export function storySystem(lang: Pick<LanguageInfo, "english" | "tag" | "country" | "promptExamples">, world: World | null): string {
+	const name = lang.english;
+	const lead = world?.cast[0];
+	const logline = world?.logline ?? `one main character, a young person who has recently moved to a town in ${countryOf(lang)} (name them and the town in the first episode; the recaps carry them)`;
+	const clauseWords = lang.promptExamples?.clauseWords;
+	const leadName = lead?.name ?? "Name";
+	return `You write graded ${name} reading texts for one learner inside a language app. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
-The brief says what kind of text to write (an episode of the running series about Robo, a young man who has recently moved to Bratislava; or a stand-alone piece: a conversation, messages, a diary page, a folk tale, a news item...). Plain, warm, a little funny where it fits; everyday life, nothing violent or sad. In the Robo series keep the same people and places across episodes (the brief gives the earlier recaps).
+The brief says what kind of text to write (an episode of the running series about ${logline}; or a stand-alone piece: a conversation, messages, a diary page, a folk tale, a news item...). Plain, warm, a little funny where it fits; everyday life, nothing violent or sad. In the series keep the same people and places across episodes (the brief gives the earlier recaps).
 
 Rules that matter more than the plot:
-- Write at the learner's level and ONLY with the grammar listed as held. Simple main clauses at A1; a subordinate clause with "že", "keď", "lebo" from A2.
+- Write at the learner's level and ONLY with the grammar listed as held. Simple main clauses at A1; a subordinate clause${clauseWords ? ` with ${clauseWords}` : ""} from A2.
 - Use the learner's known words. About 97 of every 100 running words must be words a learner at this level knows; the brief gives the known words to lean on. Repeat words rather than reach for new ones.
 - Introduce at most the number of new words the brief allows. Each new word appears at least three times in the text, in different sentences, so it can be learned from context. List every new word under newWords with its dictionary form and a short English gloss.
-- Every sentence is something a Slovak would really say or write in that situation. No filler that states the obvious ("I listen and you talk", "we are a family and you are a friend"); at A1 lean on the real exchanges of the situation: greetings, asking and answering, wanting and having, liking, where and when. A line of dialogue sounds like speech: short, with a reaction to what was just said.
-- Correct Slovak spelling with all diacritics. Check case endings and verb forms; a wrong form teaches a wrong form.
+- Every sentence is something a ${name} speaker would really say or write in that situation. No filler that states the obvious ("I listen and you talk", "we are a family and you are a friend"); at A1 lean on the real exchanges of the situation: greetings, asking and answering, wanting and having, liking, where and when. A line of dialogue sounds like speech: short, with a reaction to what was just said.
+- Correct ${name} spelling with all diacritics. Check case endings and verb forms; a wrong form teaches a wrong form.
 - One sentence per array item; each 4 to 14 words; the whole text within the sentence count the brief gives. Narration and speech are separate items: never put a speech tag ("he says") and the quoted line in one item — the "who" field says who speaks, so quoted lines need no quotation marks and no tags.
-- "cast" lists every person who speaks: name, gender ("f" or "m"), age ("child", "young", "adult" or "old"). Each sentence's "who" is "narrator" or one cast name exactly as listed. In the Robo series Robo is male, young.
+- "cast" lists every person who speaks: name, gender ("f" or "m"), age ("child", "young", "adult" or "old"). Each sentence's "who" is "narrator" or one cast name exactly as listed.${lead ? ` In the series ${lead.name} is ${lead.gender === "f" ? "female" : "male"}, ${lead.age}.` : ""}
 - "en" is a plain English translation of the sentence.
-- Comprehension questions as the brief lists them: that many, of those kinds in that order, each with that many options, question and options in Slovak at the text's level. Mark each question with its "kind". Options are short and all the same shape; the wrong ones are plausible (things the text mentions, or a near meaning), never silly. The right one is at a different index each time. "answer" is the index of the right option. Questions test meaning, never grammar.
+- Comprehension questions as the brief lists them: that many, of those kinds in that order, each with that many options, question and options in ${name} at the text's level. Mark each question with its "kind". Options are short and all the same shape; the wrong ones are plausible (things the text mentions, or a near meaning), never silly. The right one is at a different index each time. "answer" is the index of the right option. Questions test meaning, never grammar.
 - "topic" is three to six English words saying what the text is about.
-- "recap" is one English sentence saying what happened (for the next Robo episode's brief).
-- "title" is two to five Slovak words.
+- "recap" is one English sentence saying what happened (for the next episode's brief).
+- "title" is two to five ${name} words.
 
-Shape: {"title": "...", "topic": "...", "cast": [{"name": "Robo", "gender": "m", "age": "young"}], "sentences": [{"who": "narrator", "sk": "...", "en": "..."}, {"who": "Robo", "sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+Shape: {"title": "...", "topic": "...", "cast": [{"name": "${leadName}", "gender": "m", "age": "young"}], "sentences": [{"who": "narrator", "sk": "...", "en": "..."}, {"who": "${leadName}", "sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+}
 
 export interface StoryBrief {
 	genre: StoryGenre;
-	/** The Robo episode number; 0 for a stand-alone piece. */
+	/** The episode number in the series; 0 for a stand-alone piece. */
 	episode: number;
 	theme: string;
 	prompt: string;
 }
 
-/** The setting for an episode: rotate through what Slovak is for, with
- *  everyday life when nothing was picked. */
-export function episodeTheme(purposes: readonly Purpose[], episode: number): string {
-	const SETTINGS: Record<Purpose, string[]> = {
-		family: ["a Sunday lunch with his girlfriend's family", "a phone call with his mother", "a friend's birthday at home"],
-		daily: ["a café in the old town", "the market at Miletičova", "a tram ride across the city", "a visit to the doctor", "finding a flat"],
-		work: ["his first week at a new job", "a meeting that goes wrong", "lunch with colleagues", "writing an email to the boss"],
-		offices: ["the foreigners' police office", "a form that has to be filled in", "a phone call to the bank"],
-		media: ["a Slovak film at the cinema", "the evening news on TV", "a podcast about Bratislava"],
-		exam: ["a language course in the evening", "a study day before an exam"],
-		curious: ["a trip to the castle", "a day in the Tatras", "a Slovak word that puzzles him"],
-		// "Something else" is a note in the learner's words; the brief carries
-		// it, the setting falls back to everyday life.
-		other: [],
-	};
-	const pool = (purposes.length ? purposes : (["daily"] as Purpose[])).flatMap((p) => SETTINGS[p] ?? []);
-	if (pool.length === 0) return "a day in Bratislava";
+/** Episode settings for a language whose story bible names none. */
+const PLAIN_SETTINGS: Record<Purpose, string[]> = {
+	family: ["a Sunday lunch with his girlfriend's family", "a phone call with his mother", "a friend's birthday at home"],
+	daily: ["a café in the old town", "the market", "a tram ride across the city", "a visit to the doctor", "finding a flat"],
+	work: ["his first week at a new job", "a meeting that goes wrong", "lunch with colleagues", "writing an email to the boss"],
+	offices: ["the foreigners' police office", "a form that has to be filled in", "a phone call to the bank"],
+	media: ["a film at the cinema", "the evening news on TV", "a podcast about the city"],
+	exam: ["a language course in the evening", "a study day before an exam"],
+	curious: ["a trip to the castle", "a day in the mountains", "a word that puzzles him"],
+	// "Something else" is a note in the learner's words; the brief carries
+	// it, the setting falls back to everyday life.
+	other: [],
+};
+
+/** The setting for an episode: rotate through what the learner is learning
+ *  for, with everyday life when nothing was picked. The story bible's own
+ *  settings (Bratislava's market, the Tatras) come first. */
+export function episodeTheme(purposes: readonly Purpose[], episode: number, world: World | null = null): string {
+	const settings = (p: Purpose) => world?.settings?.[p] ?? PLAIN_SETTINGS[p] ?? [];
+	const pool = (purposes.length ? purposes : (["daily"] as Purpose[])).flatMap(settings);
+	if (pool.length === 0) return `a day in ${world?.city ?? "the city"}`;
 	return pool[(episode - 1) % pool.length]!;
 }
 
@@ -428,22 +440,24 @@ export function questionLine(level: Cefr): string {
 /** The brief for one text. `previous` lists the shelf (every kept story):
  *  Robo episodes count the series, the others' topics are named so the
  *  new text is about something else. A Robo episode is seeded from the
- *  story bible (`curriculum/slovak/<profile>/world.json`, src/server/world.ts):
+ *  language's story bible (`world.json`, src/server/world.ts):
  *  its cast, its places, and the chapter the learner is in as this
  *  episode's plot beat. */
-export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null): StoryBrief {
+export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage()): StoryBrief {
 	const robo = previous.filter((s) => (s.genre ?? "robo") === "robo");
 	const episode = genre === "robo" ? robo.length + 1 : 0;
-	const theme = genre === "robo" ? episodeTheme(k.purposes, episode) : genreInfo(genre).label.toLowerCase();
+	const names = { series: world?.series ?? "The story", language: lang.english, country: countryOf(lang) };
+	const theme = genre === "robo" ? episodeTheme(k.purposes, episode, world) : genreInfo(genre, names).label.toLowerCase();
+	const lead = world?.cast[0]?.name;
 	const len = STORY_LENGTH[k.level];
 	const stage = STAGES.find((s) => s.level === k.level);
 	const topics = previous.map((s) => s.topic).filter((t): t is string => !!t).slice(-12);
 	const series = genre === "robo" && world?.cast.length ? world : null;
 	const lines = [
-		genre === "robo" ? `Text: episode ${episode} of the Robo series. Setting: ${theme}.` : `Text: ${genreInfo(genre).brief}.`,
+		genre === "robo" ? `Text: episode ${episode} of the ${lead ? `${lead} series` : "running series"}. Setting: ${theme}.` : `Text: ${genreInfo(genre, names).brief}.`,
 		series ? `Series bible, keep them as written — the cast: ${series.cast.map((c) => `${c.name} (${c.gender === "f" ? "woman" : "man"}, ${c.age}) ${c.role}`).join("; ")}.` : "",
 		series ? `The places they meet at: ${series.places.map((p) => p.name).join(", ")}.` : "",
-		series ? `This episode's beat: "${series.beats[k.chapter] ?? "another day in Bratislava"}" — build the episode on it.` : "",
+		series ? `This episode's beat: "${series.beats[k.chapter] ?? `another day in ${series.city ?? "the city"}`}" — build the episode on it.` : "",
 		topics.length ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
 		`Learner level: ${k.level}${stage ? ` (${stage.title})` : ""}, working in the chapter "${k.chapterTitle}".`,
 		`Length: ${len.min} to ${len.max} sentences. New words allowed: at most ${NEW_WORDS_MAX[k.level]}.`,
@@ -451,9 +465,9 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		k.grammar.length ? `Grammar held (use it freely): ${k.grammar.join("; ")}.` : "Grammar held: only the present tense of common verbs, nouns in the nominative and the accusative after common verbs, and short questions.",
 		k.practicing.length ? `Grammar being practiced now (use it a few times, correctly): ${k.practicing.join("; ")}.` : "",
 		k.sample.length ? `Known words to lean on: ${k.sample.join(", ")}.` : "The learner is at the very start: use only the most common words (greetings, family, food and drink, the home, going places, numbers to ten).",
-		k.purposes.length ? `The learner is learning Slovak for: ${k.purposes.map((p) => purposeInfo(p).title.toLowerCase()).join(", ")}.` : "",
+		k.purposes.length ? `The learner is learning ${lang.english} for: ${k.purposes.map((p) => purposeInfo(p).title.toLowerCase()).join(", ")}.` : "",
 		k.note ? `In their own words: "${k.note.replace(/\s+/g, " ").slice(0, 300)}". Let the setting serve this when it can.` : "",
-		genre !== "robo" ? "" : recaps.length ? `Earlier episodes, oldest first:\n${recaps.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}` : "This is the first episode: introduce Robo and one other person.",
+		genre !== "robo" ? "" : recaps.length ? `Earlier episodes, oldest first:\n${recaps.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}` : `This is the first episode: introduce ${lead ?? "the main character"} and one other person.`,
 		`Today is ${now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}; the season may show.`,
 	].filter(Boolean);
 	return { genre, episode, theme, prompt: lines.join("\n") };
@@ -469,7 +483,7 @@ export interface GenerateOptions {
 	model?: string;
 	/** The level to write for; the learner's own when absent. */
 	level?: Cefr;
-	/** The kind of text; a Robo episode when absent. */
+	/** The kind of text; a series episode when absent. */
 	genre?: StoryGenre;
 	/** A reader is waiting for it (true) or the shelf is being filled. */
 	wanted?: boolean;
@@ -516,7 +530,7 @@ async function draft(engine: PiEngine, prompt: string, usage: StoryUsage, onPart
 	const { text } = await runSubagent([], {
 		role: "researcher",
 		engine,
-		systemPrompt: SYSTEM,
+		systemPrompt: storySystem(activeLanguage(), loadWorld()),
 		prompt,
 		maxTurns: 1,
 		onUsage: (u) => usage.steps.push(stepOf(u)),

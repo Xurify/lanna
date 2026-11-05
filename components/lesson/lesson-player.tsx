@@ -917,7 +917,7 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 					<p className="text-foreground">
 						{vocabulary ? (
 							<>
-								Find the Slovak word for “{hintFor(item)}”.
+								Find the word for “{hintFor(item)}”.
 							</>
 						) : (
 							"Read the whole sentence again: who does what, and which case follows."

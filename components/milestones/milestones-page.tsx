@@ -197,7 +197,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 				{/* Your own milestone, in your words. */}
 				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="milestone-add">
 					<h2 className="font-ui text-sm font-semibold text-foreground">Add your own</h2>
-					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch Slovak let's plays”. The tutor's cheap model maps it to the kind of language it needs, once, and keeps the answer.</p>
+					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch let's plays”. The tutor's cheap model maps it to the kind of language it needs, once, and keeps the answer.</p>
 					<form
 						className="mt-3 flex flex-wrap items-stretch gap-2"
 						onSubmit={(e) => {
@@ -232,7 +232,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 					{sourcesOpen && (
 						<div className="mt-3 flex flex-col gap-4 font-prose text-sm leading-relaxed text-muted-foreground">
 							<p>
-								<b className="text-foreground">Words.</b> Your working vocabulary is every word the deck or a word lesson has shown you, plus the commonest words up to the size a learner at your level typically has (Milton 2009: A1 {n(LEVEL_VOCAB.A1)}, A2 {n(LEVEL_VOCAB.A2)}, B1 {n(LEVEL_VOCAB.B1)}, B2 {n(LEVEL_VOCAB.B2)}, C1 {n(LEVEL_VOCAB.C1)} lemmas here). “Commonest” is by how often a word's forms occur in the dictionary's 30,000 example sentences. The published thresholds count English word families; a Slovak lemma is finer (národ, národný and národne are three), so every count is raised by a quarter (×{INFLECTION_FACTOR}). Between the published 95% and 98% points the curve is a Zipf tail.
+								<b className="text-foreground">Words.</b> Your working vocabulary is every word the deck or a word lesson has shown you, plus the commonest words up to the size a learner at your level typically has (Milton 2009: A1 {n(LEVEL_VOCAB.A1)}, A2 {n(LEVEL_VOCAB.A2)}, B1 {n(LEVEL_VOCAB.B1)}, B2 {n(LEVEL_VOCAB.B2)}, C1 {n(LEVEL_VOCAB.C1)} lemmas here). “Commonest” is by how often a word's forms occur in the dictionary's 30,000 example sentences. The published thresholds count English word families; a lemma in an inflected language is finer (a noun, its adjective and its adverb are three), so every count is raised by a quarter (×{INFLECTION_FACTOR}). Between the published 95% and 98% points the curve is a Zipf tail.
 							</p>
 							<p>
 								<b className="text-foreground">Speed.</b> Words a minute of understanding: in Listen, the words of a sentence divided by the time from its first sound to your right answer (never less than the audio itself; replays and a peek at the text count against it). In Watch, the segments you got on the first unaided pass. Each situation demands the speaker's rate, discounted for its support: {Object.entries(SUPPORT_LINE).map(([k, v]) => `${k} (${v})`).join("; ")}. Hours to a speed follow the guided-hours ladder — {SPEED_LADDER.map((r) => `${r.level} ≈ ${r.wpm}`).join(", ")} words a minute — until eight of your own Listen sessions across a week replace it with your trend.

@@ -36,9 +36,13 @@ Russian is in the catalog although its profile is built in: the profile has its 
 
 ## What works in an added language
 
-- Review, Words and the tutor work: they read the lexicon and the language segment.
-- Lessons and the curriculum path are built for Slovak (`src/core/lesson.ts`).
-- Read, Watch, Speak, the placement check and the custom milestones still have Slovak written into their model prompts, so they produce Slovak. Making them follow the active language is the next step.
+- Review, Words, Read, Watch, Speak, the placement check and the tutor work: their model prompts take the language from the running profile, and setup asks what *that* language is for.
+- The lessons and the curriculum path are Slovak units (`LESSON_LANGUAGE` in `src/core/lesson.ts`), so they stay Slovak. Parallels from the learner's languages exist only for them.
+- Language-specific touches are data, not code: Slovak examples in prompts are `promptExamples` on the Slovak entry in `src/core/language.ts`, and Robo, Bratislava, the Read settings and the Speak scenes in their Slovak form are in `curriculum/slovak/world.json`. A language without them gets neutral wording.
+
+## Removing a language
+
+In the language menu, hover an added language and press the bin. Its words, sentences and grammar map (`<data>/languages/<id>/`) are deleted. The learner's progress in it (`<data>/profiles/<id>/`) stays, so adding it again picks up where they were. The running language cannot be removed; switch first.
 
 ## Where the code is
 

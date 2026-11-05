@@ -115,9 +115,12 @@ export function LanguagePicker({
 	value,
 	levels,
 	onChange,
+	exclude,
 	testid = "languages",
 }: {
 	value: readonly Lang[];
+	/** The language being learned (ISO 639-1): not one the learner "knows". */
+	exclude?: string;
 	levels: Readonly<Partial<Record<Lang, LangLevel>>>;
 	onChange: (langs: Lang[], levels: Partial<Record<Lang, LangLevel>>) => void;
 	testid?: string;
@@ -174,9 +177,10 @@ export function LanguagePicker({
 			document.removeEventListener("keydown", onKey);
 		};
 	});
-	const shown = KNOWN_LANGUAGES.filter((l) => l.primary || value.includes(l.id));
+	const offered = KNOWN_LANGUAGES.filter((l) => l.id !== exclude);
+	const shown = offered.filter((l) => l.primary || value.includes(l.id));
 	const q = query.trim().toLowerCase();
-	const found = KNOWN_LANGUAGES.filter((l) => (q ? l.title.toLowerCase().includes(q) : !l.primary));
+	const found = offered.filter((l) => (q ? l.title.toLowerCase().includes(q) : !l.primary));
 	const added = pending ? pending.filter((l) => !value.includes(l)).length : 0;
 	return (
 		<div data-testid={testid}>

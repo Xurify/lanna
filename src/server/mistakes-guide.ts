@@ -19,11 +19,13 @@ import { aspectFrames } from "./aspect-frames.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { aiMissing, aiSlot, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { analyzeNow, mistakesReportOf, type MistakesReport } from "./mistakes-snapshot.ts";
+import { activeLanguage } from "./active-language.ts";
 
-const SYSTEM = `You are a Slovak teacher reading a learner's own answers. The facts below are their unit scores, trends, word mix-ups and the latest wrong first tries, each with the sentence, the form wanted and what they wrote. Find the patterns behind the mistakes and say what to do about them.
+export function mistakesGuideSystem(name: string = activeLanguage().english): string {
+	return `You are a ${name} teacher reading a learner's own answers. The facts below are their unit scores, trends, word mix-ups and the latest wrong first tries, each with the sentence, the form wanted and what they wrote. Find the patterns behind the mistakes and say what to do about them.
 
 Rules:
-- Use only the facts. Never invent a mistake, a number or a sentence. Slovak examples must come from the facts' own sentences.
+- Use only the facts. Never invent a mistake, a number or a sentence. ${name} examples must come from the facts' own sentences.
 - A pattern is a reason several misses share (for example: the ending after a preposition, a case mixed with another, one word taken for its look-alike). Name it, quote the evidence, say why it happens in plain words, and give one concrete fix. A pattern needs at least two misses behind it. A unit marked "too few answers to call weak" is not a pattern by itself; a single miss is a slip, not a pattern.
 - "next" are guesses about what may trip them next, from pairs marked not tested yet and units whose trend is worse. Say they are guesses.
 - "plan" is up to four steps the app can open: kind "mixups" (the Mix-ups lesson), "unit" (a lesson; put the unit's id, the word in [brackets] in the facts, in "unit"), "review", or "other".
@@ -34,6 +36,7 @@ Rules:
 Reply with one JSON object and nothing else:
 {"patterns":[{"title":"","evidence":"","why":"","fix":""}],"next":[{"what":"","why":""}],"plan":[{"step":"","kind":"mixups"}],"practice":{"words":[],"units":[],"pairs":[["",""]]}}
 At most 4 patterns, 4 guesses and 4 steps.`;
+}
 
 /** The Strong slot when set (finding the reason behind several misses is
  *  reasoning, and it runs a few times a week), else Cheap; with the slot's
@@ -68,7 +71,7 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 	const steps: ReturnType<typeof stepOf>[] = [];
 	let text: string;
 	try {
-		({ text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: SYSTEM, prompt: `Facts:\n${facts}`, maxTurns: 1, onUsage: (u) => steps.push(stepOf(u)) }));
+		({ text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: mistakesGuideSystem(), prompt: `Facts:\n${facts}`, maxTurns: 1, onUsage: (u) => steps.push(stepOf(u)) }));
 	} catch (err) {
 		throw new Error(friendlyAiError(err));
 	}

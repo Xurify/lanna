@@ -129,7 +129,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				</div>
 
 				<p className="text-xs leading-relaxed text-muted-foreground">
-					If a model is set in Settings, it also drafts a grammar map for the skill map in one Cheap-slot call. Review, Words and the tutor work in the new language. Lessons, Read, Watch and Speak are still written for Slovak.
+					If a model is set in Settings, it also drafts a grammar map for the skill map in one Cheap-slot call. Review, Words, Read, Watch, Speak and the tutor work in the new language. The lessons and the curriculum path are written for Slovak only so far.
 				</p>
 				{error && (
 					<p className="text-xs text-destructive" role="alert">

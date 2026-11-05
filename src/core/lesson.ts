@@ -140,6 +140,10 @@ const PAIR_UNITS: UnitInfo[] = PAIR_UNIT_IDS.map((id) => ({
 	grammarTerm: "Confusing pairs",
 }));
 
+/** The language the units below and their bridge lines are written in
+ *  (ISO 639-1). Another target language has no lessons or parallels yet. */
+export const LESSON_LANGUAGE = "sk";
+
 /** The path, in teaching order. */
 export const UNITS: UnitInfo[] = [
 	{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, slovakTerm: "Základná slovná zásoba", grammarTerm: "Core vocabulary" },

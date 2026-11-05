@@ -2,6 +2,103 @@
 	"series": "Robo in Bratislava",
 	"language": "slovak",
 	"version": 1,
+	"city": "Bratislava",
+	"logline": "Robo, a young man who has recently moved to Bratislava",
+	"settings": {
+		"family": [
+			"a Sunday lunch with his girlfriend's family",
+			"a phone call with his mother",
+			"a friend's birthday at home"
+		],
+		"daily": [
+			"a café in the old town",
+			"the market at Miletičova",
+			"a tram ride across the city",
+			"a visit to the doctor",
+			"finding a flat"
+		],
+		"work": [
+			"his first week at a new job",
+			"a meeting that goes wrong",
+			"lunch with colleagues",
+			"writing an email to the boss"
+		],
+		"offices": [
+			"the foreigners' police office",
+			"a form that has to be filled in",
+			"a phone call to the bank"
+		],
+		"media": [
+			"a Slovak film at the cinema",
+			"the evening news on TV",
+			"a podcast about Bratislava"
+		],
+		"exam": [
+			"a language course in the evening",
+			"a study day before an exam"
+		],
+		"curious": [
+			"a trip to the castle",
+			"a day in the Tatras",
+			"a Slovak word that puzzles him"
+		]
+	},
+	"scenes": {
+		"cafe": {
+			"title": "Kaviareň",
+			"blurb": "Order coffee and cake in Bratislava",
+			"brief": "a waiter in a small café in Bratislava's old town; I want to order coffee and something sweet, and ask what's good",
+			"task": "Order a coffee and something sweet, and ask what is good."
+		},
+		"way": {
+			"title": "Na ulici",
+			"blurb": "Ask a stranger the way to the station",
+			"brief": "a friendly local on Obchodná ulica; I am lost and need to get to the main train station",
+			"task": "You are lost. Find out how to get to the main station."
+		},
+		"colleague": {
+			"title": "Nový kolega",
+			"blurb": "Meet a new colleague on day one",
+			"brief": "my new colleague at the office; we meet at the coffee machine on my first day and get to know each other",
+			"task": "It is your first day. Get to know your new colleague."
+		},
+		"shop": {
+			"title": "Na trhu",
+			"blurb": "Buy vegetables at the market",
+			"brief": "a stallholder at the Miletičova market; I want vegetables and fruit for a soup, and to ask about prices",
+			"task": "Buy what you need for a soup, and ask about prices."
+		},
+		"doctor": {
+			"title": "U lekára",
+			"blurb": "Explain to a doctor what hurts",
+			"brief": "a GP in a Slovak clinic; I have a sore throat and a headache since yesterday",
+			"task": "Tell the doctor what hurts and since when."
+		},
+		"family": {
+			"title": "Rodina",
+			"blurb": "Talk about your family with a new friend",
+			"brief": "a new Slovak friend at a party who asks about my family, where they live and what they do",
+			"task": "Tell a new friend about your family."
+		},
+		"station": {
+			"title": "Na stanici",
+			"blurb": "Buy a train ticket to Poprad-Tatry",
+			"brief": "a ticket counter clerk at the main train station; I need a return ticket to Poprad-Tatry with a seat reservation",
+			"task": "Buy a return train ticket to Poprad-Tatry and ask which platform the train leaves from."
+		},
+		"restaurant": {
+			"title": "V kolibe",
+			"blurb": "Order traditional Slovak dinner at a mountain koliba",
+			"brief": "a waiter in a traditional mountain koliba; I want to try bryndzové halušky and a draft Kofola, and pay by card",
+			"task": "Order traditional sheep cheese dumplings, drink, and pay by card."
+		},
+		"hotel": {
+			"title": "V hoteli",
+			"blurb": "Check into a guest house in the High Tatras",
+			"brief": "a receptionist at a mountain guest house in Starý Smokovec; I have a reservation for two nights, need the wifi and breakfast info",
+			"task": "Check into your room, ask about breakfast times and the wifi password."
+		}
+	},
 	"cast": [
 		{
 			"id": "robo",

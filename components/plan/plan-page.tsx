@@ -228,7 +228,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				{stamps && stamps.length > 0 && (
 					<section id="stamps" className={cn(CARD, "scroll-mt-20")} data-testid="plan-stamps" aria-label="Stamp book">
 						<h2 className={H2}>Stamp book</h2>
-						<p className="mt-1 text-sm text-ink-3">Like the wooden stamps sold at every Slovak peak and hut: one for each chapter and each level, and one for each thing done on the way. A stamp marks something you can now do, never time spent.</p>
+						<p className="mt-1 text-sm text-ink-3">Like the wooden stamps sold at mountain huts: one for each chapter and each level, and one for each thing done on the way. A stamp marks something you can now do, never time spent.</p>
 						<StampBook stamps={stamps} className="mt-4" />
 					</section>
 				)}

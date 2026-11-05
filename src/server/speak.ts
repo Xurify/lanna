@@ -24,7 +24,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
-import { LANGUAGES } from "../core/language.ts";
+import type { LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
 import type { PronEngine, PronScore } from "../core/pronounce.ts";
@@ -43,6 +43,7 @@ import {
 	speakCounts,
 	speakId,
 	speakScene,
+	sceneIn,
 	speakXp,
 	type SpeakCorrection,
 	type SpeakIndexEntry,
@@ -59,33 +60,42 @@ import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { pronounceEngine, pronunciationReport, type PronReport } from "./pronounce.ts";
 import { resolveWord, storyEngine } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
+import { loadWorld } from "./world.ts";
 
 const code = () => activeLanguage().code;
 const tag = () => activeLanguage().tag;
 
 // ─── The prompt ─────────────────────────────────────────────────────────────
 
-const SYSTEM = `You play one role in a short spoken scene with a learner of Slovak inside a language app. The learner SAYS each line into a microphone (speech-to-text turns it into the text you see; small transcription slips in diacritics or word boundaries are not the learner's fault), and your reply is read out loud to them. You answer with ONE JSON object and nothing else: no prose, no code fences.
+type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
+
+export function speakSystem(lang: PromptLang = activeLanguage()): string {
+	const name = lang.english;
+	const x = lang.promptExamples ?? {};
+	return `You play one role in a short spoken scene with a learner of ${name} inside a language app. The learner SAYS each line into a microphone (speech-to-text turns it into the text you see; small transcription slips in diacritics or word boundaries are not the learner's fault), and your reply is read out loud to them. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
 Reply shape, every turn:
-{"sk": "<your line in Slovak, 1–2 short sentences at the learner's level>", "en": "<its meaning in the explanation language>", "prompt": null | {"yours": "<the learner's words with the slip, quoted>", "hint": "<a Slovak hint in brackets that names the trigger and starts the right form without giving it, e.g. (do škol…? skús ešte raz) or (včera — bol, bola…?)>", "kind": "case" | "verb" | "aspect"}, "repaired": true | false, "end": true | false}
+{"sk": "<your line in ${name}, 1–2 short sentences at the learner's level>", "en": "<its meaning in the explanation language>", "prompt": null | {"yours": "<the learner's words with the slip, quoted>", "hint": "<a ${name} hint in brackets that names the trigger and starts the right form without giving it${x.repairHints ? `, e.g. ${x.repairHints}` : ""}>", "kind": "case" | "verb" | "aspect"}, "repaired": true | false, "end": true | false}
 
 The rules:
-- Stay in the scene and in character. Slovak only in "sk". One exchange at a time; end your line so the learner has something to say next (a question, an offer, a choice).
+- Stay in the scene and in character. ${name} only in "sk". One exchange at a time; end your line so the learner has something to say next (a question, an offer, a choice).
 - Keep the scene moving: meaning first. Never explain grammar mid-scene.
-- Prompts, not recasts. When the learner's last line has a slip in a CASE ending, a VERB ending or ASPECT, give ONE prompt: the exact words of theirs in "yours", a Slovak hint in "hint" that makes them repair it themselves (the trigger word plus the opening of the form and "skús ešte raz"), and the kind. At most one prompt a turn; pick the most useful slip. Everything else (word choice, word order, spelling, a missing diacritic, transcription noise) you let go or use correctly in your own line without comment.
+- Prompts, not recasts. When the learner's last line has a slip in a CASE ending, a VERB ending or ASPECT, give ONE prompt: the exact words of theirs in "yours", a ${name} hint in "hint" that makes them repair it themselves (the trigger word plus the opening of the form and ${x.tryAgain ? `"${x.tryAgain}"` : `"try again" in ${name}`}), and the kind. At most one prompt a turn; pick the most useful slip. Everything else (word choice, word order, spelling, a missing diacritic, transcription noise) you let go or use correctly in your own line without comment.
 - When the turn before yours carried a prompt and the learner's new line repairs it (or says it right in other words), set "repaired": true and carry on warmly. If they did not repair it, do not prompt the same thing again; move on.
 - The learner's level sets your language: short, common words, no idioms a learner would not know. If the profile says explain in a language, "en" is in that language; otherwise English.
 - After the learner's ${SPEAK_TURNS}th line, or sooner when the scene reaches its natural end, say a closing line (a goodbye, a thank-you) and set "end": true. Never end before the learner has said at least 3 lines.`;
+}
 
-const SUMMARY_SYSTEM = `You are a Slovak tutor summing up a short spoken scene a learner just did. You answer with ONE JSON object and nothing else: no prose, no code fences.
+export function speakSummarySystem(name: string = activeLanguage().english): string {
+	return `You are a ${name} tutor summing up a short spoken scene a learner just did. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
-{"corrections": [{"yours": "<the learner's words>", "right": "<the right Slovak>", "rule": "<the rule in at most twelve words, in the explanation language>", "kind": "case" | "verb" | "aspect" | "word" | "order" | "spelling" | "other", "lemma": "<dictionary form of the word the slip was on>"}], "keep": ["<a useful Slovak phrase from the scene>", "<another>"], "note": "<one encouraging sentence in the explanation language about what went well>"}
+{"corrections": [{"yours": "<the learner's words>", "right": "<the right ${name}>", "rule": "<the rule in at most twelve words, in the explanation language>", "kind": "case" | "verb" | "aspect" | "word" | "order" | "spelling" | "other", "lemma": "<dictionary form of the word the slip was on>"}], "keep": ["<a useful ${name} phrase from the scene>", "<another>"], "note": "<one encouraging sentence in the explanation language about what went well>"}
 
 - At most THREE corrections, the most useful first: case, verb and aspect slips before word choice; never a diacritic alone, never transcription noise.
 - "right" is the learner's own line put right, not a different sentence.
 - Exactly two phrases in "keep": things the tutor or the learner said that are worth remembering as chunks.
 - If the learner made no real slips, "corrections" is [] and the note says so.`;
+}
 
 function transcript(s: SpeakSession): string {
 	return s.turns
@@ -271,7 +281,7 @@ export function speakState(): SpeakState {
 	const wanted = [...new Set([chapterScene, ...purposeScenes(goal.purposes ?? [])].filter((s): s is string => !!s))];
 	const done = speakStore.list();
 	const count = (id: string) => done.filter((d) => d.scene === id).length;
-	const scenes = [...SPEAK_SCENES]
+	const scenes = SPEAK_SCENES.map((x) => sceneFor(x.id)!)
 		.sort((a, b) => Number(wanted.includes(b.id)) - Number(wanted.includes(a.id)) || wanted.indexOf(a.id) - wanted.indexOf(b.id))
 		.map((s) => ({ ...s, suggested: wanted.includes(s.id), done: count(s.id) }));
 	const open = speakStore.unfinished()[0];
@@ -297,10 +307,16 @@ function serial<T>(run: () => Promise<T>): Promise<T> {
 	return next;
 }
 
+/** A scene as the language's story bible sets it (curriculum/<language>/world.json). */
+function sceneFor(id: string): SpeakScene | undefined {
+	const plain = speakScene(id);
+	return plain && sceneIn(plain, loadWorld()?.scenes?.[id]);
+}
+
 /** Open a scene: the record, the tutor's first line. */
 export function speakStart(sceneId: string, opts: SpeakOptions = {}): Promise<SpeakSession> {
 	return serial(async () => {
-		const scene = speakScene(sceneId);
+		const scene = sceneFor(sceneId);
 		if (!scene) throw new Error(`unknown scene ${sceneId}`);
 		const now = opts.now ?? new Date();
 		const p = progressStore.read();
@@ -318,7 +334,7 @@ export function speakStart(sceneId: string, opts: SpeakOptions = {}): Promise<Sp
 			turns: [],
 			usage: { model, steps: [] },
 		};
-		const reply = parseTutorReply(await ask(engine, SYSTEM, `${sceneBrief(scene, s)}\n\nOpen the scene with your first line.`, s.usage));
+		const reply = parseTutorReply(await ask(engine, speakSystem(), `${sceneBrief(scene, s)}\n\nOpen the scene with your first line.`, s.usage));
 		s.turns.push(tutorTurn(reply, now));
 		speakStore.put(s);
 		ensureReadmes();
@@ -362,7 +378,7 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 		const s = speakStore.get(input.id);
 		if (!s) throw new Error(`unknown scene ${input.id}`);
 		if (s.endedAt) throw new Error("this scene is over");
-		const scene = speakScene(s.scene)!;
+		const scene = sceneFor(s.scene)!;
 		const now = opts.now ?? new Date();
 		const text = input.text.replace(/\s+/g, " ").trim().slice(0, 600);
 		if (!text) throw new Error("say something first");
@@ -385,7 +401,7 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 		].join("\n");
 		let reply: TutorReply;
 		try {
-			reply = parseTutorReply(await ask(engine, SYSTEM, prompt, s.usage));
+			reply = parseTutorReply(await ask(engine, speakSystem(), prompt, s.usage));
 		} catch (err) {
 			// The line got no answer: take it back out, so a retry does not
 			// say it twice or spend a second turn of the cap.
@@ -429,10 +445,10 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		if (s.endedAt) return { session: s, xp: s.xp ?? 0, queued: s.queued ?? [], summary: progressSummary(input.tz, now), report: pronunciationReport() };
 		const learner = speakCounts(s.turns).learner;
 		if (learner === 0) throw new Error("nothing was said");
-		const scene = speakScene(s.scene)!;
+		const scene = sceneFor(s.scene)!;
 		const { engine } = resolveEngine({ ...opts, model: s.usage.model });
 		const lexicon = loadLexicon();
-		let summary = parseSummary(await ask(engine, SUMMARY_SYSTEM, `${sceneBrief(scene, s)}\n\nThe scene:\n${transcript(s)}\n\nSum it up.`, s.usage));
+		let summary = parseSummary(await ask(engine, speakSummarySystem(), `${sceneBrief(scene, s)}\n\nThe scene:\n${transcript(s)}\n\nSum it up.`, s.usage));
 		summary = { ...summary, corrections: summary.corrections.map((c) => withSlug(c, lexicon)) };
 		s.summary = summary;
 		s.endedAt = now.toISOString();

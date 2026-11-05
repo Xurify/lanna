@@ -25,6 +25,7 @@ import {
 	PlusIcon,
 	RepeatIcon,
 	SunIcon,
+	Trash2Icon,
 	CircleAlertIcon,
 	ClapperboardIcon,
 	FlagIcon,
@@ -48,7 +49,7 @@ interface ProfileInfo {
 	active: string;
 	selected: string;
 	restartRequired: boolean;
-	profiles: Array<{ id: string; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean }>;
+	profiles: Array<{ id: string; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; removable?: boolean }>;
 }
 
 interface Counts {
@@ -64,6 +65,8 @@ export function LanguageSwitcher() {
 	const [note, setNote] = useState<string | null>(null);
 	const [open, setOpen] = useState(false);
 	const [pending, setPending] = useState<{ id: string; label: string } | null>(null);
+	const [removing, setRemoving] = useState<{ id: string; english: string } | null>(null);
+	const [removeError, setRemoveError] = useState<string | null>(null);
 	const [adding, setAdding] = useState(false);
 	const { feed } = useActivity();
 	const addsRunning = feed.tasks.filter((t) => t.kind === "language" && t.status === "running");
@@ -149,6 +152,20 @@ export function LanguageSwitcher() {
 	const pendingProfile = pending ? profile?.profiles.find((p) => p.id === pending.id) : null;
 
 	const modalDismiss = useBackdropDismiss(() => setPending(null));
+	const removeDismiss = useBackdropDismiss(() => setRemoving(null));
+
+	const confirmRemove = async () => {
+		if (!removing) return;
+		setRemoveError(null);
+		const res = await fetch("/api/languages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "remove", id: removing.id }) }).catch(() => null);
+		if (!res?.ok) {
+			const body = (await res?.json().catch(() => null)) as { message?: string } | null;
+			setRemoveError(body?.message ?? `Could not remove ${removing.english}.`);
+			return;
+		}
+		setRemoving(null);
+		refresh();
+	};
 
 	return (
 		<div className="mx-3 mb-3 flex flex-col gap-3" data-testid="language-block">
@@ -205,8 +222,8 @@ export function LanguageSwitcher() {
 									const running = p.id === profile.active;
 									const isPending = p.id === profile.selected && profile.restartRequired;
 									return (
+										<div key={p.id} className="group relative">
 										<button
-											key={p.id}
 											type="button"
 											role="option"
 											aria-selected={running}
@@ -218,6 +235,7 @@ export function LanguageSwitcher() {
 													? "bg-accent font-semibold text-foreground shadow-xs"
 													: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
 												isPending && "ring-1 ring-primary/50",
+												p.removable && "pr-8",
 											)}
 										>
 											<div className="flex min-w-0 items-center gap-2 truncate">
@@ -227,6 +245,23 @@ export function LanguageSwitcher() {
 											</div>
 											{running && <CheckIcon className="size-3.5 shrink-0 text-primary" />}
 										</button>
+										{p.removable && (
+											<button
+												type="button"
+												aria-label={`Remove ${p.english}`}
+												title={`Remove ${p.english}`}
+												data-testid={`profile-remove-${p.id}`}
+												onClick={() => {
+													setOpen(false);
+													setRemoveError(null);
+													setRemoving({ id: p.id, english: p.english });
+												}}
+												className="absolute top-1/2 right-1 -translate-y-1/2 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100"
+											>
+												<Trash2Icon className="size-3.5" />
+											</button>
+										)}
+										</div>
 									);
 								})}
 							</div>
@@ -308,6 +343,44 @@ export function LanguageSwitcher() {
 			)}
 
 			{adding && typeof document !== "undefined" && <AddLanguageDialog onClose={() => setAdding(false)} onStarted={() => setAdding(false)} />}
+
+			{removing && typeof document !== "undefined" && createPortal(
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...removeDismiss}>
+					<div
+						role="alertdialog"
+						aria-modal="true"
+						aria-labelledby="remove-lang-title"
+						data-testid="profile-remove-confirm"
+						className="flex w-full max-w-sm flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
+					>
+						<h3 id="remove-lang-title" className="text-sm font-semibold text-foreground">
+							Remove {removing.english}?
+						</h3>
+						<p className="text-xs leading-relaxed text-muted-foreground">
+							Its downloaded words, sentences and grammar map are deleted. Your {removing.english} progress stays: add {removing.english} again and you pick up where you were.
+						</p>
+						{removeError && (
+							<p className="text-xs text-destructive" role="alert">
+								{removeError}
+							</p>
+						)}
+						<div className="flex items-center justify-end gap-2 pt-2">
+							<button type="button" onClick={() => setRemoving(null)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+								Cancel
+							</button>
+							<button
+								type="button"
+								data-testid="profile-remove-confirm-button"
+								onClick={() => void confirmRemove()}
+								className="rounded-lg bg-destructive px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-destructive/90 dark:bg-destructive/60"
+							>
+								Remove
+							</button>
+						</div>
+					</div>
+				</div>,
+				document.body,
+			)}
 
 			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
 			<nav className="flex flex-col gap-3" aria-label="Main">

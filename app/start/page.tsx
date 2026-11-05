@@ -1,6 +1,6 @@
 import { Start } from "@/components/onboarding/start";
 import { hoursDone, type LearnerGoal } from "@/src/core";
-import { progressSummary } from "@/src/server";
+import { activeLanguage, progressSummary } from "@/src/server";
 
 export const metadata = { title: "Set up" };
 
@@ -21,6 +21,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 	} catch {
 		goal = null;
 	}
+	const { code, english } = activeLanguage();
 	// ?check=1 opens on the placement check itself, for a learner who is set up.
-	return <Start goal={goal} edit={edit === "1"} hoursDone={hours} currentChapter={current} onCheck={edit === "1" && check === "1" && !!goal?.onboardedAt} />;
+	return <Start target={{ code, english }} goal={goal} edit={edit === "1"} hoursDone={hours} currentChapter={current} onCheck={edit === "1" && check === "1" && !!goal?.onboardedAt} />;
 }

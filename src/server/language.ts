@@ -16,6 +16,7 @@ import { settleGraphLayout } from "../core/layout-settle.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { graphStore } from "../store/graph.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
+import { languageRemovable } from "./language-add.ts";
 
 export interface ProfileStatus {
 	active: LanguageProfile;
@@ -24,7 +25,7 @@ export interface ProfileStatus {
 	restartRequired: boolean;
 	/** The running language in full: the browser reads its tag, voices and letters here. */
 	language: LanguageInfo;
-	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean }>;
+	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** Its downloaded words can be removed now. */ removable: boolean }>;
 	seeded: { nodes: number; chains: number } | null;
 }
 
@@ -59,6 +60,7 @@ export function profileStatus(): ProfileStatus {
 				english: info.english,
 				lexicon: fs.existsSync(curriculumFile(id, "lexicon.json")),
 				seed: fs.existsSync(seedFile(id)),
+				removable: languageRemovable(id),
 			}];
 		}),
 		seeded: lastSeed,

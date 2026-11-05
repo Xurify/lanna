@@ -424,7 +424,7 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 				Vocabulary, on its own: forty words from five frequency bands estimate how many you recognize.
 			</p>
 			<h2 className="mt-8 font-prose text-2xl font-semibold text-foreground">Tick every word whose meaning you know</h2>
-			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not Slovak words at all, and ticking them lowers the estimate. Two minutes.</p>
+			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not real words at all, and ticking them lowers the estimate. Two minutes.</p>
 			{!items ? (
 				<p className="mt-8 flex items-center gap-2 font-prose text-lg text-muted-foreground" role="status">
 					<LoaderCircleIcon className="size-5 animate-spin" /> Picking words…

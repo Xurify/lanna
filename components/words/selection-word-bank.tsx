@@ -493,7 +493,7 @@ export function SelectionWordBankBar() {
 
 	const langCode = lookup?.langCode ?? activeLang?.code ?? "sk";
 	const langTag = lookup?.langTag ?? activeLang?.tag ?? "sk-SK";
-	const langEnglish = lookup?.langEnglish ?? activeLang?.english ?? "Slovak";
+	const langEnglish = lookup?.langEnglish ?? activeLang?.english ?? "the language";
 
 	const primaryGloss =
 		translationMode === "google"

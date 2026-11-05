@@ -520,7 +520,8 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - One model call is allowed: a grammar map draft on the Cheap slot, checked (unknown keys and loops dropped), labeled "(model draft)" in the skill map, and counted in Spending. It never writes a sentence or a form.
 - The tutor's language segment is a template that states nothing about the language a model would have to know.
 - The work is a background task (`src/server/tasks.ts`, kind `language`); each step is kept under `build/`, and `language.json` is written last.
-- **Open:** Read, Watch, Speak, the placement check and custom milestones still have Slovak in their model prompts, and lessons are Slovak units. An added language gets Review, Words and the tutor until those follow the active language.
+- **No hardcoded target language (owner, 2026-11-05: "stop hardcoding stuff").** A prompt, a screen or a list never names Slovak when it can take the name from the running profile (`activeLanguage()`, `useActiveLanguage()`), and neutral wording is preferred where it reads naturally. A Slovak example in a prompt is `promptExamples` data and disappears for another language. Slovak story content (Robo, Bratislava, the Read settings, the Speak scenes) lives in `curriculum/slovak/world.json`. A list of the learner's own languages leaves out the one being learned. The lessons stay Slovak (`LESSON_LANGUAGE`).
+- **Removing.** An added language can be removed from the language menu; its words go, the learner's progress stays.
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 

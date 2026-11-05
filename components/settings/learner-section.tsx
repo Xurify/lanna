@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
 import { CountryFlag } from "@/components/ui/country-flag";
+import { useActiveLanguage } from "@/components/speech";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { CEFR_ORDER, DEFAULT_DAYS_PER_WEEK, DEFAULT_XP_PER_HOUR, explanationLanguages, knownLanguages, MAX_EXPLAIN, MAX_MINUTES, MINUTE_CHOICES, parallelsLine, parallelsOn, xpForPlan, type Cefr, type Lang, type LangLevel, type LearnerGoal } from "@/src/core";
@@ -71,6 +72,7 @@ function Placeholder() {
 }
 
 export function LearnerSection({ onClose, children }: { onClose: () => void; children?: React.ReactNode }) {
+	const target = useActiveLanguage();
 	const router = useRouter();
 	const [state, setState] = useState<Langs | null>(last?.state ?? null);
 	const [goals, setGoals] = useState<Goals | null>(last?.goals ?? null);
@@ -197,13 +199,13 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 				</SettingsGroup>
 			)}
 			<SettingsGroup label="Languages you know" testid="learner-languages">
-				<LanguagePicker value={state.languages} levels={state.languageLevels} onChange={(languages, languageLevels) => void save({ ...state, languages, languageLevels, explainIn: keepExplain(state.explainIn, languages) })} />
+				<LanguagePicker exclude={target?.code} value={state.languages} levels={state.languageLevels} onChange={(languages, languageLevels) => void save({ ...state, languages, languageLevels, explainIn: keepExplain(state.explainIn, languages) })} />
 				<p className="text-xs text-muted-foreground">Any language you can read a simple text in, and your CEFR level in it (A1 to C2, or native). The tutor uses them to understand you and to pick what to compare.</p>
 			</SettingsGroup>
 			<SettingsGroup label="Parallels from my languages" testid="learner-parallels">
 				<div className="flex items-center justify-between gap-4 py-1">
 					<span className="font-prose text-(length:--lh-prose-size)" data-testid="parallels-line">
-						{parallelsLine(state).replace(/ You can turn it off in Settings → Learning\.$/, "")}
+						{target && parallelsLine(state, target).replace(/ You can turn it off in Settings → Learning\.$/, "")}
 					</span>
 					<Toggle checked={state.showParallels} onChange={(showParallels) => void save({ ...state, showParallels })} label="Show parallels from my languages" />
 				</div>

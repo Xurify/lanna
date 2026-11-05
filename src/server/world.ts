@@ -31,6 +31,14 @@ export interface World {
 	series: string;
 	language?: string;
 	version?: number;
+	/** Where the series is set ("Bratislava"). */
+	city?: string;
+	/** The lead in one line, as the writer is told it. */
+	logline?: string;
+	/** Episode settings per purpose (src/core/onboarding.ts PURPOSES). */
+	settings?: Partial<Record<string, string[]>>;
+	/** The Speak scenes set in the series' places, by scene id (src/core/speak.ts). */
+	scenes?: Partial<Record<string, { title?: string; blurb?: string; brief?: string; task?: string }>>;
 	cast: WorldPerson[];
 	places: WorldPlace[];
 	/** One English sentence per chapter id (src/core/curriculum.ts CHAPTERS). */

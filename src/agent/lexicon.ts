@@ -11,8 +11,9 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { ACTIVE_PROFILE, curriculumFile, readAddedLanguage } from "../../config.ts";
-import { foldDiacritics, languageById, parseLanguageInfo } from "../core/language.ts";
+import { ACTIVE_PROFILE, curriculumFile } from "../../config.ts";
+import { foldDiacritics } from "../core/language.ts";
+import { profileLanguage } from "./profile-language.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import type { SlovakLookup } from "../core/slovak-check.ts";
 
@@ -35,7 +36,7 @@ export function lexiconPath(profile: string = ACTIVE_PROFILE): string {
 
 /** The profile's BCP-47 tag, for lowercasing words the way the language does. */
 function tagOf(profile: string): string {
-	return languageById(profile)?.tag ?? parseLanguageInfo(readAddedLanguage(profile))?.tag ?? "sk-SK";
+	return profileLanguage(profile)?.tag ?? "sk-SK";
 }
 
 function push(map: Map<string, LexiconEntry[]>, key: string, entry: LexiconEntry) {

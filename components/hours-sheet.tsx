@@ -4,7 +4,7 @@
  * "How long does it take?" (LangHarness, 2026-10-28) — the research behind
  * the goal line's hours, in one sheet: the guided-hour bands per CEFR
  * level (Cambridge's figures for English next to this app's estimate for
- * Slovak), the FSI yardstick for a category-III language, and what the
+ * language being learned), the FSI yardsticks for categories I and III, and what the
  * learner's own pace makes of them. Opened from the goal line on Today
  * and from the setup's time screen.
  *
@@ -19,51 +19,62 @@ import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrajectorySection } from "@/components/trajectory-section";
+import { useActiveLanguage } from "@/components/speech";
 import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, measuredPace, trajectory, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
 const CAMBRIDGE_ENGLISH: Record<Cefr, number> = { A1: 95, A2: 190, B1: 375, B2: 550, C1: 750 };
-/** FSI: a category-III language (Slovak among them) takes about 1,100
+/** FSI: a category-III language (Slovak, Polish, Russian) takes about 1,100
  *  class hours to professional working proficiency (ILR 3 ≈ B2/C1). */
 const FSI_CAT3 = 1100;
 const FSI_CAT1 = 700;
 
+const CATEGORY_HOURS: Record<1 | 2 | 3 | 4, string> = { 1: "about 24–30 weeks, 600–750 class hours", 2: "about 36 weeks, 900 class hours", 3: "about 44 weeks, 1,100 class hours", 4: "about 88 weeks, 2,200 class hours" };
+const ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV" } as const;
 
-export const STUDIES: Array<{ who: string; what: string; line: string }> = [
-	{
-		who: "Cambridge English (Cambridge Assessment)",
-		what: "Guided learning hours per CEFR level",
-		line: "The gray bars: about 90–100 hours of guided learning for A1, 180–200 for A2, 350–400 for B1, 500–600 for B2, 700–800 for C1 — for English, with as much again in independent study.",
-	},
-	{
-		who: "U.S. Foreign Service Institute",
-		what: "Language difficulty categories",
-		line: "Slovak sits in category III with Czech, Polish and Russian: about 44 weeks, 1,100 class hours, to professional working proficiency (ILR 3, roughly B2–C1). French or Spanish take 600–750.",
-	},
-	{
-		who: "Ringbom (2007), Cross-linguistic Similarity in Foreign Language Learning",
-		what: "Why the first language matters",
-		line: "Learners whose languages already have the target's structures learn them faster. A language with cases (Estonian, Finnish, German, Latvian…) is a real head start on Slovak cases; a Slavic language is a bigger one. The green bars sit between the two yardsticks for that reason.",
-	},
-	{
-		who: "Cepeda, Pashler, Vul, Wixted & Rohrer (2006), Psychological Bulletin",
-		what: "Distributed practice",
-		line: "A review of 254 studies: the same hours spread over many short sessions are remembered far better than the same hours in a few long ones. That is why the plan asks for minutes a day, not hours a week.",
-	},
-];
+/** The studies behind the chart, for the language being learned. */
+export function studies(lang: { english: string; fsiCategory?: 1 | 2 | 3 | 4 } | null): Array<{ who: string; what: string; line: string }> {
+	const name = lang?.english ?? "The language";
+	const cat = lang?.fsiCategory;
+	const fsi = cat
+		? `${name} sits in category ${ROMAN[cat]}: ${CATEGORY_HOURS[cat]}, to professional working proficiency (ILR 3, roughly B2–C1). Category III (Czech, Polish, Russian) takes about 1,100; French or Spanish (category I) 600–750.${cat < 3 ? ` This app's hours are set for a category III language, so for ${name} they run long.` : ""}`
+		: "Category III (Czech, Polish, Russian) takes about 44 weeks, 1,100 class hours, to professional working proficiency (ILR 3, roughly B2–C1); French or Spanish (category I) 600–750.";
+	return [
+		{
+			who: "Cambridge English (Cambridge Assessment)",
+			what: "Guided learning hours per CEFR level",
+			line: "The gray bars: about 90–100 hours of guided learning for A1, 180–200 for A2, 350–400 for B1, 500–600 for B2, 700–800 for C1 — for English, with as much again in independent study.",
+		},
+		{
+			who: "U.S. Foreign Service Institute",
+			what: "Language difficulty categories",
+			line: fsi,
+		},
+		{
+			who: "Ringbom (2007), Cross-linguistic Similarity in Foreign Language Learning",
+			what: "Why the first language matters",
+			line: `Learners whose languages already have the target's structures learn them faster. A language you know with cases or aspect is a real head start when ${lang?.english ?? "the language you learn"} has them too, and a close relative is a bigger one. The green bars sit between the two yardsticks for that reason.`,
+		},
+		{
+			who: "Cepeda, Pashler, Vul, Wixted & Rohrer (2006), Psychological Bulletin",
+			what: "Distributed practice",
+			line: "A review of 254 studies: the same hours spread over many short sessions are remembered far better than the same hours in a few long ones. That is why the plan asks for minutes a day, not hours a week.",
+		},
+	];
+}
 
-/** What each known language is worth as a head start on Slovak, for the
- *  note under the chart. Slavic languages share the case system and the
- *  vocabulary; the others listed have cases of their own (Ringbom 2007). */
+/** The grammar each known language brings, for the head-start note under
+ *  the chart (Ringbom 2007). */
 const HEAD_START: Partial<Record<Lang, string>> = {
-	ru: "Slavic, the same six cases",
-	uk: "Slavic, the same case logic",
-	pl: "Slavic, cases and aspect",
-	cs: "Slavic, nearly the same grammar",
-	sl: "Slavic, cases and aspect",
-	hr: "Slavic, seven cases",
-	bg: "Slavic vocabulary and aspect",
+	sk: "six cases and aspect",
+	ru: "six cases and aspect",
+	uk: "seven cases and aspect",
+	pl: "seven cases and aspect",
+	cs: "seven cases and aspect",
+	sl: "six cases and aspect",
+	hr: "seven cases and aspect",
+	bg: "aspect",
 	et: "14 cases",
 	fi: "15 cases",
 	hu: "cases",
@@ -77,10 +88,10 @@ const HEAD_START: Partial<Record<Lang, string>> = {
  *  learner has it. Xurify (2026-10-28): the old legend said "from
  *  Estonian", which read as the app's language; the hours table does not
  *  change by language, the assumption behind it does. */
-export function headStartLine(languages: readonly Lang[]): string {
-	const have = languages.filter((l) => HEAD_START[l]).map((l) => `${languageName(l)} (${HEAD_START[l]})`);
+export function headStartLine(languages: readonly Lang[], targetCode?: string): string {
+	const have = languages.filter((l) => l !== targetCode && HEAD_START[l]).map((l) => `${languageName(l)} (${HEAD_START[l]})`);
 	const worth = `the gap to the FSI line, ${FSI_CAT3 - GUIDED_HOURS.C1}–${FSI_CAT3 - GUIDED_HOURS.B2} hours at B2–C1`;
-	const assume = "The green bars assume a head start: a language you know that already has cases, or is Slavic.";
+	const assume = "The green bars assume a head start: a language you know that already has cases or aspect.";
 	if (have.length === 0) return `${assume} None of yours is, so read nearer the FSI line; the head start is ${worth} (Ringbom 2007).`;
 	return `${assume} Yours: ${have.join(", ")}. The head start is ${worth} (Ringbom 2007).`;
 }
@@ -111,6 +122,7 @@ export function HoursSheet({
 	languages?: readonly Lang[];
 }) {
 	const [view, setView] = useState<"chart" | "table">("chart");
+	const lang = useActiveLanguage();
 	const [hover, setHover] = useState<{ level: Cefr; series: "app" | "en" } | null>(null);
 	useEffect(() => {
 		if (!open) return;
@@ -150,7 +162,7 @@ export function HoursSheet({
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2 className="text-2xl font-semibold tracking-[-0.022em] text-foreground">How long does it take?</h2>
-						<p className="mt-1 font-prose text-base text-muted-foreground">Guided hours to each level: this app&apos;s estimate for Slovak next to the usual figures for English, and the FSI yardstick for a language in Slovak&apos;s category.</p>
+						<p className="mt-1 font-prose text-base text-muted-foreground">Guided hours to each level: this app&apos;s estimate next to the usual figures for English, and the FSI yardsticks for language categories I and III.</p>
 					</div>
 					<button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-well hover:text-ink-2">
 						<XIcon className="size-5" />
@@ -163,7 +175,7 @@ export function HoursSheet({
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground" aria-label="Legend">
 						<span className="flex items-center gap-1.5">
 							<span className="inline-block size-2.5 rounded-sm bg-teal" aria-hidden="true" />
-							This app · Slovak
+							This app
 						</span>
 						<span className="flex items-center gap-1.5">
 							<span className="inline-block size-2.5 rounded-sm bg-ink-4" aria-hidden="true" />
@@ -216,7 +228,7 @@ export function HoursSheet({
 											{lv}
 										</text>
 										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-teal" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })}>
-											<title>{`${lv}: about ${app} guided hours (this app, Slovak)`}</title>
+											<title>{`${lv}: about ${app} guided hours (this app)`}</title>
 										</rect>
 										<text x={x(app) + 6} y={y0 + bar - 3} className="fill-foreground font-ui" fontSize={11} fontWeight={600}>
 											{app}
@@ -249,7 +261,7 @@ export function HoursSheet({
 						<thead>
 							<tr className="text-left text-xs text-muted-foreground">
 								<th className="py-1 font-semibold">Level</th>
-								<th className="py-1 font-semibold">This app (Slovak)</th>
+								<th className="py-1 font-semibold">This app</th>
 								<th className="py-1 font-semibold">Cambridge (English)</th>
 								<th className="py-1 font-semibold">At your {paceWord} pace</th>
 							</tr>
@@ -271,7 +283,7 @@ export function HoursSheet({
 				)}
 
 				<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="hours-head-start">
-					{headStartLine(languages)}
+					{headStartLine(languages, lang?.code)}
 				</p>
 
 				<p className="mt-3 rounded-xl bg-well px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
@@ -280,7 +292,7 @@ export function HoursSheet({
 
 				<h3 className="mt-5 font-ui text-xs font-semibold tracking-wide text-muted-foreground">The studies behind the numbers</h3>
 				<ol className="mt-2 flex flex-col gap-3">
-					{STUDIES.map((s) => (
+					{studies(lang).map((s) => (
 						<li key={s.who} className="font-prose text-sm leading-relaxed">
 							<span className="block font-ui text-sm font-semibold text-foreground">
 								{s.what} <span className="font-normal text-muted-foreground">· {s.who}</span>

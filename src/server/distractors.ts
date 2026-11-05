@@ -2,7 +2,7 @@
  * Meaning questions with wrong answers worth reading (LangHarness,
  * 2026-10-30). A lesson's meaning reps and the Listen task come out of the
  * local builders with length-matched wrong meanings, which a learner can rule
- * out without knowing a word of Slovak. This swaps them for close ones:
+ * out without knowing a word of the language. This swaps them for close ones:
  *
  *   cached near-miss → close dictionary neighbors → (the old options)
  *
@@ -22,19 +22,22 @@ import type { ListenPlan } from "../core/listen.ts";
 import type { LessonPlan } from "../core/lesson.ts";
 import { distractorStore, type NearMiss } from "../store/distractors.ts";
 import { storyEngine } from "./reading.ts";
+import { activeLanguage } from "./active-language.ts";
 
 /** Close wrong options a sentence should have before the model is asked. */
 const WANT_CLOSE = 2;
 const BATCH_MAX = 16;
 const DEFAULT_WAIT_MS = 6_000;
 
-const SYSTEM = `You write wrong answers for a multiple-choice question inside a Slovak learning app. You answer with ONE JSON object and nothing else: {"near": [["...", "..."], ["...", "..."]]} — one pair per sentence, in the same order, the same count.
+export function distractorSystem(name: string = activeLanguage().english): string {
+	return `You write wrong answers for a multiple-choice question inside a ${name} learning app. You answer with ONE JSON object and nothing else: {"near": [["...", "..."], ["...", "..."]]} — one pair per sentence, in the same order, the same count.
 
-For each Slovak sentence you get its right English translation. Write exactly TWO wrong English translations that a learner who misread ONE thing would pick:
-- Change a single detail that the Slovak carries in a word form or ending: who (I, you, he, we, they), number, tense, polarity (is, is not), question or statement, who does what to whom.
+For each ${name} sentence you get its right English translation. Write exactly TWO wrong English translations that a learner who misread ONE thing would pick:
+- Change a single detail that the ${name} carries in a word form or ending: who (I, you, he, we, they), number, tense, polarity (is, is not), question or statement, who does what to whom.
 - Keep every other word the same, with the same length and style as the right one.
-- Each must be clearly wrong for the Slovak sentence, never another valid translation of it.
+- Each must be clearly wrong for the ${name} sentence, never another valid translation of it.
 - The two wrong ones must differ from each other.`;
+}
 
 let indexFor: { lexicon: Lexicon; index: NeighborIndex } | null = null;
 
@@ -77,11 +80,11 @@ export function parseNearMisses(text: string, count: number): string[][] | null 
 
 async function writeNearMisses(need: readonly OptionItem[], resolved: { engine: PiEngine; model: string }): Promise<void> {
 	const input = { in: 0, out: 0 };
-	const prompt = `Sentences (Slovak — right English translation):\n${JSON.stringify(need.map((n) => [n.sentence, n.translation]))}\n\nReturn {"near": [...]} with ${need.length} pairs.`;
+	const prompt = `Sentences (${activeLanguage().english} — right English translation):\n${JSON.stringify(need.map((n) => [n.sentence, n.translation]))}\n\nReturn {"near": [...]} with ${need.length} pairs.`;
 	const { text } = await runSubagent([], {
 		role: "researcher",
 		engine: resolved.engine,
-		systemPrompt: SYSTEM,
+		systemPrompt: distractorSystem(),
 		prompt,
 		maxTurns: 1,
 		onUsage: (u) => {

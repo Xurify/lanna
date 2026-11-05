@@ -33,7 +33,7 @@ import type { StoryUsage } from "./reading.ts";
 
 export interface SpeakScene {
 	id: string;
-	/** Slovak title. */
+	/** The scene's name: in the language when its story bible gives one. */
 	title: string;
 	/** One line in English. */
 	blurb: string;
@@ -43,20 +43,27 @@ export interface SpeakScene {
 	task: string;
 }
 
-/** The six scenes the Talk task has always had, now spoken. The ids are
+/** The scenes the Talk task has always had, now spoken. The ids are
  *  what the curriculum's goals and the purposes point at
- *  (src/core/onboarding.ts PURPOSES[].scenes). */
+ *  (src/core/onboarding.ts PURPOSES[].scenes). These are the plain
+ *  versions; a language's story bible (world.json `scenes`) sets them in
+ *  its own places, with the title in the language. */
 export const SPEAK_SCENES: SpeakScene[] = [
-	{ id: "cafe", title: "Kaviareň", blurb: "Order coffee and cake in Bratislava", brief: "a waiter in a small café in Bratislava's old town; I want to order coffee and something sweet, and ask what's good", task: "Order a coffee and something sweet, and ask what is good." },
-	{ id: "way", title: "Na ulici", blurb: "Ask a stranger the way to the station", brief: "a friendly local on Obchodná ulica; I am lost and need to get to the main train station", task: "You are lost. Find out how to get to the main station." },
-	{ id: "colleague", title: "Nový kolega", blurb: "Meet a new colleague on day one", brief: "my new colleague at the office; we meet at the coffee machine on my first day and get to know each other", task: "It is your first day. Get to know your new colleague." },
-	{ id: "shop", title: "Na trhu", blurb: "Buy vegetables at the market", brief: "a stallholder at the Miletičova market; I want vegetables and fruit for a soup, and to ask about prices", task: "Buy what you need for a soup, and ask about prices." },
-	{ id: "doctor", title: "U lekára", blurb: "Explain to a doctor what hurts", brief: "a GP in a Slovak clinic; I have a sore throat and a headache since yesterday", task: "Tell the doctor what hurts and since when." },
-	{ id: "family", title: "Rodina", blurb: "Talk about your family with a new friend", brief: "a new Slovak friend at a party who asks about my family, where they live and what they do", task: "Tell a new friend about your family." },
-	{ id: "station", title: "Na stanici", blurb: "Buy a train ticket to Poprad-Tatry", brief: "a ticket counter clerk at the main train station; I need a return ticket to Poprad-Tatry with a seat reservation", task: "Buy a return train ticket to Poprad-Tatry and ask which platform the train leaves from." },
-	{ id: "restaurant", title: "V kolibe", blurb: "Order traditional Slovak dinner at a mountain koliba", brief: "a waiter in a traditional mountain koliba; I want to try bryndzové halušky and a draft Kofola, and pay by card", task: "Order traditional sheep cheese dumplings, drink, and pay by card." },
-	{ id: "hotel", title: "V hoteli", blurb: "Check into a guest house in the High Tatras", brief: "a receptionist at a mountain guest house in Starý Smokovec; I have a reservation for two nights, need the wifi and breakfast info", task: "Check into your room, ask about breakfast times and the wifi password." },
+	{ id: "cafe", title: "At the café", blurb: "Order coffee and cake", brief: "a waiter in a small café in the old town; I want to order coffee and something sweet, and ask what's good", task: "Order a coffee and something sweet, and ask what is good." },
+	{ id: "way", title: "On the street", blurb: "Ask a stranger the way to the station", brief: "a friendly local in the town center; I am lost and need to get to the main train station", task: "You are lost. Find out how to get to the main station." },
+	{ id: "colleague", title: "A new colleague", blurb: "Meet a new colleague on day one", brief: "my new colleague at the office; we meet at the coffee machine on my first day and get to know each other", task: "It is your first day. Get to know your new colleague." },
+	{ id: "shop", title: "At the market", blurb: "Buy vegetables at the market", brief: "a stallholder at the market; I want vegetables and fruit for a soup, and to ask about prices", task: "Buy what you need for a soup, and ask about prices." },
+	{ id: "doctor", title: "At the doctor's", blurb: "Explain to a doctor what hurts", brief: "a GP at a local clinic; I have a sore throat and a headache since yesterday", task: "Tell the doctor what hurts and since when." },
+	{ id: "family", title: "Family", blurb: "Talk about your family with a new friend", brief: "a new friend at a party who asks about my family, where they live and what they do", task: "Tell a new friend about your family." },
+	{ id: "station", title: "At the station", blurb: "Buy a train ticket to the mountains", brief: "a ticket counter clerk at the main train station; I need a return ticket to a town in the mountains with a seat reservation", task: "Buy a return train ticket and ask which platform the train leaves from." },
+	{ id: "restaurant", title: "At a restaurant", blurb: "Order a traditional dinner", brief: "a waiter in a traditional restaurant; I want to try a local dish and a local drink, and pay by card", task: "Order a traditional dish and a drink, and pay by card." },
+	{ id: "hotel", title: "At the hotel", blurb: "Check into a guest house", brief: "a receptionist at a guest house in the mountains; I have a reservation for two nights, need the wifi and breakfast info", task: "Check into your room, ask about breakfast times and the wifi password." },
 ];
+
+/** A scene as a language's story bible sets it, over the plain version. */
+export function sceneIn(scene: SpeakScene, override?: Partial<Omit<SpeakScene, "id">>): SpeakScene {
+	return override ? { ...scene, ...override } : scene;
+}
 
 export function speakScene(id: string): SpeakScene | undefined {
 	return SPEAK_SCENES.find((s) => s.id === id);

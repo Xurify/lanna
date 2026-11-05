@@ -43,6 +43,7 @@ import { reviewStore } from "../store/review.ts";
 import { DEFAULT_DAYS_PER_WEEK } from "../core/onboarding.ts";
 import { aiMissing, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { resolveWord, storyEngine } from "./reading.ts";
+import { activeLanguage } from "./active-language.ts";
 
 // ─── A unified frequency order ──────────────────────────────────────────────
 
@@ -312,9 +313,10 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 
 // ─── Custom milestones ──────────────────────────────────────────────────────
 
-const SYSTEM = `You classify a language learner's goal for a Slovak learning app. You answer with ONE JSON object and nothing else: no prose, no code fences.
+export function customMilestoneSystem(name: string = activeLanguage().english): string {
+	return `You classify a language learner's goal for a ${name} learning app. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
-The learner writes a situation they want to handle in Slovak, in their own words. Map it to the kind of language it involves and how it is delivered, so the app can estimate when they will get there from published word-coverage and listening-speed research. Fields:
+The learner writes a situation they want to handle in ${name}, in their own words. Map it to the kind of language it involves and how it is delivered, so the app can estimate when they will get there from published word-coverage and listening-speed research. Fields:
 - "title": the situation as a short can-do line in English, at most 8 words, starting with a verb or noun phrase ("Follow my mother-in-law's phone calls").
 - "line": one sentence, at most 25 words, saying what "most of it" means here.
 - "genre": the closest kind of material, one of: ${Object.keys(GENRES).join(", ")}. Everyday talk, phone calls, family, shops, friends → conversation. YouTube, podcasts, radio, TV → tv (children's cartoons → children). Cinema, series drama → film. Newspapers, news sites → news. Books → fiction. Offices, contracts, letters, official forms, lectures → formal. Music → songs.
@@ -323,6 +325,7 @@ The learner writes a situation they want to handle in Slovak, in their own words
 - "support": "interactive" when the learner can ask for a repeat (any live conversation), "subtitles" when text runs with the speech, "visual" when pictures or action carry meaning (video, film, being there), "none" for audio alone or plain text.
 - "icon": one of monitor-play (video sites), video, headphones (podcasts, radio), newspaper, coffee, users, captions, clapperboard, radio, book-open, message-circle, briefcase, music, phone, mail, landmark, tv, mic, baby, gamepad-2, map, sparkles.
 - "cefr": the CEFR listening or reading descriptor this matches, at most 15 words ("B1: can follow clearly articulated speech directed at me").`;
+}
 
 export interface CustomOptions {
 	engine?: PiEngine;
@@ -358,7 +361,7 @@ export async function addCustomMilestone(textRaw: string, opts: CustomOptions = 
 		({ text: answer } = await runSubagent([], {
 			role: "researcher",
 			engine: resolved.engine,
-			systemPrompt: SYSTEM,
+			systemPrompt: customMilestoneSystem(),
 			prompt: `The learner wrote: "${text}"`,
 			maxTurns: 1,
 			onUsage: (u) => usage.steps.push(stepOf(u)),

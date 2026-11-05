@@ -708,7 +708,7 @@ export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, 
  * the path (one lesson on the Continue unit), interleaved strengthening of
  * the weakest practiced unit, new words in context, an episode to read at
  * the learner's level, output with feedback (a tutor unit, else a spoken
- * scene from what Slovak is for), and three minutes of speed on what is
+ * scene from the learner's goals), and three minutes of speed on what is
  * already known (a timed re-read of an episode, or "say it faster"). The
  * order follows comprehension-before-production; the mix follows
  * Nation's four strands (src/core/strands.ts). The list is cut to the
@@ -844,7 +844,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push({
 		id: "read",
 		title: "Read",
-		line: (day.reads ?? 0) > 0 ? "Today's episode is read" : "Today's episode of Robo in Bratislava — tap any word for its meaning",
+		line: (day.reads ?? 0) > 0 ? "Today's episode is read" : "Today's episode of the story — tap any word for its meaning",
 		minutes: TASK_MINUTES.read,
 		done: (day.reads ?? 0) > 0,
 		href: "/read",
@@ -878,9 +878,9 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		const tutorClean = tutorUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 		tasks.push({ id: "speak", title: `With the tutor: ${tutorClean}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
 	} else if (scene) {
-		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers in Slovak and prompts your slips" : "Say a scene from what Slovak is for out loud — the tutor answers in Slovak and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
+		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers and prompts your slips" : "Say a scene from your goals out loud — the tutor answers and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
 	} else {
-		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers in Slovak and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
+		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
 	}
 
 	// 8. Speed: fluency on what is already known (src/core/fluency.ts). A
@@ -922,7 +922,7 @@ export function tutorUnitPrompt(unit: CurriculumUnit): string {
 	const cleanTitle = unit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 	return [
 		`Lesson with the tutor: ${cleanTitle}. ${unit.brief ?? unit.tagline}`,
-		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in Slovak.",
-		"On a miss, name the trigger and let me try once more before you give the form. Use say: spans for every Slovak example. End with the three forms to remember.",
+		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in the language I am learning.",
+		"On a miss, name the trigger and let me try once more before you give the form. Use say: spans for every example in the language I am learning. End with the three forms to remember.",
 	].join(" ");
 }

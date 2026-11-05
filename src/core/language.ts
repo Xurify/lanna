@@ -56,6 +56,54 @@ export interface LanguageInfo {
 	 *  this one, most preferred first. Czech is near enough to Slovak to
 	 *  follow; the video is labelled with the language it is in. */
 	captionFallbacks?: Array<{ code: string; english: string }>;
+	/** Where the language is at home, when the tag's region does not say it
+	 *  (Catalan is ca-ES, but its home is Catalonia). */
+	country?: string;
+	/** Short examples a model prompt shows next to a rule. A language
+	 *  without one gets the rule alone. */
+	promptExamples?: PromptExamples;
+	/** The U.S. Foreign Service Institute's difficulty category for an
+	 *  English speaker: I (French, Norwegian, Romanian) takes 600–750 class
+	 *  hours, III (Slovak, Czech, Polish, Russian, Estonian) about 1,100. */
+	fsiCategory?: 1 | 2 | 3 | 4;
+}
+
+/** Examples in the language itself, written by someone who knows it. */
+export interface PromptExamples {
+	/** The subordinating words a learner meets at A2, quoted: "že", "keď", "lebo". */
+	clauseWords?: string;
+	/** What automatic captions get wrong, quoted: a repeat and a false start. */
+	captionNoise?: string;
+	/** Repair prompts in brackets that name the trigger and start the form. */
+	repairHints?: string;
+	/** "Try again", as a repair prompt ends. */
+	tryAgain?: string;
+	/** Two words a diacritic tells apart: vina ≠ vína. */
+	diacriticPair?: string;
+	/** A judge's note on a missed ending, naming the case and the pattern. */
+	caseNote?: string;
+	/** A frame with ___ and the dictionary word in brackets. */
+	frame?: string;
+	/** A present-tense sentence to put in the past. */
+	pastSentence?: string;
+	/** Listening slips that are spelling rules, not the ear. */
+	spellingSlips?: string;
+}
+
+/** The country or region a language is at home in, in English. */
+export function countryOf(info: Pick<LanguageInfo, "tag" | "country">): string {
+	if (info.country) return info.country;
+	const region = info.tag.split("-")[1];
+	try {
+		return (region && new Intl.DisplayNames(["en"], { type: "region" }).of(region)) || "the country";
+	} catch {
+		return "the country";
+	}
+}
+
+/** ` (e.g. …)`, or nothing when the language has no example. */
+export function eg(example: string | undefined): string {
+	return example ? ` (e.g. ${example})` : "";
 }
 
 export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
@@ -72,6 +120,18 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 			baseUrl: "https://www.slovak.wiki",
 		},
 		captionFallbacks: [{ code: "cs", english: "Czech" }],
+		fsiCategory: 3,
+		promptExamples: {
+			clauseWords: `"že", "keď", "lebo"`,
+			captionNoise: `"tak, tak", "ktoré to nie sú veci, ktoré to nie sú"`,
+			repairHints: "(do škol…? skús ešte raz) or (včera — bol, bola…?)",
+			tryAgain: "skús ešte raz",
+			diacriticPair: "vina ≠ vína",
+			caseNote: `"After prijal the object is accusative, and feminine -a nouns take -u there"`,
+			frame: "Idem do ___ (škola).",
+			pastSentence: "Píšem list.",
+			spellingSlips: "A consonant written as it is said (had as hat) and i against y are spelling rules",
+		},
 	},
 	russian: {
 		id: "russian",
@@ -81,6 +141,7 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 		english: "Russian",
 		specialLetters: ["ё", "й", "ъ", "ь", "ы", "э", "щ", "ж", "ю", "я"],
 		edgeVoices: ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"],
+		fsiCategory: 3,
 		referenceSite: {
 			label: "Wiktionary",
 			baseUrl: "https://ru.wiktionary.org",
@@ -117,6 +178,9 @@ export interface CatalogLanguage extends LanguageInfo {
 
 type CatalogRow = [id: string, tag: string, endonym: string, english: string, voices: [string, string], tatoeba: string, wiktionary: string, frequency?: string];
 
+/** FSI categories, from state.gov, "Foreign Language Training". */
+const FSI: Record<string, 1 | 3> = { bulgarian: 3, czech: 3, estonian: 3, norwegian: 1, polish: 3, romanian: 1, russian: 3 };
+
 const CATALOG_ROWS: CatalogRow[] = [
 	["bulgarian", "bg-BG", "Български", "Bulgarian", ["bg-BG-KalinaNeural", "bg-BG-BorislavNeural"], "bul", "Bulgarian", "bg"],
 	["czech", "cs-CZ", "Čeština", "Czech", ["cs-CZ-VlastaNeural", "cs-CZ-AntoninNeural"], "ces", "Czech", "cs"],
@@ -141,6 +205,7 @@ export const LANGUAGE_CATALOG: CatalogLanguage[] = CATALOG_ROWS.map(([id, tag, e
 	tatoeba,
 	wiktionary,
 	...(frequency ? { frequency } : {}),
+	...(FSI[id] ? { fsiCategory: FSI[id] } : {}),
 }));
 
 export function catalogLanguage(id: string): CatalogLanguage | undefined {
@@ -180,6 +245,7 @@ export function parseLanguageInfo(raw: unknown): LanguageInfo | null {
 	const label = str(site?.label);
 	const baseUrl = str(site?.baseUrl);
 	const wordUrl = str(site?.wordUrl);
+	const fsi = r.fsiCategory;
 	return {
 		id,
 		tag,
@@ -189,6 +255,7 @@ export function parseLanguageInfo(raw: unknown): LanguageInfo | null {
 		specialLetters: strs(r.specialLetters),
 		edgeVoices: strs(r.edgeVoices),
 		...(label && baseUrl ? { referenceSite: { label, baseUrl, ...(wordUrl ? { wordUrl } : {}) } } : {}),
+		...(fsi === 1 || fsi === 2 || fsi === 3 || fsi === 4 ? { fsiCategory: fsi } : {}),
 	};
 }
 

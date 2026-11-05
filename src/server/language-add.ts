@@ -17,9 +17,9 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { PATHS, curriculumFile } from "../../config.ts";
+import { ACTIVE_PROFILE, PATHS, PROFILE_FILE, curriculumFile } from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
-import { catalogLanguage, LANGUAGE_CATALOG, type CatalogLanguage } from "../core/language.ts";
+import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, type CatalogLanguage } from "../core/language.ts";
 import {
 	ExampleCollector,
 	frequencyFromSentences,
@@ -42,7 +42,7 @@ import {
 import type { StoryUsage } from "../core/reading.ts";
 import { aiStatus } from "./ai-status.ts";
 import { storyEngine } from "./reading.ts";
-import { failTask, finishTask, listTasks, startTask, updateTask } from "./tasks.ts";
+import { failTask, finishTask, listTasks, removeTask, startTask, updateTask } from "./tasks.ts";
 
 /** Words kept per language, commonest first. */
 const WORD_LIMIT = 3000;
@@ -99,6 +99,35 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
 		(err: unknown) => failTask(taskIdOf(id), signal.aborted ? "Stopped. Start it again to continue where it stopped." : friendly(err)),
 	);
 	return { taskId: taskIdOf(id), done };
+}
+
+/** Whether a language's downloaded data can be removed now: it has some,
+ *  it is not the one running, and it is not being added. */
+export function languageRemovable(id: string): boolean {
+	if (id === ACTIVE_PROFILE || !fs.existsSync(dirOf(id))) return false;
+	return !listTasks().some((t) => t.id === taskIdOf(id) && t.status === "running");
+}
+
+/**
+ * Remove an added language: its words, sentences and grammar map under
+ * <data>/languages/<id>/. The learner's progress in it (<data>/profiles/<id>/)
+ * stays, so adding it again picks up where they were. A switch to it that
+ * waits for a restart is undone.
+ */
+export function removeLanguage(id: string): void {
+	const name = catalogLanguage(id)?.english ?? id;
+	if (id === ACTIVE_PROFILE) throw new Error(`${name} is the language running now. Switch to another one first.`);
+	if (!LANGUAGE_ID_RE.test(id) || !fs.existsSync(dirOf(id))) throw new Error(`${name} has nothing to remove`);
+	if (!languageRemovable(id)) throw new Error(`${name} is being added. Stop that first.`);
+	fs.rmSync(dirOf(id), { recursive: true, force: true });
+	try {
+		const selected = (JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8")) as { active?: unknown }).active;
+		if (selected === id) fs.writeFileSync(PROFILE_FILE, JSON.stringify({ active: ACTIVE_PROFILE }), "utf-8");
+	} catch {
+		// no saved choice: nothing waits for a restart
+	}
+	// A task card offering the switch to it would now point at nothing.
+	removeTask(taskIdOf(id));
 }
 
 class SourceError extends Error {}
@@ -340,6 +369,7 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 		specialLetters: specialLettersOf(entries.map((e) => e.lemma ?? ""), lang.tag),
 		edgeVoices: lang.edgeVoices,
 		referenceSite: lang.referenceSite,
+		...(lang.fsiCategory ? { fsiCategory: lang.fsiCategory } : {}),
 		addedAt: new Date().toISOString(),
 		words: entries.length,
 		wordsWithSentences: withExamples,

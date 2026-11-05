@@ -71,7 +71,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 
 	const langCode = lookupData?.langCode ?? activeLang?.code ?? "sk";
 	const langTag = lookupData?.langTag ?? activeLang?.tag ?? "sk-SK";
-	const langEnglish = lookupData?.langEnglish ?? activeLang?.english ?? "Slovak";
+	const langEnglish = lookupData?.langEnglish ?? activeLang?.english ?? "the language";
 
 	const resolvedSlug = token.slug ?? lookupData?.slug ?? token.lemma ?? token.text;
 	const resolvedLemma = token.lemma ?? lookupData?.lemma ?? token.text;

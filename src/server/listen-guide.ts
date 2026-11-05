@@ -15,13 +15,18 @@ import { analysisStore } from "../store/analysis.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { aiMissing, aiSlot, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { analyzeNow, mistakesReportOf, type MistakesReport } from "./mistakes-snapshot.ts";
+import { activeLanguage } from "./active-language.ts";
+import type { LanguageInfo } from "../core/language.ts";
 
-const SYSTEM = `You are a Slovak teacher reading a learner's Listen results: they heard a sentence, typed what they heard, and the app compared the two word by word and gave every difference one cause. The facts below are the app's own figures, with every trend already called, or not, by a statistical test.
+export function listenGuideSystem(lang: Pick<LanguageInfo, "english" | "promptExamples"> = activeLanguage()): string {
+	const name = lang.english;
+	const spelling = lang.promptExamples?.spellingSlips ?? "A letter written as it is said rather than as the spelling has it is a spelling rule";
+	return `You are a ${name} teacher reading a learner's Listen results: they heard a sentence, typed what they heard, and the app compared the two word by word and gave every difference one cause. The facts below are the app's own figures, with every trend already called, or not, by a statistical test.
 
 Rules:
-- Use only the facts. Never invent a number, a sentence, a cause or a trend. Slovak examples must come from the facts' own misses.
+- Use only the facts. Never invent a number, a sentence, a cause or a trend. ${name} examples must come from the facts' own misses.
 - A trend is "less often" or "more often" only where the facts say it was called. "No clear change" means the figures show nothing either way: never write "stable", "the same" or "no problem" for it. Weekly counts are small and noisy: describe them, never call a trend from them.
-- Keep the kinds apart. A word the learner had not met is vocabulary. The right word with the wrong ending is grammar, not hearing. A consonant written as it is said (had as hat) and i against y are spelling rules, not the ear. A one-letter slip may be typing. Say which a pattern is, and where it is not hearing, say so and point to grammar or spelling practice instead of Listen.
+- Keep the kinds apart. A word the learner had not met is vocabulary. The right word with the wrong ending is grammar, not hearing. ${spelling}, not the ear. A one-letter slip may be typing. Say which a pattern is, and where it is not hearing, say so and point to grammar or spelling practice instead of Listen.
 - A pattern is something several misses share. Name it, quote the evidence from the misses, say why it happens in plain words and give one concrete fix. A single miss is a slip. At most four patterns.
 - "noticed" is the part the learner could not have worked out alone: up to three things that no single figure says. A link between two figures, one of the app's findings explained, or a contrast (something better than they would expect). Say why it matters. A link the facts do not state is a guess: begin it "This may be". Do not repeat what a pattern already says.
 - "tips" are up to four things to try, each tied to a pattern, a cause or a finding, and saying which one in "why". They may use ordinary listening technique (type as you hear instead of after the clip, write the first word before replaying, replay once only for the ending, say the sentence under your breath) but must not promise a result or quote a number the facts do not hold.
@@ -33,6 +38,7 @@ Rules:
 Reply with one JSON object and nothing else:
 {"summary":"","patterns":[{"title":"","evidence":"","why":"","fix":""}],"noticed":[{"what":"","why":""}],"tips":[{"tip":"","why":""}],"trends":[{"what":"","read":""}],"next":[""],"limits":""}
 At most 4 patterns, 3 noticed, 4 tips, 4 trends and 4 next steps.`;
+}
 
 function readEngine(): { engine: PiEngine; model: string } | null {
 	const slot = aiSlot("strong");
@@ -63,7 +69,7 @@ export async function writeListenGuide(opts: { force?: boolean; now?: Date; say?
 	let text: string;
 	let model = "faux:faux";
 	if (opts.say) {
-		text = await opts.say(SYSTEM, `Facts:\n${facts}`);
+		text = await opts.say(listenGuideSystem(), `Facts:\n${facts}`);
 	} else {
 		const status = aiStatus("strong");
 		if (!status.ready) throw new Error(aiMissing(status));
@@ -71,7 +77,7 @@ export async function writeListenGuide(opts: { force?: boolean; now?: Date; say?
 		if (!resolved) throw new Error(aiMissing({ ready: false, reason: "no-model" }));
 		model = resolved.model;
 		try {
-			({ text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: SYSTEM, prompt: `Facts:\n${facts}`, maxTurns: 1, onUsage: (u) => steps.push(stepOf(u)) }));
+			({ text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: listenGuideSystem(), prompt: `Facts:\n${facts}`, maxTurns: 1, onUsage: (u) => steps.push(stepOf(u)) }));
 		} catch (err) {
 			throw new Error(friendlyAiError(err));
 		}

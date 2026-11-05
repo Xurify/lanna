@@ -17,7 +17,8 @@ delete process.env.LH_PROFILE;
 const build = await import("../src/core/language-build.ts");
 const { languageById, parseLanguageInfo, referenceLink } = await import("../src/core/language.ts");
 const config = await import("../config.ts");
-const { languageCatalog, startLanguageAdd } = await import("../src/server/language-add.ts");
+const startModule = await import("../src/server/language-add.ts");
+const { languageCatalog, startLanguageAdd } = startModule;
 const { profileLanguage } = await import("../src/server/active-language.ts");
 const { profileStatus } = await import("../src/server/language.ts");
 const { listTasks, resetTasks } = await import("../src/server/tasks.ts");
@@ -220,7 +221,7 @@ describe("adding a language in the background", () => {
 		assert.deepEqual(info?.specialLetters, []);
 		assert.equal(languageById("czech")?.english, "Czech", "registered for the browser-safe core");
 		const listed = profileStatus().profiles.find((p) => p.id === "czech");
-		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, seed: true });
+		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, seed: true, removable: true });
 		assert.equal(languageCatalog().find((r) => r.id === "czech")?.ready, true);
 		const { usageReport } = await import("../src/server/usage-report.ts");
 		assert.equal(usageReport().languages?.count, 1, "the grammar map call shows in Spending");
@@ -229,6 +230,25 @@ describe("adding a language in the background", () => {
 	test("an added language cannot be added twice, and an unknown one not at all", () => {
 		assert.throws(() => startLanguageAdd("czech", { fetch: fakeFetch }), /already added/);
 		assert.throws(() => startLanguageAdd("klingon", { fetch: fakeFetch }), /not a language the app can add/);
+	});
+
+	test("removing an added language deletes its words, keeps the learner's progress, and undoes a waiting switch", () => {
+		const { removeLanguage, languageRemovable } = startModule;
+		const progress = path.join(dir, "profiles", "czech");
+		fs.mkdirSync(progress, { recursive: true });
+		fs.writeFileSync(path.join(progress, "progress.json"), "{}");
+		fs.writeFileSync(path.join(dir, "profile.json"), JSON.stringify({ active: "czech" }));
+		assert.equal(languageRemovable("czech"), true);
+		assert.equal(profileStatus().profiles.find((p) => p.id === "czech")?.removable, true);
+		assert.equal(languageRemovable(config.ACTIVE_PROFILE), false, "the running language is never removable");
+
+		removeLanguage("czech");
+		assert.equal(fs.existsSync(path.join(dir, "languages", "czech")), false);
+		assert.ok(fs.existsSync(path.join(progress, "progress.json")), "progress stays");
+		assert.equal(config.isLanguageProfile("czech"), false);
+		assert.equal(JSON.parse(fs.readFileSync(path.join(dir, "profile.json"), "utf-8")).active, config.ACTIVE_PROFILE, "the switch waiting for a restart is undone");
+		assert.throws(() => removeLanguage("czech"), /nothing to remove/);
+		assert.throws(() => removeLanguage(config.ACTIVE_PROFILE), /running now/);
 	});
 
 	test("a malformed language.json is not a language", () => {

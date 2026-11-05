@@ -335,7 +335,7 @@ export const MILESTONES: MilestoneDef[] = [
 	},
 	{
 		id: "news",
-		title: "Read Slovak news",
+		title: "Read the news",
 		line: "An article on aktuality.sk or SME, at your own pace, looking up a word now and then.",
 		icon: "newspaper",
 		genre: "news",
@@ -371,7 +371,7 @@ export const MILESTONES: MilestoneDef[] = [
 	},
 	{
 		id: "film-subs",
-		title: "A film with Slovak subtitles",
+		title: "A film with subtitles in the language",
 		line: "Follow the story with the text under it, not translating in your head.",
 		icon: "captions",
 		genre: "film",
@@ -712,7 +712,7 @@ export const MILESTONE_SOURCES: Array<{ who: string; what: string; line: string 
 	{ who: "Webb & Rodgers (2009a, 2009b)", what: "The vocabulary of TV and film", line: "Across 88 TV programs and 318 films, 3,000 word families plus proper nouns gave about 95% of the words, and 6,000–7,000 gave 98%. The vlog and film milestones take their counts from here." },
 	{ who: "Nation (2006), Canadian Modern Language Review", what: "How large a vocabulary for reading and listening", line: "Newspapers and novels need about 4,000 families for 95% and 8,000–9,000 for 98%; everyday speech about 3,000 and 6,000–7,000. The news and in-laws milestones take their counts from here." },
 	{ who: "Adolphs & Schmitt (2003), Applied Linguistics", what: "Everyday conversation", line: "In the CANCODE corpus of spoken English, 2,000 word families covered about 95% of the words, and 3,000 about 96%; conversation is the least demanding material there is." },
-	{ who: "Milton (2009), Measuring Second Language Vocabulary Acquisition", what: "Vocabulary size by CEFR level", line: "Learners placed at A2 know about 1,500–2,500 lemmas, at B1 2,750–3,250, at B2 3,250–3,750. The app uses these (raised a quarter for Slovak's morphology) to credit words your level implies but the deck has not tested." },
+	{ who: "Milton (2009), Measuring Second Language Vocabulary Acquisition", what: "Vocabulary size by CEFR level", line: "Learners placed at A2 know about 1,500–2,500 lemmas, at B1 2,750–3,250, at B2 3,250–3,750. The app uses these (raised a quarter for an inflected language's morphology) to credit words your level implies but the deck has not tested." },
 	{ who: "Segalowitz (2010), Cognitive Bases of Second Language Fluency", what: "Why knowing a word is not hearing it", line: "Fluent comprehension is automatic retrieval: fast and stable, not just correct. A word you can recall in three seconds is not yet one you hear at 400 ms a word. The speed column measures this directly." },
 	{ who: "DeKeyser (1997), Studies in Second Language Acquisition", what: "How speed grows", line: "Processing speed improves with practice along a power law: fast gains at first, then slower ones, over weeks of practice. The speed dates use the guided-hours ladder until your own Listen trend has enough sessions to replace it." },
 	{ who: "Council of Europe, CEFR Companion Volume (2020)", what: "What each level can follow", line: "B1: clearly articulated speech directed at me, and films where pictures carry the story. B2: the majority of films in standard dialect, most TV on familiar topics. The speed ladder is anchored to these descriptors." },

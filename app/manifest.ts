@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
 	return {
 		name: "LangHarness",
 		short_name: "LangHarness",
-		description: "A Slovak and Russian tutor: lessons, spaced review, reading and speaking, kept on your own computer.",
+		description: "A language tutor: lessons, spaced review, reading and speaking, kept on your own computer.",
 		start_url: "/",
 		scope: "/",
 		display: "standalone",
