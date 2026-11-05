@@ -28,8 +28,25 @@ import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import { startTutorChat } from "@/components/lesson/tutor";
+import { CountryFlag } from "@/components/ui/country-flag";
+import { DaySplit } from "@/components/day-split";
+import { switchLanguage } from "@/components/switch-language";
 import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
-import type { PlanTask, UnitState } from "@/src/core";
+import type { DayLanguage, LanguageDay, PlanTask, UnitState } from "@/src/core";
+
+/** One thing to do today: a task in a language's plan, or setting a new language up. */
+interface Step {
+	key: string;
+	/** The language it is in, when the day spans several. */
+	lang: DayLanguage | null;
+	/** Null: the language is not set up yet, and this step is its setup. */
+	task: PlanTask | null;
+	minutes: number;
+	done: boolean;
+}
+
+/** Minutes a language's setup takes (four screens and the level check). */
+const SETUP_MINUTES = 5;
 
 
 /** "Verb forms" from "Grammar: Verb forms": the unit's name without its kind. */
@@ -37,9 +54,12 @@ function bare(title: string): string {
 	return title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 }
 
-export function Today({ initialConfigured, initialSummary = null }: { initialConfigured: boolean; initialSummary?: Summary | null }) {
+export function Today({ initialConfigured, initialSummary = null, initialDay = null }: { initialConfigured: boolean; initialSummary?: Summary | null; initialDay?: LanguageDay | null }) {
 	const router = useRouter();
 	const [s, setS] = useState<Summary | null>(initialSummary);
+	const [day, setDay] = useState<LanguageDay | null>(initialDay);
+	const [splitting, setSplitting] = useState(false);
+	const [switchNote, setSwitchNote] = useState<string | null>(null);
 	const [failed, setFailed] = useState(false);
 	const [dayLog, setDayLog] = useState<DayLog | null>(null);
 	const [configured, setConfigured] = useState(initialConfigured);
@@ -62,6 +82,11 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 				setFailed(false);
 			})
 			.catch(() => setFailed(true));
+		// Every language's plan for today, when the list has more than one.
+		void fetch(`/api/day?tz=${new Date().getTimezoneOffset()}`)
+			.then((r) => (r.ok ? (r.json() as Promise<LanguageDay>) : null))
+			.then((x) => x && setDay(x))
+			.catch(() => {});
 		// Today so far: the same log the Log page shows, for today only.
 		void fetch(`/api/daylog?tz=${new Date().getTimezoneOffset()}`)
 			.then((r) => (r.ok ? (r.json() as Promise<DayLog>) : null))
@@ -75,23 +100,34 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 
 	const hidden = (t: PlanTask) => t.via === "tutor" && keyless && !t.done;
 	const tasks = (s?.plan.tasks ?? []).filter((t) => !hidden(t));
-	const up = tasks.find((t) => !t.done) ?? null;
+	// With more than one language the plan is every language's, largest share first.
+	const multi = (day?.languages.length ?? 0) > 1;
+	const groups = multi
+		? day!.languages.map((lang) => {
+				const own = lang.running ? tasks : lang.tasks.filter((t) => !hidden(t));
+				const steps: Step[] = lang.setUp ? own.map((t) => ({ key: `${lang.id}:${t.id}`, lang, task: t, minutes: t.minutes, done: t.done })) : [{ key: `${lang.id}:setup`, lang, task: null, minutes: SETUP_MINUTES, done: false }];
+				return { lang, steps };
+			})
+		: null;
+	const steps: Step[] = groups ? groups.flatMap((g) => g.steps) : tasks.map((t) => ({ key: t.id, lang: null, task: t, minutes: t.minutes, done: t.done }));
+	const up = steps.find((x) => !x.done) ?? null;
 	// Enter starts the day's next step (a lesson once the plan is done).
 	// Tasks that open a tutor chat start a model turn, so they wait for a click.
-	const enterHref = s ? (up ? up.href : `/lesson?unit=${s.next}`) : undefined;
+	const enterable = s ? (up ? !up.task || Boolean(up.task.href) : true) : false;
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter" || !enterHref || setupOpen) return;
+			if (e.key !== "Enter" || !enterable || !s || setupOpen) return;
 			if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 			const t = e.target as HTMLElement | null;
 			// A focused control answers Enter itself.
 			if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "BUTTON" || t.tagName === "A" || t.isContentEditable || t.getAttribute("role") === "button")) return;
 			e.preventDefault();
-			router.push(enterHref);
+			if (up) start(up);
+			else router.push(`/lesson?unit=${s.next}`);
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [enterHref, setupOpen, router]);
+	});
 
 	/** Tutor chats need a model; without one, the setup dialog comes first. */
 	const withTutor = (run: () => Promise<void>) => {
@@ -123,10 +159,41 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 		else if (!(t.via === "tutor" && keyless)) speak(t);
 		else settings.open("keys");
 	};
+	/** A step in another language switches to it first; the page then loads
+	 *  there (a tutor task, which has no page of its own, lands on Today). */
+	function start(x: Step) {
+		if (x.lang && !x.lang.running) {
+			setBusy(true);
+			setSwitchNote(null);
+			void switchLanguage(x.lang.id, x.lang.english, x.task ? (x.task.href ?? "/") : "/start").catch((err: unknown) => {
+				setSwitchNote(err instanceof Error ? err.message : String(err));
+				setBusy(false);
+			});
+			return;
+		}
+		if (x.task) open(x.task);
+		else router.push("/start");
+	}
 
-	const done = tasks.filter((t) => t.done).length;
-	const total = tasks.length;
-	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
+	const done = steps.filter((x) => x.done).length;
+	const total = steps.length;
+	const left = steps.filter((x) => !x.done).reduce((n, x) => n + x.minutes, 0);
+	const row = (x: Step) => {
+		const elsewhere = x.lang && !x.lang.running ? x.lang : null;
+		return x === up ? (
+			<li key={x.key} data-testid={`plan-${x.key}`} data-next="true">
+				{x.task ? (
+					<UpNext task={x.task} busy={busy} onOpen={() => start(x)} meta={elsewhere ? `Opens in ${elsewhere.english}.` : x.task.id === "review" && s ? reviewMeta(s) : null} />
+				) : (
+					<SetupNext lang={x.lang!} busy={busy} onOpen={() => start(x)} />
+				)}
+			</li>
+		) : (
+			<li key={x.key} data-testid={`plan-${x.key}`}>
+				{x.task ? <PlanRow task={x.task} busy={busy} onOpen={() => start(x)} /> : <SetupRow lang={x.lang!} busy={busy} onOpen={() => start(x)} />}
+			</li>
+		);
+	};
 	const date = todayDate();
 	const toGoal = s ? Math.max(0, s.dailyGoal - s.todayXp) : 0;
 	const streak = s?.streak.days ?? 0;
@@ -180,7 +247,7 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 											`All ${total} things are done today.`
 										) : (
 											<>
-												{total} things<span className="@max-6xl:hidden"> today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
+												{total} things<span className="@max-6xl:hidden">{multi ? ` in ${day!.languages.length} languages` : ""} today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
 												<span className="@6xl:hidden">min</span> left.
 											</>
 										)}
@@ -202,25 +269,57 @@ export function Today({ initialConfigured, initialSummary = null }: { initialCon
 								<h2 className="q-sh">
 									<QIcon name="arrow" />
 									Today&apos;s plan
+									{multi && (
+										<button
+											type="button"
+											onClick={() => setSplitting((v) => !v)}
+											aria-expanded={splitting}
+											data-testid="day-split-open"
+											className="lh-press order-3 -my-1 inline-flex h-7 items-center rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground pointer-coarse:h-11"
+										>
+											Split the day
+										</button>
+									)}
 								</h2>
+								{multi && splitting && (
+									<DaySplit
+										day={day!}
+										onCancel={() => setSplitting(false)}
+										onSaved={(next) => {
+											setDay(next);
+											setSplitting(false);
+											load();
+										}}
+									/>
+								)}
+								{switchNote && (
+									<p className="mb-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground" role="alert" data-testid="switch-note">
+										{switchNote}
+									</p>
+								)}
 								{!s && <PlanSkeleton />}
 								{s && total === 0 && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} />}
-								{s && total > 0 && (
+								{s && total > 0 && !groups && (
 									<ol className="flex flex-col gap-2" data-testid="plan-tasks">
-										{tasks.map((t) =>
-											t === up ? (
-												<li key={t.id} data-testid={`plan-${t.id}`} data-next="true">
-													<UpNext task={t} busy={busy} onOpen={() => open(t)} meta={t.id === "review" ? reviewMeta(s) : null} />
-												</li>
-											) : (
-												<li key={t.id} data-testid={`plan-${t.id}`}>
-													<PlanRow task={t} busy={busy} onOpen={() => open(t)} />
-												</li>
-											),
-										)}
+										{steps.map(row)}
 									</ol>
 								)}
-								{s && total > 0 && done >= total && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} className="mt-2" />}
+								{s &&
+									total > 0 &&
+									groups?.map((g, i) => (
+										<div key={g.lang.id} className={cn(i > 0 && "mt-5")} data-testid={`plan-lang-${g.lang.id}`}>
+											<h3 className="mb-2 flex items-center gap-2 px-1 text-[14px] font-[550] text-foreground">
+												<CountryFlag lang={g.lang.id} className="h-[13px] w-[20px] rounded-[3px]" />
+												{g.lang.endonym}
+												{g.lang.english !== g.lang.endonym && <span className="font-[450] text-ink-3">{g.lang.english}</span>}
+												<span className="q-num ml-auto text-[12.5px] font-[450] text-ink-3">
+													{g.lang.practiced} of {g.lang.minutes} min
+												</span>
+											</h3>
+											<ol className="flex flex-col gap-2">{g.steps.map(row)}</ol>
+										</div>
+									))}
+								{s && total > 0 && done >= total && (groups ? <AllDone minutes={day!.practiced} goal={day!.minutes} next={s.next} className="mt-2" /> : <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} className="mt-2" />)}
 							</section>
 
 							{s && (
@@ -358,6 +457,45 @@ function PlanRow({ task, busy, onOpen }: { task: PlanTask; busy: boolean; onOpen
 	);
 }
 
+/** A language in the list that is not set up yet: its setup is its one step. */
+function SetupRow({ lang, busy, onOpen }: { lang: DayLanguage; busy: boolean; onOpen: () => void }) {
+	return (
+		<button type="button" onClick={onOpen} disabled={busy} className="flex w-full items-center gap-3 rounded-[10px] bg-well px-3.5 py-2.5 text-left hover:bg-well-2">
+			<span className="q-cb !mt-0 shrink-0" />
+			<span className="min-w-0 flex-1 truncate text-[15px] tracking-[-0.006em] text-foreground">Set up {lang.english}</span>
+			<span className="q-pill grey shrink-0">Setup</span>
+			<span className="q-num w-12 shrink-0 text-right text-[12.5px] text-ink-3">{SETUP_MINUTES} min</span>
+			<span className="hidden w-12 shrink-0 text-right text-[12px] text-ink-4 @xl:block">To do</span>
+		</button>
+	);
+}
+
+function SetupNext({ lang, busy, onOpen }: { lang: DayLanguage; busy: boolean; onOpen: () => void }) {
+	return (
+		<article className="q-card" data-testid={`plan-next-setup-${lang.id}`}>
+			<div className="q-card-head">
+				<QIcon name="flag" />
+				Setup
+				<span className="mins q-num">{SETUP_MINUTES} min</span>
+			</div>
+			<div className="q-rv-body @max-xl:block">
+				<div className="min-w-0">
+					<h3 className="@max-xl:text-[19px]">Set up {lang.english}</h3>
+					<p className="q-rv-tease" style={{ fontSize: 15 }}>
+						What it is for, what you already know, your pace, and a short level check. Opens in {lang.english}.
+					</p>
+				</div>
+				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy}>
+					Start<span className="@xl:hidden"> setup</span>
+					<kbd className="q-kbd pointer-coarse:hidden">
+						<QIcon name="enter" />
+					</kbd>
+				</button>
+			</div>
+		</article>
+	);
+}
+
 function PlanSkeleton() {
 	return (
 		<div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading today's plan">
@@ -416,7 +554,7 @@ function AllDone({ minutes, goal, next, className }: { minutes: number; goal: nu
 		<article className={cn("q-card", className)} data-testid="plan-complete">
 			<div className="q-rv-body">
 				<div>
-					<h3>All done for today. Pekne!</h3>
+					<h3>All done for today.</h3>
 					<p className="q-rv-tease" style={{ fontSize: 15 }}>
 						That is {minutes} of your {goal} min goal.
 					</p>

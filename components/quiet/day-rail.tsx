@@ -106,7 +106,7 @@ export function taskIcon(t: PlanTask): QIconName {
  *  titles come two ways: "Grammar: I, you, we · Prítomný čas" (kind, name, Slovak term) or a bare
  *  kind ("Review") whose line says what it is. */
 export function words(t: PlanTask): { primary: string; kind: string; rest?: string } {
-	const m = t.title.match(/^(Grammar|Words|With the tutor|Tutor|Goal|Lesson):s*(.*?)(?:s·s(.+))?$/);
+	const m = t.title.match(/^(Grammar|Words|With the tutor|Tutor|Goal|Lesson):\s*(.*?)(?:\s·\s(.+))?$/);
 	if (m) return { primary: m[2]!, kind: `${taskLabel(t)}${m[3] ? ` · ${m[3]}` : ""}`, rest: t.line };
 	if (t.title === TASK_LABEL[t.id] || t.title === taskLabel(t)) {
 		const [first, ...more] = t.line.split(" — ");

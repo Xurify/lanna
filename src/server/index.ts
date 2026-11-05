@@ -58,6 +58,7 @@ export * from "./storage.ts";
 export * from "./tts.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+export { languageDay, setLanguageMinutes } from "./day-plan.ts";
 export * from "./stamps.ts";
 export * from "./mixups.ts";
 export * from "./ai-status.ts";
