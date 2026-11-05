@@ -1,8 +1,7 @@
 import { cookies } from "next/headers";
 import { CurriculumPage } from "@/components/curriculum-page";
 import { CLIMB_VIEW_COOKIE, resolveClimbView } from "@/lib/climb-view";
-import { NoCourse } from "@/components/no-course";
-import { missingCourse, profileStatus, progressSummary, readSettingsRecord } from "@/src/server";
+import { progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 export const metadata = { title: "Curriculum" };
@@ -12,8 +11,6 @@ export const dynamic = "force-dynamic";
 /** The whole A1→B2 map (LangHarness): every chapter open, with the
  *  learner's progress on it. The Today page shows the same path folded. */
 export default async function CurriculumRoute({ searchParams }: { searchParams: Promise<{ view?: string | string[] }> }) {
-	const missing = missingCourse();
-	if (missing) return <NoCourse language={missing} initialProfile={profileStatus()} />;
 	const view = resolveClimbView((await searchParams).view, (await cookies()).get(CLIMB_VIEW_COOKIE)?.value);
 	const record = readSettingsRecord();
 	let summary = null;

@@ -7,8 +7,8 @@
  * hours, 3,000+ words and some fifty grammar points; the learner should see
  * that road, where they stand on it, and what today's step is.
  *
- * Shape: four STAGES (CEFR levels) → CHAPTERS of 5–8 units that end in a
- * can-do goal → UNITS of four kinds:
+ * Shape: four STAGES (CEFR levels) → chapters of 5–8 units that end in a
+ * can-do goal → units of four kinds:
  *   drill  — a local lesson over the lexicon (src/core/lesson.ts)
  *   words  — the same lesson shape, over one cluster of words or a
  *            frequency band
@@ -25,9 +25,9 @@
  * Every number here is a planning estimate, shown as such in the UI.
  */
 
-import { UNITS, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts";
+import { allUnits, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts";
 import { LISTEN_MINUTES } from "./listen.ts";
-import { activeCourse, type Course } from "./course.ts";
+import { perCourse, type Course } from "./course.ts";
 
 // ─── Levels and stages ─────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ export const STAGES: Stage[] = [
 	{ id: "a1", level: "A1", title: "Foundations", blurb: "Introduce yourself, order, ask the way, talk about family and your day." },
 	{ id: "a2", level: "A2", title: "Getting around", blurb: "Shop, make appointments, describe people and plans, tell what happened." },
 	{ id: "b1", level: "B1", title: "Independence", blurb: "Tell stories, give opinions, deal with offices, read simple news." },
-	{ id: "b2", level: "B2", title: "Fluency", blurb: "Argue a point, follow film and news, write a formal email, feel the register." },
+	{ id: "b2", level: "B2", title: "Argument", blurb: "Argue a point, follow film and news, write a formal email, feel the register." },
 ];
 
 // ─── Units ──────────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export interface CurriculumUnit {
 }
 
 const drill = (id: UnitId, extra: Partial<CurriculumUnit> = {}): CurriculumUnit => {
-	const u = UNITS.find((x) => x.id === id);
+	const u = allUnits().find((x) => x.id === id);
 	if (!u) throw new Error(`curriculum: no lesson unit "${id}"`);
 	const prefix = u.kind === "words" ? "Words" : "Grammar";
 	const rawTitle = u.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
@@ -142,7 +142,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	goal("can-introduce", "Can introduce myself", "Volám sa… Som z Estónska. Odkiaľ ste?", "n_seed_can_introduce", "colleague", { slovakTerm: "Predstavenie sa", grammarTerm: "Can-Do: Introduce yourself" }),
 
 	// ── A1 · 2 At the café ──
-	tutor("byt", "To be: som, si, je", "byť in the present, and nie som", "smile", "n_seed_cop_byt", "byť in the present: som, si, je, sme, ste, sú, the negative nie som / nie je, and dropping the pronoun (Som doma). Estonian bridge: olen, oled, on. Drill me with short sentences about where I am, what I am and what I am not.", { slovakTerm: "Sloveso byť", grammarTerm: "Present copula 'byť'" }),
+	tutor("byt", "To be: som, si, je", "byť in the present, and nie som", "smile", "n_seed_cop_byt", "byť in the present: som, si, je, sme, ste, sú, the negative nie som / nie je, and dropping the pronoun (Som doma). Drill me with short sentences about where I am, what I am and what I am not.", { slovakTerm: "Sloveso byť", grammarTerm: "Present copula 'byť'" }),
 	drill("lx-core-verbs"),
 	drill("acc-fem"),
 	drill("lx-drinks"),
@@ -232,7 +232,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("lx-describe-people"),
 	drill("lx-describe-things"),
 	drill("clitics"),
-	tutor("pron-cases", "Me, you, him: pronoun cases", "ma / mňa, mi / mne, ho / jeho", "user-round", "n_seed_pron_cases", "Personal pronouns in the cases: the short forms (ma, ťa, ho, ju, mi, ti, mu, jej, nás, vás, ich, im) in second position, the long forms (mňa, teba, jeho, mne, tebe) after prepositions and for emphasis. Estonian bridge: mind/mulle/minuga. Drill me on choosing the form from the verb or preposition.", { slovakTerm: "Pády osobných zámen", grammarTerm: "Pronoun cases" }),
+	tutor("pron-cases", "Me, you, him: pronoun cases", "ma / mňa, mi / mne, ho / jeho", "user-round", "n_seed_pron_cases", "Personal pronouns in the cases: the short forms (ma, ťa, ho, ju, mi, ti, mu, jej, nás, vás, ich, im) in second position, the long forms (mňa, teba, jeho, mne, tebe) after prepositions and for emphasis. Drill me on choosing the form from the verb or preposition.", { slovakTerm: "Pády osobných zámen", grammarTerm: "Pronoun cases" }),
 	tutor("liking", "Liking things", "mám rád, rada čítam, páči sa mi", "heart", "n_seed_rad", "Three ways to like: mám rád/rada + accusative (mám rád kávu), rád/rada + verb (rád čítam), and páči sa mi + nominative (páči sa mi Bratislava), with the gender of rád/rada. Drill me on all three.", { slovakTerm: "Vyjadrovanie záľub", grammarTerm: "Expressing preferences" }),
 	goal("can-describe-people", "Can describe people", "Môj brat je vysoký a trochu lenivý.", undefined, "family", { slovakTerm: "Opis osôb", grammarTerm: "Can-Do: Describe people" }),
 
@@ -265,7 +265,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	goal("can-opinion", "Can give an opinion", "Myslím si, že… Súhlasím, ale…", undefined, "colleague", { slovakTerm: "Vyjadrenie názoru", grammarTerm: "Can-Do: Express opinions" }),
 
 	// ── B1 · 15 Dealing with offices ──
-	tutor("plural-cases", "Plural in every case", "s kamarátmi, v mestách, bez peňazí", "layers", "n_seed_gen_pl", "The plural across the cases: genitive (domov, žien, miest, peňazí), dative -om, locative -och, instrumental -ami/-mi, and the adjective plural endings -ých/-ým/-ými. Estonian bridge: the plural stem plus the same case endings. Drill me with prepositions that pick the case.", { slovakTerm: "Pády v množnom čísle", grammarTerm: "Plural in all cases" }),
+	tutor("plural-cases", "Plural in every case", "s kamarátmi, v mestách, bez peňazí", "layers", "n_seed_gen_pl", "The plural across the cases: genitive (domov, žien, miest, peňazí), dative -om, locative -och, instrumental -ami/-mi, and the adjective plural endings -ých/-ým/-ými. Drill me with prepositions that pick the case.", { slovakTerm: "Pády v množnom čísle", grammarTerm: "Plural in all cases" }),
 	drill("lx-admin"),
 	drill("lx-tech"),
 	drill("lx-languages"),
@@ -359,17 +359,16 @@ function courseCurriculum(course: Course): CurriculumUnit[] {
 	return out;
 }
 
-/** The running language's course (src/core/course.ts), else Slovak's. */
-const COURSE = activeCourse();
-
-/** Every unit on the map, in teaching order. */
-export const CURRICULUM: CurriculumUnit[] = COURSE ? courseCurriculum(COURSE) : slovakCurriculum();
+/** Every unit on the map, in teaching order: the running language's course (src/core/course.ts), else Slovak's. */
+export const curriculumUnits = perCourse((course): CurriculumUnit[] => (course ? courseCurriculum(course) : slovakCurriculum()));
 
 /** The map's chapters, in order. Each closes with a can-do goal. */
-export const CHAPTERS: Chapter[] = COURSE ? COURSE.chapters.map((c, i) => ({ id: c.id, stage: c.stage, title: c.title, tagline: c.tagline, units: i === 0 ? ["words", ...c.units] : [...c.units] })) : slovakChapters(CURRICULUM);
+export const allChapters = perCourse((course): Chapter[] =>
+	course ? course.chapters.map((c, i) => ({ id: c.id, stage: c.stage, title: c.title, tagline: c.tagline, units: i === 0 ? ["words", ...c.units] : [...c.units] })) : slovakChapters(curriculumUnits()),
+);
 
 export function curriculumUnit(id: string): CurriculumUnit | undefined {
-	return CURRICULUM.find((u) => u.id === id);
+	return curriculumUnits().find((u) => u.id === id);
 }
 
 export function stageOf(level: Cefr): Stage | undefined {
@@ -463,14 +462,14 @@ function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsT
  *  count as passed and stay open to revisit. */
 export function curriculumState(evidence: Record<string, UnitEvidence | undefined>, target: Cefr = "B2", opts: { startChapter?: string } = {}): CurriculumState {
 	const targetIdx = CEFR_ORDER.indexOf(target);
-	const startIdx = Math.max(0, CHAPTERS.findIndex((c) => c.id === opts.startChapter));
+	const startIdx = Math.max(0, allChapters().findIndex((c) => c.id === opts.startChapter));
 	const doneSet = new Set<string>();
 	const chapters: ChapterState[] = [];
 	let prevOpenSlack: boolean = true; // the first chapter is always open
 	let current: string | undefined;
 	let done = 0;
 	let total = 0;
-	for (const [chIdx, ch] of CHAPTERS.entries()) {
+	for (const [chIdx, ch] of allChapters().entries()) {
 		const stage = STAGES.find((s) => s.id === ch.stage)!;
 		const inTarget = CEFR_ORDER.indexOf(stage.level) <= targetIdx;
 		const skippedChapter = chIdx < startIdx;
@@ -921,8 +920,8 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const rereadDay = input.reread && input.dayOfYear % 2 === 1;
 	tasks.push(
 		rereadDay
-			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/fluency?mode=reread" }
-			: { id: "fluency", title: "Say it faster", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/fluency?mode=fast" },
+			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=reread" }
+			: { id: "fluency", title: "Say it faster", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=fast" },
 	);
 
 	// Cut to the planned minutes, keeping review and the lesson. A tight

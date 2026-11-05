@@ -53,7 +53,6 @@ const { desktopAPIHeaders } = require("./desktop-api.cjs");
 const { openWebSubscriptionBrowser } = require("./web-subscription-browser.cjs");
 const { registerStorageIPC } = require("./storage-ipc.cjs");
 const { registerFontsIPC } = require("./fonts-ipc.cjs");
-const { RELAUNCH_EXIT_CODE, relaunchMode } = require("./dev-relaunch.cjs");
 const { randomBytes } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
@@ -767,23 +766,6 @@ async function main() {
 	// are log lines — this can never block boot.
 	setupAutoUpdater();
 	ipcMain.on("lh:update-install", () => installUpdateNow());
-	// Language-profile switch (LangHarness): the server reads the active
-	// profile once at boot, so a switch is a full relaunch. before-quit
-	// stops the child server. Under desktop:dev the launcher restarts Next
-	// and this shell together (electron/dev-relaunch.cjs).
-	ipcMain.on("lh:relaunch", () => {
-		if (relaunchMode(process.env) === "launcher") {
-			log("relaunch: asking the desktop:dev launcher to restart Next and the shell");
-			app.once("will-quit", (event) => {
-				event.preventDefault();
-				app.exit(RELAUNCH_EXIT_CODE);
-			});
-			app.quit();
-			return;
-		}
-		app.relaunch();
-		app.quit();
-	});
 	ipcMain.handle("lh:update:get", (event) => {
 		if (!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) throw new Error("Untrusted desktop request.");
 		return updateState;

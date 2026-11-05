@@ -46,7 +46,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Watch", hint: "A video with both subtitles", href: "/watch", icon: "play", words: "youtube video" },
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
 	{ title: "Talk in writing", hint: "A role-play in writing", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
-	{ title: "Fluency", hint: "Known sentences, said faster", href: "/fluency?mode=fast", icon: "fast", words: "say it faster speed" },
+	{ title: "Speed", hint: "Known sentences, said faster", href: "/speed?mode=fast", icon: "fast", words: "say it faster speed" },
 	{ title: "Blitz", hint: "60 seconds, as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
 	{ title: "Words", hint: "Everything you have met", href: "/words", icon: "words", words: "vocabulary lexicon" },
 	{ title: "Grammar", hint: "Cases, genders, and your score on each", href: "/grammar", icon: "grammar", words: "atlas cases" },

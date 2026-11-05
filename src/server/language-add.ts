@@ -19,7 +19,7 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { ACTIVE_PROFILE, LANGUAGE_PROFILES, PATHS, curriculumFile, readProfileChoice, saveProfileChoice } from "../../config.ts";
+import { activeProfile, LANGUAGE_PROFILES, PATHS, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, languageById, type CatalogLanguage } from "../core/language.ts";
 import {
@@ -64,15 +64,9 @@ export const taskIdOf = (id: string) => `language:${id}`;
 const dirOf = (id: string) => path.join(PATHS.languages, id);
 const buildDir = (id: string) => path.join(dirOf(id), "build");
 
-/** Whether a catalog language is complete: its words and its course. One
- *  added before courses were generated is not, and adding it again
- *  finishes it from the kept downloads. */
-export function languageReady(id: string): boolean {
-	if (id === "slovak") return true;
-	const course = fs.existsSync(path.join(dirOf(id), "course.json"));
-	if (id === "russian") return course && fs.existsSync(curriculumFile(id, "lexicon.json"));
-	return course && fs.existsSync(path.join(dirOf(id), "language.json"));
-}
+/** Whether a catalog language is added: its words, course and language.json
+ *  are all written (config.ts addedLanguageIds). */
+const languageAdded = (id: string) => addedLanguageIds().includes(id);
 
 /** What the course writer is told the dictionary holds. */
 function courseInventory(entries: ReadonlyArray<{ cat: string; lemma?: string; formTags?: Record<string, string[]> }>, tag: string, scenes: readonly string[]) {
@@ -93,11 +87,8 @@ export interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
-	/** Already in the learner's list (words downloaded, or built in) but
-	 *  without its course: adding it finishes it. */
-	started: boolean;
-	/** A built-in language the learner removed from their list that is
-	 *  still complete: adding it puts it back at once, with no download. */
+	/** A built-in language the learner removed from their list: adding it
+	 *  puts it back at once, with no download. */
 	restoreOnly?: boolean;
 }
 
@@ -112,16 +103,14 @@ export function languageCatalog(): CatalogRow[] {
 		english: l.english,
 		endonym: l.endonym,
 		tag: l.tag,
-		ready: languageReady(l.id) && !hidden.includes(l.id),
+		ready: languageAdded(l.id),
 		adding: running.has(taskIdOf(l.id)),
-		started: !languageReady(l.id) && (fs.existsSync(dirOf(l.id)) || (isBuiltIn(l.id) && !hidden.includes(l.id))),
-		...(hidden.includes(l.id) && languageReady(l.id) ? { restoreOnly: true } : {}),
 	}));
-	// Slovak ships whole and is not in the catalog: once removed, it is listed here so it can come back.
+	// A built-in language ships whole and is not in the catalog: once removed, it is listed here so it can come back.
 	for (const id of hidden) {
 		const info = languageById(id);
-		if (!isBuiltIn(id) || catalogLanguage(id) || !info) continue;
-		rows.unshift({ id, english: info.english, endonym: info.endonym, tag: info.tag, ready: false, adding: false, started: false, ...(languageReady(id) ? { restoreOnly: true } : {}) });
+		if (!info) continue;
+		rows.unshift({ id, english: info.english, endonym: info.endonym, tag: info.tag, ready: false, adding: false, restoreOnly: true });
 	}
 	return rows;
 }
@@ -274,7 +263,7 @@ export function addBlocker(writer: CourseWriter = "strong"): string | null {
 export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: string; done: Promise<void> } {
 	const lang = catalogLanguage(id);
 	if (!lang) throw new Error(`"${id}" is not a language the app can add`);
-	if (languageReady(id)) throw new Error(`${lang.english} is already added`);
+	if (languageAdded(id)) throw new Error(`${lang.english} is already added`);
 	const other = listTasks().find((t) => t.kind === "language" && t.status === "running" && t.id !== taskIdOf(id));
 	if (other) throw new Error(`Wait for "${other.title}" to finish first`);
 	const blocked = deps.ask ? null : addBlocker(deps.slot);
@@ -292,7 +281,7 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
  *  running, it is not being added, and it is listed (built-in) or has
  *  downloaded data (added). */
 export function languageRemovable(id: string): boolean {
-	if (id === ACTIVE_PROFILE) return false;
+	if (id === activeProfile()) return false;
 	if (isBuiltIn(id) ? isHidden(id) : !fs.existsSync(dirOf(id))) return false;
 	return !listTasks().some((t) => t.id === taskIdOf(id) && t.status === "running");
 }
@@ -300,20 +289,19 @@ export function languageRemovable(id: string): boolean {
 /**
  * Remove a language from the list. An added one loses its words, sentences
  * and grammar map under <data>/languages/<id>/. A built-in one is hidden
- * (profile.json "hidden") and loses any words downloaded for it. The
- * learner's progress (<data>/profiles/<id>/) stays, so adding it again picks
+ * (profile.json "hidden"). The learner's progress (<data>/profiles/<id>/) stays, so adding it again picks
  * up where they were. A switch to it that waits for a restart is undone.
  */
 export function removeLanguage(id: string): void {
 	const name = languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
-	if (id === ACTIVE_PROFILE) throw new Error(`${name} is the language running now. Switch to another one first.`);
+	if (id === activeProfile()) throw new Error(`${name} is the language running now. Switch to another one first.`);
 	const builtIn = isBuiltIn(id);
 	if (!LANGUAGE_ID_RE.test(id) || (builtIn ? isHidden(id) : !fs.existsSync(dirOf(id)))) throw new Error(`${name} has nothing to remove`);
 	if (!languageRemovable(id)) throw new Error(`${name} is being added. Stop that first.`);
-	fs.rmSync(dirOf(id), { recursive: true, force: true });
+	if (!builtIn) fs.rmSync(dirOf(id), { recursive: true, force: true });
 	const choice = readProfileChoice();
 	saveProfileChoice({
-		...(choice.active === id ? { active: ACTIVE_PROFILE } : {}),
+		...(choice.active === id ? { active: activeProfile() } : {}),
 		...(builtIn ? { hidden: [...choice.hidden, id] } : {}),
 	});
 	// A task card offering the switch to it would now point at nothing.
@@ -356,11 +344,16 @@ async function cached<T>(id: string, name: string, run: () => Promise<T>): Promi
 
 const yieldNow = () => new Promise<void>((resolve) => setImmediate(resolve));
 
+/** Parsed lines yield to the event loop every this many bytes, so a request
+ *  waits at most one slice between its steps. 8 KB is about 80 Tatoeba lines,
+ *  a fraction of a millisecond of parsing. */
+const PARSE_SLICE_BYTES = 8 * 1024;
+
 /** The lines of a download, decompressed as they arrive. `onBytes` hears
  *  the decompressed total, for the progress line. Lines are split here, not
  *  by readline: readline keeps reading while its lines wait, and a 1 GB
  *  Wiktionary file then sits in memory whole. */
-async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts: { bz2?: boolean; what: string; onBytes?: (n: number) => void }): AsyncGenerator<string> {
+export async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts: { bz2?: boolean; what: string; onBytes?: (n: number) => void }): AsyncGenerator<string> {
 	const res = await get(url, { signal, headers: { "user-agent": UA, "accept-encoding": "gzip" } });
 	if (!res.ok || !res.body) throw new SourceError(`Could not download ${opts.what} (HTTP ${res.status}). Try again later; it continues where it stopped.`);
 	const raw = Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]);
@@ -370,6 +363,7 @@ async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts:
 	const decoder = new StringDecoder("utf8");
 	let carry = "";
 	let bytes = 0;
+	let sliceBytes = 0;
 	try {
 		for await (const chunk of stream as AsyncIterable<Buffer>) {
 			if (signal.aborted) throw new Error("aborted");
@@ -378,8 +372,14 @@ async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts:
 			carry += decoder.write(chunk);
 			let start = 0;
 			for (let nl = carry.indexOf("\n"); nl !== -1; nl = carry.indexOf("\n", start)) {
-				yield carry.charCodeAt(nl - 1) === 13 ? carry.slice(start, nl - 1) : carry.slice(start, nl);
+				const line = carry.charCodeAt(nl - 1) === 13 ? carry.slice(start, nl - 1) : carry.slice(start, nl);
 				start = nl + 1;
+				yield line;
+				sliceBytes += line.length;
+				if (sliceBytes >= PARSE_SLICE_BYTES) {
+					sliceBytes = 0;
+					await yieldNow();
+				}
 			}
 			carry = carry.slice(start);
 			await yieldNow();
@@ -576,9 +576,10 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	step("Matching sentences to words", true);
 	const ranked = rankWords(mergeHomographs(words, lang.tag), freq, lang.tag, WORD_LIMIT);
 	const collector = new ExampleCollector(ranked, lang.tag);
+	// About 5 µs a sentence: 50 between yields is a quarter of a millisecond.
 	for (let i = 0; i < sentences.length; i++) {
 		collector.add(sentences[i]!);
-		if (i % 5000 === 4999) {
+		if (i % 50 === 49) {
 			if (signal.aborted) throw new Error("aborted");
 			await yieldNow();
 		}

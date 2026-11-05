@@ -27,17 +27,17 @@ import { learnerProfileSegment } from "../agent/learner-profile.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
-import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
+import { allChapters, curriculumState } from "../core/curriculum.ts";
 import { buildLesson, unitInfo, type LessonItem, type RepVerdict, type UnitId } from "../core/lesson.ts";
-import { PLACEMENT_TIERS, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapter, tierOfUnit, type PlacementOutcome, type ProbeReply, type ProbeVerdict, calmEntries } from "../core/onboarding.ts";
-import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, LADDER, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
+import { placementTiers, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapter, tierOfUnit, type PlacementOutcome, type ProbeReply, type ProbeVerdict, calmEntries } from "../core/onboarding.ts";
+import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, placementLadder, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
 import { grammarWord } from "../core/reading.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { entryLemma, type LexiconEntry } from "../core/review.ts";
 import { makePseudowords, PSEUDO_WORDS, scoreVocab, VOCAB_BANDS, WORDS_PER_BAND, type VocabAnswer, type VocabItem } from "../core/vocab-probe.ts";
 import { rng, shuffle } from "../core/lesson.ts";
 import { placementStore, type PlacementSession } from "../store/placement.ts";
-import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
+import { defaultGoal, progressStore } from "../store/progress.ts";
 import { readSettings } from "../store/settings.ts";
 import { recordPlacement, type PlacementResult, type RepResult } from "./lesson.ts";
 import { frequencyOrder } from "./milestones.ts";
@@ -176,7 +176,7 @@ function itemFor(s: PlacementSession, unit: UnitId): LessonItem {
 export function startPlacement(opts: { recheck?: boolean } & PlacementOptions = {}): PlacementStart {
 	const now = opts.now ?? new Date();
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const from = opts.recheck ? tierForChapter(state.current) : 0;
 	const id = `pl_${now.getTime().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
@@ -326,7 +326,7 @@ function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitI
 	}
 	const tier = outcome.tiers.find((t) => !t.passed);
 	lines.push("");
-	lines.push(`The drill stops the learner at the ${tier ? `${tier.level} tier "${tier.title}"` : "top of the check"}; the chapter it would start them in is "${CHAPTERS.find((c) => c.id === outcome.startChapter)?.title ?? outcome.startChapter}".`);
+	lines.push(`The drill stops the learner at the ${tier ? `${tier.level} tier "${tier.title}"` : "top of the check"}; the chapter it would start them in is "${allChapters().find((c) => c.id === outcome.startChapter)?.title ?? outcome.startChapter}".`);
 	const profile = learnerProfileSegment();
 	if (profile) lines.push("", profile);
 	return lines.join("\n");
@@ -476,9 +476,9 @@ export function finishPlacement(input: { id: string; ms?: number; activeMs?: num
 		for (const [u, v] of last) tally[u] = v.result === "held" ? { hits: 2, misses: 0 } : v.result === "slip" ? { hits: 2, misses: 1 } : { hits: 0, misses: 2 };
 		// The bracket moves with the verdicts: the floor is the highest rung
 		// held with no gap below it, the ceiling the lowest gap.
-		let lo = PLACEMENT_TIERS.slice(0, ladder.from).reduce((n, t) => n + t.units.length, 0) - 1;
-		let hi = LADDER.length;
-		for (const [i, u] of LADDER.entries()) {
+		let lo = placementTiers().slice(0, ladder.from).reduce((n, t) => n + t.units.length, 0) - 1;
+		let hi = placementLadder().length;
+		for (const [i, u] of placementLadder().entries()) {
 			const st = rungStatus(tally[u]);
 			if (st === "gap") {
 				hi = Math.min(hi, i);

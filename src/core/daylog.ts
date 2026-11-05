@@ -8,7 +8,7 @@
  * branch). Pure: the server reads the stores and hands them here.
  */
 
-import { UNITS } from "./lesson.ts";
+import { allUnits } from "./lesson.ts";
 import { strandParts, type StrandDay } from "./strands.ts";
 import type { Strand } from "./strands.ts";
 
@@ -96,7 +96,7 @@ export function localDay(iso: string, tz: number): string {
 }
 
 function titleOf(e: DayLogLesson): string {
-	const info = UNITS.find((u) => u.id === e.unit);
+	const info = allUnits().find((u) => u.id === e.unit);
 	if (info && e.mode === "lesson") return `${info.kind === "words" ? "Words" : "Grammar"}: ${info.title}`;
 	return info?.title ?? TASK_NAME[e.mode] ?? e.unit;
 }
@@ -126,7 +126,7 @@ export function buildDayLog(day: string, input: DayLogInput): DayLog {
 
 	for (const e of lessons) {
 		const time = localTime(e.at, tz);
-		const info = UNITS.find((u) => u.id === e.unit);
+		const info = allUnits().find((u) => u.id === e.unit);
 		const parts = [e.total > 0 ? `${e.correct} of ${e.total} right` : "", minutesLabel(e.ms)].filter(Boolean);
 		entries.push({ at: e.at, time, kind: e.mode, title: titleOf(e), line: parts.join(", ") || "Finished" });
 		if (info && info.kind !== "words" && e.mode === "lesson" && !met.has(info.id)) {

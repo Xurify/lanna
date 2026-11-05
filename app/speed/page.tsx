@@ -2,11 +2,11 @@ import { FluencyPlayer, type FastPlan, type RereadPlan } from "@/components/flue
 import type { PronEngine } from "@/src/core";
 import { fastFor, pronounceEngine, rereadFor, sttEngine } from "@/src/server";
 
-export const metadata = { title: "Fluency" };
+export const metadata = { title: "Speed" };
 
 export const dynamic = "force-dynamic";
 
-/** Fluency: ?mode=reread times an episode already read; ?mode=fast (the
+/** Speed: ?mode=reread times an episode already read; ?mode=fast (the
  *  default) is "say it faster" on known sentences. Built with the page,
  *  so the text is in the first HTML and never swaps after load. */
 export default async function FluencyPage({ searchParams }: { searchParams: Promise<{ mode?: string; id?: string }> }) {

@@ -83,8 +83,6 @@ declare global {
 			expandWindow: () => void;
 			/** Tells the Electron frame which theme the page is in. */
 			setTheme?: (night: boolean) => void;
-			/** LangHarness: restart the app (language-profile switch). */
-			relaunch?: () => void;
 			/** The zoom truth (owner round 7): subscribes to "lh:zoom" pushes; returns unsubscribe. */
 			onZoom?: (cb: (factor: number) => void) => () => void;
 			getZoom?: () => Promise<number>;
@@ -139,7 +137,7 @@ export function useSidebar() {
 
 /** The full-screen task pages. They fold the sidebar from the route itself, so
  *  the fold starts on the click, not once the page has rendered and hydrated. */
-const TASK_ROUTES = ["/lesson", "/exam", "/listen", "/speak", "/fluency", "/read", "/watch"];
+const TASK_ROUTES = ["/lesson", "/exam", "/listen", "/speak", "/speed", "/read", "/watch"];
 
 function isTaskRoute(pathname: string | null): boolean {
 	if (!pathname) return false;

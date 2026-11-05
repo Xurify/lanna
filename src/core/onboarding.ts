@@ -7,9 +7,9 @@
  * The tutor reads all of it as a profile block (learnerProfileText). Pure and browser-safe.
  */
 
-import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
-import { LESSON_LANGUAGE, LESSONS_HAVE_BRIDGES, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
-import { activeCourse, type Course } from "./course.ts";
+import { CEFR_ORDER, allChapters, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
+import { lessonLanguage, lessonsHaveBridges, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { perCourse, type Course } from "./course.ts";
 import { entryLemma, exampleText } from "./review.ts";
 import { slipLine } from "./grammar.ts";
 import type { FirstTally } from "./first-try.ts";
@@ -368,7 +368,7 @@ export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | un
 
 /** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. `target` is the language being learned; only the lessons' own language has parallels. */
 export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined, target: { code: string; english: string }): string {
-	const langs = LESSONS_HAVE_BRIDGES && target.code === LESSON_LANGUAGE ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
+	const langs = lessonsHaveBridges() && target.code === lessonLanguage() ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
 	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
@@ -437,6 +437,32 @@ export interface LearnerGoal {
 	 *  estimate in lemmas and when. The words calculator trusts it over
 	 *  the level's band. */
 	vocabulary?: { size: number; at: string; reliable: boolean };
+}
+
+/** The goal's fields that belong to the learner, not to one language: what
+ *  they know and how they want it explained. Every language reads the same
+ *  copy (<data>/learner.json, 2026-11-05), so a learner of three languages
+ *  states them once. */
+export const LEARNER_FIELDS = ["languages", "languageLevels", "otherLanguages", "explainIn", "firstLanguage", "bridges", "showParallels"] as const;
+export type LearnerFields = Pick<LearnerGoal, (typeof LEARNER_FIELDS)[number]>;
+
+/** The learner's fields of a goal, the ones that are set. */
+export function learnerFieldsOf(goal: LearnerGoal): LearnerFields {
+	const out: Record<string, unknown> = {};
+	for (const k of LEARNER_FIELDS) if (goal[k] !== undefined) out[k] = goal[k];
+	return out as LearnerFields;
+}
+
+/** A language's goal without the learner's fields. */
+export function withoutLearnerFields<G extends LearnerGoal>(goal: G): G {
+	const out = { ...goal };
+	for (const k of LEARNER_FIELDS) delete out[k];
+	return out;
+}
+
+/** A language's goal with the learner's own fields in place of its copy. */
+export function withLearnerFields<G extends LearnerGoal>(goal: G, fields: LearnerFields): G {
+	return { ...withoutLearnerFields(goal), ...fields };
 }
 
 export const DEFAULT_DAYS_PER_WEEK = 6;
@@ -512,29 +538,26 @@ function courseTiers(course: Course): PlacementTier[] {
 	return tiers;
 }
 
-/** The running language's course (src/core/course.ts), else Slovak's. */
-const COURSE = activeCourse();
-
-/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
-export const PLACEMENT_TIERS: PlacementTier[] = COURSE ? courseTiers(COURSE) : SLOVAK_TIERS;
+/** Four tiers, each the grammar of a stretch of the map: the running language's course (src/core/course.ts), else Slovak's. A tier passes at PASS_SHARE of its reps. */
+export const placementTiers = perCourse((course): PlacementTier[] => (course ? courseTiers(course) : SLOVAK_TIERS));
 
 export const REPS_PER_UNIT = 2;
 export const PASS_SHARE = 0.75;
 
 export function placementTier(id: string): PlacementTier | undefined {
-	return PLACEMENT_TIERS.find((t) => t.id === id);
+	return placementTiers().find((t) => t.id === id);
 }
 
 /** The tier to start a re-check from: the one whose chapters hold the
  *  learner's current chapter (or the first). */
 export function tierForChapter(chapter: string | undefined): number {
-	const i = PLACEMENT_TIERS.findIndex((t) => t.chapters.includes(chapter ?? ""));
+	const i = placementTiers().findIndex((t) => t.chapters.includes(chapter ?? ""));
 	if (i >= 0) return i;
 	// A chapter past the last tier's (B2: the check stops at B1 grammar)
 	// re-checks from the last tier, not from the first.
-	const idx = CHAPTERS.findIndex((c) => c.id === chapter);
-	const last = CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[PLACEMENT_TIERS.length - 1]!.chapters.at(-1));
-	return idx > last ? PLACEMENT_TIERS.length - 1 : 0;
+	const idx = allChapters().findIndex((c) => c.id === chapter);
+	const last = allChapters().findIndex((c) => c.id === placementTiers()[placementTiers().length - 1]!.chapters.at(-1));
+	return idx > last ? placementTiers().length - 1 : 0;
 }
 
 export interface PlacementRep {
@@ -591,10 +614,10 @@ export function tierNeed(reps: number): number {
  * Fold answered reps into the outcome. Pure. Tiers below `from` (a re-check start) were not asked and count as held.
  */
 export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: number } = {}): PlacementOutcome {
-	const from = Math.max(0, Math.min(PLACEMENT_TIERS.length - 1, opts.from ?? 0));
+	const from = Math.max(0, Math.min(placementTiers().length - 1, opts.from ?? 0));
 	const tiers: TierResult[] = [];
 	const units: PlacementOutcome["units"] = {};
-	for (const [i, t] of PLACEMENT_TIERS.entries()) {
+	for (const [i, t] of placementTiers().entries()) {
 		if (i < from) {
 			tiers.push({ id: t.id, level: t.level, title: t.title, reps: 0, correct: 0, passed: true, held: true });
 			continue;
@@ -614,15 +637,15 @@ export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: n
 		if (tiers[i]!.passed) lastPassed = i;
 		else break;
 	}
-	const startChapter = lastPassed >= 0 ? (CHAPTERS[CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[lastPassed]!.chapters.at(-1)) + 1]?.id ?? CHAPTERS.at(-1)!.id) : CHAPTERS[0]!.id;
-	const level: Cefr = STAGES.find((st) => st.id === CHAPTERS.find((c) => c.id === startChapter)!.stage)!.level;
+	const startChapter = lastPassed >= 0 ? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]?.id ?? allChapters().at(-1)!.id) : allChapters()[0]!.id;
+	const level: Cefr = STAGES.find((st) => st.id === allChapters().find((c) => c.id === startChapter)!.stage)!.level;
 	const testedOut = Object.entries(units)
 		.filter(([, e]) => e.reps >= REPS_PER_UNIT && e.correct === e.reps)
 		.map(([id]) => id as UnitId);
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, from, ceiling: lastPassed === PLACEMENT_TIERS.length - 1, startChapter, units, testedOut, weak };
+	return { level, tiers, from, ceiling: lastPassed === placementTiers().length - 1, startChapter, units, testedOut, weak };
 }
 
 /** Should the staircase climb after this tier's reps? */
@@ -646,7 +669,7 @@ export function tierBorderline(tier: PlacementTier, reps: readonly PlacementRep[
 
 /** The tier a unit belongs to (undefined for a unit no tier probes). */
 export function tierOfUnit(unit: UnitId): PlacementTier | undefined {
-	return PLACEMENT_TIERS.find((t) => t.units.includes(unit));
+	return placementTiers().find((t) => t.units.includes(unit));
 }
 
 // ─── The edge: the Socratic stage ───────────────────────────────────────────
@@ -699,11 +722,11 @@ export const PROBE_TURNS = 6;
 export function probeUnits(outcome: PlacementOutcome): UnitId[] {
 	const out: UnitId[] = [...outcome.weak];
 	const stopped = outcome.tiers.findIndex((t) => !t.passed);
-	const next = stopped < 0 ? PLACEMENT_TIERS[outcome.tiers.length] : undefined;
+	const next = stopped < 0 ? placementTiers()[outcome.tiers.length] : undefined;
 	const after = stopped >= 0 ? undefined : next;
 	for (const u of after?.units ?? []) if (!out.includes(u)) out.push(u);
 	// A failed tier's untested-out units too: the drill asked two reps each.
-	if (stopped >= 0) for (const u of PLACEMENT_TIERS[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
+	if (stopped >= 0) for (const u of placementTiers()[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
 	return out.slice(0, 8);
 }
 
@@ -786,8 +809,28 @@ export function measuredWeak(u: { title: string; reps: number; accuracy: number 
 	return null;
 }
 
+/** Another language the learner studies in this app, and where it stands on its own map. */
+export interface StudiedLanguage {
+	english: string;
+	/** Absent until that language is set up. */
+	working?: Cefr;
+	target?: Cefr;
+	placed?: Cefr;
+}
+
+/** The tutor's line on the other languages studied in this app: they are bridges at the level the app measures, unless "Knows" says more. */
+export function studiedLine(studied: readonly StudiedLanguage[]): string | null {
+	if (studied.length === 0) return null;
+	const parts = studied.map((l) => {
+		if (!l.working) return `${l.english} (just added, not set up yet)`;
+		const placed = l.placed ? `, placed at ${l.placed}` : "";
+		return `${l.english} (working at ${l.working} on its map${placed}, aiming at ${l.target ?? l.working})`;
+	});
+	return `- Also studying in this app: ${parts.join(", ")}. Use these as bridges at those levels unless "Knows" gives a higher one, and never quiz them here.`;
+}
+
 /** The learner as a short profile block for the tutor's system prompt, for learning `target`. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts); `mixups_` the pairs of words they confuse (src/core/mixups.ts). */
-export function learnerProfileText(target: { code: string; english: string }, goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord): string | null {
+export function learnerProfileText(target: { code: string; english: string }, goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord, studied_: readonly StudiedLanguage[] = []): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -807,14 +850,18 @@ export function learnerProfileText(target: { code: string; english: string }, go
 		};
 		const names = [...known.map((l) => `${languageName(l)} (${levelOf(l)})`), ...other];
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line}`);
-		const [first, second] = explanationLanguages(goal);
+		// The language being learned is never an explanation language of its own lessons.
+		const explain = explanationLanguages(goal).filter((l) => l !== target.code);
+		const [first, second] = explain.length ? explain : (["en"] as Lang[]);
 		lines.push(
-			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? ` When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") || target.code === "et" ? "" : " Do not lean on Estonian bridges."}` : ` The learner turned parallels off: do not compare ${target.english} to these languages unless asked; use them only to understand what the learner means.`}`,
+			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? " When a form has a parallel in one of these, show it that way too, not only in English." : ` The learner turned parallels off: do not compare ${target.english} to these languages unless asked; use them only to understand what the learner means.`}`,
 		);
 		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, ${target.english} examples in ${target.english}, English only when asked.`;
 		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
 		lines.push((second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}` : lead) + (first !== "en" ? simple(first!) : ""));
 	}
+	const studied = studiedLine(studied_);
+	if (studied) lines.push(studied);
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
 	if (goal?.placedAt && goal.placedLevel) {
 		const placed = Object.entries(evidence).filter(([, e]) => e?.placed);

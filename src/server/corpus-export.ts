@@ -10,7 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+import { activeProfile, PATHS } from "../../config.ts";
 import type { ChatRecord } from "../core/contracts.ts";
 import { LANGUAGES } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -291,7 +291,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 
 	const summary: CorpusSummary = {
 		exportedAt: now.toISOString(),
-		profile: ACTIVE_PROFILE,
+		profile: activeProfile(),
 		language: activeLanguage().code,
 		counts: {
 			audioClips: audio.length,

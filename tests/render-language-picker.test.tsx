@@ -86,6 +86,28 @@ afterEach(async () => {
 	}
 });
 
+describe("Languages you know: the language being learned is not one you know", () => {
+	it("leaves its row out, but it rides along on every change for the other languages", async () => {
+		const calls: [Lang[], Levels][] = [];
+		const host = await mount(
+			<LanguagePicker value={["en", "ru", "et"]} levels={{ en: "native", ru: "A1", et: "A2" }} exclude="et" onChange={(langs, next) => calls.push([langs, next])} />,
+		);
+		assert.equal(q(host, "level-et"), null, "no row for the language being learned");
+		assert.ok(q(host, "level-ru"), "the other languages keep their rows");
+		await click(q(host, "level-ru-B1"));
+		assert.deepEqual(calls.at(-1), [["en", "ru", "et"], { en: "native", ru: "B1", et: "A2" }]);
+	});
+
+	it("removing another language still keeps the one being learned", async () => {
+		const calls: [Lang[], Levels][] = [];
+		const host = await mount(
+			<LanguagePicker value={["en", "et", "sv"]} levels={{ en: "native", et: "A2", sv: "C1" }} exclude="et" onChange={(langs, next) => calls.push([langs, next])} />,
+		);
+		await click(host.querySelector<HTMLElement>("[aria-label='Remove Swedish']"));
+		assert.deepEqual(calls.at(-1), [["en", "et"], { en: "native", et: "A2" }]);
+	});
+});
+
 describe("Languages you know: a language you add has no level until you press one", () => {
 	it("shows no level pressed and asks for one", async () => {
 		const host = await mount(<Stateful initial={["et"]} initialLevels={{ et: "native" }} />);

@@ -17,13 +17,13 @@
 
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 import fs from "node:fs";
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { learnerProfileSegment } from "../agent/learner-profile.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
-import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
+import { allChapters, curriculumState } from "../core/curriculum.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
@@ -53,7 +53,7 @@ import {
 	type TutorReply,
 } from "../core/speak.ts";
 import { appendLessonLog, ensureReadmes } from "../store/corpus.ts";
-import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
+import { defaultGoal, progressStore } from "../store/progress.ts";
 import { speakStore } from "../store/speak.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
@@ -112,7 +112,7 @@ function sceneBrief(scene: SpeakScene, s: SpeakSession): string {
 	return [
 		`The scene: you are ${scene.brief}.`,
 		`The learner's task: ${scene.task}`,
-		`Level: ${s.level}. Chapter on the map: ${CHAPTERS.find((c) => c.id === s.chapter)?.title ?? s.chapter}.`,
+		`Level: ${s.level}. Chapter on the map: ${allChapters().find((c) => c.id === s.chapter)?.title ?? s.chapter}.`,
 		profile ? `\n${profile}` : "",
 	]
 		.filter(Boolean)
@@ -275,7 +275,7 @@ export interface SpeakState {
 
 export function speakState(): SpeakState {
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const chapterScene = state.chapters.find((c) => c.id === state.current)?.units.find((u) => u.kind === "goal")?.scene;
 	const wanted = [...new Set([chapterScene, ...purposeScenes(goal.purposes ?? [])].filter((s): s is string => !!s))];
@@ -320,7 +320,7 @@ export function speakStart(sceneId: string, opts: SpeakOptions = {}): Promise<Sp
 		if (!scene) throw new Error(`unknown scene ${sceneId}`);
 		const now = opts.now ?? new Date();
 		const p = progressStore.read();
-		const goal = p.goal ?? DEFAULT_GOAL;
+		const goal = p.goal ?? defaultGoal();
 		const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 		const { engine, model } = resolveEngine(opts);
 		const s: SpeakSession = {

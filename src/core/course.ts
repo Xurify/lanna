@@ -83,17 +83,28 @@ export interface Course {
 	chapters: CourseChapter[];
 }
 
-// The running language's course, chosen once per process before the core
-// modules load: config.ts sets it on the server from course.json, the root
-// layout in the browser (app/layout.tsx). Null runs the Slovak course.
-// The key is spelled out in config.ts too, which may not import the core.
+// The running language's course: config.ts sets it on the server from
+// course.json and changes it on a switch, the root layout sets it in the
+// browser (app/layout.tsx), which reloads on a switch. Null runs the Slovak
+// course. The key is spelled out in config.ts too, which may not import the core.
 const ACTIVE_KEY = "__lhCourse";
 
 export function activeCourse(): Course | null {
 	return ((globalThis as Record<string, unknown>)[ACTIVE_KEY] as Course | undefined) ?? null;
 }
 
-/** Tests and the browser bootstrap only: the core reads it at load. */
+/** A table built from the running course, rebuilt only when the course
+ *  changes (a language switch). */
+export function perCourse<T>(build: (course: Course | null) => T): () => T {
+	let memo: { course: Course | null; value: T } | null = null;
+	return () => {
+		const course = activeCourse();
+		if (!memo || memo.course !== course) memo = { course, value: build(course) };
+		return memo.value;
+	};
+}
+
+/** Tests and the browser bootstrap only. */
 export function setActiveCourse(course: Course | null): void {
 	(globalThis as Record<string, unknown>)[ACTIVE_KEY] = course ?? undefined;
 }

@@ -179,7 +179,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						<Link href="/read" className={PRIMARY}>
 							Read today&apos;s episode
 						</Link>
-						<Link href="/fluency?mode=fast" className={SECONDARY}>
+						<Link href="/speed?mode=fast" className={SECONDARY}>
 							Say it faster instead
 						</Link>
 						<Link href="/" className={SECONDARY}>

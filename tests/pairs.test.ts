@@ -8,8 +8,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
 import { chapterArc } from "../src/core/arc.ts";
-import { CHAPTERS, curriculumUnit } from "../src/core/curriculum.ts";
-import { buildPairsLesson, PAIR_UNIT_IDS, UNITS, unitInfo, type UnitId } from "../src/core/lesson.ts";
+import { allChapters, curriculumUnit } from "../src/core/curriculum.ts";
+import { buildPairsLesson, PAIR_UNIT_IDS, allUnits, unitInfo, type UnitId } from "../src/core/lesson.ts";
 import { MIN_PAIR_SENTENCES, PAIRS, pairSentences, pairsWithSentences } from "../src/core/pairs.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
@@ -26,7 +26,7 @@ test("the pairs file: 12 to 20 pairs, both forms in the lexicon, a real chapter,
 		assert.ok(lemmas.has(p.a), `${p.id}: "${p.a}" is not a lexicon entry`);
 		assert.ok(lemmas.has(p.b), `${p.id}: "${p.b}" is not a lexicon entry`);
 		assert.notEqual(p.a, p.b, p.id);
-		assert.ok(CHAPTERS.some((c) => c.id === p.chapter), `${p.id}: "${p.chapter}" is not a chapter`);
+		assert.ok(allChapters().some((c) => c.id === p.chapter), `${p.id}: "${p.chapter}" is not a chapter`);
 		assert.ok(p.rule.length > 10 && !p.rule.includes("\n"), `${p.id}: the rule is one English line`);
 		assert.ok(p.bridge.length > 10 && !p.bridge.includes("\n"), `${p.id}: the bridge is one Estonian line`);
 	}
@@ -36,7 +36,7 @@ test("the registry has one pairs unit per chapter that teaches a pair, of the pa
 	const chapters = [...new Set(PAIRS.map((p) => p.chapter))];
 	assert.deepEqual([...PAIR_UNIT_IDS], chapters.map((c) => `pairs-${c}`), "PAIR_UNIT_IDS and the file agree");
 	for (const id of PAIR_UNIT_IDS) {
-		const info = UNITS.find((u) => u.id === id)!;
+		const info = allUnits().find((u) => u.id === id)!;
 		assert.equal(info.kind, "pairs", id);
 		assert.ok(curriculumUnit(id), `${id} is not on the map`);
 	}
@@ -67,7 +67,7 @@ test("a pair with fewer than three verified sentences is dropped", () => {
 test("each chapter's pairs unit sits right after its forms unit and fills the arc's pairs step", () => {
 	for (const id of PAIR_UNIT_IDS) {
 		const chapterId = id.slice("pairs-".length);
-		const ch = CHAPTERS.find((c) => c.id === chapterId)!;
+		const ch = allChapters().find((c) => c.id === chapterId)!;
 		const idx = ch.units.indexOf(id);
 		assert.ok(idx > 0, `${id} is on the chapter's list`);
 		const forms = ch.units.map((u) => curriculumUnit(u)!).find((u) => u.kind === "drill" && !u.id.startsWith("lx-") && !u.id.startsWith("pairs-"));

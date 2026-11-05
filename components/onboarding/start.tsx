@@ -33,7 +33,7 @@ import { startTutorChat } from "@/components/lesson/tutor";
 import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
-import { CEFR_ORDER, CHAPTERS, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, priorsFor, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
+import { CEFR_ORDER, allChapters, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, priorsFor, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -220,6 +220,8 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Add a model key in Settings first."));
 	};
 
+	const withoutTarget = (langs: readonly Lang[]) => langs.filter((l) => l !== target.code);
+
 	const progress = step === 4 && outcome ? 4 : step;
 
 	return (
@@ -320,14 +322,14 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								exclude={target.code}
 								value={d.languages}
 								levels={d.languageLevels}
-								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(x.explainIn, languages) }))}
+								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(withoutTarget(x.explainIn), languages) }))}
 							/>
 							<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="parallels-line">
 								{parallelsLine({ languages: d.languages, languageLevels: d.languageLevels }, target)}
 							</p>
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
-							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
+							<PickSome items={explainChoices(withoutTarget(d.languages))} value={withoutTarget(d.explainIn)} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
 							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
 						</Field>
 						<Field label={`${target.english} so far`}>
@@ -517,8 +519,8 @@ export interface CheckResult extends PlacementOutcome {
 const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft text-go", slip: "bg-warn-soft text-warn", gap: "bg-miss-soft text-miss" };
 
 function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edit: boolean; onDeeper: () => void; /** The language's English name. */ target: string }) {
-	const chapter = CHAPTERS.find((c) => c.id === outcome.startChapter);
-	const skipped = useMemo(() => CHAPTERS.slice(0, Math.max(0, CHAPTERS.findIndex((c) => c.id === outcome.startChapter))).length, [outcome.startChapter]);
+	const chapter = allChapters().find((c) => c.id === outcome.startChapter);
+	const skipped = useMemo(() => allChapters().slice(0, Math.max(0, allChapters().findIndex((c) => c.id === outcome.startChapter))).length, [outcome.startChapter]);
 	const title = (id: UnitId) => unitInfo(id).title;
 	const missed = outcome.missed;
 	return (

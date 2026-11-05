@@ -30,7 +30,7 @@ const { reviewStore } = await import("../src/store/review.ts");
 const { progressSummary } = await import("../src/server/lesson.ts");
 const { usageReport } = await import("../src/server/usage-report.ts");
 const { exportCorpus } = await import("../src/server/corpus-export.ts");
-const { CHAPTERS } = await import("../src/core/curriculum.ts");
+const { allChapters } = await import("../src/core/curriculum.ts");
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -369,8 +369,8 @@ describe("the story bible (curriculum/slovak/world.json)", () => {
 		assert.ok(bible.cast.every((c) => ["child", "young", "adult", "old"].includes(c.age)));
 		assert.equal(bible.places.length, 6);
 		assert.ok(bible.places.every((p) => p.id && p.name && p.note), "each place named with its note");
-		assert.deepEqual(Object.keys(bible.beats).sort(), CHAPTERS.map((c) => c.id).sort(), "one beat per chapter, keyed exactly by the chapters' ids");
-		assert.equal(Object.keys(bible.beats).length, CHAPTERS.length, "no extra or missing beats");
+		assert.deepEqual(Object.keys(bible.beats).sort(), allChapters().map((c) => c.id).sort(), "one beat per chapter, keyed exactly by the chapters' ids");
+		assert.equal(Object.keys(bible.beats).length, allChapters().length, "no extra or missing beats");
 		for (const beat of Object.values(bible.beats)) assert.match(beat.trim(), /\.$/, "each beat is one closed sentence");
 	});
 

@@ -15,7 +15,7 @@ import { scriptFor } from "../src/core/speak-script.ts";
 
 describe("multi-language architecture", () => {
 	it("registers active language profiles in config and core", () => {
-		const expected = ["russian", "slovak"];
+		const expected = ["slovak"];
 		assert.deepEqual([...LANGUAGE_PROFILES].sort(), expected);
 		assert.deepEqual([...LANGUAGE_IDS].sort(), expected);
 		for (const id of LANGUAGE_PROFILES) {
@@ -115,7 +115,7 @@ describe("multi-language architecture", () => {
 	});
 
 	it("gracefully falls back when curriculum assets are not present", () => {
-		// Russian has no lexicon yet
+		// A language that is not added has no lexicon
 		assert.equal(loadLexicon("russian"), null);
 		assert.deepEqual(lookupWord("привет", "russian"), { query: "привет", match: "none", entries: [] });
 

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveLanguage } from "@/components/speech";
-import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem, LESSON_LANGUAGE } from "@/src/core";
+import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem, lessonLanguage } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 const INPUT = "w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-xl text-foreground caret-go outline-none focus:border-go";
@@ -137,7 +137,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 	const share = Math.min(1, progress.asked / Math.max(10, Math.min(progress.max, 14)));
 
 	return (
-		<div data-testid="placement-ladder">
+		<div data-testid="placement-ladder" className="@container">
 			<div className="flex items-center justify-between gap-4">
 				<p className="font-ui text-sm font-semibold text-muted-foreground">
 					{progress.tier && <span className="rounded-md bg-accent px-2 py-0.5 text-foreground">{progress.tier.level}</span>} {progress.tier?.title}
@@ -164,7 +164,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				data-word-lookup-enabled={result !== null ? "true" : "false"}
 			>
 				<h2 className="font-prose text-2xl font-semibold text-foreground">{words ? "Type the word" : "Type the missing word"}</h2>
-				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang={LESSON_LANGUAGE}>
+				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang={lessonLanguage()}>
 					<span>{item.before}</span>
 					{result ? (
 						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}</span>
@@ -196,8 +196,8 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				</p>
 				{!result && (
 					<div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-						<DiacriticBar variant="keys" />
-						<button type="submit" disabled={!given.trim() || checking} className={PRIMARY} data-testid="placement-check">
+						<DiacriticBar variant="keys" className="basis-full sm:flex-1" />
+						<button type="submit" disabled={!given.trim() || checking} className={cn(PRIMARY, "ms-auto")} data-testid="placement-check">
 							{checking ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 							{checking ? (start.judges ? "Judging…" : "Checking…") : "Check"}
 						</button>
@@ -207,7 +207,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 
 			{result && result.judged?.accepted && (
 				<p className="lh-rise mt-6 font-prose text-base text-muted-foreground" role="status" aria-live="polite" data-testid="placement-accepted">
-					Also right: the dictionary had <b lang={LESSON_LANGUAGE}>{item.answer}</b>, and the tutor accepts <b lang={LESSON_LANGUAGE}>{result.given}</b>{result.judged.note ? ` (${result.judged.note})` : ""}.
+					Also right: the dictionary had <b lang={lessonLanguage()}>{item.answer}</b>, and the tutor accepts <b lang={lessonLanguage()}>{result.given}</b>{result.judged.note ? ` (${result.judged.note})` : ""}.
 				</p>
 			)}
 			{result && result.verdict === "wrong" && (
@@ -217,11 +217,11 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 						return (
 							<>
 								<p className="font-prose text-base text-foreground">
-									The form here is <b lang={LESSON_LANGUAGE}>{v.form}</b>
+									The form here is <b lang={lessonLanguage()}>{v.form}</b>
 									{item.trigger && (
 										<>
 											{" "}
-											— decided by <span lang={LESSON_LANGUAGE} className="font-semibold">{item.trigger}</span>
+											— decided by <span lang={lessonLanguage()} className="font-semibold">{item.trigger}</span>
 										</>
 									)}
 									.{v.reason ? ` ${v.reason}` : ""}
@@ -349,7 +349,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 					data-word-lookup-enabled="false"
 				>
 					<h2 className="font-prose text-2xl font-semibold text-foreground">{ask.prompt || (ask.kind === "why" ? "What decided that?" : "Give the form")}</h2>
-					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang={LESSON_LANGUAGE}>
+					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang={lessonLanguage()}>
 						{ask.sk}
 					</p>
 					<input ref={inputRef} value={answer} onChange={(e) => setAnswer(e.target.value)} aria-label="Your answer" data-testid="edge-input" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} disabled={busy} className={cn(INPUT, "mt-5")} lang={ask.kind === "why" ? undefined : "sk"} />
@@ -437,7 +437,7 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 							<li key={w.id}>
 								<button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(w.id)} data-testid="word-chip" className={cn("flex w-full items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left font-prose text-lg transition-colors", on ? "border-go bg-go-soft text-foreground" : "border-border bg-card text-foreground hover:border-foreground/40")}>
 									<span className={cn("flex size-5 shrink-0 items-center justify-center rounded-md border", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3.5" strokeWidth={3} />}</span>
-									<span lang={LESSON_LANGUAGE}>{w.word}</span>
+									<span lang={lessonLanguage()}>{w.word}</span>
 								</button>
 							</li>
 						);

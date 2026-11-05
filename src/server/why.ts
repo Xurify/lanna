@@ -8,7 +8,7 @@
  * a Talk or Story (cheap slot) and records it in the index.
  */
 
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { LANGUAGES } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { chatStore } from "../store/chats.ts";

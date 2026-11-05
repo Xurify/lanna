@@ -18,7 +18,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-exam-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { CHAPTERS } = await import("../src/core/curriculum.ts");
+const { allChapters } = await import("../src/core/curriculum.ts");
 const { unitInfo } = await import("../src/core/lesson.ts");
 const { EXAM_LENGTH, EXAM_PASS_MARK, bestAttempt, chapterHasExam, examItems, examLine, examSummaries, scoreExam } = await import("../src/core/exam.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
@@ -38,7 +38,7 @@ const NO_EXAM = new Set(["media"]);
 
 describe("the draw", () => {
 	it("gives every chapter with word or drill units eight choose items, answers among the options, no item twice", () => {
-		for (const ch of CHAPTERS) {
+		for (const ch of allChapters()) {
 			const draw = examItems(ch.id, 42, entries);
 			assert.ok(draw, `${ch.id}: no draw`);
 			if (NO_EXAM.has(ch.id)) {
@@ -151,7 +151,7 @@ describe("the path's exam row", () => {
 	const t = (at: string, score: number) => ({ at, score, total: EXAM_LENGTH, passed: score / EXAM_LENGTH >= EXAM_PASS_MARK });
 
 	it("a chapter has an exam when its arc gives it words or a form drill: every chapter but media", () => {
-		for (const ch of CHAPTERS) assert.equal(chapterHasExam(ch.id), ch.id !== "media", `${ch.id}`);
+		for (const ch of allChapters()) assert.equal(chapterHasExam(ch.id), ch.id !== "media", `${ch.id}`);
 		assert.equal(chapterHasExam("nope"), false, "an unknown chapter has no exam");
 	});
 
@@ -160,7 +160,7 @@ describe("the path's exam row", () => {
 		assert.deepEqual(summaries["cafe"], { attempts: 2, best: { at: "2026-10-30T11:00:00Z", score: 7, total: EXAM_LENGTH, passed: true } });
 		assert.deepEqual(summaries["town"], { attempts: 0, best: null }, "a chapter with no attempt is listed, not taken yet");
 		assert.equal(summaries["media"], undefined);
-		assert.equal(Object.keys(summaries).length, CHAPTERS.filter((c) => c.id !== "media").length);
+		assert.equal(Object.keys(summaries).length, allChapters().filter((c) => c.id !== "media").length);
 	});
 
 	it("examLine says where the exam stands, with the pass mark", () => {

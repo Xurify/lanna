@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, curriculumFile } from "../../config.ts";
+import { activeProfile, curriculumFile } from "../../config.ts";
 
 export interface WorldPerson {
 	id: string;
@@ -41,18 +41,18 @@ export interface World {
 	scenes?: Partial<Record<string, { title?: string; blurb?: string; brief?: string; task?: string }>>;
 	cast: WorldPerson[];
 	places: WorldPlace[];
-	/** One English sentence per chapter id (src/core/curriculum.ts CHAPTERS). */
+	/** One English sentence per chapter id (src/core/curriculum.ts allChapters()). */
 	beats: Record<string, string>;
 }
 
 const cache = new Map<string, World | null>();
 
-export function worldPath(profile: string = ACTIVE_PROFILE): string {
+export function worldPath(profile: string = activeProfile()): string {
 	return curriculumFile(profile, "world.json");
 }
 
 /** The active profile's story bible, or null when the language has none. */
-export function loadWorld(profile: string = ACTIVE_PROFILE): World | null {
+export function loadWorld(profile: string = activeProfile()): World | null {
 	if (cache.has(profile)) return cache.get(profile)!;
 	let world: World | null = null;
 	try {

@@ -9,7 +9,7 @@
  */
 
 import { BRIDGE_LANGS, languageName, type BridgeLang } from "./onboarding.ts";
-import { UNITS, type UnitId } from "./lesson.ts";
+import { allUnits, type UnitId } from "./lesson.ts";
 
 type Lines = Partial<Record<Exclude<BridgeLang, "et">, string>>;
 
@@ -127,7 +127,7 @@ export interface UnitBridge {
  *  (the learner's own: strongest first). Empty for a words unit or a
  *  learner with none. */
 export function unitBridges(unit: UnitId, langs: readonly BridgeLang[]): UnitBridge[] {
-	const info = UNITS.find((u) => u.id === unit);
+	const info = allUnits().find((u) => u.id === unit);
 	if (!info) return [];
 	const out: UnitBridge[] = [];
 	for (const lang of new Set(langs)) {
@@ -140,5 +140,5 @@ export function unitBridges(unit: UnitId, langs: readonly BridgeLang[]): UnitBri
 
 /** The units that carry a line in a language (for the tests). */
 export function unitsBridgedIn(lang: BridgeLang): UnitId[] {
-	return UNITS.filter((u) => (lang === "et" ? !!u.bridge : !!MORE[u.id]?.[lang])).map((u) => u.id);
+	return allUnits().filter((u) => (lang === "et" ? !!u.bridge : !!MORE[u.id]?.[lang])).map((u) => u.id);
 }

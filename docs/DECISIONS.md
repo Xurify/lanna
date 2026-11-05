@@ -401,7 +401,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 ### E34. One name per page: route, nav label and page title (2026-11-03, branch `feat/quiet-tool-redesign`)
 
 - A page has one name, and the route, the sidebar label and the page title all say it. The table is `lib/nav.ts`; the sidebar, the jump palette and the document titles read it, and `tests/nav.test.ts` fails when a page under `app/` is missing from it or a label and a title differ.
-- The names: Today, Curriculum, Review; Practice: Read, Listen, Watch, Speak, Fluency; Understand: Words, Grammar, Map; Track: Progress, Milestones, Mistakes, Log. Lesson, Exam, the Tutor chats and Set up are reached from inside other pages and keep their own one-word titles. The Curriculum page's second view is called Mountain; "Your climb to B2" is its subtitle, not its name.
+- The names: Today, Curriculum, Review; Practice: Read, Listen, Watch, Speak, Fluency (now Speed, E48); Understand: Words, Grammar, Map; Track: Progress, Milestones, Mistakes, Log. Lesson, Exam, the Tutor chats and Set up are reached from inside other pages and keep their own one-word titles. The Curriculum page's second view is called Mountain; "Your climb to B2" is its subtitle, not its name.
 - The Progress page was `/plan`; `/plan` redirects to `/progress`. A subtitle may carry the old, longer name ("When can I…?" under Milestones).
 
 ### E35. One motion system: a timing scale, transform-only, press that shrinks (2026-11-03, branch `feat/motion-pass`)
@@ -531,9 +531,51 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The course is data (`<data>/languages/<id>/course.json`, shape in `src/core/course.ts`): grammar units, word themes, tutor sessions, goals and chapters. The Strong slot writes it (the Cheap one stands in), one call for the course and one for the story bible, both counted in Spending. Slovak's course stays hand-written in code.
 - A grammar unit selects Tatoeba sentences by the Wiktionary tags on the blanked form, plus optional trigger words before the blank. A dictionary form never counts as a case form; without a trigger the form must be unambiguous. Sentences are never written by a model (E27).
 - Everything the model writes is checked against the dictionary before it is kept, and a unit with fewer than 12 sentences is dropped. A course with fewer than three chapters or three grammar units is refused.
-- The running language's course is chosen once per process, before the core loads: `config.ts` on the server, a before-interactive script in the browser. The core builds its tables from it at load, so a switch needs the restart it already had.
+- The running language's course is set by `config.ts` on the server and by a before-interactive script in the browser. Superseded by E45: the server changes it in place on a switch, and the browser reloads.
 - Slovak-only content (the grammar atlas, Dvojičky, aspect tasks, the unit bridges and parallels) does not appear in a generated course.
 - Who builds it is chosen in the add dialog, once per language, not in Settings: the Strong or Cheap model, priced per model and thinking level from earlier runs and capped per call; or the dictionary alone, free (`src/core/course-procedural.ts`).
+
+### E45. A language switch happens in place, with no restart (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** the owner studies Russian, Slovak and Estonian every day and found the restart on every switch in the way; it also made a plan across languages impossible.
+
+**How to apply:**
+- The running language is process state on `globalThis`, per data folder (`config.ts`: `activeProfile()`, `switchProfile()`, `withProfile()`), because `next dev` evaluates a module once per route. Nothing may copy it at module load: read `activeProfile()` and `PATHS.*` (getters) when they are used, and give a module-level cache the file it was read from as part of its key.
+- The core's course tables are functions memoized per course object (`perCourse` in `src/core/course.ts`): `allUnits()`, `allChapters()`, `curriculumUnits()`, `placementTiers()`, `placementLadder()`, `lessonLanguage()`, `lessonsHaveBridges()`. Do not add a module-level constant built from the course.
+- `withProfile(id, fn)` reads another language's records for the daily plan across languages. `fn` must be synchronous, so no other request runs while the language is borrowed.
+- A switch waits (409 with the reason) while a tutor turn, a skill-map update or a video preparation is running, since each writes into the running language's folder when it ends. The browser then loads the page again (`window.location.assign`), on the same page when it means the same thing in every language, else on Today. There is no confirm step and no relaunch; the Electron relaunch and the desktop:dev restart that existed only for switching are gone.
+- Open: a model call started by a page (a Read episode, a Speak line) that is still in flight during a switch writes into the new language's folder. Nothing waits for those yet.
+
+### E46. One plan for the day across languages; the split is each language's own minutes (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** the owner learns Russian, Slovak and Estonian at once, with no fixed limit on the day: "a unified daily plan is literally my dream". They think in minutes for the day and a share per language.
+
+**How to apply:**
+- Today's plan, with more than one language, is each language's own daily plan (the same `dailyPlan` Today shows when it runs), read with `withProfile` (E45) by `languageDay()` in `src/server/day-plan.ts`. Languages are ordered by their minutes a day, largest first; the next step is the first undone one in that order. One list, as E33 asks: a language is a heading over its rows, not a card of its own.
+- The split of the day is not stored apart. A language's share is its `goal.minutesPerDay`, so the plan's budget, the pace, the hours sheet and the milestones all read one number. **Split the day** turns the day's minutes and whole-percent shares into those minutes (`minutesFromShares`, at least 5 a language) and saves them (`PUT /api/day`).
+- A step in another language switches (E45) and lands on the step's page; a tutor step, which has no page, lands on Today. A language not set up has one step, its setup.
+- The rail, the score, the weak spots and the week stay the running language's.
+
+### E47. What the learner knows is kept once; bridges come from the learner's own languages (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** the bridges were written for one learner. The Slovak tutor was told "He knows Estonian" and leaned on Estonian cases for everyone, the probe asked every language's learner about Estonian, and three Slovak tutor briefs carried Estonian lines. The owner is learning Estonian (A2), not native in it, and with three languages they would have entered the languages they know three times, with levels that went stale.
+
+**How to apply:**
+- The learner's fields of the goal (`LEARNER_FIELDS` in `src/core/onboarding.ts`: the languages known with levels, the explanation languages, the parallels switch) live once in `<data>/learner.json` (`src/store/learner.ts`). The progress store lays them over every language's goal on read and takes them out on write; a goal made fresh for a new language never wipes them. Before the file exists, the first goal that has them hands them over. A new language's setup starts from them (`defaultGoal()`).
+- A language's own pickers leave it out, so a list saved there keeps the running language and its level if the shared list had it (Slovak listed in a Russian setup stays when the Slovak profile saves). Its rows and its "Explain to me in" choices leave it out too, so a language is never asked to know itself.
+- Prompts never assume a language. The Slovak doctrine names Estonian and Slavic parallels only "when it is listed" in "This learner"; the probe asks about "a language they know"; tutor briefs carry no bridge line.
+- "This learner" also says which other languages are studied in the app and where each works on its own map ("Also studying in this app: Slovak (working at A1 on its map, aiming at B1)"), read by borrowing them (E45). The level the learner gave stays theirs; the measured one is said apart, never overwrites it. A language is never its own explanation language.
+- The hand-written bridge lines in the Slovak lessons (Estonian, Finnish, Russian, German) stay: they are chosen by the learner's languages already.
+
+### E48. Fluency is called Speed, at `/speed`; the B2 stage is Argument; no redirect (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** "Fluency" is Paul Nation's name for the fourth strand, and the practice page took the word from the research note. A learner hears it as speaking smoothly, but the drill is speed on sentences they already know. The same strand was already called Speed in the strand bars, the stamps and the log, and the B2 stage on the map was also called Fluency.
+
+**How to apply:**
+- The practice page is Speed in the sidebar, the page title, the jump palette, the plan's strand labels and the week chart. Its route is `/speed`. `/fluency` no longer opens: the owner chose no redirect. E34 still holds: route, label and title say the same name.
+- The two exercises keep their names, "Say it faster" and "Read it faster".
+- The B2 stage (`src/core/curriculum.ts`) is Argument. Its blurb is unchanged.
+- Internal names stay: the `fluency` strand id, `data/profiles/<lang>/fluency/`, `src/server/fluency.ts` and `/api/fluency`. Renaming them would move learner data for no visible gain.
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
@@ -554,6 +596,6 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
-- **Russian profile.** Prompts and a profile exist; no lexicon, seed or review deck. Not started.
+- **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.

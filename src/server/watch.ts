@@ -20,7 +20,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";

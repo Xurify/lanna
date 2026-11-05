@@ -51,13 +51,14 @@ export { sessionCost } from "./pricing.ts";
 // LangHarness: language profiles + curriculum seeding, speech synthesis,
 // spaced review, and the lexicon lookup the review page and tutor share.
 export * from "./language.ts";
-export { addBlocker, addEstimate, addEstimates, type AddEstimate, type CourseWriter, type WriterSlot, languageCatalog, languageReady, languageRemovable, removeLanguage, restoreLanguage, startLanguageAdd, type CatalogRow } from "./language-add.ts";
+export { addBlocker, addEstimate, addEstimates, type AddEstimate, type CourseWriter, type WriterSlot, languageCatalog, languageRemovable, removeLanguage, restoreLanguage, startLanguageAdd, type CatalogRow } from "./language-add.ts";
 export { activeLanguage, profileLanguage } from "./active-language.ts";
 export * from "./reset.ts";
 export * from "./storage.ts";
 export * from "./tts.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+export { languageDay, setLanguageMinutes } from "./day-plan.ts";
 export * from "./stamps.ts";
 export * from "./mixups.ts";
 export * from "./ai-status.ts";

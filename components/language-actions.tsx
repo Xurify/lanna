@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { AddLanguageDialog } from "@/components/add-language-dialog";
-import { switchLanguage } from "@/components/switch-language";
+import { landingAfterSwitch, switchLanguage } from "@/components/switch-language";
 
 export interface ProfileEntry {
 	id: string;
@@ -20,8 +20,6 @@ export interface ProfileEntry {
 	english: string;
 	lexicon: boolean;
 	seed: boolean;
-	/** Its words and course are complete. */
-	ready?: boolean;
 	removable?: boolean;
 }
 
@@ -31,54 +29,29 @@ export interface ProfileInfo {
 }
 
 export function useLanguageActions({ profile, onChanged }: { profile: ProfileInfo | null; onChanged: (next?: ProfileInfo) => void }) {
-	const [pending, setPending] = useState<ProfileEntry | null>(null);
 	const [removing, setRemoving] = useState<ProfileEntry | null>(null);
 	// The language the Add dialog opens on, or true for none.
 	const [adding, setAdding] = useState<string | boolean>(false);
 	const [note, setNote] = useState<string | null>(null);
+	const [switching, setSwitching] = useState<string | null>(null);
 
-	/** Pick a language: switching restarts the app, so it asks first. One
-	 *  without its course opens Add a language on it instead, since running
-	 *  it would show another language's lessons. */
-	const choose = (id: string) => {
-		if (!profile || id === profile.active) return;
-		setNote(null);
+	/** Pick a language: it runs at once and the page loads again in it. */
+	const choose = async (id: string) => {
+		if (!profile || id === profile.active || switching) return;
 		const entry = profile.profiles.find((p) => p.id === id);
 		if (!entry) return;
-		if (entry.ready === false) setAdding(entry.id);
-		else setPending(entry);
-	};
-
-	const confirmSwitch = async () => {
-		if (!pending) return;
-		const { id, english } = pending;
-		setPending(null);
+		setNote(null);
+		setSwitching(id);
 		try {
-			const { restartNote } = await switchLanguage(id, english);
-			setNote(restartNote);
+			await switchLanguage(id, entry.english, landingAfterSwitch(window.location.pathname));
 		} catch (err) {
-			setNote(err instanceof Error ? err.message : `Could not switch to ${english}.`);
+			setNote(err instanceof Error ? err.message : `Could not switch to ${entry.english}.`);
+			setSwitching(null);
 		}
-		onChanged();
 	};
 
 	const dialogs = (
 		<>
-			{pending && profile && (
-				<ConfirmDialog
-					testid="profile-confirm"
-					confirmTestid="profile-confirm-switch"
-					title={`Switch to ${pending.english}?`}
-					flag={pending.id}
-					lead={`LangHarness restarts in ${pending.english}.`}
-					body={
-						<>Your {profile.profiles.find((p) => p.id === profile.active)?.english ?? "current"} progress stays as it is.</>
-					}
-					confirm="Switch and restart"
-					onConfirm={() => void confirmSwitch()}
-					onCancel={() => setPending(null)}
-				/>
-			)}
 			{removing && (
 				<RemoveDialog
 					entry={removing}
@@ -103,7 +76,9 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 	);
 
 	return {
-		choose,
+		choose: (id: string) => void choose(id),
+		/** The language being switched to while the page reloads. */
+		switching,
 		askRemove: (entry: ProfileEntry) => {
 			setNote(null);
 			setRemoving(entry);

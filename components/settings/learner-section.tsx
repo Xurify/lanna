@@ -153,7 +153,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	return (
 		<div className="lh-rise flex flex-col gap-2">
 			{profile && profile.profiles.length > 0 && (
-				<SettingsGroup label="Target language" hint="The language you are studying. Switching restarts LangHarness; your progress in each language stays." testid="learner-target-language">
+				<SettingsGroup label="Target language" hint="The languages you are studying. Each keeps its own progress." testid="learner-target-language">
 					<ul className="flex flex-col divide-y divide-border/60 rounded-lg bg-well" aria-label="Your languages">
 						{profile.profiles.map((p) => {
 							const running = p.id === profile.active;
@@ -163,15 +163,11 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 									<span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
 										<span className="font-ui text-sm font-semibold text-foreground">{p.endonym}</span>
 										<span className="text-xs text-muted-foreground">{p.english}</span>
-										{running ? (
-											<span className="text-xs font-medium text-teal">Studying now</span>
-										) : p.ready === false ? (
-											<span className="text-xs text-muted-foreground">Needs its course</span>
-										) : null}
+										{running && <span className="text-xs font-medium text-teal">Studying now</span>}
 									</span>
 									{!running && (
-										<button type="button" onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-switch-${p.id}`}>
-											{p.ready === false ? "Finish" : "Switch"}
+										<button type="button" disabled={languages.switching !== null} onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-switch-${p.id}`}>
+											{languages.switching === p.id ? "Switching…" : "Switch"}
 										</button>
 									)}
 									{p.removable ? (

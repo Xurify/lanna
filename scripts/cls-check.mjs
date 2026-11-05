@@ -31,7 +31,7 @@ const executablePath =
 if (!existsSync(executablePath)) throw new Error(`no browser at ${executablePath}; pass --browser`);
 const puppeteer = createRequire(`${pptrDir.replace(/[\\/]$/, "")}/`)("puppeteer-core");
 
-const ROUTES = (arg("routes", "") || "/,/review,/listen,/read,/speak,/watch,/fluency?mode=fast,/mistakes,/grammar,/curriculum,/milestones,/progress,/words,/map,/chat/new,/log,/lesson,/start,/nowhere").split(",");
+const ROUTES = (arg("routes", "") || "/,/review,/listen,/read,/speak,/watch,/speed?mode=fast,/mistakes,/grammar,/curriculum,/milestones,/progress,/words,/map,/chat/new,/log,/lesson,/start,/nowhere").split(",");
 const SIZES = flag("quick") ? [[1440, 900]] : [[1440, 900], [390, 844]];
 const THEMES = flag("quick") ? ["day"] : ["day", "night"];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

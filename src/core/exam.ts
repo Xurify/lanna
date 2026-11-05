@@ -15,7 +15,7 @@
  * an empty draw, never a broken page.
  */
 
-import { CHAPTERS } from "./curriculum.ts";
+import { allChapters } from "./curriculum.ts";
 import { chapterArc } from "./arc.ts";
 import { buildItem, buildPairsLesson, candidatesFor, rng, shuffle, unitInfo, type Candidate, type LessonItem, type UnitId } from "./lesson.ts";
 import { foldDiacritics } from "./language.ts";
@@ -44,7 +44,7 @@ const fold = (s: string) => foldDiacritics(s.toLowerCase());
  * empty item list for one with nothing to draw from (media).
  */
 export function examItems(chapterId: string, seed: number, entries: readonly LexiconEntry[]): ExamDraw | undefined {
-	const chapter = CHAPTERS.find((c) => c.id === chapterId);
+	const chapter = allChapters().find((c) => c.id === chapterId);
 	if (!chapter) return undefined;
 	const rand = rng(seed);
 	const arc = chapterArc(chapterId)!;
@@ -141,7 +141,7 @@ export function chapterHasExam(chapterId: string): boolean {
  *  with no attempt still gets an entry (the path says "Not taken yet"). */
 export function examSummaries(exams: Record<string, readonly ExamResult[]>): Record<string, ExamSummary> {
 	const out: Record<string, ExamSummary> = {};
-	for (const ch of CHAPTERS) {
+	for (const ch of allChapters()) {
 		if (!chapterHasExam(ch.id)) continue;
 		const attempts = exams[ch.id] ?? [];
 		const best = bestAttempt(attempts);

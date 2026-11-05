@@ -1,12 +1,12 @@
 /**
  * The chapter arc (LangHarness, 2026-10-30): the seven steps every chapter
  * goes through, in the same order. Phase 1 says which units already provide
- * each step, computed from the map (CHAPTERS and CURRICULUM), so no unit
+ * each step, computed from the map (allChapters() and curriculumUnits()), so no unit
  * list is copied here. A step with no unit is "not yet". Tutor units stay
  * outside the seven steps. Pure and browser-safe.
  */
 
-import { CHAPTERS, curriculumUnit } from "./curriculum.ts";
+import { allChapters, curriculumUnit } from "./curriculum.ts";
 import type { Strand } from "./strands.ts";
 
 export type ArcStepId = "story" | "words" | "forms" | "pairs" | "scene" | "sound" | "exam";
@@ -43,7 +43,7 @@ export interface ChapterArcStep {
  *  opens. Story, sound and exam have no unit yet. Undefined for an unknown
  *  chapter. */
 export function chapterArc(chapterId: string): ChapterArcStep[] | undefined {
-	const chapter = CHAPTERS.find((c) => c.id === chapterId);
+	const chapter = allChapters().find((c) => c.id === chapterId);
 	if (!chapter) return undefined;
 	const units = chapter.units.map((id) => curriculumUnit(id)!);
 	const form = units.find((u) => u.kind === "drill" && !u.id.startsWith("lx-") && !u.id.startsWith("pairs-"));

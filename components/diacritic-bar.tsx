@@ -82,10 +82,10 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 
 	if (variant === "keys") {
 		return (
-			// Two even rows on a narrow card, one row on a wide one: never a lone key on a second row.
+			// Two even rows on a narrow card, one row on a wide one: never a lone key on a second row. A key is never narrower than the h-10 height (2.5rem), even when the bar shares a row with a button.
 			<div
 				data-testid="diacritic-bar"
-				className={cn("grid grid-cols-[repeat(var(--half),minmax(0,1fr))] gap-2 font-prose @xl:grid-cols-[repeat(var(--all),minmax(0,1fr))]", className)}
+				className={cn("grid grid-cols-[repeat(var(--half),minmax(2.5rem,1fr))] gap-2 font-prose @xl:grid-cols-[repeat(var(--all),minmax(2.5rem,1fr))]", className)}
 				style={{ ["--half" as string]: Math.ceil(lang.specialLetters.length / 2), ["--all" as string]: lang.specialLetters.length }}
 				aria-label={`${lang.english} letters`}
 			>

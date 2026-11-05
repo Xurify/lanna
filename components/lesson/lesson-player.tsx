@@ -57,7 +57,7 @@ import {
 	type LessonScore,
 	type RepVerdict,
 	type UnitId,
-	LESSON_LANGUAGE,
+	lessonLanguage,
 } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { shake as shakeEl } from "@/components/motion";
@@ -871,7 +871,7 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 	return (
 		<div className="lh-rise mt-6 rounded-[14px] bg-well px-5 py-4" role="status" aria-live="polite" data-testid="lesson-hint">
 			<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">
-				Not “<span lang={LESSON_LANGUAGE}>{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
+				Not “<span lang={lessonLanguage()}>{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
 			<div className="mt-2 flex flex-col gap-1 font-prose text-[15px] leading-relaxed">
 				{item.pair?.cue ? (
@@ -881,7 +881,7 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 						<span className="font-semibold text-miss">“{miss}”</span> is the dictionary base form.{" "}
 						{item.trigger ? (
 							<>
-								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={LESSON_LANGUAGE}>{item.trigger}</span>: it requires the inflected case form.
+								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>{item.trigger}</span>: it requires the inflected case form.
 							</>
 						) : item.form ? (
 							<>Wanted: <span className="font-semibold">{item.form}</span>.</>
@@ -894,7 +894,7 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 						<span className="font-semibold text-miss">“{miss}”</span> has another ending.{" "}
 						{item.trigger ? (
 							<>
-								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={LESSON_LANGUAGE}>{item.trigger}</span>: it decides the case ending.
+								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>{item.trigger}</span>: it decides the case ending.
 							</>
 						) : item.form ? (
 							<>Wanted: <span className="font-semibold">{item.form}</span>.</>
@@ -905,7 +905,7 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 				) : item.trigger ? (
 					<p className="text-foreground">
 						Look at{" "}
-						<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={LESSON_LANGUAGE}>
+						<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>
 							{item.trigger}
 						</span>
 						: it decides the form.
@@ -1101,7 +1101,7 @@ function ClozeRep({
 			)}
 			<div className="relative">
 				<form id={REP_FORM} onSubmit={(e) => (e.preventDefault(), submit())}>
-					<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang={LESSON_LANGUAGE}>
+					<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang={lessonLanguage()}>
 						{beforeText}
 						{meaning ? (
 							// Input: the form is there to be met, not produced — marked, never blanked.
@@ -1213,14 +1213,14 @@ function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: 
 			{task.kind === "grid" ? (
 				<>
 					<p className="font-prose text-xl leading-snug text-foreground">
-						Which cell does <span className="font-semibold" lang={LESSON_LANGUAGE}>{task.form}</span> belong in?
+						Which cell does <span className="font-semibold" lang={lessonLanguage()}>{task.form}</span> belong in?
 					</p>
 					<TaskGrid task={task} revealed={locked} />
 				</>
 			) : (
 				<>
 					<p className="font-ui text-[14px] text-ink-3">{task.question}</p>
-					<p className="mt-3 font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang={LESSON_LANGUAGE}>
+					<p className="mt-3 font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang={lessonLanguage()}>
 						{item.sentence}
 					</p>
 				</>
@@ -1285,14 +1285,14 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 						>
 							<Volume2Icon className="size-[18px]" strokeWidth={1.6} />
 					</button>
-					<p className="font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground" lang={LESSON_LANGUAGE}>
+					<p className="font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground" lang={lessonLanguage()}>
 							{item.sentence}
 					</p>
 				</div>
 			)}
 			<div className="mt-6 flex min-h-[4.5rem] flex-wrap items-center gap-2 rounded-[10px] bg-well p-3" data-testid="build-answer">
 				{picked.map((bi, k) => (
-					<button key={`${bi}-${k}`} type="button" disabled={locked} onClick={() => setPicked((p) => p.filter((_, j) => j !== k))} className={cn("lh-pop", tile)} lang={LESSON_LANGUAGE}>
+					<button key={`${bi}-${k}`} type="button" disabled={locked} onClick={() => setPicked((p) => p.filter((_, j) => j !== k))} className={cn("lh-pop", tile)} lang={lessonLanguage()}>
 						{bank[bi]}
 					</button>
 				))}
@@ -1310,7 +1310,7 @@ function BuildRep({ item, locked, onGrade, onReady }: { item: LessonItem; locked
 								setPicked((p) => [...p, bi]);
 							}}
 							className={cn(tile, "transition-colors", used ? "bg-well-2 text-transparent shadow-none" : "hover:bg-well")}
-							lang={LESSON_LANGUAGE}
+							lang={lessonLanguage()}
 						>
 							{w}
 						</button>
@@ -1448,7 +1448,7 @@ function FeedbackSheet({
 						<div className="rounded-[10px] bg-card px-3.5 py-2.5 font-prose text-[15px] shadow-[inset_0_0_0_1px_var(--q-teal-line)]" data-testid="variant-accepted">
 						<span className="font-semibold text-teal-2">Also accepted: “{given}”</span>
 							<span className="text-muted-foreground"> · This sentence uses </span>
-							<b className="font-semibold text-foreground" lang={LESSON_LANGUAGE}>{item.answer}</b>.
+							<b className="font-semibold text-foreground" lang={lessonLanguage()}>{item.answer}</b>.
 						</div>
 					)}
 					{verdict === "exact" && item.kind !== "build" && (
@@ -1463,7 +1463,7 @@ function FeedbackSheet({
 								<Volume2Icon className="size-4" strokeWidth={1.6} />
 							</button>
 							<div className="min-w-0">
-								<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={LESSON_LANGUAGE}>
+								<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={lessonLanguage()}>
 									{item.before}
 									<b className={tone.ink}>{item.pair ? (item.form ?? item.answer) : item.answer}</b>
 									{item.after}
@@ -1488,7 +1488,7 @@ function FeedbackSheet({
 							<span className={cn(WHY_LABEL, "mr-2")}>{info.kind === "words" ? "Tip" : "Rule"}</span>
 							{item.trigger && (
 								<>
-									<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={LESSON_LANGUAGE}>
+									<span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>
 										{item.trigger}
 									</span>{" "}
 									decides the form here.{" "}
@@ -1528,7 +1528,7 @@ function FeedbackSheet({
 										<ul className="flex flex-col gap-0.5">
 											{examples.map((ex) => (
 												<li key={ex.id} className="text-muted-foreground">
-													<span className="text-foreground" lang={LESSON_LANGUAGE}>
+													<span className="text-foreground" lang={lessonLanguage()}>
 														{ex.before}
 														<b>{ex.answer}</b>
 														{ex.after}
@@ -1657,7 +1657,7 @@ function EndScreen({
 							<StampDisc state={st} size="sm" pressed />
 							<span className="min-w-0">
 								<span className="block font-ui text-xs font-semibold text-teal-2">New stamp</span>
-								<span className="block font-ui text-sm font-semibold text-foreground" lang={LESSON_LANGUAGE}>
+								<span className="block font-ui text-sm font-semibold text-foreground" lang={lessonLanguage()}>
 									{st.name}
 								</span>
 								<span className="block font-ui text-xs text-ink-3">{st.line}</span>
@@ -1695,7 +1695,7 @@ function EndScreen({
 					<ul className="mt-3 flex flex-col gap-2.5">
 						{missed.slice(0, 5).map((r, i) => (
 							<li key={i} className="font-prose text-base leading-snug">
-								<span className="text-foreground" lang={LESSON_LANGUAGE}>
+								<span className="text-foreground" lang={lessonLanguage()}>
 									{r.item.before}
 									<b className="font-semibold text-teal-2">{r.item.answer}</b>
 									{r.item.after}

@@ -1,5 +1,5 @@
 /**
- * Fluency service (LangHarness, 2026-10-28) — behind /fluency and
+ * Fluency service (LangHarness, 2026-10-28) — behind /speed and
  * /api/fluency. Two rounds at 100% known material, built locally with no
  * model call:
  *

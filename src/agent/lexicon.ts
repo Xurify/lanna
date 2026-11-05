@@ -11,7 +11,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { ACTIVE_PROFILE, curriculumFile } from "../../config.ts";
+import { activeProfile, curriculumFile } from "../../config.ts";
 import { foldDiacritics } from "../core/language.ts";
 import { profileLanguage } from "./profile-language.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
@@ -30,7 +30,7 @@ export interface Lexicon {
 
 const cache = new Map<string, Lexicon | null>();
 
-export function lexiconPath(profile: string = ACTIVE_PROFILE): string {
+export function lexiconPath(profile: string = activeProfile()): string {
 	return curriculumFile(profile, "lexicon.json");
 }
 
@@ -47,7 +47,7 @@ function push(map: Map<string, LexiconEntry[]>, key: string, entry: LexiconEntry
 }
 
 /** The active profile's lexicon, or null when the language has none yet. */
-export function loadLexicon(profile: string = ACTIVE_PROFILE): Lexicon | null {
+export function loadLexicon(profile: string = activeProfile()): Lexicon | null {
 	if (cache.has(profile)) return cache.get(profile)!;
 	let lexicon: Lexicon | null = null;
 	try {
@@ -96,7 +96,7 @@ export interface LookupResult {
 
 /** Find entries for a word: an exact lemma/form first, then the same
  *  letters without diacritics, then an English gloss word. */
-export function lookupWord(query: string, profile: string = ACTIVE_PROFILE, limit = 5): LookupResult {
+export function lookupWord(query: string, profile: string = activeProfile(), limit = 5): LookupResult {
 	const lexicon = loadLexicon(profile);
 	const tag = tagOf(profile);
 	const q = query.trim().toLocaleLowerCase(tag);
@@ -117,7 +117,7 @@ const sentenceKey = (s: string) => s.normalize("NFC").toLocaleLowerCase("sk").re
 /** The dictionary as the Slovak checker reads it (src/core/slovak-check.ts):
  *  each noun form's genders, and the curated example sentences, which a
  *  person checked. Null without a lexicon. */
-export function slovakLookup(profile: string = ACTIVE_PROFILE): SlovakLookup | null {
+export function slovakLookup(profile: string = activeProfile()): SlovakLookup | null {
 	if (lookups.has(profile)) return lookups.get(profile)!;
 	const lexicon = loadLexicon(profile);
 	let lookup: SlovakLookup | null = null;

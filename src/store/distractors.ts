@@ -25,19 +25,20 @@ const FILE = () => path.join(PATHS.distractors, "near-misses.jsonl");
 
 const key = (sk: string) => sk.normalize("NFC").trim();
 
-let cache: { mtime: number; size: number; map: Map<string, NearMiss> } | null = null;
+let cache: { file: string; mtime: number; size: number; map: Map<string, NearMiss> } | null = null;
 
 function read(): Map<string, NearMiss> {
+	const file = FILE();
 	let stat: fs.Stats;
 	try {
-		stat = fs.statSync(FILE());
+		stat = fs.statSync(file);
 	} catch {
 		cache = null;
 		return new Map();
 	}
-	if (cache && cache.mtime === stat.mtimeMs && cache.size === stat.size) return cache.map;
+	if (cache && cache.file === file && cache.mtime === stat.mtimeMs && cache.size === stat.size) return cache.map;
 	const map = new Map<string, NearMiss>();
-	for (const line of fs.readFileSync(FILE(), "utf-8").split("\n")) {
+	for (const line of fs.readFileSync(file, "utf-8").split("\n")) {
 		if (!line.trim()) continue;
 		try {
 			const e = JSON.parse(line) as NearMiss;
@@ -46,7 +47,7 @@ function read(): Map<string, NearMiss> {
 			// a torn line (crash mid-append) is skipped, never fatal
 		}
 	}
-	cache = { mtime: stat.mtimeMs, size: stat.size, map };
+	cache = { file, mtime: stat.mtimeMs, size: stat.size, map };
 	return map;
 }
 

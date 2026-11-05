@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { ACTIVE_PROFILE, PATHS } from "../../../config.ts";
+import { activeProfile, PATHS } from "../../../config.ts";
 import { checkerNote, checkSlovak } from "../../core/slovak-check.ts";
 import { serverExecute } from "../tool-execute.ts";
 import { formatEntry, loadLexicon, lookupWord, slovakLookup } from "../lexicon.ts";
@@ -169,7 +169,7 @@ function reviewStatusTool(seam: ReviewSeam): AgentTool<typeof statusInput> {
 export function languageTools(review?: ReviewSeam): Record<string, AgentTool<any>> {
 	const tools: Record<string, AgentTool<any>> = {};
 	if (loadLexicon()) tools.lookup_word = lookupWordTool;
-	if (ACTIVE_PROFILE === "slovak") {
+	if (activeProfile() === "slovak") {
 		tools.check_slovak = checkSlovakTool;
 		tools.slovak_reference = slovakReferenceTool;
 	}

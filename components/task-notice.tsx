@@ -44,8 +44,7 @@ export function TaskNotice({ tasks }: { tasks?: FeedTask[] } = {}) {
 		if (!task.language) return;
 		setBusy(task.id);
 		try {
-			const { restartNote } = await switchLanguage(task.language.id, task.language.english);
-			if (restartNote) setLines((l) => ({ ...l, [task.id]: restartNote }));
+			await switchLanguage(task.language.id, task.language.english);
 		} catch (err) {
 			say(task.id, err);
 		}

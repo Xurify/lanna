@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Today } from "@/components/today";
-import { NoCourse } from "@/components/no-course";
-import { missingCourse, prepareCorpus, profileStatus, progressSummary, readSettingsRecord } from "@/src/server";
+import { languageDay, prepareCorpus, progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 export const metadata = { title: { absolute: "Today · LangHarness" } };
@@ -13,8 +12,6 @@ export const dynamic = "force-dynamic";
 /** Today — the front page: what to do next, the day's goal, the skill path.
  *  The knowledge-graph home moved to /map. */
 export default function HomePage() {
-	const missing = missingCourse();
-	if (missing) return <NoCourse language={missing} initialProfile={profileStatus()} />;
 	// The corpus (data/README.md, the audio library): READMEs in place and
 	// the old audio cache moved into the indexed tree, once per process.
 	try {
@@ -32,8 +29,15 @@ export default function HomePage() {
 		summary = null;
 	}
 	// A fresh profile goes through setup once (a minute, no model): what
-	// Slovak is for, what the learner brings, the pace, and a placement
+	// the language is for, what the learner brings, the pace, and a placement
 	// drill. Skipping it stamps the record too, so this never repeats.
 	if (summary && !summary.goal.onboardedAt) redirect("/start");
-	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} />;
+	// Every language's plan, rendered with the page too.
+	let day = null;
+	try {
+		day = languageDay(new Date().getTimezoneOffset());
+	} catch {
+		day = null;
+	}
+	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} initialDay={day} />;
 }

@@ -140,7 +140,7 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 	const p = progressStore.read();
 	const state = curriculumState(p.units, "B2");
 	const planned = dailyPlan({ state, evidence: p.units, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 }, review: { due: 0, newLeft: 0, available: false }, minutesPerDay: 60, next: nextLessonUnit(state), dayOfYear: 301, reread: true });
-	assert.equal(planned.tasks.find((t) => t.id === "fluency")?.href, "/fluency?mode=reread");
+	assert.equal(planned.tasks.find((t) => t.id === "fluency")?.href, "/speed?mode=reread");
 });
 
 test("a say-it-faster round: the plan from the lexicon, the practiced sentences first, the record into the ledger and the logs", () => {

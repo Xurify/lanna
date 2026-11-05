@@ -1,20 +1,25 @@
 "use client";
 
-/** Select a language profile for the next start and restart into it. The
- *  desktop app relaunches itself; a browser on `next dev` gets the line to
- *  show instead. */
-export async function switchLanguage(id: string, english: string): Promise<{ restartNote: string | null }> {
+/** Run another language from now on. The server switches in place; the page
+ *  then loads again from the server, since the browser's copy of the course
+ *  is read once per page load. `to` is where it lands, Today by default.
+ *  Throws with the server's reason when the switch has to wait. */
+export async function switchLanguage(id: string, english: string, to = "/"): Promise<void> {
 	const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ active: id }) });
-	if (!res.ok) throw new Error(`Could not switch to ${english}`);
-	const next = (await res.json()) as { restartRequired?: boolean; active?: string };
-	// Already running it: a course just finished for it loads only on a restart.
-	const reload = next.active === id;
-	if (!next.restartRequired && !reload) return { restartNote: null };
-	if (window.lh?.relaunch) {
-		window.lh.relaunch();
-		return { restartNote: null };
+	if (!res.ok) {
+		const body = (await res.json().catch(() => null)) as { message?: string } | null;
+		throw new Error(body?.message ?? `Could not switch to ${english}.`);
 	}
-	return { restartNote: `Restart LangHarness to switch to ${english}.` };
+	window.location.assign(to);
+}
+
+/** Pages that mean the same thing in every language. Any other page holds
+ *  something of the old language (a chat, a lesson, an exam), so a switch
+ *  from it lands on Today. */
+const SAME_IN_EVERY_LANGUAGE = new Set(["/", "/review", "/listen", "/read", "/speak", "/watch", "/words", "/speed", "/progress", "/milestones", "/mistakes", "/curriculum", "/map", "/tasks", "/log"]);
+
+export function landingAfterSwitch(pathname: string): string {
+	return SAME_IN_EVERY_LANGUAGE.has(pathname) ? pathname : "/";
 }
 
 /** Start adding a language in the background; the error says why not. */

@@ -18,7 +18,7 @@ import {
 	unitLevel,
 	unitProgress,
 	unitStage,
-	UNITS,
+	allUnits,
 	xpLevel,
 	type ItemKind,
 	type LessonFocus,
@@ -26,7 +26,7 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "../core/lesson.ts";
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { pairsLessonFor } from "../core/aspect-tasks.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
@@ -78,7 +78,7 @@ import type { TrajectoryDay, TrajectoryInput } from "../core/trajectory.ts";
 import { carriedTasks, doneInLedger, RECENT_DAYS, type DayPlanSnapshot } from "../core/carry-over.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
-import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
+import { defaultGoal, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { stampEvidence, syncStamps, type StampReport } from "./stamps.ts";
 import type { StampState, TrailLog } from "../core/stamps.ts";
 import { reviewStore } from "../store/review.ts";
@@ -108,14 +108,14 @@ function entries() {
  * title — interleaving, which is what makes the choice stick.
  */
 export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: AtlasGender }): LessonPlan {
-	const info = UNITS.find((u) => u.id === unit)!;
+	const info = allUnits().find((u) => u.id === unit)!;
 	// Dvojičky build their own reps: a choice between the two twins, from
 	// pairs.json, not the cloze classifier.
 	if (info.kind === "pairs") return withKnown(pairsLessonFor(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
 	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
-	const grammar = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
+	const grammar = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
 	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || grammar.indexOf(u) < grammar.indexOf(unit);
 	const contrast = (CONTRAST[unit] ?? []).filter(reached);
 	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
@@ -151,8 +151,8 @@ export function personalFor(seed = Date.now()): LessonPlan {
 /** Blitz runs over the units you have started (at least the first three). */
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
-	const started = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
-	const firstGrammar = UNITS.filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
+	const started = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
+	const firstGrammar = allUnits().filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
 	const units = started.length >= 2 ? started : firstGrammar;
 	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }
@@ -509,7 +509,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		const d = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
 		week.push({ day: d, xp: p.days[d]?.xp ?? 0 });
 	}
-	const units: UnitSummary[] = UNITS.map((u) => {
+	const units: UnitSummary[] = allUnits().map((u) => {
 		const r = p.units[u.id];
 		const lessons = r?.lessons ?? 0;
 		const accuracy = r && r.reps > 0 ? r.correct / r.reps : null;
@@ -531,7 +531,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	});
 	// Continue = the first open drill on the map (then a words unit): the
 	// curriculum's chapter order, with locks. Never dead-ends.
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const curriculum = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const next = nextLessonUnit(curriculum);
 	const rs = reviewStatus(now, tz, { mint: false });
@@ -669,7 +669,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
  */
 export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?: number, now = new Date()): ProgressSummary {
 	const p = progressStore.read();
-	const cur = p.goal ?? DEFAULT_GOAL;
+	const cur = p.goal ?? defaultGoal();
 	const level = goal.level && CEFR_ORDER.includes(goal.level) ? (goal.level as Cefr) : cur.level;
 	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(MAX_MINUTES, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
 	const daysPerWeek = typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek) ? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek))) : (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
@@ -702,6 +702,15 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	} else if (next.languageLevels && next.languages) {
 		// Languages that left the list take their level with them.
 		for (const k of Object.keys(next.languageLevels) as Lang[]) if (!next.languages.includes(k)) delete next.languageLevels[k];
+	}
+	// The running language is left out of its own pickers, so a list saved
+	// here never names it. The list is shared with the other languages,
+	// which may name it (Slovak in a Russian setup): keep it and its level.
+	const own = activeLanguage().code;
+	if (Array.isArray(goal.languages) && isLang(own) && cur.languages?.includes(own) && next.languages && !next.languages.includes(own)) {
+		next.languages = [...next.languages, own];
+		const level = cur.languageLevels?.[own];
+		if (level) next.languageLevels = { ...next.languageLevels, [own]: level };
 	}
 	if (Array.isArray(goal.otherLanguages)) {
 		next.otherLanguages = [...new Set(goal.otherLanguages.filter((v): v is string => typeof v === "string").map((v) => v.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH)).filter(Boolean))].slice(0, MAX_OTHER_LANGUAGES);
@@ -768,7 +777,7 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 		p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
 	}
 	p.weak = weak;
-	const goal = { ...(p.goal ?? DEFAULT_GOAL) };
+	const goal = { ...(p.goal ?? defaultGoal()) };
 	goal.placedAt = now.toISOString();
 	goal.placedLevel = outcome.level;
 	goal.startChapter = outcome.startChapter;

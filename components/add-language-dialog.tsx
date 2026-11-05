@@ -22,9 +22,7 @@ interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
-	/** Downloaded before courses were generated: adding finishes it. */
-	started: boolean;
-	/** A removed built-in language that is still complete: adding puts it back at once. */
+	/** A removed built-in language: adding puts it back at once. */
 	restoreOnly?: boolean;
 }
 
@@ -116,8 +114,6 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 			"Adding…"
 		) : r.restoreOnly ? (
 			"Removed"
-		) : r.started ? (
-			"Needs its course"
 		) : null;
 
 	return createPortal(
@@ -227,7 +223,7 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 							onClick={() => void start()}
 							className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 						>
-							{choice?.restoreOnly ? `Put ${choice.english} back` : anyAdding ? "Another language is being added" : choice ? `${choice.started ? "Finish" : "Add"} ${choice.english}` : "Pick a language"}
+							{choice?.restoreOnly ? `Put ${choice.english} back` : anyAdding ? "Another language is being added" : choice ? `Add ${choice.english}` : "Pick a language"}
 						</button>
 					</div>
 				</div>
