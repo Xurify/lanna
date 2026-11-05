@@ -142,6 +142,17 @@ describe("glossing against the lexicon", () => {
 		assert.equal(words[4]!.slug, "kaviaren");
 		assert.equal(words[4]!.fresh, true, "a word not in the known set is fresh");
 	});
+
+	it("reads the grammar table as known even when the dictionary also has the word, and beats a stem guess", () => {
+		const s = reading.glossSentence("Aj nejaký človek povedal jedno, tri alebo štyri.", "", lexicon, new Set(), []);
+		const w = (text: string) => s.tokens.find((t) => t.text === text)!;
+		assert.equal(w("Aj").fresh, undefined, "aj is in the dictionary but unmet; the table still makes it known");
+		assert.equal(w("nejaký").fresh, undefined);
+		assert.equal(w("jedno").lemma, "jeden", "jedno is the number, not a form of jednať");
+		assert.equal(w("jedno").fresh, undefined);
+		assert.equal(w("tri").lemma, "tri", "tri is the number, not trio");
+		assert.equal(w("štyri").fresh, undefined);
+	});
 });
 
 describe("an episode on a scripted engine", () => {

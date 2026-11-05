@@ -332,30 +332,33 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 		// A capitalised word inside the sentence, or one the text showed to
 		// be a name (Robo, Zuzka, Petržalka), is only claimed by a listed
 		// dictionary form, never by a stem guess.
-		const entry = lexicon ? resolveWord(lexicon, t.text, known, { stem: !name }) : undefined;
+		const resolved = lexicon ? resolveWord(lexicon, t.text, known, { stem: !name }) : undefined;
+		const grammar = grammarWord(t.text);
+		// Only an exact dictionary form outranks the grammar table: a stem
+		// or diacritics guess would turn "jedno" into "jednať" and "tri"
+		// into "trio".
+		const exact = !!resolved && !!lexicon?.byForm.get(t.text.toLocaleLowerCase(tag()))?.includes(resolved);
+		const entry = grammar && !exact ? undefined : resolved;
 		if (entry) {
 			token.slug = entry.slug;
 			token.lemma = entry.sk;
 			token.gloss = entry.en;
 			token.cat = entry.cat;
 			if (entry.gender) token.gender = entry.gender;
-			if (!known.has(entry.slug)) token.fresh = true;
+			if (!known.has(entry.slug) && !grammar) token.fresh = true;
 			return token;
 		}
 		const introduced = fresh.get(foldDiacritics(t.text.toLocaleLowerCase(tag())));
 		if (introduced) {
 			token.lemma = introduced.lemma;
 			token.gloss = introduced.gloss;
-		} else {
+		} else if (grammar) {
 			// A pronoun form or particle the dictionary lacks: glossed from
 			// the table, known at every level.
-			const grammar = grammarWord(t.text);
-			if (grammar) {
-				token.lemma = grammar.lemma;
-				token.gloss = grammar.gloss;
-				token.cat = "Grammar";
-				return token;
-			}
+			token.lemma = grammar.lemma;
+			token.gloss = grammar.gloss;
+			token.cat = "Grammar";
+			return token;
 		}
 		// A proper name is not fresh vocabulary; an unknown word is.
 		if (!name) token.fresh = true;
