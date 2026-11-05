@@ -374,7 +374,7 @@
 					"perfective": "prečítať (perfective): a line that ends at a result. The book is read through."
 				},
 				"trap": "The English \"read\" does not say which twin. Ask whether the act is finished with a result (perfective) or going on, repeated or in general (imperfective).",
-				"wiki": "https://slovak.wiki/grammar/aspect",
+				"wiki": "https://www.slovak.wiki/grammar/aspect#contrasts",
 				"points": [
 					"The English tense does not decide the aspect: 'I read' (past) can be čítal som (the reading went on) or prečítal som (read through to the end).",
 					"A perfective verb has no present meaning: prečítam means I will read it through, never I am reading.",
@@ -558,7 +558,7 @@
 					}
 				],
 				"trap": "Slovak has no articles. ten points to a thing already known or mentioned, where English often says 'the' or 'that'; most nouns need nothing: Kniha je na stole = The book is on the table. Check the English: this is tento, that is ten.",
-				"wiki": "https://slovak.wiki/grammar/demonstratives",
+				"wiki": "https://www.slovak.wiki/grammar/demonstratives#contrasts",
 				"checked": "pending verifier"
 			}
 		}

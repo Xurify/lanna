@@ -3,7 +3,7 @@
 /**
  * The static explanation of a contrast (LessonExplain in src/core/lesson.ts):
  * two worked sentences with the form in bold, one note, an aspect timeline or
- * a case grid, the three cue points, the trap, and a page-level slovak.wiki
+ * a case grid, the three cue points, the trap, and an allowlisted slovak.wiki
  * link. Shown under "Parallels and examples" in the Why? panel, after a miss,
  * so a miss opens the rule alone and the picture comes on request.
  *

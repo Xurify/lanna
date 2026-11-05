@@ -43,9 +43,9 @@ describe("the grammar explanation (static, worked examples; never a drill)", () 
 		assert.equal(renderToStaticMarkup(<GrammarExplain explain={thisThat} />).includes("not yet"), false);
 	});
 
-	it("links only to an allowlisted slovak.wiki page", () => {
+	it("links only to an allowlisted slovak.wiki page or section", () => {
 		const html = renderToStaticMarkup(<GrammarExplain explain={aspect} />);
-		assert.ok(html.includes('href="https://slovak.wiki/grammar/aspect"'));
+		assert.ok(html.includes('href="https://www.slovak.wiki/grammar/aspect#contrasts"'));
 		assert.ok(html.includes('rel="noopener noreferrer"'));
 		const other = renderToStaticMarkup(<GrammarExplain explain={{ ...aspect, wiki: "https://example.com/aspect" }} />);
 		assert.equal(other.includes("href="), false, "a link off the allowlist is not rendered");

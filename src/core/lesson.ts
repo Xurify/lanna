@@ -308,7 +308,7 @@ export type ItemKind = "meaning" | "choose" | "type" | "build" | "listen";
 /** A static, worked explanation of a contrast (curriculum/slovak/mixups.json,
  *  `explain`). Shown in the Why? panel after a miss; never a drill item and
  *  never part of the first-try measure or the mix-up record. Every Slovak
- *  line is for the verifier; `wiki` is a page-level slovak.wiki link. */
+ *  line is for the verifier; `wiki` is an allowlisted slovak.wiki page or section. */
 export interface LessonExplain {
 	contrast: {
 		first: { sk: string; en: string; form: string };
@@ -322,7 +322,7 @@ export interface LessonExplain {
 	/** Demonstratives only: case-by-gender grids, cells as written. */
 	tables?: Array<{ title: string; cols: string[]; rows: Array<{ case: string; cells: string[] }> }>;
 	trap: string;
-	/** A page-level slovak.wiki link (src/core/reference-pages.ts); shown only when allowed. */
+	/** An allowlisted slovak.wiki page or section link (src/core/reference-pages.ts); shown only when allowed. */
 	wiki: string;
 	/** Who has checked the Slovak in this block. "pending verifier": not yet approved. */
 	checked?: string;

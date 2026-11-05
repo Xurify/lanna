@@ -29,7 +29,7 @@ import {
 	type MixupFamily,
 	type MixupRecord,
 } from "../src/core/mixups.ts";
-import { isAllowedReferenceUrl, REFERENCE_PAGES, referencePageUrl } from "../src/core/reference-pages.ts";
+import { isAllowedReferenceUrl, REFERENCE_ANCHORS, REFERENCE_PAGES, referencePageUrl } from "../src/core/reference-pages.ts";
 import { aspectFrames, parseFrameRows } from "../src/server/aspect-frames.ts";
 import { GRAMMAR_WORDS } from "../src/core/reading.ts";
 
@@ -304,13 +304,20 @@ test("the frame file holds no rows, and a row is read only with a recorded appro
 	assert.equal(parseFrameRows({ rows: [{ ...row, approved: "verifier 2026-11-04" }] }).length, 1);
 });
 
-test("every explanation link is a page-level slovak.wiki page on the allowlist", () => {
+test("every explanation link is an allowlisted slovak.wiki page or verified section", () => {
 	const withExplain = MIXUP_FAMILIES.filter((f) => f.explain);
 	assert.equal(withExplain.length, 2, "the aspect and demonstrative explanations");
 	for (const f of withExplain) {
 		assert.ok(isAllowedReferenceUrl(f.explain!.wiki), `${f.id}: ${f.explain!.wiki} is allowed`);
 	}
-	assert.equal(referencePageUrl("/grammar/aspect"), "https://slovak.wiki/grammar/aspect");
+	assert.equal(referencePageUrl("/grammar/aspect"), "https://www.slovak.wiki/grammar/aspect");
+	assert.equal(referencePageUrl("/grammar/aspect", "slovak", "contrasts"), "https://www.slovak.wiki/grammar/aspect#contrasts");
+	assert.equal(referencePageUrl("/grammar/aspect", "slovak", "made-up"), null, "an unlisted anchor is refused");
+	assert.ok(isAllowedReferenceUrl("https://www.slovak.wiki/grammar/demonstratives#contrasts"));
+	assert.equal(isAllowedReferenceUrl("https://www.slovak.wiki/grammar/aspect#made-up"), false, "an unlisted anchor is refused");
+	assert.equal(isAllowedReferenceUrl("https://www.slovak.wiki/grammar/motion-verbs#contrasts"), false, "an anchor not verified on that page");
+	assert.equal(isAllowedReferenceUrl("https://slovak.wiki/grammar/aspect"), false, "only the www base, which the bare domain redirects to");
+	for (const page of Object.keys(REFERENCE_ANCHORS)) assert.ok(REFERENCE_PAGES.includes(page), `${page} is a listed page`);
 	assert.equal(referencePageUrl("/not-listed"), null);
 	assert.equal(isAllowedReferenceUrl("https://www.slovak.wiki/grammar"), false, "the root is not an allowed page");
 	assert.ok(REFERENCE_PAGES.every((p) => p.startsWith("/") && !p.endsWith("/")));
