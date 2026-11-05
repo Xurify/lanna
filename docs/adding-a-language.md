@@ -9,7 +9,7 @@ Everything lands in `<data>/languages/<id>/`, shared by every profile. The steps
 | Step | Source | Kept in |
 |---|---|---|
 | Example sentences with English translations | Tatoeba per-language exports (CC BY 2.0 FR), bzip2 | `build/sentences.json` |
-| Which words are common | FrequencyWords, OpenSubtitles 2018 (CC BY-SA 4.0); for Irish and Welsh, which it lacks, counts from the Tatoeba sentences | `build/frequency.json` |
+| Which words are common | FrequencyWords, OpenSubtitles 2018 (CC BY-SA 4.0); a language it lacks would be ranked from its Tatoeba sentences | `build/frequency.json` |
 | Words, glosses, gender, inflected forms | Wiktionary as extracted by kaikki.org (CC BY-SA 4.0), streamed with gzip and filtered line by line | `build/words.json` |
 | The word list (about 3,000 lemmas, commonest first, each with up to five sentences blanked at a form) | the three above | `lexicon.json` |
 | The tutor's language segment | a template, no model | `prompt.md` |
@@ -30,7 +30,7 @@ The rules are in `src/core/language-build.ts` and pinned by `tests/language-add.
 
 ## Which languages
 
-The catalog is `LANGUAGE_CATALOG` in `src/core/language.ts`: 32 languages, each with its Tatoeba code, its kaikki.org name, its FrequencyWords code and two Edge voices. All four sources were checked to exist on 5 November 2026. To add one to the catalog, add a row and check the same four things.
+The catalog is `LANGUAGE_CATALOG` in `src/core/language.ts`: seven languages for now (Bulgarian, Czech, Estonian, Norwegian, Polish, Romanian and Russian), each with its Tatoeba code, its kaikki.org name, its FrequencyWords code and two Edge voices. All four sources were checked to exist on 5 November 2026. To add one to the catalog, add a row and check the same four things.
 
 Russian is in the catalog although its profile is built in: the profile has its prompt but ships no words, so adding it downloads them into `<data>/languages/russian/`.
 

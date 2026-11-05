@@ -29,7 +29,7 @@ describe("multi-language architecture", () => {
 
 	it("lists the languages the app can add, each with its sources and a voice", () => {
 		const ids = LANGUAGE_CATALOG.map((l) => l.id);
-		for (const id of ["czech", "romanian", "german", "spanish", "russian", "estonian"]) assert.ok(ids.includes(id), id);
+		assert.deepEqual([...ids].sort(), ["bulgarian", "czech", "estonian", "norwegian", "polish", "romanian", "russian"]);
 		assert.equal(new Set(ids).size, ids.length);
 		for (const l of LANGUAGE_CATALOG) {
 			assert.match(l.tag, /^[a-z]{2}-[A-Z]{2}$/, l.id);

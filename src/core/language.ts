@@ -104,9 +104,10 @@ export function captionLanguageName(code: string): string {
  * A language the learner can add from the app. The sources are named per
  * language because their codes differ: Tatoeba uses ISO 639-3, kaikki.org
  * names a Wiktionary language in English, and FrequencyWords (OpenSubtitles
- * 2018) has its own short code. Each was checked to exist on 2026-11-05;
- * `frequency` is absent where FrequencyWords has no list. The voices were
- * checked against the Edge voice list the same day.
+ * 2018) has its own short code. Each was checked to exist on 2026-11-05,
+ * and the voices against the Edge voice list the same day. A language
+ * FrequencyWords lacks leaves `frequency` out and is ranked from its
+ * Tatoeba sentences instead.
  */
 export interface CatalogLanguage extends LanguageInfo {
 	tatoeba: string;
@@ -117,38 +118,13 @@ export interface CatalogLanguage extends LanguageInfo {
 type CatalogRow = [id: string, tag: string, endonym: string, english: string, voices: [string, string], tatoeba: string, wiktionary: string, frequency?: string];
 
 const CATALOG_ROWS: CatalogRow[] = [
-	["albanian", "sq-AL", "Shqip", "Albanian", ["sq-AL-AnilaNeural", "sq-AL-IlirNeural"], "sqi", "Albanian", "sq"],
 	["bulgarian", "bg-BG", "Български", "Bulgarian", ["bg-BG-KalinaNeural", "bg-BG-BorislavNeural"], "bul", "Bulgarian", "bg"],
-	["catalan", "ca-ES", "Català", "Catalan", ["ca-ES-JoanaNeural", "ca-ES-EnricNeural"], "cat", "Catalan", "ca"],
-	["croatian", "hr-HR", "Hrvatski", "Croatian", ["hr-HR-GabrijelaNeural", "hr-HR-SreckoNeural"], "hrv", "Serbo-Croatian", "hr"],
 	["czech", "cs-CZ", "Čeština", "Czech", ["cs-CZ-VlastaNeural", "cs-CZ-AntoninNeural"], "ces", "Czech", "cs"],
-	["danish", "da-DK", "Dansk", "Danish", ["da-DK-ChristelNeural", "da-DK-JeppeNeural"], "dan", "Danish", "da"],
-	["dutch", "nl-NL", "Nederlands", "Dutch", ["nl-NL-ColetteNeural", "nl-NL-MaartenNeural"], "nld", "Dutch", "nl"],
 	["estonian", "et-EE", "Eesti", "Estonian", ["et-EE-AnuNeural", "et-EE-KertNeural"], "est", "Estonian", "et"],
-	["finnish", "fi-FI", "Suomi", "Finnish", ["fi-FI-NooraNeural", "fi-FI-HarriNeural"], "fin", "Finnish", "fi"],
-	["french", "fr-FR", "Français", "French", ["fr-FR-DeniseNeural", "fr-FR-HenriNeural"], "fra", "French", "fr"],
-	["galician", "gl-ES", "Galego", "Galician", ["gl-ES-SabelaNeural", "gl-ES-RoiNeural"], "glg", "Galician", "gl"],
-	["german", "de-DE", "Deutsch", "German", ["de-DE-KatjaNeural", "de-DE-ConradNeural"], "deu", "German", "de"],
-	["greek", "el-GR", "Ελληνικά", "Greek", ["el-GR-AthinaNeural", "el-GR-NestorasNeural"], "ell", "Greek", "el"],
-	["hungarian", "hu-HU", "Magyar", "Hungarian", ["hu-HU-NoemiNeural", "hu-HU-TamasNeural"], "hun", "Hungarian", "hu"],
-	["icelandic", "is-IS", "Íslenska", "Icelandic", ["is-IS-GudrunNeural", "is-IS-GunnarNeural"], "isl", "Icelandic", "is"],
-	["indonesian", "id-ID", "Bahasa Indonesia", "Indonesian", ["id-ID-GadisNeural", "id-ID-ArdiNeural"], "ind", "Indonesian", "id"],
-	["irish", "ga-IE", "Gaeilge", "Irish", ["ga-IE-OrlaNeural", "ga-IE-ColmNeural"], "gle", "Irish"],
-	["italian", "it-IT", "Italiano", "Italian", ["it-IT-ElsaNeural", "it-IT-DiegoNeural"], "ita", "Italian", "it"],
-	["latvian", "lv-LV", "Latviešu", "Latvian", ["lv-LV-EveritaNeural", "lv-LV-NilsNeural"], "lvs", "Latvian", "lv"],
-	["lithuanian", "lt-LT", "Lietuvių", "Lithuanian", ["lt-LT-OnaNeural", "lt-LT-LeonasNeural"], "lit", "Lithuanian", "lt"],
-	["macedonian", "mk-MK", "Македонски", "Macedonian", ["mk-MK-MarijaNeural", "mk-MK-AleksandarNeural"], "mkd", "Macedonian", "mk"],
 	["norwegian", "nb-NO", "Norsk bokmål", "Norwegian", ["nb-NO-PernilleNeural", "nb-NO-FinnNeural"], "nob", "Norwegian Bokmål", "no"],
 	["polish", "pl-PL", "Polski", "Polish", ["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"], "pol", "Polish", "pl"],
-	["portuguese", "pt-PT", "Português", "Portuguese", ["pt-PT-RaquelNeural", "pt-PT-DuarteNeural"], "por", "Portuguese", "pt"],
 	["romanian", "ro-RO", "Română", "Romanian", ["ro-RO-AlinaNeural", "ro-RO-EmilNeural"], "ron", "Romanian", "ro"],
 	["russian", "ru-RU", "Русский", "Russian", ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"], "rus", "Russian", "ru"],
-	["slovene", "sl-SI", "Slovenščina", "Slovene", ["sl-SI-PetraNeural", "sl-SI-RokNeural"], "slv", "Slovene", "sl"],
-	["spanish", "es-ES", "Español", "Spanish", ["es-ES-ElviraNeural", "es-ES-AlvaroNeural"], "spa", "Spanish", "es"],
-	["swedish", "sv-SE", "Svenska", "Swedish", ["sv-SE-SofieNeural", "sv-SE-MattiasNeural"], "swe", "Swedish", "sv"],
-	["turkish", "tr-TR", "Türkçe", "Turkish", ["tr-TR-EmelNeural", "tr-TR-AhmetNeural"], "tur", "Turkish", "tr"],
-	["ukrainian", "uk-UA", "Українська", "Ukrainian", ["uk-UA-PolinaNeural", "uk-UA-OstapNeural"], "ukr", "Ukrainian", "uk"],
-	["welsh", "cy-GB", "Cymraeg", "Welsh", ["cy-GB-NiaNeural", "cy-GB-AledNeural"], "cym", "Welsh"],
 ];
 
 /** Every language the app can add by itself. Russian is here too: its

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, PlayIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
@@ -370,8 +371,8 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 	// rows match the session rows' hover. Empty means empty: the header sits
 	// alone (the cost span is population, not decoration).
 	return (
-		<section data-testid="activity-section" className="border-t border-border px-3 pb-3 pt-2">
-			<div className="mb-1 flex items-center gap-1.5 px-2.5 text-xs font-bold text-muted-foreground">
+		<section data-testid="activity-section" className="border-t border-border px-3 py-2.5">
+			<div className={cn("flex h-5 items-center gap-1.5 px-2.5 text-xs font-bold text-muted-foreground", blobs.length > 0 && "mb-1")}>
 				<ActivityIcon className="size-3" />
 				Background
 				{feed.tasks.length > 0 && (
@@ -437,33 +438,41 @@ function ActivityBlobRow({
 							: blob.jobKind === "pdf"
 								? "PDF reader"
 								: "Sub-agent";
+	const face = (
+		<>
+			<Icon className="size-3.5 shrink-0 text-muted-foreground" />
+			<span className="min-w-0 flex-1">
+				<span className="block truncate font-medium text-card-foreground">{blob.title}</span>
+				{blob.activity ? (
+					<span className="block truncate text-muted-foreground" title={blob.activity}>
+						{blob.activity}
+					</span>
+				) : (
+					<span className="block truncate text-muted-foreground/80">{label}</span>
+				)}
+			</span>
+			<span className="flex shrink-0 items-center gap-2 tabular-nums text-muted-foreground">
+				{blob.process !== "task" && <span data-testid="activity-blob-cost">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>}
+				<span data-testid="activity-blob-elapsed">{formatElapsed(now - blob.startedAt)}</span>
+			</span>
+		</>
+	);
 	return (
 		<div
 			data-testid={`activity-blob-${blob.process}`}
 			className="relative rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-accent"
 		>
-			<button
-				type="button"
-				onClick={onToggleDetail}
-				aria-expanded={detailOpen}
-				className="flex w-full items-center gap-2 pr-7 text-left"
-			>
-				<Icon className="size-3.5 shrink-0 text-muted-foreground" />
-				<span className="min-w-0 flex-1">
-					<span className="block truncate font-medium text-card-foreground">{blob.title}</span>
-					{blob.activity ? (
-						<span className="block truncate text-muted-foreground" title={blob.activity}>
-							{blob.activity}
-						</span>
-					) : (
-						<span className="block truncate text-muted-foreground/80">{label}</span>
-					)}
-				</span>
-				<span className="flex shrink-0 items-center gap-2 tabular-nums text-muted-foreground">
-					{blob.process !== "task" && <span data-testid="activity-blob-cost">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>}
-					<span data-testid="activity-blob-elapsed">{formatElapsed(now - blob.startedAt)}</span>
-				</span>
-			</button>
+			{blob.process === "task" ? (
+				// A task has no cost, context or session to show, so a detail would
+				// only repeat the face: the row opens the Tasks page instead.
+				<Link href="/tasks" className="flex w-full items-center gap-2 pr-7 text-left" data-testid="activity-task-link">
+					{face}
+				</Link>
+			) : (
+				<button type="button" onClick={onToggleDetail} aria-expanded={detailOpen} className="flex w-full items-center gap-2 pr-7 text-left">
+					{face}
+				</button>
+			)}
 			{/* The explicit END always on the blob's face (SCOPE) — the popover
 			    is for DETAIL, not the control. A failed abort locks the button and
 			    says why; a succeeded one just makes the blob vanish on refresh. */}
@@ -479,7 +488,7 @@ function ActivityBlobRow({
 				<SquareIcon className="size-3" />
 			</button>
 
-			{detailOpen && (
+			{detailOpen && blob.process !== "task" && (
 				<div
 					data-testid="activity-blob-detail"
 					className="mt-1 flex flex-col gap-1 rounded-lg bg-accent/40 p-2 text-muted-foreground"
@@ -496,20 +505,16 @@ function ActivityBlobRow({
 							{blob.title}
 						</div>
 						{blob.activity && <div className="break-words">{blob.activity}</div>}
-						{blob.process !== "task" && (
-							<>
-								<div className="flex justify-between gap-2">
-									<span>Cost</span>
-									<span className="tabular-nums text-card-foreground">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>
-								</div>
-								<div className="flex justify-between gap-2">
-									<span>Context</span>
-									<span className="tabular-nums text-card-foreground" data-testid="activity-blob-context">
-										{blob.context === null ? "—" : `${formatTokens(blob.context.used)} / ${formatTokens(blob.context.limit)}`}
-									</span>
-								</div>
-							</>
-						)}
+						<div className="flex justify-between gap-2">
+							<span>Cost</span>
+							<span className="tabular-nums text-card-foreground">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>
+						</div>
+						<div className="flex justify-between gap-2">
+							<span>Context</span>
+							<span className="tabular-nums text-card-foreground" data-testid="activity-blob-context">
+								{blob.context === null ? "—" : `${formatTokens(blob.context.used)} / ${formatTokens(blob.context.limit)}`}
+							</span>
+						</div>
 						{blob.model && (
 							<div className="flex justify-between gap-2">
 								<span>Model</span>
@@ -522,11 +527,9 @@ function ActivityBlobRow({
 								<span className="tabular-nums text-card-foreground">{blob.steps}</span>
 							</div>
 						)}
-						{blob.process !== "task" && (
-							<a href={`/chat/${blob.chatId}`} className="text-primary hover:underline">
-								Open session →
-							</a>
-						)}
+						<a href={`/chat/${blob.chatId}`} className="text-primary hover:underline">
+							Open session →
+						</a>
 					</div>
 					<div className="mt-2 text-muted-foreground/80">
 					{abortState === "failed" && "Abort failed — try again"}
