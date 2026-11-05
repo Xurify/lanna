@@ -7,7 +7,9 @@
  * has no `VAR=value cmd` syntax, and Electron could open before Next was
  * listening (main.cjs loads the URL once, no retry). This launcher sets the
  * env itself, waits for Next to answer, then opens Electron. Closing either
- * one stops both.
+ * one stops both. A language switch asks for a restart: the shell exits with
+ * RELAUNCH_EXIT_CODE and both start again, so Next boots in the new profile
+ * (electron/dev-relaunch.cjs).
  */
 import { spawn, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -18,20 +20,30 @@ const PORT = process.env.PORT || "3010";
 const URL_ = `http://localhost:${PORT}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
+const { LAUNCHER_ENV, onShellExit } = require("../electron/dev-relaunch.cjs");
 
-const children = [];
+const children = new Set();
 let stopping = false;
-function stop(code = 0) {
-	if (stopping) return;
-	stopping = true;
-	for (const c of children) {
-		if (c.exitCode !== null) continue;
+let restarting = false;
+
+/** End one child and wait until it has. */
+function end(c) {
+	return new Promise((resolve) => {
+		if (c.exitCode !== null || c.signalCode !== null) return resolve();
+		c.once("exit", () => resolve());
+		// A child that never reports its exit must not hold the launcher open.
+		setTimeout(resolve, 5000).unref();
 		// Windows: kill() ends only the top process and leaves Next's
 		// workers holding the port, so take down the whole tree.
 		if (process.platform === "win32") spawnSync("taskkill", ["/PID", String(c.pid), "/T", "/F"], { stdio: "ignore" });
 		else c.kill();
-	}
-	process.exit(code);
+	});
+}
+
+function stop(code = 0) {
+	if (stopping) return;
+	stopping = true;
+	void Promise.all([...children].map(end)).then(() => process.exit(code));
 }
 process.on("SIGINT", () => stop(0));
 process.on("SIGTERM", () => stop(0));
@@ -45,9 +57,43 @@ if (PROD) {
 	const built = spawnSync(process.execPath, [nextBin, "build"], { cwd: root, stdio: "inherit" });
 	if (built.status !== 0) process.exit(built.status ?? 1);
 }
-const next = spawn(process.execPath, [nextBin, PROD ? "start" : "dev", "-H", "127.0.0.1", "-p", PORT], { cwd: root, stdio: "inherit" });
-children.push(next);
-next.on("exit", (code) => stop(code ?? 0));
+function startNext() {
+	const next = spawn(process.execPath, [nextBin, PROD ? "start" : "dev", "-H", "127.0.0.1", "-p", PORT], { cwd: root, stdio: "inherit" });
+	children.add(next);
+	next.on("exit", (code) => {
+		children.delete(next);
+		if (!restarting) stop(code ?? 0);
+	});
+	return next;
+}
+
+function startShell() {
+	const electronBin = require("electron");
+	const electron = spawn(electronBin, ["."], { cwd: root, stdio: "inherit", env: { ...process.env, LH_DEV_URL: URL_, [LAUNCHER_ENV]: "1" } });
+	children.add(electron);
+	electron.on("exit", (code) => {
+		children.delete(electron);
+		if (onShellExit(code) === "restart" && !stopping) void restart();
+		else stop(code ?? 0);
+	});
+}
+
+/** A language switch: Next reads the profile once at boot, so it starts
+ *  again with the shell. */
+async function restart() {
+	restarting = true;
+	console.log("desktop:dev: restarting Next and the shell for the new language");
+	await Promise.all([...children].map(end));
+	restarting = false;
+	startNext();
+	if (await ready()) startShell();
+	else if (!stopping) {
+		console.error(`desktop:dev: Next did not answer on ${URL_} within 2 minutes`);
+		stop(1);
+	}
+}
+
+startNext();
 
 async function ready() {
 	for (let i = 0; i < 240; i++) {
@@ -64,10 +110,7 @@ async function ready() {
 }
 
 if (await ready()) {
-	const electronBin = require("electron");
-	const electron = spawn(electronBin, ["."], { cwd: root, stdio: "inherit", env: { ...process.env, LH_DEV_URL: URL_ } });
-	children.push(electron);
-	electron.on("exit", (code) => stop(code ?? 0));
+	startShell();
 } else if (!stopping) {
 	console.error(`desktop:dev: Next did not answer on ${URL_} within 2 minutes`);
 	stop(1);
