@@ -117,6 +117,10 @@ export interface VideoRecord {
 	/** Lines the model could not translate back into its answer: they keep
 	 *  their Slovak and have an empty English line. Absent when none. */
 	untranslated?: number;
+	/** Foreign captions: coverage, the word counts and the pre-teach words come
+	 *  from a model's Slovak rendering of the lines (the lines shown stay as
+	 *  captioned), so the share is an estimate. */
+	coverageEstimated?: boolean;
 }
 
 export interface VideoIndexEntry {
@@ -132,6 +136,26 @@ export interface VideoIndexEntry {
 	preTeach: string[];
 	source: CaptionSource;
 	model: string;
+	/** The video's language and its caption track's. Absent on older lines,
+	 *  which the store fills in on first read. */
+	lang?: string;
+	trackLang?: string;
+	/** The share is an estimate from a Slovak rendering of foreign captions. */
+	estimated?: boolean;
+}
+
+/** Captions in another language than the video's (Czech for Slovak). */
+export function foreignCaptions(v: { lang?: string; trackLang?: string }): boolean {
+	return !!v.lang && !!v.trackLang && v.lang !== v.trackLang;
+}
+
+/** What the known-word share means for a video: "exact" when the captions
+ *  are in its language; "estimated" for foreign captions measured on a Slovak
+ *  rendering of them (src/server/watch.ts renderInLanguage); "none" for
+ *  foreign captions kept before that existed (Czech words matched against
+ *  Slovak would read far too low). */
+export function coverageKind(v: { lang?: string; trackLang?: string; estimated?: boolean }): "exact" | "estimated" | "none" {
+	return !foreignCaptions(v) ? "exact" : v.estimated ? "estimated" : "none";
 }
 
 /** How one line went in step mode. */

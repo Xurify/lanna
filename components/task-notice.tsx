@@ -4,41 +4,33 @@ import Link from "next/link";
 import { useState } from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
+import { retryTask, taskAction } from "@/components/task-actions";
 
 /**
  * The ready notice for background tasks (src/server/tasks.ts): one card per
- * finished task, anywhere in the app, until the learner dismisses it, so a
+ * finished task, anywhere in the app, until the learner closes it, so a
  * video that finished while they were on another page is not missed. A
  * failure says why and, when the server offers one, a one-step retry (a video
- * with no captions can be transcribed from its audio). Running tasks live in
- * the sidebar's Background section, not here.
+ * with no captions can be transcribed from its audio). Closing a card keeps
+ * the task on the Tasks page (app/tasks). Running tasks live in the sidebar's
+ * Background section, not here.
  */
 export function TaskNotice({ tasks }: { tasks?: FeedTask[] } = {}) {
 	const { feed, refresh } = useActivity();
 	const [busy, setBusy] = useState<string | null>(null);
-	const finished = (tasks ?? feed.tasks).filter((t) => t.status !== "running");
+	const finished = (tasks ?? feed.tasks).filter((t) => t.status !== "running" && !t.dismissed);
 	if (finished.length === 0) return null;
 
 	const dismiss = async (id: string) => {
 		setBusy(id);
-		try {
-			await fetch("/api/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "dismiss", id }) });
-		} catch {
-			// the card stays; the next feed says what is left
-		}
+		await taskAction({ action: "dismiss", id });
 		setBusy(null);
 		refresh();
 	};
 
 	const retry = async (task: FeedTask) => {
-		if (!task.retry) return;
 		setBusy(task.id);
-		try {
-			const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url: task.retry.url, transcribe: task.retry.transcribe, background: true }) });
-			if (res.ok) await fetch("/api/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "dismiss", id: task.id }) });
-		} catch {
-			// the card stays, so the learner can try again
-		}
+		if (await retryTask(task)) await taskAction({ action: "dismiss", id: task.id });
 		setBusy(null);
 		refresh();
 	};

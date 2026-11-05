@@ -32,7 +32,7 @@ import { pairsLessonFor } from "../core/aspect-tasks.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
 import type { UnitKind } from "../core/lesson.ts";
 import { weakestGender, type AtlasGender } from "../core/grammar.ts";
-import { isLanguageId, LANGUAGES } from "../core/language.ts";
+import { captionLanguageName, isLanguageId, LANGUAGES } from "../core/language.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
 import {
 	CEFR_ORDER,
@@ -83,7 +83,7 @@ import type { StampState, TrailLog } from "../core/stamps.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
-import { watchMinutes } from "../core/watch.ts";
+import { coverageKind, watchMinutes } from "../core/watch.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
 import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
@@ -479,14 +479,14 @@ export interface ProgressSummary {
 /** The video the daily plan should show: the one watched today (so the
  *  task reads as done), else the newest added and not watched yet;
  *  undefined when neither exists. */
-function pendingWatch(day: string): { id: string; title: string; minutes: number; coverage: number } | undefined {
+function pendingWatch(day: string): { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string } | undefined {
 	try {
 		const watches = videoStore.watches();
 		const library = videoStore.list();
 		const todays = watches.filter((w) => w.day === day).at(-1);
 		const watched = new Set(watches.map((w) => w.videoId));
 		const v = (todays && library.find((e) => e.id === todays.videoId)) ?? [...library].reverse().find((e) => !watched.has(e.id));
-		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec), coverage: v.coverage } : undefined;
+		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec), ...(coverageKind(v) === "none" ? { captionLang: captionLanguageName(v.trackLang!) } : { coverage: v.coverage, ...(coverageKind(v) === "estimated" ? { estimated: true } : {}) }) } : undefined;
 	} catch {
 		return undefined;
 	}

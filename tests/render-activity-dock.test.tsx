@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { ActivitySection, formatElapsed, toBlobs, type ActivityFeed, type FeedExtraction, type FeedTask } from "../components/activity-dock.tsx";
 import { TaskNotice } from "../components/task-notice.tsx";
+import { TasksPage } from "../components/tasks-page.tsx";
 import { formatTokens, formatUsd } from "../components/usage-format.ts";
 import { jobCost } from "../src/server/pricing.ts";
 
@@ -286,5 +287,25 @@ describe("background tasks in the dock and the notice", () => {
 		assert.match(failed, /No captions\./);
 		assert.match(failed, /Transcribe the audio/);
 		assert.doesNotMatch(failed, /task-notice-open/);
+	});
+
+	it("a closed notice stays off the screen but on the Tasks page, which lists running first and finished with their actions", () => {
+		const closed = task({ id: "video:ccccccccccc", status: "done", href: "/watch?id=ccccccccccc", dismissed: true, finishedAt: NOW - 1000 });
+		assert.equal(renderToStaticMarkup(<TaskNotice tasks={[closed]} />), "");
+		const failed = task({ id: "video:ddddddddddd", status: "error", error: "No captions.", finishedAt: NOW - 500, retry: { label: "Transcribe the audio", url: "u", transcribe: true } });
+		const html = renderToStaticMarkup(<TasksPage tasks={[closed, task(), failed]} />);
+		assert.ok(html.indexOf("tasks-running") < html.indexOf("tasks-finished"), "running first");
+		assert.match(html, /data-testid="task-stop"/);
+		assert.match(html, /data-testid="task-open"/);
+		assert.match(html, /data-testid="task-retry"/);
+		assert.match(html, /data-testid="tasks-clear"/);
+		assert.match(html, /No captions\./);
+		assert.match(renderToStaticMarkup(<TasksPage tasks={[]} />), /No tasks yet/);
+	});
+
+	it("the sidebar section links to the Tasks page while any task is listed", () => {
+		const finishedOnly = renderToStaticMarkup(<ActivitySection feed={{ jobs: [], extractions: [], tasks: [task({ status: "done" })] }} />);
+		assert.match(finishedOnly, /href="\/tasks"/);
+		assert.doesNotMatch(renderToStaticMarkup(<ActivitySection feed={{ jobs: [], extractions: [], tasks: [] }} />), /\/tasks/);
 	});
 });

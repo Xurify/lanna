@@ -937,15 +937,14 @@ body {
 }
 .lh-menu-in { animation: lh-menu-in var(--dur-fast) var(--ease-out) both; }
 .lh-float-up { animation: lh-float-up 800ms var(--ease-out) forwards; }
-/* The active unit's ring: a pseudo-element scaled and faded, not an animated
-   box-shadow, which repaints the badge every frame. */
-.lh-pulse-ring::after {
+/* The active unit: a still hairline ring set off from the badge, not a pulse
+   or a glow (the anti-slop list: no colored glows, no looping effects). */
+.lh-here-ring::after {
 	content: "";
 	position: absolute;
-	inset: 0;
-	border-radius: inherit;
-	box-shadow: 0 0 0 2px var(--q-teal);
-	animation: lh-ring 1.8s var(--ease-out) infinite;
+	inset: -5px;
+	border-radius: 9999px;
+	box-shadow: 0 0 0 1.5px var(--q-teal-line);
 	pointer-events: none;
 }
 .lh-flicker { animation: lh-flicker 1.6s ease-in-out infinite; }
@@ -987,8 +986,7 @@ body {
 	animation: lh-ring 1.8s var(--ease-out) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-	.lh-ring,
-	.lh-pulse-ring::after { animation: none; opacity: 0; }
+	.lh-ring { animation: none; opacity: 0; }
 }
 
 /* While the sidebar's edge is dragged the width follows the pointer with no transition, and the text under it is not selected. */

@@ -29,6 +29,9 @@
  *
  *   window.lh.relaunch() — restart the app after a language-profile switch.
  *
+ *   window.lh.fonts.list() — Settings → Appearance: the installed font
+ *   families (names only), read by the main process.
+ *
  *   window.lh.storage — Settings → Storage: the HTTP cache's size and
  *   clearing it. Nothing else on disk is reachable from the renderer.
  *
@@ -102,6 +105,10 @@ contextBridge.exposeInMainWorld("lh", {
 	storage: {
 		cacheSize: () => ipcRenderer.invoke("lh:storage:cache-size"),
 		clearCache: () => ipcRenderer.invoke("lh:storage:clear-cache"),
+	},
+	/** Settings → Appearance: the installed font families, A to Z; [] when the OS would not say. */
+	fonts: {
+		list: () => ipcRenderer.invoke("lh:fonts:list"),
 	},
 	onOpenSettings: (cb) => {
 		openSettingsListener = cb;
