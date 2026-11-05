@@ -2,6 +2,17 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: one plan for every language, and switching with no restart (branch `feat/unified-daily-plan`)
+
+- **Why:** the owner studies Russian (the main motivation: friends and family), Slovak (a trip within two months, then series and YouTubers) and Estonian (B1), and wanted one daily plan across all of them, with switching that does not restart the app.
+- **One plan for the day:** with more than one language, Today's plan lists every language's own plan, largest share first, each headed by its flag, name and "minutes today of minutes a day". The next step is drawn large wherever it is. A step in another language switches to it and opens there; a language not set up yet has "Set up <language>" as its one step. The summary line counts everything across languages.
+- **Split the day:** a button on the plan's heading opens the minutes for the day and each language's share (steppers, 15 minutes and 5% a step). Saving writes each language's minutes a day, so its plan, its pace and its dates follow the same number. Nothing new is stored.
+- **Switching in place (E45):** the language menu and Settings switch at once, with no confirm step and no restart; the page loads again in the new language. A switch waits, and says why, while the tutor is answering, the skill map is updating or a video is being prepared. The Electron relaunch and the desktop:dev restart are gone.
+- **Old language state removed:** the built-in Russian profile with no words, the "Needs its course" rows, the Finish button and the no-course page. Russian is added from the app like any other language and keeps its hand-written tutor doctrine. The earlier Russian and Estonian progress (made on Slovak lessons) was moved to `data/backups/`.
+- **Also fixed:** the plan's task titles had lost the backslashes in their pattern, so a unit's native term was glued to its name ("I, you, we · Prítomný čas" now reads "I, you, we"); "Left from Wednesday. retrieval…" starts with a capital; the all-done card no longer says "Pekne!" in every language.
+- **Checked:** the full test suite; a second dev server on a scratch data folder with Slovak, a Russian and an Estonian course: the plan for all three, Split the day, a Russian step clicked from Slovak (it switched and opened Listen in Russian in 0.7 s), Today in Russian, at 1400 and 1133 px wide, 390 px on a phone, light and dark.
+- **Unverified:** the switch inside the Electron window (only the browser was checked), and real Russian and Estonian courses (the check used small stand-in courses).
+
 ## 5 November: switching and removing languages (branch `fix/language-switch-and-manage`)
 
 - **Switching did nothing from Settings:** Settings → Learning saved the choice and reloaded the page, but the server reads the language once at boot, so the app stayed in the old language with the switch waiting. It now asks first and restarts, the same as the sidebar.

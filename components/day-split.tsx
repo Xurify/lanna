@@ -84,7 +84,8 @@ function Stepper({ value, onChange, min, max, step, unit, label, testid }: { val
 				<MinusIcon className="size-4" />
 			</button>
 			<span className="q-num min-w-[64px] text-center text-[14px] font-[550] text-foreground" aria-live="polite">
-				{value} {unit}
+				{value}
+				{unit === "%" ? "%" : ` ${unit}`}
 			</span>
 			<button type="button" aria-label={`More, ${label}`} className={cn(btn, "rounded-r-[9px]")} disabled={value >= max} onClick={() => set(value + step)}>
 				<PlusIcon className="size-4" />

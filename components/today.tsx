@@ -522,8 +522,7 @@ function UpNext({ task, busy, onOpen, meta }: { task: PlanTask; busy: boolean; o
 					<h3 className="@max-xl:text-[19px]">{w.primary}</h3>
 					{w.rest && (
 						<p className="q-rv-tease" style={{ fontSize: 15 }}>
-							{task.from ? `Left from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ` : ""}
-							{w.rest}
+							{task.from ? `Left from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ${w.rest.charAt(0).toUpperCase()}${w.rest.slice(1)}` : w.rest}
 						</p>
 					)}
 					{meta && <p className="q-rv-meta">{meta}</p>}
