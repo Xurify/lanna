@@ -2,14 +2,15 @@
  * Background tasks (2026-11-05): work that takes a while (preparing a
  * video, adding a language) runs here instead of holding a page.
  * The caller starts a task and returns; the task reports its step, ends
- * done or in error, and the sidebar's Background section and a ready notice
- * read it from the activity feed (server/observability.ts). Nothing here
+ * done or in error, and the sidebar's Background section, a ready notice and
+ * the Tasks page read it from the activity feed (server/observability.ts). Nothing here
  * calls a model: a task is the bookkeeping around work some module already
  * does.
  *
  * In memory, on globalThis (Next dev gives each route its own module
- * instances). A finished task stays until the learner dismisses it, so a
- * "ready" notice is not lost to a reload; a restart drops them, and the
+ * instances). A finished task stays until the learner removes it (the notice
+ * can be closed without removing it), so a "ready" notice is not lost to a
+ * reload and the Tasks page has a history; a restart drops them, and the
  * work they point to (a saved video) is still in its own library.
  */
 
@@ -30,6 +31,8 @@ export interface TaskRecord {
 	/** Where the result is, once done. */
 	href?: string;
 	error?: string;
+	/** The learner closed its "ready" notice; it stays in the Tasks list. */
+	dismissed?: boolean;
 	/** A failed task the learner can start again in one step (a video with no
 	 *  captions, whose audio can be transcribed instead). */
 	retry?: { label: string; url: string; transcribe: boolean };
@@ -105,14 +108,33 @@ export function abortTask(id: string): boolean {
 	return true;
 }
 
-/** Remove a finished task from the notice. A running one is left alone. */
+/** Close a finished task's notice. It stays in the Tasks list (removeTask
+ *  takes it out). A running one is left alone. */
 export function dismissTask(id: string): boolean {
+	const task = state().tasks.get(id);
+	if (!task || task.status === "running" || task.dismissed) return false;
+	task.dismissed = true;
+	changed();
+	return true;
+}
+
+/** Take a finished task out of the Tasks list. A running one is left alone. */
+export function removeTask(id: string): boolean {
 	const s = state();
 	const task = s.tasks.get(id);
 	if (!task || task.status === "running") return false;
 	s.tasks.delete(id);
 	changed();
 	return true;
+}
+
+/** Take every finished task out of the list; how many went. */
+export function clearFinishedTasks(): number {
+	const s = state();
+	const done = [...s.tasks.values()].filter((t) => t.status !== "running");
+	for (const t of done) s.tasks.delete(t.id);
+	if (done.length) changed();
+	return done.length;
 }
 
 /** Every task, oldest first. */

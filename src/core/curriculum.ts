@@ -686,7 +686,8 @@ export interface PlanInput {
 	personal?: { focus: string };
 	/** A video the learner added and has not watched yet (src/core/watch.ts):
 	 *  it joins the plan as input until it is watched. */
-	watch?: { id: string; title: string; minutes: number; coverage: number };
+	/** A video with captions in another language: coverage is an estimate (`estimated`), or absent with the language's name when none was made. */
+	watch?: { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string };
 	/** An episode read before today exists, so a timed re-read is possible. */
 	reread?: boolean;
 	/** Unfinished tasks from earlier days (src/core/carry-over.ts): the ones
@@ -856,7 +857,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "watch",
 			title: `Watch: ${input.watch.title}`,
-			line: (day.watches ?? 0) > 0 ? "Watched today" : `${Math.round(input.watch.coverage * 100)} of every 100 words known — listen first, then reveal`,
+			line: (day.watches ?? 0) > 0 ? "Watched today" : input.watch.coverage === undefined ? `${input.watch.captionLang ?? "Other-language"} captions — listen first, then reveal` : `${input.watch.estimated ? "About " : ""}${Math.round(input.watch.coverage * 100)} of every 100 words known — listen first, then reveal`,
 			minutes: input.watch.minutes,
 			done: (day.watches ?? 0) > 0,
 			href: `/watch?id=${input.watch.id}`,

@@ -359,6 +359,13 @@ Rules:
 - Automatic captions have no punctuation, wrong words, false starts and repeats ("tak, tak", "ktoré to nie sú veci, ktoré to nie sú"): translate what the speaker most likely meant, and say a repeat or false start once.
 - Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
 
+const RENDER_SYSTEM = `You rewrite the lines of a video's subtitles into Slovak, for a language app that measures how much of the video a Slovak learner already knows. The subtitles are in a closely related language (the ask names it). You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one Slovak string per line, in the same order, the same count.
+
+Rules:
+- Say each line the way a Slovak speaker would say it, with the same meaning and as close to the original words as Slovak allows: change a word only where the two languages differ (spelling, endings, vocabulary), and leave a word that is the same in both.
+- Never summarize, add or drop words; a line that stops mid-sentence stays cut, and the lines around it are context only.
+- Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
+
 const QUESTIONS_SYSTEM = `You write comprehension questions in Slovak about a video, for one learner inside a language app. You answer with ONE JSON object and nothing else: {"questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}]}.
 
 Rules:
@@ -395,12 +402,35 @@ async function ask(engine: PiEngine, system: string, prompt: string, usage: Stor
  *  enough that a miscount is cheap to redo. */
 export const TRANSLATE_CHUNK = 40;
 
+/** What a chunked ask wants of the model: the English translation of the
+ *  lines, or (foreign captions) their Slovak rendering. */
+interface ChunkJob {
+	system: string;
+	/** The line before the lines to do, e.g. "Translate these 40 lines, one English string each". */
+	ask: (n: number) => string;
+	/** What the context lines are not asked for. */
+	skip: string;
+}
+const TRANSLATE_JOB: ChunkJob = { system: TRANSLATE_SYSTEM, ask: (n) => `Translate these ${n} lines, one English string each, same order`, skip: "translate" };
+const RENDER_JOB: ChunkJob = { system: RENDER_SYSTEM, ask: (n) => `Rewrite these ${n} lines in Slovak, one string each, same order`, skip: "rewrite" };
+
 export async function translateLines(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, trackLang: string = code()): Promise<string[]> {
-	const out: string[] = [];
 	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not Slovak: translate what is said.` : "";
+	return askInChunks(engine, lines, usage, title, foreign, TRANSLATE_JOB);
+}
+
+/** Foreign captions only: each line said in Slovak, so the known-word share can
+ *  be measured on Slovak words. One line per line; "" for a line the model
+ *  could not count back. */
+export async function renderInLanguage(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, trackLang: string): Promise<string[]> {
+	return askInChunks(engine, lines, usage, title, `These subtitles are in ${captionLanguageName(trackLang)}.`, RENDER_JOB);
+}
+
+async function askInChunks(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, foreign: string, job: ChunkJob): Promise<string[]> {
+	const out: string[] = [];
 	for (let at = 0; at < lines.length; at += TRANSLATE_CHUNK) {
 		const chunk = lines.slice(at, at + TRANSLATE_CHUNK);
-		out.push(...(await translateChunk(engine, chunk, lines.slice(Math.max(0, at - 3), at), lines.slice(at + chunk.length, at + chunk.length + 3), at + 1, lines.length, title, usage, foreign)));
+		out.push(...(await translateChunk(engine, chunk, lines.slice(Math.max(0, at - 3), at), lines.slice(at + chunk.length, at + chunk.length + 3), at + 1, lines.length, title, usage, foreign, job)));
 	}
 	return out;
 }
@@ -408,20 +438,20 @@ export async function translateLines(engine: PiEngine, lines: readonly string[],
 /** One chunk asked for as a whole, then once more. A chunk the model still
  *  miscounts is split in two, and each half is asked on its own with the
  *  lines around it as context: a shorter ask miscounts less often. */
-async function translateChunk(engine: PiEngine, chunk: readonly string[], before: readonly string[], after: readonly string[], from: number, total: number, title: string, usage: StoryUsage, foreign: string): Promise<string[]> {
+async function translateChunk(engine: PiEngine, chunk: readonly string[], before: readonly string[], after: readonly string[], from: number, total: number, title: string, usage: StoryUsage, foreign: string, job: ChunkJob): Promise<string[]> {
 	const prompt = [
 		`Video: "${title}". Lines ${from}–${from + chunk.length - 1} of ${total}.`,
 		foreign,
-		before.length ? `For context, the lines just before (do not translate these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
-		after.length ? `For context, the lines just after (do not translate these):\n${after.map((l) => `  ${l}`).join("\n")}` : "",
-		`Translate these ${chunk.length} lines, one English string each, same order:\n${JSON.stringify(chunk, null, 0)}`,
+		before.length ? `For context, the lines just before (do not ${job.skip} these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
+		after.length ? `For context, the lines just after (do not ${job.skip} these):\n${after.map((l) => `  ${l}`).join("\n")}` : "",
+		`${job.ask(chunk.length)}:\n${JSON.stringify(chunk, null, 0)}`,
 	]
 		.filter(Boolean)
 		.join("\n\n");
 	let lastError: unknown;
 	for (let attempt = 0; attempt < 2; attempt++) {
 		try {
-			return parseTranslations(await ask(engine, TRANSLATE_SYSTEM, attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
+			return parseTranslations(await ask(engine, job.system, attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
 		} catch (err) {
 			lastError = err;
 		}
@@ -435,8 +465,8 @@ async function translateChunk(engine: PiEngine, chunk: readonly string[], before
 		throw failed;
 	}
 	const half = Math.ceil(chunk.length / 2);
-	const first = await translateChunk(engine, chunk.slice(0, half), before, [...chunk.slice(half), ...after].slice(0, 3), from, total, title, usage, foreign);
-	const second = await translateChunk(engine, chunk.slice(half), [...before, ...chunk.slice(0, half)].slice(-3), after, from + half, total, title, usage, foreign);
+	const first = await translateChunk(engine, chunk.slice(0, half), before, [...chunk.slice(half), ...after].slice(0, 3), from, total, title, usage, foreign, job);
+	const second = await translateChunk(engine, chunk.slice(half), [...before, ...chunk.slice(0, half)].slice(-3), after, from + half, total, title, usage, foreign, job);
 	return [...first, ...second];
 }
 
@@ -535,12 +565,29 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		signal.throwIfAborted();
 		const untranslated = en.filter((t) => t === "").length;
 		const segments = glossSegments(lines, en, lexicon, k);
+		// Foreign captions (Czech): the known-word share is measured on a Slovak rendering of the lines,
+		// since Czech spellings would read as unknown words. The lines shown stay as captioned. Without a
+		// usable rendering the share is left out (coverageKind "none") instead of guessed low.
+		let measured = segments;
+		let estimated = false;
+		if (fetched.source.trackLang !== code()) {
+			try {
+				const sk = await renderInLanguage(engine, lines.map((l) => l.sk), usage, fetched.meta.title, fetched.source.trackLang);
+				signal.throwIfAborted();
+				if (sk.filter(Boolean).length >= lines.length * 0.9) {
+					measured = glossSegments(lines.map((l, i) => ({ ...l, sk: sk[i] || l.sk })), en, lexicon, k);
+					estimated = true;
+				}
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") throw err;
+			}
+		}
 		setStage(id, "questions");
 		const questions = opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
 		setStage(id, "saving");
 		const rankOf = (slug: string) => lexicon?.bySlug.get(slug)?.rank;
-		const preTeach = pickPreTeach(segments, undefined, rankOf);
-		const words = segments.flatMap((s) => s.tokens.filter((t) => t.word));
+		const preTeach = pickPreTeach(measured, undefined, rankOf);
+		const words = measured.flatMap((s) => s.tokens.filter((t) => t.word));
 		const record: VideoRecord = {
 			id,
 			lang: code(),
@@ -554,12 +601,13 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			segments,
 			questions,
 			preTeach,
-			coverage: Math.round(videoCoverage(segments) * 1000) / 1000,
+			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
 			wordCount: words.length,
 			unknownCount: new Set(words.filter((t) => t.fresh).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
 			usage,
 			translatedBy: "model",
 			...(untranslated ? { untranslated } : {}),
+			...(estimated ? { coverageEstimated: true } : {}),
 		};
 		signal.throwIfAborted();
 		videoStore.put(record);

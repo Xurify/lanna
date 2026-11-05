@@ -1,6 +1,6 @@
 # Adding a language
 
-Since 5 November 2026 a language is added from the app, not in code. In the sidebar, open the language menu, choose **Add a language…**, pick one, and press **Add**. The work runs in the background: the sidebar's Background section shows each step, and a card says when it is ready, with a button to switch to it.
+Since 5 November 2026 a language is added from the app, not in code. In the sidebar, open the language menu, choose **Add a language…**, pick one, and press **Add**. The work runs in the background: the sidebar's Background section and the Tasks page (`/tasks`) show each step, and a card says when it is ready, with a button to switch to it. The Tasks page keeps the finished add with the same switch or try-again button.
 
 ## What the app builds
 

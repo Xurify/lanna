@@ -34,7 +34,7 @@ export function UnitBadge({
 	const c = 2 * Math.PI * r;
 	const ring = "var(--q-teal)";
 	return (
-		<span className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-pulse-ring")} style={{ width: px, height: px }}>
+		<span className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-here-ring")} style={{ width: px, height: px }}>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
 				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--q-well-2)" strokeWidth={stroke} />
 				<circle
