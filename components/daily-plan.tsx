@@ -184,7 +184,7 @@ const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
 	},
 	blitz: {
 		label: "Speed Blitz",
-		strand: "Fluency",
+		strand: "Speed",
 		description: "Fast-paced 60-second challenge across units you have started to build quick recall.",
 	},
 	words: {
@@ -209,7 +209,7 @@ const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
 	},
 	fluency: {
 		label: "Say It Faster",
-		strand: "Fluency development",
+		strand: "Speed",
 		description: "Paul Nation's 4/3/2 fluency technique: repeat known material faster to build automaticity without hesitation.",
 	},
 };

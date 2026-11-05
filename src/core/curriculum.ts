@@ -54,7 +54,7 @@ export const STAGES: Stage[] = [
 	{ id: "a1", level: "A1", title: "Foundations", blurb: "Introduce yourself, order, ask the way, talk about family and your day." },
 	{ id: "a2", level: "A2", title: "Getting around", blurb: "Shop, make appointments, describe people and plans, tell what happened." },
 	{ id: "b1", level: "B1", title: "Independence", blurb: "Tell stories, give opinions, deal with offices, read simple news." },
-	{ id: "b2", level: "B2", title: "Fluency", blurb: "Argue a point, follow film and news, write a formal email, feel the register." },
+	{ id: "b2", level: "B2", title: "Argument", blurb: "Argue a point, follow film and news, write a formal email, feel the register." },
 ];
 
 // ─── Units ──────────────────────────────────────────────────────────────────
@@ -920,8 +920,8 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const rereadDay = input.reread && input.dayOfYear % 2 === 1;
 	tasks.push(
 		rereadDay
-			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/fluency?mode=reread" }
-			: { id: "fluency", title: "Say it faster", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/fluency?mode=fast" },
+			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=reread" }
+			: { id: "fluency", title: "Say it faster", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=fast" },
 	);
 
 	// Cut to the planned minutes, keeping review and the lesson. A tight

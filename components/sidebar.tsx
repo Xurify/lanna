@@ -137,7 +137,7 @@ export function useSidebar() {
 
 /** The full-screen task pages. They fold the sidebar from the route itself, so
  *  the fold starts on the click, not once the page has rendered and hydrated. */
-const TASK_ROUTES = ["/lesson", "/exam", "/listen", "/speak", "/fluency", "/read", "/watch"];
+const TASK_ROUTES = ["/lesson", "/exam", "/listen", "/speak", "/speed", "/read", "/watch"];
 
 function isTaskRoute(pathname: string | null): boolean {
 	if (!pathname) return false;

@@ -16,7 +16,7 @@ export async function switchLanguage(id: string, english: string, to = "/"): Pro
 /** Pages that mean the same thing in every language. Any other page holds
  *  something of the old language (a chat, a lesson, an exam), so a switch
  *  from it lands on Today. */
-const SAME_IN_EVERY_LANGUAGE = new Set(["/", "/review", "/listen", "/read", "/speak", "/watch", "/words", "/fluency", "/progress", "/milestones", "/mistakes", "/curriculum", "/map", "/tasks", "/log"]);
+const SAME_IN_EVERY_LANGUAGE = new Set(["/", "/review", "/listen", "/read", "/speak", "/watch", "/words", "/speed", "/progress", "/milestones", "/mistakes", "/curriculum", "/map", "/tasks", "/log"]);
 
 export function landingAfterSwitch(pathname: string): string {
 	return SAME_IN_EVERY_LANGUAGE.has(pathname) ? pathname : "/";

@@ -154,9 +154,9 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 	assert.match(spoken.href ?? "", /^\/speak\?scene=[a-z]+$/);
 	// Speed: "say it faster" until an episode has been read on an earlier
 	// day; then a timed re-read on alternate days.
-	assert.equal(plan.tasks[7]!.href, "/fluency?mode=fast");
-	assert.equal(dailyPlan({ ...base, reread: true, dayOfYear: 301, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "fluency")!.href, "/fluency?mode=reread");
-	assert.equal(dailyPlan({ ...base, reread: true, dayOfYear: 302, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "fluency")!.href, "/fluency?mode=fast");
+	assert.equal(plan.tasks[7]!.href, "/speed?mode=fast");
+	assert.equal(dailyPlan({ ...base, reread: true, dayOfYear: 301, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "fluency")!.href, "/speed?mode=reread");
+	assert.equal(dailyPlan({ ...base, reread: true, dayOfYear: 302, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 } }).tasks.find((t) => t.id === "fluency")!.href, "/speed?mode=fast");
 	assert.equal(plan.tasks[2]!.unit, next);
 	assert.equal(plan.tasks[3]!.unit, "acc-fem");
 	assert.equal(plan.done, 0);

@@ -43,7 +43,7 @@ export const NAV: readonly NavGroupDef[] = [
 			{ id: "listen", href: "/listen", label: "Listen", hint: "Ten sentences you can follow" },
 			{ id: "watch", href: "/watch", label: "Watch", hint: "A video with both subtitles" },
 			{ id: "speak", href: "/speak", label: "Speak", hint: "A scene said out loud" },
-			{ id: "fluency", href: "/fluency", label: "Fluency", hint: "Known sentences, said faster" },
+			{ id: "fluency", href: "/speed", label: "Speed", hint: "Known sentences, said faster" },
 		],
 	},
 	{
