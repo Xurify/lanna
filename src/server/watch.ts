@@ -26,6 +26,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { captionLanguageName, LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
@@ -63,9 +64,9 @@ import { enqueueWords } from "./review.ts";
 import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
 const run = promisify(execFile);
-const code = () => LANGUAGES[ACTIVE_PROFILE].code;
+const code = () => activeLanguage().code;
 /** The caption languages taken, the learner's own first. */
-const captionLangs = (): string[] => [code(), ...(LANGUAGES[ACTIVE_PROFILE].captionFallbacks ?? []).map((f) => f.code)];
+const captionLangs = (): string[] => [code(), ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 const ANDROID_VERSION = "20.10.38";
 

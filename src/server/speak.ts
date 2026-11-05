@@ -25,6 +25,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
 import { LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
 import type { PronEngine, PronScore } from "../core/pronounce.ts";
 import type { StoryUsage } from "../core/reading.ts";
@@ -59,8 +60,8 @@ import { pronounceEngine, pronunciationReport, type PronReport } from "./pronoun
 import { resolveWord, storyEngine } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
 
-const code = () => LANGUAGES[ACTIVE_PROFILE].code;
-const tag = () => LANGUAGES[ACTIVE_PROFILE].tag;
+const code = () => activeLanguage().code;
+const tag = () => activeLanguage().tag;
 
 // ─── The prompt ─────────────────────────────────────────────────────────────
 

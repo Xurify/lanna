@@ -20,8 +20,8 @@ let profilePromise: Promise<LanguageInfo> | null = null;
 let knownLanguage: LanguageInfo | null = null;
 
 export function activeLanguage(): Promise<LanguageInfo> {
-	profilePromise ??= sharedJson<{ active?: string }>("/api/profile")
-		.then((p) => (isLanguageId(p.active) ? LANGUAGES[p.active] : LANGUAGES.slovak))
+	profilePromise ??= sharedJson<{ active?: string; language?: LanguageInfo }>("/api/profile")
+		.then((p) => p.language ?? (isLanguageId(p.active) ? LANGUAGES[p.active] : LANGUAGES.slovak))
 		.catch(() => LANGUAGES.slovak)
 		.then((l) => {
 			knownLanguage = l;

@@ -60,14 +60,61 @@ function testDataRoot(): string {
 // at boot (LH_PROFILE env wins, else <data>/profile.json, else slovak);
 // switching profiles restarts the server (POST /api/profile).
 
+/** The profiles that ship with the app. */
 export const LANGUAGE_PROFILES = ["slovak", "russian"] as const;
-export type LanguageProfile = (typeof LANGUAGE_PROFILES)[number];
+/** A built-in profile or one the learner added (<data>/languages/<id>/). */
+export type LanguageProfile = string;
 
 /** Where the active profile choice is stored (a tiny {active} JSON). */
 export const PROFILE_FILE = path.join(BASE_DATA_ROOT, "profile.json");
 
+/** Languages added from the app: <data>/languages/<id>/ holds the words,
+ *  the grammar map and language.json. language.json is written last, so a
+ *  folder without it is an addition still running or one that failed. */
+const LANGUAGES_DIR = path.join(BASE_DATA_ROOT, "languages");
+const PROFILE_ID_RE = /^[a-z][a-z-]{1,31}$/;
+
+/** The ids of the added languages that finished. Read from disk each call:
+ *  a language added while the app runs is listed without a restart. */
+export function addedLanguageIds(): string[] {
+	let names: string[];
+	try {
+		names = fs.readdirSync(LANGUAGES_DIR);
+	} catch {
+		return [];
+	}
+	return names
+		.filter((id) => PROFILE_ID_RE.test(id) && !(LANGUAGE_PROFILES as readonly string[]).includes(id) && fs.existsSync(path.join(LANGUAGES_DIR, id, "language.json")))
+		.sort();
+}
+
+/** An added language's language.json as written, or null. */
+export function readAddedLanguage(id: string): unknown {
+	if (!PROFILE_ID_RE.test(id)) return null;
+	try {
+		return JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, id, "language.json"), "utf-8"));
+	} catch {
+		return null;
+	}
+}
+
+/** Every profile the learner can switch to: built-in first, then added. */
+export function languageProfiles(): string[] {
+	return [...LANGUAGE_PROFILES, ...addedLanguageIds()];
+}
+
 export function isLanguageProfile(v: unknown): v is LanguageProfile {
-	return typeof v === "string" && (LANGUAGE_PROFILES as readonly string[]).includes(v);
+	return typeof v === "string" && languageProfiles().includes(v);
+}
+
+/** A language's data file: the copy the app ships (curriculum/<id>/) when
+ *  there is one, else the one built when the learner added it. Russian is
+ *  built in but ships no words, so its lexicon can come from either. */
+export function curriculumFile(profile: string, name: string): string {
+	const shipped = path.join(ROOT, "curriculum", profile, name);
+	if (fs.existsSync(shipped)) return shipped;
+	const added = path.join(LANGUAGES_DIR, profile, name);
+	return fs.existsSync(added) ? added : shipped;
 }
 
 // `next dev` evaluates this module again for each route it compiles, and
@@ -108,6 +155,8 @@ export const PATHS = {
 	data: DATA_ROOT,
 	/** The read-only curriculum assets (seed graph, lexicon) per language. */
 	curriculum: path.join(ROOT, "curriculum"),
+	/** Languages added from the app, shared by every profile. */
+	languages: LANGUAGES_DIR,
 	/** Every spoken clip, paid for once and kept for good (LangHarness
 	 *  corpus, 2026-10-27): <data>/audio/<lang>/<voice>/<slug>-<key>.mp3
 	 *  plus audio/index.jsonl (text, voice, tier, date per clip). Shared

@@ -10,6 +10,7 @@
 
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { chatStore } from "../store/chats.ts";
 import { countWhyReuse, findWhy, forgetWhy, rememberWhy, whyKey } from "../store/corpus.ts";
 import { readSettings } from "../store/settings.ts";
@@ -30,7 +31,7 @@ export interface WhyOutcome {
 }
 
 export function openWhy(req: WhyRequest, now = new Date()): WhyOutcome {
-	const lang = LANGUAGES[ACTIVE_PROFILE].code;
+	const lang = activeLanguage().code;
 	const key = whyKey(lang, req.sentence, req.answer);
 	const known = findWhy(key);
 	if (known) {

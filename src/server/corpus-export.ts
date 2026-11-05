@@ -13,6 +13,7 @@ import path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 import type { ChatRecord } from "../core/contracts.ts";
 import { LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { userFacingTextOf, failedOutputCallIds } from "../core/native-messages.ts";
 import { chatStore } from "../store/chats.ts";
 import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEntry } from "../store/corpus.ts";
@@ -291,7 +292,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	const summary: CorpusSummary = {
 		exportedAt: now.toISOString(),
 		profile: ACTIVE_PROFILE,
-		language: LANGUAGES[ACTIVE_PROFILE].code,
+		language: activeLanguage().code,
 		counts: {
 			audioClips: audio.length,
 			lessons: lessons.length,

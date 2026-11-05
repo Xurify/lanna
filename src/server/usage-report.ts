@@ -206,6 +206,28 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(e.startedAt, usd);
 		}
 	}
+	// Grammar maps drafted while adding a language: one call each, kept
+	// beside the language's build steps (shared by every profile).
+	let languagesUsd = 0;
+	let languagesUnpriced = 0;
+	let languagesCount = 0;
+	for (const name of safeReaddir(PATHS.languages)) {
+		type Draft = { usage?: Pick<TurnUsage, "model" | "steps">; createdAt?: string } | null;
+		let draft: Draft;
+		try {
+			draft = JSON.parse(fs.readFileSync(path.join(PATHS.languages, name, "build", "seed-draft.json"), "utf-8")) as Draft;
+		} catch {
+			continue;
+		}
+		if (!draft?.usage) continue;
+		languagesCount++;
+		const usd = safeTurnCost(draft.usage);
+		if (usd === null) languagesUnpriced++;
+		else {
+			languagesUsd += usd;
+			if (draft.createdAt) addMonth(draft.createdAt, usd);
+		}
+	}
 	const clips = listAudioClips();
 	const byTier: Record<string, number> = {};
 	let bytes = 0;
@@ -218,7 +240,7 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd),
+		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + languagesUsd),
 		turnsUsd: round(turnsUsd),
 		extractionUsd: round(extractionUsd),
 		jobsUsd: round(jobsUsd),
@@ -230,6 +252,8 @@ export function usageReport(now = new Date()): UsageReport {
 		videos: { count: videoIndex.length, unpriced: videosUnpriced },
 		placementUsd: round(placementUsd),
 		placement: { count: placementIndex.length, unpriced: placementUnpriced },
+		languagesUsd: round(languagesUsd),
+		languages: { count: languagesCount, unpriced: languagesUnpriced },
 		unpricedTurns,
 		byMonth: [...months.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([month, m]) => ({ month, usd: round(m.usd), turns: m.turns })),
 		byMode: [...byModeMap.entries()].sort(([, a], [, b]) => b.usd - a.usd).map(([mode, m]) => ({ mode, ...m, usd: round(m.usd) })),
@@ -237,6 +261,14 @@ export function usageReport(now = new Date()): UsageReport {
 		audio: { clips: clips.length, bytes, byTier, elevenLabsCharacters },
 		tokens,
 	};
+}
+
+function safeReaddir(dir: string): string[] {
+	try {
+		return fs.readdirSync(dir);
+	} catch {
+		return [];
+	}
 }
 
 function safeTurnCost(turn: Pick<TurnUsage, "model" | "steps">): number | null {

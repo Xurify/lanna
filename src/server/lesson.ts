@@ -33,6 +33,7 @@ import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from
 import type { UnitKind } from "../core/lesson.ts";
 import { weakestGender, type AtlasGender } from "../core/grammar.ts";
 import { isLanguageId, LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
 import {
 	CEFR_ORDER,
@@ -325,7 +326,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	return { ...outcome, ...(newStamps.length ? { newStamps } : {}), summary };
 }
 
-const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
+const tag = () => activeLanguage().tag;
 
 /** A rep's first try, located from the lexicon here: the word's entry, and
  *  the try it counts as (null when it counts toward nothing). The slip and

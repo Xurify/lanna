@@ -1,164 +1,50 @@
-# Adding a New Language to LangHarness
+# Adding a language
 
-LangHarness is designed with a fully modular, decoupled multi-language architecture. Each target language maintains isolated learning records, FSRS spaced repetition decks, knowledge graph ledgers, and conversation histories under `<data>/profiles/<language>/`.
+Since 5 November 2026 a language is added from the app, not in code. In the sidebar, open the language menu, choose **Add a language…**, pick one, and press **Add**. The work runs in the background: the sidebar's Background section shows each step, and a card says when it is ready, with a button to switch to it.
 
-Adding a new language is deterministic, fast, and token-efficient. This guide details the architecture, schemas, and a 5-step checklist for learners, developers, and AI agents.
+## What the app builds
 
----
+Everything lands in `<data>/languages/<id>/`, shared by every profile. The steps, in order, each kept under `build/` so a failed or stopped add continues where it ended:
 
-## 1. Multi-Language Architecture Overview
+| Step | Source | Kept in |
+|---|---|---|
+| Example sentences with English translations | Tatoeba per-language exports (CC BY 2.0 FR), bzip2 | `build/sentences.json` |
+| Which words are common | FrequencyWords, OpenSubtitles 2018 (CC BY-SA 4.0); for Irish and Welsh, which it lacks, counts from the Tatoeba sentences | `build/frequency.json` |
+| Words, glosses, gender, inflected forms | Wiktionary as extracted by kaikki.org (CC BY-SA 4.0), streamed with gzip and filtered line by line | `build/words.json` |
+| The word list (about 3,000 lemmas, commonest first, each with up to five sentences blanked at a form) | the three above | `lexicon.json` |
+| The tutor's language segment | a template, no model | `prompt.md` |
+| A grammar map for the skill map | one Cheap-slot call, only when a model is set; checked before it is kept | `seed.json`, cost in `build/seed-draft.json` |
+| The language itself (tag, names, voices, letters) | the catalog in `src/core/language.ts` | `language.json`, written last |
 
-- **Zero-Shift Scalable UI**: The language switcher in the sidebar uses an anchored dropdown menu (`MenuShell`) and a centered modal confirmation dialog (`SwitchConfirmDialog`). Switching languages restarts the backend server in the selected profile without disturbing or shifting the main navigation (`Today`, `Plan`, `Review`, `Skill map`, `Words`).
-- **Profile Data Isolation**: All learner data (chats, cards, SRS intervals, graph nodes) is isolated in `<data>/profiles/<language>/`. Slovak and new languages never mix data.
-- **Universal Diacritic Folding & Slip Detection**: `foldDiacritics(text)` uses Unicode NFD canonical decomposition (`\p{M}+` stripping) and NFKC normalization. It works out-of-the-box across Latin, Cyrillic, Greek, and other accented scripts.
-- **Backwards-Compatible Schema**: Lexicon entries support both `lemma` and `text` (generic) alongside backwards-compatible legacy aliases (`sk`).
-- **Graceful Asset Fallback**: If a newly added language doesn't have curated sound pairs or scene scripts yet, the system returns empty safe fallbacks without throwing errors.
+`language.json` is what makes the language appear in the menu, so a half-built folder is never offered as a profile. Measured on 5 November 2026: Czech took 12 seconds (2,823 of 3,000 words with sentences), Russian 29 seconds (2,972 of 3,000); peak memory of the process was about 550 MB for Russian.
 
----
+## The rules for words
 
-## 2. The 5-Step Checklist to Add a Language
+The rules are in `src/core/language-build.ts` and pinned by `tests/language-add.test.ts`:
 
-```mermaid
-flowchart LR
-    A["1. Core Metadata\n(src/core/language.ts)"] --> B["2. Enable Profile\n(config.ts)"]
-    B --> C["3. Lexicon Vocabulary\n(curriculum/<lang>/lexicon.json)"]
-    C --> D["4. Agent Prompts\n(prompts/language/10-<lang>.md)"]
-    D --> E["5. Verify & Test\n(tests/multi-language.test.ts)"]
-```
+- Sentences come only from Tatoeba (E27). A model never writes one.
+- A form is blanked only when one word owns it. When several do, the word whose dictionary form it is wins ("prosím" is "please" before it is a form of prosit), and the commoner one when two share that spelling. This is the homograph guard of E28.
+- Forms come from Wiktionary's inflection tables only. Dated and pre-reform forms (кошкѣ), romanizations, rare forms and related words (diminutives, aspect partners) are left out.
+- Entries that do not inflect and share a spelling ("co" as pronoun, conjunction and particle) become one row. A noun, verb or adjective that shares its spelling with a common word ranks by its own other forms ("jak", the yak, does not ride on "jak", how).
+- Letter names ("the name of the Cyrillic letter Я") and proper names are not words.
 
-### Step 1: Register Language Metadata in `src/core/language.ts`
+## Which languages
 
-In `src/core/language.ts`, update `LanguageId` and add the language configuration to `LANGUAGES`.
+The catalog is `LANGUAGE_CATALOG` in `src/core/language.ts`: 32 languages, each with its Tatoeba code, its kaikki.org name, its FrequencyWords code and two Edge voices. All four sources were checked to exist on 5 November 2026. To add one to the catalog, add a row and check the same four things.
 
-> [!TIP]
-> LangHarness exports pre-configured `LANGUAGE_PRESETS` for **Czech (`czech`)**, **Romanian (`romanian`)**, **German (`german`)**, and **Spanish (`spanish`)**. You can simply copy a preset into `LANGUAGES`.
+Russian is in the catalog although its profile is built in: the profile has its prompt but ships no words, so adding it downloads them into `<data>/languages/russian/`.
 
-```typescript
-export type LanguageId = "slovak" | "russian" | "czech"; // add new id
+## What works in an added language
 
-export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
-  // ... existing languages ...
-  czech: {
-    id: "czech",
-    tag: "cs-CZ",          // BCP-47 tag for TTS and browser SpeechSynthesis
-    code: "cs",           // ISO 639-1 code
-    endonym: "Čeština",   // Native endonym displayed in the UI
-    english: "Czech",     // English name
-    specialLetters: ["á", "č", "ď", "é", "ě", "í", "ň", "ó", "ř", "š", "ť", "ú", "ů", "ý", "ž"],
-    edgeVoices: ["cs-CZ-VlastaNeural", "cs-CZ-AntoninNeural"], // Microsoft Edge TTS neural voices
-    referenceSite: {
-      label: "Wiktionary",
-      baseUrl: "https://cs.wiktionary.org",
-    },
-  },
-};
-```
+- Review, Words and the tutor work: they read the lexicon and the language segment.
+- Lessons and the curriculum path are built for Slovak (`src/core/lesson.ts`).
+- Read, Watch, Speak, the placement check and the custom milestones still have Slovak written into their model prompts, so they produce Slovak. Making them follow the active language is the next step.
 
-### Step 2: Enable the Profile in `config.ts`
+## Where the code is
 
-In `config.ts`, add the language ID to `LANGUAGE_PROFILES`:
-
-```typescript
-export const LANGUAGE_PROFILES = ["slovak", "russian", "czech"] as const;
-```
-
-*(Note: `tests/langharness.test.ts` pins `LANGUAGE_PROFILES` in `config.ts` and `LANGUAGE_IDS` in `src/core/language.ts` to ensure exact parity.)*
-
-### Step 3: Create Curriculum Lexicon in `curriculum/<lang>/lexicon.json`
-
-Create the folder `curriculum/<lang>/` and add `lexicon.json`.
-
-Each entry in the lexicon array must follow this JSON schema:
-
-```json
-[
-  {
-    "slug": "dekuji",
-    "lemma": "děkuji",
-    "pos": "verb",
-    "en": "thank you; I thank",
-    "examples": [
-      {
-        "text": "Děkuji moc za pomoc.",
-        "en": "Thank you very much for the help.",
-        "cloze": {
-          "answer": "Děkuji",
-          "at": 0
-        }
-      }
-    ]
-  },
-  {
-    "slug": "kava",
-    "lemma": "káva",
-    "pos": "noun",
-    "en": "coffee",
-    "gender": "f",
-    "declension": {
-      "nom": "káva",
-      "gen": "kávy",
-      "dat": "kávě",
-      "acc": "kávu",
-      "loc": "kávě",
-      "ins": "kávou"
-    },
-    "examples": [
-      {
-        "text": "Mám rád černou kávu.",
-        "en": "I like black coffee.",
-        "cloze": {
-          "answer": "kávu",
-          "at": 15
-        }
-      }
-    ]
-  }
-]
-```
-
-#### Cloze Validation Rules
-- `cloze.answer`: Must match the exact inflected form as it appears inside `text`.
-- `cloze.at`: The 0-based character index where `cloze.answer` starts in `text` (`text.slice(at, at + answer.length) === answer`).
-
-### Step 4: (Optional) Add Teaching Prompts in `prompts/language/`
-
-If you want custom agent instructions for how the AI teacher introduces grammar, explains phonology, or guides drills for this language, create:
-
-`prompts/language/10-<language>.md`
-
-Example for Czech (`prompts/language/10-czech.md`):
-```markdown
-# Czech Language Instructions
-
-- Target language is Czech (čeština).
-- Pay close attention to vocalic r/l, ř pronunciation, and vowel length (čárka / kroužek).
-- In explanations, always provide English glosses alongside Czech sentences.
-- When correcting diacritic slips (e.g. e vs ě, u vs ů/ú), point out the grammatical significance.
-```
-
-### Step 5: Verify & Run the Test Suite
-
-Run the multi-language test suite:
-
-```bash
-npm test tests/multi-language.test.ts
-npm test tests/langharness.test.ts
-```
-
-All 42+ unit tests will verify:
-1. `LANGUAGE_PROFILES` and `LANGUAGE_IDS` matching.
-2. Diacritic folding and slip detection.
-3. Lexicon loading and cloze card minting.
-4. Clean UI mounting and server restart endpoints.
-
----
-
-## 3. Ready-To-Use Presets in `src/core/language.ts`
-
-LangHarness already contains pre-configured presets in `LANGUAGE_PRESETS`:
-- **`czech`**: `cs-CZ`, `cs-CZ-VlastaNeural` / `AntoninNeural`, Czech diacritics including `ř`, `ě`, `ů`.
-- **`romanian`**: `ro-RO`, `ro-RO-AlinaNeural` / `EmilNeural`, Romanian diacritics `ă`, `â`, `î`, `ș`, `ț`, DEXonline reference.
-- **`german`**: `de-DE`, `de-DE-KatjaNeural` / `ConradNeural`, German umlauts `ä`, `ö`, `ü`, `ß`.
-- **`spanish`**: `es-ES`, `es-ES-ElviraNeural` / `AlvaroNeural`, Spanish inverted punctuation `¿`, `¡`, and `ñ`.
-
-To activate any of them, copy from `LANGUAGE_PRESETS` to `LANGUAGES` and add the key to `LANGUAGE_PROFILES`.
+- `src/core/language.ts`: the built-in languages, the catalog, and the run-time registry for added ones.
+- `config.ts`: `languageProfiles()` lists built-in and added profiles; `curriculumFile(profile, name)` finds a language's file, the shipped copy first.
+- `src/server/active-language.ts`: which language the running profile is.
+- `src/server/language-add.ts`: the background task.
+- `app/api/languages/route.ts`: the catalog and the start.
+- `components/add-language-dialog.tsx`, `components/task-notice.tsx`, `components/activity-dock.tsx`: the dialog, the ready card, the Background row.

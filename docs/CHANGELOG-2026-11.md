@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: add a language from the app (branch `feat/add-language-button`, E43)
+
+- **What changed for the learner:** the language menu's "Add a language…" opened a page of developer steps (edit two source files, write a lexicon by hand) and named an `add-language` skill that did not exist. It now opens a list of 32 languages. Picking one starts a background task that shows in the sidebar's Background section with its step, and ends in a card with "Switch to <language>", or with why it failed and "Try again", which continues where it stopped.
+- **What it builds:** Tatoeba sentences, a frequency list and Wiktionary entries, streamed and filtered into `data/languages/<id>/`: about 3,000 words, up to five blanked sentences each, a tutor segment from a template, and a grammar map from one Cheap-slot call when a model is set (counted in Settings → Spending). Measured: Czech 12 s, 2,823 of 3,000 words with sentences; Russian 29 s, 2,972 of 3,000.
+- **Also fixed:** Russian's dictionary link pointed at `ru.wiktionary.org/dictionary/<slug>`, a page that does not exist; a reference site can now name its per-word page.
+- **Unverified:** the dialog, the Background row and the card in the live app and the Electron window (checked by unit tests and the end-to-end task on a fake network; the real downloads were run from a script into a scratch folder); the grammar map from a real model (only a scripted one); Review and Words on an added language in the live app.
+
 ## 5 November: Watch prepares videos in the background (branch `fix/watch-known-grammar-words`)
 
 - **Background tasks:** preparing or regenerating a video no longer holds the page. The shelf comes back at once with the video listed as running; the sidebar's Background section lists it with its step and a stop button; when it ends, a card (any page) says "Video ready" with Open, or why it failed. The card stays until dismissed. `src/server/tasks.ts` is the registry (in memory, so a restart drops the list, not the saved videos); the next AI jobs (stories, lessons) can register the same way.

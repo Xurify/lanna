@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, PenToolIcon, PlayIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
+import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, PlayIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
 import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
 import { formatTokens, planCostLabel } from "@/components/usage-format";
@@ -70,7 +70,7 @@ export interface FeedExtraction {
  *  are the ready notice (components/task-notice.tsx). */
 export interface FeedTask {
 	id: string;
-	kind: "video";
+	kind: "video" | "language";
 	title: string;
 	step: string;
 	status: "running" | "done" | "error";
@@ -79,6 +79,8 @@ export interface FeedTask {
 	href?: string;
 	error?: string;
 	retry?: { label: string; url: string; transcribe: boolean };
+	language?: { id: string; english: string };
+	note?: string;
 }
 
 export interface ActivityFeed {
@@ -185,6 +187,8 @@ export interface ActivityBlob {
 	 *  chunk jobs — unique per row, per-chunk jobs owner 2026-09-28). */
 	id: string;
 	process: "job" | "extraction" | "task";
+	/** What a background task does (tasks only). */
+	taskKind?: FeedTask["kind"];
 	/** Sub-agent kind for jobs (extraction blobs have none). */
 	jobKind?: JobKind;
 	/** Extraction phase (extracting/auditing/merging/embedding); jobs carry none. */
@@ -270,7 +274,7 @@ export function toBlobs(feed: ActivityFeed): ActivityBlob[] {
 	}
 	for (const task of feed.tasks) {
 		if (task.status !== "running") continue;
-		blobs.push({ id: task.id, process: "task", title: task.title, chatId: "", startedAt: task.startedAt, cost: null, context: null, activity: task.step });
+		blobs.push({ id: task.id, process: "task", taskKind: task.kind, title: task.title, chatId: "", startedAt: task.startedAt, cost: null, context: null, activity: task.step });
 	}
 	blobs.sort((a, b) => a.startedAt - b.startedAt);
 	return blobs;
@@ -409,10 +413,12 @@ function ActivityBlobRow({
 	abortState: AbortState | undefined;
 	onAbort: () => void;
 }) {
-	const Icon = blob.process === "task" ? ClapperboardIcon : blob.process === "extraction" ? WaypointsIcon : (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
+	const Icon = blob.process === "task" ? (blob.taskKind === "language" ? GlobeIcon : ClapperboardIcon) : blob.process === "extraction" ? WaypointsIcon : (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
 	const label =
 		blob.process === "task"
-			? "Video preparation"
+			? blob.taskKind === "language"
+				? "Adding a language"
+				: "Video preparation"
 			: blob.process === "extraction"
 				? `Extraction — ${blob.phase ?? "running"}`
 				: blob.jobKind === "research"

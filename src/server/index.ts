@@ -51,6 +51,7 @@ export { sessionCost } from "./pricing.ts";
 // LangHarness: language profiles + curriculum seeding, speech synthesis,
 // spaced review, and the lexicon lookup the review page and tutor share.
 export * from "./language.ts";
+export { languageCatalog, startLanguageAdd, type CatalogRow } from "./language-add.ts";
 export * from "./reset.ts";
 export * from "./storage.ts";
 export * from "./tts.ts";

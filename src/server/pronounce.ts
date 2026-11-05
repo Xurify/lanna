@@ -15,6 +15,7 @@
 
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { matchScore, parseAzure, pronReport, type AzureResult, type PronEngine, type PronReport, type PronScore } from "../core/pronounce.ts";
 
 export type { PronReport };
@@ -78,7 +79,7 @@ export async function assess(input: AssessInput): Promise<PronScore | null> {
 	if (!engine) throw new Error("No way to score pronunciation: add an Azure Speech key (sound by sound) or a speech-to-text key in Settings → API keys.");
 	if (input.audio.byteLength === 0) return null;
 	if (scripted()) return scriptedScore(input.reference || input.heard || "", input.heard);
-	const lang = input.lang ?? LANGUAGES[ACTIVE_PROFILE].code;
+	const lang = input.lang ?? activeLanguage().code;
 	if (engine === "azure") {
 		const score = await assessAzure(input.audio, input.reference, LOCALE[lang] ?? `${lang}-${lang.toUpperCase()}`);
 		if (score) return score;

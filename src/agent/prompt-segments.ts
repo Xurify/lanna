@@ -29,7 +29,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, PATHS, PROMPTS_OVERRIDE_DIR } from "../../config.ts";
+import { ACTIVE_PROFILE, PATHS, PROMPTS_OVERRIDE_DIR, curriculumFile } from "../../config.ts";
 import { FRAGMENT_RE, isValidSegmentPath, type PromptAgent, type PromptSegmentInfo } from "../core/prompt-segments.ts";
 
 const PROMPTS_DIR = path.join(PATHS.root, "src", "agent", "prompts");
@@ -92,6 +92,11 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
 			.filter((f) => FRAGMENT_RE.test(f) && f.replace(/^\d+-/, "").replace(/\.md$/, "") === ACTIVE_PROFILE)
 			.sort();
 		for (const f of own) segments.push({ path: `language/${f}`, shared: true, file: path.join(languageDir, f) });
+	}
+	// A language added from the app keeps its doctrine beside its words.
+	const added = curriculumFile(ACTIVE_PROFILE, "prompt.md");
+	if (!segments.some((s) => s.path.startsWith("language/")) && fs.existsSync(added)) {
+		segments.push({ path: `language/10-${ACTIVE_PROFILE}.md`, shared: true, file: added });
 	}
 	const sharedDir = path.join(PROMPTS_DIR, "shared");
 	if (fs.existsSync(sharedDir)) {

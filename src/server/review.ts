@@ -8,6 +8,7 @@
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm } from "../core/lesson.ts";
 import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
@@ -18,7 +19,7 @@ import { firstTryOf, recordFirstTry } from "../core/first-try.ts";
 import { noteReviewMixup } from "./mixups.ts";
 
 const DAY_MS = 86_400_000;
-const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
+const tag = () => activeLanguage().tag;
 
 let ordered: { profile: string; list: LexiconEntry[] } | null = null;
 function orderedLexicon(): LexiconEntry[] {

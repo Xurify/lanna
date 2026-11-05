@@ -33,6 +33,7 @@ import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { curriculumState, CHAPTERS, STAGES, type Cefr } from "../core/curriculum.ts";
 import { foldDiacritics, LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { UNITS } from "../core/lesson.ts";
 import { purposeInfo, type Purpose } from "../core/onboarding.ts";
 import {
@@ -81,8 +82,8 @@ import { loadWorld, type World } from "./world.ts";
 
 export const STORY_SERIES = "robo";
 
-const tag = () => LANGUAGES[ACTIVE_PROFILE].tag;
-const code = () => LANGUAGES[ACTIVE_PROFILE].code;
+const tag = () => activeLanguage().tag;
+const code = () => activeLanguage().code;
 
 // ─── What the learner knows ─────────────────────────────────────────────────
 

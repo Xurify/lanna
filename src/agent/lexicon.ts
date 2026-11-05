@@ -11,8 +11,8 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
-import { foldDiacritics, LANGUAGES, type LanguageId } from "../core/language.ts";
+import { ACTIVE_PROFILE, curriculumFile, readAddedLanguage } from "../../config.ts";
+import { foldDiacritics, languageById, parseLanguageInfo } from "../core/language.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import type { SlovakLookup } from "../core/slovak-check.ts";
 
@@ -30,7 +30,12 @@ export interface Lexicon {
 const cache = new Map<string, Lexicon | null>();
 
 export function lexiconPath(profile: string = ACTIVE_PROFILE): string {
-	return path.join(PATHS.curriculum, profile, "lexicon.json");
+	return curriculumFile(profile, "lexicon.json");
+}
+
+/** The profile's BCP-47 tag, for lowercasing words the way the language does. */
+function tagOf(profile: string): string {
+	return languageById(profile)?.tag ?? parseLanguageInfo(readAddedLanguage(profile))?.tag ?? "sk-SK";
 }
 
 function push(map: Map<string, LexiconEntry[]>, key: string, entry: LexiconEntry) {
@@ -50,7 +55,7 @@ export function loadLexicon(profile: string = ACTIVE_PROFILE): Lexicon | null {
 			source?: string;
 			license?: string;
 		};
-		const tag = LANGUAGES[profile as LanguageId]?.tag ?? "sk-SK";
+		const tag = tagOf(profile);
 		const bySlug = new Map<string, LexiconEntry>();
 		const byForm = new Map<string, LexiconEntry[]>();
 		const byFolded = new Map<string, LexiconEntry[]>();
@@ -92,7 +97,7 @@ export interface LookupResult {
  *  letters without diacritics, then an English gloss word. */
 export function lookupWord(query: string, profile: string = ACTIVE_PROFILE, limit = 5): LookupResult {
 	const lexicon = loadLexicon(profile);
-	const tag = LANGUAGES[profile as LanguageId]?.tag ?? "sk-SK";
+	const tag = tagOf(profile);
 	const q = query.trim().toLocaleLowerCase(tag);
 	if (!lexicon || !q) return { query, match: "none", entries: [] };
 	const exact = lexicon.byForm.get(q);

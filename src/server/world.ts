@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+import { ACTIVE_PROFILE, curriculumFile } from "../../config.ts";
 
 export interface WorldPerson {
 	id: string;
@@ -40,7 +40,7 @@ export interface World {
 const cache = new Map<string, World | null>();
 
 export function worldPath(profile: string = ACTIVE_PROFILE): string {
-	return path.join(PATHS.curriculum, profile, "world.json");
+	return curriculumFile(profile, "world.json");
 }
 
 /** The active profile's story bible, or null when the language has none. */

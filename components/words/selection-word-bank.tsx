@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fitPopoverTop, POPOVER_EDGE, POPOVER_GAP } from "@/components/words/popover-fit";
+import { referenceLink } from "@/src/core";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode, type WordTranslationMode } from "@/components/settings/device-prefs";
 
@@ -552,9 +553,7 @@ export function SelectionWordBankBar() {
 	const referenceUrl =
 		lookup?.referenceUrl ??
 		(referenceSite
-			? selection.isSingleWord && lookup?.slug
-				? `${referenceSite.baseUrl}/dictionary/${encodeURIComponent(lookup.slug)}`
-				: `${referenceSite.baseUrl}/search?q=${encodedWord}`
+			? referenceLink(referenceSite, { slug: selection.isSingleWord ? lookup?.slug : undefined, lemma: lookup?.lemma ?? selection.text, query: selection.text })
 			: undefined);
 	const referenceLabel = lookup?.referenceLabel ?? referenceSite?.label;
 

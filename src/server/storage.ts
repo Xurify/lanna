@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 import { LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { STORAGE_AREAS, type StorageArea, type StorageReport } from "../core/storage.ts";
 import { BACKUPS_DIR } from "./reset.ts";
 
@@ -44,5 +45,5 @@ export async function storageReport(): Promise<StorageReport> {
 	const paths: Record<StorageArea["id"], string> = { clips: PATHS.audio, progress: PATHS.data, backups: BACKUPS_DIR };
 	const areas: StorageArea[] = [];
 	for (const { id, label } of STORAGE_AREAS) areas.push({ id, label, path: paths[id], ...(await measureTree(paths[id])) });
-	return { language: LANGUAGES[ACTIVE_PROFILE].english, areas };
+	return { language: activeLanguage().english, areas };
 }
