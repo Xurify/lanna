@@ -256,6 +256,18 @@ everything the app made of its captions, paid for once.
   YouTube served it, so the lines can be cut again without fetching.
 - \`index.jsonl\`: one line per video (id, title, channel, length, level,
   date, coverage, word count, line count, pre-teach words, source, model).
+- \`discover/\`: the picks on the Watch page. \`creators.json\` (the saved
+  channels: \`id\`, \`name\`, \`handle\`, \`addedAt\`, \`from\`; and the
+  settings, \`keepReady\`); \`scans.json\` (every video checked for a pick:
+  its caption tracks, \`spoken\` = whether it is spoken in the language,
+  \`skip\` = why it is not offered, \`coverage\` with the level it was measured
+  at, \`sources\`); \`text/<id>.<lang>.txt\` (the caption lines of a checked
+  video, so the known-word share can be measured again as you learn);
+  \`youtube.json\` (what was read from your YouTube account or a Takeout
+  export: the videos of your history and recommendations and your
+  subscriptions, with when each was read; no password, cookie or token);
+  \`searches.json\` (the searches the cheap model wrote from your interests,
+  with what they cost); \`dismissed.json\` (videos you said are not for you).
 - \`sentences.jsonl\`: one line per model verdict on a sentence written at the end of a video: \`videoId\`, \`lemma\`, \`sentence\`, \`ok\`, \`corrected\`, \`why\`, \`model\`, \`at\`. A program's refusal is not kept.
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
   \`ms\` (the wall-clock time since the start), \`activeMs\` (the playing

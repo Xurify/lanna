@@ -100,6 +100,13 @@ declare global {
 			};
 			/** Settings → Appearance: the installed font families, read by the main process. */
 			fonts?: { list: () => Promise<string[]> };
+			/** Watch → picks: YouTube signed in through the app's own session (electron/youtube.cjs). */
+			youtube?: {
+				status: () => Promise<{ available: boolean; connected: boolean }>;
+				connect: () => Promise<{ available: boolean; connected: boolean }>;
+				read: (list: "history" | "recommended" | "subscriptions") => Promise<{ signedIn: boolean; html?: string }>;
+				disconnect: () => Promise<{ available: boolean; connected: boolean }>;
+			};
 		};
 	}
 }

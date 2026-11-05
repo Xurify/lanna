@@ -53,6 +53,7 @@ const { desktopAPIHeaders } = require("./desktop-api.cjs");
 const { openWebSubscriptionBrowser } = require("./web-subscription-browser.cjs");
 const { registerStorageIPC } = require("./storage-ipc.cjs");
 const { registerFontsIPC } = require("./fonts-ipc.cjs");
+const { createYouTube, registerYouTubeIPC } = require("./youtube.cjs");
 const { randomBytes } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
@@ -786,6 +787,14 @@ async function main() {
 	// here because the renderer's queryLocalFonts is empty in Electron 44 (electron/fonts-ipc.cjs).
 	registerFontsIPC(ipcMain, {
 		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
+	});
+
+	// Watch → picks: the learner's YouTube history, recommendations and
+	// subscriptions, read through a signed-in session of its own (electron/youtube.cjs).
+	registerYouTubeIPC(ipcMain, {
+		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
+		youtube: createYouTube({ session, BrowserWindow, userAgent: app.userAgentFallback }),
+		BrowserWindow,
 	});
 
 	// Sidebar-at-narrow-window (owner, 2026-09-17): the renderer auto-closes

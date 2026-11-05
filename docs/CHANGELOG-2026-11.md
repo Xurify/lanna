@@ -2,6 +2,19 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: picks for Watch from saved creators and your YouTube (branch `feat/watch-creators`)
+
+- **Why:** the owner asked to connect their YouTube account, pick or find videos from the history and recommendations, and save creators so adding videos is "easier or more automatic". Research and the live trial: [research/watch-picks.md](research/watch-picks.md); rule E50.
+- **Picked for you** on the Watch page: videos from saved creators, your YouTube and searches, ranked by how much of each you know (measured on the captions, locally). Prepare, or dismiss for good. When none is at your level, the page says so.
+- **Creators:** saved from a channel link, an @handle or a video; their newest uploads come from YouTube's feed. Channels in the language found in your YouTube are suggested, the ones you subscribe to first.
+- **Your YouTube:** in the desktop app, a Google sign-in window with its own session reads the history, the recommendations and the subscriptions (`electron/youtube.cjs`); only the lists are kept. In the browser, a Takeout export does the same for history and subscriptions.
+- **Checked before offered:** spoken in the language (the automatic track, then the original title; translated subtitle sets do not count), speech density (cooking videos captioned only with on-screen text are left out of suggestions), the known-word share. A video is fetched once; its share is measured again as you learn.
+- **Searches:** with an AI key, six searches in the language from your interests, written once on the cheap slot and kept with their cost.
+- **Keep one ready** (on, needs an AI key): when no video waits, the best pick you can follow is prepared in the background, so Today's plan has a Watch task.
+- **Tests:** `tests/discover.test.ts` (parsing, the spoken-language rule, ranking, the refresh end to end against a scripted YouTube) and `tests/desktop-youtube.test.ts` (the sign-in window's hosts and the IPC). Full suite: 1,902 passed, 0 failed.
+- **Verified on the PC:** the feed, search, handle and player reads against live YouTube; 23 videos from two Slovak creators checked in 12 seconds; the Watch page at 1280 and 390 px; the Electron session fetch, and Google's sign-in page loading in the window.
+- **Unverified:** signing in with the owner's Google account (Google may refuse a window it does not recognize as a browser; then use Takeout), reading the signed-in history, home and channels pages (their page shapes are parsed generically, but were not seen signed in), a real Takeout export, and Keep one ready spending on the cheap slot.
+
 ## 5 November: one plan for every language, and switching with no restart (branch `feat/unified-daily-plan`)
 
 - **Why:** the owner studies Russian (the main motivation: friends and family), Slovak (a trip within two months, then series and YouTubers) and Estonian (B1), and wanted one daily plan across all of them, with switching that does not restart the app.

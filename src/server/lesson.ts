@@ -488,6 +488,16 @@ function pendingWatch(day: string): { id: string; title: string; minutes: number
 		const todays = watches.filter((w) => w.day === day).at(-1);
 		const watched = new Set(watches.map((w) => w.videoId));
 		const v = (todays && library.find((e) => e.id === todays.videoId)) ?? [...library].reverse().find((e) => !watched.has(e.id));
+		// Nothing waits: the picks are read again when stale, and the best one prepared
+		// when the learner keeps one ready. Imported late: discover imports this module.
+		if (!v && process.env.NODE_ENV !== "test") {
+			void import("./discover.ts")
+				.then((d) => {
+					d.refreshIfStale();
+					d.keepOneReady();
+				})
+				.catch(() => {});
+		}
 		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec), ...(coverageKind(v) === "none" ? { captionLang: captionLanguageName(v.trackLang!) } : { coverage: v.coverage, ...(coverageKind(v) === "estimated" ? { estimated: true } : {}) }) } : undefined;
 	} catch {
 		return undefined;
