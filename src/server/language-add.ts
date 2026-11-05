@@ -313,7 +313,7 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	if (fs.existsSync(seedFile)) {
 		// kept from an earlier run
 	} else if (!draftSeed) {
-		note = "No grammar map: set a model in Settings and add the language again to draft one.";
+		note = "No grammar map, because no model is set in Settings; the words work without it.";
 	} else {
 		step("Drafting the grammar map", true);
 		const { system, prompt } = seedDraftPrompt(lang);
