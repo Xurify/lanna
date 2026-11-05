@@ -318,7 +318,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 				</p>
 			</div>
 			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="edge-note">
-				The tutor asks you to produce the forms at your edge and to say why: a slip and a gap look the same in a drill, not here.
+				The tutor asks you to produce the forms at your edge, and the one your level rests on, and to say why: a lucky guess, a slip and a gap look the same in a drill, not here.
 			</p>
 
 			{log.length > 0 && (

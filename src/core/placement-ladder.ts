@@ -172,3 +172,13 @@ export function ladderOutcome(state: LadderState): PlacementOutcome {
 export function ladderEdge(state: LadderState): { floor: UnitId | null; ceiling: UnitId | null } {
 	return { floor: state.lo >= 0 ? (placementLadder()[state.lo] ?? null) : null, ceiling: state.hi < placementLadder().length ? (placementLadder()[state.hi] ?? null) : null };
 }
+
+/** The rung the level rests on, when only drill hits hold it. Two right
+ *  answers can be a lucky run, and every rung below the floor is credited
+ *  without being asked, so one lucky pair lifts the whole placement: the
+ *  Socratic stage checks this rung. Null for a floor held by a re-check's
+ *  start (no answers on it) or when nothing was held. */
+export function luckRung(state: LadderState): UnitId | null {
+	const { floor } = ladderEdge(state);
+	return floor && rungStatus(state.tally[floor]) === "held" ? floor : null;
+}
