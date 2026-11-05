@@ -85,7 +85,8 @@ export function OptionTile({ n, state = "idle", disabled, onClick, children, tes
 			onClick={onClick}
 			data-testid={testId}
 			className={cn(
-				"lh-press flex min-h-12 items-center gap-3 rounded-[10px] bg-card px-3.5 py-2.5 text-left font-prose text-[19px] font-medium tracking-[-0.01em] text-foreground shadow-raise",
+				// The tile sits on a card, so it needs its own line: the raise shadow alone vanishes in the dark theme.
+				"lh-press flex min-h-12 items-center gap-3 rounded-[10px] bg-card px-3.5 py-2.5 text-left font-prose text-[19px] font-medium tracking-[-0.01em] text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)]",
 				state === "idle" && !disabled && "hover:bg-well",
 				state === "right" && "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
 				state === "wrong" && "bg-miss-soft text-miss shadow-[inset_0_0_0_1.5px_var(--q-miss)]",

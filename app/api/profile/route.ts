@@ -6,7 +6,7 @@
  * restarted by hand.
  */
 
-import { ensureSeeded, isLanguageProfile, profileStatus, selectProfile, type LanguageProfile } from "@/src/server";
+import { ensureSeeded, profileStatus, selectProfile, shownProfiles, type LanguageProfile } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +17,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
 	const body = (await req.json().catch(() => null)) as { active?: unknown } | null;
-	if (!isLanguageProfile(body?.active)) {
-		return Response.json({ message: "active must be a language profile id" }, { status: 400 });
+	if (typeof body?.active !== "string" || !shownProfiles().includes(body.active)) {
+		return Response.json({ message: "active must be a language in the list" }, { status: 400 });
 	}
 	return Response.json(selectProfile(body!.active as LanguageProfile));
 }

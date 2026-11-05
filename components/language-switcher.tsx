@@ -2,15 +2,13 @@
 
 /**
  * The sidebar's language block (LangHarness): which language profile is
- * running, a switch to the other one, the Today door, and the
- * spaced-review door with its due count. Switching writes the choice and restarts — the desktop app
- * relaunches itself; under `next dev` the learner restarts the server.
- * "Add a language" builds a new one in the background; while it runs, the
- * menu lists it with its current step.
+ * running, a switch to another one, the Today door, and the
+ * spaced-review door with its due count. Switching, removing and adding go
+ * through components/language-actions.tsx, shared with Settings → Learning.
+ * While a language is being added, the menu lists it with its current step.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -40,17 +38,9 @@ import { NAV, navItemFor, type NavId } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { sharedJson } from "@/lib/shared-fetch";
 import { useActivity } from "@/components/activity-dock";
-import { AddLanguageDialog } from "@/components/add-language-dialog";
-
-interface ProfileInfo {
-	active: string;
-	selected: string;
-	restartRequired: boolean;
-	profiles: Array<{ id: string; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; removable?: boolean }>;
-}
+import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
 
 interface Counts {
 	due: number;
@@ -62,12 +52,7 @@ export function LanguageSwitcher() {
 	const pathname = usePathname();
 	const [profile, setProfile] = useState<ProfileInfo | null>(null);
 	const [counts, setCounts] = useState<Counts | null>(null);
-	const [note, setNote] = useState<string | null>(null);
 	const [open, setOpen] = useState(false);
-	const [pending, setPending] = useState<{ id: string; label: string } | null>(null);
-	const [removing, setRemoving] = useState<{ id: string; english: string } | null>(null);
-	const [removeError, setRemoveError] = useState<string | null>(null);
-	const [adding, setAdding] = useState(false);
 	const { feed } = useActivity();
 	const addsRunning = feed.tasks.filter((t) => t.kind === "language" && t.status === "running");
 
@@ -116,26 +101,10 @@ export function LanguageSwitcher() {
 		};
 	}, [open]);
 
-	const choose = (id: string, label: string) => {
+	const languages = useLanguageActions({ profile, onChanged: (next) => (next ? setProfile(next) : refresh()) });
+	const choose = (id: string) => {
 		setOpen(false);
-		if (!profile || id === profile.selected) return;
-		setPending({ id, label });
-	};
-
-	const confirmSwitch = async () => {
-		if (!pending) return;
-		const { id, label } = pending;
-		setPending(null);
-		const res = await fetch("/api/profile", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ active: id }),
-		});
-		const next = (await res.json()) as ProfileInfo;
-		setProfile(next);
-		if (!next.restartRequired) return;
-		if (window.lh?.relaunch) window.lh.relaunch();
-		else setNote(`Restart LangHarness to switch to ${label}.`);
+		languages.choose(id);
 	};
 
 	const activeNav = navItemFor(pathname);
@@ -149,23 +118,6 @@ export function LanguageSwitcher() {
 	const reviewDue = counts ? counts.due + counts.learning : 0;
 	const reviewNew = counts?.newLeft ?? 0;
 	const activeProfile = profile?.profiles.find((p) => p.id === profile.active);
-	const pendingProfile = pending ? profile?.profiles.find((p) => p.id === pending.id) : null;
-
-	const modalDismiss = useBackdropDismiss(() => setPending(null));
-	const removeDismiss = useBackdropDismiss(() => setRemoving(null));
-
-	const confirmRemove = async () => {
-		if (!removing) return;
-		setRemoveError(null);
-		const res = await fetch("/api/languages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "remove", id: removing.id }) }).catch(() => null);
-		if (!res?.ok) {
-			const body = (await res?.json().catch(() => null)) as { message?: string } | null;
-			setRemoveError(body?.message ?? `Could not remove ${removing.english}.`);
-			return;
-		}
-		setRemoving(null);
-		refresh();
-	};
 
 	return (
 		<div className="mx-3 mb-3 flex flex-col gap-3" data-testid="language-block">
@@ -220,7 +172,6 @@ export function LanguageSwitcher() {
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
 								{profile.profiles.map((p) => {
 									const running = p.id === profile.active;
-									const isPending = p.id === profile.selected && profile.restartRequired;
 									return (
 										<div key={p.id} className="group relative">
 										<button
@@ -228,13 +179,12 @@ export function LanguageSwitcher() {
 											role="option"
 											aria-selected={running}
 											data-testid={`profile-${p.id}`}
-											onClick={() => choose(p.id, p.english)}
+											onClick={() => choose(p.id)}
 											className={cn(
 												"flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
 												running
 													? "bg-accent font-semibold text-foreground shadow-xs"
 													: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-												isPending && "ring-1 ring-primary/50",
 												p.removable && "pr-8",
 											)}
 										>
@@ -253,10 +203,9 @@ export function LanguageSwitcher() {
 												data-testid={`profile-remove-${p.id}`}
 												onClick={() => {
 													setOpen(false);
-													setRemoveError(null);
-													setRemoving({ id: p.id, english: p.english });
+													languages.askRemove(p);
 												}}
-												className="absolute top-1/2 right-1 -translate-y-1/2 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100"
+												className="absolute top-1/2 right-1 -translate-y-1/2 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 pointer-coarse:opacity-100"
 											>
 												<Trash2Icon className="size-3.5" />
 											</button>
@@ -279,7 +228,7 @@ export function LanguageSwitcher() {
 								data-testid="add-language-open"
 								onClick={() => {
 									setOpen(false);
-									setAdding(true);
+									languages.openAdd();
 								}}
 								className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 							>
@@ -291,98 +240,9 @@ export function LanguageSwitcher() {
 				)}
 			</div>
 
-			{/* Centered Modal Confirmation — zero layout shift on sidebar navigation */}
-			{pending && typeof document !== "undefined" && createPortal(
-				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
-					{...modalDismiss}
-				>
-					<div
-						role="alertdialog"
-						aria-modal="true"
-						aria-labelledby="switch-dialog-title"
-						data-testid="profile-confirm"
-						className="flex w-full max-w-sm flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
-					>
-						<div className="flex items-center gap-3">
-							<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/40">
-								<CountryFlag lang={pending.id} className="w-[30px] h-[20px] rounded-[4px]" />
-							</div>
-							<div className="min-w-0 flex-1">
-								<h3 id="switch-dialog-title" className="text-sm font-semibold text-foreground">
-									Switch to {pending.label}?
-								</h3>
-								<p className="text-xs text-muted-foreground">
-									LangHarness restarts in {pending.label}.
-								</p>
-							</div>
-						</div>
-						<p className="text-xs leading-relaxed text-muted-foreground">
-							Your {activeProfile?.english ?? "current"} progress stays safely as it is.
-						</p>
-						<div className="flex items-center justify-end gap-2 pt-2">
-							<button
-								type="button"
-								onClick={() => setPending(null)}
-								className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-							>
-								Cancel
-							</button>
-							<button
-								type="button"
-								data-testid="profile-confirm-switch"
-								onClick={() => void confirmSwitch()}
-								className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
-							>
-								Switch &amp; Restart
-							</button>
-						</div>
-					</div>
-				</div>,
-				document.body,
-			)}
+			{languages.dialogs}
 
-			{adding && typeof document !== "undefined" && <AddLanguageDialog onClose={() => setAdding(false)} onStarted={() => setAdding(false)} />}
-
-			{removing && typeof document !== "undefined" && createPortal(
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...removeDismiss}>
-					<div
-						role="alertdialog"
-						aria-modal="true"
-						aria-labelledby="remove-lang-title"
-						data-testid="profile-remove-confirm"
-						className="flex w-full max-w-sm flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
-					>
-						<h3 id="remove-lang-title" className="text-sm font-semibold text-foreground">
-							Remove {removing.english}?
-						</h3>
-						<p className="text-xs leading-relaxed text-muted-foreground">
-							Its downloaded words, sentences and grammar map are deleted. Your {removing.english} progress stays: add {removing.english} again and you pick up where you were.
-						</p>
-						{removeError && (
-							<p className="text-xs text-destructive" role="alert">
-								{removeError}
-							</p>
-						)}
-						<div className="flex items-center justify-end gap-2 pt-2">
-							<button type="button" onClick={() => setRemoving(null)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-								Cancel
-							</button>
-							<button
-								type="button"
-								data-testid="profile-remove-confirm-button"
-								onClick={() => void confirmRemove()}
-								className="rounded-lg bg-destructive px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-destructive/90 dark:bg-destructive/60"
-							>
-								Remove
-							</button>
-						</div>
-					</div>
-				</div>,
-				document.body,
-			)}
-
-			{note && <p className="px-1 text-xs text-muted-foreground">{note}</p>}
+			{languages.note && <p className="px-1 text-xs text-muted-foreground" role="status">{languages.note}</p>}
 			<nav className="flex flex-col gap-3" aria-label="Main">
 				{NAV.map((group) => (
 					<div key={group.id} className="flex flex-col gap-0.5" role={group.label ? "group" : undefined} aria-label={group.label ?? undefined} data-testid={`nav-group-${group.id}`}>

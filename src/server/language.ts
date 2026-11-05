@@ -9,14 +9,13 @@
  */
 
 import fs from "node:fs";
-import path from "node:path";
-import { ACTIVE_PROFILE, PROFILE_FILE, curriculumFile, isLanguageProfile, languageProfiles, type LanguageProfile } from "../../config.ts";
+import { ACTIVE_PROFILE, curriculumFile, isLanguageProfile, readProfileChoice, saveProfileChoice, shownProfiles, type LanguageProfile } from "../../config.ts";
 import type { GraphChain, GraphNode } from "../core/contracts.ts";
 import { settleGraphLayout } from "../core/layout-settle.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { graphStore } from "../store/graph.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
-import { languageRemovable } from "./language-add.ts";
+import { languageReady, languageRemovable } from "./language-add.ts";
 
 export interface ProfileStatus {
 	active: LanguageProfile;
@@ -25,18 +24,13 @@ export interface ProfileStatus {
 	restartRequired: boolean;
 	/** The running language in full: the browser reads its tag, voices and letters here. */
 	language: LanguageInfo;
-	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** Its downloaded words can be removed now. */ removable: boolean }>;
+	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** Its words and course are complete. */ ready: boolean; /** It can be removed from the list now. */ removable: boolean }>;
 	seeded: { nodes: number; chains: number } | null;
 }
 
 function readSelected(): LanguageProfile {
-	try {
-		const parsed = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8")) as { active?: unknown };
-		if (isLanguageProfile(parsed.active)) return parsed.active;
-	} catch {
-		// absent — the active one
-	}
-	return ACTIVE_PROFILE;
+	const { active } = readProfileChoice();
+	return isLanguageProfile(active) ? active : ACTIVE_PROFILE;
 }
 
 function seedFile(profile: LanguageProfile): string {
@@ -50,7 +44,7 @@ export function profileStatus(): ProfileStatus {
 		selected,
 		restartRequired: selected !== ACTIVE_PROFILE,
 		language: activeLanguage(),
-		profiles: languageProfiles().flatMap((id) => {
+		profiles: shownProfiles().flatMap((id) => {
 			const info = profileLanguage(id);
 			if (!info) return [];
 			return [{
@@ -60,6 +54,7 @@ export function profileStatus(): ProfileStatus {
 				english: info.english,
 				lexicon: fs.existsSync(curriculumFile(id, "lexicon.json")),
 				seed: fs.existsSync(seedFile(id)),
+				ready: languageReady(id),
 				removable: languageRemovable(id),
 			}];
 		}),
@@ -68,9 +63,17 @@ export function profileStatus(): ProfileStatus {
 }
 
 export function selectProfile(profile: LanguageProfile): ProfileStatus {
-	fs.mkdirSync(path.dirname(PROFILE_FILE), { recursive: true });
-	fs.writeFileSync(PROFILE_FILE, JSON.stringify({ active: profile }), "utf-8");
+	saveProfileChoice({ active: profile });
 	return profileStatus();
+}
+
+/** The running language when it has no course yet, else null. Without a
+ *  course the core falls back to Slovak's units (src/core/course.ts), which
+ *  then drill this language's words under Slovak titles, so the pages that
+ *  teach from the course ask to finish it instead. */
+export function missingCourse(): { id: string; english: string } | null {
+	if (languageReady(ACTIVE_PROFILE)) return null;
+	return { id: ACTIVE_PROFILE, english: activeLanguage().english };
 }
 
 interface SeedFile {

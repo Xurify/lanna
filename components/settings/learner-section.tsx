@@ -7,9 +7,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
 import { CountryFlag } from "@/components/ui/country-flag";
+import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
 import { useActiveLanguage } from "@/components/speech";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
@@ -29,20 +31,6 @@ interface Goals {
 	daysPerWeek: number;
 	/** XP earned per measured hour so far; null until there is an hour of it. */
 	xpPerHour: number | null;
-}
-
-interface ProfileInfo {
-	active: string;
-	selected: string;
-	restartRequired: boolean;
-	profiles: Array<{
-		id: string;
-		code: string;
-		tag: string;
-		endonym: string;
-		english: string;
-		description: string;
-	}>;
 }
 
 /** The last thing the tab showed, so opening it again paints at once and the fetch only corrects it. */
@@ -107,25 +95,20 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 		};
 	}, []);
 
-	const switchProfile = async (id: string) => {
-		if (profile?.active === id) return;
-		try {
-			const res = await fetch("/api/profile", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ active: id }),
-			});
-			if (!res.ok) return;
-			const next: ProfileInfo = await res.json();
-			setProfile(next);
-			if (last) last = { ...last, profile: next };
-			if (next.restartRequired) {
-				window.location.reload();
-			}
-		} catch {
-			// ignore
-		}
+	const showProfile = (next: ProfileInfo | null) => {
+		setProfile(next);
+		if (last) last = { ...last, profile: next };
 	};
+	const languages = useLanguageActions({
+		profile,
+		onChanged: (next) => {
+			if (next) return showProfile(next);
+			void fetch("/api/profile")
+				.then((r) => (r.ok ? (r.json() as Promise<ProfileInfo>) : null))
+				.then((p) => p && showProfile(p))
+				.catch(() => {});
+		},
+	});
 
 	const save = async (next: Langs) => {
 		edited.current = true;
@@ -170,32 +153,57 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	return (
 		<div className="lh-rise flex flex-col gap-2">
 			{profile && profile.profiles.length > 0 && (
-				<SettingsGroup label="Target language" testid="learner-target-language">
-					<div className="flex flex-wrap items-center gap-2 py-1">
+				<SettingsGroup label="Target language" hint="The language you are studying. Switching restarts LangHarness; your progress in each language stays." testid="learner-target-language">
+					<ul className="flex flex-col divide-y divide-border/60 rounded-lg bg-well" aria-label="Your languages">
 						{profile.profiles.map((p) => {
 							const running = p.id === profile.active;
 							return (
-								<button
-									key={p.id}
-									type="button"
-									aria-pressed={running}
-									onClick={() => void switchProfile(p.id)}
-									className={cn(
-										"flex items-center gap-2 rounded-xl border px-3.5 py-1.5 font-ui text-sm font-semibold transition-colors",
-										running
-											? "border-primary/80 bg-primary/15 text-primary font-semibold shadow-xs"
-											: "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground",
-									)}
-									data-testid={`target-language-${p.id}`}
-								>
+								<li key={p.id} className="flex min-h-12 items-center gap-3 px-4 py-2" data-testid={`target-language-${p.id}`}>
 									<CountryFlag lang={p.id} />
-									<span>{p.endonym}</span>
-									<span className="text-xs font-normal opacity-70">({p.english})</span>
-								</button>
+									<span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+										<span className="font-ui text-sm font-semibold text-foreground">{p.endonym}</span>
+										<span className="text-xs text-muted-foreground">{p.english}</span>
+										{running ? (
+											<span className="text-xs font-medium text-teal">Studying now</span>
+										) : p.ready === false ? (
+											<span className="text-xs text-muted-foreground">Needs its course</span>
+										) : null}
+									</span>
+									{!running && (
+										<button type="button" onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-switch-${p.id}`}>
+											{p.ready === false ? "Finish" : "Switch"}
+										</button>
+									)}
+									{p.removable ? (
+										<button
+											type="button"
+											onClick={() => languages.askRemove(p)}
+											aria-label={`Remove ${p.english}`}
+											title={`Remove ${p.english}`}
+											className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+											data-testid={`target-language-remove-${p.id}`}
+										>
+											<Trash2Icon className="size-4" />
+										</button>
+									) : (
+										<span className="size-8 shrink-0" aria-hidden="true" />
+									)}
+								</li>
 							);
 						})}
+					</ul>
+					<div className="flex flex-wrap items-center gap-3">
+						<button type="button" onClick={() => languages.openAdd()} className={cn(SECONDARY, SMALL)} data-testid="target-language-add">
+							<PlusIcon className="size-4" />
+							Add a language
+						</button>
+						{languages.note && (
+							<span className="text-xs text-muted-foreground" role="status">
+								{languages.note}
+							</span>
+						)}
 					</div>
-					<p className="text-xs text-muted-foreground">The language you are studying in LangHarness.</p>
+					{languages.dialogs}
 				</SettingsGroup>
 			)}
 			<SettingsGroup label="Languages you know" testid="learner-languages">

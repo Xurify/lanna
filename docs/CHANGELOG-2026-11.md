@@ -2,6 +2,17 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: switching and removing languages (branch `fix/language-switch-and-manage`)
+
+- **Switching did nothing from Settings:** Settings → Learning saved the choice and reloaded the page, but the server reads the language once at boot, so the app stayed in the old language with the switch waiting. It now asks first and restarts, the same as the sidebar.
+- **A saved switch could not be finished:** the sidebar menu ignored a click on a language that was saved for the next start but never restarted into. Every switch now restarts at once, so the menu and Settings no longer show a "waiting for a restart" state.
+- **Remove any language but the running one:** Slovak and Russian are built in, so they had no bin. Removing one now hides it (`hidden` in `data/profile.json`) and deletes any words downloaded for it; your progress stays. **Add a language** offers it again: Slovak comes back at once, Russian downloads its words again. A language already in your list without its course (Russian) shows "Needs its course" there, not as a new language.
+- **Settings → Learning manages the languages:** each one is a row with its state (studying now, needs its course), **Switch**, and a bin, with **Add a language** under the list. The sidebar menu and Settings share one set of dialogs (`components/language-actions.tsx`), and Escape in them leaves Settings open.
+- **A language without its course showed Slovak's lessons:** with no `course.json` the core falls back to the Slovak units, so an Estonian profile drilled Estonian sentences under titles such as "I, you, we · Prítomný čas". Today, the curriculum and a lesson now say the language has no course yet, with **Finish <language>** and a switch to each language that has one. Switching to such a language opens Add a language on it instead of restarting into it.
+- **Add a language fits its window:** the buttons ran past the dialog's bottom edge and the language list scrolled inside the dialog. The title and the buttons now stay put and only the middle scrolls; the model lines wrap instead of being cut.
+- **Answer tiles are visible in the dark theme:** the choice tiles in lessons, exams and fluency had only a shadow, which is invisible on the dark card. They now have a line around them.
+- **Unverified:** the restart from Settings in the desktop app, and the new Settings rows on screen.
+
 ## 5 November: an added language gets its whole course (branch `feat/generated-courses`, E44)
 
 - **What changed for the learner:** an Estonian profile ran the Slovak lessons and curriculum. Adding a language now builds its course: grammar lessons on real Tatoeba sentences chosen by each form's Wiktionary tags, word themes, tutor sessions, goals, chapters, placement tiers, a skill map and a story world for Read and Speak. Your Strong model writes the rules and the structure in two calls; the app checks them against the dictionary. A language added before this shows "Needs its course" in the dialog, and **Finish** builds it from the kept downloads.

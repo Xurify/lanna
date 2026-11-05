@@ -51,7 +51,7 @@ export { sessionCost } from "./pricing.ts";
 // LangHarness: language profiles + curriculum seeding, speech synthesis,
 // spaced review, and the lexicon lookup the review page and tutor share.
 export * from "./language.ts";
-export { addBlocker, addEstimate, addEstimates, type AddEstimate, type CourseWriter, type WriterSlot, languageCatalog, languageRemovable, removeLanguage, startLanguageAdd, type CatalogRow } from "./language-add.ts";
+export { addBlocker, addEstimate, addEstimates, type AddEstimate, type CourseWriter, type WriterSlot, languageCatalog, languageReady, languageRemovable, removeLanguage, restoreLanguage, startLanguageAdd, type CatalogRow } from "./language-add.ts";
 export { activeLanguage, profileLanguage } from "./active-language.ts";
 export * from "./reset.ts";
 export * from "./storage.ts";
@@ -81,7 +81,7 @@ export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";
 export * from "./usage-report.ts";
 export { lookupWord, loadLexicon } from "../agent/lexicon.ts";
-export { isLanguageProfile, LANGUAGE_PROFILES, type LanguageProfile } from "../../config.ts";
+export { isLanguageProfile, LANGUAGE_PROFILES, shownProfiles, type LanguageProfile } from "../../config.ts";
 export * from "./distractors.ts";
 export * from "./word-bank.ts";
 export { savedPhraseStore } from "../store/saved-phrases.ts";

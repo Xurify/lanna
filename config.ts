@@ -107,6 +107,42 @@ export function isLanguageProfile(v: unknown): v is LanguageProfile {
 	return typeof v === "string" && languageProfiles().includes(v);
 }
 
+/** profile.json: the language chosen for the next start, and the built-in
+ *  languages the learner removed from their list. */
+export interface ProfileChoice {
+	active?: string;
+	hidden: string[];
+}
+
+export function readProfileChoice(): ProfileChoice {
+	try {
+		const parsed: unknown = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8"));
+		const r = parsed && typeof parsed === "object" ? (parsed as { active?: unknown; hidden?: unknown }) : {};
+		const hidden = Array.isArray(r.hidden) ? r.hidden.filter((h): h is string => typeof h === "string" && PROFILE_ID_RE.test(h)) : [];
+		return { ...(typeof r.active === "string" ? { active: r.active } : {}), hidden: [...new Set(hidden)] };
+	} catch {
+		return { hidden: [] };
+	}
+}
+
+/** Change part of profile.json and keep the rest. */
+export function saveProfileChoice(patch: Partial<ProfileChoice>): ProfileChoice {
+	const next = { ...readProfileChoice(), ...patch };
+	const out: Record<string, unknown> = {};
+	if (next.active) out.active = next.active;
+	if (next.hidden.length) out.hidden = [...new Set(next.hidden)];
+	fs.mkdirSync(path.dirname(PROFILE_FILE), { recursive: true });
+	fs.writeFileSync(PROFILE_FILE, JSON.stringify(out), "utf-8");
+	return next;
+}
+
+/** The languages the learner's list shows: every profile but the built-in
+ *  ones they removed. The running one always shows. */
+export function shownProfiles(): string[] {
+	const hidden = new Set(readProfileChoice().hidden);
+	return languageProfiles().filter((id) => id === ACTIVE_PROFILE || !hidden.has(id));
+}
+
 /** A language's data file: the copy the app ships (curriculum/<id>/) when
  *  there is one, else the one built when the learner added it. Russian is
  *  built in but ships no words, so its lexicon can come from either. */
@@ -131,14 +167,8 @@ function readActiveProfile(): LanguageProfile {
 }
 
 function readProfileFile(): LanguageProfile {
-	try {
-		const parsed: unknown = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8"));
-		const active = parsed && typeof parsed === "object" ? (parsed as { active?: unknown }).active : undefined;
-		if (isLanguageProfile(active)) return active;
-	} catch {
-		// absent or unreadable — the default profile
-	}
-	return "slovak";
+	const { active } = readProfileChoice();
+	return isLanguageProfile(active) ? active : "slovak";
 }
 
 export const ACTIVE_PROFILE: LanguageProfile = readActiveProfile();

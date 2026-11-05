@@ -19,9 +19,9 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { ACTIVE_PROFILE, PATHS, PROFILE_FILE, curriculumFile } from "../../config.ts";
+import { ACTIVE_PROFILE, LANGUAGE_PROFILES, PATHS, curriculumFile, readProfileChoice, saveProfileChoice } from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
-import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, type CatalogLanguage } from "../core/language.ts";
+import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, languageById, type CatalogLanguage } from "../core/language.ts";
 import {
 	ExampleCollector,
 	frequencyFromSentences,
@@ -93,13 +93,45 @@ export interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
-	/** Words downloaded but no course yet: adding it finishes it. */
+	/** Already in the learner's list (words downloaded, or built in) but
+	 *  without its course: adding it finishes it. */
 	started: boolean;
+	/** A built-in language the learner removed from their list that is
+	 *  still complete: adding it puts it back at once, with no download. */
+	restoreOnly?: boolean;
 }
+
+const isBuiltIn = (id: string) => (LANGUAGE_PROFILES as readonly string[]).includes(id);
+const isHidden = (id: string) => readProfileChoice().hidden.includes(id);
 
 export function languageCatalog(): CatalogRow[] {
 	const running = new Set(listTasks().filter((t) => t.kind === "language" && t.status === "running").map((t) => t.id));
-	return LANGUAGE_CATALOG.map((l) => ({ id: l.id, english: l.english, endonym: l.endonym, tag: l.tag, ready: languageReady(l.id), adding: running.has(taskIdOf(l.id)), started: !languageReady(l.id) && fs.existsSync(dirOf(l.id)) }));
+	const hidden = readProfileChoice().hidden;
+	const rows: CatalogRow[] = LANGUAGE_CATALOG.map((l) => ({
+		id: l.id,
+		english: l.english,
+		endonym: l.endonym,
+		tag: l.tag,
+		ready: languageReady(l.id) && !hidden.includes(l.id),
+		adding: running.has(taskIdOf(l.id)),
+		started: !languageReady(l.id) && (fs.existsSync(dirOf(l.id)) || (isBuiltIn(l.id) && !hidden.includes(l.id))),
+		...(hidden.includes(l.id) && languageReady(l.id) ? { restoreOnly: true } : {}),
+	}));
+	// Slovak ships whole and is not in the catalog: once removed, it is listed here so it can come back.
+	for (const id of hidden) {
+		const info = languageById(id);
+		if (!isBuiltIn(id) || catalogLanguage(id) || !info) continue;
+		rows.unshift({ id, english: info.english, endonym: info.endonym, tag: info.tag, ready: false, adding: false, started: false, ...(languageReady(id) ? { restoreOnly: true } : {}) });
+	}
+	return rows;
+}
+
+/** Put a removed built-in language back in the list. True when it was removed. */
+export function restoreLanguage(id: string): boolean {
+	const { hidden } = readProfileChoice();
+	if (!hidden.includes(id)) return false;
+	saveProfileChoice({ hidden: hidden.filter((h) => h !== id) });
+	return true;
 }
 
 export interface AddDeps {
@@ -256,31 +288,34 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
 	return { taskId: taskIdOf(id), done };
 }
 
-/** Whether a language's downloaded data can be removed now: it has some,
- *  it is not the one running, and it is not being added. */
+/** Whether a language can be removed from the list now: it is not the one
+ *  running, it is not being added, and it is listed (built-in) or has
+ *  downloaded data (added). */
 export function languageRemovable(id: string): boolean {
-	if (id === ACTIVE_PROFILE || !fs.existsSync(dirOf(id))) return false;
+	if (id === ACTIVE_PROFILE) return false;
+	if (isBuiltIn(id) ? isHidden(id) : !fs.existsSync(dirOf(id))) return false;
 	return !listTasks().some((t) => t.id === taskIdOf(id) && t.status === "running");
 }
 
 /**
- * Remove an added language: its words, sentences and grammar map under
- * <data>/languages/<id>/. The learner's progress in it (<data>/profiles/<id>/)
- * stays, so adding it again picks up where they were. A switch to it that
- * waits for a restart is undone.
+ * Remove a language from the list. An added one loses its words, sentences
+ * and grammar map under <data>/languages/<id>/. A built-in one is hidden
+ * (profile.json "hidden") and loses any words downloaded for it. The
+ * learner's progress (<data>/profiles/<id>/) stays, so adding it again picks
+ * up where they were. A switch to it that waits for a restart is undone.
  */
 export function removeLanguage(id: string): void {
-	const name = catalogLanguage(id)?.english ?? id;
+	const name = languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
 	if (id === ACTIVE_PROFILE) throw new Error(`${name} is the language running now. Switch to another one first.`);
-	if (!LANGUAGE_ID_RE.test(id) || !fs.existsSync(dirOf(id))) throw new Error(`${name} has nothing to remove`);
+	const builtIn = isBuiltIn(id);
+	if (!LANGUAGE_ID_RE.test(id) || (builtIn ? isHidden(id) : !fs.existsSync(dirOf(id)))) throw new Error(`${name} has nothing to remove`);
 	if (!languageRemovable(id)) throw new Error(`${name} is being added. Stop that first.`);
 	fs.rmSync(dirOf(id), { recursive: true, force: true });
-	try {
-		const selected = (JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8")) as { active?: unknown }).active;
-		if (selected === id) fs.writeFileSync(PROFILE_FILE, JSON.stringify({ active: ACTIVE_PROFILE }), "utf-8");
-	} catch {
-		// no saved choice: nothing waits for a restart
-	}
+	const choice = readProfileChoice();
+	saveProfileChoice({
+		...(choice.active === id ? { active: ACTIVE_PROFILE } : {}),
+		...(builtIn ? { hidden: [...choice.hidden, id] } : {}),
+	});
 	// A task card offering the switch to it would now point at nothing.
 	removeTask(taskIdOf(id));
 }
