@@ -52,6 +52,7 @@ const { attachSubscriptionChild, subscriptionControl } = require("./subscription
 const { desktopAPIHeaders } = require("./desktop-api.cjs");
 const { openWebSubscriptionBrowser } = require("./web-subscription-browser.cjs");
 const { registerStorageIPC } = require("./storage-ipc.cjs");
+const { registerFontsIPC } = require("./fonts-ipc.cjs");
 const { randomBytes } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
@@ -785,6 +786,12 @@ async function main() {
 	// (electron/storage-ipc.cjs). Same sender check as the handlers above.
 	registerStorageIPC(ipcMain, {
 		session,
+		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
+	});
+
+	// Settings → Appearance → Reading font: the installed families, asked of the OS
+	// here because the renderer's queryLocalFonts is empty in Electron 44 (electron/fonts-ipc.cjs).
+	registerFontsIPC(ipcMain, {
 		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
 	});
 

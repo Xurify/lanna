@@ -100,6 +100,8 @@ declare global {
 				cacheSize: () => Promise<number>;
 				clearCache: () => Promise<number>;
 			};
+			/** Settings → Appearance: the installed font families, read by the main process. */
+			fonts?: { list: () => Promise<string[]> };
 		};
 	}
 }

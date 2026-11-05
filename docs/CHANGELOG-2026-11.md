@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: Czech captions, a Tasks page, a quieter active-unit ring, installed fonts (branch `fix/watch-czech-video-label`)
+
+- **Czech-caption videos:** the shelf, the preview and the daily plan say "Czech captions" instead of a known-word share and a band (the words are matched against Slovak, so the old 53% "hard" meant nothing). The video index keeps each video's language and caption language and fills older lines in on first read.
+- **Tasks page (`/tasks`):** every background task, running first (with Stop), finished after (Open, retry, Remove, Clear finished). Closing the ready card keeps the task on the page. The sidebar's Background section links to it while any task is listed. In memory: a server restart empties it.
+- **Active unit:** the looping teal pulse around the current unit's badge is a still hairline ring.
+- **Reading font:** the list of installed fonts comes from the OS in the desktop app (PowerShell on Windows, osascript on macOS, fc-list on Linux), because Electron 44's `queryLocalFonts` returns nothing and the picker only showed ten common families. **Unverified:** the Windows and macOS commands (only the Linux one was run, and the parsing is tested on sample output).
+
 ## 5 November: Watch prepares videos in the background (branch `fix/watch-known-grammar-words`)
 
 - **Background tasks:** preparing or regenerating a video no longer holds the page. The shelf comes back at once with the video listed as running; the sidebar's Background section lists it with its step and a stop button; when it ends, a card (any page) says "Video ready" with Open, or why it failed. The card stays until dismissed. `src/server/tasks.ts` is the registry (in memory, so a restart drops the list, not the saved videos); the next AI jobs (stories, lessons) can register the same way.

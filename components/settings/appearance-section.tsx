@@ -6,9 +6,11 @@
  * variables move at once. Hex inputs commit on blur or Enter. Mode (System, Day, Night)
  * is per device: it lives in the "lh-theme" cookie (lib/theme.ts), which the server reads into the first HTML, not in the settings record.
  *
- * The reading font lists installed families via window.queryLocalFonts in the
- * desktop shell. In a plain browser the API is absent: a curated list shows,
- * with a footer saying so. Never a fabricated system list.
+ * The reading font lists installed families: the desktop shell asks the OS
+ * (window.lh.fonts, electron/fonts-ipc.cjs; Electron's own queryLocalFonts
+ * comes back empty), a browser that has window.queryLocalFonts uses that. With
+ * neither, a curated list shows, with a footer saying so. Never a fabricated
+ * system list.
  *
  * Graph rows dim when a parent is off; stored values persist but resolve inert.
  */
@@ -62,9 +64,11 @@ export const CURATED_FALLBACK_FONTS: readonly string[] = [
  *  caller dedupes). */
 type LocalFontsApi = () => Promise<Array<{ family: string }>>;
 
-/** Read lazily: SSR has no window. */
+/** Read lazily: SSR has no window. The desktop bridge comes first; its names are already families. */
 function localFontsApi(): LocalFontsApi | null {
 	if (typeof window === "undefined") return null;
+	const desktop = window.lh?.fonts;
+	if (desktop) return async () => (await desktop.list()).map((family) => ({ family }));
 	return (window as unknown as { queryLocalFonts?: LocalFontsApi }).queryLocalFonts ?? null;
 }
 
