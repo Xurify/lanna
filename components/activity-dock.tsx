@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, PenToolIcon, PlayIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
@@ -76,6 +77,7 @@ export interface FeedTask {
 	status: "running" | "done" | "error";
 	startedAt: number;
 	finishedAt?: number;
+	dismissed?: boolean;
 	href?: string;
 	error?: string;
 	retry?: { label: string; url: string; transcribe: boolean };
@@ -368,8 +370,13 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 			<div className="mb-1 flex items-center gap-1.5 px-2.5 text-xs font-bold text-muted-foreground">
 				<ActivityIcon className="size-3" />
 				Background
-				{blobs.length > 0 && (
-					<span className="ml-auto tabular-nums" data-testid="activity-total-cost" title="Total running cost (inferred)">
+				{feed.tasks.length > 0 && (
+					<Link href="/tasks" className="ml-auto font-medium text-primary hover:underline" data-testid="activity-all-tasks">
+						All tasks
+					</Link>
+				)}
+				{blobs.some((b) => b.process !== "task") && (
+					<span className={feed.tasks.length > 0 ? "tabular-nums" : "ml-auto tabular-nums"} data-testid="activity-total-cost" title="Total running cost (inferred)">
 						{planCostLabel(totalCost, subscriptionLabels(blobs.map((blob) => blob.model)))}
 				</span>
 				)}

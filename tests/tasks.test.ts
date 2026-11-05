@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, test } from "node:test";
 
-const { abortTask, dismissTask, failTask, finishTask, listTasks, resetTasks, startTask, TASKS_KEPT, updateTask } = await import("../src/server/tasks.ts");
+const { abortTask, clearFinishedTasks, dismissTask, removeTask, failTask, finishTask, listTasks, resetTasks, startTask, TASKS_KEPT, updateTask } = await import("../src/server/tasks.ts");
 const { subscribe } = await import("../src/core/events.ts");
 
 beforeEach(() => resetTasks());
@@ -56,13 +56,22 @@ describe("task registry", () => {
 		assert.equal(abortTask("video:a"), false);
 	});
 
-	test("dismiss removes a finished task and leaves a running one", () => {
+	test("dismiss closes the notice but keeps the task; remove and clear take finished tasks out; a running one stays", () => {
 		startTask(init("video:a"));
 		assert.equal(dismissTask("video:a"), false);
+		assert.equal(removeTask("video:a"), false);
 		finishTask("video:a");
 		assert.equal(dismissTask("video:a"), true);
-		assert.equal(listTasks().length, 0);
-		assert.equal(dismissTask("video:a"), false);
+		assert.equal(listTasks()[0]!.dismissed, true, "still listed, so the Tasks page keeps its history");
+		assert.equal(dismissTask("video:a"), false, "closing twice is nothing");
+		startTask(init("video:b", 2));
+		finishTask("video:b");
+		startTask(init("video:c", 3));
+		assert.equal(removeTask("video:a"), true);
+		assert.equal(removeTask("video:a"), false);
+		assert.equal(clearFinishedTasks(), 1);
+		assert.deepEqual(listTasks().map((t) => t.id), ["video:c"]);
+		assert.equal(clearFinishedTasks(), 0);
 	});
 
 	test("only the newest finished tasks are kept, running ones never dropped", () => {
@@ -85,7 +94,8 @@ describe("task registry", () => {
 		updateTask("video:a", { step: "x" });
 		finishTask("video:a");
 		dismissTask("video:a");
+		removeTask("video:a");
 		off();
-		assert.equal(n, 4);
+		assert.equal(n, 5);
 	});
 });

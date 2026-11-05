@@ -521,7 +521,7 @@ function SessionsSidebar() {
 	const [kindFilter, setKindFilter] = useState<SessionKindFilter>("all");
 	const searchBoxRef = useRef<HTMLDivElement>(null);
 	const { feed } = useActivity();
-	const agentsRunning = useMemo(() => toBlobs(feed).length > 0, [feed]);
+	const agentsRunning = useMemo(() => toBlobs(feed).length > 0 || feed.tasks.length > 0, [feed]);
 	const pathname = usePathname();
 	const router = useRouter();
 	const { open: openSettings } = useSettingsDialog();
@@ -1127,7 +1127,7 @@ function SessionsSidebar() {
 						)}
 					</section>
 
-					{/* Background work (agents, extraction, tasks) appears only while some runs: an idle header
+					{/* Background work (agents, extraction, tasks) appears only while some runs or a task is on the Tasks list: an idle header
 					    told the learner nothing and read as machinery. */}
 					{agentsRunning && <ActivitySection />}
 
