@@ -152,7 +152,8 @@ export function personalFor(seed = Date.now()): LessonPlan {
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
 	const started = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
-	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
+	const firstGrammar = UNITS.filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
+	const units = started.length >= 2 ? started : firstGrammar;
 	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }
 

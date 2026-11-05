@@ -13,7 +13,9 @@ Everything lands in `<data>/languages/<id>/`, shared by every profile. The steps
 | Words, glosses, gender, inflected forms | Wiktionary as extracted by kaikki.org (CC BY-SA 4.0), streamed with gzip and filtered line by line | `build/words.json` |
 | The word list (about 3,000 lemmas, commonest first, each with up to five sentences blanked at a form) | the three above | `lexicon.json` |
 | The tutor's language segment | a template, no model | `prompt.md` |
-| A grammar map for the skill map | one Cheap-slot call, only when a model is set; checked before it is kept | `seed.json`, cost in `build/seed-draft.json` |
+| The course: grammar lessons, word themes, tutor sessions, goals, chapters | one call on the Strong slot (the Cheap one when no Strong is set), checked against the dictionary, asked once more if it fails | `course.json`, cost in `build/course-draft.json` |
+| The story bible: series, city, cast, places, a beat per chapter, Read settings, Speak scenes | one more call on the same slot, checked | `world.json`, cost in `build/world-draft.json` |
+| The skill map | derived from the course: one node per grammar lesson, chained in teaching order | `seed.json` |
 | The language itself (tag, names, voices, letters) | the catalog in `src/core/language.ts` | `language.json`, written last |
 
 `language.json` is what makes the language appear in the menu, so a half-built folder is never offered as a profile. Measured on 5 November 2026: Czech took 12 seconds (2,823 of 3,000 words with sentences), Russian 29 seconds (2,972 of 3,000); peak memory of the process was about 550 MB for Russian.
@@ -34,11 +36,15 @@ The catalog is `LANGUAGE_CATALOG` in `src/core/language.ts`: seven languages for
 
 Russian is in the catalog although its profile is built in: the profile has its prompt but ships no words, so adding it downloads them into `<data>/languages/russian/`.
 
-## What works in an added language
+## The generated course
 
-- Review, Words, Read, Watch, Speak, the placement check and the tutor work: their model prompts take the language from the running profile, and setup asks what *that* language is for.
-- The lessons and the curriculum path are Slovak units (`LESSON_LANGUAGE` in `src/core/lesson.ts`), so they stay Slovak. Parallels from the learner's languages exist only for them.
-- Language-specific touches are data, not code: Slovak examples in prompts are `promptExamples` on the Slovak entry in `src/core/language.ts`, and Robo, Bratislava, the Read settings and the Speak scenes in their Slovak form are in `curriculum/slovak/world.json`. A language without them gets neutral wording.
+Adding a language needs a model: without one there is no course, so the add does not start and the dialog says why.
+
+- **Grammar lessons select real sentences by their form's tags.** Wiktionary labels each form ("kávu": accusative singular). A lesson names the tags it drills and, when the rule depends on it, the words that come right before the blank (a preposition). A sentence counts when its blank carries every tag. With no trigger word, the form must mean only that (Czech "kávě" is dative or locative, so it needs "v" or "na" before it to count as a locative). A dictionary form never counts as a case form ("Dobrý den" is not an accusative). The model never writes a sentence (E27).
+- **What the model writes is checked** against the language's own dictionary (`checkCourse`, `checkWorld` in `src/core/course.ts`): a tag the dictionary does not use, a word theme whose words are not in it, a lesson with fewer than 12 sentences, a chapter that does not end on a goal are dropped. When too little is left, the model is asked once more; a second failure ends the task with "Try again", which keeps the downloads.
+- **The course runs the whole app.** The server reads `course.json` at start (`config.ts`), the browser gets the same course before the page loads (`app/layout.tsx`), and the lesson units, the map, the chapters and the placement tiers are the course's (`src/core/lesson.ts`, `curriculum.ts`, `onboarding.ts`). First words and the frequency bands come with every course.
+- **Not generated:** the grammar atlas (a Slovak case × gender table), the Dvojičky pairs and the aspect tasks are Slovak content. Parallels from the learner's languages exist only in the Slovak lessons.
+- A language added before courses were generated shows "Needs its course" in the dialog; **Finish** builds it from the kept downloads. The running language picks up its new course on a restart.
 
 ## Removing a language
 

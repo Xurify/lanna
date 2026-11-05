@@ -2,6 +2,12 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: an added language gets its whole course (branch `feat/generated-courses`, E44)
+
+- **What changed for the learner:** an Estonian profile ran the Slovak lessons and curriculum. Adding a language now builds its course: grammar lessons on real Tatoeba sentences chosen by each form's Wiktionary tags, word themes, tutor sessions, goals, chapters, placement tiers, a skill map and a story world for Read and Speak. Your Strong model writes the rules and the structure in two calls; the app checks them against the dictionary. A language added before this shows "Needs its course" in the dialog, and **Finish** builds it from the kept downloads.
+- **A model is now required** to add a language; the dialog says so.
+- **Unverified:** a course written by a real model (the tests use a scripted one; the prompt has not run against a live model yet), and the lessons on screen.
+
 ## 5 November: add a language from the app (branch `feat/add-language-button`, E43)
 
 - **What changed for the learner:** the language menu's "Add a language…" opened a page of developer steps (edit two source files, write a lexicon by hand) and named an `add-language` skill that did not exist. It now opens a list of seven languages (Bulgarian, Czech, Estonian, Norwegian, Polish, Romanian and Russian). Picking one starts a background task that shows in the sidebar's Background section and on the Tasks page with its step, and ends in a card with "Switch to <language>", or with why it failed and "Try again", which continues where it stopped.

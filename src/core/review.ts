@@ -46,6 +46,9 @@ export interface LexiconEntry {
 	/** Rule-generated forms that slovak.wiki marks as verified for this
 	 *  paradigm (unordered). Absent = no trusted generated forms. */
 	forms?: string[];
+	/** An added language's forms and the grammar cells each fills, as
+	 *  space-joined Wiktionary tags ("genitive singular"); one string per cell. */
+	formTags?: Record<string, string[]>;
 	origin?: string;
 	examples: LexiconExample[];
 	related: string[];

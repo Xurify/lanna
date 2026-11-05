@@ -21,6 +21,10 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
+import { activeCourse, courseUnitsFor, type Course, type CourseUnit } from "./course.ts";
+
+/** The running language's generated course; null runs the Slovak one below. */
+const COURSE = activeCourse();
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
@@ -106,6 +110,9 @@ export interface UnitInfo {
 	grammarTerm?: string;
 	/** Special lesson interaction pattern (e.g. sentence building for clitics). */
 	pattern?: "build";
+	/** A generated course's grammar unit: which blanked forms it drills, by
+	 *  their grammar tags and the word before the blank (src/core/course.ts). */
+	match?: Pick<CourseUnit, "cat" | "tags" | "after">;
 }
 
 const WORD_RULE = "Learn the word with its sentence: the sentence is what you will hear.";
@@ -140,12 +147,16 @@ const PAIR_UNITS: UnitInfo[] = PAIR_UNIT_IDS.map((id) => ({
 	grammarTerm: "Confusing pairs",
 }));
 
-/** The language the units below and their bridge lines are written in
- *  (ISO 639-1). Another target language has no lessons or parallels yet. */
-export const LESSON_LANGUAGE = "sk";
+/** The language the lessons are in (ISO 639-1): the generated course's,
+ *  else Slovak, whose units and bridge lines are below. */
+export const LESSON_LANGUAGE = COURSE?.code ?? "sk";
 
-/** The path, in teaching order. */
-export const UNITS: UnitInfo[] = [
+/** Whether the units carry bridge lines to the learner's languages: the
+ *  hand-written Slovak course does, a generated one does not. */
+export const LESSONS_HAVE_BRIDGES = !COURSE;
+
+/** Slovak's path, in teaching order. */
+const SLOVAK_UNITS: UnitInfo[] = [
 	{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, slovakTerm: "Základná slovná zásoba", grammarTerm: "Core vocabulary" },
 	{ id: "present", title: "I, you, we", tagline: "Verbs in the present: -ám, -ím", glyph: "users", rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.", node: "n_seed_v_present", bridge: "Like Estonian: my robíme ≈ me teeme, vy robíte ≈ te teete. Ja robím ≈ ma teen.", slovakTerm: "Prítomný čas", grammarTerm: "Present tense" },
 	{ id: "acc-fem", title: "Objects: -a → -u", tagline: "What you have, see, drink", glyph: "coffee", rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.", node: "n_seed_acc_fem", bridge: "The object case, like Estonian osastav: Pijem kávu ≈ Joon kohvi.", slovakTerm: "Akuzatív (ženský rod)", grammarTerm: "Feminine accusative" },
@@ -173,6 +184,26 @@ export const UNITS: UnitInfo[] = [
 	...BAND_UNITS,
 	...PAIR_UNITS,
 ];
+
+/** A generated course's units: First words, the course's own grammar and
+ *  word themes, then the frequency bands, which any lexicon with ranks has. */
+function courseLessonUnits(course: Course): UnitInfo[] {
+	const own: UnitInfo[] = course.units.map((u) => ({
+		id: u.id as UnitId,
+		title: u.kind === "words" ? `Words: ${u.title.replace(/^Words:\s*/, "")}` : u.title,
+		tagline: u.tagline,
+		glyph: u.glyph,
+		rule: u.rule,
+		node: `n_seed_${u.id.replace(/[^a-z0-9]+/gi, "_")}`,
+		...(u.grammarTerm ? { grammarTerm: u.grammarTerm } : {}),
+		...(u.nativeTerm ? { slovakTerm: u.nativeTerm } : {}),
+		...(u.kind === "words" ? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true } : { match: { cat: u.cat, tags: u.tags ?? [], after: u.after } }),
+	}));
+	return [{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, grammarTerm: "Core vocabulary" }, ...own, ...BAND_UNITS.map(({ slovakTerm: _native, ...b }) => b)];
+}
+
+/** The path, in teaching order: the running language's course. */
+export const UNITS: UnitInfo[] = COURSE ? courseLessonUnits(COURSE) : SLOVAK_UNITS;
 
 export function isUnitId(v: unknown): v is UnitId {
 	return typeof v === "string" && UNITS.some((u) => u.id === v);
@@ -429,6 +460,10 @@ export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | 
 	const isVerb = entry.pos === "verb" || entry.cat === "Verbs";
 	const a = answer.toLowerCase();
 	if (a === entryLemma(entry).toLowerCase()) return undefined;
+	// A generated unit says what it drills; the Slovak endings below do not apply.
+	const own = unitInfo(unit)?.match;
+	if (own) return own.tags?.length ? `${own.tags.join(" ")} of ${entryLemma(entry)}` : undefined;
+	if (COURSE) return undefined;
 	// A verb form the dictionary lists, or any form in a verb unit (the
 	// dictionary's form lists are incomplete for prefixed verbs).
 	const verbUnit = /^(present|past|cond|core-verbs|motion|verbs-mix)/.test(unit);
@@ -463,6 +498,8 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	const out: Candidate[] = [];
 	const lemmas = info.lemmas ? new Set(info.lemmas.map((l) => l.toLowerCase())) : null;
 	const union = info.union ? new Set<UnitId>(info.union) : null;
+	const matcher: CourseUnit[] | null = info.match ? [{ id: unit, kind: "grammar", title: "", tagline: "", rule: "", glyph: "", ...info.match }] : null;
+	const tag = COURSE?.tag ?? "sk-SK";
 	for (const entry of entries) {
 		entry.examples.forEach((ex, index) => {
 			if (ex.rejected) return;
@@ -472,6 +509,8 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 				if (inCluster(lemmas, entry, ex)) out.push({ entry, index, unit });
 			} else if (info.band) {
 				if (inBand(entry, info.band, ex)) out.push({ entry, index, unit });
+			} else if (matcher) {
+				if (courseUnitsFor(matcher, entry, ex, tag).length) out.push({ entry, index, unit });
 			} else if (union) {
 				const hit = classifyAll(entry, ex).find((u) => union.has(u));
 				if (hit) out.push({ entry, index, unit: hit });
@@ -646,8 +685,10 @@ export function unitStage(lessons: number, accuracy: number | null): UnitStage {
 }
 
 /** The preposition before the blank, if it is one that picks a case. */
-export function triggerOf(sentence: string, at: number): string | undefined {
+export function triggerOf(sentence: string, at: number, unit?: UnitId): string | undefined {
 	const w = wordBefore(sentence, at);
+	const own = unit ? unitInfo(unit)?.match : undefined;
+	if (own || COURSE) return own?.after?.includes(w) ? w : undefined;
 	return ALL_PREPS.has(w) ? w : undefined;
 }
 
@@ -710,7 +751,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (form) item.form = form;
 	const alts = knownVariants(answer);
 	if (alts.length > 0) item.alternatives = alts;
-	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at);
+	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at, c.unit);
 	if (trigger) item.trigger = trigger;
 	const options = () => (info.kind === "words" ? wordOptions(answer, entryLemma(c.entry), pool, rand) : formOptions(c.entry, answer, pool, rand));
 	if (kind === "choose") item.options = options();
@@ -919,7 +960,7 @@ export function buildBlitz(entries: readonly LexiconEntry[], units: readonly Uni
 		used.add(id);
 		items.push(buildItem(c, "choose", group.pool, rand));
 	}
-	return { unit: units[0] ?? "acc-fem", units: [...units], items };
+	return { unit: units[0] ?? (UNITS.find((u) => !u.kind || u.kind === "grammar")?.id as UnitId), units: [...units], items };
 }
 
 // ─── Scoring, streaks, levels ──────────────────────────────────────────────

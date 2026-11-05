@@ -143,6 +143,21 @@ function readProfileFile(): LanguageProfile {
 
 export const ACTIVE_PROFILE: LanguageProfile = readActiveProfile();
 
+// A language added from the app runs its own generated course
+// (src/core/course.ts). The core modules read it from globalThis when they
+// load, so it is set here, as early as the profile is known; the key is the
+// one src/core/course.ts reads (config may not import the core).
+{
+	const g = globalThis as Record<string, unknown>;
+	if (g.__lhCourse === undefined) {
+		try {
+			g.__lhCourse = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, ACTIVE_PROFILE, "course.json"), "utf-8"));
+		} catch {
+			// no generated course: Slovak's, or none yet
+		}
+	}
+}
+
 const DATA_ROOT = path.join(BASE_DATA_ROOT, "profiles", ACTIVE_PROFILE);
 
 export const PATHS = {

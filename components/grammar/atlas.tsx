@@ -39,6 +39,12 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 					Today
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Grammar</h1>
+				{!first ? (
+					<p className="q-line dim mt-2 max-w-2xl" data-testid="grammar-none">
+						This table is the Slovak case and gender grid. The grammar of the language you are learning now is in its lessons on the map, each with its rule.
+					</p>
+				) : (
+				<>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practice.{" "}
 					<span className="font-semibold text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
@@ -90,6 +96,8 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 						<p className="text-base text-ink-3">No drill for this cell yet.</p>
 					)}
 				</div>
+				</>
+				)}
 			</main>
 		</div>
 	);

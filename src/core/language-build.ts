@@ -24,12 +24,16 @@ export interface BuildWord {
 	glosses: string[];
 	gender?: string;
 	forms: string[];
+	/** Each form's grammar as Wiktionary labels it ("genitive", "plural"),
+	 *  the lemma's own form included: what a generated lesson unit selects by. */
+	formTags?: Record<string, string[]>;
 }
 
 export interface FormOf {
 	form: string;
 	lemma: string;
 	pos: string;
+	tags?: string[];
 }
 
 export interface TatoebaSentence {
@@ -115,7 +119,7 @@ export function catOf(pos: string): string | null {
 
 /** Table cells that are not forms (headers, template names, romanizations)
  *  and forms not to drill (pre-reform spellings such as кошкѣ, rare ones). */
-const NOT_A_FORM = new Set(["table-tags", "inflection-template", "class", "romanization", "error-unknown-tag", "canonical", "transliteration", "dated", "archaic", "obsolete", "rare", "nonstandard", "misspelling"]);
+const NOT_A_FORM = new Set(["error-unrecognized-form", "table-tags", "inflection-template", "class", "romanization", "error-unknown-tag", "canonical", "transliteration", "dated", "archaic", "obsolete", "rare", "nonstandard", "misspelling"]);
 
 /** A "form of" sense that names another word, not an inflection of it. */
 const RELATED_WORD = new Set(["diminutive", "augmentative", "endearing", "pejorative", "abbreviation", "alt-of", "misspelling", "dated", "archaic", "obsolete"]);
@@ -169,7 +173,7 @@ export function readKaikkiEntry(raw: unknown): { word: BuildWord | null; formOf:
 		const tags = s.tags ?? [];
 		const target = s.form_of?.[0]?.word;
 		if (target) {
-			if (!tags.some((t) => RELATED_WORD.has(t))) formOf.push({ form: lemma, lemma: stripStress(target), pos });
+			if (!tags.some((t) => RELATED_WORD.has(t))) formOf.push({ form: lemma, lemma: stripStress(target), pos, tags: grammarTags(tags) });
 			continue;
 		}
 		if (s.alt_of?.length || tags.includes("form-of") || tags.includes("alt-of") || tags.includes("misspelling")) continue;
@@ -181,21 +185,38 @@ export function readKaikkiEntry(raw: unknown): { word: BuildWord | null; formOf:
 	}
 	if (glosses.length === 0) return { word: null, formOf };
 	const forms = new Set<string>();
+	const formTags: Record<string, string[]> = {};
 	const script = scriptOf(lemma);
 	for (const f of e.forms ?? []) {
 		const form = typeof f.form === "string" ? stripStress(f.form).trim() : "";
-		if (!form || form === "-" || form === lemma || /[\s\d]/.test(form) || !/\p{L}/u.test(form)) continue;
+		if (!form || form === "-" || /[\s\d]/.test(form) || !/\p{L}/u.test(form)) continue;
 		if (scriptOf(form) !== script) continue;
 		if ((f.tags ?? []).some((t) => NOT_A_FORM.has(t))) continue;
 		// A form outside an inflection table is a related word (the aspect
 		// partner, a diminutive), not this lemma's form.
 		if (!f.source) continue;
-		forms.add(form);
+		addTags(formTags, form, grammarTags(f.tags ?? []));
+		if (form !== lemma) forms.add(form);
 	}
 	return {
-		word: { key: `${lemma}\u0000${pos}`, lemma, pos, glosses: glosses.slice(0, 3), gender: pos === "noun" ? genderOf(senseTags) : undefined, forms: [...forms] },
+		word: { key: `${lemma}\u0000${pos}`, lemma, pos, glosses: glosses.slice(0, 3), gender: pos === "noun" ? genderOf(senseTags) : undefined, forms: [...forms], ...(Object.keys(formTags).length ? { formTags } : {}) },
 		formOf,
 	};
+}
+
+/** The tags that say a form's grammar; layout and source labels go. */
+function grammarTags(tags: readonly string[]): string[] {
+	return tags.filter((t) => !NOT_A_FORM.has(t) && !RELATED_WORD.has(t) && t !== "form-of" && t !== "table-tags");
+}
+
+/** A form can fill several cells (Czech "kávě" is dative and locative):
+ *  its tags are each cell's, kept as alternatives joined by "|". */
+function addTags(into: Record<string, string[]>, form: string, tags: readonly string[]): void {
+	if (tags.length === 0) return;
+	const cell = [...tags].sort().join(" ");
+	const list = into[form] ?? [];
+	if (!list.includes(cell)) list.push(cell);
+	into[form] = list;
 }
 
 /** Every form names the lemmas it belongs to; the ones only one lemma owns
@@ -222,7 +243,13 @@ export function mergeFormOf(words: BuildWord[], formOf: readonly FormOf[]): void
 	for (const w of words) byLemma.set(`${w.lemma}\u0000${w.pos}`, w);
 	for (const f of formOf) {
 		const w = byLemma.get(`${f.lemma}\u0000${f.pos}`);
-		if (w && f.form !== w.lemma && !w.forms.includes(f.form)) w.forms.push(f.form);
+		if (!w || f.form === w.lemma) continue;
+		if (!w.forms.includes(f.form)) w.forms.push(f.form);
+		// The table's cells are exact; a "form of" entry often lumps several.
+		if (f.tags?.length && !w.formTags?.[f.form]) {
+			w.formTags ??= {};
+			addTags(w.formTags, f.form, f.tags);
+		}
 	}
 }
 
@@ -376,7 +403,8 @@ export function toLexiconEntries(ranked: ReadonlyArray<BuildWord & { rank: numbe
 			pos: w.pos,
 			rank: w.rank,
 			...(w.gender ? { gender: w.gender } : {}),
-			...(w.forms.length ? { forms: w.forms.slice(0, 40) } : {}),
+			...(w.forms.length ? { forms: w.forms } : {}),
+			...(w.formTags ? { formTags: w.formTags } : {}),
 			origin: "wiktionary",
 			examples: examples.get(w.key) ?? [],
 			related: [],

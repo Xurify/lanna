@@ -22,6 +22,8 @@ interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
+	/** Downloaded before courses were generated: adding finishes it. */
+	started: boolean;
 }
 
 export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void; onStarted: () => void }) {
@@ -29,13 +31,18 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 	const [picked, setPicked] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [blocker, setBlocker] = useState<string | null>(null);
 	const dismiss = useBackdropDismiss(onClose);
 
 	useEffect(() => {
 		let live = true;
 		fetch("/api/languages")
-			.then((r) => r.json() as Promise<{ languages: CatalogRow[] }>)
-			.then((d) => live && setRows(d.languages))
+			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; blocker: string | null }>)
+			.then((d) => {
+				if (!live) return;
+				setRows(d.languages);
+				setBlocker(d.blocker);
+			})
 			.catch(() => live && setError("Could not load the list of languages."));
 		return () => {
 			live = false;
@@ -81,7 +88,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 							Add a language
 						</h3>
 						<p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-							LangHarness downloads about 3,000 common words from Wiktionary and example sentences from Tatoeba. It takes a minute or two in the background, so you can keep studying.
+							LangHarness builds the whole course: about 3,000 common words from Wiktionary with example sentences from Tatoeba, then lessons, chapters, tutor sessions, goals and a story world written by your model. It runs in the background, so you can keep studying.
 						</p>
 					</div>
 					<button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
@@ -121,6 +128,8 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 										</span>
 									) : r.adding ? (
 										"Adding…"
+									) : r.started ? (
+										"Needs its course"
 									) : null}
 								</span>
 							</button>
@@ -129,8 +138,13 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				</div>
 
 				<p className="text-xs leading-relaxed text-muted-foreground">
-					If a model is set in Settings, it also drafts a grammar map for the skill map in one Cheap-slot call. Review, Words, Read, Watch, Speak and the tutor work in the new language. The lessons and the curriculum path are written for Slovak only so far.
+					The course is written in two calls on your Strong model (the Cheap one if no Strong is set); Settings → Spending shows what they cost. The sentences are never written by a model: they are real Tatoeba sentences.
 				</p>
+				{blocker && (
+					<p className="text-xs text-destructive" role="alert" data-testid="add-language-blocker">
+						{blocker}
+					</p>
+				)}
 				{error && (
 					<p className="text-xs text-destructive" role="alert">
 						{error}
@@ -143,11 +157,11 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 					<button
 						type="button"
 						data-testid="add-language-start"
-						disabled={!choice || busy || anyAdding}
+						disabled={!choice || busy || anyAdding || !!blocker}
 						onClick={() => void start()}
 						className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 					>
-						{anyAdding ? "Another language is being added" : choice ? `Add ${choice.english}` : "Pick a language"}
+						{anyAdding ? "Another language is being added" : choice ? `${choice.started ? "Finish" : "Add"} ${choice.english}` : "Pick a language"}
 					</button>
 				</div>
 			</div>

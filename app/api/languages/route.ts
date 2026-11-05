@@ -7,12 +7,12 @@
  * POST /api/languages {action: "remove", id} — delete an added language's
  * words and grammar map. The learner's progress in it stays.
  */
-import { languageCatalog, removeLanguage, startLanguageAdd } from "@/src/server";
+import { addBlocker, languageCatalog, removeLanguage, startLanguageAdd } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-	return Response.json({ languages: languageCatalog() });
+	return Response.json({ languages: languageCatalog(), blocker: addBlocker() });
 }
 
 export async function POST(req: Request) {

@@ -1,5 +1,5 @@
 import { Start } from "@/components/onboarding/start";
-import { hoursDone, type LearnerGoal } from "@/src/core";
+import { CHAPTERS, hoursDone, type LearnerGoal } from "@/src/core";
 import { activeLanguage, progressSummary } from "@/src/server";
 
 export const metadata = { title: "Set up" };
@@ -12,7 +12,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 	const { edit, check } = await searchParams;
 	let goal: LearnerGoal | null = null;
 	let hours = 0;
-	let current = "hello";
+	let current = CHAPTERS[0]?.id ?? "";
 	try {
 		const s = progressSummary(new Date().getTimezoneOffset());
 		goal = s.goal;

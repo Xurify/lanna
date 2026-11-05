@@ -55,7 +55,7 @@ describe("reading Wiktionary entries", () => {
 
 	test("a form-of entry names its lemma, but a diminutive does not", () => {
 		assert.deepEqual(build.readKaikkiEntry({ word: "kun", pos: "noun", senses: [{ glosses: ["genitive plural of kuna"], tags: ["form-of"], form_of: [{ word: "kuna" }] }] }).formOf, [
-			{ form: "kun", lemma: "kuna", pos: "noun" },
+			{ form: "kun", lemma: "kuna", pos: "noun", tags: [] },
 		]);
 		assert.deepEqual(build.readKaikkiEntry({ word: "kočička", pos: "noun", senses: [{ glosses: ["diminutive of kočka"], tags: ["diminutive", "form-of"], form_of: [{ word: "kočka" }] }] }).formOf, []);
 	});
@@ -166,21 +166,49 @@ const fakeFetch = (async (input: string | URL | Request) => {
 	return body === undefined ? new Response("missing", { status: 404 }) : new Response(typeof body === "string" ? body : new Uint8Array(body));
 }) as typeof fetch;
 
-const SEED = JSON.stringify({
-	nodes: ["alphabet", "gender", "cases", "present", "past"].map((key) => ({ key, strand: "nouns", name: key, statement: `About ${key}.` })),
-	chains: [{ premises: ["gender"], conclusion: "cases" }],
+// The fixture has three words, so the course is three tiny chapters over
+// the one cell its sentences have (accusative singular).
+const COURSE = JSON.stringify({
+	units: ["acc", "acc-objects", "acc-nouns"].map((id) => ({ id, kind: "grammar", title: id, tagline: "objects", rule: "The object takes the accusative: Vidím kočku.", glyph: "coffee", grammarTerm: "Accusative", cat: "Nouns", tags: ["accusative", "singular"] })),
+	tutors: [{ id: "sounds", title: "Sounds", tagline: "č, ř", glyph: "ear", brief: "Teach the sounds." }],
+	goals: ["can-a", "can-b", "can-c"].map((id) => ({ id, title: id, tagline: "x", scene: "cafe" })),
+	chapters: [
+		{ id: "one", stage: "a1", title: "One", tagline: "objects", units: ["acc", "sounds", "can-a"] },
+		{ id: "two", stage: "a1", title: "Two", tagline: "more objects", units: ["acc-objects", "can-b"] },
+		{ id: "three", stage: "a2", title: "Three", tagline: "still objects", units: ["acc-nouns", "can-c"] },
+	],
 });
+const WORLD = JSON.stringify({
+	series: "Jana in Brno",
+	city: "Brno",
+	logline: "Jana, who has just moved to Brno",
+	cast: [
+		{ id: "jana", name: "Jana", gender: "f", age: "young", role: "the lead" },
+		{ id: "petr", name: "Petr", gender: "m", age: "adult", role: "a neighbor" },
+		{ id: "eva", name: "Eva", gender: "f", age: "old", role: "the baker" },
+	],
+	places: ["Zelný trh", "Špilberk", "Kavárna"].map((name) => ({ id: name.toLowerCase(), name, note: "x" })),
+	beats: { one: "Jana arrives", two: "Jana shops", three: "Jana works" },
+	settings: { daily: ["the market"] },
+	scenes: { cafe: { title: "V kavárně", blurb: "Order a coffee", brief: "a waiter in Brno", task: "Order a coffee." } },
+});
+let asked: string[] = [];
+const fakeAsk = async (system: string) => {
+	asked.push(system);
+	return { text: system.includes("story bible") ? WORLD : COURSE, usage: { model: "faux:faux", steps: [] } };
+};
 
 describe("adding a language in the background", () => {
 	beforeEach(() => {
 		resetTasks();
 		calls = [];
 		failKaikki = false;
+		asked = [];
 	});
 
 	test("a failed download ends the task with why, and keeps the steps already done", async () => {
 		failKaikki = true;
-		const { done } = startLanguageAdd("czech", { fetch: fakeFetch, draftSeed: null });
+		const { done } = startLanguageAdd("czech", { fetch: fakeFetch, ask: fakeAsk, minUnitSentences: 1 });
 		await done;
 		const [t] = listTasks();
 		assert.equal(t?.kind, "language");
@@ -192,7 +220,7 @@ describe("adding a language in the background", () => {
 	});
 
 	test("trying again continues where it stopped, writes the language and lists it as a profile", async () => {
-		const { taskId, done } = startLanguageAdd("czech", { fetch: fakeFetch, draftSeed: async () => ({ text: SEED, usage: { model: "faux:faux", steps: [] } }) });
+		const { taskId, done } = startLanguageAdd("czech", { fetch: fakeFetch, ask: fakeAsk, minUnitSentences: 1 });
 		assert.equal(taskId, "language:czech");
 		assert.deepEqual(listTasks()[0]?.language, { id: "czech", english: "Czech" });
 		await done;
@@ -201,7 +229,8 @@ describe("adding a language in the background", () => {
 		assert.equal(t?.status, "done");
 		assert.equal(t?.title, "Czech is ready");
 		// hrad is not in the frequency list; "Děkuji." is one word, too short to drill.
-		assert.equal(t?.note, "3 words, 2 with example sentences.");
+		assert.equal(t?.note, "3 chapters, 3 grammar lessons, 0 word themes, 1 tutor sessions; 3 words, 2 with example sentences.");
+		assert.equal(asked.length, 2, "one call for the course, one for the story bible");
 
 		const folder = path.join(dir, "languages", "czech");
 		const lexicon = JSON.parse(fs.readFileSync(path.join(folder, "lexicon.json"), "utf-8")) as { words: Array<{ lemma: string; examples: Array<{ text: string; tatoebaId: number; cloze: { answer: string; at: number } }> }> };
@@ -209,7 +238,13 @@ describe("adding a language in the background", () => {
 		const cat = lexicon.words[0]!;
 		assert.deepEqual(cat.examples.map((e) => e.text), ["Kočka spí.", "Vidím kočku.", "Mám psa a kočku."]);
 		for (const e of cat.examples) assert.equal(e.text.slice(e.cloze.at, e.cloze.at + e.cloze.answer.length), e.cloze.answer);
-		assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "seed.json"), "utf-8")).nodes.length, 5);
+		const course = JSON.parse(fs.readFileSync(path.join(folder, "course.json"), "utf-8"));
+		assert.deepEqual(course.chapters.map((c: { id: string }) => c.id), ["one", "two", "three"]);
+		assert.equal(course.code, "cs");
+		assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "seed.json"), "utf-8")).nodes.length, 3, "one skill-map node per grammar unit");
+		const world = JSON.parse(fs.readFileSync(path.join(folder, "world.json"), "utf-8"));
+		assert.equal(world.city, "Brno");
+		assert.equal(world.scenes.cafe.title, "V kavárně");
 		assert.match(fs.readFileSync(path.join(folder, "prompt.md"), "utf-8"), /teaches \*\*Czech\*\* \(Čeština\)/);
 
 		assert.deepEqual(config.addedLanguageIds(), ["czech"]);
@@ -224,7 +259,7 @@ describe("adding a language in the background", () => {
 		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, seed: true, removable: true });
 		assert.equal(languageCatalog().find((r) => r.id === "czech")?.ready, true);
 		const { usageReport } = await import("../src/server/usage-report.ts");
-		assert.equal(usageReport().languages?.count, 1, "the grammar map call shows in Spending");
+		assert.equal(usageReport().languages?.count, 1, "the course and story calls show in Spending");
 	});
 
 	test("an added language cannot be added twice, and an unknown one not at all", () => {

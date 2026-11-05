@@ -1,9 +1,11 @@
 /**
  * Adding a language from the app (2026-11-05): one background task
  * (server/tasks.ts, so it shows in the sidebar's Background section and
- * ends in a ready notice) downloads open data and writes
- * <data>/languages/<id>/: lexicon.json, prompt.md, seed.json when a model
- * is set, and language.json last, which is what makes the language appear.
+ * ends in a ready notice) downloads open data, has a model write the course
+ * and the story bible, and writes <data>/languages/<id>/: lexicon.json,
+ * course.json, world.json, seed.json, prompt.md, and language.json last,
+ * which is what makes the language appear. Without a model there is no
+ * course, so the add does not start.
  *
  * Every step keeps its result under build/, so a failed or stopped add
  * resumes where it ended. The large files are streamed and filtered on the
@@ -28,10 +30,8 @@ import {
 	mergeFormOf,
 	mergeHomographs,
 	parseFrequency,
-	parseSeedDraft,
 	rankWords,
 	readKaikkiEntry,
-	seedDraftPrompt,
 	sentenceUsable,
 	specialLettersOf,
 	toLexiconEntries,
@@ -40,8 +40,12 @@ import {
 	type TatoebaSentence,
 } from "../core/language-build.ts";
 import type { StoryUsage } from "../core/reading.ts";
-import { aiStatus } from "./ai-status.ts";
-import { storyEngine } from "./reading.ts";
+import { checkCourse, checkWorld, courseDraftPrompt, courseSeed, worldDraftPrompt, type Course } from "../core/course.ts";
+import { PURPOSES } from "../core/onboarding.ts";
+import { SPEAK_SCENES } from "../core/speak.ts";
+import { countryOf } from "../core/language.ts";
+import { piEngineForSpec } from "../agent/models.ts";
+import { aiSlot, aiStatus } from "./ai-status.ts";
 import { failTask, finishTask, listTasks, removeTask, startTask, updateTask } from "./tasks.ts";
 
 /** Words kept per language, commonest first. */
@@ -56,12 +60,26 @@ export const taskIdOf = (id: string) => `language:${id}`;
 const dirOf = (id: string) => path.join(PATHS.languages, id);
 const buildDir = (id: string) => path.join(dirOf(id), "build");
 
-/** Whether a catalog language can be learned now: an added one has its
- *  language.json, the built-in Russian needs only its words. */
+/** Whether a catalog language is complete: its words and its course. One
+ *  added before courses were generated is not, and adding it again
+ *  finishes it from the kept downloads. */
 export function languageReady(id: string): boolean {
 	if (id === "slovak") return true;
-	if (id === "russian") return fs.existsSync(curriculumFile(id, "lexicon.json"));
-	return fs.existsSync(path.join(dirOf(id), "language.json"));
+	const course = fs.existsSync(path.join(dirOf(id), "course.json"));
+	if (id === "russian") return course && fs.existsSync(curriculumFile(id, "lexicon.json"));
+	return course && fs.existsSync(path.join(dirOf(id), "language.json"));
+}
+
+/** What the course writer is told the dictionary holds. */
+function courseInventory(entries: ReadonlyArray<{ cat: string; lemma?: string; formTags?: Record<string, string[]> }>, tag: string, scenes: readonly string[]) {
+	const tags = new Map<string, number>();
+	const cats = new Map<string, number>();
+	for (const e of entries) {
+		cats.set(e.cat, (cats.get(e.cat) ?? 0) + 1);
+		for (const cells of Object.values(e.formTags ?? {})) for (const cell of cells) for (const t of cell.split(" ")) tags.set(t, (tags.get(t) ?? 0) + 1);
+	}
+	const top = <K,>(m: Map<K, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]);
+	return { tags: top(tags).slice(0, 60), cats: top(cats), words: entries.slice(0, 400).map((e) => (e.lemma ?? "").toLocaleLowerCase(tag)), scenes };
 }
 
 export interface CatalogRow {
@@ -71,17 +89,29 @@ export interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
+	/** Words downloaded but no course yet: adding it finishes it. */
+	started: boolean;
 }
 
 export function languageCatalog(): CatalogRow[] {
 	const running = new Set(listTasks().filter((t) => t.kind === "language" && t.status === "running").map((t) => t.id));
-	return LANGUAGE_CATALOG.map((l) => ({ id: l.id, english: l.english, endonym: l.endonym, tag: l.tag, ready: languageReady(l.id), adding: running.has(taskIdOf(l.id)) }));
+	return LANGUAGE_CATALOG.map((l) => ({ id: l.id, english: l.english, endonym: l.endonym, tag: l.tag, ready: languageReady(l.id), adding: running.has(taskIdOf(l.id)), started: !languageReady(l.id) && fs.existsSync(dirOf(l.id)) }));
 }
 
 export interface AddDeps {
 	fetch?: typeof fetch;
-	/** The model call for the grammar map; null skips it. Defaults to the Cheap slot when one is set. */
-	draftSeed?: ((system: string, prompt: string, signal: AbortSignal) => Promise<{ text: string; usage: StoryUsage }>) | null;
+	/** The model call that writes the course and the story bible. Defaults
+	 *  to the Strong slot, else the Cheap one. */
+	ask?: Ask;
+	/** Sentences a grammar unit needs (tests run on a few words). */
+	minUnitSentences?: number;
+}
+
+export type Ask = (system: string, prompt: string, signal: AbortSignal) => Promise<{ text: string; usage: StoryUsage }>;
+
+/** Why a language cannot be added now, or null. */
+export function addBlocker(): string | null {
+	return aiStatus("strong").ready || aiStatus().ready ? null : "Adding a language writes its course with a model: set one in Settings → AI models first.";
 }
 
 /** Start adding a catalog language in the background. Starting one that is
@@ -92,6 +122,8 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
 	if (languageReady(id)) throw new Error(`${lang.english} is already added`);
 	const other = listTasks().find((t) => t.kind === "language" && t.status === "running" && t.id !== taskIdOf(id));
 	if (other) throw new Error(`Wait for "${other.title}" to finish first`);
+	const blocked = deps.ask ? null : addBlocker();
+	if (blocked) throw new Error(blocked);
 	const { signal, fresh } = startTask({ id: taskIdOf(id), kind: "language", title: `Adding ${lang.english}`, step: "Starting", language: { id, english: lang.english } });
 	if (!fresh) return { taskId: taskIdOf(id), done: Promise.resolve() };
 	const done = addLanguage(lang, signal, deps).then(
@@ -287,9 +319,18 @@ async function wiktionary(get: typeof fetch, lang: CatalogLanguage, wanted: Set<
 	return list;
 }
 
-async function defaultDraftSeed(system: string, prompt: string, signal: AbortSignal): Promise<{ text: string; usage: StoryUsage }> {
-	const resolved = storyEngine();
-	if (!resolved) throw new Error("no model");
+/** The Strong slot writes the course: it is teaching content. The Cheap
+ *  slot stands in when no Strong model is set. */
+function courseEngine() {
+	const slot = aiSlot("strong")?.model ? aiSlot("strong") : aiSlot("cheap");
+	if (!slot?.model) return null;
+	const spec = { provider: slot.model.provider, id: slot.model.id, ...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}) };
+	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
+}
+
+const defaultAsk: Ask = async (system, prompt, signal) => {
+	const resolved = courseEngine();
+	if (!resolved) throw new SourceError("No model is set in Settings → AI models.");
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const { text } = await runSubagent([], {
 		role: "researcher",
@@ -302,6 +343,44 @@ async function defaultDraftSeed(system: string, prompt: string, signal: AbortSig
 			usage.steps.push({ inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning }),
 	});
 	return { text, usage };
+};
+
+function jsonOf(text: string): unknown {
+	const start = text.indexOf("{");
+	const end = text.lastIndexOf("}");
+	if (start < 0 || end <= start) return null;
+	try {
+		return JSON.parse(text.slice(start, end + 1));
+	} catch {
+		return null;
+	}
+}
+
+/** One model draft, kept in build/<name>-draft.json with its cost (it shows
+ *  in Settings → Spending), checked, and asked once more with what was
+ *  wrong when the check fails. */
+async function drafted<T>(id: string, name: string, ask: Ask, signal: AbortSignal, first: { system: string; prompt: string }, check: (raw: unknown) => { value: T; problems: string[] } | null): Promise<T> {
+	const file = path.join(buildDir(id), `${name}-draft.json`);
+	const kept = readJson<{ value?: T }>(file);
+	if (kept?.value) return kept.value;
+	const calls: Array<{ model: string; usage: StoryUsage; createdAt: string }> = [];
+	let prompt = first.prompt;
+	for (let attempt = 0; attempt < 2; attempt++) {
+		const { text, usage } = await ask(first.system, prompt, signal);
+		calls.push({ model: usage.model, usage, createdAt: new Date().toISOString() });
+		const result = check(jsonOf(text));
+		if (result) {
+			writeJson(file, { value: result.value, problems: result.problems, calls, model: usage.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });
+			return result.value;
+		}
+		prompt = `${first.prompt}\n\nYour last answer could not be used: it was not valid JSON in the shape above, or too little of it held up against the dictionary. Write it again, complete.`;
+	}
+	writeJson(file, { calls, model: calls[0]!.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });
+	throw new SourceError(`The model's ${name} did not hold up against the dictionary twice. Try again; the downloads are kept.`);
+}
+
+function mergeUsage(calls: ReadonlyArray<{ usage: StoryUsage }>): StoryUsage {
+	return { model: calls[0]!.usage.model, steps: calls.flatMap((c) => c.usage.steps) };
 }
 
 /** Runs every step; resolves with a note for the ready notice, if any. */
@@ -315,7 +394,8 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	step("Downloading the word frequency list", true);
 	const freqWords = await cached(id, "frequency", () => frequency(get, lang, sentences, signal));
 	const freq = new Map(freqWords.map((w, i) => [w, i + 1]));
-	const words = await cached(id, "words", () => wiktionary(get, lang, new Set(freqWords), signal, step));
+	// v2 keeps each form's grammar tags; a words cache from before them is read again.
+	const words = await cached(id, "words-v2", () => wiktionary(get, lang, new Set(freqWords), signal, step));
 
 	step("Matching sentences to words", true);
 	const ranked = rankWords(mergeHomographs(words, lang.tag), freq, lang.tag, WORD_LIMIT);
@@ -336,27 +416,24 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	});
 	fs.writeFileSync(path.join(dirOf(id), "prompt.md"), languagePrompt(lang), "utf-8");
 
-	let note: string | undefined;
-	const seedFile = path.join(dirOf(id), "seed.json");
-	const draftSeed = deps.draftSeed === undefined ? (aiStatus().ready ? defaultDraftSeed : null) : deps.draftSeed;
-	if (fs.existsSync(seedFile)) {
-		// kept from an earlier run
-	} else if (!draftSeed) {
-		note = "No grammar map, because no model is set in Settings; the words work without it.";
-	} else {
-		step("Drafting the grammar map", true);
-		const { system, prompt } = seedDraftPrompt(lang);
-		try {
-			const { text, usage } = await draftSeed(system, prompt, signal);
-			const seed = parseSeedDraft(text, id);
-			writeJson(path.join(buildDir(id), "seed-draft.json"), { model: usage.model, usage, createdAt: new Date().toISOString(), accepted: !!seed });
-			if (seed) writeJson(seedFile, seed);
-			else note = "The grammar map draft did not come back in a usable shape; the words are ready without it.";
-		} catch (err) {
-			if (signal.aborted) throw err;
-			note = "The grammar map could not be drafted; the words are ready without it.";
-		}
-	}
+	const ask = deps.ask ?? defaultAsk;
+	const sceneIds = SPEAK_SCENES.map((x) => x.id);
+	step("Writing the course", true);
+	const inventory = courseInventory(entries, lang.tag, sceneIds);
+	const course = await drafted<Course>(id, "course", ask, signal, courseDraftPrompt(lang.english, inventory), (raw) => {
+		const checked = checkCourse(raw, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
+		return checked ? { value: checked.course, problems: checked.dropped } : null;
+	});
+	writeJson(path.join(dirOf(id), "course.json"), course);
+	writeJson(path.join(dirOf(id), "seed.json"), courseSeed(course));
+
+	step("Writing the story world", true);
+	const world = await drafted(id, "world", ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
+		const w = checkWorld(raw, id, course.chapters, sceneIds);
+		return w ? { value: w, problems: [] } : null;
+	});
+	writeJson(path.join(dirOf(id), "world.json"), world);
+	const note: string | undefined = undefined;
 
 	const withExamples = entries.filter((e) => e.examples.length > 0).length;
 	step("Saving", true);
@@ -374,7 +451,8 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 		words: entries.length,
 		wordsWithSentences: withExamples,
 	});
-	const summary = `${entries.length.toLocaleString("en-US")} words, ${withExamples.toLocaleString("en-US")} with example sentences.`;
+	const grammar = course.units.filter((u) => u.kind === "grammar").length;
+	const summary = `${course.chapters.length} chapters, ${grammar} grammar lessons, ${course.units.length - grammar} word themes, ${course.tutors.length} tutor sessions; ${entries.length.toLocaleString("en-US")} words, ${withExamples.toLocaleString("en-US")} with example sentences.`;
 	return note ? `${summary} ${note}` : summary;
 }
 

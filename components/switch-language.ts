@@ -6,8 +6,10 @@
 export async function switchLanguage(id: string, english: string): Promise<{ restartNote: string | null }> {
 	const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ active: id }) });
 	if (!res.ok) throw new Error(`Could not switch to ${english}`);
-	const next = (await res.json()) as { restartRequired?: boolean };
-	if (!next.restartRequired) return { restartNote: null };
+	const next = (await res.json()) as { restartRequired?: boolean; active?: string };
+	// Already running it: a course just finished for it loads only on a restart.
+	const reload = next.active === id;
+	if (!next.restartRequired && !reload) return { restartNote: null };
 	if (window.lh?.relaunch) {
 		window.lh.relaunch();
 		return { restartNote: null };

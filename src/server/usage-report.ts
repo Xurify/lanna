@@ -206,27 +206,33 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(e.startedAt, usd);
 		}
 	}
-	// Grammar maps drafted while adding a language: one call each, kept
-	// beside the language's build steps (shared by every profile).
+	// What adding a language paid a model for (the course and the story
+	// bible, kept beside its build steps): one line per language.
 	let languagesUsd = 0;
 	let languagesUnpriced = 0;
 	let languagesCount = 0;
 	for (const name of safeReaddir(PATHS.languages)) {
-		type Draft = { usage?: Pick<TurnUsage, "model" | "steps">; createdAt?: string } | null;
-		let draft: Draft;
-		try {
-			draft = JSON.parse(fs.readFileSync(path.join(PATHS.languages, name, "build", "seed-draft.json"), "utf-8")) as Draft;
-		} catch {
-			continue;
+		const build = path.join(PATHS.languages, name, "build");
+		const drafts = safeReaddir(build).filter((f) => f.endsWith("-draft.json"));
+		let counted = false;
+		for (const file of drafts) {
+			type Draft = { usage?: Pick<TurnUsage, "model" | "steps">; createdAt?: string } | null;
+			let draft: Draft;
+			try {
+				draft = JSON.parse(fs.readFileSync(path.join(build, file), "utf-8")) as Draft;
+			} catch {
+				continue;
+			}
+			if (!draft?.usage) continue;
+			counted = true;
+			const usd = safeTurnCost(draft.usage);
+			if (usd === null) languagesUnpriced++;
+			else {
+				languagesUsd += usd;
+				if (draft.createdAt) addMonth(draft.createdAt, usd);
+			}
 		}
-		if (!draft?.usage) continue;
-		languagesCount++;
-		const usd = safeTurnCost(draft.usage);
-		if (usd === null) languagesUnpriced++;
-		else {
-			languagesUsd += usd;
-			if (draft.createdAt) addMonth(draft.createdAt, usd);
-		}
+		if (counted) languagesCount++;
 	}
 	const clips = listAudioClips();
 	const byTier: Record<string, number> = {};

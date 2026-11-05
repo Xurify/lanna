@@ -8,7 +8,8 @@
  */
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
-import { LESSON_LANGUAGE, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { LESSON_LANGUAGE, LESSONS_HAVE_BRIDGES, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { activeCourse, type Course } from "./course.ts";
 import { entryLemma, exampleText } from "./review.ts";
 import { slipLine } from "./grammar.ts";
 import type { FirstTally } from "./first-try.ts";
@@ -367,7 +368,7 @@ export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | un
 
 /** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. `target` is the language being learned; only the lessons' own language has parallels. */
 export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined, target: { code: string; english: string }): string {
-	const langs = target.code === LESSON_LANGUAGE ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
+	const langs = LESSONS_HAVE_BRIDGES && target.code === LESSON_LANGUAGE ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
 	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
@@ -477,13 +478,45 @@ export interface PlacementTier {
 	chapters: string[];
 }
 
-/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
-export const PLACEMENT_TIERS: PlacementTier[] = [
+/** Slovak's four tiers, each the grammar of a stretch of the map. */
+const SLOVAK_TIERS: PlacementTier[] = [
 	{ id: "a1a", level: "A1", title: "First steps", units: ["words", "present", "acc-fem", "loc"], chapters: ["hello", "cafe", "town"] },
 	{ id: "a1b", level: "A1", title: "Everyday A1", units: ["acc-people", "gen", "ins", "past"], chapters: ["family", "everyday", "yesterday"] },
 	{ id: "a2", level: "A2", title: "Getting around", units: ["present-ujem", "plural", "cond", "motion"], chapters: ["health", "shopping", "plans", "moving", "people", "work"] },
 	{ id: "b1", level: "B1", title: "Independence", units: ["adj-cases", "numbers", "cases-mix", "verbs-mix"], chapters: ["stories", "opinions", "offices", "world"] },
 ];
+
+/** A generated course's tiers, cut the way Slovak's are: the A1 chapters
+ *  in two halves, then A2, then B1, each probed on up to four of its grammar
+ *  units spread over its chapters (First words opens the first tier). */
+function courseTiers(course: Course): PlacementTier[] {
+	const grammar = new Set(course.units.filter((u) => u.kind === "grammar").map((u) => u.id));
+	const at = (stage: string) => course.chapters.filter((c) => c.stage === stage);
+	const a1 = at("a1");
+	const half = Math.ceil(a1.length / 2);
+	const spans: Array<Omit<PlacementTier, "units"> & { from: Course["chapters"] }> = [
+		{ id: "a1a", level: "A1", title: "First steps", chapters: [], from: a1.slice(0, half) },
+		{ id: "a1b", level: "A1", title: "Everyday A1", chapters: [], from: a1.slice(half) },
+		{ id: "a2", level: "A2", title: "Getting around", chapters: [], from: at("a2") },
+		{ id: "b1", level: "B1", title: "Independence", chapters: [], from: at("b1") },
+	];
+	const tiers: PlacementTier[] = [];
+	for (const span of spans) {
+		const ids = span.from.flatMap((c) => c.units.filter((u) => grammar.has(u)));
+		const room = tiers.length === 0 ? 3 : 4;
+		const picked = ids.length <= room ? ids : Array.from({ length: room }, (_, i) => ids[Math.floor((i * ids.length) / room)]!);
+		const units = (tiers.length === 0 ? ["words", ...picked] : picked) as UnitId[];
+		if (units.length === 0) continue;
+		tiers.push({ id: span.id, level: span.level, title: span.title, units, chapters: span.from.map((c) => c.id) });
+	}
+	return tiers;
+}
+
+/** The running language's course (src/core/course.ts), else Slovak's. */
+const COURSE = activeCourse();
+
+/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
+export const PLACEMENT_TIERS: PlacementTier[] = COURSE ? courseTiers(COURSE) : SLOVAK_TIERS;
 
 export const REPS_PER_UNIT = 2;
 export const PASS_SHARE = 0.75;

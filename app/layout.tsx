@@ -9,7 +9,8 @@ import { AppShell, SidebarProvider } from "@/components/sidebar";
 import { SIDEBAR_MAX, SIDEBAR_WIDTH_COOKIE } from "@/lib/sidebar-size";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
 import { readSettingsRecord } from "@/src/server";
-import type { AppearanceSettings } from "@/src/core";
+import { activeCourse, type AppearanceSettings } from "@/src/core";
+import Script from "next/script";
 import { ActivityProvider } from "@/components/activity-dock";
 import { TaskNotice } from "@/components/task-notice";
 import { ServerEventsProvider } from "@/components/server-events";
@@ -63,9 +64,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 		appearance = undefined;
 	}
 	const vars = appearanceVars(resolveAppearance(appearance));
+	const course = activeCourse();
 	return (
 		<html lang="en" className={`${geist.variable} ${mono.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} style={vars as React.CSSProperties} suppressHydrationWarning>
 			<body className="min-h-dvh antialiased">
+			{/* A language added from the app runs its generated course: the browser
+			    gets the same one as the server before any module of the core loads
+			    (src/core/course.ts). */}
+			{course && <Script id="lh-course" strategy="beforeInteractive">{`globalThis.__lhCourse=${JSON.stringify(course).replace(/</g, "\\u003c")};`}</Script>}
 			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
 							<ServerEventsProvider>
