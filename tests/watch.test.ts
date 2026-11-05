@@ -147,7 +147,9 @@ test("dailyPlan: a waiting video is a Watch task; none when nothing waits", () =
 	const without = dailyPlan(base);
 	assert.ok(!without.tasks.some((t) => t.id === "watch"));
 	const foreign = dailyPlan({ ...base, watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, captionLang: "Czech" } });
-	assert.match(foreign.tasks.find((t) => t.id === "watch")!.line, /^Czech captions/, "no known-word share for a video whose captions are in another language");
+	assert.match(foreign.tasks.find((t) => t.id === "watch")!.line, /^Czech captions/, "no known-word share for foreign captions that were not measured");
+	const estimate = dailyPlan({ ...base, watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, coverage: 0.84, estimated: true } });
+	assert.match(estimate.tasks.find((t) => t.id === "watch")!.line, /^About 84 of every 100 words known/);
 	const withVideo = dailyPlan({ ...base, watch: { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 4, coverage: 0.91 } });
 	const task = withVideo.tasks.find((t) => t.id === "watch");
 	assert.ok(task);
@@ -317,25 +319,44 @@ test("recordWatch counts the measured playing time, and the log keeps the minute
 	assert.equal(progressStore.read().days["2026-11-04"]!.minutesBy!.watch, 80);
 });
 
+const czechCaptions = async (id: string) => ({ ...(await captions(id)), source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const } });
+
 test("a video with only Czech captions is prepared, kept as Czech, and the translator is told it is Czech", async () => {
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify({ t: lines.map(() => "Ahoj") })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
 	const sent: string[] = [];
 	const streamFn: typeof faux.streamSimple = (...args) => {
 		sent.push(JSON.stringify(args[1]));
 		return faux.streamSimple(...args);
 	};
-	const czech = async (id: string) => ({ ...(await captions(id)), source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const } });
-	const v = await watch.prepareVideo("https://youtu.be/CZCZCZCZCZC", { engine: { model: faux.getModel(), streamFn }, model: "faux:watch", captions: czech, now: new Date("2026-11-03T10:00:00Z") });
+	const v = await watch.prepareVideo("https://youtu.be/CZCZCZCZCZC", { engine: { model: faux.getModel(), streamFn }, model: "faux:watch", captions: czechCaptions, now: new Date("2026-11-03T10:00:00Z") });
 	assert.equal(v.lang, "sk", "the video belongs to the Slovak profile");
 	assert.equal(v.source.trackLang, "cs");
 	assert.equal(v.segments.length, lines.length);
 	assert.ok(sent[0]!.includes("These subtitles are in Czech, not Slovak"), "the first call says the subtitles are Czech");
+	assert.ok(sent[1]!.includes("Rewrite these") && sent[1]!.includes("These subtitles are in Czech"), "the second call asks for a Slovak rendering");
+	assert.equal(v.segments[0]!.sk, lines[0]!.sk, "the lines shown stay as captioned");
+	assert.equal(v.coverageEstimated, true);
+	assert.equal(v.wordCount, lines.length, "the share is measured on the rendering (one word a line here), not on the Czech text");
 	const entry = videoStore.list().find((e) => e.id === v.id)!;
-	assert.deepEqual({ lang: entry.lang, trackLang: entry.trackLang }, { lang: "sk", trackLang: "cs" });
-	assert.equal(core.foreignCaptions(entry), true, "the shelf shows the captions' language, not a known-word share");
-	assert.equal(core.foreignCaptions({ lang: "sk", trackLang: "sk" }), false);
-	assert.equal(core.foreignCaptions({}), false, "an old line with no caption language is not foreign until it is filled in");
+	assert.deepEqual({ lang: entry.lang, trackLang: entry.trackLang, estimated: entry.estimated }, { lang: "sk", trackLang: "cs", estimated: true });
+	assert.equal(core.coverageKind(entry), "estimated");
+	assert.equal(core.coverageKind({ lang: "sk", trackLang: "cs" }), "none", "Czech kept before the rendering existed has no share until it is regenerated");
+	assert.equal(core.coverageKind({ lang: "sk", trackLang: "sk" }), "exact");
+	assert.equal(core.coverageKind({}), "exact", "an old line with no caption language is not foreign until it is filled in");
+});
+
+test("when the Slovak rendering cannot be had, Czech captions keep no share instead of a low guess", async () => {
+	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const streamFn: typeof faux.streamSimple = (...args) => {
+		if (JSON.stringify(args[1]).includes("Rewrite these")) throw new Error("boom");
+		return faux.streamSimple(...args);
+	};
+	const v = await watch.prepareVideo("https://youtu.be/CZNORENDER1", { engine: { model: faux.getModel(), streamFn }, model: "faux:watch", captions: czechCaptions, now: new Date("2026-11-05T10:00:00Z") });
+	assert.equal(v.coverageEstimated, undefined);
+	assert.equal(core.coverageKind({ lang: v.lang, trackLang: v.source.trackLang, estimated: v.coverageEstimated }), "none");
+	assert.equal(v.segments.length, lines.length, "the video is still prepared");
 });
 
 test("an index line written before the caption language was kept gets it from the record, once", () => {

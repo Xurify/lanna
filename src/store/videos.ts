@@ -80,6 +80,7 @@ export function videoIndexEntryOf(v: VideoRecord): VideoIndexEntry {
 		model: v.usage.model,
 		lang: v.lang,
 		trackLang: v.source.trackLang,
+		...(v.coverageEstimated ? { estimated: true } : {}),
 	};
 }
 
