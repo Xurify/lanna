@@ -85,7 +85,7 @@ test("the aspect family holds the verifier's eighteen rows: two perfective, sixt
 	assert.equal(rows.length - perfective.length, 16, "sixteen imperfective rows");
 });
 
-test("every approved row is a verified lexicon sentence, with its cue type on the right side of the licence", () => {
+test("every approved row is a verified lexicon sentence, with its cue type on the right side of the license", () => {
 	const sentences = new Set(entries.flatMap((e) => e.examples.filter((x) => x.cloze && !x.rejected).map((x) => exampleText(x))));
 	for (const row of rows) {
 		assert.ok(row.approved && row.approved.trim().length > 0, `${row.slug}: approved`);
@@ -93,7 +93,7 @@ test("every approved row is a verified lexicon sentence, with its cue type on th
 		const pair = aspect.pairs.find((p) => p.includes(row.slug));
 		assert.ok(pair, `${row.slug} is a twin of an aspect pair`);
 		const side = pair[0] === row.slug ? "first" : "second";
-		assert.ok(aspect.licence?.[side]?.includes(row.type), `${row.slug}: "${row.type}" is licensed for the ${side} twin`);
+		assert.ok(aspect.license?.[side]?.includes(row.type), `${row.slug}: "${row.type}" is licensed for the ${side} twin`);
 		assert.ok(sentences.has(row.sk), `${row.slug}: "${row.sk}" is a verified lexicon sentence`);
 		if (row.form) assert.ok(row.sk.includes(row.form), `${row.slug}: the form "${row.form}" is in the sentence`);
 	}

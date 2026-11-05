@@ -8,7 +8,7 @@
  * It also runs the drill path on a fixture deck, since the shipped aspect
  * pairs have no two-sided deck yet: approved rows on both sides of kupovať /
  * kupiť (real verified sentences of those two entries), through the builder,
- * the parallel choice, the balance gate, the licence, the mend rule and the
+ * the parallel choice, the balance gate, the license, the mend rule and the
  * shadow ids. No network: every source is a file in the repository.
  */
 import assert from "node:assert/strict";
@@ -367,7 +367,7 @@ function fixtureRows(overrides: Partial<MixupProbe> = {}, extra: MixupProbe[] = 
 const fixtureFamily = (probes: MixupProbe[], extra: Partial<MixupFamily> = {}): MixupFamily => ({
 	...aspect,
 	probes,
-	licence: { first: ["fixture"], second: ["fixture"] },
+	license: { first: ["fixture"], second: ["fixture"] },
 	...extra,
 });
 
@@ -417,7 +417,7 @@ test("fixture: an unapproved row is refused, and a pair with one side approved i
 	assert.equal(build(oneSide, kupRecord(0)).items.length, 0, "one side is not a deck");
 });
 
-test("fixture: a row outside the licence is refused", () => {
+test("fixture: a row outside the license is refused", () => {
 	assert.equal(build(fixtureRows({ type: "not-licensed" }), kupRecord(0)).items.length, 0);
 });
 

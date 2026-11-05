@@ -5,7 +5,7 @@
  * yet, so the drills do not):
  *
  * - grid: one aspect pair's grid (past, present, future by imperfective and
- *   perfective) with its cells labelled and empty. The question names a form,
+ *   perfective) with its cells labeled and empty. The question names a form,
  *   and the learner places it: picks the label of the cell it belongs in. The
  *   cells fill, with their notes, once the rep is answered. The perfective
  *   future cell has no form: budem + a perfective is never offered. Each formed

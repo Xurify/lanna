@@ -46,7 +46,7 @@ export interface MixupFamily {
 	probes?: MixupProbe[];
 	/** Cue types a twin's probes may use: `first` is the pair's first twin (the
 	 *  imperfective, for an aspect pair), `second` the other. */
-	licence?: { first?: string[]; second?: string[] };
+	license?: { first?: string[]; second?: string[] };
 	/** `parallel`: the blank is a verb form and the choice is the other twin's
 	 *  form in the same slot; `lemma` (the default): the choice is the two
 	 *  dictionary words. */
@@ -73,7 +73,7 @@ export interface MixupProbe {
 	/** The form in the sentence, and where it starts. */
 	form?: string;
 	at?: number;
-	/** The cue type (licence) and the cue phrase, as it reads in the sentence (novelty counts). */
+	/** The cue type (license) and the cue phrase, as it reads in the sentence (novelty counts). */
 	type: string;
 	phrase?: string;
 	/** The English line, when the verifier corrected the gloss. */
@@ -663,7 +663,7 @@ function choiceFor(family: MixupFamily | undefined, s: PairSentence, other: Lexi
 
 /** The sentences a family drills for a pair. A family that lists its probes
  *  drills only rows that are approved, match a verified sentence of this pair,
- *  carry a cue type the licence allows for that twin, and (for parallel probes)
+ *  carry a cue type the license allows for that twin, and (for parallel probes)
  *  have a choice (choiceFor). Otherwise every verified twin sentence counts. */
 export function probeSentences(lex: MixupLexicon, family: MixupFamily | undefined, a: string, b: string, raw: PairSentence[]): PairSentence[] {
 	if (!family?.probes) return raw;
@@ -674,7 +674,7 @@ export function probeSentences(lex: MixupLexicon, family: MixupFamily | undefine
 		const row = probes.find((p) => p.slug === s.entry.slug && p.sk === text);
 		if (!row || !row.approved) return false;
 		const side = s.member === "a" ? "first" : "second";
-		if (family.licence && !(family.licence[side] ?? []).includes(row.type)) return false;
+		if (family.license && !(family.license[side] ?? []).includes(row.type)) return false;
 		if (family.probeForm === "parallel") {
 			const other = lex.bySlug.get(s.member === "a" ? b : a);
 			if (!other || choiceFor(family, s, other, accepted) === null) return false;

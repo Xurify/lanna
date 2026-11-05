@@ -29,7 +29,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 3 November: Czech captions for Watch (branch `feat/czech-captions`)
 
-- **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labelled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).
+- **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labeled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).
 - **Error text:** "none in Slovak or Czech" instead of "none in Slovak".
 - **Thumbnails:** the library shows each video's YouTube thumbnail (`https://i.ytimg.com/vi/<id>/hqdefault.jpg`) loaded in the browser, in a fixed 16:9 box. Nothing is saved on disk; the icon stands in when YouTube has none. Unverified: the owner's PC must reach `i.ytimg.com`.
 - **Unverified:** fetching a Czech track from YouTube (the cloud container cannot reach YouTube; the tests use a scripted track). The owner should paste a Czech video with no Slovak captions and check the preview and the lines.
@@ -157,7 +157,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 - **Slow tabs** (E36, [research/slow-tabs.md](research/slow-tabs.md)): the owner's dev server compiles each route on first visit; the shared bundle also carried 900 KB of KaTeX and Markdown parsing. KaTeX is out of every route (`@/src/core/tutor`), a tab click now answers at once (`app/loading.tsx`), and `npm run desktop:prod` runs a build. At 4x CPU, long tasks per page load went from 620–880 ms to 66–183 ms.
 - **Watch** is a page like Milestones: sidebar, "Today" back link, the same heading and cards, with the link field and the video list on cards.
-- **Letter keys** on Listen, Review and the lesson have an edge and a darker face, so each key can be told from its neighbour.
+- **Letter keys** on Listen, Review and the lesson have an edge and a darker face, so each key can be told from its neighbor.
 - **The period after a word** on Review sat after the tick; the tick now follows the period.
 - **Streak calendar** followed minutes while the XP chart above it followed XP, so Monday could be filled in one and empty in the other. Inside the last seven days it now uses the same XP as the chart; older days use minutes; a legend names the three shades and each day has a name on hover.
 - **Minutes by strand** shows minutes beside the percent, and the week's total in its heading.

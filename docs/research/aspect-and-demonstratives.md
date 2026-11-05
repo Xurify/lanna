@@ -1,6 +1,6 @@
-# Practising aspect and demonstratives without a model writing the practice
+# Practicing aspect and demonstratives without a model writing the practice
 
-Date: 2026-11-04. Question: should aspect and demonstratives be practised in tutor-chat units (`kind: "tutor"`, a practice session the tutor runs), or in verified drills that the app measures?
+Date: 2026-11-04. Question: should aspect and demonstratives be practiced in tutor-chat units (`kind: "tutor"`, a practice session the tutor runs), or in verified drills that the app measures?
 
 ## Short answer
 
@@ -88,7 +88,7 @@ Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 in `docs/D
 | U13 One question after a miss | DONE | The family `cue`, shown after a miss by the lesson player's hint panel (`components/lesson/lesson-player.tsx`, the `pair.cue` branch). No model call; E18 unchanged. |
 | U14 Typed answers | DONE (verified, unchanged) | Lessons grade typed answers with `compareAnswer`; the model judge runs only in placement, after a string miss. No model call added. |
 | U15 Tutor units | DONE (left unchanged) | `tutor("aspect")` and `tutor("gender-this-my")` are untouched (D1). They still write practice in tutor chats. |
-| U16 Form-reading tasks | DONE (second round) | A grid (tenses as rows, aspects as columns; the cells placed by label, the forms after the answer) and a cue task at slots 3, 7 and 11 of the aspect chapters' Dvojičky lesson; 66 tasks in all (60 grid, 6 cue: six of the 18 approved rows have three windows left after the form's neighbours and the cue words are dropped, row 21 with its keep list for "Dlho"; row 53 has no span; eight rows have too few windows; one perfective cue, nakoniec). Not a first try, a mix-up or a retry; a task seen in the last lesson goes last. Reachable now; an hour is not reached (about 11 minutes of tasks in one pass). |
+| U16 Form-reading tasks | DONE (second round) | A grid (tenses as rows, aspects as columns; the cells placed by label, the forms after the answer) and a cue task at slots 3, 7 and 11 of the aspect chapters' Dvojičky lesson; 66 tasks in all (60 grid, 6 cue: six of the 18 approved rows have three windows left after the form's neighbors and the cue words are dropped, row 21 with its keep list for "Dlho"; row 53 has no span; eight rows have too few windows; one perfective cue, nakoniec). Not a first try, a mix-up or a retry; a task seen in the last lesson goes last. Reachable now; an hour is not reached (about 11 minutes of tasks in one pass). |
 | R1 DECISIONS entry | DONE | E42. |
 | R2 This note | DONE | This section; the research facts are unchanged. |
 | R3 Changelog | DONE | `docs/CHANGELOG-2026-11.md`, 4 November section. |

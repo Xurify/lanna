@@ -56,7 +56,7 @@ describe("the grammar explanation (static, worked examples; never a drill)", () 
 		assert.ok(html.includes('data-checked="pending verifier"'));
 	});
 
-	it("uses the app's colour tokens and no pills, all caps or blur", () => {
+	it("uses the app's color tokens and no pills, all caps or blur", () => {
 		const src = fs.readFileSync("components/lesson/grammar-explain.tsx", "utf-8");
 		assert.equal(/backdrop-blur|blur-|rounded-full|uppercase/.test(src), false);
 	});

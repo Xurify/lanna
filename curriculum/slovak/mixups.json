@@ -123,7 +123,7 @@
 				]
 			],
 			"probeForm": "parallel",
-			"licence": {
+			"license": {
 				"first": [
 					"budem + inf",
 					"začať/prestať + inf",
@@ -147,7 +147,7 @@
 					"phrase": "za + time span",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 6",
-					"en": "They organised the wedding in a hurry, in less than a month.",
+					"en": "They organized the wedding in a hurry, in less than a month.",
 					"span": "za necelý mesiac"
 				},
 				{
@@ -339,7 +339,7 @@
 					"phrase": "vždy + manner",
 					"src": "verified-pool",
 					"approved": "verifier 2026-11-04 (verifier-rows-1.md), row 58",
-					"en": "She always spoke contemptuously about the neighbours.",
+					"en": "She always spoke contemptuously about the neighbors.",
 					"span": "pohŕdavo"
 				},
 				{
@@ -402,7 +402,7 @@
 				]
 			],
 			"probeForm": "lemma",
-			"licence": {
+			"license": {
 				"first": [
 					"gloss"
 				],
