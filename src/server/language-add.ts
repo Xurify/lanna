@@ -110,32 +110,87 @@ export interface AddDeps {
 	minUnitSentences?: number;
 }
 
-export type Ask = (system: string, prompt: string, signal: AbortSignal) => Promise<{ text: string; usage: StoryUsage }>;
+/** One model call: the answer, what it used, and the thinking level it ran at. `cap` is the most output tokens it may write. */
+export type Ask = (system: string, prompt: string, signal: AbortSignal, cap: number) => Promise<{ text: string; usage: StoryUsage; level?: string }>;
 
-/** Tokens the two course calls take, thinking included: typical, and both
- *  answers retried (the most a language can cost). Estimated from the
- *  prompt sizes (about 3,000 and 1,500 tokens) and a course of about 20
- *  lessons, 10 themes, 15 tutor sessions and 14 chapters. */
-const TYPICAL_TOKENS = { inputTokens: 4_500, outputTokens: 21_000 };
-const MOST_TOKENS = { inputTokens: 12_000, outputTokens: 70_000 };
+type DraftKind = "course" | "world";
+
+/** The most output tokens (thinking included) each call may write. The
+ *  provider stops it there, so the most a language can cost is known before
+ *  it starts. A course is about 8,000 tokens of JSON, a story bible 3,000;
+ *  the rest is room to think. */
+export const DRAFT_CAPS: Record<DraftKind, number> = { course: 32_000, world: 16_000 };
+
+/** A call's tokens before any course has been written on this model: the
+ *  prompts are about 3,500 and 1,500 tokens, the answers as above, plus the
+ *  thinking the level allows. Replaced by measured calls as soon as there
+ *  are some (see addEstimate). */
+const FIRST_GUESS: Record<DraftKind, { input: number; output: number }> = { course: { input: 3_500, output: 8_000 }, world: { input: 1_500, output: 3_000 } };
+const THINKING_GUESS: Record<string, number> = { off: 0, minimal: 1_000, low: 3_000, medium: 8_000, high: 14_000, xhigh: 20_000 };
 
 export interface AddEstimate {
 	/** "provider:id" and the model's display name. */
 	model: string;
 	name: string;
+	/** The thinking level the course would be written at. */
+	level: string;
 	/** USD, or null when the catalog has no price (a subscription model). */
 	typicalUsd: number | null;
+	/** The most it can cost: both calls answered twice, each to its cap. */
 	mostUsd: number | null;
+	/** Earlier calls on this model and level the typical figure comes from; 0 = a first guess. */
+	measured: number;
 	subscription: boolean;
 }
 
-/** What writing a course will cost on the model that would write it. */
+interface DraftCall {
+	model: string;
+	level?: string;
+	usage: StoryUsage;
+}
+
+/** Every course or story-bible call made so far, on any language. */
+function pastCalls(kind: DraftKind): DraftCall[] {
+	let names: string[];
+	try {
+		names = fs.readdirSync(PATHS.languages);
+	} catch {
+		return [];
+	}
+	return names.flatMap((n) => readJson<{ calls?: DraftCall[] }>(path.join(PATHS.languages, n, "build", `${kind}-draft.json`))?.calls ?? []);
+}
+
+const median = (xs: number[]) => {
+	const s = [...xs].sort((a, b) => a - b);
+	return s.length ? s[Math.floor(s.length / 2)]! : 0;
+};
+const sum = (usage: StoryUsage, key: "inputTokens" | "outputTokens") => usage.steps.reduce((n, st) => n + (st[key] ?? 0), 0);
+
+/** What writing a course will cost on the model and thinking level that
+ *  would write it: the median of earlier calls on that same model and
+ *  level when there are any (models differ in tokenizer, length and
+ *  thinking), else a first guess; the most is fixed by the caps. */
 export function addEstimate(): AddEstimate | null {
-	const slot = aiSlot("strong")?.model ? aiSlot("strong") : aiSlot("cheap");
-	if (!slot?.model) return null;
-	const model = `${slot.model.provider}:${slot.model.id}`;
-	const name = piModels().getModel(slot.model.provider, slot.model.id)?.name ?? slot.model.id;
-	return { model, name, typicalUsd: callCost(TYPICAL_TOKENS, model), mostUsd: callCost(MOST_TOKENS, model), subscription: isSubscriptionModel(model) };
+	const resolved = courseEngine();
+	if (!resolved) return null;
+	const { model, engine } = resolved;
+	const level = engine.level ?? "off";
+	const colon = model.indexOf(":");
+	const name = piModels().getModel(model.slice(0, colon), model.slice(colon + 1))?.name ?? model.slice(colon + 1);
+	let measured = 0;
+	let typical: number | null = 0;
+	let most: number | null = 0;
+	for (const kind of ["course", "world"] as const) {
+		const same = pastCalls(kind).filter((c) => c.model === model && (c.level ?? "off") === level);
+		measured = Math.max(measured, same.length);
+		const input = same.length ? median(same.map((c) => sum(c.usage, "inputTokens"))) : FIRST_GUESS[kind].input;
+		const output = same.length ? median(same.map((c) => sum(c.usage, "outputTokens"))) : FIRST_GUESS[kind].output + (THINKING_GUESS[level] ?? 0);
+		const t = callCost({ inputTokens: input, outputTokens: Math.min(output, DRAFT_CAPS[kind]) }, model);
+		const m = callCost({ inputTokens: 2 * input, outputTokens: 2 * DRAFT_CAPS[kind] }, model);
+		typical = t === null || typical === null ? null : typical + t;
+		most = m === null || most === null ? null : most + m;
+	}
+	return { model, name, level, typicalUsd: typical, mostUsd: most, measured, subscription: isSubscriptionModel(model) };
 }
 
 /** Why a language cannot be added now, or null. */
@@ -357,13 +412,16 @@ function courseEngine() {
 	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
 }
 
-const defaultAsk: Ask = async (system, prompt, signal) => {
+const defaultAsk: Ask = async (system, prompt, signal, cap) => {
 	const resolved = courseEngine();
 	if (!resolved) throw new SourceError("No model is set in Settings → AI models.");
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
+	const { engine } = resolved;
+	// The cap rides every request, so the provider ends the answer there.
+	const capped = { ...engine, streamFn: ((m, c, o) => engine.streamFn(m, c, { ...o, maxTokens: cap })) as typeof engine.streamFn };
 	const { text } = await runSubagent([], {
 		role: "researcher",
-		engine: resolved.engine,
+		engine: capped,
 		systemPrompt: system,
 		prompt,
 		maxTurns: 1,
@@ -371,7 +429,7 @@ const defaultAsk: Ask = async (system, prompt, signal) => {
 		onUsage: (u: Usage) =>
 			usage.steps.push({ inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning }),
 	});
-	return { text, usage };
+	return { text, usage, level: engine.level ?? "off" };
 };
 
 function jsonOf(text: string): unknown {
@@ -388,15 +446,15 @@ function jsonOf(text: string): unknown {
 /** One model draft, kept in build/<name>-draft.json with its cost (it shows
  *  in Settings → Spending), checked, and asked once more with what was
  *  wrong when the check fails. */
-async function drafted<T>(id: string, name: string, ask: Ask, signal: AbortSignal, first: { system: string; prompt: string }, check: (raw: unknown) => { value: T; problems: string[] } | null): Promise<T> {
+async function drafted<T>(id: string, name: DraftKind, ask: Ask, signal: AbortSignal, first: { system: string; prompt: string }, check: (raw: unknown) => { value: T; problems: string[] } | null): Promise<T> {
 	const file = path.join(buildDir(id), `${name}-draft.json`);
 	const kept = readJson<{ value?: T }>(file);
 	if (kept?.value) return kept.value;
-	const calls: Array<{ model: string; usage: StoryUsage; createdAt: string }> = [];
+	const calls: Array<DraftCall & { createdAt: string }> = [];
 	let prompt = first.prompt;
 	for (let attempt = 0; attempt < 2; attempt++) {
-		const { text, usage } = await ask(first.system, prompt, signal);
-		calls.push({ model: usage.model, usage, createdAt: new Date().toISOString() });
+		const { text, usage, level } = await ask(first.system, prompt, signal, DRAFT_CAPS[name]);
+		calls.push({ model: usage.model, ...(level ? { level } : {}), usage, createdAt: new Date().toISOString() });
 		const result = check(jsonOf(text));
 		if (result) {
 			writeJson(file, { value: result.value, problems: result.problems, calls, model: usage.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });

@@ -28,8 +28,10 @@ interface CatalogRow {
 
 interface Estimate {
 	name: string;
+	level: string;
 	typicalUsd: number | null;
 	mostUsd: number | null;
+	measured: number;
 	subscription: boolean;
 }
 
@@ -40,7 +42,8 @@ function estimateLine(e: Estimate | null): string | null {
 	if (!e) return null;
 	if (e.subscription) return `Written on ${e.name}: included in your subscription.`;
 	if (e.typicalUsd === null || e.mostUsd === null) return `Written on ${e.name}; its price is not in the catalog.`;
-	return `Written on ${e.name}: about ${usd(e.typicalUsd)}, at most ${usd(e.mostUsd)} if both answers need a second try.`;
+	const basis = e.measured > 0 ? `from ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model` : "a first guess: no course has been written on this model yet";
+	return `Written on ${e.name} (${e.level} thinking): about ${usd(e.typicalUsd)} (${basis}). It cannot cost more than ${usd(e.mostUsd)}: each answer is capped.`;
 }
 
 export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void; onStarted: () => void }) {
