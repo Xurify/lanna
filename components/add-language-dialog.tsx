@@ -26,22 +26,41 @@ interface CatalogRow {
 	started: boolean;
 }
 
+interface Estimate {
+	name: string;
+	typicalUsd: number | null;
+	mostUsd: number | null;
+	subscription: boolean;
+}
+
+const usd = (n: number) => `$${n.toFixed(2)}`;
+
+/** What the course will cost, in one line, before anything is spent. */
+function estimateLine(e: Estimate | null): string | null {
+	if (!e) return null;
+	if (e.subscription) return `Written on ${e.name}: included in your subscription.`;
+	if (e.typicalUsd === null || e.mostUsd === null) return `Written on ${e.name}; its price is not in the catalog.`;
+	return `Written on ${e.name}: about ${usd(e.typicalUsd)}, at most ${usd(e.mostUsd)} if both answers need a second try.`;
+}
+
 export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void; onStarted: () => void }) {
 	const [rows, setRows] = useState<CatalogRow[] | null>(null);
 	const [picked, setPicked] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [blocker, setBlocker] = useState<string | null>(null);
+	const [estimate, setEstimate] = useState<Estimate | null>(null);
 	const dismiss = useBackdropDismiss(onClose);
 
 	useEffect(() => {
 		let live = true;
 		fetch("/api/languages")
-			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; blocker: string | null }>)
+			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; blocker: string | null; estimate: Estimate | null }>)
 			.then((d) => {
 				if (!live) return;
 				setRows(d.languages);
 				setBlocker(d.blocker);
+				setEstimate(d.estimate);
 			})
 			.catch(() => live && setError("Could not load the list of languages."));
 		return () => {
@@ -138,7 +157,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				</div>
 
 				<p className="text-xs leading-relaxed text-muted-foreground">
-					The course is written in two calls on your Strong model (the Cheap one if no Strong is set); Settings → Spending shows what they cost. The sentences are never written by a model: they are real Tatoeba sentences.
+					The course is written in two calls on your Strong model (the Cheap one if no Strong is set). {estimateLine(estimate)} The sentences are never written by a model: they are real Tatoeba sentences.
 				</p>
 				{blocker && (
 					<p className="text-xs text-destructive" role="alert" data-testid="add-language-blocker">

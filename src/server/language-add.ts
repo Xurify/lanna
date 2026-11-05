@@ -46,6 +46,9 @@ import { SPEAK_SCENES } from "../core/speak.ts";
 import { countryOf } from "../core/language.ts";
 import { piEngineForSpec } from "../agent/models.ts";
 import { aiSlot, aiStatus } from "./ai-status.ts";
+import { callCost } from "./pricing.ts";
+import { piModels } from "../agent/models.ts";
+import { isSubscriptionModel } from "../core/prices.ts";
 import { failTask, finishTask, listTasks, removeTask, startTask, updateTask } from "./tasks.ts";
 
 /** Words kept per language, commonest first. */
@@ -108,6 +111,32 @@ export interface AddDeps {
 }
 
 export type Ask = (system: string, prompt: string, signal: AbortSignal) => Promise<{ text: string; usage: StoryUsage }>;
+
+/** Tokens the two course calls take, thinking included: typical, and both
+ *  answers retried (the most a language can cost). Estimated from the
+ *  prompt sizes (about 3,000 and 1,500 tokens) and a course of about 20
+ *  lessons, 10 themes, 15 tutor sessions and 14 chapters. */
+const TYPICAL_TOKENS = { inputTokens: 4_500, outputTokens: 21_000 };
+const MOST_TOKENS = { inputTokens: 12_000, outputTokens: 70_000 };
+
+export interface AddEstimate {
+	/** "provider:id" and the model's display name. */
+	model: string;
+	name: string;
+	/** USD, or null when the catalog has no price (a subscription model). */
+	typicalUsd: number | null;
+	mostUsd: number | null;
+	subscription: boolean;
+}
+
+/** What writing a course will cost on the model that would write it. */
+export function addEstimate(): AddEstimate | null {
+	const slot = aiSlot("strong")?.model ? aiSlot("strong") : aiSlot("cheap");
+	if (!slot?.model) return null;
+	const model = `${slot.model.provider}:${slot.model.id}`;
+	const name = piModels().getModel(slot.model.provider, slot.model.id)?.name ?? slot.model.id;
+	return { model, name, typicalUsd: callCost(TYPICAL_TOKENS, model), mostUsd: callCost(MOST_TOKENS, model), subscription: isSubscriptionModel(model) };
+}
 
 /** Why a language cannot be added now, or null. */
 export function addBlocker(): string | null {
