@@ -533,6 +533,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Everything the model writes is checked against the dictionary before it is kept, and a unit with fewer than 12 sentences is dropped. A course with fewer than three chapters or three grammar units is refused.
 - The running language's course is chosen once per process, before the core loads: `config.ts` on the server, a before-interactive script in the browser. The core builds its tables from it at load, so a switch needs the restart it already had.
 - Slovak-only content (the grammar atlas, Dvojičky, aspect tasks, the unit bridges and parallels) does not appear in a generated course.
+- Who builds it is chosen in the add dialog, once per language, not in Settings: the Strong or Cheap model, priced per model and thinking level from earlier runs and capped per call; or the dictionary alone, free (`src/core/course-procedural.ts`).
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 

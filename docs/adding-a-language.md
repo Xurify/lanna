@@ -38,7 +38,10 @@ Russian is in the catalog although its profile is built in: the profile has its 
 
 ## The generated course
 
-Adding a language needs a model: without one there is no course, so the add does not start and the dialog says why.
+The dialog asks who builds the course and shows the price of each choice before anything is spent:
+
+- **The Strong or the Cheap model** writes it (two calls). The price is the median of earlier calls on that same model and thinking level, or a first guess the dialog labels as one. Each call is capped (room for the answer plus twice the thinking the level allows, at least twice the longest answer that model has given, never past the model's limit); an answer cut at its cap is asked again with twice the room, so the most is known before it starts.
+- **From the dictionary only** builds it for free and in seconds (`src/core/course-procedural.ts`): a lesson per common grammar cell (cases by number, verb forms by tense and person), its rule a template with a real sentence as the example, a case's prepositions found from the sentences. No word themes, general tutor sessions, no story world. Czech gave 13 lessons in 7 chapters, Estonian 17 in 9.
 
 - **Grammar lessons select real sentences by their form's tags.** Wiktionary labels each form ("kávu": accusative singular). A lesson names the tags it drills and, when the rule depends on it, the words that come right before the blank (a preposition). A sentence counts when its blank carries every tag. With no trigger word, the form must mean only that (Czech "kávě" is dative or locative, so it needs "v" or "na" before it to count as a locative). A dictionary form never counts as a case form ("Dobrý den" is not an accusative). The model never writes a sentence (E27).
 - **What the model writes is checked** against the language's own dictionary (`checkCourse`, `checkWorld` in `src/core/course.ts`): a tag the dictionary does not use, a word theme whose words are not in it, a lesson with fewer than 12 sentences, a chapter that does not end on a goal are dropped. When too little is left, the model is asked once more; a second failure ends the task with "Try again", which keeps the downloads.

@@ -41,6 +41,7 @@ import {
 } from "../core/language-build.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { checkCourse, checkWorld, courseDraftPrompt, courseSeed, worldDraftPrompt, type Course } from "../core/course.ts";
+import { proceduralCourse } from "../core/course-procedural.ts";
 import { PURPOSES } from "../core/onboarding.ts";
 import { SPEAK_SCENES } from "../core/speak.ts";
 import { countryOf } from "../core/language.ts";
@@ -108,8 +109,8 @@ export interface AddDeps {
 	ask?: Ask;
 	/** Sentences a grammar unit needs (tests run on a few words). */
 	minUnitSentences?: number;
-	/** Which slot's model writes the course (the add dialog's choice). */
-	slot?: WriterSlot;
+	/** Who builds the course (the add dialog's choice). */
+	slot?: CourseWriter;
 }
 
 /** One model call: the answer, what it used, the thinking level it ran at,
@@ -127,8 +128,8 @@ const FIRST_GUESS: Record<DraftKind, { input: number; output: number }> = { cour
 const THINKING_GUESS: Record<string, number> = { off: 0, minimal: 1_000, low: 3_000, medium: 8_000, high: 14_000, xhigh: 20_000 };
 
 export interface AddEstimate {
-	/** The slot that would write it. */
-	slot: WriterSlot;
+	/** The slot that would write it, or the dictionary alone. */
+	slot: CourseWriter;
 	/** "provider:id" and the model's display name. */
 	model: string;
 	name: string;
@@ -223,13 +224,17 @@ export function addEstimate(writer: WriterSlot = "strong"): AddEstimate | null {
 export function addEstimates(): AddEstimate[] {
 	const strong = aiSlot("strong")?.model ? addEstimate("strong") : null;
 	const cheap = aiSlot("cheap")?.model ? addEstimate("cheap") : null;
-	if (strong && cheap && strong.model === cheap.model && strong.level === cheap.level) return [strong];
-	return [strong, cheap].filter((e): e is AddEstimate => e !== null);
+	const models = strong && cheap && strong.model === cheap.model && strong.level === cheap.level ? [strong] : [strong, cheap].filter((e): e is AddEstimate => e !== null);
+	return [...models, DICTIONARY_ESTIMATE];
 }
 
-/** Why a language cannot be added now, or null. */
-export function addBlocker(): string | null {
-	return aiStatus("strong").ready || aiStatus().ready ? null : "Adding a language writes its course with a model: set one in Settings → AI models first.";
+/** The free choice: the course is built from the dictionary alone. */
+const DICTIONARY_ESTIMATE: AddEstimate = { slot: "dictionary", model: "", name: "From the dictionary only", level: "none", typicalUsd: 0, mostUsd: 0, measured: 0, subscription: false };
+
+/** Why a language cannot be added with `writer` now, or null. */
+export function addBlocker(writer: CourseWriter = "strong"): string | null {
+	if (writer === "dictionary") return null;
+	return aiStatus("strong").ready || aiStatus().ready ? null : "Writing the course with a model needs one in Settings → AI models. Pick \"From the dictionary only\" to build it without one.";
 }
 
 /** Start adding a catalog language in the background. Starting one that is
@@ -240,7 +245,7 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
 	if (languageReady(id)) throw new Error(`${lang.english} is already added`);
 	const other = listTasks().find((t) => t.kind === "language" && t.status === "running" && t.id !== taskIdOf(id));
 	if (other) throw new Error(`Wait for "${other.title}" to finish first`);
-	const blocked = deps.ask ? null : addBlocker();
+	const blocked = deps.ask ? null : addBlocker(deps.slot);
 	if (blocked) throw new Error(blocked);
 	const { signal, fresh } = startTask({ id: taskIdOf(id), kind: "language", title: `Adding ${lang.english}`, step: "Starting", language: { id, english: lang.english } });
 	if (!fresh) return { taskId: taskIdOf(id), done: Promise.resolve() };
@@ -441,6 +446,8 @@ async function wiktionary(get: typeof fetch, lang: CatalogLanguage, wanted: Set<
  *  language (it happens once per language, so it is not a setting). The
  *  Strong slot by default: it is teaching content. */
 export type WriterSlot = "strong" | "cheap";
+/** Who builds the course: a model slot, or the dictionary alone (free). */
+export type CourseWriter = WriterSlot | "dictionary";
 
 /** The picked slot's model, or the other slot's when that one is empty. */
 function courseEngine(writer: WriterSlot = "strong") {
@@ -550,25 +557,36 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	});
 	fs.writeFileSync(path.join(dirOf(id), "prompt.md"), languagePrompt(lang), "utf-8");
 
-	const writer = deps.slot ?? "strong";
-	const ask = deps.ask ?? askOn(writer);
 	const sceneIds = SPEAK_SCENES.map((x) => x.id);
-	step("Writing the course", true);
-	const inventory = courseInventory(entries, lang.tag, sceneIds);
-	const course = await drafted<Course>(id, "course", writer, ask, signal, courseDraftPrompt(lang.english, inventory), (raw) => {
-		const checked = checkCourse(raw, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
-		return checked ? { value: checked.course, problems: checked.dropped } : null;
-	});
+	const writer = deps.slot ?? "strong";
+	let course: Course;
+	if (writer === "dictionary") {
+		step("Building the course from the dictionary", true);
+		const built = checkCourse(proceduralCourse(entries, id, lang.english, lang.tag), id, entries, lang.tag, sceneIds, deps.minUnitSentences);
+		if (!built) throw new SourceError(`The dictionary has too few ${lang.english} sentences for a course. Try again with a model.`);
+		course = built.course;
+	} else {
+		const ask = deps.ask ?? askOn(writer);
+		step("Writing the course", true);
+		const inventory = courseInventory(entries, lang.tag, sceneIds);
+		course = await drafted<Course>(id, "course", writer, ask, signal, courseDraftPrompt(lang.english, inventory), (raw) => {
+			const checked = checkCourse(raw, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
+			return checked ? { value: checked.course, problems: checked.dropped } : null;
+		});
+	}
 	writeJson(path.join(dirOf(id), "course.json"), course);
 	writeJson(path.join(dirOf(id), "seed.json"), courseSeed(course));
 
-	step("Writing the story world", true);
-	const world = await drafted(id, "world", writer, ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
-		const w = checkWorld(raw, id, course.chapters, sceneIds);
-		return w ? { value: w, problems: [] } : null;
-	});
-	writeJson(path.join(dirOf(id), "world.json"), world);
-	const note: string | undefined = undefined;
+	if (writer !== "dictionary") {
+		const ask = deps.ask ?? askOn(writer);
+		step("Writing the story world", true);
+		const world = await drafted(id, "world", writer, ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
+			const w = checkWorld(raw, id, course.chapters, sceneIds);
+			return w ? { value: w, problems: [] } : null;
+		});
+		writeJson(path.join(dirOf(id), "world.json"), world);
+	}
+	const note: string | undefined = writer === "dictionary" ? "Built from the dictionary: plain rules, no word themes, no story world." : undefined;
 
 	const withExamples = entries.filter((e) => e.examples.length > 0).length;
 	step("Saving", true);

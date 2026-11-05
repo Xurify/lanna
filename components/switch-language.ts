@@ -18,7 +18,7 @@ export async function switchLanguage(id: string, english: string): Promise<{ res
 }
 
 /** Start adding a language in the background; the error says why not. */
-export async function addLanguage(id: string, slot?: "strong" | "cheap"): Promise<void> {
+export async function addLanguage(id: string, slot?: "strong" | "cheap" | "dictionary"): Promise<void> {
 	const res = await fetch("/api/languages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", id, ...(slot ? { slot } : {}) }) });
 	if (!res.ok) {
 		const body = (await res.json().catch(() => null)) as { message?: string } | null;

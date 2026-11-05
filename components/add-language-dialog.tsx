@@ -27,7 +27,7 @@ interface CatalogRow {
 }
 
 interface Estimate {
-	slot: "strong" | "cheap";
+	slot: "strong" | "cheap" | "dictionary";
 	name: string;
 	level: string;
 	typicalUsd: number | null;
@@ -40,12 +40,14 @@ const usd = (n: number) => `$${n.toFixed(2)}`;
 
 /** What a course will cost on one model, before anything is spent. */
 function priceLine(e: Estimate): string {
+	if (e.slot === "dictionary") return "Free";
 	if (e.subscription) return "Included in your subscription";
 	if (e.typicalUsd === null || e.mostUsd === null) return "Its price is not in the catalog";
 	return `About ${usd(e.typicalUsd)}, at most ${usd(e.mostUsd)}`;
 }
 
 function basisLine(e: Estimate): string {
+	if (e.slot === "dictionary") return "Plainer: rules from templates, no word themes or story world.";
 	return e.measured > 0 ? `From ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model.` : "A first guess: no course has been written on this model yet.";
 }
 
@@ -54,7 +56,6 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 	const [picked, setPicked] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [blocker, setBlocker] = useState<string | null>(null);
 	const [writers, setWriters] = useState<Estimate[]>([]);
 	const [writer, setWriter] = useState<Estimate["slot"]>("strong");
 	const dismiss = useBackdropDismiss(onClose);
@@ -62,11 +63,10 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 	useEffect(() => {
 		let live = true;
 		fetch("/api/languages")
-			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; blocker: string | null; writers: Estimate[] }>)
+			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; writers: Estimate[] }>)
 			.then((d) => {
 				if (!live) return;
 				setRows(d.languages);
-				setBlocker(d.blocker);
 				setWriters(d.writers);
 				if (d.writers[0]) setWriter(d.writers[0].slot);
 			})
@@ -165,7 +165,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				</div>
 
 				<p className="text-xs leading-relaxed text-muted-foreground">
-					The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories, in two calls; each answer is capped, so it cannot cost more than shown.
+					The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons from the dictionary for free.
 				</p>
 				{writers.length > 0 && (
 					<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1" data-testid="add-language-writers">
@@ -188,7 +188,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 									<span className="min-w-0">
 										<span className="block truncate font-semibold">{w.name}</span>
 										<span className="block truncate text-muted-foreground">
-											{w.slot === "strong" ? "Strong" : "Cheap"} slot · {w.level} thinking · {basisLine(w)}
+											{w.slot === "dictionary" ? basisLine(w) : <>{w.slot === "strong" ? "Strong" : "Cheap"} slot · {w.level} thinking · {basisLine(w)}</>}
 										</span>
 									</span>
 									<span className="shrink-0 tabular-nums font-semibold">{priceLine(w)}</span>
@@ -196,11 +196,6 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 							);
 						})}
 					</div>
-				)}
-				{blocker && (
-					<p className="text-xs text-destructive" role="alert" data-testid="add-language-blocker">
-						{blocker}
-					</p>
 				)}
 				{error && (
 					<p className="text-xs text-destructive" role="alert">
@@ -214,7 +209,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 					<button
 						type="button"
 						data-testid="add-language-start"
-						disabled={!choice || busy || anyAdding || !!blocker}
+						disabled={!choice || busy || anyAdding}
 						onClick={() => void start()}
 						className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 					>

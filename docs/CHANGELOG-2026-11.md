@@ -5,7 +5,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 ## 5 November: an added language gets its whole course (branch `feat/generated-courses`, E44)
 
 - **What changed for the learner:** an Estonian profile ran the Slovak lessons and curriculum. Adding a language now builds its course: grammar lessons on real Tatoeba sentences chosen by each form's Wiktionary tags, word themes, tutor sessions, goals, chapters, placement tiers, a skill map and a story world for Read and Speak. Your Strong model writes the rules and the structure in two calls; the app checks them against the dictionary. A language added before this shows "Needs its course" in the dialog, and **Finish** builds it from the kept downloads.
-- **A model is now required** to add a language; the dialog says so.
+- **Who builds it is your choice in the dialog**, each priced before anything is spent: the Strong model (about $0.56 on Opus 5.5, at most $2.95), the Cheap one (about $0.28 on Sonnet 5.5), or the dictionary alone (free, plainer). Model calls are capped, so the most is real; the typical figure learns from earlier runs on the same model and thinking level.
 - **Unverified:** a course written by a real model (the tests use a scripted one; the prompt has not run against a live model yet), and the lessons on screen.
 
 ## 5 November: add a language from the app (branch `feat/add-language-button`, E43)

@@ -1,18 +1,18 @@
 /**
  * GET /api/languages — the languages the app can add, and which are ready
  * or being added.
- * POST /api/languages {action: "add", id, slot?: "strong" | "cheap"} — start adding one in the
+ * POST /api/languages {action: "add", id, slot?: "strong" | "cheap" | "dictionary"} — start adding one in the
  * background (src/server/language-add.ts). The task shows in the sidebar's
  * Background section and ends in a ready notice; GET /api/activity has it.
  * POST /api/languages {action: "remove", id} — delete an added language's
  * words and grammar map. The learner's progress in it stays.
  */
-import { addBlocker, addEstimates, languageCatalog, removeLanguage, startLanguageAdd } from "@/src/server";
+import { addEstimates, languageCatalog, removeLanguage, startLanguageAdd } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-	return Response.json({ languages: languageCatalog(), blocker: addBlocker(), writers: addEstimates() });
+	return Response.json({ languages: languageCatalog(), writers: addEstimates() });
 }
 
 export async function POST(req: Request) {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 			removeLanguage(body.id);
 			return Response.json({ ok: true });
 		}
-		const slot = body.slot === "cheap" ? "cheap" : "strong";
+		const slot = body.slot === "cheap" || body.slot === "dictionary" ? body.slot : "strong";
 		const { taskId } = startLanguageAdd(body.id, { slot });
 		return Response.json({ ok: true, taskId });
 	} catch (err) {
