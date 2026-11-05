@@ -132,6 +132,8 @@ export function LanguagePicker({
 	const more = pending !== null;
 	const anchor = useRef<HTMLSpanElement>(null);
 	const chosen = pending ?? value;
+	// The language being learned stays in `value`, where the other languages read it, but this picker neither shows nor counts it.
+	const pickable = value.filter((l) => l !== exclude);
 	// A language has a level only once the learner presses one. Until then the tutor reads DEFAULT_LANG_LEVEL.
 	const levelsFor = (langs: readonly Lang[]) => {
 		const next: Partial<Record<Lang, LangLevel>> = {};
@@ -140,10 +142,10 @@ export function LanguagePicker({
 	};
 	const toggle = (id: Lang) => {
 		if (value.includes(id)) return onChange(value.filter((l) => l !== id), levelsFor(value.filter((l) => l !== id)));
-		if (value.length >= MAX_LANGUAGES) return;
+		if (pickable.length >= MAX_LANGUAGES) return;
 		onChange([...value, id], levelsFor([...value, id]));
 	};
-	const togglePending = (id: Lang) => setPending((p) => (p ? (p.includes(id) ? p.filter((l) => l !== id) : p.length >= MAX_LANGUAGES ? p : [...p, id]) : p));
+	const togglePending = (id: Lang) => setPending((p) => (p ? (p.includes(id) ? p.filter((l) => l !== id) : p.filter((l) => l !== exclude).length >= MAX_LANGUAGES ? p : [...p, id]) : p));
 	const setLevel = (id: Lang, level: LangLevel) => onChange([...value], { ...levels, [id]: level });
 	// The panel lines up with the More button on the side that has room: the button sits at the end of a wrapping row.
 	const open = () => {
@@ -239,9 +241,9 @@ export function LanguagePicker({
 					)}
 				</span>
 			</div>
-			{value.length > 0 && (
+			{pickable.length > 0 && (
 				<div className="mt-4 flex flex-col gap-2" data-testid={`${testid}-levels`}>
-					{value.map((id) => {
+					{pickable.map((id) => {
 						const level = normalizeLangLevel(levels[id]); // none until pressed; a profile from before may still say "fluent"
 						return (
 							<div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors" data-testid={`level-${id}`}>

@@ -401,7 +401,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 ### E34. One name per page: route, nav label and page title (2026-11-03, branch `feat/quiet-tool-redesign`)
 
 - A page has one name, and the route, the sidebar label and the page title all say it. The table is `lib/nav.ts`; the sidebar, the jump palette and the document titles read it, and `tests/nav.test.ts` fails when a page under `app/` is missing from it or a label and a title differ.
-- The names: Today, Curriculum, Review; Practice: Read, Listen, Watch, Speak, Fluency; Understand: Words, Grammar, Map; Track: Progress, Milestones, Mistakes, Log. Lesson, Exam, the Tutor chats and Set up are reached from inside other pages and keep their own one-word titles. The Curriculum page's second view is called Mountain; "Your climb to B2" is its subtitle, not its name.
+- The names: Today, Curriculum, Review; Practice: Read, Listen, Watch, Speak, Fluency (now Speed, E48); Understand: Words, Grammar, Map; Track: Progress, Milestones, Mistakes, Log. Lesson, Exam, the Tutor chats and Set up are reached from inside other pages and keep their own one-word titles. The Curriculum page's second view is called Mountain; "Your climb to B2" is its subtitle, not its name.
 - The Progress page was `/plan`; `/plan` redirects to `/progress`. A subtitle may carry the old, longer name ("When can I…?" under Milestones).
 
 ### E35. One motion system: a timing scale, transform-only, press that shrinks (2026-11-03, branch `feat/motion-pass`)
@@ -562,10 +562,20 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 **How to apply:**
 - The learner's fields of the goal (`LEARNER_FIELDS` in `src/core/onboarding.ts`: the languages known with levels, the explanation languages, the parallels switch) live once in `<data>/learner.json` (`src/store/learner.ts`). The progress store lays them over every language's goal on read and takes them out on write; a goal made fresh for a new language never wipes them. Before the file exists, the first goal that has them hands them over. A new language's setup starts from them (`defaultGoal()`).
-- A language's own pickers leave it out, so a list saved there keeps the running language and its level if the shared list had it (Slovak listed in a Russian setup stays when the Slovak profile saves).
+- A language's own pickers leave it out, so a list saved there keeps the running language and its level if the shared list had it (Slovak listed in a Russian setup stays when the Slovak profile saves). Its rows and its "Explain to me in" choices leave it out too, so a language is never asked to know itself.
 - Prompts never assume a language. The Slovak doctrine names Estonian and Slavic parallels only "when it is listed" in "This learner"; the probe asks about "a language they know"; tutor briefs carry no bridge line.
 - "This learner" also says which other languages are studied in the app and where each works on its own map ("Also studying in this app: Slovak (working at A1 on its map, aiming at B1)"), read by borrowing them (E45). The level the learner gave stays theirs; the measured one is said apart, never overwrites it. A language is never its own explanation language.
 - The hand-written bridge lines in the Slovak lessons (Estonian, Finnish, Russian, German) stay: they are chosen by the learner's languages already.
+
+### E48. Fluency is called Speed, at `/speed`; the B2 stage is Argument; no redirect (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** "Fluency" is Paul Nation's name for the fourth strand, and the practice page took the word from the research note. A learner hears it as speaking smoothly, but the drill is speed on sentences they already know. The same strand was already called Speed in the strand bars, the stamps and the log, and the B2 stage on the map was also called Fluency.
+
+**How to apply:**
+- The practice page is Speed in the sidebar, the page title, the jump palette, the plan's strand labels and the week chart. Its route is `/speed`. `/fluency` no longer opens: the owner chose no redirect. E34 still holds: route, label and title say the same name.
+- The two exercises keep their names, "Say it faster" and "Read it faster".
+- The B2 stage (`src/core/curriculum.ts`) is Argument. Its blurb is unchanged.
+- Internal names stay: the `fluency` strand id, `data/profiles/<lang>/fluency/`, `src/server/fluency.ts` and `/api/fluency`. Renaming them would move learner data for no visible gain.
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 

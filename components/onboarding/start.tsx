@@ -220,6 +220,8 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Add a model key in Settings first."));
 	};
 
+	const withoutTarget = (langs: readonly Lang[]) => langs.filter((l) => l !== target.code);
+
 	const progress = step === 4 && outcome ? 4 : step;
 
 	return (
@@ -320,14 +322,14 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								exclude={target.code}
 								value={d.languages}
 								levels={d.languageLevels}
-								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(x.explainIn, languages) }))}
+								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(withoutTarget(x.explainIn), languages) }))}
 							/>
 							<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="parallels-line">
 								{parallelsLine({ languages: d.languages, languageLevels: d.languageLevels }, target)}
 							</p>
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
-							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
+							<PickSome items={explainChoices(withoutTarget(d.languages))} value={withoutTarget(d.explainIn)} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
 							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
 						</Field>
 						<Field label={`${target.english} so far`}>
