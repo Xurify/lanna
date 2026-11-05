@@ -29,7 +29,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
@@ -126,7 +126,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 	/** Prepare a pasted link: the server fetches, translates and keeps it;
 	 *  the step it is at is polled while it works. */
 	const prepare = useCallback(
-		async (url: string, transcribe = false) => {
+		async (url: string, transcribe = false, force = false) => {
 			const id = parseVideoUrl(url);
 			if (!id) {
 				setError({ message: "That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link." });
@@ -144,7 +144,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 					.catch(() => {});
 			}, 900);
 			try {
-				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe }) });
+				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force }) });
 				const body = (await res.json()) as VideoRecord | PrepareError;
 				if (!res.ok || !("segments" in body)) throw body;
 				setVideo(body);
@@ -171,6 +171,18 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 		kicked.current = true;
 		void prepare(pending);
 	}, [stage, pending, prepare]);
+
+	const remove = useCallback(
+		async (id: string) => {
+			try {
+				await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", videoId: id }) });
+			} catch {
+				// the list below says what is still there
+			}
+			void load();
+		},
+		[load],
+	);
 
 	const open = (id: string) => {
 		void fetch(`/api/watch?id=${encodeURIComponent(id)}`)
@@ -289,7 +301,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} onOpen={open} onPrepare={(url) => void prepare(url)} />
+			<Shelf state={state} onOpen={open} onPrepare={(url) => void prepare(url)} onDelete={(id) => void remove(id)} />
 		);
 	}
 
@@ -297,7 +309,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 		return (
 			<Frame strip={false}>
 				<TopBar video={video} step={`${video.segments.length} lines · ${formatClock(video.durationSec)}`} progress={0} onShelf={() => setStage("shelf")} />
-				<Preview video={video} onStart={start} />
+				<Preview video={video} onStart={start} onRegenerate={() => void prepare(video.url, video.source.kind === "transcription", true)} />
 			</Frame>
 		);
 	}
@@ -405,8 +417,9 @@ function Thumb({ id, watched }: { id: string; watched: boolean }) {
 	);
 }
 
-function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen: (id: string) => void; onPrepare: (url: string) => void }) {
+function Shelf({ state, onOpen, onPrepare, onDelete }: { state: WatchState | null; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
 	const [url, setUrl] = useState("");
+	const [confirming, setConfirming] = useState<string | null>(null);
 	const list = [...(state?.library ?? [])].reverse();
 	const valid = parseVideoUrl(url) !== null;
 	const submit = (e: React.FormEvent) => {
@@ -468,8 +481,8 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 							{list.map((v) => {
 								const band = coverageBand(v.coverage);
 								return (
-									<li key={v.id}>
-										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
+									<li key={v.id} className="relative">
+										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 py-3.5 pl-4 pr-12 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
 											<Thumb id={v.id} watched={v.watches > 0} />
 											<span className="min-w-0 flex-1">
 												<span className="block truncate font-ui text-[16px] font-[600] text-foreground" lang="sk">
@@ -484,6 +497,28 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 												{v.watches === 0 ? <span className="text-teal-2">new</span> : v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : `watched ${v.watches}×`}
 											</span>
 										</button>
+										{confirming === v.id ? (
+												<span className="absolute inset-y-1.5 right-1.5 flex items-center gap-1 rounded-lg bg-well pl-3 pr-1 font-ui text-xs font-[600] text-foreground" data-testid="watch-delete-confirm">
+													Delete this video?
+													<button
+														type="button"
+														onClick={() => {
+															setConfirming(null);
+															onDelete(v.id);
+														}}
+														className="rounded-md px-2 py-1 text-miss hover:bg-accent"
+													>
+														Delete
+													</button>
+													<button type="button" onClick={() => setConfirming(null)} className="rounded-md px-2 py-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+														Keep
+													</button>
+												</span>
+											) : (
+												<button type="button" onClick={() => setConfirming(v.id)} aria-label={`Delete ${v.title}`} title="Delete this video" className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-delete">
+													<Trash2Icon className="size-4" strokeWidth={1.6} />
+												</button>
+											)}
 									</li>
 								);
 							})}
@@ -497,7 +532,7 @@ function Shelf({ state, onOpen, onPrepare }: { state: WatchState | null; onOpen:
 
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
-function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: WatchMode) => void }) {
+function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
 	const tone = band.band === "comfortable" ? "text-teal-2" : band.band === "stretch" ? "text-teal-2" : "text-miss";
@@ -586,6 +621,14 @@ function Preview({ video, onStart }: { video: VideoRecord; onStart: (mode: Watch
 						</span>
 						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles live under the video, the whole transcript below. Click any line to jump. Tap any word.</span>
 					</button>
+				</div>
+
+				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
+					<button type="button" onClick={onRegenerate} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-regenerate">
+						<RepeatIcon className="size-4" strokeWidth={1.6} />
+						Regenerate
+					</button>
+					<span className="font-prose text-sm text-muted-foreground">Fetches the captions again and translates them again (one model call). Your past watchings stay.</span>
 				</div>
 			</div>
 		</div>

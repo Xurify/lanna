@@ -382,6 +382,25 @@ test("a translation the model miscounts twice is split in halves, each half aske
 	assert.equal(v.usage.steps.length, 5, "two asks for the whole, one each for the halves, one for the questions");
 });
 
+test("a kept video is prepared again when forced, and removing it leaves its watchings", async () => {
+	const url = "https://youtu.be/DDDDDDDDDDD";
+	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const first = await watch.prepareVideo(url, { engine, model: "faux:watch", captions, now: new Date("2026-11-04T09:00:00Z") });
+	const redo = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.map((t) => `${t} (again)`) })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const again = await watch.prepareVideo(url, { engine: redo, model: "faux:watch", captions, force: true, now: new Date("2026-11-04T09:30:00Z") });
+	assert.equal(again.segments[0]!.en, `${TRANSLATIONS[0]} (again)`, "forcing asks the model again instead of reusing the kept video");
+	assert.equal(videoStore.list().filter((e) => e.id === first.id).length, 1, "one index line per video");
+	videoStore.putCaptions(first.id, "sk", "json", "{}");
+	videoStore.appendWatch({ id: "w-keep", videoId: first.id } as never);
+	assert.equal(videoStore.remove(first.id), true);
+	assert.equal(videoStore.get(first.id), null);
+	assert.equal(videoStore.list().some((e) => e.id === first.id), false);
+	assert.equal(videoStore.captions(first.id, "sk"), null);
+	assert.ok(videoStore.watches().some((w) => w.videoId === first.id), "the watchings stay");
+	assert.equal(videoStore.remove(first.id), false, "a second removal finds nothing");
+	assert.throws(() => videoStore.remove("not an id"));
+});
+
 test("a translation chunk is asked with the lines on both sides as context", async () => {
 	const many = Array.from({ length: 43 }, (_, i) => `riadok${i + 1}`);
 	const base = createFauxCore({ tokenSize: { min: 64, max: 64 } });
