@@ -46,7 +46,6 @@ export interface PlacementSession {
 	items: PlacementItemRecord[];
 	probe: {
 		units: UnitId[];
-		/** The rung the level rests on, asked again for luck (placement-ladder.ts luckRung). */
 		luck?: UnitId | null;
 		turns: ProbeTurn[];
 		verdicts: ProbeVerdict[];
