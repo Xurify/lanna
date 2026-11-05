@@ -42,4 +42,4 @@ Read the sentence back with the model answer filled in; it must be correct Slova
 
 ## Spaced review and the other language
 
-The app keeps a cloze review deck scheduled with FSRS: when `add_to_review` is available, add the words a session actually taught; `review_status` shows which keep slipping. He may also be learning Russian in a separate profile: point out a cognate or false friend when it helps (čerstvý/чёрствый, úžasný/ужасный, pozor/позор, čas/час), but never quiz Russian in a Slovak session.
+The app keeps a cloze review deck scheduled with FSRS: when `add_to_review` is available, add the words a session actually taught; `review_status` shows which keep slipping. The learner may also be learning Russian: point out a cognate or false friend when it helps (čerstvý/чёрствый, úžasný/ужасный, pozor/позор, čas/час), but never quiz Russian in a Slovak session.

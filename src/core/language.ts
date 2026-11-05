@@ -10,7 +10,7 @@
  * <data>/languages/<id>/language.json.
  */
 
-export type LanguageId = "slovak" | "russian";
+export type LanguageId = "slovak";
 
 import { isVariantMatch, knownVariants } from "./variants.ts";
 export { isVariantMatch, knownVariants };
@@ -133,21 +133,6 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 			spellingSlips: "A consonant written as it is said (had as hat) and i against y are spelling rules",
 		},
 	},
-	russian: {
-		id: "russian",
-		tag: "ru-RU",
-		code: "ru",
-		endonym: "Русский",
-		english: "Russian",
-		specialLetters: ["ё", "й", "ъ", "ь", "ы", "э", "щ", "ж", "ю", "я"],
-		edgeVoices: ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"],
-		fsiCategory: 3,
-		referenceSite: {
-			label: "Wiktionary",
-			baseUrl: "https://ru.wiktionary.org",
-			wordUrl: "https://ru.wiktionary.org/wiki/{word}",
-		},
-	},
 };
 
 /** The English name of a caption language: a profile's own, or one of its
@@ -191,8 +176,7 @@ const CATALOG_ROWS: CatalogRow[] = [
 	["russian", "ru-RU", "Русский", "Russian", ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"], "rus", "Russian", "ru"],
 ];
 
-/** Every language the app can add by itself. Russian is here too: its
- *  profile is built in but ships no words. */
+/** Every language the app can add by itself. */
 export const LANGUAGE_CATALOG: CatalogLanguage[] = CATALOG_ROWS.map(([id, tag, endonym, english, voices, tatoeba, wiktionary, frequency]) => ({
 	id,
 	tag,

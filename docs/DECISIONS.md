@@ -554,6 +554,6 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
-- **Russian profile.** Prompts and a profile exist; no lexicon, seed or review deck. Not started.
+- **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.

@@ -163,15 +163,11 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 									<span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
 										<span className="font-ui text-sm font-semibold text-foreground">{p.endonym}</span>
 										<span className="text-xs text-muted-foreground">{p.english}</span>
-										{running ? (
-											<span className="text-xs font-medium text-teal">Studying now</span>
-										) : p.ready === false ? (
-											<span className="text-xs text-muted-foreground">Needs its course</span>
-										) : null}
+										{running && <span className="text-xs font-medium text-teal">Studying now</span>}
 									</span>
 									{!running && (
 										<button type="button" onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-switch-${p.id}`}>
-											{p.ready === false ? "Finish" : "Switch"}
+											Switch
 										</button>
 									)}
 									{p.removable ? (

@@ -1,14 +1,14 @@
 # LangHarness
 
-A fork of LearnHarness 0.3.8 for learning Slovak (and later Russian) from
-English and Estonian. Built on branch `slovak` from the plan in
+A fork of LearnHarness 0.3.8 for learning Slovak, and any language added from the app,
+with bridges from the languages you already know. Built on branch `slovak` from the plan in
 `wayfinder-slovak-harness-spec.md`.
 
 ## What it adds
 
 | Area | What you get |
 |---|---|
-| Language profiles | Slovak and Russian are built in. Each keeps its own sessions, graph and review deck under `data/profiles/<language>/`. Switch from the language menu at the top of the sidebar or from Settings → Learning, which also removes and adds languages. The desktop app restarts itself; under `npm run dev`, restart the server. Removing a built-in language hides it (`hidden` in `data/profile.json`); **Add a language** brings it back. The running language cannot be removed. |
+| Language profiles | Slovak is built in; every other language is added from the app. Each keeps its own sessions, graph and review deck under `data/profiles/<language>/`. Switch from the language menu at the top of the sidebar or from Settings → Learning, which also removes and adds languages. The desktop app restarts itself; under `npm run dev`, restart the server. Removing a built-in language hides it (`hidden` in `data/profile.json`); **Add a language** brings it back. The running language cannot be removed. |
 | Add a language | The language menu's **Add a language…** lists seven languages: Bulgarian, Czech, Estonian, Norwegian, Polish, Romanian and Russian. Pick one and the app builds the whole course in the background (November 2026): about 3,000 common words with glosses and forms from Wiktionary, up to five Tatoeba sentences each, then lessons, chapters, tutor sessions, goals and a story world written by the model you pick (each choice priced first) and checked against the dictionary, or built from the dictionary alone for free. The sidebar's Background section and the Tasks page show each step; a card offers the switch when it is ready. Czech takes about 12 seconds, Russian about 30. Everything is kept in `data/languages/<id>/`. Lessons, the curriculum path, placement, Review, Read, Watch, Speak and the tutor all run on its course. To remove one, press its bin in Settings → Learning, or hover it in the language menu: its words go, your progress in it stays. Details: [docs/adding-a-language.md](docs/adding-a-language.md). |
 | Seeded grammar graph | A fresh Slovak profile starts with 53 grammar nodes (phonetics, cases, verbs, aspect, word order…) and 40 vocabulary clusters, linked by 57 prerequisite chains. Every grammar node carries an Estonian bridge. Seeding runs once; nodes you delete stay deleted. |
 | Prompts | `src/agent/prompts/language/10-<language>.md` joins every agent's prompt. It covers the English and Estonian bridges (with where each breaks), adaptive immersion, grading diacritic slips apart from grammar, Russian false friends, and the `lookup_word` rule. Prober, teacher and practice each get a language fragment too. Edit them all in Settings → AI models → Advanced → System prompts. |
@@ -114,7 +114,7 @@ fresh, delete `data/profiles/slovak/`.
 ## Limits worth knowing
 
 - Only 4 words (from slovak.wiki's hand-checked set) have full declension tables checked against JÚĽŠ. 2,958 more have rule-generated form sets that slovak.wiki verified. For the rest, `lookup_word` says plainly that the form is not in the dictionary.
-- Russian has prompts and a profile but ships no words. **Add a language…** → Russian downloads them (see above).
+- Slovak is the only built-in language. Russian, Estonian and the others are added from **Add a language…** (see above).
 - An added language gets its own generated course. The grammar atlas, the Dvojičky pairs and the aspect tasks are Slovak content and do not appear for it.
 - Edge speech could not be tested in the build sandbox (no network there). The fallback to the next tier was tested.
 - Example sentences come from Tatoeba (CC BY 2.0 FR). The review page credits them.

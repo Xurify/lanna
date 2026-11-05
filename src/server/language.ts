@@ -15,7 +15,7 @@ import { settleGraphLayout } from "../core/layout-settle.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { graphStore } from "../store/graph.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
-import { languageReady, languageRemovable } from "./language-add.ts";
+import { languageRemovable } from "./language-add.ts";
 
 export interface ProfileStatus {
 	active: LanguageProfile;
@@ -24,7 +24,7 @@ export interface ProfileStatus {
 	restartRequired: boolean;
 	/** The running language in full: the browser reads its tag, voices and letters here. */
 	language: LanguageInfo;
-	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** Its words and course are complete. */ ready: boolean; /** It can be removed from the list now. */ removable: boolean }>;
+	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** It can be removed from the list now. */ removable: boolean }>;
 	seeded: { nodes: number; chains: number } | null;
 }
 
@@ -54,7 +54,6 @@ export function profileStatus(): ProfileStatus {
 				english: info.english,
 				lexicon: fs.existsSync(curriculumFile(id, "lexicon.json")),
 				seed: fs.existsSync(seedFile(id)),
-				ready: languageReady(id),
 				removable: languageRemovable(id),
 			}];
 		}),
@@ -65,15 +64,6 @@ export function profileStatus(): ProfileStatus {
 export function selectProfile(profile: LanguageProfile): ProfileStatus {
 	saveProfileChoice({ active: profile });
 	return profileStatus();
-}
-
-/** The running language when it has no course yet, else null. Without a
- *  course the core falls back to Slovak's units (src/core/course.ts), which
- *  then drill this language's words under Slovak titles, so the pages that
- *  teach from the course ask to finish it instead. */
-export function missingCourse(): { id: string; english: string } | null {
-	if (languageReady(ACTIVE_PROFILE)) return null;
-	return { id: ACTIVE_PROFILE, english: activeLanguage().english };
 }
 
 interface SeedFile {

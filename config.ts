@@ -54,14 +54,15 @@ function testDataRoot(): string {
 // ─── Language profiles (LangHarness, spec D7 / WF-01) ──────────────────────
 // Each target language keeps its own learning records under
 // <data>/profiles/<language>/ — chats, graph ledgers, jobs, review cards,
-// debug — so Slovak and Russian never mix. Settings, prompt overrides, keys
+// debug — so two languages never mix. Settings, prompt overrides, keys
 // and the audio cache stay at the data root: they are about the learner and
 // their providers, not about one language. The active profile is read ONCE
 // at boot (LH_PROFILE env wins, else <data>/profile.json, else slovak);
 // switching profiles restarts the server (POST /api/profile).
 
-/** The profiles that ship with the app. */
-export const LANGUAGE_PROFILES = ["slovak", "russian"] as const;
+/** The profiles that ship with the app. Every other language is added from
+ *  the app with its generated course. */
+export const LANGUAGE_PROFILES = ["slovak"] as const;
 /** A built-in profile or one the learner added (<data>/languages/<id>/). */
 export type LanguageProfile = string;
 
@@ -69,8 +70,10 @@ export type LanguageProfile = string;
 export const PROFILE_FILE = path.join(BASE_DATA_ROOT, "profile.json");
 
 /** Languages added from the app: <data>/languages/<id>/ holds the words,
- *  the grammar map and language.json. language.json is written last, so a
- *  folder without it is an addition still running or one that failed. */
+ *  the course, the grammar map and language.json. language.json is written
+ *  last, so a folder without it is an addition still running or one that
+ *  failed. One without course.json predates generated courses: adding the
+ *  language again finishes it from the kept downloads. */
 const LANGUAGES_DIR = path.join(BASE_DATA_ROOT, "languages");
 const PROFILE_ID_RE = /^[a-z][a-z-]{1,31}$/;
 
@@ -84,7 +87,7 @@ export function addedLanguageIds(): string[] {
 		return [];
 	}
 	return names
-		.filter((id) => PROFILE_ID_RE.test(id) && !(LANGUAGE_PROFILES as readonly string[]).includes(id) && fs.existsSync(path.join(LANGUAGES_DIR, id, "language.json")))
+		.filter((id) => PROFILE_ID_RE.test(id) && !(LANGUAGE_PROFILES as readonly string[]).includes(id) && ["language.json", "course.json"].every((f) => fs.existsSync(path.join(LANGUAGES_DIR, id, f))))
 		.sort();
 }
 
@@ -108,7 +111,8 @@ export function isLanguageProfile(v: unknown): v is LanguageProfile {
 }
 
 /** profile.json: the language chosen for the next start, and the built-in
- *  languages the learner removed from their list. */
+ *  languages the learner removed from their list (other ids are dropped on
+ *  read, so a language that stops being built in is not hidden by mistake). */
 export interface ProfileChoice {
 	active?: string;
 	hidden: string[];
@@ -118,7 +122,7 @@ export function readProfileChoice(): ProfileChoice {
 	try {
 		const parsed: unknown = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8"));
 		const r = parsed && typeof parsed === "object" ? (parsed as { active?: unknown; hidden?: unknown }) : {};
-		const hidden = Array.isArray(r.hidden) ? r.hidden.filter((h): h is string => typeof h === "string" && PROFILE_ID_RE.test(h)) : [];
+		const hidden = Array.isArray(r.hidden) ? r.hidden.filter((h): h is string => typeof h === "string" && (LANGUAGE_PROFILES as readonly string[]).includes(h)) : [];
 		return { ...(typeof r.active === "string" ? { active: r.active } : {}), hidden: [...new Set(hidden)] };
 	} catch {
 		return { hidden: [] };
@@ -144,8 +148,7 @@ export function shownProfiles(): string[] {
 }
 
 /** A language's data file: the copy the app ships (curriculum/<id>/) when
- *  there is one, else the one built when the learner added it. Russian is
- *  built in but ships no words, so its lexicon can come from either. */
+ *  there is one, else the one built when the learner added it. */
 export function curriculumFile(profile: string, name: string): string {
 	const shipped = path.join(ROOT, "curriculum", profile, name);
 	if (fs.existsSync(shipped)) return shipped;
@@ -156,8 +159,8 @@ export function curriculumFile(profile: string, name: string): string {
 // `next dev` evaluates this module again for each route it compiles, and
 // again after HMR, all in one process. Reading profile.json each time split
 // one server across two profiles once a switch was saved but not restarted
-// (2026-11-01: Today read Slovak while lessons were recorded into a new,
-// empty Russian profile). The first read is kept on globalThis, per data
+// (2026-11-01: Today read one language while lessons were recorded into a
+// new, empty profile). The first read is kept on globalThis, per data
 // folder, so every later evaluation in the process agrees with it.
 const BOOT_PROFILES = ((globalThis as { __lhBootProfiles?: Record<string, LanguageProfile> }).__lhBootProfiles ??= {});
 

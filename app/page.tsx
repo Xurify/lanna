@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Today } from "@/components/today";
-import { NoCourse } from "@/components/no-course";
-import { missingCourse, prepareCorpus, profileStatus, progressSummary, readSettingsRecord } from "@/src/server";
+import { prepareCorpus, progressSummary, readSettingsRecord } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 export const metadata = { title: { absolute: "Today · LangHarness" } };
@@ -13,8 +12,6 @@ export const dynamic = "force-dynamic";
 /** Today — the front page: what to do next, the day's goal, the skill path.
  *  The knowledge-graph home moved to /map. */
 export default function HomePage() {
-	const missing = missingCourse();
-	if (missing) return <NoCourse language={missing} initialProfile={profileStatus()} />;
 	// The corpus (data/README.md, the audio library): READMEs in place and
 	// the old audio cache moved into the indexed tree, once per process.
 	try {

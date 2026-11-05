@@ -9,7 +9,7 @@
  * hidden. The learner's progress in it stays. Adding a hidden built-in puts
  * it back.
  */
-import { addEstimates, languageCatalog, languageReady, removeLanguage, restoreLanguage, startLanguageAdd } from "@/src/server";
+import { addEstimates, languageCatalog, removeLanguage, restoreLanguage, startLanguageAdd } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +27,7 @@ export async function POST(req: Request) {
 			removeLanguage(body.id);
 			return Response.json({ ok: true });
 		}
-		// A removed built-in comes back at once when it ships its course (Slovak); Russian goes on to download its words.
-		if (restoreLanguage(body.id) && languageReady(body.id)) return Response.json({ ok: true, restored: true });
+		if (restoreLanguage(body.id)) return Response.json({ ok: true, restored: true });
 		const slot = body.slot === "cheap" || body.slot === "dictionary" ? body.slot : "strong";
 		const { taskId } = startLanguageAdd(body.id, { slot });
 		return Response.json({ ok: true, taskId });

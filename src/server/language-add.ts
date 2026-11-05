@@ -19,7 +19,7 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { ACTIVE_PROFILE, LANGUAGE_PROFILES, PATHS, curriculumFile, readProfileChoice, saveProfileChoice } from "../../config.ts";
+import { ACTIVE_PROFILE, LANGUAGE_PROFILES, PATHS, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, languageById, type CatalogLanguage } from "../core/language.ts";
 import {
@@ -64,15 +64,9 @@ export const taskIdOf = (id: string) => `language:${id}`;
 const dirOf = (id: string) => path.join(PATHS.languages, id);
 const buildDir = (id: string) => path.join(dirOf(id), "build");
 
-/** Whether a catalog language is complete: its words and its course. One
- *  added before courses were generated is not, and adding it again
- *  finishes it from the kept downloads. */
-export function languageReady(id: string): boolean {
-	if (id === "slovak") return true;
-	const course = fs.existsSync(path.join(dirOf(id), "course.json"));
-	if (id === "russian") return course && fs.existsSync(curriculumFile(id, "lexicon.json"));
-	return course && fs.existsSync(path.join(dirOf(id), "language.json"));
-}
+/** Whether a catalog language is added: its words, course and language.json
+ *  are all written (config.ts addedLanguageIds). */
+const languageAdded = (id: string) => addedLanguageIds().includes(id);
 
 /** What the course writer is told the dictionary holds. */
 function courseInventory(entries: ReadonlyArray<{ cat: string; lemma?: string; formTags?: Record<string, string[]> }>, tag: string, scenes: readonly string[]) {
@@ -93,11 +87,8 @@ export interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
-	/** Already in the learner's list (words downloaded, or built in) but
-	 *  without its course: adding it finishes it. */
-	started: boolean;
-	/** A built-in language the learner removed from their list that is
-	 *  still complete: adding it puts it back at once, with no download. */
+	/** A built-in language the learner removed from their list: adding it
+	 *  puts it back at once, with no download. */
 	restoreOnly?: boolean;
 }
 
@@ -112,16 +103,14 @@ export function languageCatalog(): CatalogRow[] {
 		english: l.english,
 		endonym: l.endonym,
 		tag: l.tag,
-		ready: languageReady(l.id) && !hidden.includes(l.id),
+		ready: languageAdded(l.id),
 		adding: running.has(taskIdOf(l.id)),
-		started: !languageReady(l.id) && (fs.existsSync(dirOf(l.id)) || (isBuiltIn(l.id) && !hidden.includes(l.id))),
-		...(hidden.includes(l.id) && languageReady(l.id) ? { restoreOnly: true } : {}),
 	}));
-	// Slovak ships whole and is not in the catalog: once removed, it is listed here so it can come back.
+	// A built-in language ships whole and is not in the catalog: once removed, it is listed here so it can come back.
 	for (const id of hidden) {
 		const info = languageById(id);
-		if (!isBuiltIn(id) || catalogLanguage(id) || !info) continue;
-		rows.unshift({ id, english: info.english, endonym: info.endonym, tag: info.tag, ready: false, adding: false, started: false, ...(languageReady(id) ? { restoreOnly: true } : {}) });
+		if (!info) continue;
+		rows.unshift({ id, english: info.english, endonym: info.endonym, tag: info.tag, ready: false, adding: false, restoreOnly: true });
 	}
 	return rows;
 }
@@ -274,7 +263,7 @@ export function addBlocker(writer: CourseWriter = "strong"): string | null {
 export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: string; done: Promise<void> } {
 	const lang = catalogLanguage(id);
 	if (!lang) throw new Error(`"${id}" is not a language the app can add`);
-	if (languageReady(id)) throw new Error(`${lang.english} is already added`);
+	if (languageAdded(id)) throw new Error(`${lang.english} is already added`);
 	const other = listTasks().find((t) => t.kind === "language" && t.status === "running" && t.id !== taskIdOf(id));
 	if (other) throw new Error(`Wait for "${other.title}" to finish first`);
 	const blocked = deps.ask ? null : addBlocker(deps.slot);
@@ -300,8 +289,7 @@ export function languageRemovable(id: string): boolean {
 /**
  * Remove a language from the list. An added one loses its words, sentences
  * and grammar map under <data>/languages/<id>/. A built-in one is hidden
- * (profile.json "hidden") and loses any words downloaded for it. The
- * learner's progress (<data>/profiles/<id>/) stays, so adding it again picks
+ * (profile.json "hidden"). The learner's progress (<data>/profiles/<id>/) stays, so adding it again picks
  * up where they were. A switch to it that waits for a restart is undone.
  */
 export function removeLanguage(id: string): void {
@@ -310,7 +298,7 @@ export function removeLanguage(id: string): void {
 	const builtIn = isBuiltIn(id);
 	if (!LANGUAGE_ID_RE.test(id) || (builtIn ? isHidden(id) : !fs.existsSync(dirOf(id)))) throw new Error(`${name} has nothing to remove`);
 	if (!languageRemovable(id)) throw new Error(`${name} is being added. Stop that first.`);
-	fs.rmSync(dirOf(id), { recursive: true, force: true });
+	if (!builtIn) fs.rmSync(dirOf(id), { recursive: true, force: true });
 	const choice = readProfileChoice();
 	saveProfileChoice({
 		...(choice.active === id ? { active: ACTIVE_PROFILE } : {}),

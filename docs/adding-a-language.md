@@ -34,7 +34,7 @@ The rules are in `src/core/language-build.ts` and pinned by `tests/language-add.
 
 The catalog is `LANGUAGE_CATALOG` in `src/core/language.ts`: seven languages for now (Bulgarian, Czech, Estonian, Norwegian, Polish, Romanian and Russian), each with its Tatoeba code, its kaikki.org name, its FrequencyWords code and two Edge voices. All four sources were checked to exist on 5 November 2026. To add one to the catalog, add a row and check the same four things.
 
-Russian is in the catalog although its profile is built in: the profile has its prompt but ships no words, so adding it downloads them into `<data>/languages/russian/`.
+Russian is an added language like the others. Its tutor doctrine is hand-written (`src/agent/prompts/language/10-russian.md`) and replaces the template prompt once Russian is added.
 
 ## The generated course
 
@@ -47,7 +47,7 @@ The dialog asks who builds the course and shows the price of each choice before 
 - **What the model writes is checked** against the language's own dictionary (`checkCourse`, `checkWorld` in `src/core/course.ts`): a tag the dictionary does not use, a word theme whose words are not in it, a lesson with fewer than 12 sentences, a chapter that does not end on a goal are dropped. When too little is left, the model is asked once more; a second failure ends the task with "Try again", which keeps the downloads.
 - **The course runs the whole app.** The server reads `course.json` at start (`config.ts`), the browser gets the same course before the page loads (`app/layout.tsx`), and the lesson units, the map, the chapters and the placement tiers are the course's (`src/core/lesson.ts`, `curriculum.ts`, `onboarding.ts`). First words and the frequency bands come with every course.
 - **Not generated:** the grammar atlas (a Slovak case × gender table), the Dvojičky pairs and the aspect tasks are Slovak content. Parallels from the learner's languages exist only in the Slovak lessons.
-- A language added before courses were generated shows "Needs its course" in the dialog; **Finish** builds it from the kept downloads. The running language picks up its new course on a restart.
+- A folder without `course.json` (a language added before courses were generated) is not listed as a language; adding it again builds the course from the kept downloads.
 
 ## Removing a language
 

@@ -20,8 +20,6 @@ export interface ProfileEntry {
 	english: string;
 	lexicon: boolean;
 	seed: boolean;
-	/** Its words and course are complete. */
-	ready?: boolean;
 	removable?: boolean;
 }
 
@@ -37,16 +35,12 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 	const [adding, setAdding] = useState<string | boolean>(false);
 	const [note, setNote] = useState<string | null>(null);
 
-	/** Pick a language: switching restarts the app, so it asks first. One
-	 *  without its course opens Add a language on it instead, since running
-	 *  it would show another language's lessons. */
+	/** Pick a language: switching restarts the app, so it asks first. */
 	const choose = (id: string) => {
 		if (!profile || id === profile.active) return;
 		setNote(null);
 		const entry = profile.profiles.find((p) => p.id === id);
-		if (!entry) return;
-		if (entry.ready === false) setAdding(entry.id);
-		else setPending(entry);
+		if (entry) setPending(entry);
 	};
 
 	const confirmSwitch = async () => {
