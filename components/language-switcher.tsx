@@ -5,7 +5,7 @@
  * running, a switch to another one, the Today door, and the
  * spaced-review door with its due count. Switching, removing and adding go
  * through components/language-actions.tsx, shared with Settings → Learning.
- * While a language is being added, the menu lists it with its current step.
+ * While a language is being added, the menu lists it as usual, with a loading mark.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -39,13 +39,33 @@ import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { sharedJson } from "@/lib/shared-fetch";
-import { useActivity } from "@/components/activity-dock";
+import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
+import { catalogLanguage } from "@/src/core";
 
 interface Counts {
 	due: number;
 	learning: number;
 	newLeft: number;
+}
+
+/** A language being added, listed the way a set-up one is, with a loading mark
+ *  where its check would be. Its build step lives on the Tasks page. */
+export function AddingRow({ task }: { task: FeedTask }) {
+	const id = task.language?.id ?? "";
+	const english = task.language?.english ?? task.title;
+	const endonym = catalogLanguage(id)?.endonym ?? english;
+	return (
+		<div className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground" data-testid="profile-adding">
+			<div className="flex min-w-0 items-center gap-2 truncate">
+				<CountryFlag lang={id} />
+				<span className="truncate font-semibold">{endonym}</span>
+				<span className="truncate text-[11px] text-muted-foreground">({english})</span>
+			</div>
+			<LoaderCircleIcon className="size-3.5 shrink-0 animate-spin" aria-hidden />
+			<span className="sr-only">Being added</span>
+		</div>
+	);
 }
 
 export function LanguageSwitcher() {
@@ -215,12 +235,7 @@ export function LanguageSwitcher() {
 								})}
 							</div>
 							{addsRunning.map((t) => (
-								<div key={t.id} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground" data-testid="profile-adding">
-									<LoaderCircleIcon className="size-3.5 shrink-0 animate-spin" aria-hidden />
-									<span className="min-w-0 flex-1 truncate">
-										<span className="font-semibold">{t.language?.english ?? t.title}</span> · {t.step}
-									</span>
-								</div>
+								<AddingRow key={t.id} task={t} />
 							))}
 							<div className="my-1 border-t border-border/50" />
 							<button
