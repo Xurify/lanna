@@ -344,11 +344,16 @@ async function cached<T>(id: string, name: string, run: () => Promise<T>): Promi
 
 const yieldNow = () => new Promise<void>((resolve) => setImmediate(resolve));
 
+/** Parsed lines yield to the event loop every this many bytes, so a request
+ *  waits at most one slice between its steps. 8 KB is about 80 Tatoeba lines,
+ *  a fraction of a millisecond of parsing. */
+const PARSE_SLICE_BYTES = 8 * 1024;
+
 /** The lines of a download, decompressed as they arrive. `onBytes` hears
  *  the decompressed total, for the progress line. Lines are split here, not
  *  by readline: readline keeps reading while its lines wait, and a 1 GB
  *  Wiktionary file then sits in memory whole. */
-async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts: { bz2?: boolean; what: string; onBytes?: (n: number) => void }): AsyncGenerator<string> {
+export async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts: { bz2?: boolean; what: string; onBytes?: (n: number) => void }): AsyncGenerator<string> {
 	const res = await get(url, { signal, headers: { "user-agent": UA, "accept-encoding": "gzip" } });
 	if (!res.ok || !res.body) throw new SourceError(`Could not download ${opts.what} (HTTP ${res.status}). Try again later; it continues where it stopped.`);
 	const raw = Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]);
@@ -358,6 +363,7 @@ async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts:
 	const decoder = new StringDecoder("utf8");
 	let carry = "";
 	let bytes = 0;
+	let sliceBytes = 0;
 	try {
 		for await (const chunk of stream as AsyncIterable<Buffer>) {
 			if (signal.aborted) throw new Error("aborted");
@@ -366,8 +372,14 @@ async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts:
 			carry += decoder.write(chunk);
 			let start = 0;
 			for (let nl = carry.indexOf("\n"); nl !== -1; nl = carry.indexOf("\n", start)) {
-				yield carry.charCodeAt(nl - 1) === 13 ? carry.slice(start, nl - 1) : carry.slice(start, nl);
+				const line = carry.charCodeAt(nl - 1) === 13 ? carry.slice(start, nl - 1) : carry.slice(start, nl);
 				start = nl + 1;
+				yield line;
+				sliceBytes += line.length;
+				if (sliceBytes >= PARSE_SLICE_BYTES) {
+					sliceBytes = 0;
+					await yieldNow();
+				}
 			}
 			carry = carry.slice(start);
 			await yieldNow();
@@ -564,9 +576,10 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	step("Matching sentences to words", true);
 	const ranked = rankWords(mergeHomographs(words, lang.tag), freq, lang.tag, WORD_LIMIT);
 	const collector = new ExampleCollector(ranked, lang.tag);
+	// About 5 µs a sentence: 50 between yields is a quarter of a millisecond.
 	for (let i = 0; i < sentences.length; i++) {
 		collector.add(sentences[i]!);
-		if (i % 5000 === 4999) {
+		if (i % 50 === 49) {
 			if (signal.aborted) throw new Error("aborted");
 			await yieldNow();
 		}
