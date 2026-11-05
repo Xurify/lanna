@@ -22,7 +22,6 @@ import {
 	MountainSnowIcon,
 	PlusIcon,
 	RepeatIcon,
-	RotateCwIcon,
 	SunIcon,
 	Trash2Icon,
 	CircleAlertIcon,
@@ -173,7 +172,6 @@ export function LanguageSwitcher() {
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
 								{profile.profiles.map((p) => {
 									const running = p.id === profile.active;
-									const isPending = p.id === profile.selected && profile.restartRequired;
 									return (
 										<div key={p.id} className="group relative">
 										<button
@@ -187,7 +185,6 @@ export function LanguageSwitcher() {
 												running
 													? "bg-accent font-semibold text-foreground shadow-xs"
 													: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-												isPending && "ring-1 ring-primary/50",
 												p.removable && "pr-8",
 											)}
 										>
@@ -197,7 +194,6 @@ export function LanguageSwitcher() {
 												<span className="truncate text-[11px] text-muted-foreground">({p.english})</span>
 											</div>
 											{running && <CheckIcon className="size-3.5 shrink-0 text-primary" />}
-											{isPending && <RotateCwIcon className="size-3.5 shrink-0 text-primary" aria-label="Starts after a restart" />}
 										</button>
 										{p.removable && (
 											<button

@@ -157,7 +157,6 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 					<ul className="flex flex-col divide-y divide-border/60 rounded-lg bg-well" aria-label="Your languages">
 						{profile.profiles.map((p) => {
 							const running = p.id === profile.active;
-							const waiting = p.id === profile.selected && profile.restartRequired;
 							return (
 								<li key={p.id} className="flex min-h-12 items-center gap-3 px-4 py-2" data-testid={`target-language-${p.id}`}>
 									<CountryFlag lang={p.id} />
@@ -166,24 +165,16 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 										<span className="text-xs text-muted-foreground">{p.english}</span>
 										{running ? (
 											<span className="text-xs font-medium text-teal">Studying now</span>
-										) : waiting ? (
-											<span className="text-xs font-medium text-teal">Starts after a restart</span>
 										) : p.ready === false ? (
-											<span className="text-xs text-muted-foreground">No course yet</span>
+											<span className="text-xs text-muted-foreground">Needs its course</span>
 										) : null}
 									</span>
-									{running ? (
-										profile.restartRequired && (
-											<button type="button" onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-keep-${p.id}`}>
-												Keep {p.english}
-											</button>
-										)
-									) : (
+									{!running && (
 										<button type="button" onClick={() => languages.choose(p.id)} className={cn(SECONDARY, SMALL)} data-testid={`target-language-switch-${p.id}`}>
-											{waiting ? "Restart now" : "Switch"}
+											Switch
 										</button>
 									)}
-									{p.removable && (
+									{p.removable ? (
 										<button
 											type="button"
 											onClick={() => languages.askRemove(p)}
@@ -194,6 +185,8 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 										>
 											<Trash2Icon className="size-4" />
 										</button>
+									) : (
+										<span className="size-8 shrink-0" aria-hidden="true" />
 									)}
 								</li>
 							);

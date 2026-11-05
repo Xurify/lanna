@@ -93,7 +93,8 @@ export interface CatalogRow {
 	tag: string;
 	ready: boolean;
 	adding: boolean;
-	/** Words downloaded but no course yet: adding it finishes it. */
+	/** Already in the learner's list (words downloaded, or built in) but
+	 *  without its course: adding it finishes it. */
 	started: boolean;
 	/** A built-in language the learner removed from their list that is
 	 *  still complete: adding it puts it back at once, with no download. */
@@ -113,7 +114,7 @@ export function languageCatalog(): CatalogRow[] {
 		tag: l.tag,
 		ready: languageReady(l.id) && !hidden.includes(l.id),
 		adding: running.has(taskIdOf(l.id)),
-		started: !languageReady(l.id) && fs.existsSync(dirOf(l.id)),
+		started: !languageReady(l.id) && (fs.existsSync(dirOf(l.id)) || (isBuiltIn(l.id) && !hidden.includes(l.id))),
 		...(hidden.includes(l.id) && languageReady(l.id) ? { restoreOnly: true } : {}),
 	}));
 	// Slovak ships whole and is not in the catalog: once removed, it is listed here so it can come back.

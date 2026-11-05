@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { AddLanguageDialog } from "@/components/add-language-dialog";
-import { selectLanguage, switchLanguage } from "@/components/switch-language";
+import { switchLanguage } from "@/components/switch-language";
 
 export interface ProfileEntry {
 	id: string;
@@ -27,8 +27,6 @@ export interface ProfileEntry {
 
 export interface ProfileInfo {
 	active: string;
-	selected: string;
-	restartRequired: boolean;
 	profiles: ProfileEntry[];
 }
 
@@ -38,15 +36,10 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 	const [adding, setAdding] = useState(false);
 	const [note, setNote] = useState<string | null>(null);
 
-	/** Pick a language. The running one undoes a switch that waits for a
-	 *  restart; any other asks first, because switching restarts the app. */
+	/** Pick a language: switching restarts the app, so it asks first. */
 	const choose = (id: string) => {
-		if (!profile) return;
+		if (!profile || id === profile.active) return;
 		setNote(null);
-		if (id === profile.active) {
-			if (profile.restartRequired) void selectLanguage<ProfileInfo>(id).then((next) => onChanged(next), () => setNote("Could not undo the switch."));
-			return;
-		}
 		const entry = profile.profiles.find((p) => p.id === id);
 		if (entry) setPending(entry);
 	};

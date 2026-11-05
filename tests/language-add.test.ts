@@ -303,6 +303,7 @@ describe("adding a language in the background", () => {
 		fs.writeFileSync(profileFile, JSON.stringify({ active: "russian" }));
 		assert.equal(languageRemovable("russian"), true, "a built-in that is not running can be removed");
 		assert.equal(profileStatus().profiles.find((p) => p.id === "russian")?.removable, true);
+		assert.equal(languageCatalog().find((r) => r.id === "russian")?.started, true, "in the list without its course: Add a language finishes it, not adds it");
 
 		removeLanguage("russian");
 		assert.deepEqual(config.readProfileChoice(), { active: config.ACTIVE_PROFILE, hidden: ["russian"] }, "the waiting switch is undone and the language hidden");
@@ -313,6 +314,7 @@ describe("adding a language in the background", () => {
 		assert.throws(() => removeLanguage("russian"), /nothing to remove/);
 		const row = languageCatalog().find((r) => r.id === "russian");
 		assert.equal(row?.ready, false, "offered again in Add a language");
+		assert.equal(row?.started, false);
 		assert.equal(row?.restoreOnly, undefined, "Russian ships no words, so adding it downloads them");
 
 		config.saveProfileChoice({ active: "russian" });
