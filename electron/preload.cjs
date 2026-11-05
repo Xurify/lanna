@@ -27,8 +27,6 @@
  *   window.lh.onOpenSettings(cb) — menu navigation, buffered until React
  *   subscribes after a window is reopened. Browser builds have no bridge.
  *
- *   window.lh.relaunch() — restart the app after a language-profile switch.
- *
  *   window.lh.fonts.list() — Settings → Appearance: the installed font
  *   families (names only), read by the main process.
  *
@@ -84,8 +82,6 @@ contextBridge.exposeInMainWorld("lh", {
 	expandWindow: () => ipcRenderer.send("lh:expand-window"),
 	/** Tell the window frame which theme the page is in, so its background and title bar follow. */
 	setTheme: (night) => ipcRenderer.send("lh:theme", night === true),
-	/** Restart the whole app (language-profile switch). */
-	relaunch: () => ipcRenderer.send("lh:relaunch"),
 	onZoom: (cb) => {
 		const listener = (_event, factor) => cb(factor);
 		ipcRenderer.on("lh:zoom", listener);

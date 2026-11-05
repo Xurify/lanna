@@ -8,7 +8,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { ATLAS_CASES, ATLAS_GENDERS, atlasCellOf, atlasUnit, caseDrill, genderColumn, genderLabel, grammarAtlas, isAtlasGender, slipLine, weakestAtlasCell, weakestGender } from "../src/core/grammar.ts";
-import { UNITS, unitInfo } from "../src/core/lesson.ts";
+import { allUnits, unitInfo } from "../src/core/lesson.ts";
 
 const cell = (atlas: ReturnType<typeof grammarAtlas>, row: string, col: string) => atlas.find((c) => c.row === row && c.col === col)!;
 
@@ -28,8 +28,8 @@ test("the mapping, pinned cell by cell: A-fem → acc-fem, A-masc → acc-people
 	for (const g of ATLAS_GENDERS) assert.equal(atlasUnit("N", g.id), null, `N ${g.id} has no drill`);
 });
 
-test("every mapped id exists in UNITS, so no mapped cell collapses to not-yet", () => {
-	const ids = new Set(UNITS.map((u) => u.id));
+test("every mapped id exists in allUnits(), so no mapped cell collapses to not-yet", () => {
+	const ids = new Set(allUnits().map((u) => u.id));
 	for (const row of ATLAS_CASES) {
 		for (const g of ATLAS_GENDERS) {
 			const unit = atlasUnit(row.case, g.id);

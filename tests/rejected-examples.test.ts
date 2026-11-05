@@ -8,7 +8,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { describe, it } from "node:test";
-import { UNITS, candidatesFor } from "../src/core/lesson.ts";
+import { allUnits, candidatesFor } from "../src/core/lesson.ts";
 import { pickClozeExample } from "../src/core/review.ts";
 
 const lexicon = JSON.parse(fs.readFileSync(new URL("../curriculum/slovak/lexicon.json", import.meta.url), "utf8"));
@@ -20,7 +20,7 @@ describe("rejected examples", () => {
 	});
 
 	it("are never a lesson candidate", () => {
-		for (const unit of UNITS) {
+		for (const unit of allUnits()) {
 			for (const c of candidatesFor(lexicon.words, unit.id)) {
 				assert.notEqual(c.entry.examples[c.index]!.rejected, true, `${unit.id}: ${c.entry.slug}#${c.index}`);
 			}

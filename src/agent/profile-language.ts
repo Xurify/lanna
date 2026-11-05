@@ -6,7 +6,7 @@
  * server re-exports it (src/server/active-language.ts).
  */
 
-import { ACTIVE_PROFILE, readAddedLanguage } from "../../config.ts";
+import { activeProfile, readAddedLanguage } from "../../config.ts";
 import { LANGUAGES, languageById, parseLanguageInfo, registerLanguage, type LanguageInfo } from "../core/language.ts";
 
 export function profileLanguage(id: string): LanguageInfo | undefined {
@@ -21,5 +21,5 @@ export function profileLanguage(id: string): LanguageInfo | undefined {
 /** The running profile's language. Slovak when its language.json has gone
  *  missing, so a page still renders. */
 export function activeLanguage(): LanguageInfo {
-	return profileLanguage(ACTIVE_PROFILE) ?? LANGUAGES.slovak;
+	return profileLanguage(activeProfile()) ?? LANGUAGES.slovak;
 }

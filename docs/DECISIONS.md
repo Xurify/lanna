@@ -531,9 +531,20 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The course is data (`<data>/languages/<id>/course.json`, shape in `src/core/course.ts`): grammar units, word themes, tutor sessions, goals and chapters. The Strong slot writes it (the Cheap one stands in), one call for the course and one for the story bible, both counted in Spending. Slovak's course stays hand-written in code.
 - A grammar unit selects Tatoeba sentences by the Wiktionary tags on the blanked form, plus optional trigger words before the blank. A dictionary form never counts as a case form; without a trigger the form must be unambiguous. Sentences are never written by a model (E27).
 - Everything the model writes is checked against the dictionary before it is kept, and a unit with fewer than 12 sentences is dropped. A course with fewer than three chapters or three grammar units is refused.
-- The running language's course is chosen once per process, before the core loads: `config.ts` on the server, a before-interactive script in the browser. The core builds its tables from it at load, so a switch needs the restart it already had.
+- The running language's course is set by `config.ts` on the server and by a before-interactive script in the browser. Superseded by E45: the server changes it in place on a switch, and the browser reloads.
 - Slovak-only content (the grammar atlas, Dvojičky, aspect tasks, the unit bridges and parallels) does not appear in a generated course.
 - Who builds it is chosen in the add dialog, once per language, not in Settings: the Strong or Cheap model, priced per model and thinking level from earlier runs and capped per call; or the dictionary alone, free (`src/core/course-procedural.ts`).
+
+### E45. A language switch happens in place, with no restart (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** the owner studies Russian, Slovak and Estonian every day and found the restart on every switch in the way; it also made a plan across languages impossible.
+
+**How to apply:**
+- The running language is process state on `globalThis`, per data folder (`config.ts`: `activeProfile()`, `switchProfile()`, `withProfile()`), because `next dev` evaluates a module once per route. Nothing may copy it at module load: read `activeProfile()` and `PATHS.*` (getters) when they are used, and give a module-level cache the file it was read from as part of its key.
+- The core's course tables are functions memoized per course object (`perCourse` in `src/core/course.ts`): `allUnits()`, `allChapters()`, `curriculumUnits()`, `placementTiers()`, `placementLadder()`, `lessonLanguage()`, `lessonsHaveBridges()`. Do not add a module-level constant built from the course.
+- `withProfile(id, fn)` reads another language's records for the daily plan across languages. `fn` must be synchronous, so no other request runs while the language is borrowed.
+- A switch waits (409 with the reason) while a tutor turn, a skill-map update or a video preparation is running, since each writes into the running language's folder when it ends. The browser then loads the page again (`window.location.assign`), on the same page when it means the same thing in every language, else on Today. There is no confirm step and no relaunch; the Electron relaunch and the desktop:dev restart that existed only for switching are gone.
+- Open: a model call started by a page (a Read episode, a Speak line) that is still in flight during a switch writes into the new language's folder. Nothing waits for those yet.
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 

@@ -19,7 +19,7 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { ACTIVE_PROFILE, LANGUAGE_PROFILES, PATHS, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
+import { activeProfile, LANGUAGE_PROFILES, PATHS, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, languageById, type CatalogLanguage } from "../core/language.ts";
 import {
@@ -281,7 +281,7 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
  *  running, it is not being added, and it is listed (built-in) or has
  *  downloaded data (added). */
 export function languageRemovable(id: string): boolean {
-	if (id === ACTIVE_PROFILE) return false;
+	if (id === activeProfile()) return false;
 	if (isBuiltIn(id) ? isHidden(id) : !fs.existsSync(dirOf(id))) return false;
 	return !listTasks().some((t) => t.id === taskIdOf(id) && t.status === "running");
 }
@@ -294,14 +294,14 @@ export function languageRemovable(id: string): boolean {
  */
 export function removeLanguage(id: string): void {
 	const name = languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
-	if (id === ACTIVE_PROFILE) throw new Error(`${name} is the language running now. Switch to another one first.`);
+	if (id === activeProfile()) throw new Error(`${name} is the language running now. Switch to another one first.`);
 	const builtIn = isBuiltIn(id);
 	if (!LANGUAGE_ID_RE.test(id) || (builtIn ? isHidden(id) : !fs.existsSync(dirOf(id)))) throw new Error(`${name} has nothing to remove`);
 	if (!languageRemovable(id)) throw new Error(`${name} is being added. Stop that first.`);
 	if (!builtIn) fs.rmSync(dirOf(id), { recursive: true, force: true });
 	const choice = readProfileChoice();
 	saveProfileChoice({
-		...(choice.active === id ? { active: ACTIVE_PROFILE } : {}),
+		...(choice.active === id ? { active: activeProfile() } : {}),
 		...(builtIn ? { hidden: [...choice.hidden, id] } : {}),
 	});
 	// A task card offering the switch to it would now point at nothing.

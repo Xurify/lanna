@@ -7,9 +7,9 @@
  * The tutor reads all of it as a profile block (learnerProfileText). Pure and browser-safe.
  */
 
-import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
-import { LESSON_LANGUAGE, LESSONS_HAVE_BRIDGES, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
-import { activeCourse, type Course } from "./course.ts";
+import { CEFR_ORDER, allChapters, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
+import { lessonLanguage, lessonsHaveBridges, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { perCourse, type Course } from "./course.ts";
 import { entryLemma, exampleText } from "./review.ts";
 import { slipLine } from "./grammar.ts";
 import type { FirstTally } from "./first-try.ts";
@@ -368,7 +368,7 @@ export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | un
 
 /** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. `target` is the language being learned; only the lessons' own language has parallels. */
 export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined, target: { code: string; english: string }): string {
-	const langs = LESSONS_HAVE_BRIDGES && target.code === LESSON_LANGUAGE ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
+	const langs = lessonsHaveBridges() && target.code === lessonLanguage() ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
 	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
@@ -512,29 +512,26 @@ function courseTiers(course: Course): PlacementTier[] {
 	return tiers;
 }
 
-/** The running language's course (src/core/course.ts), else Slovak's. */
-const COURSE = activeCourse();
-
-/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
-export const PLACEMENT_TIERS: PlacementTier[] = COURSE ? courseTiers(COURSE) : SLOVAK_TIERS;
+/** Four tiers, each the grammar of a stretch of the map: the running language's course (src/core/course.ts), else Slovak's. A tier passes at PASS_SHARE of its reps. */
+export const placementTiers = perCourse((course): PlacementTier[] => (course ? courseTiers(course) : SLOVAK_TIERS));
 
 export const REPS_PER_UNIT = 2;
 export const PASS_SHARE = 0.75;
 
 export function placementTier(id: string): PlacementTier | undefined {
-	return PLACEMENT_TIERS.find((t) => t.id === id);
+	return placementTiers().find((t) => t.id === id);
 }
 
 /** The tier to start a re-check from: the one whose chapters hold the
  *  learner's current chapter (or the first). */
 export function tierForChapter(chapter: string | undefined): number {
-	const i = PLACEMENT_TIERS.findIndex((t) => t.chapters.includes(chapter ?? ""));
+	const i = placementTiers().findIndex((t) => t.chapters.includes(chapter ?? ""));
 	if (i >= 0) return i;
 	// A chapter past the last tier's (B2: the check stops at B1 grammar)
 	// re-checks from the last tier, not from the first.
-	const idx = CHAPTERS.findIndex((c) => c.id === chapter);
-	const last = CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[PLACEMENT_TIERS.length - 1]!.chapters.at(-1));
-	return idx > last ? PLACEMENT_TIERS.length - 1 : 0;
+	const idx = allChapters().findIndex((c) => c.id === chapter);
+	const last = allChapters().findIndex((c) => c.id === placementTiers()[placementTiers().length - 1]!.chapters.at(-1));
+	return idx > last ? placementTiers().length - 1 : 0;
 }
 
 export interface PlacementRep {
@@ -591,10 +588,10 @@ export function tierNeed(reps: number): number {
  * Fold answered reps into the outcome. Pure. Tiers below `from` (a re-check start) were not asked and count as held.
  */
 export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: number } = {}): PlacementOutcome {
-	const from = Math.max(0, Math.min(PLACEMENT_TIERS.length - 1, opts.from ?? 0));
+	const from = Math.max(0, Math.min(placementTiers().length - 1, opts.from ?? 0));
 	const tiers: TierResult[] = [];
 	const units: PlacementOutcome["units"] = {};
-	for (const [i, t] of PLACEMENT_TIERS.entries()) {
+	for (const [i, t] of placementTiers().entries()) {
 		if (i < from) {
 			tiers.push({ id: t.id, level: t.level, title: t.title, reps: 0, correct: 0, passed: true, held: true });
 			continue;
@@ -614,15 +611,15 @@ export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: n
 		if (tiers[i]!.passed) lastPassed = i;
 		else break;
 	}
-	const startChapter = lastPassed >= 0 ? (CHAPTERS[CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[lastPassed]!.chapters.at(-1)) + 1]?.id ?? CHAPTERS.at(-1)!.id) : CHAPTERS[0]!.id;
-	const level: Cefr = STAGES.find((st) => st.id === CHAPTERS.find((c) => c.id === startChapter)!.stage)!.level;
+	const startChapter = lastPassed >= 0 ? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]?.id ?? allChapters().at(-1)!.id) : allChapters()[0]!.id;
+	const level: Cefr = STAGES.find((st) => st.id === allChapters().find((c) => c.id === startChapter)!.stage)!.level;
 	const testedOut = Object.entries(units)
 		.filter(([, e]) => e.reps >= REPS_PER_UNIT && e.correct === e.reps)
 		.map(([id]) => id as UnitId);
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, from, ceiling: lastPassed === PLACEMENT_TIERS.length - 1, startChapter, units, testedOut, weak };
+	return { level, tiers, from, ceiling: lastPassed === placementTiers().length - 1, startChapter, units, testedOut, weak };
 }
 
 /** Should the staircase climb after this tier's reps? */
@@ -646,7 +643,7 @@ export function tierBorderline(tier: PlacementTier, reps: readonly PlacementRep[
 
 /** The tier a unit belongs to (undefined for a unit no tier probes). */
 export function tierOfUnit(unit: UnitId): PlacementTier | undefined {
-	return PLACEMENT_TIERS.find((t) => t.units.includes(unit));
+	return placementTiers().find((t) => t.units.includes(unit));
 }
 
 // ─── The edge: the Socratic stage ───────────────────────────────────────────
@@ -699,11 +696,11 @@ export const PROBE_TURNS = 6;
 export function probeUnits(outcome: PlacementOutcome): UnitId[] {
 	const out: UnitId[] = [...outcome.weak];
 	const stopped = outcome.tiers.findIndex((t) => !t.passed);
-	const next = stopped < 0 ? PLACEMENT_TIERS[outcome.tiers.length] : undefined;
+	const next = stopped < 0 ? placementTiers()[outcome.tiers.length] : undefined;
 	const after = stopped >= 0 ? undefined : next;
 	for (const u of after?.units ?? []) if (!out.includes(u)) out.push(u);
 	// A failed tier's untested-out units too: the drill asked two reps each.
-	if (stopped >= 0) for (const u of PLACEMENT_TIERS[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
+	if (stopped >= 0) for (const u of placementTiers()[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
 	return out.slice(0, 8);
 }
 

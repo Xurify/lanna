@@ -18,7 +18,7 @@ import {
 	unitLevel,
 	unitProgress,
 	unitStage,
-	UNITS,
+	allUnits,
 	xpLevel,
 	type ItemKind,
 	type LessonFocus,
@@ -26,7 +26,7 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "../core/lesson.ts";
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { pairsLessonFor } from "../core/aspect-tasks.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
@@ -108,14 +108,14 @@ function entries() {
  * title — interleaving, which is what makes the choice stick.
  */
 export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: AtlasGender }): LessonPlan {
-	const info = UNITS.find((u) => u.id === unit)!;
+	const info = allUnits().find((u) => u.id === unit)!;
 	// Dvojičky build their own reps: a choice between the two twins, from
 	// pairs.json, not the cloze classifier.
 	if (info.kind === "pairs") return withKnown(pairsLessonFor(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
 	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
-	const grammar = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
+	const grammar = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
 	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || grammar.indexOf(u) < grammar.indexOf(unit);
 	const contrast = (CONTRAST[unit] ?? []).filter(reached);
 	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
@@ -151,8 +151,8 @@ export function personalFor(seed = Date.now()): LessonPlan {
 /** Blitz runs over the units you have started (at least the first three). */
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
-	const started = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
-	const firstGrammar = UNITS.filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
+	const started = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
+	const firstGrammar = allUnits().filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
 	const units = started.length >= 2 ? started : firstGrammar;
 	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }
@@ -509,7 +509,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		const d = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
 		week.push({ day: d, xp: p.days[d]?.xp ?? 0 });
 	}
-	const units: UnitSummary[] = UNITS.map((u) => {
+	const units: UnitSummary[] = allUnits().map((u) => {
 		const r = p.units[u.id];
 		const lessons = r?.lessons ?? 0;
 		const accuracy = r && r.reps > 0 ? r.correct / r.reps : null;

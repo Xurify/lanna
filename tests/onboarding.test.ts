@@ -7,8 +7,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { CHAPTERS, curriculumState, hoursDone, nextLessonUnit } from "../src/core/curriculum.ts";
-import { buildLesson, UNITS } from "../src/core/lesson.ts";
+import { allChapters, curriculumState, hoursDone, nextLessonUnit } from "../src/core/curriculum.ts";
+import { buildLesson, allUnits } from "../src/core/lesson.ts";
 import {
 	BRIDGE_LANGS,
 	bridgeLanguages,
@@ -17,7 +17,7 @@ import {
 	knownLanguages,
 	learnerProfileText,
 	measuredWeak,
-	PLACEMENT_TIERS,
+	placementTiers,
 	placementOutcome,
 	PURPOSES,
 	purposeGoals,
@@ -40,7 +40,7 @@ const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "ut
 const entries = lexicon.words;
 
 const tierReps = (tierId: string, hits: number): PlacementRep[] => {
-	const t = PLACEMENT_TIERS.find((x) => x.id === tierId)!;
+	const t = placementTiers().find((x) => x.id === tierId)!;
 	const reps: PlacementRep[] = [];
 	let n = 0;
 	for (const u of t.units) for (let i = 0; i < REPS_PER_UNIT; i++) reps.push({ tier: t.id, unit: u, verdict: n++ < hits ? "exact" : "wrong" });
@@ -64,14 +64,14 @@ test("purposes map onto real goals and scenes, and the target follows the most d
 });
 
 test("every placement tier has lesson material and stands for real chapters; B2 chapters re-check from the last tier", () => {
-	for (const t of PLACEMENT_TIERS) {
+	for (const t of placementTiers()) {
 		for (const u of t.units) {
-			assert.ok(UNITS.some((x) => x.id === u), `${t.id}: ${u} is not a lesson unit`);
+			assert.ok(allUnits().some((x) => x.id === u), `${t.id}: ${u} is not a lesson unit`);
 			const plan = buildLesson(entries, u, { seed: 3, length: 1, pattern: ["type"] });
 			assert.equal(plan.items.length, 1, `${t.id}/${u}`);
 			assert.equal(plan.items[0]!.kind, "type", "the check is production only");
 		}
-		for (const c of t.chapters) assert.ok(CHAPTERS.some((x) => x.id === c), `${t.id}: no chapter ${c}`);
+		for (const c of t.chapters) assert.ok(allChapters().some((x) => x.id === c), `${t.id}: no chapter ${c}`);
 	}
 	assert.equal(tierForChapter("hello"), 0);
 	assert.equal(tierForChapter("shopping"), 2);
@@ -87,8 +87,8 @@ test("the staircase outcome: a beginner stops on the first tier, a reader climbs
 	assert.equal(beginner.tiers[0]!.passed, false);
 	assert.ok(beginner.testedOut.length >= 1, "the units it got both right are tested out");
 	assert.ok(beginner.weak.length >= 1);
-	assert.ok(!tierPassed(PLACEMENT_TIERS[0]!, tierReps("a1a", 5)), "5 of 8 is not 75%");
-	assert.ok(tierPassed(PLACEMENT_TIERS[0]!, tierReps("a1a", 6)));
+	assert.ok(!tierPassed(placementTiers()[0]!, tierReps("a1a", 5)), "5 of 8 is not 75%");
+	assert.ok(tierPassed(placementTiers()[0]!, tierReps("a1a", 6)));
 
 	const reader = placementOutcome([...tierReps("a1a", 8), ...tierReps("a1b", 7), ...tierReps("a2", 4)]);
 	assert.equal(reader.level, "A2", "A1 is behind them: they work at A2 now");
@@ -257,7 +257,7 @@ test("the server round trip: the wizard's PUT and the drill's POST land in progr
 });
 
 test("every grammar unit has a bridge in each of the four languages, and the profile picks them", () => {
-	const grammar = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union).map((u) => u.id);
+	const grammar = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union).map((u) => u.id);
 	for (const lang of BRIDGE_LANGS) {
 		const have = unitsBridgedIn(lang);
 		for (const u of grammar) assert.ok(have.includes(u), `${u} lacks a ${lang} line`);

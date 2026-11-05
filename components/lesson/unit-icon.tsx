@@ -1,7 +1,7 @@
 import { ActivityIcon, AlarmClockIcon, AppleIcon, ArrowRightLeftIcon, BanIcon, BlocksIcon, BookAIcon, BookOpenIcon, BookOpenTextIcon, BotMessageSquareIcon, BoxIcon, BrainIcon, BriefcaseIcon, Building2Icon, BusIcon, CalculatorIcon, CalendarClockIcon, CalendarDaysIcon, CircleHelpIcon, ClockIcon, ClipboardCheckIcon, CloudSunIcon, CoffeeIcon, CompassIcon, CopyIcon, CupSodaIcon, DicesIcon, DoorOpenIcon, EarIcon, FileTextIcon, FilmIcon, FlagIcon, FootprintsIcon, Gamepad2Icon, GiftIcon, GitCompareIcon, GitMergeIcon, GlobeIcon, HandIcon, HandshakeIcon, HashIcon, HeartIcon, HistoryIcon, HourglassIcon, HouseIcon, KeyIcon, LaptopIcon, LayersIcon, LinkIcon, MapPinIcon, MegaphoneIcon, MessageCircleQuestionMarkIcon, MessageSquareIcon, MicIcon, MoveHorizontalIcon, NewspaperIcon, PaintbrushIcon, PaletteIcon, PawPrintIcon, PenIcon, PenLineIcon, PhoneIcon, QuoteIcon, RepeatIcon, RewindIcon, RouteIcon, ShieldIcon, ShirtIcon, ShoppingBagIcon, ShuffleIcon, SignpostIcon, SmileIcon, SparklesIcon, StarIcon, StethoscopeIcon, SunIcon, TagIcon, TreePineIcon, TrendingUpIcon, UserIcon, UserRoundIcon, UsersIcon, UtensilsIcon, WandIcon, type LucideProps } from "lucide-react";
 
-/** The path's unit icons, by the name UNITS[].glyph (src/core/lesson.ts,
- *  src/core/word-clusters.ts) and CURRICULUM[].glyph (src/core/curriculum.ts)
+/** The path's unit icons, by the name allUnits()[].glyph (src/core/lesson.ts,
+ *  src/core/word-clusters.ts) and curriculumUnits()[].glyph (src/core/curriculum.ts)
  *  carry. A picture of what the unit is about (a coffee for "what you
  *  drink", a pin for "where?") instead of an ending like "-u", which reads
  *  as noise before the unit is learned. */

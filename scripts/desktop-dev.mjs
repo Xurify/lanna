@@ -7,9 +7,7 @@
  * has no `VAR=value cmd` syntax, and Electron could open before Next was
  * listening (main.cjs loads the URL once, no retry). This launcher sets the
  * env itself, waits for Next to answer, then opens Electron. Closing either
- * one stops both. A language switch asks for a restart: the shell exits with
- * RELAUNCH_EXIT_CODE and both start again, so Next boots in the new profile
- * (electron/dev-relaunch.cjs).
+ * one stops both.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -20,11 +18,9 @@ const PORT = process.env.PORT || "3010";
 const URL_ = `http://localhost:${PORT}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const { LAUNCHER_ENV, onShellExit } = require("../electron/dev-relaunch.cjs");
 
 const children = new Set();
 let stopping = false;
-let restarting = false;
 
 /** End one child and wait until it has. */
 function end(c) {
@@ -62,35 +58,19 @@ function startNext() {
 	children.add(next);
 	next.on("exit", (code) => {
 		children.delete(next);
-		if (!restarting) stop(code ?? 0);
+		stop(code ?? 0);
 	});
 	return next;
 }
 
 function startShell() {
 	const electronBin = require("electron");
-	const electron = spawn(electronBin, ["."], { cwd: root, stdio: "inherit", env: { ...process.env, LH_DEV_URL: URL_, [LAUNCHER_ENV]: "1" } });
+	const electron = spawn(electronBin, ["."], { cwd: root, stdio: "inherit", env: { ...process.env, LH_DEV_URL: URL_ } });
 	children.add(electron);
 	electron.on("exit", (code) => {
 		children.delete(electron);
-		if (onShellExit(code) === "restart" && !stopping) void restart();
-		else stop(code ?? 0);
+		stop(code ?? 0);
 	});
-}
-
-/** A language switch: Next reads the profile once at boot, so it starts
- *  again with the shell. */
-async function restart() {
-	restarting = true;
-	console.log("desktop:dev: restarting Next and the shell for the new language");
-	await Promise.all([...children].map(end));
-	restarting = false;
-	startNext();
-	if (await ready()) startShell();
-	else if (!stopping) {
-		console.error(`desktop:dev: Next did not answer on ${URL_} within 2 minutes`);
-		stop(1);
-	}
 }
 
 startNext();

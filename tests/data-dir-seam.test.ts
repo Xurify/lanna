@@ -24,10 +24,10 @@ describe("LH_DATA_DIR seam", () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-seam-"));
 		process.env.LH_DATA_DIR = dir;
 		try {
-			const { PATHS, ROOT, ACTIVE_PROFILE, SETTINGS_FILE } = await import("../config.ts");
+			const { PATHS, ROOT, activeProfile, SETTINGS_FILE } = await import("../config.ts");
 			// LangHarness: records live under the active language profile;
 			// settings stay shared at the data root.
-			const profileDir = path.join(dir, "profiles", ACTIVE_PROFILE);
+			const profileDir = path.join(dir, "profiles", activeProfile());
 			assert.equal(PATHS.base, dir, "PATHS.base resolves the env value (resolved absolute)");
 			assert.equal(PATHS.data, profileDir);
 			assert.equal(PATHS.chats, path.join(profileDir, "chats"));

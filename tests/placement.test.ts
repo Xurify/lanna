@@ -40,17 +40,17 @@ function fauxEngine(steps: FauxResponseStep[]) {
 const reply = (o: unknown) => fauxAssistantMessage(JSON.stringify(o));
 
 test("the ladder: enters where the learner said, jumps on a hold, halves on a gap, closes the bracket in about a dozen items, and places by evidence", () => {
-	const { LADDER, ladderStart, nextUnit, applyAnswer, ladderOutcome, START_BY_PRIOR, MAX_ITEMS } = ladder;
-	assert.equal(LADDER.length, 16);
-	assert.equal(nextUnit(ladderStart({ prior: "none" })), LADDER[0]);
-	assert.equal(nextUnit(ladderStart({ prior: "reading" })), LADDER[START_BY_PRIOR.reading]);
+	const { placementLadder, ladderStart, nextUnit, applyAnswer, ladderOutcome, START_BY_PRIOR, MAX_ITEMS } = ladder;
+	assert.equal(placementLadder().length, 16);
+	assert.equal(nextUnit(ladderStart({ prior: "none" })), placementLadder()[0]);
+	assert.equal(nextUnit(ladderStart({ prior: "reading" })), placementLadder()[START_BY_PRIOR.reading]);
 	// A beginner: two misses on the first rung, then one confirm... none below → done in two.
 	let s = ladderStart({ prior: "none" });
-	s = applyAnswer(s, LADDER[0]!, false);
-	s = applyAnswer(s, LADDER[0]!, false);
+	s = applyAnswer(s, placementLadder()[0]!, false);
+	s = applyAnswer(s, placementLadder()[0]!, false);
 	assert.equal(s.phase, "done");
 	assert.equal(ladderOutcome(s).startChapter, "hello");
-	assert.deepEqual(ladderOutcome(s).weak, [LADDER[0]]);
+	assert.deepEqual(ladderOutcome(s).weak, [placementLadder()[0]]);
 
 	// A deterministic learner whose edge is rung 10 (holds 0–9).
 	const run = (edge: number, prior: "none" | "words" | "sentences" | "reading", from = 0) => {
@@ -59,7 +59,7 @@ test("the ladder: enters where the learner said, jumps on a hold, halves on a ga
 		for (;;) {
 			const u = nextUnit(st);
 			if (!u) break;
-			st = applyAnswer(st, u, LADDER.indexOf(u) < edge);
+			st = applyAnswer(st, u, placementLadder().indexOf(u) < edge);
 			if (++n > MAX_ITEMS + 1) throw new Error("the ladder did not stop");
 		}
 		return { st, n, out: ladderOutcome(st) };
@@ -92,7 +92,7 @@ test("the ladder: enters where the learner said, jumps on a hold, halves on a ga
 		for (let n = 0; n < MAX_ITEMS; n++) {
 			const u = nextUnit(st);
 			if (!u) break;
-			st = applyAnswer(st, u, rand() < (LADDER.indexOf(u) < 12 ? 0.9 : 0.15));
+			st = applyAnswer(st, u, rand() < (placementLadder().indexOf(u) < 12 ? 0.9 : 0.15));
 			items++;
 		}
 		if (ladderOutcome(st).startChapter === "stories") right++;
@@ -102,7 +102,7 @@ test("the ladder: enters where the learner said, jumps on a hold, halves on a ga
 });
 
 test("the Socratic stage's JSON: verdicts and asks only on the units offered; prose becomes a closing line; verdicts replace the drill's reps", () => {
-	const { parseProbeReply, probeReps, withProbe, probeUnits, placementOutcome, PLACEMENT_TIERS, REPS_PER_UNIT } = onboarding;
+	const { parseProbeReply, probeReps, withProbe, probeUnits, placementOutcome, placementTiers, REPS_PER_UNIT } = onboarding;
 	const units = ["motion", "cond"] as const;
 	const r = parseProbeReply('```json\n{"say":"Right form.","verdict":{"unit":"motion","result":"held","note":"idem do školy"},"ask":{"unit":"cond","prompt":"Give the form","sk":"Keby som ___ (mať) čas.","kind":"produce"},"done":null}\n```', [...units]);
 	assert.equal(r.say, "Right form.");
@@ -119,14 +119,14 @@ test("the Socratic stage's JSON: verdicts and asks only on the units offered; pr
 	const reps = probeReps([{ unit: "motion", result: "slip", note: "" }, { unit: "cond", result: "gap", note: "" }]);
 	assert.equal(reps.length, 2 * REPS_PER_UNIT);
 	assert.equal(reps.filter((x) => x.verdict === "exact").length, 1);
-	const drill = PLACEMENT_TIERS[2]!.units.flatMap((u) => [0, 1].map(() => ({ tier: "a2", unit: u, verdict: (u === "motion" ? "wrong" : "exact") as "exact" | "wrong" })));
+	const drill = placementTiers()[2]!.units.flatMap((u) => [0, 1].map(() => ({ tier: "a2", unit: u, verdict: (u === "motion" ? "wrong" : "exact") as "exact" | "wrong" })));
 	const before = placementOutcome(drill, { from: 2 });
 	assert.equal(before.weak.join(), "motion");
 	const after = placementOutcome(withProbe(drill, [{ unit: "motion", result: "held", note: "" }]), { from: 2 });
 	assert.deepEqual(after.weak, [], "a held verdict clears the drill's miss");
 	assert.ok(after.testedOut.includes("motion"));
 	assert.deepEqual(probeUnits(before).slice(0, 1), ["motion"], "the misses come first");
-	assert.ok(probeUnits(before).some((u) => PLACEMENT_TIERS[3]!.units.includes(u)) === false || true);
+	assert.ok(probeUnits(before).some((u) => placementTiers()[3]!.units.includes(u)) === false || true);
 });
 
 test("the word check: bands scored with the false-alarm correction, pseudowords are not in the dictionary", () => {
@@ -168,7 +168,7 @@ test("the whole check through the server: items one at a time, a typed alternati
 	assert.equal(start.from, 0);
 	assert.equal(start.item.kind, "type");
 	assert.equal(start.progress.asked, 0);
-	assert.equal(ladder.LADDER.indexOf(start.item.unit), ladder.START_BY_PRIOR.reading, "a reader enters at A2");
+	assert.equal(ladder.placementLadder().indexOf(start.item.unit), ladder.START_BY_PRIOR.reading, "a reader enters at A2");
 	assert.ok(fs.existsSync(path.join(PATHS.placement, `${start.id}.json`)));
 
 	// Answer the ladder: everything right up to rung 10, by string; the
@@ -177,7 +177,7 @@ test("the whole check through the server: items one at a time, a typed alternati
 	let judgedOnce = false;
 	let answered = 0;
 	for (;;) {
-		const idx = ladder.LADDER.indexOf(item.unit);
+		const idx = ladder.placementLadder().indexOf(item.unit);
 		const right = idx < 10;
 		let out;
 		if (!right && !judgedOnce) {

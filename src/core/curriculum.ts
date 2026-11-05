@@ -7,8 +7,8 @@
  * hours, 3,000+ words and some fifty grammar points; the learner should see
  * that road, where they stand on it, and what today's step is.
  *
- * Shape: four STAGES (CEFR levels) → CHAPTERS of 5–8 units that end in a
- * can-do goal → UNITS of four kinds:
+ * Shape: four STAGES (CEFR levels) → chapters of 5–8 units that end in a
+ * can-do goal → units of four kinds:
  *   drill  — a local lesson over the lexicon (src/core/lesson.ts)
  *   words  — the same lesson shape, over one cluster of words or a
  *            frequency band
@@ -25,9 +25,9 @@
  * Every number here is a planning estimate, shown as such in the UI.
  */
 
-import { UNITS, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts";
+import { allUnits, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts";
 import { LISTEN_MINUTES } from "./listen.ts";
-import { activeCourse, type Course } from "./course.ts";
+import { perCourse, type Course } from "./course.ts";
 
 // ─── Levels and stages ─────────────────────────────────────────────────────
 
@@ -83,7 +83,7 @@ export interface CurriculumUnit {
 }
 
 const drill = (id: UnitId, extra: Partial<CurriculumUnit> = {}): CurriculumUnit => {
-	const u = UNITS.find((x) => x.id === id);
+	const u = allUnits().find((x) => x.id === id);
 	if (!u) throw new Error(`curriculum: no lesson unit "${id}"`);
 	const prefix = u.kind === "words" ? "Words" : "Grammar";
 	const rawTitle = u.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
@@ -359,17 +359,16 @@ function courseCurriculum(course: Course): CurriculumUnit[] {
 	return out;
 }
 
-/** The running language's course (src/core/course.ts), else Slovak's. */
-const COURSE = activeCourse();
-
-/** Every unit on the map, in teaching order. */
-export const CURRICULUM: CurriculumUnit[] = COURSE ? courseCurriculum(COURSE) : slovakCurriculum();
+/** Every unit on the map, in teaching order: the running language's course (src/core/course.ts), else Slovak's. */
+export const curriculumUnits = perCourse((course): CurriculumUnit[] => (course ? courseCurriculum(course) : slovakCurriculum()));
 
 /** The map's chapters, in order. Each closes with a can-do goal. */
-export const CHAPTERS: Chapter[] = COURSE ? COURSE.chapters.map((c, i) => ({ id: c.id, stage: c.stage, title: c.title, tagline: c.tagline, units: i === 0 ? ["words", ...c.units] : [...c.units] })) : slovakChapters(CURRICULUM);
+export const allChapters = perCourse((course): Chapter[] =>
+	course ? course.chapters.map((c, i) => ({ id: c.id, stage: c.stage, title: c.title, tagline: c.tagline, units: i === 0 ? ["words", ...c.units] : [...c.units] })) : slovakChapters(curriculumUnits()),
+);
 
 export function curriculumUnit(id: string): CurriculumUnit | undefined {
-	return CURRICULUM.find((u) => u.id === id);
+	return curriculumUnits().find((u) => u.id === id);
 }
 
 export function stageOf(level: Cefr): Stage | undefined {
@@ -463,14 +462,14 @@ function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsT
  *  count as passed and stay open to revisit. */
 export function curriculumState(evidence: Record<string, UnitEvidence | undefined>, target: Cefr = "B2", opts: { startChapter?: string } = {}): CurriculumState {
 	const targetIdx = CEFR_ORDER.indexOf(target);
-	const startIdx = Math.max(0, CHAPTERS.findIndex((c) => c.id === opts.startChapter));
+	const startIdx = Math.max(0, allChapters().findIndex((c) => c.id === opts.startChapter));
 	const doneSet = new Set<string>();
 	const chapters: ChapterState[] = [];
 	let prevOpenSlack: boolean = true; // the first chapter is always open
 	let current: string | undefined;
 	let done = 0;
 	let total = 0;
-	for (const [chIdx, ch] of CHAPTERS.entries()) {
+	for (const [chIdx, ch] of allChapters().entries()) {
 		const stage = STAGES.find((s) => s.id === ch.stage)!;
 		const inTarget = CEFR_ORDER.indexOf(stage.level) <= targetIdx;
 		const skippedChapter = chIdx < startIdx;

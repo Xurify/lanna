@@ -8,7 +8,8 @@
  * stats.
  */
 
-import { UNITS, type UnitId } from "./lesson.ts";
+import { allUnits, type UnitId } from "./lesson.ts";
+import { perCourse } from "./course.ts";
 import { FORM_SLIPS, FORM_SLIP_LABEL, type FormSlip } from "./form-slip.ts";
 import type { FirstTally } from "./first-try.ts";
 
@@ -40,7 +41,7 @@ export const ATLAS_GENDERS: Array<{ id: AtlasGender; slovak: string; english: st
 /** The drill unit each cell opens: A-fem → acc-fem, A-masc → acc-people,
  *  and one drill per case for G, D, L and I (each unit drills every
  *  gender of its case). A blank — or a mapped id that is not a unit in
- *  UNITS — is "not yet" (null). */
+ *  allUnits() — is "not yet" (null). */
 const CELL_UNITS: Record<AtlasCase, Partial<Record<AtlasGender, string>>> = {
 	N: {},
 	G: { masc: "gen", fem: "gen", neut: "gen" },
@@ -50,11 +51,7 @@ const CELL_UNITS: Record<AtlasCase, Partial<Record<AtlasGender, string>>> = {
 	I: { masc: "ins", fem: "ins", neut: "ins" },
 };
 
-let _unitIds: Set<string> | null = null;
-function unitIds(): Set<string> {
-	if (!_unitIds) _unitIds = new Set<string>(UNITS.map((u) => u.id));
-	return _unitIds;
-}
+const unitIds = perCourse(() => new Set<string>(allUnits().map((u) => u.id)));
 
 /** The cell's drill unit, or null while it is "not yet". */
 export function atlasUnit(row: AtlasCase, col: AtlasGender): UnitId | null {

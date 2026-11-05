@@ -18,7 +18,7 @@ delete process.env.LH_PROFILE;
 const { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS } = await import("../src/core/language.ts");
 const { review, intervalDays, retrievability, initialState, nextDue, formatInterval, FSRS5_WEIGHTS } = await import("../src/core/fsrs.ts");
 const { pickClozeExample, mintCard, clozeParts, ratingFor, dueCards, lexiconOrder } = await import("../src/core/review.ts");
-const { LANGUAGE_PROFILES, ACTIVE_PROFILE, PATHS } = await import("../config.ts");
+const { LANGUAGE_PROFILES, activeProfile, PATHS } = await import("../config.ts");
 const { lookupWord, loadLexicon, formatEntry } = await import("../src/agent/lexicon.ts");
 const { listSourceSegments } = await import("../src/agent/prompt-segments.ts");
 const { isValidSegmentPath } = await import("../src/core/prompt-segments.ts");
@@ -178,7 +178,7 @@ describe("the Slovak seed", () => {
 
 describe("language prompts", () => {
 	it("compose the active language into every agent", () => {
-		assert.equal(ACTIVE_PROFILE, "slovak");
+		assert.equal(activeProfile(), "slovak");
 		for (const agent of ["prober", "teacher", "practice"] as const) {
 			const paths = listSourceSegments(agent).map((s) => s.path);
 			assert.ok(paths.includes("language/10-slovak.md"), agent);

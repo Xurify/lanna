@@ -102,7 +102,7 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 										</Link>
 									)}
 									{t.status === "done" && t.language && (
-										<button type="button" disabled={busy === t.id} onClick={() => void act(t.id, async () => setNote((await switchLanguage(t.language!.id, t.language!.english)).restartNote))} className="q-btn sec pointer-coarse:min-h-11" data-testid="task-switch">
+										<button type="button" disabled={busy === t.id} onClick={() => void act(t.id, () => switchLanguage(t.language!.id, t.language!.english))} className="q-btn sec pointer-coarse:min-h-11" data-testid="task-switch">
 											Switch to {t.language.english}
 										</button>
 									)}

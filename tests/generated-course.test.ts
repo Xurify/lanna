@@ -69,14 +69,14 @@ const LEXICON = [KAVA, SKOLA];
 
 describe("a generated course runs the core", () => {
 	test("its units, map and chapters replace Slovak's, with First words first", () => {
-		assert.deepEqual(lesson.UNITS.slice(0, 4).map((u) => u.id), ["words", "loc", "acc", "lx-food"]);
-		assert.ok(lesson.UNITS.some((u) => u.id === "words-300"), "the frequency bands come along");
-		assert.ok(!lesson.UNITS.some((u) => u.id === "acc-fem"), "no Slovak unit");
-		assert.equal(lesson.LESSON_LANGUAGE, "cs");
-		assert.equal(lesson.LESSONS_HAVE_BRIDGES, false);
-		assert.deepEqual(curriculum.CHAPTERS.map((c) => c.id), ["cafe", "town"]);
-		assert.deepEqual(curriculum.CHAPTERS[0]!.units, ["words", "acc", "lx-food", "sounds", "can-order"]);
-		assert.deepEqual(curriculum.CURRICULUM.map((u) => `${u.kind}:${u.id}`), ["words:words", "drill:acc", "words:lx-food", "tutor:sounds", "goal:can-order", "drill:loc", "goal:can-find"]);
+		assert.deepEqual(lesson.allUnits().slice(0, 4).map((u) => u.id), ["words", "loc", "acc", "lx-food"]);
+		assert.ok(lesson.allUnits().some((u) => u.id === "words-300"), "the frequency bands come along");
+		assert.ok(!lesson.allUnits().some((u) => u.id === "acc-fem"), "no Slovak unit");
+		assert.equal(lesson.lessonLanguage(), "cs");
+		assert.equal(lesson.lessonsHaveBridges(), false);
+		assert.deepEqual(curriculum.allChapters().map((c) => c.id), ["cafe", "town"]);
+		assert.deepEqual(curriculum.allChapters()[0]!.units, ["words", "acc", "lx-food", "sounds", "can-order"]);
+		assert.deepEqual(curriculum.curriculumUnits().map((u) => `${u.kind}:${u.id}`), ["words:words", "drill:acc", "words:lx-food", "tutor:sounds", "goal:can-order", "drill:loc", "goal:can-find"]);
 		assert.equal(curriculum.curriculumUnit("sounds")?.brief, "Teach the Czech sounds.");
 		assert.equal(lesson.unitInfo("loc" as UnitId).slovakTerm, "Lokál", "the native term rides the same field");
 	});
@@ -97,7 +97,7 @@ describe("a generated course runs the core", () => {
 		const state = curriculum.curriculumState({}, "B1");
 		assert.equal(state.current, "cafe");
 		assert.equal(curriculum.nextLessonUnit(state), "acc", "a drill before a word unit, as in Slovak");
-		assert.deepEqual(onboarding.PLACEMENT_TIERS.map((t) => [t.id, t.units, t.chapters]), [
+		assert.deepEqual(onboarding.placementTiers().map((t) => [t.id, t.units, t.chapters]), [
 			["a1a", ["words", "acc"], ["cafe"]],
 			["a2", ["loc"], ["town"]],
 		]);

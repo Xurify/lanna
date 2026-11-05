@@ -17,13 +17,13 @@
 
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 import fs from "node:fs";
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { learnerProfileSegment } from "../agent/learner-profile.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
-import { CHAPTERS, curriculumState } from "../core/curriculum.ts";
+import { allChapters, curriculumState } from "../core/curriculum.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
@@ -112,7 +112,7 @@ function sceneBrief(scene: SpeakScene, s: SpeakSession): string {
 	return [
 		`The scene: you are ${scene.brief}.`,
 		`The learner's task: ${scene.task}`,
-		`Level: ${s.level}. Chapter on the map: ${CHAPTERS.find((c) => c.id === s.chapter)?.title ?? s.chapter}.`,
+		`Level: ${s.level}. Chapter on the map: ${allChapters().find((c) => c.id === s.chapter)?.title ?? s.chapter}.`,
 		profile ? `\n${profile}` : "",
 	]
 		.filter(Boolean)

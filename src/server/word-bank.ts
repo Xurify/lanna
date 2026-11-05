@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+import { activeProfile, PATHS } from "../../config.ts";
 import { loadLexicon, lookupWord, type Lexicon } from "../agent/lexicon.ts";
 import { foldDiacritics, LANGUAGES, referenceLink, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -224,17 +224,19 @@ interface CachedTranslation {
 }
 
 const translationCacheFile = () => path.join(PATHS.data, "translations-cache.json");
-let memoryTranslationCache: Record<string, CachedTranslation> | null = null;
+let memoryTranslationCache: { file: string; entries: Record<string, CachedTranslation> } | null = null;
 
 function readTranslationCache(): Record<string, CachedTranslation> {
-	if (memoryTranslationCache) return memoryTranslationCache;
+	const file = translationCacheFile();
+	if (memoryTranslationCache?.file === file) return memoryTranslationCache.entries;
+	let entries: Record<string, CachedTranslation>;
 	try {
-		const raw = fs.readFileSync(translationCacheFile(), "utf-8");
-		memoryTranslationCache = JSON.parse(raw) as Record<string, CachedTranslation>;
+		entries = JSON.parse(fs.readFileSync(file, "utf-8")) as Record<string, CachedTranslation>;
 	} catch {
-		memoryTranslationCache = {};
+		entries = {};
 	}
-	return memoryTranslationCache;
+	memoryTranslationCache = { file, entries };
+	return entries;
 }
 
 function writeTranslationCacheEntry(key: string, value: CachedTranslation): void {

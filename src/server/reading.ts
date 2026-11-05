@@ -25,16 +25,16 @@
  * and the number of drafts is on the record.
  */
 
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
-import { curriculumState, CHAPTERS, STAGES, type Cefr } from "../core/curriculum.ts";
+import { curriculumState, allChapters, STAGES, type Cefr } from "../core/curriculum.ts";
 import { countryOf, foldDiacritics, LANGUAGES, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
-import { UNITS } from "../core/lesson.ts";
+import { allUnits } from "../core/lesson.ts";
 import { purposeInfo, type Purpose } from "../core/onboarding.ts";
 import {
 	COVERAGE_FLOOR,
@@ -117,7 +117,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 	const goal = p.goal ?? DEFAULT_GOAL;
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const at = level ?? state.level;
-	const chapter = CHAPTERS.find((c) => c.id === state.current);
+	const chapter = allChapters().find((c) => c.id === state.current);
 	const met = new Set<string>();
 	const sample: string[] = [];
 	// The deck: every word the learner has been asked about. Stable words
@@ -129,7 +129,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 		sample.push(c.lemma);
 	}
 	// Word units with a lesson behind them: their clusters' lemmas.
-	for (const u of UNITS) {
+	for (const u of allUnits()) {
 		if (u.kind !== "words" || (p.units[u.id]?.lessons ?? 0) === 0) continue;
 		for (const lemma of u.lemmas ?? []) {
 			const entries = lexicon?.byForm.get(lemma.toLocaleLowerCase(tag())) ?? [];

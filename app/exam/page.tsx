@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ExamPlayer } from "@/components/exam/exam-player";
-import { CHAPTERS } from "@/src/core";
+import { allChapters } from "@/src/core";
 import { examFor } from "@/src/server";
 
 export const metadata = { title: "Exam" };
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  *  first draw is built with the page, so the first item is in the first HTML. */
 export default async function ExamPage({ searchParams }: { searchParams: Promise<{ chapter?: string }> }) {
 	const { chapter } = await searchParams;
-	const ch = CHAPTERS.find((c) => c.id === chapter);
+	const ch = allChapters().find((c) => c.id === chapter);
 	if (!ch) notFound();
 	let draw = null;
 	try {

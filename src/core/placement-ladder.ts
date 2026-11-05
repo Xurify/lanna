@@ -24,12 +24,12 @@
  * map, the plan and the profile read it unchanged.
  */
 
-import { CHAPTERS, STAGES, type Cefr } from "./curriculum.ts";
+import { allChapters, STAGES, type Cefr } from "./curriculum.ts";
 import type { UnitId } from "./lesson.ts";
-import { PASS_SHARE, PLACEMENT_TIERS, type PlacementOutcome, type Prior, type TierResult } from "./onboarding.ts";
+import { PASS_SHARE, placementTiers, type PlacementOutcome, type Prior, type TierResult } from "./onboarding.ts";
 
 /** The units of the four tiers, easiest first: the ladder's rungs. */
-export const LADDER: readonly UnitId[] = PLACEMENT_TIERS.flatMap((t) => t.units);
+export const placementLadder = (): readonly UnitId[] => placementTiers().flatMap((t) => t.units);
 
 /** The most items the check asks before it stops where it is. */
 export const MAX_ITEMS = 24;
@@ -58,7 +58,7 @@ export function rungStatus(t: UnitTally | undefined): RungStatus {
 export interface LadderState {
 	/** The highest rung held (-1: none yet). Rungs below it count as held. */
 	lo: number;
-	/** The lowest rung missed (LADDER.length: none yet). */
+	/** The lowest rung missed (placementLadder().length: none yet). */
 	hi: number;
 	/** The rung being asked. */
 	cursor: number;
@@ -71,23 +71,23 @@ export interface LadderState {
 
 /** A fresh ladder: a re-check from tier `from` holds every rung below it. */
 export function ladderStart(opts: { prior?: Prior; from?: number } = {}): LadderState {
-	const from = Math.max(0, Math.min(PLACEMENT_TIERS.length - 1, opts.from ?? 0));
-	const below = PLACEMENT_TIERS.slice(0, from).reduce((n, t) => n + t.units.length, 0);
+	const from = Math.max(0, Math.min(placementTiers().length - 1, opts.from ?? 0));
+	const below = placementTiers().slice(0, from).reduce((n, t) => n + t.units.length, 0);
 	const lo = below - 1;
 	const seed = START_BY_PRIOR[opts.prior ?? "none"];
 	const cursor = Math.max(lo + 1, seed);
-	return { lo, hi: LADDER.length, cursor: Math.min(cursor, LADDER.length - 1), asked: 0, tally: {}, phase: "bracket", from };
+	return { lo, hi: placementLadder().length, cursor: Math.min(cursor, placementLadder().length - 1), asked: 0, tally: {}, phase: "bracket", from };
 }
 
 /** The unit the next item comes from, or null when the check is over. */
 export function nextUnit(state: LadderState): UnitId | null {
 	if (state.phase === "done") return null;
-	return LADDER[state.cursor] ?? null;
+	return placementLadder()[state.cursor] ?? null;
 }
 
 /** Fold one answer in and move the cursor. */
 export function applyAnswer(state: LadderState, unit: UnitId, hit: boolean): LadderState {
-	const idx = LADDER.indexOf(unit);
+	const idx = placementLadder().indexOf(unit);
 	if (idx < 0 || state.phase === "done") return state;
 	const was = state.tally[unit] ?? { hits: 0, misses: 0 };
 	const tally = { ...state.tally, [unit]: { hits: was.hits + (hit ? 1 : 0), misses: was.misses + (hit ? 0 : 1) } };
@@ -118,9 +118,9 @@ export function applyAnswer(state: LadderState, unit: UnitId, hit: boolean): Lad
 /** The next rung below the floor to confirm: unasked, above the re-check's
  *  start, at most two rungs down. Null when there is none. */
 function confirmRung(state: LadderState): number | null {
-	const floor = PLACEMENT_TIERS.slice(0, state.from).reduce((n, t) => n + t.units.length, 0);
+	const floor = placementTiers().slice(0, state.from).reduce((n, t) => n + t.units.length, 0);
 	for (let i = state.lo - 1; i >= Math.max(floor, state.lo - 2); i--) {
-		const u = LADDER[i]!;
+		const u = placementLadder()[i]!;
 		if (!state.tally[u]) return i;
 	}
 	return null;
@@ -136,7 +136,7 @@ export function ladderOutcome(state: LadderState): PlacementOutcome {
 	let offset = 0;
 	let lastPassed = -1;
 	let blocked = false;
-	for (const [i, t] of PLACEMENT_TIERS.entries()) {
+	for (const [i, t] of placementTiers().entries()) {
 		let reps = 0;
 		let correct = 0;
 		let held = 0;
@@ -157,18 +157,18 @@ export function ladderOutcome(state: LadderState): PlacementOutcome {
 		if (!passed) blocked = true;
 		tiers.push({ id: t.id, level: t.level, title: t.title, reps, correct, passed, ...(i < state.from ? { held: true } : {}) });
 	}
-	const startChapter = lastPassed >= 0 ? (CHAPTERS[CHAPTERS.findIndex((c) => c.id === PLACEMENT_TIERS[lastPassed]!.chapters.at(-1)) + 1]?.id ?? CHAPTERS.at(-1)!.id) : CHAPTERS[0]!.id;
-	const level: Cefr = STAGES.find((st) => st.id === CHAPTERS.find((c) => c.id === startChapter)!.stage)!.level;
+	const startChapter = lastPassed >= 0 ? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]?.id ?? allChapters().at(-1)!.id) : allChapters()[0]!.id;
+	const level: Cefr = STAGES.find((st) => st.id === allChapters().find((c) => c.id === startChapter)!.stage)!.level;
 	const testedOut = Object.entries(units)
 		.filter(([, e]) => e.reps >= 2 && e.correct === e.reps)
 		.map(([id]) => id as UnitId);
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, from: state.from, ceiling: lastPassed === PLACEMENT_TIERS.length - 1, startChapter, units, testedOut, weak };
+	return { level, tiers, from: state.from, ceiling: lastPassed === placementTiers().length - 1, startChapter, units, testedOut, weak };
 }
 
 /** The floor and the ceiling in words, for the result screen and the tutor. */
 export function ladderEdge(state: LadderState): { floor: UnitId | null; ceiling: UnitId | null } {
-	return { floor: state.lo >= 0 ? (LADDER[state.lo] ?? null) : null, ceiling: state.hi < LADDER.length ? (LADDER[state.hi] ?? null) : null };
+	return { floor: state.lo >= 0 ? (placementLadder()[state.lo] ?? null) : null, ceiling: state.hi < placementLadder().length ? (placementLadder()[state.hi] ?? null) : null };
 }

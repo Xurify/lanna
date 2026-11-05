@@ -1,5 +1,5 @@
 /**
- * CURRICULUM PINS (LangHarness r5): the map's shape, its locks, the Continue
+ * curriculumUnits() PINS (LangHarness r5): the map's shape, its locks, the Continue
  * choice, the hours projection and the daily plan are all pure, so the
  * tests pin them from hand-made ledgers.
  */
@@ -7,8 +7,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
 import {
-	CHAPTERS,
-	CURRICULUM,
+	allChapters,
+	curriculumUnits,
 	curriculumState,
 	curriculumUnit,
 	dailyPlan,
@@ -19,7 +19,7 @@ import {
 	tutorUnitPrompt,
 	type UnitEvidence,
 } from "../src/core/curriculum.ts";
-import { buildLesson, candidatesFor, UNITS } from "../src/core/lesson.ts";
+import { buildLesson, candidatesFor, allUnits } from "../src/core/lesson.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] };
@@ -31,21 +31,21 @@ const sessions = (n: number): UnitEvidence => ({ lessons: n, reps: 0, correct: 0
 
 test("the map is well-formed: every chapter ends in a goal, every unit is on exactly one chapter, every lesson unit is on the map", () => {
 	const seen = new Map<string, number>();
-	for (const ch of CHAPTERS) {
+	for (const ch of allChapters()) {
 		assert.ok(ch.units.length >= 4, `${ch.id} has ${ch.units.length} units`);
 		assert.equal(curriculumUnit(ch.units[ch.units.length - 1]!)?.kind, "goal", `${ch.id} must end in a goal`);
 		for (const id of ch.units) seen.set(id, (seen.get(id) ?? 0) + 1);
 	}
-	for (const u of CURRICULUM) assert.equal(seen.get(u.id), 1, `${u.id} appears ${seen.get(u.id) ?? 0} times`);
-	for (const u of UNITS) assert.ok(curriculumUnit(u.id), `lesson unit ${u.id} is not on the map`);
-	for (const u of CURRICULUM) {
+	for (const u of curriculumUnits()) assert.equal(seen.get(u.id), 1, `${u.id} appears ${seen.get(u.id) ?? 0} times`);
+	for (const u of allUnits()) assert.ok(curriculumUnit(u.id), `lesson unit ${u.id} is not on the map`);
+	for (const u of curriculumUnits()) {
 		for (const r of u.requires ?? []) assert.ok(curriculumUnit(r), `${u.id} requires unknown ${r}`);
 		if (u.kind === "tutor") assert.ok(u.brief && u.brief.length > 40, `${u.id} needs a brief`);
 	}
 });
 
 test("every lesson unit on the map has material for a full lesson", () => {
-	for (const u of UNITS) {
+	for (const u of allUnits()) {
 		if (u.kind === "pairs") continue; // Dvojičky build their own reps (tests/pairs.test.ts).
 		const plan = buildLesson(entries, u.id, { seed: 11 });
 		assert.ok(plan.items.length >= 10, `${u.id}: ${plan.items.length} items`);
@@ -67,7 +67,7 @@ test("a fresh learner: only the first chapter is open, Continue is the first dri
 });
 
 test("a chapter opens when the one before has at most two units left; a goal is reached when its chapter's units are done", () => {
-	const hello = CHAPTERS[0]!;
+	const hello = allChapters()[0]!;
 	const evidence: Record<string, UnitEvidence> = {};
 	// Everything but the goal and one more unit done: the next chapter opens, the goal is not reached.
 	const open = hello.units.filter((id) => curriculumUnit(id)!.kind !== "goal");
@@ -100,7 +100,7 @@ test("a unit's own prerequisites lock it inside an open chapter", () => {
 	const cafe = s.chapters.find((c) => c.id === "cafe")!;
 	// modal-inf requires present; the chapter itself is closed for a fresh learner, so test on the needs text once open.
 	const evidence: Record<string, UnitEvidence> = {};
-	for (const id of CHAPTERS[0]!.units) if (curriculumUnit(id)!.kind !== "goal" && id !== "present") evidence[id] = curriculumUnit(id)!.kind === "tutor" ? sessions(2) : aced();
+	for (const id of allChapters()[0]!.units) if (curriculumUnit(id)!.kind !== "goal" && id !== "present") evidence[id] = curriculumUnit(id)!.kind === "tutor" ? sessions(2) : aced();
 	const s2 = curriculumState(evidence, "B2");
 	const cafe2 = s2.chapters.find((c) => c.id === "cafe")!;
 	assert.equal(cafe.open, false);
@@ -116,7 +116,7 @@ test("the target level bounds the count; hours and the projection move with prog
 	assert.ok(fresh.total < toB2.total);
 	assert.equal(hoursDone(fresh), 0);
 	const evidence: Record<string, UnitEvidence> = {};
-	for (const ch of CHAPTERS.filter((c) => c.stage === "a1")) for (const id of ch.units) evidence[id] = curriculumUnit(id)!.kind === "tutor" ? sessions(2) : aced();
+	for (const ch of allChapters().filter((c) => c.stage === "a1")) for (const id of ch.units) evidence[id] = curriculumUnit(id)!.kind === "tutor" ? sessions(2) : aced();
 	const a1done = curriculumState(evidence, "B2");
 	assert.equal(Math.round(hoursDone(a1done)), 90);
 	const now = new Date("2026-10-28T12:00:00Z");

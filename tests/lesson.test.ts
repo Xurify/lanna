@@ -21,7 +21,7 @@ import {
 	unitLevel,
 	unitProgress,
 	unitStage,
-	UNITS,
+	allUnits,
 	xpLevel,
 } from "../src/core/lesson.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
@@ -69,7 +69,7 @@ test("buildLesson is deterministic per seed and never repeats a word", () => {
 });
 
 test("every unit has enough material for a full lesson", () => {
-	for (const u of UNITS) {
+	for (const u of allUnits()) {
 		if (u.kind === "pairs") continue; // Dvojičky build their own reps (tests/pairs.test.ts).
 		const plan = buildLesson(entries, u.id, { seed: 7 });
 		assert.ok(plan.items.length >= 10, `${u.id}: ${plan.items.length} items`);
@@ -211,7 +211,7 @@ test("a right answer after the hint earns half", () => {
 });
 
 test("every grammar unit carries an Estonian bridge", () => {
-	for (const u of UNITS) if (u.kind !== "words" && u.kind !== "pairs" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
+	for (const u of allUnits()) if (u.kind !== "words" && u.kind !== "pairs" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
 });
 
 test("formOptions always includes base lemma as distractor when inflected", () => {

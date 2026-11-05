@@ -32,7 +32,7 @@ import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
-import { UNITS } from "../core/lesson.ts";
+import { allUnits } from "../core/lesson.ts";
 import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, levelVocabulary, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
 import { grammarWord, tokenize } from "../core/reading.ts";
 import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
@@ -124,7 +124,7 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 		met.add(c.slug);
 		if ((c.memory?.stability ?? 0) >= 7 && c.reps > 0) solid++;
 	}
-	for (const u of UNITS) {
+	for (const u of allUnits()) {
 		if (u.kind !== "words" || (p.units[u.id]?.lessons ?? 0) === 0) continue;
 		for (const lemma of u.lemmas ?? []) for (const e of lexicon?.byForm.get(lemma.toLocaleLowerCase("sk-SK")) ?? []) met.add(e.slug);
 	}

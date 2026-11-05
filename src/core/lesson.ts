@@ -21,10 +21,7 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
-import { activeCourse, courseUnitsFor, type Course, type CourseUnit } from "./course.ts";
-
-/** The running language's generated course; null runs the Slovak one below. */
-const COURSE = activeCourse();
+import { activeCourse, courseUnitsFor, perCourse, type Course, type CourseUnit } from "./course.ts";
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
@@ -149,11 +146,11 @@ const PAIR_UNITS: UnitInfo[] = PAIR_UNIT_IDS.map((id) => ({
 
 /** The language the lessons are in (ISO 639-1): the generated course's,
  *  else Slovak, whose units and bridge lines are below. */
-export const LESSON_LANGUAGE = COURSE?.code ?? "sk";
+export const lessonLanguage = (): string => activeCourse()?.code ?? "sk";
 
 /** Whether the units carry bridge lines to the learner's languages: the
  *  hand-written Slovak course does, a generated one does not. */
-export const LESSONS_HAVE_BRIDGES = !COURSE;
+export const lessonsHaveBridges = (): boolean => !activeCourse();
 
 /** Slovak's path, in teaching order. */
 const SLOVAK_UNITS: UnitInfo[] = [
@@ -203,14 +200,14 @@ function courseLessonUnits(course: Course): UnitInfo[] {
 }
 
 /** The path, in teaching order: the running language's course. */
-export const UNITS: UnitInfo[] = COURSE ? courseLessonUnits(COURSE) : SLOVAK_UNITS;
+export const allUnits = perCourse((course): UnitInfo[] => (course ? courseLessonUnits(course) : SLOVAK_UNITS));
 
 export function isUnitId(v: unknown): v is UnitId {
-	return typeof v === "string" && UNITS.some((u) => u.id === v);
+	return typeof v === "string" && allUnits().some((u) => u.id === v);
 }
 
 export function unitInfo(id: UnitId): UnitInfo {
-	return UNITS.find((u) => u.id === id)!;
+	return allUnits().find((u) => u.id === id)!;
 }
 
 const GEN_PREPS = new Set(["do", "z", "zo", "od", "bez", "u", "okolo", "vedľa", "blízko", "počas", "podľa", "namiesto", "vrátane"]);
@@ -463,7 +460,7 @@ export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | 
 	// A generated unit says what it drills; the Slovak endings below do not apply.
 	const own = unitInfo(unit)?.match;
 	if (own) return own.tags?.length ? `${own.tags.join(" ")} of ${entryLemma(entry)}` : undefined;
-	if (COURSE) return undefined;
+	if (activeCourse()) return undefined;
 	// A verb form the dictionary lists, or any form in a verb unit (the
 	// dictionary's form lists are incomplete for prefixed verbs).
 	const verbUnit = /^(present|past|cond|core-verbs|motion|verbs-mix)/.test(unit);
@@ -499,7 +496,7 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	const lemmas = info.lemmas ? new Set(info.lemmas.map((l) => l.toLowerCase())) : null;
 	const union = info.union ? new Set<UnitId>(info.union) : null;
 	const matcher: CourseUnit[] | null = info.match ? [{ id: unit, kind: "grammar", title: "", tagline: "", rule: "", glyph: "", ...info.match }] : null;
-	const tag = COURSE?.tag ?? "sk-SK";
+	const tag = activeCourse()?.tag ?? "sk-SK";
 	for (const entry of entries) {
 		entry.examples.forEach((ex, index) => {
 			if (ex.rejected) return;
@@ -688,7 +685,7 @@ export function unitStage(lessons: number, accuracy: number | null): UnitStage {
 export function triggerOf(sentence: string, at: number, unit?: UnitId): string | undefined {
 	const w = wordBefore(sentence, at);
 	const own = unit ? unitInfo(unit)?.match : undefined;
-	if (own || COURSE) return own?.after?.includes(w) ? w : undefined;
+	if (own || activeCourse()) return own?.after?.includes(w) ? w : undefined;
 	return ALL_PREPS.has(w) ? w : undefined;
 }
 
@@ -960,7 +957,7 @@ export function buildBlitz(entries: readonly LexiconEntry[], units: readonly Uni
 		used.add(id);
 		items.push(buildItem(c, "choose", group.pool, rand));
 	}
-	return { unit: units[0] ?? (UNITS.find((u) => !u.kind || u.kind === "grammar")?.id as UnitId), units: [...units], items };
+	return { unit: units[0] ?? (allUnits().find((u) => !u.kind || u.kind === "grammar")?.id as UnitId), units: [...units], items };
 }
 
 // ─── Scoring, streaks, levels ──────────────────────────────────────────────

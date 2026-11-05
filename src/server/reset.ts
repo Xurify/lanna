@@ -8,7 +8,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+import { activeProfile, PATHS } from "../../config.ts";
 
 export const BACKUPS_DIR = path.join(PATHS.base, "backups");
 
@@ -30,9 +30,9 @@ export interface ResetOutcome {
 
 export function resetProfileData(now = new Date()): ResetOutcome {
 	const stamp = now.toISOString().replace(/[:.]/g, "-");
-	const backup = path.join(BACKUPS_DIR, `${ACTIVE_PROFILE}-${stamp}`);
+	const backup = path.join(BACKUPS_DIR, `${activeProfile()}-${stamp}`);
 	fs.mkdirSync(BACKUPS_DIR, { recursive: true });
 	if (fs.existsSync(PATHS.data)) fs.renameSync(PATHS.data, backup);
 	fs.mkdirSync(PATHS.data, { recursive: true });
-	return { profile: ACTIVE_PROFILE, backup };
+	return { profile: activeProfile(), backup };
 }

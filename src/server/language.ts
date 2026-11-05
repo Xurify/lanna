@@ -3,34 +3,28 @@
  * server runs, switching it, and seeding a fresh profile's graph with the
  * language's curriculum (spec D2 / WF-02).
  *
- * The active profile is fixed at boot (config.ts ACTIVE_PROFILE); a switch
- * writes data/profile.json and needs a restart — the desktop shell
- * relaunches itself, `next dev` must be restarted by hand.
+ * A switch happens in place (config.ts switchProfile): the data folder and
+ * the course follow at once, and the browser reloads the page.
  */
 
 import fs from "node:fs";
-import { ACTIVE_PROFILE, curriculumFile, isLanguageProfile, readProfileChoice, saveProfileChoice, shownProfiles, type LanguageProfile } from "../../config.ts";
+import { activeProfile, curriculumFile, shownProfiles, switchProfile, type LanguageProfile } from "../../config.ts";
+import { extractionStatuses } from "../agent/subagents/extraction.ts";
 import type { GraphChain, GraphNode } from "../core/contracts.ts";
 import { settleGraphLayout } from "../core/layout-settle.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { graphStore } from "../store/graph.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
 import { languageRemovable } from "./language-add.ts";
+import { listTasks } from "./tasks.ts";
+import { anyTurnRunning } from "./turn-liveness.ts";
 
 export interface ProfileStatus {
 	active: LanguageProfile;
-	/** What profile.json asks for — differs from `active` until restart. */
-	selected: LanguageProfile;
-	restartRequired: boolean;
 	/** The running language in full: the browser reads its tag, voices and letters here. */
 	language: LanguageInfo;
 	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** It can be removed from the list now. */ removable: boolean }>;
 	seeded: { nodes: number; chains: number } | null;
-}
-
-function readSelected(): LanguageProfile {
-	const { active } = readProfileChoice();
-	return isLanguageProfile(active) ? active : ACTIVE_PROFILE;
 }
 
 function seedFile(profile: LanguageProfile): string {
@@ -38,11 +32,8 @@ function seedFile(profile: LanguageProfile): string {
 }
 
 export function profileStatus(): ProfileStatus {
-	const selected = readSelected();
 	return {
-		active: ACTIVE_PROFILE,
-		selected,
-		restartRequired: selected !== ACTIVE_PROFILE,
+		active: activeProfile(),
 		language: activeLanguage(),
 		profiles: shownProfiles().flatMap((id) => {
 			const info = profileLanguage(id);
@@ -61,8 +52,27 @@ export function profileStatus(): ProfileStatus {
 	};
 }
 
+export class SwitchBlocked extends Error {}
+
+/** Why the running language cannot change now, or null. Work in flight
+ *  writes into the running language's folder when it finishes, so a switch
+ *  waits for it. */
+export function switchBlocker(): string | null {
+	if (anyTurnRunning()) return "The tutor is still answering. Switch when the reply is done.";
+	if (extractionStatuses().length > 0) return "The skill map is still being updated. Switch when it is done.";
+	const video = listTasks().find((t) => t.kind === "video" && t.status === "running");
+	if (video) return `"${video.title}" is still running. Switch when it is done, or stop it on the Tasks page.`;
+	return null;
+}
+
+/** Run `profile` from now on, and seed its skill map the first time. */
 export function selectProfile(profile: LanguageProfile): ProfileStatus {
-	saveProfileChoice({ active: profile });
+	if (profile !== activeProfile()) {
+		const blocked = switchBlocker();
+		if (blocked) throw new SwitchBlocked(blocked);
+		switchProfile(profile);
+	}
+	ensureSeeded();
 	return profileStatus();
 }
 
@@ -87,7 +97,7 @@ const seedSourceId = (profile: string, group: string) => `src_seed_${profileLang
  * birth-session clusters fall along strands.
  */
 export function ensureSeeded(): { nodes: number; chains: number } | null {
-	const file = seedFile(ACTIVE_PROFILE);
+	const file = seedFile(activeProfile());
 	if (!fs.existsSync(file)) return null;
 	const prefix = `src_seed_`;
 	if (graphStore.readSources().some((s) => s.id.startsWith(prefix))) return null;
@@ -99,7 +109,7 @@ export function ensureSeeded(): { nodes: number; chains: number } | null {
 	const groups = new Set(groupOf.values());
 	for (const group of groups) {
 		graphStore.upsertSource({
-			id: seedSourceId(ACTIVE_PROFILE, group),
+			id: seedSourceId(activeProfile(), group),
 			filePath: `${activeLanguage().english} curriculum${seed.draft ? " (model draft)" : ""}: ${group}`,
 			importedAt: now,
 		});
@@ -111,7 +121,7 @@ export function ensureSeeded(): { nodes: number; chains: number } | null {
 			statement: n.statement,
 			aliases: [],
 			createdAt: now,
-			provenance: [{ chatId: seedSourceId(ACTIVE_PROFILE, groupOf.get(n.key)!), messageId: "" }],
+			provenance: [{ chatId: seedSourceId(activeProfile(), groupOf.get(n.key)!), messageId: "" }],
 		};
 		graphStore.appendNode(node);
 	}
@@ -120,7 +130,7 @@ export function ensureSeeded(): { nodes: number; chains: number } | null {
 			id: `arg_seed_${i}`,
 			premises: c.premises.map(idOf),
 			conclusion: idOf(c.conclusion),
-			provenance: [{ chatId: seedSourceId(ACTIVE_PROFILE, groupOf.get(c.conclusion)!), messageId: "" }],
+			provenance: [{ chatId: seedSourceId(activeProfile(), groupOf.get(c.conclusion)!), messageId: "" }],
 			createdAt: now,
 		};
 		graphStore.appendChain(chain);
@@ -131,6 +141,6 @@ export function ensureSeeded(): { nodes: number; chains: number } | null {
 		console.warn("[seed] layout settle failed (positions rebuild on the next merge):", err);
 	}
 	lastSeed = { nodes: seed.nodes.length, chains: seed.chains.length };
-	console.log(`[seed] ${ACTIVE_PROFILE}: seeded ${lastSeed.nodes} nodes, ${lastSeed.chains} chains`);
+	console.log(`[seed] ${activeProfile()}: seeded ${lastSeed.nodes} nodes, ${lastSeed.chains} chains`);
 	return lastSeed;
 }

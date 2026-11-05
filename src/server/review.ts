@@ -5,7 +5,7 @@
  * with FSRS (core/fsrs.ts). Persistence: src/store/review.ts.
  */
 
-import { ACTIVE_PROFILE } from "../../config.ts";
+import { activeProfile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -23,10 +23,10 @@ const tag = () => activeLanguage().tag;
 
 let ordered: { profile: string; list: LexiconEntry[] } | null = null;
 function orderedLexicon(): LexiconEntry[] {
-	if (ordered?.profile === ACTIVE_PROFILE) return ordered.list;
+	if (ordered?.profile === activeProfile()) return ordered.list;
 	const lexicon = loadLexicon();
 	const list = lexicon ? [...lexicon.entries].sort(lexiconOrder) : [];
-	ordered = { profile: ACTIVE_PROFILE, list };
+	ordered = { profile: activeProfile(), list };
 	return list;
 }
 
@@ -184,7 +184,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		}
 	}
 	return {
-		profile: ACTIVE_PROFILE,
+		profile: activeProfile(),
 		available: orderedLexicon().length > 0,
 		counts: {
 			due: due.filter((c) => c.state === "review").length,

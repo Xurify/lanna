@@ -17,7 +17,7 @@
  * Browser-safe: pure functions over plain records.
  */
 
-import { unitInfo, UNITS, type UnitId } from "./lesson.ts";
+import { unitInfo, allUnits, type UnitId } from "./lesson.ts";
 
 export type WeakSource = "check" | "lesson" | "review";
 
@@ -63,7 +63,7 @@ export function weakFamily(unit: UnitId): (typeof WEAK_FAMILIES)[number] | undef
 const SOURCE_LABEL: Record<WeakSource, string> = { check: "from the level check", lesson: "from your lessons", review: "from review" };
 
 function isUnit(id: string): id is UnitId {
-	return UNITS.some((u) => u.id === id);
+	return allUnits().some((u) => u.id === id);
 }
 
 /** Flag a unit. An existing spot keeps its first date and its tally; a
