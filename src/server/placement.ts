@@ -42,6 +42,8 @@ import { readSettings } from "../store/settings.ts";
 import { recordPlacement, type PlacementResult, type RepResult } from "./lesson.ts";
 import { frequencyOrder } from "./milestones.ts";
 import { storyEngine } from "./reading.ts";
+import { activeLanguage } from "./active-language.ts";
+import type { LanguageInfo } from "../core/language.ts";
 
 // ─── Engines ────────────────────────────────────────────────────────────────
 
@@ -214,7 +216,13 @@ export interface AnswerResult {
 	progress: PlacementProgress;
 }
 
-const JUDGE_SYSTEM = `You check one answer in a Slovak fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right (vina ≠ vína); a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>"}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class (e.g. "After prijal the object is accusative, and feminine -a nouns take -u there"). Write Slovak words bare, with no quotation marks, and use no semicolons.`;
+type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
+
+export function judgeSystem(lang: PromptLang = activeLanguage()): string {
+	const name = lang.english;
+	const x = lang.promptExamples ?? {};
+	return `You check one answer in a ${name} fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right${x.diacriticPair ? ` (${x.diacriticPair})` : ""}; a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>"}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class${x.caseNote ? ` (e.g. ${x.caseNote})` : ""}. Write ${name} words bare, with no quotation marks, and use no semicolons.`;
+}
 
 function parseJudge(text: string): { accepted: boolean; note: string } {
 	const m = text.match(/\{[\s\S]*\}/);
@@ -235,7 +243,7 @@ export async function judgeAnswer(item: LessonItem, given: string, usage: StoryU
 	if (!real) return null;
 	const prompt = [`Sentence: ${item.before}___${item.after}`, `Meaning: ${item.translation}`, `Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`, `Hint the learner saw: ${item.hint ?? item.lemma}`, `The learner typed: ${given}`].join("\n");
 	try {
-		return parseJudge(await ask(real.engine, JUDGE_SYSTEM, prompt, usage));
+		return parseJudge(await ask(real.engine, judgeSystem(), prompt, usage));
 	} catch {
 		return null;
 	}
@@ -271,23 +279,27 @@ export async function answerPlacement(input: AnswerInput, opts: PlacementOptions
 
 // ─── Stage 2: the edge ──────────────────────────────────────────────────────
 
-const PROBE_SYSTEM = `You are the placement tutor of a Slovak learning app. The learner has just done an adaptive drill; its evidence is in the brief. Your job is the Socratic part a drill cannot do: find out, on the units at the learner's edge, whether a miss was a slip, a gap or a misconception, and whether a hit was knowledge or luck.
+export function probeSystem(lang: PromptLang = activeLanguage()): string {
+	const name = lang.english;
+	const x = lang.promptExamples ?? {};
+	return `You are the placement tutor of a ${name} learning app. The learner has just done an adaptive drill; its evidence is in the brief. Your job is the Socratic part a drill cannot do: find out, on the units at the learner's edge, whether a miss was a slip, a gap or a misconception, and whether a hit was knowledge or luck.
 
 How you work:
-- One question at a time, chosen from the answer before it. Make the learner PRODUCE the form under its trigger: a Slovak frame with ___ and the dictionary word in brackets ("Idem do ___ (škola)."), or a short sentence to transform ("Put it in the past: Píšem list."). Never a multiple choice, never a yes/no.
+- One question at a time, chosen from the answer before it. Make the learner PRODUCE the form under its trigger: a ${name} frame with ___ and the dictionary word in brackets${x.frame ? ` ("${x.frame}")` : ""}, or a short sentence to transform${x.pastSentence ? ` ("Put it in the past: ${x.pastSentence}")` : ""}. Never a multiple choice, never a yes/no.
 - After a right form, you may ask WHY once: "What decided that ending?" — a right form with a right reason is held; a right form with no reason or a wrong one is a slip (fragile).
 - Judge every answer: "held" (produces it and knows what decides it), "slip" (right form but shaky, or one miss then right), "gap" (cannot produce it, or a misconception). One verdict per unit; a later verdict on the same unit replaces the earlier one.
 - At most ${PROBE_TURNS} questions in all; stop as soon as the edge is clear. Do not re-ask what the drill already showed twice. Enter at the unit the brief marks first.
-- Speak to the learner in the explanation language of the profile (English unless it says otherwise); the frames in Slovak. Short: one or two sentences of feedback, then the next question.
+- Speak to the learner in the explanation language of the profile (English unless it says otherwise); the frames in ${name}. Short: one or two sentences of feedback, then the next question.
 - Unit ids are for the JSON fields only. In "say", "prompt" and "done", name the grammar in full words ("the feminine accusative", "the locative"), never an id like acc-fem or a short form like fem. or sg.
 - Never give the level. The app computes it from your verdicts and the drill.
 
 Answer with ONE JSON object and nothing else:
 {"say": "<feedback on the last answer, one or two sentences; empty on the first turn>",
  "verdict": {"unit": "<unit id from the brief>", "result": "held" | "slip" | "gap", "note": "<the evidence in one line: what was produced or missed>"} | null,
- "ask": {"unit": "<unit id>", "prompt": "<the task in the explanation language>", "sk": "<the Slovak frame>", "kind": "produce" | "why"} | null,
+ "ask": {"unit": "<unit id>", "prompt": "<the task in the explanation language>", "sk": "<the ${name} frame>", "kind": "produce" | "why"} | null,
  "done": "<when you stop: two sentences on the edge you found, in the explanation language, with the forms as evidence>" | null}
 "ask" is null only when "done" is set.`;
+}
 
 /** A unit as the probe tutor should say it: the grammar term, then the title
  *  ("Feminine accusative (Objects: -a → -u)"), never the bare id. */
@@ -373,13 +385,13 @@ export async function probePlacement(input: { id: string; answer?: string }, opt
 	const prompt = [probeBrief(s, outcome, s.probe.units), "", s.probe.turns.length ? `The stage so far:\n${probeTranscript(s)}` : "Open the stage: judge nothing yet, ask your first question.", asked >= PROBE_TURNS ? `\nThat was your last question: judge the answer and set "done".` : asked === PROBE_TURNS - 1 ? "\nOne question left after this answer at most." : ""].join("\n");
 	let reply: ProbeReply;
 	try {
-		const text = await ask(real.engine, PROBE_SYSTEM, prompt, s.usage);
+		const text = await ask(real.engine, probeSystem(), prompt, s.usage);
 		if (process.env.LH_PLACEMENT_DEBUG) console.error("[placement/probe]", JSON.stringify(text).slice(0, 400), s.probe.units);
 		reply = parseProbeReply(text, s.probe.units);
 		if (!reply.ask && !reply.done && asked < PROBE_TURNS) {
 			// Neither a question about an offered unit nor a reading: once more, with the units named.
 			const nudge = `${prompt}\n\nYour last reply had no question about one of the offered units (${s.probe.units.map((u) => `${u} = ${unitName(u)}`).join("; ")}) and no "done". Ask ONE question about one of those units, or set "done" with your reading.`;
-			const again = await ask(real.engine, PROBE_SYSTEM, nudge, s.usage);
+			const again = await ask(real.engine, probeSystem(), nudge, s.usage);
 			if (process.env.LH_PLACEMENT_DEBUG) console.error("[placement/probe retry]", JSON.stringify(again).slice(0, 400));
 			reply = parseProbeReply(again, s.probe.units);
 			if (!reply.ask && !reply.done) reply = { say: reply.say, done: "The tutor had no further question. The drill's evidence stands." };

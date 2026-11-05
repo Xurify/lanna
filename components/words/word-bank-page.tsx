@@ -721,7 +721,7 @@ export function WordBankPage() {
 							<form onSubmit={handleAddPhrase} className="space-y-4">
 								<div>
 									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										Slovak phrase *
+										Phrase *
 									</label>
 									<input
 										type="text"

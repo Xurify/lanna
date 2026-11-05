@@ -510,6 +510,31 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 **Owner decisions, open:** D1 the two tutor units stay unchanged until the families run in use (recommended). D2 who writes the aspect sentences (9 pairs have one aspect, 3 have none, and none has both), and the demonstrative sentences (Tatoeba is not reachable from the build container). D3 aspect families stay in the A2 chapter. D4 authored frames: see above.
 
+### E43. A language is added from the app, from open data, without a model writing words (2026-11-05, branch `feat/add-language-button`)
+
+**Why:** the owner asked to make adding a language smoother, "less dev work or completely eliminate the need for that", and to have it all done in the background behind a button that shows in the Background section.
+
+**How to apply:**
+- The list of profiles is built-in (`LANGUAGE_PROFILES` in `config.ts`, pinned to `LANGUAGES` in `src/core/language.ts`) plus every `data/languages/<id>/` that has a `language.json`. A language is added there, not in code. `curriculumFile(profile, name)` reads a language's file from `curriculum/<id>/` when the app ships one, else from `data/languages/<id>/`.
+- Words come from Wiktionary (kaikki.org), frequency from FrequencyWords, sentences only from Tatoeba (E27). The homograph guard of E28 applies to every added language. The rules are pure, in `src/core/language-build.ts`.
+- One model call is allowed: a grammar map draft on the Cheap slot, checked (unknown keys and loops dropped), labeled "(model draft)" in the skill map, and counted in Spending. It never writes a sentence or a form.
+- The tutor's language segment is a template that states nothing about the language a model would have to know.
+- The work is a background task (`src/server/tasks.ts`, kind `language`); each step is kept under `build/`, and `language.json` is written last.
+- **No hardcoded target language (owner, 2026-11-05: "stop hardcoding stuff").** A prompt, a screen or a list never names Slovak when it can take the name from the running profile (`activeLanguage()`, `useActiveLanguage()`), and neutral wording is preferred where it reads naturally. A Slovak example in a prompt is `promptExamples` data and disappears for another language. Slovak story content (Robo, Bratislava, the Read settings, the Speak scenes) lives in `curriculum/slovak/world.json`. A list of the learner's own languages leaves out the one being learned. The lessons stay Slovak (`LESSON_LANGUAGE`).
+- **Removing.** An added language can be removed from the language menu; its words go, the learner's progress stays.
+
+### E44. An added language gets a whole generated course; the model writes the rules, never the sentences (2026-11-05, branch `feat/generated-courses`)
+
+**Why:** the owner switched to Estonian and got Slovak lessons: "The point of adding a language is to have everything fully done and ready for me to use."
+
+**How to apply:**
+- The course is data (`<data>/languages/<id>/course.json`, shape in `src/core/course.ts`): grammar units, word themes, tutor sessions, goals and chapters. The Strong slot writes it (the Cheap one stands in), one call for the course and one for the story bible, both counted in Spending. Slovak's course stays hand-written in code.
+- A grammar unit selects Tatoeba sentences by the Wiktionary tags on the blanked form, plus optional trigger words before the blank. A dictionary form never counts as a case form; without a trigger the form must be unambiguous. Sentences are never written by a model (E27).
+- Everything the model writes is checked against the dictionary before it is kept, and a unit with fewer than 12 sentences is dropped. A course with fewer than three chapters or three grammar units is refused.
+- The running language's course is chosen once per process, before the core loads: `config.ts` on the server, a before-interactive script in the browser. The core builds its tables from it at load, so a switch needs the restart it already had.
+- Slovak-only content (the grammar atlas, Dvojičky, aspect tasks, the unit bridges and parallels) does not appear in a generated course.
+- Who builds it is chosen in the add dialog, once per language, not in Settings: the Strong or Cheap model, priced per model and thinking level from earlier runs and capped per call; or the dictionary alone, free (`src/core/course-procedural.ts`).
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

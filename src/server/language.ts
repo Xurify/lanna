@@ -10,19 +10,22 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, LANGUAGE_PROFILES, PATHS, PROFILE_FILE, isLanguageProfile, type LanguageProfile } from "../../config.ts";
+import { ACTIVE_PROFILE, PROFILE_FILE, curriculumFile, isLanguageProfile, languageProfiles, type LanguageProfile } from "../../config.ts";
 import type { GraphChain, GraphNode } from "../core/contracts.ts";
 import { settleGraphLayout } from "../core/layout-settle.ts";
-import { LANGUAGES } from "../core/language.ts";
-import { loadLexicon } from "../agent/lexicon.ts";
+import type { LanguageInfo } from "../core/language.ts";
 import { graphStore } from "../store/graph.ts";
+import { activeLanguage, profileLanguage } from "./active-language.ts";
+import { languageRemovable } from "./language-add.ts";
 
 export interface ProfileStatus {
 	active: LanguageProfile;
 	/** What profile.json asks for — differs from `active` until restart. */
 	selected: LanguageProfile;
 	restartRequired: boolean;
-	profiles: Array<{ id: LanguageProfile; endonym: string; english: string; lexicon: boolean; seed: boolean }>;
+	/** The running language in full: the browser reads its tag, voices and letters here. */
+	language: LanguageInfo;
+	profiles: Array<{ id: LanguageProfile; tag: string; endonym: string; english: string; lexicon: boolean; seed: boolean; /** Its downloaded words can be removed now. */ removable: boolean }>;
 	seeded: { nodes: number; chains: number } | null;
 }
 
@@ -37,7 +40,7 @@ function readSelected(): LanguageProfile {
 }
 
 function seedFile(profile: LanguageProfile): string {
-	return path.join(PATHS.curriculum, profile, "seed.json");
+	return curriculumFile(profile, "seed.json");
 }
 
 export function profileStatus(): ProfileStatus {
@@ -46,13 +49,20 @@ export function profileStatus(): ProfileStatus {
 		active: ACTIVE_PROFILE,
 		selected,
 		restartRequired: selected !== ACTIVE_PROFILE,
-		profiles: LANGUAGE_PROFILES.map((id) => ({
-			id,
-			endonym: LANGUAGES[id].endonym,
-			english: LANGUAGES[id].english,
-			lexicon: !!loadLexicon(id),
-			seed: fs.existsSync(seedFile(id)),
-		})),
+		language: activeLanguage(),
+		profiles: languageProfiles().flatMap((id) => {
+			const info = profileLanguage(id);
+			if (!info) return [];
+			return [{
+				id,
+				tag: info.tag,
+				endonym: info.endonym,
+				english: info.english,
+				lexicon: fs.existsSync(curriculumFile(id, "lexicon.json")),
+				seed: fs.existsSync(seedFile(id)),
+				removable: languageRemovable(id),
+			}];
+		}),
 		seeded: lastSeed,
 	};
 }
@@ -68,11 +78,13 @@ interface SeedFile {
 	version: number;
 	nodes: Array<{ key: string; name: string; statement: string; kind: string; strand?: string }>;
 	chains: Array<{ premises: string[]; conclusion: string }>;
+	/** Drafted by a model when the language was added, not written by hand. */
+	draft?: boolean;
 }
 
 let lastSeed: { nodes: number; chains: number } | null = null;
 
-const seedSourceId = (profile: string, group: string) => `src_seed_${LANGUAGES[profile as LanguageProfile]?.code ?? profile}_${group}`;
+const seedSourceId = (profile: string, group: string) => `src_seed_${profileLanguage(profile)?.code ?? profile}_${group}`;
 
 /**
  * Seed the active profile's graph from curriculum/<language>/seed.json —
@@ -95,7 +107,7 @@ export function ensureSeeded(): { nodes: number; chains: number } | null {
 	for (const group of groups) {
 		graphStore.upsertSource({
 			id: seedSourceId(ACTIVE_PROFILE, group),
-			filePath: `${LANGUAGES[ACTIVE_PROFILE].english} curriculum: ${group}`,
+			filePath: `${activeLanguage().english} curriculum${seed.draft ? " (model draft)" : ""}: ${group}`,
 			importedAt: now,
 		});
 	}

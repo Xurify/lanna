@@ -14,6 +14,7 @@ import type { QIconName } from "@/components/quiet/icon-paths";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import type { Goal } from "@/components/daily-plan";
 import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 export interface UnitSummary {
 	id: UnitId;
@@ -141,7 +142,7 @@ export function taskLocked(t: PlanTask, keyless: boolean): boolean {
 	return !t.done && t.via === "tutor" && keyless;
 }
 
-/** The date the screens show, in Slovak: "Pondelok 2. novembra". */
+/** The date the screens show: "Monday, November 2". */
 export function todayDate(): string {
 	return new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 }
@@ -149,6 +150,7 @@ export function todayDate(): string {
 /** The rail beside Today and Review: the brand, the day's date, the charts and the goal. */
 export function DayRail({ s }: { s: Summary | null }) {
 	const settings = useSettingsDialog();
+	const lang = useActiveLanguage();
 	const date = todayDate();
 	return (
 		<div className="hidden min-h-0 @6xl:block">
@@ -159,7 +161,7 @@ export function DayRail({ s }: { s: Summary | null }) {
 							<QPie frac={0.7} size={14} className="mk" />
 						</span>
 						<b>LangHarness</b>
-						<small>Slovak</small>
+						<small>{lang?.english}</small>
 						<button type="button" className="gear" aria-label="Settings" onClick={() => settings.open()}>
 							<QIcon name="gear" className="size-4" />
 						</button>

@@ -285,7 +285,7 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 							</div>
 							<p className="text-xs font-semibold text-foreground">{unit.grammarTerm ?? unit.title}</p>
 							<p className="text-[11px] leading-relaxed text-muted-foreground">
-								Interactive 1-on-1 session with your Slovak tutor. Explains pronunciation rules, sentence structure, and grammar concepts aloud with examples before you drill them.
+								Interactive 1-on-1 session with your tutor. Explains pronunciation rules, sentence structure, and grammar concepts aloud with examples before you drill them.
 							</p>
 							{unit.tagline && (
 								<p className="border-t border-border/50 pt-1.5 text-[10px] italic text-muted-foreground">
@@ -450,7 +450,7 @@ function TermHover({ unit }: { unit: UnitState }) {
 						<div className="flex items-baseline justify-between gap-1.5">
 							<span className="text-xs font-semibold text-foreground">{unit.slovakTerm}</span>
 							<span className="rounded bg-accent px-1 py-0.5 text-[10px] font-semibold text-muted-foreground">
-								Slovak grammar
+								Grammar term
 							</span>
 						</div>
 						{unit.grammarTerm && (

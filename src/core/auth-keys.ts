@@ -20,7 +20,7 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "ELEVENLABS_API_KEY",
 		label: "ElevenLabs",
-		description: "Premium speech for Slovak and Russian audio (first tier of the TTS cascade). Without it the app uses free Edge voices.",
+		description: "Premium speech for the language you are learning (first tier of the TTS cascade). Without it the app uses free Edge voices.",
 		docsUrl: "https://elevenlabs.io/app/settings/api-keys",
 	},
 	{
@@ -32,7 +32,7 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "AZURE_SPEECH_KEY",
 		label: "Azure Speech",
-		description: "Pronunciation assessment for Speak and Say it faster: a sound-level score for every line you say (Slovak is covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
+		description: "Pronunciation assessment for Speak and Say it faster: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
 		docsUrl: "https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices",
 	},
 	{

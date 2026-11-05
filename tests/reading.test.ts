@@ -163,7 +163,7 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(k.met.size, 0);
 		const brief = reading.storyBrief(k, [], []);
 		assert.equal(brief.episode, 1);
-		assert.match(brief.prompt, /episode 1 of the Robo series/);
+		assert.match(brief.prompt, /episode 1 of the running series/, "without a story bible the series has no named lead");
 		assert.match(brief.prompt, /first episode/);
 		assert.match(brief.prompt, /20 to 25 sentences/);
 		const diary = reading.storyBrief(k, [{ id: "x", series: "diary", episode: 0, title: "t", level: "A2", theme: "a diary page", genre: "diary", topic: "a rainy Monday", createdAt: "", wordCount: 40, coverage: 0.95, newWords: [], model: "m" }], [], new Date(), "diary");
@@ -379,6 +379,7 @@ describe("the story bible (curriculum/slovak/world.json)", () => {
 		const world = loadWorld();
 		assert.ok(world, "the Slovak profile has a bible");
 		const brief = reading.storyBrief(reading.knownWords(), [], [], new Date(), "robo", world);
+		assert.match(brief.prompt, /episode 1 of the Robo series/, "the bible names the lead");
 		assert.match(brief.prompt, /Series bible, keep them as written — the cast: Robo \(man, young\) the lead/);
 		assert.match(brief.prompt, /Zuzka/);
 		assert.match(brief.prompt, /This episode's beat: "Robo arrives in Bratislava with two suitcases and meets Zuzka in the stairwell/, "the current chapter's beat (hello) is in the brief");
@@ -436,5 +437,17 @@ describe("the chapter's episode on the shelf", () => {
 		assert.equal(chapterStories[0]!.genre, "robo", "the chapter's episode is a Robo episode");
 		const state = reading.readingState(0, new Date("2026-10-30T09:01:00Z"));
 		assert.equal(state.current?.chapter, "cafe", "the picker serves the chapter's episode, not the unread shelf stock");
+	});
+});
+describe("a language other than Slovak", () => {
+	it("the writer and the brief name the language and its country, and no Slovak place or word", async () => {
+		const ESTONIAN = { english: "Estonian", tag: "et-EE" };
+		const system = reading.storySystem(ESTONIAN, null);
+		assert.match(system, /graded Estonian reading texts/);
+		assert.match(system, /a town in Estonia/);
+		assert.doesNotMatch(system, /Slovak|Bratislava|Robo|že/);
+		const brief = reading.storyBrief(reading.knownWords(), [], [], new Date(), "travel", null, ESTONIAN);
+		assert.match(brief.prompt, /a real town, region or custom in Estonia/);
+		assert.equal(reading.episodeTheme(["curious"], 2, null), "a day in the mountains");
 	});
 });

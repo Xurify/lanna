@@ -283,7 +283,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 			clearInterval(timer);
 		};
 	}, []);
-	const label = progress ? (progress.genre === "robo" ? "the next Robo episode" : `a ${genreInfo(progress.genre).label.toLowerCase()}`) : "your next story";
+	const label = progress ? (progress.genre === "robo" ? "the next episode" : `a ${genreInfo(progress.genre).label.toLowerCase()}`) : "your next story";
 	const lines = progress?.sentences ?? [];
 	return (
 		<Frame>

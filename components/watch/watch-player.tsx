@@ -36,7 +36,7 @@ import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-stat
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
-import { speak } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
@@ -430,6 +430,9 @@ function Thumb({ id, watched }: { id: string; watched: boolean }) {
 function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
 	const [url, setUrl] = useState("");
 	const [confirming, setConfirming] = useState<string | null>(null);
+	const lang = useActiveLanguage();
+	const name = lang?.english ?? "the language";
+	const fallbacks = (lang?.captionFallbacks ?? []).map((f) => f.english);
 	const list = [...(state?.library ?? [])].reverse();
 	const valid = parseVideoUrl(url) !== null;
 	const submit = (e: React.FormEvent) => {
@@ -448,7 +451,7 @@ function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchSt
 					Today
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Watch</h1>
-				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a Slovak YouTube link (Czech captions work too when a video has no Slovak ones, and the video is labelled Czech). You get every line in Slovak and English, one at a time, every word tappable, and a check at the end.</p>
+				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a YouTube link in {name}{fallbacks.length > 0 && <> ({fallbacks.join(" or ")} captions work too when a video has no {name} ones, and the video is labelled with its language)</>}. You get every line in {name} and English, one at a time, every word tappable, and a check at the end.</p>
 
 				<form onSubmit={submit} className="q-card mt-6 flex flex-col gap-3 p-4 sm:flex-row" data-testid="watch-form">
 					<label className="sr-only" htmlFor="watch-url">
@@ -1203,7 +1206,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					<Ctl onClick={toggleSlow} label={rate === 1 ? "Slower" : "Normal speed"} keyName="S" active={rate !== 1} icon={<SnailIcon className="size-4" />} testId="watch-slow" />
 					{step ? (
 						<>
-							<Ctl onClick={showText} label="Slovak" keyName="T" active={line.revealedText} disabled={line.revealedText} icon={<EyeIcon className="size-4" />} testId="watch-text" />
+							<Ctl onClick={showText} label={captionLanguageName(video.source?.trackLang ?? video.lang)} keyName="T" active={line.revealedText} disabled={line.revealedText} icon={<EyeIcon className="size-4" />} testId="watch-text" />
 							<Ctl onClick={showMeaning} label="Meaning" keyName="M" active={line.revealedMeaning} disabled={line.revealedMeaning || !line.revealedText} icon={<LanguagesIcon className="size-4" />} testId="watch-meaning" />
 						</>
 					) : (

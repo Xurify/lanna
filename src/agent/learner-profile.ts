@@ -15,6 +15,7 @@ import { PATHS } from "../../config.ts";
 import { curriculumState, type UnitEvidence } from "../core/curriculum.ts";
 import type { FirstTryStats } from "../core/first-try.ts";
 import { learnerProfileText, type LearnerGoal } from "../core/onboarding.ts";
+import { activeLanguage } from "./profile-language.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
 import type { MixupRecord } from "../core/mixups.ts";
@@ -51,5 +52,5 @@ export function learnerProfileSegment(): string | null {
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
 	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
-	return learnerProfileText(goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups);
+	return learnerProfileText(activeLanguage(), goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups);
 }

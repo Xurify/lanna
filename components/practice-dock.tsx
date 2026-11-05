@@ -143,7 +143,7 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 							submit();
 						}
 					}}
-					placeholder="Answer in Slovak. Add your reasoning only if you want to."
+					placeholder="Answer in the language you are learning. Add your reasoning only if you want to."
 					rows={4}
 					className={cn(
 						"field-sizing-content lh-input max-h-64 min-h-16 w-full resize-none bg-transparent px-2.5 pb-2 outline-none placeholder:text-muted-foreground",

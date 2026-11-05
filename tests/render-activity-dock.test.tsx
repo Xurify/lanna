@@ -232,6 +232,22 @@ describe("activity section render", () => {
 	});
 
 
+	it("a background task's row opens the Tasks page instead of a detail that repeats it", () => {
+		const html = renderToStaticMarkup(
+			<ActivitySection
+				feed={{
+					jobs: [],
+					extractions: [],
+					tasks: [{ id: "language:estonian", kind: "language", title: "Adding Estonian", step: "Downloading English translations · 3 MB", status: "running", startedAt: NOW - 7_000, language: { id: "estonian", english: "Estonian" } }],
+				}}
+			/>,
+		);
+		assert.match(html, /data-testid="activity-task-link"[^>]*>|href="\/tasks"[^>]*data-testid="activity-task-link"/);
+		assert.equal(html.match(/>Adding Estonian</g)?.length, 1, "the title shows once");
+		assert.doesNotMatch(html, /aria-expanded/);
+		assert.match(html, /data-testid="activity-abort"/, "a running task can still be stopped");
+	});
+
 	it("shows total running cost when jobs are priced", () => {
 		const usage = {
 			model: "openrouter:z-ai/glm-5.3-flash",

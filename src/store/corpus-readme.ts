@@ -18,7 +18,8 @@ is the corpus for whatever you build next.
 | Folder / file | What it holds | Format |
 |---|---|---|
 | \`audio/\` | Every spoken clip, named after its text, with \`index.jsonl\` listing text, voice, engine and date per clip | MP3 + JSON Lines |
-| \`profiles/slovak/\` | Everything about learning Slovak (one folder per language) | see its README |
+| \`profiles/<language>/\` | Everything about learning one language (one folder per language) | see its README |
+| \`languages/<language>/\` | A language added from the app: its words, sentences, tutor segment and grammar map | |
 | \`profiles/slovak/chats/\` | Every tutor session: Learn, Talk, Story, Why?, Practice. Full transcript, tool calls, token usage per turn | one JSON per chat |
 | \`profiles/slovak/chats/trash/\` | Sessions you deleted in the app. Kept here, never destroyed | one JSON per chat |
 | \`profiles/slovak/lessons/\` | Every finished lesson and blitz: every sentence shown, your answer, the verdict, the hint used | JSON Lines per day |
@@ -52,7 +53,7 @@ stay untouched; the export is a view you can hand to another program.
 ## Keeping it safe
 
 This folder is the only copy. Back it up (it is small apart from \`audio/\`).
-Deleting \`profiles/slovak/\` starts Slovak from scratch; deleting \`audio/\`
+Deleting \`profiles/<language>/\` starts that language from scratch; deleting \`audio/\`
 means paying for every clip again.
 `;
 
@@ -116,7 +117,7 @@ per finished lesson or blitz. Each holds:
 - \`xp\`, \`correct\`, \`total\`, \`perfect\`, \`queued\` (words sent to review)
 - \`reps\`: every exercise in order. Per rep: \`kind\` (\`choose\`, \`type\`,
   \`build\`, \`listen\`), \`unit\`, \`slug\`, \`lemma\`, \`gloss\`, \`sentence\`
-  (the full Slovak sentence), \`translation\`, \`answer\` (the blanked form),
+  (the full sentence), \`translation\`, \`answer\` (the blanked form),
   \`given\` (what you wrote or picked), \`verdict\` (\`exact\`, \`accents\`,
   \`wrong\`), \`assisted\` (right only after the hint), \`trigger\` (the
   preposition that decides the case, when there is one), \`options\` (the
@@ -146,7 +147,7 @@ One JSON file per tutor session, named by its id. Fields:
   for a Learn course), \`createdAt\`, \`updatedAt\`
 - \`messages\`: the full transcript in order. \`role\` is \`user\`,
   \`assistant\`, \`toolResult\` or \`custom\`; assistant \`content\` is a list
-  of blocks (\`text\`, \`thinking\`, \`toolCall\`). Slovak the tutor meant to be
+  of blocks (\`text\`, \`thinking\`, \`toolCall\`). Lines the tutor meant to be
   heard is written as \`\\\`say: …\\\`\` inside the text; those phrases are the
   ones in \`../../../audio/\`.
 - \`turns\`: token usage per model turn (input, output, cache reads and
@@ -169,7 +170,7 @@ story at your level, each paid for once and kept here for good.
   \`chapter\`, \`theme\` (the setting it was asked to use), \`createdAt\`;
   \`sentences[]\`: \`sk\`, \`en\` and \`tokens[]\` (every word with the
   dictionary's \`slug\`, \`lemma\`, \`gloss\`, \`cat\`, \`gender\`, and \`fresh\`
-  when you had not met it); \`questions[]\` (Slovak, three options, the
+  when you had not met it); \`questions[]\` (in the language, three options, the
   \`answer\` index); \`newWords[]\` (the words it introduces on purpose);
   \`recap\` (one English line, used to write the next episode);
   \`coverage\` (share of running words you were expected to know),
@@ -194,7 +195,7 @@ tutor, one file per scene, kept for good.
 
 - \`<id>.json\` (e.g. \`sp-2026-10-28-cafe-k3f9ab.json\`): \`scene\`,
   \`sceneTitle\`, \`level\`, \`chapter\`, \`startedAt\`, \`endedAt\`, \`ms\`;
-  \`turns[]\` in order: \`role\` (\`tutor\` | \`learner\`), \`text\` (Slovak),
+  \`turns[]\` in order: \`role\` (\`tutor\` | \`learner\`), \`text\` (in the language),
   \`en\` (the tutor's meaning), \`prompt\` (a repair prompt on your last
   line: \`yours\`, \`hint\`, \`kind\` = case | verb | aspect), \`repaired\`
   (your next line fixed it), \`via\` (\`voice\` | \`typed\`), \`audio\` (your
@@ -241,13 +242,13 @@ everything the app made of its captions, paid for once.
 - \`<id>.json\` (the YouTube video id): \`title\`, \`channel\`, \`url\`,
   \`durationSec\`, \`source\` (\`captions\` = made by people,
   \`auto-captions\` = YouTube's automatic ones, \`transcription\` = the
-  audio transcribed because the video had none; and how it was fetched; \`trackLang\` is the caption language, \`cs\` when the video had no Slovak),
+  audio transcribed because the video had none; and how it was fetched; \`trackLang\` is the caption language, another language when the video had none in the one being learned),
   \`level\` (yours when it was prepared); \`segments[]\`: every line with
   \`start\`/\`end\` (seconds), \`sk\`, \`en\` (the translation) and
   \`tokens[]\` (every word with the dictionary's \`slug\`, \`lemma\`,
   \`gloss\`, \`cat\`, \`gender\`, and \`fresh\` when you had not met it);
   \`preTeach[]\` (the unknown words worth meeting first, with how often
-  each appears); \`questions[]\` (Slovak, the \`answer\` index, the
+  each appears); \`questions[]\` (in the language, the \`answer\` index, the
   \`kind\`); \`coverage\` (share of running words you were expected to
   know), \`wordCount\`, \`unknownCount\`, \`usage\` (the model and
   tokens the translation and questions cost).
@@ -275,7 +276,7 @@ const DISTRACTORS = `# Distractors
 Wrong answers for the meaning questions (Lesson meaning reps and Listen),
 written once by the cheap model and kept so a sentence is paid for once.
 
-- \`near-misses.jsonl\`: one line per Slovak sentence: \`sk\`, \`en\` (its right
+- \`near-misses.jsonl\`: one line per sentence: \`sk\`, \`en\` (its right
   translation), \`near[]\` (two English meanings that differ from it in one
   thing a form carries: person, tense, number, polarity), \`model\`,
   \`createdAt\`.

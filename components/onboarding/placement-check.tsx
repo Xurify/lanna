@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveLanguage } from "@/components/speech";
-import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem } from "@/src/core";
+import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem, LESSON_LANGUAGE } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 const INPUT = "w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-xl text-foreground caret-go outline-none focus:border-go";
@@ -164,7 +164,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				data-word-lookup-enabled={result !== null ? "true" : "false"}
 			>
 				<h2 className="font-prose text-2xl font-semibold text-foreground">{words ? "Type the word" : "Type the missing word"}</h2>
-				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang="sk">
+				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang={LESSON_LANGUAGE}>
 					<span>{item.before}</span>
 					{result ? (
 						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}</span>
@@ -207,7 +207,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 
 			{result && result.judged?.accepted && (
 				<p className="lh-rise mt-6 font-prose text-base text-muted-foreground" role="status" aria-live="polite" data-testid="placement-accepted">
-					Also right: the dictionary had <b lang="sk">{item.answer}</b>, and the tutor accepts <b lang="sk">{result.given}</b>{result.judged.note ? ` (${result.judged.note})` : ""}.
+					Also right: the dictionary had <b lang={LESSON_LANGUAGE}>{item.answer}</b>, and the tutor accepts <b lang={LESSON_LANGUAGE}>{result.given}</b>{result.judged.note ? ` (${result.judged.note})` : ""}.
 				</p>
 			)}
 			{result && result.verdict === "wrong" && (
@@ -217,11 +217,11 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 						return (
 							<>
 								<p className="font-prose text-base text-foreground">
-									The form here is <b lang="sk">{v.form}</b>
+									The form here is <b lang={LESSON_LANGUAGE}>{v.form}</b>
 									{item.trigger && (
 										<>
 											{" "}
-											— decided by <span lang="sk" className="font-semibold">{item.trigger}</span>
+											— decided by <span lang={LESSON_LANGUAGE} className="font-semibold">{item.trigger}</span>
 										</>
 									)}
 									.{v.reason ? ` ${v.reason}` : ""}
@@ -349,7 +349,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 					data-word-lookup-enabled="false"
 				>
 					<h2 className="font-prose text-2xl font-semibold text-foreground">{ask.prompt || (ask.kind === "why" ? "What decided that?" : "Give the form")}</h2>
-					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang="sk">
+					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang={LESSON_LANGUAGE}>
 						{ask.sk}
 					</p>
 					<input ref={inputRef} value={answer} onChange={(e) => setAnswer(e.target.value)} aria-label="Your answer" data-testid="edge-input" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} disabled={busy} className={cn(INPUT, "mt-5")} lang={ask.kind === "why" ? undefined : "sk"} />
@@ -424,7 +424,7 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 				Vocabulary, on its own: forty words from five frequency bands estimate how many you recognize.
 			</p>
 			<h2 className="mt-8 font-prose text-2xl font-semibold text-foreground">Tick every word whose meaning you know</h2>
-			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not Slovak words at all, and ticking them lowers the estimate. Two minutes.</p>
+			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not real words at all, and ticking them lowers the estimate. Two minutes.</p>
 			{!items ? (
 				<p className="mt-8 flex items-center gap-2 font-prose text-lg text-muted-foreground" role="status">
 					<LoaderCircleIcon className="size-5 animate-spin" /> Picking words…
@@ -437,7 +437,7 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 							<li key={w.id}>
 								<button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(w.id)} data-testid="word-chip" className={cn("flex w-full items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left font-prose text-lg transition-colors", on ? "border-go bg-go-soft text-foreground" : "border-border bg-card text-foreground hover:border-foreground/40")}>
 									<span className={cn("flex size-5 shrink-0 items-center justify-center rounded-md border", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3.5" strokeWidth={3} />}</span>
-									<span lang="sk">{w.word}</span>
+									<span lang={LESSON_LANGUAGE}>{w.word}</span>
 								</button>
 							</li>
 						);

@@ -45,7 +45,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Read", hint: "Stories, every word tappable", href: "/read", icon: "read", words: "stories episode library" },
 	{ title: "Watch", hint: "A video with both subtitles", href: "/watch", icon: "play", words: "youtube video" },
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
-	{ title: "Talk in writing", hint: "A role-play in written Slovak", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
+	{ title: "Talk in writing", hint: "A role-play in writing", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
 	{ title: "Fluency", hint: "Known sentences, said faster", href: "/fluency?mode=fast", icon: "fast", words: "say it faster speed" },
 	{ title: "Blitz", hint: "60 seconds, as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
 	{ title: "Words", hint: "Everything you have met", href: "/words", icon: "words", words: "vocabulary lexicon" },
@@ -55,7 +55,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Curriculum", hint: "Your climb, level by level and chapter by chapter", href: "/curriculum", icon: "arrow", words: "climb path levels chapters" },
 	{ title: "Progress", hint: "Hours, stamps, the plan's pace", href: "/progress", icon: "chart", words: "plan stamps hours" },
 	{ title: "Milestones", hint: "Level checks", href: "/milestones", icon: "flag", words: "level exam" },
-	{ title: "Ask the tutor", hint: "Any question about Slovak", href: "/chat/new", icon: "tutor", words: "chat" },
+	{ title: "Ask the tutor", hint: "Any question about the language", href: "/chat/new", icon: "tutor", words: "chat" },
 	{ title: "Map", hint: "What you know, as a graph", href: "/map", icon: "chart", words: "knowledge graph" },
 ];
 
@@ -165,7 +165,7 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 						autoComplete="off"
 						spellCheck={false}
 					/>
-					<button type="button" className="q-letter" aria-label="Slovak letters" aria-pressed={letters} onClick={() => setLetters((v) => !v)}>
+					<button type="button" className="q-letter" aria-label="Special letters" aria-pressed={letters} onClick={() => setLetters((v) => !v)}>
 						ä
 					</button>
 					<kbd className="q-kbd">Esc</kbd>

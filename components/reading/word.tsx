@@ -13,7 +13,7 @@ import { BookmarkCheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Volume2Icon } 
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode } from "@/components/settings/device-prefs";
-import type { StoryToken } from "@/src/core";
+import { referenceLink, type StoryToken } from "@/src/core";
 
 interface LookupFallback {
 	slug?: string;
@@ -71,7 +71,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 
 	const langCode = lookupData?.langCode ?? activeLang?.code ?? "sk";
 	const langTag = lookupData?.langTag ?? activeLang?.tag ?? "sk-SK";
-	const langEnglish = lookupData?.langEnglish ?? activeLang?.english ?? "Slovak";
+	const langEnglish = lookupData?.langEnglish ?? activeLang?.english ?? "the language";
 
 	const resolvedSlug = token.slug ?? lookupData?.slug ?? token.lemma ?? token.text;
 	const resolvedLemma = token.lemma ?? lookupData?.lemma ?? token.text;
@@ -172,9 +172,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 	const referenceUrl =
 		lookupData?.referenceUrl ??
 		(referenceSite
-			? resolvedSlug
-				? `${referenceSite.baseUrl}/dictionary/${encodeURIComponent(resolvedSlug)}`
-				: `${referenceSite.baseUrl}/search?q=${encodedWord}`
+			? referenceLink(referenceSite, { slug: resolvedSlug, lemma: resolvedLemma, query: token.text })
 			: undefined);
 	const referenceLabel = lookupData?.referenceLabel ?? referenceSite?.label;
 

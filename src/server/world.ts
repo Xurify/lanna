@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
+import { ACTIVE_PROFILE, curriculumFile } from "../../config.ts";
 
 export interface WorldPerson {
 	id: string;
@@ -31,6 +31,14 @@ export interface World {
 	series: string;
 	language?: string;
 	version?: number;
+	/** Where the series is set ("Bratislava"). */
+	city?: string;
+	/** The lead in one line, as the writer is told it. */
+	logline?: string;
+	/** Episode settings per purpose (src/core/onboarding.ts PURPOSES). */
+	settings?: Partial<Record<string, string[]>>;
+	/** The Speak scenes set in the series' places, by scene id (src/core/speak.ts). */
+	scenes?: Partial<Record<string, { title?: string; blurb?: string; brief?: string; task?: string }>>;
 	cast: WorldPerson[];
 	places: WorldPlace[];
 	/** One English sentence per chapter id (src/core/curriculum.ts CHAPTERS). */
@@ -40,7 +48,7 @@ export interface World {
 const cache = new Map<string, World | null>();
 
 export function worldPath(profile: string = ACTIVE_PROFILE): string {
-	return path.join(PATHS.curriculum, profile, "world.json");
+	return curriculumFile(profile, "world.json");
 }
 
 /** The active profile's story bible, or null when the language has none. */

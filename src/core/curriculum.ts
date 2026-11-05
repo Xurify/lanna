@@ -27,6 +27,7 @@
 
 import { UNITS, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts";
 import { LISTEN_MINUTES } from "./listen.ts";
+import { activeCourse, type Course } from "./course.ts";
 
 // ─── Levels and stages ─────────────────────────────────────────────────────
 
@@ -128,8 +129,9 @@ const goal = (id: string, title: string, tagline: string, node: string | undefin
 	};
 };
 
-/** Every unit on the map, in teaching order. */
-export const CURRICULUM: CurriculumUnit[] = [
+/** Slovak's map, in teaching order. Built only when Slovak runs: its
+ *  units are not in a generated course. */
+const slovakCurriculum = (): CurriculumUnit[] => [
 	// ── A1 · 1 Hello ──
 	drill("words"),
 	drill("lx-greetings"),
@@ -308,35 +310,63 @@ export interface Chapter {
 	units: string[];
 }
 
-function chapter(id: string, stage: StageId, title: string, tagline: string, from: string, to: string): Chapter {
-	const a = CURRICULUM.findIndex((u) => u.id === from);
-	const b = CURRICULUM.findIndex((u) => u.id === to);
+function chapter(map: readonly CurriculumUnit[], id: string, stage: StageId, title: string, tagline: string, from: string, to: string): Chapter {
+	const a = map.findIndex((u) => u.id === from);
+	const b = map.findIndex((u) => u.id === to);
 	if (a < 0 || b < a) throw new Error(`curriculum: bad chapter ${id}`);
-	return { id, stage, title, tagline, units: CURRICULUM.slice(a, b + 1).map((u) => u.id) };
+	return { id, stage, title, tagline, units: map.slice(a, b + 1).map((u) => u.id) };
 }
 
-/** The map's chapters, in order. Each closes with a can-do goal. */
-export const CHAPTERS: Chapter[] = [
-	chapter("hello", "a1", "Hello", "Sounds, greetings and the present tense", "words", "can-introduce"),
-	chapter("cafe", "a1", "At the café", "To be, to want, the object case, ordering", "byt", "can-order"),
-	chapter("town", "a1", "In town", "Where and where to", "loc", "can-directions"),
-	chapter("family", "a1", "Family", "People as objects, genitive, gender", "acc-people", "can-family"),
-	chapter("everyday", "a1", "Every day", "With, adjectives, time and routine", "ins", "can-describe-day"),
-	chapter("yesterday", "a1", "Yesterday", "The past tense and the dative", "past", "can-tell-day"),
-	chapter("health", "a2", "Health and body", "-ujem verbs, reflexives", "present-ujem", "can-appointment"),
-	chapter("shopping", "a2", "Shopping", "Numbers, plural, would like", "numbers", "can-shop"),
-	chapter("plans", "a2", "Plans and weather", "-em verbs and the future", "present-em", "can-plan"),
-	chapter("moving", "a2", "Moving around", "Motion, aspect, commands", "motion", "can-travel"),
-	chapter("people", "a2", "People and feelings", "Adjective cases, pronouns, clitics", "adj-cases", "can-describe-people"),
-	chapter("work", "a2", "Work and school", "Negation, time, word order", "lx-work", "can-interview"),
-	chapter("stories", "b1", "Telling stories", "All cases mixed, prefixes, narration", "cases-mix", "can-narrate"),
-	chapter("opinions", "b1", "Opinions", "Relative clauses, reported speech, comparison", "verbs-mix", "can-opinion"),
-	chapter("offices", "b1", "Dealing with offices", "Plural cases, forms, phone and email", "plural-cases", "can-complain"),
-	chapter("world", "b1", "The wider world", "Participles, nature, 1,500 words", "lx-nature", "can-read-news"),
-	chapter("nuance", "b2", "Nuance", "Passive, past conditional, numerals", "words-2000", "can-write-formal"),
-	chapter("register", "b2", "Register and idiom", "Idioms, street Slovak, connectors", "idioms", "can-debate"),
-	chapter("media", "b2", "Media", "Reading, listening, writing at length", "reading", "can-follow-media"),
+/** Slovak's chapters, in order. Each closes with a can-do goal. */
+const slovakChapters = (map: readonly CurriculumUnit[]): Chapter[] => [
+	chapter(map, "hello", "a1", "Hello", "Sounds, greetings and the present tense", "words", "can-introduce"),
+	chapter(map, "cafe", "a1", "At the café", "To be, to want, the object case, ordering", "byt", "can-order"),
+	chapter(map, "town", "a1", "In town", "Where and where to", "loc", "can-directions"),
+	chapter(map, "family", "a1", "Family", "People as objects, genitive, gender", "acc-people", "can-family"),
+	chapter(map, "everyday", "a1", "Every day", "With, adjectives, time and routine", "ins", "can-describe-day"),
+	chapter(map, "yesterday", "a1", "Yesterday", "The past tense and the dative", "past", "can-tell-day"),
+	chapter(map, "health", "a2", "Health and body", "-ujem verbs, reflexives", "present-ujem", "can-appointment"),
+	chapter(map, "shopping", "a2", "Shopping", "Numbers, plural, would like", "numbers", "can-shop"),
+	chapter(map, "plans", "a2", "Plans and weather", "-em verbs and the future", "present-em", "can-plan"),
+	chapter(map, "moving", "a2", "Moving around", "Motion, aspect, commands", "motion", "can-travel"),
+	chapter(map, "people", "a2", "People and feelings", "Adjective cases, pronouns, clitics", "adj-cases", "can-describe-people"),
+	chapter(map, "work", "a2", "Work and school", "Negation, time, word order", "lx-work", "can-interview"),
+	chapter(map, "stories", "b1", "Telling stories", "All cases mixed, prefixes, narration", "cases-mix", "can-narrate"),
+	chapter(map, "opinions", "b1", "Opinions", "Relative clauses, reported speech, comparison", "verbs-mix", "can-opinion"),
+	chapter(map, "offices", "b1", "Dealing with offices", "Plural cases, forms, phone and email", "plural-cases", "can-complain"),
+	chapter(map, "world", "b1", "The wider world", "Participles, nature, 1,500 words", "lx-nature", "can-read-news"),
+	chapter(map, "nuance", "b2", "Nuance", "Passive, past conditional, numerals", "words-2000", "can-write-formal"),
+	chapter(map, "register", "b2", "Register and idiom", "Idioms, street Slovak, connectors", "idioms", "can-debate"),
+	chapter(map, "media", "b2", "Media", "Reading, listening, writing at length", "reading", "can-follow-media"),
 ];
+
+/** A generated course's map: First words opens it, then each chapter's
+ *  units, tutor sessions and goal in the course's order. */
+function courseCurriculum(course: Course): CurriculumUnit[] {
+	const units = new Set(course.units.map((u) => u.id));
+	const tutors = new Map(course.tutors.map((t) => [t.id, t]));
+	const goals = new Map(course.goals.map((g) => [g.id, g]));
+	const out: CurriculumUnit[] = [drill("words")];
+	for (const ch of course.chapters) {
+		for (const id of ch.units) {
+			const t = tutors.get(id);
+			const g = goals.get(id);
+			if (units.has(id)) out.push(drill(id as UnitId));
+			else if (t) out.push(tutor(t.id, t.title, t.tagline, t.glyph, undefined, t.brief));
+			else if (g) out.push(goal(g.id, g.title, g.tagline, undefined, g.scene));
+		}
+	}
+	return out;
+}
+
+/** The running language's course (src/core/course.ts), else Slovak's. */
+const COURSE = activeCourse();
+
+/** Every unit on the map, in teaching order. */
+export const CURRICULUM: CurriculumUnit[] = COURSE ? courseCurriculum(COURSE) : slovakCurriculum();
+
+/** The map's chapters, in order. Each closes with a can-do goal. */
+export const CHAPTERS: Chapter[] = COURSE ? COURSE.chapters.map((c, i) => ({ id: c.id, stage: c.stage, title: c.title, tagline: c.tagline, units: i === 0 ? ["words", ...c.units] : [...c.units] })) : slovakChapters(CURRICULUM);
 
 export function curriculumUnit(id: string): CurriculumUnit | undefined {
 	return CURRICULUM.find((u) => u.id === id);
@@ -708,7 +738,7 @@ export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, 
  * the path (one lesson on the Continue unit), interleaved strengthening of
  * the weakest practiced unit, new words in context, an episode to read at
  * the learner's level, output with feedback (a tutor unit, else a spoken
- * scene from what Slovak is for), and three minutes of speed on what is
+ * scene from the learner's goals), and three minutes of speed on what is
  * already known (a timed re-read of an episode, or "say it faster"). The
  * order follows comprehension-before-production; the mix follows
  * Nation's four strands (src/core/strands.ts). The list is cut to the
@@ -844,7 +874,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push({
 		id: "read",
 		title: "Read",
-		line: (day.reads ?? 0) > 0 ? "Today's episode is read" : "Today's episode of Robo in Bratislava — tap any word for its meaning",
+		line: (day.reads ?? 0) > 0 ? "Today's episode is read" : "Today's episode of the story — tap any word for its meaning",
 		minutes: TASK_MINUTES.read,
 		done: (day.reads ?? 0) > 0,
 		href: "/read",
@@ -878,9 +908,9 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		const tutorClean = tutorUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 		tasks.push({ id: "speak", title: `With the tutor: ${tutorClean}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
 	} else if (scene) {
-		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers in Slovak and prompts your slips" : "Say a scene from what Slovak is for out loud — the tutor answers in Slovak and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
+		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers and prompts your slips" : "Say a scene from your goals out loud — the tutor answers and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
 	} else {
-		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers in Slovak and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
+		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
 	}
 
 	// 8. Speed: fluency on what is already known (src/core/fluency.ts). A
@@ -922,7 +952,7 @@ export function tutorUnitPrompt(unit: CurriculumUnit): string {
 	const cleanTitle = unit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 	return [
 		`Lesson with the tutor: ${cleanTitle}. ${unit.brief ?? unit.tagline}`,
-		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in Slovak.",
-		"On a miss, name the trigger and let me try once more before you give the form. Use say: spans for every Slovak example. End with the three forms to remember.",
+		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in the language I am learning.",
+		"On a miss, name the trigger and let me try once more before you give the form. Use say: spans for every example in the language I am learning. End with the three forms to remember.",
 	].join(" ");
 }

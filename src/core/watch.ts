@@ -233,7 +233,7 @@ export interface WatchState {
 export type PrepareStage = "captions" | "transcribing" | "translating" | "questions" | "saving" | "done" | "error";
 
 export const PREPARE_STAGE_LINE: Record<PrepareStage, string> = {
-	captions: "Fetching the Slovak captions from YouTube",
+	captions: "Fetching the captions from YouTube",
 	transcribing: "No captions — transcribing the audio",
 	translating: "Translating every line (cheap model slot, once)",
 	questions: "Writing the comprehension questions",

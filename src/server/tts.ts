@@ -31,6 +31,7 @@ import path from "node:path";
 import { ACTIVE_PROFILE } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { entryLemma, exampleText } from "../core/review.ts";
 import { chatStore } from "../store/chats.ts";
 import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
@@ -107,7 +108,7 @@ function* spokenPhrases(): Generator<MigrationCandidate> {
 			for (const ex of e.examples) if (!ex.rejected) yield* emit(info.code, exampleText(ex));
 		}
 	}
-	const active = LANGUAGES[ACTIVE_PROFILE].code;
+	const active = activeLanguage().code;
 	for (const card of Object.values(reviewStore.readCards())) yield* emit(active, card.sentence);
 	for (const summary of chatStore.listChats()) {
 		const chat = chatStore.getChat(summary.id);
@@ -240,7 +241,7 @@ const TIERS: Array<{ tier: TtsTier; ext: "mp3" | "wav"; run: (req: TtsRequest, l
 
 /** Cached clip, or the first tier that succeeds; null = use the browser. */
 export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
-	const lang = languageByCode(req.lang);
+	const lang = languageByCode(req.lang) ?? [activeLanguage()].find((l) => l.code === req.lang);
 	if (!lang) throw new Error(`unsupported language "${req.lang}"`);
 	migrateAudioOnce();
 	// slovak.wiki's own recording beats any clip made here, for the default voice.

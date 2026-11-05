@@ -57,7 +57,10 @@ describe("LH_DATA_DIR seam", () => {
 			{ cwd: REPO_ROOT, encoding: "utf-8", env: env as NodeJS.ProcessEnv },
 		);
 		const parsed = JSON.parse(out) as { data: string; chats: string | null };
-		assert.equal(parsed.data, path.join(REPO_ROOT, "data", "profiles", "slovak"));
-		assert.equal(parsed.chats, path.join(REPO_ROOT, "data", "profiles", "slovak", "chats"));
+		// The profile is whichever one the repo's own data/profile.json names: on
+		// the owner's machine that can be a language added from the app.
+		const profiles = path.join(REPO_ROOT, "data", "profiles");
+		assert.equal(path.dirname(parsed.data), profiles);
+		assert.equal(parsed.chats, path.join(parsed.data, "chats"));
 	});
 });

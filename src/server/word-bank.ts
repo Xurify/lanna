@@ -11,7 +11,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 import { loadLexicon, lookupWord, type Lexicon } from "../agent/lexicon.ts";
-import { foldDiacritics, isLanguageId, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { foldDiacritics, LANGUAGES, referenceLink, type LanguageInfo } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { GRAMMAR_WORDS, grammarWord } from "../core/reading.ts";
 import { reviewStore } from "../store/review.ts";
 import { savedPhraseStore } from "../store/saved-phrases.ts";
@@ -29,7 +30,7 @@ import { compareMatches, matchWord, type WordSearchMatch } from "../core/word-se
 import { entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "../core/review.ts";
 
 function activeLang(): LanguageInfo {
-	return isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE] : LANGUAGES.slovak;
+	return activeLanguage();
 }
 
 export interface SelectionLookupResult {
@@ -71,20 +72,11 @@ export function referenceSiteLinkFor(
 	slug?: string,
 	query?: string,
 	lang: LanguageInfo = activeLang(),
+	lemma?: string,
 ): { url?: string; label?: string } {
 	const site = lang.referenceSite;
 	if (!site) return {};
-	if (slug && !slug.includes(" ") && slug !== "word") {
-		return {
-			url: `${site.baseUrl}/dictionary/${encodeURIComponent(slug)}`,
-			label: site.label,
-		};
-	}
-	const trimmedQuery = (query ?? "").trim();
-	return {
-		url: trimmedQuery ? `${site.baseUrl}/search?q=${encodeURIComponent(trimmedQuery)}` : `${site.baseUrl}/dictionary`,
-		label: site.label,
-	};
+	return { url: referenceLink(site, { slug, lemma: lemma ?? query, query }), label: site.label };
 }
 
 export function slovakWikiUrlFor(slug?: string, query?: string): string {
@@ -336,7 +328,7 @@ function buildResultFromEntry(
 		gloss = rawEntryGloss;
 	}
 
-	const refLink = referenceSiteLinkFor(canonicalEntry.slug, cleaned, lang);
+	const refLink = referenceSiteLinkFor(canonicalEntry.slug, cleaned, lang, entryLemma(canonicalEntry));
 
 	return {
 		query: cleaned,
@@ -403,7 +395,7 @@ export function lookupSelection(text: string): SelectionLookupResult {
 		const slug = lexEntry?.slug ?? foldDiacritics(grammarMatch.lemma.toLocaleLowerCase(lang.tag)).replace(/[^a-z0-9]+/g, "-");
 		const card = Object.values(cards).find((cardEntry) => cardEntry.slug === slug);
 		const isDifferent = lower !== grammarMatch.lemma.toLocaleLowerCase(lang.tag);
-		const refLink = referenceSiteLinkFor(lexEntry?.slug, grammarMatch.lemma, lang);
+		const refLink = referenceSiteLinkFor(lexEntry?.slug, grammarMatch.lemma, lang, grammarMatch.lemma);
 		return {
 			query: cleaned,
 			found: true,
@@ -468,7 +460,7 @@ export function lookupSelection(text: string): SelectionLookupResult {
 			if (matchedNewWord) {
 				const slug = matchedNewWord.slug ?? folded.replace(/[^a-z0-9]+/g, "-");
 				const card = Object.values(cards).find((cardEntry) => cardEntry.slug === slug);
-				const refLink = referenceSiteLinkFor(matchedNewWord.slug, matchedNewWord.lemma, lang);
+				const refLink = referenceSiteLinkFor(matchedNewWord.slug, matchedNewWord.lemma, lang, matchedNewWord.lemma);
 				return {
 					query: cleaned,
 					found: true,

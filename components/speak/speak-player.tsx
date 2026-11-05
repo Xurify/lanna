@@ -449,7 +449,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 								}}
 								rows={1}
 								lang="sk"
-								placeholder="Your line in Slovak…"
+								placeholder="Your line…"
 								disabled={sending || phase !== "scene"}
 								className="min-h-12 flex-1 resize-none rounded-lg bg-card px-4 py-3 font-prose text-lg text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] dark:bg-background"
 								data-testid="speak-input"

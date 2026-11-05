@@ -170,12 +170,12 @@ const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
 	listen: {
 		label: "Comprehensible Input",
 		strand: "Listening",
-		description: "Hear real Slovak sentences at 95–98% known words. Train your ear before production.",
+		description: "Hear real sentences at 95–98% known words. Train your ear before production.",
 	},
 	lesson: {
 		label: "Grammar & Rules",
 		strand: "Language-focused learning",
-		description: "Deliberate practice of Slovak grammar patterns, case endings, and verb conjugations.",
+		description: "Deliberate practice of grammar patterns, case endings, and verb conjugations.",
 	},
 	strengthen: {
 		label: "Strengthen Weak Spots",
@@ -195,7 +195,7 @@ const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
 	read: {
 		label: "Extensive Reading",
 		strand: "Input",
-		description: "Graded story reading in Slovak with instant word tap-to-translate and audio.",
+		description: "Graded story reading with instant word tap-to-translate and audio.",
 	},
 	watch: {
 		label: "Authentic Video",
@@ -223,7 +223,7 @@ function TaskIcon({ task, large = false }: { task: PlanTask; large?: boolean }) 
 		? {
 				label: "Tutor Session",
 				strand: "Guided speaking",
-				description: "1-on-1 spoken practice with your Slovak tutor to guide pronunciation and rules.",
+				description: "1-on-1 spoken practice with your tutor to guide pronunciation and rules.",
 		  }
 		: TASK_DETAILS[task.id];
 

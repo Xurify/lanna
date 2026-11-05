@@ -32,7 +32,8 @@ import { pairsLessonFor } from "../core/aspect-tasks.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
 import type { UnitKind } from "../core/lesson.ts";
 import { weakestGender, type AtlasGender } from "../core/grammar.ts";
-import { captionLanguageName, isLanguageId, LANGUAGES } from "../core/language.ts";
+import { captionLanguageName } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { dayKey, type LexiconEntry } from "../core/review.ts";
 import {
 	CEFR_ORDER,
@@ -151,7 +152,8 @@ export function personalFor(seed = Date.now()): LessonPlan {
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
 	const started = UNITS.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
-	const units = started.length >= 2 ? started : (["present", "acc-fem", "loc"] as UnitId[]);
+	const firstGrammar = UNITS.filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
+	const units = started.length >= 2 ? started : firstGrammar;
 	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
 }
 
@@ -325,7 +327,7 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	return { ...outcome, ...(newStamps.length ? { newStamps } : {}), summary };
 }
 
-const tag = () => (isLanguageId(ACTIVE_PROFILE) ? LANGUAGES[ACTIVE_PROFILE].tag : "sk-SK");
+const tag = () => activeLanguage().tag;
 
 /** A rep's first try, located from the lexicon here: the word's entry, and
  *  the try it counts as (null when it counts toward nothing). The slip and

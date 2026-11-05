@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { LANGUAGE_PROFILES } from "../config.ts";
-import { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS, LANGUAGE_PRESETS } from "../src/core/language.ts";
+import { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_CATALOG, LANGUAGE_IDS } from "../src/core/language.ts";
 import { loadLexicon, lookupWord } from "../src/agent/lexicon.ts";
 import { entryLemma, exampleText, pickClozeExample, mintCard } from "../src/core/review.ts";
 import { getPairsForLanguage } from "../src/core/pairs.ts";
@@ -27,18 +27,17 @@ describe("multi-language architecture", () => {
 		}
 	});
 
-	it("provides ready-to-plug presets for additional languages", () => {
-		const presetKeys = Object.keys(LANGUAGE_PRESETS);
-		assert.ok(presetKeys.includes("czech"));
-		assert.ok(presetKeys.includes("romanian"));
-		assert.ok(presetKeys.includes("german"));
-		assert.ok(presetKeys.includes("spanish"));
-
-		for (const preset of Object.values(LANGUAGE_PRESETS)) {
-			assert.ok(preset.code);
-			assert.ok(preset.tag);
-			assert.ok(preset.endonym);
-			assert.ok(preset.edgeVoices.length > 0);
+	it("lists the languages the app can add, each with its sources and a voice", () => {
+		const ids = LANGUAGE_CATALOG.map((l) => l.id);
+		assert.deepEqual([...ids].sort(), ["bulgarian", "czech", "estonian", "norwegian", "polish", "romanian", "russian"]);
+		assert.equal(new Set(ids).size, ids.length);
+		for (const l of LANGUAGE_CATALOG) {
+			assert.match(l.tag, /^[a-z]{2}-[A-Z]{2}$/, l.id);
+			assert.equal(l.code, l.tag.split("-")[0]);
+			assert.match(l.tatoeba, /^[a-z]{3}$/, l.id);
+			assert.ok(l.wiktionary, l.id);
+			assert.ok(l.edgeVoices.length > 0 && l.edgeVoices.every((v) => v.startsWith(`${l.tag}-`)), l.id);
+			assert.ok(l.referenceSite?.wordUrl?.includes("{word}"), l.id);
 		}
 	});
 

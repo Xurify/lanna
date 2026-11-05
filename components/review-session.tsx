@@ -337,7 +337,7 @@ export function ReviewSession() {
 
 								{status && !status.available && (
 									<div className="q-card p-6 text-[15px] text-ink-3" data-testid="review-unavailable">
-										This language has no dictionary yet, so there are no review sentences. Slovak has one: switch languages at the top of the sidebar.
+										This language has no words yet, so there are no review sentences. Add its words from the language menu at the top of the sidebar (Add a language…).
 									</div>
 								)}
 

@@ -6,7 +6,8 @@
  * removes them. The sidebar's Background section shows what runs; the ready
  * card says what just finished; this page is where both stay. The list is
  * the activity feed, so it moves on its own. It is in memory: a server
- * restart empties it, and the videos it prepared stay in Watch.
+ * restart empties it, and the videos it prepared stay in Watch, the
+ * languages it added in the language menu.
  */
 
 import { useState } from "react";
@@ -16,19 +17,26 @@ import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { formatElapsed, useActivity, type FeedTask } from "@/components/activity-dock";
 import { retryTask, stopTask, taskAction } from "@/components/task-actions";
+import { addLanguage, switchLanguage } from "@/components/switch-language";
 
-const KIND_LABEL: Record<FeedTask["kind"], string> = { video: "Video preparation" };
+const KIND_LABEL: Record<FeedTask["kind"], string> = { video: "Video preparation", language: "Adding a language" };
 
 export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 	const { feed, refresh } = useActivity();
 	const [busy, setBusy] = useState<string | null>(null);
+	const [note, setNote] = useState<string | null>(null);
 	const tasks = tasksProp ?? feed.tasks;
 	const running = tasks.filter((t) => t.status === "running").sort((a, b) => a.startedAt - b.startedAt);
 	const finished = tasks.filter((t) => t.status !== "running").sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0));
 
 	const act = async (id: string, run: () => Promise<unknown>) => {
 		setBusy(id);
-		await run();
+		setNote(null);
+		try {
+			await run();
+		} catch (err) {
+			setNote(err instanceof Error ? err.message : String(err));
+		}
 		setBusy(null);
 		refresh();
 	};
@@ -45,7 +53,7 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 					Today
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Tasks</h1>
-				<p className="q-line dim mt-2 max-w-2xl">Work that runs in the background, so a page does not have to wait: preparing a video for now. What runs shows here and in the sidebar; what finished stays until you remove it.</p>
+				<p className="q-line dim mt-2 max-w-2xl">Work that runs in the background, so a page does not have to wait: preparing a video, adding a language. What runs shows here and in the sidebar; what finished stays until you remove it.</p>
 
 				{tasks.length === 0 && (
 					<EmptyState
@@ -87,11 +95,21 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 						</h2>
 						<ul className="flex flex-col gap-2" data-testid="tasks-finished">
 							{finished.map((t) => (
-								<TaskRow key={t.id} task={t} line={t.status === "done" ? "Ready" : (t.error ?? "Failed")}>
+								<TaskRow key={t.id} task={t} line={t.status === "done" ? (t.note ?? "Ready") : (t.error ?? "Failed")}>
 									{t.status === "done" && t.href && (
 										<Link href={t.href} className="q-btn sec pointer-coarse:min-h-11" data-testid="task-open">
 											Open
 										</Link>
+									)}
+									{t.status === "done" && t.language && (
+										<button type="button" disabled={busy === t.id} onClick={() => void act(t.id, async () => setNote((await switchLanguage(t.language!.id, t.language!.english)).restartNote))} className="q-btn sec pointer-coarse:min-h-11" data-testid="task-switch">
+											Switch to {t.language.english}
+										</button>
+									)}
+									{t.status === "error" && t.language && (
+										<button type="button" disabled={busy === t.id} onClick={() => void act(t.id, async () => { await taskAction({ action: "remove", id: t.id }); await addLanguage(t.language!.id); })} className="q-btn sec pointer-coarse:min-h-11" data-testid="task-retry">
+											Try again
+										</button>
 									)}
 									{t.status === "error" && t.retry && (
 										<button type="button" disabled={busy === t.id} onClick={() => void act(t.id, async () => (await retryTask(t)) && (await taskAction({ action: "remove", id: t.id })))} className="q-btn sec pointer-coarse:min-h-11" data-testid="task-retry">
@@ -104,6 +122,11 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 								</TaskRow>
 							))}
 						</ul>
+						{note && (
+							<p className="q-line dim mt-3" role="status">
+								{note}
+							</p>
+						)}
 						<button type="button" onClick={() => void act("clear", () => taskAction({ action: "clear" }))} className="q-btn ghost mt-3 pointer-coarse:min-h-11" data-testid="tasks-clear">
 							Clear finished
 						</button>
@@ -120,7 +143,7 @@ function TaskRow({ task, line, children }: { task: FeedTask; line: string; child
 		<li className="q-card flex items-center gap-3 px-4 py-3" data-testid={`task-${task.status}`}>
 			{task.status === "running" ? <LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" /> : task.status === "done" ? <CheckIcon className="size-4 shrink-0 text-teal-2" /> : <XIcon className="size-4 shrink-0 text-miss" />}
 			<span className="min-w-0 flex-1">
-				<span className="block truncate font-ui text-[15px] font-[600] text-foreground" lang="sk" title={task.title}>
+				<span className="block truncate font-ui text-[15px] font-[600] text-foreground" lang={task.kind === "video" ? "sk" : undefined} title={task.title}>
 					{task.title}
 				</span>
 				<span className="block font-prose text-[13px] text-ink-3">

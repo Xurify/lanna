@@ -13,6 +13,7 @@ import path from "node:path";
 import { ACTIVE_PROFILE, PATHS } from "../../config.ts";
 import type { ChatRecord } from "../core/contracts.ts";
 import { LANGUAGES } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { userFacingTextOf, failedOutputCallIds } from "../core/native-messages.ts";
 import { chatStore } from "../store/chats.ts";
 import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEntry } from "../store/corpus.ts";
@@ -196,9 +197,9 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
 | \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage) and \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats) |
-| \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, Slovak, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
+| \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, the line in the language, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
 
-Text is UTF-8 with Slovak diacritics as written. Verdicts: \`exact\`,
+Text is UTF-8 with diacritics as written. Verdicts: \`exact\`,
 \`accents\` (right apart from diacritics), \`wrong\`. Tokens are per provider
 report; \`costUsd\` is null when a model had no price in the catalog.
 `;
@@ -291,7 +292,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	const summary: CorpusSummary = {
 		exportedAt: now.toISOString(),
 		profile: ACTIVE_PROFILE,
-		language: LANGUAGES[ACTIVE_PROFILE].code,
+		language: activeLanguage().code,
 		counts: {
 			audioClips: audio.length,
 			lessons: lessons.length,

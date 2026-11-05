@@ -48,6 +48,9 @@ export interface UsageReport {
 	/** Placement checks (src/server/placement.ts): judged answers + the Socratic stage, USD. */
 	placementUsd?: number;
 	placement?: { count: number; unpriced: number };
+	/** Courses and story bibles written while adding a language (src/server/language-add.ts), USD. */
+	languagesUsd?: number;
+	languages?: { count: number; unpriced: number };
 	unpricedTurns: number;
 	/** YYYY-MM → USD (turns, extraction and jobs by their own dates). */
 	byMonth: Array<{ month: string; usd: number; turns: number }>;

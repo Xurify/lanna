@@ -86,6 +86,7 @@ export type StoryGenre = "robo" | "dialogue" | "message" | "diary" | "folk" | "t
 
 export interface GenreInfo {
 	id: StoryGenre;
+	/** May hold {series}, {language} and {country}; genreInfo fills them. */
 	label: string;
 	/** The lowest level the genre is written at. */
 	from: Cefr;
@@ -94,22 +95,35 @@ export interface GenreInfo {
 }
 
 export const STORY_GENRES: readonly GenreInfo[] = [
-	{ id: "robo", label: "Robo in Bratislava", from: "A1", brief: "an episode of the running series about Robo (see the earlier recaps); mostly dialogue with a little narration" },
+	{ id: "robo", label: "{series}", from: "A1", brief: "an episode of the running series (see the earlier recaps); mostly dialogue with a little narration" },
 	{ id: "dialogue", label: "A conversation", from: "A1", brief: "a stand-alone conversation between two people in an everyday place (a shop, a bus, a kitchen, a reception desk); almost every line is speech, with one narrator line to set the scene" },
 	{ id: "message", label: "Messages", from: "A1", brief: "an exchange of short text messages or a short email and its reply between two named people; each sentence is one message or one line of a message" },
 	{ id: "diary", label: "A diary page", from: "A2", brief: "a diary entry written in the first person by a named person about one day; narration only" },
-	{ id: "folk", label: "A folk tale", from: "A2", brief: "a Slovak folk tale or legend retold simply (a water sprite, a castle, a shepherd, the Tatras); narration with a few lines of speech" },
-	{ id: "travel", label: "A place in Slovakia", from: "A2", brief: "a short piece about a real Slovak town, region or custom, as a friendly guide would tell it; narration only" },
+	{ id: "folk", label: "A folk tale", from: "A2", brief: "a {language} folk tale or legend retold simply; narration with a few lines of speech" },
+	{ id: "travel", label: "A place in {country}", from: "A2", brief: "a short piece about a real town, region or custom in {country}, as a friendly guide would tell it; narration only" },
 	{ id: "fable", label: "A fable", from: "A2", brief: "a short fable with animals and a one-line moral at the end; narration with lines of speech" },
-	{ id: "news", label: "A news item", from: "B1", brief: "a short local news item in plain newspaper Slovak about an everyday event (a new tram line, a festival, a lost dog found); one quoted person" },
+	{ id: "news", label: "A news item", from: "B1", brief: "a short local news item in plain newspaper {language} about an everyday event (a new tram line, a festival, a lost dog found); one quoted person" },
 	{ id: "interview", label: "An interview", from: "B1", brief: "a short interview: a named interviewer's questions and a named person's answers about their work or hobby" },
 	{ id: "work", label: "At work", from: "B1", brief: "a scene at work (a meeting, a phone call with a client, an email thread) with two or three named colleagues; mostly speech" },
-	{ id: "opinion", label: "An opinion piece", from: "B2", brief: "a short opinion column that argues one point about life in Slovakia and admits one counter-argument; narration only" },
-	{ id: "history", label: "From history", from: "B2", brief: "a short piece about a person, place or event from Slovak history, told as a story; narration with at most two lines of speech" },
+	{ id: "opinion", label: "An opinion piece", from: "B2", brief: "a short opinion column that argues one point about life in {country} and admits one counter-argument; narration only" },
+	{ id: "history", label: "From history", from: "B2", brief: "a short piece about a person, place or event from the history of {country}, told as a story; narration with at most two lines of speech" },
 ];
 
-export function genreInfo(id: string): GenreInfo {
-	return STORY_GENRES.find((g) => g.id === id) ?? STORY_GENRES[0]!;
+/** The names a genre's label and brief are filled with. */
+export interface StoryNames {
+	/** The running series, from the language's story bible. */
+	series: string;
+	language: string;
+	country: string;
+}
+
+/** Without a language at hand (a label in a list), the words stay general. */
+const PLAIN_NAMES: StoryNames = { series: "The story", language: "local", country: "the country" };
+
+export function genreInfo(id: string, names: StoryNames = PLAIN_NAMES): GenreInfo {
+	const g = STORY_GENRES.find((x) => x.id === id) ?? STORY_GENRES[0]!;
+	const fill = (t: string) => t.replace(/\{(series|language|country)\}/g, (_, k: keyof StoryNames) => names[k]);
+	return { ...g, label: fill(g.label), brief: fill(g.brief) };
 }
 
 const LEVEL_ORDER: readonly Cefr[] = ["A1", "A2", "B1", "B2", "C1"];
@@ -189,7 +203,7 @@ export interface StoryRecord {
 	/** "ep-003-robo-na-trhu": the episode number and the title's slug. */
 	id: string;
 	lang: string;
-	/** The series the episode belongs to (one so far: Robo in Bratislava). */
+	/** The series the episode belongs to (the language's story bible names it). */
 	series: string;
 	episode: number;
 	title: string;

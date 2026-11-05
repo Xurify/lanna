@@ -25,7 +25,8 @@ import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
-import { captionLanguageName, LANGUAGES } from "../core/language.ts";
+import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
+import { activeLanguage } from "./active-language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
@@ -63,9 +64,9 @@ import { enqueueWords } from "./review.ts";
 import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
 const run = promisify(execFile);
-const code = () => LANGUAGES[ACTIVE_PROFILE].code;
+const code = () => activeLanguage().code;
 /** The caption languages taken, the learner's own first. */
-const captionLangs = (): string[] => [code(), ...(LANGUAGES[ACTIVE_PROFILE].captionFallbacks ?? []).map((f) => f.code)];
+const captionLangs = (): string[] => [code(), ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 const ANDROID_VERSION = "20.10.38";
 
@@ -350,27 +351,37 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 
 // ─── Translation and questions on the cheap slot ────────────────────────────
 
-const TRANSLATE_SYSTEM = `You translate the lines of a Slovak video's subtitles into natural English for a learner who watches with both languages on screen. You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one English string per Slovak line, in the same order, the same count.
+type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
+
+export function translateSystem(lang: PromptLang = activeLanguage()): string {
+	const name = lang.english;
+	const x = lang.promptExamples ?? {};
+	return `You translate the lines of a ${name} video's subtitles into natural English for a learner who watches with both languages on screen. You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one English string per ${name} line, in the same order, the same count.
 
 Rules:
 - One English string per line, covering only that line's own words: never pull in words from the next line or repeat the previous one.
 - Lines are cut by length, so a sentence often runs across lines. Read the lines around each one to see what it means, then write the line as natural English for its own words. A line that stops mid-sentence ends with "…", and the line that carries on starts with "…".
-- Automatic captions have no punctuation, wrong words, false starts and repeats ("tak, tak", "ktoré to nie sú veci, ktoré to nie sú"): translate what the speaker most likely meant, and say a repeat or false start once.
+- Automatic captions have no punctuation, wrong words, false starts and repeats${x.captionNoise ? ` (${x.captionNoise})` : ""}: translate what the speaker most likely meant, and say a repeat or false start once.
 - Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
+}
 
-const RENDER_SYSTEM = `You rewrite the lines of a video's subtitles into Slovak, for a language app that measures how much of the video a Slovak learner already knows. The subtitles are in a closely related language (the ask names it). You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one Slovak string per line, in the same order, the same count.
+export function renderSystem(name: string = activeLanguage().english): string {
+	return `You rewrite the lines of a video's subtitles into ${name}, for a language app that measures how much of the video a ${name} learner already knows. The subtitles are in a closely related language (the ask names it). You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one ${name} string per line, in the same order, the same count.
 
 Rules:
-- Say each line the way a Slovak speaker would say it, with the same meaning and as close to the original words as Slovak allows: change a word only where the two languages differ (spelling, endings, vocabulary), and leave a word that is the same in both.
+- Say each line the way a ${name} speaker would say it, with the same meaning and as close to the original words as ${name} allows: change a word only where the two languages differ (spelling, endings, vocabulary), and leave a word that is the same in both.
 - Never summarize, add or drop words; a line that stops mid-sentence stays cut, and the lines around it are context only.
 - Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
+}
 
-const QUESTIONS_SYSTEM = `You write comprehension questions in Slovak about a video, for one learner inside a language app. You answer with ONE JSON object and nothing else: {"questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}]}.
+export function questionsSystem(name: string = activeLanguage().english): string {
+	return `You write comprehension questions in ${name} about a video, for one learner inside a language app. You answer with ONE JSON object and nothing else: {"questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}]}.
 
 Rules:
 - The questions test whether the video was understood: what was said, why, what someone meant. Never grammar, never trivia the video did not say.
-- Write the questions and the options at the learner's level, in simple Slovak the learner can read; the options short and all the same shape; the wrong ones plausible (things the video mentions, or a near meaning), never silly. The right one at a different index each time. "answer" is the index of the right option.
+- Write the questions and the options at the learner's level, in simple ${name} the learner can read; the options short and all the same shape; the wrong ones plausible (things the video mentions, or a near meaning), never silly. The right one at a different index each time. "answer" is the index of the right option.
 - Follow the brief's plan: that many questions, of those kinds in that order, with that many options each; mark each question with its "kind".`;
+}
 
 export interface PrepareOptions {
 	/** Test seam: a scripted engine replaces the cheap slot's. */
@@ -404,17 +415,17 @@ export const TRANSLATE_CHUNK = 40;
 /** What a chunked ask wants of the model: the English translation of the
  *  lines, or (foreign captions) their Slovak rendering. */
 interface ChunkJob {
-	system: string;
+	system: () => string;
 	/** The line before the lines to do, e.g. "Translate these 40 lines, one English string each". */
 	ask: (n: number) => string;
 	/** What the context lines are not asked for. */
 	skip: string;
 }
-const TRANSLATE_JOB: ChunkJob = { system: TRANSLATE_SYSTEM, ask: (n) => `Translate these ${n} lines, one English string each, same order`, skip: "translate" };
-const RENDER_JOB: ChunkJob = { system: RENDER_SYSTEM, ask: (n) => `Rewrite these ${n} lines in Slovak, one string each, same order`, skip: "rewrite" };
+const TRANSLATE_JOB: ChunkJob = { system: () => translateSystem(), ask: (n) => `Translate these ${n} lines, one English string each, same order`, skip: "translate" };
+const RENDER_JOB: ChunkJob = { system: () => renderSystem(), ask: (n) => `Rewrite these ${n} lines in ${activeLanguage().english}, one string each, same order`, skip: "rewrite" };
 
 export async function translateLines(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, trackLang: string = code()): Promise<string[]> {
-	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not Slovak: translate what is said.` : "";
+	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not ${activeLanguage().english}: translate what is said.` : "";
 	return askInChunks(engine, lines, usage, title, foreign, TRANSLATE_JOB);
 }
 
@@ -450,7 +461,7 @@ async function translateChunk(engine: PiEngine, chunk: readonly string[], before
 	let lastError: unknown;
 	for (let attempt = 0; attempt < 2; attempt++) {
 		try {
-			return parseTranslations(await ask(engine, job.system, attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
+			return parseTranslations(await ask(engine, job.system(), attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
 		} catch (err) {
 			lastError = err;
 		}
@@ -474,8 +485,8 @@ export async function questionsFor(engine: PiEngine, segments: readonly { sk: st
 	// The whole transcript when it fits; the Slovak alone past that.
 	const full = segments.map((s) => `${s.sk} — ${s.en}`).join("\n");
 	const transcript = full.length <= 24_000 ? full : segments.map((s) => s.sk).join("\n").slice(0, 30_000);
-	const prompt = [`Video: "${title}".`, `Learner level: ${k.level}.`, questionLine(k.level), `Transcript (Slovak${full.length <= 24_000 ? " — English" : ""}):\n${transcript}`].join("\n\n");
-	const text = await ask(engine, QUESTIONS_SYSTEM, prompt, usage);
+	const prompt = [`Video: "${title}".`, `Learner level: ${k.level}.`, questionLine(k.level), `Transcript (${activeLanguage().english}${full.length <= 24_000 ? " — English" : ""}):\n${transcript}`].join("\n\n");
+	const text = await ask(engine, questionsSystem(), prompt, usage);
 	const start = text.indexOf("{");
 	const end = text.lastIndexOf("}");
 	let raw: unknown = null;
@@ -740,14 +751,16 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 
 // ─── The sentence step ──────────────────────────────────────────────────────
 
-const SENTENCE_SYSTEM = `You check one Slovak sentence that a beginner wrote to use a given Slovak word. You answer with ONE JSON object and nothing else: {"ok": true, "corrected": "...", "why": "..."}.
+export function sentenceSystem(name: string = activeLanguage().english): string {
+	return `You check one ${name} sentence that a beginner wrote to use a given ${name} word. You answer with ONE JSON object and nothing else: {"ok": true, "corrected": "...", "why": "..."}.
 
 Rules:
-- ok is true when the sentence is correct, standard Slovak and uses the word in any form.
+- ok is true when the sentence is correct, standard ${name} and uses the word in any form.
 - Answer ok false only when you are sure the sentence is wrong or does not use the word. When you are unsure, answer ok true and say in "why" what to check.
 - "corrected": the sentence with the smallest fix when ok is false; otherwise the sentence as written.
 - "why": one plain English sentence for the learner, at most 25 words.
 - Nothing outside the JSON.`;
+}
 
 export interface SentenceAnswer {
 	ok: boolean;
@@ -781,7 +794,7 @@ export async function checkSentence(input: { videoId: string; lemma: string; sen
 	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
 	const gloss = video.preTeach.find((w) => w.lemma === lemma)?.gloss ?? video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.gloss ?? "";
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
-	const text = await ask(resolved.engine, SENTENCE_SYSTEM, `The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`, usage);
+	const text = await ask(resolved.engine, sentenceSystem(), `The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`, usage);
 	const verdict = parseVerdict(text, sentence);
 	if (!verdict) throw new Error("The check did not answer in the form it should. Try again.");
 	const now = opts.now ?? new Date();

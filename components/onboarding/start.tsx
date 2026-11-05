@@ -5,10 +5,10 @@
  * the placement chat. Four short screens, every one skippable, no model
  * call anywhere:
  *
- *   1  What Slovak is for    — can-do purposes that map onto the map's
+ *   1  What it is for        — can-do purposes that map onto the map's
  *                              goals and scenes; the target follows
  *   2  What you bring        — the languages you know and how well,
- *                              how much Slovak already
+ *                              how much of the language already
  *   3  Time                  — minutes a day, days a week, and the date
  *                              that pace reaches the target
  *   4  Where you stand       — the placement drill (src/core/onboarding.ts
@@ -33,7 +33,7 @@ import { startTutorChat } from "@/components/lesson/tutor";
 import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
-import { CEFR_ORDER, CHAPTERS, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, PRIORS, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
+import { CEFR_ORDER, CHAPTERS, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, priorsFor, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -78,7 +78,7 @@ function draftFrom(goal: LearnerGoal | null): Draft {
 	};
 }
 
-export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }: { goal: LearnerGoal | null; edit: boolean; hoursDone: number; currentChapter: string; /** Open on the check (the last screen), not the first. */ onCheck?: boolean }) {
+export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck = false }: { /** The language being learned (the running profile). */ target: { code: string; english: string }; goal: LearnerGoal | null; edit: boolean; hoursDone: number; currentChapter: string; /** Open on the check (the last screen), not the first. */ onCheck?: boolean }) {
 	const router = useRouter();
 	const [step, setStep] = useState<Step>(onCheck ? 4 : 1);
 	const [d, setD] = useState<Draft>(() => draftFrom(goal));
@@ -215,7 +215,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 			"Placement follow-up. In the app's placement check I missed these:",
 			...lines,
 			...(outcome?.probe.summary ? [`The placement tutor's reading of my edge: ${outcome.probe.summary}`] : []),
-			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need Slovak for.",
+			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need " + target.english + " for.",
 		].join("\n");
 		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Add a model key in Settings first."));
 	};
@@ -257,7 +257,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 			<main className={cn(COLUMN, "flex-1 py-6")}>
 				{step === 1 && (
 					<section className="lh-rise" data-testid="start-purposes">
-						<Heading title="What is Slovak for?" line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice; the tutor stops asking.`} />
+						<Heading title={`What is ${target.english} for?`} line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice; the tutor stops asking.`} />
 						<div className="mt-6 grid gap-3 sm:grid-cols-2">
 							{PURPOSES.map((p) => {
 								const on = d.purposes.includes(p.id);
@@ -298,7 +298,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 									rows={2}
 									maxLength={MAX_PURPOSE_NOTE}
 									placeholder="e.g. Moving to Košice next spring for a nursing job; I want to follow the ward and the paperwork."
-									aria-label="What Slovak is for, in your words"
+									aria-label={`What ${target.english} is for, in your words`}
 									className="w-full resize-none rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-go"
 									data-testid="purpose-note"
 								/>
@@ -314,23 +314,24 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 
 				{step === 2 && (
 					<section className="lh-rise" data-testid="start-you">
-						<Heading title="What you bring" line="The tutor explains in a language you choose, and knows which of your languages a Slovak rule resembles." />
+						<Heading title="What you bring" line={`The tutor explains in a language you choose, and knows which of your languages a ${target.english} rule resembles.`} />
 						<Field label="Languages you know" hint="any language you can read a simple text in; then your level, on the CEFR">
 							<LanguagePicker
+								exclude={target.code}
 								value={d.languages}
 								levels={d.languageLevels}
 								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(x.explainIn, languages) }))}
 							/>
 							<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="parallels-line">
-								{parallelsLine({ languages: d.languages, languageLevels: d.languageLevels })}
+								{parallelsLine({ languages: d.languages, languageLevels: d.languageLevels }, target)}
 							</p>
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
 							<PickSome items={explainChoices(d.languages)} value={d.explainIn} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
 							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
 						</Field>
-						<Field label="Slovak so far">
-							<Choices items={PRIORS} value={d.prior} onPick={(v) => set("prior", v)} />
+						<Field label={`${target.english} so far`}>
+							<Choices items={priorsFor(target.english)} value={d.prior} onPick={(v) => set("prior", v)} />
 						</Field>
 					</section>
 				)}
@@ -427,7 +428,7 @@ export function Start({ goal, edit, hoursDone, currentChapter, onCheck = false }
 					</section>
 				)}
 
-				{step === 4 && outcome && <Result outcome={outcome} edit={edit} onDeeper={goDeeper} />}
+				{step === 4 && outcome && <Result outcome={outcome} edit={edit} onDeeper={goDeeper} target={target.english} />}
 
 				{error && (
 					<p className="mt-6 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 font-prose text-sm text-foreground" role="alert">
@@ -515,7 +516,7 @@ export interface CheckResult extends PlacementOutcome {
 
 const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft text-go", slip: "bg-warn-soft text-warn", gap: "bg-miss-soft text-miss" };
 
-function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boolean; onDeeper: () => void }) {
+function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edit: boolean; onDeeper: () => void; /** The language's English name. */ target: string }) {
 	const chapter = CHAPTERS.find((c) => c.id === outcome.startChapter);
 	const skipped = useMemo(() => CHAPTERS.slice(0, Math.max(0, CHAPTERS.findIndex((c) => c.id === outcome.startChapter))).length, [outcome.startChapter]);
 	const title = (id: UnitId) => unitInfo(id).title;
@@ -564,7 +565,7 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 					<div className="rounded-2xl border bg-card p-4" data-testid="result-words">
 						<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">Words</p>
 						<p className="mt-1 font-prose text-base text-foreground">
-							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized{outcome.vocabulary.reliable ? "" : " — you ticked words that are not Slovak, so treat this as generous"}.
+							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized{outcome.vocabulary.reliable ? "" : ` — you ticked words that are not ${target} words, so treat this as generous`}.
 						</p>
 						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="By frequency band">
 							{outcome.vocabulary.bands.map((b) => (
@@ -619,7 +620,7 @@ function Result({ outcome, edit, onDeeper }: { outcome: CheckResult; edit: boole
 					</button>
 				)}
 			</div>
-			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">{missed.length > 0 ? "The tutor starts from these sentences and teaches the one that matters most for what you need Slovak for." : "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}</p>
+			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">{missed.length > 0 ? `The tutor starts from these sentences and teaches the one that matters most for what you need ${target} for.` : "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}</p>
 		</section>
 	);
 }

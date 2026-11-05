@@ -8,7 +8,8 @@
  */
 
 import { CEFR_ORDER, CHAPTERS, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
-import { unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { LESSON_LANGUAGE, LESSONS_HAVE_BRIDGES, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
+import { activeCourse, type Course } from "./course.ts";
 import { entryLemma, exampleText } from "./review.ts";
 import { slipLine } from "./grammar.ts";
 import type { FirstTally } from "./first-try.ts";
@@ -37,7 +38,7 @@ export const PURPOSES: PurposeInfo[] = [
 	{
 		id: "family",
 		title: "Family and friends",
-		blurb: "In-laws, a partner's family, friends who switch to Slovak",
+		blurb: "In-laws, a partner's family, friends who switch to the language",
 		glyph: "users",
 		level: "B1",
 		goals: ["can-introduce", "can-family", "can-describe-day", "can-tell-day", "can-describe-people", "can-narrate", "can-opinion"],
@@ -45,7 +46,7 @@ export const PURPOSES: PurposeInfo[] = [
 	},
 	{
 		id: "daily",
-		title: "Daily life in Slovakia",
+		title: "Daily life",
 		blurb: "Cafés, shops, the doctor, getting around",
 		glyph: "coffee",
 		level: "A2",
@@ -138,12 +139,12 @@ export function suggestedLevel(purposes: readonly Purpose[], examLevel?: Cefr): 
 	return best;
 }
 
-/** What each level buys in Slovak life, in plain words. Based on the CEFR Companion Volume (2020). */
+/** What each level buys in daily life, in plain words. Based on the CEFR Companion Volume (2020). */
 export const LEVEL_CAN_DO: Record<Cefr, string> = {
 	A1: "Say hello, order a coffee, count, ask the way. Set phrases and a lot of pointing; people switch to English fast.",
 	A2: "Shop, book the doctor, say what you did today, get around town. Simple talk with people who slow down for you.",
 	B1: "Chat with family and friends about everyday life, tell a story, give an opinion, get through an office visit. A vlog with clear speech is followable.",
-	B2: "Hold your own at work and in an argument, follow the news and most films, write a formal email. Slovaks talk to you at their own speed.",
+	B2: "Hold your own at work and in an argument, follow the news and most films, write a formal email. People talk to you at their own speed.",
 	C1: "Nuance, humour, long articles and novels, any meeting. Mistakes are rare and nobody slows down for you.",
 };
 
@@ -192,7 +193,7 @@ export function purposeScenes(purposes: readonly Purpose[]): string[] {
 /** A language the learner may know. The `primary` ones are chips; the rest sit behind a searchable panel. */
 export type Lang =
 	| "et" | "fi" | "ru" | "de"
-	| "cs" | "pl" | "uk" | "sl" | "hr" | "bg"
+	| "sk" | "cs" | "pl" | "uk" | "sl" | "hr" | "bg"
 	| "hu" | "lv" | "lt"
 	| "en" | "sv" | "nl" | "fr" | "es" | "it" | "pt"
 	| "sr" | "mk" | "be" | "ro" | "el" | "tr" | "no" | "da" | "is" | "ga" | "cy" | "eu" | "ca" | "gl" | "sq" | "mt"
@@ -230,7 +231,7 @@ export function isLowLevel(level: LangLevel): boolean {
 export interface KnownLanguageInfo {
 	id: Lang;
 	title: string;
-	/** What it brings to Slovak, in a few words (the chip's tooltip and the tutor's note). */
+	/** What the language is like, in a few words (the chip's tooltip and the tutor's note). */
 	line: string;
 	/** Shown as a chip without opening the panel. */
 	primary?: boolean;
@@ -239,17 +240,18 @@ export interface KnownLanguageInfo {
 /** Bridge languages first, then the Slavic family, then other case
  *  languages, then the rest of Europe; the panel holds everything else. */
 export const KNOWN_LANGUAGES: readonly KnownLanguageInfo[] = [
-	{ id: "et", title: "Estonian", line: "14 cases: the closest model for Slovak cases; the lessons show every form the Estonian way", primary: true },
-	{ id: "fi", title: "Finnish", line: "15 cases: the lessons show every form the Finnish way", primary: true },
-	{ id: "ru", title: "Russian", line: "The same six cases and aspect; cognates and false friends; the lessons show every form the Russian way", primary: true },
-	{ id: "de", title: "German", line: "Four cases, gender and agreement; the lessons show every form the German way", primary: true },
-	{ id: "cs", title: "Czech", line: "Nearly the same grammar, different sounds", primary: true },
-	{ id: "pl", title: "Polish", line: "Cases and aspect carry over; cognates", primary: true },
-	{ id: "uk", title: "Ukrainian", line: "Close vocabulary, the same case logic", primary: true },
-	{ id: "sl", title: "Slovene", line: "Cases and aspect carry over; the dual is extra", primary: true },
-	{ id: "hr", title: "Croatian", line: "Seven cases and aspect; many cognates", primary: true },
-	{ id: "bg", title: "Bulgarian", line: "Aspect and vocabulary carry over; no cases to lean on", primary: true },
-	{ id: "hu", title: "Hungarian", line: "Cases and agglutination: the idea of a case ending is familiar", primary: true },
+	{ id: "et", title: "Estonian", line: "14 cases, no gender", primary: true },
+	{ id: "fi", title: "Finnish", line: "15 cases, no gender", primary: true },
+	{ id: "ru", title: "Russian", line: "Six cases, three genders and aspect", primary: true },
+	{ id: "de", title: "German", line: "Four cases, gender and agreement", primary: true },
+	{ id: "sk", title: "Slovak", line: "Six cases, three genders and aspect", primary: true },
+	{ id: "cs", title: "Czech", line: "Seven cases, three genders and aspect", primary: true },
+	{ id: "pl", title: "Polish", line: "Seven cases, three genders and aspect", primary: true },
+	{ id: "uk", title: "Ukrainian", line: "Seven cases, three genders and aspect", primary: true },
+	{ id: "sl", title: "Slovene", line: "Six cases, aspect and a dual", primary: true },
+	{ id: "hr", title: "Croatian", line: "Seven cases and aspect", primary: true },
+	{ id: "bg", title: "Bulgarian", line: "Aspect and a definite article; almost no cases", primary: true },
+	{ id: "hu", title: "Hungarian", line: "Many cases and agglutination", primary: true },
 	{ id: "lv", title: "Latvian", line: "Seven cases and gender", primary: true },
 	{ id: "lt", title: "Lithuanian", line: "Seven cases, gender and aspect-like prefixes", primary: true },
 	{ id: "en", title: "English", line: "The app explains in English", primary: true },
@@ -259,9 +261,9 @@ export const KNOWN_LANGUAGES: readonly KnownLanguageInfo[] = [
 	{ id: "es", title: "Spanish", line: "Gender, agreement, verb endings and a perfective/imperfective past", primary: true },
 	{ id: "it", title: "Italian", line: "Gender, agreement and verb endings", primary: true },
 	{ id: "pt", title: "Portuguese", line: "Gender, agreement and verb endings", primary: true },
-	{ id: "sr", title: "Serbian", line: "Seven cases and aspect; many cognates" },
-	{ id: "mk", title: "Macedonian", line: "Aspect and vocabulary carry over; no cases to lean on" },
-	{ id: "be", title: "Belarusian", line: "The same six cases and aspect; close vocabulary" },
+	{ id: "sr", title: "Serbian", line: "Seven cases and aspect" },
+	{ id: "mk", title: "Macedonian", line: "Aspect and a definite article; almost no cases" },
+	{ id: "be", title: "Belarusian", line: "Six cases, three genders and aspect" },
 	{ id: "ro", title: "Romanian", line: "Gender, a little case marking, and a Slavic layer in the vocabulary" },
 	{ id: "el", title: "Greek", line: "Four cases, gender and agreement; aspect in the verb" },
 	{ id: "tr", title: "Turkish", line: "Cases and agglutination" },
@@ -285,11 +287,11 @@ export const KNOWN_LANGUAGES: readonly KnownLanguageInfo[] = [
 	{ id: "ta", title: "Tamil", line: "Case suffixes and agglutination" },
 	{ id: "te", title: "Telugu", line: "Case suffixes and agglutination" },
 	{ id: "ml", title: "Malayalam", line: "Case suffixes and agglutination" },
-	{ id: "ja", title: "Japanese", line: "Particles mark the role a case ending marks in Slovak" },
-	{ id: "ko", title: "Korean", line: "Particles mark the role a case ending marks in Slovak" },
-	{ id: "zh", title: "Chinese", line: "No endings at all: every Slovak ending is new" },
-	{ id: "vi", title: "Vietnamese", line: "No endings at all: every Slovak ending is new" },
-	{ id: "th", title: "Thai", line: "No endings at all: every Slovak ending is new" },
+	{ id: "ja", title: "Japanese", line: "Particles where other languages have case endings" },
+	{ id: "ko", title: "Korean", line: "Particles where other languages have case endings" },
+	{ id: "zh", title: "Chinese", line: "No endings at all" },
+	{ id: "vi", title: "Vietnamese", line: "No endings at all" },
+	{ id: "th", title: "Thai", line: "No endings at all" },
 	{ id: "id", title: "Indonesian", line: "No cases or gender; affixes on the verb" },
 	{ id: "ms", title: "Malay", line: "No cases or gender; affixes on the verb" },
 	{ id: "tl", title: "Filipino", line: "Case markers on the noun phrase; focus on the verb" },
@@ -364,14 +366,14 @@ export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | un
 	return goal?.showParallels !== false;
 }
 
-/** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. */
-export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): string {
-	const langs = bridgeLanguages(goal);
+/** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. `target` is the language being learned; only the lessons' own language has parallels. */
+export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined, target: { code: string; english: string }): string {
+	const langs = LESSONS_HAVE_BRIDGES && target.code === LESSON_LANGUAGE ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
 	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 	const example = langs[0] === "et" ? "v meste ≈ linnas" : langs[0] === "fi" ? "v meste ≈ kaupungissa" : langs[0] === "ru" ? "v meste ≈ в городе" : "v meste ≈ in der Stadt";
-	return `When a Slovak rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learning.`;
+	return `When a ${target.english} rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learning.`;
 }
 
 /** Explanation languages in order: the first carries the explanation, the second the key line and terms. English by default. */
@@ -381,15 +383,20 @@ export function explanationLanguages(goal: Pick<LearnerGoal, "explainIn"> | null
 	return list.length ? [...new Set(list)].slice(0, MAX_EXPLAIN) : ["en"];
 }
 
-export const PRIORS: Array<{ id: Prior; title: string; line: string }> = [
-	{ id: "none", title: "Nothing yet", line: "Start at the very beginning" },
-	{ id: "words", title: "A few words", line: "Greetings, numbers, some food" },
-	{ id: "sentences", title: "Simple sentences", line: "I can introduce myself and order" },
-	{ id: "reading", title: "I read some Slovak", line: "I follow texts but my endings are shaky" },
-];
+/** How much of the target language the learner brings. */
+export function priorsFor(target: string): Array<{ id: Prior; title: string; line: string }> {
+	return [
+		{ id: "none", title: "Nothing yet", line: "Start at the very beginning" },
+		{ id: "words", title: "A few words", line: "Greetings, numbers, some food" },
+		{ id: "sentences", title: "Simple sentences", line: "I can introduce myself and order" },
+		{ id: "reading", title: `I read some ${target}`, line: "I follow texts but my endings are shaky" },
+	];
+}
+
+const PRIOR_IDS: readonly Prior[] = ["none", "words", "sentences", "reading"];
 
 export function isPrior(v: unknown): v is Prior {
-	return typeof v === "string" && PRIORS.some((p) => p.id === v);
+	return typeof v === "string" && (PRIOR_IDS as readonly string[]).includes(v);
 }
 
 // ─── The learner's goal record ──────────────────────────────────────────────
@@ -471,13 +478,45 @@ export interface PlacementTier {
 	chapters: string[];
 }
 
-/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
-export const PLACEMENT_TIERS: PlacementTier[] = [
+/** Slovak's four tiers, each the grammar of a stretch of the map. */
+const SLOVAK_TIERS: PlacementTier[] = [
 	{ id: "a1a", level: "A1", title: "First steps", units: ["words", "present", "acc-fem", "loc"], chapters: ["hello", "cafe", "town"] },
 	{ id: "a1b", level: "A1", title: "Everyday A1", units: ["acc-people", "gen", "ins", "past"], chapters: ["family", "everyday", "yesterday"] },
 	{ id: "a2", level: "A2", title: "Getting around", units: ["present-ujem", "plural", "cond", "motion"], chapters: ["health", "shopping", "plans", "moving", "people", "work"] },
 	{ id: "b1", level: "B1", title: "Independence", units: ["adj-cases", "numbers", "cases-mix", "verbs-mix"], chapters: ["stories", "opinions", "offices", "world"] },
 ];
+
+/** A generated course's tiers, cut the way Slovak's are: the A1 chapters
+ *  in two halves, then A2, then B1, each probed on up to four of its grammar
+ *  units spread over its chapters (First words opens the first tier). */
+function courseTiers(course: Course): PlacementTier[] {
+	const grammar = new Set(course.units.filter((u) => u.kind === "grammar").map((u) => u.id));
+	const at = (stage: string) => course.chapters.filter((c) => c.stage === stage);
+	const a1 = at("a1");
+	const half = Math.ceil(a1.length / 2);
+	const spans: Array<Omit<PlacementTier, "units"> & { from: Course["chapters"] }> = [
+		{ id: "a1a", level: "A1", title: "First steps", chapters: [], from: a1.slice(0, half) },
+		{ id: "a1b", level: "A1", title: "Everyday A1", chapters: [], from: a1.slice(half) },
+		{ id: "a2", level: "A2", title: "Getting around", chapters: [], from: at("a2") },
+		{ id: "b1", level: "B1", title: "Independence", chapters: [], from: at("b1") },
+	];
+	const tiers: PlacementTier[] = [];
+	for (const span of spans) {
+		const ids = span.from.flatMap((c) => c.units.filter((u) => grammar.has(u)));
+		const room = tiers.length === 0 ? 3 : 4;
+		const picked = ids.length <= room ? ids : Array.from({ length: room }, (_, i) => ids[Math.floor((i * ids.length) / room)]!);
+		const units = (tiers.length === 0 ? ["words", ...picked] : picked) as UnitId[];
+		if (units.length === 0) continue;
+		tiers.push({ id: span.id, level: span.level, title: span.title, units, chapters: span.from.map((c) => c.id) });
+	}
+	return tiers;
+}
+
+/** The running language's course (src/core/course.ts), else Slovak's. */
+const COURSE = activeCourse();
+
+/** Four tiers, each the grammar of a stretch of the map. A tier passes at PASS_SHARE of its reps. */
+export const PLACEMENT_TIERS: PlacementTier[] = COURSE ? courseTiers(COURSE) : SLOVAK_TIERS;
 
 export const REPS_PER_UNIT = 2;
 export const PASS_SHARE = 0.75;
@@ -726,7 +765,7 @@ const PRIOR_LINE: Record<Prior, string> = {
 	none: "started from nothing",
 	words: "started with a few words",
 	sentences: "started with simple sentences",
-	reading: "started able to read some Slovak, with shaky endings",
+	reading: "started able to read some of the language, with shaky endings",
 };
 
 /** One unit's line in the tutor's "Measured weak points": its unaided first
@@ -747,8 +786,8 @@ export function measuredWeak(u: { title: string; reps: number; accuracy: number 
 	return null;
 }
 
-/** The learner as a short profile block for the tutor's system prompt. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts); `mixups_` the pairs of words they confuse (src/core/mixups.ts). */
-export function learnerProfileText(goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord): string | null {
+/** The learner as a short profile block for the tutor's system prompt, for learning `target`. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts); `mixups_` the pairs of words they confuse (src/core/mixups.ts). */
+export function learnerProfileText(target: { code: string; english: string }, goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -756,23 +795,23 @@ export function learnerProfileText(goal: LearnerGoal | undefined, state: Curricu
 	if (purposes.length || note) {
 		const named = purposes.filter((p) => p !== "other").map(purposePhrase);
 		const goals = [...purposeGoals(purposes)].map((g) => `"${curriculumUnit(g)?.title ?? g}"`).slice(0, 5);
-		lines.push(`- Slovak is for: ${[...named, ...(note ? [`in the learner's own words, "${note}"`] : purposes.includes("other") ? ["something the cards did not cover"] : [])].join("; ")}.${goals.length ? ` The goal is concrete: the map's can-do goals ${goals.join(", ")}.` : ""}${note ? " Shape examples and scenes around those words." : ""}`);
+		lines.push(`- ${target.english} is for: ${[...named, ...(note ? [`in the learner's own words, "${note}"`] : purposes.includes("other") ? ["something the cards did not cover"] : [])].join("; ")}.${goals.length ? ` The goal is concrete: the map's can-do goals ${goals.join(", ")}.` : ""}${note ? " Shape examples and scenes around those words." : ""}`);
 	}
 	if (goal) lines.push(`- Target: ${goal.level} (about ${GUIDED_HOURS[goal.level]} guided hours), at ${goal.minutesPerDay} minutes a day, ${goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} days a week.${pace_ ? ` Over the last ${pace_.days} days they actually averaged ${pace_.dailyAverage} minutes a day.` : ""}`);
 	if (goal) {
-		const known = knownLanguages(goal);
+		const known = knownLanguages(goal).filter((l) => l !== target.code);
 		const other = (goal.otherLanguages ?? []).filter(Boolean);
 		const levelOf = (l: Lang) => {
 			const lv = languageLevel(goal, l);
 			return lv === "native" ? "native" : `${lv} on the CEFR`;
 		};
 		const names = [...known.map((l) => `${languageName(l)} (${levelOf(l)})`), ...other];
-		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line.replace(/; the lessons show every form the \w+ way$/, "")}`);
+		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line}`);
 		const [first, second] = explanationLanguages(goal);
 		lines.push(
-			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? ` When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") ? "" : " Do not lean on Estonian bridges."}` : " The learner turned parallels off: do not compare Slovak to these languages unless asked; use them only to understand what the learner means."}`,
+			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? ` When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") || target.code === "et" ? "" : " Do not lean on Estonian bridges."}` : ` The learner turned parallels off: do not compare ${target.english} to these languages unless asked; use them only to understand what the learner means.`}`,
 		);
-		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, Slovak examples in Slovak, English only when asked.`;
+		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, ${target.english} examples in ${target.english}, English only when asked.`;
 		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
 		lines.push((second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}` : lead) + (first !== "en" ? simple(first!) : ""));
 	}

@@ -1,6 +1,6 @@
 /**
- * Background tasks (2026-11-05): a model call that takes a while (preparing
- * a video, later a story or a lesson) runs here instead of holding a page.
+ * Background tasks (2026-11-05): work that takes a while (preparing a
+ * video, adding a language) runs here instead of holding a page.
  * The caller starts a task and returns; the task reports its step, ends
  * done or in error, and the sidebar's Background section, a ready notice and
  * the Tasks page read it from the activity feed (server/observability.ts). Nothing here
@@ -16,7 +16,7 @@
 
 import { emit } from "../core/events.ts";
 
-export type TaskKind = "video";
+export type TaskKind = "video" | "language";
 export type TaskStatus = "running" | "done" | "error";
 
 export interface TaskRecord {
@@ -36,6 +36,10 @@ export interface TaskRecord {
 	/** A failed task the learner can start again in one step (a video with no
 	 *  captions, whose audio can be transcribed instead). */
 	retry?: { label: string; url: string; transcribe: boolean };
+	/** The language a "language" task adds, for the notice's switch button. */
+	language?: { id: string; english: string };
+	/** One more line for the ready notice (what was built, what was skipped). */
+	note?: string;
 }
 
 interface TaskState {
@@ -56,12 +60,12 @@ const changed = () => emit("activity-changed", {});
 
 /** Start a task. One task per id: starting a running id returns it with
  *  its abort signal unchanged, so a second request shares the first. */
-export function startTask(init: { id: string; kind: TaskKind; title: string; step: string; now?: number }): { task: TaskRecord; signal: AbortSignal; fresh: boolean } {
+export function startTask(init: { id: string; kind: TaskKind; title: string; step: string; now?: number; language?: TaskRecord["language"] }): { task: TaskRecord; signal: AbortSignal; fresh: boolean } {
 	const s = state();
 	const running = s.tasks.get(init.id);
 	if (running?.status === "running") return { task: running, signal: s.aborts.get(init.id)!.signal, fresh: false };
 	const controller = new AbortController();
-	const task: TaskRecord = { id: init.id, kind: init.kind, title: init.title, step: init.step, status: "running", startedAt: init.now ?? Date.now() };
+	const task: TaskRecord = { id: init.id, kind: init.kind, title: init.title, step: init.step, status: "running", startedAt: init.now ?? Date.now(), ...(init.language ? { language: init.language } : {}) };
 	s.tasks.set(init.id, task);
 	s.aborts.set(init.id, controller);
 	changed();
@@ -87,7 +91,7 @@ function end(id: string, patch: Partial<TaskRecord> & { status: "done" | "error"
 	changed();
 }
 
-export function finishTask(id: string, patch: { title?: string; href?: string } = {}): void {
+export function finishTask(id: string, patch: { title?: string; href?: string; note?: string } = {}): void {
 	end(id, { status: "done", step: "Ready", ...patch });
 }
 
