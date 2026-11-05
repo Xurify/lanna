@@ -27,6 +27,7 @@ interface CatalogRow {
 }
 
 interface Estimate {
+	slot: "strong" | "cheap";
 	name: string;
 	level: string;
 	typicalUsd: number | null;
@@ -37,13 +38,15 @@ interface Estimate {
 
 const usd = (n: number) => `$${n.toFixed(2)}`;
 
-/** What the course will cost, in one line, before anything is spent. */
-function estimateLine(e: Estimate | null): string | null {
-	if (!e) return null;
-	if (e.subscription) return `Written on ${e.name}: included in your subscription.`;
-	if (e.typicalUsd === null || e.mostUsd === null) return `Written on ${e.name}; its price is not in the catalog.`;
-	const basis = e.measured > 0 ? `from ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model` : "a first guess: no course has been written on this model yet";
-	return `Written on ${e.name} (${e.level} thinking): about ${usd(e.typicalUsd)} (${basis}). It cannot cost more than ${usd(e.mostUsd)}: each answer is capped.`;
+/** What a course will cost on one model, before anything is spent. */
+function priceLine(e: Estimate): string {
+	if (e.subscription) return "Included in your subscription";
+	if (e.typicalUsd === null || e.mostUsd === null) return "Its price is not in the catalog";
+	return `About ${usd(e.typicalUsd)}, at most ${usd(e.mostUsd)}`;
+}
+
+function basisLine(e: Estimate): string {
+	return e.measured > 0 ? `From ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model.` : "A first guess: no course has been written on this model yet.";
 }
 
 export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void; onStarted: () => void }) {
@@ -52,18 +55,20 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [blocker, setBlocker] = useState<string | null>(null);
-	const [estimate, setEstimate] = useState<Estimate | null>(null);
+	const [writers, setWriters] = useState<Estimate[]>([]);
+	const [writer, setWriter] = useState<Estimate["slot"]>("strong");
 	const dismiss = useBackdropDismiss(onClose);
 
 	useEffect(() => {
 		let live = true;
 		fetch("/api/languages")
-			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; blocker: string | null; estimate: Estimate | null }>)
+			.then((r) => r.json() as Promise<{ languages: CatalogRow[]; blocker: string | null; writers: Estimate[] }>)
 			.then((d) => {
 				if (!live) return;
 				setRows(d.languages);
 				setBlocker(d.blocker);
-				setEstimate(d.estimate);
+				setWriters(d.writers);
+				if (d.writers[0]) setWriter(d.writers[0].slot);
 			})
 			.catch(() => live && setError("Could not load the list of languages."));
 		return () => {
@@ -87,7 +92,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 		setBusy(true);
 		setError(null);
 		try {
-			await addLanguage(choice.id);
+			await addLanguage(choice.id, writer);
 			onStarted();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
@@ -160,8 +165,38 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				</div>
 
 				<p className="text-xs leading-relaxed text-muted-foreground">
-					The course is written in two calls on your Strong model (the Cheap one if no Strong is set). {estimateLine(estimate)} The sentences are never written by a model: they are real Tatoeba sentences.
+					The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories, in two calls; each answer is capped, so it cannot cost more than shown.
 				</p>
+				{writers.length > 0 && (
+					<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1" data-testid="add-language-writers">
+						<p className="text-xs font-semibold text-foreground">Written by</p>
+						{writers.map((w) => {
+							const on = w.slot === writer;
+							return (
+								<button
+									key={w.slot}
+									type="button"
+									role="radio"
+									aria-checked={on}
+									data-testid={`add-language-writer-${w.slot}`}
+									onClick={() => setWriter(w.slot)}
+									className={cn(
+										"flex w-full items-baseline justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
+										on ? "bg-accent text-foreground ring-1 ring-primary/50" : "text-muted-foreground hover:bg-accent/60",
+									)}
+								>
+									<span className="min-w-0">
+										<span className="block truncate font-semibold">{w.name}</span>
+										<span className="block truncate text-muted-foreground">
+											{w.slot === "strong" ? "Strong" : "Cheap"} slot · {w.level} thinking · {basisLine(w)}
+										</span>
+									</span>
+									<span className="shrink-0 tabular-nums font-semibold">{priceLine(w)}</span>
+								</button>
+							);
+						})}
+					</div>
+				)}
 				{blocker && (
 					<p className="text-xs text-destructive" role="alert" data-testid="add-language-blocker">
 						{blocker}

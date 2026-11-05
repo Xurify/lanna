@@ -108,6 +108,8 @@ export interface AddDeps {
 	ask?: Ask;
 	/** Sentences a grammar unit needs (tests run on a few words). */
 	minUnitSentences?: number;
+	/** Which slot's model writes the course (the add dialog's choice). */
+	slot?: WriterSlot;
 }
 
 /** One model call: the answer, what it used, the thinking level it ran at,
@@ -125,6 +127,8 @@ const FIRST_GUESS: Record<DraftKind, { input: number; output: number }> = { cour
 const THINKING_GUESS: Record<string, number> = { off: 0, minimal: 1_000, low: 3_000, medium: 8_000, high: 14_000, xhigh: 20_000 };
 
 export interface AddEstimate {
+	/** The slot that would write it. */
+	slot: WriterSlot;
 	/** "provider:id" and the model's display name. */
 	model: string;
 	name: string;
@@ -174,8 +178,8 @@ const sum = (usage: StoryUsage, key: "inputTokens" | "outputTokens") => usage.st
  * cap is tried once more with twice the room. Never past the model's own
  * limit.
  */
-export function capPlan(kind: DraftKind): { first: number; second: number } {
-	const resolved = courseEngine();
+export function capPlan(kind: DraftKind, writer: WriterSlot = "strong"): { first: number; second: number } {
+	const resolved = courseEngine(writer);
 	const level = resolved?.engine.level ?? "off";
 	const limit = resolved?.engine.model.maxTokens || Infinity;
 	const past = resolved ? pastCalls(kind).filter((c) => c.model === resolved.model && (c.level ?? "off") === level) : [];
@@ -189,8 +193,8 @@ export function capPlan(kind: DraftKind): { first: number; second: number } {
  *  would write it: the median of earlier calls on that same model and
  *  level when there are any (models differ in tokenizer, length and
  *  thinking), else a first guess; the most is fixed by the caps. */
-export function addEstimate(): AddEstimate | null {
-	const resolved = courseEngine();
+export function addEstimate(writer: WriterSlot = "strong"): AddEstimate | null {
+	const resolved = courseEngine(writer);
 	if (!resolved) return null;
 	const { model, engine } = resolved;
 	const level = engine.level ?? "off";
@@ -204,13 +208,23 @@ export function addEstimate(): AddEstimate | null {
 		measured = Math.max(measured, same.length);
 		const input = same.length ? median(same.map((c) => sum(c.usage, "inputTokens"))) : FIRST_GUESS[kind].input;
 		const output = same.length ? median(same.map((c) => sum(c.usage, "outputTokens"))) : FIRST_GUESS[kind].output + (THINKING_GUESS[level] ?? 0);
-		const caps = capPlan(kind);
+		const caps = capPlan(kind, writer);
 		const t = callCost({ inputTokens: input, outputTokens: Math.min(output, caps.first) }, model);
 		const m = callCost({ inputTokens: 2 * input, outputTokens: caps.first + caps.second }, model);
 		typical = t === null || typical === null ? null : typical + t;
 		most = m === null || most === null ? null : most + m;
 	}
-	return { model, name, level, typicalUsd: typical, mostUsd: most, measured, subscription: isSubscriptionModel(model) };
+	return { slot: writer, model, name, level, typicalUsd: typical, mostUsd: most, measured, subscription: isSubscriptionModel(model) };
+}
+
+/** The choices the add dialog offers: the Strong slot's model and the
+ *  Cheap slot's, each priced; one entry when both are the same model and
+ *  thinking level. */
+export function addEstimates(): AddEstimate[] {
+	const strong = aiSlot("strong")?.model ? addEstimate("strong") : null;
+	const cheap = aiSlot("cheap")?.model ? addEstimate("cheap") : null;
+	if (strong && cheap && strong.model === cheap.model && strong.level === cheap.level) return [strong];
+	return [strong, cheap].filter((e): e is AddEstimate => e !== null);
 }
 
 /** Why a language cannot be added now, or null. */
@@ -423,17 +437,22 @@ async function wiktionary(get: typeof fetch, lang: CatalogLanguage, wanted: Set<
 	return list;
 }
 
-/** The Strong slot writes the course: it is teaching content. The Cheap
- *  slot stands in when no Strong model is set. */
-function courseEngine() {
-	const slot = aiSlot("strong")?.model ? aiSlot("strong") : aiSlot("cheap");
+/** Which model writes a course: the learner picks it when adding the
+ *  language (it happens once per language, so it is not a setting). The
+ *  Strong slot by default: it is teaching content. */
+export type WriterSlot = "strong" | "cheap";
+
+/** The picked slot's model, or the other slot's when that one is empty. */
+function courseEngine(writer: WriterSlot = "strong") {
+	const other: WriterSlot = writer === "strong" ? "cheap" : "strong";
+	const slot = aiSlot(writer)?.model ? aiSlot(writer) : aiSlot(other);
 	if (!slot?.model) return null;
 	const spec = { provider: slot.model.provider, id: slot.model.id, ...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}) };
 	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
 }
 
-const defaultAsk: Ask = async (system, prompt, signal, cap) => {
-	const resolved = courseEngine();
+const askOn = (writer: WriterSlot): Ask => async (system, prompt, signal, cap) => {
+	const resolved = courseEngine(writer);
 	if (!resolved) throw new SourceError("No model is set in Settings → AI models.");
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const { engine } = resolved;
@@ -467,13 +486,13 @@ function jsonOf(text: string): unknown {
 /** One model draft, kept in build/<name>-draft.json with its cost (it shows
  *  in Settings → Spending), checked, and asked once more with what was
  *  wrong when the check fails. */
-async function drafted<T>(id: string, name: DraftKind, ask: Ask, signal: AbortSignal, first: { system: string; prompt: string }, check: (raw: unknown) => { value: T; problems: string[] } | null): Promise<T> {
+async function drafted<T>(id: string, name: DraftKind, writer: WriterSlot, ask: Ask, signal: AbortSignal, first: { system: string; prompt: string }, check: (raw: unknown) => { value: T; problems: string[] } | null): Promise<T> {
 	const file = path.join(buildDir(id), `${name}-draft.json`);
 	const kept = readJson<{ value?: T }>(file);
 	if (kept?.value) return kept.value;
 	const calls: Array<DraftCall & { createdAt: string }> = [];
 	let prompt = first.prompt;
-	const caps = capPlan(name);
+	const caps = capPlan(name, writer);
 	let cap = caps.first;
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const { text, usage, level, cut } = await ask(first.system, prompt, signal, cap);
@@ -531,11 +550,12 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	});
 	fs.writeFileSync(path.join(dirOf(id), "prompt.md"), languagePrompt(lang), "utf-8");
 
-	const ask = deps.ask ?? defaultAsk;
+	const writer = deps.slot ?? "strong";
+	const ask = deps.ask ?? askOn(writer);
 	const sceneIds = SPEAK_SCENES.map((x) => x.id);
 	step("Writing the course", true);
 	const inventory = courseInventory(entries, lang.tag, sceneIds);
-	const course = await drafted<Course>(id, "course", ask, signal, courseDraftPrompt(lang.english, inventory), (raw) => {
+	const course = await drafted<Course>(id, "course", writer, ask, signal, courseDraftPrompt(lang.english, inventory), (raw) => {
 		const checked = checkCourse(raw, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
 		return checked ? { value: checked.course, problems: checked.dropped } : null;
 	});
@@ -543,7 +563,7 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	writeJson(path.join(dirOf(id), "seed.json"), courseSeed(course));
 
 	step("Writing the story world", true);
-	const world = await drafted(id, "world", ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
+	const world = await drafted(id, "world", writer, ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
 		const w = checkWorld(raw, id, course.chapters, sceneIds);
 		return w ? { value: w, problems: [] } : null;
 	});

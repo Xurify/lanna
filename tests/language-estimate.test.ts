@@ -12,9 +12,9 @@ import { test } from "node:test";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-estimate-"));
 process.env.LH_DATA_DIR = dir;
-fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ models: { strong: { model: { provider: "anthropic", id: "claude-opus-5-5" }, thinkingLevel: "medium" } } }));
+fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ models: { strong: { model: { provider: "anthropic", id: "claude-opus-5-5" }, thinkingLevel: "medium" }, cheap: { model: { provider: "anthropic", id: "claude-sonnet-5-5" }, thinkingLevel: "medium" } } }));
 
-const { addEstimate, capPlan } = await import("../src/server/language-add.ts");
+const { addEstimate, addEstimates, capPlan } = await import("../src/server/language-add.ts");
 const { callCost } = await import("../src/server/pricing.ts");
 
 const MODEL = "anthropic:claude-opus-5-5";
@@ -53,4 +53,14 @@ test("after a course on the same model and level, the typical cost is what it re
 test("a model that once wrote a long answer gets at least twice that room", () => {
 	draft("estonian", "course", "medium", 3_000, 30_000);
 	assert.deepEqual(capPlan("course"), { first: 60_000, second: 120_000 }, "twice the longest answer, under Opus 5.5's 128,000");
+});
+
+test("the dialog offers the Strong and the Cheap model, each priced on its own", () => {
+	const [strong, cheap] = addEstimates();
+	assert.equal(strong?.slot, "strong");
+	assert.match(strong!.name, /Opus/);
+	assert.equal(cheap?.slot, "cheap");
+	assert.match(cheap!.name, /Sonnet/);
+	assert.equal(cheap!.measured, 0, "the Opus courses do not count for Sonnet");
+	assert.ok(cheap!.mostUsd! < strong!.mostUsd!);
 });
