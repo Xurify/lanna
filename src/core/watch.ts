@@ -50,6 +50,9 @@ export interface CaptionCue {
 	start: number;
 	dur: number;
 	text: string;
+	/** Second each word of `text` starts, when the track gives word times
+	 *  (YouTube's automatic json3 captions do). */
+	at?: number[];
 }
 
 /** One line of the guided video: a stretch of speech short enough to hold
@@ -285,19 +288,27 @@ export function parseJson3(text: string): CaptionCue[] {
 	const cues: CaptionCue[] = [];
 	for (const e of events as Array<{ tStartMs?: unknown; dDurationMs?: unknown; segs?: unknown; aAppend?: unknown }>) {
 		if (!Array.isArray(e.segs)) continue;
-		const txt = cleanCaptionText((e.segs as Array<{ utf8?: unknown }>).map((s) => (typeof s.utf8 === "string" ? s.utf8 : "")).join(""));
+		const segs = e.segs as Array<{ utf8?: unknown; tOffsetMs?: unknown }>;
+		const txt = cleanCaptionText(segs.map((s) => (typeof s.utf8 === "string" ? s.utf8 : "")).join(""));
 		if (!txt) continue;
 		const start = typeof e.tStartMs === "number" ? e.tStartMs / 1000 : NaN;
 		if (!Number.isFinite(start)) continue;
 		const dur = typeof e.dDurationMs === "number" ? e.dDurationMs / 1000 : 0;
+		const at: number[] = [];
+		for (const s of segs) {
+			const t = start + (typeof s.tOffsetMs === "number" ? s.tOffsetMs / 1000 : 0);
+			for (const _word of wordsOf(cleanCaptionText(typeof s.utf8 === "string" ? s.utf8 : ""))) at.push(t);
+		}
+		const times = at.length === wordsOf(txt).length ? at : undefined;
 		// An "append" event continues the previous cue's text.
 		if (e.aAppend === 1 && cues.length) {
 			const prev = cues[cues.length - 1]!;
+			prev.at = prev.at && times ? [...prev.at, ...times] : undefined;
 			prev.text = `${prev.text} ${txt}`.trim();
 			prev.dur = Math.max(prev.dur, start + dur - prev.start);
 			continue;
 		}
-		cues.push({ start, dur, text: txt });
+		cues.push({ start, dur, text: txt, ...(times ? { at: times } : {}) });
 	}
 	return cues;
 }
@@ -413,32 +424,34 @@ export function segmentCues(cues: readonly CaptionCue[], opts: { maxWords?: numb
 	let prevText = "";
 	for (let i = 0; i < sorted.length; i++) {
 		const cue = sorted[i]!;
-		const text = stripOverlap(prevText, cleanCaptionText(cue.text));
-		prevText = cleanCaptionText(cue.text);
+		const whole = cleanCaptionText(cue.text);
+		const text = stripOverlap(prevText, whole);
+		prevText = whole;
 		if (!text) continue;
 		const cueEnd = cue.start + Math.max(0, cue.dur);
+		const words = wordsOf(text);
+		const total = wordsOf(whole).length;
+		const dropped = total - words.length;
+		// Where each word starts: the track's own word times, else the cue's
+		// span spread over its words, so a line cut inside a cue starts at
+		// its first word and not at the cue's end.
+		const own = cue.at && cue.at.length === total ? cue.at : undefined;
+		const starts = words.map((_, k) => own ? own[dropped + k]! : cue.start + (Math.max(0, cue.dur) * (dropped + k)) / total);
 		// A silence before this cue ends the open line.
 		if (buf.length && cue.start - bufEnd > gapSec) flush();
-		if (!buf.length) bufStart = cue.start;
 		// The cue's words, one line at a time: punctuation inside a cue
 		// closes a line too.
-		for (const w of wordsOf(text)) {
-			buf.push(w);
-			bufEnd = cueEnd;
-			const closes = /[.!?…]["»”)]?$/.test(w);
-			if ((closes && buf.length >= minWords) || buf.length >= maxWords || cueEnd - bufStart >= maxSec) {
-				flush();
-				bufStart = cueEnd;
-			}
-		}
 		// A line's end never passes the next cue's start.
 		const nextStart = sorted[i + 1]?.start;
-		if (nextStart !== undefined && bufEnd > nextStart && buf.length) bufEnd = Math.max(bufStart + 0.4, nextStart);
+		words.forEach((w, k) => {
+			if (!buf.length) bufStart = starts[k]!;
+			buf.push(w);
+			bufEnd = k + 1 < words.length ? starts[k + 1]! : nextStart !== undefined && cueEnd > nextStart ? Math.max(starts[k]! + 0.4, nextStart) : cueEnd;
+			const closes = /[.!?…]["»”)]?$/.test(w);
+			if ((closes && buf.length >= minWords) || buf.length >= maxWords || bufEnd - bufStart >= maxSec) flush();
+		});
 		// Without punctuation the cue break is the phrase break.
-		if (!punctuated && buf.length >= minWords) {
-			flush();
-			bufStart = nextStart ?? cueEnd;
-		}
+		if (!punctuated && buf.length >= minWords) flush();
 	}
 	flush();
 	// Times inside a cue that was split: spread the cue's span over its

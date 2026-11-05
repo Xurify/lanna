@@ -108,6 +108,14 @@ test("segmentCues: punctuation closes a line, the word and time limits cut long 
 	assert.equal(gap.length, 2);
 });
 
+test("segmentCues: a line cut inside a cue starts at its first word, from the track's word times or spread over the cue", () => {
+	const timed = JSON.stringify({ events: [{ tStartMs: 0, dDurationMs: 3000, segs: [{ utf8: "a" }, { utf8: " b", tOffsetMs: 200 }, { utf8: " c", tOffsetMs: 400 }, { utf8: " d", tOffsetMs: 2000 }, { utf8: " e.", tOffsetMs: 2400 }] }] });
+	const withTimes = core.segmentCues(core.parseJson3(timed), { maxWords: 3, minWords: 2 });
+	assert.deepEqual(withTimes.map((l) => [l.sk, l.start]), [["a b c", 0], ["d e.", 2]]);
+	const spread = core.segmentCues([{ start: 0, dur: 4, text: "a b c d e f g h" }], { maxWords: 4, minWords: 2 });
+	assert.deepEqual(spread.map((l) => l.start), [0, 2]);
+});
+
 test("coverageBand, watchXp, watchMinutes, listeningSpeed, parseTranslations", () => {
 	assert.equal(core.coverageBand(0.96).band, "comfortable");
 	assert.equal(core.coverageBand(0.9).band, "stretch");
