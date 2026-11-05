@@ -53,7 +53,7 @@ import {
 	type TutorReply,
 } from "../core/speak.ts";
 import { appendLessonLog, ensureReadmes } from "../store/corpus.ts";
-import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
+import { defaultGoal, progressStore } from "../store/progress.ts";
 import { speakStore } from "../store/speak.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
@@ -275,7 +275,7 @@ export interface SpeakState {
 
 export function speakState(): SpeakState {
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const chapterScene = state.chapters.find((c) => c.id === state.current)?.units.find((u) => u.kind === "goal")?.scene;
 	const wanted = [...new Set([chapterScene, ...purposeScenes(goal.purposes ?? [])].filter((s): s is string => !!s))];
@@ -320,7 +320,7 @@ export function speakStart(sceneId: string, opts: SpeakOptions = {}): Promise<Sp
 		if (!scene) throw new Error(`unknown scene ${sceneId}`);
 		const now = opts.now ?? new Date();
 		const p = progressStore.read();
-		const goal = p.goal ?? DEFAULT_GOAL;
+		const goal = p.goal ?? defaultGoal();
 		const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 		const { engine, model } = resolveEngine(opts);
 		const s: SpeakSession = {

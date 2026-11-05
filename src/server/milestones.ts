@@ -38,7 +38,7 @@ import { grammarWord, tokenize } from "../core/reading.ts";
 import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
-import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
+import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { DEFAULT_DAYS_PER_WEEK } from "../core/onboarding.ts";
 import { aiMissing, aiStatus, friendlyAiError } from "./ai-status.ts";
@@ -108,7 +108,7 @@ export const PACE_DAYS = PACE_WINDOW_DAYS;
 
 export function wordSets(lexicon: Lexicon | null): WordSets {
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	// The level is where the map has the learner: placement set its start,
 	// every lesson since has moved it. (It used to pin goal.placedLevel for
@@ -169,7 +169,7 @@ function minutesByDay(): Map<string, number> {
 
 export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new Date(), tz?: number): LearnerFacts {
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const sets = wordSets(lexicon);
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const daysPerWeek = goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK;
@@ -304,7 +304,7 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 		}
 	}
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const goals: MilestonesReport["goals"] = {};
 	for (const c of state.chapters) for (const u of c.units) if (u.kind === "goal") goals[u.id] = { title: u.title, done: u.status === "done" || u.status === "skipped", open: u.status === "open" || u.status === "started" };

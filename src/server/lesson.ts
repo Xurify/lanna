@@ -78,7 +78,7 @@ import type { TrajectoryDay, TrajectoryInput } from "../core/trajectory.ts";
 import { carriedTasks, doneInLedger, RECENT_DAYS, type DayPlanSnapshot } from "../core/carry-over.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
 import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
-import { DEFAULT_GOAL, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
+import { defaultGoal, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { stampEvidence, syncStamps, type StampReport } from "./stamps.ts";
 import type { StampState, TrailLog } from "../core/stamps.ts";
 import { reviewStore } from "../store/review.ts";
@@ -531,7 +531,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	});
 	// Continue = the first open drill on the map (then a words unit): the
 	// curriculum's chapter order, with locks. Never dead-ends.
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const curriculum = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const next = nextLessonUnit(curriculum);
 	const rs = reviewStatus(now, tz, { mint: false });
@@ -669,7 +669,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
  */
 export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?: number, now = new Date()): ProgressSummary {
 	const p = progressStore.read();
-	const cur = p.goal ?? DEFAULT_GOAL;
+	const cur = p.goal ?? defaultGoal();
 	const level = goal.level && CEFR_ORDER.includes(goal.level) ? (goal.level as Cefr) : cur.level;
 	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(MAX_MINUTES, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
 	const daysPerWeek = typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek) ? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek))) : (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
@@ -702,6 +702,15 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 	} else if (next.languageLevels && next.languages) {
 		// Languages that left the list take their level with them.
 		for (const k of Object.keys(next.languageLevels) as Lang[]) if (!next.languages.includes(k)) delete next.languageLevels[k];
+	}
+	// The running language is left out of its own pickers, so a list saved
+	// here never names it. The list is shared with the other languages,
+	// which may name it (Slovak in a Russian setup): keep it and its level.
+	const own = activeLanguage().code;
+	if (Array.isArray(goal.languages) && isLang(own) && cur.languages?.includes(own) && next.languages && !next.languages.includes(own)) {
+		next.languages = [...next.languages, own];
+		const level = cur.languageLevels?.[own];
+		if (level) next.languageLevels = { ...next.languageLevels, [own]: level };
 	}
 	if (Array.isArray(goal.otherLanguages)) {
 		next.otherLanguages = [...new Set(goal.otherLanguages.filter((v): v is string => typeof v === "string").map((v) => v.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH)).filter(Boolean))].slice(0, MAX_OTHER_LANGUAGES);
@@ -768,7 +777,7 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 		p.units[id] = { lessons: 0, reps: e.reps, correct: e.correct, placed: true, lastAt: now.toISOString() };
 	}
 	p.weak = weak;
-	const goal = { ...(p.goal ?? DEFAULT_GOAL) };
+	const goal = { ...(p.goal ?? defaultGoal()) };
 	goal.placedAt = now.toISOString();
 	goal.placedLevel = outcome.level;
 	goal.startChapter = outcome.startChapter;

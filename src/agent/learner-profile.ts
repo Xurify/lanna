@@ -11,11 +11,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { PATHS } from "../../config.ts";
-import { curriculumState, type UnitEvidence } from "../core/curriculum.ts";
+import { activeProfile, PATHS, shownProfiles, withProfile } from "../../config.ts";
+import { curriculumState, STAGES, type UnitEvidence } from "../core/curriculum.ts";
 import type { FirstTryStats } from "../core/first-try.ts";
-import { learnerProfileText, type LearnerGoal } from "../core/onboarding.ts";
-import { activeLanguage } from "./profile-language.ts";
+import { LEARNER_FIELDS, learnerProfileText, withLearnerFields, type LearnerFields, type LearnerGoal, type StudiedLanguage } from "../core/onboarding.ts";
+import { activeLanguage, profileLanguage } from "./profile-language.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
 import type { MixupRecord } from "../core/mixups.ts";
@@ -36,21 +36,58 @@ function recentAverage(days: ProgressFile["days"], now = new Date()): number {
 	return Math.round(total / RECENT_DAYS);
 }
 
+function readProgress(): ProgressFile | null {
+	try {
+		return JSON.parse(fs.readFileSync(path.join(PATHS.data, "progress.json"), "utf-8")) as ProgressFile;
+	} catch {
+		return null;
+	}
+}
+
+/** What the learner knows, shared by every language (src/store/learner.ts
+ *  writes it), laid over the language's goal. */
+function withShared(goal: LearnerGoal | undefined): LearnerGoal | undefined {
+	if (!goal) return goal;
+	try {
+		const raw = JSON.parse(fs.readFileSync(path.join(PATHS.base, "learner.json"), "utf-8")) as Record<string, unknown>;
+		const fields = Object.fromEntries(LEARNER_FIELDS.filter((k) => raw[k] !== undefined).map((k) => [k, raw[k]])) as LearnerFields;
+		return withLearnerFields(goal, fields);
+	} catch {
+		return goal;
+	}
+}
+
+/** The other languages in the learner's list, each where it stands on its
+ *  own map, read by borrowing it (config.ts withProfile). */
+function otherStudied(): StudiedLanguage[] {
+	const running = activeProfile();
+	return shownProfiles()
+		.filter((id) => id !== running)
+		.flatMap((id) => {
+			const english = profileLanguage(id)?.english;
+			if (!english) return [];
+			return withProfile(id, (): StudiedLanguage[] => {
+				const record = readProgress();
+				const goal = record?.goal;
+				if (!goal?.onboardedAt) return [{ english }];
+				const state = curriculumState(record?.units ?? {}, goal.level, { startChapter: goal.startChapter });
+				const stage = STAGES.find((s) => s.id === state.chapters.find((c) => c.id === state.current)?.stage);
+				return [{ english, working: stage?.level ?? "A1", target: goal.level, ...(goal.placedLevel ? { placed: goal.placedLevel } : {}) }];
+			});
+		});
+}
+
 /** The profile block, or null when nothing is known yet (a fresh profile
  *  with no goal and no lesson evidence). Read fresh on every call: the
  *  prompt composes per turn, and a lesson between turns changes it. */
 export function learnerProfileSegment(): string | null {
-	let record: ProgressFile;
-	try {
-		record = JSON.parse(fs.readFileSync(path.join(PATHS.data, "progress.json"), "utf-8")) as ProgressFile;
-	} catch {
-		return null;
-	}
+	const record = readProgress();
+	if (!record) return null;
 	const units = record.units ?? {};
-	const goal = record.goal;
+	const goal = withShared(record.goal);
 	const hasEvidence = Object.values(units).some((u) => u && u.reps > 0);
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
 	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
-	return learnerProfileText(activeLanguage(), goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups);
+	return learnerProfileText(activeLanguage(), goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups, otherStudied());
 }

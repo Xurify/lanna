@@ -439,6 +439,32 @@ export interface LearnerGoal {
 	vocabulary?: { size: number; at: string; reliable: boolean };
 }
 
+/** The goal's fields that belong to the learner, not to one language: what
+ *  they know and how they want it explained. Every language reads the same
+ *  copy (<data>/learner.json, 2026-11-05), so a learner of three languages
+ *  states them once. */
+export const LEARNER_FIELDS = ["languages", "languageLevels", "otherLanguages", "explainIn", "firstLanguage", "bridges", "showParallels"] as const;
+export type LearnerFields = Pick<LearnerGoal, (typeof LEARNER_FIELDS)[number]>;
+
+/** The learner's fields of a goal, the ones that are set. */
+export function learnerFieldsOf(goal: LearnerGoal): LearnerFields {
+	const out: Record<string, unknown> = {};
+	for (const k of LEARNER_FIELDS) if (goal[k] !== undefined) out[k] = goal[k];
+	return out as LearnerFields;
+}
+
+/** A language's goal without the learner's fields. */
+export function withoutLearnerFields<G extends LearnerGoal>(goal: G): G {
+	const out = { ...goal };
+	for (const k of LEARNER_FIELDS) delete out[k];
+	return out;
+}
+
+/** A language's goal with the learner's own fields in place of its copy. */
+export function withLearnerFields<G extends LearnerGoal>(goal: G, fields: LearnerFields): G {
+	return { ...withoutLearnerFields(goal), ...fields };
+}
+
 export const DEFAULT_DAYS_PER_WEEK = 6;
 /** Quick picks; the stepper accepts any value up to MAX_MINUTES. */
 export const MINUTE_CHOICES = [10, 15, 20, 30, 45, 60, 90, 120] as const;
@@ -783,8 +809,28 @@ export function measuredWeak(u: { title: string; reps: number; accuracy: number 
 	return null;
 }
 
+/** Another language the learner studies in this app, and where it stands on its own map. */
+export interface StudiedLanguage {
+	english: string;
+	/** Absent until that language is set up. */
+	working?: Cefr;
+	target?: Cefr;
+	placed?: Cefr;
+}
+
+/** The tutor's line on the other languages studied in this app: they are bridges at the level the app measures, unless "Knows" says more. */
+export function studiedLine(studied: readonly StudiedLanguage[]): string | null {
+	if (studied.length === 0) return null;
+	const parts = studied.map((l) => {
+		if (!l.working) return `${l.english} (just added, not set up yet)`;
+		const placed = l.placed ? `, placed at ${l.placed}` : "";
+		return `${l.english} (working at ${l.working} on its map${placed}, aiming at ${l.target ?? l.working})`;
+	});
+	return `- Also studying in this app: ${parts.join(", ")}. Use these as bridges at those levels unless "Knows" gives a higher one, and never quiz them here.`;
+}
+
 /** The learner as a short profile block for the tutor's system prompt, for learning `target`. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts); `mixups_` the pairs of words they confuse (src/core/mixups.ts). */
-export function learnerProfileText(target: { code: string; english: string }, goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord): string | null {
+export function learnerProfileText(target: { code: string; english: string }, goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord, studied_: readonly StudiedLanguage[] = []): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -804,14 +850,18 @@ export function learnerProfileText(target: { code: string; english: string }, go
 		};
 		const names = [...known.map((l) => `${languageName(l)} (${levelOf(l)})`), ...other];
 		const notes = known.filter((l) => l !== "en").map((l) => `${languageName(l)}: ${languageInfo(l).line}`);
-		const [first, second] = explanationLanguages(goal);
+		// The language being learned is never an explanation language of its own lessons.
+		const explain = explanationLanguages(goal).filter((l) => l !== target.code);
+		const [first, second] = explain.length ? explain : (["en"] as Lang[]);
 		lines.push(
-			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? ` When a form has a parallel in one of these, show it that way too, not only in English.${known.includes("et") || target.code === "et" ? "" : " Do not lean on Estonian bridges."}` : ` The learner turned parallels off: do not compare ${target.english} to these languages unless asked; use them only to understand what the learner means.`}`,
+			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? " When a form has a parallel in one of these, show it that way too, not only in English." : ` The learner turned parallels off: do not compare ${target.english} to these languages unless asked; use them only to understand what the learner means.`}`,
 		);
 		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, ${target.english} examples in ${target.english}, English only when asked.`;
 		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
 		lines.push((second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}` : lead) + (first !== "en" ? simple(first!) : ""));
 	}
+	const studied = studiedLine(studied_);
+	if (studied) lines.push(studied);
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
 	if (goal?.placedAt && goal.placedLevel) {
 		const placed = Object.entries(evidence).filter(([, e]) => e?.placed);

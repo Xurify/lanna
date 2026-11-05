@@ -556,6 +556,17 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - A step in another language switches (E45) and lands on the step's page; a tutor step, which has no page, lands on Today. A language not set up has one step, its setup.
 - The rail, the score, the weak spots and the week stay the running language's.
 
+### E47. What the learner knows is kept once; bridges come from the learner's own languages (2026-11-05, branch `feat/unified-daily-plan`)
+
+**Why:** the bridges were written for one learner. The Slovak tutor was told "He knows Estonian" and leaned on Estonian cases for everyone, the probe asked every language's learner about Estonian, and three Slovak tutor briefs carried Estonian lines. The owner is learning Estonian (A2), not native in it, and with three languages they would have entered the languages they know three times, with levels that went stale.
+
+**How to apply:**
+- The learner's fields of the goal (`LEARNER_FIELDS` in `src/core/onboarding.ts`: the languages known with levels, the explanation languages, the parallels switch) live once in `<data>/learner.json` (`src/store/learner.ts`). The progress store lays them over every language's goal on read and takes them out on write; a goal made fresh for a new language never wipes them. Before the file exists, the first goal that has them hands them over. A new language's setup starts from them (`defaultGoal()`).
+- A language's own pickers leave it out, so a list saved there keeps the running language and its level if the shared list had it (Slovak listed in a Russian setup stays when the Slovak profile saves).
+- Prompts never assume a language. The Slovak doctrine names Estonian and Slavic parallels only "when it is listed" in "This learner"; the probe asks about "a language they know"; tutor briefs carry no bridge line.
+- "This learner" also says which other languages are studied in the app and where each works on its own map ("Also studying in this app: Slovak (working at A1 on its map, aiming at B1)"), read by borrowing them (E45). The level the learner gave stays theirs; the measured one is said apart, never overwrites it. A language is never its own explanation language.
+- The hand-written bridge lines in the Slovak lessons (Estonian, Finnish, Russian, German) stay: they are chosen by the learner's languages already.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

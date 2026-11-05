@@ -15,7 +15,8 @@ import type { MixupRecord } from "../core/mixups.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import type { LearnerGoal } from "../core/onboarding.ts";
+import { LEARNER_FIELDS, learnerFieldsOf, withLearnerFields, withoutLearnerFields, type LearnerFields, type LearnerGoal } from "../core/onboarding.ts";
+import { readLearnerFields, writeLearnerFields } from "./learner.ts";
 
 export interface DayRecord {
 	xp: number;
@@ -128,20 +129,48 @@ export function emptyProgress(): ProgressRecord {
 	return { xp: 0, days: {}, units: {}, exams: {}, recent: [] };
 }
 
+/** The learner's fields every language shares. Before learner.json exists
+ *  they are taken from the first goal that has any, so a profile set up
+ *  before 2026-11-05 hands its languages to the others. */
+function sharedFields(goal: GoalRecord | undefined): LearnerFields | null {
+	const kept = readLearnerFields();
+	if (kept || !goal || !LEARNER_FIELDS.some((k) => goal[k] !== undefined)) return kept;
+	const fields = learnerFieldsOf(goal);
+	writeLearnerFields(fields);
+	return fields;
+}
+
+/** The goal of a language not set up yet: the defaults, with what the
+ *  learner already told the app in another language (setup prefills it). */
+export function defaultGoal(): GoalRecord {
+	return { ...DEFAULT_GOAL, ...(readLearnerFields() ?? {}) };
+}
+
 export const progressStore = {
 	read(): ProgressRecord {
+		let record: ProgressRecord;
 		try {
 			const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Partial<ProgressRecord>;
-			return { ...emptyProgress(), ...raw, days: raw.days ?? {}, units: raw.units ?? {}, exams: raw.exams ?? {}, recent: raw.recent ?? [] };
+			record = { ...emptyProgress(), ...raw, days: raw.days ?? {}, units: raw.units ?? {}, exams: raw.exams ?? {}, recent: raw.recent ?? [] };
 		} catch {
 			return emptyProgress();
 		}
+		const shared = sharedFields(record.goal);
+		if (record.goal && shared) record.goal = withLearnerFields(record.goal, shared);
+		return record;
 	},
 	write(record: ProgressRecord): void {
 		const file = FILE();
+		let out = record;
+		if (record.goal) {
+			// A goal made fresh for a new language carries none of them: it must not wipe the learner's copy.
+			const fields = learnerFieldsOf(record.goal);
+			if (Object.keys(fields).length > 0) writeLearnerFields(fields);
+			out = { ...record, goal: withoutLearnerFields(record.goal) };
+		}
 		fs.mkdirSync(path.dirname(file), { recursive: true });
 		const tmp = `${file}.${process.pid}.tmp`;
-		fs.writeFileSync(tmp, JSON.stringify(record), "utf-8");
+		fs.writeFileSync(tmp, JSON.stringify(out), "utf-8");
 		fs.renameSync(tmp, file);
 	},
 };

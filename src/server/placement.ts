@@ -37,7 +37,7 @@ import { entryLemma, type LexiconEntry } from "../core/review.ts";
 import { makePseudowords, PSEUDO_WORDS, scoreVocab, VOCAB_BANDS, WORDS_PER_BAND, type VocabAnswer, type VocabItem } from "../core/vocab-probe.ts";
 import { rng, shuffle } from "../core/lesson.ts";
 import { placementStore, type PlacementSession } from "../store/placement.ts";
-import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
+import { defaultGoal, progressStore } from "../store/progress.ts";
 import { readSettings } from "../store/settings.ts";
 import { recordPlacement, type PlacementResult, type RepResult } from "./lesson.ts";
 import { frequencyOrder } from "./milestones.ts";
@@ -176,7 +176,7 @@ function itemFor(s: PlacementSession, unit: UnitId): LessonItem {
 export function startPlacement(opts: { recheck?: boolean } & PlacementOptions = {}): PlacementStart {
 	const now = opts.now ?? new Date();
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const from = opts.recheck ? tierForChapter(state.current) : 0;
 	const id = `pl_${now.getTime().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;

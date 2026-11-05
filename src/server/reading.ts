@@ -71,7 +71,7 @@ import {
 } from "../core/reading.ts";
 import { dayKey, entryLemma, type LexiconEntry } from "../core/review.ts";
 import { ensureReadmes } from "../store/corpus.ts";
-import { DEFAULT_GOAL, progressStore } from "../store/progress.ts";
+import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { readSettings } from "../store/settings.ts";
 import { storyStore } from "../store/stories.ts";
@@ -114,7 +114,7 @@ export interface KnownWords {
  *  frequency bound moves. */
 export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr): KnownWords {
 	const p = progressStore.read();
-	const goal = p.goal ?? DEFAULT_GOAL;
+	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const at = level ?? state.level;
 	const chapter = allChapters().find((c) => c.id === state.current);

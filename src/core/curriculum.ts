@@ -142,7 +142,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	goal("can-introduce", "Can introduce myself", "Volám sa… Som z Estónska. Odkiaľ ste?", "n_seed_can_introduce", "colleague", { slovakTerm: "Predstavenie sa", grammarTerm: "Can-Do: Introduce yourself" }),
 
 	// ── A1 · 2 At the café ──
-	tutor("byt", "To be: som, si, je", "byť in the present, and nie som", "smile", "n_seed_cop_byt", "byť in the present: som, si, je, sme, ste, sú, the negative nie som / nie je, and dropping the pronoun (Som doma). Estonian bridge: olen, oled, on. Drill me with short sentences about where I am, what I am and what I am not.", { slovakTerm: "Sloveso byť", grammarTerm: "Present copula 'byť'" }),
+	tutor("byt", "To be: som, si, je", "byť in the present, and nie som", "smile", "n_seed_cop_byt", "byť in the present: som, si, je, sme, ste, sú, the negative nie som / nie je, and dropping the pronoun (Som doma). Drill me with short sentences about where I am, what I am and what I am not.", { slovakTerm: "Sloveso byť", grammarTerm: "Present copula 'byť'" }),
 	drill("lx-core-verbs"),
 	drill("acc-fem"),
 	drill("lx-drinks"),
@@ -232,7 +232,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("lx-describe-people"),
 	drill("lx-describe-things"),
 	drill("clitics"),
-	tutor("pron-cases", "Me, you, him: pronoun cases", "ma / mňa, mi / mne, ho / jeho", "user-round", "n_seed_pron_cases", "Personal pronouns in the cases: the short forms (ma, ťa, ho, ju, mi, ti, mu, jej, nás, vás, ich, im) in second position, the long forms (mňa, teba, jeho, mne, tebe) after prepositions and for emphasis. Estonian bridge: mind/mulle/minuga. Drill me on choosing the form from the verb or preposition.", { slovakTerm: "Pády osobných zámen", grammarTerm: "Pronoun cases" }),
+	tutor("pron-cases", "Me, you, him: pronoun cases", "ma / mňa, mi / mne, ho / jeho", "user-round", "n_seed_pron_cases", "Personal pronouns in the cases: the short forms (ma, ťa, ho, ju, mi, ti, mu, jej, nás, vás, ich, im) in second position, the long forms (mňa, teba, jeho, mne, tebe) after prepositions and for emphasis. Drill me on choosing the form from the verb or preposition.", { slovakTerm: "Pády osobných zámen", grammarTerm: "Pronoun cases" }),
 	tutor("liking", "Liking things", "mám rád, rada čítam, páči sa mi", "heart", "n_seed_rad", "Three ways to like: mám rád/rada + accusative (mám rád kávu), rád/rada + verb (rád čítam), and páči sa mi + nominative (páči sa mi Bratislava), with the gender of rád/rada. Drill me on all three.", { slovakTerm: "Vyjadrovanie záľub", grammarTerm: "Expressing preferences" }),
 	goal("can-describe-people", "Can describe people", "Môj brat je vysoký a trochu lenivý.", undefined, "family", { slovakTerm: "Opis osôb", grammarTerm: "Can-Do: Describe people" }),
 
@@ -265,7 +265,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	goal("can-opinion", "Can give an opinion", "Myslím si, že… Súhlasím, ale…", undefined, "colleague", { slovakTerm: "Vyjadrenie názoru", grammarTerm: "Can-Do: Express opinions" }),
 
 	// ── B1 · 15 Dealing with offices ──
-	tutor("plural-cases", "Plural in every case", "s kamarátmi, v mestách, bez peňazí", "layers", "n_seed_gen_pl", "The plural across the cases: genitive (domov, žien, miest, peňazí), dative -om, locative -och, instrumental -ami/-mi, and the adjective plural endings -ých/-ým/-ými. Estonian bridge: the plural stem plus the same case endings. Drill me with prepositions that pick the case.", { slovakTerm: "Pády v množnom čísle", grammarTerm: "Plural in all cases" }),
+	tutor("plural-cases", "Plural in every case", "s kamarátmi, v mestách, bez peňazí", "layers", "n_seed_gen_pl", "The plural across the cases: genitive (domov, žien, miest, peňazí), dative -om, locative -och, instrumental -ami/-mi, and the adjective plural endings -ých/-ým/-ými. Drill me with prepositions that pick the case.", { slovakTerm: "Pády v množnom čísle", grammarTerm: "Plural in all cases" }),
 	drill("lx-admin"),
 	drill("lx-tech"),
 	drill("lx-languages"),

@@ -82,7 +82,7 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
 		}
 	}
 	// LangHarness: the active language profile's doctrine (target language,
-	// the English + Estonian bridges, immersion, audio and spelling rules)
+	// the bridges from the learner's languages, immersion, audio and spelling rules)
 	// composes into EVERY agent, after its own fragments and before the
 	// shared appendix. language/<NN>-<profile>.md — only the active one.
 	const languageDir = path.join(PROMPTS_DIR, "language");

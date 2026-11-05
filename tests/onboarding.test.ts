@@ -152,7 +152,8 @@ test("the profile block says what the tutor must not ask, and is null on a fresh
 	assert.ok(own.includes('Slovak is for: daily life; in the learner\'s own words, "a nursing job in Košice".'), own);
 	assert.ok(own.includes("Shape examples and scenes around those words"), own);
 	const de = learnerProfileText(SLOVAK, { ...goal, languages: ["de", "en"], explainIn: ["de"] }, state, o.units)!;
-	assert.ok(de.includes("Do not lean on Estonian bridges"), de);
+	assert.ok(de.includes("Knows: German (B2 on the CEFR), English"), de);
+	assert.ok(!de.includes("Estonian"), "no Estonian for a learner who does not know it");
 	assert.ok(de.includes("Explain in German"), de);
 	const two = learnerProfileText(SLOVAK, { ...goal, explainIn: ["en", "ru"] }, state, o.units)!;
 	assert.ok(two.includes("Explanations in English. Also Russian, which the learner is still learning"), two);
