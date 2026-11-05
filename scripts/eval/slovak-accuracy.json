@@ -1,5 +1,5 @@
 {
-	"about": "Items with one checkable answer, for measuring how often a model misleads a Slovak learner (scripts/eval-slovak-accuracy.ts). Answers were checked against skills/slovak-language/references; the 'correct' sentences marked curated come from curriculum/slovak/lexicon.json. ref names the one skill reference a tutor would read for the item.",
+	"about": "Items with one checkable answer, for measuring how often a model misleads a Slovak learner (scripts/eval-slovak-accuracy.ts). Answers were checked against .claude/skills/slovak-language/references; the 'correct' sentences marked curated come from curriculum/slovak/lexicon.json. ref names the one skill reference a tutor would read for the item.",
 	"items": [
 		{ "id": "err-do-skoly", "kind": "sentence", "text": "Idem do škola.", "ok": false, "fix": "do školy", "ref": "valency-and-prepositions.md" },
 		{ "id": "err-v-bratislave", "kind": "sentence", "text": "Bývam v Bratislava.", "ok": false, "fix": "v Bratislave", "ref": "nouns.md" },

@@ -2,6 +2,21 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: Watch prepares videos in the background (branch `fix/watch-known-grammar-words`)
+
+- **Background tasks:** preparing or regenerating a video no longer holds the page. The shelf comes back at once with the video listed as running; the sidebar's Background section lists it with its step and a stop button; when it ends, a card (any page) says "Video ready" with Open, or why it failed. The card stays until dismissed. `src/server/tasks.ts` is the registry (in memory, so a restart drops the list, not the saved videos); the next AI jobs (stories, lessons) can register the same way.
+- **Transcribing:** a video with no captions that can be transcribed shows "Transcribe the audio" on its failure card.
+- **Tooltips** keep 12 px from the window edge.
+- **Unverified:** the flow in the live app (the checks were unit tests and the render tests), and whether a real model's new translations read better.
+
+## 4 November: aspect and demonstrative drills, built but inert (branch `feat/aspect-demonstrative-drills`, E42)
+
+- **What was built:** aspect is a mix-up family of 12 pairs (`curriculum/slovak/mixups.json`), drilled only from 18 verifier-approved verified-lexicon rows; a pair is drilled and recorded only with rows of both aspects, and it mends only after right first tries on both. Each family has a static explanation (contrast, timeline or case grid, cue points, trap, one slovak.wiki page link) under the Why? panel after a miss. The lesson's cue question after a miss is the family's own line. Demonstratives (tento/ten) have their grid and explanation, but no approved rows, so nothing is drilled.
+- **What it does today:** nothing new is drilled by the family. No aspect pair has rows on both sides, so the family's drill and record stay empty until the owner supplies sentences (D2). The older Dvojičky pairs step still drills 12 aspect pairs from raw verified sentences, which the approved-rows rule does not yet reach (E42). `tutor("aspect")` and `tutor("gender-this-my")` are unchanged (D1).
+- **Reachable now (second round):** the six aspect chapters' Dvojičky steps carry up to three form-reading tasks, at reps 4, 8 and 12: a grid whose cells are empty until you answer (the tenses are the rows; you place the form by its cell label; the forms and notes appear after the answer), or the cue word that decided an approved sentence's form, asked with its verb and twin ("Which word made it robiť and not urobiť?"; six approved rows make one). An aspect pair's miss opens the static explanation. Neither is a first try or a mix-up. A task seen in the last lesson goes to the back of its chapter's pool (66 tasks in all: 60 grid, 6 cue; one perfective cue, nakoniec, kept by its keep list).
+- **Also fixed:** `vtomto` is now `tomto` in `src/core/reading.ts`; four verifier-rejected sentences are excluded from every pair (`curriculum/slovak/pairs.json`).
+- **Unverified:** every Slovak line in the explanations is pending the verifier (`checked: "pending verifier"`); the slovak.wiki links (www base, `#contrasts` sections) were fetched and confirmed on 5 November; the Why? visuals were checked on a phone and a desktop in the dev server (`docs/assets/aspect-explain/`), not on a device.
+
 ## 3 November: Watch time counts the video playing (branch `fix/watch-time-logging`)
 
 - **What counted:** the day's Watch minutes counted the time the tab was visible and focused on the watch stage, so a paused video with the tab open counted as watching, with no idle limit. Now the time the video plays counts, and so does the time a paused line waits for your decision (up to 2 minutes a line), and the questions (up to 90 seconds after your last action). Nothing counts before the video is loaded. Clicks into the player's frame count as actions.
@@ -21,7 +36,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 3 November: Czech captions for Watch (branch `feat/czech-captions`)
 
-- **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labelled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).
+- **Czech when there is no Slovak:** a video with no Slovak captions (made by people or automatic) uses its Czech ones, labeled "in Czech" on the preview, and the translation is told they are Czech. Slovak still wins whenever it exists. Decision: E41 in [DECISIONS.md](DECISIONS.md).
 - **Error text:** "none in Slovak or Czech" instead of "none in Slovak".
 - **Thumbnails:** the library shows each video's YouTube thumbnail (`https://i.ytimg.com/vi/<id>/hqdefault.jpg`) loaded in the browser, in a fixed 16:9 box. Nothing is saved on disk; the icon stands in when YouTube has none. Unverified: the owner's PC must reach `i.ytimg.com`.
 - **Unverified:** fetching a Czech track from YouTube (the cloud container cannot reach YouTube; the tests use a scripted track). The owner should paste a Czech video with no Slovak captions and check the preview and the lines.
@@ -149,7 +164,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 - **Slow tabs** (E36, [research/slow-tabs.md](research/slow-tabs.md)): the owner's dev server compiles each route on first visit; the shared bundle also carried 900 KB of KaTeX and Markdown parsing. KaTeX is out of every route (`@/src/core/tutor`), a tab click now answers at once (`app/loading.tsx`), and `npm run desktop:prod` runs a build. At 4x CPU, long tasks per page load went from 620–880 ms to 66–183 ms.
 - **Watch** is a page like Milestones: sidebar, "Today" back link, the same heading and cards, with the link field and the video list on cards.
-- **Letter keys** on Listen, Review and the lesson have an edge and a darker face, so each key can be told from its neighbour.
+- **Letter keys** on Listen, Review and the lesson have an edge and a darker face, so each key can be told from its neighbor.
 - **The period after a word** on Review sat after the tick; the tick now follows the period.
 - **Streak calendar** followed minutes while the XP chart above it followed XP, so Monday could be filled in one and empty in the other. Inside the last seven days it now uses the same XP as the chart; older days use minutes; a legend names the three shades and each day has a name on hover.
 - **Minutes by strand** shows minutes beside the percent, and the week's total in its heading.

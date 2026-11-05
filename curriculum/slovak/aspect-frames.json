@@ -1,0 +1,4 @@
+{
+	"comment": "Authored cue frames for the aspect probes. Empty: no frames exist yet. Adding a row needs the owner's approval (D4) and a recorded verifier approval in approved. Every row needs src \"frame\". Deleting this file switches the frame layer off; the app keeps working.",
+	"rows": []
+}

@@ -10,7 +10,7 @@
  */
 
 import { buildItem, buildLesson, candidatesFor, classifyExample, isUnitId, rng, shuffle, unitInfo, type LessonItem, type LessonPlan, type UnitId } from "./lesson.ts";
-import { drillable, mixupItem, mixupKey, mixupLexicon, mixupRule, mixupStatus, twinsOf, type MixupLexicon, type MixupRecord } from "./mixups.ts";
+import { drillable, mixupItem, mixupKey, mixupLexicon, mixupRule, mixupStatus, NO_FRAMES, pairSentenceId, twinsOf, type MixupLexicon, type MixupProbe, type MixupRecord } from "./mixups.ts";
 import { entryLemma, type LexiconEntry } from "./review.ts";
 
 /** The targets, as the lexicon backs them. */
@@ -39,9 +39,9 @@ function entryOfLemma(lex: MixupLexicon, lemma: string): LexiconEntry | undefine
 /** Keep what the lexicon can back: a word with a verified sentence, a unit
  *  that lessons can build (not a pairs or tutor unit) with enough sentences,
  *  a pair whose twins both exist and can be drilled. */
-export function resolvePractice(raw: { words: string[]; units: string[]; pairs: Array<[string, string]> } | undefined, focus: string[], entries: readonly LexiconEntry[]): PersonalPractice | null {
+export function resolvePractice(raw: { words: string[]; units: string[]; pairs: Array<[string, string]> } | undefined, focus: string[], entries: readonly LexiconEntry[], frames: readonly MixupProbe[] = NO_FRAMES): PersonalPractice | null {
 	if (!raw) return null;
-	const lex = mixupLexicon(entries);
+	const lex = mixupLexicon(entries, frames);
 	const words = [...new Set(raw.words.map((w) => entryOfLemma(lex, w)?.slug).filter((s): s is string => !!s))];
 	const units = [...new Set(raw.units.filter(isUnitId))].filter((u) => unitInfo(u).kind !== "pairs" && candidatesFor(entries, u).length >= MIN_UNIT_SENTENCES);
 	const pairs: Array<[string, string]> = [];
@@ -65,11 +65,11 @@ export function resolvePractice(raw: { words: string[]; units: string[]; pairs: 
  * one rep each, so the lesson is interleaved rather than blocked. `recent`
  * sentence ids go to the back while fresher ones remain.
  */
-export function buildPersonalLesson(entries: readonly LexiconEntry[], practice: PersonalPractice | null | undefined, record: MixupRecord | undefined, opts: { seed: number; length?: number; recent?: ReadonlySet<string> }): LessonPlan {
+export function buildPersonalLesson(entries: readonly LexiconEntry[], practice: PersonalPractice | null | undefined, record: MixupRecord | undefined, opts: { seed: number; length?: number; recent?: ReadonlySet<string>; frames?: readonly MixupProbe[] }): LessonPlan {
 	const rand = rng(opts.seed);
 	const length = opts.length ?? 12;
 	if (!practice) return { unit: "words", items: [], focus: "personal" };
-	const lex = mixupLexicon(entries);
+	const lex = mixupLexicon(entries, opts.frames ?? NO_FRAMES);
 	const fresh = <T>(list: T[], id: (x: T) => string) => [...list.filter((x) => !opts.recent?.has(id(x))), ...list.filter((x) => opts.recent?.has(id(x)))];
 	const pools: LessonItem[][] = [];
 	for (const [a, b] of practice.pairs) {
@@ -77,7 +77,7 @@ export function buildPersonalLesson(entries: readonly LexiconEntry[], practice: 
 		const m = record?.[key];
 		const open = !!m && mixupStatus(m) === "active";
 		const rule = mixupRule(m ?? { a, b }, lex);
-		const sentences = fresh(shuffle(twinsOf(lex, a, b), rand), (x) => `${x.entry.slug}#${x.index}`);
+		const sentences = fresh(shuffle(twinsOf(lex, a, b), rand), pairSentenceId);
 		const sides = [sentences.filter((x) => x.member === "a"), sentences.filter((x) => x.member === "b")];
 		const turns: LessonItem[] = [];
 		for (let i = 0; turns.length < 4 && (sides[0]!.length || sides[1]!.length); i++) {

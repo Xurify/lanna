@@ -87,6 +87,7 @@ export * from "./variants.ts";
 export * from "./fsrs.ts";
 export * from "./review.ts";
 export * from "./lesson.ts";
+export * from "./reference-pages.ts";
 export * from "./grammar.ts";
 export * from "./form-slip.ts";
 export * from "./first-try.ts";

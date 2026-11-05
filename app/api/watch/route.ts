@@ -7,14 +7,20 @@
  * POST /api/watch {action: "add", url, transcribe?} — prepare a video
  * from a YouTube link (src/server/watch.ts): captions fetched, cut into
  * lines, translated on the cheap slot, glossed, questioned, kept under
- * data/profiles/<language>/videos/. Reused when already there.
+ * data/profiles/<language>/videos/. Reused when already there, unless
+ * force is true (regenerate: captions fetched and lines translated again).
+ * With background: true it answers 202 {id} at once and the work runs as a
+ * task (src/server/tasks.ts, listed in GET /api/activity); a video already
+ * kept is returned whole, as without it.
+ * POST /api/watch {action: "delete", videoId} — take a video out of the
+ * library (its watchings stay).
  * POST /api/watch {action: "finish", videoId, mode, stats, answers,
  * tapped, ms?, tz?} — a finished watching: XP, the check, the words sent
  * to the review deck, a fresh summary.
  */
 
-import type { SegmentStat, WatchMode } from "@/src/core";
-import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, videoStore, watchState } from "@/src/server";
+import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
+import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, storyEngine, videoStore, watchState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -36,17 +42,21 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add") {
 		if (typeof body.url !== "string" || !body.url.trim()) return Response.json({ message: "url is required" }, { status: 400 });
 		try {
-			return Response.json(await prepareVideo(body.url, { transcribe: body.transcribe === true }));
+			return Response.json(await prepareVideo(body.url, { transcribe: body.transcribe === true, force: body.force === true }));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			if (err instanceof NoCaptionsError) return Response.json({ message, noCaptions: true, canTranscribe: err.canTranscribe, meta: err.meta }, { status: 422 });
 			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /not a YouTube link|minutes long/.test(message) ? 400 : 502 });
 		}
+	}
+	if (body.action === "delete") {
+		if (typeof body.videoId !== "string" || !isVideoId(body.videoId)) return Response.json({ message: "videoId is required" }, { status: 400 });
+		return videoStore.remove(body.videoId) ? Response.json({ ok: true }) : Response.json({ message: "no such video" }, { status: 404 });
 	}
 	if (body.action === "finish") {
 		if (typeof body.videoId !== "string") return Response.json({ message: "videoId is required" }, { status: 400 });

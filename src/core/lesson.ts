@@ -305,6 +305,52 @@ function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: Pi
  *  precedes production): the first two reps of a new unit. */
 export type ItemKind = "meaning" | "choose" | "type" | "build" | "listen";
 
+/** A static, worked explanation of a contrast (curriculum/slovak/mixups.json,
+ *  `explain`). Shown in the Why? panel after a miss; never a drill item and
+ *  never part of the first-try measure or the mix-up record. Every Slovak
+ *  line is for the verifier; `wiki` is an allowlisted slovak.wiki page or section. */
+export interface LessonExplain {
+	contrast: {
+		first: { sk: string; en: string; form: string };
+		second: { sk: string; en: string; form: string };
+		note: string;
+	};
+	/** Aspect only: one line per twin, drawn as a timeline. */
+	timeline?: { imperfective: string; perfective: string };
+	/** Aspect only: the three points, one per cue type that needs one. */
+	points?: string[];
+	/** Demonstratives only: case-by-gender grids, cells as written. */
+	tables?: Array<{ title: string; cols: string[]; rows: Array<{ case: string; cells: string[] }> }>;
+	trap: string;
+	/** An allowlisted slovak.wiki page or section link (src/core/reference-pages.ts); shown only when allowed. */
+	wiki: string;
+	/** Who has checked the Slovak in this block. "pending verifier": not yet approved. */
+	checked?: string;
+}
+
+/** A form-reading task in an aspect chapter (src/core/aspect-tasks.ts). Not a
+ *  sentence drill: it has no first try and no mix-up record. */
+export type LessonTask =
+	| {
+			kind: "grid";
+			/** The form the question names; the answer is the cell it sits in. */
+			form: string;
+			rows: string[];
+			cols: string[];
+			/** Six cells, row by row; `form: null` is a cell with no form. */
+			cells: Array<{ row: number; col: number; form: string | null; note?: string }>;
+			target: { row: number; col: number };
+	  }
+	| {
+			kind: "cue";
+			/** The word or phrase that decided the form (a span of the sentence). */
+			span: string;
+			/** The cue type, as the row names it ("prestať + inf"). */
+			phrase: string;
+			/** The question, naming the row's verb and its twin ("Which word made it robiť and not urobiť?"). */
+			question: string;
+	  };
+
 export interface LessonItem {
 	/** "<slug>#<exampleIndex>" — the same id the review deck uses. */
 	id: string;
@@ -345,10 +391,12 @@ export interface LessonItem {
 	/** The answer's form in plain words: "he / she / it form of dávať",
 	 *  "accusative of káva". */
 	form?: string;
+	/** A form-reading task (aspect chapters). Its kind and rendering differ; see LessonTask. */
+	task?: LessonTask;
 	/** pairs: the contrast pair behind this rep. The form in the sentence is
 	 *  the pair member's (item.form); the rule and the Estonian bridge are
 	 *  the pair's own, shown after a miss in place of the unit's. */
-	pair?: { id: string; rule: string; bridge: string };
+	pair?: { id: string; rule: string; bridge: string; cue?: string; explain?: LessonExplain };
 	/** The review deck's memory of this word, attached by the server. */
 	known?: WordKnown | null;
 }
@@ -776,7 +824,22 @@ export function buildLesson(
  *  two lemmas — recognizing which twin the sentence really uses. Deck
  *  order is deterministic per seed; `recent` ids go to the back while
  *  fresher sentences remain; a short deck cycles (repeat: true). */
-export function buildPairsLesson(entries: readonly LexiconEntry[], unit: UnitId, opts: { seed: number; length?: number; recent?: ReadonlySet<string> }): LessonPlan {
+/** Where a task rep sits in a Dvojičky lesson (0-based), when tasks are given. */
+export const PAIRS_TASK_SLOTS = [3, 7, 11];
+
+export function buildPairsLesson(
+	entries: readonly LexiconEntry[],
+	unit: UnitId,
+	opts: {
+		seed: number;
+		length?: number;
+		recent?: ReadonlySet<string>;
+		/** Form-reading tasks, placed at PAIRS_TASK_SLOTS in the order given. */
+		tasks?: readonly LessonItem[];
+		/** The cue and explanation a pair's reps carry (aspect pairs only). */
+		pairInfo?: (pair: PairDef) => { cue?: string; explain?: LessonExplain } | undefined;
+	},
+): LessonPlan {
 	const rand = rng(opts.seed);
 	const length = opts.length ?? LESSON_PATTERN.length;
 	const chapter = unit.startsWith("pairs-") ? unit.slice("pairs-".length) : unit;
@@ -784,15 +847,21 @@ export function buildPairsLesson(entries: readonly LexiconEntry[], unit: UnitId,
 	const shuffled = shuffle(deck, rand);
 	const fresh = shuffled.filter((x) => !opts.recent?.has(`${x.s.entry.slug}#${x.s.index}`));
 	const order = [...fresh, ...shuffled.filter((x) => opts.recent?.has(`${x.s.entry.slug}#${x.s.index}`))];
+	const tasks = [...(opts.tasks ?? [])];
 	const items: LessonItem[] = [];
-	for (let k = 0; items.length < length && order.length > 0; k++) {
+	for (let k = 0; items.length < length && order.length > 0; ) {
+		if (tasks.length > 0 && PAIRS_TASK_SLOTS.includes(items.length)) {
+			items.push(tasks.shift()!);
+			continue;
+		}
 		const pick = order[k % order.length]!;
-		items.push(pairItem(pick, unit, entries, rand));
+		items.push(pairItem(pick, unit, entries, rand, opts.pairInfo?.(pick.pair)));
+		k++;
 	}
 	return { unit, items };
 }
 
-function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId, entries: readonly LexiconEntry[], rand: () => number): LessonItem {
+function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId, entries: readonly LexiconEntry[], rand: () => number, info?: { cue?: string; explain?: LessonExplain }): LessonItem {
 	const ex = s.entry.examples[s.index]!;
 	// The twins' own meanings, first sense, imperfective/perfective marker
 	// kept — for a pair it is often the only difference the chip can show.
@@ -816,8 +885,16 @@ function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId,
 		after: exampleText(ex).slice(s.at + s.form.length),
 		hint: `${pair.a} = ${gloss(pair.a)} · ${pair.b} = ${gloss(pair.b)}`,
 		options: shuffle([pair.a, pair.b], rand),
-		pair: { id: pair.id, rule: pair.rule, bridge: pair.bridge },
+		pair: { id: pair.id, rule: pair.rule, bridge: pair.bridge, ...(info?.cue ? { cue: info.cue } : {}), ...(info?.explain ? { explain: info.explain } : {}) },
 	};
+}
+
+/** The "Same pattern" examples a Why? panel shows for a rep: other sentences of
+ *  its unit, never a form-reading task (a grid or a cue rep, whose sentence is
+ *  empty or a bare span), and none at all for a task rep itself (N2). */
+export function patternExamples(items: readonly LessonItem[], current: LessonItem | undefined, limit = 2): LessonItem[] {
+	if (!current || current.task) return [];
+	return items.filter((o) => !o.task && o.unit === current.unit && o.sentence !== current.sentence && !o.again).slice(0, limit);
 }
 
 /** Blitz: choose-only reps across the given units, as many as a minute holds. */

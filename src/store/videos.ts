@@ -104,6 +104,39 @@ export const videoStore = {
 		fs.renameSync(tmp, file);
 		appendJsonl(INDEX(), videoIndexEntryOf(v));
 	},
+	/** Take a video out of the library: its record, its index lines and its
+	 *  kept caption track. The watchings stay, as the learner's own record
+	 *  (XP, words sent to review). False when it was not there. */
+	remove(id: string): boolean {
+		const file = videoFile(id);
+		const existed = fs.existsSync(file);
+		fs.rmSync(file, { force: true });
+		try {
+			const kept = fs
+				.readFileSync(INDEX(), "utf-8")
+				.split("\n")
+				.filter((line) => {
+					if (!line.trim()) return false;
+					try {
+						return (JSON.parse(line) as VideoIndexEntry).id !== id;
+					} catch {
+						return true;
+					}
+				});
+			const tmp = `${INDEX()}.${process.pid}.tmp`;
+			fs.writeFileSync(tmp, kept.length ? `${kept.join("\n")}\n` : "", "utf-8");
+			fs.renameSync(tmp, INDEX());
+		} catch {
+			// no index yet: nothing to take the video out of
+		}
+		const dir = path.join(PATHS.videos, "captions");
+		try {
+			for (const name of fs.readdirSync(dir)) if (name.startsWith(`${id}.`)) fs.rmSync(path.join(dir, name), { force: true });
+		} catch {
+			// no captions folder
+		}
+		return existed;
+	},
 	/** Keep the caption track as fetched; returns the file. */
 	putCaptions(id: string, lang: string, ext: "json" | "xml" | "vtt", text: string): string {
 		if (!isVideoId(id)) throw new Error(`bad video id ${id}`);

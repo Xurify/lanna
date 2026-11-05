@@ -16,7 +16,7 @@ export { isVariantMatch, knownVariants };
 export interface LanguageReferenceSite {
 	/** Display label in popovers, e.g. "slovak.wiki" or "DEXonline". */
 	label: string;
-	/** Base origin, e.g. "https://slovak.wiki". */
+	/** Base origin, e.g. "https://www.slovak.wiki" (the bare domain redirects there). */
 	baseUrl: string;
 }
 
@@ -52,7 +52,7 @@ export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 		edgeVoices: ["sk-SK-ViktoriaNeural", "sk-SK-LukasNeural"],
 		referenceSite: {
 			label: "slovak.wiki",
-			baseUrl: "https://slovak.wiki",
+			baseUrl: "https://www.slovak.wiki",
 		},
 		captionFallbacks: [{ code: "cs", english: "Czech" }],
 	},

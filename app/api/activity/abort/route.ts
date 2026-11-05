@@ -1,6 +1,6 @@
 /**
  * POST /api/activity/abort — the dock's END/ABORT control, uniform across
- * process kinds (user-decided contract): body {kind: "job"|"extraction"|"turn", id}
+ * process kinds (user-decided contract): body {kind: "job"|"extraction"|"turn"|"task", id}
  * where id is the jobId for sub-agent jobs, the chatId for extraction runs
  * (the pipeline registry is chat-keyed), and the chatId for turns
  * (background-turn wave, 2026-09-25: a running turn is a background
@@ -14,10 +14,12 @@
  * A turn mirrors the job semantics: not_running -> 409 (honest "nothing to
  * abort" — the caller refetches), aborted -> 200 (partial persists via
  * the usual settle path, every subscriber closes cleanly).
+ * A task (background-tasks wave, 2026-11-05) aborts by its task id: not
+ * running -> 409, aborted -> 200.
  * Extraction abort is idempotent by design (aborting with nothing in
  * flight is success — the blob is gone either way) -> 200.
  */
-import { abortExtraction, abortJob, abortTurn } from "@/src/server";
+import { abortExtraction, abortJob, abortTask, abortTurn } from "@/src/server";
 
 export async function POST(req: Request) {
 	let body: unknown;
@@ -27,8 +29,8 @@ export async function POST(req: Request) {
 		return Response.json({ error: "Invalid JSON body" }, { status: 400 });
 	}
 	const { kind, id } = (body ?? {}) as { kind?: string; id?: string };
-	if ((kind !== "job" && kind !== "extraction" && kind !== "turn") || typeof id !== "string" || id === "") {
-		return Response.json({ error: 'Body must be {kind: "job"|"extraction"|"turn", id: string}' }, { status: 400 });
+	if ((kind !== "job" && kind !== "extraction" && kind !== "turn" && kind !== "task") || typeof id !== "string" || id === "") {
+		return Response.json({ error: 'Body must be {kind: "job"|"extraction"|"turn"|"task", id: string}' }, { status: 400 });
 	}
 	if (!/^[A-Za-z0-9:_-]+$/.test(id)) {
 		return Response.json({ error: "Invalid id" }, { status: 400 });
@@ -41,6 +43,10 @@ export async function POST(req: Request) {
 			return Response.json({ ok: false, reason: outcome.reason }, { status });
 		}
 		return Response.json({ ok: true });
+	}
+	if (kind === "task") {
+		// A background task (server/tasks.ts): its signal fires and the work ends it.
+		return abortTask(id) ? Response.json({ ok: true }) : Response.json({ ok: false, reason: "not_running" }, { status: 409 });
 	}
 	if (kind === "turn") {
 		const outcome = abortTurn(id);

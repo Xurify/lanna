@@ -1,6 +1,7 @@
 /**
- * Bring skills/slovak-language up to date with slovak.wiki (LangHarness,
- * 2026-11-01). slovak.wiki is the source of truth; this copy only follows.
+ * Bring .claude/skills/slovak-language up to date with slovak.wiki (LangHarness,
+ * 2026-11-01). slovak.wiki is the source of truth; this copy only follows. The
+ * same files are then mirrored to .agents/skills/slovak-language.
  *
  *   npm run skill:sync                  # from ../slovak.wiki next to this repo
  *   npm run skill:sync -- <dir>         # from another checkout of slovak.wiki
@@ -21,7 +22,9 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LOCAL = path.join(ROOT, "skills", "slovak-language");
+const LOCAL = path.join(ROOT, ".claude", "skills", "slovak-language");
+// The same skill, kept beside it under .agents/skills so agents that read that folder see it too.
+const MIRROR = path.join(ROOT, ".agents", "skills", "slovak-language");
 const UPSTREAM_SKILL = ".agents/skills/slovak-language";
 const OWN = "SOURCE.md";
 
@@ -128,6 +131,8 @@ function main() {
 	}
 	for (const p of [...plan.remove, ...(force ? plan.conflicts.filter((c) => !incoming.has(c)) : [])]) fs.rmSync(path.join(LOCAL, p));
 	fs.writeFileSync(path.join(LOCAL, OWN), recordCommit(sourceMd, commit, date)!);
+	fs.rmSync(MIRROR, { recursive: true, force: true });
+	fs.cpSync(LOCAL, MIRROR, { recursive: true });
 
 	const changed = plan.add.length + plan.update.length + plan.remove.length + (force ? plan.conflicts.length : 0);
 	console.log(`Synced from ${repo} at ${commit} (${date}): ${plan.add.length} added, ${plan.update.length} updated, ${plan.remove.length} removed${force && plan.conflicts.length ? `, ${plan.conflicts.length} local edits dropped` : ""}.`);

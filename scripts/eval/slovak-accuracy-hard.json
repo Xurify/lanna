@@ -1,5 +1,5 @@
 {
-	"about": "The hard set: forms models get wrong (clitic order, s/so, masculine-person plurals, numerals with people, animals in the plural). Answers checked against skills/slovak-language/references (grammar-core, nouns, adjectives-pronouns-numerals, orthography-and-punctuation).",
+	"about": "The hard set: forms models get wrong (clitic order, s/so, masculine-person plurals, numerals with people, animals in the plural). Answers checked against .claude/skills/slovak-language/references (grammar-core, nouns, adjectives-pronouns-numerals, orthography-and-punctuation).",
 	"items": [
 		{ "id": "h-ok-pacisami", "kind": "sentence", "text": "Páči sa mi to.", "ok": true, "ref": "syntax-and-style.md" },
 		{ "id": "h-ok-dal-som-mu-ho", "kind": "sentence", "text": "Dal som mu ho včera.", "ok": true, "ref": "syntax-and-style.md" },

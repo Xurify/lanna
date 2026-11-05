@@ -2,6 +2,8 @@
 
 Copied from the slovak.wiki repository, `.agents/skills/slovak-language/`, at commit `337d5fc1` (2026-10-30). slovak.wiki is the source of truth: change the skill there, commit, then run `npm run skill:sync` here.
 
+The copy lives in `.claude/skills/slovak-language` (where Claude Code loads it) and is mirrored to `.agents/skills/slovak-language` (where agents that read that folder look). The two hold the same files; `npm run skill:sync` writes both, and `tests/slovak-skill-copies.test.ts` fails if they differ.
+
 ## Keeping it in step
 
 `scripts/sync-slovak-skill.ts` compares three versions of every file: this copy, slovak.wiki at the commit above, and slovak.wiki now.

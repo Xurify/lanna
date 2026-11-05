@@ -12,7 +12,9 @@ import { cn } from "@/lib/utils"
  * a 500ms rest, so tooltips appear when you pause on a control, never in
  * passing; disableHoverableContent means the chip is un-hoverable — the
  * instant the cursor leaves the trigger it's gone, even mid-move onto the
- * chip's own pixels.
+ * chip's own pixels. A tooltip keeps 12px from the window's edges
+ * (collisionPadding): Radix's default is none, so a chip next to the
+ * sidebar or the right edge sat flush against it.
  */
 
 /** The rest delay (ms): shared by hover and focus opens. */
@@ -53,6 +55,7 @@ function TooltipTrigger({
 function TooltipContent({
   className,
   sideOffset = 6,
+  collisionPadding = 12,
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
@@ -61,6 +64,7 @@ function TooltipContent({
       <TooltipPrimitive.Content
         data-slot="tooltip-content"
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
         className={cn(
           "z-50 w-fit origin-(--radix-tooltip-content-transform-origin) animate-in rounded-md bg-card px-2 py-1 text-[11.5px] text-ink-2 shadow-raise-hi text-balance fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
           className

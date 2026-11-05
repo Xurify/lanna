@@ -42,6 +42,11 @@ export function getPairsForLanguage(lang: string = "slovak"): PairDef[] {
 
 export const PAIRS: PairDef[] = (pairsJson as { pairs: PairDef[] }).pairs;
 
+/** Verified sentences that are wrong or misleading, excluded from every drill
+ *  (curriculum/slovak/pairs.json, `excluded`), each with its reason. The
+ *  lexicon file itself is never edited. */
+const EXCLUDED: ReadonlyArray<{ slug: string; sk: string; why: string }> = (pairsJson as { excluded?: Array<{ slug: string; sk: string; why: string }> }).excluded ?? [];
+
 /** Sentences a pair must have on the two sides together, or it is dropped. */
 export const MIN_PAIR_SENTENCES = 3;
 
@@ -107,6 +112,7 @@ export function twinSentences(entryA: LexiconEntry, entryB: LexiconEntry): PairS
 		entry.examples.forEach((example, index) => {
 			if (!example.cloze || example.rejected) return;
 			if (otherRegex.test(exampleText(example))) return;
+			if (EXCLUDED.some((x) => x.slug === entry.slug && x.sk === exampleText(example))) return;
 			out.push({ entry, index, member, form: example.cloze.answer, at: example.cloze.at });
 		});
 	}

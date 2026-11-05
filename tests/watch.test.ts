@@ -108,6 +108,14 @@ test("segmentCues: punctuation closes a line, the word and time limits cut long 
 	assert.equal(gap.length, 2);
 });
 
+test("segmentCues: a line cut inside a cue starts at its first word, from the track's word times or spread over the cue", () => {
+	const timed = JSON.stringify({ events: [{ tStartMs: 0, dDurationMs: 3000, segs: [{ utf8: "a" }, { utf8: " b", tOffsetMs: 200 }, { utf8: " c", tOffsetMs: 400 }, { utf8: " d", tOffsetMs: 2000 }, { utf8: " e.", tOffsetMs: 2400 }] }] });
+	const withTimes = core.segmentCues(core.parseJson3(timed), { maxWords: 3, minWords: 2 });
+	assert.deepEqual(withTimes.map((l) => [l.sk, l.start]), [["a b c", 0], ["d e.", 2]]);
+	const spread = core.segmentCues([{ start: 0, dur: 4, text: "a b c d e f g h" }], { maxWords: 4, minWords: 2 });
+	assert.deepEqual(spread.map((l) => l.start), [0, 2]);
+});
+
 test("coverageBand, watchXp, watchMinutes, listeningSpeed, parseTranslations", () => {
 	assert.equal(core.coverageBand(0.96).band, "comfortable");
 	assert.equal(core.coverageBand(0.9).band, "stretch");
@@ -374,6 +382,46 @@ test("a translation the model miscounts twice is split in halves, each half aske
 	assert.equal(v.usage.steps.length, 5, "two asks for the whole, one each for the halves, one for the questions");
 });
 
+test("a kept video is prepared again when forced, and removing it leaves its watchings", async () => {
+	const url = "https://youtu.be/DDDDDDDDDDD";
+	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const first = await watch.prepareVideo(url, { engine, model: "faux:watch", captions, now: new Date("2026-11-04T09:00:00Z") });
+	const redo = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.map((t) => `${t} (again)`) })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const again = await watch.prepareVideo(url, { engine: redo, model: "faux:watch", captions, force: true, now: new Date("2026-11-04T09:30:00Z") });
+	assert.equal(again.segments[0]!.en, `${TRANSLATIONS[0]} (again)`, "forcing asks the model again instead of reusing the kept video");
+	assert.equal(videoStore.list().filter((e) => e.id === first.id).length, 1, "one index line per video");
+	videoStore.putCaptions(first.id, "sk", "json", "{}");
+	videoStore.appendWatch({ id: "w-keep", videoId: first.id } as never);
+	assert.equal(videoStore.remove(first.id), true);
+	assert.equal(videoStore.get(first.id), null);
+	assert.equal(videoStore.list().some((e) => e.id === first.id), false);
+	assert.equal(videoStore.captions(first.id, "sk"), null);
+	assert.ok(videoStore.watches().some((w) => w.videoId === first.id), "the watchings stay");
+	assert.equal(videoStore.remove(first.id), false, "a second removal finds nothing");
+	assert.throws(() => videoStore.remove("not an id"));
+});
+
+test("a translation chunk is asked with the lines on both sides as context", async () => {
+	const many = Array.from({ length: 43 }, (_, i) => `riadok${i + 1}`);
+	const base = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	const asks: string[] = [];
+	const streamFn: typeof base.streamSimple = (...args) => {
+		const asked = JSON.stringify(args[1]);
+		asks.push(asked);
+		const [, from, to] = asked.match(/Lines (\d+)–(\d+) of/)!;
+		const one = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+		one.setResponses([fauxAssistantMessage(JSON.stringify({ t: Array.from({ length: Number(to) - Number(from) + 1 }, (_, i) => `line ${Number(from) + i}`) }))]);
+		return one.streamSimple(...args);
+	};
+	const out = await watch.translateLines({ model: base.getModel(), streamFn }, many, { model: "faux:watch", steps: [] }, "Test");
+	assert.equal(out.length, 43);
+	assert.equal(asks.length, 2);
+	assert.match(asks[0]!, /lines just after[\s\S]*riadok41[\s\S]*riadok43/);
+	assert.doesNotMatch(asks[0]!, /lines just before/);
+	assert.match(asks[1]!, /lines just before[\s\S]*riadok38[\s\S]*riadok40/);
+	assert.doesNotMatch(asks[1]!, /lines just after/);
+});
+
 test("a line the model never translates stays in the video with no English, and is counted", async () => {
 	const bad = 2;
 	const missing = lines[bad]!.sk;
@@ -397,4 +445,35 @@ test("a line the model never translates stays in the video with no English, and 
 	assert.equal(v.segments[bad]!.en, "", "the line keeps its Slovak and has no English");
 	assert.deepEqual(v.segments.filter((_, i) => i !== bad).map((s) => s.en), TRANSLATIONS.filter((_, i) => i !== bad));
 	assert.equal(v.untranslated, 1);
+});
+
+test("a preparation is a background task: running with its step, done with where to open it, failed with why", async () => {
+	const { listTasks, resetTasks, abortTask } = await import("../src/server/tasks.ts");
+	resetTasks();
+	const url = "https://youtu.be/EEEEEEEEEEE";
+	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const slow = watch.prepareVideo(url, { engine, model: "faux:watch", captions: async (id) => ({ ...(await captions(id)), meta: { id, title: "Slow one", durationSec: 58 } }), now: new Date("2026-11-05T09:00:00Z") });
+	const [running] = listTasks();
+	assert.equal(running!.id, "video:EEEEEEEEEEE");
+	assert.equal(running!.status, "running");
+	const v = await slow;
+	const [done] = listTasks();
+	assert.deepEqual({ status: done!.status, title: done!.title, href: done!.href }, { status: "done", title: "Slow one", href: `/watch?id=${v.id}` });
+
+	const failing = watch.prepareVideo("https://youtu.be/FFFFFFFFFFF", { engine: fauxEngine([]), model: "faux:watch", captions: async () => Promise.reject(new Error("YouTube said no.")) });
+	await assert.rejects(failing, /YouTube said no/);
+	const failed = listTasks().find((t) => t.id === "video:FFFFFFFFFFF")!;
+	assert.deepEqual({ status: failed.status, error: failed.error }, { status: "error", error: "YouTube said no." });
+
+	const stopped = watch.prepareVideo("https://youtu.be/GGGGGGGGGGG", {
+		engine: fauxEngine([]),
+		model: "faux:watch",
+		captions: async (id) => {
+			assert.equal(abortTask(`video:${id}`), true);
+			return captions(id);
+		},
+	});
+	await assert.rejects(stopped);
+	assert.equal(listTasks().find((t) => t.id === "video:GGGGGGGGGGG")!.error, "Stopped.");
+	assert.equal(videoStore.get("GGGGGGGGGGG"), null, "a stopped preparation keeps nothing");
 });

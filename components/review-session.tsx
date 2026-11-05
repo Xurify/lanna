@@ -605,7 +605,7 @@ export function ReviewSession() {
 											<em>{last.answer}</em>
 											{last.after}
 										</span>
-										<span className="e hidden @xl:inline">{last.translation}</span>
+										<span className="e" title={last.translation}>{last.translation}</span>
 										<span className="r">{last.label}</span>
 									</div>
 								)}

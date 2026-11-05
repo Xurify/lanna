@@ -90,7 +90,7 @@ export function referenceSiteLinkFor(
 export function slovakWikiUrlFor(slug?: string, query?: string): string {
 	return (
 		referenceSiteLinkFor(slug, query, LANGUAGES.slovak).url ??
-		"https://slovak.wiki/dictionary"
+		"https://www.slovak.wiki/dictionary"
 	);
 }
 

@@ -73,8 +73,8 @@ const checkSlovakTool: AgentTool<typeof checkInput> = {
 	}),
 };
 
-/** The slovak-language skill's references (skills/slovak-language, from slovak.wiki). */
-const REFERENCE_DIR = path.join(PATHS.root, "skills", "slovak-language", "references");
+/** The slovak-language skill's references (.claude/skills/slovak-language, from slovak.wiki). */
+const REFERENCE_DIR = path.join(PATHS.root, ".claude", "skills", "slovak-language", "references");
 
 const REFERENCES: Record<string, string> = {
 	"grammar-core": "cases, agreement, verbs, aspect, prepositions: the overview",
