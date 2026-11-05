@@ -146,6 +146,8 @@ test("dailyPlan: a waiting video is a Watch task; none when nothing waits", () =
 	const base = { state, evidence: {}, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 }, review: { due: 0, newLeft: 0, available: false }, minutesPerDay: 60, next: state.chapters[0]!.units[0]!.id as UnitId, dayOfYear: 1 };
 	const without = dailyPlan(base);
 	assert.ok(!without.tasks.some((t) => t.id === "watch"));
+	const foreign = dailyPlan({ ...base, watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, captionLang: "Czech" } });
+	assert.match(foreign.tasks.find((t) => t.id === "watch")!.line, /^Czech captions/, "no known-word share for a video whose captions are in another language");
 	const withVideo = dailyPlan({ ...base, watch: { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 4, coverage: 0.91 } });
 	const task = withVideo.tasks.find((t) => t.id === "watch");
 	assert.ok(task);
@@ -329,6 +331,20 @@ test("a video with only Czech captions is prepared, kept as Czech, and the trans
 	assert.equal(v.source.trackLang, "cs");
 	assert.equal(v.segments.length, lines.length);
 	assert.ok(sent[0]!.includes("These subtitles are in Czech, not Slovak"), "the first call says the subtitles are Czech");
+	const entry = videoStore.list().find((e) => e.id === v.id)!;
+	assert.deepEqual({ lang: entry.lang, trackLang: entry.trackLang }, { lang: "sk", trackLang: "cs" });
+	assert.equal(core.foreignCaptions(entry), true, "the shelf shows the captions' language, not a known-word share");
+	assert.equal(core.foreignCaptions({ lang: "sk", trackLang: "sk" }), false);
+	assert.equal(core.foreignCaptions({}), false, "an old line with no caption language is not foreign until it is filled in");
+});
+
+test("an index line written before the caption language was kept gets it from the record, once", () => {
+	const v = videoStore.get("CZCZCZCZCZC")!;
+	const index = path.join(PATHS.videos, "index.jsonl");
+	const stripped = videoStore.list().map(({ lang: _l, trackLang: _t, ...old }) => old);
+	fs.writeFileSync(index, `${stripped.map((e) => JSON.stringify(e)).join("\n")}\n`);
+	assert.equal(videoStore.list().find((e) => e.id === v.id)!.trackLang, "cs");
+	assert.match(fs.readFileSync(index, "utf-8"), /"trackLang":"cs"/, "written back, so the record is not read again");
 });
 
 test("the sentence step: a model verdict is kept and reused, XP once per accepted word, the program refuses without a model, a Czech video has no step", async () => {

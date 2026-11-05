@@ -78,6 +78,8 @@ export function videoIndexEntryOf(v: VideoRecord): VideoIndexEntry {
 		preTeach: v.preTeach.map((w) => w.lemma),
 		source: v.source.kind,
 		model: v.usage.model,
+		lang: v.lang,
+		trackLang: v.source.trackLang,
 	};
 }
 
@@ -86,6 +88,24 @@ export const videoStore = {
 	list(): VideoIndexEntry[] {
 		const seen = new Map<string, VideoIndexEntry>();
 		for (const e of readJsonl<VideoIndexEntry>(INDEX())) seen.set(e.id, e);
+		// Lines written before the caption language was kept get it from the record, once.
+		let filled = false;
+		for (const [id, e] of seen) {
+			if (e.trackLang) continue;
+			const full = this.get(id);
+			if (!full) continue;
+			seen.set(id, { ...e, lang: full.lang, trackLang: full.source.trackLang });
+			filled = true;
+		}
+		if (filled) {
+			try {
+				const tmp = `${INDEX()}.${process.pid}.tmp`;
+				fs.writeFileSync(tmp, `${[...seen.values()].map((e) => JSON.stringify(e)).join("\n")}\n`, "utf-8");
+				fs.renameSync(tmp, INDEX());
+			} catch {
+				// read-only data folder: the list is still right for this call
+			}
+		}
 		return [...seen.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 	},
 	get(id: string): VideoRecord | null {

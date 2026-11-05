@@ -132,6 +132,17 @@ export interface VideoIndexEntry {
 	preTeach: string[];
 	source: CaptionSource;
 	model: string;
+	/** The video's language and its caption track's. Absent on older lines,
+	 *  which the store fills in on first read. */
+	lang?: string;
+	trackLang?: string;
+}
+
+/** Captions in another language than the video's (Czech for Slovak): the
+ *  words are matched against the learner's Slovak, so a known-word share
+ *  would mean nothing. */
+export function foreignCaptions(v: { lang?: string; trackLang?: string }): boolean {
+	return !!v.lang && !!v.trackLang && v.lang !== v.trackLang;
 }
 
 /** How one line went in step mode. */

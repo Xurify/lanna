@@ -40,7 +40,7 @@ import { speak } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
+import { coverageBand, foreignCaptions, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
@@ -504,6 +504,7 @@ function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchSt
 						<ol className="flex flex-col gap-2">
 							{list.map((v) => {
 								const band = coverageBand(v.coverage);
+								const foreign = foreignCaptions(v);
 								return (
 									<li key={v.id} className="relative">
 										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 py-3.5 pl-4 pr-12 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
@@ -514,7 +515,7 @@ function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchSt
 												</span>
 												<span className="block truncate font-prose text-[13px] text-ink-3">
 													{v.channel ? `${v.channel} · ` : ""}
-													{formatClock(v.durationSec)} · {v.segments} lines · {Math.round(v.coverage * 100)}% known ({band.title.toLowerCase()})
+													{formatClock(v.durationSec)} · {v.segments} lines · {foreign ? `${captionLanguageName(v.trackLang!)} captions` : `${Math.round(v.coverage * 100)}% known (${band.title.toLowerCase()})`}
 												</span>
 											</span>
 											<span className="shrink-0 text-right font-ui text-xs font-[600] text-ink-3">
@@ -559,6 +560,7 @@ function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchSt
 function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
+	const foreign = foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang });
 	const tone = band.band === "comfortable" ? "text-teal-2" : band.band === "stretch" ? "text-teal-2" : "text-miss";
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -584,15 +586,24 @@ function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart
 				</h1>
 
 				<div className="mt-6 grid gap-4 sm:grid-cols-[auto_1fr]">
-					<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
-						<Ring value={video.coverage} floor={LISTEN_FLOOR} tone={tone} />
-						<div>
-							<p className={cn("font-ui text-2xl font-[600]", tone)}>{band.title}</p>
-							<p className="font-ui text-sm font-[600] text-muted-foreground">{pct} of every 100 words known</p>
+					{foreign ? (
+						<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
+							<div>
+								<p className="font-ui text-2xl font-[600] text-foreground">{captionLanguageName(video.source.trackLang)} captions</p>
+								<p className="font-ui text-sm font-[600] text-muted-foreground">No known-word share</p>
+							</div>
 						</div>
-					</div>
+					) : (
+						<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
+							<Ring value={video.coverage} floor={LISTEN_FLOOR} tone={tone} />
+							<div>
+								<p className={cn("font-ui text-2xl font-[600]", tone)}>{band.title}</p>
+								<p className="font-ui text-sm font-[600] text-muted-foreground">{pct} of every 100 words known</p>
+							</div>
+						</div>
+					)}
 					<div className="rounded-lg border bg-card px-5 py-4">
-						<p className="font-prose text-base leading-snug text-foreground">{band.line}</p>
+						<p className="font-prose text-base leading-snug text-foreground">{foreign ? `The captions are ${captionLanguageName(video.source.trackLang)}, so the words are not matched against your ${captionLanguageName(video.lang)}. The English is translated from them; the video itself is in ${captionLanguageName(video.lang)}.` : band.line}</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
 							{video.wordCount} words · {video.unknownCount} you have not met · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
 						</p>
