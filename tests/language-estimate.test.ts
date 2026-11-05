@@ -14,7 +14,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-estimate-"));
 process.env.LH_DATA_DIR = dir;
 fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ models: { strong: { model: { provider: "anthropic", id: "claude-opus-5-5" }, thinkingLevel: "medium" } } }));
 
-const { addEstimate, DRAFT_CAPS } = await import("../src/server/language-add.ts");
+const { addEstimate, capPlan } = await import("../src/server/language-add.ts");
 const { callCost } = await import("../src/server/pricing.ts");
 
 const MODEL = "anthropic:claude-opus-5-5";
@@ -31,7 +31,12 @@ test("before any course: a first guess for that thinking level, and a most fixed
 	assert.equal(e.level, "medium");
 	assert.equal(e.measured, 0);
 	assert.ok(e.typicalUsd! > 0 && e.typicalUsd! < e.mostUsd!);
-	const most = callCost({ inputTokens: 2 * 3_500, outputTokens: 2 * DRAFT_CAPS.course }, MODEL)! + callCost({ inputTokens: 2 * 1_500, outputTokens: 2 * DRAFT_CAPS.world }, MODEL)!;
+	const course = capPlan("course");
+	const world = capPlan("world");
+	// Medium thinking: 1.5 × the answer plus twice the thinking; a cut answer gets twice that.
+	assert.deepEqual(course, { first: 28_000, second: 56_000 });
+	assert.deepEqual(world, { first: 20_500, second: 41_000 });
+	const most = callCost({ inputTokens: 2 * 3_500, outputTokens: course.first + course.second }, MODEL)! + callCost({ inputTokens: 2 * 1_500, outputTokens: world.first + world.second }, MODEL)!;
 	assert.equal(e.mostUsd!.toFixed(6), most.toFixed(6));
 });
 
@@ -43,4 +48,9 @@ test("after a course on the same model and level, the typical cost is what it re
 	assert.equal(e.measured, 1);
 	const typical = callCost({ inputTokens: 3_000, outputTokens: 10_000 }, MODEL)! + callCost({ inputTokens: 1_200, outputTokens: 4_000 }, MODEL)!;
 	assert.equal(e.typicalUsd!.toFixed(6), typical.toFixed(6));
+});
+
+test("a model that once wrote a long answer gets at least twice that room", () => {
+	draft("estonian", "course", "medium", 3_000, 30_000);
+	assert.deepEqual(capPlan("course"), { first: 60_000, second: 120_000 }, "twice the longest answer, under Opus 5.5's 128,000");
 });

@@ -193,8 +193,15 @@ const WORLD = JSON.stringify({
 	scenes: { cafe: { title: "V kavárně", blurb: "Order a coffee", brief: "a waiter in Brno", task: "Order a coffee." } },
 });
 let asked: string[] = [];
-const fakeAsk = async (system: string) => {
+let caps: number[] = [];
+let cutFirst = false;
+const fakeAsk = async (system: string, _prompt: string, _signal: AbortSignal, cap: number) => {
 	asked.push(system);
+	caps.push(cap);
+	if (cutFirst) {
+		cutFirst = false;
+		return { text: '{"units": [{"id": "acc", "kind": "gram', usage: { model: "faux:faux", steps: [] }, cut: true };
+	}
 	return { text: system.includes("story bible") ? WORLD : COURSE, usage: { model: "faux:faux", steps: [] } };
 };
 
@@ -204,6 +211,8 @@ describe("adding a language in the background", () => {
 		calls = [];
 		failKaikki = false;
 		asked = [];
+		caps = [];
+		cutFirst = false;
 	});
 
 	test("a failed download ends the task with why, and keeps the steps already done", async () => {
@@ -220,6 +229,7 @@ describe("adding a language in the background", () => {
 	});
 
 	test("trying again continues where it stopped, writes the language and lists it as a profile", async () => {
+		cutFirst = true;
 		const { taskId, done } = startLanguageAdd("czech", { fetch: fakeFetch, ask: fakeAsk, minUnitSentences: 1 });
 		assert.equal(taskId, "language:czech");
 		assert.deepEqual(listTasks()[0]?.language, { id: "czech", english: "Czech" });
@@ -230,7 +240,8 @@ describe("adding a language in the background", () => {
 		assert.equal(t?.title, "Czech is ready");
 		// hrad is not in the frequency list; "Děkuji." is one word, too short to drill.
 		assert.equal(t?.note, "3 chapters, 3 grammar lessons, 0 word themes, 1 tutor sessions; 3 words, 2 with example sentences.");
-		assert.equal(asked.length, 2, "one call for the course, one for the story bible");
+		assert.equal(asked.length, 3, "the course (cut once, then asked with twice the room), then the story bible");
+		assert.equal(caps[1], 2 * caps[0]!);
 
 		const folder = path.join(dir, "languages", "czech");
 		const lexicon = JSON.parse(fs.readFileSync(path.join(folder, "lexicon.json"), "utf-8")) as { words: Array<{ lemma: string; examples: Array<{ text: string; tatoebaId: number; cloze: { answer: string; at: number } }> }> };

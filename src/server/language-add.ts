@@ -110,16 +110,12 @@ export interface AddDeps {
 	minUnitSentences?: number;
 }
 
-/** One model call: the answer, what it used, and the thinking level it ran at. `cap` is the most output tokens it may write. */
-export type Ask = (system: string, prompt: string, signal: AbortSignal, cap: number) => Promise<{ text: string; usage: StoryUsage; level?: string }>;
+/** One model call: the answer, what it used, the thinking level it ran at,
+ *  and whether it stopped at `cap` (the most output tokens it may write)
+ *  rather than finishing. */
+export type Ask = (system: string, prompt: string, signal: AbortSignal, cap: number) => Promise<{ text: string; usage: StoryUsage; level?: string; cut?: boolean }>;
 
 type DraftKind = "course" | "world";
-
-/** The most output tokens (thinking included) each call may write. The
- *  provider stops it there, so the most a language can cost is known before
- *  it starts. A course is about 8,000 tokens of JSON, a story bible 3,000;
- *  the rest is room to think. */
-export const DRAFT_CAPS: Record<DraftKind, number> = { course: 32_000, world: 16_000 };
 
 /** A call's tokens before any course has been written on this model: the
  *  prompts are about 3,500 and 1,500 tokens, the answers as above, plus the
@@ -136,7 +132,7 @@ export interface AddEstimate {
 	level: string;
 	/** USD, or null when the catalog has no price (a subscription model). */
 	typicalUsd: number | null;
-	/** The most it can cost: both calls answered twice, each to its cap. */
+	/** The most it can cost: each call cut at its cap, then answered to the doubled cap. */
 	mostUsd: number | null;
 	/** Earlier calls on this model and level the typical figure comes from; 0 = a first guess. */
 	measured: number;
@@ -147,6 +143,8 @@ interface DraftCall {
 	model: string;
 	level?: string;
 	usage: StoryUsage;
+	/** Stopped at its cap. */
+	cut?: boolean;
 }
 
 /** Every course or story-bible call made so far, on any language. */
@@ -165,6 +163,27 @@ const median = (xs: number[]) => {
 	return s.length ? s[Math.floor(s.length / 2)]! : 0;
 };
 const sum = (usage: StoryUsage, key: "inputTokens" | "outputTokens") => usage.steps.reduce((n, st) => n + (st[key] ?? 0), 0);
+
+/**
+ * The output caps for one draft (thinking included). The provider stops a
+ * call at its cap, so the most a language can cost is known before it
+ * starts; but a cap that is too low cuts a good answer short, and a cut
+ * JSON answer is worth nothing. So the cap is generous: room for the answer
+ * plus twice the thinking the level allows, and at least twice the longest
+ * answer this model at this level has given. A call that still stops at the
+ * cap is tried once more with twice the room. Never past the model's own
+ * limit.
+ */
+export function capPlan(kind: DraftKind): { first: number; second: number } {
+	const resolved = courseEngine();
+	const level = resolved?.engine.level ?? "off";
+	const limit = resolved?.engine.model.maxTokens || Infinity;
+	const past = resolved ? pastCalls(kind).filter((c) => c.model === resolved.model && (c.level ?? "off") === level) : [];
+	const room = 1.5 * FIRST_GUESS[kind].output + 2 * (THINKING_GUESS[level] ?? 0);
+	const seen = Math.max(0, ...past.map((c) => sum(c.usage, "outputTokens")));
+	const first = Math.round(Math.min(limit, Math.max(room, 2 * seen)));
+	return { first, second: Math.round(Math.min(limit, 2 * first)) };
+}
 
 /** What writing a course will cost on the model and thinking level that
  *  would write it: the median of earlier calls on that same model and
@@ -185,8 +204,9 @@ export function addEstimate(): AddEstimate | null {
 		measured = Math.max(measured, same.length);
 		const input = same.length ? median(same.map((c) => sum(c.usage, "inputTokens"))) : FIRST_GUESS[kind].input;
 		const output = same.length ? median(same.map((c) => sum(c.usage, "outputTokens"))) : FIRST_GUESS[kind].output + (THINKING_GUESS[level] ?? 0);
-		const t = callCost({ inputTokens: input, outputTokens: Math.min(output, DRAFT_CAPS[kind]) }, model);
-		const m = callCost({ inputTokens: 2 * input, outputTokens: 2 * DRAFT_CAPS[kind] }, model);
+		const caps = capPlan(kind);
+		const t = callCost({ inputTokens: input, outputTokens: Math.min(output, caps.first) }, model);
+		const m = callCost({ inputTokens: 2 * input, outputTokens: caps.first + caps.second }, model);
 		typical = t === null || typical === null ? null : typical + t;
 		most = m === null || most === null ? null : most + m;
 	}
@@ -419,7 +439,7 @@ const defaultAsk: Ask = async (system, prompt, signal, cap) => {
 	const { engine } = resolved;
 	// The cap rides every request, so the provider ends the answer there.
 	const capped = { ...engine, streamFn: ((m, c, o) => engine.streamFn(m, c, { ...o, maxTokens: cap })) as typeof engine.streamFn };
-	const { text } = await runSubagent([], {
+	const { text, newMessages } = await runSubagent([], {
 		role: "researcher",
 		engine: capped,
 		systemPrompt: system,
@@ -429,7 +449,8 @@ const defaultAsk: Ask = async (system, prompt, signal, cap) => {
 		onUsage: (u: Usage) =>
 			usage.steps.push({ inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning }),
 	});
-	return { text, usage, level: engine.level ?? "off" };
+	const last = [...newMessages].reverse().find((m) => m.role === "assistant") as { stopReason?: string } | undefined;
+	return { text, usage, level: engine.level ?? "off", cut: last?.stopReason === "length" };
 };
 
 function jsonOf(text: string): unknown {
@@ -452,9 +473,16 @@ async function drafted<T>(id: string, name: DraftKind, ask: Ask, signal: AbortSi
 	if (kept?.value) return kept.value;
 	const calls: Array<DraftCall & { createdAt: string }> = [];
 	let prompt = first.prompt;
+	const caps = capPlan(name);
+	let cap = caps.first;
 	for (let attempt = 0; attempt < 2; attempt++) {
-		const { text, usage, level } = await ask(first.system, prompt, signal, DRAFT_CAPS[name]);
-		calls.push({ model: usage.model, ...(level ? { level } : {}), usage, createdAt: new Date().toISOString() });
+		const { text, usage, level, cut } = await ask(first.system, prompt, signal, cap);
+		calls.push({ model: usage.model, ...(level ? { level } : {}), usage, ...(cut ? { cut } : {}), createdAt: new Date().toISOString() });
+		if (cut) {
+			// Cut short, not wrong: the same question with twice the room.
+			cap = caps.second;
+			continue;
+		}
 		const result = check(jsonOf(text));
 		if (result) {
 			writeJson(file, { value: result.value, problems: result.problems, calls, model: usage.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });
