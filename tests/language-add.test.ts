@@ -267,7 +267,7 @@ describe("adding a language in the background", () => {
 		assert.deepEqual(info?.specialLetters, []);
 		assert.equal(languageById("czech")?.english, "Czech", "registered for the browser-safe core");
 		const listed = profileStatus().profiles.find((p) => p.id === "czech");
-		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, seed: true, removable: true });
+		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, seed: true, ready: true, removable: true });
 		assert.equal(languageCatalog().find((r) => r.id === "czech")?.ready, true);
 		const { usageReport } = await import("../src/server/usage-report.ts");
 		assert.equal(usageReport().languages?.count, 1, "the course and story calls show in Spending");
@@ -295,6 +295,41 @@ describe("adding a language in the background", () => {
 		assert.equal(JSON.parse(fs.readFileSync(path.join(dir, "profile.json"), "utf-8")).active, config.ACTIVE_PROFILE, "the switch waiting for a restart is undone");
 		assert.throws(() => removeLanguage("czech"), /nothing to remove/);
 		assert.throws(() => removeLanguage(config.ACTIVE_PROFILE), /running now/);
+	});
+
+	test("a built-in language is hidden from the list, not deleted, and comes back", () => {
+		const { removeLanguage, languageRemovable, restoreLanguage } = startModule;
+		const profileFile = path.join(dir, "profile.json");
+		fs.writeFileSync(profileFile, JSON.stringify({ active: "russian" }));
+		assert.equal(languageRemovable("russian"), true, "a built-in that is not running can be removed");
+		assert.equal(profileStatus().profiles.find((p) => p.id === "russian")?.removable, true);
+
+		removeLanguage("russian");
+		assert.deepEqual(config.readProfileChoice(), { active: config.ACTIVE_PROFILE, hidden: ["russian"] }, "the waiting switch is undone and the language hidden");
+		assert.equal(profileStatus().profiles.some((p) => p.id === "russian"), false);
+		assert.equal(config.shownProfiles().includes("russian"), false);
+		assert.equal(config.isLanguageProfile("russian"), true, "still a profile: its progress is kept");
+		assert.equal(languageRemovable("russian"), false);
+		assert.throws(() => removeLanguage("russian"), /nothing to remove/);
+		const row = languageCatalog().find((r) => r.id === "russian");
+		assert.equal(row?.ready, false, "offered again in Add a language");
+		assert.equal(row?.restoreOnly, undefined, "Russian ships no words, so adding it downloads them");
+
+		config.saveProfileChoice({ active: "russian" });
+		assert.deepEqual(config.readProfileChoice(), { active: "russian", hidden: ["russian"] }, "saving a switch keeps the hidden list");
+
+		assert.equal(restoreLanguage("russian"), true);
+		assert.equal(restoreLanguage("russian"), false);
+		assert.equal(config.shownProfiles().includes("russian"), true);
+		fs.rmSync(profileFile);
+	});
+
+	test("the running language always shows, and a removed one that ships whole comes back without a download", () => {
+		fs.writeFileSync(path.join(dir, "profile.json"), JSON.stringify({ hidden: [config.ACTIVE_PROFILE] }));
+		assert.equal(config.shownProfiles().includes(config.ACTIVE_PROFILE), true);
+		const row = languageCatalog().find((r) => r.id === config.ACTIVE_PROFILE);
+		assert.equal(row?.restoreOnly, true);
+		fs.rmSync(path.join(dir, "profile.json"));
 	});
 
 	test("a malformed language.json is not a language", () => {

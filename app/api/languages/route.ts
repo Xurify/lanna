@@ -4,10 +4,12 @@
  * POST /api/languages {action: "add", id, slot?: "strong" | "cheap" | "dictionary"} — start adding one in the
  * background (src/server/language-add.ts). The task shows in the sidebar's
  * Background section and ends in a ready notice; GET /api/activity has it.
- * POST /api/languages {action: "remove", id} — delete an added language's
- * words and grammar map. The learner's progress in it stays.
+ * POST /api/languages {action: "remove", id} — take a language off the
+ * list: an added one's words and grammar map are deleted, a built-in one is
+ * hidden. The learner's progress in it stays. Adding a hidden built-in puts
+ * it back.
  */
-import { addEstimates, languageCatalog, removeLanguage, startLanguageAdd } from "@/src/server";
+import { addEstimates, languageCatalog, languageReady, removeLanguage, restoreLanguage, startLanguageAdd } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,8 @@ export async function POST(req: Request) {
 			removeLanguage(body.id);
 			return Response.json({ ok: true });
 		}
+		// A removed built-in comes back at once when it ships its course (Slovak); Russian goes on to download its words.
+		if (restoreLanguage(body.id) && languageReady(body.id)) return Response.json({ ok: true, restored: true });
 		const slot = body.slot === "cheap" || body.slot === "dictionary" ? body.slot : "strong";
 		const { taskId } = startLanguageAdd(body.id, { slot });
 		return Response.json({ ok: true, taskId });

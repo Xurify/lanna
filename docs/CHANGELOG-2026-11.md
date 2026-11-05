@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: switching and removing languages (branch `fix/language-switch-and-manage`)
+
+- **Switching did nothing from Settings:** Settings → Learning saved the choice and reloaded the page, but the server reads the language once at boot, so the app stayed in the old language with the switch waiting. It now asks first and restarts, the same as the sidebar.
+- **A waiting switch could not be finished:** a language saved for the next start but not restarted into ignored a click in the sidebar menu. A click now restarts into it, and clicking the running language undoes the waiting switch. The menu marks the waiting one with a restart icon.
+- **Remove any language but the running one:** Slovak and Russian are built in, so they had no bin. Removing one now hides it (`hidden` in `data/profile.json`) and deletes any words downloaded for it; your progress stays. **Add a language** offers it again: Slovak comes back at once, Russian downloads its words again.
+- **Settings → Learning manages the languages:** each one is a row with its state (studying now, starts after a restart, no course yet), **Switch** or **Restart now**, and a bin, with **Add a language** under the list. The sidebar menu and Settings share one set of dialogs (`components/language-actions.tsx`), and Escape in them leaves Settings open.
+- **Unverified:** the restart from Settings in the desktop app, and the new Settings rows on screen.
+
 ## 5 November: an added language gets its whole course (branch `feat/generated-courses`, E44)
 
 - **What changed for the learner:** an Estonian profile ran the Slovak lessons and curriculum. Adding a language now builds its course: grammar lessons on real Tatoeba sentences chosen by each form's Wiktionary tags, word themes, tutor sessions, goals, chapters, placement tiers, a skill map and a story world for Read and Speak. Your Strong model writes the rules and the structure in two calls; the app checks them against the dictionary. A language added before this shows "Needs its course" in the dialog, and **Finish** builds it from the kept downloads.

@@ -24,6 +24,8 @@ interface CatalogRow {
 	adding: boolean;
 	/** Downloaded before courses were generated: adding finishes it. */
 	started: boolean;
+	/** A removed built-in language that is still complete: adding puts it back at once. */
+	restoreOnly?: boolean;
 }
 
 interface Estimate {
@@ -77,11 +79,15 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 	}, []);
 
 	useEffect(() => {
+		// Capture phase: opened from Settings, one Escape must close this dialog and leave Settings open.
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
+			if (e.key !== "Escape") return;
+			e.preventDefault();
+			e.stopImmediatePropagation();
+			onClose();
 		};
-		document.addEventListener("keydown", onKey);
-		return () => document.removeEventListener("keydown", onKey);
+		document.addEventListener("keydown", onKey, true);
+		return () => document.removeEventListener("keydown", onKey, true);
 	}, [onClose]);
 
 	const choice = rows?.find((r) => r.id === picked) ?? null;
@@ -101,7 +107,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 	};
 
 	return createPortal(
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...dismiss}>
+		<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...dismiss}>
 			<div
 				role="dialog"
 				aria-modal="true"
@@ -155,6 +161,8 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 										</span>
 									) : r.adding ? (
 										"Adding…"
+									) : r.restoreOnly ? (
+										"Removed"
 									) : r.started ? (
 										"Needs its course"
 									) : null}
@@ -167,7 +175,7 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 				<p className="text-xs leading-relaxed text-muted-foreground">
 					The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons from the dictionary for free.
 				</p>
-				{writers.length > 0 && (
+				{writers.length > 0 && !choice?.restoreOnly && (
 					<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1" data-testid="add-language-writers">
 						<p className="text-xs font-semibold text-foreground">Written by</p>
 						{writers.map((w) => {
@@ -209,11 +217,11 @@ export function AddLanguageDialog({ onClose, onStarted }: { onClose: () => void;
 					<button
 						type="button"
 						data-testid="add-language-start"
-						disabled={!choice || busy || anyAdding}
+						disabled={!choice || busy || (anyAdding && !choice.restoreOnly)}
 						onClick={() => void start()}
 						className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 					>
-						{anyAdding ? "Another language is being added" : choice ? `${choice.started ? "Finish" : "Add"} ${choice.english}` : "Pick a language"}
+						{choice?.restoreOnly ? `Put ${choice.english} back` : anyAdding ? "Another language is being added" : choice ? `${choice.started ? "Finish" : "Add"} ${choice.english}` : "Pick a language"}
 					</button>
 				</div>
 			</div>
