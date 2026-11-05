@@ -137,7 +137,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 	const share = Math.min(1, progress.asked / Math.max(10, Math.min(progress.max, 14)));
 
 	return (
-		<div data-testid="placement-ladder">
+		<div data-testid="placement-ladder" className="@container">
 			<div className="flex items-center justify-between gap-4">
 				<p className="font-ui text-sm font-semibold text-muted-foreground">
 					{progress.tier && <span className="rounded-md bg-accent px-2 py-0.5 text-foreground">{progress.tier.level}</span>} {progress.tier?.title}
@@ -196,8 +196,8 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				</p>
 				{!result && (
 					<div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-						<DiacriticBar variant="keys" />
-						<button type="submit" disabled={!given.trim() || checking} className={PRIMARY} data-testid="placement-check">
+						<DiacriticBar variant="keys" className="basis-full sm:flex-1" />
+						<button type="submit" disabled={!given.trim() || checking} className={cn(PRIMARY, "ms-auto")} data-testid="placement-check">
 							{checking ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 							{checking ? (start.judges ? "Judging…" : "Checking…") : "Check"}
 						</button>
