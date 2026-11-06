@@ -1,6 +1,6 @@
 /**
- * Cheatsheets: the Markdown import, the store on a throwaway data folder,
- * and the bridge to the Review deck.
+ * Cheatsheets: the one-line-per-phrase text, the store on a throwaway data
+ * folder, adding phrases to a sheet, and the bridge to the Review deck.
  */
 
 import assert from "node:assert/strict";
@@ -13,7 +13,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-cheatsheets-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { CheatsheetParseError, cheatsheetOverlap, inlineList, isChatter, mergeCheatsheetMarkdown, phraseKey, cheatsheetId, cheatsheetRowCount, cheatsheetWords, isCheatsheetId, parseCheatsheet, plainText, tableColumns } = await import("../src/core/cheatsheets.ts");
+const { CheatsheetParseError, cheatsheetId, cheatsheetRowCount, cheatsheetWords, countOverlap, formatSheetText, isCheatsheetId, mergeSections, parseSheetText, phraseKey, sameSection } = await import("../src/core/cheatsheets.ts");
 const { cheatsheetStore } = await import("../src/store/cheatsheets.ts");
 const { cheatsheetReviewState, cheatsheetToReview } = await import("../src/server/cheatsheets.ts");
 const { PATHS } = await import("../config.ts");
@@ -22,239 +22,225 @@ after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
 });
 
-const GUIDE = fs.readFileSync(path.join(import.meta.dirname, "..", "docs", "cheatsheets", "animal-hospital-russian.md"), "utf-8");
-// A guide as a chat assistant answered it, with its own lines to the reader.
-const CHAT_GUIDE = fs.readFileSync(path.join(import.meta.dirname, "fixtures", "cheatsheet-chat-guide.md"), "utf-8");
+const fixture = (name: string) => fs.readFileSync(path.join(import.meta.dirname, "fixtures", name), "utf-8");
+const A = fixture("cheatsheet-a.txt");
+const B = fixture("cheatsheet-b.txt");
 
-describe("parseCheatsheet", () => {
-	it("reads the shipped Russian guide: title, intro, sections and four columns", () => {
-		const sheet = parseCheatsheet(GUIDE);
-		assert.equal(sheet.title, "Night shift at the animal clinic (Russian, A1)");
-		assert.equal(sheet.intro.length, 1);
-		const titles = sheet.sections.map((s) => s.title);
-		assert.equal(titles[0], "1. At the desk: who gets in");
-		assert.ok(titles.includes("Numbers") && titles.includes("Animals") && titles.includes("Tips"));
-		const first = sheet.sections[0]!.rows[0]!;
-		assert.deepEqual(first, { text: "Пускаем?", pron: "poos-KA-yem?", meaning: "Do we let it in?" });
-		const gendered = sheet.sections[0]!.rows.find((r) => r.text.startsWith("Я не уверен"));
-		assert.equal(gendered?.note, "m / f");
-		const tips = sheet.sections.find((s) => s.title === "Tips")!;
-		assert.equal(tips.rows.length, 0, "tips without a dash separator stay notes");
-		assert.equal(tips.notes.length, 4);
-		assert.ok(cheatsheetRowCount(sheet) >= 140);
-	});
-
-	it("marks every suggested game term in the Note column", () => {
-		const sheet = parseCheatsheet(GUIDE);
-		const rows = sheet.sections.flatMap((s) => s.rows);
-		for (const text of ["Это аномалия!", "Мало рассудка!", "Купи шокер.", "рентген"]) {
-			assert.match(rows.find((r) => r.text === text)?.note ?? "", /suggestion/, text);
-		}
-	});
-
-	it("finds the columns by header in any order, else by position", () => {
-		assert.deepEqual(tableColumns(["English", "Russian"], 2), ["meaning", "text"]);
-		assert.deepEqual(tableColumns(["Slovensky", "Výslovnosť", "Význam"], 3), ["text", "pron", "meaning"]);
-		assert.deepEqual(tableColumns(["a", "b"], 2), ["text", "meaning"]);
-		assert.deepEqual(tableColumns(null, 4), ["text", "pron", "meaning", "note"]);
-	});
-
-	it("reads a table with no header line", () => {
-		const sheet = parseCheatsheet("| Ahoj | hi |\n| Ďakujem | thanks |");
-		assert.deepEqual(sheet.sections[0]!.rows, [
-			{ text: "Ahoj", meaning: "hi" },
-			{ text: "Ďakujem", meaning: "thanks" },
-		]);
-		assert.equal(sheet.title, "Cheatsheet");
-	});
-
-	it("reads list rows with a dash and an optional pronunciation; a hyphen is not a separator", () => {
-		const sheet = parseCheatsheet("## Words\n- пожар (pa-ZHAR) — fire\n- **кот** – cat\n- 1. ничего = it's OK\n- pa-ZHAR is said with a stress\n");
-		const s = sheet.sections[0]!;
-		assert.deepEqual(s.rows, [
-			{ text: "пожар", pron: "pa-ZHAR", meaning: "fire" },
-			{ text: "кот", meaning: "cat" },
-			{ text: "1. ничего", meaning: "it's OK" },
-		]);
-		assert.deepEqual(s.notes, ["pa-ZHAR is said with a stress"]);
-	});
-
-	it("keeps escaped pipes inside a cell and strips Markdown emphasis", () => {
-		const sheet = parseCheatsheet("| Phrase | Meaning |\n|---|---|\n| да \\| нет | yes \\| no |\n| *Стой!* | [Stop!](https://example.org) |");
-		assert.deepEqual(sheet.sections[0]!.rows, [
-			{ text: "да | нет", meaning: "yes | no" },
-			{ text: "Стой!", meaning: "Stop!" },
-		]);
-		assert.equal(plainText("**bold** and _it_ and `code`"), "bold and it and code");
-		assert.equal(plainText("snake_case_name"), "snake_case_name");
-	});
-
-	it("refuses text with no phrase, and text over the size limit", () => {
-		assert.throws(() => parseCheatsheet("# Only a title\n\nSome prose."), CheatsheetParseError);
-		assert.throws(() => parseCheatsheet("x".repeat(200_001)), CheatsheetParseError);
-	});
-
-	it("gives sections unique anchors", () => {
-		const sheet = parseCheatsheet("## Words\n| a | b |\n## Words\n| c | d |");
+describe("parseSheetText", () => {
+	it("reads a line with | as a phrase and a line without one as a section name", () => {
+		const sections = parseSheetText("Desk\nПускаем? | poos-KA-yem? | Do we let it in?\nNot here | | Nothing\n\nWhat we see\nЯ вижу | ya VEE-zhu | I see");
 		assert.deepEqual(
-			sheet.sections.map((s) => s.id),
+			sections.map((s) => s.title),
+			["Desk", "What we see"],
+		);
+		assert.deepEqual(sections[0]!.rows[0], { text: "Пускаем?", pron: "poos-KA-yem?", meaning: "Do we let it in?" });
+		assert.deepEqual(sections[1]!.rows, [{ text: "Я вижу", pron: "ya VEE-zhu", meaning: "I see" }]);
+	});
+
+	it("keeps empty fields out and joins extra fields as a note", () => {
+		const [s] = parseSheetText("Words\nголова |  | head\nДа | | yes | common | formal");
+		assert.deepEqual(s!.rows, [
+			{ text: "голова", meaning: "head" },
+			{ text: "Да", meaning: "yes", note: "common · formal" },
+		]);
+	});
+
+	it("skips the header and separator of a pasted table and strips bold marks", () => {
+		const sections = parseSheetText("| Russian | Sounds like | Meaning |\n|---|---|---|\n**Пожар!** | pa-ZHAR | Fire");
+		assert.deepEqual(sections[0]!.title, "Phrases");
+		assert.deepEqual(sections[0]!.rows, [{ text: "Пожар!", pron: "pa-ZHAR", meaning: "Fire" }]);
+	});
+
+	it("puts phrases above the first section under Phrases, and drops sections with no phrase", () => {
+		const sections = parseSheetText("Ahoj | hi\n\nEmpty heading\n\nDone\nDakujem | thanks");
+		assert.deepEqual(
+			sections.map((s) => s.title),
+			["Phrases", "Done"],
+		);
+	});
+
+	it("gives sections unique ids", () => {
+		const sections = parseSheetText("Words\na | b\nWords\nc | d");
+		assert.deepEqual(
+			sections.map((s) => s.id),
 			["words", "words-2"],
 		);
 	});
-});
 
-describe("guides written by a chat assistant", () => {
-	it("leaves out the assistant's lines to the reader and says which", () => {
-		const sheet = parseCheatsheet(CHAT_GUIDE);
-		assert.equal(sheet.intro.length, 0);
-		assert.equal(sheet.skipped.length, 3);
-		assert.match(sheet.skipped[2] ?? "", /^I can turn/);
-		assert.ok(isChatter("Here are some phrases"));
-		assert.ok(!isChatter("In Note, m / f is what a man / a woman says"));
-		assert.ok(!isChatter("Ich bin müde")); // a phrase, not chatter
+	it("refuses text with no phrase and text over the row limit", () => {
+		assert.throws(() => parseSheetText("Only a heading\n\nand prose"), CheatsheetParseError);
+		assert.throws(() => parseSheetText(""), CheatsheetParseError);
+		assert.throws(() => parseSheetText("x".repeat(200_001)), CheatsheetParseError);
 	});
 
-	it("reads labelled inline lists as rows under their own section", () => {
-		const sheet = parseCheatsheet(CHAT_GUIDE);
-		const body = sheet.sections.find((s) => s.title === "Body words");
-		assert.equal(body?.rows.length, 8);
-		assert.deepEqual(body?.rows[1], { text: "лицо", meaning: "face" });
-		const numbers = sheet.sections.find((s) => s.title === "Numbers");
-		assert.deepEqual(numbers?.rows[5], { text: "шесть", meaning: "6" });
-		const gender = sheet.sections.find((s) => s.title === "Three patterns that cover a lot");
-		assert.match(gender?.notes.at(-1) ?? "", /^Gendered words/, "a colon line that is not a list stays a note");
-		assert.equal(inlineList("Start with ten phrases: Пускаем, Не пускаем"), null);
-		assert.equal(inlineList("Tip: say it twice"), null);
+	it("reads the example files: every phrase line is a row, no row is lost", () => {
+		for (const text of [A, B]) {
+			const lines = text.split("\n").filter((l) => l.includes("|"));
+			const sections = parseSheetText(text);
+			assert.equal(sections.reduce((n, s) => n + s.rows.length, 0), lines.length);
+		}
 	});
 });
 
-describe("overlap and merging", () => {
-	it("compares phrases without case, ё or punctuation, and by their / parts", () => {
+describe("formatSheetText", () => {
+	it("writes the text a sheet is edited as, and reads back to the same sections", () => {
+		for (const text of [A, B]) {
+			const sections = parseSheetText(text);
+			const again = parseSheetText(formatSheetText(sections));
+			assert.deepEqual(
+				again.map((s) => [s.title, s.rows]),
+				sections.map((s) => [s.title, s.rows]),
+			);
+		}
+	});
+
+	it("keeps a phrase with no meaning a phrase, not a section name", () => {
+		const text = formatSheetText([{ title: "Words", rows: [{ text: "Ahoj" }] }]);
+		assert.equal(text, "Words\nAhoj |");
+		assert.deepEqual(parseSheetText(text)[0]!.rows, [{ text: "Ahoj" }]);
+	});
+});
+
+describe("phrases across sheets", () => {
+	it("compares by case, ё and punctuation, and covers a / b when both parts are there", () => {
 		assert.equal(phraseKey("Пускаем!"), phraseKey("пускаем."));
 		assert.equal(phraseKey("Ещё раз"), phraseKey("еще раз"));
-		const ours = parseCheatsheet(GUIDE);
-		const theirs = parseCheatsheet(CHAT_GUIDE);
-		const o = cheatsheetOverlap(theirs, ours);
+		const sheet = parseSheetText("Words\nглаз / глаза | | eye\nДа | | yes");
+		const o = countOverlap(sheet, parseSheetText("Other\nглаза | | eyes\nда. | | yes\nНет | | no"));
+		assert.deepEqual(o, { shared: 2, fresh: 1 });
+	});
+
+	it("counts the shared and the new phrases of a second text", () => {
+		const o = countOverlap(parseSheetText(A), parseSheetText(B));
 		assert.ok(o.shared >= 25, `shared ${o.shared}`);
-		const fresh = o.fresh.map((f) => f.row.text);
-		assert.ok(fresh.includes("Кто у окна?"));
-		assert.ok(!fresh.includes("Пускаем!"));
-		assert.ok(!fresh.includes("Ты где? / Я здесь."), "both parts are in the guide");
-		assert.ok(!fresh.includes("глаза"), "глаз / глаза covers глаза");
+		assert.ok(o.fresh > 0);
+		assert.equal(o.shared + o.fresh, new Set(parseSheetText(B).flatMap((s) => s.rows.map((r) => phraseKey(r.text)))).size, "every distinct phrase is counted once");
 	});
 
-	it("adds only new phrases: into the matching numbered section's table, else as a new section", () => {
-		const target = "# Mine\n\n## 1. At the desk\n| Russian | Say it | English | Note |\n|---|---|---|---|\n| Пускаем? | poos-KA-yem? | Do we let it in? | |\n\n## Tips\n- Say it twice.\n";
-		const incoming = parseCheatsheet("## 1. Front desk\n| Russian | Sounds like | Meaning |\n|---|---|---|\n| Пускаем! | x | Admit |\n| Кто у окна? | kto oo ak-NA | Who's at the window? |\n\n## Fire\n- Пожар — fire");
-		const { markdown, added } = mergeCheatsheetMarkdown(target, incoming);
+	it("matches numbered sections by their number, else by title", () => {
+		assert.equal(sameSection("2. Describing what you see", "2. What we see"), true);
+		assert.equal(sameSection("2. Describing", "3. Describing"), false);
+		assert.equal(sameSection("Numbers", "numbers"), true);
+	});
+
+	it("adds only new phrases: into the section they name, else as a new section", () => {
+		const existing = parseSheetText("1. At the desk\nПускаем? | poos-KA-yem? | Do we let it in?\n\nTips\nСтоп | | stop");
+		const incoming = parseSheetText("1. Front desk\nПускаем! | x | Admit\nКто у окна? | kto oo ak-NA | Who's at the window?\n\nFire\nПожар | | fire");
+		const { sections, added } = mergeSections(existing, incoming);
 		assert.equal(added, 2);
-		const lines = markdown.split("\n");
-		const at = lines.indexOf("| Кто у окна? | kto oo ak-NA | Who's at the window? |  |");
-		assert.equal(at, lines.indexOf("| Пускаем? | poos-KA-yem? | Do we let it in? | |") + 1, "goes under the same section's table");
-		assert.ok(markdown.trimEnd().endsWith("| Пожар |  | fire |  |"));
-		assert.match(markdown, /## Fire\n\n\| Phrase \| Say it \| Meaning \| Note \|/);
-		const again = mergeCheatsheetMarkdown(markdown, incoming);
-		assert.deepEqual(again, { markdown, added: 0 });
-	});
-});
-
-describe("cheatsheetWords and ids", () => {
-	it("lists each word once, lowercased, in the order it first appears", () => {
-		const sheet = parseCheatsheet("| Я не уверен. / Я не уверена. | I'm not sure |\n| Что-то есть? | Is there something? |");
-		assert.deepEqual(cheatsheetWords(sheet, "ru-RU"), ["я", "не", "уверен", "уверена", "что-то", "есть"]);
-	});
-
-	it("makes file-safe ids and rejects unsafe ones", () => {
-		const now = new Date("2026-11-06T12:00:00Z");
-		const id = cheatsheetId("Night shift: Ночь!", now, () => false);
-		assert.ok(isCheatsheetId(id), id);
-		assert.ok(id.startsWith("night-shift-"));
-		assert.equal(cheatsheetId("Ночь", now, () => false).startsWith("sheet-"), true);
-		const taken = new Set([id]);
-		assert.notEqual(cheatsheetId("Night shift: Ночь!", now, (c) => taken.has(c)), id);
-		for (const bad of ["../progress", "a/b", "", "UPPER", ".hidden"]) assert.equal(isCheatsheetId(bad), false, bad);
+		const desk = sections.find((s) => s.id === "1-at-the-desk")!;
+		assert.deepEqual(
+			desk.rows.map((r) => r.text),
+			["Пускаем?", "Кто у окна?"],
+		);
+		assert.equal(sections.at(-1)!.title, "Fire");
+		assert.equal(mergeSections(sections, incoming).added, 0, "a second add of the same text adds nothing");
 	});
 });
 
 describe("cheatsheetStore", () => {
-	it("keeps the source and the parsed sheet, lists, reads and moves a removed one to trash", () => {
-		const sheet = cheatsheetStore.create(GUIDE, undefined, new Date("2026-11-06T10:00:00Z"));
-		const dir = PATHS.cheatsheets;
-		assert.equal(fs.readFileSync(path.join(dir, `${sheet.id}.md`), "utf-8"), GUIDE);
-		assert.ok(fs.existsSync(path.join(dir, `${sheet.id}.json`)));
-		assert.ok(fs.existsSync(path.join(dir, "README.md")));
-
-		const second = cheatsheetStore.create("| Ahoj | hi |", "Greetings", new Date("2026-11-06T11:00:00Z"));
-		assert.deepEqual(
-			cheatsheetStore.list().map((s) => s.title),
-			["Greetings", sheet.title],
-		);
-		assert.equal(cheatsheetStore.list()[0]!.rows, 1);
-		assert.equal(cheatsheetStore.get(sheet.id)?.title, sheet.title);
+	it("creates a sheet from a title and text, lists it, reads it and keeps the ids safe", () => {
+		const sheet = cheatsheetStore.create("Sample sheet", A, new Date("2026-11-06T10:00:00Z"));
+		assert.equal(sheet.title, "Sample sheet");
+		assert.equal(cheatsheetRowCount(sheet), cheatsheetRowCount({ sections: parseSheetText(A) }));
+		assert.ok(fs.existsSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)));
+		assert.deepEqual(fs.readdirSync(PATHS.cheatsheets).filter((f) => f.endsWith(".md")), ["README.md"], "one JSON file per sheet, no source copy");
+		assert.ok(fs.existsSync(path.join(PATHS.cheatsheets, "README.md")));
+		assert.equal(cheatsheetStore.get(sheet.id)?.title, "Sample sheet");
 		assert.equal(cheatsheetStore.get("../progress"), null);
-
-		assert.equal(cheatsheetStore.remove(second.id), true);
-		assert.equal(cheatsheetStore.get(second.id), null);
-		assert.ok(fs.existsSync(path.join(dir, "trash", `${second.id}.md`)));
-		assert.equal(cheatsheetStore.remove(second.id), false);
+		assert.equal(isCheatsheetId("../progress"), false);
+		assert.ok(cheatsheetStore.list().some((s) => s.id === sheet.id && s.rows > 0));
+		cheatsheetStore.remove(sheet.id);
 	});
 
-	it("edits the text and title in place, keeping the id and the replaced version in trash", () => {
-		const sheet = cheatsheetStore.create("| Ahoj | hi |", "Old name", new Date("2026-11-06T09:00:00Z"));
-		const edited = cheatsheetStore.update(sheet.id, "## Words\n| Ahoj | hi |\n| Čau | bye |", "New name", new Date("2026-11-06T12:00:00Z"));
+	it("names an untitled sheet and refuses text with no phrase, writing nothing", () => {
+		const before = cheatsheetStore.list().length;
+		assert.equal(cheatsheetStore.create("", "Ahoj | hi").title, "Cheatsheet");
+		assert.throws(() => cheatsheetStore.create("No phrases", "just prose"), CheatsheetParseError);
+		assert.equal(cheatsheetStore.list().length, before + 1);
+	});
+
+	it("update replaces the title and phrases, keeps the id and the import date, and moves the old version to trash", () => {
+		const sheet = cheatsheetStore.create("Old name", "| Ahoj | hi |", new Date("2026-11-06T09:00:00Z"));
+		const edited = cheatsheetStore.update(sheet.id, { title: "New name", text: "Words\nAhoj | | hi\nČau | | bye" }, new Date("2026-11-06T12:00:00Z"));
 		assert.equal(edited?.id, sheet.id);
 		assert.equal(edited?.title, "New name");
 		assert.equal(edited?.importedAt, sheet.importedAt);
 		assert.equal(edited?.updatedAt, "2026-11-06T12:00:00.000Z");
-		assert.equal(cheatsheetStore.get(sheet.id)?.sections[0]?.rows.length, 2);
-		assert.match(cheatsheetStore.source(sheet.id) ?? "", /Čau/);
-		assert.equal(fs.readFileSync(path.join(PATHS.cheatsheets, "trash", `${sheet.id}.md`), "utf-8"), "| Ahoj | hi |");
+		assert.equal(cheatsheetRowCount(cheatsheetStore.get(sheet.id)!), 2);
+		const trash = fs.readdirSync(path.join(PATHS.cheatsheets, "trash")).filter((f) => f.startsWith(`${sheet.id}.`));
+		assert.equal(trash.length, 1);
+		assert.equal(JSON.parse(fs.readFileSync(path.join(PATHS.cheatsheets, "trash", trash[0]!), "utf-8")).title, "Old name");
 
-		assert.throws(() => cheatsheetStore.update(sheet.id, "## No phrase"), CheatsheetParseError);
+		assert.throws(() => cheatsheetStore.update(sheet.id, { text: "No phrase here" }), CheatsheetParseError);
 		assert.equal(cheatsheetStore.get(sheet.id)?.title, "New name", "a refused edit changes nothing");
-		assert.equal(cheatsheetStore.update("no-such-sheet", "| a | b |"), null);
+		assert.equal(cheatsheetStore.update("no-such-sheet", { text: "a | b" }), null);
 		cheatsheetStore.remove(sheet.id);
 	});
 
-	it("adds a guide's new phrases to a kept sheet, keeping the version before", () => {
-		const sheet = cheatsheetStore.create(GUIDE, "Night shift", new Date("2026-11-06T13:00:00Z"));
+	it("add puts the new phrases in, keeps the version before, and writes nothing when nothing is new", () => {
+		const sheet = cheatsheetStore.create("Sample sheet", A, new Date("2026-11-06T13:00:00Z"));
 		const before = cheatsheetStore.get(sheet.id)!;
-		const result = cheatsheetStore.merge(sheet.id, CHAT_GUIDE);
-		assert.equal(result?.added, cheatsheetOverlap(parseCheatsheet(CHAT_GUIDE), before).fresh.length);
-		assert.equal(result?.sheet.title, "Night shift", "a merge keeps the title");
-		const rows = (s: typeof before) => s.sections.reduce((n, x) => n + x.rows.length, 0);
-		assert.equal(rows(result!.sheet), rows(before) + result!.added);
-		assert.ok(fs.existsSync(path.join(PATHS.cheatsheets, "trash", `${sheet.id}.md`)));
-		assert.equal(cheatsheetStore.merge(sheet.id, CHAT_GUIDE)?.added, 0);
+		const result = cheatsheetStore.add(sheet.id, B);
+		assert.equal(result?.added, countOverlap(before.sections, parseSheetText(B)).fresh);
+		assert.equal(result?.sheet.title, "Sample sheet", "an add keeps the title");
+		assert.equal(cheatsheetRowCount(result!.sheet), cheatsheetRowCount(before) + result!.added);
+		const versions = fs.readdirSync(path.join(PATHS.cheatsheets, "trash")).filter((f) => f.startsWith(`${sheet.id}.`));
+		assert.ok(versions.length >= 1);
+		const writes = fs.statSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)).mtimeMs;
+		assert.equal(cheatsheetStore.add(sheet.id, B)?.added, 0);
+		assert.equal(fs.statSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)).mtimeMs, writes, "a no-op add writes nothing");
 		cheatsheetStore.remove(sheet.id);
 	});
 
-	it("refuses a guide with no phrases and writes nothing", () => {
-		const before = cheatsheetStore.list().length;
-		assert.throws(() => cheatsheetStore.create("just prose"), CheatsheetParseError);
-		assert.equal(cheatsheetStore.list().length, before);
+	it("remove moves the sheet to trash", () => {
+		const sheet = cheatsheetStore.create("Gone soon", "Ahoj | hi", new Date("2026-11-06T14:00:00Z"));
+		assert.equal(cheatsheetStore.remove(sheet.id), true);
+		assert.equal(cheatsheetStore.get(sheet.id), null);
+		assert.equal(cheatsheetStore.remove(sheet.id), false);
+	});
+});
+
+describe("cheatsheet words into Review", () => {
+	it("finds the sheet's dictionary words and adds the ones not in the deck", () => {
+		const sheet = cheatsheetStore.create("Station", "Station\nKde je stanica? | | Where is the station?\nDobrý deň, jeden lístok, prosím. | | Hello, one ticket, please.", new Date("2026-11-06T15:00:00Z"));
+		const before = cheatsheetReviewState(sheet);
+		assert.ok(before.inDictionary > 0, "the Slovak lexicon knows some of these words");
+		const result = cheatsheetToReview(sheet);
+		assert.ok(result.added.length > 0);
+		assert.equal(result.inReview, before.inReview + result.added.length);
+		assert.deepEqual(cheatsheetToReview(sheet).added, []);
+		cheatsheetStore.remove(sheet.id);
 	});
 });
 
 describe("corpus export", () => {
 	it("writes every kept cheatsheet to cheatsheets.json", async () => {
 		const { exportCorpus } = await import("../src/server/corpus-export.ts");
+		const sheet = cheatsheetStore.create("Exported sheet", "Ahoj | hi", new Date("2026-11-06T16:00:00Z"));
 		const { dir, summary } = exportCorpus({ stamp: "cheatsheets-test" });
 		const exported = JSON.parse(fs.readFileSync(path.join(dir, "cheatsheets.json"), "utf-8")) as Array<{ title: string }>;
 		assert.equal(summary.counts.cheatsheets, cheatsheetStore.list().length);
-		assert.ok(exported.some((s) => s.title.startsWith("Night shift")));
+		assert.ok(exported.some((s) => s.title === "Exported sheet"));
+		cheatsheetStore.remove(sheet.id);
 	});
 });
 
-describe("cheatsheet words into Review", () => {
-	it("finds the sheet's dictionary words and adds the ones not in the deck", () => {
-		const sheet = cheatsheetStore.create("## Na stanici\n| Slovak | English |\n|---|---|\n| Kde je stanica? | Where is the station? |\n| Dobrý deň, jeden lístok, prosím. | Hello, one ticket, please. |", "Station");
-		const before = cheatsheetReviewState(sheet);
-		assert.ok(before.inDictionary > 0, "the Slovak lexicon knows some of these words");
-		const result = cheatsheetToReview(sheet);
-		assert.ok(result.added.length > 0);
-		assert.equal(result.inReview, before.inReview + result.added.length);
-		const again = cheatsheetToReview(sheet);
-		assert.deepEqual(again.added, []);
+describe("ids", () => {
+	it("makes file-safe ids and rejects unsafe ones", () => {
+		const now = new Date("2026-11-06T12:00:00Z");
+		const id = cheatsheetId("Sample: Ночь!", now, () => false);
+		assert.ok(isCheatsheetId(id), id);
+		assert.ok(id.startsWith("sample-"));
+		assert.ok(cheatsheetId("Ночь", now, () => false).startsWith("sheet-"));
+		const taken = new Set([id]);
+		assert.notEqual(cheatsheetId("Sample: Ночь!", now, (c) => taken.has(c)), id);
+		for (const bad of ["../progress", "a/b", "", "UPPER", ".hidden"]) assert.equal(isCheatsheetId(bad), false, bad);
+	});
+
+	it("lists each word of a sheet once, lowercased", () => {
+		const sheet = { sections: parseSheetText("Words\nЯ не уверен. / Я не уверена. | | I'm not sure\nЧто-то есть? | | Is there something?") };
+		assert.deepEqual(cheatsheetWords(sheet, "ru-RU"), ["я", "не", "уверен", "уверена", "что-то", "есть"]);
 	});
 });
+

@@ -285,14 +285,13 @@ written once by the cheap model and kept so a sentence is paid for once.
 
 const CHEATSHEETS = `# Cheatsheets
 
-Phrase guides you added under Words → Cheatsheets, one pair of files each:
+Phrase lists you made under Words → Cheatsheets, one JSON file per sheet:
 
-- \`<id>.md\`: the text as you last saved it.
-- \`<id>.json\`: what the app read from it: \`id\`, \`title\`,
-  \`importedAt\`, \`intro[]\` (the lines before the first section) and
-  \`sections[]\`, each with \`id\`, \`title\`, \`notes[]\` and \`rows[]\`
-  (\`text\` in the language, \`pron\` how to say it, \`meaning\`, \`note\`).
-- \`trash/\`: sheets you removed, moved here rather than deleted.
+- \`<id>.json\`: \`id\`, \`title\`, \`importedAt\`, \`updatedAt\` (when edited)
+  and \`sections[]\`, each with \`id\`, \`title\` and \`rows[]\`. A row is
+  \`text\` (the phrase in the language), \`pron\` (how to say it),
+  \`meaning\` and \`note\`; the empty ones are left out.
+- \`trash/\`: every version an edit or an add replaced, and removed sheets.
 `;
 
 export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS, distractors: DISTRACTORS, cheatsheets: CHEATSHEETS } as const;

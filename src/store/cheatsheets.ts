@@ -1,20 +1,30 @@
 /**
- * Cheatsheets on disk — the active profile's data/profiles/<language>/cheatsheets/:
+ * Cheatsheets on disk: the active profile's data/profiles/<language>/cheatsheets/
  *
- *   <id>.json   the parsed sheet (title, intro, sections with rows)
- *   <id>.md     the text exactly as it was imported
- *   trash/      removed sheets and the versions an edit replaced, moved
- *               here rather than deleted (E1)
+ *   <id>.json   the sheet: title, dates and its sections with their phrases
+ *   trash/      every version an edit or an add replaced, and removed sheets,
+ *               moved here rather than deleted (E1)
  */
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import { cheatsheetId, cheatsheetSummary, isCheatsheetId, mergeCheatsheetMarkdown, parseCheatsheet, type Cheatsheet, type CheatsheetSummary } from "../core/cheatsheets.ts";
+import {
+	CHEATSHEET_TITLE_MAX,
+	cheatsheetId,
+	cheatsheetSummary,
+	isCheatsheetId,
+	mergeSections,
+	parseSheetText,
+	type Cheatsheet,
+	type CheatsheetSummary,
+} from "../core/cheatsheets.ts";
 import { ensureReadmes } from "./corpus.ts";
 
 const dir = () => PATHS.cheatsheets;
-const fileFor = (id: string, ext: "json" | "md") => path.join(dir(), `${id}.${ext}`);
+const fileFor = (id: string) => path.join(dir(), `${id}.json`);
+const trashDir = () => path.join(dir(), "trash");
 
 function writeAtomic(file: string, text: string): void {
 	fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -26,20 +36,30 @@ function writeAtomic(file: string, text: string): void {
 function readSheet(id: string): Cheatsheet | null {
 	if (!isCheatsheetId(id)) return null;
 	try {
-		return JSON.parse(fs.readFileSync(fileFor(id, "json"), "utf-8")) as Cheatsheet;
+		return JSON.parse(fs.readFileSync(fileFor(id), "utf-8")) as Cheatsheet;
 	} catch {
 		return null;
 	}
 }
 
-function toTrash(id: string): void {
-	const trash = path.join(dir(), "trash");
-	fs.mkdirSync(trash, { recursive: true });
-	const suffix = fs.existsSync(path.join(trash, `${id}.json`)) || fs.existsSync(path.join(trash, `${id}.md`)) ? `.${Date.now().toString(36)}` : "";
-	for (const ext of ["json", "md"] as const) {
-		const from = fileFor(id, ext);
-		if (fs.existsSync(from)) fs.renameSync(from, path.join(trash, `${id}${suffix}.${ext}`));
-	}
+/** A name in trash/ that no earlier version already has. */
+function trashName(id: string, now: Date): string {
+	return `${id}.${now.getTime().toString(36)}-${crypto.randomBytes(2).toString("hex")}.json`;
+}
+
+function toTrash(id: string, now: Date): void {
+	fs.mkdirSync(trashDir(), { recursive: true });
+	fs.renameSync(fileFor(id), path.join(trashDir(), trashName(id, now)));
+}
+
+function keepVersion(id: string, now: Date): void {
+	fs.mkdirSync(trashDir(), { recursive: true });
+	fs.copyFileSync(fileFor(id), path.join(trashDir(), trashName(id, now)));
+}
+
+function titleOr(title: string | undefined, fallback: string): string {
+	const t = title?.trim().slice(0, CHEATSHEET_TITLE_MAX);
+	return t ? t : fallback;
 }
 
 export const cheatsheetStore = {
@@ -63,58 +83,44 @@ export const cheatsheetStore = {
 		return readSheet(id);
 	},
 
-	/** Parse and keep a guide. Throws CheatsheetParseError on text with no phrases. */
-	create(markdown: string, title?: string, now = new Date()): Cheatsheet {
-		const { skipped: _skipped, ...draft } = parseCheatsheet(markdown);
-		const finalTitle = title?.trim() ? title.trim().slice(0, 120) : draft.title;
-		const id = cheatsheetId(finalTitle, now, (candidate) => fs.existsSync(fileFor(candidate, "json")));
-		const sheet: Cheatsheet = { id, importedAt: now.toISOString(), ...draft, title: finalTitle };
-		writeAtomic(fileFor(id, "md"), markdown);
-		writeAtomic(fileFor(id, "json"), JSON.stringify(sheet, null, "\t"));
+	/** A new sheet from a title and its text. Throws CheatsheetParseError on text with no phrase, before writing. */
+	create(title: string, text: string, now = new Date()): Cheatsheet {
+		const sections = parseSheetText(text);
+		const name = titleOr(title, "Cheatsheet");
+		const id = cheatsheetId(name, now, (candidate) => fs.existsSync(fileFor(candidate)));
+		const sheet: Cheatsheet = { id, title: name, importedAt: now.toISOString(), sections };
+		writeAtomic(fileFor(id), JSON.stringify(sheet, null, "\t"));
 		ensureReadmes();
 		return sheet;
 	},
 
-	/** The text as it was imported or last edited. */
-	source(id: string): string | null {
-		if (!isCheatsheetId(id)) return null;
-		try {
-			return fs.readFileSync(fileFor(id, "md"), "utf-8");
-		} catch {
-			return null;
-		}
-	},
-
-	/** Replace a sheet's text and title, keeping its id and import date. The
-	 *  version it replaces goes to trash/. Null when there is no such sheet;
-	 *  throws CheatsheetParseError on text with no phrases, before writing. */
-	update(id: string, markdown: string, title?: string, now = new Date()): Cheatsheet | null {
+	/** Replace a sheet's title and phrases with what the text says. The version before goes to trash/. Null when there is no such sheet. */
+	update(id: string, input: { title?: string; text: string }, now = new Date()): Cheatsheet | null {
 		const old = readSheet(id);
 		if (!old) return null;
-		const { skipped: _skipped, ...draft } = parseCheatsheet(markdown);
-		const sheet: Cheatsheet = { id, importedAt: old.importedAt, updatedAt: now.toISOString(), ...draft, title: title?.trim() ? title.trim().slice(0, 120) : draft.title };
-		toTrash(id);
-		writeAtomic(fileFor(id, "md"), markdown);
-		writeAtomic(fileFor(id, "json"), JSON.stringify(sheet, null, "\t"));
+		const sections = parseSheetText(input.text);
+		keepVersion(id, now);
+		const sheet: Cheatsheet = { ...old, title: titleOr(input.title, old.title), updatedAt: now.toISOString(), sections };
+		writeAtomic(fileFor(id), JSON.stringify(sheet, null, "\t"));
 		return sheet;
 	},
 
-	/** Add the new phrases of a guide to a sheet (mergeCheatsheetMarkdown);
-	 *  the version before goes to trash/ like any edit. */
-	merge(id: string, incomingMarkdown: string, now = new Date()): { sheet: Cheatsheet; added: number } | null {
+	/** Add the text's phrases that the sheet does not have yet. Nothing is written when none is new. Null when there is no such sheet. */
+	add(id: string, text: string, now = new Date()): { sheet: Cheatsheet; added: number } | null {
 		const old = readSheet(id);
-		const source = this.source(id);
-		if (!old || source === null) return null;
-		const { markdown, added } = mergeCheatsheetMarkdown(source, parseCheatsheet(incomingMarkdown));
+		if (!old) return null;
+		const { sections, added } = mergeSections(old.sections, parseSheetText(text));
 		if (!added) return { sheet: old, added };
-		const sheet = this.update(id, markdown, old.title, now);
-		return sheet ? { sheet, added } : null;
+		keepVersion(id, now);
+		const sheet: Cheatsheet = { ...old, updatedAt: now.toISOString(), sections };
+		writeAtomic(fileFor(id), JSON.stringify(sheet, null, "\t"));
+		return { sheet, added };
 	},
 
-	/** Move a sheet and its source to trash/. False when there is no such sheet. */
-	remove(id: string): boolean {
+	/** Move a sheet to trash/. False when there is no such sheet. */
+	remove(id: string, now = new Date()): boolean {
 		if (!readSheet(id)) return false;
-		toTrash(id);
+		toTrash(id, now);
 		return true;
 	},
 };
