@@ -2,6 +2,16 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 6 November: pick a stretch of a video (branch `feat/watch-fragments`)
+
+- **Why:** the owner asked to pick fragments of a video, with a smart analysis that makes comprehensible input to learn faster. Rule E52; the numbers: [research/watch-picks.md](research/watch-picks.md), "Fragments".
+- **Pick a stretch:** a scissors button on each pick, each creator's video, each video in Your videos, and beside the link field opens a strip of the whole video coloured by how much of each moment you know. The best stretches for you are marked and listed (the known-word share, the new words with their meaning, which come back); the best one is selected. Drag on the strip, or click it, to pick another by hand. **Prepare this stretch** translates only those lines. **Prepare the whole video instead** stays beside it.
+- **How it chooses:** locally, with no model call: about two minutes starting and stopping at a pause, 93–97% of the words known, speech all the way through, new words worth learning that are said more than once inside it. When no stretch is close to your level, it says so.
+- **Cheaper and any length:** a stretch costs a fraction of the translation, and a video of up to 3 hours can be cut. The library keeps one cut of a video; a different stretch replaces it. The video's line and the preview say which part it is ("from 12:21 of 45:47"), and the player is told to stop at the end of the stretch.
+- **Tests:** `tests/fragments.test.ts` (the scoring, the choice without overlap, the strip, the range, analysing a video, preparing a stretch with one cut kept, refusing a bad range). Full suite: 1,922 passed, 0 failed.
+- **Verified on the PC:** the analysis of three real Slovak videos and six Estonian ones against live YouTube; the panel at 900 and 390 px with a real analysis, including dragging a stretch on the strip.
+- **Unverified:** YouTube's player stopping at the end of a stretch (`end` player parameter), and a real preparation of a stretch with a model key. The panel was checked with a Slovak analysis shown on the Estonian profile, because none of the Estonian vlogs had a stretch near the level.
+
 ## 5 November: the placement check names a repeated mistake (branch `feat/placement-repeated-mistakes`)
 
 - **Why:** the note after a wrong answer explained only that one answer, so it could not tell you that you had made the same mistake before.

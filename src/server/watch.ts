@@ -26,13 +26,16 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
+import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
 import { activeLanguage } from "./active-language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
+	foreignCaptions,
 	MAX_SEGMENTS,
 	MAX_VIDEO_SEC,
+	MEASURE_VERSION,
 	parseCaptions,
 	parseTranslations,
 	parseVideoUrl,
@@ -40,6 +43,7 @@ import {
 	pickPreTeach,
 	segmentCues,
 	videoCoverage,
+	videoExpected,
 	videoUrl,
 	watchXp,
 	type CaptionCue,
@@ -59,7 +63,7 @@ import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
-import { glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
+import { commonness, glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
 import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
@@ -427,6 +431,10 @@ export interface PrepareOptions {
 	now?: Date;
 	/** Prepare again even when the video is already in the library. */
 	force?: boolean;
+	/** Prepare only this stretch of the video (src/core/fragments.ts): only its
+	 *  lines are translated and questioned, whatever the video's length. The
+	 *  library keeps one cut of a video; a different one replaces it. */
+	range?: FragmentRange;
 	/** Skip the questions (no model call); tests only. */
 	questions?: boolean;
 	signal?: AbortSignal;
@@ -538,6 +546,12 @@ export async function questionsFor(engine: PiEngine, segments: readonly { sk: st
 const stages = new Map<string, { stage: PrepareStage; error?: string; at: number }>();
 const inFlight = new Map<string, Promise<VideoRecord>>();
 
+/** Is the kept record the cut asked for: the whole video, or this stretch? */
+function sameCut(kept: VideoRecord, range: FragmentRange | undefined): boolean {
+	if (!range) return !kept.fragment;
+	return !!kept.fragment && Math.abs(kept.fragment.startSec - range.startSec) < 1.5 && Math.abs(kept.fragment.endSec - range.endSec) < 1.5;
+}
+
 export function prepareStage(id: string): { stage: PrepareStage; error?: string } | null {
 	const s = stages.get(id);
 	return s ? { stage: s.stage, ...(s.error ? { error: s.error } : {}) } : null;
@@ -553,11 +567,13 @@ function setStage(id: string, stage: PrepareStage, error?: string) {
 	if (stage === "done" || stage === "error") setTimeout(() => stages.get(id)?.stage === stage && stages.delete(id), 60_000).unref?.();
 }
 
-/** Gloss every line against the lexicon and the learner's known words. */
+/** Gloss every line against the lexicon and the learner's words: `fresh`
+ *  is a word beyond what the level expects, `assumed` one the level expects
+ *  but the learner has not studied. */
 export function glossSegments(lines: readonly { start: number; end: number; sk: string }[], en: readonly string[], lexicon: Lexicon | null, k: KnownWords): VideoSegment[] {
 	const names = storyNames(lines, lexicon);
 	return lines.map((l, i) => {
-		const g = glossSentence(l.sk, en[i] ?? "", lexicon, k.known, [], names);
+		const g = glossSentence(l.sk, en[i] ?? "", lexicon, k.expected, [], names, k.met);
 		return { i, start: l.start, end: l.end, sk: l.sk, en: g.en, tokens: g.tokens };
 	});
 }
@@ -568,13 +584,18 @@ export function glossSegments(lines: readonly { start: number; end: number; sk: 
 export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<VideoRecord> {
 	const id = parseVideoUrl(url);
 	if (!id) return Promise.reject(new Error("That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link."));
-	const existing = inFlight.get(id);
+	const range = opts.range;
+	if (range && !(Number.isFinite(range.startSec) && Number.isFinite(range.endSec) && range.startSec >= 0 && range.endSec - range.startSec >= FRAGMENT_PICK_MIN_SEC && range.endSec - range.startSec <= FRAGMENT_PICK_MAX_SEC)) {
+		return Promise.reject(new Error(`A fragment is between ${FRAGMENT_PICK_MIN_SEC} seconds and ${FRAGMENT_PICK_MAX_SEC / 60} minutes long.`));
+	}
+	const key = range ? `${id}@${Math.round(range.startSec)}-${Math.round(range.endSec)}` : id;
+	const existing = inFlight.get(key);
 	if (existing) return existing;
 	const job = (async () => {
 		const now = opts.now ?? new Date();
 		if (!opts.force) {
 			const kept = videoStore.get(id);
-			if (kept) return kept;
+			if (kept && sameCut(kept, range)) return kept;
 		}
 		const task = startTask({ id: taskIdOf(id), kind: "video", title: videoStore.get(id)?.title ?? `Video ${id}`, step: PREPARE_STAGE_LINE.captions });
 		const signal = opts.signal ? AbortSignal.any([opts.signal, task.signal]) : task.signal;
@@ -582,11 +603,11 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		const lexicon = loadLexicon();
 		const k = knownWords(lexicon);
 		const fetched = await (opts.captions ? opts.captions(id) : fetchCaptions(id, { transcribe: opts.transcribe, signal, onStage: (s) => setStage(id, s) }));
-		if (fetched.meta.durationSec > MAX_VIDEO_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`);
+		if (range ? fetched.meta.durationSec > FRAGMENT_SOURCE_MAX_SEC : fetched.meta.durationSec > MAX_VIDEO_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`);
 		signal.throwIfAborted();
 		updateTask(taskIdOf(id), { title: fetched.meta.title });
-		const lines = segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
-		if (lines.length === 0) throw new Error("The captions are empty.");
+		const lines = range ? segmentCues(fetched.cues).filter((l) => l.start >= range.startSec - 0.5 && l.end <= range.endSec + 0.5) : segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
+		if (lines.length === 0) throw new Error(range ? "The captions have no speech in that stretch." : "The captions are empty.");
 		if (fetched.raw) {
 			try {
 				videoStore.putCaptions(id, fetched.source.trackLang, fetched.raw.ext, fetched.raw.text);
@@ -628,7 +649,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		setStage(id, "questions");
 		const questions = opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
 		setStage(id, "saving");
-		const rankOf = (slug: string) => lexicon?.bySlug.get(slug)?.rank;
+		const rankOf = commonness(lexicon);
 		const preTeach = pickPreTeach(measured, undefined, rankOf);
 		const words = measured.flatMap((s) => s.tokens.filter((t) => t.word));
 		const record: VideoRecord = {
@@ -637,7 +658,8 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			url: videoUrl(id),
 			title: fetched.meta.title,
 			...(fetched.meta.channel ? { channel: fetched.meta.channel } : {}),
-			durationSec: fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
+			durationSec: range ? Math.ceil(lines[lines.length - 1]!.end - lines[0]!.start) : fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
+			...(range ? { fragment: { startSec: lines[0]!.start, endSec: lines[lines.length - 1]!.end, ofSec: fetched.meta.durationSec || Math.ceil(fetched.cues[fetched.cues.length - 1]?.start ?? 0) } } : {}),
 			source: fetched.source,
 			level: k.level,
 			createdAt: now.toISOString(),
@@ -645,8 +667,10 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			questions,
 			preTeach,
 			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
+			expected: Math.round(videoExpected(measured) * 1000) / 1000,
+			measure: MEASURE_VERSION,
 			wordCount: words.length,
-			unknownCount: new Set(words.filter((t) => t.fresh).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
+			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
 			usage,
 			translatedBy: "model",
 			...(untranslated ? { untranslated } : {}),
@@ -659,7 +683,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		finishTask(taskIdOf(id), { title: record.title, href: `/watch?id=${id}` });
 		return record;
 	})();
-	inFlight.set(id, job);
+	inFlight.set(key, job);
 	return job
 		.catch((err) => {
 			const message = err instanceof Error && err.name === "AbortError" ? "Stopped." : err instanceof Error ? err.message : String(err);
@@ -667,12 +691,50 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			failTask(taskIdOf(id), message, err instanceof NoCaptionsError && err.canTranscribe ? { label: "Transcribe the audio", url, transcribe: true } : undefined);
 			throw err;
 		})
-		.finally(() => inFlight.delete(id));
+		.finally(() => inFlight.delete(key));
 }
 
 // ─── The library ────────────────────────────────────────────────────────────
 
+/** A kept video measured by the current rule. One kept under an older rule is
+ *  glossed again from its stored lines (local, no model call) and saved, so
+ *  its shares match what the learner knows now. Foreign captions keep theirs:
+ *  their share came from a model's rendering that is not kept. */
+export function remeasureVideo(rec: VideoRecord): VideoRecord {
+	if (rec.measure === MEASURE_VERSION || foreignCaptions({ lang: rec.lang, trackLang: rec.source.trackLang })) return rec;
+	try {
+		const lexicon = loadLexicon();
+		const segments = glossSegments(rec.segments, rec.segments.map((s) => s.en), lexicon, knownWords(lexicon));
+		const words = segments.flatMap((s) => s.tokens.filter((t) => t.word));
+		const next: VideoRecord = {
+			...rec,
+			segments,
+			coverage: Math.round(videoCoverage(segments) * 1000) / 1000,
+			expected: Math.round(videoExpected(segments) * 1000) / 1000,
+			wordCount: words.length,
+			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(activeLanguage().tag))).size,
+			preTeach: pickPreTeach(segments, undefined, commonness(lexicon)),
+			measure: MEASURE_VERSION,
+		};
+		videoStore.put(next);
+		return next;
+	} catch {
+		return rec;
+	}
+}
+
+/** A kept video as the page should show it. */
+export function currentVideo(id: string): VideoRecord | null {
+	const rec = videoStore.get(id);
+	return rec ? remeasureVideo(rec) : null;
+}
+
 export function videoLibrary(): VideoLibraryEntry[] {
+	for (const e of videoStore.list()) {
+		if (e.measure === MEASURE_VERSION || e.estimated) continue;
+		const rec = videoStore.get(e.id);
+		if (rec) remeasureVideo(rec);
+	}
 	const watches = videoStore.watches();
 	return videoStore.list().map((v) => {
 		const mine = watches.filter((w) => w.videoId === v.id);

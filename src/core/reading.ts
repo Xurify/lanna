@@ -56,6 +56,9 @@ export interface StoryToken {
 	/** A word the learner has not met (not in the deck, not in a unit done,
 	 *  not in the common words at this level): the i+1 of the episode. */
 	fresh?: boolean;
+	/** Counted as known only because the learner's level is expected to know
+	 *  it (Watch, and Read's word card): not in the deck, not in a finished unit. */
+	assumed?: boolean;
 }
 
 export interface StorySentence {
@@ -443,13 +446,12 @@ export const STORY_LENGTH: Record<Cefr, { min: number; max: number }> = {
 /** New words an episode may bring in on purpose, by level. */
 export const NEW_WORDS_MAX: Record<Cefr, number> = { A1: 3, A2: 4, B1: 5, B2: 6, C1: 8 };
 
-/** Frequency rank (within part of speech) up to which a word counts as
- *  "common at this level" for the coverage estimate — the words a learner
- *  at the level has met in the app's own word bands. */
-/** How far down the frequency list a learner at each level is assumed to
- *  know (the usual CEFR vocabulary sizes: ~500 words at A1, ~1,000 at A2,
- *  ~2,000 at B1; the lexicon ranks 3,000). The deck and the met words add
- *  what the learner has actually studied. */
+/** How far down each part of speech's frequency list a written text may
+ *  reach and still count as "common at this level" (Read, Listen, Speed).
+ *  The rank is WITHIN a part of speech, so A1 = 500 means 500 verbs, 500
+ *  nouns and so on: about 2,000 words. That is a tolerance for texts the
+ *  model writes at the level, not a claim about what the learner knows; the
+ *  claim is `creditedWords` (src/core/milestones.ts). */
 export const KNOWN_RANK: Record<Cefr, number> = { A1: 500, A2: 1000, B1: 2000, B2: 3000, C1: 5000 };
 
 /** Below this share of known running words the draft is written again. */

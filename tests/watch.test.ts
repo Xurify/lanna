@@ -221,7 +221,7 @@ describe("a video on a scripted engine", () => {
 		// Glossed against the lexicon: "mesto" is a dictionary word.
 		const mesto = v.segments.flatMap((s) => s.tokens).find((t) => t.text === "mesto");
 		assert.ok(mesto?.slug, "mesto resolves to a lexicon entry");
-		assert.ok(v.coverage > 0.5 && v.coverage <= 1, `coverage ${v.coverage}`);
+		assert.ok(v.expected! <= 1 && v.coverage >= 0 && v.coverage < v.expected!, `an empty deck knows less (${v.coverage}) than the beginner set adds (${v.expected})`);
 		assert.ok(v.wordCount > 60);
 		// As many as the plan at the learner's level asks for (A1: three).
 		assert.equal(v.questions.length, QUESTION_PLAN[v.level].count);
@@ -242,6 +242,21 @@ describe("a video on a scripted engine", () => {
 		assert.equal(index.length, 1);
 		assert.equal(index[0]!.segments, lines.length);
 		assert.equal(index[0]!.model, "faux:watch");
+	});
+
+	test("a video kept under an older measuring rule is measured again from its stored lines, with no model call", () => {
+		const fresh = videoStore.get("dQw4w9WgXcQ")!;
+		assert.equal(fresh.measure, core.MEASURE_VERSION);
+		const old = { ...fresh, coverage: 0.99, expected: undefined, measure: undefined, segments: fresh.segments.map((s) => ({ ...s, tokens: s.tokens.map(({ fresh: _f, assumed: _a, ...t }) => t) })) };
+		videoStore.put(old as typeof fresh);
+		assert.equal(videoStore.list().find((e) => e.id === fresh.id)!.measure, undefined);
+		const lib = watch.videoLibrary();
+		const entry = lib.find((e) => e.id === fresh.id)!;
+		assert.equal(entry.measure, core.MEASURE_VERSION);
+		assert.equal(entry.coverage, fresh.coverage, "the share is back to what the rule gives");
+		const again = watch.currentVideo(fresh.id)!;
+		assert.equal(again.expected, fresh.expected);
+		assert.ok(again.segments.flatMap((s) => s.tokens).some((t) => t.fresh || t.assumed), "the words are marked again");
 	});
 
 	test("a kept video is reused without a model call; the plan shows it as the Watch task", async () => {

@@ -75,6 +75,7 @@ export * from "./pronounce.ts";
 export { speakStore, fluencyStore } from "../store/speak.ts";
 export * from "./watch.ts";
 export * from "./discover.ts";
+export * from "./fragments.ts";
 export { videoStore } from "../store/videos.ts";
 export * from "./milestones.ts";
 export * from "./placement.ts";

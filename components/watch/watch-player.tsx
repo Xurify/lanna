@@ -29,7 +29,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
@@ -42,9 +42,10 @@ import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
 import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
+import { FragmentsPanel } from "@/components/watch/fragments";
 import { Thumb } from "@/components/watch/thumb";
 import { CreatorsSection, PicksSection, useDiscover, YouTubeSection } from "@/components/watch/discover";
-import type { DiscoverStateView } from "@/src/core";
+import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -136,8 +137,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	/** Prepare a pasted link. The server fetches, translates and keeps it as a
 	 *  background task (the sidebar lists it, a notice says when it is ready),
 	 *  so the learner is back on the shelf at once. A video already kept opens. */
+	const rangeRef = useRef<FragmentRange | undefined>(undefined);
 	const prepare = useCallback(
-		async (url: string, transcribe = false, force = false) => {
+		async (url: string, transcribe = false, force = false, range?: FragmentRange) => {
+			rangeRef.current = range;
 			const id = parseVideoUrl(url);
 			if (!id) {
 				setError({ message: "That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link." });
@@ -148,7 +151,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			setError(null);
 			setStage("preparing");
 			try {
-				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true }) });
+				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true, ...(range ? { range } : {}) }) });
 				const body = (await res.json()) as VideoRecord | PrepareError | { background: true };
 				if (!res.ok) throw body;
 				if ("background" in body) {
@@ -184,7 +187,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	useEffect(() => {
 		if (kicked.current || stage !== "preparing" || !pending) return;
 		kicked.current = true;
-		void prepare(pending);
+		void prepare(pending, false, false, rangeRef.current);
 	}, [stage, pending, prepare]);
 
 	const remove = useCallback(
@@ -315,7 +318,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} running={running} discover={discover} onOpen={open} onPrepare={(url) => void prepare(url)} onDelete={(id) => void remove(id)} />
+			<Shelf state={state} running={running} discover={discover} onOpen={open} onPrepare={(url, range) => void prepare(url, false, false, range)} onDelete={(id) => void remove(id)} />
 		);
 	}
 
@@ -412,8 +415,9 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The shelf: paste a link, or pick a video ───────────────────────────────
 
-function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; discover: ReturnType<typeof useDiscover>; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
+function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; discover: ReturnType<typeof useDiscover>; onOpen: (id: string) => void; onPrepare: (url: string, range?: FragmentRange) => void; onDelete: (id: string) => void }) {
 	const [url, setUrl] = useState("");
+	const [cutting, setCutting] = useState<string | null>(null);
 	const [confirming, setConfirming] = useState<string | null>(null);
 	const lang = useActiveLanguage();
 	const name = lang?.english ?? "the language";
@@ -457,7 +461,12 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 						<SparklesIcon className="size-4" />
 						Prepare it
 					</button>
+					<button type="button" disabled={!valid} onClick={() => setCutting(cutting === "form" ? null : "form")} aria-expanded={cutting === "form"} className={cn(SECONDARY, "h-11 px-4")} title="Watch only a stretch of it" data-testid="watch-fragments-open">
+						<ScissorsIcon className="size-4" strokeWidth={1.6} />
+						Pick a stretch
+					</button>
 				</form>
+				{cutting === "form" && valid && <FragmentsPanel videoId={parseVideoUrl(url)!} canPrepare={state?.canPrepare !== false} onPrepare={(range) => onPrepare(url.trim(), range)} onClose={() => setCutting(null)} />}
 				{state?.canPrepare === false ? (
 					<div className="mt-3">
 						<KeyNote>Preparing a new video needs an AI key, for the English translation. Videos you have already prepared play without one.</KeyNote>
@@ -496,8 +505,9 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 								const band = coverageBand(v.coverage);
 								const kind = coverageKind(v);
 								return (
-									<li key={v.id} className="relative">
-										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 py-3.5 pl-4 pr-12 text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
+									<li key={v.id}>
+										<div className="relative">
+										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 py-3.5 pl-4 pr-[5.25rem] text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
 											<Thumb id={v.id} watched={v.watches > 0} />
 											<span className="min-w-0 flex-1">
 												<span className="block truncate font-ui text-[16px] font-[600] text-foreground" lang="sk">
@@ -505,7 +515,8 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 												</span>
 												<span className="block truncate font-prose text-[13px] text-ink-3">
 													{v.channel ? `${v.channel} · ` : ""}
-													{formatClock(v.durationSec)} · {v.segments} lines · {kind === "none" ? `${captionLanguageName(v.trackLang!)} captions` : `${kind === "estimated" ? "about " : ""}${Math.round(v.coverage * 100)}% known (${band.title.toLowerCase()})${kind === "estimated" ? ` · ${captionLanguageName(v.trackLang!)} captions` : ""}`}
+													{formatClock(v.durationSec)}
+													{v.fragment ? ` from ${formatClock(v.fragment.startSec)} of ${formatClock(v.fragment.ofSec)}` : ""} · {v.segments} lines · {kind === "none" ? `${captionLanguageName(v.trackLang!)} captions` : `${kind === "estimated" ? "about " : ""}${Math.round(v.coverage * 100)}% known (${band.title.toLowerCase()})${kind === "estimated" ? ` · ${captionLanguageName(v.trackLang!)} captions` : ""}`}
 												</span>
 											</span>
 											<span className="shrink-0 text-right font-ui text-xs font-[600] text-ink-3">
@@ -530,10 +541,17 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 													</button>
 												</span>
 											) : (
+												<button type="button" onClick={() => setCutting(cutting === v.id ? null : v.id)} aria-expanded={cutting === v.id} aria-label={`Pick another stretch of ${v.title}`} title="Pick a stretch of this video" className={cn("absolute right-10 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-foreground", cutting === v.id ? "bg-accent text-foreground" : "text-muted-foreground")} data-testid="watch-shelf-fragments">
+													<ScissorsIcon className="size-4" strokeWidth={1.6} />
+												</button>
+											)}
+											{confirming !== v.id && (
 												<button type="button" onClick={() => setConfirming(v.id)} aria-label={`Delete ${v.title}`} title="Delete this video" className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-delete">
 													<Trash2Icon className="size-4" strokeWidth={1.6} />
 												</button>
 											)}
+										</div>
+										{cutting === v.id && <FragmentsPanel videoId={v.id} canPrepare={state?.canPrepare !== false} onPrepare={(range) => onPrepare(videoUrl(v.id), range)} onClose={() => setCutting(null)} />}
 									</li>
 								);
 							})}
@@ -570,7 +588,8 @@ function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart
 			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-preview">
 				<p className="font-ui text-sm font-[600] text-muted-foreground">
 					{video.channel ? `${video.channel} · ` : ""}
-					{formatClock(video.durationSec)} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
+					{formatClock(video.durationSec)}
+					{video.fragment ? ` (${formatClock(video.fragment.startSec)} to ${formatClock(video.fragment.endSec)} of a ${formatClock(video.fragment.ofSec)} video)` : ""} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
 					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
 					{video.untranslated ? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation` : ""}
 				</p>
@@ -601,7 +620,7 @@ function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart
 					<div className="rounded-lg border bg-card px-5 py-4">
 						<p className="font-prose text-base leading-snug text-foreground">{kind === "none" ? `The captions are ${captionLanguageName(video.source.trackLang)}, so their words are not matched against your ${captionLanguageName(video.lang)}. Regenerate to get an estimate from a ${captionLanguageName(video.lang)} rendering of them.` : kind === "estimated" ? `${band.line} An estimate: measured on a ${captionLanguageName(video.lang)} rendering of the ${captionLanguageName(video.source.trackLang)} captions.` : band.line}</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
-							{video.wordCount} words · {video.unknownCount} you have not met · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
+							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
 						</p>
 					</div>
 				</div>
@@ -793,7 +812,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					width: "100%",
 					height: "100%",
 					host: "https://www.youtube-nocookie.com",
-					playerVars: { controls: 1, rel: 0, modestbranding: 1, playsinline: 1, cc_load_policy: 0, iv_load_policy: 3, disablekb: 1, fs: 0, origin: window.location.origin, start: Math.floor(segs[0]!.start) },
+					playerVars: { controls: 1, rel: 0, modestbranding: 1, playsinline: 1, cc_load_policy: 0, iv_load_policy: 3, disablekb: 1, fs: 0, origin: window.location.origin, start: Math.floor(segs[0]!.start), ...(video.fragment ? { end: Math.ceil(segs[segs.length - 1]!.end + 1) } : {}) },
 					events: {
 						onReady: () => {
 							if (!alive) return;

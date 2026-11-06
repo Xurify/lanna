@@ -40,8 +40,7 @@ import { placementStore, type Judgement, type PlacementItemRecord, type Placemen
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { readSettings } from "../store/settings.ts";
 import { recordPlacement, type PlacementResult, type RepResult } from "./lesson.ts";
-import { frequencyOrder } from "./milestones.ts";
-import { storyEngine } from "./reading.ts";
+import { frequencyOrder, storyEngine } from "./reading.ts";
 import { activeLanguage } from "./active-language.ts";
 import type { LanguageInfo } from "../core/language.ts";
 

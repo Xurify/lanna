@@ -12,6 +12,8 @@
  *                    Takeout export: history, recommendations, subscriptions.
  *                    Never a password, cookie or token.
  *   searches.json    the searches written from the learner's interests.
+ *   lines/<id>.json  a video's caption lines with their times, for its fragments
+ *                    (src/server/fragments.ts).
  *   avatars.json     channel pictures (Google image links), by channel id.
  *   dismissed-channels.json
  *                    suggested channels the learner said are not for them.
@@ -38,8 +40,8 @@ function readJson<T>(name: string, fallback: T): T {
 }
 
 function writeJson(name: string, value: unknown): void {
-	fs.mkdirSync(dir(), { recursive: true });
 	const target = file(name);
+	fs.mkdirSync(path.dirname(target), { recursive: true });
 	const tmp = `${target}.${process.pid}.tmp`;
 	fs.writeFileSync(tmp, JSON.stringify(value, null, "\t"), "utf-8");
 	fs.renameSync(tmp, target);
@@ -58,6 +60,18 @@ export interface YouTubeSignals {
 	history?: { at: string; via: "account" | "takeout"; videos: FoundVideo[] };
 	recommended?: { at: string; via: "account"; videos: FoundVideo[] };
 	subscriptions?: { at: string; via: "account" | "takeout"; channels: FoundChannel[] };
+}
+
+/** videos/discover/lines/<id>.json */
+export interface CaptionLines {
+	title: string;
+	channel?: string;
+	durationSec: number;
+	/** The caption track's language, and whether people made it. */
+	trackLang: string;
+	kind: "captions" | "auto-captions" | "transcription";
+	lines: Array<{ start: number; end: number; sk: string }>;
+	at: string;
 }
 
 export interface SearchesFile {
@@ -119,6 +133,17 @@ export const discoverStore = {
 	},
 	putSearches(s: SearchesFile): void {
 		writeJson("searches.json", s);
+	},
+	/** A video's caption lines with their times, kept so its fragments can be
+	 *  found again, and measured again as the learner learns, without YouTube. */
+	putLines(id: string, v: CaptionLines): void {
+		if (!VIDEO_ID.test(id)) return;
+		writeJson(`lines/${id}.json`, v);
+	},
+	lines(id: string): CaptionLines | null {
+		if (!VIDEO_ID.test(id)) return null;
+		const v = readJson<CaptionLines | null>(`lines/${id}.json`, null);
+		return v && Array.isArray(v.lines) ? v : null;
 	},
 	/** Channel pictures by channel id. */
 	avatars(): Record<string, string> {

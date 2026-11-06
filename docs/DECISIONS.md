@@ -628,6 +628,32 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The edge tutor's brief carries each miss's judge note and its REPEATS mark, and the prompt treats a repeat as a likely misconception worth a question. Its verdict then counts toward the level as before.
 - A weak spot's evidence is the note of a miss that repeats an earlier one, when there is one; else the first miss's note; the tutor's verdict still wins over both.
 
+### E52. Watch fragments: pick a stretch of a video, ranked locally for the learner's level (2026-11-06, branch `feat/watch-fragments`)
+
+**Why:** the owner asked to pick fragments of a video and to build comprehensible input from a smart analysis, to learn faster. Whole videos are mostly over the learner's level (80% known is common at A1), but two minutes of them may be at 93%. Research and numbers: [research/watch-picks.md](research/watch-picks.md), "Fragments".
+
+**How to apply:**
+- A fragment is a run of whole caption lines of 45 to 180 seconds, or a stretch the learner drags (20 seconds to 8 minutes). The analysis (`src/core/fragments.ts`, `src/server/fragments.ts`) uses no model: the same local gloss as the picks, so it costs nothing and repeats as the learner learns.
+- The score is the product of comprehension (the known-word share, full at 93–97%, nothing under 85%), speech density, length, and the square root of what the new words are worth (common, said more than once inside it). A stretch weak in one loses. When none is close, the page says so; do not offer noise.
+- Captions in another language than the video's (Czech for Slovak) are not measured; the learner can still drag a stretch by ear.
+- `prepareVideo(url, { range })` translates and questions only the stretch. The record keeps the video's id, with `fragment` {startSec, endSec, ofSec}; its `durationSec`, lines and coverage are the stretch's, so the plan's minutes and the library line are right without change. One cut per video: preparing another stretch, or the whole video, replaces the record. Watch history stays in `watches.jsonl`.
+- The 90-minute limit (was 75, raised so a 76-minute video from a saved creator is not left out) and the line limit (1,100) apply to whole videos. The time one Watch session can add follows it (90 minutes).
+- The caption lines of an analysed video are kept in `videos/discover/lines/<id>.json` (E1); a video in the library is read from its kept caption track.
+
+### E53. Watch measures real speech against what the learner knows, and shows what the level expects beside it (2026-11-06, branch `feat/watch-known-share`)
+
+**Why:** the owner questioned the 80–84% "known" on Watch for a learner with 48 studied words. It was not a calculation error but a setting: `KNOWN_RANK.A1 = 500` is a rank *within each part of speech*, so the app counted about 1,980 words (2,113 with the beginner set and place names) as known at A1, against a comment that said "about 500 words" and CEFR figures of 500–800. The learner's real share of the Avocast podcast was 38.8%. Research: [research/watch-picks.md](research/watch-picks.md), "Fragments".
+
+**How to apply:**
+- Watch and Discover measure two shares. **Known** (`coverage`) counts the words the learner has studied (the deck and finished word units) plus grammar words, names and numbers. **Expected** (`expected`) adds the words the Milestones page credits at this point: `creditedWords` (the word check's estimate, else the band of the level completed plus the progress made in the current one; `LEVEL_VOCAB`, A1 1,200 at its end), taken as the commonest words by use (`frequencyOrder`, one order for Watch, Milestones and placement), plus the beginner set and place names. So a learner at the start of A1 is credited almost nothing and the figure grows with the course; the three places that count "words the level knows" can no longer disagree. Both are shown ("you know 39%", "78% expected at A1"). Everything is ranked and banded on *known*, never on expected.
+- A word the level expects but the learner has not studied is `assumed` on its token; `fresh` now means beyond even the level. Pre-teach and the new-words list offer assumed words too, since they are new to the learner. A fragment line carries `fresh` (not studied) and `beyond` (beyond the level).
+- When no stretch is within reach (88% known), the fragments panel says so, lists "the nearest stretches" and points to graded stories and Listen. The comprehension score keeps a sliver under 85% so the order is by nearness; Discover's fit does the same under 80%.
+- How common a word is (what a new word is worth, what to pre-teach) reads `commonness`, a word's place in `frequencyOrder`, the same in every language. Estonian and Russian lexicons rank every word on one list (ranks to 25,000), Slovak restarts per part of speech (`isOneList`, `rankShare`); thresholds written for Slovak ranks no longer apply to raw ranks. For a one-list lexicon the Read tolerance (`known`) is the level's whole `LEVEL_VOCAB` band instead of "rank 500".
+- A kept video carries `measure` (`MEASURE_VERSION`); one kept under an older rule is glossed again from its stored lines when the library or the video is opened (`remeasureVideo`, local, no model call). Foreign-caption videos keep their estimate. Bump `MEASURE_VERSION` when what `coverage` means changes again.
+- Read's word card says "not studied yet" for a word its tolerance counts as known but the learner has not met; nothing is underlined, and story coverage is unchanged.
+- `KNOWN_RANK` is otherwise unchanged, and its comment now says what it is: a per-part-of-speech tolerance for texts the model writes at the level (Read, Listen, Speed). Narrowing it would make drafts fail the 92% coverage floor and cost extra model calls; it is not a claim about the learner. Do not show it as one.
+- Videos kept before this change carry the old `coverage` until they are prepared again; Discover's scans are measured again on refresh.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

@@ -125,6 +125,14 @@ export function levelVocabulary(level: Cefr, progress: number): number {
 	return Math.round(below + p * (LEVEL_VOCAB[level] - below));
 }
 
+/** The lemmas credited beyond the ones met: the word check's estimate when
+ *  there was one, else the band of the level completed plus the progress
+ *  through the current one. Watch's "expected" and the Milestones page both
+ *  read this, so they never disagree. */
+export function creditedWords(measured: { size: number } | undefined, level: Cefr, progress: number): number {
+	return measured ? measured.size : levelVocabulary(level, progress);
+}
+
 // ─── Speed ──────────────────────────────────────────────────────────────────
 
 export type Support = "none" | "visual" | "subtitles" | "interactive";

@@ -105,8 +105,15 @@ export interface VideoRecord {
 	segments: VideoSegment[];
 	questions: StoryQuestion[];
 	preTeach: PreTeachWord[];
-	/** Share of running words the learner is expected to know (0..1). */
+	/** Share of running words the learner knows (0..1): studied, or a
+	 *  grammar word, name or number. */
 	coverage: number;
+	/** The share a learner at the level is expected to know, the words the
+	 *  level assumes included. Absent on videos kept before it was measured. */
+	expected?: number;
+	/** Which measuring rule `coverage` and `expected` came from (MEASURE_VERSION).
+	 *  A kept video with an older one is measured again from its stored lines. */
+	measure?: number;
 	wordCount: number;
 	/** Distinct dictionary words the learner has not met. */
 	unknownCount: number;
@@ -117,6 +124,10 @@ export interface VideoRecord {
 	/** Lines the model could not translate back into its answer: they keep
 	 *  their Slovak and have an empty English line. Absent when none. */
 	untranslated?: number;
+	/** Set when only a stretch of the video was prepared (src/core/fragments.ts):
+	 *  `durationSec`, the lines and the coverage are the stretch's, and this says
+	 *  where it sits in the whole video, whose length is `ofSec`. */
+	fragment?: { startSec: number; endSec: number; ofSec: number };
 	/** Foreign captions: coverage, the word counts and the pre-teach words come
 	 *  from a model's Slovak rendering of the lines (the lines shown stay as
 	 *  captioned), so the share is an estimate. */
@@ -131,6 +142,7 @@ export interface VideoIndexEntry {
 	level: Cefr;
 	createdAt: string;
 	coverage: number;
+	measure?: number;
 	wordCount: number;
 	segments: number;
 	preTeach: string[];
@@ -142,6 +154,8 @@ export interface VideoIndexEntry {
 	trackLang?: string;
 	/** The share is an estimate from a Slovak rendering of foreign captions. */
 	estimated?: boolean;
+	/** Only a stretch of the video was prepared (VideoRecord.fragment). */
+	fragment?: { startSec: number; endSec: number; ofSec: number };
 }
 
 /** Captions in another language than the video's (Czech for Slovak). */
@@ -499,7 +513,19 @@ export const PRE_TEACH_MAX = 8;
 
 /** Share of word tokens the learner is expected to know. Grammar words
  *  and names are known (glossSentence never marks them fresh). */
+/** Bump when what `coverage` means changes, so kept videos are measured again.
+ *  2: known is what the learner studied; `expected` is the level's credit. */
+export const MEASURE_VERSION = 2;
+
 export function videoCoverage(segments: readonly { tokens: readonly StoryToken[] }[]): number {
+	const words = wordTokens(segments);
+	if (words.length === 0) return 1;
+	return words.filter((t) => !t.fresh && !t.assumed).length / words.length;
+}
+
+/** The share a learner at the level is expected to know: the same words, with
+ *  the ones the level assumes (but the learner has not studied) counted. */
+export function videoExpected(segments: readonly { tokens: readonly StoryToken[] }[]): number {
 	const words = wordTokens(segments);
 	if (words.length === 0) return 1;
 	return words.filter((t) => !t.fresh).length / words.length;
@@ -512,7 +538,7 @@ export function pickPreTeach(segments: readonly VideoSegment[], max = PRE_TEACH_
 	const seen = new Map<string, PreTeachWord & { score: number }>();
 	segments.forEach((s) => {
 		for (const t of s.tokens) {
-			if (!t.word || !t.fresh || !t.slug || !t.gloss || !t.lemma) continue;
+			if (!t.word || !(t.fresh || t.assumed) || !t.slug || !t.gloss || !t.lemma) continue;
 			const hit = seen.get(t.slug);
 			if (hit) {
 				hit.count++;

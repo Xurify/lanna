@@ -1,5 +1,5 @@
 import { WatchPlayer } from "@/components/watch/watch-player";
-import { discoverState, fillAvatars, refreshIfStale, videoStore, watchState } from "@/src/server";
+import { currentVideo, discoverState, fillAvatars, refreshIfStale, watchState } from "@/src/server";
 
 export const metadata = { title: "Watch" };
 
@@ -17,7 +17,7 @@ export default async function WatchPage({ searchParams }: { searchParams: Promis
 	let discover = null;
 	try {
 		state = watchState(new Date().getTimezoneOffset());
-		if (id) video = videoStore.get(id);
+		if (id) video = currentVideo(id);
 	} catch {
 		state = null;
 	}
