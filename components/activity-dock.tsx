@@ -371,7 +371,7 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 	// rows match the session rows' hover. Empty means empty: the header sits
 	// alone (the cost span is population, not decoration).
 	return (
-		<section data-testid="activity-section" className="border-t border-border px-3 py-2.5">
+		<section data-testid="activity-section" className="border-t border-border px-3 pb-3 pt-2.5">
 			<div className={cn("flex h-5 items-center gap-1.5 px-2.5 text-xs font-bold text-muted-foreground", blobs.length > 0 && "mb-1")}>
 				<ActivityIcon className="size-3" />
 				Background

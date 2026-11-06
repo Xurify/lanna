@@ -611,7 +611,7 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 					</Link>
 				</div>
 				<h1 className="mt-6 font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-				<p className="mt-2 max-w-xl font-prose text-base text-muted-foreground">
+				<p className="mt-2 font-prose text-base text-muted-foreground">
 					{typed
 						? "Pick a scene and write it. The tutor plays the other person and answers out loud. Type each line and press Enter. A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."
 						: "Pick a scene and say it. The tutor plays the other person and answers out loud. Say your lines into the mic (press, speak, press). A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."}
@@ -625,7 +625,7 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 					</p>
 				)}
 				{state && !state.canSpeak && (
-					<EmptyState className="mt-6" testid="speak-nomodel" title="Say a scene out loud with a tutor" action={<AddKeyButton />}>
+					<EmptyState className="mt-6 max-w-none" testid="speak-nomodel" title="Say a scene out loud with a tutor" action={<AddKeyButton />}>
 						<p>In a scene the tutor plays the other person and answers what you say. That needs an AI key.</p>
 						<p>Step by step works without one: pick a scene below and walk through it line by line.{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}</p>
 					</EmptyState>
