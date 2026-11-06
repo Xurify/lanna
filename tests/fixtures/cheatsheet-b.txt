@@ -1,62 +1,23 @@
-1. Front desk: deciding who gets in
-Пускаем! | poo-SKAH-yem | Let it in! (admit)
-Не пускаем! | nye poo-SKAH-yem | Don't let it in! (reject)
-Подожди! | pa-da-ZHDEE | Wait!
-Проверь ещё раз. | pra-VYER ye-SHCHYO rahs | Check again.
-Кто у окна? | kto oo ahk-NAH | Who's at the window?
-Я у окна. | ya oo ahk-NAH | I'm at the window.
-Решаю я. / Ты решаешь. | rye-SHAH-yu ya / ty rye-SHAH-yesh | I decide. / You decide.
-Я не уверен (m) / уверена (f). | ya nye oo-VYE-ren / -ra | I'm not sure.
+| Russian | Sounds like | Meaning |
+|---|---|---|
 
-2. Describing what you see
-Что ты видишь? | shto ty VEE-dish | What do you see?
-Я вижу… | ya VEE-zhu | I see…
-Фото не совпадает. | FO-to nye sahv-pa-DAH-yet | The photo doesn't match.
-Уши другие. | OO-shi droo-GEE-ye | The ears are different.
-Глаза чёрные. | gla-ZAH CHYOR-nye-ye | The eyes are black.
-На камере странно. | na KAH-mye-rye STRAHN-na | It looks strange on the camera.
-Он нормальный. | on nar-MAHL-ny | He's normal.
-Он странный. / Она странная. | on STRAHN-ny / a-NAH STRAHN-na-ya | He's strange. / She's strange.
-Это аномалия! | EH-ta a-na-MAH-lee-ya | It's an anomaly!
+1. Café and food
+Кофе, пожалуйста! | KO-fye pa-ZHAL-sta | Coffee, please!
+Сколько стоит? | SKOL-ka STO-it | How much?
+Меню, пожалуйста. | mee-NYU, pa-ZHAL-sta | The menu, please.
+Без сахара. | byez SA-kha-ra | Without sugar.
 
-Body words
-голова |  | head
-лицо |  | face
+2. Directions
+Где вокзал? | gdye vak-ZAL | Where's the station?
+налево | na-LYE-va | left
+направо | na-PRA-va | right
+Где метро? | GDYE mee-TRO? | Where is the metro?
+
+4. Emergencies
+Помогите! | pa-ma-GEE-tye | Help!
+Где аптека? | GDYE ap-TYE-ka? | Where is the pharmacy?
+
+Words
 глаза |  | eyes
-уши |  | ears
-рот |  | mouth
-зубы |  | teeth
-лапа |  | paw
-хвост |  | tail
-
-Common animals
-кошка |  | cat
-собака |  | dog
-кролик |  | rabbit
-
-3. Splitting jobs and moving around
-Я на столе. | ya na sta-LYE | I'm on the desk.
-Ты смотришь камеры? | ty SMOT-rish KAH-mye-ry | Are you watching the cameras?
-Я иду налево. | ya ee-DOO na-LYE-va | I'm going left.
-Где пациент? | gdye pa-tsi-YENT | Where's the patient?
-Комната шесть. | KOM-na-ta shest | Room six.
-Ты где? / Я здесь. | ty gdye / ya zdyes | Where are you? / I'm here.
-
-Directions
-налево |  | left
-направо |  | right
-прямо |  | straight
-назад |  | back
-быстрее |  | faster
-
-Numbers
-один |  | 1
-два |  | 2
-три |  | 3
-четыре |  | 4
-пять |  | 5
-шесть |  | 6
-семь |  | 7
-восемь |  | 8
-девять |  | 9
-десять |  | 10
+хлеб |  | bread
+молоко |  | milk

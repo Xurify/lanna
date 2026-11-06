@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeftIcon, FileTextIcon, PencilIcon, PlusIcon, RepeatIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
@@ -165,14 +165,150 @@ function sectionsFromDraft(draft: DraftSection[]): Array<{ title: string; rows: 
 const phraseCount = (sections: ReadonlyArray<{ rows: ReadonlyArray<unknown> }>) => sections.reduce((n, s) => n + s.rows.length, 0);
 
 /** One dialog for the phrases, in three uses: a new sheet, adding phrases to an open one, and editing a sheet.
- *  It edits as a table by default; the text view pastes a list, such as an assistant's answer, as one phrase per line. */
+ *  It edits as a table; the text view pastes a list, such as an assistant's answer, as one phrase per line. */
 type DialogMode = { kind: "new" } | { kind: "add"; sheet: Cheatsheet } | { kind: "edit"; sheet: Cheatsheet };
+
+type RowField = keyof Omit<DraftRow, "key">;
 
 const FIELD = "h-9 w-full min-w-0 rounded-md border border-border bg-well px-2.5 font-prose text-sm text-foreground outline-none focus:border-primary";
 const ICON_BUTTON = "grid size-9 shrink-0 place-items-center rounded-md text-ink-3 transition-colors hover:bg-well hover:text-miss";
+const COLUMNS = "grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_2.25rem]";
+
+const isFilled = (r: DraftRow) => !!(r.text.trim() || r.pron.trim() || r.meaning.trim() || r.note.trim());
+
+/** One phrase's inputs. Memoised, so typing in one row of a long sheet re-renders that row only. */
+const RowFields = memo(function RowFields({
+	sectionKey,
+	row,
+	tag,
+	onChange,
+	onRemove,
+	onEnter,
+}: {
+	sectionKey: number;
+	row: DraftRow;
+	tag?: string;
+	onChange: (sectionKey: number, rowKey: number, field: RowField, value: string) => void;
+	onRemove: (sectionKey: number, rowKey: number) => void;
+	onEnter: (sectionKey: number, from: HTMLElement) => void;
+}) {
+	const input = (field: RowField, label: string, className: string, lang?: string) => (
+		<input
+			type="text"
+			aria-label={label}
+			placeholder={label.toLowerCase()}
+			value={row[field]}
+			lang={lang}
+			onChange={(e) => onChange(sectionKey, row.key, field, e.target.value)}
+			onKeyDown={(e) => {
+				if (e.key !== "Enter" || e.nativeEvent.isComposing || e.metaKey || e.ctrlKey) return;
+				e.preventDefault();
+				onEnter(sectionKey, e.currentTarget);
+			}}
+			className={className}
+		/>
+	);
+	return (
+		<div data-row-key={row.key} className={cn(COLUMNS, "[contain:layout_paint] max-sm:border-b max-sm:border-border/60 max-sm:pb-3")}>
+			{input("text", "Phrase", cn(FIELD, "col-span-2 sm:col-span-1"), tag)}
+			{input("pron", "Say it", cn(FIELD, "font-ui text-[13px] text-ink-2"))}
+			{input("meaning", "Meaning", FIELD, "en")}
+			{input("note", "Note", cn(FIELD, "font-ui text-[13px] text-ink-2"))}
+			<button type="button" aria-label="Remove phrase" onClick={() => onRemove(sectionKey, row.key)} className={cn(ICON_BUTTON, "justify-self-end")}>
+				<Trash2Icon className="size-4" />
+			</button>
+		</div>
+	);
+});
+
+/** One section of the table: its name and its phrases. Memoised with RowFields, so a keystroke rebuilds only the section being typed in. */
+const SectionEditor = memo(function SectionEditor({
+	section,
+	first,
+	confirming,
+	tag,
+	onRename,
+	onRemove,
+	onKeep,
+	onAddRow,
+	onFirstPhrase,
+	onChange,
+	onRemoveRow,
+	onEnter,
+}: {
+	section: DraftSection;
+	first: boolean;
+	confirming: boolean;
+	tag?: string;
+	onRename: (sectionKey: number, title: string) => void;
+	onRemove: (sectionKey: number, filled: boolean, confirmed: boolean) => void;
+	onKeep: () => void;
+	onAddRow: (sectionKey: number) => void;
+	onFirstPhrase: (sectionKey: number) => void;
+	onChange: (sectionKey: number, rowKey: number, field: RowField, value: string) => void;
+	onRemoveRow: (sectionKey: number, rowKey: number) => void;
+	onEnter: (sectionKey: number, from: HTMLElement) => void;
+}) {
+	const filled = section.rows.filter(isFilled).length;
+	return (
+		<div data-section-key={section.key} className="scroll-mt-2 space-y-2 [contain-intrinsic-size:auto_520px] [content-visibility:auto]">
+			<div className="flex items-center gap-2">
+				<input
+					type="text"
+					aria-label="Section name"
+					value={section.title}
+					onChange={(e) => onRename(section.key, e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key !== "Enter" || e.metaKey || e.ctrlKey) return;
+						e.preventDefault();
+						onFirstPhrase(section.key);
+					}}
+					placeholder={first ? "Section name (optional)" : "Section name"}
+					maxLength={120}
+					className={cn(FIELD, "h-10 font-ui text-[15px] font-semibold")}
+				/>
+				{confirming ? (
+					<span className="flex shrink-0 items-center gap-1">
+						<button type="button" className="q-btn ghost text-miss" onClick={() => onRemove(section.key, filled > 0, true)} data-testid="cheatsheet-remove-section-yes">
+							Remove {plural(filled, "phrase")}
+						</button>
+						<button type="button" className="q-btn ghost" onClick={onKeep}>
+							Keep
+						</button>
+					</span>
+				) : (
+					<button type="button" aria-label="Remove section" onClick={() => onRemove(section.key, filled > 0, false)} className={ICON_BUTTON}>
+						<Trash2Icon className="size-4" />
+					</button>
+				)}
+			</div>
+
+			<div className={cn(COLUMNS, "hidden px-0.5 font-ui text-xs text-ink-3 sm:grid")} aria-hidden="true">
+				<span>Phrase</span>
+				<span>Say it</span>
+				<span>Meaning</span>
+				<span>Note</span>
+				<span />
+			</div>
+
+			<div className="space-y-2 max-sm:space-y-3">
+				{section.rows.map((row) => (
+					<RowFields key={row.key} sectionKey={section.key} row={row} tag={tag} onChange={onChange} onRemove={onRemoveRow} onEnter={onEnter} />
+				))}
+			</div>
+
+			<button type="button" onClick={() => onAddRow(section.key)} className="q-btn ghost -ml-2.5">
+				<PlusIcon className="size-4" />
+				Add phrase
+			</button>
+		</div>
+	);
+});
 
 function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: () => void; onSaved: (sheet: Cheatsheet) => void }) {
-	const [view, setView] = useState<"table" | "text">("table");
+	const lang = useActiveLanguage();
+	// Adding to a sheet is mostly pasting a list; writing or editing one is the table.
+	const [view, setView] = useState<"table" | "text">(mode.kind === "add" ? "text" : "table");
 	const [draft, setDraft] = useState<DraftSection[]>(() => (mode.kind === "edit" ? draftFromSections(mode.sheet.sections) : [emptySection()]));
 	const [text, setText] = useState("");
 	const [switchError, setSwitchError] = useState<string | null>(null);
@@ -180,23 +316,52 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [serverError, setServerError] = useState<string | null>(null);
+	const [confirmSection, setConfirmSection] = useState<number | null>(null);
+	const [confirmClose, setConfirmClose] = useState(false);
+	const [jump, setJump] = useState("");
 	const fileRef = useRef<HTMLInputElement>(null);
+	const formRef = useRef<HTMLFormElement>(null);
+	const bodyRef = useRef<HTMLDivElement>(null);
+	// A selector to focus once the draft has rendered (a new row or section).
+	const pendingFocus = useRef<string | null>(null);
 
 	const textParse = useMemo(() => (view === "text" ? parseOrError(text) : null), [view, text]);
-	const current = view === "table" ? sectionsFromDraft(draft) : (textParse?.sections ?? []);
+	const current = useMemo(() => (view === "table" ? sectionsFromDraft(draft) : (textParse?.sections ?? [])), [view, draft, textParse]);
 	const phrases = phraseCount(current);
 	const overlap = mode.kind === "add" && phrases > 0 ? countOverlap(mode.sheet.sections, current) : null;
 	const nothingNew = !!overlap && overlap.fresh === 0;
 	const canSave = phrases > 0 && !saving && !nothingNew && !textParse?.error;
 
+	const initial = useMemo(() => ({ body: mode.kind === "edit" ? formatSheetText(mode.sheet.sections) : "", title: mode.kind === "edit" ? mode.sheet.title : "" }), [mode]);
+	const body = useMemo(() => (view === "table" ? formatSheetText(current) : text), [view, current, text]);
+	const dirty = body.trim() !== initial.body.trim() || title.trim() !== initial.title.trim();
+
 	const heading = mode.kind === "new" ? "New cheatsheet" : mode.kind === "add" ? `Add phrases to ${mode.sheet.title}` : "Edit cheatsheet";
 	const action = mode.kind === "edit" ? "Save" : mode.kind === "add" ? (nothingNew ? "Nothing new" : `Add ${plural(overlap?.fresh ?? 0, "phrase")}`) : "Create";
 
+	const requestClose = useCallback(() => {
+		if (dirty) setConfirmClose(true);
+		else onClose();
+	}, [dirty, onClose]);
+
 	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key !== "Escape") return;
+			if (confirmClose) setConfirmClose(false);
+			else requestClose();
+		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
+	}, [confirmClose, requestClose]);
+
+	useEffect(() => {
+		const selector = pendingFocus.current;
+		if (!selector) return;
+		pendingFocus.current = null;
+		const el = bodyRef.current?.querySelector<HTMLInputElement>(selector);
+		el?.focus();
+		el?.scrollIntoView({ block: "nearest" });
+	}, [draft]);
 
 	const switchTo = (next: "table" | "text") => {
 		if (next === view) return;
@@ -219,11 +384,11 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 		setView("table");
 	};
 
-	const updateSection = (key: number, patch: Partial<DraftSection>) => setDraft((d) => d.map((s) => (s.key === key ? { ...s, ...patch } : s)));
-	const updateRow = (sectionKey: number, rowKey: number, field: keyof Omit<DraftRow, "key">, value: string) =>
+	const updateRow = useCallback((sectionKey: number, rowKey: number, field: RowField, value: string) => {
 		setDraft((d) => d.map((s) => (s.key !== sectionKey ? s : { ...s, rows: s.rows.map((r) => (r.key === rowKey ? { ...r, [field]: value } : r)) })));
-	const addRow = (sectionKey: number) => setDraft((d) => d.map((s) => (s.key === sectionKey ? { ...s, rows: [...s.rows, emptyRow()] } : s)));
-	const removeRow = (sectionKey: number, rowKey: number) =>
+	}, []);
+
+	const removeRow = useCallback((sectionKey: number, rowKey: number) => {
 		setDraft((d) =>
 			d.map((s) => {
 				if (s.key !== sectionKey) return s;
@@ -231,8 +396,43 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 				return { ...s, rows: rows.length ? rows : [emptyRow()] };
 			}),
 		);
-	const removeSection = (key: number) => setDraft((d) => (d.length > 1 ? d.filter((s) => s.key !== key) : [emptySection()]));
-	const addSection = () => setDraft((d) => [...d, emptySection()]);
+	}, []);
+
+	const addRow = useCallback((sectionKey: number) => {
+		const row = emptyRow();
+		pendingFocus.current = `[data-row-key="${row.key}"] input`;
+		setDraft((d) => d.map((s) => (s.key === sectionKey ? { ...s, rows: [...s.rows, row] } : s)));
+	}, []);
+
+	/** Enter goes down to the next phrase, and past the last one starts a new phrase. */
+	const onEnter = useCallback(
+		(sectionKey: number, from: HTMLElement) => {
+			const next = from.closest("[data-row-key]")?.nextElementSibling;
+			const input = next?.matches("[data-row-key]") ? next.querySelector("input") : null;
+			if (input) input.focus();
+			else addRow(sectionKey);
+		},
+		[addRow],
+	);
+
+	const addSection = () => {
+		const section = emptySection();
+		pendingFocus.current = `[data-section-key="${section.key}"] input`;
+		setDraft((d) => [...d, section]);
+	};
+
+	const removeSection = useCallback((sectionKey: number, filled: boolean, confirmed: boolean) => {
+		if (filled && !confirmed) return setConfirmSection(sectionKey);
+		setConfirmSection(null);
+		setDraft((d) => (d.length > 1 ? d.filter((s) => s.key !== sectionKey) : [emptySection()]));
+	}, []);
+	const keepSection = useCallback(() => setConfirmSection(null), []);
+	const renameSection = useCallback((sectionKey: number, value: string) => setDraft((d) => d.map((s) => (s.key === sectionKey ? { ...s, title: value } : s))), []);
+
+	const focusFirstPhrase = useCallback((sectionKey?: number) => {
+		const scope = sectionKey === undefined ? bodyRef.current : bodyRef.current?.querySelector(`[data-section-key="${sectionKey}"]`);
+		scope?.querySelector<HTMLInputElement>("[data-row-key] input")?.focus();
+	}, []);
 
 	const readFile = async (file: File) => {
 		setFileName(file.name);
@@ -247,7 +447,6 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 		if (!canSave) return;
 		setSaving(true);
 		setServerError(null);
-		const body = view === "table" ? formatSheetText(sectionsFromDraft(draft)) : text;
 		const request =
 			mode.kind === "edit"
 				? { url: `/api/cheatsheets/${encodeURIComponent(mode.sheet.id)}`, method: "PUT", body: { title, text: body } }
@@ -266,42 +465,57 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	const shownError = serverError ?? switchError ?? textParse?.error ?? null;
 	if (shownError) status = <span className="text-miss">{shownError}</span>;
 	else if (overlap) status = <span className="text-ink-2">{`${overlap.fresh} new · ${overlap.shared} already here`}</span>;
-	else if (phrases > 0) {
-		const names = current.map((s) => s.title || "Phrases");
-		const list = names.slice(0, 4).join(", ") + (names.length > 4 ? ` +${names.length - 4} more` : "");
-		status = <span className="text-ink-2">{`${plural(phrases, "phrase")} in ${plural(current.length, "section")}: ${list}`}</span>;
-	}
+	else if (phrases > 0) status = <span className="text-ink-2">{`${plural(phrases, "phrase")} in ${plural(current.length, "section")}`}</span>;
 
 	return (
-		<div className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-			<form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="cheatsheet-dialog-title" className="lh-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col gap-4 overflow-y-auto p-5 sm:p-6" data-testid="cheatsheet-dialog">
-				<div className="flex items-center justify-between gap-3">
+		<div className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
+			<form
+				ref={formRef}
+				onSubmit={submit}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+						e.preventDefault();
+						formRef.current?.requestSubmit();
+					}
+				}}
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="cheatsheet-dialog-title"
+				className="lh-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden"
+				data-testid="cheatsheet-dialog"
+			>
+				<div className="flex items-center justify-between gap-3 px-5 pb-3 pt-5 sm:px-6 sm:pt-6">
 					<h2 id="cheatsheet-dialog-title" className="truncate font-title text-xl font-semibold text-foreground">
 						{heading}
 					</h2>
-					<button type="button" onClick={onClose} aria-label="Close" className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground">
+					<button type="button" onClick={requestClose} aria-label="Close" className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground">
 						<XIcon className="size-5" />
 					</button>
 				</div>
 
-				{mode.kind !== "add" && (
-					<label className="block">
-						<span className="font-ui text-xs font-semibold text-muted-foreground">Title</span>
-						<input
-							type="text"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							placeholder="Sample sheet"
-							maxLength={120}
-							className={cn(FIELD, "mt-1 h-10")}
-							data-testid="cheatsheet-title"
-						/>
-					</label>
-				)}
+				<div ref={bodyRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6" data-testid="cheatsheet-dialog-body">
+					{mode.kind !== "add" && (
+						<label className="block">
+							<span className="font-ui text-xs font-semibold text-muted-foreground">Title</span>
+							<input
+								type="text"
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter" || e.metaKey || e.ctrlKey) return;
+									e.preventDefault();
+									if (view === "table") focusFirstPhrase();
+								}}
+								placeholder="Sample sheet"
+								maxLength={120}
+								className={cn(FIELD, "mt-1 h-10")}
+								data-testid="cheatsheet-title"
+							/>
+						</label>
+					)}
 
-				<div className="space-y-2">
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<div className="q-segc" role="radiogroup" aria-label="How to edit the phrases">
+					<div className="flex flex-wrap items-center gap-2">
+						<div className="q-segc" role="radiogroup" aria-label="Edit as">
 							<button type="button" role="radio" aria-checked={view === "table"} className={cn(view === "table" && "on")} onClick={() => switchTo("table")} data-testid="cheatsheet-view-table">
 								Table
 							</button>
@@ -310,57 +524,43 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 							</button>
 						</div>
 						{view === "text" && (
-							<button type="button" className="font-ui text-xs font-medium text-teal-2 hover:underline" onClick={() => fileRef.current?.click()}>
+							<button type="button" className="ml-auto font-ui text-xs font-medium text-teal-2 hover:underline" onClick={() => fileRef.current?.click()}>
 								<UploadIcon className="mr-1 inline size-3.5 align-[-2px]" />
 								{fileName ?? "From a text file"}
 							</button>
+						)}
+						{view === "table" && draft.length > 3 && (
+							<ChoiceMenu
+								value={jump}
+								onChange={(next) => {
+									setJump(next);
+									bodyRef.current?.querySelector(`[data-section-key="${next}"]`)?.scrollIntoView({ block: "start" });
+								}}
+								ariaLabel="Jump to a section"
+								className="w-full sm:ml-auto sm:w-64"
+								options={[{ value: "", label: "Jump to a section" }, ...draft.map((s) => ({ value: String(s.key), label: s.title.trim() || "Untitled section" }))]}
+							/>
 						)}
 					</div>
 
 					{view === "table" ? (
 						<div className="space-y-6" data-testid="cheatsheet-table">
 							{draft.map((section, si) => (
-								<div key={section.key} className="space-y-2">
-									<div className="flex items-center gap-2">
-										<input
-											type="text"
-											aria-label="Section name"
-											value={section.title}
-											onChange={(e) => updateSection(section.key, { title: e.target.value })}
-											placeholder={si === 0 ? "Section name (optional)" : "Section name"}
-											maxLength={120}
-											className={cn(FIELD, "h-10 font-ui text-[15px] font-semibold")}
-										/>
-										<button type="button" aria-label="Remove section" onClick={() => removeSection(section.key)} className={ICON_BUTTON}>
-											<Trash2Icon className="size-4" />
-										</button>
-									</div>
-
-									<div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_2.25rem] gap-2 px-0.5 font-ui text-xs text-ink-3 sm:grid">
-										<span>Phrase</span>
-										<span>Say it</span>
-										<span>Meaning</span>
-										<span>Note</span>
-										<span />
-									</div>
-
-									{section.rows.map((row) => (
-										<div key={row.key} className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_2.25rem]">
-											<input type="text" aria-label="Phrase" value={row.text} onChange={(e) => updateRow(section.key, row.key, "text", e.target.value)} placeholder="phrase" className={cn(FIELD, "col-span-2 sm:col-span-1")} lang="ru" />
-											<input type="text" aria-label="Say it" value={row.pron} onChange={(e) => updateRow(section.key, row.key, "pron", e.target.value)} placeholder="say it" className={cn(FIELD, "font-ui text-[13px] text-ink-2")} />
-											<input type="text" aria-label="Meaning" value={row.meaning} onChange={(e) => updateRow(section.key, row.key, "meaning", e.target.value)} placeholder="meaning" className={FIELD} lang="en" />
-											<input type="text" aria-label="Note" value={row.note} onChange={(e) => updateRow(section.key, row.key, "note", e.target.value)} placeholder="note" className={cn(FIELD, "font-ui text-[13px] text-ink-2")} />
-											<button type="button" aria-label="Remove phrase" onClick={() => removeRow(section.key, row.key)} className={cn(ICON_BUTTON, "justify-self-end")}>
-												<Trash2Icon className="size-4" />
-											</button>
-										</div>
-									))}
-
-									<button type="button" onClick={() => addRow(section.key)} className="q-btn ghost -ml-2.5">
-										<PlusIcon className="size-4" />
-										Add phrase
-									</button>
-								</div>
+								<SectionEditor
+									key={section.key}
+									section={section}
+									first={si === 0}
+									confirming={confirmSection === section.key}
+									tag={lang?.tag}
+									onRename={renameSection}
+									onRemove={removeSection}
+									onKeep={keepSection}
+									onAddRow={addRow}
+									onFirstPhrase={focusFirstPhrase}
+									onChange={updateRow}
+									onRemoveRow={removeRow}
+									onEnter={onEnter}
+								/>
 							))}
 							<button type="button" onClick={addSection} className="q-btn sec" data-testid="cheatsheet-add-section">
 								<PlusIcon className="size-4" />
@@ -368,7 +568,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 							</button>
 						</div>
 					) : (
-						<>
+						<div className="space-y-2">
 							<span className="block font-ui text-xs text-ink-3">One phrase per line: phrase | say it | meaning. A line with no | is a section name.</span>
 							<textarea
 								value={text}
@@ -384,36 +584,52 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 								className="w-full resize-y rounded-md border border-border bg-well px-3 py-2 font-mono text-[13px] leading-relaxed text-foreground outline-none focus:border-primary"
 								data-testid="cheatsheet-text"
 							/>
-						</>
+						</div>
 					)}
+
+					<input
+						ref={fileRef}
+						type="file"
+						accept=".txt,text/plain"
+						className="sr-only"
+						tabIndex={-1}
+						aria-hidden="true"
+						onChange={(e) => {
+							const file = e.target.files?.[0];
+							if (file) void readFile(file);
+							e.target.value = "";
+						}}
+					/>
 				</div>
 
-				<input
-					ref={fileRef}
-					type="file"
-					accept=".txt,text/plain"
-					className="sr-only"
-					tabIndex={-1}
-					aria-hidden="true"
-					onChange={(e) => {
-						const file = e.target.files?.[0];
-						if (file) void readFile(file);
-						e.target.value = "";
-					}}
-				/>
-
-				<div className="flex flex-wrap items-center justify-between gap-2">
-					<p className="min-h-5 font-ui text-xs" aria-live="polite" data-testid="cheatsheet-preview">
-						{status}
-					</p>
-					<div className="ml-auto flex items-center gap-2">
-						<button type="button" className="q-btn ghost" onClick={onClose}>
-							Cancel
-						</button>
-						<button type="submit" className="q-btn primary" disabled={!canSave} data-testid="cheatsheet-save">
-							{saving ? "Saving…" : action}
-						</button>
-					</div>
+				<div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-5 py-3.5 sm:px-6" data-testid="cheatsheet-dialog-footer">
+					{confirmClose ? (
+						<>
+							<p className="font-ui text-sm text-ink-2">Discard your changes?</p>
+							<div className="ml-auto flex items-center gap-2">
+								<button type="button" className="q-btn ghost" onClick={() => setConfirmClose(false)} data-testid="cheatsheet-keep-editing">
+									Keep editing
+								</button>
+								<button type="button" className="q-btn sec text-miss" onClick={onClose} data-testid="cheatsheet-discard">
+									Discard
+								</button>
+							</div>
+						</>
+					) : (
+						<>
+							<p className="min-h-5 font-ui text-xs" aria-live="polite" data-testid="cheatsheet-preview">
+								{status}
+							</p>
+							<div className="ml-auto flex items-center gap-2">
+								<button type="button" className="q-btn ghost" onClick={requestClose}>
+									Cancel
+								</button>
+								<button type="submit" className="q-btn primary" disabled={!canSave} data-testid="cheatsheet-save">
+									{saving ? "Saving…" : action}
+								</button>
+							</div>
+						</>
+					)}
 				</div>
 			</form>
 		</div>
@@ -566,7 +782,7 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 					</div>
 
 					{sections.map((section) => (
-						<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3">
+						<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">
 							<h3 className="q-sh !mb-0">{section.title}</h3>
 							<ul className="q-card divide-y divide-border/70 overflow-hidden">
 								{section.rows.map((row, i) => {

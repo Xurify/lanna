@@ -28,13 +28,13 @@ const B = fixture("cheatsheet-b.txt");
 
 describe("parseSheetText", () => {
 	it("reads a line with | as a phrase and a line without one as a section name", () => {
-		const sections = parseSheetText("Desk\nПускаем? | poos-KA-yem? | Do we let it in?\nNot here | | Nothing\n\nWhat we see\nЯ вижу | ya VEE-zhu | I see");
+		const sections = parseSheetText("Café\nКофе, пожалуйста. | KO-fye, pa-ZHAL-sta | A coffee, please.\nNot here | | Nothing\n\nStation\nГде вокзал? | GDYE vak-ZAL? | Where is the station?");
 		assert.deepEqual(
 			sections.map((s) => s.title),
-			["Desk", "What we see"],
+			["Café", "Station"],
 		);
-		assert.deepEqual(sections[0]!.rows[0], { text: "Пускаем?", pron: "poos-KA-yem?", meaning: "Do we let it in?" });
-		assert.deepEqual(sections[1]!.rows, [{ text: "Я вижу", pron: "ya VEE-zhu", meaning: "I see" }]);
+		assert.deepEqual(sections[0]!.rows[0], { text: "Кофе, пожалуйста.", pron: "KO-fye, pa-ZHAL-sta", meaning: "A coffee, please." });
+		assert.deepEqual(sections[1]!.rows, [{ text: "Где вокзал?", pron: "GDYE vak-ZAL?", meaning: "Where is the station?" }]);
 	});
 
 	it("keeps empty fields out and joins extra fields as a note", () => {
@@ -46,9 +46,9 @@ describe("parseSheetText", () => {
 	});
 
 	it("skips the header and separator of a pasted table and strips bold marks", () => {
-		const sections = parseSheetText("| Russian | Sounds like | Meaning |\n|---|---|---|\n**Пожар!** | pa-ZHAR | Fire");
+		const sections = parseSheetText("| Russian | Sounds like | Meaning |\n|---|---|---|\n**Помогите!** | pa-ma-GEE-tye | Help");
 		assert.deepEqual(sections[0]!.title, "Phrases");
-		assert.deepEqual(sections[0]!.rows, [{ text: "Пожар!", pron: "pa-ZHAR", meaning: "Fire" }]);
+		assert.deepEqual(sections[0]!.rows, [{ text: "Помогите!", pron: "pa-ma-GEE-tye", meaning: "Help" }]);
 	});
 
 	it("puts phrases above the first section under Phrases, and drops sections with no phrase", () => {
@@ -74,8 +74,10 @@ describe("parseSheetText", () => {
 	});
 
 	it("reads the example files: every phrase line is a row, no row is lost", () => {
+		assert.equal(parseSheetText(B)[0]!.title, "1. Café and food", "the pasted table header above it is skipped");
 		for (const text of [A, B]) {
-			const lines = text.split("\n").filter((l) => l.includes("|"));
+			// A pasted table header and its |---| line carry a "|" but are not phrases.
+			const lines = text.split("\n").filter((l) => l.includes("|") && !/^[\s|:-]+$/.test(l) && !/^\|\s*Russian\b/.test(l));
 			const sections = parseSheetText(text);
 			assert.equal(sections.reduce((n, s) => n + s.rows.length, 0), lines.length);
 		}
@@ -103,7 +105,7 @@ describe("formatSheetText", () => {
 
 describe("phrases across sheets", () => {
 	it("compares by case, ё and punctuation, and covers a / b when both parts are there", () => {
-		assert.equal(phraseKey("Пускаем!"), phraseKey("пускаем."));
+		assert.equal(phraseKey("Спасибо!"), phraseKey("спасибо."));
 		assert.equal(phraseKey("Ещё раз"), phraseKey("еще раз"));
 		const sheet = parseSheetText("Words\nглаз / глаза | | eye\nДа | | yes");
 		const o = countOverlap(sheet, parseSheetText("Other\nглаза | | eyes\nда. | | yes\nНет | | no"));
@@ -112,8 +114,7 @@ describe("phrases across sheets", () => {
 
 	it("counts the shared and the new phrases of a second text", () => {
 		const o = countOverlap(parseSheetText(A), parseSheetText(B));
-		assert.ok(o.shared >= 25, `shared ${o.shared}`);
-		assert.ok(o.fresh > 0);
+		assert.deepEqual(o, { shared: 8, fresh: 5 });
 		assert.equal(o.shared + o.fresh, new Set(parseSheetText(B).flatMap((s) => s.rows.map((r) => phraseKey(r.text)))).size, "every distinct phrase is counted once");
 	});
 
@@ -124,16 +125,16 @@ describe("phrases across sheets", () => {
 	});
 
 	it("adds only new phrases: into the section they name, else as a new section", () => {
-		const existing = parseSheetText("1. At the desk\nПускаем? | poos-KA-yem? | Do we let it in?\n\nTips\nСтоп | | stop");
-		const incoming = parseSheetText("1. Front desk\nПускаем! | x | Admit\nКто у окна? | kto oo ak-NA | Who's at the window?\n\nFire\nПожар | | fire");
+		const existing = parseSheetText("1. At the café\nКофе, пожалуйста. | KO-fye | A coffee, please.\n\nTips\nСтоп | | stop");
+		const incoming = parseSheetText("1. Café and food\nКофе, пожалуйста! | x | Coffee!\nМеню, пожалуйста. | mee-NYU | The menu, please.\n\nHelp\nПомогите | | help");
 		const { sections, added } = mergeSections(existing, incoming);
 		assert.equal(added, 2);
-		const desk = sections.find((s) => s.id === "1-at-the-desk")!;
+		const cafe = sections.find((s) => s.id === "1-at-the-cafe")!;
 		assert.deepEqual(
-			desk.rows.map((r) => r.text),
-			["Пускаем?", "Кто у окна?"],
+			cafe.rows.map((r) => r.text),
+			["Кофе, пожалуйста.", "Меню, пожалуйста."],
 		);
-		assert.equal(sections.at(-1)!.title, "Fire");
+		assert.equal(sections.at(-1)!.title, "Help");
 		assert.equal(mergeSections(sections, incoming).added, 0, "a second add of the same text adds nothing");
 	});
 });
