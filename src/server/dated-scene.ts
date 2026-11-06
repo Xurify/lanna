@@ -45,7 +45,7 @@ export function datedScenesForToday(now = new Date(), tz?: number): DatedScenesT
 }
 
 /** A scene in the learner's words, on a day. The words are mapped once (the
- *  cheap model, or the rules), then the day is kept with them. */
+ *  cheap model), then the day is kept with them. */
 export async function addDatedScene(textRaw: string, date: string, opts: CustomOptions & { tz?: number } = {}): Promise<{ record: CustomMilestoneRecord; reused: boolean }> {
 	const { tz, ...custom } = opts;
 	const now = custom.now ?? new Date();

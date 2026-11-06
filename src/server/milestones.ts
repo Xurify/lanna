@@ -33,7 +33,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
 import { allUnits } from "../core/lesson.ts";
-import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, creditedWords, MILESTONES, normalizeCustomText, parseCustomMapping, ruleMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestoneEstimate, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
+import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, creditedWords, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestoneEstimate, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
 import { datedSceneView, isIsoDate, type DatedSceneView } from "../core/dated-scene.ts";
 import { grammarWord } from "../core/reading.ts";
 import { isWatchItem } from "../core/watch-reps.ts";
@@ -313,8 +313,6 @@ export interface CustomOptions {
 	engine?: PiEngine;
 	model?: string;
 	now?: Date;
-	/** Map with the rules and call no model, even when one is set (tests). */
-	rules?: boolean;
 }
 
 function stepOf(u: Usage) {
@@ -333,33 +331,28 @@ export async function addCustomMilestone(textRaw: string, opts: CustomOptions = 
 		return { record: { ...existing, removedAt: undefined }, reused: true };
 	}
 	const now = opts.now ?? new Date();
-	// The cheap model maps the words when one is set and its key is there;
-	// with none, the rules map them and the record says "rule".
-	const useModel = !opts.rules && (opts.engine !== undefined || aiStatus().ready);
-	const usage = { model: "rule", steps: [] as ReturnType<typeof stepOf>[] };
-	let mapping: CustomMapping;
-	if (useModel) {
-		const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:faux" } : storyEngine();
-		if (!resolved) throw new Error(aiMissing({ ready: false, reason: "no-model" }));
-		usage.model = resolved.model;
-		let answer: string;
-		try {
-			({ text: answer } = await runSubagent([], {
-				role: "researcher",
-				engine: resolved.engine,
-				systemPrompt: customMilestoneSystem(),
-				prompt: `The learner wrote: "${text}"`,
-				maxTurns: 1,
-				onUsage: (u) => usage.steps.push(stepOf(u)),
-			}));
-		} catch (err) {
-			throw new Error(friendlyAiError(err));
-		}
-		mapping = parseCustomMapping(answer, text);
-	} else {
-		mapping = ruleMapping(text);
+	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:faux" } : storyEngine();
+	if (!opts.engine) {
+		const status = aiStatus();
+		if (!status.ready) throw new Error(aiMissing(status));
 	}
-	const record: CustomMilestoneRecord = { def: customMilestone(text, mapping), text, mapping, model: usage.model, usage, createdAt: now.toISOString() };
+	if (!resolved) throw new Error(aiMissing({ ready: false, reason: "no-model" }));
+	const usage = { model: resolved.model, steps: [] as ReturnType<typeof stepOf>[] };
+	let answer: string;
+	try {
+		({ text: answer } = await runSubagent([], {
+			role: "researcher",
+			engine: resolved.engine,
+			systemPrompt: customMilestoneSystem(),
+			prompt: `The learner wrote: "${text}"`,
+			maxTurns: 1,
+			onUsage: (u) => usage.steps.push(stepOf(u)),
+		}));
+	} catch (err) {
+		throw new Error(friendlyAiError(err));
+	}
+	const mapping: CustomMapping = parseCustomMapping(answer, text);
+	const record: CustomMilestoneRecord = { def: customMilestone(text, mapping), text, mapping, model: resolved.model, usage, createdAt: now.toISOString() };
 	milestoneStore.upsert(record);
 	return { record, reused: false };
 }

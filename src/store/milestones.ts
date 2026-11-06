@@ -20,7 +20,7 @@ export interface CustomMilestoneRecord {
 	/** The learner's words, as typed. */
 	text: string;
 	mapping: CustomMapping;
-	/** "provider:id" of the model that mapped it, or "rule" when no model ran. */
+	/** "provider:id" of the model that mapped it. */
 	model: string;
 	usage: StoryUsage;
 	createdAt: string;

@@ -2,9 +2,9 @@
  * A SCENE WITH A DATE PINS (LangHarness, 2026-11-05; creator-hooks proposal 3):
  * the calendar (the quick choices, the stepper across month ends, leap years
  * and year changes), the standing against the measured pace (no speed, on
- * track, behind, passed), the rules that map the words when no model runs, the
- * store round trip of a date and its line, records written before dates
- * existed, and the server flow. No model is called: the scenes use rules.
+ * track, behind, passed), the store round trip of a date and its line, records
+ * written before dates existed, and the server flow. No real model is called:
+ * a scripted engine answers the mapping.
  *
  * Runs under an isolated LH_DATA_DIR (E6); the real profile is refused.
  */
@@ -15,6 +15,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
 import { createElement } from "react";
+import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const REAL_PROFILE_DATA = path.resolve("C:/Users/Stream/Projects/langharness/data").toLowerCase();
@@ -36,6 +37,15 @@ after(() => {
 });
 
 type Facts = import("../src/core/milestones.ts").LearnerFacts;
+
+const MAPPING_JSON = '{"title":"Lunch with friends","line":"Most of a lunch conversation.","genre":"conversation","coverage":0.95,"wpm":150,"support":"interactive","icon":"users"}';
+const mapOf = (text: string) => core.parseCustomMapping(MAPPING_JSON, text);
+/** A scripted engine whose every answer is the mapping above. */
+function scriptedEngine() {
+	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	faux.setResponses(Array.from({ length: 4 }, () => fauxAssistantMessage(MAPPING_JSON)));
+	return { model: faux.getModel(), streamFn: faux.streamSimple } as never;
+}
 
 const TODAY = "2026-11-05";
 const NOW = new Date("2026-11-05T12:00:00Z");
@@ -182,50 +192,17 @@ describe("the standing against the measured pace", () => {
 	});
 
 	test("the verdict from a real estimate: reached by the measured pace, or not", () => {
-		const estimate = core.estimateMilestone(core.customMilestone("lunch with friends in the city", core.ruleMapping("lunch with friends in the city")), facts("listen", 14), { now: NOW });
+		const estimate = core.estimateMilestone(core.customMilestone("lunch with friends in the city", mapOf("lunch with friends in the city")), facts("listen", 14), { now: NOW });
 		const reach = Math.round(estimate.eta.daysPace!);
 		assert.ok(reach > 10, `the estimate needs more than ten days (${reach})`);
 		assert.equal(dated.datedSceneView(scene(ahead(reach + 10)), estimate, TODAY).status, "on-track");
 		const behind = dated.datedSceneView(scene(ahead(reach - 10)), estimate, TODAY);
 		assert.equal(behind.status, "behind");
 		assert.equal(behind.daysLater, 10);
-		const noSpeed = core.estimateMilestone(core.customMilestone("lunch with friends in the city", core.ruleMapping("lunch with friends in the city")), facts("level", 14), { now: NOW });
+		const noSpeed = core.estimateMilestone(core.customMilestone("lunch with friends in the city", mapOf("lunch with friends in the city")), facts("level", 14), { now: NOW });
 		assert.equal(dated.datedSceneView(scene(ahead(reach + 10)), noSpeed, TODAY).status, "no-speed");
-		const noPace = core.estimateMilestone(core.customMilestone("lunch with friends in the city", core.ruleMapping("lunch with friends in the city")), facts("listen", 3), { now: NOW });
+		const noPace = core.estimateMilestone(core.customMilestone("lunch with friends in the city", mapOf("lunch with friends in the city")), facts("listen", 3), { now: NOW });
 		assert.equal(dated.datedSceneView(scene(ahead(reach + 10)), noPace, TODAY).status, "no-pace");
-	});
-});
-
-describe("the rules that map the words when no model runs", () => {
-	test("a conversation is live, asks for no subtitles, and runs at natural speed", () => {
-		const m = core.ruleMapping("lunch with friends in the city in December, in the language, without switching to English");
-		assert.equal(m.genre, "conversation");
-		assert.equal(m.support, "interactive");
-		assert.equal(m.wpm, core.NATURAL_WPM);
-		assert.equal(m.coverage, 0.95);
-		assert.ok(m.title.length <= 60 && m.title.startsWith("Lunch with friends"), m.title);
-	});
-
-	test("reading takes no speed, and a video watched without subtitles needs 98%", () => {
-		const news = core.ruleMapping("read the news on aktuality.sk");
-		assert.equal(news.genre, "news");
-		assert.equal(news.wpm, 0);
-		assert.equal(news.support, "none");
-		const vlog = core.ruleMapping("watch a Slovak vlog on YouTube without subtitles");
-		assert.equal(vlog.genre, "tv");
-		assert.equal(vlog.coverage, 0.98);
-		assert.equal(vlog.support, "visual");
-		const lease = core.ruleMapping("read a lease");
-		assert.equal(lease.genre, "formal");
-		assert.equal(lease.wpm, 0);
-	});
-
-	test("every rule answer is a known icon and a known kind of language", () => {
-		for (const t of ["follow my in-laws on the phone", "a film in the cinema", "old cartoons for kids", "songs on the radio", "a novel for the weekend"]) {
-			const m = core.ruleMapping(t);
-			assert.ok(m.icon && ICONS.includes(m.icon), `${t}: ${m.icon}`);
-			assert.ok(Object.keys(core.GENRES).includes(m.genre), `${t}: ${m.genre}`);
-		}
 	});
 });
 
@@ -248,9 +225,9 @@ describe("the store keeps the date and the line, and older records still read", 
 
 	test("a date and a line round-trip through the file; moving the date drops the old line", () => {
 		const text = "lunch with friends in the city";
-		const mapping = core.ruleMapping(text);
+		const mapping = mapOf(text);
 		const id = core.customId(text);
-		milestoneStore.upsert({ def: core.customMilestone(text, mapping), text, mapping, model: "rule", usage: { model: "rule", steps: [] }, createdAt: NOW.toISOString(), date: ahead(60) });
+		milestoneStore.upsert({ def: core.customMilestone(text, mapping), text, mapping, model: "test", usage: { model: "test", steps: [] }, createdAt: NOW.toISOString(), date: ahead(60) });
 		assert.equal(milestoneStore.find(id)?.date, ahead(60));
 		assert.equal(milestoneStore.recordOutcome(id, { at: "2027-01-01T00:00:00.000Z", text: "I said most of it" })?.outcome?.text, "I said most of it");
 		assert.equal(milestoneStore.find(id)?.outcome?.text, "I said most of it", "read back from the file");
@@ -267,13 +244,12 @@ describe("the server flow: a scene on a day, Today's list, the line after the da
 	let first: { id: string } = { id: "" };
 	let soonest: { id: string } = { id: "" };
 
-	test("a scene is added on a day with the rules, and a bad day is refused before any mapping", async () => {
-		await assert.rejects(datedServer.addDatedScene("lunch with friends in the city", ahead(-1), { now: NOW, tz: 0, rules: true }), (err: unknown) => err instanceof datedServer.DatedSceneError && err.status === 400);
-		await assert.rejects(datedServer.addDatedScene("lunch with friends in the city", "2027-02-30", { now: NOW, tz: 0, rules: true }), /calendar/);
-		const { record, reused } = await datedServer.addDatedScene("lunch with friends in the city in December, in the language", ahead(40), { now: NOW, tz: 0, rules: true });
+	test("a scene is added on a day with the mapping, and a bad day is refused before any mapping", async () => {
+		await assert.rejects(datedServer.addDatedScene("lunch with friends in the city", ahead(-1), { now: NOW, tz: 0, engine: scriptedEngine() }), (err: unknown) => err instanceof datedServer.DatedSceneError && err.status === 400);
+		await assert.rejects(datedServer.addDatedScene("lunch with friends in the city", "2027-02-30", { now: NOW, tz: 0, engine: scriptedEngine() }), /calendar/);
+		const { record, reused } = await datedServer.addDatedScene("lunch with friends in the city in December, in the language", ahead(40), { now: NOW, tz: 0, engine: scriptedEngine() });
 		assert.equal(reused, false);
-		assert.equal(record.model, "rule", "no model ran, and the record says so");
-		assert.equal(record.usage.steps.length, 0, "no model call was made");
+		assert.ok(record.usage.steps.length > 0, "the model mapped the words");
 		assert.equal(record.date, ahead(40));
 		first = { id: record.def.id };
 		const today = datedServer.datedScenesForToday(NOW, 0);
@@ -284,9 +260,9 @@ describe("the server flow: a scene on a day, Today's list, the line after the da
 	});
 
 	test("Today shows the nearest upcoming scene", async () => {
-		const near = await datedServer.addDatedScene("a film with subtitles in the language", ahead(9), { now: NOW, tz: 0, rules: true });
+		const near = await datedServer.addDatedScene("a film with subtitles in the language", ahead(9), { now: NOW, tz: 0, engine: scriptedEngine() });
 		soonest = { id: near.record.def.id };
-		await datedServer.addDatedScene("a conversation with the in-laws in six months", ahead(180), { now: NOW, tz: 0, rules: true });
+		await datedServer.addDatedScene("a conversation with the in-laws in six months", ahead(180), { now: NOW, tz: 0, engine: scriptedEngine() });
 		assert.equal(datedServer.datedScenesForToday(NOW, 0).next?.id, soonest.id);
 	});
 

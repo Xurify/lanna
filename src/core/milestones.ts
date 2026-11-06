@@ -690,65 +690,6 @@ export function parseCustomMapping(text: string, fallbackTitle: string): CustomM
 	};
 }
 
-const RULE_GENRES: Array<[RegExp, GenreId]> = [
-	[/\b(child|children|kids?|cartoons?|nursery)\b/, "children"],
-	[/\b(songs?|music|lyrics|sing|singing)\b/, "songs"],
-	[/\b(youtube|videos?|vlogs?|tv|television|streams?|tiktok|let'?s play)\b/, "tv"],
-	[/\b(films?|movies?|cinema|series)\b/, "film"],
-	[/\b(news|newspapers?|articles?|aktuality)\b/, "news"],
-	[/\b(novels?|books?|fiction)\b/, "fiction"],
-	[/\b(contracts?|leases?|letters?|e-?mails?|forms?|documents?|offices?|official|lectures?|bills?|bank|tax|insurance)\b/, "formal"],
-];
-const RULE_READS = /\b(read|reading|write|writing|texts?|texting|messages?|articles?|letters?|e-?mails?|books?|novels?|contracts?|leases?|news|newspapers?|forms?|documents?)\b/;
-const RULE_HEARS = /\b(listen|listening|hear|hearing|talk|talking|speak|speaking|phones?|calls?|conversations?|videos?|youtube|vlogs?|tv|podcasts?|radio|films?|movies?|cinema|series|lectures?|songs?|music|dinner|lunch|chats?|meet|meeting|friends?|family|in-laws?|shops?|caf[eé]|orders?|asks?|asking)\b/;
-const RULE_LIVE = /\b(friends?|family|in-laws?|parents?|mum|mom|dad|talk|talking|chats?|conversations?|dinner|lunch|coffee|caf[eé]|shops?|orders?|asks?|asking|colleagues?|neighbou?rs?|doctors?|landlords?|meet|meeting|phones?|calls?)\b/;
-const RULE_ICONS: Array<[RegExp, string]> = [
-	[/\b(youtube|videos?|vlogs?|tv|streams?|tiktok)\b/, "monitor-play"],
-	[/\b(films?|movies?|cinema|series)\b/, "clapperboard"],
-	[/\b(news|newspapers?|articles?)\b/, "newspaper"],
-	[/\b(letters?|e-?mails?|mail)\b/, "mail"],
-	[/\b(contracts?|leases?|forms?|documents?|offices?|official|bills?)\b/, "briefcase"],
-	[/\b(books?|novels?|read|reading)\b/, "book-open"],
-	[/\b(songs?|music|lyrics)\b/, "music"],
-	[/\b(child|children|kids?|cartoons?)\b/, "baby"],
-	[/\b(phones?|calls?)\b/, "phone"],
-	[/\b(coffee|caf[eé]|shops?|orders?)\b/, "coffee"],
-	[/\b(family|friends?|in-laws?|parents?)\b/, "users"],
-	[/\b(podcasts?|radio)\b/, "headphones"],
-];
-
-/** The mapping with no model (none is set, or the caller asks for the rules):
- *  the words are read for what they name, by keyword, and the line says the
- *  kind of language is a guess. Coarse on purpose; a model reads the same
- *  words more closely when one is set. */
-export function ruleMapping(text: string): CustomMapping {
-	const clean = normalizeCustomText(text);
-	const t = clean.toLowerCase();
-	const genre = RULE_GENRES.find(([re]) => re.test(t))?.[1] ?? "conversation";
-	const unaided = /\bwithout\b[^.,;]*\b(help|subtitles?|captions?|translations?|dictionary|text)\b|\bunassisted\b/.test(t);
-	const reads = RULE_READS.test(t) && !RULE_HEARS.test(t);
-	const subtitles = !unaided && /\b(subtitles?|captions?)\b/.test(t);
-	const live = RULE_LIVE.test(t);
-	const coverage: CustomMapping["coverage"] = unaided ? 0.98 : /\b(orders?|shops?|caf[eé]|asks?|asking)\b/.test(t) ? 0.9 : 0.95;
-	const support: Support = subtitles ? "subtitles" : live ? "interactive" : genre === "tv" || genre === "film" ? "visual" : "none";
-	const wpm = reads ? 0 : genre === "film" ? 160 : genre === "children" ? 100 : NATURAL_WPM;
-	return {
-		title: clip(clean.replace(/^./, (c) => c.toUpperCase()), 60),
-		line: "Read with simple rules, not a model, so the kind of language is a guess.",
-		genre,
-		coverage,
-		wpm,
-		support,
-		icon: RULE_ICONS.find(([re]) => re.test(t))?.[1] ?? "sparkles",
-	};
-}
-
-function clip(s: string, max: number): string {
-	if (s.length <= max) return s;
-	const cut = s.slice(0, max - 1);
-	return `${cut.replace(/\s+\S*$/, "") || cut}…`;
-}
-
 /** A stable id for a custom milestone from its text. */
 export function normalizeCustomText(text: string): string {
 	return text.trim().replace(/\s+/g, " ").slice(0, MAX_CUSTOM_LENGTH);

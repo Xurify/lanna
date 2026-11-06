@@ -60,7 +60,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Where you are (E55):** one sentence on Today names the limit, words or speed, with the milestones' own numbers. A speed that is only the level's estimate is said so.
 - **Watch lines come back in Listen (E56):** a line missed in Watch returns on days 1, 3 and 7, up to three a session. Lines from foreign captions do not return.
 - **Catch the mistake (E57):** a separate exercise at `/catch`, linked from "Words you mix up". The learner taps the wrong word in a short item built from a pair they often mix up, then types the right word. Read episodes no longer carry a planted mistake. The series lead is Martin ("Martin in Bratislava"); the internal `robo` id is unchanged.
-- **A scene with a date (E58):** a custom milestone with a day. Today shows the days left and whether the measured pace reaches it in time. The app asks how it went after the day. Without a model, the rules map the words.
+- **A scene with a date (E58):** a custom milestone with a day. Today shows the days left and whether the measured pace reaches it in time. The app asks how it went after the day.
 - **Not built here:** the way back after a gap (proposal 2) and the weekly look-back (proposal 5). Branch `feat/return-path-and-speaking-ladder` builds the same ground, and building both would collide in `curriculum.ts` and `progress.ts`.
 - **Unverified:** the Robo slip in a live episode (the scratch copy has no model key); a real Watch save followed by Listen; "on track" and "behind" against real Listen history; the dated card and the watch label at 390 px; the owner's own profile. Every live check ran on a scratch copy of the data.
 

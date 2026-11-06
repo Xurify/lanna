@@ -228,7 +228,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 				{/* Your own milestone, in your words. */}
 				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="milestone-add">
 					<h2 className="font-ui text-sm font-semibold text-foreground">Add your own</h2>
-					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch let's plays”. {modelReady ? "The tutor's cheap model maps it to the kind of language it needs, once, and keeps the answer." : "Without AI set up, simple rules read it, and the kind of language is a guess. Settings → AI models and API keys give a closer read."}</p>
+					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch let's plays”. The tutor's cheap model maps it to the kind of language it needs, once, and keeps the answer.</p>
 					<form
 						className="mt-3 flex flex-wrap items-stretch gap-2"
 						onSubmit={(e) => {
@@ -236,8 +236,8 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 							void add();
 						}}
 					>
-						<SceneInput value={text} onChange={setText} placeholder="I want to be able to…" disabled={adding} label="Your milestone" testId="milestone-input" />
-						<button type="submit" disabled={adding || text.trim().length < 3} className="q-btn primary h-11" data-testid="milestone-submit">
+						<SceneInput value={text} onChange={setText} placeholder={modelReady ? "I want to be able to…" : "Turn on AI in Settings → AI models to add your own"} disabled={!modelReady || adding} label="Your milestone" testId="milestone-input" />
+						<button type="submit" disabled={!modelReady || adding || text.trim().length < 3} className="q-btn primary h-11" data-testid="milestone-submit">
 							<PlusIcon className="q-ico" />
 							{adding ? "Estimating…" : "Estimate"}
 						</button>
@@ -256,8 +256,8 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 						}}
 					>
 						<div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-							<SceneInput value={datedText} onChange={setDatedText} placeholder="lunch with friends in the city, in the language" disabled={datedAdding} label="Your scene" testId="dated-input" className="w-full sm:flex-1" />
-							<button type="submit" disabled={datedAdding || datedText.trim().length < 3 || !datedDate} className="q-btn primary h-11 w-full sm:w-auto" data-testid="dated-submit">
+							<SceneInput value={datedText} onChange={setDatedText} placeholder={modelReady ? "lunch with friends in the city, in the language" : "Turn on AI in Settings → AI models to add a scene"} disabled={!modelReady || datedAdding} label="Your scene" testId="dated-input" className="w-full sm:flex-1" />
+							<button type="submit" disabled={!modelReady || datedAdding || datedText.trim().length < 3 || !datedDate} className="q-btn primary h-11 w-full sm:w-auto" data-testid="dated-submit">
 								<PlusIcon className="q-ico" />
 								{datedAdding ? "Adding…" : "Add the scene"}
 							</button>
