@@ -46,6 +46,7 @@ export interface PlacementSession {
 	items: PlacementItemRecord[];
 	probe: {
 		units: UnitId[];
+		luck?: UnitId | null;
 		turns: ProbeTurn[];
 		verdicts: ProbeVerdict[];
 		summary?: string;

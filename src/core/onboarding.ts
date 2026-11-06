@@ -717,10 +717,12 @@ export interface ProbeTurn {
 export const PROBE_TURNS = 6;
 
 /** The units the stage may probe, in order of value: the drill's misses
- *  first (slip or gap?), then the units of the first tier the drill never
- *  reached (a strong learner can be moved up on evidence). At most eight. */
-export function probeUnits(outcome: PlacementOutcome): UnitId[] {
-	const out: UnitId[] = [...outcome.weak];
+ *  first (slip or gap?), then the luck rung, then the units of the first
+ *  tier the drill never reached (a strong learner can be moved up on
+ *  evidence). At most eight. */
+export function probeUnits(outcome: PlacementOutcome, luck: UnitId | null = null): UnitId[] {
+	const out: UnitId[] = outcome.weak.filter((u) => u !== luck).slice(0, luck ? 7 : 8);
+	if (luck) out.push(luck);
 	const stopped = outcome.tiers.findIndex((t) => !t.passed);
 	const next = stopped < 0 ? placementTiers()[outcome.tiers.length] : undefined;
 	const after = stopped >= 0 ? undefined : next;

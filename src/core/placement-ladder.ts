@@ -172,3 +172,8 @@ export function ladderOutcome(state: LadderState): PlacementOutcome {
 export function ladderEdge(state: LadderState): { floor: UnitId | null; ceiling: UnitId | null } {
 	return { floor: state.lo >= 0 ? (placementLadder()[state.lo] ?? null) : null, ceiling: state.hi < placementLadder().length ? (placementLadder()[state.hi] ?? null) : null };
 }
+
+export function luckRung(state: LadderState): UnitId | null {
+	const { floor } = ladderEdge(state);
+	return floor && rungStatus(state.tally[floor]) === "held" ? floor : null;
+}

@@ -292,3 +292,58 @@ test("the whole check through the server: items one at a time, a typed alternati
 	assert.equal(f.startChapter, "hello");
 	assert.equal(f.probe.skipped, true);
 });
+
+test("the luck check: the rung the level rests on is offered to the tutor again, marked in its brief, and a gap there lowers the placement", async () => {
+	const { luckRung, ladderStart, applyAnswer, ladderOutcome, ladderEdge, placementLadder } = ladder;
+	let b = ladderStart({ prior: "none" });
+	b = applyAnswer(applyAnswer(b, placementLadder()[0]!, false), placementLadder()[0]!, false);
+	assert.equal(luckRung(b), null, "nothing held, nothing to check");
+	assert.equal(luckRung(ladderStart({ from: 2 })), null, "a re-check's start is held without answers on it");
+	const crowded = { ...ladderOutcome(b), weak: placementLadder().slice(0, 9) as UnitId[] };
+	assert.equal(onboarding.probeUnits(crowded, "numbers").length, 8);
+	assert.ok(onboarding.probeUnits(crowded, "numbers").includes("numbers"), "many misses never push the luck check out");
+	assert.match(server.probeSystem(), /CHECK FOR LUCK/);
+
+	// A reader who holds every rung below 11: three of four A2 rungs, exactly the pass line.
+	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
+	setGoal({ level: "B1", minutesPerDay: 20, prior: "reading", onboarded: true }, 0);
+	const now = new Date("2026-11-05T12:00:00Z");
+	const start = server.startPlacement({ now });
+	let item = start.item;
+	let rung = start.progress.unit!;
+	for (let n = 0; ; n++) {
+		const right = placementLadder().indexOf(rung) < 11;
+		const out = await server.answerPlacement({ id: start.id, itemId: item.id, given: right ? item.answer : "zle", verdict: right ? "exact" : "wrong", ms: 4000 }, { now });
+		if (!out.item) break;
+		item = out.item;
+		rung = out.progress.unit!;
+		assert.ok(n < 30, "the ladder did not stop");
+	}
+	const s = placementStore.get(start.id)!;
+	const floor = ladderEdge(s.ladder).floor!;
+	assert.equal(luckRung(s.ladder), floor);
+	assert.equal(ladderOutcome(s.ladder).startChapter, "stories", "the drill alone passes A2");
+
+	const prompts: string[] = [];
+	const faux = fauxEngine([
+		reply({ say: "", verdict: null, ask: { unit: floor, prompt: "Give the form", sk: "Keby som ___ (mať) auto, išiel by som.", kind: "produce" }, done: null }),
+		reply({ say: "Not that form.", verdict: { unit: floor, result: "gap", note: "no form under keby" }, ask: null, done: "The conditional is not there yet." }),
+	]);
+	const engine = {
+		model: faux.model,
+		streamFn: ((model, context, options) => {
+			const last = context.messages[context.messages.length - 1];
+			prompts.push(last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "");
+			return faux.streamFn(model, context, options);
+		}) as typeof faux.streamFn,
+	};
+	let t = await server.probePlacement({ id: start.id }, { engine, now });
+	assert.equal(t.reply.ask?.unit, floor, "the floor is among the units offered");
+	assert.match(prompts[0]!, new RegExp(`- ${floor} · .*CHECK FOR LUCK`), "the brief marks the floor");
+	assert.match(prompts[0]!, /wrote "[^"]*" in 4 s/, "the brief carries the time of each answer");
+	t = await server.probePlacement({ id: start.id, answer: "mám" }, { engine, now });
+	assert.equal(t.done, true);
+	const r = server.finishPlacement({ id: start.id, tz: 0 }, { now });
+	assert.equal(r.startChapter, "health", "a gap on the floor takes the lucky pair back: A2 is the edge again");
+	assert.ok(r.weak.includes(floor));
+});
