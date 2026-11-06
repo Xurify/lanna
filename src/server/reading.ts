@@ -42,6 +42,7 @@ import {
 	knownCoverage,
 	gradeAnswers,
 	KNOWN_RANK,
+	VOCAB_AT_LEVEL,
 	NEW_WORDS_MAX,
 	parseStoryDraft,
 	QUESTION_KIND_INFO,
@@ -97,6 +98,10 @@ export interface KnownWords {
 	/** Everything that counts as known for the coverage estimate: `met`
 	 *  plus the common words at the level (rank ≤ KNOWN_RANK). */
 	known: Set<string>;
+	/** What Watch measures real speech against: `met`, plus the commonest
+	 *  words up to `VOCAB_AT_LEVEL` in all, plus the beginner set and place
+	 *  names. Smaller than `known`, which is a tolerance for written texts. */
+	expected: Set<string>;
 	/** Lemmas to hand the model as "use these", most useful first. */
 	sample: string[];
 	/** Grammar units held (titles), for the brief. */
@@ -106,6 +111,26 @@ export interface KnownWords {
 	purposes: Purpose[];
 	/** "Something else", in the learner's own words (onboarding). */
 	note?: string;
+}
+
+const commonestIndex = new WeakMap<Lexicon, string[]>();
+
+/** The slugs of the `count` commonest words in all. A rank counts within
+ *  its part of speech (verb 40 and noun 40 are not equally common), so the
+ *  words are ordered by how far down their own list they sit. */
+export function commonestWords(lexicon: Lexicon, count: number): string[] {
+	let order = commonestIndex.get(lexicon);
+	if (!order) {
+		const size = new Map<string, number>();
+		for (const e of lexicon.entries) if (e.rank !== undefined) size.set(e.cat, Math.max(size.get(e.cat) ?? 0, e.rank));
+		order = lexicon.entries
+			.filter((e) => e.rank !== undefined)
+			.map((e) => ({ slug: e.slug, share: e.rank! / size.get(e.cat)!, rank: e.rank! }))
+			.sort((a, b) => a.share - b.share || a.rank - b.rank || a.slug.localeCompare(b.slug))
+			.map((e) => e.slug);
+		commonestIndex.set(lexicon, order);
+	}
+	return order.slice(0, count);
 }
 
 /** What the learner knows, as the brief and the coverage measure see it.
@@ -143,7 +168,12 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 	// (greetings, question words, pronouns) and place names (Bratislava is
 	// not vocabulary to learn) count as known at every level.
 	if (lexicon) for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
-	const all = state.chapters.flatMap((c) => c.units);
+	const expected = new Set(met);
+	if (lexicon) {
+		for (const slug of commonestWords(lexicon, VOCAB_AT_LEVEL[at])) expected.add(slug);
+		for (const e of lexicon.entries) if (e.origin === "curated" || e.cat === "Places") expected.add(e.slug);
+	}
+	const all =state.chapters.flatMap((c) => c.units);
 	const grammar = all.filter((u) => (u.kind === "drill" || u.kind === "tutor") && (u.status === "done" || u.status === "skipped")).map((u) => u.title);
 	const practicing = all.filter((u) => u.kind === "drill" && u.status === "started").map((u) => u.title);
 	return {
@@ -152,6 +182,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 		chapterTitle: chapter?.title ?? state.current,
 		met,
 		known,
+		expected,
 		sample: sample.slice(0, 160),
 		grammar,
 		practicing,
@@ -318,7 +349,7 @@ export function storyNames(sentences: readonly { sk: string }[], lexicon: Lexico
 	return names;
 }
 
-export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, known: Set<string>, newWords: readonly StoryWord[], names: ReadonlySet<string> = STORY_NAMES): StorySentence {
+export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, known: Set<string>, newWords: readonly StoryWord[], names: ReadonlySet<string> = STORY_NAMES, met?: ReadonlySet<string>): StorySentence {
 	const fresh = new Map(newWords.map((w) => [foldDiacritics(w.lemma.toLocaleLowerCase(tag())), w]));
 	let seenWord = false;
 	const tokens: StoryToken[] = tokenize(sk).map((t) => {
@@ -347,6 +378,7 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 			token.cat = entry.cat;
 			if (entry.gender) token.gender = entry.gender;
 			if (!known.has(entry.slug) && !grammar) token.fresh = true;
+			else if (met && !grammar && entry.cat !== "Places" && !met.has(entry.slug)) token.assumed = true;
 			return token;
 		}
 		const introduced = fresh.get(foldDiacritics(t.text.toLocaleLowerCase(tag())));

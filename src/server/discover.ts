@@ -50,7 +50,7 @@ import {
 	type ScannedVideo,
 } from "../core/discover.ts";
 import { tokenize, type StoryUsage } from "../core/reading.ts";
-import { MAX_SEGMENTS, MAX_VIDEO_SEC, segmentCues, videoCoverage, videoUrl } from "../core/watch.ts";
+import { MAX_SEGMENTS, MAX_VIDEO_SEC, segmentCues, videoCoverage, videoExpected, videoUrl } from "../core/watch.ts";
 import { discoverStore, type YouTubeSignals } from "../store/discover.ts";
 import { videoStore } from "../store/videos.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -309,7 +309,7 @@ export function languageShare(text: string, lexicon: Lexicon | null): { share: n
 }
 
 /** The known-word share of a video's caption lines, measured locally. */
-export function measureLines(lines: readonly string[], lexicon: Lexicon | null, k: KnownWords): { coverage: number; wordCount: number; unknownCount: number } {
+export function measureLines(lines: readonly string[], lexicon: Lexicon | null, k: KnownWords): { coverage: number; expected: number; wordCount: number; unknownCount: number } {
 	const segments = glossSegments(
 		lines.map((sk, i) => ({ start: i, end: i + 1, sk })),
 		[],
@@ -320,8 +320,9 @@ export function measureLines(lines: readonly string[], lexicon: Lexicon | null, 
 	const tag = activeLanguage().tag;
 	return {
 		coverage: Math.round(videoCoverage(segments) * 1000) / 1000,
+		expected: Math.round(videoExpected(segments) * 1000) / 1000,
 		wordCount: words.length,
-		unknownCount: new Set(words.filter((t) => t.fresh).map((t) => t.slug ?? t.text.toLocaleLowerCase(tag))).size,
+		unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(tag))).size,
 	};
 }
 

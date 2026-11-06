@@ -68,7 +68,7 @@ export async function analyzeFragments(id: string, opts: { captions?: (id: strin
 	const rankOf = (slug: string) => lexicon?.bySlug.get(slug)?.rank;
 	const facts = lineFacts(segments, rankOf);
 	// Another language's spellings would read as unknown words: the share is not measured, the strip stays plain.
-	const lines = measurable ? facts.lines : facts.lines.map(({ u: _u, ...l }) => ({ ...l, fresh: 0 }));
+	const lines = measurable ? facts.lines : facts.lines.map(({ u: _u, beyond: _b, ...l }) => ({ ...l, fresh: 0 }));
 	const lex = measurable ? facts.lex : {};
 	const kept = videoStore.get(id);
 	const all = rangeStats(lines, lex, 0, lines.length - 1);
@@ -84,6 +84,7 @@ export async function analyzeFragments(id: string, opts: { captions?: (id: strin
 		lex,
 		picks: measurable ? bestFragments(lines, lex) : [],
 		coverage: measurable ? Math.round((all?.coverage ?? 1) * 1000) / 1000 : 0,
+		expected: measurable ? Math.round((all?.expected ?? 1) * 1000) / 1000 : 0,
 		level: k.level,
 		...(kept ? { prepared: kept.fragment ? { startSec: kept.fragment.startSec, endSec: kept.fragment.endSec } : { whole: true as const } } : {}),
 	};

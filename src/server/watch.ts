@@ -41,6 +41,7 @@ import {
 	pickPreTeach,
 	segmentCues,
 	videoCoverage,
+	videoExpected,
 	videoUrl,
 	watchXp,
 	type CaptionCue,
@@ -564,11 +565,13 @@ function setStage(id: string, stage: PrepareStage, error?: string) {
 	if (stage === "done" || stage === "error") setTimeout(() => stages.get(id)?.stage === stage && stages.delete(id), 60_000).unref?.();
 }
 
-/** Gloss every line against the lexicon and the learner's known words. */
+/** Gloss every line against the lexicon and the learner's words: `fresh`
+ *  is a word beyond what the level expects, `assumed` one the level expects
+ *  but the learner has not studied. */
 export function glossSegments(lines: readonly { start: number; end: number; sk: string }[], en: readonly string[], lexicon: Lexicon | null, k: KnownWords): VideoSegment[] {
 	const names = storyNames(lines, lexicon);
 	return lines.map((l, i) => {
-		const g = glossSentence(l.sk, en[i] ?? "", lexicon, k.known, [], names);
+		const g = glossSentence(l.sk, en[i] ?? "", lexicon, k.expected, [], names, k.met);
 		return { i, start: l.start, end: l.end, sk: l.sk, en: g.en, tokens: g.tokens };
 	});
 }
@@ -662,8 +665,9 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			questions,
 			preTeach,
 			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
+			expected: Math.round(videoExpected(measured) * 1000) / 1000,
 			wordCount: words.length,
-			unknownCount: new Set(words.filter((t) => t.fresh).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
+			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
 			usage,
 			translatedBy: "model",
 			...(untranslated ? { untranslated } : {}),

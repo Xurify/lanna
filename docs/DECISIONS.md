@@ -625,6 +625,17 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The 90-minute limit (was 75, raised so a 76-minute video from a saved creator is not left out) and the line limit (1,100) apply to whole videos. The time one Watch session can add follows it (90 minutes).
 - The caption lines of an analysed video are kept in `videos/discover/lines/<id>.json` (E1); a video in the library is read from its kept caption track.
 
+### E53. Watch measures real speech against what the learner knows, and shows what the level expects beside it (2026-11-06, branch `feat/watch-known-share`)
+
+**Why:** the owner questioned the 80–84% "known" on Watch for a learner with 48 studied words. It was not a calculation error but a setting: `KNOWN_RANK.A1 = 500` is a rank *within each part of speech*, so the app counted about 1,980 words (2,113 with the beginner set and place names) as known at A1, against a comment that said "about 500 words" and CEFR figures of 500–800. The learner's real share of the Avocast podcast was 38.8%. Research: [research/watch-picks.md](research/watch-picks.md), "Fragments".
+
+**How to apply:**
+- Watch and Discover measure two shares. **Known** (`coverage`) counts the words the learner has studied (the deck and finished word units) plus grammar words, names and numbers. **Expected** (`expected`) adds the words a learner at the level is assumed to know: `VOCAB_AT_LEVEL` in all (A1 600, A2 1,200, B1 2,400, B2 4,000, C1 6,000), taken as the commonest words across all parts of speech (`commonestWords`, ordered by how far down their own list they sit), plus the beginner set and place names. Both are shown ("you know 39%", "78% expected at A1"). Everything is ranked and banded on *known*, never on expected.
+- A word the level expects but the learner has not studied is `assumed` on its token; `fresh` now means beyond even the level. Pre-teach and the new-words list offer assumed words too, since they are new to the learner. A fragment line carries `fresh` (not studied) and `beyond` (beyond the level).
+- When no stretch is within reach (88% known), the fragments panel says so, lists "the nearest stretches" and points to graded stories and Listen. The comprehension score keeps a sliver under 85% so the order is by nearness; Discover's fit does the same under 80%.
+- `KNOWN_RANK` is unchanged, and its comment now says what it is: a per-part-of-speech tolerance for texts the model writes at the level (Read, Listen, Speed). Narrowing it would make drafts fail the 92% coverage floor and cost extra model calls; it is not a claim about the learner. Do not show it as one.
+- Videos kept before this change carry the old `coverage` until they are prepared again; Discover's scans are measured again on refresh.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

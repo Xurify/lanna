@@ -221,7 +221,8 @@ describe("a video on a scripted engine", () => {
 		// Glossed against the lexicon: "mesto" is a dictionary word.
 		const mesto = v.segments.flatMap((s) => s.tokens).find((t) => t.text === "mesto");
 		assert.ok(mesto?.slug, "mesto resolves to a lexicon entry");
-		assert.ok(v.coverage > 0.5 && v.coverage <= 1, `coverage ${v.coverage}`);
+		assert.ok(v.expected! > 0.5 && v.expected! <= 1, `expected ${v.expected}`);
+		assert.ok(v.coverage >= 0 && v.coverage < v.expected!, `an empty deck knows less (${v.coverage}) than the level expects (${v.expected})`);
 		assert.ok(v.wordCount > 60);
 		// As many as the plan at the learner's level asks for (A1: three).
 		assert.equal(v.questions.length, QUESTION_PLAN[v.level].count);

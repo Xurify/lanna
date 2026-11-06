@@ -105,8 +105,12 @@ export interface VideoRecord {
 	segments: VideoSegment[];
 	questions: StoryQuestion[];
 	preTeach: PreTeachWord[];
-	/** Share of running words the learner is expected to know (0..1). */
+	/** Share of running words the learner knows (0..1): studied, or a
+	 *  grammar word, name or number. */
 	coverage: number;
+	/** The share a learner at the level is expected to know, the words the
+	 *  level assumes included. Absent on videos kept before it was measured. */
+	expected?: number;
 	wordCount: number;
 	/** Distinct dictionary words the learner has not met. */
 	unknownCount: number;
@@ -508,6 +512,14 @@ export const PRE_TEACH_MAX = 8;
 export function videoCoverage(segments: readonly { tokens: readonly StoryToken[] }[]): number {
 	const words = wordTokens(segments);
 	if (words.length === 0) return 1;
+	return words.filter((t) => !t.fresh && !t.assumed).length / words.length;
+}
+
+/** The share a learner at the level is expected to know: the same words, with
+ *  the ones the level assumes (but the learner has not studied) counted. */
+export function videoExpected(segments: readonly { tokens: readonly StoryToken[] }[]): number {
+	const words = wordTokens(segments);
+	if (words.length === 0) return 1;
 	return words.filter((t) => !t.fresh).length / words.length;
 }
 
@@ -518,7 +530,7 @@ export function pickPreTeach(segments: readonly VideoSegment[], max = PRE_TEACH_
 	const seen = new Map<string, PreTeachWord & { score: number }>();
 	segments.forEach((s) => {
 		for (const t of s.tokens) {
-			if (!t.word || !t.fresh || !t.slug || !t.gloss || !t.lemma) continue;
+			if (!t.word || !(t.fresh || t.assumed) || !t.slug || !t.gloss || !t.lemma) continue;
 			const hit = seen.get(t.slug);
 			if (hit) {
 				hit.count++;

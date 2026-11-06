@@ -620,7 +620,7 @@ function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart
 					<div className="rounded-lg border bg-card px-5 py-4">
 						<p className="font-prose text-base leading-snug text-foreground">{kind === "none" ? `The captions are ${captionLanguageName(video.source.trackLang)}, so their words are not matched against your ${captionLanguageName(video.lang)}. Regenerate to get an estimate from a ${captionLanguageName(video.lang)} rendering of them.` : kind === "estimated" ? `${band.line} An estimate: measured on a ${captionLanguageName(video.lang)} rendering of the ${captionLanguageName(video.source.trackLang)} captions.` : band.line}</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
-							{video.wordCount} words · {video.unknownCount} you have not met · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
+							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
 						</p>
 					</div>
 				</div>

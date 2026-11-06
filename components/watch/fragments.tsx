@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderCircleIcon, ScissorsIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { coverageBand, formatClock, FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, heatStrip, linesTouching, LISTEN_FLOOR, MAX_VIDEO_SEC, rangeStats, type Fragment, type FragmentAnalysis, type FragmentRange } from "@/src/core";
+import { coverageBand, formatClock, FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, heatStrip, IN_REACH, linesTouching, LISTEN_FLOOR, MAX_VIDEO_SEC, rangeStats, VOCAB_AT_LEVEL, type Fragment, type FragmentAnalysis, type FragmentRange } from "@/src/core";
 
 const BUCKETS = 72;
 /** Where a plain click on the strip puts a stretch: about this long, around the click. */
@@ -92,6 +92,7 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 	const band = stats && a.measurable ? coverageBand(stats.coverage) : null;
 	const inPick = (f: Fragment) => !!sel && sel.from === f.from && sel.to === f.to;
 	const whole = a.durationSec <= MAX_VIDEO_SEC;
+	const nothingInReach = a.measurable && a.picks.length > 0 && a.picks[0]!.coverage < IN_REACH;
 	return (
 		<div className="mt-3">
 			{!a.measurable && a.message && <p className="mb-3 font-prose text-[13px] text-ink-3">{a.message}</p>}
@@ -163,8 +164,13 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 					<>
 						<p className="font-ui text-[15px] font-[600] text-foreground">
 							{formatClock(stats.start)} to {formatClock(stats.end)} · {formatClock(stats.sec)}
-							{a.measurable ? ` · ${Math.round(stats.coverage * 100)}% known${band ? ` (${band.title.toLowerCase()})` : ""}` : ""}
+							{a.measurable ? ` · you know ${Math.round(stats.coverage * 100)}%${band ? ` (${band.title.toLowerCase()})` : ""}` : ""}
 						</p>
+						{a.measurable && (
+							<p className="mt-0.5 font-prose text-[13px] text-ink-3" data-testid="watch-fragments-expected">
+								{Math.round(stats.expected * 100)}% is expected at {a.level}, counting the words the level is assumed to know.
+							</p>
+						)}
 						<p className="mt-0.5 font-prose text-[13px] text-ink-3">
 							{stats.to - stats.from + 1} lines
 							{a.measurable ? ` · ${stats.newWords.length === 0 ? "no new words" : `${stats.newWords.length} new ${stats.newWords.length === 1 ? "word" : "words"}${stats.recurring ? `, ${stats.recurring} of them said more than once` : ""}`}` : ""}
@@ -194,13 +200,18 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 						</div>
 					</>
 				) : (
-					<p className="font-prose text-[13px] text-ink-3">{a.picks.length === 0 && a.measurable ? "No stretch is close to your level yet. Drag on the strip to pick one by hand." : "Drag on the strip, or click it, to pick a stretch."}</p>
+					<p className="font-prose text-[13px] text-ink-3">{a.picks.length === 0 && a.measurable ? "Nothing is playable in this video. Drag on the strip to pick a stretch by hand." : "Drag on the strip, or click it, to pick a stretch."}</p>
 				)}
 			</div>
 
 			{a.picks.length > 0 && (
 				<>
-					<p className="mt-4 font-ui text-[13px] font-[600] text-ink-2">The best stretches for you</p>
+					<p className="mt-4 font-ui text-[13px] font-[600] text-ink-2">{nothingInReach ? "The nearest stretches" : "The best stretches for you"}</p>
+					{nothingInReach && (
+						<p className="mt-1 font-prose text-[13px] text-ink-3" data-testid="watch-fragments-too-hard">
+							Nothing in this video is within reach of your words yet. Even the nearest stretch below is mostly new. Graded stories and Listen will get you here faster; come back when more of these words are yours.
+						</p>
+					)}
 					<ol className="mt-2 flex flex-col gap-1.5" data-testid="watch-fragments-picks">
 						{a.picks.map((f, i) => (
 							<li key={f.from}>
@@ -211,7 +222,7 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 											{formatClock(f.start)} to {formatClock(f.end)}
 										</span>
 										<span className="line-clamp-2 font-prose text-[13px] text-ink-3 sm:block sm:truncate">
-											{Math.round(f.coverage * 100)}% known · {f.newWords.length} new {f.newWords.length === 1 ? "word" : "words"}
+											you know {Math.round(f.coverage * 100)}% · {Math.round(f.expected * 100)}% expected at {a.level} · {f.newWords.length} new {f.newWords.length === 1 ? "word" : "words"}
 											{f.recurring ? `, ${f.recurring} said again` : ""} · {formatClock(f.sec)}
 										</span>
 									</span>
@@ -222,12 +233,12 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 				</>
 			)}
 			<p className="mt-4 font-prose text-[12px] leading-relaxed text-ink-3">
-				The best stretches have the share of known words where listening works (about 93 to 97%), new words worth learning that come back, and speech all the way through. Measured on the captions with no AI request.
+				"You know" counts the words you have studied, plus grammar words, names and numbers. "Expected" adds the words a learner at {a.level} is assumed to know, about {VOCAB_AT_LEVEL[a.level as keyof typeof VOCAB_AT_LEVEL]?.toLocaleString("en-US") ?? "a few hundred"} in all, whether or not you have met them. Stretches are ranked on what you know: the share where listening works (about 93 to 97%), new words worth learning that come back, and speech all the way through. Measured on the captions with no AI request.
 				{a.prepared ? " This video is already in your videos; preparing a stretch replaces it (your watching history stays)." : ""}
 			</p>
 			{whole && (
 				<button type="button" disabled={!canPrepare} onClick={() => onPrepare(undefined)} className="q-btn ghost mt-2 h-auto min-h-8 whitespace-normal py-1.5 text-left" data-testid="watch-fragments-whole">
-					Prepare the whole video instead ({Math.round(a.coverage * 100)}% known, {formatClock(a.durationSec)})
+					Prepare the whole video instead (you know {Math.round(a.coverage * 100)}%, {formatClock(a.durationSec)})
 				</button>
 			)}
 		</div>

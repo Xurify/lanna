@@ -72,10 +72,14 @@ export interface ScannedVideo {
 	/** The track measured, and whether people made it. */
 	trackLang?: string;
 	captionKind?: "captions" | "auto-captions";
-	/** Share of running words the learner is expected to know, with the
-	 *  level and day it was measured at. Absent for captions in another
-	 *  language (Czech for Slovak), which are not matched against the lexicon. */
+	/** Share of running words the learner knows (studied, or a grammar word,
+	 *  name or number), with the level and day it was measured at. Absent for
+	 *  captions in another language (Czech for Slovak), which are not matched
+	 *  against the lexicon. */
 	coverage?: number;
+	/** The share a learner at the level is expected to know, the words the
+	 *  level assumes included. */
+	expected?: number;
 	wordCount?: number;
 	unknownCount?: number;
 	level?: Cefr;
@@ -513,7 +517,7 @@ export function pickScore(v: ScannedVideo, now = new Date()): number {
 	else if (v.coverage >= LISTEN_FLOOR) fit = 1;
 	else if (v.coverage >= 0.88) fit = 0.75;
 	else if (v.coverage >= 0.8) fit = 0.35;
-	else fit = 0.05;
+	else fit = 0.02 + 0.06 * (v.coverage / 0.8);
 	let score = fit;
 	if (v.spoken === "unsure") score *= 0.7;
 	if (v.wordsPerMin !== undefined) score *= v.wordsPerMin < SPARSE_SPEECH_WPM ? 0.3 : v.wordsPerMin < 50 ? 0.85 : 1;

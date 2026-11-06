@@ -41,9 +41,11 @@ function video(fresh: (i: number) => { fresh: number; u?: string[]; words?: numb
 
 const SLUGS = ["káva", "pivo", "chlieb", "mlieko"];
 
-test("comprehension: nothing under 85%, a ramp to 93%, full to 97%, little when nothing is new", () => {
-	assert.equal(f.comprehension(0.8), 0);
-	assert.equal(f.comprehension(0.85), 0);
+test("comprehension: a sliver under 85% that still sorts by nearness, a ramp to 93%, full to 97%, little when nothing is new", () => {
+	assert.ok(f.comprehension(0.8) > 0 && f.comprehension(0.8) < 0.05, "too hard keeps a sliver");
+	assert.ok(f.comprehension(0.4) < f.comprehension(0.6) && f.comprehension(0.6) < f.comprehension(0.8), "nearer ranks higher");
+	assert.equal(f.comprehension(0), 0);
+	assert.ok(f.comprehension(0.85) <= 0.05 + 1e-9);
 	assert.ok(Math.abs(f.comprehension(0.9) - 0.6) < 1e-9);
 	assert.ok(f.comprehension(0.92) > 0.6 && f.comprehension(0.92) < 1);
 	assert.equal(f.comprehension(0.95), 1);
@@ -105,14 +107,18 @@ test("bestFragments: the comfortable stretch with new words that come back wins,
 		if (i > 0) assert.ok(picks[i]!.score <= picks[i - 1]!.score, "best first");
 		for (let j = i + 1; j < picks.length; j++) assert.ok(picks[i]!.to < picks[j]!.from || picks[j]!.to < picks[i]!.from, "no overlap");
 	}
-	assert.ok(picks.every((p) => p.coverage >= 0.85), "nothing under 85% is offered");
+	assert.ok(picks.slice(1).every((p) => p.coverage >= 0.85 || p.score < best.score * 0.1), "a stretch under 85% is only a distant runner-up");
 	assert.equal(f.bestFragments(v.lines, v.lex, { max: 1 }).length, 1);
 	assert.deepEqual(f.bestFragments([], {}), []);
 });
 
-test("bestFragments: a video all too hard has no fragment; starts and stops sit at pauses when there are pauses", () => {
+test("bestFragments: a video all too hard offers only its nearest stretches, none in reach; starts and stops sit at pauses when there are pauses", () => {
 	const hard = video(() => ({ fresh: 6, u: ["dážď"] }));
-	assert.deepEqual(f.bestFragments(hard.lines, hard.lex), []);
+	const nearest = f.bestFragments(hard.lines, hard.lex);
+	assert.ok(nearest.length > 0, "the nearest are still listed");
+	assert.ok(nearest.every((p) => p.coverage < f.IN_REACH && p.band === "Too hard for now" && p.score < 0.1));
+	const worse = video((i) => (i < 60 ? { fresh: 6, u: ["dážď"] } : { fresh: 9, u: ["dážď"] }));
+	assert.ok(f.bestFragments(worse.lines, worse.lex)[0]!.end <= 300 + 1, "the nearer half comes first");
 	// a pause (2 s) after every 10th line, none elsewhere (4.2 s lines 5 s apart leave 0.8 s: a pause too), so shorten the lines
 	const gapped = video((i) => (i >= 20 && i < 70 ? { fresh: 1, u: [SLUGS[i % 4]!] } : { fresh: 6, u: ["dážď"] }));
 	gapped.lines.forEach((l, i) => {
@@ -150,6 +156,46 @@ test("lineFacts: counts words and fresh words, keeps the dictionary ones with th
 	assert.deepEqual(lines[0], { start: 0, end: 3, words: 3, fresh: 1, u: ["káva"], stop: true });
 	assert.deepEqual(lines[1], { start: 3.5, end: 6, words: 3, fresh: 1 }, "a fresh word with no dictionary entry counts but cannot be taught");
 	assert.deepEqual(lex, { káva: { lemma: "káva", gloss: "coffee", rank: 400 } });
+});
+
+test("lineFacts and rangeStats: a word the level only assumes is new to the learner but not beyond the level; expected counts it, coverage does not", () => {
+	const tok = (text: string, o: Record<string, unknown> = {}) => ({ text, word: true, ...o });
+	const { lines, lex } = f.lineFacts([
+		{ start: 0, end: 4, sk: "Ja pijem pivo a kávu", tokens: [tok("Ja"), tok("pijem", { assumed: true, slug: "piť", lemma: "piť", gloss: "to drink" }), tok("pivo", { assumed: true, slug: "pivo", lemma: "pivo", gloss: "beer" }), tok("a"), tok("kávu", { fresh: true, slug: "káva", lemma: "káva", gloss: "coffee" })] },
+	]);
+	assert.equal(lines[0]!.fresh, 3, "assumed and fresh are both new to the learner");
+	assert.equal(lines[0]!.beyond, 1, "only the fresh one is beyond the level");
+	assert.deepEqual(lines[0]!.u, ["piť", "pivo", "káva"], "an assumed word can be taught");
+	assert.deepEqual(Object.keys(lex).sort(), ["káva", "pivo", "piť"].sort());
+	const s = f.rangeStats(lines, lex, 0, 0)!;
+	assert.ok(Math.abs(s.coverage - 2 / 5) < 1e-9);
+	assert.ok(Math.abs(s.expected - 4 / 5) < 1e-9);
+	const plain = f.rangeStats([{ start: 0, end: 4, words: 10, fresh: 2 }], {}, 0, 0)!;
+	assert.equal(plain.expected, plain.coverage, "with no `beyond` the two shares are the same");
+});
+
+// ─── What the level expects ─────────────────────────────────────────────────
+
+test("knownWords: Watch's expected set is the level's honest vocabulary (about 600 words at A1), not the 2,000 the written-text tolerance reaches", async () => {
+	const { knownWords, commonestWords, glossSentence } = await import("../src/server/reading.ts");
+	const { loadLexicon } = await import("../src/agent/lexicon.ts");
+	const lexicon = loadLexicon();
+	assert.ok(lexicon, "the Slovak lexicon loads");
+	const a1 = knownWords(lexicon, "A1");
+	assert.ok(a1.expected.size >= 600 && a1.expected.size <= 800, `expected holds ${a1.expected.size} words`);
+	assert.ok(a1.known.size > 1900, "the tolerance for written texts is unchanged");
+	assert.ok(knownWords(lexicon, "A2").expected.size > a1.expected.size * 1.7, "each level roughly doubles");
+	const cats = new Set(commonestWords(lexicon!, 600).map((s) => lexicon!.bySlug.get(s)!.cat));
+	for (const c of ["Verbs", "Nouns", "Adjectives", "Adverbs"]) assert.ok(cats.has(c), `${c} are among the commonest 600`);
+	assert.equal(commonestWords(lexicon!, 600).length, 600);
+	// A word the level expects but the learner has not studied is assumed; a studied one is not.
+	const entry = [...a1.expected].map((s) => lexicon!.bySlug.get(s)!).find((e) => e.cat === "Verbs" && !a1.met.has(e.slug))!;
+	const lemma = (entry.sk ?? "").split(" ")[0]!;
+	const plain = glossSentence(lemma, "", lexicon, a1.expected, [], undefined, a1.met).tokens.find((t) => t.word)!;
+	assert.equal(plain.assumed, true);
+	assert.ok(!plain.fresh);
+	const studied = glossSentence(lemma, "", lexicon, a1.expected, [], undefined, new Set([...a1.met, entry.slug])).tokens.find((t) => t.word)!;
+	assert.ok(!studied.assumed && !studied.fresh);
 });
 
 // ─── Analysing a video, and preparing a stretch of it ───────────────────────
