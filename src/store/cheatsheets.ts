@@ -10,7 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import { cheatsheetId, cheatsheetOverlap, cheatsheetSummary, isCheatsheetId, mergeCheatsheetMarkdown, parseCheatsheet, type Cheatsheet, type CheatsheetSummary } from "../core/cheatsheets.ts";
+import { cheatsheetId, cheatsheetSummary, isCheatsheetId, mergeCheatsheetMarkdown, parseCheatsheet, type Cheatsheet, type CheatsheetSummary } from "../core/cheatsheets.ts";
 import { ensureReadmes } from "./corpus.ts";
 
 const dir = () => PATHS.cheatsheets;
@@ -109,21 +109,6 @@ export const cheatsheetStore = {
 		if (!added) return { sheet: old, added };
 		const sheet = this.update(id, markdown, old.title, now);
 		return sheet ? { sheet, added } : null;
-	},
-
-	/** For each kept sheet that shares a phrase with the guide: how many it
-	 *  shares and how many would be new. Most shared first. */
-	overlaps(incomingMarkdown: string): Array<{ id: string; title: string; shared: number; fresh: number }> {
-		const incoming = parseCheatsheet(incomingMarkdown);
-		return this.list()
-			.map((s) => {
-				const sheet = readSheet(s.id);
-				if (!sheet) return null;
-				const o = cheatsheetOverlap(incoming, sheet);
-				return { id: s.id, title: s.title, shared: o.shared, fresh: o.fresh.length };
-			})
-			.filter((o): o is { id: string; title: string; shared: number; fresh: number } => !!o && o.shared > 0)
-			.sort((a, b) => b.shared - a.shared);
 	},
 
 	/** Move a sheet and its source to trash/. False when there is no such sheet. */

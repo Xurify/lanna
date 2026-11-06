@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
-import { CheatsheetParseError, cheatsheetRowCount, parseCheatsheet, type Cheatsheet, type ParsedCheatsheet, type CheatsheetSummary, type CheatRow } from "@/src/core";
+import { CheatsheetParseError, cheatsheetOverlap, cheatsheetRowCount, parseCheatsheet, type Cheatsheet, type ParsedCheatsheet, type CheatsheetSummary, type CheatRow } from "@/src/core";
 
 interface ReviewState {
 	inDictionary: number;
@@ -29,7 +29,7 @@ function setSheetInUrl(id: string | null) {
 export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: string; onCount?: (n: number) => void }) {
 	const [sheets, setSheets] = useState<CheatsheetSummary[] | null>(null);
 	const [openId, setOpenId] = useState<string | null>(initialSheet ?? null);
-	const [importing, setImporting] = useState(false);
+	const [creating, setCreating] = useState(false);
 
 	const load = useCallback(async () => {
 		const res = await fetch("/api/cheatsheets").catch(() => null);
@@ -65,9 +65,9 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 	return (
 		<div className="space-y-4" data-testid="cheatsheets">
 			<div className="flex justify-end">
-				<button type="button" className="q-btn primary" onClick={() => setImporting(true)} data-testid="cheatsheet-import-open">
+				<button type="button" className="q-btn primary" onClick={() => setCreating(true)} data-testid="cheatsheet-new">
 					<PlusIcon className="size-4" />
-					Import a cheatsheet
+					New cheatsheet
 				</button>
 			</div>
 
@@ -96,11 +96,12 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 				)}
 			</div>
 
-			{importing && (
+			{creating && (
 				<SheetDialog
-					onClose={() => setImporting(false)}
+					mode={{ kind: "new" }}
+					onClose={() => setCreating(false)}
 					onSaved={(sheet) => {
-						setImporting(false);
+						setCreating(false);
 						void load();
 						open(sheet.id);
 					}}
@@ -108,13 +109,6 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 			)}
 		</div>
 	);
-}
-
-interface Overlap {
-	id: string;
-	title: string;
-	shared: number;
-	fresh: number;
 }
 
 function preview(markdown: string): { draft: ParsedCheatsheet | null; error: string | null } {
@@ -126,45 +120,23 @@ function preview(markdown: string): { draft: ParsedCheatsheet | null; error: str
 	}
 }
 
-/** Import a new sheet, or edit one when `editing` is given: the same fields, prefilled. */
-function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; title: string; markdown: string }; onClose: () => void; onSaved: (sheet: Cheatsheet) => void }) {
-	const [markdown, setMarkdown] = useState(editing?.markdown ?? "");
-	const [title, setTitle] = useState(editing?.title ?? "");
+/** The one dialog for a sheet's text, in three uses:
+ *  new   a title and the phrases, from the list
+ *  add   more phrases for an open sheet; only the ones it lacks are kept
+ *  edit  the sheet's title and its whole text */
+type DialogMode = { kind: "new" } | { kind: "add"; sheet: Cheatsheet } | { kind: "edit"; id: string; title: string; markdown: string };
+
+function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: () => void; onSaved: (sheet: Cheatsheet) => void }) {
+	const [markdown, setMarkdown] = useState(mode.kind === "edit" ? mode.markdown : "");
+	const [title, setTitle] = useState(mode.kind === "edit" ? mode.title : "");
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [serverError, setServerError] = useState<string | null>(null);
 	const fileRef = useRef<HTMLInputElement>(null);
 	const { draft, error } = useMemo(() => preview(markdown), [markdown]);
+	const overlap = useMemo(() => (mode.kind === "add" && draft ? cheatsheetOverlap(draft, mode.sheet) : null), [mode, draft]);
 	const hasHeading = /^#\s+\S/m.test(markdown);
-	const heading = editing ? "Edit the cheatsheet" : "Import a cheatsheet";
-	const [overlap, setOverlap] = useState<Overlap | null>(null);
-	const [mergeInto, setMergeInto] = useState<string | null>(null);
-
-	// A guide that repeats a kept sheet is offered as an addition to it, so
-	// the same phrases do not live in two sheets.
-	useEffect(() => {
-		if (editing || !draft) {
-			setOverlap(null);
-			setMergeInto(null);
-			return;
-		}
-		let live = true;
-		const t = window.setTimeout(() => {
-			void fetch("/api/cheatsheets/overlap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markdown }) })
-				.then((res) => (res.ok ? (res.json() as Promise<{ overlaps: Overlap[] }>) : null))
-				.then((data) => {
-					if (!live) return;
-					const best = data?.overlaps[0] ?? null;
-					setOverlap(best);
-					setMergeInto(best && best.shared * 4 >= best.shared + best.fresh ? best.id : null);
-				})
-				.catch(() => {});
-		}, 300);
-		return () => {
-			live = false;
-			window.clearTimeout(t);
-		};
-	}, [editing, draft, markdown]);
+	const heading = mode.kind === "new" ? "New cheatsheet" : mode.kind === "add" ? `Add phrases to ${mode.sheet.title}` : "Edit the cheatsheet";
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -180,16 +152,17 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 
 	const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!draft || saving) return;
+		if (!draft || saving || (overlap && overlap.fresh.length === 0)) return;
 		setSaving(true);
 		setServerError(null);
 		const fallback = fileName ? fileName.replace(/\.(md|markdown|txt)$/i, "") : "";
-		const url = editing ? `/api/cheatsheets/${encodeURIComponent(editing.id)}` : mergeInto ? `/api/cheatsheets/${encodeURIComponent(mergeInto)}/merge` : "/api/cheatsheets";
-		const res = await fetch(url, {
-			method: editing ? "PUT" : "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ markdown, title: title.trim() || (hasHeading ? undefined : fallback) }),
-		}).catch(() => null);
+		const request =
+			mode.kind === "edit"
+				? { url: `/api/cheatsheets/${encodeURIComponent(mode.id)}`, method: "PUT", body: { markdown, title } }
+				: mode.kind === "add"
+					? { url: `/api/cheatsheets/${encodeURIComponent(mode.sheet.id)}/merge`, method: "POST", body: { markdown } }
+					: { url: "/api/cheatsheets", method: "POST", body: { markdown, title: title.trim() || (hasHeading ? undefined : fallback) } };
+		const res = await fetch(request.url, { method: request.method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(request.body) }).catch(() => null);
 		setSaving(false);
 		if (!res) return setServerError("The app did not answer. Try again.");
 		const data = (await res.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string };
@@ -197,35 +170,52 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 		onSaved(data.sheet);
 	};
 
+	let status: React.ReactNode = null;
+	if (serverError || error) status = <span className="text-miss">{serverError ?? error}</span>;
+	else if (draft) {
+		const parts = overlap ? [`${overlap.fresh.length} new`, overlap.shared ? `${overlap.shared} already here` : ""] : [plural(cheatsheetRowCount(draft), "phrase")];
+		if (draft.skipped.length) parts.push(`${plural(draft.skipped.length, "chat line")} left out`);
+		status = <span className="text-ink-2">{parts.filter(Boolean).join(" · ")}</span>;
+	}
+
+	const action = mode.kind === "edit" ? "Save" : mode.kind === "add" ? (!overlap ? "Add" : overlap.fresh.length ? `Add ${plural(overlap.fresh.length, "phrase")}` : "Nothing new") : "Create";
+
 	return (
 		<div className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
 			<form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="cheatsheet-dialog-title" className="lh-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col gap-4 overflow-y-auto p-5 sm:p-6" data-testid="cheatsheet-dialog">
-				<div className="flex items-center justify-between">
-					<h2 id="cheatsheet-dialog-title" className="font-title text-xl font-semibold text-foreground">
+				<div className="flex items-center justify-between gap-3">
+					<h2 id="cheatsheet-dialog-title" className="truncate font-title text-xl font-semibold text-foreground">
 						{heading}
 					</h2>
-					<button type="button" onClick={onClose} aria-label="Close" className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground">
+					<button type="button" onClick={onClose} aria-label="Close" className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground">
 						<XIcon className="size-5" />
 					</button>
 				</div>
 
-				<label className="block">
-					<span className="font-ui text-xs font-semibold text-muted-foreground">Title</span>
-					<input
-						type="text"
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						placeholder={draft && hasHeading ? draft.title : "Night shift phrases"}
-						maxLength={120}
-						className="mt-1 w-full rounded-md border border-border bg-well px-3 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
-						data-testid="cheatsheet-title"
-					/>
-				</label>
+				{mode.kind !== "add" && (
+					<label className="block">
+						<span className="font-ui text-xs font-semibold text-muted-foreground">Title</span>
+						<input
+							type="text"
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							placeholder={draft && hasHeading ? draft.title : "Night shift phrases"}
+							maxLength={120}
+							className="mt-1 w-full rounded-md border border-border bg-well px-3 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
+							data-testid="cheatsheet-title"
+						/>
+					</label>
+				)}
 
 				<label className="block">
-					<span className="flex items-center justify-between">
-						<span className="font-ui text-xs font-semibold text-muted-foreground">Markdown</span>
-						{fileName && <span className="truncate font-ui text-xs text-ink-3">{fileName}</span>}
+					<span className="flex items-center justify-between gap-2">
+						<span className="font-ui text-xs font-semibold text-muted-foreground">Phrases</span>
+						{mode.kind !== "edit" && (
+							<button type="button" className="font-ui text-xs font-medium text-teal-2 hover:underline" onClick={() => fileRef.current?.click()}>
+								<UploadIcon className="mr-1 inline size-3.5 align-[-2px]" />
+								{fileName ?? "From a file"}
+							</button>
+						)}
 					</span>
 					<textarea
 						value={markdown}
@@ -233,63 +223,38 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 							setMarkdown(e.target.value);
 							setServerError(null);
 						}}
-						rows={editing ? 18 : 12}
+						rows={mode.kind === "edit" ? 18 : 12}
 						spellCheck={false}
+						autoFocus={mode.kind !== "edit"}
 						placeholder={"## At the desk\n| Russian | Say it | English |\n|---|---|---|\n| Пускаем? | poos-KA-yem? | Do we let it in? |\n\n- пожар — fire"}
 						className="mt-1 w-full resize-y rounded-md border border-border bg-well px-3 py-2 font-mono text-[13px] leading-relaxed text-foreground outline-none focus:border-primary"
 						data-testid="cheatsheet-markdown"
 					/>
 				</label>
-
-				<p className="min-h-5 font-ui text-xs" aria-live="polite" data-testid="cheatsheet-preview">
-					{serverError ? (
-						<span className="text-miss">{serverError}</span>
-					) : error ? (
-						<span className="text-miss">{error}</span>
-					) : draft ? (
-						<span className="text-ink-2">
-							{plural(cheatsheetRowCount(draft), "phrase")}
-							{overlap && ` · ${overlap.shared} already in ${overlap.title}`}
-							{draft.skipped.length > 0 && ` · ${plural(draft.skipped.length, "chat line")} left out`}
-						</span>
-					) : null}
-				</p>
-
-				{overlap && (
-					<div className="q-segc self-start" role="radiogroup" aria-label="Where the phrases go">
-						<button type="button" role="radio" aria-checked={mergeInto === overlap.id} className={cn(mergeInto === overlap.id && "on")} onClick={() => setMergeInto(overlap.id)} data-testid="cheatsheet-merge">
-							{overlap.fresh ? `Add ${overlap.fresh} new to ${overlap.title}` : `Nothing new for ${overlap.title}`}
-						</button>
-						<button type="button" role="radio" aria-checked={mergeInto !== overlap.id} className={cn(mergeInto !== overlap.id && "on")} onClick={() => setMergeInto(null)}>
-							New sheet
-						</button>
-					</div>
-				)}
+				<input
+					ref={fileRef}
+					type="file"
+					accept=".md,.markdown,.txt,text/markdown,text/plain"
+					className="sr-only"
+					tabIndex={-1}
+					aria-hidden="true"
+					onChange={(e) => {
+						const file = e.target.files?.[0];
+						if (file) void readFile(file);
+						e.target.value = "";
+					}}
+				/>
 
 				<div className="flex flex-wrap items-center justify-between gap-2">
-					<button type="button" className="q-btn sec" onClick={() => fileRef.current?.click()}>
-						<UploadIcon className="size-4" />
-						{editing ? "Replace from a file" : "Choose a file"}
-					</button>
-					<input
-						ref={fileRef}
-						type="file"
-						accept=".md,.markdown,.txt,text/markdown,text/plain"
-						className="sr-only"
-						tabIndex={-1}
-						aria-hidden="true"
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							if (file) void readFile(file);
-							e.target.value = "";
-						}}
-					/>
-					<div className="flex items-center gap-2">
+					<p className="min-h-5 font-ui text-xs" aria-live="polite" data-testid="cheatsheet-preview">
+						{status}
+					</p>
+					<div className="ml-auto flex items-center gap-2">
 						<button type="button" className="q-btn ghost" onClick={onClose}>
 							Cancel
 						</button>
-						<button type="submit" className="q-btn primary" disabled={!draft || saving || (!!mergeInto && overlap?.fresh === 0)} data-testid="cheatsheet-save">
-							{saving ? "Saving…" : editing ? "Save" : mergeInto ? "Add" : "Import"}
+						<button type="submit" className="q-btn primary" disabled={!draft || saving || (!!overlap && overlap.fresh.length === 0)} data-testid="cheatsheet-save">
+							{saving ? "Saving…" : action}
 						</button>
 					</div>
 				</div>
@@ -308,7 +273,7 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 	const [cover, setCover] = useState(false);
 	const [shown, setShown] = useState<Set<string>>(() => new Set());
 	const [confirmRemove, setConfirmRemove] = useState(false);
-	const [editing, setEditing] = useState<{ id: string; title: string; markdown: string } | null>(null);
+	const [dialog, setDialog] = useState<DialogMode | null>(null);
 	const [jump, setJump] = useState("");
 
 	const load = useCallback(async () => {
@@ -327,7 +292,7 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}?source=1`).catch(() => null);
 		if (!res?.ok) return;
 		const data = (await res.json()) as { markdown: string; title: string };
-		setEditing({ id, title: data.title, markdown: data.markdown });
+		setDialog({ kind: "edit", id, title: data.title, markdown: data.markdown });
 	};
 
 	const addToReview = async () => {
@@ -400,6 +365,10 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 								</>
 							) : (
 								<>
+									<button type="button" className="q-btn ghost" onClick={() => setDialog({ kind: "add", sheet })} data-testid="cheatsheet-add">
+										<PlusIcon className="size-4" />
+										Add phrases
+									</button>
 									<button type="button" className="q-btn ghost" onClick={() => void startEdit()} data-testid="cheatsheet-edit">
 										<PencilIcon className="size-4" />
 										Edit
@@ -478,12 +447,12 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 				</>
 			)}
 
-			{editing && (
+			{dialog && (
 				<SheetDialog
-					editing={editing}
-					onClose={() => setEditing(null)}
+					mode={dialog}
+					onClose={() => setDialog(null)}
 					onSaved={(saved) => {
-						setEditing(null);
+						setDialog(null);
 						setSheet(saved);
 						setShown(new Set());
 						setReviewNote(null);

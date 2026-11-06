@@ -216,13 +216,11 @@ describe("cheatsheetStore", () => {
 		cheatsheetStore.remove(sheet.id);
 	});
 
-	it("reports overlaps and merges into a kept sheet, keeping the version before", () => {
+	it("adds a guide's new phrases to a kept sheet, keeping the version before", () => {
 		const sheet = cheatsheetStore.create(GUIDE, "Night shift", new Date("2026-11-06T13:00:00Z"));
-		const overlaps = cheatsheetStore.overlaps(CHAT_GUIDE);
-		assert.equal(overlaps[0]?.id, sheet.id);
 		const before = cheatsheetStore.get(sheet.id)!;
 		const result = cheatsheetStore.merge(sheet.id, CHAT_GUIDE);
-		assert.equal(result?.added, overlaps[0]?.fresh);
+		assert.equal(result?.added, cheatsheetOverlap(parseCheatsheet(CHAT_GUIDE), before).fresh.length);
 		assert.equal(result?.sheet.title, "Night shift", "a merge keeps the title");
 		const rows = (s: typeof before) => s.sections.reduce((n, x) => n + x.rows.length, 0);
 		assert.equal(rows(result!.sheet), rows(before) + result!.added);

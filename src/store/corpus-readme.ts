@@ -285,9 +285,9 @@ written once by the cheap model and kept so a sentence is paid for once.
 
 const CHEATSHEETS = `# Cheatsheets
 
-Phrase guides you imported under Words → Cheatsheets, one pair of files each:
+Phrase guides you added under Words → Cheatsheets, one pair of files each:
 
-- \`<id>.md\`: the text exactly as you pasted or chose it.
+- \`<id>.md\`: the text as you last saved it.
 - \`<id>.json\`: what the app read from it: \`id\`, \`title\`,
   \`importedAt\`, \`intro[]\` (the lines before the first section) and
   \`sections[]\`, each with \`id\`, \`title\`, \`notes[]\` and \`rows[]\`
