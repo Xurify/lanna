@@ -251,7 +251,7 @@ export function CreatorsSection({ d }: { d: Discover }) {
 				<ul className="mt-3 flex flex-col gap-2">
 					{state.creators.map((c) => (
 						<li key={c.id} className="q-card relative flex items-center gap-3 py-3 pl-4 pr-12" data-testid="watch-creator">
-							<Initial name={c.name} />
+							<Avatar name={c.name} src={c.avatar} />
 							<span className="min-w-0 flex-1">
 								<a href={c.handle ? `https://www.youtube.com/${c.handle}` : `https://www.youtube.com/channel/${c.id}`} target="_blank" rel="noreferrer" className="block truncate font-ui text-[15px] font-[600] text-foreground hover:underline">
 									{c.name}
@@ -293,7 +293,7 @@ export function CreatorsSection({ d }: { d: Discover }) {
 					<ul className="mt-2 flex flex-col gap-2" data-testid="watch-suggestions">
 						{state.suggestions.map((s) => (
 							<li key={s.id} className="q-card flex items-center gap-3 py-3 pl-4 pr-2" data-testid="watch-suggestion">
-								<Initial name={s.name} />
+								<Avatar name={s.name} src={s.avatar} />
 								<span className="min-w-0 flex-1">
 									<span className="block truncate font-ui text-[15px] font-[600] text-foreground">{s.name}</span>
 									<span className="block truncate font-prose text-[13px] text-ink-3">
@@ -315,10 +315,19 @@ export function CreatorsSection({ d }: { d: Discover }) {
 	);
 }
 
-function Initial({ name }: { name: string }) {
+/** The channel's picture from Google's image host; the first letter shows
+ *  when there is none or it does not load. The circle is the same size
+ *  either way, so the row does not move when the picture arrives. */
+function Avatar({ name, src }: { name: string; src?: string }) {
+	const [failed, setFailed] = useState(false);
 	return (
-		<span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-well-2 font-ui text-[15px] font-[600] text-ink-2">
+		<span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-well-2 font-ui text-[15px] font-[600] text-ink-2">
 			{[...name.replace(/^[^\p{L}\p{N}]+/u, "")][0]?.toLocaleUpperCase() ?? "?"}
+			{src && !failed && (
+				// next/image would need Google's image host allowed in its config; the plain image needs no setup.
+				// eslint-disable-next-line @next/next/no-img-element
+				<img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} className="absolute inset-0 size-full object-cover" />
+			)}
 		</span>
 	);
 }

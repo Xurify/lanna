@@ -27,6 +27,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import {
+	channelImage,
 	extractChannels,
 	extractVideos,
 	judgeSpoken,
@@ -80,6 +81,8 @@ const SEARCHES_AFTER_MS = 14 * 86_400_000;
 const REMEASURE_AFTER_MS = 7 * 86_400_000;
 /** Below this the best pick is not prepared on its own: it would cost a model call for a video that is too hard. */
 const KEEP_READY_FLOOR = 0.88;
+/** Channels suggested on the Watch page. */
+const SUGGESTIONS_SHOWN = 12;
 
 const captionLangs = (): string[] => [activeLanguage().code, ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
 const region = (): string | undefined => activeLanguage().tag.split("-")[1]?.toUpperCase();
@@ -133,8 +136,9 @@ export async function channelVideos(channelId: string, signal?: AbortSignal): Pr
 	const meta = (data.metadata as Json | undefined)?.channelMetadataRenderer as Json | undefined;
 	const name = typeof meta?.title === "string" ? meta.title : undefined;
 	const vanity = typeof meta?.vanityChannelUrl === "string" ? /\/(@[^/?#]+)/.exec(meta.vanityChannelUrl)?.[1] : undefined;
+	const avatar = channelImage(meta?.avatar);
 	return {
-		channel: name ? { id: channelId, name, ...(vanity ? { handle: decodeURIComponent(vanity) } : {}) } : null,
+		channel: name ? { id: channelId, name, ...(vanity ? { handle: decodeURIComponent(vanity) } : {}), ...(avatar ? { avatar } : {}) } : null,
 		videos: extractVideos(data).map((v) => ({ ...v, channelId, ...(name && !v.channel ? { channel: name } : {}) })),
 	};
 }
@@ -169,7 +173,47 @@ export async function resolveChannel(input: string, signal?: AbortSignal): Promi
 	const feed = await channelVideos(id, signal);
 	name = feed.channel?.name ?? name;
 	if (!name) throw new Error("YouTube did not answer for that channel. Try again in a minute.");
-	return { id, name, ...((handle ?? feed.channel?.handle) ? { handle: handle ?? feed.channel?.handle } : {}) };
+	// The feed has no picture; the channel page does.
+	const avatar = feed.channel?.avatar ?? (await channelAvatar(id, signal));
+	return { id, name, ...((handle ?? feed.channel?.handle) ? { handle: handle ?? feed.channel?.handle } : {}), ...(avatar ? { avatar } : {}) };
+}
+
+/** A channel's picture, from its page; undefined when YouTube gives none. */
+async function channelAvatar(channelId: string, signal?: AbortSignal): Promise<string | undefined> {
+	try {
+		const data = await innertube("browse", { browseId: channelId, params: VIDEOS_TAB }, signal);
+		return channelImage(((data?.metadata as Json | undefined)?.channelMetadataRenderer as Json | undefined)?.avatar);
+	} catch (err) {
+		if (err instanceof Error && err.name === "AbortError") throw err;
+		return undefined;
+	}
+}
+
+function rememberAvatars(found: Record<string, string>): void {
+	discoverStore.putAvatars({ ...discoverStore.avatars(), ...found });
+}
+
+// A channel YouTube gave no picture for is asked again on the next server run, not on every visit.
+const noAvatar = (): Set<string> => ((globalThis as { __lhNoAvatar?: Set<string> }).__lhNoAvatar ??= new Set());
+
+/** Fetch the picture of every saved creator and suggested channel that has
+ *  none yet: creators saved before pictures were kept, and channels read
+ *  from the account's history. */
+export async function fillAvatars(signal?: AbortSignal): Promise<void> {
+	const missed = noAvatar();
+	const have = discoverStore.avatars();
+	const yt = discoverStore.youtube();
+	const saved = discoverStore.creators().creators;
+	const suggested = suggestCreators(Object.values(discoverStore.scans()), new Set(saved.map((c) => c.id)), yt.subscriptions?.channels).slice(0, SUGGESTIONS_SHOWN);
+	const todo = [...saved.map((c) => c.id), ...suggested.map((c) => c.id)].filter((id, i, all) => !have[id] && !missed.has(id) && all.indexOf(id) === i);
+	if (!todo.length) return;
+	const found: Record<string, string> = {};
+	await pool(todo, 4, async (id) => {
+		const avatar = await channelAvatar(id, signal);
+		if (avatar) found[id] = avatar;
+		else missed.add(id);
+	}, signal);
+	if (Object.keys(found).length) rememberAvatars(found);
 }
 
 export function listCreators(): Creator[] {
@@ -184,6 +228,7 @@ export async function addCreator(input: string, from: CreatorFrom = "link", opts
 	if (kept) return kept;
 	const creator: Creator = { id: found.id, name: found.name, ...(found.handle ? { handle: found.handle } : {}), addedAt: (opts.now ?? new Date()).toISOString(), from };
 	discoverStore.putCreators({ ...f, creators: [...f.creators, creator] });
+	if (found.avatar) rememberAvatars({ [found.id]: found.avatar });
 	return creator;
 }
 
@@ -503,6 +548,7 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		if (activeProfile() !== profile) return;
 		discoverStore.putScans(scans);
 		discoverStore.putCreators({ ...discoverStore.creators(), refreshedAt: now.toISOString() });
+		await fillAvatars(signal).catch(() => {});
 		if (opts.keepReady !== false) keepOneReady();
 	})();
 	s.job = job;
@@ -564,10 +610,14 @@ export function discoverState(now = new Date()): DiscoverStateView {
 	const scans = Object.values(discoverStore.scans());
 	const all = picks(now);
 	const saved = new Set(f.creators.map((c) => c.id));
+	const pics = discoverStore.avatars();
+	const picture = (id: string) => (pics[id] ? { avatar: pics[id] } : {});
 	return {
-		creators: f.creators.map((c) => ({ ...c, picks: all.filter((p) => p.channelId === c.id).length })),
+		creators: f.creators.map((c) => ({ ...c, picks: all.filter((p) => p.channelId === c.id).length, ...picture(c.id) })),
 		picks: all.slice(0, 40),
-		suggestions: suggestCreators(scans, saved, yt.subscriptions?.channels).slice(0, 12),
+		suggestions: suggestCreators(scans, saved, yt.subscriptions?.channels)
+			.slice(0, SUGGESTIONS_SHOWN)
+			.map((s) => ({ ...s, ...picture(s.id) })),
 		keepReady: f.keepReady,
 		...(f.refreshedAt ? { refreshedAt: f.refreshedAt } : {}),
 		refresh: refreshStatus(),

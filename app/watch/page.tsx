@@ -1,5 +1,5 @@
 import { WatchPlayer } from "@/components/watch/watch-player";
-import { discoverState, refreshIfStale, videoStore, watchState } from "@/src/server";
+import { discoverState, fillAvatars, refreshIfStale, videoStore, watchState } from "@/src/server";
 
 export const metadata = { title: "Watch" };
 
@@ -23,6 +23,7 @@ export default async function WatchPage({ searchParams }: { searchParams: Promis
 	}
 	try {
 		refreshIfStale();
+		await fillAvatars(AbortSignal.timeout(4000)).catch(() => {});
 		discover = discoverState();
 	} catch {
 		discover = null;

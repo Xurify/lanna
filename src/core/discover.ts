@@ -103,6 +103,7 @@ export interface FoundChannel {
 	id: string;
 	name: string;
 	handle?: string;
+	avatar?: string;
 }
 
 // ─── Ids and links ──────────────────────────────────────────────────────────
@@ -285,6 +286,29 @@ export function extractVideos(data: unknown): FoundVideo[] {
 	return [...out.values()];
 }
 
+/** The biggest picture in a `thumbnails` list that sits on Google's image
+ *  hosts, resized to a small round crop. Anything else is dropped, so a page
+ *  cannot make the app load an image from another site. */
+export function channelImage(thumbnails: unknown): string | undefined {
+	const list = isObj(thumbnails) && Array.isArray(thumbnails.thumbnails) ? thumbnails.thumbnails : Array.isArray(thumbnails) ? thumbnails : [];
+	let best: { url: string; width: number } | undefined;
+	for (const t of list) {
+		if (!isObj(t) || typeof t.url !== "string") continue;
+		const width = typeof t.width === "number" ? t.width : 0;
+		if (!best || width >= best.width) best = { url: t.url, width };
+	}
+	if (!best) return undefined;
+	let url: URL;
+	try {
+		url = new URL(best.url.startsWith("//") ? `https:${best.url}` : best.url);
+	} catch {
+		return undefined;
+	}
+	if (url.protocol !== "https:" || !/^yt[34]\.(ggpht|googleusercontent)\.com$/.test(url.hostname)) return undefined;
+	// The picture's own size and crop come after the "=".
+	return `${url.origin}${url.pathname.split("=")[0]}=s96-c-k-c0x00ffffff-no-rj`;
+}
+
 /** Every channel listed on a page's data (the subscriptions page lists
  *  them as channel renderers). */
 export function extractChannels(data: unknown): FoundChannel[] {
@@ -299,7 +323,8 @@ export function extractChannels(data: unknown): FoundChannel[] {
 			if ((k === "channelRenderer" || k === "gridChannelRenderer") && isObj(x) && typeof x.channelId === "string" && CHANNEL_ID.test(x.channelId)) {
 				const name = textOf(x.title);
 				const handle = textOf(x.subscriberCountText)?.trim();
-				if (name && !out.has(x.channelId)) out.set(x.channelId, { id: x.channelId, name, ...(handle?.startsWith("@") ? { handle } : {}) });
+				const avatar = channelImage(x.thumbnail);
+				if (name && !out.has(x.channelId)) out.set(x.channelId, { id: x.channelId, name, ...(handle?.startsWith("@") ? { handle } : {}), ...(avatar ? { avatar } : {}) });
 				continue;
 			}
 			walk(x, depth + 1);
@@ -513,7 +538,7 @@ export function suggestCreators(videos: readonly ScannedVideo[], saved: Readonly
 	for (const v of videos) {
 		if (!v.channelId || saved.has(v.channelId) || v.spoken !== "yes" || !v.trackLang || v.skip) continue;
 		if (v.wordsPerMin !== undefined && v.wordsPerMin < SPARSE_SPEECH_WPM) continue;
-		const c = by.get(v.channelId) ?? { id: v.channelId, name: v.channel ?? subs.get(v.channelId)?.name ?? v.channelId, videos: 0, from: [], subscribed: subs.has(v.channelId) };
+		const c = by.get(v.channelId) ?? { id: v.channelId, name: v.channel ?? subs.get(v.channelId)?.name ?? v.channelId, videos: 0, from: [], subscribed: subs.has(v.channelId), ...(subs.get(v.channelId)?.avatar ? { avatar: subs.get(v.channelId)!.avatar } : {}) };
 		c.videos++;
 		for (const s of v.sources) if (s !== "creator" && !c.from.includes(s)) c.from.push(s);
 		by.set(v.channelId, c);
@@ -526,7 +551,7 @@ export type YouTubeListName = "history" | "recommended" | "subscriptions";
 
 /** What GET /api/watch/discover answers (src/server/discover.ts discoverState). */
 export interface DiscoverStateView {
-	creators: Array<Creator & { picks: number }>;
+	creators: Array<Creator & { picks: number; avatar?: string }>;
 	picks: PickedVideo[];
 	suggestions: CreatorSuggestion[];
 	keepReady: boolean;

@@ -145,6 +145,18 @@ test("rankPicks: comfortable before a stretch before hard; sparse speech, unsure
 	assert.equal(core.rankPicks([scanned({ coverage: 0.95 })], { now })[0]!.band, "comfortable");
 });
 
+test("channelImage: Google's image hosts only, the biggest picture, cropped small; nothing else", () => {
+	const big = { thumbnails: [{ url: "https://yt3.ggpht.com/a=s48-c-k-c0x00ffffff-no-rj", width: 48 }, { url: "//yt3.ggpht.com/b=s176-c-k-c0x00ffffff-no-rj", width: 176 }] };
+	assert.equal(core.channelImage(big), "https://yt3.ggpht.com/b=s96-c-k-c0x00ffffff-no-rj");
+	assert.equal(core.channelImage(big.thumbnails), "https://yt3.ggpht.com/b=s96-c-k-c0x00ffffff-no-rj");
+	assert.equal(core.channelImage({ thumbnails: [{ url: "https://evil.example/a.png" }] }), undefined);
+	assert.equal(core.channelImage({ thumbnails: [{ url: "http://yt3.ggpht.com/a" }] }), undefined);
+	assert.equal(core.channelImage({ thumbnails: [{ url: "https://yt3.ggpht.com.evil.example/a" }] }), undefined);
+	assert.equal(core.channelImage(undefined), undefined);
+	const [ch] = core.extractChannels({ items: [{ channelRenderer: { channelId: SLOVAK_CHANNEL, title: { simpleText: "Sub" }, thumbnail: big } }] });
+	assert.equal(ch?.avatar, "https://yt3.ggpht.com/b=s96-c-k-c0x00ffffff-no-rj");
+});
+
 test("suggestCreators: channels spoken in the language, subscribed first, saved and sparse ones left out", () => {
 	const list = [
 		scanned({ id: "a1111111111", channelId: SLOVAK_CHANNEL, channel: "Kuchár", sources: ["history"] }),
@@ -192,7 +204,11 @@ globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) =>
 		return body.url.endsWith("@foodinnature") ? json({ endpoint: { browseEndpoint: { browseId: SLOVAK_CHANNEL } } }) : new Response("{}", { status: 404 });
 	}
 	if (url.includes("/feeds/videos.xml")) return url.includes(SLOVAK_CHANNEL) ? new Response(FEED, { status: 200 }) : new Response("", { status: 404 });
-	if (url.includes("/youtubei/v1/browse")) return json({ metadata: { channelMetadataRenderer: { title: "Leicht & lecker" } }, contents: {} });
+	if (url.includes("/youtubei/v1/browse")) {
+		const { browseId } = JSON.parse(String(init?.body)) as { browseId: string };
+		const avatar = browseId === "UCnopicture0000000000000" ? undefined : { thumbnails: [{ url: `https://yt3.googleusercontent.com/${browseId}=s900-c-k-c0x00ffffff-no-rj`, width: 900, height: 900 }] };
+		return json({ metadata: { channelMetadataRenderer: { title: "Leicht & lecker", ...(avatar ? { avatar } : {}) } }, contents: {} });
+	}
 	if (url.includes("/youtubei/v1/player")) {
 		const id = (JSON.parse(String(init?.body)) as { videoId: string }).videoId;
 		return PLAYERS[id] ? json(PLAYERS[id]) : json({ playabilityStatus: { status: "ERROR", reason: "Video unavailable" } });
@@ -220,6 +236,20 @@ describe("the service", () => {
 		assert.equal(discover.listCreators().length, 2);
 		assert.equal(discover.removeCreator(GERMAN_CHANNEL), true);
 		assert.equal(discover.removeCreator(GERMAN_CHANNEL), false);
+	});
+
+	test("a saved creator keeps the channel's picture, also when only the browse page has it; creators saved before are filled in once", async () => {
+		const pics = discoverStore.avatars();
+		assert.equal(pics[SLOVAK_CHANNEL], `https://yt3.googleusercontent.com/${SLOVAK_CHANNEL}=s96-c-k-c0x00ffffff-no-rj`, "the feed has no picture, so the channel page is asked");
+		assert.equal(discover.discoverState().creators.find((c) => c.id === SLOVAK_CHANNEL)?.avatar, pics[SLOVAK_CHANNEL]);
+
+		discoverStore.putAvatars({});
+		const before = calls.length;
+		await discover.fillAvatars();
+		assert.equal(discoverStore.avatars()[SLOVAK_CHANNEL], pics[SLOVAK_CHANNEL]);
+		const asked = calls.length - before;
+		await discover.fillAvatars();
+		assert.equal(calls.length - before, asked, "a channel is not asked again on every visit");
 	});
 
 	test("a page read while signed in becomes the list; a signed-out page is refused", () => {

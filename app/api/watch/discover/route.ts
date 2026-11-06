@@ -17,7 +17,7 @@
  */
 
 import { isChannelId } from "@/src/core";
-import { addCreator, discoverState, dismissPick, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
+import { addCreator, discoverState, dismissPick, fillAvatars, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,7 @@ const LISTS = new Set(["history", "recommended", "subscriptions"]);
 
 export async function GET() {
 	refreshIfStale();
+	await fillAvatars(AbortSignal.timeout(4000)).catch(() => {});
 	return Response.json(discoverState());
 }
 

@@ -12,6 +12,7 @@
  *                    Takeout export: history, recommendations, subscriptions.
  *                    Never a password, cookie or token.
  *   searches.json    the searches written from the learner's interests.
+ *   avatars.json     channel pictures (Google image links), by channel id.
  *   dismissed.json   video ids the learner said are not for them.
  *
  * Same idioms as the other stores: sync fs, atomic renames.
@@ -116,6 +117,14 @@ export const discoverStore = {
 	},
 	putSearches(s: SearchesFile): void {
 		writeJson("searches.json", s);
+	},
+	/** Channel pictures by channel id. */
+	avatars(): Record<string, string> {
+		const a = readJson<Record<string, unknown>>("avatars.json", {});
+		return Object.fromEntries(Object.entries(a && typeof a === "object" ? a : {}).filter((e): e is [string, string] => typeof e[1] === "string"));
+	},
+	putAvatars(a: Record<string, string>): void {
+		writeJson("avatars.json", a);
 	},
 	dismissed(): Set<string> {
 		const d = readJson<string[]>("dismissed.json", []);
