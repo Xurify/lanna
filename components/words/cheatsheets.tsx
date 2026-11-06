@@ -586,7 +586,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 								spellCheck={false}
 								autoFocus
 								placeholder={"Desk\nПускаем? | poos-KA-yem? | Do we let it in?\nНе пускаем. | nye poos-KA-yem | We don't let it in."}
-								className="w-full resize-y rounded-md border border-border bg-well px-3 py-2 font-mono text-[13px] leading-relaxed text-foreground outline-none focus:border-primary"
+								className="q-field w-full resize-y rounded-md px-3 py-2 font-mono text-[13px] leading-relaxed"
 								data-testid="cheatsheet-text"
 							/>
 						</div>

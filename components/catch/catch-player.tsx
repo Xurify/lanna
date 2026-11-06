@@ -112,7 +112,7 @@ export function CatchPlayer() {
 									autoCapitalize="none"
 									spellCheck={false}
 									disabled={busy}
-									className="min-h-11 min-w-0 flex-1 rounded-lg bg-background px-4 py-2.5 font-ui text-base text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none focus:shadow-[0_0_0_1.5px_var(--q-line-2)]"
+									className="q-field min-h-11 min-w-0 flex-1 rounded-lg px-4 py-2.5 font-ui text-base"
 								/>
 								<button type="submit" disabled={busy || !typed.trim()} className={`${BUTTON} bg-primary text-primary-foreground`}>
 									Check

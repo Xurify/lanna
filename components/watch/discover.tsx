@@ -268,7 +268,7 @@ export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; can
 					placeholder="Channel link, @handle, or one of their videos"
 					autoComplete="off"
 					spellCheck={false}
-					className="h-11 min-w-0 flex-1 rounded-lg bg-well px-4 font-ui text-[15px] text-foreground outline-none transition-colors placeholder:text-ink-3 focus:bg-card focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
+					className="q-field h-11 min-w-0 flex-1 rounded-lg px-4 font-ui text-[15px]"
 					data-testid="watch-creator-input"
 				/>
 				<button type="submit" disabled={!valid || busy} className="q-btn sec h-11 px-5" data-testid="watch-creator-save">

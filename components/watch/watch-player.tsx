@@ -454,7 +454,7 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
-						className="h-11 min-w-0 flex-1 rounded-lg bg-well px-4 font-ui text-[15px] text-foreground outline-none transition-colors placeholder:text-ink-3 focus:bg-card focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
+						className="q-field h-11 min-w-0 flex-1 rounded-lg px-4 font-ui text-[15px]"
 						data-testid="watch-url"
 					/>
 					<button type="submit" disabled={!valid || state?.canPrepare === false} className={cn(PRIMARY, "h-11 px-5")} data-testid="watch-prepare">
@@ -1352,7 +1352,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 					maxLength={SENTENCE_MAX_CHARS}
 					placeholder="Write a sentence"
 					aria-label={`A sentence with ${target.lemma}`}
-					className="h-11 min-w-0 flex-1 rounded-lg bg-well px-4 font-ui text-[15px] text-foreground outline-none transition-colors placeholder:text-ink-3 focus:bg-card focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)] disabled:opacity-60"
+					className="q-field h-11 min-w-0 flex-1 rounded-lg px-4 font-ui text-[15px]"
 					data-testid="watch-sentence-input"
 				/>
 				{!accepted && (
