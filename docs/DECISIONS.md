@@ -613,7 +613,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The edge tutor's brief carries each miss's judge note and its REPEATS mark, and the prompt treats a repeat as a likely misconception worth a question. Its verdict then counts toward the level as before.
 - A weak spot's evidence is the note of a miss that repeats an earlier one, when there is one; else the first miss's note; the tutor's verdict still wins over both.
 
-### E52. Watch fragments: pick a stretch of a video, ranked locally for the learner's level (2026-11-06, branch `feat/watch-creators`)
+### E52. Watch fragments: pick a stretch of a video, ranked locally for the learner's level (2026-11-06, branch `feat/watch-fragments`)
 
 **Why:** the owner asked to pick fragments of a video and to build comprehensible input from a smart analysis, to learn faster. Whole videos are mostly over the learner's level (80% known is common at A1), but two minutes of them may be at 93%. Research and numbers: [research/watch-picks.md](research/watch-picks.md), "Fragments".
 

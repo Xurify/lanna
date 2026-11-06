@@ -2,7 +2,7 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
-## 6 November: pick a stretch of a video (branch `feat/watch-creators`)
+## 6 November: pick a stretch of a video (branch `feat/watch-fragments`)
 
 - **Why:** the owner asked to pick fragments of a video, with a smart analysis that makes comprehensible input to learn faster. Rule E52; the numbers: [research/watch-picks.md](research/watch-picks.md), "Fragments".
 - **Pick a stretch:** a scissors button on each pick, each creator's video, each video in Your videos, and beside the link field opens a strip of the whole video coloured by how much of each moment you know. The best stretches for you are marked and listed (the known-word share, the new words with their meaning, which come back); the best one is selected. Drag on the strip, or click it, to pick another by hand. **Prepare this stretch** translates only those lines. **Prepare the whole video instead** stays beside it.
