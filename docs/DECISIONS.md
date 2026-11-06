@@ -709,6 +709,17 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - `KNOWN_RANK` is otherwise unchanged, and its comment now says what it is: a per-part-of-speech tolerance for texts the model writes at the level (Read, Listen, Speed). Narrowing it would make drafts fail the 92% coverage floor and cost extra model calls; it is not a claim about the learner. Do not show it as one.
 - Videos kept before this change carry the old `coverage` until they are prepared again; Discover's scans are measured again on refresh.
 
+### E54. The mark is a cursor at an empty answer line, for any language (2026-11-06, branch `feat/cursor-icon-and-brand`)
+
+**Why:** the owner asked for a new app icon and a better brand. The old mark, two speech bubbles, came from the upstream app and looked like any chat app. A first draft, an `š` cut from Geist Bold, was dropped when the owner pointed out that this is a language tutor for any language, not a Slovak app. A háček over a line was dropped too, because it read as a download icon. Details and name ideas: [brand.md](brand.md).
+
+**How to apply:**
+- The mark is a text cursor (ink) waiting at an empty answer line (teal): two rounded rectangles in a 1024 box, cursor 282,252 72×520 and line 402,700 340×72. It says what every task asks for: the blank first, your answer next (P3). It reads as an L.
+- No letter, script, flag or diacritic goes into the mark, so it fits every language the app can add (E43).
+- In the app, the cursor is `currentColor` and the line is `var(--q-teal)` (`components/lh-mark.tsx`), so the mark follows Day and Night like the wordmark ("Lang" in ink, "Harness" in teal). The app icon is always the Night version on an ink tile (#16181B).
+- One geometry, kept in step by hand: `build/mark.svg`, `build/icon-flat.svg`, `app/icon.svg`, `components/lh-mark.tsx` and the Icon Composer layers in `build/icon.icon`. After changing it, run `node scripts/make-icons.mjs` and `node scripts/make-pwa-icons.mjs`.
+- The name stays LangHarness. A rename is the owner's call and its own piece of work (app id, window title, PWA, repo).
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

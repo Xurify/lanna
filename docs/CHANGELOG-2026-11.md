@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 6 November: a new app icon and brand notes (branch `feat/cursor-icon-and-brand`)
+
+- **Why:** the owner asked for a new icon, a better brand and some name ideas. Rule E54; details and names: [brand.md](brand.md).
+- **The icon:** a text cursor waiting at an empty answer line, the cursor in ink and the line in teal, on an ink tile. It replaces the two speech bubbles in the desktop icons (Windows, Linux, macOS before 26 and the macOS 26 Icon Composer layers), the browser tab, the home-screen icons and the sidebar. In the sidebar, the mark follows Day and Night and is now as tall as the wordmark.
+- **Name ideas:** eight candidates with what each says and where each is weak, in [brand.md](brand.md). The recommendation is to keep LangHarness for now, and to use Unprompted if the app gets a public name. Only a web search was done; no trademark or domain checks.
+- **Checked:** the regenerated icons at 16 to 512 px, and the sidebar in both themes in the running app (`docs/assets/brand/sidebar-mark.png`). Typecheck.
+- **Unverified:** the macOS 26 icon. `build/icon.icon` was edited by hand (new layer files and fill color) and needs `actool` on a Mac with Xcode 26 to build.
+
 ## 6 November: pick a stretch of a video (branch `feat/watch-fragments`)
 
 - **Why:** the owner asked to pick fragments of a video, with a smart analysis that makes comprehensible input to learn faster. Rule E52; the numbers: [research/watch-picks.md](research/watch-picks.md), "Fragments".
