@@ -69,6 +69,18 @@ The screens lay out for a phone (390 px wide) and an iPad (820 px in portrait), 
 | Notch and home bar | The top bar and the drawer clear the notch and the home indicator. |
 | Devices (Settings → Devices) | Off by default. Turn on **Remote access**, run `tailscale serve --bg 3010` once on this computer (Tailscale signed in, HTTPS certificates on), then choose **Make a code** and type the six digits on the phone within five minutes. Each paired device is listed with its last use and can be signed out on its own; turning remote access off signs out every device. This computer's own browser never asks for a code. Funnel stays off. Steps: [docs/remote-access.md](docs/remote-access.md). |
 
+## Creator-hooks features (November 2026)
+
+Built from [docs/research/creator-hooks.md](docs/research/creator-hooks.md) (branch `feat/daily-hooks`).
+
+| Area | What you get |
+|---|---|
+| Today's line (`/line`) | One real sentence a day, in the same full-screen frame as Listen. It plays as the card opens, with no text on screen; type what you caught (Space plays it again, Enter checks). The result is a count, "3 of 6 words", with every word marked: caught in full, missed faded, a missing accent underlined; then the meaning and the one or two words you had not met. Once you have practiced that day, the same sentence comes back in the evening and the two counts sit side by side with the change between them. The last 14 days are a chart of two marks a day, morning and evening, with a table behind one button. Nothing is graded and no XP is given; time on the page counts as listening minutes. On Today it is one row above the plan that says where the line stands. |
+| Where you are (Today) | One card: a sentence that names the gap that limits you right now, words or speed, with the milestones' own numbers; two meters under it with the need as a marker on the track, the binding one in teal; a speed that is only the level's estimate is marked so. Your next dated scene sits in the same card. "See the evidence" opens Milestones. |
+| Watch lines come back (Listen) | A line you did not understand the first time in Watch comes back in Listen: tomorrow, then in 3 and 7 days, up to three a session, oldest due first, until you have understood it three times. It is marked "From a video you watched", with the video's title. Lines from Czech captions do not come back. |
+| Robo's slip (Read) | When a pair you keep mixing up has come up enough, a Read series episode has Robo use the wrong word in one line and correct it in the next. The reader marks that line and shows, under it, what Robo wrote struck through, what the line needs underlined, and the rule; the right word goes to your review deck. |
+| A scene with a date (Milestones) | Write one scene in your own words and pick its day. On Today it sits in the "Where you are" card with the days left as the figure, the status as a word, and whether your measured pace reaches it in time, or how many days later it falls. Once the day has passed, the app asks how it went. Weekly rehearsal is not built yet. |
+
 ## Where the thinking lives
 
 - [docs/DECISIONS.md](docs/DECISIONS.md): the principles and rules behind the app, dated, with the why.

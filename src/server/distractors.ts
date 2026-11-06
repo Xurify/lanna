@@ -20,6 +20,7 @@ import { buildNeighborIndex, chooseOptions, neighbors, type NeighborIndex } from
 import { rng } from "../core/lesson.ts";
 import type { ListenPlan } from "../core/listen.ts";
 import type { LessonPlan } from "../core/lesson.ts";
+import { isWatchItem } from "../core/watch-reps.ts";
 import { distractorStore, type NearMiss } from "../store/distractors.ts";
 import { storyEngine } from "./reading.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -139,6 +140,7 @@ export async function lessonWithBetterOptions(plan: LessonPlan, opts?: BetterOpt
 
 /** A Listen plan with every sentence's options made close. */
 export async function listenWithBetterOptions(plan: ListenPlan, opts?: BetterOptionsOptions): Promise<ListenPlan> {
-	await betterOptions(plan.items, opts);
+	// A watch line has no options (src/core/watch-reps.ts); a near-miss call for it would be paid for and never shown.
+	await betterOptions(plan.items.filter((i) => !isWatchItem(i.id)), opts);
 	return plan;
 }

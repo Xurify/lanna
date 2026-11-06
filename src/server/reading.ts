@@ -70,6 +70,7 @@ import {
 	type StoryUsage,
 	type StoryWord,
 } from "../core/reading.ts";
+import { slipBrief, type SlipTarget } from "../core/reading-slip.ts";
 import { dayKey, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
@@ -381,7 +382,7 @@ export function resolveWord(lexicon: Lexicon, form: string, known: Set<string>, 
 /** Tokenize one sentence and gloss every word. A word the dictionary
  *  lacks keeps the story's own gloss when the model introduced it. */
 /** The series cast: never vocabulary, whatever the dictionary says. */
-export const STORY_NAMES: ReadonlySet<string> = new Set(["robo"]);
+export const STORY_NAMES: ReadonlySet<string> = new Set(["robo", "martin"]);
 
 /** The proper names in a text: capitalised words inside a sentence (not
  *  its first word) that no dictionary form claims — Zuzka, Petržalka. A
@@ -488,6 +489,8 @@ export interface StoryBrief {
 	episode: number;
 	theme: string;
 	prompt: string;
+	/** The slip the brief asks for; the draft's slip is checked against it. */
+	slip?: SlipTarget;
 }
 
 /** Episode settings for a language whose story bible names none. */
@@ -527,7 +530,7 @@ export function questionLine(level: Cefr): string {
  *  language's story bible (`world.json`, src/server/world.ts):
  *  its cast, its places, and the chapter the learner is in as this
  *  episode's plot beat. */
-export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage()): StoryBrief {
+export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage(), slip: SlipTarget | null = null): StoryBrief {
 	const robo = previous.filter((s) => (s.genre ?? "robo") === "robo");
 	const episode = genre === "robo" ? robo.length + 1 : 0;
 	const names = { series: world?.series ?? "The story", language: lang.english, country: countryOf(lang) };
@@ -552,9 +555,10 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		k.purposes.length ? `The learner is learning ${lang.english} for: ${k.purposes.map((p) => purposeInfo(p).title.toLowerCase()).join(", ")}.` : "",
 		k.note ? `In their own words: "${k.note.replace(/\s+/g, " ").slice(0, 300)}". Let the setting serve this when it can.` : "",
 		genre !== "robo" ? "" : recaps.length ? `Earlier episodes, oldest first:\n${recaps.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}` : `This is the first episode: introduce ${lead ?? "the main character"} and one other person.`,
+		...(slip ? slipBrief(slip) : []),
 		`Today is ${now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}; the season may show.`,
 	].filter(Boolean);
-	return { genre, episode, theme, prompt: lines.join("\n") };
+	return { genre, episode, theme, prompt: lines.join("\n"), ...(slip ? { slip } : {}) };
 }
 
 // ─── Generation ─────────────────────────────────────────────────────────────
@@ -708,7 +712,8 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 		.slice(-4)
 		.map((s) => storyStore.get(s.id)?.recap)
 		.filter((r): r is string => !!r);
-	const brief = storyBrief(k, previous, recaps, now, genre, loadWorld());
+	const world = loadWorld();
+	const brief = storyBrief(k, previous, recaps, now, genre, world, activeLanguage());
 	let engine = opts.engine;
 	let model = opts.model;
 	if (!engine) {
@@ -904,7 +909,7 @@ export function recordRead(input: ReadResultInput, now = new Date()): ReadOutcom
 	const reread = storyStore.reads().some((r) => r.storyId === story.id);
 	const { correct, total } = gradeAnswers(story.questions, input.answers);
 	const xp = readXp(story.sentences.length, correct, reread);
-	const slugs = [...new Set([...story.newWords.map((w) => w.slug).filter((s): s is string => !!s), ...input.tapped.filter((s) => /^[a-z0-9-]+$/.test(s))])];
+	const slugs = [...new Set([...story.newWords.map((w) => w.slug).filter((s): s is string => !!s), ...(story.slip ? [story.slip.rightSlug] : []), ...input.tapped.filter((s) => /^[a-z0-9-]+$/.test(s))])];
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	const p = progressStore.read();
 	const day = dayKey(now, input.tz);

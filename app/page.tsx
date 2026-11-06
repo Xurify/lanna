@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Today } from "@/components/today";
-import { languageDay, prepareCorpus, progressSummary, readSettingsRecord } from "@/src/server";
+import { datedScenesForToday, languageDay, lineState, prepareCorpus, progressSummary, readSettingsRecord, stageNow } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 export const metadata = { title: { absolute: "Today · LangHarness" } };
@@ -39,5 +39,25 @@ export default function HomePage() {
 	} catch {
 		day = null;
 	}
-	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} initialDay={day} />;
+	// A scene with a date (docs/research/creator-hooks.md, proposal 3): the nearest one, and any that waits for a line.
+	let dated = null;
+	try {
+		dated = datedScenesForToday();
+	} catch {
+		dated = null;
+	}
+	// Today's line and the stage sentence (docs/research/creator-hooks.md, proposals 1 and 4).
+	let line = null;
+	try {
+		line = lineState();
+	} catch {
+		line = null;
+	}
+	let stage = null;
+	try {
+		stage = stageNow();
+	} catch {
+		stage = null;
+	}
+	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} initialDay={day} initialLine={line} initialStage={stage} initialDated={dated} />;
 }

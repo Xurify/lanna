@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
+import type { DatedOutcome } from "../core/dated-scene.ts";
 import type { CustomMapping, MilestoneDef } from "../core/milestones.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
@@ -24,6 +25,10 @@ export interface CustomMilestoneRecord {
 	usage: StoryUsage;
 	createdAt: string;
 	removedAt?: string;
+	/** A scene with a date: the day it is for (YYYY-MM-DD). Absent on older records. */
+	date?: string;
+	/** The line the learner wrote once the date had passed. */
+	outcome?: DatedOutcome;
 }
 
 export interface MilestonesFile {
@@ -70,5 +75,26 @@ export const milestoneStore = {
 		rec.removedAt = now.toISOString();
 		this.write(file);
 		return true;
+	},
+	/** Set a scene's date. Moving it to another day drops the line written for the old one. */
+	schedule(id: string, date: string): CustomMilestoneRecord | undefined {
+		const file = this.read();
+		const rec = file.custom.find((c) => c.def.id === id && !c.removedAt);
+		if (!rec) return undefined;
+		if (rec.date !== date) {
+			rec.date = date;
+			delete rec.outcome;
+		}
+		this.write(file);
+		return rec;
+	},
+	/** Save the line written after a scene's date. */
+	recordOutcome(id: string, outcome: DatedOutcome): CustomMilestoneRecord | undefined {
+		const file = this.read();
+		const rec = file.custom.find((c) => c.def.id === id && !c.removedAt);
+		if (!rec) return undefined;
+		rec.outcome = outcome;
+		this.write(file);
+		return rec;
 	},
 };

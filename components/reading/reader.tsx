@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
+import { QIcon } from "@/components/quiet/icon";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
@@ -30,7 +31,7 @@ import { speak, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
-import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+import { genreInfo, gradeAnswers, readXp, type ReadingState, type StorySlip, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
 export function levelBadgeStyle(level: string): string {
@@ -395,6 +396,41 @@ export function groupTokens(tokens: readonly StoryToken[]): Array<{ indexes: num
 	return groups;
 }
 
+/** A speaker's lines cut after the slip's sentence, so the slip's card sits right under it. */
+export function cutAfter<T extends { index: number }>(items: readonly T[], slipAt: number | undefined): T[][] {
+	const at = slipAt === undefined ? -1 : items.findIndex((x) => x.index === slipAt);
+	if (at < 0 || at === items.length - 1) return [[...items]];
+	return [items.slice(0, at + 1), items.slice(at + 1)];
+}
+
+/** The series lead's slip, explained under the line it is in (src/core/reading-slip.ts). */
+export function SlipNote({ slip }: { slip: StorySlip }) {
+	return (
+		<aside className="q-card mt-3 px-[18px] pb-4 pt-3.5" data-testid="read-slip" aria-label={`${slip.speaker}'s slip`}>
+			<p className="q-lbl">
+				<QIcon name="mix" />
+				{slip.speaker}&apos;s slip, and the repair
+			</p>
+			<div className="q-forms !mt-2.5">
+				<div className="q-form">
+					<span className="w !text-[22px]" lang="sk">
+						<s className="text-ink-4 decoration-[var(--q-dash)]">{slip.wrong}</s>
+					</span>
+					<small>what {slip.speaker} wrote</small>
+				</div>
+				<QIcon name="arrow" className="arr" />
+				<div className="q-form">
+					<span className="w !text-[22px]" lang="sk">
+						<u>{slip.right}</u>
+					</span>
+					<small>what the line needs</small>
+				</div>
+			</div>
+			<p className="q-t2">{slip.rule}</p>
+		</aside>
+	);
+}
+
 function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: string[]; onTap: (key: string) => void; onDone?: () => void }) {
 	const [playing, setPlaying] = useState<number | null>(null);
 	const [all, setAll] = useState(false);
@@ -403,6 +439,8 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 	const [popover, setPopover] = useState<{ sentence: number; token: number } | null>(null);
 	const stop = useRef(false);
 	const sentenceRefs = useRef<(HTMLElement | null)[]>([]);
+	const slip = story.slip;
+	const slipAt = slip?.sentence;
 
 	// Play all: sentence after sentence, the one being read in the accent color.
 	const playAll = async () => {
@@ -520,51 +558,57 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 										{block.speaker}
 									</p>
 								)}
-								<p className={cn("font-prose text-foreground [&_[data-word]]:!py-0", large ? "text-[24px] leading-[1.6] max-sm:text-[21px]" : "text-[21px] leading-[1.6] max-sm:text-[19px]")} lang="sk">
-									{block.sentences.map(({ sentence: s, index: i }) => (
-										<span
-											key={i}
-											ref={(el) => {
-												sentenceRefs.current[i] = el;
-											}}
-											className={cn("transition-colors duration-150", playing === i && "text-teal-2")}
-											data-testid="read-sentence"
-										>
-											{groupTokens(s.tokens).map((g, gi) =>
-												g.space ? (
-													<span key={gi}>{s.tokens[g.indexes[0]!]!.text}</span>
-												) : (
-													<span key={gi} className="whitespace-nowrap">
-														{g.indexes.map((j) => {
-															const t = s.tokens[j]!;
-															return t.word ? (
-																<Word
-																	key={j}
-																	token={t}
-																	looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
-																	open={popover?.sentence === i && popover.token === j}
-																	onOpen={() => {
-																		setPopover({ sentence: i, token: j });
-																		onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
-																		sfx.tap();
-																	}}
-																	onClose={() => setPopover(null)}
-																/>
-															) : (
-																<span key={j}>{t.text}</span>
-															);
-														})}
-													</span>
-												),
-											)}{" "}
-										</span>
-									))}
-								</p>
-								{showTranslation && (
-									<p className="mt-2 text-[15px] leading-relaxed text-ink-3 select-text" data-testid="read-translation">
-										{block.sentences.map((s) => s.sentence.en).join(" ")}
-									</p>
-								)}
+								{cutAfter(block.sentences, slipAt).map((part, pi) => (
+									<div key={pi} className={pi > 0 ? "mt-3" : undefined}>
+										<p className={cn("font-prose text-foreground [&_[data-word]]:!py-0", large ? "text-[24px] leading-[1.6] max-sm:text-[21px]" : "text-[21px] leading-[1.6] max-sm:text-[19px]")} lang="sk">
+											{part.map(({ sentence: s, index: i }) => (
+												<span
+													key={i}
+													ref={(el) => {
+														sentenceRefs.current[i] = el;
+													}}
+													className={cn("transition-colors duration-150", playing === i && "text-teal-2")}
+													data-testid="read-sentence"
+												>
+													{slipAt === i && <span aria-hidden data-testid="read-slip-mark" className="mr-2 inline-block h-[0.85em] w-[3px] translate-y-[0.12em] rounded-full bg-teal" />}
+															{groupTokens(s.tokens).map((g, gi) =>
+														g.space ? (
+															<span key={gi}>{s.tokens[g.indexes[0]!]!.text}</span>
+														) : (
+															<span key={gi} className="whitespace-nowrap">
+																{g.indexes.map((j) => {
+																	const t = s.tokens[j]!;
+																	return t.word ? (
+																		<Word
+																			key={j}
+																			token={t}
+																			looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
+																			open={popover?.sentence === i && popover.token === j}
+																			onOpen={() => {
+																				setPopover({ sentence: i, token: j });
+																				onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
+																				sfx.tap();
+																			}}
+																			onClose={() => setPopover(null)}
+																		/>
+																	) : (
+																		<span key={j}>{t.text}</span>
+																	);
+																})}
+															</span>
+														),
+													)}{" "}
+												</span>
+											))}
+										</p>
+										{slip && part.some(({ index }) => index === slip.sentence) && <SlipNote slip={slip} />}
+										{showTranslation && (
+											<p className="mt-2 text-[15px] leading-relaxed text-ink-3 select-text" data-testid="read-translation">
+												{part.map((s) => s.sentence.en).join(" ")}
+											</p>
+										)}
+									</div>
+								))}
 							</div>
 						))}
 					</div>

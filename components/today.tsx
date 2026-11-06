@@ -32,7 +32,9 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { DaySplit } from "@/components/day-split";
 import { switchLanguage } from "@/components/switch-language";
 import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
-import type { DayLanguage, LanguageDay, PlanTask, UnitState } from "@/src/core";
+import type { DatedSceneView, DayLanguage, LanguageDay, LineState, PlanTask, StageView, UnitState } from "@/src/core";
+import { TodayLineRow } from "@/components/today-line-row";
+import { WhereYouAre } from "@/components/where-you-are";
 
 /** One thing to do today: a task in a language's plan, or setting a new language up. */
 interface Step {
@@ -54,8 +56,12 @@ function bare(title: string): string {
 	return title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 }
 
-export function Today({ initialConfigured, initialSummary = null, initialDay = null }: { initialConfigured: boolean; initialSummary?: Summary | null; initialDay?: LanguageDay | null }) {
+export function Today({ initialConfigured, initialSummary = null, initialDay = null, initialLine = null, initialStage = null, initialDated = null }: { initialConfigured: boolean; initialSummary?: Summary | null; initialDay?: LanguageDay | null; initialLine?: LineState | null; initialStage?: StageView | null; initialDated?: { next: DatedSceneView | null; awaitingOutcome: DatedSceneView[] } | null }) {
 	const router = useRouter();
+	const line = initialLine;
+	const stage = initialStage;
+	const dated = initialDated;
+	const soonest = dated?.awaitingOutcome[0] ?? dated?.next ?? null;
 	const [s, setS] = useState<Summary | null>(initialSummary);
 	const [day, setDay] = useState<LanguageDay | null>(initialDay);
 	const [splitting, setSplitting] = useState(false);
@@ -265,7 +271,12 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 								</p>
 							)}
 
-							<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Today's plan">
+							{line && (
+									<div className="mt-5 q-rise" style={{ animationDelay: ".04s" }} data-testid="today-line">
+										<TodayLineRow line={line} />
+									</div>
+								)}
+								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Today's plan">
 								<h2 className="q-sh">
 									<QIcon name="arrow" />
 									Today&apos;s plan
@@ -321,6 +332,8 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 									))}
 								{s && total > 0 && done >= total && (groups ? <AllDone minutes={day!.practiced} goal={day!.minutes} next={s.next} className="mt-2" /> : <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} className="mt-2" />)}
 							</section>
+
+							<WhereYouAre stage={stage} scene={soonest} />
 
 							{s && (
 								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".08s" }} data-testid="today-so-far" aria-label="Today so far">

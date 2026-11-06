@@ -410,6 +410,60 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Each change keeps the version before in `trash/` (E1). A removed sheet moves there too. The corpus export writes `cheatsheets.json`.
 - The sheet is the learner's own curated text. Its words go to Review through the dictionary (`cheatsheetToReview`, 30 at a time), so a mistake in a generated line never becomes a drill; the merge does not judge a phrase, so a wrong one comes in like a right one.
 - Open: a "write me a cheatsheet for…" request inside the app (Cheap slot, cached, priced), and a custom Speak scene from a sheet.
+### E54. Today's line is heard cold, heard again after practice, and counts rather than grades (2026-11-05, branch `feat/daily-hooks`)
+
+**Why:** the creator research ([research/creator-hooks.md](research/creator-hooks.md), proposal 1) found that a payoff which arrives after an attempt holds attention, and that a before-and-after from the learner's own record shows change without a grade. The line is a daily first listen of about a minute, with no text shown before the answer.
+
+**How to apply:**
+- One sentence a day, from the dictionary's verified examples: five to twelve words, one or two glossed words the learner has not met (`src/core/line.ts`, `pickLine`). The day's sentence is seeded by language and day, and once heard it is kept in `line/log.jsonl`, so it never changes within the day. A sentence heard in the last fourteen days is not picked again.
+- Nothing is shown before the answer, except the play buttons. The audio is the shared Listen audio (E1), and no model is called.
+- The evening replay is offered only after the learner has practiced that day (XP, reps or a review), so the line never asks for a return visit by itself.
+- The score counts words typed exactly. A word typed without its accent is marked apart and is not counted as caught. It is shown as "3 of 9 words", never as a grade or XP (E31).
+- Time on the page counts as listening minutes (P9).
+- The line is a task in the same frame as Listen and the lessons (`/line`, 2026-11-06): the sentence plays as the card opens, nothing is shown before the answer, and the result is the count as the figure with every word marked (caught in full, missed faded, a missing mark underlined). On Today it is a row above the plan, not a card, so the plan's Start stays the one next step (E4a).
+- The last 14 days are a chart of two marks a day, the morning in the app's de-emphasis gray and the evening in the teal, joined when both are in. That is the emphasis form of the dataviz method: the pair passes the CVD and normal-vision separation checks on both themes, and the legend and today's direct labels carry identity besides the color. The same numbers sit in a table behind one button, so nothing is reachable only through the chart.
+
+### E55. The stage sentence names the limit with the milestones' own numbers, and says when a number is an estimate (2026-11-05, branch `feat/daily-hooks`)
+
+**Why:** proposal 4 of the same research: the learner should be able to see which gap limits them without reading a table. The milestones already measure the words gap and the speed gap; they did not say which one binds on Today.
+
+**How to apply:**
+- One sentence on Today, built from `estimateMilestone` for the nearest unreached milestone (`src/core/stage.ts`). It adds no measurement of its own.
+- A speed that comes from the level's ladder, not from the learner's Listen or Watch sessions, is said to be an estimate in a second line (P8).
+- When every milestone is reached, the sentence says so and names nothing. With no milestones at all, it says there is nothing to measure yet.
+- The sentence sits in one "Where you are" card on Today (2026-11-06) with two meters under it, words and speed, that carry the same numbers: the binding gap is the teal one, the need is the marker on the track (the `.q-bar` meter the week's balance already uses), and an estimated speed is marked "est." on the meter as well as in the line. A dated scene (E52) sits in the same card. The card has no primary button; "See the evidence" is a ghost link to Milestones.
+
+### E56. Watch lines come back in Listen (2026-11-05, branch `feat/daily-hooks`)
+
+**Why:** proposal 7 in [research/creator-hooks.md](research/creator-hooks.md): a line the learner missed in a video is the most useful Listen sentence they can get, and spacing brings it back while it can still be learned.
+
+**How to apply:**
+- A line not understood on the first unaided listen in Watch is queued per profile (`data/profiles/<language>/watch-reps.json`, `src/store/watch-reps.ts`). It comes back tomorrow, then in 3 and 7 days. An understood answer moves it on; a miss or a peeked answer sends it back to tomorrow; the third understood answer, at the 7-day check, retires it (`src/core/watch-reps.ts`).
+- At most three due lines join a Listen session, oldest due first. They are typed like any Listen sentence, labelled "From a video you watched", and graded against the stored line.
+- Lines from foreign captions (Czech for Slovak, E41) do not come back: they would be played in another language.
+- The audio is the existing Listen path (E1). No model is called, and no near-miss meaning is asked for.
+- In Listen the line carries its source (`ListenItem.source`): a "From a video you watched" pill and the video's title, in place of the new-words line.
+
+### E57. Catch the mistake: a separate exercise, not a planted slip in episodes (2026-11-06, branch `feat/daily-hooks`)
+
+**Why:** proposal 6 wanted the learner's own confusion to show up in a story. A wrong word inside a Read episode teaches the wrong form to anyone who skims, and the episode should be correct Slovak. So the mistake moved out of the stories into an exercise of its own.
+
+**How to apply:**
+- The pair comes from the learner's mix-ups on record (E24) that are verified pairs (E11), missed at least twice, and not used in the last five items (`chooseSlip` in `src/core/reading-slip.ts`).
+- The Cheap slot writes a three-sentence item with the wrong word, and `verifySlip` must accept it before it is kept (E29). Kept items live in `data/profiles/<language>/catch-mistake.json`; a waiting item is served with no new call.
+- The learner presses Start, taps the wrong word, types the right one, and then sees the whole item with its translations and the rule. The typed word is graded with `compareAnswer`. The page is `/catch`, linked from "Words you mix up" on Today.
+- Read episodes carry no planted mistake. An episode written with a slip earlier still reads normally.
+- The series lead is Martin ("Martin in Bratislava", `curriculum/slovak/world.json`). The internal `robo` series id is unchanged.
+
+### E58. A scene with a date: a custom milestone with a day and a line after it, never an invented speed (2026-11-05, branch `feat/daily-hooks`)
+
+**Why:** proposal 3: a dated, concrete scene makes the future self visible. The app must not invent a speed or a date to give one.
+
+**How to apply:**
+- A dated scene is a custom milestone with a `date` (`src/core/dated-scene.ts`). Days left come from the learner's own day key. "On track" or "behind" compares the milestone's estimate at the measured pace with the date. With no measured speed or pace, the app gives no date and says what measures it.
+- The date is chosen with quick choices and a month-and-year stepper, with no native date input (E4). A date in the past is refused before anything runs.
+- The line after the date is written once, with no XP and no stamp (E31). Without a model, the rules map the learner's words (`model: "rule"`), so adding a scene needs no AI.
+- On Today the scene is a row inside the "Where you are" card (E55): the days left as the figure, the status as a word next to the title, the app's line under it, and links to Speak and, once the date has passed with no line written, to Milestones. Weekly rehearsal is not built yet.
 
 ## Working rules (how work reaches the repo)
 

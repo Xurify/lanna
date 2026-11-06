@@ -28,7 +28,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
+import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 
 interface Rep {
 	item: ListenItem;
@@ -330,7 +330,16 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						title="Listen"
 						sub={`Sentence ${index + 1} of ${total}`}
 					>
-						<p className="mb-4 font-ui text-[13px] text-ink-3">{item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
+						{item.source ? (
+							<p className="mb-4 flex min-w-0 items-center gap-2 font-ui text-[13px] text-ink-3" data-testid="listen-source">
+								<span className="q-pill shrink-0">From a video you watched</span>
+								<span className="truncate" title={item.source.title}>
+									{item.source.title}
+								</span>
+							</p>
+						) : (
+							<p className="mb-4 font-ui text-[13px] text-ink-3">{isWatchItem(item.id) ? "From a video you watched" : item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
+						)}
 						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
 							{!current ? "Type what you hear" : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : "It says…"}
 						</h2>
@@ -431,7 +440,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 											))}
 										</ul>
 									)}
-									{current && (
+									{current && item.translation && (
 										<p data-no-word-lookup="true" className="mt-3 font-prose text-base text-ink-2" data-testid="listen-translation">
 											{item.translation}
 										</p>

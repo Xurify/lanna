@@ -60,6 +60,9 @@ export interface ListenItem {
 	/** Share of the sentence's words that count as known (0..1). */
 	coverage: number;
 	words: number;
+	/** Where the sentence came from when not from the dictionary: a line the
+	 *  learner missed in a video (src/core/watch-reps.ts). */
+	source?: { kind: "watch"; title: string };
 }
 
 export interface ListenPlan {

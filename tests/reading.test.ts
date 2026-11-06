@@ -361,9 +361,9 @@ describe("the story bible (curriculum/slovak/world.json)", () => {
 		beats: Record<string, string>;
 	};
 
-	it("carries six cast members starting with Robo, six places, and one beat per chapter", () => {
+	it("carries six cast members starting with Martin, six places, and one beat per chapter", () => {
 		assert.equal(bible.cast.length, 6);
-		assert.equal(bible.cast[0]!.name, "Robo", "the lead is listed first");
+		assert.equal(bible.cast[0]!.name, "Martin", "the lead is listed first");
 		assert.ok(bible.cast.every((c) => c.name.length > 0 && c.role.length > 0 && /^[A-ZÁÄÔĽŔŠČŤŽÝ]/.test(c.name)), "Slovak names, each with a one-line role");
 		assert.ok(bible.cast.every((c) => c.gender === "f" || c.gender === "m"));
 		assert.ok(bible.cast.every((c) => ["child", "young", "adult", "old"].includes(c.age)));
@@ -374,15 +374,15 @@ describe("the story bible (curriculum/slovak/world.json)", () => {
 		for (const beat of Object.values(bible.beats)) assert.match(beat.trim(), /\.$/, "each beat is one closed sentence");
 	});
 
-	it("seeds the Robo brief with the cast and the chapter's beat; stand-alone pieces leave it out", async () => {
+	it("seeds the Martin brief with the cast and the chapter's beat; stand-alone pieces leave it out", async () => {
 		const { loadWorld } = await import("../src/server/world.ts");
 		const world = loadWorld();
 		assert.ok(world, "the Slovak profile has a bible");
 		const brief = reading.storyBrief(reading.knownWords(), [], [], new Date(), "robo", world);
-		assert.match(brief.prompt, /episode 1 of the Robo series/, "the bible names the lead");
-		assert.match(brief.prompt, /Series bible, keep them as written — the cast: Robo \(man, young\) the lead/);
+		assert.match(brief.prompt, /episode 1 of the Martin series/, "the bible names the lead");
+		assert.match(brief.prompt, /Series bible, keep them as written — the cast: Martin \(man, young\) the lead/);
 		assert.match(brief.prompt, /Zuzka/);
-		assert.match(brief.prompt, /This episode's beat: "Robo arrives in Bratislava with two suitcases and meets Zuzka in the stairwell/, "the current chapter's beat (hello) is in the brief");
+		assert.match(brief.prompt, /This episode's beat: "Martin arrives in Bratislava with two suitcases and meets Zuzka in the stairwell/, "the current chapter's beat (hello) is in the brief");
 		assert.match(brief.prompt, /Miletičova market/, "the bible's places are in the brief");
 		const diary = reading.storyBrief(reading.knownWords(), [], [], new Date(), "diary", world);
 		assert.doesNotMatch(diary.prompt, /Series bible/, "a stand-alone piece uses no series bible");

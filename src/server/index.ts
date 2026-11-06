@@ -68,6 +68,7 @@ export * from "./personal.ts";
 export * from "./exam.ts";
 export * from "./why.ts";
 export * from "./reading.ts";
+export * from "./catch-mistake.ts";
 export * from "./listen.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
@@ -78,6 +79,7 @@ export * from "./discover.ts";
 export * from "./fragments.ts";
 export { videoStore } from "../store/videos.ts";
 export * from "./milestones.ts";
+export * from "./dated-scene.ts";
 export * from "./placement.ts";
 export { placementStore } from "../store/placement.ts";
 export { storyStore } from "../store/stories.ts";
@@ -114,3 +116,5 @@ export {
 	revokeDevice,
 } from "./remote-access-store.ts";
 export * from "./daylog.ts";
+export * from "./line.ts";
+export * from "./stage.ts";
