@@ -39,6 +39,10 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | Камера не работает. | KA-mye-ra nye ra-BO-ta-yet | The camera doesn't work. | |
 | Он странный. / Она странная. | on STRAN-nyy / a-NA STRAN-na-ya | It's strange. | m animal / f animal |
 | Всё в порядке. | FSYO f pa-RYAT-kye | Everything is fine. | |
+| Что ты видишь? | SHTO ty VEE-deesh? | What do you see? | |
+| Я вижу кошку. | ya VEE-zhoo KOSH-koo | I see a cat. | Я вижу + the thing |
+| Уши другие. | OO-shy droo-GEE-ye | The ears are different. | |
+| Глаза чёрные. | gla-ZA CHYOR-ny-ye | The eyes are black. | |
 
 ## 3. Jobs and moving around
 
@@ -58,6 +62,9 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | Кто лечит? | KTO LYE-cheet? | Who is treating? | |
 | Я лечу. | ya lee-CHOO | I'm treating (it). | also means "I'm flying" |
 | Давай поменяемся. | da-VAI pa-mee-NYA-yem-sya | Let's swap jobs. | |
+| Ты смотришь камеры? | ty SMOT-reesh KA-mye-ry? | Are you watching the cameras? | |
+| Я иду налево. | ya ee-DOO na-LYE-va | I'm going left. | направо (na-PRA-va): right |
+| Где пациент? | GDYE pa-tsy-YENT? | Where is the patient? | |
 
 ## 4. Emergencies and danger
 
@@ -78,6 +85,10 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | Мало времени! | MA-la VRYE-mee-nee | Not much time! | |
 | Оно здесь! | a-NO ZDYES' | It's here! | оно for a thing you can't name |
 | Я умер. / Я умерла. | ya OO-myer / ya oo-myer-LA | I died. | m / f |
+| Я тушу огонь. | ya too-SHOO a-GON' | I'm putting out the fire. | |
+| Не стреляй! | nye stree-LYAI | Don't shoot! | |
+| Щупальца! | SHCHOO-pal'-tsa | Tentacles! | |
+| Зелёная слизь! | zee-LYO-na-ya SLEES' | Green slime! | suggestion |
 
 ## 5. Sanity, coffee, money and shopping
 
@@ -97,6 +108,10 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | Что купим? | SHTO KOO-peem? | What shall we buy? | |
 | Давай купим кофе. | da-VAI KOO-peem KO-fye | Let's buy coffee. | |
 | Купи шокер. | koo-PEE SHO-ker | Buy a taser. | шокер is a suggestion |
+| У меня мало рассудка. | oo mee-NYA MA-la ra-SOOT-ka | My sanity is low. | suggestion |
+| Сколько у тебя рассудка? | SKOL'-ka oo tee-BYA ra-SOOT-ka? | How much sanity do you have? | suggestion |
+| У нас есть деньги? | oo NAS YEST' DYEN'-gee? | Do we have money? | |
+| Кто берёт шокер? | KTO bee-RYOT SHO-ker? | Who takes the taser? | |
 
 ## 6. Reactions and after the shift
 
@@ -116,6 +131,10 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | Ещё одну смену? | yee-SHCHO ad-NOO SMYE-noo? | One more shift? | |
 | Давай! | da-VAI | Let's go! | |
 | Всё, хватит. | FSYO, KHVA-teet | That's it, enough. | |
+| Что это было?! | SHTO E-ta BY-la? | What was that?! | |
+| Я боюсь. | ya ba-YUS' | I'm afraid. | |
+| Круто! | KROO-ta | Cool! | |
+| Я ошибся. / Я ошиблась. | ya a-SHYP-sya / ya a-SHYB-las' | I made a mistake. | m / f |
 
 ## 7. Learning while playing
 
@@ -132,6 +151,7 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | Правильно? | PRA-veel'-na? | Is that right? | |
 | Ещё раз. | yee-SHCHO RAS | Once more. | |
 | Напиши в чат. | na-pee-SHY f CHAT | Write it in the chat. | |
+| Что это значит? | SHTO E-ta ZNA-cheet? | What does that mean? | |
 
 ## Numbers
 
@@ -185,6 +205,7 @@ Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what
 | сердце | SYER-tse | heart |
 | крыло | kry-LO | wing |
 | шерсть | SHERST' | fur |
+| лицо | lee-TSO | face |
 
 ## Animals
 
