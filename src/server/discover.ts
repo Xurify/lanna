@@ -28,6 +28,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import {
 	channelImage,
+	awaitingCaptions,
 	extractChannels,
 	extractVideos,
 	judgeSpoken,
@@ -488,7 +489,12 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		const queue = new Map<string, { found: FoundVideo; sources: Set<PickSource>; query?: string }>();
 		const add = (v: FoundVideo, source: PickSource, query?: string) => {
 			const kept = scans[v.id];
-			if (kept) {
+			if (kept && awaitingCaptions(kept, now)) {
+				// Its captions may have arrived since: check it again, keeping what found it.
+				const q = queue.get(v.id) ?? { found: { ...v, at: kept.publishedAt }, sources: new Set<PickSource>(kept.sources), ...(kept.query ? { query: kept.query } : {}) };
+				q.sources.add(source);
+				queue.set(v.id, q);
+			} else if (kept) {
 				if (!kept.sources.includes(source)) kept.sources = [...kept.sources, source];
 				if (source === "creator" && v.at && !kept.publishedAt) kept.publishedAt = v.at;
 				return;
@@ -530,7 +536,10 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		s.total = todo.length;
 		await pool(todo, 4, async (q) => {
 			try {
-				scans[q.found.id] = await scanVideo(q.found, [...q.sources], { lexicon, k, now, query: q.query, signal });
+				const prev = scans[q.found.id];
+				const next = await scanVideo(q.found, [...q.sources], { lexicon, k, now, query: q.query, signal });
+				// Still no captions: the wait is counted from the first check.
+				scans[q.found.id] = prev?.skip === "no-captions" && next.skip === "no-captions" ? { ...next, scannedAt: prev.scannedAt } : next;
 			} finally {
 				s.done++;
 			}
@@ -611,9 +620,16 @@ export function discoverState(now = new Date()): DiscoverStateView {
 	const all = picks(now);
 	const saved = new Set(f.creators.map((c) => c.id));
 	const pics = discoverStore.avatars();
+	const dismissed = discoverStore.dismissed();
 	const picture = (id: string) => (pics[id] ? { avatar: pics[id] } : {});
 	return {
-		creators: f.creators.map((c) => ({ ...c, picks: all.filter((p) => p.channelId === c.id).length, ...picture(c.id) })),
+		creators: f.creators.map((c) => ({
+			...c,
+			picks: all.filter((p) => p.channelId === c.id).length,
+			tooLong: scans.filter((v) => v.channelId === c.id && v.skip === "too-long" && !dismissed.has(v.id)).length,
+			awaitingCaptions: scans.filter((v) => v.channelId === c.id && awaitingCaptions(v, now)).length,
+			...picture(c.id),
+		})),
 		picks: all.slice(0, 40),
 		suggestions: suggestCreators(scans, saved, yt.subscriptions?.channels)
 			.slice(0, SUGGESTIONS_SHOWN)

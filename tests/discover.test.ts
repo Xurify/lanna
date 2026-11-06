@@ -290,7 +290,21 @@ describe("the service", () => {
 
 		const before = calls.filter((c) => c.includes("/youtubei/v1/player")).length;
 		await discover.refreshDiscover({ now: new Date("2026-11-05T13:00:00Z"), keepReady: false });
-		assert.equal(calls.filter((c) => c.includes("/youtubei/v1/player")).length, before, "a video checked once is not fetched again");
+		assert.equal(calls.filter((c) => c.includes("/youtubei/v1/player")).length, before + 1, "a video checked once is not fetched again, except the new one that had no captions yet");
+
+		// A new upload's automatic captions arrive later: it is checked again, and only while it is new.
+		const noCaptions = { ...discoverStore.scans()["aaaaaaaaaaa"]!, publishedAt: "2026-11-05T01:00:00Z" };
+		discoverStore.putScans({ ...discoverStore.scans(), aaaaaaaaaaa: noCaptions });
+		const original = PLAYERS["aaaaaaaaaaa"]!;
+		PLAYERS["aaaaaaaaaaa"] = player("aaaaaaaaaaa", { title: "Varíme doma", channelId: "UCaaaaaaaaaaaaaaaaaaaaaa", channel: "Kuchár", tracks: [{ lang: "sk", asr: true }] });
+		try {
+			await discover.refreshDiscover({ now: new Date("2026-11-05T14:00:00Z"), keepReady: false });
+			assert.equal(discoverStore.scans()["aaaaaaaaaaa"]?.skip, undefined, "the captions that arrived were found");
+			assert.equal(discoverStore.scans()["aaaaaaaaaaa"]?.trackLang, "sk");
+		} finally {
+			PLAYERS["aaaaaaaaaaa"] = original;
+			discoverStore.putScans({ ...discoverStore.scans(), aaaaaaaaaaa: noCaptions });
+		}
 	});
 
 	test("a dismissed pick is gone; forgetting YouTube drops what only it found; keep one ready needs a model", () => {
@@ -303,4 +317,15 @@ describe("the service", () => {
 		assert.ok(scans["HHJXg-NBrEo"], "a creator's video stays");
 		assert.equal(scans["ZY7eJbQZmL4"], undefined, "a video only the recommendations found is dropped");
 	});
+});
+
+test("awaitingCaptions: a fresh upload without captions is looked at again; an old one, or one with captions, is not", () => {
+	const now = new Date("2026-11-06T12:00:00Z");
+	const at = "2026-11-06T01:00:00Z";
+	assert.equal(core.awaitingCaptions({ skip: "no-captions", publishedAt: at, scannedAt: at }, now), true);
+	assert.equal(core.awaitingCaptions({ skip: "no-captions", publishedAt: "2026-11-01T01:00:00Z", scannedAt: at }, now), false, "old upload");
+	assert.equal(core.awaitingCaptions({ skip: "no-captions", scannedAt: at }, now), true, "no publishing date: counted from the first check");
+	assert.equal(core.awaitingCaptions({ skip: "no-captions", scannedAt: "2026-11-01T01:00:00Z" }, now), false);
+	assert.equal(core.awaitingCaptions({ publishedAt: at, scannedAt: at }, now), false);
+	assert.equal(core.awaitingCaptions({ skip: "too-long", publishedAt: at, scannedAt: at }, now), false);
 });

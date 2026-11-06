@@ -88,6 +88,19 @@ export interface ScannedVideo {
 	query?: string;
 }
 
+/** YouTube makes a new upload's automatic captions hours after it is
+ *  published; a video found without captions is looked at again until it is
+ *  this old (counted from when it was first checked when the date of
+ *  publishing is not known, as when a channel's page stands in for its feed). */
+export const CAPTIONS_WAIT_MS = 3 * 86_400_000;
+
+/** A fresh upload that had no captions when it was checked. */
+export function awaitingCaptions(v: Pick<ScannedVideo, "skip" | "publishedAt" | "scannedAt">, now: Date): boolean {
+	if (v.skip !== "no-captions") return false;
+	const age = now.getTime() - Date.parse(v.publishedAt ?? v.scannedAt);
+	return age >= 0 && age < CAPTIONS_WAIT_MS;
+}
+
 /** A video on a YouTube page or in an export, before it is checked. */
 export interface FoundVideo {
 	id: string;
@@ -551,7 +564,7 @@ export type YouTubeListName = "history" | "recommended" | "subscriptions";
 
 /** What GET /api/watch/discover answers (src/server/discover.ts discoverState). */
 export interface DiscoverStateView {
-	creators: Array<Creator & { picks: number; avatar?: string }>;
+	creators: Array<Creator & { picks: number; avatar?: string; /** Checked but not offered: over the length of a session. */ tooLong: number; /** Videos without captions that are looked at again (see awaitingCaptions). */ awaitingCaptions: number }>;
 	picks: PickedVideo[];
 	suggestions: CreatorSuggestion[];
 	keepReady: boolean;

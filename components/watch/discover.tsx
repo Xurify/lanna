@@ -15,7 +15,7 @@ import { Toggle } from "@/components/settings/controls";
 import { timeAgo } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
 import { Thumb } from "@/components/watch/thumb";
-import { coverageBand, formatClock, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, takeoutKind, videoUrl, type DiscoverStateView, type PickedVideo } from "@/src/core";
+import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, takeoutKind, videoUrl, type DiscoverStateView, type PickedVideo } from "@/src/core";
 
 type State = DiscoverStateView;
 
@@ -259,6 +259,8 @@ export function CreatorsSection({ d }: { d: Discover }) {
 								<span className="block truncate font-prose text-[13px] text-ink-3">
 									{c.handle ? `${c.handle} · ` : ""}
 									{c.picks === 0 ? "no picks right now" : c.picks === 1 ? "1 pick" : `${c.picks} picks`}
+									{c.awaitingCaptions > 0 && ` · ${c.awaitingCaptions} without captions yet`}
+									{c.tooLong > 0 && ` · ${c.tooLong} over ${MAX_VIDEO_SEC / 60} min`}
 								</span>
 							</span>
 							{confirming === c.id ? (
