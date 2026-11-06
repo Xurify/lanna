@@ -381,7 +381,7 @@ export function resolveWord(lexicon: Lexicon, form: string, known: Set<string>, 
 /** Tokenize one sentence and gloss every word. A word the dictionary
  *  lacks keeps the story's own gloss when the model introduced it. */
 /** The series cast: never vocabulary, whatever the dictionary says. */
-export const STORY_NAMES: ReadonlySet<string> = new Set(["robo"]);
+export const STORY_NAMES: ReadonlySet<string> = new Set(["martin"]);
 
 /** The proper names in a text: capitalised words inside a sentence (not
  *  its first word) that no dictionary form claims — Zuzka, Petržalka. A
@@ -414,7 +414,7 @@ export function glossSentence(sk: string, en: string, lexicon: Lexicon | null, k
 		const capital = t.text.charAt(0) !== t.text.charAt(0).toLocaleLowerCase(tag());
 		const name = capital && (names.has(foldDiacritics(t.text.toLocaleLowerCase(tag()))) || !first);
 		// A capitalised word inside the sentence, or one the text showed to
-		// be a name (Robo, Zuzka, Petržalka), is only claimed by a listed
+		// be a name (Martin, Zuzka, Petržalka), is only claimed by a listed
 		// dictionary form, never by a stem guess.
 		const resolved = lexicon ? resolveWord(lexicon, t.text, known, { stem: !name }) : undefined;
 		const grammar = grammarWord(t.text);
@@ -522,8 +522,8 @@ export function questionLine(level: Cefr): string {
 }
 
 /** The brief for one text. `previous` lists the shelf (every kept story):
- *  Robo episodes count the series, the others' topics are named so the
- *  new text is about something else. A Robo episode is seeded from the
+ *  series episodes count the series, the others' topics are named so the
+ *  new text is about something else. A series episode is seeded from the
  *  language's story bible (`world.json`, src/server/world.ts):
  *  its cast, its places, and the chapter the learner is in as this
  *  episode's plot beat. */
@@ -855,7 +855,7 @@ export function readingState(tz?: number, now = new Date()): ReadingState {
 
 /** The story to read: an unread episode of the current chapter first (the
  *  arc's story step), else the shelf's best fit, else a new one written
- *  now — the chapter's episode when it has none yet, else a Robo episode
+ *  now — the chapter's episode when it has none yet, else a series episode
  *  or the genre the shelf lacks most. */
 export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
 	const pick = pickNext();

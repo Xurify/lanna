@@ -48,8 +48,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
+import { dateInWords, daysLeftWords, GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type DatedSceneView, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
+import { DatePicker } from "@/components/milestones/date-picker";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 	"monitor-play": MonitorPlayIcon,
@@ -116,6 +117,10 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 	const [open, setOpen] = useState<string | null>(null);
 	const [sourcesOpen, setSourcesOpen] = useState(false);
 	const [queued, setQueued] = useState<Set<string>>(new Set());
+	const [datedText, setDatedText] = useState("");
+	const [datedDate, setDatedDate] = useState<string | null>(null);
+	const [datedAdding, setDatedAdding] = useState(false);
+	const [datedError, setDatedError] = useState<string | null>(null);
 
 	const reload = useCallback(async () => {
 		try {
@@ -152,6 +157,32 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 		const res = await fetch(`/api/milestones?id=${encodeURIComponent(id)}&tz=${new Date().getTimezoneOffset()}`, { method: "DELETE" });
 		const body = (await res.json().catch(() => null)) as { report?: MilestonesReport } | null;
 		if (body?.report) setReport(body.report);
+	};
+	const addDated = async () => {
+		const t = datedText.trim();
+		if (!t || !datedDate || datedAdding) return;
+		setDatedAdding(true);
+		setDatedError(null);
+		try {
+			const res = await fetch(`/api/milestones/dated?tz=${new Date().getTimezoneOffset()}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: t, date: datedDate }) });
+			const body = (await res.json()) as { message?: string; id?: string; report?: MilestonesReport };
+			if (!res.ok || !body.report) throw new Error(body.message ?? `HTTP ${res.status}`);
+			setReport(body.report);
+			setDatedText("");
+			setDatedDate(null);
+			if (body.id) setOpen(body.id);
+		} catch (err) {
+			setDatedError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setDatedAdding(false);
+		}
+	};
+	const saveOutcome = async (id: string, line: string): Promise<string | null> => {
+		const res = await fetch(`/api/milestones/dated?tz=${new Date().getTimezoneOffset()}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, outcome: line }) });
+		const body = (await res.json().catch(() => null)) as { message?: string; report?: MilestonesReport } | null;
+		if (!res.ok || !body?.report) return body?.message ?? `HTTP ${res.status}`;
+		setReport(body.report);
+		return null;
 	};
 	const queue = async (slugs: string[]) => {
 		const res = await fetch("/api/review/enqueue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slugs }) });
@@ -190,7 +221,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 
 				<ol className="mt-6 flex flex-col gap-3" data-testid="milestone-list">
 					{sorted.map((m) => (
-						<MilestoneCard key={m.def.id} m={m} facts={facts} goals={report?.goals ?? {}} open={open === m.def.id} onToggle={() => setOpen(open === m.def.id ? null : m.def.id)} onRemove={m.def.custom ? () => void remove(m.def.id) : undefined} />
+						<MilestoneCard key={m.def.id} m={m} facts={facts} goals={report?.goals ?? {}} open={open === m.def.id} onToggle={() => setOpen(open === m.def.id ? null : m.def.id)} onRemove={m.def.custom ? () => void remove(m.def.id) : undefined} scene={report?.scenes[m.def.id]} onSaveOutcome={(line) => saveOutcome(m.def.id, line)} />
 					))}
 				</ol>
 
@@ -205,20 +236,39 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 							void add();
 						}}
 					>
-						<input
-							value={text}
-							onChange={(e) => setText(e.target.value.slice(0, MAX_CUSTOM_LENGTH))}
-							placeholder={modelReady ? "I want to be able to…" : "Turn on AI in Settings → AI models to add your own"}
-							disabled={!modelReady || adding}
-							aria-label="Your milestone"
-							className="min-h-11 min-w-0 flex-1 rounded-lg bg-card px-4 py-2.5 text-base text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-60"
-							data-testid="milestone-input"
-						/>
+						<SceneInput value={text} onChange={setText} placeholder={modelReady ? "I want to be able to…" : "Turn on AI in Settings → AI models to add your own"} disabled={!modelReady || adding} label="Your milestone" testId="milestone-input" />
 						<button type="submit" disabled={!modelReady || adding || text.trim().length < 3} className="q-btn primary h-11" data-testid="milestone-submit">
 							<PlusIcon className="q-ico" />
 							{adding ? "Estimating…" : "Estimate"}
 						</button>
 					</form>
+				</section>
+
+				{/* A scene with a date: the same text box, and the day it should work. */}
+				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="dated-add">
+					<h2 className="font-ui text-sm font-semibold text-foreground">Add a scene with a date</h2>
+					<p className="mt-1 font-prose text-sm text-muted-foreground">One scene you want to handle, in your own words, and the day you want to be ready for it. The app says whether your real pace gets you there, and asks how it went once the day has passed.</p>
+					<form
+						className="mt-3 flex flex-col gap-4"
+						onSubmit={(e) => {
+							e.preventDefault();
+							void addDated();
+						}}
+					>
+						<div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+							<SceneInput value={datedText} onChange={setDatedText} placeholder={modelReady ? "lunch with friends in the city, in the language" : "Turn on AI in Settings → AI models to add a scene"} disabled={!modelReady || datedAdding} label="Your scene" testId="dated-input" className="w-full sm:flex-1" />
+							<button type="submit" disabled={!modelReady || datedAdding || datedText.trim().length < 3 || !datedDate} className="q-btn primary h-11 w-full sm:w-auto" data-testid="dated-submit">
+								<PlusIcon className="q-ico" />
+								{datedAdding ? "Adding…" : "Add the scene"}
+							</button>
+						</div>
+						{report && <DatePicker value={datedDate} today={report.today} onChange={setDatedDate} />}
+					</form>
+					{datedError && (
+						<p role="alert" className="mt-3 font-ui text-sm text-miss">
+							{datedError}
+						</p>
+					)}
 				</section>
 
 				{report && report.nextWords.length > 0 && <NextWords words={report.nextWords} queued={queued} onQueue={queue} />}
@@ -238,7 +288,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 								<b className="text-foreground">Speed.</b> Words a minute of understanding: in Listen, the words of a sentence divided by the time from its first sound to your right answer (never less than the audio itself; replays and a peek at the text count against it). In Watch, the segments you got on the first unaided pass. Each situation demands the speaker's rate, discounted for its support: {Object.entries(SUPPORT_LINE).map(([k, v]) => `${k} (${v})`).join("; ")}. Hours to a speed follow the guided-hours ladder — {SPEED_LADDER.map((r) => `${r.level} ≈ ${r.wpm}`).join(", ")} words a minute — until eight of your own Listen sessions across a week replace it with your trend.
 							</p>
 							<p>
-								<b className="text-foreground">Dates.</b> Words grow at the deck's new words a day plus about five from Listen and Read (planned), or at the deck's real growth over the last two weeks. Speed grows with study hours at your planned minutes × days, or at your real minutes a day over the last two weeks. The milestone's date is the later of the two. Everything is an estimate, and it changes as the evidence does.
+								<b className="text-foreground">Dates.</b> Words grow at the deck's new words a day plus about five from Listen and Read (planned), or at the deck's real growth over the last two weeks. Speed grows with study hours at your planned minutes × days, or at your real minutes a day over the last two weeks. The milestone's date is the later of the two. Everything is an estimate, and it changes as the evidence does. A scene with a date is on track when the estimate at your real pace falls on or before its date; otherwise the page gives the days it falls later. With no measured speed or pace, it gives no date.
 							</p>
 							<ol className="flex flex-col gap-3">
 								{MILESTONE_SOURCES.map((s) => (
@@ -419,7 +469,7 @@ export function Timeline({ items, paceKnown = true }: { items: MilestoneEstimate
 
 // ─── One milestone ──────────────────────────────────────────────────────────
 
-function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: MilestoneEstimate; facts: LearnerFacts | null; goals: MilestonesReport["goals"]; open: boolean; onToggle: () => void; onRemove?: () => void }) {
+function MilestoneCard({ m, facts, goals, open, onToggle, onRemove, scene, onSaveOutcome }: { m: MilestoneEstimate; facts: LearnerFacts | null; goals: MilestonesReport["goals"]; open: boolean; onToggle: () => void; onRemove?: () => void; scene?: DatedSceneView; onSaveOutcome?: (line: string) => Promise<string | null> }) {
 	const st = STATUS[m.status];
 	const genre = GENRES[m.def.genre];
 	const lemmas = genreLemmas(genre);
@@ -461,7 +511,8 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 				</span>
 				<ChevronDownIcon className={cn("mt-1 size-5 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
 			</button>
-			{open && (
+			{scene && onSaveOutcome && <SceneDates scene={scene} onSave={onSaveOutcome} />}
+				{open && (
 				<div className="border-t px-4 pb-4 pt-3 font-prose text-sm leading-relaxed text-muted-foreground lh-rise" data-testid={`milestone-${m.def.id}-details`}>
 					<p className="text-foreground">{m.verdict}</p>
 					{m.missing.length > 0 && (
@@ -517,6 +568,74 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove }: { m: Miles
 				</div>
 			)}
 		</li>
+	);
+}
+
+/** A scene's date, its days and where the estimate stands. Once the date has
+ *  passed, the one line "How did it go?" saves through /api/milestones/dated. */
+function SceneDates({ scene, onSave }: { scene: DatedSceneView; onSave: (line: string) => Promise<string | null> }) {
+	const [line, setLine] = useState("");
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const save = async () => {
+		const t = line.trim();
+		if (!t || busy) return;
+		setBusy(true);
+		setError(null);
+		const failed = await onSave(t);
+		setBusy(false);
+		if (failed) setError(failed);
+	};
+	return (
+		<div className="border-t px-4 pb-4 pt-3 font-ui text-sm" data-testid={`scene-${scene.id}`}>
+			<p className="text-foreground">
+				<b>{dateInWords(scene.date)}</b> · {daysLeftWords(scene.daysLeft)}
+			</p>
+			<p className="mt-1 font-prose text-sm text-muted-foreground" data-testid={`scene-${scene.id}-status`}>
+				{scene.line}
+			</p>
+			{scene.outcome && (
+				<p className="mt-2 font-prose text-sm text-foreground" data-testid={`scene-${scene.id}-outcome`}>
+					<span className="text-muted-foreground">How it went: </span>
+					{scene.outcome.text}
+				</p>
+			)}
+			{scene.outcomeDue && (
+				<form
+					className="mt-3 flex flex-wrap items-stretch gap-2"
+					onSubmit={(e) => {
+						e.preventDefault();
+						void save();
+					}}
+				>
+					<span className="w-full font-semibold text-foreground sm:w-auto sm:self-center">How did it go?</span>
+					<SceneInput value={line} onChange={setLine} placeholder="One line" disabled={busy} label="How did it go?" testId={`scene-${scene.id}-line`} className="w-full sm:flex-1" />
+					<button type="submit" disabled={busy || line.trim().length === 0} className="q-btn sec h-11 w-full sm:w-auto" data-testid={`scene-${scene.id}-save`}>
+						{busy ? "Saving…" : "Save"}
+					</button>
+				</form>
+			)}
+			{error && (
+				<p role="alert" className="mt-2 text-miss">
+					{error}
+				</p>
+			)}
+		</div>
+	);
+}
+
+/** The custom-milestone text box, shared by "Add your own" and "Add a scene with a date". */
+function SceneInput({ value, onChange, placeholder, disabled, label, testId, className = "flex-1" }: { value: string; onChange: (text: string) => void; placeholder: string; disabled: boolean; label: string; testId: string; className?: string }) {
+	return (
+		<input
+			value={value}
+			onChange={(e) => onChange(e.target.value.slice(0, MAX_CUSTOM_LENGTH))}
+			placeholder={placeholder}
+			disabled={disabled}
+			aria-label={label}
+			className={cn("min-h-11 min-w-0 rounded-lg bg-card px-4 py-2.5 text-base text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-60", className)}
+			data-testid={testId}
+		/>
 	);
 }
 

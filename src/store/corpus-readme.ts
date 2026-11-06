@@ -26,6 +26,7 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/lessons/why-index.json\` | Which chat answered "Why?" for which sentence, so the question is paid for once | JSON |
 | \`profiles/slovak/stories/\` | Every graded story episode written for the Read task, with every word glossed, the questions and what it cost; \`index.jsonl\` lists them, \`reads.jsonl\` logs every reading | JSON + JSON Lines |
 | \`profiles/slovak/videos/\` | Every YouTube video prepared for the Watch task: the caption track as fetched (\`captions/\`), every line with its times, translation and glossed words, the pre-teach words and the questions; \`index.jsonl\` lists them, \`watches.jsonl\` logs every watching (lines understood on the first listen, replays, the check) | JSON + JSON Lines |
+| \`profiles/<language>/watch-reps.json\` | The Watch lines to hear again in Listen: each line not understood on the first listen, its step, and the day it is next due; a line retires after three understood answers | JSON |
 | \`profiles/slovak/speak/\` | Every spoken scene from the Speak task: each line (the tutor's with its meaning, yours with how it arrived), every repair prompt, the end summary and what it cost; your own recordings in \`<id>/\`; \`index.jsonl\` lists the scenes | JSON + WAV + JSON Lines |
 | \`profiles/slovak/fluency/\` | The speed strand's log: every timed re-read (words a minute) and every "say it faster" round (each pass's time, window, what was heard, how clearly it was said) | JSON Lines |
 | \`profiles/slovak/review/\` | The spaced-review deck: \`cards.json\` (every card and its memory state), \`log.jsonl\` (every answer), \`meta.json\` (settings) | JSON + JSON Lines |
@@ -178,6 +179,10 @@ story at your level, each paid for once and kept here for good.
   \`wordCount\`, \`drafts\` (2 when the first draft was too hard and was
   redone), \`usage\` (the model and tokens it cost; priced at read time in
   Settings → Spending).
+  \`slip\` is on a series episode only, when the lead says the wrong word of a
+  pair you mix up in one sentence and the right one in the next: \`sentence\`
+  (the index), \`wrong\` and \`right\` as written, the pair's \`pair\` id and \`rule\`,
+  and the \`speaker\`. Absent on every other episode.
 - \`index.jsonl\`: one line per episode (id, title, level, theme, date, word
   count, coverage, new words, model), so the library lists without opening
   every file.

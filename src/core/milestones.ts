@@ -37,6 +37,7 @@
  */
 
 import { CEFR_ORDER, GUIDED_HOURS, MIN_PACE_DAYS, type Cefr } from "./curriculum.ts";
+import type { DatedSceneView } from "./dated-scene.ts";
 
 // ─── Genres: the published coverage points ──────────────────────────────────
 
@@ -535,6 +536,10 @@ export interface MilestonesReport {
 	goals: Record<string, { title: string; done: boolean; open: boolean }>;
 	guidedHours: Record<Cefr, number>;
 	generatedAt: string;
+	/** The learner's day key as the server counts it: the day a scene's date is measured from. */
+	today: string;
+	/** Each dated scene's standing, by milestone id (src/core/dated-scene.ts). */
+	scenes: Record<string, DatedSceneView>;
 }
 
 function addDaysIso(from: Date, days: number): string {

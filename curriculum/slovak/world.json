@@ -1,9 +1,9 @@
 {
-	"series": "Robo in Bratislava",
+	"series": "Martin in Bratislava",
 	"language": "slovak",
 	"version": 1,
 	"city": "Bratislava",
-	"logline": "Robo, a young man who has recently moved to Bratislava",
+	"logline": "Martin, a young man who has recently moved to Bratislava",
 	"settings": {
 		"family": [
 			"a Sunday lunch with his girlfriend's family",
@@ -101,8 +101,8 @@
 	},
 	"cast": [
 		{
-			"id": "robo",
-			"name": "Robo",
+			"id": "martin",
+			"name": "Martin",
 			"gender": "m",
 			"age": "young",
 			"role": "the lead: a young man who has just moved to Bratislava and takes the city one word at a time"
@@ -112,7 +112,7 @@
 			"name": "Zuzka",
 			"gender": "f",
 			"age": "young",
-			"role": "Robo's neighbor in Petržalka; she shows him the city and keeps his Slovak honest"
+			"role": "Martin's neighbor in Petržalka; she shows him the city and keeps his Slovak honest"
 		},
 		{
 			"id": "eva",
@@ -126,7 +126,7 @@
 			"name": "Tomáš",
 			"gender": "m",
 			"age": "adult",
-			"role": "Robo's colleague at the office; he explains the country over coffee and football"
+			"role": "Martin's colleague at the office; he explains the country over coffee and football"
 		},
 		{
 			"id": "jan",
@@ -147,7 +147,7 @@
 		{
 			"id": "cafe",
 			"name": "Eva's café in the old town",
-			"note": "the café where Robo orders, reads and greets — the Speak café scene"
+			"note": "the café where Martin orders, reads and greets — the Speak café scene"
 		},
 		{
 			"id": "obchodna",
@@ -157,7 +157,7 @@
 		{
 			"id": "office",
 			"name": "the office in the new building",
-			"note": "where Robo works and meets Tomáš — the Speak colleague scene"
+			"note": "where Martin works and meets Tomáš — the Speak colleague scene"
 		},
 		{
 			"id": "mileticova",
@@ -176,24 +176,24 @@
 		}
 	],
 	"beats": {
-		"hello": "Robo arrives in Bratislava with two suitcases and meets Zuzka in the stairwell.",
-		"cafe": "Robo orders his first coffee alone; Eva saves him when the words run out.",
-		"town": "Robo gets lost looking for the main station and asks his way along Obchodná.",
-		"family": "Zuzka takes Robo to her family's Sunday lunch, where her mother asks more than his Slovak answers.",
-		"everyday": "Robo settles into a routine: up early, the tram to work, the shopping on the way home.",
-		"yesterday": "Robo tells Zuzka how his first week went, and what went wrong in it.",
-		"health": "Robo wakes with a sore throat and visits Mária, who orders rest in writing.",
-		"shopping": "Zuzka sends Robo to the Miletičova market for soup vegetables, where pán Ján quizzes him on the price.",
-		"plans": "Robo and Zuzka plan a weekend trip and argue with the weather forecast.",
-		"moving": "Robo rides the train to Košice for a match, muddles the platform change, still makes kick-off.",
-		"people": "Tomáš brings his brother to dinner and Robo has to describe everyone without mixing them up.",
-		"work": "Robo survives his first Slovak phone call at work and a meeting he understood half of.",
-		"stories": "Robo recounts the Košice trip at a team lunch, fixing the order of events while Zuzka winces.",
-		"opinions": "The office argues about a new tram line, and Robo gives his first real opinion in Slovak.",
-		"offices": "Robo sorts out a wrong delivery and a form at the foreigners' police office.",
-		"world": "A news item about a flooded Danube path gives Robo something to read and something to say at lunch.",
-		"nuance": "Robo writes to his landlord about a broken boiler and debates how much to soften the letter.",
-		"register": "At Zuzka's family table Robo hears the street version of every phrase he learned, and keeps them apart.",
-		"media": "Robo watches the evening news with Zuzka's family and follows it without the subtitles."
+		"hello": "Martin arrives in Bratislava with two suitcases and meets Zuzka in the stairwell.",
+		"cafe": "Martin orders his first coffee alone; Eva saves him when the words run out.",
+		"town": "Martin gets lost looking for the main station and asks his way along Obchodná.",
+		"family": "Zuzka takes Martin to her family's Sunday lunch, where her mother asks more than his Slovak answers.",
+		"everyday": "Martin settles into a routine: up early, the tram to work, the shopping on the way home.",
+		"yesterday": "Martin tells Zuzka how his first week went, and what went wrong in it.",
+		"health": "Martin wakes with a sore throat and visits Mária, who orders rest in writing.",
+		"shopping": "Zuzka sends Martin to the Miletičova market for soup vegetables, where pán Ján quizzes him on the price.",
+		"plans": "Martin and Zuzka plan a weekend trip and argue with the weather forecast.",
+		"moving": "Martin rides the train to Košice for a match, muddles the platform change, still makes kick-off.",
+		"people": "Tomáš brings his brother to dinner and Martin has to describe everyone without mixing them up.",
+		"work": "Martin survives his first Slovak phone call at work and a meeting he understood half of.",
+		"stories": "Martin recounts the Košice trip at a team lunch, fixing the order of events while Zuzka winces.",
+		"opinions": "The office argues about a new tram line, and Martin gives his first real opinion in Slovak.",
+		"offices": "Martin sorts out a wrong delivery and a form at the foreigners' police office.",
+		"world": "A news item about a flooded Danube path gives Martin something to read and something to say at lunch.",
+		"nuance": "Martin writes to his landlord about a broken boiler and debates how much to soften the letter.",
+		"register": "At Zuzka's family table Martin hears the street version of every phrase he learned, and keeps them apart.",
+		"media": "Martin watches the evening news with Zuzka's family and follows it without the subtitles."
 	}
 }

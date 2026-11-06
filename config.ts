@@ -316,6 +316,11 @@ export const PATHS = {
 	get fluency() {
 		return path.join(dataRoot(), "fluency");
 	},
+	/** Today's line (src/store/line.ts): line/log.jsonl, one line per
+	 *  morning or evening hearing. */
+	get line() {
+		return path.join(dataRoot(), "line");
+	},
 	/** YouTube videos prepared for the Watch task (LangHarness watch,
 	 *  2026-10-28): videos/<id>.json (the segmented transcript with glossed
 	 *  tokens, translations, questions, cost), videos/captions/<id>.<lang>.json

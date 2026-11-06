@@ -81,7 +81,7 @@ export interface StoryCharacter {
 
 // ─── Genres ─────────────────────────────────────────────────────────────────
 
-/** What kinds of text the shelf holds. Robo is the running series; the
+/** What kinds of text the shelf holds. Martin is the running series; the
  *  rest are stand-alone pieces so a learner meets the text types the CEFR
  *  describes for the level (messages and dialogues at A1, diary and
  *  tales at A2, news and interviews at B1, opinion and history at B2). */
@@ -332,7 +332,7 @@ export const SHELF_DAILY_CAP = 8;
 /** Which (level, genre) to write next so the shelf stays stocked: the
  *  learner's level first until it holds SHELF_OWN unread stories, then one
  *  at the level below and one above; genres rotate so no level holds two
- *  unread stories of one kind, and Robo episodes stay in the mix. */
+ *  unread stories of one kind, and series episodes stay in the mix. */
 export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: StoryGenre }[], recentGenres: readonly StoryGenre[] = []): Array<{ level: Cefr; genre: StoryGenre }> {
 	const li = levelIndex(level);
 	const wants: Array<{ level: Cefr; want: number }> = [{ level, want: SHELF_OWN }];
@@ -344,7 +344,7 @@ export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: 
 		const taken = new Set<StoryGenre>([...have, ...out.filter((o) => o.level === w.level).map((o) => o.genre)]);
 		for (let n = have.length; n < w.want; n++) {
 			const pool = genresAt(w.level).map((g) => g.id).filter((g) => !taken.has(g));
-			// Robo first when the level has no episode waiting, then the
+			// Martin first when the level has no episode waiting, then the
 			// genre read least recently.
 			const pick = pool.includes("robo") && !taken.has("robo") ? "robo" : [...pool].sort((a, b) => lastSeen(a, recentGenres) - lastSeen(b, recentGenres))[0];
 			if (!pick) break;
@@ -411,7 +411,7 @@ function fitScore(story: StoryRecord, input: PickInput): PickReason {
  *  shelf fits well enough and a new one should be written. The score
  *  weighs how many words the learner knows (the 95–98% band reads best),
  *  the level the text was written for, and variety against the last few
- *  readings; Robo episodes are offered in order. An unread episode of the
+ *  readings; series episodes are offered in order. An unread episode of the
  *  current chapter comes first, whatever its score: the chapter's story
  *  step is the point. */
 export function pickStory(stories: readonly StoryRecord[], input: PickInput): { story: StoryRecord; reason: PickReason } | null {

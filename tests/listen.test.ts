@@ -42,7 +42,7 @@ function lookup(bound = 800) {
 
 test("judgeSentence: known words, names and grammar words count as known; the rest are stretch words with a gloss", () => {
 	const l = lookup();
-	const j = judgeSentence("Robo ide do školy.", l);
+	const j = judgeSentence("Martin ide do školy.", l);
 	assert.ok(j.words >= 3);
 	assert.ok(j.coverage > 0.5, `coverage ${j.coverage}`);
 	for (const w of j.stretch) assert.ok(w.text.length > 0);

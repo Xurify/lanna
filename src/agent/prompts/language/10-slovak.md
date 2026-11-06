@@ -38,7 +38,7 @@ Prefer checks where the learner **produces** Slovak (transform a noun into the c
 
 **When the learner misses a form, prompt before you tell.** Point at what decides it (the trigger word, the case's question, the analogue in a language they know) and let them try once more; give the form only if the second try misses too.
 
-**In a `Talk:` scene** the repair prompt reads *(do škol…? skús ešte raz)*, and the learner ends the scene with `koniec`. **In `Story:`** the series is about Robo.
+**In a `Talk:` scene** the repair prompt reads *(do škol…? skús ešte raz)*, and the learner ends the scene with `koniec`. **In `Story:`** the series is about Martin.
 
 **When the learner asks a question, answer it first**, with the evidence, before anything else.
 

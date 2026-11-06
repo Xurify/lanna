@@ -33,8 +33,10 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
 import { allUnits } from "../core/lesson.ts";
-import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, creditedWords, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
+import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, creditedWords, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestoneEstimate, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
+import { datedSceneView, isIsoDate, type DatedSceneView } from "../core/dated-scene.ts";
 import { grammarWord } from "../core/reading.ts";
+import { isWatchItem } from "../core/watch-reps.ts";
 import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, type LexiconEntry } from "../core/review.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
@@ -191,7 +193,8 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 	for (const e of log) {
 		const queued = new Set(e.queued);
 		for (const r of e.reps) {
-			if (queued.has(r.slug)) continue;
+			// A watch line is no dictionary sentence, so it is not a known one (src/core/watch-reps.ts).
+			if (queued.has(r.slug) || isWatchItem(r.itemId)) continue;
 			knownSentences.total++;
 			if (r.verdict === "exact") knownSentences.right++;
 		}
@@ -275,7 +278,19 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const goals: MilestonesReport["goals"] = {};
 	for (const c of state.chapters) for (const u of c.units) if (u.kind === "goal") goals[u.id] = { title: u.title, done: u.status === "done" || u.status === "skipped", open: u.status === "open" || u.status === "started" };
-	return { facts, milestones, nextWords, goals, guidedHours: GUIDED_HOURS, generatedAt: now.toISOString() };
+	const today = dayKey(now, tz ?? now.getTimezoneOffset());
+	return { facts, milestones, nextWords, goals, guidedHours: GUIDED_HOURS, generatedAt: now.toISOString(), today, scenes: datedSceneViews(milestones, today) };
+}
+
+/** Each dated scene on the list, read against its estimate, by milestone id. */
+export function datedSceneViews(estimates: readonly MilestoneEstimate[], today: string): Record<string, DatedSceneView> {
+	const views: Record<string, DatedSceneView> = {};
+	for (const rec of milestoneStore.active()) {
+		const estimate = estimates.find((m) => m.def.id === rec.def.id);
+		if (!rec.date || !isIsoDate(rec.date) || !estimate) continue;
+		views[rec.def.id] = datedSceneView({ id: rec.def.id, title: rec.def.title, words: rec.def.custom ?? rec.text ?? null, date: rec.date, outcome: rec.outcome }, estimate, today);
+	}
+	return views;
 }
 
 // ─── Custom milestones ──────────────────────────────────────────────────────

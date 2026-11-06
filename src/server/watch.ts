@@ -58,9 +58,11 @@ import {
 	type WatchState,
 } from "../core/watch.ts";
 import { parseVerdict, SENTENCE_MAX_CHARS, SENTENCE_XP, sentenceProblems, type SentenceCheckEntry } from "../core/watch-sentences.ts";
+import { missedWatchReps } from "../core/watch-reps.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
+import { watchRepStore } from "../store/watch-reps.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { commonness, glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
@@ -841,6 +843,13 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 		stats,
 	};
 	videoStore.appendWatch(entry);
+	// The lines not understood on the first listen come back in Listen (docs/research/creator-hooks.md, proposal 7).
+	try {
+		// Foreign captions (Czech for Slovak) would be played in another language, so their lines do not come back.
+		if (!foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang })) watchRepStore.addNew(missedWatchReps(video, stats, day));
+	} catch (err) {
+		console.warn("[watch] could not queue the missed lines:", err instanceof Error ? err.message : err);
+	}
 	return { xp, correct, total, gotFirst, gotAfter, missed, queued, rewatch, summary: progressSummary(input.tz, now) };
 }
 

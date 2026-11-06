@@ -75,6 +75,7 @@ export const CONTEXTUAL_PAGES: readonly { href: string; title: string; from: str
 	{ href: "/exam", title: "Exam", from: "Curriculum (a chapter's exam)" },
 	{ href: "/chat/new", title: "Tutor", from: "the Tutor group in the sidebar" },
 	{ href: "/start", title: "Set up", from: "Settings, Progress" },
+	{ href: "/catch", title: "Catch the mistake", from: "Today, Words you mix up" },
 ];
 
 export function navItemFor(pathname: string): NavItemDef | undefined {

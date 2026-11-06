@@ -11,7 +11,7 @@
 
 ## Design
 
-- One episode a day of *Robo in Bratislava*, written on the Cheap model slot: 6 to 8 sentences at A1 up to 16 to 20 at C1, about 97 of 100 words known, 2 to 3 deliberate new words each used three times, the setting rotated from the learner's purposes (the "something else" note passed word for word).
+- One episode a day of *Martin in Bratislava*, written on the Cheap model slot: 6 to 8 sentences at A1 up to 16 to 20 at C1, about 97 of 100 words known, 2 to 3 deliberate new words each used three times, the setting rotated from the learner's purposes (the "something else" note passed word for word).
 - Known words come from the deck and word units plus the commonest words up to the level's rank (A1 500, A2 1,000, B1 2,000, B2 3,000). A draft whose stray unknown share is over 8% is redrafted once naming the hard words; deliberate new words do not count against coverage.
 - Tap a word for lemma, "here: form", gloss, tags and audio. Per-sentence speaker and translation toggle, Play all.
 - Questions by level (`QUESTION_PLAN`, added after the question "are all the questions simple like this?"): A1 three recall with three options; A2 recall, recall, inference; B1 four questions of four options (recall, inference, vocab, paraphrase); B2 five (inference, vocab, paraphrase, attitude, recall); C1 five (inference, attitude, paraphrase, vocab, inference). The reader labels the kind.
