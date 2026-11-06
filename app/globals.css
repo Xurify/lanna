@@ -91,6 +91,8 @@ html[data-keyboard] :focus-visible {
 	--q-miss-wash: #fbeceb;
 	--q-shadow-rgb: 22 24 27;
 	--q-hair: 0 0 0 1px var(--q-line);
+	/* A text field's surface (.q-field). Day sits it on the well; Night needs the next step up, because the Night well (#1a1d1f) is almost the card (#1b1e21) and a field there could not be seen. */
+	--q-field: var(--q-well);
 	--q-raise: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 6px 16px -8px rgb(var(--q-shadow-rgb) / 0.1);
 	--q-raise-hi: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 16px 36px -14px rgb(var(--q-shadow-rgb) / 0.16);
 	--q-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -139,6 +141,7 @@ html[data-keyboard] :focus-visible {
 	--q-side: #16181a;
 	--q-well: #1a1d1f;
 	--q-well-2: #23272a;
+	--q-field: #23272a;
 	--q-line: #26292c;
 	--q-line-2: #353a3e;
 	--q-ink: #ecedee;
@@ -171,6 +174,7 @@ html[data-keyboard] :focus-visible {
 		--q-side: #16181a;
 		--q-well: #1a1d1f;
 		--q-well-2: #23272a;
+		--q-field: #23272a;
 		--q-line: #26292c;
 		--q-line-2: #353a3e;
 		--q-ink: #ecedee;
@@ -314,6 +318,14 @@ button:disabled,
 input:disabled,
 select:disabled {
 	cursor: not-allowed;
+}
+
+/* Firefox dims placeholders with opacity. One color everywhere, AA on --q-field in both themes (ink-3 is 4.9:1 in Day, 5.2:1 in Night). */
+@layer base {
+	::placeholder {
+		color: var(--q-ink-3);
+		opacity: 1;
+	}
 }
 
 input[type="text"],

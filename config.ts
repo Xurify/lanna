@@ -479,7 +479,15 @@ export const PROMPTS_OVERRIDE_DIR = path.join(BASE_DATA_ROOT, "prompts");
  * dev) always win (src/server/keys.ts). Hand-edits still work: the file is
  * re-read from disk on every API access. Secrets NEVER go in settings.json
  * — this file keeps that role, alongside .env.local.
+ *
+ * Under the test fence (2026-11-06) a run that does not set LH_AUTH_FILE
+ * gets auth.json inside the throwaway data folder, never the repo-root
+ * file: a fixture var ("B": "2" from tests/auth-store.test.ts) had reached
+ * a real key file, and tests/speak.test.ts deleted and restored the real
+ * speech keys in it.
  */
 export const AUTH_FILE = process.env.LH_AUTH_FILE
 	? path.resolve(process.env.LH_AUTH_FILE)
-	: path.join(ROOT, "auth.json");
+	: underTestRunner()
+		? path.join(BASE_DATA_ROOT, "auth.json")
+		: path.join(ROOT, "auth.json");

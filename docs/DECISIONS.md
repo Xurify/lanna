@@ -107,7 +107,7 @@ Keys go in `.env` or environment variables, never in a thread. Each key only goe
 
 ### E6. Tests never touch the real profile (2026-10-28)
 
-A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. The suite is green on Node 26, the version CI runs (2807 tests). Under Node 22 the pi-ai package-exports test in `tests/subscription-auth.test.ts` fails; that is environment-bound, not a regression. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
+A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. The key file follows the same fence (2026-11-06): with no `LH_AUTH_FILE`, a test run uses `auth.json` inside that data folder, never the repo-root one. Before this, `tests/speak.test.ts` deleted and restored the real speech keys, and a fixture var (`"B": "2"`) reached a real key file. An unknown var held in the file can now be deleted from Settings → Keys; `tests/auth-fence.test.ts` pins both. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. The suite is green on Node 26, the version CI runs (2807 tests). Under Node 22 the pi-ai package-exports test in `tests/subscription-auth.test.ts` fails; that is environment-bound, not a regression. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
 
 ### E7. Local only, no sync (2026-10-26)
 
@@ -708,6 +708,36 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - Read's word card says "not studied yet" for a word its tolerance counts as known but the learner has not met; nothing is underlined, and story coverage is unchanged.
 - `KNOWN_RANK` is otherwise unchanged, and its comment now says what it is: a per-part-of-speech tolerance for texts the model writes at the level (Read, Listen, Speed). Narrowing it would make drafts fail the 92% coverage floor and cost extra model calls; it is not a claim about the learner. Do not show it as one.
 - Videos kept before this change carry the old `coverage` until they are prepared again; Discover's scans are measured again on refresh.
+
+### E59. The mark is a cursor at an empty answer line, for any language (2026-11-06, branch `feat/icon-fields-creators`)
+
+**Why:** the owner asked for a new app icon and a better brand. The old mark, two speech bubbles, came from the upstream app and looked like any chat app. A first draft, an `š` cut from Geist Bold, was dropped when the owner pointed out that this is a language tutor for any language, not a Slovak app. A háček over a line was dropped too, because it read as a download icon. Details and name ideas: [brand.md](brand.md).
+
+**How to apply:**
+- The mark is a text cursor (ink) waiting at an empty answer line (teal): two rounded rectangles in a 1024 box, cursor 282,252 72×520 and line 402,700 340×72. It says what every task asks for: the blank first, your answer next (P3). It reads as an L.
+- No letter, script, flag or diacritic goes into the mark, so it fits every language the app can add (E43).
+- In the app, the cursor is `currentColor` and the line is `var(--q-teal)` (`components/lh-mark.tsx`), so the mark follows Day and Night like the wordmark ("Lang" in ink, "Harness" in teal). The app icon is always the Night version on an ink tile (#16181B).
+- One geometry, kept in step by hand: `build/mark.svg`, `build/icon-flat.svg`, `app/icon.svg`, `components/lh-mark.tsx` and the Icon Composer layers in `build/icon.icon`. After changing it, run `node scripts/make-icons.mjs` and `node scripts/make-pwa-icons.mjs`.
+- The name stays LangHarness (owner, 2026-11-06: "Let's keep LangHarness for now"). The name ideas in brand.md are kept for later; a rename is its own piece of work (app id, window title, PWA, repo).
+
+### E60. One text field style, set once in global CSS (2026-11-06, branch `feat/icon-fields-creators`)
+
+**Why:** the owner could hardly see the Creators field on Watch in Night ("Stuff like this should be fixed in global styles so we don't have to be redundant"). The Night well (#1a1d1f) is almost the card (#1b1e21), and every form field carried its own border, background, focus and placeholder classes.
+
+**How to apply:**
+- A typed field outside an exercise uses `.q-field` (`app/quiet.css`): its own surface `--q-field` (the well in Day, #23272a in Night), the checkbox grey `--q-box` as a 1 px inset outline (the hairline `--q-line-2` is 1.5:1 on a Night card), and a 1.5 px teal ring on focus. Height, padding, radius and font stay on the element.
+- Placeholders get one color in the base layer: `--q-ink-3`, opacity 1 (4.9:1 in Day, 5.2:1 in Night). Utilities still override it.
+- Answer fields inside exercises (lesson, placement, Read, Catch the mistake's answer states) keep their own right and wrong colors; they are not form fields.
+
+### E61. A saved creator can be searched and listed newest first (2026-11-06, branch `feat/icon-fields-creators`)
+
+**Why:** the owner: "I should be able to search their channels and just see their latest videos or sort by that." A creator's row showed only its four best picks.
+
+**How to apply:**
+- A creator's panel has a search of the channel and a Best for you / Newest order (`CreatorVideos` in `components/watch/discover.tsx`, `POST /api/watch/discover {action: "creator-videos", id, query?}`).
+- Newest reads the channel's videos tab (`channelUploads`): the feed lists only a few uploads. The feed's exact dates win; otherwise the date comes from the English page's relative date ("3 weeks ago", `agoToIso`), which is only as exact as that text. Titles come from the page in the language, because an English page translates them.
+- Each listed video is checked as a pick is (`scanVideo`: captions and the known-word share, free, no model), and the check is kept, so it feeds the picks too. A video that cannot be offered stays in the list and says why (`creatorVideoRows`): no captions yet, not spoken in the language, too long or too short, live, unavailable, already in your videos, or marked not for you.
+- Best for you sorts offered videos by the pick score, then the rest by date; Newest sorts by date alone, undated last (`sortCreatorVideos`).
 
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 

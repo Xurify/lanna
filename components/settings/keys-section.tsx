@@ -5,7 +5,8 @@
  * mislead. The Add-provider control is the last row.
  *
  * Groups: Model API keys, Subscriptions, Speech, Dictation, Web search. Unknown
- * variables stay masked and read only at the end of Model API keys.
+ * variables stay masked and read only at the end of Model API keys; one held
+ * in the file can be deleted (a stray test fixture reached a real profile).
  *
  * API: GET /api/keys, PUT /api/keys/:id (400s show inline), DELETE. Saves take
  * effect at once; plaintext never returns from the store.
@@ -585,10 +586,7 @@ export function KeysSection({
 					</div>
 				)}
 				{unknownRows.length > 0 && <div data-testid="group-unknown-keys" className="flex flex-col gap-2">
-					{unknownRows.map((status) => <div key={status.id} data-testid={`unknown-${status.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 opacity-40">
-						<span className="font-mono text-xs text-foreground">{status.id}</span>
-						<span className="font-mono text-[11px] text-muted-foreground">{status.masked}</span>
-					</div>)}
+					{unknownRows.map((status) => <UnknownKeyRow key={status.id} status={status} onDelete={() => deleteKey(status.id)} />)}
 				</div>}
 			</SettingsGroup>
 
@@ -690,6 +688,49 @@ function AddProviderEditor({
 					{error}
 				</p>
 			)}
+		</div>
+	);
+}
+
+/** A var in auth.json that no catalog entry knows: read only, but removable. */
+function UnknownKeyRow({ status, onDelete }: { status: AuthKeyStatus; onDelete: () => Promise<void> }) {
+	const [confirm, setConfirm] = useState(false);
+	const removable = status.source === "file";
+	return (
+		<div data-testid={`unknown-${status.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5">
+			<span className="font-mono text-xs text-muted-foreground">{status.id}</span>
+			<span className="flex items-center gap-3">
+				<span className="font-mono text-[11px] text-muted-foreground">{status.masked}</span>
+				{removable && !confirm && (
+					<button
+						type="button"
+						onClick={() => setConfirm(true)}
+						data-testid={`unknown-${status.id}-delete`}
+						className="shrink-0 cursor-pointer rounded-lg px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-miss"
+					>
+						Delete
+					</button>
+				)}
+				{confirm && (
+					<span className="flex shrink-0 items-center gap-2 text-xs" data-testid={`unknown-${status.id}-delete-confirm`}>
+						<span className="text-muted-foreground">Delete this variable?</span>
+						<button
+							type="button"
+							onClick={() => {
+								setConfirm(false);
+								void onDelete();
+							}}
+							data-testid={`unknown-${status.id}-delete-confirm-yes`}
+							className="cursor-pointer font-medium text-miss underline-offset-2 hover:underline"
+						>
+							Delete
+						</button>
+						<button type="button" onClick={() => setConfirm(false)} className="cursor-pointer text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+							Keep
+						</button>
+					</span>
+				)}
+			</span>
 		</div>
 	);
 }

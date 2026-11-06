@@ -19,10 +19,13 @@
  * POST {action: "forget-youtube"} — drop every list read from YouTube.
  * POST {action: "dismiss", videoId} — never offer this video again.
  * POST {action: "keep-ready", on} — prepare the best pick when no video waits.
+ * POST {action: "creator-videos", id, query?} — a saved creator's newest
+ *   uploads, or what a search of the channel finds, each checked for free.
+ *   Answers {videos} (CreatorVideo[]), in the channel's own order.
  */
 
 import { isChannelId, splitChannelInputs } from "@/src/core";
-import { addCreator, addCreators, discoverState, dismissSuggestion, saveSuggestions, dismissPick, fillAvatars, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
+import { addCreator, addCreators, creatorVideos, discoverState, dismissSuggestion, saveSuggestions, dismissPick, fillAvatars, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +38,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown; query?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add-creator") {
 		if (typeof body.input !== "string" || !body.input.trim()) return Response.json({ message: "input is required" }, { status: 400 });
@@ -102,6 +105,16 @@ export async function POST(req: Request) {
 		if (typeof body.videoId !== "string") return Response.json({ message: "videoId is required" }, { status: 400 });
 		dismissPick(body.videoId);
 		return Response.json(discoverState());
+	}
+	if (body.action === "creator-videos") {
+		if (typeof body.id !== "string" || !isChannelId(body.id)) return Response.json({ message: "id is required" }, { status: 400 });
+		try {
+			const videos = await creatorVideos(body.id, { query: typeof body.query === "string" ? body.query : undefined, signal: AbortSignal.timeout(60_000) });
+			return Response.json({ videos });
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			return Response.json({ message }, { status: /not saved/.test(message) ? 404 : 502 });
+		}
 	}
 	if (body.action === "keep-ready") {
 		setKeepReady(body.on === true);

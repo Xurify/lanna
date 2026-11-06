@@ -364,7 +364,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 									placeholder="Search a word or its meaning (for example chlieb, bread)"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
-									className="w-full rounded-2xl border border-border/80 bg-accent/30 py-2.5 pl-10 pr-4 font-prose text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-background"
+									className="q-field w-full rounded-2xl py-2.5 pl-10 pr-4 font-prose text-sm"
 								/>
 								{searchQuery && (
 									<button
@@ -650,7 +650,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 									placeholder="Search your saved phrases"
 									value={phraseSearch}
 									onChange={(e) => setPhraseSearch(e.target.value)}
-									className="w-full rounded-2xl border border-border/80 bg-accent/30 py-2.5 pl-10 pr-4 font-prose text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-background"
+									className="q-field w-full rounded-2xl py-2.5 pl-10 pr-4 font-prose text-sm"
 								/>
 							</div>
 
@@ -771,7 +771,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 										placeholder="for example Dnes je pekne."
 										value={newPhraseText}
 										onChange={(e) => setNewPhraseText(e.target.value)}
-										className="mt-1 w-full rounded-xl border border-border bg-accent/40 px-3.5 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
+										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"
 									/>
 								</div>
 
@@ -784,7 +784,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 										placeholder="e.g. Today is a beautiful sunny day."
 										value={newPhraseTrans}
 										onChange={(e) => setNewPhraseTrans(e.target.value)}
-										className="mt-1 w-full rounded-xl border border-border bg-accent/40 px-3.5 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
+										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"
 									/>
 								</div>
 
@@ -797,7 +797,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 										placeholder="for example Weather"
 										value={newPhraseContext}
 										onChange={(e) => setNewPhraseContext(e.target.value)}
-										className="mt-1 w-full rounded-xl border border-border bg-accent/40 px-3.5 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
+										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"
 									/>
 								</div>
 

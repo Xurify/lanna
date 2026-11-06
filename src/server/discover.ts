@@ -27,8 +27,12 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import {
+	agoToIso,
 	channelImage,
 	awaitingCaptions,
+	creatorVideoRows,
+	publishedTimes,
+	type CreatorVideo,
 	extractChannels,
 	extractVideos,
 	judgeSpoken,
@@ -63,6 +67,8 @@ const WEB_VERSION = "2.20251101.00.00";
 const SUBTITLES_FILTER = "EgIoAQ==";
 /** A channel's videos tab, for the browse fallback when the feed fails. */
 const VIDEOS_TAB = "EgZ2aWRlb3PyBgQKAjoA";
+/** A channel's search tab: browse with this and a `query`. */
+const CHANNEL_SEARCH = "EgZzZWFyY2jyBgQKAloA";
 
 /** How long the picks stay fresh before a visit reads the feeds again. */
 export const REFRESH_AFTER_MS = 6 * 3_600_000;
@@ -87,18 +93,20 @@ const KEEP_READY_FLOOR = 0.88;
 const SUGGESTIONS_SHOWN = 12;
 /** Videos listed under a creator on the Watch page. */
 const CREATOR_VIDEOS = 4;
+/** Videos checked when the learner lists a creator's newest or searches the channel. */
+const CREATOR_LIST = 20;
 
 const captionLangs = (): string[] => [activeLanguage().code, ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
 const region = (): string | undefined => activeLanguage().tag.split("-")[1]?.toUpperCase();
 
 type Json = Record<string, unknown>;
 
-async function innertube(endpoint: string, body: Json, signal?: AbortSignal): Promise<Json | null> {
+async function innertube(endpoint: string, body: Json, signal?: AbortSignal, hl: string = activeLanguage().code): Promise<Json | null> {
 	const gl = region();
 	const res = await fetch(`https://www.youtube.com/youtubei/v1/${endpoint}?prettyPrint=false`, {
 		method: "POST",
 		headers: { "content-type": "application/json", "user-agent": UA },
-		body: JSON.stringify({ context: { client: { clientName: "WEB", clientVersion: WEB_VERSION, hl: activeLanguage().code, ...(gl ? { gl } : {}) } }, ...body }),
+		body: JSON.stringify({ context: { client: { clientName: "WEB", clientVersion: WEB_VERSION, hl, ...(gl ? { gl } : {}) } }, ...body }),
 		signal,
 	});
 	if (!res.ok) return null;
@@ -145,6 +153,66 @@ export async function channelVideos(channelId: string, signal?: AbortSignal): Pr
 		channel: name ? { id: channelId, name, ...(vanity ? { handle: decodeURIComponent(vanity) } : {}), ...(avatar ? { avatar } : {}) } : null,
 		videos: extractVideos(data).map((v) => ({ ...v, channelId, ...(name && !v.channel ? { channel: name } : {}) })),
 	};
+}
+
+/** Videos in one channel that match `query`, as YouTube's channel search
+ *  ranks them. The page is read twice: in the language for the titles as
+ *  written (an English page translates them), and in English for the
+ *  relative dates, which only English can be read in. */
+export async function channelSearch(channelId: string, query: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
+	return withDates(channelId, { browseId: channelId, params: CHANNEL_SEARCH, query }, opts);
+}
+
+/** A browse page's videos with titles from the page in the language and dates from the page in English. */
+async function withDates(channelId: string, body: Json, opts: { signal?: AbortSignal; now?: Date }, exact: ReadonlyMap<string, string> = new Map()): Promise<FoundVideo[]> {
+	const now = opts.now ?? new Date();
+	const [page, english] = await Promise.all([innertube("browse", body, opts.signal).catch(() => null), innertube("browse", body, opts.signal, "en").catch(() => null)]);
+	const when = english ? publishedTimes(english) : new Map<string, string>();
+	return extractVideos(page ?? english ?? {}).map((v) => {
+		const at = exact.get(v.id) ?? (when.has(v.id) ? agoToIso(when.get(v.id)!, now) : undefined);
+		return { ...v, channelId: v.channelId ?? channelId, ...(at ? { at } : {}) };
+	});
+}
+
+/** A channel's uploads, newest first, from its videos tab (withDates), with
+ *  the feed's exact dates where the feed has the video. The feed alone lists
+ *  only a few, and no older ones. */
+export async function channelUploads(channelId: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
+	const feed = await channelVideos(channelId, opts.signal).catch(() => ({ channel: null, videos: [] as FoundVideo[] }));
+	const exact = new Map(feed.videos.filter((v) => v.at).map((v) => [v.id, v.at!]));
+	const listed = await withDates(channelId, { browseId: channelId, params: VIDEOS_TAB }, opts, exact);
+	return listed.length ? listed : feed.videos;
+}
+
+/** A saved creator's newest uploads (channelUploads), or the videos a search of
+ *  the channel finds, each checked as for a pick (free: player data and
+ *  captions, glossed locally; no model). A video checked before is not
+ *  fetched again. The checks are kept, so they feed the picks as well. */
+export async function creatorVideos(id: string, opts: { query?: string; signal?: AbortSignal; now?: Date } = {}): Promise<CreatorVideo[]> {
+	const creator = discoverStore.creators().creators.find((c) => c.id === id);
+	if (!creator) throw new Error("That creator is not saved.");
+	const now = opts.now ?? new Date();
+	const query = opts.query?.trim().slice(0, 100);
+	const found = (query ? await channelSearch(id, query, { signal: opts.signal, now }) : await channelUploads(id, { signal: opts.signal, now })).slice(0, CREATOR_LIST).map((v) => ({ ...v, channelId: v.channelId ?? id, channel: v.channel ?? creator.name }));
+	const kept = discoverStore.scans();
+	const fresh: Record<string, ScannedVideo> = {};
+	const lexicon = loadLexicon();
+	const k = knownWords(lexicon);
+	await pool(found.filter((v) => !kept[v.id] || awaitingCaptions(kept[v.id]!, now)), 4, async (v) => {
+		fresh[v.id] = await scanVideo(v, ["creator"], { lexicon, k, now, signal: opts.signal });
+	}, opts.signal);
+	const scans = { ...discoverStore.scans(), ...fresh };
+	for (const v of found) {
+		const s = scans[v.id];
+		if (!s) continue;
+		// A failed check kept the title it was found with, which an English page had translated.
+		const title = s.skip === "unavailable" ? v.title : s.title;
+		if ((v.at && !s.publishedAt) || title !== s.title) scans[v.id] = { ...s, title, ...(v.at && !s.publishedAt ? { publishedAt: v.at } : {}) };
+	}
+	discoverStore.putScans(scans);
+	const library = new Set(videoStore.list().map((v) => v.id));
+	const pics = discoverStore.avatars();
+	return creatorVideoRows(found.map((v) => scans[v.id]).filter((v): v is ScannedVideo => !!v), { library, dismissed: discoverStore.dismissed(), now }).map((v) => (pics[id] ? { ...v, avatar: pics[id] } : v));
 }
 
 /** The channel a pasted link, @handle or video belongs to. */
