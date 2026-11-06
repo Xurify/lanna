@@ -38,6 +38,22 @@ The signed-in window uses its own Electron session (`persist:lh-youtube`), so no
 - **Searches from interests**: with a model set, the cheap slot writes six searches in the language from the titles and channels of the history, recommendations and subscriptions. They are kept with their cost and written again only when those change, or after two weeks.
 - **Keep one ready** (on by default, needs a model): when no video waits, the best pick that is spoken in the language, 88% known or more, and 50 words a minute or more is prepared in the background, so Today has a Watch task. A prepare that fails marks the video unavailable instead of trying again on every visit.
 
+## Fragments: watching a stretch of a video (2026-11-06)
+
+The owner asked to pick fragments of a video, with a smart analysis that builds comprehensible input to learn faster. A 45-minute vlog the learner knows 70% of is noise as a whole; two minutes of it may sit at 93%, the range where listening works.
+
+- **What the trial showed.** The learner's Slovak (A1) knew 80–84% of three long Slovak videos (a vlog and two podcasts, 40 to 48 minutes). The best two-minute stretches of each reached 88–91%, and one 54-second stretch of a podcast reached 91.5%, so nothing was *comfortable* yet but the stretches were a whole band better than the videos. For the Estonian profile, five vlogs of one creator sat at 69–71% with no stretch at 85% or more; a 32-minute podcast had five stretches at 85–89%. So the tool will often say "none is close yet": it must say so rather than offer noise.
+- **What a fragment is.** A run of whole caption lines, 45 to 180 seconds, starting after a pause and stopping before one when the captions have pauses (automatic captions that run on get any line as a cut). The learner may also drag out their own, 20 seconds to 8 minutes.
+- **The score** (`src/core/fragments.ts`) is the product of four things, so a stretch weak in any one loses:
+  1. *Comprehension*: 0 under 85% known, rising to 0.6 at 90% and 1 at 93% (LISTEN_FLOOR) through 97%, down to 0.2 at 100%, where nothing is new.
+  2. *Density*: 0 under 40 words a minute (music, a title card), full from 90 to 200.
+  3. *Length*: 1 at about 110 seconds, never under 0.7.
+  4. *What the new words are worth*, by its square root: each new word that has a dictionary entry counts by how common it is (rank 1,500 or under counts fully, rare words 0.3), by how many times it is said inside the fragment (a second meeting counts 1.35 times, up to four), and the 15th counts about a third of the first. The square root keeps a stretch at 92% with five new words ahead of one at 89% with nine.
+  The weights are design choices, not measurements: the comprehension band comes from the sources of the picks above; that a repeated word inside two minutes sticks better than two single ones is an assumption of the design, not something this trial tested.
+- **No model call.** The captions are glossed against the learner's words as they stand now. The first look downloads a video's captions (kept under `videos/discover/lines/`), later looks need no YouTube. 600 to 1,400 lines are measured in under two seconds.
+- **Cheaper too.** Preparing a stretch translates and questions only its 20 to 60 lines, whatever the video's length (the 90-minute limit applies to whole videos only; fragments are found in videos up to 3 hours). The library keeps one cut per video: a different stretch replaces it, and the learner's watching history stays.
+- **Not tested here:** the YouTube player stopping at the end of a stretch (the `end` player parameter), and a real preparation of a stretch with a model. The stretch is cut from captions only; scenes the captions do not describe (a silent demonstration) are not seen.
+
 ## Sources
 
 - YouTube Data API revision history (2016: watch history and watch later lists return empty): https://developers.google.com/youtube/v3/revision_history

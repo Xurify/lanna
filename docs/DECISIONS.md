@@ -613,6 +613,18 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The edge tutor's brief carries each miss's judge note and its REPEATS mark, and the prompt treats a repeat as a likely misconception worth a question. Its verdict then counts toward the level as before.
 - A weak spot's evidence is the note of a miss that repeats an earlier one, when there is one; else the first miss's note; the tutor's verdict still wins over both.
 
+### E52. Watch fragments: pick a stretch of a video, ranked locally for the learner's level (2026-11-06, branch `feat/watch-creators`)
+
+**Why:** the owner asked to pick fragments of a video and to build comprehensible input from a smart analysis, to learn faster. Whole videos are mostly over the learner's level (80% known is common at A1), but two minutes of them may be at 93%. Research and numbers: [research/watch-picks.md](research/watch-picks.md), "Fragments".
+
+**How to apply:**
+- A fragment is a run of whole caption lines of 45 to 180 seconds, or a stretch the learner drags (20 seconds to 8 minutes). The analysis (`src/core/fragments.ts`, `src/server/fragments.ts`) uses no model: the same local gloss as the picks, so it costs nothing and repeats as the learner learns.
+- The score is the product of comprehension (the known-word share, full at 93–97%, nothing under 85%), speech density, length, and the square root of what the new words are worth (common, said more than once inside it). A stretch weak in one loses. When none is close, the page says so; do not offer noise.
+- Captions in another language than the video's (Czech for Slovak) are not measured; the learner can still drag a stretch by ear.
+- `prepareVideo(url, { range })` translates and questions only the stretch. The record keeps the video's id, with `fragment` {startSec, endSec, ofSec}; its `durationSec`, lines and coverage are the stretch's, so the plan's minutes and the library line are right without change. One cut per video: preparing another stretch, or the whole video, replaces the record. Watch history stays in `watches.jsonl`.
+- The 90-minute limit (was 75, raised so a 76-minute video from a saved creator is not left out) and the line limit (1,100) apply to whole videos. The time one Watch session can add follows it (90 minutes).
+- The caption lines of an analysed video are kept in `videos/discover/lines/<id>.json` (E1); a video in the library is read from its kept caption track.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

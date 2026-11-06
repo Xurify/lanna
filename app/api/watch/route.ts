@@ -9,6 +9,8 @@
  * lines, translated on the cheap slot, glossed, questioned, kept under
  * data/profiles/<language>/videos/. Reused when already there, unless
  * force is true (regenerate: captions fetched and lines translated again).
+ * With range {startSec, endSec} only that stretch is prepared (see
+ * GET /api/watch/fragments); the library keeps one cut of a video.
  * With background: true it answers 202 {id} at once and the work runs as a
  * task (src/server/tasks.ts, listed in GET /api/activity); a video already
  * kept is returned whole, as without it.
@@ -42,16 +44,19 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; range?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add") {
 		if (typeof body.url !== "string" || !body.url.trim()) return Response.json({ message: "url is required" }, { status: 400 });
 		try {
-			return Response.json(await prepareVideo(body.url, { transcribe: body.transcribe === true, force: body.force === true }));
+			const r = body.range as { startSec?: unknown; endSec?: unknown } | undefined;
+			const range = r && typeof r.startSec === "number" && typeof r.endSec === "number" ? { startSec: r.startSec, endSec: r.endSec } : undefined;
+			if (body.range !== undefined && !range) return Response.json({ message: "range needs startSec and endSec in seconds" }, { status: 400 });
+			return Response.json(await prepareVideo(body.url, { transcribe: body.transcribe === true, force: body.force === true, ...(range ? { range } : {}) }));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			if (err instanceof NoCaptionsError) return Response.json({ message, noCaptions: true, canTranscribe: err.canTranscribe, meta: err.meta }, { status: 422 });
-			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /not a YouTube link|minutes long/.test(message) ? 400 : 502 });
+			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /not a YouTube link|minutes long|A fragment is between|no speech in that stretch/.test(message) ? 400 : 502 });
 		}
 	}
 	if (body.action === "delete") {

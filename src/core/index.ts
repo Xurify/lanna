@@ -123,6 +123,7 @@ export * from "./pronounce.ts";
 export * from "./watch.ts";
 export * from "./watch-sentences.ts";
 export * from "./discover.ts";
+export * from "./fragments.ts";
 export * from "./milestones.ts";
 export * from "./stamps.ts";
 export * from "./plan.ts";

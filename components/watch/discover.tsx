@@ -9,13 +9,14 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, ScissorsIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/settings/controls";
 import { timeAgo } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
+import { FragmentsPanel } from "@/components/watch/fragments";
 import { Thumb } from "@/components/watch/thumb";
-import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, splitChannelInputs, takeoutKind, videoUrl, type DiscoverStateView, type PickedVideo } from "@/src/core";
+import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, splitChannelInputs, takeoutKind, videoUrl, type DiscoverStateView, type FragmentRange, type PickedVideo } from "@/src/core";
 
 type State = DiscoverStateView;
 
@@ -85,7 +86,7 @@ function sourceLine(p: PickedVideo): string | null {
 	return null;
 }
 
-export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPrepare: boolean; onPrepare: (url: string) => void }) {
+export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPrepare: boolean; onPrepare: (url: string, range?: FragmentRange) => void }) {
 	const { state, apply, load } = d;
 	const [all, setAll] = useState(false);
 	const lang = useActiveLanguage();
@@ -117,12 +118,12 @@ export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPre
 				<>
 					{(state.picks[0]?.coverage ?? 0) < 0.88 && (
 						<p className="q-sub mt-3 max-w-2xl" data-testid="watch-picks-none-at-level">
-							None of these is at your level yet (88% of the words known or more). The closest come first; a video below that is mostly decoding, not listening. Creators who speak slowly or about everyday things fit sooner.
+							None of these is at your level yet (88% of the words known or more). The closest come first; a video below that is mostly decoding, not listening. The scissors on a video find its easiest stretch, which may be much closer. Creators who speak slowly or about everyday things fit sooner too.
 						</p>
 					)}
 					<ol className="mt-3 flex flex-col gap-2">
 						{shown.map((p) => (
-							<PickRow key={p.id} p={p} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={() => onPrepare(videoUrl(p.id))} onDismiss={() => void post({ action: "dismiss", videoId: p.id }).then((r) => apply(r.body))} />
+							<PickRow key={p.id} p={p} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={(range) => onPrepare(videoUrl(p.id), range)} onDismiss={() => void post({ action: "dismiss", videoId: p.id }).then((r) => apply(r.body))} />
 						))}
 					</ol>
 					{state.picks.length > SHOWN && (
@@ -150,36 +151,51 @@ export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPre
 	);
 }
 
-function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss, bare }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: () => void; onDismiss: () => void; bare?: boolean }) {
+function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss, bare }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: (range?: FragmentRange) => void; onDismiss: () => void; bare?: boolean }) {
 	const why = sourceLine(p);
+	const [cutting, setCutting] = useState(false);
 	return (
-		<li className={cn("flex items-center gap-3 py-3 pl-4 pr-2 sm:gap-4", bare ? "border-t border-border" : "q-card")} data-testid="watch-pick">
-			<span className="max-sm:hidden">
-				<Thumb id={p.id} watched={false} />
-			</span>
-			<span className="min-w-0 flex-1">
-				<span className="line-clamp-2 font-ui text-[15px] font-[600] text-foreground sm:block sm:truncate" lang={lang} title={p.title}>
-					{p.title}
+		<li className={bare ? "border-t border-border" : "q-card"} data-testid="watch-pick">
+			<div className="flex items-center gap-3 py-3 pl-4 pr-2 sm:gap-4">
+				<span className="max-sm:hidden">
+					<Thumb id={p.id} watched={false} />
 				</span>
-				<span className="line-clamp-2 font-prose text-[13px] text-ink-3 sm:block sm:truncate" title={pickLine(p, name)}>
-					{!bare && p.avatar && <Avatar name={p.channel ?? ""} src={p.avatar} small />}
-					{pickLine(p, name)}
+				<span className="min-w-0 flex-1">
+					<span className="line-clamp-2 font-ui text-[15px] font-[600] text-foreground sm:block sm:truncate" lang={lang} title={p.title}>
+						{p.title}
+					</span>
+					<span className="line-clamp-2 font-prose text-[13px] text-ink-3 sm:block sm:truncate" title={pickLine(p, name)}>
+						{!bare && p.avatar && <Avatar name={p.channel ?? ""} src={p.avatar} small />}
+						{pickLine(p, name)}
+					</span>
+					{why && <span className="block truncate font-prose text-[12px] text-ink-3">{why}</span>}
 				</span>
-				{why && <span className="block truncate font-prose text-[12px] text-ink-3">{why}</span>}
-			</span>
-			<button type="button" disabled={!canPrepare} onClick={onPrepare} className="q-btn sec t h-9 shrink-0" title={canPrepare ? "Translate it and add it to your videos" : "Preparing needs an AI key"} data-testid="watch-pick-prepare">
-				Prepare
-			</button>
-			<button type="button" onClick={onDismiss} aria-label={`Not for me: ${p.title}`} title="Not for me" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-pick-dismiss">
-				<XIcon className="size-4" strokeWidth={1.6} />
-			</button>
+				<button
+					type="button"
+					onClick={() => setCutting((v) => !v)}
+					aria-expanded={cutting}
+					aria-label={`Pick a stretch of ${p.title}`}
+					title="Watch only a stretch of it"
+					className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-foreground", cutting ? "bg-accent text-foreground" : "text-muted-foreground")}
+					data-testid="watch-pick-fragments"
+				>
+					<ScissorsIcon className="size-4" strokeWidth={1.6} />
+				</button>
+				<button type="button" disabled={!canPrepare} onClick={() => onPrepare()} className="q-btn sec t h-9 shrink-0" title={canPrepare ? "Translate it and add it to your videos" : "Preparing needs an AI key"} data-testid="watch-pick-prepare">
+					Prepare
+				</button>
+				<button type="button" onClick={onDismiss} aria-label={`Not for me: ${p.title}`} title="Not for me" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-pick-dismiss">
+					<XIcon className="size-4" strokeWidth={1.6} />
+				</button>
+			</div>
+			{cutting && <FragmentsPanel bare videoId={p.id} canPrepare={canPrepare} onPrepare={onPrepare} onClose={() => setCutting(false)} />}
 		</li>
 	);
 }
 
 // ─── Creators ───────────────────────────────────────────────────────────────
 
-export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; canPrepare: boolean; onPrepare: (url: string) => void }) {
+export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; canPrepare: boolean; onPrepare: (url: string, range?: FragmentRange) => void }) {
 	const { state, apply } = d;
 	const [open, setOpen] = useState<string | null>(null);
 	const [savingAll, setSavingAll] = useState(false);
@@ -315,7 +331,7 @@ export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; can
 									{c.videos.length > 0 ? (
 										<ol>
 											{c.videos.map((p) => (
-												<PickRow key={p.id} bare p={p} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={() => onPrepare(videoUrl(p.id))} onDismiss={() => void post({ action: "dismiss", videoId: p.id }).then((r) => apply(r.body))} />
+												<PickRow key={p.id} bare p={p} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={(range) => onPrepare(videoUrl(p.id), range)} onDismiss={() => void post({ action: "dismiss", videoId: p.id }).then((r) => apply(r.body))} />
 											))}
 										</ol>
 									) : (

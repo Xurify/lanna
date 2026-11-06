@@ -117,6 +117,10 @@ export interface VideoRecord {
 	/** Lines the model could not translate back into its answer: they keep
 	 *  their Slovak and have an empty English line. Absent when none. */
 	untranslated?: number;
+	/** Set when only a stretch of the video was prepared (src/core/fragments.ts):
+	 *  `durationSec`, the lines and the coverage are the stretch's, and this says
+	 *  where it sits in the whole video, whose length is `ofSec`. */
+	fragment?: { startSec: number; endSec: number; ofSec: number };
 	/** Foreign captions: coverage, the word counts and the pre-teach words come
 	 *  from a model's Slovak rendering of the lines (the lines shown stay as
 	 *  captioned), so the share is an estimate. */
@@ -142,6 +146,8 @@ export interface VideoIndexEntry {
 	trackLang?: string;
 	/** The share is an estimate from a Slovak rendering of foreign captions. */
 	estimated?: boolean;
+	/** Only a stretch of the video was prepared (VideoRecord.fragment). */
+	fragment?: { startSec: number; endSec: number; ofSec: number };
 }
 
 /** Captions in another language than the video's (Czech for Slovak). */

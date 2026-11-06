@@ -26,6 +26,7 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
+import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
 import { activeLanguage } from "./active-language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
@@ -427,6 +428,10 @@ export interface PrepareOptions {
 	now?: Date;
 	/** Prepare again even when the video is already in the library. */
 	force?: boolean;
+	/** Prepare only this stretch of the video (src/core/fragments.ts): only its
+	 *  lines are translated and questioned, whatever the video's length. The
+	 *  library keeps one cut of a video; a different one replaces it. */
+	range?: FragmentRange;
 	/** Skip the questions (no model call); tests only. */
 	questions?: boolean;
 	signal?: AbortSignal;
@@ -538,6 +543,12 @@ export async function questionsFor(engine: PiEngine, segments: readonly { sk: st
 const stages = new Map<string, { stage: PrepareStage; error?: string; at: number }>();
 const inFlight = new Map<string, Promise<VideoRecord>>();
 
+/** Is the kept record the cut asked for: the whole video, or this stretch? */
+function sameCut(kept: VideoRecord, range: FragmentRange | undefined): boolean {
+	if (!range) return !kept.fragment;
+	return !!kept.fragment && Math.abs(kept.fragment.startSec - range.startSec) < 1.5 && Math.abs(kept.fragment.endSec - range.endSec) < 1.5;
+}
+
 export function prepareStage(id: string): { stage: PrepareStage; error?: string } | null {
 	const s = stages.get(id);
 	return s ? { stage: s.stage, ...(s.error ? { error: s.error } : {}) } : null;
@@ -568,13 +579,18 @@ export function glossSegments(lines: readonly { start: number; end: number; sk: 
 export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<VideoRecord> {
 	const id = parseVideoUrl(url);
 	if (!id) return Promise.reject(new Error("That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link."));
-	const existing = inFlight.get(id);
+	const range = opts.range;
+	if (range && !(Number.isFinite(range.startSec) && Number.isFinite(range.endSec) && range.startSec >= 0 && range.endSec - range.startSec >= FRAGMENT_PICK_MIN_SEC && range.endSec - range.startSec <= FRAGMENT_PICK_MAX_SEC)) {
+		return Promise.reject(new Error(`A fragment is between ${FRAGMENT_PICK_MIN_SEC} seconds and ${FRAGMENT_PICK_MAX_SEC / 60} minutes long.`));
+	}
+	const key = range ? `${id}@${Math.round(range.startSec)}-${Math.round(range.endSec)}` : id;
+	const existing = inFlight.get(key);
 	if (existing) return existing;
 	const job = (async () => {
 		const now = opts.now ?? new Date();
 		if (!opts.force) {
 			const kept = videoStore.get(id);
-			if (kept) return kept;
+			if (kept && sameCut(kept, range)) return kept;
 		}
 		const task = startTask({ id: taskIdOf(id), kind: "video", title: videoStore.get(id)?.title ?? `Video ${id}`, step: PREPARE_STAGE_LINE.captions });
 		const signal = opts.signal ? AbortSignal.any([opts.signal, task.signal]) : task.signal;
@@ -582,11 +598,11 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		const lexicon = loadLexicon();
 		const k = knownWords(lexicon);
 		const fetched = await (opts.captions ? opts.captions(id) : fetchCaptions(id, { transcribe: opts.transcribe, signal, onStage: (s) => setStage(id, s) }));
-		if (fetched.meta.durationSec > MAX_VIDEO_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`);
+		if (range ? fetched.meta.durationSec > FRAGMENT_SOURCE_MAX_SEC : fetched.meta.durationSec > MAX_VIDEO_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`);
 		signal.throwIfAborted();
 		updateTask(taskIdOf(id), { title: fetched.meta.title });
-		const lines = segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
-		if (lines.length === 0) throw new Error("The captions are empty.");
+		const lines = range ? segmentCues(fetched.cues).filter((l) => l.start >= range.startSec - 0.5 && l.end <= range.endSec + 0.5) : segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
+		if (lines.length === 0) throw new Error(range ? "The captions have no speech in that stretch." : "The captions are empty.");
 		if (fetched.raw) {
 			try {
 				videoStore.putCaptions(id, fetched.source.trackLang, fetched.raw.ext, fetched.raw.text);
@@ -637,7 +653,8 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			url: videoUrl(id),
 			title: fetched.meta.title,
 			...(fetched.meta.channel ? { channel: fetched.meta.channel } : {}),
-			durationSec: fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
+			durationSec: range ? Math.ceil(lines[lines.length - 1]!.end - lines[0]!.start) : fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
+			...(range ? { fragment: { startSec: lines[0]!.start, endSec: lines[lines.length - 1]!.end, ofSec: fetched.meta.durationSec || Math.ceil(fetched.cues[fetched.cues.length - 1]?.start ?? 0) } } : {}),
 			source: fetched.source,
 			level: k.level,
 			createdAt: now.toISOString(),
@@ -659,7 +676,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		finishTask(taskIdOf(id), { title: record.title, href: `/watch?id=${id}` });
 		return record;
 	})();
-	inFlight.set(id, job);
+	inFlight.set(key, job);
 	return job
 		.catch((err) => {
 			const message = err instanceof Error && err.name === "AbortError" ? "Stopped." : err instanceof Error ? err.message : String(err);
@@ -667,7 +684,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			failTask(taskIdOf(id), message, err instanceof NoCaptionsError && err.canTranscribe ? { label: "Transcribe the audio", url, transcribe: true } : undefined);
 			throw err;
 		})
-		.finally(() => inFlight.delete(id));
+		.finally(() => inFlight.delete(key));
 }
 
 // ─── The library ────────────────────────────────────────────────────────────
