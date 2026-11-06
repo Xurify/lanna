@@ -1,5 +1,5 @@
 /**
- * Writes the hand-made Robo episodes (scripts/fixtures/robo-episodes.ts) into a scratch profile, in the
+ * Writes the hand-made series episodes (scripts/fixtures/series-episodes.ts) into a scratch profile, in the
  * format the app writes under data/profiles/slovak/stories/. Run it with LH_DATA_DIR set to a scratch
  * folder; it refuses a folder inside this repository, where the real data/ lives, and skips episodes
  * that are already there.
@@ -11,7 +11,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ROBO_EPISODES, type FixtureEpisode } from "./fixtures/robo-episodes.ts";
+import { ROBO_EPISODES, type FixtureEpisode } from "./fixtures/series-episodes.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = process.env.LH_DATA_DIR;

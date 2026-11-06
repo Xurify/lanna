@@ -43,9 +43,9 @@ function fauxEngine(steps: FauxResponseStep[]) {
 }
 
 const EPISODE = {
-	title: "Robo pije kávu",
+	title: "Martin pije kávu",
 	sentences: [
-		{ sk: "Robo je v Bratislave.", en: "Robo is in Bratislava." },
+		{ sk: "Martin je v Bratislave.", en: "Martin is in Bratislava." },
 		{ sk: "Ráno ide do kaviarne.", en: "In the morning he goes to a café." },
 		{ sk: "Pije kávu a je chlieb.", en: "He drinks coffee and eats bread." },
 		{ sk: "Káva je dobrá, chlieb je dobrý.", en: "The coffee is good, the bread is good." },
@@ -54,24 +54,24 @@ const EPISODE = {
 	],
 	newWords: [{ sk: "kaviareň", en: "café" }],
 	questions: [
-		{ q: "Kde je Robo?", options: ["V Bratislave", "V Košiciach", "Doma"], answer: 0 },
+		{ q: "Kde je Martin?", options: ["V Bratislave", "V Košiciach", "Doma"], answer: 0 },
 		{ q: "Čo pije?", options: ["Čaj", "Kávu", "Vodu"], answer: 1 },
 		{ q: "Čo má doma?", options: ["Mačku", "Psa", "Auto"], answer: "Psa" },
 	],
-	recap: "Robo has coffee and bread in a café, then goes home to his dog.",
+	recap: "Martin has coffee and bread in a café, then goes home to his dog.",
 };
 
 describe("the pure rules", () => {
 	it("tokenizes a sentence into words and the pieces between them, losslessly", () => {
-		const t = core.tokenize("„Dobrý deň,“ povedal Robo — a odišiel.");
-		assert.equal(t.map((x) => x.text).join(""), "„Dobrý deň,“ povedal Robo — a odišiel.");
-		assert.deepEqual(t.filter((x) => x.word).map((x) => x.text), ["Dobrý", "deň", "povedal", "Robo", "a", "odišiel"]);
+		const t = core.tokenize("„Dobrý deň,“ povedal Martin — a odišiel.");
+		assert.equal(t.map((x) => x.text).join(""), "„Dobrý deň,“ povedal Martin — a odišiel.");
+		assert.deepEqual(t.filter((x) => x.word).map((x) => x.text), ["Dobrý", "deň", "povedal", "Martin", "a", "odišiel"]);
 		assert.deepEqual(core.tokenize("rock'n'roll 5-krát").filter((x) => x.word).map((x) => x.text), ["rock'n'roll", "5-krát"]);
 	});
 
 	it("reads the model's JSON out of fences and prose, and normalizes the questions", () => {
 		const d = core.parseStoryDraft(`Here you go:\n\`\`\`json\n${JSON.stringify(EPISODE)}\n\`\`\`\nEnjoy!`);
-		assert.equal(d.title, "Robo pije kávu");
+		assert.equal(d.title, "Martin pije kávu");
 		assert.equal(d.sentences.length, 6);
 		assert.equal(d.questions.length, 3);
 		assert.equal(d.questions[2]!.answer, 1, "an answer given as text becomes its index");
@@ -92,7 +92,7 @@ describe("the pure rules", () => {
 		assert.deepEqual(core.gradeAnswers(qs, [0, 2]), { correct: 1, total: 3 });
 		assert.equal(core.readXp(6, 3, false), 27);
 		assert.equal(core.readXp(6, 3, true), 15);
-		assert.equal(core.storyId(3, "Robo na trhu!"), "ep-003-robo-na-trhu");
+		assert.equal(core.storyId(3, "Martin na trhu!"), "ep-003-martin-na-trhu");
 	});
 
 	it("measures coverage from the fresh marks", () => {
@@ -130,10 +130,10 @@ describe("glossing against the lexicon", () => {
 
 	it("glosses a sentence: dictionary words carry lemma and gloss, unmet words are fresh, names are not", () => {
 		const known = new Set(["pit", "kava", "byt"]);
-		const s = reading.glossSentence("Robo pije kávu v kaviarni.", "Robo drinks coffee in a café.", lexicon, known, [{ lemma: "kaviareň", gloss: "café", slug: "kaviaren" }]);
-		assert.equal(s.tokens.map((t) => t.text).join(""), "Robo pije kávu v kaviarni.");
+		const s = reading.glossSentence("Martin pije kávu v kaviarni.", "Martin drinks coffee in a café.", lexicon, known, [{ lemma: "kaviareň", gloss: "café", slug: "kaviaren" }]);
+		assert.equal(s.tokens.map((t) => t.text).join(""), "Martin pije kávu v kaviarni.");
 		const words = s.tokens.filter((t) => t.word);
-		assert.equal(words[0]!.text, "Robo");
+		assert.equal(words[0]!.text, "Martin");
 		assert.equal(words[0]!.fresh, undefined, "a capitalised name is not fresh vocabulary");
 		assert.equal(words[1]!.lemma, "piť");
 		assert.match(words[1]!.gloss!, /drink/);
@@ -173,7 +173,7 @@ describe("an episode on a scripted engine", () => {
 		assert.doesNotMatch(diary.prompt, /first episode/);
 	});
 
-	it("the shelf plan: the learner's level first, one each side, genres rotate, Robo first", () => {
+	it("the shelf plan: the learner's level first, one each side, genres rotate, Martin first", () => {
 		const needs = core.shelfNeeds("A2", []);
 		assert.deepEqual(needs.map((n) => n.level), ["A2", "A2", "A2", "A1", "B1"]);
 		assert.equal(needs[0]!.genre, "robo");
@@ -184,7 +184,7 @@ describe("an episode on a scripted engine", () => {
 		assert.ok(!core.shelfNeeds("C1", []).some((n) => n.level === "C2" as never));
 	});
 
-	it("the picker: the best-fitting unread story, Robo in order, none when too hard", () => {
+	it("the picker: the best-fitting unread story, Martin in order, none when too hard", () => {
 		const mk = (id: string, level: "A1" | "A2" | "B1", genre: StoryGenre, episode: number, fresh: number): StoryRecord => ({
 			id, lang: "sk", series: genre, episode, title: id, level, chapter: "hello", theme: "t", genre, createdAt: "2026-10-28T00:00:00Z", drafts: 1, wordCount: 20, coverage: 1, recap: "", usage: { model: "m", steps: [] }, questions: [], newWords: [],
 			sentences: [{ sk: "x", en: "x", tokens: Array.from({ length: 20 }, (_, i) => ({ text: "w", word: true, slug: i < fresh ? `unk${i}` : `k${i}`, ...(i < fresh ? { fresh: true } : {}) })) }],
@@ -196,7 +196,7 @@ describe("an episode on a scripted engine", () => {
 		const hard = mk("news", "B1", "news", 0, 6); // 70% known
 		const dialogue = mk("dlg", "A2", "dialogue", 0, 1);
 		const pick = core.pickStory([later, hard, dialogue, good], input);
-		assert.equal(pick?.story.id, "ep-2", "episode 2 before 3, Robo bonus over the dialogue just read");
+		assert.equal(pick?.story.id, "ep-2", "episode 2 before 3, Martin bonus over the dialogue just read");
 		assert.ok(pick!.reason.coverage > 0.9 && pick!.reason.line.includes("95 of 100"));
 		assert.equal(core.pickStory([hard], input), null, "70% known is not readable: write a new one");
 		assert.equal(core.pickStory([], input), null);
@@ -204,15 +204,15 @@ describe("an episode on a scripted engine", () => {
 	});
 
 	it("the model's text as it streams: the Slovak sentences so far", () => {
-		const partial = '{"title": "Ahoj", "cast": [{"name": "Robo"}], "sentences": [{"who": "narrator", "sk": "Robo je doma.", "en": "Robo is at home."}, {"who": "Robo", "sk": "„Ahoj, mama!“ hovor';
-		assert.deepEqual(reading.sentencesSoFar(partial), ["Robo je doma."], "a sentence is listed once its closing quote has arrived");
-		assert.deepEqual(reading.sentencesSoFar(partial + 'í.", "en": "x"}'), ["Robo je doma.", "„Ahoj, mama!“ hovorí."]);
+		const partial = '{"title": "Ahoj", "cast": [{"name": "Martin"}], "sentences": [{"who": "narrator", "sk": "Martin je doma.", "en": "Martin is at home."}, {"who": "Martin", "sk": "„Ahoj, mama!“ hovor';
+		assert.deepEqual(reading.sentencesSoFar(partial), ["Martin je doma."], "a sentence is listed once its closing quote has arrived");
+		assert.deepEqual(reading.sentencesSoFar(partial + 'í.", "en": "x"}'), ["Martin je doma.", "„Ahoj, mama!“ hovorí."]);
 	});
 
 	it("cast and speakers: parsed from the draft, each character gets a stable voice, the narrator its own", async () => {
 		const { assignVoices, NARRATOR_VOICE, VOICE_PALETTE } = await import("../src/server/voices.ts");
-		const d = core.parseStoryDraft(JSON.stringify({ ...EPISODE, cast: [{ name: "Robo", gender: "m", age: "young" }, { name: "Eva", gender: "female", age: "old" }], sentences: [{ who: "narrator", sk: "Robo je doma.", en: "x" }, { who: "Eva", sk: "Ahoj, Robo!", en: "x" }, { who: "Nobody", sk: "Kto?", en: "x" }] }));
-		assert.deepEqual(d.cast, [{ name: "Robo", gender: "m", age: "young" }, { name: "Eva", gender: "f", age: "old" }]);
+		const d = core.parseStoryDraft(JSON.stringify({ ...EPISODE, cast: [{ name: "Martin", gender: "m", age: "young" }, { name: "Eva", gender: "female", age: "old" }], sentences: [{ who: "narrator", sk: "Martin je doma.", en: "x" }, { who: "Eva", sk: "Ahoj, Martin!", en: "x" }, { who: "Nobody", sk: "Kto?", en: "x" }] }));
+		assert.deepEqual(d.cast, [{ name: "Martin", gender: "m", age: "young" }, { name: "Eva", gender: "f", age: "old" }]);
 		assert.deepEqual(d.sentences.map((s) => s.who), [undefined, "Eva", undefined], "narrator and unknown names carry no speaker");
 		const voiced = assignVoices(d.cast);
 		assert.equal(voiced.length, 2);
@@ -220,14 +220,14 @@ describe("an episode on a scripted engine", () => {
 		assert.notEqual(voiced[0]!.voice, voiced[1]!.voice);
 		assert.equal(VOICE_PALETTE.find((v) => v.id === voiced[0]!.voice)?.gender, "m");
 		assert.equal(VOICE_PALETTE.find((v) => v.id === voiced[1]!.voice)?.age, "old");
-		assert.equal(assignVoices([{ name: "robo", gender: "m", age: "young" }])[0]!.voice, voiced[0]!.voice, "the same name gets the same voice in every story");
+		assert.equal(assignVoices([{ name: "martin", gender: "m", age: "young" }])[0]!.voice, voiced[0]!.voice, "the same name gets the same voice in every story");
 		assert.equal(assignVoices(d.cast, new Set([NARRATOR_VOICE]))[0]!.voice, NARRATOR_VOICE, "with no usable voice in the account, the narrator reads it");
 	});
 
 	it("writes, glosses, measures and keeps the episode; usage is on the record", async () => {
 		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify(EPISODE))]);
 		const story = await reading.generateStory({ engine, model: "faux:story", now: new Date("2026-10-28T10:00:00Z") });
-		assert.equal(story.id, "ep-001-robo-pije-kavu");
+		assert.equal(story.id, "ep-001-martin-pije-kavu");
 		assert.equal(story.episode, 1);
 		assert.equal(story.level, "A1");
 		assert.equal(story.sentences.length, 6);
@@ -244,20 +244,20 @@ describe("an episode on a scripted engine", () => {
 		assert.ok(story.newWords.some((w) => w.slug === "kaviaren"), "the introduced word is on the list with its slug");
 		assert.equal(story.genre, "robo");
 		assert.ok(Array.isArray(story.cast) && story.narratorVoice, "the record carries its cast and narrator voice");
-		assert.ok(fs.existsSync(path.join(PATHS.stories, "ep-001-robo-pije-kavu.json")));
+		assert.ok(fs.existsSync(path.join(PATHS.stories, "ep-001-martin-pije-kavu.json")));
 		assert.ok(fs.existsSync(path.join(PATHS.stories, "README.md")), "the folder explains itself");
 		const index = storyStore.list();
 		assert.equal(index.length, 1);
-		assert.equal(index[0]!.title, "Robo pije kávu");
+		assert.equal(index[0]!.title, "Martin pije kávu");
 		assert.equal(index[0]!.model, "faux:story");
 	});
 
 	it("the unread episode is reused: nextStory does not call the model again", async () => {
 		const engine = fauxEngine([]); // any call would fail
 		const again = await reading.nextStory({ engine });
-		assert.equal(again.id, "ep-001-robo-pije-kavu");
+		assert.equal(again.id, "ep-001-martin-pije-kavu");
 		const state = reading.readingState();
-		assert.equal(state.current?.id, "ep-001-robo-pije-kavu");
+		assert.equal(state.current?.id, "ep-001-martin-pije-kavu");
 		assert.equal(state.library.length, 1);
 		assert.equal(state.library[0]!.reads, 0);
 		assert.equal(state.readToday, 0);
@@ -270,7 +270,7 @@ describe("an episode on a scripted engine", () => {
 		assert.equal(task.done, false);
 		assert.equal(task.href, "/read");
 
-		const out = reading.recordRead({ storyId: "ep-001-robo-pije-kavu", answers: [0, 1, 0], tapped: ["pes", "kava"], ms: 150_000, tz: 0 }, new Date("2026-10-28T10:31:00Z"));
+		const out = reading.recordRead({ storyId: "ep-001-martin-pije-kavu", answers: [0, 1, 0], tapped: ["pes", "kava"], ms: 150_000, tz: 0 }, new Date("2026-10-28T10:31:00Z"));
 		assert.equal(out.correct, 2);
 		assert.equal(out.total, 3);
 		assert.equal(out.xp, 6 * 2 + 2 * 5);
@@ -315,7 +315,7 @@ describe("an episode on a scripted engine", () => {
 	});
 
 	it("fills the shelf in the background: one story per need, varied genres, the day's cap, and the picker serves it", async () => {
-		const piece = (title: string, genre: string) => fauxAssistantMessage(JSON.stringify({ ...EPISODE, title, topic: `${genre} topic`, cast: [{ name: "Robo", gender: "m", age: "young" }], sentences: EPISODE.sentences.map((x, i) => ({ ...x, who: i === 0 ? "narrator" : "Robo" })) }));
+		const piece = (title: string, genre: string) => fauxAssistantMessage(JSON.stringify({ ...EPISODE, title, topic: `${genre} topic`, cast: [{ name: "Martin", gender: "m", age: "young" }], sentences: EPISODE.sentences.map((x, i) => ({ ...x, who: i === 0 ? "narrator" : "Martin" })) }));
 		const before = storyStore.list().length;
 		const engine = fauxEngine(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"].map((t) => piece(`Príbeh ${t}`, t)));
 		const written = await reading.fillShelf({ engine, model: "faux:shelf", now: new Date("2026-10-29T09:00:00Z") });
@@ -332,7 +332,7 @@ describe("an episode on a scripted engine", () => {
 		assert.ok(state.current, "the picker has something to offer");
 		assert.ok(state.pick && state.pick.coverage > 0.9, "and says why");
 		assert.equal(state.generating, null);
-		assert.equal(storyStore.get(state.current!.id)!.sentences[1]!.who, "Robo", "speakers are kept on the sentences");
+		assert.equal(storyStore.get(state.current!.id)!.sentences[1]!.who, "Martin", "speakers are kept on the sentences");
 	});
 
 	it("the spending report and the export see the episodes", () => {
@@ -428,13 +428,13 @@ describe("the chapter's episode on the shelf", () => {
 		assert.equal(k.chapter, "cafe", "the learner is now in the second chapter");
 		assert.ok(!storyStore.list().some((s) => s.chapter === "cafe"), "no episode of it exists");
 		const beforeIds = new Set(storyStore.list().map((s) => s.id));
-		const piece = (t: string) => fauxAssistantMessage(JSON.stringify({ ...EPISODE, title: t, topic: "shelf topic", cast: [{ name: "Robo", gender: "m", age: "young" }], sentences: EPISODE.sentences.map((x, i) => ({ ...x, who: i === 0 ? "narrator" : "Robo" })) }));
+		const piece = (t: string) => fauxAssistantMessage(JSON.stringify({ ...EPISODE, title: t, topic: "shelf topic", cast: [{ name: "Martin", gender: "m", age: "young" }], sentences: EPISODE.sentences.map((x, i) => ({ ...x, who: i === 0 ? "narrator" : "Martin" })) }));
 		const written = await reading.fillShelf({ engine: fauxEngine([piece("Dvojkáva"), piece("Trojkáva")]), model: "faux:shelf", now: new Date("2026-10-30T09:00:00Z") });
 		const fresh = storyStore.list().filter((s) => !beforeIds.has(s.id));
 		assert.ok(written >= 1, "something was written");
 		const chapterStories = fresh.filter((s) => s.chapter === "cafe");
 		assert.equal(chapterStories.length, 1, "exactly one episode for the new chapter");
-		assert.equal(chapterStories[0]!.genre, "robo", "the chapter's episode is a Robo episode");
+		assert.equal(chapterStories[0]!.genre, "robo", "the chapter's episode is a Martin episode");
 		const state = reading.readingState(0, new Date("2026-10-30T09:01:00Z"));
 		assert.equal(state.current?.chapter, "cafe", "the picker serves the chapter's episode, not the unread shelf stock");
 	});
@@ -445,7 +445,7 @@ describe("a language other than Slovak", () => {
 		const system = reading.storySystem(ESTONIAN, null);
 		assert.match(system, /graded Estonian reading texts/);
 		assert.match(system, /a town in Estonia/);
-		assert.doesNotMatch(system, /Slovak|Bratislava|Robo|že/);
+		assert.doesNotMatch(system, /Slovak|Bratislava|Martin|že/);
 		const brief = reading.storyBrief(reading.knownWords(), [], [], new Date(), "travel", null, ESTONIAN);
 		assert.match(brief.prompt, /a real town, region or custom in Estonia/);
 		assert.equal(reading.episodeTheme(["curious"], 2, null), "a day in the mountains");

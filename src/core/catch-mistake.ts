@@ -4,8 +4,8 @@
  * pair the learner mixes up. The learner taps the wrong word, then types the
  * word that belongs there, which is graded with compareAnswer.
  *
- * The pair is chosen by chooseSlip and the wrong and right words are checked by
- * verifySlip (src/core/reading-slip.ts). An item is kept only when that code can
+ * The pair is chosen by chooseCatch and the wrong and right words are checked by
+ * verifyCatch (src/core/catch-pair.ts). An item is kept only when that code can
  * see the mistake, so the model writes the sentences and does not grade them.
  *
  * Pure. The model call is in src/server/catch-mistake.ts and the file in
@@ -14,8 +14,8 @@
 
 import { compareAnswer, type AnswerVerdict } from "./language.ts";
 import type { PairDef } from "./pairs.ts";
-import { tokenize, type DraftSlip, type StorySentence } from "./reading.ts";
-import { verifySlip, type SlipLexicon, type SlipTarget, type SlipWord } from "./reading-slip.ts";
+import { tokenize, type StorySentence } from "./reading.ts";
+import { verifyCatch, type CatchDraftMark, type CatchLexicon, type CatchTarget, type CatchWord } from "./catch-pair.ts";
 
 /** Sentences in one item: a context line, the wrong one, and its correction. */
 export const CATCH_SENTENCES = 3;
@@ -94,7 +94,7 @@ export interface CatchNext {
 
 export interface CatchDraft {
 	sentences: Array<{ sk: string; en: string }>;
-	slip: DraftSlip;
+	slip: CatchDraftMark;
 }
 
 /** The sentences the page shows before the answer. */
@@ -158,8 +158,8 @@ export function parseCatchDraft(text: string): CatchDraft | null {
 
 /** The brief for one item. It is written from the pair, not from slipBrief,
  *  whose lines tell a series episode about its lead character. */
-export function catchBrief(t: SlipTarget, language: string): string {
-	const forms = (w: SlipWord) => w.forms.slice(0, BRIEF_FORMS).map((f) => `"${f}"`).join(", ");
+export function catchBrief(t: CatchTarget, language: string): string {
+	const forms = (w: CatchWord) => w.forms.slice(0, BRIEF_FORMS).map((f) => `"${f}"`).join(", ");
 	return [
 		`Write ${CATCH_SENTENCES} short sentences in ${language}, one after another, as practice text for a learner who mixes up "${t.wrong.lemma}" and "${t.right.lemma}". The rule: ${t.rule}`,
 		`Sentence 0 is plain context with neither word. Sentence 1 uses a form of "${t.wrong.lemma}" where "${t.right.lemma}" belongs, so it is wrong in exactly this way. Use one of these forms, exactly as written: ${forms(t.wrong)}.`,
@@ -173,8 +173,8 @@ export interface CatchBuildInput {
 	now: Date;
 	model: string;
 	draft: CatchDraft;
-	target: SlipTarget;
-	lexicon: SlipLexicon;
+	target: CatchTarget;
+	lexicon: CatchLexicon;
 	pairs: readonly PairDef[];
 }
 
@@ -182,7 +182,7 @@ export interface CatchBuildInput {
 export function buildCatchItem(input: CatchBuildInput): { item: CatchItem } | { reason: string } {
 	const { draft, target } = input;
 	const sentences: StorySentence[] = draft.sentences.map((s) => ({ sk: s.sk, en: s.en, who: target.speaker, tokens: tokenize(s.sk) }));
-	const check = verifySlip(draft.slip, target, sentences, input.lexicon, input.pairs);
+	const check = verifyCatch(draft.slip, target, sentences, input.lexicon, input.pairs);
 	if (!("slip" in check)) return { reason: check.reason };
 	const wanted = check.slip.wrong.toLowerCase();
 	const hits = sentences[check.slip.sentence]!.tokens.flatMap((t, i) => (t.word && t.text.toLowerCase() === wanted ? [i] : []));

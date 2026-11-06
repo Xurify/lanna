@@ -8,7 +8,7 @@
  * ElevenLabs (tier 1) can read Slovak with any multilingual voice, so a
  * story's cast is drawn from a small palette of its premade voices by
  * gender and age; the narrator keeps the slovak.wiki voice, which no
- * character uses. A recurring name (Robo) always gets the same voice: the
+ * character uses. A recurring name (Martin) always gets the same voice: the
  * choice hashes the name. The palette is checked against the account's
  * voice list once an hour, so a voice the account cannot use falls back
  * to the narrator rather than failing the clip. Edge (tier 2) has one
@@ -77,8 +77,8 @@ function hashOf(name: string): number {
 }
 
 /** The voice for a character: same gender and age when the palette has
- *  one, else same gender; chosen by the name's hash so Robo is always
- *  Robo. Two characters of a story never share a voice while the palette
+ *  one, else same gender; chosen by the name's hash so Martin is always
+ *  Martin. Two characters of a story never share a voice while the palette
  *  allows. */
 export function assignVoices(cast: readonly StoryCharacter[], available: ReadonlySet<string> | null = null): StoryCharacter[] {
 	const palette = available ? VOICE_PALETTE.filter((v) => available.has(v.id)) : [...VOICE_PALETTE];

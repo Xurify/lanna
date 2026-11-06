@@ -1,15 +1,15 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { groupTokens, storyMeta } from "@/components/reading/reader";
-import { ROBO_EPISODES } from "../scripts/fixtures/robo-episodes.ts";
+import { ROBO_EPISODES } from "../scripts/fixtures/series-episodes.ts";
 
 const tok = (text: string, word = /\p{L}/u.test(text)) => ({ text, word });
 
 describe("the reader's text", () => {
 	it("punctuation stays with the word before it and an opening quote with the word after it", () => {
-		const tokens = [tok("Robo"), tok(" "), tok("hovorí"), tok(":"), tok(" "), tok("„"), tok("Dobrý"), tok(" "), tok("deň"), tok("!"), tok("“")];
+		const tokens = [tok("Martin"), tok(" "), tok("hovorí"), tok(":"), tok(" "), tok("„"), tok("Dobrý"), tok(" "), tok("deň"), tok("!"), tok("“")];
 		const groups = groupTokens(tokens).map((g) => g.indexes.map((i) => tokens[i]!.text).join(""));
-		assert.deepEqual(groups, ["Robo", " ", "hovorí:", " ", "„Dobrý", " ", "deň!“"]);
+		assert.deepEqual(groups, ["Martin", " ", "hovorí:", " ", "„Dobrý", " ", "deň!“"]);
 	});
 
 	it("a final full stop is never a group of its own", () => {

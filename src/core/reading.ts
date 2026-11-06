@@ -81,7 +81,7 @@ export interface StoryCharacter {
 
 // ─── Genres ─────────────────────────────────────────────────────────────────
 
-/** What kinds of text the shelf holds. Robo is the running series; the
+/** What kinds of text the shelf holds. Martin is the running series; the
  *  rest are stand-alone pieces so a learner meets the text types the CEFR
  *  describes for the level (messages and dialogues at A1, diary and
  *  tales at A2, news and interviews at B1, opinion and history at B2). */
@@ -202,27 +202,6 @@ export interface StoryUsage {
 	}>;
 }
 
-/** Robo's slip in a series episode (src/core/reading-slip.ts): one sentence
- *  where Robo says the wrong word of a pair the learner mixes up, and the
- *  next sentence where he says the right one. Absent on every other episode. */
-export interface StorySlip {
-	/** The pair's id in curriculum/<language>/pairs.json ("kam-vs-kde"). */
-	pair: string;
-	/** Index of the sentence with the wrong word; the repair is the next one. */
-	sentence: number;
-	/** The wrong word, as it is written in that sentence. */
-	wrong: string;
-	/** The right word, as it is written in the repair sentence. */
-	right: string;
-	/** Lexicon slugs of the two words: the right one goes to review after the reading. */
-	wrongSlug: string;
-	rightSlug: string;
-	/** The pair's rule, one English line, as it stood when the episode was written. */
-	rule: string;
-	/** The series lead who says both lines, as the story bible names them. */
-	speaker: string;
-}
-
 export interface StoryRecord {
 	/** "ep-003-robo-na-trhu": the episode number and the title's slug. */
 	id: string;
@@ -258,8 +237,6 @@ export interface StoryRecord {
 	usage: StoryUsage;
 	/** How many drafts it took (a draft under the coverage floor is redone once). */
 	drafts: number;
-	/** Robo's slip, when the episode was asked for one and the check passed. */
-	slip?: StorySlip;
 }
 
 /** The index line (data/profiles/<lang>/stories/index.jsonl): enough to
@@ -355,7 +332,7 @@ export const SHELF_DAILY_CAP = 8;
 /** Which (level, genre) to write next so the shelf stays stocked: the
  *  learner's level first until it holds SHELF_OWN unread stories, then one
  *  at the level below and one above; genres rotate so no level holds two
- *  unread stories of one kind, and Robo episodes stay in the mix. */
+ *  unread stories of one kind, and series episodes stay in the mix. */
 export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: StoryGenre }[], recentGenres: readonly StoryGenre[] = []): Array<{ level: Cefr; genre: StoryGenre }> {
 	const li = levelIndex(level);
 	const wants: Array<{ level: Cefr; want: number }> = [{ level, want: SHELF_OWN }];
@@ -367,7 +344,7 @@ export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: 
 		const taken = new Set<StoryGenre>([...have, ...out.filter((o) => o.level === w.level).map((o) => o.genre)]);
 		for (let n = have.length; n < w.want; n++) {
 			const pool = genresAt(w.level).map((g) => g.id).filter((g) => !taken.has(g));
-			// Robo first when the level has no episode waiting, then the
+			// Martin first when the level has no episode waiting, then the
 			// genre read least recently.
 			const pick = pool.includes("robo") && !taken.has("robo") ? "robo" : [...pool].sort((a, b) => lastSeen(a, recentGenres) - lastSeen(b, recentGenres))[0];
 			if (!pick) break;
@@ -434,7 +411,7 @@ function fitScore(story: StoryRecord, input: PickInput): PickReason {
  *  shelf fits well enough and a new one should be written. The score
  *  weighs how many words the learner knows (the 95–98% band reads best),
  *  the level the text was written for, and variety against the last few
- *  readings; Robo episodes are offered in order. An unread episode of the
+ *  readings; series episodes are offered in order. An unread episode of the
  *  current chapter comes first, whatever its score: the chapter's story
  *  step is the point. */
 export function pickStory(stories: readonly StoryRecord[], input: PickInput): { story: StoryRecord; reason: PickReason } | null {
@@ -580,14 +557,6 @@ export function knownCoverage(sentences: readonly { tokens: readonly StoryToken[
 
 // ─── The model's answer ─────────────────────────────────────────────────────
 
-/** The slip as the model returns it, before the code checks it. `sentence`
- *  is an index into the draft's sentences (-1 when that sentence was dropped). */
-export interface DraftSlip {
-	sentence: number;
-	wrong: string;
-	right: string;
-}
-
 /** The JSON the generator asks the model for. */
 export interface StoryDraft {
 	title: string;
@@ -597,7 +566,6 @@ export interface StoryDraft {
 	newWords: Array<{ sk: string; en: string }>;
 	questions: StoryQuestion[];
 	recap: string;
-	slip?: DraftSlip;
 }
 
 /** The usable questions in a model's list: a question with two to four
@@ -654,20 +622,17 @@ export function parseStoryDraft(text: string): StoryDraft {
 				.slice(0, 6)
 		: [];
 	const names = new Set(cast.map((c) => c.name.toLocaleLowerCase()));
-	// A blank sentence is dropped, so the model's index is mapped onto the
-	// sentences that are kept (the slip is checked against those).
-	const sentences: Array<{ sk: string; en: string; who?: string }> = [];
-	const keptAt = new Map<number, number>();
-	(Array.isArray(o.sentences) ? o.sentences : []).forEach((s, raw) => {
-		if (!s || typeof s !== "object") return;
-		const ss = s as { sk?: unknown; en?: unknown; who?: unknown };
-		const sk = str(ss.sk);
-		if (!sk) return;
-		const who = str(ss.who);
-		const known = who && who.toLocaleLowerCase() !== "narrator" && names.has(who.toLocaleLowerCase()) ? cast.find((c) => c.name.toLocaleLowerCase() === who.toLocaleLowerCase())!.name : undefined;
-		keptAt.set(raw, sentences.length);
-		sentences.push({ sk, en: str(ss.en), ...(known ? { who: known } : {}) });
-	});
+	const sentences = Array.isArray(o.sentences)
+		? o.sentences
+				.map((s) => {
+					if (!s || typeof s !== "object") return null;
+					const ss = s as { sk?: unknown; en?: unknown; who?: unknown };
+					const who = str(ss.who);
+					const known = who && who.toLocaleLowerCase() !== "narrator" && names.has(who.toLocaleLowerCase()) ? cast.find((c) => c.name.toLocaleLowerCase() === who.toLocaleLowerCase())!.name : undefined;
+					return { sk: str(ss.sk), en: str(ss.en), ...(known ? { who: known } : {}) };
+				})
+				.filter((s): s is { sk: string; en: string; who?: string } => !!s && s.sk.length > 0)
+		: [];
 	if (sentences.length < 3) throw new Error(`the draft has ${sentences.length} sentences`);
 	const newWords = Array.isArray(o.newWords)
 		? o.newWords
@@ -675,7 +640,6 @@ export function parseStoryDraft(text: string): StoryDraft {
 				.filter((w): w is { sk: string; en: string } => !!w && w.sk.length > 0)
 		: [];
 	const questions = questionsFrom(o.questions);
-	const slip = draftSlipFrom(o.slip, keptAt);
 	return {
 		title: str(o.title) || sentences[0]!.sk.replace(/[.!?…]+$/, ""),
 		topic: str(o.topic).slice(0, 80),
@@ -684,21 +648,7 @@ export function parseStoryDraft(text: string): StoryDraft {
 		newWords,
 		questions: questions.slice(0, MAX_QUESTIONS),
 		recap: str(o.recap),
-		...(slip ? { slip } : {}),
 	};
-}
-
-/** The slip the model returned, its sentence index mapped onto the kept
- *  sentences (-1 when that sentence was dropped). Undefined when the slip is
- *  missing or not shaped as asked; the check then has nothing to keep. */
-function draftSlipFrom(raw: unknown, keptAt: ReadonlyMap<number, number>): DraftSlip | undefined {
-	if (!raw || typeof raw !== "object") return undefined;
-	const r = raw as { sentence?: unknown; wrong?: unknown; right?: unknown };
-	const at = typeof r.sentence === "string" && /^\s*\d+\s*$/.test(r.sentence) ? Number(r.sentence) : r.sentence;
-	const wrong = typeof r.wrong === "string" ? r.wrong.trim() : "";
-	const right = typeof r.right === "string" ? r.right.trim() : "";
-	if (typeof at !== "number" || !Number.isInteger(at) || at < 0 || !wrong || !right) return undefined;
-	return { sentence: keptAt.get(at) ?? -1, wrong, right };
 }
 
 // ─── Grading the check ──────────────────────────────────────────────────────

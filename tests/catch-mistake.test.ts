@@ -1,7 +1,7 @@
 /**
  * CATCH THE MISTAKE (LangHarness, 2026-11-06): the items the exercise is built from (src/core/catch-mistake.ts)
- * and the server that serves them (src/server/catch-mistake.ts). The pair comes from chooseSlip and the check
- * is verifySlip, both from src/core/reading-slip.ts. One item is made on a scripted engine and kept; a second
+ * and the server that serves them (src/server/catch-mistake.ts). The pair comes from chooseCatch and the check
+ * is verifyCatch, both from src/core/catch-pair.ts. One item is made on a scripted engine and kept; a second
  * visit gets the same item; an answer is graded once; the pair is held back after it. Runs under its own
  * scratch LH_DATA_DIR, never the real profile.
  */
@@ -14,7 +14,7 @@ import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 import type { Mixup, MixupRecord } from "../src/core/mixups.ts";
 import { PAIRS } from "../src/core/pairs.ts";
-import { chooseSlip, type SlipLexicon, type SlipTarget } from "../src/core/reading-slip.ts";
+import { chooseCatch, type CatchLexicon, type CatchTarget } from "../src/core/catch-pair.ts";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-catch-"));
 process.env.LH_DATA_DIR = TMP_DATA;
@@ -29,7 +29,7 @@ const { progressStore } = await import("../src/store/progress.ts");
 after(() => fs.rmSync(TMP_DATA, { recursive: true, force: true }));
 
 const lexicon = loadLexicon()!;
-const slipLexicon: SlipLexicon = { entries: lexicon.entries, bySlug: lexicon.bySlug };
+const slipLexicon: CatchLexicon = { entries: lexicon.entries, bySlug: lexicon.bySlug };
 const AT = new Date("2026-11-06T09:00:00Z");
 
 /** A mix-up on record with the last miss as evidence: the sentence asked for "kam" and the learner gave "kde". */
@@ -48,9 +48,9 @@ function mixup(a: string, b: string, misses: number): Mixup {
 }
 
 /** The kam/kde target, chosen the way the server chooses it. */
-function kamTarget(): SlipTarget {
+function kamTarget(): CatchTarget {
 	const record: MixupRecord = { "kam~kde": mixup("kam", "kde", 2) };
-	const target = chooseSlip({ record, lexicon: slipLexicon, pairs: PAIRS, recentPairs: [], speaker: "item" });
+	const target = chooseCatch({ record, lexicon: slipLexicon, pairs: PAIRS, recentPairs: [], speaker: "item" });
 	assert.ok(target, "kam and kde qualify with two misses");
 	return target;
 }
@@ -123,7 +123,7 @@ describe("building an item from a draft", () => {
 	it("refuses an item with no correction after the wrong sentence", () => {
 		const built = build({ sentences: [GOOD.sentences[0]!, GOOD.sentences[1]!], slip: { sentence: 1, wrong: "Kde", right: "Kam" } });
 		assert.ok("reason" in built);
-		assert.match(built.reason, /repair/);
+		assert.match(built.reason, /correction/);
 	});
 });
 

@@ -1,7 +1,7 @@
 /**
  * The story bible (LangHarness reading, chapter-arc phase 2, 2026-10-30):
  * the series' cast, places and one plot beat per chapter, bundled under
- * curriculum/<profile>/world.json. It seeds the Robo episodes the Read
+ * curriculum/<profile>/world.json. It seeds the series episodes the Read
  * shelf writes for the chapter the learner is in, so every chapter opens
  * with its own episode and the series keeps its people and places. Read
  * only — no generation writes the bible; the picker and the brief read it.

@@ -1,7 +1,7 @@
 /**
  * Catch the mistake, served (LangHarness, 2026-11-06). The next item is the one
  * waiting for an answer; otherwise a new one is made when a pair the learner
- * mixes up qualifies (src/core/reading-slip.ts) and an AI key is set, and kept
+ * mixes up qualifies (src/core/catch-pair.ts) and an AI key is set, and kept
  * in data/profiles/<language>/catch-mistake.json. Only one item waits at a
  * time, and two requests at once share one model call.
  */
@@ -24,7 +24,7 @@ import {
 	type CatchResult,
 } from "../core/catch-mistake.ts";
 import { getPairsForLanguage } from "../core/pairs.ts";
-import { chooseSlip, SLIP_RECENT_EPISODES } from "../core/reading-slip.ts";
+import { chooseCatch, CATCH_RECENT_ITEMS } from "../core/catch-pair.ts";
 import { catchStore } from "../store/catch-mistake.ts";
 import { progressStore } from "../store/progress.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -51,11 +51,11 @@ async function makeNext(opts: CatchOptions): Promise<CatchNext> {
 	const lexicon = loadLexicon();
 	if (!lexicon) return { view: null, reason: "The dictionary for this language is not loaded." };
 	const pairs = getPairsForLanguage(activeProfile());
-	const target = chooseSlip({
+	const target = chooseCatch({
 		record: progressStore.read().mixups ?? {},
 		lexicon,
 		pairs,
-		recentPairs: catchStore.list().slice(-SLIP_RECENT_EPISODES).map((i) => i.pair),
+		recentPairs: catchStore.list().slice(-CATCH_RECENT_ITEMS).map((i) => i.pair),
 		speaker: CATCH_SPEAKER,
 	});
 	if (!target) return { view: null, reason: "No pair you mix up is ready yet. Keep practicing and check back." };
