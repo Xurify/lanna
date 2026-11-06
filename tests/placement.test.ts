@@ -347,3 +347,33 @@ test("the luck check: the rung the level rests on is offered to the tutor again,
 	assert.equal(r.startChapter, "health", "a gap on the floor takes the lucky pair back: A2 is the edge again");
 	assert.ok(r.weak.includes(floor));
 });
+
+test("the miss judge reads the earlier answers of the check, so its note can name a repeated mistake", async () => {
+	assert.match(server.judgeSystem(), /earlier answers in this check/);
+	assert.match(server.judgeSystem(), /Decide "accept" on this answer alone/);
+	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
+	setGoal({ level: "B1", minutesPerDay: 20, prior: "none", onboarded: true }, 0);
+	const now = new Date("2026-11-05T13:00:00Z");
+	const start = server.startPlacement({ now });
+	const prompts: string[] = [];
+	const judging = (note: string) => {
+		const faux = fauxEngine([reply({ accept: false, note })]);
+		return {
+			model: faux.model,
+			streamFn: ((model, context, options) => {
+				const last = context.messages[context.messages.length - 1];
+				prompts.push(last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "");
+				return faux.streamFn(model, context, options);
+			}) as typeof faux.streamFn,
+		};
+	};
+	const first = start.item;
+	const a = await server.answerPlacement({ id: start.id, itemId: first.id, given: "prvé", verdict: "wrong" }, { engine: judging("A past form for a present meaning."), now });
+	assert.doesNotMatch(prompts[0]!, /Earlier answers/, "nothing earlier on the first answer");
+	const second = a.item!;
+	const b = await server.answerPlacement({ id: start.id, itemId: second.id, given: "druhé", verdict: "wrong" }, { engine: judging("Again a past form for a present meaning, as with prvé."), now });
+	assert.match(prompts[1]!, /Earlier answers in this check, oldest first:\n- \[.+\] ".*" \(.*\) → wrote "prvé", form ".+": MISS \(A past form for a present meaning\.\)/);
+	assert.doesNotMatch(prompts[1]!, /wrote "druhé"/, "the answer being judged is not its own history");
+	assert.match(prompts[1]!, /^The learner typed: druhé$/m);
+	assert.equal(b.judged?.note, "Again a past form for a present meaning, as with prvé.");
+});

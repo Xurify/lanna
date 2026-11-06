@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: the placement check names a repeated mistake (branch `feat/placement-repeated-mistakes`)
+
+- **Why:** the note after a wrong answer explained only that one answer, so it could not tell you that you had made the same mistake before.
+- **What changed (E51):** on a wrong answer, the AI now also reads your earlier answers in the check, right and wrong. When it is the same kind of mistake again, the note says so and names the earlier word, for example "Again a past form for a present meaning, as with <the earlier word>". Whether your answer is accepted still depends on that answer alone. No extra AI calls.
+- **Checked:** a new test: the first miss has no history, the second sees the first with its note, and never itself. Typecheck, lint and the full test suite.
+- **Unverified:** a real model with a key: whether it names repeats only when they are there.
+
 ## 5 November: picks for Watch from saved creators and your YouTube (branch `feat/watch-creators`)
 
 - **Why:** the owner asked to connect their YouTube account, pick or find videos from the history and recommendations, and save creators so adding videos is "easier or more automatic". Research and the live trial: [research/watch-picks.md](research/watch-picks.md); rule E50.

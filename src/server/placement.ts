@@ -36,7 +36,7 @@ import type { StoryUsage } from "../core/reading.ts";
 import { entryLemma, type LexiconEntry } from "../core/review.ts";
 import { makePseudowords, PSEUDO_WORDS, scoreVocab, VOCAB_BANDS, WORDS_PER_BAND, type VocabAnswer, type VocabItem } from "../core/vocab-probe.ts";
 import { rng, shuffle } from "../core/lesson.ts";
-import { placementStore, type PlacementSession } from "../store/placement.ts";
+import { placementStore, type PlacementItemRecord, type PlacementSession } from "../store/placement.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { readSettings } from "../store/settings.ts";
 import { recordPlacement, type PlacementResult, type RepResult } from "./lesson.ts";
@@ -221,7 +221,7 @@ type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
 export function judgeSystem(lang: PromptLang = activeLanguage()): string {
 	const name = lang.english;
 	const x = lang.promptExamples ?? {};
-	return `You check one answer in a ${name} fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right${x.diacriticPair ? ` (${x.diacriticPair})` : ""}; a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>"}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class${x.caseNote ? ` (e.g. ${x.caseNote})` : ""}. Write ${name} words bare, with no quotation marks, and use no semicolons.`;
+	return `You check one answer in a ${name} fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right${x.diacriticPair ? ` (${x.diacriticPair})` : ""}; a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>"}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class${x.caseNote ? ` (e.g. ${x.caseNote})` : ""}. You may also get the learner's earlier answers in this check. Decide "accept" on this answer alone. When an earlier MISS shows the same kind of mistake (the same wrong tense, person, case or ending), the note says so and names that earlier form: "Again a past form for a present meaning, as with <the earlier form>". Claim no pattern the earlier answers do not show: one earlier miss of another kind is no pattern, and an earlier right answer on the same form counts against one. Write ${name} words bare, with no quotation marks, and use no semicolons.`;
 }
 
 function parseJudge(text: string): { accepted: boolean; note: string } {
@@ -229,19 +229,28 @@ function parseJudge(text: string): { accepted: boolean; note: string } {
 	if (!m) return { accepted: false, note: "" };
 	try {
 		const o = JSON.parse(m[0]) as { accept?: unknown; note?: unknown };
-		return { accepted: o.accept === true, note: typeof o.note === "string" ? o.note.trim().slice(0, 160) : "" };
+		return { accepted: o.accept === true, note: typeof o.note === "string" ? o.note.trim().slice(0, 200) : "" };
 	} catch {
 		return { accepted: false, note: "" };
 	}
 }
 
+const EARLIER_ANSWERS = 12;
+
+function earlierLine(r: PlacementItemRecord): string {
+	const result = r.verdict === "wrong" ? `MISS${r.judged?.note ? ` (${r.judged.note})` : ""}` : r.judged?.accepted ? "right (an accepted alternative)" : "right";
+	return `- [${unitInfo(r.rung ?? r.item.unit).title}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}", form "${r.item.answer}": ${result}`;
+}
+
 /** Ask the cheap slot whether a typed miss is a valid alternative. Null
  *  when no model is set or the call fails (then the string verdict stands). */
-export async function judgeAnswer(item: LessonItem, given: string, usage: StoryUsage, opts: PlacementOptions = {}): Promise<{ accepted: boolean; note: string } | null> {
+export async function judgeAnswer(item: LessonItem, given: string, usage: StoryUsage, opts: PlacementOptions = {}, earlier: readonly PlacementItemRecord[] = []): Promise<{ accepted: boolean; note: string } | null> {
 	const script = scriptedEngines();
 	const real = opts.engine ? { engine: opts.engine } : script ? { engine: script.judge } : storyEngine();
 	if (!real) return null;
-	const prompt = [`Sentence: ${item.before}___${item.after}`, `Meaning: ${item.translation}`, `Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`, `Hint the learner saw: ${item.hint ?? item.lemma}`, `The learner typed: ${given}`].join("\n");
+	const answered = earlier.filter((r) => r.verdict !== undefined).slice(-EARLIER_ANSWERS);
+	const history = answered.length ? ["Earlier answers in this check, oldest first:", ...answered.map(earlierLine), ""] : [];
+	const prompt = [...history, `Sentence: ${item.before}___${item.after}`, `Meaning: ${item.translation}`, `Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`, `Hint the learner saw: ${item.hint ?? item.lemma}`, `The learner typed: ${given}`].join("\n");
 	try {
 		return parseJudge(await ask(real.engine, judgeSystem(), prompt, usage));
 	} catch {
@@ -259,7 +268,7 @@ export async function answerPlacement(input: AnswerInput, opts: PlacementOptions
 	rec.given = input.given;
 	if (input.ms !== undefined) rec.ms = input.ms;
 	if (verdict === "wrong" && input.given.trim()) {
-		const judged = await judgeAnswer(rec.item, input.given, s.usage, opts);
+		const judged = await judgeAnswer(rec.item, input.given, s.usage, opts, s.items.filter((r) => r !== rec));
 		if (judged) {
 			rec.judged = judged;
 			if (judged.accepted) verdict = "exact";

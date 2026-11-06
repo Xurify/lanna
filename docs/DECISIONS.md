@@ -601,6 +601,15 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - "Keep one ready" (on, needs a model) prepares the best pick in the background when no video waits: spoken in the language, 88% known or more, 50 words a minute or more. Today's plan then has a Watch task with no paste. Turning it off stops all spending here except the searches.
 - The picks refresh when the Watch page or Today's plan is opened and they are over six hours old, and on "Check again".
 
+### E51. The miss judge reads the check so far, and names a repeated mistake (2026-11-05, branch `feat/placement-repeated-mistakes`)
+
+**Why:** the owner asked whether their answers reach the AI for a real analysis rather than right and wrong. The judge of a typed miss saw only that one item, so its note could explain the miss but could never say it was the same mistake as two answers ago.
+
+**How to apply:**
+- `judgeAnswer` gets the check's earlier answered items (the last twelve): each with its rung, sentence, meaning, what was typed, the form, right or MISS, and the earlier note. The item being judged is never in its own history.
+- The prompt decides `accept` on this answer alone. The note names a repeated mistake only with the earlier form it repeats ("as with <form>"), so the learner can check the claim. One miss of another kind is no pattern, and an earlier right answer on the same form counts against one.
+- Still one cheap call per typed miss and none on a match (P7). The note may run to 200 characters (it was 160) to fit the earlier form.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.
