@@ -32,8 +32,10 @@ import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } fro
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
+	foreignCaptions,
 	MAX_SEGMENTS,
 	MAX_VIDEO_SEC,
+	MEASURE_VERSION,
 	parseCaptions,
 	parseTranslations,
 	parseVideoUrl,
@@ -61,7 +63,7 @@ import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
-import { glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
+import { commonness, glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
 import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
@@ -647,7 +649,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		setStage(id, "questions");
 		const questions = opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
 		setStage(id, "saving");
-		const rankOf = (slug: string) => lexicon?.bySlug.get(slug)?.rank;
+		const rankOf = commonness(lexicon);
 		const preTeach = pickPreTeach(measured, undefined, rankOf);
 		const words = measured.flatMap((s) => s.tokens.filter((t) => t.word));
 		const record: VideoRecord = {
@@ -666,6 +668,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			preTeach,
 			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
 			expected: Math.round(videoExpected(measured) * 1000) / 1000,
+			measure: MEASURE_VERSION,
 			wordCount: words.length,
 			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
 			usage,
@@ -693,7 +696,45 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 
 // ─── The library ────────────────────────────────────────────────────────────
 
+/** A kept video measured by the current rule. One kept under an older rule is
+ *  glossed again from its stored lines (local, no model call) and saved, so
+ *  its shares match what the learner knows now. Foreign captions keep theirs:
+ *  their share came from a model's rendering that is not kept. */
+export function remeasureVideo(rec: VideoRecord): VideoRecord {
+	if (rec.measure === MEASURE_VERSION || foreignCaptions({ lang: rec.lang, trackLang: rec.source.trackLang })) return rec;
+	try {
+		const lexicon = loadLexicon();
+		const segments = glossSegments(rec.segments, rec.segments.map((s) => s.en), lexicon, knownWords(lexicon));
+		const words = segments.flatMap((s) => s.tokens.filter((t) => t.word));
+		const next: VideoRecord = {
+			...rec,
+			segments,
+			coverage: Math.round(videoCoverage(segments) * 1000) / 1000,
+			expected: Math.round(videoExpected(segments) * 1000) / 1000,
+			wordCount: words.length,
+			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(activeLanguage().tag))).size,
+			preTeach: pickPreTeach(segments, undefined, commonness(lexicon)),
+			measure: MEASURE_VERSION,
+		};
+		videoStore.put(next);
+		return next;
+	} catch {
+		return rec;
+	}
+}
+
+/** A kept video as the page should show it. */
+export function currentVideo(id: string): VideoRecord | null {
+	const rec = videoStore.get(id);
+	return rec ? remeasureVideo(rec) : null;
+}
+
 export function videoLibrary(): VideoLibraryEntry[] {
+	for (const e of videoStore.list()) {
+		if (e.measure === MEASURE_VERSION || e.estimated) continue;
+		const rec = videoStore.get(e.id);
+		if (rec) remeasureVideo(rec);
+	}
 	const watches = videoStore.watches();
 	return videoStore.list().map((v) => {
 		const mine = watches.filter((w) => w.videoId === v.id);

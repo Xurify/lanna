@@ -22,7 +22,7 @@
  */
 
 import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
-import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, storyEngine, videoStore, watchState } from "@/src/server";
+import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 	const url = new URL(req.url);
 	const id = url.searchParams.get("id");
 	if (id) {
-		const video = videoStore.get(id);
+		const video = currentVideo(id);
 		return video ? Response.json(video) : Response.json({ message: "no such video" }, { status: 404 });
 	}
 	const status = url.searchParams.get("status");

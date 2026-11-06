@@ -73,6 +73,7 @@ export function videoIndexEntryOf(v: VideoRecord): VideoIndexEntry {
 		level: v.level,
 		createdAt: v.createdAt,
 		coverage: v.coverage,
+		...(v.measure ? { measure: v.measure } : {}),
 		wordCount: v.wordCount,
 		segments: v.segments.length,
 		preTeach: v.preTeach.map((w) => w.lemma),

@@ -57,7 +57,7 @@ export interface StoryToken {
 	 *  not in the common words at this level): the i+1 of the episode. */
 	fresh?: boolean;
 	/** Counted as known only because the learner's level is expected to know
-	 *  it (Watch): not in the deck, not in a finished unit. */
+	 *  it (Watch, and Read's word card): not in the deck, not in a finished unit. */
 	assumed?: boolean;
 }
 
@@ -451,14 +451,8 @@ export const NEW_WORDS_MAX: Record<Cefr, number> = { A1: 3, A2: 4, B1: 5, B2: 6,
  *  The rank is WITHIN a part of speech, so A1 = 500 means 500 verbs, 500
  *  nouns and so on: about 2,000 words. That is a tolerance for texts the
  *  model writes at the level, not a claim about what the learner knows; the
- *  claim is `VOCAB_AT_LEVEL`. */
+ *  claim is `creditedWords` (src/core/milestones.ts). */
 export const KNOWN_RANK: Record<Cefr, number> = { A1: 500, A2: 1000, B1: 2000, B2: 3000, C1: 5000 };
-
-/** Dictionary words, in all, a learner at each level is expected to know
- *  (lemmas; the usual CEFR figures run 500–800 at A1 and double at A2).
- *  Watch measures real speech against this, the studied words and the
- *  grammar table; the number it shows as "you know" leaves this out. */
-export const VOCAB_AT_LEVEL: Record<Cefr, number> = { A1: 600, A2: 1200, B1: 2400, B2: 4000, C1: 6000 };
 
 /** Below this share of known running words the draft is written again. */
 export const COVERAGE_FLOOR = 0.92;

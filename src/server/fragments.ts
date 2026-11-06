@@ -19,7 +19,7 @@ import { isVideoId, parseCaptions, segmentCues } from "../core/watch.ts";
 import { discoverStore, type CaptionLines } from "../store/discover.ts";
 import { videoStore } from "../store/videos.ts";
 import { activeLanguage } from "./active-language.ts";
-import { knownWords } from "./reading.ts";
+import { commonness, knownWords } from "./reading.ts";
 import { fetchCaptions, glossSegments, type FetchedCaptions } from "./watch.ts";
 
 const MAX_LINES = 6000;
@@ -65,7 +65,7 @@ export async function analyzeFragments(id: string, opts: { captions?: (id: strin
 	const language = activeLanguage();
 	const measurable = src.trackLang.toLowerCase().split("-")[0] === language.code;
 	const segments = glossSegments(src.lines, [], lexicon, k);
-	const rankOf = (slug: string) => lexicon?.bySlug.get(slug)?.rank;
+	const rankOf = commonness(lexicon);
 	const facts = lineFacts(segments, rankOf);
 	// Another language's spellings would read as unknown words: the share is not measured, the strip stays plain.
 	const lines = measurable ? facts.lines : facts.lines.map(({ u: _u, beyond: _b, ...l }) => ({ ...l, fresh: 0 }));
@@ -86,6 +86,7 @@ export async function analyzeFragments(id: string, opts: { captions?: (id: strin
 		coverage: measurable ? Math.round((all?.coverage ?? 1) * 1000) / 1000 : 0,
 		expected: measurable ? Math.round((all?.expected ?? 1) * 1000) / 1000 : 0,
 		level: k.level,
+		expectedWords: k.expectedWords,
 		...(kept ? { prepared: kept.fragment ? { startSec: kept.fragment.startSec, endSec: kept.fragment.endSec } : { whole: true as const } } : {}),
 	};
 }

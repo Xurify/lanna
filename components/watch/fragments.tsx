@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderCircleIcon, ScissorsIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { coverageBand, formatClock, FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, heatStrip, IN_REACH, linesTouching, LISTEN_FLOOR, MAX_VIDEO_SEC, rangeStats, VOCAB_AT_LEVEL, type Fragment, type FragmentAnalysis, type FragmentRange } from "@/src/core";
+import { coverageBand, formatClock, FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, heatStrip, IN_REACH, linesTouching, LISTEN_FLOOR, MAX_VIDEO_SEC, rangeStats, type Fragment, type FragmentAnalysis, type FragmentRange } from "@/src/core";
 
 const BUCKETS = 72;
 /** Where a plain click on the strip puts a stretch: about this long, around the click. */
@@ -233,7 +233,7 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 				</>
 			)}
 			<p className="mt-4 font-prose text-[12px] leading-relaxed text-ink-3">
-				"You know" counts the words you have studied, plus grammar words, names and numbers. "Expected" adds the words a learner at {a.level} is assumed to know, about {VOCAB_AT_LEVEL[a.level as keyof typeof VOCAB_AT_LEVEL]?.toLocaleString("en-US") ?? "a few hundred"} in all, whether or not you have met them. Stretches are ranked on what you know: the share where listening works (about 93 to 97%), new words worth learning that come back, and speech all the way through. Measured on the captions with no AI request.
+				"You know" counts the words you have studied, plus grammar words, names and numbers. "Expected" adds the words a learner at {a.level} is assumed to know, about {a.expectedWords.toLocaleString("en-US")} words in all at your point in the course, whether or not you have met them. Stretches are ranked on what you know: the share where listening works (about 93 to 97%), new words worth learning that come back, and speech all the way through. Measured on the captions with no AI request.
 				{a.prepared ? " This video is already in your videos; preparing a stretch replaces it (your watching history stays)." : ""}
 			</p>
 			{whole && (

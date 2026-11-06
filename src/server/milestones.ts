@@ -33,50 +33,17 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
 import { allUnits } from "../core/lesson.ts";
-import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, levelVocabulary, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
-import { grammarWord, tokenize } from "../core/reading.ts";
-import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
+import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, creditedWords, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
+import { grammarWord } from "../core/reading.ts";
+import { dayKey, DEFAULT_REVIEW_SETTINGS, entryLemma, type LexiconEntry } from "../core/review.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { DEFAULT_DAYS_PER_WEEK } from "../core/onboarding.ts";
 import { aiMissing, aiStatus, friendlyAiError } from "./ai-status.ts";
-import { resolveWord, storyEngine } from "./reading.ts";
+import { frequencyOrder, storyEngine } from "./reading.ts";
 import { activeLanguage } from "./active-language.ts";
-
-// ─── A unified frequency order ──────────────────────────────────────────────
-
-const orderCache = new WeakMap<Lexicon, string[]>();
-
-/** Every dictionary word, commonest first, by how often its forms occur
- *  across the dictionary's example sentences (170,000 running words).
- *  Words whose forms never occur keep their part-of-speech rank order
- *  after the rest. Computed once per process. */
-export function frequencyOrder(lexicon: Lexicon): string[] {
-	const hit = orderCache.get(lexicon);
-	if (hit) return hit;
-	const all = new Set(lexicon.entries.map((e) => e.slug));
-	const counts = new Map<string, number>();
-	for (const e of lexicon.entries)
-		for (const ex of e.examples.filter((x) => !x.rejected))
-			for (const t of tokenize(exampleText(ex))) {
-				if (!t.word || /^\p{N}+$/u.test(t.text)) continue;
-				const entry = resolveWord(lexicon, t.text, all, { stem: false });
-				if (entry) counts.set(entry.slug, (counts.get(entry.slug) ?? 0) + 1);
-			}
-	// Ties (and the long tail the sentences never reach) fall back to the
-	// part-of-speech rank as a share of its list, so noun #1,500 of 3,000
-	// sits beside verb #1,000 of 2,000 rather than after adverb #1,000.
-	const size = new Map<string, number>();
-	for (const e of lexicon.entries) if (e.rank !== undefined) size.set(e.cat, Math.max(size.get(e.cat) ?? 0, e.rank));
-	const share = (e: LexiconEntry) => (e.rank === undefined ? 2 : e.rank / (size.get(e.cat) ?? e.rank));
-	const order = [...lexicon.entries]
-		.sort((a, b) => (counts.get(b.slug) ?? 0) - (counts.get(a.slug) ?? 0) || share(a) - share(b) || a.slug.localeCompare(b.slug))
-		.map((e) => e.slug);
-	orderCache.set(lexicon, order);
-	return order;
-}
 
 // ─── What the learner knows ─────────────────────────────────────────────────
 
@@ -116,7 +83,7 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 	const placed = !!goal.placedAt;
 	const level: Cefr = state.level;
 	const measured = goal.vocabulary;
-	const credited = measured ? measured.size : levelVocabulary(level, state.levelProgress);
+	const credited = creditedWords(measured, level, state.levelProgress);
 	const met = new Set<string>();
 	let solid = 0;
 	const cards = Object.values(reviewStore.readCards()).filter((c) => !c.suspended);

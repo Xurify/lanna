@@ -259,11 +259,12 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							"Tap a dictionary link below to inspect."
 						)}
 					</span>
-					{(resolvedCat || resolvedGender || token.fresh || lookupData?.source === "translated") && (
+					{(resolvedCat || resolvedGender || token.fresh || token.assumed || lookupData?.source === "translated") && (
 						<span className="mt-1.5 flex flex-wrap gap-1.5">
 							{resolvedCat && <Tag>{resolvedCat.toLowerCase()}</Tag>}
 							{resolvedGender && <Tag>{resolvedGender}</Tag>}
 							{token.fresh && <Tag className="bg-teal-wash text-teal-2">new word</Tag>}
+							{token.assumed && <Tag>not studied yet</Tag>}
 							{lookupData?.source === "translated" && <Tag className="bg-teal-wash text-teal-2">translated</Tag>}
 						</span>
 					)}

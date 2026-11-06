@@ -10,7 +10,7 @@
  *
  * "Known" is what the learner has studied (plus grammar words, names and
  * numbers). A second share, "expected", adds the words the level is assumed
- * to know (VOCAB_AT_LEVEL); it is shown beside the first and never ranks.
+ * to know (what the Milestones page credits at this point); it is shown beside the first and never ranks.
  * Ranking by the assumed words made a beginner's 48 words read as 80–84%.
  *
  * A fragment is a run of whole caption lines. It scores well when
@@ -347,8 +347,10 @@ export interface FragmentAnalysis {
 	 *  the level is expected to know. */
 	coverage: number;
 	expected: number;
-	/** The learner's level the share was measured at. */
+	/** The learner's level the share was measured at, and how many words the
+	 *  Milestones page credits at this point (the "expected" share counts them). */
 	level: string;
+	expectedWords: number;
 	/** What the library holds of this video: the whole of it, or a stretch. */
 	prepared?: { whole: true } | { startSec: number; endSec: number };
 }

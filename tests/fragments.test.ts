@@ -176,29 +176,36 @@ test("lineFacts and rangeStats: a word the level only assumes is new to the lear
 
 // ─── What the level expects ─────────────────────────────────────────────────
 
-test("knownWords: Watch's expected set is the level's honest vocabulary (about 600 words at A1), not the 2,000 the written-text tolerance reaches", async () => {
-	const { knownWords, commonestWords, glossSentence } = await import("../src/server/reading.ts");
+test("knownWords: Watch's expected set is the credit the Milestones page gives, the commonest words by use; a given level credits its whole band", async () => {
+	const { knownWords, frequencyOrder, commonness, isOneList, glossSentence } = await import("../src/server/reading.ts");
 	const { loadLexicon } = await import("../src/agent/lexicon.ts");
+	const { LEVEL_VOCAB } = await import("../src/core/milestones.ts");
 	const lexicon = loadLexicon();
 	assert.ok(lexicon, "the Slovak lexicon loads");
-	const a1 = knownWords(lexicon, "A1");
-	assert.ok(a1.expected.size >= 600 && a1.expected.size <= 800, `expected holds ${a1.expected.size} words`);
-	assert.ok(a1.known.size > 1900, "the tolerance for written texts is unchanged");
-	assert.ok(knownWords(lexicon, "A2").expected.size > a1.expected.size * 1.7, "each level roughly doubles");
-	const cats = new Set(commonestWords(lexicon!, 600).map((s) => lexicon!.bySlug.get(s)!.cat));
+	const band = knownWords(lexicon, "A1");
+	assert.equal(band.expectedWords, LEVEL_VOCAB.A1);
+	assert.ok(band.expected.size >= LEVEL_VOCAB.A1 && band.expected.size <= LEVEL_VOCAB.A1 + 200, `expected holds ${band.expected.size} words`);
+	assert.ok(band.known.size > 1900, "the tolerance for written texts is unchanged");
+	const start = knownWords(lexicon);
+	assert.ok(start.expectedWords < LEVEL_VOCAB.A1 && start.expected.size < band.expected.size, "a learner at the start of A1 is credited less than the whole band");
+	const order = frequencyOrder(lexicon!);
+	const cats = new Set(order.slice(0, 600).map((s: string) => lexicon!.bySlug.get(s)!.cat));
 	for (const c of ["Verbs", "Nouns", "Adjectives", "Adverbs"]) assert.ok(cats.has(c), `${c} are among the commonest 600`);
-	assert.equal(commonestWords(lexicon!, 600).length, 600);
+	assert.equal(commonness(lexicon)(order[0]!), 1);
+	assert.equal(commonness(null)("x"), undefined);
+	assert.equal(isOneList(lexicon!), false, "Slovak ranks restart in each part of speech");
 	// A corpus-ranked lexicon (one list across all parts of speech) is ordered by the rank itself.
-	const entry0 = (slug: string, cat: string, rank: number) => ({ slug, cat, rank }) as never;
+	const entry0 = (slug: string, cat: string, rank: number) => ({ slug, cat, rank, examples: [] }) as never;
 	const oneList = { entries: [entry0("v-9", "Verbs", 9000), entry0("n-1", "Nouns", 100), entry0("p-1", "Pronouns", 5), entry0("v-1", "Verbs", 400), entry0("n-2", "Nouns", 2500)] } as never;
-	assert.deepEqual(commonestWords(oneList, 3), ["p-1", "n-1", "v-1"]);
+	assert.equal(isOneList(oneList), true);
+	assert.deepEqual(frequencyOrder(oneList).slice(0, 3), ["p-1", "n-1", "v-1"]);
 	// A word the level expects but the learner has not studied is assumed; a studied one is not.
-	const entry = [...a1.expected].map((s) => lexicon!.bySlug.get(s)!).find((e) => e.cat === "Verbs" && !a1.met.has(e.slug))!;
+	const entry = [...band.expected].map((s) => lexicon!.bySlug.get(s)!).find((e) => e.cat === "Verbs" && !band.met.has(e.slug))!;
 	const lemma = (entry.sk ?? "").split(" ")[0]!;
-	const plain = glossSentence(lemma, "", lexicon, a1.expected, [], undefined, a1.met).tokens.find((t) => t.word)!;
+	const plain = glossSentence(lemma, "", lexicon, band.expected, [], undefined, band.met).tokens.find((t) => t.word)!;
 	assert.equal(plain.assumed, true);
 	assert.ok(!plain.fresh);
-	const studied = glossSentence(lemma, "", lexicon, a1.expected, [], undefined, new Set([...a1.met, entry.slug])).tokens.find((t) => t.word)!;
+	const studied = glossSentence(lemma, "", lexicon, band.expected, [], undefined, new Set([...band.met, entry.slug])).tokens.find((t) => t.word)!;
 	assert.ok(!studied.assumed && !studied.fresh);
 });
 

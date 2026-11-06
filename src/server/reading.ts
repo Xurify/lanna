@@ -32,6 +32,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { curriculumState, allChapters, STAGES, type Cefr } from "../core/curriculum.ts";
+import { creditedWords, LEVEL_VOCAB } from "../core/milestones.ts";
 import { countryOf, foldDiacritics, LANGUAGES, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { allUnits } from "../core/lesson.ts";
@@ -42,7 +43,6 @@ import {
 	knownCoverage,
 	gradeAnswers,
 	KNOWN_RANK,
-	VOCAB_AT_LEVEL,
 	NEW_WORDS_MAX,
 	parseStoryDraft,
 	QUESTION_KIND_INFO,
@@ -70,7 +70,7 @@ import {
 	type StoryUsage,
 	type StoryWord,
 } from "../core/reading.ts";
-import { dayKey, entryLemma, type LexiconEntry } from "../core/review.ts";
+import { dayKey, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
@@ -99,9 +99,13 @@ export interface KnownWords {
 	 *  plus the common words at the level (rank ≤ KNOWN_RANK). */
 	known: Set<string>;
 	/** What Watch measures real speech against: `met`, plus the commonest
-	 *  words up to `VOCAB_AT_LEVEL` in all, plus the beginner set and place
-	 *  names. Smaller than `known`, which is a tolerance for written texts. */
+	 *  `expectedWords` words, plus the beginner set and place names. Smaller
+	 *  than `known`, which is a tolerance for written texts. */
 	expected: Set<string>;
+	/** How many words the level credits beyond the ones met (the word check's
+	 *  estimate, else the level's band through the progress made in it): the
+	 *  figure the Milestones page uses. */
+	expectedWords: number;
 	/** Lemmas to hand the model as "use these", most useful first. */
 	sample: string[];
 	/** Grammar units held (titles), for the brief. */
@@ -113,27 +117,64 @@ export interface KnownWords {
 	note?: string;
 }
 
-const commonestIndex = new WeakMap<Lexicon, string[]>();
+const orderCache = new WeakMap<Lexicon, string[]>();
 
-/** The slugs of the `count` commonest words in all. In the Slovak lexicon a
- *  rank counts within its part of speech (verb 40 and noun 40 are not equally
- *  common), so the words are ordered by how far down their own list they sit.
- *  A lexicon built from a corpus (Estonian, Russian) ranks every word on one
- *  list, so there the rank itself is the order. */
-export function commonestWords(lexicon: Lexicon, count: number): string[] {
-	let order = commonestIndex.get(lexicon);
-	if (!order) {
-		const ranked = lexicon.entries.filter((e) => e.rank !== undefined);
-		const oneList = new Set(ranked.map((e) => e.rank)).size > ranked.length * 0.9;
-		const size = new Map<string, number>();
-		for (const e of ranked) size.set(e.cat, Math.max(size.get(e.cat) ?? 0, e.rank!));
-		order = ranked
-			.map((e) => ({ slug: e.slug, share: oneList ? e.rank! : e.rank! / size.get(e.cat)!, rank: e.rank! }))
-			.sort((a, b) => a.share - b.share || a.rank - b.rank || a.slug.localeCompare(b.slug))
-			.map((e) => e.slug);
-		commonestIndex.set(lexicon, order);
+/** Whether every word is ranked on one list (Estonian, Russian) rather than
+ *  within its part of speech (Slovak): nearly all the ranks are different. */
+export function isOneList(lexicon: Lexicon): boolean {
+	const ranked = lexicon.entries.filter((e) => e.rank !== undefined);
+	return ranked.length > 0 && new Set(ranked.map((e) => e.rank)).size > ranked.length * 0.9;
+}
+
+/** How far down its own list a word sits, 0 to 1. Slovak ranks restart in
+ *  each part of speech (noun #1,500 of 3,000 sits beside verb #1,000 of
+ *  2,000); a lexicon built from a corpus (Estonian, Russian) ranks every
+ *  word on one list, where the rank itself is the order and the share is
+ *  its place on that list. */
+export function rankShare(lexicon: Lexicon): (e: LexiconEntry) => number {
+	const ranked = lexicon.entries.filter((e) => e.rank !== undefined);
+	const oneList = isOneList(lexicon);
+	const size = new Map<string, number>();
+	for (const e of ranked) size.set(oneList ? "" : e.cat, Math.max(size.get(oneList ? "" : e.cat) ?? 0, e.rank!));
+	return (e) => (e.rank === undefined ? 2 : e.rank / (size.get(oneList ? "" : e.cat) ?? e.rank));
+}
+
+/** Every dictionary word, commonest first, by how often its forms occur
+ *  across the dictionary's example sentences. Words whose forms never occur
+ *  keep their rank order after the rest. Computed once per process. */
+export function frequencyOrder(lexicon: Lexicon): string[] {
+	const hit = orderCache.get(lexicon);
+	if (hit) return hit;
+	const all = new Set(lexicon.entries.map((e) => e.slug));
+	const counts = new Map<string, number>();
+	for (const e of lexicon.entries)
+		for (const ex of e.examples.filter((x) => !x.rejected))
+			for (const t of tokenize(exampleText(ex))) {
+				if (!t.word || /^\p{N}+$/u.test(t.text)) continue;
+				const entry = resolveWord(lexicon, t.text, all, { stem: false });
+				if (entry) counts.set(entry.slug, (counts.get(entry.slug) ?? 0) + 1);
+			}
+	const share = rankShare(lexicon);
+	const order = [...lexicon.entries]
+		.sort((x, y) => (counts.get(y.slug) ?? 0) - (counts.get(x.slug) ?? 0) || share(x) - share(y) || x.slug.localeCompare(y.slug))
+		.map((e) => e.slug);
+	orderCache.set(lexicon, order);
+	return order;
+}
+
+const commonnessCache = new WeakMap<Lexicon, Map<string, number>>();
+
+/** Where a word sits among all the dictionary's words by use (1 = commonest),
+ *  the same in every language and part of speech. Thresholds on "how common"
+ *  (what a new word is worth, what to pre-teach) read this, not the raw rank. */
+export function commonness(lexicon: Lexicon | null): (slug: string) => number | undefined {
+	if (!lexicon) return () => undefined;
+	let pos = commonnessCache.get(lexicon);
+	if (!pos) {
+		pos = new Map(frequencyOrder(lexicon).map((slug, i) => [slug, i + 1]));
+		commonnessCache.set(lexicon, pos);
 	}
-	return order.slice(0, count);
+	return (slug) => pos.get(slug);
 }
 
 /** What the learner knows, as the brief and the coverage measure see it.
@@ -170,13 +211,20 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 	// The common words at the level, slovak.wiki's curated beginner set
 	// (greetings, question words, pronouns) and place names (Bratislava is
 	// not vocabulary to learn) count as known at every level.
-	if (lexicon) for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
+	if (lexicon) {
+		// A corpus-ranked lexicon has no per-class ranks: the level's whole band of commonest words stands in.
+		const oneList = isOneList(lexicon);
+		const wide = oneList ? new Set(frequencyOrder(lexicon).slice(0, LEVEL_VOCAB[at])) : null;
+		for (const e of lexicon.entries) if ((wide ? wide.has(e.slug) : e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
+	}
+	// The same credit the Milestones page gives: the word check's estimate, or the level's band through the progress made in it.
+	const expectedWords = level ? LEVEL_VOCAB[at] : creditedWords(goal.vocabulary, at, state.levelProgress);
 	const expected = new Set(met);
 	if (lexicon) {
-		for (const slug of commonestWords(lexicon, VOCAB_AT_LEVEL[at])) expected.add(slug);
+		for (const slug of frequencyOrder(lexicon).slice(0, expectedWords)) expected.add(slug);
 		for (const e of lexicon.entries) if (e.origin === "curated" || e.cat === "Places") expected.add(e.slug);
 	}
-	const all =state.chapters.flatMap((c) => c.units);
+	const all = state.chapters.flatMap((c) => c.units);
 	const grammar = all.filter((u) => (u.kind === "drill" || u.kind === "tutor") && (u.status === "done" || u.status === "skipped")).map((u) => u.title);
 	const practicing = all.filter((u) => u.kind === "drill" && u.status === "started").map((u) => u.title);
 	return {
@@ -186,6 +234,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 		met,
 		known,
 		expected,
+		expectedWords,
 		sample: sample.slice(0, 160),
 		grammar,
 		practicing,
@@ -589,7 +638,7 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 		return entry ? { lemma: entryLemma(entry), gloss: entry.en, slug: entry.slug } : { lemma: w.sk, gloss: w.en };
 	});
 	const names = storyNames(d.sentences, lexicon);
-	const sentences = d.sentences.map((s) => ({ ...glossSentence(s.sk, s.en, lexicon, k.known, newWords, names), ...(s.who ? { who: s.who } : {}) }));
+	const sentences = d.sentences.map((s) => ({ ...glossSentence(s.sk, s.en, lexicon, k.known, newWords, names, k.met), ...(s.who ? { who: s.who } : {}) }));
 	const cast = assignVoices(d.cast, voices);
 	// Coverage counts the words the model introduced ON PURPOSE as taught,
 	// not as unknown: they are the i+1. Every other fresh word is a stray.
