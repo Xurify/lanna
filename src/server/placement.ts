@@ -30,7 +30,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { allChapters, curriculumState } from "../core/curriculum.ts";
 import { buildLesson, unitInfo, type LessonItem, type RepVerdict, type UnitId } from "../core/lesson.ts";
 import { placementTiers, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapter, tierOfUnit, type PlacementOutcome, type ProbeReply, type ProbeVerdict, calmEntries } from "../core/onboarding.ts";
-import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, placementLadder, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
+import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, luckRung, placementLadder, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
 import { grammarWord } from "../core/reading.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { entryLemma, type LexiconEntry } from "../core/review.ts";
@@ -288,7 +288,8 @@ How you work:
 - One question at a time, chosen from the answer before it. Make the learner PRODUCE the form under its trigger: a ${name} frame with ___ and the dictionary word in brackets${x.frame ? ` ("${x.frame}")` : ""}, or a short sentence to transform${x.pastSentence ? ` ("Put it in the past: ${x.pastSentence}")` : ""}. Never a multiple choice, never a yes/no.
 - After a right form, you may ask WHY once: "What decided that ending?" — a right form with a right reason is held; a right form with no reason or a wrong one is a slip (fragile).
 - Judge every answer: "held" (produces it and knows what decides it), "slip" (right form but shaky, or one miss then right), "gap" (cannot produce it, or a misconception). One verdict per unit; a later verdict on the same unit replaces the earlier one.
-- At most ${PROBE_TURNS} questions in all; stop as soon as the edge is clear. Do not re-ask what the drill already showed twice. Enter at the unit the brief marks first.
+- At most ${PROBE_TURNS} questions in all; stop as soon as the edge is clear. Do not re-ask what the drill already showed twice, except a unit the brief marks CHECK FOR LUCK. Enter at the unit the brief marks first.
+- CHECK FOR LUCK: the level rests on that unit, and the drill held it on two right answers, which a lucky pair can make. Ask for the form in a NEW frame with a different word, then ask WHY. Held needs the right form and a right reason; a right form with a wrong or missing reason is a slip; a wrong form is a gap. Do not set "done" before this unit has a verdict, unless the questions have run out.
 - Speak to the learner in the explanation language of the profile (English unless it says otherwise); the frames in ${name}. Short: one or two sentences of feedback, then the next question.
 - Unit ids are for the JSON fields only. In "say", "prompt" and "done", name the grammar in full words ("the feminine accusative", "the locative"), never an id like acc-fem or a short form like fem. or sg.
 - Never give the level. The app computes it from your verdicts and the drill.
@@ -315,14 +316,16 @@ function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitI
 	for (const r of s.items) {
 		if (!r.verdict) continue;
 		const tag = r.verdict === "wrong" ? "MISS" : r.verdict === "accents" ? "hit (diacritics off)" : r.judged?.accepted ? "hit (model accepted an alternative)" : "hit";
-		lines.push(`- [${unitName(r.rung ?? r.item.unit)}${r.rung && r.rung !== r.item.unit ? ` · ${unitName(r.item.unit)}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}", form "${r.item.answer}": ${tag}`);
+		const secs = r.ms !== undefined ? ` in ${Math.round(r.ms / 1000)} s` : "";
+		lines.push(`- [${unitName(r.rung ?? r.item.unit)}${r.rung && r.rung !== r.item.unit ? ` · ${unitName(r.item.unit)}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}"${secs}, form "${r.item.answer}": ${tag}`);
 	}
 	lines.push("");
 	lines.push("Units you may probe, most valuable first (id for the JSON · its grammar name and title · its trigger):");
 	for (const u of units) {
 		const info = unitInfo(u);
 		const t = s.ladder.tally[u];
-		lines.push(`- ${u} · ${unitName(u)}: ${info.tagline}${t ? ` · drill ${t.hits}/${t.hits + t.misses}` : " · not asked by the drill"}`);
+		const luck = u === s.probe.luck ? " · CHECK FOR LUCK: the level rests on this unit, held on drill hits alone" : "";
+		lines.push(`- ${u} · ${unitName(u)}: ${info.tagline}${t ? ` · drill ${t.hits}/${t.hits + t.misses}` : " · not asked by the drill"}${luck}`);
 	}
 	const tier = outcome.tiers.find((t) => !t.passed);
 	lines.push("");
@@ -366,7 +369,10 @@ export async function probePlacement(input: { id: string; answer?: string }, opt
 	const script = scriptedEngines();
 	const real = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:test" } : script ? { engine: script.probe, model: "faux:script" } : probeEngine();
 	const outcome = ladderOutcome(s.ladder);
-	if (s.probe.units.length === 0) s.probe.units = probeUnits(outcome);
+	if (s.probe.units.length === 0) {
+		s.probe.luck = luckRung(s.ladder);
+		s.probe.units = probeUnits(outcome, s.probe.luck);
+	}
 	const finished = (): ProbeTurnResult => ({ reply: s.probe.turns.at(-1)?.reply ?? { say: "", done: s.probe.summary ?? "" }, turn: s.probe.turns.length, max: PROBE_TURNS, verdicts: s.probe.verdicts, done: true });
 	if (!real || s.probe.units.length === 0) {
 		s.probe.skipped = true;

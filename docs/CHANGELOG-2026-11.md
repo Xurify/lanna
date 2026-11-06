@@ -15,6 +15,13 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Verified on the PC:** the feed, search, handle and player reads against live YouTube; 23 videos from two Slovak creators checked in 12 seconds; the Watch page at 1280 and 390 px; the Electron session fetch, and Google's sign-in page loading in the window.
 - **Unverified:** signing in with the owner's Google account (Google may refuse a window it does not recognize as a browser; then use Takeout), reading the signed-in history, home and channels pages (their page shapes are parsed generically, but were not seen signed in), a real Takeout export, and Keep one ready spending on the cheap slot.
 
+## 5 November: the placement check asks about the rung your level rests on (branch `feat/placement-luck-check`)
+
+- **Why:** two right answers hold a rung, and everything below the highest held rung counts as known, so a lucky pair could place you a tier too high. The tutor's questions after the ladder covered only your misses and the tier above. It was never asked to check the rung your level rests on.
+- **What changed (E49):** the tutor now also gets that rung, marked "check for luck", with how long each of your answers took. It asks for the form in a new sentence, then why. Held keeps your level, a slip keeps it and adds a weak spot, and a gap moves your level below that rung. The note at the top of the tutor's stage says so.
+- **Checked:** a new test walks a learner whose floor sits exactly on the A2 pass line: the drill alone starts them at "stories", and a gap on the floor brings them back to "health". Typecheck, lint and the full test suite.
+- **Unverified:** a real tutor with a key: whether it follows the new rule and asks about that rung before closing.
+
 ## 5 November: one plan for every language, and switching with no restart (branch `feat/unified-daily-plan`)
 
 - **Why:** the owner studies Russian (the main motivation: friends and family), Slovak (a trip within two months, then series and YouTubers) and Estonian (B1), and wanted one daily plan across all of them, with switching that does not restart the app.
