@@ -15,6 +15,8 @@
 import { compareAnswer, type AnswerVerdict } from "./language.ts";
 import type { PairDef } from "./pairs.ts";
 import { tokenize, type StorySentence } from "./reading.ts";
+import type { RepVerdict } from "./lesson.ts";
+import type { MixupEvent } from "./mixups.ts";
 import { verifyCatch, type CatchDraftMark, type CatchLexicon, type CatchTarget, type CatchWord } from "./catch-pair.ts";
 
 /** Sentences in one item: a context line, the wrong one, and its correction. */
@@ -205,4 +207,18 @@ export function buildCatchItem(input: CatchBuildInput): { item: CatchItem } | { 
 			created: input.now.toISOString(),
 		},
 	};
+}
+
+/**
+ * An answer as the mix-up record reads it. Catching the wrong word and typing
+ * the right one is a right first try on the word the sentence needed. Typing
+ * another word is a miss that names it. Letting the wrong word pass counts as
+ * having taken it for right, so it is a miss on the wrong word, one the
+ * learner saw in the sentence (visible).
+ */
+export function catchMixupEvent(item: CatchItem, answer: { tapOk: boolean; typed: string; verdict: AnswerVerdict }, at: string): MixupEvent {
+	const sentence = item.sentences[item.slip.sentence]?.sk ?? "";
+	const base = { slug: item.slip.rightSlug, answer: item.slip.right, sentence, at };
+	if (!answer.tapOk) return { ...base, given: item.slip.wrong, verdict: "wrong", visible: true };
+	return { ...base, given: answer.typed, verdict: answer.verdict as RepVerdict };
 }

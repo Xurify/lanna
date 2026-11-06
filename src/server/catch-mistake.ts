@@ -14,6 +14,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import {
 	buildCatchItem,
 	catchBrief,
+	catchMixupEvent,
 	gradeTyped,
 	isTapRight,
 	parseCatchDraft,
@@ -28,6 +29,7 @@ import { chooseCatch, CATCH_RECENT_ITEMS } from "../core/catch-pair.ts";
 import { catchStore } from "../store/catch-mistake.ts";
 import { progressStore } from "../store/progress.ts";
 import { activeLanguage } from "./active-language.ts";
+import { noteMixups } from "./mixups.ts";
 import { storyEngine } from "./reading.ts";
 
 export interface CatchOptions {
@@ -88,5 +90,14 @@ export function answerCatch(id: string, input: { sentence: number; token: number
 	const verdict = gradeTyped(item.slip.right, input.typed, activeLanguage().tag);
 	item.answer = { sentence: input.sentence, token: input.token, typed: input.typed, tapOk, verdict, at: now.toISOString() };
 	catchStore.update(item);
+	// The answer counts toward the pair like a lesson's first try, so a mended pair can reopen and a caught one can mend.
+	try {
+		const p = progressStore.read();
+		const before = JSON.stringify(p.mixups ?? {});
+		noteMixups(p, [catchMixupEvent(item, item.answer, item.answer.at)]);
+		if (JSON.stringify(p.mixups ?? {}) !== before) progressStore.write(p);
+	} catch (err) {
+		console.warn("[catch] could not record the answer in the mix-ups:", err instanceof Error ? err.message : err);
+	}
 	return { ok: true, result: resultOf(item) };
 }

@@ -210,6 +210,31 @@ describe("the server makes, keeps and grades items", () => {
 		}
 	});
 
+	it("an answer counts toward the pair in the mix-up record", async () => {
+		const read = () => progressStore.read().mixups?.["kam~kde"];
+		const fresh = async () => {
+			catchStore.write({ items: [] });
+			progressStore.write({ ...progressStore.read(), mixups: { "kam~kde": mixup("kam", "kde", 2) } });
+			const made = await server.nextCatchItem({ engine: scripted(GOOD), model: "faux:catch", now: AT });
+			assert.ok(made.view);
+			return made.view.id;
+		};
+
+		const caught = await fresh();
+		server.answerCatch(caught, { sentence: 1, token: 0, typed: "kam" }, AT);
+		assert.equal(read()?.hits, 1, "the wrong word caught and the right one typed is a right first try");
+		assert.equal(read()?.misses, 2);
+
+		const swapped = await fresh();
+		server.answerCatch(swapped, { sentence: 1, token: 0, typed: "kde" }, AT);
+		assert.equal(read()?.misses, 3, "typing the other word of the pair is a miss on it");
+		assert.equal(read()?.hits, 0);
+
+		const passed = await fresh();
+		server.answerCatch(passed, { sentence: 1, token: 2, typed: "kam" }, AT);
+		assert.equal(read()?.misses, 3, "letting the wrong word pass is a miss, even with the right word typed");
+	});
+
 	it("a draft the check refuses is not kept, and the page is told why", async () => {
 		catchStore.write({ items: [] });
 		progressStore.write({ ...progressStore.read(), mixups: { "kam~kde": mixup("kam", "kde", 2) } });
