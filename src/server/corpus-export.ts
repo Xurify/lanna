@@ -21,6 +21,8 @@ import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { fluencyStore, speakStore } from "../store/speak.ts";
 import { videoStore } from "../store/videos.ts";
+import { cheatsheetStore } from "../store/cheatsheets.ts";
+import type { Cheatsheet } from "../core/cheatsheets.ts";
 import type { VideoRecord } from "../core/watch.ts";
 import type { SpeakSession } from "../core/speak.ts";
 import type { StoryRecord } from "../core/reading.ts";
@@ -88,7 +90,7 @@ export interface CorpusSummary {
 	exportedAt: string;
 	profile: string;
 	language: string;
-	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number; spokenScenes: number; fluencyRounds: number; videos: number; watchings: number };
+	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number; spokenScenes: number; fluencyRounds: number; videos: number; watchings: number; cheatsheets: number };
 	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number; /** Spoken scenes (the Speak task), USD. */ speakUsd: number; /** Videos prepared for the Watch task (translation + questions), USD. */ videosUsd: number };
 }
 
@@ -197,6 +199,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
 | \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage) and \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats) |
+| \`cheatsheets.json\` | an array | every phrase guide you imported under Words → Cheatsheets: title, when, intro, and sections with their rows (the phrase, how to say it, the meaning, a note). The text as imported stays in \`<data>/profiles/<lang>/cheatsheets/<id>.md\` |
 | \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, the line in the language, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
 
 Text is UTF-8 with diacritics as written. Verdicts: \`exact\`,
@@ -289,6 +292,11 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	}
 	usage.costUsd = Math.round(usage.costUsd * 10000) / 10000;
 
+	const cheatsheets = cheatsheetStore
+		.list()
+		.map((s) => cheatsheetStore.get(s.id))
+		.filter((s): s is Cheatsheet => s !== null);
+
 	const summary: CorpusSummary = {
 		exportedAt: now.toISOString(),
 		profile: activeProfile(),
@@ -308,6 +316,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			fluencyRounds: fluency.length,
 			videos: videos.length,
 			watchings: watchings.length,
+			cheatsheets: cheatsheets.length,
 		},
 		usage,
 	};
@@ -323,6 +332,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("stories.json", { stories, readings });
 	write("spoken.json", { scenes, fluency });
 	write("videos.json", { videos, watchings });
+	write("cheatsheets.json", cheatsheets);
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };
 }

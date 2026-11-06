@@ -396,6 +396,18 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - No word is marked with a tinted pill or a curved underline. A blank is a straight writing line (`.q-blank`, `.q-write`); a marked or answered word is weight and color with a straight text underline (`text-decoration`, 2 px, offset 6 to 8 px). No frosted glass (`backdrop-blur`) and no all-caps labels.
 - Mockup copy the app cannot back does not ship: the sample sentence and the rule note with the Estonian bridge on the Review card, "Add 3 minutes of Say it faster", "Not today", "Why? Ask the tutor", and invented shortcuts.
 
+### E50. Cheatsheets: the learner's own phrase guides, kept under Words, words to Review on request (2026-11-06, branch `feat/cheatsheets`)
+
+**Why:** the owner wanted a Russian phrase guide for a co-op game played with a friend in Russian only, and asked for it as a feature: "Cheatsheets", part of Words, where they see all their cheatsheets and import more. A guide written by a chat assistant is reference text for a situation the course does not cover (game words such as anomaly or taser are far outside the 3,000 commonest), so it belongs beside the course, not in it.
+
+**How to apply:**
+- A cheatsheet is a third tab of Words, not a page of its own, so the nav (E34) does not change. `/words?tab=cheatsheets&sheet=<id>` opens one directly, for a second window during a game.
+- The import format is Markdown, the shape chat assistants answer in. The parser is pure (`src/core/cheatsheets.ts`, pinned by `tests/cheatsheets.test.ts`): `#` title, `##` or `###` sections, tables with columns found by header words in English, Slovak, Estonian or Russian and else by position, list lines with an em dash, en dash or `=` as rows (a hyphen is not a separator, since pronunciations use it), everything else a note. Text with no phrase is refused before anything is written. No model call: importing is free.
+- The sheet is the learner's curated text. It is kept as imported (`<id>.md`) and as read (`<id>.json`) per language, removed sheets move to `trash/` (E1), and the corpus export writes `cheatsheets.json`.
+- Showing a whole sheet is free help, which P3 forbids in practice but which a reference needs. So a sheet offers **Cover**: every phrase (and its sound and pronunciation) hidden until the learner says it and presses it. It records nothing.
+- The way into practice is Review, by word: the sheet's words are matched to the running language's lexicon and up to 30 at a press go into the deck, drilled on verified sentences (E27). A sheet's own lines never become cards, so a mistake in a model-written guide never becomes a drill.
+- Open: a "write me a cheatsheet for…" request inside the app (Cheap slot, cached, priced), and a custom Speak scene from a sheet.
+
 ## Working rules (how work reaches the repo)
 
 ### E34. One name per page: route, nav label and page title (2026-11-03, branch `feat/quiet-tool-redesign`)

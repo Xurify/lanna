@@ -3,17 +3,29 @@
 import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpenIcon, BookmarkCheckIcon, BookmarkIcon, CheckCheckIcon, FootprintsIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, CheckCheckIcon, FootprintsIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import type { SavedPhrase, WordBankItem, WordBankSummary } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
+import { CheatsheetsTab } from "@/components/words/cheatsheets";
 
 const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
-export function WordBankPage() {
-	const [activeTab, setActiveTab] = useState<"words" | "phrases">("words");
+export type WordsTab = "words" | "phrases" | "cheatsheets";
+
+export function WordBankPage({ initialTab = "words", initialSheet }: { initialTab?: WordsTab; initialSheet?: string }) {
+	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
+	const [sheetCount, setSheetCount] = useState<number | null>(null);
+	const setActiveTab = (tab: WordsTab) => {
+		setActiveTabState(tab);
+		const url = new URL(window.location.href);
+		url.searchParams.delete("sheet");
+		if (tab === "words") url.searchParams.delete("tab");
+		else url.searchParams.set("tab", tab);
+		window.history.replaceState(null, "", url);
+	};
 
 	// Word Bank state
 	const [words, setWords] = useState<WordBankItem[]>([]);
@@ -95,6 +107,13 @@ export function WordBankPage() {
 	useEffect(() => {
 		void fetchPhrases();
 	}, [fetchPhrases]);
+
+	useEffect(() => {
+		void fetch("/api/cheatsheets")
+			.then((res) => (res.ok ? (res.json() as Promise<{ sheets: unknown[] }>) : null))
+			.then((data) => data && setSheetCount(data.sheets.length))
+			.catch(() => {});
+	}, []);
 
 	// Toggle word favorite
 	const handleToggleFavorite = async (slug: string) => {
@@ -203,7 +222,7 @@ export function WordBankPage() {
 							Words
 						</h1>
 						<p className="mt-1 font-prose text-sm text-muted-foreground sm:text-base">
-							Your words, the ones you know, and your saved phrases in one place.
+							Your words, the ones you know, your saved phrases and your cheatsheets.
 						</p>
 					</div>
 
@@ -308,7 +327,29 @@ export function WordBankPage() {
 							{phrases.length}
 						</span>
 					</button>
+
+					<button
+						type="button"
+						onClick={() => setActiveTab("cheatsheets")}
+						data-testid="tab-cheatsheets"
+						className={cn(
+							"flex items-center gap-2 border-b-2 px-5 py-3 font-ui text-sm font-semibold transition-colors",
+							activeTab === "cheatsheets"
+								? "border-primary text-foreground"
+								: "border-transparent text-muted-foreground hover:text-foreground",
+						)}
+					>
+						<FileTextIcon className="size-4" />
+						<span>Cheatsheets</span>
+						{sheetCount !== null && (
+							<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
+								{sheetCount}
+							</span>
+						)}
+					</button>
 				</div>
+
+				{activeTab === "cheatsheets" && <CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} />}
 
 				{/* ──────────────── TAB 1: WORD BANK ──────────────── */}
 				{activeTab === "words" && (

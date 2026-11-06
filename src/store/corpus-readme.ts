@@ -89,6 +89,7 @@ where the format is not obvious.
 - \`videos/\`: every YouTube video prepared for the Watch task. See \`videos/README.md\`.
 - \`speak/\`: every spoken scene from the Speak task, with your recordings. See \`speak/README.md\`.
 - \`fluency/\`: the speed strand's log (timed re-reads, "say it faster"). See \`fluency/README.md\`.
+- \`cheatsheets/\`: the phrase guides you imported under Words. See \`cheatsheets/README.md\`.
 - \`review/\`: the spaced-review deck. \`cards.json\` is every card with its
   FSRS memory state; \`log.jsonl\` is one line per answer (card, what you
   typed, verdict, rating, when; on a form card also the drill its sentence
@@ -282,4 +283,16 @@ written once by the cheap model and kept so a sentence is paid for once.
   \`createdAt\`.
 `;
 
-export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS, distractors: DISTRACTORS } as const;
+const CHEATSHEETS = `# Cheatsheets
+
+Phrase guides you imported under Words → Cheatsheets, one pair of files each:
+
+- \`<id>.md\`: the text exactly as you pasted or chose it.
+- \`<id>.json\`: what the app read from it: \`id\`, \`title\`,
+  \`importedAt\`, \`intro[]\` (the lines before the first section) and
+  \`sections[]\`, each with \`id\`, \`title\`, \`notes[]\` and \`rows[]\`
+  (\`text\` in the language, \`pron\` how to say it, \`meaning\`, \`note\`).
+- \`trash/\`: sheets you removed, moved here rather than deleted.
+`;
+
+export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS, distractors: DISTRACTORS, cheatsheets: CHEATSHEETS } as const;
