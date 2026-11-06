@@ -541,7 +541,7 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 					</>
 				)}
 
-				<CreatorsSection d={discover} />
+				<CreatorsSection d={discover} canPrepare={state?.canPrepare !== false} onPrepare={onPrepare} />
 				<YouTubeSection d={discover} />
 			</main>
 		</div>

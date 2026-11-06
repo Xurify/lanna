@@ -5,6 +5,11 @@
  * starts a refresh in the background when the picks are over six hours old.
  * POST {action: "add-creator", input} — save a channel (link, @handle or
  *   one of its videos), then refresh.
+ * POST {action: "add-creators", input} — save every channel in pasted text
+ *   (links, @handles, videos; apart by spaces, commas or lines); the answer
+ *   names the ones that failed.
+ * POST {action: "save-suggestions", ids?} — save the channels suggested (all, or the ones named).
+ * POST {action: "dismiss-channel", id} — stop suggesting a channel.
  * POST {action: "remove-creator", id}
  * POST {action: "refresh"} — read the feeds and lists again now.
  * POST {action: "import", list: "history" | "recommended" | "subscriptions",
@@ -16,8 +21,8 @@
  * POST {action: "keep-ready", on} — prepare the best pick when no video waits.
  */
 
-import { isChannelId } from "@/src/core";
-import { addCreator, discoverState, dismissPick, fillAvatars, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
+import { isChannelId, splitChannelInputs } from "@/src/core";
+import { addCreator, addCreators, discoverState, dismissSuggestion, saveSuggestions, dismissPick, fillAvatars, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +35,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add-creator") {
 		if (typeof body.input !== "string" || !body.input.trim()) return Response.json({ message: "input is required" }, { status: 400 });
@@ -42,6 +47,25 @@ export async function POST(req: Request) {
 			const message = err instanceof Error ? err.message : String(err);
 			return Response.json({ message }, { status: /not a YouTube channel|has no channel/.test(message) ? 400 : 502 });
 		}
+	}
+	if (body.action === "add-creators") {
+		if (typeof body.input !== "string") return Response.json({ message: "input is required" }, { status: 400 });
+		const inputs = splitChannelInputs(body.input).slice(0, 40);
+		if (!inputs.length) return Response.json({ message: "input is required" }, { status: 400 });
+		const { saved, failed } = await addCreators(inputs);
+		if (saved.length) void refreshDiscover();
+		return Response.json({ saved: saved.length, failed, state: discoverState() });
+	}
+	if (body.action === "save-suggestions") {
+		const ids = Array.isArray(body.ids) ? body.ids.filter((x): x is string => typeof x === "string" && isChannelId(x)) : undefined;
+		const saved = saveSuggestions(ids);
+		if (saved.length) void refreshDiscover();
+		return Response.json({ saved: saved.length, state: discoverState() });
+	}
+	if (body.action === "dismiss-channel") {
+		if (typeof body.id !== "string" || !isChannelId(body.id)) return Response.json({ message: "id is required" }, { status: 400 });
+		dismissSuggestion(body.id);
+		return Response.json(discoverState());
 	}
 	if (body.action === "remove-creator") {
 		if (typeof body.id !== "string" || !isChannelId(body.id)) return Response.json({ message: "id is required" }, { status: 400 });

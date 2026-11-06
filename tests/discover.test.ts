@@ -317,6 +317,60 @@ describe("the service", () => {
 		assert.ok(scans["HHJXg-NBrEo"], "a creator's video stays");
 		assert.equal(scans["ZY7eJbQZmL4"], undefined, "a video only the recommendations found is dropped");
 	});
+
+	test("several channels are saved from pasted text, naming the one that fails", async () => {
+		assert.deepEqual(core.splitChannelInputs("@foodinnature, @nobody-here\n@foodinnature  https://youtu.be/dQw4w9WgXcQ"), ["@foodinnature", "@nobody-here", "https://youtu.be/dQw4w9WgXcQ"]);
+		const r = await discover.addCreators(["@foodinnature", "@nobody-here"]);
+		assert.equal(r.saved.length, 1);
+		assert.equal(r.saved[0]?.id, SLOVAK_CHANNEL);
+		assert.equal(r.failed.length, 1);
+		assert.equal(r.failed[0]?.input, "@nobody-here");
+		assert.match(r.failed[0]?.message ?? "", /no channel/);
+	});
+
+	test("suggested channels are turned down, or saved in one go with no request; a creator's row lists its picks", () => {
+		const CH = { b: "UCbbbbbbbbbbbbbbbbbbbbbb", c: "UCcccccccccccccccccccccc", d: "UCdddddddddddddddddddddd" };
+		const scan = (id: string, channelId: string, channel: string) => ({
+			id,
+			title: `Video ${id}`,
+			channelId,
+			channel,
+			durationSec: 600,
+			scannedAt: "2026-11-06T10:00:00.000Z",
+			tracks: ["sk:asr"],
+			spoken: "yes" as const,
+			trackLang: "sk",
+			captionKind: "auto-captions" as const,
+			coverage: 0.9,
+			wordsPerMin: 120,
+			sources: ["search" as const],
+		});
+		discoverStore.putScans({ ...discoverStore.scans(), bbbbbbbbbb1: scan("bbbbbbbbbb1", CH.b, "B"), cccccccccc1: scan("cccccccccc1", CH.c, "C"), dddddddddd1: scan("dddddddddd1", CH.d, "D") });
+		assert.deepEqual(discover.discoverState().suggestions.map((s) => s.id).sort(), [CH.b, CH.c, CH.d]);
+		const before = calls.length;
+
+		discover.dismissSuggestion(CH.c);
+		assert.deepEqual(discover.discoverState().suggestions.map((s) => s.id).sort(), [CH.b, CH.d]);
+
+		assert.deepEqual(discover.saveSuggestions([CH.b]).map((c) => [c.id, c.name, c.from]), [[CH.b, "B", "search"]]);
+		assert.equal(discover.discoverState().creators.find((c) => c.id === CH.b)?.videos[0]?.id, "bbbbbbbbbb1", "its picks are listed on its row");
+		assert.equal(discover.saveSuggestions().length, 1, "all the rest, but not the one turned down");
+		assert.deepEqual(discover.saveSuggestions(), [], "nothing is saved twice");
+		const state = discover.discoverState();
+		assert.ok(state.creators.some((c) => c.id === CH.d));
+		assert.ok(!state.creators.some((c) => c.id === CH.c));
+		assert.equal(calls.length, before, "saving what the page shows asks YouTube for nothing");
+	});
+
+	test("a video found too long once is checked again now that it fits", async () => {
+		const kept = discoverStore.scans()["HHJXg-NBrEo"]!;
+		assert.ok((await import("../src/core/watch.ts")).MAX_VIDEO_SEC >= 90 * 60);
+		discoverStore.putScans({ ...discoverStore.scans(), "HHJXg-NBrEo": { ...kept, skip: "too-long", durationSec: 4602 } });
+		await discover.refreshDiscover({ now: new Date("2026-11-06T12:00:00Z"), keepReady: false });
+		const again = discoverStore.scans()["HHJXg-NBrEo"]!;
+		assert.equal(again.skip, undefined);
+		assert.ok(again.sources.includes("creator"));
+	});
 });
 
 test("awaitingCaptions: a fresh upload without captions is looked at again; an old one, or one with captions, is not", () => {

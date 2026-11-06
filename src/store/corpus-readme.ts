@@ -268,7 +268,8 @@ everything the app made of its captions, paid for once.
   subscriptions, with when each was read; no password, cookie or token);
   \`searches.json\` (the searches the cheap model wrote from your interests,
   with what they cost); \`avatars.json\` (links to channel pictures);
-  \`dismissed.json\` (videos you said are not for you).
+  \`dismissed.json\` (videos you said are not for you);
+  \`dismissed-channels.json\` (suggested channels you turned down).
 - \`sentences.jsonl\`: one line per model verdict on a sentence written at the end of a video: \`videoId\`, \`lemma\`, \`sentence\`, \`ok\`, \`corrected\`, \`why\`, \`model\`, \`at\`. A program's refusal is not kept.
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
   \`ms\` (the wall-clock time since the start), \`activeMs\` (the playing

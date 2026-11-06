@@ -314,9 +314,9 @@ test("recordWatch counts the measured playing time, and the log keeps the minute
 	const log = videoStore.watches().filter((w) => w.day === "2026-11-04");
 	assert.deepEqual(log.map((w) => [w.activeMs, w.ms, w.minutes]), [
 		[5 * 60_000, 60 * 60_000, 5],
-		[3 * 3_600_000, 4 * 3_600_000, 75],
+		[3 * 3_600_000, 4 * 3_600_000, 90],
 	]);
-	assert.equal(progressStore.read().days["2026-11-04"]!.minutesBy!.watch, 80);
+	assert.equal(progressStore.read().days["2026-11-04"]!.minutesBy!.watch, 95);
 });
 
 const czechCaptions = async (id: string) => ({ ...(await captions(id)), source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const } });

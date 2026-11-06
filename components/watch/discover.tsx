@@ -9,13 +9,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/settings/controls";
 import { timeAgo } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
 import { Thumb } from "@/components/watch/thumb";
-import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, takeoutKind, videoUrl, type DiscoverStateView, type PickedVideo } from "@/src/core";
+import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, splitChannelInputs, takeoutKind, videoUrl, type DiscoverStateView, type PickedVideo } from "@/src/core";
 
 type State = DiscoverStateView;
 
@@ -117,7 +117,7 @@ export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPre
 				<>
 					{(state.picks[0]?.coverage ?? 0) < 0.88 && (
 						<p className="q-sub mt-3 max-w-2xl" data-testid="watch-picks-none-at-level">
-							None of these is at your level yet (88% of the words known or more). The closest come first; a video below that is mostly decoding, not listening.
+							None of these is at your level yet (88% of the words known or more). The closest come first; a video below that is mostly decoding, not listening. Creators who speak slowly or about everyday things fit sooner.
 						</p>
 					)}
 					<ol className="mt-3 flex flex-col gap-2">
@@ -150,10 +150,10 @@ export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPre
 	);
 }
 
-function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: () => void; onDismiss: () => void }) {
+function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss, bare }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: () => void; onDismiss: () => void; bare?: boolean }) {
 	const why = sourceLine(p);
 	return (
-		<li className="q-card flex items-center gap-3 py-3 pl-4 pr-2 sm:gap-4" data-testid="watch-pick">
+		<li className={cn("flex items-center gap-3 py-3 pl-4 pr-2 sm:gap-4", bare ? "border-t border-border" : "q-card")} data-testid="watch-pick">
 			<span className="max-sm:hidden">
 				<Thumb id={p.id} watched={false} />
 			</span>
@@ -162,6 +162,7 @@ function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss }: { p: Picke
 					{p.title}
 				</span>
 				<span className="line-clamp-2 font-prose text-[13px] text-ink-3 sm:block sm:truncate" title={pickLine(p, name)}>
+					{!bare && p.avatar && <Avatar name={p.channel ?? ""} src={p.avatar} small />}
 					{pickLine(p, name)}
 				</span>
 				{why && <span className="block truncate font-prose text-[12px] text-ink-3">{why}</span>}
@@ -178,8 +179,10 @@ function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss }: { p: Picke
 
 // ─── Creators ───────────────────────────────────────────────────────────────
 
-export function CreatorsSection({ d }: { d: Discover }) {
+export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; canPrepare: boolean; onPrepare: (url: string) => void }) {
 	const { state, apply } = d;
+	const [open, setOpen] = useState<string | null>(null);
+	const [savingAll, setSavingAll] = useState(false);
 	const [input, setInput] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -188,19 +191,34 @@ export function CreatorsSection({ d }: { d: Discover }) {
 	const lang = useActiveLanguage();
 	const name = lang?.english ?? "the language";
 	if (!state) return null;
-	const valid = parseChannelInput(input) !== null;
-	const add = async (value: string) => {
+	const tokens = splitChannelInputs(input);
+	const valid = tokens.length > 0 && tokens.every((t) => parseChannelInput(t) !== null);
+	const add = async () => {
 		setBusy(true);
 		setError(null);
-		const r = await post({ action: "add-creator", input: value });
+		const many = tokens.length > 1;
+		const r = await post(many ? { action: "add-creators", input } : { action: "add-creator", input: tokens[0] });
 		setBusy(false);
 		if (!r.ok) {
 			setError(typeof r.body.message === "string" ? r.body.message : "That channel could not be saved.");
 			return;
 		}
-		setInput("");
 		apply(r.body);
+		const failed = Array.isArray(r.body.failed) ? (r.body.failed as Array<{ input: string; message: string }>) : [];
+		if (failed.length) {
+			setInput(failed.map((f) => f.input).join("\n"));
+			setError(`Saved ${String(r.body.saved ?? 0)}. Not saved: ${failed.map((f) => `${f.input} (${f.message.replace(/\.$/, "")})`).join("; ")}`);
+			return;
+		}
+		setInput("");
 	};
+	const saveAll = async () => {
+		setSavingAll(true);
+		const r = await post({ action: "save-suggestions" });
+		setSavingAll(false);
+		if (r.ok) apply(r.body);
+	};
+	const dismissed = (id: string) => void post({ action: "dismiss-channel", id }).then((r) => apply(r.body));
 	const save = async (id: string) => {
 		setSaving(id);
 		const r = await post({ action: "add-creator", input: id });
@@ -216,13 +234,13 @@ export function CreatorsSection({ d }: { d: Discover }) {
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
-					if (valid && !busy) void add(input.trim());
+					if (valid && !busy) void add();
 				}}
 				className="q-card flex flex-col gap-3 p-4 sm:flex-row"
 				data-testid="watch-creator-form"
 			>
 				<label className="sr-only" htmlFor="watch-creator">
-					A channel link, an @handle or one of their videos
+					A channel link, an @handle or one of their videos; several at once, apart by spaces
 				</label>
 				<input
 					id="watch-creator"
@@ -239,7 +257,7 @@ export function CreatorsSection({ d }: { d: Discover }) {
 				/>
 				<button type="submit" disabled={!valid || busy} className="q-btn sec h-11 px-5" data-testid="watch-creator-save">
 					{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
-					Save creator
+					{tokens.length > 1 ? `Save ${tokens.length} creators` : "Save creator"}
 				</button>
 			</form>
 			{error && (
@@ -250,13 +268,14 @@ export function CreatorsSection({ d }: { d: Discover }) {
 			{state.creators.length > 0 && (
 				<ul className="mt-3 flex flex-col gap-2">
 					{state.creators.map((c) => (
-						<li key={c.id} className="q-card relative flex items-center gap-3 py-3 pl-4 pr-12" data-testid="watch-creator">
+						<li key={c.id} className="q-card overflow-hidden" data-testid="watch-creator">
+							<div className="relative flex items-center gap-3 py-3 pl-4 pr-[5.25rem]">
 							<Avatar name={c.name} src={c.avatar} />
 							<span className="min-w-0 flex-1">
 								<a href={c.handle ? `https://www.youtube.com/${c.handle}` : `https://www.youtube.com/channel/${c.id}`} target="_blank" rel="noreferrer" className="block truncate font-ui text-[15px] font-[600] text-foreground hover:underline">
 									{c.name}
 								</a>
-								<span className="block truncate font-prose text-[13px] text-ink-3">
+								<span className="line-clamp-2 sm:block sm:truncate font-prose text-[13px] text-ink-3">
 									{c.handle ? `${c.handle} · ` : ""}
 									{c.picks === 0 ? "no picks right now" : c.picks === 1 ? "1 pick" : `${c.picks} picks`}
 									{c.awaitingCaptions > 0 && ` · ${c.awaitingCaptions} without captions yet`}
@@ -281,9 +300,32 @@ export function CreatorsSection({ d }: { d: Discover }) {
 									</button>
 								</span>
 							) : (
+								<button type="button" onClick={() => setOpen(open === c.id ? null : c.id)} aria-expanded={open === c.id} aria-label={`${open === c.id ? "Hide" : "Show"} the videos of ${c.name}`} title="Their videos" className="absolute right-10 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-creator-videos">
+									<ChevronDownIcon className={cn("size-4 transition-transform", open === c.id && "rotate-180")} strokeWidth={1.6} />
+								</button>
+							)}
+							{confirming !== c.id && (
 								<button type="button" onClick={() => setConfirming(c.id)} aria-label={`Remove ${c.name}`} title="Remove this creator" className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-creator-remove">
 									<Trash2Icon className="size-4" strokeWidth={1.6} />
 								</button>
+							)}
+							</div>
+							{open === c.id && (
+								<div data-testid="watch-creator-panel">
+									{c.videos.length > 0 ? (
+										<ol>
+											{c.videos.map((p) => (
+												<PickRow key={p.id} bare p={p} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={() => onPrepare(videoUrl(p.id))} onDismiss={() => void post({ action: "dismiss", videoId: p.id }).then((r) => apply(r.body))} />
+											))}
+										</ol>
+									) : (
+										<p className="border-t border-border px-4 py-3 font-prose text-[13px] text-ink-3">
+											Nothing to watch from {c.name} right now.
+											{c.tooLong > 0 && ` ${c.tooLong === 1 ? "One video is" : `${c.tooLong} videos are`} over ${MAX_VIDEO_SEC / 60} minutes.`}
+											{c.awaitingCaptions > 0 && ` ${c.awaitingCaptions === 1 ? "One has" : `${c.awaitingCaptions} have`} no captions yet; they are checked again each time.`}
+										</p>
+									)}
+								</div>
 							)}
 						</li>
 					))}
@@ -291,14 +333,22 @@ export function CreatorsSection({ d }: { d: Discover }) {
 			)}
 			{state.suggestions.length > 0 && (
 				<>
-					<p className="mt-6 font-ui text-sm font-[600] text-ink-2">Channels in {name} from your YouTube</p>
+					<div className="mt-6 flex items-center gap-2">
+						<p className="min-w-0 flex-1 font-ui text-sm font-[600] text-ink-2">Channels in {name} from your YouTube</p>
+						{state.suggestions.length > 1 && (
+							<button type="button" disabled={savingAll} onClick={() => void saveAll()} className="q-btn ghost h-8" data-testid="watch-suggestions-save-all">
+								{savingAll ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <PlusIcon className="size-3.5" />}
+								Save all {state.suggestions.length}
+							</button>
+						)}
+					</div>
 					<ul className="mt-2 flex flex-col gap-2" data-testid="watch-suggestions">
 						{state.suggestions.map((s) => (
 							<li key={s.id} className="q-card flex items-center gap-3 py-3 pl-4 pr-2" data-testid="watch-suggestion">
 								<Avatar name={s.name} src={s.avatar} />
 								<span className="min-w-0 flex-1">
 									<span className="block truncate font-ui text-[15px] font-[600] text-foreground">{s.name}</span>
-									<span className="block truncate font-prose text-[13px] text-ink-3">
+									<span className="line-clamp-2 sm:block sm:truncate font-prose text-[13px] text-ink-3">
 										{s.subscribed ? "You subscribe · " : ""}
 										{s.videos === 1 ? "1 video" : `${s.videos} videos`} in {name}
 										{s.from.length ? ` from your ${s.from.map((f) => (f === "subscriptions" ? "subscriptions" : f === "history" ? "history" : f === "recommended" ? "recommendations" : "searches")).join(" and ")}` : ""}
@@ -307,6 +357,9 @@ export function CreatorsSection({ d }: { d: Discover }) {
 								<button type="button" disabled={saving === s.id} onClick={() => void save(s.id)} className="q-btn sec h-9 shrink-0" data-testid="watch-suggestion-save">
 									{saving === s.id ? <LoaderCircleIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
 									Save
+								</button>
+								<button type="button" onClick={() => dismissed(s.id)} aria-label={`Not for me: ${s.name}`} title="Not for me" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-suggestion-dismiss">
+									<XIcon className="size-4" strokeWidth={1.6} />
 								</button>
 							</li>
 						))}
@@ -320,10 +373,10 @@ export function CreatorsSection({ d }: { d: Discover }) {
 /** The channel's picture from Google's image host; the first letter shows
  *  when there is none or it does not load. The circle is the same size
  *  either way, so the row does not move when the picture arrives. */
-function Avatar({ name, src }: { name: string; src?: string }) {
+function Avatar({ name, src, small }: { name: string; src?: string; small?: boolean }) {
 	const [failed, setFailed] = useState(false);
 	return (
-		<span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-well-2 font-ui text-[15px] font-[600] text-ink-2">
+		<span aria-hidden="true" className={cn("relative shrink-0 items-center justify-center overflow-hidden rounded-full bg-well-2 font-ui font-[600] text-ink-2", small ? "mr-1.5 inline-flex size-4 align-[-3px] text-[9px]" : "flex size-9 text-[15px]")}>
 			{[...name.replace(/^[^\p{L}\p{N}]+/u, "")][0]?.toLocaleUpperCase() ?? "?"}
 			{src && !failed && (
 				// next/image would need Google's image host allowed in its config; the plain image needs no setup.

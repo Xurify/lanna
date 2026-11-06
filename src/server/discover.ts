@@ -39,6 +39,7 @@ import {
 	suggestCreators,
 	trackTags,
 	type Creator,
+	type CreatorSuggestion,
 	type DiscoverStateView,
 	type YouTubeListName,
 	type CreatorFrom,
@@ -84,6 +85,8 @@ const REMEASURE_AFTER_MS = 7 * 86_400_000;
 const KEEP_READY_FLOOR = 0.88;
 /** Channels suggested on the Watch page. */
 const SUGGESTIONS_SHOWN = 12;
+/** Videos listed under a creator on the Watch page. */
+const CREATOR_VIDEOS = 4;
 
 const captionLangs = (): string[] => [activeLanguage().code, ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
 const region = (): string | undefined => activeLanguage().tag.split("-")[1]?.toUpperCase();
@@ -190,6 +193,12 @@ async function channelAvatar(channelId: string, signal?: AbortSignal): Promise<s
 	}
 }
 
+/** Channels worth saving: not saved, not turned down. */
+function suggestions(): CreatorSuggestion[] {
+	const skip = new Set([...discoverStore.creators().creators.map((c) => c.id), ...discoverStore.dismissedChannels()]);
+	return suggestCreators(Object.values(discoverStore.scans()), skip, discoverStore.youtube().subscriptions?.channels).slice(0, SUGGESTIONS_SHOWN);
+}
+
 function rememberAvatars(found: Record<string, string>): void {
 	discoverStore.putAvatars({ ...discoverStore.avatars(), ...found });
 }
@@ -203,9 +212,8 @@ const noAvatar = (): Set<string> => ((globalThis as { __lhNoAvatar?: Set<string>
 export async function fillAvatars(signal?: AbortSignal): Promise<void> {
 	const missed = noAvatar();
 	const have = discoverStore.avatars();
-	const yt = discoverStore.youtube();
 	const saved = discoverStore.creators().creators;
-	const suggested = suggestCreators(Object.values(discoverStore.scans()), new Set(saved.map((c) => c.id)), yt.subscriptions?.channels).slice(0, SUGGESTIONS_SHOWN);
+	const suggested = suggestions();
 	const todo = [...saved.map((c) => c.id), ...suggested.map((c) => c.id)].filter((id, i, all) => !have[id] && !missed.has(id) && all.indexOf(id) === i);
 	if (!todo.length) return;
 	const found: Record<string, string> = {};
@@ -231,6 +239,46 @@ export async function addCreator(input: string, from: CreatorFrom = "link", opts
 	discoverStore.putCreators({ ...f, creators: [...f.creators, creator] });
 	if (found.avatar) rememberAvatars({ [found.id]: found.avatar });
 	return creator;
+}
+
+/** Save several channels from pasted text; the ones that fail are named. */
+export async function addCreators(inputs: readonly string[], opts: { signal?: AbortSignal } = {}): Promise<{ saved: Creator[]; failed: Array<{ input: string; message: string }> }> {
+	const saved: Creator[] = [];
+	const failed: Array<{ input: string; message: string }> = [];
+	await pool(
+		inputs,
+		3,
+		async (input) => {
+			try {
+				saved.push(await addCreator(input, "link", opts));
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") throw err;
+				failed.push({ input, message: err instanceof Error ? err.message : String(err) });
+			}
+		},
+		opts.signal,
+	);
+	return { saved, failed };
+}
+
+/** Save the suggested channels (all, or the ones named) as the page shows them: no request to YouTube is needed. */
+export function saveSuggestions(ids?: readonly string[]): Creator[] {
+	const want = ids ? new Set(ids) : null;
+	const out: Creator[] = [];
+	for (const s of suggestions()) {
+		if (want && !want.has(s.id)) continue;
+		const f = discoverStore.creators();
+		if (f.creators.some((c) => c.id === s.id)) continue;
+		const creator: Creator = { id: s.id, name: s.name, ...(s.handle ? { handle: s.handle } : {}), addedAt: new Date().toISOString(), from: s.from.find((x): x is Exclude<PickSource, "creator"> => x !== "creator") ?? "history" };
+		discoverStore.putCreators({ ...f, creators: [...f.creators, creator] });
+		if (s.avatar) rememberAvatars({ [s.id]: s.avatar });
+		out.push(creator);
+	}
+	return out;
+}
+
+export function dismissSuggestion(id: string): void {
+	discoverStore.dismissChannel(id);
 }
 
 export function removeCreator(id: string): boolean {
@@ -489,8 +537,8 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		const queue = new Map<string, { found: FoundVideo; sources: Set<PickSource>; query?: string }>();
 		const add = (v: FoundVideo, source: PickSource, query?: string) => {
 			const kept = scans[v.id];
-			if (kept && awaitingCaptions(kept, now)) {
-				// Its captions may have arrived since: check it again, keeping what found it.
+			if (kept && (awaitingCaptions(kept, now) || (kept.skip === "too-long" && kept.durationSec <= MAX_VIDEO_SEC))) {
+				// Its captions may have arrived since, or the longest video taken may have grown: check it again, keeping what found it.
 				const q = queue.get(v.id) ?? { found: { ...v, at: kept.publishedAt }, sources: new Set<PickSource>(kept.sources), ...(kept.query ? { query: kept.query } : {}) };
 				q.sources.add(source);
 				queue.set(v.id, q);
@@ -618,22 +666,21 @@ export function discoverState(now = new Date()): DiscoverStateView {
 	const yt = discoverStore.youtube();
 	const scans = Object.values(discoverStore.scans());
 	const all = picks(now);
-	const saved = new Set(f.creators.map((c) => c.id));
 	const pics = discoverStore.avatars();
 	const dismissed = discoverStore.dismissed();
 	const picture = (id: string) => (pics[id] ? { avatar: pics[id] } : {});
+	const withPicture = (p: PickedVideo): PickedVideo => (p.channelId && pics[p.channelId] ? { ...p, avatar: pics[p.channelId]! } : p);
 	return {
 		creators: f.creators.map((c) => ({
 			...c,
 			picks: all.filter((p) => p.channelId === c.id).length,
+			videos: all.filter((p) => p.channelId === c.id).slice(0, CREATOR_VIDEOS).map(withPicture),
 			tooLong: scans.filter((v) => v.channelId === c.id && v.skip === "too-long" && !dismissed.has(v.id)).length,
 			awaitingCaptions: scans.filter((v) => v.channelId === c.id && awaitingCaptions(v, now)).length,
 			...picture(c.id),
 		})),
-		picks: all.slice(0, 40),
-		suggestions: suggestCreators(scans, saved, yt.subscriptions?.channels)
-			.slice(0, SUGGESTIONS_SHOWN)
-			.map((s) => ({ ...s, ...picture(s.id) })),
+		picks: all.slice(0, 40).map(withPicture),
+		suggestions: suggestions().map((s) => ({ ...s, ...picture(s.id) })),
 		keepReady: f.keepReady,
 		...(f.refreshedAt ? { refreshedAt: f.refreshedAt } : {}),
 		refresh: refreshStatus(),

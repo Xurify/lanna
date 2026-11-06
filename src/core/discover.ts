@@ -101,6 +101,11 @@ export function awaitingCaptions(v: Pick<ScannedVideo, "skip" | "publishedAt" | 
 	return age >= 0 && age < CAPTIONS_WAIT_MS;
 }
 
+/** The channels in pasted text: links, @handles and ids, apart by spaces, commas or lines; each once. */
+export function splitChannelInputs(text: string): string[] {
+	return [...new Set(text.split(/[\s,;]+/).filter(Boolean))];
+}
+
 /** A video on a YouTube page or in an export, before it is checked. */
 export interface FoundVideo {
 	id: string;
@@ -485,6 +490,8 @@ export function trackTags(tracks: readonly { languageCode: string; kind?: string
 // ─── The offer ──────────────────────────────────────────────────────────────
 
 export interface PickedVideo extends ScannedVideo {
+	/** The channel's picture, when known. */
+	avatar?: string;
 	score: number;
 	/** coverageBand's word ("comfortable", "stretch"…), or "unmeasured" for
 	 *  captions in another language. */
@@ -564,7 +571,18 @@ export type YouTubeListName = "history" | "recommended" | "subscriptions";
 
 /** What GET /api/watch/discover answers (src/server/discover.ts discoverState). */
 export interface DiscoverStateView {
-	creators: Array<Creator & { picks: number; avatar?: string; /** Checked but not offered: over the length of a session. */ tooLong: number; /** Videos without captions that are looked at again (see awaitingCaptions). */ awaitingCaptions: number }>;
+	creators: Array<
+		Creator & {
+			picks: number;
+			avatar?: string;
+			/** Its best picks, to watch from its row. */
+			videos: PickedVideo[];
+			/** Checked but not offered: over the length of a session. */
+			tooLong: number;
+			/** Videos without captions that are looked at again (see awaitingCaptions). */
+			awaitingCaptions: number;
+		}
+	>;
 	picks: PickedVideo[];
 	suggestions: CreatorSuggestion[];
 	keepReady: boolean;

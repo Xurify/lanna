@@ -13,6 +13,8 @@
  *                    Never a password, cookie or token.
  *   searches.json    the searches written from the learner's interests.
  *   avatars.json     channel pictures (Google image links), by channel id.
+ *   dismissed-channels.json
+ *                    suggested channels the learner said are not for them.
  *   dismissed.json   video ids the learner said are not for them.
  *
  * Same idioms as the other stores: sync fs, atomic renames.
@@ -125,6 +127,17 @@ export const discoverStore = {
 	},
 	putAvatars(a: Record<string, string>): void {
 		writeJson("avatars.json", a);
+	},
+	/** Suggested channels the learner said are not for them. */
+	dismissedChannels(): Set<string> {
+		const d = readJson<string[]>("dismissed-channels.json", []);
+		return new Set(Array.isArray(d) ? d.filter((x) => typeof x === "string") : []);
+	},
+	dismissChannel(id: string): void {
+		if (!/^UC[A-Za-z0-9_-]{22}$/.test(id)) return;
+		const d = this.dismissedChannels();
+		d.add(id);
+		writeJson("dismissed-channels.json", [...d]);
 	},
 	dismissed(): Set<string> {
 		const d = readJson<string[]>("dismissed.json", []);
