@@ -118,6 +118,7 @@ export * from "./speak-script.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
 export * from "./saved-phrases.ts";
+export * from "./cheatsheets.ts";
 export * from "./word-search.ts";
 export * from "./pronounce.ts";
 export * from "./watch.ts";

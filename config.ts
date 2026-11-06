@@ -329,6 +329,12 @@ export const PATHS = {
 	get saved() {
 		return path.join(dataRoot(), "saved");
 	},
+	/** Imported cheatsheets (Words → Cheatsheets): cheatsheets/<id>.json
+	 *  (the parsed sheet), cheatsheets/<id>.md (the text as imported),
+	 *  cheatsheets/trash/ (removed ones) — src/store/cheatsheets.ts. */
+	get cheatsheets() {
+		return path.join(dataRoot(), "cheatsheets");
+	},
 	/** Chat sessions (AI SDK UIMessage transcripts, one JSON file per chat). */
 	get chats() {
 		return path.join(dataRoot(), "chats");

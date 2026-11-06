@@ -87,6 +87,8 @@ export { isLanguageProfile, LANGUAGE_PROFILES, shownProfiles, type LanguageProfi
 export * from "./distractors.ts";
 export * from "./word-bank.ts";
 export { savedPhraseStore } from "../store/saved-phrases.ts";
+export { cheatsheetStore } from "../store/cheatsheets.ts";
+export * from "./cheatsheets.ts";
 // Remote access (E21): the pairing and device-session API, for app/api/access and Settings.
 export { desktopWindowRequest } from "./desktop-access.ts";
 export {

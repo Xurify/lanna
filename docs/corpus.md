@@ -19,6 +19,7 @@ Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor
 | `data/profiles/<lang>/videos/discover/` (`creators.json`, `scans.json`, `text/`, `youtube.json`, `searches.json`, `avatars.json`, `dismissed.json`, `dismissed-channels.json`) | Watch picks: saved creators, channel pictures (Google image links), every video checked for a pick, its caption lines, the lists read from the learner's YouTube or Takeout (no cookie or token), the model-written searches with their cost | `src/store/discover.ts` |
 | `data/profiles/<lang>/speak/<id>.json` + `<id>/NN.wav` + `index.jsonl` | Spoken scenes with the learner's own recordings | `src/store/speak.ts` |
 | `data/profiles/<lang>/fluency/log.jsonl` | Say-it-faster and re-read rounds (words a minute, clarity) | `src/server/fluency.ts` |
+| `data/profiles/<lang>/cheatsheets/<id>.json` + `trash/` | Cheatsheets: title, sections and their phrases; every version an edit or an add replaced goes to `trash/`; exported as `cheatsheets.json` | `src/store/cheatsheets.ts` |
 | `data/profiles/<lang>/milestones.json` | Custom "When can I…?" situations mapped once by the cheap slot | `src/server/milestones.ts` |
 | `data/export/<stamp>/` | `npm run corpus:export`: summary, audio, sentences, lessons, dialogues, explanations, review, stories, spoken, with a README | `src/server/corpus-export.ts` |
 

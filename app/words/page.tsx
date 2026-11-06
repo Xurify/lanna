@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import { WordBankPage } from "@/components/words/word-bank-page";
+import { WordBankPage, type WordsTab } from "@/components/words/word-bank-page";
 
 export const metadata: Metadata = {
 	title: "Words",
-	description: "Your words, the ones you know, and your saved phrases.",
+	description: "Your words, the ones you know, your saved phrases and your cheatsheets.",
 };
 
-export default function Page() {
-	return <WordBankPage />;
+const TABS: readonly WordsTab[] = ["words", "phrases", "cheatsheets"];
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; sheet?: string }> }) {
+	const { tab, sheet } = await searchParams;
+	const initialTab = TABS.find((t) => t === tab) ?? (sheet ? "cheatsheets" : "words");
+	return <WordBankPage initialTab={initialTab} initialSheet={initialTab === "cheatsheets" ? sheet : undefined} />;
 }
