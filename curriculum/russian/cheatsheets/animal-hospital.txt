@@ -1,3 +1,5 @@
+# Animal Hospital: night shift
+
 1. At the desk: who gets in
 Пускаем? | poos-KA-yem? | Do we let it in?
 Пускаем. | poos-KA-yem | We let it in. (admit)
@@ -47,7 +49,8 @@
 Я в комнате номер три. | ya f KOM-na-tye NO-myer TREE | I'm in room three. | номер keeps the number simple
 Иди в комнату номер пять. | ee-DEE f KOM-na-too NO-myer PYAT' | Go to room five.
 Кто лечит? | KTO LYE-cheet? | Who is treating?
-Я лечу. | ya lee-CHOO | I'm treating (it). | also means "I'm flying"
+Я лечу пациента. | ya lee-CHOO pa-tsy-YEN-ta | I'm treating the patient. | лечу alone also means "I'm flying"; the patient makes it clear
+Я его лечу. / Я её лечу. | ya ye-VO lee-CHOO / ya ye-YO lee-CHOO | I'm treating him / her. | его for a m animal, её for a f animal
 Давай поменяемся. | da-VAI pa-mee-NYA-yem-sya | Let's swap jobs.
 Ты смотришь камеры? | ty SMOT-reesh KA-mye-ry? | Are you watching the cameras?
 Я иду налево. | ya ee-DOO na-LYE-va | I'm going left. | направо (na-PRA-va): right

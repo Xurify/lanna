@@ -1,10 +1,10 @@
 /**
  * GET /api/cheatsheets/<id>: the sheet, and how many of its words the dictionary knows and Review has
  * PUT /api/cheatsheets/<id> {title?, text}: replace the title and the phrases (the old version goes to trash/)
- * DELETE /api/cheatsheets/<id>: move it to trash/
+ * DELETE /api/cheatsheets/<id>: move it to trash/ (a repo sheet is removed by deleting its file, so this refuses it)
  */
 
-import { CheatsheetParseError, CHEATSHEET_MAX_CHARS } from "@/src/core";
+import { CheatsheetParseError, CHEATSHEET_MAX_CHARS, REPO_PREFIX } from "@/src/core";
 import { cheatsheetReviewState, cheatsheetStore } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
 
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
 	const { id } = await ctx.params;
+	if (id.startsWith(REPO_PREFIX)) return Response.json({ message: "This sheet is kept in the repo. Delete its file there." }, { status: 409 });
 	const removed = cheatsheetStore.remove(id);
 	return Response.json({ removed }, { status: removed ? 200 : 404 });
 }
