@@ -400,8 +400,9 @@ export const SEGMENT_MIN_WORDS = 3;
 export const SEGMENT_GAP_SEC = 1.6;
 /** Videos longer than this are refused: the translation alone would be
  *  thousands of lines, and an hour of input is not one session. */
-export const MAX_VIDEO_SEC = 75 * 60;
-export const MAX_SEGMENTS = 900;
+export const MAX_VIDEO_SEC = 90 * 60;
+/** About what MAX_VIDEO_SEC of speech makes (a line runs 4–5 s). */
+export const MAX_SEGMENTS = 1100;
 
 const wordsOf = (s: string) => s.split(/\s+/).filter(Boolean);
 

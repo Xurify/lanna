@@ -42,6 +42,9 @@ import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
 import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
+import { Thumb } from "@/components/watch/thumb";
+import { CreatorsSection, PicksSection, useDiscover, YouTubeSection } from "@/components/watch/discover";
+import type { DiscoverStateView } from "@/src/core";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -67,8 +70,9 @@ interface PrepareError {
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
 const SLOW_RATE = 0.75;
 
-export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: WatchState | null; initialVideo?: VideoRecord | null; initialUrl?: string | null }) {
+export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover }: { initial: WatchState | null; initialVideo?: VideoRecord | null; initialUrl?: string | null; initialDiscover?: DiscoverStateView | null }) {
 	const router = useRouter();
+	const discover = useDiscover(initialDiscover ?? null);
 	const [state, setState] = useState<WatchState | null>(initial);
 	const [video, setVideo] = useState<VideoRecord | null>(initialVideo ?? null);
 	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : initialUrl ? "preparing" : "shelf");
@@ -311,7 +315,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl }: { initial: Wa
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} running={running} onOpen={open} onPrepare={(url) => void prepare(url)} onDelete={(id) => void remove(id)} />
+			<Shelf state={state} running={running} discover={discover} onOpen={open} onPrepare={(url) => void prepare(url)} onDelete={(id) => void remove(id)} />
 		);
 	}
 
@@ -408,26 +412,7 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The shelf: paste a link, or pick a video ───────────────────────────────
 
-/** The video's YouTube thumbnail, loaded from YouTube's image host in the
- *  browser; the icon stands in when YouTube has none. The box is 16:9 so the
- *  row does not move when the image arrives. */
-function Thumb({ id, watched }: { id: string; watched: boolean }) {
-	const [missing, setMissing] = useState(false);
-	if (missing) {
-		return (
-			<span className={cn("flex h-[50px] w-[89px] shrink-0 items-center justify-center rounded-md", watched ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
-				<MonitorPlayIcon className="size-5" />
-			</span>
-		);
-	}
-	return (
-		// next/image would need YouTube's image host allowed in its config; the plain image needs no setup.
-		// eslint-disable-next-line @next/next/no-img-element
-		<img src={`https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`} alt="" loading="lazy" onError={() => setMissing(true)} className="h-[50px] w-[89px] shrink-0 rounded-md bg-well-2 object-cover" />
-	);
-}
-
-function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
+function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; discover: ReturnType<typeof useDiscover>; onOpen: (id: string) => void; onPrepare: (url: string) => void; onDelete: (id: string) => void }) {
 	const [url, setUrl] = useState("");
 	const [confirming, setConfirming] = useState<string | null>(null);
 	const lang = useActiveLanguage();
@@ -495,6 +480,8 @@ function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchSt
 					</ul>
 				)}
 
+				<PicksSection d={discover} canPrepare={state?.canPrepare !== false} onPrepare={onPrepare} />
+
 				{list.length > 0 && (
 					<>
 						<h2 className="q-sh mt-10">
@@ -553,6 +540,9 @@ function Shelf({ state, running, onOpen, onPrepare, onDelete }: { state: WatchSt
 						</ol>
 					</>
 				)}
+
+				<CreatorsSection d={discover} canPrepare={state?.canPrepare !== false} onPrepare={onPrepare} />
+				<YouTubeSection d={discover} />
 			</main>
 		</div>
 	);

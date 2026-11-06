@@ -347,3 +347,56 @@ test("the luck check: the rung the level rests on is offered to the tutor again,
 	assert.equal(r.startChapter, "health", "a gap on the floor takes the lucky pair back: A2 is the edge again");
 	assert.ok(r.weak.includes(floor));
 });
+
+test("the miss judge reads the earlier answers of the check, so its note can name a repeated mistake", async () => {
+	assert.match(server.judgeSystem(), /earlier answers in this check/);
+	assert.match(server.judgeSystem(), /Decide "accept" on this answer alone/);
+	progressStore.write({ ...progressStore.read(), units: {}, goal: undefined });
+	setGoal({ level: "B1", minutesPerDay: 20, prior: "none", onboarded: true }, 0);
+	const now = new Date("2026-11-05T13:00:00Z");
+	const start = server.startPlacement({ now });
+	const prompts: string[] = [];
+	const judging = (note: string, repeat: string | null = null) => {
+		const faux = fauxEngine([reply({ accept: false, note, repeat })]);
+		return {
+			model: faux.model,
+			streamFn: ((model, context, options) => {
+				const last = context.messages[context.messages.length - 1];
+				prompts.push(last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "");
+				return faux.streamFn(model, context, options);
+			}) as typeof faux.streamFn,
+		};
+	};
+	const first = start.item;
+	const a = await server.answerPlacement({ id: start.id, itemId: first.id, given: "prvé", verdict: "wrong" }, { engine: judging("A past form for a present meaning."), now });
+	assert.doesNotMatch(prompts[0]!, /Earlier answers/, "nothing earlier on the first answer");
+	const second = a.item!;
+	const b = await server.answerPlacement({ id: start.id, itemId: second.id, given: "druhé", verdict: "wrong" }, { engine: judging("Again a past form for a present meaning, as with prvé.", "Prvé "), now });
+	assert.match(prompts[1]!, /Earlier answers in this check, oldest first:\n- \[.+\] ".*" \(.*\) → wrote "prvé", form ".+": MISS \(A past form for a present meaning\.\)/);
+	assert.doesNotMatch(prompts[1]!, /wrote "druhé"/, "the answer being judged is not its own history");
+	assert.match(prompts[1]!, /^The learner typed: druhé$/m);
+	assert.equal(b.judged?.note, "Again a past form for a present meaning, as with prvé.");
+	assert.equal(b.judged?.repeat, "Prvé", "a repeat that names a real earlier miss is kept");
+	const earlier = placementStore.get(start.id)!.items;
+	const imagined = await server.judgeAnswer(second, "tretie", { model: "faux", steps: [] }, { engine: judging("Again, as with nič.", "nič") }, earlier);
+	assert.equal(imagined?.repeat, undefined, "a repeat of a miss the learner never typed is dropped");
+
+	// The tutor sees the judge's notes and the repeat; the weak spot keeps the repeat's note, not the first one.
+	assert.equal(b.item, null, "two misses on the first rung end a beginner's ladder");
+	const brief: string[] = [];
+	const tutor = fauxEngine([reply({ say: "", verdict: null, ask: null, done: "Nothing more to ask." })]);
+	const reading = {
+		model: tutor.model,
+		streamFn: ((model, context, options) => {
+			const last = context.messages[context.messages.length - 1];
+			brief.push(typeof last?.content === "string" ? last.content : "");
+			return tutor.streamFn(model, context, options);
+		}) as typeof tutor.streamFn,
+	};
+	await server.probePlacement({ id: start.id }, { engine: reading, now });
+	assert.match(brief[0] ?? "", /wrote "prvé".*MISS \(judge: A past form for a present meaning\.\)/);
+	assert.match(brief[0] ?? "", /wrote "druhé".*REPEATS the miss "Prvé"/);
+	const rung = placementStore.get(start.id)!.items[0]!.rung;
+	server.finishPlacement({ id: start.id, tz: 0 }, { now });
+	assert.match(progressStore.read().weak?.[rung]?.note ?? "", /^Again a past form for a present meaning, as with prvé/);
+});

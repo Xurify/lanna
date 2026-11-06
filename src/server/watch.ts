@@ -84,6 +84,11 @@ export interface VideoMeta {
 	id: string;
 	title: string;
 	channel?: string;
+	channelId?: string;
+	/** The start of the uploader's description. */
+	description?: string;
+	/** A live stream or premiere, now or upcoming. */
+	live?: boolean;
 	durationSec: number;
 	tracks: CaptionTrack[];
 	via: "watch-page" | "innertube";
@@ -127,7 +132,7 @@ export function extractJsonAfter(html: string, marker: RegExp): unknown {
 
 function metaOf(player: unknown, id: string, via: VideoMeta["via"]): VideoMeta | null {
 	const p = player as {
-		videoDetails?: { videoId?: string; title?: string; author?: string; lengthSeconds?: string | number };
+		videoDetails?: { videoId?: string; title?: string; author?: string; channelId?: string; shortDescription?: string; lengthSeconds?: string | number; isLive?: boolean; isUpcoming?: boolean };
 		captions?: { playerCaptionsTracklistRenderer?: { captionTracks?: Array<{ baseUrl?: string; languageCode?: string; kind?: string; name?: { simpleText?: string; runs?: Array<{ text?: string }> } }> } };
 		playabilityStatus?: { status?: string; reason?: string };
 	} | null;
@@ -138,7 +143,17 @@ function metaOf(player: unknown, id: string, via: VideoMeta["via"]): VideoMeta |
 	const tracks: CaptionTrack[] = (p.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [])
 		.filter((t): t is { baseUrl: string; languageCode: string; kind?: string; name?: { simpleText?: string; runs?: Array<{ text?: string }> } } => typeof t.baseUrl === "string" && typeof t.languageCode === "string")
 		.map((t) => ({ baseUrl: t.baseUrl, languageCode: t.languageCode, ...(t.kind ? { kind: t.kind } : {}), ...(t.name?.simpleText || t.name?.runs?.[0]?.text ? { name: t.name?.simpleText ?? t.name?.runs?.map((r) => r.text ?? "").join("") } : {}) }));
-	return { id, title: (d.title ?? "").trim() || `YouTube ${id}`, ...(d.author ? { channel: d.author } : {}), durationSec: Number(d.lengthSeconds) || 0, tracks, via };
+	return {
+		id,
+		title: (d.title ?? "").trim() || `YouTube ${id}`,
+		...(d.author ? { channel: d.author } : {}),
+		...(d.channelId ? { channelId: d.channelId } : {}),
+		...(d.shortDescription ? { description: d.shortDescription.slice(0, 600) } : {}),
+		...(d.isLive || d.isUpcoming || status === "LIVE_STREAM_OFFLINE" ? { live: true } : {}),
+		durationSec: Number(d.lengthSeconds) || 0,
+		tracks,
+		via,
+	};
 }
 
 /** The player response through YouTube's own app client: plain JSON, no
@@ -182,7 +197,25 @@ export function pickTrack(tracks: readonly CaptionTrack[], langs: readonly strin
 	return null;
 }
 
-async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
+/** A video's player data: YouTube's app client first, its watch page when
+ *  that lists no captions. Null when neither answers. */
+export async function fetchVideoMeta(id: string, signal?: AbortSignal): Promise<VideoMeta | null> {
+	let meta: VideoMeta | null = null;
+	try {
+		meta = await metaFromInnertube(id, signal);
+	} catch (err) {
+		if (err instanceof Error && err.name === "AbortError") throw err;
+	}
+	if (meta && meta.tracks.length) return meta;
+	try {
+		return (await metaFromWatchPage(id, signal)) ?? meta;
+	} catch (err) {
+		if (err instanceof Error && err.name === "AbortError") throw err;
+		return meta;
+	}
+}
+
+export async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
 	const base = track.baseUrl.replace(/&fmt=[^&]*/g, "");
 	for (const [fmt, ext] of [["json3", "json"], ["", "xml"]] as const) {
 		try {

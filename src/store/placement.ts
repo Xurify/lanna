@@ -20,6 +20,13 @@ import type { LadderState } from "../core/placement-ladder.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import type { VocabAnswer, VocabEstimate, VocabItem } from "../core/vocab-probe.ts";
 
+export interface Judgement {
+	accepted: boolean;
+	note: string;
+	/** An earlier miss of this check that this one repeats, as the learner typed it. */
+	repeat?: string;
+}
+
 export interface PlacementItemRecord {
 	item: LessonItem;
 	/** The ladder rung the item was asked for. A union unit (cases-mix,
@@ -31,7 +38,7 @@ export interface PlacementItemRecord {
 	/** The verdict that counted (after the model's judgement, when asked). */
 	verdict?: RepVerdict;
 	/** The client's string verdict was "wrong" and the model was asked. */
-	judged?: { accepted: boolean; note: string };
+	judged?: Judgement;
 	ms?: number;
 }
 

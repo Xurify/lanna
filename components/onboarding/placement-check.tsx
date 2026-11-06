@@ -354,8 +354,8 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 					</p>
 					<input ref={inputRef} value={answer} onChange={(e) => setAnswer(e.target.value)} aria-label="Your answer" data-testid="edge-input" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} disabled={busy} className={cn(INPUT, "mt-5")} lang={ask.kind === "why" ? undefined : "sk"} />
 					<div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-						{ask.kind === "why" ? <span /> : <DiacriticBar variant="keys" />}
-						<div className="flex gap-2">
+						{ask.kind === "why" ? <span /> : <DiacriticBar variant="keys" className="basis-full sm:flex-1" />}
+						<div className="ms-auto flex gap-2">
 							<button type="button" onClick={() => void skip()} className={SECONDARY} disabled={busy}>
 								Stop here
 							</button>

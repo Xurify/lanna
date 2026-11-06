@@ -36,7 +36,7 @@ import type { StoryUsage } from "../core/reading.ts";
 import { entryLemma, type LexiconEntry } from "../core/review.ts";
 import { makePseudowords, PSEUDO_WORDS, scoreVocab, VOCAB_BANDS, WORDS_PER_BAND, type VocabAnswer, type VocabItem } from "../core/vocab-probe.ts";
 import { rng, shuffle } from "../core/lesson.ts";
-import { placementStore, type PlacementSession } from "../store/placement.ts";
+import { placementStore, type Judgement, type PlacementItemRecord, type PlacementSession } from "../store/placement.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { readSettings } from "../store/settings.ts";
 import { recordPlacement, type PlacementResult, type RepResult } from "./lesson.ts";
@@ -210,7 +210,7 @@ export interface AnswerInput {
 export interface AnswerResult {
 	/** The verdict that counted. */
 	verdict: RepVerdict;
-	judged?: { accepted: boolean; note: string };
+	judged?: Judgement;
 	/** The next item, or null when the ladder is done. */
 	item: LessonItem | null;
 	progress: PlacementProgress;
@@ -221,29 +221,45 @@ type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
 export function judgeSystem(lang: PromptLang = activeLanguage()): string {
 	const name = lang.english;
 	const x = lang.promptExamples ?? {};
-	return `You check one answer in a ${name} fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right${x.diacriticPair ? ` (${x.diacriticPair})` : ""}; a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>"}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class${x.caseNote ? ` (e.g. ${x.caseNote})` : ""}. Write ${name} words bare, with no quotation marks, and use no semicolons.`;
+	return `You check one answer in a ${name} fill-the-blank exercise for a language-learning app. You get the sentence with its blank, its English meaning, the word the dictionary put in the blank, and what the learner typed. Decide whether the learner's word is a CORRECT and NATURAL filling of this blank in this sentence: the same meaning, correct grammar for this slot (case, number, gender, person, tense, aspect), including a synonym or an alternative form the sentence allows. Diacritics must be right${x.diacriticPair ? ` (${x.diacriticPair})` : ""}; a missing or wrong diacritic is not accepted. A different word that changes the meaning, or a form that does not fit the slot, is not accepted. Answer with ONE JSON object and nothing else: {"accept": true | false, "note": "<why, in English>", "repeat": "<the earlier miss this one repeats, exactly as the learner typed it>" | null}. The note is ONE plain sentence of at most 25 words for the learner to read: when the miss is a case or ending, name the case and the pattern for this noun's class${x.caseNote ? ` (e.g. ${x.caseNote})` : ""}. You may also get the learner's earlier answers in this check. Decide "accept" on this answer alone. When an earlier MISS shows the same kind of mistake (the same wrong tense, person, case or ending), the note says so and names that earlier form: "Again a past form for a present meaning, as with <the earlier form>", and "repeat" is that form; otherwise "repeat" is null. Claim no pattern the earlier answers do not show: one earlier miss of another kind is no pattern, and an earlier right answer on the same form counts against one. Write ${name} words bare, with no quotation marks, and use no semicolons.`;
 }
 
-function parseJudge(text: string): { accepted: boolean; note: string } {
+function parseJudge(text: string): Judgement {
 	const m = text.match(/\{[\s\S]*\}/);
 	if (!m) return { accepted: false, note: "" };
 	try {
-		const o = JSON.parse(m[0]) as { accept?: unknown; note?: unknown };
-		return { accepted: o.accept === true, note: typeof o.note === "string" ? o.note.trim().slice(0, 160) : "" };
+		const o = JSON.parse(m[0]) as { accept?: unknown; note?: unknown; repeat?: unknown };
+		const out: Judgement = { accepted: o.accept === true, note: typeof o.note === "string" ? o.note.trim().slice(0, 200) : "" };
+		if (!out.accepted && typeof o.repeat === "string" && o.repeat.trim()) out.repeat = o.repeat.trim().slice(0, 80);
+		return out;
 	} catch {
 		return { accepted: false, note: "" };
 	}
 }
 
+const fold = (s: string) => s.normalize("NFC").trim().toLocaleLowerCase();
+
+const EARLIER_ANSWERS = 12;
+
+function earlierLine(r: PlacementItemRecord): string {
+	const result = r.verdict === "wrong" ? `MISS${r.judged?.note ? ` (${r.judged.note})` : ""}` : r.judged?.accepted ? "right (an accepted alternative)" : "right";
+	return `- [${unitInfo(r.rung ?? r.item.unit).title}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}", form "${r.item.answer}": ${result}`;
+}
+
 /** Ask the cheap slot whether a typed miss is a valid alternative. Null
  *  when no model is set or the call fails (then the string verdict stands). */
-export async function judgeAnswer(item: LessonItem, given: string, usage: StoryUsage, opts: PlacementOptions = {}): Promise<{ accepted: boolean; note: string } | null> {
+export async function judgeAnswer(item: LessonItem, given: string, usage: StoryUsage, opts: PlacementOptions = {}, earlier: readonly PlacementItemRecord[] = []): Promise<Judgement | null> {
 	const script = scriptedEngines();
 	const real = opts.engine ? { engine: opts.engine } : script ? { engine: script.judge } : storyEngine();
 	if (!real) return null;
-	const prompt = [`Sentence: ${item.before}___${item.after}`, `Meaning: ${item.translation}`, `Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`, `Hint the learner saw: ${item.hint ?? item.lemma}`, `The learner typed: ${given}`].join("\n");
+	const answered = earlier.filter((r) => r.verdict !== undefined).slice(-EARLIER_ANSWERS);
+	const history = answered.length ? ["Earlier answers in this check, oldest first:", ...answered.map(earlierLine), ""] : [];
+	const prompt = [...history, `Sentence: ${item.before}___${item.after}`, `Meaning: ${item.translation}`, `Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`, `Hint the learner saw: ${item.hint ?? item.lemma}`, `The learner typed: ${given}`].join("\n");
 	try {
-		return parseJudge(await ask(real.engine, judgeSystem(), prompt, usage));
+		const judged = parseJudge(await ask(real.engine, judgeSystem(), prompt, usage));
+		// A repeat is kept only when it names a miss the learner really typed, so a pattern the model imagines never reaches a weak spot.
+		if (judged.repeat && !answered.some((r) => r.verdict === "wrong" && fold(r.given ?? "") === fold(judged.repeat!))) delete judged.repeat;
+		return judged;
 	} catch {
 		return null;
 	}
@@ -259,7 +275,7 @@ export async function answerPlacement(input: AnswerInput, opts: PlacementOptions
 	rec.given = input.given;
 	if (input.ms !== undefined) rec.ms = input.ms;
 	if (verdict === "wrong" && input.given.trim()) {
-		const judged = await judgeAnswer(rec.item, input.given, s.usage, opts);
+		const judged = await judgeAnswer(rec.item, input.given, s.usage, opts, s.items.filter((r) => r !== rec));
 		if (judged) {
 			rec.judged = judged;
 			if (judged.accepted) verdict = "exact";
@@ -290,6 +306,7 @@ How you work:
 - Judge every answer: "held" (produces it and knows what decides it), "slip" (right form but shaky, or one miss then right), "gap" (cannot produce it, or a misconception). One verdict per unit; a later verdict on the same unit replaces the earlier one.
 - At most ${PROBE_TURNS} questions in all; stop as soon as the edge is clear. Do not re-ask what the drill already showed twice, except a unit the brief marks CHECK FOR LUCK. Enter at the unit the brief marks first.
 - CHECK FOR LUCK: the level rests on that unit, and the drill held it on two right answers, which a lucky pair can make. Ask for the form in a NEW frame with a different word, then ask WHY. Held needs the right form and a right reason; a right form with a wrong or missing reason is a slip; a wrong form is a gap. Do not set "done" before this unit has a verdict, unless the questions have run out.
+- A miss marked REPEATS is the same mistake twice in the drill, maybe across units: a likely misconception. Worth a question on one of its units, and the verdict note names the pattern.
 - Speak to the learner in the explanation language of the profile (English unless it says otherwise); the frames in ${name}. Short: one or two sentences of feedback, then the next question.
 - Unit ids are for the JSON fields only. In "say", "prompt" and "done", name the grammar in full words ("the feminine accusative", "the locative"), never an id like acc-fem or a short form like fem. or sg.
 - Never give the level. The app computes it from your verdicts and the drill.
@@ -315,7 +332,7 @@ function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitI
 	lines.push(`Drill evidence (${s.items.length} typed items, adaptive): floor ${edge.floor ? unitInfo(edge.floor).title : "none"}, ceiling ${edge.ceiling ? unitInfo(edge.ceiling).title : "none (every rung held)"}.`);
 	for (const r of s.items) {
 		if (!r.verdict) continue;
-		const tag = r.verdict === "wrong" ? "MISS" : r.verdict === "accents" ? "hit (diacritics off)" : r.judged?.accepted ? "hit (model accepted an alternative)" : "hit";
+		const tag = r.verdict === "wrong" ? `MISS${r.judged?.note ? ` (judge: ${r.judged.note})` : ""}${r.judged?.repeat ? ` · REPEATS the miss "${r.judged.repeat}"` : ""}` : r.verdict === "accents" ? "hit (diacritics off)" : r.judged?.accepted ? "hit (model accepted an alternative)" : "hit";
 		const secs = r.ms !== undefined ? ` in ${Math.round(r.ms / 1000)} s` : "";
 		lines.push(`- [${unitName(r.rung ?? r.item.unit)}${r.rung && r.rung !== r.item.unit ? ` · ${unitName(r.item.unit)}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}"${secs}, form "${r.item.answer}": ${tag}`);
 	}
@@ -509,12 +526,17 @@ export function finishPlacement(input: { id: string; ms?: number; activeMs?: num
 			detail: { unit: r.item.unit, lemma: r.item.lemma, gloss: r.item.gloss, sentence: r.item.sentence, translation: r.item.translation, answer: r.item.answer, given: r.given, trigger: r.item.trigger, ...(r.judged?.accepted ? { hint: `accepted: ${r.judged.note}` } : {}) },
 		}));
 	// Why each missed unit was missed: the tutor's verdict first, else the
-	// judge's note on the first miss, else the form itself.
+	// judge's note on a miss that repeats an earlier one, else on the first
+	// miss, else the form itself.
 	const weakNotes: Partial<Record<UnitId, string>> = {};
+	const repeated = new Set<UnitId>();
 	for (const r of s.items) {
 		const unit = (r.rung ?? r.item.unit) as UnitId;
-		if (r.verdict === undefined || r.verdict !== "wrong" || weakNotes[unit]) continue;
-		weakNotes[unit] = r.judged?.note ? r.judged.note : `wrote "${r.given}" for ${r.item.answer}`;
+		if (r.verdict !== "wrong" || repeated.has(unit)) continue;
+		if (r.judged?.repeat && r.judged.note) {
+			weakNotes[unit] = r.judged.note;
+			repeated.add(unit);
+		} else if (!weakNotes[unit]) weakNotes[unit] = r.judged?.note ? r.judged.note : `wrote "${r.given}" for ${r.item.answer}`;
 	}
 	for (const [u, v] of last) if (v.result !== "held") weakNotes[u] = v.note ? `${v.result}: ${v.note}` : `the tutor saw a ${v.result}`;
 	const result = recordPlacement({ outcome, reps, ms: input.ms, activeMs: input.activeMs, tz: input.tz, note: s.probe.summary || undefined, weakNotes, vocabulary: s.words?.estimate ? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable } : undefined }, now);

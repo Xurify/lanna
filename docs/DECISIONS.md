@@ -588,6 +588,31 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - No copied-hint signal: in 4,800 generated items across the sixteen rungs, no typed item asked for the form shown in its hint, so copying the hint cannot score.
 - No new model call on the ladder: P7 still holds. The check costs one or two of the stage's existing six questions.
 
+### E50. Watch picks: saved creators, the learner's own YouTube read in a window of the app's own, every video checked for free before it is offered (2026-11-05, branch `feat/watch-creators`)
+
+**Why:** the owner asked to connect their YouTube account, use the history and recommendations to pick or find videos, and save creators so adding videos is "easier or more automatic". YouTube's API returns neither the history nor the recommendations, and a video with Slovak subtitles is often German or Polish speech with translated subtitles. Research and the live trial: [research/watch-picks.md](research/watch-picks.md). (E49 is taken by `feat/placement-luck-check`.)
+
+**How to apply:**
+- A creator is a channel id, saved from a channel link, an @handle or one of their videos. Its newest uploads come from the channel's feed, or its videos tab when the feed fails. No key, no model.
+- The account is read in the desktop app only, through a sign-in window with its own session (`electron/youtube.cjs`, partition `persist:lh-youtube`): the history, the home page's recommendations and the subscribed channels. Only the page text leaves the main process, and only the lists of videos and channels are kept (`videos/discover/youtube.json`). No cookie, token or password is ever written to `data/` or logged. The window may go to Google's and YouTube's hosts only and has no preload. Outside the desktop app, or when Google refuses the window, a Takeout export (`watch-history` JSON or HTML, `subscriptions.csv`) is parsed in the browser and gives the same lists.
+- Every candidate is checked before it is offered, once, with no model call: its caption tracks, whether it is spoken in the language (`judgeSpoken`: the automatic track first; then the original title and description against the lexicon; a set of five uploaded subtitle languages or more never counts as proof), its speech density, and the known-word share of its captions. The rules and numbers are in `src/core/discover.ts`; change them there, not in the page.
+- The offer is ranked by fit, not by recency: 93–98% known first. When none is at the learner's level, the page says so.
+- The model is used in one place only: the cheap slot writes six searches in the language from the learner's interests, kept with their cost and written again when the interests change or after two weeks.
+- "Keep one ready" (on, needs a model) prepares the best pick in the background when no video waits: spoken in the language, 88% known or more, 50 words a minute or more. Today's plan then has a Watch task with no paste. Turning it off stops all spending here except the searches.
+- The picks refresh when the Watch page or Today's plan is opened and they are over six hours old, and on "Check again".
+
+### E51. The miss judge reads the check so far, and names a repeated mistake (2026-11-05, branch `feat/placement-repeated-mistakes`)
+
+**Why:** the owner asked whether their answers reach the AI for a real analysis rather than right and wrong. The judge of a typed miss saw only that one item, so its note could explain the miss but could never say it was the same mistake as two answers ago.
+
+**How to apply:**
+- `judgeAnswer` gets the check's earlier answered items (the last twelve): each with its rung, sentence, meaning, what was typed, the form, right or MISS, and the earlier note. The item being judged is never in its own history.
+- The prompt decides `accept` on this answer alone. The note names a repeated mistake only with the earlier form it repeats ("as with <form>"), so the learner can check the claim. One miss of another kind is no pattern, and an earlier right answer on the same form counts against one.
+- Still one cheap call per typed miss and none on a match (P7). The note may run to 200 characters (it was 160) to fit the earlier form.
+- The judge also returns `repeat`, the earlier miss as typed. The server keeps it only when it matches a miss the learner really typed in this check, so an invented pattern never reaches a weak spot.
+- The edge tutor's brief carries each miss's judge note and its REPEATS mark, and the prompt treats a repeat as a likely misconception worth a question. Its verdict then counts toward the level as before.
+- A weak spot's evidence is the note of a miss that repeats an earlier one, when there is one; else the first miss's note; the tutor's verdict still wins over both.
+
 ### W1. Take over, do not ask (2026-10-27, repeated 2026-10-28)
 
 Pick the recommended option, build it, verify it in the live app, deploy, then send one short report with screenshots. Do not ask for confirmation, choices or approval. The only exceptions are things impossible from the cloud (creating a GitHub repo, approving a device card). `AGENTS.md` carries the upstream "No guessing, always ask" rule; for LangHarness the owner's standing rule overrides it.

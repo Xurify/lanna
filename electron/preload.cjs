@@ -33,6 +33,10 @@
  *   window.lh.storage — Settings → Storage: the HTTP cache's size and
  *   clearing it. Nothing else on disk is reachable from the renderer.
  *
+ *   window.lh.youtube — Watch → picks: sign in to YouTube in a window with its
+ *   own session, read the history, home and channels pages, sign out
+ *   (electron/youtube.cjs). Only page text comes back; never a cookie.
+ *
  * Channel names are mirrored in electron/main.cjs — keep them in sync.
  */
 const { contextBridge, ipcRenderer } = require("electron");
@@ -105,6 +109,14 @@ contextBridge.exposeInMainWorld("lh", {
 	/** Settings → Appearance: the installed font families, A to Z; [] when the OS would not say. */
 	fonts: {
 		list: () => ipcRenderer.invoke("lh:fonts:list"),
+	},
+	/** Watch → picks: sign in to YouTube in a window of its own, read one list's
+	 *  page (history, recommended, subscriptions) through that session, sign out. */
+	youtube: {
+		status: () => ipcRenderer.invoke("lh:youtube", { op: "status" }),
+		connect: () => ipcRenderer.invoke("lh:youtube", { op: "connect" }),
+		read: (list) => ipcRenderer.invoke("lh:youtube", { op: "read", list }),
+		disconnect: () => ipcRenderer.invoke("lh:youtube", { op: "disconnect" }),
 	},
 	onOpenSettings: (cb) => {
 		openSettingsListener = cb;

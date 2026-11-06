@@ -25,9 +25,9 @@ export function isTimedActivity(v: unknown): v is TimedActivity {
 
 /** The most one send may add, in minutes: a safety net against a forgotten
  *  tab, not the measurement itself. */
-/** Watch's cap is the longest video the app takes (75 min): a watching counts the
+/** Watch's cap is the longest video the app takes (90 min, MAX_VIDEO_SEC): a watching counts the
  *  video's playing time, so one send can never be longer than the video. */
-export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, listen: 20, read: 20, watch: 75, speak: 20, reread: 10, fast: 10 };
+export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, listen: 20, read: 20, watch: 90, speak: 20, reread: 10, fast: 10 };
 
 /** What a day's ledger holds (src/store/progress.ts DayRecord). */
 export interface MinutesLedger {

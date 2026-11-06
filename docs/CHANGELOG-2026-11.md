@@ -2,6 +2,29 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 5 November: the placement check names a repeated mistake (branch `feat/placement-repeated-mistakes`)
+
+- **Why:** the note after a wrong answer explained only that one answer, so it could not tell you that you had made the same mistake before.
+- **What changed (E51):** on a wrong answer, the AI now also reads your earlier answers in the check, right and wrong. When it is the same kind of mistake again, the note says so and names the earlier word, for example "Again a past form for a present meaning, as with <the earlier word>". Whether your answer is accepted still depends on that answer alone. No extra AI calls.
+- **The repeat is remembered:** the tutor after the ladder now sees every note and every repeat, so it can ask about the mistake you keep making, and its verdict counts toward your level. The weak spot saved for that topic keeps the "again" note rather than the first one. A repeat is kept only when the earlier word is one you really typed.
+- **Checked:** a new test: the first miss has no history, the second sees the first with its note and never itself; a real repeat is kept and an invented one dropped; the tutor's brief shows both; the weak spot keeps the repeat's note. Typecheck, lint and the full test suite.
+- **Unverified:** a real model with a key: whether it names repeats only when they are there.
+
+## 5 November: picks for Watch from saved creators and your YouTube (branch `feat/watch-creators`)
+
+- **Why:** the owner asked to connect their YouTube account, pick or find videos from the history and recommendations, and save creators so adding videos is "easier or more automatic". Research and the live trial: [research/watch-picks.md](research/watch-picks.md); rule E50.
+- **Picked for you** on the Watch page: videos from saved creators, your YouTube and searches, ranked by how much of each you know (measured on the captions, locally). Prepare, or dismiss for good. When none is at your level, the page says so.
+- **Creators:** saved from a channel link, an @handle or a video; their newest uploads come from YouTube's feed. Channels in the language found in your YouTube are suggested, the ones you subscribe to first.
+- **Your YouTube:** in the desktop app, a Google sign-in window with its own session reads the history, the recommendations and the subscriptions (`electron/youtube.cjs`); only the lists are kept. In the browser, a Takeout export does the same for history and subscriptions.
+- **Checked before offered:** spoken in the language (the automatic track, then the original title; translated subtitle sets do not count), speech density (cooking videos captioned only with on-screen text are left out of suggestions), the known-word share. A video is fetched once; its share is measured again as you learn.
+- **Searches:** with an AI key, six searches in the language from your interests, written once on the cheap slot and kept with their cost.
+- **Keep one ready** (on, needs an AI key): when no video waits, the best pick you can follow is prepared in the background, so Today's plan has a Watch task.
+- **Creators, 6 November:** a channel's picture shows in its row (kept as a link in `avatars.json`, Google's image hosts only). A row opens to its best picks with Prepare. Several links can be pasted at once. Suggested channels can be turned down, or saved all at once. The row says what is held back: videos over the length limit, and videos without captions yet.
+- **Newest videos:** a new upload has no automatic captions for hours; a video found without them is checked again at each refresh for three days (counted from the first check when the feed gave no date). The longest video the app takes is now 90 minutes (was 75): a 76-minute video was silently left out. The line limit (900 to 1,100) and Watch's time cap per send (75 to 90 minutes) follow it. A video once skipped as too long is checked again.
+- **Tests:** `tests/discover.test.ts` (parsing, the spoken-language rule, ranking, the refresh end to end against a scripted YouTube) and `tests/desktop-youtube.test.ts` (the sign-in window's hosts and the IPC). Full suite: 1,902 passed, 0 failed.
+- **Verified on the PC:** the feed, search, handle and player reads against live YouTube; 23 videos from two Slovak creators checked in 12 seconds; the Watch page at 1280 and 390 px; the Electron session fetch, and Google's sign-in page loading in the window.
+- **Unverified:** signing in with the owner's Google account (Google may refuse a window it does not recognize as a browser; then use Takeout), reading the signed-in history, home and channels pages (their page shapes are parsed generically, but were not seen signed in), a real Takeout export, and Keep one ready spending on the cheap slot.
+
 ## 5 November: the placement check asks about the rung your level rests on (branch `feat/placement-luck-check`)
 
 - **Why:** two right answers hold a rung, and everything below the highest held rung counts as known, so a lucky pair could place you a tier too high. The tutor's questions after the ladder covered only your misses and the tier above. It was never asked to check the rung your level rests on.

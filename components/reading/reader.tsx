@@ -341,7 +341,8 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<Link href="/" aria-label="Leave the story" className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground">
+				{/* The 12px padding makes a 44px touch target; the matching margin keeps the icon on the text edge. */}
+				<Link href="/" aria-label="Leave the story" className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground">
 					<XIcon className="size-5" />
 				</Link>
 				<div className="min-w-0 flex-1">
@@ -484,7 +485,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 		<div className="flex flex-1 flex-col overflow-hidden">
 			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 				<div className="mx-auto flex h-16 w-full max-w-[40rem] items-center gap-3 px-6 pt-2">
-					<Link href="/" aria-label="Leave the story" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-well hover:text-foreground pointer-coarse:-ml-3 pointer-coarse:p-3">
+					<Link href="/" aria-label="Leave the story" className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground">
 						<XIcon className="size-5" />
 					</Link>
 					<p className="min-w-0 flex-1 truncate text-[14px] font-[600] text-foreground" lang="sk">
