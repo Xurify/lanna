@@ -188,6 +188,10 @@ test("knownWords: Watch's expected set is the level's honest vocabulary (about 6
 	const cats = new Set(commonestWords(lexicon!, 600).map((s) => lexicon!.bySlug.get(s)!.cat));
 	for (const c of ["Verbs", "Nouns", "Adjectives", "Adverbs"]) assert.ok(cats.has(c), `${c} are among the commonest 600`);
 	assert.equal(commonestWords(lexicon!, 600).length, 600);
+	// A corpus-ranked lexicon (one list across all parts of speech) is ordered by the rank itself.
+	const entry0 = (slug: string, cat: string, rank: number) => ({ slug, cat, rank }) as never;
+	const oneList = { entries: [entry0("v-9", "Verbs", 9000), entry0("n-1", "Nouns", 100), entry0("p-1", "Pronouns", 5), entry0("v-1", "Verbs", 400), entry0("n-2", "Nouns", 2500)] } as never;
+	assert.deepEqual(commonestWords(oneList, 3), ["p-1", "n-1", "v-1"]);
 	// A word the level expects but the learner has not studied is assumed; a studied one is not.
 	const entry = [...a1.expected].map((s) => lexicon!.bySlug.get(s)!).find((e) => e.cat === "Verbs" && !a1.met.has(e.slug))!;
 	const lemma = (entry.sk ?? "").split(" ")[0]!;

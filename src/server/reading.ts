@@ -115,17 +115,20 @@ export interface KnownWords {
 
 const commonestIndex = new WeakMap<Lexicon, string[]>();
 
-/** The slugs of the `count` commonest words in all. A rank counts within
- *  its part of speech (verb 40 and noun 40 are not equally common), so the
- *  words are ordered by how far down their own list they sit. */
+/** The slugs of the `count` commonest words in all. In the Slovak lexicon a
+ *  rank counts within its part of speech (verb 40 and noun 40 are not equally
+ *  common), so the words are ordered by how far down their own list they sit.
+ *  A lexicon built from a corpus (Estonian, Russian) ranks every word on one
+ *  list, so there the rank itself is the order. */
 export function commonestWords(lexicon: Lexicon, count: number): string[] {
 	let order = commonestIndex.get(lexicon);
 	if (!order) {
+		const ranked = lexicon.entries.filter((e) => e.rank !== undefined);
+		const oneList = new Set(ranked.map((e) => e.rank)).size > ranked.length * 0.9;
 		const size = new Map<string, number>();
-		for (const e of lexicon.entries) if (e.rank !== undefined) size.set(e.cat, Math.max(size.get(e.cat) ?? 0, e.rank));
-		order = lexicon.entries
-			.filter((e) => e.rank !== undefined)
-			.map((e) => ({ slug: e.slug, share: e.rank! / size.get(e.cat)!, rank: e.rank! }))
+		for (const e of ranked) size.set(e.cat, Math.max(size.get(e.cat) ?? 0, e.rank!));
+		order = ranked
+			.map((e) => ({ slug: e.slug, share: oneList ? e.rank! : e.rank! / size.get(e.cat)!, rank: e.rank! }))
 			.sort((a, b) => a.share - b.share || a.rank - b.rank || a.slug.localeCompare(b.slug))
 			.map((e) => e.slug);
 		commonestIndex.set(lexicon, order);
