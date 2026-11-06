@@ -157,6 +157,15 @@ export function curriculumFile(profile: string, name: string): string {
 	return fs.existsSync(added) ? added : shipped;
 }
 
+/** Cheatsheets kept in the repo (E50): curriculum/<language>/cheatsheets/*.txt,
+ *  committed like the rest of the curriculum. A test run never writes there:
+ *  under the test fence they live in the throwaway data folder. */
+export function repoCheatsheetsDir(profile: string = activeProfile()): string {
+	if (process.env.LH_REPO_CHEATSHEETS_DIR) return path.join(path.resolve(process.env.LH_REPO_CHEATSHEETS_DIR), profile);
+	if (underTestRunner()) return path.join(BASE_DATA_ROOT, "repo-cheatsheets", profile);
+	return path.join(ROOT, "curriculum", profile, "cheatsheets");
+}
+
 // The running language is process state, switched in place (POST
 // /api/profile) with no restart. `next dev` evaluates this module again for
 // each route it compiles and after HMR, all in one process (2026-11-01: one

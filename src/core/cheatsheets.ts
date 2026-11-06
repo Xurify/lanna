@@ -8,6 +8,9 @@
  * A line with no "|" starts a section, and the phrases below it belong to it.
  * Empty fields are allowed ("голова |  | head"). Phrases above the first
  * section go to "Phrases". A section with no phrases is dropped.
+ *
+ * A sheet kept in the repo is the same text in a .txt file, with the title on
+ * its first line as "# Title".
  */
 
 export interface CheatRow {
@@ -32,6 +35,8 @@ export interface Cheatsheet {
 	importedAt: string;
 	updatedAt?: string;
 	sections: CheatSection[];
+	/** Set for a sheet kept in the repo: its file, relative to the repo root. */
+	repoFile?: string;
 }
 
 export interface CheatsheetSummary {
@@ -41,6 +46,7 @@ export interface CheatsheetSummary {
 	rows: number;
 	importedAt: string;
 	updatedAt?: string;
+	repoFile?: string;
 }
 
 export const CHEATSHEET_MAX_CHARS = 200_000;
@@ -220,7 +226,7 @@ export function cheatsheetRowCount(sheet: Pick<Cheatsheet, "sections">): number 
 }
 
 export function cheatsheetSummary(sheet: Cheatsheet): CheatsheetSummary {
-	return { id: sheet.id, title: sheet.title, sections: sheet.sections.length, rows: cheatsheetRowCount(sheet), importedAt: sheet.importedAt, updatedAt: sheet.updatedAt };
+	return { id: sheet.id, title: sheet.title, sections: sheet.sections.length, rows: cheatsheetRowCount(sheet), importedAt: sheet.importedAt, updatedAt: sheet.updatedAt, repoFile: sheet.repoFile };
 }
 
 /** The words of a sheet's phrases, lowercased in the language's own rules, each once, in the order they first appear. */
@@ -244,19 +250,41 @@ export function isCheatsheetId(id: string): boolean {
 	return ID_RE.test(id);
 }
 
+/** A repo sheet's id is "repo-" and its file name; a local id never starts that way. */
+export const REPO_PREFIX = "repo-";
+
+/** The ASCII slug of a title: "Night shift: Ночь!" is "night-shift". */
+export function titleSlug(title: string): string {
+	return title
+		.toLowerCase()
+		.normalize("NFKD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.slice(0, 40)
+		.replace(/-+$/, "");
+}
+
 /** A file-safe id from the title and the time: "night-shift-mh3k2". */
 export function cheatsheetId(title: string, now: Date, taken: (id: string) => boolean): string {
-	const base =
-		title
-			.toLowerCase()
-			.normalize("NFKD")
-			.replace(/[̀-ͯ]/g, "")
-			.replace(/[^a-z0-9]+/g, "-")
-			.replace(/^-+|-+$/g, "")
-			.slice(0, 40)
-			.replace(/-+$/, "") || "sheet";
+	let base = titleSlug(title) || "sheet";
+	if (base === "repo" || base.startsWith(REPO_PREFIX)) base = `sheet-${base}`;
 	const stamp = now.getTime().toString(36).slice(-5);
 	let id = `${base}-${stamp}`;
 	for (let n = 2; taken(id); n++) id = `${base}-${stamp}-${n}`;
 	return id;
+}
+
+/** A repo file: an optional "# Title" first line, then the sheet's text. */
+export function parseRepoSheet(raw: string, fallbackTitle: string): { title: string; sections: CheatSection[] } {
+	const lines = raw.replace(/\r\n?/g, "\n").split("\n");
+	const first = lines.findIndex((l) => l.trim() !== "");
+	const heading = first >= 0 ? /^#\s+(.+)$/.exec(lines[first]!.trim()) : null;
+	if (heading) lines.splice(first, 1);
+	const title = heading?.[1]?.trim().slice(0, CHEATSHEET_TITLE_MAX) || fallbackTitle;
+	return { title, sections: parseSheetText(lines.join("\n")) };
+}
+
+export function formatRepoSheet(title: string, sections: ReadonlyArray<Pick<CheatSection, "title" | "rows">>): string {
+	return `# ${title.replace(/\s+/g, " ").trim()}\n\n${formatSheetText(sections)}\n`;
 }

@@ -13,10 +13,10 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-cheatsheets-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { CheatsheetParseError, cheatsheetId, cheatsheetRowCount, cheatsheetWords, countOverlap, formatSheetText, isCheatsheetId, mergeSections, parseSheetText, phraseKey, sameSection } = await import("../src/core/cheatsheets.ts");
+const { CheatsheetParseError, formatRepoSheet, parseRepoSheet, cheatsheetId, cheatsheetRowCount, cheatsheetWords, countOverlap, formatSheetText, isCheatsheetId, mergeSections, parseSheetText, phraseKey, sameSection } = await import("../src/core/cheatsheets.ts");
 const { cheatsheetStore } = await import("../src/store/cheatsheets.ts");
 const { cheatsheetReviewState, cheatsheetToReview } = await import("../src/server/cheatsheets.ts");
-const { PATHS } = await import("../config.ts");
+const { PATHS, ROOT, repoCheatsheetsDir } = await import("../config.ts");
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -245,3 +245,65 @@ describe("ids", () => {
 	});
 });
 
+describe("sheets kept in the repo", () => {
+	it("never point a test run at the real repo folder", () => {
+		assert.ok(repoCheatsheetsDir("slovak").startsWith(TMP_DATA), repoCheatsheetsDir("slovak"));
+	});
+
+	it("read a # Title first line, and write it back", () => {
+		const { title, sections } = parseRepoSheet("# Café words\n\nCafé\nКофе | KO-fye | coffee", "fallback");
+		assert.equal(title, "Café words");
+		assert.deepEqual(sections[0]!.rows, [{ text: "Кофе", pron: "KO-fye", meaning: "coffee" }]);
+		assert.equal(parseRepoSheet("Café\nКофе | | coffee", "cafe-words").title, "cafe-words", "no title line: the file name");
+		assert.equal(formatRepoSheet("Café words", sections), "# Café words\n\nCafé\nКофе | KO-fye | coffee\n");
+	});
+
+	it("list, read, edit and add in place, and are never removed by the app", () => {
+		const dir = repoCheatsheetsDir();
+		fs.mkdirSync(dir, { recursive: true });
+		fs.writeFileSync(path.join(dir, "cafe-words.txt"), "# Café words\n\nCafé\nКофе | KO-fye | coffee\n");
+		const listed = cheatsheetStore.list().find((s) => s.id === "repo-cafe-words");
+		assert.equal(listed?.title, "Café words");
+		assert.ok(listed?.repoFile?.endsWith("cafe-words.txt"));
+		assert.equal(cheatsheetStore.get("repo-cafe-words")?.sections[0]?.rows.length, 1);
+
+		const edited = cheatsheetStore.update("repo-cafe-words", { title: "Café", text: "Café\nКофе | KO-fye | coffee\nЧай | CHAI | tea" });
+		assert.equal(edited?.title, "Café");
+		assert.equal(fs.readFileSync(path.join(dir, "cafe-words.txt"), "utf-8"), "# Café\n\nCafé\nКофе | KO-fye | coffee\nЧай | CHAI | tea\n");
+		assert.equal(cheatsheetStore.add("repo-cafe-words", "Café\nЧай | | tea\nВода | | water")?.added, 1);
+		assert.match(fs.readFileSync(path.join(dir, "cafe-words.txt"), "utf-8"), /Вода/);
+
+		assert.equal(cheatsheetStore.remove("repo-cafe-words"), false);
+		assert.ok(fs.existsSync(path.join(dir, "cafe-words.txt")));
+		fs.rmSync(path.join(dir, "cafe-words.txt"));
+	});
+
+	it("Move to repo writes the sheet under its title and puts the local copy in trash", () => {
+		const local = cheatsheetStore.create("Travel: basics", "Help\nПомогите! | | Help!", new Date("2026-11-06T17:00:00Z"));
+		const moved = cheatsheetStore.toRepo(local.id);
+		assert.equal(moved?.id, "repo-travel-basics");
+		assert.equal(cheatsheetStore.get(local.id), null);
+		assert.ok(fs.existsSync(path.join(repoCheatsheetsDir(), "travel-basics.txt")));
+		const again = cheatsheetStore.toRepo(cheatsheetStore.create("Travel: basics", "Help\nСтоп | | stop").id);
+		assert.equal(again?.id, "repo-travel-basics-2", "a name already in the repo gets a number");
+		assert.equal(cheatsheetStore.toRepo("repo-travel-basics"), null, "only a local sheet moves");
+	});
+
+	it("a local id never looks like a repo id", () => {
+		assert.ok(!cheatsheetId("Repo notes", new Date(), () => false).startsWith("repo-"));
+	});
+
+	it("every sheet shipped in the repo parses", () => {
+		const root = path.join(ROOT, "curriculum");
+		const files = fs
+			.readdirSync(root)
+			.map((lang) => path.join(root, lang, "cheatsheets"))
+			.filter((d) => fs.existsSync(d))
+			.flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith(".txt")).map((f) => path.join(d, f)));
+		assert.ok(files.length >= 1);
+		for (const file of files) {
+			const { title, sections } = parseRepoSheet(fs.readFileSync(file, "utf-8"), path.basename(file, ".txt"));
+			assert.ok(title && sections.length > 0, file);
+		}
+	});
+});

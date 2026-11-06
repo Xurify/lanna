@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftIcon, FileTextIcon, PencilIcon, PlusIcon, RepeatIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, PencilIcon, PlusIcon, RepeatIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
@@ -51,9 +51,14 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 	if (openId) {
 		return (
 			<CheatsheetView
+				key={openId}
 				id={openId}
 				onBack={() => open(null)}
 				onChanged={() => void load()}
+				onMoved={(newId) => {
+					open(newId);
+					void load();
+				}}
 				onRemoved={() => {
 					open(null);
 					void load();
@@ -81,7 +86,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 									<span className="min-w-0 flex-1">
 										<span className="block truncate font-ui text-[15px] font-semibold text-foreground">{s.title}</span>
 										<span className="block font-ui text-xs text-muted-foreground">
-											{plural(s.rows, "phrase")} · {dateLabel(s.updatedAt ?? s.importedAt)}
+											{plural(s.rows, "phrase")} · {s.repoFile ? "in the repo" : dateLabel(s.updatedAt ?? s.importedAt)}
 										</span>
 									</span>
 								</button>
@@ -636,7 +641,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	);
 }
 
-function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBack: () => void; onChanged: () => void; onRemoved: () => void }) {
+function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: string; onBack: () => void; onChanged: () => void; onMoved: (newId: string) => void; onRemoved: () => void }) {
 	const lang = useActiveLanguage();
 	const [sheet, setSheet] = useState<Cheatsheet | null>(null);
 	const [missing, setMissing] = useState(false);
@@ -669,6 +674,15 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 		const data = (await res.json()) as ReviewState & { added: string[] };
 		setReview({ inDictionary: data.inDictionary, inReview: data.inReview });
 		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "The other words have no dictionary sentence yet.");
+	};
+
+	const [moveError, setMoveError] = useState<string | null>(null);
+	const toRepo = async () => {
+		setMoveError(null);
+		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}/to-repo`, { method: "POST" }).catch(() => null);
+		const data = (await res?.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string } | undefined;
+		if (!res?.ok || !data?.sheet) return setMoveError(data?.message ?? "The sheet was not moved.");
+		onMoved(data.sheet.id);
 	};
 
 	const remove = async () => {
@@ -714,10 +728,11 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 						<div className="min-w-0 space-y-1">
 							<h2 className="font-title text-2xl font-semibold tracking-tight text-foreground">{sheet.title}</h2>
 							<p className="font-ui text-xs text-muted-foreground">
-								{plural(cheatsheetRowCount(sheet), "phrase")} · {sheet.updatedAt ? `edited ${dateLabel(sheet.updatedAt)}` : `made ${dateLabel(sheet.importedAt)}`}
+								{plural(cheatsheetRowCount(sheet), "phrase")} · {sheet.repoFile ? `in the repo: ${sheet.repoFile}` : sheet.updatedAt ? `edited ${dateLabel(sheet.updatedAt)}` : `made ${dateLabel(sheet.importedAt)}`}
 							</p>
+							{moveError && <p className="font-ui text-xs text-miss">{moveError}</p>}
 						</div>
-						<span className="flex items-center gap-1">
+						<span className="flex flex-wrap items-center gap-1">
 							{confirmRemove ? (
 								<>
 									<span className="font-ui text-xs text-ink-2">Remove this sheet?</span>
@@ -738,10 +753,18 @@ function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBa
 										<PencilIcon className="size-4" />
 										Edit
 									</button>
-									<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(true)} data-testid="cheatsheet-remove">
-										<Trash2Icon className="size-4" />
-										Remove
-									</button>
+									{!sheet.repoFile && (
+										<>
+											<button type="button" className="q-btn ghost" onClick={() => void toRepo()} title="Keep it in the repo, as a text file you can commit" data-testid="cheatsheet-to-repo">
+												<FolderGit2Icon className="size-4" />
+												Move to repo
+											</button>
+											<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(true)} data-testid="cheatsheet-remove">
+												<Trash2Icon className="size-4" />
+												Remove
+											</button>
+										</>
+									)}
 								</>
 							)}
 						</span>
