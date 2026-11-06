@@ -2,12 +2,15 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
-## 6 November: a new app icon and brand notes (branch `feat/cursor-icon-and-brand`)
+## 6 November: a new app icon, fields you can see, a creator's newest videos, keys safe from tests (branch `feat/icon-fields-creators`)
 
-- **Why:** the owner asked for a new icon, a better brand and some name ideas. Rule E54; details and names: [brand.md](brand.md).
+- **Why:** the owner asked for a new icon, a better brand and some name ideas. Rule E59; details and names: [brand.md](brand.md).
 - **The icon:** a text cursor waiting at an empty answer line, the cursor in ink and the line in teal, on an ink tile. It replaces the two speech bubbles in the desktop icons (Windows, Linux, macOS before 26 and the macOS 26 Icon Composer layers), the browser tab, the home-screen icons and the sidebar. In the sidebar, the mark follows Day and Night and is now as tall as the wordmark.
-- **Name ideas:** eight candidates with what each says and where each is weak, in [brand.md](brand.md). The recommendation is to keep LangHarness for now, and to use Unprompted if the app gets a public name. Only a web search was done; no trademark or domain checks.
-- **Checked:** the regenerated icons at 16 to 512 px, and the sidebar in both themes in the running app (`docs/assets/brand/sidebar-mark.png`). Typecheck.
+- **Name ideas:** eight candidates with what each says and where each is weak, in [brand.md](brand.md). The owner keeps LangHarness for now. Only a web search was done; no trademark or domain checks.
+- **Text fields (E60):** the Creators field on Watch could hardly be seen in Night. Every form field now uses one style from global CSS (`.q-field`): its own surface, a visible outline and a teal focus ring, with one placeholder color everywhere. Applied to Watch, Creators, Milestones, Words, Cheatsheets, onboarding and Catch the mistake.
+- **A creator's videos (E61):** each saved creator's panel has a search of the channel and a Best for you / Newest order. Newest lists the channel's uploads (up to 20), not only the few in its feed. Every video is checked for free, and one that cannot be offered says why. Checked live against YouTube from the cloud for the list, the dates and the search. **Unverified:** the checks themselves, because YouTube refuses player data to the cloud machine, so every video read there as "Not available".
+- **Keys safe from tests:** a test run without `LH_AUTH_FILE` now keeps `auth.json` in its throwaway data folder (E6). Before this, `tests/speak.test.ts` deleted and restored your real speech keys, and the fixture `"B": "2"` reached a real key file. An unknown variable in the key file can now be deleted from Settings → Keys.
+- **Checked:** the regenerated icons at 16 to 512 px, the sidebar and the fields in both themes in the running app, the creator panel's Newest and search. Typecheck, lint and the full test suite.
 - **Unverified:** the macOS 26 icon. `build/icon.icon` was edited by hand (new layer files and fill color) and needs `actool` on a Mac with Xcode 26 to build.
 
 ## 6 November: pick a stretch of a video (branch `feat/watch-fragments`)
@@ -64,7 +67,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 ## 5 November: creator hooks, five features (branch `feat/daily-hooks`)
 
 - **Why:** the owner asked for the top proposals in [research/creator-hooks.md](research/creator-hooks.md) built in a separate worktree. Four creators who hold an audience were read in full. Their shared moves: a payoff that comes after the attempt, the learner's own stuck point named back to them, and a before-and-after from the learner's own record.
-- **Today's line (E54):** one real sentence a day, heard with no text and typed. Once there has been practice that day, it plays again in the evening, and the two hearings sit side by side. Counts, not grades. Page `/line`; the card sits above the plan on Today.
+- **Today's line (E59):** one real sentence a day, heard with no text and typed. Once there has been practice that day, it plays again in the evening, and the two hearings sit side by side. Counts, not grades. Page `/line`; the card sits above the plan on Today.
 - **Where you are (E55):** one sentence on Today names the limit, words or speed, with the milestones' own numbers. A speed that is only the level's estimate is said so.
 - **Watch lines come back in Listen (E56):** a line missed in Watch returns on days 1, 3 and 7, up to three a session. Lines from foreign captions do not return.
 - **Catch the mistake (E57):** a separate exercise at `/catch`, linked from "Words you mix up". The learner taps the wrong word in a short item built from a pair they often mix up, then types the right word. Read episodes no longer carry a planted mistake. The series lead is Martin ("Martin in Bratislava"); the internal `robo` id is unchanged.

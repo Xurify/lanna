@@ -2,7 +2,7 @@
 
 LangHarness is a language tutor for any language: you add a language from the app, and every task asks you to produce the answer before it helps (P3). The brand says that and nothing more.
 
-Rule: [DECISIONS.md](DECISIONS.md) E54. Sheet: [assets/brand/logo-sheet.png](assets/brand/logo-sheet.png); in the app: [assets/brand/sidebar-mark.png](assets/brand/sidebar-mark.png).
+Rule: [DECISIONS.md](DECISIONS.md) E59. Sheet: [assets/brand/logo-sheet.png](assets/brand/logo-sheet.png); in the app: [assets/brand/sidebar-mark.png](assets/brand/sidebar-mark.png).
 
 ## The mark: your turn
 
@@ -70,6 +70,6 @@ If the app gets a name of its own, these fit what it does. The first three fit t
 | **Firsthand** | Words you produce yourself, not ones you pick from a list. | Long; a little plain. |
 | **Tabula** | A blank slate (tabula rasa) that you fill. Latin, so it is neutral across languages. | Abstract; easy to confuse with "Tableau". |
 
-**Recommendation:** keep LangHarness for now. If the app gets a public name, **Unprompted** fits the mark and the method best, with **Foothold** second.
+**Decision (owner, 2026-11-06):** keep LangHarness for now. If the app gets a public name later, **Unprompted** fits the mark and the method best, with **Foothold** second.
 
 **Checked so far (2026-11-06):** web searches for Unprompted, Foothold and Offhand found no language app with that name. Nothing else has been checked: no trademark search, no domain search and no app store search.
