@@ -6,7 +6,8 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 - **Why:** the note after a wrong answer explained only that one answer, so it could not tell you that you had made the same mistake before.
 - **What changed (E51):** on a wrong answer, the AI now also reads your earlier answers in the check, right and wrong. When it is the same kind of mistake again, the note says so and names the earlier word, for example "Again a past form for a present meaning, as with <the earlier word>". Whether your answer is accepted still depends on that answer alone. No extra AI calls.
-- **Checked:** a new test: the first miss has no history, the second sees the first with its note, and never itself. Typecheck, lint and the full test suite.
+- **The repeat is remembered:** the tutor after the ladder now sees every note and every repeat, so it can ask about the mistake you keep making, and its verdict counts toward your level. The weak spot saved for that topic keeps the "again" note rather than the first one. A repeat is kept only when the earlier word is one you really typed.
+- **Checked:** a new test: the first miss has no history, the second sees the first with its note and never itself; a real repeat is kept and an invented one dropped; the tutor's brief shows both; the weak spot keeps the repeat's note. Typecheck, lint and the full test suite.
 - **Unverified:** a real model with a key: whether it names repeats only when they are there.
 
 ## 5 November: picks for Watch from saved creators and your YouTube (branch `feat/watch-creators`)
