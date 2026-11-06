@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftIcon, FileTextIcon, PlusIcon, RepeatIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, FileTextIcon, PencilIcon, PlusIcon, RepeatIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
+import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
 import { CheatsheetParseError, cheatsheetRowCount, parseCheatsheet, type Cheatsheet, type CheatsheetDraft, type CheatsheetSummary, type CheatRow } from "@/src/core";
 
@@ -52,6 +53,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 			<CheatsheetView
 				id={openId}
 				onBack={() => open(null)}
+				onChanged={() => void load()}
 				onRemoved={() => {
 					open(null);
 					void load();
@@ -61,12 +63,9 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 	}
 
 	return (
-		<div className="space-y-6" data-testid="cheatsheets">
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-				<p className="max-w-xl font-prose text-sm text-muted-foreground">
-					Phrase guides you keep at hand: for a game, a trip or a call. Paste one or choose a Markdown file.
-				</p>
-				<button type="button" className="q-btn primary shrink-0" onClick={() => setImporting(true)} data-testid="cheatsheet-import-open">
+		<div className="space-y-4" data-testid="cheatsheets">
+			<div className="flex justify-end">
+				<button type="button" className="q-btn primary" onClick={() => setImporting(true)} data-testid="cheatsheet-import-open">
 					<PlusIcon className="size-4" />
 					Import a cheatsheet
 				</button>
@@ -82,7 +81,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 									<span className="min-w-0 flex-1">
 										<span className="block truncate font-ui text-[15px] font-semibold text-foreground">{s.title}</span>
 										<span className="block font-ui text-xs text-muted-foreground">
-											{plural(s.rows, "phrase")} · {plural(s.sections, "section")} · imported {dateLabel(s.importedAt)}
+											{plural(s.rows, "phrase")} · {dateLabel(s.importedAt)}
 										</span>
 									</span>
 								</button>
@@ -92,15 +91,15 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 				)}
 				{sheets && sheets.length === 0 && (
 					<EmptyState testid="cheatsheets-empty" title="No cheatsheets yet">
-						<p>Import a phrase guide as Markdown: a table with the phrase, how to say it and the meaning, one section per heading. Its words can go to Review from the sheet.</p>
+						<p>Paste a phrase guide in Markdown, or choose a .md file.</p>
 					</EmptyState>
 				)}
 			</div>
 
 			{importing && (
-				<ImportDialog
+				<SheetDialog
 					onClose={() => setImporting(false)}
-					onImported={(sheet) => {
+					onSaved={(sheet) => {
 						setImporting(false);
 						void load();
 						open(sheet.id);
@@ -120,15 +119,17 @@ function preview(markdown: string): { draft: CheatsheetDraft | null; error: stri
 	}
 }
 
-function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported: (sheet: Cheatsheet) => void }) {
-	const [markdown, setMarkdown] = useState("");
-	const [title, setTitle] = useState("");
+/** Import a new sheet, or edit one when `editing` is given: the same fields, prefilled. */
+function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; title: string; markdown: string }; onClose: () => void; onSaved: (sheet: Cheatsheet) => void }) {
+	const [markdown, setMarkdown] = useState(editing?.markdown ?? "");
+	const [title, setTitle] = useState(editing?.title ?? "");
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [serverError, setServerError] = useState<string | null>(null);
 	const fileRef = useRef<HTMLInputElement>(null);
 	const { draft, error } = useMemo(() => preview(markdown), [markdown]);
 	const hasHeading = /^#\s+\S/m.test(markdown);
+	const heading = editing ? "Edit the cheatsheet" : "Import a cheatsheet";
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -148,8 +149,8 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 		setSaving(true);
 		setServerError(null);
 		const fallback = fileName ? fileName.replace(/\.(md|markdown|txt)$/i, "") : "";
-		const res = await fetch("/api/cheatsheets", {
-			method: "POST",
+		const res = await fetch(editing ? `/api/cheatsheets/${encodeURIComponent(editing.id)}` : "/api/cheatsheets", {
+			method: editing ? "PUT" : "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ markdown, title: title.trim() || (hasHeading ? undefined : fallback) }),
 		}).catch(() => null);
@@ -157,15 +158,15 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 		if (!res) return setServerError("The app did not answer. Try again.");
 		const data = (await res.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string };
 		if (!res.ok || !data.sheet) return setServerError(data.message ?? "The cheatsheet was not saved.");
-		onImported(data.sheet);
+		onSaved(data.sheet);
 	};
 
 	return (
 		<div className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-			<form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="cheatsheet-import-title" className="lh-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col gap-4 overflow-y-auto p-5 sm:p-6" data-testid="cheatsheet-import">
+			<form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="cheatsheet-dialog-title" className="lh-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col gap-4 overflow-y-auto p-5 sm:p-6" data-testid="cheatsheet-dialog">
 				<div className="flex items-center justify-between">
-					<h2 id="cheatsheet-import-title" className="font-title text-xl font-semibold text-foreground">
-						Import a cheatsheet
+					<h2 id="cheatsheet-dialog-title" className="font-title text-xl font-semibold text-foreground">
+						{heading}
 					</h2>
 					<button type="button" onClick={onClose} aria-label="Close" className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground">
 						<XIcon className="size-5" />
@@ -178,15 +179,16 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 						type="text"
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
-						placeholder={draft && hasHeading ? draft.title : "For example Night shift phrases"}
+						placeholder={draft && hasHeading ? draft.title : "Night shift phrases"}
 						maxLength={120}
 						className="mt-1 w-full rounded-md border border-border bg-well px-3 py-2 font-prose text-sm text-foreground outline-none focus:border-primary"
+						data-testid="cheatsheet-title"
 					/>
 				</label>
 
 				<label className="block">
 					<span className="flex items-center justify-between">
-						<span className="font-ui text-xs font-semibold text-muted-foreground">The guide in Markdown</span>
+						<span className="font-ui text-xs font-semibold text-muted-foreground">Markdown</span>
 						{fileName && <span className="truncate font-ui text-xs text-ink-3">{fileName}</span>}
 					</span>
 					<textarea
@@ -195,9 +197,9 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 							setMarkdown(e.target.value);
 							setServerError(null);
 						}}
-						rows={12}
+						rows={editing ? 18 : 12}
 						spellCheck={false}
-						placeholder={"# Night shift\n\n## At the desk\n| Russian | Say it | English |\n|---|---|---|\n| Пускаем? | poos-KA-yem? | Do we let it in? |"}
+						placeholder={"## At the desk\n| Russian | Say it | English |\n|---|---|---|\n| Пускаем? | poos-KA-yem? | Do we let it in? |\n\n- пожар — fire"}
 						className="mt-1 w-full resize-y rounded-md border border-border bg-well px-3 py-2 font-mono text-[13px] leading-relaxed text-foreground outline-none focus:border-primary"
 						data-testid="cheatsheet-markdown"
 					/>
@@ -209,18 +211,14 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 					) : error ? (
 						<span className="text-miss">{error}</span>
 					) : draft ? (
-						<span className="text-ink-2">
-							Found {plural(cheatsheetRowCount(draft), "phrase")} in {plural(draft.sections.filter((s) => s.rows.length).length, "section")}.
-						</span>
-					) : (
-						<span className="text-muted-foreground">A table per section works best. A list line with a dash, “phrase — meaning”, works too.</span>
-					)}
+						<span className="text-ink-2">{plural(cheatsheetRowCount(draft), "phrase")}</span>
+					) : null}
 				</p>
 
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<button type="button" className="q-btn sec" onClick={() => fileRef.current?.click()}>
 						<UploadIcon className="size-4" />
-						Choose a file
+						{editing ? "Replace from a file" : "Choose a file"}
 					</button>
 					<input
 						ref={fileRef}
@@ -239,8 +237,8 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 						<button type="button" className="q-btn ghost" onClick={onClose}>
 							Cancel
 						</button>
-						<button type="submit" className="q-btn primary" disabled={!draft || saving} data-testid="cheatsheet-import-save">
-							{saving ? "Importing…" : "Import"}
+						<button type="submit" className="q-btn primary" disabled={!draft || saving} data-testid="cheatsheet-save">
+							{saving ? "Saving…" : editing ? "Save" : "Import"}
 						</button>
 					</div>
 				</div>
@@ -249,7 +247,7 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
 	);
 }
 
-function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => void; onRemoved: () => void }) {
+function CheatsheetView({ id, onBack, onChanged, onRemoved }: { id: string; onBack: () => void; onChanged: () => void; onRemoved: () => void }) {
 	const lang = useActiveLanguage();
 	const [sheet, setSheet] = useState<Cheatsheet | null>(null);
 	const [missing, setMissing] = useState(false);
@@ -259,23 +257,27 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 	const [cover, setCover] = useState(false);
 	const [shown, setShown] = useState<Set<string>>(() => new Set());
 	const [confirmRemove, setConfirmRemove] = useState(false);
+	const [editing, setEditing] = useState<{ id: string; title: string; markdown: string } | null>(null);
+	const [jump, setJump] = useState("");
+
+	const load = useCallback(async () => {
+		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}`).catch(() => null);
+		if (!res?.ok) return setMissing(true);
+		const data = (await res.json()) as { sheet: Cheatsheet; review: ReviewState };
+		setSheet(data.sheet);
+		setReview(data.review);
+	}, [id]);
 
 	useEffect(() => {
-		let live = true;
-		void fetch(`/api/cheatsheets/${encodeURIComponent(id)}`)
-			.then(async (res) => {
-				if (!live) return;
-				if (!res.ok) return setMissing(true);
-				const data = (await res.json()) as { sheet: Cheatsheet; review: ReviewState };
-				if (!live) return;
-				setSheet(data.sheet);
-				setReview(data.review);
-			})
-			.catch(() => live && setMissing(true));
-		return () => {
-			live = false;
-		};
-	}, [id]);
+		void load();
+	}, [load]);
+
+	const startEdit = async () => {
+		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}?source=1`).catch(() => null);
+		if (!res?.ok) return;
+		const data = (await res.json()) as { markdown: string; title: string };
+		setEditing({ id, title: data.title, markdown: data.markdown });
+	};
 
 	const addToReview = async () => {
 		setAdding(true);
@@ -284,11 +286,7 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 		if (!res?.ok) return setReviewNote("The words were not added. Try again.");
 		const data = (await res.json()) as ReviewState & { added: string[] };
 		setReview({ inDictionary: data.inDictionary, inReview: data.inReview });
-		setReviewNote(
-			data.added.length
-				? `Added ${plural(data.added.length, "word")}. Review asks for them in dictionary sentences, not in this sheet's lines.`
-				: "None of the remaining words has a dictionary sentence yet, so they cannot become cards.",
-		);
+		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "The other words have no dictionary sentence yet.");
 	};
 
 	const remove = async () => {
@@ -312,18 +310,18 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 					</button>
 				}
 			>
-				<p>It may have been removed, or it belongs to another language. Removed sheets stay in the cheatsheets trash folder.</p>
+				<p>It was removed, or it belongs to another language.</p>
 			</EmptyState>
 		);
 	}
 
 	const waiting = review ? review.inDictionary - review.inReview : 0;
-	const languageName = lang?.english ?? "phrase";
+	const languageName = lang?.english ?? "phrases";
 	const sections = sheet?.sections ?? [];
 	const rowSections = sections.filter((s) => s.rows.length);
 
 	return (
-		<div className="min-h-[60vh] space-y-6" data-testid="cheatsheet-view">
+		<div className="min-h-[60vh] space-y-5" data-testid="cheatsheet-view">
 			<button type="button" onClick={onBack} className="q-btn ghost -ml-2.5">
 				<ArrowLeftIcon className="size-4" />
 				All cheatsheets
@@ -331,11 +329,37 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 
 			{sheet && (
 				<>
-					<div className="space-y-1">
-						<h2 className="font-title text-2xl font-semibold tracking-tight text-foreground">{sheet.title}</h2>
-						<p className="font-ui text-xs text-muted-foreground">
-							{plural(cheatsheetRowCount(sheet), "phrase")} · imported {dateLabel(sheet.importedAt)}
-						</p>
+					<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+						<div className="min-w-0 space-y-1">
+							<h2 className="font-title text-2xl font-semibold tracking-tight text-foreground">{sheet.title}</h2>
+							<p className="font-ui text-xs text-muted-foreground">
+								{plural(cheatsheetRowCount(sheet), "phrase")} · {sheet.updatedAt ? `edited ${dateLabel(sheet.updatedAt)}` : dateLabel(sheet.importedAt)}
+							</p>
+						</div>
+						<span className="flex items-center gap-1">
+							{confirmRemove ? (
+								<>
+									<span className="font-ui text-xs text-ink-2">Remove this sheet?</span>
+									<button type="button" className="q-btn ghost text-miss" onClick={() => void remove()} data-testid="cheatsheet-remove-yes">
+										Remove
+									</button>
+									<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(false)}>
+										Keep
+									</button>
+								</>
+							) : (
+								<>
+									<button type="button" className="q-btn ghost" onClick={() => void startEdit()} data-testid="cheatsheet-edit">
+										<PencilIcon className="size-4" />
+										Edit
+									</button>
+									<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(true)} data-testid="cheatsheet-remove">
+										<Trash2Icon className="size-4" />
+										Remove
+									</button>
+								</>
+							)}
+						</span>
 					</div>
 
 					<div className="flex flex-wrap items-center gap-2">
@@ -353,44 +377,27 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 								{adding ? "Adding…" : `Add ${plural(Math.min(waiting, 30), "word")} to Review`}
 							</button>
 						)}
-						{review && review.inDictionary > 0 && waiting === 0 && <span className="font-ui text-xs text-ink-2">All {plural(review.inDictionary, "dictionary word")} are in Review.</span>}
-						<span className="ml-auto flex items-center gap-1">
-							{confirmRemove ? (
-								<>
-									<span className="font-ui text-xs text-ink-2">Remove this sheet?</span>
-									<button type="button" className="q-btn ghost text-miss" onClick={() => void remove()} data-testid="cheatsheet-remove-yes">
-										Remove
-									</button>
-									<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(false)}>
-										Keep
-									</button>
-								</>
-							) : (
-								<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(true)} data-testid="cheatsheet-remove">
-									<Trash2Icon className="size-4" />
-									Remove
-								</button>
-							)}
-						</span>
+						{reviewNote && (
+							<span className="font-ui text-xs text-ink-2" aria-live="polite">
+								{reviewNote}
+							</span>
+						)}
+						{rowSections.length > 1 && (
+							<ChoiceMenu
+								value={jump}
+								onChange={(next) => {
+									setJump(next);
+									document.getElementById(`cs-${next}`)?.scrollIntoView({ block: "start" });
+								}}
+								ariaLabel="Jump to a section"
+								className="w-full sm:ml-auto sm:w-64"
+								options={[{ value: "", label: "Jump to a section" }, ...rowSections.map((s) => ({ value: s.id, label: s.title }))]}
+							/>
+						)}
 					</div>
-					{reviewNote && (
-						<p className="font-ui text-xs text-ink-2" aria-live="polite">
-							{reviewNote}
-						</p>
-					)}
-
-					{rowSections.length > 1 && (
-						<nav aria-label="Sections" className="flex flex-wrap gap-1.5">
-							{rowSections.map((s) => (
-								<a key={s.id} href={`#cs-${s.id}`} className="rounded-md bg-well px-2.5 py-1 font-ui text-xs font-medium text-ink-2 transition-colors hover:bg-well-2 hover:text-foreground">
-									{s.title}
-								</a>
-							))}
-						</nav>
-					)}
 
 					{sheet.intro.length > 0 && (
-						<div className="max-w-2xl space-y-2 font-prose text-sm text-ink-2">
+						<div className="max-w-2xl space-y-1.5 font-prose text-sm text-ink-2">
 							{sheet.intro.map((p, i) => (
 								<p key={i}>{p}</p>
 							))}
@@ -399,24 +406,12 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 
 					{sections.map((section) => (
 						<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3">
-							<h3 className="q-sh !mb-0">
-								{section.title}
-								{section.rows.length > 0 && <small>{plural(section.rows.length, "phrase")}</small>}
-							</h3>
+							<h3 className="q-sh !mb-0">{section.title}</h3>
 							{section.rows.length > 0 && (
 								<ul className="q-card divide-y divide-border/70 overflow-hidden">
 									{section.rows.map((row, i) => {
 										const key = `${section.id}:${i}`;
-										const hidden = cover && !shown.has(key);
-										return (
-											<CheatRowItem
-												key={key}
-												row={row}
-												tag={lang?.tag}
-												hidden={hidden}
-												onReveal={() => setShown((prev) => new Set(prev).add(key))}
-											/>
-										);
+										return <CheatRowItem key={key} row={row} tag={lang?.tag} hidden={cover && !shown.has(key)} onReveal={() => setShown((prev) => new Set(prev).add(key))} />;
 									})}
 								</ul>
 							)}
@@ -430,6 +425,21 @@ function CheatsheetView({ id, onBack, onRemoved }: { id: string; onBack: () => v
 						</section>
 					))}
 				</>
+			)}
+
+			{editing && (
+				<SheetDialog
+					editing={editing}
+					onClose={() => setEditing(null)}
+					onSaved={(saved) => {
+						setEditing(null);
+						setSheet(saved);
+						setShown(new Set());
+						setReviewNote(null);
+						void load();
+						onChanged();
+					}}
+				/>
 			)}
 		</div>
 	);

@@ -41,6 +41,8 @@ export interface CheatsheetDraft {
 export interface Cheatsheet extends CheatsheetDraft {
 	id: string;
 	importedAt: string;
+	/** Set once the sheet has been edited. */
+	updatedAt?: string;
 }
 
 export interface CheatsheetSummary {

@@ -28,7 +28,7 @@ describe("parseCheatsheet", () => {
 	it("reads the shipped Russian guide: title, intro, sections and four columns", () => {
 		const sheet = parseCheatsheet(GUIDE);
 		assert.equal(sheet.title, "Night shift at the animal clinic (Russian, A1)");
-		assert.ok(sheet.intro.length >= 3);
+		assert.equal(sheet.intro.length, 1);
 		const titles = sheet.sections.map((s) => s.title);
 		assert.equal(titles[0], "1. At the desk: who gets in");
 		assert.ok(titles.includes("Numbers") && titles.includes("Animals") && titles.includes("Tips"));
@@ -38,7 +38,7 @@ describe("parseCheatsheet", () => {
 		assert.equal(gendered?.note, "m / f");
 		const tips = sheet.sections.find((s) => s.title === "Tips")!;
 		assert.equal(tips.rows.length, 0, "tips without a dash separator stay notes");
-		assert.ok(tips.notes.length >= 5);
+		assert.equal(tips.notes.length, 4);
 		assert.ok(cheatsheetRowCount(sheet) >= 140);
 	});
 
@@ -140,6 +140,23 @@ describe("cheatsheetStore", () => {
 		assert.equal(cheatsheetStore.get(second.id), null);
 		assert.ok(fs.existsSync(path.join(dir, "trash", `${second.id}.md`)));
 		assert.equal(cheatsheetStore.remove(second.id), false);
+	});
+
+	it("edits the text and title in place, keeping the id and the replaced version in trash", () => {
+		const sheet = cheatsheetStore.create("| Ahoj | hi |", "Old name", new Date("2026-11-06T09:00:00Z"));
+		const edited = cheatsheetStore.update(sheet.id, "## Words\n| Ahoj | hi |\n| Čau | bye |", "New name", new Date("2026-11-06T12:00:00Z"));
+		assert.equal(edited?.id, sheet.id);
+		assert.equal(edited?.title, "New name");
+		assert.equal(edited?.importedAt, sheet.importedAt);
+		assert.equal(edited?.updatedAt, "2026-11-06T12:00:00.000Z");
+		assert.equal(cheatsheetStore.get(sheet.id)?.sections[0]?.rows.length, 2);
+		assert.match(cheatsheetStore.source(sheet.id) ?? "", /Čau/);
+		assert.equal(fs.readFileSync(path.join(PATHS.cheatsheets, "trash", `${sheet.id}.md`), "utf-8"), "| Ahoj | hi |");
+
+		assert.throws(() => cheatsheetStore.update(sheet.id, "## No phrase"), CheatsheetParseError);
+		assert.equal(cheatsheetStore.get(sheet.id)?.title, "New name", "a refused edit changes nothing");
+		assert.equal(cheatsheetStore.update("no-such-sheet", "| a | b |"), null);
+		cheatsheetStore.remove(sheet.id);
 	});
 
 	it("refuses a guide with no phrases and writes nothing", () => {

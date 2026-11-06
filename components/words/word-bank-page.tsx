@@ -222,7 +222,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 							Words
 						</h1>
 						<p className="mt-1 font-prose text-sm text-muted-foreground sm:text-base">
-							Your words, the ones you know, your saved phrases and your cheatsheets.
+							Your words, saved phrases and cheatsheets.
 						</p>
 					</div>
 
@@ -293,20 +293,20 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 				</div>
 
 				{/* Primary Tab Selector */}
-				<div className="mb-6 flex border-b border-border/80">
+				<div className="mb-6 flex overflow-x-auto border-b border-border/80">
 					<button
 						type="button"
 						onClick={() => setActiveTab("words")}
 						className={cn(
-							"flex items-center gap-2 border-b-2 px-5 py-3 font-ui text-sm font-semibold transition-colors",
+							"flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 sm:px-5 font-ui text-sm font-semibold transition-colors",
 							activeTab === "words"
 								? "border-primary text-foreground"
 								: "border-transparent text-muted-foreground hover:text-foreground",
 						)}
 					>
-						<BookOpenIcon className="size-4" />
+						<BookOpenIcon className="hidden size-4 sm:block" />
 						<span>Words</span>
-						<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
+						<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 							{totalWords}
 						</span>
 					</button>
@@ -315,15 +315,15 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 						type="button"
 						onClick={() => setActiveTab("phrases")}
 						className={cn(
-							"flex items-center gap-2 border-b-2 px-5 py-3 font-ui text-sm font-semibold transition-colors",
+							"flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 sm:px-5 font-ui text-sm font-semibold transition-colors",
 							activeTab === "phrases"
 								? "border-primary text-foreground"
 								: "border-transparent text-muted-foreground hover:text-foreground",
 						)}
 					>
-						<BookmarkIcon className="size-4" />
+						<BookmarkIcon className="hidden size-4 sm:block" />
 						<span>Saved phrases</span>
-						<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
+						<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 							{phrases.length}
 						</span>
 					</button>
@@ -333,16 +333,16 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 						onClick={() => setActiveTab("cheatsheets")}
 						data-testid="tab-cheatsheets"
 						className={cn(
-							"flex items-center gap-2 border-b-2 px-5 py-3 font-ui text-sm font-semibold transition-colors",
+							"flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 sm:px-5 font-ui text-sm font-semibold transition-colors",
 							activeTab === "cheatsheets"
 								? "border-primary text-foreground"
 								: "border-transparent text-muted-foreground hover:text-foreground",
 						)}
 					>
-						<FileTextIcon className="size-4" />
+						<FileTextIcon className="hidden size-4 sm:block" />
 						<span>Cheatsheets</span>
 						{sheetCount !== null && (
-							<span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
+							<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 								{sheetCount}
 							</span>
 						)}

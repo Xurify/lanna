@@ -1,12 +1,6 @@
 # Night shift at the animal clinic (Russian, A1)
 
-A phrase guide for a two-player co-op horror game: a night shift at an animal clinic, with a front desk, treatment rooms, emergencies, a Sanity meter, coffee and a shop. Import it under Words, Cheatsheets.
-
-How to read "Say it": the syllable in capitals is stressed. An apostrophe (') means a soft sound, as in "pyat'". An unstressed o sounds like a, so "хорошо" is kha-ra-SHO.
-
-The game is in English. Russian words for its own things (sanity, anomaly, taser, front desk, X-ray room) are my suggestions, marked "suggestion" in the Note column, not names from the game.
-
-Gender: "m" is what a man or boy says, "f" what a woman or girl says. With "ты" (you), pick the form for your friend.
+Capitals mark the stressed syllable; ' is a soft sound. In Note, "m / f" is what a man / a woman says, and "suggestion" is my Russian for a game term, not the game's own name.
 
 ## 1. At the desk: who gets in
 
@@ -194,8 +188,6 @@ Gender: "m" is what a man or boy says, "f" what a woman or girl says. With "ты
 
 ## Animals
 
-The animal's gender decides он or она: "У неё три глаза" for a dog (собака is f).
-
 | Russian | Say it | English | Note |
 |---|---|---|---|
 | собака | sa-BA-ka | dog | f: она |
@@ -222,8 +214,6 @@ The animal's gender decides он or она: "У неё три глаза" for a 
 ## Tips
 
 - Start with ten phrases: Пускаем, Не пускаем, Подожди, Смотри, Это аномалия, Ты где, Я здесь, Помоги, Пожар, Я не понимаю.
-- Pick one job per shift and learn only its section. The desk player needs sections 1 and 2; the runner needs 3 and 4.
-- Use "Cover the Russian" on this sheet before you play: read the English, say the Russian, then show it.
-- Agree on one escape word with your friend, for example "стоп", when you need English for a moment. Then go back to Russian.
-- Say the numbers with "номер": комната номер пять. You don't need to change the number.
-- Add the words to Review from this sheet. Review drills them in dictionary sentences, so you meet them outside the game too.
+- Learn one job's sections per shift: the desk needs 1 and 2, the runner 3 and 4.
+- Agree on one escape word, for example "стоп", for a moment of English.
+- Say room numbers with "номер": комната номер пять. The number does not change.
