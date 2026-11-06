@@ -9,14 +9,14 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, ScissorsIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, RefreshCwIcon, ScissorsIcon, SearchIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/settings/controls";
 import { timeAgo } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
 import { FragmentsPanel } from "@/components/watch/fragments";
 import { Thumb } from "@/components/watch/thumb";
-import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, splitChannelInputs, takeoutKind, videoUrl, type DiscoverStateView, type FragmentRange, type PickedVideo } from "@/src/core";
+import { coverageBand, formatClock, MAX_VIDEO_SEC, parseChannelInput, parseTakeoutHistory, parseTakeoutSubscriptions, SPARSE_SPEECH_WPM, splitChannelInputs, sortCreatorVideos, takeoutKind, videoUrl, type CreatorVideo, type DiscoverStateView, type FragmentRange, type PickedVideo } from "@/src/core";
 
 type State = DiscoverStateView;
 
@@ -151,8 +151,8 @@ export function PicksSection({ d, canPrepare, onPrepare }: { d: Discover; canPre
 	);
 }
 
-function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss, bare }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: (range?: FragmentRange) => void; onDismiss: () => void; bare?: boolean }) {
-	const why = sourceLine(p);
+function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss, bare, note }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: (range?: FragmentRange) => void; onDismiss: () => void; bare?: boolean; note?: string }) {
+	const why = note ?? sourceLine(p);
 	const [cutting, setCutting] = useState(false);
 	return (
 		<li className={bare ? "border-t border-border" : "q-card"} data-testid="watch-pick">
@@ -326,23 +326,7 @@ export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; can
 								</button>
 							)}
 							</div>
-							{open === c.id && (
-								<div data-testid="watch-creator-panel">
-									{c.videos.length > 0 ? (
-										<ol>
-											{c.videos.map((p) => (
-												<PickRow key={p.id} bare p={p} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={(range) => onPrepare(videoUrl(p.id), range)} onDismiss={() => void post({ action: "dismiss", videoId: p.id }).then((r) => apply(r.body))} />
-											))}
-										</ol>
-									) : (
-										<p className="border-t border-border px-4 py-3 font-prose text-[13px] text-ink-3">
-											Nothing to watch from {c.name} right now.
-											{c.tooLong > 0 && ` ${c.tooLong === 1 ? "One video is" : `${c.tooLong} videos are`} over ${MAX_VIDEO_SEC / 60} minutes.`}
-											{c.awaitingCaptions > 0 && ` ${c.awaitingCaptions === 1 ? "One has" : `${c.awaitingCaptions} have`} no captions yet; they are checked again each time.`}
-										</p>
-									)}
-								</div>
-							)}
+							{open === c.id && <CreatorVideos c={c} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={onPrepare} apply={apply} />}
 						</li>
 					))}
 				</ul>
@@ -383,6 +367,158 @@ export function CreatorsSection({ d, canPrepare, onPrepare }: { d: Discover; can
 				</>
 			)}
 		</section>
+	);
+}
+
+type CreatorRow = DiscoverStateView["creators"][number];
+
+const STATUS_LINE: Record<Exclude<CreatorVideo["status"], "offered">, (name: string) => string> = {
+	"in-library": () => "Already in your videos",
+	dismissed: () => "You marked it not for you",
+	"no-captions": (name) => `No captions in ${name} yet`,
+	"other-language": (name) => `Not spoken in ${name}`,
+	"not-in-language": (name) => `Not spoken in ${name}`,
+	"too-long": () => `Over ${MAX_VIDEO_SEC / 60} minutes`,
+	"too-short": () => "Under a minute",
+	live: () => "A live stream",
+	unavailable: () => "Not available",
+};
+
+/** Under a saved creator: their best picks, their newest uploads, or a search
+ *  of the channel, best for you or newest first. Every video listed was
+ *  checked for free (captions and the known-word share); one that cannot be
+ *  offered says why instead of disappearing. */
+function CreatorVideos({ c, name, lang, canPrepare, onPrepare, apply }: { c: CreatorRow; name: string; lang?: string; canPrepare: boolean; onPrepare: (url: string, range?: FragmentRange) => void; apply: (body: Record<string, unknown>) => void }) {
+	const [sort, setSort] = useState<"best" | "newest">("best");
+	const [query, setQuery] = useState("");
+	/** The search the rows answer: null for the picks, "" for the newest uploads. */
+	const [asked, setAsked] = useState<string | null>(null);
+	const [rows, setRows] = useState<CreatorVideo[] | null>(null);
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const load = async (q: string) => {
+		setAsked(q);
+		setBusy(true);
+		setError(null);
+		const r = await post({ action: "creator-videos", id: c.id, ...(q ? { query: q } : {}) });
+		setBusy(false);
+		if (!r.ok || !Array.isArray(r.body.videos)) {
+			setRows([]);
+			setError(typeof r.body.message === "string" ? r.body.message : "YouTube did not answer. Try again.");
+			return;
+		}
+		setRows(r.body.videos as CreatorVideo[]);
+	};
+	const choose = (by: "best" | "newest") => {
+		setSort(by);
+		if (by === "newest" && asked === null) void load("");
+	};
+	const clear = () => {
+		setQuery("");
+		if (sort === "newest") void load("");
+		else {
+			setAsked(null);
+			setRows(null);
+			setError(null);
+		}
+	};
+	const dismiss = (id: string) =>
+		void post({ action: "dismiss", videoId: id }).then((r) => {
+			apply(r.body);
+			setRows((list) => list?.map((v) => (v.id === id ? { ...v, status: "dismissed" as const } : v)) ?? null);
+		});
+	const listed = asked === null ? null : sortCreatorVideos(rows ?? [], sort);
+	return (
+		<div data-testid="watch-creator-panel">
+			<div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						if (query.trim()) void load(query.trim());
+					}}
+					className="relative min-w-48 flex-1"
+					role="search"
+				>
+					<SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3" strokeWidth={1.6} />
+					<input
+						value={query}
+						onChange={(e) => setQuery(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Escape" && query) {
+								e.preventDefault();
+								clear();
+							}
+						}}
+						placeholder={`Search ${c.name}'s videos`}
+						aria-label={`Search the videos of ${c.name}`}
+						enterKeyHint="search"
+						className="q-field h-9 w-full rounded-lg pl-9 pr-9 font-ui text-[14px]"
+						data-testid="watch-creator-search"
+					/>
+					{query && (
+						<button type="button" onClick={clear} aria-label="Clear the search" className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground">
+							<XIcon className="size-3.5" strokeWidth={1.6} />
+						</button>
+					)}
+				</form>
+				<div className="q-segc" role="radiogroup" aria-label="Order">
+					{(["best", "newest"] as const).map((by) => (
+						<button key={by} type="button" role="radio" aria-checked={sort === by} className={cn(sort === by && "on")} onClick={() => choose(by)} data-testid={`watch-creator-sort-${by}`}>
+							{by === "best" ? "Best for you" : "Newest"}
+						</button>
+					))}
+				</div>
+			</div>
+			{busy ? (
+				<p className="flex items-center gap-2 border-t border-border px-4 py-3 font-prose text-[13px] text-ink-3" role="status">
+					<LoaderCircleIcon className="size-4 animate-spin" />
+					{asked ? `Searching ${c.name}'s videos and checking each one` : `Reading ${c.name}'s newest videos and checking each one`}
+				</p>
+			) : error ? (
+				<p className="border-t border-border px-4 py-3 font-prose text-[13px] text-miss" role="alert">
+					{error}
+				</p>
+			) : listed === null ? (
+				c.videos.length > 0 ? (
+					<ol>
+						{c.videos.map((p) => (
+							<PickRow key={p.id} bare p={p} name={name} lang={lang} canPrepare={canPrepare} onPrepare={(range) => onPrepare(videoUrl(p.id), range)} onDismiss={() => dismiss(p.id)} />
+						))}
+					</ol>
+				) : (
+					<p className="border-t border-border px-4 py-3 font-prose text-[13px] text-ink-3">
+						Nothing to watch from {c.name} right now.
+						{c.tooLong > 0 && ` ${c.tooLong === 1 ? "One video is" : `${c.tooLong} videos are`} over ${MAX_VIDEO_SEC / 60} minutes.`}
+						{c.awaitingCaptions > 0 && ` ${c.awaitingCaptions === 1 ? "One has" : `${c.awaitingCaptions} have`} no captions yet; they are checked again each time.`}
+					</p>
+				)
+			) : listed.length === 0 ? (
+				<p className="border-t border-border px-4 py-3 font-prose text-[13px] text-ink-3">{asked ? `No video of ${c.name} matches "${asked}".` : `YouTube lists no videos for ${c.name}.`}</p>
+			) : (
+				<ol data-testid="watch-creator-videos-list">
+					{listed.map((v) =>
+						v.status === "offered" ? (
+							<PickRow key={v.id} bare p={v} name={name} lang={lang} canPrepare={canPrepare} onPrepare={(range) => onPrepare(videoUrl(v.id), range)} onDismiss={() => dismiss(v.id)} note={v.publishedAt ? `Published ${timeAgo(v.publishedAt)}` : undefined} />
+						) : (
+							<li key={v.id} className="flex items-center gap-3 border-t border-border py-3 pl-4 pr-4 sm:gap-4" data-testid="watch-creator-video-skipped">
+								<span className="max-sm:hidden opacity-60">
+									<Thumb id={v.id} watched={false} />
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="line-clamp-2 font-ui text-[15px] font-[500] text-ink-2 sm:block sm:truncate" lang={lang} title={v.title}>
+										{v.title}
+									</span>
+									<span className="block truncate font-prose text-[13px] text-ink-3">
+										{STATUS_LINE[v.status](name)}
+										{v.publishedAt && ` · published ${timeAgo(v.publishedAt)}`}
+									</span>
+								</span>
+							</li>
+						),
+					)}
+				</ol>
+			)}
+		</div>
 	);
 }
 

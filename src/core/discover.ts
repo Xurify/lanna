@@ -546,6 +546,79 @@ export function rankPicks(videos: readonly ScannedVideo[], opts: { exclude?: Rea
 		.sort((a, b) => b.score - a.score || (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
 }
 
+// ─── One creator's videos ────────────────────────────────────────────────────
+
+const AGO = /(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/i;
+const AGO_UNITS: Record<string, number> = { second: 1 / 86_400, minute: 1 / 1_440, hour: 1 / 24, day: 1, week: 7, month: 30, year: 365 };
+
+/** YouTube's English relative date ("3 weeks ago", "Streamed 2 days ago")
+ *  as the date that far back. Only as exact as the text: good enough to sort
+ *  search results by date, which is all it is used for. */
+export function agoToIso(text: string, now: Date): string | undefined {
+	const m = AGO.exec(text);
+	if (!m) return undefined;
+	const days = Number(m[1]) * AGO_UNITS[m[2]!.toLowerCase()]!;
+	return new Date(now.getTime() - days * 86_400_000).toISOString();
+}
+
+/** Each video's relative publish date on a YouTube page (English pages only), by id. */
+export function publishedTimes(data: unknown): Map<string, string> {
+	const out = new Map<string, string>();
+	const walk = (v: unknown, depth: number) => {
+		if (depth > 60 || !v || typeof v !== "object") return;
+		if (Array.isArray(v)) {
+			for (const x of v) walk(x, depth + 1);
+			return;
+		}
+		const o = v as Json;
+		if (typeof o.videoId === "string" && o.publishedTimeText !== undefined) {
+			const t = textOf(o.publishedTimeText);
+			if (t && !out.has(o.videoId)) out.set(o.videoId, t);
+		}
+		// The lockup (2024 on) keeps the date as one of its metadata row texts.
+		if (o.contentType === "LOCKUP_CONTENT_TYPE_VIDEO" && typeof o.contentId === "string" && !out.has(o.contentId)) {
+			const t = firstAgo(o.metadata, 0);
+			if (t) out.set(o.contentId, t);
+		}
+		for (const x of Object.values(o)) walk(x, depth + 1);
+	};
+	walk(data, 0);
+	return out;
+}
+
+function firstAgo(v: unknown, depth: number): string | undefined {
+	if (depth > 12 || !v || typeof v !== "object") return undefined;
+	for (const x of Array.isArray(v) ? v : Object.values(v)) {
+		if (typeof x === "string" && AGO.test(x)) return x;
+		const found = firstAgo(x, depth + 1);
+		if (found) return found;
+	}
+	return undefined;
+}
+
+/** Why a creator's video is or is not offered. */
+export type CreatorVideoStatus = "offered" | "in-library" | "dismissed" | SkipReason | "not-in-language";
+
+export interface CreatorVideo extends PickedVideo {
+	status: CreatorVideoStatus;
+}
+
+/** A creator's videos as checked, in the order given, each with why it is
+ *  or is not offered. Only offered ones carry a score; the rest score 0. */
+export function creatorVideoRows(videos: readonly ScannedVideo[], opts: { library: ReadonlySet<string>; dismissed: ReadonlySet<string>; now?: Date }): CreatorVideo[] {
+	return videos.map((v) => {
+		const status: CreatorVideoStatus = opts.library.has(v.id) ? "in-library" : opts.dismissed.has(v.id) ? "dismissed" : v.skip ? v.skip : v.spoken === "no" || !v.trackLang ? "not-in-language" : "offered";
+		const offered = status === "offered";
+		return { ...v, status, score: offered ? pickScore(v, opts.now) : 0, band: v.coverage === undefined ? "unmeasured" : coverageBand(v.coverage).band };
+	});
+}
+
+/** Best for you: offered videos by score, then the rest, newest first. Newest: by date alone; an undated video goes last. */
+export function sortCreatorVideos(rows: readonly CreatorVideo[], by: "best" | "newest"): CreatorVideo[] {
+	const newest = (a: CreatorVideo, b: CreatorVideo) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+	return [...rows].sort(by === "newest" ? newest : (a, b) => b.score - a.score || newest(a, b));
+}
+
 export interface CreatorSuggestion extends FoundChannel {
 	/** Its videos found spoken in the language. */
 	videos: number;
