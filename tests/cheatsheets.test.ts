@@ -13,7 +13,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-cheatsheets-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { CheatsheetParseError, cheatsheetId, cheatsheetRowCount, cheatsheetWords, isCheatsheetId, parseCheatsheet, plainText, tableColumns } = await import("../src/core/cheatsheets.ts");
+const { CheatsheetParseError, cheatsheetOverlap, inlineList, isChatter, mergeCheatsheetMarkdown, phraseKey, cheatsheetId, cheatsheetRowCount, cheatsheetWords, isCheatsheetId, parseCheatsheet, plainText, tableColumns } = await import("../src/core/cheatsheets.ts");
 const { cheatsheetStore } = await import("../src/store/cheatsheets.ts");
 const { cheatsheetReviewState, cheatsheetToReview } = await import("../src/server/cheatsheets.ts");
 const { PATHS } = await import("../config.ts");
@@ -23,6 +23,8 @@ after(() => {
 });
 
 const GUIDE = fs.readFileSync(path.join(import.meta.dirname, "..", "docs", "cheatsheets", "animal-hospital-russian.md"), "utf-8");
+// A guide as a chat assistant answered it, with its own lines to the reader.
+const CHAT_GUIDE = fs.readFileSync(path.join(import.meta.dirname, "fixtures", "cheatsheet-chat-guide.md"), "utf-8");
 
 describe("parseCheatsheet", () => {
 	it("reads the shipped Russian guide: title, intro, sections and four columns", () => {
@@ -101,6 +103,61 @@ describe("parseCheatsheet", () => {
 	});
 });
 
+describe("guides written by a chat assistant", () => {
+	it("leaves out the assistant's lines to the reader and says which", () => {
+		const sheet = parseCheatsheet(CHAT_GUIDE);
+		assert.equal(sheet.intro.length, 0);
+		assert.equal(sheet.skipped.length, 3);
+		assert.match(sheet.skipped[2] ?? "", /^I can turn/);
+		assert.ok(isChatter("Here are some phrases"));
+		assert.ok(!isChatter("In Note, m / f is what a man / a woman says"));
+		assert.ok(!isChatter("Ich bin müde")); // a phrase, not chatter
+	});
+
+	it("reads labelled inline lists as rows under their own section", () => {
+		const sheet = parseCheatsheet(CHAT_GUIDE);
+		const body = sheet.sections.find((s) => s.title === "Body words");
+		assert.equal(body?.rows.length, 8);
+		assert.deepEqual(body?.rows[1], { text: "лицо", meaning: "face" });
+		const numbers = sheet.sections.find((s) => s.title === "Numbers");
+		assert.deepEqual(numbers?.rows[5], { text: "шесть", meaning: "6" });
+		const gender = sheet.sections.find((s) => s.title === "Three patterns that cover a lot");
+		assert.match(gender?.notes.at(-1) ?? "", /^Gendered words/, "a colon line that is not a list stays a note");
+		assert.equal(inlineList("Start with ten phrases: Пускаем, Не пускаем"), null);
+		assert.equal(inlineList("Tip: say it twice"), null);
+	});
+});
+
+describe("overlap and merging", () => {
+	it("compares phrases without case, ё or punctuation, and by their / parts", () => {
+		assert.equal(phraseKey("Пускаем!"), phraseKey("пускаем."));
+		assert.equal(phraseKey("Ещё раз"), phraseKey("еще раз"));
+		const ours = parseCheatsheet(GUIDE);
+		const theirs = parseCheatsheet(CHAT_GUIDE);
+		const o = cheatsheetOverlap(theirs, ours);
+		assert.ok(o.shared >= 25, `shared ${o.shared}`);
+		const fresh = o.fresh.map((f) => f.row.text);
+		assert.ok(fresh.includes("Кто у окна?"));
+		assert.ok(!fresh.includes("Пускаем!"));
+		assert.ok(!fresh.includes("Ты где? / Я здесь."), "both parts are in the guide");
+		assert.ok(!fresh.includes("глаза"), "глаз / глаза covers глаза");
+	});
+
+	it("adds only new phrases: into the matching numbered section's table, else as a new section", () => {
+		const target = "# Mine\n\n## 1. At the desk\n| Russian | Say it | English | Note |\n|---|---|---|---|\n| Пускаем? | poos-KA-yem? | Do we let it in? | |\n\n## Tips\n- Say it twice.\n";
+		const incoming = parseCheatsheet("## 1. Front desk\n| Russian | Sounds like | Meaning |\n|---|---|---|\n| Пускаем! | x | Admit |\n| Кто у окна? | kto oo ak-NA | Who's at the window? |\n\n## Fire\n- Пожар — fire");
+		const { markdown, added } = mergeCheatsheetMarkdown(target, incoming);
+		assert.equal(added, 2);
+		const lines = markdown.split("\n");
+		const at = lines.indexOf("| Кто у окна? | kto oo ak-NA | Who's at the window? |  |");
+		assert.equal(at, lines.indexOf("| Пускаем? | poos-KA-yem? | Do we let it in? | |") + 1, "goes under the same section's table");
+		assert.ok(markdown.trimEnd().endsWith("| Пожар |  | fire |  |"));
+		assert.match(markdown, /## Fire\n\n\| Phrase \| Say it \| Meaning \| Note \|/);
+		const again = mergeCheatsheetMarkdown(markdown, incoming);
+		assert.deepEqual(again, { markdown, added: 0 });
+	});
+});
+
 describe("cheatsheetWords and ids", () => {
 	it("lists each word once, lowercased, in the order it first appears", () => {
 		const sheet = parseCheatsheet("| Я не уверен. / Я не уверена. | I'm not sure |\n| Что-то есть? | Is there something? |");
@@ -156,6 +213,21 @@ describe("cheatsheetStore", () => {
 		assert.throws(() => cheatsheetStore.update(sheet.id, "## No phrase"), CheatsheetParseError);
 		assert.equal(cheatsheetStore.get(sheet.id)?.title, "New name", "a refused edit changes nothing");
 		assert.equal(cheatsheetStore.update("no-such-sheet", "| a | b |"), null);
+		cheatsheetStore.remove(sheet.id);
+	});
+
+	it("reports overlaps and merges into a kept sheet, keeping the version before", () => {
+		const sheet = cheatsheetStore.create(GUIDE, "Night shift", new Date("2026-11-06T13:00:00Z"));
+		const overlaps = cheatsheetStore.overlaps(CHAT_GUIDE);
+		assert.equal(overlaps[0]?.id, sheet.id);
+		const before = cheatsheetStore.get(sheet.id)!;
+		const result = cheatsheetStore.merge(sheet.id, CHAT_GUIDE);
+		assert.equal(result?.added, overlaps[0]?.fresh);
+		assert.equal(result?.sheet.title, "Night shift", "a merge keeps the title");
+		const rows = (s: typeof before) => s.sections.reduce((n, x) => n + x.rows.length, 0);
+		assert.equal(rows(result!.sheet), rows(before) + result!.added);
+		assert.ok(fs.existsSync(path.join(PATHS.cheatsheets, "trash", `${sheet.id}.md`)));
+		assert.equal(cheatsheetStore.merge(sheet.id, CHAT_GUIDE)?.added, 0);
 		cheatsheetStore.remove(sheet.id);
 	});
 

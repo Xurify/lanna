@@ -10,7 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import { cheatsheetId, cheatsheetSummary, isCheatsheetId, parseCheatsheet, type Cheatsheet, type CheatsheetSummary } from "../core/cheatsheets.ts";
+import { cheatsheetId, cheatsheetOverlap, cheatsheetSummary, isCheatsheetId, mergeCheatsheetMarkdown, parseCheatsheet, type Cheatsheet, type CheatsheetSummary } from "../core/cheatsheets.ts";
 import { ensureReadmes } from "./corpus.ts";
 
 const dir = () => PATHS.cheatsheets;
@@ -65,7 +65,7 @@ export const cheatsheetStore = {
 
 	/** Parse and keep a guide. Throws CheatsheetParseError on text with no phrases. */
 	create(markdown: string, title?: string, now = new Date()): Cheatsheet {
-		const draft = parseCheatsheet(markdown);
+		const { skipped: _skipped, ...draft } = parseCheatsheet(markdown);
 		const finalTitle = title?.trim() ? title.trim().slice(0, 120) : draft.title;
 		const id = cheatsheetId(finalTitle, now, (candidate) => fs.existsSync(fileFor(candidate, "json")));
 		const sheet: Cheatsheet = { id, importedAt: now.toISOString(), ...draft, title: finalTitle };
@@ -91,12 +91,39 @@ export const cheatsheetStore = {
 	update(id: string, markdown: string, title?: string, now = new Date()): Cheatsheet | null {
 		const old = readSheet(id);
 		if (!old) return null;
-		const draft = parseCheatsheet(markdown);
+		const { skipped: _skipped, ...draft } = parseCheatsheet(markdown);
 		const sheet: Cheatsheet = { id, importedAt: old.importedAt, updatedAt: now.toISOString(), ...draft, title: title?.trim() ? title.trim().slice(0, 120) : draft.title };
 		toTrash(id);
 		writeAtomic(fileFor(id, "md"), markdown);
 		writeAtomic(fileFor(id, "json"), JSON.stringify(sheet, null, "\t"));
 		return sheet;
+	},
+
+	/** Add the new phrases of a guide to a sheet (mergeCheatsheetMarkdown);
+	 *  the version before goes to trash/ like any edit. */
+	merge(id: string, incomingMarkdown: string, now = new Date()): { sheet: Cheatsheet; added: number } | null {
+		const old = readSheet(id);
+		const source = this.source(id);
+		if (!old || source === null) return null;
+		const { markdown, added } = mergeCheatsheetMarkdown(source, parseCheatsheet(incomingMarkdown));
+		if (!added) return { sheet: old, added };
+		const sheet = this.update(id, markdown, old.title, now);
+		return sheet ? { sheet, added } : null;
+	},
+
+	/** For each kept sheet that shares a phrase with the guide: how many it
+	 *  shares and how many would be new. Most shared first. */
+	overlaps(incomingMarkdown: string): Array<{ id: string; title: string; shared: number; fresh: number }> {
+		const incoming = parseCheatsheet(incomingMarkdown);
+		return this.list()
+			.map((s) => {
+				const sheet = readSheet(s.id);
+				if (!sheet) return null;
+				const o = cheatsheetOverlap(incoming, sheet);
+				return { id: s.id, title: s.title, shared: o.shared, fresh: o.fresh.length };
+			})
+			.filter((o): o is { id: string; title: string; shared: number; fresh: number } => !!o && o.shared > 0)
+			.sort((a, b) => b.shared - a.shared);
 	},
 
 	/** Move a sheet and its source to trash/. False when there is no such sheet. */

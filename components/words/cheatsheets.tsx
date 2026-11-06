@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
-import { CheatsheetParseError, cheatsheetRowCount, parseCheatsheet, type Cheatsheet, type CheatsheetDraft, type CheatsheetSummary, type CheatRow } from "@/src/core";
+import { CheatsheetParseError, cheatsheetRowCount, parseCheatsheet, type Cheatsheet, type ParsedCheatsheet, type CheatsheetSummary, type CheatRow } from "@/src/core";
 
 interface ReviewState {
 	inDictionary: number;
@@ -110,7 +110,14 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 	);
 }
 
-function preview(markdown: string): { draft: CheatsheetDraft | null; error: string | null } {
+interface Overlap {
+	id: string;
+	title: string;
+	shared: number;
+	fresh: number;
+}
+
+function preview(markdown: string): { draft: ParsedCheatsheet | null; error: string | null } {
 	if (!markdown.trim()) return { draft: null, error: null };
 	try {
 		return { draft: parseCheatsheet(markdown), error: null };
@@ -130,6 +137,34 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 	const { draft, error } = useMemo(() => preview(markdown), [markdown]);
 	const hasHeading = /^#\s+\S/m.test(markdown);
 	const heading = editing ? "Edit the cheatsheet" : "Import a cheatsheet";
+	const [overlap, setOverlap] = useState<Overlap | null>(null);
+	const [mergeInto, setMergeInto] = useState<string | null>(null);
+
+	// A guide that repeats a kept sheet is offered as an addition to it, so
+	// the same phrases do not live in two sheets.
+	useEffect(() => {
+		if (editing || !draft) {
+			setOverlap(null);
+			setMergeInto(null);
+			return;
+		}
+		let live = true;
+		const t = window.setTimeout(() => {
+			void fetch("/api/cheatsheets/overlap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markdown }) })
+				.then((res) => (res.ok ? (res.json() as Promise<{ overlaps: Overlap[] }>) : null))
+				.then((data) => {
+					if (!live) return;
+					const best = data?.overlaps[0] ?? null;
+					setOverlap(best);
+					setMergeInto(best && best.shared * 4 >= best.shared + best.fresh ? best.id : null);
+				})
+				.catch(() => {});
+		}, 300);
+		return () => {
+			live = false;
+			window.clearTimeout(t);
+		};
+	}, [editing, draft, markdown]);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -149,7 +184,8 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 		setSaving(true);
 		setServerError(null);
 		const fallback = fileName ? fileName.replace(/\.(md|markdown|txt)$/i, "") : "";
-		const res = await fetch(editing ? `/api/cheatsheets/${encodeURIComponent(editing.id)}` : "/api/cheatsheets", {
+		const url = editing ? `/api/cheatsheets/${encodeURIComponent(editing.id)}` : mergeInto ? `/api/cheatsheets/${encodeURIComponent(mergeInto)}/merge` : "/api/cheatsheets";
+		const res = await fetch(url, {
 			method: editing ? "PUT" : "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ markdown, title: title.trim() || (hasHeading ? undefined : fallback) }),
@@ -211,9 +247,24 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 					) : error ? (
 						<span className="text-miss">{error}</span>
 					) : draft ? (
-						<span className="text-ink-2">{plural(cheatsheetRowCount(draft), "phrase")}</span>
+						<span className="text-ink-2">
+							{plural(cheatsheetRowCount(draft), "phrase")}
+							{overlap && ` · ${overlap.shared} already in ${overlap.title}`}
+							{draft.skipped.length > 0 && ` · ${plural(draft.skipped.length, "chat line")} left out`}
+						</span>
 					) : null}
 				</p>
+
+				{overlap && (
+					<div className="q-segc self-start" role="radiogroup" aria-label="Where the phrases go">
+						<button type="button" role="radio" aria-checked={mergeInto === overlap.id} className={cn(mergeInto === overlap.id && "on")} onClick={() => setMergeInto(overlap.id)} data-testid="cheatsheet-merge">
+							{overlap.fresh ? `Add ${overlap.fresh} new to ${overlap.title}` : `Nothing new for ${overlap.title}`}
+						</button>
+						<button type="button" role="radio" aria-checked={mergeInto !== overlap.id} className={cn(mergeInto !== overlap.id && "on")} onClick={() => setMergeInto(null)}>
+							New sheet
+						</button>
+					</div>
+				)}
 
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<button type="button" className="q-btn sec" onClick={() => fileRef.current?.click()}>
@@ -237,8 +288,8 @@ function SheetDialog({ editing, onClose, onSaved }: { editing?: { id: string; ti
 						<button type="button" className="q-btn ghost" onClick={onClose}>
 							Cancel
 						</button>
-						<button type="submit" className="q-btn primary" disabled={!draft || saving} data-testid="cheatsheet-save">
-							{saving ? "Saving…" : editing ? "Save" : "Import"}
+						<button type="submit" className="q-btn primary" disabled={!draft || saving || (!!mergeInto && overlap?.fresh === 0)} data-testid="cheatsheet-save">
+							{saving ? "Saving…" : editing ? "Save" : mergeInto ? "Add" : "Import"}
 						</button>
 					</div>
 				</div>
