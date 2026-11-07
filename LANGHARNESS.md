@@ -103,7 +103,7 @@ Add a model key in Settings → API keys as in LearnHarness.
 
 Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 
-- `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe). Change the voice with `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`.
+- `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe). Change the voice with `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`. Every language is read with `eleven_v4` (set `ELEVENLABS_MODEL_ID` for another); an account without it falls back to `eleven_v3`, then `eleven_multilingual_v2` for the 29 languages that one reads. Single words and the tutor's lines in a language without its own ElevenLabs voice use Edge unless `ELEVENLABS_VOICE_ID_<CODE>` (for example `ELEVENLABS_VOICE_ID_ET`) names one.
 - `DEEPGRAM_API_KEY`: speech-to-text for the Speak task when there is no ElevenLabs key (and the composer's dictation).
 - `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`: Azure Speech pronunciation assessment (Slovak is covered) for Speak and Speed — a phoneme-level score for every spoken line. Without them clarity is judged from the transcript alone.
 - `LH_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key. `LH_STT_SCRIPT=<text>`: dev only — every recording transcribes to that text.

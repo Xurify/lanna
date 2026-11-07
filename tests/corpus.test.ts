@@ -228,14 +228,63 @@ describe("spending report", () => {
 	});
 });
 
-describe("ElevenLabs only gets languages its model reads", () => {
-	it("sends Slovak and Russian, keeps Estonian for Edge", async () => {
-		const { elevenLabsReads } = await import("../src/server/tts.ts");
+describe("ElevenLabs reads Estonian with a model that knows it", () => {
+	it("reads every language with v4 first, and falls back only to models that read it", async () => {
+		const { elevenLabsReads, elevenLabsModelsFor } = await import("../src/server/tts.ts");
 		assert.equal(elevenLabsReads("sk", "eleven_multilingual_v2"), true);
-		assert.equal(elevenLabsReads("ru", "eleven_multilingual_v2"), true);
-		assert.equal(elevenLabsReads("et", "eleven_multilingual_v2"), false, "a story's narrator voice must not take Estonian to a model that cannot read it");
-		assert.equal(elevenLabsReads("hu", "eleven_multilingual_v2"), false);
+		assert.equal(elevenLabsReads("et", "eleven_multilingual_v2"), false);
+		assert.equal(elevenLabsReads("et", "eleven_flash_v2_5"), false);
 		assert.equal(elevenLabsReads("hu", "eleven_flash_v2_5"), true);
 		assert.equal(elevenLabsReads("et", "eleven_v3"), true);
+		assert.equal(elevenLabsReads("et", "eleven_v4"), true);
+		assert.deepEqual(elevenLabsModelsFor("sk"), ["eleven_v4", "eleven_v3", "eleven_multilingual_v2"]);
+		assert.deepEqual(elevenLabsModelsFor("et"), ["eleven_v4", "eleven_v3"], "multilingual v2 cannot read Estonian");
+	});
+
+	it("speaks an Estonian story line with v4 and its language code, and remakes an old multilingual v2 clip", async () => {
+		const { LANGUAGE_CATALOG, registerLanguage } = await import("../src/core/language.ts");
+		registerLanguage({ ...LANGUAGE_CATALOG.find((l) => l.id === "estonian")!, specialLetters: ["õ", "ä", "ö", "ü"] });
+		const { synthesize, ttsCacheKey } = await import("../src/server/tts.ts");
+		const req = { text: "Mart on Tartus.", lang: "et", voice: "YJsJ2Mt3VRr0gCiTY6DA", gender: "female" as const, style: "narration" as const };
+		// An Estonian clip multilingual v2 made before the model was recorded.
+		corpus.storeAudioClip({ key: ttsCacheKey(req), lang: "et", voice: req.voice, tier: "elevenlabs", text: req.text, ext: "mp3", data: Buffer.from("old") });
+		const sent: Array<Record<string, unknown>> = [];
+		const realFetch = globalThis.fetch;
+		const hadKey = process.env.ELEVENLABS_API_KEY;
+		process.env.ELEVENLABS_API_KEY = "test-key";
+		globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
+			sent.push(JSON.parse(String(init?.body)));
+			return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+		}) as typeof fetch;
+		try {
+			const clip = await synthesize(req);
+			assert.equal(clip?.tier, "elevenlabs", "the old clip is not served");
+			assert.equal(sent.length, 1);
+			assert.equal(sent[0]!.model_id, "eleven_v4");
+			assert.equal(sent[0]!.language_code, "et");
+			assert.equal(corpus.findAudioClip(ttsCacheKey(req))?.model, "eleven_v4");
+			const again = await synthesize(req);
+			assert.equal(again?.tier, "cache", "a v4 clip is kept");
+
+			// A Slovak clip from before the model was recorded is still good: multilingual v2 reads Slovak.
+			const sk = { text: "Dobrý deň.", lang: "sk", voice: "YJsJ2Mt3VRr0gCiTY6DA", gender: "female" as const, style: "narration" as const };
+			corpus.storeAudioClip({ key: ttsCacheKey(sk), lang: "sk", voice: sk.voice, tier: "elevenlabs", text: sk.text, ext: "mp3", data: Buffer.from("old") });
+			assert.equal((await synthesize(sk))?.tier, "cache");
+
+			// An account without v4: the refusal moves the line to v3, and v4 is not asked again within the hour.
+			sent.length = 0;
+			globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
+				const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+				sent.push(body);
+				return body.model_id === "eleven_v4" ? new Response("model not available", { status: 403 }) : new Response(new Uint8Array([4, 5]), { status: 200 });
+			}) as typeof fetch;
+			await synthesize({ ...req, text: "Täna on laupäev." });
+			await synthesize({ ...req, text: "Mart tuleb bussiga." });
+			assert.deepEqual(sent.map((b) => b.model_id), ["eleven_v4", "eleven_v3", "eleven_v3"]);
+		} finally {
+			globalThis.fetch = realFetch;
+			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;
+			else process.env.ELEVENLABS_API_KEY = hadKey;
+		}
 	});
 });
