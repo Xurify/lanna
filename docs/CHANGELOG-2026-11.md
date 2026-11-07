@@ -13,6 +13,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Tests:** `tests/sources.test.ts` (new: ids, citations, DOI shape, pages exist, the Speed caveat), `tests/fluency.test.ts` (re-read target and XP rules, pace), and the line, stage and dated-scene tests updated for the new wording.
 - **Verified on the PC:** Say it faster played through by keyboard on a scratch copy of the data at 1400 px and 390 px, light and dark, the Sources page at both widths, and the Sources note open on the end screen.
 - **Unverified:** the microphone path with a real speech key (no key in the scratch copy: silent clip, a failed check and the denied-permission line were not exercised live; they follow from the code and the tests of the pure parts); the Crossref check shows the records exist and match, not that each line on a page was read in full.
+
 ## 6 November: a new app icon, fields you can see, a creator's newest videos, keys safe from tests (branch `feat/icon-fields-creators`)
 
 - **Why:** the owner asked for a new icon, a better brand and some name ideas. Rule E59; details and names: [brand.md](brand.md).
