@@ -25,6 +25,7 @@ import { STRAND_STYLE, taskStrand } from "@/components/strand-style";
 import { TrailMark } from "@/components/trail";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STRANDS, weakSpotGroups, type DailyPlan as Plan, type LearnerGoal, type MixupSummary, type PlanTask, type WeakSpotSummary } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 export type Goal = LearnerGoal;
 
@@ -387,6 +388,7 @@ export function WeakSpots({ weak, className = "mt-4 border-t pt-4" }: { weak: We
  *  look-alikes predicted from them (src/core/mixups.ts). One link opens the
  *  Mix-ups lesson, which takes them all. */
 export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: MixupSummary[]; className?: string }) {
+	const lang = useActiveLanguage();
 	const open = mixups.filter((m) => m.status === "active");
 	const probes = mixups.filter((m) => m.status === "probe");
 	if (!open.length && !probes.length) return null;
@@ -399,7 +401,7 @@ export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: M
 			<ul className="mt-2 flex flex-col gap-0.5">
 				{open.slice(0, 4).map((m) => (
 					<li key={m.key} className="py-1.5" data-testid={`mixup-${m.key}`}>
-						<span className="block text-sm font-bold text-foreground" lang="sk">
+						<span className="block text-sm font-bold text-foreground" lang={lang?.code}>
 							{m.words.join(" / ")}
 						</span>
 						<span className="block text-xs text-muted-foreground">{m.line}</span>
@@ -408,7 +410,7 @@ export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: M
 				{probes.length > 0 && (
 					<li className="py-1.5 text-xs text-muted-foreground" data-testid="mixup-probes">
 						<span className="font-bold text-foreground">{open.length ? "Likely next" : "To test"}:</span>{" "}
-						<span lang="sk">{probes.slice(0, 4).map((m) => m.words.join(" / ")).join(", ")}</span>
+						<span lang={lang?.code}>{probes.slice(0, 4).map((m) => m.words.join(" / ")).join(", ")}</span>
 						{open.length ? " — the same pattern, not tested yet" : " — predicted from pairs you have mixed up"}
 					</li>
 				)}

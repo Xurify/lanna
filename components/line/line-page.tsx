@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { speak, stopSpeaking } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { useActiveTime } from "@/components/use-active-time";
 import { COLUMN, Dock, PRIMARY, SECONDARY, TaskTop } from "@/components/task-frame";
 import type { QIconName } from "@/components/quiet/icon-paths";
@@ -41,6 +41,7 @@ const INPUT =
 	"w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-4 focus-visible:shadow-[inset_0_0_0_1.5px_var(--q-teal)]";
 
 export function LinePage({ initial }: { initial: LineState }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [view, setView] = useState<LineState>(initial);
 	const [typed, setTyped] = useState("");
@@ -213,7 +214,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 									<input
 										ref={inputRef}
 										type="text"
-										lang="sk"
+										lang={lang?.code}
 										autoComplete="off"
 										autoCapitalize="off"
 										spellCheck={false}
@@ -292,6 +293,7 @@ export function LinePage({ initial }: { initial: LineState }) {
  *  what was typed when it fell short, the meaning and the new words. With a
  *  morning record to compare to, the change since then sits by the figure. */
 function Result({ record, compare }: { record: LineRecord; compare: LineRecord | null }) {
+	const lang = useActiveLanguage();
 	const score = scoreLine(record.sentence, record.typed);
 	const before = compare ? scoreLine(compare.sentence, compare.typed) : null;
 	const shown = record.sentence.normalize("NFC").match(/[\p{L}\p{N}]+/gu) ?? [];
@@ -310,7 +312,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 					</span>
 				)}
 			</div>
-			<p className="mt-5 font-prose text-[28px] font-[550] leading-[1.4] tracking-[-0.025em]" lang="sk" data-testid="line-marks">
+			<p className="mt-5 font-prose text-[28px] font-[550] leading-[1.4] tracking-[-0.025em]" lang={lang?.code} data-testid="line-marks">
 				{score.marks.map((m, i) => (
 					<span key={i}>
 						{i > 0 && " "}
@@ -329,7 +331,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 				<p className="mt-3 font-prose text-base text-ink-3" data-testid="line-typed">
 					{record.typed ? (
 						<>
-							You typed · <span lang="sk">{record.typed}</span>
+							You typed · <span lang={lang?.code}>{record.typed}</span>
 						</>
 					) : (
 						"Nothing caught this time"
@@ -341,7 +343,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 				<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
 					{record.newWords.map((w) => (
 						<li key={w.text} className="q-ex">
-							<u lang="sk">{w.text}</u>
+							<u lang={lang?.code}>{w.text}</u>
 							{w.gloss && <span className="ml-1.5 font-normal text-ink-3">· {w.gloss}</span>}
 						</li>
 					))}

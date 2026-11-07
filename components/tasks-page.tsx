@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { formatElapsed, useActivity, type FeedTask } from "@/components/activity-dock";
 import { retryTask, stopTask, taskAction } from "@/components/task-actions";
 import { addLanguage, switchLanguage } from "@/components/switch-language";
+import { useActiveLanguage } from "@/components/speech";
 
 const KIND_LABEL: Record<FeedTask["kind"], string> = { video: "Video preparation", language: "Adding a language" };
 
@@ -138,12 +139,13 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 }
 
 function TaskRow({ task, line, children }: { task: FeedTask; line: string; children: React.ReactNode }) {
+	const lang = useActiveLanguage();
 	const ms = (task.finishedAt ?? Date.now()) - task.startedAt;
 	return (
 		<li className="q-card flex items-center gap-3 px-4 py-3" data-testid={`task-${task.status}`}>
 			{task.status === "running" ? <LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" /> : task.status === "done" ? <CheckIcon className="size-4 shrink-0 text-teal-2" /> : <XIcon className="size-4 shrink-0 text-miss" />}
 			<span className="min-w-0 flex-1">
-				<span className="block truncate font-ui text-[15px] font-[600] text-foreground" lang={task.kind === "video" ? "sk" : undefined} title={task.title}>
+				<span className="block truncate font-ui text-[15px] font-[600] text-foreground" lang={task.kind === "video" ? lang?.code : undefined} title={task.title}>
 					{task.title}
 				</span>
 				<span className="block font-prose text-[13px] text-ink-3">

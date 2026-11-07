@@ -35,6 +35,7 @@ import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
 import type { DatedSceneView, DayLanguage, LanguageDay, LineState, PlanTask, StageView, UnitState } from "@/src/core";
 import { TodayLineRow } from "@/components/today-line-row";
 import { WhereYouAre } from "@/components/where-you-are";
+import { useActiveLanguage } from "@/components/speech";
 
 /** One thing to do today: a task in a language's plan, or setting a new language up. */
 interface Step {
@@ -57,6 +58,7 @@ function bare(title: string): string {
 }
 
 export function Today({ initialConfigured, initialSummary = null, initialDay = null, initialLine = null, initialStage = null, initialDated = null }: { initialConfigured: boolean; initialSummary?: Summary | null; initialDay?: LanguageDay | null; initialLine?: LineState | null; initialStage?: StageView | null; initialDated?: { next: DatedSceneView | null; awaitingOutcome: DatedSceneView[] } | null }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const line = initialLine;
 	const stage = initialStage;
@@ -386,7 +388,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 													{openMixups.slice(0, 3).map((m, i, arr) => (
 														<span key={m.key}>
 															{i > 0 && (i === arr.length - 1 ? " and " : ", ")}
-															<span className="q-pair" lang="sk">
+															<span className="q-pair" lang={lang?.code}>
 																{m.words[0]}
 																<s>/</s>
 																{m.words[1]}

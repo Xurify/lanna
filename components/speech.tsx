@@ -311,7 +311,7 @@ export function PlayButton({ text, className, label }: { text: string; className
 export function SpokenPhrase({ text }: { text: string }) {
 	const lang = useActiveLanguage();
 	return (
-		<span className="lh-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground" data-testid="spoken-phrase" lang={lang?.code ?? "sk"}>
+		<span className="lh-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground" data-testid="spoken-phrase" lang={lang?.code}>
 			<span>{text}</span>
 			<PlayButton text={text} className="size-5 self-center" />
 		</span>
