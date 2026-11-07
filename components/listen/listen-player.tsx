@@ -380,7 +380,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								>
 									<span className={cn("w", replays >= PEEK_AFTER_REPLAYS && "!text-ink-2")}>
 										<EyeIcon className="size-3.5" strokeWidth={1.6} />
-										{replays < PEEK_AFTER_REPLAYS ? "Text · listen again first" : "Show the text · not counted"}
+										{replays < PEEK_AFTER_REPLAYS ? "Show the text · listen once more first" : "Show the text · not counted"}
 									</span>
 								</button>
 							)}
@@ -468,7 +468,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								{current.verdict === "exact"
 									? `Typed correctly · +${LISTEN_XP} XP`
 									: current.verdict === "accents"
-										? `Almost · the letters are right, a mark is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
+										? `Almost · only an accent is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
 										: current.given
 											? "Not quite"
 											: "Not caught this time"}
@@ -483,7 +483,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 					) : (
 						<>
 							<button type="button" onClick={giveUp} className={SECONDARY} data-testid="listen-give-up">
-								Didn't catch it
+								I didn&apos;t catch it
 							</button>
 							<button type="button" onClick={submit} disabled={!draft.trim()} className={PRIMARY} data-testid="listen-check">
 								Check
@@ -535,7 +535,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				<div>
 					<p className="font-ui text-[13px] font-[550] text-ink-3">Listen · done</p>
 						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
-						{outcome.correct} of {outcome.total} typed correctly, text hidden
+						{outcome.correct} of {outcome.total} typed correctly, without the text
 					</h1>
 					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-ink-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
 				</div>

@@ -22,7 +22,7 @@ export default function UpdateBanner() {
 			className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg bg-card px-4 py-3 shadow-raise-hi"
 		>
 			<div className="text-sm">
-				<span className="font-medium">LearnHarness {ready.version ?? "update"} is ready</span>
+				<span className="font-medium">LangHarness {ready.version ?? "update"} is ready</span>
 				<span className="text-muted-foreground"> — restart to finish installing.</span>
 			</div>
 			<button

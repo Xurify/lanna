@@ -42,7 +42,7 @@ const usd = (n: number) => `$${n.toFixed(2)}`;
 function priceLine(e: Estimate): string {
 	if (e.slot === "dictionary") return "Free";
 	if (e.subscription) return "Included in your subscription";
-	if (e.typicalUsd === null || e.mostUsd === null) return "Its price is not in the catalog";
+	if (e.typicalUsd === null || e.mostUsd === null) return "Price not known for this model";
 	return `About ${usd(e.typicalUsd)}, at most ${usd(e.mostUsd)}`;
 }
 
@@ -70,7 +70,7 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 				setWriters(d.writers);
 				if (d.writers[0]) setWriter(d.writers[0].slot);
 			})
-			.catch(() => live && setError("Could not load the list of languages."));
+			.catch(() => live && setError("Couldn't load the list of languages. Close this and try again."));
 		return () => {
 			live = false;
 		};

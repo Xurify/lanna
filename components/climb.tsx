@@ -202,7 +202,7 @@ export function Climb({ state, next, view = "chapters", mode = "compact", goalLe
 	if (state.chapters.length === 0) {
 		return (
 			<EmptyState testid="climb-empty" title="Your climb is not set up yet">
-				<p>The map lists every level from A1 to your goal, with the chapters and units in each. It fills in once your level and goal are set.</p>
+				<p>This page lists every level from A1 to your goal, with the chapters and units in each. It fills in once your level and goal are set.</p>
 			</EmptyState>
 		);
 	}

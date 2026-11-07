@@ -183,7 +183,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 							Read today&apos;s episode
 						</Link>
 						<Link href="/speed?mode=fast" className={SECONDARY}>
-							Speed instead
+							Try Speed instead
 						</Link>
 						<Link href="/" className={SECONDARY}>
 							Today
@@ -241,7 +241,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 
 		return (
 		<TaskFrame strip={false}>
-			<TaskTop progress={phase === "intro" ? 0 : phase === "reading" ? 0.5 : 0.9} label="Re-read" count={phase === "question" ? "check" : phase === "reading" ? `${seconds} s` : `${plan.words} words`}  />
+			<TaskTop progress={phase === "intro" ? 0 : phase === "reading" ? 0.5 : 0.9} label="Read it faster" count={phase === "question" ? "question" : phase === "reading" ? `${seconds} s` : `${plan.words} words`}  />
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon="read" title="Read it faster" sub={`episode ${story.episode} · ${plan.words} words`}>
@@ -564,7 +564,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			} catch {
 				setUseMic(false);
 				setMicDenied(true);
-				setError("The browser did not give the microphone. Space marks the end of each pass instead, and nothing checks what you said.");
+				setError("The browser did not allow the microphone. Space marks the end of each pass instead, and nothing checks what you said.");
 			}
 		}
 		passStart.current = Date.now();
@@ -637,7 +637,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
 					<EmptyState
 						testid="fast-error"
-						title={/yet/i.test(error) ? "No sentences to say faster yet" : "Speed could not start"}
+						title={/yet/i.test(error) ? "No sentences for Speed yet" : "Speed could not start"}
 						action={
 							/yet/i.test(error) ? (
 								<Link href="/" className="q-btn primary">
@@ -773,7 +773,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon="fast" title="Speed" sub={`pass ${Math.min(pass + 1, FAST_PASSES)} of ${FAST_PASSES} · ${item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}`}>
 					<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground">
-						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.silent ? "Nothing heard" : last?.made ? (last.pron ? ["Made it!", "Faster!", "Full speed!"][pass] : "In time") : last?.inWindow ? "Fast, but not clear" : "Over the window"}
+						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.silent ? "Nothing heard" : last?.made ? (last.pron ? ["Made it!", "Faster!", "Full speed!"][pass] : "In time") : last?.inWindow ? "Fast, but not clear" : "Over time"}
 					</h2>
 					<div className="flex items-start gap-3">
 						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2" data-testid="fast-play">

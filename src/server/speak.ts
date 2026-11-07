@@ -174,7 +174,7 @@ function resolveEngine(opts: SpeakOptions): { engine: PiEngine; model: string } 
 	const scripted = scriptedEngine();
 	if (scripted) return scripted;
 	const real = storyEngine();
-	if (!real) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+	if (!real) throw new Error("No model is configured. Pick one in Settings → AI models.");
 	return real;
 }
 

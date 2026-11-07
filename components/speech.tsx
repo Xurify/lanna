@@ -134,6 +134,7 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 		u.volume = volume();
 		const voice = window.speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang.code));
 		if (voice) u.voice = voice;
+		else console.warn(`[Speech] this ${navigator.userAgent.includes("Electron") ? "desktop app" : "browser"} has no system voice for ${lang.tag}; nothing may play`);
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
 			resolve();
@@ -171,13 +172,15 @@ export function slowRate(speed: number): number {
  *  element cannot go above 1, so quieter ones play as they are. */
 const TARGET_DB = -20;
 const gains = new Map<string, Promise<number>>();
+const GAIN_WAIT_MS = 1500;
 
 /** The volume factor that brings a clip to TARGET_DB, from the mean power of
  *  its 50 ms windows within 30 dB of the loudest (pauses do not count). */
 function clipGain(key: string, blob: Blob): Promise<number> {
 	let gain = gains.get(key);
 	if (!gain) {
-		gain = measureGain(blob);
+		// The measure only adjusts loudness: if decoding stalls, the clip plays at full volume rather than not at all.
+		gain = Promise.race([measureGain(blob), new Promise<number>((resolve) => setTimeout(() => resolve(1), GAIN_WAIT_MS))]);
 		gains.set(key, gain);
 	}
 	return gain;
@@ -221,7 +224,11 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	const res = await fetch(url).catch(() => null);
 	// A newer call or a mute arrived while this one was loading: drop it.
 	if (mine !== generation || !soundOn()) return;
-	if (!res || res.status === 204 || !res.ok) return speakWithBrowser(text, language, rate);
+	if (!res || res.status === 204 || !res.ok) {
+		// The app's own voices failed; the system's voice is the fallback. The desktop app often has none for the language, so say why it may be silent.
+		console.warn(`[Speech] no server voice (${res ? `HTTP ${res.status}` : "no answer"}${res?.headers.get("x-tts-fallback") ? ", every voice service failed" : ""}); trying the system voice for ${language.tag}`);
+		return speakWithBrowser(text, language, rate);
+	}
 	const blob = await res.blob();
 	if (mine !== generation || !soundOn()) return;
 	const gain = await clipGain(url, blob);

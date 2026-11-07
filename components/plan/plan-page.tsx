@@ -145,7 +145,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							Re-check my level
 						</Link>
 					</div>
-					<p className="mt-3 text-xs text-ink-3">{goal.placedAt ? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.` : "No level check yet; the map credits hours as you finish units."}</p>
+					<p className="mt-3 text-xs text-ink-3">{goal.placedAt ? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.` : "No level check yet. Guided hours are credited as you finish units."}</p>
 				</section>
 
 				{/* The sliders: every date below moves as they do. */}
@@ -200,8 +200,8 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 
 				{/* The trail log: the totals, every one an outcome (src/core/stamps.ts TrailLog). */}
 				{log && (
-					<section className={CARD} data-testid="plan-log" aria-label="Trail log">
-						<h2 className={H2}>Trail log</h2>
+					<section className={CARD} data-testid="plan-log" aria-label="Totals">
+						<h2 className={H2}>Totals</h2>
 						<dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
 							{[
 								["Time studied", clock(log.minutes)],
@@ -221,7 +221,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							))}
 						</dl>
 						<p className="mt-4 text-[12.5px] leading-relaxed text-ink-3" data-testid="plan-log-hours-note">
-							Time studied is what was measured while you were active. Guided hours are the map&apos;s own clock: each stage of the road is worth some (A1 {GUIDED_HOURS.A1}, A2 {GUIDED_HOURS.A2}, B1 {GUIDED_HOURS.B1}, B2 {GUIDED_HOURS.B2}), and a unit you finish credits its share, after three lessons at the bar or one ace. They differ on purpose, so the credit stays at 0 until the first unit is done.
+							Time studied is the time measured while you were active. Guided hours are the curriculum&apos;s own count: each level is worth a set number (A1 {GUIDED_HOURS.A1}, A2 {GUIDED_HOURS.A2}, B1 {GUIDED_HOURS.B1}, B2 {GUIDED_HOURS.B2}), and each unit you finish adds its share. The two differ on purpose, so guided hours stay at 0 until your first unit is done.
 						</p>
 					</section>
 				)}
@@ -263,7 +263,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 					</ol>
 					<p className="mt-3 text-xs text-ink-3">
 						<FlagIcon className="mr-1 inline size-3 align-[-1px] text-teal" strokeWidth={1.6} />
-						The filled part is what the map credits so far: {hoursText(hoursDone)} h.
+						The filled part is the guided hours credited so far: {hoursText(hoursDone)} h.
 					</p>
 				</section>
 
@@ -273,7 +273,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 						<div className="flex items-baseline justify-between gap-3">
 							<h2 className={H2}>When can I…?</h2>
 							<Link href="/milestones" className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2" data-testid="plan-milestones-link">
-								Details, and add your own
+								See details or add your own
 							</Link>
 						</div>
 						<Timeline items={milestones} paceKnown={paceKnown} />

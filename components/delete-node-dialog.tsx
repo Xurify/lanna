@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 /** The 409 extraction_running line (owner phrasing, node interlude):
  *  the server's error names the extraction; the ACTIVITY DOCK is the
  *  surface the user actually watches drain. Exported pure for pins. */
-export const EXTRACTION_RETRY_LINE = "An extraction is running — try again when the activity dock drains.";
+export const EXTRACTION_RETRY_LINE = "The skill map is still updating. Try again when it is done.";
 
 /**
  * Node deletion (node interlude, Platform's 50bfcba engine) — the
@@ -81,8 +81,8 @@ export function DeleteNodeBody({
 			</div>
 			<p className="mt-2 text-sm text-muted-foreground" data-testid="node-permanence-line">
 				{nodes.length === 1
-					? "This permanently deletes the node — this cannot be undone."
-					: `This permanently deletes all ${nodes.length} nodes — this cannot be undone.`}
+					? "This deletes the node and its links. It cannot be undone."
+					: `This deletes all ${nodes.length} nodes and their links. It cannot be undone.`}
 			</p>
 			{failure && (
 				<div

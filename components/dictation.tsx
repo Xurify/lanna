@@ -412,12 +412,12 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 						})
 						.catch(() => {
 							if (gen === genRef.current) {
-								setError("Deepgram reconnect failed");
+								setError("Lost the Deepgram connection. Try again");
 								cleanup();
 							}
 						});
 				} else {
-					setError(`Deepgram connection lost (${ev.code})`);
+					setError(`Lost the Deepgram connection (${ev.code}). Try again`);
 					cleanup();
 				}
 			});
@@ -488,10 +488,10 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 			if (gen !== genRef.current) return;
 			const msg =
 				e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError")
-					? "Microphone permission denied"
+					? "Microphone blocked. Allow it, then try again"
 					: e instanceof Error
 						? e.message
-						: "mic unavailable";
+						: "Microphone unavailable";
 			setError(msg);
 			cleanup();
 			return;

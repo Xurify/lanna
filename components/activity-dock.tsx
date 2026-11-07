@@ -381,7 +381,7 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 					</Link>
 				)}
 				{blobs.some((b) => b.process !== "task") && (
-					<span className={feed.tasks.length > 0 ? "tabular-nums" : "ml-auto tabular-nums"} data-testid="activity-total-cost" title="Total running cost (inferred)">
+					<span className={feed.tasks.length > 0 ? "tabular-nums" : "ml-auto tabular-nums"} data-testid="activity-total-cost" title="Total cost so far (estimated)">
 						{planCostLabel(totalCost, subscriptionLabels(blobs.map((blob) => blob.model)))}
 				</span>
 				)}
@@ -428,7 +428,7 @@ function ActivityBlobRow({
 				? "Adding a language"
 				: "Video preparation"
 			: blob.process === "extraction"
-				? `Extraction — ${blob.phase ?? "running"}`
+				? `Skill map update — ${blob.phase ?? "running"}`
 				: blob.jobKind === "research"
 					? "Researcher"
 					: blob.jobKind === "demo"
@@ -437,7 +437,7 @@ function ActivityBlobRow({
 							? "Figure maker"
 							: blob.jobKind === "pdf"
 								? "PDF reader"
-								: "Sub-agent";
+								: "Helper";
 	const face = (
 		<>
 			<Icon className="size-3.5 shrink-0 text-muted-foreground" />
@@ -481,7 +481,7 @@ function ActivityBlobRow({
 				data-testid="activity-abort"
 				onClick={onAbort}
 				disabled={abortState !== undefined}
-				title={abortState === "failed" ? "Abort failed — try again" : "End this background process"}
+				title={abortState === "failed" ? "Couldn't stop it." : "Stop this background work"}
 				aria-label={`End ${label} in ${blob.title}`}
 				className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 			>
@@ -532,7 +532,7 @@ function ActivityBlobRow({
 						</a>
 					</div>
 					<div className="mt-2 text-muted-foreground/80">
-					{abortState === "failed" && "Abort failed — try again"}
+					{abortState === "failed" && "Couldn't stop it."}
 					{abortState === "pending" && "Stopping…"}
 				</div>
 				</div>

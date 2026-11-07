@@ -41,10 +41,10 @@ export function DispatchCard({ toolCallId, kind }: { toolCallId: string; kind: J
 	// whose key is gone reads as the key being needed — the deep-link
 	// lands on the SetupDialog's first-key stage on its own.
 	if (isModelsRefusal(job.error)) {
-		return <DispatchRefusedCard label={label} line="needs model setup" button="Set up models" />;
+		return <DispatchRefusedCard label={label} line="needs model setup" button="Set up a model" />;
 	}
 	if (isProviderKeyRefusal(job.error)) {
-		return <DispatchRefusedCard label={label} line="needs a provider key" button="Add a key" />;
+		return <DispatchRefusedCard label={label} line="needs a provider key" button="Add an AI key" />;
 	}
 	const failed = job.status === "error";
 	return (
@@ -110,7 +110,7 @@ function DispatchActivityCard({ job, label }: { job: JobRecord | null; label: st
 			)}
 			{!job && (
 				<div className="mt-1 text-sm text-muted-foreground" data-testid="dispatch-pending">
-					Dispatched…
+					Starting…
 				</div>
 			)}
 		</div>

@@ -220,7 +220,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">
 							{s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {s?.dailyGoal ?? 50} XP</span>
 						</b>
-						<small className="text-xs text-ink-3">{s ? (toGoal > 0 ? `${toGoal} to today's goal` : "Today's goal is met") : " "}</small>
+						<small className="text-xs text-ink-3">{s ? (toGoal > 0 ? `${toGoal} XP to today's goal` : "Today's goal is met") : " "}</small>
 					</div>
 					<div className="ml-auto flex items-center rounded-[9px] bg-well-2 p-0.5" aria-label={`${streak} days in a row, level ${s?.level.level ?? 1}`}>
 						<span className="inline-flex h-7 items-center gap-1.5 px-2.5 text-[13px] font-[550] text-ink-2">
@@ -252,10 +252,10 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 								{s && (
 									<p className="q-line dim @max-6xl:!text-[16px]" style={{ marginTop: 8 }} data-testid="plan-summary">
 										{total > 0 && done >= total ? (
-											`All ${total} things are done today.`
+											`All ${total} tasks are done today.`
 										) : (
 											<>
-												{total} things<span className="@max-6xl:hidden">{multi ? ` in ${day!.languages.length} languages` : ""} today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
+												{total} tasks<span className="@max-6xl:hidden">{multi ? ` in ${day!.languages.length} languages` : ""} today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
 												<span className="@6xl:hidden">min</span> left.
 											</>
 										)}
@@ -497,7 +497,7 @@ function SetupNext({ lang, busy, onOpen }: { lang: DayLanguage; busy: boolean; o
 				<div className="min-w-0">
 					<h3 className="@max-xl:text-[19px]">Set up {lang.english}</h3>
 					<p className="q-rv-tease" style={{ fontSize: 15 }}>
-						What it is for, what you already know, your pace, and a short level check. Opens in {lang.english}.
+						Why you are learning it, what you already know, your pace and a short level check. Opens in {lang.english}.
 					</p>
 				</div>
 				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy}>
@@ -537,7 +537,7 @@ function UpNext({ task, busy, onOpen, meta }: { task: PlanTask; busy: boolean; o
 					<h3 className="@max-xl:text-[19px]">{w.primary}</h3>
 					{w.rest && (
 						<p className="q-rv-tease" style={{ fontSize: 15 }}>
-							{task.from ? `Left from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ${w.rest.charAt(0).toUpperCase()}${w.rest.slice(1)}` : w.rest}
+							{task.from ? `Left over from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ${w.rest.charAt(0).toUpperCase()}${w.rest.slice(1)}` : w.rest}
 						</p>
 					)}
 					{meta && <p className="q-rv-meta">{meta}</p>}

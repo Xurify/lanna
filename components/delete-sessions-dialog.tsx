@@ -98,13 +98,13 @@ export function DeleteSessionsDialog({
 			<div
 				role="dialog"
 				aria-modal="true"
-				aria-label="Delete sessions"
+				aria-label="Delete chats"
 				data-testid="delete-sessions-dialog"
 				onClick={(e) => e.stopPropagation()}
 				className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 			>
 				<h2 className="text-sm font-semibold text-destructive">
-					Delete {chats.length} {chats.length === 1 ? "session" : "sessions"}?
+					Delete {chats.length} {chats.length === 1 ? "chat" : "chats"}?
 				</h2>
 				<ul className="mt-2 max-h-40 overflow-y-auto font-mono text-xs text-foreground" data-testid="delete-sessions-list">
 					{chats.map((c) => (
@@ -114,7 +114,7 @@ export function DeleteSessionsDialog({
 					))}
 				</ul>
 				<p className="mt-3 text-sm text-muted-foreground">
-					They leave your list and their background work stops. The files, with their spending record, are kept in the trash.
+					They leave your list and any background work in them stops. They are kept in the trash, with their spending record.
 				</p>
 				<label data-testid="delete-sessions-traces" className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/60 px-4 py-3">
 					<input

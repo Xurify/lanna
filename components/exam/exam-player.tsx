@@ -113,7 +113,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 					<p className="q-date">Chapter exam · {title}</p>
 						<h1 className="q-hello">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
 						<p className="q-sub max-w-md">
-						{draw ? "This chapter has no words or drills to draw from. The rest of the path still works." : "Check the connection, then try again."}
+						{draw ? "This chapter has no words or drills to draw from. The rest of the curriculum still works." : "Check the connection, then try again."}
 					</p>
 					{error && (
 						<p className="mt-3 font-ui text-sm text-miss" role="alert">
@@ -127,7 +127,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							</button>
 						)}
 						<Link href="/curriculum" className={draw ? PRIMARY : SECONDARY}>
-							Back to the path
+							Back to Curriculum
 						</Link>
 					</div>
 				</div>
@@ -147,7 +147,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-ink-2" />
 						</Stats>
 						<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
-						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved on your path." : "This attempt was not saved, so the path will not show it."}
+						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved. It shows in Curriculum." : "This attempt was not saved, so Curriculum will not show it."}
 					</p>
 					{score.misses.length > 0 && (
 						<div className="mt-8" data-testid="exam-misses" data-word-lookup-enabled="true">
@@ -181,7 +181,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							Try again
 						</button>
 						<Link href="/curriculum" className={SECONDARY}>
-							Back to the path
+							Back to Curriculum
 						</Link>
 					</div>
 				</div>

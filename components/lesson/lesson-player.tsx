@@ -96,7 +96,7 @@ function Bridges({ unit, compact = false }: { unit: UnitId; compact?: boolean })
 					className="self-start font-prose text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
 					data-testid="bridges-more"
 				>
-					Also the {rest.map((b) => b.name).join(" and ")} way
+					Show the {rest.map((b) => b.name).join(" and ")} parallels
 				</button>
 			)}
 		</>
@@ -294,7 +294,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
 			if (seq !== loadSeq.current) return;
-			if (next.items.length === 0) throw new Error(focus === "mixups" ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : focus === "personal" ? "No personal plan yet. Write your guide on My mistakes, and its practice shows up here." : "There are no sentences for this unit yet.");
+			if (next.items.length === 0) throw new Error(focus === "mixups" ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : focus === "personal" ? "No plan practice yet. Write your guide on Mistakes, and its practice shows up here." : "There are no sentences for this unit yet.");
 			setPlan(next);
 			startedAt.current = Date.now();
 			activeTime.restart();
@@ -880,15 +880,15 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 					<p className="text-foreground">{item.pair.cue}</p>
 				) : slip === "base" ? (
 					<p className="text-foreground">
-						<span className="font-semibold text-miss">“{miss}”</span> is the dictionary base form.{" "}
+						<span className="font-semibold text-miss">“{miss}”</span> is the base form.{" "}
 						{item.trigger ? (
 							<>
-								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>{item.trigger}</span>: it requires the inflected case form.
+								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>{item.trigger}</span>: it needs a case ending.
 							</>
 						) : item.form ? (
 							<>Wanted: <span className="font-semibold">{item.form}</span>.</>
 						) : (
-							<>Remember to inflect the ending for this sentence.</>
+							<>Change the ending to fit this sentence.</>
 						)}
 					</p>
 				) : slip === "same-word" ? (
@@ -1415,7 +1415,7 @@ function FeedbackSheet({
 								title={inDeck ? "This word is in your review deck" : "Add this word to your review deck"}
 							>
 								{inDeck ? <BookmarkCheckIcon className="size-4" strokeWidth={1.6} /> : <BookmarkIcon className="size-4" strokeWidth={1.6} />}
-								{inDeck ? "In your deck" : "Tricky"}
+								{inDeck ? "In your deck" : "Add to deck"}
 							</button>
 						)}
 						{canExplain && (
@@ -1632,7 +1632,7 @@ function EndScreen({
 		return () => window.removeEventListener("keydown", onKey);
 	}, [recorded, mode, focus, onAgain, onNext]);
 
-	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
+	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time's up.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
 	const where = mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title;
 
 	return (
@@ -1680,11 +1680,11 @@ function EndScreen({
 			<p className="mt-3 min-h-5 font-prose text-[13px] text-ink-3" data-testid="lesson-end-recorded">
 				{recorded ? (
 					<>
-						{goalMet ? "Daily XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
+						{goalMet ? "Today's XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
 						{recorded.queued.length > 0 && `${recorded.queued.length} missed word${recorded.queued.length === 1 ? "" : "s"} added to your review deck.`}
 					</>
 				) : failed ? (
-					"Not saved yet. The app will send it again."
+					"Not saved yet. The app will try again."
 				) : (
 					<Pulse className="h-3.5 w-64 align-middle" />
 				)}

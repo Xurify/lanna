@@ -562,8 +562,8 @@ export function pickPreTeach(segments: readonly VideoSegment[], max = PRE_TEACH_
 export function coverageBand(coverage: number): { band: "comfortable" | "stretch" | "hard" | "too-hard"; title: string; line: string } {
 	const pct = Math.round(coverage * 100);
 	if (coverage >= LISTEN_FLOOR) return { band: "comfortable", title: "Comfortable", line: `You know ${pct} of every 100 words — the range where listening works on its own.` };
-	if (coverage >= 0.88) return { band: "stretch", title: "A stretch", line: `${pct} of every 100 words known. Below ${Math.round(LISTEN_FLOOR * 100)} the ear decodes instead of follows; the words below and the step mode close the gap.` };
-	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text; step mode, one line at a time.` };
+	if (coverage >= 0.88) return { band: "stretch", title: "Within reach", line: `${pct} of every 100 words known. Below ${Math.round(LISTEN_FLOOR * 100)} you work out the words more than follow them; learning the new words first and watching line by line close the gap.` };
+	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text; watch it line by line.` };
 	return { band: "too-hard", title: "Too hard for now", line: `Only ${pct} of every 100 words known. It will be noise at the moment; keep it for later, or watch with both subtitles on.` };
 }
 

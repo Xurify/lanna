@@ -138,7 +138,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 				)}
 				{!searching && sheets && sheets.length === 0 && (
 					<EmptyState testid="cheatsheets-empty" title="No cheatsheets yet">
-						<p>A cheatsheet is a list of phrases you keep at hand. Add one phrase per line.</p>
+						<p>A cheatsheet is a list of phrases you keep at hand. Press New cheatsheet to make one.</p>
 					</EmptyState>
 				)}
 			</div>
@@ -504,7 +504,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 		setSaving(false);
 		if (!res) return setServerError("The app did not answer. Try again.");
 		const data = (await res.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string };
-		if (!res.ok || !data.sheet) return setServerError(data.message ?? "The cheatsheet was not saved.");
+		if (!res.ok || !data.sheet) return setServerError(data.message ?? "The cheatsheet was not saved. Try again.");
 		onSaved(data.sheet);
 	};
 
@@ -616,7 +616,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 						</div>
 					) : (
 						<div className="space-y-2">
-							<span className="block font-ui text-xs text-ink-3">One phrase per line: phrase | say it | meaning. A line with no | is a section name.</span>
+							<span className="block font-ui text-xs text-ink-3">One phrase per line: phrase | say it | meaning | note. A line with no | is a section name.</span>
 							<textarea
 								value={text}
 								onChange={(e) => {
@@ -716,7 +716,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 		if (!res?.ok) return setReviewNote("The words were not added. Try again.");
 		const data = (await res.json()) as ReviewState & { added: string[] };
 		setReview({ inDictionary: data.inDictionary, inReview: data.inReview });
-		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "The other words have no dictionary sentence yet.");
+		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "None of these words has a dictionary sentence yet, so none was added.");
 	};
 
 	const [moveError, setMoveError] = useState<string | null>(null);
@@ -724,7 +724,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 		setMoveError(null);
 		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}/to-repo`, { method: "POST" }).catch(() => null);
 		const data = (await res?.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string } | undefined;
-		if (!res?.ok || !data?.sheet) return setMoveError(data?.message ?? "The sheet was not moved.");
+		if (!res?.ok || !data?.sheet) return setMoveError(data?.message ?? "The sheet was not moved. Try again.");
 		onMoved(data.sheet.id);
 	};
 

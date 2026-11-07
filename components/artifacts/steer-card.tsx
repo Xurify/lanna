@@ -38,7 +38,7 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 		if (aborted?.data) return <AbortedBadge kind={aborted.data.kind ?? "job"} />;
 		return (
 				<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-				A sub-agent finished, but its result could not be displayed.
+				A background agent finished, but its result could not be displayed.
 			</div>
 		);
 	}
@@ -65,12 +65,14 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 /** The aborted-job chip: mirrors the complete-badge one-liner — the
  * teacher's wake turn acknowledges the abort in the lesson itself,
  * this just marks what happened. */
+const ABORTED_LABEL: Record<string, string> = { research: "Research", pdf: "PDF reading", demo: "Demo", visual: "Figure", job: "Background work" };
+
 function AbortedBadge({ kind }: { kind: string }) {
 	return (
 		<div data-testid="job-aborted-badge" className="flex items-center gap-2 text-xs text-muted-foreground">
 			<CircleX className="size-3.5" />
-			<span className="font-medium">{kind}</span>
-			<span>aborted by the learner</span>
+			<span className="font-medium">{ABORTED_LABEL[kind] ?? kind}</span>
+			<span>stopped by you</span>
 		</div>
 	);
 }

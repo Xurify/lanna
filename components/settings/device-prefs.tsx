@@ -72,7 +72,7 @@ export function WordLookupModeRow() {
 	return (
 		<SettingsRow
 			label="Word lookup translation"
-			hint="Hybrid combines Google Translate's surface translation with local lemma & grammar resolution. Dictionary uses only the offline lexicon; Google Translate shows direct surface translations."
+			hint="Dictionary: the app's own word list, works offline. Hybrid: Google Translate's translation, plus the base form and grammar from the dictionary. Google Translate: its translation only."
 			testid="row-word-lookup-mode"
 		>
 			<SettingsSegmented

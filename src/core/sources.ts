@@ -281,7 +281,7 @@ export const FEATURES: readonly Feature[] = [
 		route: "/progress",
 		evidence: "Related languages give a learning head start (Ringbom 2007), and spaced daily practice is the efficient way to spend minutes (Cepeda et al. 2006; Bahrick et al. 1993).",
 		limits: "The hours per level are taken between English-course figures and government course figures (Cambridge English; the US Foreign Service Institute), which are classroom hours, not self-study minutes. The head start in hours is the app's subtraction, not a result from the book.",
-		ours: "Every hour figure, the head-start estimate, and the map-credited hours.",
+		ours: "Every hour figure, the head-start estimate, and the guided hours credited for finished units.",
 		sources: ["ringbom2007", "cepeda2006", "bahrick1993", "kim2022"],
 	},
 	{

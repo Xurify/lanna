@@ -242,7 +242,7 @@ export function SettingsDialogBody({
 				const detail = (await res.json().catch(() => ({}))) as {
 					error?: string;
 				};
-				setError(`${section}: ${detail.error ?? res.status}`);
+				setError(`Couldn't save this setting: ${detail.error ?? `error ${res.status}`}`);
 				return;
 			}
 			// Store the server's answer, not the request body: the models section clamps thinking levels on write.
@@ -427,7 +427,7 @@ export function SettingsDialogBody({
 							{active === "appearance" && (
 								<SettingsSection
 									title="Appearance"
-									hint="Theme, typography, and reading interface customization."
+									hint="Day or night, the reading font and text colors."
 									testid="section-appearance"
 								>
 									<AppearanceSection
@@ -473,7 +473,7 @@ export function SettingsDialogBody({
 							{active === "learner" && (
 								<SettingsSection
 									title="Learning"
-									hint="The languages you know, and how the tutor explains things to you."
+									hint="Your languages, your goals, and how the tutor explains and checks."
 									testid="section-learner"
 								>
 									<LearnerSection onClose={onClose}>

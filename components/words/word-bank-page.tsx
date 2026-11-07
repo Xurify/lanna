@@ -254,7 +254,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.wordsMastered}
 							</p>
-							<p className="text-[11px] text-muted-foreground">Deck cards scored 80+ so far</p>
+							<p className="text-[11px] text-muted-foreground">Review cards at 80%+ recall</p>
 						</div>
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
@@ -287,7 +287,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.savedPhrasesCount}
 							</p>
-							<p className="text-[11px] text-muted-foreground">From stories and lessons</p>
+							<p className="text-[11px] text-muted-foreground">From stories, scenes and lessons</p>
 						</div>
 					</div>
 				)}
@@ -736,7 +736,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 
 							{filteredPhrases.length === 0 && !loadingPhrases && (
 								<EmptyState testid="phrases-empty" title="No saved phrases yet">
-									<p>You save phrases with Save while reading stories and in lessons. It needs no AI key.</p>
+									<p>Press Save on a phrase in a story, a scene or a lesson to keep it here, or add your own. No AI key needed.</p>
 								</EmptyState>
 							)}
 						</div>
@@ -754,6 +754,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 								<button
 									type="button"
 									onClick={() => setShowAddModal(false)}
+									aria-label="Close"
 									className="text-muted-foreground hover:text-foreground"
 								>
 									<XIcon className="size-5" />
@@ -782,7 +783,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 									</label>
 									<input
 										type="text"
-										placeholder="e.g. Today is a beautiful sunny day."
+										placeholder="for example It is nice today."
 										value={newPhraseTrans}
 										onChange={(e) => setNewPhraseTrans(e.target.value)}
 										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"

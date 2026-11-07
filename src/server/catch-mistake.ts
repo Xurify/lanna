@@ -62,7 +62,7 @@ async function makeNext(opts: CatchOptions): Promise<CatchNext> {
 	});
 	if (!target) return { view: null, reason: "No pair you mix up is ready yet. Keep practicing and check back." };
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:catch" } : storyEngine();
-	if (!resolved) return { view: null, reason: "Add an AI key in Settings to make new items." };
+	if (!resolved) return { view: null, reason: "New texts need an AI key. Add one in Settings → API keys." };
 	const language = activeLanguage().english;
 	const { text } = await runSubagent([], {
 		role: "researcher",

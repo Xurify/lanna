@@ -159,7 +159,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 						}
 					>
 						<p>The line is a dictionary sentence of five to twelve words with one or two you have not met. None fits yet.</p>
-						<p>It fills in as the words you know grow.</p>
+						<p>One will fit as you learn more words.</p>
 					</EmptyState>
 				</div>
 			</Frame>
@@ -182,7 +182,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 						{asking && item ? (
 							<>
 								<p className="mb-4 font-ui text-[13px] text-ink-3">
-									{askPhase === "morning" ? "Heard cold. Nothing is shown until you have answered." : `First hearing: ${view.morning!.caught} of ${view.morning!.words} words. The same sentence, once more.`}
+									{askPhase === "morning" ? "No text yet. It shows once you have answered." : `First hearing: ${view.morning!.caught} of ${view.morning!.words} words. The same sentence, once more.`}
 								</p>
 								<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">Type what you hear</h2>
 								<div className="flex flex-wrap items-center gap-3">
@@ -263,7 +263,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 					) : (
 						<>
 							<p className="min-w-0 font-ui text-[15px] font-[600] tracking-[-0.01em] text-foreground" data-testid="line-verdict">
-								{shown ? `${shown.phase === "morning" ? "Heard cold" : "Heard again"} · ${shown.caught} of ${shown.words} words` : ""}
+								{shown ? `${shown.phase === "morning" ? "First hearing" : "Second hearing"} · ${shown.caught} of ${shown.words} words` : ""}
 								{eveningLater && <span className="block text-[13px] font-[450] text-ink-3">It comes back later today, once you have practiced.</span>}
 								{eveningNow && <span className="block text-[13px] font-[450] text-ink-3">You have practiced today, so it can come back now, or later today.</span>}
 								{shown?.phase === "evening" && <span className="block text-[13px] font-[450] text-ink-3">Both hearings are in. The next line comes tomorrow.</span>}
@@ -300,7 +300,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 	const delta = before ? score.caught - before.caught : null;
 	return (
 		<>
-			<p className="mb-3 font-ui text-[13px] text-ink-3">{record.phase === "morning" ? "Heard cold, with no text" : "Heard again, after practice"}</p>
+			<p className="mb-3 font-ui text-[13px] text-ink-3">{record.phase === "morning" ? "First hearing, with no text" : "Second hearing, after practice"}</p>
 			<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 				<p className="font-ui text-[44px] font-semibold leading-none tracking-[-0.03em] text-foreground" data-testid="line-figure">
 					{score.caught}
@@ -318,14 +318,14 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 						{i > 0 && " "}
 						<span
 							className={m.caught ? "text-foreground" : m.almost ? "text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]" : "text-ink-4"}
-							title={m.caught ? "Caught" : m.almost ? "The right word, a mark missing" : "Not caught"}
+							title={m.caught ? "Caught" : m.almost ? "The right word, an accent missing" : "Not caught"}
 						>
 							{shown[i] ?? m.word}
 						</span>
 					</span>
 				))}
 			</p>
-			<p className="mt-2 font-ui text-[12.5px] text-ink-3">Caught words in full, missed words faded, a missing mark underlined.</p>
+			<p className="mt-2 font-ui text-[12.5px] text-ink-3">Caught words in full, missed words faded, a missing accent underlined.</p>
 			{before && <p className="mt-1 font-ui text-[12.5px] text-ink-3" data-testid="line-confound">You had seen the sentence by now, so a higher count shows what you remember, not how much better you hear.</p>}
 			{score.caught < score.words && (
 				<p className="mt-3 font-prose text-base text-ink-3" data-testid="line-typed">

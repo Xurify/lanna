@@ -49,7 +49,7 @@ export async function findSections(id: string, opts: { force?: boolean; engine?:
 	const kept = videoStore.sections(id);
 	if (kept && !opts.force) return kept;
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "test" } : storyEngine();
-	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+	if (!resolved) throw new Error("No model is configured. Pick one in Settings → AI models.");
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const prompt = sectionsPrompt(video, video.level);
 	const { text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: sectionsSystem(activeLanguage().english), prompt, maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
