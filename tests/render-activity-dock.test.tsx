@@ -217,7 +217,7 @@ describe("activity section render", () => {
 		assert.match(html, /data-testid="activity-blob-extraction"/);
 		assert.match(html, /Chain-rule demo/);
 		assert.match(html, /building sandbox…/);
-		assert.match(html, /Extraction — merging/);
+		assert.match(html, /Skill map update — merging/);
 		// Unpriced job → "—", never $0.0000 (doctrine); both blobs show it.
 		assert.match(html, /activity-blob-cost[^>]*>—</);
 		assert.match(html, /data-testid="activity-abort"/, "END on the blob face, popover-independent");

@@ -473,7 +473,7 @@ export function SettingsDialogBody({
 							{active === "learner" && (
 								<SettingsSection
 									title="Learning"
-									hint="The languages you know, and how the tutor explains things to you."
+									hint="Your languages, your goals, and how the tutor explains and checks."
 									testid="section-learner"
 								>
 									<LearnerSection onClose={onClose}>

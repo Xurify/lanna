@@ -67,7 +67,7 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 							</Link>
 						}
 					>
-						<p>When you prepare a video, it runs here and you can leave the page. It stays on this list when it is done.</p>
+						<p>When you prepare a video or add a language, it runs here and you can leave the page. It stays on this list when it is done.</p>
 					</EmptyState>
 				)}
 

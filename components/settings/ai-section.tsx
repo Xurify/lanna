@@ -41,7 +41,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
-	cheap: { label: "Cheap", roster: "Talk, Story, Why? and practice, plus the assistants that research, build demos, and grade your work" },
+	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research, build demos, and grade your work" },
 	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
 };
 
