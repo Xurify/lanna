@@ -89,7 +89,7 @@ describe("Today", () => {
 			planned: [
 				{ id: "listen", title: "Listen", done: false },
 				{ id: "read", title: "Read", done: false },
-				{ id: "fluency", title: "Say it faster", done: false },
+				{ id: "fluency", title: "Speed", done: false },
 			],
 		};
 		p.days["2026-10-26"] = { xp: 5, lessons: 0, reps: 0, reviews: 0, minutes: 14 };

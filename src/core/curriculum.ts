@@ -922,7 +922,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push(
 		rereadDay
 			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=reread" }
-			: { id: "fluency", title: "Say it faster", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=fast" },
+			: { id: "fluency", title: "Speed", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=fast" },
 	);
 
 	// Cut to the planned minutes, keeping review and the lesson. A tight

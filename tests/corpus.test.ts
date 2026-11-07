@@ -227,3 +227,15 @@ describe("spending report", () => {
 		assert.equal(sessionMode({ kind: "practice", title: "Household items", messages: [] }), "practice");
 	});
 });
+
+describe("ElevenLabs only gets languages its model reads", () => {
+	it("sends Slovak and Russian, keeps Estonian for Edge", async () => {
+		const { elevenLabsReads } = await import("../src/server/tts.ts");
+		assert.equal(elevenLabsReads("sk", "eleven_multilingual_v2"), true);
+		assert.equal(elevenLabsReads("ru", "eleven_multilingual_v2"), true);
+		assert.equal(elevenLabsReads("et", "eleven_multilingual_v2"), false, "a story's narrator voice must not take Estonian to a model that cannot read it");
+		assert.equal(elevenLabsReads("hu", "eleven_multilingual_v2"), false);
+		assert.equal(elevenLabsReads("hu", "eleven_flash_v2_5"), true);
+		assert.equal(elevenLabsReads("et", "eleven_v3"), true);
+	});
+});

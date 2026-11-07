@@ -476,7 +476,7 @@ export function AiSection({
 								className={
 									dirty
 										? "text-xs text-foreground underline-offset-2 hover:underline"
-										: "cursor-not-allowed text-xs text-muted-foreground/40 underline-offset-2"
+										: "cursor-not-allowed text-xs text-ink-4 underline-offset-2"
 								}
 							>
 								Save

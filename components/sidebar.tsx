@@ -160,6 +160,14 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	const forcedFolded = isTaskRoute(pathname);
 	// The open button shows the sidebar on the page it was pressed on only; another page folds again.
 	const [revealedOn, setRevealedOn] = useState<string | null>(null);
+	// Leaving the page forgets the reveal, so coming back to it folds again
+	// (before, a reveal on /speak stuck to every later visit of /speak).
+	// Reset during render, not in an effect, so the open sidebar never paints for a frame.
+	const [seenPath, setSeenPath] = useState(pathname);
+	if (seenPath !== pathname) {
+		setSeenPath(pathname);
+		if (revealedOn !== null) setRevealedOn(null);
+	}
 	const revealed = revealedOn === pathname;
 	const toggleCollapsed = useCallback(() => {
 		if (forcedFolded) {

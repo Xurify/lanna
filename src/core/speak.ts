@@ -63,6 +63,17 @@ export const SPEAK_SCENES: SpeakScene[] = [
 	{ id: "hotel", title: "At the hotel", blurb: "Check into a guest house", brief: "a receptionist at a guest house in the mountains; I have a reservation for two nights, need the wifi and breakfast info", task: "Check into your room, ask about breakfast times and the wifi password." },
 ];
 
+/** A scene as the Speak screen lists it: why it is offered, how often it was
+ *  said, whether it has a step-by-step script in this language, and the last time. */
+export interface SpeakSceneEntry extends SpeakScene {
+	suggested: boolean;
+	/** "chapter": the current chapter's scene; "goal": one of the learner's purposes. */
+	why: "chapter" | "goal" | null;
+	done: number;
+	scripted: boolean;
+	last: { at: string; turns: number; corrections: number } | null;
+}
+
 /** A scene as a language's story bible sets it, over the plain version. */
 export function sceneIn(scene: SpeakScene, override?: Partial<Omit<SpeakScene, "id">>): SpeakScene {
 	return override ? { ...scene, ...override } : scene;

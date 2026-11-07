@@ -78,7 +78,7 @@ export const TASK_LABEL: Record<PlanTask["id"], string> = {
 	read: "Read",
 	watch: "Watch",
 	speak: "Speak",
-	fluency: "Say it faster",
+	fluency: "Speed",
 };
 
 export const TASK_ICON: Record<PlanTask["id"], QIconName> = {

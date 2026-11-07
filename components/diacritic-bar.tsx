@@ -40,8 +40,11 @@ export function insertAtCaret(field: Field, text: string): void {
 	field.setSelectionRange(caret, caret);
 }
 
-const KEY_PX = 40; // h-10: a key is never narrower than it is tall
-const KEY_GAP_PX = 8; // gap-2
+// A key is a keycap, not a slab: a fixed 40 px square (44 px under a finger),
+// never stretched to the card's width. 44 is used for the fit so a touch
+// screen's bigger keys still fit the measured row.
+const KEY_PX = 44;
+const KEY_GAP_PX = 6; // gap-1.5
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
@@ -73,8 +76,8 @@ function KeyGrid({ letters, english, tag, type, className }: { letters: string[]
 			ref={ref}
 			data-testid="diacritic-bar"
 			// min-w-0: beside a button in a flex row, the keys' own minimum must not stop the grid shrinking.
-			className={cn("grid min-w-0 gap-2 font-prose", className)}
-			style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+			className={cn("grid min-w-0 justify-start gap-1.5 font-prose", className)}
+			style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
 			aria-label={`${english} letters`}
 		>
 			{letters.map((letter) => (
@@ -84,7 +87,7 @@ function KeyGrid({ letters, english, tag, type, className }: { letters: string[]
 					onMouseDown={(e) => e.preventDefault()}
 					onClick={(e) => type(letter, e.shiftKey)}
 					title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
-					className="lh-press flex h-10 min-w-0 items-center justify-center rounded-lg bg-well-2 text-lg font-medium text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_2px_0_var(--q-line-2)] hover:bg-well active:shadow-[0_0_0_1px_var(--q-line-2)]"
+					className="lh-press flex size-10 items-center justify-center rounded-md bg-well text-base font-medium text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well-2 pointer-coarse:size-11"
 				>
 					{letter}
 				</button>

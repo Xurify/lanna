@@ -77,6 +77,21 @@ export const TTS_MAX_CHARS = 600;
 /** The slovak.wiki narrator voice ("Slovak Wiki Dictionary Neutral"). */
 const DEFAULT_ELEVENLABS_VOICE: Record<string, string> = { sk: "YJsJ2Mt3VRr0gCiTY6DA" };
 
+/** The languages ElevenLabs' models read (elevenlabs.io/docs/models, 2026):
+ *  multilingual v2 reads these 29; flash and turbo v2.5 add Hungarian,
+ *  Norwegian and Vietnamese; v3 reads 70+ and is not limited here. A story
+ *  carries an ElevenLabs voice id for its narrator and cast, so without this
+ *  an Estonian episode went to a model that cannot read Estonian, while single
+ *  words (no voice id) went to Edge and sounded fine (owner, 2026-11-07). */
+const ELEVENLABS_V2 = new Set(["en", "ja", "zh", "de", "hi", "fr", "ko", "pt", "it", "es", "id", "nl", "tr", "fil", "pl", "sv", "bg", "ro", "ar", "cs", "el", "fi", "hr", "ms", "sk", "da", "ta", "uk", "ru"]);
+const ELEVENLABS_V25_EXTRA = new Set(["hu", "no", "nb", "vi"]);
+
+export function elevenLabsReads(code: string, model: string = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2"): boolean {
+	if (model.includes("v3")) return true;
+	if (ELEVENLABS_V2.has(code)) return true;
+	return (model.includes("flash") || model.includes("turbo")) && ELEVENLABS_V25_EXTRA.has(code);
+}
+
 const EXT_TYPES: Record<string, string> = { mp3: "audio/mpeg", wav: "audio/wav" };
 
 export function ttsCacheKey(req: TtsRequest): string {
@@ -142,6 +157,7 @@ export function migrateAudioOnce(): { moved: number; matched: number } | null {
 function cached(key: string, lang: string): TtsClip | null {
 	const hit = findAudioClip(key);
 	if (!hit) return null;
+	if (hit.tier === "elevenlabs" && !elevenLabsReads(lang)) return null;
 	const ext = hit.file.endsWith(".wav") ? "wav" : "mp3";
 	return { file: hit.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier: "cache" };
 }
@@ -152,7 +168,7 @@ function envFor(name: string, code: string): string | undefined {
 
 async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Buffer | null> {
 	const key = keyValue("ELEVENLABS_API_KEY");
-	if (!key) return null;
+	if (!key || !elevenLabsReads(lang.code)) return null;
 	const custom = req.voice && req.voice !== "male" && req.voice !== "female" ? req.voice : undefined;
 	const voice = custom ?? envFor("ELEVENLABS_VOICE_ID", lang.code) ?? DEFAULT_ELEVENLABS_VOICE[lang.code];
 	if (!voice) return null;

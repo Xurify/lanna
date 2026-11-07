@@ -1,7 +1,7 @@
 import { SpeakPlayer } from "@/components/speak/speak-player";
 import { ScriptPlayer } from "@/components/speak/script-player";
 import { scriptFor } from "@/src/core";
-import { speakState } from "@/src/server";
+import { activeLanguage, speakState } from "@/src/server";
 
 export const metadata = { title: "Speak" };
 
@@ -18,8 +18,10 @@ export default async function SpeakPage({ searchParams }: { searchParams: Promis
 	// Script mode runs its own player and must never auto-start the live
 	// scene (SpeakPlayer starts when sceneId is set). A scene without a
 	// script falls through to the normal player.
-	if (mode === "script" && sceneId && scriptFor(sceneId)) {
-		return <ScriptPlayer key={`script-${sceneId}`} sceneId={sceneId} />;
+	const language = activeLanguage();
+	const lang = { id: language.id, tag: language.tag };
+	if (mode === "script" && sceneId && scriptFor(sceneId, lang.id)) {
+		return <ScriptPlayer key={`script-${sceneId}`} sceneId={sceneId} lang={lang.id} />;
 	}
 	let state = null;
 	try {
@@ -27,5 +29,5 @@ export default async function SpeakPage({ searchParams }: { searchParams: Promis
 	} catch {
 		state = null;
 	}
-	return <SpeakPlayer key={scene ?? "pick"} initialState={state} sceneId={sceneId} typed={mode === "typed"} />;
+	return <SpeakPlayer key={scene ?? "pick"} initialState={state} sceneId={sceneId} typed={mode === "typed"} lang={lang} />;
 }

@@ -182,7 +182,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 							Read today&apos;s episode
 						</Link>
 						<Link href="/speed?mode=fast" className={SECONDARY}>
-							Say it faster instead
+							Speed instead
 						</Link>
 						<Link href="/" className={SECONDARY}>
 							Today
@@ -349,7 +349,7 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 	);
 }
 
-// ─── Say it faster ──────────────────────────────────────────────────────────
+// ─── Speed (say it faster) ──────────────────────────────────────────────────────────
 
 type FastPhase = "loading" | "ready" | "running" | "between" | "done";
 
@@ -635,7 +635,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
 					<EmptyState
 						testid="fast-error"
-						title={/yet/i.test(error) ? "No sentences to say faster yet" : "Say it faster could not start"}
+						title={/yet/i.test(error) ? "No sentences to say faster yet" : "Speed could not start"}
 						action={
 							/yet/i.test(error) ? (
 								<Link href="/" className="q-btn primary">
@@ -651,7 +651,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 					>
 						{/yet/i.test(error) ? (
 							<>
-								<p>Say it faster uses sentences built from words you have met, so it opens after your first lessons.</p>
+								<p>Speed uses sentences built from words you have met, so it opens after your first lessons.</p>
 								<p>It needs no AI key.</p>
 							</>
 						) : (
@@ -687,7 +687,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="fast-end">
 					<p className="q-date flex items-center gap-1.5">
 							<QIcon name="fast" className="text-teal" />
-							Say it faster · done
+							Speed · done
 						</p>
 						<h1 className="q-hello">
 							{scoredPasses.length ? `${clean} of ${reps.length} said clearly enough in the last window.` : `${clean} of ${reps.length} finished inside the last window.`}
@@ -769,7 +769,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			<TaskTop progress={progress} label={`${index} of ${total} sentences`} count={`${index + 1}/${total}`}  />
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
-					<PracticeCard icon="fast" title="Say it faster" sub={`pass ${Math.min(pass + 1, FAST_PASSES)} of ${FAST_PASSES} · ${item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}`}>
+					<PracticeCard icon="fast" title="Speed" sub={`pass ${Math.min(pass + 1, FAST_PASSES)} of ${FAST_PASSES} · ${item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}`}>
 					<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground">
 						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.silent ? "Nothing heard" : last?.made ? (last.pron ? ["Made it!", "Faster!", "Full speed!"][pass] : "In time") : last?.inWindow ? "Fast, but not clear" : "Over the window"}
 					</h2>
