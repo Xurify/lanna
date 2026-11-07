@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: a bolder app icon (branch `feat/bolder-app-icon`)
+
+- **Why:** the owner: "Make the icon a bit better". In the taskbar the cursor and line were thin and small, and the ink tile disappeared on a dark taskbar.
+- **What changed (E59):** the bars are 60% thicker and the drawing fills more of the tile. The app icon is now a teal tile with a white cursor and a pale teal line, so it stands out on a dark or a light taskbar. The sidebar mark is bolder too and still follows Day and Night. Regenerated: Windows, Linux, macOS (and the Icon Composer layers), the browser tab and the home-screen icons.
+- **Checked:** the icon at 16 to 128 px on a dark and a light taskbar, and the sidebar in both themes in the running app.
+- **Unverified:** the macOS 26 icon (needs `actool` on a Mac with Xcode 26).
+
 ## 7 November: the Watch shelf as cards in four tabs, and what was asked once is kept (branch `feat/watch-layout-and-cache`)
 
 - **Why:** the owner found the Watch page hard to navigate and asked for fewer requests and some caching. Rule E64.
