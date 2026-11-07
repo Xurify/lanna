@@ -2,6 +2,18 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: Review says why an answer was wrong (branch `fix/review-miss-reason`)
+
+- **Why:** the owner, on "večer" for "Po *večeri* ideme na prechádzku": "It should tell us why our answer was wrong." Review showed only "Not quite" and the correct answer, so a different word with the wrong case read as a typo.
+- **What changed:** under the correct answer, one or two lines. First what you wrote: a different word the dictionary knows ("večer" means evening: a different word. This one is večera, dinner), the dictionary form, the right word with another ending, or not a form of the word. Then what the sentence needs: the preposition before the gap and the form ("po decides the case: locative of večera (feminine)"). The reason comes from `GET /api/review/miss` (`missReason` in `src/core/review-miss.ts`), because the dictionary lives on the server. A word filed under another lemma counts as another word even when it shares the stem, which the lesson's slip guess would call another ending.
+- **Layout:** "Not quite" moved from the right end of the translation row to the start of the answer line. The answer and its reason take the place of the hidden letter keys, and the translation row keeps room for its play button, so the rating buttons no longer move when the answer is checked (they moved 8 px before, 40 px on a phone with a reason).
+- **I don't know** names the word too ("The word is večera, dinner."), so the reason is always two lines.
+- **Less empty space** (the owner: "sometimes I feel like there is too much whitespace"): the card kept an empty slot under the translation for the hints, and after the answer the keys' full height stayed empty under a one-line verdict. The meaning and base form now open in the row below the card, in place of the button that asked for them, so the slot is gone and the card is 50 px shorter at 1280 px. A right answer, or one off by accents, shows the word, its meaning and its form under the verdict, as a lesson does. The rating buttons still do not move when the answer is checked.
+- **Checked:** unit tests, and every state of the card (before the answer, one and two hints, a different word, another ending, I don't know, accents only, right) in a sandbox at 1280, 820 and 390 px wide.
+- **Unverified:** the owner's own deck.
+- **Removing a language** (the owner: "Remove the delete button from the language selector dropdown"): the language menu no longer has a bin; Settings → Learning still does. The Remove button in the confirm dialog is a solid danger red with white text (`--q-danger`, `bg-danger`). In Night it was the pink text red at 60%, which read as a muddy brown.
+- **Comments** (E69, the owner: "Code explains itself; name things until it does"): a comment is only for something outside the repo. The rule is in `AGENTS.md` under Code style → Comments, with a pointer in `CLAUDE.md` and the repo's own skills. This branch's comments follow it: two are left, a WCAG ratio and an ESM import order.
+
 ## 7 November: a long day goes to listening, and listening outside the app is logged apart (branch `feat/input-after-plan`)
 
 - **Why:** the owner asked what ten hours of Russian listening a day for a year would do, and whether the app should apply it. Rule E68, [research/outside-listening.md](research/outside-listening.md).

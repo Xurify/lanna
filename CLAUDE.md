@@ -10,3 +10,5 @@ LangHarness is a Slovak-learning fork of LearnHarness. Read these before changin
 6. [LANGHARNESS.md](LANGHARNESS.md): the user-facing description of every feature, keys and commands.
 
 Short version of the rules: every task is retrieval-first with graded, priced help; one task per Nation strand in the daily plan; cache every model or TTS output to `data/` before calling an API; Cheap slot for everything but Learn; custom UI with no native widgets and no layout shift; test with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile; name branches after the work, open a PR, do not merge.
+
+- **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule in [AGENTS.md](AGENTS.md) under **Code style → Comments**.

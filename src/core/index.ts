@@ -91,6 +91,7 @@ export * from "./lesson.ts";
 export * from "./reference-pages.ts";
 export * from "./grammar.ts";
 export * from "./form-slip.ts";
+export * from "./review-miss.ts";
 export * from "./first-try.ts";
 export * from "./word-clusters.ts";
 export * from "./pairs.ts";
