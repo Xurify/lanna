@@ -207,7 +207,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 			if (!sample.includes(lemma)) sample.push(lemma);
 		}
 	}
-	// Words the learner marked as known (E69) count as met wherever "known" is measured.
+	// Words the learner marked as known (E71) count as met wherever "known" is measured.
 	for (const [slug, w] of Object.entries(knownWordStore.read().words)) {
 		met.add(slug);
 		if (!sample.includes(w.lemma)) sample.push(w.lemma);

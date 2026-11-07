@@ -105,7 +105,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 		}).catch(() => {});
 	};
 
-	/** "I know this" (E69): the word counts as known from now on, everywhere the app measures what you know. Press again to undo. */
+	/** "I know this" (E71): the word counts as known from now on, everywhere the app measures what you know. Press again to undo. */
 	const toggleKnown = async () => {
 		if (!resolvedSlug) return;
 		const next = !known;

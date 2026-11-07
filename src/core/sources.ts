@@ -145,6 +145,13 @@ export const SOURCES: readonly Source[] = [
 	S("alhoorie2018", "Al-Hoorie 2018", 2018, "The L2 motivational self system: a meta-analysis", "Studies in Second Language Learning and Teaching 8(4)", "meta-analysis", "doi", "10.14746/ssllt.2018.8.4.2", "The ideal L2 self correlates with motivation; its link to achievement is weak."),
 	S("hershfield2011", "Hershfield et al. 2011", 2011, "Increasing saving behavior through age-progressed renderings of the future self", "Journal of Marketing Research 48", "experiment", "doi", "10.1509/jmkr.48.spl.s23"),
 	S("oettingen2002", "Oettingen & Mayer 2002", 2002, "The motivating function of thinking about the future: expectations versus fantasies", "Journal of Personality and Social Psychology 83(5)", "study", "doi", "10.1037/0022-3514.83.5.1198"),
+	// Listening outside the app
+	S("toro2005", "Toro, Sinnett & Soto-Faraco 2005", 2005, "Speech segmentation by statistical learning depends on attention", "Cognition 97(2)", "experiment", "doi", "10.1016/j.cognition.2005.01.006", "Adults found the words in a stream of artificial speech when they only listened; a task done at the same time impaired it dramatically."),
+	S("kuhl2003", "Kuhl, Tsao & Liu 2003", 2003, "Foreign-language experience in infancy: effects of short-term exposure and social interaction on phonetic learning", "PNAS 100(15)", "experiment", "doi", "10.1073/pnas.1532872100", "Infants learned Mandarin sounds from live tutors, not from the same sessions on video or audio."),
+	S("craik1996", "Craik et al. 1996", 1996, "The effects of divided attention on encoding and retrieval processes in human memory", "Journal of Experimental Psychology: General 125(2)", "experiment", "doi", "10.1037/0096-3445.125.2.159", "Dividing attention while taking words in cut later memory by a large margin."),
+	S("wright2010", "Wright et al. 2010", 2010, "Enhancing perceptual learning by combining practice with periods of additional sensory stimulation", "Journal of Neuroscience 30(38)", "experiment", "doi", "10.1523/jneurosci.0487-10.2010", "Extra exposure to a sound helped discrimination learning only when it came close to active practice."),
+	S("alexander2023", "Alexander, Van Hedger & Batterink 2023", 2023, "Learning words without trying: daily second language podcasts support word-form learning in adults", "Psychonomic Bulletin & Review 30(2)", "experiment", "doi", "10.3758/s13423-022-02190-1", "Two weeks of Italian podcasts in daily routines improved telling Italian words from non-words; meanings were not tested."),
+	S("parry2021", "Parry et al. 2021", 2021, "A systematic review and meta-analysis of discrepancies between logged and self-reported digital media use", "Nature Human Behaviour 5", "meta-analysis", "doi", "10.1038/s41562-021-01117-5", "Self-reported media time correlated with logged time at about r = 0.38, with errors in both directions."),
 ];
 
 // ─── The features ───────────────────────────────────────────────────────────
@@ -269,8 +276,17 @@ export const FEATURES: readonly Feature[] = [
 		route: "/",
 		evidence: "A balanced course gives about equal time to meaning-focused input, output, language-focused study and fluency work (Nation 2007). Short daily practice, spread out, beats long sessions (Cepeda et al. 2006; Kim & Webb 2022).",
 		limits: "The quarter each is a planning guideline for classroom courses, not a tested optimum. A real day here is about half form-focused study, well over a quarter, and the balance chart shows it.",
-		ours: "One task per strand, the minutes assigned to each task, and the order they drop out when time is short.",
+		ours: "One task per strand, the minutes assigned to each task, the order they drop out when time is short, and input (a video that waits, else ten more Listen sentences) as the step once the plan is done.",
 		sources: ["nation2007", "cepeda2006", "kim2022"],
+	},
+	{
+		id: "outside",
+		title: "Listening outside the app",
+		route: "/",
+		evidence: "Attention is what turns heard speech into words: adults found the words of an artificial language by listening alone, and a task done at the same time impaired it dramatically (Toro, Sinnett & Soto-Faraco 2005); dividing attention while taking words in cuts later memory by a large margin (Craik et al. 1996). Infants learned new sounds from a live tutor and not from the same sessions on video or audio (Kuhl, Tsao & Liu 2003).",
+		limits: "No study gives a weight for an hour of focused listening outside a course against an hour of guided study, and none compares attended with background listening in adult learners. Background listening is not worth exactly nothing: two weeks of podcasts in daily routines improved recognizing word forms, though meanings were not tested (Alexander, Van Hedger & Batterink 2023), and passive exposure helped sound learning when it came close to practice (Wright et al. 2010). Minutes you log yourself are imprecise; self-reported media time agrees only loosely with logs, in both directions (Parry et al. 2021).",
+		ours: "Focused time counts at half and background time not at all, in a speed date of its own; the measured dates, minutes, XP, streak and strand balance never include it; one entry is at most 600 minutes and a day at most 16 hours.",
+		sources: ["toro2005", "craik1996", "kuhl2003", "alexander2023", "wright2010", "parry2021"],
 	},
 	{
 		id: "milestones",

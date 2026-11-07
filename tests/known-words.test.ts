@@ -1,5 +1,5 @@
 /**
- * Words marked as known (E69): kept per profile, counted as met wherever
+ * Words marked as known (E71): kept per profile, counted as met wherever
  * "known" is measured, a kept video measured again once the list changed,
  * and the word popover's lookup saying so. Runs under an isolated
  * LH_DATA_DIR, so app modules are imported after it.

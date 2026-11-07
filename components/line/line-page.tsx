@@ -26,7 +26,7 @@ import type { QIconName } from "@/components/quiet/icon-paths";
 import { QUIET } from "@/components/ui/learn-buttons";
 import { LineHistory } from "@/components/line/line-history";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { scoreLine, type LineRecord, type LineState } from "@/src/core";
+import { scoreLine, sentenceWordSpans, type LineRecord, type LineState } from "@/src/core";
 
 type Phase = "ask-morning" | "ask-evening" | "waiting" | "done" | "no-line";
 
@@ -296,7 +296,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 	const lang = useActiveLanguage();
 	const score = scoreLine(record.sentence, record.typed);
 	const before = compare ? scoreLine(compare.sentence, compare.typed) : null;
-	const shown = record.sentence.normalize("NFC").match(/[\p{L}\p{N}]+/gu) ?? [];
+	const shown = sentenceWordSpans(record.sentence).map((w) => w.text);
 	const delta = before ? score.caught - before.caught : null;
 	return (
 		<>

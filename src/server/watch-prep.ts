@@ -1,5 +1,5 @@
 /**
- * Get ready for a video (docs/research/pre-listening.md, E68). One cheap-slot
+ * Get ready for a video (docs/research/pre-listening.md, E70). One cheap-slot
  * request writes the briefing (src/core/watch-prep.ts): what the video is
  * about, its parts, the keys to hear for, and a short version in the
  * language at the learner's level. The summary is glossed against the
@@ -46,7 +46,7 @@ const isForeign = (video: VideoRecord) => foreignCaptions({ lang: video.lang, tr
 
 /** The lines the briefing is built on. Captions in the language: the video's
  *  own lines. Foreign captions (Czech): their rendering in the language, kept
- *  on the lines since E68 and glossed here with no model call; a video kept
+ *  on the lines since E70 and glossed here with no model call; a video kept
  *  before that is rendered once more (one chunked request, on the briefing's
  *  cost) and the rendering kept in the record. */
 async function linesFor(video: VideoRecord, engine: PiEngine, usage: StoryUsage, lexicon: Lexicon | null, k: KnownWords): Promise<{ lines: PrepLine[]; rendered: boolean }> {

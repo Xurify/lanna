@@ -465,7 +465,7 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 	const lang = useActiveLanguage();
 	const [marking, setMarking] = useState<string | null>(null);
 	const [marked, setMarked] = useState<string[]>([]);
-	/** "I know this" on a pre-teach word: marked for good (E69), then the video is measured again so the share and the list follow. */
+	/** "I know this" on a pre-teach word: marked for good (E71), then the video is measured again so the share and the list follow. */
 	const markKnown = async (w: { slug?: string; lemma: string }) => {
 		if (!w.slug) return;
 		setMarking(w.slug);

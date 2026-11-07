@@ -81,6 +81,7 @@ export * from "./watch-sections.ts";
 export * from "./watch-prep.ts";
 export { videoStore } from "../store/videos.ts";
 export * from "./milestones.ts";
+export * from "./outside.ts";
 export * from "./dated-scene.ts";
 export * from "./placement.ts";
 export { placementStore } from "../store/placement.ts";

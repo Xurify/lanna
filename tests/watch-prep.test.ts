@@ -1,5 +1,5 @@
 /**
- * Get ready (E68, docs/research/pre-listening.md): the model's briefing is
+ * Get ready (E70, docs/research/pre-listening.md): the model's briefing is
  * kept only where it holds against the video's own lines (real part ranges
  * in order, keys that are runs of words of their line), the summary is
  * glossed and measured and written again once when it is too hard, the
@@ -199,7 +199,7 @@ describe("making and finishing the briefing", () => {
 
 	test("foreign captions: briefed from the rendering kept on the lines, no second request; the gaps use the rendering", async () => {
 		const v = video("prepprepp03", "cs");
-		// Czech lines as captioned, each with its Slovak rendering kept at prepare time (E68).
+		// Czech lines as captioned, each with its Slovak rendering kept at prepare time (E70).
 		const czech = ["Ahoj všichni.", "Dnes mluvíme o penězích.", "Dělala jsem hudbu.", "Potom jsem začala počítat finance.", "Bylo to těžké.", "Ale bavilo mě to.", "Děkuji za pozvání."];
 		v.segments = v.segments.map((s, i) => ({ ...s, rendered: s.sk, sk: czech[i]! }));
 		videoStore.put(v);

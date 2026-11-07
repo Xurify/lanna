@@ -1,5 +1,5 @@
 /**
- * Get ready for a video (E68, src/server/watch-prep.ts): the briefing a
+ * Get ready for a video (E70, src/server/watch-prep.ts): the briefing a
  * learner studies before a video they cannot yet follow.
  * GET ?id=<videoId> — the kept briefing, or {prep: null}. No model call.
  * POST {action: "make", videoId, force?} — the kept briefing, or one

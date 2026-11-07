@@ -85,6 +85,8 @@ import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
 import { coverageKind, watchMinutes } from "../core/watch.ts";
+import { afterPlan, type AfterPlan } from "../core/after-plan.ts";
+import { LISTEN_MINUTES } from "../core/listen.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
 import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
@@ -454,6 +456,8 @@ export interface ProgressSummary {
 	curriculum: CurriculumState;
 	/** Today's tasks on that map. */
 	plan: DailyPlan;
+	/** What Today offers once the plan is done (src/core/after-plan.ts). */
+	afterPlan: AfterPlan;
 	goal: GoalRecord;
 	projection: Projection;
 	/** This week's minutes by Nation's four strands, against a quarter each. */
@@ -501,6 +505,17 @@ function pendingWatch(day: string): { id: string; title: string; minutes: number
 				.catch(() => {});
 		}
 		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec), ...(coverageKind(v) === "none" ? { captionLang: captionLanguageName(v.trackLang!) } : { coverage: v.coverage, ...(coverageKind(v) === "estimated" ? { estimated: true } : {}) }) } : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/** The newest video added and never watched, for the step after the plan. */
+function unwatchedVideo(): { id: string; title: string; minutes: number } | undefined {
+	try {
+		const watched = new Set(videoStore.watches().map((w) => w.videoId));
+		const v = [...videoStore.list()].reverse().find((e) => !watched.has(e.id));
+		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec) } : undefined;
 	} catch {
 		return undefined;
 	}
@@ -646,6 +661,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		review,
 		curriculum,
 		plan,
+		afterPlan: afterPlan({ video: unwatchedVideo(), listensToday: d?.listens ?? 0, listenMinutes: LISTEN_MINUTES }),
 		goal,
 		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
 		balance,

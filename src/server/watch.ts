@@ -779,7 +779,7 @@ export async function prepareVideoInBackground(url: string, opts: PrepareOptions
  *  its shares match what the learner knows now. Foreign captions keep theirs:
  *  their share came from a model's rendering that is not kept. */
 /** A kept video measured under an older rule, or before the learner marked
- *  words as known (E69), is glossed again from its stored lines: no model
+ *  words as known (E71), is glossed again from its stored lines: no model
  *  call. Foreign captions are measured on the rendering kept on each line;
  *  a foreign video kept before the rendering was kept keeps its estimate. */
 export function remeasureVideo(rec: VideoRecord, now = new Date()): VideoRecord {

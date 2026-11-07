@@ -602,7 +602,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - The tutor's language segment is a template that states nothing about the language a model would have to know.
 - The work is a background task (`src/server/tasks.ts`, kind `language`); each step is kept under `build/`, and `language.json` is written last.
 - **No hardcoded target language (owner, 2026-11-05: "stop hardcoding stuff").** A prompt, a screen or a list never names Slovak when it can take the name from the running profile (`activeLanguage()`, `useActiveLanguage()`), and neutral wording is preferred where it reads naturally. A Slovak example in a prompt is `promptExamples` data and disappears for another language. Slovak story content (Robo, Bratislava, the Read settings, the Speak scenes) lives in `curriculum/slovak/world.json`. A list of the learner's own languages leaves out the one being learned. The lessons stay Slovak (`LESSON_LANGUAGE`).
-- **Removing.** An added language can be removed from the language menu; its words go, the learner's progress stays.
+- **Removing.** An added language is removed from Settings → Learning; its words go, the learner's progress stays. The language menu had a bin too until 2026-11-07, when the owner asked for it to go ("Remove the delete button from the language selector dropdown").
 
 ### E44. An added language gets a whole generated course; the model writes the rules, never the sentences (2026-11-05, branch `feat/generated-courses`)
 
@@ -830,7 +830,7 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 - The drill said out loud is **Speed**; the re-read is **Read it faster**. A heard sentence is heard the **first** or **second** time, not "cold".
 - Errors say what to do next ("Couldn't save the key. Try again."). Sentence case everywhere, no all-caps labels. The owner's tool labels stay (Probe and Recall in a chat, 2026-10-09).
 
-### E68. Get ready: a hard video is briefed before it is watched, content first, then its keys typed into their lines (2026-11-07, branch `feat/watch-get-ready`)
+### E70. Get ready: a hard video is briefed before it is watched, content first, then its keys typed into their lines (2026-11-07, branch `feat/watch-get-ready`)
 
 **Why:** the owner, on a podcast episode rated "Too hard for now" (41% known): "What if we used AI to analyze and make pre-content for me to use and learn from. I do the content and then once I feel a bit more comfortable I finally watch the video… I should be drastically so much better at hearing what is being said and noticing what the speaker(s) are talking about." Research: [research/pre-listening.md](research/pre-listening.md): before a hard listening, knowing what it is about helped more than being taught its words (Chang & Read 2006), and a short description of what a video will show, as statements, raised comprehension of it (Herron 1994; Herron et al. 1998).
 
@@ -844,7 +844,7 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 - Regenerate on the preview says what it is doing: the button spins with the preparation's step, the page opens the new version when the background task is done, and shows the task's error when it failed. Before, the task ran in the sidebar and the preview did not change.
 - Pictures per part, and a measure of whether a briefed video is understood better, are open (the research note says what to compare).
 
-### E69. A word can be marked as known, and it counts everywhere what you know is measured (2026-11-07, branch `feat/watch-get-ready`)
+### E71. A word can be marked as known, and it counts everywhere what you know is measured (2026-11-07, branch `feat/watch-get-ready`)
 
 **Why:** the owner, on a Watch preview whose "Meet these first" listed že, nie, dobrý, dosť, mať, to, môcť and už: "I actually do know all of these. Is it possible to mark words as known in our app or something?" Since E53, "known" is what the learner studied (the deck and finished word units) plus grammar words, names and numbers, so a learner who knows the basics but did not study them in the app sees them as new, and the shares read low. A suspended review card did not count as known either.
 
@@ -854,6 +854,21 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 - A kept measure follows the list: a video carries `measuredAt` and is glossed again from its stored lines when opened after a mark (`remeasureVideo`; foreign captions on their kept rendering), and a pick measured before a mark is measured again on the next refresh. No model call either way.
 - Where to mark: the tick on each "Meet these first" card (the share and the list follow at once) and **I know this** in the word popover, beside Add to Review, which also undoes it. On screen the word is "known", never "mastered" or "learned": it is the learner's say, not a measure.
 - Marked words are not review cards and earn nothing; the Milestones "words you can recall" count does not read them (it is the word check's estimate). Open: a place to see and edit the list (the Words page could list them).
+### E68. A long day goes to input, and listening outside the app is logged apart (2026-11-07, branch `feat/input-after-plan`)
+
+**Why:** the owner asked what ten hours of Russian listening a day would do and whether the app should apply it. A goal can be 600 minutes, but the plan holds about 35 to 45, and once it was done Today offered "One more lesson", deliberate study, already the strand over its quarter (P2). Listening done elsewhere had nowhere to go, and counting it like measured time would break P8 and P9. Research: [research/outside-listening.md](research/outside-listening.md).
+
+**How to apply:**
+- Once the plan is done, the next step is input: a video added and not watched, else ten more Listen sentences (`afterPlan` in `src/core/after-plan.ts`, served as `afterPlan` in the progress summary). Enter starts it. "One more lesson" stays, as the second choice. Do not make a drill the step after the plan.
+- Listening outside the app is logged by hand on Today (`components/outside-listening.tsx`, `/api/outside`), focused or background, and kept in `outside-listening.json`. It never enters `minutes`, `minutesBy`, XP, the streak, stamps or the strand balance.
+- The milestones page shows it only in its own row, "Speed with outside listening": focused minutes at `OUTSIDE_WEIGHT.focused` (0.5), background at 0, added to the measured real pace. On the learner's own Listen trend it adds nothing and says why (the slope is per hour in the app, so it already holds what outside listening did). The weights are the app's own and say so (E63, the `outside` feature in `src/core/sources.ts`). Change them only with new evidence, in the research note first.
+- No hours target, challenge or stamp for hours of listening.
+
+### E69. Comments only for what lives outside the repo (2026-11-07, branch `fix/review-miss-reason`)
+
+Owner's rule: "Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from)."
+
+**How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` and the repo's own skills point to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
 
 ## Dropped or deferred
 

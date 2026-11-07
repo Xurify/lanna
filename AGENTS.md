@@ -8,6 +8,32 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+# Rules in short
+
+- **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule under **Code style → Comments** below.
+
+# Code style
+
+## Comments
+
+Code explains itself: names, types, small functions and tests carry the meaning. When a line seems to need a comment, rename it, extract a named function or constant, or pin the behavior in a test.
+
+A comment is allowed only for something outside this repo that the code cannot show:
+
+- a browser, framework, library or platform behavior ("Safari fires blur before click", "ESM evaluates static imports first");
+- a third-party API's behavior or limit;
+- a spec the code follows (WCAG, BCP 47, HTTP, FSRS);
+- where an external number comes from (a standard, a study, a measurement), with its source.
+
+Not allowed:
+
+- restating what the code does, or naming the element ("// the rating row");
+- docblocks on this repo's own functions, types, fields, routes or test files;
+- the product reason for a choice, the owner's words, dates or history ("was X before", "since PR #12"): those go in `docs/DECISIONS.md`, the changelog and the commit message;
+- commented-out code and TODOs: delete the code; write a deferred item in `docs/DECISIONS.md` under "Dropped or deferred".
+
+Code you add or change follows this rule. An older comment goes when the code around it is next changed.
+
 # No guessing
 
 All design authority belongs to the human. **Never guess a design or implementation decision.** If anything is ambiguous — naming, behavior, data shapes, UX, defaults, scope boundaries, prompt wording — STOP and ask with the ask-user-question tool before proceeding. If you are "a little unsure," you are unsure: ask. A wrong guess is far more expensive than a question. Ask early, ask specific, one question per call.

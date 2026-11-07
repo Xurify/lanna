@@ -1,5 +1,5 @@
 /**
- * Words the learner marked as known (E69, src/store/known-words.ts).
+ * Words the learner marked as known (E71, src/store/known-words.ts).
  * GET ?slug=<slug> — {slug, known}.
  * POST {slug, known: true|false} — mark or unmark a dictionary word; answers
  * {slug, lemma, known}. 404 for a slug the dictionary does not have.

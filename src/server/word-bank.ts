@@ -66,7 +66,7 @@ export interface SelectionLookupResult {
 	alternatives?: string[];
 	inDeck?: boolean;
 	favorite?: boolean;
-	/** The learner marked it as known (E69). */
+	/** The learner marked it as known (E71). */
 	known?: boolean;
 	state?: WordLearningState;
 }

@@ -20,6 +20,7 @@ import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEn
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { fluencyStore, speakStore } from "../store/speak.ts";
+import { outsideStore } from "../store/outside.ts";
 import { videoStore } from "../store/videos.ts";
 import { knownWordStore } from "../store/known-words.ts";
 import { cheatsheetStore } from "../store/cheatsheets.ts";
@@ -203,6 +204,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage), \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats), \`sections[]\` (the study sections a model found per video) and \`preps[]\` (the briefing made per video before watching: what it is about, its parts, the keys, the short version at the learner's level, its cost, and when the keys were typed) |
 | \`cheatsheets.json\` | an array | every cheatsheet you made under Words → Cheatsheets: title, when made and edited, and its sections with their rows (the phrase, how to say it, the meaning, a note) |
 | \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, the line in the language, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
+| \`outside-listening.json\` | an array | every stretch of listening you logged outside the app: the day, minutes, \`focused\` or \`background\`, and what it was. Logged by hand, never measured |
 
 Text is UTF-8 with diacritics as written. Verdicts: \`exact\`,
 \`accents\` (right apart from diacritics), \`wrong\`. Tokens are per provider
@@ -338,6 +340,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("spoken.json", { scenes, fluency });
 	write("videos.json", { videos, watchings, sections, preps });
 	write("cheatsheets.json", cheatsheets);
+	write("outside-listening.json", outsideStore.read().entries);
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };
 }

@@ -1,6 +1,6 @@
 "use client";
 /**
- * A typed gap in a real caption line, one after another (E62, E68): the
+ * A typed gap in a real caption line, one after another (E62, E70): the
  * line is spoken, the learner types the missing word or phrase. Retrieval
  * first: the first miss shows the first letter and the line's English, the
  * second the answer and its meaning. "I don't know" is a miss. Study

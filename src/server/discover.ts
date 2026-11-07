@@ -715,7 +715,7 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 
 		s.step = "Measuring what you know of each";
 		const tooOld = now.getTime() - REMEASURE_AFTER_MS;
-		// A pick measured before the learner marked words as known (E69) is measured again.
+		// A pick measured before the learner marked words as known (E71) is measured again.
 		const marked = knownWordStore.updatedAt();
 		for (const v of Object.values(scans)) {
 			if (v.coverage === undefined || !v.trackLang) continue;

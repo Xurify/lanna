@@ -1,6 +1,6 @@
 "use client";
 /**
- * Get ready (E68, docs/research/pre-listening.md): what a learner studies
+ * Get ready (E70, docs/research/pre-listening.md): what a learner studies
  * before a video they cannot yet follow, on the preview. One cheap request
  * writes it (src/core/watch-prep.ts); the preview then shows three steps:
  * what the video is about (in English, part by part), a short version in the
