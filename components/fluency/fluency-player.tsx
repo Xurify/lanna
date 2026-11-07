@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 import { LoaderCircleIcon, MicIcon, MicOffIcon, RepeatIcon, TimerIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { speak } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, Centered, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
@@ -80,6 +80,7 @@ interface RereadOutcome {
 }
 
 function Reread({ initial }: { initial: RereadPlan | null }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [plan, setPlan] = useState<RereadPlan | null>(initial);
 	const [missing, setMissing] = useState(initial === null);
@@ -244,7 +245,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon="read" title="Read it faster" sub={`episode ${story.episode} · ${plan.words} words`}>
-					<h2 className="mb-5 font-prose text-[28px] font-semibold leading-tight tracking-[-0.028em] text-foreground" lang="sk">
+					<h2 className="mb-5 font-prose text-[28px] font-semibold leading-tight tracking-[-0.028em] text-foreground" lang={lang?.code}>
 						{story.title}
 					</h2>
 
@@ -270,7 +271,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						<div data-testid="reread-text" data-word-lookup-enabled="true">
 							<div className="rounded-[10px] bg-well px-5 py-4">
 								{story.sentences.map((s, i) => (
-									<p key={i} className="font-prose text-[21px] leading-[1.7] tracking-[-0.008em] text-foreground" lang="sk">
+									<p key={i} className="font-prose text-[21px] leading-[1.7] tracking-[-0.008em] text-foreground" lang={lang?.code}>
 										{s.sk}
 									</p>
 								))}
@@ -281,7 +282,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 					{phase === "question" && (
 						<div data-testid="reread-question" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 							<p className="q-lbl">{QUESTION_KIND_INFO[plan.question.kind ?? "recall"].label}</p>
-							<p className="mt-2 font-prose text-[22px] font-semibold leading-snug tracking-[-0.018em] text-foreground" lang="sk">
+							<p className="mt-2 font-prose text-[22px] font-semibold leading-snug tracking-[-0.018em] text-foreground" lang={lang?.code}>
 								{plan.question.q}
 							</p>
 							<div className="mt-5 grid gap-3">
@@ -289,7 +290,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 									const right = picked !== null && i === plan.question.answer;
 									const wrong = picked === i && !right;
 									return (
-										<OptionTile key={o} n={i + 1} lang="sk" disabled={picked !== null} onClick={() => void answer(i)} state={picked === null ? "idle" : right ? "right" : wrong ? "wrong" : "dim"}>
+										<OptionTile key={o} n={i + 1} lang={lang?.code} disabled={picked !== null} onClick={() => void answer(i)} state={picked === null ? "idle" : right ? "right" : wrong ? "wrong" : "dim"}>
 											{o}
 										</OptionTile>
 									);
@@ -394,6 +395,7 @@ const SILENCE_MS = 650;
 type MicWhy = "no-key" | "no-browser" | "denied";
 
 function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; pron: PronEngine | null }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [plan, setPlan] = useState<FastPlan | null>(initial);
 	const [error, setError] = useState<string | null>(null);
@@ -724,7 +726,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 										<Volume2Icon className="size-4" strokeWidth={1.6} />
 									</button>
 									<div className="min-w-0 flex-1">
-										<p className="font-prose text-lg text-foreground" lang="sk">
+										<p className="font-prose text-lg text-foreground" lang={lang?.code}>
 											{r.sentence}
 										</p>
 										<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">{r.translation}</p>
@@ -778,7 +780,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							<Volume2Icon className="size-6" strokeWidth={1.6} />
 						</button>
 						<div>
-							<p className="font-prose text-[28px] font-semibold leading-[1.4] tracking-[-0.03em] text-foreground sm:text-[36px]" lang="sk" data-testid="fast-sentence" data-word-lookup-enabled={phase === "between" ? "true" : "false"}>
+							<p className="font-prose text-[28px] font-semibold leading-[1.4] tracking-[-0.03em] text-foreground sm:text-[36px]" lang={lang?.code} data-testid="fast-sentence" data-word-lookup-enabled={phase === "between" ? "true" : "false"}>
 								{item.sentence}
 							</p>
 							<p data-no-word-lookup="true" className="mt-2 font-prose text-base text-ink-2">{item.translation}</p>

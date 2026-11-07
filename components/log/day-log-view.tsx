@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { dayLogIsEmpty, STRANDS, type DayEntry, type DayLog } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 const KIND_ICON: Record<string, QIconName> = {
 	lesson: "grammar",
@@ -38,6 +39,7 @@ export function EntryRow({ e }: { e: DayEntry }) {
 }
 
 export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) {
+	const lang = useActiveLanguage();
 	if (dayLogIsEmpty(log)) {
 		return (
 			<p className="q-line dim" data-testid="log-empty">
@@ -98,7 +100,7 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 							{log.words.length} {log.words.length === 1 ? "word" : "words"}
 						</small>
 					</h3>
-					<p className="text-[15px] leading-7 text-foreground" lang="sk">
+					<p className="text-[15px] leading-7 text-foreground" lang={lang?.code}>
 						{log.words.map((w, i) => (
 							<span key={w.lemma} title={w.gloss}>
 								{i > 0 && <span className="text-ink-4"> · </span>}
@@ -120,7 +122,7 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 					</h3>
 					<ul className="flex flex-col gap-1.5">
 						{log.mistakes.slice(0, 12).map((m, i) => (
-							<li key={i} className="text-[14px] text-ink-2" lang="sk">
+							<li key={i} className="text-[14px] text-ink-2" lang={lang?.code}>
 								<span className="q-num mr-2 text-[13px] text-ink-3">{m.time}</span>
 								<span className="text-miss line-through decoration-1">{m.given}</span> <span className="text-ink-4">→</span> <b className="font-[550] text-foreground">{m.answer}</b>
 							</li>

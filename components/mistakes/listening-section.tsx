@@ -5,6 +5,7 @@ import { LoaderCircleIcon, SparklesIcon } from "lucide-react";
 import { AiCallout } from "@/components/ai-callout";
 import { cn } from "@/lib/utils";
 import { CAUSE_MIN_SENTENCES, LISTEN_CAUSES, LISTEN_KIND_LABEL, LISTEN_MIN_MISSED, LISTEN_MIN_SESSIONS, LISTEN_MIN_TYPED, type CauseTrend, type ListenAnalysis, type ListenGuideData, type MistakesReport, type Trend } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -60,6 +61,7 @@ const DEEP_ADDS = [
 ];
 
 function DeepBody({ data }: { data: ListenGuideData }) {
+	const lang = useActiveLanguage();
 	// A read saved before these two existed has neither.
 	const noticed = data.noticed ?? [];
 	const tips = data.tips ?? [];
@@ -73,7 +75,7 @@ function DeepBody({ data }: { data: ListenGuideData }) {
 						<article key={p.title} className="rounded-xl bg-well p-4">
 							<h5 className="text-sm font-semibold text-foreground">{p.title}</h5>
 							{p.evidence && (
-								<p className="mt-1 text-sm text-ink-3" lang="sk">
+								<p className="mt-1 text-sm text-ink-3" lang={lang?.code}>
 									{p.evidence}
 								</p>
 							)}
@@ -190,6 +192,7 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 
 /** What the Listen task says about hearing: how it is going, why sentences were missed, and whether that is changing. The figures are local, no model; the deep read is the optional model call. */
 export function ListeningSection({ l, report, busy, error, onWrite }: { l: ListenAnalysis; report: MistakesReport; busy: boolean; error: string | null; onWrite: (force: boolean) => void }) {
+	const lang = useActiveLanguage();
 	if (l.sentences === 0) return null;
 	const from = l.from === l.to ? l.from : `${l.from} to ${l.to}`;
 	return (
@@ -286,10 +289,10 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 											<ul className="mt-2 flex flex-wrap gap-1.5">
 												{l.repeats.map((w) => (
 													<li key={w.word} className="q-pill grey">
-														<span lang="sk">{w.word}</span>
+														<span lang={lang?.code}>{w.word}</span>
 														{w.typedAs.length > 0 && (
 															<>
-																{" "}→ <span lang="sk">{w.typedAs.join(", ")}</span>
+																{" "}→ <span lang={lang?.code}>{w.typedAs.join(", ")}</span>
 															</>
 														)}
 													</li>
@@ -310,17 +313,17 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 							<ul className="q-card mt-2 divide-y divide-[var(--q-line)]" data-testid="listening-misses">
 								{l.misses.slice(0, 5).map((m) => (
 									<li key={`${m.at}-${m.sentence}`} className="px-4 py-3">
-										<p className="font-prose text-[16px] text-foreground" lang="sk">
+										<p className="font-prose text-[16px] text-foreground" lang={lang?.code}>
 											{m.sentence}
 										</p>
 										<p className="mt-0.5 text-[13px] text-ink-3">
-											You typed <span lang="sk">{m.given || "nothing"}</span>
+											You typed <span lang={lang?.code}>{m.given || "nothing"}</span>
 										</p>
 										<ul className="mt-1 flex flex-wrap gap-1.5">
 											{m.errors.map((e, i) => (
 												<li key={i} className="q-pill grey" title={LISTEN_CAUSES[e.cause].line}>
-													<span lang="sk">{e.target || "+"}</span>
-													{e.given && e.target ? <> → <span lang="sk">{e.given}</span></> : e.target ? " missed" : <> “{e.given}” added</>} · {LISTEN_CAUSES[e.cause].label.toLowerCase()}
+													<span lang={lang?.code}>{e.target || "+"}</span>
+													{e.given && e.target ? <> → <span lang={lang?.code}>{e.given}</span></> : e.target ? " missed" : <> “{e.given}” added</>} · {LISTEN_CAUSES[e.cause].label.toLowerCase()}
 												</li>
 											))}
 										</ul>

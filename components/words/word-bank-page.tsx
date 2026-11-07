@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, CheckCheckIcon, FootprintsIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import type { SavedPhrase, WordBankItem, WordBankSummary } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
@@ -16,6 +16,7 @@ const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 export type WordsTab = "words" | "phrases" | "cheatsheets";
 
 export function WordBankPage({ initialTab = "words", initialSheet }: { initialTab?: WordsTab; initialSheet?: string }) {
+	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
 	const setActiveTab = (tab: WordsTab) => {
@@ -707,7 +708,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 												<Volume2Icon className="size-4" />
 											</button>
 											<div>
-												<p className="font-prose text-lg font-semibold leading-snug text-foreground" lang="sk" data-word-lookup-enabled="true">
+												<p className="font-prose text-lg font-semibold leading-snug text-foreground" lang={lang?.code} data-word-lookup-enabled="true">
 													{phrase.text}
 												</p>
 												<p className="mt-1 font-prose text-sm text-muted-foreground" lang="en">

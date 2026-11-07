@@ -16,10 +16,12 @@ import { ArrowLeftIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { ATLAS_CASES, ATLAS_GENDERS, slipLine, unitInfo, type AtlasCell } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 const cellKey = (row: AtlasCell["row"], col: AtlasCell["col"]) => `${row}-${col}`;
 
 export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
+	const lang = useActiveLanguage();
 	const cells = initial ?? [];
 	const byKey = new Map(cells.map((c) => [cellKey(c.row, c.col), c]));
 	// The first mapped cell starts selected, so the rule panel is never empty.
@@ -59,7 +61,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 							{ATLAS_GENDERS.map((g) => (
 								<th key={g.id} scope="col" className="p-1 pb-2 text-xs font-semibold text-ink-2">
 									<span className="block capitalize">{g.english}</span>
-									<span className="block font-normal text-ink-3" lang="sk">
+									<span className="block font-normal text-ink-3" lang={lang?.code}>
 										{g.slovak}
 									</span>
 								</th>
@@ -71,7 +73,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 							<tr key={row.case}>
 								<th scope="row" className="p-1 text-left align-middle">
 									<span className="block text-sm font-semibold text-foreground capitalize">{row.english}</span>
-									<span className="block text-xs text-ink-3" lang="sk">
+									<span className="block text-xs text-ink-3" lang={lang?.code}>
 										{row.slovak}
 									</span>
 								</th>

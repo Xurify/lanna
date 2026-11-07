@@ -17,6 +17,7 @@ import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BA
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { ListeningSection } from "@/components/mistakes/listening-section";
+import { useActiveLanguage } from "@/components/speech";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-teal-2" },
@@ -141,6 +142,7 @@ const STEP_HREF = (p: GuideData["plan"][number]): string | null => (p.kind === "
 /** The guide as the model wrote it: the patterns behind the misses, what may
  *  trip you next (said as guesses), and a plan whose steps open the app. */
 function GuideBody({ data }: { data: GuideData }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="flex flex-col gap-5" data-testid="guide-body">
 			<div className="flex flex-col gap-3">
@@ -149,7 +151,7 @@ function GuideBody({ data }: { data: GuideData }) {
 					<article key={p.title} className="rounded-xl bg-well p-4">
 						<h4 className="text-sm font-semibold text-foreground">{p.title}</h4>
 						{p.evidence && (
-							<p className="mt-1 text-sm text-ink-3" lang="sk">
+							<p className="mt-1 text-sm text-ink-3" lang={lang?.code}>
 								{p.evidence}
 							</p>
 						)}
@@ -251,6 +253,7 @@ function Readiness({ enough }: { enough: ReturnType<typeof guideReadiness> }) {
 }
 
 function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: boolean; onWrite: (force: boolean) => void }) {
+	const lang = useActiveLanguage();
 	const { guide, guideCurrent, ai } = report;
 	const enough = guideReadiness(report.analysis);
 	return (
@@ -272,7 +275,7 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 					<div className="min-w-0">
 						<p className="text-sm font-semibold text-teal-2">Your plan practice</p>
 						<p className="text-xs text-ink-3">
-							Built from checked sentences on: <span lang="sk">{guide.practice.shown.join(", ")}</span>
+							Built from checked sentences on: <span lang={lang?.code}>{guide.practice.shown.join(", ")}</span>
 						</p>
 					</div>
 					<Link href="/lesson?mode=personal" className="q-btn primary shrink-0 pointer-coarse:min-h-11" data-testid="guide-practice">
@@ -368,13 +371,14 @@ function Step({ title, line, children }: { title: string; line: string; children
 }
 
 function MixupsSection({ a }: { a: MistakeAnalysis }) {
+	const lang = useActiveLanguage();
 	if (!a.mixups.length) return null;
 	return (
 		<Section id="mistakes-mixups" title="Words you mix up" line="One word given where another was wanted. Not tested yet means the same pattern, guessed from a pair you missed.">
 			<ul className="q-card flex flex-col divide-y divide-border">
 				{a.mixups.map((m) => (
 					<li key={m.key} className="px-4 py-3" data-testid={`mistakes-mixup-${m.key}`}>
-						<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground" lang="sk">
+						<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground" lang={lang?.code}>
 							{m.words.join(" / ")}
 						</p>
 						<p className="mt-0.5 text-xs text-ink-3">{m.line}</p>
@@ -438,6 +442,7 @@ function UnitsSection({ units }: { units: UnitTrend[] }) {
 }
 
 function WordsSection({ a }: { a: MistakeAnalysis }) {
+	const lang = useActiveLanguage();
 	const [done, setDone] = useState<Record<string, "adding" | "added" | "failed">>({});
 	if (!a.words.length) return null;
 	const add = async (slug: string) => {
@@ -454,7 +459,7 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 			<ul className="q-card flex flex-col divide-y divide-border">
 				{a.words.map((w) => (
 					<li key={w.slug} className="flex items-baseline justify-between gap-3 px-4 py-3">
-						<span className="min-w-0 text-base text-foreground" lang="sk">
+						<span className="min-w-0 text-base text-foreground" lang={lang?.code}>
 							<b className="font-semibold">{w.answer}</b>
 							<span className="text-ink-3"> · {w.lastGiven ? `you wrote “${w.lastGiven}”` : "no answer"}</span>
 						</span>

@@ -56,7 +56,7 @@ describe("the grid task (N1, N7, N8): the forms are hidden until answered, and t
 	it("the asked cell is marked by weight, the teal token and an underline (E33), and by nothing else", () => {
 		const task = firstGrid();
 		const html = renderToStaticMarkup(<TaskGrid task={task} revealed={true} />);
-		const askedForm = html.match(/<span class="([^"]*)" lang="sk">([^<]*)<\/span><\/td>/g)?.find((x) => x.includes("text-teal-2"));
+		const askedForm = html.match(/<span class="([^"]*)"(?: lang="[^"]*")?>([^<]*)<\/span><\/td>/g)?.find((x) => x.includes("text-teal-2"));
 		assert.ok(askedForm, "the asked form is teal");
 		assert.match(askedForm!, /font-bold/, "bold");
 		assert.match(askedForm!, /underline decoration-2 underline-offset-\[7px\]/, "a straight underline, offset 7 px");

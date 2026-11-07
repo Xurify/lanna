@@ -14,12 +14,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, TaskFrame, TaskTop } from "@/components/task-frame";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
 export function ScriptPlayer({ sceneId }: { sceneId: string }) {
+	const lang = useActiveLanguage();
 	const script = scriptFor(sceneId);
 	const [turnIndex, setTurnIndex] = useState(0);
 	const [miss, setMiss] = useState<{ choice: number; explanation: string } | null>(null);
@@ -147,7 +148,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 										line.role === "learner" ? "rounded-br-md bg-teal-wash" : "rounded-bl-md bg-card",
 									)}
 								>
-									<p className="font-prose text-lg text-foreground" lang="sk">
+									<p className="font-prose text-lg text-foreground" lang={lang?.code}>
 										{line.sk}
 									</p>
 									{line.shown && <p className="mt-0.5 font-ui text-xs text-muted-foreground">the right line, shown</p>}
@@ -156,7 +157,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 						))}
 					</ol>
 
-					<p className="font-prose text-xl text-foreground" lang="sk" data-testid="script-tutor" data-word-lookup-enabled="true">
+					<p className="font-prose text-xl text-foreground" lang={lang?.code} data-testid="script-tutor" data-word-lookup-enabled="true">
 						{turn.tutor.sk}
 					</p>
 					<p className="-mt-2 font-prose text-sm text-muted-foreground">{turn.tutor.en}</p>
@@ -177,7 +178,7 @@ export function ScriptPlayer({ sceneId }: { sceneId: string }) {
 									data-testid={`script-option-${i}`}
 								>
 									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
-									<span lang="sk" className="text-foreground">
+									<span lang={lang?.code} className="text-foreground">
 										{o.sk}
 									</span>
 									{failed && <XIcon className="ml-auto size-4 shrink-0 text-miss" />}
