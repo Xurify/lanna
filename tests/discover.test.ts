@@ -383,3 +383,60 @@ test("awaitingCaptions: a fresh upload without captions is looked at again; an o
 	assert.equal(core.awaitingCaptions({ publishedAt: at, scannedAt: at }, now), false);
 	assert.equal(core.awaitingCaptions({ skip: "too-long", publishedAt: at, scannedAt: at }, now), false);
 });
+
+describe("one creator's videos (search, newest, sort)", () => {
+	const now = new Date("2026-11-06T12:00:00Z");
+	const base = { title: "t", durationSec: 600, scannedAt: now.toISOString(), tracks: ["sk"], spoken: "yes" as const, trackLang: "sk", captionKind: "captions" as const, sources: ["creator" as const] };
+
+	test("agoToIso reads YouTube's English relative dates, nothing else", () => {
+		assert.equal(core.agoToIso("3 weeks ago", now), "2026-10-16T12:00:00.000Z");
+		assert.equal(core.agoToIso("Streamed 2 days ago", now), "2026-11-04T12:00:00.000Z");
+		assert.equal(core.agoToIso("pred 3 týždňami", now), undefined);
+	});
+
+	test("publishedTimes finds the date on an old renderer and on a lockup", () => {
+		const page = {
+			a: { videoRenderer: { videoId: "aaaaaaaaaaa", publishedTimeText: { simpleText: "4 months ago" } } },
+			b: { lockupViewModel: { contentType: "LOCKUP_CONTENT_TYPE_VIDEO", contentId: "bbbbbbbbbbb", metadata: { rows: [{ parts: [{ text: { content: "17K views" } }, { text: { content: "2 days ago" } }] }] } } },
+		};
+		const times = core.publishedTimes(page);
+		assert.equal(times.get("aaaaaaaaaaa"), "4 months ago");
+		assert.equal(times.get("bbbbbbbbbbb"), "2 days ago");
+	});
+
+	test("every video says why it is or is not offered; only offered ones score", () => {
+		const rows = core.creatorVideoRows(
+			[
+				{ ...base, id: "offered0000", coverage: 0.95, publishedAt: "2026-10-01T00:00:00Z" },
+				{ ...base, id: "library0000" },
+				{ ...base, id: "dismissed00" },
+				{ ...base, id: "nocaptions0", skip: "no-captions" as const },
+				{ ...base, id: "otherlang00", spoken: "no" as const },
+			],
+			{ library: new Set(["library0000"]), dismissed: new Set(["dismissed00"]), now },
+		);
+		assert.deepEqual(rows.map((r) => r.status), ["offered", "in-library", "dismissed", "no-captions", "not-in-language"]);
+		assert.ok(rows[0]!.score > 0);
+		assert.ok(rows.slice(1).every((r) => r.score === 0));
+	});
+
+	test("best puts offered videos first; newest goes by date, undated last", () => {
+		const rows = core.creatorVideoRows(
+			[
+				{ ...base, id: "oldgood0000", coverage: 0.95, publishedAt: "2026-01-01T00:00:00Z" },
+				{ ...base, id: "newskipped0", skip: "too-long" as const, publishedAt: "2026-11-05T00:00:00Z" },
+				{ ...base, id: "undated0000", coverage: 0.9 },
+				{ ...base, id: "midgood0000", coverage: 0.7, publishedAt: "2026-06-01T00:00:00Z" },
+			],
+			{ library: new Set(), dismissed: new Set(), now },
+		);
+		assert.deepEqual(core.sortCreatorVideos(rows, "newest").map((r) => r.id), ["newskipped0", "midgood0000", "oldgood0000", "undated0000"]);
+		const best = core.sortCreatorVideos(rows, "best").map((r) => r.id);
+		assert.equal(best.at(-1), "newskipped0");
+		assert.equal(best[0], "oldgood0000");
+	});
+
+	test("creatorVideos refuses a channel that is not saved", async () => {
+		await assert.rejects(discover.creatorVideos("UCzzzzzzzzzzzzzzzzzzzzzz"), /not saved/);
+	});
+});

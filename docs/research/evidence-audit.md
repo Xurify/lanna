@@ -1,6 +1,6 @@
 # Evidence audit: does each feature say only what its research supports?
 
-*LangHarness, 2026-11-06, branch `feat/sources-and-speed`. Decision: E59. Code: `src/core/sources.ts`, `components/sources/`, `app/sources`, `scripts/check-sources.ts`, `tests/sources.test.ts`.*
+*LangHarness, 2026-11-06, branch `feat/sources-and-speed`. Decision: E62. Code: `src/core/sources.ts`, `components/sources/`, `app/sources`, `scripts/check-sources.ts`, `tests/sources.test.ts`.*
 
 ## Why
 

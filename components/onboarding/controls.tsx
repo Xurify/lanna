@@ -212,7 +212,7 @@ export function LanguagePicker({
 									}}
 									placeholder="Search languages"
 									aria-label="Search languages"
-									className="w-full shrink-0 rounded-xl border-2 border-border bg-background px-3 py-2 font-ui text-sm font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-go"
+									className="q-field w-full shrink-0 rounded-xl px-3 py-2 font-ui text-sm font-semibold placeholder:font-normal"
 									data-testid={`${testid}-search`}
 								/>
 								<div className="mt-2 grid max-h-64 min-h-0 flex-1 grid-cols-2 content-start gap-1 overflow-y-auto pr-1">

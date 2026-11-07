@@ -1,5 +1,5 @@
 /**
- * SOURCES PINS (LangHarness, 2026-11-06, E59): the registry is the one
+ * SOURCES PINS (LangHarness, 2026-11-06, E62): the registry is the one
  * place pages get their research from, so it must hold together offline —
  * every cited id exists, nothing is cited twice or left over, every DOI is
  * shaped like one, and every feature points at a page that exists. The DOIs

@@ -636,7 +636,7 @@ function SceneInput({ value, onChange, placeholder, disabled, label, testId, cla
 			placeholder={placeholder}
 			disabled={disabled}
 			aria-label={label}
-			className={cn("min-h-11 min-w-0 rounded-lg bg-card px-4 py-2.5 text-base text-foreground shadow-[0_0_0_1px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[0_0_0_1.5px_var(--q-teal)] disabled:opacity-60", className)}
+			className={cn("q-field min-h-11 min-w-0 rounded-lg px-4 py-2.5 text-base", className)}
 			data-testid={testId}
 		/>
 	);

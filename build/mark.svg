@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- LangHarness: two voices — a filled speech bubble answered by an outlined one.
-       The ring is an open path that stops short of the filled bubble, so the gap is
-       real (transparent), not a dark outline. One ink (#F2F2F2, for dark surfaces).
-       1024 box, no padding. Same geometry: build/icon-flat.svg, app/icon.svg,
-       components/lh-mark.tsx, build/icon.icon/Assets. -->
-  <g transform="translate(-13.5 -2.5)"><path d="M191 683 A220 220 0 1 1 297 789 L165 825 Z" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="20" stroke-linejoin="round"/><path d="M471.7 350.6 A185 185 0 1 1 817.7 478.2 L875 610 L756.1 551.5 A185 185 0 0 1 643 584.9" fill="none" stroke="#F2F2F2" stroke-width="42" stroke-linejoin="round" stroke-linecap="round"/></g>
+  <!-- LangHarness: a text cursor waiting at an empty answer line. The two shapes
+       also read as an L. Colors are for dark surfaces: the cursor in Night ink
+       (#ECEDEE), the line in Night teal (#4CBDB7). Same geometry:
+       build/icon-flat.svg, app/icon.svg, components/lh-mark.tsx,
+       build/icon.icon/Assets. Rationale: docs/brand.md. -->
+  <rect x="282" y="252" width="72" height="520" rx="8" fill="#ECEDEE"/>
+  <rect x="402" y="700" width="340" height="72" rx="8" fill="#4CBDB7"/>
 </svg>
