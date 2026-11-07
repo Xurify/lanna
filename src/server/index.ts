@@ -78,6 +78,7 @@ export * from "./watch.ts";
 export * from "./discover.ts";
 export * from "./fragments.ts";
 export * from "./watch-sections.ts";
+export * from "./watch-prep.ts";
 export { videoStore } from "../store/videos.ts";
 export * from "./milestones.ts";
 export * from "./outside.ts";
@@ -92,6 +93,7 @@ export { isLanguageProfile, LANGUAGE_PROFILES, shownProfiles, type LanguageProfi
 export * from "./distractors.ts";
 export * from "./word-bank.ts";
 export { savedPhraseStore } from "../store/saved-phrases.ts";
+export { knownWordStore } from "../store/known-words.ts";
 export { cheatsheetStore } from "../store/cheatsheets.ts";
 export * from "./cheatsheets.ts";
 // Remote access (E21): the pairing and device-session API, for app/api/access and Settings.

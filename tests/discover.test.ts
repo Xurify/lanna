@@ -285,6 +285,57 @@ describe("the service", () => {
 		assert.doesNotMatch(saved, /cookie|SAPISID|password/i);
 	});
 
+	test("who is signed in: from the account switcher (name, handle, picture; never the email), or the page's top bar picture", () => {
+		const switcher = `)]}'\n${JSON.stringify({
+			actions: [
+				{
+					getMultiPageMenuAction: {
+						menu: {
+							multiPageMenuRenderer: {
+								header: { googleAccountHeaderRenderer: { name: { simpleText: "Kristýna" }, email: { simpleText: "kristyna@example.com" } } },
+								sections: [
+									{
+										accountSectionListRenderer: {
+											contents: [
+												{
+													accountItemSectionRenderer: {
+														contents: [
+															{ accountItem: { accountName: { simpleText: "Other" }, isSelected: false, accountPhoto: { thumbnails: [{ url: "https://yt3.ggpht.com/other=s88-c-k-c0x00ffffff-no-rj", width: 88 }] } } },
+															{ accountItem: { accountName: { runs: [{ text: "Kristýna " }, { text: "N." }] }, isSelected: true, channelHandle: { simpleText: "@kristyna" }, accountPhoto: { thumbnails: [{ url: "https://lh3.googleusercontent.com/a/ABC=s32-c", width: 32 }, { url: "https://lh3.googleusercontent.com/a/ABC=s88-c", width: 88 }] } } },
+														],
+													},
+												},
+											],
+										},
+									},
+								],
+							},
+						},
+					},
+				},
+			],
+		})}`;
+		assert.deepEqual(core.accountFromSwitcher(switcher), { name: "Kristýna N.", handle: "@kristyna", photo: "https://lh3.googleusercontent.com/a/ABC=s96-c" });
+		assert.equal(core.accountFromSwitcher(")]}'\n{}"), null);
+		assert.equal(core.accountFromSwitcher("not json"), null);
+		assert.deepEqual(core.accountFromSwitcher(JSON.stringify({ accountItem: { accountName: { simpleText: "X" }, accountPhoto: { thumbnails: [{ url: "https://evil.example/pic", width: 88 }] }, channelHandle: { simpleText: "not a handle" } } })), { name: "X" }, "a picture off Google's hosts and a malformed handle are dropped");
+
+		const kept = discover.importYouTubeAccount(switcher, new Date("2026-11-07T12:00:00Z"));
+		assert.deepEqual(kept, { at: "2026-11-07T12:00:00.000Z", name: "Kristýna N.", handle: "@kristyna", photo: "https://lh3.googleusercontent.com/a/ABC=s96-c" });
+		assert.deepEqual(discover.discoverState().youtubeAccount, kept);
+		const saved = fs.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "youtube.json"), "utf-8");
+		assert.doesNotMatch(saved, /example\.com|email/i, "the email is never kept");
+		assert.throws(() => discover.importYouTubeAccount(")]}'\n{}"), /who is signed in/);
+
+		// A page's top bar gives the picture when the switcher could not be read.
+		discover.forgetYouTubeAccount();
+		assert.equal(discover.discoverState().youtubeAccount, undefined);
+		const page = { ...PAGE, topbar: { desktopTopbarRenderer: { topbarButtons: [{ topbarMenuButtonRenderer: { avatar: { thumbnails: [{ url: "https://yt3.ggpht.com/me=s88-c-k-c0x00ffffff-no-rj", width: 88 }] } } }] } } };
+		discover.importYouTube("history", { html: `<script>var ytInitialData = ${JSON.stringify(page)};</script>` }, "account", new Date("2026-11-07T12:05:00Z"));
+		assert.deepEqual(discover.discoverState().youtubeAccount, { at: "2026-11-07T12:05:00.000Z", photo: "https://yt3.ggpht.com/me=s96-c-k-c0x00ffffff-no-rj" });
+		discover.forgetYouTubeAccount();
+	});
+
 	test("the refresh reads the feeds and lists, checks each video once, and offers only the Slovak one", async () => {
 		const engine = createFauxCore({ tokenSize: { min: 64, max: 64 } });
 		engine.setResponses([fauxAssistantMessage(JSON.stringify({ queries: ["varenie doma", "varenie doma", "\"vlog\""] }))]);

@@ -41,12 +41,13 @@ import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
+import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { Shelf } from "@/components/watch/shelf";
 import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
+import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -234,6 +235,20 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		[load],
 	);
 
+	/** A regenerate in flight for the open video: pressed at `at`, then the
+	 *  background task; the preview says so, opens the new version when the
+	 *  task is done, and shows the task's error when it failed. */
+	const [regen, setRegen] = useState<{ id: string; at: number; error?: string } | null>(null);
+	const regenTask = regen ? feed.tasks.find((t) => t.id === `video:${regen.id}`) : undefined;
+	const openRef = useRef<(id: string) => void>(() => {});
+	useEffect(() => {
+		if (!regen || regen.error || !regenTask || regenTask.status === "running" || (regenTask.finishedAt ?? 0) < regen.at) return;
+		if (regenTask.status === "done") {
+			setRegen(null);
+			if (stageRef.current === "preview") openRef.current(regen.id);
+		} else setRegen({ ...regen, error: regenTask.error ?? "Something went wrong. Try again." });
+	}, [regen, regenTask]);
+
 	const open = (id: string) => {
 		void fetch(`/api/watch?id=${encodeURIComponent(id)}`)
 			.then((r) => (r.ok ? (r.json() as Promise<VideoRecord>) : Promise.reject(new Error(`HTTP ${r.status}`))))
@@ -250,6 +265,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				setStage("error");
 			});
 	};
+	openRef.current = open;
 
 	const start = useCallback((m: WatchMode) => {
 		setMode(m);
@@ -348,7 +364,18 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		return (
 			<Frame strip={false}>
 				<TopBar video={video} step={`${video.segments.length} lines · ${formatClock(video.durationSec)}`} progress={0} onShelf={() => setStage("shelf")} />
-				<Preview video={video} canFind={state?.canPrepare !== false} onStart={start} onRegenerate={() => void prepare(video.url, video.source.kind === "transcription", true)} />
+				<Preview
+					video={video}
+					canFind={state?.canPrepare !== false}
+					onStart={start}
+					onVideo={setVideo}
+					regenerating={!!regen && regen.id === video.id && !regen.error ? { step: regenTask?.status === "running" ? regenTask.step : PREPARE_STAGE_LINE.captions } : null}
+					regenError={regen?.id === video.id ? regen.error : undefined}
+					onRegenerate={() => {
+						setRegen({ id: video.id, at: Date.now() });
+						void prepare(video.url, video.source.kind === "transcription", true);
+					}}
+				/>
 			</Frame>
 		);
 	}
@@ -434,8 +461,26 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
-function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
+function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating, regenError }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void; /** The video measured again (a word marked as known). */ onVideo: (v: VideoRecord) => void; regenerating: { step: string } | null; regenError?: string }) {
 	const lang = useActiveLanguage();
+	const [marking, setMarking] = useState<string | null>(null);
+	const [marked, setMarked] = useState<string[]>([]);
+	/** "I know this" on a pre-teach word: marked for good (E71), then the video is measured again so the share and the list follow. */
+	const markKnown = async (w: { slug?: string; lemma: string }) => {
+		if (!w.slug) return;
+		setMarking(w.slug);
+		try {
+			const res = await fetch("/api/words/known", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: w.slug, known: true }) });
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const again = await fetch(`/api/watch?id=${encodeURIComponent(video.id)}`);
+			if (again.ok) onVideo((await again.json()) as VideoRecord);
+			setMarked((m) => [...m, w.lemma]);
+		} catch {
+			// the word stays listed; the next open measures again
+		} finally {
+			setMarking(null);
+		}
+	};
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
 	const kind = coverageKind({ lang: video.lang, trackLang: video.source.trackLang, estimated: video.coverageEstimated });
@@ -501,12 +546,17 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 					</div>
 				</div>
 
+				<GetReady video={video} canFind={canFind} />
+
 				{video.preTeach.length > 0 && (
 					<div className="mt-6" data-testid="watch-preteach">
-						<p className="font-ui text-sm font-[600] text-muted-foreground">Meet these first — they come up in the video and you have not met them</p>
+						<p className="font-ui text-sm font-[600] text-muted-foreground">Meet these first — they come up in the video and you have not studied them</p>
+						<p className="mt-0.5 font-prose text-[13px] text-ink-3" role="status">
+							{marked.length ? `${marked.join(", ")} ${marked.length === 1 ? "counts" : "count"} as known now; the share and the list above follow. Undo in a word's card.` : "Know one already? Tick it and it counts as known from now on, here and everywhere the app measures what you know."}
+						</p>
 						<ul className="mt-2 grid gap-2 sm:grid-cols-2">
 							{video.preTeach.map((w) => (
-								<li key={w.slug ?? w.lemma} className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3">
+								<li key={w.slug ?? w.lemma} className={cn("flex items-start gap-3 rounded-lg border bg-card px-4 py-3", marking === w.slug && "opacity-60")}>
 									<button type="button" onClick={() => void speak(w.lemma).catch(() => {})} aria-label={`Play ${w.lemma}`} className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 										<Volume2Icon className="size-4" />
 									</button>
@@ -525,6 +575,11 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 											{w.example}
 										</span>
 									</span>
+									{w.slug && (
+										<button type="button" disabled={marking !== null} onClick={() => void markKnown(w)} aria-label={`I know ${w.lemma}`} title="I know this" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-teal-2 disabled:opacity-50 pointer-coarse:size-11" data-testid="watch-preteach-known">
+											{marking === w.slug ? <LoaderCircleIcon className="size-4 animate-spin" /> : <CheckIcon className="size-4" strokeWidth={2} />}
+										</button>
+									)}
 								</li>
 							))}
 						</ul>
@@ -551,13 +606,24 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 
 				{video.source.trackLang === video.lang && <StudySections video={video} canFind={canFind} />}
 
-				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
-					<button type="button" onClick={onRegenerate} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-regenerate">
-						<RepeatIcon className="size-4" strokeWidth={1.6} />
-						Regenerate
+				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
+					<button type="button" onClick={onRegenerate} disabled={!!regenerating || !canFind} aria-busy={!!regenerating} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 disabled:hover:bg-transparent" data-testid="watch-regenerate">
+						{regenerating ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RepeatIcon className="size-4" strokeWidth={1.6} />}
+						{regenerating ? "Regenerating…" : "Regenerate"}
 					</button>
-					<span className="font-prose text-sm text-muted-foreground">Fetches the captions again and translates them again (one model call, two for captions in another language). Your past watchings stay.</span>
+					{regenerating ? (
+						<span className="font-prose text-sm text-muted-foreground" data-testid="watch-regenerate-step">
+							{regenerating.step}. This page updates when it is done.
+						</span>
+					) : (
+						<span className="font-prose text-sm text-muted-foreground">Fetches the captions again and translates them again. One AI request, two for captions in another language. Your past watchings stay.</span>
+					)}
 				</div>
+				{regenError && (
+					<p className="mt-2 font-prose text-sm text-miss" role="alert" data-testid="watch-regenerate-error">
+						{regenError}
+					</p>
+				)}
 			</div>
 		</div>
 	);

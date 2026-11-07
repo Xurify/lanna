@@ -105,6 +105,8 @@ declare global {
 				status: () => Promise<{ available: boolean; connected: boolean }>;
 				connect: () => Promise<{ available: boolean; connected: boolean }>;
 				read: (list: "history" | "recommended" | "subscriptions") => Promise<{ signedIn: boolean; html?: string }>;
+				/** Who is signed in: YouTube's account switcher answer. Absent in a desktop app built before it. */
+				account?: () => Promise<{ signedIn: boolean; text?: string }>;
 				disconnect: () => Promise<{ available: boolean; connected: boolean }>;
 			};
 		};

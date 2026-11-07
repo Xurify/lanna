@@ -17,6 +17,10 @@
  *                          check, the words tapped and queued, XP.
  *   sections/<id>.json     the study sections a model found for the video,
  *                          with what the request cost (src/core/watch-sections.ts)
+ *   prep/<id>.json         the briefing to study before the video: what it is
+ *                          about, its parts, the keys and a short version at
+ *                          the learner's level, with what it cost
+ *                          (src/core/watch-prep.ts)
  *   sentences.jsonl        one line per model verdict on a sentence the
  *                          learner wrote for the end of a video
  *                          (SentenceCheckEntry, docs/plans/watch-sentences.md).
@@ -32,11 +36,13 @@ import { PATHS } from "../../config.ts";
 import { isVideoId, type VideoIndexEntry, type VideoRecord, type WatchLogEntry } from "../core/watch.ts";
 import type { SentenceCheckEntry } from "../core/watch-sentences.ts";
 import type { SectionsRecord } from "../core/watch-sections.ts";
+import type { PrepRecord } from "../core/watch-prep.ts";
 
 const INDEX = () => path.join(PATHS.videos, "index.jsonl");
 const WATCHES = () => path.join(PATHS.videos, "watches.jsonl");
 const SENTENCES = () => path.join(PATHS.videos, "sentences.jsonl");
 const SECTIONS = (id: string) => path.join(PATHS.videos, "sections", `${id}.json`);
+const PREP = (id: string) => path.join(PATHS.videos, "prep", `${id}.json`);
 
 function videoFile(id: string): string {
 	if (!isVideoId(id)) throw new Error(`bad video id ${id}`);
@@ -61,6 +67,34 @@ function readJsonl<T>(file: string): T[] {
 		}
 	}
 	return out;
+}
+
+function writeJson(file: string, value: unknown): void {
+	fs.mkdirSync(path.dirname(file), { recursive: true });
+	const tmp = `${file}.${process.pid}.tmp`;
+	fs.writeFileSync(tmp, JSON.stringify(value, null, 2), "utf-8");
+	fs.renameSync(tmp, file);
+}
+
+function readJson<T>(file: string): T | null {
+	try {
+		return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
+	} catch {
+		return null;
+	}
+}
+
+/** The video ids with a kept file in a folder of <id>.json. */
+function idsIn(dir: string): string[] {
+	try {
+		return fs
+			.readdirSync(dir)
+			.filter((n) => n.endsWith(".json"))
+			.map((n) => n.slice(0, -5))
+			.filter(isVideoId);
+	} catch {
+		return [];
+	}
 }
 
 function appendJsonl(file: string, value: unknown): void {
@@ -201,11 +235,24 @@ export const videoStore = {
 	},
 	putSections(rec: SectionsRecord): void {
 		if (!isVideoId(rec.videoId)) throw new Error(`not a video id: ${rec.videoId}`);
-		const file = SECTIONS(rec.videoId);
-		fs.mkdirSync(path.dirname(file), { recursive: true });
-		const tmp = `${file}.${process.pid}.tmp`;
-		fs.writeFileSync(tmp, JSON.stringify(rec, null, 2), "utf-8");
-		fs.renameSync(tmp, file);
+		writeJson(SECTIONS(rec.videoId), rec);
+	},
+	/** Every kept study-sections record. */
+	allSections(): SectionsRecord[] {
+		return idsIn(path.join(PATHS.videos, "sections")).flatMap((id) => this.sections(id) ?? []);
+	},
+	/** The briefing made for a video before watching it (src/core/watch-prep.ts), with its cost. */
+	prep(id: string): PrepRecord | null {
+		if (!isVideoId(id)) return null;
+		return readJson<PrepRecord>(PREP(id));
+	},
+	putPrep(rec: PrepRecord): void {
+		if (!isVideoId(rec.videoId)) throw new Error(`not a video id: ${rec.videoId}`);
+		writeJson(PREP(rec.videoId), rec);
+	},
+	/** Every kept briefing. */
+	allPreps(): PrepRecord[] {
+		return idsIn(path.join(PATHS.videos, "prep")).flatMap((id) => this.prep(id) ?? []);
 	},
 	appendSentence(entry: SentenceCheckEntry): void {
 		appendJsonl(SENTENCES(), entry);

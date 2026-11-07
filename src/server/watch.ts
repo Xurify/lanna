@@ -63,6 +63,7 @@ import { ensureReadmes } from "../store/corpus.ts";
 import { discoverStore } from "../store/discover.ts";
 import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
+import { knownWordStore } from "../store/known-words.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
 import { keyValue } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
@@ -710,12 +711,15 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			source: fetched.source,
 			level: k.level,
 			createdAt: now.toISOString(),
-			segments,
+			// Foreign captions keep their rendering on each line, so a later step
+			// (Get ready) can work on it without rendering the lines again.
+			segments: estimated ? segments.map((s, i) => ({ ...s, rendered: measured[i]!.sk })) : segments,
 			questions,
 			preTeach,
 			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
 			expected: Math.round(videoExpected(measured) * 1000) / 1000,
 			measure: MEASURE_VERSION,
+			measuredAt: now.toISOString(),
 			wordCount: words.length,
 			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
 			usage,
@@ -774,21 +778,34 @@ export async function prepareVideoInBackground(url: string, opts: PrepareOptions
  *  glossed again from its stored lines (local, no model call) and saved, so
  *  its shares match what the learner knows now. Foreign captions keep theirs:
  *  their share came from a model's rendering that is not kept. */
-export function remeasureVideo(rec: VideoRecord): VideoRecord {
-	if (rec.measure === MEASURE_VERSION || foreignCaptions({ lang: rec.lang, trackLang: rec.source.trackLang })) return rec;
+/** A kept video measured under an older rule, or before the learner marked
+ *  words as known (E71), is glossed again from its stored lines: no model
+ *  call. Foreign captions are measured on the rendering kept on each line;
+ *  a foreign video kept before the rendering was kept keeps its estimate. */
+export function remeasureVideo(rec: VideoRecord, now = new Date()): VideoRecord {
+	const marked = knownWordStore.updatedAt();
+	const stale = rec.measure !== MEASURE_VERSION || (!!marked && (!rec.measuredAt || rec.measuredAt < marked));
+	if (!stale) return rec;
+	const foreign = foreignCaptions({ lang: rec.lang, trackLang: rec.source.trackLang });
+	if (foreign && !rec.segments.every((s) => s.rendered)) return rec;
 	try {
 		const lexicon = loadLexicon();
-		const segments = glossSegments(rec.segments, rec.segments.map((s) => s.en), lexicon, knownWords(lexicon));
-		const words = segments.flatMap((s) => s.tokens.filter((t) => t.word));
+		const k = knownWords(lexicon);
+		const en = rec.segments.map((s) => s.en);
+		const segments = foreign ? rec.segments : glossSegments(rec.segments, en, lexicon, k);
+		const measured = foreign ? glossSegments(rec.segments.map((s) => ({ start: s.start, end: s.end, sk: s.rendered! })), en, lexicon, k) : segments;
+		const words = measured.flatMap((s) => s.tokens.filter((t) => t.word));
 		const next: VideoRecord = {
 			...rec,
 			segments,
-			coverage: Math.round(videoCoverage(segments) * 1000) / 1000,
-			expected: Math.round(videoExpected(segments) * 1000) / 1000,
+			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
+			expected: Math.round(videoExpected(measured) * 1000) / 1000,
 			wordCount: words.length,
 			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(activeLanguage().tag))).size,
-			preTeach: pickPreTeach(segments, undefined, commonness(lexicon)),
+			preTeach: pickPreTeach(measured, undefined, commonness(lexicon)),
 			measure: MEASURE_VERSION,
+			measuredAt: now.toISOString(),
+			...(foreign ? { coverageEstimated: true } : {}),
 		};
 		videoStore.put(next);
 		return next;

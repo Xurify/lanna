@@ -1,8 +1,29 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { alignWords, analyzeListening, CAUSE_MIN_SENTENCES, causeOfSub, holm, LISTEN_MIN_TYPED, readTyped, twoProportionZ, type LoggedListen } from "../src/core/listen-analysis.ts";
+import { alignWords, analyzeListening, CAUSE_MIN_SENTENCES, causeOfSub, holm, LISTEN_MIN_TYPED, listenWords, readTyped, sentenceWordSpans, twoProportionZ, type LoggedListen } from "../src/core/listen-analysis.ts";
 
 const causes = (sentence: string, given: string, stretch: string[] = []) => readTyped(sentence, given, stretch).map((e) => e.cause);
+
+describe("the words of a sentence line up with the typed ones", () => {
+	it("an apostrophe inside a word is part of the word: d'alej typed as dalej is right", () => {
+		assert.deepEqual(listenWords("Ide d'alej."), ["ide", "dalej"]);
+		assert.deepEqual(readTyped("Ide d'alej.", "ide dalej"), [], "typed without the apostrophe is right");
+		assert.deepEqual(readTyped("Ide d'alej.", "ide d'alej"), []);
+		assert.deepEqual(sentenceWordSpans("Ide d’alej.").map((w) => w.text), ["Ide", "d’alej"], "shown as written");
+	});
+
+	it("a hyphen separates words, so dve-tri and dve tri are the same two words", () => {
+		assert.deepEqual(listenWords("Dve-tri mapy."), ["dve", "tri", "mapy"]);
+		assert.deepEqual(readTyped("Dve-tri mapy.", "dve tri mapy"), []);
+	});
+
+	it("the words shown and the words compared have the same count, so a mark sits on its own word", () => {
+		for (const s of ["Ide d'alej, dve-tri mapy.", "Afrika je na mape malá.", "Čo by si poradila ľuďom, ktorí chcú zmenu?"]) {
+			assert.equal(sentenceWordSpans(s).length, listenWords(s).length, s);
+		}
+	});
+});
+
 
 describe("reading one typed sentence", () => {
 	it("calls a missing mark by the sound it stands for when the learner types marks", () => {

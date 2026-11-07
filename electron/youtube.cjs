@@ -7,10 +7,12 @@
  * with its own browser session (partition "persist:lh-youtube", nothing
  * shared with the app window), and the main process later fetches three
  * pages through that session: the history, the home page's
- * recommendations and the subscribed channels. Only the page text leaves
- * this file; the renderer hands it to the server, which keeps the lists of
- * videos and channels (src/server/discover.ts). Cookies stay in the
- * session's own storage; Disconnect clears it.
+ * recommendations and the subscribed channels, and YouTube's account
+ * switcher, which says who is signed in. Only the page text leaves this
+ * file; the renderer hands it to the server, which keeps the lists of
+ * videos and channels and the account's name, handle and picture link
+ * (src/server/discover.ts). Cookies stay in the session's own storage;
+ * Disconnect clears it.
  *
  * The sign-in window may go to Google's and YouTube's own hosts only and
  * has no preload. Google may refuse a sign-in from a window it does not
@@ -24,7 +26,10 @@ const LISTS = {
 	recommended: "https://www.youtube.com/",
 	subscriptions: "https://www.youtube.com/feed/channels",
 };
+/** Who is signed in: YouTube's own account menu data (the name, the handle, the picture). */
+const ACCOUNT = "https://www.youtube.com/getAccountSwitcherEndpoint";
 const MAX_PAGE = 12_000_000;
+const MAX_ACCOUNT = 2_000_000;
 
 /** Google's and YouTube's hosts: the sign-in flow, consent and 2-step pages. */
 function allowedUrl(target) {
@@ -110,6 +115,15 @@ function createYouTube({ session, BrowserWindow, userAgent }) {
 		return { signedIn: true, html: html.length > MAX_PAGE ? html.slice(0, MAX_PAGE) : html };
 	}
 
+	/** The account switcher's answer, fetched through the signed-in session. */
+	async function account() {
+		if (!(await signedIn())) return { signedIn: false };
+		const res = await ses().fetch(ACCOUNT, { credentials: "include", headers: { "accept-language": "en-US,en;q=0.9", "x-origin": "https://www.youtube.com" } });
+		if (!res.ok) throw new Error(`YouTube answered ${res.status}.`);
+		const text = await res.text();
+		return { signedIn: true, text: text.length > MAX_ACCOUNT ? text.slice(0, MAX_ACCOUNT) : text };
+	}
+
 	async function disconnect() {
 		if (win && !win.isDestroyed()) win.close();
 		await ses().clearStorageData();
@@ -121,11 +135,12 @@ function createYouTube({ session, BrowserWindow, userAgent }) {
 		status: async () => ({ available: true, connected: await signedIn() }),
 		connect,
 		read,
+		account,
 		disconnect,
 	};
 }
 
-/** The renderer's only door to it: status, connect, read a list, disconnect. */
+/** The renderer's only door to it: status, connect, read a list, who is signed in, disconnect. */
 function registerYouTubeIPC(ipcMain, { trusted, youtube, BrowserWindow }) {
 	ipcMain.handle("lh:youtube", async (event, command) => {
 		if (!trusted(event)) throw new Error("Untrusted desktop request.");
@@ -133,6 +148,7 @@ function registerYouTubeIPC(ipcMain, { trusted, youtube, BrowserWindow }) {
 		if (op === "status") return youtube.status();
 		if (op === "connect") return youtube.connect(BrowserWindow.fromWebContents(event.sender) ?? undefined);
 		if (op === "read" && typeof command.list === "string" && Object.hasOwn(LISTS, command.list)) return youtube.read(command.list);
+		if (op === "account") return youtube.account();
 		if (op === "disconnect") return youtube.disconnect();
 		throw new Error("Unsupported YouTube request.");
 	});

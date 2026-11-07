@@ -179,7 +179,9 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(e.startedAt, usd);
 		}
 	}
-	// Videos prepared for the Watch task: the translation and the questions.
+	// Videos prepared for the Watch task: the translation and the questions,
+	// then what was asked of a video once kept: its study sections and its
+	// briefing (Get ready).
 	let videosUsd = 0;
 	let videosUnpriced = 0;
 	const videoIndex = videoStore.list();
@@ -190,6 +192,14 @@ export function usageReport(now = new Date()): UsageReport {
 		else {
 			videosUsd += usd;
 			addMonth(e.createdAt, usd);
+		}
+	}
+	for (const r of [...videoStore.allSections(), ...videoStore.allPreps()]) {
+		const usd = safeTurnCost(r.usage);
+		if (usd === null) videosUnpriced++;
+		else {
+			videosUsd += usd;
+			addMonth(r.createdAt, usd);
 		}
 	}
 	// Placement checks: the judged answers and the Socratic stage.

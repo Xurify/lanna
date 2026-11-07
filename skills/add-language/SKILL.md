@@ -5,6 +5,8 @@ description: Guides the agent to scaffold, configure, and validate a new languag
 
 # Add Language Skill
 
+- **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule in [AGENTS.md](../../AGENTS.md) under **Code style → Comments**.
+
 Use this skill whenever the user asks to add, configure, or support a new target language in LangHarness (e.g. Czech, Romanian, German, Spanish, French, Italian, Japanese, etc.).
 
 ## Philosophy & Core Rules

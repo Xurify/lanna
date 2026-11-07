@@ -64,6 +64,10 @@ export interface VideoSegment {
 	sk: string;
 	en: string;
 	tokens: StoryToken[];
+	/** Foreign captions (Czech for Slovak): the line as a speaker of the
+	 *  learner's language would say it, the model's rendering the known-word
+	 *  share was measured on (E53). Absent on videos kept before it was kept. */
+	rendered?: string;
 }
 
 export type CaptionSource = "captions" | "auto-captions" | "transcription";
@@ -116,6 +120,9 @@ export interface VideoRecord {
 	/** Which measuring rule `coverage` and `expected` came from (MEASURE_VERSION).
 	 *  A kept video with an older one is measured again from its stored lines. */
 	measure?: number;
+	/** When `coverage` was last measured; a video measured before the learner
+	 *  marked words as known (E71) is measured again from its stored lines. */
+	measuredAt?: string;
 	wordCount: number;
 	/** Distinct dictionary words the learner has not met. */
 	unknownCount: number;
@@ -253,7 +260,7 @@ export type PrepareStage = "captions" | "transcribing" | "translating" | "questi
 export const PREPARE_STAGE_LINE: Record<PrepareStage, string> = {
 	captions: "Fetching the captions from YouTube",
 	transcribing: "No captions — transcribing the audio",
-	translating: "Translating every line (cheap model slot, once)",
+	translating: "Translating every line (one AI request)",
 	questions: "Writing the comprehension questions",
 	saving: "Glossing every word and saving",
 	done: "Ready",
@@ -563,8 +570,8 @@ export function coverageBand(coverage: number): { band: "comfortable" | "stretch
 	const pct = Math.round(coverage * 100);
 	if (coverage >= LISTEN_FLOOR) return { band: "comfortable", title: "Comfortable", line: `You know ${pct} of every 100 words — the range where listening works on its own.` };
 	if (coverage >= 0.88) return { band: "stretch", title: "Within reach", line: `${pct} of every 100 words known. Below ${Math.round(LISTEN_FLOOR * 100)} you work out the words more than follow them; learning the new words first and watching line by line close the gap.` };
-	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text; watch it line by line.` };
-	return { band: "too-hard", title: "Too hard for now", line: `Only ${pct} of every 100 words known. It will be noise at the moment; keep it for later, or watch with both subtitles on.` };
+	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text: get ready first, then watch it line by line.` };
+	return { band: "too-hard", title: "Too hard for now", line: `Only ${pct} of every 100 words known. It will be noise at the moment: get ready first, keep it for later, or watch with both subtitles on.` };
 }
 
 // ─── XP, the listening-speed summary ────────────────────────────────────────

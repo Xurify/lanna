@@ -97,6 +97,9 @@ where the format is not obvious.
   typed, verdict, rating, when; on a form card also the drill its sentence
   practices, the word's gender and the slip); \`meta.json\` holds settings
   and how many new cards each day introduced.
+- \`known.json\`: the words you marked as known (I know this): each word's
+  slug, dictionary form and when, and \`updatedAt\`. They count as known
+  wherever the app measures what you know.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
   tutor read (\`first\`, split \`byGender\`).
@@ -249,7 +252,9 @@ everything the app made of its captions, paid for once.
   \`level\` (yours when it was prepared); \`segments[]\`: every line with
   \`start\`/\`end\` (seconds), \`sk\`, \`en\` (the translation) and
   \`tokens[]\` (every word with the dictionary's \`slug\`, \`lemma\`,
-  \`gloss\`, \`cat\`, \`gender\`, and \`fresh\` when you had not met it);
+  \`gloss\`, \`cat\`, \`gender\`, and \`fresh\` when you had not met it),
+  and for captions in another language \`rendered\` (the line as a Slovak
+  speaker would say it, the model's rendering the known share was measured on);
   \`preTeach[]\` (the unknown words worth meeting first, with how often
   each appears); \`questions[]\` (in the language, the \`answer\` index, the
   \`kind\`); \`coverage\` (share of running words you were expected to
@@ -268,7 +273,9 @@ everything the app made of its captions, paid for once.
   video, so the known-word share can be measured again as you learn);
   \`youtube.json\` (what was read from your YouTube account or a Takeout
   export: the videos of your history and recommendations and your
-  subscriptions, with when each was read; no password, cookie or token);
+  subscriptions, with when each was read, and \`account\`: the name, @handle
+  and picture link of the account you were signed in as; no password, cookie,
+  token or email);
   \`searches.json\` (the searches the cheap model wrote from your interests,
   with what they cost); \`avatars.json\` (links to channel pictures);
   \`dismissed.json\` (videos you said are not for you);
@@ -276,6 +283,7 @@ everything the app made of its captions, paid for once.
   \`lines/<id>.json\` (a video's caption lines with their times, so its best
   stretches can be found again without YouTube).
 - \`sections/<id>.json\`: the study sections a model found for a video: each section's first and last line, its title, why it is worth studying and the words to practice (each one a word of its line), the model, the lines it saw and what the request cost. Found again only when you ask.
+- \`prep/<id>.json\`: the briefing made before a video you cannot yet follow (Get ready): \`about\` (what the video is and who speaks, in English), \`parts[]\` (\`from\`, \`to\`, \`what\`: ranges of real lines with one statement each), \`keys[]\` (the words and short phrases that carry it, each copied from its line: \`at\`, \`token\`, \`span\`, \`text\`, \`why\`, and the dictionary's \`lemma\`, \`slug\`, \`gloss\` for a single word), \`summary[]\` (a short version in the language at your level, written by the model, every word glossed) with \`summaryKnown\` and \`summaryExpected\` (the shares of its words you know and the level expects), \`drafts\`, the model, the lines it saw, \`lines[]\` (Czech captions only: the Slovak rendering of the lines the briefing was built on, glossed), what it cost, and \`done\` (the last time you typed the words: when, right, total, XP). Made again only when you ask.
 - \`sentences.jsonl\`: one line per model verdict on a sentence written at the end of a video: \`videoId\`, \`lemma\`, \`sentence\`, \`ok\`, \`corrected\`, \`why\`, \`model\`, \`at\`. A program's refusal is not kept.
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
   \`ms\` (the wall-clock time since the start), \`activeMs\` (the playing
