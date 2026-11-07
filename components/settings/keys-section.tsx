@@ -359,7 +359,7 @@ function PlainSettingRow({
 					autoComplete="off"
 					spellCheck={false}
 					data-testid={`${testid}-input`}
-					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground/60 transition-[color,background-color,border-color,box-shadow] hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
+					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-ink-4 transition-[color,background-color,border-color,box-shadow] hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
 				/>
 			</div>
 			{error && (

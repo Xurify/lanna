@@ -45,6 +45,8 @@ export interface AudioClipEntry {
 	voice: AudioVoice;
 	/** Which engine spoke it ("elevenlabs" | "edge" | "piper"); "unknown" for clips migrated without a record. */
 	tier: string;
+	/** ElevenLabs only: the model that spoke it. Absent on clips from before 2026-11-07. */
+	model?: string;
 	/** The exact text spoken; null only for migrated clips whose text could not be recovered. */
 	text: string | null;
 	/** Path relative to <data>/audio, forward slashes. */
@@ -141,12 +143,13 @@ export function findAudioClip(key: string): (AudioClipEntry & { absolute: string
 }
 
 /** Write a clip and its index line; returns the entry with its absolute path. */
-export function storeAudioClip(input: { key: string; lang: string; voice: AudioVoice; tier: string; text: string; ext: "mp3" | "wav"; data: Buffer; now?: Date }): AudioClipEntry & { absolute: string } {
+export function storeAudioClip(input: { key: string; lang: string; voice: AudioVoice; tier: string; model?: string; text: string; ext: "mp3" | "wav"; data: Buffer; now?: Date }): AudioClipEntry & { absolute: string } {
 	const entry: AudioClipEntry = {
 		key: input.key,
 		lang: input.lang,
 		voice: input.voice,
 		tier: input.tier,
+		...(input.model ? { model: input.model } : {}),
 		text: input.text.normalize("NFC").trim(),
 		file: clipRelativePath({ lang: input.lang, voice: input.voice, key: input.key, text: input.text }, input.ext),
 		bytes: input.data.length,

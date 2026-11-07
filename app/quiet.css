@@ -229,7 +229,7 @@
 .q-segc { display: inline-flex; padding: 2px; border-radius: 9px; background: var(--q-well-2); gap: 0; }
 .q-segc button { position: relative; height: 30px; padding: 0 14px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--q-ink-2); }
 .q-segc button + button::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--q-line-2); }
-.q-segc button.on { background: var(--q-card); color: var(--q-teal-2); font-weight: 600; box-shadow: 0 0 0 0.5px rgb(var(--q-shadow-rgb) / 0.08), 0 1px 3px rgb(var(--q-shadow-rgb) / 0.12); }
+.q-segc button.on { background: var(--q-seg-on); color: var(--q-teal-2); font-weight: 600; box-shadow: 0 0 0 0.5px rgb(var(--q-shadow-rgb) / 0.08), 0 1px 3px rgb(var(--q-shadow-rgb) / 0.12); }
 .q-segc button.on::before, .q-segc button.on + button::before { display: none; }
 .q-segc kbd { margin-left: 6px; height: 16px; padding: 0 4px; font-family: var(--font-ui); font-size: 10.5px; font-weight: 550; display: inline-flex; align-items: center; box-shadow: none; background: transparent; color: var(--q-ink-3); }
 .q-segc .on kbd { color: var(--q-teal-2); }

@@ -28,6 +28,7 @@ import { ChannelLink } from "@/components/watch/channel-link";
 import { CreatorsPanel } from "@/components/watch/creators-panel";
 import { YouTubeSection, type useDiscover } from "@/components/watch/discover";
 import { atLevel, PicksPanel } from "@/components/watch/picks-panel";
+import { PreparingContext, usePreparing } from "@/components/watch/preparing";
 import { StretchDialog } from "@/components/watch/stretch-dialog";
 import { Poster } from "@/components/watch/thumb";
 import { CardGrid, CardIconButton, Known, VideoCard } from "@/components/watch/video-card";
@@ -61,8 +62,15 @@ export function Shelf({ state, running, starting, discover, onOpen, onPrepare, o
 		setTabState(t);
 	};
 	const [cutting, setCutting] = useState<Cutting | null>(null);
+	// A background task's id is "video:<id>". The shelf's own "Adding" row is
+	// only for the moment before the server's task exists; then the task's row says it.
+	const runningIds = running.map((t) => t.id.replace(/^video:/, ""));
+	const startingId = starting ? parseVideoUrl(starting) : null;
+	const showStarting = !!starting && !(startingId && runningIds.includes(startingId));
+	const preparing = new Set([...runningIds, ...(startingId ? [startingId] : [])]);
 
 	return (
+		<PreparingContext.Provider value={preparing}>
 		<div className="relative min-h-dvh bg-background">
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-20 flex items-center gap-2 bg-background px-3 py-2">
@@ -80,9 +88,9 @@ export function Shelf({ state, running, starting, discover, onOpen, onPrepare, o
 
 				<LinkField name={name} fallbacks={(lang?.captionFallbacks ?? []).map((f) => f.english)} canPrepare={canPrepare} canTranscribe={!!state?.canTranscribe} onPrepare={onPrepare} onCut={(id) => setCutting({ id })} />
 
-				{(running.length > 0 || starting) && (
+				{(running.length > 0 || showStarting) && (
 					<ul className="mt-4 flex flex-col gap-1.5" data-testid="watch-running">
-						{starting && (
+						{showStarting && (
 							<li className="q-card flex items-center gap-3 px-4 py-2.5" data-testid="watch-starting">
 								<LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" />
 								<span className="min-w-0 flex-1 truncate font-ui text-[14px] text-foreground">
@@ -121,6 +129,17 @@ export function Shelf({ state, running, starting, discover, onOpen, onPrepare, o
 			</main>
 			{cutting && <StretchDialog videoId={cutting.id} title={cutting.title} canPrepare={canPrepare} onPrepare={(range) => (setCutting(null), onPrepare(videoUrl(cutting.id), range))} onClose={() => setCutting(null)} />}
 		</div>
+		</PreparingContext.Provider>
+	);
+}
+
+function UpNextAdd({ id, canPrepare, onPrepare }: { id: string; canPrepare: boolean; onPrepare: () => void }) {
+	const preparing = usePreparing(id);
+	return (
+		<button type="button" disabled={!canPrepare || preparing} onClick={onPrepare} aria-busy={preparing} className={cn(PRIMARY, "h-11 rounded-xl px-6")} data-testid="watch-up-next-prepare">
+			{preparing ? <LoaderCircleIcon className="size-4 animate-spin" /> : <ListPlusIcon className="size-4" strokeWidth={1.8} />}
+			{preparing ? "Preparing…" : "Add video"}
+		</button>
 	);
 }
 
@@ -254,10 +273,7 @@ function UpNext(props: UpNextProps) {
 						</button>
 					) : (
 						<>
-							<button type="button" disabled={!props.canPrepare} onClick={props.onPrepare} className={cn(PRIMARY, "h-11 rounded-xl px-6")} data-testid="watch-up-next-prepare">
-								<ListPlusIcon className="size-4" strokeWidth={1.8} />
-								Add video
-							</button>
+							<UpNextAdd id={props.pick.id} canPrepare={props.canPrepare} onPrepare={props.onPrepare} />
 							<button type="button" onClick={props.onCut} className="q-btn sec h-11 rounded-xl px-4" data-testid="watch-up-next-stretch">
 								<ScissorsIcon className="size-4" strokeWidth={1.6} />
 								Pick a stretch

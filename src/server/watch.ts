@@ -741,6 +741,33 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		.finally(() => inFlight.delete(key));
 }
 
+/** Start a preparation and answer as soon as it is safely under way: a kept
+ *  video, or an error from the captions step (no captions, a video in another
+ *  language, no model), comes back as before; once the lines are being
+ *  translated, the rest runs as the task and this answers `background`.
+ *  Before, the route ignored `background` and held the request through the
+ *  whole translation, so the shelf showed its own "Adding" row next to the
+ *  task's row for the same video until the end. */
+export async function prepareVideoInBackground(url: string, opts: PrepareOptions & { pollMs?: number } = {}): Promise<VideoRecord | { background: true; id: string }> {
+	const id = parseVideoUrl(url);
+	const job = prepareVideo(url, opts);
+	// A failure after the answer is on the task (failTask), not unhandled here.
+	job.catch(() => undefined);
+	if (!id) return job;
+	let timer: ReturnType<typeof setInterval> | undefined;
+	const underWay = new Promise<{ background: true; id: string }>((resolve) => {
+		timer = setInterval(() => {
+			const s = prepareStage(id)?.stage;
+			if (s === "translating" || s === "questions" || s === "saving") resolve({ background: true, id });
+		}, opts.pollMs ?? 200);
+	});
+	try {
+		return await Promise.race([job, underWay]);
+	} finally {
+		clearInterval(timer);
+	}
+}
+
 // ─── The library ────────────────────────────────────────────────────────────
 
 /** A kept video measured by the current rule. One kept under an older rule is

@@ -699,16 +699,20 @@ export function SelectionWordBankBar() {
 								<span>·</span>
 							</>
 						)}
-						<a
-							href={wiktionaryUrl}
-							target="_blank"
-							rel="noreferrer"
-							onMouseDown={(e) => e.stopPropagation()}
-							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
-						>
-							Wiktionary <ExternalLinkIcon className="size-2.5" />
-						</a>
-						<span>·</span>
+						{!/wiktionary/i.test(referenceLabel ?? "") && (
+							<>
+								<a
+									href={wiktionaryUrl}
+									target="_blank"
+									rel="noreferrer"
+									onMouseDown={(e) => e.stopPropagation()}
+									className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+								>
+									Wiktionary <ExternalLinkIcon className="size-2.5" />
+								</a>
+								<span>·</span>
+							</>
+						)}
 						<a
 							href={deeplUrl}
 							target="_blank"

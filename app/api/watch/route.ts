@@ -14,9 +14,10 @@
  * force is true (regenerate: captions fetched and lines translated again).
  * With range {startSec, endSec} only that stretch is prepared (see
  * GET /api/watch/fragments); the library keeps one cut of a video.
- * With background: true it answers 202 {id} at once and the work runs as a
- * task (src/server/tasks.ts, listed in GET /api/activity); a video already
- * kept is returned whole, as without it.
+ * With background: true it answers 202 {background, id} once the captions
+ * are in and the lines are being translated; the rest runs as a task
+ * (src/server/tasks.ts, listed in GET /api/activity). A video already kept is
+ * returned whole, and a captions error answers as without it.
  * POST /api/watch {action: "delete", videoId} — take a video out of the
  * library (its watchings stay).
  * POST /api/watch {action: "finish", videoId, mode, stats, answers,
@@ -25,7 +26,7 @@
  */
 
 import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
-import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, recordWatch, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
+import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordWatch, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,12 @@ export async function POST(req: Request) {
 			const r = body.range as { startSec?: unknown; endSec?: unknown } | undefined;
 			const range = r && typeof r.startSec === "number" && typeof r.endSec === "number" ? { startSec: r.startSec, endSec: r.endSec } : undefined;
 			if (body.range !== undefined && !range) return Response.json({ message: "range needs startSec and endSec in seconds" }, { status: 400 });
-			return Response.json(await prepareVideo(body.url, { transcribe: body.transcribe === true, force: body.force === true, ...(range ? { range } : {}) }));
+			const opts = { transcribe: body.transcribe === true, force: body.force === true, ...(range ? { range } : {}) };
+			if (body.background === true) {
+				const out = await prepareVideoInBackground(body.url, opts);
+				return "background" in out ? Response.json(out, { status: 202 }) : Response.json(out);
+			}
+			return Response.json(await prepareVideo(body.url, opts));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			if (err instanceof NoCaptionsError) return Response.json({ message, noCaptions: true, canTranscribe: err.canTranscribe, meta: err.meta, elsewhere: err.elsewhere }, { status: 422 });

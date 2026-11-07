@@ -20,7 +20,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
-import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
@@ -28,14 +27,15 @@ import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
+import { SceneBoard } from "@/components/speak/scene-board";
 import { SettingsLink } from "@/components/settings/settings-link";
-import { PRON_CLEAR, PRON_GOOD, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { PRON_CLEAR, PRON_GOOD, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakSceneEntry, type SpeakSession, type SpeakTurn } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 
 type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
 export interface SpeakState {
-	scenes: Array<SpeakScene & { suggested: boolean; done: number }>;
+	scenes: SpeakSceneEntry[];
 	canSpeak: boolean;
 	stt: SttEngine | null;
 	pron: PronEngine | null;
@@ -55,7 +55,7 @@ type Phase = "pick" | "starting" | "scene" | "ending" | "done";
 
 const PRAISE = ["Výborne!", "Presne!", "Áno, tak!", "Super!"];
 
-export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean }) {
+export function SpeakPlayer({ initialState, sceneId = null, typed = false, sceneLang = { id: "slovak", tag: "sk-SK" } }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean; sceneLang?: { id: string; tag: string } }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [state, setState] = useState<SpeakState | null>(initialState);
@@ -349,7 +349,22 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false }: { i
 		return () => window.removeEventListener("keydown", onKey);
 	}, [phase, listening, session, router, toggleMic]);
 
-	if (phase === "pick") return <Picker state={state} error={error} sceneId={sceneId} typed={typed} onPick={(id) => void start(id)} onResume={(id) => void resume(id)} onRetry={() => void load()} />;
+	if (phase === "pick")
+		return (
+			<SceneBoard
+				state={state}
+				lang={sceneLang}
+				error={error}
+				sceneId={sceneId}
+				typed={typed}
+				onPick={(id, byKeyboard) => {
+					setTyping(byKeyboard);
+					void start(id);
+				}}
+				onResume={(id) => void resume(id)}
+				onRetry={() => void load()}
+			/>
+		);
 
 	if (phase === "starting" || !session) {
 		return (
@@ -601,82 +616,6 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 				{turn.pron && <PronChip score={turn.pron} />}
 			</p>
 		</div>
-	);
-}
-
-function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { state: SpeakState | null; error: string | null; sceneId: string | null; typed: boolean; onPick: (id: string) => void; onResume: (id: string) => void; onRetry: () => void }) {
-	const lang = useActiveLanguage();
-	return (
-		<TaskFrame>
-			<div className={cn(COLUMN, "flex flex-1 flex-col overflow-y-auto pb-10 pt-[6vh]")}>
-				<div className="lh-wco-gutter flex items-center justify-between">
-					<Link href="/" className="flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
-						<ArrowLeftIcon className="size-3.5" />
-						Today
-					</Link>
-				</div>
-				<h1 className="mt-6 font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-				<p className="mt-2 font-prose text-base text-muted-foreground">
-					{typed
-						? "Pick a scene and write it. The tutor plays the other person and answers out loud. Type each line and press Enter. A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."
-						: "Pick a scene and say it. The tutor plays the other person and answers out loud. Say your lines into the mic (press, speak, press). A slip in an ending comes back as a prompt to fix yourself; the rest waits for the end."}
-				</p>
-				{error && (
-					<p className="mt-4 rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert" data-testid="speak-error">
-						{error}{" "}
-						<button type="button" onClick={onRetry} className="underline">
-							Try again
-						</button>
-					</p>
-				)}
-				{state && !state.canSpeak && (
-					<EmptyState className="mt-6 max-w-none" testid="speak-nomodel" title="Say a scene out loud with a tutor" action={<AddKeyButton />}>
-						<p>In a scene the tutor plays the other person and answers what you say. That needs an AI key.</p>
-						<p>Step by step works without one: pick a scene below and walk through it line by line.{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}</p>
-					</EmptyState>
-				)}
-				{state?.unfinished && (
-					<button type="button" onClick={() => onResume(state.unfinished!.id)} className="q-card mt-5 flex items-center gap-3 px-4 py-3 text-left shadow-[0_0_0_1px_var(--q-teal-line)] hover:bg-teal-wash" data-testid="speak-resume">
-						<RepeatIcon className="size-5 text-teal-2" />
-						<span>
-							<span className="block font-ui text-base font-[600] text-foreground">Carry on: {state.unfinished.sceneTitle}</span>
-							<span className="block font-prose text-sm text-muted-foreground">{state.unfinished.turns} lines said</span>
-						</span>
-					</button>
-				)}
-				<div className="mt-6 grid gap-3 sm:grid-cols-2" data-testid="speak-scenes">
-					{(state?.scenes ?? []).map((s) => (
-						<div key={s.id} className={cn("q-card flex items-stretch transition-shadow hover:shadow-raise-hi", s.id === sceneId && "ring-1 ring-teal")}>
-							<button type="button" disabled={!state?.canSpeak} onClick={() => onPick(s.id)} className="flex min-w-0 flex-1 flex-col gap-1 rounded-l-lg px-4 py-3.5 text-left disabled:opacity-50" data-testid={`scene-${s.id}`}>
-								<span className="flex items-baseline justify-between gap-2">
-									<span className="font-ui text-lg font-[600] text-foreground" lang={lang?.code}>
-										{s.title}
-									</span>
-									{s.suggested && <span className="shrink-0 rounded-md bg-teal-wash px-1.5 py-0.5 font-ui text-xs font-[600] text-teal-2">for you</span>}
-								</span>
-								<span className="block font-prose text-sm text-muted-foreground">{s.blurb}</span>
-								{s.done > 0 && <span className="mt-1 block font-ui text-xs text-muted-foreground">{s.done === 1 ? "once before" : `${s.done} times before`}</span>}
-							</button>
-							{/* The step-by-step walk-through (E13) sits beside the scene, its own target and not nested in the button. */}
-							<Link href={`/speak?scene=${s.id}&mode=script`} className="flex shrink-0 items-center rounded-r-lg border-l border-border px-4 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid={`scene-script-${s.id}`}>
-								Step by step
-							</Link>
-						</div>
-					))}
-				</div>
-				{!state && !error && (
-					<p className="mt-6 flex items-center gap-2 font-ui text-sm text-muted-foreground">
-						<LoaderCircleIcon className="size-4 animate-spin" /> Loading the scenes…
-					</p>
-				)}
-				{state && (
-					<p className="mt-6 font-ui text-xs text-muted-foreground">
-						{state.stt ? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : state.stt === "groq" ? "Groq" : "Deepgram"} speech-to-text, your recordings kept with the scene.` : "No speech-to-text key yet (ElevenLabs, Groq or Deepgram in Settings → API keys): lines are typed until then."}
-					</p>
-				)}
-				<SourcesNote feature="speak" className="mt-6" />
-			</div>
-		</TaskFrame>
 	);
 }
 

@@ -143,7 +143,7 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 			{/* The verdict — plain prose under the heading, no 'Verdict:' label
 			    (owner round 3): the same quiet 50% register as quiz explanations. */}
 			{verdict.length > 0 && (
-				<div className="text-sm text-foreground/50">
+				<div className="text-sm text-ink-3">
 					<ToolContentResponse>{verdict}</ToolContentResponse>
 				</div>
 			)}

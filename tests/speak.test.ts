@@ -243,3 +243,14 @@ test("transcribe refuses honestly without a key", async () => {
 		if (savedGroq) authStore.setAuthVar("GROQ_API_KEY", savedGroq);
 	}
 });
+
+test("a scene's brief gives who you meet, without the tutor's \"you are\"", async () => {
+	const { briefParts, sceneCounterpart } = await import("../src/core/speak.ts");
+	assert.equal(sceneCounterpart("a waiter in a small café in Bratislava's old town; I want to order coffee"), "A waiter in a small café in Bratislava's old town");
+	assert.equal(sceneCounterpart("my new colleague at the office; we meet at the coffee machine"), "Your new colleague at the office");
+	// A generated story bible wrote the brief as an instruction to the tutor.
+	const kadri = "You are Kadri, the friendly owner of a small café on Raekoja plats in Tartu. It is morning and the learner comes to the counter.";
+	assert.equal(sceneCounterpart(kadri), "Kadri, the friendly owner of a small café on Raekoja plats in Tartu");
+	assert.deepEqual(briefParts(kadri), { role: "Kadri, the friendly owner of a small café on Raekoja plats in Tartu", situation: "It is morning and the learner comes to the counter" });
+	for (const s of SPEAK_SCENES) assert.ok(!/^you are/i.test(sceneCounterpart(s.brief)), s.id);
+});

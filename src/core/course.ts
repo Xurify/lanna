@@ -364,7 +364,7 @@ export function worldDraftPrompt(language: string, country: string, chapters: re
  "places": [{"id": "kebab-id", "name": "a real place in the city", "note": "why the series goes there"}],
  "beats": {"<chapter id>": "One English sentence: what happens in that chapter's episodes, built on the chapter's topic"},
  "settings": {"<purpose>": ["three to five short English settings for an episode, in real places of the city or the country"]},
- "scenes": {"<scene id>": {"title": "the scene's name in ${language}", "blurb": "one English line for the screen", "brief": "the tutor's role and the situation, in English, naming a real place", "task": "what the learner is there to do, one English sentence"}}}
+ "scenes": {"<scene id>": {"title": "the scene's name in ${language}", "blurb": "one English line for the screen", "brief": "who the tutor plays, as words that follow \"you are\" (\"a waiter in a small café on <a real street>\", \"<a name>, who runs a bakery on <a real square>\"), then a semicolon and the situation from the learner's side (\"I want to order breakfast\"); in English, never starting with You are", "task": "what the learner is there to do, one English sentence"}}}
 
 The first cast member is the lead. Six cast members, six places. One beat for each chapter: ${chapters.map((c) => `${c.id} (${c.title}: ${c.tagline})`).join("; ")}. Settings for each purpose: ${purposes.join(", ")}. A scene for each of: ${scenes.join(", ")}. Plain, warm, everyday life; nothing violent or sad.`,
 	};

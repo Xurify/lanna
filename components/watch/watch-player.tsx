@@ -23,13 +23,13 @@
  *   - the comprehension check at your level, then the end screen: XP,
  *     lines got first time, words a minute, the words now in your deck.
  *
- * Full screen like a lesson (Escape leaves). Research in src/core/watch.ts.
+ * Full screen like a lesson. X and Escape go back to the shelf, and from the shelf Escape goes to Today. Research in src/core/watch.ts.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
@@ -285,10 +285,12 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		[video, saving, mode, tapped, load, activeTime],
 	);
 
-	// Escape leaves, like a lesson — unless a word popover is open.
+	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to Today; a word popover closes first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape" && !document.querySelector("[data-word-popover]")) router.push("/");
+			if (e.key !== "Escape" || document.querySelector("[data-word-popover]") || document.querySelector("[role=dialog]")) return;
+			if (stageRef.current === "shelf") router.push("/");
+			else setStage("shelf");
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
@@ -413,9 +415,9 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<Link href="/" aria-label="Leave the video" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="Back to your videos" title="Back to your videos" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-leave">
 					<XIcon className="size-5" />
-				</Link>
+				</button>
 				<div className="min-w-0 flex-1">
 					<p className="truncate font-ui text-sm font-[600] text-foreground" lang={lang?.code}>
 						{video.title} <span className="text-muted-foreground">· {step}</span>
@@ -425,10 +427,6 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 					</div>
 				</div>
 				{right}
-				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 flex items-center gap-1.5 rounded-lg p-1.5 text-[13px] font-[550] text-muted-foreground hover:bg-accent hover:text-foreground">
-					<LibraryIcon className="size-5" />
-					<span className="max-sm:hidden">Videos</span>
-				</button>
 			</div>
 		</div>
 	);
@@ -571,13 +569,14 @@ function Ring({ value, floor, tone }: { value: number; floor: number; tone: stri
 	const c = 2 * Math.PI * r;
 	const angle = (p: number) => -90 + p * 360;
 	const mark = (p: number, radius: number) => ({ x: 32 + radius * Math.cos((angle(p) * Math.PI) / 180), y: 32 + radius * Math.sin((angle(p) * Math.PI) / 180) });
-	const a = mark(floor, r - 6);
-	const b = mark(floor, r + 6);
+	// The floor tick spans the track exactly, so it reads as a mark on the ring, not a stray stroke beside it.
+	const a = mark(floor, r - 3);
+	const b = mark(floor, r + 3);
 	return (
 		<svg viewBox="0 0 64 64" className="size-20 shrink-0" aria-hidden="true">
-			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-accent" />
+			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-well-2" />
 			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className={tone} strokeDasharray={`${c * Math.max(0.01, value)} ${c}`} transform="rotate(-90 32 32)" />
-			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" className="text-foreground/50" />
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-ink-2" />
 			<text x="32" y="36" textAnchor="middle" className="fill-current font-ui text-[15px] font-[600] text-foreground">
 				{Math.round(value * 100)}%
 			</text>

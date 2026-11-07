@@ -19,9 +19,9 @@ import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, TaskFrame, TaskTop } from "@/components/task-frame";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
-export function ScriptPlayer({ sceneId }: { sceneId: string }) {
+export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: string }) {
 	const lang = useActiveLanguage();
-	const script = scriptFor(sceneId);
+	const script = scriptFor(sceneId, langId);
 	const [turnIndex, setTurnIndex] = useState(0);
 	const [miss, setMiss] = useState<{ choice: number; explanation: string } | null>(null);
 	// The lines said so far, tutor and learner alternating.

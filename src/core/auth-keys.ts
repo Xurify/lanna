@@ -32,7 +32,7 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "AZURE_SPEECH_KEY",
 		label: "Azure Speech",
-		description: "Pronunciation assessment for Speak and Say it faster: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
+		description: "Pronunciation assessment for Speak and Speed: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
 		docsUrl: "https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices",
 	},
 	{

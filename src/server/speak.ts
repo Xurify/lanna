@@ -27,6 +27,7 @@ import { allChapters, curriculumState } from "../core/curriculum.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { purposeScenes } from "../core/onboarding.ts";
+import { scriptFor } from "../core/speak-script.ts";
 import type { PronEngine, PronScore } from "../core/pronounce.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
@@ -36,6 +37,7 @@ import { atlasCellOf } from "../core/grammar.ts";
 import type { UnitId } from "../core/lesson.ts";
 import { dayKey } from "../core/review.ts";
 import {
+	briefParts,
 	parseSummary,
 	parseTutorReply,
 	SPEAK_SCENES,
@@ -48,6 +50,7 @@ import {
 	type SpeakCorrection,
 	type SpeakIndexEntry,
 	type SpeakScene,
+	type SpeakSceneEntry,
 	type SpeakSession,
 	type SpeakTurn,
 	type TutorReply,
@@ -110,7 +113,10 @@ function transcript(s: SpeakSession): string {
 function sceneBrief(scene: SpeakScene, s: SpeakSession): string {
 	const profile = learnerProfileSegment();
 	return [
-		`The scene: you are ${scene.brief}.`,
+		(() => {
+			const { role, situation } = briefParts(scene.brief);
+			return `The scene: you are ${role}${situation ? `; ${situation}` : ""}.`;
+		})(),
 		`The learner's task: ${scene.task}`,
 		`Level: ${s.level}. Chapter on the map: ${allChapters().find((c) => c.id === s.chapter)?.title ?? s.chapter}.`,
 		profile ? `\n${profile}` : "",
@@ -263,7 +269,7 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 
 export interface SpeakState {
 	/** The scenes, the chapter's and the purposes' first. */
-	scenes: Array<SpeakScene & { suggested: boolean; done: number }>;
+	scenes: SpeakSceneEntry[];
 	canSpeak: boolean;
 	stt: SttEngine | null;
 	/** How spoken lines are scored for clarity: sound by sound, from the transcript, or not at all. */
@@ -281,9 +287,21 @@ export function speakState(): SpeakState {
 	const wanted = [...new Set([chapterScene, ...purposeScenes(goal.purposes ?? [])].filter((s): s is string => !!s))];
 	const done = speakStore.list();
 	const count = (id: string) => done.filter((d) => d.scene === id).length;
+	const goalScenes = new Set(purposeScenes(goal.purposes ?? []));
+	const lang = activeLanguage().id;
 	const scenes = SPEAK_SCENES.map((x) => sceneFor(x.id)!)
 		.sort((a, b) => Number(wanted.includes(b.id)) - Number(wanted.includes(a.id)) || wanted.indexOf(a.id) - wanted.indexOf(b.id))
-		.map((s) => ({ ...s, suggested: wanted.includes(s.id), done: count(s.id) }));
+		.map((s) => {
+			const last = done.filter((d) => d.scene === s.id).at(-1);
+			return {
+				...s,
+				suggested: wanted.includes(s.id),
+				why: s.id === chapterScene ? ("chapter" as const) : goalScenes.has(s.id) ? ("goal" as const) : null,
+				done: count(s.id),
+				scripted: !!scriptFor(s.id, lang),
+				last: last ? { at: last.endedAt ?? last.startedAt, turns: last.turns, corrections: last.corrections } : null,
+			};
+		});
 	const open = speakStore.unfinished()[0];
 	return {
 		scenes,
