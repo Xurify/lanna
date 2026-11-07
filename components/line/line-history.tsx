@@ -112,7 +112,7 @@ export function LineHistory({ days, showTable, onToggleTable }: { days: readonly
 				<figcaption className="q-legend">
 					<span>
 						<i style={{ background: "var(--q-bar)" }} />
-						First hearing, cold
+						First hearing, no text
 					</span>
 					<span>
 						<i style={{ background: "var(--q-teal)" }} />

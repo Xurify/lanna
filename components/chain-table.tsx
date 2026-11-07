@@ -254,7 +254,7 @@ export function ChainTableBody({
 					type="button"
 					data-testid="chain-table-close"
 					onClick={onClose}
-					aria-label="Close chains"
+					aria-label="Close skills"
 					className="lh-no-drag flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 				>
 					<XIcon className="size-4" />
@@ -302,7 +302,7 @@ export function ChainTableBody({
 
 				{groups.length === 0 && (
 					<div data-testid="chain-table-nomatch" className="px-4 pt-3 text-xs text-muted-foreground">
-						No matching chains.
+						No matching skills.
 						{query && (
 							<button type="button" onClick={() => onQuery("")} className="ml-2 underline-offset-2 hover:text-foreground hover:underline">
 								Clear search
@@ -343,9 +343,9 @@ export function ChainTableBody({
 									indeterminate={selectedCount > 0 && selectedCount < group.nodeIds.length}
 									onToggle={(next) => onToggleNodes(group.nodeIds, next)}
 									testid={`cluster-checkbox-${group.key}`}
-									label={`Select everything born in ${group.label ?? "unlabeled"}`}
+									label={`Select every skill from ${group.label ?? "unlabeled"}`}
 								/>
-								<Expander open={open} onClick={() => onToggleCluster(group.key)} testid={`cluster-toggle-${group.key}`} label={`Expand cluster ${group.label ?? "unlabeled"}`} />
+								<Expander open={open} onClick={() => onToggleCluster(group.key)} testid={`cluster-toggle-${group.key}`} label={`Expand ${group.label ?? "unlabeled"}`} />
 								<span className="flex shrink-0 items-center justify-center text-muted-foreground">
 									{open ? <FolderOpenIcon className="size-3.5" /> : <FolderIcon className="size-3.5" />}
 								</span>
@@ -392,9 +392,9 @@ export function ChainTableBody({
 													indeterminate={selectedInChain > 0 && selectedInChain < memberIds.length}
 													onToggle={(next) => onToggleNodes(memberIds, next)}
 													testid={`chain-checkbox-${chain.id}`}
-													label={`Select chain ${nameOf(chain.conclusion)}`}
+													label={`Select topic ${nameOf(chain.conclusion)}`}
 												/>
-												<Expander open={chainOpen} onClick={() => onToggleChain(chain.id)} testid={`chain-toggle-${chain.id}`} label={`Expand chain ${nameOf(chain.conclusion)}`} />
+												<Expander open={chainOpen} onClick={() => onToggleChain(chain.id)} testid={`chain-toggle-${chain.id}`} label={`Expand topic ${nameOf(chain.conclusion)}`} />
 												{/* The chain line: proposition names as faint-outlined
 												    chips. THE LOGIC IS THE PAYLOAD (owner rulings,
 												    2026-09-30): premises join with the LaTeX LAND (∧),
@@ -460,7 +460,7 @@ export function ChainTableBody({
 																checked={selection.has(id)}
 																onToggle={(next) => onToggleNodes([id], next)}
 																testid={`prop-checkbox-${id}`}
-																label={`Select node ${node.name}`}
+																label={`Select skill ${node.name}`}
 															/>
 															<span className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">
 																{node.statement}
@@ -504,7 +504,7 @@ export function ChainTableBody({
 								type="button"
 								data-testid="chain-practice-done"
 								onClick={onSelect}
-								aria-label={`Done picking — ${selection.size} ${selection.size === 1 ? "proposition" : "propositions"} selected`}
+								aria-label={`Done picking — ${selection.size} ${selection.size === 1 ? "skill" : "skills"} selected`}
 								className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/80"
 							>
 								<DumbbellIcon aria-hidden="true" className="size-3.5" />
