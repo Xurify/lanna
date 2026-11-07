@@ -89,7 +89,7 @@ html[data-keyboard] :focus-visible {
 	--q-on-teal: #ffffff;
 	--q-miss: #b42318;
 	--q-miss-wash: #fbeceb;
-	/* A filled danger button: white text keeps 4.5:1 on both (6.6 and 8.3). */
+	/* WCAG AA asks 4.5:1 for white text on these fills: 6.6 here, 4.8 in Night. */
 	--q-danger: #b42318;
 	--q-danger-hover: #9a1b12;
 	--q-shadow-rgb: 22 24 27;

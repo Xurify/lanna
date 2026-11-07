@@ -5,6 +5,8 @@ description: "Checklist of the visual tells that make a UI look AI-generated (In
 
 # Anti-slop design
 
+- **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule in [AGENTS.md](../../../AGENTS.md) under **Code style → Comments**.
+
 A page an agent builds from defaults looks like every other page an agent built from defaults. The learner notices, even without a name for it, and reads it as "nobody decided this". LangHarness already has a direction of its own (the trail design, rule E30 in `docs/DECISIONS.md`). This skill keeps new work on it.
 
 Use it twice: once **before** you write markup (pick from the "Do instead" column), and once **after** (run the checks at the bottom on your diff).

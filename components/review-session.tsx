@@ -20,7 +20,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -79,11 +79,6 @@ function clozeAround(before: string, after: string) {
 	const lead = /[^\s\p{L}\p{N}]*$/u.exec(before)?.[0] ?? "";
 	const tail = /^[^\s\p{L}\p{N}]*/u.exec(after)?.[0] ?? "";
 	return { before: before.slice(0, before.length - lead.length), lead, tail, after: after.slice(tail.length) };
-}
-
-/** "dinner; evening meal" → "dinner". */
-function firstSense(gloss: string): string {
-	return (gloss.split(/[;,(]/)[0] ?? gloss).trim();
 }
 
 function MissWhy({ reason, given, code, className }: { reason: MissReason; given: string; code?: string; className?: string }) {
@@ -238,7 +233,6 @@ export function ReviewSession() {
 		else {
 			sfx.wrong();
 			shake(sentenceRef.current);
-			// The reason needs the dictionary, which only the server has.
 			const id = prompt.card.id;
 			void fetch(`/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}`)
 				.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
@@ -546,8 +540,6 @@ export function ReviewSession() {
 												</div>
 											</div>
 
-											{/* Before and after the answer share one grid cell: the cell keeps the height of the keys,
-											    so the answer and its reason replace them without pushing the ratings down. */}
 											<div className="mt-4 grid grid-cols-[minmax(0,1fr)]">
 												<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
 													{!verdict && mode === "choice" && !picks && <p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>}
@@ -592,7 +584,7 @@ export function ReviewSession() {
 																<span className="q-ex">
 																	<span className="mr-1.5 text-[12px] font-semibold text-ink-3">word</span>
 																	<span lang={lang?.code}>{prompt.card.lemma}</span>
-																	<span className="ml-1.5 font-[450] text-ink-2">{firstSense(prompt.card.gloss)}</span>
+																	<span className="ml-1.5 font-[450] text-ink-2">{shortGloss(prompt.card.gloss)}</span>
 																</span>
 																{prompt.form && (
 																	<span className="q-ex">

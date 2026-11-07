@@ -12,6 +12,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Checked:** unit tests, and every state of the card (before the answer, one and two hints, a different word, another ending, I don't know, accents only, right) in a sandbox at 1280, 820 and 390 px wide.
 - **Unverified:** the owner's own deck.
 - **Removing a language** (the owner: "Remove the delete button from the language selector dropdown"): the language menu no longer has a bin; Settings → Learning still does. The Remove button in the confirm dialog is a solid danger red with white text (`--q-danger`, `bg-danger`). In Night it was the pink text red at 60%, which read as a muddy brown.
+- **Comments** (E69, the owner: "Code explains itself; name things until it does"): a comment is only for something outside the repo. The rule is in `AGENTS.md` under Code style → Comments, with a pointer in `CLAUDE.md` and the repo's own skills. This branch's comments follow it: two are left, a WCAG ratio and an ESM import order.
 
 ## 7 November: a long day goes to listening, and listening outside the app is logged apart (branch `feat/input-after-plan`)
 

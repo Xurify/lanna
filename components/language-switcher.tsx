@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * The sidebar's language block (LangHarness): which language profile is
- * running, a switch to another one, the Today door, and the
- * spaced-review door with its due count. Switching and adding go through
- * components/language-actions.tsx, shared with Settings → Learning, where a
- * language is removed.
- * While a language is being added, the menu lists it as usual, with a loading mark.
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

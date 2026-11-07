@@ -839,6 +839,12 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 - The milestones page shows it only in its own row, "Speed with outside listening": focused minutes at `OUTSIDE_WEIGHT.focused` (0.5), background at 0, added to the measured real pace. On the learner's own Listen trend it adds nothing and says why (the slope is per hour in the app, so it already holds what outside listening did). The weights are the app's own and say so (E63, the `outside` feature in `src/core/sources.ts`). Change them only with new evidence, in the research note first.
 - No hours target, challenge or stamp for hours of listening.
 
+### E69. Comments only for what lives outside the repo (2026-11-07, branch `fix/review-miss-reason`)
+
+Owner's rule: "Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from)."
+
+**How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` and the repo's own skills point to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.

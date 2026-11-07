@@ -1,11 +1,3 @@
-/**
- * REVIEW MISS (LangHarness, 2026-11-07): a wrong review answer says why —
- * another word the dictionary knows, the dictionary form, or another
- * ending — and which form the sentence needs.
- *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
- */
-
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import * as os from "node:os";
@@ -15,6 +7,8 @@ import { after, test } from "node:test";
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-review-miss-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
+
+// ESM evaluates static imports before this module's body, so the app modules are imported after the env is set.
 
 const { missReason } = await import("../src/core/review-miss.ts");
 const { reviewMiss } = await import("../src/server/review.ts");
@@ -60,8 +54,7 @@ test("a form of another word says so", () => {
 	assert.deepEqual(r.other, { lemma: "večer", gloss: "evening", isLemma: false });
 });
 
-test("the card word's own forms are endings, not another word", () => {
-	// "večera" is also večer's genitive; on this card it is the dictionary form.
+test("the card word's own forms are endings, even when another word shares them (večera is večer's genitive)", () => {
 	assert.equal(reviewMiss("vecera#2", "večera")!.slip, "base");
 	const r = reviewMiss("vecera#2", "večeru")!;
 	assert.equal(r.slip, "same-word");
