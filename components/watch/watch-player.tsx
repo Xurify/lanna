@@ -568,13 +568,14 @@ function Ring({ value, floor, tone }: { value: number; floor: number; tone: stri
 	const c = 2 * Math.PI * r;
 	const angle = (p: number) => -90 + p * 360;
 	const mark = (p: number, radius: number) => ({ x: 32 + radius * Math.cos((angle(p) * Math.PI) / 180), y: 32 + radius * Math.sin((angle(p) * Math.PI) / 180) });
-	const a = mark(floor, r - 6);
-	const b = mark(floor, r + 6);
+	// The floor tick spans the track exactly, so it reads as a mark on the ring, not a stray stroke beside it.
+	const a = mark(floor, r - 3);
+	const b = mark(floor, r + 3);
 	return (
 		<svg viewBox="0 0 64 64" className="size-20 shrink-0" aria-hidden="true">
-			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-accent" />
+			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-well-2" />
 			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className={tone} strokeDasharray={`${c * Math.max(0.01, value)} ${c}`} transform="rotate(-90 32 32)" />
-			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" className="text-foreground/50" />
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-ink-2" />
 			<text x="32" y="36" textAnchor="middle" className="fill-current font-ui text-[15px] font-[600] text-foreground">
 				{Math.round(value * 100)}%
 			</text>

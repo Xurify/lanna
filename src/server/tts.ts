@@ -116,7 +116,7 @@ export function elevenLabsModelsFor(code: string, now = Date.now()): string[] {
 }
 
 /** What a tier made: the audio, and for ElevenLabs the model that spoke it. */
-interface Spoken {
+export interface Spoken {
 	data: Buffer;
 	model?: string;
 }
@@ -198,12 +198,24 @@ function envFor(name: string, code: string): string | undefined {
 	return process.env[`${name}_${code.toUpperCase()}`] || process.env[name] || undefined;
 }
 
-async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Spoken | null> {
+/** The ElevenLabs voice for a clip's voice field: its own id, or the
+ *  language's voice for "female" / "male". Undefined: Edge reads it. */
+export function elevenLabsVoiceFor(voice: string | undefined, code: string): string | undefined {
+	const custom = voice && voice !== "male" && voice !== "female" ? voice : undefined;
+	return custom ?? envFor("ELEVENLABS_VOICE_ID", code) ?? DEFAULT_ELEVENLABS_VOICE[code];
+}
+
+/** The model new clips are made with when the account allows it. */
+export function latestElevenLabsModel(): string {
+	return configuredModel();
+}
+
+/** One clip from ElevenLabs, past the cache (the regeneration uses it). */
+export async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<Spoken | null> {
 	const key = keyValue("ELEVENLABS_API_KEY");
 	const models = key ? elevenLabsModelsFor(lang.code) : [];
 	if (!key || models.length === 0) return null;
-	const custom = req.voice && req.voice !== "male" && req.voice !== "female" ? req.voice : undefined;
-	const voice = custom ?? envFor("ELEVENLABS_VOICE_ID", lang.code) ?? DEFAULT_ELEVENLABS_VOICE[lang.code];
+	const voice = elevenLabsVoiceFor(req.voice, lang.code);
 	if (!voice) return null;
 	// A line of speech wants more expression than narration; stability
 	// down, style up. Narration keeps the steady slovak.wiki reading.
