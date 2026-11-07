@@ -23,13 +23,13 @@
  *   - the comprehension check at your level, then the end screen: XP,
  *     lines got first time, words a minute, the words now in your deck.
  *
- * Full screen like a lesson (Escape leaves). Research in src/core/watch.ts.
+ * Full screen like a lesson. X and Escape go back to the shelf, and from the shelf Escape goes to Today. Research in src/core/watch.ts.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
@@ -284,10 +284,12 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		[video, saving, mode, tapped, load, activeTime],
 	);
 
-	// Escape leaves, like a lesson — unless a word popover is open.
+	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to Today; a word popover closes first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape" && !document.querySelector("[data-word-popover]")) router.push("/");
+			if (e.key !== "Escape" || document.querySelector("[data-word-popover]") || document.querySelector("[role=dialog]")) return;
+			if (stageRef.current === "shelf") router.push("/");
+			else setStage("shelf");
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
@@ -411,9 +413,9 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<Link href="/" aria-label="Leave the video" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="Back to your videos" title="Back to your videos" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-leave">
 					<XIcon className="size-5" />
-				</Link>
+				</button>
 				<div className="min-w-0 flex-1">
 					<p className="truncate font-ui text-sm font-[600] text-foreground" lang="sk">
 						{video.title} <span className="text-muted-foreground">· {step}</span>
@@ -423,10 +425,6 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 					</div>
 				</div>
 				{right}
-				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 flex items-center gap-1.5 rounded-lg p-1.5 text-[13px] font-[550] text-muted-foreground hover:bg-accent hover:text-foreground">
-					<LibraryIcon className="size-5" />
-					<span className="max-sm:hidden">Videos</span>
-				</button>
 			</div>
 		</div>
 	);
