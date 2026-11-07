@@ -25,7 +25,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import type { Creator, FoundChannel, FoundVideo, ScannedVideo } from "../core/discover.ts";
+import { rejudgeSpoken, type Creator, type FoundChannel, type FoundVideo, type ScannedVideo } from "../core/discover.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
 const dir = () => path.join(PATHS.videos, "discover");
@@ -95,7 +95,8 @@ export const discoverStore = {
 	},
 	scans(): Record<string, ScannedVideo> {
 		const s = readJson<Record<string, ScannedVideo>>("scans.json", {});
-		return s && typeof s === "object" ? s : {};
+		if (!s || typeof s !== "object") return {};
+		return Object.fromEntries(Object.entries(s).map(([id, v]) => [id, rejudgeSpoken(v)]));
 	},
 	putScans(scans: Record<string, ScannedVideo>): void {
 		writeJson("scans.json", scans);

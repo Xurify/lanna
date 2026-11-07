@@ -259,6 +259,25 @@ describe("a video on a scripted engine", () => {
 		assert.ok(again.segments.flatMap((s) => s.tokens).some((t) => t.fresh || t.assumed), "the words are marked again");
 	});
 
+	test("a kept video's channel links to its id: from the record, else the picks' check of the same video, else a saved creator of the same name", async () => {
+		const { discoverStore } = await import("../src/store/discover.ts");
+		const id = "dQw4w9WgXcQ";
+		const kept = videoStore.get(id)!;
+		const CH = "UC" + "a".repeat(22);
+		const CH2 = "UC" + "b".repeat(22);
+		videoStore.put({ ...kept, channel: "Rick", channelId: undefined });
+		assert.equal(watch.videoLibrary().find((e) => e.id === id)!.channelId, undefined, "nothing says whose it is");
+		discoverStore.putCreators({ creators: [{ id: CH2, name: "Rick", addedAt: "2026-11-07T00:00:00Z", from: "link" }], keepReady: true });
+		assert.equal(watch.videoLibrary().find((e) => e.id === id)!.channelId, CH2, "a saved creator of the same name");
+		discoverStore.putScans({ [id]: { id, title: "t", channelId: CH, durationSec: 100, scannedAt: "2026-11-07T00:00:00Z", tracks: [], spoken: "yes", sources: [] } });
+		assert.equal(watch.currentVideo(id)!.channelId, CH, "the check of the same video wins");
+		videoStore.put({ ...kept, channel: "Rick", channelId: CH2 });
+		assert.equal(watch.videoLibrary().find((e) => e.id === id)!.channelId, CH2, "the record's own id wins over both");
+		discoverStore.putScans({});
+		discoverStore.putCreators({ creators: [], keepReady: true });
+		videoStore.put(kept);
+	});
+
 	test("a kept video is reused without a model call; the plan shows it as the Watch task", async () => {
 		const engine = fauxEngine([]); // any call would fail
 		const again = await watch.prepareVideo("youtu.be/dQw4w9WgXcQ", { engine, captions });

@@ -11,7 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderCircleIcon, ScissorsIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { coverageBand, formatClock, FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, heatStrip, IN_REACH, linesTouching, LISTEN_FLOOR, MAX_VIDEO_SEC, rangeStats, type Fragment, type FragmentAnalysis, type FragmentRange } from "@/src/core";
+import { fragmentAnalyses } from "@/components/watch/caches";
+import { coverageBand, formatClock, videoUrl, FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, heatStrip, IN_REACH, linesTouching, LISTEN_FLOOR, MAX_VIDEO_SEC, rangeStats, type Fragment, type FragmentAnalysis, type FragmentRange } from "@/src/core";
 
 const BUCKETS = 72;
 /** Where a plain click on the strip puts a stretch: about this long, around the click. */
@@ -27,16 +28,29 @@ function heatClass(share: number | null): string {
 	return cn("h-full", band === "comfortable" ? "bg-teal-2" : band === "stretch" ? "bg-teal-2/55" : band === "hard" ? "bg-ink-3/45" : "bg-well-2");
 }
 
-export function FragmentsPanel({ videoId, canPrepare, onPrepare, onClose, bare }: { videoId: string; canPrepare: boolean; onPrepare: (range?: FragmentRange) => void; onClose: () => void; bare?: boolean }) {
+export function FragmentsPanel({ videoId, canPrepare, onPrepare, onClose, bare, plain, title }: { videoId: string; canPrepare: boolean; onPrepare: (range?: FragmentRange) => void; onClose: () => void; bare?: boolean; /** No card or rule of its own: the dialog around it is the card. */ plain?: boolean; /** The video's name, under the heading. */ title?: string }) {
 	const [load, setLoad] = useState<Load>({ state: "loading" });
 	const [sel, setSel] = useState<Pick | null>(null);
 	useEffect(() => {
 		const abort = new AbortController();
+		const kept = fragmentAnalyses.peek(videoId);
+		if (kept) {
+			setLoad({ state: "ready", a: kept });
+			const best = kept.picks[0];
+			setSel(best ? { from: best.from, to: best.to } : null);
+			return;
+		}
 		setLoad({ state: "loading" });
-		fetch(`/api/watch/fragments?id=${encodeURIComponent(videoId)}`, { signal: abort.signal })
-			.then(async (res) => {
+		// The request is shared and kept (not tied to this panel), so closing the panel does not waste it.
+		fragmentAnalyses
+			.run(videoId, async () => {
+				const res = await fetch(`/api/watch/fragments?id=${encodeURIComponent(videoId)}`);
 				const body = (await res.json().catch(() => ({}))) as FragmentAnalysis & { message?: string };
 				if (!res.ok) throw new Error(body.message ?? "The captions could not be read.");
+				return body;
+			})
+			.then((body) => {
+				if (abort.signal.aborted) return;
 				setLoad({ state: "ready", a: body });
 				const best = body.picks[0];
 				setSel(best ? { from: best.from, to: best.to } : null);
@@ -48,10 +62,19 @@ export function FragmentsPanel({ videoId, canPrepare, onPrepare, onClose, bare }
 		return () => abort.abort();
 	}, [videoId]);
 	return (
-		<div className={cn("px-4 pb-4 pt-3", bare ? "border-t border-border" : "mt-3 q-card")} data-testid="watch-fragments">
+		<div className={cn("px-4 pb-4 pt-3", !plain && (bare ? "border-t border-border" : "mt-3 q-card"))} data-testid="watch-fragments">
 			<div className="flex items-center gap-2">
 				<ScissorsIcon className="size-4 text-ink-3" strokeWidth={1.6} />
-				<p className="min-w-0 flex-1 font-ui text-sm font-[600] text-ink-2">Pick a stretch of this video</p>
+				<div className="min-w-0 flex-1">
+					<p className="font-ui text-sm font-[600] text-ink-2">Pick a stretch of this video</p>
+					{title && (
+						<p className="truncate font-prose text-[13px] text-ink-3">
+							<a href={videoUrl(videoId)} target="_blank" rel="noreferrer" title={`${title} (opens on YouTube)`} className="hover:text-ink-2 hover:underline">
+								{title}
+							</a>
+						</p>
+					)}
+				</div>
 				<button type="button" onClick={onClose} aria-label="Close" title="Close" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 					<XIcon className="size-4" strokeWidth={1.6} />
 				</button>

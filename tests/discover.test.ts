@@ -123,6 +123,25 @@ test("judgeSpoken: the automatic track decides; else the title, unless a transla
 	assert.equal(core.judgeSpoken({ ...sk, tracks: ["sk"], titleShare: 0.9, titleWords: 2 }), "unsure");
 });
 
+test("judgeSpoken: YouTube's machine-translated automatic tracks are not speech", () => {
+	const ru = { lang: "ru" };
+	const translated = ["ar:asr", "en:asr", "fr:asr", "de:asr", "ru:asr", "es:asr", "uk:asr"];
+	assert.equal(core.judgeSpoken({ ...ru, tracks: translated, titleShare: 0, titleWords: 8 }), "no", "an English video with a Russian automatic track");
+	assert.equal(core.judgeSpoken({ ...ru, tracks: translated }), "unsure", "no title to go on");
+	assert.equal(core.judgeSpoken({ ...ru, tracks: translated, titleShare: 0.8, titleWords: 8 }), "yes", "a Russian title over the same set");
+	assert.equal(core.judgeSpoken({ ...ru, tracks: ["en:asr", "ru:asr"] }), "yes", "two automatic tracks are still speech");
+});
+
+test("rejudgeSpoken: an old 'yes' on a translated set is judged by its title; a real one stays", () => {
+	const set = ["ar:asr", "en:asr", "fr:asr", "de:asr", "ru:asr"];
+	const old = scanned({ tracks: set, trackLang: "ru", spoken: "yes", titleShare: 0 });
+	assert.equal(core.rejudgeSpoken(old).spoken, "no");
+	assert.equal(core.rejudgeSpoken(scanned({ tracks: set, trackLang: "ru", spoken: "yes", titleShare: 0.7 })).spoken, "yes");
+	const real = scanned({ tracks: ["ru:asr"], trackLang: "ru", spoken: "yes", titleShare: 0 });
+	assert.equal(core.rejudgeSpoken(real), real, "one automatic track is left as it was");
+	assert.deepEqual(core.suggestCreators([core.rejudgeSpoken({ ...old, channelId: SLOVAK_CHANNEL })], new Set()), []);
+});
+
 function scanned(over: Partial<import("../src/core/discover.ts").ScannedVideo>): import("../src/core/discover.ts").ScannedVideo {
 	return { id: "aaaaaaaaaaa", title: "t", durationSec: 600, scannedAt: "2026-11-05T00:00:00Z", tracks: ["sk:asr"], spoken: "yes", trackLang: "sk", captionKind: "captions", coverage: 0.95, wordsPerMin: 140, sources: ["creator"], ...over };
 }

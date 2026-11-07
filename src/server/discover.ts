@@ -54,6 +54,7 @@ import {
 	type ScannedVideo,
 } from "../core/discover.ts";
 import { tokenize, type StoryUsage } from "../core/reading.ts";
+import { TtlMemo } from "../core/ttl-memo.ts";
 import { MAX_SEGMENTS, MAX_VIDEO_SEC, segmentCues, videoCoverage, videoExpected, videoUrl } from "../core/watch.ts";
 import { discoverStore, type YouTubeSignals } from "../store/discover.ts";
 import { videoStore } from "../store/videos.ts";
@@ -188,12 +189,25 @@ export async function channelUploads(channelId: string, opts: { signal?: AbortSi
  *  the channel finds, each checked as for a pick (free: player data and
  *  captions, glossed locally; no model). A video checked before is not
  *  fetched again. The checks are kept, so they feed the picks as well. */
+/** What YouTube listed for a channel, kept so opening a creator again, or
+ *  switching Best and Newest, is not three more requests to YouTube. The
+ *  list is what is kept; whether each video is in the library, dismissed or
+ *  checked is read fresh each time. "Check again" clears it. */
+const CREATOR_LIST_TTL_MS = 10 * 60_000;
+const listings = (): TtlMemo<FoundVideo[]> => ((globalThis as { __lhListings?: TtlMemo<FoundVideo[]> }).__lhListings ??= new TtlMemo({ ttlMs: CREATOR_LIST_TTL_MS, max: 60 }));
+/** A shared load is not the caller's to cancel: it finishes and is kept, so a click that was left is not wasted. */
+const LISTING_TIMEOUT_MS = 45_000;
+
 export async function creatorVideos(id: string, opts: { query?: string; signal?: AbortSignal; now?: Date } = {}): Promise<CreatorVideo[]> {
 	const creator = discoverStore.creators().creators.find((c) => c.id === id);
 	if (!creator) throw new Error("That creator is not saved.");
 	const now = opts.now ?? new Date();
 	const query = opts.query?.trim().slice(0, 100);
-	const found = (query ? await channelSearch(id, query, { signal: opts.signal, now }) : await channelUploads(id, { signal: opts.signal, now })).slice(0, CREATOR_LIST).map((v) => ({ ...v, channelId: v.channelId ?? id, channel: v.channel ?? creator.name }));
+	const listed = await listings().run(`${activeProfile()}|${id}|${query ?? ""}`, async () => {
+		const signal = AbortSignal.timeout(LISTING_TIMEOUT_MS);
+		return (query ? await channelSearch(id, query, { signal, now }) : await channelUploads(id, { signal, now })).slice(0, CREATOR_LIST);
+	});
+	const found = listed.map((v) => ({ ...v, channelId: v.channelId ?? id, channel: v.channel ?? creator.name }));
 	const kept = discoverStore.scans();
 	const fresh: Record<string, ScannedVideo> = {};
 	const lexicon = loadLexicon();
@@ -277,7 +291,15 @@ const noAvatar = (): Set<string> => ((globalThis as { __lhNoAvatar?: Set<string>
 /** Fetch the picture of every saved creator and suggested channel that has
  *  none yet: creators saved before pictures were kept, and channels read
  *  from the account's history. */
-export async function fillAvatars(signal?: AbortSignal): Promise<void> {
+export function fillAvatars(signal?: AbortSignal): Promise<void> {
+	const g = globalThis as { __lhFillAvatars?: Promise<void> };
+	// One fill at a time: a page and the poll that follows it share the same requests.
+	return (g.__lhFillAvatars ??= fillAvatarsNow(signal).finally(() => {
+		g.__lhFillAvatars = undefined;
+	}));
+}
+
+async function fillAvatarsNow(signal?: AbortSignal): Promise<void> {
 	const missed = noAvatar();
 	const have = discoverStore.avatars();
 	const saved = discoverStore.creators().creators;
@@ -594,6 +616,7 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 	if (s.job) return s.job;
 	const abort = new AbortController();
 	const profile = activeProfile();
+	listings().forget();
 	Object.assign(s, { running: true, step: "Reading your creators' newest videos", done: 0, total: 0, error: undefined, abort });
 	const job = (async () => {
 		const signal = abort.signal;

@@ -463,7 +463,10 @@ export const TRANSLATED_SET = 5;
 /** Spoken in the language, from the caption tracks and how much of the
  *  original title and description reads as the language:
  *   - YouTube's automatic track is in the language, or in one of its
- *     caption fallbacks: yes;
+ *     caption fallbacks: yes, unless the video has automatic tracks in five
+ *     languages or more. That is YouTube's machine translation of the
+ *     speech into twenty languages, so an English video has a Russian
+ *     "automatic" track too; it goes by the title like any other video;
  *   - the title reads as the language (half its words or more are the
  *     language's): yes, unless the video carries subtitles uploaded in five
  *     languages or more, a translated set that says nothing of the speech
@@ -475,12 +478,21 @@ export const TRANSLATED_SET = 5;
 export function judgeSpoken(input: { tracks: readonly string[]; lang: string; fallbacks?: readonly string[]; titleShare?: number; titleWords?: number }): "yes" | "no" | "unsure" {
 	const own = new Set([input.lang, ...(input.fallbacks ?? [])]);
 	const asr = input.tracks.filter((t) => t.endsWith(":asr")).map((t) => t.split(":")[0]!.split("-")[0]!);
-	if (asr.some((l) => own.has(l))) return "yes";
+	if (asr.length < TRANSLATED_SET && asr.some((l) => own.has(l))) return "yes";
 	if (input.titleShare === undefined || (input.titleWords ?? 0) < 3) return "unsure";
 	if (input.titleShare <= 0.2) return "no";
 	const uploaded = input.tracks.filter((t) => !t.endsWith(":asr")).length;
 	if (input.titleShare >= 0.5 && uploaded < TRANSLATED_SET) return "yes";
 	return "unsure";
+}
+
+/** A scan made before the translated automatic set was told apart: "yes" on
+ *  the strength of that set is judged again by the title it was measured
+ *  with. The word count was not kept, so the title is taken to have enough. */
+export function rejudgeSpoken(v: ScannedVideo): ScannedVideo {
+	if (v.spoken !== "yes" || v.titleShare === undefined || v.tracks.filter((t) => t.endsWith(":asr")).length < TRANSLATED_SET) return v;
+	const spoken = judgeSpoken({ tracks: v.tracks, lang: v.trackLang ?? "", titleShare: v.titleShare, titleWords: 3 });
+	return spoken === v.spoken ? v : { ...v, spoken };
 }
 
 /** Under this many caption words a minute the video is mostly music or

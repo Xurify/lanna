@@ -2,6 +2,15 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: the Watch shelf as cards in four tabs, and what was asked once is kept (branch `feat/watch-layout-and-cache`)
+
+- **Why:** the owner found the Watch page hard to navigate and asked for fewer requests and some caching. Rule E64.
+- **Layout:** the link field stays on top (`/` focuses it); under it the one next step (a video ready to watch, or the best pick you can follow); then a sticky segmented control of four tabs, For you, My videos, Creators and YouTube, each a grid of the same video card. Creators is a list beside the selected creator's videos. "Pick a stretch" opens in a sheet. The picks that are not at your level are grouped under "Closest so far" with one line saying so, instead of a paragraph above a flat list.
+- **Caching:** a creator's newest uploads or search are kept 10 minutes (server and browser), so reopening a creator or switching creators is not another trip to YouTube; the fragments analysis is kept 2 minutes. Checked against the running app: a creator's search 1.2 s then 0.23 s, a 200 KB analysis 1.7 s then 0.25 s (the 0.23 s is the dev server's own floor), and switching creators and back made no request. The page no longer waits on Google for channel pictures; thumbnails are YouTube's largest size with a fallback chain, and a size a video lacks (YouTube sends a 120×90 grey picture) is skipped.
+- **Links:** every channel name and picture is a link to the channel on YouTube (suggested channels, a pick's channel, a creator's name, the next-step card, My videos, the preview); a pick's title in the next-step card, the title in the stretch sheet and a new icon beside the preview's title open the video on YouTube. A kept video now keeps its channel's id; older ones find it from the picks' check of the same video or a saved creator of the same name, and stay plain text when neither knows.
+- **Lowercase unit titles in added languages:** the course prompt's example read "Words: a theme", so the model wrote every word unit in lowercase ("Words: hello and thanks" in Russian and Estonian). The example is capitalized and `tidyTitle` (`src/core/course.ts`) capitalizes unit titles when a course is checked. The Russian and Estonian `course.json` and `course-draft.json` (11 titles each) and the 3 plan lines per profile in `progress.json` that carried them were fixed in place; no model call.
+- **Unverified:** the layout at the owner's full window size and in Day theme (checked in the browser pane at 390, 800 and 1400 px wide in Night only); the keyboard order of the tabs with a screen reader; the sheet's focus handling with Tab (it moves focus in and back, but does not trap it).
+
 ## 6 November: the sources behind every task, and Speed kept and fixed (branch `feat/sources-and-speed`)
 
 - **Why:** the owner asked to keep the Speed page and its time pressure, link the research the exercises and features are built on, and fix whatever a full analysis found. Rule E63; the analysis: [research/evidence-audit.md](research/evidence-audit.md).

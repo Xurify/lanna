@@ -23,7 +23,8 @@ export default async function WatchPage({ searchParams }: { searchParams: Promis
 	}
 	try {
 		refreshIfStale();
-		await fillAvatars(AbortSignal.timeout(4000)).catch(() => {});
+		// Not awaited: a missing picture is an initial until it arrives, and the page does not wait on Google for it.
+		void fillAvatars(AbortSignal.timeout(8000)).catch(() => {});
 		discover = discoverState();
 	} catch {
 		discover = null;

@@ -242,6 +242,18 @@ describe("a video's fragments", () => {
 		await assert.rejects(server.analyzeFragments("not a video", {}), /not a YouTube video/);
 	});
 
+	test("a second look within the memo's time is served from memory, and whether the video is prepared is read fresh", async () => {
+		await server.analyzeFragments("FRAGMENTMEM", { captions: captions() });
+		const first = await server.analyzeFragments("FRAGMENTMEM", {});
+		assert.equal(first.prepared, undefined);
+		// The kept lines are gone, so only the memo can answer.
+		fs.rmSync(path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "lines", "FRAGMENTMEM.json"));
+		const second = await server.analyzeFragments("FRAGMENTMEM", {});
+		assert.deepEqual(second.lines, first.lines);
+		await watch.prepareVideo("https://youtu.be/FRAGMENTMEM", { engine: engineFor(fixtureLines.length), model: "faux:f", captions: captions(), questions: false });
+		assert.deepEqual((await server.analyzeFragments("FRAGMENTMEM", {})).prepared, { whole: true });
+	});
+
 	test("captions in another language are not measured against the language's words", async () => {
 		const a = await server.analyzeFragments("FRAGMENT002", { captions: captions("cs") });
 		assert.equal(a.measurable, false);

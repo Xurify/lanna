@@ -182,6 +182,13 @@ export function courseUnitsFor(units: readonly CourseUnit[], entry: LexiconEntry
 const ID = /^[a-z][a-z0-9-]{1,40}$/;
 
 const str = (v: unknown, max = 400) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+/** A unit's title as a heading: the first letter capital, after a "Words:" label too. The course prompt's example used to read "Words: a theme", and the model copied the lowercase into every words unit ("Words: hello and thanks"). */
+export function tidyTitle(title: string): string {
+	const m = /^(Words|Grammar|Tutor|Goal):\s*(.*)$/s.exec(title);
+	const capital = (s: string) => s.replace(/^\p{Ll}/u, (c) => c.toLocaleUpperCase());
+	return m ? `${m[1]}: ${capital(m[2]!)}` : capital(title);
+}
 const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean) : []);
 
 export interface CourseCheck {
@@ -219,7 +226,7 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 	for (const u of Array.isArray(r.units) ? r.units : []) {
 		const x = u as Record<string, unknown>;
 		const id = str(x.id, 41);
-		const title = str(x.title, 60);
+		const title = tidyTitle(str(x.title, 60));
 		if (!title || !fresh(id, "unit")) continue;
 		const base = { id, title, tagline: str(x.tagline, 80), rule: str(x.rule, 300), glyph: glyph(x.glyph), ...(str(x.grammarTerm, 60) ? { grammarTerm: str(x.grammarTerm, 60) } : {}), ...(str(x.nativeTerm, 60) ? { nativeTerm: str(x.nativeTerm, 60) } : {}) };
 		if (x.kind === "words") {
@@ -420,7 +427,7 @@ The commonest ${language} words, for word themes: ${inventory.words.join(", ")}.
 
 Write the course as:
 {"units": [{"id": "kebab-id", "kind": "grammar", "title": "A short English title", "tagline": "a few words", "rule": "One plain English line a learner reads after a miss, with one short ${language} example", "glyph": "an icon from the list", "grammarTerm": "the English term", "nativeTerm": "the term in ${language}", "cat": "Nouns", "tags": ["genitive", "singular"], "after": []},
-  {"id": "kebab-id", "kind": "words", "title": "Words: a theme", "tagline": "...", "rule": "Learn the word with its sentence.", "glyph": "...", "lemmas": ["eight to twelve words from the list above"]}],
+  {"id": "kebab-id", "kind": "words", "title": "Words: A theme", "tagline": "...", "rule": "Learn the word with its sentence.", "glyph": "...", "lemmas": ["eight to twelve words from the list above"]}],
  "tutors": [{"id": "kebab-id", "title": "...", "tagline": "...", "glyph": "...", "brief": "The first message to the tutor: what to explain and how to practice it, in two or three sentences, in English"}],
  "goals": [{"id": "can-something", "title": "Can do something", "tagline": "...", "scene": "one of: ${inventory.scenes.join(", ")}, or leave it out"}],
  "chapters": [{"id": "kebab-id", "stage": "a1", "title": "...", "tagline": "the grammar it covers", "units": ["unit, tutor and goal ids in teaching order, the LAST one a goal"]}]}

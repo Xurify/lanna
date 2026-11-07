@@ -13,7 +13,9 @@
  * the whole video and a video of any length can be used.
  */
 
+import { activeProfile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
+import { TtlMemo } from "../core/ttl-memo.ts";
 import { bestFragments, FRAGMENT_SOURCE_MAX_SEC, lineFacts, rangeStats, type FragmentAnalysis } from "../core/fragments.ts";
 import { isVideoId, parseCaptions, segmentCues } from "../core/watch.ts";
 import { discoverStore, type CaptionLines } from "../store/discover.ts";
@@ -57,7 +59,28 @@ async function captionLines(id: string, opts: { captions?: (id: string) => Promi
 	return v;
 }
 
-export async function analyzeFragments(id: string, opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date } = {}): Promise<FragmentAnalysis> {
+/** Glossing up to 6000 lines against the lexicon is the work, and the same
+ *  video is opened, closed and opened again from the shelf. A short memo keeps
+ *  the last few analyses; short, because the strip reads the learner's words
+ *  as they stand and a lesson changes them. */
+const ANALYSIS_TTL_MS = 2 * 60_000;
+const analyses = (): TtlMemo<FragmentAnalysis> => ((globalThis as { __lhFragments?: TtlMemo<FragmentAnalysis> }).__lhFragments ??= new TtlMemo({ ttlMs: ANALYSIS_TTL_MS, max: 8 }));
+
+export function analyzeFragments(id: string, opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date } = {}): Promise<FragmentAnalysis> {
+	// A caller that brings its own caption source (a test) is not shared with.
+	if (opts.captions || opts.now) return analyzeNow(id, opts);
+	return analyses()
+		.run(`${activeProfile()}|${id}`, () => analyzeNow(id, opts))
+		.then(({ prepared: _stale, ...a }) => ({ ...a, ...preparedOf(id) }));
+}
+
+/** Whether the library holds the video, read fresh: preparing it must show at once. */
+function preparedOf(id: string): Pick<FragmentAnalysis, "prepared"> {
+	const kept = videoStore.get(id);
+	return kept ? { prepared: kept.fragment ? { startSec: kept.fragment.startSec, endSec: kept.fragment.endSec } : { whole: true as const } } : {};
+}
+
+async function analyzeNow(id: string, opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date }): Promise<FragmentAnalysis> {
 	if (!isVideoId(id)) throw new Error("That is not a YouTube video.");
 	const src = await captionLines(id, opts);
 	const lexicon = loadLexicon();
@@ -70,7 +93,6 @@ export async function analyzeFragments(id: string, opts: { captions?: (id: strin
 	// Another language's spellings would read as unknown words: the share is not measured, the strip stays plain.
 	const lines = measurable ? facts.lines : facts.lines.map(({ u: _u, beyond: _b, ...l }) => ({ ...l, fresh: 0 }));
 	const lex = measurable ? facts.lex : {};
-	const kept = videoStore.get(id);
 	const all = rangeStats(lines, lex, 0, lines.length - 1);
 	return {
 		id,
@@ -87,6 +109,6 @@ export async function analyzeFragments(id: string, opts: { captions?: (id: strin
 		expected: measurable ? Math.round((all?.expected ?? 1) * 1000) / 1000 : 0,
 		level: k.level,
 		expectedWords: k.expectedWords,
-		...(kept ? { prepared: kept.fragment ? { startSec: kept.fragment.startSec, endSec: kept.fragment.endSec } : { whole: true as const } } : {}),
+		...preparedOf(id),
 	};
 }

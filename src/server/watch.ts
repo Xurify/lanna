@@ -60,6 +60,7 @@ import {
 import { parseVerdict, SENTENCE_MAX_CHARS, SENTENCE_XP, sentenceProblems, type SentenceCheckEntry } from "../core/watch-sentences.ts";
 import { missedWatchReps } from "../core/watch-reps.ts";
 import { ensureReadmes } from "../store/corpus.ts";
+import { discoverStore } from "../store/discover.ts";
 import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
@@ -238,7 +239,7 @@ export async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Pro
 }
 
 export interface FetchedCaptions {
-	meta: { id: string; title: string; channel?: string; durationSec: number };
+	meta: { id: string; title: string; channel?: string; channelId?: string; durationSec: number };
 	cues: CaptionCue[];
 	source: VideoSourceInfo;
 	/** The raw track, kept next to the record. */
@@ -321,7 +322,7 @@ async function captionsViaDeepgram(id: string, meta: VideoMeta | null, lang: str
 		const cues: CaptionCue[] = (body.results?.utterances ?? []).filter((u) => u.transcript?.trim()).map((u) => ({ start: u.start, dur: Math.max(0, u.end - u.start), text: u.transcript.trim() }));
 		if (!cues.length) return null;
 		return {
-			meta: { id, title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`, ...(meta?.channel || info.channel || info.uploader ? { channel: (meta?.channel ?? info.channel ?? info.uploader)! } : {}), durationSec: meta?.durationSec || Number(info.duration) || 0 },
+			meta: { id, title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`, ...(meta?.channel || info.channel || info.uploader ? { channel: (meta?.channel ?? info.channel ?? info.uploader)! } : {}), ...(meta?.channelId ? { channelId: meta.channelId } : {}), durationSec: meta?.durationSec || Number(info.duration) || 0 },
 			cues,
 			source: { kind: "transcription", trackLang: lang, via: "deepgram" },
 			raw: { ext: "json", text: JSON.stringify({ events: cues.map((c) => ({ tStartMs: Math.round(c.start * 1000), dDurationMs: Math.round(c.dur * 1000), segs: [{ utf8: c.text }] })) }) },
@@ -358,7 +359,7 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 				const track = pickTrack(meta.tracks, langs);
 				if (track) {
 					const got = await fetchTrack(track, opts.signal);
-					if (got) return { meta: { id, title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec }, cues: got.cues, source: { kind: track.kind === "asr" ? "auto-captions" : "captions", trackLang: track.languageCode, ...(track.name ? { trackName: track.name } : {}), via: meta.via }, raw: { ext: got.ext, text: got.text } };
+					if (got) return { meta: { id, title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), ...(meta.channelId ? { channelId: meta.channelId } : {}), durationSec: meta.durationSec }, cues: got.cues, source: { kind: track.kind === "asr" ? "auto-captions" : "captions", trackLang: track.languageCode, ...(track.name ? { trackName: track.name } : {}), via: meta.via }, raw: { ext: got.ext, text: got.text } };
 					errors.push(`${meta.via}: the caption track came back empty`);
 				} else if (meta.tracks.length === 0 && meta.via === "innertube") {
 					// The app client sometimes lists no tracks at all: the
@@ -663,6 +664,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			url: videoUrl(id),
 			title: fetched.meta.title,
 			...(fetched.meta.channel ? { channel: fetched.meta.channel } : {}),
+			...(fetched.meta.channelId ? { channelId: fetched.meta.channelId } : {}),
 			durationSec: range ? Math.ceil(lines[lines.length - 1]!.end - lines[0]!.start) : fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
 			...(range ? { fragment: { startSec: lines[0]!.start, endSec: lines[lines.length - 1]!.end, ofSec: fetched.meta.durationSec || Math.ceil(fetched.cues[fetched.cues.length - 1]?.start ?? 0) } } : {}),
 			source: fetched.source,
@@ -729,9 +731,17 @@ export function remeasureVideo(rec: VideoRecord): VideoRecord {
 }
 
 /** A kept video as the page should show it. */
+/** The channel a kept video belongs to, for a link to it. Videos kept before the id was kept take it from the picks' check of the same video, or from a saved creator of the same name. */
+function channelIdOf(v: { id: string; channel?: string; channelId?: string }, scans: ReturnType<typeof discoverStore.scans>, creators: Array<{ id: string; name: string }>): string | undefined {
+	return v.channelId ?? scans[v.id]?.channelId ?? (v.channel ? creators.find((c) => c.name === v.channel)?.id : undefined);
+}
+
 export function currentVideo(id: string): VideoRecord | null {
 	const rec = videoStore.get(id);
-	return rec ? remeasureVideo(rec) : null;
+	if (!rec) return null;
+	const next = remeasureVideo(rec);
+	const channelId = channelIdOf(next, discoverStore.scans(), discoverStore.creators().creators);
+	return channelId ? { ...next, channelId } : next;
 }
 
 export function videoLibrary(): VideoLibraryEntry[] {
@@ -741,11 +751,15 @@ export function videoLibrary(): VideoLibraryEntry[] {
 		if (rec) remeasureVideo(rec);
 	}
 	const watches = videoStore.watches();
+	const scans = discoverStore.scans();
+	const creators = discoverStore.creators().creators;
 	return videoStore.list().map((v) => {
 		const mine = watches.filter((w) => w.videoId === v.id);
 		const last = mine[mine.length - 1];
+		const channelId = channelIdOf(v, scans, creators);
 		return {
 			...v,
+			...(channelId ? { channelId } : {}),
 			watches: mine.length,
 			...(last ? { lastWatchedAt: last.at, lastScore: { correct: last.correct, total: last.total }, ...(last.mode === "step" && last.segments ? { lastGotFirst: Math.round((last.gotFirst / last.segments) * 100) / 100 } : {}) } : {}),
 		};
