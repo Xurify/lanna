@@ -2,6 +2,16 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: get ready for a video you cannot yet follow (branch `feat/watch-get-ready`)
+
+- **Why:** the owner, on a podcast episode the app rated "Too hard for now" (41% known): use AI to make pre-content to study first, then watch, and be "drastically so much better at hearing what is being said and noticing what the speaker(s) are talking about". Rule E68; the research: [research/pre-listening.md](research/pre-listening.md) (knowing the topic helped listeners more than being taught the words; a short description of a video before it raised comprehension, statements more than questions).
+- **Get ready** on a prepared video's preview, under the coverage cards: one cheap request writes what the video is about (in English, part by part with the times), a short version in the language at your level (spoken, every word tappable, the English behind a switch, with the shares of its words you know and the level expects), and the keys to hear for (words and short phrases copied from the real lines, each with its meaning and its line). Type them: each key is a gap in its real line, spoken, with the first miss showing the first letter and the line's English, the second the answer; XP as typed reps, misses to Review and back in Listen, the briefing marked done with the score. Under 88% known the offer leads; above it is a quiet offer. Get ready again asks once more. Kept in `videos/prep/<id>.json` with its cost, counted at Settings → Spending under Videos (the study sections' cost is now counted there too).
+- **Shared drill:** the typed-gap drill of the study sections moved to `components/watch/gap-drill.tsx`; sections and Get ready both use it, unchanged on screen.
+- **The hard bands' lines** on every video card and the Today card say "get ready first".
+- **Sources:** the Watch note carries Chang & Read 2006, Herron 1994, Herron et al. 1998, Chung 1999 and Vandergrift & Tafaghodtari 2010 (DOIs checked on Crossref), and says what they did not show.
+- **Tests:** `tests/watch-prep.test.ts` (parts, keys and phrases held against the lines; the summary glossed and measured, written again under the floor; kept and not asked again; typing the keys pays XP and feeds Review and Listen).
+- **Unverified:** the preview with a real model and a real video (the cloud cannot reach YouTube); checked in the browser on a seeded video with a faux briefing at 1400 and 390 px.
+
 ## 7 November: a bolder app icon (branch `feat/bolder-app-icon`)
 
 - **Why:** the owner: "Make the icon a bit better". In the taskbar the cursor and line were thin and small, and the ink tile disappeared on a dark taskbar.

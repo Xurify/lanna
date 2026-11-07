@@ -198,7 +198,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`explanations.json\` | Why? question | \`sentence\`, \`answer\`, \`lemma\`, \`learnerWrote\`, \`question\`, \`explanation\` (the tutor's reply), \`chatId\`, \`askedAt\`, \`reopened\` |
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
-| \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage) and \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats) |
+| \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage), \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats), \`sections[]\` (the study sections a model found per video) and \`preps[]\` (the briefing made per video before watching: what it is about, its parts, the keys, the short version at the learner's level, its cost, and when the keys were typed) |
 | \`cheatsheets.json\` | an array | every cheatsheet you made under Words → Cheatsheets: title, when made and edited, and its sections with their rows (the phrase, how to say it, the meaning, a note) |
 | \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, the line in the language, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
 
@@ -263,8 +263,10 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		.map((e) => videoStore.get(e.id))
 		.filter((v): v is VideoRecord => v !== null);
 	const watchings = videoStore.watches();
+	const sections = videoStore.allSections();
+	const preps = videoStore.allPreps();
 	let videosUsd = 0;
-	for (const v of videos) {
+	for (const v of [...videos, ...sections, ...preps]) {
 		try {
 			videosUsd += turnCost(v.usage as never) ?? 0;
 		} catch {
@@ -331,7 +333,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("review.json", { cards, answers });
 	write("stories.json", { stories, readings });
 	write("spoken.json", { scenes, fluency });
-	write("videos.json", { videos, watchings });
+	write("videos.json", { videos, watchings, sections, preps });
 	write("cheatsheets.json", cheatsheets);
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };

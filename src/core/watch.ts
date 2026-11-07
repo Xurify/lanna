@@ -563,8 +563,8 @@ export function coverageBand(coverage: number): { band: "comfortable" | "stretch
 	const pct = Math.round(coverage * 100);
 	if (coverage >= LISTEN_FLOOR) return { band: "comfortable", title: "Comfortable", line: `You know ${pct} of every 100 words — the range where listening works on its own.` };
 	if (coverage >= 0.88) return { band: "stretch", title: "Within reach", line: `${pct} of every 100 words known. Below ${Math.round(LISTEN_FLOOR * 100)} you work out the words more than follow them; learning the new words first and watching line by line close the gap.` };
-	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text; watch it line by line.` };
-	return { band: "too-hard", title: "Too hard for now", line: `Only ${pct} of every 100 words known. It will be noise at the moment; keep it for later, or watch with both subtitles on.` };
+	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text: get ready first, then watch it line by line.` };
+	return { band: "too-hard", title: "Too hard for now", line: `Only ${pct} of every 100 words known. It will be noise at the moment: get ready first, keep it for later, or watch with both subtitles on.` };
 }
 
 // ─── XP, the listening-speed summary ────────────────────────────────────────

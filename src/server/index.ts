@@ -78,6 +78,7 @@ export * from "./watch.ts";
 export * from "./discover.ts";
 export * from "./fragments.ts";
 export * from "./watch-sections.ts";
+export * from "./watch-prep.ts";
 export { videoStore } from "../store/videos.ts";
 export * from "./milestones.ts";
 export * from "./dated-scene.ts";

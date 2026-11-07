@@ -129,6 +129,7 @@ export * from "./fragments.ts";
 export * from "./ttl-memo.ts";
 export * from "./watch-reps.ts";
 export * from "./watch-sections.ts";
+export * from "./watch-prep.ts";
 export * from "./catch-mistake.ts";
 export * from "./milestones.ts";
 export * from "./dated-scene.ts";

@@ -47,6 +47,7 @@ import { ChannelLink } from "@/components/watch/channel-link";
 import { Shelf } from "@/components/watch/shelf";
 import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
+import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -500,6 +501,8 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 						</p>
 					</div>
 				</div>
+
+				{video.source.trackLang === video.lang && <GetReady video={video} canFind={canFind} />}
 
 				{video.preTeach.length > 0 && (
 					<div className="mt-6" data-testid="watch-preteach">
