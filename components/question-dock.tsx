@@ -95,7 +95,7 @@ export function QuestionDock({
 	// The chip's display name carries the tool's OWN name (owner
 	// 2026-10-09): probe-phase questions label Probe/Recall in the
 	// composer; teach tools keep the standing labels.
-	const toolLabel = toolName === "probe" ? "Probe" : toolName === "recall" ? "Recall" : undefined;
+	const toolLabel = toolName === "probe" ? "Warm-up" : toolName === "recall" ? "Recall" : undefined;
 	// Parse, don't cast (src/core/tool-parts.ts): the model authored this
 	// input, and only the schema the tool declared vouches for its shape.
 	// The dock mounts on input-available parts (already validated at the
@@ -107,7 +107,7 @@ export function QuestionDock({
 	if (!parsed) {
 		return (
 			<div data-testid="malformed-question" className="rounded-xl border border-dashed bg-card/60 p-3 text-sm text-muted-foreground">
-				This question arrived malformed — the transcript keeps the retry.
+				This question could not be shown. The tutor’s next try is below.
 			</div>
 		);
 	}
@@ -567,7 +567,7 @@ function QuestionDockForm({
 			<div data-session-find-root="" className="max-h-[var(--dock-max-h,55dvh)] overflow-y-auto px-4 pt-3">
 				<div className="mb-1 text-xs font-semibold text-muted-foreground">
 					{toolName === "probe"
-						? "Probe"
+						? "Warm-up"
 						: toolName === "recall"
 							? "Recall"
 							: kind === "quiz"
@@ -791,9 +791,9 @@ function QuestionDockForm({
 								step={1}
 								value={CONFIDENCE_STOPS[confIdx]}
 								disabled={sel.dontKnow}
-								aria-label="Confidence — the probability your selected answer is correct"
+								aria-label="Confidence: how sure you are that your answer is right"
 								aria-valuetext={`${CONFIDENCE_STOPS[confIdx]} percent`}
-								title="The probability your selected answer is correct — 50% is a coin flip. Adjust with ←/→."
+								title="How sure are you that your answer is right? 50% is a guess. Change it with ← and →."
 								data-testid="confidence-slider"
 								onChange={(e) => {
 									// Snap to the nearest stop; the rendered VALUE is the stop's own
@@ -851,9 +851,9 @@ function QuestionDockForm({
 					</button>
 					<span aria-hidden className="ml-auto text-xs text-muted-foreground">
 						{compactionRunning
-							? "compacting session…"
+							? "Summarizing the chat…"
 							: qd.mode === "single-select"
-								? `tap an answer · 1–${Math.min(9, qd.options.length)} keys`
+								? `Pick an answer, or press 1–${Math.min(9, qd.options.length)}`
 								: "↵ submits"}
 					</span>
 					{(qd.mode === "multi-select" || sel.dontKnow || sel.otherSelected) && (
@@ -880,7 +880,7 @@ function QuestionDockForm({
 					className="rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
 				>
 					<div className="px-2.5 pt-2 text-xs font-semibold text-muted-foreground">
-						{qd.mode === "text" ? "Your answer" : "YOUR THINKING"}
+						{qd.mode === "text" ? "Your answer" : "Your thinking"}
 					</div>
 					{qd.mode === "text" ? (
 						<textarea
@@ -948,7 +948,7 @@ function QuestionDockForm({
 					)}
 					<div className="flex items-center justify-between gap-2 p-1">
 						<span aria-hidden className="pl-1.5 text-xs text-muted-foreground">
-								{compactionRunning ? "compacting session…" : "↵ submits · ⇧↵ newline"}
+								{compactionRunning ? "Summarizing the chat…" : "↵ submits · ⇧↵ newline"}
 						</span>
 						<Button
 							type="submit"

@@ -45,7 +45,7 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 		try {
 			await switchLanguage(id, entry.english, landingAfterSwitch(window.location.pathname));
 		} catch (err) {
-			setNote(err instanceof Error ? err.message : `Could not switch to ${entry.english}.`);
+			setNote(err instanceof Error ? err.message : `Couldn't switch to ${entry.english}. Try again.`);
 			setSwitching(null);
 		}
 	};
@@ -98,7 +98,7 @@ function RemoveDialog({ entry, onCancel, onRemoved }: { entry: ProfileEntry; onC
 		const res = await fetch("/api/languages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "remove", id: entry.id }) }).catch(() => null);
 		if (!res?.ok) {
 			const body = (await res?.json().catch(() => null)) as { message?: string } | null;
-			setError(body?.message ?? `Could not remove ${entry.english}.`);
+			setError(body?.message ?? `Couldn't remove ${entry.english}. Try again.`);
 			setBusy(false);
 			return;
 		}
@@ -113,7 +113,7 @@ function RemoveDialog({ entry, onCancel, onRemoved }: { entry: ProfileEntry; onC
 			lead="It leaves your list of languages."
 			body={`Any words downloaded for it are deleted. Your ${entry.english} progress stays: add ${entry.english} again and you pick up where you were.`}
 			error={error}
-			confirm="Remove"
+			confirm={`Remove ${entry.english}`}
 			destructive
 			busy={busy}
 			onConfirm={() => void remove()}

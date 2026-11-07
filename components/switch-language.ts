@@ -8,7 +8,7 @@ export async function switchLanguage(id: string, english: string, to = "/"): Pro
 	const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ active: id }) });
 	if (!res.ok) {
 		const body = (await res.json().catch(() => null)) as { message?: string } | null;
-		throw new Error(body?.message ?? `Could not switch to ${english}.`);
+		throw new Error(body?.message ?? `Couldn't switch to ${english}. Try again.`);
 	}
 	window.location.assign(to);
 }
@@ -27,6 +27,6 @@ export async function addLanguage(id: string, slot?: "strong" | "cheap" | "dicti
 	const res = await fetch("/api/languages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", id, ...(slot ? { slot } : {}) }) });
 	if (!res.ok) {
 		const body = (await res.json().catch(() => null)) as { message?: string } | null;
-		throw new Error(body?.message ?? "Could not start adding the language");
+		throw new Error(body?.message ?? "Couldn't start adding the language. Try again.");
 	}
 }

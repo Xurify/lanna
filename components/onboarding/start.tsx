@@ -219,7 +219,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 			...(outcome?.probe.summary ? [`The placement tutor's reading of my edge: ${outcome.probe.summary}`] : []),
 			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need " + target.english + " for.",
 		].join("\n");
-		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Add a model key in Settings first."));
+		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Check Settings → AI models."));
 	};
 
 	const withoutTarget = (langs: readonly Lang[]) => langs.filter((l) => l !== target.code);
@@ -261,7 +261,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 			<main className={cn(COLUMN, "flex-1 py-6")}>
 				{step === 1 && (
 					<section className="lh-rise" data-testid="start-purposes">
-						<Heading title={`What is ${target.english} for?`} line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice; the tutor stops asking.`} />
+						<Heading title={`What is ${target.english} for?`} line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice, so the tutor does not have to ask.`} />
 						<div className="mt-6 grid gap-3 sm:grid-cols-2">
 							{PURPOSES.map((p) => {
 								const on = d.purposes.includes(p.id);
@@ -332,7 +332,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
 							<PickSome items={explainChoices(withoutTarget(d.languages))} value={withoutTarget(d.explainIn)} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
-							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now.</p>
 						</Field>
 						<Field label={`${target.english} so far`}>
 							<Choices items={priorsFor(target.english)} value={d.prior} onPick={(v) => set("prior", v)} />
@@ -362,7 +362,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								{LEVEL_CAN_DO[level]}
 							</p>
 							<p className="mt-1.5 font-prose text-sm text-muted-foreground" data-testid="start-level-fit">
-								{levelFitLine(level, d.purposes, examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The map credits hours as units are done, so the date moves with you.
+								{levelFitLine(level, d.purposes, examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The date moves as you finish units.
 							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-3">
 								<span className="font-ui text-sm text-foreground">Aim for</span>
@@ -386,9 +386,9 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 							title={edit && goal?.placedAt ? "Re-check where you stand?" : d.prior === "none" ? "You start at the beginning" : "Where do you stand?"}
 							line={
 								edit && goal?.placedAt
-									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts from your current chapter, never below it, and replaces it.`
+									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts at your current chapter, never below it, and replaces that result.`
 									: d.prior === "none"
-										? "First words and the present tense are the first lesson. If you know more than you said, a 2-minute check can skip you ahead."
+										? "First words and the present tense are the first lesson. If you know more than you said, a short check can skip you ahead."
 										: "An adaptive check: every sentence is chosen from your answers so far, so it finds your edge in about a dozen typed answers. Then the tutor asks a few questions at that edge, and a two-minute word check counts your vocabulary. Units you hold are ticked off the map; the ones you miss come first in your plan."
 							}
 						/>

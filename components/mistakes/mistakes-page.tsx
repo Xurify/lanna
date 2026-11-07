@@ -39,7 +39,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 		try {
 			const res = await fetch("/api/mistakes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, force }) });
 			const body = await res.json();
-			if (!res.ok) throw new Error(body.message ?? `HTTP ${res.status}`);
+			if (!res.ok) throw new Error(body.message ?? `Something went wrong (error ${res.status}). Try again.`);
 			setReport(body as MistakesReport);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
@@ -287,7 +287,7 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 			{guide ? (
 				<div className="mt-3">{guide.data ? <GuideBody data={guide.data} /> : <GuideText text={guide.text} />}</div>
 			) : ai.ready ? (
-				<p className="mt-2 text-sm text-ink-3">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Strong model (Cheap when Strong is empty) and runs once per set of answers.</p>
+				<p className="mt-2 text-sm text-ink-3">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your main AI model and runs once per set of answers.</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={GUIDE_ADDS} className="mt-3" />
 			)}
@@ -346,10 +346,10 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 					</Step>
 				)}
 				{slugs.length > 0 && (
-					<Step title="Put the words you miss into review" line={`${slugs.length} ${slugs.length === 1 ? "word" : "words"}, so they come back on a schedule`}>
+					<Step title="Put the words you miss into Review" line={`${slugs.length} ${slugs.length === 1 ? "word" : "words"}, so they come back on a schedule`}>
 						<button type="button" disabled={added === "adding" || added === "added"} onClick={() => void addWords()} className="q-btn sec pointer-coarse:min-h-11" data-testid="step-review">
 							{added === "added" ? <CheckIcon className="q-ico" /> : added === "adding" ? <LoaderCircleIcon className="q-ico animate-spin" /> : <PlusIcon className="q-ico" />}
-							{added === "added" ? "Added" : added === "failed" ? "Try again" : "Add to review"}
+							{added === "added" ? "Added" : added === "failed" ? "Try again" : "Add to Review"}
 						</button>
 					</Step>
 				)}
@@ -472,7 +472,7 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 								disabled={done[w.slug] === "adding" || done[w.slug] === "added"}
 								onClick={() => void add(w.slug)}
 								className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-3 hover:bg-well hover:text-ink-2 disabled:opacity-60 pointer-coarse:min-h-11"
-								aria-label={`Add ${w.lemma} to review`}
+								aria-label={`Add ${w.lemma} to Review`}
 								data-testid={`word-review-${w.slug}`}
 							>
 								{done[w.slug] === "added" ? <CheckIcon className="size-3.5" strokeWidth={1.6} /> : <PlusIcon className="size-3.5" strokeWidth={1.6} />}

@@ -392,8 +392,8 @@ export function timeAgo(iso: string, now = new Date()): string {
  *  still rides the API payload, so this is a one-line flip back if it's
  *  ever wanted. */
 function sessionMeta(chat: ChatListItem): string {
-	if (chat.compacting) return `Compacting context · ${timeAgo(chat.updatedAt)}`;
-	if (chat.pendingQuestion) return `Waiting for input · ${timeAgo(chat.updatedAt)}`;
+	if (chat.compacting) return `Summarizing the chat · ${timeAgo(chat.updatedAt)}`;
+	if (chat.pendingQuestion) return `Waiting for your answer · ${timeAgo(chat.updatedAt)}`;
 	if ((chat.kind ?? "teach") === "practice" && chat.pendingProblem) {
 		return `Problem waiting · ${timeAgo(chat.updatedAt)}`;
 	}
@@ -465,7 +465,7 @@ export function SessionRow({
 			    was left of the name; right-aligned keeps the titles flush with
 			    the teaching rows and reads cleaner. */}
 			{(chat.kind ?? "teach") === "practice" && (
-				<MessagesSquareIcon className="size-3.5 shrink-0 text-muted-foreground" aria-label="Practice session" />
+				<MessagesSquareIcon className="size-3.5 shrink-0 text-muted-foreground" aria-label="Practice chat" />
 			)}
 		</button>
 	);
@@ -511,7 +511,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
 							onCancel();
 						}
 					}}
-					aria-label="Rename session"
+					aria-label="Rename chat"
 					data-testid="session-rename-input"
 					className="lh-input w-full min-w-0 truncate border-0 border-b border-border bg-transparent px-0 text-foreground outline-none"
 				/>

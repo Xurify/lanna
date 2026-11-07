@@ -31,11 +31,11 @@ export function ResetSection({ language }: { language?: string }) {
 		try {
 			const res = await fetch("/api/reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: CONFIRM_WORD }) });
 			const body = (await res.json()) as { error?: string; backup?: string };
-			if (!res.ok) throw new Error(body.error ?? `Reset failed (${res.status})`);
+			if (!res.ok) throw new Error(body.error ?? `Couldn't reset (error ${res.status}). Try again.`);
 			setBackup(body.backup ?? null);
 			setTimeout(() => window.location.assign("/"), 1500);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Reset failed");
+			setError(err instanceof Error ? err.message : "Couldn't reset. Try again.");
 			setBusy(false);
 		}
 	};
@@ -43,7 +43,7 @@ export function ResetSection({ language }: { language?: string }) {
 	if (backup !== null) {
 		return (
 			<p className="text-sm text-foreground" role="status" data-testid="reset-done">
-				Done. Your old data is kept at <code className="font-mono text-xs">{backup}</code>. Reloading…
+				Done. Your data is backed up at <code className="font-mono text-xs">{backup}</code>. Reloading…
 			</p>
 		);
 	}
@@ -51,14 +51,13 @@ export function ResetSection({ language }: { language?: string }) {
 	return (
 		<div className="flex flex-col gap-3" data-testid="reset-section">
 			<p className="text-sm text-muted-foreground">
-				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking sessions and stories all go. Your provider keys, settings and voice clips stay.
-				Nothing is deleted: the data is moved into a backup folder you can put back.
+				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking sessions and stories move into a backup folder, so you can put them back. Your API keys, settings and voice clips stay.
 			</p>
 			{where && (
 				<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs" data-testid="reset-locations">
 					<dt className="text-muted-foreground">Your data</dt>
 					<dd className="min-w-0 break-all font-mono text-foreground">{where.data}</dd>
-					<dt className="text-muted-foreground">Old data</dt>
+					<dt className="text-muted-foreground">Backups</dt>
 					<dd className="min-w-0 break-all font-mono text-foreground">
 						{where.backups}
 						<span className="font-sans text-muted-foreground">{where.backupCount === 0 ? " (none yet)" : ` (${where.backupCount} saved)`}</span>
@@ -93,7 +92,7 @@ export function ResetSection({ language }: { language?: string }) {
 					)}
 					<div className="flex gap-2">
 						<Button type="button" variant="destructive" size="sm" data-testid="reset-confirm" disabled={busy || typed !== CONFIRM_WORD} onClick={() => void run()}>
-							{busy ? "Resetting…" : "Reset everything"}
+							{busy ? "Resetting…" : "Reset my data"}
 						</Button>
 						<Button
 							type="button"

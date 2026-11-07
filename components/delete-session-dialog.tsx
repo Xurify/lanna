@@ -14,7 +14,7 @@ export const TRACES_COPY = {
 	testid: "delete-traces",
 	checkbox: "delete-traces-checkbox",
 	title: "Also remove what it added to the skill map",
-	body: "Its topics, links and events leave the skill map too. Topics that other sessions also cover stay; topics only this session created are removed.",
+	body: "Its topics and links leave the skill map too. Topics that other chats also cover stay.",
 };
 
 /**
@@ -160,12 +160,12 @@ export function DeleteSessionBody({
 		<div
 			role="dialog"
 			aria-modal="true"
-			aria-label="Delete session"
+			aria-label="Delete chat"
 			data-testid="delete-session-dialog"
 			onClick={(e) => e.stopPropagation()}
 			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 		>
-			<h2 className="text-sm font-semibold text-destructive">Delete session?</h2>
+			<h2 className="text-sm font-semibold text-destructive">Delete chat?</h2>
 			{/* The session name below the title in JetBrains Mono (owner,
 			    2026-09-24): no code-block chrome — the font already says
 			    code. Owner, 2026-10-13 polish: normal text-sm size (was
@@ -177,8 +177,8 @@ export function DeleteSessionBody({
 				</code>
 			</div>
 			<p className="mt-2 text-sm text-muted-foreground">
-				The session leaves your list and its background work stops. What it added to your skill map stays unless
-				you tick the box below. The file itself is kept in the trash, so opening the session&apos;s link later can put it back.
+				The chat leaves your list and any background work in it stops. What it added to your skill map stays unless
+				you tick the box below. The chat is kept in the trash, so opening its link again lets you put it back.
 			</p>
 			<label
 				data-testid={TRACES_COPY.testid}

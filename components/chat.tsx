@@ -1233,8 +1233,8 @@ export function Chat({
 								}}
 								onBlur={() => void commitRename(titleDraft)}
 								spellCheck={false}
-								aria-label="Session title"
-								title="Rename this session"
+								aria-label="Chat title"
+								title="Rename this chat"
 								className="lh-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
 							/>
 							{/* flex-1 spacer during rename too, so the chips stay at
@@ -1246,7 +1246,7 @@ export function Chat({
 					<>
 						<Hint
 							// F2 renames (registry) — surfaced on the hover.
-							label="Rename session"
+							label="Rename chat"
 							action="rename-session"
 							side="bottom"
 						>
@@ -1338,8 +1338,8 @@ export function Chat({
 						<div data-session-find-root="" className={`${COLUMN} flex flex-1 flex-col gap-4 pt-4`}>
 							{messages.length === 0 && !busy && (
 								<ConversationEmptyState
-									title="New session"
-									description="The teacher will open by probing what you already know."
+									title="New chat"
+									description={kind === "practice" ? "Your tutor starts with a first problem." : "Your tutor starts with a few quick questions to see what you know."}
 								/>
 							)}
 
@@ -1583,15 +1583,15 @@ export function Chat({
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
-									<BrailleSpinner label="Compacting context" />
-									<Shimmer duration={1}>COMPACTING CONTEXT…</Shimmer>
+									<BrailleSpinner label="Summarizing the chat so far" />
+									<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
 								</span>
 							)}
 							{(status === "submitted" || turnInFlight) && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Thinking" />
 									<Shimmer duration={1}>
-										THINKING…
+										Thinking…
 									</Shimmer>
 								</span>
 							)}

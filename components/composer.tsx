@@ -45,7 +45,7 @@ export function Composer({
 	autoFocus,
 	inputRef,
 	onEscape,
-	placeholder = "Ask, answer, or steer the lesson…",
+	placeholder = "Write to your tutor…",
 	nextProblem = false,
 	onNext,
 }: {

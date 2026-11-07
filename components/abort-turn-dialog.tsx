@@ -30,19 +30,19 @@ export type AbortMode = "turn" | "question" | "problem";
 
 const COPY: Record<AbortMode, { title: string; line: string; action: string }> = {
 	turn: {
-		title: "Abort this turn?",
-		line: "The partial answer stays in the transcript.",
-		action: "Abort",
+		title: "Stop the tutor's answer?",
+		line: "What it has written so far stays in the chat.",
+		action: "Stop",
 	},
 	question: {
-		title: "Dismiss this question?",
-		line: "Skipped — the teacher moves on without it.",
-		action: "Dismiss",
+		title: "Skip this question?",
+		line: "The tutor moves on without your answer.",
+		action: "Skip",
 	},
 	problem: {
-		title: "Discard this problem?",
-		line: "The problem is dropped — no solution is revealed.",
-		action: "Discard",
+		title: "Skip this problem?",
+		line: "It is dropped, and the answer is not shown.",
+		action: "Skip",
 	},
 };
 
@@ -82,7 +82,7 @@ export function AbortTurnBody({
 				</h2>
 				<p className="mt-1.5 text-xs text-muted-foreground" data-testid="abort-turn-line">
 					{copy.line}
-					{busy && mode !== "turn" ? " The working turn stops too." : ""}
+					{busy && mode !== "turn" ? " The tutor's current answer stops too." : ""}
 				</p>
 				<div className="mt-4 flex justify-end gap-2">
 					<Button type="button" variant="ghost" size="sm" data-testid="abort-turn-cancel" onClick={onClose}>

@@ -145,7 +145,7 @@ export const LEVEL_CAN_DO: Record<Cefr, string> = {
 	A2: "Shop, book the doctor, say what you did today, get around town. Simple talk with people who slow down for you.",
 	B1: "Chat with family and friends about everyday life, tell a story, give an opinion, get through an office visit. A vlog with clear speech is followable.",
 	B2: "Hold your own at work and in an argument, follow the news and most films, write a formal email. People talk to you at their own speed.",
-	C1: "Nuance, humour, long articles and novels, any meeting. Mistakes are rare and nobody slows down for you.",
+	C1: "Nuance, humor, long articles and novels, any meeting. Mistakes are rare and nobody slows down for you.",
 };
 
 /** The level a purpose needs: the exam's own level when given. */
@@ -373,7 +373,7 @@ export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLev
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 	const example = langs[0] === "et" ? "v meste ≈ linnas" : langs[0] === "fi" ? "v meste ≈ kaupungissa" : langs[0] === "ru" ? "v meste ≈ в городе" : "v meste ≈ in der Stadt";
-	return `When a ${target.english} rule mirrors one in ${list}, the Why? panel and the tutor's hints show that one line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learning.`;
+	return `When a ${target.english} rule mirrors one in ${list}, the Why? panel and the tutor's hints show the matching line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learning.`;
 }
 
 /** Explanation languages in order: the first carries the explanation, the second the key line and terms. English by default. */

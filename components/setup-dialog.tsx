@@ -54,9 +54,9 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 /** The pickers' slot identity — same roster language as the Agent
  *  section's slot rows. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
-	strong: { label: "Strong", roster: "Prober, teacher" },
-	cheap: { label: "Cheap", roster: "Researcher, demo builder, extractor, auditor" },
-	vision: { label: "Vision", roster: "Visual maker + PDF reader" },
+	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
+	cheap: { label: "Cheap", roster: "Talk, Story, Why? and practice, plus the assistants that research, build demos, and grade your work" },
+	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
 };
 const SLOT_ORDER: readonly ModelSlotName[] = ["strong", "cheap", "vision"];
 
@@ -368,7 +368,7 @@ export function SetupDialog({
 		setKeySaving(false);
 		if (!res || !res.ok) {
 			const body = (await res?.json().catch(() => ({}))) as { error?: string } | undefined;
-			setKeyError(res ? (body?.error ?? `Save failed (${res.status})`) : "Save failed. Check your connection and try again.");
+			setKeyError(res ? (body?.error ?? `Couldn't save the key (error ${res.status}). Try again.`) : "Couldn't save. Check your connection and try again.");
 			return;
 		}
 		setKeyProvider(null);
@@ -395,7 +395,7 @@ export function SetupDialog({
 		}).catch(() => null);
 		if (!res || !res.ok) {
 			setSaving(false);
-			setError(res ? `Save failed: ${(await res.json().catch(() => ({}))).error ?? res.status}` : "Save failed. Check your connection and try again.");
+			setError(res ? `Couldn't save: ${(await res.json().catch(() => ({}))).error ?? res.status}` : "Couldn't save. Check your connection and try again.");
 			return;
 		}
 		notifySettingsSaved("models");
@@ -425,7 +425,7 @@ export function SetupDialog({
 										Set up your models
 									</h2>
 									<p className="text-xs text-muted-foreground">
-										Configure AI providers and select your models
+										Add an AI key, then pick your models
 									</p>
 								</div>
 							</div>
@@ -445,7 +445,7 @@ export function SetupDialog({
 								{failed ? (
 									<div className="p-6">
 										<p className="text-sm text-foreground">
-											Model catalog could not be loaded. Check the connection and retry.
+											The list of models could not be loaded. Check your connection, then close this and open it again.
 										</p>
 									</div>
 								) : (

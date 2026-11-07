@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 			// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
 			// iOS Safari still reads the Apple name to launch full screen, so both go out.
 			other: { "apple-mobile-web-app-capable": "yes" },
-	description: "A language tutor with a memory: sessions, practice, spaced review, and a knowledge graph of what you know.",
+	description: "A language tutor: lessons, spaced review, reading and speaking, kept on your own computer.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
