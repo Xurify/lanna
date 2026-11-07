@@ -20,14 +20,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { activeProfile } from "../../config.ts";
+import { activeProfile, curriculumFile, shownProfiles } from "../../config.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
 import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
-import { activeLanguage } from "./active-language.ts";
+import { activeLanguage, profileLanguage } from "./active-language.ts";
 import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
@@ -332,15 +332,47 @@ async function captionsViaDeepgram(id: string, meta: VideoMeta | null, lang: str
 	}
 }
 
+/** Another of the learner's languages that a video is spoken in. */
+export interface ElsewhereProfile {
+	profile: string;
+	english: string;
+}
+
 export class NoCaptionsError extends Error {
 	constructor(
 		message: string,
 		public readonly meta: { title: string; channel?: string; durationSec: number } | null,
 		public readonly canTranscribe: boolean,
+		public readonly elsewhere: ElsewhereProfile | null = null,
 	) {
 		super(message);
 		this.name = "NoCaptionsError";
 	}
+}
+
+/** The language a video is spoken in, from its caption tracks: YouTube's
+ *  automatic track is made from the audio, so it names the spoken language.
+ *  Without one, a single language among the tracks is taken; several human
+ *  tracks could all be translations, so no guess is made. */
+export function spokenLanguage(tracks: readonly CaptionTrack[]): string | null {
+	const base = (t: CaptionTrack) => t.languageCode.toLowerCase().split("-")[0]!;
+	const auto = tracks.find((t) => t.kind === "asr");
+	if (auto) return base(auto);
+	const all = new Set(tracks.map(base));
+	return all.size === 1 ? [...all][0]! : null;
+}
+
+/** The learner's other language profile that `tracks` say a video is in, when
+ *  it is ready to take it (it has its words). */
+export function elsewhereProfile(tracks: readonly CaptionTrack[]): ElsewhereProfile | null {
+	const spoken = spokenLanguage(tracks);
+	if (!spoken) return null;
+	for (const id of shownProfiles()) {
+		if (id === activeProfile()) continue;
+		const info = profileLanguage(id);
+		if (info?.code === spoken && fs.existsSync(curriculumFile(id, "lexicon.json"))) return { profile: id, english: info.english };
+	}
+	return null;
 }
 
 /** The captions of a video in the first of the caption languages it has
@@ -385,8 +417,16 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 		errors.push("deepgram: no speech found");
 	}
 	const wanted = langs.map(captionLanguageName).join(" or ");
-	const why = meta ? (meta.tracks.length ? `This video has captions in ${[...new Set(meta.tracks.map((t) => t.languageCode))].join(", ")} but none in ${wanted}.` : `This video has no captions at all.`) : `YouTube did not answer for this video${errors.length ? ` (${errors[errors.length - 1]})` : ""}.`;
-	throw new NoCaptionsError(`${why}${!meta || meta.tracks.length === 0 ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and a Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe);
+	// A caller that chose `lang` wants that language, so no other profile is suggested.
+	const elsewhere = meta && !opts.lang ? elsewhereProfile(meta.tracks) : null;
+	const why = elsewhere
+		? `This video is in ${elsewhere.english}, not ${wanted}. It belongs in your ${elsewhere.english} profile.`
+		: meta
+			? meta.tracks.length
+				? `This video has captions in ${[...new Set(meta.tracks.map((t) => t.languageCode))].join(", ")} but none in ${wanted}.`
+				: `This video has no captions at all.`
+			: `YouTube did not answer for this video${errors.length ? ` (${errors[errors.length - 1]})` : ""}.`;
+	throw new NoCaptionsError(`${why}${!elsewhere && (!meta || meta.tracks.length === 0) ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and a Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe, elsewhere);
 }
 
 // ─── Translation and questions on the cheap slot ────────────────────────────

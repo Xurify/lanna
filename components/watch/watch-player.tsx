@@ -36,6 +36,7 @@ import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-stat
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
+import { switchLanguage } from "@/components/switch-language";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
@@ -69,6 +70,8 @@ interface PrepareError {
 	noCaptions?: boolean;
 	canTranscribe?: boolean;
 	meta?: { title: string; channel?: string; durationSec: number } | null;
+	/** Another of the learner's languages the video is spoken in. */
+	elsewhere?: { profile: string; english: string } | null;
 }
 
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
@@ -194,6 +197,21 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		void prepare(pending, false, false, rangeRef.current);
 	}, [stage, pending, prepare]);
 
+	/** The video is in another language of the learner's: run that language and
+	 *  open the link there, where the page prepares it. */
+	const [moving, setMoving] = useState(false);
+	const [moveError, setMoveError] = useState<string | null>(null);
+	const moveTo = useCallback(async (to: { profile: string; english: string }, url: string) => {
+		setMoving(true);
+		setMoveError(null);
+		try {
+			await switchLanguage(to.profile, to.english, `/watch?url=${encodeURIComponent(url)}`);
+		} catch (err) {
+			setMoveError(err instanceof Error ? err.message : String(err));
+			setMoving(false);
+		}
+	}, []);
+
 	const remove = useCallback(
 		async (id: string) => {
 			try {
@@ -292,9 +310,13 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
 					<EmptyState
 						testid="watch-error"
-						title="This video could not be prepared"
+						title={error?.elsewhere ? `This video is in ${error.elsewhere.english}` : "This video could not be prepared"}
 						action={
-							error?.noCaptions && error.canTranscribe && pending ? (
+							error?.elsewhere && pending ? (
+								<button type="button" onClick={() => void moveTo(error.elsewhere!, pending)} disabled={moving} className="q-btn primary" data-testid="watch-move">
+									{moving ? "Switching…" : `Switch to ${error.elsewhere.english} and add it`}
+								</button>
+							) : error?.noCaptions && error.canTranscribe && pending ? (
 								<button type="button" onClick={() => void prepare(pending, true)} className="q-btn primary" data-testid="watch-transcribe">
 									Transcribe the audio
 								</button>
@@ -314,6 +336,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 					>
 						{error?.meta?.title && <p lang="sk">{error.meta.title}</p>}
 						<p>{error?.message ?? "Something went wrong."}</p>
+						{moveError && <p role="alert">{moveError}</p>}
 						<p>Videos you have already prepared still play from your list.</p>
 					</EmptyState>
 				</div>
