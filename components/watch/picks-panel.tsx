@@ -73,7 +73,7 @@ export function PickCard({ p, name, lang, canPrepare, onPrepare, onCut, onDismis
 				by={p.channel ? <ChannelLink id={p.channelId} name={p.channel} avatar={p.avatar} withAvatar /> : undefined}
 				line={<PickFacts p={p} name={name} note={note} />}
 			>
-				<button type="button" disabled={!canPrepare || preparing} onClick={onPrepare} aria-busy={preparing} className="q-btn sec t h-8 min-w-0 flex-1 px-3 pointer-coarse:h-11" title={preparing ? "Being translated; it lands in My videos" : canPrepare ? "Translate it and add it to your videos" : "Preparing needs an AI key"} data-testid="watch-pick-prepare">
+				<button type="button" disabled={!canPrepare || preparing} onClick={onPrepare} aria-busy={preparing} className="q-btn sec t h-8 min-w-0 flex-1 px-3 pointer-coarse:h-11" title={preparing ? "Being translated; it lands in My videos" : canPrepare ? "Translate it and add it to My videos" : "Preparing needs an AI key"} data-testid="watch-pick-prepare">
 					{preparing ? (
 						<>
 							<LoaderCircleIcon className="size-3.5 animate-spin" />

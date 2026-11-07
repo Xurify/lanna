@@ -47,7 +47,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 			{report.sounds.length > 0 && (
 				<ul className="mt-2 flex flex-wrap gap-2">
 					{report.sounds.map((s) => (
-						<li key={s.p} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" title={`${s.score} on average over ${s.n} times${s.in.length ? ` · in ${s.in.join(", ")}` : ""}`}>
+						<li key={s.p} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" title={`${s.score} on average over ${s.n} ${s.n === 1 ? "time" : "times"}${s.in.length ? ` · in ${s.in.join(", ")}` : ""}`}>
 							<span className={cn("font-ui font-[600]", pronInk(s.score))} lang={lang?.code}>
 								{s.p}
 							</span>

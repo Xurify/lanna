@@ -28,7 +28,7 @@ const SUGGESTIONS_SHOWN = 4;
 let lastCreator: string | null = null;
 
 const STATUS_LINE: Record<Exclude<CreatorVideo["status"], "offered">, (name: string) => string> = {
-	"in-library": () => "Already in your videos",
+	"in-library": () => "Already in My videos",
 	dismissed: () => "You marked it not for you",
 	"no-captions": (name) => `No captions in ${name} yet`,
 	"other-language": (name) => `Not spoken in ${name}`,
