@@ -33,7 +33,7 @@ const LISTS = new Set(["history", "recommended", "subscriptions"]);
 
 export async function GET() {
 	refreshIfStale();
-	await fillAvatars(AbortSignal.timeout(4000)).catch(() => {});
+	void fillAvatars(AbortSignal.timeout(8000)).catch(() => {});
 	return Response.json(discoverState());
 }
 

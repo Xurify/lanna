@@ -96,6 +96,8 @@ export interface VideoRecord {
 	url: string;
 	title: string;
 	channel?: string;
+	/** The channel's id, so its name can link to it; videos kept before it was kept get it from the picks' check of the same video. */
+	channelId?: string;
 	durationSec: number;
 	source: VideoSourceInfo;
 	/** The learner's level when the video was prepared (the questions'
@@ -138,6 +140,8 @@ export interface VideoIndexEntry {
 	id: string;
 	title: string;
 	channel?: string;
+	/** The channel's id, so its name can link to it; videos kept before it was kept get it from the picks' check of the same video. */
+	channelId?: string;
 	durationSec: number;
 	level: Cefr;
 	createdAt: string;

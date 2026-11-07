@@ -29,7 +29,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
@@ -42,10 +42,11 @@ import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
 import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
-import { FragmentsPanel } from "@/components/watch/fragments";
-import { Thumb } from "@/components/watch/thumb";
+import { ChannelLink } from "@/components/watch/channel-link";
+import { Shelf } from "@/components/watch/shelf";
+import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
-import { CreatorsSection, PicksSection, useDiscover, YouTubeSection } from "@/components/watch/discover";
+import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 
@@ -156,6 +157,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true, ...(range ? { range } : {}) }) });
 				const body = (await res.json()) as VideoRecord | PrepareError | { background: true };
 				if (!res.ok) throw body;
+				forgetWatchCaches();
 				if ("background" in body) {
 					setPending(null);
 					setStage("shelf");
@@ -199,6 +201,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			} catch {
 				// the list below says what is still there
 			}
+			forgetWatchCaches();
 			void load();
 		},
 		[load],
@@ -415,159 +418,6 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 	);
 }
 
-// ─── The shelf: paste a link, or pick a video ───────────────────────────────
-
-function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; discover: ReturnType<typeof useDiscover>; onOpen: (id: string) => void; onPrepare: (url: string, range?: FragmentRange) => void; onDelete: (id: string) => void }) {
-	const [url, setUrl] = useState("");
-	const [cutting, setCutting] = useState<string | null>(null);
-	const [confirming, setConfirming] = useState<string | null>(null);
-	const lang = useActiveLanguage();
-	const name = lang?.english ?? "the language";
-	const fallbacks = (lang?.captionFallbacks ?? []).map((f) => f.english);
-	const list = [...(state?.library ?? [])].reverse();
-	const valid = parseVideoUrl(url) !== null;
-	const submit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (valid) onPrepare(url.trim());
-	};
-	return (
-		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
-			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
-				<SidebarToggle />
-			</header>
-			<main className="lh-rise mx-auto w-full max-w-3xl px-5 pb-20" data-testid="watch-shelf">
-				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
-				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Watch</h1>
-				<p className="q-line dim mt-2 max-w-2xl">A video with both subtitles. Paste a YouTube link in {name}{fallbacks.length > 0 && <> ({fallbacks.join(" or ")} captions work too when a video has no {name} ones, and the video is labelled with its language)</>}. You get every line in {name} and English, one at a time, every word tappable, and a check at the end.</p>
-
-				<form onSubmit={submit} className="q-card mt-6 flex flex-col gap-3 p-4 sm:flex-row" data-testid="watch-form">
-					<label className="sr-only" htmlFor="watch-url">
-						YouTube link
-					</label>
-					<input
-						id="watch-url"
-						value={url}
-						onChange={(e) => setUrl(e.target.value)}
-						placeholder="https://www.youtube.com/watch?v=…"
-						autoFocus
-						autoComplete="off"
-						spellCheck={false}
-						className="q-field h-11 min-w-0 flex-1 rounded-lg px-4 font-ui text-[15px]"
-						data-testid="watch-url"
-					/>
-					<button type="submit" disabled={!valid || state?.canPrepare === false} className={cn(PRIMARY, "h-11 px-5")} data-testid="watch-prepare">
-						<SparklesIcon className="size-4" />
-						Prepare it
-					</button>
-					<button type="button" disabled={!valid} onClick={() => setCutting(cutting === "form" ? null : "form")} aria-expanded={cutting === "form"} className={cn(SECONDARY, "h-11 px-4")} title="Watch only a stretch of it" data-testid="watch-fragments-open">
-						<ScissorsIcon className="size-4" strokeWidth={1.6} />
-						Pick a stretch
-					</button>
-				</form>
-				{cutting === "form" && valid && <FragmentsPanel videoId={parseVideoUrl(url)!} canPrepare={state?.canPrepare !== false} onPrepare={(range) => onPrepare(url.trim(), range)} onClose={() => setCutting(null)} />}
-				{state?.canPrepare === false ? (
-					<div className="mt-3">
-						<KeyNote>Preparing a new video needs an AI key, for the English translation. Videos you have already prepared play without one.</KeyNote>
-					</div>
-				) : (
-					<p className="mt-3 font-prose text-[13px] leading-relaxed text-ink-3">The captions come from YouTube (made by people, or its automatic ones). Translating a video takes one or two short requests to your AI provider, once, and it is kept. Nothing is downloaded.{state?.canTranscribe ? " A video without captions can be transcribed from its audio." : ""}</p>
-				)}
-
-				{running.length > 0 && (
-					<ul className="mt-4 flex flex-col gap-2" data-testid="watch-running">
-						{running.map((t) => (
-							<li key={t.id} className="q-card flex items-center gap-3 px-4 py-3">
-								<LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" />
-								<span className="min-w-0 flex-1">
-									<span className="block truncate font-ui text-[15px] text-foreground">{t.title}</span>
-									<span className="block truncate font-ui text-[13px] text-ink-3">{t.step}. It keeps going if you leave this page.</span>
-								</span>
-							</li>
-						))}
-					</ul>
-				)}
-
-				<PicksSection d={discover} canPrepare={state?.canPrepare !== false} onPrepare={onPrepare} />
-
-				{list.length > 0 && (
-					<>
-						<h2 className="q-sh mt-10">
-							Your videos
-							<small>
-								{list.length}
-								{state?.watchedToday ? ` · ${state.watchedToday} watched today` : ""}
-							</small>
-						</h2>
-						<ol className="flex flex-col gap-2">
-							{list.map((v) => {
-								const band = coverageBand(v.coverage);
-								const kind = coverageKind(v);
-								return (
-									<li key={v.id}>
-										<div className="relative">
-										<button type="button" onClick={() => onOpen(v.id)} className="q-card flex w-full items-center gap-4 py-3.5 pl-4 pr-[5.25rem] text-left transition-colors hover:bg-well" data-testid="watch-shelf-item">
-											<Thumb id={v.id} watched={v.watches > 0} />
-											<span className="min-w-0 flex-1">
-												<span className="block truncate font-ui text-[16px] font-[600] text-foreground" lang="sk">
-													{v.title}
-												</span>
-												<span className="block truncate font-prose text-[13px] text-ink-3">
-													{v.channel ? `${v.channel} · ` : ""}
-													{formatClock(v.durationSec)}
-													{v.fragment ? ` from ${formatClock(v.fragment.startSec)} of ${formatClock(v.fragment.ofSec)}` : ""} · {v.segments} lines · {kind === "none" ? `${captionLanguageName(v.trackLang!)} captions` : `${kind === "estimated" ? "about " : ""}${Math.round(v.coverage * 100)}% known (${band.title.toLowerCase()})${kind === "estimated" ? ` · ${captionLanguageName(v.trackLang!)} captions` : ""}`}
-												</span>
-											</span>
-											<span className="shrink-0 text-right font-ui text-xs font-[600] text-ink-3">
-												{v.watches === 0 ? <span className="text-teal-2">new</span> : v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : `watched ${v.watches}×`}
-											</span>
-										</button>
-										{confirming === v.id ? (
-												<span className="absolute inset-y-1.5 right-1.5 flex items-center gap-1 rounded-lg bg-well pl-3 pr-1 font-ui text-xs font-[600] text-foreground" data-testid="watch-delete-confirm">
-													Delete this video?
-													<button
-														type="button"
-														onClick={() => {
-															setConfirming(null);
-															onDelete(v.id);
-														}}
-														className="rounded-md px-2 py-1 text-miss hover:bg-accent"
-													>
-														Delete
-													</button>
-													<button type="button" onClick={() => setConfirming(null)} className="rounded-md px-2 py-1 text-muted-foreground hover:bg-accent hover:text-foreground">
-														Keep
-													</button>
-												</span>
-											) : (
-												<button type="button" onClick={() => setCutting(cutting === v.id ? null : v.id)} aria-expanded={cutting === v.id} aria-label={`Pick another stretch of ${v.title}`} title="Pick a stretch of this video" className={cn("absolute right-10 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-foreground", cutting === v.id ? "bg-accent text-foreground" : "text-muted-foreground")} data-testid="watch-shelf-fragments">
-													<ScissorsIcon className="size-4" strokeWidth={1.6} />
-												</button>
-											)}
-											{confirming !== v.id && (
-												<button type="button" onClick={() => setConfirming(v.id)} aria-label={`Delete ${v.title}`} title="Delete this video" className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-delete">
-													<Trash2Icon className="size-4" strokeWidth={1.6} />
-												</button>
-											)}
-										</div>
-										{cutting === v.id && <FragmentsPanel videoId={v.id} canPrepare={state?.canPrepare !== false} onPrepare={(range) => onPrepare(videoUrl(v.id), range)} onClose={() => setCutting(null)} />}
-									</li>
-								);
-							})}
-						</ol>
-					</>
-				)}
-
-				<CreatorsSection d={discover} canPrepare={state?.canPrepare !== false} onPrepare={onPrepare} />
-				<YouTubeSection d={discover} />
-			</main>
-		</div>
-	);
-}
-
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
 function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
@@ -578,7 +428,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			// Enter in a field (a study section's gap) belongs to that field.
-			if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement) && !(e.target instanceof HTMLInputElement)) {
+			if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement) && !(e.target instanceof HTMLAnchorElement) && !(e.target instanceof HTMLInputElement)) {
 				e.preventDefault();
 				onStart("step");
 			}
@@ -590,14 +440,22 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 		<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[4vh]">
 			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-preview">
 				<p className="font-ui text-sm font-[600] text-muted-foreground">
-					{video.channel ? `${video.channel} · ` : ""}
+					{video.channel && (
+						<>
+							<ChannelLink id={video.channelId} name={video.channel} />
+							{" · "}
+						</>
+					)}
 					{formatClock(video.durationSec)}
 					{video.fragment ? ` (${formatClock(video.fragment.startSec)} to ${formatClock(video.fragment.endSec)} of a ${formatClock(video.fragment.ofSec)} video)` : ""} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
 					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
 					{video.untranslated ? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation` : ""}
 				</p>
-				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang="sk">
+				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang={video.lang}>
 					{video.title}
+					<a href={videoUrl(video.id)} target="_blank" rel="noreferrer" aria-label="Open this video on YouTube" title="Open on YouTube" className="ml-2 inline-flex size-8 translate-y-0.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-preview-youtube">
+						<ExternalLinkIcon className="size-4" strokeWidth={1.6} />
+					</a>
 				</h1>
 
 				<div className="mt-6 grid gap-4 sm:grid-cols-[auto_1fr]">

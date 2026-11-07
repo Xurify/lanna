@@ -1,24 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MonitorPlayIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** The video's YouTube thumbnail, loaded from YouTube's image host in the
- *  browser; the icon stands in when YouTube has none. The box is 16:9 so the
- *  row does not move when the image arrives. */
-export function Thumb({ id, watched }: { id: string; watched: boolean }) {
-	const [missing, setMissing] = useState(false);
-	if (missing) {
-		return (
-			<span className={cn("flex h-[50px] w-[89px] shrink-0 items-center justify-center rounded-md", watched ? "bg-well-2 text-ink-3" : "bg-teal-wash text-teal-2")}>
-				<MonitorPlayIcon className="size-5" />
-			</span>
-		);
-	}
+/** YouTube's sizes of a thumbnail, best first. `maxresdefault` is 1280×720 and
+ *  only exists for videos uploaded in HD; `sddefault` (640×480) and
+ *  `hqdefault` (480×360) are 4:3 with black bars above and below the 16:9
+ *  picture, which `object-cover` in a 16:9 box crops away exactly. */
+const SIZES = ["maxresdefault", "sddefault", "hqdefault"] as const;
+
+/** YouTube answers a size a video does not have with a 120×90 grey stand-in
+ *  (status 404, but a picture, so the browser reports it as loaded). */
+const STAND_IN_WIDTH = 120;
+
+/** A video's YouTube thumbnail in a 16:9 box that fills its parent's width, so
+ *  a row or a card does not move when the image arrives. Loaded from YouTube's
+ *  image host in the browser. It steps down through the sizes when one is
+ *  missing, fades in when it has loaded, and shows the icon when YouTube has
+ *  none at all. */
+export function Poster({ id, watched = false, className }: { id: string; watched?: boolean; className?: string }) {
+	const [at, setAt] = useState({ id, size: 0, loaded: false });
+	// The same card showing another video starts from the best size again.
+	const size = at.id === id ? at.size : 0;
+	const loaded = at.id === id && at.loaded;
+	const next = () => setAt({ id, size: size + 1, loaded: false });
+	const img = useRef<HTMLImageElement>(null);
+	const settle = (el: HTMLImageElement) => (el.naturalWidth <= STAND_IN_WIDTH ? next() : setAt({ id, size, loaded: true }));
+	// A picture that finished (or failed) before the page was interactive fired its events to nobody.
+	useEffect(() => {
+		if (img.current?.complete && !loaded) settle(img.current);
+	}, [id, size]);
 	return (
-		// next/image would need YouTube's image host allowed in its config; the plain image needs no setup.
-		// eslint-disable-next-line @next/next/no-img-element
-		<img src={`https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`} alt="" loading="lazy" onError={() => setMissing(true)} className="h-[50px] w-[89px] shrink-0 rounded-md bg-well-2 object-cover" />
+		<span className={cn("relative block aspect-video w-full overflow-hidden bg-well-2", className)}>
+			{size >= SIZES.length ? (
+				<span className={cn("absolute inset-0 flex items-center justify-center", watched ? "text-ink-3" : "bg-teal-wash text-teal-2")}>
+					<MonitorPlayIcon className="size-7" strokeWidth={1.5} />
+				</span>
+			) : (
+				// next/image would need YouTube's image host allowed in its config; the plain image needs no setup.
+				// eslint-disable-next-line @next/next/no-img-element
+				<img
+					ref={img}
+					key={`${id}-${size}`}
+					src={`https://i.ytimg.com/vi/${encodeURIComponent(id)}/${SIZES[size]}.jpg`}
+					alt=""
+					loading="lazy"
+					decoding="async"
+					onError={next}
+					onLoad={(e) => settle(e.currentTarget)}
+					className={cn("absolute inset-0 size-full object-cover transition-opacity duration-200 motion-reduce:transition-none", loaded ? "opacity-100" : "opacity-0")}
+				/>
+			)}
+		</span>
 	);
 }

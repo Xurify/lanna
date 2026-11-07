@@ -73,6 +73,7 @@ export function videoIndexEntryOf(v: VideoRecord): VideoIndexEntry {
 		id: v.id,
 		title: v.title,
 		...(v.channel ? { channel: v.channel } : {}),
+		...(v.channelId ? { channelId: v.channelId } : {}),
 		durationSec: v.durationSec,
 		level: v.level,
 		createdAt: v.createdAt,

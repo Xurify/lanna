@@ -126,6 +126,7 @@ export * from "./watch.ts";
 export * from "./watch-sentences.ts";
 export * from "./discover.ts";
 export * from "./fragments.ts";
+export * from "./ttl-memo.ts";
 export * from "./watch-reps.ts";
 export * from "./watch-sections.ts";
 export * from "./catch-mistake.ts";
