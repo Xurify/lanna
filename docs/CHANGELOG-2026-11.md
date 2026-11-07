@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: study sections of a video (branch `feat/watch-ai-sections`)
+
+- **Why:** the owner asked for a feature where AI analyses a video, picks sections and turns them into exercises. Rule E62; research: [research/watch-sections.md](research/watch-sections.md).
+- **Find sections** on a prepared video: one cheap request picks up to three parts worth studying, each with a title, why it is worth the time and the words to practice. The answer is checked against the video's own lines and kept with its cost. **Find new sections** asks again.
+- **Practice** a section: each word is a gap in its real line, spoken aloud. Type it. The first miss shows the first letter and the English, the second shows the answer. "I don't know" is a miss. Misses go to Review and the lines come back in Listen. XP, reps and minutes count as in a lesson.
+- **Checked:** `tests/watch-sections.test.ts` (the answer held against the lines, the gaps, keeping and forcing, the XP and the misses); typecheck and lint; the full test suite. In the running app with a seeded video, in Day, Night and at 390 px: the list, a right answer with wrong accents, the cue after a miss, "I don't know" and the end line.
+- **Unverified:** a real model's sections. The cloud session has no AI key, so the model's choices were not seen; the app-side checks were tested with a stand-in answer.
+
 ## 6 November: a new app icon, fields you can see, a creator's newest videos, keys safe from tests (branch `feat/icon-fields-creators`)
 
 - **Why:** the owner asked for a new icon, a better brand and some name ideas. Rule E59; details and names: [brand.md](brand.md).
