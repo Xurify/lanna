@@ -11,7 +11,7 @@ import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/
 import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm } from "../core/lesson.ts";
-import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCap, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
+import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -214,7 +214,7 @@ export interface ReviewAnswer {
 	given: string;
 	ms?: number;
 	/** Override the derived rating (the learner pressed a button); still
-	 *  capped by the help taken. */
+	 *  capped by the help taken, and Again after a wrong answer. */
 	rating?: Rating;
 	/** Hints taken before the answer (1 = meaning, 2 = the word too). */
 	hints?: number;
@@ -235,7 +235,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	const meta = reviewStore.readMeta();
 	const verdict = compareAnswer(card.answer, input.given, tag());
 	const help: ReviewHelp = { ...(input.hints ? { hints: input.hints } : {}), ...(input.picked ? { picked: true } : {}) };
-	const rating = Math.min(input.rating ?? ratingFor(verdict, input.ms, help), ratingCap(help)) as Rating;
+	const rating = Math.min(input.rating ?? ratingFor(verdict, input.ms, help), ratingCeiling(verdict, help)) as Rating;
 	const elapsedDays = card.lastReview ? (now.getTime() - Date.parse(card.lastReview)) / DAY_MS : 0;
 	const memory = review(card.memory, rating, elapsedDays);
 	const updated: ReviewCard = {

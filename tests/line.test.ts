@@ -88,12 +88,12 @@ test("lineRow: says where the day's line stands, in the learner's own counts", (
 	assert.equal(fresh.pill, "Not heard yet");
 	const waiting = lineRow({ hasLine: true, morning: { caught: 3, words: 9 }, evening: null, eveningOpen: false });
 	assert.equal(waiting.tone, "idle");
-	assert.match(waiting.line, /^This morning 3 of 9 words\./);
-	assert.equal(waiting.pill, "Back tonight");
+	assert.match(waiting.line, /^First hearing 3 of 9 words\./);
+	assert.equal(waiting.pill, "Back later");
 	const open = lineRow({ hasLine: true, morning: { caught: 3, words: 9 }, evening: null, eveningOpen: true });
 	assert.equal(open.tone, "open");
 	assert.equal(open.pill, "Hear it again");
 	const both = lineRow({ hasLine: true, morning: { caught: 3, words: 9 }, evening: { caught: 8, words: 9 }, eveningOpen: true });
 	assert.equal(both.tone, "done");
-	assert.equal(both.line, "This morning 3 of 9 words, this evening 8 of 9.");
+	assert.equal(both.line, "First hearing 3 of 9 words, second hearing 8 of 9.");
 });

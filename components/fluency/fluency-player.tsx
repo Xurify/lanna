@@ -32,7 +32,9 @@ import { COLUMN, Centered, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, S
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
-import { FAST_PASSES, fastWindows, passMade, PRON_CLEAR, QUESTION_KIND_INFO, wordsPerMinute, type FastItem, type FastRep, type PronEngine, type PronReport, type PronScore, type StoryQuestion, type StoryRecord } from "@/src/core";
+import { SettingsLink } from "@/components/settings/settings-link";
+import { SourcesNote } from "@/components/sources/sources-note";
+import { FAST_PASSES, fastWindows, passMade, PRON_CLEAR, QUESTION_KIND_INFO, wordsPerMinute, type FastItem, type FastPace, type FastRep, type PronEngine, type PronReport, type PronScore, type StoryQuestion, type StoryRecord } from "@/src/core";
 
 export type FluencyMode = "reread" | "fast";
 
@@ -172,7 +174,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						) : (
 						<>
 							<p className="font-prose text-lg text-foreground">Nothing to re-read yet.</p>
-							<p className="mt-2 font-prose text-base text-muted-foreground">Read an episode first; the day after, it comes back here against the clock.</p>
+							<p className="mt-2 font-prose text-base text-muted-foreground">Read an episode first. Once you have, it comes back here against the clock.</p>
 						</>
 					)}
 					<div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -208,13 +210,18 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						</h1>
 						<Stats className="mt-6">
 							<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-							<Stat label={outcome.previousWpm !== null ? "Last time" : "Target"} value={`${outcome.targetWpm} wpm`} ink="text-ink-2" />
+							<Stat label={outcome.previousWpm !== null ? "Your recent pace" : "Starting target"} value={`${outcome.targetWpm} wpm`} ink="text-ink-2" />
 							{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
 							<Stat label="The question" value={outcome.right ? "right" : "missed"} ink={outcome.right ? "text-teal-2" : "text-miss"} />
 						</Stats>
 					<History history={[...plan.history, { at: "now", wpm: outcome.wpm }]} target={plan.targetWpm} />
+						<SourcesNote feature="speed-reread" className="mt-6" />
 					<p className="q-sub mt-4">
-							{outcome.faster ? "Speed on easy text is what makes the hard text feel easy. Same episode again in a few days." : "No bonus this time; the point is the climb over weeks, not one run. The question keeps the speed honest."}
+							{outcome.faster
+								? "Timed re-reading of easy text raised reading speed in classroom studies, mostly on the texts that were practiced. Same episode again in a few days."
+								: !outcome.right
+									? "No speed bonus when the question is missed: a fast read you did not follow is not the goal."
+									: "No bonus this time. The point is the climb over weeks, not one run."}
 					</p>
 					<div className="q-acts mt-6">
 							<Link href="/" className={PRIMARY} data-testid="reread-today">
@@ -244,9 +251,9 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 
 					{phase === "intro" && (
 						<div data-testid="reread-intro">
-							<p className="font-prose text-[17px] leading-relaxed text-ink-2">You have read this one. Read it again, as fast as you can while still following it. Press Start, read, press Done. One question follows.</p>
+							<p className="font-prose text-[17px] leading-relaxed text-ink-2">You have read this one. Read it again, as fast as you can while still following it. Press Start, read, press Done. One question follows, and the speed bonus needs it right. The first target is a guess for your level; after that the bar is your own recent pace.</p>
 							<Stats className="mt-5">
-								<Stat label={plan.previousWpm !== null ? "Last time" : `Target at ${story.level}`} value={`${plan.targetWpm} wpm`} ink="text-teal-2" />
+								<Stat label={plan.previousWpm !== null ? "Your recent pace" : `Starting target at ${story.level}`} value={`${plan.targetWpm} wpm`} ink="text-teal-2" />
 								{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
 								<Stat label="Re-reads" value={String(plan.history.length)} ink="text-ink-2" />
 							</Stats>
@@ -255,6 +262,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 								Start the clock
 							</button>
 							<span className="ml-3 font-ui text-xs text-ink-3">or Enter</span>
+								<SourcesNote feature="speed-reread" className="mt-6" />
 						</div>
 					)}
 
@@ -353,6 +361,12 @@ interface Pass {
 	inWindow: boolean;
 	/** The clip is being scored; the verdict is not in yet. */
 	pending?: boolean;
+	/** The microphone ran but the score never came: time alone decided. */
+	unchecked?: boolean;
+	/** Nothing was heard on the recording: the pass does not count. */
+	silent?: boolean;
+	/** From the first sound to the last, when the microphone heard it. */
+	speechMs?: number;
 	heard?: string;
 	match?: number;
 	pron?: PronScore;
@@ -365,10 +379,19 @@ interface FastOutcome {
 	total: number;
 	summary: Summary;
 	report: PronReport;
+	pace: FastPace | null;
+	previousPace: FastPace | null;
 }
 
 /** How long the verdict waits for the score before time alone decides. */
 const SCORE_WAIT_MS = 8000;
+
+/** The recorder stops this long after the voice does; the pass ended
+ *  when the voice did, so the tail is not the learner's time. */
+const SILENCE_MS = 650;
+
+/** Why the microphone is off, in words the learner can act on. */
+type MicWhy = "no-key" | "no-browser" | "denied";
 
 function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; pron: PronEngine | null }) {
 	const router = useRouter();
@@ -385,13 +408,15 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	const [outcome, setOutcome] = useState<FastOutcome | null>(null);
 	// The mic check reads browser globals: decided after mount so the
 	// server and the first client render agree (no hydration mismatch).
-	const [micOk, setMicOk] = useState(false);
+	const [micOk, setMicOk] = useState<boolean | null>(null);
 	const [useMic, setUseMic] = useState(false);
+	const [micDenied, setMicDenied] = useState(false);
 	useEffect(() => {
 		const ok = micSupported();
 		setMicOk(ok);
 		setUseMic(stt && ok);
 	}, [stt]);
+	const micWhy: MicWhy | null = !stt ? "no-key" : micOk === false ? "no-browser" : micDenied ? "denied" : null;
 	const startedAt = useRef(Date.now());
 	// The day's minutes count active time: the gaps between actions, each
 	// capped (`ms` stays the wall-clock). A timed re-read keeps its own
@@ -472,13 +497,15 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	const endPass = useCallback(
 		async (auto = false) => {
 			if (!item || phase !== "running") return;
-			const ms = (pausedAt.current || Date.now()) - passStart.current - pausedMs.current;
+			// The recorder stops itself SILENCE_MS after the voice does: that tail is not speaking time.
+			const raw = (pausedAt.current || Date.now()) - passStart.current - pausedMs.current;
+			const rec = recorder.current;
+			const ms = Math.max(0, auto && rec ? raw - SILENCE_MS : raw);
 			pausedAt.current = 0;
 			setPaused(false);
 			setPhase("between");
 			setElapsed(ms);
 			const inWindow = ms <= win;
-			const rec = recorder.current;
 			recorder.current = null;
 			const scored = !!rec && !!pron;
 			const p: Pass = { ms, window: win, made: inWindow, inWindow, ...(scored ? { pending: true } : {}) };
@@ -494,27 +521,30 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				return;
 			}
 			// The clip is scored before the verdict: in the window AND clear.
+			// Heard nothing: the pass does not count. Score never came (the
+			// engine failed or timed out): time alone decides, and the pass
+			// says it was not checked.
 			const at = next.length - 1;
 			let settled = false;
 			const settle = (extra: Partial<Pass>) => {
 				if (settled) return;
 				settled = true;
-				const made = passMade(inWindow, extra.pron ?? null);
+				const made = extra.silent ? false : passMade(inWindow, extra.pron ?? null);
 				setPasses((cur) => cur.map((x, i) => (i === at ? { ...x, ...extra, made, pending: false } : x)));
 				verdict(made);
 			};
-			const timer = setTimeout(() => settle({}), SCORE_WAIT_MS);
+			const timer = setTimeout(() => settle({ unchecked: true }), SCORE_WAIT_MS);
 			void rec
 				.stop()
 				.then(async (clip) => {
-					if (clip.ms < 200) return settle({});
+					if (clip.ms < 200 || clip.spokeAt === null) return settle({ silent: true, heard: "" });
+					const speechMs = Math.max(0, clip.ms - clip.spokeAt - (auto ? SILENCE_MS : 0));
 					const score = await scoreClip(clip.wav, item.sentence);
-					if (!score) return settle({ heard: "" });
-					settle({ pron: score, heard: score.heard ?? "", match: score.accuracy / 100 });
+					if (!score) return settle({ silent: true, heard: "" });
+					settle({ pron: score, heard: score.heard ?? "", match: score.accuracy / 100, ...(speechMs > 0 ? { speechMs } : {}) });
 				})
-				.catch(() => settle({}))
+				.catch(() => settle({ unchecked: true }))
 				.finally(() => clearTimeout(timer));
-			void auto;
 		},
 		[item, phase, win, pass, passes, pron],
 	);
@@ -527,11 +557,12 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		if (useMic) {
 			const rec = new Recorder();
 			try {
-				await rec.start({ onLevel: setLevel, silenceMs: 650, maxMs: win * 3, onAutoStop: () => void endRef.current(true) });
+				await rec.start({ onLevel: setLevel, silenceMs: SILENCE_MS, maxMs: win * 3, onAutoStop: () => void endRef.current(true) });
 				recorder.current = rec;
 			} catch {
 				setUseMic(false);
-				setError("The microphone was not allowed; Space marks the end of each pass instead.");
+				setMicDenied(true);
+				setError("The browser did not give the microphone. Space marks the end of each pass instead, and nothing checks what you said.");
 			}
 		}
 		passStart.current = Date.now();
@@ -659,15 +690,33 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							Say it faster · done
 						</p>
 						<h1 className="q-hello">
-							{clean} of {reps.length} at full speed.
+							{scoredPasses.length ? `${clean} of ${reps.length} said clearly enough in the last window.` : `${clean} of ${reps.length} finished inside the last window.`}
 						</h1>
 						<Stats className="mt-6">
 							<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
-							<Stat label={scoredPasses.length ? "Passes in the window and clear" : "Passes in the window"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-teal-2" />
-							{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear`} ink={avg >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
+							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-teal-2" />
+							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink="text-teal-2" />}
+							{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear enough`} ink={avg >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
 						</Stats>
-					<PronWorkOn report={outcome?.report} />
-					<ul className="mt-8 flex flex-col gap-2" data-testid="fast-reps">
+					{outcome?.pace && (
+							<p className="q-sub mt-3" data-testid="fast-pace-note">
+								Same sentences, said again: {outcome.pace.sentences} of {reps.length} got quicker, from {outcome.pace.first} to {outcome.pace.last} words a second.
+								{outcome.previousPace ? ` Last round: ${outcome.previousPace.first} → ${outcome.previousPace.last}.` : ""} That is repetition on the same lines; it does not show you are quicker on new ones.
+							</p>
+						)}
+						{scoredPasses.length === 0 && (
+							<p className="q-sub mt-3" data-testid="fast-selftimed-note">
+								Self-timed round: you pressed the button, and nothing checked what you said. A pass counted when you finished inside its window.
+							</p>
+						)}
+						{reps.some((r) => r.passes.some((x) => x.unchecked)) && (
+							<p className="q-sub mt-3">
+								Some passes could not be checked because the speech check did not answer; they counted by time alone.
+							</p>
+						)}
+						<PronWorkOn report={outcome?.report} />
+					<SourcesNote feature="speed-fast" className="mt-6" />
+						<ul className="mt-8 flex flex-col gap-2" data-testid="fast-reps">
 						{reps.map((r) => (
 							<li key={r.itemId} className="q-card px-4 py-3">
 								<div className="flex items-start gap-3">
@@ -722,7 +771,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon="fast" title="Say it faster" sub={`pass ${Math.min(pass + 1, FAST_PASSES)} of ${FAST_PASSES} · ${item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}`}>
 					<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground">
-						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.made ? ["Made it!", "Faster!", "Full speed!"][pass] : last?.inWindow ? "Fast, but not clear" : "Over the window"}
+						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.silent ? "Nothing heard" : last?.made ? (last.pron ? ["Made it!", "Faster!", "Full speed!"][pass] : "In time") : last?.inWindow ? "Fast, but not clear" : "Over the window"}
 					</h2>
 					<div className="flex items-start gap-3">
 						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2" data-testid="fast-play">
@@ -783,7 +832,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						<>
 							<div className="flex items-center gap-3">
 								{useMic ? <MicIcon className="size-5 text-teal" strokeWidth={1.6} /> : <TimerIcon className="size-5 text-teal" strokeWidth={1.6} />}
-								<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">{useMic ? "Listening — it stops when you stop" : "Press Space when you have said it"}</p>
+								<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">{useMic ? "Listening — it stops when you stop" : "Self-timed: press Space the moment you finish"}</p>
 								{useMic && <span className="h-1 w-16 overflow-hidden rounded-full bg-well-2"><span className="block h-full bg-teal" style={{ width: `${level * 100}%` }} /></span>}
 							</div>
 							<div className="flex items-center gap-3">
@@ -804,8 +853,10 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 									<>
 										<LoaderCircleIcon className="size-5 animate-spin" strokeWidth={1.6} /> Listening back…
 									</>
+								) : last?.silent ? (
+									"No voice came through, so this pass does not count. Say it out loud, or switch Mic off."
 								) : last?.made ? (
-									`In the window · ${((last?.ms ?? 0) / 1000).toFixed(1)} s${last.pron ? ` · ${last.pron.overall} clear` : ""}`
+									`In the window · ${((last?.ms ?? 0) / 1000).toFixed(1)} s${last.pron ? ` · ${last.pron.overall}, clear enough` : last.unchecked ? " · the check did not come back" : " · self-timed, not checked"}`
 								) : last?.inWindow ? (
 									`In the window, but ${last.pron ? `${last.pron.overall} — ` : ""}not clear enough${last.pron?.words.some((w) => w.error === "omission") ? ` · missed: ${last.pron.words.filter((w) => w.error === "omission").map((w) => w.word).join(", ")}` : ""}`
 								) : (
@@ -819,11 +870,41 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 					) : (
 						<>
 							<div className="flex items-center gap-3">
-								<button type="button" onClick={() => setUseMic((v) => !v)} disabled={!stt || !micOk} className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-[550] text-ink-3 hover:bg-well hover:text-ink-2 disabled:opacity-50 pointer-coarse:min-h-11" aria-pressed={useMic} title={stt ? (pron === "azure" ? "The microphone times each pass and scores it sound by sound" : "The microphone times each pass and checks the words were clear") : "Add an ElevenLabs or Deepgram key for the microphone"}>
+								<button
+									type="button"
+									onClick={() => {
+										setMicDenied(false);
+										setUseMic((v) => !v);
+									}}
+									disabled={!stt || micOk === false}
+									className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-[550] text-ink-3 hover:bg-well hover:text-ink-2 disabled:opacity-50 pointer-coarse:min-h-11"
+									aria-pressed={useMic}
+									data-testid="fast-mic"
+								>
 									{useMic ? <MicIcon className="size-4" strokeWidth={1.6} /> : <MicOffIcon className="size-4" strokeWidth={1.6} />}
 									{useMic ? "Mic on" : "Mic off"}
 								</button>
-								<p className="font-prose text-[13px] text-ink-3">Space starts the pass{useMic ? "" : " and ends it"} · R plays it again{useMic ? " · a pass counts only if it was clear" : ""}</p>
+								<div className="font-prose text-[13px] leading-snug text-ink-3" data-testid="fast-mic-why">
+									<p>
+										{useMic
+											? pron === "azure"
+												? "Each pass is timed and scored sound by sound. It counts only if it scored 70 or more."
+												: "Each pass is timed and checked word by word. It counts only if it scored 70 or more."
+											: micWhy === "no-key"
+												? "Self-timed: nothing checks what you said. A speech-to-text key (ElevenLabs, Groq or Deepgram) turns the microphone on."
+												: micWhy === "no-browser"
+													? "Self-timed: this browser cannot record, so nothing checks what you said."
+													: micWhy === "denied"
+														? "Self-timed: the browser blocked the microphone. Allow it in the address bar, then switch Mic on."
+														: "Self-timed: nothing checks what you said. Switch Mic on to have each pass checked."}{" "}
+										{micWhy === "no-key" && (
+											<SettingsLink keys className="text-ink-2 underline decoration-line-2 underline-offset-[3px]">
+												Add a key
+											</SettingsLink>
+										)}
+									</p>
+									<p className="pointer-coarse:hidden">Space starts the pass{useMic ? "" : " and ends it"} · R plays it again</p>
+								</div>
 							</div>
 							<button type="button" onClick={() => void startPass()} className={PRIMARY} data-testid="fast-start" ref={(el) => el?.focus()}>
 								{pass === 0 ? "Go" : "Again, faster"}

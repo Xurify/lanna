@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SourcesNote } from "@/components/sources/sources-note";
 import { TrajectorySection } from "@/components/trajectory-section";
 import { useActiveLanguage } from "@/components/speech";
 import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, measuredPace, trajectory, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
@@ -59,7 +60,7 @@ export function studies(lang: { english: string; fsiCategory?: 1 | 2 | 3 | 4 } |
 		{
 			who: "Cepeda, Pashler, Vul, Wixted & Rohrer (2006), Psychological Bulletin",
 			what: "Distributed practice",
-			line: "A review of 254 studies: the same hours spread over many short sessions are remembered far better than the same hours in a few long ones. That is why the plan asks for minutes a day, not hours a week.",
+			line: "A review of 317 experiments in 184 articles, mostly lab word recall: practice spread over time is remembered longer than the same practice crammed together. The plan asks for minutes a day for that reason. It is a reason, not proof that these minutes are the best use of your hours.",
 		},
 	];
 }
@@ -309,6 +310,7 @@ export function HoursSheet({
 					</Link>{" "}
 					says when real situations do: a vlog, the news, a film, the in-laws.
 				</p>
+				<SourcesNote feature="hours" className="mt-4" />
 			</div>
 		</div>
 	);

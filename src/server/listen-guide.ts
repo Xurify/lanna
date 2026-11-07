@@ -30,7 +30,7 @@ Rules:
 - A pattern is something several misses share. Name it, quote the evidence from the misses, say why it happens in plain words and give one concrete fix. A single miss is a slip. At most four patterns.
 - "noticed" is the part the learner could not have worked out alone: up to three things that no single figure says. A link between two figures, one of the app's findings explained, or a contrast (something better than they would expect). Say why it matters. A link the facts do not state is a guess: begin it "This may be". Do not repeat what a pattern already says.
 - "tips" are up to four things to try, each tied to a pattern, a cause or a finding, and saying which one in "why". They may use ordinary listening technique (type as you hear instead of after the clip, write the first word before replaying, replay once only for the ending, say the sentence under your breath) but must not promise a result or quote a number the facts do not hold.
-- Connect the figures where they agree: for example short words dropped, and a worse second half of the session, or fast clips understood less. Say when two figures point the same way and when they do not.
+- Connect the figures where they agree: for example short words dropped, and a worse second half of the session, or fast clips typed correctly less often. Say when two figures point the same way and when they do not.
 - What to practice is in the app's own terms: Listen (typed), the snail button for slow play, replaying a sentence, Review, a Learn unit. Do not invent features.
 - "limits" is one honest sentence on what these figures cannot show yet (sample size, typing against hearing).
 - Plain English, short sentences. Name grammar in full words (accusative, locative, 1st person singular).

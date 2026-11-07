@@ -193,7 +193,7 @@ const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
 		description: "New core vocabulary organized by high-frequency thematic clusters.",
 	},
 	read: {
-		label: "Extensive Reading",
+		label: "Graded Reading",
 		strand: "Input",
 		description: "Graded story reading with instant word tap-to-translate and audio.",
 	},
@@ -210,7 +210,7 @@ const TASK_DETAILS: Record<PlanTask["id"], TaskDescription> = {
 	fluency: {
 		label: "Say It Faster",
 		strand: "Speed",
-		description: "Paul Nation's 4/3/2 fluency technique: repeat known material faster to build automaticity without hesitation.",
+		description: "Say known sentences again, each time a little faster. Research supports the repetition; the shrinking time is our design.",
 	},
 };
 

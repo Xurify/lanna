@@ -440,8 +440,8 @@ test("fixture: one aspect never mends, and both aspects mend (the fixture's own 
 	let record: MixupRecord = { [key]: { ...kupRecord(1)[key]! } };
 	record = tallyMixups(record, [right("kupovat", 1), right("kupovat", 2), right("kupovat", 3), right("kupovat", 4)], lex).record;
 	assert.equal(mixupStatus(record[key]!), "active", "three or more right on one aspect do not mend");
-	record = tallyMixups(record, [right("kupit", 5)], lex).record;
-	assert.equal(mixupStatus(record[key]!), "mended", "the other aspect mends it");
+	record = tallyMixups(record, [{ ...right("kupit", 5), at: new Date(Date.UTC(2026, 10, 5, 10)).toISOString() }], lex).record;
+	assert.equal(mixupStatus(record[key]!), "mended", "the other aspect, on a second day, mends it");
 });
 
 test("fixture: a wrong first try between the twins opens the pair, with both aspects' rows drillable", () => {

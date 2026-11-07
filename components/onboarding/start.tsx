@@ -33,6 +33,7 @@ import { startTutorChat } from "@/components/lesson/tutor";
 import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/components/onboarding/placement-check";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
+import { SourcesNote } from "@/components/sources/sources-note";
 import { CEFR_ORDER, allChapters, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, priorsFor, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
 
 type Step = 1 | 2 | 3 | 4;
@@ -567,7 +568,7 @@ function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edi
 					<div className="rounded-2xl border bg-card p-4" data-testid="result-words">
 						<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">Words</p>
 						<p className="mt-1 font-prose text-base text-foreground">
-							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized{outcome.vocabulary.reliable ? "" : ` — you ticked words that are not ${target} words, so treat this as generous`}.
+							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized (a rough size from 40 words, off by a fifth or more){outcome.vocabulary.reliable ? "" : ` — you ticked words that are not ${target} words, so treat this as generous`}.
 						</p>
 						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="By frequency band">
 							{outcome.vocabulary.bands.map((b) => (
@@ -623,6 +624,7 @@ function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edi
 				)}
 			</div>
 			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">{missed.length > 0 ? `The tutor starts from these sentences and teaches the one that matters most for what you need ${target} for.` : "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}</p>
+			<SourcesNote feature="placement" className="mt-6 text-left" />
 		</section>
 	);
 }

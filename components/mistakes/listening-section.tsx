@@ -51,7 +51,7 @@ function CauseRow({ c }: { c: CauseTrend }) {
 }
 
 const DEEP_ADDS = [
-	"Connects the figures: for example short words dropped with a worse second half, or fast clips understood less",
+	"Connects the figures: for example short words dropped with a worse second half, or fast clips typed correctly less often",
 	"Keeps hearing apart from grammar, spelling and typing, and sends each to the right practice",
 	"Points out what you would not see from the figures one at a time, and says when that is a guess",
 	"Reads the weekly counts for what changed, but calls a trend only where the test above did",
@@ -198,16 +198,16 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 				Listening
 			</h2>
 			<p className="-mt-1 mb-3 text-[13px] text-ink-3">
-				From the Listen task, {l.sentences} {l.sentences === 1 ? "sentence" : "sentences"} in {l.sessions} {l.sessions === 1 ? "session" : "sessions"} ({from}). Each typed sentence is compared with what was said, word by word. Meanings picked before Listen became typing-only count toward understood, not toward why.
+				From the Listen task, {l.sentences} {l.sentences === 1 ? "sentence" : "sentences"} in {l.sessions} {l.sessions === 1 ? "session" : "sessions"} ({from}). Each typed sentence is compared with what was said, word by word. Meanings picked before Listen became typing-only count as right when the right one was picked, but give no cause.
 			</p>
 			<div className="q-card p-4">
 				<p className="text-[15px] text-foreground">
-					<b className="q-num font-semibold">{pct(l.right)}</b> understood
+					<b className="q-num font-semibold">{pct(l.right)}</b> typed correctly
 					{l.range && l.sentences < 100 ?<span className="text-ink-3">, likely between {pct(l.range.low)} and {pct(l.range.high)}</span> : null}
 					<span className="text-ink-3"> · {l.typed} typed</span>
 				</p>
 				{l.weeks.length >= 2 && (
-					<ol className="mt-3 flex items-end gap-2" aria-label="Sentences understood by week">
+					<ol className="mt-3 flex items-end gap-2" aria-label="Sentences typed correctly by week">
 						{l.weeks.map((w) => (
 							<li key={w.week} className="flex min-w-0 flex-1 flex-col items-center gap-1">
 								<span className="q-num text-xs font-semibold text-ink-2">{w.few ? "few" : pct(w.right / w.reps)}</span>
@@ -268,7 +268,7 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 						)}
 						{l.pace ? (
 							<li className="px-4 py-2.5">
-								Slow clips (under {l.pace.slowBelow} syllables a second): <b className="q-num font-semibold">{pct(l.pace.slow.right / l.pace.slow.reps)}</b> understood. Fast clips (over {l.pace.fastAbove}): <b className="q-num font-semibold">{pct(l.pace.fast.right / l.pace.fast.reps)}</b>.
+								Slow clips (under {l.pace.slowBelow} syllables a second): <b className="q-num font-semibold">{pct(l.pace.slow.right / l.pace.slow.reps)}</b> typed correctly. Fast clips (over {l.pace.fastAbove}): <b className="q-num font-semibold">{pct(l.pace.fast.right / l.pace.fast.reps)}</b>.
 								{l.pace.fastHarder ? " Speed, more than any single word, is where it goes." : ""}
 							</li>
 						) : null}

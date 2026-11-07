@@ -2,12 +2,13 @@
 
 /**
  * Listen (LangHarness, 2026-10-28) — the input task's screen. Ten real
- * sentences the learner can follow (src/core/listen.ts picks them at
- * 95–98% known words): each is played with the text hidden, and the Slovak
- * it said is typed (dictation). Picking one of three meanings was dropped on
- * 2026-11-03: it was too easy at the owner's level and could not say why a
- * sentence was missed. Then the Slovak appears with its one stretch word
- * marked and glossed. No grammar grading; understanding is the whole task.
+ * sentences the learner can follow (src/core/listen.ts picks them: at most
+ * one unknown word each): each is played with the text hidden, and the
+ * Slovak it said is typed (dictation). Picking one of three meanings was
+ * dropped on 2026-11-03: it was too easy at the owner's level and could not
+ * say why a sentence was missed. Then the Slovak appears with its one
+ * stretch word marked and glossed. No grammar grading. A right answer shows
+ * the typing matched, not that the meaning was understood.
  *
  * Full screen like a lesson (a focus mode; Escape leaves). Keys: Space plays
  * again, Enter checks the typed sentence or continues.
@@ -29,6 +30,7 @@ import { speak, stopSpeaking } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 interface Rep {
 	item: ListenItem;
@@ -53,7 +55,6 @@ interface Outcome {
 	almost: number;
 	total: number;
 	queued: string[];
-	summary: { todayXp: number; dailyGoal: number; streak: { days: number } };
 }
 
 
@@ -153,7 +154,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			finishing.current = true;
 			setSaving(true);
 			sfx.done();
-			// Understood by ear only: a right answer with the text shown is not counted.
+			// A right answer with the text shown first is not counted.
 			const correct = understood(all);
 			const almost = almostCount(all);
 			try {
@@ -187,7 +188,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as Outcome);
 			} catch {
-				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [], summary: { todayXp: 0, dailyGoal: 50, streak: { days: 0 } } });
+				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
 			} finally {
 				setSaving(false);
 			}
@@ -372,7 +373,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 									type="button"
 									onClick={() => setPeeked(true)}
 									disabled={replays < PEEK_AFTER_REPLAYS}
-									title={replays < PEEK_AFTER_REPLAYS ? "Listen once more first" : "Show the text — this sentence then does not count as understood"}
+									title={replays < PEEK_AFTER_REPLAYS ? "Listen once more first" : "Show the text — this sentence then does not count as typed correctly"}
 									className="q-why-off ml-auto !mt-0"
 									data-testid="listen-peek"
 								>
@@ -464,7 +465,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", current.verdict === "exact" ? "text-teal-2" : current.verdict === "accents" ? "text-ink-2" : "text-miss")} data-testid="listen-verdict">
 								<VerdictDisc ok={current.verdict !== "wrong"} />
 								{current.verdict === "exact"
-									? `Understood · +${LISTEN_XP} XP`
+									? `Typed correctly · +${LISTEN_XP} XP`
 									: current.verdict === "accents"
 										? `Almost · the letters are right, a mark is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
 										: current.given
@@ -532,7 +533,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				<div>
 					<p className="font-ui text-[13px] font-[550] text-ink-3">Listen · done</p>
 						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
-						{outcome.correct} of {outcome.total} understood by ear
+						{outcome.correct} of {outcome.total} typed correctly, text hidden
 					</h1>
 					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-ink-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
 				</div>
@@ -568,7 +569,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				<details className="group mt-6" data-testid="listen-understood">
 					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
 						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
-						Understood · {understood.length} {understood.length === 1 ? "sentence" : "sentences"}
+						Typed correctly · {understood.length} {understood.length === 1 ? "sentence" : "sentences"}
 					</summary>
 					<SentenceRows reps={understood} />
 				</details>
@@ -586,6 +587,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				</Link>
 				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
 			</div>
+			<SourcesNote feature="listen" className="mt-8" />
 		</div>
 	);
 }

@@ -35,8 +35,8 @@ export type Cefr = "A1" | "A2" | "B1" | "B2" | "C1";
 export const CEFR_ORDER: Cefr[] = ["A1", "A2", "B1", "B2", "C1"];
 
 /** Cumulative guided-learning hours to reach each level. A rough figure
- *  for a Slavic language learned by an adult who already has a case
- *  language (Estonian): between the Cambridge/ALTE figures for English and
+ *  for a Slavic language learned by an adult who knows a language with
+ *  grammatical cases: between the Cambridge/ALTE figures for English and
  *  the FSI category-III figures. Shown to the learner as an estimate. */
 export const GUIDED_HOURS: Record<Cefr, number> = { A1: 90, A2: 200, B1: 400, B2: 650, C1: 950 };
 
@@ -438,7 +438,8 @@ export interface CurriculumState {
 
 /** Tutor sessions a tutor unit needs. */
 export const TUTOR_SESSIONS = 2;
-/** One full lesson at this accuracy tests out of a unit. */
+/** One full lesson (at least 10 reps) at this accuracy tests out of a unit.
+ *  The 95% and the 10 reps are the app's own policy, not figures from a study. */
 export const TEST_OUT_ACCURACY = 0.95;
 /** A chapter opens when the one before has at most this many units undone. */
 export const CHAPTER_SLACK = 2;
@@ -765,12 +766,12 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	}
 
 	// 2. Listen: meaning-focused input before any production. Ten real
-	//    sentences at 95–98% known words, heard first, understood by
-	//    picking the meaning (src/core/listen.ts).
+	//    sentences of mostly known words, heard first and typed
+	//    (src/core/listen.ts).
 	tasks.push({
 		id: "listen",
 		title: "Listen",
-		line: (day.listens ?? 0) > 0 ? "Ten sentences heard and understood" : "Ten sentences you can follow — hear each, then pick what it meant",
+		line: (day.listens ?? 0) > 0 ? "Ten sentences heard and typed" : "Ten sentences you can follow — hear each, then type what you heard",
 		minutes: TASK_MINUTES.listen,
 		done: (day.listens ?? 0) > 0,
 		href: "/listen",
@@ -868,8 +869,8 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	}
 
 	// 6. Read: an episode at the learner's level (src/core/reading.ts) —
-	//    extensive reading at ~97% known words is where vocabulary grows
-	//    between lessons, and the one input the plan had none of.
+	//    easy graded reading at ~97% known words, the input the plan had
+	//    none of, where words are met again between lessons.
 	tasks.push({
 		id: "read",
 		title: "Read",

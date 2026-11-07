@@ -61,6 +61,7 @@ import {
 } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { shake as shakeEl } from "@/components/motion";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 type Mode = "lesson" | "blitz";
 
@@ -185,8 +186,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	const [left, setLeft] = useState(BLITZ_SECONDS);
 	const [shake, setShake] = useState(0);
 	// The first wrong answer on this rep: the learner gets a hint and one
-	// more try before the answer is shown (a prompt, not a recast — making
-	// the learner find the form is what moves grammar, telling them is not).
+	// more try before the answer is shown (a prompt, not a recast: classroom
+	// studies found prompts at least as good, a design choice and not proven here).
 	const [miss, setMiss] = useState<string | null>(null);
 	// The first answer to this rep, held while the cue is showing: a miss
 	// comes back right on the second try, and the first try is what counts
@@ -1725,6 +1726,7 @@ function EndScreen({
 					</button>
 				)}
 			</div>
+			<SourcesNote feature="lesson" className="mt-6" />
 		</div>
 	);
 }

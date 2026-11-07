@@ -20,9 +20,10 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { compareAnswer, diacriticSlips, formatInterval, ratingCap, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 interface Prompt {
 	card: ReviewCard;
@@ -163,6 +164,7 @@ export function ReviewSession() {
 	}, [sentence, lang]);
 	const picks = mode === "choice" && !!prompt && prompt.card.state !== "review";
 	const help = { hints: hint, picked: picks };
+	const cap = ratingCeiling(verdict ?? "exact", help);
 
 	useEffect(() => {
 		if (status?.next && !verdict && !picks) inputRef.current?.focus();
@@ -190,9 +192,9 @@ export function ReviewSession() {
 			const res = await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, ratingCap(help)), hints: hint, picked: picks, tz: new Date().getTimezoneOffset() }),
+				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, cap), hints: hint, picked: picks, tz: new Date().getTimezoneOffset() }),
 			});
-			setLast({ before: around.before + around.lead, answer: prompt.card.answer, after: around.tail + around.after, translation: prompt.card.translation, label: `${RATING_LABELS[Math.min(rating, ratingCap(help)) as Rating]}${help.hints > 0 || help.picked ? ", with help" : ", no help"}` });
+			setLast({ before: around.before + around.lead, answer: prompt.card.answer, after: around.tail + around.after, translation: prompt.card.translation, label: `${RATING_LABELS[Math.min(rating, cap) as Rating]}${help.hints > 0 || help.picked ? ", with help" : ", no help"}` });
 			// The answer's response carries the deck as it stands now: one round trip, not two.
 			const after = res.ok ? ((await res.json().catch(() => null)) as { status?: Status } | null)?.status : undefined;
 			if (after) show(after);
@@ -229,7 +231,7 @@ export function ReviewSession() {
 			if (e.key === "Enter") {
 				e.preventDefault();
 				void rate(suggested);
-			} else if (["1", "2", "3", "4"].includes(e.key) && !(e.target instanceof HTMLInputElement) && Number(e.key) <= ratingCap(help)) {
+			} else if (["1", "2", "3", "4"].includes(e.key) && !(e.target instanceof HTMLInputElement) && Number(e.key) <= cap) {
 				setSuggested(Number(e.key) as Rating);
 			}
 		};
@@ -274,7 +276,7 @@ export function ReviewSession() {
 	const newTotal = counts ? counts.newToday + counts.newLeft : 0;
 	const exact = verdict === "exact";
 	const helped = hint > 0 || picks;
-	const shownSuggested = Math.min(suggested, ratingCap(help)) as Rating;
+	const shownSuggested = Math.min(suggested, cap) as Rating;
 
 	return (
 		<div className="@container h-dvh" data-testid="review-session">
@@ -376,6 +378,7 @@ export function ReviewSession() {
 												Do a lesson
 											</Link>
 										</div>
+										<SourcesNote feature="review" className="mt-6" />
 									</div>
 								)}
 
@@ -569,9 +572,9 @@ export function ReviewSession() {
 															type="button"
 															role="radio"
 															aria-checked={r === shownSuggested}
-															disabled={saving || r > ratingCap(help)}
+															disabled={saving || r > cap}
 															onClick={() => setSuggested(r)}
-															title={r > ratingCap(help) ? `${RATING_LABELS[r]} is off: you had help on this card` : undefined}
+															title={r > cap ? `${RATING_LABELS[r]} is off: ${verdict === "wrong" ? "a miss counts as Again" : "you had help on this card"}` : undefined}
 															className={cn("flex h-14 min-w-0 flex-col items-center justify-center rounded-lg text-[14px] font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well disabled:opacity-35 disabled:line-through", r === shownSuggested && "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)] hover:bg-teal-wash")}
 																>
 															{RATING_LABELS[r]}

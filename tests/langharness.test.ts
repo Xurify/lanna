@@ -17,7 +17,7 @@ delete process.env.LH_PROFILE;
 
 const { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS } = await import("../src/core/language.ts");
 const { review, intervalDays, retrievability, initialState, nextDue, formatInterval, FSRS5_WEIGHTS } = await import("../src/core/fsrs.ts");
-const { pickClozeExample, mintCard, clozeParts, ratingFor, dueCards, lexiconOrder } = await import("../src/core/review.ts");
+const { pickClozeExample, mintCard, clozeParts, ratingFor, ratingCeiling, dueCards, lexiconOrder } = await import("../src/core/review.ts");
 const { LANGUAGE_PROFILES, activeProfile, PATHS } = await import("../config.ts");
 const { lookupWord, loadLexicon, formatEntry } = await import("../src/agent/lexicon.ts");
 const { listSourceSegments } = await import("../src/agent/prompt-segments.ts");
@@ -128,6 +128,10 @@ describe("cloze cards", () => {
 		assert.equal(ratingFor("exact", 2000, { hints: 2 }), 2);
 		assert.equal(ratingFor("accents", 2000, { hints: 2 }), 2);
 		assert.equal(ratingFor("wrong", 2000, { hints: 2 }), 1);
+		// After a miss only Again can be picked: a lucky Good would schedule the card too far out.
+		assert.equal(ratingCeiling("wrong"), 1);
+		assert.equal(ratingCeiling("accents"), 4);
+		assert.equal(ratingCeiling("exact", { hints: 2 }), 2);
 		const sorted = [...lexicon.entries].sort(lexiconOrder);
 		assert.equal(sorted[0]!.origin, "curated", "beginner words come first");
 		const now = new Date();

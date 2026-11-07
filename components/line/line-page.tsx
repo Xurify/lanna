@@ -25,6 +25,7 @@ import { COLUMN, Dock, PRIMARY, SECONDARY, TaskTop } from "@/components/task-fra
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { QUIET } from "@/components/ui/learn-buttons";
 import { LineHistory } from "@/components/line/line-history";
+import { SourcesNote } from "@/components/sources/sources-note";
 import { scoreLine, type LineRecord, type LineState } from "@/src/core";
 
 type Phase = "ask-morning" | "ask-evening" | "waiting" | "done" | "no-line";
@@ -166,13 +167,13 @@ export function LinePage({ initial }: { initial: LineState }) {
 
 	const shown: LineRecord | null = justHeard ? (justHeard === "morning" ? view.morning : view.evening) : phase === "waiting" ? view.morning : phase === "done" ? view.evening : null;
 	const compare: LineRecord | null = shown && shown.phase === "evening" ? view.morning : null;
-	const sub = asking ? (askPhase === "morning" ? "This morning" : "This evening") : shown?.phase === "evening" ? "Heard twice" : "This morning";
+	const sub = asking ? (askPhase === "morning" ? "First hearing" : "Second hearing") : shown?.phase === "evening" ? "Heard twice" : "First hearing";
 	const eveningLater = shown?.phase === "morning" && !view.eveningOpen;
 	const eveningNow = shown?.phase === "morning" && view.eveningOpen && !view.evening;
 
 	return (
 		<Frame>
-			<TaskTop progress={heard / 2} label="Morning and evening hearings" count={`${heard}/2`} />
+			<TaskTop progress={heard / 2} label="First and second hearing" count={`${heard}/2`} />
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={asking ? `ask-${askPhase}` : `shown-${shown?.phase ?? "none"}`} className={cn(COLUMN, "lh-rise")}>
@@ -180,7 +181,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 						{asking && item ? (
 							<>
 								<p className="mb-4 font-ui text-[13px] text-ink-3">
-									{askPhase === "morning" ? "Heard cold. Nothing is shown until you have answered." : `This morning ${view.morning!.caught} of ${view.morning!.words} words. The same sentence, once more.`}
+									{askPhase === "morning" ? "Heard cold. Nothing is shown until you have answered." : `First hearing: ${view.morning!.caught} of ${view.morning!.words} words. The same sentence, once more.`}
 								</p>
 								<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">Type what you hear</h2>
 								<div className="flex flex-wrap items-center gap-3">
@@ -240,6 +241,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 
 				<div className={cn(COLUMN, "mt-8")}>
 					<LineHistory days={view.history} showTable={showTable} onToggleTable={() => setShowTable((v) => !v)} />
+					<SourcesNote feature="line" className="mt-6" />
 				</div>
 			</div>
 
@@ -261,8 +263,8 @@ export function LinePage({ initial }: { initial: LineState }) {
 						<>
 							<p className="min-w-0 font-ui text-[15px] font-[600] tracking-[-0.01em] text-foreground" data-testid="line-verdict">
 								{shown ? `${shown.phase === "morning" ? "Heard cold" : "Heard again"} · ${shown.caught} of ${shown.words} words` : ""}
-								{eveningLater && <span className="block text-[13px] font-[450] text-ink-3">It comes back this evening, once you have practiced.</span>}
-								{eveningNow && <span className="block text-[13px] font-[450] text-ink-3">You have practiced today, so it can come back now, or this evening.</span>}
+								{eveningLater && <span className="block text-[13px] font-[450] text-ink-3">It comes back later today, once you have practiced.</span>}
+								{eveningNow && <span className="block text-[13px] font-[450] text-ink-3">You have practiced today, so it can come back now, or later today.</span>}
 								{shown?.phase === "evening" && <span className="block text-[13px] font-[450] text-ink-3">Both hearings are in. The next line comes tomorrow.</span>}
 							</p>
 							<div className="flex shrink-0 items-center gap-2">
@@ -296,7 +298,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 	const delta = before ? score.caught - before.caught : null;
 	return (
 		<>
-			<p className="mb-3 font-ui text-[13px] text-ink-3">{record.phase === "morning" ? "Heard cold, with no text" : "Heard again, after a day's practice"}</p>
+			<p className="mb-3 font-ui text-[13px] text-ink-3">{record.phase === "morning" ? "Heard cold, with no text" : "Heard again, after practice"}</p>
 			<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 				<p className="font-ui text-[44px] font-semibold leading-none tracking-[-0.03em] text-foreground" data-testid="line-figure">
 					{score.caught}
@@ -304,7 +306,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 				</p>
 				{before && delta !== null && (
 					<span className={cn("q-pill", delta <= 0 && "grey")} data-testid="line-delta">
-						{delta > 0 ? `+${delta}` : delta === 0 ? "same" : `${delta}`} since this morning ({before.caught} of {before.words})
+						{delta === 0 ? "Same as" : `${delta > 0 ? "+" : ""}${delta} on`} the first hearing ({before.caught} of {before.words})
 					</span>
 				)}
 			</div>
@@ -322,6 +324,7 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 				))}
 			</p>
 			<p className="mt-2 font-ui text-[12.5px] text-ink-3">Caught words in full, missed words faded, a missing mark underlined.</p>
+			{before && <p className="mt-1 font-ui text-[12.5px] text-ink-3" data-testid="line-confound">You had seen the sentence by now, so a higher count shows what you remember, not how much better you hear.</p>}
 			{score.caught < score.words && (
 				<p className="mt-3 font-prose text-base text-ink-3" data-testid="line-typed">
 					{record.typed ? (

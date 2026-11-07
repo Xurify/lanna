@@ -103,7 +103,7 @@ describe("choosing the pair", () => {
 
 	it("open mix-ups come first, then the most misses, then the latest", () => {
 		const open = mixup("kam", "kde", 2, { hits: 0 });
-		const mended = { ...mixup("moj", "svoj", 5, { answer: "svoj", given: "môj" }), hits: 3 };
+		const mended = { ...mixup("moj", "svoj", 5, { answer: "svoj", given: "môj" }), hits: 3, days: ["2026-11-02", "2026-11-03"] };
 		assert.equal(chooseCatch(choice({ "kam~kde": open, "moj~svoj": mended }))?.pair, "kam-vs-kde");
 		const older = mixup("kam", "kde", 2, { lastAt: "2026-11-01T10:00:00.000Z" });
 		const newer = mixup("moj", "svoj", 2, { answer: "svoj", given: "môj", lastAt: "2026-11-03T10:00:00.000Z" });

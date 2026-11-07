@@ -21,7 +21,7 @@ describe("the reader's text", () => {
 
 	it("the library line leaves out what does not exist", () => {
 		assert.equal(storyMeta({ level: "A1", wordCount: 80, coverage: 0, newWords: [] }), "A1 · about 1 min");
-		assert.equal(storyMeta({ level: "A2", wordCount: 160, coverage: 0.92, newWords: ["stanica", { sk: "lístok" }] }), "A2 · about 2 min · 2 new words · 92% of words known");
+		assert.equal(storyMeta({ level: "A2", wordCount: 160, coverage: 0.92, newWords: ["stanica", { sk: "lístok" }] }), "A2 · about 2 min · 2 new words · 92% of words counted as known");
 	});
 
 	it("the hand-made fixture episodes are complete: sentences with translations, three questions, glossed words", () => {

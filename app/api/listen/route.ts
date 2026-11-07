@@ -1,7 +1,6 @@
 /**
- * GET /api/listen — a Listen session: ten dictionary sentences at 95–98%
- * known words, each with three meanings to choose from and its stretch
- * words glossed (src/server/listen.ts). Built locally; the wrong meanings are
+ * GET /api/listen — a Listen session: ten dictionary sentences of mostly
+ * known words, each with its stretch words glossed (src/server/listen.ts). Built locally; the wrong meanings are
  * close ones (src/server/distractors.ts), and a cheap-model near-miss is
  * asked for only when the dictionary has none close, then kept.
  * POST /api/listen {reps, ms?, activeMs?, tz?} — a finished session: XP, the day's

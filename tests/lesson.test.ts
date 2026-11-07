@@ -107,6 +107,12 @@ test("streakOf counts back from today and forgives one rest day after six", () =
 	assert.equal(s.restUsed, true);
 	assert.equal(s.days, 8);
 	assert.equal(streakOf(new Set(["2026-10-20"]), "2026-10-27").days, 0);
+	// The morning after a forgiven rest day: yesterday was missed, today is still open, the streak through the day before stands.
+	const afterRest = new Set(["2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24", "2026-10-25", "2026-10-26"]);
+	assert.deepEqual(streakOf(afterRest, "2026-10-28", 1), { days: 6, restUsed: true, activeToday: false });
+	assert.equal(streakOf(afterRest, "2026-10-28", 0).days, 0, "a seven-day plan has no rest day to forgive");
+	assert.equal(streakOf(afterRest, "2026-10-29", 1).days, 0, "two missed days in a row end the streak");
+	assert.deepEqual(streakOf(new Set<string>(), "2026-10-28", 6), { days: 0, restUsed: false, activeToday: false });
 	// A six-day plan rests one day a week: that rest day keeps the streak.
 	const sixDays = new Set(["2026-10-18", "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-25", "2026-10-26", "2026-10-27"]);
 	assert.equal(streakOf(sixDays, "2026-10-27", 1).days, 9);

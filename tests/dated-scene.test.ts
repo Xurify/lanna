@@ -142,7 +142,7 @@ describe("the standing against the measured pace", () => {
 		assert.equal(v.status, "no-speed");
 		assert.equal(v.reach, null);
 		assert.equal(v.daysLater, null);
-		assert.ok(!/Behind by|to spare|just in time/.test(v.line), v.line);
+		assert.ok(!/Later than the date|to spare|just in time/.test(v.line), v.line);
 	});
 
 	test("a scene that asks no speed is read on the pace alone", () => {
@@ -169,10 +169,10 @@ describe("the standing against the measured pace", () => {
 		assert.equal(v.status, "behind");
 		assert.equal(v.daysLater, 15);
 		assert.equal(v.reach, ahead(75));
-		assert.match(v.line, /Behind by 15 days/);
+		assert.match(v.line, /15 days after/);
 		const one = dated.datedSceneView(scene(ahead(60)), est(61), TODAY);
 		assert.equal(one.daysLater, 1);
-		assert.match(one.line, /Behind by 1 day:/);
+		assert.match(one.line, /1 day after/);
 	});
 
 	test("a scene dated today is on track once the estimate says it is reached", () => {
@@ -303,7 +303,7 @@ describe("the server flow: a scene on a day, Today's list, the line after the da
 
 describe("the components render their states", () => {
 	test("the Today card names the scene and its days, links to Speak, and to Milestones once the line is due", () => {
-		const base = { title: "Lunch with friends", date: "2026-12-05", line: "Behind by 4 days: at your real pace you reach it on December 9, 2026." };
+		const base = { title: "Lunch with friends", date: "2026-12-05", line: "Later than the date: at your pace of the last 14 days you reach it on December 9, 2026, 4 days after." };
 		const html = renderToStaticMarkup(createElement(DatedSceneCard, { scene: { ...base, daysLeft: 30, status: "behind", outcomeDue: false } }));
 		assert.ok(html.includes("Lunch with friends"));
 		assert.ok(html.includes("Saturday, December 5, 2026"));

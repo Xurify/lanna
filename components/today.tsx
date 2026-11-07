@@ -556,7 +556,7 @@ function reviewMeta(s: Summary): React.ReactNode {
 	const known = s.wordsKnown ?? 0;
 	return (
 		<>
-			Type it, don&apos;t pick it. <b>{s.review.due} due</b>, {known} {known === 1 ? "word" : "words"} known so far.
+			Type it, don&apos;t pick it. <b>{s.review.due} due</b>, {known} {known === 1 ? "word" : "words"} you can recall.
 		</>
 	);
 }

@@ -25,6 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { Timeline } from "@/components/milestones/milestones-page";
 import { WeakSpots } from "@/components/daily-plan";
 import { StampBook } from "@/components/stamp";
+import { SourcesNote } from "@/components/sources/sources-note";
 import { LevelProgress, StrandBars, StreakCalendar, WeekXpChart } from "@/components/quiet/charts";
 import type { ChartData } from "@/components/quiet/chart-data";
 import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages, LEVEL_CAN_DO, levelDates, MIN_PACE_DAYS, PACE_WINDOW_DAYS, paceEta, purposePhrase, shiftLine, withPlan, type LearnerGoal, type WeakSpotSummary } from "@/src/core";
@@ -125,6 +126,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							<LevelProgress data={charts} className="!mt-0 self-start" />
 							<StreakCalendar data={charts} />
 							<StrandBars balance={charts.balance} className="sm:col-span-2" />
+							<SourcesNote feature="plan" className="sm:col-span-2" />
 						</div>
 					</section>
 				)}
@@ -204,7 +206,7 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							{[
 								["Time studied", clock(log.minutes)],
 								["Guided hours credited", hoursText(log.hours)],
-								["Words known", log.wordsKnown.toLocaleString("en-US")],
+								["Words you can recall", log.wordsKnown.toLocaleString("en-US")],
 								["Days practiced", String(log.daysActive)],
 								["Longest streak", `${log.longestStreak} ${log.longestStreak === 1 ? "day" : "days"}`],
 								["Lessons", log.lessons.toLocaleString("en-US")],
@@ -228,8 +230,9 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				{stamps && stamps.length > 0 && (
 					<section id="stamps" className={cn(CARD, "scroll-mt-20")} data-testid="plan-stamps" aria-label="Stamp book">
 						<h2 className={H2}>Stamp book</h2>
-						<p className="mt-1 text-sm text-ink-3">Like the wooden stamps sold at mountain huts: one for each chapter and each level, and one for each thing done on the way. A stamp marks something you can now do, never time spent.</p>
+						<p className="mt-1 text-sm text-ink-3">Like the wooden stamps sold at mountain huts: one for each chapter and each level, and one for each thing done on the way. Most stamps mark something you can now do; a few count practice you did, such as reviews, listens and guided hours credited for finished units. None count minutes alone.</p>
 						<StampBook stamps={stamps} className="mt-4" />
+						<SourcesNote feature="habit" className="mt-5" />
 					</section>
 				)}
 
@@ -282,6 +285,13 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 						<WeakSpots weak={weak} />
 					</section>
 				)}
+
+				<p className="mt-2 font-ui text-xs text-ink-3">
+					Every task is built from published research.{" "}
+					<Link href="/sources" className="underline decoration-line-2 underline-offset-[3px] hover:text-ink-2" data-testid="plan-sources-link">
+						See the sources
+					</Link>
+				</p>
 			</main>
 			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={minutes} daysPerWeek={days} target={goal.level} hoursDone={hoursDone} languages={knownLanguages(goal)} />
 		</div>

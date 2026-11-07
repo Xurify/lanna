@@ -51,7 +51,7 @@ Kate's *Plenty* has the same jingle word for word on every episode ("a weekly re
 
 Consistency alone did not grow anything, though. Natalie's 811 near-daily shorts sit on a flat floor around 450 views, and the newest 50 have a median of 185. In one episode Zweig describes posting three times a day and calls the habit "addicting" ([hhx8g9YPLAU](https://youtu.be/hhx8g9YPLAU) 47:00).
 
-**What the research says.** Habits form from a stable cue in a stable context, repeated; the goal fades and the cue does the work (Wood and Neal 2007). In the field, habit strength rose over a median of 66 days, and missing one day did not measurably set it back (Lally et al. 2010). Duolingo found the same about forgiveness and about binging (see [gamification.md](gamification.md), finding 6).
+**What the research says.** Habits form from a stable cue in a stable context, repeated; the goal fades and the cue does the work (Wood and Neal 2007). In the field, simple daily actions (a glass of water, a piece of fruit, a short walk) took a median of 66 days to reach each person's own plateau of automaticity, with a range of 18 to 254 days, and missing one day did not materially set it back (Lally et al. 2010). The study did not test any forgiveness rule. Duolingo found the same about forgiveness and about binging (see [gamification.md](gamification.md), finding 6).
 
 **For the app.** The daily plan already has a fixed shape (one task per strand). It lacks a fixed opening and a fixed weekly moment. Proposals 1 and 5.
 

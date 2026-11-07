@@ -24,7 +24,7 @@ test("speed is the limit: the sentence names the milestone and both numbers, mea
 	const view = stageSentence([estimate("A casual vlog")]);
 	assert.equal(view.title, "A casual vlog");
 	assert.equal(view.line, 'Speed limits "A casual vlog": about 40 words a minute are understood, and this needs about 100.');
-	assert.equal(view.detail, null);
+	assert.match(view.detail ?? "", /grows with hours/);
 });
 
 test("speed from the level, not measured, says so in the detail line and on the meter", () => {

@@ -197,11 +197,11 @@ export function lineRow(input: LineCardInput): LineRow {
 	if (!input.hasLine) return { line: "The dictionary has no sentence that fits yet.", pill: "No line today", tone: "none" };
 	const m = input.morning;
 	if (!m) return { line: "One sentence, no text. Listen, then type what you caught.", pill: "Not heard yet", tone: "idle" };
-	const first = `This morning ${m.caught} of ${m.words} words`;
+	const first = `First hearing ${m.caught} of ${m.words} words`;
 	if (input.evening) {
 		const e = input.evening;
-		return { line: `${first}, this evening ${e.caught} of ${e.words}.`, pill: "Both heard", tone: "done" };
+		return { line: `${first}, second hearing ${e.caught} of ${e.words}.`, pill: "Both heard", tone: "done" };
 	}
 	if (input.eveningOpen) return { line: `${first}. Hear it again, now that you have practiced.`, pill: "Hear it again", tone: "open" };
-	return { line: `${first}. It comes back once you have practiced today.`, pill: "Back tonight", tone: "idle" };
+	return { line: `${first}. It comes back once you have practiced today.`, pill: "Back later", tone: "idle" };
 }

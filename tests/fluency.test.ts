@@ -19,7 +19,7 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { FAST_COUNT, FAST_PASSES, fastWindows, fastXp, pickKnown, rereadXp, wordsPerMinute, WPM_TARGET } = await import("../src/core/fluency.ts");
+const { FAST_COUNT, FAST_MAX_WPS, FAST_PASSES, REREAD_MAX_WPM, fastPace, fastWindows, fastXp, pickKnown, rereadTarget, rereadXp, wordsPerMinute, WPM_TARGET } = await import("../src/core/fluency.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { knownWords, resolveWord, STORY_NAMES } = await import("../src/server/reading.ts");
 const fluency = await import("../src/server/fluency.ts");
@@ -72,9 +72,38 @@ test("fastWindows shrink and the XP counts passes, sentences and the finish", ()
 test("words a minute and the re-read XP: the read, a bonus for beating the bar, the question", () => {
 	assert.equal(wordsPerMinute(120, 60_000), 120);
 	assert.equal(wordsPerMinute(0, 1000), 0);
-	assert.equal(rereadXp(90, WPM_TARGET.A2, null, true), 12 + 6 + 5);
-	assert.equal(rereadXp(70, WPM_TARGET.A2, null, false), 12);
-	assert.equal(rereadXp(90, 80, 95, true), 12 + 5, "the last time on the text is the bar once there is one");
+	assert.equal(rereadXp(90, WPM_TARGET.A2, true), 12 + 6 + 5);
+	assert.equal(rereadXp(70, WPM_TARGET.A2, false), 12);
+	assert.equal(rereadXp(90, 80, false), 12, "faster with the question missed earns no speed bonus");
+	assert.equal(rereadXp(90, 95, true), 12 + 5, "not beating the bar earns no speed bonus");
+	assert.equal(rereadXp(REREAD_MAX_WPM + 1, 80, true), 12 + 5, "skimming earns no speed bonus");
+});
+
+test("the re-read target: the level's guess, then the last pace, then the middle of the last three", () => {
+	assert.equal(rereadTarget([], "A2"), WPM_TARGET.A2);
+	assert.equal(rereadTarget([100], "A2"), 100);
+	assert.equal(rereadTarget([100, 90], "A2"), 90);
+	assert.equal(rereadTarget([60, 200, 90], "A2"), 90, "one fluke run does not set the bar");
+	assert.equal(rereadTarget([300, 60, 200, 90], "A2"), 90, "only the last three count");
+});
+
+test("pace over a round: words a second, first pass against last, only where both counted", () => {
+	const rep = (sentence: string, ms: number[], made = [true, true, true]) => ({
+		itemId: sentence,
+		slug: sentence,
+		sentence,
+		translation: "",
+		passes: ms.map((m, i) => ({ ms: m, window: 9999, made: made[i] ?? true })),
+	});
+	assert.equal(fastPace([]), null);
+	// Four words in 4 s, then in 2 s: one, then two words a second.
+	assert.deepEqual(fastPace([rep("jeden dva tri štyri", [4000, 3000, 2000])]), { sentences: 1, first: 1, last: 2 });
+	assert.equal(fastPace([rep("jeden dva tri štyri", [4000, 3000, 2000], [true, true, false])]), null, "a sentence whose last pass did not count is left out");
+	const timed = { itemId: "x", slug: "x", sentence: "jeden dva tri štyri", translation: "", passes: [{ ms: 5000, speechMs: 4000, window: 9999, made: true }, { ms: 4000, window: 9999, made: true }, { ms: 3000, speechMs: 2000, window: 9999, made: true }] };
+	assert.deepEqual(fastPace([timed]), { sentences: 1, first: 1, last: 2 }, "the time spent speaking wins over the window clock");
+	// Four words in 0.4 s is ten words a second: a button pressed early, not speech.
+	assert.ok(10 > FAST_MAX_WPS);
+	assert.equal(fastPace([rep("jeden dva tri štyri", [400, 400, 400])]), null, "passes faster than speech are left out of the pace");
 });
 
 test("a timed re-read of a stored episode: the plan, the record, the history, the next question", () => {

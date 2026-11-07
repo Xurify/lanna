@@ -57,7 +57,7 @@ export function stageSentence(milestones: readonly MilestoneEstimate[]): StageVi
 		return {
 			title: target.def.title,
 			line: `Speed limits ${title}: about ${target.speed.have} words a minute are understood, and this needs about ${target.speed.need}.`,
-			detail: estimated ? "The speed is the level's estimate until a few Listen or Watch sessions measure it." : null,
+			detail: estimated ? "The speed is the level's estimate until a few Listen or Watch sessions measure it." : "Speed grows with hours of Listen and Watch, not with learning words alone.",
 			binding: "speed",
 			...meters,
 		};

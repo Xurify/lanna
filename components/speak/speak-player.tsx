@@ -29,7 +29,8 @@ import { COLUMN, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop, Centered }
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SettingsLink } from "@/components/settings/settings-link";
-import { pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { PRON_CLEAR, PRON_GOOD, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakScene, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
@@ -556,7 +557,7 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 			{turn.repaired && (
 				<p className="mb-1.5 inline-flex items-center gap-1.5 rounded-xl bg-teal-wash px-3 py-1 font-ui text-sm font-[600] text-teal-2" data-testid="speak-repaired">
 					<CheckIcon className="size-4" strokeWidth={3} />
-					Repaired · +{SPEAK_REPAIR_XP} XP
+					Repaired, in the tutor&apos;s judgment · +{SPEAK_REPAIR_XP} XP
 				</p>
 			)}
 			<div className={cn("rounded-lg rounded-bl-md bg-well px-4 py-3", last && "lh-rise shadow-[0_0_0_1.5px_var(--q-teal)]")}>
@@ -666,9 +667,10 @@ function Picker({ state, error, sceneId, typed, onPick, onResume, onRetry }: { s
 				)}
 				{state && (
 					<p className="mt-6 font-ui text-xs text-muted-foreground">
-						{state.stt ? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : "Deepgram"} speech-to-text, your recordings kept with the scene.` : "No speech-to-text key yet (ElevenLabs or Deepgram in Settings → API keys): lines are typed until then."}
+						{state.stt ? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : state.stt === "groq" ? "Groq" : "Deepgram"} speech-to-text, your recordings kept with the scene.` : "No speech-to-text key yet (ElevenLabs, Groq or Deepgram in Settings → API keys): lines are typed until then."}
 					</p>
 				)}
+				<SourcesNote feature="speak" className="mt-6" />
 			</div>
 		</TaskFrame>
 	);
@@ -698,8 +700,8 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			</div>
 			<Stats className="mt-6 font-ui text-sm">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="Prompts repaired" value={`${counts.repaired} of ${counts.prompts}`} ink="text-teal-2" />
-				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= 85 ? "text-teal-2" : s.pron.average >= 70 ? "text-teal-2" : "text-miss"} />}
+				<Stat label="Repaired (tutor&apos;s call)" value={`${counts.repaired} of ${counts.prompts}`} ink="text-teal-2" />
+				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= PRON_GOOD ? "text-teal-2" : s.pron.average >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
 				<Stat label="In your deck" value={String(outcome.queued.length)} ink="text-teal-2" />
 			</Stats>
 			{s.pron && (
@@ -711,7 +713,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			{sum?.note && <p className="mt-6 font-prose text-base text-foreground">{sum.note}</p>}
 			{sum && sum.corrections.length > 0 ? (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth fixing</p>
+					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth fixing, in the tutor&apos;s judgment</p>
 					<ul className="mt-2 flex flex-col gap-2" data-testid="speak-corrections">
 						{sum.corrections.map((c, i) => (
 							<li key={i} className="q-card px-4 py-3">
@@ -768,6 +770,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 				</button>
 				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
 			</div>
+			<SourcesNote feature="speak" className="mt-8" />
 		</div>
 	);
 }

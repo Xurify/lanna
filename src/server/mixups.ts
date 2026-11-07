@@ -7,7 +7,7 @@
 
 import { loadLexicon } from "../agent/lexicon.ts";
 import type { LessonPlan, RepVerdict } from "../core/lesson.ts";
-import { buildMixupLesson, mixupEventOf, mixupLexicon, mixupRule, openMixupFor, tallyMixups, type MixupEvent } from "../core/mixups.ts";
+import { buildMixupLesson, isReviewRetry, mixupEventOf, mixupLexicon, mixupRule, openMixupFor, tallyMixups, type MixupEvent } from "../core/mixups.ts";
 import type { ReviewCard } from "../core/review.ts";
 import { progressStore, type ProgressRecord } from "../store/progress.ts";
 import { aspectFrames } from "./aspect-frames.ts";
@@ -38,9 +38,10 @@ export function noteMixups(p: ProgressRecord, events: readonly MixupEvent[]): st
 	return found;
 }
 
-/** A review answer, unless a hint came first (the first-try rule). */
+/** A review answer, unless a hint came first or the card is being relearned
+ *  after a miss (the first-try rule): its answer was just shown. */
 export function noteReviewMixup(card: ReviewCard, given: string, verdict: RepVerdict, hints: number | undefined, now: Date): void {
-	if (hints) return;
+	if (hints || isReviewRetry(card)) return;
 	try {
 		const p = progressStore.read();
 		const before = JSON.stringify(p.mixups ?? {});

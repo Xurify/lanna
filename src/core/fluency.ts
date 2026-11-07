@@ -4,14 +4,19 @@
  * word is one the learner has met, and the only variable is time.
  *
  *   reread  — a timed re-reading of an episode already read in the Read
- *             task. Speed-reading work (Nation 2009; Chang 2010) uses easy
- *             texts, a clock, a running record of words per minute and a
- *             light comprehension check, so speed never comes at the
- *             price of understanding.
- *   fast    — "say it faster": the 4/3/2 technique (Maurice 1983; Nation
- *             1989) shrunk to a sentence. The same line is said three
- *             times, each time in a shorter window; the repetition at
- *             rising speed is what makes retrieval automatic.
+ *             task. Timed-reading studies (Chang 2010; Taguchi et al.
+ *             2004) use easy texts, a clock, a running record of words
+ *             per minute and a comprehension check, so speed does not
+ *             come at the price of understanding. They show gains on the
+ *             practiced texts; transfer to new ones is the open question.
+ *   fast    — "say it faster": the 4/3/2 idea (Maurice 1983; Nation 1989)
+ *             shrunk to a sentence. The same line is said three times,
+ *             each time in a shorter window. What the studies support is
+ *             the REPETITION of the same content (Lambert, Kormos & Minn
+ *             2017; de Jong & Perfetti 2011; Thai & Boers 2016); the
+ *             shrinking window is the app's design on top of it, kept on
+ *             purpose, and Boers (2014) warns that pressure can cost
+ *             accuracy, so a spoken pass also has to be clear to count.
  *   blitz   — the 60-second choose drill the app already had; counted
  *             into the strand by src/core/strands.ts.
  *
@@ -31,11 +36,24 @@ export const FLUENCY_MINUTES = 3;
 
 // ─── Re-reading against the clock ───────────────────────────────────────────
 
-/** Silent-reading pace to aim for, words a minute, by level. Nation's
- *  speed-reading courses move intermediate learners from ~100 toward
- *  ~250 wpm on easy text; a beginner decoding a second script-free
- *  language sits well under 100. These are floors to beat, not norms. */
+/** First-run pace to beat, words a minute, by level. The app's own
+ *  guess, not a published norm: the timed-reading studies report gains
+ *  against the learner's own earlier pace, not level targets. From the
+ *  second re-read of an episode the target is the learner's own pace
+ *  (rereadTarget). */
 export const WPM_TARGET: Readonly<Record<Cefr, number>> = { A1: 60, A2: 80, B1: 100, B2: 130, C1: 160 };
+
+/** Above this the text was skimmed, not read; no speed bonus. */
+export const REREAD_MAX_WPM = 450;
+
+/** The pace to beat on a re-read: the middle of the last three, so one
+ *  fluke run does not set the bar. With fewer than three, the last one;
+ *  with none, the level's guess. */
+export function rereadTarget(history: readonly number[], level: Cefr): number {
+	if (history.length === 0) return WPM_TARGET[level];
+	if (history.length < 3) return history[history.length - 1]!;
+	return [...history.slice(-3)].sort((a, b) => a - b)[1]!;
+}
 
 export function wordsPerMinute(words: number, ms: number): number {
 	if (ms <= 0 || words <= 0) return 0;
@@ -46,11 +64,13 @@ export const REREAD_XP = 12;
 export const REREAD_FASTER_XP = 6;
 export const REREAD_QUESTION_XP = 5;
 
-/** XP for a re-read: the read itself, a bonus for beating the last time
- *  (or the level's target on a first re-read), and the check. */
-export function rereadXp(wpm: number, target: number, previousWpm: number | null, questionRight: boolean): number {
-	const bar = previousWpm ?? target;
-	return REREAD_XP + (wpm > bar ? REREAD_FASTER_XP : 0) + (questionRight ? REREAD_QUESTION_XP : 0);
+/** XP for a re-read: the read itself, the check, and a bonus for beating
+ *  the target that is paid only when the question was right and the pace
+ *  is a plausible reading pace: speed that costs understanding earns
+ *  nothing extra. */
+export function rereadXp(wpm: number, target: number, questionRight: boolean): number {
+	const beat = questionRight && wpm > target && wpm <= REREAD_MAX_WPM;
+	return REREAD_XP + (beat ? REREAD_FASTER_XP : 0) + (questionRight ? REREAD_QUESTION_XP : 0);
 }
 
 /** A re-read log line (data/profiles/<lang>/fluency/log.jsonl). */
@@ -89,9 +109,10 @@ export const FAST_MAX_WORDS = 9;
 export const FAST_PASSES = 3;
 
 /** How long a pass allows, in ms: a base for the mouth to get going plus
- *  a share per word, at a comfortable speaking rate on the first pass,
- *  then faster. The last window is close to a native pace for a learner
- *  (about 2.3 words a second). */
+ *  a share per word. The first pass gets 1.6 times the last window, the
+ *  second 1.25 times. The last window asks for about 1.4 to 1.9 words a
+ *  second: a brisk read-aloud, slower than conversation. The numbers are
+ *  the app's design, not a study's. */
 export function fastWindows(words: number): number[] {
 	const base = 900 + words * 430;
 	return [Math.round(base * 1.6), Math.round(base * 1.25), base];
@@ -117,7 +138,43 @@ export interface FastRep {
 	 *  inside it, the transcript heard and the pronunciation score (when
 	 *  the microphone ran). `made` is the verdict: in the window AND clear
 	 *  (src/core/pronounce.ts passMade). */
-	passes: Array<{ ms: number; window: number; made: boolean; inWindow?: boolean; heard?: string; match?: number; pron?: PronScore }>;
+	passes: Array<{ ms: number; window: number; made: boolean; inWindow?: boolean; unchecked?: boolean; speechMs?: number; heard?: string; match?: number; pron?: PronScore }>;
+}
+
+/** Words a second, first pass and last pass, over the sentences whose
+ *  first and last pass both counted. The comparison is within each
+ *  sentence: it shows how much quicker the repetition got, and says
+ *  nothing about new sentences. */
+/** Faster than this is not speech (the quickest talkers reach about five words a second): a button pressed early. */
+export const FAST_MAX_WPS = 5;
+
+export interface FastPace {
+	sentences: number;
+	first: number;
+	last: number;
+}
+
+export function fastPace(reps: readonly FastRep[]): FastPace | null {
+	let words = 0;
+	let firstSec = 0;
+	let lastSec = 0;
+	let sentences = 0;
+	for (const r of reps) {
+		const a = r.passes[0];
+		const b = r.passes[r.passes.length - 1];
+		if (!a || !b || r.passes.length < FAST_PASSES || !a.made || !b.made) continue;
+		const n = r.sentence.split(/\s+/).filter(Boolean).length;
+		const fs = (a.speechMs ?? a.ms) / 1000;
+		const ls = (b.speechMs ?? b.ms) / 1000;
+		if (n === 0 || fs <= 0 || ls <= 0 || n / fs > FAST_MAX_WPS || n / ls > FAST_MAX_WPS) continue;
+		words += n;
+		firstSec += fs;
+		lastSec += ls;
+		sentences++;
+	}
+	if (sentences === 0) return null;
+	const round = (x: number) => Math.round(x * 10) / 10;
+	return { sentences, first: round(words / firstSec), last: round(words / lastSec) };
 }
 
 export interface FastLogEntry {

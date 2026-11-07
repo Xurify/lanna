@@ -179,10 +179,6 @@ story at your level, each paid for once and kept here for good.
   \`wordCount\`, \`drafts\` (2 when the first draft was too hard and was
   redone), \`usage\` (the model and tokens it cost; priced at read time in
   Settings → Spending).
-  \`slip\` is on a series episode only, when the lead says the wrong word of a
-  pair you mix up in one sentence and the right one in the next: \`sentence\`
-  (the index), \`wrong\` and \`right\` as written, the pair's \`pair\` id and \`rule\`,
-  and the \`speaker\`. Absent on every other episode.
 - \`index.jsonl\`: one line per episode (id, title, level, theme, date, word
   count, coverage, new words, model), so the library lists without opening
   every file.

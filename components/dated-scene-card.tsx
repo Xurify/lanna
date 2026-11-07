@@ -17,7 +17,7 @@ export interface DatedSceneCardProps {
 
 const STATUS_LABEL: Record<DatedStatus, string> = {
 	"on-track": "On track",
-	behind: "Behind",
+	behind: "Later than the date",
 	"no-speed": "Speed not measured",
 	"no-pace": "Pace not measured",
 	passed: "Date passed",
@@ -30,7 +30,7 @@ export function DatedSceneCard({ scene }: DatedSceneCardProps) {
 		<div className="flex items-start gap-4" data-testid="dated-scene-card">
 			<div className="w-14 shrink-0 pt-0.5 text-center" role="img" aria-label={daysLeftWords(scene.daysLeft)}>
 				<p className="text-[30px] font-semibold leading-none tracking-[-0.025em] text-foreground">{n}</p>
-				<p className="mt-1 text-[11.5px] leading-tight text-ink-3">{past ? (n === 1 ? "day ago" : "days ago") : n === 1 ? "day left" : "days left"}</p>
+				<p className="mt-1 text-[11.5px] leading-tight text-ink-3">{past ? (n === 1 ? "day ago" : "days ago") : n === 0 ? "today" : n === 1 ? "day left" : "days left"}</p>
 			</div>
 			<div className="min-w-0 flex-1">
 				{/* The learner's own words, whole: the generated title is cut short. */}
@@ -44,7 +44,7 @@ export function DatedSceneCard({ scene }: DatedSceneCardProps) {
 				<p className="mt-1.5 text-[14px] leading-snug text-ink-2">{scene.line}</p>
 				<div className="mt-3 flex flex-wrap gap-2">
 					<Link href="/speak" className="q-btn sec pointer-coarse:h-11">
-						Rehearse it in Speak
+						Open Speak
 					</Link>
 					{scene.outcomeDue && (
 						<Link href="/milestones" className="q-btn sec t pointer-coarse:h-11">

@@ -11,8 +11,9 @@
  * nič/niečo) or, for a pair no family names, the same edit applied to other
  * words of the lexicon. A predicted pair is a probe: a two-way choice tests
  * it, a miss makes it a mix-up, and two right first tries clear it. A mix-up
- * is mended after three right first tries since its last miss; any miss
- * opens it again.
+ * is mended after three right first tries since its last miss, on at least
+ * two different days; any miss opens it again. These counts (and the two
+ * above) are this app's own choices, not figures from a study.
  *
  * The record lives in progress.json (`mixups`) and feeds the Mix-ups lesson
  * (buildMixupLesson), the Strengthen task, Today and the tutor's "This
@@ -25,7 +26,7 @@ import mixupsJson from "../../curriculum/slovak/mixups.json";
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
 import { matchCase, rng, shortGloss, shuffle, type ItemKind, type LessonExplain, type LessonItem, type LessonPlan, type RepVerdict } from "./lesson.ts";
 import { formsOfEntry, MIN_PAIR_SENTENCES, PAIRS, twinSentences, type PairSentence } from "./pairs.ts";
-import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
+import { dayKey, entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "./review.ts";
 
 export interface MixupFamily {
 	id: string;
@@ -123,13 +124,21 @@ export interface Mixup {
 	/** A family that lists probes (aspect): the words with a right first try
 	 *  since the last miss. Mended or cleared only when both have one. */
 	won?: string[];
+	/** The local days with a right first try since the last miss. Mended needs
+	 *  MIXUP_MEND_DAYS of them, so one lucky sitting does not mend a pair. */
+	days?: string[];
 }
 
 export type MixupRecord = Record<string, Mixup>;
 
-/** Right first tries since the last miss before a mix-up is mended. */
+/** Right first tries since the last miss before a mix-up is mended. The app's
+ *  own choice: no study gives a number, and three is what a short lesson can
+ *  produce. */
 export const MIXUP_MEND_HITS = 3;
-/** Right first tries before a predicted pair is cleared. */
+/** Different days those right first tries must fall on (the app's own choice:
+ *  an answer right minutes after a miss shows less than one right a day later). */
+export const MIXUP_MEND_DAYS = 2;
+/** Right first tries before a predicted pair is cleared (the app's own choice). */
 export const PROBE_CLEAR_HITS = 2;
 /** Pairs kept at most; the mended and cleared ones go first. */
 export const MIXUP_RECORD_CAP = 40;
@@ -145,13 +154,13 @@ export function mixupKey(a: string, b: string): string {
 
 export type MixupStatus = "active" | "mended" | "probe" | "cleared";
 
-export function mixupStatus(m: Pick<Mixup, "misses" | "hits" | "won" | "family">): MixupStatus {
+export function mixupStatus(m: Pick<Mixup, "misses" | "hits" | "won" | "family" | "days">): MixupStatus {
 	// A probe family needs a right first try on both of its aspects, not
 	// three on one side: a learner who always picks the imperfective is not
 	// mended. A probe family with no `won` yet has none on either side.
 	const probing = !!m.family && !!MIXUP_FAMILIES.find((f) => f.id === m.family)?.probes;
 	const bothSides = !probing || new Set(m.won ?? []).size >= 2;
-	if (m.misses > 0) return m.hits >= MIXUP_MEND_HITS && bothSides ? "mended" : "active";
+	if (m.misses > 0) return m.hits >= MIXUP_MEND_HITS && new Set(m.days ?? []).size >= MIXUP_MEND_DAYS && bothSides ? "mended" : "active";
 	return m.hits >= PROBE_CLEAR_HITS && bothSides ? "cleared" : "probe";
 }
 
@@ -359,6 +368,12 @@ export function mixupEventOf(rep: { kind: string; again?: boolean; first?: { giv
 	return WORD_KINDS.has(rep.kind) && rep.again !== true && !!rep.first && rep.first.peeked !== true;
 }
 
+/** A review answer on a card that was missed and is being relearned comes
+ *  after the answer was shown, so it is a retry and not a first try. */
+export function isReviewRetry(card: Pick<ReviewCard, "state">): boolean {
+	return card.state === "learning";
+}
+
 function lemmaPair(lex: MixupLexicon, a: string, b: string): [string, string] {
 	return [entryLemma(lex.bySlug.get(a)!), entryLemma(lex.bySlug.get(b)!)];
 }
@@ -434,7 +449,7 @@ export function tallyMixups(record: MixupRecord, events: readonly MixupEvent[], 
 			const prev = out[key];
 			const seen = [...(prev?.seen ?? []), { at: e.at, sentence: e.sentence, answer: e.answer, given: e.given.trim() }].slice(-SEEN_CAP);
 			if (prev) {
-				const { from: _from, won: _won, ...rest } = prev;
+				const { from: _from, won: _won, days: _days, ...rest } = prev;
 				out[key] = { ...rest, misses: prev.misses + 1, hits: 0, lastAt: e.at, seen };
 			} else {
 				const family = familyIn(lex, wanted.slug, other.slug);
@@ -446,7 +461,8 @@ export function tallyMixups(record: MixupRecord, events: readonly MixupEvent[], 
 			for (const [k, m] of Object.entries(out)) {
 				if (m.a !== e.slug && m.b !== e.slug) continue;
 				const won = familyIn(lex, m.a, m.b)?.probes ? [...new Set([...(m.won ?? []), e.slug])] : undefined;
-				out[k] = { ...m, hits: m.hits + 1, lastAt: e.at, ...(won ? { won } : {}) };
+				const days = [...new Set([...(m.days ?? []), dayKey(new Date(e.at))])];
+				out[k] = { ...m, hits: m.hits + 1, lastAt: e.at, days, ...(won ? { won } : {}) };
 			}
 		}
 	}
@@ -484,7 +500,7 @@ export function mixupList(record: MixupRecord | undefined): MixupSummary[] {
 		const last = m.seen?.[m.seen.length - 1];
 		const line =
 			status === "active"
-				? `${m.misses} ${m.misses === 1 ? "miss" : "misses"}${last ? ` · last: “${last.given}” for “${last.answer}”` : ""}${m.hits > 0 ? ` · ${m.hits} of ${MIXUP_MEND_HITS} right since` : ""}`
+				? `${m.misses} ${m.misses === 1 ? "miss" : "misses"}${last ? ` · last: “${last.given}” for “${last.answer}”` : ""}${m.hits > 0 ? ` · ${m.hits} of ${MIXUP_MEND_HITS} right since${m.hits >= MIXUP_MEND_HITS ? `, mended once they span ${MIXUP_MEND_DAYS} days` : ""}` : ""}`
 				: status === "probe"
 					? `Not tested yet${source ? ` · same pattern as ${source.words.join(" / ")}` : m.from === GUIDE_SOURCE ? " · suggested by your guide" : ""}`
 					: `Mended · ${m.hits} right since the last miss`;

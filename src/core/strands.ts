@@ -135,10 +135,10 @@ export function strandCaption(b: StrandBalance): string {
 
 /** One line under the bars: what the week says to do next. */
 export function strandAdvice(b: StrandBalance): string {
-	if (b.total === 0) return "Nothing counted yet this week. Today's plan gives each strand about a quarter.";
+	if (b.total === 0) return "Nothing counted yet this week. Nation's four strands suggest about a quarter of the time in each.";
 	const over = STRANDS.filter((s) => b.share[s.id] > 0.5).map((s) => s.title);
 	const name = (s: Strand) => STRANDS.find((x) => x.id === s)!.title;
-	if (!b.behind) return "Close to a quarter each, the balance Nation's four strands ask for.";
+	if (!b.behind) return "Close to a quarter each, the balance Nation suggests for a course.";
 	const pct = Math.round(b.share[b.behind] * 100);
 	const where: Record<Strand, string> = {
 		input: "Listen, Read or Watch",

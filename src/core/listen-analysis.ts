@@ -12,8 +12,8 @@
  *   - the rest are words the learner is counted as knowing, so a difference there is
  *     something else: a sound not caught (vowel length, ľ ň ď ť, š ž č, d/t b/p z/s),
  *     a short word dropped (v, z, s, sa, si), a different word heard, the wrong
- *     ending on the right word (grammar, not hearing), i for y or a consonant
- *     written as it sounds (spelling), or a one-letter slip (typing).
+ *     ending on the right word (grammar, not hearing), i for y, e for ä or a
+ *     consonant written as it sounds (spelling), or a one-letter slip (typing).
  *
  * A sentence typed with no marks at all is read without its marks: the learner
  * is not typing them, so a missing dĺžeň there says nothing about the ear. A
@@ -36,23 +36,24 @@
 import { countSyllables } from "./pace.ts";
 import { TREND_DAYS, TREND_Z, wilson, type Trend } from "./mistakes.ts";
 
-export type ListenCause = "new-word" | "length" | "palatal" | "hushing" | "voicing" | "small-word" | "word-missed" | "extra-word" | "mishear" | "ending" | "spelling" | "assimilation" | "slip";
+export type ListenCause = "new-word" | "length" | "diphthong" | "palatal" | "hushing" | "voicing" | "small-word" | "word-missed" | "extra-word" | "mishear" | "ending" | "spelling" | "assimilation" | "slip";
 
 /** The larger reading of a cause: what kind of trouble it is. */
 export type ListenKind = "vocabulary" | "hearing" | "grammar" | "spelling" | "typing";
 
 export const LISTEN_CAUSES: Record<ListenCause, { label: string; kind: ListenKind; line: string }> = {
 	"new-word": { label: "A word you had not met", kind: "vocabulary", line: "The sentence's one new word. It is in your review deck now." },
-	length: { label: "Long and short vowels", kind: "hearing", line: "á, é, í, ó, ú, ý, ô, ä heard as short, or the reverse: the length is the part that is easy to miss." },
+	length: { label: "Long and short vowels", kind: "hearing", line: "á, é, í, ó, ú, ý, ŕ, ĺ heard as short, or the reverse: the length is the part that is easy to miss." },
+	diphthong: { label: "ô against o", kind: "hearing", line: "ô is a diphthong, said roughly like uo, not a long o: it was heard, or typed, as a plain o." },
 	palatal: { label: "Soft ľ ň ď ť", kind: "hearing", line: "A soft consonant heard as a hard one (l, n, d, t), or the reverse." },
 	hushing: { label: "š ž č against s z c", kind: "hearing", line: "A hushing sound heard as the plain one, or the reverse." },
-	voicing: { label: "Voiced and unvoiced", kind: "hearing", line: "d and t, b and p, z and s, g and k, v and f: the same sound with and without voice." },
+	voicing: { label: "Voiced and unvoiced", kind: "hearing", line: "d and t, b and p, z and s, g and k, v and f, h and ch: the same sound with and without voice." },
 	"small-word": { label: "Short words dropped", kind: "hearing", line: "v, z, s, k, sa, si, je and the like are quick and unstressed, so they vanish." },
 	"word-missed": { label: "A word not caught", kind: "hearing", line: "A word you know that did not register at all." },
 	"extra-word": { label: "A word added", kind: "hearing", line: "A word written that was not said." },
 	mishear: { label: "A different word heard", kind: "hearing", line: "A known word heard as another word: the sounds ran together." },
 	ending: { label: "The right word, the wrong ending", kind: "grammar", line: "You caught the word and not its case or person ending: grammar, more than hearing." },
-	spelling: { label: "i and y", kind: "spelling", line: "The two sound the same in Slovak, so this is spelling, not ear." },
+	spelling: { label: "i and y, e and ä", kind: "spelling", line: "i and y sound the same in Slovak, and ä is said like e, so this is spelling, not ear." },
 	assimilation: { label: "Written as it sounds", kind: "spelling", line: "A consonant takes the voice of the next one, and loses it at the end of a word (had sounds like hat, v škole like fškole): the ear was right, the spelling rule is the gap." },
 	slip: { label: "A one-letter slip", kind: "typing", line: "One letter off in a way that sounds the same: usually a typing slip, not a hearing one." },
 };
@@ -148,7 +149,7 @@ export interface ListenAnalysis {
 	sessions: number;
 	from: string | null;
 	to: string | null;
-	/** Understood: the share that went exactly right, with its likely range. */
+	/** Typed correctly: the share that went exactly right, with its likely range. */
 	right: number;
 	range: { low: number; high: number } | null;
 	/** Typed sentences read for causes, those with at least one difference, and the sessions they came from. */
@@ -232,11 +233,11 @@ const DAY_MS = 86_400_000;
 
 // ─── Reading one typed sentence ─────────────────────────────────────────────
 
-const LENGTH = new Set(["á", "é", "í", "ó", "ú", "ý", "ô", "ä", "ŕ", "ĺ"]);
 const PALATAL = new Set(["ľ", "ň", "ď", "ť"]);
 const HUSHING = new Set(["š", "ž", "č"]);
-/** Pairs that differ only in voice (after the accents are folded). */
-const VOICING: Array<[string, string]> = [["b", "p"], ["d", "t"], ["g", "k"], ["z", "s"], ["v", "f"]];
+/** Pairs that differ only in voice (after the accents are folded). "χ" stands in for the two letters "ch" so the pair is one character long. */
+const VOICING: Array<[string, string]> = [["b", "p"], ["d", "t"], ["g", "k"], ["z", "s"], ["v", "f"], ["h", "χ"]];
+const joinCh = (s: string) => s.replace(/ch/g, "χ");
 const SMALL_WORDS = new Set(["a", "i", "k", "o", "s", "u", "v", "z", "na", "do", "po", "od", "za", "sa", "si", "je", "to", "by", "že", "aj", "ma", "mi", "ti", "som", "si", "sme", "ste", "so", "zo", "ku", "vo", "ho", "ju", "ich"]);
 
 function fold(s: string): string {
@@ -298,6 +299,9 @@ export function causeOfSub(target: string, given: string, stretch: ReadonlySet<s
 	if (stretch.has(target)) return "new-word";
 	const ft = fold(target);
 	const fg = fold(given);
+	// ä is said like e, so e for ä is spelling; nothing in the sound tells the two apart.
+	if (target.includes("ä") && fold(target.replace(/ä/g, "e")) === fg) return "spelling";
+	if (given.includes("ä") && fold(given.replace(/ä/g, "e")) === ft) return "spelling";
 	if (ft === fg) {
 		// Same letters, different marks: which mark?
 		for (let i = 0; i < target.length; i++) {
@@ -306,16 +310,21 @@ export function causeOfSub(target: string, given: string, stretch: ReadonlySet<s
 			if (t === g) continue;
 			if (PALATAL.has(t) || (g && PALATAL.has(g))) return "palatal";
 			if (HUSHING.has(t) || (g && HUSHING.has(g))) return "hushing";
+			if (t === "ä" || g === "ä") return "spelling";
+			// ô is a diphthong, not a long o, so it is not a length mark.
+			if (t === "ô" || g === "ô") return "diphthong";
 			return "length";
 		}
 		return "length";
 	}
 	if (ft.replace(/y/g, "i") === fg.replace(/y/g, "i")) return "spelling";
-	if (ft.length === fg.length) {
-		const diff = [...ft].map((c, i) => [c, fg[i]!, i] as const).filter(([a, b]) => a !== b);
+	const vt = joinCh(ft);
+	const vg = joinCh(fg);
+	if (vt.length === vg.length) {
+		const diff = [...vt].map((c, i) => [c, vg[i]!, i] as const).filter(([a, b]) => a !== b);
 		if (diff.length > 0 && diff.every(([a, b]) => VOICING.some(([x, y]) => (a === x && b === y) || (a === y && b === x)))) {
 			// At the end of a word or before another consonant the letter is said with its neighbor's voice, so it was heard right.
-			const assimilated = diff.every(([, , i]) => i === ft.length - 1 || !VOWELS.has(ft[i + 1]!));
+			const assimilated = diff.every(([, , i]) => i === vt.length - 1 || !VOWELS.has(vt[i + 1]!));
 			return assimilated ? "assimilation" : "voicing";
 		}
 	}
@@ -395,8 +404,8 @@ function findInsights(readable: readonly Counted[], first: { reps: number; right
 	// The two halves of a session.
 	if (first.reps >= CUT_MIN_REPS && second.reps >= CUT_MIN_REPS) {
 		const z = twoProportionZ(first.right, first.reps, second.right, second.reps);
-		if (z !== null && z <= -INSIGHT_Z) out.push({ id: "warm-up", title: "Your ear needs a few sentences to warm up", line: `${pct(second.right / second.reps)} of the second half of a session is understood, against ${pct(first.right / first.reps)} of the first.` });
-		else if (z !== null && z >= INSIGHT_Z) out.push({ id: "tiring", title: "The second half of a session goes worse", line: `${pct(second.right / second.reps)} of the second half of a session is understood, against ${pct(first.right / first.reps)} of the first.` });
+		if (z !== null && z <= -INSIGHT_Z) out.push({ id: "warm-up", title: "Your ear needs a few sentences to warm up", line: `${pct(second.right / second.reps)} of the second half of a session is typed correctly, against ${pct(first.right / first.reps)} of the first.` });
+		else if (z !== null && z >= INSIGHT_Z) out.push({ id: "tiring", title: "The second half of a session goes worse", line: `${pct(second.right / second.reps)} of the second half of a session is typed correctly, against ${pct(first.right / first.reps)} of the first.` });
 	}
 	return out;
 }
@@ -482,7 +491,7 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 		const session = sessions++;
 		for (const [i, r] of lesson.reps.entries()) {
 			const typed = r.kind === "dictation";
-			// The words were heard: only the marks are off. Understood by ear, as long as the text was not shown first.
+			// The words were heard: only the marks are off. Counted as right, as long as the text was not shown first.
 			const right = r.verdict !== "wrong" && !r.peeked;
 			// Causes need the stretch word as logged; an older typed miss without it, or a copied one, is not read.
 			const errors = typed && !r.peeked && r.stretch !== undefined ? (r.verdict === "exact" ? [] : readTyped(r.sentence, r.given, r.stretch)) : null;

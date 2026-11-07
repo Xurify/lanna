@@ -157,13 +157,13 @@ function PickRow({ p, name, lang, canPrepare, onPrepare, onDismiss, bare, note }
 	return (
 		<li className={bare ? "border-t border-border" : "q-card"} data-testid="watch-pick">
 			<div className="flex items-center gap-3 py-3 pl-4 pr-2 sm:gap-4">
-				<span className="max-sm:hidden">
+				<a href={videoUrl(p.id)} target="_blank" rel="noreferrer" tabIndex={-1} aria-hidden="true" className="max-sm:hidden">
 					<Thumb id={p.id} watched={false} />
-				</span>
+				</a>
 				<span className="min-w-0 flex-1">
-					<span className="line-clamp-2 font-ui text-[15px] font-[600] text-foreground sm:block sm:truncate" lang={lang} title={p.title}>
+					<a href={videoUrl(p.id)} target="_blank" rel="noreferrer" className="line-clamp-2 font-ui text-[15px] font-[600] text-foreground hover:underline sm:block sm:truncate" lang={lang} title={`${p.title} (opens on YouTube)`} data-testid="watch-pick-link">
 						{p.title}
-					</span>
+					</a>
 					<span className="line-clamp-2 font-prose text-[13px] text-ink-3 sm:block sm:truncate" title={pickLine(p, name)}>
 						{!bare && p.avatar && <Avatar name={p.channel ?? ""} src={p.avatar} small />}
 						{pickLine(p, name)}
@@ -501,13 +501,13 @@ function CreatorVideos({ c, name, lang, canPrepare, onPrepare, apply }: { c: Cre
 							<PickRow key={v.id} bare p={v} name={name} lang={lang} canPrepare={canPrepare} onPrepare={(range) => onPrepare(videoUrl(v.id), range)} onDismiss={() => dismiss(v.id)} note={v.publishedAt ? `Published ${timeAgo(v.publishedAt)}` : undefined} />
 						) : (
 							<li key={v.id} className="flex items-center gap-3 border-t border-border py-3 pl-4 pr-4 sm:gap-4" data-testid="watch-creator-video-skipped">
-								<span className="max-sm:hidden opacity-60">
+								<a href={videoUrl(v.id)} target="_blank" rel="noreferrer" tabIndex={-1} aria-hidden="true" className="max-sm:hidden opacity-60">
 									<Thumb id={v.id} watched={false} />
-								</span>
+								</a>
 								<span className="min-w-0 flex-1">
-									<span className="line-clamp-2 font-ui text-[15px] font-[500] text-ink-2 sm:block sm:truncate" lang={lang} title={v.title}>
+									<a href={videoUrl(v.id)} target="_blank" rel="noreferrer" className="line-clamp-2 font-ui text-[15px] font-[500] text-ink-2 hover:underline sm:block sm:truncate" lang={lang} title={`${v.title} (opens on YouTube)`}>
 										{v.title}
-									</span>
+									</a>
 									<span className="block truncate font-prose text-[13px] text-ink-3">
 										{STATUS_LINE[v.status](name)}
 										{v.publishedAt && ` · published ${timeAgo(v.publishedAt)}`}

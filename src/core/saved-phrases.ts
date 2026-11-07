@@ -55,8 +55,9 @@ export interface WordBankSummary {
 }
 
 /**
- * Calculates Lingvist/Speakly-style memory retention percentage (0–100%)
- * based on FSRS memory state and repetition history.
+ * A 0–100 score for how well a card is held, from its FSRS stability and its
+ * repetition and lapse history. It is the app's own heuristic, not a measured
+ * probability of recall, and it is not a vocabulary size.
  */
 export function calculateRetention(card?: {
 	state: "new" | "learning" | "review";
@@ -83,6 +84,7 @@ export function calculateRetention(card?: {
 	return score;
 }
 
+/** "mastered" means a card that has been answered at least once and scores 80 or more. The UI calls it "can recall", never "known words". */
 export function classifyWordState(card?: {
 	state: "new" | "learning" | "review";
 	reps?: number;
