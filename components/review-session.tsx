@@ -20,7 +20,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, type AnswerVerdict, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -81,12 +81,60 @@ function clozeAround(before: string, after: string) {
 	return { before: before.slice(0, before.length - lead.length), lead, tail, after: after.slice(tail.length) };
 }
 
+function MissWhy({ reason, given, code, className }: { reason: MissReason; given: string; code?: string; className?: string }) {
+	const w = (text: string) => (
+		<b className="font-semibold" lang={code}>
+			{text}
+		</b>
+	);
+	const yours = <span lang={code}>“{given.trim()}”</span>;
+	const here = (
+		<>
+			This one is {w(reason.lemma)}, {reason.gloss}.
+		</>
+	);
+	const what =
+		reason.slip === "other" && reason.other ? (
+			<>
+				{yours} {reason.other.isLemma ? <>means {reason.other.gloss}</> : <>is a form of {w(reason.other.lemma)}, {reason.other.gloss}</>}: a different word. {here}
+			</>
+		) : reason.slip === "other" ? (
+			<>
+				{yours} is not a form of {w(reason.lemma)} ({reason.gloss}).
+			</>
+		) : reason.slip === "base" ? (
+			<>{yours} is the dictionary form. The sentence needs an ending on it.</>
+		) : reason.slip === "same-word" ? (
+			<>
+				{yours} is {w(reason.lemma)} with another ending.
+			</>
+		) : null;
+	const need = reason.trigger ? (
+		<>
+			<span className="rounded-[5px] bg-well px-1.5 font-semibold text-teal-2" lang={code}>
+				{reason.trigger}
+			</span>{" "}
+			decides the case{reason.form ? <>: {w(`${reason.form}`)}</> : null}.
+		</>
+	) : reason.form ? (
+		<>The sentence needs the {w(reason.form)}.</>
+	) : null;
+	if (!what && !need) return null;
+	return (
+		<div className={cn("lh-fade flex flex-col gap-1 text-[15px] leading-relaxed text-foreground", className)} data-testid="review-why">
+			{what && <p>{what}</p>}
+			{need && <p>{need}</p>}
+		</div>
+	);
+}
+
 export function ReviewSession() {
 	const lang = useActiveLanguage();
 	const [status, setStatus] = useState<Status | null>(() => knownStatus);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [given, setGiven] = useState("");
 	const [verdict, setVerdict] = useState<AnswerVerdict | null>(null);
+	const [reason, setReason] = useState<MissReason | null>(null);
 	const [suggested, setSuggested] = useState<Rating>(3);
 	// Hints taken on this card: 1 = the meaning, 2 = the dictionary form too.
 	// Each one is allowed and priced (caps the rating; core/review.ts).
@@ -121,6 +169,7 @@ export function ReviewSession() {
 			if (!sameCard) {
 				setGiven("");
 				setVerdict(null);
+				setReason(null);
 				setHint(0);
 				shownAt.current = Date.now();
 				// A card is on screen: time it. The caught-up screen is not practice.
@@ -181,6 +230,14 @@ export function ReviewSession() {
 		else {
 			sfx.wrong();
 			shake(sentenceRef.current);
+			// The reason needs the dictionary, which only the server has.
+			const id = prompt.card.id;
+			void fetch(`/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}`)
+				.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
+				.then((body) => {
+					if (body?.reason && knownStatus?.next?.card.id === id) setReason(body.reason);
+				})
+				.catch(() => {});
 		}
 		void speak(prompt.card.sentence);
 	};
@@ -474,62 +531,74 @@ export function ReviewSession() {
 												<span>{around.after}</span>
 											</form>
 
-											<div className="q-en @max-xl:flex-col @max-xl:items-start @max-xl:gap-2">
-												<div className="flex items-center gap-2">
+											<div className="q-en">
+												<div className="flex min-h-8 items-center gap-2">
 													<p data-no-word-lookup="true">{prompt.card.translation}</p>
 													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}
 												</div>
-												{verdict && (
-													<p className={cn("q-result lh-fade", verdict === "wrong" && "miss")} data-testid="review-verdict">
-														{verdict === "wrong" ? <XIcon className="size-[15px]" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
-														{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
-														<span>{exact ? (helped ? "· help used" : "· no help used") : ""}</span>
-													</p>
-												)}
 											</div>
 
-											<div className="mt-3 min-h-[60px] @xl:min-h-[34px]" data-testid="review-feedback">
-												{verdict && verdict !== "exact" && (
-													<div className="q-sub lh-fade !mt-0">
-														Correct answer: <b lang={lang?.code}>{prompt.card.answer}</b>
-														{given && (
-															<>
-																{" "}
-																· You wrote “<span lang={lang?.code}>{given}</span>”
-															</>
+											{/* Before and after the answer share one grid cell: the cell keeps the height of the keys,
+											    so the answer and its reason replace them without pushing the ratings down. */}
+											<div className="mt-3 grid">
+												<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
+													<div className="min-h-[60px] @xl:min-h-[34px]">
+														{!verdict && hint > 0 && (
+															<p className="flex flex-wrap gap-2 text-[15px]" data-testid="review-hints">
+																<span className="q-ex">
+																	<span className="mr-1.5 text-[12px] font-semibold text-ink-3">means</span>
+																	{prompt.card.gloss}
+																</span>
+																{hint > 1 && (
+																	<span className="q-ex">
+																		<span className="mr-1.5 text-[12px] font-semibold text-ink-3">base form</span>
+																		<span lang={lang?.code}>{prompt.card.lemma}</span>
+																	</span>
+																)}
+															</p>
 														)}
 													</div>
-												)}
-												{!verdict && hint > 0 && (
-													<p className="flex flex-wrap gap-2 text-[15px]" data-testid="review-hints">
-														<span className="q-ex">
-															<span className="mr-1.5 text-[12px] font-semibold text-ink-3">means</span>
-															{prompt.card.gloss}
-														</span>
-														{hint > 1 && (
-															<span className="q-ex">
-																<span className="mr-1.5 text-[12px] font-semibold text-ink-3">base form</span>
-																<span lang={lang?.code}>{prompt.card.lemma}</span>
+
+													{!verdict && mode === "choice" && !picks && <p className="q-sub">You have met this word before, so this time you type it.</p>}
+
+													{!verdict && picks && (
+														<div className="mt-5 grid gap-2 @xl:grid-cols-2" data-testid="review-options">
+															{prompt.options.map((o, i) => (
+																<button key={o} type="button" onClick={() => check(o)} lang={lang?.code} className="flex h-12 items-center gap-3 rounded-lg bg-well px-3.5 text-left text-[20px] font-[500] hover:bg-well-2">
+																	<kbd className="q-kbd pointer-coarse:hidden">{i + 1}</kbd>
+																	{o}
+																</button>
+															))}
+														</div>
+													)}
+
+													{!picks && <DiacriticBar variant="keys" className="mt-5" />}
+												</div>
+
+												{verdict && (
+													<div className="lh-fade col-start-1 row-start-1" data-testid="review-feedback">
+														<p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-ink-3">
+															<span className={cn("q-result", verdict === "wrong" && "miss")} data-testid="review-verdict">
+																{verdict === "wrong" ? <XIcon className="size-[15px]" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
+																{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
+																{exact && <span>· {helped ? "help used" : "no help used"}</span>}
 															</span>
-														)}
-													</p>
+															{!exact && (
+																<span>
+																	Correct answer: <b className="font-[550] text-ink-2" lang={lang?.code}>{prompt.card.answer}</b>
+																	{given && (
+																		<>
+																			{" "}
+																			· You wrote “<span lang={lang?.code}>{given}</span>”
+																		</>
+																	)}
+																</span>
+															)}
+														</p>
+														{verdict === "wrong" && reason && <MissWhy reason={reason} given={given} code={lang?.code} className="mt-2.5" />}
+													</div>
 												)}
 											</div>
-
-											{!verdict && mode === "choice" && !picks && <p className="q-sub">You have met this word before, so this time you type it.</p>}
-
-											{!verdict && picks && (
-												<div className="mt-5 grid gap-2 @xl:grid-cols-2" data-testid="review-options">
-													{prompt.options.map((o, i) => (
-														<button key={o} type="button" onClick={() => check(o)} lang={lang?.code} className="flex h-12 items-center gap-3 rounded-lg bg-well px-3.5 text-left text-[20px] font-[500] hover:bg-well-2">
-															<kbd className="q-kbd pointer-coarse:hidden">{i + 1}</kbd>
-															{o}
-														</button>
-													))}
-												</div>
-											)}
-
-											{!picks && <DiacriticBar variant="keys" className={cn("mt-5", verdict && "invisible")} />}
 										</div>
 									</article>
 								)}

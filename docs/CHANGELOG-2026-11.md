@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: Review says why an answer was wrong (branch `fix/review-miss-reason`)
+
+- **Why:** the owner, on "večer" for "Po *večeri* ideme na prechádzku": "It should tell us why our answer was wrong." Review showed only "Not quite" and the correct answer, so a different word with the wrong case read as a typo.
+- **What changed:** under the correct answer, one or two lines. First what you wrote: a different word the dictionary knows ("večer" means evening: a different word. This one is večera, dinner), the dictionary form, the right word with another ending, or not a form of the word. Then what the sentence needs: the preposition before the gap and the form ("po decides the case: locative of večera (feminine)"). The reason comes from `GET /api/review/miss` (`missReason` in `src/core/review-miss.ts`), because the dictionary lives on the server. A word filed under another lemma counts as another word even when it shares the stem, which the lesson's slip guess would call another ending.
+- **Layout:** "Not quite" moved from the right end of the translation row to the start of the answer line. The answer and its reason take the place of the hidden letter keys, and the translation row keeps room for its play button, so the rating buttons no longer move when the answer is checked (they moved 8 px before, 40 px on a phone with a reason).
+- **Checked:** unit tests, and the review screen in a sandbox at 1280 and 390 px wide (a different word, another ending, I don't know, accents only).
+- **Unverified:** the owner's own deck.
+
 ## 7 November: a bolder app icon (branch `feat/bolder-app-icon`)
 
 - **Why:** the owner: "Make the icon a bit better". In the taskbar the cursor and line were thin and small, and the ink tile disappeared on a dark taskbar.

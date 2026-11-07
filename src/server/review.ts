@@ -10,8 +10,10 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
-import { classifyExample, describeForm } from "../core/lesson.ts";
-import { clozeParts, dayKey, dueCards, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
+import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
+import { knownForms } from "../core/form-slip.ts";
+import { missReason, type MissReason, type MissWord } from "../core/review-miss.ts";
+import { clozeParts, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -265,6 +267,33 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...form,
 	});
 	return { verdict, rating, card: updated };
+}
+
+/** Why `given` is a wrong answer to the card: what the learner's word is,
+ *  and which form the sentence needs. Null for an unknown card or an
+ *  answer that is right or only off by accents. */
+export function reviewMiss(cardId: string, given: string): MissReason | null {
+	const card = reviewStore.readCards()[cardId];
+	if (!card) return null;
+	const lexicon = loadLexicon();
+	const entry = lexicon?.bySlug.get(card.slug);
+	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	const word = given.trim().toLocaleLowerCase(tag());
+	const matches = word ? (lexicon?.byForm.get(word) ?? lexicon?.byFolded.get(foldDiacritics(word)) ?? []) : [];
+	// The same part of speech first (večer the noun, not the adverb), then the dictionary form, then the commoner word.
+	const others: MissWord[] = matches
+		.filter((e) => e.slug !== card.slug)
+		.map((e) => ({ e, isLemma: entryLemma(e).toLocaleLowerCase(tag()) === word }))
+		.sort((a, b) => Number(b.e.cat === entry?.cat) - Number(a.e.cat === entry?.cat) || Number(b.isLemma) - Number(a.isLemma) || (a.e.rank ?? 1e9) - (b.e.rank ?? 1e9))
+		.map(({ e, isLemma }) => ({ lemma: entryLemma(e), gloss: shortGloss(e.en), isLemma }));
+	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
+	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
+	return (
+		missReason(
+			{ answer: card.answer, lemma: card.lemma, gloss: entry ? shortGloss(entry.en) : card.gloss, given, forms: entry ? knownForms(entry) : [], form, trigger, others },
+			tag(),
+		) ?? null
+	);
 }
 
 /** A review answer as a first try (src/core/first-try.ts) on the drill its
