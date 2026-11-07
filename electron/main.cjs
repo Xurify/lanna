@@ -24,7 +24,7 @@
  *     would shadow every settings-page key change until restart.
  */
 
-const { app, BrowserWindow, Menu, ipcMain, session, shell } = require("electron");
+const { app, BrowserWindow, clipboard, Menu, ipcMain, session, shell } = require("electron");
 
 /** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lh:theme". */
 /** Whether the last session ended in Night, kept beside the window state so the window is the right color from its first frame. */
@@ -54,6 +54,7 @@ const { openWebSubscriptionBrowser } = require("./web-subscription-browser.cjs")
 const { registerStorageIPC } = require("./storage-ipc.cjs");
 const { registerFontsIPC } = require("./fonts-ipc.cjs");
 const { createYouTube, registerYouTubeIPC } = require("./youtube.cjs");
+const { attachContextMenu } = require("./context-menu.cjs");
 const { randomBytes } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
@@ -412,6 +413,7 @@ function createWindow(url) {
 		void shell.openExternal(target);
 		return { action: "deny" };
 	});
+	attachContextMenu(win, allowedOrigin, { Menu, clipboard, shell });
 
 	void win.loadURL(url);
 	// Zoom truth reaches the renderer for EVERY load (reload, nav): the
