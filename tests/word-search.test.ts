@@ -76,6 +76,22 @@ describe("word search ranking", () => {
 		assert.deepEqual(rows.sort(compareMatches).map((r) => r.rank), [2, 300]);
 	});
 
+	it("a phrase finds the sentence that has its words side by side", () => {
+		const zaujem: SearchableWord = { lemma: "záujem", gloss: "interest", examples: [{ sk: "O kurz je veľký záujem medzi študentmi.", en: "There is great interest in the course among students." }] };
+		assert.equal(matchWord("veľký záujem", zaujem)?.kind, "example");
+		assert.equal(matchWord("velky zaujem medzi", zaujem)?.kind, "example");
+		assert.equal(matchWord("je  veľký zauj", zaujem)?.kind, "example");
+		assert.equal(matchWord("kurz je", zaujem)?.kind, "example");
+		assert.equal(matchWord("O kurz je veľký záujem medzi študentmi.", zaujem)?.kind, "example");
+	});
+
+	it("a phrase needs its words in a row, from a word start", () => {
+		const zaujem: SearchableWord = { lemma: "záujem", gloss: "interest", examples: [{ sk: "O kurz je veľký záujem medzi študentmi.", en: "" }] };
+		assert.equal(matchWord("záujem veľký", zaujem), null);
+		assert.equal(matchWord("kurz veľký", zaujem), null);
+		assert.equal(matchWord("urz je", zaujem), null);
+	});
+
 	it("an empty query matches nothing and is the caller's cue to list everything", () => {
 		assert.equal(matchWord("  ", W.dom), null);
 	});

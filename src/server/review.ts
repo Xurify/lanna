@@ -65,6 +65,8 @@ export interface ReviewPrompt {
 	rank?: number;
 	cat?: string;
 	form?: string;
+	/** Where the sentence comes from: the dictionary's own curated text or Tatoeba. */
+	sentenceSource?: string;
 }
 
 export interface ReviewStatus {
@@ -132,6 +134,7 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 	const entry = loadLexicon()?.bySlug.get(card.slug);
 	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
+	const sentenceSource = entry?.examples[Number(card.id.split("#")[1])]?.src;
 	return {
 		card,
 		...clozeParts(card),
@@ -140,6 +143,7 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 		...(entry?.rank !== undefined ? { rank: entry.rank } : {}),
 		...(entry?.cat ? { cat: entry.cat } : {}),
 		...(form ? { form } : {}),
+		...(sentenceSource ? { sentenceSource } : {}),
 	};
 }
 

@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -34,7 +34,11 @@ interface Prompt {
 	rank?: number;
 	cat?: string;
 	form?: string;
+	sentenceSource?: string;
 }
+
+/** How the lexicon's `src` reads on the card. */
+const SENTENCE_SOURCES: Record<string, string> = { curated: "slovak.wiki", tatoeba: "Tatoeba" };
 
 interface Status {
 	profile: string;
@@ -145,6 +149,8 @@ export function ReviewSession() {
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
 	const [saving, setSaving] = useState(false);
+	// Cards whose sentence went to the saved phrases from this page.
+	const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
 	// The rep just before this one, kept on screen as a collapsed line.
 	const [last, setLast] = useState<{ before: string; answer: string; after: string; translation: string; label: string } | null>(null);
 	const shownAt = useRef(Date.now());
@@ -263,6 +269,17 @@ export function ReviewSession() {
 		} finally {
 			setSaving(false);
 		}
+	};
+
+	const saveSentence = async () => {
+		if (!prompt || savedIds.has(prompt.card.id)) return;
+		const id = prompt.card.id;
+		const res = await fetch("/api/phrases", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ text: prompt.card.sentence, translation: prompt.card.translation, source: "review", context: prompt.card.lemma }),
+		}).catch(() => null);
+		if (res?.ok) setSavedIds((s) => new Set(s).add(id));
 	};
 
 	const suspend = async () => {
@@ -537,6 +554,19 @@ export function ReviewSession() {
 												<div className="flex min-h-8 items-center gap-2">
 													<p data-no-word-lookup="true">{prompt.card.translation}</p>
 													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}
+													{verdict && (
+														<button
+															type="button"
+															onClick={() => void saveSentence()}
+															aria-pressed={savedIds.has(prompt.card.id)}
+															aria-label={savedIds.has(prompt.card.id) ? "Sentence saved to your phrases" : "Save the sentence to your phrases"}
+															title={savedIds.has(prompt.card.id) ? "Saved to your phrases" : "Save the sentence to your phrases"}
+															data-testid="review-save-phrase"
+															className={cn("grid size-8 shrink-0 place-items-center rounded-full bg-well text-ink-2 hover:bg-well-2", savedIds.has(prompt.card.id) && "text-teal-2")}
+														>
+															<BookmarkIcon className="size-4" fill={savedIds.has(prompt.card.id) ? "currentColor" : "none"} aria-hidden="true" />
+														</button>
+													)}
 												</div>
 											</div>
 
@@ -583,7 +613,9 @@ export function ReviewSession() {
 															<p className="mt-3 flex flex-wrap gap-2" data-testid="review-facts">
 																<span className="q-ex">
 																	<span className="mr-1.5 text-[12px] font-semibold text-ink-3">word</span>
-																	<span lang={lang?.code}>{prompt.card.lemma}</span>
+																	<Link href={`/words?search=${encodeURIComponent(prompt.card.lemma)}`} lang={lang?.code} className="underline decoration-line-2 underline-offset-2 hover:text-ink">
+																		{prompt.card.lemma}
+																	</Link>
 																	<span className="ml-1.5 font-[450] text-ink-2">{shortGloss(prompt.card.gloss)}</span>
 																</span>
 																{prompt.form && (
@@ -592,6 +624,11 @@ export function ReviewSession() {
 																		{prompt.form}
 																	</span>
 																)}
+															</p>
+														)}
+														{prompt.sentenceSource && (
+															<p className="mt-3 text-[14px] text-ink-3" data-testid="review-source">
+																Sentence from {SENTENCE_SOURCES[prompt.sentenceSource] ?? prompt.sentenceSource}
 															</p>
 														)}
 													</div>

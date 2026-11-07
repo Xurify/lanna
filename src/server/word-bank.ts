@@ -960,7 +960,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 
 		let match: WordSearchMatch | null = null;
 		if (searchText) {
-			match = matchWord(searchText, { lemma: entryLemma(entry), gloss: entry.en, forms: entry.forms, examples: (entry.examples ?? []).map((e) => ({ sk: exampleText(e), en: e.en })) });
+			match = matchWord(searchText, { lemma: entryLemma(entry), gloss: entry.en, forms: entry.forms, examples: (entry.examples ?? []).filter((e) => !e.rejected).map((e) => ({ sk: exampleText(e), en: e.en })) });
 			if (!match) continue;
 		}
 
