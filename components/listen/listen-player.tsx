@@ -26,7 +26,7 @@ import { QIcon } from "@/components/quiet/icon";
 import { COLUMN, Dock, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { speak, stopSpeaking } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
@@ -61,6 +61,7 @@ interface Outcome {
 const PRAISE = ["Rozumieš!", "Presne tak!", "Áno!", "Super!", "Výborne!"];
 
 export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan | null }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [plan, setPlan] = useState<ListenPlan | null>(initialPlan);
 	const [error, setError] = useState<string | null>(null);
@@ -379,7 +380,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								>
 									<span className={cn("w", replays >= PEEK_AFTER_REPLAYS && "!text-ink-2")}>
 										<EyeIcon className="size-3.5" strokeWidth={1.6} />
-										{replays < PEEK_AFTER_REPLAYS ? "Text · listen again first" : "Show the text · not counted"}
+										{replays < PEEK_AFTER_REPLAYS ? "Show the text · listen once more first" : "Show the text · not counted"}
 									</span>
 								</button>
 							)}
@@ -390,7 +391,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						<div className="mt-6">
 								<input
 									type="text"
-									lang="sk"
+									lang={lang?.code}
 									autoComplete="off"
 									autoCapitalize="off"
 									spellCheck={false}
@@ -417,14 +418,14 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						<div className="mt-6 min-h-[4.5rem]" data-testid="listen-sentence" data-word-lookup-enabled={current !== null || peeked ? "true" : "false"}>
 							{current || peeked ? (
 								<div className="lh-rise">
-									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang="sk">
+									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang={lang?.code}>
 										<Marked sentence={item.sentence} stretch={item.stretch.map((w) => w.text)} />
 									</p>
 									{current && current.verdict !== "exact" && (
 										<p className="mt-2 font-prose text-base text-ink-3" data-testid="listen-typed">
 											{current.given ? (
 												<>
-													You typed · <span lang="sk">{current.given}</span>
+													You typed · <span lang={lang?.code}>{current.given}</span>
 												</>
 											) : (
 												"Not caught"
@@ -435,7 +436,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 										<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
 											{item.stretch.map((w) => (
 												<li key={w.text} className="q-ex">
-													<u lang="sk">{w.lemma}</u>
+													<u lang={lang?.code}>{w.lemma}</u>
 													{w.gloss && <span className="ml-1.5 font-normal text-ink-3">· {w.gloss}</span>}
 												</li>
 											))}
@@ -467,7 +468,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 								{current.verdict === "exact"
 									? `Typed correctly · +${LISTEN_XP} XP`
 									: current.verdict === "accents"
-										? `Almost · the letters are right, a mark is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
+										? `Almost · only an accent is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
 										: current.given
 											? "Not quite"
 											: "Not caught this time"}
@@ -482,7 +483,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 					) : (
 						<>
 							<button type="button" onClick={giveUp} className={SECONDARY} data-testid="listen-give-up">
-								Didn't catch it
+								I didn&apos;t catch it
 							</button>
 							<button type="button" onClick={submit} disabled={!draft.trim()} className={PRIMARY} data-testid="listen-check">
 								Check
@@ -519,6 +520,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 }
 
 function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps: Rep[]; saving: boolean; onAgain: () => void }) {
+	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
 	const missed = reps.filter((r) => r.verdict !== "exact");
@@ -533,7 +535,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 				<div>
 					<p className="font-ui text-[13px] font-[550] text-ink-3">Listen · done</p>
 						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
-						{outcome.correct} of {outcome.total} typed correctly, text hidden
+						{outcome.correct} of {outcome.total} typed correctly, without the text
 					</h1>
 					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-ink-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
 				</div>
@@ -549,7 +551,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{words.map((w) => (
 							<li key={w.lemma} className="rounded-md bg-well px-2.5 py-1 font-prose text-[14px]">
-									<span className="font-[600] text-teal-2" lang="sk">
+									<span className="font-[600] text-teal-2" lang={lang?.code}>
 									{w.lemma}
 								</span>
 								{w.gloss && <span className="text-muted-foreground"> · {w.gloss}</span>}
@@ -594,6 +596,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 
 /** The sentences of a finished session, each with its play button and meaning. */
 function SentenceRows({ reps }: { reps: Rep[] }) {
+	const lang = useActiveLanguage();
 	return (
 		<ul className="mt-2 flex flex-col gap-2">
 			{reps.map((r) => (
@@ -602,7 +605,7 @@ function SentenceRows({ reps }: { reps: Rep[] }) {
 						<Volume2Icon className="size-4" strokeWidth={1.6} />
 					</button>
 					<div className="min-w-0">
-						<p className="font-prose text-lg text-foreground" lang="sk">
+						<p className="font-prose text-lg text-foreground" lang={lang?.code}>
 							{r.item.sentence}
 						</p>
 						<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">

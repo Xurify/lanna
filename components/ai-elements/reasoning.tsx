@@ -136,9 +136,9 @@ export type ReasoningTriggerProps = ComponentProps<
    language; motion (spinner + shimmer) stays the working signal. */
 const defaultGetThinkingMessage = (isStreaming: boolean) => {
   if (isStreaming) {
-    return <Shimmer duration={1}>Thinking...</Shimmer>;
+    return <Shimmer duration={1}>Thinking…</Shimmer>;
   }
-  return <p>AGENT’S THINKING</p>;
+  return <p>Tutor’s thinking</p>;
 };
 
 export const ReasoningTrigger = memo(

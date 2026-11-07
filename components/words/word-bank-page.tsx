@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, CheckCheckIcon, FootprintsIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import type { SavedPhrase, WordBankItem, WordBankSummary } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
@@ -16,6 +16,7 @@ const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 export type WordsTab = "words" | "phrases" | "cheatsheets";
 
 export function WordBankPage({ initialTab = "words", initialSheet }: { initialTab?: WordsTab; initialSheet?: string }) {
+	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
 	const setActiveTab = (tab: WordsTab) => {
@@ -253,7 +254,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.wordsMastered}
 							</p>
-							<p className="text-[11px] text-muted-foreground">Deck cards scored 80+ so far</p>
+							<p className="text-[11px] text-muted-foreground">Review cards at 80%+ recall</p>
 						</div>
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
@@ -286,7 +287,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.savedPhrasesCount}
 							</p>
-							<p className="text-[11px] text-muted-foreground">From stories and lessons</p>
+							<p className="text-[11px] text-muted-foreground">From stories, scenes and lessons</p>
 						</div>
 					</div>
 				)}
@@ -361,7 +362,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 								<SearchIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 								<input
 									type="text"
-									placeholder="Search a word or its meaning (for example chlieb, bread)"
+									placeholder="Search a word or its meaning"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
 									className="q-field w-full rounded-2xl py-2.5 pl-10 pr-4 font-prose text-sm"
@@ -707,7 +708,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 												<Volume2Icon className="size-4" />
 											</button>
 											<div>
-												<p className="font-prose text-lg font-semibold leading-snug text-foreground" lang="sk" data-word-lookup-enabled="true">
+												<p className="font-prose text-lg font-semibold leading-snug text-foreground" lang={lang?.code} data-word-lookup-enabled="true">
 													{phrase.text}
 												</p>
 												<p className="mt-1 font-prose text-sm text-muted-foreground" lang="en">
@@ -735,7 +736,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 
 							{filteredPhrases.length === 0 && !loadingPhrases && (
 								<EmptyState testid="phrases-empty" title="No saved phrases yet">
-									<p>You save phrases with Save while reading stories and in lessons. It needs no AI key.</p>
+									<p>Press Save on a phrase in a story, a scene or a lesson to keep it here, or add your own. No AI key needed.</p>
 								</EmptyState>
 							)}
 						</div>
@@ -753,6 +754,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 								<button
 									type="button"
 									onClick={() => setShowAddModal(false)}
+									aria-label="Close"
 									className="text-muted-foreground hover:text-foreground"
 								>
 									<XIcon className="size-5" />
@@ -781,7 +783,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 									</label>
 									<input
 										type="text"
-										placeholder="e.g. Today is a beautiful sunny day."
+										placeholder="for example It is nice today."
 										value={newPhraseTrans}
 										onChange={(e) => setNewPhraseTrans(e.target.value)}
 										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"

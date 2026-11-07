@@ -229,7 +229,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 				{/* Your own milestone, in your words. */}
 				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="milestone-add">
 					<h2 className="font-ui text-sm font-semibold text-foreground">Add your own</h2>
-					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch let's plays”. The tutor's cheap model maps it to the kind of language it needs, once, and keeps the answer.</p>
+					<p className="mt-1 font-prose text-sm text-muted-foreground">Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch let's plays”. The AI works out once what kind of language it needs, and keeps the answer.</p>
 					<form
 						className="mt-3 flex flex-wrap items-stretch gap-2"
 						onSubmit={(e) => {
@@ -316,7 +316,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 function Evidence({ facts }: { facts: LearnerFacts }) {
 	const speedLine =
 		facts.speed.basis === "level"
-			? `assumed from your hours on the map; do a Listen session to measure it`
+			? `assumed from your guided hours; do a Listen session to measure it`
 			: facts.speed.basis === "listen"
 				? `from ${facts.listen.reading?.samples ?? 0} Listen sentences over ${facts.listen.sessions} session${facts.listen.sessions === 1 ? "" : "s"}${facts.listen.reading?.audioWpm ? ` · the voice speaks at ${facts.listen.reading.audioWpm}` : ""}`
 				: facts.speed.basis === "watch"
@@ -327,15 +327,15 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 				<h2 className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">What the app knows about you</h2>
 				<p className="font-ui text-xs text-muted-foreground">
-					level from the map ·{" "}
+					level from the curriculum ·{" "}
 					<Link href="/start?edit=1&check=1" className="underline hover:text-foreground">
 						re-check
 					</Link>
 				</p>
 			</div>
 			<dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-				<Fact label="Level" value={facts.level} line={`where the map has you${facts.placed ? " (placement set the start; lessons move it)" : ""} · ${Math.round(facts.levelProgress * 100)}% through it`} />
-				<Fact label="Words" value={n(facts.vocabulary)} line={`${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid) · ${n(facts.assumed)} more ${facts.words.basis === "measured" ? `from your word check${facts.words.measuredAt ? ` on ${facts.words.measuredAt.slice(0, 10)}` : ""}${facts.words.reliable === false ? " (generous: pseudowords were ticked)" : ""}` : `credited for the ${facts.level === "A1" ? "part of A1" : `levels before ${facts.level} and the part of it`} behind you; a word check (re-check) measures it`}`} />
+				<Fact label="Level" value={facts.level} line={`where the curriculum has you${facts.placed ? " (placement set the start; lessons move it)" : ""} · ${Math.round(facts.levelProgress * 100)}% through it`} />
+				<Fact label="Words" value={n(facts.vocabulary)} line={`${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid) · ${n(facts.assumed)} more ${facts.words.basis === "measured" ? `from your word check${facts.words.measuredAt ? ` on ${facts.words.measuredAt.slice(0, 10)}` : ""}${facts.words.reliable === false ? " (generous: some made-up words were ticked)" : ""}` : `credited for the ${facts.level === "A1" ? "part of A1" : `levels before ${facts.level} and the part of it`} behind you; a word check (re-check) measures it`}`} />
 				<Fact label="Speed" value={`${facts.speed.wpm} w/min`} line={speedLine} dim={facts.speed.basis === "level"} />
 				<Fact label="Pace" value={`${facts.paceMinutes} min/day`} line={`last 14 days · plan ${facts.minutesPerDay} min × ${facts.daysPerWeek} days · ${facts.hoursLogged} h logged`} />
 			</dl>
@@ -346,7 +346,7 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 			)}
 			{facts.listen.knownSentences.total >= 10 && (
 				<p className="mt-3 font-prose text-sm text-muted-foreground">
-					Of the {facts.listen.knownSentences.total} Listen sentences built only from words the app counts as known, you understood {facts.listen.knownSentences.right} ({pct(facts.listen.knownSentences.right / facts.listen.knownSentences.total)}). {facts.listen.knownSentences.right / facts.listen.knownSentences.total < 0.75 ? "The word count above is generous, then; the speed figure is the one to trust." : "The word count above is earning its trust."}
+					Of the {facts.listen.knownSentences.total} Listen sentences built only from words the app counts as known, you understood {facts.listen.knownSentences.right} ({pct(facts.listen.knownSentences.right / facts.listen.knownSentences.total)}). {facts.listen.knownSentences.right / facts.listen.knownSentences.total < 0.75 ? "The word count above is generous, then; the speed figure is the one to trust." : "So the word count above holds up."}
 				</p>
 			)}
 		</section>
@@ -546,7 +546,7 @@ function MilestoneCard({ m, facts, goals, open, onToggle, onRemove, scene, onSav
 					</dl>
 					{m.def.goals && m.def.goals.some((g) => goals[g]) && (
 						<p className="mt-3">
-							<span className="font-ui text-xs font-semibold text-foreground">On the map: </span>
+							<span className="font-ui text-xs font-semibold text-foreground">In the curriculum: </span>
 							{m.def.goals
 								.filter((g) => goals[g])
 								.map((g) => `${goals[g]!.title} (${goals[g]!.done ? "done" : goals[g]!.open ? "open" : "ahead"})`)

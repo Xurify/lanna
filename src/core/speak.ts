@@ -63,6 +63,40 @@ export const SPEAK_SCENES: SpeakScene[] = [
 	{ id: "hotel", title: "At the hotel", blurb: "Check into a guest house", brief: "a receptionist at a guest house in the mountains; I have a reservation for two nights, need the wifi and breakfast info", task: "Check into your room, ask about breakfast times and the wifi password." },
 ];
 
+/** A scene as the Speak screen lists it: why it is offered, how often it was
+ *  said, whether it has a step-by-step script in this language, and the last time. */
+export interface SpeakSceneEntry extends SpeakScene {
+	suggested: boolean;
+	/** "chapter": the current chapter's scene; "goal": one of the learner's purposes. */
+	why: "chapter" | "goal" | null;
+	done: number;
+	scripted: boolean;
+	last: { at: string; turns: number; corrections: number } | null;
+}
+
+/** A brief's two halves: who the tutor plays, and the situation. The plain
+ *  scenes write "a waiter in a small café; I want to order…"; a generated
+ *  story bible may write "You are Kadri, the owner of a café in Tartu. It is
+ *  morning and the learner comes to the counter." Both give the role
+ *  ("Kadri, the owner of a café in Tartu") without the "you are", which the
+ *  tutor's prompt adds itself and the Speak screen must not show: under
+ *  "You meet" it read as if the learner were Kadri (owner, 2026-11-07). */
+export function briefParts(brief: string): { role: string; situation: string } {
+	const b = brief.trim().replace(/^(?:you are|you're|you play)\s+/i, "");
+	const semi = b.indexOf(";");
+	const stop = /\.\s+(?=\p{Lu})/u.exec(b);
+	const cut = semi >= 0 && (!stop || semi < stop.index) ? semi : stop ? stop.index : -1;
+	const role = (cut >= 0 ? b.slice(0, cut) : b).trim().replace(/\.$/, "");
+	const situation = cut >= 0 ? b.slice(cut + 1).trim().replace(/\.$/, "") : "";
+	return { role, situation };
+}
+
+/** Who the learner meets, for the screen: "A waiter in…", "Your new colleague…", "Kadri, the owner…". */
+export function sceneCounterpart(brief: string): string {
+	const role = briefParts(brief).role.replace(/^my\s+/i, "your ");
+	return role.charAt(0).toLocaleUpperCase() + role.slice(1);
+}
+
 /** A scene as a language's story bible sets it, over the plain version. */
 export function sceneIn(scene: SpeakScene, override?: Partial<Omit<SpeakScene, "id">>): SpeakScene {
 	return override ? { ...scene, ...override } : scene;

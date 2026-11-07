@@ -76,7 +76,7 @@ const OUTCOME_LABEL: Record<string, string> = {
 	solved: "Solved",
 	solvedWithHints: "Solved with hints",
 	movedOn: "Moved on",
-	surrendered: "Surrendered",
+	surrendered: "Gave up",
 	dismissed: "Dismissed",
 };
 
@@ -143,7 +143,7 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 			{/* The verdict — plain prose under the heading, no 'Verdict:' label
 			    (owner round 3): the same quiet 50% register as quiz explanations. */}
 			{verdict.length > 0 && (
-				<div className="text-sm text-foreground/50">
+				<div className="text-sm text-ink-3">
 					<ToolContentResponse>{verdict}</ToolContentResponse>
 				</div>
 			)}
@@ -250,7 +250,7 @@ function MetadataPopover({
 				aria-expanded={open}
 				className="flex items-center gap-1 text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-foreground"
 			>
-				Metadata
+				Details
 			</button>
 			{open &&
 				anchor &&
@@ -305,5 +305,5 @@ export function ThinkingCard({ data }: { data: PracticeThinkingData }) {
 	// 50%-italic quote block on expand. Legacy records' commit flag is
 	// deliberately unread (one lane now). A TRANSCRIPT row (owner round,
 	// 2026-10-07): full-width band + rail, arriving expanded.
-	return <ThinkingBlock testId="thinking-card" label="YOUR THINKING" text={data.text} defaultOpen />;
+	return <ThinkingBlock testId="thinking-card" label="Your thinking" text={data.text} defaultOpen />;
 }

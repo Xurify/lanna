@@ -186,7 +186,7 @@ export function LanguageSwitcher() {
 						menuClass="flex w-60 flex-col gap-0.5 rounded-xl border bg-card p-1.5 text-xs shadow-xl"
 					>
 						<div ref={menuRef} role="listbox" aria-label="Languages" className="flex flex-col gap-0.5">
-							<div className="px-2 py-1 text-[10px] font-boldr text-muted-foreground/70">
+							<div className="px-2 py-1 text-xs font-semibold text-ink-3">
 								Target Language
 							</div>
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">

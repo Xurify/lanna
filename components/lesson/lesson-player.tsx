@@ -96,7 +96,7 @@ function Bridges({ unit, compact = false }: { unit: UnitId; compact?: boolean })
 					className="self-start font-prose text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
 					data-testid="bridges-more"
 				>
-					Also the {rest.map((b) => b.name).join(" and ")} way
+					Show the {rest.map((b) => b.name).join(" and ")} parallels
 				</button>
 			)}
 		</>
@@ -294,7 +294,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as LessonPlan;
 			if (seq !== loadSeq.current) return;
-			if (next.items.length === 0) throw new Error(focus === "mixups" ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : focus === "personal" ? "No personal plan yet. Write your guide on My mistakes, and its practice shows up here." : "There are no sentences for this unit yet.");
+			if (next.items.length === 0) throw new Error(focus === "mixups" ? "No mix-ups on record yet. When you give one word for another, the pair shows up here." : focus === "personal" ? "No plan practice yet. Write your guide on Mistakes, and its practice shows up here." : "There are no sentences for this unit yet.");
 			setPlan(next);
 			startedAt.current = Date.now();
 			activeTime.restart();
@@ -796,12 +796,13 @@ function hintFor(item: LessonItem): string {
  *  "means" for a vocabulary rep (the English), "base form" for a grammar
  *  rep (the dictionary form to inflect). */
 function HintChip({ item }: { item: LessonItem }) {
+	const lang = useActiveLanguage();
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
 	return (
 		<span className="q-pair mr-2" data-testid="lesson-hint-chip">
 			<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
-			<span lang={meaning && !pairs ? undefined : "sk"}>{hintFor(item)}</span>
+			<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
 		</span>
 	);
 }
@@ -879,15 +880,15 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 					<p className="text-foreground">{item.pair.cue}</p>
 				) : slip === "base" ? (
 					<p className="text-foreground">
-						<span className="font-semibold text-miss">“{miss}”</span> is the dictionary base form.{" "}
+						<span className="font-semibold text-miss">“{miss}”</span> is the base form.{" "}
 						{item.trigger ? (
 							<>
-								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>{item.trigger}</span>: it requires the inflected case form.
+								Look at <span className="rounded-[5px] bg-card px-1.5 font-semibold text-teal-2" lang={lessonLanguage()}>{item.trigger}</span>: it needs a case ending.
 							</>
 						) : item.form ? (
 							<>Wanted: <span className="font-semibold">{item.form}</span>.</>
 						) : (
-							<>Remember to inflect the ending for this sentence.</>
+							<>Change the ending to fit this sentence.</>
 						)}
 					</p>
 				) : slip === "same-word" ? (
@@ -952,6 +953,7 @@ function ClozeRep({
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 }) {
+	const lang = useActiveLanguage();
 	const [given, setGiven] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
 	// A missed choice retries typed: recognition failed, so the second try
@@ -1175,7 +1177,7 @@ function ClozeRep({
 						const right = locked && judge(o) === "exact";
 						const ruledOut = !locked && miss === o;
 						return (
-							<OptionTile key={o} n={i + 1} lang={meaning ? undefined : "sk"} disabled={locked || ruledOut} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : ruledOut ? "ruled-out" : "idle"}>
+							<OptionTile key={o} n={i + 1} lang={meaning ? undefined : lang?.code} disabled={locked || ruledOut} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : ruledOut ? "ruled-out" : "idle"}>
 								{o}
 							</OptionTile>
 						);
@@ -1191,6 +1193,7 @@ function ClozeRep({
  *  asks which word decided its form. Both are a choice, never typed and never
  *  retried; the answer and the Why? panel follow the choice. */
 function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: boolean; result: Rep | null; onGrade: (given: string, verdict: RepVerdict) => void }) {
+	const lang = useActiveLanguage();
 	const task = item.task!;
 	const options = item.options ?? [];
 	const grid = task.kind === "grid";
@@ -1231,7 +1234,7 @@ function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: 
 					const picked = result?.given === o;
 					const right = locked && judge(o) === "exact";
 					return (
-						<OptionTile key={o} n={i + 1} lang={grid ? undefined : "sk"} disabled={locked} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : "idle"}>
+						<OptionTile key={o} n={i + 1} lang={grid ? undefined : lang?.code} disabled={locked} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : "idle"}>
 							{o}
 						</OptionTile>
 					);
@@ -1341,6 +1344,7 @@ function FeedbackSheet({
 	comesBack: boolean;
 	examples: LessonItem[];
 }) {
+	const lang = useActiveLanguage();
 	const praise = useMemo(() => PRAISE[Math.floor(Math.random() * PRAISE.length)]!, []);
 	const { item, verdict, given } = rep;
 	// After a miss the rule opens by itself: feedback after a failed
@@ -1411,7 +1415,7 @@ function FeedbackSheet({
 								title={inDeck ? "This word is in your review deck" : "Add this word to your review deck"}
 							>
 								{inDeck ? <BookmarkCheckIcon className="size-4" strokeWidth={1.6} /> : <BookmarkIcon className="size-4" strokeWidth={1.6} />}
-								{inDeck ? "In your deck" : "Tricky"}
+								{inDeck ? "In your deck" : "Add to deck"}
 							</button>
 						)}
 						{canExplain && (
@@ -1430,7 +1434,7 @@ function FeedbackSheet({
 					{verdict !== "exact" && (
 						<p className="font-prose text-[17px] text-foreground">
 							{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
-							<span className="font-semibold" lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : "sk"}>
+							<span className="font-semibold" lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : lang?.code}>
 								{[...expected].map((ch, i) => (
 									<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
 										{ch}
@@ -1440,7 +1444,7 @@ function FeedbackSheet({
 							{verdict === "wrong" && given && (
 								<span className="text-[15px] text-ink-3">
 									{" "}
-									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : "sk"}>{given}</span>”
+									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : lang?.code}>{given}</span>”
 								</span>
 							)}
 						</p>
@@ -1628,7 +1632,7 @@ function EndScreen({
 		return () => window.removeEventListener("keydown", onKey);
 	}, [recorded, mode, focus, onAgain, onNext]);
 
-	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
+	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time's up.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
 	const where = mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title;
 
 	return (
@@ -1676,11 +1680,11 @@ function EndScreen({
 			<p className="mt-3 min-h-5 font-prose text-[13px] text-ink-3" data-testid="lesson-end-recorded">
 				{recorded ? (
 					<>
-						{goalMet ? "Daily XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
+						{goalMet ? "Today's XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
 						{recorded.queued.length > 0 && `${recorded.queued.length} missed word${recorded.queued.length === 1 ? "" : "s"} added to your review deck.`}
 					</>
 				) : failed ? (
-					"Not saved yet. The app will send it again."
+					"Not saved yet. The app will try again."
 				) : (
 					<Pulse className="h-3.5 w-64 align-middle" />
 				)}

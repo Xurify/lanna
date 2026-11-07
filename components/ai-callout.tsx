@@ -12,11 +12,12 @@ import { SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
-import type { AiStatus } from "@/src/core";
+import { AUTH_PROVIDER_KEYS, type AiStatus } from "@/src/core";
 
 export function AiCallout({ status, title, adds, className }: { status: AiStatus; title: string; adds: string[]; className?: string }) {
 	if (status.ready) return null;
-	const missing = status.reason === "no-model" ? "No AI key is set." : `The ${status.provider} key is missing.`;
+	const provider = AUTH_PROVIDER_KEYS.find((p) => p.id === status.provider)?.label ?? status.provider;
+	const missing = status.reason === "no-model" ? "AI is not set up yet." : `The ${provider} key is missing.`;
 	return (
 		<div className={cn("q-well", className)} data-testid="ai-callout">
 			<p className="flex items-center gap-1.5 font-ui text-sm font-semibold text-foreground">
@@ -32,7 +33,7 @@ export function AiCallout({ status, title, adds, className }: { status: AiStatus
 			)}
 			<p className="mt-2 font-prose text-xs text-muted-foreground">{missing} Everything else here works without AI.</p>
 			<SettingsLink keys={status.reason === "no-key"} className={cn(SECONDARY, SMALL, "mt-3 pointer-coarse:min-h-11")}>
-				{status.reason === "no-model" ? "Add an AI key" : `Add the ${status.provider} key`}
+				{status.reason === "no-model" ? "Set up AI" : `Add the ${provider} key`}
 			</SettingsLink>
 		</div>
 	);

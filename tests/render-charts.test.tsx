@@ -42,7 +42,7 @@ describe("progress charts", () => {
 	it("level progress shows the XP to the next level and today's goal", () => {
 		const html = renderToStaticMarkup(createElement(LevelProgress, { data: chartData({ ...base, todayXp: 44, level: { level: 5, into: 214, span: 500 } }) }));
 		assert.ok(html.includes("286 XP to level 6"));
-		assert.ok(html.includes("6 to today"));
+		assert.ok(html.includes("6 XP to today"));
 	});
 
 	it("strand bars show an intentional empty state before anything is counted", () => {

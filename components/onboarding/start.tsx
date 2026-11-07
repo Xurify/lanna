@@ -35,6 +35,7 @@ import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@
 import { HoursSheet } from "@/components/hours-sheet";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { CEFR_ORDER, allChapters, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, priorsFor, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -218,7 +219,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 			...(outcome?.probe.summary ? [`The placement tutor's reading of my edge: ${outcome.probe.summary}`] : []),
 			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need " + target.english + " for.",
 		].join("\n");
-		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Add a model key in Settings first."));
+		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Check Settings → AI models."));
 	};
 
 	const withoutTarget = (langs: readonly Lang[]) => langs.filter((l) => l !== target.code);
@@ -260,7 +261,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 			<main className={cn(COLUMN, "flex-1 py-6")}>
 				{step === 1 && (
 					<section className="lh-rise" data-testid="start-purposes">
-						<Heading title={`What is ${target.english} for?`} line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice; the tutor stops asking.`} />
+						<Heading title={`What is ${target.english} for?`} line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice, so the tutor does not have to ask.`} />
 						<div className="mt-6 grid gap-3 sm:grid-cols-2">
 							{PURPOSES.map((p) => {
 								const on = d.purposes.includes(p.id);
@@ -331,7 +332,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 						</Field>
 						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
 							<PickSome items={explainChoices(withoutTarget(d.languages))} value={withoutTarget(d.explainIn)} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
-							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now; parallels from your languages are the one line described above.</p>
+							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now.</p>
 						</Field>
 						<Field label={`${target.english} so far`}>
 							<Choices items={priorsFor(target.english)} value={d.prior} onPick={(v) => set("prior", v)} />
@@ -361,7 +362,7 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								{LEVEL_CAN_DO[level]}
 							</p>
 							<p className="mt-1.5 font-prose text-sm text-muted-foreground" data-testid="start-level-fit">
-								{levelFitLine(level, d.purposes, examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The map credits hours as units are done, so the date moves with you.
+								{levelFitLine(level, d.purposes, examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The date moves as you finish units.
 							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-3">
 								<span className="font-ui text-sm text-foreground">Aim for</span>
@@ -385,9 +386,9 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 							title={edit && goal?.placedAt ? "Re-check where you stand?" : d.prior === "none" ? "You start at the beginning" : "Where do you stand?"}
 							line={
 								edit && goal?.placedAt
-									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts from your current chapter, never below it, and replaces it.`
+									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts at your current chapter, never below it, and replaces that result.`
 									: d.prior === "none"
-										? "First words and the present tense are the first lesson. If you know more than you said, a 2-minute check can skip you ahead."
+										? "First words and the present tense are the first lesson. If you know more than you said, a short check can skip you ahead."
 										: "An adaptive check: every sentence is chosen from your answers so far, so it finds your edge in about a dozen typed answers. Then the tutor asks a few questions at that edge, and a two-minute word check counts your vocabulary. Units you hold are ticked off the map; the ones you miss come first in your plan."
 							}
 						/>
@@ -520,6 +521,7 @@ export interface CheckResult extends PlacementOutcome {
 const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft text-go", slip: "bg-warn-soft text-warn", gap: "bg-miss-soft text-miss" };
 
 function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edit: boolean; onDeeper: () => void; /** The language's English name. */ target: string }) {
+	const lang = useActiveLanguage();
 	const chapter = allChapters().find((c) => c.id === outcome.startChapter);
 	const skipped = useMemo(() => allChapters().slice(0, Math.max(0, allChapters().findIndex((c) => c.id === outcome.startChapter))).length, [outcome.startChapter]);
 	const title = (id: UnitId) => unitInfo(id).title;
@@ -599,7 +601,7 @@ function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edi
 					<ul className="mt-2 flex flex-col gap-2">
 						{missed.slice(0, 6).map((r, i) => (
 							<li key={i} className="font-prose text-base leading-snug">
-								<span className="text-foreground" lang="sk">
+								<span className="text-foreground" lang={lang?.code}>
 									{r.item.before}
 									<b>{r.item.answer}</b>
 									{r.item.after}

@@ -637,7 +637,7 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 	const missing: string[] = [];
 	if (!wordsDone) missing.push(`About ${toGo.toLocaleString("en-GB")} more words: the words you know cover about ${pct(coverageNow)} of ${genre.title}; this needs ${pct(def.coverage)} (≈${need.toLocaleString("en-GB")} lemmas).`);
 	if (!speedDone) {
-		const who = facts.speed.basis === "level" ? "a listener at your point on the map" : "you";
+		const who = facts.speed.basis === "level" ? "a listener at your level" : "you";
 		missing.push(`Speed: ${who} understand${facts.speed.basis === "level" ? "s" : ""} about ${speedHave} word${speedHave === 1 ? "" : "s"} a minute; this needs about ${speedNeed} (${def.wpm} spoken, ${SUPPORT_LINE[def.support]}).`);
 	}
 	let verdict: string;

@@ -14,6 +14,7 @@
 
 import { isAllowedReferenceUrl, type LessonExplain } from "@/src/core";
 import { cn } from "@/lib/utils";
+import { useActiveLanguage } from "@/components/speech";
 
 const LABEL = "font-ui text-[12.5px] font-semibold text-ink-3";
 
@@ -31,11 +32,12 @@ function Highlight({ sk, form }: { sk: string; form: string }) {
 }
 
 function Contrast({ c }: { c: LessonExplain["contrast"] }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="flex flex-col gap-2" data-testid="explain-contrast">
 			{[c.first, c.second].map((line) => (
 				<div key={line.sk}>
-					<p className="text-foreground" lang="sk">
+					<p className="text-foreground" lang={lang?.code}>
 						<Highlight sk={line.sk} form={line.form} />
 					</p>
 					<p className="text-muted-foreground" data-no-word-lookup="true">
@@ -82,6 +84,7 @@ type Grid = NonNullable<LessonExplain["tables"]>[number];
 /** A case-by-gender grid, cells as the reference has them. "not yet" marks a
  *  form the reference does not name; it is never filled in. */
 function CaseGrid({ grid }: { grid: Grid }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="flex flex-col gap-1.5" data-testid="explain-table">
 			<p className="font-ui text-[13px] font-semibold text-ink-2">{grid.title}</p>
@@ -108,7 +111,7 @@ function CaseGrid({ grid }: { grid: Grid }) {
 								{row.cells.map((cell, i) => {
 									const missing = cell === "not yet";
 									return (
-										<td key={i} className={cn("px-2 py-1 align-top", missing ? "font-ui text-[13px] italic text-ink-3" : "text-foreground")} lang={missing ? undefined : "sk"}>
+										<td key={i} className={cn("px-2 py-1 align-top", missing ? "font-ui text-[13px] italic text-ink-3" : "text-foreground")} lang={missing ? undefined : lang?.code}>
 											{cell}
 										</td>
 									);

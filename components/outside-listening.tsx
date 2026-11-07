@@ -102,7 +102,7 @@ export function OutsideListening() {
 				{s && s.entries > 0 && (
 					<>
 						<Link href="/milestones" className="font-[550] text-ink-2 underline underline-offset-2">
-							When can I…?
+							Milestones
 						</Link>{" "}
 						counts focused time at {OUTSIDE_WEIGHT.focused === 0.5 ? "half" : `${OUTSIDE_WEIGHT.focused}×`}{OUTSIDE_WEIGHT.background === 0 ? " and background time not at all" : ""}.
 					</>

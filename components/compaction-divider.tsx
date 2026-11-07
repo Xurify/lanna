@@ -22,7 +22,7 @@ export function CompactionMomentDivider({ data: _data }: { data: CompactionDivid
 	return (
 		<div className="flex w-full items-center justify-center py-1">
 			<span data-testid="compaction-divider" className="px-1.5 text-xs text-muted-foreground">
-				Context compacted
+				Earlier messages summarized
 			</span>
 		</div>
 	);
@@ -35,12 +35,12 @@ export function CompactionMomentDivider({ data: _data }: { data: CompactionDivid
  *  since release polish 2026-10-06 — the token count stays, the summary
  *  is inspectable only in provider logs. */
 export function CompactionCutDivider({ data }: { data: CompactionDividerData }) {
-	const kTok = data.details.tokensBefore > 0 ? ` · ${Math.round(data.details.tokensBefore / 1000)}k tok` : "";
+	const kTok = data.details.tokensBefore > 0 ? ` · ${Math.round(data.details.tokensBefore / 1000)}k tokens` : "";
 	return (
 		<div data-testid="compaction-cut-divider" className="my-4 flex w-full items-center gap-3">
 			<span className="h-0 flex-1 border-t-2 border-dotted border-border/50" aria-hidden />
 			<span className="rounded-full bg-well-2 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-				History compacted{kTok}
+				Summarized up to here{kTok}
 			</span>
 			<span className="h-0 flex-1 border-t-2 border-dotted border-border/50" aria-hidden />
 		</div>

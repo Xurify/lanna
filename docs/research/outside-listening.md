@@ -2,7 +2,7 @@
 
 **Question:** the owner asked what ten hours of Russian listening a day for a year would do, and whether the app should apply that. A goal can already be 600 minutes a day, so the real question is what the app does with a long day, and what it does with listening it cannot see.
 
-**Date:** 2026-11-07. **Decision:** E65. **Code:** `src/core/after-plan.ts`, `src/core/outside.ts`, `src/server/outside.ts`, `src/store/outside.ts`, `components/outside-listening.tsx`, the outside row in `src/core/milestones.ts`.
+**Date:** 2026-11-07. **Decision:** E68. **Code:** `src/core/after-plan.ts`, `src/core/outside.ts`, `src/server/outside.ts`, `src/store/outside.ts`, `components/outside-listening.tsx`, the outside row in `src/core/milestones.ts`.
 
 ## What ten hours a day would and would not do
 

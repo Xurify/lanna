@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, LinkIcon, LoaderCircleIcon, PlayIcon, ScissorsIcon, SparklesIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, LinkIcon, ListPlusIcon, LoaderCircleIcon, PlayIcon, ScissorsIcon, Trash2Icon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
 import type { FeedTask } from "@/components/activity-dock";
@@ -28,6 +28,7 @@ import { ChannelLink } from "@/components/watch/channel-link";
 import { CreatorsPanel } from "@/components/watch/creators-panel";
 import { YouTubeSection, type useDiscover } from "@/components/watch/discover";
 import { atLevel, PicksPanel } from "@/components/watch/picks-panel";
+import { PreparingContext, usePreparing } from "@/components/watch/preparing";
 import { StretchDialog } from "@/components/watch/stretch-dialog";
 import { Poster } from "@/components/watch/thumb";
 import { CardGrid, CardIconButton, Known, VideoCard } from "@/components/watch/video-card";
@@ -44,7 +45,7 @@ interface Cutting {
 	title?: string;
 }
 
-export function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; discover: ReturnType<typeof useDiscover>; onOpen: (id: string) => void; onPrepare: (url: string, range?: FragmentRange) => void; onDelete: (id: string) => void }) {
+export function Shelf({ state, running, starting, discover, onOpen, onPrepare, onDelete }: { state: WatchState | null; running: FeedTask[]; starting?: string | null; discover: ReturnType<typeof useDiscover>; onOpen: (id: string) => void; onPrepare: (url: string, range?: FragmentRange) => void; onDelete: (id: string) => void }) {
 	const lang = useActiveLanguage();
 	const name = lang?.english ?? "the language";
 	const canPrepare = state?.canPrepare !== false;
@@ -61,8 +62,15 @@ export function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }:
 		setTabState(t);
 	};
 	const [cutting, setCutting] = useState<Cutting | null>(null);
+	// A background task's id is "video:<id>". The shelf's own "Adding" row is
+	// only for the moment before the server's task exists; then the task's row says it.
+	const runningIds = running.map((t) => t.id.replace(/^video:/, ""));
+	const startingId = starting ? parseVideoUrl(starting) : null;
+	const showStarting = !!starting && !(startingId && runningIds.includes(startingId));
+	const preparing = new Set([...runningIds, ...(startingId ? [startingId] : [])]);
 
 	return (
+		<PreparingContext.Provider value={preparing}>
 		<div className="relative min-h-dvh bg-background">
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-20 flex items-center gap-2 bg-background px-3 py-2">
@@ -80,8 +88,17 @@ export function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }:
 
 				<LinkField name={name} fallbacks={(lang?.captionFallbacks ?? []).map((f) => f.english)} canPrepare={canPrepare} canTranscribe={!!state?.canTranscribe} onPrepare={onPrepare} onCut={(id) => setCutting({ id })} />
 
-				{running.length > 0 && (
+				{(running.length > 0 || showStarting) && (
 					<ul className="mt-4 flex flex-col gap-1.5" data-testid="watch-running">
+						{showStarting && (
+							<li className="q-card flex items-center gap-3 px-4 py-2.5" data-testid="watch-starting">
+								<LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" />
+								<span className="min-w-0 flex-1 truncate font-ui text-[14px] text-foreground">
+									Adding {starting}
+									<span className="text-ink-3"> · It keeps going if you leave this page.</span>
+								</span>
+							</li>
+						)}
 						{running.map((t) => (
 							<li key={t.id} className="q-card flex items-center gap-3 px-4 py-2.5">
 								<LoaderCircleIcon className="size-4 shrink-0 animate-spin text-ink-3" />
@@ -103,7 +120,7 @@ export function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }:
 					counts={{ picks: shownPicks, videos: library.length, creators: discover.state?.creators.length ?? 0 }}
 				/>
 
-				<div role="tabpanel" id={`watch-panel-${tab}`} aria-labelledby={`watch-tab-${tab}`} className="pt-5" data-testid={`watch-panel-${tab}`}>
+				<div role="tabpanel" id={`watch-panel-${tab}`} aria-labelledby={`watch-tab-${tab}`} className="pt-6" data-testid={`watch-panel-${tab}`}>
 					{tab === "picks" && <PicksPanel d={discover} canPrepare={canPrepare} exclude={upNextPick?.id} onPrepare={onPrepare} onCut={(p) => setCutting({ id: p.id, title: p.title })} onSources={setTab} />}
 					{tab === "videos" && <LibraryPanel library={library} exclude={upNextVideo?.id} watchedToday={state?.watchedToday ?? 0} onOpen={onOpen} onDelete={onDelete} onCut={(v) => setCutting({ id: v.id, title: v.title })} onFind={() => setTab("picks")} />}
 					{tab === "creators" && <CreatorsPanel d={discover} canPrepare={canPrepare} onPrepare={onPrepare} onCut={(p) => setCutting({ id: p.id, title: p.title })} />}
@@ -112,6 +129,17 @@ export function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }:
 			</main>
 			{cutting && <StretchDialog videoId={cutting.id} title={cutting.title} canPrepare={canPrepare} onPrepare={(range) => (setCutting(null), onPrepare(videoUrl(cutting.id), range))} onClose={() => setCutting(null)} />}
 		</div>
+		</PreparingContext.Provider>
+	);
+}
+
+function UpNextAdd({ id, canPrepare, onPrepare }: { id: string; canPrepare: boolean; onPrepare: () => void }) {
+	const preparing = usePreparing(id);
+	return (
+		<button type="button" disabled={!canPrepare || preparing} onClick={onPrepare} aria-busy={preparing} className={cn(PRIMARY, "h-11 rounded-xl px-6")} data-testid="watch-up-next-prepare">
+			{preparing ? <LoaderCircleIcon className="size-4 animate-spin" /> : <ListPlusIcon className="size-4" strokeWidth={1.8} />}
+			{preparing ? "Preparing…" : "Add video"}
+		</button>
 	);
 }
 
@@ -152,7 +180,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 						id="watch-url"
 						value={url}
 						onChange={(e) => setUrl(e.target.value)}
-						placeholder={`Paste a YouTube link in ${name}`}
+						placeholder={`Paste a link to a YouTube video in ${name}`}
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
@@ -163,8 +191,8 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 				</div>
 				<div className="flex gap-2">
 					<button type="submit" disabled={!id || !canPrepare} className={cn(PRIMARY, "h-12 flex-1 rounded-xl px-5 @2xl:flex-none")} data-testid="watch-prepare">
-						<SparklesIcon className="size-4" />
-						Prepare it
+						<ListPlusIcon className="size-4" strokeWidth={1.8} />
+						Add video
 					</button>
 					<button type="button" disabled={!id} onClick={() => id && onCut(id)} className="q-btn sec h-12 flex-1 rounded-xl px-4 @2xl:flex-none" title="Watch only a stretch of it" data-testid="watch-fragments-open">
 						<ScissorsIcon className="size-4" strokeWidth={1.6} />
@@ -178,8 +206,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 				</div>
 			) : (
 				<p className="mt-2.5 max-w-3xl font-prose text-[13px] leading-relaxed text-ink-3">
-					Captions come from YouTube, made by people or automatic
-					{fallbacks.length > 0 ? `; ${fallbacks.join(" or ")} captions work when a video has none in ${name}` : ""}. Preparing a video takes one or two short AI requests, once, and it is kept. Nothing is downloaded.{canTranscribe ? " A video without captions can be transcribed from its audio." : ""}
+					Uses YouTube's captions, written by people or automatic{fallbacks.length > 0 ? `, or ${fallbacks.join(" or ")} ones when there are none in ${name}` : ""}. Adding a video costs one or two short AI requests, once. Nothing is downloaded.{canTranscribe ? " A video without captions can be transcribed from its audio." : ""}
 				</p>
 			)}
 		</div>
@@ -203,14 +230,14 @@ function UpNext(props: UpNextProps) {
 	const band = coverage !== undefined ? coverageBand(coverage) : null;
 	return (
 		<section className="q-card mt-6 flex flex-col overflow-hidden @2xl:flex-row" aria-label="Up next" data-testid="watch-up-next">
-			<div className="relative @2xl:w-[22rem] @2xl:shrink-0">
+			<div className="relative aspect-video @2xl:aspect-auto @2xl:min-h-[12.5rem] @2xl:w-[22rem] @2xl:shrink-0">
 				{v ? (
-					<button type="button" onClick={props.onOpen} tabIndex={-1} aria-hidden="true" className="block w-full">
-						<Poster id={id} className="@2xl:h-full" />
+					<button type="button" onClick={props.onOpen} tabIndex={-1} aria-hidden="true" className="absolute inset-0 block">
+						<Poster id={id} className="absolute inset-0 aspect-auto h-full" />
 					</button>
 				) : (
-					<a href={videoUrl(id)} target="_blank" rel="noreferrer" tabIndex={-1} aria-hidden="true" className="block">
-						<Poster id={id} className="@2xl:h-full" />
+					<a href={videoUrl(id)} target="_blank" rel="noreferrer" tabIndex={-1} aria-hidden="true" className="absolute inset-0 block">
+						<Poster id={id} className="absolute inset-0 aspect-auto h-full" />
 					</a>
 				)}
 				<span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 font-ui text-[11.5px] font-[600] tabular-nums leading-none text-white">{formatClock(sec)}</span>
@@ -246,10 +273,7 @@ function UpNext(props: UpNextProps) {
 						</button>
 					) : (
 						<>
-							<button type="button" disabled={!props.canPrepare} onClick={props.onPrepare} className={cn(PRIMARY, "h-11 rounded-xl px-6")} data-testid="watch-up-next-prepare">
-								<SparklesIcon className="size-4" />
-								Prepare it
-							</button>
+							<UpNextAdd id={props.pick.id} canPrepare={props.canPrepare} onPrepare={props.onPrepare} />
 							<button type="button" onClick={props.onCut} className="q-btn sec h-11 rounded-xl px-4" data-testid="watch-up-next-stretch">
 								<ScissorsIcon className="size-4" strokeWidth={1.6} />
 								Pick a stretch
@@ -282,8 +306,8 @@ function Tabs({ tab, onTab, counts }: { tab: TabId; onTab: (t: TabId) => void; c
 	};
 	return (
 		// Sticks under the header (52px), so the way to the other lists is in reach however far down the page is scrolled.
-		<div className="sticky top-[52px] z-10 -mx-5 mt-6 bg-background px-5 py-2.5">
-			<div role="tablist" aria-label="Watch" className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-well p-1" data-testid="watch-tabs">
+		<div className="sticky top-[52px] z-10 -mx-5 mt-8 bg-background px-5">
+			<div role="tablist" aria-label="Watch" className="flex max-w-full gap-6 overflow-x-auto border-b border-border" data-testid="watch-tabs">
 				{TABS.map((t, i) => {
 					const on = t.id === tab;
 					const n = t.count ? counts[t.id] : undefined;
@@ -298,11 +322,11 @@ function Tabs({ tab, onTab, counts }: { tab: TabId; onTab: (t: TabId) => void; c
 							tabIndex={on ? 0 : -1}
 							onClick={() => onTab(t.id)}
 							onKeyDown={(e) => move(e, i)}
-							className={cn("flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 font-ui text-[14px] transition-colors", on ? "bg-card font-[600] text-foreground ring-1 ring-border" : "font-[500] text-ink-2 hover:bg-card/60 hover:text-foreground")}
+							className={cn("relative flex h-11 shrink-0 items-center gap-2 font-ui text-[15px] transition-colors after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full", on ? "font-[600] text-foreground after:bg-teal-2" : "font-[500] text-ink-3 hover:text-foreground")}
 							data-testid={`watch-tab-${t.id}`}
 						>
 							{t.label}
-							{n !== undefined && n > 0 && <span className={cn("rounded-md px-1.5 py-px text-[12px] font-[600] tabular-nums leading-snug", on ? "bg-teal-wash text-teal-2" : "bg-well-2 text-ink-3")}>{n}</span>}
+							{n !== undefined && n > 0 && <span className={cn("rounded-md px-1.5 py-px text-[12px] font-[600] tabular-nums leading-snug", on ? "bg-teal-wash text-teal-2" : "bg-well text-ink-3")}>{n}</span>}
 						</button>
 					);
 				})}
@@ -319,7 +343,7 @@ function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut,
 		return (
 			<div className="max-w-lg" data-testid="watch-library-empty">
 				<p className="font-ui text-[17px] font-[600] text-foreground">Nothing prepared yet</p>
-				<p className="q-sub">Paste a YouTube link above, or prepare one of the videos picked for you. It is translated once and kept here.</p>
+				<p className="q-sub">Paste a YouTube link above, or add one of the videos picked for you. It is translated once and kept here.</p>
 				<button type="button" onClick={onFind} className="q-btn sec t mt-4">
 					See what is picked for you
 				</button>
@@ -329,14 +353,14 @@ function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut,
 	const rest = library.filter((v) => v.id !== exclude);
 	return (
 		<div>
-			<p className="mb-5 font-prose text-[14px] text-ink-3">
+			<p className="mb-4 font-prose text-[14px] text-ink-3" hidden={rest.length === 0}>
 				{library.length} {library.length === 1 ? "video" : "videos"}, newest first{rest.length < library.length ? " (the first is above)" : ""}
 				{watchedToday > 0 ? ` · ${watchedToday} watched today` : ""}
 			</p>
 			<CardGrid testid="watch-library">
 				{rest.map((v) => {
 					const kind = coverageKind(v);
-					const gotFirst = v.watches > 0 && v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : v.watches > 0 ? `Watched ${v.watches}×` : null;
+					const gotFirst = v.watches > 0 && v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% got first time · watched ${v.watches}×` : v.watches > 0 ? `Watched ${v.watches}×` : null;
 					return (
 						<li key={v.id}>
 							<VideoCard

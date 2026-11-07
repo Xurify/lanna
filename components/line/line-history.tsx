@@ -98,7 +98,7 @@ export function LineHistory({ days, showTable, onToggleTable }: { days: readonly
 								);
 							})}
 						</div>
-						{!heard && <p className="absolute inset-0 flex items-center justify-center font-ui text-[13px] text-ink-3">Nothing heard yet. The first mark lands today.</p>}
+						{!heard && <p className="absolute inset-0 flex items-center justify-center font-ui text-[13px] text-ink-3">Nothing heard yet. Today's line is the first point.</p>}
 					</div>
 					<span aria-hidden="true" />
 					<div className="mt-2 grid" style={columns} aria-hidden="true">
@@ -112,7 +112,7 @@ export function LineHistory({ days, showTable, onToggleTable }: { days: readonly
 				<figcaption className="q-legend">
 					<span>
 						<i style={{ background: "var(--q-bar)" }} />
-						First hearing, cold
+						First hearing, no text
 					</span>
 					<span>
 						<i style={{ background: "var(--q-teal)" }} />

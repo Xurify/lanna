@@ -10,7 +10,7 @@
  * in this browser.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeedToggle, useActiveLanguage } from "@/components/speech";
@@ -38,6 +38,62 @@ export function insertAtCaret(field: Field, text: string): void {
 	const caret = start + text.length;
 	field.focus();
 	field.setSelectionRange(caret, caret);
+}
+
+// A key is a keycap, not a slab: a fixed 40 px square (44 px under a finger),
+// never stretched to the card's width. 44 is used for the fit so a touch
+// screen's bigger keys still fit the measured row.
+const KEY_PX = 44;
+const KEY_GAP_PX = 6; // gap-1.5
+
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+/** The fewest even rows whose keys all fit `width`: never a lone key on a
+ *  last row, never wider than the card. Measured on the grid itself because
+ *  the card is narrower than the page, so a viewport breakpoint overflows. */
+function columnsFor(count: number, width: number): number {
+	const fit = Math.max(1, Math.floor((width + KEY_GAP_PX) / (KEY_PX + KEY_GAP_PX)));
+	return Math.ceil(count / Math.ceil(count / fit));
+}
+
+function KeyGrid({ letters, english, tag, type, className }: { letters: string[]; english: string; tag: string; type: (letter: string, upper: boolean) => void; className?: string }) {
+	const ref = useRef<HTMLDivElement>(null);
+	const [cols, setCols] = useState(() => Math.ceil(letters.length / 2));
+
+	useIsoLayoutEffect(() => {
+		const el = ref.current;
+		if (!el) return;
+		const measure = () => setCols(columnsFor(letters.length, el.clientWidth));
+		measure();
+		if (typeof ResizeObserver === "undefined") return;
+		const ro = new ResizeObserver(measure);
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, [letters.length]);
+
+	return (
+		<div
+			ref={ref}
+			data-testid="diacritic-bar"
+			// min-w-0: beside a button in a flex row, the keys' own minimum must not stop the grid shrinking.
+			className={cn("grid min-w-0 justify-start gap-1.5 font-prose", className)}
+			style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
+			aria-label={`${english} letters`}
+		>
+			{letters.map((letter) => (
+				<button
+					key={letter}
+					type="button"
+					onMouseDown={(e) => e.preventDefault()}
+					onClick={(e) => type(letter, e.shiftKey)}
+					title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
+					className="lh-press flex size-10 items-center justify-center rounded-md bg-well text-base font-medium text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well-2 pointer-coarse:size-11"
+				>
+					{letter}
+				</button>
+			))}
+		</div>
+	);
 }
 
 /** `keys`: the lesson's keycap row — real tap targets, no speed toggle and
@@ -81,28 +137,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	};
 
 	if (variant === "keys") {
-		return (
-			// Two even rows on a narrow card, one row on a wide one: never a lone key on a second row. A key is never narrower than the h-10 height (2.5rem), even when the bar shares a row with a button.
-			<div
-				data-testid="diacritic-bar"
-				className={cn("grid grid-cols-[repeat(var(--half),minmax(2.5rem,1fr))] gap-2 font-prose @xl:grid-cols-[repeat(var(--all),minmax(2.5rem,1fr))]", className)}
-				style={{ ["--half" as string]: Math.ceil(lang.specialLetters.length / 2), ["--all" as string]: lang.specialLetters.length }}
-				aria-label={`${lang.english} letters`}
-			>
-				{lang.specialLetters.map((letter) => (
-					<button
-						key={letter}
-						type="button"
-						onMouseDown={(e) => e.preventDefault()}
-						onClick={(e) => type(letter, e.shiftKey)}
-						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
-						className="lh-press flex h-10 min-w-0 items-center justify-center rounded-lg bg-well-2 text-lg font-medium text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_2px_0_var(--q-line-2)] hover:bg-well active:shadow-[0_0_0_1px_var(--q-line-2)]"
-					>
-						{letter}
-					</button>
-				))}
-			</div>
-		);
+		return <KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} type={type} className={className} />;
 	}
 
 	return (

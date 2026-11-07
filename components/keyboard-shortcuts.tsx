@@ -157,7 +157,7 @@ function CheatSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const scopeLabels: Record<(typeof scopes)[number], string> = {
 		global: "Global",
 		chat: "Chat",
-		graph: "Graph view",
+		graph: "Skill map",
 	};
 	return (
 		<div

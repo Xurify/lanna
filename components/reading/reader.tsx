@@ -26,7 +26,7 @@ import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-stat
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
-import { speak, stopSpeaking } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
@@ -262,6 +262,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 /** The sentences arrive as the model writes them: the learner starts
  *  reading before the questions are even written. */
 function Writing({ initial }: { initial: WritingProgress | null }) {
+	const lang = useActiveLanguage();
 	const [progress, setProgress] = useState<WritingProgress | null>(initial);
 	useEffect(() => {
 		let live = true;
@@ -283,7 +284,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 			clearInterval(timer);
 		};
 	}, []);
-	const label = progress ? (progress.genre === "robo" ? "the next episode" : `a ${genreInfo(progress.genre).label.toLowerCase()}`) : "your next story";
+	const label = progress ? (progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story";
 	const lines = progress?.sentences ?? [];
 	return (
 		<Frame>
@@ -303,7 +304,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 					{lines.length > 0 ? (
 						<div className="mt-8 flex flex-col gap-4" aria-live="polite">
 							{lines.map((line, i) => (
-								<p key={i} className="lh-rise font-prose text-[1.65rem] leading-[1.6] text-foreground" lang="sk">
+								<p key={i} className="lh-rise font-prose text-[1.65rem] leading-[1.6] text-foreground" lang={lang?.code}>
 									{line}
 								</p>
 							))}
@@ -315,7 +316,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 					) : (
 						<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground">
 							<LoaderCircleIcon className="size-4 animate-spin" />
-							The first sentences appear in a few seconds
+							This takes about a minute. The episode opens when it is written.
 						</p>
 					)}
 				</div>
@@ -396,6 +397,7 @@ export function groupTokens(tokens: readonly StoryToken[]): Array<{ indexes: num
 }
 
 function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: string[]; onTap: (key: string) => void; onDone?: () => void }) {
+	const lang = useActiveLanguage();
 	const [playing, setPlaying] = useState<number | null>(null);
 	const [all, setAll] = useState(false);
 	const [showTranslation, setShowTranslation] = useState(false);
@@ -488,7 +490,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 					<Link href="/" aria-label="Leave the story" className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground">
 						<XIcon className="size-5" />
 					</Link>
-					<p className="min-w-0 flex-1 truncate text-[14px] font-[600] text-foreground" lang="sk">
+					<p className="min-w-0 flex-1 truncate text-[14px] font-[600] text-foreground" lang={lang?.code}>
 						{story.title}
 					</p>
 					<Link href="/read?library=1" className="q-btn ghost">
@@ -507,7 +509,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						<p className="text-[13px] text-ink-3">
 							{kindOf(story)} · {story.level} · about {minutes} min
 						</p>
-						<h1 className="mt-2 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground" lang="sk">
+						<h1 className="mt-2 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground" lang={lang?.code}>
 							{story.title}
 						</h1>
 					</header>
@@ -520,7 +522,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 										{block.speaker}
 									</p>
 								)}
-								<p className={cn("font-prose text-foreground [&_[data-word]]:!py-0", large ? "text-[24px] leading-[1.6] max-sm:text-[21px]" : "text-[21px] leading-[1.6] max-sm:text-[19px]")} lang="sk">
+								<p className={cn("font-prose text-foreground [&_[data-word]]:!py-0", large ? "text-[24px] leading-[1.6] max-sm:text-[21px]" : "text-[21px] leading-[1.6] max-sm:text-[19px]")} lang={lang?.code}>
 									{block.sentences.map(({ sentence: s, index: i }) => (
 										<span
 											key={i}
@@ -575,7 +577,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 							<ul className="flex flex-col gap-1.5">
 								{story.newWords.map((w) => (
 									<li key={w.lemma} className="text-[16px]">
-										<span className="font-[600] text-foreground" lang="sk">
+										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{w.lemma}
 										</span>
 										<span className="text-ink-3"> · {w.gloss}</span>
@@ -598,7 +600,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						Translation {showTranslation ? "on" : "off"}
 					</button>
 					<button type="button" onClick={onDone} className="q-btn primary" data-testid="read-done">
-						{story.questions.length ? `Questions (${story.questions.length})` : "Done"}
+						{story.questions.length ? `Answer ${story.questions.length} ${story.questions.length === 1 ? "question" : "questions"}` : "Done"}
 					</button>
 				</div>
 			</div>
@@ -609,6 +611,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 // ─── The end ────────────────────────────────────────────────────────────────
 
 function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+	const lang = useActiveLanguage();
 	const looked = useMemo(() => {
 		const seen = new Set<string>();
 		const out: StoryToken[] = [];
@@ -637,7 +640,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 				<BookOpenIcon className="size-12" />
 			</div>
 			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang="sk">
+			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
 				{story.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
@@ -659,7 +662,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 							<ul className="mt-2 flex flex-col gap-1">
 								{story.newWords.slice(0, 8).map((w) => (
 									<li key={w.lemma} className="font-prose text-base leading-snug">
-										<span className="font-[600] text-foreground" lang="sk">
+										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{w.lemma}
 										</span>{" "}
 										<span className="text-muted-foreground">{w.gloss}</span>
@@ -674,7 +677,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 							<ul className="mt-2 flex flex-col gap-1">
 								{looked.slice(0, 8).map((t) => (
 									<li key={t.slug ?? t.text} className="font-prose text-base leading-snug">
-										<span className="font-[600] text-foreground" lang="sk">
+										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{t.lemma ?? t.text}
 										</span>{" "}
 										<span className="text-muted-foreground">{t.gloss ?? ""}</span>
@@ -699,12 +702,12 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 					</button>
 				) : (
 					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
-						The library
+						Open the library
 					</button>
 				)}
 			</div>
 			<SourcesNote feature="read" className="mt-8 text-left" />
-			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">The shelf is being filled in the background; the next story is a tap away in the library.</p>}
+			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">New stories are written in the background and wait in the library.</p>}
 		</div>
 	);
 }
@@ -738,6 +741,7 @@ export function storyMeta(s: { level: string; wordCount: number; coverage: numbe
 }
 
 function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen: (id: string) => void; onWrite: () => void }) {
+	const lang = useActiveLanguage();
 	const list = state?.library ?? [];
 	const [level, setLevel] = useState<string>("all");
 	const [status, setStatus] = useState<"all" | "unread" | "read">("all");
@@ -798,13 +802,13 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						<h2 className="q-sh">{featured.reads === 0 ? "Today's episode" : "Read it again"}</h2>
 						<article className="q-card p-5 sm:p-6">
 							<p className="text-[13px] text-ink-3">{kindOf(featured)}</p>
-							<h3 className="mt-1 text-[24px] font-semibold leading-[1.2] tracking-[-0.02em] text-foreground" lang="sk">
+							<h3 className="mt-1 text-[24px] font-semibold leading-[1.2] tracking-[-0.02em] text-foreground" lang={lang?.code}>
 								{featured.title}
 							</h3>
 							<p className="mt-2 text-[14px] text-ink-3">{storyMeta(featured)}</p>
 							{newWordList(featured.newWords).length > 0 && (
 								<p className="mt-1 text-[14px] text-ink-2">
-									New words: <span lang="sk">{newWordList(featured.newWords).slice(0, 4).join(", ")}</span>
+									New words: <span lang={lang?.code}>{newWordList(featured.newWords).slice(0, 4).join(", ")}</span>
 								</p>
 							)}
 							<div className="q-acts" style={{ marginTop: 16 }}>
@@ -857,12 +861,12 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 									<li key={s.id}>
 										<button type="button" onClick={() => onOpen(s.id)} className="flex w-full items-center gap-4 py-3 text-left hover:bg-well sm:px-2" data-testid="read-story">
 											<span className="min-w-0 flex-1">
-												<span className="block truncate text-[16px] font-[550] text-foreground" lang="sk">
+												<span className="block truncate text-[16px] font-[550] text-foreground" lang={lang?.code}>
 													{s.title}
 												</span>
 												<span className="block text-[13px] text-ink-3">{storyMeta(s)}</span>
 											</span>
-											<span className="shrink-0 text-[13px] text-ink-3">{s.reads === 0 ? "New" : s.lastScore ? `${s.lastScore.correct} of ${s.lastScore.total}` : `Read ${s.reads}×`}</span>
+											<span className="shrink-0 text-[13px] text-ink-3">{s.reads === 0 ? "New" : s.lastScore ? `${s.lastScore.correct} of ${s.lastScore.total} right` : `Read ${s.reads}×`}</span>
 										</button>
 									</li>
 								))}

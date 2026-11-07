@@ -153,7 +153,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	return (
 		<div className="lh-rise flex flex-col gap-2">
 			{profile && profile.profiles.length > 0 && (
-				<SettingsGroup label="Target language" hint="The languages you are studying. Each keeps its own progress." testid="learner-target-language">
+				<SettingsGroup label="Languages you are learning" hint="Each keeps its own progress." testid="learner-target-language">
 					<ul className="flex flex-col divide-y divide-border/60 rounded-lg bg-well" aria-label="Your languages">
 						{profile.profiles.map((p) => {
 							const running = p.id === profile.active;
@@ -218,7 +218,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 				<PickSome items={explainChoices(state.languages)} value={state.explainIn} onChange={(explainIn) => void save({ ...state, explainIn })} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
 				<p className="text-xs text-muted-foreground">Up to {MAX_EXPLAIN}: the tutor explains in the first and adds the key line and the terms in the second. Lesson rules stay in English for now.</p>
 			</SettingsGroup>
-			<SettingsGroup label="Daily goals" hint="How much you want to study. The XP that counts as a day done follows from it." testid="learner-goals">
+			<SettingsGroup label="Study goals" hint="How much you want to study. The XP that counts as a day done follows from it." testid="learner-goals">
 				<div className="flex flex-col gap-4 rounded-lg bg-well px-4 py-3.5">
 					<div className="flex flex-col gap-1.5" data-testid="goal-level">
 						<span className="font-ui text-sm font-medium text-foreground">Target level</span>
@@ -248,12 +248,12 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 					</div>
 				</div>
 			</SettingsGroup>
-			<SettingsGroup label="Goal and level" testid="learner-goal">
+			<SettingsGroup label="Purpose and starting level" testid="learner-goal">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
-					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">The purposes and your starting level live in setup.</span>
+					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">Why you are learning and where you started are set in setup.</span>
 					<span className="flex min-w-0 flex-wrap gap-2">
 						{[
-							{ id: "learner-open-plan", href: "/progress", label: "Open progress" },
+							{ id: "learner-open-plan", href: "/progress", label: "Open Progress" },
 							{ id: "learner-open-setup", href: "/start?edit=1", label: "Open setup" },
 							{ id: "learner-recheck", href: "/start?edit=1&check=1", label: "Re-check my level" },
 						].map((b) => (

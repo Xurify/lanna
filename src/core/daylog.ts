@@ -1,7 +1,7 @@
 /**
  * The log of a day (Quiet tool, 2026-11-02): what the learner did on one day,
  * written from the records the app already keeps and nothing else: the lesson
- * log (a finished lesson, Blitz, Listen, a Speak scene, a Say it faster round,
+ * log (a finished lesson, Blitz, Listen, a Speak scene, a Speed round,
  * each with its time), the review log (answers, grouped into sittings), the
  * cards minted that day, and the day's record (measured minutes per activity).
  * Adapted from the Notebook design's page builder (src/core/notebook.ts on its
@@ -77,10 +77,10 @@ export interface DayLogInput {
 const TASK_NAME: Record<string, string> = {
 	blitz: "Blitz",
 	mixups: "Mix-ups",
-	personal: "From your guide",
+	personal: "Your plan",
 	listen: "Listen",
 	speak: "Speak",
-	fluency: "Say it faster",
+	fluency: "Speed",
 };
 
 /** A gap this long between two review answers starts a new sitting. */

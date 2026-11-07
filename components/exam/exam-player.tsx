@@ -20,10 +20,12 @@ import { sfx } from "@/components/lesson/sound";
 import { COLUMN, Dock, OptionTile, PracticeCard, Stat, Stats, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 type Phase = { state: "playing" } | { state: "saving"; score: ExamScore } | { state: "result"; score: ExamScore; recorded: boolean };
 
 export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; title: string; initial: ExamDraw | null }) {
+	const lang = useActiveLanguage();
 	const [draw, setDraw] = useState<ExamDraw | null>(initial);
 	const [index, setIndex] = useState(0);
 	const [picked, setPicked] = useState<number | null>(null);
@@ -111,7 +113,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 					<p className="q-date">Chapter exam · {title}</p>
 						<h1 className="q-hello">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
 						<p className="q-sub max-w-md">
-						{draw ? "This chapter has no words or drills to draw from. The rest of the path still works." : "Check the connection, then try again."}
+						{draw ? "This chapter has no words or drills to draw from. The rest of the curriculum still works." : "Check the connection, then try again."}
 					</p>
 					{error && (
 						<p className="mt-3 font-ui text-sm text-miss" role="alert">
@@ -125,7 +127,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							</button>
 						)}
 						<Link href="/curriculum" className={draw ? PRIMARY : SECONDARY}>
-							Back to the path
+							Back to Curriculum
 						</Link>
 					</div>
 				</div>
@@ -145,7 +147,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-ink-2" />
 						</Stats>
 						<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
-						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved on your path." : "This attempt was not saved, so the path will not show it."}
+						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved. It shows in Curriculum." : "This attempt was not saved, so Curriculum will not show it."}
 					</p>
 					{score.misses.length > 0 && (
 						<div className="mt-8" data-testid="exam-misses" data-word-lookup-enabled="true">
@@ -156,11 +158,11 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 									if (!missed) return null;
 									return (
 										<li key={id} className="q-card px-4 py-3">
-											<p className="font-prose text-base text-foreground" lang="sk">
+											<p className="font-prose text-base text-foreground" lang={lang?.code}>
 												{missed.sentence}
 											</p>
 											<p className="mt-0.5 font-prose text-sm text-ink-3">
-													The answer is <span className="font-semibold text-teal-2" lang="sk">{missed.answer}</span>. {missed.translation}
+													The answer is <span className="font-semibold text-teal-2" lang={lang?.code}>{missed.answer}</span>. {missed.translation}
 											</p>
 										</li>
 									);
@@ -179,7 +181,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							Try again
 						</button>
 						<Link href="/curriculum" className={SECONDARY}>
-							Back to the path
+							Back to Curriculum
 						</Link>
 					</div>
 				</div>
@@ -194,7 +196,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
 				<div className={COLUMN}>
 					<PracticeCard icon="grammar" title={`Chapter exam · ${title}`} right={`${index + 1} of ${items.length}`}>
-						<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang="sk" data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
+						<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang={lang?.code} data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
 							{item!.before}
 							<span className="q-blank mx-0.5 w-[5ch]" aria-label="blank" />
 							{item!.after}
@@ -205,7 +207,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 								const chosen = picked === i;
 								const isAnswer = o === item!.answer;
 								return (
-									<OptionTile key={i} n={i + 1} lang="sk" testId={`exam-option-${i}`} disabled={picked !== null} onClick={() => pick(i)} state={picked === null ? "idle" : isAnswer ? "right" : chosen ? "wrong" : "dim"}>
+									<OptionTile key={i} n={i + 1} lang={lang?.code} testId={`exam-option-${i}`} disabled={picked !== null} onClick={() => pick(i)} state={picked === null ? "idle" : isAnswer ? "right" : chosen ? "wrong" : "dim"}>
 										{o}
 									</OptionTile>
 								);
@@ -233,10 +235,10 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 								<p className={cn("font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]", right ? "text-teal-2" : "text-miss")}>{right ? "Right" : "Not quite"}</p>
 								{!right && (
 									<p className="mt-1 font-prose text-[15px] text-foreground">
-										The answer is <span className="font-semibold" lang="sk">{item!.answer}</span>.
+										The answer is <span className="font-semibold" lang={lang?.code}>{item!.answer}</span>.
 									</p>
 								)}
-								<p className="mt-1 font-prose text-[15px] text-foreground" lang="sk">
+								<p className="mt-1 font-prose text-[15px] text-foreground" lang={lang?.code}>
 									{item!.sentence}
 								</p>
 								<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">{item!.translation}</p>

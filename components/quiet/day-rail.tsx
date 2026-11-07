@@ -79,7 +79,7 @@ export const TASK_LABEL: Record<PlanTask["id"], string> = {
 	read: "Read",
 	watch: "Watch",
 	speak: "Speak",
-	fluency: "Say it faster",
+	fluency: "Speed",
 };
 
 export const TASK_ICON: Record<PlanTask["id"], QIconName> = {
@@ -170,7 +170,7 @@ export function DayRail({ s }: { s: Summary | null }) {
 
 					<div className="q-r-today">
 						<h2>Progress</h2>
-						<p className="first-letter:uppercase" lang="sk">
+						<p className="first-letter:uppercase" lang={lang?.code}>
 							{date}
 						</p>
 					</div>
@@ -209,7 +209,7 @@ function goalLine(s: Summary): React.ReactNode {
 			{avg !== undefined && s.pace && (
 				<>
 					{" "}
-					You average {avg} of {s.pace.goalMinutes} min a day this week.
+					You average {avg} of {s.pace.goalMinutes} min a day over the last {s.pace.windowDays} days.
 				</>
 			)}
 		</>

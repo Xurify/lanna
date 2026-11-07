@@ -75,7 +75,7 @@ html[data-keyboard] :focus-visible {
 	--q-ink: #16181b;
 	--q-ink-2: #3f444a;
 	--q-ink-3: #656b72;
-	--q-ink-4: #8c9197;
+	--q-ink-4: #70757b;
 	--q-teal: #0d6764;
 	--q-teal-2: #0a5452;
 	--q-teal-wash: #e8f2f1;
@@ -91,10 +91,12 @@ html[data-keyboard] :focus-visible {
 	--q-miss-wash: #fbeceb;
 	--q-shadow-rgb: 22 24 27;
 	--q-hair: 0 0 0 1px var(--q-line);
-	/* A text field's surface (.q-field). Day sits it on the well; Night needs the next step up, because the Night well (#1a1d1f) is almost the card (#1b1e21) and a field there could not be seen. */
+	/* A text field's surface (.q-field). Day sits it on the well; Night uses the next step up (well-2), so a field on a well still shows. */
 	--q-field: var(--q-well);
 	--q-raise: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 6px 16px -8px rgb(var(--q-shadow-rgb) / 0.1);
 	--q-raise-hi: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 16px 36px -14px rgb(var(--q-shadow-rgb) / 0.16);
+	/* The selected segment of a segmented control (.q-segc): the card in Day; Night lifts it above its well-2 track, which is lighter than the card. */
+	--q-seg-on: var(--q-card);
 	--q-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
 	--radius: 8px;
@@ -129,38 +131,47 @@ html[data-keyboard] :focus-visible {
 }
 
 /* Night, derived from Day. Grounds #ffffff / #f6f6f4 / #f5f5f3 / #ededea
-   become #101214 / #16181a / #1a1d1f / #23272a; lines #e8e8e5 / #d8d9d5
-   become #26292c / #353a3e; the four ink steps invert; the teal, its wash
+   become #101214 / #16181a / #24282c / #2d3236; lines #e8e8e5 / #d8d9d5
+   become #2f3438 / #454b51; the four ink steps invert; the teal, its wash
    and its line are re-picked so teal text on the ground keeps Day's contrast.
-   Shadows stay black at the same opacities. */
+   In Night a surface is seen by being lighter, so the wells sit above the
+   card (#1c1f22), not below it: at #1a1d1f the well was 1.01:1 against the
+   card and the Speed windows, stat cells and tiles inside a card vanished
+   (owner, 2026-11-07). Every step is now at least 1.12:1 from its neighbour,
+   lines at least 1.3:1 on the card, ink-4 at least 4.5:1 on the card in both
+   themes. Black shadows cannot be seen on a dark ground, so a raised surface
+   carries a faint light hairline instead. */
 .dark,
 :root[data-theme="night"] {
 	color-scheme: dark;
 	--q-bg: #101214;
-	--q-card: #1b1e21;
+	--q-card: #1c1f22;
 	--q-side: #16181a;
-	--q-well: #1a1d1f;
-	--q-well-2: #23272a;
-	--q-field: #23272a;
-	--q-line: #26292c;
-	--q-line-2: #353a3e;
+	--q-well: #24282c;
+	--q-well-2: #2d3236;
+	--q-field: #2d3236;
+	--q-line: #2f3438;
+	--q-line-2: #454b51;
 	--q-ink: #ecedee;
 	--q-ink-2: #c3c7cb;
 	--q-ink-3: #9399a0;
-	--q-ink-4: #6e747b;
+	--q-ink-4: #858b92;
 	--q-teal: #4cbdb7;
 	--q-teal-2: #7bd3ce;
-	--q-teal-wash: #12302f;
+	--q-teal-wash: #143634;
 	--q-teal-line: #1f5552;
 	--q-bar: #7d838a;
-	--q-bar-hatch-a: #4a4f55;
-	--q-bar-hatch-b: #353a3e;
-	--q-box: #4a4f55;
-	--q-dash: #4a4f55;
+	--q-bar-hatch-a: #565c62;
+	--q-bar-hatch-b: #3d4247;
+	--q-box: #565c62;
+	--q-dash: #565c62;
 	--q-on-teal: #06201f;
 	--q-miss: #f0867b;
-	--q-miss-wash: #2d1a18;
+	--q-miss-wash: #40231f;
 	--q-shadow-rgb: 0 0 0;
+	--q-raise: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 16px -8px rgb(0 0 0 / 0.5);
+	--q-raise-hi: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 36px -14px rgb(0 0 0 / 0.6);
+	--q-seg-on: #3c4247;
 	--lh-ink-strong: var(--foreground);
 	--lh-ink-italic: var(--foreground);
 }
@@ -170,30 +181,33 @@ html[data-keyboard] :focus-visible {
 	:root:not([data-theme="day"]) {
 		color-scheme: dark;
 		--q-bg: #101214;
-		--q-card: #1b1e21;
+		--q-card: #1c1f22;
 		--q-side: #16181a;
-		--q-well: #1a1d1f;
-		--q-well-2: #23272a;
-		--q-field: #23272a;
-		--q-line: #26292c;
-		--q-line-2: #353a3e;
+		--q-well: #24282c;
+		--q-well-2: #2d3236;
+		--q-field: #2d3236;
+		--q-line: #2f3438;
+		--q-line-2: #454b51;
 		--q-ink: #ecedee;
 		--q-ink-2: #c3c7cb;
 		--q-ink-3: #9399a0;
-		--q-ink-4: #6e747b;
+		--q-ink-4: #858b92;
 		--q-teal: #4cbdb7;
 		--q-teal-2: #7bd3ce;
-		--q-teal-wash: #12302f;
+		--q-teal-wash: #143634;
 		--q-teal-line: #1f5552;
 		--q-bar: #7d838a;
-		--q-bar-hatch-a: #4a4f55;
-		--q-bar-hatch-b: #353a3e;
-		--q-box: #4a4f55;
-		--q-dash: #4a4f55;
+		--q-bar-hatch-a: #565c62;
+		--q-bar-hatch-b: #3d4247;
+		--q-box: #565c62;
+		--q-dash: #565c62;
 		--q-on-teal: #06201f;
 		--q-miss: #f0867b;
-		--q-miss-wash: #2d1a18;
+		--q-miss-wash: #40231f;
 		--q-shadow-rgb: 0 0 0;
+		--q-raise: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 16px -8px rgb(0 0 0 / 0.5);
+		--q-raise-hi: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 36px -14px rgb(0 0 0 / 0.6);
+		--q-seg-on: #3c4247;
 		--lh-ink-strong: var(--foreground);
 		--lh-ink-italic: var(--foreground);
 	}

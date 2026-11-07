@@ -194,7 +194,7 @@ export function CoverageMenuBody({
 			{busy ? (
 				<span className="flex items-center gap-1.5 text-muted-foreground" data-testid="ctx-coverage-running">
 					<span className="size-1.5 animate-pulse rounded-full bg-foreground/70" aria-hidden />
-					Adding what this session taught…
+					Adding what this chat taught…
 				</span>
 			) : complete ? (
 				<span className="text-muted-foreground">Everything here is in your skill map.</span>
@@ -302,7 +302,7 @@ export function CoverageRing({ chatId, refreshKey = 0 }: { chatId: string; refre
 		<div ref={rootRef} className="lh-no-drag relative shrink-0">
 			<Hint
 				// Trimmed (owner, subtlety round 2026-09-25).
-				label="How much of this session isn't mapped yet"
+				label="How much of this chat is not in your skill map yet"
 				side="bottom"
 			>
 				<button
@@ -363,17 +363,17 @@ export function CoverageRingDetail({ coverage, chunkTokens }: { coverage: Sessio
 	return (
 		<>
 			<div className="mb-2 text-xs font-medium text-muted-foreground">
-				Extraction coverage
+				Skill map
 			</div>
 			<div className="flex flex-col gap-1 text-muted-foreground">
 				<div className="flex justify-between gap-2">
-					<span>Uncovered</span>
+					<span>Not added yet</span>
 					<span className="tabular-nums text-card-foreground">
 						{formatTokens(coverage.uncoveredTokens)} tokens
 					</span>
 				</div>
 				<div className="flex justify-between gap-2">
-					<span>Covered</span>
+					<span>Added</span>
 					<span className="tabular-nums text-card-foreground">
 						{formatTokens(coverage.coveredTokens)} tokens
 					</span>
@@ -385,13 +385,13 @@ export function CoverageRingDetail({ coverage, chunkTokens }: { coverage: Sessio
 					</span>
 				</div>
 				<div className="flex justify-between gap-2">
-					<span>Chunk threshold</span>
+					<span>Adds after</span>
 					<span className="tabular-nums text-card-foreground">
 						{formatTokens(chunkTokens)} tokens
 					</span>
 				</div>
 				<div className="flex justify-between gap-2">
-					<span>Last extraction</span>
+					<span>Last added</span>
 					<span className="tabular-nums text-card-foreground">
 						{coverage.lastFoldedAt ? timeAgo(coverage.lastFoldedAt) : "—"}
 					</span>
@@ -399,7 +399,7 @@ export function CoverageRingDetail({ coverage, chunkTokens }: { coverage: Sessio
 				{coverage.running && (
 					<div className="flex justify-between gap-2" data-testid="coverage-ring-running">
 						<span>Status</span>
-						<span className="text-card-foreground">extracting…</span>
+						<span className="text-card-foreground">adding…</span>
 					</div>
 				)}
 			</div>

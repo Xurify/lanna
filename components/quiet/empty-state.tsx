@@ -31,7 +31,7 @@ export function KeyNote({ children = "New ones are written with an AI key." }: {
 			<span>
 				{children}{" "}
 				<SettingsLink keys className="text-ink-2 underline decoration-line-2 underline-offset-[3px]">
-					Add one in Settings, API keys.
+					Add one in Settings → API keys.
 				</SettingsLink>
 			</span>
 		</p>

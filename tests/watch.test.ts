@@ -383,6 +383,28 @@ test("recordWatch counts the measured playing time, and the log keeps the minute
 
 const czechCaptions = async (id: string) => ({ ...(await captions(id)), source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const } });
 
+test("Prepare in the background answers once the lines are being translated, and the task finishes the video", async () => {
+	// A slow model: the translation streams for a moment, and the answer must not wait for it.
+	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 }, tokensPerSecond: 200 });
+	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const engine = { model: faux.getModel(), streamFn: faux.streamSimple };
+	const id = "BGBGBGBGBG1";
+	const out = await watch.prepareVideoInBackground(`https://youtu.be/${id}`, { engine, model: "faux:watch", captions, pollMs: 5 });
+	assert.deepEqual(out, { background: true, id });
+	assert.equal(videoStore.get(id), null, "not kept yet when the answer comes");
+	for (let i = 0; i < 400 && !["done", "error"].includes(watch.prepareStage(id)?.stage ?? ""); i++) await new Promise((r) => setTimeout(r, 25));
+	assert.equal(watch.prepareStage(id)?.error, undefined);
+	assert.equal(videoStore.get(id)?.title, "Bratislava za jeden deň");
+
+	const kept = await watch.prepareVideoInBackground(`https://youtu.be/${id}`, { engine: fauxEngine([]), captions });
+	assert.ok("segments" in kept, "a kept video comes back whole");
+
+	const noCaptions = async () => {
+		throw new Error("The captions are empty.");
+	};
+	await assert.rejects(watch.prepareVideoInBackground("https://youtu.be/BGBGBGBGBG2", { engine: fauxEngine([]), captions: noCaptions }), /captions are empty/, "a captions error is the answer, not a silent task");
+});
+
 test("a video with only Czech captions is prepared, kept as Czech, and the translator is told it is Czech", async () => {
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
 	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify({ t: lines.map(() => "Ahoj") })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);

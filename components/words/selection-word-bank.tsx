@@ -502,7 +502,7 @@ export function SelectionWordBankBar() {
 
 	const secondaryGloss =
 		translationMode === "google" && lookup?.dictionaryGloss && lookup.dictionaryGloss !== primaryGloss
-			? `Dict: ${lookup.dictionaryGloss}`
+			? `Dictionary: ${lookup.dictionaryGloss}`
 			: translationMode === "hybrid" &&
 				  lookup?.googleTranslation &&
 				  lookup.gloss &&
@@ -609,7 +609,7 @@ export function SelectionWordBankBar() {
 								type="button"
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={cycleTranslationMode}
-								title={`Translation mode: ${translationMode} (click to switch between Dictionary, Hybrid, and Google)`}
+								title={`Translation: ${translationMode === "dictionary" ? "Dictionary" : translationMode === "hybrid" ? "Hybrid" : "Google Translate"}. Click to switch.`}
 								data-testid="selection-mode-toggle"
 								className={cn(
 									"rounded-md px-1.5 py-0.5 font-ui text-[10px] font-semibold transition-colors",
@@ -678,7 +678,7 @@ export function SelectionWordBankBar() {
 							</div>
 						) : (
 							<p className="font-ui text-xs text-muted-foreground">
-								No offline gloss — use quick dictionary links below or save to bank.
+								No dictionary entry. Try the links below, or save the phrase.
 							</p>
 						)}
 					</div>
@@ -699,16 +699,20 @@ export function SelectionWordBankBar() {
 								<span>·</span>
 							</>
 						)}
-						<a
-							href={wiktionaryUrl}
-							target="_blank"
-							rel="noreferrer"
-							onMouseDown={(e) => e.stopPropagation()}
-							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
-						>
-							Wiktionary <ExternalLinkIcon className="size-2.5" />
-						</a>
-						<span>·</span>
+						{!/wiktionary/i.test(referenceLabel ?? "") && (
+							<>
+								<a
+									href={wiktionaryUrl}
+									target="_blank"
+									rel="noreferrer"
+									onMouseDown={(e) => e.stopPropagation()}
+									className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+								>
+									Wiktionary <ExternalLinkIcon className="size-2.5" />
+								</a>
+								<span>·</span>
+							</>
+						)}
 						<a
 							href={deeplUrl}
 							target="_blank"
@@ -771,12 +775,12 @@ export function SelectionWordBankBar() {
 							{wordSaved ? (
 								<>
 									<CheckIcon className="size-3.5" />
-									In Word Bank
+									Favorite
 								</>
 							) : (
 								<>
 									<StarIcon className="size-3.5" />
-									+ Word Bank
+									Add to favorites
 								</>
 							)}
 						</button>
@@ -800,12 +804,12 @@ export function SelectionWordBankBar() {
 						{phraseSaved ? (
 							<>
 								<BookmarkCheckIcon className="size-3.5" />
-								Phrase Saved
+								Phrase saved
 							</>
 						) : (
 							<>
 								<BookmarkIcon className="size-3.5" />
-								Save Phrase
+								Save phrase
 							</>
 						)}
 					</button>

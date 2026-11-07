@@ -167,7 +167,7 @@ export interface Feature {
 export const FEATURES: readonly Feature[] = [
 	{
 		id: "speed-fast",
-		title: "Say it faster",
+		title: "Speed",
 		route: "/speed",
 		evidence: "Saying the same lines again is the idea behind the 4/3/2 technique (Maurice 1983; Nation 1989), and repeating the same speaking task raised fluency in experiments (de Jong & Perfetti 2011; Lambert, Kormos & Minn 2017; Thai & Boers 2016).",
 		limits: "What the studies support is the repetition. The shrinking time window is our design on top of it, kept on purpose: Boers (2014) and Thai & Boers (2016) found tighter time limits did not add fluency and could cost accuracy, which is why a spoken pass counts only if it was also clear. The gains are on the repeated content; nothing here shows you get quicker on new sentences.",
@@ -297,7 +297,7 @@ export const FEATURES: readonly Feature[] = [
 		route: "/progress",
 		evidence: "Related languages give a learning head start (Ringbom 2007), and spaced daily practice is the efficient way to spend minutes (Cepeda et al. 2006; Bahrick et al. 1993).",
 		limits: "The hours per level are taken between English-course figures and government course figures (Cambridge English; the US Foreign Service Institute), which are classroom hours, not self-study minutes. The head start in hours is the app's subtraction, not a result from the book.",
-		ours: "Every hour figure, the head-start estimate, and the map-credited hours.",
+		ours: "Every hour figure, the head-start estimate, and the guided hours credited for finished units.",
 		sources: ["ringbom2007", "cepeda2006", "bahrick1993", "kim2022"],
 	},
 	{

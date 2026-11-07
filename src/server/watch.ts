@@ -665,7 +665,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		let model = opts.model;
 		if (!engine) {
 			const resolved = storyEngine();
-			if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+			if (!resolved) throw new Error("No model is configured. Pick one in Settings → AI models.");
 			engine = resolved.engine;
 			model ??= resolved.model;
 		}
@@ -739,6 +739,33 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			throw err;
 		})
 		.finally(() => inFlight.delete(key));
+}
+
+/** Start a preparation and answer as soon as it is safely under way: a kept
+ *  video, or an error from the captions step (no captions, a video in another
+ *  language, no model), comes back as before; once the lines are being
+ *  translated, the rest runs as the task and this answers `background`.
+ *  Before, the route ignored `background` and held the request through the
+ *  whole translation, so the shelf showed its own "Adding" row next to the
+ *  task's row for the same video until the end. */
+export async function prepareVideoInBackground(url: string, opts: PrepareOptions & { pollMs?: number } = {}): Promise<VideoRecord | { background: true; id: string }> {
+	const id = parseVideoUrl(url);
+	const job = prepareVideo(url, opts);
+	// A failure after the answer is on the task (failTask), not unhandled here.
+	job.catch(() => undefined);
+	if (!id) return job;
+	let timer: ReturnType<typeof setInterval> | undefined;
+	const underWay = new Promise<{ background: true; id: string }>((resolve) => {
+		timer = setInterval(() => {
+			const s = prepareStage(id)?.stage;
+			if (s === "translating" || s === "questions" || s === "saving") resolve({ background: true, id });
+		}, opts.pollMs ?? 200);
+	});
+	try {
+		return await Promise.race([job, underWay]);
+	} finally {
+		clearInterval(timer);
+	}
 }
 
 // ─── The library ────────────────────────────────────────────────────────────
@@ -953,7 +980,7 @@ export async function checkSentence(input: { videoId: string; lemma: string; sen
 	const same = earlier.find((s) => s.sentence === sentence);
 	if (same) return { ok: same.ok, corrected: same.corrected, why: same.why, cached: true, xp: 0 };
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "test" } : storyEngine();
-	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+	if (!resolved) throw new Error("No model is configured. Pick one in Settings → AI models.");
 	const gloss = video.preTeach.find((w) => w.lemma === lemma)?.gloss ?? video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.gloss ?? "";
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const text = await ask(resolved.engine, sentenceSystem(), `The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`, usage);

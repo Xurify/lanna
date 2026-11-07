@@ -23,6 +23,7 @@ import {
 	mergeSections,
 	parseRepoSheet,
 	parseSheetText,
+	searchSections,
 	REPO_PREFIX,
 	titleSlug,
 	type Cheatsheet,
@@ -121,6 +122,16 @@ export const cheatsheetStore = {
 			if (sheet) out.push(cheatsheetSummary(sheet));
 		}
 		return out.sort((a, b) => b.importedAt.localeCompare(a.importedAt));
+	},
+
+	/** The sheets whose title or any phrase holds the search, newest first. */
+	search(query: string, tag: string): CheatsheetSummary[] {
+		const out: CheatsheetSummary[] = [];
+		for (const summary of this.list()) {
+			const sheet = this.get(summary.id);
+			if (sheet && (searchSections([{ id: "", title: sheet.title, rows: [] }], query, tag).length > 0 || searchSections(sheet.sections, query, tag).length > 0)) out.push(summary);
+		}
+		return out;
 	},
 
 	get(id: string): Cheatsheet | null {

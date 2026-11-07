@@ -23,13 +23,13 @@
  *   - the comprehension check at your level, then the end screen: XP,
  *     lines got first time, words a minute, the words now in your deck.
  *
- * Full screen like a lesson (Escape leaves). Research in src/core/watch.ts.
+ * Full screen like a lesson. X and Escape go back to the shelf, and from the shelf Escape goes to Today. Research in src/core/watch.ts.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, LibraryIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
@@ -51,7 +51,7 @@ import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 
-type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
+type Stage = "shelf" | "preview" | "watch" | "questions" | "end" | "error";
 
 interface Outcome {
 	xp: number;
@@ -78,13 +78,18 @@ const COLUMN = "mx-auto w-full max-w-3xl px-6";
 const SLOW_RATE = 0.75;
 
 export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover }: { initial: WatchState | null; initialVideo?: VideoRecord | null; initialUrl?: string | null; initialDiscover?: DiscoverStateView | null }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const discover = useDiscover(initialDiscover ?? null);
 	const [state, setState] = useState<WatchState | null>(initial);
 	const [video, setVideo] = useState<VideoRecord | null>(initialVideo ?? null);
-	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : initialUrl ? "preparing" : "shelf");
+	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : "shelf");
 	const [error, setError] = useState<PrepareError | null>(null);
 	const [pending, setPending] = useState<string | null>(initialUrl ?? null);
+	// The link being sent to the server: the shelf shows a row for it, and stays usable.
+	const [starting, setStarting] = useState<string | null>(initialUrl ?? null);
+	const stageRef = useRef(stage);
+	stageRef.current = stage;
 	const [mode, setMode] = useState<WatchMode>("step");
 	const [tapped, setTapped] = useState<string[]>([]);
 	const [answers, setAnswers] = useState<number[]>([]);
@@ -150,12 +155,13 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			const id = parseVideoUrl(url);
 			if (!id) {
 				setError({ message: "That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link." });
+				setStarting(null);
 				setStage("error");
 				return;
 			}
 			setPending(url);
 			setError(null);
-			setStage("preparing");
+			setStarting(url);
 			try {
 				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true, ...(range ? { range } : {}) }) });
 				const body = (await res.json()) as VideoRecord | PrepareError | { background: true };
@@ -163,22 +169,25 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				forgetWatchCaches();
 				if ("background" in body) {
 					setPending(null);
-					setStage("shelf");
 					void load();
 					return;
 				}
 				if (!("segments" in body)) throw body;
+				void load();
+				// A kept video opens only if the learner is still on the shelf, not in another video.
+				if (stageRef.current !== "shelf") return;
 				setVideo(body);
 				setTapped([]);
 				setAnswers([]);
 				setStats([]);
 				setOutcome(null);
 				setStage("preview");
-				void load();
 			} catch (err) {
 				const e = err && typeof err === "object" && "message" in err ? (err as PrepareError) : { message: err instanceof Error ? err.message : String(err) };
 				setError(e);
 				setStage("error");
+			} finally {
+				setStarting(null);
 			}
 		},
 		[load],
@@ -192,10 +201,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	const kicked = useRef(false);
 	useEffect(() => {
-		if (kicked.current || stage !== "preparing" || !pending) return;
+		if (kicked.current || !initialUrl || initialVideo) return;
 		kicked.current = true;
-		void prepare(pending, false, false, rangeRef.current);
-	}, [stage, pending, prepare]);
+		void prepare(initialUrl, false, false, rangeRef.current);
+	}, [initialUrl, initialVideo, prepare]);
 
 	/** The video is in another language of the learner's: run that language and
 	 *  open the link there, where the page prepares it. */
@@ -276,33 +285,18 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		[video, saving, mode, tapped, load, activeTime],
 	);
 
-	// Escape leaves, like a lesson — unless a word popover is open.
+	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to Today; a word popover closes first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape" && !document.querySelector("[data-word-popover]")) router.push("/");
+			if (e.key !== "Escape" || document.querySelector("[data-word-popover]") || document.querySelector("[role=dialog]")) return;
+			if (stageRef.current === "shelf") router.push("/");
+			else setStage("shelf");
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
 	}, [router]);
 
 	const onTap = (key: string) => setTapped((t) => (t.includes(key) ? t : [...t, key]));
-
-	if (stage === "preparing") {
-		return (
-			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="watch-preparing">
-					<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-						<MonitorPlayIcon className="size-9 lh-flicker" />
-					</div>
-					<h1 className="mt-5 font-ui text-3xl font-[600] text-foreground">Starting…</h1>
-					<p className="mt-2 font-prose text-lg text-muted-foreground">The video is prepared in the background. You can leave this page; a notice shows when it is ready.</p>
-					<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground" data-testid="watch-stage">
-						<LoaderCircleIcon className="size-4 animate-spin" />
-					</p>
-				</div>
-			</Frame>
-		);
-	}
 
 	if (stage === "error") {
 		return (
@@ -334,10 +328,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 							</button>
 						}
 					>
-						{error?.meta?.title && <p lang="sk">{error.meta.title}</p>}
+						{error?.meta?.title && <p lang={lang?.code}>{error.meta.title}</p>}
 						<p>{error?.message ?? "Something went wrong."}</p>
 						{moveError && <p role="alert">{moveError}</p>}
-						<p>Videos you have already prepared still play from your list.</p>
+						<p>Videos you have already prepared still play from My videos.</p>
 					</EmptyState>
 				</div>
 			</Frame>
@@ -346,7 +340,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} running={running} discover={discover} onOpen={open} onPrepare={(url, range) => void prepare(url, false, false, range)} onDelete={(id) => void remove(id)} />
+			<Shelf state={state} running={running} starting={starting} discover={discover} onOpen={open} onPrepare={(url, range) => void prepare(url, false, false, range)} onDelete={(id) => void remove(id)} />
 		);
 	}
 
@@ -417,14 +411,15 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 }
 
 function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord; step: string; progress: number; onShelf: () => void; right?: React.ReactNode }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<Link href="/" aria-label="Leave the video" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+				<button type="button" onClick={onShelf} aria-label="Back to your videos" title="Back to your videos" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-leave">
 					<XIcon className="size-5" />
-				</Link>
+				</button>
 				<div className="min-w-0 flex-1">
-					<p className="truncate font-ui text-sm font-[600] text-foreground" lang="sk">
+					<p className="truncate font-ui text-sm font-[600] text-foreground" lang={lang?.code}>
 						{video.title} <span className="text-muted-foreground">· {step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
@@ -432,10 +427,6 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 					</div>
 				</div>
 				{right}
-				<button type="button" onClick={onShelf} aria-label="Your videos" title="Your videos" className="-mr-1.5 flex items-center gap-1.5 rounded-lg p-1.5 text-[13px] font-[550] text-muted-foreground hover:bg-accent hover:text-foreground">
-					<LibraryIcon className="size-5" />
-					<span className="max-sm:hidden">Videos</span>
-				</button>
 			</div>
 		</div>
 	);
@@ -444,6 +435,7 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
 function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
+	const lang = useActiveLanguage();
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
 	const kind = coverageKind({ lang: video.lang, trackLang: video.source.trackLang, estimated: video.coverageEstimated });
@@ -486,7 +478,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 						<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
 							<div>
 								<p className="font-ui text-2xl font-[600] text-foreground">{captionLanguageName(video.source.trackLang)} captions</p>
-								<p className="font-ui text-sm font-[600] text-muted-foreground">No known-word share</p>
+								<p className="font-ui text-sm font-[600] text-muted-foreground">Not matched to your words</p>
 							</div>
 						</div>
 					) : (
@@ -504,7 +496,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 					<div className="rounded-lg border bg-card px-5 py-4">
 						<p className="font-prose text-base leading-snug text-foreground">{kind === "none" ? `The captions are ${captionLanguageName(video.source.trackLang)}, so their words are not matched against your ${captionLanguageName(video.lang)}. Regenerate to get an estimate from a ${captionLanguageName(video.lang)} rendering of them.` : kind === "estimated" ? `${band.line} An estimate: measured on a ${captionLanguageName(video.lang)} rendering of the ${captionLanguageName(video.source.trackLang)} captions.` : band.line}</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
-							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
+							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · {video.questions.length} {video.questions.length === 1 ? "question" : "questions"} at {video.level}
 						</p>
 					</div>
 				</div>
@@ -520,7 +512,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 									</button>
 									<span className="min-w-0 flex-1">
 										<span className="flex flex-wrap items-baseline gap-x-2">
-											<span className="font-ui text-lg font-[600] text-foreground" lang="sk">
+											<span className="font-ui text-lg font-[600] text-foreground" lang={lang?.code}>
 												{w.lemma}
 											</span>
 											<span className="font-prose text-base text-foreground">{w.gloss}</span>
@@ -529,7 +521,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 											<Tag>{w.count === 1 ? "once" : `${w.count}× in the video`}</Tag>
 											{w.cat && <Tag>{w.cat.toLowerCase()}</Tag>}
 										</span>
-										<span className="mt-1 block truncate font-prose text-xs text-muted-foreground" lang="sk" title={w.example}>
+										<span className="mt-1 block truncate font-prose text-xs text-muted-foreground" lang={lang?.code} title={w.example}>
 											{w.example}
 										</span>
 									</span>
@@ -546,14 +538,14 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 							Line by line
 							<kbd className="ml-auto rounded-md border bg-card px-1.5 font-ui text-xs font-[600] text-muted-foreground">Enter</kbd>
 						</span>
-						<span className="mt-1 block font-prose text-sm text-foreground/80">Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. The one for assembling meaning at speed.</span>
+						<span className="mt-1 block font-prose text-sm text-foreground/80">Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. It trains putting meaning together at speed.</span>
 					</button>
 					<button type="button" onClick={() => onStart("flow")} className="rounded-lg border bg-card p-5 text-left transition-colors hover:shadow-raise-hi" data-testid="watch-start-flow">
 						<span className="flex items-center gap-2 font-ui text-lg font-[600] text-foreground">
 							<ListIcon className="size-5 text-muted-foreground" />
 							Straight through
 						</span>
-						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles live under the video, the whole transcript below. Click any line to jump. Tap any word.</span>
+						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles show under the video and the whole transcript below it. Tap a line to jump to it, or a word for its meaning.</span>
 					</button>
 				</div>
 
@@ -577,13 +569,14 @@ function Ring({ value, floor, tone }: { value: number; floor: number; tone: stri
 	const c = 2 * Math.PI * r;
 	const angle = (p: number) => -90 + p * 360;
 	const mark = (p: number, radius: number) => ({ x: 32 + radius * Math.cos((angle(p) * Math.PI) / 180), y: 32 + radius * Math.sin((angle(p) * Math.PI) / 180) });
-	const a = mark(floor, r - 6);
-	const b = mark(floor, r + 6);
+	// The floor tick spans the track exactly, so it reads as a mark on the ring, not a stray stroke beside it.
+	const a = mark(floor, r - 3);
+	const b = mark(floor, r + 3);
 	return (
 		<svg viewBox="0 0 64 64" className="size-20 shrink-0" aria-hidden="true">
-			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-accent" />
+			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-well-2" />
 			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className={tone} strokeDasharray={`${c * Math.max(0.01, value)} ${c}`} transform="rotate(-90 32 32)" />
-			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" className="text-foreground/50" />
+			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-ink-2" />
 			<text x="32" y="36" textAnchor="middle" className="fill-current font-ui text-[15px] font-[600] text-foreground">
 				{Math.round(value * 100)}%
 			</text>
@@ -658,6 +651,7 @@ interface LineState {
 const fresh = (): LineState => ({ replays: 0, slow: false, revealedText: false, revealedMeaning: false });
 
 function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying, onReady, onDeciding }: { video: VideoRecord; mode: WatchMode; tapped: string[]; onTap: (key: string) => void; onMode: (m: WatchMode) => void; onShelf: () => void; onDone: (stats: SegmentStat[]) => void; onPlaying: (on: boolean) => void; onReady: (on: boolean) => void; onDeciding: (on: boolean) => void }) {
+	const lang = useActiveLanguage();
 	const holder = useRef<HTMLDivElement>(null);
 	const player = useRef<YTPlayer | null>(null);
 	const [ready, setReady] = useState(false);
@@ -1023,13 +1017,13 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					{/* Both subtitles */}
 					<div className="mt-4 min-h-[7.5rem]" data-word-column data-word-lookup-enabled="true" data-testid="watch-subtitles">
 						{step && prev && (
-							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang="sk" aria-hidden="true">
+							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang={lang?.code} aria-hidden="true">
 								{prev.sk}
 							</p>
 						)}
 						<div className={cn("rounded-lg border px-5 py-4 transition-colors", miss ? "border-miss bg-miss-soft" : atEnd && step ? "border-teal-line bg-card" : "bg-card")}>
 							{textShown ? (
-								<p className="font-prose text-[1.5rem] leading-[1.5] text-foreground" lang="sk" data-testid="watch-sk">
+								<p className="font-prose text-[1.5rem] leading-[1.5] text-foreground" lang={lang?.code} data-testid="watch-sk">
 									{seg.tokens.map((t, j) =>
 										t.word ? (
 											<Word
@@ -1080,7 +1074,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 									>
 										<span className="w-12 shrink-0 font-ui text-xs font-[600] tabular-nums text-muted-foreground">{formatClock(s.start)}</span>
 										<span className="min-w-0 flex-1">
-											<span className={cn("block font-prose text-base", s.i === idx ? "text-foreground" : "text-foreground/80")} lang="sk">
+											<span className={cn("block font-prose text-base", s.i === idx ? "text-foreground" : "text-foreground/80")} lang={lang?.code}>
 												{s.sk}
 											</span>
 											{showEn && <span className="block font-prose text-sm text-muted-foreground">{s.en}</span>}
@@ -1129,7 +1123,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 							)
 						) : (
 							<button type="button" onClick={() => onDone(statsOf())} className={PRIMARY} data-testid="watch-finish">
-								{video.questions.length ? `${video.questions.length} quick questions` : "Done"}
+								{video.questions.length ? `Answer ${video.questions.length} ${video.questions.length === 1 ? "question" : "questions"}` : "Done"}
 							</button>
 						)}
 						<button type="button" onClick={() => (step && idx + 1 >= segs.length ? onDone(statsOf()) : goTo(idx + 1))} aria-label="Next line" className="flex size-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-next">
@@ -1188,6 +1182,7 @@ function SentenceStep({ videoId, targets }: { videoId: string; targets: Sentence
 }
 
 function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTarget }) {
+	const lang = useActiveLanguage();
 	const [text, setText] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [reply, setReply] = useState<SentenceReply | null>(null);
@@ -1216,10 +1211,10 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	};
 	return (
 		<li className="q-card px-4 py-3.5" data-testid="watch-sentence">
-			<p className="font-ui text-[17px] font-[600] text-foreground" lang="sk">
+			<p className="font-ui text-[17px] font-[600] text-foreground" lang={lang?.code}>
 				{target.lemma}
 			</p>
-			<p className="mt-1 font-prose text-sm text-ink-3" lang="sk">
+			<p className="mt-1 font-prose text-sm text-ink-3" lang={lang?.code}>
 				From the video: {target.line}
 			</p>
 			{reply && (
@@ -1232,7 +1227,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 					value={text}
 					onChange={(e) => setText(e.target.value)}
 					disabled={accepted || busy}
-					lang="sk"
+					lang={lang?.code}
 					autoComplete="off"
 					spellCheck={false}
 					maxLength={SENTENCE_MAX_CHARS}
@@ -1254,7 +1249,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 					{!reply.ok && reply.corrected && reply.corrected !== text.trim() && (
 						<>
 							<br />
-							Try: <span lang="sk">{reply.corrected}</span>
+							Try: <span lang={lang?.code}>{reply.corrected}</span>
 						</>
 					)}
 				</p>
@@ -1264,6 +1259,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 }
 
 function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
 	const judged = stats.length;
@@ -1285,7 +1281,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 				<MonitorPlayIcon className="size-12" />
 			</div>
 			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang="sk">
+			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
 				{video.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
@@ -1295,8 +1291,8 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 			</div>
 			{mode === "step" && judged > 0 && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="watch-speed">
-					{speed.wpmFirst !== null ? `On the lines you got first time the speech ran at ${speed.wpmFirst} words a minute` : "No line got on the first listen yet"}
-					{speed.wpmAll ? ` · the video runs at ${speed.wpmAll}` : ""}. {Math.round(speed.shareFirst * 100)}% first time
+					{speed.wpmFirst !== null ? `On the lines you got the first time, the speech ran at ${speed.wpmFirst} words a minute` : "You got no line on the first listen this time"}
+					{speed.wpmAll ? `; the whole video runs at ${speed.wpmAll}` : ""}. You got {Math.round(speed.shareFirst * 100)}% the first time
 					{outcome && outcome.missed > 0 ? `, ${outcome.missed} not yet` : ""}.
 				</p>
 			)}
@@ -1315,7 +1311,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 					Watch again
 				</button>
 				<button type="button" onClick={onShelf} className={PRIMARY} data-testid="watch-shelf-button">
-					Your videos
+					Pick another video
 				</button>
 			</div>
 			<SourcesNote feature="watch" className="mt-8 text-left" />

@@ -1,12 +1,12 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, PencilIcon, PlusIcon, RepeatIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, PencilIcon, PlusIcon, RepeatIcon, SearchIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
-import { CheatsheetParseError, cheatsheetRowCount, countOverlap, formatSheetText, parseSheetText, type Cheatsheet, type CheatRow, type CheatsheetSummary, type CheatSection } from "@/src/core";
+import { CheatsheetParseError, cheatsheetRowCount, countOverlap, formatSheetText, parseSheetText, searchSections, type Cheatsheet, type CheatRow, type CheatsheetSummary, type CheatSection } from "@/src/core";
 
 interface ReviewState {
 	inDictionary: number;
@@ -26,10 +26,43 @@ function setSheetInUrl(id: string | null) {
 	window.history.replaceState(null, "", url);
 }
 
+function SearchField({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+	return (
+		<div className="relative min-w-0 flex-1">
+			<SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
+			<input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} autoComplete="off" spellCheck={false} className="q-field h-10 w-full rounded-xl pl-10 pr-10 font-prose text-[15px]" />
+			{value && (
+				<button type="button" onClick={() => onChange("")} aria-label="Clear the search" className="absolute right-2.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-ink-3 hover:bg-well hover:text-foreground">
+					<XIcon className="size-4" />
+				</button>
+			)}
+		</div>
+	);
+}
+
 export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: string; onCount?: (n: number) => void }) {
 	const [sheets, setSheets] = useState<CheatsheetSummary[] | null>(null);
 	const [openId, setOpenId] = useState<string | null>(initialSheet ?? null);
 	const [creating, setCreating] = useState(false);
+	const [query, setQuery] = useState("");
+	// The sheets whose title or phrases hold the search; null while the answer is on its way.
+	const [found, setFound] = useState<CheatsheetSummary[] | null>(null);
+
+	useEffect(() => {
+		const q = query.trim();
+		if (!q) return;
+		const ctl = new AbortController();
+		const t = window.setTimeout(() => {
+			void fetch(`/api/cheatsheets?q=${encodeURIComponent(q)}`, { signal: ctl.signal })
+				.then((res) => (res.ok ? (res.json() as Promise<{ sheets: CheatsheetSummary[] }>) : null))
+				.then((data) => setFound(data?.sheets ?? []))
+				.catch(() => {});
+		}, 150);
+		return () => {
+			window.clearTimeout(t);
+			ctl.abort();
+		};
+	}, [query]);
 
 	const load = useCallback(async () => {
 		const res = await fetch("/api/cheatsheets").catch(() => null);
@@ -67,19 +100,23 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 		);
 	}
 
+	const searching = query.trim() !== "";
+	const shownSheets = searching ? found : sheets;
+
 	return (
 		<div className="space-y-4" data-testid="cheatsheets">
-			<div className="flex justify-end">
-				<button type="button" className="q-btn primary" onClick={() => setCreating(true)} data-testid="cheatsheet-new">
+			<div className="flex items-center gap-3">
+				<SearchField value={query} onChange={(v) => { setQuery(v); if (!v.trim()) setFound(null); }} placeholder="Search your cheatsheets and their phrases" label="Search cheatsheets" />
+				<button type="button" className="q-btn primary shrink-0" onClick={() => setCreating(true)} data-testid="cheatsheet-new">
 					<PlusIcon className="size-4" />
 					New cheatsheet
 				</button>
 			</div>
 
 			<div className="min-h-[120px]">
-				{sheets && sheets.length > 0 && (
+				{shownSheets && shownSheets.length > 0 && (
 					<ul className="q-card divide-y divide-border/70 overflow-hidden" data-testid="cheatsheet-list">
-						{sheets.map((s) => (
+						{shownSheets.map((s) => (
 							<li key={s.id}>
 								<button type="button" onClick={() => open(s.id)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-well">
 									<FileTextIcon className="size-4 shrink-0 text-ink-3" />
@@ -94,9 +131,14 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 						))}
 					</ul>
 				)}
-				{sheets && sheets.length === 0 && (
+				{searching && found?.length === 0 && (
+					<EmptyState testid="cheatsheets-no-match" title="Nothing matches">
+						<p>No cheatsheet has that in its title or its phrases. Accents are optional.</p>
+					</EmptyState>
+				)}
+				{!searching && sheets && sheets.length === 0 && (
 					<EmptyState testid="cheatsheets-empty" title="No cheatsheets yet">
-						<p>A cheatsheet is a list of phrases you keep at hand. Add one phrase per line.</p>
+						<p>A cheatsheet is a list of phrases you keep at hand. Press New cheatsheet to make one.</p>
 					</EmptyState>
 				)}
 			</div>
@@ -462,7 +504,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 		setSaving(false);
 		if (!res) return setServerError("The app did not answer. Try again.");
 		const data = (await res.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string };
-		if (!res.ok || !data.sheet) return setServerError(data.message ?? "The cheatsheet was not saved.");
+		if (!res.ok || !data.sheet) return setServerError(data.message ?? "The cheatsheet was not saved. Try again.");
 		onSaved(data.sheet);
 	};
 
@@ -574,7 +616,7 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 						</div>
 					) : (
 						<div className="space-y-2">
-							<span className="block font-ui text-xs text-ink-3">One phrase per line: phrase | say it | meaning. A line with no | is a section name.</span>
+							<span className="block font-ui text-xs text-ink-3">One phrase per line: phrase | say it | meaning | note. A line with no | is a section name.</span>
 							<textarea
 								value={text}
 								onChange={(e) => {
@@ -653,6 +695,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 	const [confirmRemove, setConfirmRemove] = useState(false);
 	const [dialog, setDialog] = useState<DialogMode | null>(null);
 	const [jump, setJump] = useState("");
+	const [find, setFind] = useState("");
 
 	const load = useCallback(async () => {
 		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}`).catch(() => null);
@@ -673,7 +716,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 		if (!res?.ok) return setReviewNote("The words were not added. Try again.");
 		const data = (await res.json()) as ReviewState & { added: string[] };
 		setReview({ inDictionary: data.inDictionary, inReview: data.inReview });
-		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "The other words have no dictionary sentence yet.");
+		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "None of these words has a dictionary sentence yet, so none was added.");
 	};
 
 	const [moveError, setMoveError] = useState<string | null>(null);
@@ -681,7 +724,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 		setMoveError(null);
 		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}/to-repo`, { method: "POST" }).catch(() => null);
 		const data = (await res?.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string } | undefined;
-		if (!res?.ok || !data?.sheet) return setMoveError(data?.message ?? "The sheet was not moved.");
+		if (!res?.ok || !data?.sheet) return setMoveError(data?.message ?? "The sheet was not moved. Try again.");
 		onMoved(data.sheet.id);
 	};
 
@@ -694,6 +737,8 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 		setCover(next);
 		setShown(new Set());
 	};
+
+	const sections = useMemo(() => searchSections(sheet?.sections ?? [], find, lang?.tag), [sheet, find, lang?.tag]);
 
 	if (missing) {
 		return (
@@ -713,7 +758,6 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 
 	const waiting = review ? review.inDictionary - review.inReview : 0;
 	const languageName = lang?.english ?? "phrases";
-	const sections = sheet?.sections ?? [];
 
 	return (
 		<div className="min-h-[60vh] space-y-5" data-testid="cheatsheet-view">
@@ -721,6 +765,14 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 				<ArrowLeftIcon className="size-4" />
 				All cheatsheets
 			</button>
+
+			{!sheet && (
+				<div className="space-y-3" aria-busy="true" aria-label="Loading the cheatsheet" data-testid="cheatsheet-loading">
+					<div className="h-8 w-56 rounded-lg bg-well" />
+					<div className="h-4 w-32 rounded-md bg-well" />
+					<div className="q-card h-48" />
+				</div>
+			)}
 
 			{sheet && (
 				<>
@@ -803,6 +855,13 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 							/>
 						)}
 					</div>
+
+					<SearchField value={find} onChange={setFind} placeholder="Search this sheet by phrase, meaning or note" label="Search this cheatsheet" />
+					{find.trim() && sections.length === 0 && (
+						<p className="font-prose text-[15px] text-ink-3" data-testid="cheatsheet-find-empty">
+							Nothing in this sheet matches “{find.trim()}”. Accents are optional.
+						</p>
+					)}
 
 					{sections.map((section) => (
 						<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">

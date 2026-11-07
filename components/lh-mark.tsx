@@ -13,9 +13,9 @@
  */
 export function LhMark({ className = "" }: { className?: string }) {
 	return (
-		<svg viewBox="232 232 560 560" className={className} aria-hidden="true">
-			<rect x="282" y="252" width="72" height="520" rx="8" fill="currentColor" />
-			<rect x="402" y="700" width="340" height="72" rx="8" style={{ fill: "var(--q-teal)" }} />
+		<svg viewBox="212 212 600 600" className={className} aria-hidden="true">
+			<rect x="262" y="212" width="116" height="600" rx="22" fill="currentColor" />
+			<rect x="418" y="696" width="344" height="116" rx="22" style={{ fill: "var(--q-teal)" }} />
 		</svg>
 	);
 }

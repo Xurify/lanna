@@ -23,13 +23,13 @@ describe("empty and blocked states", () => {
 	it("the key note points to the one place a key is added, in plain words", () => {
 		const html = wrap(<KeyNote />);
 		assert.ok(html.includes("written with an AI key"));
-		assert.ok(html.includes("Add one in Settings, API keys."));
+		assert.ok(html.includes("Add one in Settings → API keys."));
 	});
 
 	it("no screen text names an internal term", () => {
 		const html = wrap(<AiCallout status={{ ready: false, reason: "no-model" } as never} title="Better with AI" adds={["A tutor reads your answers"]} />);
-		assert.ok(html.includes("No AI key is set."));
-		assert.ok(html.includes("Add an AI key"));
+		assert.ok(html.includes("AI is not set up yet."));
+		assert.ok(html.includes("Set up AI"));
 		for (const word of ["slot", "cheap", "strong", "token"]) assert.ok(!html.toLowerCase().includes(word), word);
 	});
 });

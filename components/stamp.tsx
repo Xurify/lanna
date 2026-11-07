@@ -18,6 +18,7 @@ import { BookAIcon, BookOpenIcon, CheckCheckIcon, FlagIcon, FootprintsIcon, Grad
 import { cn } from "@/lib/utils";
 import { nextStamps, recentStamps, STRANDS, type StampKind, type StampState } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
+import { useActiveLanguage } from "@/components/speech";
 
 const ICON: Record<Exclude<StampKind, "balance">, ComponentType<{ className?: string; strokeWidth?: number }>> = {
 	first: FootprintsIcon,
@@ -81,11 +82,12 @@ export function StampDisc({ state, size = "md", pressed = false, className }: { 
 
 /** A stamp with its name under it, for the book. */
 export function StampTile({ state, size = "md" }: { state: StampState; size?: "sm" | "md" }) {
+	const lang = useActiveLanguage();
 	const earned = !!state.earned;
 	return (
 		<li className={cn("flex flex-col items-center text-center", size === "sm" ? "w-20" : "w-28")} title={`${state.name} — ${state.line}${earned ? ` · earned ${state.earned}` : state.goal > 1 ? ` · ${fmt(state.have)} of ${fmt(state.goal)}` : ""}`}>
 			<StampDisc state={state} size={size} />
-			<span className={cn("mt-2 line-clamp-2 font-ui text-xs font-semibold leading-tight", earned ? "text-foreground" : "text-muted-foreground")} lang="sk">
+			<span className={cn("mt-2 line-clamp-2 font-ui text-xs font-semibold leading-tight", earned ? "text-foreground" : "text-muted-foreground")} lang={lang?.code}>
 				{state.name}
 			</span>
 			<span className="mt-0.5 line-clamp-2 font-ui text-[11px] leading-tight text-muted-foreground">{earned ? state.line : state.goal > 1 ? `${fmt(state.have)} of ${fmt(state.goal)}` : state.line}</span>
@@ -130,6 +132,7 @@ export function StampBook({ stamps, className }: { stamps: StampState[]; classNa
 
 /** The Today card: the last stamp earned and the closest ones to come. */
 export function StampsCard({ stamps, className }: { stamps: StampState[] | null; className?: string }) {
+	const lang = useActiveLanguage();
 	const recent = stamps ? recentStamps(stamps, 1) : [];
 	const next = stamps ? nextStamps(stamps, 3) : [];
 	const earned = stamps ? stamps.filter((s) => s.earned).length : 0;
@@ -149,7 +152,7 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 				<div className="mt-3 flex items-center gap-3" data-testid="stamps-recent">
 					<StampDisc state={recent[0]} size="sm" />
 					<div className="min-w-0">
-						<p className="truncate font-ui text-sm font-semibold text-foreground" lang="sk">
+						<p className="truncate font-ui text-sm font-semibold text-foreground" lang={lang?.code}>
 							{recent[0].name}
 						</p>
 						<p className="truncate font-ui text-xs text-muted-foreground">{recent[0].line} · earned</p>
@@ -163,7 +166,7 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 							<StampDisc state={s} size="sm" />
 							<div className="min-w-0 flex-1">
 								<p className="flex items-baseline justify-between gap-2">
-									<span className="truncate font-ui text-sm font-semibold text-foreground" lang="sk">
+									<span className="truncate font-ui text-sm font-semibold text-foreground" lang={lang?.code}>
 										{s.name}
 									</span>
 									<span className="shrink-0 font-ui text-xs font-semibold tabular-nums text-muted-foreground">{s.goal > 1 ? `${fmt(s.have)} of ${fmt(s.goal)}` : s.line}</span>

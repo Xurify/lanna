@@ -17,6 +17,7 @@ import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BA
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { ListeningSection } from "@/components/mistakes/listening-section";
+import { useActiveLanguage } from "@/components/speech";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-teal-2" },
@@ -38,7 +39,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 		try {
 			const res = await fetch("/api/mistakes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, force }) });
 			const body = await res.json();
-			if (!res.ok) throw new Error(body.message ?? `HTTP ${res.status}`);
+			if (!res.ok) throw new Error(body.message ?? `Something went wrong (error ${res.status}). Try again.`);
 			setReport(body as MistakesReport);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
@@ -141,6 +142,7 @@ const STEP_HREF = (p: GuideData["plan"][number]): string | null => (p.kind === "
 /** The guide as the model wrote it: the patterns behind the misses, what may
  *  trip you next (said as guesses), and a plan whose steps open the app. */
 function GuideBody({ data }: { data: GuideData }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="flex flex-col gap-5" data-testid="guide-body">
 			<div className="flex flex-col gap-3">
@@ -149,7 +151,7 @@ function GuideBody({ data }: { data: GuideData }) {
 					<article key={p.title} className="rounded-xl bg-well p-4">
 						<h4 className="text-sm font-semibold text-foreground">{p.title}</h4>
 						{p.evidence && (
-							<p className="mt-1 text-sm text-ink-3" lang="sk">
+							<p className="mt-1 text-sm text-ink-3" lang={lang?.code}>
 								{p.evidence}
 							</p>
 						)}
@@ -251,6 +253,7 @@ function Readiness({ enough }: { enough: ReturnType<typeof guideReadiness> }) {
 }
 
 function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: boolean; onWrite: (force: boolean) => void }) {
+	const lang = useActiveLanguage();
 	const { guide, guideCurrent, ai } = report;
 	const enough = guideReadiness(report.analysis);
 	return (
@@ -272,7 +275,7 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 					<div className="min-w-0">
 						<p className="text-sm font-semibold text-teal-2">Your plan practice</p>
 						<p className="text-xs text-ink-3">
-							Built from checked sentences on: <span lang="sk">{guide.practice.shown.join(", ")}</span>
+							Built from checked sentences on: <span lang={lang?.code}>{guide.practice.shown.join(", ")}</span>
 						</p>
 					</div>
 					<Link href="/lesson?mode=personal" className="q-btn primary shrink-0 pointer-coarse:min-h-11" data-testid="guide-practice">
@@ -284,7 +287,7 @@ function GuideCard({ report, busy, onWrite }: { report: MistakesReport; busy: bo
 			{guide ? (
 				<div className="mt-3">{guide.data ? <GuideBody data={guide.data} /> : <GuideText text={guide.text} />}</div>
 			) : ai.ready ? (
-				<p className="mt-2 text-sm text-ink-3">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your Strong model (Cheap when Strong is empty) and runs once per set of answers.</p>
+				<p className="mt-2 text-sm text-ink-3">An AI teacher reads your wrong answers and writes what keeps going wrong, why, and what to do about it. It uses your main AI model and runs once per set of answers.</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={GUIDE_ADDS} className="mt-3" />
 			)}
@@ -343,10 +346,10 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 					</Step>
 				)}
 				{slugs.length > 0 && (
-					<Step title="Put the words you miss into review" line={`${slugs.length} ${slugs.length === 1 ? "word" : "words"}, so they come back on a schedule`}>
+					<Step title="Put the words you miss into Review" line={`${slugs.length} ${slugs.length === 1 ? "word" : "words"}, so they come back on a schedule`}>
 						<button type="button" disabled={added === "adding" || added === "added"} onClick={() => void addWords()} className="q-btn sec pointer-coarse:min-h-11" data-testid="step-review">
 							{added === "added" ? <CheckIcon className="q-ico" /> : added === "adding" ? <LoaderCircleIcon className="q-ico animate-spin" /> : <PlusIcon className="q-ico" />}
-							{added === "added" ? "Added" : added === "failed" ? "Try again" : "Add to review"}
+							{added === "added" ? "Added" : added === "failed" ? "Try again" : "Add to Review"}
 						</button>
 					</Step>
 				)}
@@ -368,13 +371,14 @@ function Step({ title, line, children }: { title: string; line: string; children
 }
 
 function MixupsSection({ a }: { a: MistakeAnalysis }) {
+	const lang = useActiveLanguage();
 	if (!a.mixups.length) return null;
 	return (
 		<Section id="mistakes-mixups" title="Words you mix up" line="One word given where another was wanted. Not tested yet means the same pattern, guessed from a pair you missed.">
 			<ul className="q-card flex flex-col divide-y divide-border">
 				{a.mixups.map((m) => (
 					<li key={m.key} className="px-4 py-3" data-testid={`mistakes-mixup-${m.key}`}>
-						<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground" lang="sk">
+						<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground" lang={lang?.code}>
 							{m.words.join(" / ")}
 						</p>
 						<p className="mt-0.5 text-xs text-ink-3">{m.line}</p>
@@ -438,6 +442,7 @@ function UnitsSection({ units }: { units: UnitTrend[] }) {
 }
 
 function WordsSection({ a }: { a: MistakeAnalysis }) {
+	const lang = useActiveLanguage();
 	const [done, setDone] = useState<Record<string, "adding" | "added" | "failed">>({});
 	if (!a.words.length) return null;
 	const add = async (slug: string) => {
@@ -454,7 +459,7 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 			<ul className="q-card flex flex-col divide-y divide-border">
 				{a.words.map((w) => (
 					<li key={w.slug} className="flex items-baseline justify-between gap-3 px-4 py-3">
-						<span className="min-w-0 text-base text-foreground" lang="sk">
+						<span className="min-w-0 text-base text-foreground" lang={lang?.code}>
 							<b className="font-semibold">{w.answer}</b>
 							<span className="text-ink-3"> · {w.lastGiven ? `you wrote “${w.lastGiven}”` : "no answer"}</span>
 						</span>
@@ -467,7 +472,7 @@ function WordsSection({ a }: { a: MistakeAnalysis }) {
 								disabled={done[w.slug] === "adding" || done[w.slug] === "added"}
 								onClick={() => void add(w.slug)}
 								className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-3 hover:bg-well hover:text-ink-2 disabled:opacity-60 pointer-coarse:min-h-11"
-								aria-label={`Add ${w.lemma} to review`}
+								aria-label={`Add ${w.lemma} to Review`}
 								data-testid={`word-review-${w.slug}`}
 							>
 								{done[w.slug] === "added" ? <CheckIcon className="size-3.5" strokeWidth={1.6} /> : <PlusIcon className="size-3.5" strokeWidth={1.6} />}

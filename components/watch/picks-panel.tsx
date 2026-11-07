@@ -14,6 +14,7 @@ import { timeAgo } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { post, type Discover } from "@/components/watch/discover";
+import { usePreparing } from "@/components/watch/preparing";
 import { CardGrid, CardIconButton, Known, VideoCard } from "@/components/watch/video-card";
 import { captionLanguageName, coverageBand, SPARSE_SPEECH_WPM, videoUrl, type FragmentRange, type PickedVideo } from "@/src/core";
 
@@ -58,6 +59,7 @@ export function PickFacts({ p, name, note }: { p: PickedVideo; name: string; not
 }
 
 export function PickCard({ p, name, lang, canPrepare, onPrepare, onCut, onDismiss, note }: { p: PickedVideo; name: string; lang?: string; canPrepare: boolean; onPrepare: () => void; onCut: () => void; onDismiss: () => void; note?: string }) {
+	const preparing = usePreparing(p.id);
 	return (
 		<li>
 			<VideoCard
@@ -71,8 +73,15 @@ export function PickCard({ p, name, lang, canPrepare, onPrepare, onCut, onDismis
 				by={p.channel ? <ChannelLink id={p.channelId} name={p.channel} avatar={p.avatar} withAvatar /> : undefined}
 				line={<PickFacts p={p} name={name} note={note} />}
 			>
-				<button type="button" disabled={!canPrepare} onClick={onPrepare} className="q-btn sec t h-8 min-w-0 flex-1 px-3 pointer-coarse:h-11" title={canPrepare ? "Translate it and add it to your videos" : "Preparing needs an AI key"} data-testid="watch-pick-prepare">
-					Prepare
+				<button type="button" disabled={!canPrepare || preparing} onClick={onPrepare} aria-busy={preparing} className="q-btn sec t h-8 min-w-0 flex-1 px-3 pointer-coarse:h-11" title={preparing ? "Being translated; it lands in My videos" : canPrepare ? "Translate it and add it to My videos" : "Preparing needs an AI key"} data-testid="watch-pick-prepare">
+					{preparing ? (
+						<>
+							<LoaderCircleIcon className="size-3.5 animate-spin" />
+							Preparing…
+						</>
+					) : (
+						"Prepare"
+					)}
 				</button>
 				<CardIconButton label="Watch only a stretch of it" onClick={onCut} testid="watch-pick-fragments">
 					<ScissorsIcon className="size-4" strokeWidth={1.6} />

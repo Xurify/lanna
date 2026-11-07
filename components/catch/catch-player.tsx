@@ -34,13 +34,13 @@ export function CatchPlayer() {
 			const res = await fetch("/api/catch", { cache: "no-store" });
 			const body = (await res.json()) as CatchNext & { message?: string };
 			if (!res.ok) {
-				setError(body.message ?? "The item could not be made.");
+				setError(body.message ?? "Couldn't make a new text.");
 				setNext({ view: null });
 			} else {
 				setNext(body);
 			}
 		} catch {
-			setError("The item could not be made. Check the connection and try again.");
+			setError("Couldn't make a new text. Check the connection and try again.");
 			setNext({ view: null });
 		} finally {
 			setBusy(false);
@@ -58,10 +58,10 @@ export function CatchPlayer() {
 				body: JSON.stringify({ id: next.view.id, sentence: tap.sentence, token: tap.token, typed }),
 			});
 			const body = (await res.json()) as CatchResult & { message?: string };
-			if (!res.ok) setError(body.message ?? "The answer was not kept.");
+			if (!res.ok) setError(body.message ?? "Your answer wasn't saved.");
 			else setResult(body);
 		} catch {
-			setError("The answer was not kept. Check the connection and try again.");
+			setError("Your answer wasn't saved. Check the connection and try again.");
 		} finally {
 			setBusy(false);
 		}
@@ -75,10 +75,10 @@ export function CatchPlayer() {
 			<section className="mt-6 flex min-h-[16rem] flex-col rounded-xl bg-card p-5 shadow-[0_0_0_1px_var(--q-line-2)]" aria-live="polite">
 				{!started && (
 					<button type="button" onClick={() => void load()} className={`${BUTTON} bg-primary text-primary-foreground self-start`}>
-						Start
+						Show a text
 					</button>
 				)}
-				{started && !next && <p className="font-ui text-sm text-muted-foreground">Getting an item…</p>}
+				{started && !next && <p className="font-ui text-sm text-muted-foreground">Getting a text…</p>}
 
 				{next && !next.view && (
 					<div className="flex flex-col gap-3">
@@ -148,7 +148,7 @@ export function CatchPlayer() {
 							))}
 						</ol>
 						<button type="button" onClick={() => void load()} disabled={busy} className={`${BUTTON} bg-primary text-primary-foreground self-start`}>
-							Next item
+							Next text
 						</button>
 					</div>
 				)}

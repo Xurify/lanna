@@ -32,7 +32,7 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "AZURE_SPEECH_KEY",
 		label: "Azure Speech",
-		description: "Pronunciation assessment for Speak and Say it faster: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
+		description: "Pronunciation assessment for Speak and Speed: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
 		docsUrl: "https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices",
 	},
 	{
@@ -137,12 +137,12 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 	const nonEmpty = (min: number) =>
 		value.length >= min && !/\s/.test(value)
 			? { ok: true as const }
-			: { ok: false as const, error: `${id} must be at least ${min} characters with no whitespace` };
+			: { ok: false as const, error: `That doesn't look like a whole key: it needs at least ${min} characters and no spaces.` };
 	switch (id) {
 		case "TAVILY_API_KEY":
 			return value.startsWith("tvly-")
 				? nonEmpty(20)
-				: { ok: false, error: `${id} must start with "tvly-" (Tavily's key format)` };
+				: { ok: false, error: 'A Tavily key starts with "tvly-". Copy it again from Tavily.' };
 		case "BRAVE_API_KEY":
 			// No public format — a length floor + paste hygiene only.
 			return nonEmpty(20);
@@ -156,7 +156,7 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 			// 32 hex characters today; a length floor only.
 			return nonEmpty(20);
 		case "AZURE_SPEECH_REGION":
-			return /^[a-z0-9]{4,40}$/.test(value) ? { ok: true } : { ok: false, error: `${id} must be a region name such as westeurope (lowercase letters and digits)` };
+			return /^[a-z0-9]{4,40}$/.test(value) ? { ok: true } : { ok: false, error: "Use a region name such as westeurope: lowercase letters and digits only." };
 		default:
 			return { ok: false, error: `unknown key "${id}" (supported: ${[...AUTH_KEY_IDS].join(", ")})` };
 	}
@@ -166,7 +166,7 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 export function genericProviderKeyGuard(id: string, rawValue: string): KeyShapeResult {
 	const value = rawValue.trim();
 	if (value.length >= 12 && !/\s/.test(value)) return { ok: true };
-	return { ok: false, error: `${id} must be at least 12 characters with no whitespace` };
+	return { ok: false, error: "That doesn't look like a whole key: it needs at least 12 characters and no spaces." };
 }
 
 /** Masked key for display: last 4 characters, never the plaintext. */

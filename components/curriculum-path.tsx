@@ -127,7 +127,7 @@ export function CurriculumPath({
 /** The second line of a unit: what the ledger shows, or what it needs. */
 export function unitLine(u: UnitState, active: boolean): string {
 	const pct = u.accuracy !== null && u.reps > 0 ? `${Math.round(u.accuracy * 100)}% right` : "";
-	if (u.kind === "goal") return u.status === "done" ? (u.scene ? "Reached · prove it in a Talk scene" : "Reached") : u.status === "skipped" ? "Passed in placement" : (u.needs ?? u.tagline);
+	if (u.kind === "goal") return u.status === "done" ? (u.scene ? "Reached · prove it in a Speak scene" : "Reached") : u.status === "skipped" ? "Passed in placement" : (u.needs ?? u.tagline);
 	if (u.status === "skipped") return u.kind === "tutor" ? "Passed in placement · open any time" : `Passed in placement${pct ? ` · ${pct}` : ""} · open any time`;
 	if (u.status === "locked") return u.needs ?? u.tagline;
 	if (u.kind === "tutor") return u.status === "done" ? `Done · ${u.lessons} sessions` : u.lessons > 0 ? `${u.lessons} of ${TUTOR_SESSIONS} sessions · ${u.tagline}` : u.tagline;
@@ -138,8 +138,8 @@ export function unitLine(u: UnitState, active: boolean): string {
 
 const WEAK_SOURCE_NAMES: Record<string, string> = {
 	check: "Level check",
-	lesson: "Lesson drill",
-	review: "Review deck lapses",
+	lesson: "Lessons",
+	review: "Review",
 };
 
 function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary }) {
@@ -186,7 +186,7 @@ function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary 
 						<div className="min-w-0 flex-1 space-y-2">
 							<div>
 								<div className="flex items-baseline justify-between gap-1.5">
-									<span className="text-xs font-semibold text-foreground">Weak Spot</span>
+									<span className="text-xs font-semibold text-foreground">Weak spot</span>
 									<span className="text-[10px] font-semibold text-muted-foreground">
 										{WEAK_SOURCE_NAMES[weak.source] ?? weak.source}
 									</span>
@@ -210,18 +210,18 @@ function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary 
 								<div className="flex items-center justify-between text-muted-foreground">
 									<span>Practice since flagged:</span>
 									<span className="font-medium text-foreground">
-										{totalReps > 0 ? `${weak.hits}/${totalReps} right (${accuracy}%)` : "0 reps"}
+										{totalReps > 0 ? `${weak.hits}/${totalReps} right (${accuracy}%)` : "None yet"}
 									</span>
 								</div>
 								<div className="flex items-center justify-between text-muted-foreground">
-									<span>To clear spot:</span>
+									<span>To clear it:</span>
 									<span className="font-medium text-foreground">
-										{WEAK_MEND_REPS} reps at ≥{mendPercent}%
+										{WEAK_MEND_REPS} answers at {mendPercent}% or better
 									</span>
 								</div>
 								{totalReps < WEAK_MEND_REPS && (
 									<p className="text-[10px] text-muted-foreground/80">
-										{WEAK_MEND_REPS - totalReps} more reps needed before clearing
+										{WEAK_MEND_REPS - totalReps} more answers before it can clear
 									</p>
 								)}
 							</div>
@@ -278,7 +278,7 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 						</div>
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
-								<span className="text-xs font-semibold text-foreground">With the Tutor</span>
+								<span className="text-xs font-semibold text-foreground">With the tutor</span>
 								<span className="rounded bg-xp/10 px-1 py-0.5 text-[10px] font-semibold text-xp">
 									Guided session
 								</span>
@@ -338,7 +338,7 @@ function StarredGoalHover({ unit }: { unit: UnitState }) {
 						</div>
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
-								<span className="text-xs font-semibold text-foreground">Priority Goal</span>
+								<span className="text-xs font-semibold text-foreground">Priority goal</span>
 								<span className="rounded bg-teal-wash px-1 py-0.5 text-[10px] font-semibold text-teal-2">
 									Your target
 								</span>
@@ -374,7 +374,7 @@ function CanDoGoalHover({ unit }: { unit: UnitState }) {
 							}
 						}}
 						className="inline-flex cursor-help items-center gap-1 rounded px-1 py-0.5 text-ink-2 transition-colors hover:bg-well focus:outline-none focus:ring-1 focus:ring-ink-3"
-						aria-label="Can-do milestone"
+						aria-label="Can-do goal"
 						data-testid={`goal-hint-${unit.id}`}
 					>
 						<FlagIcon className="size-3.5 shrink-0 text-ink-2" aria-hidden="true" />
@@ -393,18 +393,18 @@ function CanDoGoalHover({ unit }: { unit: UnitState }) {
 						</div>
 						<div className="min-w-0 flex-1 space-y-1.5">
 							<div className="flex items-baseline justify-between gap-1.5">
-								<span className="text-xs font-semibold text-foreground">Can-Do Milestone</span>
+								<span className="text-xs font-semibold text-foreground">Can-do goal</span>
 								<span className="rounded bg-well px-1 py-0.5 text-[10px] font-semibold text-ink-2">
 									CEFR goal
 								</span>
 							</div>
 							<p className="text-xs font-semibold text-foreground">{unit.grammarTerm ?? unit.title}</p>
 							<p className="text-[11px] leading-relaxed text-muted-foreground">
-								A communicative milestone. Proves practical ability in a spoken or typed dialogue scenario rather than isolated grammar exercises.
+								A real-world task. You prove it in a spoken or typed scene, not in grammar drills.
 							</p>
 							{unit.tagline && (
 								<p className="border-t border-border/50 pt-1.5 text-[10px] italic text-muted-foreground">
-									Scenario: {unit.tagline}
+									Example: {unit.tagline}
 								</p>
 							)}
 						</div>
@@ -435,7 +435,7 @@ function TermHover({ unit }: { unit: UnitState }) {
 							}
 						}}
 						className="inline-flex max-w-[120px] shrink truncate cursor-help items-center rounded-md bg-accent/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-well hover:text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-						aria-label={`Linguistic term: ${unit.slovakTerm}`}
+						aria-label={`Grammar term: ${unit.slovakTerm}`}
 					>
 						<span className="truncate">{unit.slovakTerm}</span>
 					</span>
@@ -483,30 +483,30 @@ function UnitBadgeHover({
 }) {
 	const done = unit.status === "done" || skipped;
 	const statusLabel = done
-		? "Completed"
+		? "Done"
 		: locked
 			? "Locked"
 			: active
-				? "Up Next"
+				? "Up next"
 				: unit.lessons > 0
-					? "In Progress"
+					? "In progress"
 					: "Ready to start";
 
 	const typeName =
 		unit.kind === "tutor"
-			? "Tutor Session"
+			? "Tutor session"
 			: unit.kind === "goal"
-				? "Can-Do Goal"
+				? "Can-do goal"
 				: unit.kind === "words"
-					? "Vocabulary Lesson"
-					: "Grammar Lesson";
+					? "Words lesson"
+					: "Grammar lesson";
 
 	const detail = done
-		? "Mastered or tested out. Tap to practice anytime."
+		? "Done or tested out. Open it to practice any time."
 		: locked
-			? (unit.needs ? `Locked: ${unit.needs}.` : "Complete earlier lessons or open this chapter to unlock.")
+			? (unit.needs ? `Locked: ${unit.needs}.` : "Opens when the units before it are done.")
 			: active
-				? "Current recommended unit on your path."
+				? "The next unit on your climb."
 				: unit.lessons > 0
 					? `${unit.lessons} lesson${unit.lessons === 1 ? "" : "s"} done (${Math.round(unit.progress * 100)}%).`
 					: "Unlocked and ready to practice.";

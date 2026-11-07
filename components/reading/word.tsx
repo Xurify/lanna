@@ -211,18 +211,19 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					)}
 					data-testid="word-popover"
 				>
-					<span className="flex items-baseline justify-between gap-3">
-						<span className="font-ui text-xl font-[600] text-foreground" lang={langCode}>
+					<span className="flex items-start justify-between gap-3">
+						<span className="font-ui text-xl leading-7 font-[600] text-foreground" lang={langCode}>
 							{resolvedLemma}
 						</span>
-						<span className="flex items-center gap-1">
+						{/* -mr: the icons' own padding would push their glyphs in from the card's right edge. */}
+						<span className="-mr-1.5 flex shrink-0 items-center gap-0.5">
 							<button
 								type="button"
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={() => void toggleFav()}
 								aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
 								title={isFav ? "Remove from favorites" : "Add to favorites"}
-								className={cn("rounded-md p-1 transition-colors", isFav ? "text-teal-2 hover:bg-teal-wash" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+								className={cn("rounded-md p-1.5 transition-colors", isFav ? "text-teal-2 hover:bg-teal-wash" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
 							>
 								<StarIcon className={cn("size-4", isFav && "fill-gold")} />
 							</button>
@@ -231,7 +232,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={() => void speak(resolvedLemma).catch(() => {})}
 								aria-label="Play the word"
-								className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+								className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
 							>
 								<Volume2Icon className="size-4" />
 							</button>
@@ -239,11 +240,11 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					</span>
 					{(resolvedLemma.toLocaleLowerCase(langTag) !== token.text.toLocaleLowerCase(langTag) || resolvedFormNote) && (
 						<span className="block font-ui text-xs text-muted-foreground">
-							here: <span className="font-semibold text-foreground/80" lang={langCode}>{token.text}</span>
+							here: <span className="font-semibold text-ink-2" lang={langCode}>{token.text}</span>
 							{resolvedFormNote ? ` (${resolvedFormNote})` : ""}
 						</span>
 					)}
-					<span className="mt-1 block leading-snug text-foreground">
+					<span className="mt-2 block leading-snug text-foreground">
 						{resolvedGloss ? (
 							<>
 								<span className="block">{resolvedGloss}</span>
@@ -256,11 +257,11 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						) : loadingLookup ? (
 							<span className="inline-block h-4 w-32 animate-pulse rounded bg-accent align-middle" />
 						) : (
-							"Tap a dictionary link below to inspect."
+							"No meaning found here. Try a dictionary link below."
 						)}
 					</span>
 					{(resolvedCat || resolvedGender || token.fresh || token.assumed || lookupData?.source === "translated") && (
-						<span className="mt-1.5 flex flex-wrap gap-1.5">
+						<span className="mt-2.5 flex flex-wrap gap-1.5">
 							{resolvedCat && <Tag>{resolvedCat.toLowerCase()}</Tag>}
 							{resolvedGender && <Tag>{resolvedGender}</Tag>}
 							{token.fresh && <Tag className="bg-teal-wash text-teal-2">new word</Tag>}
@@ -268,48 +269,53 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							{lookupData?.source === "translated" && <Tag className="bg-teal-wash text-teal-2">translated</Tag>}
 						</span>
 					)}
-					<span className="mt-2 flex flex-wrap items-center gap-2 font-ui text-[11px] text-muted-foreground">
+					<span className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-ui text-xs text-muted-foreground">
 						{referenceUrl && referenceLabel && (
 							<>
 								<a
 									href={referenceUrl}
 									target="_blank"
 									rel="noreferrer"
-									className="inline-flex items-center gap-0.5 font-semibold text-foreground/90 hover:text-foreground hover:underline"
+									className="inline-flex items-center gap-1 font-semibold text-ink-2 hover:text-foreground hover:underline"
 								>
-									{referenceLabel} <ExternalLinkIcon className="size-2.5" />
+									{referenceLabel} <ExternalLinkIcon className="size-3" />
 								</a>
-								<span>·</span>
+								<span aria-hidden="true" className="text-ink-4">·</span>
 							</>
 						)}
-						<a
-							href={wiktionaryUrl}
-							target="_blank"
-							rel="noreferrer"
-							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
-						>
-							Wiktionary <ExternalLinkIcon className="size-2.5" />
-						</a>
-						<span>·</span>
+						{/* The language's own reference can already be Wiktionary (Estonian); one link is enough. */}
+						{!/wiktionary/i.test(referenceLabel ?? "") && (
+							<>
+								<a
+									href={wiktionaryUrl}
+									target="_blank"
+									rel="noreferrer"
+									className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
+								>
+									Wiktionary <ExternalLinkIcon className="size-3" />
+								</a>
+								<span aria-hidden="true" className="text-ink-4">·</span>
+							</>
+						)}
 						<a
 							href={deeplUrl}
 							target="_blank"
 							rel="noreferrer"
-							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+							className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
 						>
-							DeepL <ExternalLinkIcon className="size-2.5" />
+							DeepL <ExternalLinkIcon className="size-3" />
 						</a>
-						<span>·</span>
+						<span aria-hidden="true" className="text-ink-4">·</span>
 						<a
 							href={forvoUrl}
 							target="_blank"
 							rel="noreferrer"
-							className="inline-flex items-center gap-0.5 hover:text-foreground hover:underline"
+							className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
 						>
-							Forvo <ExternalLinkIcon className="size-2.5" />
+							Forvo <ExternalLinkIcon className="size-3" />
 						</a>
 					</span>
-					<span className="mt-2.5 block border-t border-border/50 pt-2.5">
+					<span className="mt-3 block border-t border-border pt-3">
 						<button
 							type="button"
 							onMouseDown={(e) => e.preventDefault()}
@@ -317,21 +323,21 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							disabled={inDeck && isFav}
 							data-testid="word-popover-add-bank"
 							className={cn(
-								"flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-[600] transition-colors",
+								"lh-press flex h-8 w-full items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
 								inDeck && isFav
 									? "bg-teal-wash text-teal-2"
-									: "bg-accent text-foreground hover:bg-teal-2 hover:text-primary-foreground",
+									: "bg-well text-foreground hover:bg-well-2",
 							)}
 						>
 							{inDeck && isFav ? (
 								<>
 									<BookmarkCheckIcon className="size-3.5" />
-									In Word Bank
+									In Review
 								</>
 							) : (
 								<>
 									<PlusIcon className="size-3.5" />
-									Add to Word Bank
+									Add to Review
 								</>
 							)}
 						</button>
@@ -343,5 +349,5 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 }
 
 export function Tag({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <span className={cn(" rounded-md bg-accent px-2 py-0.5 font-ui text-xs font-semibold text-muted-foreground", className)}>{children}</span>;
+	return <span className={cn("rounded-md bg-well-2 px-1.5 py-0.5 font-ui text-xs font-[550] text-ink-2", className)}>{children}</span>;
 }

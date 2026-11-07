@@ -5,6 +5,7 @@ import { LoaderCircleIcon, SparklesIcon } from "lucide-react";
 import { AiCallout } from "@/components/ai-callout";
 import { cn } from "@/lib/utils";
 import { CAUSE_MIN_SENTENCES, LISTEN_CAUSES, LISTEN_KIND_LABEL, LISTEN_MIN_MISSED, LISTEN_MIN_SESSIONS, LISTEN_MIN_TYPED, type CauseTrend, type ListenAnalysis, type ListenGuideData, type MistakesReport, type Trend } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -60,6 +61,7 @@ const DEEP_ADDS = [
 ];
 
 function DeepBody({ data }: { data: ListenGuideData }) {
+	const lang = useActiveLanguage();
 	// A read saved before these two existed has neither.
 	const noticed = data.noticed ?? [];
 	const tips = data.tips ?? [];
@@ -73,7 +75,7 @@ function DeepBody({ data }: { data: ListenGuideData }) {
 						<article key={p.title} className="rounded-xl bg-well p-4">
 							<h5 className="text-sm font-semibold text-foreground">{p.title}</h5>
 							{p.evidence && (
-								<p className="mt-1 text-sm text-ink-3" lang="sk">
+								<p className="mt-1 text-sm text-ink-3" lang={lang?.code}>
 									{p.evidence}
 								</p>
 							)}
@@ -163,7 +165,7 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 			{guide ? (
 				<div className="mt-3">{guide.data ? <DeepBody data={guide.data} /> : <p className="whitespace-pre-wrap text-sm text-foreground">{guide.text}</p>}</div>
 			) : ai.ready ? (
-				<p className="mt-2 text-sm text-ink-3">An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to practice. It uses your Strong model (Cheap when Strong is empty) and runs once per set of figures.</p>
+				<p className="mt-2 text-sm text-ink-3">An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to practice. It uses your main AI model and runs once per set of figures.</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={DEEP_ADDS} className="mt-3" />
 			)}
@@ -176,7 +178,7 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 				<div className="mt-4 flex flex-wrap items-center gap-3">
 					<button type="button" disabled={busy || (!!guide && !!current)} onClick={() => onWrite(false)} className="q-btn sec pointer-coarse:min-h-11" data-testid="listen-guide-write">
 						{busy ? <LoaderCircleIcon className="q-ico animate-spin" /> : <SparklesIcon className="q-ico" />}
-						{guide ? (current ? "Deep read is up to date" : "Read it again") : "Read my listening"}
+						{guide ? (current ? "Deep read is up to date" : "Read it again") : "Analyze my listening"}
 					</button>
 					<p className="text-xs text-ink-3" data-testid="listen-guide-privacy">
 						Sends the figures on this page and the sentences you missed, with what you typed, to your model provider. Nothing else leaves this computer.
@@ -190,6 +192,7 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 
 /** What the Listen task says about hearing: how it is going, why sentences were missed, and whether that is changing. The figures are local, no model; the deep read is the optional model call. */
 export function ListeningSection({ l, report, busy, error, onWrite }: { l: ListenAnalysis; report: MistakesReport; busy: boolean; error: string | null; onWrite: (force: boolean) => void }) {
+	const lang = useActiveLanguage();
 	if (l.sentences === 0) return null;
 	const from = l.from === l.to ? l.from : `${l.from} to ${l.to}`;
 	return (
@@ -276,7 +279,7 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 
 					{(l.insights ?? []).length > 0 && (
 						<>
-							<Heading line="Found by a test far stricter than the trends', so a few sentences never produce one.">Things you may not have noticed</Heading>
+							<Heading line="Found by a stricter test than the trends, so it needs many sentences before it shows anything.">Things you may not have noticed</Heading>
 							<ul className="q-card mt-2 divide-y divide-[var(--q-line)]" data-testid="listening-insights">
 								{l.insights.map((i) => (
 									<li key={i.id} className="px-4 py-3" data-testid={`listening-insight-${i.id}`}>
@@ -286,10 +289,10 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 											<ul className="mt-2 flex flex-wrap gap-1.5">
 												{l.repeats.map((w) => (
 													<li key={w.word} className="q-pill grey">
-														<span lang="sk">{w.word}</span>
+														<span lang={lang?.code}>{w.word}</span>
 														{w.typedAs.length > 0 && (
 															<>
-																{" "}→ <span lang="sk">{w.typedAs.join(", ")}</span>
+																{" "}→ <span lang={lang?.code}>{w.typedAs.join(", ")}</span>
 															</>
 														)}
 													</li>
@@ -310,17 +313,17 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 							<ul className="q-card mt-2 divide-y divide-[var(--q-line)]" data-testid="listening-misses">
 								{l.misses.slice(0, 5).map((m) => (
 									<li key={`${m.at}-${m.sentence}`} className="px-4 py-3">
-										<p className="font-prose text-[16px] text-foreground" lang="sk">
+										<p className="font-prose text-[16px] text-foreground" lang={lang?.code}>
 											{m.sentence}
 										</p>
 										<p className="mt-0.5 text-[13px] text-ink-3">
-											You typed <span lang="sk">{m.given || "nothing"}</span>
+											You typed <span lang={lang?.code}>{m.given || "nothing"}</span>
 										</p>
 										<ul className="mt-1 flex flex-wrap gap-1.5">
 											{m.errors.map((e, i) => (
 												<li key={i} className="q-pill grey" title={LISTEN_CAUSES[e.cause].line}>
-													<span lang="sk">{e.target || "+"}</span>
-													{e.given && e.target ? <> → <span lang="sk">{e.given}</span></> : e.target ? " missed" : <> “{e.given}” added</>} · {LISTEN_CAUSES[e.cause].label.toLowerCase()}
+													<span lang={lang?.code}>{e.target || "+"}</span>
+													{e.given && e.target ? <> → <span lang={lang?.code}>{e.given}</span></> : e.target ? " missed" : <> “{e.given}” added</>} · {LISTEN_CAUSES[e.cause].label.toLowerCase()}
 												</li>
 											))}
 										</ul>

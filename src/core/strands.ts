@@ -26,7 +26,7 @@ export const STRANDS: Array<{ id: Strand; title: string; line: string }> = [
 	{ id: "input", title: "Input", line: "Listen, Read, Watch, Story — understanding the message" },
 	{ id: "output", title: "Speaking", line: "Speak, Talk — saying it before you are sure" },
 	{ id: "form", title: "Words & rules", line: "Lessons, Review, the tutor — deliberate study" },
-	{ id: "fluency", title: "Speed", line: "Blitz, re-read, say it faster — fast with what you know" },
+	{ id: "fluency", title: "Speed", line: "Blitz, re-read, Speed — fast with what you know" },
 ];
 
 export const STRAND_TARGET = 0.25;
@@ -144,7 +144,7 @@ export function strandAdvice(b: StrandBalance): string {
 		input: "Listen, Read or Watch",
 		output: "A spoken scene",
 		form: "A lesson or the review deck",
-		fluency: "A Blitz, a timed re-read or Say it faster",
+		fluency: "A Blitz, a timed re-read or a Speed round",
 	};
 	return `${name(b.behind)} is furthest behind at ${pct}%${over.length ? ` while ${over.join(" and ")} ${over.length > 1 ? "are" : "is"} over half` : ""}. ${where[b.behind]} is the quickest way to catch up.`;
 }

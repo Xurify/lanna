@@ -894,7 +894,7 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 		>
 			<div className="mb-2 flex items-center gap-2">
 				<span className="text-sm font-medium">The plan</span>
-				<span className="text-xs text-muted-foreground">live — statuses derive from your check outcomes</span>
+				<span className="text-xs text-muted-foreground">updates as you answer the checks</span>
 				<Hint label="Close" binding="escape" side="left">
 <button
 					type="button"
@@ -985,7 +985,7 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 					</>
 				) : (
 					<div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-						No plan in this session yet.
+						No plan in this chat yet.
 					</div>
 				)}
 			</div>

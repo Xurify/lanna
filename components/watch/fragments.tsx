@@ -212,7 +212,7 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 							</ul>
 						)}
 						<div className="mt-3 flex flex-wrap items-center gap-3">
-							<button type="button" disabled={!canPrepare || !!problem} onClick={() => onPrepare(range)} className="q-btn sec t h-9" title={canPrepare ? "Translate only this stretch and add it to your videos" : "Preparing needs an AI key"} data-testid="watch-fragments-prepare">
+							<button type="button" disabled={!canPrepare || !!problem} onClick={() => onPrepare(range)} className="q-btn sec t h-9" title={canPrepare ? "Translate only this stretch and add it to My videos" : "Preparing needs an AI key"} data-testid="watch-fragments-prepare">
 								Prepare this stretch
 							</button>
 							{problem && (
@@ -223,7 +223,7 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 						</div>
 					</>
 				) : (
-					<p className="font-prose text-[13px] text-ink-3">{a.picks.length === 0 && a.measurable ? "Nothing is playable in this video. Drag on the strip to pick a stretch by hand." : "Drag on the strip, or click it, to pick a stretch."}</p>
+					<p className="font-prose text-[13px] text-ink-3">{a.picks.length === 0 && a.measurable ? "No stretch has enough speech to suggest. Drag on the strip to pick one by hand." : "Drag on the strip, or click it, to pick a stretch."}</p>
 				)}
 			</div>
 
@@ -257,7 +257,7 @@ function Ready({ a, sel, setSel, canPrepare, onPrepare }: { a: FragmentAnalysis;
 			)}
 			<p className="mt-4 font-prose text-[12px] leading-relaxed text-ink-3">
 				"You know" counts the words you have studied, plus grammar words, names and numbers. "Expected" adds the words a learner at {a.level} is assumed to know, about {a.expectedWords.toLocaleString("en-US")} words in all at your point in the course, whether or not you have met them. Stretches are ranked on what you know: the share where listening works (about 93 to 97%), new words worth learning that come back, and speech all the way through. Measured on the captions with no AI request.
-				{a.prepared ? " This video is already in your videos; preparing a stretch replaces it (your watching history stays)." : ""}
+				{a.prepared ? " This video is already in My videos; preparing a stretch replaces it (your watching history stays)." : ""}
 			</p>
 			{whole && (
 				<button type="button" disabled={!canPrepare} onClick={() => onPrepare(undefined)} className="q-btn ghost mt-2 h-auto min-h-8 whitespace-normal py-1.5 text-left" data-testid="watch-fragments-whole">

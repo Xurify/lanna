@@ -4,10 +4,17 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 7 November: a long day goes to listening, and listening outside the app is logged apart (branch `feat/input-after-plan`)
 
-- **Why:** the owner asked what ten hours of Russian listening a day for a year would do, and whether the app should apply it. Rule E65, [research/outside-listening.md](research/outside-listening.md).
+- **Why:** the owner asked what ten hours of Russian listening a day for a year would do, and whether the app should apply it. Rule E68, [research/outside-listening.md](research/outside-listening.md).
 - **After the plan:** once every task is done, Today's card offers a video you added and have not watched, else ten more Listen sentences, with Start and Enter. "Find a video at your level" and "One more lesson" sit under it. Before, the only offer was another lesson.
-- **Listening outside the app:** "Log listening" on Today records minutes, focused or in the background, the day and what it was; each entry can be removed. It stays out of minutes, XP, streak, stamps and the week's balance. The When can I…? page says how much was logged and adds a "Speed with outside listening" row (focused at half, background at none, an assumption the page names). The Sources note for it cites six studies, their DOIs checked on Crossref.
+- **Listening outside the app:** "Log listening" on Today records minutes, focused or in the background, the day and what it was; each entry can be removed. It stays out of minutes, XP, streak, stamps and the week's balance. The Milestones page says how much was logged and adds a "Speed with outside listening" row (focused at half, background at none, an assumption the page names). The Sources note for it cites six studies, their DOIs checked on Crossref.
 - **Checked:** unit tests (`tests/after-plan.test.ts`, `tests/outside.test.ts`), the full suite, typecheck, lint, and the screens in a sandbox at 1400 and 390 px wide (Night only), with the plan forced to done in the browser to see the card. **Unverified:** the card on a real day when the plan is done, the form on the owner's phone, and the outside row with a real Listen trend.
+
+## 7 November: a bolder app icon (branch `feat/bolder-app-icon`)
+
+- **Why:** the owner: "Make the icon a bit better". In the taskbar the cursor and line were thin and small, and the ink tile disappeared on a dark taskbar.
+- **What changed (E59):** the bars are 60% thicker and the drawing fills more of the tile. The app icon is now a teal tile with a white cursor and a pale teal line, so it stands out on a dark or a light taskbar. The sidebar mark is bolder too and still follows Day and Night. Regenerated: Windows, Linux, macOS (and the Icon Composer layers), the browser tab and the home-screen icons.
+- **Checked:** the icon at 16 to 128 px on a dark and a light taskbar, and the sidebar in both themes in the running app.
+- **Unverified:** the macOS 26 icon (needs `actool` on a Mac with Xcode 26).
 
 ## 7 November: the Watch shelf as cards in four tabs, and what was asked once is kept (branch `feat/watch-layout-and-cache`)
 

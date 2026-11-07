@@ -44,7 +44,7 @@ export interface DayRecord {
 	speaks?: number;
 	/** Timed re-reads of an episode (the fluency strand). */
 	rereads?: number;
-	/** "Say it faster" rounds finished (the fluency strand). */
+	/** Speed ("say it faster") rounds finished (the fluency strand). */
 	fasts?: number;
 	/** Lessons finished with every answer right (the stamp book, src/core/stamps.ts). */
 	perfect?: number;
