@@ -245,15 +245,15 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 				<div className="mb-8 min-h-[228px] sm:min-h-[108px]">
 				{summary && (
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
+						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm" title="Cards in your review deck that you have answered at least once and that the scheduler predicts you can recall at 80% or more. It is not a count of all the words you know.">
 							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Known</span>
+								<span className="font-ui text-xs font-semibold">Can recall</span>
 								<CheckCheckIcon className="size-4 text-go" />
 							</div>
 							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
 								{summary.wordsMastered}
 							</p>
-							<p className="text-[11px] text-muted-foreground">80% retention or better</p>
+							<p className="text-[11px] text-muted-foreground">Deck cards scored 80+ so far</p>
 						</div>
 
 						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
@@ -399,7 +399,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 							{[
 								{ id: "all", label: "All" },
 								{ id: "favorite", label: "Favorites" },
-								{ id: "mastered", label: "Known (≥80%)" },
+								{ id: "mastered", label: "Can recall (≥80%)" },
 								{ id: "learning", label: "In progress" },
 								{ id: "due", label: "Due for review" },
 								{ id: "new", label: "New in the deck" },
@@ -524,7 +524,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 															)}
 														>
 															{item.retention >= 80
-																? "Known"
+																? "Can recall"
 																: item.retention > 0
 																	? "In progress"
 																	: "New"}

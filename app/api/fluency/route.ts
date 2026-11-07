@@ -8,7 +8,7 @@
  * XP, the day's fluency work, the log line.
  */
 
-import type { FastRep } from "@/src/core";
+import { isPronScore, type FastRep } from "@/src/core";
 import { fastFor, recordFast, recordReread, rereadFor } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +49,10 @@ export async function POST(req: Request) {
 							ms: num(p.ms) ?? 0,
 							window: num(p.window) ?? 0,
 							made: p.made === true,
+							...(typeof p.inWindow === "boolean" ? { inWindow: p.inWindow } : {}),
+							...(p.unchecked === true ? { unchecked: true } : {}),
+							...(num(p.speechMs) !== undefined ? { speechMs: num(p.speechMs) } : {}),
+							...(isPronScore(p.pron) ? { pron: p.pron } : {}),
 							...(typeof p.heard === "string" ? { heard: p.heard.slice(0, 300) } : {}),
 							...(num(p.match) !== undefined ? { match: num(p.match) } : {}),
 						}))

@@ -27,6 +27,19 @@ describe("reading one typed sentence", () => {
 		assert.equal(causeOfSub("kde", "gde", new Set()), "assimilation");
 		assert.deepEqual(causes("Bol v škole.", "Bol f škole."), ["assimilation"]);
 	});
+	it("does not read ô or ä as a long o or a", () => {
+		assert.equal(causeOfSub("kôň", "koň", new Set()), "diphthong");
+		assert.equal(causeOfSub("mäso", "maso", new Set()), "spelling");
+		assert.equal(causeOfSub("mäso", "meso", new Set()), "spelling");
+		assert.equal(causeOfSub("mesto", "mästo", new Set()), "spelling");
+		assert.equal(causeOfSub("sála", "sala", new Set()), "length");
+	});
+	it("reads h and ch as a voicing pair", () => {
+		assert.equal(causeOfSub("chata", "hata", new Set()), "voicing");
+		assert.equal(causeOfSub("boh", "boch", new Set()), "assimilation");
+		assert.equal(causeOfSub("stach", "stah", new Set()), "assimilation");
+		assert.equal(causeOfSub("chata", "kata", new Set()), "mishear");
+	});
 	it("finds a dropped short word and a dropped content word apart", () => {
 		assert.deepEqual(causes("Žila som v Ríme.", "Žila som Ríme."), ["small-word"]);
 		assert.deepEqual(causes("Peter varil večeru.", "Peter večeru."), ["word-missed"]);

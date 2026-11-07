@@ -618,11 +618,11 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
 	return "wrong";
 }
 
-/** The rhythm of a first lesson on a unit: recognize first, then produce,
- *  a word bank and a listening rep to vary the work. */
-/** A new unit meets the form before it is asked for it: two reps that only
- *  ask what the sentence means (spoken, form marked), then recognition,
- *  then production. */
+/** The rhythm of a first lesson on a unit. A new unit meets the form before it
+ *  is asked for it: two reps that only ask what the sentence means (spoken,
+ *  form marked), then recognition, then production, with a word bank and a
+ *  listening rep to vary the work. The patterns here are 12 reps long, the
+ *  app's own choice: a lesson that fits one short sitting. */
 export const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
 
 /** Once a unit is known: production almost throughout. Picking a form from
@@ -644,7 +644,9 @@ export const PLACEMENT_PATTERN: ItemKind[] = ["choose", "type"];
 /** Word-order units: rebuild the sentence, with a listening rep to vary it. */
 export const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
 
-/** Slots (by position) that take an item from another unit. */
+/** Slots (by position) that take an item from another unit: 2 in a new unit,
+ *  4 in a practiced one, 6 in a complete one. The counts are the app's own
+ *  policy; the mix rises with mastery by design, not from a measured optimum. */
 const MIX_SLOTS: Record<UnitStage, number[]> = { new: [5, 9], practiced: [2, 5, 8, 11], strong: [1, 3, 5, 7, 9, 11] };
 
 /** Units that are easy to confuse with each one: the mix comes from these
@@ -673,8 +675,8 @@ export const CONTRAST: Partial<Record<UnitId, UnitId[]>> = {
 
 export type UnitStage = "new" | "practiced" | "strong";
 
-/** Practiced when a unit has two lessons at 60% or better; strong once it
- *  is complete (unitDone). Each stage asks for more: see LESSON_PATTERN,
+/** Practiced when a unit has two lessons at 60% or better (the app's own
+ *  policy, like the other stage thresholds); strong once it is complete (unitDone). Each stage asks for more: see LESSON_PATTERN,
  *  PRACTICED_PATTERN, STRONG_PATTERN and MIX_SLOTS. */
 export function unitStage(lessons: number, accuracy: number | null): UnitStage {
 	if (unitDone(lessons, accuracy)) return "strong";
@@ -1009,11 +1011,12 @@ export function lessonScore(reps: readonly { kind: ItemKind; verdict: RepVerdict
 	return { xp, correct, total, perfect };
 }
 
-/** Lessons finished → the unit's level (0–5), the ring on the skill path. */
 /** When a unit counts as complete: LESSONS_TO_COMPLETE finished lessons with
  *  at least COMPLETE_ACCURACY of the reps right, or twice that many lessons
  *  whatever the accuracy (so a unit can never trap the learner). The path
- *  ring fills toward this, and "Continue" is the first unit not yet done. */
+ *  ring fills toward this, and "Continue" is the first unit not yet done.
+ *  The 3 lessons, 80% and the 6-lesson escape are the app's own policy, not
+ *  figures from a study. */
 export const LESSONS_TO_COMPLETE = 3;
 export const COMPLETE_ACCURACY = 0.8;
 export function unitDone(lessons: number, accuracy: number | null): boolean {
@@ -1027,6 +1030,7 @@ export function unitProgress(lessons: number, accuracy: number | null): number {
 	return Math.min(lessons / LESSONS_TO_COMPLETE, 0.9);
 }
 
+/** Lessons finished → the unit's level (0–5), the ring on the skill path. */
 export const LEVEL_STEPS = [1, 3, 6, 10, 15];
 export function unitLevel(lessons: number): number {
 	return LEVEL_STEPS.filter((s) => lessons >= s).length;
@@ -1049,15 +1053,17 @@ function addDays(key: string, n: number): string {
 export const DAYS_IN_WEEK = 7;
 
 /**
- * The streak: consecutive active days ending today (or yesterday, while
- * today is still open). A missed day is forgiven as a rest day when the
+ * The streak: consecutive active days ending today (or yesterday, or the day
+ * before when yesterday was a forgiven rest day, while today is still open).
+ * `days` counts active days only, so a forgiven rest day adds none. A missed day is forgiven as a rest day when the
  * seven days ending on it hold no more misses than `restAllowance` — the
  * days the plan does not ask for (7 − daysPerWeek). A streak should reward
  * the habit, not punish a planned off day.
  */
 export function streakOf(activeDays: ReadonlySet<string>, today: string, restAllowance = 1): { days: number; restUsed: boolean; activeToday: boolean } {
 	const activeToday = activeDays.has(today);
-	let cursor = activeToday ? today : addDays(today, -1);
+	const yesterday = addDays(today, -1);
+	let cursor = activeToday ? today : yesterday;
 	let days = 0;
 	let restUsed = false;
 	for (let guard = 0; guard < 3660; guard++) {
@@ -1068,14 +1074,15 @@ export function streakOf(activeDays: ReadonlySet<string>, today: string, restAll
 		}
 		let misses = 0;
 		for (let k = 0; k < DAYS_IN_WEEK; k++) if (!activeDays.has(addDays(cursor, -k))) misses++;
-		if (days > 0 && misses <= restAllowance) {
+		// Yesterday may itself be the forgiven rest day: the streak from the day before it still stands this morning.
+		if ((days > 0 || cursor === yesterday) && misses <= restAllowance) {
 			restUsed = true;
 			cursor = addDays(cursor, -1);
 			continue;
 		}
 		break;
 	}
-	return { days, restUsed, activeToday };
+	return { days, restUsed: days > 0 && restUsed, activeToday };
 }
 
 /** Learner level from total XP: each level costs 50 XP more than the last. */

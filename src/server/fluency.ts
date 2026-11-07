@@ -16,7 +16,7 @@
  */
 
 import { loadLexicon } from "../agent/lexicon.ts";
-import { FAST_PASSES, fastXp, pickKnown, rereadXp, wordsPerMinute, WPM_TARGET, type FastItem, type FastRep, type FluencyLogEntry, type RereadLogEntry } from "../core/fluency.ts";
+import { FAST_PASSES, fastPace, fastXp, pickKnown, rereadTarget, rereadXp, wordsPerMinute, type FastItem, type FastLogEntry, type FastPace, type FastRep, type FluencyLogEntry, type RereadLogEntry } from "../core/fluency.ts";
 import type { StoryQuestion, StoryRecord } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
@@ -33,7 +33,7 @@ import { knownWords, resolveWord, STORY_NAMES } from "./reading.ts";
 export interface RereadPlan {
 	story: StoryRecord;
 	words: number;
-	/** Words a minute to beat: the last re-read of this episode, else the level's target. */
+	/** Words a minute to beat: the middle of the last three re-reads of this episode, else the level's guess. */
 	targetWpm: number;
 	previousWpm: number | null;
 	/** The first reading's pace, when it was timed. */
@@ -85,7 +85,7 @@ export function rereadFor(opts: { id?: string; tz?: number; now?: Date } = {}): 
 	return {
 		story,
 		words,
-		targetWpm: previousWpm ?? WPM_TARGET[story.level],
+		targetWpm: rereadTarget(history.map((h) => h.wpm), story.level),
 		previousWpm,
 		firstWpm,
 		question: story.questions[questionIndex]!,
@@ -120,10 +120,10 @@ export function recordReread(input: RereadResultInput, now = new Date()): Reread
 	const wpm = wordsPerMinute(words, ms);
 	const history = fluencyStore.list().filter((e): e is RereadLogEntry => e.mode === "reread" && e.storyId === story.id);
 	const previousWpm = history.length ? history[history.length - 1]!.wpm : null;
-	const targetWpm = previousWpm ?? WPM_TARGET[story.level];
+	const targetWpm = rereadTarget(history.map((h) => h.wpm), story.level);
 	const q = story.questions[input.questionIndex];
 	const right = !!q && q.answer === input.answer;
-	const xp = rereadXp(wpm, targetWpm, previousWpm, right);
+	const xp = rereadXp(wpm, targetWpm, right);
 	const key = dayKey(now, input.tz);
 	const p = progressStore.read();
 	const day = (p.days[key] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
@@ -135,7 +135,7 @@ export function recordReread(input: RereadResultInput, now = new Date()): Reread
 	progressStore.write(p);
 	fluencyStore.append({ mode: "reread", storyId: story.id, at: now.toISOString(), day: key, words, ms, wpm, question: input.questionIndex, right, xp });
 	ensureReadmes();
-	return { xp, wpm, targetWpm, previousWpm, faster: wpm > targetWpm, right, summary: progressSummary(input.tz, now) };
+	return { xp, wpm, targetWpm, previousWpm, faster: right && wpm > targetWpm, right, summary: progressSummary(input.tz, now) };
 }
 
 // ─── Say it faster ──────────────────────────────────────────────────────────
@@ -186,10 +186,18 @@ export interface FastOutcome {
 	summary: ProgressSummary;
 	/** What to work on in pronunciation, across recent rounds and scenes. */
 	report: PronReport;
+	/** Words a second, first pass to last, this round and the round before. */
+	pace: FastPace | null;
+	previousPace: FastPace | null;
 }
 
 export function recordFast(input: FastResultInput, now = new Date()): FastOutcome {
 	const reps = input.reps.slice(0, 12);
+	const lastRound = fluencyStore
+		.list()
+		.filter((e): e is FastLogEntry => e.mode === "fast")
+		.pop();
+	const previousPace = lastRound ? fastPace(lastRound.reps) : null;
 	const passesMade = reps.reduce((n, r) => n + r.passes.filter((p) => p.made).length, 0);
 	const sentencesMade = reps.filter((r) => r.passes.length >= FAST_PASSES && r.passes[r.passes.length - 1]!.made).length;
 	const xp = fastXp(passesMade, sentencesMade, reps.length);
@@ -235,5 +243,5 @@ export function recordFast(input: FastResultInput, now = new Date()): FastOutcom
 	} catch (err) {
 		console.warn("[fluency] could not append the lesson log:", err instanceof Error ? err.message : err);
 	}
-	return { xp, passesMade, sentencesMade, total: reps.length, summary: progressSummary(input.tz, now), report: pronunciationReport() };
+	return { xp, passesMade, sentencesMade, total: reps.length, summary: progressSummary(input.tz, now), report: pronunciationReport(), pace: fastPace(reps), previousPace };
 }

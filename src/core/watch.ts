@@ -21,7 +21,7 @@
  *     listening with the text as support, not substitute).
  *   - Coverage still decides whether the video is input or noise (van
  *     Zeeland & Schmitt 2013: ~95% known for comfortable listening; the
- *     Listen task's LISTEN_FLOOR). The pre-watch pass measures it with the
+ *     Listen task's LISTEN_FLOOR is the app's own, a little below). The pre-watch pass measures it with the
  *     same known-words estimate the Read and Listen tasks use, says so
  *     plainly, and pre-teaches the unknown words that recur (Webb 2007:
  *     meeting a word before the text lifts comprehension of the text).

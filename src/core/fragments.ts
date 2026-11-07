@@ -14,11 +14,13 @@
  * Ranking by the assumed words made a beginner's 48 words read as 80–84%.
  *
  * A fragment is a run of whole caption lines. It scores well when
- *   - the share of words the learner knows is in the range where listening
- *     works (about 93–97%): below it the ear decodes, above it nothing is new;
+ *   - the share of words the learner knows is in the app's target range
+ *     (93–97%, its own choice around the roughly 95% van Zeeland & Schmitt
+ *     2013 found comfortable for listening): below it the ear decodes, above
+ *     it little is new;
  *   - its new words are worth learning (common ones) and come back inside the
- *     fragment, since a word met twice in two minutes sticks far better than
- *     two words met once;
+ *     fragment, since repeated meetings help words stick (Webb 2007), though
+ *     the weights here are a design choice, not a measured effect;
  *   - there is speech all the way through (not music or silence under a title);
  *   - it is about two minutes long, and starts and ends at a pause.
  *
@@ -188,7 +190,7 @@ export function rangeStats(lines: readonly FragmentLine[], lex: FragmentLex, fro
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
-/** How well the known-word share suits listening: 1 across 93–97%, a ramp
+/** How well the known-word share suits listening, by the app's own target: 1 across 93–97%, a ramp
  *  down to noise at 85%, and down to a fifth at 100% (nothing new). Under
  *  85% a sliver is kept, rising with the share, so that when nothing is in
  *  reach the stretches still sort by how near they are. */

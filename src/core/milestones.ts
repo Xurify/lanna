@@ -53,13 +53,13 @@ export interface Genre {
 }
 
 export const GENRES: Record<GenreId, Genre> = {
-	conversation: { id: "conversation", title: "everyday conversation", n95: 2500, n98: 6500, source: "Adolphs & Schmitt 2003 (CANCODE: 2,000 families ≈ 95%); Nation 2006 (spoken: 6,000–7,000 for 98%)" },
+	conversation: { id: "conversation", title: "everyday conversation", n95: 2500, n98: 6500, source: "Adolphs & Schmitt 2003 (CANCODE: 2,000 families ≈ 95%); Nation 2006 (spoken: 6,000–7,000 for 98%). The 2,500 for 95% is the app's own figure between that and Nation's roughly 3,000" },
 	tv: { id: "tv", title: "TV and vlogs", n95: 3000, n98: 7000, source: "Webb & Rodgers 2009a, 88 TV programs: 3,000 families + proper nouns = 95.5%, 7,000 = 98.3%" },
 	film: { id: "film", title: "films", n95: 3000, n98: 6000, source: "Webb & Rodgers 2009b, 318 films: 3,000 families + proper nouns = 95.8%, 6,000 = 98.2%" },
 	news: { id: "news", title: "newspapers", n95: 4000, n98: 8000, source: "Nation 2006: newspapers need about 4,000 families for 95% and 8,000 for 98%" },
 	fiction: { id: "fiction", title: "novels", n95: 4000, n98: 9000, source: "Nation 2006: novels need about 4,000 families for 95% and 8,000–9,000 for 98%" },
 	formal: { id: "formal", title: "formal and official text", n95: 4500, n98: 9000, source: "Nation 2006 (academic and formal text sits above newspapers); Laufer & Ravenhorst-Kalovski 2010 (8,000 for 98%)" },
-	children: { id: "children", title: "children's shows", n95: 2000, n98: 5000, source: "Webb & Rodgers 2009a found children's programs about a thousand families easier than adult TV (estimate)" },
+	children: { id: "children", title: "children's shows", n95: 2000, n98: 5000, source: "No study behind this row: the app's own estimate, lower than adult TV" },
 	songs: { id: "songs", title: "songs", n95: 3000, n98: 6500, source: "Tegge 2017 (popular songs: about 3,000 families for 95%); 98% estimated between film and TV" },
 };
 
@@ -165,7 +165,7 @@ export const SPEED_LADDER: Array<{ level: Cefr; wpm: number }> = [
 	{ level: "C1", wpm: 160 },
 ];
 
-/** Natural speech, words a minute, for a milestone that names no rate. */
+/** Natural speech, words a minute, for a milestone that names no rate. The app's own round figure: English speech rates vary widely by genre (Tauroza & Allison 1990), and Slovak words are longer than English ones, so real Slovak speech may run lower. */
 export const NATURAL_WPM = 150;
 /** When a Listen rep carries no audio length: 400 ms a word. */
 export const MS_PER_WORD = 60_000 / NATURAL_WPM;
@@ -387,7 +387,7 @@ export const MILESTONES: MilestoneDef[] = [
 		coverage: 0.95,
 		wpm: NATURAL_WPM,
 		support: "subtitles",
-		cefr: "B1–B2: can follow films in which visuals and text carry part of the storyline",
+		cefr: "B1–B2: can follow films in which the pictures and the action carry part of the storyline",
 	},
 	{
 		id: "film",
@@ -719,14 +719,14 @@ export function customMilestone(text: string, mapping: CustomMapping): Milestone
 
 /** The studies the page cites, in the order the numbers appear. */
 export const MILESTONE_SOURCES: Array<{ who: string; what: string; line: string }> = [
-	{ who: "van Zeeland & Schmitt (2013), Applied Linguistics", what: "How much of the words you need to follow speech", line: "Listeners followed informal narratives adequately at 95% of the words known, and many did at 90%; listening tolerates a little less than reading because the voice carries meaning too. That is why a conversation here asks 90–95% and a film without subtitles 98%." },
+	{ who: "van Zeeland & Schmitt (2013), Applied Linguistics", what: "How much of the words you need to follow speech", line: "Listeners followed informal narratives adequately at 95% of the words known, and many did at 90%; conversation here asks 90–95%. A film without subtitles is held to 98%: that is our own cautious choice, because the study used short narratives, not films." },
 	{ who: "Hu & Nation (2000); Laufer & Ravenhorst-Kalovski (2010)", what: "The reading thresholds", line: "Unassisted reading for pleasure needs about 98% of the words; 95% is the minimum where comprehension holds with some help, such as a dictionary tap." },
 	{ who: "Schmitt, Jiang & Grabe (2011), Modern Language Journal", what: "Coverage and comprehension", line: "Comprehension rises roughly in a straight line with the share of words known: there is no cliff, so every hundred words bought moves the needle." },
 	{ who: "Webb & Rodgers (2009a, 2009b)", what: "The vocabulary of TV and film", line: "Across 88 TV programs and 318 films, 3,000 word families plus proper nouns gave about 95% of the words, and 6,000–7,000 gave 98%. The vlog and film milestones take their counts from here." },
 	{ who: "Nation (2006), Canadian Modern Language Review", what: "How large a vocabulary for reading and listening", line: "Newspapers and novels need about 4,000 families for 95% and 8,000–9,000 for 98%; everyday speech about 3,000 and 6,000–7,000. The news and in-laws milestones take their counts from here." },
 	{ who: "Adolphs & Schmitt (2003), Applied Linguistics", what: "Everyday conversation", line: "In the CANCODE corpus of spoken English, 2,000 word families covered about 95% of the words, and 3,000 about 96%; conversation is the least demanding material there is." },
-	{ who: "Milton (2009), Measuring Second Language Vocabulary Acquisition", what: "Vocabulary size by CEFR level", line: "Learners placed at A2 know about 1,500–2,500 lemmas, at B1 2,750–3,250, at B2 3,250–3,750. The app uses these (raised a quarter for an inflected language's morphology) to credit words your level implies but the deck has not tested." },
-	{ who: "Segalowitz (2010), Cognitive Bases of Second Language Fluency", what: "Why knowing a word is not hearing it", line: "Fluent comprehension is automatic retrieval: fast and stable, not just correct. A word you can recall in three seconds is not yet one you hear at 400 ms a word. The speed column measures this directly." },
-	{ who: "DeKeyser (1997), Studies in Second Language Acquisition", what: "How speed grows", line: "Processing speed improves with practice along a power law: fast gains at first, then slower ones, over weeks of practice. The speed dates use the guided-hours ladder until your own Listen trend has enough sessions to replace it." },
+	{ who: "Milton (2009), Measuring Second Language Vocabulary Acquisition", what: "Vocabulary size by CEFR level", line: "Learners placed at A2 know about 1,500–2,500 lemmas, at B1 2,750–3,250, at B2 3,250–3,750. The app uses these, raised by the same quarter as the word-family counts, to credit words your level implies but the deck has not tested. Milton's counts may already be lemma-based, so this can credit more words than you know." },
+	{ who: "Segalowitz (2010), Cognitive Bases of Second Language Fluency", what: "Why knowing a word is not hearing it", line: "Fluent comprehension is automatic retrieval: fast and stable, not just correct. That recalling a word slowly is not yet hearing it at speech pace is the app's reading of this, not Segalowitz's finding; his measure is how steady reaction times are, not words a minute. The speed column measures the pace directly." },
+	{ who: "DeKeyser (1997), Studies in Second Language Acquisition", what: "How speed grows", line: "Processing speed improves with practice along a power law: fast gains at first, then slower ones, over weeks of practice. The app's projections use straight lines, which overstate late gains. The speed dates use the guided-hours ladder until your own Listen trend has enough sessions to replace it." },
 	{ who: "Council of Europe, CEFR Companion Volume (2020)", what: "What each level can follow", line: "B1: clearly articulated speech directed at me, and films where pictures carry the story. B2: the majority of films in standard dialect, most TV on familiar topics. The speed ladder is anchored to these descriptors." },
 ];

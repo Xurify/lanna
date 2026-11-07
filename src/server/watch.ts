@@ -455,6 +455,9 @@ async function ask(engine: PiEngine, system: string, prompt: string, usage: Stor
  *  enough that a miscount is cheap to redo. */
 export const TRANSLATE_CHUNK = 40;
 
+/** Most words one watching sends to the review deck: the app's own cap, so a long video does not flood it. */
+export const WATCH_WORDS_MAX = 12;
+
 /** What a chunked ask wants of the model: the English translation of the
  *  lines, or (foreign captions) their Slovak rendering. */
 interface ChunkJob {
@@ -810,7 +813,8 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	const missed = stats.filter((s) => s.got === "no").length;
 	const xp = watchXp(video.segments.length, gotFirst, gotAfter, correct, rewatch);
 	const missedWords = stats.filter((s) => s.got === "no").flatMap((s) => video.segments[s.i]!.tokens.filter((t) => t.fresh && t.slug).map((t) => t.slug!));
-	const slugs = [...new Set([...video.preTeach.map((w) => w.slug).filter((s): s is string => !!s), ...input.tapped.filter((s) => /^[a-z0-9-]+$/.test(s)), ...missedWords])];
+	// The words the learner asked about come first, so a long video cannot crowd them out.
+	const slugs = [...new Set([...input.tapped.filter((s) => /^[a-z0-9-]+$/.test(s)), ...missedWords, ...video.preTeach.map((w) => w.slug).filter((s): s is string => !!s)])].slice(0, WATCH_WORDS_MAX);
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	const p = progressStore.read();
 	const day = dayKey(now, input.tz);
@@ -845,8 +849,8 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	videoStore.appendWatch(entry);
 	// The lines not understood on the first listen come back in Listen (docs/research/creator-hooks.md, proposal 7).
 	try {
-		// Foreign captions (Czech for Slovak) would be played in another language, so their lines do not come back.
-		if (!foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang })) watchRepStore.addNew(missedWatchReps(video, stats, day));
+		// Foreign captions (Czech for Slovak) would be played in another language, and automatic ones can misspell what was said, so their lines do not come back.
+		if (!foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang }) && video.source.kind !== "auto-captions") watchRepStore.addNew(missedWatchReps(video, stats, day));
 	} catch (err) {
 		console.warn("[watch] could not queue the missed lines:", err instanceof Error ? err.message : err);
 	}

@@ -4,7 +4,7 @@
  * On Slovak trails, every peak and hut sells a round wooden stamp, and
  * hikers collect them in a book. The app's stamps are the same idea: one
  * for every chapter finished and every level climbed, and one for each
- * real achievement on the way (a week of days, a thousand words known, a
+ * real achievement on the way (a week of days, a thousand words you can recall, a
  * story read, a lesson without a miss). A stamp marks an outcome, never an
  * action: lessons started, buttons pressed and minutes alone earn nothing,
  * so there is nothing to game. Stamps carry no XP and unlock nothing; they
@@ -70,18 +70,18 @@ export interface StampState extends StampDef {
 
 const DEEDS: StampDef[] = [
 	{ id: "first-step", kind: "first", name: "Prvý krok", line: "Your first lesson", goal: 1 },
-	{ id: "streak-7", kind: "streak", name: "Týždeň na trati", line: "Seven days in a row", goal: 7 },
-	{ id: "streak-30", kind: "streak", name: "Mesiac na trati", line: "Thirty days in a row", goal: 30 },
-	{ id: "streak-100", kind: "streak", name: "Sto dní", line: "A hundred days in a row", goal: 100 },
-	{ id: "streak-365", kind: "streak", name: "Rok na trati", line: "A year in a row", goal: 365 },
-	{ id: "words-50", kind: "words", name: "Prvé slová", line: "50 words known", goal: 50 },
-	{ id: "words-150", kind: "words", name: "Stopäťdesiat slov", line: "150 words known", goal: 150 },
-	{ id: "words-300", kind: "words", name: "Tristo slov", line: "300 words known", goal: 300 },
-	{ id: "words-600", kind: "words", name: "Šesťsto slov", line: "600 words known", goal: 600 },
-	{ id: "words-1000", kind: "words", name: "Tisíc slov", line: "1,000 words known", goal: 1000 },
-	{ id: "words-1500", kind: "words", name: "Tisícpäťsto slov", line: "1,500 words known", goal: 1500 },
-	{ id: "words-2000", kind: "words", name: "Dvetisíc slov", line: "2,000 words known", goal: 2000 },
-	{ id: "words-3000", kind: "words", name: "Tritisíc slov", line: "3,000 words known", goal: 3000 },
+	{ id: "streak-7", kind: "streak", name: "Týždeň na trati", line: "Seven streak days", goal: 7 },
+	{ id: "streak-30", kind: "streak", name: "Mesiac na trati", line: "Thirty streak days", goal: 30 },
+	{ id: "streak-100", kind: "streak", name: "Sto dní", line: "A hundred streak days", goal: 100 },
+	{ id: "streak-365", kind: "streak", name: "Rok na trati", line: "365 streak days", goal: 365 },
+	{ id: "words-50", kind: "words", name: "Prvé slová", line: "50 words you can recall", goal: 50 },
+	{ id: "words-150", kind: "words", name: "Stopäťdesiat slov", line: "150 words you can recall", goal: 150 },
+	{ id: "words-300", kind: "words", name: "Tristo slov", line: "300 words you can recall", goal: 300 },
+	{ id: "words-600", kind: "words", name: "Šesťsto slov", line: "600 words you can recall", goal: 600 },
+	{ id: "words-1000", kind: "words", name: "Tisíc slov", line: "1,000 words you can recall", goal: 1000 },
+	{ id: "words-1500", kind: "words", name: "Tisícpäťsto slov", line: "1,500 words you can recall", goal: 1500 },
+	{ id: "words-2000", kind: "words", name: "Dvetisíc slov", line: "2,000 words you can recall", goal: 2000 },
+	{ id: "words-3000", kind: "words", name: "Tritisíc slov", line: "3,000 words you can recall", goal: 3000 },
 	{ id: "reviews-100", kind: "reviews", name: "Sto opakovaní", line: "100 review answers", goal: 100 },
 	{ id: "reviews-500", kind: "reviews", name: "Päťsto opakovaní", line: "500 review answers", goal: 500 },
 	{ id: "reviews-1000", kind: "reviews", name: "Tisíc opakovaní", line: "1,000 review answers", goal: 1000 },

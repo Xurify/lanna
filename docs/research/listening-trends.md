@@ -8,7 +8,7 @@
 
 Each Listen rep logs the sentence, what was typed or picked, the verdict, time to answer, the first playback's length, plays after it, whether the text was shown first, and the sentence's word count. Two things were missing or wrong:
 
-- **The words the learner had not met.** Every sentence has at most one stretch word (95–98% of the words are counted as known), which is exactly what tells a gap in vocabulary from a sound not caught, but it was not logged. It is now (`stretch`, the words as they stand in the sentence). Sessions from before cannot be told apart and are kept out of the causes.
+- **The words the learner had not met.** Every sentence has at most one stretch word (the session as a whole keeps at least 93% of its words known), which is exactly what tells a gap in vocabulary from a sound not caught, but it was not logged. It is now (`stretch`, the words as they stand in the sentence). Sessions from before cannot be told apart and are kept out of the causes.
 - **Typed answers were logged as picked meanings.** The client sent `answer: "type"` but `/api/listen` dropped the field, so the server never graded a typed sentence again, logged it as kind "meaning" and counted an accents-only answer as wrong (half XP lost). Fixed in the route. The speed model's rule to skip dictation (typing time is not listening time) now takes effect.
 
 ## The reading
@@ -18,9 +18,9 @@ A typed sentence is aligned with the one played, word by word (a similar word is
 | Kind | Causes |
 |---|---|
 | Vocabulary | the stretch word, whatever the difference looks like |
-| Hearing | vowel length (á é í ó ú ý ô ä), soft ľ ň ď ť, š ž č against s z c, voiced against unvoiced (d/t, b/p, z/s, g/k, v/f), a short word dropped (v z s sa si je…), a word not caught, a word added, a different word heard |
+| Hearing | vowel length (á é í ó ú ý ŕ ĺ), ô heard as a plain o (it is a diphthong, not a long o), soft ľ ň ď ť, š ž č against s z c, voiced against unvoiced (d/t, b/p, z/s, g/k, v/f, h/ch), a short word dropped (v z s sa si je…), a word not caught, a word added, a different word heard |
 | Grammar | the right word with the wrong ending |
-| Spelling | i for y (the two sound the same in Slovak) |
+| Spelling | i for y (the two sound the same in Slovak), e or a for ä (ä is said like e) |
 | Typing | a one-letter slip that sounds the same |
 
 Because the sentence's only unmet word is known, a difference on any other word is not a vocabulary gap, which is what makes the split honest. A picked meaning shows only whether the sentence was understood, so it counts toward accuracy and effort but has no cause. That is why Listen became typing-only the same day: the causes need typed sentences, and the owner had already found picking too easy.

@@ -13,7 +13,7 @@
  * verifyCatch checks what the model returns, in code (E29): the wrong word is a
  * token of the mistaken sentence and resolves in the lexicon to its own twin
  * and not the other; the right word is a token of the correction; both
- * sentences are the speaker's; the pair is verified. An item that fails is
+ * sentences carry the item's label; the pair is verified. An item that fails is
  * dropped with its reason.
  *
  * Pure: the pairs and families are bundled JSON, no fs.
@@ -38,7 +38,7 @@ export interface CatchMark {
 	rightSlug: string;
 	/** The pair's rule, one English line. */
 	rule: string;
-	/** Who says both lines. */
+	/** The label both sentences carry. */
 	speaker: string;
 }
 
@@ -61,13 +61,13 @@ export interface CatchWord {
 	forms: string[];
 }
 
-/** The pair chosen for an episode, before anything is written. */
+/** The pair chosen for an item, before anything is written. */
 export interface CatchTarget {
 	/** The pair's id in pairs.json. */
 	pair: string;
 	/** The pair's rule, one English line. */
 	rule: string;
-	/** Who says both sentences: the series lead. */
+	/** The label every sentence of the item carries (an item has no cast). */
 	speaker: string;
 	/** The word the speaker uses by mistake. */
 	wrong: CatchWord;
@@ -87,7 +87,7 @@ export interface CatchChoice {
 	pairs: readonly PairDef[];
 	/** Pair ids the last items used. */
 	recentPairs: readonly string[];
-	/** The series lead, who says the lines; empty when the series has none. */
+	/** The label the item sentences carry; empty means no item can be made. */
 	speaker: string;
 }
 

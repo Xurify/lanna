@@ -53,7 +53,7 @@ Add families to `curriculum/slovak/mixups.json`, one per context where aspect is
 - Check a typed answer only when the dictionary did not expect it (P7, E27).
 - Do not write the practice sentences (E26).
 
-Prompts beat recasts (`docs/research/desirable-difficulties.md`, citing Lyster & Ranta 1997 and Lyster & Saito 2010). A cue that makes the learner choose again is more useful than the tutor's correct sentence.
+Prompts worked at least as well as recasts in classroom studies (`docs/research/desirable-difficulties.md`, citing Lyster & Ranta 1997 and Lyster & Saito 2010); using them here is a design choice, not proven for an AI tutor. A cue that makes the learner choose again is more useful than the tutor's correct sentence.
 
 ## Decisions for the owner
 

@@ -11,11 +11,14 @@
  *     badly are the immersion profile (Swain 1985). Output with feedback
  *     is one of Nation's four strands, and before this task the app's
  *     only output was a text chat.
- *   - Prompts beat recasts: a correction the learner has to produce
- *     themselves ("do škol…? skús ešte raz") changes their grammar; a
- *     recast is often not even noticed (Lyster & Ranta 1997; Lyster &
- *     Saito 2010). One prompt per reply, on the known weak points only;
- *     everything else is let go so the scene keeps moving.
+ *   - Prompts instead of recasts: a correction the learner has to produce
+ *     themselves ("do škol…? skús ešte raz"). Classroom research found
+ *     corrective feedback helps and prompts work at least as well as
+ *     recasts (Lyster & Ranta 1997, an observation study; Lyster & Saito
+ *     2010, a meta-analysis). Using prompts with an AI tutor is this app's
+ *     design choice resting on that, not shown for an AI tutor. One prompt
+ *     per reply, on the known weak points only; everything else is let go
+ *     so the scene keeps moving.
  *   - Saying it, not writing it: speaking at a conversational pace is a
  *     different skill from composing in a text box, and the one the
  *     learner lacks. Voice in, voice out; the text is there to read along.
@@ -26,7 +29,7 @@
 
 import type { Cefr } from "./curriculum.ts";
 import { foldDiacritics } from "./language.ts";
-import type { PronEngine, PronScore } from "./pronounce.ts";
+import { PRON_GOOD, type PronEngine, type PronScore } from "./pronounce.ts";
 import type { StoryUsage } from "./reading.ts";
 
 // ─── Scenes ─────────────────────────────────────────────────────────────────
@@ -195,11 +198,10 @@ export const SPEAK_TURNS = 8;
 export const SPEAK_TURN_XP = 3;
 export const SPEAK_REPAIR_XP = 5;
 export const SPEAK_BONUS = 10;
-/** A line needs this many words to be worth a scene turn (a bare "áno"
- *  is a turn too, but the XP cap stops padding). */
+/** Learner turns that earn XP at most, so one-word lines cannot pad a scene. */
 export const SPEAK_XP_TURNS_CAP = 10;
 
-/** A spoken line scored "clear" (src/core/pronounce.ts PRON_GOOD) earns this on top. */
+/** A spoken line scored "Clear" (at or above PRON_GOOD in src/core/pronounce.ts) earns this on top. */
 export const SPEAK_CLEAR_XP = 2;
 
 export function speakXp(learnerTurns: number, repaired: number, clear = 0): number {
@@ -219,7 +221,7 @@ export function speakCounts(turns: readonly SpeakTurn[]): { learner: number; pro
 			learner++;
 			if (t.pron) {
 				spoken++;
-				if (t.pron.overall >= 85) clear++;
+				if (t.pron.overall >= PRON_GOOD) clear++;
 			}
 		} else {
 			if (t.prompt) prompts++;

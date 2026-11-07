@@ -1,6 +1,6 @@
 # Speak and fluency: the two missing strands, and honest pronunciation scores
 
-*LangHarness, 2026-10-28. Thread "Build speaking and fluency tasks". Code: `src/core/speak.ts`, `src/core/fluency.ts`, `src/core/pronounce.ts`, their `src/server/` counterparts, `components/speak/`, `app/speak`, `app/fluency`.*
+*LangHarness, 2026-10-28. Thread "Build speaking and fluency tasks". Code: `src/core/speak.ts`, `src/core/fluency.ts`, `src/core/pronounce.ts`, their `src/server/` counterparts, `components/speak/`, `app/speak`, `app/speed` (called Fluency when this was written).*
 
 ## Why
 
@@ -8,8 +8,8 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 
 ## Evidence
 
-- **Prompts beat recasts.** Corrective feedback that makes the learner self-repair moves grammar; recasts (the teacher just says it right) are mostly not noticed (Lyster & Ranta 1997; Lyster & Saito 2010).
-- **Fluency practice** is Nation's fourth strand: nothing new, only faster, on material the learner already knows fully. Repeated timed readings and the 4/3/2 technique (the same thing said in four, then three, then two minutes; here a shrinking window) are the standard forms.
+- **Prompts over recasts.** In classroom studies, feedback that makes the learner repair the error worked at least as well as the teacher saying it right (recasts); recasts were often not noticed as corrections (Lyster & Ranta 1997, an observation study; Lyster & Saito 2010, a meta-analysis that found corrective feedback helps). Using prompts with an AI tutor is our design choice resting on that, not something shown for an AI tutor.
+- **Fluency practice** is Nation's fourth strand: nothing new, only faster, on material the learner already knows fully. The classic forms are timed repeated readings (Chang 2010; Taguchi et al. 2004) and the 4/3/2 technique (Maurice 1983; Nation 1989: the same talk given in four, then three, then two minutes). What experiments support is the repetition of the same content (de Jong & Perfetti 2011; Lambert, Kormos & Minn 2017; Thai & Boers 2016). The shrinking time limit is the part with weak support: Boers (2014) and Thai & Boers (2016) found that tighter time limits did not add fluency and could cost accuracy, and gains are on the repeated content, not shown on new content. Say it faster keeps the shrinking window as a design decision (2026-11-06) and guards accuracy by counting a spoken pass only when it was also clear. The page's own note with the links is in `src/core/sources.ts` (`speed-fast`).
 - **Pronunciation assessment** needs a phoneme-level engine to say anything about accent; a transcript match can only say whether the words were recognizable.
 
 ## Speak (`/speak`)
@@ -20,7 +20,7 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 - After about eight lines, or *Koniec*: at most three corrections (yours → the right line, the rule in a few words, played aloud), two phrases to keep, the slips' words into the review deck.
 - Sessions and recordings are kept under `data/profiles/<lang>/speak/`. Cost shows under Spending as "Speaking".
 
-## Fluency (`/fluency`)
+## Speed (`/speed`)
 
 - **Say it faster:** six sentences the learner knows 100% (ones answered right in lessons first), each heard once and said three times in a shrinking window (for example 3.5 s → 2.7 s → 2.2 s). Mic optional.
 - **Read it faster:** a timed re-read of an episode read on an earlier day, words a minute against the last time or the level target (A1 60, A2 80, B1 100, B2 130), one of the episode's own questions as the check.

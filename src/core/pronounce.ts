@@ -57,7 +57,7 @@ export interface PronScore {
 	heard?: string;
 }
 
-/** A pass or a turn at or above this is "clear": it counts. */
+/** A pass or a turn at or above this is "Mostly clear" or better: it counts. */
 export const PRON_CLEAR = 70;
 /** At or above this the line was said like someone who knows the language. */
 export const PRON_GOOD = 85;

@@ -194,6 +194,13 @@ export function ratingCap(help?: ReviewHelp): Rating {
 	return 4;
 }
 
+/** The highest rating the learner can pick after the verdict: a wrong answer
+ *  or "I don't know" is Again and nothing else, because a lucky Good after a
+ *  miss would put the card too far out. Otherwise the help cap applies. */
+export function ratingCeiling(verdict: "exact" | "accents" | "wrong", help?: ReviewHelp): Rating {
+	return verdict === "wrong" ? 1 : ratingCap(help);
+}
+
 /** Map a typed answer's verdict (and speed) to an FSRS rating. A diacritic
  *  slip is Hard: the word came back, its spelling did not. Help lowers
  *  the ceiling (ratingCap). */

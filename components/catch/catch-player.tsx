@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { SourcesNote } from "@/components/sources/sources-note";
 import type { CatchNext, CatchResult, CatchToken } from "@/src/core";
 
 type Tap = { sentence: number; token: number };
@@ -152,6 +153,7 @@ export function CatchPlayer() {
 					</div>
 				)}
 			</section>
+			<SourcesNote feature="mixups" className="mt-6" />
 		</div>
 	);
 }

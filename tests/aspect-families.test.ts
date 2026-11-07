@@ -121,17 +121,19 @@ test("the mend rule: three right first tries on one aspect do not mend; both asp
 	assert.deepEqual(record[key]!.won, ["pisat"]);
 	assert.equal(record[key]!.hits, 3);
 	assert.equal(mixupStatus(record[key]!), "active", "one side is not enough");
-	record = tallyMixups(record, [right("napisat", 5)], lex).record;
-	assert.equal(mixupStatus(record[key]!), "mended", "a right first try on the other aspect mends it");
+	record = tallyMixups(record, [{ ...right("napisat", 5), at: new Date(Date.UTC(2026, 10, 5, 9)).toISOString() }], lex).record;
+	assert.equal(mixupStatus(record[key]!), "mended", "a right first try on the other aspect, on a second day, mends it");
 });
 
 test("the mend and clear rules use both aspects when a family lists probes, and one aspect otherwise", () => {
 	const family = "aspect";
-	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat"], family }), "active");
-	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat", "napisat"], family }), "mended");
-	assert.equal(mixupStatus({ misses: 1, hits: 3, won: ["pisat", "pisat"], family }), "active", "one aspect twice is still one side");
-	assert.equal(mixupStatus({ misses: 1, hits: 3, family }), "active", "S2: a probe family with no won counts as empty, not as both sides");
-	assert.equal(mixupStatus({ misses: 1, hits: 3 }), "mended", "a pair outside a probe family keeps the old rule");
+	const days = ["2026-11-04", "2026-11-05"];
+	assert.equal(mixupStatus({ misses: 1, hits: 3, days, won: ["pisat"], family }), "active");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, days, won: ["pisat", "napisat"], family }), "mended");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, days: days.slice(0, 1), won: ["pisat", "napisat"], family }), "active", "both aspects on one day is not enough");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, days, won: ["pisat", "pisat"], family }), "active", "one aspect twice is still one side");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, days, family }), "active", "S2: a probe family with no won counts as empty, not as both sides");
+	assert.equal(mixupStatus({ misses: 1, hits: 3, days }), "mended", "a pair outside a probe family keeps the old rule");
 	assert.equal(mixupStatus({ misses: 0, hits: 2, won: ["pisat"], family }), "probe");
 	assert.equal(mixupStatus({ misses: 0, hits: 2, won: ["pisat", "napisat"], family }), "cleared");
 	assert.equal(mixupStatus({ misses: 0, hits: 2, family }), "probe", "S2: no won, no clear");

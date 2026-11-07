@@ -433,8 +433,9 @@ export function pickStory(stories: readonly StoryRecord[], input: PickInput): { 
 
 // ─── Level rules ────────────────────────────────────────────────────────────
 
-/** Sentences per episode by level: optimized for extensive reading volume
- *  to overachieve the daily incidental vocabulary learning threshold. */
+/** Sentences per episode by level. One assigned episode a day is graded
+ *  reading; extensive reading (Nakanishi 2015; Jeon & Day 2016) means reading
+ *  a great deal, easy and chosen for pleasure, which this does not measure. */
 export const STORY_LENGTH: Record<Cefr, { min: number; max: number }> = {
 	A1: { min: 20, max: 25 },
 	A2: { min: 22, max: 28 },

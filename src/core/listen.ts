@@ -1,9 +1,9 @@
 /**
  * Listen (LangHarness, 2026-10-28) — the meaning-focused input strand,
  * built locally. Ten real sentences from the dictionary that the learner
- * can follow (95–98% of the words known), each heard first with the text
- * hidden, understood by picking its meaning, then read with its one
- * stretch word glossed.
+ * can follow (at most one unknown word each, and the session at or above
+ * LISTEN_FLOOR), each heard first with the text hidden, typed, then read
+ * with its one stretch word glossed.
  *
  * Typed answers (2026-10-31, owner: pick-a-meaning was too easy at their
  * level): the same sentence can instead be typed as Slovak, what was heard
@@ -82,8 +82,9 @@ export function sessionCoverage(items: readonly Pick<ListenItem, "words" | "stre
 
 export const LISTEN_COUNT = 10;
 export const LISTEN_MINUTES = 4;
-/** The session as a whole: at least this share of its running words known
- *  (van Zeeland & Schmitt 2013 put comfortable listening near 95%). A
+/** The session as a whole: at least this share of its running words known.
+ *  93% is this app's own choice, a little below the roughly 95% that van
+ *  Zeeland & Schmitt (2013) found comfortable for listening. A
  *  single short sentence cannot be held to a percentage — one new word in
  *  eight is 87% — so the rule is one stretch word a sentence, and the
  *  session trades stretch sentences for fully-known ones until the whole

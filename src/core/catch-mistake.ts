@@ -158,8 +158,7 @@ export function parseCatchDraft(text: string): CatchDraft | null {
 	return { sentences, slip: { sentence: sl.sentence, wrong: sl.wrong, right: sl.right } };
 }
 
-/** The brief for one item. It is written from the pair, not from slipBrief,
- *  whose lines tell a series episode about its lead character. */
+/** The brief for one item, written from the pair the learner mixes up. */
 export function catchBrief(t: CatchTarget, language: string): string {
 	const forms = (w: CatchWord) => w.forms.slice(0, BRIEF_FORMS).map((f) => `"${f}"`).join(", ");
 	return [

@@ -117,6 +117,7 @@ export * from "./trajectory.ts";
 export * from "./speak-script.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
+export * from "./sources.ts";
 export * from "./saved-phrases.ts";
 export * from "./cheatsheets.ts";
 export * from "./word-search.ts";

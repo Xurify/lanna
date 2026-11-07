@@ -55,6 +55,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Curriculum", hint: "Your climb, level by level and chapter by chapter", href: "/curriculum", icon: "arrow", words: "climb path levels chapters" },
 	{ title: "Progress", hint: "Hours, stamps, the plan's pace", href: "/progress", icon: "chart", words: "plan stamps hours" },
 	{ title: "Milestones", hint: "Level checks", href: "/milestones", icon: "flag", words: "level exam" },
+	{ title: "Sources", hint: "The research behind each task", href: "/sources", icon: "read", words: "research studies evidence papers references" },
 	{ title: "Ask the tutor", hint: "Any question about the language", href: "/chat/new", icon: "tutor", words: "chat" },
 	{ title: "Map", hint: "What you know, as a graph", href: "/map", icon: "chart", words: "knowledge graph" },
 ];

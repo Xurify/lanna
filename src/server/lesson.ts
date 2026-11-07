@@ -105,7 +105,9 @@ function entries() {
  * 60%+) almost every rep is typed. Either way some reps come from
  * neighboring units the learner has reached (CONTRAST first), so the case
  * has to be chosen from the trigger rather than assumed from the lesson's
- * title — interleaving, which is what makes the choice stick.
+ * title. The mix makes the learner read the trigger; the evidence that
+ * interleaving helps is mixed for language material, so this is a design
+ * choice, not a proven gain (docs/research/desirable-difficulties.md).
  */
 export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: AtlasGender }): LessonPlan {
 	const info = allUnits().find((u) => u.id === unit)!;
@@ -470,7 +472,7 @@ export interface ProgressSummary {
 	backlog: number;
 	/** Minutes practiced today. */
 	todayMinutes: number;
-	/** Words known: review cards at 80% retention or better. */
+	/** Review cards answered at least once whose score is 80 or more (calculateRetention: the scheduler's stability less a lapse penalty, the app's own heuristic). Not a vocabulary size: it counts deck cards, not words outside the deck. */
 	wordsKnown: number;
 	/** The stamp book (src/core/stamps.ts, src/server/stamps.ts). */
 	stamps: StampReport;

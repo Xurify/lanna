@@ -158,8 +158,8 @@ export function datedSceneView(scene: DatedScene, estimate: DatedEstimate, today
 	if (reachDays <= daysLeft) {
 		const spare = daysLeft - reachDays;
 		const margin = spare > 0 ? `${days(spare)} to spare` : "just in time";
-		return { ...open, status: "on-track", reach, line: `On track: at your real pace you reach it by ${reachWords}, ${margin}.` };
+		return { ...open, status: "on-track", reach, line: `At your pace of the last 14 days you reach it by ${reachWords}, ${margin}. A projection, not a promise.` };
 	}
 	const daysLater = reachDays - daysLeft;
-	return { ...open, status: "behind", reach, daysLater, line: `Behind by ${days(daysLater)}: at your real pace you reach it on ${reachWords}.` };
+	return { ...open, status: "behind", reach, daysLater, line: `Later than the date: at your pace of the last 14 days you reach it on ${reachWords}, ${days(daysLater)} after.` };
 }

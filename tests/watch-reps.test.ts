@@ -244,6 +244,32 @@ describe("a Watch save queues its missed lines", () => {
 		recordWatch({ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 }, new Date("2026-11-05T09:00:00Z"));
 		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === record.id), []);
 	});
+
+	test("a video with automatic captions queues nothing, since their text can be wrong", () => {
+		resetStore();
+		const record: VideoRecord = {
+			id: "vid00000005",
+			lang: "sk",
+			url: "https://www.youtube.com/watch?v=vid00000005",
+			title: "Na trhu, automaticky",
+			durationSec: 60,
+			source: { kind: "auto-captions", trackLang: "sk", via: "test" },
+			level: "A2",
+			createdAt: "2026-11-04T09:00:00.000Z",
+			segments: [{ i: 0, start: 0, end: 3, sk: "Dobrý deň, pani predavačka.", en: "Good day, shopkeeper.", tokens: [] }],
+			questions: [],
+			preTeach: [],
+			coverage: 0.9,
+			wordCount: 4,
+			unknownCount: 1,
+			usage: { model: "faux:watch", steps: [] },
+			translatedBy: "model",
+		};
+		videoStore.put(record);
+		const stats = [{ i: 0, words: 4, sec: 3, replays: 0, slow: false, revealed: false, got: "no" as const }];
+		recordWatch({ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 }, new Date("2026-11-05T09:00:00Z"));
+		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === record.id), []);
+	});
 });
 
 describe("Listen serves the due watch lines", () => {

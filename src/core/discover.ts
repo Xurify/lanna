@@ -21,8 +21,9 @@
  *     description reads as the language (measured with the lexicon).
  *   - The offer is ranked by the known-word share of the real transcript,
  *     measured locally with no model call (src/server/discover.ts), so a pick
- *     is input at the learner's level: 93–98% known is where listening works
- *     (the Watch task's LISTEN_FLOOR, van Zeeland & Schmitt 2013).
+ *     is near the learner's level. The target is the app's own LISTEN_FLOOR
+ *     or more, a little below the roughly 95% van Zeeland & Schmitt (2013)
+ *     found comfortable for listening; the study does not give an upper bound.
  *
  * Browser-safe: no file or network access.
  */

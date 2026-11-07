@@ -46,6 +46,7 @@ import { FragmentsPanel } from "@/components/watch/fragments";
 import { Thumb } from "@/components/watch/thumb";
 import { CreatorsSection, PicksSection, useDiscover, YouTubeSection } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -1235,9 +1236,9 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 									<button type="button" onClick={notYet} className={SECONDARY} data-testid="watch-notyet" title="N">
 										Not yet
 									</button>
-									<button type="button" onClick={gotIt} disabled={!heard && !atEnd} className={PRIMARY} data-testid="watch-gotit" title="Enter">
+									<button type="button" onClick={gotIt} disabled={!heard && !atEnd} className={PRIMARY} data-testid="watch-gotit" title="Enter · your own call, nothing checks it">
 										<CheckIcon className="size-5" strokeWidth={3} />
-										{idx + 1 >= segs.length ? "Got it · finish" : "Got it"}
+										{idx + 1 >= segs.length ? "Got it (my call) · finish" : "Got it (my call)"}
 									</button>
 								</>
 							)
@@ -1405,7 +1406,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 			<div className="mt-8 grid grid-cols-3 gap-3">
 				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
 				<Stat label={mode === "step" ? "Got first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst}/${judged}` : "—") : String(video.segments.length)} ink="text-teal-2" />
-				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
+				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
 			</div>
 			{mode === "step" && judged > 0 && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="watch-speed">
@@ -1417,7 +1418,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 			{outcome && (
 				<p className="mt-2 font-prose text-sm text-muted-foreground">
 					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
-					{Math.round(video.coverage * 100)}% of the words were ones you knew.
+					The app counts {Math.round(video.coverage * 100)}% of this video's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
 			{targets.length > 0 && <SentenceStep videoId={video.id} targets={targets} />}
@@ -1432,6 +1433,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 					Your videos
 				</button>
 			</div>
+			<SourcesNote feature="watch" className="mt-8 text-left" />
 		</div>
 	);
 }

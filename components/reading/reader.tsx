@@ -32,6 +32,7 @@ import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 export function levelBadgeStyle(level: string): string {
 	switch (level) {
@@ -71,7 +72,6 @@ interface Outcome {
 	total: number;
 	queued: string[];
 	reread: boolean;
-	summary: { todayXp: number; dailyGoal: number; streak: { days: number } };
 }
 
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
@@ -169,7 +169,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 				void load();
 			} catch {
 				const g = gradeAnswers(story.questions, all);
-				setOutcome({ xp: readXp(story.sentences.length, g.correct, false), ...g, queued: [], reread: false, summary: { todayXp: 0, dailyGoal: 50, streak: { days: 0 } } });
+				setOutcome({ xp: readXp(story.sentences.length, g.correct, false), ...g, queued: [], reread: false });
 			} finally {
 				setSaving(false);
 			}
@@ -642,13 +642,13 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">
 				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="Understood" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
+				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
 				<Stat label="Words" value={String(story.wordCount)} ink="text-teal-2" />
 			</div>
 			{outcome && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground">
 					{outcome.queued.length > 0 ? `${outcome.queued.length} new word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
-					{Math.round(story.coverage * 100)}% of the words were ones you knew.
+					The app counts {Math.round(story.coverage * 100)}% of this episode's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
 			{(story.newWords.length > 0 || looked.length > 0) && (
@@ -703,6 +703,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 					</button>
 				)}
 			</div>
+			<SourcesNote feature="read" className="mt-8 text-left" />
 			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">The shelf is being filled in the background; the next story is a tap away in the library.</p>}
 		</div>
 	);
@@ -727,12 +728,12 @@ function newWordList(words: ReadonlyArray<string | { sk: string }>): string[] {
 	return words.map((w) => (typeof w === "string" ? w : w.sk)).filter(Boolean);
 }
 
-/** One line of what a story is: level, length, new words, share of words known. Parts that do not exist are left out. */
+/** One line of what a story is: level, length, new words, share of words the app counts as known. Parts that do not exist are left out. */
 export function storyMeta(s: { level: string; wordCount: number; coverage: number; newWords: ReadonlyArray<string | { sk: string }> }): string {
 	const parts = [s.level, `about ${Math.max(1, Math.round(s.wordCount / 80))} min`];
 	const fresh = newWordList(s.newWords);
 	if (fresh.length) parts.push(`${fresh.length} new ${fresh.length === 1 ? "word" : "words"}`);
-	if (s.coverage > 0) parts.push(`${Math.round(s.coverage * 100)}% of words known`);
+	if (s.coverage > 0) parts.push(`${Math.round(s.coverage * 100)}% of words counted as known`);
 	return parts.join(" · ");
 }
 
@@ -891,6 +892,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						)}
 					</section>
 				)}
+				<SourcesNote feature="read" className="mt-10" />
 			</div>
 		</div>
 	);

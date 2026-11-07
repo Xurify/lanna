@@ -51,6 +51,7 @@ import { SidebarToggle } from "@/components/sidebar";
 import { dateInWords, daysLeftWords, GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type DatedSceneView, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { DatePicker } from "@/components/milestones/date-picker";
+import { SourcesNote } from "@/components/sources/sources-note";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 	"monitor-play": MonitorPlayIcon,
@@ -115,7 +116,7 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 	const [text, setText] = useState("");
 	const [adding, setAdding] = useState(false);
 	const [open, setOpen] = useState<string | null>(null);
-	const [sourcesOpen, setSourcesOpen] = useState(false);
+	const [sourcesOpen, setSourcesOpen] = useState(true);
 	const [queued, setQueued] = useState<Set<string>>(new Set());
 	const [datedText, setDatedText] = useState("");
 	const [datedDate, setDatedDate] = useState<string | null>(null);
@@ -303,6 +304,8 @@ export function MilestonesPage({ initialReport, modelReady }: { initialReport: M
 						</div>
 					)}
 				</section>
+				<SourcesNote feature="milestones" className="mt-6" />
+				<SourcesNote feature="where-you-are" className="mt-3" />
 			</main>
 		</div>
 	);

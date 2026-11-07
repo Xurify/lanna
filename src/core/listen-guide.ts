@@ -47,8 +47,8 @@ const share = (g: { reps: number; right: number }) => `${pct(g.right / g.reps)} 
 export function listenGuideFacts(l: ListenAnalysis): string {
 	const lines: string[] = [];
 	lines.push(`Listen sentences: ${l.sentences} over ${l.sessions} sessions${l.from ? ` (${l.from} to ${l.to})` : ""}; ${l.typed} typed, ${l.readable} typed and read for causes, ${l.read} of those with a miss.`);
-	lines.push(`Understood (exactly right, text not shown first): ${pct(l.right)}${l.range ? `, likely ${pct(l.range.low)} to ${pct(l.range.high)}` : ""}.`);
-	if (l.weeks.length) lines.push(`Understood by week: ${l.weeks.map((w) => `${w.week} ${w.few ? `too few (${w.reps})` : `${pct(w.right / w.reps)} of ${w.reps}`}`).join("; ")}.`);
+	lines.push(`Typed correctly (exactly right, text not shown first; this shows the typing matched, not that the meaning was understood): ${pct(l.right)}${l.range ? `, likely ${pct(l.range.low)} to ${pct(l.range.high)}` : ""}.`);
+	if (l.weeks.length) lines.push(`Typed correctly by week: ${l.weeks.map((w) => `${w.week} ${w.few ? `too few (${w.reps})` : `${pct(w.right / w.reps)} of ${w.reps}`}`).join("; ")}.`);
 	lines.push(`Causes, in sentences per 100 typed ones, the last 14 days against before. A trend is called only when it passes the test across all causes; otherwise it reads "no clear change", which is not "the same":`);
 	for (const c of l.causes) {
 		const info = LISTEN_CAUSES[c.cause];
@@ -73,7 +73,7 @@ export function listenGuideFacts(l: ListenAnalysis): string {
 		for (const i of insights) lines.push(`- ${i.title}: ${i.line}`);
 	}
 	for (const w of l.repeats ?? []) lines.push(`Keeps going wrong: "${w.word}", wrong in ${w.missed} of ${w.appeared} sentences it was in, over ${w.sessions} sessions${w.typedAs.length ? `, typed as ${w.typedAs.map((t) => `"${t}"`).join(", ")}` : ""}.`);
-	if (l.pace) lines.push(`By speed of the clip: slow ${share(l.pace.slow)} understood, fast ${share(l.pace.fast)}; fast is harder past chance: ${l.pace.fastHarder ? "yes" : "no"}.`);
+	if (l.pace) lines.push(`By speed of the clip: slow ${share(l.pace.slow)} typed correctly, fast ${share(l.pace.fast)}; fast is harder past chance: ${l.pace.fastHarder ? "yes" : "no"}.`);
 	if (l.session) lines.push(`By place in the session: first half ${share(l.session.first)}, second half ${share(l.session.second)}; second half worse past chance: ${l.session.tiring ? "yes" : "no"}.`);
 	if (l.length) lines.push(`By sentence length: short ${share(l.length.short)}, long ${share(l.length.long)}; long is harder past chance: ${l.length.longHarder ? "yes" : "no"}.`);
 	if (l.replays.recent !== null) lines.push(`Plays after the first: ${l.replays.recent.toFixed(1)} a sentence lately${l.replays.earlier !== null ? `, ${l.replays.earlier.toFixed(1)} before` : ""}.`);
