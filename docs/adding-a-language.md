@@ -51,7 +51,7 @@ The dialog asks who builds the course and shows the price of each choice before 
 
 ## Removing a language
 
-In the language menu, hover an added language and press the bin. Its words, sentences and grammar map (`<data>/languages/<id>/`) are deleted. The learner's progress in it (`<data>/profiles/<id>/`) stays, so adding it again picks up where they were. The running language cannot be removed; switch first.
+In Settings → Learning, press the bin next to an added language. Its words, sentences and grammar map (`<data>/languages/<id>/`) are deleted. The learner's progress in it (`<data>/profiles/<id>/`) stays, so adding it again picks up where they were. The running language cannot be removed; switch first.
 
 ## Where the code is
 

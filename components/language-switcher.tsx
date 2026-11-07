@@ -3,8 +3,9 @@
 /**
  * The sidebar's language block (LangHarness): which language profile is
  * running, a switch to another one, the Today door, and the
- * spaced-review door with its due count. Switching, removing and adding go
- * through components/language-actions.tsx, shared with Settings → Learning.
+ * spaced-review door with its due count. Switching and adding go through
+ * components/language-actions.tsx, shared with Settings → Learning, where a
+ * language is removed.
  * While a language is being added, the menu lists it as usual, with a loading mark.
  */
 
@@ -23,7 +24,6 @@ import {
 	PlusIcon,
 	RepeatIcon,
 	SunIcon,
-	Trash2Icon,
 	CircleAlertIcon,
 	ClapperboardIcon,
 	FlagIcon,
@@ -193,8 +193,8 @@ export function LanguageSwitcher() {
 								{profile.profiles.map((p) => {
 									const running = p.id === profile.active;
 									return (
-										<div key={p.id} className="group relative">
 										<button
+											key={p.id}
 											type="button"
 											role="option"
 											aria-selected={running}
@@ -205,7 +205,6 @@ export function LanguageSwitcher() {
 												running
 													? "bg-accent font-semibold text-foreground shadow-xs"
 													: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-												p.removable && "pr-8",
 											)}
 										>
 											<div className="flex min-w-0 items-center gap-2 truncate">
@@ -215,22 +214,6 @@ export function LanguageSwitcher() {
 											</div>
 											{running && <CheckIcon className="size-3.5 shrink-0 text-primary" />}
 										</button>
-										{p.removable && (
-											<button
-												type="button"
-												aria-label={`Remove ${p.english}`}
-												title={`Remove ${p.english}`}
-												data-testid={`profile-remove-${p.id}`}
-												onClick={() => {
-													setOpen(false);
-													languages.askRemove(p);
-												}}
-												className="absolute top-1/2 right-1 -translate-y-1/2 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 pointer-coarse:opacity-100"
-											>
-												<Trash2Icon className="size-3.5" />
-											</button>
-										)}
-										</div>
 									);
 								})}
 							</div>

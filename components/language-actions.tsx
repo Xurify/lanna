@@ -211,7 +211,7 @@ function ConfirmDialog({
 						onClick={onConfirm}
 						className={
 							destructive
-								? "rounded-lg bg-destructive px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-destructive/90 disabled:opacity-50 dark:bg-destructive/60"
+								? "rounded-lg bg-danger px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-danger-hover disabled:opacity-50"
 								: "rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 						}
 					>

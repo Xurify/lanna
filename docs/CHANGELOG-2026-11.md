@@ -11,6 +11,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Less empty space** (the owner: "sometimes I feel like there is too much whitespace"): the card kept an empty slot under the translation for the hints, and after the answer the keys' full height stayed empty under a one-line verdict. The meaning and base form now open in the row below the card, in place of the button that asked for them, so the slot is gone and the card is 50 px shorter at 1280 px. A right answer, or one off by accents, shows the word, its meaning and its form under the verdict, as a lesson does. The rating buttons still do not move when the answer is checked.
 - **Checked:** unit tests, and every state of the card (before the answer, one and two hints, a different word, another ending, I don't know, accents only, right) in a sandbox at 1280, 820 and 390 px wide.
 - **Unverified:** the owner's own deck.
+- **Removing a language** (the owner: "Remove the delete button from the language selector dropdown"): the language menu no longer has a bin; Settings → Learning still does. The Remove button in the confirm dialog is a solid danger red with white text (`--q-danger`, `bg-danger`). In Night it was the pink text red at 60%, which read as a muddy brown.
 
 ## 7 November: a bolder app icon (branch `feat/bolder-app-icon`)
 

@@ -89,6 +89,9 @@ html[data-keyboard] :focus-visible {
 	--q-on-teal: #ffffff;
 	--q-miss: #b42318;
 	--q-miss-wash: #fbeceb;
+	/* A filled danger button: white text keeps 4.5:1 on both (6.6 and 8.3). */
+	--q-danger: #b42318;
+	--q-danger-hover: #9a1b12;
 	--q-shadow-rgb: 22 24 27;
 	--q-hair: 0 0 0 1px var(--q-line);
 	/* A text field's surface (.q-field). Day sits it on the well; Night uses the next step up (well-2), so a field on a well still shows. */
@@ -168,6 +171,8 @@ html[data-keyboard] :focus-visible {
 	--q-on-teal: #06201f;
 	--q-miss: #f0867b;
 	--q-miss-wash: #40231f;
+	--q-danger: #d92d20;
+	--q-danger-hover: #c4321f;
 	--q-shadow-rgb: 0 0 0;
 	--q-raise: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 16px -8px rgb(0 0 0 / 0.5);
 	--q-raise-hi: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 36px -14px rgb(0 0 0 / 0.6);
@@ -204,6 +209,8 @@ html[data-keyboard] :focus-visible {
 		--q-on-teal: #06201f;
 		--q-miss: #f0867b;
 		--q-miss-wash: #40231f;
+		--q-danger: #d92d20;
+		--q-danger-hover: #c4321f;
 		--q-shadow-rgb: 0 0 0;
 		--q-raise: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 16px -8px rgb(0 0 0 / 0.5);
 		--q-raise-hi: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 36px -14px rgb(0 0 0 / 0.6);
@@ -279,6 +286,8 @@ html[data-keyboard] :focus-visible {
 	--color-ink-3: var(--q-ink-3);
 	--color-ink-4: var(--q-ink-4);
 	--color-teal: var(--q-teal);
+	--color-danger: var(--q-danger);
+	--color-danger-hover: var(--q-danger-hover);
 	--color-teal-2: var(--q-teal-2);
 	--color-teal-wash: var(--q-teal-wash);
 	--color-teal-line: var(--q-teal-line);
