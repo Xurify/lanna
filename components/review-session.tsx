@@ -81,6 +81,11 @@ function clozeAround(before: string, after: string) {
 	return { before: before.slice(0, before.length - lead.length), lead, tail, after: after.slice(tail.length) };
 }
 
+/** "dinner; evening meal" → "dinner". */
+function firstSense(gloss: string): string {
+	return (gloss.split(/[;,(]/)[0] ?? gloss).trim();
+}
+
 function MissWhy({ reason, given, code, className }: { reason: MissReason; given: string; code?: string; className?: string }) {
 	const w = (text: string) => (
 		<b className="font-semibold" lang={code}>
@@ -108,7 +113,11 @@ function MissWhy({ reason, given, code, className }: { reason: MissReason; given
 			<>
 				{yours} is {w(reason.lemma)} with another ending.
 			</>
-		) : null;
+		) : (
+			<>
+				The word is {w(reason.lemma)}, {reason.gloss}.
+			</>
+		);
 	const need = reason.trigger ? (
 		<>
 			<span className="rounded-[5px] bg-well px-1.5 font-semibold text-teal-2" lang={code}>
@@ -119,9 +128,8 @@ function MissWhy({ reason, given, code, className }: { reason: MissReason; given
 	) : reason.form ? (
 		<>The sentence needs the {w(reason.form)}.</>
 	) : null;
-	if (!what && !need) return null;
 	return (
-		<div className={cn("lh-fade flex flex-col gap-1 text-[15px] leading-relaxed text-foreground", className)} data-testid="review-why">
+		<div className={cn("lh-fade flex flex-col gap-1.5 text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
 			{what && <p>{what}</p>}
 			{need && <p>{need}</p>}
 		</div>
@@ -540,31 +548,14 @@ export function ReviewSession() {
 
 											{/* Before and after the answer share one grid cell: the cell keeps the height of the keys,
 											    so the answer and its reason replace them without pushing the ratings down. */}
-											<div className="mt-3 grid">
+											<div className="mt-4 grid grid-cols-[minmax(0,1fr)]">
 												<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
-													<div className="min-h-[60px] @xl:min-h-[34px]">
-														{!verdict && hint > 0 && (
-															<p className="flex flex-wrap gap-2 text-[15px]" data-testid="review-hints">
-																<span className="q-ex">
-																	<span className="mr-1.5 text-[12px] font-semibold text-ink-3">means</span>
-																	{prompt.card.gloss}
-																</span>
-																{hint > 1 && (
-																	<span className="q-ex">
-																		<span className="mr-1.5 text-[12px] font-semibold text-ink-3">base form</span>
-																		<span lang={lang?.code}>{prompt.card.lemma}</span>
-																	</span>
-																)}
-															</p>
-														)}
-													</div>
+													{!verdict && mode === "choice" && !picks && <p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>}
 
-													{!verdict && mode === "choice" && !picks && <p className="q-sub">You have met this word before, so this time you type it.</p>}
-
-													{!verdict && picks && (
-														<div className="mt-5 grid gap-2 @xl:grid-cols-2" data-testid="review-options">
+													{picks && (
+														<div className="grid gap-2 @xl:grid-cols-2" data-testid="review-options">
 															{prompt.options.map((o, i) => (
-																<button key={o} type="button" onClick={() => check(o)} lang={lang?.code} className="flex h-12 items-center gap-3 rounded-lg bg-well px-3.5 text-left text-[20px] font-[500] hover:bg-well-2">
+																<button key={o} type="button" onClick={() => check(o)} disabled={!!verdict} lang={lang?.code} className="flex h-12 items-center gap-3 rounded-lg bg-well px-3.5 text-left text-[20px] font-[500] hover:bg-well-2">
 																	<kbd className="q-kbd pointer-coarse:hidden">{i + 1}</kbd>
 																	{o}
 																</button>
@@ -572,7 +563,7 @@ export function ReviewSession() {
 														</div>
 													)}
 
-													{!picks && <DiacriticBar variant="keys" className="mt-5" />}
+													{!picks && <DiacriticBar variant="keys" />}
 												</div>
 
 												{verdict && (
@@ -596,6 +587,21 @@ export function ReviewSession() {
 															)}
 														</p>
 														{verdict === "wrong" && reason && <MissWhy reason={reason} given={given} code={lang?.code} className="mt-2.5" />}
+														{verdict !== "wrong" && (
+															<p className="mt-3 flex flex-wrap gap-2" data-testid="review-facts">
+																<span className="q-ex">
+																	<span className="mr-1.5 text-[12px] font-semibold text-ink-3">word</span>
+																	<span lang={lang?.code}>{prompt.card.lemma}</span>
+																	<span className="ml-1.5 font-[450] text-ink-2">{firstSense(prompt.card.gloss)}</span>
+																</span>
+																{prompt.form && (
+																	<span className="q-ex">
+																		<span className="mr-1.5 text-[12px] font-semibold text-ink-3">form</span>
+																		{prompt.form}
+																	</span>
+																)}
+															</p>
+														)}
 													</div>
 												)}
 											</div>
@@ -604,9 +610,21 @@ export function ReviewSession() {
 								)}
 
 								{prompt && lang && (
-									<div className="mt-4 min-h-[152px]" data-testid="review-dock">
+									<div className="mt-4 min-h-[184px] @xl:min-h-[152px]" data-testid="review-dock">
 										{!verdict ? (
 											<div className="flex flex-wrap items-center gap-2">
+												{hint > 0 && (
+													<span className="q-ex h-12 !items-center rounded-lg bg-well px-3.5" data-testid="review-hints">
+														<span className="mr-1.5 text-[12px] font-semibold text-ink-3">means</span>
+														{prompt.card.gloss}
+													</span>
+												)}
+												{hint > 1 && (
+													<span className="q-ex h-12 !items-center rounded-lg bg-well px-3.5">
+														<span className="mr-1.5 text-[12px] font-semibold text-ink-3">base form</span>
+														<span lang={lang?.code}>{prompt.card.lemma}</span>
+													</span>
+												)}
 												{hint < 2 && (
 													<button
 														type="button"
