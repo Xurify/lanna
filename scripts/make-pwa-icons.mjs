@@ -13,7 +13,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 
-const BACKGROUND = "#16181B";
+const BACKGROUND = "#0D6764";
 const mark = readFileSync("build/mark.svg", "utf8");
 // Everything inside the mark's own <svg> element: the glyph and its comments.
 const glyph = mark.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
