@@ -111,11 +111,13 @@ contextBridge.exposeInMainWorld("lh", {
 		list: () => ipcRenderer.invoke("lh:fonts:list"),
 	},
 	/** Watch → picks: sign in to YouTube in a window of its own, read one list's
-	 *  page (history, recommended, subscriptions) through that session, sign out. */
+	 *  page (history, recommended, subscriptions) and who is signed in through
+	 *  that session, sign out. */
 	youtube: {
 		status: () => ipcRenderer.invoke("lh:youtube", { op: "status" }),
 		connect: () => ipcRenderer.invoke("lh:youtube", { op: "connect" }),
 		read: (list) => ipcRenderer.invoke("lh:youtube", { op: "read", list }),
+		account: () => ipcRenderer.invoke("lh:youtube", { op: "account" }),
 		disconnect: () => ipcRenderer.invoke("lh:youtube", { op: "disconnect" }),
 	},
 	onOpenSettings: (cb) => {

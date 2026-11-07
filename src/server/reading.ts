@@ -74,6 +74,7 @@ import { dayKey, entryLemma, exampleText, type LexiconEntry } from "../core/revi
 import { ensureReadmes } from "../store/corpus.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
+import { knownWordStore } from "../store/known-words.ts";
 import { readSettings } from "../store/settings.ts";
 import { storyStore } from "../store/stories.ts";
 import { assignVoices, availableVoiceIds, NARRATOR_VOICE } from "./voices.ts";
@@ -205,6 +206,11 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 			for (const e of entries) met.add(e.slug);
 			if (!sample.includes(lemma)) sample.push(lemma);
 		}
+	}
+	// Words the learner marked as known (E69) count as met wherever "known" is measured.
+	for (const [slug, w] of Object.entries(knownWordStore.read().words)) {
+		met.add(slug);
+		if (!sample.includes(w.lemma)) sample.push(w.lemma);
 	}
 	const known = new Set(met);
 	const bound = KNOWN_RANK[at];

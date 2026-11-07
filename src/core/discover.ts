@@ -309,6 +309,100 @@ export function extractVideos(data: unknown): FoundVideo[] {
 	return [...out.values()];
 }
 
+/** The account the desktop app's YouTube session is signed in as: what the
+ *  Watch page shows beside "Connected". Read from YouTube's account switcher
+ *  (the name, the @handle and the picture) or, failing that, the picture in
+ *  the top bar of a page read. Never the email address. */
+export interface YouTubeAccount {
+	name?: string;
+	handle?: string;
+	/** A link to the picture on Google's image hosts, small round crop. */
+	photo?: string;
+}
+
+/** The account's picture, on Google's image hosts (yt3.ggpht.com for a
+ *  channel's, lh3.googleusercontent.com for a Google account's), resized to a
+ *  small round crop. Anything else is dropped. */
+export function accountImage(thumbnails: unknown): string | undefined {
+	const yt = channelImage(thumbnails);
+	if (yt) return yt;
+	const list = isObj(thumbnails) && Array.isArray(thumbnails.thumbnails) ? thumbnails.thumbnails : Array.isArray(thumbnails) ? thumbnails : [];
+	let best: { url: string; width: number } | undefined;
+	for (const t of list) {
+		if (!isObj(t) || typeof t.url !== "string") continue;
+		const width = typeof t.width === "number" ? t.width : 0;
+		if (!best || width >= best.width) best = { url: t.url, width };
+	}
+	if (!best) return undefined;
+	let url: URL;
+	try {
+		url = new URL(best.url.startsWith("//") ? `https:${best.url}` : best.url);
+	} catch {
+		return undefined;
+	}
+	if (url.protocol !== "https:" || !/^lh[0-9]\.googleusercontent\.com$/.test(url.hostname)) return undefined;
+	return `${url.origin}${url.pathname.split("=")[0]}=s96-c`;
+}
+
+const HANDLE = /^@[\p{L}\p{N}._-]{2,100}$/u;
+
+/** The signed-in account out of YouTube's account switcher answer
+ *  (getAccountSwitcherEndpoint: a ")]}'" line, then JSON with one
+ *  `accountItem` per account, the current one `isSelected`). The name, the
+ *  handle and the picture are kept; the email in the same answer is not read.
+ *  Null when the answer holds no account. */
+export function accountFromSwitcher(text: string): YouTubeAccount | null {
+	const body = text.replace(/^\)\]\}'\s*/, "").trim();
+	let data: unknown;
+	try {
+		data = JSON.parse(body.slice(body.indexOf("{")));
+	} catch {
+		return null;
+	}
+	const items: Json[] = [];
+	const walk = (v: unknown, depth: number) => {
+		if (depth > 40 || !v || typeof v !== "object") return;
+		if (Array.isArray(v)) {
+			for (const x of v) walk(x, depth + 1);
+			return;
+		}
+		for (const [k, x] of Object.entries(v)) {
+			if (k === "accountItem" && isObj(x)) items.push(x);
+			else walk(x, depth + 1);
+		}
+	};
+	walk(data, 0);
+	const item = items.find((i) => i.isSelected === true) ?? items[0];
+	if (!item) return null;
+	const name = textOf(item.accountName)?.trim().slice(0, 100);
+	const handle = textOf(item.channelHandle)?.trim();
+	const photo = accountImage(item.accountPhoto);
+	if (!name && !photo) return null;
+	return { ...(name ? { name } : {}), ...(handle && HANDLE.test(handle) ? { handle } : {}), ...(photo ? { photo } : {}) };
+}
+
+/** The signed-in account's picture in the top bar of a YouTube page's data
+ *  (the avatar button), when the page has one. */
+export function accountFromPage(data: unknown): YouTubeAccount | null {
+	let photo: string | undefined;
+	const walk = (v: unknown, depth: number) => {
+		if (photo || depth > 30 || !v || typeof v !== "object") return;
+		if (Array.isArray(v)) {
+			for (const x of v) walk(x, depth + 1);
+			return;
+		}
+		for (const [k, x] of Object.entries(v)) {
+			if (k === "topbarMenuButtonRenderer" && isObj(x) && x.avatar) {
+				photo = accountImage(x.avatar);
+				if (photo) return;
+			}
+			walk(x, depth + 1);
+		}
+	};
+	walk(data, 0);
+	return photo ? { photo } : null;
+}
+
 /** The biggest picture in a `thumbnails` list that sits on Google's image
  *  hosts, resized to a small round crop. Anything else is dropped, so a page
  *  cannot make the app load an image from another site. */
@@ -679,6 +773,8 @@ export interface DiscoverStateView {
 	refreshedAt?: string;
 	refresh: { running: boolean; step?: string; done: number; total: number; error?: string; finishedAt?: string };
 	youtube: Partial<Record<YouTubeListName, { at: string; via: "account" | "takeout"; count: number }>>;
+	/** Who the desktop app's YouTube session is signed in as, when it was read. */
+	youtubeAccount?: YouTubeAccount & { at: string };
 	searches: string[];
 	/** A model is set: searches can be written and a pick prepared. */
 	canSearch: boolean;

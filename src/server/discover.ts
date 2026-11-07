@@ -52,11 +52,15 @@ import {
 	type PickedVideo,
 	type PickSource,
 	type ScannedVideo,
+	accountFromPage,
+	accountFromSwitcher,
+	type YouTubeAccount,
 } from "../core/discover.ts";
 import { tokenize, type StoryUsage } from "../core/reading.ts";
 import { TtlMemo } from "../core/ttl-memo.ts";
 import { MAX_SEGMENTS, MAX_VIDEO_SEC, segmentCues, videoCoverage, videoExpected, videoUrl } from "../core/watch.ts";
 import { discoverStore, type YouTubeSignals } from "../store/discover.ts";
+import { knownWordStore } from "../store/known-words.ts";
 import { videoStore } from "../store/videos.ts";
 import { activeLanguage } from "./active-language.ts";
 import { knownWords, storyEngine, type KnownWords } from "./reading.ts";
@@ -553,25 +557,49 @@ function cleanChannels(list: readonly unknown[]): FoundChannel[] {
 	return [...out.values()];
 }
 
-/** The lists out of a YouTube page the desktop app read while signed in. */
-export function listsFromPage(list: YouTubeList, html: string): { videos: FoundVideo[]; channels: FoundChannel[] } {
+/** The lists out of a YouTube page the desktop app read while signed in,
+ *  and the signed-in account's picture from its top bar when the page has one. */
+export function listsFromPage(list: YouTubeList, html: string): { videos: FoundVideo[]; channels: FoundChannel[]; account?: YouTubeAccount } {
 	const data = extractJsonAfter(html, /ytInitialData\s*=\s*/) ?? extractJsonAfter(html, /window\["ytInitialData"\]\s*=\s*/);
 	if (!data) throw new Error("YouTube sent a page without the list. Sign in again and retry.");
 	const context = ((data as Json).responseContext as Json | undefined)?.mainAppWebResponseContext as Json | undefined;
 	if (context?.loggedOut === true) throw new Error("YouTube no longer counts this window as signed in. Connect again.");
-	return list === "subscriptions" ? { videos: [], channels: extractChannels(data) } : { videos: extractVideos(data), channels: [] };
+	const account = accountFromPage(data);
+	return { ...(list === "subscriptions" ? { videos: [], channels: extractChannels(data) } : { videos: extractVideos(data), channels: [] }), ...(account ? { account } : {}) };
 }
 
 /** Keep what was read from YouTube. Returns how many items the list has. */
 export function importYouTube(list: YouTubeList, payload: { html?: string; videos?: unknown[]; channels?: unknown[] }, via: "account" | "takeout", now = new Date()): number {
-	const read = payload.html ? listsFromPage(list, payload.html) : { videos: cleanVideos(payload.videos ?? []), channels: cleanChannels(payload.channels ?? []) };
+	const read = payload.html ? listsFromPage(list, payload.html) : { videos: cleanVideos(payload.videos ?? []), channels: cleanChannels(payload.channels ?? []), account: undefined };
 	const yt = discoverStore.youtube();
 	const at = now.toISOString();
 	if (list === "subscriptions") yt.subscriptions = { at, via, channels: read.channels };
 	else if (list === "history") yt.history = { at, via, videos: read.videos };
 	else yt.recommended = { at, via: "account", videos: read.videos };
+	// The page's top bar carries the signed-in picture; the account switcher, read after the lists, adds the name.
+	if (read.account?.photo) yt.account = { ...(yt.account ?? {}), at, photo: read.account.photo };
 	discoverStore.putYoutube(yt);
 	return list === "subscriptions" ? read.channels.length : read.videos.length;
+}
+
+/** Keep who the YouTube session is signed in as, from the account switcher's
+ *  answer the desktop app read: the name, the @handle and the picture link.
+ *  The email in that answer is never kept. */
+export function importYouTubeAccount(text: string, now = new Date()): YouTubeAccount & { at: string } {
+	const account = accountFromSwitcher(text);
+	if (!account) throw new Error("YouTube did not say who is signed in.");
+	const yt = discoverStore.youtube();
+	yt.account = { at: now.toISOString(), ...account };
+	discoverStore.putYoutube(yt);
+	return yt.account;
+}
+
+/** Signed out: who it was is dropped; what was read stays until forgotten. */
+export function forgetYouTubeAccount(): void {
+	const yt = discoverStore.youtube();
+	if (!yt.account) return;
+	delete yt.account;
+	discoverStore.putYoutube(yt);
 }
 
 export function forgetYouTube(): void {
@@ -687,9 +715,11 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 
 		s.step = "Measuring what you know of each";
 		const tooOld = now.getTime() - REMEASURE_AFTER_MS;
+		// A pick measured before the learner marked words as known (E69) is measured again.
+		const marked = knownWordStore.updatedAt();
 		for (const v of Object.values(scans)) {
 			if (v.coverage === undefined || !v.trackLang) continue;
-			if (v.level === k.level && v.measuredAt && Date.parse(v.measuredAt) > tooOld) continue;
+			if (v.level === k.level && v.measuredAt && Date.parse(v.measuredAt) > tooOld && !(marked && v.measuredAt < marked)) continue;
 			const lines = discoverStore.text(v.id, v.trackLang);
 			if (!lines) continue;
 			Object.assign(v, measureLines(lines, lexicon, k), { level: k.level, measuredAt: now.toISOString() });
@@ -781,6 +811,7 @@ export function discoverState(now = new Date()): DiscoverStateView {
 			...(yt.recommended ? { recommended: { at: yt.recommended.at, via: yt.recommended.via, count: yt.recommended.videos.length } } : {}),
 			...(yt.subscriptions ? { subscriptions: { at: yt.subscriptions.at, via: yt.subscriptions.via, count: yt.subscriptions.channels.length } } : {}),
 		},
+		...(yt.account && (yt.account.name || yt.account.photo) ? { youtubeAccount: yt.account } : {}),
 		searches: discoverStore.searches()?.queries ?? [],
 		canSearch: storyEngine() !== null,
 		checked: scans.length,

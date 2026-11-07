@@ -96,6 +96,9 @@ where the format is not obvious.
   typed, verdict, rating, when; on a form card also the drill its sentence
   practices, the word's gender and the slip); \`meta.json\` holds settings
   and how many new cards each day introduced.
+- \`known.json\`: the words you marked as known (I know this): each word's
+  slug, dictionary form and when, and \`updatedAt\`. They count as known
+  wherever the app measures what you know.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
   tutor read (\`first\`, split \`byGender\`).
@@ -269,7 +272,9 @@ everything the app made of its captions, paid for once.
   video, so the known-word share can be measured again as you learn);
   \`youtube.json\` (what was read from your YouTube account or a Takeout
   export: the videos of your history and recommendations and your
-  subscriptions, with when each was read; no password, cookie or token);
+  subscriptions, with when each was read, and \`account\`: the name, @handle
+  and picture link of the account you were signed in as; no password, cookie,
+  token or email);
   \`searches.json\` (the searches the cheap model wrote from your interests,
   with what they cost); \`avatars.json\` (links to channel pictures);
   \`dismissed.json\` (videos you said are not for you);

@@ -335,6 +335,23 @@ export function prepReps(video: { id: string; segments: readonly Line[] }, keys:
 	});
 }
 
+/** A caption line shown as an excerpt: a comma, semicolon or dash left at the
+ *  end by the cut (the sentence runs on in the next line) is dropped; a full
+ *  stop, question or exclamation mark stays. */
+export function excerpt(text: string): string {
+	return text.trim().replace(/[\s,;:–—-]+$/u, "");
+}
+
+/** The quotation marks a language writes an excerpt in: „…“ for Slovak,
+ *  Czech, Estonian, German and Polish, «…» for Russian and French, “…”
+ *  otherwise. */
+export function quotesFor(code: string | undefined): [string, string] {
+	const c = (code ?? "").toLowerCase().split("-")[0];
+	if (["sk", "cs", "et", "de", "pl", "bg", "ro"].includes(c!)) return ["„", "“"];
+	if (["ru", "fr", "no", "nb", "nn"].includes(c!)) return ["«", "»"];
+	return ["“", "”"];
+}
+
 export function prepRepId(videoId: string, at: number, token: number): string {
 	return `${sectionRepId(videoId, at, token)}:key`;
 }

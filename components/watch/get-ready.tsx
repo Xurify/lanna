@@ -20,7 +20,7 @@ import { sfx } from "@/components/lesson/sound";
 import { Word } from "@/components/reading/word";
 import { groupTokens } from "@/components/reading/reader";
 import { GapDrill, type GapOutcome } from "@/components/watch/gap-drill";
-import { captionLanguageName, coverageBand, coverageKind, formatClock, prepReps, type GapResult, type PrepRecord, type VideoRecord } from "@/src/core";
+import { captionLanguageName, coverageBand, coverageKind, excerpt, formatClock, prepReps, quotesFor, type GapResult, type PrepRecord, type VideoRecord } from "@/src/core";
 
 export function GetReady({ video, canFind }: { video: VideoRecord; canFind: boolean }) {
 	const lang = useActiveLanguage();
@@ -93,6 +93,7 @@ export function GetReady({ video, canFind }: { video: VideoRecord; canFind: bool
 		);
 	}
 	const lines = rec.lines ?? video.segments;
+	const [q1, q2] = quotesFor(video.lang);
 	const known = Math.round(rec.summaryKnown * 100);
 	const expected = Math.round(rec.summaryExpected * 100);
 	return (
@@ -159,7 +160,9 @@ export function GetReady({ video, canFind }: { video: VideoRecord; canFind: bool
 												)}
 												{line && (
 													<span className="mt-1 block truncate font-prose text-xs text-muted-foreground" lang={video.lang} title={line.sk}>
-														{line.sk}
+														{q1}
+														{excerpt(line.sk)}
+														{q2}
 													</span>
 												)}
 											</span>

@@ -14,7 +14,7 @@ import { KBD, PRIMARY, QUIET, SECONDARY, SMALL } from "@/components/ui/learn-but
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { useActiveTime } from "@/components/use-active-time";
-import { gapCue, gradeGap, type GapResult, type SectionRep } from "@/src/core";
+import { excerpt, gapCue, gradeGap, quotesFor, type GapResult, type SectionRep } from "@/src/core";
 
 export interface GapOutcome {
 	xp: number;
@@ -148,6 +148,9 @@ export function GapDrill({
 	if (!rep) return null;
 	const shown = stage.kind === "shown";
 	const cue = stage.kind === "ask" && stage.misses > 0;
+	// The line is an excerpt of the captions: in the language's quotation marks, the cut's trailing comma dropped.
+	const [qOpen, qClose] = quotesFor(langCode);
+	const after = excerpt(rep.after);
 	return (
 		<div className="q-card mt-4 px-5 py-5" data-testid={`${testid}-drill`}>
 			<div className="flex items-center gap-3">
@@ -169,6 +172,7 @@ export function GapDrill({
 				className="mt-4 font-prose text-xl leading-relaxed text-foreground"
 				lang={langCode}
 			>
+				<span className="text-ink-3">{qOpen}</span>
 				<span>{rep.before}</span>
 				{shown ? (
 					<span className={cn("font-[600] underline decoration-2 underline-offset-[6px]", stage.verdict !== "wrong" && !stage.assisted ? "text-teal-2" : "text-miss")} data-testid={`${testid}-answer`}>
@@ -188,19 +192,20 @@ export function GapDrill({
 						data-testid={`${testid}-input`}
 					/>
 				)}
-				<span>{rep.after}</span>
+				<span>{after}</span>
+				<span className="text-ink-3">{qClose}</span>
 			</form>
 			{cue && (
 				<p className="mt-3 font-prose text-sm text-ink-2" data-testid={`${testid}-cue`}>
 					Starts with <span className="font-[600]" lang={langCode}>{gapCue(rep.answer)}</span>
-					{rep.en && <> · {rep.en}</>}
+					{rep.en && <> · {excerpt(rep.en)}</>}
 				</p>
 			)}
 			{shown && (
 				<p className="mt-3 font-prose text-sm text-ink-2" data-testid={`${testid}-feedback`}>
 					{stage.verdict === "exact" && !stage.assisted ? "Right." : stage.verdict === "accents" && !stage.assisted ? "Right, but check the accents." : stage.gaveUp ? "The answer is above." : stage.verdict === "wrong" ? "Not this time." : "Right after the cue."}
 					{rep.gloss && ` ${rep.lemma && rep.lemma !== rep.answer ? `${rep.lemma}: ` : ""}${rep.gloss}.`}
-					{rep.en && <span className="block text-ink-3">{rep.en}</span>}
+					{rep.en && <span className="block text-ink-3">{excerpt(rep.en)}</span>}
 				</p>
 			)}
 			<div className="mt-5 flex flex-wrap items-center gap-2">

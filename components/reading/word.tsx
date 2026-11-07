@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { BookmarkCheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Volume2Icon } from "lucide-react";
+import { BookmarkCheckIcon, CheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode } from "@/components/settings/device-prefs";
@@ -33,6 +33,7 @@ interface LookupFallback {
 	source?: string;
 	favorite?: boolean;
 	inDeck?: boolean;
+	known?: boolean;
 }
 
 /** One tappable word. A fresh word (not met before) carries a dotted
@@ -45,6 +46,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 	const [placeAbove, setPlaceAbove] = useState(false);
 	const [isFav, setIsFav] = useState(false);
 	const [inDeck, setInDeck] = useState(false);
+	const [known, setKnown] = useState(false);
 	const [addingToBank, setAddingToBank] = useState(false);
 	const [lookupData, setLookupData] = useState<LookupFallback | null>(null);
 	const [loadingLookup, setLoadingLookup] = useState(false);
@@ -63,6 +65,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					setLookupData(d);
 					if (typeof d?.favorite === "boolean") setIsFav(d.favorite);
 					if (typeof d?.inDeck === "boolean") setInDeck(d.inDeck);
+					if (typeof d?.known === "boolean") setKnown(d.known);
 				})
 				.catch(() => {})
 				.finally(() => setLoadingLookup(false));
@@ -100,6 +103,19 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ slug: resolvedSlug }),
 		}).catch(() => {});
+	};
+
+	/** "I know this" (E69): the word counts as known from now on, everywhere the app measures what you know. Press again to undo. */
+	const toggleKnown = async () => {
+		if (!resolvedSlug) return;
+		const next = !known;
+		setKnown(next);
+		try {
+			const res = await fetch("/api/words/known", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: resolvedSlug, known: next }) });
+			if (!res.ok) setKnown(!next);
+		} catch {
+			setKnown(!next);
+		}
 	};
 
 	const handleAddToBank = async () => {
@@ -315,7 +331,22 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							Forvo <ExternalLinkIcon className="size-3" />
 						</a>
 					</span>
-					<span className="mt-3 block border-t border-border pt-3">
+					<span className="mt-3 flex gap-1.5 border-t border-border pt-3">
+						<button
+							type="button"
+							onMouseDown={(e) => e.preventDefault()}
+							onClick={() => void toggleKnown()}
+							aria-pressed={known}
+							title={known ? "Counted as known. Press to undo." : "Count this word as known from now on"}
+							data-testid="word-popover-known"
+							className={cn(
+								"lh-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
+								known ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
+							)}
+						>
+							<CheckIcon className="size-3.5" />
+							{known ? "Known" : "I know this"}
+						</button>
 						<button
 							type="button"
 							onMouseDown={(e) => e.preventDefault()}
@@ -323,7 +354,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							disabled={inDeck && isFav}
 							data-testid="word-popover-add-bank"
 							className={cn(
-								"lh-press flex h-8 w-full items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
+								"lh-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
 								inDeck && isFav
 									? "bg-teal-wash text-teal-2"
 									: "bg-well text-foreground hover:bg-well-2",

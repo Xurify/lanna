@@ -25,7 +25,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import { rejudgeSpoken, type Creator, type FoundChannel, type FoundVideo, type ScannedVideo } from "../core/discover.ts";
+import { rejudgeSpoken, type Creator, type FoundChannel, type FoundVideo, type ScannedVideo, type YouTubeAccount } from "../core/discover.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
 const dir = () => path.join(PATHS.videos, "discover");
@@ -60,6 +60,8 @@ export interface YouTubeSignals {
 	history?: { at: string; via: "account" | "takeout"; videos: FoundVideo[] };
 	recommended?: { at: string; via: "account"; videos: FoundVideo[] };
 	subscriptions?: { at: string; via: "account" | "takeout"; channels: FoundChannel[] };
+	/** The account the lists were read as: name, @handle and a picture link; never the email. */
+	account?: { at: string } & YouTubeAccount;
 }
 
 /** videos/discover/lines/<id>.json */

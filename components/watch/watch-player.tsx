@@ -368,6 +368,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 					video={video}
 					canFind={state?.canPrepare !== false}
 					onStart={start}
+					onVideo={setVideo}
 					regenerating={!!regen && regen.id === video.id && !regen.error ? { step: regenTask?.status === "running" ? regenTask.step : PREPARE_STAGE_LINE.captions } : null}
 					regenError={regen?.id === video.id ? regen.error : undefined}
 					onRegenerate={() => {
@@ -460,8 +461,26 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
-function Preview({ video, canFind, onStart, onRegenerate, regenerating, regenError }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void; regenerating: { step: string } | null; regenError?: string }) {
+function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating, regenError }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void; /** The video measured again (a word marked as known). */ onVideo: (v: VideoRecord) => void; regenerating: { step: string } | null; regenError?: string }) {
 	const lang = useActiveLanguage();
+	const [marking, setMarking] = useState<string | null>(null);
+	const [marked, setMarked] = useState<string[]>([]);
+	/** "I know this" on a pre-teach word: marked for good (E69), then the video is measured again so the share and the list follow. */
+	const markKnown = async (w: { slug?: string; lemma: string }) => {
+		if (!w.slug) return;
+		setMarking(w.slug);
+		try {
+			const res = await fetch("/api/words/known", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: w.slug, known: true }) });
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const again = await fetch(`/api/watch?id=${encodeURIComponent(video.id)}`);
+			if (again.ok) onVideo((await again.json()) as VideoRecord);
+			setMarked((m) => [...m, w.lemma]);
+		} catch {
+			// the word stays listed; the next open measures again
+		} finally {
+			setMarking(null);
+		}
+	};
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
 	const kind = coverageKind({ lang: video.lang, trackLang: video.source.trackLang, estimated: video.coverageEstimated });
@@ -531,10 +550,13 @@ function Preview({ video, canFind, onStart, onRegenerate, regenerating, regenErr
 
 				{video.preTeach.length > 0 && (
 					<div className="mt-6" data-testid="watch-preteach">
-						<p className="font-ui text-sm font-[600] text-muted-foreground">Meet these first — they come up in the video and you have not met them</p>
+						<p className="font-ui text-sm font-[600] text-muted-foreground">Meet these first — they come up in the video and you have not studied them</p>
+						<p className="mt-0.5 font-prose text-[13px] text-ink-3" role="status">
+							{marked.length ? `${marked.join(", ")} ${marked.length === 1 ? "counts" : "count"} as known now; the share and the list above follow. Undo in a word's card.` : "Know one already? Tick it and it counts as known from now on, here and everywhere the app measures what you know."}
+						</p>
 						<ul className="mt-2 grid gap-2 sm:grid-cols-2">
 							{video.preTeach.map((w) => (
-								<li key={w.slug ?? w.lemma} className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3">
+								<li key={w.slug ?? w.lemma} className={cn("flex items-start gap-3 rounded-lg border bg-card px-4 py-3", marking === w.slug && "opacity-60")}>
 									<button type="button" onClick={() => void speak(w.lemma).catch(() => {})} aria-label={`Play ${w.lemma}`} className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
 										<Volume2Icon className="size-4" />
 									</button>
@@ -553,6 +575,11 @@ function Preview({ video, canFind, onStart, onRegenerate, regenerating, regenErr
 											{w.example}
 										</span>
 									</span>
+									{w.slug && (
+										<button type="button" disabled={marking !== null} onClick={() => void markKnown(w)} aria-label={`I know ${w.lemma}`} title="I know this" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-teal-2 disabled:opacity-50 pointer-coarse:size-11" data-testid="watch-preteach-known">
+											{marking === w.slug ? <LoaderCircleIcon className="size-4 animate-spin" /> : <CheckIcon className="size-4" strokeWidth={2} />}
+										</button>
+									)}
 								</li>
 							))}
 						</ul>

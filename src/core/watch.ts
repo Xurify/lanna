@@ -120,6 +120,9 @@ export interface VideoRecord {
 	/** Which measuring rule `coverage` and `expected` came from (MEASURE_VERSION).
 	 *  A kept video with an older one is measured again from its stored lines. */
 	measure?: number;
+	/** When `coverage` was last measured; a video measured before the learner
+	 *  marked words as known (E69) is measured again from its stored lines. */
+	measuredAt?: string;
 	wordCount: number;
 	/** Distinct dictionary words the learner has not met. */
 	unknownCount: number;

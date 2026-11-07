@@ -21,6 +21,7 @@ Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor
 | `data/profiles/<lang>/fluency/log.jsonl` | Say-it-faster and re-read rounds (words a minute, clarity) | `src/server/fluency.ts` |
 | `data/profiles/<lang>/cheatsheets/<id>.json` + `trash/` | Cheatsheets: title, sections and their phrases; every version an edit or an add replaced goes to `trash/`; exported as `cheatsheets.json` | `src/store/cheatsheets.ts` |
 | `data/profiles/<lang>/milestones.json` | Custom "When can I…?" situations mapped once by the cheap slot | `src/server/milestones.ts` |
+| `data/profiles/<lang>/known.json` | Words the learner marked as known (slug, dictionary form, when), counted as met wherever "known" is measured (E69) | `src/store/known-words.ts` |
 | `data/export/<stamp>/` | `npm run corpus:export`: summary, audio, sentences, lessons, dialogues, explanations, review, stories, spoken, with a README | `src/server/corpus-export.ts` |
 
 ## Rules for new features
