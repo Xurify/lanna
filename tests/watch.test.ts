@@ -181,6 +181,34 @@ test("pickTrack: Slovak first, Czech only when there is no Slovak, a human track
 	assert.equal(watch.pickTrack([csHuman], ["sk"]), null);
 });
 
+test("spokenLanguage: the automatic track names the spoken language; human tracks alone only when they agree", () => {
+	const ru = { baseUrl: "ru", languageCode: "ru" };
+	const ruAsr = { baseUrl: "ru-asr", languageCode: "ru", kind: "asr" };
+	const en = { baseUrl: "en", languageCode: "en" };
+	assert.equal(watch.spokenLanguage([ruAsr]), "ru");
+	assert.equal(watch.spokenLanguage([en, ruAsr, { baseUrl: "sk", languageCode: "sk" }]), "ru", "a translated human track does not change what is spoken");
+	assert.equal(watch.spokenLanguage([ru, { baseUrl: "ru-RU", languageCode: "ru-RU" }]), "ru");
+	assert.equal(watch.spokenLanguage([ru, en]), null, "two human languages could be a translation");
+	assert.equal(watch.spokenLanguage([]), null);
+});
+
+test("elsewhereProfile: a video spoken in another ready profile of the learner's, never the running one", () => {
+	const languages = path.join(TMP_DATA, "languages");
+	const make = (id: string, tag: string, english: string, lexicon: boolean) => {
+		fs.mkdirSync(path.join(languages, id), { recursive: true });
+		fs.writeFileSync(path.join(languages, id, "language.json"), JSON.stringify({ id, tag, code: tag.split("-")[0], endonym: english, english }));
+		fs.writeFileSync(path.join(languages, id, "course.json"), JSON.stringify({ language: id }));
+		if (lexicon) fs.writeFileSync(path.join(languages, id, "lexicon.json"), "{}");
+	};
+	make("russian", "ru-RU", "Russian", true);
+	make("estonian", "et-EE", "Estonian", false);
+	const asr = (languageCode: string) => [{ baseUrl: languageCode, languageCode, kind: "asr" }];
+	assert.deepEqual(watch.elsewhereProfile(asr("ru")), { profile: "russian", english: "Russian" });
+	assert.equal(watch.elsewhereProfile(asr("et")), null, "a profile without its words is not offered");
+	assert.equal(watch.elsewhereProfile(asr("sk")), null, "the running language is not elsewhere");
+	assert.equal(watch.elsewhereProfile(asr("de")), null, "a language the learner does not study");
+});
+
 test("captionLanguageName: the profile's language and its Czech fallback by name, anything else by code", () => {
 	assert.equal(captionLanguageName("sk"), "Slovak");
 	assert.equal(captionLanguageName("cs"), "Czech");

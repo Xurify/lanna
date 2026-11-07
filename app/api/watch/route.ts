@@ -7,7 +7,10 @@
  * POST /api/watch {action: "add", url, transcribe?} — prepare a video
  * from a YouTube link (src/server/watch.ts): captions fetched, cut into
  * lines, translated on the cheap slot, glossed, questioned, kept under
- * data/profiles/<language>/videos/. Reused when already there, unless
+ * data/profiles/<language>/videos/. A video with no captions in the running
+ * language that is spoken in another ready profile answers 422 with
+ * elsewhere {profile, english}: the page offers to switch and add it there.
+ * Reused when already there, unless
  * force is true (regenerate: captions fetched and lines translated again).
  * With range {startSec, endSec} only that stretch is prepared (see
  * GET /api/watch/fragments); the library keeps one cut of a video.
@@ -55,7 +58,7 @@ export async function POST(req: Request) {
 			return Response.json(await prepareVideo(body.url, { transcribe: body.transcribe === true, force: body.force === true, ...(range ? { range } : {}) }));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
-			if (err instanceof NoCaptionsError) return Response.json({ message, noCaptions: true, canTranscribe: err.canTranscribe, meta: err.meta }, { status: 422 });
+			if (err instanceof NoCaptionsError) return Response.json({ message, noCaptions: true, canTranscribe: err.canTranscribe, meta: err.meta, elsewhere: err.elsewhere }, { status: 422 });
 			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /not a YouTube link|minutes long|A fragment is between|no speech in that stretch/.test(message) ? 400 : 502 });
 		}
 	}
