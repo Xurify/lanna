@@ -24,6 +24,7 @@
  * situation gives; the mapping is kept on disk (src/store/milestones.ts).
  */
 
+import { outsideSummaryNow } from "./outside.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import fs from "node:fs";
 import path from "node:path";
@@ -241,6 +242,7 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 		hoursLogged: Math.round(hoursLogged * 10) / 10,
 		listen: { sessions: log.length, reading: listenReading, trend: trend ? { slope: trend.slope, points: trend.points } : null, knownSentences },
 		watch,
+		outside: outsideSummaryNow(now, tz),
 	};
 	return { ...base, speed: creditedSpeed(base) };
 }
