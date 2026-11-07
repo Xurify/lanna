@@ -13,7 +13,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-cheatsheets-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { CheatsheetParseError, formatRepoSheet, parseRepoSheet, cheatsheetId, cheatsheetRowCount, cheatsheetWords, countOverlap, formatSheetText, isCheatsheetId, mergeSections, parseSheetText, phraseKey, sameSection } = await import("../src/core/cheatsheets.ts");
+const { CheatsheetParseError, formatRepoSheet, parseRepoSheet, cheatsheetId, cheatsheetRowCount, cheatsheetWords, countOverlap, formatSheetText, isCheatsheetId, mergeSections, parseSheetText, phraseKey, sameSection, searchSections } = await import("../src/core/cheatsheets.ts");
 const { cheatsheetStore } = await import("../src/store/cheatsheets.ts");
 const { cheatsheetReviewState, cheatsheetToReview } = await import("../src/server/cheatsheets.ts");
 const { PATHS, ROOT, repoCheatsheetsDir } = await import("../config.ts");
@@ -305,5 +305,35 @@ describe("sheets kept in the repo", () => {
 			const { title, sections } = parseRepoSheet(fs.readFileSync(file, "utf-8"), path.basename(file, ".txt"));
 			assert.ok(title && sections.length > 0, file);
 		}
+	});
+});
+
+describe("searchSections", () => {
+	const sections = [
+		{ id: "a", title: "Greetings", rows: [{ text: "Dobrý deň", meaning: "good day" }, { text: "Čau", meaning: "hi", note: "friends only" }] },
+		{ id: "b", title: "Time", rows: [{ text: "Koľko je hodín?", pron: "KOL-ko ye HO-deen", meaning: "what time is it" }] },
+	];
+
+	it("returns everything for an empty search", () => {
+		assert.equal(searchSections(sections, "  ", "sk-SK"), sections);
+	});
+
+	it("finds a phrase without its accents, and by meaning, pronunciation or note", () => {
+		assert.deepEqual(searchSections(sections, "cau", "sk-SK").map((s) => s.rows.map((r) => r.text)), [["Čau"]]);
+		assert.deepEqual(searchSections(sections, "what time", "sk-SK").map((s) => s.id), ["b"]);
+		assert.deepEqual(searchSections(sections, "ho-deen", "sk-SK").map((s) => s.id), ["b"]);
+		assert.deepEqual(searchSections(sections, "friends", "sk-SK").map((s) => s.id), ["a"]);
+	});
+
+	it("keeps every row of a section whose title matches, and drops sections with no match", () => {
+		assert.equal(searchSections(sections, "greet", "sk-SK")[0]?.rows.length, 2);
+		assert.deepEqual(searchSections(sections, "zzz", "sk-SK"), []);
+	});
+
+	it("finds a sheet by a phrase in it", () => {
+		const sheet = cheatsheetStore.create("Travel", "Greetings\nDobrý deň | | good day");
+		assert.ok(cheatsheetStore.search("dobry", "sk-SK").some((s) => s.id === sheet.id));
+		assert.ok(cheatsheetStore.search("travel", "sk-SK").some((s) => s.id === sheet.id));
+		assert.ok(!cheatsheetStore.search("nothing like it", "sk-SK").some((s) => s.id === sheet.id));
 	});
 });

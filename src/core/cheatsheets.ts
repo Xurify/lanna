@@ -13,6 +13,8 @@
  * its first line as "# Title".
  */
 
+import { foldDiacritics } from "./language.ts";
+
 export interface CheatRow {
 	/** The phrase in the language being learned. */
 	text: string;
@@ -241,6 +243,28 @@ export function cheatsheetWords(sheet: Pick<Cheatsheet, "sections">, tag: string
 				seen.add(w);
 				out.push(w);
 			}
+	return out;
+}
+
+/** Lowercase and without accents, so "cas" finds "čas" and "ЕЖ" finds "ёж". */
+function searchKey(text: string, tag: string): string {
+	return foldDiacritics(text.toLocaleLowerCase(tag));
+}
+
+/** The sections of a sheet that match a search: the rows whose phrase, pronunciation, meaning or note hold every word of it, accents optional. A section whose title matches keeps all its rows. No sections left means nothing matched. */
+export function searchSections(sections: CheatSection[], query: string, tag = "en"): CheatSection[] {
+	const words = searchKey(query, tag).split(/\s+/).filter(Boolean);
+	if (words.length === 0) return sections;
+	const holdsAll = (text: string) => words.every((w) => text.includes(w));
+	const out: CheatSection[] = [];
+	for (const section of sections) {
+		if (holdsAll(searchKey(section.title, tag))) {
+			out.push(section);
+			continue;
+		}
+		const rows = section.rows.filter((r) => holdsAll(searchKey([r.text, r.pron, r.meaning, r.note].filter(Boolean).join(" "), tag)));
+		if (rows.length > 0) out.push({ ...section, rows });
+	}
 	return out;
 }
 

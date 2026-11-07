@@ -361,7 +361,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 								<SearchIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 								<input
 									type="text"
-									placeholder="Search a word or its meaning (for example chlieb, bread)"
+									placeholder="Search a word or its meaning"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
 									className="q-field w-full rounded-2xl py-2.5 pl-10 pr-4 font-prose text-sm"
