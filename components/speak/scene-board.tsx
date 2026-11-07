@@ -18,7 +18,7 @@ import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
 import { TaskFrame } from "@/components/task-frame";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { scriptFor, tutorLineText, type SpeakSceneEntry } from "@/src/core";
+import { sceneCounterpart, scriptFor, tutorLineText, type SpeakSceneEntry } from "@/src/core";
 import type { SpeakState } from "@/components/speak/speak-player";
 
 const GROUPS: Array<{ why: SpeakSceneEntry["why"]; label: string }> = [
@@ -26,12 +26,6 @@ const GROUPS: Array<{ why: SpeakSceneEntry["why"]; label: string }> = [
 	{ why: "goal", label: "For your goals" },
 	{ why: null, label: "More scenes" },
 ];
-
-/** The other person, from the brief's first clause ("a waiter in a small café; I want…"). */
-function whoYouMeet(brief: string): string {
-	const who = brief.split(";")[0]!.trim();
-	return who.charAt(0).toUpperCase() + who.slice(1);
-}
 
 function shortDate(iso: string): string {
 	const d = new Date(iso);
@@ -127,7 +121,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 								{groups.map((g) => (
 									<section key={g.label} aria-label={grouped ? g.label : "Scenes"}>
 										{grouped && <h2 className="q-sh !mb-1.5 px-3">{g.label}</h2>}
-										<ul className="flex flex-col">
+										<ul className="flex flex-col gap-1">
 											{g.scenes.map((s) => {
 												const on = s.id === current?.id;
 												const open = state.unfinished?.scene === s.id;
@@ -267,7 +261,7 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 
 				<dl className={cn("grid gap-x-6 gap-y-3 font-prose text-[15px] @md:grid-cols-[7rem_minmax(0,1fr)]", !inline && "mt-5 border-t border-border pt-5")}>
 					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">You meet</dt>
-					<dd className="-mt-2 text-foreground @md:mt-0">{whoYouMeet(scene.brief)}</dd>
+					<dd className="-mt-2 text-foreground @md:mt-0">{sceneCounterpart(scene.brief)}</dd>
 					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">Your part</dt>
 					<dd className="-mt-2 text-foreground @md:mt-0">{scene.task}</dd>
 				</dl>

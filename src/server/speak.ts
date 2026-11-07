@@ -37,6 +37,7 @@ import { atlasCellOf } from "../core/grammar.ts";
 import type { UnitId } from "../core/lesson.ts";
 import { dayKey } from "../core/review.ts";
 import {
+	briefParts,
 	parseSummary,
 	parseTutorReply,
 	SPEAK_SCENES,
@@ -112,7 +113,10 @@ function transcript(s: SpeakSession): string {
 function sceneBrief(scene: SpeakScene, s: SpeakSession): string {
 	const profile = learnerProfileSegment();
 	return [
-		`The scene: you are ${scene.brief}.`,
+		(() => {
+			const { role, situation } = briefParts(scene.brief);
+			return `The scene: you are ${role}${situation ? `; ${situation}` : ""}.`;
+		})(),
 		`The learner's task: ${scene.task}`,
 		`Level: ${s.level}. Chapter on the map: ${allChapters().find((c) => c.id === s.chapter)?.title ?? s.chapter}.`,
 		profile ? `\n${profile}` : "",
