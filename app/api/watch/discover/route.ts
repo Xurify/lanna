@@ -17,6 +17,9 @@
  *   read from YouTube (a signed-in page from the desktop app, or the items
  *   of a Takeout file parsed in the browser). The page refreshes after the last list.
  * POST {action: "forget-youtube"} — drop every list read from YouTube.
+ * POST {action: "account", text} — who the desktop app's YouTube session is
+ * signed in as, from the account switcher's answer: name, handle, picture.
+ * POST {action: "forget-account"} — signed out: drop who it was.
  * POST {action: "dismiss", videoId} — never offer this video again.
  * POST {action: "keep-ready", on} — prepare the best pick when no video waits.
  * POST {action: "creator-videos", id, query?} — a saved creator's newest
@@ -25,7 +28,7 @@
  */
 
 import { isChannelId, splitChannelInputs } from "@/src/core";
-import { addCreator, addCreators, creatorVideos, discoverState, dismissSuggestion, saveSuggestions, dismissPick, fillAvatars, forgetYouTube, importYouTube, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
+import { addCreator, addCreators, creatorVideos, discoverState, dismissSuggestion, saveSuggestions, dismissPick, fillAvatars, forgetYouTube, forgetYouTubeAccount, importYouTube, importYouTubeAccount, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +41,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown; query?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown; query?: unknown; text?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add-creator") {
 		if (typeof body.input !== "string" || !body.input.trim()) return Response.json({ message: "input is required" }, { status: 400 });
@@ -99,6 +102,19 @@ export async function POST(req: Request) {
 	}
 	if (body.action === "forget-youtube") {
 		forgetYouTube();
+		return Response.json(discoverState());
+	}
+	if (body.action === "account") {
+		if (typeof body.text !== "string") return Response.json({ message: "text is required" }, { status: 400 });
+		try {
+			importYouTubeAccount(body.text.slice(0, 2_000_000));
+			return Response.json(discoverState());
+		} catch (err) {
+			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 422 });
+		}
+	}
+	if (body.action === "forget-account") {
+		forgetYouTubeAccount();
 		return Response.json(discoverState());
 	}
 	if (body.action === "dismiss") {

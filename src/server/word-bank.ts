@@ -16,6 +16,7 @@ import { activeLanguage } from "./active-language.ts";
 import { GRAMMAR_WORDS, grammarWord } from "../core/reading.ts";
 import { reviewStore } from "../store/review.ts";
 import { savedPhraseStore } from "../store/saved-phrases.ts";
+import { knownWordStore } from "../store/known-words.ts";
 import { storyStore } from "../store/stories.ts";
 import { resolveWord } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
@@ -65,6 +66,8 @@ export interface SelectionLookupResult {
 	alternatives?: string[];
 	inDeck?: boolean;
 	favorite?: boolean;
+	/** The learner marked it as known (E71). */
+	known?: boolean;
 	state?: WordLearningState;
 }
 
@@ -353,6 +356,7 @@ function buildResultFromEntry(
 		source,
 		inDeck: !!card,
 		favorite: favorites.has(canonicalEntry.slug) || favorites.has(entry.slug),
+		known: knownWordStore.has(canonicalEntry.slug) || knownWordStore.has(entry.slug),
 		state: card ? classifyWordState(card) : "unseen",
 	};
 }

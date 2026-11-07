@@ -247,9 +247,21 @@ function fold(s: string): string {
 const hasMarks = (s: string) => fold(s) !== s.normalize("NFD");
 const VOWELS = new Set(["a", "e", "i", "o", "u", "y"]);
 
+/** The words of a sentence as the ear takes them. An apostrophe inside a word
+ *  is part of it (d'alej is one word, typed as dalej or d'alej); anything else
+ *  that is not a letter or a digit separates words (dve-tri is two). Every
+ *  consumer that pairs a typed word with a played one counts words this way,
+ *  so a mark and the word it belongs to are always the same index. */
+const WORD_SPAN = /[\p{L}\p{N}]+(?:['’ʼ][\p{L}\p{N}]+)*/gu;
+
+/** Each word of the sentence as written (for display) and as compared (lower-case, no apostrophe). */
+export function sentenceWordSpans(text: string): Array<{ text: string; word: string }> {
+	return [...text.normalize("NFC").matchAll(WORD_SPAN)].map((m) => ({ text: m[0], word: m[0].replace(/['’ʼ]/g, "").toLowerCase() }));
+}
+
 /** Words of a sentence, lower-cased, without punctuation. */
 export function listenWords(text: string): string[] {
-	return text.normalize("NFC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+	return sentenceWordSpans(text).map((s) => s.word);
 }
 
 function editDistance(a: string, b: string): number {
