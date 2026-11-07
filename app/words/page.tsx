@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 const TABS: readonly WordsTab[] = ["words", "phrases", "cheatsheets"];
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; sheet?: string }> }) {
-	const { tab, sheet } = await searchParams;
+export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; sheet?: string; search?: string }> }) {
+	const { tab, sheet, search } = await searchParams;
 	const initialTab = TABS.find((t) => t === tab) ?? (sheet ? "cheatsheets" : "words");
-	return <WordBankPage initialTab={initialTab} initialSheet={initialTab === "cheatsheets" ? sheet : undefined} />;
+	return <WordBankPage initialTab={initialTab} initialSheet={initialTab === "cheatsheets" ? sheet : undefined} initialSearch={initialTab === "words" ? search : undefined} />;
 }

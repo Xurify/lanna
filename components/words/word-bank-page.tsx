@@ -15,7 +15,7 @@ const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
 export type WordsTab = "words" | "phrases" | "cheatsheets";
 
-export function WordBankPage({ initialTab = "words", initialSheet }: { initialTab?: WordsTab; initialSheet?: string }) {
+export function WordBankPage({ initialTab = "words", initialSheet, initialSearch }: { initialTab?: WordsTab; initialSheet?: string; initialSearch?: string }) {
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
@@ -23,6 +23,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 		setActiveTabState(tab);
 		const url = new URL(window.location.href);
 		url.searchParams.delete("sheet");
+		url.searchParams.delete("search");
 		if (tab === "words") url.searchParams.delete("tab");
 		else url.searchParams.set("tab", tab);
 		window.history.replaceState(null, "", url);
@@ -32,7 +33,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 	const [words, setWords] = useState<WordBankItem[]>([]);
 	const [totalWords, setTotalWords] = useState(0);
 	const [summary, setSummary] = useState<WordBankSummary | null>(null);
-	const [searchQuery, setSearchQuery] = useState("");
+	const [searchQuery, setSearchQuery] = useState(initialSearch ?? "");
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [posFilter, setPosFilter] = useState<string>("all");
 	const [loadingWords, setLoadingWords] = useState(false);
@@ -615,7 +616,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 										</button>
 									}
 								>
-									<p>{searchQuery.trim() ? "Search by how a word starts, or by its English meaning. Accents are optional. A longer search also looks in example sentences." : "Try another filter. All your words are still here."}</p>
+									<p>{searchQuery.trim() ? "Search by how a word starts, or by its English meaning. Accents are optional. A longer search also looks in example sentences, and a few words in a row find the sentence that has them." : "Try another filter. All your words are still here."}</p>
 								</EmptyState>
 							)}
 
@@ -671,6 +672,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 								{ id: "all", label: "All" },
 								{ id: "story", label: "From stories" },
 								{ id: "speak", label: "From scenes" },
+								{ id: "review", label: "From review" },
 								{ id: "lesson", label: "From lessons" },
 								{ id: "manual", label: "Your own phrases" },
 							].map((tab) => (
@@ -736,7 +738,7 @@ export function WordBankPage({ initialTab = "words", initialSheet }: { initialTa
 
 							{filteredPhrases.length === 0 && !loadingPhrases && (
 								<EmptyState testid="phrases-empty" title="No saved phrases yet">
-									<p>Press Save on a phrase in a story, a scene or a lesson to keep it here, or add your own. No AI key needed.</p>
+									<p>Press Save on a phrase in a story, a scene, a lesson or a review card to keep it here, or add your own. No AI key needed.</p>
 								</EmptyState>
 							)}
 						</div>

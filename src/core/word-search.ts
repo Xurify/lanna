@@ -4,7 +4,8 @@
  *   1 the headword starts with the query     2 the headword contains it
  *   3 an inflected form matches              4 the English meaning has a word starting with it
  *   5 an example sentence has it (queries of 3 or more letters only)
- * One letter matches headword starts only. Two letters never search examples. Case and diacritics are
+ * A query of several words ("veľký záujem") finds a sentence that has them side by side; the last word
+ * may still be unfinished. One letter matches headword starts only. Two letters never search examples. Case and diacritics are
  * ignored in both directions ("c" finds "čas", "cas" finds "čas").
  */
 
@@ -36,10 +37,14 @@ export function fold(text: string): string {
 	return out;
 }
 
+/** The letters-only words of `text`, folded and joined by single spaces. */
+const wordsOf = (text: string): string => (fold(text).match(/\p{L}+/gu) ?? []).join(" ");
+
+/** `q` sits in `text` at the start of a word: one word's beginning, or several words in a row. */
 const startsAtWord = (text: string, q: string): boolean => {
-	const f = fold(text);
-	for (const m of f.matchAll(/\p{L}+/gu)) if (m[0].startsWith(q)) return true;
-	return false;
+	const words = wordsOf(text);
+	const query = wordsOf(q);
+	return !!query && (words.startsWith(query) || words.includes(` ${query}`));
 };
 
 const meaningWord = (gloss: string, q: string): string | undefined => {
