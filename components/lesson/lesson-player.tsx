@@ -796,12 +796,13 @@ function hintFor(item: LessonItem): string {
  *  "means" for a vocabulary rep (the English), "base form" for a grammar
  *  rep (the dictionary form to inflect). */
 function HintChip({ item }: { item: LessonItem }) {
+	const lang = useActiveLanguage();
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
 	return (
 		<span className="q-pair mr-2" data-testid="lesson-hint-chip">
 			<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
-			<span lang={meaning && !pairs ? undefined : "sk"}>{hintFor(item)}</span>
+			<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
 		</span>
 	);
 }
@@ -952,6 +953,7 @@ function ClozeRep({
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 }) {
+	const lang = useActiveLanguage();
 	const [given, setGiven] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
 	// A missed choice retries typed: recognition failed, so the second try
@@ -1175,7 +1177,7 @@ function ClozeRep({
 						const right = locked && judge(o) === "exact";
 						const ruledOut = !locked && miss === o;
 						return (
-							<OptionTile key={o} n={i + 1} lang={meaning ? undefined : "sk"} disabled={locked || ruledOut} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : ruledOut ? "ruled-out" : "idle"}>
+							<OptionTile key={o} n={i + 1} lang={meaning ? undefined : lang?.code} disabled={locked || ruledOut} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : ruledOut ? "ruled-out" : "idle"}>
 								{o}
 							</OptionTile>
 						);
@@ -1191,6 +1193,7 @@ function ClozeRep({
  *  asks which word decided its form. Both are a choice, never typed and never
  *  retried; the answer and the Why? panel follow the choice. */
 function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: boolean; result: Rep | null; onGrade: (given: string, verdict: RepVerdict) => void }) {
+	const lang = useActiveLanguage();
 	const task = item.task!;
 	const options = item.options ?? [];
 	const grid = task.kind === "grid";
@@ -1231,7 +1234,7 @@ function TaskRep({ item, locked, result, onGrade }: { item: LessonItem; locked: 
 					const picked = result?.given === o;
 					const right = locked && judge(o) === "exact";
 					return (
-						<OptionTile key={o} n={i + 1} lang={grid ? undefined : "sk"} disabled={locked} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : "idle"}>
+						<OptionTile key={o} n={i + 1} lang={grid ? undefined : lang?.code} disabled={locked} onClick={() => onGrade(o, judge(o))} state={right ? "right" : picked ? "wrong" : locked ? "dim" : "idle"}>
 							{o}
 						</OptionTile>
 					);
@@ -1341,6 +1344,7 @@ function FeedbackSheet({
 	comesBack: boolean;
 	examples: LessonItem[];
 }) {
+	const lang = useActiveLanguage();
 	const praise = useMemo(() => PRAISE[Math.floor(Math.random() * PRAISE.length)]!, []);
 	const { item, verdict, given } = rep;
 	// After a miss the rule opens by itself: feedback after a failed
@@ -1430,7 +1434,7 @@ function FeedbackSheet({
 					{verdict !== "exact" && (
 						<p className="font-prose text-[17px] text-foreground">
 							{item.kind === "meaning" ? "It meant:" : "Correct answer:"}{" "}
-							<span className="font-semibold" lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : "sk"}>
+							<span className="font-semibold" lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : lang?.code}>
 								{[...expected].map((ch, i) => (
 									<span key={i} className={slips.has(i) ? `underline decoration-2 underline-offset-4 ${tone.ink}` : undefined}>
 										{ch}
@@ -1440,7 +1444,7 @@ function FeedbackSheet({
 							{verdict === "wrong" && given && (
 								<span className="text-[15px] text-ink-3">
 									{" "}
-									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : "sk"}>{given}</span>”
+									· {item.kind === "meaning" ? "you picked" : "you wrote"} “<span lang={item.kind === "meaning" || item.task?.kind === "grid" ? undefined : lang?.code}>{given}</span>”
 								</span>
 							)}
 						</p>

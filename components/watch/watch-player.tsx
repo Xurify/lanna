@@ -78,6 +78,7 @@ const COLUMN = "mx-auto w-full max-w-3xl px-6";
 const SLOW_RATE = 0.75;
 
 export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover }: { initial: WatchState | null; initialVideo?: VideoRecord | null; initialUrl?: string | null; initialDiscover?: DiscoverStateView | null }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const discover = useDiscover(initialDiscover ?? null);
 	const [state, setState] = useState<WatchState | null>(initial);
@@ -327,7 +328,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 							</button>
 						}
 					>
-						{error?.meta?.title && <p lang="sk">{error.meta.title}</p>}
+						{error?.meta?.title && <p lang={lang?.code}>{error.meta.title}</p>}
 						<p>{error?.message ?? "Something went wrong."}</p>
 						{moveError && <p role="alert">{moveError}</p>}
 						<p>Videos you have already prepared still play from your list.</p>
@@ -410,6 +411,7 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 }
 
 function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord; step: string; progress: number; onShelf: () => void; right?: React.ReactNode }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
@@ -417,7 +419,7 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 					<XIcon className="size-5" />
 				</button>
 				<div className="min-w-0 flex-1">
-					<p className="truncate font-ui text-sm font-[600] text-foreground" lang="sk">
+					<p className="truncate font-ui text-sm font-[600] text-foreground" lang={lang?.code}>
 						{video.title} <span className="text-muted-foreground">· {step}</span>
 					</p>
 					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
@@ -433,6 +435,7 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
 function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
+	const lang = useActiveLanguage();
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
 	const kind = coverageKind({ lang: video.lang, trackLang: video.source.trackLang, estimated: video.coverageEstimated });
@@ -509,7 +512,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 									</button>
 									<span className="min-w-0 flex-1">
 										<span className="flex flex-wrap items-baseline gap-x-2">
-											<span className="font-ui text-lg font-[600] text-foreground" lang="sk">
+											<span className="font-ui text-lg font-[600] text-foreground" lang={lang?.code}>
 												{w.lemma}
 											</span>
 											<span className="font-prose text-base text-foreground">{w.gloss}</span>
@@ -518,7 +521,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 											<Tag>{w.count === 1 ? "once" : `${w.count}× in the video`}</Tag>
 											{w.cat && <Tag>{w.cat.toLowerCase()}</Tag>}
 										</span>
-										<span className="mt-1 block truncate font-prose text-xs text-muted-foreground" lang="sk" title={w.example}>
+										<span className="mt-1 block truncate font-prose text-xs text-muted-foreground" lang={lang?.code} title={w.example}>
 											{w.example}
 										</span>
 									</span>
@@ -648,6 +651,7 @@ interface LineState {
 const fresh = (): LineState => ({ replays: 0, slow: false, revealedText: false, revealedMeaning: false });
 
 function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying, onReady, onDeciding }: { video: VideoRecord; mode: WatchMode; tapped: string[]; onTap: (key: string) => void; onMode: (m: WatchMode) => void; onShelf: () => void; onDone: (stats: SegmentStat[]) => void; onPlaying: (on: boolean) => void; onReady: (on: boolean) => void; onDeciding: (on: boolean) => void }) {
+	const lang = useActiveLanguage();
 	const holder = useRef<HTMLDivElement>(null);
 	const player = useRef<YTPlayer | null>(null);
 	const [ready, setReady] = useState(false);
@@ -1013,13 +1017,13 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					{/* Both subtitles */}
 					<div className="mt-4 min-h-[7.5rem]" data-word-column data-word-lookup-enabled="true" data-testid="watch-subtitles">
 						{step && prev && (
-							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang="sk" aria-hidden="true">
+							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang={lang?.code} aria-hidden="true">
 								{prev.sk}
 							</p>
 						)}
 						<div className={cn("rounded-lg border px-5 py-4 transition-colors", miss ? "border-miss bg-miss-soft" : atEnd && step ? "border-teal-line bg-card" : "bg-card")}>
 							{textShown ? (
-								<p className="font-prose text-[1.5rem] leading-[1.5] text-foreground" lang="sk" data-testid="watch-sk">
+								<p className="font-prose text-[1.5rem] leading-[1.5] text-foreground" lang={lang?.code} data-testid="watch-sk">
 									{seg.tokens.map((t, j) =>
 										t.word ? (
 											<Word
@@ -1070,7 +1074,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 									>
 										<span className="w-12 shrink-0 font-ui text-xs font-[600] tabular-nums text-muted-foreground">{formatClock(s.start)}</span>
 										<span className="min-w-0 flex-1">
-											<span className={cn("block font-prose text-base", s.i === idx ? "text-foreground" : "text-foreground/80")} lang="sk">
+											<span className={cn("block font-prose text-base", s.i === idx ? "text-foreground" : "text-foreground/80")} lang={lang?.code}>
 												{s.sk}
 											</span>
 											{showEn && <span className="block font-prose text-sm text-muted-foreground">{s.en}</span>}
@@ -1178,6 +1182,7 @@ function SentenceStep({ videoId, targets }: { videoId: string; targets: Sentence
 }
 
 function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTarget }) {
+	const lang = useActiveLanguage();
 	const [text, setText] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [reply, setReply] = useState<SentenceReply | null>(null);
@@ -1206,10 +1211,10 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	};
 	return (
 		<li className="q-card px-4 py-3.5" data-testid="watch-sentence">
-			<p className="font-ui text-[17px] font-[600] text-foreground" lang="sk">
+			<p className="font-ui text-[17px] font-[600] text-foreground" lang={lang?.code}>
 				{target.lemma}
 			</p>
-			<p className="mt-1 font-prose text-sm text-ink-3" lang="sk">
+			<p className="mt-1 font-prose text-sm text-ink-3" lang={lang?.code}>
 				From the video: {target.line}
 			</p>
 			{reply && (
@@ -1222,7 +1227,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 					value={text}
 					onChange={(e) => setText(e.target.value)}
 					disabled={accepted || busy}
-					lang="sk"
+					lang={lang?.code}
 					autoComplete="off"
 					spellCheck={false}
 					maxLength={SENTENCE_MAX_CHARS}
@@ -1244,7 +1249,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 					{!reply.ok && reply.corrected && reply.corrected !== text.trim() && (
 						<>
 							<br />
-							Try: <span lang="sk">{reply.corrected}</span>
+							Try: <span lang={lang?.code}>{reply.corrected}</span>
 						</>
 					)}
 				</p>
@@ -1254,6 +1259,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 }
 
 function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
 	const judged = stats.length;
@@ -1275,7 +1281,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 				<MonitorPlayIcon className="size-12" />
 			</div>
 			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang="sk">
+			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
 				{video.title}
 			</p>
 			<div className="mt-8 grid grid-cols-3 gap-3">

@@ -261,6 +261,7 @@ const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft t
 const RESULT_WORD: Record<ProbeVerdict["result"], string> = { held: "held", slip: "slip", gap: "gap" };
 
 export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summary: string, verdicts: ProbeVerdict[], skipped: boolean) => void; onError: (msg: string) => void }) {
+	const lang = useActiveLanguage();
 	const [turn, setTurn] = useState<ProbeOut | null>(null);
 	const [answer, setAnswer] = useState("");
 	const [busy, setBusy] = useState(true);
@@ -352,7 +353,7 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang={lessonLanguage()}>
 						{ask.sk}
 					</p>
-					<input ref={inputRef} value={answer} onChange={(e) => setAnswer(e.target.value)} aria-label="Your answer" data-testid="edge-input" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} disabled={busy} className={cn(INPUT, "mt-5")} lang={ask.kind === "why" ? undefined : "sk"} />
+					<input ref={inputRef} value={answer} onChange={(e) => setAnswer(e.target.value)} aria-label="Your answer" data-testid="edge-input" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} disabled={busy} className={cn(INPUT, "mt-5")} lang={ask.kind === "why" ? undefined : lang?.code} />
 					<div className="mt-5 flex flex-wrap items-center justify-between gap-3">
 						{ask.kind === "why" ? <span /> : <DiacriticBar variant="keys" className="basis-full sm:flex-1" />}
 						<div className="ms-auto flex gap-2">

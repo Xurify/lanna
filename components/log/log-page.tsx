@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { DayLogView } from "@/components/log/day-log-view";
 import type { DayLog } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -29,6 +30,7 @@ function shortDay(day: string): string {
 }
 
 export function LogPage() {
+	const lang = useActiveLanguage();
 	const [days, setDays] = useState<DayLog[] | null>(null);
 	const [today, setToday] = useState("");
 	const [failed, setFailed] = useState(false);
@@ -89,7 +91,7 @@ export function LogPage() {
 
 				{log ? (
 					<section className="mt-6" aria-label={dayTitle(log.day)}>
-						<h2 className="text-[22px] font-semibold tracking-[-0.022em]" lang="sk">
+						<h2 className="text-[22px] font-semibold tracking-[-0.022em]" lang={lang?.code}>
 							{dayTitle(log.day)}
 						</h2>
 						<div className="mt-4">

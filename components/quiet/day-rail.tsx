@@ -169,7 +169,7 @@ export function DayRail({ s }: { s: Summary | null }) {
 
 					<div className="q-r-today">
 						<h2>Progress</h2>
-						<p className="first-letter:uppercase" lang="sk">
+						<p className="first-letter:uppercase" lang={lang?.code}>
 							{date}
 						</p>
 					</div>

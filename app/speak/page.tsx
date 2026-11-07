@@ -21,7 +21,7 @@ export default async function SpeakPage({ searchParams }: { searchParams: Promis
 	const language = activeLanguage();
 	const lang = { id: language.id, tag: language.tag };
 	if (mode === "script" && sceneId && scriptFor(sceneId, lang.id)) {
-		return <ScriptPlayer key={`script-${sceneId}`} sceneId={sceneId} lang={lang.id} />;
+		return <ScriptPlayer key={`script-${sceneId}`} sceneId={sceneId} langId={lang.id} />;
 	}
 	let state = null;
 	try {
@@ -29,5 +29,5 @@ export default async function SpeakPage({ searchParams }: { searchParams: Promis
 	} catch {
 		state = null;
 	}
-	return <SpeakPlayer key={scene ?? "pick"} initialState={state} sceneId={sceneId} typed={mode === "typed"} lang={lang} />;
+	return <SpeakPlayer key={scene ?? "pick"} initialState={state} sceneId={sceneId} typed={mode === "typed"} sceneLang={lang} />;
 }

@@ -65,7 +65,7 @@ describe("StampBook", () => {
 		assert.ok(html.includes("Chapters · 0 of 1"));
 		assert.ok(html.includes(`On the trail · 1 of ${deeds.length}`));
 		assert.ok(html.includes("40 of 50"), "the count toward the next words stamp");
-		assert.ok(html.includes('lang="sk"'), "stamp names are Slovak");
+		assert.ok(!html.includes('lang="sk"'), "stamp names take the active language, not a fixed one");
 	});
 });
 

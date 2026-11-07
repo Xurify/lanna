@@ -1,6 +1,7 @@
 "use client";
 
 import type { LessonTask } from "@/src/core";
+import { useActiveLanguage } from "@/components/speech";
 
 type GridTask = Extract<LessonTask, { kind: "grid" }>;
 
@@ -26,6 +27,7 @@ const CAPTION = "mt-2 min-h-10 font-ui text-[12px] leading-snug text-ink-3";
  *  notes appear in the caption. Nothing about a cell's form reaches the page
  *  before the answer. */
 export function TaskGrid({ task, revealed }: { task: GridTask; revealed: boolean }) {
+	const lang = useActiveLanguage();
 	const notes = revealed ? [...new Set(task.cells.flatMap((c) => (c.note ? [c.note] : [])))] : [];
 	return (
 		<div className="mt-5">
@@ -61,7 +63,7 @@ export function TaskGrid({ task, revealed }: { task: GridTask; revealed: boolean
 									<td key={r} className={CELL} data-asked={asked ? "true" : undefined}>
 										{revealed ? (
 											cell?.form ? (
-												<span className={asked ? ASKED : FORM} lang="sk">
+												<span className={asked ? ASKED : FORM} lang={lang?.code}>
 													{cell.form}
 												</span>
 											) : (

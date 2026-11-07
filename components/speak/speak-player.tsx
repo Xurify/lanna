@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { speak, SpeedToggle } from "@/components/speech";
+import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
@@ -55,7 +55,8 @@ type Phase = "pick" | "starting" | "scene" | "ending" | "done";
 
 const PRAISE = ["Výborne!", "Presne!", "Áno, tak!", "Super!"];
 
-export function SpeakPlayer({ initialState, sceneId = null, typed = false, lang = { id: "slovak", tag: "sk-SK" } }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean; lang?: { id: string; tag: string } }) {
+export function SpeakPlayer({ initialState, sceneId = null, typed = false, sceneLang = { id: "slovak", tag: "sk-SK" } }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean; sceneLang?: { id: string; tag: string } }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [state, setState] = useState<SpeakState | null>(initialState);
 	const [phase, setPhase] = useState<Phase>("pick");
@@ -352,7 +353,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, lang 
 		return (
 			<SceneBoard
 				state={state}
-				lang={lang}
+				lang={sceneLang}
 				error={error}
 				sceneId={sceneId}
 				typed={typed}
@@ -410,7 +411,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, lang 
 					<div className="flex flex-wrap items-baseline justify-between gap-2">
 						<div>
 							<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · {scene?.blurb ?? session.sceneTitle}</p>
-							<h2 className="font-prose text-2xl font-semibold text-foreground" lang="sk">
+							<h2 className="font-prose text-2xl font-semibold text-foreground" lang={lang?.code}>
 								{session.sceneTitle}
 							</h2>
 						</div>
@@ -464,7 +465,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, lang 
 									}
 								}}
 								rows={1}
-								lang="sk"
+								lang={lang?.code}
 								placeholder="Your line…"
 								disabled={sending || phase !== "scene"}
 								className="min-h-12 flex-1 resize-none rounded-lg bg-card px-4 py-3 font-prose text-lg text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] dark:bg-background"
@@ -556,15 +557,16 @@ function Meter({ level }: { level: number }) {
 }
 
 function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last: boolean; meaning: boolean; onMeaning: () => void }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="max-w-[85%]">
 			{turn.prompt && (
 				<div className="mb-1.5 inline-flex max-w-full flex-wrap items-baseline gap-x-2 rounded-xl border border-teal-line bg-teal-wash px-3 py-1.5 font-prose text-base" data-testid="speak-prompt">
 					<span className="font-ui text-xs font-[600] text-foreground">Fix the {SLIP_LABEL[turn.prompt.kind]}</span>
-					<span className="text-muted-foreground line-through decoration-2" lang="sk">
+					<span className="text-muted-foreground line-through decoration-2" lang={lang?.code}>
 						{turn.prompt.yours}
 					</span>
-					<span className="font-[600] text-foreground" lang="sk">
+					<span className="font-[600] text-foreground" lang={lang?.code}>
 						{turn.prompt.hint}
 					</span>
 				</div>
@@ -580,7 +582,7 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 					<button type="button" onClick={() => void speak(turn.text).catch(() => {})} aria-label="Play" className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2">
 							<Volume2Icon className="size-4" strokeWidth={1.6} />
 					</button>
-					<p className={cn("font-prose text-foreground", last ? "text-2xl leading-snug" : "text-lg")} lang="sk">
+					<p className={cn("font-prose text-foreground", last ? "text-2xl leading-snug" : "text-lg")} lang={lang?.code}>
 						{turn.text}
 					</p>
 				</div>
@@ -603,9 +605,10 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 }
 
 function LearnerBubble({ turn }: { turn: SpeakTurn }) {
+	const lang = useActiveLanguage();
 	return (
 		<div className="max-w-[85%] rounded-lg rounded-br-md bg-teal-wash px-4 py-3">
-			<p className="font-prose text-lg text-foreground" lang="sk">
+			<p className="font-prose text-lg text-foreground" lang={lang?.code}>
 				{turn.text}
 			</p>
 			<p className="mt-0.5 flex items-center gap-2 font-ui text-xs text-muted-foreground">
@@ -617,6 +620,7 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 }
 
 function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void }) {
+	const lang = useActiveLanguage();
 	const s = outcome.session;
 	const counts = speakCounts(s.turns);
 	const sum = s.summary;
@@ -658,10 +662,10 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 						{sum.corrections.map((c, i) => (
 							<li key={i} className="q-card px-4 py-3">
 								<p className="font-ui text-xs font-[600] text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
-								<p className="mt-1 font-prose text-base text-muted-foreground line-through decoration-2" lang="sk">
+								<p className="mt-1 font-prose text-base text-muted-foreground line-through decoration-2" lang={lang?.code}>
 									{c.yours}
 								</p>
-								<p className="flex items-start gap-2 font-prose text-xl text-foreground" lang="sk">
+								<p className="flex items-start gap-2 font-prose text-xl text-foreground" lang={lang?.code}>
 									<button type="button" onClick={() => void speak(c.right).catch(() => {})} aria-label="Play" className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:brightness-110">
 										<Volume2Icon className="size-4" />
 									</button>
@@ -690,7 +694,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth keeping</p>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{sum.keep.map((k) => (
-							<li key={k} className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base" lang="sk">
+							<li key={k} className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base" lang={lang?.code}>
 								<span>{k}</span>
 								<button type="button" onClick={() => void speak(k).catch(() => {})} aria-label="Play" className="flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
 									<Volume2Icon className="size-3.5" />

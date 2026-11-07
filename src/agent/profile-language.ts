@@ -7,7 +7,7 @@
  */
 
 import { activeProfile, readAddedLanguage } from "../../config.ts";
-import { LANGUAGES, languageById, parseLanguageInfo, registerLanguage, type LanguageInfo } from "../core/language.ts";
+import { languageById, parseLanguageInfo, registerLanguage, type LanguageInfo } from "../core/language.ts";
 
 export function profileLanguage(id: string): LanguageInfo | undefined {
 	const known = languageById(id);
@@ -18,8 +18,12 @@ export function profileLanguage(id: string): LanguageInfo | undefined {
 	return added;
 }
 
-/** The running profile's language. Slovak when its language.json has gone
- *  missing, so a page still renders. */
+/** The running profile's language. Throws when its language.json is missing
+ *  or unreadable: falling back to another language would show the learner
+ *  the wrong one with no sign of the fault. */
 export function activeLanguage(): LanguageInfo {
-	return profileLanguage(activeProfile()) ?? LANGUAGES.slovak;
+	const id = activeProfile();
+	const info = profileLanguage(id);
+	if (!info) throw new Error(`Language "${id}" has no readable language.json. Restore that file, or switch to another language.`);
+	return info;
 }
