@@ -38,6 +38,7 @@
 
 import { CEFR_ORDER, GUIDED_HOURS, MIN_PACE_DAYS, type Cefr } from "./curriculum.ts";
 import type { DatedSceneView } from "./dated-scene.ts";
+import type { OutsideSummary } from "./outside.ts";
 
 // ─── Genres: the published coverage points ──────────────────────────────────
 
@@ -448,6 +449,8 @@ export interface LearnerFacts {
 		knownSentences: { total: number; right: number };
 	};
 	watch: { videos: number; segments: number; gotFirst: number; reading: SpeedReading | null } | null;
+	/** Listening logged by hand outside the app (src/core/outside.ts); kept out of every measured figure above. */
+	outside?: OutsideSummary;
 	/** Words a minute the learner is credited with, and where it comes from. */
 	speed: { wpm: number; basis: "listen" | "watch" | "both" | "level" };
 }
@@ -504,6 +507,10 @@ export interface MilestoneEstimate {
 		/** "ladder": the guided-hours ladder; "trend": the learner's own Listen slope. */
 		hoursBasis: "ladder" | "trend";
 		eta: Eta;
+		/** The real-pace date with outside listening added at its weight; null with none logged.
+		 *  On the learner's own trend it adds nothing: the slope is per hour in the app, so
+		 *  whatever the outside listening did is in it already. */
+		outside?: { basis: "added"; measuredPerDay: number; creditedPerDay: number; days: number; date: string } | { basis: "in-trend" } | null;
 	};
 	eta: Eta;
 	/** The one line under the title. */
@@ -608,6 +615,17 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 		hoursToGo === 0 ? 0 : facts.paceMinutes > 0 && facts.paceDays >= MIN_PACE_DAYS ? hoursToGo / (facts.paceMinutes / 60) : null,
 	);
 
+	const credited = facts.outside?.creditedPerDay ?? 0;
+	let outside: MilestoneEstimate["speed"]["outside"] = null;
+	if (credited > 0 && hoursToGo > 0) {
+		if (hoursBasis === "trend") outside = { basis: "in-trend" };
+		else {
+			const app = facts.paceMinutes > 0 && facts.paceDays >= MIN_PACE_DAYS ? facts.paceMinutes : 0;
+			const days = hoursToGo / ((app + credited) / 60);
+			outside = { basis: "added", measuredPerDay: Math.round(app), creditedPerDay: Math.round(credited * 10) / 10, days, date: addDaysIso(opts.now, days) };
+		}
+	}
+
 	const eta = later(wordsEta, speedEta);
 	const wordsDone = toGo === 0;
 	const speedDone = speedNeed === 0 || speedHave >= speedNeed;
@@ -632,7 +650,7 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 		status,
 		binding,
 		words: { have, need, toGo, coverageNow, coverageTarget: def.coverage, eta: wordsEta },
-		speed: { have: speedHave, need: speedNeed, basis: facts.speed.basis, hoursToGo: Math.round(hoursToGo), hoursBasis, eta: speedEta },
+		speed: { have: speedHave, need: speedNeed, basis: facts.speed.basis, hoursToGo: Math.round(hoursToGo), hoursBasis, eta: speedEta, outside },
 		eta,
 		verdict,
 		missing,

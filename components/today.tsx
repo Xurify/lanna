@@ -32,9 +32,10 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { DaySplit } from "@/components/day-split";
 import { switchLanguage } from "@/components/switch-language";
 import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
-import type { DatedSceneView, DayLanguage, LanguageDay, LineState, PlanTask, StageView, UnitState } from "@/src/core";
+import type { AfterPlan, DatedSceneView, DayLanguage, LanguageDay, LineState, PlanTask, StageView, UnitState } from "@/src/core";
 import { TodayLineRow } from "@/components/today-line-row";
 import { WhereYouAre } from "@/components/where-you-are";
+import { OutsideListening } from "@/components/outside-listening";
 
 /** One thing to do today: a task in a language's plan, or setting a new language up. */
 interface Step {
@@ -117,7 +118,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 		: null;
 	const steps: Step[] = groups ? groups.flatMap((g) => g.steps) : tasks.map((t) => ({ key: t.id, lang: null, task: t, minutes: t.minutes, done: t.done }));
 	const up = steps.find((x) => !x.done) ?? null;
-	// Enter starts the day's next step (a lesson once the plan is done).
+	// Enter starts the day's next step (input once the plan is done).
 	// Tasks that open a tutor chat start a model turn, so they wait for a click.
 	const enterable = s ? (up ? !up.task || Boolean(up.task.href) : true) : false;
 	useEffect(() => {
@@ -129,7 +130,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 			if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "BUTTON" || t.tagName === "A" || t.isContentEditable || t.getAttribute("role") === "button")) return;
 			e.preventDefault();
 			if (up) start(up);
-			else router.push(`/lesson?unit=${s.next}`);
+			else router.push(s.afterPlan?.step.href ?? `/lesson?unit=${s.next}`);
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
@@ -309,7 +310,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 									</p>
 								)}
 								{!s && <PlanSkeleton />}
-								{s && total === 0 && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} />}
+								{s && total === 0 && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} after={s.afterPlan} />}
 								{s && total > 0 && !groups && (
 									<ol className="flex flex-col gap-2" data-testid="plan-tasks">
 										{steps.map(row)}
@@ -330,7 +331,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 											<ol className="flex flex-col gap-2">{g.steps.map(row)}</ol>
 										</div>
 									))}
-								{s && total > 0 && done >= total && (groups ? <AllDone minutes={day!.practiced} goal={day!.minutes} next={s.next} className="mt-2" /> : <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} className="mt-2" />)}
+								{s && total > 0 && done >= total && (groups ? <AllDone minutes={day!.practiced} goal={day!.minutes} next={s.next} after={s.afterPlan} className="mt-2" /> : <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} after={s.afterPlan} className="mt-2" />)}
 							</section>
 
 							<WhereYouAre stage={stage} scene={soonest} />
@@ -356,6 +357,8 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 									)}
 								</section>
 							)}
+
+							{s && <OutsideListening />}
 
 							{weakGroups.length > 0 && (
 								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
@@ -561,19 +564,47 @@ function reviewMeta(s: Summary): React.ReactNode {
 	);
 }
 
-function AllDone({ minutes, goal, next, className }: { minutes: number; goal: number; next: string; className?: string }) {
+/** The plan is done: time left goes to input (src/core/after-plan.ts), with a lesson as the second choice. */
+function AllDone({ minutes, goal, next, after, className }: { minutes: number; goal: number; next: string; after?: AfterPlan; className?: string }) {
+	const step = after?.step;
 	return (
 		<article className={cn("q-card", className)} data-testid="plan-complete">
-			<div className="q-rv-body">
-				<div>
-					<h3>All done for today.</h3>
+			<div className="q-rv-body @max-xl:block">
+				<div className="min-w-0">
+					<h3 className="@max-xl:text-[19px]">All done for today.</h3>
 					<p className="q-rv-tease" style={{ fontSize: 15 }}>
-						That is {minutes} of your {goal} min goal.
+						That is {minutes} of your {goal} min goal.{step && minutes < goal ? " More time goes to listening, so drills stay about a quarter of your week." : ""}
 					</p>
+					{step && (
+						<p className="q-rv-meta" data-testid="after-plan">
+							<b>{step.title}</b> · {step.minutes} min. {step.line}.
+						</p>
+					)}
+					{step && (
+						<div className="q-acts" style={{ marginTop: 12 }}>
+							{after?.find && (
+								<Link href={after.find} className="q-btn sec" data-testid="after-plan-find">
+									Find a video at your level
+								</Link>
+							)}
+							<Link href={`/lesson?unit=${next}`} className="q-btn ghost" data-testid="plan-one-more">
+								One more lesson
+							</Link>
+						</div>
+					)}
 				</div>
-				<Link href={`/lesson?unit=${next}`} className="q-btn sec" data-testid="plan-one-more">
-					One more lesson
-				</Link>
+				{step ? (
+					<Link href={step.href} className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" data-testid="after-plan-start">
+						Start<span className="@xl:hidden"> {step.kind === "watch" ? "Watch" : "Listen"}</span>
+						<kbd className="q-kbd pointer-coarse:hidden">
+							<QIcon name="enter" />
+						</kbd>
+					</Link>
+				) : (
+					<Link href={`/lesson?unit=${next}`} className="q-btn sec" data-testid="plan-one-more">
+						One more lesson
+					</Link>
+				)}
 			</div>
 		</article>
 	);
