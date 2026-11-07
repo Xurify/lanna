@@ -4,7 +4,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 6 November: the sources behind every task, and Speed kept and fixed (branch `feat/sources-and-speed`)
 
-- **Why:** the owner asked to keep the Speed page and its time pressure, link the research the exercises and features are built on, and fix whatever a full analysis found. Rule E62; the analysis: [research/evidence-audit.md](research/evidence-audit.md).
+- **Why:** the owner asked to keep the Speed page and its time pressure, link the research the exercises and features are built on, and fix whatever a full analysis found. Rule E63; the analysis: [research/evidence-audit.md](research/evidence-audit.md).
 - **Sources:** a `/sources` page (also in the jump palette and linked from Progress) lists every feature with what the studies found, what they did not show and which numbers are the app's own, then the references with links. Each task folds the same text into a "Why this works · N sources" note: Speed (both screens), Lessons, Review, Listen, Read, Watch, Speak, Today's line, Catch, the level check, the plan, Milestones, the hours sheet and the stamp book. 97 sources, 91 with a DOI link checked against Crossref, 4 whose abstract was read, the rest listed without a link. `npm run sources:check` repeats the check.
 - **Speed, kept:** the shrinking window stays. The note says plainly that the research supports repeating the same lines, not the window, and that two studies found tight limits did not add fluency and could cost accuracy; so a spoken pass counts only when clear.
 - **Speed, fixed:** a recording with no voice no longer counts; the silence tail is no longer the learner's time; the pass scores now reach the "sounds to work on" report (they were dropped before); the Mic off line names the reason and opens the key settings (Groq added to the list); self-timed rounds and passes say so; the end screen shows pace in words a second from first to last pass against the last round, ignoring impossible speeds. Read it faster: the target is the middle of the last three paces, and the speed bonus needs the right answer and a pace under 450 words a minute.
@@ -13,6 +13,14 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Tests:** `tests/sources.test.ts` (new: ids, citations, DOI shape, pages exist, the Speed caveat), `tests/fluency.test.ts` (re-read target and XP rules, pace), and the line, stage and dated-scene tests updated for the new wording.
 - **Verified on the PC:** Say it faster played through by keyboard on a scratch copy of the data at 1400 px and 390 px, light and dark, the Sources page at both widths, and the Sources note open on the end screen.
 - **Unverified:** the microphone path with a real speech key (no key in the scratch copy: silent clip, a failed check and the denied-permission line were not exercised live; they follow from the code and the tests of the pure parts); the Crossref check shows the records exist and match, not that each line on a page was read in full.
+
+## 7 November: study sections of a video (branch `feat/watch-ai-sections`)
+
+- **Why:** the owner asked for a feature where AI analyses a video, picks sections and turns them into exercises. Rule E62; research: [research/watch-sections.md](research/watch-sections.md).
+- **Find sections** on a prepared video: one cheap request picks up to three parts worth studying, each with a title, why it is worth the time and the words to practice. The answer is checked against the video's own lines and kept with its cost. **Find new sections** asks again.
+- **Practice** a section: each word is a gap in its real line, spoken aloud. Type it. The first miss shows the first letter and the English, the second shows the answer. "I don't know" is a miss. Misses go to Review and the lines come back in Listen. XP, reps and minutes count as in a lesson.
+- **Checked:** `tests/watch-sections.test.ts` (the answer held against the lines, the gaps, keeping and forcing, the XP and the misses); typecheck and lint; the full test suite. In the running app with a seeded video, in Day, Night and at 390 px: the list, a right answer with wrong accents, the cue after a miss, "I don't know" and the end line.
+- **Unverified:** a real model's sections. The cloud session has no AI key, so the model's choices were not seen; the app-side checks were tested with a stand-in answer.
 
 ## 6 November: a new app icon, fields you can see, a creator's newest videos, keys safe from tests (branch `feat/icon-fields-creators`)
 

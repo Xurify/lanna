@@ -44,6 +44,7 @@ import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_
 import { fillStyle } from "@/components/ui/fill";
 import { FragmentsPanel } from "@/components/watch/fragments";
 import { Thumb } from "@/components/watch/thumb";
+import { StudySections } from "@/components/watch/sections";
 import { CreatorsSection, PicksSection, useDiscover, YouTubeSection } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -327,7 +328,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		return (
 			<Frame strip={false}>
 				<TopBar video={video} step={`${video.segments.length} lines · ${formatClock(video.durationSec)}`} progress={0} onShelf={() => setStage("shelf")} />
-				<Preview video={video} onStart={start} onRegenerate={() => void prepare(video.url, video.source.kind === "transcription", true)} />
+				<Preview video={video} canFind={state?.canPrepare !== false} onStart={start} onRegenerate={() => void prepare(video.url, video.source.kind === "transcription", true)} />
 			</Frame>
 		);
 	}
@@ -569,14 +570,15 @@ function Shelf({ state, running, discover, onOpen, onPrepare, onDelete }: { stat
 
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
-function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
+function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
 	const kind = coverageKind({ lang: video.lang, trackLang: video.source.trackLang, estimated: video.coverageEstimated });
 	const tone = band.band === "comfortable" ? "text-teal-2" : band.band === "stretch" ? "text-teal-2" : "text-miss";
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) {
+			// Enter in a field (a study section's gap) belongs to that field.
+			if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement) && !(e.target instanceof HTMLInputElement)) {
 				e.preventDefault();
 				onStart("step");
 			}
@@ -673,6 +675,8 @@ function Preview({ video, onStart, onRegenerate }: { video: VideoRecord; onStart
 						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles live under the video, the whole transcript below. Click any line to jump. Tap any word.</span>
 					</button>
 				</div>
+
+				{video.source.trackLang === video.lang && <StudySections video={video} canFind={canFind} />}
 
 				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
 					<button type="button" onClick={onRegenerate} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-regenerate">
