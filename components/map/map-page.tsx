@@ -139,7 +139,7 @@ function RulesView({ onGraph }: { onGraph: () => void }) {
 
 				{keyless && (
 					<div className="mt-3">
-						<KeyNote>Practice chats are written with an AI key.</KeyNote>
+						<KeyNote>Practice chats need an AI key.</KeyNote>
 					</div>
 				)}
 

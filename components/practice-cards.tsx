@@ -76,7 +76,7 @@ const OUTCOME_LABEL: Record<string, string> = {
 	solved: "Solved",
 	solvedWithHints: "Solved with hints",
 	movedOn: "Moved on",
-	surrendered: "Surrendered",
+	surrendered: "Gave up",
 	dismissed: "Dismissed",
 };
 
@@ -250,7 +250,7 @@ function MetadataPopover({
 				aria-expanded={open}
 				className="flex items-center gap-1 text-[12.5px] font-semibold text-ink-3 transition-colors hover:text-foreground"
 			>
-				Metadata
+				Details
 			</button>
 			{open &&
 				anchor &&

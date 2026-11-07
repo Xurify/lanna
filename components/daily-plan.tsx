@@ -375,7 +375,7 @@ export function WeakSpots({ weak, className = "mt-4 border-t pt-4" }: { weak: We
 				{groups.length > 4 && (
 					<li className="pt-1 text-xs text-muted-foreground">
 						<Link href="/curriculum" className="underline underline-offset-2 hover:text-foreground">
-							{groups.length - 4} more on the path
+							{groups.length - 4} more in Curriculum
 						</Link>
 					</li>
 				)}

@@ -208,7 +208,7 @@ function goalLine(s: Summary): React.ReactNode {
 			{avg !== undefined && s.pace && (
 				<>
 					{" "}
-					You average {avg} of {s.pace.goalMinutes} min a day this week.
+					You average {avg} of {s.pace.goalMinutes} min a day over the last {s.pace.windowDays} days.
 				</>
 			)}
 		</>

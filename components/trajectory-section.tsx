@@ -17,7 +17,7 @@ import { MAX_MINUTES, measuredPace, MIN_WORD_SNAPSHOTS, trajectory, TRAJECTORY_M
 function rateLine(t: Trajectory): string {
 	const per = t.perPracticeHour;
 	if (t.metric === "hours") {
-		return t.basis === "measured" ? `Lately an hour of practice has earned about ${per.toFixed(1)} map hours.` : "Until there is a couple of weeks of history, an hour of practice counts as one map hour.";
+		return t.basis === "measured" ? `Lately an hour of practice has earned about ${per.toFixed(1)} guided hours.` : "Until there is a couple of weeks of history, an hour of practice counts as one guided hour.";
 	}
 	if (t.metric === "units") {
 		return t.basis === "measured" ? `Lately ${per.toFixed(2)} units for every hour of practice.` : "Estimated from lessons per hour until there is a couple of weeks of history.";

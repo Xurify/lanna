@@ -288,7 +288,7 @@ export function HoursSheet({
 				</p>
 
 				<p className="mt-3 rounded-xl bg-well px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
-					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about <b>{Math.round(yearly)} hours of the map a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. The map credits hours as units are done, so your real date moves with the evidence, not with this table.
+					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about <b>{Math.round(yearly)} guided hours a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. Guided hours are credited as units are done, so your real date moves with the evidence, not with this table.
 				</p>
 
 				<h3 className="mt-5 font-ui text-xs font-semibold tracking-wide text-muted-foreground">The studies behind the numbers</h3>

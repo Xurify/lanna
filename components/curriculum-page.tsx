@@ -77,7 +77,7 @@ export function CurriculumPage({ initialView = "chapters", initialConfigured, st
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Curriculum</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Your climb to {goal.level}. {state ? `${state.done} of ${state.total} units done. ` : ""}
-					Each level is a stop on the way up. A chapter opens when the one before is nearly done, and a lesson you ace counts as done.
+					Each level is a stretch of the climb, and each chapter a stop on it. A chapter opens when the one before is nearly done. One lesson you ace finishes its unit.
 				</p>
 				<div role="tablist" aria-label="How to read the climb" className="q-segc mt-6" data-testid="climb-views">
 					{CLIMB_VIEWS.map((v, i) => (

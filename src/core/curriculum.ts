@@ -491,7 +491,7 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 				const reached = open && doneCount >= countable;
 				status = reached ? (units.some((x) => x.status === "skipped") ? "skipped" : "done") : "locked";
 				progress = countable > 0 ? Math.min(1, doneCount / countable) : 0;
-				if (!reached) needs = open ? `Finish the chapter's ${countable - doneCount} open unit${countable - doneCount === 1 ? "" : "s"}` : `Opens with “${ch.title}”`;
+				if (!reached) needs = open ? `Finish the chapter's ${countable - doneCount} open unit${countable - doneCount === 1 ? "" : "s"}` : `Opens when “${ch.title}” opens`;
 			} else {
 				const p = unitProgressOf(u, e, u.lessonsToComplete ?? 0);
 				const missing = (u.requires ?? []).filter((r) => !doneSet.has(r));
@@ -501,7 +501,7 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 				else if (missing.length) status = "locked";
 				else status = lessons > 0 ? "started" : "open";
 				progress = p.progress;
-				if (status === "locked") needs = !open ? `Opens with “${ch.title}”` : `After ${missing.map((m) => curriculumUnit(m)?.title ?? m).join(" and ")}`;
+				if (status === "locked") needs = !open ? `Opens when “${ch.title}” opens` : `After ${missing.map((m) => curriculumUnit(m)?.title ?? m).join(" and ")}`;
 			}
 			if (status === "done" || status === "skipped") {
 				doneSet.add(id);
@@ -758,7 +758,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "review",
 			title: "Review",
-			line: review.due > 0 ? `${review.due} card${review.due === 1 ? "" : "s"} due — retrieval before anything new` : review.newLeft > 0 && !done ? `${review.newLeft} new words waiting` : "All caught up",
+			line: review.due > 0 ? `${review.due} card${review.due === 1 ? "" : "s"} due — recall them before anything new` : review.newLeft > 0 && !done ? `${review.newLeft} new word${review.newLeft === 1 ? "" : "s"} waiting` : "All caught up",
 			minutes,
 			done,
 			href: "/review",
@@ -793,7 +793,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const nextClean = next ? next.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "") : "";
 	tasks.push({
 		id: "lesson",
-		title: next ? `${prefix}: ${nextClean}${termSuffix}` : "Grammar Lesson",
+		title: next ? `${prefix}: ${nextClean}${termSuffix}` : "Grammar lesson",
 		line: next ? (next.lessons > 0 ? `Lesson ${next.lessons + 1} · ${lineGrammar}${next.tagline}` : `New · ${lineGrammar}${next.tagline}`) : "The next step on your path",
 		minutes: TASK_MINUTES.lesson,
 		done: newGroundDone,
@@ -839,7 +839,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weakClean}${weakSlovak ? ` · ${weakSlovak}` : ""}`,
-			line: spot ? `A weak spot on record — a typed lesson, mixed with its neighbors` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with its neighbors` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with its neighbors`,
+			line: spot ? `A weak spot on record — a typed lesson, mixed with related units` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with related units` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with related units`,
 			minutes: TASK_MINUTES.strengthen,
 			done: strengthenDone,
 			unit: weak.id,
@@ -908,9 +908,9 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		const tutorClean = tutorUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 		tasks.push({ id: "speak", title: `With the tutor: ${tutorClean}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
 	} else if (scene) {
-		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers and prompts your slips" : "Say a scene from your goals out loud — the tutor answers and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
+		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers and asks you to fix your slips" : "Say a scene from your goals out loud — the tutor answers and asks you to fix your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
 	} else {
-		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers and prompts your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
+		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers and asks you to fix your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
 	}
 
 	// 8. Speed: fluency on what is already known (src/core/fluency.ts). A

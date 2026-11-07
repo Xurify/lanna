@@ -99,7 +99,7 @@ export function LogPage() {
 						</div>
 					</section>
 				) : (
-					<p className="q-line dim mt-6">{failed ? "The log could not be loaded. Check that LangHarness is still running, then reload." : days ? "No days yet." : "\u00a0"}</p>
+					<p className="q-line dim mt-6">{failed ? "The log could not be loaded. Check that LangHarness is still running, then reload." : days ? "No days yet. Each finished task shows up here." : "\u00a0"}</p>
 				)}
 			</main>
 		</div>
