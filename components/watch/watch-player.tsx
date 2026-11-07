@@ -51,7 +51,7 @@ import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 
-type Stage = "shelf" | "preparing" | "preview" | "watch" | "questions" | "end" | "error";
+type Stage = "shelf" | "preview" | "watch" | "questions" | "end" | "error";
 
 interface Outcome {
 	xp: number;
@@ -82,9 +82,13 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const discover = useDiscover(initialDiscover ?? null);
 	const [state, setState] = useState<WatchState | null>(initial);
 	const [video, setVideo] = useState<VideoRecord | null>(initialVideo ?? null);
-	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : initialUrl ? "preparing" : "shelf");
+	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : "shelf");
 	const [error, setError] = useState<PrepareError | null>(null);
 	const [pending, setPending] = useState<string | null>(initialUrl ?? null);
+	// The link being sent to the server: the shelf shows a row for it, and stays usable.
+	const [starting, setStarting] = useState<string | null>(initialUrl ?? null);
+	const stageRef = useRef(stage);
+	stageRef.current = stage;
 	const [mode, setMode] = useState<WatchMode>("step");
 	const [tapped, setTapped] = useState<string[]>([]);
 	const [answers, setAnswers] = useState<number[]>([]);
@@ -150,12 +154,13 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			const id = parseVideoUrl(url);
 			if (!id) {
 				setError({ message: "That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link." });
+				setStarting(null);
 				setStage("error");
 				return;
 			}
 			setPending(url);
 			setError(null);
-			setStage("preparing");
+			setStarting(url);
 			try {
 				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true, ...(range ? { range } : {}) }) });
 				const body = (await res.json()) as VideoRecord | PrepareError | { background: true };
@@ -163,22 +168,25 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				forgetWatchCaches();
 				if ("background" in body) {
 					setPending(null);
-					setStage("shelf");
 					void load();
 					return;
 				}
 				if (!("segments" in body)) throw body;
+				void load();
+				// A kept video opens only if the learner is still on the shelf, not in another video.
+				if (stageRef.current !== "shelf") return;
 				setVideo(body);
 				setTapped([]);
 				setAnswers([]);
 				setStats([]);
 				setOutcome(null);
 				setStage("preview");
-				void load();
 			} catch (err) {
 				const e = err && typeof err === "object" && "message" in err ? (err as PrepareError) : { message: err instanceof Error ? err.message : String(err) };
 				setError(e);
 				setStage("error");
+			} finally {
+				setStarting(null);
 			}
 		},
 		[load],
@@ -192,10 +200,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	const kicked = useRef(false);
 	useEffect(() => {
-		if (kicked.current || stage !== "preparing" || !pending) return;
+		if (kicked.current || !initialUrl || initialVideo) return;
 		kicked.current = true;
-		void prepare(pending, false, false, rangeRef.current);
-	}, [stage, pending, prepare]);
+		void prepare(initialUrl, false, false, rangeRef.current);
+	}, [initialUrl, initialVideo, prepare]);
 
 	/** The video is in another language of the learner's: run that language and
 	 *  open the link there, where the page prepares it. */
@@ -287,23 +295,6 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	const onTap = (key: string) => setTapped((t) => (t.includes(key) ? t : [...t, key]));
 
-	if (stage === "preparing") {
-		return (
-			<Frame>
-				<div className="m-auto max-w-md text-center" data-testid="watch-preparing">
-					<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-						<MonitorPlayIcon className="size-9 lh-flicker" />
-					</div>
-					<h1 className="mt-5 font-ui text-3xl font-[600] text-foreground">Starting…</h1>
-					<p className="mt-2 font-prose text-lg text-muted-foreground">The video is prepared in the background. You can leave this page; a notice shows when it is ready.</p>
-					<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground" data-testid="watch-stage">
-						<LoaderCircleIcon className="size-4 animate-spin" />
-					</p>
-				</div>
-			</Frame>
-		);
-	}
-
 	if (stage === "error") {
 		return (
 			<Frame>
@@ -346,7 +337,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} running={running} discover={discover} onOpen={open} onPrepare={(url, range) => void prepare(url, false, false, range)} onDelete={(id) => void remove(id)} />
+			<Shelf state={state} running={running} starting={starting} discover={discover} onOpen={open} onPrepare={(url, range) => void prepare(url, false, false, range)} onDelete={(id) => void remove(id)} />
 		);
 	}
 

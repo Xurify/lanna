@@ -4,12 +4,13 @@
  */
 
 import { CheatsheetParseError, CHEATSHEET_MAX_CHARS } from "@/src/core";
-import { cheatsheetStore } from "@/src/server";
+import { activeLanguage, cheatsheetStore } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-	return Response.json({ sheets: cheatsheetStore.list() });
+export async function GET(req: Request) {
+	const q = new URL(req.url).searchParams.get("q")?.trim();
+	return Response.json({ sheets: q ? cheatsheetStore.search(q, activeLanguage().tag) : cheatsheetStore.list() });
 }
 
 export async function POST(req: Request) {
