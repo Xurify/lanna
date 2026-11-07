@@ -263,9 +263,9 @@ export function addBlocker(writer: CourseWriter = "strong"): string | null {
 export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: string; done: Promise<void> } {
 	const lang = catalogLanguage(id);
 	if (!lang) throw new Error(`"${id}" is not a language the app can add`);
-	if (languageAdded(id)) throw new Error(`${lang.english} is already added`);
+	if (languageAdded(id)) throw new Error(`${lang.english} is already added.`);
 	const other = listTasks().find((t) => t.kind === "language" && t.status === "running" && t.id !== taskIdOf(id));
-	if (other) throw new Error(`Wait for "${other.title}" to finish first`);
+	if (other) throw new Error(`Wait for "${other.title}" to finish first.`);
 	const blocked = deps.ask ? null : addBlocker(deps.slot);
 	if (blocked) throw new Error(blocked);
 	const { signal, fresh } = startTask({ id: taskIdOf(id), kind: "language", title: `Adding ${lang.english}`, step: "Starting", language: { id, english: lang.english } });
@@ -495,7 +495,7 @@ function courseEngine(writer: WriterSlot = "strong") {
 
 const askOn = (writer: WriterSlot): Ask => async (system, prompt, signal, cap) => {
 	const resolved = courseEngine(writer);
-	if (!resolved) throw new SourceError("No model is set in Settings → AI models.");
+	if (!resolved) throw new SourceError('No model is set. Pick one in Settings → AI models, or add the language again with "From the dictionary only".');
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const { engine } = resolved;
 	// The cap rides every request, so the provider ends the answer there.
@@ -552,7 +552,7 @@ async function drafted<T>(id: string, name: DraftKind, writer: WriterSlot, ask: 
 		prompt = `${first.prompt}\n\nYour last answer could not be used: it was not valid JSON in the shape above, or too little of it held up against the dictionary. Write it again, complete.`;
 	}
 	writeJson(file, { calls, model: calls[0]!.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });
-	throw new SourceError(`The model's ${name} did not hold up against the dictionary twice. Try again; the downloads are kept.`);
+	throw new SourceError(`The model's ${name === "world" ? "story world" : "course"} failed the dictionary check twice. Try again; the downloads are kept.`);
 }
 
 function mergeUsage(calls: ReadonlyArray<{ usage: StoryUsage }>): StoryUsage {

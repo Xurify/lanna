@@ -665,7 +665,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		let model = opts.model;
 		if (!engine) {
 			const resolved = storyEngine();
-			if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+			if (!resolved) throw new Error("No model is configured. Pick one in Settings → AI models.");
 			engine = resolved.engine;
 			model ??= resolved.model;
 		}
@@ -980,7 +980,7 @@ export async function checkSentence(input: { videoId: string; lemma: string; sen
 	const same = earlier.find((s) => s.sentence === sentence);
 	if (same) return { ok: same.ok, corrected: same.corrected, why: same.why, cached: true, xp: 0 };
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "test" } : storyEngine();
-	if (!resolved) throw new Error("No model is configured. Set the cheap slot in Settings → AI models.");
+	if (!resolved) throw new Error("No model is configured. Pick one in Settings → AI models.");
 	const gloss = video.preTeach.find((w) => w.lemma === lemma)?.gloss ?? video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.gloss ?? "";
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const text = await ask(resolved.engine, sentenceSystem(), `The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`, usage);

@@ -331,7 +331,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 						{error?.meta?.title && <p lang={lang?.code}>{error.meta.title}</p>}
 						<p>{error?.message ?? "Something went wrong."}</p>
 						{moveError && <p role="alert">{moveError}</p>}
-						<p>Videos you have already prepared still play from your list.</p>
+						<p>Videos you have already prepared still play from My videos.</p>
 					</EmptyState>
 				</div>
 			</Frame>
@@ -478,7 +478,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 						<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
 							<div>
 								<p className="font-ui text-2xl font-[600] text-foreground">{captionLanguageName(video.source.trackLang)} captions</p>
-								<p className="font-ui text-sm font-[600] text-muted-foreground">No known-word share</p>
+								<p className="font-ui text-sm font-[600] text-muted-foreground">Not matched to your words</p>
 							</div>
 						</div>
 					) : (
@@ -496,7 +496,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 					<div className="rounded-lg border bg-card px-5 py-4">
 						<p className="font-prose text-base leading-snug text-foreground">{kind === "none" ? `The captions are ${captionLanguageName(video.source.trackLang)}, so their words are not matched against your ${captionLanguageName(video.lang)}. Regenerate to get an estimate from a ${captionLanguageName(video.lang)} rendering of them.` : kind === "estimated" ? `${band.line} An estimate: measured on a ${captionLanguageName(video.lang)} rendering of the ${captionLanguageName(video.source.trackLang)} captions.` : band.line}</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
-							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · a check of {video.questions.length} at {video.level}
+							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · {video.questions.length} {video.questions.length === 1 ? "question" : "questions"} at {video.level}
 						</p>
 					</div>
 				</div>
@@ -538,14 +538,14 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 							Line by line
 							<kbd className="ml-auto rounded-md border bg-card px-1.5 font-ui text-xs font-[600] text-muted-foreground">Enter</kbd>
 						</span>
-						<span className="mt-1 block font-prose text-sm text-foreground/80">Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. The one for assembling meaning at speed.</span>
+						<span className="mt-1 block font-prose text-sm text-foreground/80">Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. It trains putting meaning together at speed.</span>
 					</button>
 					<button type="button" onClick={() => onStart("flow")} className="rounded-lg border bg-card p-5 text-left transition-colors hover:shadow-raise-hi" data-testid="watch-start-flow">
 						<span className="flex items-center gap-2 font-ui text-lg font-[600] text-foreground">
 							<ListIcon className="size-5 text-muted-foreground" />
 							Straight through
 						</span>
-						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles live under the video, the whole transcript below. Click any line to jump. Tap any word.</span>
+						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles show under the video and the whole transcript below it. Tap a line to jump to it, or a word for its meaning.</span>
 					</button>
 				</div>
 
@@ -1123,7 +1123,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 							)
 						) : (
 							<button type="button" onClick={() => onDone(statsOf())} className={PRIMARY} data-testid="watch-finish">
-								{video.questions.length ? `${video.questions.length} quick questions` : "Done"}
+								{video.questions.length ? `Answer ${video.questions.length} ${video.questions.length === 1 ? "question" : "questions"}` : "Done"}
 							</button>
 						)}
 						<button type="button" onClick={() => (step && idx + 1 >= segs.length ? onDone(statsOf()) : goTo(idx + 1))} aria-label="Next line" className="flex size-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-next">
@@ -1291,8 +1291,8 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 			</div>
 			{mode === "step" && judged > 0 && (
 				<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="watch-speed">
-					{speed.wpmFirst !== null ? `On the lines you got first time the speech ran at ${speed.wpmFirst} words a minute` : "No line got on the first listen yet"}
-					{speed.wpmAll ? ` · the video runs at ${speed.wpmAll}` : ""}. {Math.round(speed.shareFirst * 100)}% first time
+					{speed.wpmFirst !== null ? `On the lines you got the first time, the speech ran at ${speed.wpmFirst} words a minute` : "You got no line on the first listen this time"}
+					{speed.wpmAll ? `; the whole video runs at ${speed.wpmAll}` : ""}. You got {Math.round(speed.shareFirst * 100)}% the first time
 					{outcome && outcome.missed > 0 ? `, ${outcome.missed} not yet` : ""}.
 				</p>
 			)}
@@ -1311,7 +1311,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 					Watch again
 				</button>
 				<button type="button" onClick={onShelf} className={PRIMARY} data-testid="watch-shelf-button">
-					Your videos
+					Pick another video
 				</button>
 			</div>
 			<SourcesNote feature="watch" className="mt-8 text-left" />

@@ -168,7 +168,7 @@ test("without a Listen measurement the speed is assumed from the hours ladder an
 	assert.deepEqual(facts({ listen: f.listen, hoursDone: 500, level: "A2" }).speed, { wpm: 111, basis: "level" }, "more hours than the rung count");
 	const vlog = estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, f, { now: NOW });
 	assert.equal(vlog.speed.basis, "level");
-	assert.match(vlog.missing[1]!, /a listener at your point on the map/);
+	assert.match(vlog.missing[1]!, /a listener at your level/);
 	// A trend is never used over an assumed speed.
 	const withTrend = facts({ listen: { sessions: 0, reading: null, trend: { slope: 5, points: 9 }, knownSentences: { total: 0, right: 0 } }, hoursDone: 200 });
 	assert.equal(estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, withTrend, { now: NOW }).speed.hoursBasis, "ladder");

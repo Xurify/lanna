@@ -180,7 +180,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 						id="watch-url"
 						value={url}
 						onChange={(e) => setUrl(e.target.value)}
-						placeholder={`Paste a YouTube link in ${name}`}
+						placeholder={`Paste a link to a YouTube video in ${name}`}
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
@@ -343,7 +343,7 @@ function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut,
 		return (
 			<div className="max-w-lg" data-testid="watch-library-empty">
 				<p className="font-ui text-[17px] font-[600] text-foreground">Nothing prepared yet</p>
-				<p className="q-sub">Paste a YouTube link above, or prepare one of the videos picked for you. It is translated once and kept here.</p>
+				<p className="q-sub">Paste a YouTube link above, or add one of the videos picked for you. It is translated once and kept here.</p>
 				<button type="button" onClick={onFind} className="q-btn sec t mt-4">
 					See what is picked for you
 				</button>
@@ -360,7 +360,7 @@ function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut,
 			<CardGrid testid="watch-library">
 				{rest.map((v) => {
 					const kind = coverageKind(v);
-					const gotFirst = v.watches > 0 && v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% first time · ${v.watches}×` : v.watches > 0 ? `Watched ${v.watches}×` : null;
+					const gotFirst = v.watches > 0 && v.lastGotFirst !== undefined ? `${Math.round(v.lastGotFirst * 100)}% got first time · watched ${v.watches}×` : v.watches > 0 ? `Watched ${v.watches}×` : null;
 					return (
 						<li key={v.id}>
 							<VideoCard

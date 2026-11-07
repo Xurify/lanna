@@ -275,7 +275,7 @@ function GraphCostPanel({ costs }: { costs: GraphCostSummary }) {
 		<div className="w-80 max-w-[calc(100vw-1.5rem)] rounded-xl bg-card p-3 text-xs shadow-raise-hi">
 			<div className="mb-2 flex items-baseline justify-between">
 				<span className="text-xs font-medium text-muted-foreground">
-					Graph pipeline costs
+					Graph costs
 				</span>
 				<span className="text-foreground tabular-nums">
 					{graphUsageLabel(costs)}
@@ -756,7 +756,7 @@ export function GraphChromeRow({
 			{/* Chains button: its own 36px container, between search and Import. */}
 			{!isEmpty && (
 				<div className="graph-chrome-fade-in w-24 shrink-0 rounded-xl bg-card px-1 py-[3px] shadow-raise-hi">
-					<Hint label="Every reasoning chain" side="bottom">
+					<Hint label="Every prerequisite chain" side="bottom">
 						<button
 							type="button"
 							onClick={onOpenChains}
@@ -1255,7 +1255,7 @@ export function GraphView({
 						<WaypointsIcon className="size-10 opacity-40" strokeWidth={1.25} />
 						<div className="text-lg font-medium text-foreground">Knowledge graph</div>
 						<p className="max-w-sm text-sm">
-							Start a session or import notes to build your graph.
+							Chat with your tutor or import notes to build your graph.
 						</p>
 						<button
 							type="button"
@@ -1369,7 +1369,7 @@ export function GraphView({
 					<div className="mt-1 text-xs leading-relaxed text-muted-foreground">{selected.node.statement}</div>
 					{selected.sourceIds.length > 0 ? (
 						<div className="mt-3 flex flex-col gap-1">
-							<div className="text-xs text-muted-foreground">Sessions</div>
+							<div className="text-xs text-muted-foreground">From</div>
 							{selected.sourceIds.map((sourceId) => {
 								// An imported-notes file: a STATIC entry — the path,
 								// plain text, never a link (no session to open).
@@ -1398,7 +1398,7 @@ export function GraphView({
 							})}
 						</div>
 					) : (
-						<div className="mt-3 text-xs text-muted-foreground">No sessions recorded.</div>
+						<div className="mt-3 text-xs text-muted-foreground">Not from any chat or notes.</div>
 					)}
 				</div>
 			)}

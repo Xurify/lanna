@@ -242,7 +242,7 @@ export function AppearanceSection({
 					type="number"
 					value={String(appearance?.proseFontSize ?? "")}
 					placeholder="16"
-					ariaLabel="prose font size"
+					ariaLabel="Reading font size"
 					testid="input-prose-size"
 					onCommit={(v) => {
 						// Empty = factory default: omit the key. Absence is the unset for numbers; Number("") is 0.
@@ -259,7 +259,7 @@ export function AppearanceSection({
 			<SettingsRow label="Session names in serif" testid="row-session-serif">
 				<Toggle
 					checked={appearance?.sessionNameSerif ?? true}
-					label="session names serif"
+					label="Session names in serif"
 					onChange={(on) => onSectionChange({ ...appearance, sessionNameSerif: on })}
 				/>
 			</SettingsRow>
@@ -276,7 +276,7 @@ export function AppearanceSection({
 				<CommitInput
 					value={appearance?.background ?? ""}
 					placeholder={FACTORY_BACKGROUND}
-					ariaLabel="background hex"
+					ariaLabel="Background color"
 					testid="input-background"
 					onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
 				/>
@@ -286,7 +286,7 @@ export function AppearanceSection({
 					type="number"
 					value={String(md?.headingWeight ?? "")}
 					placeholder="900"
-					ariaLabel="heading weight"
+					ariaLabel="Heading weight"
 					testid="input-heading-weight"
 					onCommit={(v) => {
 						// Empty = factory default: absence is the unset representation (Number("") is 0).
@@ -308,7 +308,7 @@ export function AppearanceSection({
 				<CommitInput
 					value={md?.boldColor ?? ""}
 					placeholder="same as text"
-					ariaLabel="bold color"
+					ariaLabel="Bold color"
 					testid="input-bold-color"
 					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, boldColor: v === "" ? null : v } })}
 				/>
@@ -317,7 +317,7 @@ export function AppearanceSection({
 				<CommitInput
 					value={md?.italicColor ?? ""}
 					placeholder="same as text"
-					ariaLabel="italic color"
+					ariaLabel="Italic color"
 					testid="input-italic-color"
 					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, italicColor: v === "" ? null : v } })}
 				/>
@@ -356,10 +356,10 @@ export function GraphSection({
 				/>
 			</SettingsRow>
 			{/* Rendering is display only. Off shows the chains view on home; data work keeps running. */}
-			<SettingsRow label="Show the map on home" hint="Off = home shows the chains view instead" testid="graph-row-rendering">
+			<SettingsRow label="Draw the map on the Map page" hint="Off = the Map page shows a summary in numbers instead" testid="graph-row-rendering">
 				<Toggle
 					checked={graph?.rendering ?? true}
-					label="Show the map on home"
+					label="Draw the map on the Map page"
 					testid="toggle-graph-rendering-enabled"
 					onChange={(on) => onSectionChange({ ...graph, rendering: on })}
 				/>
@@ -378,7 +378,7 @@ export function GraphSection({
 					type="number"
 					value={String(graph?.extractionChunkTokens ?? "")}
 					placeholder={String(resolved.extractionChunkTokens)}
-					ariaLabel="extraction chunk budget"
+					ariaLabel="Map update size"
 					testid="input-chunk-tokens"
 					onCommit={(v) => {
 						// Empty = factory default. Absence is the unset for numbers; Number("") is 0.

@@ -87,7 +87,7 @@ export function Check({ questions, answers, onAnswer }: { questions: StoryQuesti
 			<div className={cn("border-t border-border", picked !== null && (right ? "bg-teal-wash" : "bg-miss-soft"))}>
 				<div className={cn(COLUMN, "flex min-h-24 items-center justify-between gap-4 py-5")}>
 					<p className={cn("font-ui text-lg font-[600]", picked === null ? "text-muted-foreground font-prose text-sm font-normal" : right ? "text-teal-2" : "text-miss")}>
-						{picked === null ? "Pick one, or press its number" : right ? "Presne tak!" : "Not quite — the right one is marked"}
+						{picked === null ? <>Pick one<span className="hidden pointer-fine:inline">, or press its number</span></> : right ? "Presne tak!" : "Not quite — the right one is marked"}
 					</p>
 					{picked !== null && (
 						<button type="button" autoFocus onClick={() => onAnswer(picked)} className={cn(BUTTON, right ? "bg-teal text-teal-2-ink" : "bg-miss text-background", "hover:brightness-110")} data-testid="read-continue">

@@ -41,7 +41,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
-	cheap: { label: "Cheap", roster: "Talk, Story, Why? and practice, plus the assistants that research, build demos, and grade your work" },
+	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research, build demos, and grade your work" },
 	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
 };
 
@@ -364,7 +364,7 @@ export function AiSection({
 			body: JSON.stringify({ text }),
 		});
 		if (!res.ok) {
-			setSegmentStatus(`Save failed: ${(await res.json().catch(() => ({}))).error ?? res.status}`);
+			setSegmentStatus(`Couldn't save: ${(await res.json().catch(() => ({}))).error ?? res.status}`);
 			return;
 		}
 		readPrompts();
@@ -450,7 +450,7 @@ export function AiSection({
 				{open && (
 					<div className="mt-1 flex flex-col gap-2">
 						<div>
-							<p className="mb-1 text-xs text-muted-foreground">Source</p>
+							<p className="mb-1 text-xs text-muted-foreground">Original</p>
 							<textarea
 								readOnly
 								value={info.sourceText}
@@ -459,7 +459,7 @@ export function AiSection({
 							/>
 						</div>
 						<div>
-							<p className="mb-1 text-xs text-muted-foreground">Override</p>
+							<p className="mb-1 text-xs text-muted-foreground">Your version</p>
 							<textarea
 								value={segmentDraft[info.path] ?? info.overrideText ?? ""}
 								onChange={(e) => setSegmentDraft({ ...segmentDraft, [info.path]: e.target.value })}
@@ -492,7 +492,7 @@ export function AiSection({
 							)}
 							{fileExists && confirmDeletePath === info.path && (
 								<span className="flex items-center gap-2 text-xs" data-testid="segment-delete-confirm">
-									<span className="text-muted-foreground">Your version goes, and the default instructions are used.</span>
+									<span className="text-muted-foreground">Delete your version? The original instructions are used again.</span>
 									<button
 										type="button"
 										onClick={() => {
@@ -604,7 +604,7 @@ export function AiSection({
 											footer={
 												catalog && catalog.length === 0
 													? "No models — add a provider key in Settings → API keys"
-													: "Runs every agent of this tier"
+													: "Runs everything this row lists"
 											}
 										/>
 									</MenuShell>
@@ -731,7 +731,7 @@ export function AiSection({
 						type="number"
 						value={String(compaction?.thresholdTokens ?? "")}
 						placeholder={String(resolvedCompaction.thresholdTokens)}
-						ariaLabel="compaction threshold"
+						ariaLabel="Summarize long chats after"
 						testid="input-compaction-threshold"
 						onCommit={(v) => {
 							// Empty = factory default. Absence is the unset for numbers.

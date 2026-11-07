@@ -13,7 +13,7 @@ import { chartData } from "@/components/quiet/chart-data";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { useSettingsDialog } from "@/components/settings/settings-dialog";
 import type { Goal } from "@/components/daily-plan";
-import type { CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
+import type { AfterPlan, CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
 export interface UnitSummary {
@@ -45,6 +45,7 @@ export interface Summary {
 	review: { due: number; newLeft: number; total: number; available: boolean };
 	curriculum: CurriculumState;
 	plan: Plan;
+	afterPlan?: AfterPlan;
 	goal: Goal;
 	projection: Projection;
 	balance?: StrandBalance;
@@ -208,7 +209,7 @@ function goalLine(s: Summary): React.ReactNode {
 			{avg !== undefined && s.pace && (
 				<>
 					{" "}
-					You average {avg} of {s.pace.goalMinutes} min a day this week.
+					You average {avg} of {s.pace.goalMinutes} min a day over the last {s.pace.windowDays} days.
 				</>
 			)}
 		</>

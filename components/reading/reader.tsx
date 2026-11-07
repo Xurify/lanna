@@ -284,7 +284,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 			clearInterval(timer);
 		};
 	}, []);
-	const label = progress ? (progress.genre === "robo" ? "the next episode" : `a ${genreInfo(progress.genre).label.toLowerCase()}`) : "your next story";
+	const label = progress ? (progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story";
 	const lines = progress?.sentences ?? [];
 	return (
 		<Frame>
@@ -316,7 +316,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 					) : (
 						<p className="mt-6 flex items-center justify-center gap-2 font-ui text-sm text-muted-foreground">
 							<LoaderCircleIcon className="size-4 animate-spin" />
-							The first sentences appear in a few seconds
+							This takes about a minute. The episode opens when it is written.
 						</p>
 					)}
 				</div>
@@ -600,7 +600,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						Translation {showTranslation ? "on" : "off"}
 					</button>
 					<button type="button" onClick={onDone} className="q-btn primary" data-testid="read-done">
-						{story.questions.length ? `Questions (${story.questions.length})` : "Done"}
+						{story.questions.length ? `Answer ${story.questions.length} ${story.questions.length === 1 ? "question" : "questions"}` : "Done"}
 					</button>
 				</div>
 			</div>
@@ -702,12 +702,12 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 					</button>
 				) : (
 					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
-						The library
+						Open the library
 					</button>
 				)}
 			</div>
 			<SourcesNote feature="read" className="mt-8 text-left" />
-			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">The shelf is being filled in the background; the next story is a tap away in the library.</p>}
+			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">New stories are written in the background and wait in the library.</p>}
 		</div>
 	);
 }
@@ -866,7 +866,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 												</span>
 												<span className="block text-[13px] text-ink-3">{storyMeta(s)}</span>
 											</span>
-											<span className="shrink-0 text-[13px] text-ink-3">{s.reads === 0 ? "New" : s.lastScore ? `${s.lastScore.correct} of ${s.lastScore.total}` : `Read ${s.reads}×`}</span>
+											<span className="shrink-0 text-[13px] text-ink-3">{s.reads === 0 ? "New" : s.lastScore ? `${s.lastScore.correct} of ${s.lastScore.total} right` : `Read ${s.reads}×`}</span>
 										</button>
 									</li>
 								))}

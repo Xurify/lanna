@@ -155,7 +155,7 @@ export function LevelProgress({ data, className }: { data: ChartData; className?
 					<b className="q-num">
 						{todayXp} <span>/ {dailyGoal} XP today</span>
 					</b>
-					<small>{toGoal > 0 ? `${toGoal} to today's goal` : "Today's goal is met"}</small>
+					<small>{toGoal > 0 ? `${toGoal} XP to today's goal` : "Today's goal is met"}</small>
 				</div>
 			</div>
 			<div className="border-t border-border px-4 pb-3.5 pt-3">

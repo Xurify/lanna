@@ -165,7 +165,7 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 			{guide ? (
 				<div className="mt-3">{guide.data ? <DeepBody data={guide.data} /> : <p className="whitespace-pre-wrap text-sm text-foreground">{guide.text}</p>}</div>
 			) : ai.ready ? (
-				<p className="mt-2 text-sm text-ink-3">An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to practice. It uses your Strong model (Cheap when Strong is empty) and runs once per set of figures.</p>
+				<p className="mt-2 text-sm text-ink-3">An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to practice. It uses your main AI model and runs once per set of figures.</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={DEEP_ADDS} className="mt-3" />
 			)}
@@ -178,7 +178,7 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 				<div className="mt-4 flex flex-wrap items-center gap-3">
 					<button type="button" disabled={busy || (!!guide && !!current)} onClick={() => onWrite(false)} className="q-btn sec pointer-coarse:min-h-11" data-testid="listen-guide-write">
 						{busy ? <LoaderCircleIcon className="q-ico animate-spin" /> : <SparklesIcon className="q-ico" />}
-						{guide ? (current ? "Deep read is up to date" : "Read it again") : "Read my listening"}
+						{guide ? (current ? "Deep read is up to date" : "Read it again") : "Analyze my listening"}
 					</button>
 					<p className="text-xs text-ink-3" data-testid="listen-guide-privacy">
 						Sends the figures on this page and the sentences you missed, with what you typed, to your model provider. Nothing else leaves this computer.
@@ -279,7 +279,7 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 
 					{(l.insights ?? []).length > 0 && (
 						<>
-							<Heading line="Found by a test far stricter than the trends', so a few sentences never produce one.">Things you may not have noticed</Heading>
+							<Heading line="Found by a stricter test than the trends, so it needs many sentences before it shows anything.">Things you may not have noticed</Heading>
 							<ul className="q-card mt-2 divide-y divide-[var(--q-line)]" data-testid="listening-insights">
 								{l.insights.map((i) => (
 									<li key={i.id} className="px-4 py-3" data-testid={`listening-insight-${i.id}`}>

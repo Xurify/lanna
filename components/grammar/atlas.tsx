@@ -43,7 +43,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Grammar</h1>
 				{!first ? (
 					<p className="q-line dim mt-2 max-w-2xl" data-testid="grammar-none">
-						This table is the Slovak case and gender grid. The grammar of the language you are learning now is in its lessons on the map, each with its rule.
+						The case and gender table is built for Slovak only. For the language you are learning now, each grammar lesson in Curriculum carries its rule.
 					</p>
 				) : (
 				<>

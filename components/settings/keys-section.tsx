@@ -267,7 +267,7 @@ function KeyTableRow({
 							onClick={(e) => e.stopPropagation()}
 							className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 						>
-							key ↗
+							Get a key ↗
 						</a>
 					)}
 					<span data-testid={`${testid}-status`} className="font-mono text-[11px] text-muted-foreground">
@@ -502,7 +502,7 @@ export function KeysSection({
 		});
 		if (!res.ok) {
 			const body = (await res.json().catch(() => ({}))) as { error?: string };
-			return body.error ?? `Save failed (${res.status})`;
+			return body.error ?? `Couldn't save the key (error ${res.status}). Try again.`;
 		}
 		await reload();
 		// Cross-surface signal: other keys readers re-read here (deletes too).

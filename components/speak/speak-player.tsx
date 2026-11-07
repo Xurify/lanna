@@ -228,7 +228,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				const clip = await rec.stop();
 				recorder.current = null;
 				if (clip.ms < 300 || clip.spokeAt === null) {
-					setError("Nothing heard. Hold the mic and say your line.");
+					setError("Nothing heard. Say your line while the mic is on.");
 					return;
 				}
 				const text = await transcribeClip(clip.wav);
@@ -515,7 +515,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 					<div className="flex items-center justify-between gap-3">
 						{!state?.stt ? (
 							<p className="font-ui text-xs text-muted-foreground">
-								Voice needs an ElevenLabs or Deepgram key —{" "}
+								Voice needs an ElevenLabs, Groq or Deepgram key —{" "}
 								<SettingsLink keys className="underline hover:text-foreground">
 									Settings → API keys
 								</SettingsLink>

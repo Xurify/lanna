@@ -96,6 +96,8 @@ export * from "./first-try.ts";
 export * from "./word-clusters.ts";
 export * from "./pairs.ts";
 export * from "./curriculum.ts";
+export * from "./after-plan.ts";
+export * from "./outside.ts";
 export * from "./day-plan.ts";
 export * from "./arc.ts";
 export * from "./exam.ts";

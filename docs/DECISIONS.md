@@ -107,7 +107,7 @@ Keys go in `.env` or environment variables, never in a thread. Each key only goe
 
 ### E6. Tests never touch the real profile (2026-10-28)
 
-A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. The key file follows the same fence (2026-11-06): with no `LH_AUTH_FILE`, a test run uses `auth.json` inside that data folder, never the repo-root one. Before this, `tests/speak.test.ts` deleted and restored the real speech keys, and a fixture var (`"B": "2"`) reached a real key file. An unknown var held in the file can now be deleted from Settings → Keys; `tests/auth-fence.test.ts` pins both. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. The suite is green on Node 26, the version CI runs (2807 tests). Under Node 22 the pi-ai package-exports test in `tests/subscription-auth.test.ts` fails; that is environment-bound, not a regression. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
+A full test run on the PC once wrote fixture chats into the real session list and ran a paid Opus placement turn. Under `NODE_ENV=test` with no `LH_DATA_DIR`, data goes to a temp folder. The key file follows the same fence (2026-11-06): with no `LH_AUTH_FILE`, a test run uses `auth.json` inside that data folder, never the repo-root one. Before this, `tests/speak.test.ts` deleted and restored the real speech keys, and a fixture var (`"B": "2"`) reached a real key file. An unknown var held in the file can now be deleted from Settings → API keys; `tests/auth-fence.test.ts` pins both. Always test in the cloud copy with `LH_DATA_DIR` pointed at scratch. Run with `NODE_ENV=test npx tsx --test tests/<file>.test.ts`. The suite is green on Node 26, the version CI runs (2807 tests). Under Node 22 the pi-ai package-exports test in `tests/subscription-auth.test.ts` fails; that is environment-bound, not a regression. On the PC (Eastern time) one sidebar test, "awaiting meta keeps the existing date", fails because it expects a UTC date; it passes with `TZ=UTC`.
 
 ### E7. Local only, no sync (2026-10-26)
 
@@ -117,7 +117,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 
 **Why:** Talk ran twice. The chat version (2026-10-27) and the spoken Speak screen (2026-10-28) shared the same six scenes, copied into two lists. The curriculum's goal scenes still opened the chat, so one scene could be spoken or typed depending on where you clicked. A chat Talk credited output minutes when it opened, before anything was said, and kept the day active for the streak. Story had a chat version beside Read, and the plan had stopped producing it.
 
-**How to apply:** each task has one screen and one scene list. Talk and Talk in writing are `/speak` (`?mode=typed` opens it with the keyboard on), Story is `/read`, and a goal's scene opens `/speak?scene=`. The scenes are `SPEAK_SCENES` in `src/core/speak.ts`. Chats are for what a screen cannot do: tutor units, Why? and the placement follow-up. Old Talk and Story chats still open, and the usage and corpus exports still classify them by title. A learning screen's "Set up a model" or "Settings → Keys" line opens the settings dialog (`components/settings/settings-link.tsx`).
+**How to apply:** each task has one screen and one scene list. Talk and Talk in writing are `/speak` (`?mode=typed` opens it with the keyboard on), Story is `/read`, and a goal's scene opens `/speak?scene=`. The scenes are `SPEAK_SCENES` in `src/core/speak.ts`. Chats are for what a screen cannot do: tutor units, Why? and the placement follow-up. Old Talk and Story chats still open, and the usage and corpus exports still classify them by title. A learning screen's "Set up a model" or "Settings → API keys" line opens the settings dialog (`components/settings/settings-link.tsx`).
 
 ### E9. Every chapter has the same seven steps (2026-10-30)
 
@@ -816,6 +816,28 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 - Watch's Prepare answers as soon as the captions are in and the lines are being translated (`prepareVideoInBackground`, `src/server/watch.ts`); a kept video or a captions error still comes back as the answer. The route used to ignore `background: true` and hold the request through the whole translation, so the shelf showed its own "Adding <link>" row beside the task's row for the same video, and the card gave no sign. Now the shelf's row shows only until the task exists, and the card's Prepare (and Up next's Add video) reads "Preparing…" while that video is being prepared (`components/watch/preparing.ts`).
 - In a video, X and Escape go back to the shelf (owner, 2026-11-07); the separate Videos button is gone. On the shelf, Escape goes to Today.
 - A sidebar shown on a task page with its open button folds again once you leave that page; before, the reveal stuck to the route.
+
+### E67. One word for each thing the learner sees (2026-11-07, branch `fix/copy-audit-and-desktop-audio`)
+
+**Why:** the owner: "Check our whole app for wording and text that doesn't make sense." A copy audit of every screen found one concept under several names (a chat was also a "session"; the curriculum was also "the path" and "the map", though Map is the rules page), internal names on screen (prober, extraction, compacting, cheap slot, chains, propositions), all-caps labels, errors with no next step, and claims the code did not keep ("the first sentences appear in a few seconds" for an episode that is not streamed).
+
+**How to apply:** new copy uses these words, and a screen that says otherwise is a bug.
+- A conversation with the tutor is a **chat**, never a session. The tutor is the **tutor**, never the teacher or an agent; background work is a **helper**.
+- Courses: **Curriculum** (not the path, not the map); its hours are **guided hours**. A goal unit is a **can-do goal**, not a milestone (Milestones is a page).
+- Settings sections are named as the dialog names them: **Settings → API keys**, **Settings → AI models**. On learner screens, say "AI key" or "AI model", never "slot", "tier" or "provider key".
+- The diacritic is an **accent**. Saving a word for Review is **Add to Review** / **In Review**; a starred word is a **favorite**.
+- The drill said out loud is **Speed**; the re-read is **Read it faster**. A heard sentence is heard the **first** or **second** time, not "cold".
+- Errors say what to do next ("Couldn't save the key. Try again."). Sentence case everywhere, no all-caps labels. The owner's tool labels stay (Probe and Recall in a chat, 2026-10-09).
+
+### E68. A long day goes to input, and listening outside the app is logged apart (2026-11-07, branch `feat/input-after-plan`)
+
+**Why:** the owner asked what ten hours of Russian listening a day would do and whether the app should apply it. A goal can be 600 minutes, but the plan holds about 35 to 45, and once it was done Today offered "One more lesson", deliberate study, already the strand over its quarter (P2). Listening done elsewhere had nowhere to go, and counting it like measured time would break P8 and P9. Research: [research/outside-listening.md](research/outside-listening.md).
+
+**How to apply:**
+- Once the plan is done, the next step is input: a video added and not watched, else ten more Listen sentences (`afterPlan` in `src/core/after-plan.ts`, served as `afterPlan` in the progress summary). Enter starts it. "One more lesson" stays, as the second choice. Do not make a drill the step after the plan.
+- Listening outside the app is logged by hand on Today (`components/outside-listening.tsx`, `/api/outside`), focused or background, and kept in `outside-listening.json`. It never enters `minutes`, `minutesBy`, XP, the streak, stamps or the strand balance.
+- The milestones page shows it only in its own row, "Speed with outside listening": focused minutes at `OUTSIDE_WEIGHT.focused` (0.5), background at 0, added to the measured real pace. On the learner's own Listen trend it adds nothing and says why (the slope is per hour in the app, so it already holds what outside listening did). The weights are the app's own and say so (E63, the `outside` feature in `src/core/sources.ts`). Change them only with new evidence, in the research note first.
+- No hours target, challenge or stamp for hours of listening.
 
 ## Dropped or deferred
 

@@ -202,7 +202,7 @@ export function parseAgentSettingsBody(body: unknown): SettingsBodyResult<AgentS
 function parseHexOrNull(value: unknown, field: string): { color?: string | null; error?: string } {
 	if (value === null) return { color: null };
 	if (typeof value !== "string" || !isHexColor(value)) {
-		return { error: `${field} must be a #hex color or null` };
+		return { error: `${field} must be a hex color such as #1c1f22, or empty.` };
 	}
 	return { color: value };
 }
@@ -220,7 +220,7 @@ export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<A
 		settings.mode = raw.mode;
 	}
 	if (raw.background !== undefined) {
-		const parsed = parseHexOrNull(raw.background, "background");
+		const parsed = parseHexOrNull(raw.background, "Background color");
 		if (parsed.error) return { ok: false, error: parsed.error };
 		settings.background = parsed.color ?? null;
 	}
@@ -263,12 +263,12 @@ export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<A
 			rendering.headingWeight = md.headingWeight;
 		}
 		if (md.boldColor !== undefined) {
-			const parsed = parseHexOrNull(md.boldColor, "mdRendering.boldColor");
+			const parsed = parseHexOrNull(md.boldColor, "Bold color");
 			if (parsed.error) return { ok: false, error: parsed.error };
 			rendering.boldColor = parsed.color ?? null;
 		}
 		if (md.italicColor !== undefined) {
-			const parsed = parseHexOrNull(md.italicColor, "mdRendering.italicColor");
+			const parsed = parseHexOrNull(md.italicColor, "Italic color");
 			if (parsed.error) return { ok: false, error: parsed.error };
 			rendering.italicColor = parsed.color ?? null;
 		}

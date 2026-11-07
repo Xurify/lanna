@@ -47,17 +47,17 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
 	{ title: "Talk in writing", hint: "A role-play in writing", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
 	{ title: "Speed", hint: "Known sentences, said faster", href: "/speed?mode=fast", icon: "fast", words: "say it faster speed" },
-	{ title: "Blitz", hint: "60 seconds, as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
+	{ title: "Blitz", hint: "60 seconds: answer as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
 	{ title: "Words", hint: "Everything you have met", href: "/words", icon: "words", words: "vocabulary lexicon" },
 	{ title: "Grammar", hint: "Cases, genders, and your score on each", href: "/grammar", icon: "grammar", words: "atlas cases" },
 	{ title: "Mistakes", hint: "What goes wrong and whether it is getting better", href: "/mistakes", icon: "chart", words: "errors weak" },
 	{ title: "Mix-ups lesson", hint: "Words you give one for the other", href: "/lesson?mode=mixups", icon: "mix", words: "confused" },
 	{ title: "Curriculum", hint: "Your climb, level by level and chapter by chapter", href: "/curriculum", icon: "arrow", words: "climb path levels chapters" },
 	{ title: "Progress", hint: "Hours, stamps, the plan's pace", href: "/progress", icon: "chart", words: "plan stamps hours" },
-	{ title: "Milestones", hint: "Level checks", href: "/milestones", icon: "flag", words: "level exam" },
+	{ title: "Milestones", hint: "When you can handle real situations", href: "/milestones", icon: "flag", words: "level exam" },
 	{ title: "Sources", hint: "The research behind each task", href: "/sources", icon: "read", words: "research studies evidence papers references" },
 	{ title: "Ask the tutor", hint: "Any question about the language", href: "/chat/new", icon: "tutor", words: "chat" },
-	{ title: "Map", hint: "What you know, as a graph", href: "/map", icon: "chart", words: "knowledge graph" },
+	{ title: "Map", hint: "The rules behind your lessons", href: "/map", icon: "chart", words: "knowledge graph" },
 ];
 
 function useUnits(active: boolean) {
@@ -119,7 +119,7 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 	const places = useMemo<Place[]>(() => {
 		const out: Place[] = ROUTES.map((r) => ({ id: r.href, title: r.title, hint: r.hint, icon: <QIcon name={r.icon} />, words: r.words, run: (go) => go(r.href) }));
 		for (const u of units) out.push({ id: `unit-${u.id}`, title: u.title, hint: "Lesson", icon: <QIcon name="grammar" />, run: (go) => go(`/lesson?unit=${u.id}`) });
-		out.push({ id: "settings", title: "Settings", hint: "Keys, tutor, learning, appearance", icon: <QIcon name="gear" />, words: "keys api options theme day night", run: () => settings.open() });
+		out.push({ id: "settings", title: "Settings", hint: "AI keys, learning, sound, appearance", icon: <QIcon name="gear" />, words: "keys api options theme day night", run: () => settings.open() });
 		out.push({ id: "sidebar", title: sidebarOpen ? "Hide the sidebar" : "Show the sidebar", hint: "Your tutor chats", icon: <QIcon name="tutor" />, words: "chats sessions", run: () => toggle() });
 		return out;
 	}, [units, settings, sidebarOpen, toggle]);

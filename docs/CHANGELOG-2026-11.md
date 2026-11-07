@@ -13,6 +13,13 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Unverified:** the owner's own deck.
 - **Removing a language** (the owner: "Remove the delete button from the language selector dropdown"): the language menu no longer has a bin; Settings → Learning still does. The Remove button in the confirm dialog is a solid danger red with white text (`--q-danger`, `bg-danger`). In Night it was the pink text red at 60%, which read as a muddy brown.
 
+## 7 November: a long day goes to listening, and listening outside the app is logged apart (branch `feat/input-after-plan`)
+
+- **Why:** the owner asked what ten hours of Russian listening a day for a year would do, and whether the app should apply it. Rule E68, [research/outside-listening.md](research/outside-listening.md).
+- **After the plan:** once every task is done, Today's card offers a video you added and have not watched, else ten more Listen sentences, with Start and Enter. "Find a video at your level" and "One more lesson" sit under it. Before, the only offer was another lesson.
+- **Listening outside the app:** "Log listening" on Today records minutes, focused or in the background, the day and what it was; each entry can be removed. It stays out of minutes, XP, streak, stamps and the week's balance. The Milestones page says how much was logged and adds a "Speed with outside listening" row (focused at half, background at none, an assumption the page names). The Sources note for it cites six studies, their DOIs checked on Crossref.
+- **Checked:** unit tests (`tests/after-plan.test.ts`, `tests/outside.test.ts`), the full suite, typecheck, lint, and the screens in a sandbox at 1400 and 390 px wide (Night only), with the plan forced to done in the browser to see the card. **Unverified:** the card on a real day when the plan is done, the form on the owner's phone, and the outside row with a real Listen trend.
+
 ## 7 November: a bolder app icon (branch `feat/bolder-app-icon`)
 
 - **Why:** the owner: "Make the icon a bit better". In the taskbar the cursor and line were thin and small, and the ink tile disappeared on a dark taskbar.

@@ -108,7 +108,7 @@ export function StudySections({ video, canFind }: { video: VideoRecord; canFind:
 								{busy ? "Reading the lines…" : "Find sections"}
 							</button>
 						)}
-						{!canFind && <span className="font-prose text-sm text-muted-foreground">Needs an AI key: set the cheap slot in Settings → AI models.</span>}
+						{!canFind && <span className="font-prose text-sm text-muted-foreground">Needs an AI model: pick one in Settings → AI models.</span>}
 						{rec && rec.linesShown < video.segments.length && <span className="font-prose text-sm text-muted-foreground">The model saw the first {rec.linesShown} of {video.segments.length} lines.</span>}
 					</div>
 					{error && (

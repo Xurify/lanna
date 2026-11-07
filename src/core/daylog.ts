@@ -77,7 +77,7 @@ export interface DayLogInput {
 const TASK_NAME: Record<string, string> = {
 	blitz: "Blitz",
 	mixups: "Mix-ups",
-	personal: "From your guide",
+	personal: "Your plan",
 	listen: "Listen",
 	speak: "Speak",
 	fluency: "Speed",

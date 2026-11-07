@@ -257,7 +257,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						) : loadingLookup ? (
 							<span className="inline-block h-4 w-32 animate-pulse rounded bg-accent align-middle" />
 						) : (
-							"Tap a dictionary link below to inspect."
+							"No meaning found here. Try a dictionary link below."
 						)}
 					</span>
 					{(resolvedCat || resolvedGender || token.fresh || token.assumed || lookupData?.source === "translated") && (
@@ -332,12 +332,12 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							{inDeck && isFav ? (
 								<>
 									<BookmarkCheckIcon className="size-3.5" />
-									In Word Bank
+									In Review
 								</>
 							) : (
 								<>
 									<PlusIcon className="size-3.5" />
-									Add to Word Bank
+									Add to Review
 								</>
 							)}
 						</button>
