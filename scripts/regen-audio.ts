@@ -47,7 +47,7 @@ if (!yes) {
 	process.exit(0);
 }
 if (!keyValue("ELEVENLABS_API_KEY")) {
-	console.error("No ELEVENLABS_API_KEY: add it in Settings → Keys first.");
+	console.error("No ELEVENLABS_API_KEY: add it in Settings → API keys first.");
 	process.exit(1);
 }
 let n = 0;

@@ -55,7 +55,7 @@ export function ZeroKeysPill({ onOpen, inline = false }: { onOpen: () => void; i
 			onClick={onOpen}
 			className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
 		>
-			Add a provider key
+			Add an AI key
 		</button>
 	);
 	return inline ? button : (

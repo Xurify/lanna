@@ -332,12 +332,12 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							{inDeck && isFav ? (
 								<>
 									<BookmarkCheckIcon className="size-3.5" />
-									In Word Bank
+									In Review
 								</>
 							) : (
 								<>
 									<PlusIcon className="size-3.5" />
-									Add to Word Bank
+									Add to Review
 								</>
 							)}
 						</button>

@@ -15,7 +15,7 @@
  * MODEL-PROVIDER env vars (provider-keys interlude); anything else is 404
  * on PUT — unknown file vars are preserved, not editable. DELETE also takes
  * an unknown var held in the file (2026-11-06), so a stray one can be
- * removed from Settings → Keys instead of by hand-editing auth.json.
+ * removed from Settings → API keys instead of by hand-editing auth.json.
  */
 import { isWritableAuthKey, keyStatuses } from "@/src/server";
 import { deleteKey, saveKey } from "@/src/server";

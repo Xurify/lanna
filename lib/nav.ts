@@ -60,7 +60,7 @@ export const NAV: readonly NavGroupDef[] = [
 		label: "Track",
 		items: [
 			{ id: "progress", href: "/progress", label: "Progress", hint: "Hours, stamps, the plan's pace" },
-			{ id: "milestones", href: "/milestones", label: "Milestones", hint: "When can I…? Level checks and situations" },
+			{ id: "milestones", href: "/milestones", label: "Milestones", hint: "When you can handle real situations" },
 			{ id: "mistakes", href: "/mistakes", label: "Mistakes", hint: "What goes wrong and whether it is getting better" },
 			{ id: "log", href: "/log", label: "Log", hint: "What you did, day by day" },
 		],

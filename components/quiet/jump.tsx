@@ -119,7 +119,7 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 	const places = useMemo<Place[]>(() => {
 		const out: Place[] = ROUTES.map((r) => ({ id: r.href, title: r.title, hint: r.hint, icon: <QIcon name={r.icon} />, words: r.words, run: (go) => go(r.href) }));
 		for (const u of units) out.push({ id: `unit-${u.id}`, title: u.title, hint: "Lesson", icon: <QIcon name="grammar" />, run: (go) => go(`/lesson?unit=${u.id}`) });
-		out.push({ id: "settings", title: "Settings", hint: "Keys, tutor, learning, appearance", icon: <QIcon name="gear" />, words: "keys api options theme day night", run: () => settings.open() });
+		out.push({ id: "settings", title: "Settings", hint: "AI keys, learning, sound, appearance", icon: <QIcon name="gear" />, words: "keys api options theme day night", run: () => settings.open() });
 		out.push({ id: "sidebar", title: sidebarOpen ? "Hide the sidebar" : "Show the sidebar", hint: "Your tutor chats", icon: <QIcon name="tutor" />, words: "chats sessions", run: () => toggle() });
 		return out;
 	}, [units, settings, sidebarOpen, toggle]);
