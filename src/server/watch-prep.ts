@@ -18,8 +18,9 @@ import { addMinutes } from "../core/active-time.ts";
 import { repXp } from "../core/lesson.ts";
 import { knownCoverage, type StoryUsage } from "../core/reading.ts";
 import { dayKey } from "../core/review.ts";
-import { foreignCaptions, videoCoverage } from "../core/watch.ts";
-import { keyWords, parsePrep, parsePrepSummary, prepPrompt, prepReps, prepSystem, PREP_PROMPT_LINES, PREP_SUMMARY_FLOOR, PREP_SUMMARY_MIN, summaryAgainPrompt, summaryAgainSystem, type PrepKey, type PrepRecord, type PrepSentence } from "../core/watch-prep.ts";
+import { captionLanguageName } from "../core/language.ts";
+import { foreignCaptions, videoCoverage, type VideoRecord } from "../core/watch.ts";
+import { keyWords, parsePrep, parsePrepSummary, prepPrompt, prepReps, prepSystem, PREP_PROMPT_LINES, PREP_SUMMARY_FLOOR, PREP_SUMMARY_MIN, summaryAgainPrompt, summaryAgainSystem, type PrepKey, type PrepLine, type PrepRecord, type PrepSentence } from "../core/watch-prep.ts";
 import { missedWatchReps } from "../core/watch-reps.ts";
 import type { GapResult } from "../core/watch-sections.ts";
 import { progressStore } from "../store/progress.ts";
@@ -29,6 +30,7 @@ import { activeLanguage } from "./active-language.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { glossSentence, knownWords, storyEngine, storyNames, type KnownWords } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
+import { glossSegments, renderInLanguage } from "./watch.ts";
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {
 	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
@@ -37,8 +39,25 @@ function stepOf(u: Usage): StoryUsage["steps"][number] {
 function videoFor(id: string) {
 	const video = videoStore.get(id);
 	if (!video) throw new Error(`unknown video ${id}`);
-	if (foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang })) throw new Error("This video's captions are not in the language you learn, so it cannot be briefed from them.");
 	return video;
+}
+
+const isForeign = (video: VideoRecord) => foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang });
+
+/** The lines the briefing is built on. Captions in the language: the video's
+ *  own lines. Foreign captions (Czech): their rendering in the language, kept
+ *  on the lines since E68 and glossed here with no model call; a video kept
+ *  before that is rendered once more (one chunked request, on the briefing's
+ *  cost) and the rendering kept in the record. */
+async function linesFor(video: VideoRecord, engine: PiEngine, usage: StoryUsage, lexicon: Lexicon | null, k: KnownWords): Promise<{ lines: PrepLine[]; rendered: boolean }> {
+	if (!isForeign(video)) return { lines: video.segments, rendered: false };
+	let sk = video.segments.map((s) => s.rendered ?? "");
+	if (sk.filter(Boolean).length < video.segments.length * 0.9) {
+		sk = await renderInLanguage(engine, video.segments.map((s) => s.sk), usage, video.title, video.source.trackLang);
+		if (sk.filter(Boolean).length < video.segments.length * 0.9) throw new Error(`The ${captionLanguageName(video.source.trackLang)} captions could not be rendered in ${activeLanguage().english}. Try again.`);
+	}
+	const glossed = glossSegments(video.segments.map((s, i) => ({ start: s.start, end: s.end, sk: sk[i] || s.sk })), video.segments.map((s) => s.en), lexicon, k);
+	return { lines: glossed.map((g, i) => ({ ...g, i: video.segments[i]!.i })), rendered: true };
 }
 
 /** The kept briefing, or null when none was made yet. */
@@ -85,11 +104,13 @@ export async function makePrep(id: string, opts: PrepOptions = {}): Promise<Prep
 		const { text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: system, prompt, maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
 		return text;
 	};
-	const parsed = parsePrep(await ask(prepSystem(name, video.level), prepPrompt(video, video.level)), video);
-	if (!parsed) throw new Error("The model's briefing did not hold against the video's own lines. Try again.");
 	const lexicon = opts.lexicon !== undefined ? opts.lexicon : loadLexicon();
 	const k = knownWords(lexicon);
-	let measured = measureSummary(parsed.summary, lexicon, k, parsed.keys, video.segments);
+	const { lines, rendered } = await linesFor(video, resolved.engine, usage, lexicon, k);
+	const on = { title: video.title, ...(video.channel ? { channel: video.channel } : {}), segments: lines };
+	const parsed = parsePrep(await ask(prepSystem(name, video.level), prepPrompt(on, video.level, rendered ? { captions: captionLanguageName(video.source.trackLang), language: name } : undefined)), on);
+	if (!parsed) throw new Error("The model's briefing did not hold against the video's own lines. Try again.");
+	let measured = measureSummary(parsed.summary, lexicon, k, parsed.keys, lines);
 	let drafts = parsed.summary.length ? 1 : 0;
 	if (parsed.summary.length >= PREP_SUMMARY_MIN && measured.expected < PREP_SUMMARY_FLOOR) {
 		// Written again once with the hard words named; the better draft stays.
@@ -100,7 +121,7 @@ export async function makePrep(id: string, opts: PrepOptions = {}): Promise<Prep
 			const again = parsePrepSummary(raw.summary);
 			drafts = 2;
 			if (again.length >= PREP_SUMMARY_MIN) {
-				const second = measureSummary(again, lexicon, k, parsed.keys, video.segments);
+				const second = measureSummary(again, lexicon, k, parsed.keys, lines);
 				if (second.expected >= measured.expected) measured = second;
 			}
 		} catch {
@@ -119,7 +140,8 @@ export async function makePrep(id: string, opts: PrepOptions = {}): Promise<Prep
 		summaryKnown: measured.known,
 		summaryExpected: measured.expected,
 		drafts,
-		linesShown: Math.min(video.segments.length, PREP_PROMPT_LINES),
+		linesShown: Math.min(lines.length, PREP_PROMPT_LINES),
+		...(rendered ? { lines } : {}),
 		usage,
 	};
 	videoStore.putPrep(rec);
@@ -146,13 +168,14 @@ export interface PrepOutcome {
 
 /** The keys typed into their lines: XP per gap (a typed rep; half when
  *  accents only or helped), the day's reps and minutes, missed words to
- *  Review, missed lines to the Watch lines in Listen, and the record marked
- *  done. Only the briefing's own gaps count. */
+ *  Review, missed lines to the Watch lines in Listen (as for a watching: not
+ *  from foreign or automatic captions), and the record marked done. Only the
+ *  briefing's own gaps count. */
 export function recordPrep(input: { videoId: string; results: readonly GapResult[]; activeMs?: number; tz?: number }, now = new Date()): PrepOutcome {
 	const video = videoFor(input.videoId);
 	const kept = videoStore.prep(input.videoId);
 	if (!kept) throw new Error("No briefing for this video. Get ready first.");
-	const reps = new Map(prepReps(video, kept.keys).map((r) => [r.id, r]));
+	const reps = new Map(prepReps(video, kept.keys, kept.lines ?? video.segments).map((r) => [r.id, r]));
 	const seen = new Set<string>();
 	const results = input.results.filter((r) => reps.has(r.id) && !seen.has(r.id) && seen.add(r.id));
 	let combo = 0;
@@ -166,7 +189,8 @@ export function recordPrep(input: { videoId: string; results: readonly GapResult
 	const slugs = [...new Set(missed.map((r) => r.slug).filter((s): s is string => !!s))];
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	const day = dayKey(now, input.tz);
-	const lines = watchRepStore.addNew(missedWatchReps(video, [...new Set(missed.map((r) => r.at))].map((i) => ({ i, got: "no" as const })), day)).length;
+	const toListen = !isForeign(video) && video.source.kind !== "auto-captions";
+	const lines = toListen ? watchRepStore.addNew(missedWatchReps(video, [...new Set(missed.map((r) => r.at))].map((i) => ({ i, got: "no" as const })), day)).length : 0;
 	const p = progressStore.read();
 	const d = (p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	d.xp += xp;

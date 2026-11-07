@@ -101,7 +101,8 @@ export function recordSection(input: { videoId: string; section: number; results
 	const slugs = [...new Set(missed.map((r) => r.slug).filter((s): s is string => !!s))];
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	const day = dayKey(now, input.tz);
-	const lines = watchRepStore.addNew(missedWatchReps(video, [...new Set(missed.map((r) => r.at))].map((i) => ({ i, got: "no" as const })), day)).length;
+	// As for a watching (recordWatch): automatic captions can misspell what was said, so their lines do not come back in Listen.
+	const lines = video.source.kind === "auto-captions" ? 0 : watchRepStore.addNew(missedWatchReps(video, [...new Set(missed.map((r) => r.at))].map((i) => ({ i, got: "no" as const })), day)).length;
 	const p = progressStore.read();
 	const d = (p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	d.xp += xp;

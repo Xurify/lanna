@@ -40,14 +40,18 @@ export const PREP_PROMPT_LINES = 400;
  *  the summary is written again once, like a Read episode. */
 export const PREP_SUMMARY_FLOOR = COVERAGE_FLOOR;
 
-interface Line {
+/** A line the briefing is built on: a caption line, or (foreign captions)
+ *  its rendering in the learner's language, glossed. */
+export interface PrepLine {
 	i: number;
 	start: number;
 	end: number;
 	sk: string;
 	en: string;
-	tokens: readonly StoryToken[];
+	tokens: StoryToken[];
 }
+
+type Line = Pick<PrepLine, "i" | "start" | "end" | "sk" | "en"> & { tokens: readonly StoryToken[] };
 
 export interface PrepPart {
 	/** First and last segment index, inclusive. */
@@ -98,6 +102,10 @@ export interface PrepRecord {
 	drafts: number;
 	/** Lines the model saw, from the start of the video. */
 	linesShown: number;
+	/** Foreign captions only: the lines in the learner's language (the model's
+	 *  rendering of the captions, glossed) the parts, keys and gaps refer to.
+	 *  Absent when the captions are in the language: the video's own lines. */
+	lines?: PrepLine[];
 	usage: StoryUsage;
 	/** The last time the keys were typed into their lines. */
 	done?: { at: string; right: number; total: number; xp: number };
@@ -117,15 +125,18 @@ Rules:
 - Never correct, invent or translate the caption lines themselves. Nothing outside the JSON.`;
 }
 
-/** The numbered lines, unstudied words marked, for the model (the same view the study sections get). */
-export function prepPrompt(video: { title: string; channel?: string; segments: readonly Line[] }, level: string): string {
+/** The numbered lines, unstudied words marked, for the model (the same view
+ *  the study sections get). `rendering` names the captions' language when the
+ *  lines are a rendering of them in the learner's language. */
+export function prepPrompt(video: { title: string; channel?: string; segments: readonly Line[] }, level: string, rendering?: { captions: string; language: string }): string {
 	const lines = video.segments.slice(0, PREP_PROMPT_LINES).map((s) => {
 		const marked = s.tokens.map((t) => (t.word && t.fresh ? `[${t.text}]` : t.text)).join("");
 		return `${s.i}. ${marked.trim()} — ${s.en.trim()}`;
 	});
 	const cut = video.segments.length > PREP_PROMPT_LINES ? `\n(The video has ${video.segments.length} lines; these are the first ${PREP_PROMPT_LINES}.)` : "";
 	const by = video.channel ? ` Channel: ${JSON.stringify(video.channel)}.` : "";
-	return `The video: ${JSON.stringify(video.title)}.${by} The learner's level: ${level}.${cut}\n\n${lines.join("\n")}`;
+	const note = rendering ? `\nThe captions are ${rendering.captions}; the lines below are a ${rendering.language} rendering of them, so a word can differ from what is said. Copy keys from these lines as written.` : "";
+	return `The video: ${JSON.stringify(video.title)}.${by} The learner's level: ${level}.${cut}${note}\n\n${lines.join("\n")}`;
 }
 
 /** The system prompt for the one redraft of the summary. */
@@ -295,10 +306,11 @@ export function keyWords(keys: readonly PrepKey[]): StoryWord[] {
 	return keys.filter((k) => k.span === 1 && k.lemma).map((k) => ({ lemma: k.lemma!, gloss: k.gloss ?? k.why, ...(k.slug ? { slug: k.slug } : {}) }));
 }
 
-/** The keys as typed gaps in their real lines, in line order, built from the
- *  stored lines alone (the same shape the study sections drill). */
-export function prepReps(video: { id: string; segments: readonly Line[] }, keys: readonly PrepKey[]): SectionRep[] {
-	const byIndex = new Map(video.segments.map((s) => [s.i, s]));
+/** The keys as typed gaps in their lines, in line order, built from the
+ *  stored lines alone (the same shape the study sections drill). `lines` are
+ *  the briefing's own when it has them (foreign captions), else the video's. */
+export function prepReps(video: { id: string; segments: readonly Line[] }, keys: readonly PrepKey[], lines: readonly Line[] = video.segments): SectionRep[] {
+	const byIndex = new Map(lines.map((s) => [s.i, s]));
 	return keys.flatMap((k) => {
 		const seg = byIndex.get(k.at);
 		const t = seg?.tokens[k.token];

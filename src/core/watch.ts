@@ -64,6 +64,10 @@ export interface VideoSegment {
 	sk: string;
 	en: string;
 	tokens: StoryToken[];
+	/** Foreign captions (Czech for Slovak): the line as a speaker of the
+	 *  learner's language would say it, the model's rendering the known-word
+	 *  share was measured on (E53). Absent on videos kept before it was kept. */
+	rendered?: string;
 }
 
 export type CaptionSource = "captions" | "auto-captions" | "transcription";
@@ -253,7 +257,7 @@ export type PrepareStage = "captions" | "transcribing" | "translating" | "questi
 export const PREPARE_STAGE_LINE: Record<PrepareStage, string> = {
 	captions: "Fetching the captions from YouTube",
 	transcribing: "No captions — transcribing the audio",
-	translating: "Translating every line (cheap model slot, once)",
+	translating: "Translating every line (one AI request)",
 	questions: "Writing the comprehension questions",
 	saving: "Glossing every word and saving",
 	done: "Ready",

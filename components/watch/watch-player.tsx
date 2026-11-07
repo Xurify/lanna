@@ -41,7 +41,7 @@ import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
+import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { Shelf } from "@/components/watch/shelf";
@@ -235,6 +235,20 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		[load],
 	);
 
+	/** A regenerate in flight for the open video: pressed at `at`, then the
+	 *  background task; the preview says so, opens the new version when the
+	 *  task is done, and shows the task's error when it failed. */
+	const [regen, setRegen] = useState<{ id: string; at: number; error?: string } | null>(null);
+	const regenTask = regen ? feed.tasks.find((t) => t.id === `video:${regen.id}`) : undefined;
+	const openRef = useRef<(id: string) => void>(() => {});
+	useEffect(() => {
+		if (!regen || regen.error || !regenTask || regenTask.status === "running" || (regenTask.finishedAt ?? 0) < regen.at) return;
+		if (regenTask.status === "done") {
+			setRegen(null);
+			if (stageRef.current === "preview") openRef.current(regen.id);
+		} else setRegen({ ...regen, error: regenTask.error ?? "Something went wrong. Try again." });
+	}, [regen, regenTask]);
+
 	const open = (id: string) => {
 		void fetch(`/api/watch?id=${encodeURIComponent(id)}`)
 			.then((r) => (r.ok ? (r.json() as Promise<VideoRecord>) : Promise.reject(new Error(`HTTP ${r.status}`))))
@@ -251,6 +265,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				setStage("error");
 			});
 	};
+	openRef.current = open;
 
 	const start = useCallback((m: WatchMode) => {
 		setMode(m);
@@ -349,7 +364,17 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		return (
 			<Frame strip={false}>
 				<TopBar video={video} step={`${video.segments.length} lines · ${formatClock(video.durationSec)}`} progress={0} onShelf={() => setStage("shelf")} />
-				<Preview video={video} canFind={state?.canPrepare !== false} onStart={start} onRegenerate={() => void prepare(video.url, video.source.kind === "transcription", true)} />
+				<Preview
+					video={video}
+					canFind={state?.canPrepare !== false}
+					onStart={start}
+					regenerating={!!regen && regen.id === video.id && !regen.error ? { step: regenTask?.status === "running" ? regenTask.step : PREPARE_STAGE_LINE.captions } : null}
+					regenError={regen?.id === video.id ? regen.error : undefined}
+					onRegenerate={() => {
+						setRegen({ id: video.id, at: Date.now() });
+						void prepare(video.url, video.source.kind === "transcription", true);
+					}}
+				/>
 			</Frame>
 		);
 	}
@@ -435,7 +460,7 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
-function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void }) {
+function Preview({ video, canFind, onStart, onRegenerate, regenerating, regenError }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void; regenerating: { step: string } | null; regenError?: string }) {
 	const lang = useActiveLanguage();
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
@@ -502,7 +527,7 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 					</div>
 				</div>
 
-				{video.source.trackLang === video.lang && <GetReady video={video} canFind={canFind} />}
+				<GetReady video={video} canFind={canFind} />
 
 				{video.preTeach.length > 0 && (
 					<div className="mt-6" data-testid="watch-preteach">
@@ -554,13 +579,24 @@ function Preview({ video, canFind, onStart, onRegenerate }: { video: VideoRecord
 
 				{video.source.trackLang === video.lang && <StudySections video={video} canFind={canFind} />}
 
-				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
-					<button type="button" onClick={onRegenerate} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-regenerate">
-						<RepeatIcon className="size-4" strokeWidth={1.6} />
-						Regenerate
+				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
+					<button type="button" onClick={onRegenerate} disabled={!!regenerating || !canFind} aria-busy={!!regenerating} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 disabled:hover:bg-transparent" data-testid="watch-regenerate">
+						{regenerating ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RepeatIcon className="size-4" strokeWidth={1.6} />}
+						{regenerating ? "Regenerating…" : "Regenerate"}
 					</button>
-					<span className="font-prose text-sm text-muted-foreground">Fetches the captions again and translates them again (one model call, two for captions in another language). Your past watchings stay.</span>
+					{regenerating ? (
+						<span className="font-prose text-sm text-muted-foreground" data-testid="watch-regenerate-step">
+							{regenerating.step}. This page updates when it is done.
+						</span>
+					) : (
+						<span className="font-prose text-sm text-muted-foreground">Fetches the captions again and translates them again. One AI request, two for captions in another language. Your past watchings stay.</span>
+					)}
 				</div>
+				{regenError && (
+					<p className="mt-2 font-prose text-sm text-miss" role="alert" data-testid="watch-regenerate-error">
+						{regenError}
+					</p>
+				)}
 			</div>
 		</div>
 	);

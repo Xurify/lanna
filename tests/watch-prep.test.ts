@@ -197,9 +197,44 @@ describe("making and finishing the briefing", () => {
 		assert.ok(rec.summaryExpected >= rec.summaryKnown, "the level expects at least what the learner studied");
 	});
 
-	test("captions in another language cannot be briefed", async () => {
-		videoStore.put(video("prepprepp03", "cs"));
-		await assert.rejects(server.makePrep("prepprepp03", { engine: fauxEngine([]), model: "x" }), /not in the language/);
+	test("foreign captions: briefed from the rendering kept on the lines, no second request; the gaps use the rendering", async () => {
+		const v = video("prepprepp03", "cs");
+		// Czech lines as captioned, each with its Slovak rendering kept at prepare time (E68).
+		const czech = ["Ahoj všichni.", "Dnes mluvíme o penězích.", "Dělala jsem hudbu.", "Potom jsem začala počítat finance.", "Bylo to těžké.", "Ale bavilo mě to.", "Děkuji za pozvání."];
+		v.segments = v.segments.map((s, i) => ({ ...s, rendered: s.sk, sk: czech[i]! }));
+		videoStore.put(v);
+		const rec = await server.makePrep("prepprepp03", { engine: fauxEngine([fauxAssistantMessage(JSON.stringify(ANSWER)), fauxAssistantMessage(JSON.stringify(EASIER))]), model: "faux:prep", lexicon: loadLexicon() });
+		assert.ok(rec.lines, "the briefing keeps the lines it was built on");
+		assert.equal(rec.lines!.length, 7);
+		assert.equal(rec.lines![1]!.sk, "Dnes hovoríme o peniazoch.");
+		assert.ok(rec.lines![1]!.tokens.some((t) => t.text === "peniazoch" && t.slug), "the rendering is glossed against the dictionary");
+		assert.deepEqual(rec.keys.map((k) => k.text), ["peniazoch", "počítať financie", "bavilo ma", "pozvanie"]);
+		const reps = core.prepReps(v, rec.keys, rec.lines);
+		assert.equal(reps[1]!.line, "Potom som začala počítať financie.");
+		assert.equal(core.prepReps(v, rec.keys)[1]!.line, "Potom jsem začala počítat finance.", "without the briefing's lines the gaps would fall on the Czech");
+		// No line goes back to Listen from foreign captions (E56); the words still go to Review.
+		const out = server.recordPrep({ videoId: "prepprepp03", results: [{ id: "prepprepp03:3:6:key", verdict: "wrong", assisted: true }], tz: 0 }, new Date("2026-11-07T10:00:00Z"));
+		assert.equal(out.total, 1);
+		assert.equal(out.lines, 0);
+		assert.equal(watchRepStore.read().lines.filter((l) => l.videoId === "prepprepp03").length, 0);
+	});
+
+	test("foreign captions kept before the rendering was kept are rendered once more, on the briefing's cost", async () => {
+		const v = video("prepprepp06", "cs");
+		const czech = ["Ahoj všichni.", "Dnes mluvíme o penězích.", "Dělala jsem hudbu.", "Potom jsem začala počítat finance.", "Bylo to těžké.", "Ale bavilo mě to.", "Děkuji za pozvání."];
+		const slovak = v.segments.map((s) => s.sk);
+		v.segments = v.segments.map((s, i) => ({ ...s, sk: czech[i]! }));
+		videoStore.put(v);
+		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: slovak })), fauxAssistantMessage(JSON.stringify(ANSWER)), fauxAssistantMessage(JSON.stringify(EASIER))]);
+		const rec = await server.makePrep("prepprepp06", { engine, model: "faux:prep", lexicon: loadLexicon() });
+		assert.equal(rec.lines![3]!.sk, "Potom som začala počítať financie.");
+		assert.equal(rec.keys.length, 4);
+		assert.ok(rec.usage.steps.length >= 2, "the rendering is on the briefing's cost");
+	});
+
+	test("the prompt says when the lines are a rendering", () => {
+		const p = core.prepPrompt(video(), "A1", { captions: "Czech", language: "Slovak" });
+		assert.match(p, /captions are Czech; the lines below are a Slovak rendering/);
 	});
 
 	test("typing the keys: XP per gap, misses to Review and back in Listen, unknown gaps ignored, the record marked done", async () => {
@@ -226,11 +261,18 @@ describe("making and finishing the briefing", () => {
 		assert.equal(out.right, 3);
 		assert.equal(out.xp, 10 + 0 + 5 + 10);
 		assert.equal(progressStore.read().xp - xpBefore, 25);
-		assert.equal(out.lines, 1);
-		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === "prepprepp04").map((l) => l.text), ["Potom som začala počítať financie."]);
+		assert.equal(out.lines, 0, "automatic captions can misspell what was said, so their lines do not come back in Listen");
+		assert.equal(watchRepStore.read().lines.filter((l) => l.videoId === "prepprepp04").length, 0);
 		const done = server.keptPrep("prepprepp04")!.done;
 		assert.deepEqual(done, { at: "2026-11-07T10:00:00.000Z", right: 3, total: 4, xp: 25 });
-		assert.throws(() => server.recordPrep({ videoId: "prepprepp03", results: [] }), /not in the language/);
+		// Captions made by people: the missed line comes back in Listen.
+		const made = video("prepprepp07");
+		made.source = { kind: "captions", trackLang: "sk", via: "test" };
+		videoStore.put(made);
+		await server.makePrep("prepprepp07", { engine: fauxEngine([fauxAssistantMessage(JSON.stringify(ANSWER))]), model: "faux:prep", lexicon: loadLexicon() });
+		const again = server.recordPrep({ videoId: "prepprepp07", results: [{ id: "prepprepp07:3:6:key", verdict: "wrong", assisted: true }], tz: 0 }, new Date("2026-11-07T10:00:00Z"));
+		assert.equal(again.lines, 1);
+		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === "prepprepp07").map((l) => l.text), ["Potom som začala počítať financie."]);
 		videoStore.put(video("prepprepp05"));
 		assert.throws(() => server.recordPrep({ videoId: "prepprepp05", results: [] }), /Get ready first/);
 	});

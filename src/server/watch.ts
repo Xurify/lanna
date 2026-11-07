@@ -710,7 +710,9 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			source: fetched.source,
 			level: k.level,
 			createdAt: now.toISOString(),
-			segments,
+			// Foreign captions keep their rendering on each line, so a later step
+			// (Get ready) can work on it without rendering the lines again.
+			segments: estimated ? segments.map((s, i) => ({ ...s, rendered: measured[i]!.sk })) : segments,
 			questions,
 			preTeach,
 			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,

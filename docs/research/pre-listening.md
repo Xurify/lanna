@@ -16,7 +16,7 @@ Watch already had two things to do before a video: the pre-teach list (the unkno
 
 1. **Lead with the content, in English.** What the video is, who speaks, what they talk about, part by part in order, as statements (Herron et al. 1998), each part anchored to real lines so it has a time range. This is the topic preparation that helped most and the prediction the learner then checks against the video.
 2. **Then the content in the language, at the level.** Five to eight short sentences, spoken by the Listen voice, every word tappable, the English behind a switch (hear it first). Glossed and measured like a Read episode; written again once when under the 92% floor the Read task uses, with the hard words named; kept whatever comes back, with its shares shown (what the learner knows, what the level expects).
-3. **Then the keys, typed.** Six to twelve words or short phrases that carry the video, each copied from a real line (the program checks it is there), each heard in its line and typed into it (retrieval first, P3; the shared gap drill of the study sections). Misses go to Review and the lines come back in Listen, so the words get the time Chang (2007) found they need.
+3. **Then the words to listen for, typed.** Six to twelve words or short phrases that carry the video, each copied from a real line (the program checks it is there), each heard in its line and typed into it (retrieval first, P3; the shared gap drill of the study sections). Misses go to Review and the lines come back in Listen, so the words get the time Chang (2007) found they need.
 4. **Then the video, line by line.** The briefing is offered first when the video is under 88% known (the app's own line between "within reach" and "hard"), and as a quiet offer otherwise. Nothing is gated: a learner can watch without it.
 
 What the model is for: judging what the video is about and which words carry it, and writing a short graded text. What it is not for: it never writes or corrects a caption line (E27, E44); a key that is not a run of words of its line, as written, is dropped; a part whose lines do not exist, overlap another or come out of order is dropped.
@@ -24,14 +24,14 @@ What the model is for: judging what the video is about and which words carry it,
 ## What was built
 
 - **Get ready**, on a prepared video's preview (captions in the language only), under the coverage cards: one cheap-slot request (`src/server/watch-prep.ts`, `src/core/watch-prep.ts`) returns `about`, `parts`, `keys` and `summary`. A second request, for the summary only, when the first is under the floor. Kept in `videos/prep/<id>.json` with its cost (E1, counted under Videos at Settings → Spending), made again only with "Get ready again".
-- **Three steps on the preview:** What it's about (the English, then the parts with their times), The short version (spoken, tappable, the English behind a switch, the two shares named), Keys to hear for (each with its meaning and its line, spoken; "Type them" runs the gap drill). A finished drill earns XP as a lesson's typed reps, counts as Watch minutes, sends misses to Review and their lines to Listen, and marks the briefing done with the score and the day.
+- **Three steps on the preview:** What it's about (the English, then the parts with their times), The short version (spoken, tappable, the English behind a switch, the two shares named), Words to listen for (each with its meaning and its line, spoken; "Type them" runs the gap drill). A finished drill earns XP as a lesson's typed reps, counts as Watch minutes, sends misses to Review and their lines to Listen, and marks the briefing done with the score and the day.
 - The hard bands' lines on every video card now say "get ready first".
 - The Watch sources note carries the before-listening studies, what they did not show, and which numbers are the app's own.
 
 ## Not built, and open
 
 - **Pictures.** Herron, Hanley and Cole (1995) found pictures added to the description. A frame of the video per part would need the video's frames, which the app does not fetch; the card shows YouTube's thumbnail only. Deferred.
-- **Czech captions** (E41) are not briefed: the keys would be Czech words, and the lines the model reads would be marked against the Slovak lexicon. The summary and the parts would still be useful; a later slice could brief from the Slovak rendering (E53).
+- **Czech captions** (E41) are briefed from the Slovak rendering of the lines (E53), which is now kept on each line when a video is prepared. The words to listen for are Slovak words a speaker would use where the video's speaker says the Czech; the screen says so, and those lines do not go to Listen.
 - **Does it work?** The watch log keeps the lines got on the first unaided listen (`gotFirst`). After a few briefed and unbriefed watchings at similar coverage, compare them; nothing in the app claims the gain yet.
 - **The summary can be wrong.** A model's short version may misstate what the video says. The parts in English sit above it and the lines are a tap away in the video, so it can be checked; the screen says the model wrote it.
 
