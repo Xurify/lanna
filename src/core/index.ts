@@ -126,6 +126,7 @@ export * from "./watch-sentences.ts";
 export * from "./discover.ts";
 export * from "./fragments.ts";
 export * from "./watch-reps.ts";
+export * from "./watch-sections.ts";
 export * from "./catch-mistake.ts";
 export * from "./milestones.ts";
 export * from "./dated-scene.ts";

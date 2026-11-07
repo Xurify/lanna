@@ -278,6 +278,7 @@ everything the app made of its captions, paid for once.
   \`dismissed-channels.json\` (suggested channels you turned down);
   \`lines/<id>.json\` (a video's caption lines with their times, so its best
   stretches can be found again without YouTube).
+- \`sections/<id>.json\`: the study sections a model found for a video: each section's first and last line, its title, why it is worth studying and the words to practice (each one a word of its line), the model, the lines it saw and what the request cost. Found again only when you ask.
 - \`sentences.jsonl\`: one line per model verdict on a sentence written at the end of a video: \`videoId\`, \`lemma\`, \`sentence\`, \`ok\`, \`corrected\`, \`why\`, \`model\`, \`at\`. A program's refusal is not kept.
 - \`watches.jsonl\`: one line per watching: \`videoId\`, \`at\`, \`day\`,
   \`ms\` (the wall-clock time since the start), \`activeMs\` (the playing

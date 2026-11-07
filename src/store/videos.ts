@@ -15,6 +15,8 @@
  *   watches.jsonl          one line per watching (WatchLogEntry): mode,
  *                          lines got on the first listen, replays, the
  *                          check, the words tapped and queued, XP.
+ *   sections/<id>.json     the study sections a model found for the video,
+ *                          with what the request cost (src/core/watch-sections.ts)
  *   sentences.jsonl        one line per model verdict on a sentence the
  *                          learner wrote for the end of a video
  *                          (SentenceCheckEntry, docs/plans/watch-sentences.md).
@@ -29,10 +31,12 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import { isVideoId, type VideoIndexEntry, type VideoRecord, type WatchLogEntry } from "../core/watch.ts";
 import type { SentenceCheckEntry } from "../core/watch-sentences.ts";
+import type { SectionsRecord } from "../core/watch-sections.ts";
 
 const INDEX = () => path.join(PATHS.videos, "index.jsonl");
 const WATCHES = () => path.join(PATHS.videos, "watches.jsonl");
 const SENTENCES = () => path.join(PATHS.videos, "sentences.jsonl");
+const SECTIONS = (id: string) => path.join(PATHS.videos, "sections", `${id}.json`);
 
 function videoFile(id: string): string {
 	if (!isVideoId(id)) throw new Error(`bad video id ${id}`);
@@ -185,6 +189,23 @@ export const videoStore = {
 		appendJsonl(WATCHES(), entry);
 	},
 	/** One model verdict on a sentence written for a video's sentence step. */
+	/** The study sections a model found for a video (src/core/watch-sections.ts), with their cost. */
+	sections(id: string): SectionsRecord | null {
+		if (!isVideoId(id)) return null;
+		try {
+			return JSON.parse(fs.readFileSync(SECTIONS(id), "utf-8")) as SectionsRecord;
+		} catch {
+			return null;
+		}
+	},
+	putSections(rec: SectionsRecord): void {
+		if (!isVideoId(rec.videoId)) throw new Error(`not a video id: ${rec.videoId}`);
+		const file = SECTIONS(rec.videoId);
+		fs.mkdirSync(path.dirname(file), { recursive: true });
+		const tmp = `${file}.${process.pid}.tmp`;
+		fs.writeFileSync(tmp, JSON.stringify(rec, null, 2), "utf-8");
+		fs.renameSync(tmp, file);
+	},
 	appendSentence(entry: SentenceCheckEntry): void {
 		appendJsonl(SENTENCES(), entry);
 	},
