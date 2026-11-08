@@ -888,6 +888,15 @@ The owner: grammar "feels like review, it should feel like we are learning", the
 - A new scene is built from the kit in `components/lesson/ink.tsx` (Figure, House, Box, Loop, Curve, Arrow, Patch, Dot, Note), with a seed per stroke and a delay per layer: scenery, actors, patch, arrow, label. No new font: labels are the app’s own.
 - The visual-maker sub-agent’s prompt asks for the same look (thin near-black strokes, round caps, curved arrows with two-stroke heads, one teal accent and one highlighter patch), on the white background the figure card and its invert switch rely on.
 
+### E74. A grammar claim is sourced, complete, labeled and plain (2026-11-08, branch `feat/ink-case-sketches`)
+
+The owner, after the case walk-throughs: a letter list had come from memory, three genders were shown where Slovak has more patterns (feminine nouns in a consonant, the other neuter patterns), "hard noun" and "men" meant nothing to a learner, "learn which with each word" was said of a rule, and `do Žiliny, v Žiline, Žilinu` read as one case.
+
+**How to apply:**
+- The checklist is the `grammar-explanations` skill (`.claude/skills/grammar-explanations/SKILL.md`): source every form (slovak.wiki case page, then the Wikipedia paradigm tables, then JÚĽŠ), cover each pattern (masculine person and thing, feminine in -a hard and soft, feminine in a consonant, neuter), state the rule before its exceptions, name the case of every example, use only words the learner has, say why a cell is empty.
+- `tests/case-forms.test.ts` holds every walk-through sentence and table row to a paradigm table, requires each rule line to name its case, and fails on terms the learner was not given. Add a word to `FORMS` when you add a form.
+- What no source gives is written in the changelog, not in the app. The same checklist is in the slovak.wiki authoring reference (`slovak-wiki-authoring.md`).
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.

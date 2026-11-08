@@ -47,8 +47,7 @@ Ask each of these of every picture. A picture that fails one is redrawn, not cap
 3. **No two meanings share a picture.** "Toward" (k), "have" (mám) and "see" (vidím) are three drawings, not one. Stay (u: at someone's place) has no arrow at all.
 4. **The object is recognizable without the caption.** An office has windows, a school a flag, a clinic a cross, milk a drop. A plain house reads as home.
 5. **Gender is shown, not assumed.** A case with three genders has a step for a masculine, a feminine and a neuter word. A rule with several parallel cases is a table, one row per kind of word.
-6. **The Slovak is checked.** Every sentence, form and rule is checked against the case page on slovak.wiki (`/grammar/cases/<case>`). What the wiki does not say is marked as such in the changelog, not presented as sourced.
-7. **Plain English.** No term a learner was not given ("hard noun"). Say feminine, not "-a words", when gender is the reason.
+6. **The Slovak is checked.** Follow the `grammar-explanations` skill for every form and rule: sourced, whole paradigm, rule with exceptions, case named, plain words. `tests/case-forms.test.ts` holds the tables to a paradigm.
 
 ## Look at it
 

@@ -104,7 +104,7 @@ const ACCUSATIVE_ROWS: readonly SummaryRow[] = [
 const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 	gen: {
 		slug: "genitive",
-		calls: "do, z, od, bez, u and okolo call for the genitive. The ending depends on the word’s gender:",
+		calls: "do, z, od, bez, u and okolo call for the genitive. In the genitive, the ending depends on the word’s gender:",
 		rows: [
 			{ who: "masculine person", from: "lekár", stem: "lekár", ending: "a" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u", note: "or -a: stôl → stola" },
@@ -116,7 +116,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 	},
 	loc: {
 		slug: "locative",
-		calls: "v, na and o call for the locative. It never stands alone. The ending depends on the word’s gender:",
+		calls: "v, na and o call for the locative. It never stands alone. In the locative, the ending depends on the word’s gender:",
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "e", note: "after k, g, h, ch: -u (park → parku)" },
@@ -128,7 +128,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 	},
 	ins: {
 		slug: "instrumental",
-		calls: "s and pred call for the instrumental. Alone, it also means “by” or “with” a tool. The ending depends on the word’s gender:",
+		calls: "s and pred call for the instrumental. Alone, it also means “by” or “with” a tool. In the instrumental, the ending depends on the word’s gender:",
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "om" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "om" },
@@ -140,7 +140,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 	},
 	dat: {
 		slug: "dative",
-		calls: "k and vďaka call for the dative. The ending depends on the word’s gender:",
+		calls: "k and vďaka call for the dative. In the dative, the ending depends on the word’s gender:",
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u" },
