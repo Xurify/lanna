@@ -77,6 +77,12 @@ describe("a course unit's tag sets", () => {
 		assert.deepEqual(units(byt, [present], "ru-RU"), [[]]);
 	});
 
+	test("a unit can be kept to a few words", () => {
+		const onlyTea = unit({ id: "tea", cat: "Nouns", tags: ["partitive", "singular"], lemmas: ["tee"] });
+		assert.deepEqual(units(TEA, [onlyTea]), [["tea"], ["tea"]]);
+		assert.deepEqual(units(TEA, [{ ...onlyTea, lemmas: ["kohv"] }]), [[], []]);
+	});
+
 	test("two standard forms of one cell are both accepted", () => {
 		assert.deepEqual(sameCellForms(MAJA, "majja", "et-EE"), ["majasse"]);
 		assert.deepEqual(sameCellForms(MAJA, "majas", "et-EE"), []);

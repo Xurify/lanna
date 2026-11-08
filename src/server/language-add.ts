@@ -566,8 +566,11 @@ function shippedJson<T>(id: string, name: string): T | null {
 	return readJson<T>(path.join(ROOT, "curriculum", id, name));
 }
 
-async function writeLexicon(lang: CatalogLanguage, sentences: readonly TatoebaSentence[], freq: ReadonlyMap<string, number>, words: readonly BuildWord[], signal: AbortSignal) {
-	const themeWords = new Set(shippedJson<Course>(lang.id, "course.json")?.units.flatMap((u) => u.lemmas ?? []) ?? []);
+async function writeLexicon(lang: CatalogLanguage, sentences: TatoebaSentence[], freq: ReadonlyMap<string, number>, words: readonly BuildWord[], signal: AbortSignal) {
+	const written = shippedJson<Course>(lang.id, "course.json");
+	const themeWords = new Set(written?.units.flatMap((u) => u.lemmas ?? []) ?? []);
+	const bad = new Set((written?.badSentences ?? []).map((b) => b.id));
+	sentences = sentences.filter((s) => !bad.has(s.id));
 	const merged = mergeHomographs(words, lang.tag);
 	const ranked = rankWords(merged, freq, lang.tag, WORD_LIMIT, themeWords);
 	const collector = new ExampleCollector(ranked, lang.tag, undefined, { names: namesIn(sentences, lang.tag), outside: merged });

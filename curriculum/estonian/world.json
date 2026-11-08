@@ -37,7 +37,7 @@
 			"Scrolling through a city events page about the Tartu festivals"
 		],
 		"exam": [
-			"The language exam center on Jakobi street",
+			"The state language exam center in Tartu",
 			"Filling in a form at the Tartu library",
 			"A short interview about daily life at a language school",
 			"Describing a picture of Raekoja plats to an examiner"
@@ -184,17 +184,17 @@
 	],
 	"beats": {
 		"first-words": "Mart arrives in Tartu, greets his landlord Peeter and meets Liis in the stairwell, trading names and hellos.",
-		"who-i-am": "At Kadri's café Mart says who he is, where he lives and what he does, and Kadri tells him about herself.",
-		"no-and-questions": "On his first day at the studio Mart asks Tiina many questions and learns what the office does not have.",
-		"whose-is-it": "Peeter shows Mart old family photos, and Mart explains whose brother, sister and grandmother is whose.",
+		"who-i-am": "On his first morning at the studio Mart tells Tiina and the team who he is, where he lives and what he does.",
+		"no-and-questions": "At Kadri's café Mart asks what there is and what there is not, and orders without the words he does not know yet.",
+		"whose-is-it": "Mart shows Peeter photos of his own family and explains who is who and whose things are whose.",
 		"having": "Mart and Liis sort out the hallway: whose bikes and boxes are whose, and what Mart's flat has and still lacks.",
 		"counting": "At the Turuhoone market Mart buys bread, apples and cheese, counting money and amounts with the sellers.",
 		"where-things-are": "Mart unpacks his boxes, takes things out, puts them into cupboards and asks Peeter where everything goes.",
-		"going-places": "Mart crosses Tartu by bus, from the market to the riverbank and from the station back to work, asking the way.",
+		"going-places": "Mart crosses Tartu by bus, from the market to the riverbank and from the station back to work, asking what is behind, in front of and next to what.",
 		"wants-and-plans": "Mart, Liis and Rasmus plan a Saturday at AHHAA: what they want to see, what they must bring and when to go.",
 		"with-friends": "Mart has friends over for dinner and describes the food, the guests and the colorful table.",
 		"do-it": "Peeter teaches Mart to make jam in his kitchen, giving one instruction after another.",
-		"yesterday": "Over coffee Mart tells Kadri about his busy yesterday and what he did not manage to do.",
+		"yesterday": "Over coffee Mart tells Kadri about his busy yesterday, what he did not manage to do, and how he finally understood the bus timetable.",
 		"some-things": "Mart shops for a housewarming party, buying some of everything and many small things.",
 		"many-places": "Liis shows Mart the town's parks, museums and cafés and tells him about the people in them.",
 		"asking-nicely": "On a weekend trip Mart checks into a small hotel and politely asks for what he would like.",
@@ -204,7 +204,6 @@
 		"how-it-is-done": "Mart registers his address at the city government and learns how things are done and what is not allowed.",
 		"busy-doing": "On a busy Saturday everyone Mart calls is in the middle of something or just back from somewhere.",
 		"linking-ideas": "Mart explains to Rasmus who is who in the building, which flat is whose and why things are the way they are.",
-		"around-and-away": "Peeter sends Mart on an errand across the old town, under arches, behind churches and out to the river.",
 		"they-say": "Rumors fly around the café that a famous designer is coming to Tartu, and Mart passes on what people say.",
 		"two-registers": "Mart chats casually with friends at a sauna evening, then writes a formal email to the city for the studio."
 	}

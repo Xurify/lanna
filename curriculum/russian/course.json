@@ -120,7 +120,7 @@
 			"kind": "grammar",
 			"title": "I, you, she: the present",
 			"tagline": "я читаю, ты говоришь",
-			"rule": "Present tense, я / ты / он: -у or -ю, -ешь or -ишь, -ет or -ит: я читаю, ты читаешь, он читает; я говорю, ты говоришь, она говорит. Many verbs change the stem: писать → пишу, пишешь.",
+			"rule": "Present tense, я / ты / он: -у or -ю, -ешь or -ишь, -ет or -ит, stressed -ёшь, -ёт: я читаю, ты читаешь, он читает; я говорю, ты говоришь; он пьёт. Many verbs change the stem: писать → пишу, пишешь.",
 			"glyph": "user",
 			"grammarTerm": "present tense, singular",
 			"nativeTerm": "настоящее время, единственное число",
@@ -241,7 +241,7 @@
 			"kind": "grammar",
 			"title": "New, new, new: agreement",
 			"tagline": "новый дом, новая книга",
-			"rule": "A describing word takes its noun's gender and number: -ый, -ий or -ой for masculine (новый, синий, большой), -ая or -яя for feminine (новая), -ое or -ее for neuter (новое), -ые or -ие for the plural (новые).",
+			"rule": "A describing word takes its noun's gender and number: -ый, -ий or -ой (новый, синий, большой), -ая (новая), -ое (новое), -ые (новые). Soft ones keep я, е, и: синяя, синее, синие; after г, к, х, ж, ч, ш, щ write и: хороший, хорошие.",
 			"glyph": "palette",
 			"grammarTerm": "adjective agreement, nominative",
 			"nativeTerm": "согласование прилагательных",
@@ -274,7 +274,7 @@
 			"kind": "grammar",
 			"title": "My, your, our, whose",
 			"tagline": "мой брат, моя сестра",
-			"rule": "Мой, твой, наш, ваш and чей take the gender, number and case of the thing owned (мой брат, моя сестра, моё окно, мои книги, у моего брата, чья книга?); его, её and их never change. Свой replaces them when the owner is the subject: я люблю свою работу.",
+			"rule": "Мой, твой, наш, ваш and чей take the gender, number and case of the thing owned (моя сестра, моё окно, мои книги, у моего брата, чья книга?); его, её and их never change. Свой is required for его, её, их when the owner is the subject (он любит свою жену); with мой and твой it is optional.",
 			"glyph": "key",
 			"grammarTerm": "possessive pronouns",
 			"nativeTerm": "притяжательные местоимения",
@@ -443,7 +443,7 @@
 			"kind": "grammar",
 			"title": "Of, from, without: the genitive",
 			"tagline": "у брата, из школы, нет воды",
-			"rule": "After у, из, от, до, без, для, около, после and нет the noun takes the genitive: -а or -я for masculine and neuter (у брата), -ы or -и for feminine (из школы, у матери; -и after г, к, х, ж, ч, ш, щ: нет книги); -мя words take -мени (нет времени).",
+			"rule": "After у, из, от, до, без, для, около, после and нет the noun takes the genitive: -а or -я for masculine and neuter (у брата), -ы or -и for feminine (из школы, нет соли; -и after г, к, х, ж, ч, ш, щ: нет книги); -мя words take -мени (нет времени).",
 			"glyph": "door-open",
 			"grammarTerm": "genitive singular",
 			"nativeTerm": "родительный падеж",
@@ -503,7 +503,7 @@
 			"kind": "grammar",
 			"title": "Of many: the genitive plural",
 			"tagline": "столов, книг, дней",
-			"rule": "Genitive plural: masculine -ов or -ев (столов, музеев), -ей after ж, ш, ч, щ and -ь (врачей, дней); feminine and neuter words often lose the ending (книг, мест), sometimes with a vowel added (окно → окон, сестра → сестёр).",
+			"rule": "Genitive plural: masculine -ов or -ев (столов, музеев); -ей after ж, ш, ч, щ and for words in -ь (врачей, дней, ночей); -ия and -ие become -ий (серий, зданий); feminine and neuter words often lose the ending (книг, мест), sometimes with a vowel added (окно → окон).",
 			"glyph": "layers",
 			"grammarTerm": "genitive plural",
 			"nativeTerm": "родительный падеж, множественное число",
@@ -518,7 +518,7 @@
 			"kind": "grammar",
 			"title": "Two books, five books",
 			"tagline": "два брата, пять братьев",
-			"rule": "After 2, 3, 4 (and оба) the noun is genitive singular: два брата, три книги; after 5 and up, and after много, мало, сколько, несколько, it is genitive plural: пять братьев, много книг. After 1 the noun keeps its own case: один брат, двадцать один год.",
+			"rule": "After 2, 3, 4 (два, or две before a feminine word) the noun is genitive singular: два брата, две книги; after 5 and up it is genitive plural: пять братьев. Много, мало, сколько: genitive plural for things counted (много книг), singular for an amount (много воды).",
 			"glyph": "hash",
 			"grammarTerm": "nouns after numbers",
 			"nativeTerm": "сочетание числительных с существительными",
@@ -552,23 +552,15 @@
 		{
 			"id": "where-or-where-to",
 			"kind": "grammar",
-			"title": "Где? or Куда?",
-			"tagline": "в школе or в школу",
-			"rule": "в and на with где? (where) take the prepositional (в школе, на работе); with куда? (where to) they take the accusative (в школу, на работу).",
+			"title": "Куда? в школу, на работу",
+			"tagline": "в and на with the accusative",
+			"rule": "в and на with куда? (where to) take the accusative: в школу, на работу, в горы; with где? (where) the prepositional: в школе. в with the accusative also gives the day: в среду, в субботу.",
 			"glyph": "signpost",
 			"grammarTerm": "location and direction",
 			"nativeTerm": "где? и куда?",
 			"cat": "Nouns",
 			"tags": [
 				"accusative"
-			],
-			"variants": [
-				[
-					"accusative"
-				],
-				[
-					"prepositional"
-				]
 			],
 			"after": [
 				"в",
@@ -610,7 +602,7 @@
 			"kind": "grammar",
 			"title": "Yesterday: -л, -ла, -ли",
 			"tagline": "он читал, она читала",
-			"rule": "Past tense: drop -ть and add -л for a masculine subject, -ла for a feminine one, -ло for a neuter one, -ли for any plural, in every person: я читал (a man), я читала (a woman), мы читали. Irregular: шёл, шла; мог; ел; -ся gives -лся, -лась.",
+			"rule": "Past: drop -ть, add -л for a masculine subject, -ла feminine, -ло neuter, -ли plural, in every person: я читал (a man), я читала (a woman), мы читали. Most -нуть verbs drop -ну-: исчез, исчезла. Irregular: шёл, шла; мог; ел; -ся → -лся, -лась.",
 			"glyph": "history",
 			"grammarTerm": "past tense",
 			"nativeTerm": "прошедшее время",
@@ -666,9 +658,7 @@
 				"зима",
 				"весна",
 				"лето",
-				"осень",
-				"январь",
-				"май"
+				"осень"
 			]
 		},
 		{
@@ -749,7 +739,7 @@
 			"kind": "grammar",
 			"title": "To and for someone: the dative",
 			"tagline": "брату, маме, к другу",
-			"rule": "To or for someone (дать, звонить, помогать, нравиться) and after к and по: -у or -ю for masculine and neuter (брату, морю), -е for feminine in -а or -я (маме), -и for feminine in -ь and in -ия (матери, России).",
+			"rule": "To or for someone (дать, звонить, помогать, нравиться) and after к and по: -у or -ю for masculine and neuter (брату, морю), -е for feminine in -а or -я (маме), -и for feminine in -ь and in -ия (к двери, по России).",
 			"glyph": "gift",
 			"grammarTerm": "dative singular",
 			"nativeTerm": "дательный падеж",
@@ -844,6 +834,9 @@
 					"prepositional",
 					"plural"
 				]
+			],
+			"skipForms": [
+				"временами"
 			]
 		},
 		{
@@ -871,7 +864,7 @@
 			"kind": "grammar",
 			"title": "Describing words in every case",
 			"tagline": "нового, новой, новыми",
-			"rule": "The adjective takes its noun's case: masculine and neuter -ого, -ому, -ым, -ом (нового, новому, новым, о новом; -ого is said -ово); feminine -ой (новой) and -ую in the accusative (новую); plural -ых, -ым, -ыми (новых, новым, новыми).",
+			"rule": "The adjective takes its noun's case: masculine and neuter -ого, -ому, -ым, -ом (нового, said -ово); feminine -ой, and -ую in the accusative; plural -ых, -ым, -ыми. Soft ones: синего, синей, синих. A masculine animate object takes -ого: вижу нового врача.",
 			"glyph": "paintbrush",
 			"grammarTerm": "adjective declension",
 			"nativeTerm": "склонение прилагательных",
@@ -962,7 +955,7 @@
 			"kind": "grammar",
 			"title": "Do it!",
 			"tagline": "читай, говори, читайте",
-			"rule": "Start from the present stem: after a vowel add -й (читай); after a consonant -и when the я form is stressed on the end or two consonants meet (скажу → скажи), else -ь (верь). Add -те for вы. Irregular: дай, ешь, пей, будь.",
+			"rule": "From the present stem: after a vowel -й (читай), after a consonant -и when the я form is stressed on the end or two consonants meet (скажу → скажи), else -ь (верь). -ся becomes -сь after a vowel (садись). Add -те for вы. Irregular: дай, ешь, пей, будь.",
 			"glyph": "megaphone",
 			"grammarTerm": "imperative",
 			"nativeTerm": "повелительное наклонение",
@@ -993,7 +986,7 @@
 			"kind": "grammar",
 			"title": "Bigger, better",
 			"tagline": "больше, лучше, новее",
-			"rule": "The comparative of adjectives and adverbs adds -ее (новее, быстрее) or is irregular (лучше, больше, проще, дороже); по- in front means a little (побыстрее). Than is чем or the genitive: он старше меня, он старше, чем я.",
+			"rule": "Comparative of adjectives and adverbs: -ее (новее, быстрее), or -е with a consonant change (громче, дороже, выше), or irregular (лучше, больше); по- adds a little (побыстрее). Than is чем or the genitive: он старше меня, старше, чем я.",
 			"glyph": "trending-up",
 			"grammarTerm": "comparative",
 			"nativeTerm": "сравнительная степень",
@@ -1069,7 +1062,7 @@
 			"kind": "grammar",
 			"title": "This, that, such, any",
 			"tagline": "в этом доме, такая книга",
-			"rule": "Этот (this), тот (that), такой (such), какой (which, what kind), другой and любой change like adjectives: этот дом, эта книга, это окно, эти книги; в этом доме, с той женщиной, какую книгу?",
+			"rule": "Этот and тот agree with their noun: этот дом, эта книга, это окно, эти книги; в этом доме, с той женщиной, тех людей, всем, всех. Такой (such), какой (which), другой and любой change like adjectives: такая книга, какую книгу?",
 			"glyph": "hand",
 			"grammarTerm": "demonstratives",
 			"nativeTerm": "указательные местоимения",
@@ -1111,7 +1104,7 @@
 			"kind": "grammar",
 			"title": "Numbers in cases",
 			"tagline": "до десяти, с двумя",
-			"rule": "Numbers take case endings: один like этот (в одном), два, три, четыре → двух, трёх, четырёх (двум, двумя); пять to тридцать like a feminine word in -ь (пяти, пятью); сорок, девяносто and сто → сорока, девяноста, ста.",
+			"rule": "Numbers take case endings, and the noun takes the same case in the plural: один like этот (в одном доме); два, три, четыре → двух, двум, двумя (с двумя братьями); пять to тридцать like a feminine word in -ь (пяти, пятью); сорок, девяносто, сто → сорока, девяноста, ста.",
 			"glyph": "calculator",
 			"grammarTerm": "numerals in cases",
 			"nativeTerm": "склонение числительных",
@@ -1204,7 +1197,7 @@
 			"kind": "grammar",
 			"title": "While doing, having done",
 			"tagline": "читая, прочитав",
-			"rule": "A verbal adverb says what else the subject does: -я or -а while doing (читая, слушая), -в after doing it (прочитав): Он ушёл, не сказав ни слова.",
+			"rule": "A verbal adverb says what else the subject does: -я or -а while doing (читая, слушая), -в or -вшись after doing it (прочитав, умывшись); prefixed идти, нести and вести take -я for that (войдя, придя). Быть → будучи. Он ушёл, не сказав ни слова.",
 			"glyph": "activity",
 			"grammarTerm": "verbal adverbs",
 			"nativeTerm": "деепричастия",
@@ -1226,6 +1219,127 @@
 					"past"
 				]
 			]
+		},
+		{
+			"id": "lx-words-home",
+			"kind": "words",
+			"title": "Words: At home",
+			"tagline": "house, room, door",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "house",
+			"lemmas": [
+				"дом",
+				"квартира",
+				"комната",
+				"дверь",
+				"окно",
+				"стол",
+				"стул",
+				"кровать",
+				"кухня",
+				"ключ",
+				"диван",
+				"стена",
+				"пол",
+				"шкаф"
+			]
+		},
+		{
+			"id": "lx-words-clothes",
+			"kind": "words",
+			"title": "Words: Clothes",
+			"tagline": "dress, shirt, coat",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "shirt",
+			"lemmas": [
+				"одежда",
+				"платье",
+				"рубашка",
+				"брюки",
+				"куртка",
+				"пальто",
+				"сумка",
+				"шапка"
+			]
+		},
+		{
+			"id": "lx-words-months",
+			"kind": "words",
+			"title": "Words: Months",
+			"tagline": "January to December",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "calendar-days",
+			"lemmas": [
+				"январь",
+				"февраль",
+				"март",
+				"апрель",
+				"май",
+				"июнь",
+				"июль",
+				"август",
+				"сентябрь",
+				"октябрь",
+				"ноябрь",
+				"декабрь"
+			]
+		},
+		{
+			"id": "lx-words-free-time",
+			"kind": "words",
+			"title": "Words: Free time",
+			"tagline": "music, film, travel",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "film",
+			"lemmas": [
+				"спорт",
+				"музыка",
+				"фильм",
+				"кино",
+				"футбол",
+				"отпуск",
+				"путешествие",
+				"хобби",
+				"книга"
+			]
+		},
+		{
+			"id": "lx-words-countries",
+			"kind": "words",
+			"title": "Words: Countries and languages",
+			"tagline": "country, language, Russian",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "globe",
+			"lemmas": [
+				"страна",
+				"язык",
+				"русский",
+				"английский",
+				"немецкий",
+				"французский",
+				"город",
+				"мир"
+			]
+		},
+		{
+			"id": "lx-words-personal",
+			"kind": "words",
+			"title": "Words: Forms and offices",
+			"tagline": "name, address, pharmacy",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "file-text",
+			"lemmas": [
+				"имя",
+				"фамилия",
+				"адрес",
+				"возраст",
+				"паспорт",
+				"телефон",
+				"почта",
+				"аптека",
+				"банк",
+				"больница"
+			]
 		}
 	],
 	"tutors": [
@@ -1234,7 +1348,7 @@
 			"title": "The Cyrillic alphabet",
 			"tagline": "letters and sounds",
 			"glyph": "book-open",
-			"brief": "Teach me the Cyrillic alphabet in groups: letters that look and sound much as in English (а, к, м, о, т), letters that look familiar but sound different (в, н, р, с, у, х), and the new ones (б, г, д, ж, з, и, й, л, п, ф, ц, ч, ш, щ, ы, э, ю, я, ё), plus the signs ь and ъ. Then show me short words to read aloud and dictate words for me to type."
+			"brief": "Teach me the Cyrillic alphabet in groups: letters that look and sound much as in English (а, к, м, о, т), letters that look familiar but sound different (в, е, н, р, с, у, х), and the new ones (б, г, д, ж, з, и, й, л, п, ф, ц, ч, ш, щ, ы, э, ю, я, ё), plus the signs ь and ъ. Then show me short words to read aloud and dictate words for me to type."
 		},
 		{
 			"id": "tutor-stress",
@@ -1276,7 +1390,7 @@
 			"title": "в or на",
 			"tagline": "в школе, на работе",
 			"glyph": "map-pin",
-			"brief": "Explain when a place takes в and when на: в for enclosed places (в школе, в магазине, в городе) and на for open places, events and a list of fixed words (на улице, на работе, на почте, на вокзале, на концерте, на рынке); and that the same choice goes on in where to (в школу, на работу) and from where (из школы, с работы). Quiz me with places and correct me."
+			"brief": "Explain when a place takes в and when на: в for enclosed places (в школе, в магазине, в городе) and на for open places, events and a list of fixed words (на улице, на работе, на почте, на вокзале, на концерте); the same choice for where to (в школу, на работу) and from where (из школы, с работы); and that a person takes к, у and от instead (к врачу, у врача, от врача). Quiz me with places and people and correct me."
 		},
 		{
 			"id": "tutor-u-menya",
@@ -1297,7 +1411,7 @@
 			"title": "Going on foot, going by car",
 			"tagline": "идти, ходить, ехать, ездить",
 			"glyph": "bus",
-			"brief": "Explain the verbs of going: идти (on foot, one way, now) and ходить (on foot, there and back, or regularly), ехать and ездить for any vehicle, and на with the prepositional for the vehicle (на автобусе, на метро). Give me situations and ask me which verb fits, in the present and the past, and correct me."
+			"brief": "Explain the verbs of going in pairs: one direction now (идти, ехать, нести, вести, везти, бежать, лететь, плыть) against there and back or regularly (ходить, ездить, носить, водить, возить, бегать, летать, плавать); ехать and ездить for any vehicle, and на with the prepositional for the vehicle (на автобусе, на метро). Give me situations, ask which verb fits in the present and the past, and correct me."
 		},
 		{
 			"id": "tutor-aspect",
@@ -1353,7 +1467,7 @@
 			"title": "Arrive, leave, cross",
 			"tagline": "прийти, уйти, перейти",
 			"glyph": "route",
-			"brief": "Explain prefixed verbs of motion: при- (arrive), у- (leave), в- (in), вы- (out), пере- (across), про- (past), под- (up to), от- (away from), до- (as far as), за- (drop in), об- (around): идти becomes прийти, уйти, войти, выйти and ходить becomes приходить, уходить; with идти or ехать the verb is perfective, with ходить or ездить imperfective; and the prepositions that go with each (прийти в, выйти из, подойти к). Describe a route, have me retell it, and correct me."
+			"brief": "Explain prefixed verbs of motion: при- (arrive), у- (leave), в- (in), вы- (out), пере- (across), про- (past), под- (up to), от- (away from), до- (as far as), за- (drop in), об- (around). With идти and ехать the verb is perfective (прийти, уехать); its imperfective partner is built on -ходить and -езжать (приходить, уезжать). Name the prepositions each takes (прийти в, выйти из, подойти к). Describe a route, have me retell it, and correct me."
 		},
 		{
 			"id": "tutor-doctor",
@@ -1445,6 +1559,41 @@
 			"tagline": "the special forms",
 			"glyph": "sparkles",
 			"brief": "Explain the special forms of a few masculine words: the stressed -у after в and на (в лесу, на мосту, в саду, в аэропорту, в этом году), the second genitive in -у for some of a substance (чашка чаю, немного сахару), and the casual call form of names (Маш! Саш! Мам!). Show me where each is used and quiz me."
+		},
+		{
+			"id": "tutor-intonation",
+			"title": "Questions by the voice",
+			"tagline": "ИК-1, ИК-2, ИК-3",
+			"glyph": "ear",
+			"brief": "Explain Russian intonation: a statement falls at the end (ИК-1), a question with a question word stresses that word (ИК-2: Где ты живёшь?), and a yes or no question with no question word rises sharply on the word in question (ИК-3: Ты живёшь в Москве?), so the same words can be a statement or a question. Read me pairs and have me say which is which, then have me say them."
+		},
+		{
+			"id": "tutor-pronouns",
+			"title": "Me, you, him: pronouns",
+			"tagline": "меня, мне, у него, с ней",
+			"glyph": "users",
+			"brief": "Teach me the personal pronouns in all cases (я: меня, мне, мной, обо мне; он: его, ему, им, о нём; она: её, ей, ею, о ней; мы, вы, они), that он, она and они take н- after a preposition (у него, к нему, с ней, о них), and себя for oneself. Quiz me with short sentences and correct me."
+		},
+		{
+			"id": "tutor-time",
+			"title": "When: days, months, years",
+			"tagline": "в среду, в январе, через неделю",
+			"glyph": "calendar-days",
+			"brief": "Teach me time phrases: в with the accusative for days (в среду), в with the prepositional for months and years (в январе, в 2020 году), на with the prepositional for weeks (на прошлой неделе), через and назад (через неделю, неделю назад), на and за with the accusative for how long (на неделю, за неделю). Quiz me with my week and correct me."
+		},
+		{
+			"id": "tutor-word-order",
+			"title": "What comes first",
+			"tagline": "new information at the end",
+			"glyph": "move-horizontal",
+			"brief": "Explain Russian word order: it is free, and the new or important information comes at the end (Книгу взял брат: it was the brother; Брат взял книгу: he took the book), questions are made by intonation alone, and short pronouns tend to come early. Give me questions and have me answer with the new information last, and correct me."
+		},
+		{
+			"id": "tutor-phone",
+			"title": "On the phone",
+			"tagline": "алло, перезвоните",
+			"glyph": "phone",
+			"brief": "Teach me how a phone call goes in Russian: answering (Алло! Слушаю), asking for someone (Можно Марину?), saying who is calling, asking to call back (Перезвоните, пожалуйста), leaving a message, spelling a name and saying a number. Role-play a call to a friend and one to an office, and correct me."
 		}
 	],
 	"goals": [
@@ -1579,6 +1728,7 @@
 				"lx-words-greetings",
 				"tutor-stress",
 				"tutor-soft-hard",
+				"tutor-intonation",
 				"tutor-ty-vy",
 				"can-greet"
 			]
@@ -1594,6 +1744,7 @@
 				"present-plural",
 				"lx-words-basic-verbs",
 				"tutor-conjugations",
+				"lx-words-countries",
 				"can-introduce-self"
 			]
 		},
@@ -1601,11 +1752,10 @@
 			"id": "my-family",
 			"stage": "a1",
 			"title": "My family",
-			"tagline": "gender, my and your, agreement, the plural",
+			"tagline": "gender, agreement, the plural",
 			"units": [
 				"lx-words-family",
 				"tutor-gender",
-				"possessives",
 				"adjective-nominative",
 				"nominative-plural",
 				"lx-words-questions",
@@ -1643,6 +1793,8 @@
 			"units": [
 				"genitive-singular",
 				"tutor-u-menya",
+				"lx-words-home",
+				"tutor-pronouns",
 				"can-say-what-i-have"
 			]
 		},
@@ -1663,7 +1815,7 @@
 			"id": "going-places",
 			"stage": "a1",
 			"title": "Going places",
-			"tagline": "где and куда, verbs of going",
+			"tagline": "куда and the accusative, verbs of going",
 			"units": [
 				"where-or-where-to",
 				"lx-words-motion",
@@ -1679,6 +1831,8 @@
 			"units": [
 				"past",
 				"lx-words-time",
+				"lx-words-months",
+				"tutor-time",
 				"can-tell-yesterday"
 			]
 		},
@@ -1702,6 +1856,7 @@
 			"units": [
 				"dative-singular",
 				"tutor-dative-experiencer",
+				"lx-words-free-time",
 				"can-say-what-i-like"
 			]
 		},
@@ -1732,13 +1887,16 @@
 			"id": "many-things",
 			"stage": "a2",
 			"title": "Many things",
-			"tagline": "the plural cases, adjectives in cases",
+			"tagline": "the plural cases, adjectives and pronouns in cases",
 			"units": [
 				"plural-cases",
 				"tutor-plural",
 				"adjective-cases",
+				"possessives",
+				"demonstratives",
 				"lx-words-describing",
 				"lx-words-colors",
+				"lx-words-clothes",
 				"can-describe-things"
 			]
 		},
@@ -1746,10 +1904,9 @@
 			"id": "comparing",
 			"stage": "a2",
 			"title": "Bigger, best",
-			"tagline": "comparing",
+			"tagline": "comparatives",
 			"units": [
 				"comparative",
-				"superlative",
 				"tutor-comparison",
 				"can-compare"
 			]
@@ -1758,10 +1915,11 @@
 			"id": "arriving-leaving",
 			"stage": "a2",
 			"title": "Arriving and leaving",
-			"tagline": "verbs of motion with prefixes, в лесу",
+			"tagline": "verbs of motion with prefixes, в лесу, чашка чаю",
 			"units": [
 				"tutor-motion-prefixes",
 				"locative-u",
+				"tutor-special-cases",
 				"lx-words-nature",
 				"can-describe-route"
 			]
@@ -1775,17 +1933,20 @@
 				"lx-words-health",
 				"tutor-doctor",
 				"tutor-negatives",
+				"lx-words-personal",
 				"can-see-doctor"
 			]
 		},
 		{
 			"id": "would-you",
-			"stage": "b1",
+			"stage": "a2",
 			"title": "Would you",
 			"tagline": "бы, если бы, чтобы",
 			"units": [
 				"tutor-conditional",
 				"tutor-polite-requests",
+				"tutor-phone",
+				"tutor-word-order",
 				"can-request-politely"
 			]
 		},
@@ -1793,9 +1954,8 @@
 			"id": "linking-ideas",
 			"stage": "b1",
 			"title": "Who, which, so that",
-			"tagline": "this and that, который, что and чтобы",
+			"tagline": "свой, который, что and чтобы",
 			"units": [
-				"demonstratives",
 				"tutor-svoj",
 				"tutor-kotoryj",
 				"tutor-chto-chtoby",
@@ -1807,12 +1967,13 @@
 			"id": "written-style",
 			"stage": "b1",
 			"title": "The written style",
-			"tagline": "participles, verbal adverbs, numbers in cases",
+			"tagline": "participles, verbal adverbs, numbers in cases, -ейший",
 			"units": [
 				"numeral-cases",
 				"participles",
 				"verbal-adverbs",
 				"tutor-participles",
+				"superlative",
 				"can-read-news"
 			]
 		},
@@ -1824,7 +1985,6 @@
 			"units": [
 				"tutor-reported-speech",
 				"tutor-news",
-				"tutor-special-cases",
 				"can-retell-news"
 			]
 		},

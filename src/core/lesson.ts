@@ -109,7 +109,7 @@ interface UnitInfo {
 	pattern?: "build";
 	/** A generated course's grammar unit: which blanked forms it drills, by
 	 *  their grammar tags and the word before the blank (src/core/course.ts). */
-	match?: Pick<CourseUnit, "cat" | "tags" | "variants" | "after" | "notAfter" | "skipForms">;
+	match?: Pick<CourseUnit, "cat" | "tags" | "variants" | "after" | "notAfter" | "skipForms" | "lemmas">;
 }
 
 const WORD_RULE = "Learn the word with its sentence: the sentence is what you will hear.";
@@ -194,7 +194,7 @@ function courseLessonUnits(course: Course): UnitInfo[] {
 		node: `n_seed_${u.id.replace(/[^a-z0-9]+/gi, "_")}`,
 		...(u.grammarTerm ? { grammarTerm: u.grammarTerm } : {}),
 		...(u.nativeTerm ? { slovakTerm: u.nativeTerm } : {}),
-		...(u.kind === "words" ? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true } : { match: { cat: u.cat, tags: u.tags ?? [], ...(u.variants ? { variants: u.variants } : {}), after: u.after, ...(u.notAfter ? { notAfter: u.notAfter } : {}), ...(u.skipForms ? { skipForms: u.skipForms } : {}) } }),
+		...(u.kind === "words" ? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true } : { match: { cat: u.cat, tags: u.tags ?? [], ...(u.variants ? { variants: u.variants } : {}), after: u.after, ...(u.notAfter ? { notAfter: u.notAfter } : {}), ...(u.skipForms ? { skipForms: u.skipForms } : {}), ...(u.lemmas ? { lemmas: u.lemmas } : {}) } }),
 	}));
 	return [{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, grammarTerm: "Core vocabulary" }, ...own, ...BAND_UNITS.map(({ slovakTerm: _native, ...b }) => b)];
 }

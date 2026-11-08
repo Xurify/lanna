@@ -96,6 +96,7 @@ export interface Course {
 	goals: CourseGoal[];
 	chapters: CourseChapter[];
 	cases?: CourseCase[];
+	badSentences?: Array<{ id: number; why: string }>;
 }
 
 // The running language's course: config.ts sets it on the server from
@@ -182,6 +183,7 @@ export function courseUnitsFor(units: readonly CourseUnit[], entry: LexiconEntry
 		if (u.cat && u.cat !== entry.cat) continue;
 		if (u.notAfter?.includes(prev)) continue;
 		if (u.skipForms?.includes(c.answer.toLocaleLowerCase(tag))) continue;
+		if (u.lemmas?.length && !u.lemmas.some((l) => l.toLocaleLowerCase(tag) === (entry.lemma ?? entry.sk ?? "").toLocaleLowerCase(tag))) continue;
 		// The dictionary form says nothing about a case ("Dobrý den" is not an
 		// accusative); only a unit about that form itself may take it.
 		if (isLemma && !sets.some((set) => set.some((t) => LEMMA_TAGS.has(t)))) continue;
@@ -344,6 +346,7 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 			...(strs(x.after).length ? { after: strs(x.after).map((w) => w.toLocaleLowerCase(tag)) } : {}),
 			...(strs(x.notAfter).length ? { notAfter: strs(x.notAfter).map((w) => w.toLocaleLowerCase(tag)) } : {}),
 			...(strs(x.skipForms).length ? { skipForms: strs(x.skipForms).map((w) => w.toLocaleLowerCase(tag)) } : {}),
+			...(strs(x.lemmas).length ? { lemmas: strs(x.lemmas) } : {}),
 		};
 		let n = 0;
 		for (const e of lexicon) for (const ex of e.examples) if (!ex.rejected && courseUnitsFor([unit], e, ex, tag).length) n++;
@@ -392,6 +395,10 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 	chapters.sort((a, b) => COURSE_STAGES.indexOf(a.stage) - COURSE_STAGES.indexOf(b.stage));
 	const used = (id: string) => placed.has(id);
 	const cases = checkCases(r.cases, new Set(tutors.filter((t) => used(t.id)).map((t) => t.id)));
+	const badSentences = (Array.isArray(r.badSentences) ? r.badSentences : []).flatMap((b) => {
+		const x = (b ?? {}) as Record<string, unknown>;
+		return Number.isInteger(x.id) && str(x.why) ? [{ id: x.id as number, why: str(x.why, 200) }] : [];
+	});
 	const course: Course = {
 		language,
 		code,
@@ -403,6 +410,7 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 		goals: goals.filter((g) => used(g.id)),
 		chapters,
 		...(cases.length ? { cases } : {}),
+		...(badSentences.length ? { badSentences } : {}),
 	};
 	if (course.chapters.length < 3 || course.units.filter((u) => u.kind === "grammar").length < 3) return null;
 	return { course, dropped };

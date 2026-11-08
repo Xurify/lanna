@@ -34,7 +34,7 @@
 			"noDrill": {
 				"plural": {
 					"short": "too few sentences",
-					"why": "Into many things (majadesse) is rare in the example sentences: one sentence holds it, too few for a lesson. The tutor session on plural stems practices it."
+					"why": "Into many things (majadesse) is rare in the example sentences: one sentence holds it, too few for a lesson. The tutor session “The plural stem” practices it."
 				}
 			}
 		},
@@ -66,19 +66,19 @@
 			"noDrill": {
 				"plural": {
 					"short": "too few sentences",
-					"why": "From many people or surfaces (majadelt) is rare in the example sentences: two sentences hold it, too few for a lesson. The tutor session on plural stems practices it."
+					"why": "From many people or surfaces (majadelt) is rare in the example sentences: two sentences hold it, too few for a lesson. The tutor session “The plural stem” practices it."
 				}
 			}
 		},
 		{
 			"tag": "translative",
 			"native": "saav",
-			"means": "becoming, for a time: arstiks, homseks",
+			"means": "becoming, and by a time: arstiks, homseks",
 			"tutor": "tutor-plural-stems",
 			"noDrill": {
 				"plural": {
 					"short": "too few sentences",
-					"why": "No example sentence holds the plural (arstideks), so there is no lesson for it. It is built like every plural case: the genitive plural plus -ks. The tutor session on plural stems practices it."
+					"why": "No example sentence holds the plural (arstideks), so there is no lesson for it. It is built like every plural case: the genitive plural plus -ks. The tutor session “The plural stem” practices it."
 				}
 			}
 		},
@@ -90,7 +90,7 @@
 			"noDrill": {
 				"plural": {
 					"short": "too few sentences",
-					"why": "No example sentence holds the plural (majadeni), so there is no lesson for it. It is the genitive plural plus -ni. The tutor session As a child, as a doctor practices it."
+					"why": "No example sentence holds the plural (majadeni), so there is no lesson for it. It is the genitive plural plus -ni. The tutor session “As a child, as a doctor” practices it."
 				}
 			}
 		},
@@ -102,11 +102,11 @@
 			"noDrill": {
 				"singular": {
 					"short": "too few sentences",
-					"why": "Only one example sentence holds the essive (arstina, lapsena), too few for a lesson. The tutor session As a child, as a doctor practices it."
+					"why": "Only one example sentence holds the essive (arstina, lapsena), too few for a lesson. The tutor session “As a child, as a doctor” practices it."
 				},
 				"plural": {
 					"short": "too few sentences",
-					"why": "No example sentence holds the plural essive (arstidena). The tutor session As a child, as a doctor practices it."
+					"why": "No example sentence holds the plural essive (arstidena). The tutor session “As a child, as a doctor” practices it."
 				}
 			}
 		},
@@ -169,7 +169,7 @@
 			"kind": "grammar",
 			"title": "I, you, she: the present",
 			"tagline": "ma elan, sa elad, ta elab",
-			"rule": "Present tense: the present stem plus -n for ma, -d for sa, -b for ta: ma elan, sa elad, ta elab. Olema is irregular: olen, oled, on.",
+			"rule": "Present tense: the present stem plus -n for ma, -d for sa, -b for ta (ma elan, sa elad, ta elab). Learn the present stem with the verb: õppima → ma õpin, lugema → ma loen, minema → ma lähen. Olema: olen, oled, on.",
 			"glyph": "user",
 			"grammarTerm": "present tense, singular",
 			"nativeTerm": "olevik, ainsus",
@@ -345,7 +345,7 @@
 			"kind": "grammar",
 			"title": "Whose: the genitive",
 			"tagline": "Mari auto, kooli ees",
-			"rule": "The genitive answers whose? (Mari auto), comes before a postposition (laua peal) and is the stem most other cases are built on. Learn it with each word: kool → kooli, süda → südame, jõgi → jõe.",
+			"rule": "The genitive answers whose? (Mari auto), comes before a postposition (laua peal), is the whole object of a finished action (ma ostsin raamatu) and the stem of most cases. Learn it with each word: kool → kooli, süda → südame, jõgi → jõe.",
 			"glyph": "key",
 			"grammarTerm": "genitive singular",
 			"nativeTerm": "omastav",
@@ -397,7 +397,7 @@
 			"kind": "grammar",
 			"title": "On, at, having: -l",
 			"tagline": "laual, turul, isal on",
-			"rule": "-l on the genitive stem means on or at (laual, turul) and, with olema, who has something: isal on auto (Father has a car).",
+			"rule": "-l on the genitive stem means on or at (laual, turul), when (talvel, esmaspäeval) and, with olema, who has something: isal on auto (Father has a car).",
 			"glyph": "house",
 			"grammarTerm": "adessive singular",
 			"nativeTerm": "alalütlev",
@@ -417,7 +417,7 @@
 			"kind": "grammar",
 			"title": "Some of it: the partitive",
 			"tagline": "kohvi, autot, raamatut",
-			"rule": "The partitive is the object of an unfinished action or of a negative, and an amount of something: ma joon kohvi, mul ei ole autot. Learn it with each word: -t (autot), -d (teed), a vowel (kohvi) or -da (maad).",
+			"rule": "The partitive is the object of an unfinished action or of a negative, and an amount of something: ma joon kohvi, mul ei ole autot. Learn it with each word: -t (autot, raamatut), -d (teed, maad) or a vowel (kohvi, lauda).",
 			"glyph": "cup-soda",
 			"grammarTerm": "partitive singular",
 			"nativeTerm": "osastav",
@@ -436,6 +436,18 @@
 				"kaheksa",
 				"üheksa",
 				"kümme",
+				"üksteist",
+				"kaksteist",
+				"kolmteist",
+				"neliteist",
+				"viisteist",
+				"kakskümmend",
+				"kolmkümmend",
+				"nelikümmend",
+				"viiskümmend",
+				"sada",
+				"tuhat",
+				"miljon",
 				"paar",
 				"mitu",
 				"palju",
@@ -448,7 +460,7 @@
 			"kind": "grammar",
 			"title": "Two of something",
 			"tagline": "kaks autot, palju raha",
-			"rule": "After a number from two up, and after palju, vähe, mitu, paar and pool, the noun is in the partitive singular: kaks autot, palju raha. When the number itself takes another case, the noun takes it too: kahe autoga.",
+			"rule": "After a number from two up, and after mitu, paar and pool, the noun is partitive singular: kaks autot, pool tundi. After palju and vähe an amount is partitive singular (palju raha). A number in another case takes the noun with it: kahe autoga.",
 			"glyph": "hash",
 			"grammarTerm": "partitive after numbers",
 			"nativeTerm": "osastav arvsõna järel",
@@ -467,6 +479,18 @@
 				"kaheksa",
 				"üheksa",
 				"kümme",
+				"üksteist",
+				"kaksteist",
+				"kolmteist",
+				"neliteist",
+				"viisteist",
+				"kakskümmend",
+				"kolmkümmend",
+				"nelikümmend",
+				"viiskümmend",
+				"sada",
+				"tuhat",
+				"miljon",
 				"paar",
 				"mitu",
 				"palju",
@@ -562,7 +586,7 @@
 			"kind": "grammar",
 			"title": "In: -s",
 			"tagline": "majas, linnas, koolis",
-			"rule": "-s on the genitive stem means in or inside: maja → majas, linn (linna) → linnas, kool (kooli) → koolis.",
+			"rule": "-s on the genitive stem means in or inside (majas, linnas, koolis) and also in a month or per a time: märtsis, kord nädalas.",
 			"glyph": "map-pin",
 			"grammarTerm": "inessive singular",
 			"nativeTerm": "seesütlev",
@@ -660,6 +684,10 @@
 			"tags": [
 				"allative",
 				"singular"
+			],
+			"skipForms": [
+				"kõrvale",
+				"omale"
 			]
 		},
 		{
@@ -695,7 +723,9 @@
 				"nimel",
 				"saatel",
 				"nimelt",
-				"pealt"
+				"pealt",
+				"kõrvale",
+				"omale"
 			]
 		},
 		{
@@ -753,7 +783,7 @@
 			"kind": "grammar",
 			"title": "Yesterday I did",
 			"tagline": "elasin, elas, tegin",
-			"rule": "Simple past: -sin, -sid, -s, -sime, -site, -sid (ma elasin, ta elas). A group of common verbs uses -i- instead: ma tegin, ta tegi; ma olin, ta oli.",
+			"rule": "Simple past: -sin, -sid, -s, -sime, -site, -sid (ma elasin, ta elas; after a consonant stem ta kandis). Common verbs use -i- (ma tegin, ta tegi; ma olin), some with a vowel change (ma sain, sõin, jõin) or a new stem (minema → ma läksin).",
 			"glyph": "rewind",
 			"grammarTerm": "simple past",
 			"nativeTerm": "lihtminevik",
@@ -808,7 +838,7 @@
 			"kind": "grammar",
 			"title": "Didn't: ei + -nud",
 			"tagline": "ma ei teadnud",
-			"rule": "Past negation: ei + the -nud form, the same for every person: ma ei teadnud, nad ei tulnud. Ei olnud is often said polnud.",
+			"rule": "Past negation: ei + the -nud form, the same for every person: ma ei teadnud, nad ei tulnud. Some -nud forms are learned by heart: läinud, teinud, näinud, söönud. Ei olnud is often said polnud.",
 			"glyph": "ban",
 			"grammarTerm": "negation, past",
 			"nativeTerm": "minevikueitus",
@@ -836,6 +866,7 @@
 				"eile",
 				"esmaspäev",
 				"teisipäev",
+				"kolmapäev",
 				"neljapäev",
 				"reede",
 				"laupäev",
@@ -843,9 +874,10 @@
 				"nädal",
 				"kuu",
 				"aasta",
+				"kevad",
 				"suvi",
-				"talv",
-				"sügis"
+				"sügis",
+				"talv"
 			]
 		},
 		{
@@ -853,7 +885,7 @@
 			"kind": "grammar",
 			"title": "Do it!",
 			"tagline": "Tule! Tulge!",
-			"rule": "A command to sina is the present stem, the I form without -n (ma tulen → tule!), except minema → mine; don't is ära: ära tule. To teie add -ge or -ke to the da form's stem: tulla → tulge, oodata → oodake; don't is ärge: ärge tulge.",
+			"rule": "A command to sina is the I form without -n (ma tulen → tule!), except minema → mine. For teie use the da form: -da → -ge (lugeda → lugege), -ta → -ke (oodata → oodake), -ke after d or h (anda → andke, teha → tehke). Don't: ära tule, ärge tulge.",
 			"glyph": "megaphone",
 			"grammarTerm": "imperative",
 			"nativeTerm": "käskiv kõneviis",
@@ -1020,8 +1052,7 @@
 				"september",
 				"oktoober",
 				"november",
-				"detsember",
-				"kevad"
+				"detsember"
 			]
 		},
 		{
@@ -1223,7 +1254,7 @@
 			"kind": "grammar",
 			"title": "Would",
 			"tagline": "tahaksin, oleks",
-			"rule": "Would: -ks after the present stem, with the person endings: ma tahaksin, sa tahaksid, ta tahaks, me tahaksime, te tahaksite, nad tahaksid. Speech often drops them: ma tahaks.",
+			"rule": "Would: -ks after the present stem, with the person endings: ma tahaksin, sa tahaksid, ta tahaks, me tahaksime, te tahaksite, nad tahaksid. Not: ei + -ks with no ending (ma ei tahaks). Speech often drops the endings: ma tahaks.",
 			"glyph": "wand",
 			"grammarTerm": "conditional mood",
 			"nativeTerm": "tingiv kõneviis",
@@ -1238,7 +1269,7 @@
 			"kind": "grammar",
 			"title": "Bigger, better",
 			"tagline": "suurem, parem, rohkem",
-			"rule": "The comparative adds -m to the genitive: suur (suure) → suurem, ilus (ilusa) → ilusam; hea → parem, palju → rohkem; adverbs take -mini or -malt: kiiremini, aeglasemalt. Than is kui, or the elative: suurem kui maja, majast suurem.",
+			"rule": "The comparative adds -m to the genitive: suur → suurem, ilus → ilusam, and a final a or u of a short word turns into e: vana → vanem, pikk → pikem; hea → parem, palju → rohkem. Adverbs: kiiremini. Than: kui or the elative (majast suurem).",
 			"glyph": "trending-up",
 			"grammarTerm": "comparative",
 			"nativeTerm": "keskvõrre",
@@ -1401,7 +1432,7 @@
 			"kind": "grammar",
 			"title": "It is done: the impersonal",
 			"tagline": "räägitakse, räägiti",
-			"rule": "The impersonal names no doer: -takse or -akse in the present, -ti or -di in the past (Eestis räägitakse eesti keelt; auto varastati), and the -tud form for what is done: uks on suletud.",
+			"rule": "The impersonal names no doer: -takse, -akse or -dakse in the present (räägitakse, lauldakse), -ti or -di in the past (varastati, lauldi), and the -tud form for what is done: uks on suletud.",
 			"glyph": "shield",
 			"grammarTerm": "impersonal voice",
 			"nativeTerm": "umbisikuline tegumood",
@@ -1434,7 +1465,7 @@
 			"kind": "grammar",
 			"title": "Busy doing, back from doing",
 			"tagline": "käimas, ujumast, söömata",
-			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas); -mast, back from doing (tulen ujumast); -mata, without doing (ta läks söömata).",
+			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas; nägin teda tulemas); -mast, from doing or kept from it (tulen ujumast, keelas mul suitsetamast); -mata, without doing (ta läks söömata).",
 			"glyph": "activity",
 			"grammarTerm": "ma-infinitive cases",
 			"nativeTerm": "ma-tegevusnime käändevormid",
@@ -1455,11 +1486,12 @@
 				[
 					"abessive",
 					"infinitive-ma"
-				],
-				[
-					"translative",
-					"infinitive-ma"
 				]
+			],
+			"skipForms": [
+				"hoolimata",
+				"kahtlemata",
+				"tulemast"
 			]
 		},
 		{
@@ -1491,7 +1523,7 @@
 			"kind": "grammar",
 			"title": "Who, what, someone",
 			"tagline": "kellel, mida, kedagi",
-			"rule": "Kes and mis take case endings like nouns (kellel, kellele, mida, millest), and keegi and miski keep -gi after them: kedagi, midagi. With ei they mean nobody and nothing: ma ei näinud kedagi.",
+			"rule": "Kes and mis take case endings like nouns (kellel, kellele, mida, millest), and keegi and miski keep -gi after them, -ki after a voiceless sound: kedagi, midagi, kellestki. With ei they mean nobody and nothing: ma ei näinud kedagi.",
 			"glyph": "circle-help",
 			"grammarTerm": "interrogative and indefinite pronouns",
 			"nativeTerm": "küsi- ja umbmäärased asesõnad",
@@ -1528,6 +1560,78 @@
 					"ablative"
 				]
 			]
+		},
+		{
+			"id": "lx-words-clothes",
+			"kind": "words",
+			"title": "Words: Clothes",
+			"tagline": "dress, shirt, hat",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "shirt",
+			"lemmas": [
+				"kleit",
+				"särk",
+				"müts",
+				"kott",
+				"mantel",
+				"jope"
+			]
+		},
+		{
+			"id": "lx-words-free-time",
+			"kind": "words",
+			"title": "Words: Free time",
+			"tagline": "music, film, sport",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "film",
+			"lemmas": [
+				"sport",
+				"muusika",
+				"film",
+				"kino",
+				"jalgpall",
+				"puhkus",
+				"reis",
+				"hobi",
+				"mäng"
+			]
+		},
+		{
+			"id": "lx-words-countries",
+			"kind": "words",
+			"title": "Words: Countries and languages",
+			"tagline": "country, language, English",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "globe",
+			"lemmas": [
+				"riik",
+				"keel",
+				"eesti",
+				"inglise",
+				"vene",
+				"soome",
+				"maa",
+				"linn"
+			]
+		},
+		{
+			"id": "lx-words-personal",
+			"kind": "words",
+			"title": "Words: Forms and offices",
+			"tagline": "name, address, pharmacy",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "file-text",
+			"lemmas": [
+				"nimi",
+				"perekonnanimi",
+				"aadress",
+				"vanus",
+				"telefon",
+				"apteek",
+				"pank",
+				"juuksur",
+				"haigla"
+			]
 		}
 	],
 	"tutors": [
@@ -1557,7 +1661,7 @@
 			"title": "Where the verb goes",
 			"tagline": "the verb comes second",
 			"glyph": "move-horizontal",
-			"brief": "Explain that in an Estonian main clause the verb usually comes second, so a sentence that starts with a time or place word puts the verb before the subject (Täna lähen ma tööle), and that in a clause after et or kui the verb often moves to the end. Give me jumbled words to build into sentences and comment on what sounds natural."
+			"brief": "Explain that in an Estonian main clause the verb usually comes second, so a sentence that starts with a time or place word puts the verb before the subject (Täna lähen ma tööle); that clauses after et, sest and kuna keep that order; and that in a clause after kui, in an indirect question and in a negative that does not start with the subject the verb often goes to the end. Give me jumbled words to build into sentences and comment on what sounds natural."
 		},
 		{
 			"id": "tutor-questions",
@@ -1592,7 +1696,7 @@
 			"title": "Numbers, clock and prices",
 			"tagline": "kell on pool viis",
 			"glyph": "clock",
-			"brief": "Teach me the numbers, prices in euros and cents, and clock times, including that pool kuus means half past five (5:30), veerand and kolmveerand, and the days of the week, which are written in lowercase. Quiz me with times and prices in a shop and correct my answers."
+			"brief": "Teach me the numbers, prices in euros and cents, clock times (pool kuus is half past five, 5:30; veerand, kolmveerand), ordinals and dates (kahekümnendal aprillil, 1994. aastal), and the days and months, written in lowercase. Quiz me with times, dates and prices in a shop and correct me."
 		},
 		{
 			"id": "tutor-place-cases",
@@ -1606,7 +1710,7 @@
 			"title": "Must, can, may",
 			"tagline": "pean, võin, saan, tuleb",
 			"glyph": "key",
-			"brief": "Explain how to say must, can, may and need in Estonian: pidama with the ma form (pean minema), võima, saama and oskama with the da form, tuleb and on vaja with the da form (tuleb minna, mul on vaja minna), and the difference between oskan (know how), saan (am able) and võin (am allowed). Give me situations and ask me to say what I must, can or may do."
+			"brief": "Explain how to say must, can, may and need in Estonian: pidama with the -ma form (pean minema); võima, tohtima, saama and oskama with the da form; tuleb and on vaja with the da form (tuleb minna, mul on vaja minna); and the difference between oskan (know how), saan (am able), võin (may) and tohin (am allowed). Give me situations and ask me what I must, can or may do."
 		},
 		{
 			"id": "tutor-gradation",
@@ -1627,7 +1731,7 @@
 			"title": "Whole or partial object",
 			"tagline": "the partitive or the genitive",
 			"glyph": "git-compare",
-			"brief": "Explain when a direct object is a whole object (the genitive singular or the nominative plural: ma ostsin auto, ma ostsin autod) and when a partial one (the partitive: ma ostan autot, ma ei ostnud autot), including negatives, unfinished actions, amounts and the verbs that always take the partitive (armastama, ootama, aitama, kuulama). Give me sentences to complete and explain each choice."
+			"brief": "Explain when a direct object is a whole object (the genitive singular or the nominative plural: ma ostsin raamatu, ma ostsin raamatud) and when a partial one (the partitive: ma ostan raamatut, ma ei ostnud raamatut), including negatives, unfinished actions, amounts, and the verbs that take the partitive (armastama, aitama; ootama and kuulama unless ära makes the action whole: ootasin ta ära). Give me sentences to complete and explain each choice."
 		},
 		{
 			"id": "tutor-plural-stems",
@@ -1641,28 +1745,28 @@
 			"title": "Asking nicely",
 			"tagline": "palun, would, could",
 			"glyph": "handshake",
-			"brief": "Explain how to make polite requests in Estonian with palun, the conditional (kas te saaksite, ma sooviksin, ma tahaks) and indirect questions (kas te teate, kus ...). Role-play a hotel desk where I ask for things and tell me how polite I sound."
+			"brief": "Explain polite requests in Estonian with palun, the conditional (kas te saaksite, ma sooviksin, ma tahaks), indirect questions (kas te teate, kus …), the past conditional for what would have happened (ma oleksin tulnud) and reported requests (ta palus, et ma tuleksin). Role-play a hotel desk where I ask for things and tell me how polite I sound."
 		},
 		{
 			"id": "tutor-comparison",
 			"title": "Bigger, biggest",
 			"tagline": "kui, kõige, -im",
 			"glyph": "trending-up",
-			"brief": "Explain comparing in Estonian: the comparative in -m (suurem), than with kui or the elative (suurem kui maja, majast suurem), the superlative with kõige (kõige suurem) and the short superlative in -im (suurim, parim), and the irregular ones (hea → parem → parim, palju → rohkem → kõige rohkem). Ask me to compare cities, people and things and correct me."
+			"brief": "Explain comparing in Estonian: the comparative in -m (suurem, vanem), than with kui or the elative (suurem kui maja, majast suurem), the superlative with kõige (kõige suurem) and the short one in -im (suurim, parim), the irregular ones (hea → parem → parim, palju → rohkem), and adverbs in -sti and -mini (kiiresti, kiiremini). Ask me to compare cities, people and things and correct me."
 		},
 		{
 			"id": "tutor-essive",
 			"title": "As a child, as a doctor",
 			"tagline": "-na and -ni",
 			"glyph": "user-round",
-			"brief": "Explain the essive -na (as, in the role of: ma töötan arstina, lapsena elasin maal) next to the translative -ks (ta sai arstiks), and the terminative -ni (until: õhtuni, Tartuni), all on the genitive stem. Ask me about jobs, childhood and plans so I use them, and correct me."
+			"brief": "Explain the essive -na (as, in the role of: ma töötan arstina, lapsena elasin maal) next to the translative -ks (ta sai arstiks), and the terminative -ni (until, as far as: õhtuni, Tartuni), all on the genitive stem, with their plurals (arstidena, arstideks). Ask me about jobs, childhood and plans so I use them, and correct me."
 		},
 		{
 			"id": "tutor-impersonal",
 			"title": "Done, has been done",
 			"tagline": "tehakse, tehti, on tehtud",
 			"glyph": "shield",
-			"brief": "Explain the Estonian impersonal in its tenses: present (tehakse), past (tehti), perfect (on tehtud) and pluperfect (oli tehtud), its negative (ei tehta, ei tehtud), and that its object is in the nominative or the partitive (maja ehitati, maja ei ehitatud). Show me notices and news headlines that use it, then have me rewrite active sentences."
+			"brief": "Explain the Estonian impersonal in its tenses: present (tehakse), past (tehti), perfect (on tehtud) and pluperfect (oli tehtud), its negative (ei tehta, ei tehtud), that its object is nominative or partitive (raamat loeti läbi, raamatut ei loetud), and the -tud form on signs (avatud, suletud). Show me notices and news headlines that use it, then have me rewrite active sentences."
 		},
 		{
 			"id": "tutor-des",
@@ -1726,6 +1830,27 @@
 			"tagline": "-ja, -mine, -lik, -ne",
 			"glyph": "wand",
 			"brief": "Explain how Estonian builds words: compounds (raamatukogu, haigekassa), the doer -ja (õpetaja), the action -mine (lugemine), -lik and -ne for describing words (sõbralik, puust → puine), -tu for without (rahatu), and the small -ke(ne) (majake). Give me words to take apart and to build, and correct me."
+		},
+		{
+			"id": "tutor-pronouns",
+			"title": "Me, you, him: pronouns",
+			"tagline": "mind, mulle, minuga, see",
+			"glyph": "users",
+			"brief": "Teach me the personal pronouns in their cases, long and short (mina, minu, mind, mulle, mul, minust, minuga; sina, sind, sulle …), that a pronoun object is usually partitive (ma armastan sind, nad ootavad meid), see and need in cases (selle, seda, sellele, neid), oma and enda for one's own, and the place words siia, siin, siit and sinna, seal, sealt. Quiz me with short sentences and correct me."
+		},
+		{
+			"id": "tutor-phone",
+			"title": "On the phone",
+			"tagline": "calling, leaving a message",
+			"glyph": "phone",
+			"brief": "Teach me how a phone call goes in Estonian: answering (Halloo, Mart kuuleb), asking for someone, saying who is calling, asking to call back, leaving a message, spelling a name and saying a number. Role-play a few calls, one to a friend and one to an office, and correct me."
+		},
+		{
+			"id": "tutor-participles",
+			"title": "Tired man, open door: participles",
+			"tagline": "-v, -tav, -nud, -tud",
+			"glyph": "file-text",
+			"brief": "Explain the four Estonian participles used as describing words: -v (elav, living), -tav (loetav, being read), -nud (väsinud, tired; who has done) and -tud (suletud, closed; done), how they agree like adjectives except -nud and -tud, which stay the same (väsinud mehega), and how one can replace a clause (raamat, mida loetakse → loetav raamat). Give me written sentences to rewrite in plain speech and back, and correct me."
 		}
 	],
 	"goals": [
@@ -1844,11 +1969,6 @@
 			"tagline": "who, which, because"
 		},
 		{
-			"id": "can-describe-route",
-			"title": "Can describe where things are",
-			"tagline": "under, behind, out, away"
-		},
-		{
 			"id": "can-retell-news",
 			"title": "Can retell what I heard",
 			"tagline": "reportedly, they say"
@@ -1884,6 +2004,7 @@
 				"present-plural",
 				"lx-words-basic-verbs",
 				"tutor-word-order",
+				"lx-words-countries",
 				"can-introduce-self"
 			]
 		},
@@ -1903,11 +2024,12 @@
 			"id": "whose-is-it",
 			"stage": "a1",
 			"title": "Whose is it",
-			"tagline": "the genitive, three forms of a noun",
+			"tagline": "the genitive, three forms of a noun, stems",
 			"units": [
 				"lx-words-family",
 				"genitive-singular",
 				"tutor-principal-parts",
+				"tutor-gradation",
 				"can-talk-family"
 			]
 		},
@@ -1922,6 +2044,7 @@
 				"adessive-singular",
 				"tutor-habitive",
 				"tutor-there-is",
+				"tutor-pronouns",
 				"can-say-what-i-have"
 			]
 		},
@@ -1957,11 +2080,12 @@
 			"id": "going-places",
 			"stage": "a1",
 			"title": "On, onto, off",
-			"tagline": "the outer place cases",
+			"tagline": "the outer place cases, postpositions",
 			"units": [
 				"allative-singular",
 				"outer-cases",
 				"tutor-place-cases",
+				"tutor-postpositions",
 				"can-travel"
 			]
 		},
@@ -1974,6 +2098,7 @@
 				"ma-or-da",
 				"lx-words-adverbs-time",
 				"tutor-modals",
+				"lx-words-free-time",
 				"can-make-plans"
 			]
 		},
@@ -2005,13 +2130,13 @@
 			"id": "yesterday",
 			"stage": "a2",
 			"title": "Yesterday",
-			"tagline": "the simple past, didn't",
+			"tagline": "the simple past, didn't, verbs with a little word",
 			"units": [
 				"past",
 				"negative-past",
 				"lx-words-time",
 				"lx-words-months",
-				"tutor-gradation",
+				"tutor-particle-verbs",
 				"can-tell-yesterday"
 			]
 		},
@@ -2024,6 +2149,7 @@
 				"partitive-plural",
 				"whole-or-part",
 				"tutor-object-case",
+				"lx-words-clothes",
 				"can-describe-things"
 			]
 		},
@@ -2047,6 +2173,7 @@
 			"units": [
 				"conditional",
 				"tutor-polite-requests",
+				"tutor-phone",
 				"can-request-politely"
 			]
 		},
@@ -2094,6 +2221,7 @@
 				"impersonal",
 				"tutor-impersonal",
 				"lx-words-communication",
+				"lx-words-personal",
 				"can-read-notices"
 			]
 		},
@@ -2111,7 +2239,7 @@
 		},
 		{
 			"id": "linking-ideas",
-			"stage": "b1",
+			"stage": "a2",
 			"title": "Who, which, because",
 			"tagline": "pronouns in cases, linked sentences",
 			"units": [
@@ -2121,22 +2249,12 @@
 			]
 		},
 		{
-			"id": "around-and-away",
-			"stage": "b1",
-			"title": "Under, behind, away",
-			"tagline": "postpositions, particle verbs",
-			"units": [
-				"tutor-postpositions",
-				"tutor-particle-verbs",
-				"can-describe-route"
-			]
-		},
-		{
 			"id": "they-say",
 			"stage": "b1",
 			"title": "They say",
-			"tagline": "the quotative, reported speech",
+			"tagline": "participles, the quotative, reported speech",
 			"units": [
+				"tutor-participles",
 				"tutor-news",
 				"can-retell-news"
 			]
@@ -2153,6 +2271,16 @@
 				"tutor-word-formation",
 				"can-write-formally"
 			]
+		}
+	],
+	"badSentences": [
+		{
+			"id": 3707031,
+			"why": "Mul pean is ungrammatical; the standard sentence is Ma pean selle raamatu lõpuni lugema."
+		},
+		{
+			"id": 3401642,
+			"why": "ühe õlu mixes cases; the standard phrase is ühe õlle võlgu."
 		}
 	]
 }
