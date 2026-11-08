@@ -21,9 +21,11 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
-import { questionOpen, repeatsEarlierText } from "@/src/core";
-import { InkBlot } from "@/components/ink-blot";
+import { CHAT_RECORD_TOOLS, questionOpen, repeatsEarlierText } from "@/src/core";
+import { chatMdComponents } from "@/components/chat-link";
+import { SketchFigure } from "@/components/sketch-figure";
 import { ChatBoard, useDrill } from "@/components/chat-board";
+import { ChatExportMenu } from "@/components/chat-export";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -334,6 +336,12 @@ export function Chat({
 		return () => window.removeEventListener("lh:chat-renamed", onRenamed);
 	}, [chatId]);
 
+	// A chat turn ends right after its record calls, so a steer would wait for the next run; the chat
+	// holds what the learner sends during a turn and sends it the moment the turn is over.
+	const applyTextRef = useRef<(v: string) => void>(() => {});
+	const heldAnswerRef = useRef<string | null>(null);
+	const [heldAnswer, setHeldAnswer] = useState<string | null>(null);
+
 	// The Esc chain's last link: abort the turn. The background runner
 	// decoupled turns from views, so the abort is ALWAYS the remote kill
 	// (POST /api/activity/abort — any in-flight turn dies server-side, our
@@ -342,6 +350,11 @@ export function Chat({
 	// and keeps the partial; the server-side partial persists via the
 	// abort's own onFinish. Inert when nothing runs (busyRef gate).
 	const abortInFlightTurn = useCallback(() => {
+		if (heldAnswerRef.current !== null) {
+			applyTextRef.current(heldAnswerRef.current);
+			heldAnswerRef.current = null;
+			setHeldAnswer(null);
+		}
 		if (localStreamRef.current) stop();
 		void fetch("/api/activity/abort", {
 			method: "POST",
@@ -351,7 +364,7 @@ export function Chat({
 			/* transient — the turn settles on its own; the record poll adopts */
 		});
 		// 409 not_running is the benign raced-settle: the stream's finish
-			// already settled the view (or the poll fallback adopts) — nothing owed.
+		// already settled the view (or the poll fallback adopts) — nothing owed.
 	}, [chatId, stop]);
 	// ESC-abort guard (owner, 2026-10-02): the abort chain opens a confirm
 	// popup EVERYWHERE (streams and pending questions alike). Both window
@@ -552,6 +565,7 @@ export function Chat({
 		textRef.current = v;
 		setText(v);
 	}, []);
+	applyTextRef.current = applyText;
 	// The BYOK setup flow (owner, 2026-09-22): the persistent CTA and the
 	// refusal interception share one SetupDialog mount. `configured` is
 	// seeded server-side (slotsConfigured on the record) and flips on Save.
@@ -1148,6 +1162,21 @@ export function Chat({
 		void send({ type: "text", text: t });
 	};
 
+	useEffect(() => {
+		if (busy || pending || compacting || heldAnswer === null) return;
+		if (error) {
+			applyText(heldAnswer);
+			heldAnswerRef.current = null;
+			setHeldAnswer(null);
+			return;
+		}
+		const answer = heldAnswer;
+		draftRef.current = answer;
+		heldAnswerRef.current = null;
+		setHeldAnswer(null);
+		send({ type: "text", text: answer });
+	}, [busy, pending, compacting, error, heldAnswer, send, applyText]);
+
 	/* STEER VS SEND (owner arc 2026-10-03): a send while a turn runs steers
 	 * it — the quiet queue + the live agent's steering rail; the turn's own
 	 * stream lands the card when pi drains it. The branch is BUSY, not
@@ -1161,6 +1190,15 @@ export function Chat({
 		if (pending || compacting) return;
 		const t = textRef.current.trim();
 		if (!t) return;
+		if (busy && kind === "chat") {
+			applyText("");
+			setHeldAnswer((held) => {
+				const next = held ? `${held}\n${t}` : t;
+				heldAnswerRef.current = next;
+				return next;
+			});
+			return;
+		}
 		if (busy) {
 			applyText("");
 			void steer(t);
@@ -1306,6 +1344,14 @@ export function Chat({
 							{showWorking ? "Hide working" : "Show working"}
 						</button>
 					</Hint>}
+					{messages.length > 0 && (
+						<ChatExportMenu
+							chatId={chatId}
+							title={titleText}
+							messages={messages}
+							nativeMessages={nativeMessages}
+						/>
+					)}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
 					{kind === "chat" ? null : kind === "practice" ? (
@@ -1434,19 +1480,18 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className={kind === "chat" ? "mt-6 font-ui text-xl font-medium leading-snug tracking-tight text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
+										className={kind === "chat" ? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
 												<div className="sr-only">You</div>
 												<div className={kind === "chat" ? "whitespace-pre-wrap" : "lh-prose whitespace-pre-wrap text-foreground"}>
-													<span className={kind === "chat" ? "lh-asked" : undefined}>{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}</span>
+													{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice relative")}>
-									{kind === "chat" && <InkBlot className="absolute top-2.5 -left-6 size-3 text-foreground max-md:hidden" />}
+									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice")}>
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -1469,7 +1514,8 @@ export function Chat({
 												if (
 													part.state === "output-error" &&
 													part.type.startsWith("tool-") &&
-													part.errorText !== "Operation aborted"
+													part.errorText !== "Operation aborted" &&
+													!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
 												) {
 													return (
 														<SystemLine key={`retry-${pi}`} testId="tool-retry">
@@ -1482,7 +1528,7 @@ export function Chat({
 														if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 														return (
 															<div key={part.id || pi} className="lh-source-passage">
-																<MessageResponse>{part.text}</MessageResponse>
+																<MessageResponse {...(kind === "chat" ? { components: chatMdComponents } : {})}>{part.text}</MessageResponse>
 															</div>
 														);
 													}
@@ -1510,6 +1556,11 @@ export function Chat({
 																onOpen={() => setPlanOpen(true)}
 															/>
 														);
+													case "tool-draw": {
+														const drawn = part.state === "output-available" ? (part.output as { svg?: string } | null)?.svg : undefined;
+														if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
+														return part.state !== "output-available" && part.state !== "output-error" && busy ? <SketchFigure key={pi} source="" incomplete /> : null;
+													}
 													case "tool-quiz":
 													case "tool-probe":
 													case "tool-ask_user_question":
@@ -1572,6 +1623,12 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
+							{kind === "chat" && heldAnswer !== null && (
+								<div data-testid="held-answer" className="mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] whitespace-pre-wrap text-ink-3">
+									{heldAnswer}
+									<p className="mt-1 text-xs font-normal tracking-normal text-muted-foreground">Sends when the tutor is done</p>
+								</div>
+							)}
 							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">

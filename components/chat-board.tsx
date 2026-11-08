@@ -10,7 +10,17 @@ import { SketchFigure } from "@/components/sketch-figure";
 import { SpokenPhrase } from "@/components/speech";
 
 function replyTexts(messages: readonly LhViewMessage[]): string[] {
-	return messages.filter((m) => m.role === "assistant").map((m) => m.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join("\n\n"));
+	return messages
+		.filter((m) => m.role === "assistant")
+		.map((m) =>
+			m.parts
+				.flatMap((p) => {
+					if (p.type === "text") return [p.text];
+					const svg = p.type === "tool-draw" && p.state === "output-available" ? (p.output as { svg?: string } | null)?.svg : undefined;
+					return svg ? ["```svg\n" + svg + "\n```"] : [];
+				})
+				.join("\n\n"),
+		);
 }
 
 export function useDrill(messages: readonly LhViewMessage[], title: string) {

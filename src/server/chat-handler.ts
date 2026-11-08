@@ -52,6 +52,9 @@ import type {CallUsage} from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
 import { appendChatAnswer } from "../store/chat-answers.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
+import { appContentNow } from "./app-content.ts";
+import { drawForReply, latestReplyText } from "./drawing.ts";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 
 /** LangHarness: the spaced-review seam every agent's language tools use. */
 const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
@@ -59,6 +62,15 @@ const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: 
 function chatCheckerNote(text: string): string | null {
 	if (activeProfile() !== "slovak" || text.startsWith("[")) return null;
 	return checkerNote(checkSlovak(text, slovakLookup() ?? undefined));
+}
+
+function chatAppContent(chatId: string): string | undefined {
+	try {
+		return appContentNow();
+	} catch (err) {
+		console.error(`[chat ${chatId}] the app's content map could not be read:`, err);
+		return "# What the app has\n\nNot available this turn: say you cannot look up the app's lessons right now.";
+	}
 }
 
 function compactionKind(record: ChatRecord): "teach" | "practice" | "probe" {
@@ -412,6 +424,7 @@ export async function handleChatInput(
 	// split, no plan/question/job tools; the whole registry is
 	// problem + conclude. buildAgent stays honored (the test seam is
 	// uniform across kinds).
+	let turnMessages: () => readonly AgentMessage[] = () => [];
 	const constructed: TeachingAgent = buildAgent
 		? buildAgent({ ...agentOpts, teaching, kind: record.kind })
 		: record.kind === "chat"
@@ -419,6 +432,7 @@ export async function handleChatInput(
 					{
 						review: reviewSeam,
 						answers: { record: (answer) => appendChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
+						drawing: { draw: (brief, signal) => drawForReply({ engine, reply: latestReplyText(turnMessages()), brief, signal, onUsage: collectUsage, chatId }) },
 						jobs: {
 							chatId,
 							jobStore: stores.jobStore,
@@ -426,7 +440,7 @@ export async function handleChatInput(
 							searchAvailable,
 						},
 					},
-					{ ...agentOpts, noteLearnerText: chatCheckerNote },
+					{ ...agentOpts, noteLearnerText: chatCheckerNote, appContent: chatAppContent(chatId) },
 				)
 			: record.kind === "practice"
 			? createPracticeAgent(
@@ -493,6 +507,7 @@ export async function handleChatInput(
 		// run's first LLM call (the native replacement for continuation
 		// coalescing). Settlement still cannot beat the flow below: it needs
 		// a streamed response, which never happens inside the constructor.
+		turnMessages = () => constructed.state.messages;
 		registerLiveAgent(chatId, constructed, input.type !== "steers" && input.type !== "continue",
 			input.type === "steers" ? new Set(appends.map((message) => message.id)) : undefined);
 		// Debug recorder run marker (owner, 2026-10-04): correlates the
