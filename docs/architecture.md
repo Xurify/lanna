@@ -150,7 +150,7 @@ flowchart TB
 - `contracts/graph.ts` — graph domain: ledgers, findings/audit shapes, snapshot, birth-session clusters
 - `contracts/chat.ts` — session records, usage/money channel, settings, handoff text
 - `contracts/jobs.ts` — the ack-and-steer protocol: job records, steer message builders, deterministic steer ids, usage accumulation
-- `contracts/probe.ts` — probe assessment + the shared zod schema
+- `contracts/probe.ts` — probe assessment + the shared schema
 - `contracts/models.ts` — client-safe model-catalog shapes
 - `contracts/practice.ts` — problem sets, reasoning chains, params, grade scores
 
@@ -470,7 +470,7 @@ For ordinary Next web/dev, `src/server/web-subscriptions.ts` composes these same
 | **The persisted record is the only source of truth** — agents are stateless per-turn rebuilds; no unanswered tool call reaches a provider |
 | **Failure containment** — side channels (context, extraction, usage, naming) are fire-and-forget behind try/catch seams; a side-channel failure never touches the response or the persist; the turn registry clears on every path |
 | **Absence is not zero** — unreported tokens, absent prices, absent levels render as absent, never fabricated |
-| **Schema-valid ⇔ parseable** — boundary zod schemas are shared verbatim by producer and consumer |
+| **Schema-valid ⇔ parseable** — boundary schemas are shared verbatim by producer and consumer |
 
 ### Known deviations from the ideal (documented, deliberate or accepted)
 
