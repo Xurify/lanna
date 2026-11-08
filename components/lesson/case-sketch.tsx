@@ -110,7 +110,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -e (práca → práce)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "a" },
 		],
-		exceptions: "A few men end in -a too (hrdina). They follow the masculine pattern: hrdinu. And večera takes -e although it ends in r: večere.",
+		exceptions: "A few men end in -a too (hrdina). They follow the masculine pattern: hrdinu. A few words follow the soft pattern anyway: večera is declined like ulica, so večere.",
 	},
 	loc: {
 		slug: "locative",
@@ -121,6 +121,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "e" },
 		],
+		exceptions: "A few words follow the soft pattern anyway: večera is declined like ulica, so o večeri.",
 	},
 	ins: {
 		slug: "instrumental",
@@ -142,6 +143,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "u" },
 		],
+		exceptions: "A few words follow the soft pattern anyway: večera is declined like ulica, so večeri.",
 	},
 	"acc-people": {
 		slug: "accusative",
