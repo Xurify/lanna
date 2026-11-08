@@ -868,13 +868,34 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 
 Owner's rule: "Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from)."
 
-**How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` and the repo's own skills point to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
+**How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` points to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
 
 ### E72. A session closes to the page it was opened from (2026-11-07, branch `feat/session-close-to-origin`)
 
 The owner closed a grammar drill mid-way and expected to land back on the Grammar atlas; every player's X and Escape went to Today.
 
 **How to apply:** a full-screen session (lesson, listen, speak, watch, the speed strand) keeps the page its session was opened from (`components/origin.tsx` stamps the route on every navigation and skips the session routes themselves) and its close (X, Escape, leave after done) returns there. A lesson paused and rejoined (tutor chat, Today, a reload) keeps the page it was first opened from: the origin rides in the saved lesson. A lesson opened from nowhere keeps Today. The finish screens' own next steps (the score grid, speak's scene board, watch's shelf) stay where they point by themselves.
+
+### E73. A grammar lesson opens on a click-through sketch, drawn in ink (2026-11-07, branch `feat/ink-case-sketches`)
+
+The owner: grammar "feels like review, it should feel like we are learning", then "make them look more like ink graphics, like riddled.ai does".
+
+**How to apply:**
+- A unit lesson that has a case sketch opens on it before rep 1 (`components/lesson/lesson-intro.tsx`): one drawing per preposition’s job, a real sentence with only the case ending lit, one line on why that ending (the noun’s pattern picks it, not the preposition), and a last step with the exceptions and the case page on slovak.wiki. Nothing in it is graded. A restored session and a unit with no sketch skip it. A grammar unit’s first lesson then asks the form first (`GRAMMAR_FIRST_PATTERN`), vocabulary units keep meaning first.
+- Every case with all three genders (genitive, locative, instrumental, dative) has a step for a masculine, a feminine and a neuter word, because the ending follows the word’s gender and a learner who only sees feminine examples will think the rule is about -a. The last step is a table with one row for each kind of word (masculine person, masculine thing, feminine, neuter), not paragraphs: a rule with several parallel cases is shown as a table. Every form was checked against the slovak.wiki case page of its case (2026-11-07; the dative of a neuter word is -u).
+- The drawings are ink, not diagrams: strokes are pen paths with a seeded wobble (`components/lesson/ink-paths.ts`, pure, the same on server and client), a displacement filter roughens the edge, and each stroke draws itself in order (`ink-draw` in `app/globals.css`, off under reduced motion). Line ink is the text color, so Night inverts it; the one thing that matters gets the teal ink and a soft highlighter patch. The lit ending is underlined with the pen, not a CSS underline.
+- The look and the checks are written down as the `ink-drawing` skill (`.claude/skills/ink-drawing/SKILL.md`), with `scripts/ink-contact-sheet.tsx` to see every sketch in Day and Night. Audited 2026-11-07: no two meanings share a picture (k, mám and vidím are three drawings; u has no arrow), an office is not a house, and each object can be named without its caption.
+- A new scene is built from the kit in `components/lesson/ink.tsx` (Figure, House, Box, Loop, Curve, Arrow, Patch, Dot, Note), with a seed per stroke and a delay per layer: scenery, actors, patch, arrow, label. No new font: labels are the app’s own.
+- The visual-maker sub-agent’s prompt asks for the same look (thin near-black strokes, round caps, curved arrows with two-stroke heads, one teal accent and one highlighter patch), on the white background the figure card and its invert switch rely on.
+
+### E74. A grammar claim is sourced, complete, labeled and plain (2026-11-08, branch `feat/ink-case-sketches`)
+
+The owner, after the case walk-throughs: a letter list had come from memory, three genders were shown where Slovak has more patterns (feminine nouns in a consonant, the other neuter patterns), "hard noun" and "men" meant nothing to a learner, "learn which with each word" was said of a rule, and `do Žiliny, v Žiline, Žilinu` read as one case.
+
+**How to apply:**
+- The checklist is the `grammar-explanations` skill (`.claude/skills/grammar-explanations/SKILL.md`): source every form (slovak.wiki case page, then the Wikipedia paradigm tables, then JÚĽŠ), cover each pattern (masculine person and thing, feminine in -a hard and soft, feminine in a consonant, neuter), state the rule before its exceptions, name the case of every example, use only words the learner has, say why a cell is empty.
+- `tests/case-forms.test.ts` holds every walk-through sentence and table row to a paradigm table, requires each rule line to name its case, and fails on terms the learner was not given. Add a word to `FORMS` when you add a form.
+- What no source gives is written in the changelog, not in the app. The same checklist is in the slovak.wiki authoring reference (`slovak-wiki-authoring.md`).
 
 ## Dropped or deferred
 

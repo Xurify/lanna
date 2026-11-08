@@ -625,6 +625,12 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
  *  app's own choice: a lesson that fits one short sitting. */
 export const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
 
+/** The first lesson of a grammar unit, forms first: the case work comes
+ *  before the two vocabulary reps, same multiset as LESSON_PATTERN. A
+ *  lesson that follows the case sketch should test the case. Vocabulary
+ *  units stay on LESSON_PATTERN, where the meaning reps carry their work. */
+export const GRAMMAR_FIRST_PATTERN: ItemKind[] = ["choose", "type", "meaning", "build", "type", "listen", "type", "choose", "build", "listen", "meaning", "type"];
+
 /** Once a unit is known: production almost throughout. Picking a form from
  *  four trains recognizing it; typing it trains producing it, and producing
  *  endings is the gap (reading is ahead of production). */
@@ -800,7 +806,7 @@ export function buildLesson(
 	const info = unitInfo(unit);
 	const stage = opts.stage ?? "new";
 	const length = opts.length ?? LESSON_PATTERN.length;
-	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practiced" ? PRACTICED_PATTERN : LESSON_PATTERN);
+	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practiced" ? PRACTICED_PATTERN : info.kind === "words" ? LESSON_PATTERN : GRAMMAR_FIRST_PATTERN);
 	const pattern = base.slice(0, length);
 	const sourceFor = (u: UnitId, filterGender?: AtlasGender, weakGender?: AtlasGender) => {
 		const raw = candidatesFor(entries, u);

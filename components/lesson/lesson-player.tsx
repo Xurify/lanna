@@ -12,7 +12,7 @@
  * ("Why?"), never in the loop.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookmarkCheckIcon, BookmarkIcon, BrainIcon, ChartColumnIcon, ChevronDownIcon, FlagIcon, LanguagesIcon, LoaderCircleIcon, SnailIcon, TimerIcon, Volume2Icon, WholeWordIcon, XIcon, ZapIcon } from "lucide-react";
@@ -29,6 +29,9 @@ import { COLUMN, Dock, OptionTile, PracticeCard, Pulse, Stat, Stats, TaskFrame a
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
+import { Bridges, BridgesContext } from "@/components/lesson/bridges";
+import { LessonIntro } from "@/components/lesson/lesson-intro";
+import { sketchStages } from "@/components/lesson/case-sketch";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
@@ -49,7 +52,6 @@ import {
 	unitBridges,
 	unitInfo,
 	type AtlasGender,
-	type BridgeLang,
 	type FirstAnswer,
 	type ItemKind,
 	type LessonItem,
@@ -65,44 +67,6 @@ import { shake as shakeEl } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
 
 type Mode = "lesson" | "blitz";
-
-/** The languages the hints bridge to, from the plan (the learner's
- *  profile). A plan built before profiles carried languages reads as
- *  Estonian, the app's first learner. */
-const BridgesContext = createContext<readonly BridgeLang[]>(["et"]);
-
-/** The bridge lines for a unit in the languages the learner knows, one
- *  line each, after the rule (the Estonian, Finnish, Russian or German way
- *  of the same point; src/core/unit-bridges.ts). `compact` (the retry
- *  hint) shows the strongest language and folds the rest behind one line,
- *  so the second try is not under a wall of text. */
-function Bridges({ unit, compact = false }: { unit: UnitId; compact?: boolean }) {
-	const langs = useContext(BridgesContext);
-	const [all, setAll] = useState(false);
-	const lines = unitBridges(unit, langs);
-	if (lines.length === 0) return null;
-	const shown = compact && !all ? lines.slice(0, 1) : lines;
-	const rest = lines.slice(1);
-	return (
-		<>
-			{shown.map((b) => (
-				<p key={b.lang} className="text-muted-foreground" data-testid={`bridge-${b.lang}`}>
-					<span className="font-semibold text-foreground">{b.name}:</span> {b.text}
-				</p>
-			))}
-			{compact && !all && rest.length > 0 && (
-				<button
-					type="button"
-					onClick={() => setAll(true)}
-					className="self-start font-prose text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
-					data-testid="bridges-more"
-				>
-					Show the {rest.map((b) => b.name).join(" and ")} parallels
-				</button>
-			)}
-		</>
-	);
-}
 
 interface Rep {
 	item: LessonItem;
@@ -214,6 +178,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// lesson log keeps): the gaps between answers, each capped.
 	const activeTime = useActiveTime(mode === "blitz" ? "blitz" : "lesson", "interactive");
 	const finishing = useRef(false);
+	const opensOnIntro = Boolean(unit && mode === "lesson" && !focus && sketchStages(unit).length > 0);
+	const [introUp, setIntroUp] = useState(opensOnIntro);
 
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
@@ -230,6 +196,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 			if (!raw) return;
 			const saved = JSON.parse(raw) as SavedLesson;
 			if (!saved.plan || (saved.reps.length === 0 && saved.index === 0 && !saved.current)) return;
+			setIntroUp(false);
 			leaveTarget.current = saved.from ?? readOrigin();
 			setPlan(saved.plan);
 			setIndex(saved.index);
@@ -575,6 +542,27 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 					<span className="font-prose">Picking your sentences…</span>
 				</div>
 			</Frame>
+		);
+	}
+
+	// The learn-first intro: the teach step before rep 1. It owns the frame
+	// until Start practicing; leaving from here drops nothing, so no ask.
+	if (introUp && plan) {
+		return (
+			<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
+				<Frame strip={false}>
+					<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+						<div className={cn(COLUMN, "flex h-16 items-center pt-2")}>
+							<button type="button" aria-label="Leave" onClick={leave} className="-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-ink-3 transition-colors hover:bg-well hover:text-ink-2">
+								<XIcon className="size-5" strokeWidth={1.6} />
+							</button>
+						</div>
+					</div>
+					<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[2vh]" data-testid="lesson-intro">
+						<LessonIntro plan={plan} onStart={() => setIntroUp(false)} />
+					</div>
+				</Frame>
+			</BridgesContext.Provider>
 		);
 	}
 
