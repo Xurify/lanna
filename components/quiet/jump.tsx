@@ -57,7 +57,6 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Milestones", hint: "When you can handle real situations", href: "/milestones", icon: "flag", words: "level exam" },
 	{ title: "Sources", hint: "The research behind each task", href: "/sources", icon: "read", words: "research studies evidence papers references" },
 	{ title: "Ask the tutor", hint: "Any question about the language", href: "/chat/new", icon: "tutor", words: "chat" },
-	{ title: "Map", hint: "The rules behind your lessons", href: "/map", icon: "chart", words: "knowledge graph" },
 ];
 
 function useUnits(active: boolean) {

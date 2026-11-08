@@ -21,7 +21,6 @@ import {
 	HeadphonesIcon,
 	HistoryIcon,
 	type LucideIcon,
-	MapIcon,
 	TableIcon,
 	ZapIcon,
 } from "lucide-react";
@@ -272,7 +271,6 @@ export const NAV_ICONS: Record<NavId, LucideIcon> = {
 	fluency: ZapIcon,
 	words: BookAIcon,
 	grammar: TableIcon,
-	map: MapIcon,
 	progress: ChartNoAxesColumnIcon,
 	milestones: FlagIcon,
 	mistakes: CircleAlertIcon,
