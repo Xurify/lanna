@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { defaultProfile, isLanguageProfile } from "./config.ts";
+import { DEVICE_LANGUAGE_COOKIE, deviceLanguageCookie, languageGone, SHOWN_LANGUAGE_HEADER } from "./src/core/language-guard.ts";
 import { desktopAPIAuthorized, desktopWindowRequest } from "./src/server/desktop-access.ts";
-import { DEVICE_COOKIE, decideAccess, readCookie, tailnetHost } from "./src/server/remote-access.ts";
+import { DEVICE_COOKIE, decideAccess, readCookie, secureRequest, tailnetHost } from "./src/server/remote-access.ts";
 import { readAccess, resolveDevice } from "./src/server/remote-access-store.ts";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -22,7 +24,15 @@ export async function proxy(request: NextRequest) {
 		desktopApiOk: desktopAPIAuthorized(headers),
 		paired: device !== null,
 	});
-	if (decision.action === "allow") return NextResponse.next();
+	if (decision.action === "allow") {
+		const gone = languageGone({ method: request.method, pathname, shown: headers.get(SHOWN_LANGUAGE_HEADER) }, isLanguageProfile);
+		if (gone) return NextResponse.json(gone, { status: 409, headers: NO_STORE });
+		const next = NextResponse.next();
+		if (!pathname.startsWith("/api/") && request.method === "GET" && !isLanguageProfile(readCookie(headers, DEVICE_LANGUAGE_COOKIE))) {
+			next.headers.append("set-cookie", deviceLanguageCookie(defaultProfile(), secureRequest(request.url, headers)));
+		}
+		return next;
+	}
 	const api = pathname.startsWith("/api/");
 	if (decision.action === "pair") {
 		if (api || request.method !== "GET") {

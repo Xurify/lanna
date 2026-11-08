@@ -349,10 +349,12 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 		forget();
 		pendingId.current = entry.id;
 		const off = onSettled(entry.id, (recorded) => {
-			off();
-			if (pendingId.current !== entry.id) return;
-			if (recorded) setRecorded(recorded);
-			else setSaveFailed(true);
+			if (recorded) off();
+			if (pendingId.current !== entry.id) return off();
+			if (recorded) {
+				setRecorded(recorded);
+				setSaveFailed(false);
+			} else setSaveFailed(true);
 		});
 		void flushOutbox(entry.lang);
 	},

@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 8 November: each device keeps its own language (branch `fix/per-device-language`, PR #145)
+
+- **Why:** a language switch on the PC reloaded only the PC. A phone or iPad page still in the old language kept writing, and its writes went into the new language. Rule E75.
+- **What changed:** each device runs its own language. Switching on the PC no longer changes the phone, and the switch is remembered per device. A device that has never switched starts in the last language chosen anywhere. Every page writes into the language it shows, even an old tab on a device that has since switched; it takes the new language when it is loaded again. A switch no longer waits for the tutor or a video preparation, since that work stays in its own language. Only a page whose language was removed refuses to save, and it says so.
+- **Checked:** reproduced first in the sandbox with two browser contexts (Slovak and an added Czech). After the fix, with a phone (iPhone 13 emulation) and a PC, the PC switched to Czech and the phone's lesson and minutes went into Slovak; the phone loaded again in Slovak; an old tab kept Slovak through a client-side navigation and took Czech on a full load. The same rules in `next start`. Full suite green.
+- **Unverified:** on a real phone over Tailscale; and a tutor turn or video preparation running across a switch with a real model (the test covers work started by a request, not the model engine itself).
+
 ## 7 November: grammar lessons open on an ink sketch (branch `feat/ink-case-sketches`)
 
 - **Why:** the owner: grammar felt like review, and the diagrams should look like pen drawings, as riddled.ai’s do. Rule E73.

@@ -79,8 +79,6 @@ export function enqueueLesson(lang: string, body: Record<string, unknown>): Pend
 type Settle = (recorded: Recorded | null) => void;
 const waiters = new Map<string, Set<Settle>>();
 
-/** Called with the server's answer once the entry is recorded, or with null
- *  when the server refuses it for good (the entry is then dropped). */
 export function onSettled(id: string, settle: Settle): () => void {
 	const set = waiters.get(id) ?? new Set<Settle>();
 	set.add(settle);
@@ -92,8 +90,8 @@ export function onSettled(id: string, settle: Settle): () => void {
 
 function settle(id: string, recorded: Recorded | null): void {
 	const set = waiters.get(id);
-	waiters.delete(id);
-	for (const s of set ?? []) s(recorded);
+	if (recorded) waiters.delete(id);
+	for (const s of [...(set ?? [])]) s(recorded);
 }
 
 let running: Promise<void> | null = null;

@@ -7,7 +7,7 @@ import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
 import { SIDEBAR_MAX, SIDEBAR_WIDTH_COOKIE } from "@/lib/sidebar-size";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
-import { readSettingsRecord } from "@/src/server";
+import { activeProfile, readSettingsRecord } from "@/src/server";
 import { activeCourse, type AppearanceSettings } from "@/src/core";
 import Script from "next/script";
 import { ActivityProvider } from "@/components/activity-dock";
@@ -19,6 +19,7 @@ import { ThemeSync } from "@/components/quiet/theme-sync";
 import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
 import { OriginStamp } from "@/components/origin";
 import { OutboxFlush } from "@/components/lesson/outbox-flush";
+import { LanguageGoneNotice } from "@/components/language-gone-notice";
 
 // Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
 // JetBrains Mono stays for code. latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä),
@@ -66,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const vars = appearanceVars(resolveAppearance(appearance));
 	const course = activeCourse();
 	return (
-		<html lang="en" className={`${geist.variable} ${mono.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} style={vars as React.CSSProperties} suppressHydrationWarning>
+		<html lang="en" className={`${geist.variable} ${mono.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} data-lh-language={activeProfile()} style={vars as React.CSSProperties} suppressHydrationWarning>
 			<body className="min-h-dvh antialiased">
 			{/* A language added from the app runs its generated course: the browser
 			    gets the same one as the server before any module of the core loads
@@ -80,6 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 						<ActivityProvider>
 							<AppShell>{children}</AppShell>
 							<TaskNotice />
+							<LanguageGoneNotice />
 						</ActivityProvider>
 					</SidebarProvider>
 				</AppearanceProvider>
