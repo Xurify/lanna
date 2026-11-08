@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
@@ -14,7 +15,7 @@ import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
 import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_WIDTH_COOKIE, clampSidebarWidth } from "@/lib/sidebar-size";
-import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-context";
+import { preloadSettingsDialog, SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-context";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,6 @@ import type { ChatListItem } from "@/src/core";
 import { kbdEventForAction } from "@/src/core";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { stopSpeaking } from "@/components/speech";
-import { SelectionWordBankBar } from "@/components/words/selection-word-bank";
 
 /**
  * Toggleable sidebar — NOT a modal drawer: no backdrop, no focus theft. It
@@ -53,6 +53,9 @@ import { SelectionWordBankBar } from "@/components/words/selection-word-bank";
  */
 import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/src/core";
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
+
+// Only needed once the learner selects text, so it stays out of the first load.
+const SelectionWordBankBar = dynamic(() => import("@/components/words/selection-word-bank").then((m) => m.SelectionWordBankBar), { ssr: false });
 const SIDEBAR_AUTOCLOSE = 900;
 
 /* Phone widths, and touch tablets below lg, in the plain browser: the sidebar becomes
@@ -1147,6 +1150,8 @@ function SessionsSidebar() {
 							<button
 								type="button"
 								onClick={() => openSettings()}
+								onPointerEnter={preloadSettingsDialog}
+								onFocus={preloadSettingsDialog}
 								data-testid="settings-entry"
 								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
 							>
