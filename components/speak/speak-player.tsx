@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, EnterHint, onFocusedControl, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
+import { COLUMN, EnterHint, onFocusedControl, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -328,8 +328,8 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter" && !onFocusedControl(e)) {
-				router.push(readOrigin());
+			if (phase === "done" && e.key === "Enter" && !e.repeat && !onFocusedControl(e)) {
+				router.push("/");
 				return;
 			}
 			if (phase !== "scene" || inField) return;
@@ -654,12 +654,12 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			</h1>
 			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="Repaired (tutor&apos;s call)" value={`${counts.repaired} of ${counts.prompts}`} ink="text-teal-2" />
+				<Stat label="Repaired (tutor&apos;s call)" value={`${counts.repaired} of ${counts.prompts}`} ink={counts.prompts > 0 && counts.repaired >= counts.prompts ? "text-teal-2" : undefined} />
 				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= PRON_GOOD ? "text-teal-2" : s.pron.average >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
-				<Stat label="In your deck" value={String(outcome.queued.length)} ink="text-teal-2" />
+				<Stat label="Added to Review" value={outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} />
 			</Stats>
 			{s.pron && (
-				<p className="mt-2 font-prose text-sm text-muted-foreground" data-testid="speak-pron">
+				<p className="mt-2 font-prose text-sm text-ink-3" data-testid="speak-pron">
 					{s.pron.clear} of {s.pron.lines} spoken {s.pron.lines === 1 ? "line" : "lines"} said clearly (+{SPEAK_CLEAR_XP} XP each){s.pron.engine === "azure" ? ", scored sound by sound" : ""}.
 				</p>
 			)}
@@ -668,29 +668,31 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			{sum && sum.corrections.length > 0 ? (
 				<div className="mt-8">
 					<h2 className="q-sh">Worth fixing, in the tutor&apos;s judgment</h2>
-					<ul className="mt-2 flex flex-col gap-2" data-testid="speak-corrections">
+					<SentenceRows className="mt-2" data-testid="speak-corrections">
 						{sum.corrections.map((c, i) => (
-							<li key={i} className="q-card px-4 py-3">
-								<p className="font-ui text-xs font-[600] text-muted-foreground">{SLIP_LABEL[c.kind]}</p>
-								<p className="mt-1 font-prose text-base text-muted-foreground line-through decoration-2" lang={lang?.code}>
-									{c.yours}
-								</p>
-								<p className="flex items-start gap-2 font-prose text-xl text-foreground" lang={lang?.code}>
-									<button type="button" onClick={() => void speak(c.right).catch(() => {})} aria-label="Play" className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:brightness-110">
-										<Volume2Icon className="size-4" />
-									</button>
-									<span>{c.right}</span>
-								</p>
-								{c.rule && <p className="mt-1 font-prose text-sm text-muted-foreground">{c.rule}</p>}
-							</li>
+							<SentenceRow
+								key={i}
+								sentence={c.right}
+								lang={lang?.code}
+								translation={c.rule}
+								onPlay={() => void speak(c.right).catch(() => {})}
+								note={
+									<>
+										<span>{SLIP_LABEL[c.kind]}</span>
+										<span>
+											You said <s className="text-ink-2 decoration-2" lang={lang?.code}>{c.yours}</s>
+										</span>
+									</>
+								}
+							/>
 						))}
-					</ul>
-					{outcome.queued.length > 0 && <p className="mt-2 font-prose text-sm text-muted-foreground">The words behind them are in your review deck now.</p>}
+					</SentenceRows>
+					{outcome.queued.length > 0 && <p className="mt-2 font-prose text-sm text-ink-3">The words behind them are in Review now.</p>}
 				</div>
 			) : (
 				sum &&
 				(sum.unreadable ? (
-					<p className="mt-6 rounded-xl bg-muted px-4 py-3 font-ui text-sm font-[600] text-muted-foreground" data-testid="speak-unreadable">
+					<p className="mt-6 rounded-xl bg-well px-4 py-3 font-ui text-sm font-[600] text-ink-3" data-testid="speak-unreadable">
 						The summary could not be read, so no fixes are listed.
 					</p>
 				) : (
@@ -706,7 +708,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 						{sum.keep.map((k) => (
 							<li key={k} className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base" lang={lang?.code}>
 								<span>{k}</span>
-								<button type="button" onClick={() => void speak(k).catch(() => {})} aria-label="Play" className="flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+								<button type="button" onClick={() => void speak(k).catch(() => {})} aria-label={`Play: ${k}`} className="flex size-6 items-center justify-center rounded-full text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-11">
 									<Volume2Icon className="size-3.5" />
 								</button>
 							</li>

@@ -7,7 +7,6 @@
 
 export interface Cheer {
 	text: string;
-	/** What it means, word for word, in English. */
 	gloss: string;
 }
 
@@ -54,8 +53,6 @@ export function cheersFor(code: string | undefined): Cheers | null {
 	return (code && CHEERS[code]) || null;
 }
 
-/** The nth praise in the learner's language, or in English when it has none;
- *  `lang` is set only when the text is in the learner's language. */
 export function praiseFor(code: string | undefined, n: number): { text: string; lang: string | undefined } {
 	const own = cheersFor(code);
 	const list = own?.praise ?? ENGLISH_PRAISE;

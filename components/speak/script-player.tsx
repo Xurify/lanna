@@ -12,15 +12,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, EnterHint, onFocusedControl, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
 export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: string }) {
+	const router = useRouter();
 	const lang = useActiveLanguage();
 	const script = scriptFor(sceneId, langId);
 	const [turnIndex, setTurnIndex] = useState(0);
@@ -102,19 +104,25 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 	// Keys 1 to 3 pick an option.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (done) return;
+			if (done) {
+				if (e.key !== "Enter" || e.repeat || onFocusedControl(e)) return;
+				e.preventDefault();
+				router.push(`/speak?scene=${scene}`);
+				return;
+			}
 			const n = Number(e.key);
 			if (n >= 1 && n <= 3) pick(turn.options[n - 1]!, n - 1);
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [pick, turn, done]);
+	}, [pick, turn, done, router, scene]);
 
 	if (done) {
 		return (
 			<TaskFrame>
 				<TaskEnd
 					testId="script-done"
+					hint={<EnterHint>to say it live</EnterHint>}
 					actions={
 						<>
 							<Link href="/speak" className={SECONDARY}>

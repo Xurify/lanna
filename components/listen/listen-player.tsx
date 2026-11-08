@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, EnterHint, onFocusedControl, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, EnterHint, NotSaved, onFocusedControl, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -74,6 +74,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [replays, setReplays] = useState(0);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
 	const startedAt = useRef(Date.now());
 	// Listening is mostly hearing, not clicking: the day's minutes count the
 	// time this tab is visible and focused (`ms` stays the wall-clock).
@@ -94,6 +95,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		setCurrent(null);
 		setPeeked(false);
 		setOutcome(null);
+		setSaveFailed(false);
 		finishing.current = false;
 		try {
 			const res = await fetch("/api/listen");
@@ -188,6 +190,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as Outcome);
 			} catch {
+				setSaveFailed(true);
 				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
 			} finally {
 				setSaving(false);
@@ -243,7 +246,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				return;
 			}
 			if (outcome) {
-				if (e.key === "Enter" && !onFocusedControl(e)) router.push(readOrigin());
+				if (e.key === "Enter" && !onFocusedControl(e)) router.push("/");
 				return;
 			}
 			if (!item) return;
@@ -311,7 +314,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} reps={reps} saving={saving} onAgain={() => void load()} />
+				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} onAgain={() => void load()} />
 			</Frame>
 		);
 	}
@@ -518,7 +521,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 	);
 }
 
-function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps: Rep[]; saving: boolean; onAgain: () => void }) {
+function EndScreen({ outcome, reps, saving, failed, onAgain }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; onAgain: () => void }) {
 	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
@@ -528,7 +531,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 	return (
 		<TaskEnd
 			testId="listen-end"
-			hint={<EnterHint>for Today</EnterHint>}
+			hint={failed ? <NotSaved>This session is not counted.</NotSaved> : <EnterHint>for Today</EnterHint>}
 			actions={
 				<>
 					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
@@ -550,33 +553,33 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 			</h1>
 			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="New words met" value={String(words.length)} ink="text-foreground" />
-				<Stat label="In your deck" value={saving ? "…" : String(outcome.queued.length)} ink="text-foreground" />
+				<Stat label="XP" value={saving ? null : failed ? "Not saved" : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label="New words met" value={String(words.length)} />
+				<Stat label="Added to Review" value={saving ? null : failed ? "Not saved" : outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} ink={failed ? "text-ink-3" : undefined} />
 			</Stats>
 			<Link href="/mistakes#mistakes-listening" className="mt-3 inline-block font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2" data-testid="listen-trends">
 				How your listening is going
 			</Link>
 			{words.length > 0 && (
 				<div className="mt-8">
-					<p className="q-sh">Words you met today</p>
+					<h2 className="q-sh">Words you met today</h2>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{words.map((w) => (
 							<li key={w.lemma} className="rounded-md bg-well px-2.5 py-1 font-prose text-[14px]">
 									<span className="font-[600] text-teal-2" lang={lang?.code}>
 									{w.lemma}
 								</span>
-								{w.gloss && <span className="text-muted-foreground"> · {w.gloss}</span>}
+								{w.gloss && <span className="text-ink-3"> · {w.gloss}</span>}
 							</li>
 						))}
 					</ul>
-					<p className="mt-2 font-prose text-sm text-muted-foreground">They are in your review deck now, so you meet them again before you forget them.</p>
+					<p className="mt-2 font-prose text-sm text-ink-3">They are in Review now, so you meet them again before you forget them.</p>
 				</div>
 			)}
 			{missed.length > 0 && (
 				<div className="mt-8">
-					<p className="q-sh">Worth hearing again</p>
-					<SentenceRows reps={missed} />
+					<h2 className="q-sh">Missed</h2>
+					<ListenRows reps={missed} />
 				</div>
 			)}
 			{understood.length > 0 && (
@@ -585,7 +588,7 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
 						Typed correctly · {understood.length} {understood.length === 1 ? "sentence" : "sentences"}
 					</summary>
-					<SentenceRows reps={understood} />
+					<ListenRows reps={understood} />
 				</details>
 			)}
 			<SourcesNote feature="listen" className="mt-14" />
@@ -593,26 +596,32 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 	);
 }
 
-/** The sentences of a finished session, each with its play button and meaning. */
-function SentenceRows({ reps }: { reps: Rep[] }) {
+function ListenRows({ reps }: { reps: Rep[] }) {
 	const lang = useActiveLanguage();
 	return (
-		<ul className="mt-2 flex flex-col gap-2">
+		<SentenceRows className="mt-2">
 			{reps.map((r) => (
-				<li key={r.item.id} className="q-card flex items-start gap-3 px-4 py-3">
-					<button type="button" onClick={() => void speak(r.item.sentence)} aria-label="Play" className="lh-press mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]">
-						<Volume2Icon className="size-4" strokeWidth={1.6} />
-					</button>
-					<div className="min-w-0">
-						<p className="font-prose text-lg text-foreground" lang={lang?.code}>
-							{r.item.sentence}
-						</p>
-						<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">
-							{r.item.translation}
-						</p>
-					</div>
-				</li>
+				<SentenceRow
+					key={r.item.id}
+					sentence={r.item.sentence}
+					lang={lang?.code}
+					translation={r.item.translation}
+					onPlay={() => void speak(r.item.sentence)}
+					note={
+						r.verdict === "exact" ? undefined : r.verdict === "accents" ? (
+							<span>
+								Accents off: <span className="font-medium text-ink-2" lang={lang?.code}>“{r.given}”</span>
+							</span>
+						) : r.given ? (
+							<span>
+								You typed <span className="font-medium text-miss" lang={lang?.code}>“{r.given}”</span>
+							</span>
+						) : (
+							<span>You didn&apos;t know it</span>
+						)
+					}
+				/>
 			))}
-		</ul>
+		</SentenceRows>
 	);
 }

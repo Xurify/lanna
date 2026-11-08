@@ -20,14 +20,14 @@ describe("an end screen in the task frame (E77)", () => {
 		const heading = html.indexOf("<h1>Done</h1>");
 		const button = html.indexOf("<button");
 		assert.ok(body > 0 && heading > body && button > heading, "result first, then the dock");
-		assert.match(html, /class="flex min-h-0 flex-1 flex-col overflow-y-auto" data-testid="end"/);
+		assert.match(html, /tabindex="-1" role="region" aria-label="Your result" data-task-end="" class="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" data-testid="end"/);
 		assert.match(html, /<kbd[^>]*>Enter<\/kbd> for Today/);
 	});
 
 	it("gives the result and the dock one width, widened together on a large screen", () => {
-		const narrow = render().match(/mx-auto w-full max-w-3xl px-6[^"]*/g) ?? [];
+		const narrow = render().match(/mx-auto w-full max-w-2xl px-6[^"]*/g) ?? [];
 		assert.equal(narrow.length, 2);
-		const wide = render(true).match(/mx-auto w-full max-w-3xl px-6 lg:max-w-5xl/g) ?? [];
+		const wide = render(true).match(/mx-auto w-full max-w-2xl px-6 lg:max-w-5xl/g) ?? [];
 		assert.equal(wide.length, 2);
 	});
 

@@ -35,7 +35,7 @@ import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { EnterHint, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { EnterHint, NotSaved, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { switchLanguage } from "@/components/switch-language";
@@ -100,6 +100,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const [stats, setStats] = useState<SegmentStat[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
 	const startedAt = useRef(Date.now());
 	// The watch clock counts while the video plays, and while the learner works
 	// (a paused line, a question): after GAP_CAP_MS with no action it stops.
@@ -281,6 +282,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		async (all: number[], segStats: SegmentStat[]) => {
 			if (!video || saving) return;
 			setSaving(true);
+			setSaveFailed(false);
 			setStage("end");
 			sfx.done();
 			try {
@@ -293,6 +295,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				setOutcome((await res.json()) as Outcome);
 				void load();
 			} catch {
+				setSaveFailed(true);
 				const correct = video.questions.filter((q, i) => all[i] === q.answer).length;
 				const gotFirst = segStats.filter((s) => s.got === "first").length;
 				const gotAfter = segStats.filter((s) => s.got === "after").length;
@@ -403,7 +406,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End video={video} stats={stats} outcome={outcome} saving={saving} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
+				<End video={video} stats={stats} outcome={outcome} saving={saving} failed={saveFailed} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
 			</Frame>
 		);
 	}
@@ -1239,8 +1242,8 @@ interface SentenceReply {
 function SentenceStep({ videoId, targets }: { videoId: string; targets: SentenceTarget[] }) {
 	return (
 		<section className="mt-10 text-left" data-testid="watch-sentences">
-			<h2 className="font-ui text-lg font-[600] text-foreground">Use the words</h2>
-			<p className="mt-1 font-prose text-sm text-muted-foreground">Write one sentence with each word, in any form. The meaning shows after your first try.</p>
+			<h2 className="q-sh">Use the words</h2>
+			<p className="mt-1 font-prose text-sm text-ink-3">Write one sentence with each word, in any form. The meaning shows after your first try.</p>
 			<ol className="mt-4 flex flex-col gap-3">
 				{targets.map((t) => (
 					<SentenceRow key={t.lemma} videoId={videoId} target={t} />
@@ -1327,14 +1330,14 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	);
 }
 
-function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+function End({ failed, video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; failed: boolean; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
 	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
 	const judged = stats.length;
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome && !onFocusedControl(e)) {
+			if (e.key === "Enter" && !e.repeat && outcome && !onFocusedControl(e)) {
 				e.preventDefault();
 				onShelf();
 			}
@@ -1347,7 +1350,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 	return (
 		<TaskEnd
 			testId="watch-end"
-			hint={<EnterHint>for another video</EnterHint>}
+			hint={failed ? <NotSaved>This session is not counted.</NotSaved> : <EnterHint>for another video</EnterHint>}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>
@@ -1371,7 +1374,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 				{video.title}
 			</p>
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving || !outcome ? null : `+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label="XP" value={saving || !outcome ? null : failed ? "Not saved" : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label={mode === "step" ? "Got the first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)} />
 				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
 			</Stats>
@@ -1384,7 +1387,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 			)}
 			{outcome && (
 				<p className="mt-2 font-prose text-[13px] text-ink-3">
-					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
+					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to Review. ` : ""}
 					The app counts {Math.round(video.coverage * 100)}% of this video's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}

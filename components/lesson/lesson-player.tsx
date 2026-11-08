@@ -25,7 +25,7 @@ import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
-import { COLUMN, Dock, EnterHint, onFocusedControl, OptionTile, PracticeCard, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, EnterHint, NotSaved, onFocusedControl, OptionTile, SentenceRow, SentenceRows, PracticeCard, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
@@ -583,6 +583,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 					failed={saveFailed}
 					onAgain={() => void load()}
 					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}${gender ? `&gender=${gender}` : ""}`))}
+					onRetrySave={() => void flushOutbox(lang?.code ?? "sk")}
 				/>
 			</Frame>
 		);
@@ -693,8 +694,30 @@ function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: num
 	);
 }
 
+type FirstTry = "right" | "almost" | "missed";
+
+function firstTry(rep: Rep): FirstTry {
+	if (rep.verdict === "wrong" || rep.assisted) return "missed";
+	return rep.verdict === "accents" ? "almost" : "right";
+}
+
 function repTone(rep: Rep): string {
-	return rep.verdict === "wrong" ? "bg-miss" : rep.verdict === "accents" ? "bg-teal/60" : "bg-teal";
+	const kind = firstTry(rep);
+	return kind === "missed" ? "bg-miss" : kind === "almost" ? "bg-teal/60" : "bg-teal";
+}
+
+const MARK: Record<FirstTry, string> = {
+	right: "bg-teal",
+	almost: "shadow-[inset_0_0_0_2px_var(--q-teal)]",
+	missed: "shadow-[inset_0_0_0_2px_var(--q-miss)]",
+};
+
+function Mark({ kind, className, style }: { kind: FirstTry; className?: string; style?: React.CSSProperties }) {
+	return (
+		<span className={cn("relative block overflow-hidden", MARK[kind], className)} style={style}>
+			{kind === "almost" && <span className="absolute inset-x-0 bottom-0 h-1/2 bg-teal" />}
+		</span>
+	);
 }
 
 /** The keys that answer this kind of rep, shown beside the actions. Hidden
@@ -1597,6 +1620,7 @@ function EndScreen({
 	failed,
 	onAgain,
 	onNext,
+	onRetrySave,
 }: {
 	mode: Mode;
 	focus?: LessonFocus;
@@ -1607,11 +1631,14 @@ function EndScreen({
 	failed: boolean;
 	onAgain: () => void;
 	onNext: (unit: UnitId) => void;
+	onRetrySave: () => void;
 }) {
 	const { correct, xp, perfect } = score;
-	const accuracy = reps.length ? Math.round((correct / reps.length) * 100) : 0;
+	const firstGo = reps.filter((r) => !r.item.again);
+	const rightFirst = firstGo.filter((r) => firstTry(r) === "right").length;
+	const accuracy = firstGo.length ? Math.round((rightFirst / firstGo.length) * 100) : 0;
 	// One line per sentence: a miss and its "once more" rep are the same item.
-	const missed = reps.filter((r, i) => (r.verdict !== "exact" || r.assisted) && reps.findIndex((o) => o.item.sentence === r.item.sentence) === i);
+	const missed = firstGo.filter((r, i) => firstTry(r) !== "right" && firstGo.findIndex((o) => o.item.sentence === r.item.sentence) === i);
 	// The score is the lesson's own and shows at once. What the server keeps
 	// (streak, goal, unit progress) fills its slot when it lands; each slot
 	// keeps its size until then, so nothing moves.
@@ -1621,33 +1648,35 @@ function EndScreen({
 	const pairs = new Set(reps.map((r) => r.item.pair?.id).filter(Boolean)).size;
 	const wasDone = here ? unitDone(here.lessons - 1, here.accuracy) : false;
 	const nextUnit = recorded ? (recorded.summary.units.find((u) => u.id === recorded.summary.next) ?? null) : null;
-	const stayHere = !!recorded && recorded.summary.next === unit;
+	const goOn = () => onNext(recorded?.summary.next ?? unit);
+	const canGoOn = !!recorded || failed;
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter" || onFocusedControl(e)) return;
+			if (e.key !== "Enter" || e.repeat || onFocusedControl(e)) return;
 			if (mode === "blitz" || focus) {
 				e.preventDefault();
 				onAgain();
-			} else if (recorded) {
+			} else if (canGoOn) {
 				e.preventDefault();
-				onNext(recorded.summary.next);
+				goOn();
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [recorded, mode, focus, onAgain, onNext]);
+	});
 
 	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time's up.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
 	const where = mode === "blitz" ? `${reps.length} answered in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : recorded || failed ? unitInfo(unit).title : "";
-	const cheers = cheersFor(lessonLanguage());
+	const unitComplete = !!here?.done && !wasDone;
+	const cheers = mode === "blitz" || (!focus && !unitComplete) ? cheersFor(lessonLanguage()) : null;
 	const cheer: CheerKey = mode === "blitz" ? (recorded?.newBest ? "newBest" : "timeUp") : perfect ? "perfect" : "done";
 	const stamps = recorded?.newStamps ?? [];
 	const split = missed.length > 0;
 	const toGoal = recorded ? Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp) : 0;
 	const queued = recorded?.queued.length ?? 0;
 	const enterHint = mode === "blitz" ? "to go again" : focus ? "for another round" : "for the next lesson";
-	const nextLabel = mode === "blitz" ? "Go again" : focus ? "Another round" : !recorded || stayHere || !nextUnit ? "Next lesson" : `Next: ${nextUnit.title}`;
+	const nextLabel = mode === "blitz" ? "Go again" : focus ? "Another round" : "Next lesson";
 
 	return (
 		<TaskEnd
@@ -1655,9 +1684,7 @@ function EndScreen({
 			wide={split}
 			hint={
 				failed && !recorded ? (
-					<p className="font-prose text-[13px] text-ink-3" role="status">
-						Not saved yet. The app will try again.
-					</p>
+					<NotSaved onRetry={onRetrySave}>The app keeps trying.</NotSaved>
 				) : (
 					<EnterHint>{enterHint}</EnterHint>
 				)
@@ -1672,8 +1699,8 @@ function EndScreen({
 							{nextLabel}
 						</button>
 					) : (
-						<button type="button" disabled={!recorded} onClick={() => recorded && onNext(recorded.summary.next)} className={cn(PRIMARY, "min-w-0")} data-testid="lesson-next">
-							<span className="truncate">{nextLabel}</span>
+						<button type="button" disabled={!canGoOn} onClick={goOn} className={PRIMARY} data-testid="lesson-next">
+							{nextLabel}
 						</button>
 					)}
 				</>
@@ -1688,8 +1715,8 @@ function EndScreen({
 					<h1 className="q-hello">
 						{cheers ? (
 							<>
-								<span lang={lessonLanguage()}>{cheers[cheer].text}</span>
-								<span className="ml-2.5 font-ui text-[15px] font-[550] tracking-normal text-ink-2">{cheers[cheer].gloss}</span>
+								<span lang={lessonLanguage()}>{cheers[cheer].text}</span>{" "}
+								<span className="ml-1 font-ui text-[15px] font-[550] tracking-normal text-ink-2">{cheers[cheer].gloss}</span>
 							</>
 						) : (
 							title
@@ -1697,7 +1724,7 @@ function EndScreen({
 					</h1>
 					<div className="mt-2 flex min-h-7 flex-wrap items-center gap-x-3.5 gap-y-1.5">
 						<p className="q-line dim" data-testid="lesson-end-where">
-							{where}
+							{where || <Pulse className="h-4 w-28 align-middle" />}
 						</p>
 						{mode === "lesson" && !focus && !here?.done && (
 							<ol className="q-dots ml-0" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
@@ -1715,15 +1742,15 @@ function EndScreen({
 				<section className={cn("mt-10 [grid-area:score]", split && "lg:sticky lg:top-16 lg:self-start")} aria-label="Your score" data-testid="lesson-end-score">
 					<p className="flex items-baseline gap-2.5">
 						<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">{mode === "blitz" ? correct : `${accuracy}%`}</span>
-						<span className="font-ui text-[15px] font-[550] text-ink-2">right</span>
+						<span className="font-ui text-[15px] font-[550] text-ink-2">{mode === "blitz" ? "right" : "right the first time"}</span>
 					</p>
 					{reps.length > 0 && <RepStrip reps={reps} />}
 					<Stats className="mt-7 max-w-none">
 						<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
 						{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
-						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : null} ink={goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
-						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
-						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : null} />
+						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "–" : null} ink={goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
+						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "–" : null} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
+						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "–" : null} />
 					</Stats>
 				</section>
 
@@ -1731,15 +1758,15 @@ function EndScreen({
 					<section className="mt-12 [grid-area:list] lg:mt-10" aria-labelledby="lesson-worked" data-testid="lesson-end-worked" data-word-lookup-enabled="true">
 						<h2 id="lesson-worked" className="q-sh mb-0">
 							<QIcon name="rule" />
-							What you worked for
+							Missed
 							<small>{missed.length}</small>
 						</h2>
 						<p className="mt-1 font-prose text-[14px] text-ink-3">A miss you then got right is the rep that sticks.</p>
-						<ul className="mt-2 divide-y divide-[var(--q-line)]">
+						<SentenceRows className="mt-2">
 							{missed.map((r) => (
 								<WorkedRow key={r.item.id} rep={r} back={reps.find((o) => o.item.again && o.item.sentence === r.item.sentence)} />
 							))}
-						</ul>
+						</SentenceRows>
 					</section>
 				)}
 			</div>
@@ -1776,6 +1803,7 @@ function NewStamps({ stamps }: { stamps: StampState[] }) {
 								<span lang={lessonLanguage()} title={st.line}>
 									{st.name}
 								</span>
+								<span className="sr-only">: {st.line}</span>
 							</span>
 						))}
 					</p>
@@ -1788,18 +1816,15 @@ function NewStamps({ stamps }: { stamps: StampState[] }) {
 function RepStrip({ reps }: { reps: Rep[] }) {
 	const firstGo = reps.filter((r) => !r.item.again);
 	const cameBack = reps.filter((r) => r.item.again);
-	const backRight = cameBack.filter((r) => r.verdict !== "wrong").length;
-	const count = (verdict: RepVerdict) => reps.filter((r) => r.verdict === verdict).length;
-	const keys = [
-		{ tone: "bg-teal", n: count("exact"), label: "right" },
-		{ tone: "bg-teal/60", n: count("accents"), label: "almost" },
-		{ tone: "bg-miss", n: count("wrong"), label: "missed" },
-	].filter((k) => k.n > 0);
+	const backRight = cameBack.filter((r) => firstTry(r) === "right").length;
+	const keys = (["right", "almost", "missed"] as const).map((kind) => ({ kind, n: firstGo.filter((r) => firstTry(r) === kind).length })).filter((k) => k.n > 0);
 	const step = Math.min(14, 280 / reps.length);
 	const tiles = (group: Rep[], offset: number) => (
 		<ol className={cn("flex h-7 min-w-0", reps.length > 24 ? "gap-px" : "gap-[3px]")} style={{ flex: `${group.length} 1 0` }}>
 			{group.map((r, i) => (
-				<li key={i} className={cn("lh-tile flex-1 rounded-[3px]", repTone(r))} style={{ animationDelay: `${Math.round((offset + i) * step)}ms` }} />
+				<li key={i} className="flex-1">
+					<Mark kind={firstTry(r)} className="lh-tile h-full rounded-[3px]" style={{ animationDelay: `${Math.round((offset + i) * step)}ms` }} />
+				</li>
 			))}
 		</ol>
 	);
@@ -1812,9 +1837,9 @@ function RepStrip({ reps }: { reps: Rep[] }) {
 			<figcaption className="mt-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3">
 				<span className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
 					{keys.map((k) => (
-						<span key={k.label} className="flex items-center gap-1.5">
-							<span className={cn("size-2 rounded-[2px]", k.tone)} aria-hidden="true" />
-							{k.n} {k.label}
+						<span key={k.kind} className="flex items-center gap-1.5">
+							<Mark kind={k.kind} className="size-2.5 rounded-[2px]" />
+							{k.n} {k.kind}
 						</span>
 					))}
 				</span>
@@ -1828,13 +1853,11 @@ function RepStrip({ reps }: { reps: Rep[] }) {
 	);
 }
 
-const PLAY_QUIET = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
-
 function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
 	const { item, verdict, given } = rep;
 	const target = lessonLanguage();
 	const answerLang = item.kind === "meaning" || item.task?.kind === "grid" ? undefined : target;
-	const firstTry = rep.first?.verdict === "wrong" ? rep.first.given : "";
+	const firstAnswer = rep.first?.verdict === "wrong" ? rep.first.given : "";
 	const quoted = (text: string, ink: string) => (
 		<span className={cn("font-medium", ink)} lang={answerLang}>
 			“{text}”
@@ -1844,7 +1867,7 @@ function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
 		verdict === "wrong" ? (
 			given ? (
 				<span>
-					{item.kind === "meaning" ? "You picked" : "You wrote"} {quoted(given, "text-miss")}
+					{item.kind === "meaning" || item.kind === "choose" ? "You picked" : item.kind === "build" ? "You built" : "You wrote"} {quoted(given, "text-miss")}
 				</span>
 			) : (
 				<span>You didn&apos;t know it</span>
@@ -1852,36 +1875,33 @@ function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
 		) : verdict === "accents" ? (
 			<span>Accents off: {quoted(given, "text-ink-2")}</span>
 		) : (
-			<span>{rep.first?.peeked ? "Right after you looked at the meaning" : firstTry ? <>Right on the second try · first try {quoted(firstTry, "text-miss")}</> : "Right with help"}</span>
+			<span>{rep.first?.peeked ? "Right after you looked at the meaning" : firstAnswer ? <>Right on the second try · first try {quoted(firstAnswer, "text-miss")}</> : "Right with help"}</span>
 		);
 	return (
-		<li className="flex items-start gap-4 py-4">
-			<button type="button" onClick={() => void speak(item.sentence)} className={PLAY_QUIET} aria-label={`Play: ${item.sentence}`} title="Play">
-				<Volume2Icon className="size-4" strokeWidth={1.6} />
-			</button>
-			<div className="min-w-0 flex-1">
-				<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={target}>
-					{item.before}
-					<b className="font-semibold text-teal-2">{item.pair ? (item.form ?? item.answer) : item.answer}</b>
-					{item.after}
-				</p>
-				<p data-no-word-lookup="true" className="mt-0.5 font-prose text-[15px] text-ink-3">
-					{item.translation}
-				</p>
-				<p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3" data-no-word-lookup="true">
+		<SentenceRow
+			sentence={item.sentence}
+			lang={target}
+			translation={item.translation}
+			onPlay={() => void speak(item.sentence)}
+			note={
+				<>
 					{attempt}
 					{back &&
-						(back.verdict === "wrong" ? (
+						(firstTry(back) === "missed" ? (
 							<span className="text-miss">Missed again when it came back</span>
 						) : (
 							<span className="flex items-center gap-1 text-teal-2">
 								<QIcon name="check" className="size-3.5" />
-								{back.verdict === "accents" ? "Almost, when it came back" : "Right when it came back"}
+								{firstTry(back) === "almost" ? "Almost, when it came back" : "Right when it came back"}
 							</span>
 						))}
-				</p>
-			</div>
-		</li>
+				</>
+			}
+		>
+			{item.before}
+			<b className="font-semibold text-teal-2">{item.pair ? (item.form ?? item.answer) : item.answer}</b>
+			{item.after}
+		</SentenceRow>
 	);
 }
 
@@ -1897,7 +1917,7 @@ function knownLine(known: LessonItem["known"]): string | undefined {
 /** The line under the end-screen heading (the unit is named above it):
  *  lesson N of 3, or the unit is done and here is what follows. */
 function whereLine(here: { title: string; lessons: number; done: boolean; accuracy: number | null }, next: { id: UnitId; title: string } | null): string {
-	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE}`;
-	if (here.lessons === LESSONS_TO_COMPLETE || !next || next.title === here.title) return `${here.title} is done · ${here.lessons} lessons · ${Math.round((here.accuracy ?? 0) * 100)}% right`;
+	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE}${next && next.title !== here.title ? ` · Up next: ${next.title}` : ""}`;
+	if (here.lessons === LESSONS_TO_COMPLETE || !next || next.title === here.title) return `${here.title} is done · ${here.lessons} lessons`;
 	return `${here.title} is done. Up next: ${next.title}`;
 }

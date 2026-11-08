@@ -62,6 +62,31 @@ describe("lesson outbox", () => {
 		assert.equal(waiting().length, 1);
 	});
 
+	it("tells the end screen at once when a save fails, and again when a later try lands", async () => {
+		replies = [{ status: 500 }, { status: 200 }];
+		const entry = outbox.enqueueLesson("sk", { unit: "loc" });
+		const told: Array<{ queued: string[] } | null> = [];
+		outbox.onSettled(entry.id, (r) => told.push(r));
+		await outbox.flushOutbox("sk");
+		assert.deepEqual([...told], [null], "the screen learns the save failed instead of waiting");
+		await outbox.flushOutbox("sk");
+		assert.equal(told.length, 2);
+		assert.deepEqual(told[1]?.queued, ["vták"]);
+		assert.deepEqual(waiting(), []);
+	});
+
+	it("tells every waiting lesson when the server is down, not only the oldest", async () => {
+		replies = ["network"];
+		const older = outbox.enqueueLesson("sk", { unit: "loc" });
+		const newer = outbox.enqueueLesson("sk", { unit: "gen" });
+		const told: string[] = [];
+		outbox.onSettled(older.id, (r) => r === null && told.push("older"));
+		outbox.onSettled(newer.id, (r) => r === null && told.push("newer"));
+		await outbox.flushOutbox("sk");
+		assert.deepEqual(told.sort(), ["newer", "older"]);
+		assert.equal(sent.length, 1, "one try per run while the server is down");
+	});
+
 	it("keeps the lesson when the connection drops", async () => {
 		replies = ["network"];
 		outbox.enqueueLesson("sk", { unit: "loc" });

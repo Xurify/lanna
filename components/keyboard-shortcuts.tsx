@@ -63,6 +63,7 @@ export function KeyboardShortcuts() {
 			// the default action runs after dispatch, so suppressing it here
 			// works from any focus.
 			if (e.key === "Tab") {
+				if (document.querySelector("[data-task-end]")) return;
 				e.preventDefault();
 				if (e.shiftKey) window.dispatchEvent(new CustomEvent("lh:kbd-cycle-thinking"));
 				// Plain Tab cycles the active surface's text fields (owner,

@@ -23,13 +23,13 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LoaderCircleIcon, MicIcon, MicOffIcon, RepeatIcon, TimerIcon, Volume2Icon } from "lucide-react";
+import { CheckIcon, LoaderCircleIcon, MicIcon, MicOffIcon, RepeatIcon, TimerIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
-import { COLUMN, Centered, Dock, EnterHint, onFocusedControl, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, Centered, Dock, EnterHint, onFocusedControl, OptionTile, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -154,11 +154,11 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") return router.push(readOrigin());
 			if (e.key === "Enter") {
-				if (phase === "done" && onFocusedControl(e)) return;
+				if (phase === "done" && (e.repeat || onFocusedControl(e))) return;
 				e.preventDefault();
 				if (phase === "intro" && plan) begin();
 				else if (phase === "reading") stop();
-				else if (phase === "done" && !onFocusedControl(e)) router.push(readOrigin());
+				else if (phase === "done" && !onFocusedControl(e)) router.push("/");
 			} else if (phase === "question" && plan) {
 				const n = Number(e.key);
 				if (n >= 1 && n <= plan.question.options.length) void answer(n - 1);
@@ -342,7 +342,7 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 	const h = 72;
 	return (
 		<div className="mt-6" data-testid="reread-history">
-			<p className="q-sh">Your pace on this episode</p>
+			<h2 className="q-sh">Your pace on this episode</h2>
 			<div className="relative mt-2 flex h-[72px] items-end gap-2">
 				<div className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]" style={{ bottom: `${(target / max) * h}px` }} aria-hidden="true" />
 				{history.map((x, i) => (
@@ -625,7 +625,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter") return onFocusedControl(e) ? undefined : router.push(readOrigin());
+			if (phase === "done" && e.key === "Enter") return e.repeat || onFocusedControl(e) ? undefined : router.push("/");
 			if (e.key === " " || e.key === "Enter") {
 				e.preventDefault();
 				if (phase === "ready") void startPass();
@@ -716,8 +716,8 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						</h1>
 						<Stats className="mt-7 max-w-none">
 							<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
-							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-teal-2" />
-							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink="text-teal-2" />}
+							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink={made === reps.length * FAST_PASSES ? "text-teal-2" : undefined} />
+							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink={outcome.pace.last > outcome.pace.first ? "text-teal-2" : undefined} />}
 							{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear enough`} ink={avg >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
 						</Stats>
 					{outcome?.pace && (
@@ -737,30 +737,25 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							</p>
 						)}
 						<PronWorkOn report={outcome?.report} />
-						<ul className="mt-8 flex flex-col gap-2" data-testid="fast-reps">
-						{reps.map((r) => (
-							<li key={r.itemId} className="q-card px-4 py-3">
-								<div className="flex items-start gap-3">
-									<button type="button" onClick={() => void speak(r.sentence).catch(() => {})} aria-label="Play" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]">
-										<Volume2Icon className="size-4" strokeWidth={1.6} />
-									</button>
-									<div className="min-w-0 flex-1">
-										<p className="font-prose text-lg text-foreground" lang={lang?.code}>
-											{r.sentence}
-										</p>
-										<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">{r.translation}</p>
-									</div>
-									<div className="flex gap-1.5" aria-label="Passes">
-										{r.passes.map((p, i) => (
-											<span key={i} className={cn("rounded-md px-1.5 py-0.5 font-ui text-xs font-bold tabular-nums", p.made ? "bg-teal-wash text-teal-2" : "bg-miss-soft text-miss")} title={`${(p.ms / 1000).toFixed(1)} s of ${(p.window / 1000).toFixed(1)} s${p.pron ? ` · ${p.pron.overall} clear` : ""}${p.heard ? ` · heard: ${p.heard}` : ""}${p.inWindow && !p.made ? " · in the window but not clear" : ""}`}>
-												{(p.ms / 1000).toFixed(1)}s{p.pron ? ` · ${p.pron.overall}` : ""}
-											</span>
-										))}
-									</div>
-								</div>
-							</li>
-						))}
-					</ul>
+						<SentenceRows className="mt-8">
+							{reps.map((r) => (
+								<SentenceRow
+									key={r.itemId}
+									sentence={r.sentence}
+									lang={lang?.code}
+									translation={r.translation}
+									onPlay={() => void speak(r.sentence).catch(() => {})}
+									note={r.passes.map((p, i) => (
+										<span key={i} className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold tabular-nums", p.made ? "bg-teal-wash text-teal-2" : "bg-miss-soft text-miss")}>
+											{p.made ? <CheckIcon className="size-3" strokeWidth={2.4} aria-hidden="true" /> : <XIcon className="size-3" strokeWidth={2.4} aria-hidden="true" />}
+											<span className="sr-only">{p.made ? "Made it:" : "Missed:"} </span>
+											{(p.ms / 1000).toFixed(1)} of {(p.window / 1000).toFixed(1)} s{p.pron ? ` · clear ${p.pron.overall}` : ""}
+											{p.inWindow && !p.made ? " · not clear" : ""}
+										</span>
+									))}
+								/>
+							))}
+						</SentenceRows>
 					{error && (
 						<p className="mt-4 rounded-[10px] bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert">
 							{error}

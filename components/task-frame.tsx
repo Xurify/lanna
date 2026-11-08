@@ -9,13 +9,14 @@
  * stat row the end screens use.
  */
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { XIcon } from "lucide-react";
+import { Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
-import { KBD } from "@/components/ui/learn-buttons";
+import { KBD, QUIET, SMALL } from "@/components/ui/learn-buttons";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -114,11 +115,15 @@ export function Dock({ tone = "plain", children, testId, live }: { tone?: "plain
 	);
 }
 
-export function TaskEnd({ children, actions, hint, wide = false, testId }: { children: React.ReactNode; actions: React.ReactNode; hint?: React.ReactNode; wide?: boolean; testId?: string }) {
-	const column = cn("mx-auto w-full max-w-3xl px-6", wide && "lg:max-w-5xl");
+export function TaskEnd({ children, actions, hint, wide = false, label = "Your result", testId }: { children: React.ReactNode; actions: React.ReactNode; hint?: React.ReactNode; wide?: boolean; label?: string; testId?: string }) {
+	const column = cn("mx-auto w-full max-w-2xl px-6", wide && "lg:max-w-5xl");
+	const body = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (document.activeElement === null || document.activeElement === document.body) body.current?.focus({ preventScroll: true });
+	}, []);
 	return (
 		<>
-			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto" data-testid={testId}>
+			<div ref={body} tabIndex={-1} role="region" aria-label={label} data-task-end="" className="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" data-testid={testId}>
 				<div className={cn(column, "q-rise my-auto pb-12 pt-16")}>{children}</div>
 			</div>
 			<Dock>
@@ -128,6 +133,56 @@ export function TaskEnd({ children, actions, hint, wide = false, testId }: { chi
 				</div>
 			</Dock>
 		</>
+	);
+}
+
+const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+
+export function SentenceRows({ children, className, "data-testid": testId }: { children: React.ReactNode; className?: string; "data-testid"?: string }) {
+	return (
+		<ul className={cn("divide-y divide-[var(--q-line)]", className)} data-testid={testId}>
+			{children}
+		</ul>
+	);
+}
+
+export function SentenceRow({ sentence, lang, translation, note, onPlay, children }: { sentence: string; lang?: string; translation?: string; note?: React.ReactNode; onPlay: () => void; children?: React.ReactNode }) {
+	return (
+		<li className="flex items-start gap-4 py-4">
+			<button type="button" onClick={onPlay} className={PLAY_ROW} aria-label={`Play: ${sentence}`} title="Play">
+				<Volume2Icon className="size-4" strokeWidth={1.6} />
+			</button>
+			<div className="min-w-0 flex-1">
+				<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={lang}>
+					{children ?? sentence}
+				</p>
+				{translation && (
+					<p data-no-word-lookup="true" className="mt-0.5 font-prose text-[15px] text-ink-3">
+						{translation}
+					</p>
+				)}
+				{note && (
+					<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3" data-no-word-lookup="true">
+						{note}
+					</div>
+				)}
+			</div>
+		</li>
+	);
+}
+
+export function NotSaved({ onRetry, children }: { onRetry?: () => void; children?: React.ReactNode }) {
+	return (
+		<p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-prose text-[13px] text-ink-3" role="status">
+			<span>
+				Not saved yet.{children ? <> {children}</> : null}
+			</span>
+			{onRetry && (
+				<button type="button" onClick={onRetry} className={cn(QUIET, SMALL)}>
+					Try again
+				</button>
+			)}
+		</p>
 	);
 }
 

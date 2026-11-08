@@ -25,7 +25,7 @@ import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, Sea
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { EnterHint, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { EnterHint, NotSaved, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -74,6 +74,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
 	const startedAt = useRef(Date.now());
 	// Reading is mostly not clicking: the day's minutes count the time this
 	// tab is visible and focused while an episode is being read or its
@@ -141,6 +142,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		async (all: number[]) => {
 			if (!story || saving) return;
 			setSaving(true);
+			setSaveFailed(false);
 			setStage("end");
 			sfx.done();
 			try {
@@ -153,6 +155,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 				setOutcome((await res.json()) as Outcome);
 				void load();
 			} catch {
+				setSaveFailed(true);
 				const g = gradeAnswers(story.questions, all);
 				setOutcome({ xp: readXp(story.sentences.length, g.correct, false), ...g, queued: [], reread: false });
 			} finally {
@@ -230,7 +233,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} outcome={outcome} saving={saving} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End story={story} tapped={tapped} outcome={outcome} saving={saving} failed={saveFailed} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
 			</Frame>
 		);
 	}
@@ -595,7 +598,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+function End({ failed, story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; failed: boolean; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
 	const lang = useActiveLanguage();
 	const looked = useMemo(() => {
 		const seen = new Set<string>();
@@ -610,7 +613,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 	}, [story, tapped]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome && !onFocusedControl(e)) {
+			if (e.key === "Enter" && !e.repeat && outcome && !onFocusedControl(e)) {
 				e.preventDefault();
 				if (unreadLeft) onNext();
 				else onShelf();
@@ -623,7 +626,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 	return (
 		<TaskEnd
 			testId="read-end"
-			hint={<EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
+			hint={failed ? <NotSaved>This session is not counted.</NotSaved> : <EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>
@@ -648,18 +651,18 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 				<QIcon name="read" className="text-teal" />
 				Read · done
 			</p>
-			<h1 className="q-hello">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
+			<h1 className="q-hello">{outcome?.reread ? "Episode read again!" : "Episode read!"}</h1>
 			<p className="q-line dim mt-2" lang={lang?.code}>
 				{story.title}
 			</p>
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving || !outcome ? null : `+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label="XP" value={saving || !outcome ? null : failed ? "Not saved" : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
 				<Stat label="Words" value={String(story.wordCount)} />
 			</Stats>
 			{outcome && (
 				<p className="mt-3 font-prose text-[13px] text-ink-3">
-					{outcome.queued.length > 0 ? `${outcome.queued.length} new word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
+					{outcome.queued.length > 0 ? `${outcome.queued.length} new word${outcome.queued.length === 1 ? "" : "s"} added to Review. ` : ""}
 					The app counts {Math.round(story.coverage * 100)}% of this episode's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
@@ -674,7 +677,7 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{w.lemma}
 										</span>{" "}
-										<span className="text-muted-foreground">{w.gloss}</span>
+										<span className="text-ink-3">{w.gloss}</span>
 									</li>
 								))}
 							</ul>
@@ -689,17 +692,17 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{t.lemma ?? t.text}
 										</span>{" "}
-										<span className="text-muted-foreground">{t.gloss ?? ""}</span>
+										<span className="text-ink-3">{t.gloss ?? ""}</span>
 									</li>
 								))}
-								{looked.length > 8 && <li className="font-prose text-sm text-muted-foreground">and {looked.length - 8} more</li>}
+								{looked.length > 8 && <li className="font-prose text-sm text-ink-3">and {looked.length - 8} more</li>}
 							</ul>
 						</section>
 					)}
 				</div>
 			)}
 			<SourcesNote feature="read" className="mt-14" />
-			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">New stories are written in the background and wait in the library.</p>}
+			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-ink-3">New stories are written in the background and wait in the library.</p>}
 		</TaskEnd>
 	);
 }
