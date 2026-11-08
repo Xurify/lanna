@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { QIcon } from "@/components/quiet/icon";
 import { insertAtCaret } from "@/components/diacritic-bar";
 import { useSidebar } from "@/components/sidebar";
-import { useSettingsDialog } from "@/components/settings/settings-dialog";
+import { useSettingsDialog } from "@/components/settings/settings-context";
 import { fuzzyScore } from "@/src/core";
 import { cn } from "@/lib/utils";
 

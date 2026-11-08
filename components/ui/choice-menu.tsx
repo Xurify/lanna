@@ -43,7 +43,7 @@ export function ChoiceMenu({
 		<div ref={root} className={cn("relative", className)}>
 			<button
 				type="button"
-				aria-label={ariaLabel}
+				aria-label={`${ariaLabel}: ${current?.label ?? ""}`}
 				aria-haspopup="listbox"
 				aria-expanded={open}
 				onClick={() => setOpen((v) => !v)}

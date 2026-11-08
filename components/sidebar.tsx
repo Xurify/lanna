@@ -14,7 +14,7 @@ import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
 import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_WIDTH_COOKIE, clampSidebarWidth } from "@/lib/sidebar-size";
-import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
+import { SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-context";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -884,7 +884,7 @@ function SessionsSidebar() {
 						</Hint>
 					</div>
 				)}
-				<div aria-hidden={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
+				<div inert={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}

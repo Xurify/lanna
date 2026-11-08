@@ -749,7 +749,7 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-16 pt-8 [scrollbar-gutter:stable]">
 			<div className={cn(COLUMN, "max-w-3xl lh-rise")} data-testid="read-shelf-list">
-				<Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
 					<XIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>

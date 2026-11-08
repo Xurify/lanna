@@ -26,7 +26,7 @@ import { DayRail, greeting, todayDate, taskIcon, taskLabel, words, type Summary 
 import { SidebarToggle } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
-import { useSettingsDialog } from "@/components/settings/settings-dialog";
+import { useSettingsDialog } from "@/components/settings/settings-context";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { DaySplit } from "@/components/day-split";
