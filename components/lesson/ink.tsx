@@ -87,14 +87,42 @@ export function Figure({ x, ground, seed, tone = "graphite", delay = 0, reach }:
 	);
 }
 
-export function House({ x, ground, seed, delay = 0 }: { x: number; ground: number; seed: number; delay?: number }) {
+export function House({ x, ground, seed, delay = 0, kind = "home" }: { x: number; ground: number; seed: number; delay?: number; kind?: "home" | "school" | "office" }) {
+	if (kind === "office") {
+		const top = ground - 82;
+		return (
+			<g>
+				<Box x={x} y={top} width={62} height={82} seed={seed} tone="soft" delay={delay} />
+				{[0, 1, 2].map((row) =>
+					[0, 1].map((col) => (
+						<Box key={`${row}-${col}`} x={x + 10 + col * 26} y={top + 10 + row * 16} width={16} height={10} seed={seed + 20 + row * 2 + col} tone="soft" opacity={0.7} delay={delay + 0.25 + row * 0.05} />
+					)),
+				)}
+				<Curve points={[[x + 25, ground], [x + 25, ground - 22], [x + 37, ground - 22], [x + 37, ground]]} seed={seed + 12} tone="soft" delay={delay + 0.4} />
+			</g>
+		);
+	}
 	const top = ground - 50;
 	return (
 		<g>
 			<Box x={x} y={top} width={58} height={50} seed={seed} tone="soft" delay={delay} />
 			<Curve points={[[x - 7, top + 1], [x + 29, top - 26], [x + 65, top + 1]]} seed={seed + 11} tone="soft" delay={delay + 0.2} />
 			<Curve points={[[x + 24, ground], [x + 24, ground - 24], [x + 36, ground - 24], [x + 36, ground]]} seed={seed + 12} tone="soft" delay={delay + 0.35} />
+			{kind === "school" && (
+				<>
+					<Line from={[x + 29, top - 25]} to={[x + 29, top - 46]} seed={seed + 13} tone="soft" delay={delay + 0.45} />
+					<Curve points={[[x + 29, top - 46], [x + 42, top - 43], [x + 29, top - 36]]} seed={seed + 14} tone="soft" delay={delay + 0.5} />
+				</>
+			)}
 		</g>
+	);
+}
+
+export function PenRule({ delay = 0, className }: { delay?: number; className?: string }) {
+	return (
+		<svg viewBox="0 0 100 4" preserveAspectRatio="none" className={cn("pointer-events-none h-1 w-full overflow-visible", className)} aria-hidden="true">
+			<path d="M1 2.2 C22 1 40 3.2 62 2 S90 1.4 99 2.4" pathLength={1} className="ink-draw fill-none stroke-current text-line-2" strokeWidth={1.2} strokeLinecap="round" vectorEffect="non-scaling-stroke" style={delayed(delay)} />
+		</svg>
 	);
 }
 

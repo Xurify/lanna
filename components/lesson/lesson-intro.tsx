@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { KBD, PRIMARY } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, PracticeCard } from "@/components/task-frame";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { CaseSketch, sketchLead, sketchStages, sketchSummary, type SketchStage } from "@/components/lesson/case-sketch";
-import { PenUnderline } from "@/components/lesson/ink";
+import { CaseSketch, sketchLead, sketchStages, sketchSummary, type SketchStage, type SketchSummary } from "@/components/lesson/case-sketch";
+import { PenRule, PenUnderline } from "@/components/lesson/ink";
 import { referencePageUrl, unitInfo, type LessonPlan } from "@/src/core";
 
 /**
@@ -192,14 +192,35 @@ function StageDots({ step, count, onPick }: { step: number; count: number; onPic
 	);
 }
 
-function SummaryStage({ summary }: { summary: { lines: readonly string[]; exceptions?: string; slug: string } }) {
+function SummaryStage({ summary }: { summary: SketchSummary }) {
 	const link = referencePageUrl(`/grammar/cases/${summary.slug}`);
 	return (
 		<div className="lh-rise flex flex-col items-start gap-3 font-prose text-[15px] leading-relaxed text-foreground" data-testid="intro-summary">
 			<p className="font-ui text-[13px] font-semibold text-ink-3">The rule in short</p>
-			{summary.lines.map((l, i) => (
-				<p key={i}>{keepEndings(l)}</p>
-			))}
+			<p>{summary.calls}</p>
+			<div className="w-full" data-testid="intro-table">
+				{summary.rows.map((row, i) => (
+					<div key={row.who}>
+						{i > 0 && <PenRule delay={0.15 * i} />}
+						<div className="grid grid-cols-[7.5rem_1fr] items-center gap-x-3 gap-y-0.5 py-2.5 sm:grid-cols-[9rem_1fr]">
+							<span className="font-ui text-[13px] text-ink-3">{row.who}</span>
+							<div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5" lang="sk">
+								<span className="text-[20px] font-semibold">{row.from}</span>
+								<ArrowRightIcon className="size-4 self-center text-ink-3" strokeWidth={1.6} aria-hidden />
+								<span className="text-[20px] font-semibold">
+									{row.stem}
+									<span className="text-teal-2">{row.ending}</span>
+								</span>
+								{row.note && (
+									<span className="font-ui text-[13px] text-ink-3" lang="en">
+										{keepEndings(row.note)}
+									</span>
+								)}
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
 			{summary.exceptions && (
 				<p className="text-ink-3" data-testid="intro-exceptions">
 					<span className="font-semibold text-foreground">Exceptions: </span>

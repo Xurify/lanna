@@ -4,7 +4,7 @@ import React from "react";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { CaseSketch, sketchStages } from "@/components/lesson/case-sketch";
+import { CaseSketch, sketchStages, sketchSummary } from "@/components/lesson/case-sketch";
 import { PenUnderline } from "@/components/lesson/ink";
 import { arrowD, boxD, inkRandom, lineD, loopD, patchD, smoothD } from "@/components/lesson/ink-paths";
 
@@ -80,5 +80,35 @@ describe("case sketches in ink", () => {
 		const html = renderToStaticMarkup(<PenUnderline />);
 		assert.match(html, /preserveAspectRatio="none"/);
 		assert.match(html, /class="ink-draw/);
+	});
+});
+
+describe("what the walk-through teaches", () => {
+	const units = ["gen", "loc", "ins", "dat", "acc-people", "acc-fem"] as const;
+	const WHO = ["masculine person", "masculine thing", "feminine", "neuter"];
+
+	it("every case with all three genders shows each gender in its steps", () => {
+		for (const unit of ["gen", "loc", "ins", "dat"] as const) {
+			const genders = new Set(sketchStages(unit).map((s) => s.gender));
+			assert.deepEqual([...genders].sort(), ["feminine", "masculine", "neuter"], unit);
+		}
+	});
+
+	it("each step changes its word: the form after the cue is not the dictionary form", () => {
+		for (const unit of units) {
+			for (const s of sketchStages(unit)) {
+				assert.ok(s.ending.length > 0, s.dictionary);
+				assert.notEqual(s.base + s.ending, s.dictionary, s.dictionary);
+				assert.ok(s.meaning.length > 0 && s.cue.length > 0 && s.why.length > 0, s.dictionary);
+			}
+		}
+	});
+
+	it("the summary is a table with one row for each kind of word", () => {
+		for (const unit of units) {
+			const summary = sketchSummary(unit)!;
+			assert.deepEqual(summary.rows.map((r) => r.who), WHO, unit);
+			for (const row of summary.rows) assert.ok(row.stem.length > 0 && row.from.length > 0, `${unit} ${row.who}`);
+		}
 	});
 });
