@@ -30,7 +30,7 @@ export interface SketchStage {
 }
 
 export interface SummaryRow {
-	who: "masculine person" | "masculine thing" | "feminine" | "feminine, ends in a consonant" | "neuter";
+	who: "masculine person or animal" | "masculine thing" | "feminine" | "feminine, ends in a consonant" | "neuter";
 	from: string;
 	stem: string;
 	ending: string;
@@ -53,7 +53,7 @@ const SKETCHES: Partial<Record<UnitId, SketchStage[]>> = {
 	gen: [
 		stage({ label: "do means “into”", kind: "into", before: "Idem do ", base: "škol", ending: "y", after: ".", meaning: "I am going to school.", dictionary: "škola", gender: "feminine", cue: "after do", why: "Feminine words ending in -a swap it for -y: škola → školy, ruka → ruky." }),
 		stage({ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", gender: "feminine", cue: "after z", why: "Words ending in -ca take -e instead of -y: práca → práce, ulica → ulice." }),
-		stage({ label: "u means “at someone’s place”", kind: "at", before: "Som u ", base: "lekár", ending: "a", after: ".", meaning: "I am at the doctor’s.", dictionary: "lekár", gender: "masculine", cue: "after u", why: "A male person adds -a: lekár → lekára." }),
+		stage({ label: "u means “at someone’s place”", kind: "at", before: "Som u ", base: "lekár", ending: "a", after: ".", meaning: "I am at the doctor’s.", dictionary: "lekár", gender: "masculine", cue: "after u", why: "A masculine person or animal adds -a: lekár → lekára, pes → psa." }),
 		stage({ label: "bez means “without”", kind: "without", before: "Káva bez ", base: "mliek", ending: "a", after: ".", meaning: "Coffee without milk.", dictionary: "mlieko", gender: "neuter", cue: "after bez", why: "A neuter word swaps -o for -a: mlieko → mlieka." }),
 	],
 	loc: [
@@ -68,13 +68,13 @@ const SKETCHES: Partial<Record<UnitId, SketchStage[]>> = {
 		stage({ label: "-om alone also means “with” a tool", kind: "pen", before: "Píšem ", base: "per", ending: "om", after: ".", meaning: "I write with a pen.", dictionary: "pero", gender: "neuter", cue: "no preposition", why: "A neuter word swaps -o for -om: pero → perom." }),
 	],
 	dat: [
-		stage({ label: "k means “toward”", kind: "toward", before: "Idem k ", base: "brat", ending: "ovi", after: ".", meaning: "I am going to my brother’s.", dictionary: "brat", gender: "masculine", cue: "after k", why: "A male person adds -ovi: brat → bratovi." }),
+		stage({ label: "k means “toward”", kind: "toward", before: "Idem k ", base: "brat", ending: "ovi", after: ".", meaning: "I am going to my brother’s.", dictionary: "brat", gender: "masculine", cue: "after k", why: "A masculine person or animal adds -ovi: brat → bratovi, pes → psovi." }),
 		stage({ label: "vďaka means “thanks to”", kind: "gift", before: "Vďaka ", base: "mam", ending: "e", after: ".", meaning: "Thanks to mom.", dictionary: "mama", gender: "feminine", cue: "after vďaka", why: "Feminine words ending in -a swap it for -e: mama → mame." }),
 		stage({ label: "k also points toward a place", kind: "town", before: "Idem k ", base: "mest", ending: "u", after: ".", meaning: "I am going toward the town.", dictionary: "mesto", gender: "neuter", cue: "after k", why: "A neuter word swaps -o for -u: mesto → mestu." }),
 	],
 	"acc-people": [
-		stage({ label: "A male person as the object", kind: "have", before: "Mám ", base: "brat", ending: "a", after: ".", meaning: "I have a brother.", dictionary: "brat", gender: "masculine", cue: "as the object", why: "A male person as the object adds -a: brat → brata." }),
-		stage({ label: "Another male person as the object", kind: "see", before: "Vidím ", base: "učiteľ", ending: "a", after: ".", meaning: "I see the teacher.", dictionary: "učiteľ", gender: "masculine", cue: "as the object", why: "Every male person does this: učiteľ → učiteľa." }),
+		stage({ label: "A masculine person or animal as the object", kind: "have", before: "Mám ", base: "brat", ending: "a", after: ".", meaning: "I have a brother.", dictionary: "brat", gender: "masculine", cue: "as the object", why: "A masculine person or animal as the object adds -a: brat → brata, pes → psa." }),
+		stage({ label: "Another masculine person as the object", kind: "see", before: "Vidím ", base: "učiteľ", ending: "a", after: ".", meaning: "I see the teacher.", dictionary: "učiteľ", gender: "masculine", cue: "as the object", why: "Every masculine person or animal does this: učiteľ → učiteľa." }),
 	],
 	"acc-fem": [
 		stage({ label: "A woman as the object", kind: "have", before: "Mám ", base: "sestr", ending: "u", after: ".", meaning: "I have a sister.", dictionary: "sestra", gender: "feminine", cue: "as the object", why: "Feminine words ending in -a swap it for -u when they are the object: sestra → sestru." }),
@@ -89,12 +89,12 @@ const LEADS: Partial<Record<UnitId, string>> = {
 	loc: "After v, na and o, a word changes its ending.",
 	ins: "After s and pred, and to say “by” or “with”, a word changes its ending.",
 	dat: "After k and vďaka, a word changes its ending.",
-	"acc-people": "When a male person is the object (I have a brother), the word changes its ending.",
+	"acc-people": "When a masculine person or animal is the object (I have a brother, I see a dog), the word changes its ending.",
 	"acc-fem": "When a feminine word ending in -a is the object (I have a sister), it changes its ending.",
 };
 
 const ACCUSATIVE_ROWS: readonly SummaryRow[] = [
-	{ who: "masculine person", from: "brat", stem: "brat", ending: "a" },
+	{ who: "masculine person or animal", from: "brat", stem: "brat", ending: "a" },
 	{ who: "masculine thing", from: "dom", stem: "dom", ending: "", note: "no change" },
 	{ who: "feminine", from: "škola", stem: "škol", ending: "u" },
 	{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "", note: "no change" },
@@ -106,7 +106,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "genitive",
 		calls: "do, z, od, bez, u and okolo call for the genitive. In the genitive, the ending depends on the word’s gender:",
 		rows: [
-			{ who: "masculine person", from: "lekár", stem: "lekár", ending: "a" },
+			{ who: "masculine person or animal", from: "lekár", stem: "lekár", ending: "a" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u", note: "or -a: stôl → stola" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -e (práca → práce)" },
 			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "i", note: "pieseň → piesne" },
@@ -118,7 +118,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "locative",
 		calls: "v, na and o call for the locative. It never stands alone. In the locative, the ending depends on the word’s gender:",
 		rows: [
-			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
+			{ who: "masculine person or animal", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "e", note: "after k, g, h, ch: -u (park → parku)" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
 			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "i", note: "pieseň → piesni" },
@@ -130,7 +130,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "instrumental",
 		calls: "s and pred call for the instrumental. Alone, it also means “by” or “with” a tool. In the instrumental, the ending depends on the word’s gender:",
 		rows: [
-			{ who: "masculine person", from: "brat", stem: "brat", ending: "om" },
+			{ who: "masculine person or animal", from: "brat", stem: "brat", ending: "om" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "om" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "ou" },
 			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "ou" },
@@ -142,7 +142,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "dative",
 		calls: "k and vďaka call for the dative. In the dative, the ending depends on the word’s gender:",
 		rows: [
-			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
+			{ who: "masculine person or animal", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
 			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "i", note: "pieseň → piesni" },
@@ -154,7 +154,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "accusative",
 		calls: "The object of a verb (I have, I see) is in the accusative. Only some words change:",
 		rows: ACCUSATIVE_ROWS,
-		exceptions: "Male persons keep this in the plural too: Vidím študentov.",
+		exceptions: "People keep this in the plural too: Vidím študentov.",
 	},
 	"acc-fem": {
 		slug: "accusative",

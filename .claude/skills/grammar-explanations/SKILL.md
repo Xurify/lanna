@@ -22,7 +22,7 @@ A rule that holds for "most" words is incomplete until its patterns are listed. 
 
 | Row | Test word |
 |---|---|
-| masculine person | brat, lekár (and the few in -a: hrdina, kolega) |
+| masculine person or animal (animate) | brat, lekár, pes (and the few in -a: hrdina, kolega) |
 | masculine thing | dom, stôl |
 | feminine in -a after a hard consonant | škola, ruka, Žilina |
 | feminine in -a after a soft consonant | ulica, práca |
@@ -35,6 +35,7 @@ Run every test word through the table you wrote, in every case it covers, before
 
 - Write the rule and then its exceptions. "Learn it with each word" is only for a list with no rule, and then say "no rule".
 - An exception says it is one: "večera is declined like ulica".
+- Masculine words for people **and animals** (animate) share a pattern in the singular: brata, psa. Do not write "male person" for a rule that covers animals, or "masculine" for one that leaves out things (dom stays dom). In the plural animals are usually treated like things, so say "people" there.
 - The letter that decides is the one right before the ending (Žilina: n, so Žiliny; the Ž does not count).
 
 ## 4. Name the case, always
@@ -75,6 +76,7 @@ A rule with parallel cases is a table, not paragraphs. A spatial idea is an ink 
 - "Learn which with each word" for práca → práce; the rule is the soft consonant.
 - A table with feminine words only in -a: noc, pieseň, srdce, námestie were missing.
 - "A few men end in -a": male-person words (hrdina, kolega).
+- "A male person as the object" for a rule about masculine animate nouns: it also covers animals (Vidím psa) and leaves out masculine things.
 - `do Žiliny, v Žiline, Žilinu` with no cases, read as three genitives.
 - "no ending to practice" for the nominative, which read as "the nominative does not exist".
 - "Not yet" for a cell that will never have a drill.
