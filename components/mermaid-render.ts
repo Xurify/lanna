@@ -9,34 +9,19 @@
  * component in the first place.
  */
 
-import { createMermaidPlugin } from "@streamdown/mermaid";
-import type { MermaidConfig } from "mermaid";
+import { render } from "pele";
 
-/** The chart's base font size (px) — mermaid sizes ALL text relative to
- *  this, so it's the number the display-width cap (md-blocks) divides by:
- *  a chart shown at its natural width renders text at exactly this size.
- *  Pinned explicitly so a mermaid default change can't silently shift the
- *  cap (owner rule, chrome-melt tweaks wave, 2026-09-19: chart text must
- *  never render larger than the session's own text). */
 export const MERMAID_FONT_SIZE = 16;
 
-// The app is dark-only (html.dark in the root layout) — diagrams render in
-// mermaid's dark theme. (Moved from ai-elements/message.tsx when the
-// renderer became app-owned; the old `mermaid` prop wiring is retired.)
-export const mermaidTheme: MermaidConfig = {
-	fontFamily: "ui-sans-serif, system-ui, sans-serif",
-	fontSize: MERMAID_FONT_SIZE,
-	securityLevel: "strict",
-	theme: "dark",
-};
-
-const plugin = createMermaidPlugin();
-
-/** Render one chart source to an svg string. The id is unique per call —
- *  mermaid caches rendered ids, and a repeated id across charts/renders
- *  returns the stale svg (the bug streamdown's own id minting avoids). */
+/**
+ * Render one chart source to an svg string using Pele (https://pele.run).
+ * Pele parses and renders Mermaid syntax synchronously with zero dependencies.
+ */
 export async function renderMermaid(chart: string): Promise<string> {
-	const id = `lh-mermaid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
-	const { svg } = await plugin.getMermaid(mermaidTheme).render(id, chart);
+	const { svg } = render(chart, {
+		fontFamily: "ui-sans-serif, system-ui, sans-serif",
+		fontSize: MERMAID_FONT_SIZE,
+	});
 	return svg;
 }
+
