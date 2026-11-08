@@ -59,6 +59,7 @@ import {
 	type LessonPlan,
 	type LessonScore,
 	type RepVerdict,
+	type StampState,
 	type UnitId,
 	lessonLanguage,
 } from "@/src/core";
@@ -683,12 +684,16 @@ function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: num
 			{Array.from({ length: n }, (_, i) => {
 				const rep = i < index ? reps[i] : i === index && answered ? reps[i] : undefined;
 				const current = i === index && !answered;
-				const tone = !rep ? (current ? "bg-teal-line" : "bg-well-2") : rep.verdict === "wrong" ? "bg-miss" : rep.verdict === "accents" ? "bg-teal/60" : "bg-teal";
+				const tone = !rep ? (current ? "bg-teal-line" : "bg-well-2") : repTone(rep);
 					return <li key={i} className={cn("h-1 flex-1 rounded-full transition-colors duration-300", tone)} />;
 			})}
 		</ol>
 		</div>
 	);
+}
+
+function repTone(rep: Rep): string {
+	return rep.verdict === "wrong" ? "bg-miss" : rep.verdict === "accents" ? "bg-teal/60" : "bg-teal";
 }
 
 /** The keys that answer this kind of rep, shown beside the actions. Hidden
@@ -1616,7 +1621,7 @@ function EndScreen({
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter") return;
+			if (e.key !== "Enter" || (e.target instanceof Element && e.target.closest("a, button"))) return;
 			if (mode === "blitz" || focus) {
 				e.preventDefault();
 				onAgain();
@@ -1630,105 +1635,243 @@ function EndScreen({
 	}, [recorded, mode, focus, onAgain, onNext]);
 
 	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time's up.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
-	const where = mode === "blitz" ? `${correct} right in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : unitInfo(unit).title;
+	const where = mode === "blitz" ? `${reps.length} answered in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : recorded || failed ? unitInfo(unit).title : "";
+	const stamps = recorded?.newStamps ?? [];
+	const split = missed.length > 0;
+	const width = cn("mx-auto w-full max-w-3xl px-6", split && "lg:max-w-5xl");
+	const toGoal = recorded ? Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp) : 0;
+	const queued = recorded?.queued.length ?? 0;
+	const enterHint = mode === "blitz" ? "to go again" : focus ? "for another round" : "for the next lesson";
+	const nextLabel = mode === "blitz" ? "Go again" : focus ? "Another round" : !recorded || stayHere || !nextUnit ? "Next lesson" : `Next: ${nextUnit.title}`;
 
 	return (
-		<div className="q-rise m-auto w-full max-w-xl px-5" data-testid="lesson-end">
-			<p className="q-date flex items-center gap-1.5">
-				<QIcon name={mode === "blitz" ? "fast" : "check"} className="text-teal" />
-				{mode === "blitz" ? "Blitz" : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : unitInfo(unit).title}
-			</p>
-			<h1 className="q-hello">{title}</h1>
-			<p className="q-line dim mt-2 min-h-7" data-testid="lesson-end-where">
-				{where}
-			</p>
-			{mode === "lesson" && !focus && (
-				<ol className="q-dots mt-3 ml-0" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
-					{!here?.done &&
-						Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
-							<li key={i} className={cn("h-1 w-8 rounded-full", !here ? "animate-pulse bg-well-2" : i < here.lessons ? "bg-teal" : "bg-well-2")} />
-						))}
-				</ol>
-			)}
+		<>
+			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto" data-testid="lesson-end">
+				<div className={cn(width, "q-rise my-auto pb-12 pt-16")}>
+					<div className={cn("lh-end", split && "lh-end-split")}>
+						<header className="min-w-0 [grid-area:head]">
+							<p className="q-date flex items-center gap-1.5">
+								<QIcon name={mode === "blitz" ? "fast" : "check"} className="text-teal" />
+								{mode === "blitz" ? "Blitz" : focus === "mixups" ? "Mix-ups" : focus === "personal" ? "Your plan" : unitInfo(unit).title}
+							</p>
+							<h1 className="q-hello">{title}</h1>
+							<div className="mt-2 flex min-h-7 flex-wrap items-center gap-x-3.5 gap-y-1.5">
+								<p className="q-line dim" data-testid="lesson-end-where">
+									{where}
+								</p>
+								{mode === "lesson" && !focus && !here?.done && (
+									<ol className="q-dots ml-0" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
+										{Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
+											<li key={i} className={cn("h-1 w-8 rounded-full", !here ? "animate-pulse bg-well-2" : i < here.lessons ? "bg-teal" : "bg-well-2")} />
+										))}
+									</ol>
+								)}
+							</div>
+						</header>
 
-			{/* A stamp earned by this lesson is pressed onto the page (src/core/stamps.ts). */}
-			{recorded?.newStamps && recorded.newStamps.length > 0 && (
-				<ul className="mt-6 flex flex-col gap-2" aria-label="New stamps" data-testid="lesson-new-stamps">
-					{recorded.newStamps.map((st) => (
-						<li key={st.id} className="q-card flex items-center gap-3 py-2 pl-2 pr-4 text-left">
-							<StampDisc state={st} size="sm" pressed />
-							<span className="min-w-0">
-								<span className="block font-ui text-xs font-semibold text-teal-2">New stamp</span>
-								<span className="block font-ui text-sm font-semibold text-foreground" lang={lessonLanguage()}>
+						{/* A stamp earned by this lesson is pressed onto the page (src/core/stamps.ts). */}
+						{stamps.length > 0 && <NewStamps stamps={stamps} />}
+
+						<section className={cn("mt-10 [grid-area:score]", split && "lg:sticky lg:top-16 lg:self-start")} aria-label="Your score" data-testid="lesson-end-score">
+							<p className="flex items-baseline gap-2.5">
+								<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">{mode === "blitz" ? correct : `${accuracy}%`}</span>
+								<span className="font-ui text-[15px] font-[550] text-ink-2">right</span>
+							</p>
+							{reps.length > 0 && <RepStrip reps={reps} />}
+							<Stats className="mt-7 max-w-none">
+								<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
+								{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
+								<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : null} ink={goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
+								<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
+								<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : null} />
+							</Stats>
+						</section>
+
+						{split && (
+							<section className="mt-12 [grid-area:list] lg:mt-10" aria-labelledby="lesson-worked" data-testid="lesson-end-worked" data-word-lookup-enabled="true">
+								<h2 id="lesson-worked" className="q-sh mb-0">
+									<QIcon name="rule" />
+									What you worked for
+									<small>{missed.length}</small>
+								</h2>
+								<p className="mt-1 font-prose text-[14px] text-ink-3">A miss you then got right is the rep that sticks.</p>
+								<ul className="mt-2 divide-y divide-[var(--q-line)]">
+									{missed.map((r) => (
+										<WorkedRow key={r.item.id} rep={r} back={reps.find((o) => o.item.again && o.item.sentence === r.item.sentence)} />
+									))}
+								</ul>
+							</section>
+						)}
+					</div>
+					<SourcesNote feature="lesson" className="mt-14" />
+				</div>
+			</div>
+
+			<Dock>
+				<div className={cn(width, "flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4")}>
+					{failed && !recorded ? (
+						<p className="font-prose text-[13px] text-ink-3" role="status">
+							Not saved yet. The app will try again.
+						</p>
+					) : (
+						<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 sm:pointer-fine:flex">
+							<kbd className={KBD}>Enter</kbd> {enterHint}
+						</p>
+					)}
+					<div className="ml-auto flex min-w-0 items-center gap-2">
+						<Link href="/" className={SECONDARY}>
+							Today
+						</Link>
+						{mode === "blitz" || focus ? (
+							<button type="button" onClick={onAgain} className={PRIMARY} data-testid="lesson-next">
+								{nextLabel}
+							</button>
+						) : (
+							<button type="button" disabled={!recorded} onClick={() => recorded && onNext(recorded.summary.next)} className={cn(PRIMARY, "min-w-0")} data-testid="lesson-next">
+								<span className="truncate">{nextLabel}</span>
+							</button>
+						)}
+					</div>
+				</div>
+			</Dock>
+		</>
+	);
+}
+
+function NewStamps({ stamps }: { stamps: StampState[] }) {
+	const one = stamps.length === 1 ? stamps[0] : null;
+	return (
+		<div className="mt-8 flex flex-wrap items-center gap-x-3.5 gap-y-3 [grid-area:stamp] sm:mt-0 sm:max-w-[22rem] sm:flex-nowrap sm:self-end" data-testid="lesson-new-stamps">
+			<span className="flex shrink-0" aria-hidden="true">
+				{stamps.map((st, i) => (
+					<span key={st.id} className={cn("flex", i > 0 && "-ml-3", i % 2 ? "rotate-3" : "-rotate-6")}>
+						<StampDisc state={st} size={one ? "md" : "sm"} pressed />
+					</span>
+				))}
+			</span>
+			<div className="min-w-40 flex-1 sm:min-w-0">
+				<p className="font-ui text-xs font-semibold text-teal-2">{one ? "New stamp" : `${stamps.length} new stamps`}</p>
+				{one ? (
+					<>
+						<p className="font-ui text-[15px] font-semibold text-foreground" lang={lessonLanguage()}>
+							{one.name}
+						</p>
+						<p className="font-ui text-[13px] text-ink-3">{one.line}</p>
+					</>
+				) : (
+					<p className="font-ui text-sm font-semibold leading-snug text-foreground">
+						{stamps.map((st, i) => (
+							<span key={st.id}>
+								{i > 0 && " · "}
+								<span lang={lessonLanguage()} title={st.line}>
 									{st.name}
 								</span>
-								<span className="block font-ui text-xs text-ink-3">{st.line}</span>
 							</span>
-						</li>
-					))}
-				</ul>
-			)}
-			<Stats className="mt-6">
-				<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
-				<Stat label={mode === "blitz" ? "Best" : "Right"} value={mode === "blitz" ? String(Math.max(recorded?.summary.bestBlitz ?? 0, correct)) : `${accuracy}%`} ink={mode === "blitz" || accuracy >= 80 ? "text-teal-2" : "text-foreground"} />
-				<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : null} ink="text-foreground" icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
-			</Stats>
-
-			<p className="mt-3 min-h-5 font-prose text-[13px] text-ink-3" data-testid="lesson-end-recorded">
-				{recorded ? (
-					<>
-						{goalMet ? "Today's XP goal reached. " : `${Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp)} XP to today's XP goal. `}
-						{recorded.queued.length > 0 && `${recorded.queued.length} missed word${recorded.queued.length === 1 ? "" : "s"} added to your review deck.`}
-					</>
-				) : failed ? (
-					"Not saved yet. The app will try again."
-				) : (
-					<Pulse className="h-3.5 w-64 align-middle" />
-				)}
-			</p>
-
-			{missed.length > 0 && (
-				<div className="q-card mt-6 px-[22px] py-[18px] text-left">
-					<p className="q-lbl">
-						<QIcon name="rule" />
-						What you worked for
-					</p>
-					<p className="mt-1 font-prose text-[13px] text-ink-3">A miss you then got right is the rep that sticks.</p>
-					<ul className="mt-3 flex flex-col gap-2.5">
-						{missed.slice(0, 5).map((r, i) => (
-							<li key={i} className="font-prose text-base leading-snug">
-								<span className="text-foreground" lang={lessonLanguage()}>
-									{r.item.before}
-									<b className="font-semibold text-teal-2">{r.item.answer}</b>
-									{r.item.after}
-								</span>
-								<span data-no-word-lookup="true" className="block text-sm text-ink-3">{r.item.translation}</span>
-							</li>
 						))}
-					</ul>
-				</div>
-			)}
-
-			<div className="q-acts mt-6">
-				<Link href="/" className={SECONDARY}>
-					Today
-				</Link>
-				{mode === "blitz" ? (
-					<button type="button" onClick={onAgain} className={PRIMARY}>
-						Go again
-					</button>
-				) : focus ? (
-					<button type="button" onClick={onAgain} className={PRIMARY} data-testid="lesson-next">
-						Another round
-					</button>
-				) : (
-					<button type="button" disabled={!recorded} onClick={() => recorded && onNext(recorded.summary.next)} className={PRIMARY} data-testid="lesson-next">
-						{!recorded || stayHere || !nextUnit ? "Next lesson" : `Next: ${nextUnit.title}`}
-					</button>
+					</p>
 				)}
 			</div>
-			<SourcesNote feature="lesson" className="mt-6" />
 		</div>
+	);
+}
+
+function RepStrip({ reps }: { reps: Rep[] }) {
+	const firstGo = reps.filter((r) => !r.item.again);
+	const cameBack = reps.filter((r) => r.item.again);
+	const backRight = cameBack.filter((r) => r.verdict !== "wrong").length;
+	const count = (verdict: RepVerdict) => reps.filter((r) => r.verdict === verdict).length;
+	const keys = [
+		{ tone: "bg-teal", n: count("exact"), label: "right" },
+		{ tone: "bg-teal/60", n: count("accents"), label: "almost" },
+		{ tone: "bg-miss", n: count("wrong"), label: "missed" },
+	].filter((k) => k.n > 0);
+	const step = Math.min(14, 280 / reps.length);
+	const tiles = (group: Rep[], offset: number) => (
+		<ol className={cn("flex h-7 min-w-0", reps.length > 24 ? "gap-px" : "gap-[3px]")} style={{ flex: `${group.length} 1 0` }}>
+			{group.map((r, i) => (
+				<li key={i} className={cn("lh-tile flex-1 rounded-[3px]", repTone(r))} style={{ animationDelay: `${Math.round((offset + i) * step)}ms` }} />
+			))}
+		</ol>
+	);
+	return (
+		<figure className="mt-5" data-testid="lesson-end-strip">
+			<div className="flex gap-2.5" aria-hidden="true">
+				{tiles(firstGo, 0)}
+				{cameBack.length > 0 && tiles(cameBack, firstGo.length)}
+			</div>
+			<figcaption className="mt-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3">
+				<span className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+					{keys.map((k) => (
+						<span key={k.label} className="flex items-center gap-1.5">
+							<span className={cn("size-2 rounded-[2px]", k.tone)} aria-hidden="true" />
+							{k.n} {k.label}
+						</span>
+					))}
+				</span>
+				{cameBack.length > 0 && (
+					<span>
+						Came back: {backRight} of {cameBack.length} right
+					</span>
+				)}
+			</figcaption>
+		</figure>
+	);
+}
+
+const PLAY_QUIET = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+
+function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
+	const { item, verdict, given } = rep;
+	const target = lessonLanguage();
+	const answerLang = item.kind === "meaning" || item.task?.kind === "grid" ? undefined : target;
+	const firstTry = rep.first?.verdict === "wrong" ? rep.first.given : "";
+	const quoted = (text: string, ink: string) => (
+		<span className={cn("font-medium", ink)} lang={answerLang}>
+			“{text}”
+		</span>
+	);
+	const attempt =
+		verdict === "wrong" ? (
+			given ? (
+				<span>
+					{item.kind === "meaning" ? "You picked" : "You wrote"} {quoted(given, "text-miss")}
+				</span>
+			) : (
+				<span>You didn&apos;t know it</span>
+			)
+		) : verdict === "accents" ? (
+			<span>Accents off: {quoted(given, "text-ink-2")}</span>
+		) : (
+			<span>{rep.first?.peeked ? "Right after you looked at the meaning" : firstTry ? <>Right on the second try · first try {quoted(firstTry, "text-miss")}</> : "Right with help"}</span>
+		);
+	return (
+		<li className="flex items-start gap-4 py-4">
+			<button type="button" onClick={() => void speak(item.sentence)} className={PLAY_QUIET} aria-label={`Play: ${item.sentence}`} title="Play">
+				<Volume2Icon className="size-4" strokeWidth={1.6} />
+			</button>
+			<div className="min-w-0 flex-1">
+				<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={target}>
+					{item.before}
+					<b className="font-semibold text-teal-2">{item.pair ? (item.form ?? item.answer) : item.answer}</b>
+					{item.after}
+				</p>
+				<p data-no-word-lookup="true" className="mt-0.5 font-prose text-[15px] text-ink-3">
+					{item.translation}
+				</p>
+				<p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3" data-no-word-lookup="true">
+					{attempt}
+					{back &&
+						(back.verdict === "wrong" ? (
+							<span className="text-miss">Missed again when it came back</span>
+						) : (
+							<span className="flex items-center gap-1 text-teal-2">
+								<QIcon name="check" className="size-3.5" />
+								{back.verdict === "accents" ? "Almost, when it came back" : "Right when it came back"}
+							</span>
+						))}
+				</p>
+			</div>
+		</li>
 	);
 }
 
@@ -1741,10 +1884,10 @@ function knownLine(known: LessonItem["known"]): string | undefined {
 	return known.state === "learning" ? `learning · ${when}` : `known · ${when}`;
 }
 
-/** The line under the end-screen heading: lesson N of 3 in this unit, or
- *  the unit is done and here is what follows. */
+/** The line under the end-screen heading (the unit is named above it):
+ *  lesson N of 3, or the unit is done and here is what follows. */
 function whereLine(here: { title: string; lessons: number; done: boolean; accuracy: number | null }, next: { id: UnitId; title: string } | null): string {
-	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} in ${here.title}`;
+	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE}`;
 	if (here.lessons === LESSONS_TO_COMPLETE || !next || next.title === here.title) return `${here.title} · ${here.lessons} lessons · ${Math.round((here.accuracy ?? 0) * 100)}% right`;
 	return `${here.title} is done. Up next: ${next.title}`;
 }

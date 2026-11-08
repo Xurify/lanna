@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 8 November: the lesson end screen, redone (branch `fix/lesson-end-layout`)
+
+- **Why:** the owner: the end screen had "no room", could not be scrolled, was not aligned and was "so cramped"; "full creative control". Rule E77.
+- **What changed:** the end screen scrolls, and Today and Next lesson sit in the bar at the bottom, where Continue was. On a wide screen your score is on the left and the sentences you missed are on the right; on a phone they are one column. The score is one big figure over a strip of tiles, one per answer in order, with the comebacks at the end as their own group. Each missed sentence plays its audio and says what you answered and whether you got it when it came back. A new stamp is pressed beside the heading. Enter on a focused button or link now does that button's job instead of starting the next lesson.
+- **Checked:** in the sandbox, a lesson played to its end with misses, an accent slip and comebacks, and a perfect one, Day and Night, at 1280×860, 1133×700, 820×1180 and 390×844, with one and with four new stamps.
+- **Unverified:** the owner's screen and phone; the Blitz, Mix-ups and Your plan end screens (the same component, not opened in the sandbox).
+
 ## 8 November: the chat is a plain conversation, after riddled.ai (branch `feat/light-tutor-chat`)
 
 - **Why:** the owner: the chat is "way too clunky" and slow (picking a model, the thinking, long replies, late drawings), and should "feel very easy to follow along and not overwhelming at all", taking "major inspiration from Riddled.ai". Rule E76; research: [research/riddled-chat.md](research/riddled-chat.md) (riddled.ai's public pages, its shared Slovak demonstratives thread and the demo video; no account, no prompt extraction).
