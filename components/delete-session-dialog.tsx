@@ -106,7 +106,7 @@ export function DeleteSessionDialog({
 
 /** The dialog's pure body — exported for SSR pins (the settings-dialog /
  *  node-dialog body pattern). The wrapper owns state + effects + portal. */
-export function DeleteSessionBody({
+function DeleteSessionBody({
 	chat,
 	busy,
 	failure,

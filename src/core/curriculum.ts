@@ -61,7 +61,7 @@ export const STAGES: Stage[] = [
 
 export type CurriculumKind = "drill" | "words" | "tutor" | "goal";
 
-export interface CurriculumUnit {
+interface CurriculumUnit {
 	id: string;
 	kind: CurriculumKind;
 	title: string;
@@ -301,7 +301,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	goal("can-follow-media", "Can follow Slovak media", "News, film and a podcast, understood", undefined, undefined),
 ];
 
-export interface Chapter {
+interface Chapter {
 	id: string;
 	stage: StageId;
 	title: string;
@@ -322,7 +322,7 @@ const slovakChapters = (map: readonly CurriculumUnit[]): Chapter[] => [
 	chapter(map, "hello", "a1", "Hello", "Sounds, greetings and the present tense", "words", "can-introduce"),
 	chapter(map, "cafe", "a1", "At the café", "To be, to want, the object case, ordering", "byt", "can-order"),
 	chapter(map, "town", "a1", "In town", "Where and where to", "loc", "can-directions"),
-	chapter(map, "family", "a1", "Family", "People as objects, genitive, gender", "acc-people", "can-family"),
+	chapter(map, "family", "a1", "Family", "People and animals as objects, genitive, gender", "acc-people", "can-family"),
 	chapter(map, "everyday", "a1", "Every day", "With, adjectives, time and routine", "ins", "can-describe-day"),
 	chapter(map, "yesterday", "a1", "Yesterday", "The past tense and the dative", "past", "can-tell-day"),
 	chapter(map, "health", "a2", "Health and body", "-ujem verbs, reflexives", "present-ujem", "can-appointment"),
@@ -370,11 +370,6 @@ export const allChapters = perCourse((course): Chapter[] =>
 export function curriculumUnit(id: string): CurriculumUnit | undefined {
 	return curriculumUnits().find((u) => u.id === id);
 }
-
-export function stageOf(level: Cefr): Stage | undefined {
-	return STAGES.find((s) => s.level === level);
-}
-
 // ─── State ──────────────────────────────────────────────────────────────────
 
 /** What progress.json knows about a unit: lessons (or tutor sessions),
@@ -440,9 +435,9 @@ export interface CurriculumState {
 export const TUTOR_SESSIONS = 2;
 /** One full lesson (at least 10 reps) at this accuracy tests out of a unit.
  *  The 95% and the 10 reps are the app's own policy, not figures from a study. */
-export const TEST_OUT_ACCURACY = 0.95;
+const TEST_OUT_ACCURACY = 0.95;
 /** A chapter opens when the one before has at most this many units undone. */
-export const CHAPTER_SLACK = 2;
+const CHAPTER_SLACK = 2;
 
 function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsToComplete: number): { done: boolean; progress: number } {
 	const lessons = e?.lessons ?? 0;
@@ -663,7 +658,7 @@ export interface DailyPlan {
 }
 
 /** What today's ledger says was done. */
-export interface DayEvidence {
+interface DayEvidence {
 	/** lessons finished today, per unit id. */
 	units: Record<string, number>;
 	reviews: number;
@@ -688,7 +683,7 @@ export interface DayEvidence {
 	fasts?: number;
 }
 
-export interface PlanInput {
+interface PlanInput {
 	state: CurriculumState;
 	evidence: Record<string, UnitEvidence | undefined>;
 	day: DayEvidence;
@@ -729,7 +724,7 @@ export interface PlanInput {
  *  then one task of each strand, then the second form-focused ones. */
 const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, watch: 4, fluency: 5, strengthen: 6, blitz: 6, words: 7 };
 
-export const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, fluency: 3, blitz: 1 } as const;
+const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, fluency: 3, blitz: 1 } as const;
 
 /**
  * The day's plan, from the research on what actually moves a learner:

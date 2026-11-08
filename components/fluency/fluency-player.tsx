@@ -37,7 +37,7 @@ import { SettingsLink } from "@/components/settings/settings-link";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { FAST_PASSES, fastWindows, passMade, PRON_CLEAR, QUESTION_KIND_INFO, wordsPerMinute, type FastItem, type FastPace, type FastRep, type PronEngine, type PronReport, type PronScore, type StoryQuestion, type StoryRecord } from "@/src/core";
 
-export type FluencyMode = "reread" | "fast";
+type FluencyMode = "reread" | "fast";
 
 export interface RereadPlan {
 	story: StoryRecord;

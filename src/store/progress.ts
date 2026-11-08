@@ -121,7 +121,7 @@ export interface ProgressRecord {
 	lessonAcks?: Array<{ id: string; outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number } }>;
 }
 
-export const DEFAULT_GOAL: GoalRecord = { level: "B2", minutesPerDay: 30 };
+const DEFAULT_GOAL: GoalRecord = { level: "B2", minutesPerDay: 30 };
 
 const FILE = () => path.join(PATHS.data, "progress.json");
 

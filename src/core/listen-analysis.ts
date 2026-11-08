@@ -85,7 +85,7 @@ export interface LoggedListen {
 }
 
 /** One difference between what was played and what was typed. */
-export interface WordError {
+interface WordError {
 	cause: ListenCause;
 	/** The word that was said ("" for a word added). */
 	target: string;
@@ -193,41 +193,41 @@ export const LISTEN_MIN_MISSED = 15;
 export const LISTEN_MIN_SESSIONS = 3;
 /** A cause is listed once it has turned up in this many sentences over this many sessions. */
 export const CAUSE_MIN_SENTENCES = 4;
-export const CAUSE_MIN_SESSIONS = 2;
+const CAUSE_MIN_SESSIONS = 2;
 /** Each window of a cause's trend needs this many read sentences from this many
  *  sessions, and five expected sentences with the cause and five without (the
  *  usual floor for the normal approximation behind the z-test). */
-export const CAUSE_TREND_MIN_SENTENCES = 30;
-export const CAUSE_TREND_MIN_SESSIONS = 3;
-export const MIN_EXPECTED = 5;
+const CAUSE_TREND_MIN_SENTENCES = 30;
+const CAUSE_TREND_MIN_SESSIONS = 3;
+const MIN_EXPECTED = 5;
 /** Family-wise error across all the causes tested at once (Holm). */
-export const TREND_ALPHA = 0.05;
+const TREND_ALPHA = 0.05;
 /** Sentences each pace group needs before the two are compared. */
-export const PACE_MIN_REPS = 20;
+const PACE_MIN_REPS = 20;
 /** Sentences each window needs before effort is compared. */
-export const EFFORT_MIN_REPS = 30;
+const EFFORT_MIN_REPS = 30;
 /** A week with fewer sentences is shown without its share. */
-export const WEEK_MIN_REPS = 10;
+const WEEK_MIN_REPS = 10;
 /** Sentences each half of a session, and each length group, needs before the two are compared. */
 export const CUT_MIN_REPS = 30;
 /** Words: a short sentence has up to this many, a long one this many or more. */
-export const SHORT_WORDS = 6;
-export const LONG_WORDS = 9;
+const SHORT_WORDS = 6;
+const LONG_WORDS = 9;
 /** An insight needs a z of this much: a 1% two-sided test, because five are looked for at once (Bonferroni from 5%). */
-export const INSIGHT_Z = 2.58;
+const INSIGHT_Z = 2.58;
 /** Differences needed before the place of a miss in its sentence is read. */
-export const ENDS_MIN_DIFFS = 40;
+const ENDS_MIN_DIFFS = 40;
 /** A word is "repeated" when it was in this many sentences read, went wrong in this many, in this many sessions, at this share or more. */
-export const REPEAT_MIN_APPEARED = 4;
-export const REPEAT_MIN_MISSED = 3;
-export const REPEAT_MIN_SESSIONS = 2;
-export const REPEAT_RATE = 0.4;
-export const REPEATS_KEPT = 5;
+const REPEAT_MIN_APPEARED = 4;
+const REPEAT_MIN_MISSED = 3;
+const REPEAT_MIN_SESSIONS = 2;
+const REPEAT_RATE = 0.4;
+const REPEATS_KEPT = 5;
 /** Syllables a second below and above which a clip counts as slow or fast (the slovak.wiki clips run 2.3 to 5.4). */
-export const SLOW_PACE = 3.5;
-export const FAST_PACE = 4.6;
-export const MISSES_KEPT = 8;
-export const WEEKS_KEPT = 8;
+const SLOW_PACE = 3.5;
+const FAST_PACE = 4.6;
+const MISSES_KEPT = 8;
+const WEEKS_KEPT = 8;
 
 const DAY_MS = 86_400_000;
 

@@ -20,7 +20,7 @@ import { STAGES, type CurriculumState } from "./curriculum.ts";
 
 export type StampKind = "first" | "chapter" | "summit" | "streak" | "words" | "reviews" | "perfect" | "comeback" | "balance" | "stories" | "scenes" | "listens" | "blitz" | "hours" | "exams";
 
-export interface StampDef {
+interface StampDef {
 	id: string;
 	kind: StampKind;
 	/** The Slovak name pressed on the stamp. */

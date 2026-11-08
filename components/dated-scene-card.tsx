@@ -11,7 +11,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { dateInWords, daysLeftWords, type DatedStatus } from "@/src/core";
 
-export interface DatedSceneCardProps {
+interface DatedSceneCardProps {
 	scene: { title: string; words?: string | null; date: string; daysLeft: number; status: DatedStatus; line: string; outcomeDue: boolean };
 }
 

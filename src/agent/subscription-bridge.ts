@@ -93,7 +93,7 @@ export async function refreshSubscriptionModels(): Promise<void> {
 	try { accept(state, await subscriptionRequest<NativeSubscriptionSnapshot>("snapshot")); }
 	catch { invalidate(state); notify(state); }
 }
-export function nativeSubscriptionStatus(providerId: NativeSubscriptionProviderId): NativeSubscriptionStatus | undefined { return bridge().statuses.get(providerId); }
+function nativeSubscriptionStatus(providerId: NativeSubscriptionProviderId): NativeSubscriptionStatus | undefined { return bridge().statuses.get(providerId); }
 export function nativeSubscriptionConnected(providerId: NativeSubscriptionProviderId): boolean {
 	const status = nativeSubscriptionStatus(providerId);
 	return runtimeConnected() && status?.available === true && status.connected && !!status.connectionId;

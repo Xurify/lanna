@@ -18,7 +18,7 @@ import type { ModelRole } from "../../../config.ts";
  * `signal.aborted` early-return keeps working unchanged.
  */
 
-export interface SubagentRunOptions {
+interface SubagentRunOptions {
 	/** The role whose engine (model + thinking level) this run uses. */
 	role: ModelRole;
 	/** Test seam: a scripted engine replaces the role's production one. */
@@ -49,14 +49,14 @@ export interface SubagentRunOptions {
 	chatId?: string;
 }
 
-export interface SubagentRunResult {
+interface SubagentRunResult {
 	/** The messages this run added (assistant + tool results). */
 	newMessages: AgentMessage[];
 	/** The final assistant text (the deliverable). */
 	text: string;
 }
 
-export function subagentEngine(role: ModelRole, override?: PiEngine): PiEngine {
+function subagentEngine(role: ModelRole, override?: PiEngine): PiEngine {
 	// BYOK (owner, 2026-09-22): no factory pins — the override is the only
 	// real path (the runner injects settings-resolved engines); a missed
 	// injection hits the honest thrower in models.ts instead of a guess.

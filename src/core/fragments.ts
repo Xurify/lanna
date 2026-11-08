@@ -77,7 +77,7 @@ export function lineFacts(segments: readonly { start: number; end: number; sk: s
 
 // ─── Measuring a run of lines ───────────────────────────────────────────────
 
-export interface NewWord {
+interface NewWord {
 	slug: string;
 	lemma: string;
 	gloss: string;
@@ -85,7 +85,7 @@ export interface NewWord {
 	count: number;
 }
 
-export interface FragmentStats {
+interface FragmentStats {
 	/** The first and last line (indexes into the lines), and their times. */
 	from: number;
 	to: number;
@@ -226,7 +226,7 @@ export function lengthFactor(sec: number): number {
  *  when it is too hard. Even with no new word it keeps a little (listening
  *  practice at a comfortable share), so a fragment of all-known words ranks
  *  last, not out. */
-export function fragmentScore(s: FragmentStats): number {
+function fragmentScore(s: FragmentStats): number {
 	return Math.round(comprehension(s.coverage) * density(s.wpm) * lengthFactor(s.sec) * Math.sqrt(0.4 + s.value) * 1000) / 1000;
 }
 
@@ -236,7 +236,7 @@ export interface Fragment extends FragmentStats {
 	band: string;
 }
 
-export interface FragmentOptions {
+interface FragmentOptions {
 	/** How many to give back (default 5). */
 	max?: number;
 	minSec?: number;

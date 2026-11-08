@@ -30,9 +30,9 @@ const MORE: Partial<Record<UnitId, Lines>> = {
 		de: "Like the German dative after in / an / auf for a place (im Haus, auf dem Tisch); Slovak has a case of its own for it, the locative: v dome, na stole.",
 	},
 	"acc-people": {
-		fi: "A male person as the object, like Finnish näen veljen: Vidím brata; the ending is -a.",
+		fi: "A masculine person or animal as the object, like Finnish näen veljen: Vidím brata; the ending is -a.",
 		ru: "Exactly the Russian animate accusative: вижу брата ≈ Vidím brata, знаю учителя ≈ Poznám učiteľa.",
-		de: "Like den Bruder, den Lehrer: a male person as the object changes form; in Slovak the change is the ending -a: Vidím brata.",
+		de: "Like den Bruder, den Lehrer: a masculine person or animal as the object changes form; in Slovak the change is the ending -a: Vidím brata.",
 	},
 	gen: {
 		fi: "do školy ≈ kouluun (illative), zo školy ≈ koulusta (elative), bez cukru ≈ ilman sokeria.",
@@ -116,7 +116,7 @@ const MORE: Partial<Record<UnitId, Lines>> = {
 	},
 };
 
-export interface UnitBridge {
+interface UnitBridge {
 	lang: BridgeLang;
 	/** The language's name, for the label in front of the line. */
 	name: string;

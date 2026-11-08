@@ -94,7 +94,7 @@ export function lineState(now = new Date(), tz = now.getTimezoneOffset()): LineS
 	};
 }
 
-export interface LineAnswer {
+interface LineAnswer {
 	phase: "morning" | "evening";
 	itemId: string;
 	typed: string;
@@ -102,7 +102,7 @@ export interface LineAnswer {
 	activeMs?: number;
 }
 
-export type LineOutcome = { ok: true; record: LineRecord; score: LineScore } | { ok: false; status: 409; message: string };
+type LineOutcome = { ok: true; record: LineRecord; score: LineScore } | { ok: false; status: 409; message: string };
 
 export function recordLine(input: LineAnswer, now = new Date(), tz = now.getTimezoneOffset()): LineOutcome {
 	const day = dayKey(now, tz);

@@ -5,7 +5,7 @@
  */
 import { compareMatches, matchWord, type WordSearchMatch } from "./word-search.ts";
 
-export interface RuleItem {
+interface RuleItem {
 	id: string;
 	name: string;
 	/** The rule itself, without the native-language bridge. */
@@ -16,7 +16,7 @@ export interface RuleItem {
 	buildsOn: { id: string; name: string }[];
 }
 
-export interface RuleArea {
+interface RuleArea {
 	id: string;
 	label: string;
 	rules: RuleItem[];
@@ -83,7 +83,7 @@ export function buildRulesMap(g: GraphLike): RuleArea[] {
 	return [...areas.values()].filter((a) => a.rules.length > 0).sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label));
 }
 
-export interface RuleHit {
+interface RuleHit {
 	rule: RuleItem;
 	match: WordSearchMatch;
 }

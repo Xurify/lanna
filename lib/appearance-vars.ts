@@ -37,7 +37,7 @@ function raise(hex: string, add: number): string {
  *  itself, the raised surfaces (card/popover/secondary/muted, +8), the
  *  accent (+22), the edges (border/input, +47), and primary-foreground
  *  (the inverted text on primary = the background's own color, as today). */
-export function derivedPalette(background: string): Record<string, string> {
+function derivedPalette(background: string): Record<string, string> {
 	const card = raise(background, 8);
 	const accent = raise(background, 22);
 	const border = raise(background, 47);

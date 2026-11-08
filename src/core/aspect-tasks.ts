@@ -31,7 +31,7 @@ import { chapterPairs, pairMembers, type PairDef } from "./pairs.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
 
 /** The family whose pairs are aspect pairs (curriculum/slovak/mixups.json). */
-export const ASPECT_FAMILY_ID = "aspect";
+const ASPECT_FAMILY_ID = "aspect";
 
 const CELL_ROWS = ["imperfective", "perfective"];
 const CELL_COLS = ["past", "present", "future"];
@@ -159,7 +159,7 @@ const PERFECTIVE_STEMS = ["podari", "podarí", "stih"];
 const FOR_WORD = "za";
 const PRESENT_WORDS: ReadonlySet<string> = new Set(["práve"]);
 
-export type CueGroup = "habit" | "duration" | "phase" | "perfective" | "present";
+type CueGroup = "habit" | "duration" | "phase" | "perfective" | "present";
 
 const GROUP_REASON: Record<CueGroup, WindowDrop["reason"]> = {
 	habit: "a habit cue",
@@ -200,7 +200,7 @@ function cueMarks(sentence: string, tokens: ReadonlyArray<{ start: number; end: 
 }
 
 /** Why a candidate window was not offered as a cue option. */
-export type WindowDrop = {
+type WindowDrop = {
 	text: string;
 	reason:
 		| "overlaps the cue"

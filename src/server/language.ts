@@ -14,7 +14,7 @@ import { languageRemovable } from "./language-add.ts";
 import { listTasks } from "./tasks.ts";
 import { anyTurnRunning } from "./turn-liveness.ts";
 
-export interface ProfileStatus {
+interface ProfileStatus {
 	active: LanguageProfile;
 	/** The running language in full: the browser reads its tag, voices and letters here. */
 	language: LanguageInfo;
@@ -45,7 +45,7 @@ export class SwitchBlocked extends Error {}
 /** Why the running language cannot change now, or null. Work in flight
  *  writes into the running language's folder when it finishes, so a switch
  *  waits for it. */
-export function switchBlocker(): string | null {
+function switchBlocker(): string | null {
 	if (anyTurnRunning()) return "The tutor is still answering. Switch when the reply is done.";
 	const video = listTasks().find((t) => t.kind === "video" && t.status === "running");
 	if (video) return `"${video.title}" is still running. Switch when it is done, or stop it on the Tasks page.`;

@@ -16,7 +16,7 @@ export interface MissReason {
 	trigger?: string;
 }
 
-export interface MissInput {
+interface MissInput {
 	answer: string;
 	lemma: string;
 	gloss: string;

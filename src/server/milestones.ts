@@ -50,7 +50,7 @@ import { activeLanguage } from "./active-language.ts";
 
 // ─── What the learner knows ─────────────────────────────────────────────────
 
-export interface WordSets {
+interface WordSets {
 	met: Set<string>;
 	solid: number;
 	assumed: Set<string>;
@@ -72,9 +72,9 @@ export interface WordSets {
 
 /** New words a day the input tasks add on top of the deck's setting:
  *  Listen's stretch words and Read's deliberate new words. */
-export const INPUT_WORDS_PER_DAY = 5;
+const INPUT_WORDS_PER_DAY = 5;
 /** Days of history the real rates need before they are shown. */
-export const PACE_DAYS = PACE_WINDOW_DAYS;
+const PACE_DAYS = PACE_WINDOW_DAYS;
 
 export function wordSets(lexicon: Lexicon | null): WordSets {
 	const p = progressStore.read();
@@ -249,11 +249,11 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 
 // ─── The report ─────────────────────────────────────────────────────────────
 
-export type { MilestonesReport, NextWord };
+export type { MilestonesReport };
 
-export const NEXT_WORDS = 24;
+const NEXT_WORDS = 24;
 
-export function allMilestones(): MilestoneDef[] {
+function allMilestones(): MilestoneDef[] {
 	return [...MILESTONES, ...milestoneStore.active().map((c) => c.def)];
 }
 
@@ -297,7 +297,7 @@ export function datedSceneViews(estimates: readonly MilestoneEstimate[], today: 
 
 // ─── Custom milestones ──────────────────────────────────────────────────────
 
-export function customMilestoneSystem(name: string = activeLanguage().english): string {
+function customMilestoneSystem(name: string = activeLanguage().english): string {
 	return `You classify a language learner's goal for a ${name} learning app. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
 The learner writes a situation they want to handle in ${name}, in their own words. Map it to the kind of language it involves and how it is delivered, so the app can estimate when they will get there from published word-coverage and listening-speed research. Fields:

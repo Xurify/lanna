@@ -61,7 +61,7 @@ export function pronounceEngine(): PronEngine | null {
 	return null;
 }
 
-export interface AssessInput {
+interface AssessInput {
 	audio: Uint8Array;
 	/** The line expected. Empty for free speech: Azure then scores what it heard. */
 	reference: string;
@@ -110,7 +110,7 @@ async function assessAzure(audio: Uint8Array, reference: string, locale: string)
 
 /** Every scored line lately: the last rounds of "say it faster" and the
  *  last scenes. Oldest first. */
-export function recentScores(opts: { rounds?: number; scenes?: number } = {}): PronScore[] {
+function recentScores(opts: { rounds?: number; scenes?: number } = {}): PronScore[] {
 	const out: PronScore[] = [];
 	const rounds = fluencyStore
 		.list()

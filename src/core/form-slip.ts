@@ -54,7 +54,7 @@ export function isFormOf(word: string, lemma: string, forms: readonly string[] =
 	return stem.length >= 3 && w.startsWith(stem) && w.length - stem.length <= MAX_ENDING;
 }
 
-export interface FormSlipInput {
+interface FormSlipInput {
 	/** The form the sentence needs. */
 	answer: string;
 	/** The word's dictionary form. */

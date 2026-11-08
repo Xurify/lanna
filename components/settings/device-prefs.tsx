@@ -16,7 +16,7 @@ export type WordTranslationMode = "dictionary" | "hybrid" | "google";
 const WORD_TRANSLATION_MODE_KEY = "lh:word-translation-mode";
 const WORD_TRANSLATION_MODE_EVENT = "lh:word-translation-mode-change";
 
-export function getWordTranslationMode(): WordTranslationMode {
+function getWordTranslationMode(): WordTranslationMode {
 	if (typeof window === "undefined") return "hybrid";
 	try {
 		const raw = localStorage.getItem(WORD_TRANSLATION_MODE_KEY);
@@ -29,7 +29,7 @@ export function getWordTranslationMode(): WordTranslationMode {
 	return "hybrid";
 }
 
-export function setWordTranslationMode(mode: WordTranslationMode): void {
+function setWordTranslationMode(mode: WordTranslationMode): void {
 	if (typeof window === "undefined") return;
 	try {
 		localStorage.setItem(WORD_TRANSLATION_MODE_KEY, mode);

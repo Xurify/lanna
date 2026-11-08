@@ -15,7 +15,7 @@ import { CEFR_ORDER, GUIDED_HOURS, type Cefr, type Trajectory, type TrajectoryMe
 
 const DAY_MS = 86_400_000;
 
-export function monthAt(now: Date, days: number): string {
+function monthAt(now: Date, days: number): string {
 	return new Date(now.getTime() + days * DAY_MS).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 }
 
@@ -23,7 +23,7 @@ function dayAt(now: Date, days: number): string {
 	return new Date(now.getTime() + days * DAY_MS).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export function formatValue(metric: TrajectoryMetric, v: number): string {
+function formatValue(metric: TrajectoryMetric, v: number): string {
 	if (metric === "hours") return `${Math.round(v)} h`;
 	if (metric === "units") return `${Math.round(v)} unit${Math.round(v) === 1 ? "" : "s"}`;
 	return `${Math.round(v).toLocaleString("en-GB")} words`;
@@ -55,7 +55,7 @@ function interpolate(points: readonly TrajectoryPoint[], day: number): number | 
 	return last.value;
 }
 
-export interface Scenario {
+interface Scenario {
 	label: string;
 	t: Trajectory;
 }

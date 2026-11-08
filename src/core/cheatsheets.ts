@@ -52,7 +52,7 @@ export interface CheatsheetSummary {
 }
 
 export const CHEATSHEET_MAX_CHARS = 200_000;
-export const CHEATSHEET_MAX_ROWS = 2_000;
+const CHEATSHEET_MAX_ROWS = 2_000;
 export const CHEATSHEET_TITLE_MAX = 120;
 
 export class CheatsheetParseError extends Error {}
@@ -159,7 +159,7 @@ export function phraseKey(text: string): string {
 }
 
 /** Every phrase of the sections, whole and split at " / ", so "глаз / глаза" covers "глаза". */
-export function phraseKeys(sections: ReadonlyArray<Pick<CheatSection, "rows">>): Set<string> {
+function phraseKeys(sections: ReadonlyArray<Pick<CheatSection, "rows">>): Set<string> {
 	const keys = new Set<string>();
 	for (const s of sections)
 		for (const r of s.rows) {

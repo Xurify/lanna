@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { ChatInput, LhMessage, QuestionAnswerData } from "@/src/core";
 import { SessionModel, type SessionState } from "@/components/session-core";
 
-export interface UseChatSessionOptions {
+interface UseChatSessionOptions {
 	chatId: string;
 	/** The native record seed (server-rendered page or a full sync). */
 	initialMessages: LhMessage[];

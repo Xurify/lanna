@@ -9,10 +9,10 @@ import { useChatGPTBridge } from "./subscription-client";
 
 export const CHATGPT_NOTICE = "LangHarness stores your ChatGPT account details and credentials in an unencrypted local file on this device. When this connection is used, relevant conversation context, learning material, and tool results are sent directly to OpenAI. ChatGPT plan limits apply; any additional credits are authorized and managed in ChatGPT, not LangHarness.";
 export function chatGPTNotice(web = false): string { return web ? `${CHATGPT_NOTICE.replace("on this device", "on the machine running LangHarness")} Complete ChatGPT sign-in in a browser on that same machine.` : CHATGPT_NOTICE; }
-export const CHATGPT_BACKGROUND_HINT = "Background work counts toward your ChatGPT plan usage.";
+const CHATGPT_BACKGROUND_HINT = "Background work counts toward your ChatGPT plan usage.";
 const BACKGROUND_LABEL = "Allow background use for all ChatGPT accounts";
 const REVOCATION_WARNING = "Account disconnected locally. Remote revocation could not be confirmed.";
-export const CHATGPT_DISCONNECT_COPY = { title: "Disconnect account?", body: "This removes the saved account and its credentials from this device." };
+const CHATGPT_DISCONNECT_COPY = { title: "Disconnect account?", body: "This removes the saved account and its credentials from this device." };
 const empty: ChatGPTStatus = { available: false, pending: false, allowBackgroundUse: true, activeId: null, accounts: [], error: null };
 type Account = ChatGPTStatus["accounts"][number];
 type Dialog = { kind: "connect" } | { kind: "manage"; accountId: string; account: Account; confirm?: boolean } | { kind: "warning" };

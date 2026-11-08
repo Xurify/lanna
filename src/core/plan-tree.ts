@@ -25,12 +25,6 @@ export class PlanTreeError extends Error {
 		this.name = "PlanTreeError";
 	}
 }
-
-/** An empty, never-stored tree used as the seed before plan_init runs. */
-export function emptyTree(): PlanTree {
-	return { nodes: [], edges: [], version: 0 };
-}
-
 // ─── validation helpers ──────────────────────────────────────────────────────
 
 function assertValidNode(node: PlanNode): void {

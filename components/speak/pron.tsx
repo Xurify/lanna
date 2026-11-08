@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { PRON_CLEAR, PRON_GOOD, pronLabel, type PronReport, type PronScore } from "@/src/core";
 
-export function pronInk(overall: number): string {
+function pronInk(overall: number): string {
 	return overall >= PRON_GOOD ? "text-teal-2" : overall >= PRON_CLEAR ? "text-teal-2" : "text-miss";
 }
 
-export function pronBg(overall: number): string {
+function pronBg(overall: number): string {
 	return overall >= PRON_GOOD ? "bg-teal-wash text-teal-2" : overall >= PRON_CLEAR ? "bg-teal-wash text-foreground" : "bg-miss-soft text-miss";
 }
 

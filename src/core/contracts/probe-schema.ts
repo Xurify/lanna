@@ -34,8 +34,3 @@ export const probeDoneInputSchema = Type.Object({
 		{ description: "The learner assessment — the probe's distilled output." },
 	),
 });
-
-/** Schema ↔ interface lock (the old `satisfies z.ZodType` guarantee): the
- *  declaration and ProbeDoneInput can never drift apart — this only compiles
- *  when the schema's static shape IS the interface. */
-export const probeDoneSchemaLock = (v: Static<typeof probeDoneInputSchema>): ProbeDoneInput => v;

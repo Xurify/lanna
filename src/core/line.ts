@@ -166,12 +166,12 @@ export function repeatWindowStart(day: string): string {
 	return d.toISOString().slice(0, 10);
 }
 
-export interface LineHearingSummary {
+interface LineHearingSummary {
 	caught: number;
 	words: number;
 }
 
-export interface LineCardInput {
+interface LineCardInput {
 	hasLine: boolean;
 	morning: LineHearingSummary | null;
 	evening: LineHearingSummary | null;
@@ -181,9 +181,9 @@ export interface LineCardInput {
 /** How the row on Today reads: idle before the morning hearing or while the
  *  evening waits for practice, open when the evening replay can be heard,
  *  done once both hearings are in, none when no sentence fits. */
-export type LineRowTone = "idle" | "open" | "done" | "none";
+type LineRowTone = "idle" | "open" | "done" | "none";
 
-export interface LineRow {
+interface LineRow {
 	/** The one line under the row's title. */
 	line: string;
 	/** The short state on the right. */

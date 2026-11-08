@@ -45,7 +45,7 @@ export interface CheckStart {
 	judges: boolean;
 }
 
-export interface AnswerOut {
+interface AnswerOut {
 	verdict: RepVerdict;
 	judged?: { accepted: boolean; note: string };
 	item: LessonItem | null;
@@ -248,7 +248,7 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 
 // ─── Stage 2: the edge ──────────────────────────────────────────────────────
 
-export interface ProbeOut {
+interface ProbeOut {
 	reply: ProbeReply;
 	turn: number;
 	max: number;

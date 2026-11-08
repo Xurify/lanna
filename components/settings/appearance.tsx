@@ -24,7 +24,6 @@ import type { AppearanceSettings } from "@/src/core";
 import { appearanceVars, resolveAppearance, staleVarNames } from "@/lib/appearance-vars";
 import { sharedJson } from "@/lib/shared-fetch";
 
-export { appearanceVars, derivedPalette, resolveAppearance, staleVarNames } from "@/lib/appearance-vars";
 
 interface AppearanceContextValue {
 	/** Resolved appearance; factory until the record arrives. */

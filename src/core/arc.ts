@@ -9,12 +9,12 @@
 import { allChapters, curriculumUnit } from "./curriculum.ts";
 import type { Strand } from "./strands.ts";
 
-export type ArcStepId = "story" | "words" | "forms" | "pairs" | "scene" | "sound" | "exam";
+type ArcStepId = "story" | "words" | "forms" | "pairs" | "scene" | "sound" | "exam";
 
 /** "all": the exam draws on every strand. */
-export type ArcStrand = Strand | "all";
+type ArcStrand = Strand | "all";
 
-export interface ArcStep {
+interface ArcStep {
 	id: ArcStepId;
 	/** The Slovak name the step is known by (Príbeh, Slová…). */
 	slovak: string;
@@ -32,7 +32,7 @@ export const ARC_STEPS: ArcStep[] = [
 	{ id: "exam", slovak: "Skúška", english: "Exam", strand: "all" },
 ];
 
-export interface ChapterArcStep {
+interface ChapterArcStep {
 	step: ArcStep;
 	/** The units that provide the step, in chapter order; empty while "not yet". */
 	units: string[];

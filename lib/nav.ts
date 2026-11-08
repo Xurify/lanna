@@ -7,7 +7,7 @@
 
 export type NavId = "today" | "curriculum" | "review" | "read" | "listen" | "watch" | "speak" | "fluency" | "words" | "grammar" | "progress" | "milestones" | "mistakes" | "log";
 
-export interface NavItemDef {
+interface NavItemDef {
 	id: NavId;
 	href: string;
 	/** The nav label and the page title: the same word. */
@@ -18,7 +18,7 @@ export interface NavItemDef {
 	also?: readonly string[];
 }
 
-export interface NavGroupDef {
+interface NavGroupDef {
 	id: "main" | "practice" | "understand" | "track";
 	/** Null for the short primary group, which has no heading. */
 	label: string | null;
@@ -66,17 +66,7 @@ export const NAV: readonly NavGroupDef[] = [
 	},
 ];
 
-export const NAV_ITEMS: readonly NavItemDef[] = NAV.flatMap((g) => g.items);
-
-/** Pages that are reached from inside another page, not from the nav. They still have one name. */
-export const CONTEXTUAL_PAGES: readonly { href: string; title: string; from: string }[] = [
-	{ href: "/lesson", title: "Lesson", from: "Today, Curriculum, Mistakes" },
-	{ href: "/exam", title: "Exam", from: "Curriculum (a chapter's exam)" },
-	{ href: "/chat/new", title: "Tutor", from: "the Tutor group in the sidebar" },
-	{ href: "/start", title: "Set up", from: "Settings, Progress" },
-	{ href: "/catch", title: "Catch the mistake", from: "Today, Words you mix up" },
-];
-
+const NAV_ITEMS: readonly NavItemDef[] = NAV.flatMap((g) => g.items);
 export function navItemFor(pathname: string): NavItemDef | undefined {
 	return NAV_ITEMS.find((i) => (i.href === "/" ? pathname === "/" : pathname === i.href || pathname.startsWith(`${i.href}/`) || i.also?.some((a) => pathname === a || pathname.startsWith(`${a}/`))));
 }

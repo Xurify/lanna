@@ -32,7 +32,7 @@ import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages,
 import type { LearnerFacts, MilestoneEstimate, StampState, TrailLog } from "@/src/core";
 
 /** The part of the milestones report (src/server/milestones.ts) the page reads. */
-export interface PlanReport {
+interface PlanReport {
 	facts: LearnerFacts;
 	milestones: MilestoneEstimate[];
 	generatedAt: string;

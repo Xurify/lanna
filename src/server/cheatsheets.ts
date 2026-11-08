@@ -14,9 +14,9 @@ import { enqueueWords } from "./review.ts";
 
 /** At most this many words go to Review on one press, so a long sheet
  *  does not bury the day's deck. */
-export const CHEATSHEET_REVIEW_BATCH = 30;
+const CHEATSHEET_REVIEW_BATCH = 30;
 
-export interface CheatsheetReviewState {
+interface CheatsheetReviewState {
 	/** Words of the sheet the dictionary knows, each lemma once. */
 	inDictionary: number;
 	/** Of those, the ones already in Review. */

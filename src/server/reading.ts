@@ -81,7 +81,7 @@ import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { enqueueWords } from "./review.ts";
 import { loadWorld, type World } from "./world.ts";
 
-export const STORY_SERIES = "robo";
+const STORY_SERIES = "robo";
 
 const tag = () => activeLanguage().tag;
 const code = () => activeLanguage().code;
@@ -131,7 +131,7 @@ export function isOneList(lexicon: Lexicon): boolean {
  *  2,000); a lexicon built from a corpus (Estonian, Russian) ranks every
  *  word on one list, where the rank itself is the order and the share is
  *  its place on that list. */
-export function rankShare(lexicon: Lexicon): (e: LexiconEntry) => number {
+function rankShare(lexicon: Lexicon): (e: LexiconEntry) => number {
 	const ranked = lexicon.entries.filter((e) => e.rank !== undefined);
 	const oneList = isOneList(lexicon);
 	const size = new Map<string, number>();
@@ -564,7 +564,7 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 
 // ─── Generation ─────────────────────────────────────────────────────────────
 
-export interface GenerateOptions {
+interface GenerateOptions {
 	/** Test seam: a scripted engine replaces the cheap slot's. */
 	engine?: PiEngine;
 	now?: Date;
@@ -816,7 +816,7 @@ export async function fillShelf(opts: GenerateOptions = {}): Promise<number> {
 }
 
 /** Start filling the shelf in the background; errors are logged, never thrown. */
-export function kickShelf(): void {
+function kickShelf(): void {
 	void fillShelf().catch((err) => console.warn("[read] shelf:", err instanceof Error ? err.message : err));
 }
 
@@ -834,7 +834,7 @@ export function library(): LibraryEntry[] {
 /** The picker's choice among the unread stories, with its reason. The
  *  current chapter's unread episodes come before the fit scoring (the
  *  arc's story step). */
-export function pickNext(lexicon: Lexicon | null = loadLexicon()): { story: StoryRecord; reason: PickReason } | null {
+function pickNext(lexicon: Lexicon | null = loadLexicon()): { story: StoryRecord; reason: PickReason } | null {
 	const k = knownWords(lexicon);
 	const recent = recentReads();
 	return pickStory(unreadStories(), { level: k.level, known: k.known, recentGenres: recent.genres, recentTopics: recent.topics, chapter: k.chapter });
@@ -879,7 +879,7 @@ export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord
 
 // ─── Recording a reading ────────────────────────────────────────────────────
 
-export interface ReadResultInput {
+interface ReadResultInput {
 	storyId: string;
 	answers: number[];
 	/** Slugs tapped for a gloss. */
@@ -890,7 +890,7 @@ export interface ReadResultInput {
 	tz?: number;
 }
 
-export interface ReadOutcome {
+interface ReadOutcome {
 	xp: number;
 	correct: number;
 	total: number;

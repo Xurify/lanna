@@ -53,7 +53,7 @@ function mintNext(cards: Record<string, ReviewCard>, now: Date, preferSlugs: str
 	return undefined;
 }
 
-export interface ReviewPrompt {
+interface ReviewPrompt {
 	card: ReviewCard;
 	before: string;
 	after: string;
@@ -69,7 +69,7 @@ export interface ReviewPrompt {
 	sentenceSource?: string;
 }
 
-export interface ReviewStatus {
+interface ReviewStatus {
 	profile: string;
 	available: boolean;
 	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
@@ -215,7 +215,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 	};
 }
 
-export interface ReviewAnswer {
+interface ReviewAnswer {
 	cardId: string;
 	given: string;
 	ms?: number;
@@ -228,7 +228,7 @@ export interface ReviewAnswer {
 	picked?: boolean;
 }
 
-export interface ReviewOutcome {
+interface ReviewOutcome {
 	verdict: "exact" | "accents" | "wrong";
 	rating: Rating;
 	card: ReviewCard;

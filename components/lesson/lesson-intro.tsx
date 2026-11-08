@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { KBD, PRIMARY, QUIET } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, PracticeCard } from "@/components/task-frame";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { CaseSketch, sketchLead, sketchStages, sketchSummary, type SketchStage, type SketchSummary } from "@/components/lesson/case-sketch";
+import { CaseSketch, sketchLead, sketchStages, sketchSummary, ROW_GLOSS, type SketchStage, type SketchSummary } from "@/components/lesson/case-sketch";
 import { PenRule, PenUnderline } from "@/components/lesson/ink";
 import { referencePageUrl, unitInfo, type LessonPlan } from "@/src/core";
 
@@ -214,8 +214,15 @@ function SummaryStage({ summary }: { summary: SketchSummary }) {
 				{summary.rows.map((row, i) => (
 					<div key={row.who}>
 						{i > 0 && <PenRule delay={0.15 * i} />}
-						<div className="grid grid-cols-[7.5rem_1fr] items-center gap-x-3 gap-y-0.5 py-2.5 sm:grid-cols-[9rem_1fr]">
-							<span className="font-ui text-[13px] text-ink-3">{row.who}</span>
+						<div className="grid grid-cols-[8.5rem_1fr] items-center gap-x-3 gap-y-0.5 py-2.5 sm:grid-cols-[11rem_1fr]">
+							<div className="font-ui">
+								<span className="block text-[13px] text-ink-3">{row.who}</span>
+								{ROW_GLOSS[row.who] && (
+									<span className="block text-xs text-ink-4" lang="sk">
+										{ROW_GLOSS[row.who]}
+									</span>
+								)}
+							</div>
 							<div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5" lang="sk">
 								<span className="text-[20px] font-semibold">{row.from}</span>
 								<ArrowRightIcon className="size-4 self-center text-ink-3" strokeWidth={1.6} aria-hidden />

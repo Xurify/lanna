@@ -73,7 +73,7 @@ export function scriptFor(sceneId: string, lang: string = "slovak"): SceneScript
 }
 
 /** What the grader says about one choice. */
-export interface ScriptGrade {
+interface ScriptGrade {
 	correct: boolean;
 	/** The right line — the choice itself when correct, otherwise shown after the retry. */
 	right: string;

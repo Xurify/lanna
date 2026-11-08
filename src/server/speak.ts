@@ -71,7 +71,7 @@ const tag = () => activeLanguage().tag;
 
 type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
 
-export function speakSystem(lang: PromptLang = activeLanguage()): string {
+function speakSystem(lang: PromptLang = activeLanguage()): string {
 	const name = lang.english;
 	const x = lang.promptExamples ?? {};
 	return `You play one role in a short spoken scene with a learner of ${name} inside a language app. The learner SAYS each line into a microphone (speech-to-text turns it into the text you see; small transcription slips in diacritics or word boundaries are not the learner's fault), and your reply is read out loud to them. You answer with ONE JSON object and nothing else: no prose, no code fences.
@@ -88,7 +88,7 @@ The rules:
 - After the learner's ${SPEAK_TURNS}th line, or sooner when the scene reaches its natural end, say a closing line (a goodbye, a thank-you) and set "end": true. Never end before the learner has said at least 3 lines.`;
 }
 
-export function speakSummarySystem(name: string = activeLanguage().english): string {
+function speakSummarySystem(name: string = activeLanguage().english): string {
 	return `You are a ${name} tutor summing up a short spoken scene a learner just did. You answer with ONE JSON object and nothing else: no prose, no code fences.
 
 {"corrections": [{"yours": "<the learner's words>", "right": "<the right ${name}>", "rule": "<the rule in at most twelve words, in the explanation language>", "kind": "case" | "verb" | "aspect" | "word" | "order" | "spelling" | "other", "lemma": "<dictionary form of the word the slip was on>"}], "keep": ["<a useful ${name} phrase from the scene>", "<another>"], "note": "<one encouraging sentence in the explanation language about what went well>"}
@@ -126,7 +126,7 @@ function sceneBrief(scene: SpeakScene, s: SpeakSession): string {
 
 // ─── The engine ─────────────────────────────────────────────────────────────
 
-export interface SpeakOptions {
+interface SpeakOptions {
 	/** Test seam: a scripted engine replaces the cheap slot's. */
 	engine?: PiEngine;
 	model?: string;
@@ -202,7 +202,7 @@ async function ask(engine: PiEngine, systemPrompt: string, prompt: string, usage
 
 // ─── Speech-to-text ─────────────────────────────────────────────────────────
 
-export type SttEngine = "elevenlabs" | "deepgram" | "groq";
+type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
 /** Which speech-to-text engine a line would go to; null when neither key
  *  is set (the screen then takes typing only). */
@@ -266,7 +266,7 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 
 // ─── The scenes ─────────────────────────────────────────────────────────────
 
-export interface SpeakState {
+interface SpeakState {
 	/** The scenes, the chapter's and the purposes' first. */
 	scenes: SpeakSceneEntry[];
 	canSpeak: boolean;
@@ -370,7 +370,7 @@ function tutorTurn(reply: TutorReply, now: Date): SpeakTurn {
 	};
 }
 
-export interface SpeakTurnInput {
+interface SpeakTurnInput {
 	id: string;
 	text: string;
 	via: "voice" | "typed";
@@ -381,7 +381,7 @@ export interface SpeakTurnInput {
 	pron?: PronScore;
 }
 
-export interface SpeakTurnOutcome {
+interface SpeakTurnOutcome {
 	session: SpeakSession;
 	/** The tutor's new line. */
 	reply: SpeakTurn;
@@ -434,7 +434,7 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 	});
 }
 
-export interface SpeakEndInput {
+interface SpeakEndInput {
 	id: string;
 	ms?: number;
 	/** Active milliseconds since the last send (src/core/active-time.ts). */
@@ -442,7 +442,7 @@ export interface SpeakEndInput {
 	tz?: number;
 }
 
-export interface SpeakOutcome {
+interface SpeakOutcome {
 	session: SpeakSession;
 	xp: number;
 	queued: string[];

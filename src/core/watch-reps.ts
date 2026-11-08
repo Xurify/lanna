@@ -19,7 +19,7 @@ import { understood, type ListenItem, type ListenVerdict } from "./listen.ts";
 
 /** Days until a line is due at each step: the miss is shown tomorrow (step 0),
  *  and each understood answer moves it to the next step's gap. */
-export const WATCH_REP_GAPS = [1, 3, 7] as const;
+const WATCH_REP_GAPS = [1, 3, 7] as const;
 export type WatchStep = 0 | 1 | 2;
 const LAST_STEP = (WATCH_REP_GAPS.length - 1) as WatchStep;
 const TOMORROW = WATCH_REP_GAPS[0];
@@ -45,11 +45,11 @@ export interface WatchRep {
 	retiredAt?: string;
 }
 
-export function watchRepId(videoId: string, segment: number): string {
+function watchRepId(videoId: string, segment: number): string {
 	return `${videoId}:${segment}`;
 }
 
-export function watchItemId(repId: string): string {
+function watchItemId(repId: string): string {
 	return `${ITEM_PREFIX}${repId}`;
 }
 

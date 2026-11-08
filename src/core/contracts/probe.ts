@@ -16,7 +16,7 @@
  */
 
 /** One dependency strand the planned lesson will rest on. */
-export interface ProbeStrand {
+interface ProbeStrand {
 	/** Name/description of the strand (e.g. "the derivative as a limit"). */
 	strand: string;
 	/** Free-form: where the learner's edge sits on this strand — floor,

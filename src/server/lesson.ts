@@ -194,7 +194,7 @@ export interface RepResult {
 	};
 }
 
-export interface LessonResultInput {
+interface LessonResultInput {
 	unit: UnitId;
 	mode: "lesson" | "blitz";
 	/** A Mix-ups or personal lesson: counts XP, the day and the mix-ups, never a unit. */
@@ -210,7 +210,7 @@ export interface LessonResultInput {
 	clientId?: string;
 }
 
-export interface LessonOutcome {
+interface LessonOutcome {
 	xp: number;
 	correct: number;
 	total: number;
@@ -393,7 +393,7 @@ export function recordActiveTime(activity: TimedActivity, ms: number, tz?: numbe
 	return added;
 }
 
-export type Activity = "talk" | "story" | "tutor";
+type Activity = "talk" | "story" | "tutor";
 
 /** A Talk, a Story or a tutor unit's session was started: the day's plan
  *  counts it as the speaking task; a tutor unit counts the session toward
@@ -758,7 +758,7 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 
 // ─── Placement: recording the check ─────────────────────────────────────────
 
-export interface PlacementResultInput {
+interface PlacementResultInput {
 	/** The outcome the three stages folded into (src/server/placement.ts). */
 	outcome: PlacementOutcome;
 	/** Every ladder item answered, for the lesson log. */

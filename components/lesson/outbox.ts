@@ -27,7 +27,7 @@ export interface Recorded {
 	};
 }
 
-export interface Pending {
+interface Pending {
 	id: string;
 	/** The language profile the lesson was finished in ("sk", "ru"). */
 	lang: string;

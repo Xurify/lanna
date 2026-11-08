@@ -34,7 +34,7 @@ function activeLang(): LanguageInfo {
 	return activeLanguage();
 }
 
-export interface SelectionLookupResult {
+interface SelectionLookupResult {
 	query: string;
 	found: boolean;
 	/** ISO 639-1 language code of the active profile (e.g. "sk", "ru"). */
@@ -69,7 +69,7 @@ export interface SelectionLookupResult {
 	state?: WordLearningState;
 }
 
-export function referenceSiteLinkFor(
+function referenceSiteLinkFor(
 	slug?: string,
 	query?: string,
 	lang: LanguageInfo = activeLang(),
@@ -678,7 +678,7 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 	return null;
 }
 
-export interface LookupAsyncOptions {
+interface LookupAsyncOptions {
 	/**
 	 * When true, or when the query is a multi-word phrase or inflected form, also fetches & caches
 	 * the natural Google Translate surface translation alongside the local dictionary entry.
@@ -860,7 +860,7 @@ export interface WordBankQuery {
 	offset?: number;
 }
 
-export interface WordBankResult {
+interface WordBankResult {
 	items: WordBankItem[];
 	total: number;
 	summary: WordBankSummary;

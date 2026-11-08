@@ -52,7 +52,7 @@ const SECRET_FILE_PATTERNS = [
 
 /** True when `absolute` is a credential file or lies inside a credential
  *  directory. Pure path check; callers resolve symlinks first. */
-export function isSecretPath(absolute: string): boolean {
+function isSecretPath(absolute: string): boolean {
 	const parts = path.resolve(absolute).split(/[\\/]+/);
 	if (parts.some((part) => SECRET_DIR_NAMES.has(part.toLowerCase()))) return true;
 	const base = parts[parts.length - 1] ?? "";

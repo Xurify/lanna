@@ -110,7 +110,7 @@ export function resolveRoleSpec(role: ModelRole, record: UserSettings | null): E
 /** Resolve one slot to its configured view, or null when the tier holds
  *  no model (a thinkingLevel-only slot is inert — the level has nothing
  *  to ride without the factory floor). */
-export function resolveSlot(slot: ModelSlot | undefined): EffectiveSlot | null {
+function resolveSlot(slot: ModelSlot | undefined): EffectiveSlot | null {
 	if (!slot?.model) return null;
 	return { provider: slot.model.provider, id: slot.model.id, thinkingLevel: slot.thinkingLevel };
 }
@@ -121,7 +121,7 @@ export function resolveSlot(slot: ModelSlot | undefined): EffectiveSlot | null {
  *  with no model anywhere stays unset and the engine build resolves it
  *  from DEFAULT_THINKING_ORDER). undefined = no model resolved; the
  *  per-need refusal gates fire on exactly that. */
-export function resolveModelSpec(
+function resolveModelSpec(
 	role: ModelRole,
 	override: RoleModelOverride | undefined,
 	slots?: Partial<Record<ModelSlotName, ModelSlot>>,

@@ -131,7 +131,7 @@ function SettingsDialog({
 
 /** The dialog without the portal/backdrop — the SSR-testable frame
  *  (portals render nothing under renderToStaticMarkup). */
-export function SettingsDialogBody({
+function SettingsDialogBody({
 	onClose,
 	initialSection = "general",
 	initialRow = null,

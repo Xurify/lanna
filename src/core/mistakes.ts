@@ -147,7 +147,7 @@ export const TREND_MIN_REPS = 6;
  *  as likely to be chance as real, and it reads "steady". */
 export const TREND_Z = 1.96;
 /** A unit is listed once it has this many first tries. */
-export const UNIT_MIN_REPS = 3;
+const UNIT_MIN_REPS = 3;
 /** A unit is called weak only when even the top of its likely range is
  *  under this (the lesson pass bar the weak spots use, 85%). */
 export const WEAK_BAR = 0.85;
@@ -155,13 +155,13 @@ export const WEAK_BAR = 0.85;
 export const RANGE_SHOWN_UNDER = 20;
 /** A word is listed among the most missed from its second miss: one miss is
  *  a slip; the review deck already has it. */
-export const WORD_MIN_MISSES = 2;
+const WORD_MIN_MISSES = 2;
 /** The guide is written only from enough evidence: patterns read from a
  *  handful of answers are guesses dressed as findings. */
 export const GUIDE_MIN_REPS = 30;
 export const GUIDE_MIN_WRONG = 5;
-export const WORDS_SHOWN = 8;
-export const WEEKS_SHOWN = 8;
+const WORDS_SHOWN = 8;
+const WEEKS_SHOWN = 8;
 /** Wrong first tries kept for the guide. */
 export const SAMPLES_KEPT = 15;
 

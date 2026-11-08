@@ -14,7 +14,7 @@ import { PATHS } from "../../config.ts";
 import type { MixupProbe } from "../core/mixups.ts";
 
 /** The switch. False: no frame row is read, whatever the file holds. */
-export const ASPECT_FRAMES_ON = true;
+const ASPECT_FRAMES_ON = true;
 
 const FILE = path.join(PATHS.curriculum, "slovak", "aspect-frames.json");
 

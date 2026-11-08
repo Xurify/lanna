@@ -18,7 +18,7 @@
  * dictionary comes in through `lookup`.
  */
 
-export interface SlovakIssue {
+interface SlovakIssue {
 	rule: "vocalized-preposition" | "nie-je" | "czech-letter" | "budem-perfective" | "numeral-gender";
 	/** The text as written. */
 	found: string;
@@ -28,7 +28,7 @@ export interface SlovakIssue {
 	why: string;
 }
 
-export interface SlovakCheck {
+interface SlovakCheck {
 	/** The whole text is a curated dictionary example. */
 	verified: boolean;
 	issues: SlovakIssue[];

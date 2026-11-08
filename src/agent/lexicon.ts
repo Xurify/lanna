@@ -29,7 +29,7 @@ export interface Lexicon {
 
 const cache = new Map<string, Lexicon | null>();
 
-export function lexiconPath(profile: string = activeProfile()): string {
+function lexiconPath(profile: string = activeProfile()): string {
 	return curriculumFile(profile, "lexicon.json");
 }
 
@@ -87,7 +87,7 @@ export function loadLexicon(profile: string = activeProfile()): Lexicon | null {
 	return lexicon;
 }
 
-export interface LookupResult {
+interface LookupResult {
 	query: string;
 	match: "exact" | "folded" | "english" | "none";
 	entries: LexiconEntry[];

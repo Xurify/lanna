@@ -13,7 +13,7 @@
  * minutes of ticking measures it instead. Pure and browser-safe.
  */
 
-export interface VocabBand {
+interface VocabBand {
 	id: string;
 	/** Rank range in the dictionary's frequency order, half-open. */
 	from: number;

@@ -44,7 +44,7 @@ export interface UnitTally {
 	misses: number;
 }
 
-export type RungStatus = "open" | "held" | "gap";
+type RungStatus = "open" | "held" | "gap";
 
 /** Two right (one miss allowed, so best of three) holds a rung; two wrong
  *  is a gap; anything else is still open. */

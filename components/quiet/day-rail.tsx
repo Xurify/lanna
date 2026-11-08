@@ -69,7 +69,7 @@ export function greeting(now = new Date()): string {
 	return "Good evening";
 }
 
-export const TASK_LABEL: Record<PlanTask["id"], string> = {
+const TASK_LABEL: Record<PlanTask["id"], string> = {
 	review: "Review",
 	listen: "Listen",
 	lesson: "Lesson",
@@ -82,7 +82,7 @@ export const TASK_LABEL: Record<PlanTask["id"], string> = {
 	fluency: "Speed",
 };
 
-export const TASK_ICON: Record<PlanTask["id"], QIconName> = {
+const TASK_ICON: Record<PlanTask["id"], QIconName> = {
 	review: "review",
 	listen: "listen",
 	lesson: "grammar",
@@ -137,12 +137,6 @@ export function useDaySummary(initial: Summary | null = null) {
 	useEffect(load, []);
 	return { s, failed, load };
 }
-
-/** A task in the plan that needs a model, when none is set up. */
-export function taskLocked(t: PlanTask, keyless: boolean): boolean {
-	return !t.done && t.via === "tutor" && keyless;
-}
-
 /** The date the screens show: "Monday, November 2". */
 export function todayDate(): string {
 	return new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });

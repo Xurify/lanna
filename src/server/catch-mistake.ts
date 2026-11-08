@@ -32,7 +32,7 @@ import { activeLanguage } from "./active-language.ts";
 import { noteMixups } from "./mixups.ts";
 import { storyEngine } from "./reading.ts";
 
-export interface CatchOptions {
+interface CatchOptions {
 	/** Test seam: a scripted engine replaces the cheap slot's. */
 	engine?: PiEngine;
 	model?: string;
@@ -79,7 +79,7 @@ async function makeNext(opts: CatchOptions): Promise<CatchNext> {
 	return { view: viewOf(built.item) };
 }
 
-export type CatchAnswerOutcome = { ok: true; result: CatchResult } | { ok: false; status: number; message: string };
+type CatchAnswerOutcome = { ok: true; result: CatchResult } | { ok: false; status: number; message: string };
 
 /** Grade one answer: the tapped word and the typed word. An item takes one answer. */
 export function answerCatch(id: string, input: { sentence: number; token: number; typed: string }, now = new Date()): CatchAnswerOutcome {

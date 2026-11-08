@@ -35,7 +35,7 @@ const CATEGORY_HOURS: Record<1 | 2 | 3 | 4, string> = { 1: "about 24–30 weeks,
 const ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV" } as const;
 
 /** The studies behind the chart, for the language being learned. */
-export function studies(lang: { english: string; fsiCategory?: 1 | 2 | 3 | 4 } | null): Array<{ who: string; what: string; line: string }> {
+function studies(lang: { english: string; fsiCategory?: 1 | 2 | 3 | 4 } | null): Array<{ who: string; what: string; line: string }> {
 	const name = lang?.english ?? "The language";
 	const cat = lang?.fsiCategory;
 	const fsi = cat
@@ -89,7 +89,7 @@ const HEAD_START: Partial<Record<Lang, string>> = {
  *  learner has it. Xurify (2026-10-28): the old legend said "from
  *  Estonian", which read as the app's language; the hours table does not
  *  change by language, the assumption behind it does. */
-export function headStartLine(languages: readonly Lang[], targetCode?: string): string {
+function headStartLine(languages: readonly Lang[], targetCode?: string): string {
 	const have = languages.filter((l) => l !== targetCode && HEAD_START[l]).map((l) => `${languageName(l)} (${HEAD_START[l]})`);
 	const worth = `the gap to the FSI line, ${FSI_CAT3 - GUIDED_HOURS.C1}–${FSI_CAT3 - GUIDED_HOURS.B2} hours at B2–C1`;
 	const assume = "The green bars assume a head start: a language you know that already has cases or aspect.";

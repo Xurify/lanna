@@ -17,7 +17,7 @@ import { aiStatus } from "./ai-status.ts";
 export type { MistakesReport };
 
 /** The snapshot is read again after a lesson once it is this old. */
-export const SNAPSHOT_MAX_AGE_MS = 6 * 3_600_000;
+const SNAPSHOT_MAX_AGE_MS = 6 * 3_600_000;
 
 export function mistakesReportOf(analysis: MistakeAnalysis, guide: GuideRecord | null, listenGuide: ListenGuideRecord | null = null): MistakesReport {
 	return {

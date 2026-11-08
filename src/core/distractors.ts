@@ -19,11 +19,11 @@ import { shuffle } from "./lesson.ts";
 /** Jaccard overlap below which a neighbor is just another sentence. */
 export const MIN_CLOSE = 0.3;
 /** At or above it a neighbor is a paraphrase, which could also be right. */
-export const MAX_CLOSE = 0.85;
+const MAX_CLOSE = 0.85;
 
 const WORD = /[\p{L}\p{N}]+(?:['’][\p{L}]+)?/gu;
 
-export function tokens(text: string): string[] {
+function tokens(text: string): string[] {
 	return (text.toLowerCase().match(WORD) ?? []).map((w) => w.replace(/’/g, "'"));
 }
 
@@ -58,7 +58,7 @@ export function buildNeighborIndex(translations: readonly string[]): NeighborInd
 	return { sentences, sets, byWord };
 }
 
-export interface Neighbor {
+interface Neighbor {
 	text: string;
 	score: number;
 }
@@ -80,7 +80,7 @@ export function neighbors(index: NeighborIndex, own: string, limit = 12): Neighb
 	return scored.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
-export interface OptionChoice {
+interface OptionChoice {
 	options: string[];
 	/** How many wrong options came from near-misses or close neighbors. */
 	close: number;

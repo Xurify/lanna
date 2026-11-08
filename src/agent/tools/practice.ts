@@ -49,20 +49,20 @@ export interface PracticeToolContext {
  *  (one practiceTools per turn — chat-handler builds the agent per
  *  request, so there is no cross-turn leakage), and the executes flip
  *  this closure — the intra-turn truth the record cannot hold yet. */
-export interface PracticeGate {
+interface PracticeGate {
 	problemActive: boolean;
 }
 
 /** Seed the turn's gate from the record (result-aware activeProblemOf —
  *  only a cleanly-posed problem counts). */
-export function createPracticeGate(ctx: PracticeToolContext): PracticeGate {
+function createPracticeGate(ctx: PracticeToolContext): PracticeGate {
 	const record = ctx.chatStore.getChat(ctx.chatId);
 	return { problemActive: record ? activeProblemOf(record.messages) !== null : false };
 }
 
 // ─── problem: the pose ───────────────────────────────────────────────────────
 
-export const problemInputObject = Type.Object({
+const problemInputObject = Type.Object({
 	statement: Type.String({
 		description:
 			"REQUIRED — the problem as the learner sees it (markdown). Must be self-contained and " +
@@ -75,10 +75,7 @@ export const problemInputObject = Type.Object({
 		description: "REQUIRED — the full solution, moves in order, committed BEFORE the learner sees the problem. This IS the reveal — conclude shows it verbatim; never re-author it.",
 	}),
 });
-
-export type ProblemInput = Static<typeof problemInputObject>;
-
-export function problemTool(gate: PracticeGate): AgentTool<typeof problemInputObject> {
+function problemTool(gate: PracticeGate): AgentTool<typeof problemInputObject> {
 	return {
 		name: "problem",
 		label: "problem",
@@ -104,7 +101,7 @@ export function problemTool(gate: PracticeGate): AgentTool<typeof problemInputOb
 
 // ─── conclude: the end of a problem ──────────────────────────────────────────
 
-export const concludeInputObject = Type.Object({
+const concludeInputObject = Type.Object({
 	outcome: Type.Union(
 		[
 			Type.Literal("solved"),
@@ -141,10 +138,7 @@ export const concludeInputObject = Type.Object({
 		}),
 	),
 });
-
-export type ConcludeInput = Static<typeof concludeInputObject>;
-
-export function concludeTool(gate: PracticeGate): AgentTool<typeof concludeInputObject> {
+function concludeTool(gate: PracticeGate): AgentTool<typeof concludeInputObject> {
 	return {
 		name: "conclude",
 		label: "conclude",

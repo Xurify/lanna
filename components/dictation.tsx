@@ -100,9 +100,9 @@ const DG_URL =
 /** Meter tuning — the owner's tested values, see the file header. */
 const METER_FLOOR_DB = -50;
 const METER_CEILING_DB = -10;
-export const METER_TICK_MS = 60;
+const METER_TICK_MS = 60;
 /** Rolling history: 48 cells × 60ms ≈ 2.9s of recent loudness. */
-export const METER_CELLS = 48;
+const METER_CELLS = 48;
 
 /** The Deepgram key's id in the keys store (the env-var name — the Keys
  *  section's openRow state and the PUT /api/keys/:id seam). */
@@ -138,9 +138,9 @@ async function mintFreshToken(): Promise<string> {
  *  so the next call re-mints — the honest error path stays honest.
  *  refresh() re-mints in the background (page mount, run end); its
  *  failures are silently tolerated (a keyless pre-mint just doesn't warm). */
-export const WARM_TOKEN_TTL_MS = 3 * 60_000;
+const WARM_TOKEN_TTL_MS = 3 * 60_000;
 
-export type WarmMinter = { mint: () => Promise<string>; refresh: () => void };
+type WarmMinter = { mint: () => Promise<string>; refresh: () => void };
 
 export function createWarmMinter(
 	mint: () => Promise<string>,
@@ -188,7 +188,7 @@ function ensureAudioGraph(): { ctx: AudioContext; module: Promise<void> } {
 }
 
 /** RMS (0..1) → normalized 0..1 across the audible dB window. */
-export function rmsToMeter(rms: number): number {
+function rmsToMeter(rms: number): number {
 	if (rms <= 0) return 0;
 	const db = 20 * Math.log10(rms);
 	const t = (db - METER_FLOOR_DB) / (METER_CEILING_DB - METER_FLOOR_DB);
@@ -238,9 +238,9 @@ export function useDictationTarget(append: (text: string) => void, claimed: bool
 	}, [append, claimed]);
 }
 
-export type DictationPhase = "idle" | "connecting" | "recording" | "stopping";
+type DictationPhase = "idle" | "connecting" | "recording" | "stopping";
 
-export type Dictation = {
+type Dictation = {
 	phase: DictationPhase;
 	/** Terminal-state explanation, shown inside the wide button (cleared on the next start). */
 	error: string | null;

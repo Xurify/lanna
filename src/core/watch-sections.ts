@@ -10,10 +10,10 @@
 import { compareAnswer, type AnswerVerdict } from "./language.ts";
 import type { StoryToken, StoryUsage } from "./reading.ts";
 
-export const MAX_SECTIONS = 3;
-export const SECTION_MIN_LINES = 3;
-export const SECTION_MAX_LINES = 20;
-export const FOCUS_MAX = 6;
+const MAX_SECTIONS = 3;
+const SECTION_MIN_LINES = 3;
+const SECTION_MAX_LINES = 20;
+const FOCUS_MAX = 6;
 /** Lines shown to the model at most; a longer video is offered from its start. */
 export const SECTION_PROMPT_LINES = 400;
 

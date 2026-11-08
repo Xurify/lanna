@@ -19,7 +19,7 @@ let profilePromise: Promise<LanguageInfo> | null = null;
 // Set once the language arrives, so later mounts render it on the first frame.
 let knownLanguage: LanguageInfo | null = null;
 
-export function activeLanguage(): Promise<LanguageInfo> {
+function activeLanguage(): Promise<LanguageInfo> {
 	profilePromise ??= sharedJson<{ active?: string; language?: LanguageInfo }>("/api/profile")
 		.then((p) => p.language ?? (isLanguageId(p.active) ? LANGUAGES[p.active] : LANGUAGES.slovak))
 		.catch(() => LANGUAGES.slovak)
@@ -150,7 +150,7 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 	});
 }
 
-export interface SpeakOptions {
+interface SpeakOptions {
 	/** A voice id (a story character) or "female" | "male". */
 	voice?: string;
 	gender?: "female" | "male";

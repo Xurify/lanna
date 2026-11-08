@@ -31,7 +31,7 @@ function isToolUIPart(part: UIMessage["parts"][number]): boolean {
  * contracts/jobs.ts "THE ASYNC PROTOCOL"), so job tools are NOT returned
  * here. This file carries only the question gate and the shared scan helper.
  */
-export interface PendingToolCall {
+interface PendingToolCall {
 	toolCallId: string;
 	tool: string;
 	/** Tool input (quiz/ask args) — lets the composer pick note vs answer mode. */
@@ -56,10 +56,6 @@ export const QUESTION_TOOLS = [
 export function toolQuestionKind(tool: string): "quiz" | "ask" | "explain" {
 	return tool === "quiz" || tool === "probe" ? "quiz" : tool === "explain" || tool === "recall" ? "explain" : "ask";
 }
-
-/** Tools fulfilled by background sub-agent jobs (W2/W6). */
-export const JOB_TOOLS = ["research", "visual"] as const;
-
 // ─── Tool availability (2026-09 settings seam) ─────────────────────────────
 
 /** The tools a user may toggle off in settings — THE DEFINITIVE LIST
@@ -76,7 +72,7 @@ export const JOB_TOOLS = ["research", "visual"] as const;
  *  lenient for forward-compat. The names are the MODEL-FACING tool names
  *  (research, not researcher; pdf is the PDF-reader dispatch, sources v0
  *  2026-09). */
-export const TOGGLEABLE_TOOLS = ["research", "visual", "pdf"] as const;
+const TOGGLEABLE_TOOLS = ["research", "visual", "pdf"] as const;
 
 /** The keys the settings WRITE side accepts in agent.tools: the plain
  *  toggleables PLUS the quizzing-mechanics switch (`explain: true` arms

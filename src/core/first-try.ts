@@ -84,7 +84,7 @@ export interface FirstTryStats {
 }
 
 /** One rep as the first-try measure reads it. */
-export interface FirstTryRep {
+interface FirstTryRep {
 	kind: string;
 	/** The unit the rep drilled (its own unit, also inside a mixed lesson). */
 	unit: string;
@@ -130,7 +130,7 @@ export function recordSpokenSlip<T extends FirstTryStats>(s: T, cell: FirstTryCe
 }
 
 /** A slip the learner said in Speak, read against the dictionary. */
-export interface SpokenSlip {
+interface SpokenSlip {
 	/** The case drill the phrase puts the word in (gen, dat, loc, ins, acc-fem, acc-people). */
 	drill: UnitId;
 	slip: FormSlip;

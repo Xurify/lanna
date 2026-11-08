@@ -143,7 +143,7 @@ export const PROBE_CLEAR_HITS = 2;
 /** Pairs kept at most; the mended and cleared ones go first. */
 export const MIXUP_RECORD_CAP = 40;
 /** Pairs a single mix-up may predict. */
-export const PREDICT_CAP = 3;
+const PREDICT_CAP = 3;
 const SEEN_CAP = 3;
 /** Lesson reps whose answer is one word, typed, picked or heard. */
 const WORD_KINDS = new Set(["choose", "type", "listen"]);
@@ -379,7 +379,7 @@ function lemmaPair(lex: MixupLexicon, a: string, b: string): [string, string] {
 }
 
 /** Add the pairs a mix-up predicts: its family's other pairs, else the edit-rule neighbors. */
-export function predictMixups(record: MixupRecord, key: string, lex: MixupLexicon, at: string): MixupRecord {
+function predictMixups(record: MixupRecord, key: string, lex: MixupLexicon, at: string): MixupRecord {
 	const m = record[key];
 	if (!m) return record;
 	const family = m.family ? lex.families.find((f) => f.id === m.family) : undefined;
@@ -397,7 +397,7 @@ export function predictMixups(record: MixupRecord, key: string, lex: MixupLexico
 }
 
 /** The `from` of a probe the guide suggested rather than a mix-up predicted. */
-export const GUIDE_SOURCE = "guide";
+const GUIDE_SOURCE = "guide";
 
 /** Pairs the guide named become probes, like a family's (tested before they
  *  are taught). A pair already on record is left as it is. */
@@ -559,7 +559,7 @@ export function openMixupFor(record: MixupRecord | undefined, slug: string): (Mi
 // ─── The Mix-ups lesson ─────────────────────────────────────────────────────
 
 /** Open mix-ups and probes a lesson takes at most. */
-export const MIXUP_LESSON_PAIRS = 4;
+const MIXUP_LESSON_PAIRS = 4;
 
 const fold = (s: string) => foldDiacritics(s.toLowerCase());
 
@@ -613,7 +613,7 @@ export function buildMixupLesson(entries: readonly LexiconEntry[], record: Mixup
 /** The two twins' English, each first sense, without repeats: "to read / to
  *  read through". A rep shows both, so the English never names the answer
  *  (the chip would otherwise give it away, and the sentence must decide). */
-export function jointGloss(lex: MixupLexicon, a: string, b: string): string {
+function jointGloss(lex: MixupLexicon, a: string, b: string): string {
 	const glosses = [a, b].map((slug) => lex.bySlug.get(slug)).map((e) => (e ? shortGloss(e.en) : "?"));
 	return [...new Set(glosses)].join(" / ");
 }
@@ -681,7 +681,7 @@ function choiceFor(family: MixupFamily | undefined, s: PairSentence, other: Lexi
  *  drills only rows that are approved, match a verified sentence of this pair,
  *  carry a cue type the license allows for that twin, and (for parallel probes)
  *  have a choice (choiceFor). Otherwise every verified twin sentence counts. */
-export function probeSentences(lex: MixupLexicon, family: MixupFamily | undefined, a: string, b: string, raw: PairSentence[]): PairSentence[] {
+function probeSentences(lex: MixupLexicon, family: MixupFamily | undefined, a: string, b: string, raw: PairSentence[]): PairSentence[] {
 	if (!family?.probes) return raw;
 	const accepted = new Set(family.formsAccepted ?? []);
 	const probes = [...family.probes, ...(lex.frames.get(a) ?? []), ...(lex.frames.get(b) ?? [])];

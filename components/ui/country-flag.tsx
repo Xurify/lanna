@@ -238,7 +238,7 @@ export function langToCountryCode(lang?: string): string {
 	}
 }
 
-export interface CountryFlagProps {
+interface CountryFlagProps {
 	/** Language ID (e.g. "slovak", "russian", "sk", "ru", "en"). */
 	lang?: string;
 	/** Direct 2-letter country code (e.g. "SK", "RU", "GB"). Takes precedence over `lang`. */

@@ -22,7 +22,7 @@ import { createHash } from "node:crypto";
 import type { StoryCharacter } from "../core/reading.ts";
 import { keyValue } from "./keys.ts";
 
-export interface VoiceInfo {
+interface VoiceInfo {
 	id: string;
 	label: string;
 	gender: "f" | "m";
@@ -93,10 +93,4 @@ export function assignVoices(cast: readonly StoryCharacter[], available: Readonl
 		used.add(pick.id);
 		return { ...c, voice: pick.id };
 	});
-}
-
-/** What the palette knows about a voice id (for the Edge fallback's
- *  gender and for labels). */
-export function voiceInfo(id: string): VoiceInfo | undefined {
-	return VOICE_PALETTE.find((v) => v.id === id);
 }

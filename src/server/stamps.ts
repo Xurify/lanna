@@ -12,8 +12,8 @@ import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 
 /** A week counts as balanced from this many minutes, each strand at this share. */
-export const BALANCED_WEEK_MINUTES = 60;
-export const BALANCED_STRAND_SHARE = 0.15;
+const BALANCED_WEEK_MINUTES = 60;
+const BALANCED_STRAND_SHARE = 0.15;
 
 export interface StampReport {
 	/** Every stamp, book order: summits, chapters, then the deeds. */

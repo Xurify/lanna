@@ -3,7 +3,7 @@
 import type { CallUsage, ChatRecord, JobRecord, TurnUsage } from "./contracts.ts";
 import { NATIVE_SUBSCRIPTIONS } from "./contracts/subscriptions.ts";
 
-export type CallPricer = (usage: Partial<CallUsage>, model: string) => number | null;
+type CallPricer = (usage: Partial<CallUsage>, model: string) => number | null;
 export interface SessionPricing {
 	cost: number;
 	unpriced: number;
@@ -13,7 +13,7 @@ export interface SessionPricing {
 	turnCosts: Record<string, number | null>;
 }
 
-export function isChatGPTPlan(model: string | undefined): boolean {
+function isChatGPTPlan(model: string | undefined): boolean {
 	return model?.startsWith("chatgpt:") === true;
 }
 export function subscriptionLabel(model: string | undefined): string | undefined {

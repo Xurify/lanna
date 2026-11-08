@@ -41,7 +41,6 @@ import { useSettingsDialog } from "@/components/settings/settings-context";
 // Re-exported for the contract pin (tests/keyboard-toggle-sidebar.test.ts):
 // the dispatcher composes event names through the ONE helper — a second
 // spelling here is how the ⌘B bug happened.
-export { kbdEventForAction };
 
 export function KeyboardShortcuts() {
 	const router = useRouter();

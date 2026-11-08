@@ -13,7 +13,7 @@
  * not change it.
  */
 
-export interface TtlMemoOptions {
+interface TtlMemoOptions {
 	ttlMs: number;
 	max?: number;
 	/** For tests. */
