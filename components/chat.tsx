@@ -25,6 +25,7 @@ import { CHAT_RECORD_TOOLS, questionOpen, repeatsEarlierText } from "@/src/core"
 import { chatMdComponents } from "@/components/chat-link";
 import { SketchFigure } from "@/components/sketch-figure";
 import { ChatBoard, useDrill } from "@/components/chat-board";
+import { ChatExportMenu } from "@/components/chat-export";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -1343,6 +1344,14 @@ export function Chat({
 							{showWorking ? "Hide working" : "Show working"}
 						</button>
 					</Hint>}
+					{messages.length > 0 && (
+						<ChatExportMenu
+							chatId={chatId}
+							title={titleText}
+							messages={messages}
+							nativeMessages={nativeMessages}
+						/>
+					)}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
 					{kind === "chat" ? null : kind === "practice" ? (

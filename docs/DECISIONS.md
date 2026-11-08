@@ -988,7 +988,12 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Links open in place.** `components/chat-link.tsx` renders a reply's links: an app address with Next's `Link`; a tutor unit's address (`/lesson?unit=<tutor unit>`, `tutorUnitAt`) starts that tutor chat, as the Curriculum does; anything else opens in a new window with an arrow. Links are teal with a straight underline (E33).
 - **Our own reading view.** The tutor's text is Geist at 17 px with a 1.7 line height, like the rest of the app (E33 again has one family; Source Serif 4 and `--font-voice` are gone). The ink blot in the margin and the dotted underline under the learner's line are removed; the learner's line is a semibold heading with space above it.
 - **American spelling** is in the chat prompt: a reply said "practise".
-- Tests: `tests/fast-chat.test.ts` (one model call for a closed reply, also with a failed record or a dispatched job; a second call after a check, a file read or a record before text; the map's links, states and lists; link sorting; the drawer's input, its kept and failed results, the allowlist), `tests/chat-kind.test.ts` (the chat prompt asks for `draw`, the drawer's prompt carries the six colors).
+- **Export across formats.** The chat header features an **Export** menu (`components/chat-export.tsx`, `src/core/chat-export.ts`):
+  - **Markdown (`.md`)**: Instant "Copy as Markdown" with visual clipboard toast, or download `.md` file with clean dialogue, glossed forms, and code-fenced SVGs.
+  - **Anki Deck (`.tsv`)**: Direct download of Anki-ready flashcards (`#separator:tab`, `#html:true`, `#tags column:3`) extracting all glossed Slovak vocabulary and posed quiz questions.
+  - **Print / PDF**: `@media print` print styles in `app/globals.css` that hide sidebar, composer, and header buttons to print or save directly to PDF.
+  - **Session Data (`.json`)**: Raw backup of transcript, metadata, and turns.
+- Tests: `tests/fast-chat.test.ts` (one model call for a closed reply, also with a failed record or a dispatched job; a second call after a check, a file read or a record before text; the map's links, states and lists; link sorting; the drawer's input, its kept and failed results, the allowlist), `tests/chat-kind.test.ts` (the chat prompt asks for `draw`, the drawer's prompt carries the six colors), `tests/chat-export.test.ts` (Markdown, Anki TSV cards, JSON export, and title slugification).
 
 ## Dropped or deferred
 

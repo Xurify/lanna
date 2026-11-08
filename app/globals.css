@@ -374,6 +374,53 @@ body {
 	font-variant-numeric: tabular-nums;
 }
 
+/* Print and PDF export: clean printable document hiding chrome and docks */
+@media print {
+	header button,
+	header [role="button"],
+	aside,
+	nav,
+	[data-sidebar],
+	[data-testid="chat-board"],
+	[data-testid="composer-dock"],
+	[data-testid="export-chat-trigger"],
+	[data-testid="plan-chip"],
+	[data-testid="show-working"],
+	[data-testid="scroll-to-bottom"],
+	[data-testid="diacritic-bar"],
+	[data-testid="stats-bar"],
+	.composer,
+	button {
+		display: none !important;
+	}
+
+	html,
+	body,
+	.h-dvh {
+		height: auto !important;
+		overflow: visible !important;
+		background: #ffffff !important;
+		color: #111827 !important;
+	}
+
+	[data-session-find-root],
+	.overflow-y-auto {
+		overflow: visible !important;
+		height: auto !important;
+		max-height: none !important;
+	}
+
+	article,
+	[data-message-container] {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+
+	@page {
+		margin: 1.5cm;
+	}
+}
+
 /* Teaching prose (the markdown renderer's container gets .lh-prose):
    Source Sans 3 with the size/leading tokens; emphasis color bound to
    the settings-ready tokens. */
