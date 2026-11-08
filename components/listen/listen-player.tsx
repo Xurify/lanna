@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, EnterHint, NotSaved, onFocusedControl, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -32,6 +32,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { newSessionId, sendSession } from "@/components/session-save";
 
 interface Rep {
 	item: ListenItem;
@@ -75,6 +76,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const lastSave = useRef<string | null>(null);
 	const startedAt = useRef(Date.now());
 	// Listening is mostly hearing, not clicking: the day's minutes count the
 	// time this tab is visible and focused (`ms` stays the wall-clock).
@@ -160,10 +162,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			const correct = understood(all);
 			const almost = almostCount(all);
 			try {
-				const res = await fetch("/api/listen", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({
+				lastSave.current = JSON.stringify({
+						clientId: newSessionId(),
 						reps: all.map((r) => ({
 							itemId: r.item.id,
 							slug: r.item.slug,
@@ -185,10 +185,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						ms: Date.now() - startedAt.current,
 						activeMs: activeTime.finish(),
 						tz: new Date().getTimezoneOffset(),
-					}),
 				});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				setOutcome((await res.json()) as Outcome);
+				setOutcome(await sendSession<Outcome>("/api/listen", lastSave.current));
 			} catch {
 				setSaveFailed(true);
 				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
@@ -198,6 +196,19 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		},
 		[activeTime],
 	);
+
+	const retrySave = async () => {
+		if (!lastSave.current || saving) return;
+		setSaving(true);
+		try {
+			setOutcome(await sendSession<Outcome>("/api/listen", lastSave.current));
+			setSaveFailed(false);
+		} catch {
+			setSaveFailed(true);
+		} finally {
+			setSaving(false);
+		}
+	};
 
 	/** Grade and show one answer. The time since the text was first shown
 	 *  is the speed model's; the first playback's length is kept too. */
@@ -246,7 +257,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				return;
 			}
 			if (outcome) {
-				if (e.key === "Enter" && !onFocusedControl(e)) router.push("/");
+				if (e.key === "Enter" && !endEnterBlocked(e)) router.push("/");
 				return;
 			}
 			if (!item) return;
@@ -314,7 +325,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} onAgain={() => void load()} />
+				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
 			</Frame>
 		);
 	}
@@ -521,7 +532,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 	);
 }
 
-function EndScreen({ outcome, reps, saving, failed, onAgain }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; onAgain: () => void }) {
+function EndScreen({ outcome, reps, saving, failed, onAgain, onRetrySave }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; onAgain: () => void; onRetrySave: () => void }) {
 	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
@@ -531,7 +542,7 @@ function EndScreen({ outcome, reps, saving, failed, onAgain }: { outcome: Outcom
 	return (
 		<TaskEnd
 			testId="listen-end"
-			hint={failed ? <NotSaved>This session is not counted.</NotSaved> : <EnterHint>for Today</EnterHint>}
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} /> : <EnterHint>for Today</EnterHint>}
 			actions={
 				<>
 					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
@@ -573,7 +584,7 @@ function EndScreen({ outcome, reps, saving, failed, onAgain }: { outcome: Outcom
 							</li>
 						))}
 					</ul>
-					<p className="mt-2 font-prose text-sm text-ink-3">They are in Review now, so you meet them again before you forget them.</p>
+					{!failed && <p className="mt-2 font-prose text-sm text-ink-3">They are in Review now, so you meet them again before you forget them.</p>}
 				</div>
 			)}
 			{missed.length > 0 && (

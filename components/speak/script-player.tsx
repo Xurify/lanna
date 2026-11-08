@@ -17,7 +17,7 @@ import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, EnterHint, onFocusedControl, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, endEnterBlocked, EnterHint, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
@@ -105,7 +105,7 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (done) {
-				if (e.key !== "Enter" || e.repeat || onFocusedControl(e)) return;
+				if (e.key !== "Enter" || endEnterBlocked(e)) return;
 				e.preventDefault();
 				router.push(`/speak?scene=${scene}`);
 				return;

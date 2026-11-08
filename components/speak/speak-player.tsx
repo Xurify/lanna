@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, EnterHint, onFocusedControl, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
+import { COLUMN, endEnterBlocked, EnterHint, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -328,7 +328,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter" && !e.repeat && !onFocusedControl(e)) {
+			if (phase === "done" && e.key === "Enter" && !endEnterBlocked(e)) {
 				router.push("/");
 				return;
 			}

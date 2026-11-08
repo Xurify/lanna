@@ -119,6 +119,7 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 	const column = cn("mx-auto w-full max-w-2xl px-6", wide && "lg:max-w-5xl");
 	const body = useRef<HTMLDivElement>(null);
 	useEffect(() => {
+		endOpenedAt = performance.now();
 		if (document.activeElement === null || document.activeElement === document.body) body.current?.focus({ preventScroll: true });
 	}, []);
 	return (
@@ -171,19 +172,26 @@ export function SentenceRow({ sentence, lang, translation, note, onPlay, childre
 	);
 }
 
-export function NotSaved({ onRetry, children }: { onRetry?: () => void; children?: React.ReactNode }) {
+export function NotSaved({ onRetry, busy = false, children }: { onRetry?: () => void; busy?: boolean; children?: React.ReactNode }) {
 	return (
 		<p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-prose text-[13px] text-ink-3" role="status">
 			<span>
 				Not saved yet.{children ? <> {children}</> : null}
 			</span>
 			{onRetry && (
-				<button type="button" onClick={onRetry} className={cn(QUIET, SMALL)}>
-					Try again
+				<button type="button" onClick={onRetry} disabled={busy} className={cn(QUIET, SMALL)}>
+					{busy ? "Trying…" : "Try again"}
 				</button>
 			)}
 		</p>
 	);
+}
+
+const END_ENTER_PAUSE_MS = 1000;
+let endOpenedAt = 0;
+
+export function endEnterBlocked(e: KeyboardEvent): boolean {
+	return e.repeat || onFocusedControl(e) || performance.now() - endOpenedAt < END_ENTER_PAUSE_MS;
 }
 
 export function onFocusedControl(e: KeyboardEvent): boolean {

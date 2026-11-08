@@ -25,7 +25,7 @@ import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, Sea
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { EnterHint, NotSaved, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { endEnterBlocked, EnterHint, NotSaved, Stat, Stats, TaskEnd } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -35,6 +35,7 @@ import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { newSessionId, sendSession } from "@/components/session-save";
 /** What a sentence is read with: the speaker's voice for a line of
  *  dialogue, the narrator's for the rest (stories written before voices
  *  were assigned have neither and get the default). */
@@ -75,6 +76,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const lastSave = useRef<string | null>(null);
 	const startedAt = useRef(Date.now());
 	// Reading is mostly not clicking: the day's minutes count the time this
 	// tab is visible and focused while an episode is being read or its
@@ -146,13 +148,8 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 			setStage("end");
 			sfx.done();
 			try {
-				const res = await fetch("/api/read", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
-				});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				setOutcome((await res.json()) as Outcome);
+				lastSave.current = JSON.stringify({ clientId: newSessionId(), action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				setOutcome(await sendSession<Outcome>("/api/read", lastSave.current));
 				void load();
 			} catch {
 				setSaveFailed(true);
@@ -164,6 +161,20 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		},
 		[story, saving, tapped, load, activeTime],
 	);
+
+	const retrySave = async () => {
+		if (!lastSave.current || saving) return;
+		setSaving(true);
+		try {
+			setOutcome(await sendSession<Outcome>("/api/read", lastSave.current));
+			setSaveFailed(false);
+			void load();
+		} catch {
+			setSaveFailed(true);
+		} finally {
+			setSaving(false);
+		}
+	};
 
 	// Escape leaves, like a lesson — unless a word popover is open, which
 	// it closes first.
@@ -233,7 +244,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} outcome={outcome} saving={saving} failed={saveFailed} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End story={story} tapped={tapped} outcome={outcome} saving={saving} failed={saveFailed} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
 			</Frame>
 		);
 	}
@@ -598,7 +609,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ failed, story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; failed: boolean; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+function End({ failed, onRetrySave, story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; failed: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
 	const lang = useActiveLanguage();
 	const looked = useMemo(() => {
 		const seen = new Set<string>();
@@ -613,7 +624,7 @@ function End({ failed, story, tapped, outcome, saving, onAgain, onNext, onShelf,
 	}, [story, tapped]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && !e.repeat && outcome && !onFocusedControl(e)) {
+			if (e.key === "Enter" && outcome && !endEnterBlocked(e)) {
 				e.preventDefault();
 				if (unreadLeft) onNext();
 				else onShelf();
@@ -626,7 +637,7 @@ function End({ failed, story, tapped, outcome, saving, onAgain, onNext, onShelf,
 	return (
 		<TaskEnd
 			testId="read-end"
-			hint={failed ? <NotSaved>This session is not counted.</NotSaved> : <EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} /> : <EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>

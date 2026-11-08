@@ -127,6 +127,7 @@ async function drain(lang: string): Promise<void> {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ ...next.body, clientId: next.id }),
+				signal: AbortSignal.timeout(15_000),
 			});
 		} catch {
 			res = null;

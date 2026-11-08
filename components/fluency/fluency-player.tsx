@@ -29,7 +29,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
-import { COLUMN, Centered, Dock, EnterHint, onFocusedControl, OptionTile, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, Centered, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -154,11 +154,11 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") return router.push(readOrigin());
 			if (e.key === "Enter") {
-				if (phase === "done" && (e.repeat || onFocusedControl(e))) return;
+				if (phase === "done" && endEnterBlocked(e)) return;
 				e.preventDefault();
 				if (phase === "intro" && plan) begin();
 				else if (phase === "reading") stop();
-				else if (phase === "done" && !onFocusedControl(e)) router.push("/");
+				else if (phase === "done") router.push("/");
 			} else if (phase === "question" && plan) {
 				const n = Number(e.key);
 				if (n >= 1 && n <= plan.question.options.length) void answer(n - 1);
@@ -625,7 +625,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter") return e.repeat || onFocusedControl(e) ? undefined : router.push("/");
+			if (phase === "done" && e.key === "Enter") return endEnterBlocked(e) ? undefined : router.push("/");
 			if (e.key === " " || e.key === "Enter") {
 				e.preventDefault();
 				if (phase === "ready") void startPass();

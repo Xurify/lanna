@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { RotateCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, Dock, EnterHint, onFocusedControl, OptionTile, PracticeCard, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { QIcon } from "@/components/quiet/icon";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
@@ -98,7 +98,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (phase.state !== "playing") {
-				if (e.key !== "Enter" || e.repeat || onFocusedControl(e)) return;
+				if (e.key !== "Enter" || endEnterBlocked(e)) return;
 				e.preventDefault();
 				if (phase.score.passed) router.push("/curriculum");
 				else retry();
@@ -184,7 +184,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 					<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
 					<Stats className="mt-7 max-w-none">
 							<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-teal-2" : "text-foreground"} />
-							<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-ink-2" />
+							<Stat label="Pass mark" value={`${Math.ceil(EXAM_PASS_MARK * score.total)} of ${score.total}`} ink="text-ink-2" />
 						</Stats>
 						<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
 						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved. It shows in Curriculum." : "This attempt was not saved, so Curriculum will not show it."}

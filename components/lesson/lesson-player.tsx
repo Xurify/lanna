@@ -25,7 +25,7 @@ import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
-import { COLUMN, Dock, EnterHint, NotSaved, onFocusedControl, OptionTile, SentenceRow, SentenceRows, PracticeCard, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, OptionTile, SentenceRow, SentenceRows, PracticeCard, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
@@ -149,6 +149,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	const [score, setScore] = useState<LessonScore | null>(null);
 	const [recorded, setRecorded] = useState<Recorded | null>(null);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const [retryingSave, setRetryingSave] = useState(false);
 	// The lesson whose save the end screen is waiting on (a new lesson clears it).
 	const pendingId = useRef<string | null>(null);
 	const [left, setLeft] = useState(BLITZ_SECONDS);
@@ -583,7 +584,11 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 					failed={saveFailed}
 					onAgain={() => void load()}
 					onNext={(u) => (u === plan.unit ? void load() : router.push(`/lesson?unit=${u}${gender ? `&gender=${gender}` : ""}`))}
-					onRetrySave={() => void flushOutbox(lang?.code ?? "sk")}
+					retrying={retryingSave}
+					onRetrySave={() => {
+						setRetryingSave(true);
+						void flushOutbox(lang?.code ?? "sk").finally(() => setRetryingSave(false));
+					}}
 				/>
 			</Frame>
 		);
@@ -1620,6 +1625,7 @@ function EndScreen({
 	failed,
 	onAgain,
 	onNext,
+	retrying,
 	onRetrySave,
 }: {
 	mode: Mode;
@@ -1631,6 +1637,7 @@ function EndScreen({
 	failed: boolean;
 	onAgain: () => void;
 	onNext: (unit: UnitId) => void;
+	retrying: boolean;
 	onRetrySave: () => void;
 }) {
 	const { correct, xp, perfect } = score;
@@ -1650,10 +1657,11 @@ function EndScreen({
 	const nextUnit = recorded ? (recorded.summary.units.find((u) => u.id === recorded.summary.next) ?? null) : null;
 	const goOn = () => onNext(recorded?.summary.next ?? unit);
 	const canGoOn = !!recorded || failed;
+	const waiting = !recorded && !failed;
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter" || e.repeat || onFocusedControl(e)) return;
+			if (e.key !== "Enter" || endEnterBlocked(e)) return;
 			if (mode === "blitz" || focus) {
 				e.preventDefault();
 				onAgain();
@@ -1667,7 +1675,7 @@ function EndScreen({
 	});
 
 	const title = mode === "blitz" ? (recorded?.newBest ? "New best." : "Time's up.") : focus === "mixups" ? (perfect ? "No mix-ups." : "Mix-ups done.") : focus === "personal" ? (perfect ? "Perfect plan practice." : "Plan practice done.") : here?.done && !wasDone ? "Unit complete." : perfect ? "Perfect lesson." : "Lesson complete.";
-	const where = mode === "blitz" ? `${reps.length} answered in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : recorded || failed ? unitInfo(unit).title : "";
+	const where = mode === "blitz" ? `${reps.length} answered in 60 seconds` : focus === "mixups" ? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words` : focus === "personal" ? "Built from your own mistakes" : here ? whereLine(here, nextUnit) : recorded ? unitInfo(unit).title : "";
 	const unitComplete = !!here?.done && !wasDone;
 	const cheers = mode === "blitz" || (!focus && !unitComplete) ? cheersFor(lessonLanguage()) : null;
 	const cheer: CheerKey = mode === "blitz" ? (recorded?.newBest ? "newBest" : "timeUp") : perfect ? "perfect" : "done";
@@ -1684,7 +1692,7 @@ function EndScreen({
 			wide={split}
 			hint={
 				failed && !recorded ? (
-					<NotSaved onRetry={onRetrySave}>The app keeps trying.</NotSaved>
+					<NotSaved onRetry={onRetrySave} busy={retrying}>The app keeps trying.</NotSaved>
 				) : (
 					<EnterHint>{enterHint}</EnterHint>
 				)
@@ -1724,9 +1732,9 @@ function EndScreen({
 					</h1>
 					<div className="mt-2 flex min-h-7 flex-wrap items-center gap-x-3.5 gap-y-1.5">
 						<p className="q-line dim" data-testid="lesson-end-where">
-							{where || <Pulse className="h-4 w-28 align-middle" />}
+							{where || (waiting && <Pulse className="h-4 w-28 align-middle" />)}
 						</p>
-						{mode === "lesson" && !focus && !here?.done && (
+						{mode === "lesson" && !focus && !here?.done && (here || waiting) && (
 							<ol className="q-dots ml-0" aria-label={here ? `${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE} lessons done` : undefined}>
 								{Array.from({ length: LESSONS_TO_COMPLETE }, (_, i) => (
 									<li key={i} className={cn("h-1 w-8 rounded-full", !here ? "animate-pulse bg-well-2" : i < here.lessons ? "bg-teal" : "bg-well-2")} />
@@ -1748,9 +1756,9 @@ function EndScreen({
 					<Stats className="mt-7 max-w-none">
 						<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
 						{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
-						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "–" : null} ink={goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
-						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "–" : null} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
-						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "–" : null} />
+						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
+						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
+						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "Not yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} />
 					</Stats>
 				</section>
 
@@ -1758,10 +1766,10 @@ function EndScreen({
 					<section className="mt-12 [grid-area:list] lg:mt-10" aria-labelledby="lesson-worked" data-testid="lesson-end-worked" data-word-lookup-enabled="true">
 						<h2 id="lesson-worked" className="q-sh mb-0">
 							<QIcon name="rule" />
-							Missed
+							Not right the first time
 							<small>{missed.length}</small>
 						</h2>
-						<p className="mt-1 font-prose text-[14px] text-ink-3">A miss you then got right is the rep that sticks.</p>
+						<p className="mt-1 font-prose text-[14px] text-ink-3">A sentence you missed and then got right is the one that sticks.</p>
 						<SentenceRows className="mt-2">
 							{missed.map((r) => (
 								<WorkedRow key={r.item.id} rep={r} back={reps.find((o) => o.item.again && o.item.sentence === r.item.sentence)} />
