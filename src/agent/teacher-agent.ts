@@ -286,7 +286,7 @@ export function createProberAgent(ctx: ProberToolContext, opts: AgentBuildOption
  * The TEACHER (agent B): enters at planning (the probe is already
  * concluded — its assessment is in the transcript), owns plan_init and the
  * full toolset (teach questions with validated nodeId, the map, research,
- * demos).
+ * figures).
  */
 export function createTeacherAgent(
 	// Optional so tests can construct a bare mock-driven agent (no storage

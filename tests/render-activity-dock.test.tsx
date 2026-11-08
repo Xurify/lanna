@@ -168,15 +168,15 @@ describe("activity section render", () => {
 		const html = renderToStaticMarkup(
 			<ActivitySection
 				feed={{
-					jobs: [job({ id: "j1", kind: "demo", activity: "building sandbox…", title: "Chain-rule demo" })],
+					jobs: [job({ id: "j1", kind: "visual", activity: "drawing figure…", title: "Chain-rule figure" })],
 					tasks: [],
 				}}
 			/>,
 		);
 		assert.match(html, /data-testid="activity-section"/);
 		assert.match(html, /data-testid="activity-blob-job"/);
-		assert.match(html, /Chain-rule demo/);
-		assert.match(html, /building sandbox…/);
+		assert.match(html, /Chain-rule figure/);
+		assert.match(html, /drawing figure…/);
 		// Unpriced job → "—", never $0.0000 (doctrine); both blobs show it.
 		assert.match(html, /activity-blob-cost[^>]*>—</);
 		assert.match(html, /data-testid="activity-abort"/, "END on the blob face, popover-independent");
@@ -187,7 +187,7 @@ describe("activity section render", () => {
 		// Truncation-reveals KEEP native title (tooltip wave mechanism rule):
 		// the truncated activity + title spans carry title= — a styled
 		// tooltip adds nothing over an ellipsis reveal.
-		assert.match(html, /title="building sandbox…"/);
+		assert.match(html, /title="drawing figure…"/);
 	});
 
 

@@ -38,9 +38,6 @@ function fakeHeadless(rendered: { pages: number[] } = { pages: [] }): HeadlessAp
 		paths,
 		available: () => true,
 		unavailableReason: () => null,
-		runDemo: async () => {
-			throw new Error("unused");
-		},
 		renderSvg: async () => {
 			throw new Error("unused");
 		},
@@ -206,9 +203,6 @@ describe("pdf-reader loop (faux engine)", () => {
 				headless: {
 					available: () => false,
 					unavailableReason: () => "No Chrome found",
-					runDemo: async () => {
-						throw new Error("unused");
-					},
 					renderSvg: async () => {
 						throw new Error("unused");
 					},

@@ -265,7 +265,7 @@ export interface ChatListItem extends ChatSummary {
 /**
  * components/chat.tsx renders any tool part it doesn't specially handle via
  * components/artifacts/index.ts's registry, keyed by tool name ("research",
- * "demo", "visual", …). Workers add renderers there — chat.tsx is off-limits
+ * "research", "visual", …). Workers add renderers there — chat.tsx is off-limits
  * to artifact work. Renderer receives the raw tool part; it typically renders
  * an activity card while state is input-available (poll /api/jobs) and the
  * artifact (iframe / svg) when output-available.

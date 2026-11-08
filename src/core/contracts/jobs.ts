@@ -12,7 +12,7 @@ import { newHandoffMessage } from "../native-messages.ts";
 
 // ─── Async sub-agent jobs (vision §2.5; plan.md Wave 0 protocol) ────────────
 
-export type JobKind = "research" | "demo" | "visual" | "pdf";
+export type JobKind = "research" | "visual" | "pdf";
 export type JobStatus = "running" | "done" | "error";
 
 export interface JobRecord {
@@ -140,7 +140,7 @@ export function accumulateJobUsage(
  * THE ASYNC PROTOCOL — "ack now, steer later" (the pi sub-agents model,
  * vision §2.5):
  *
- *  1. Job tools (research / demo / visual / pdf) are SERVER-EXECUTED. The model
+ *  1. Job tools (research / visual / pdf) are SERVER-EXECUTED. The model
  *     calls one MID-TURN; execute creates the job record, fires the
  *     background runner, and resolves IMMEDIATELY with an acknowledgement
  *     ("dispatched — continue your turn"). The teacher's turn does NOT end
@@ -150,7 +150,7 @@ export function accumulateJobUsage(
  *
  *  2. The background runner (src/agent/subagents/runner.ts) runs the kind's
  *     sub-agent loop — isolated context, modelFor(role), the
- *     verify-never-one-shot doctrine (headless-tested demos, looked-at SVGs,
+ *     verify-never-one-shot doctrine (looked-at SVGs,
  *     sourced briefs) — tracking a live activity line in the job record.
  *     ONE central client poll of GET /api/jobs?chatId=… (in Chat) drives every
  *     job surface: the transcript dispatch cards (live activity by
@@ -196,21 +196,6 @@ export interface ResearchToolInput {
 export interface ResearchResult {
 	brief: string;
 	sources: { title: string; url: string }[];
-}
-
-export interface DemoToolInput {
-	title: string;
-	/** Precise brief: concept, parameters/interactions, visual style. */
-	brief: string;
-}
-
-export interface DemoResult {
-	title: string;
-	/** Self-contained single-file HTML/JS document (sandboxed-iframe ready). */
-	html: string;
-	/** The builder sub-agent headlessly executed the demo before delivery. */
-	tested: true;
-	notes?: string;
 }
 
 export interface VisualToolInput {
@@ -277,7 +262,7 @@ export interface SubagentResultMeta {
 /** The data-subagent-artifact part payload: what the UI renders. */
 export interface SubagentArtifactData {
 	kind: JobKind;
-	result: ResearchResult | DemoResult | VisualResult | PdfResult;
+	result: ResearchResult | VisualResult | PdfResult;
 	/** The learner's pinned UI state (invert switch) riding the record. */
 	ui?: { inverted?: boolean };
 }
@@ -285,7 +270,7 @@ export interface SubagentArtifactData {
 /** A result steer's marker details: the UI's meta + artifact in one
  *  payload (the projection splits it into metadata + data part). */
 export interface SteerDetails extends SubagentResultMeta {
-	result: ResearchResult | DemoResult | VisualResult | PdfResult;
+	result: ResearchResult | VisualResult | PdfResult;
 	/** LEARNER UI state pinned onto the artifact (owner, 2026-10-07): the
 	 *  invert switch's position, persisted so navigating away and back (or
 	 *  restarting) keeps it. A VIEW preference — never enters the teacher's
@@ -305,7 +290,7 @@ export function setSteerUiInverted(
 	return messages.map((m) => {
 		if (m.id !== messageId) return m;
 		const d = (m as LhMarkerMessage).details as Partial<SteerDetails> | undefined;
-		if (!d || (d.kind !== "demo" && d.kind !== "visual")) return m;
+		if (!d || d.kind !== "visual") return m;
 		return { ...m, details: { ...d, ui: { ...d.ui, inverted } } } as LhMessage;
 	});
 }
@@ -313,18 +298,14 @@ export function setSteerUiInverted(
 /** Anything the wake pipeline may queue and deliver — a native marker. */
 export type SteerMessage = LhMarkerMessage;
 
-/** Whether a result is the failure shape (html/svg empty, failure brief). */
+/** Whether a result is the failure shape (svg empty, failure brief). */
 export function isSubagentFailure(
 	kind: JobKind,
-	result: ResearchResult | DemoResult | VisualResult | PdfResult,
+	result: ResearchResult | VisualResult | PdfResult,
 ): boolean {
 	if (kind === "research") {
 		const r = result as ResearchResult;
 		return r.sources.length === 0 && /^Research failed:/i.test(r.brief);
-	}
-	if (kind === "demo") {
-		const r = result as DemoResult;
-		return typeof r.html !== "string" || r.html.length === 0;
 	}
 	if (kind === "pdf") {
 		const r = result as PdfResult;
@@ -335,14 +316,10 @@ export function isSubagentFailure(
 }
 
 /** The model-facing text of a steer: what the result IS, what to do with it. */
-function steerText(kind: JobKind, result: ResearchResult | DemoResult | VisualResult | PdfResult): string {
+function steerText(kind: JobKind, result: ResearchResult | VisualResult | PdfResult): string {
 	if (isSubagentFailure(kind, result)) {
 		if (kind === "research")
 			return `${(result as ResearchResult).brief}\n\nContinue with what you can establish and flag the uncertainty to the learner.`;
-		if (kind === "demo")
-			return `The demo "${(result as DemoResult).title}" could not be built: ${
-				(result as DemoResult).notes ?? "unknown reason"
-			}. Fall back to explaining in prose; if the brief was the problem, re-call demo with a tighter one.`;
 		if (kind === "pdf")
 			return `${(result as PdfResult).brief}\n\nContinue with what you can establish from the session and flag the gap to the learner.`;
 		return `The figure could not be made: ${(result as VisualResult).notes ?? "unknown reason"}. Fall back to prose or mermaid, or re-call visual with a tighter brief.`;
@@ -351,10 +328,6 @@ function steerText(kind: JobKind, result: ResearchResult | DemoResult | VisualRe
 		return `Research complete — the researcher's full brief follows. Weave it into the lesson and cite its sources when you use its findings:\n\n${(result as ResearchResult).brief}`;
 	if (kind === "pdf")
 		return `PDF reading complete — the reader's brief on "${(result as PdfResult).path}" follows, with page citations. Weave it into the lesson and cite pages when you use it:\n\n${(result as PdfResult).brief}`;
-	if (kind === "demo")
-		return `The demo "${(result as DemoResult).title}" is built, headlessly tested, and rendered in the lesson. Builder notes: ${
-			(result as DemoResult).notes ?? "(none)"
-		}.\nTeach with it — reference its controls by name and point the learner at what to try.`;
 	return `The figure is drawn, verified by inspection, and rendered in the lesson. Maker notes: ${
 		(result as VisualResult).notes ?? "(none)"
 	}.\nReference its elements as you teach.`;
@@ -367,7 +340,7 @@ function steerText(kind: JobKind, result: ResearchResult | DemoResult | VisualRe
  */
 export function buildSubagentSteer(
 	job: Pick<JobRecord, "id" | "kind" | "toolCallId">,
-	result: ResearchResult | DemoResult | VisualResult | PdfResult,
+	result: ResearchResult | VisualResult | PdfResult,
 ): SteerMessage {
 	return {
 		id: `steer_${job.id}`,
@@ -408,8 +381,6 @@ export function buildAbortSteer(
 function abortText(kind: JobKind): string {
 	if (kind === "research")
 		return "Research aborted — the learner aborted the research job, so no brief is coming. Acknowledge it in one line and continue teaching without it (or offer to re-dispatch it).";
-	if (kind === "demo")
-		return "The demo job was aborted by the learner — no demo is coming. Acknowledge it in one line and teach the topic in prose instead (a re-dispatch is fine if the learner wants it).";
 	if (kind === "pdf")
 		return "The PDF reading job was aborted by the learner — no brief is coming. Acknowledge it in one line and continue without it (a re-dispatch is fine if the learner wants it).";
 	return "The figure job was aborted by the learner — no figure is coming. Acknowledge it in one line and teach without it (a re-dispatch is fine if the learner wants it).";

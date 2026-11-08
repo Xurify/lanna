@@ -21,7 +21,7 @@ export interface SessionSpend {
 	/** Model turns in USD; null when every turn was unpriced. */
 	costUsd: number | null;
 	unpricedTurns: number;
-	/** Sub-agent jobs (research, demos) started from this chat, USD. */
+	/** Sub-agent jobs (research, visuals) started from this chat, USD. */
 	jobsUsd: number;
 	models: string[];
 }

@@ -107,7 +107,7 @@ function serverEntry() {
 // ─── Single instance: two instances would fight over the data dir ─────────
 // ─── Browser-service helper (Wave E stage 3, owner 2026-10-10) ────────
 // The render engines for agent jobs: PDFs and SVGs rasterize natively
-// (pdfjs+Skia, resvg — no browser); DEMOS execute JS and need one. The
+// (pdfjs+Skia, resvg — no browser); only a page that executes JS needs one. The
 // app's own Chromium serves that via this helper — the server spawns
 //   <this binary> --browser-service
 // and connects over CDP (system Chrome stays the fallback). Handshake:

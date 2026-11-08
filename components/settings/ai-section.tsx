@@ -8,7 +8,7 @@
  * read the federated catalog from /api/models, so a stored id stays visible even
  * if its provider key lapsed. The Default row clears the override.
  *
- * Tools: research, demo, visual, pdf. An absent key counts as enabled; the UI
+ * Tools: research, visual, pdf. An absent key counts as enabled; the UI
  * writes explicit booleans for all four. The search engine (Tavily or Brave) is
  * live only with its key, so the row grays without one.
  *
@@ -40,7 +40,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
-	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research, build demos, and grade your work" },
+	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research and grade your work" },
 	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
 };
 
@@ -48,12 +48,11 @@ const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 const SEARCH_ENGINES = ["tavily", "brave"] as const;
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
-export const TOGGLE_TOOLS = ["research", "demo", "visual", "pdf"] as const;
+export const TOGGLE_TOOLS = ["research", "visual", "pdf"] as const;
 
 /** Learner-facing copy. The ids stay the engine's names. */
 export const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
 	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
-	demo: { label: "Interactive demos", hint: "Builds small working demos for ideas that move or change." },
 	visual: { label: "Precise figures", hint: "Draws exact pictures: graphs, number lines and geometry." },
 	pdf: { label: "Read PDFs", hint: "Reads the PDFs you give it and cites their pages." },
 };

@@ -30,7 +30,7 @@ Instead of just giving you an explanation, it uses your answers and thinking to 
 
 **Think out loud.** The thinking fields let you explain your reasoning, uncertainties, and reactions in your own words. This is how the agent gets a detailed picture rather than just a record of right and wrong answers. You can type or use dictation.
 
-The agent can also research questions in the background, create visual explanations, and build interactive demonstrations.
+The agent can also research questions in the background and create visual explanations.
 
 ## Knowledge that carries forward
 

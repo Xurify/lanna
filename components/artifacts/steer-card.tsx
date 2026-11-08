@@ -4,7 +4,6 @@ import { CheckIcon, CircleX } from "lucide-react";
 import type { PdfResult, ResearchResult, SubagentArtifactData } from "@/src/core";
 import type { LhViewMessage } from "@/src/core";
 import { isSubagentFailure } from "@/src/core";
-import { DemoOutputCard } from "@/components/artifacts/demo-card";
 import { PdfBriefCard, ResearchBriefCard } from "@/components/artifacts/job-card";
 import { VisualOutputCard } from "@/components/artifacts/visual-card";
 
@@ -21,7 +20,7 @@ import { VisualOutputCard } from "@/components/artifacts/visual-card";
  *     too long to inline by default and the teacher's wake turn weaves it
  *     into the lesson anyway. Failures keep the failure card (the brief
  *     explains what went wrong).
- *   demo / visual — the artifact itself (sandboxed iframe / sanitized SVG).
+ *   visual — the artifact itself (sanitized SVG).
  *     The sub-agent's verification notes are model-facing glue and do NOT
  *     render; only a failure note does.
  */
@@ -55,17 +54,20 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 			) : (
 				<PdfCompleteBadge result={data.result as PdfResult} />
 			);
-		case "demo":
-			return <DemoOutputCard output={data.result} messageId={message.id} initialInverted={data.ui?.inverted ?? false} />;
 		case "visual":
 			return <VisualOutputCard output={data.result} messageId={message.id} initialInverted={data.ui?.inverted ?? false} />;
 	}
+	return (
+		<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			A background agent finished, but its result could not be displayed.
+		</div>
+	);
 }
 
 /** The aborted-job chip: mirrors the complete-badge one-liner — the
  * teacher's wake turn acknowledges the abort in the lesson itself,
  * this just marks what happened. */
-const ABORTED_LABEL: Record<string, string> = { research: "Research", pdf: "PDF reading", demo: "Demo", visual: "Figure", job: "Background work" };
+const ABORTED_LABEL: Record<string, string> = { research: "Research", pdf: "PDF reading", visual: "Figure", job: "Background work" };
 
 function AbortedBadge({ kind }: { kind: string }) {
 	return (

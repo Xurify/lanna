@@ -63,10 +63,10 @@ describe("native app and conversation identity", { concurrency: false }, () => {
 		}
 	});
 
-	it("separate researcher/demoBuilder/compaction invocations own distinct stable unsaved conversations", async () => {
+	it("separate researcher/visualMaker/compaction invocations own distinct stable unsaved conversations", async () => {
 		const ids = new Set<unknown>();
 		// Compaction uses the shared runner with the researcher role.
-		for (const role of ["demoBuilder", "researcher"] as const) {
+		for (const role of ["visualMaker", "researcher"] as const) {
 			const { engine, requests } = recordingEngine();
 			let usage = 0;
 			const result = await runSubagent([again], { role, engine, chatId: "chat_shared_debug_only", systemPrompt: "offline", prompt: "offline", maxTurns: 3, onUsage: () => usage++ });

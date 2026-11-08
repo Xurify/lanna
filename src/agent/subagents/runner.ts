@@ -5,8 +5,6 @@ import {
 	buildSubagentSteer,
 	isSubagentFailure,
 	piUsageToStep,
-	type DemoResult,
-	type DemoToolInput,
 	type JobKind,
 	type JobRecord,
 	type JobUsage,
@@ -26,7 +24,6 @@ import * as path from "node:path";
 import type { ModelRole } from "../../../config.ts";
 import { ROLE_SLOT, modelsNotConfigured, type ModelSlotName, type ProviderKeyMissing } from "../../core/settings.ts";
 import type { ChatStore, JobStore } from "../../core/ports.ts";
-import { runDemoBuilder } from "./demo-builder.ts";
 import { runPdfReaderAgent } from "./pdf-reader.ts";
 import { runResearcherAgent } from "./researcher.ts";
 import { runVisualMaker } from "./visual-maker.ts";
@@ -57,12 +54,11 @@ import { runVisualMaker } from "./visual-maker.ts";
  * runners, which read these at call time.)
  */
 export const researchModelOverride: { current?: PiEngine } = {};
-export const demoModelOverride: { current?: PiEngine } = {};
 export const visualModelOverride: { current?: PiEngine } = {};
 export const pdfModelOverride: { current?: PiEngine } = {};
 
 /** The dispatch-time tool input (from src/agent/tools/jobs.ts schemas). */
-type JobToolInput = ResearchToolInput | DemoToolInput | VisualToolInput | PdfToolInput;
+type JobToolInput = ResearchToolInput | VisualToolInput | PdfToolInput;
 
 export interface JobRunnerDeps {
 	chatStore: ChatStore;
@@ -120,7 +116,6 @@ interface LoopContext {
  * engine each sub-agent kind runs — the engineFor injection key. */
 const KIND_ROLE: Record<JobKind, ModelRole> = {
 	research: "researcher",
-	demo: "demoBuilder",
 	visual: "visualMaker",
 	pdf: "pdfReader",
 };
@@ -171,7 +166,6 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 	function pickEngine(kind: JobKind): PiEngine | undefined {
 		const testOverride: Record<string, { current?: PiEngine } | undefined> = {
 			researcher: researchModelOverride,
-			demoBuilder: demoModelOverride,
 			visualMaker: visualModelOverride,
 			pdfReader: pdfModelOverride,
 		};
@@ -183,7 +177,6 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 		(jobId: string, engine: PiEngine, input: JobToolInput | undefined, loop: LoopContext) => Promise<void>
 	> = {
 		research: (jobId, engine, input, loop) => runResearchJob(jobId, engine, input, loop),
-		demo: (jobId, engine, input, loop) => runDemoJob(jobId, engine, input, loop),
 		visual: (jobId, engine, input, loop) => runVisualJob(jobId, engine, input, loop),
 		pdf: (jobId, engine, input, loop) => runPdfJob(jobId, engine, input, loop),
 	};
@@ -214,30 +207,22 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 			if (stillRunning(jobId)) jobStore.updateJob(jobId, { error: reason });
 			const resolved = resolveInput(job, input) as
 				| ResearchToolInput
-				| DemoToolInput
 				| VisualToolInput
 				| PdfToolInput
 				| undefined;
 			const pdf = resolved as PdfToolInput | undefined;
-			const failure: ResearchResult | DemoResult | VisualResult | PdfResult =
+			const failure: ResearchResult | VisualResult | PdfResult =
 				job.kind === "research"
 					? { brief: `Research failed: ${reason}`, sources: [] }
-					: job.kind === "demo"
-						? {
-								title: typeof (resolved as DemoToolInput | undefined)?.title === "string" && (resolved as DemoToolInput).title.trim() ? (resolved as DemoToolInput).title : "Interactive demo",
-								html: "",
-								tested: true,
-								notes: `FAILED: ${reason}`,
-							}
-						: job.kind === "visual"
-							? { svg: "", notes: `FAILED: ${reason}` }
-							: {
-									path: typeof pdf?.path === "string" ? pdf.path : "",
-									question: typeof pdf?.question === "string" ? pdf.question : "",
-									brief: `PDF failed: ${reason}`,
-									pagesRead: [],
-									pagesConsulted: [],
-								};
+					: job.kind === "visual"
+						? { svg: "", notes: `FAILED: ${reason}` }
+						: {
+								path: typeof pdf?.path === "string" ? pdf.path : "",
+								question: typeof pdf?.question === "string" ? pdf.question : "",
+								brief: `PDF failed: ${reason}`,
+								pagesRead: [],
+								pagesConsulted: [],
+							};
 			await finishJob(jobId, failure);
 		};
 		if (!engine) {
@@ -300,7 +285,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 	 * Save the computation outcome and session delivery obligation together.
 	 * Worker liveness ends after cleanup, not after a lesson consumes the result.
 	 */
-	async function finishJob(jobId: string, result: ResearchResult | DemoResult | VisualResult | PdfResult): Promise<void> {
+	async function finishJob(jobId: string, result: ResearchResult | VisualResult | PdfResult): Promise<void> {
 		const job = jobStore.getJob(jobId);
 		if (!job) return;
 		// Aborted mid-run (abortJob flips the record before
@@ -403,44 +388,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 		}
 	}
 
-	// ─── demo + visual ──────────────────────────────────────────────────────
-
-	async function runDemoJob(
-		jobId: string,
-		model: PiEngine | undefined,
-		passedInput: JobToolInput | undefined,
-		loop: LoopContext,
-	): Promise<void> {
-		const ctx = jobContext(jobId);
-		if (!ctx) return;
-		const { job } = ctx;
-
-		const input = (passedInput ?? resolveInput(job, passedInput)) as DemoToolInput | undefined;
-		const title = typeof input?.title === "string" && input.title.trim() ? input.title : "Interactive demo";
-		const brief = typeof input?.brief === "string" ? input.brief : "";
-
-		try {
-			jobStore.updateJob(jobId, { activity: "building demo" });
-			const result = await runDemoBuilder(
-				{ title, brief },
-				{
-					engine: model,
-					abortSignal: loop.abortSignal,
-					chatId: loop.chatId,
-					onUsage: (usage) => loop.onUsage(piUsageToStep(usage)),
-					onActivity: (line) => jobStore.updateJob(jobId, { activity: line }),
-				},
-			);
-			if (isDemoFailure(result) && stillRunning(jobId))
-				jobStore.updateJob(jobId, { error: result.notes ?? "demo build failed" });
-			await finishJob(jobId, result);
-		} catch (err) {
-			if (loop.abortSignal.aborted) return;
-			const reason = err instanceof Error ? err.message : String(err);
-			if (stillRunning(jobId)) jobStore.updateJob(jobId, { error: reason });
-			await finishJob(jobId, { title, html: "", tested: true, notes: `FAILED: ${reason}` });
-		}
-	}
+	// ─── visual ─────────────────────────────────────────────────────────────
 
 	async function runVisualJob(
 		jobId: string,
@@ -521,11 +469,6 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 }
 
 // ─── module-level pure helpers ──────────────────────────────────────────────
-
-/** Failure shape (W6 brief): html === "" with "FAILED: …" notes. */
-function isDemoFailure(result: DemoResult): boolean {
-	return typeof result.html !== "string" || result.html.length === 0;
-}
 
 function isVisualFailure(result: VisualResult): boolean {
 	return typeof result.svg !== "string" || result.svg.length === 0;

@@ -360,7 +360,7 @@ export async function handleChatInput(
 	// CROSS-STREAM SEAM (P2 reconciliation, 2026-09-19): `toolToggles`
 	// rides the build opts as the user-level DELTA map (absent key =
 	// enabled). The definitive toggleable set is TOGGLEABLE_TOOLS — the
-	// sub-agent JOB tools (research/demo/visual/pdf; adjudicated with the
+	// sub-agent JOB tools (research/visual/pdf; adjudicated with the
 	// user: quiz/ask/fs/plan/probe_done are always-on).
 	if (isSubscriptionProvider(conversation.provider)) requestCycle = new SubscriptionRequestCycle({
 		initialMessages: asAgentMessages(merged),

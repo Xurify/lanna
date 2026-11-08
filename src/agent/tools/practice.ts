@@ -174,7 +174,7 @@ export function practiceTools(ctx: PracticeToolContext): Record<string, AgentToo
 	// THE RARELY-NEEDED SET (owner round 10): read/ls/find/grep over the
 	// learner's files (always — the same read-only set the teacher and
 	// prober carry), the research + pdf jobs (available without search
-	// keys; demo/visual stay teach-only), and
+	// keys; visual stays teach-only), and
 	// the prober's map readers when the settings gate opened. None are
 	// toggle-filtered: problem/conclude are the session; these are
 	// exceptions the doctrine says to reach for rarely.
