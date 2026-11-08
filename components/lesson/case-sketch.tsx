@@ -13,7 +13,7 @@ import type { UnitId } from "@/src/core";
  * units; other languages get no sketch and keep the plain intro.
  */
 
-export type SceneKind = "into" | "outof" | "at" | "inside" | "on" | "about" | "together" | "infront" | "vehicle" | "toward" | "gift" | "cup" | "without" | "town" | "pen";
+export type SceneKind = "into" | "outof" | "at" | "inside" | "on" | "about" | "together" | "infront" | "vehicle" | "toward" | "gift" | "cup" | "without" | "town" | "pen" | "have" | "see";
 
 export interface SketchStage {
 	label: string;
@@ -52,7 +52,7 @@ const stage = (s: SketchStage): SketchStage => s;
 const SKETCHES: Partial<Record<UnitId, SketchStage[]>> = {
 	gen: [
 		stage({ label: "do means “into”", kind: "into", before: "Idem do ", base: "škol", ending: "y", after: ".", meaning: "I am going to school.", dictionary: "škola", gender: "feminine", cue: "after do", why: "Feminine words ending in -a swap it for -y: škola → školy, ruka → ruky." }),
-		stage({ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", gender: "feminine", cue: "after z", why: "A few feminine words ending in -ca take -e instead: práca → práce, ulica → ulice. Learn which with each word." }),
+		stage({ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", gender: "feminine", cue: "after z", why: "A few feminine words ending in -ca take -e instead: práca → práce, ulica → ulice. No rule tells you which, so remember each one as a pair." }),
 		stage({ label: "u means “at someone’s place”", kind: "at", before: "Som u ", base: "lekár", ending: "a", after: ".", meaning: "I am at the doctor’s.", dictionary: "lekár", gender: "masculine", cue: "after u", why: "A male person adds -a: lekár → lekára." }),
 		stage({ label: "bez means “without”", kind: "without", before: "Káva bez ", base: "mliek", ending: "a", after: ".", meaning: "Coffee without milk.", dictionary: "mlieko", gender: "neuter", cue: "after bez", why: "A neuter word swaps -o for -a: mlieko → mlieka." }),
 	],
@@ -73,14 +73,16 @@ const SKETCHES: Partial<Record<UnitId, SketchStage[]>> = {
 		stage({ label: "k also points toward a place", kind: "town", before: "Idem k ", base: "mest", ending: "u", after: ".", meaning: "I am going toward the town.", dictionary: "mesto", gender: "neuter", cue: "after k", why: "A neuter word swaps -o for -u: mesto → mestu." }),
 	],
 	"acc-people": [
-		stage({ label: "A male person as the object", kind: "toward", before: "Mám ", base: "brat", ending: "a", after: ".", meaning: "I have a brother.", dictionary: "brat", gender: "masculine", cue: "as the object", why: "A male person as the object adds -a: brat → brata." }),
-		stage({ label: "Another male person as the object", kind: "toward", before: "Vidím ", base: "učiteľ", ending: "a", after: ".", meaning: "I see the teacher.", dictionary: "učiteľ", gender: "masculine", cue: "as the object", why: "Every male person does this: učiteľ → učiteľa." }),
+		stage({ label: "A male person as the object", kind: "have", before: "Mám ", base: "brat", ending: "a", after: ".", meaning: "I have a brother.", dictionary: "brat", gender: "masculine", cue: "as the object", why: "A male person as the object adds -a: brat → brata." }),
+		stage({ label: "Another male person as the object", kind: "see", before: "Vidím ", base: "učiteľ", ending: "a", after: ".", meaning: "I see the teacher.", dictionary: "učiteľ", gender: "masculine", cue: "as the object", why: "Every male person does this: učiteľ → učiteľa." }),
 	],
 	"acc-fem": [
-		stage({ label: "A woman as the object", kind: "toward", before: "Mám ", base: "sestr", ending: "u", after: ".", meaning: "I have a sister.", dictionary: "sestra", gender: "feminine", cue: "as the object", why: "Feminine words ending in -a swap it for -u when they are the object: sestra → sestru." }),
-		stage({ label: "Another word in -a as the object", kind: "cup", before: "Pijem ", base: "káv", ending: "u", after: ".", meaning: "I drink coffee.", dictionary: "káva", gender: "feminine", cue: "as the object", why: "The same swap: káva → kávu." }),
+		stage({ label: "A woman as the object", kind: "have", before: "Mám ", base: "sestr", ending: "u", after: ".", meaning: "I have a sister.", dictionary: "sestra", gender: "feminine", cue: "as the object", why: "Feminine words ending in -a swap it for -u when they are the object: sestra → sestru." }),
+		stage({ label: "A thing in -a as the object", kind: "cup", before: "Pijem ", base: "káv", ending: "u", after: ".", meaning: "I drink coffee.", dictionary: "káva", gender: "feminine", cue: "as the object", why: "The same swap: káva → kávu." }),
 	],
 };
+
+export const SKETCH_UNITS = Object.keys(SKETCHES) as UnitId[];
 
 const LEADS: Partial<Record<UnitId, string>> = {
 	gen: "After do, z, od, bez and u, a word changes its ending.",
@@ -200,10 +202,9 @@ function Scene({ kind }: { kind: SceneKind }) {
 			return (
 				<>
 					<Ground />
-					<Figure x={70} ground={GROUND} seed={23} reach="right" />
-					<Figure x={250} ground={GROUND} seed={24} delay={0.1} />
-					<Patch cx={250} cy={68} rx={26} ry={40} seed={7} delay={0.6} />
-					<Arrow from={[98, 68]} to={[222, 68]} seed={33} bend={7} delay={0.7} />
+					<House kind="clinic" x={176} ground={GROUND} seed={14} />
+					<Figure x={136} ground={GROUND} seed={24} delay={0.2} />
+					<Patch cx={176} cy={66} rx={76} ry={42} seed={7} delay={0.7} />
 					<Note x={168} y={126} delay={1.1}>u</Note>
 				</>
 			);
@@ -212,6 +213,7 @@ function Scene({ kind }: { kind: SceneKind }) {
 				<>
 					<Box x={134} y={46} width={40} height={50} seed={61} />
 					<Curve points={[[134, 46], [154, 32], [174, 46]]} seed={62} delay={0.15} />
+					<Curve points={[[154, 60], [147, 72], [154, 82], [161, 72], [154, 60]]} seed={70} tone="soft" delay={0.3} />
 					<Patch cx={154} cy={70} rx={30} ry={34} seed={14} delay={0.5} />
 					<Loop cx={154} cy={66} rx={42} ry={42} seed={63} tone="mark" width={2.1} delay={0.6} />
 					<Line from={[124, 36]} to={[184, 96]} seed={64} tone="mark" width={2.1} delay={0.9} />
@@ -307,6 +309,31 @@ function Scene({ kind }: { kind: SceneKind }) {
 					<Figure x={258} ground={GROUND} seed={30} delay={0.1} />
 					<Patch cx={258} cy={68} rx={26} ry={40} seed={18} delay={0.6} />
 					<Arrow from={[92, 68]} to={[230, 68]} seed={37} bend={11} delay={0.7} />
+					<Note x={160} y={126} delay={1.1}>k</Note>
+				</>
+			);
+		case "have":
+			return (
+				<>
+					<Ground />
+					<Figure x={64} ground={GROUND} seed={71} reach="right" />
+					<Figure x={258} ground={GROUND} seed={72} delay={0.1} />
+					<Patch cx={258} cy={68} rx={26} ry={40} seed={21} delay={0.6} />
+					<Arrow from={[92, 68]} to={[230, 68]} seed={73} bend={11} delay={0.7} />
+					<Note x={160} y={126} delay={1.1}>mám</Note>
+				</>
+			);
+		case "see":
+			return (
+				<>
+					<Ground />
+					<Figure x={64} ground={GROUND} seed={74} reach="right" />
+					<Figure x={258} ground={GROUND} seed={75} delay={0.1} />
+					<Curve points={[[132, 42], [150, 30], [168, 42], [150, 52], [132, 42]]} seed={76} tone="soft" delay={0.3} />
+					<Dot cx={150} cy={41} r={3.5} seed={77} delay={0.5} />
+					<Patch cx={258} cy={68} rx={26} ry={40} seed={22} delay={0.6} />
+					<Arrow from={[84, 56]} to={[230, 60]} seed={78} bend={-4} delay={0.7} />
+					<Note x={160} y={126} delay={1.1}>vidím</Note>
 				</>
 			);
 		case "town":
@@ -339,12 +366,14 @@ function Scene({ kind }: { kind: SceneKind }) {
 			return (
 				<>
 					<Ground />
-					<Curve points={[[102, 58], [140, 59], [178, 58], [177, 78], [170, 98], [150, 104], [130, 104], [110, 98], [103, 78], [102, 58]]} seed={58} />
-					<Curve points={[[178, 66], [196, 66], [198, 82], [190, 88], [176, 86]]} seed={59} delay={0.25} />
-					<Curve points={[[128, 46], [134, 38], [126, 30], [132, 22]]} seed={60} tone="soft" opacity={0.7} delay={0.4} />
-					<Curve points={[[152, 46], [158, 38], [150, 30], [156, 22]]} seed={61} tone="soft" opacity={0.7} delay={0.45} />
-					<Patch cx={140} cy={80} rx={34} ry={20} seed={20} delay={0.7} />
-					<Note x={140} y={126} delay={1.1}>káva</Note>
+					<Figure x={64} ground={GROUND} seed={79} reach="right" />
+					<Curve points={[[222, 58], [260, 59], [298, 58], [297, 78], [290, 98], [270, 104], [250, 104], [230, 98], [223, 78], [222, 58]]} seed={58} />
+					<Curve points={[[298, 66], [316, 66], [318, 82], [310, 88], [296, 86]]} seed={59} delay={0.25} />
+					<Curve points={[[248, 46], [254, 38], [246, 30], [252, 22]]} seed={60} tone="soft" opacity={0.7} delay={0.4} />
+					<Curve points={[[272, 46], [278, 38], [270, 30], [276, 22]]} seed={61} tone="soft" opacity={0.7} delay={0.45} />
+					<Patch cx={260} cy={80} rx={34} ry={20} seed={20} delay={0.7} />
+					<Arrow from={[92, 68]} to={[206, 82]} seed={80} bend={8} delay={0.8} />
+					<Note x={150} y={126} delay={1.2}>pijem</Note>
 				</>
 			);
 		default:

@@ -52,3 +52,5 @@ Before you design or restyle any screen, component, page or artifact, read `.cla
 - One layout primitive per screen, one bold choice per screen, body text that passes WCAG AA in both themes.
 
 Run the skill's diff checks before you call a UI change done, and write any new visual rule into `docs/DECISIONS.md` in the same PR.
+
+Before you draw or change a picture that explains something (a case sketch, a lesson figure), read `.claude/skills/ink-drawing/SKILL.md` (the `ink-drawing` skill): the pen look, the kit, the checks that a picture means one thing, and how to look at it.

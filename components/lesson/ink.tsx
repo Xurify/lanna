@@ -87,7 +87,7 @@ export function Figure({ x, ground, seed, tone = "graphite", delay = 0, reach }:
 	);
 }
 
-export function House({ x, ground, seed, delay = 0, kind = "home" }: { x: number; ground: number; seed: number; delay?: number; kind?: "home" | "school" | "office" }) {
+export function House({ x, ground, seed, delay = 0, kind = "home" }: { x: number; ground: number; seed: number; delay?: number; kind?: "home" | "school" | "office" | "clinic" }) {
 	if (kind === "office") {
 		const top = ground - 82;
 		return (
@@ -108,6 +108,12 @@ export function House({ x, ground, seed, delay = 0, kind = "home" }: { x: number
 			<Box x={x} y={top} width={58} height={50} seed={seed} tone="soft" delay={delay} />
 			<Curve points={[[x - 7, top + 1], [x + 29, top - 26], [x + 65, top + 1]]} seed={seed + 11} tone="soft" delay={delay + 0.2} />
 			<Curve points={[[x + 24, ground], [x + 24, ground - 24], [x + 36, ground - 24], [x + 36, ground]]} seed={seed + 12} tone="soft" delay={delay + 0.35} />
+			{kind === "clinic" && (
+				<>
+					<Line from={[x + 23, top + 14]} to={[x + 37, top + 14]} seed={seed + 15} tone="mark" width={2.2} delay={delay + 0.45} />
+					<Line from={[x + 30, top + 7]} to={[x + 30, top + 21]} seed={seed + 16} tone="mark" width={2.2} delay={delay + 0.5} />
+				</>
+			)}
 			{kind === "school" && (
 				<>
 					<Line from={[x + 29, top - 25]} to={[x + 29, top - 46]} seed={seed + 13} tone="soft" delay={delay + 0.45} />
