@@ -15,7 +15,7 @@ export function SourcesSection({ onNavigate }: { onNavigate?: () => void }) {
 				if (inGroup.length === 0) return null;
 				return (
 					<SettingsGroup key={group.id} label={group.label} testid={`sources-${group.id}`}>
-						<ul className="flex flex-col gap-1 rounded-lg bg-well px-4 py-3">
+						<ul className="flex flex-col gap-1 rounded-lg bg-well px-4 py-3 max-md:gap-3">
 							{inGroup.map((c) => (
 								<li key={c.id} className="text-xs leading-relaxed text-muted-foreground" data-testid={`credit-${c.id}`}>
 									<a href={c.url} target="_blank" rel="noreferrer" className="font-medium text-foreground underline underline-offset-2">

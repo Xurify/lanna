@@ -42,6 +42,8 @@ import { AppearanceSection } from "./appearance-section.tsx";
 import {
 	BookMarkedIcon,
 	BotIcon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
 	CoinsIcon,
 	DatabaseIcon,
 	GraduationCapIcon,
@@ -101,7 +103,7 @@ export function SettingsDialogOpen({
 	initialRow,
 }: {
 	onClose: () => void;
-	initialSection: SectionId;
+	initialSection: SectionId | null;
 	initialRow: string | null;
 }) {
 	return (
@@ -119,14 +121,14 @@ function SettingsDialog({
 	initialRow,
 }: {
 	onClose: () => void;
-	initialSection: SectionId;
+	initialSection: SectionId | null;
 	/** Keys row to unfold on open. */
 	initialRow: string | null;
 }) {
 	return (
 		<Dialog open={true} onClose={onClose}>
 			<DialogPortal>
-				<DialogOverlay data-testid="settings-backdrop">
+				<DialogOverlay data-testid="settings-backdrop" className="max-md:p-0">
 					<SettingsDialogBody onClose={onClose} initialSection={initialSection} initialRow={initialRow} />
 				</DialogOverlay>
 			</DialogPortal>
@@ -142,7 +144,7 @@ function SettingsDialogBody({
 	initialRow = null,
 }: {
 	onClose: () => void;
-	initialSection?: SectionId;
+	initialSection?: SectionId | null;
 	/** Keys row to unfold on arrival (null = none). */
 	initialRow?: string | null;
 }) {
@@ -178,10 +180,12 @@ function SettingsDialogBody({
 			window.removeEventListener(MENU_CLOSE_EVENT, onClose);
 		};
 	}, []);
-	const [active, setActive] = useState<SectionId>(initialSection);
+	const [active, setActive] = useState<SectionId>(initialSection ?? "general");
+	const [phoneShowsSection, setPhoneShowsSection] = useState(initialSection !== null);
 	// A deep link while the dialog is already open changes initialSection; follow it.
 	useEffect(() => {
-		setActive(initialSection);
+		setActive(initialSection ?? "general");
+		setPhoneShowsSection(initialSection !== null);
 	}, [initialSection]);
 
 	// Fetch once per mount. 200 with {settings: null} is first boot, not an error.
@@ -247,27 +251,40 @@ function SettingsDialogBody({
 			aria-modal="true"
 			aria-label="Settings"
 			data-testid="settings-dialog"
-			className="flex h-[640px] max-h-[85vh] w-[940px] max-w-[92vw] flex-col overflow-hidden rounded-xl bg-card shadow-raise-hi animate-in zoom-in-95 duration-150"
+			className="flex h-[640px] max-h-[85vh] w-[940px] max-w-[92vw] flex-col overflow-hidden rounded-xl bg-card shadow-raise-hi animate-in zoom-in-95 duration-150 max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
 			onClick={(e) => e.stopPropagation()}
 		>
-			<header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
-				<div className="flex items-center gap-3">
-					<div className="flex size-9 items-center justify-center rounded-lg bg-teal-wash text-teal">
+			<header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6 max-md:h-14 max-md:px-2">
+				<div className="flex min-w-0 items-center gap-3 max-md:gap-1">
+					{phoneShowsSection && (
+						<button
+							type="button"
+							aria-label="All settings"
+							data-testid="settings-back"
+							className="flex size-11 items-center justify-center rounded-md text-ink-2 transition-colors hover:bg-well md:hidden"
+							onClick={() => setPhoneShowsSection(false)}
+						>
+							<ChevronLeftIcon className="size-5" />
+						</button>
+					)}
+					<div className={cn("flex size-9 items-center justify-center rounded-lg bg-teal-wash text-teal max-md:ml-2", phoneShowsSection && "max-md:hidden")}>
 						<SlidersIcon className="size-5" />
 					</div>
-					<div>
-						<h2 className="font-ui text-base font-semibold tracking-[-0.01em] text-foreground">Settings</h2>
-						<p className="text-xs text-muted-foreground">How LangHarness teaches, sounds and looks</p>
+					<div className="min-w-0">
+						<h2 className="truncate font-ui text-base font-semibold tracking-[-0.01em] text-foreground">
+							Settings
+						</h2>
+						<p className="text-xs text-muted-foreground max-md:hidden">How LangHarness teaches, sounds and looks</p>
 					</div>
 				</div>
 				<button
 					type="button"
 					aria-label="Close settings"
 					data-testid="settings-close"
-					className="rounded-md p-1.5 text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
+					className="rounded-md p-1.5 text-ink-3 transition-colors hover:bg-well hover:text-ink-2 max-md:flex max-md:size-11 max-md:items-center max-md:justify-center"
 					onClick={onClose}
 				>
-					<XIcon className="size-4" />
+					<XIcon className="size-4 max-md:size-5" />
 				</button>
 			</header>
 
@@ -275,7 +292,10 @@ function SettingsDialogBody({
 				<nav
 					aria-label="Settings sections"
 					data-testid="settings-nav"
-					className="flex w-48 shrink-0 flex-col gap-1 bg-side p-3 shadow-[inset_-1px_0_0_var(--q-line)]"
+					className={cn(
+						"flex w-48 shrink-0 flex-col gap-1 bg-side p-3 shadow-[inset_-1px_0_0_var(--q-line)] max-md:w-full max-md:gap-0.5 max-md:overflow-y-auto max-md:bg-card max-md:p-2 max-md:shadow-none",
+						phoneShowsSection && "max-md:hidden",
+					)}
 				>
 					{SECTIONS.map((s) => {
 						const Icon = SECTION_ICONS[s.id];
@@ -287,22 +307,27 @@ function SettingsDialogBody({
 								data-testid={`settings-nav-${s.id}`}
 								aria-current={active === s.id}
 								className={cn(
-									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-left font-ui text-sm transition-colors",
+									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-left font-ui text-sm transition-colors max-md:min-h-12 max-md:gap-3 max-md:text-[15px] max-md:text-foreground max-md:hover:bg-well",
 									active === s.id
-										? "bg-card font-semibold text-teal-2 shadow-raise"
+										? "md:bg-card md:font-semibold md:text-teal-2 md:shadow-raise"
 										: "text-ink-2 hover:bg-well-2 hover:text-foreground",
 								)}
-								onClick={() => setActive(s.id)}
+								onClick={() => {
+									setActive(s.id);
+									setPhoneShowsSection(true);
+								}}
 							>
 								{Icon && (
 									<Icon
 										className={cn(
 											"size-4 shrink-0 transition-colors",
-											active === s.id ? "text-teal" : "text-ink-3",
+											active === s.id ? "md:text-teal" : "text-ink-3",
+											"max-md:size-5 max-md:text-ink-2",
 										)}
 									/>
 								)}
-								{s.label}
+								<span className="flex-1">{s.label}</span>
+								<ChevronRightIcon className="size-4 text-ink-4 md:hidden" aria-hidden />
 							</button>
 							</Fragment>
 						);
@@ -312,7 +337,7 @@ function SettingsDialogBody({
 				{/* Content column: one section at a time. Scroll locks while a MenuShell is open. */}
 				<div
 					ref={contentRef}
-					className="min-w-0 flex-1 overflow-y-auto"
+					className={cn("min-w-0 flex-1 overflow-y-auto", !phoneShowsSection && "max-md:hidden")}
 					data-testid="settings-content"
 				>
 					{error && (

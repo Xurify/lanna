@@ -121,7 +121,7 @@ export function KeyboardSection() {
 														type="button"
 														onClick={() => setRebinding(def.id)}
 														data-testid={`kbd-rebind-${def.id}`}
-														className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+														className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline max-md:min-h-10 max-md:px-2"
 													>
 														Rebind
 													</button>
