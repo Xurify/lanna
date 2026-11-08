@@ -932,6 +932,28 @@ body {
 	.lh-trail-draw { animation: none; }
 }
 
+/* An ink stroke draws itself along its length: pathLength is 1, and the start
+   offset is a little past 1 so a round cap leaves no dot before the pen moves. */
+@keyframes ink-draw {
+	to { stroke-dashoffset: 0; }
+}
+@keyframes ink-fade {
+	to { opacity: 1; }
+}
+.ink-draw {
+	stroke-dasharray: 1 2;
+	stroke-dashoffset: 1.05;
+	animation: ink-draw 650ms var(--ease-in-out) var(--ink-delay, 0s) forwards;
+}
+.ink-fade {
+	opacity: 0;
+	animation: ink-fade 350ms var(--ease-out) var(--ink-delay, 0s) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+	.ink-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+	.ink-fade { opacity: 1; animation: none; }
+}
+
 /* Nothing in the real world appears from nothing: a pop starts at 0.94, not
    0, and the overshoot comes from the curve, not an extra keyframe. */
 @keyframes lh-pop {

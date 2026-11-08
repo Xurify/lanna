@@ -7,6 +7,11 @@
  * tests/aspect-families.test.ts holds every explanation link in
  * curriculum/slovak/mixups.json to this list and to the Slovak base URL.
  *
+ * The six case pages (under /grammar/cases/) were verified live on
+ * 2026-11-07 and against the site source's own case table
+ * (slovak.wiki: src/lib/catalog/reference/cases.ts). They carry no verified
+ * #anchors yet.
+ *
  * Pure: the base comes from the language table, no network.
  */
 
@@ -18,6 +23,12 @@ export const REFERENCE_PAGES: readonly string[] = [
 	"/grammar/motion-verbs",
 	"/grammar/future-tense",
 	"/grammar/cases-overview",
+	"/grammar/cases/nominative",
+	"/grammar/cases/genitive",
+	"/grammar/cases/dative",
+	"/grammar/cases/accusative",
+	"/grammar/cases/locative",
+	"/grammar/cases/instrumental",
 ];
 
 /** The verified section anchors per page. A link may carry only one of these. */

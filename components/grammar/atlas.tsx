@@ -49,7 +49,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				<>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practice.{" "}
-					<span className="font-semibold text-foreground">Not yet</span> means you have not tried it, or there is no drill for it yet.
+					<span className="font-semibold text-foreground">Not tried</span> means the drill is there and you have not done it. A grey cell with a reason in it, like <span className="font-semibold text-foreground">dictionary form</span>, has no drill because the word does not change.
 				</p>
 
 				<table className="mt-8 w-full border-separate border-spacing-1.5 text-center" data-testid="grammar-atlas">
@@ -95,7 +95,14 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 							<CellRecord cell={selected} />
 						</>
 					) : (
-						<p className="text-base text-ink-3">No drill for this cell yet.</p>
+						selected?.noDrill ? (
+								<>
+									<p className="text-[17px] font-semibold tracking-[-0.015em] text-foreground">{selected.noDrill.short}</p>
+									<p className="mt-1.5 text-base text-ink-2">{selected.noDrill.why}</p>
+								</>
+							) : (
+								<p className="text-base text-ink-3">Point at a cell to read its rule.</p>
+							)
 					)}
 				</div>
 				</>
@@ -132,28 +139,36 @@ function CellRecord({ cell }: { cell: AtlasCell }) {
 	);
 }
 
-/** One cell: a link to its drill, showing the first-try accuracy — or "not
- *  yet", while no first try has been counted (or no drill exists). */
+/** One cell: a link to its drill showing the first-try accuracy (or "not
+ *  tried"), or a quiet cell that says why there is no drill. */
 function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean; onSelect: (c: AtlasCell) => void }) {
-	const inner = cell.unit ? (
-		cell.accuracy === null ? (
-			<span className="text-sm text-ink-3">not yet</span>
-		) : (
-			<span className={cn("text-sm font-bold tabular-nums", cell.accuracy >= 0.8 ? "text-teal-2" : "text-foreground")}>{Math.round(cell.accuracy * 100)}%</span>
-		)
-	) : (
-		<span className="text-sm text-ink-4">not yet</span>
-	);
-	const cls = cn("flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 transition-colors", selected ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-card shadow-raise hover:bg-well");
+	const base = "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 transition-colors";
 	if (!cell.unit) {
+		const reason = cell.noDrill!;
 		return (
 			<td className="p-0 align-middle">
-				<div className={cn(cls, "cursor-default")} data-testid={`cell-${cell.row}${cell.col}`}>
-					{inner}
+				<div
+					className={cn(base, "cursor-default", selected ? "shadow-[inset_0_0_0_1.5px_var(--q-line-2)]" : "shadow-[inset_0_0_0_1px_var(--q-line)]")}
+					tabIndex={0}
+					data-testid={`cell-${cell.row}${cell.col}`}
+					onMouseEnter={() => onSelect(cell)}
+					onFocus={() => onSelect(cell)}
+					onTouchStart={() => onSelect(cell)}
+					onClick={() => onSelect(cell)}
+				>
+					<span className="text-sm text-ink-3">{reason.short}</span>
+					{reason.sub && <span className="text-xs text-ink-4">{reason.sub}</span>}
 				</div>
 			</td>
 		);
 	}
+	const cls = cn(base, selected ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-card shadow-raise hover:bg-well");
+	const inner =
+		cell.accuracy === null ? (
+			<span className="text-sm text-ink-3">not tried</span>
+		) : (
+			<span className={cn("text-sm font-bold tabular-nums", cell.accuracy >= 0.8 ? "text-teal-2" : "text-foreground")}>{Math.round(cell.accuracy * 100)}%</span>
+		);
 	return (
 		<td className="p-0 align-middle">
 			<Link

@@ -51,6 +51,25 @@ const CELL_UNITS: Record<AtlasCase, Partial<Record<AtlasGender, string>>> = {
 	I: { masc: "ins", fem: "ins", neut: "ins" },
 };
 
+export interface NoDrill {
+	short: string;
+	sub: string;
+	why: string;
+}
+
+const NOMINATIVE: NoDrill = {
+	short: "dictionary form",
+	sub: "the word does not change",
+	why: "The nominative is the case of the subject (Peter číta knihu: Peter is nominative). In the singular its form is the dictionary form, so there is nothing to change and nothing to practice. The plural does have endings (domy, ženy, mestá): that is the lesson More than one. The describing word that goes with it changes with gender (nový dom, nová kniha, nové mesto): that is Describing words.",
+};
+
+const NO_DRILL: Partial<Record<AtlasCase, Partial<Record<AtlasGender, NoDrill>>>> = {
+	N: { masc: NOMINATIVE, fem: NOMINATIVE, neut: NOMINATIVE },
+	A: { neut: { short: "same as nominative", sub: "the word does not change", why: "A neuter word as the object keeps its dictionary form, the same as in the nominative: Vidím mesto. So there is nothing to change and nothing to practice." } },
+};
+
+const NOT_BUILT: NoDrill = { short: "no drill yet", sub: "", why: "There is no drill for this cell yet." };
+
 const unitIds = perCourse(() => new Set<string>(allUnits().map((u) => u.id)));
 
 /** The cell's drill unit, or null while it is "not yet". */
@@ -102,8 +121,10 @@ export interface AtlasStats {
 export interface AtlasCell {
 	row: AtlasCase;
 	col: AtlasGender;
-	/** The drill the cell opens, or null for "not yet". */
+	/** The drill the cell opens, or null when there is none. */
 	unit: UnitId | null;
+	/** Why a cell with no drill has none: nothing to practice, or not built yet. */
+	noDrill: NoDrill | null;
 	/** First-try accuracy (right / tries, 0..1); null with no first tries yet. */
 	accuracy: number | null;
 	/** Unaided first tries in this cell, how many were right, and how many of
@@ -129,6 +150,7 @@ export function grammarAtlas(units: Readonly<Record<string, AtlasStats | undefin
 				row,
 				col,
 				unit,
+				noDrill: unit ? null : (NO_DRILL[row]?.[col] ?? NOT_BUILT),
 				accuracy,
 				reps: tally?.reps ?? 0,
 				right: tally?.right ?? 0,

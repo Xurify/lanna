@@ -146,20 +146,28 @@ test("levels climb with lessons and XP", () => {
 // ─── The method (2026-10-27): production once a unit holds, interleaving,
 // the trigger for the hint, half XP for the second try ────────────────────
 
-test("a new unit's lesson opens with two meaning reps (input before output): the whole sentence, three meanings, the translation among them", () => {
-	for (const unit of ["gen", "lx-greetings", "words"] as const) {
+test("a new lesson opens on the input its unit needs: vocabulary on meaning, a grammar lesson on the form", () => {
+	for (const unit of ["lx-greetings", "words"] as const) {
 		const plan = buildLesson(entries, unit, { seed: 3 });
 		assert.deepEqual(
 			plan.items.slice(0, 2).map((i) => i.kind),
 			["meaning", "meaning"],
 			unit,
 		);
-		for (const item of plan.items.filter((i) => i.kind === "meaning")) {
-			assert.equal(item.options?.length, 3);
-			assert.ok(item.options!.includes(item.translation));
-			assert.equal(new Set(item.options).size, 3);
-			assert.ok(!item.mixed, "the opening reps come from the unit itself");
-		}
+	}
+	// A grammar unit's lesson opens on the case (it follows the sketch which
+	// just taught it), with the two meaning reps later in the lesson.
+	const grammar = buildLesson(entries, "gen", { seed: 3 });
+	assert.deepEqual(
+		grammar.items.slice(0, 3).map((i) => i.kind),
+		["choose", "type", "meaning"],
+		"the case comes first",
+	);
+	for (const item of grammar.items.filter((i) => i.kind === "meaning")) {
+		assert.equal(item.options?.length, 3);
+		assert.ok(item.options!.includes(item.translation));
+		assert.equal(new Set(item.options).size, 3);
+		assert.ok(!item.mixed, "the opening reps come from the unit itself");
 	}
 	// Once the unit holds, no meaning reps: production throughout.
 	const held = buildLesson(entries, "gen", { seed: 3, stage: "practiced" });
