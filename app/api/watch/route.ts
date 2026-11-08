@@ -26,7 +26,7 @@
  */
 
 import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
-import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordWatch, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
+import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordOnce, recordWatch, sessionClientId, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; range?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; range?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown; clientId?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add") {
 		if (typeof body.url !== "string" || !body.url.trim()) return Response.json({ message: "url is required" }, { status: 400 });
@@ -92,7 +92,8 @@ export async function POST(req: Request) {
 					.filter((s: SegmentStat) => Number.isInteger(s.i))
 			: [];
 		try {
-			return Response.json(recordWatch({ videoId: body.videoId, mode, stats, answers, tapped, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: tzOf(body.tz) }));
+			const videoId = body.videoId;
+			return Response.json(recordOnce("watch", sessionClientId(body.clientId), () => recordWatch({ videoId, mode, stats, answers, tapped, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: tzOf(body.tz) })));
 		} catch (err) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 		}

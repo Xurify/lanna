@@ -98,6 +98,10 @@ let running: Promise<void> | null = null;
 let failures = 0;
 let retry: ReturnType<typeof setTimeout> | undefined;
 
+function settleWaiting(lang: string): void {
+	for (const p of read()) if (p.lang === lang) settle(p.id, null);
+}
+
 function retryLater(lang: string): void {
 	failures++;
 	const delay = Math.min(60_000, 2_000 * 2 ** (failures - 1));
@@ -123,6 +127,7 @@ async function drain(lang: string): Promise<void> {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ ...next.body, clientId: next.id }),
+				signal: AbortSignal.timeout(15_000),
 			});
 		} catch {
 			res = null;
@@ -132,6 +137,7 @@ async function drain(lang: string): Promise<void> {
 			try {
 				recorded = (await res.json()) as Recorded;
 			} catch {
+				settleWaiting(lang);
 				return retryLater(lang);
 			}
 			write(read().filter((p) => p.id !== next.id));
@@ -147,6 +153,7 @@ async function drain(lang: string): Promise<void> {
 			settle(next.id, null);
 			continue;
 		}
+		settleWaiting(lang);
 		return retryLater(lang);
 	}
 }
