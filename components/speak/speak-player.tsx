@@ -329,6 +329,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				return;
 			}
 			if (phase === "done" && e.key === "Enter" && !endEnterBlocked(e)) {
+				e.preventDefault();
 				router.push("/");
 				return;
 			}

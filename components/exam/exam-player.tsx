@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { readOrigin } from "@/components/origin";
 import { RotateCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
@@ -98,6 +99,11 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (phase.state !== "playing") {
+				if (e.key === "Escape") {
+					e.preventDefault();
+					router.push(readOrigin());
+					return;
+				}
 				if (e.key !== "Enter" || endEnterBlocked(e)) return;
 				e.preventDefault();
 				if (phase.score.passed) router.push("/curriculum");

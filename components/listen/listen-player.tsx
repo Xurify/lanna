@@ -257,7 +257,10 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				return;
 			}
 			if (outcome) {
-				if (e.key === "Enter" && !endEnterBlocked(e)) router.push("/");
+				if (e.key === "Enter" && !endEnterBlocked(e)) {
+					e.preventDefault();
+					router.push("/");
+				}
 				return;
 			}
 			if (!item) return;

@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { readOrigin } from "@/components/origin";
 import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
@@ -105,6 +106,11 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (done) {
+				if (e.key === "Escape") {
+					e.preventDefault();
+					router.push(readOrigin());
+					return;
+				}
 				if (e.key !== "Enter" || endEnterBlocked(e)) return;
 				e.preventDefault();
 				router.push(`/speak?scene=${scene}`);
