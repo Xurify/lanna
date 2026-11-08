@@ -1,7 +1,5 @@
 import { isJobLive } from "../agent/subagents/aborts.ts";
-import { deleteChatTraces, type ChatDeleteMode, type ChatDeletionStats } from "../core/graph-deletion.ts";
-import { titleFromPrompt } from "../core/contracts.ts";
-import { graphRevision } from "./graph.ts";
+import { titleFromPrompt } from "../core/title.ts";
 import { stores } from "./stores.ts";
 import { isTurnRunning } from "./turn-liveness.ts";
 import { clearTurnFailure } from "./turn-runs.ts";
@@ -12,41 +10,20 @@ import { discardChatDeliveries } from "./jobs.ts";
  * app/chat/[id]). Today these delegate straight to the ChatStore port; the
  * services stage carves the real orchestration behind this same surface.
  *
- * deleteChatSession (wave 6, session deletion — the FIRST destructive
- * operation on the graph ledgers) is the one real orchestration here:
- * gates → one synchronous deletion block. See core/graph-deletion.ts for
- * the ledger semantics and the atomicity argument.
+ * deleteChatSession is the one real orchestration here: a gate, then one
+ * synchronous deletion block.
  */
 
 export const { createChat, getChat, listChats } = stores.chatStore;
 export { restoreChat, trashedChat } from "../store/chats.ts";
 export { titleFromPrompt };
-export type { ChatDeleteMode, ChatDeletionStats } from "../core/graph-deletion.ts";
 
 /** What deleteChatSession did — the route maps it straight to HTTP. */
 export type ChatDeleteOutcome =
 	| { ok: false; status: 404; code: "not_found"; error: string }
 	| { ok: false; status: 409; code: "turn_in_flight" | "jobs_running"; error: string; jobIds: string[] }
-	| {
-			ok: true;
-			mode: ChatDeleteMode;
-			stats: ChatDeletionStats;
-			jobsRemoved: number;
-			graphRevision: number;
-	  };
+	| { ok: true; jobsRemoved: number };
 
-/**
- * Delete a session (owner rulings 2026-09-22/23): gates first, then the
- * purge, with no await between the gates and the purge:
- *
- *   1. GATES — a turn in flight or a running background job refuses with
- *      409 (they write the chat record and steer into it; deleting
- *      mid-flight would corrupt the write-ahead flow). The UI retries once
- *      work drains.
- *   2. THE SYNC BLOCK — ledgers first, jobs next, the chat record LAST (a
- *      crash mid-block leaves a deletable chat with a purged graph —
- *      re-running DELETE fixes it — never a deleted chat with live traces).
- */
 function runningWorkBlocker(chatId: string): Extract<ChatDeleteOutcome, { status: 409 }> | null {
 	if (isTurnRunning(chatId)) {
 		return {
@@ -74,19 +51,21 @@ function runningWorkBlocker(chatId: string): Extract<ChatDeleteOutcome, { status
 	return null;
 }
 
-export function deleteChatSession(chatId: string, mode: ChatDeleteMode): ChatDeleteOutcome {
+/** Delete a session (owner rulings 2026-09-22/23): the gates first, then
+ *  the purge. A turn in flight or a running background job refuses with
+ *  409 (they write the chat record and steer into it; deleting mid-flight
+ *  would corrupt the write-ahead flow). The UI retries once work drains.
+ *  The purge runs without an await: jobs first, the chat record last. */
+export function deleteChatSession(chatId: string): ChatDeleteOutcome {
 	if (!stores.chatStore.getChat(chatId)) {
 		return { ok: false, status: 404, code: "not_found", error: "No such session" };
 	}
 	const blocker = runningWorkBlocker(chatId);
 	if (blocker) return blocker;
-	// THE SYNC BLOCK — no awaits below (see the doc comment). Order:
-	// ledgers → jobs → the chat record.
-	const stats = deleteChatTraces(stores.graphStore, chatId, mode);
 	const jobsRemoved = stores.jobStore.deleteJobsForChat(chatId);
 	if (stores.chatStore.deleteChat(chatId)) {
 		discardChatDeliveries(chatId);
 		clearTurnFailure(chatId);
 	}
-	return { ok: true, mode, stats, jobsRemoved, graphRevision: graphRevision() };
+	return { ok: true, jobsRemoved };
 }

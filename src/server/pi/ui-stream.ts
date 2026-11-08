@@ -81,7 +81,7 @@ export interface PiTurnSpec {
 	onSettleError?: (error: unknown) => string;
 	/** Release liveness even if the normal finish seam throws. */
 	onSettleFailure?: (error: unknown, reportedErrorText?: string) => void;
-	/** The canonical end-of-turn seam: persist + usage + extraction + endTurn.
+	/** The canonical end-of-turn seam: persist + usage + endTurn.
 	 *  Receives the agent's FULL final state (native messages) — the caller
 	 *  persists the slice past its own base count. */
 	onFinish: (messages: AgentMessage[], isAborted: boolean) => void;

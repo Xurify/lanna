@@ -8,7 +8,7 @@ export const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * THE data-location seam (the Electron contract, 2026-09-17): LH_DATA_DIR
- * relocates every MUTABLE record — chat sessions, graph ledgers, the
+ * relocates every MUTABLE record — chat sessions, the
  * embedding model cache — when set. The desktop shell points it at
  * userData so nothing is written inside the read-only .app bundle
  * (macOS translocation guarantees the bundle is read-only anyway).
@@ -53,7 +53,7 @@ function testDataRoot(): string {
 
 // ─── Language profiles (LangHarness, spec D7 / WF-01) ──────────────────────
 // Each target language keeps its own learning records under
-// <data>/profiles/<language>/ — chats, graph ledgers, jobs, review cards,
+// <data>/profiles/<language>/ — chats, jobs, review cards,
 // debug — so two languages never mix. Settings, prompt overrides, keys
 // and the audio cache stay at the data root: they are about the learner and
 // their providers, not about one language. The active profile is read ONCE
@@ -272,7 +272,7 @@ export const PATHS = {
 	get data() {
 		return dataRoot();
 	},
-	/** The read-only curriculum assets (seed graph, lexicon) per language. */
+	/** The read-only curriculum assets (seed data, lexicon) per language. */
 	curriculum: path.join(ROOT, "curriculum"),
 	/** Languages added from the app, shared by every profile. */
 	languages: LANGUAGES_DIR,
@@ -353,9 +353,6 @@ export const PATHS = {
 	get chats() {
 		return path.join(dataRoot(), "chats");
 	},
-	get graph() {
-		return path.join(dataRoot(), "graph");
-	},
 	/** Debug artifacts (env-gated): data/debug/provider-events/<chatId>.jsonl
 	 * raw provider stream recordings (src/agent/provider-events.ts). */
 	get debug() {
@@ -382,63 +379,14 @@ export type ModelRole =
 	| "researcher"
 	| "demoBuilder"
 	| "visualMaker"
-	| "pdfReader"
-	| "extractor"
-	| "auditor";
-
-/**
- * The LIVE graph store (src/store/graph.ts) — owned by the app's extraction
- * pipeline. Line shapes: src/core/contracts.ts. CHAINS ARE THE STORED
- * TRUTH (owner, 2026-09-30): edges are a derived view, never stored.
- */
-export const LEDGER_FILES = {
-	get nodes() {
-		return path.join(PATHS.graph, "nodes.jsonl");
-	},
-	get chains() {
-		return path.join(PATHS.graph, "chains.jsonl");
-	},
-	get sessions() {
-		return path.join(PATHS.graph, "sessions.jsonl");
-	},
-	/** Per-message extraction coverage (contracts/graph.ts CoverageEntry;
-	 *  the checkpoint's replacement for chat extractions — notes keep
-	 *  sessions.jsonl, whole-file as they are). */
-	get coverage() {
-		return path.join(PATHS.graph, "coverage.jsonl");
-	},
-} as const;
-
-/**
- * Notes-import bookkeeping (NOT a ledger): one JSON map, src-id → NotesSource
- * record (contracts/graph.ts) — the file path + import time + the run's usage
- * log. Read-modify-write like a chat file, not append-only like the ledgers.
- */
-export const sourcesFile = () => path.join(PATHS.graph, "sources.json");
-/** The layout ledger (read-modify-write like sources.json): nodeId →
- *  {x,y} resting positions from the incremental settle (core/layout.ts).
- *  Carries an updatedAt stamp for future live-physics conflict handling. */
-export const positionsFile = () => path.join(PATHS.graph, "positions.json");
-
-/**
- * Graph render settings (the settings-panel controls): one small JSON blob,
- * read-modify-write. Shared shape/sanitizer: src/core/render-settings.ts.
- */
-export const renderSettingsFile = () => path.join(PATHS.graph, "render-settings.json");
-
-/** The graph-family FORMAT STAMP sidecar (schema-versioning wave,
- *  2026-10-10): one version for the whole family — the four JSONL ledgers,
- *  sources.json, render-settings.json. LAZY v1: absent = v1; the first
- *  graph-family write creates it. positions.json is REBUILDABLE and rides
- *  along unversioned by design (owner ruling). */
-export const graphFormatFile = () => path.join(PATHS.graph, "format.json");
+	| "pdfReader";
 
 /**
  * THE USER SETTINGS RECORD (settings-storage wave, 2026-09-19): one
  * versioned, DELTA-shaped JSON blob at the data-dir seam holding every
  * non-secret product preference — general, agent (background
  * model/thinking overrides + tool toggles + prompt-override switches),
- * appearance, graph. Explicit user choices only: ABSENT keys resolve to the
+ * appearance. Explicit user choices only: ABSENT keys resolve to the
  * factory defaults compiled into src/core/settings.ts (FACTORY_SETTINGS), so
  * a software update that adds a knob (new tool, new role, new appearance
  * field) needs no migration — old records simply lack the new keys. The

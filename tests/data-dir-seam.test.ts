@@ -31,7 +31,6 @@ describe("LH_DATA_DIR seam", () => {
 			assert.equal(PATHS.base, dir, "PATHS.base resolves the env value (resolved absolute)");
 			assert.equal(PATHS.data, profileDir);
 			assert.equal(PATHS.chats, path.join(profileDir, "chats"));
-			assert.equal(PATHS.graph, path.join(profileDir, "graph"));
 			assert.equal(SETTINGS_FILE, path.join(dir, "settings.json"));
 			assert.equal(
 				PATHS.teacherPrompt,

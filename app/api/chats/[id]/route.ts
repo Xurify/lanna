@@ -1,4 +1,4 @@
-import { compactionInFlight, deleteChatSession, getChat, isTurnRunning, sessionCost, stores, turnFailure, type ChatDeleteMode } from "@/src/server";
+import { compactionInFlight, deleteChatSession, getChat, isTurnRunning, sessionCost, stores, turnFailure } from "@/src/server";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
@@ -41,52 +41,22 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 /**
- * DELETE /api/chats/[id]?mode=preserve-graph|delete-nodes — session deletion
- * (wave 6, owner rulings 2026-09-22/23). The mode is REQUIRED and explicit:
- * no default, because the two differ in destructiveness —
- *
- *   preserve-graph  the session record and its jobs die; the graph keeps
- *                   every contribution the session merged.
- *   delete-nodes    "this session never happened": every ledger trace of
- *                   the session goes too — provenance, link lines,
- *                   events, mappings — and orphaned nodes die entirely
- *                   (shared nodes survive automatically, their other
- *                   sessions' content intact).
- *
+ * DELETE /api/chats/[id] — session deletion (owner rulings 2026-09-22/23).
  * Gates are the server orchestration's (server/chats.ts deleteChatSession):
- * 409 while a turn or background job is running — retryable. The
- * response carries what was removed plus the new graphRevision (the
- * version stamp the UI polls to refetch clusters/layout).
+ * 409 while a turn or background job is running — retryable.
  */
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
-	const mode = new URL(req.url).searchParams.get("mode");
-	if (mode !== "preserve-graph" && mode !== "delete-nodes") {
-		return Response.json(
-			{
-				error: 'mode is required and must be "preserve-graph" or "delete-nodes"',
-				code: "bad_mode",
-			},
-			{ status: 400 },
-		);
-	}
-	const outcome = deleteChatSession(id, mode as ChatDeleteMode);
+	const outcome = deleteChatSession(id);
 	if (!outcome.ok) {
 		return Response.json(
 			{
 				error: outcome.error,
 				code: outcome.code,
 				...("jobIds" in outcome ? { jobIds: outcome.jobIds } : {}),
-		},
+			},
 			{ status: outcome.status },
 		);
 	}
-	return Response.json({
-		ok: true,
-		mode: outcome.mode,
-		stats: outcome.stats,
-		jobsRemoved: outcome.jobsRemoved,
-		graphRevision: outcome.graphRevision,
-	});
+	return Response.json({ ok: true, jobsRemoved: outcome.jobsRemoved });
 }
-

@@ -12,7 +12,7 @@ import * as path from "node:path";
 import { PATHS } from "../../config.ts";
 import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
-import type { ChatRecord, ChatSettings, ChatSummary, ExtractionRunUsage, PlanTree, TurnUsage } from "../core/contracts.ts";
+import type { ChatRecord, ChatSettings, ChatSummary, PlanTree, TurnUsage } from "../core/contracts.ts";
 import { CURRENT_CHAT_VERSION } from "../core/contracts.ts";
 import type { LhMessage } from "../core/native-messages.ts";
 import { danglingQuestionOf } from "../core/native-messages.ts";
@@ -26,7 +26,7 @@ function chatFile(id: string): string {
 /** THE SILENCE LAW (push S6, 2026-10-02): chats-changed announces ONLY
  *  list-SHAPE mutations — createChat, renameChat, deleteChat (below,
  *  each emits post-write). The content writers (saveMessages,
- *  appendTurnUsage, appendExtractionUsage, saveSettings, saveTree) are
+ *  appendTurnUsage, saveSettings, saveTree) are
  *  DELIBERATELY SILENT: saveMessages fires per turn-persist and would
  *  spam the bus, and every list-visible change it causes (title, order,
  *  phase, busy, pendingQuestion) is already announced by turn-started /
@@ -84,14 +84,14 @@ function listChats(): ChatSummary[] {
 			.filter((f) => f.endsWith(".json"))
 			.map((f) => getChat(f.slice(0, -5)))
 			.filter((r): r is ChatRecord => r !== null)
-			.map(({ messages, tree, turns, extractions, ...summary }) => {
+			.map(({ messages, tree, turns, ...summary }) => {
 				// Per-record isolation (Wave B): a record whose messages fail the
 				// projection (e.g. pre-Wave-B UIMessage-format scratch — the
 				// zero-back-compat wipe makes these "corrupt") must not blank the
 				// whole sidebar — same isolation getChat's per-file catch gives.
 				try {
 					return {
-						// turns and extractions stay out of the list payload (list =
+						// turns stay out of the list payload (list =
 						// summaries; usage aggregates ride the full record, the picker
 						// never needs them).
 						...summary,
@@ -141,18 +141,6 @@ function appendTurnUsage(id: string, entry: TurnUsage): void {
 	record.turns = record.turns?.some((t) => t.id === entry.id)
 		? record.turns
 		: [...(record.turns ?? []), entry];
-	writeChat(record);
-}
-
-/** Append one extraction-run usage entry to the record's extractions
- * log — idempotent per startedAt: a retry that reaches the append twice
- * (abort replays) does not double-count spend. */
-function appendExtractionUsage(id: string, entry: ExtractionRunUsage): void {
-	const record = getChat(id);
-	if (!record) throw new Error(`Chat not found: ${id}`);
-	record.extractions = record.extractions?.some((r) => r.startedAt === entry.startedAt)
-		? record.extractions
-		: [...(record.extractions ?? []), entry];
 	writeChat(record);
 }
 
@@ -278,5 +266,4 @@ export const chatStore: ChatStore = {
 	renameChat,
 	deleteChat,
 	appendTurnUsage,
-	appendExtractionUsage,
 };

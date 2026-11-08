@@ -26,7 +26,6 @@ import {
 	resolveSettings,
 	type AgentSettings,
 	type CompactionSettings,
-	type GraphSettings,
 	type ModelCatalogEntry,
 	type ModelSlotName,
 	type ModelsSettings,

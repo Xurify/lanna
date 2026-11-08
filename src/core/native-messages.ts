@@ -240,52 +240,6 @@ export function newPlanBlockMessage(
 export const PRACTICE_PROBLEM_TOOL = "problem";
 export const PRACTICE_CONCLUDE_TOOL = "conclude";
 
-/** One picked proposition of the graph-context marker (the learner's map
- *  pick — name + statement as the learner SAW them at pick time). */
-export interface GraphContextPick {
-	id: string;
-	name: string;
-	statement: string;
-}
-
-/** The session's map context (owner, 2026-10-04): a SEPARATE custom
- *  message BEFORE the learner's first user message — the picked
- *  propositions plus the reasoning chains among them (pre-formatted
- *  lines, formatChainLine shape). The model reads `content` (flattened
- *  to a user message by toLlmMessages like every marker); `details`
- *  feeds the transcript's collapsible GraphContextCard. No more seed
- *  text glued into the first prompt. */
-export function newGraphContextMessage(picks: readonly GraphContextPick[], chains: readonly string[]): LhMarkerMessage {
-	// IDS FIRST (owner round 9, 2026-10-05 — the mastery-trace contract):
-	// each proposition is introduced ONCE with its id, name, and statement;
-	// the problem tool's `target` field takes these ids (names normalize to
-	// ids at the seam). Chains below stay NAMES — they are comprehension
-	// context, not tags; names read, ids reference.
-	const lines = [
-		// PREAMBLE LAW (owner, 2026-10-10): custom markers flatten to
-		// USER-role messages on the wire (toLlmMessages) — this text arrives
-		// in the learner's voice channel, so it must not read like a system
-		// broadcast. The bracket convention (NEXT_PROBLEM_TEXT's kin) marks
-		// it honestly as injected session context, not learner speech.
-		"[Session context] — picked from the learner's knowledge map when starting this session:",
-		"",
-		"Propositions (id — name: statement; the problem tool's target field uses these ids):",
-		...picks.map((p) => `- [${p.id}] ${p.name}: ${p.statement}`),
-	];
-	if (chains.length > 0) {
-		lines.push("", "Reasoning chains among them (premises → conclusion):", ...chains.map((c) => `- ${c}`));
-	}
-	return {
-		id: newMessageId(),
-		role: "custom",
-		customType: "graph-context",
-		content: lines.join("\n"),
-		display: true,
-		details: { propositions: picks, chains },
-		timestamp: Date.now(),
-	};
-}
-
 /** The learner's thinking submission (ONE send lane, owner round
  *  2026-10-05): the register is no longer declared by a button — the
  *  model READS the text to tell working traces from claimed answers. The
