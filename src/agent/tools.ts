@@ -113,14 +113,14 @@ export const askUserQuestionTool: AgentTool<typeof askInputSchema> = {
  *  JSON.stringify renders the wire text, so the escaping the model sees
  *  is by construction the correct one. Exported for the description pins. */
 export const quizExampleBody = {
-	question: "Ako sa povie „I read the book“ v minulom čase?",
+	question: "Which form completes the sentence correctly: *Idem do ___* (škola)?",
 	options: [
-		{ label: "Čítal som knihu.", value: "a" },
-		{ label: "Čítam knihu.", value: "b" },
-		{ label: "Prečítam knihu.", value: "c" },
+		{ label: "školy", value: "a" },
+		{ label: "škole", value: "b" },
+		{ label: "školu", value: "c" },
 	],
 	explanation:
-		"Minulý čas slovesa čítať je čítal som. Čítam je prítomný čas a prečítam je budúci čas dokonavého slovesa.",
+		"The directional preposition *do* requires the genitive case. For feminine noun *škola*, the genitive singular ending is *-y* (školy).",
 	correctAnswer: "a",
 };
 
@@ -137,7 +137,7 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 		"correct answer supplied by you, marks the learner's selection right/wrong, reveals the correct answer, and " +
 		"can show an explanation. Options-only: single-select or multi-select, plus an automatic 'I don't know' " +
 		"choice so the learner can signal a genuine gap instead of guessing. An always-present optional thinking " +
-		"field lets the learner attach his reasoning to ANY answer; it reaches you only when non-empty. " +
+		"field lets the learner attach their reasoning to ANY answer; it reaches you only when non-empty. " +
 		"No free-text answers — for non-graded questions use ask_user_question instead. " +
 		(delta.types
 			? "Every call declares `type` — the question's role in the teaching cycle; the field's own description says when each kind fires. "
@@ -147,11 +147,11 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 			: "") +
 		"ONE question per turn: call a single " +
 		delta.name +
-		", then end your turn — his answer determines the next.";
+		", then end your turn — the learner's answer determines the next.";
 	// Phase-correct shape: the teach example LEADS with the required pair
 	// (type, nodeId — the 2026-10-09 drop-order ruling); the probe example
 	// carries no phase metadata at all, exactly like the probe schema.
-	const example = delta.nodeId ? { type: "check" as const, nodeId: "chain-rule", ...quizExampleBody } : quizExampleBody;
+	const example = delta.nodeId ? { type: "check" as const, nodeId: "prep-do-genitive", ...quizExampleBody } : quizExampleBody;
 	return (
 		base +
 		"\nExample arguments — copy the escaping exactly: inside JSON strings a newline is \\n.\n```json\n" +
@@ -168,17 +168,17 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
  *  as recall (owner 2026-10-09). */
 function explainDescription(name: "explain" | "recall", nodeId: boolean): string {
 	return (
-		"Ask the learner to EXPLAIN something in his own words — a graded check with NO options: he types a free-text " +
+		"Ask the learner to EXPLAIN something in their own words — a graded check with NO options: they type a free-text " +
 		"answer. Unlike ask_user_question (no right answer), " +
 		name +
 		" always has one. THE COMMITMENT RULE: " +
-		"correctAnswer is the FULL correct answer in your own words, reasoning included, COMMITTED before he ever " +
-		"sees the question. When his answer returns, grade it strictly against the commitment — never revise it " +
-		"after seeing his words. He sees the committed answer on submit. " +
+		"correctAnswer is the FULL correct answer in your own words, reasoning included, COMMITTED before the learner " +
+		"sees the question. When their answer returns, grade it strictly against the commitment — never revise it " +
+		"after seeing their words. The learner sees the committed answer on submit. " +
 		(nodeId
 			? "Set `nodeId` (required) to the plan node this question is about — validated at call time against the session's plan map. "
 			: "") +
-		"ONE question per turn: call a single " + name + ", then end your turn — his answer determines the next."
+		"ONE question per turn: call a single " + name + ", then end your turn — the learner's answer determines the next."
 	);
 }
 
