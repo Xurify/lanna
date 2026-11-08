@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
+import { KBD } from "@/components/ui/learn-buttons";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -110,6 +111,35 @@ export function Dock({ tone = "plain", children, testId, live }: { tone?: "plain
 		>
 			{children}
 		</div>
+	);
+}
+
+export function TaskEnd({ children, actions, hint, wide = false, testId }: { children: React.ReactNode; actions: React.ReactNode; hint?: React.ReactNode; wide?: boolean; testId?: string }) {
+	const column = cn("mx-auto w-full max-w-3xl px-6", wide && "lg:max-w-5xl");
+	return (
+		<>
+			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto" data-testid={testId}>
+				<div className={cn(column, "q-rise my-auto pb-12 pt-16")}>{children}</div>
+			</div>
+			<Dock>
+				<div className={cn(column, "flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4")}>
+					{hint}
+					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+				</div>
+			</Dock>
+		</>
+	);
+}
+
+export function onFocusedControl(e: KeyboardEvent): boolean {
+	return e.target instanceof Element && !!e.target.closest("a, button, input, textarea, summary");
+}
+
+export function EnterHint({ children }: { children: React.ReactNode }) {
+	return (
+		<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 sm:pointer-fine:flex">
+			<kbd className={KBD}>Enter</kbd> {children}
+		</p>
 	);
 }
 

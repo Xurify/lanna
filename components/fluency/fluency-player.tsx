@@ -29,7 +29,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
-import { COLUMN, Centered, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, Centered, Dock, EnterHint, onFocusedControl, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -154,10 +154,11 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") return router.push(readOrigin());
 			if (e.key === "Enter") {
+				if (phase === "done" && onFocusedControl(e)) return;
 				e.preventDefault();
 				if (phase === "intro" && plan) begin();
 				else if (phase === "reading") stop();
-				else if (phase === "done") router.push(readOrigin());
+				else if (phase === "done" && !onFocusedControl(e)) router.push(readOrigin());
 			} else if (phase === "question" && plan) {
 				const n = Number(e.key);
 				if (n >= 1 && n <= plan.question.options.length) void answer(n - 1);
@@ -202,7 +203,21 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 	if (phase === "done" && outcome) {
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto py-10")} data-testid="reread-end">
+				<TaskEnd
+					testId="reread-end"
+					hint={<EnterHint>for Today</EnterHint>}
+					actions={
+						<>
+							<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="reread-again">
+								<RepeatIcon className="size-4" strokeWidth={1.6} />
+								Another episode
+							</button>
+							<Link href="/" className={PRIMARY} data-testid="reread-today">
+								Today
+							</Link>
+						</>
+					}
+				>
 					<p className="q-date flex items-center gap-1.5">
 							<QIcon name="read" className="text-teal" />
 							Read it faster · done
@@ -210,14 +225,13 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						<h1 className="q-hello">
 							{outcome.wpm} words a minute{outcome.faster ? ", faster." : "."}
 						</h1>
-						<Stats className="mt-6">
+						<Stats className="mt-7 max-w-none">
 							<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
 							<Stat label={outcome.previousWpm !== null ? "Your recent pace" : "Starting target"} value={`${outcome.targetWpm} wpm`} ink="text-ink-2" />
 							{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
 							<Stat label="The question" value={outcome.right ? "right" : "missed"} ink={outcome.right ? "text-teal-2" : "text-miss"} />
 						</Stats>
 					<History history={[...plan.history, { at: "now", wpm: outcome.wpm }]} target={plan.targetWpm} />
-						<SourcesNote feature="speed-reread" className="mt-6" />
 					<p className="q-sub mt-4">
 							{outcome.faster
 								? "Timed re-reading of easy text raised reading speed in classroom studies, mostly on the texts that were practiced. Same episode again in a few days."
@@ -225,17 +239,8 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 									? "No speed bonus when the question is missed: a fast read you did not follow is not the goal."
 									: "No bonus this time. The point is the climb over weeks, not one run."}
 					</p>
-					<div className="q-acts mt-6">
-							<Link href="/" className={PRIMARY} data-testid="reread-today">
-							Today
-						</Link>
-						<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="reread-again">
-							<RepeatIcon className="size-4" strokeWidth={1.6} />
-								Another episode
-						</button>
-						<span className="self-center font-ui text-xs text-ink-3">Enter goes to Today</span>
-						</div>
-					</div>
+					<SourcesNote feature="speed-reread" className="mt-14" />
+				</TaskEnd>
 				</TaskFrame>
 			);
 		}
@@ -620,7 +625,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter") return router.push(readOrigin());
+			if (phase === "done" && e.key === "Enter") return onFocusedControl(e) ? undefined : router.push(readOrigin());
 			if (e.key === " " || e.key === "Enter") {
 				e.preventDefault();
 				if (phase === "ready") void startPass();
@@ -687,7 +692,21 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		const avg = scoredPasses.length ? Math.round(scoredPasses.reduce((n, p) => n + (p.pron?.overall ?? 0), 0) / scoredPasses.length) : null;
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="fast-end">
+				<TaskEnd
+					testId="fast-end"
+					hint={<EnterHint>for Today</EnterHint>}
+					actions={
+						<>
+							<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="fast-again">
+								<RepeatIcon className="size-4" strokeWidth={1.6} />
+								Six more
+							</button>
+							<Link href="/" className={PRIMARY} data-testid="fast-today">
+								Today
+							</Link>
+						</>
+					}
+				>
 					<p className="q-date flex items-center gap-1.5">
 							<QIcon name="fast" className="text-teal" />
 							Speed · done
@@ -695,7 +714,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						<h1 className="q-hello">
 							{scoredPasses.length ? `${clean} of ${reps.length} said clearly enough in the last window.` : `${clean} of ${reps.length} finished inside the last window.`}
 						</h1>
-						<Stats className="mt-6">
+						<Stats className="mt-7 max-w-none">
 							<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
 							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-teal-2" />
 							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink="text-teal-2" />}
@@ -718,7 +737,6 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							</p>
 						)}
 						<PronWorkOn report={outcome?.report} />
-					<SourcesNote feature="speed-fast" className="mt-6" />
 						<ul className="mt-8 flex flex-col gap-2" data-testid="fast-reps">
 						{reps.map((r) => (
 							<li key={r.itemId} className="q-card px-4 py-3">
@@ -748,17 +766,8 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							{error}
 						</p>
 					)}
-					<div className="q-acts mt-6">
-							<Link href="/" className={PRIMARY} data-testid="fast-today">
-							Today
-						</Link>
-						<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="fast-again">
-							<RepeatIcon className="size-4" strokeWidth={1.6} />
-									Six more
-						</button>
-						<span className="self-center font-ui text-xs text-ink-3">Enter goes to Today</span>
-						</div>
-					</div>
+					<SourcesNote feature="speed-fast" className="mt-14" />
+				</TaskEnd>
 				</TaskFrame>
 			);
 		}

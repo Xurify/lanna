@@ -35,6 +35,8 @@ import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { EnterHint, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { switchLanguage } from "@/components/switch-language";
 import { speak, useActiveLanguage } from "@/components/speech";
@@ -1332,7 +1334,7 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 	const judged = stats.length;
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome && !(e.target instanceof HTMLInputElement)) {
+			if (e.key === "Enter" && outcome && !onFocusedControl(e)) {
 				e.preventDefault();
 				onShelf();
 			}
@@ -1343,54 +1345,51 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 	const total = outcome?.total ?? video.questions.length;
 	const gotFirst = outcome?.gotFirst ?? stats.filter((s) => s.got === "first").length;
 	return (
-		<div className="m-auto w-full max-w-xl px-5 text-center" data-testid="watch-end">
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-				<MonitorPlayIcon className="size-12" />
-			</div>
-			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
+		<TaskEnd
+			testId="watch-end"
+			hint={<EnterHint>for another video</EnterHint>}
+			actions={
+				<>
+					<Link href="/" className={SECONDARY}>
+						Today
+					</Link>
+					<button type="button" onClick={onAgain} className={SECONDARY}>
+						Watch again
+					</button>
+					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="watch-shelf-button">
+						Pick another video
+					</button>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="play" className="text-teal" />
+				Watch · done
+			</p>
+			<h1 className="q-hello">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
+			<p className="q-line dim mt-2" lang={lang?.code}>
 				{video.title}
 			</p>
-			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label={mode === "step" ? "Got first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst}/${judged}` : "—") : String(video.segments.length)} ink="text-teal-2" />
-				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
-			</div>
+			<Stats className="mt-7 max-w-none">
+				<Stat label="XP" value={saving || !outcome ? null : `+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label={mode === "step" ? "Got the first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)} />
+				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
+			</Stats>
 			{mode === "step" && judged > 0 && (
-				<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="watch-speed">
+				<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="watch-speed">
 					{speed.wpmFirst !== null ? `On the lines you got the first time, the speech ran at ${speed.wpmFirst} words a minute` : "You got no line on the first listen this time"}
 					{speed.wpmAll ? `; the whole video runs at ${speed.wpmAll}` : ""}. You got {Math.round(speed.shareFirst * 100)}% the first time
 					{outcome && outcome.missed > 0 ? `, ${outcome.missed} not yet` : ""}.
 				</p>
 			)}
 			{outcome && (
-				<p className="mt-2 font-prose text-sm text-muted-foreground">
+				<p className="mt-2 font-prose text-[13px] text-ink-3">
 					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
 					The app counts {Math.round(video.coverage * 100)}% of this video's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
 			{targets.length > 0 && <SentenceStep videoId={video.id} targets={targets} />}
-			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-				<Link href="/" className={SECONDARY}>
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY}>
-					Watch again
-				</button>
-				<button type="button" onClick={onShelf} className={PRIMARY} data-testid="watch-shelf-button">
-					Pick another video
-				</button>
-			</div>
-			<SourcesNote feature="watch" className="mt-8 text-left" />
-		</div>
-	);
-}
-
-function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
-	return (
-		<div className="rounded-lg border bg-card px-3 py-4">
-			<p className="font-ui text-sm font-[600] text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 font-ui text-3xl font-[600] tabular-nums", ink)}>{value}</p>
-		</div>
+			<SourcesNote feature="watch" className="mt-14" />
+		</TaskEnd>
 	);
 }

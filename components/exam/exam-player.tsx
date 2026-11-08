@@ -17,8 +17,9 @@ import Link from "next/link";
 import { RotateCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, Dock, OptionTile, PracticeCard, Stat, Stats, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, OptionTile, PracticeCard, Stat, Stats, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { QIcon } from "@/components/quiet/icon";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
@@ -139,10 +140,26 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		const { score } = phase;
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="exam-result">
-					<p className="q-date">Chapter exam · {title}</p>
-						<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
-						<Stats className="mt-6 max-w-sm">
+				<TaskEnd
+					testId="exam-result"
+					actions={
+						<>
+							<button type="button" onClick={retry} disabled={drawing} className={score.passed ? SECONDARY : PRIMARY} data-testid="exam-retry">
+								<RotateCcwIcon className="size-4" strokeWidth={1.6} />
+								Try again
+							</button>
+							<Link href="/curriculum" className={score.passed ? PRIMARY : SECONDARY}>
+								Back to Curriculum
+							</Link>
+						</>
+					}
+				>
+					<p className="q-date flex items-center gap-1.5">
+						<QIcon name="rule" className="text-teal" />
+						Chapter exam · {title}
+					</p>
+					<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
+					<Stats className="mt-7 max-w-none">
 							<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-teal-2" : "text-foreground"} />
 							<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-ink-2" />
 						</Stats>
@@ -175,16 +192,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							{error}
 						</p>
 					)}
-					<div className="q-acts mt-6">
-							<button type="button" onClick={retry} disabled={drawing} className={PRIMARY} data-testid="exam-retry">
-								<RotateCcwIcon className="size-4" strokeWidth={1.6} />
-							Try again
-						</button>
-						<Link href="/curriculum" className={SECONDARY}>
-							Back to Curriculum
-						</Link>
-					</div>
-				</div>
+				</TaskEnd>
 			</TaskFrame>
 		);
 	}

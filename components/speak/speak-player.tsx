@@ -24,13 +24,14 @@ import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
+import { COLUMN, EnterHint, onFocusedControl, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SceneBoard } from "@/components/speak/scene-board";
 import { SettingsLink } from "@/components/settings/settings-link";
-import { PRON_CLEAR, PRON_GOOD, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakSceneEntry, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { PRON_CLEAR, PRON_GOOD, praiseFor, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakSceneEntry, type SpeakSession, type SpeakTurn } from "@/src/core";
+import { QIcon } from "@/components/quiet/icon";
 import { SourcesNote } from "@/components/sources/sources-note";
 
 type SttEngine = "elevenlabs" | "deepgram" | "groq";
@@ -53,8 +54,6 @@ interface Outcome {
 }
 
 type Phase = "pick" | "starting" | "scene" | "ending" | "done";
-
-const PRAISE = ["Výborne!", "Presne!", "Áno, tak!", "Super!"];
 
 export function SpeakPlayer({ initialState, sceneId = null, typed = false, sceneLang = { id: "slovak", tag: "sk-SK" } }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean; sceneLang?: { id: string; tag: string } }) {
 	const lang = useActiveLanguage();
@@ -329,7 +328,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter") {
+			if (phase === "done" && e.key === "Enter" && !onFocusedControl(e)) {
 				router.push(readOrigin());
 				return;
 			}
@@ -628,22 +627,32 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 	// Praise only a scene that earned it: a readable summary with nothing to
 	// fix and every prompt repaired. Otherwise the heading just counts lines.
 	const earned = !!sum && !sum.unreadable && sum.corrections.length === 0 && counts.repaired >= counts.prompts;
-	const praise = earned ? `${PRAISE[counts.learner % PRAISE.length]!} ` : "";
+	const praise = earned ? praiseFor(lang?.code, counts.learner) : null;
 	return (
-		<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="speak-end">
-			<div className="flex items-center gap-4">
-				<span className="flex size-16 items-center justify-center rounded-lg bg-teal-wash text-teal-2">
-					<MicIcon className="size-8" />
-				</span>
-				<div>
-					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Speak · {s.sceneTitle} · done</p>
-					<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
-							{praise}
-						{counts.learner} {counts.learner === 1 ? "line" : "lines"} said
-					</h1>
-				</div>
-			</div>
-			<Stats className="mt-6 font-ui text-sm">
+		<TaskEnd
+			testId="speak-end"
+			hint={<EnterHint>for Today</EnterHint>}
+			actions={
+				<>
+					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="speak-again">
+						<RepeatIcon className="size-4" />
+						Another scene
+					</button>
+					<Link href="/" className={PRIMARY} data-testid="speak-today">
+						Today
+					</Link>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="speak" className="text-teal" />
+				Speak · {s.sceneTitle} · done
+			</p>
+			<h1 className="q-hello">
+				{praise && <span lang={praise.lang}>{praise.text} </span>}
+				{counts.learner} {counts.learner === 1 ? "line" : "lines"} said
+			</h1>
+			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
 				<Stat label="Repaired (tutor&apos;s call)" value={`${counts.repaired} of ${counts.prompts}`} ink="text-teal-2" />
 				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= PRON_GOOD ? "text-teal-2" : s.pron.average >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
@@ -658,7 +667,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			{sum?.note && <p className="mt-6 font-prose text-base text-foreground">{sum.note}</p>}
 			{sum && sum.corrections.length > 0 ? (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth fixing, in the tutor&apos;s judgment</p>
+					<h2 className="q-sh">Worth fixing, in the tutor&apos;s judgment</h2>
 					<ul className="mt-2 flex flex-col gap-2" data-testid="speak-corrections">
 						{sum.corrections.map((c, i) => (
 							<li key={i} className="q-card px-4 py-3">
@@ -692,7 +701,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 			)}
 			{sum && sum.keep.length > 0 && (
 				<div className="mt-8">
-					<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">Worth keeping</p>
+					<h2 className="q-sh">Worth keeping</h2>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{sum.keep.map((k) => (
 							<li key={k} className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base" lang={lang?.code}>
@@ -705,17 +714,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 					</ul>
 				</div>
 			)}
-			<div className="mt-10 flex flex-wrap gap-3">
-				<Link href="/" className={PRIMARY} data-testid="speak-today">
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY} data-testid="speak-again">
-					<RepeatIcon className="size-4" />
-					Another scene
-				</button>
-				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
-			</div>
-			<SourcesNote feature="speak" className="mt-8" />
-		</div>
+			<SourcesNote feature="speak" className="mt-14" />
+		</TaskEnd>
 	);
 }

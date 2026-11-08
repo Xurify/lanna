@@ -24,13 +24,13 @@ import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, EnterHint, onFocusedControl, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
+import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 
 interface Rep {
@@ -58,8 +58,6 @@ interface Outcome {
 	queued: string[];
 }
 
-
-const PRAISE = ["Rozumieš!", "Presne tak!", "Áno!", "Super!", "Výborne!"];
 
 export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan | null }) {
 	const lang = useActiveLanguage();
@@ -245,7 +243,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				return;
 			}
 			if (outcome) {
-				if (e.key === "Enter") router.push(readOrigin());
+				if (e.key === "Enter" && !onFocusedControl(e)) router.push(readOrigin());
 				return;
 			}
 			if (!item) return;
@@ -319,7 +317,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	}
 
 	const progress = (index + (current ? 1 : 0)) / total;
-	const praise = PRAISE[index % PRAISE.length]!;
+	const praise = praiseFor(lang?.code, index);
 	const tone = !current ? "plain" : current.verdict === "wrong" ? "miss" : current.verdict === "exact" ? "right" : "wait";
 
 	return (
@@ -344,7 +342,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							<p className="mb-4 font-ui text-[13px] text-ink-3">{isWatchItem(item.id) ? "From a video you watched" : item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
 						)}
 						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
-							{!current ? "Type what you hear" : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : "It says…"}
+							{!current ? "Type what you hear" : current.verdict === "exact" ? <span lang={praise.lang}>{praise.text}</span> : current.verdict === "accents" ? "So close" : "It says…"}
 						</h2>
 
 						{/* Hear it: the big play, the slow play, and the text behind a tap. */}
@@ -528,24 +526,37 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 	// The ones that went right are kept out of sight until asked for, but never lost: the sentence you got right is one you may want to see too.
 	const understood = reps.filter((r) => r.verdict === "exact");
 	return (
-		<div className={cn(COLUMN, "my-auto py-10")} data-testid="listen-end">
-			<div className="flex items-center gap-4">
-				<span className="flex size-14 items-center justify-center rounded-xl bg-teal-wash text-teal-2">
-						<HeadphonesIcon className="size-6" strokeWidth={1.6} />
-				</span>
-				<div>
-					<p className="font-ui text-[13px] font-[550] text-ink-3">Listen · done</p>
-						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
-						{outcome.correct} of {outcome.total} typed correctly, without the text
-					</h1>
-					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-ink-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
-				</div>
-			</div>
-			<Stats className="mt-6">
+		<TaskEnd
+			testId="listen-end"
+			hint={<EnterHint>for Today</EnterHint>}
+			actions={
+				<>
+					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
+						<RepeatIcon className="size-4" />
+						Ten more
+					</button>
+					<Link href="/" className={PRIMARY} data-testid="listen-today">
+						Today
+					</Link>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="listen" className="text-teal" />
+				Listen · done
+			</p>
+			<h1 className="q-hello">
+				{outcome.correct} of {outcome.total} typed correctly, without the text
+			</h1>
+			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
+			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
 				<Stat label="New words met" value={String(words.length)} ink="text-foreground" />
 				<Stat label="In your deck" value={saving ? "…" : String(outcome.queued.length)} ink="text-foreground" />
 			</Stats>
+			<Link href="/mistakes#mistakes-listening" className="mt-3 inline-block font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2" data-testid="listen-trends">
+				How your listening is going
+			</Link>
 			{words.length > 0 && (
 				<div className="mt-8">
 					<p className="q-sh">Words you met today</p>
@@ -577,21 +588,8 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 					<SentenceRows reps={understood} />
 				</details>
 			)}
-			<div className="mt-10 flex flex-wrap gap-3">
-				<Link href="/" className={PRIMARY} data-testid="listen-today">
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
-					<RepeatIcon className="size-4" />
-					Ten more
-				</button>
-				<Link href="/mistakes#mistakes-listening" className={SECONDARY} data-testid="listen-trends">
-					How your listening is going
-				</Link>
-				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
-			</div>
-			<SourcesNote feature="listen" className="mt-8" />
-		</div>
+			<SourcesNote feature="listen" className="mt-14" />
+		</TaskEnd>
 	);
 }
 

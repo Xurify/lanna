@@ -25,6 +25,8 @@ import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, Sea
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { EnterHint, onFocusedControl, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
@@ -608,40 +610,64 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 	}, [story, tapped]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome) {
+			if (e.key === "Enter" && outcome && !onFocusedControl(e)) {
 				e.preventDefault();
-				onShelf();
+				if (unreadLeft) onNext();
+				else onShelf();
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [outcome, onShelf]);
+	}, [outcome, onShelf, onNext, unreadLeft]);
 	const total = outcome?.total ?? story.questions.length;
 	return (
-		<div className="m-auto w-full max-w-xl px-5 text-center" data-testid="read-end">
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-				<BookOpenIcon className="size-12" />
-			</div>
-			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
+		<TaskEnd
+			testId="read-end"
+			hint={<EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
+			actions={
+				<>
+					<Link href="/" className={SECONDARY}>
+						Today
+					</Link>
+					<button type="button" onClick={onAgain} className={SECONDARY}>
+						Read again
+					</button>
+					{unreadLeft ? (
+						<button type="button" onClick={onNext} className={PRIMARY}>
+							Next story
+						</button>
+					) : (
+						<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
+							Open the library
+						</button>
+					)}
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="read" className="text-teal" />
+				Read · done
+			</p>
+			<h1 className="q-hello">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
+			<p className="q-line dim mt-2" lang={lang?.code}>
 				{story.title}
 			</p>
-			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
-				<Stat label="Words" value={String(story.wordCount)} ink="text-teal-2" />
-			</div>
+			<Stats className="mt-7 max-w-none">
+				<Stat label="XP" value={saving || !outcome ? null : `+${outcome.xp}`} ink="text-teal-2" />
+				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
+				<Stat label="Words" value={String(story.wordCount)} />
+			</Stats>
 			{outcome && (
-				<p className="mt-4 font-prose text-sm text-muted-foreground">
+				<p className="mt-3 font-prose text-[13px] text-ink-3">
 					{outcome.queued.length > 0 ? `${outcome.queued.length} new word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
 					The app counts {Math.round(story.coverage * 100)}% of this episode's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
 			{(story.newWords.length > 0 || looked.length > 0) && (
-				<div className="mt-6 grid gap-3 text-left sm:grid-cols-2">
+				<div className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2">
 					{story.newWords.length > 0 && (
-						<div className="rounded-lg border bg-card p-4">
-							<p className="font-ui text-sm font-[600] text-muted-foreground">New words</p>
+						<section>
+							<h2 className="q-sh">New words</h2>
 							<ul className="mt-2 flex flex-col gap-1">
 								{story.newWords.slice(0, 8).map((w) => (
 									<li key={w.lemma} className="font-prose text-base leading-snug">
@@ -652,11 +678,11 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 									</li>
 								))}
 							</ul>
-						</div>
+						</section>
 					)}
 					{looked.length > 0 && (
-						<div className="rounded-lg border bg-card p-4">
-							<p className="font-ui text-sm font-[600] text-muted-foreground">You looked up</p>
+						<section>
+							<h2 className="q-sh">You looked up</h2>
 							<ul className="mt-2 flex flex-col gap-1">
 								{looked.slice(0, 8).map((t) => (
 									<li key={t.slug ?? t.text} className="font-prose text-base leading-snug">
@@ -668,39 +694,13 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 								))}
 								{looked.length > 8 && <li className="font-prose text-sm text-muted-foreground">and {looked.length - 8} more</li>}
 							</ul>
-						</div>
+						</section>
 					)}
 				</div>
 			)}
-			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-				<Link href="/" className={SECONDARY}>
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY}>
-					Read again
-				</button>
-				{unreadLeft ? (
-					<button type="button" onClick={onNext} className={PRIMARY}>
-						Next story
-					</button>
-				) : (
-					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
-						Open the library
-					</button>
-				)}
-			</div>
-			<SourcesNote feature="read" className="mt-8 text-left" />
+			<SourcesNote feature="read" className="mt-14" />
 			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">New stories are written in the background and wait in the library.</p>}
-		</div>
-	);
-}
-
-function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
-	return (
-		<div className="rounded-lg border bg-card px-3 py-4">
-			<p className="font-ui text-sm font-[600] text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 font-ui text-3xl font-[600] tabular-nums", ink)}>{value}</p>
-		</div>
+		</TaskEnd>
 	);
 }
 

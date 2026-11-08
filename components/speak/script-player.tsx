@@ -16,7 +16,8 @@ import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, PRIMARY, SECONDARY, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { QIcon } from "@/components/quiet/icon";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
 export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: string }) {
@@ -112,22 +113,29 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 	if (done) {
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="script-done">
-					<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · step by step · done</p>
-					<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground">Now say it yourself</h1>
-					<p className="mt-3 max-w-md font-prose text-base text-muted-foreground">
+				<TaskEnd
+					testId="script-done"
+					actions={
+						<>
+							<Link href="/speak" className={SECONDARY}>
+								Other scenes
+							</Link>
+							<Link href={`/speak?scene=${scene}`} className={PRIMARY} data-testid="script-live">
+								<MicIcon className="size-4" />
+								Say it live
+							</Link>
+						</>
+					}
+				>
+					<p className="q-date flex items-center gap-1.5">
+						<QIcon name="speak" className="text-teal" />
+						Speak · step by step · done
+					</p>
+					<h1 className="q-hello">Now say it yourself</h1>
+					<p className="q-line dim mt-3 max-w-xl">
 						You walked through all {total} lines. Now say the same scene out loud. The tutor will follow what you say, not the script.
 					</p>
-					<div className="mt-8 flex flex-wrap gap-3">
-						<Link href={`/speak?scene=${scene}`} className={PRIMARY} data-testid="script-live">
-							<MicIcon className="size-4" />
-							Say it live
-						</Link>
-						<Link href="/speak" className={SECONDARY}>
-							Other scenes
-						</Link>
-					</div>
-				</div>
+				</TaskEnd>
 			</TaskFrame>
 		);
 	}
