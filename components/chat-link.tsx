@@ -23,7 +23,7 @@ function TutorUnitLink({ unitId, children }: { unitId: string; children: ReactNo
 		void startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }).catch(() => setBusy(false));
 	};
 	return (
-		<button type="button" onClick={open} disabled={busy} data-testid="chat-link" className={cn(LINK, "cursor-pointer text-left disabled:opacity-60")}>
+		<button type="button" onClick={open} disabled={busy} data-testid="chat-link" className={cn(LINK, "inline cursor-pointer text-left disabled:opacity-60")}>
 			{children}
 		</button>
 	);

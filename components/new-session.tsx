@@ -253,11 +253,12 @@ export function NewSession({
 		if (pathname === "/chat/new") setStarted(null);
 	}
 	// Next's replaceState stores this page's tree under the chat's address, so Back or Forward to it
-	// brings the draft back under /chat/<id>; refreshing renders the chat's own page there instead.
+	// brings the draft back under /chat/<id>. A soft refresh there left the next Forward on the chat,
+	// so the page loads in full, which also gives the history entries Next's own state again.
 	const strandedOnChat = started === null && pathname !== "/chat/new";
 	useEffect(() => {
-		if (strandedOnChat) router.refresh();
-	}, [strandedOnChat, router]);
+		if (strandedOnChat) window.location.reload();
+	}, [strandedOnChat]);
 	useEffect(() => {
 		if (mode === "chat") void loadChat();
 	}, [mode]);
@@ -287,9 +288,10 @@ export function NewSession({
 	const strongKeyless = useStrongKeyless();
 	const [setupOpen, setSetupOpen] = useState(false);
 
+	const sendingRef = useRef(false);
 	const send = useCallback(() => {
 		const draft = textRef.current.trim();
-		if (!draft || busy) return;
+		if (!draft || busy || sendingRef.current) return;
 		if (!configured) {
 			setSetupOpen(true);
 			return;
@@ -305,7 +307,11 @@ export function NewSession({
 		}
 		setBusy(true);
 		if (mode === "chat") {
+			sendingRef.current = true;
 			void createChatSession(draft, fetch)
+				.finally(() => {
+					sendingRef.current = false;
+				})
 				.then((chat) => {
 					setBusy(false);
 					if (!chat || window.location.pathname !== "/chat/new") return;
