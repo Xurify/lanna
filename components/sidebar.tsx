@@ -9,7 +9,6 @@ import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import type { ChatDeleteMode } from "@/src/core";
 import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
-import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
@@ -895,7 +894,7 @@ function SessionsSidebar() {
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
 					<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-3">
-						<Hint label="Home" action="jump-graph" side="right">
+						<Hint label="Home" side="right">
 							<Link
 								href="/"
 								aria-label="Home"
@@ -1226,7 +1225,6 @@ function SessionsSidebar() {
 							Delete…
 						</button>
 						<div className="my-0.5 border-t border-border/60" aria-hidden="true" />
-						<CoverageMenuBlock chatId={ctxChatId} />
 					</MenuShell>
 				)}
 

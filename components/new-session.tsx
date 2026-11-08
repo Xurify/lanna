@@ -11,13 +11,7 @@ import { useStrongKeyless, useZeroKeys, ZeroKeysPill } from "@/components/setup-
 import { StatsBar } from "@/components/stats-bar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChainTableOverlay } from "@/components/chain-table.tsx";
-import { ComposerActions, NodePickerControl } from "@/components/composer-actions";
-import type { GraphSnapshot } from "@/src/core";
-
-/** The draft's pick set (owner round 10): the SAME shape the home pick
- *  bar lifts — resolved nodes as the learner SAW them at pick time. */
-export type DraftPick = { id: string; name: string; statement: string };
+import { ComposerActions } from "@/components/composer-actions";
 
 /**
  * The sessionless draft view at /chat/new (owner, 2026-09-13): "+ New
@@ -49,7 +43,6 @@ export async function startDraftSession(
 	text: string,
 	fetchLike: typeof fetch,
 	mode?: "practice",
-	picks?: readonly DraftPick[],
 ): Promise<string | null> {
 	const t = text.trim();
 	if (!t) return null;
@@ -62,7 +55,7 @@ export async function startDraftSession(
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(
 			mode === "practice"
-				? { title: t, kind: "practice", ...(picks && picks.length > 0 ? { graphContext: { propositions: picks } } : {}) }
+				? { title: t, kind: "practice" }
 				: { title: t },
 		),
 	});
@@ -84,10 +77,6 @@ export function DraftShell({
 	onSend,
 	setupCta,
 	mode = "teach",
-	picks = [],
-	onOpenPicker,
-	onClearPicks,
-		overlay,
 		onModeChange,
 	}: {
 	busy: boolean;
@@ -102,19 +91,6 @@ export function DraftShell({
 	 *  affordance home carries, rendered above the draft shell — passed by
 	 *  NewSession, which owns the configured state and the SetupDialog. */
 	setupCta?: ReactNode;
-	/** THE PICK BAR (owner round 10): the SAME pill the home screen
-	 *  carries above its composer — dashed "Pick nodes" when empty,
-	 *  count + Clear when picked. The draft screen has
-	 *  no graph behind it, so the picker opens the standalone chain-table
-	 *  overlay over fetched snapshot data (owned by NewSession). */
-	picks?: DraftPick[];
-	onOpenPicker?: () => void;
-	onClearPicks?: () => void;
-	/** THE PICKER SLOT (owner round 10b): the chain-table overlay hosts
-	 *  INSIDE the content column's relative container — the same law as
-	 *  the graph view (the overlay fills its column, never the sidebar).
-	 *  Passed as a node so the pick state stays in NewSession. */
-	overlay?: ReactNode;
 		/** When given, the start screen offers the two kinds of chat as a choice. */
 		onModeChange?: (mode: "teach" | "practice") => void;
 	}) {
@@ -211,11 +187,8 @@ export function DraftShell({
 									</div>
 								</div></div>
 						<div className="w-full pb-3">
-							<div className={cn(DOCK, (picks.length > 0 || mode === "practice" || setupCta) ? "pt-9" : "pt-1")}>
+							<div className={cn(DOCK, (mode === "practice" || setupCta) ? "pt-9" : "pt-1")}>
 								<ComposerActions
-									picker={(picks.length > 0 || mode === "practice") && (
-										<NodePickerControl count={picks.length} onOpen={onOpenPicker} onClear={onClearPicks} />
-									)}
 									setup={setupCta}
 								/>
 								<div className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
@@ -243,7 +216,6 @@ export function DraftShell({
 							</div>
 						</div>
 					</div>
-					{overlay}
 				</div>
 			</div>
 			{/* The floating reopen toggle — pointer-events-none except the
@@ -272,32 +244,6 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 		setText(v);
 	};
 	const [busy, setBusy] = useState(false);
-	// THE PICK BAR (owner round 10): the draft's lifted pick set + the
-	// snapshot the standalone chain-table picker reads. Lazy — the graph
-	// is fetched on FIRST open only, then reused.
-	const [picks, setPicks] = useState<DraftPick[]>([]);
-	const picksRef = useRef<DraftPick[]>([]);
-	const applyPicks = (next: DraftPick[]) => {
-		picksRef.current = next;
-		setPicks(next);
-	};
-	const [pickerOpen, setPickerOpen] = useState(false);
-	const [snapshot, setSnapshot] = useState<GraphSnapshot | null>(null);
-	const openPicker = () => {
-		if (snapshot) {
-			setPickerOpen(true);
-			return;
-		}
-		void fetch("/api/graph")
-			.then((r) => r.json() as Promise<GraphSnapshot>)
-			.then((snap) => {
-				setSnapshot(snap);
-				setPickerOpen(true);
-			})
-			.catch(() => {
-				/* an unreachable graph leaves the draft usable — pickless */
-			});
-	};
 
 	// First-run gate (model-slots wave, owner 2026-09-20): the send
 	// INTERCEPTS into the setup flow while unconfigured — no defaults for
@@ -331,7 +277,7 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 			return;
 		}
 		setBusy(true);
-		void startDraftSession(draft, fetch, mode === "practice" ? "practice" : undefined, mode === "practice" ? picksRef.current : undefined)
+		void startDraftSession(draft, fetch, mode === "practice" ? "practice" : undefined)
 			.then((target) => {
 				if (target) router.push(target);
 				else setBusy(false);
@@ -352,34 +298,6 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 					// replaceState keeps the address shareable without reloading the draft.
 					window.history.replaceState(null, "", m === "practice" ? "/chat/new?mode=practice" : "/chat/new");
 				}}
-				picks={picks}
-				onOpenPicker={openPicker}
-				onClearPicks={() => applyPicks([])}
-				overlay={
-					// THE PICKER (owner round 10b): hosted INSIDE the content
-					// column — absolute inset-0 resolves to the column's relative
-					// container, the same confinement the graph view gives it;
-					// never over the sidebar or the traffic lights.
-					<ChainTableOverlay
-						open={pickerOpen}
-						nodes={snapshot?.propositions ?? []}
-						chains={snapshot?.chains ?? []}
-						sessions={snapshot?.sessions ?? {}}
-						fileSources={snapshot?.fileSources ?? {}}
-						onClose={() => setPickerOpen(false)}
-						selectMode
-						controlledSelection={new Set(picks.map((p) => p.id))}
-						onSelectionChange={(ids) => {
-							const byId = new Map((snapshot?.propositions ?? []).map((n) => [n.id, n]));
-							const next: DraftPick[] = [];
-							for (const id of ids) {
-								const n = byId.get(id);
-								if (n) next.push({ id: n.id, name: n.name, statement: n.statement });
-							}
-							applyPicks(next);
-						}}
-					/>
-				}
 				setupCta={
 					zeroKeys ? (
 						<ZeroKeysPill inline onOpen={() => setSetupOpen(true)} />

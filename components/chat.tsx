@@ -46,7 +46,6 @@ import { SessionFind } from "@/components/session-find";
 import { SessionMessageNavigation } from "@/components/session-navigation";
 import { PracticeDock } from "@/components/practice-dock";
 import { ThinkingCard, type PracticeThinkingData } from "@/components/practice-cards";
-import { GraphContextCard, type GraphContextData } from "@/components/graph-context-card";
 import { TopBar } from "@/components/top-bar";
 import { cn } from "@/lib/utils";
 import { setShowWorking, useShowWorking, WORKING_TOOLS } from "@/components/show-working";
@@ -58,7 +57,6 @@ import {
 	CompactionMomentDivider,
 	type CompactionDividerData,
 } from "@/components/compaction-divider";
-import { CoverageRing } from "@/components/extraction-coverage";
 import {
 	activeProblemOf,
 	dismissedAnswer,
@@ -813,7 +811,6 @@ export function Chat({
 	const hasPlan = useMemo(() => planExists(messages), [messages]);
 	// The coverage ring's refresh chain (extraction-UX redesign): bumped at
 	// turn settle — the moment this session's uncovered mass changes.
-	const [coverageTick, setCoverageTick] = useState(0);
 	// The mermaid focus (chrome-melt wave, 2026-09-19): md-blocks' expand
 	// button registers the chart source here; the overlay (and the plan
 	// popup) mount INSIDE the session-area div — both are session-scoped, so
@@ -896,7 +893,6 @@ export function Chat({
 		void syncTurns();
 		// The coverage ring re-reads at turn settle too (extraction-UX
 		// redesign, 2026-09-24); the ring's own running-poll handles runs.
-		setCoverageTick((t) => t + 1);
 		// CANONIZATION (fix B, the duplicate-previous-message bug, 2026-10-02):
 		// turn-settled for OUR OWN turn arrives while the stream is still open
 		// (endTurn emits from onFinish before the response terminates, so the
@@ -1312,7 +1308,6 @@ export function Chat({
 					{/* Practice (owner, 2026-10-04): the coverage ring hides —
 				    practice never extracts, so an ever-filling ring with no
 				    run behind it would lie. */}
-					{kind !== "practice" && <CoverageRing chatId={chatId} refreshKey={coverageTick} />}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
 					{kind === "practice" ? (
@@ -1372,8 +1367,6 @@ export function Chat({
 								<Fragment key={m.id || `m-${mi}`}>
 									{m.parts.map((part, pi) => {
 										switch (part.type) {
-											case "data-graph-context":
-												return <GraphContextCard key={pi} data={part.data as GraphContextData} />;
 											case "data-compaction":
 												return <CompactionMomentDivider key={pi} data={part.data as CompactionDividerData} />;
 											case "data-compaction-cut":

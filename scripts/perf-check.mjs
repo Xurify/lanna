@@ -68,7 +68,6 @@ const ROUTES = [
 	{ path: "/words", door: "words-door", name: "Words" },
 	{ path: "/plan", door: "plan-door", name: "Progress" },
 	{ path: "/milestones", name: "Milestones" },
-	{ path: "/map", name: "Map" },
 	{ path: "/mistakes", name: "Mistakes" },
 	{ path: "/grammar", name: "Grammar" },
 	{ path: "/lesson?unit=words", name: "Lesson" },
