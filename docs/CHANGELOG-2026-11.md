@@ -2,6 +2,16 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 7 November: grammar lessons open on an ink sketch (branch `feat/ink-case-sketches`)
+
+- **Why:** the owner: grammar felt like review, and the diagrams should look like pen drawings, as riddled.ai’s do. Rule E73.
+- **What changed:** the case sketches (genitive, locative, instrumental, dative, accusative of people and of feminine nouns) are drawn in ink: a wobbling pen line, hand-drawn people, houses and arrows, a highlighter patch behind the point, strokes that draw themselves in order, and a pen underline under the lit ending. Both Day and Night. The model-made figures (the visual tool) are asked for the same look.
+- **Plain wording (the owner: "what does that even mean?"):** every "why this ending" line is written for a learner with no grammar terms ("Most words ending in -a swap it for -y: škola → školy"), not "a hard noun". Checked against the slovak.wiki genitive and locative pages: the locative summary now says a male person takes -ovi, and the Polish "około" is "okolo". The people in the sketches are redrawn after a reference figure: round head, straight body, one pointing arm, straight legs.
+- **Less confusing intro (the owner: "improve the UX so the user is less confused"):** each step now says what it is about ("After do, z, od, bez and u, a word changes its ending"), names the preposition in plain words ("do means “into”"), shows the sentence with its English, then the same word before and after ("škola → školy", with "in the dictionary" and "after do" under them) and one plain line on why. The card says "Step 1 of 4" where it said "no score". The sentence of the vďaka step is split correctly ("Vďaka mame").
+- **Also here:** the learn-first intro itself (the sketch walk-through, the why line per ending, the summary with the slovak.wiki case page) and the forms-first order of a grammar unit’s first lesson were uncommitted work from an earlier session on the same topic; they come along in this branch.
+- **Tests:** `tests/ink.test.tsx` (seeded paths, finite numbers, every stage of every unit renders, same markup on every render).
+- **Unverified:** the figures a model draws with the new prompt (the cloud has no model key); the sketches on the owner’s screen and phone. Checked: all 15 stages as a contact sheet in Day and Night.
+
 ## 7 November: get ready for a video you cannot yet follow (branch `feat/watch-get-ready`)
 
 - **Why:** the owner, on a podcast episode the app rated "Too hard for now" (41% known): use AI to make pre-content to study first, then watch, and be "drastically so much better at hearing what is being said and noticing what the speaker(s) are talking about". Rule E70; the research: [research/pre-listening.md](research/pre-listening.md) (knowing the topic helped listeners more than being taught the words; a short description of a video before it raised comprehension, statements more than questions).

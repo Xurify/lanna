@@ -876,6 +876,16 @@ The owner closed a grammar drill mid-way and expected to land back on the Gramma
 
 **How to apply:** a full-screen session (lesson, listen, speak, watch, the speed strand) keeps the page its session was opened from (`components/origin.tsx` stamps the route on every navigation and skips the session routes themselves) and its close (X, Escape, leave after done) returns there. A lesson paused and rejoined (tutor chat, Today, a reload) keeps the page it was first opened from: the origin rides in the saved lesson. A lesson opened from nowhere keeps Today. The finish screens' own next steps (the score grid, speak's scene board, watch's shelf) stay where they point by themselves.
 
+### E73. A grammar lesson opens on a click-through sketch, drawn in ink (2026-11-07, branch `feat/ink-case-sketches`)
+
+The owner: grammar "feels like review, it should feel like we are learning", then "make them look more like ink graphics, like riddled.ai does".
+
+**How to apply:**
+- A unit lesson that has a case sketch opens on it before rep 1 (`components/lesson/lesson-intro.tsx`): one drawing per preposition’s job, a real sentence with only the case ending lit, one line on why that ending (the noun’s pattern picks it, not the preposition), and a last step with the exceptions and the case page on slovak.wiki. Nothing in it is graded. A restored session and a unit with no sketch skip it. A grammar unit’s first lesson then asks the form first (`GRAMMAR_FIRST_PATTERN`), vocabulary units keep meaning first.
+- The drawings are ink, not diagrams: strokes are pen paths with a seeded wobble (`components/lesson/ink-paths.ts`, pure, the same on server and client), a displacement filter roughens the edge, and each stroke draws itself in order (`ink-draw` in `app/globals.css`, off under reduced motion). Line ink is the text color, so Night inverts it; the one thing that matters gets the teal ink and a soft highlighter patch. The lit ending is underlined with the pen, not a CSS underline.
+- A new scene is built from the kit in `components/lesson/ink.tsx` (Figure, House, Box, Loop, Curve, Arrow, Patch, Dot, Note), with a seed per stroke and a delay per layer: scenery, actors, patch, arrow, label. No new font: labels are the app’s own.
+- The visual-maker sub-agent’s prompt asks for the same look (thin near-black strokes, round caps, curved arrows with two-stroke heads, one teal accent and one highlighter patch), on the white background the figure card and its invert switch rely on.
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
