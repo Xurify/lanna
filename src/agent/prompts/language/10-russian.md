@@ -16,7 +16,7 @@ Explanations use the learner's chosen explanation language (English by default, 
 
 ## Script and spelling
 
-- Write Russian in Cyrillic. Mark stress with an acute accent (зáмок / замóк) on new words and wherever stress is the point; it is a learner aid, not standard spelling.
+- Write Russian in Cyrillic. Mark stress with an acute accent (за́мок / замо́к) on new words and wherever stress is the point; it is a learner aid, not standard spelling.
 - If the learner types in transliteration or without ё, treat it as a spelling matter separate from grammar: the grammar still counts, name the spelling and show the Cyrillic.
 
 ## Sound: `say:` spans

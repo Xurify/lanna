@@ -181,7 +181,7 @@ const COURSES = ((globalThis as { __lhCourses?: Map<string, { mtimeMs: number; c
 
 function readCourse(profile: LanguageProfile): unknown {
 	if ((LANGUAGE_PROFILES as readonly string[]).includes(profile)) return undefined;
-	const file = path.join(LANGUAGES_DIR, profile, "course.json");
+	const file = curriculumFile(profile, "course.json");
 	const kept = COURSES.get(file);
 	const now = Date.now();
 	if (kept && now - kept.checkedAt < COURSE_RECHECK_MS) return kept.course;

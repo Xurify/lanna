@@ -21,7 +21,7 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
-import { activeCourse, courseUnitsFor, perCourse, type Course, type CourseUnit } from "./course.ts";
+import { activeCourse, courseUnitsFor, filledTags, perCourse, sameCellForms, type Course, type CourseUnit } from "./course.ts";
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ interface UnitInfo {
 	pattern?: "build";
 	/** A generated course's grammar unit: which blanked forms it drills, by
 	 *  their grammar tags and the word before the blank (src/core/course.ts). */
-	match?: Pick<CourseUnit, "cat" | "tags" | "after">;
+	match?: Pick<CourseUnit, "cat" | "tags" | "variants" | "after" | "notAfter" | "skipForms">;
 }
 
 const WORD_RULE = "Learn the word with its sentence: the sentence is what you will hear.";
@@ -194,7 +194,7 @@ function courseLessonUnits(course: Course): UnitInfo[] {
 		node: `n_seed_${u.id.replace(/[^a-z0-9]+/gi, "_")}`,
 		...(u.grammarTerm ? { grammarTerm: u.grammarTerm } : {}),
 		...(u.nativeTerm ? { slovakTerm: u.nativeTerm } : {}),
-		...(u.kind === "words" ? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true } : { match: { cat: u.cat, tags: u.tags ?? [], after: u.after } }),
+		...(u.kind === "words" ? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true } : { match: { cat: u.cat, tags: u.tags ?? [], ...(u.variants ? { variants: u.variants } : {}), after: u.after, ...(u.notAfter ? { notAfter: u.notAfter } : {}), ...(u.skipForms ? { skipForms: u.skipForms } : {}) } }),
 	}));
 	return [{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, grammarTerm: "Core vocabulary" }, ...own, ...BAND_UNITS.map(({ slovakTerm: _native, ...b }) => b)];
 }
@@ -453,13 +453,16 @@ const CASE_OF_UNIT: Partial<Record<UnitId, string>> = {
 /** The answer's form in plain words, from the ending and the unit: who is
  *  doing a verb, which case a noun is in. Undefined when nothing safe can
  *  be said (an adverb, a phrase, a form the unit does not name). */
-export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender">, answer: string, unit: UnitId): string | undefined {
+export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender" | "formTags">, answer: string, unit: UnitId): string | undefined {
 	const isVerb = entry.pos === "verb" || entry.cat === "Verbs";
 	const a = answer.toLowerCase();
 	if (a === entryLemma(entry).toLowerCase()) return undefined;
 	// A generated unit says what it drills; the Slovak endings below do not apply.
 	const own = unitInfo(unit)?.match;
-	if (own) return own.tags?.length ? `${own.tags.join(" ")} of ${entryLemma(entry)}` : undefined;
+	if (own) {
+		const filled = filledTags(own, entry, answer, activeCourse()?.tag ?? "sk-SK");
+		return filled ? `${filled.join(" ")} of ${entryLemma(entry)}` : undefined;
+	}
 	if (activeCourse()) return undefined;
 	// A verb form the dictionary lists, or any form in a verb unit (the
 	// dictionary's form lists are incomplete for prefixed verbs).
@@ -749,7 +752,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (c.entry.gender) item.gender = c.entry.gender;
 	const form = describeForm(c.entry, answer, c.unit);
 	if (form) item.form = form;
-	const alts = knownVariants(answer);
+	const alts = [...knownVariants(answer), ...(info.match ? sameCellForms(c.entry, answer, activeCourse()?.tag ?? "sk-SK") : [])];
 	if (alts.length > 0) item.alternatives = alts;
 	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at, c.unit);
 	if (trigger) item.trigger = trigger;

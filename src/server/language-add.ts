@@ -19,7 +19,7 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { activeProfile, LANGUAGE_PROFILES, PATHS, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
+import { activeProfile, LANGUAGE_PROFILES, PATHS, ROOT, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, languageById, type CatalogLanguage } from "../core/language.ts";
 import {
@@ -29,6 +29,7 @@ import {
 	lineMayMatter,
 	mergeFormOf,
 	mergeHomographs,
+	namesIn,
 	parseFrequency,
 	rankWords,
 	readKaikkiEntry,
@@ -90,6 +91,7 @@ interface CatalogRow {
 	/** A built-in language the learner removed from their list: adding it
 	 *  puts it back at once, with no download. */
 	restoreOnly?: boolean;
+	writtenCourse?: boolean;
 }
 
 const isBuiltIn = (id: string) => (LANGUAGE_PROFILES as readonly string[]).includes(id);
@@ -105,6 +107,7 @@ export function languageCatalog(): CatalogRow[] {
 		tag: l.tag,
 		ready: languageAdded(l.id),
 		adding: running.has(taskIdOf(l.id)),
+		...(fs.existsSync(path.join(ROOT, "curriculum", l.id, "course.json")) ? { writtenCourse: true } : {}),
 	}));
 	// A built-in language ships whole and is not in the catalog: once removed, it is listed here so it can come back.
 	for (const id of hidden) {
@@ -560,6 +563,48 @@ function mergeUsage(calls: ReadonlyArray<{ usage: StoryUsage }>): StoryUsage {
 }
 
 /** Runs every step; resolves with a note for the ready notice, if any. */
+/** The word list from the kept downloads: ranked words, each with its
+ *  Tatoeba sentences, written to lexicon.json. */
+function shippedJson<T>(id: string, name: string): T | null {
+	return readJson<T>(path.join(ROOT, "curriculum", id, name));
+}
+
+async function writeLexicon(lang: CatalogLanguage, sentences: readonly TatoebaSentence[], freq: ReadonlyMap<string, number>, words: readonly BuildWord[], signal: AbortSignal) {
+	const themeWords = new Set(shippedJson<Course>(lang.id, "course.json")?.units.flatMap((u) => u.lemmas ?? []) ?? []);
+	const ranked = rankWords(mergeHomographs(words, lang.tag), freq, lang.tag, WORD_LIMIT, themeWords);
+	const collector = new ExampleCollector(ranked, lang.tag, undefined, undefined, undefined, namesIn(sentences, lang.tag));
+	// About 5 µs a sentence: 50 between yields is a quarter of a millisecond.
+	for (let i = 0; i < sentences.length; i++) {
+		collector.add(sentences[i]!);
+		if (i % 50 === 49) {
+			if (signal.aborted) throw new Error("aborted");
+			await yieldNow();
+		}
+	}
+	const entries = toLexiconEntries(ranked, collector.examples, lang.tag);
+	writeJson(path.join(dirOf(lang.id), "lexicon.json"), {
+		source: "Wiktionary (kaikki.org), Tatoeba, FrequencyWords (OpenSubtitles 2018)",
+		license: "Words and glosses: Wiktionary, CC BY-SA 4.0. Example sentences: Tatoeba, CC BY 2.0 FR. Frequency: FrequencyWords, CC BY-SA 4.0.",
+		exportedAt: new Date().toISOString(),
+		words: entries,
+	});
+	return entries;
+}
+
+/** Build an added language's word list again from its kept downloads, with
+ *  no download and no model call (scripts/rebuild-lexicon.ts). The words and
+ *  their order do not change, so review cards keep their sentences. */
+export async function rebuildLexicon(id: string): Promise<{ words: number; examples: number }> {
+	const lang = catalogLanguage(id);
+	if (!lang) throw new Error(`${id} is not in the language catalog`);
+	const sentences = readJson<{ value: TatoebaSentence[] }>(path.join(buildDir(id), "sentences.json"))?.value;
+	const freqWords = readJson<{ value: string[] }>(path.join(buildDir(id), "frequency.json"))?.value;
+	const words = readJson<{ value: BuildWord[] }>(path.join(buildDir(id), "words-v2.json"))?.value;
+	if (!sentences || !freqWords || !words) throw new Error(`${id} has no kept downloads under ${buildDir(id)}; add it from the app instead`);
+	const entries = await writeLexicon(lang, sentences, new Map(freqWords.map((w, i) => [w, i + 1])), words, new AbortController().signal);
+	return { words: entries.length, examples: entries.reduce((n, e) => n + e.examples.length, 0) };
+}
+
 async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: AddDeps): Promise<string | undefined> {
 	const get = deps.fetch ?? fetch;
 	const taskId = taskIdOf(lang.id);
@@ -574,29 +619,19 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	const words = await cached(id, "words-v2", () => wiktionary(get, lang, new Set(freqWords), signal, step));
 
 	step("Matching sentences to words", true);
-	const ranked = rankWords(mergeHomographs(words, lang.tag), freq, lang.tag, WORD_LIMIT);
-	const collector = new ExampleCollector(ranked, lang.tag);
-	// About 5 µs a sentence: 50 between yields is a quarter of a millisecond.
-	for (let i = 0; i < sentences.length; i++) {
-		collector.add(sentences[i]!);
-		if (i % 50 === 49) {
-			if (signal.aborted) throw new Error("aborted");
-			await yieldNow();
-		}
-	}
-	const entries = toLexiconEntries(ranked, collector.examples, lang.tag);
-	writeJson(path.join(dirOf(id), "lexicon.json"), {
-		source: "Wiktionary (kaikki.org), Tatoeba, FrequencyWords (OpenSubtitles 2018)",
-		license: "Words and glosses: Wiktionary, CC BY-SA 4.0. Example sentences: Tatoeba, CC BY 2.0 FR. Frequency: FrequencyWords, CC BY-SA 4.0.",
-		exportedAt: new Date().toISOString(),
-		words: entries,
-	});
+	const entries = await writeLexicon(lang, sentences, freq, words, signal);
 	fs.writeFileSync(path.join(dirOf(id), "prompt.md"), languagePrompt(lang), "utf-8");
 
 	const sceneIds = SPEAK_SCENES.map((x) => x.id);
+	const written = shippedJson<Course>(id, "course.json");
 	const writer = deps.slot ?? "strong";
 	let course: Course;
-	if (writer === "dictionary") {
+	if (written) {
+		step("Checking the course written for this language", true);
+		const built = checkCourse(written, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
+		if (!built) throw new SourceError(`The ${lang.english} course that ships with the app does not fit these downloads. Try again later.`);
+		course = built.course;
+	} else if (writer === "dictionary") {
 		step("Building the course from the dictionary", true);
 		const built = checkCourse(proceduralCourse(entries, id, lang.english, lang.tag), id, entries, lang.tag, sceneIds, deps.minUnitSentences);
 		if (!built) throw new SourceError(`The dictionary has too few ${lang.english} sentences for a course. Try again with a model.`);
@@ -612,7 +647,7 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	}
 	writeJson(path.join(dirOf(id), "course.json"), course);
 
-	if (writer !== "dictionary") {
+	if (!written && writer !== "dictionary" && !shippedJson(id, "world.json")) {
 		const ask = deps.ask ?? askOn(writer);
 		step("Writing the story world", true);
 		const world = await drafted(id, "world", writer, ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
@@ -621,7 +656,7 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 		});
 		writeJson(path.join(dirOf(id), "world.json"), world);
 	}
-	const note: string | undefined = writer === "dictionary" ? "Built from the dictionary: plain rules, no word themes, no story world." : undefined;
+	const note: string | undefined = !written && writer === "dictionary" ? "Built from the dictionary: plain rules, no word themes, no story world." : undefined;
 
 	const withExamples = entries.filter((e) => e.examples.length > 0).length;
 	step("Saving", true);

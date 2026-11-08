@@ -259,10 +259,28 @@ const INFLECTING = new Set(["noun", "verb", "adj"]);
  *  conjunction and a particle. Entries that do not inflect are one word to
  *  a learner, so they become one row, which then owns the token and gets
  *  its sentences. Inflecting entries (jak, "yak") stay apart. */
+/** A noun spelled like an adjective in every form is that adjective used
+ *  as a noun (Russian "красный", a Red; Estonian "must"): kept apart, it
+ *  owns none of its forms alone, and neither word would be ranked. */
+function adjectiveUsedAsNoun(w: BuildWord, adjectives: ReadonlyMap<string, ReadonlySet<string>>, tag: string): boolean {
+	if (w.pos !== "noun") return false;
+	const forms = adjectives.get(normWord(w.lemma, tag));
+	return !!forms && w.forms.every((f) => forms.has(normWord(f, tag)));
+}
+
 export function mergeHomographs(words: readonly BuildWord[], tag: string): BuildWord[] {
 	const out: BuildWord[] = [];
 	const merged = new Map<string, BuildWord>();
+	const adjectives = new Map<string, Set<string>>();
 	for (const w of words) {
+		if (w.pos !== "adj") continue;
+		const lemma = normWord(w.lemma, tag);
+		const forms = adjectives.get(lemma) ?? new Set([lemma]);
+		for (const f of w.forms) forms.add(normWord(f, tag));
+		adjectives.set(lemma, forms);
+	}
+	for (const w of words) {
+		if (adjectiveUsedAsNoun(w, adjectives, tag)) continue;
 		if (INFLECTING.has(w.pos) && w.forms.length > 0) {
 			out.push(w);
 			continue;
@@ -287,7 +305,13 @@ export function mergeHomographs(words: readonly BuildWord[], tag: string): Build
  *  owns. A noun, verb or adjective that shares its spelling with another
  *  entry ranks by its other forms only: "jak" is common as "how", which
  *  says nothing about "jak", the yak. */
-export function rankWords(words: readonly BuildWord[], freq: ReadonlyMap<string, number>, tag: string, limit: number): Array<BuildWord & { rank: number }> {
+// Russian print and subtitles mostly write ё as е (зеленый for зелёный), so a
+// frequency list may hold only the е spelling.
+function frequencyOf(freq: ReadonlyMap<string, number>, word: string): number {
+	return Math.min(freq.get(word) ?? Infinity, word.includes("ё") ? (freq.get(word.replaceAll("ё", "е")) ?? Infinity) : Infinity);
+}
+
+export function rankWords(words: readonly BuildWord[], freq: ReadonlyMap<string, number>, tag: string, limit: number, keep: ReadonlySet<string> = new Set()): Array<BuildWord & { rank: number }> {
 	const index = formIndex(words, tag);
 	const spellings = new Map<string, number>();
 	for (const w of words) spellings.set(normWord(w.lemma, tag), (spellings.get(normWord(w.lemma, tag)) ?? 0) + 1);
@@ -295,22 +319,48 @@ export function rankWords(words: readonly BuildWord[], freq: ReadonlyMap<string,
 	for (const w of words) {
 		const lemma = normWord(w.lemma, tag);
 		const shared = (spellings.get(lemma) ?? 0) > 1 && INFLECTING.has(w.pos) && w.forms.length > 0;
-		let best = shared ? Infinity : (freq.get(lemma) ?? Infinity);
+		let best = shared ? Infinity : frequencyOf(freq, lemma);
 		for (const f of w.forms) {
 			const n = normWord(f, tag);
 			if (index.get(n)?.size !== 1) continue;
-			best = Math.min(best, freq.get(n) ?? Infinity);
+			best = Math.min(best, frequencyOf(freq, n));
 		}
 		if (Number.isFinite(best)) ranked.push({ ...w, rank: best });
 	}
 	ranked.sort((a, b) => a.rank - b.rank || a.lemma.localeCompare(b.lemma));
-	return ranked.slice(0, limit);
+	const kept = new Set([...keep].map((l) => normWord(l, tag)));
+	return [...ranked.slice(0, limit), ...ranked.slice(limit).filter((w) => kept.has(normWord(w.lemma, tag)))];
 }
 
 const TOKEN = /\p{L}[\p{L}\p{M}]*/gu;
 
 function tokenize(text: string): Array<{ token: string; at: number }> {
 	return [...text.matchAll(TOKEN)].map((m) => ({ token: m[0], at: m.index! }));
+}
+
+const startsUppercase = (word: string) => /^\p{Lu}/u.test(word);
+
+/** Spellings the sentences write with a capital inside a sentence more often
+ *  than without: names ("Том", Tom), even where a common word shares them
+ *  ("том", a volume). */
+export function namesIn(sentences: Iterable<{ text: string }>, tag: string): Set<string> {
+	const capital = new Map<string, number>();
+	const lower = new Map<string, number>();
+	for (const s of sentences) {
+		const text = s.text.normalize("NFC");
+		for (const { token, at } of tokenize(text)) {
+			if (startsSentence(text, at)) continue;
+			const n = normWord(token, tag);
+			const into = startsUppercase(token) ? capital : lower;
+			into.set(n, (into.get(n) ?? 0) + 1);
+		}
+	}
+	return new Set([...capital].filter(([n, count]) => count > (lower.get(n) ?? 0)).map(([n]) => n));
+}
+
+function startsSentence(text: string, at: number): boolean {
+	const before = text.slice(0, at).trimEnd();
+	return before === "" || /[.!?…:"«„“(—–-]$/u.test(before);
 }
 
 /** A sentence short and plain enough to drill: 2–14 words, no digits. */
@@ -321,21 +371,37 @@ export function sentenceUsable(text: string): boolean {
 }
 
 /**
- * Collects up to `perWord` Tatoeba sentences per word, each blanked at a
- * form only that word owns. Feed sentences shortest first: the first to
- * arrive are kept.
+ * Collects Tatoeba sentences per word, each blanked at a form only that word
+ * owns. Feed sentences shortest first. The first `perWord` to arrive are the
+ * word's first examples, whatever their form, so a review card's
+ * "<slug>#<index>" keeps its sentence when the lexicon is built again. After
+ * them come up to `perForm` sentences for each form the first ones lack,
+ * a new form before a second sentence of a form already there, up to
+ * `maxPerWord`: a grammar lesson drills a case only through sentences that
+ * hold it, and the first five are mostly the dictionary form.
  */
 export class ExampleCollector {
 	private readonly index: Map<string, Set<string>>;
-	readonly examples = new Map<string, LexiconExample[]>();
+	private readonly first = new Map<string, LexiconExample[]>();
+	private readonly more = new Map<string, LexiconExample[]>();
+	private readonly perFormSeen = new Map<string, Map<string, number>>();
 
 	private readonly lemmaOf = new Map<string, string>();
+	private readonly lowercaseLemma = new Set<string>();
 	private readonly rankOf = new Map<string, number>();
 
-	constructor(words: ReadonlyArray<BuildWord & { rank?: number }>, private readonly tag: string, private readonly perWord = 5) {
+	constructor(
+		words: ReadonlyArray<BuildWord & { rank?: number }>,
+		private readonly tag: string,
+		private readonly perWord = 5,
+		private readonly perForm = 2,
+		private readonly maxPerWord = 24,
+		private readonly names: ReadonlySet<string> = new Set(),
+	) {
 		this.index = formIndex(words, tag);
 		for (const w of words) {
 			this.lemmaOf.set(w.key, normWord(w.lemma, tag));
+			if (!startsUppercase(w.lemma)) this.lowercaseLemma.add(w.key);
 			this.rankOf.set(w.key, w.rank ?? Infinity);
 		}
 	}
@@ -359,13 +425,52 @@ export class ExampleCollector {
 		for (const { token, at } of tokenize(text)) {
 			const key = this.ownerOf(normWord(token, this.tag));
 			if (!key) continue;
+			if (this.lowercaseLemma.has(key) && startsUppercase(token) && (!startsSentence(text, at) || this.names.has(normWord(token, this.tag)))) continue;
 			if (used.has(key)) continue;
 			used.add(key);
-			const list = this.examples.get(key) ?? [];
-			if (list.length >= this.perWord) continue;
-			list.push({ text, en: s.en, src: "tatoeba", tatoebaId: s.id, cloze: { answer: token, at } });
-			this.examples.set(key, list);
+			const example: LexiconExample = { text, en: s.en, src: "tatoeba", tatoebaId: s.id, cloze: { answer: token, at } };
+			const form = normWord(token, this.tag);
+			const seen = this.perFormSeen.get(key) ?? new Map<string, number>();
+			this.perFormSeen.set(key, seen);
+			const firstList = this.first.get(key) ?? [];
+			if (firstList.length < this.perWord) {
+				firstList.push(example);
+				this.first.set(key, firstList);
+				seen.set(form, (seen.get(form) ?? 0) + 1);
+				continue;
+			}
+			if ((seen.get(form) ?? 0) >= this.perForm) continue;
+			seen.set(form, (seen.get(form) ?? 0) + 1);
+			const moreList = this.more.get(key) ?? [];
+			moreList.push(example);
+			this.more.set(key, moreList);
 		}
+	}
+
+	/** Each word's sentences: its first ones, then one more sentence for each
+	 *  form in the order they arrived, then a second round, up to the cap. */
+	get examples(): Map<string, LexiconExample[]> {
+		const out = new Map<string, LexiconExample[]>();
+		for (const [key, firstList] of this.first) {
+			const list = [...firstList];
+			const rounds = new Map<string, number>();
+			for (const ex of firstList) {
+				const form = normWord(ex.cloze!.answer, this.tag);
+				rounds.set(form, (rounds.get(form) ?? 0) + 1);
+			}
+			const pending = [...(this.more.get(key) ?? [])];
+			for (let round = 1; round <= this.perForm && list.length < this.maxPerWord && pending.length; round++) {
+				for (let i = 0; i < pending.length && list.length < this.maxPerWord; ) {
+					const form = normWord(pending[i]!.cloze!.answer, this.tag);
+					if ((rounds.get(form) ?? 0) < round) {
+						rounds.set(form, (rounds.get(form) ?? 0) + 1);
+						list.push(pending.splice(i, 1)[0]!);
+					} else i++;
+				}
+			}
+			out.set(key, list);
+		}
+		return out;
 	}
 }
 

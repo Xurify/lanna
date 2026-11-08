@@ -9,7 +9,8 @@
  * browser-safe.
  */
 
-import { classifyAll, type RepVerdict, type UnitId } from "./lesson.ts";
+import { allUnits, classifyAll, type RepVerdict, type UnitId } from "./lesson.ts";
+import { formCaseCell } from "./course.ts";
 import { formSlip, isFormOf, knownForms, type FormSlip } from "./form-slip.ts";
 import { atlasCellOf, caseDrill, type AtlasCase, type AtlasGender } from "./grammar.ts";
 import { foldDiacritics } from "./language.ts";
@@ -76,11 +77,14 @@ export function countsAsFirstTry(rep: { kind: string; again?: boolean; first?: F
 /** An atlas cell: a case drill's case and the gender column of its word. */
 export type FirstTryCell = { row: AtlasCase; col: AtlasGender } | null;
 
-/** What a unit keeps of its first tries: all of them, and a case drill's
- *  split by the gender column of its word (the atlas cells). */
+/** What a unit keeps of its first tries: all of them, a Slovak case drill's
+ *  split by the gender column of its word (the atlas cells), and a
+ *  generated course's split by the case table cell its form filled
+ *  ("inessive plural"). */
 export interface FirstTryStats {
 	first?: FirstTally;
 	byGender?: Partial<Record<AtlasGender, FirstTally>>;
+	byForm?: Record<string, FirstTally>;
 }
 
 /** One rep as the first-try measure reads it. */
@@ -99,6 +103,8 @@ interface FirstTryRep {
 export interface FirstTryCount {
 	unit: string;
 	cell: FirstTryCell;
+	/** A generated course's case table cell ("inessive plural"), when the form fills one. */
+	form?: string;
 	verdict: RepVerdict;
 	/** Named only for a wrong answer (form-slip.ts). */
 	slip?: FormSlip;
@@ -109,19 +115,23 @@ export function firstTryOf(rep: FirstTryRep, tag = "sk-SK"): FirstTryCount | nul
 	if (!rep.first || !countsAsFirstTry(rep)) return null;
 	const { given, verdict } = rep.first;
 	const slip = verdict === "wrong" ? formSlip({ answer: rep.answer, lemma: entryLemma(rep.entry), given, forms: knownForms(rep.entry) }, tag) : undefined;
-	return { unit: rep.unit, cell: atlasCellOf(rep.unit, rep.entry.gender), verdict, ...(slip ? { slip } : {}) };
+	const match = allUnits().find((u) => u.id === rep.unit)?.match;
+	const form = match ? formCaseCell({ kind: "grammar", ...match }, rep.entry, rep.answer, tag) : null;
+	return { unit: rep.unit, cell: atlasCellOf(rep.unit, rep.entry.gender), verdict, ...(form ? { form } : {}), ...(slip ? { slip } : {}) };
 }
 
-/** Steps a unit's tally, and the gender column's when the try filled a cell. */
-function bump<T extends FirstTryStats>(s: T, cell: FirstTryCell, step: (t: FirstTally) => FirstTally): T {
-	const first = step(s.first ?? emptyTally());
-	if (!cell) return { ...s, first };
-	return { ...s, first, byGender: { ...s.byGender, [cell.col]: step(s.byGender?.[cell.col] ?? emptyTally()) } };
+/** Steps a unit's tally, the gender column's when the try filled an atlas
+ *  cell, and the case table cell's when it filled one. */
+function bump<T extends FirstTryStats>(s: T, cell: FirstTryCell, step: (t: FirstTally) => FirstTally, form?: string): T {
+	let out: T = { ...s, first: step(s.first ?? emptyTally()) };
+	if (cell) out = { ...out, byGender: { ...s.byGender, [cell.col]: step(s.byGender?.[cell.col] ?? emptyTally()) } };
+	if (form) out = { ...out, byForm: { ...s.byForm, [form]: step(s.byForm?.[form] ?? emptyTally()) } };
+	return out;
 }
 
-/** A counted first try, recorded on its unit and its atlas cell. */
+/** A counted first try, recorded on its unit and its atlas or case table cell. */
 export function recordFirstTry<T extends FirstTryStats>(s: T, t: FirstTryCount): T {
-	return bump(s, t.cell, (x) => addFirstTry(x, t.verdict, t.slip));
+	return bump(s, t.cell, (x) => addFirstTry(x, t.verdict, t.slip), t.form);
 }
 
 /** A slip said in Speak, recorded on its drill and its atlas cell. */
