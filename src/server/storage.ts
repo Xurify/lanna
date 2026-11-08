@@ -5,8 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { activeProfile, PATHS } from "../../config.ts";
-import { LANGUAGES } from "../core/language.ts";
+import { PATHS } from "../../config.ts";
 import { activeLanguage } from "./active-language.ts";
 import { STORAGE_AREAS, type StorageArea, type StorageReport } from "../core/storage.ts";
 import { BACKUPS_DIR } from "./reset.ts";

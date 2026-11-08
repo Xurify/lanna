@@ -2,10 +2,10 @@ import { findSessionTextMatches } from "@/src/core";
 
 /** Only marked session surfaces enter Find. Offscreen scroller content counts;
  * hidden/unmounted sections do not. Never walk embedded documents or drafts.
- * Do NOT exclude aria-hidden globally: KaTeX's VISIBLE HTML uses it too. */
+ */
 const EXCLUDED = [
 	"script", "style", "noscript", "textarea", "input", "select", "iframe", "canvas",
-	"title", "defs", "metadata", "desc", ".katex-mathml", ".sr-only", "[hidden]",
+	"title", "defs", "metadata", "desc", ".sr-only", "[hidden]",
 	"[data-session-find-exclude]", "[data-lh-menu]", '[role="menu"]', '[role="dialog"]', '[role="tooltip"]',
 ].join(",");
 

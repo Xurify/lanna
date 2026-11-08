@@ -48,8 +48,6 @@ test("activityFeed: running jobs across ALL chats, running-only, title-joined, o
 		const order = feedJobs.map((j) => j.id);
 		assert.equal(order.indexOf(jobB2.id), order.length - 1);
 
-		// extraction runs are absent when the pipeline is idle (registry empty)
-		assert.deepEqual(feed.extractions, []);
 		assert.deepEqual(feed.tasks, [], "no background task while none runs");
 	} finally {
 		fs.unlinkSync(`${PATHS.chats}/${chatA.id}.json`);

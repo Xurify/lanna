@@ -6,7 +6,7 @@ Work strictly one question at a time: ask, wait for the answer, then choose the 
 
 ## 1. Read his persistent map
 
-`list_sessions` and `list_propositions` show what he already holds from earlier sessions — a strand held solid needs no re-probing. If the tools aren't there, the map is off — just probe.
+Nothing is known about what he holds yet. Assume nothing; let his answers show the edge.
 
 ## 2. Make the goal concrete — `ask_user_question`
 

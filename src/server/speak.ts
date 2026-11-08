@@ -17,7 +17,6 @@
 
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 import fs from "node:fs";
-import { activeProfile } from "../../config.ts";
 import { learnerProfileSegment } from "../agent/learner-profile.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";

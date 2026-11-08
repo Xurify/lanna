@@ -319,26 +319,6 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 	return { course, dropped };
 }
 
-/** The skill map's seed for a generated course: one node per grammar
- *  unit (its rule is the statement), chained in teaching order inside each
- *  chapter. Same shape as curriculum/<language>/seed.json. */
-export function courseSeed(course: Course): { language: string; version: number; draft: true; nodes: Array<{ key: string; kind: "grammar"; strand: string; name: string; statement: string }>; chains: Array<{ premises: string[]; conclusion: string }> } {
-	const grammar = new Map(course.units.filter((u) => u.kind === "grammar").map((u) => [u.id, u]));
-	const nodes: Array<{ key: string; kind: "grammar"; strand: string; name: string; statement: string }> = [];
-	const chains: Array<{ premises: string[]; conclusion: string }> = [];
-	for (const ch of course.chapters) {
-		let prev: string | null = null;
-		for (const id of ch.units) {
-			const u = grammar.get(id);
-			if (!u) continue;
-			nodes.push({ key: u.id, kind: "grammar", strand: u.cat === "Verbs" ? "verbs" : u.cat === "Pronouns" ? "pronouns" : u.cat === "Nouns" || u.cat === "Adjectives" ? "nouns" : "syntax", name: u.grammarTerm ?? u.title, statement: u.rule });
-			if (prev) chains.push({ premises: [prev], conclusion: u.id });
-			prev = u.id;
-		}
-	}
-	return { language: course.language, version: 1, draft: true, nodes, chains };
-}
-
 /** A language's story bible for Read and Speak (src/server/world.ts). */
 export interface DraftWorld {
 	series: string;

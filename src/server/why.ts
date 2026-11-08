@@ -8,13 +8,11 @@
  * a Talk or Story (cheap slot) and records it in the index.
  */
 
-import { activeProfile } from "../../config.ts";
-import { LANGUAGES } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { chatStore } from "../store/chats.ts";
 import { countWhyReuse, findWhy, forgetWhy, rememberWhy, whyKey } from "../store/corpus.ts";
 import { readSettings } from "../store/settings.ts";
-import { titleFromPrompt } from "../core/contracts.ts";
+import { titleFromPrompt } from "../core/title.ts";
 
 export interface WhyRequest {
 	title: string;

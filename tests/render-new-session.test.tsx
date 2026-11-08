@@ -135,60 +135,8 @@ describe("the practice draft (?mode=practice, 2026-10-04)", () => {
 		assert.match(html, /What do you want to practice\?/);
 	});
 
-	it("THE PICK BAR (owner round 10): the practice draft carries the same pill above its composer", () => {
-		const html = renderToStaticMarkup(
-			<DraftShell
-				busy={false}
-				text=""
-				onChange={() => {}}
-				onSend={() => {}}
-				mode="practice"
-			/>,
-		);
-		assert.match(html, />Pick skills<\/button>/);
-		// picked: count + Clear, the home register verbatim
-		const picked = renderToStaticMarkup(
-			<DraftShell
-				busy={false}
-				text=""
-				onChange={() => {}}
-				onSend={() => {}}
-				mode="practice"
-				picks={[{ id: "n_1", name: "Parity", statement: "Odd + odd = even." }]}
-			/>,
-		);
-		assert.match(picked, /1 skill picked/);
-		assert.match(picked, /Clear/);
-		// teach mode with nothing picked renders nothing (home's law)
-		const teach = renderToStaticMarkup(
-			<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="teach" />,
-		);
-		assert.ok(!teach.includes('data-testid="practice-props-chip"'));
-	});
 
-	it("startDraftSession carries the picks as graphContext (the home practice contract)", async () => {
-		let body: Record<string, unknown> | null = null;
-		const f = (async (_url: string, init?: RequestInit) => {
-			body = JSON.parse(String(init?.body));
-			return new Response(JSON.stringify({ id: "c10" }), { status: 201 });
-		}) as unknown as typeof fetch;
-		await startDraftSession("drill me", f, "practice", [{ id: "n_1", name: "Parity", statement: "Odd + odd = even." }]);
-		assert.deepEqual(body, {
-			title: "drill me",
-			kind: "practice",
-			graphContext: { propositions: [{ id: "n_1", name: "Parity", statement: "Odd + odd = even." }] },
-		});
-	});
 
-	it("practice with NO picks stays lean — no graphContext key on the wire", async () => {
-		let body: Record<string, unknown> | null = null;
-		const f = (async (_url: string, init?: RequestInit) => {
-			body = JSON.parse(String(init?.body));
-			return new Response(JSON.stringify({ id: "c11" }), { status: 201 });
-		}) as unknown as typeof fetch;
-		await startDraftSession("free practice", f, "practice", []);
-		assert.deepEqual(body, { title: "free practice", kind: "practice" });
-	});
 
 	it("startDraftSession carries kind:\"practice\" to the create route", async () => {
 		let body: Record<string, unknown> | null = null;

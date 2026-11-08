@@ -14,7 +14,6 @@ import {
 import { cn } from "@/lib/utils";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
-import { createMathPlugin } from "@streamdown/math";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
@@ -34,7 +33,6 @@ import {
   type PluginConfig,
 } from "streamdown";
 import { mdComponents } from "@/components/md-blocks";
-import { repairMathForDisplay, transformMathDelimiters } from "@/src/core/tutor";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: LhViewMessage["role"];
@@ -332,11 +330,6 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 // streamdown@2.5 expects shiki@4 types. Both work at runtime (each ships its
 // own highlighter); the cast papers over the .d.ts mismatch.
 //
-// Standard dollar authoring (owner, 2026-10-12): $...$ inline, $$ fenced
-// on separate lines for display. transformMathDelimiters stays as the
-// compatibility reader for old \(...\)/\[...\] content; its two-dollar
-// output remains valid alongside native single-dollar math.
-//
 // remark-breaks rides in the cjk plugin's remarkPluginsAfter slot (public
 // PluginConfig API): Streamdown's bare `remarkPlugins` PROP would REPLACE the
 // defaults ([remark-gfm, codeMeta]), silently dropping GFM and code-fence
@@ -353,19 +346,10 @@ export const streamdownPlugins = {
     remarkPluginsAfter: [...cjk.remarkPluginsAfter, remarkBreaks],
   },
   code,
-  math: createMathPlugin({ singleDollarTextMath: true }),
 } as unknown as PluginConfig;
 
 export const MessageResponse = memo(
   ({ className, children, ...props }: MessageResponseProps) => {
-    // Legacy backslash delimiters are converted in a single linear scan;
-    // native dollar math passes through to Streamdown unchanged. Incomplete
-    // legacy spans are left for a later render when their closer arrives.
-    const content =
-      typeof children === "string"
-        ? transformMathDelimiters(children)
-        : children;
-
     return (
       <Streamdown
         className={cn(
@@ -378,7 +362,7 @@ export const MessageResponse = memo(
         plugins={streamdownPlugins}
         {...props}
       >
-        {content}
+        {children}
       </Streamdown>
     );
   },
@@ -394,7 +378,7 @@ MessageResponse.displayName = "MessageResponse";
 export function ToolContentResponse({ children, ...props }: MessageResponseProps) {
   return (
     <MessageResponse {...props}>
-      {typeof children === "string" ? repairMathForDisplay(children) : children}
+      {children}
     </MessageResponse>
   );
 }

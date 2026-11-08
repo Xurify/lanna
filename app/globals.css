@@ -502,12 +502,6 @@ body {
 	height: auto !important;
 }
 
-/* Display math: long equations scroll instead of overflowing the column. */
-.katex-display {
-	overflow-x: auto;
-	overflow-y: hidden;
-}
-
 /* ============================================================
  * Chrome melt (owner wave, 2026-09-19) — tables and code blocks stop
  * being boxes: blocks read as part of the message. These rules override

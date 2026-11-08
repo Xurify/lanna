@@ -152,34 +152,6 @@ describe("cloze cards", () => {
 	});
 });
 
-describe("the Slovak seed", () => {
-	const seed = JSON.parse(fs.readFileSync(path.join(PATHS.curriculum, "slovak", "seed.json"), "utf-8")) as {
-		nodes: Array<{ key: string; statement: string; kind: string }>;
-		chains: Array<{ premises: string[]; conclusion: string }>;
-	};
-	it("is built and internally consistent", () => {
-		const keys = new Set(seed.nodes.map((n) => n.key));
-		assert.equal(keys.size, seed.nodes.length);
-		assert.ok(seed.nodes.filter((n) => n.kind === "grammar").length >= 50);
-		assert.ok(seed.nodes.filter((n) => n.kind === "vocabulary").length >= 40);
-		for (const c of seed.chains) for (const k of [...c.premises, c.conclusion]) assert.ok(keys.has(k), k);
-		assert.ok(!seed.nodes.some((n) => n.statement.includes("'?'")), "every vocabulary word has an English gloss");
-	});
-	it("prerequisites form no cycle", () => {
-		const next = new Map<string, string[]>();
-		for (const c of seed.chains) for (const p of c.premises) next.set(p, [...(next.get(p) ?? []), c.conclusion]);
-		const state = new Map<string, 1 | 2>();
-		const visit = (k: string): void => {
-			if (state.get(k) === 2) return;
-			assert.notEqual(state.get(k), 1, `cycle through ${k}`);
-			state.set(k, 1);
-			for (const n of next.get(k) ?? []) visit(n);
-			state.set(k, 2);
-		};
-		for (const n of seed.nodes) visit(n.key);
-	});
-});
-
 describe("language prompts", () => {
 	it("compose the active language into every agent", () => {
 		assert.equal(activeProfile(), "slovak");

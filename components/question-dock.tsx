@@ -7,7 +7,6 @@ import { finishDictation, isDictationActive, joinDictation, useDictationTarget }
 import { useEnterSubmits } from "@/components/enter-submits";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
-import { repairMathForDisplay } from "@/src/core/tutor";
 import { buildAnswer, normalizeQuizType, CONFIDENCE_STOPS, DEFAULT_CONFIDENCE_INDEX, emptyDockSelection, normalizeOptions, resolveCorrect, seededRandom, shuffleOptions, toolQuestionKind, toggleOption, toggleOther, type AnswerRequest, type AskToolInput, type DockSelection, type ExplainToolInput, type QuestionAnswerData, type QuestionFormDraft, type QuestionData, type QuestionMode, type QuizToolInput, type SelectMode, type Phase3 } from "@/src/core";
 import { parseAskInput, parseQuizInput, parseExplainInput } from "@/src/core/tutor";
 import { CONFIDENCE_COLORS, confidenceRailStyle } from "@/components/confidence-rail";
@@ -147,17 +146,9 @@ export function QuestionDock({
 	);
 }
 
-/** A plain-text teaser of a question for the collapsed bar: unwrap math, flatten common LaTeX. */
+/** A plain-text teaser of a question for the collapsed bar. */
 function teaserText(q: string): string {
-	return repairMathForDisplay(q)
-		.replace(/\\\(([\s\S]*?)\\\)/g, "$1") // \(...\) inline math
-		.replace(/\\\[([\s\S]*?)\\\]/g, "$1") // \[...\] display math
-		.replace(/\$\$?([^$]*)\$\$?/g, "$1") // standard $...$/$$...$$ math
-		.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "$1/$2")
-		.replace(/\\([a-zA-Z]+)/g, "$1")
-		.replace(/[{}]/g, "")
-		.replace(/\s+/g, " ")
-		.trim();
+	return q.replace(/\s+/g, " ").trim();
 }
 
 /** The collapsed strip. Two species (W5): "collapsed" is the scroll minimization
@@ -627,8 +618,8 @@ function QuestionDockForm({
 											// NO description (owner ruling 2026-09-26): the model used them to
 											// telegraph correctness — the schema dropped the field and old
 											// records must not leak either. Same MessageResponse path as the
-											// label (owner, 2026-10-12): descriptions are full markdown —
-											// LaTeX included — not plain text.
+											// label (owner, 2026-10-12): descriptions are full markdown,
+											// not plain text.
 											<ToolContentResponse className="lh-prose block text-xs text-muted-foreground">
 												{opt.description}
 											</ToolContentResponse>

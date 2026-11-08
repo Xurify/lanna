@@ -10,7 +10,7 @@ export const metadata = { title: { absolute: "Today · LangHarness" } };
 export const dynamic = "force-dynamic";
 
 /** Today — the front page: what to do next, the day's goal, the skill path.
- *  The knowledge-graph home moved to /map. */
+ */
 export default function HomePage() {
 	// The corpus (data/README.md, the audio library): READMEs in place and
 	// the old audio cache moved into the indexed tree, once per process.

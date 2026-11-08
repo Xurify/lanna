@@ -1868,7 +1868,7 @@ describe("composer steering: steerLiveChat + the deliver-or-requeue lifecycle", 
 		const chatId = chatStore.createChat("steer: reconcile").id;
 		const delivered = { id: "steer_d1", role: "user", content: "delivered", timestamp: 1 };
 		const stranded = { id: "steer_s1", role: "user", content: "stranded behind a question", timestamp: 2 };
-		const { handed, agent } = fakeAgent();
+		const { agent } = fakeAgent();
 		registerLiveAgent(chatId, agent as never);
 		assert.equal(steerLiveChat(chatId, delivered as never), true);
 		assert.equal(steerLiveChat(chatId, stranded as never), true);

@@ -115,20 +115,6 @@ describe("ranking and sentences", () => {
 	});
 });
 
-describe("the grammar map draft", () => {
-	test("keeps known keys, drops loops and unknown premises, and files odd strands under syntax", () => {
-		const nodes = ["a", "b", "c", "d", "e"].map((k) => ({ key: k, strand: k === "e" ? "magic" : "verbs", name: k.toUpperCase(), statement: `Rule ${k}.` }));
-		const seed = build.parseSeedDraft(
-			`Here: ${JSON.stringify({ nodes, chains: [{ premises: ["a"], conclusion: "b" }, { premises: ["c"], conclusion: "a" }, { premises: ["x"], conclusion: "d" }] })}`,
-			"czech",
-		);
-		assert.equal(seed?.nodes.length, 5);
-		assert.equal(seed?.nodes[4]?.strand, "syntax");
-		assert.deepEqual(seed?.chains, [{ premises: ["a"], conclusion: "b" }]);
-		assert.equal(build.parseSeedDraft("no json here", "czech"), null);
-	});
-});
-
 describe("reference links", () => {
 	test("a site with a page per word links the lemma; slovak.wiki keeps its dictionary and search pages", () => {
 		assert.equal(referenceLink({ label: "Wiktionary", baseUrl: "https://en.wiktionary.org", wordUrl: "https://en.wiktionary.org/wiki/{word}#Czech" }, { slug: "kocka", lemma: "kočka", query: "kočku" }), "https://en.wiktionary.org/wiki/ko%C4%8Dka#Czech");
@@ -252,7 +238,6 @@ describe("adding a language in the background", () => {
 		const course = JSON.parse(fs.readFileSync(path.join(folder, "course.json"), "utf-8"));
 		assert.deepEqual(course.chapters.map((c: { id: string }) => c.id), ["one", "two", "three"]);
 		assert.equal(course.code, "cs");
-		assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "seed.json"), "utf-8")).nodes.length, 3, "one skill-map node per grammar unit");
 		const world = JSON.parse(fs.readFileSync(path.join(folder, "world.json"), "utf-8"));
 		assert.equal(world.city, "Brno");
 		assert.equal(world.scenes.cafe.title, "V kavárně");
@@ -267,7 +252,7 @@ describe("adding a language in the background", () => {
 		assert.deepEqual(info?.specialLetters, []);
 		assert.equal(languageById("czech")?.english, "Czech", "registered for the browser-safe core");
 		const listed = profileStatus().profiles.find((p) => p.id === "czech");
-		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, seed: true, removable: true });
+		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, removable: true });
 		assert.equal(languageCatalog().find((r) => r.id === "czech")?.ready, true);
 		const { usageReport } = await import("../src/server/usage-report.ts");
 		assert.equal(usageReport().languages?.count, 1, "the course and story calls show in Spending");

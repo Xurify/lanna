@@ -124,9 +124,6 @@ export function KeyboardShortcuts() {
 					// gone, so there is no settings page.
 					handlersRef.current.openSettings();
 					break;
-				case "jump-graph":
-					handlersRef.current.router.push("/");
-					break;
 				case "cheat-sheet":
 					handlersRef.current.setCheatOpen(true);
 					break;
