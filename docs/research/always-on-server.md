@@ -1,6 +1,6 @@
 # Away from the PC: where the server runs, and what each option costs
 
-Date: 2026-11-08. Builds on [mobile-ipad.md](mobile-ipad.md) (E20) and [remote-access.md](remote-access.md) (E21). Owner's question: "Currently we only use our app in dev mode, locally, which is also a desktop app. But we want to turn our app into a web app and/or mobile out? Because obviously I can't also be at the PC. How seamless would this approach be? What would the costs be?"
+Date: 2026-11-08. Plan: [../plans/always-on-server.md](../plans/always-on-server.md). Builds on [mobile-ipad.md](mobile-ipad.md) (E20) and [remote-access.md](remote-access.md) (E21). Owner's question: "Currently we only use our app in dev mode, locally, which is also a desktop app. But we want to turn our app into a web app and/or mobile out? Because obviously I can't also be at the PC. How seamless would this approach be? What would the costs be?"
 
 ## Answer
 
