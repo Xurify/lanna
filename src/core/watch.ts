@@ -314,7 +314,7 @@ export function decodeEntities(s: string): string {
 
 /** Whitespace collapsed, YouTube's sound tags ([Hudba], [Music], [Applause])
  *  and speaker arrows dropped. */
-export function cleanCaptionText(s: string): string {
+function cleanCaptionText(s: string): string {
 	return decodeEntities(s)
 		.replace(/<[^>]+>/g, " ")
 		.replace(/\[[^\]]{1,40}\]/g, " ")
@@ -418,11 +418,11 @@ export function parseCaptions(text: string): CaptionCue[] {
  *  while parsing (working-memory span for L2 speech is short; the Listen
  *  task's sentences stop at twelve words). */
 export const SEGMENT_MAX_WORDS = 14;
-export const SEGMENT_MAX_SEC = 7;
+const SEGMENT_MAX_SEC = 7;
 /** A line shorter than this is joined to the next unless a pause follows. */
-export const SEGMENT_MIN_WORDS = 3;
+const SEGMENT_MIN_WORDS = 3;
 /** Silence longer than this between cues ends a line. */
-export const SEGMENT_GAP_SEC = 1.6;
+const SEGMENT_GAP_SEC = 1.6;
 /** Videos longer than this are refused: the translation alone would be
  *  thousands of lines, and an hour of input is not one session. */
 export const MAX_VIDEO_SEC = 90 * 60;
@@ -448,7 +448,7 @@ export function stripOverlap(prev: string, next: string): string {
 /** Share of cues ending in sentence punctuation above which the track
  *  counts as punctuated (captions made by people). Automatic captions have
  *  none: there YouTube's own cue breaks are the phrase units. */
-export const PUNCTUATED_SHARE = 0.2;
+const PUNCTUATED_SHARE = 0.2;
 
 /** Cut the cues into lines: a line closes at sentence punctuation, at the
  *  word or time limits, or at a silence; in a track without punctuation
@@ -589,7 +589,7 @@ export function watchMinutes(durationSec: number): number {
 	return Math.max(3, Math.min(20, Math.ceil((durationSec * 1.35) / 60) + 1));
 }
 
-export interface ListeningSpeed {
+interface ListeningSpeed {
 	/** Words per minute of speech in the lines got on the first listen. */
 	wpmFirst: number | null;
 	/** Words per minute over every line played. */

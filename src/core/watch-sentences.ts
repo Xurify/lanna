@@ -82,7 +82,7 @@ export function sentenceProblems(sentence: string, lemma: string): string[] {
 	return checkSlovak(text).issues.map((i) => i.why);
 }
 
-export interface SentenceVerdict {
+interface SentenceVerdict {
 	ok: boolean;
 	corrected: string;
 	why: string;

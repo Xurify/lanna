@@ -102,7 +102,7 @@ function appendJsonl(file: string, value: unknown): void {
 	fs.appendFileSync(file, `${JSON.stringify(value)}\n`, "utf-8");
 }
 
-export function videoIndexEntryOf(v: VideoRecord): VideoIndexEntry {
+function videoIndexEntryOf(v: VideoRecord): VideoIndexEntry {
 	return {
 		id: v.id,
 		title: v.title,

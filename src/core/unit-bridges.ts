@@ -116,7 +116,7 @@ const MORE: Partial<Record<UnitId, Lines>> = {
 	},
 };
 
-export interface UnitBridge {
+interface UnitBridge {
 	lang: BridgeLang;
 	/** The language's name, for the label in front of the line. */
 	name: string;

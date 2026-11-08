@@ -21,11 +21,6 @@ interface JumpApi {
 }
 
 const JumpContext = createContext<JumpApi>({ open: () => {} });
-
-export function useJump() {
-	return useContext(JumpContext);
-}
-
 interface Place {
 	id: string;
 	title: string;

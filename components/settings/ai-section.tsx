@@ -48,10 +48,10 @@ const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 const SEARCH_ENGINES = ["tavily", "brave"] as const;
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
-export const TOGGLE_TOOLS = ["research", "visual", "pdf"] as const;
+const TOGGLE_TOOLS = ["research", "visual", "pdf"] as const;
 
 /** Learner-facing copy. The ids stay the engine's names. */
-export const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
+const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
 	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
 	visual: { label: "Precise figures", hint: "Draws exact pictures: graphs, number lines and geometry." },
 	pdf: { label: "Read PDFs", hint: "Reads the PDFs you give it and cites their pages." },
@@ -82,7 +82,7 @@ interface ModelsBody {
 }
 
 /** One tool toggled; the rest of the section is carried verbatim. */
-export function composeTool(agent: AgentSettings | undefined, id: string, on: boolean): AgentSettings {
+function composeTool(agent: AgentSettings | undefined, id: string, on: boolean): AgentSettings {
 	return { ...agent, tools: { ...agent?.tools, [id]: on } };
 }
 
@@ -106,7 +106,7 @@ export function QuizStyleRow({ agent, onSectionChange }: { agent: AgentSettings 
 	);
 }
 
-export function composeQuizMechanics(agent: AgentSettings | undefined, mechanics: "choice" | "free"): AgentSettings {
+function composeQuizMechanics(agent: AgentSettings | undefined, mechanics: "choice" | "free"): AgentSettings {
 	return { ...agent, tools: { ...agent?.tools, explain: mechanics === "free" } };
 }
 
@@ -132,7 +132,7 @@ export function composeSlotModel(
 }
 
 /** null removes the pin, so auto-activation takes over. */
-export function composeSearchEngine(
+function composeSearchEngine(
 	agent: AgentSettings | undefined,
 	engine: (typeof SEARCH_ENGINES)[number] | null,
 ): AgentSettings {
@@ -145,10 +145,10 @@ export function composeSearchEngine(
 }
 
 /** Hint under a prompt row whose override is in use. Shown only while the switch is on. */
-export const PROMPT_IN_USE_HINT = "Your version is in use";
+const PROMPT_IN_USE_HINT = "Your version is in use";
 
 /** One prompt section: Teacher, Prober, then Shared. */
-export interface PromptSection {
+interface PromptSection {
 	id: "teacher" | "prober" | "shared";
 	label: string;
 	/** Says what the section's instructions do. Agent names are internal. */
@@ -157,7 +157,7 @@ export interface PromptSection {
 }
 
 /** Splits the per-agent lists into three sections. Shared segments arrive in both lists, so they are taken once, from the teacher list. */
-export function sectionedSegments(view: { prober: SegmentInfo[]; teacher: SegmentInfo[] }): PromptSection[] {
+function sectionedSegments(view: { prober: SegmentInfo[]; teacher: SegmentInfo[] }): PromptSection[] {
 	const own = (who: "prober" | "teacher") => view[who].filter((s) => !s.shared);
 	return [
 		{ id: "teacher", label: "Teaching", hint: "How the tutor explains and guides a lesson", segments: own("teacher") },
@@ -172,7 +172,7 @@ export function sectionedSegments(view: { prober: SegmentInfo[]; teacher: Segmen
 }
 
 /** Off removes the key: absent is the schema's off state. */
-export function composePromptSwitch(agent: AgentSettings | undefined, path: string, on: boolean): AgentSettings {
+function composePromptSwitch(agent: AgentSettings | undefined, path: string, on: boolean): AgentSettings {
 	const prompts = { ...agent?.prompts };
 	if (on) prompts[path] = true;
 	else delete prompts[path];

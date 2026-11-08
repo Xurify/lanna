@@ -53,12 +53,12 @@ const MIN_USABLE = 96; // floor: a shorter cap is an unusable sliver; the
 export const MENU_OPEN_EVENT = "lh:menu-open";
 export const MENU_CLOSE_EVENT = "lh:menu-close";
 
-export type MenuSide = "up" | "down";
+type MenuSide = "up" | "down";
 export type MenuAlign = "left" | "right";
 
 /** One placement decision. `style` is the fixed-position payload; the side
  *  rides back for the flip assertion in tests. */
-export interface MenuPlacement {
+interface MenuPlacement {
 	side: MenuSide;
 	style: Record<string, string | number>;
 	maxHeight: number;
@@ -70,7 +70,7 @@ export interface MenuPlacement {
  *  on the preferred side unless it cannot show the full content AND the
  *  other side is roomier. The cap always keeps the menu inside its side's
  *  room when there is room; the floor keeps it usable when there isn't. */
-export function computeMenuPlacement(
+function computeMenuPlacement(
 	rect: { top: number; bottom: number; left: number; right: number },
 	viewport: { width: number; height: number },
 	contentHeight: number,

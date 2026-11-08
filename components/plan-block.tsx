@@ -58,9 +58,9 @@ import { Hint } from "@/components/ui/hint";
  * single-line text gets in NODE_H (owner: "the horizontal padding
  * should be the same as the vertical one"): (44 − 11) / 2 ≈ 16 (the
  * prose font renders text-xs at 11px). */
-export const PAD_X = 16;
-export const NODE_W_MIN = 96;
-export const NODE_H = 44;
+const PAD_X = 16;
+const NODE_W_MIN = 96;
+const NODE_H = 44;
 
 // Width classes for the PROSE font (Source Sans 3 as shipped, text-xs
 // rendering at 11px): narrow stems and punctuation, wide m/w, caps +
@@ -74,7 +74,7 @@ const WIDE_CHARS = new Set("mwMW@");
 const CAP_DIGIT = /[A-Z0-9]/;
 
 /** Estimated rendered width (px) of one line at text-xs. Pure. */
-export function estimateLineWidth(line: string): number {
+function estimateLineWidth(line: string): number {
 	let w = 0;
 	for (const ch of line) {
 		if (NARROW_CHARS.has(ch)) w += 3.1;
@@ -85,57 +85,15 @@ export function estimateLineWidth(line: string): number {
 	return w;
 }
 /** Baseline-to-baseline distance of node titles. */
-export const LINE_H = 13;
-export const GAP_X = 24;
-export const GAP_Y = 48;
+const LINE_H = 13;
+const GAP_X = 24;
+const GAP_Y = 48;
 
 /** A node for layout purposes — the payload's shape and the tree's shape agree. */
-export interface LayoutNode {
+interface LayoutNode {
 	id: string;
 	title: string;
 }
-
-/** Topological order + longest-path depth (Kahn, authoring tie-break) —
- *  order + depth semantics kept for tests; placement itself runs on dagre
- *  now (owner, round 8). */
-export function topoFor(nodes: readonly LayoutNode[], edges: ReadonlyArray<{ from: string; to: string }>) {
-	const index = new Map(nodes.map((n, i) => [n.id, i] as const));
-	const indegree = new Map<string, number>(nodes.map((n) => [n.id, 0] as const));
-	const dependents = new Map<string, string[]>();
-	for (const e of edges) {
-		if (!index.has(e.from) || !index.has(e.to)) continue; // defensive: dangling ids
-		indegree.set(e.to, (indegree.get(e.to) ?? 0) + 1);
-		const list = dependents.get(e.from);
-		if (list) list.push(e.to);
-		else dependents.set(e.from, [e.to]);
-	}
-	const ready = nodes.filter((n) => (indegree.get(n.id) ?? 0) === 0).map((n) => n.id);
-	const order: LayoutNode[] = [];
-	const depth = new Map<string, number>();
-	const byId = new Map(nodes.map((n) => [n.id, n] as const));
-	while (ready.length > 0) {
-		ready.sort((a, b) => (index.get(a) ?? 0) - (index.get(b) ?? 0));
-		const id = ready.shift()!;
-		const node = byId.get(id);
-		if (node) order.push(node);
-		const d = depth.get(id) ?? 0;
-		depth.set(id, d);
-		for (const t of dependents.get(id) ?? []) {
-			if ((depth.get(t) ?? -1) < d + 1) depth.set(t, d + 1);
-			const left = (indegree.get(t) ?? 0) - 1;
-			indegree.set(t, left);
-			if (left === 0) ready.push(t);
-		}
-	}
-	for (const n of nodes) {
-		if (!depth.has(n.id)) {
-			order.push(n);
-			depth.set(n.id, 0);
-		}
-	}
-	return { order, depth };
-}
-
 /** Placement — dagre (mermaid's engine, owner round 8): Sugiyama-style
  *  layered layout, TB, with our geometry (text-first sized boxes,
  *  GAP_X/GAP_Y
@@ -146,7 +104,7 @@ export function topoFor(nodes: readonly LayoutNode[], edges: ReadonlyArray<{ fro
  *  Deterministic + synchronous + DOM-free: SSR and render tests stay
  *  exact. Dangling edges are ignored defensively — a ghost endpoint
  *  would spawn an unmeasured node and break the measurer. */
-export function blockLayout(nodes: readonly LayoutNode[], edges: ReadonlyArray<{ from: string; to: string }>) {
+function blockLayout(nodes: readonly LayoutNode[], edges: ReadonlyArray<{ from: string; to: string }>) {
 	const x = new Map<string, number>();
 	const y = new Map<string, number>();
 	const nodeH = new Map<string, number>();
@@ -259,7 +217,7 @@ export function blockLayout(nodes: readonly LayoutNode[], edges: ReadonlyArray<{
  *  node's box grows to fit every line (owner: show the full content of
  *  each node). A single oversized word is hard-chunked across lines at
  *  maxChars. Pure. */
-export function wrapTitle(title: string, maxChars = 28): string[] {
+function wrapTitle(title: string, maxChars = 28): string[] {
 	const words = title.trim().split(/\s+/).filter(Boolean);
 	if (words.length === 0) return [""];
 	// Oversized words can never fit a line — chunk them so no content is lost.
@@ -282,7 +240,7 @@ export function wrapTitle(title: string, maxChars = 28): string[] {
 // ─── Geometry caps (owner, plan-graph refinement round 1) ─────────────────────
 
 /** A node's box width for its wrapped lines — the hug itself. Pure. */
-export function nodeWidth(lines: readonly string[]): number {
+function nodeWidth(lines: readonly string[]): number {
 	const widest = Math.max(1, ...lines.map(estimateLineWidth));
 	return Math.max(NODE_W_MIN, Math.ceil(widest) + 2 * PAD_X);
 }
@@ -296,9 +254,9 @@ export const GRAPH_PAD = 8;
  *  reaches GLOW_MARGIN + 3·GLOW_BLUR past the node — any surface that
  *  shows the glow must pad its viewBox by GLOW_REACH or the blur clips
  *  at the frame edge (owner: extend the container padding to fit it). */
-export const GLOW_MARGIN = 8;
-export const GLOW_BLUR = 5;
-export const GLOW_REACH = GLOW_MARGIN + 3 * GLOW_BLUR;
+const GLOW_MARGIN = 8;
+const GLOW_BLUR = 5;
+const GLOW_REACH = GLOW_MARGIN + 3 * GLOW_BLUR;
 /** Node titles render at text-xs (12.5px) in svg units. The in-chat block
  *  scales up to fill the column but NEVER past the chat prose size
  *  (--lh-prose-size, 16px — the ladder's reading rung) — the width cap
@@ -311,10 +269,10 @@ export const TEXT_CAP_SCALE = 16 / 12.5;
  *  collapsed: viewBox 0 0 50.2 104, tip at (50.2, 52), notch mouth at
  *  x 27.2 with a 9.6-tall opening — at full height 104 the tail opening
  *  is ≈10, per the owner's spec. Solid white fill, no padding. */
-export const ARROW_HEAD = "M48,55.2C49.4,54.6 50.2,53.4 50.2,52C50.2,50.6 49.4,49.4 48,48.8C38.2,45.6 29.2,38.8 21,28.4C15.2,21.4 11.4,13.2 9.6,3.8C9,1.2 7.4,0 4.8,0C1.6,0 0,1.6 0,5L0.2,5.6C3.6,23 12.6,36.8 27.2,47.2L27.2,56.8C12.6,67.2 3.6,81 0.2,98.4L0,99C0,102.4 1.6,104 4.8,104C7.4,104 9,102.8 9.6,100.2C11.4,90.8 15.2,82.6 21,75.6C29.2,65.2 38.2,58.4 48,55.2Z";
+const ARROW_HEAD = "M48,55.2C49.4,54.6 50.2,53.4 50.2,52C50.2,50.6 49.4,49.4 48,48.8C38.2,45.6 29.2,38.8 21,28.4C15.2,21.4 11.4,13.2 9.6,3.8C9,1.2 7.4,0 4.8,0C1.6,0 0,1.6 0,5L0.2,5.6C3.6,23 12.6,36.8 27.2,47.2L27.2,56.8C12.6,67.2 3.6,81 0.2,98.4L0,99C0,102.4 1.6,104 4.8,104C7.4,104 9,102.8 9.6,100.2C11.4,90.8 15.2,82.6 21,75.6C29.2,65.2 38.2,58.4 48,55.2Z";
 /** Lines + outlines run at the app's standard border weight (owner,
  *  2026-09-26 — same 1px the UI borders use; was 1.5). */
-export const STROKE_W = 1;
+const STROKE_W = 1;
 /** The heads scale by the SAME factor the lines thinned by (owner,
  *  2026-09-26): 16 was the height tuned for 1.5-wide lines, so both sides
  *  of the head:shaft proportion shrink together — the LaTeX ratio (tail
@@ -379,7 +337,7 @@ function faceNormal(
  *  the 40° cone edge instead of breaking the head's silhouette. Without
  *  a target box the unclamped geometry applies. Straight collinear
  *  routes render identically. Pure, exported for tests. */
-export function edgePathD(
+function edgePathD(
 	points: Array<{ x: number; y: number }>,
 	target?: { x: number; y: number; w: number; h: number },
 ): string {

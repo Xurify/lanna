@@ -42,8 +42,8 @@ export const WEAK_MEND_REPS = 8;
 /** … and the share of them that must be right. */
 export const WEAK_MEND_ACCURACY = 0.85;
 /** Lessons flag a unit once it has this many reps under this accuracy. */
-export const WEAK_LESSON_REPS = 6;
-export const WEAK_LESSON_ACCURACY = 0.85;
+const WEAK_LESSON_REPS = 6;
+const WEAK_LESSON_ACCURACY = 0.85;
 /** A review card flags its unit from this many lapses. */
 export const WEAK_REVIEW_LAPSES = 2;
 
@@ -135,7 +135,7 @@ export function weakSpotList(weak: WeakRecord | undefined): WeakSpotSummary[] {
 
 /** One row per struggle: spots in the same family fold into one entry
  *  (its title, its members' evidence), the rest stand alone. */
-export interface WeakSpotGroup {
+interface WeakSpotGroup {
 	id: string;
 	title: string;
 	tagline: string;

@@ -30,7 +30,7 @@ import { knownWords, resolveWord, STORY_NAMES } from "./reading.ts";
 
 // ─── Re-read ────────────────────────────────────────────────────────────────
 
-export interface RereadPlan {
+interface RereadPlan {
 	story: StoryRecord;
 	words: number;
 	/** Words a minute to beat: the middle of the last three re-reads of this episode, else the level's guess. */
@@ -94,7 +94,7 @@ export function rereadFor(opts: { id?: string; tz?: number; now?: Date } = {}): 
 	};
 }
 
-export interface RereadResultInput {
+interface RereadResultInput {
 	storyId: string;
 	ms: number;
 	questionIndex: number;
@@ -102,7 +102,7 @@ export interface RereadResultInput {
 	tz?: number;
 }
 
-export interface RereadOutcome {
+interface RereadOutcome {
 	xp: number;
 	wpm: number;
 	targetWpm: number;
@@ -140,7 +140,7 @@ export function recordReread(input: RereadResultInput, now = new Date()): Reread
 
 // ─── Say it faster ──────────────────────────────────────────────────────────
 
-export interface FastPlan {
+interface FastPlan {
 	items: FastItem[];
 	known: number;
 }
@@ -170,7 +170,7 @@ export function fastFor(seed = Date.now()): FastPlan {
 	return { items, known: k.known.size };
 }
 
-export interface FastResultInput {
+interface FastResultInput {
 	reps: FastRep[];
 	ms?: number;
 	/** Active milliseconds since the last send (src/core/active-time.ts). */
@@ -178,7 +178,7 @@ export interface FastResultInput {
 	tz?: number;
 }
 
-export interface FastOutcome {
+interface FastOutcome {
 	xp: number;
 	passesMade: number;
 	sentencesMade: number;

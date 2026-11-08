@@ -40,7 +40,7 @@ export * from "./context-usage.ts";
 export * from "./usage-report.ts";
 export type { ChatGPTStatus, ChatGPTControlBridge } from "./contracts/chatgpt.ts";
 export { NATIVE_SUBSCRIPTIONS } from "./contracts/subscriptions.ts";
-export type { NativeSubscriptionProviderId, NativeSubscriptionLogicalId, NativeSubscriptionStatus, NativeSubscriptionSnapshot, NativeSubscriptionScope, NativeSubscriptionControlBridge, SubscriptionInteraction, SubscriptionPrompt } from "./contracts/subscriptions.ts";
+export type { NativeSubscriptionProviderId, NativeSubscriptionStatus, NativeSubscriptionControlBridge } from "./contracts/subscriptions.ts";
 export * from "./fuzzy.ts";
 // settings.ts + settings-resolution.ts (settings-storage wave, 2026-09-19):
 // the user-settings record's shape/sanitizer (pure) and its fully-resolved

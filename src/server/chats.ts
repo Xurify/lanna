@@ -19,7 +19,7 @@ export { restoreChat, trashedChat } from "../store/chats.ts";
 export { titleFromPrompt };
 
 /** What deleteChatSession did — the route maps it straight to HTTP. */
-export type ChatDeleteOutcome =
+type ChatDeleteOutcome =
 	| { ok: false; status: 404; code: "not_found"; error: string }
 	| { ok: false; status: 409; code: "turn_in_flight" | "jobs_running"; error: string; jobIds: string[] }
 	| { ok: true; jobsRemoved: number };

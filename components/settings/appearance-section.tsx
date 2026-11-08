@@ -16,10 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import {
-	resolveSettings,
-	type AppearanceSettings,
-} from "@/src/core";
+import type { AppearanceSettings } from "@/src/core";
 import { MenuShell } from "@/components/menu-shell";
 import { applyTheme, readThemeChoice, type ThemeChoice } from "@/lib/theme";
 import { Hint } from "@/components/ui/hint";
@@ -27,7 +24,6 @@ import { useAppearance } from "./appearance.tsx";
 import { FontMenuList } from "./model-menu";
 import { CommitInput, SettingsDisclosure, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 
-export type { ThemeChoice };
 const MODE_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
 	{ value: "system", label: "System" },
 	{ value: "day", label: "Day" },
@@ -39,12 +35,12 @@ function applyThemeChoice(choice: ThemeChoice) {
 }
 
 /** Factory reading family. Unset means this. */
-export const DEFAULT_READING_FONT = "Geist";
+const DEFAULT_READING_FONT = "Geist";
 /** Factory dark background. A set color must not read as the default. */
 const FACTORY_BACKGROUND = "#0f1519";
 
 /** Dev-browser fallback when queryLocalFonts is absent. Labeled as common families, never as the system list. */
-export const CURATED_FALLBACK_FONTS: readonly string[] = [
+const CURATED_FALLBACK_FONTS: readonly string[] = [
 	"Arial",
 	"CMU Serif",
 	"Courier New",
@@ -71,7 +67,7 @@ function localFontsApi(): LocalFontsApi | null {
 }
 
 /** null or blank = the factory Geist; otherwise the trimmed family. */
-export function composeFontFamily(
+function composeFontFamily(
 	appearance: AppearanceSettings | undefined,
 	family: string | null,
 ): AppearanceSettings {

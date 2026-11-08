@@ -16,7 +16,7 @@ import type { FirstTally } from "./first-try.ts";
 export type AtlasCase = "N" | "G" | "D" | "A" | "L" | "I";
 export type AtlasGender = "masc" | "fem" | "neut";
 
-export interface AtlasCaseInfo {
+interface AtlasCaseInfo {
 	case: AtlasCase;
 	/** The Slovak name of the case (menný, genitív…). */
 	slovak: string;
@@ -95,7 +95,7 @@ export function caseDrill(unit: string): AtlasCase | null {
 
 /** One drill's record as the atlas reads it (progress.json units): its first
  *  tries split by gender column. */
-export interface AtlasStats {
+interface AtlasStats {
 	byGender?: Partial<Record<AtlasGender, FirstTally>>;
 }
 

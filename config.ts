@@ -67,7 +67,7 @@ export const LANGUAGE_PROFILES = ["slovak"] as const;
 export type LanguageProfile = string;
 
 /** Where the active profile choice is stored (a tiny {active} JSON). */
-export const PROFILE_FILE = path.join(BASE_DATA_ROOT, "profile.json");
+const PROFILE_FILE = path.join(BASE_DATA_ROOT, "profile.json");
 
 /** Languages added from the app: <data>/languages/<id>/ holds the words,
  *  the course, the grammar map and language.json. language.json is written
@@ -102,7 +102,7 @@ export function readAddedLanguage(id: string): unknown {
 }
 
 /** Every profile the learner can switch to: built-in first, then added. */
-export function languageProfiles(): string[] {
+function languageProfiles(): string[] {
 	return [...LANGUAGE_PROFILES, ...addedLanguageIds()];
 }
 
@@ -113,7 +113,7 @@ export function isLanguageProfile(v: unknown): v is LanguageProfile {
 /** profile.json: the language chosen for the next start, and the built-in
  *  languages the learner removed from their list (other ids are dropped on
  *  read, so a language that stops being built in is not hidden by mistake). */
-export interface ProfileChoice {
+interface ProfileChoice {
 	active?: string;
 	hidden: string[];
 }
@@ -359,17 +359,6 @@ export const PATHS = {
 		return path.join(dataRoot(), "debug");
 	},
 } as const;
-
-// ─── Models ────────────────────────────────────────────────────────────────
-// BYOK ALL THE WAY DOWN (owner, 2026-09-22): there are NO factory default
-// models. Every engine resolves from the user's model slots (settings.json
-// models section: strong/cheap/vision) over per-role/ChatSettings overrides,
-// and a chain that ends empty REFUSES honestly (503 models_not_configured).
-// .env stays for secrets (API keys) only. What remains here are ENGINE
-// CONSTRUCTION FACTS: the thinking-level scale and the default order.
-
-export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-
 /** Every agent role in the app. The conversation pair (prober/teacher)
  *  resolves chat.model → strong slot; background roles resolve their own
  *  override → tier slot (core/settings-resolution.ts ROLE_SLOT). */

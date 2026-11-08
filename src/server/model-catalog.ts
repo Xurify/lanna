@@ -50,7 +50,7 @@ import { AUTH_PROVIDER_KEYS } from "../core/auth-keys.ts";
 import { BACKGROUND_MODEL_ROLES, MODEL_SLOTS, type BackgroundModelRole, type ModelSlotName, type ModelsSettings } from "../core/settings.ts";
 
 /** The picker's client-safe model entry (contract: core/contracts/models.ts). */
-export type ModelDto = ModelCatalogEntry;
+type ModelDto = ModelCatalogEntry;
 
 /**
  * The conversation agents' resolved default (pure form — the strong slot
@@ -78,7 +78,7 @@ export function catalogDefaultsFor(
 
 /** The conversation agents' resolved default — what a settings-less chat
  *  runs: the strong slot, i.e. the birth-default for new sessions. */
-export function catalogDefaults(): CatalogDefaults | null {
+function catalogDefaults(): CatalogDefaults | null {
 	return catalogDefaultsFor(effectiveSettings().models.strong);
 }
 
@@ -214,7 +214,7 @@ export function modelCatalog(): ModelCatalogResponse {
 }
 
 /** One validated outcome for a settings write. */
-export type SettingsValidation =
+type SettingsValidation =
 	| { ok: true }
 	| { ok: false; error: string; supported?: ThinkingLevel[] };
 

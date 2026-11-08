@@ -103,7 +103,7 @@ export function webSubscriptionOwner() {
 	return state.owner;
 }
 /** Private runtime calls only: no HTTP lease/token operation exists. */
-export async function webSubscriptionRequest<T>(channel: Channel, op: string, fields: Record<string, unknown>): Promise<T> {
+async function webSubscriptionRequest<T>(channel: Channel, op: string, fields: Record<string, unknown>): Promise<T> {
 	const owner = webSubscriptionOwner();
 	let value: unknown;
 	if (channel === "lh:chatgpt") {

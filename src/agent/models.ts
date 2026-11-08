@@ -65,18 +65,12 @@ export function piModels() {
 	}
 	return collection;
 }
-
-/** OpenRouter API key (BYOK); tests never read this — they inject engines. */
-export function openRouterApiKey(): string | undefined {
-	return process.env.OPENROUTER_API_KEY || undefined;
-}
-
 /** A fully-resolved model pin — the shape every engine now comes from:
  *  the settings-resolution chain's output (role override → slot, or the
  *  chat's conversation chain). thinkingLevel is OPTIONAL: unset means
  *  the baked default resolves here (owner 2026-09-22) — the first entry
  *  of DEFAULT_THINKING_ORDER the model supports. */
-export interface ResolvedModelSpec {
+interface ResolvedModelSpec {
 	provider: string;
 	id: string;
 	thinkingLevel?: ThinkingLevel;

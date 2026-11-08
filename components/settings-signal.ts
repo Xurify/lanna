@@ -14,13 +14,13 @@
  */
 import { useEffect, useRef } from "react";
 
-export const SETTINGS_SAVED_EVENT = "lh:settings-saved";
+const SETTINGS_SAVED_EVENT = "lh:settings-saved";
 
 /** The settings sections a writer can land (the write seam's union). */
 // "keys" joined the roster (zero-keys wave, 2026-09-25): keys-section
 // dispatches it after save AND delete — deletions used to be invisible to
 // the zero-keys pill and the setup dialog's auto-advance.
-export type SettingsSection = "general" | "keys" | "agent" | "models" | "appearance" | "graph" | "compaction";
+type SettingsSection = "general" | "keys" | "agent" | "models" | "appearance" | "graph" | "compaction";
 
 /** Writers call this after the PUT resolves ok — never before (a failed
  *  write notifies nothing; the record is unchanged). */

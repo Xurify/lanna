@@ -65,7 +65,7 @@ interface PartsCarrier {
 	parts: Array<{ type: string; state?: string; input?: unknown; output?: unknown }>;
 }
 
-export interface DerivedPlanStatuses {
+interface DerivedPlanStatuses {
 	/** The node the most recent tagged quiz call is about; null before any. */
 	current: string | null;
 	/** Nodes referenced by earlier tagged calls — been there, monotonic. */
@@ -100,28 +100,6 @@ export function derivePlanStatuses(tree: PlanTree, messages: readonly PartsCarri
 	const visited = new Set(runs.slice(0, -1));
 	return { current, visited };
 }
-
-/**
- * The plan tool result (author-once protocol, 2026-09-03): ONE server-side
- * tool, plan_init (tools/plan.ts) — a mermaid `graph TD` block canonicalized
- * into the structured tree, called once at the probe→teach seam and
- * re-callable to rewrite. The former mutation/tracking tools are gone:
- * statuses derive from check outcomes (derivePlanStatuses above), so the
- * tree carries structure, never progress. The tree panel still derives its
- * display from the LATEST plan tool output in the transcript — plus the
- * derived statuses — with no separate state channel.
- */
-export interface PlanToolResult {
-	ok: boolean;
-	error?: string;
-	/** The saved tree — SUCCESS results only (owner, context diet
-	 *  2026-10-09): this is the record/UI-facing `details` value. The
-	 *  agent-facing content never carries it — content is the validated
-	 *  nodeIds + reminder; failures carry just the error. The plan
-	 *  popup's latestTree seam reads this field. */
-	tree?: PlanTree;
-}
-
 
 // ─── the native fold (Wave D: derivePlanStatuses over LhMessage[]) ───────────
 

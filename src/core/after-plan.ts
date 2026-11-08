@@ -11,7 +11,7 @@
  * lesson stays one tap away as the second choice.
  */
 
-export interface AfterPlanVideo {
+interface AfterPlanVideo {
 	id: string;
 	title: string;
 	minutes: number;

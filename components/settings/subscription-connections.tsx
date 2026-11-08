@@ -8,11 +8,11 @@ import { ChatGPTConnection } from "./chatgpt-connection";
 import { Toggle } from "./controls";
 import { useNativeSubscriptionBridge } from "./subscription-client";
 
-export const COPILOT_POLICY_NOTICE = "Signing in to GitHub Copilot may turn on more models whose policy is not set yet. Models explicitly disabled by policy are not enabled. Organization restrictions still apply.";
-export const SUBSCRIPTION_BACKGROUND_HINT = "Let LangHarness's helper agents and automatic follow-ups use this connection.";
+const COPILOT_POLICY_NOTICE = "Signing in to GitHub Copilot may turn on more models whose policy is not set yet. Models explicitly disabled by policy are not enabled. Organization restrictions still apply.";
+const SUBSCRIPTION_BACKGROUND_HINT = "Let LangHarness's helper agents and automatic follow-ups use this connection.";
 export function subscriptionNotice(label: string, web = false): string { return `Your prompts, tool results, and relevant session context are sent to ${label} to run the work you select. Credentials are stored ${web ? "on the machine running LangHarness" : "locally"} in an owner-only plaintext file. Provider terms, data-use policies, and plan limits apply. This connection never falls back to an API key.`; }
 export function subscriptionDisconnectCopy(label: string, web = false): string { return `Disconnect ${label} from LangHarness? This stops work using this connection and removes its saved credentials from ${web ? "the machine running LangHarness" : "this device"}. It does not cancel your subscription or revoke access at the provider. Saved model choices will remain unavailable until you reconnect or change them.`; }
-export function emptySubscriptionStatus(providerId: NativeSubscriptionProviderId): NativeSubscriptionStatus { return { providerId, available: false, connected: false, pending: false, allowBackgroundUse: true, connectionId: null, epoch: 0, authorityRevision: 0, revision: 0 }; }
+function emptySubscriptionStatus(providerId: NativeSubscriptionProviderId): NativeSubscriptionStatus { return { providerId, available: false, connected: false, pending: false, allowBackgroundUse: true, connectionId: null, epoch: 0, authorityRevision: 0, revision: 0 }; }
 const Context = createContext({ statuses: [] as NativeSubscriptionStatus[], busy: false, open: (_providerId: NativeSubscriptionProviderId) => {} });
 const CONTROL_ERROR = "The connection could not be changed. Try again.";
 
@@ -119,7 +119,7 @@ export function NativeSubscriptionUIProvider({ children }: { children: React.Rea
 	</Context.Provider>;
 }
 
-export function NativeSubscriptionConnection({ providerId, setup = false }: { providerId: NativeSubscriptionProviderId; setup?: boolean }) {
+function NativeSubscriptionConnection({ providerId, setup = false }: { providerId: NativeSubscriptionProviderId; setup?: boolean }) {
 	const ui = useContext(Context), descriptor = NATIVE_SUBSCRIPTIONS.find((p) => p.providerId === providerId)!;
 	const status = ui.statuses.find((s) => s.providerId === providerId) ?? emptySubscriptionStatus(providerId);
 	return <div className="flex flex-col gap-2" data-testid={`${providerId}-connection`}>

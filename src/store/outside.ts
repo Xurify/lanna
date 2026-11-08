@@ -10,7 +10,7 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { OutsideEntry } from "../core/outside.ts";
 
-export interface OutsideFile {
+interface OutsideFile {
 	entries: OutsideEntry[];
 }
 

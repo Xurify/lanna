@@ -41,7 +41,7 @@ export type KeyAction =
  *  global; a seam that isn't mounted simply no-ops). */
 export type KeyScope = "global" | "chat" | "graph";
 
-export interface KeyActionDef {
+interface KeyActionDef {
 	id: KeyAction;
 	/** Cheat-sheet label. */
 	label: string;
@@ -117,7 +117,7 @@ export function saveOverrides(overrides: Partial<Record<KeyAction, string>>): vo
 }
 
 /** The live key map: defaults with user overrides applied. */
-export function effectiveKeymap(): Map<string, KeyAction> {
+function effectiveKeymap(): Map<string, KeyAction> {
 	const overrides = loadOverrides();
 	const map = new Map<string, KeyAction>();
 	for (const def of KEYBOARD_ACTIONS) {
@@ -184,7 +184,7 @@ export function isTypingSurface(e: KeyboardEvent): boolean {
 }
 
 /** macOS styling for binding display ("⌘D", "⇧⇥", "⌥↑"). */
-export const IS_MAC =
+const IS_MAC =
 	typeof navigator !== "undefined" && /mac/i.test(navigator.platform || navigator.userAgent);
 
 const MOD_GLYPH = IS_MAC ? "⌘" : "Ctrl+";

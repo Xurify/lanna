@@ -13,12 +13,11 @@ import { providerKeyPresent } from "./keys.ts";
 
 import type { AiStatus } from "../core/ai-status.ts";
 
-export type { AiStatus };
 
 /** Which slot a feature asks for first: most run on Cheap, falling back to
  *  Strong; the analysis of a learner's mistakes runs rarely and is reasoning,
  *  so it asks for Strong first and falls back to Cheap. */
-export type SlotPreference = "cheap" | "strong";
+type SlotPreference = "cheap" | "strong";
 
 export function aiSlot(prefer: SlotPreference = "cheap"): ModelSlot | null {
 	const models = readSettings()?.models;

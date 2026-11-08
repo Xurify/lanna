@@ -31,7 +31,7 @@ export interface CustomMilestoneRecord {
 	outcome?: DatedOutcome;
 }
 
-export interface MilestonesFile {
+interface MilestonesFile {
 	custom: CustomMilestoneRecord[];
 }
 

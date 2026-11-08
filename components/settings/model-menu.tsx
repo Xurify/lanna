@@ -278,7 +278,7 @@ export function ProviderMenuList({
 }
 
 /** Font row set. The DEFAULT row (null) is searchable like any family, so Enter never picks a row that is not on screen. */
-export function fontMenuResults(query: string, families: string[]): Array<string | null> {
+function fontMenuResults(query: string, families: string[]): Array<string | null> {
 	const scored = families
 		.map((f) => ({ f, s: fuzzyScore(query, f) }))
 		.filter((r) => r.s !== null)
@@ -291,7 +291,7 @@ export function fontMenuResults(query: string, families: string[]): Array<string
 }
 
 /** The custom-family row exists only when a typed query matches no family. */
-export function customFamilyFor(query: string, families: string[]): string | null {
+function customFamilyFor(query: string, families: string[]): string | null {
 	const trimmed = query.trim();
 	if (trimmed === "") return null;
 	return fontMenuResults(query, families).length === 0 ? trimmed : null;

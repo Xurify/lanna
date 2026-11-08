@@ -10,11 +10,11 @@
 
 /** Zoom ceiling for every surface that uses this math (raised 2×→4× for
  *  reading node titles closely, owner, plan-graph round 3). */
-export const ZOOM_MAX = 4;
+const ZOOM_MAX = 4;
 /** Viewport breathing room subtracted by the fit. */
-export const FIT_PAD = 16;
+const FIT_PAD = 16;
 /** The fit never zooms IN past this — a tiny diagram must not blow up. */
-export const FIT_ZOOM_MAX = 1.5;
+const FIT_ZOOM_MAX = 1.5;
 
 /** A pan/zoom viewport state (translate + scale; origin top-left). */
 export interface Viewport {

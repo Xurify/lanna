@@ -20,7 +20,7 @@ import type { MixupEvent } from "./mixups.ts";
 import { verifyCatch, type CatchDraftMark, type CatchLexicon, type CatchTarget, type CatchWord } from "./catch-pair.ts";
 
 /** Sentences in one item: a context line, the wrong one, and its correction. */
-export const CATCH_SENTENCES = 3;
+const CATCH_SENTENCES = 3;
 /** The speaker every item sentence is given: an item has no cast. */
 export const CATCH_SPEAKER = "item";
 /** Forms of each word the brief lists, so the model picks one the check knows. */
@@ -94,13 +94,13 @@ export interface CatchNext {
 	reason?: string;
 }
 
-export interface CatchDraft {
+interface CatchDraft {
 	sentences: Array<{ sk: string; en: string }>;
 	slip: CatchDraftMark;
 }
 
 /** The sentences the page shows before the answer. */
-export function visibleSentences(item: CatchItem): CatchSentence[] {
+function visibleSentences(item: CatchItem): CatchSentence[] {
 	return item.sentences.slice(0, item.slip.sentence + 1);
 }
 
@@ -169,7 +169,7 @@ export function catchBrief(t: CatchTarget, language: string): string {
 	].join("\n");
 }
 
-export interface CatchBuildInput {
+interface CatchBuildInput {
 	id: string;
 	now: Date;
 	model: string;

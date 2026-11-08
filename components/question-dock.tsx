@@ -31,7 +31,7 @@ import { CONFIDENCE_COLORS, confidenceRailStyle } from "@/components/confidence-
  * (hidden, not unmounted) so a half-made selection survives scrolling.
  */
 
-export interface QuestionDockProps {
+interface QuestionDockProps {
 	toolName: "quiz" | "probe" | "ask_user_question" | "explain" | "recall";
 	toolCallId: string;
 	input: QuizToolInput | AskToolInput | ExplainToolInput;
@@ -155,7 +155,7 @@ function teaserText(q: string): string {
  *  (kind chip + one-liner + Answer ↓); "reveal" is the teach-check invitation —
  *  a distinct, more inviting affordance, because it asks the learner to start
  *  something, not to resume something. */
-export function QuestionDockBar({
+function QuestionDockBar({
 	toolName,
 	question,
 	onExpand,

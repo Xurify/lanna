@@ -7,7 +7,7 @@
  * tutor unit instead (src/core/curriculum.ts).
  */
 
-export interface WordCluster {
+interface WordCluster {
 	title: string;
 	/** The words, for the path line. */
 	tagline: string;

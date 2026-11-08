@@ -44,7 +44,7 @@ import type { OutsideSummary } from "./outside.ts";
 
 export type GenreId = "conversation" | "tv" | "film" | "news" | "fiction" | "formal" | "children" | "songs";
 
-export interface Genre {
+interface Genre {
 	id: GenreId;
 	title: string;
 	/** English word families (plus proper nouns) for 95% and 98% of running words. */
@@ -144,7 +144,7 @@ export type Support = "none" | "visual" | "subtitles" | "interactive";
  *  which visuals and action carry much of the storyline"), subtitles let
  *  the eye catch what the ear missed, and in a conversation you can ask
  *  again. The factor scales the words a minute the milestone demands. */
-export const SUPPORT_FACTOR: Record<Support, number> = { none: 1, visual: 0.9, subtitles: 0.75, interactive: 0.7 };
+const SUPPORT_FACTOR: Record<Support, number> = { none: 1, visual: 0.9, subtitles: 0.75, interactive: 0.7 };
 
 export const SUPPORT_LINE: Record<Support, string> = {
 	none: "no help from pictures or text",
@@ -167,9 +167,9 @@ export const SPEED_LADDER: Array<{ level: Cefr; wpm: number }> = [
 ];
 
 /** Natural speech, words a minute, for a milestone that names no rate. The app's own round figure: English speech rates vary widely by genre (Tauroza & Allison 1990), and Slovak words are longer than English ones, so real Slovak speech may run lower. */
-export const NATURAL_WPM = 150;
+const NATURAL_WPM = 150;
 /** When a Listen rep carries no audio length: 400 ms a word. */
-export const MS_PER_WORD = 60_000 / NATURAL_WPM;
+const MS_PER_WORD = 60_000 / NATURAL_WPM;
 
 /** Guided hours at which a listener reaches `wpm`, by the ladder; linear
  *  between rungs, 0 below the first. */
@@ -198,14 +198,6 @@ export function speedForHours(hours: number): number {
 	}
 	return rungs[rungs.length - 1]!.wpm;
 }
-
-/** The ladder rung a speed sits on (the highest rung reached). */
-export function speedLevel(wpm: number): Cefr | null {
-	let level: Cefr | null = null;
-	for (const r of SPEED_LADDER) if (wpm >= r.wpm) level = r.level;
-	return level;
-}
-
 /** One Listen rep as the speed model reads it. */
 export interface SpeedSample {
 	/** Words in the sentence. */
@@ -235,7 +227,7 @@ export interface SpeedReading {
 
 /** A sample is usable when it was heard, not read, answered right, and
  *  its timing is plausible (a tab left open overnight is not a thought). */
-export function usableSample(s: SpeedSample): boolean {
+function usableSample(s: SpeedSample): boolean {
 	return s.correct && !s.peeked && s.words >= 3 && s.ms >= 300 && s.ms <= 90_000;
 }
 
@@ -282,8 +274,8 @@ export interface TrendPoint {
 	at: string;
 }
 
-export const TREND_MIN_POINTS = 8;
-export const TREND_MIN_DAYS = 7;
+const TREND_MIN_POINTS = 8;
+const TREND_MIN_DAYS = 7;
 
 /** Least-squares slope of words a minute per study hour, when there are
  *  enough sessions spread over enough days; null otherwise. The
@@ -402,11 +394,6 @@ export const MILESTONES: MilestoneDef[] = [
 		cefr: "B2–C1 listening: can understand the majority of films in standard dialect",
 	},
 ];
-
-export function builtinMilestone(id: string): MilestoneDef | undefined {
-	return MILESTONES.find((m) => m.id === id);
-}
-
 // ─── What the app knows about the learner ───────────────────────────────────
 
 export interface LearnerFacts {
@@ -519,7 +506,7 @@ export interface MilestoneEstimate {
 	missing: string[];
 }
 
-export interface EstimateOptions {
+interface EstimateOptions {
 	now: Date;
 }
 

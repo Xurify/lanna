@@ -10,7 +10,7 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { CatchItem } from "../core/catch-mistake.ts";
 
-export interface CatchMistakeFile {
+interface CatchMistakeFile {
 	items: CatchItem[];
 }
 

@@ -76,7 +76,7 @@ export type UnitId = (typeof GRAMMAR_UNIT_IDS)[number] | (typeof BAND_UNIT_IDS)[
 
 export type UnitKind = "grammar" | "words" | "pairs";
 
-export interface UnitInfo {
+interface UnitInfo {
 	id: UnitId;
 	title: string;
 	/** The question the unit answers, in a few words. */
@@ -219,7 +219,7 @@ const ALL_PREPS = new Set([...GEN_PREPS, ...LOC_PREPS, ...INS_PREPS, ...DAT_PREP
 const MAX_WORDS = 10;
 
 /** The word right before position `at`, lowercased, punctuation stripped. */
-export function wordBefore(sentence: string, at: number): string {
+function wordBefore(sentence: string, at: number): string {
 	const words = sentence.slice(0, at).trim().split(/\s+/);
 	const w = words[words.length - 1] ?? "";
 	return w.toLowerCase().replace(/^[„“"'(]+|[,.;:!?„“"')]+$/g, "");
@@ -623,26 +623,21 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
  *  form marked), then recognition, then production, with a word bank and a
  *  listening rep to vary the work. The patterns here are 12 reps long, the
  *  app's own choice: a lesson that fits one short sitting. */
-export const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
+const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
 
 /** Once a unit is known: production almost throughout. Picking a form from
  *  four trains recognizing it; typing it trains producing it, and producing
  *  endings is the gap (reading is ahead of production). */
-export const PRACTICED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
+const PRACTICED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
 
 /** Once a unit is complete (unitDone): production only. No choose rep
  *  (recognition is done teaching), more of the lesson from the units it
  *  is confused with (see MIX_SLOTS), and the player hides the translation
  *  until the answer — desirable difficulties (docs/research/
  *  desirable-difficulties.md), difficulty that rises with mastery. */
-export const STRONG_PATTERN: ItemKind[] = ["type", "type", "build", "type", "listen", "type", "type", "build", "type", "listen", "type", "type"];
-
-/** The placement drill (src/core/onboarding.ts): two reps a unit that
- *  measure, so they ask for the form — recognize it, then produce it. */
-export const PLACEMENT_PATTERN: ItemKind[] = ["choose", "type"];
-
+const STRONG_PATTERN: ItemKind[] = ["type", "type", "build", "type", "listen", "type", "type", "build", "type", "listen", "type", "type"];
 /** Word-order units: rebuild the sentence, with a listening rep to vary it. */
-export const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
+const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
 
 /** Slots (by position) that take an item from another unit: 2 in a new unit,
  *  4 in a practiced one, 6 in a complete one. The counts are the app's own
@@ -699,7 +694,7 @@ export function shortGloss(en: string): string {
 /** For a vocabulary rep: three other words of the unit (meaning distractors),
  *  so the choice is about the word, not its ending. `pool` holds the unit's
  *  dictionary forms; the word's own forms never appear. */
-export function wordOptions(answer: string, lemma: string, pool: readonly string[], rand: () => number): string[] {
+function wordOptions(answer: string, lemma: string, pool: readonly string[], rand: () => number): string[] {
 	const seen = new Set([fold(answer), fold(lemma)]);
 	const picks: string[] = [];
 	for (const f of shuffle([...pool], rand)) {
@@ -715,7 +710,7 @@ export function wordOptions(answer: string, lemma: string, pool: readonly string
 /** Three meanings for a meaning rep: the sentence's own translation and
  *  two others of similar length from the unit, so length gives nothing
  *  away. (The Listen task's version, with a wider pool: core/listen.ts.) */
-export function meaningChoices(translation: string, pool: readonly string[], rand: () => number): string[] {
+function meaningChoices(translation: string, pool: readonly string[], rand: () => number): string[] {
 	const own = translation.trim();
 	const others = [...new Set(pool.map((p) => p.trim()).filter((p) => p && p.toLowerCase() !== own.toLowerCase()))];
 	const near = shuffle(others, rand)
@@ -966,7 +961,7 @@ export function buildBlitz(entries: readonly LexiconEntry[], units: readonly Uni
 
 export type RepVerdict = "exact" | "accents" | "wrong";
 
-export const XP_FOR: Record<ItemKind, number> = { meaning: 4, choose: 5, type: 10, build: 10, listen: 12 };
+const XP_FOR: Record<ItemKind, number> = { meaning: 4, choose: 5, type: 10, build: 10, listen: 12 };
 
 /** XP for one rep: a typed answer earns more than a picked one; accents-only
  *  earns half, and so does an assisted answer (right on the second try
@@ -980,8 +975,8 @@ export function repXp(kind: ItemKind, verdict: RepVerdict, combo: number, assist
 	return base + bonus;
 }
 
-export const LESSON_BONUS = 20;
-export const PERFECT_BONUS = 15;
+const LESSON_BONUS = 20;
+const PERFECT_BONUS = 15;
 
 export interface LessonScore {
 	xp: number;
@@ -1018,7 +1013,7 @@ export function lessonScore(reps: readonly { kind: ItemKind; verdict: RepVerdict
  *  The 3 lessons, 80% and the 6-lesson escape are the app's own policy, not
  *  figures from a study. */
 export const LESSONS_TO_COMPLETE = 3;
-export const COMPLETE_ACCURACY = 0.8;
+const COMPLETE_ACCURACY = 0.8;
 export function unitDone(lessons: number, accuracy: number | null): boolean {
 	if (lessons >= LESSONS_TO_COMPLETE * 2) return true;
 	return lessons >= LESSONS_TO_COMPLETE && (accuracy ?? 0) >= COMPLETE_ACCURACY;
@@ -1031,19 +1026,10 @@ export function unitProgress(lessons: number, accuracy: number | null): number {
 }
 
 /** Lessons finished → the unit's level (0–5), the ring on the skill path. */
-export const LEVEL_STEPS = [1, 3, 6, 10, 15];
+const LEVEL_STEPS = [1, 3, 6, 10, 15];
 export function unitLevel(lessons: number): number {
 	return LEVEL_STEPS.filter((s) => lessons >= s).length;
 }
-/** Progress toward the next level, 0..1. */
-export function levelProgress(lessons: number): number {
-	const level = unitLevel(lessons);
-	if (level >= LEVEL_STEPS.length) return 1;
-	const lo = level === 0 ? 0 : LEVEL_STEPS[level - 1]!;
-	const hi = LEVEL_STEPS[level]!;
-	return (lessons - lo) / (hi - lo);
-}
-
 function addDays(key: string, n: number): string {
 	const d = new Date(`${key}T12:00:00Z`);
 	d.setUTCDate(d.getUTCDate() + n);

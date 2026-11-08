@@ -24,7 +24,7 @@ import { mixupStatus, type Mixup, type MixupRecord } from "./mixups.ts";
 import type { StorySentence } from "./reading.ts";
 
 /** The checked mistake: where it is, what is wrong and what is right, with the pair's rule. */
-export interface CatchMark {
+interface CatchMark {
 	/** The pair's id in curriculum/<language>/pairs.json ("kam-vs-kde"). */
 	pair: string;
 	/** Index of the sentence with the wrong word; the correction is the next one. */
@@ -81,7 +81,7 @@ export interface CatchLexicon {
 	bySlug: ReadonlyMap<string, LexiconEntry>;
 }
 
-export interface CatchChoice {
+interface CatchChoice {
 	record: MixupRecord;
 	lexicon: CatchLexicon;
 	pairs: readonly PairDef[];
@@ -92,7 +92,7 @@ export interface CatchChoice {
 }
 
 /** The result of checking an item: the mistake to keep, or why it was dropped. */
-export type CatchCheck = { slip: CatchMark } | { reason: string };
+type CatchCheck = { slip: CatchMark } | { reason: string };
 
 /** The model may wrap a form in punctuation, so the match ignores it. */
 function clean(form: string): string {

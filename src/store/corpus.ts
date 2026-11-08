@@ -76,7 +76,7 @@ export function slugify(text: string, max = 48): string {
 	return cut.replace(/-+$/g, "") || "clip";
 }
 
-export function clipRelativePath(entry: Pick<AudioClipEntry, "lang" | "voice" | "key" | "text">, ext: string): string {
+function clipRelativePath(entry: Pick<AudioClipEntry, "lang" | "voice" | "key" | "text">, ext: string): string {
 	const name = entry.text ? slugify(entry.text) : "unknown";
 	return `${entry.lang}/${entry.voice}/${name}-${entry.key.slice(0, 12)}.${ext}`;
 }
@@ -347,7 +347,7 @@ export function readLessonLog(): LessonLogEntry[] {
 
 // ─── Why? ────────────────────────────────────────────────────────────────────
 
-export interface WhyEntry {
+interface WhyEntry {
 	key: string;
 	lang: string;
 	sentence: string;
@@ -458,10 +458,4 @@ export function ensureReadmes(force = false): void {
 			// a README is a courtesy, never a failure
 		}
 	}
-}
-
-/** Test seam: forget the in-memory caches. */
-export function resetCorpusCaches(): void {
-	audioCache = null;
-	readmesWritten.clear();
 }

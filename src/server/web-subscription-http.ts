@@ -4,7 +4,7 @@ import { webSubscriptionOwner, webSubscriptionsEnabled, webSubscriptionStatus } 
 const HEADERS = { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" };
 /** Same-origin browser controls, not user authentication (web/dev shared-server trust model).
  * Never trust forwarded origins or add CORS grants; a public deployment needs its own access gate. */
-export function subscriptionRequestOrigin(request: Request): string | undefined {
+function subscriptionRequestOrigin(request: Request): string | undefined {
 	try {
 		const url = new URL(request.url);
 		const host = request.headers.get("host") ?? url.host;

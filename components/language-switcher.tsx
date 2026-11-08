@@ -260,7 +260,7 @@ export function LanguageSwitcher() {
 
 /** One primary destination: a trail-sign row. The one you are on is lit
  *  with a sun bar at its edge and a brighter icon, no pill. */
-export const NAV_ICONS: Record<NavId, LucideIcon> = {
+const NAV_ICONS: Record<NavId, LucideIcon> = {
 	today: SunIcon,
 	curriculum: MountainSnowIcon,
 	review: RepeatIcon,

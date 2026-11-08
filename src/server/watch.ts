@@ -80,7 +80,7 @@ const ANDROID_VERSION = "20.10.38";
 
 // ─── Captions from YouTube ──────────────────────────────────────────────────
 
-export interface CaptionTrack {
+interface CaptionTrack {
 	baseUrl: string;
 	languageCode: string;
 	name?: string;
@@ -88,7 +88,7 @@ export interface CaptionTrack {
 	kind?: string;
 }
 
-export interface VideoMeta {
+interface VideoMeta {
 	id: string;
 	title: string;
 	channel?: string;
@@ -248,7 +248,7 @@ export interface FetchedCaptions {
 }
 
 /** yt-dlp on the PATH (or YTDLP_PATH), when it is. */
-export function ytDlpPath(): string | null {
+function ytDlpPath(): string | null {
 	const configured = process.env.YTDLP_PATH?.trim();
 	if (configured && fs.existsSync(configured)) return configured;
 	const exts = process.platform === "win32" ? ["yt-dlp.exe", "yt-dlp"] : ["yt-dlp"];
@@ -334,7 +334,7 @@ async function captionsViaDeepgram(id: string, meta: VideoMeta | null, lang: str
 }
 
 /** Another of the learner's languages that a video is spoken in. */
-export interface ElsewhereProfile {
+interface ElsewhereProfile {
 	profile: string;
 	english: string;
 }
@@ -434,7 +434,7 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 
 type PromptLang = Pick<LanguageInfo, "english" | "promptExamples">;
 
-export function translateSystem(lang: PromptLang = activeLanguage()): string {
+function translateSystem(lang: PromptLang = activeLanguage()): string {
 	const name = lang.english;
 	const x = lang.promptExamples ?? {};
 	return `You translate the lines of a ${name} video's subtitles into natural English for a learner who watches with both languages on screen. You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one English string per ${name} line, in the same order, the same count.
@@ -446,7 +446,7 @@ Rules:
 - Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
 }
 
-export function renderSystem(name: string = activeLanguage().english): string {
+function renderSystem(name: string = activeLanguage().english): string {
 	return `You rewrite the lines of a video's subtitles into ${name}, for a language app that measures how much of the video a ${name} learner already knows. The subtitles are in a closely related language (the ask names it). You answer with ONE JSON object and nothing else: {"t": ["...", "..."]} — exactly one ${name} string per line, in the same order, the same count.
 
 Rules:
@@ -455,7 +455,7 @@ Rules:
 - Keep names as they are. Keep it plain; no notes, no brackets, no alternatives.`;
 }
 
-export function questionsSystem(name: string = activeLanguage().english): string {
+function questionsSystem(name: string = activeLanguage().english): string {
 	return `You write comprehension questions in ${name} about a video, for one learner inside a language app. You answer with ONE JSON object and nothing else: {"questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}]}.
 
 Rules:
@@ -464,7 +464,7 @@ Rules:
 - Follow the brief's plan: that many questions, of those kinds in that order, with that many options each; mark each question with its "kind".`;
 }
 
-export interface PrepareOptions {
+interface PrepareOptions {
 	/** Test seam: a scripted engine replaces the cheap slot's. */
 	engine?: PiEngine;
 	model?: string;
@@ -495,10 +495,10 @@ async function ask(engine: PiEngine, system: string, prompt: string, usage: Stor
 
 /** Lines per translation call: enough context to translate well, few
  *  enough that a miscount is cheap to redo. */
-export const TRANSLATE_CHUNK = 40;
+const TRANSLATE_CHUNK = 40;
 
 /** Most words one watching sends to the review deck: the app's own cap, so a long video does not flood it. */
-export const WATCH_WORDS_MAX = 12;
+const WATCH_WORDS_MAX = 12;
 
 /** What a chunked ask wants of the model: the English translation of the
  *  lines, or (foreign captions) their Slovak rendering. */
@@ -568,7 +568,7 @@ async function translateChunk(engine: PiEngine, chunk: readonly string[], before
 	return [...first, ...second];
 }
 
-export async function questionsFor(engine: PiEngine, segments: readonly { sk: string; en: string }[], k: KnownWords, title: string, usage: StoryUsage): Promise<StoryQuestion[]> {
+async function questionsFor(engine: PiEngine, segments: readonly { sk: string; en: string }[], k: KnownWords, title: string, usage: StoryUsage): Promise<StoryQuestion[]> {
 	const plan = QUESTION_PLAN[k.level];
 	// The whole transcript when it fits; the Slovak alone past that.
 	const full = segments.map((s) => `${s.sk} — ${s.en}`).join("\n");
@@ -868,7 +868,7 @@ export function pendingVideo(): VideoLibraryEntry | null {
 
 // ─── Recording a watching ───────────────────────────────────────────────────
 
-export interface WatchResultInput {
+interface WatchResultInput {
 	videoId: string;
 	mode: WatchMode;
 	stats: SegmentStat[];
@@ -880,7 +880,7 @@ export interface WatchResultInput {
 	tz?: number;
 }
 
-export interface WatchOutcome {
+interface WatchOutcome {
 	xp: number;
 	correct: number;
 	total: number;
@@ -957,7 +957,7 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 
 // ─── The sentence step ──────────────────────────────────────────────────────
 
-export function sentenceSystem(name: string = activeLanguage().english): string {
+function sentenceSystem(name: string = activeLanguage().english): string {
 	return `You check one ${name} sentence that a beginner wrote to use a given ${name} word. You answer with ONE JSON object and nothing else: {"ok": true, "corrected": "...", "why": "..."}.
 
 Rules:
@@ -968,7 +968,7 @@ Rules:
 - Nothing outside the JSON.`;
 }
 
-export interface SentenceAnswer {
+interface SentenceAnswer {
 	ok: boolean;
 	corrected: string;
 	why: string;

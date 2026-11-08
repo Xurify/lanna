@@ -21,7 +21,7 @@ export interface DayPlanSnapshot {
 }
 
 /** The counters of a day's ledger that say a task was done. */
-export interface DayLedger {
+interface DayLedger {
 	reviews?: number;
 	blitz?: number;
 	tutors?: number;
@@ -57,7 +57,7 @@ export function doneInLedger(id: string, day: DayLedger): boolean {
 	}
 }
 
-export interface CarriedTask {
+interface CarriedTask {
 	id: string;
 	title: string;
 	/** The latest day the task was planned and left unfinished. */

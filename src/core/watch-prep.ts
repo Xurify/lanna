@@ -26,14 +26,14 @@
 import { COVERAGE_FLOOR, type StoryToken, type StoryUsage, type StoryWord } from "./reading.ts";
 import { sectionRepId, type SectionRep } from "./watch-sections.ts";
 
-export const PREP_PARTS_MIN = 3;
-export const PREP_PARTS_MAX = 8;
-export const PREP_KEYS_MIN = 6;
-export const PREP_KEYS_MAX = 12;
+const PREP_PARTS_MIN = 3;
+const PREP_PARTS_MAX = 8;
+const PREP_KEYS_MIN = 6;
+const PREP_KEYS_MAX = 12;
 /** Words in one key: a word, or a phrase of up to three. */
-export const PREP_KEY_WORDS_MAX = 3;
+const PREP_KEY_WORDS_MAX = 3;
 export const PREP_SUMMARY_MIN = 3;
-export const PREP_SUMMARY_MAX = 10;
+const PREP_SUMMARY_MAX = 10;
 /** Lines shown to the model at most; a longer video is briefed from its start. */
 export const PREP_PROMPT_LINES = 400;
 /** Below this share of words the level expects (the keys counted as taught)
@@ -223,7 +223,7 @@ export function findSpan(tokens: readonly StoryToken[], words: readonly string[]
 
 /** The index just past the last token of a span that starts at `token` and
  *  holds `span` words. */
-export function spanEnd(tokens: readonly StoryToken[], token: number, span: number): number {
+function spanEnd(tokens: readonly StoryToken[], token: number, span: number): number {
 	let words = 0;
 	let j = token;
 	while (j < tokens.length) {
@@ -281,7 +281,7 @@ export function parsePrepSummary(raw: unknown): Array<{ sk: string; en: string }
 		.slice(0, PREP_SUMMARY_MAX);
 }
 
-export interface ParsedPrep {
+interface ParsedPrep {
 	about: string;
 	parts: PrepPart[];
 	keys: PrepKey[];
@@ -352,6 +352,6 @@ export function quotesFor(code: string | undefined): [string, string] {
 	return ["“", "”"];
 }
 
-export function prepRepId(videoId: string, at: number, token: number): string {
+function prepRepId(videoId: string, at: number, token: number): string {
 	return `${sectionRepId(videoId, at, token)}:key`;
 }

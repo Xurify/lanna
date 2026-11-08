@@ -92,16 +92,16 @@ export const LISTEN_MINUTES = 4;
 export const LISTEN_FLOOR = 0.93;
 /** How many of the ten should carry a stretch word; the rest are fully
  *  known (fluency: hearing what you know at speed). */
-export const STRETCH_SHARE = 0.5;
-export const MIN_WORDS = 4;
-export const MAX_WORDS = 12;
+const STRETCH_SHARE = 0.5;
+const MIN_WORDS = 4;
+const MAX_WORDS = 12;
 /** A sentence with a stretch word needs this many words around it. */
-export const STRETCH_MIN_WORDS = 6;
+const STRETCH_MIN_WORDS = 6;
 /** At most this many unknown words in one sentence. */
 export const STRETCH_MAX = 1;
 
 export const LISTEN_XP = 4;
-export const LISTEN_BONUS = 10;
+const LISTEN_BONUS = 10;
 
 /** How one sentence was answered: the meaning picked from three, or the
  *  Slovak typed (dictation). "accents" is only possible for a typed answer. */
@@ -150,7 +150,7 @@ export interface ListenLookup {
 	names?: ReadonlySet<string>;
 }
 
-export interface Judged {
+interface Judged {
 	coverage: number;
 	words: number;
 	stretch: StretchWord[];
@@ -212,7 +212,7 @@ export function meaningOptions(translation: string, pool: readonly string[], ran
 	return shuffle([own, ...picked], rand);
 }
 
-export interface PickOptions {
+interface PickOptions {
 	seed: number;
 	count?: number;
 	/** Item ids heard lately; skipped while fresher sentences remain. */

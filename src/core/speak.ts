@@ -113,7 +113,7 @@ export function speakScene(id: string): SpeakScene | undefined {
  *  mid-scene; the rest are kept for the end. */
 export type SlipKind = "case" | "verb" | "aspect" | "word" | "order" | "spelling" | "other";
 
-export const SLIP_KINDS: readonly SlipKind[] = ["case", "verb", "aspect", "word", "order", "spelling", "other"];
+const SLIP_KINDS: readonly SlipKind[] = ["case", "verb", "aspect", "word", "order", "spelling", "other"];
 
 export const SLIP_LABEL: Readonly<Record<SlipKind, string>> = {
 	case: "case ending",
@@ -222,18 +222,13 @@ export interface SpeakIndexEntry {
 export function speakId(now: Date, scene: string): string {
 	const day = now.toISOString().slice(0, 10);
 	return `sp-${day}-${scene}-${now.getTime().toString(36).slice(-4)}${Math.random().toString(36).slice(2, 5)}`;
-}
-
-// ─── The rules ──────────────────────────────────────────────────────────────
-
-export const SPEAK_MINUTES = 6;
-/** Learner lines in a scene before the tutor wraps it up. */
+}/** Learner lines in a scene before the tutor wraps it up. */
 export const SPEAK_TURNS = 8;
-export const SPEAK_TURN_XP = 3;
+const SPEAK_TURN_XP = 3;
 export const SPEAK_REPAIR_XP = 5;
-export const SPEAK_BONUS = 10;
+const SPEAK_BONUS = 10;
 /** Learner turns that earn XP at most, so one-word lines cannot pad a scene. */
-export const SPEAK_XP_TURNS_CAP = 10;
+const SPEAK_XP_TURNS_CAP = 10;
 
 /** A spoken line scored "Clear" (at or above PRON_GOOD in src/core/pronounce.ts) earns this on top. */
 export const SPEAK_CLEAR_XP = 2;
@@ -376,7 +371,7 @@ export function foldedWords(text: string, tag = "sk-SK"): string[] {
 		.filter(Boolean);
 }
 
-export interface WordMatch {
+interface WordMatch {
 	/** Share of the expected words heard (0..1). */
 	score: number;
 	/** Expected words not heard. */

@@ -46,7 +46,7 @@ import type { LanguageInfo } from "../core/language.ts";
 
 // ─── Engines ────────────────────────────────────────────────────────────────
 
-export interface PlacementOptions {
+interface PlacementOptions {
 	/** Test seam: one engine for every model call. */
 	engine?: PiEngine;
 	model?: string;
@@ -54,7 +54,7 @@ export interface PlacementOptions {
 }
 
 /** The Socratic stage thinks: the strong slot when set, else the cheap one. */
-export function probeEngine(): { engine: PiEngine; model: string } | null {
+function probeEngine(): { engine: PiEngine; model: string } | null {
 	const models = readSettings()?.models;
 	const slot = models?.strong?.model ? models.strong : models?.cheap?.model ? models.cheap : null;
 	if (!slot?.model) return null;
@@ -125,7 +125,7 @@ async function ask(engine: PiEngine, systemPrompt: string, prompt: string, usage
 
 // ─── Stage 1: the ladder ────────────────────────────────────────────────────
 
-export interface PlacementStart {
+interface PlacementStart {
 	id: string;
 	from: number;
 	/** The first item. */
@@ -135,7 +135,7 @@ export interface PlacementStart {
 	judges: boolean;
 }
 
-export interface PlacementProgress {
+interface PlacementProgress {
 	asked: number;
 	max: number;
 	/** The rung being asked, its tier, and the bracket so far. */
@@ -197,7 +197,7 @@ export function startPlacement(opts: { recheck?: boolean } & PlacementOptions = 
 	return { id, from, item, progress: progressOf(s), judges: !!(opts.engine ?? scriptedEngines() ?? storyEngine()) };
 }
 
-export interface AnswerInput {
+interface AnswerInput {
 	id: string;
 	itemId: string;
 	given: string;
@@ -206,7 +206,7 @@ export interface AnswerInput {
 	ms?: number;
 }
 
-export interface AnswerResult {
+interface AnswerResult {
 	/** The verdict that counted. */
 	verdict: RepVerdict;
 	judged?: Judgement;
@@ -362,7 +362,7 @@ function probeTranscript(s: PlacementSession): string {
 	return out.join("\n");
 }
 
-export interface ProbeTurnResult {
+interface ProbeTurnResult {
 	reply: ProbeReply;
 	/** Turns asked so far, of PROBE_TURNS. */
 	turn: number;
@@ -476,7 +476,7 @@ export function recordWords(id: string, answers: VocabAnswer[]) {
 
 // ─── Finish ─────────────────────────────────────────────────────────────────
 
-export interface FinishResult extends PlacementResult {
+interface FinishResult extends PlacementResult {
 	id: string;
 	probe: { verdicts: ProbeVerdict[]; summary: string; skipped: boolean };
 	vocabulary: PlacementSession["words"] extends infer W ? (W extends { estimate?: infer E } ? E | null : null) : null;

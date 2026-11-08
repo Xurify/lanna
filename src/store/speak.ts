@@ -61,7 +61,7 @@ function appendJsonl(file: string, value: unknown): void {
 	fs.appendFileSync(file, `${JSON.stringify(value)}\n`, "utf-8");
 }
 
-export function speakIndexEntry(s: SpeakSession): SpeakIndexEntry {
+function speakIndexEntry(s: SpeakSession): SpeakIndexEntry {
 	const c = speakCounts(s.turns);
 	return {
 		id: s.id,

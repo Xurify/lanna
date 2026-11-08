@@ -67,7 +67,7 @@ export function isPlainAuthSetting(id: string): boolean {
 }
 
 /** A model-provider key row: pi-ai provider id, its key's env var, and label. */
-export interface AuthProviderInfo {
+interface AuthProviderInfo {
 	id: string;
 	envVar: string;
 	label: string;
@@ -126,7 +126,7 @@ export function isProviderEnvVar(envVar: string): boolean {
 }
 
 /** Shape-check result: ok, or a 400-ready message naming the expectation. */
-export type KeyShapeResult = { ok: true } | { ok: false; error: string };
+type KeyShapeResult = { ok: true } | { ok: false; error: string };
 
 /**
  * Write-side shape gate: bad pastes are rejected with 400 and never stored.

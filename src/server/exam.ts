@@ -24,7 +24,7 @@ export function examFor(chapterId: string, seed = Date.now()): ExamDraw {
 	return draw;
 }
 
-export interface ExamRecordInput {
+interface ExamRecordInput {
 	chapterId: string;
 	/** The draw's seed, so the server rebuilds the same eight items. */
 	seed: number;
@@ -32,7 +32,7 @@ export interface ExamRecordInput {
 	answers: unknown[];
 }
 
-export interface ExamRecord {
+interface ExamRecord {
 	attempt: ExamAttempt;
 	/** The chapter's best attempt after this one (the path's line). */
 	best: ExamAttempt | null;

@@ -102,7 +102,7 @@ async function importPayload(standalone) {
 // exits. Wait for actual exit, boundedly; never infer shutdown intent from
 // Node's automatic stdin cleanup after an unexpected child exit.
 /** @returns {Promise<{code: number | null, signal: NodeJS.Signals | null, requested: boolean}>} */
-export async function stopBrowserService(helper) {
+async function stopBrowserService(helper) {
 	if (!helper.pid || helper.exitCode !== null || helper.signalCode !== null) {
 		return { code: helper.exitCode, signal: helper.signalCode, requested: false };
 	}

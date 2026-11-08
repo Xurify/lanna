@@ -15,8 +15,6 @@ import { grepTool } from "./tools/grep.ts";
 import { healToolRecord } from "./tools/heal.ts";
 import { languageTools, type ReviewSeam } from "./tools/language.ts";
 
-export { jobTools };
-export type { ProbeDoneContext } from "./tools/probe.ts";
 
 /**
  * The agent-split tool composition (docs/probe-teach-split.md §1): the
@@ -112,7 +110,7 @@ export const askUserQuestionTool: AgentTool<typeof askInputSchema> = {
  *  (explanation) committed before correctAnswer.
  *  JSON.stringify renders the wire text, so the escaping the model sees
  *  is by construction the correct one. Exported for the description pins. */
-export const quizExampleBody = {
+const quizExampleBody = {
 	question: "Which form completes the sentence correctly: *Idem do ___* (škola)?",
 	options: [
 		{ label: "školy", value: "a" },
@@ -190,7 +188,7 @@ function explainDescription(name: "explain" | "recall", nodeId: boolean): string
  *  that habit (the tools_fails_2 incident). Distinct names make the
  *  phase boundary visible in the transcript itself: history written by
  *  `probe` never lies about what `quiz` requires. */
-export const probeQuizTool: AgentTool<typeof probeQuizInputSchema> = {
+const probeQuizTool: AgentTool<typeof probeQuizInputSchema> = {
 	name: "probe",
 	label: "probe",
 	description: quizDescription({ name: "probe", nodeId: false, types: false }),
@@ -206,7 +204,7 @@ export const probeQuizTool: AgentTool<typeof probeQuizInputSchema> = {
 
 /** The teacher's free-recall variant (nodeId-validated, same seam as the
  *  teach quiz — phases/plan recognize BOTH tool names). */
-export function teachExplainToolFor(
+function teachExplainToolFor(
 	ctx: Pick<PlanToolContext, "chatId" | "chatStore">,
 ): AgentTool<typeof explainInputObject> {
 	return {
@@ -234,7 +232,7 @@ export function teachExplainToolFor(
  *  probe call shape into teaching. Old probe-phase records keep the
  *  `explain` name and parse identically (the display seam accepts
  *  both). */
-export const probeExplainTool: AgentTool<typeof explainInputBase> = {
+const probeExplainTool: AgentTool<typeof explainInputBase> = {
 	name: "recall",
 	label: "recall",
 	description: explainDescription("recall", false),
@@ -352,7 +350,7 @@ function nodeIdProblem(ctx: Pick<PlanToolContext, "chatId" | "chatStore">, nodeI
  *  nodeId is REQUIRED (owner ruling 2026-09-26): the untagged ad-hoc quiz is
  *  gone — off-map checks route through ask_user_question, and the teach
  *  seam (first tagged quiz) is structurally guaranteed. */
-export function teachQuizToolFor(ctx: Pick<PlanToolContext, "chatId" | "chatStore">): AgentTool<typeof quizInputObject> {
+function teachQuizToolFor(ctx: Pick<PlanToolContext, "chatId" | "chatStore">): AgentTool<typeof quizInputObject> {
 	return {
 		name: "quiz",
 		label: "quiz",
@@ -401,7 +399,7 @@ export interface TeacherToolContext extends PlanToolContext {
  *  managed, NOT individually toggleable: quiz/explain never pass through
  *  filterEnabledTools (the 2026-09-19 wedge ruling stands — a quiz-less
  *  prober collapses its assessment flow). */
-export function quizMechanics(enabled?: EnabledTools): "choice" | "free" {
+function quizMechanics(enabled?: EnabledTools): "choice" | "free" {
 	return enabled?.explain === true ? "free" : "choice";
 }
 

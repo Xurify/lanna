@@ -28,7 +28,7 @@ const SCOPES: { scope: KeyScope; label: string }[] = [
 ];
 
 /** One change to the overrides map. binding null resets the action to its default. */
-export function nextOverrides(
+function nextOverrides(
 	current: Partial<Record<KeyAction, string>>,
 	id: KeyAction,
 	binding: string | null,

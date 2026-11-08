@@ -32,7 +32,7 @@ export interface LanguageDay {
 }
 
 /** The least a language's day can hold (the goal's own floor). */
-export const MIN_LANGUAGE_MINUTES = 5;
+const MIN_LANGUAGE_MINUTES = 5;
 
 /** Whole percents that add up to 100, from each language's minutes now
  *  (largest remainder, so no language is rounded away). */

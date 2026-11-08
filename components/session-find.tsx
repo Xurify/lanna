@@ -8,15 +8,15 @@ import {
 } from "@/components/session-find-dom";
 import { scrollSessionTarget, type SessionScrollContext } from "@/components/session-navigation";
 
-export const SESSION_FIND_HIGHLIGHT = "lh-session-find";
-export const SESSION_FIND_ACTIVE_HIGHLIGHT = "lh-session-find-active";
+const SESSION_FIND_HIGHLIGHT = "lh-session-find";
+const SESSION_FIND_ACTIVE_HIGHLIGHT = "lh-session-find-active";
 
 /** ::highlight() rules live OUTSIDE globals.css on purpose: the PostCSS/
  *  Tailwind v4 pipeline rejects the Custom Highlight pseudo-element as a
  *  parse error, which downed the whole stylesheet. A tiny <style> element,
  *  injected once on first client mount, ships them verbatim. */
 const FIND_STYLE_ID = "lh-session-find-style";
-export function injectFindStyles(): void {
+function injectFindStyles(): void {
 	if (document.getElementById(FIND_STYLE_ID)) return;
 	const style = document.createElement("style");
 	style.id = FIND_STYLE_ID;
@@ -26,7 +26,7 @@ export function injectFindStyles(): void {
 	document.head.appendChild(style);
 }
 
-export function clearSessionFindHighlights(): void {
+function clearSessionFindHighlights(): void {
 	if (typeof CSS === "undefined") return;
 	CSS.highlights?.delete(SESSION_FIND_HIGHLIGHT);
 	CSS.highlights?.delete(SESSION_FIND_ACTIVE_HIGHLIGHT);
@@ -47,7 +47,7 @@ function publishHighlights(ranges: readonly Range[], index: number): void {
 /** One-Esc law: a surfaced menu/dialog/cheat sheet outranks this non-modal
  * bar, regardless of where focus happened to be left. Closed Radix exits
  * must not block Find once they have stopped being a surfaced layer. */
-export function sessionFindHasForegroundLayer(doc: Document): boolean {
+function sessionFindHasForegroundLayer(doc: Document): boolean {
 	return Array.from(doc.querySelectorAll(
 		'[data-lh-menu], [data-radix-popper-content-wrapper], [role="menu"], [role="dialog"], [data-testid="cheat-sheet"]',
 	)).some((element) => {

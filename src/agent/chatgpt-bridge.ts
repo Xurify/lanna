@@ -2,8 +2,7 @@ import type { Model } from "@earendil-works/pi-ai";
 import { onWebSubscriptionPacket, webSubscriptionRequest, webSubscriptionsEnabled } from "./subscription-runtime.ts";
 import type { ChatGPTStatus } from "../core/contracts/chatgpt.ts";
 import type { AdmissionScope, NoDispatchKind } from "./chatgpt-request-cycle.ts";
-export type { ChatGPTStatus } from "../core/contracts/chatgpt.ts";
-export interface Stamp { epoch: number; authorityRevision: number; revision: number }
+interface Stamp { epoch: number; authorityRevision: number; revision: number }
 interface StatusValue extends Stamp { status: ChatGPTStatus }
 interface ModelsValue extends StatusValue { accountId: string | null; models: { id: string; name: string }[] }
 interface LeaseValue extends Stamp { accessToken: string; accountId: string }

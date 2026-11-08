@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
+import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, SearchIcon, SquareIcon } from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
 import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
 import { formatTokens, planCostLabel } from "@/components/usage-format";
@@ -172,7 +172,7 @@ export function useActivity(): { feed: ActivityFeed; refresh: () => void } {
 // ─── Pure presentation helpers (exported for tests) ──────────────────────────
 
 /** One dock blob: the unified view of a job or a background task. */
-export interface ActivityBlob {
+interface ActivityBlob {
 	/** job.id or task.id. */
 	id: string;
 	process: "job" | "task";

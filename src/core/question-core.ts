@@ -134,7 +134,7 @@ export function quizInputProblems(input: {
 // path accepts) runs at the CALL BOUNDARY in the tool's execute:
 // quizInputProblems here, the per-session plan-nodeId validation in
 // tools.ts (it reads the live chat record, which this core never touches).
-export const QUIZ_QUESTION_TYPES = ["predict", "check"] as const;
+const QUIZ_QUESTION_TYPES = ["predict", "check"] as const;
 export type QuizQuestionType = (typeof QUIZ_QUESTION_TYPES)[number];
 
 /** Normalize a persisted quiz `type` (display seam): old records carry
@@ -192,12 +192,6 @@ export function explainInputProblems(input: { correctAnswer: string }): string[]
 	}
 	return [];
 }
-
-/** The tool names that carry the quizzing mechanic — the teach seam
- *  (phases), the plan-position fold, and the pending gate all recognize
- *  whichever is armed. */
-export const QUIZ_TOOL_NAMES = ["quiz", "explain"] as const;
-
 
 // Ask's option sanity (labels non-empty, values distinct — ask is not
 // graded, but duplicate values break the dock's value keying) runs at the
@@ -280,7 +274,7 @@ export interface QuestionAnswerData {
 }
 
 /** Client-facing question payload — deliberately omits the answer. */
-export interface ClientQuestion {
+interface ClientQuestion {
 	id: string;
 	kind: QuestionKind;
 	question: string;
@@ -436,7 +430,7 @@ export function shuffleOptions(options: QuizOption[], rand: () => number = Math.
  *  Non-matches keep the existing whitehead heal (`[":parmenides"]`) and
  *  JSON-stringified multi-select coercion. Shared by boundary, display,
  *  and grading; canonical option keys are never rewritten. */
-export function coerceCorrectAnswer(
+function coerceCorrectAnswer(
 	correctAnswer: string | string[],
 	optionValues: readonly string[],
 ): string[] {
@@ -484,26 +478,12 @@ export function resolveCorrect(
 }
 
 /** Exact-set match: same number of selections, same indices. */
-export function isCorrect(selectedIndices: number[], correctIndices: number[]): boolean {
+function isCorrect(selectedIndices: number[], correctIndices: number[]): boolean {
 	if (selectedIndices.length !== correctIndices.length) return false;
 	const a = [...selectedIndices].sort((x, y) => x - y);
 	const b = [...correctIndices].sort((x, y) => x - y);
 	return a.every((v, i) => v === b[i]);
 }
-
-// ─── arming + answering ─────────────────────────────────────────────────────
-
-export function toClientQuestion(qd: QuestionData): ClientQuestion {
-	return {
-		id: qd.id,
-		kind: qd.kind,
-		question: qd.question,
-		context: qd.context,
-		mode: qd.mode,
-		options: qd.options,
-	};
-}
-
 
 /**
  * Turn an AnswerRequest into the full answer record + the user message the
@@ -606,4 +586,4 @@ export function compactAnswerForModel(ad: QuestionAnswerData): Record<string, un
 }
 
 // The schema-derived tool-input types live with the schemas; type-only, so nothing loads.
-export type { QuizToolInput, AskToolInput, ExplainToolInput, ProbeExplainToolInput } from "./question-schemas.ts";
+export type { QuizToolInput, AskToolInput, ExplainToolInput } from "./question-schemas.ts";

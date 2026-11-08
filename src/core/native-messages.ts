@@ -48,7 +48,7 @@ import { activeCompactionOf, keptIndexFor } from "./compaction.ts";
 /** The hard-invariant wording for an aborted turn's unanswered calls —
  *  carried over verbatim from the pre-native era so the model's view
  *  never drifted. */
-export const INTERRUPTED_TEXT =
+const INTERRUPTED_TEXT =
 	"The question was interrupted — the learner never answered; continue without holding a result for it.";
 
 // ─── The record's message type ───────────────────────────────────────────────
@@ -677,9 +677,9 @@ export function endsInDismissal(messages: readonly LhMessage[]): boolean {
 	return last !== undefined && isDismissedResult(last);
 }
 
-export type RequestCause = "foreground" | "background";
-export type ReconstructedCause = RequestCause | "ambiguous";
-export type NativeInputCause = "learner" | "automatic" | "neutral" | "unrecognizable";
+type RequestCause = "foreground" | "background";
+type ReconstructedCause = RequestCause | "ambiguous";
+type NativeInputCause = "learner" | "automatic" | "neutral" | "unrecognizable";
 /** Native causes only: flattened user roles, IDs' prefixes and prose confer no permission. */
 export function nativeInputCause(message: AgentMessage, history: readonly AgentMessage[]): NativeInputCause {
 	if (message.role === "user") return "learner";

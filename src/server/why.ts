@@ -14,7 +14,7 @@ import { countWhyReuse, findWhy, forgetWhy, rememberWhy, whyKey } from "../store
 import { readSettings } from "../store/settings.ts";
 import { titleFromPrompt } from "../core/title.ts";
 
-export interface WhyRequest {
+interface WhyRequest {
 	title: string;
 	sentence: string;
 	answer: string;
@@ -22,7 +22,7 @@ export interface WhyRequest {
 	given: string;
 }
 
-export interface WhyOutcome {
+interface WhyOutcome {
 	id: string;
 	/** True = an earlier chat for the same sentence was reopened; nothing was generated. */
 	reused: boolean;

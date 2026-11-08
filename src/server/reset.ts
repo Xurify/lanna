@@ -23,7 +23,7 @@ export function dataLocations(): { data: string; backups: string; backupCount: n
 	return { data: PATHS.data, backups: BACKUPS_DIR, backupCount };
 }
 
-export interface ResetOutcome {
+interface ResetOutcome {
 	profile: string;
 	backup: string;
 }

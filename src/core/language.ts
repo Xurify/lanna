@@ -100,12 +100,6 @@ export function countryOf(info: Pick<LanguageInfo, "tag" | "country">): string {
 		return "the country";
 	}
 }
-
-/** ` (e.g. …)`, or nothing when the language has no example. */
-export function eg(example: string | undefined): string {
-	return example ? ` (e.g. ${example})` : "";
-}
-
 export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
 	slovak: {
 		id: "slovak",

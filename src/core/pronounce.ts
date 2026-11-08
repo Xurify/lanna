@@ -24,9 +24,9 @@ import { foldedWords, wordMatch } from "./speak.ts";
 
 export type PronEngine = "azure" | "match";
 
-export type PronError = "omission" | "insertion" | "mispronunciation";
+type PronError = "omission" | "insertion" | "mispronunciation";
 
-export interface PronPhoneme {
+interface PronPhoneme {
 	p: string;
 	/** 0..100 */
 	score: number;
@@ -157,8 +157,8 @@ export interface PronReport {
 	words: Array<{ word: string; score: number; n: number }>;
 }
 
-export const WEAK_SOUND = 60;
-export const WEAK_WORD = 60;
+const WEAK_SOUND = 60;
+const WEAK_WORD = 60;
 
 /** What to work on, across many scored lines: the sounds and the words
  *  that stay low. A sound counts once it was heard at least twice. */

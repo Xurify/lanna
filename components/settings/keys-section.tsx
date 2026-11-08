@@ -85,7 +85,7 @@ export function classifyKeys(
 }
 
 /** Status line such as "…ab12 · 64 chars · saved 2026-10-28". " · env" marks an env-owned value. */
-export function keyStatusLine(status: AuthKeyStatus): string {
+function keyStatusLine(status: AuthKeyStatus): string {
 	if (!status.present || !status.masked) return "not set";
 	const tail = status.masked.replace(/ \((\d+) chars\)$/, "");
 	const chars = status.masked.match(/\((\d+) chars\)$/)?.[1] ?? "?";

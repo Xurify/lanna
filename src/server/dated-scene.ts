@@ -24,7 +24,7 @@ export class DatedSceneError extends Error {
 	}
 }
 
-export interface DatedScenesToday {
+interface DatedScenesToday {
 	/** The nearest scene whose date has not come yet (today counts). */
 	next: DatedSceneView | null;
 	/** Scenes whose date has passed and that have no line yet. */

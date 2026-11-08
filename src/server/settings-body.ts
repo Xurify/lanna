@@ -71,7 +71,7 @@ function asRecord(body: unknown): Record<string, unknown> | null {
 }
 
 /** general: { autoUpdate?: boolean } */
-export function parseGeneralSettingsBody(body: unknown): SettingsBodyResult<GeneralSettings> {
+function parseGeneralSettingsBody(body: unknown): SettingsBodyResult<GeneralSettings> {
 	const raw = asRecord(body);
 	if (!raw) return { ok: false, error: "Invalid JSON body" };
 	const settings: GeneralSettings = {};
@@ -192,7 +192,7 @@ function parseHexOrNull(value: unknown, field: string): { color?: string | null;
 
 /** appearance: { mode?, background?, fontFamily?, proseFontSize?,
  *  sessionNameSerif?, mdRendering? } */
-export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<AppearanceSettings> {
+function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<AppearanceSettings> {
 	const raw = asRecord(body);
 	if (!raw) return { ok: false, error: "Invalid JSON body" };
 	const settings: AppearanceSettings = {};
@@ -265,7 +265,7 @@ export function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<A
  *  present-but-empty slot object is rejected (absent slot = unset; say
  *  what you mean). Catalog validity is checked by the route
  *  (validateChatSettings discipline). */
-export function parseModelsSettingsBody(body: unknown): SettingsBodyResult<ModelsSettings> {
+function parseModelsSettingsBody(body: unknown): SettingsBodyResult<ModelsSettings> {
 	const raw = asRecord(body);
 	if (!raw) return { ok: false, error: "Invalid JSON body" };
 	const settings: ModelsSettings = {};
@@ -296,7 +296,7 @@ export function parseModelsSettingsBody(body: unknown): SettingsBodyResult<Model
  *  smaller threshold would re-summarize the tail it just wrote). Absent =
  *  factory default 150k at resolution. Replace-whole, like every
  *  section. */
-export function parseCompactionSettingsBody(body: unknown): SettingsBodyResult<CompactionSettings> {
+function parseCompactionSettingsBody(body: unknown): SettingsBodyResult<CompactionSettings> {
 	const raw = asRecord(body);
 	if (!raw) return { ok: false, error: "Invalid JSON body" };
 	const settings: CompactionSettings = {};
@@ -326,5 +326,3 @@ export const SETTINGS_SECTIONS = {
 	compaction: parseCompactionSettingsBody,
 	models: parseModelsSettingsBody,
 } as const;
-
-export type SettingsSectionName = keyof typeof SETTINGS_SECTIONS;

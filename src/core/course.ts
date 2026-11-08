@@ -16,7 +16,7 @@
 import type { LexiconEntry, LexiconExample } from "./review.ts";
 
 export type CourseStage = "a1" | "a2" | "b1" | "b2";
-export const COURSE_STAGES: readonly CourseStage[] = ["a1", "a2", "b1", "b2"];
+const COURSE_STAGES: readonly CourseStage[] = ["a1", "a2", "b1", "b2"];
 
 /** A lesson unit: a grammar point drilled on tagged forms, or a set of words. */
 export interface CourseUnit {
@@ -103,14 +103,8 @@ export function perCourse<T>(build: (course: Course | null) => T): () => T {
 		return memo.value;
 	};
 }
-
-/** Tests and the browser bootstrap only. */
-export function setActiveCourse(course: Course | null): void {
-	(globalThis as Record<string, unknown>)[ACTIVE_KEY] = course ?? undefined;
-}
-
 /** The icons the path can draw (components/lesson/unit-icon.tsx). */
-export const UNIT_GLYPHS = [
+const UNIT_GLYPHS = [
 	"book", "book-open", "users", "coffee", "map-pin", "user-round", "door-open", "handshake", "palette", "history", "gift", "key", "signpost", "briefcase", "pen",
 	"copy", "hash", "wand", "star", "footprints", "move-horizontal", "paintbrush", "shuffle", "dices", "smile", "ear", "message-circle-question", "tag", "repeat",
 	"calendar-clock", "git-compare", "megaphone", "heart", "ban", "clock", "arrow-right-left", "route", "link", "quote", "trending-up", "layers", "phone", "file-text",
@@ -120,13 +114,13 @@ export const UNIT_GLYPHS = [
 ] as const;
 
 /** Sentences a grammar unit needs to be worth keeping: a lesson is 12 reps. */
-export const MIN_UNIT_SENTENCES = 12;
+const MIN_UNIT_SENTENCES = 12;
 /** Words a theme needs. */
-export const MIN_THEME_WORDS = 6;
+const MIN_THEME_WORDS = 6;
 const MAX_WORDS_IN_SENTENCE = 12;
 
 /** The grammar cells a blanked form fills, each a list of tags. */
-export function cellsOf(entry: Pick<LexiconEntry, "formTags">, form: string, tag: string): string[][] {
+function cellsOf(entry: Pick<LexiconEntry, "formTags">, form: string, tag: string): string[][] {
 	const want = form.toLocaleLowerCase(tag);
 	for (const [f, cells] of Object.entries(entry.formTags ?? {})) {
 		if (f.toLocaleLowerCase(tag) === want) return cells.map((c) => c.split(" "));
@@ -191,7 +185,7 @@ export function tidyTitle(title: string): string {
 }
 const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean) : []);
 
-export interface CourseCheck {
+interface CourseCheck {
 	course: Course;
 	/** What was dropped and why, for the build log and the notice. */
 	dropped: string[];
@@ -320,7 +314,7 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 }
 
 /** A language's story bible for Read and Speak (src/server/world.ts). */
-export interface DraftWorld {
+interface DraftWorld {
 	series: string;
 	language: string;
 	version: 1;

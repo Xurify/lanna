@@ -30,7 +30,7 @@ import { useActiveLanguage } from "@/components/speech";
 export type Goal = LearnerGoal;
 
 /** The day's next step: the first task in plan order not done yet. */
-export function nextTask(plan: Plan | null): PlanTask | null {
+function nextTask(plan: Plan | null): PlanTask | null {
 	return plan?.tasks.find((t) => !t.done) ?? null;
 }
 
@@ -38,81 +38,6 @@ export function nextTask(plan: Plan | null): PlanTask | null {
 function dayName(key: string): string {
 	return new Date(`${key}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" });
 }
-
-export function DailyPlan({
-	plan,
-	nextUnit,
-	pace,
-	backlog = 0,
-	busy = false,
-	onSpeak,
-}: {
-	plan: Plan | null;
-	/** The Continue unit: "one more lesson" once the plan is done. */
-	nextUnit: string;
-	/** The goal against the plan and the last seven days' logged minutes. */
-	pace?: { goalMinutes: number; plannedMinutes: number; dailyAverage: number; windowDays: number };
-	/** Unfinished tasks from the last seven days. */
-	backlog?: number;
-	busy?: boolean;
-	onSpeak: (task: PlanTask) => void;
-}) {
-	const tasks = plan?.tasks ?? [];
-	const done = plan?.done ?? 0;
-	const total = plan?.total ?? 0;
-	const up = nextTask(plan);
-	const left = tasks.filter((t) => !t.done).reduce((n, t) => n + t.minutes, 0);
-	const complete = total > 0 && done >= total;
-
-	return (
-		<section className="rounded-3xl border bg-card p-4 sm:p-5" data-testid="daily-plan" aria-labelledby="plan-title">
-			<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-1">
-				<h2 id="plan-title" className="text-xl font-extrabold text-foreground">
-					Today&apos;s plan
-				</h2>
-				<p className="text-sm font-semibold tabular-nums text-muted-foreground" data-testid="plan-summary">
-					{!plan ? "\u00a0" : complete ? `All ${total} done` : done === 0 ? `${total} tasks · about ${left} min` : `${done} of ${total} done · about ${left} min left`}
-				</p>
-			</div>
-			{pace && plan && (
-				<p className="mt-1 px-1 text-sm text-muted-foreground" data-testid="plan-pace">
-					Goal {pace.goalMinutes} min a day · today&apos;s plan about {pace.plannedMinutes} min · the last {pace.windowDays} days averaged {pace.dailyAverage} min a day
-				</p>
-			)}
-			{backlog > 0 && pace && (
-				<p className="mt-1 px-1 text-sm font-semibold text-sun" data-testid="plan-backlog">
-					{backlog} unfinished {backlog === 1 ? "task" : "tasks"} left over from the last {pace.windowDays} days
-				</p>
-			)}
-			<PlanProgress tasks={tasks} />
-
-			{complete && (
-				<div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sun/40 bg-sun/5 p-4" data-testid="plan-complete">
-					<div>
-						<p className="text-lg font-extrabold text-foreground">All done for today. Pekne!</p>
-						<p className="text-sm text-muted-foreground">
-							{pace ? `That is ${plan?.minutes ?? 0} of your ${pace.goalMinutes} min goal. ` : ""}Practice freely below, or keep going on your path.
-						</p>
-					</div>
-					<Link href={`/lesson?unit=${nextUnit}`} className={cn(SECONDARY, SMALL)} data-testid="plan-one-more">
-						One more lesson
-					</Link>
-				</div>
-			)}
-
-			{plan ? (
-				<ol className="mt-3 flex flex-col gap-1" data-testid="plan-tasks">
-					{tasks.map((t) => (
-						<li key={t.id}>{t === up ? <NextTask task={t} busy={busy} onSpeak={onSpeak} /> : <TaskRow task={t} busy={busy} onSpeak={onSpeak} />}</li>
-					))}
-				</ol>
-			) : (
-				<PlanSkeleton />
-			)}
-		</section>
-	);
-}
-
 /** One segment per task, filled in the task's strand ink once it is done. */
 function PlanProgress({ tasks }: { tasks: PlanTask[] }) {
 	return (
@@ -380,50 +305,6 @@ export function WeakSpots({ weak, className = "mt-4 border-t pt-4" }: { weak: We
 					</li>
 				)}
 			</ul>
-		</div>
-	);
-}
-
-/** The pairs of words the learner gives one for the other, and the
- *  look-alikes predicted from them (src/core/mixups.ts). One link opens the
- *  Mix-ups lesson, which takes them all. */
-export function MixUps({ mixups, className = "mt-4 border-t pt-4" }: { mixups: MixupSummary[]; className?: string }) {
-	const lang = useActiveLanguage();
-	const open = mixups.filter((m) => m.status === "active");
-	const probes = mixups.filter((m) => m.status === "probe");
-	if (!open.length && !probes.length) return null;
-	return (
-		<div className={className} data-testid="mixups">
-			<p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-				<ArrowLeftRightIcon className="size-4 text-miss" aria-hidden="true" />
-				Words you mix up
-			</p>
-			<ul className="mt-2 flex flex-col gap-0.5">
-				{open.slice(0, 4).map((m) => (
-					<li key={m.key} className="py-1.5" data-testid={`mixup-${m.key}`}>
-						<span className="block text-sm font-bold text-foreground" lang={lang?.code}>
-							{m.words.join(" / ")}
-						</span>
-						<span className="block text-xs text-muted-foreground">{m.line}</span>
-					</li>
-				))}
-				{probes.length > 0 && (
-					<li className="py-1.5 text-xs text-muted-foreground" data-testid="mixup-probes">
-						<span className="font-bold text-foreground">{open.length ? "Likely next" : "To test"}:</span>{" "}
-						<span lang={lang?.code}>{probes.slice(0, 4).map((m) => m.words.join(" / ")).join(", ")}</span>
-						{open.length ? " — the same pattern, not tested yet" : " — predicted from pairs you have mixed up"}
-					</li>
-				)}
-			</ul>
-			<Link href="/lesson?mode=mixups" className={cn(SECONDARY, SMALL, "mt-2 pointer-coarse:min-h-11")} data-testid="mixups-practice">
-				Practice them
-			</Link>
-			<Link href="/catch" className="mt-2 ml-3 inline-block font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="mixups-catch">
-					Catch the mistake
-				</Link>
-				<Link href="/mistakes" className="mt-2 ml-3 inline-block font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="mixups-all">
-				All my mistakes
-			</Link>
 		</div>
 	);
 }

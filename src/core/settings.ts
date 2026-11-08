@@ -94,8 +94,8 @@ export const DEFAULT_THINKING_ORDER = [
  *  this JSON; in-band consumers (the job record's error field) carry the
  *  human `error` line. `missing` names the slot TIER(S) the refused
  *  action needs and found unset. */
-export const MODELS_NOT_CONFIGURED_CODE = "models_not_configured" as const;
-export interface ModelsNotConfigured {
+const MODELS_NOT_CONFIGURED_CODE = "models_not_configured" as const;
+interface ModelsNotConfigured {
 	/** Human-readable — safe to render as-is. */
 	error: string;
 	/** The machine discriminator the client switches on. */
@@ -118,17 +118,6 @@ export function modelsNotConfigured(missing: ModelSlotName[]): ModelsNotConfigur
 export function isModelsRefusal(error: string | undefined): boolean {
 	return !!error && error.startsWith(modelsNotConfigured([]).error);
 }
-/** The typed throw for in-process seams: callers surface the 503 envelope
- *  (routes) instead of logging a failure. */
-export class ModelsNotConfiguredError extends Error {
-	readonly envelope: ModelsNotConfigured;
-	constructor(missing: ModelSlotName[]) {
-		super(modelsNotConfigured(missing).error);
-		this.name = "ModelsNotConfiguredError";
-		this.envelope = modelsNotConfigured(missing);
-	}
-}
-
 /** The key-presence refusal (provider-key interlude, owner, 2026-09-25):
  * a PINNED model is not enough — its provider's key must be present, or
  * the action dies mid-stream masked to a generic error. Same envelope
@@ -166,18 +155,6 @@ export function providerKeyMissing(provider: string, slots: ModelSlotName[]): Pr
 export function isProviderKeyRefusal(error: string | undefined): boolean {
 	return !!error && error.endsWith(PROVIDER_KEY_MISSING_TAIL);
 }
-/** The typed throw for in-process seams — the ProviderKeyMissing sibling of
- * ModelsNotConfiguredError: callers surface the 503 envelope (routes). */
-export class ProviderKeyMissingError extends Error {
-	readonly envelope: ProviderKeyMissing;
-	constructor(provider: string, slots: ModelSlotName[]) {
-		const envelope = providerKeyMissing(provider, slots);
-		super(envelope.error);
-		this.name = "ProviderKeyMissingError";
-		this.envelope = envelope;
-	}
-}
-
 /** One slot's stored state. BYOK (owner, 2026-09-22): the WRITE side
  *  requires model (a level alone can never run — no factory floor); the
  *  sanitizer keeps whatever is on disk, but RESOLUTION treats a slot

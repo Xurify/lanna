@@ -30,7 +30,7 @@ export function isTimedActivity(v: unknown): v is TimedActivity {
 export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, listen: 20, read: 20, watch: 90, speak: 20, reread: 10, fast: 10 };
 
 /** What a day's ledger holds (src/store/progress.ts DayRecord). */
-export interface MinutesLedger {
+interface MinutesLedger {
 	minutes?: number;
 	minutesBy?: Partial<Record<TimedActivity, number>>;
 }

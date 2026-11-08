@@ -69,7 +69,7 @@ export interface PlacementSession {
 	ms?: number;
 }
 
-export interface PlacementIndexEntry {
+interface PlacementIndexEntry {
 	id: string;
 	startedAt: string;
 	endedAt: string;
