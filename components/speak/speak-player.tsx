@@ -26,6 +26,7 @@ import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { COLUMN, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
+import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SceneBoard } from "@/components/speak/scene-board";
 import { SettingsLink } from "@/components/settings/settings-link";
@@ -325,11 +326,11 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 					return;
 				}
 				if (phase === "scene" && session && speakCounts(session.turns).learner === 0) void post({ action: "drop", id: session.id }).catch(() => undefined);
-				router.push("/");
+				router.push(readOrigin());
 				return;
 			}
 			if (phase === "done" && e.key === "Enter") {
-				router.push("/");
+				router.push(readOrigin());
 				return;
 			}
 			if (phase !== "scene" || inField) return;
@@ -402,7 +403,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				onLeave={() => {
 					recorder.current?.cancel();
 					if (counts.learner === 0) void post({ action: "drop", id: session.id }).catch(() => undefined);
-					router.push("/");
+					router.push(readOrigin());
 				}}
 			/>
 

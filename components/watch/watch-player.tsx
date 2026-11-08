@@ -23,7 +23,7 @@
  *   - the comprehension check at your level, then the end screen: XP,
  *     lines got first time, words a minute, the words now in your deck.
  *
- * Full screen like a lesson. X and Escape go back to the shelf, and from the shelf Escape goes to Today. Research in src/core/watch.ts.
+ * Full screen like a lesson. X and Escape go back to the shelf, and from the shelf Escape returns to the page the player was opened from (components/origin.tsx). Research in src/core/watch.ts.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,6 +39,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { switchLanguage } from "@/components/switch-language";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
+import { readOrigin } from "@/components/origin";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
 import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
@@ -301,11 +302,11 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		[video, saving, mode, tapped, load, activeTime],
 	);
 
-	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to Today; a word popover closes first.
+	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to the page the player was opened from; a word popover closes first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "Escape" || document.querySelector("[data-word-popover]") || document.querySelector("[role=dialog]")) return;
-			if (stageRef.current === "shelf") router.push("/");
+			if (stageRef.current === "shelf") router.push(readOrigin());
 			else setStage("shelf");
 		};
 		window.addEventListener("keydown", onKey);
