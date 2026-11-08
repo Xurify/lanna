@@ -6,8 +6,8 @@ Every teaching step is a **predict → teach → check** cycle. The two question
 
 - Ask it before you teach the step, as its own turn. The learner answers first, and your teaching resolves the answer.
 - Its subject is the next form or pattern, not yet taught. The learner does not need to be able to answer it from what they know. The attempt is the point.
-- Point at the pattern they have seen, and let them try: "these four sentences all end the same way with the word after *s*; what do you expect after *s* with *sestra*?" Reveal nothing more.
-- Predictions can also come from a language they know: "in Estonian the word for *with* is a suffix; what do you think Slovak does?"
+- Point at the pattern they have seen, and let them try: "these three sentences all show the same ending after the preposition; what ending do you expect with this new noun?" Reveal nothing more.
+- Predictions can also come from a language they know: "in your known language this meaning is marked by a case suffix; what do you expect the target language uses?"
 - When the answer comes back, open the teaching by resolving it: what they predicted, what is true, and why, using the sentences as evidence. The correction lands on their attempt.
 - Skip the prediction when there is no meaningful next step: a wrap-up, or a repair after a missed check. Never let skipping become a habit.
 

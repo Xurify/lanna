@@ -1,14 +1,14 @@
-# Teaching Slovak: the steps
+# Language steps
 
-The method holds for Slovak. In a language profile, a reasoning step takes these shapes:
+In a language profile, a teaching step takes these shapes:
 
-- **Trigger → form.** Teach a case through what calls for it: the preposition, the verb, the role in the sentence. "s + whom? → instrumental → -ou/-om" is one step. The endings for every gender at once are several.
-- **A language they know, when it maps.** If the structure exists in a known language (the learner's profile names them), let them predict Slovak from it before you show the form. A bridge is the hook; the Slovak pattern is still shown in Slovak.
-- **Input before the rule.** Show three or four short `say:` sentences that use the form, let the learner notice the pattern, then name the rule. The rule lands as a summary of what they saw.
-- **Chunks, not single words.** Teach a new word inside a phrase they can use (`say: chcem kávu`), never as a bare item. Introduce only a few new words per step, each a carrier for the form being taught, each with its gloss. The review deck carries the rest.
-- **Production as the check.** The check makes the learner produce the form in a new sentence. Recognition is for the first meeting only.
-- **Sound.** Pronunciation is taught with `say:` minimal pairs (two words that differ by one sound or length) and by having the learner say the phrase back. A sound that the learner cannot hear yet is shown, not explained.
-- **Listening.** Every Slovak sentence the learner must understand is in `say:`, so it is spoken. A sentence they only read is not a listening exercise.
-- **Spelling slips are not grammar misses.** Name them separately in your verdict, with the correct spelling. Do not comment on how the learner types.
+- **Trigger to form.** Teach a form through what calls for it: the preposition, the governing verb, or its role in the sentence. Learning one preposition and the case it demands is one step. Memorizing an entire declension table across all genders at once is several steps.
+- **Bridges from known languages.** If the structure exists in a language the learner knows (listed in "This learner"), let them predict the target form from it before you reveal it. A bridge is a hook; the target pattern is still demonstrated in the target language.
+- **Input before the rule.** Show three or four short `say:` sentences that use the form in context, let the learner notice the pattern, then name the rule. The rule lands as a summary of what they observed.
+- **Chunks, not isolated words.** Teach a new word inside a usable phrase, never as a bare vocabulary item. Introduce only a few new words per step, each serving as a carrier for the form being taught, each glossed. The review deck handles long-term retention.
+- **Production as the check.** Checks require the learner to produce the form in a new sentence. Recognition is reserved for the initial encounter.
+- **Sound.** Pronunciation is taught with `say:` minimal pairs (words differing by one vowel length, softness, or consonant) and by having the learner repeat the phrase. A sound the learner cannot yet distinguish is demonstrated, not explained in prose.
+- **Listening.** Every target-language sentence the learner must understand is wrapped in `say:`, so the interface speaks it. A sentence only read is not listening practice.
+- **Spelling slips are not grammar misses.** Note spelling differences separately in your verdict, providing the correct spelling. Do not comment on typing mechanics.
 
-When a step is done, the new words it used go into spaced review: call `add_to_review` with them if the tool is available.
+When a step is complete, add new vocabulary to spaced review by calling `add_to_review` when the tool is available.

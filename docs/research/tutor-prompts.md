@@ -19,15 +19,16 @@
 
 The sources above are cited from the authors' published work as known to the author of this change. They were **not re-checked** against Crossref or the journals in this change. Check them before relying on a specific number or wording. The evidence-audit note ([evidence-audit.md](evidence-audit.md)) shows how that check was done for the rest of the app.
 
-## What was removed
+## What was removed and generalized
 
-- The axiom-and-derivation method (unconditional truths, "how could I have discovered this?", the click, "the hedge"). It is a method for building proofs of facts, not for building a language, and it asked the tutor to check every step before building on it, which for a learner who needs many repetitions wastes time.
-- The graph language in the planning doc ("minimal tree", "adding edges to the graph"). The plan map (`plan_init`) stays, because the learner sees it. Its nodes are now forms and skills.
-- The demo and figure guidance for physics-style instruments. It stays in `50-demos.md` only for language-shaped uses (a case board, a sound chart).
+- The axiom-and-derivation method (unconditional truths, proofs, physics-style derivations) was removed. Language acquisition requires comprehensible input, pattern recognition, and applied production rather than mathematical proofs.
+- Hardcoded language references were removed from the core teacher prompts (`system-prompt.md`, `prompts/teacher/*.md`). Core teaching methodology is language-agnostic, while target language specifics are loaded dynamically from `prompts/language/10-<profile>.md` or `curriculum/<profile>/prompt.md` based on `activeProfile()`.
+- The DAG map orientation in `10-planning.md` was corrected: `graph TD` renders top-down, with foundational forms at the top and downstream goals at the bottom.
+- Turn boundaries were clarified in `20-teaching.md`: turn 1 ends with `type: "predict"`, and turn 2 resolves the attempt in prose before ending with `type: "check"`.
+- The prompt instruction cache in `teacher-agent.ts` was made dynamic by keying on active language profile, avoiding stale Slovak prompts when switching profiles at runtime.
 
 ## What is still open
 
-- The prober files (`src/agent/prompts/prober/`) still use the general strand and "binary search" language and mention `list_sessions` and `list_propositions`. Those are the graph tools another thread is removing, and the prober is out of scope here.
-- `40-jobs.md` and the `research` tool still describe a general tutor. They are mechanics, so they stay.
-- The practice prompts (`src/agent/prompts/practice/`) carry the same general doctrine. Practice is a separate agent and a separate change.
-- No learner has yet used the new prompts. The owner should check a few real lessons for whether the tutor now drills forms, uses the words, and does not over-explain.
+- The prober files (`src/agent/prompts/prober/`) still use legacy search language and references to deprecated graph tools. Those are handled in a separate prober refactoring track.
+- The practice prompts (`src/agent/prompts/practice/`) maintain their own practice loop.
+- Numeric prefixes on prompt fragment filenames (`05-`, `10-`, etc.) remain actively enforced by runtime loaders and test suites (`FRAGMENT_RE = /^\d+-[\w.-]+\.md$/`) to guarantee deterministic composition order and block non-prompt files like `README.md` from leaking into LLM contexts.
