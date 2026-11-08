@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { useAppearance } from "./appearance.tsx";
 import { SettingsGroup, SettingsSection } from "./controls.tsx";
 import { LessonSoundsRow, PlaybackSpeedRow, VolumeRow, WordLookupModeRow } from "./device-prefs.tsx";
+import { SystemVoicesRow } from "./system-voices.tsx";
+import { SourcesSection } from "./sources-section.tsx";
 import { UpdateSettings } from "./update-settings.tsx";
 import { AiSection, QuizStyleRow } from "./ai-section.tsx";
 import type { ModelsSettings } from "@/src/core";
@@ -38,6 +40,7 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 import { KeysSection } from "./keys-section.tsx";
 import { AppearanceSection } from "./appearance-section.tsx";
 import {
+	BookMarkedIcon,
 	BotIcon,
 	CoinsIcon,
 	DatabaseIcon,
@@ -74,6 +77,7 @@ const SECTIONS = [
 	{ id: "keys", label: "API keys" },
 	{ id: "usage", label: "Spending" },
 	{ id: "data", label: "Data" },
+	{ id: "sources", label: "Sources" },
 ] as const;
 export type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -88,6 +92,7 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	general: SlidersHorizontalIcon,
 	sound: Volume2Icon,
 	data: DatabaseIcon,
+	sources: BookMarkedIcon,
 };
 
 export function SettingsDialogOpen({
@@ -346,22 +351,18 @@ function SettingsDialogBody({
 									<SettingsGroup label="Dictionary & word lookup" testid="group-word-lookup">
 										<WordLookupModeRow />
 									</SettingsGroup>
-									<SettingsGroup label="Credits" testid="group-credits">
-										<p className="text-[13px] text-muted-foreground" data-testid="credits-sentences">
-											Sentences from slovak.wiki: curated examples and Tatoeba (CC BY 2.0 FR).
-										</p>
-									</SettingsGroup>
 								</SettingsSection>
 							)}
 							{active === "sound" && (
 								<SettingsSection
 									title="Sound"
-									hint="Volume, speech speed and lesson sounds. Saved on this device."
+									hint="Volume, speech speed, system voices and lesson sounds. Saved on this device."
 									testid="section-sound"
 								>
 									<SettingsGroup label="Voice" testid="group-voice">
 										<VolumeRow />
 										<PlaybackSpeedRow />
+										<SystemVoicesRow />
 									</SettingsGroup>
 									<SettingsGroup label="Lessons" testid="group-sound">
 										<LessonSoundsRow />
@@ -459,6 +460,15 @@ function SettingsDialogBody({
 							{active === "data" && (
 								<SettingsSection title="Reset" hint="Start over from scratch" testid="section-reset">
 									<ResetSection />
+								</SettingsSection>
+							)}
+							{active === "sources" && (
+								<SettingsSection
+									title="Sources"
+									hint="Where the app's words, sentences, voices, scores and art come from, with the license where one is known."
+									testid="section-sources"
+								>
+									<SourcesSection onNavigate={onClose} />
 								</SettingsSection>
 							)}
 							{active === "usage" && (
