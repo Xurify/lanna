@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2Icon, MicIcon } from "lucide-react";
-import { useSettingsDialog } from "@/components/settings/settings-dialog";
+import { useSettingsDialog } from "@/components/settings/settings-context";
 import { Hint } from "@/components/ui/hint";
 
 /**

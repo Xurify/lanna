@@ -102,10 +102,10 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 	const active = cells.filter((c) => c.state === "some" || c.state === "goal").length;
 	return (
 		<figure className={cn("q-well", className)} aria-label="Days practiced in the last five weeks" data-testid="streak-calendar">
-			<h4>
+			<h3>
 				Streak <small>last 5 weeks</small>
-			</h4>
-			<div className="mt-3 grid grid-cols-7 gap-1.5" role="grid">
+			</h3>
+			<div className="mt-3 grid grid-cols-7 gap-1.5">
 				{["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((w) => (
 					<span key={w} className="text-center text-[11px] text-ink-3">
 						{w}
@@ -114,8 +114,6 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 				{cells.map((c) => (
 					<span
 						key={c.day}
-						role="gridcell"
-						aria-label={c.state === "future" ? undefined : c.label}
 						title={c.state === "future" ? undefined : c.label}
 						className={cn("mx-auto aspect-square w-full max-w-6 rounded-[5px]", c.state === "future" ? "bg-transparent shadow-[inset_0_0_0_1px_var(--q-line)]" : c.state === "goal" ? "bg-teal" : c.state === "some" ? "bg-teal-line" : "bg-well-2", c.day === last && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]")}
 					/>

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { EmptyState, KeyNote } from "@/components/quiet/empty-state";
-import { SettingsDialogProvider } from "@/components/settings/settings-dialog";
+import { SettingsDialogProvider } from "@/components/settings/settings-context";
 import { AiCallout } from "@/components/ai-callout";
 
 const wrap = (el: React.ReactElement) => renderToStaticMarkup(createElement(SettingsDialogProvider, null, el));

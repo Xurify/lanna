@@ -11,7 +11,7 @@ import { QIcon, QPie } from "@/components/quiet/icon";
 import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
 import type { QIconName } from "@/components/quiet/icon-paths";
-import { useSettingsDialog } from "@/components/settings/settings-dialog";
+import { useSettingsDialog } from "@/components/settings/settings-context";
 import type { Goal } from "@/components/daily-plan";
 import type { AfterPlan, CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";

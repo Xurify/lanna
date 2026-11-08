@@ -36,7 +36,7 @@ import {
 	KEYBOARD_ACTIONS,
 } from "@/src/core";
 import { isDictationActive } from "@/components/dictation";
-import { useSettingsDialog } from "@/components/settings/settings-dialog.tsx";
+import { useSettingsDialog } from "@/components/settings/settings-context";
 
 // Re-exported for the contract pin (tests/keyboard-toggle-sidebar.test.ts):
 // the dispatcher composes event names through the ONE helper — a second

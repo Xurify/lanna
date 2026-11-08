@@ -78,7 +78,7 @@ const SECTIONS = [
 	{ id: "usage", label: "Spending" },
 	{ id: "data", label: "Data" },
 ] as const;
-type SectionId = (typeof SECTIONS)[number]["id"];
+export type SectionId = (typeof SECTIONS)[number]["id"];
 
 const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
 	keys: KeyRoundIcon,
@@ -94,42 +94,22 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	data: DatabaseIcon,
 };
 
-/** `open(section?, row?)`. `row` is the key id (the env-var name) to unfold in Keys. */
-const DialogContext = createContext<{ open: (section?: string, row?: string) => void }>({ open: () => {} });
-
-/** AppShell-level mount: the sidebar row and the mod+, chord call this.
- *  `open(section)` lands the dialog on a specific section (the first-run
- *  setup flow deep-links to Keys when no provider key exists yet). */
-export function SettingsDialogProvider({
-	children,
+export function SettingsDialogOpen({
+	onClose,
+	initialSection,
+	initialRow,
 }: {
-	children: React.ReactNode;
+	onClose: () => void;
+	initialSection: SectionId;
+	initialRow: string | null;
 }) {
-	const [show, setShow] = useState(false);
-	const [landOn, setLandOn] = useState<SectionId>("general");
-	const [landOnRow, setLandOnRow] = useState<string | null>(null);
-	const open = useCallback((section?: string, row?: string) => {
-		setLandOn(section ? section as SectionId : "general");
-		setLandOnRow(row ?? null);
-		setShow(true);
-	}, []);
-	useEffect(() => window.lh?.onOpenSettings?.((section) => open(section)), [open]);
 	return (
-		<DialogContext.Provider value={{ open }}>
-			{children}
-			{show && (
-				<ChatGPTUIProvider>
-					<NativeSubscriptionUIProvider>
-						<SettingsDialog onClose={() => setShow(false)} initialSection={landOn} initialRow={landOnRow} />
-					</NativeSubscriptionUIProvider>
-				</ChatGPTUIProvider>
-			)}
-		</DialogContext.Provider>
+		<ChatGPTUIProvider>
+			<NativeSubscriptionUIProvider>
+				<SettingsDialog onClose={onClose} initialSection={initialSection} initialRow={initialRow} />
+			</NativeSubscriptionUIProvider>
+		</ChatGPTUIProvider>
 	);
-}
-
-export function useSettingsDialog() {
-	return useContext(DialogContext);
 }
 
 function SettingsDialog({

@@ -11,7 +11,7 @@
  */
 
 import type { ReactNode } from "react";
-import { useSettingsDialog } from "@/components/settings/settings-dialog";
+import { useSettingsDialog } from "@/components/settings/settings-context";
 import { useZeroKeys } from "@/components/setup-cta";
 
 export function SettingsLink({ keys = false, className, children }: { keys?: boolean; className?: string; children: ReactNode }) {

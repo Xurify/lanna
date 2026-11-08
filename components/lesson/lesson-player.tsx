@@ -683,7 +683,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: number; total: number; answered: boolean }) {
 	const n = Math.max(total, 1);
 	return (
-		<ol className="flex flex-1 items-center gap-1" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((index / n) * 100)} aria-label={`${index} of ${total} done`} data-testid="lesson-trail">
+		<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((index / n) * 100)} aria-label={`${index} of ${total} done`} className="flex flex-1 items-center" data-testid="lesson-trail">
+		<ol className="flex w-full items-center gap-1">
 			{Array.from({ length: n }, (_, i) => {
 				const rep = i < index ? reps[i] : i === index && answered ? reps[i] : undefined;
 				const current = i === index && !answered;
@@ -691,6 +692,7 @@ function LessonTrail({ reps, index, total, answered }: { reps: Rep[]; index: num
 					return <li key={i} className={cn("h-1 flex-1 rounded-full transition-colors duration-300", tone)} />;
 			})}
 		</ol>
+		</div>
 	);
 }
 
