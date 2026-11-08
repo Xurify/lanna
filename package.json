@@ -10,6 +10,15 @@
 	"desktopName": "learnharness.desktop",
 	"description": "An agent harness for learning: adaptive teaching, practice, and a persistent knowledge graph.",
 	"type": "module",
+	"sideEffects": [
+		"*.css",
+		"./src/server/**",
+		"./src/agent/**",
+		"./instrumentation.ts",
+		"./proxy.ts",
+		"./electron/**",
+		"./scripts/**"
+	],
 	"private": true,
 	"main": "electron/main.cjs",
 	"scripts": {

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2Icon, MicIcon } from "lucide-react";
 import { useSettingsDialog } from "@/components/settings/settings-context";
 import { Hint } from "@/components/ui/hint";
+import { setDictationActive } from "@/components/dictation-active";
 
 /**
  * Voice dictation — the cloud engine (STT wave 1, 2026-09-17).
@@ -204,15 +205,7 @@ export function rmsToMeter(rms: number): number {
  */
 let questionTarget: ((text: string) => void) | null = null;
 
-/* Is a dictation run live on this page? The Esc chain (keyboard wave A,
- * components/keyboard-shortcuts.tsx) needs a SYNCHRONOUS answer — the
- * stop handler can't report back through a CustomEvent. Set at start(),
- * cleared in cleanup() (every terminal path runs through cleanup). */
-let dictationActiveFlag = false;
-
-export function isDictationActive(): boolean {
-	return dictationActiveFlag;
-}
+export { isDictationActive } from "@/components/dictation-active";
 
 /* The finisher registry: submit paths FAR from the hook's owner (the
  * pending question's dock) need finish() without a prop bridge. Same
@@ -329,7 +322,7 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 	/** Full teardown of one run's machinery. Idempotent; generation-guarded by callers. */
 	const cleanup = useCallback(() => {
 		genRef.current++;
-		dictationActiveFlag = false;
+		setDictationActive(false);
 		flush(); // the deferred transcript appears when the run ends (owner round 2)
 		if (safetyRef.current) {
 			clearTimeout(safetyRef.current);
@@ -426,7 +419,7 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 	);
 
 	const start = useCallback(async () => {
-		dictationActiveFlag = true;
+		setDictationActive(true);
 		setError(null);
 		setPhase("connecting");
 		reconnectsRef.current = 0;

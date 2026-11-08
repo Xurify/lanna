@@ -9,6 +9,10 @@ const DialogContext = createContext<{ open: (section?: string, row?: string) => 
 
 // The dialog's code (sections, provider pickers, key forms) is a large share of
 // the first load, and it is only needed once the learner opens it.
+export function preloadSettingsDialog() {
+	void import("./settings-dialog.tsx");
+}
+
 const SettingsDialogOpen = dynamic(() => import("./settings-dialog.tsx").then((m) => m.SettingsDialogOpen), { ssr: false });
 
 /** AppShell-level mount: the sidebar row and the mod+, chord call this.
