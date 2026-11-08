@@ -27,7 +27,8 @@ after(() => {
 });
 
 const { createChatAgent, composeInstructions } = await import("../src/agent/teacher-agent.ts");
-const { closesChatReply, needsContinuation, appContentText, unitHref, tutorUnitAt, curriculumState, curriculumUnits } = await import("../src/core/index.ts");
+const { closesChatReply, needsContinuation, appContentText, unitHref, tutorUnitAt, chatLinkTarget, curriculumState, curriculumUnits } = await import("../src/core/index.ts");
+const { svgOf, latestReplyText } = await import("../src/server/drawing.ts");
 const { appContentNow } = await import("../src/server/app-content.ts");
 
 const POSE = { answer: "táto kniha", focus: "feminine this" };
@@ -100,6 +101,8 @@ describe("closesChatReply", () => {
 		assert.equal(closesChatReply([{ type: "text", text: "  " }, { type: "toolCall", name: "pose" }]), false);
 		assert.equal(closesChatReply([{ type: "text", text: "Hi" }]), false, "no calls: the loop ends on its own");
 		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "pose" }, { type: "toolCall", name: "check_slovak" }]), false);
+		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "research" }, { type: "toolCall", name: "pose" }]), true, "a dispatched job only acknowledges");
+		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "read" }]), false, "a file read is a check the reply needs");
 	});
 });
 
@@ -160,5 +163,59 @@ describe("tutorUnitAt", () => {
 		assert.equal(tutorUnitAt(`/lesson?unit=${drill.id}`), null);
 		assert.equal(tutorUnitAt("/read"), null);
 		assert.equal(tutorUnitAt(`/lesson?unit=${tutor.id}&x=1`), null);
+	});
+});
+
+describe("chatLinkTarget", () => {
+	const origin = "http://127.0.0.1:3010";
+	it("opens the app's own pages in place and a tutor unit as its chat", () => {
+		const tutor = curriculumUnits().find((u) => u.kind === "tutor")!;
+		assert.deepEqual(chatLinkTarget("/read?id=s1", origin), { kind: "app", path: "/read?id=s1" });
+		assert.deepEqual(chatLinkTarget("speak?scene=cafe", origin), { kind: "app", path: "/speak?scene=cafe" });
+		assert.deepEqual(chatLinkTarget(`${origin}/review`, origin), { kind: "app", path: "/review" });
+		assert.deepEqual(chatLinkTarget(`/lesson?unit=${tutor.id}`, origin), { kind: "tutor", unit: tutor.id });
+	});
+	it("keeps the server's own routes and unknown schemes as plain text, and sends other sites to a new window", () => {
+		assert.deepEqual(chatLinkTarget("/api/chats", origin), { kind: "text" });
+		assert.deepEqual(chatLinkTarget("javascript:alert(1)", origin), { kind: "text" });
+		assert.deepEqual(chatLinkTarget("//evil.example/x", origin), { kind: "web", href: "http://evil.example/x" });
+		assert.deepEqual(chatLinkTarget("https://slovak.wiki/a", origin), { kind: "web", href: "https://slovak.wiki/a" });
+		assert.deepEqual(chatLinkTarget("#fn-1", origin), { kind: "anchor", href: "#fn-1" });
+		assert.deepEqual(chatLinkTarget(undefined, origin), { kind: "text" });
+	});
+});
+
+describe("a drawing asked for after the reply", () => {
+	const SVG = '<svg viewBox="0 0 320 80" style="fill:none"><text x="16" y="40" style="fill:var(--ink);font-family:var(--font-sans);font-size:15">v meste</text></svg>';
+
+	it("is made by the drawer with the reply in hand, kept off the model's next prompt, and ends the turn", async () => {
+		const model = scripted([
+			() => fauxAssistantMessage([fauxText("`say: v meste` = \"in town\"."), fauxToolCall("draw", { brief: "v meste in a box" }, { id: "d1" }), fauxToolCall("pose", POSE, { id: "p1" })]),
+			() => fauxAssistantMessage([fauxText("Never asked for.")]),
+		]);
+		const seen: Array<{ brief: string; reply: string }> = [];
+		let agent: ReturnType<typeof createChatAgent>;
+		agent = createChatAgent({ drawing: { draw: async (brief) => (seen.push({ brief, reply: latestReplyText(agent.state.messages) }), SVG) } }, { engine: model.engine });
+		await agent.prompt({ role: "user", content: "Where is it?", timestamp: Date.now() });
+		assert.equal(model.calls(), 1);
+		assert.deepEqual(seen, [{ brief: "v meste in a box", reply: "`say: v meste` = \"in town\"." }]);
+		const result = agent.state.messages.find((m) => (m as { toolName?: string }).toolName === "draw") as { details: unknown; content: Array<{ text: string }> };
+		assert.deepEqual(result.details, { svg: SVG });
+		assert.ok(!result.content[0]!.text.includes("<svg"));
+	});
+
+	it("says so when the drawer fails, and the reply stands", async () => {
+		const model = scripted([() => fauxAssistantMessage([fauxText("Text."), fauxToolCall("draw", { brief: "x" }, { id: "d1" })])]);
+		const agent = createChatAgent({ drawing: { draw: async () => null } }, { engine: model.engine });
+		await agent.prompt({ role: "user", content: "Draw it", timestamp: Date.now() });
+		const result = agent.state.messages.find((m) => (m as { toolName?: string }).toolName === "draw") as { details: unknown };
+		assert.deepEqual(result.details, { failed: true });
+	});
+
+	it("accepts only a drawing that passes the sketch allowlist", () => {
+		assert.equal(svgOf("```svg\n" + SVG + "\n```"), SVG);
+		assert.equal(svgOf(`Here: ${SVG}`), SVG);
+		assert.equal(svgOf("no drawing"), null);
+		assert.equal(svgOf("```svg\n<svg><script>x</script></svg>\n```"), null);
 	});
 });

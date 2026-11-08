@@ -7,9 +7,10 @@ import type { ExtraProps } from "streamdown";
 import { ArrowUpRightIcon } from "lucide-react";
 import { startTutorChat } from "@/components/lesson/tutor";
 import { mdComponents } from "@/components/md-blocks";
-import { curriculumUnit, tutorUnitAt, tutorUnitPrompt } from "@/src/core";
+import { chatLinkTarget, curriculumUnit, tutorUnitPrompt } from "@/src/core";
 import { cn } from "@/lib/utils";
 
+const SERVER_ORIGIN = "http://localhost";
 const LINK = "font-medium text-teal-2 underline decoration-teal-line decoration-[1.5px] underline-offset-4 transition-colors hover:text-teal hover:decoration-teal";
 
 function TutorUnitLink({ unitId, children }: { unitId: string; children: ReactNode }) {
@@ -28,25 +29,33 @@ function TutorUnitLink({ unitId, children }: { unitId: string; children: ReactNo
 	);
 }
 
-/** A link in a tutor's reply: the app's own pages open in place, anything else in a new window. */
 export function ChatLink({ href, children, node: _node, className: _className, ...rest }: ComponentProps<"a"> & ExtraProps) {
-	if (!href || href === "streamdown:incomplete-link") return <span>{children}</span>;
-	if (href.startsWith("/") && !href.startsWith("//")) {
-		const tutor = tutorUnitAt(href);
-		if (tutor) return <TutorUnitLink unitId={tutor}>{children}</TutorUnitLink>;
-		return (
-			<Link href={href} data-testid="chat-link" className={LINK}>
-				{children}
-			</Link>
-		);
+	const target = href === "streamdown:incomplete-link" ? ({ kind: "text" } as const) : chatLinkTarget(href, typeof window === "undefined" ? SERVER_ORIGIN : window.location.origin);
+	switch (target.kind) {
+		case "text":
+			return <span>{children}</span>;
+		case "tutor":
+			return <TutorUnitLink unitId={target.unit}>{children}</TutorUnitLink>;
+		case "app":
+			return (
+				<Link href={target.path} data-testid="chat-link" className={LINK}>
+					{children}
+				</Link>
+			);
+		case "anchor":
+			return (
+				<a {...rest} href={target.href} className={LINK}>
+					{children}
+				</a>
+			);
+		case "web":
+			return (
+				<a {...rest} href={target.href} target="_blank" rel="noreferrer" className={cn(LINK, "inline-flex items-baseline gap-0.5")}>
+					{children}
+					<ArrowUpRightIcon className="size-3.5 self-center" strokeWidth={1.8} aria-hidden="true" />
+				</a>
+			);
 	}
-	return (
-		<a {...rest} href={href} target="_blank" rel="noreferrer" className={cn(LINK, "inline-flex items-baseline gap-0.5")}>
-			{children}
-			<ArrowUpRightIcon className="size-3.5 self-center" strokeWidth={1.8} aria-hidden="true" />
-		</a>
-	);
 }
 
-/** The tutor chat's Markdown: the shared blocks, with the app's own links opening in place. */
 export const chatMdComponents = { ...mdComponents, a: ChatLink };

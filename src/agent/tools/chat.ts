@@ -14,15 +14,20 @@ export interface ChatAnswerSeam {
 	record(answer: Omit<ChatAnswer, "at" | "chatId">): void;
 }
 
+export interface ChatDrawingSeam {
+	draw(brief: string, signal?: AbortSignal): Promise<string | null>;
+}
+
 export interface ChatToolContext {
 	review?: ReviewSeam;
 	answers?: ChatAnswerSeam;
 	jobs?: JobToolContext;
+	drawing?: ChatDrawingSeam;
 }
 
 const poseInput = Type.Object({
 	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, committed before the learner answers. Check any form you are not sure of before you write the question." }),
-	accept: Type.Optional(Type.Array(Type.String(), { description: "Other answers that are also fully correct." })),
+	accept: Type.Optional(Type.String({ description: "Other answers that are also fully correct, in quotes like every value, separated by \" | \"." })),
 	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words (\"feminine this\", \"locative after v\")." }),
 });
 
@@ -61,6 +66,31 @@ function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<typeof gradeInpu
 	};
 }
 
+const drawInput = Type.Object({
+	brief: Type.String({
+		minLength: 1,
+		description: "What the picture shows in a few words, its layout, and the forms it labels with their meanings, all from your reply. Never the answer to your question.",
+	}),
+});
+
+export type ChatDrawing = { svg: string } | { failed: true };
+
+function drawTool(seam: ChatDrawingSeam): AgentTool<typeof drawInput, ChatDrawing> {
+	return {
+		name: "draw",
+		label: "draw",
+		description: "Ask for one drawing under the reply you just wrote. Call it after the text, with the other record calls; a drawer makes it while the learner reads.",
+		parameters: drawInput,
+		executionMode: "parallel",
+		execute: async (_toolCallId, input, signal) => {
+			const svg = await seam.draw(input.brief, signal).catch(() => null);
+			return svg
+				? { content: [{ type: "text", text: `Drawn under the reply: ${input.brief}` }], details: { svg } }
+				: { content: [{ type: "text", text: "The drawing could not be made; the reply stands without it." }], details: { failed: true } };
+		},
+	};
+}
+
 export function chatTools(ctx: ChatToolContext): Record<string, AgentTool<any>> {
 	const jobs = ctx.jobs ? jobTools(ctx.jobs) : null;
 	return healToolRecord({
@@ -73,5 +103,6 @@ export function chatTools(ctx: ChatToolContext): Record<string, AgentTool<any>> 
 		...(jobs?.research ? { research: jobs.research } : {}),
 		...(jobs?.pdf ? { pdf: jobs.pdf } : {}),
 		...languageTools(ctx.review),
+		...(ctx.drawing ? { draw: drawTool(ctx.drawing) } : {}),
 	});
 }

@@ -23,6 +23,7 @@ import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
 import { CHAT_RECORD_TOOLS, questionOpen, repeatsEarlierText } from "@/src/core";
 import { chatMdComponents } from "@/components/chat-link";
+import { SketchFigure } from "@/components/sketch-figure";
 import { ChatBoard, useDrill } from "@/components/chat-board";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
@@ -1148,6 +1149,15 @@ export function Chat({
 		void send({ type: "text", text: t });
 	};
 
+	// A chat turn ends right after its record calls, so a steer would wait for the next run; the chat
+	// holds what the learner sends during a turn and sends it the moment the turn is over.
+	const [heldAnswer, setHeldAnswer] = useState<string | null>(null);
+	useEffect(() => {
+		if (busy || pending || compacting || heldAnswer === null) return;
+		setHeldAnswer(null);
+		void send({ type: "text", text: heldAnswer });
+	}, [busy, pending, compacting, heldAnswer, send]);
+
 	/* STEER VS SEND (owner arc 2026-10-03): a send while a turn runs steers
 	 * it — the quiet queue + the live agent's steering rail; the turn's own
 	 * stream lands the card when pi drains it. The branch is BUSY, not
@@ -1161,6 +1171,11 @@ export function Chat({
 		if (pending || compacting) return;
 		const t = textRef.current.trim();
 		if (!t) return;
+		if (busy && kind === "chat") {
+			applyText("");
+			setHeldAnswer((held) => (held ? `${held}\n${t}` : t));
+			return;
+		}
 		if (busy) {
 			applyText("");
 			void steer(t);
@@ -1510,6 +1525,11 @@ export function Chat({
 																onOpen={() => setPlanOpen(true)}
 															/>
 														);
+													case "tool-draw": {
+														const drawn = part.state === "output-available" ? (part.output as { svg?: string } | null)?.svg : undefined;
+														if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
+														return part.state !== "output-available" && part.state !== "output-error" && busy ? <SketchFigure key={pi} source="" incomplete /> : null;
+													}
 													case "tool-quiz":
 													case "tool-probe":
 													case "tool-ask_user_question":
@@ -1572,6 +1592,12 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
+							{kind === "chat" && heldAnswer !== null && (
+								<div data-testid="held-answer" className="mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] whitespace-pre-wrap text-ink-3">
+									{heldAnswer}
+									<p className="mt-1 text-xs font-normal tracking-normal text-muted-foreground">Sends when the tutor is done</p>
+								</div>
+							)}
 							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">

@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 8 November: the chat starts at once and points to the app's own lessons (branch `feat/instant-chat`)
+
+- **Why:** the owner: starting a chat was slow and not seamless; the dot in the margin and the serif were copied from riddled.ai; the chat said it could not see the app's lessons. Rule E77.
+- **What changed:** pressing Enter on Ask shows the chat at once (about 60 ms, no page load), and the reply comes in one model call instead of two or three, so its text starts sooner (follow-ups in about 2 to 3 s). The tutor knows every page, unit, scene, cheatsheet and story with your state on each, answers "do we have lessons on…" with links, and may offer one fitting link after it teaches; a link opens in place, a tutor unit as its own chat. The tutor's text is in the app's own font, without the dot and the dotted underline.
+- **Checked:** production build in the sandbox with a copy of the real profile and the real key: five chats started from Ask, in Day and Night, at 1280 and 390 px. A malformed `pose` in one run made the reply appear twice; a closed reply now never retries its record. Full suite green.
+- **Unverified:** the owner's own machine and phone; how often the tutor offers a link in a longer chat.
+
 ## 8 November: the chat is a plain conversation, after riddled.ai (branch `feat/light-tutor-chat`)
 
 - **Why:** the owner: the chat is "way too clunky" and slow (picking a model, the thinking, long replies, late drawings), and should "feel very easy to follow along and not overwhelming at all", taking "major inspiration from Riddled.ai". Rule E76; research: [research/riddled-chat.md](research/riddled-chat.md) (riddled.ai's public pages, its shared Slovak demonstratives thread and the demo video; no account, no prompt extraction).

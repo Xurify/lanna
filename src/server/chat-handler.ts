@@ -53,6 +53,8 @@ import type { ChatRecord } from "../core/contracts/chat.ts";
 import { appendChatAnswer } from "../store/chat-answers.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
 import { appContentNow } from "./app-content.ts";
+import { drawForReply, latestReplyText } from "./drawing.ts";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 
 /** LangHarness: the spaced-review seam every agent's language tools use. */
 const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
@@ -67,7 +69,7 @@ function chatAppContent(chatId: string): string | undefined {
 		return appContentNow();
 	} catch (err) {
 		console.error(`[chat ${chatId}] the app's content map could not be read:`, err);
-		return undefined;
+		return "# What the app has\n\nNot available this turn: say you cannot look up the app's lessons right now.";
 	}
 }
 
@@ -422,6 +424,7 @@ export async function handleChatInput(
 	// split, no plan/question/job tools; the whole registry is
 	// problem + conclude. buildAgent stays honored (the test seam is
 	// uniform across kinds).
+	let turnMessages: () => readonly AgentMessage[] = () => [];
 	const constructed: TeachingAgent = buildAgent
 		? buildAgent({ ...agentOpts, teaching, kind: record.kind })
 		: record.kind === "chat"
@@ -429,6 +432,7 @@ export async function handleChatInput(
 					{
 						review: reviewSeam,
 						answers: { record: (answer) => appendChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
+						drawing: { draw: (brief, signal) => drawForReply({ engine, reply: latestReplyText(turnMessages()), brief, signal, onUsage: collectUsage, chatId }) },
 						jobs: {
 							chatId,
 							jobStore: stores.jobStore,
@@ -503,6 +507,7 @@ export async function handleChatInput(
 		// run's first LLM call (the native replacement for continuation
 		// coalescing). Settlement still cannot beat the flow below: it needs
 		// a streamed response, which never happens inside the constructor.
+		turnMessages = () => constructed.state.messages;
 		registerLiveAgent(chatId, constructed, input.type !== "steers" && input.type !== "continue",
 			input.type === "steers" ? new Set(appends.map((message) => message.id)) : undefined);
 		// Debug recorder run marker (owner, 2026-10-04): correlates the

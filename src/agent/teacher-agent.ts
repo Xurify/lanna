@@ -133,7 +133,6 @@ export interface AgentBuildOptions {
 	chatId?: string;
 	/** A model-only note appended to the learner's typed text (the chat's checker evidence). */
 	noteLearnerText?: (text: string) => string | null;
-	/** What the app has, with links: the chat's map of lessons, scenes and pages. */
 	appContent?: string;
 }
 
@@ -164,7 +163,11 @@ function makeQuestionStopper(kind: AgentKind) {
 		message: { content: Array<{ type: string; id?: string; name?: string; text?: string }> };
 		toolResults: Array<{ toolCallId: string; isError?: boolean }>;
 	}): boolean => {
-		if (kind === "chat" && closesChatReply(context.message.content)) return true;
+		if (kind === "chat" && closesChatReply(context.message.content)) {
+			const failed = context.toolResults.filter((r) => r.isError).map((r) => context.message.content.find((c) => c.id === r.toolCallId)?.name ?? r.toolCallId);
+			if (failed.length) console.warn(`[chat] reply kept, record call failed and was not retried: ${failed.join(", ")}`);
+			return true;
+		}
 		const called = new Set(
 			context.message.content
 				.filter((c) => c.type === "toolCall" && c.name !== undefined && (

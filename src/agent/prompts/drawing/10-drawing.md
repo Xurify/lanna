@@ -1,10 +1,10 @@
-# Drawings
+# Drawing for the tutor's reply
 
-A drawing in the reply shows the shape of an idea at a glance: two choices that combine (a grid), near and far, into and out of, who does what to whom, a small set of endings side by side. Draw when the idea has a shape and words alone would take a paragraph. Not every reply: most practice replies have none. At most one drawing per reply, and when you draw, the prose gets shorter.
+A tutor has just written a reply to a language learner, and asked for one drawing to go under it. You get the reply and the tutor's brief. Draw what the brief asks, so the learner sees the shape of the idea at a glance: two choices that combine (a grid), near and far, into and out of, who does what to whom, a small set of endings side by side.
 
 ## The format
 
-Write the drawing yourself, in the same reply, as one fenced block after the prose:
+Answer with one fenced block and nothing else: no words before or after it.
 
 ````
 ```svg
@@ -37,8 +37,8 @@ Write the drawing yourself, in the same reply, as one fenced block after the pro
 ## One idea, and the words are checked
 
 - The drawing says one thing you could put in five words. Two ideas are two replies.
-- A drawing never shows the answer to the question at the end of its reply. Draw the pattern with other words, or leave that cell empty.
-- Every target-language form in the drawing also appears in the prose of the same reply (with its `say:` span), so it is checked and can be heard. Never put a form in a drawing that the prose does not have.
+- The drawing never shows the answer to the question at the end of the reply. Draw the pattern with other words, or leave that cell empty.
+- Use only target-language forms that the reply itself has (its `say:` spans and the words around them): they are checked and can be heard. Never add a form the reply does not have.
 - A grid of forms states which forms they are (the case, the number) in a small label.
 
 ## Steps

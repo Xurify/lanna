@@ -7,7 +7,6 @@ import { defaultGoal, progressStore } from "../store/progress.ts";
 import { storyStore } from "../store/stories.ts";
 import { sceneFor } from "./speak.ts";
 
-/** The chat tutor's map of the app, read fresh per turn: a lesson between two answers changes a unit's state. */
 export function appContentNow(): string {
 	const p = progressStore.read();
 	const goal = p.goal ?? defaultGoal();

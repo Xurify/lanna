@@ -65,7 +65,6 @@ export async function startDraftSession(
 	return `/chat/${id}?prompt=${encodeURIComponent(t)}`;
 }
 
-/** Create a chat for the first message and return its id and title, without leaving the page. */
 export async function createChatSession(text: string, fetchLike: typeof fetch): Promise<{ id: string; title: string } | null> {
 	const t = text.trim();
 	if (!t) return null;
@@ -247,14 +246,18 @@ export function NewSession({
 	const router = useRouter();
 	const pathname = usePathname();
 	const [text, setText] = useState("");
-	/* A chat started here opens in place: the page swaps to it and the address
-	 * becomes the chat's, with no round trip to the server for a new page. */
 	const [started, setStarted] = useState<{ id: string; title: string; prompt: string } | null>(null);
 	const [shownPath, setShownPath] = useState(pathname);
 	if (pathname !== shownPath) {
 		setShownPath(pathname);
 		if (pathname === "/chat/new") setStarted(null);
 	}
+	// Next's replaceState stores this page's tree under the chat's address, so Back or Forward to it
+	// brings the draft back under /chat/<id>; refreshing renders the chat's own page there instead.
+	const strandedOnChat = started === null && pathname !== "/chat/new";
+	useEffect(() => {
+		if (strandedOnChat) router.refresh();
+	}, [strandedOnChat, router]);
 	useEffect(() => {
 		if (mode === "chat") void loadChat();
 	}, [mode]);
@@ -305,7 +308,7 @@ export function NewSession({
 			void createChatSession(draft, fetch)
 				.then((chat) => {
 					setBusy(false);
-					if (!chat) return;
+					if (!chat || window.location.pathname !== "/chat/new") return;
 					applyText("");
 					setStarted({ ...chat, prompt: draft });
 					window.history.replaceState(null, "", `/chat/${chat.id}`);
@@ -321,6 +324,7 @@ export function NewSession({
 			.catch(() => setBusy(false));
 	}, [busy, router, configured, zeroKeys, strongKeyless, mode]);
 
+	if (strandedOnChat) return null;
 	if (started) {
 		return <Chat key={started.id} chatId={started.id} title={started.title} kind="chat" initialMessages={[]} initialPrompt={started.prompt} initialConfigured />;
 	}
