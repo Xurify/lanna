@@ -9,12 +9,14 @@
  * stat row the end screens use.
  */
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { XIcon } from "lucide-react";
+import { Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
+import { KBD } from "@/components/ui/learn-buttons";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -113,6 +115,99 @@ export function Dock({ tone = "plain", children, testId, live }: { tone?: "plain
 	);
 }
 
+export function TaskEnd({ children, actions, hint, wide = false, label = "Your result", testId }: { children: React.ReactNode; actions: React.ReactNode; hint?: React.ReactNode; wide?: boolean; label?: string; testId?: string }) {
+	const column = cn("mx-auto w-full max-w-2xl px-6", wide && "lg:max-w-5xl");
+	const body = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		endOpenedAt = performance.now();
+		if (document.activeElement === null || document.activeElement === document.body) body.current?.focus({ preventScroll: true });
+	}, []);
+	return (
+		<>
+			<div ref={body} tabIndex={-1} role="region" aria-label={label} data-task-end="" className="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" data-testid={testId}>
+				<div className={cn(column, "q-rise my-auto pb-12 pt-16")}>{children}</div>
+			</div>
+			<Dock>
+				<div className={cn(column, "flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4")}>
+					{hint}
+					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+				</div>
+			</Dock>
+		</>
+	);
+}
+
+const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+
+export function SentenceRows({ children, className, "data-testid": testId }: { children: React.ReactNode; className?: string; "data-testid"?: string }) {
+	return (
+		<ul className={cn("divide-y divide-[var(--q-line)]", className)} data-testid={testId}>
+			{children}
+		</ul>
+	);
+}
+
+export function SentenceRow({ sentence, lang, translation, note, onPlay, children }: { sentence: string; lang?: string; translation?: string; note?: React.ReactNode; onPlay: () => void; children?: React.ReactNode }) {
+	return (
+		<li className="flex items-start gap-4 py-4">
+			<button type="button" onClick={onPlay} className={PLAY_ROW} aria-label={`Play: ${sentence}`} title="Play">
+				<Volume2Icon className="size-4" strokeWidth={1.6} />
+			</button>
+			<div className="min-w-0 flex-1">
+				<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={lang}>
+					{children ?? sentence}
+				</p>
+				{translation && (
+					<p data-no-word-lookup="true" className="mt-0.5 font-prose text-[15px] text-ink-3">
+						{translation}
+					</p>
+				)}
+				{note && (
+					<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3" data-no-word-lookup="true">
+						{note}
+					</div>
+				)}
+			</div>
+		</li>
+	);
+}
+
+export function NotSaved({ onRetry, busy = false, refused = false }: { onRetry: () => void; busy?: boolean; refused?: boolean }) {
+	if (refused)
+		return (
+			<p className="font-prose text-[13px] text-ink-3" role="status">
+				Not saved: the app refused this session, so it is not counted.
+			</p>
+		);
+	return (
+		<p className="font-prose text-[13px] text-ink-3" role="status">
+			Not saved yet. The app keeps trying.{" "}
+			<button type="button" onClick={onRetry} disabled={busy} className="font-ui font-[550] text-ink-2 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-foreground disabled:text-ink-3 disabled:no-underline pointer-coarse:py-3">
+				{busy ? "Trying…" : "Try again"}
+			</button>
+		</p>
+	);
+}
+
+const END_ENTER_PAUSE_MS = 1000;
+let endOpenedAt = 0;
+
+export function endEnterBlocked(e: KeyboardEvent): boolean {
+	return e.repeat || onFocusedControl(e) || performance.now() - endOpenedAt < END_ENTER_PAUSE_MS;
+}
+
+export function onFocusedControl(e: KeyboardEvent): boolean {
+	return e.target instanceof Element && !!e.target.closest("a, button, input, textarea, summary");
+}
+
+export function EnterHint({ children }: { children: React.ReactNode }) {
+	return (
+		<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 sm:pointer-fine:flex">
+			<kbd className={KBD}>Enter</kbd> {children}
+		</p>
+	);
+}
+
 /** The verdict mark: a small filled disc with a tick or a cross. */
 export function VerdictDisc({ ok }: { ok: boolean }) {
 	return (
@@ -132,7 +227,7 @@ export function Pulse({ className }: { className?: string }) {
 /** Numbers on an end screen, in one card divided into cells (the mockup's
  *  score card). */
 export function Stats({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <div className={cn("flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-y border-[var(--q-line)] text-left", className)}>{children}</div>;
+	return <div className={cn("flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-t border-[var(--q-line)] text-left", className)}>{children}</div>;
 }
 
 export function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink?: string; icon?: React.ReactNode }) {

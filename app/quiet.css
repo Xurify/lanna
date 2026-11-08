@@ -40,7 +40,7 @@
 
 /* the app's voice */
 .q-date { font-size: 13px; font-weight: 500; color: var(--q-ink-3); }
-.q-hello { font-size: 34px; line-height: 1.15; font-weight: 600; letter-spacing: -0.028em; margin-top: 6px; }
+.q-hello { font-size: 34px; line-height: 1.15; font-weight: 600; letter-spacing: -0.028em; margin-top: 6px; text-wrap: balance; }
 .q-hello em { font-style: normal; color: var(--q-teal); }
 .q-line { font-size: 17px; line-height: 1.5; color: var(--q-ink); letter-spacing: -0.008em; text-wrap: pretty; }
 .q-line.dim { color: var(--q-ink-2); }

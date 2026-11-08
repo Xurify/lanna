@@ -1040,6 +1040,26 @@ body {
 	.lh-stamp { animation: none; }
 }
 
+/* A grid area with no item in it is an auto row of zero height (CSS Grid), so
+   the stamp area costs nothing when there is no stamp. An auto column shrinks
+   to its content's min-content width before a minmax() floor gives way. */
+.lh-end { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "score" "stamp" "list"; }
+@media (min-width: 40rem) {
+	.lh-end { grid-template-columns: minmax(min(100%, 23rem), 1fr) auto; column-gap: 32px; grid-template-areas: "head stamp" "score score" "list list"; }
+}
+@media (min-width: 64rem) {
+	.lh-end.lh-end-split { grid-template-columns: minmax(0, 20rem) minmax(0, 1fr) auto; column-gap: 56px; grid-template-areas: "head head stamp" "score list list"; }
+}
+
+@keyframes lh-tile {
+	from { transform: scaleY(0.25); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+.lh-tile { transform-origin: bottom; animation: lh-tile var(--dur-base) var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+	.lh-tile { animation: none; }
+}
+
 @keyframes lh-ring {
 	from { transform: scale(1); opacity: 0.55; }
 	to { transform: scale(2.4); opacity: 0; }

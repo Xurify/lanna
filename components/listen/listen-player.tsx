@@ -24,14 +24,15 @@ import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
+import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
 interface Rep {
 	item: ListenItem;
@@ -59,8 +60,6 @@ interface Outcome {
 }
 
 
-const PRAISE = ["Rozumieš!", "Presne tak!", "Áno!", "Super!", "Výborne!"];
-
 export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan | null }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
@@ -76,6 +75,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [replays, setReplays] = useState(0);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const [saveRefused, setSaveRefused] = useState(false);
+	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// Listening is mostly hearing, not clicking: the day's minutes count the
 	// time this tab is visible and focused (`ms` stays the wall-clock).
@@ -96,6 +98,8 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		setCurrent(null);
 		setPeeked(false);
 		setOutcome(null);
+		setSaveFailed(false);
+		setSaveRefused(false);
 		finishing.current = false;
 		try {
 			const res = await fetch("/api/listen");
@@ -160,10 +164,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			const correct = understood(all);
 			const almost = almostCount(all);
 			try {
-				const res = await fetch("/api/listen", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/listen", {
 						reps: all.map((r) => ({
 							itemId: r.item.id,
 							slug: r.item.slug,
@@ -185,18 +186,42 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						ms: Date.now() - startedAt.current,
 						activeMs: activeTime.finish(),
 						tz: new Date().getTimezoneOffset(),
-					}),
 				});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				setOutcome((await res.json()) as Outcome);
-			} catch {
+				setOutcome(await sendSession<Outcome>(lastSave.current));
+			} catch (err) {
+				setSaveFailed(true);
+				setSaveRefused(err instanceof RefusedError);
 				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
 			} finally {
 				setSaving(false);
 			}
 		},
-		[activeTime],
+		[activeTime, lang],
 	);
+
+	const retrySave = async () => {
+		if (!lastSave.current || saving) return;
+		setSaving(true);
+		try {
+			setOutcome(await sendSession<Outcome>(lastSave.current));
+			setSaveFailed(false);
+			setSaveRefused(false);
+		} catch (err) {
+			setSaveFailed(true);
+			setSaveRefused(err instanceof RefusedError);
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	useEffect(() => {
+		const session = lastSave.current;
+		if (!saveFailed || saveRefused || !session) return;
+		return onSessionSaved(session.id, (saved) => {
+			setOutcome(saved as Outcome);
+			setSaveFailed(false);
+		});
+	}, [saveFailed, saveRefused]);
 
 	/** Grade and show one answer. The time since the text was first shown
 	 *  is the speed model's; the first playback's length is kept too. */
@@ -245,7 +270,10 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				return;
 			}
 			if (outcome) {
-				if (e.key === "Enter") router.push(readOrigin());
+				if (e.key === "Enter" && !endEnterBlocked(e)) {
+					e.preventDefault();
+					router.push("/");
+				}
 				return;
 			}
 			if (!item) return;
@@ -313,13 +341,13 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} reps={reps} saving={saving} onAgain={() => void load()} />
+				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
 			</Frame>
 		);
 	}
 
 	const progress = (index + (current ? 1 : 0)) / total;
-	const praise = PRAISE[index % PRAISE.length]!;
+	const praise = praiseFor(lang?.code, index);
 	const tone = !current ? "plain" : current.verdict === "wrong" ? "miss" : current.verdict === "exact" ? "right" : "wait";
 
 	return (
@@ -344,7 +372,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							<p className="mb-4 font-ui text-[13px] text-ink-3">{isWatchItem(item.id) ? "From a video you watched" : item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
 						)}
 						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
-							{!current ? "Type what you hear" : current.verdict === "exact" ? praise : current.verdict === "accents" ? "So close" : "It says…"}
+							{!current ? "Type what you hear" : current.verdict === "exact" ? <span lang={praise.lang}>{praise.text}</span> : current.verdict === "accents" ? "So close" : "It says…"}
 						</h2>
 
 						{/* Hear it: the big play, the slow play, and the text behind a tap. */}
@@ -520,7 +548,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 	);
 }
 
-function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps: Rep[]; saving: boolean; onAgain: () => void }) {
+function EndScreen({ outcome, reps, saving, failed, refused, onAgain, onRetrySave }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; refused: boolean; onAgain: () => void; onRetrySave: () => void }) {
 	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
@@ -528,44 +556,57 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 	// The ones that went right are kept out of sight until asked for, but never lost: the sentence you got right is one you may want to see too.
 	const understood = reps.filter((r) => r.verdict === "exact");
 	return (
-		<div className={cn(COLUMN, "my-auto py-10")} data-testid="listen-end">
-			<div className="flex items-center gap-4">
-				<span className="flex size-14 items-center justify-center rounded-xl bg-teal-wash text-teal-2">
-						<HeadphonesIcon className="size-6" strokeWidth={1.6} />
-				</span>
-				<div>
-					<p className="font-ui text-[13px] font-[550] text-ink-3">Listen · done</p>
-						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">
-						{outcome.correct} of {outcome.total} typed correctly, without the text
-					</h1>
-					{outcome.almost > 0 && <p className="mt-1 font-ui text-sm text-ink-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
-				</div>
-			</div>
-			<Stats className="mt-6">
-				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="New words met" value={String(words.length)} ink="text-foreground" />
-				<Stat label="In your deck" value={saving ? "…" : String(outcome.queued.length)} ink="text-foreground" />
+		<TaskEnd
+			testId="listen-end"
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for Today</EnterHint>}
+			actions={
+				<>
+					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
+						<RepeatIcon className="size-4" />
+						Ten more
+					</button>
+					<Link href="/" className={PRIMARY} data-testid="listen-today">
+						Today
+					</Link>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="listen" className="text-teal" />
+				Listen · done
+			</p>
+			<h1 className="q-hello">
+				{outcome.correct} of {outcome.total} typed correctly, without the text
+			</h1>
+			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
+			<Stats className="mt-7 max-w-none">
+				<Stat label="XP" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label="New words met" value={String(words.length)} />
+				<Stat label="Added to Review" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} ink={failed ? "text-ink-3" : undefined} />
 			</Stats>
+			<Link href="/mistakes#mistakes-listening" className="mt-3 inline-block font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2" data-testid="listen-trends">
+				How your listening is going
+			</Link>
 			{words.length > 0 && (
 				<div className="mt-8">
-					<p className="q-sh">Words you met today</p>
+					<h2 className="q-sh">Words you met today</h2>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{words.map((w) => (
 							<li key={w.lemma} className="rounded-md bg-well px-2.5 py-1 font-prose text-[14px]">
 									<span className="font-[600] text-teal-2" lang={lang?.code}>
 									{w.lemma}
 								</span>
-								{w.gloss && <span className="text-muted-foreground"> · {w.gloss}</span>}
+								{w.gloss && <span className="text-ink-3"> · {w.gloss}</span>}
 							</li>
 						))}
 					</ul>
-					<p className="mt-2 font-prose text-sm text-muted-foreground">They are in your review deck now, so you meet them again before you forget them.</p>
+					{!failed && <p className="mt-2 font-prose text-sm text-ink-3">They are in Review now, so you meet them again before you forget them.</p>}
 				</div>
 			)}
 			{missed.length > 0 && (
 				<div className="mt-8">
-					<p className="q-sh">Worth hearing again</p>
-					<SentenceRows reps={missed} />
+					<h2 className="q-sh">Missed</h2>
+					<ListenRows reps={missed} />
 				</div>
 			)}
 			{understood.length > 0 && (
@@ -574,47 +615,40 @@ function EndScreen({ outcome, reps, saving, onAgain }: { outcome: Outcome; reps:
 						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
 						Typed correctly · {understood.length} {understood.length === 1 ? "sentence" : "sentences"}
 					</summary>
-					<SentenceRows reps={understood} />
+					<ListenRows reps={understood} />
 				</details>
 			)}
-			<div className="mt-10 flex flex-wrap gap-3">
-				<Link href="/" className={PRIMARY} data-testid="listen-today">
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
-					<RepeatIcon className="size-4" />
-					Ten more
-				</button>
-				<Link href="/mistakes#mistakes-listening" className={SECONDARY} data-testid="listen-trends">
-					How your listening is going
-				</Link>
-				<span className="self-center font-ui text-xs text-muted-foreground">Enter goes to Today</span>
-			</div>
-			<SourcesNote feature="listen" className="mt-8" />
-		</div>
+			<SourcesNote feature="listen" className="mt-14" />
+		</TaskEnd>
 	);
 }
 
-/** The sentences of a finished session, each with its play button and meaning. */
-function SentenceRows({ reps }: { reps: Rep[] }) {
+function ListenRows({ reps }: { reps: Rep[] }) {
 	const lang = useActiveLanguage();
 	return (
-		<ul className="mt-2 flex flex-col gap-2">
+		<SentenceRows className="mt-2">
 			{reps.map((r) => (
-				<li key={r.item.id} className="q-card flex items-start gap-3 px-4 py-3">
-					<button type="button" onClick={() => void speak(r.item.sentence)} aria-label="Play" className="lh-press mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]">
-						<Volume2Icon className="size-4" strokeWidth={1.6} />
-					</button>
-					<div className="min-w-0">
-						<p className="font-prose text-lg text-foreground" lang={lang?.code}>
-							{r.item.sentence}
-						</p>
-						<p data-no-word-lookup="true" className="font-prose text-sm text-muted-foreground">
-							{r.item.translation}
-						</p>
-					</div>
-				</li>
+				<SentenceRow
+					key={r.item.id}
+					sentence={r.item.sentence}
+					lang={lang?.code}
+					translation={r.item.translation}
+					onPlay={() => void speak(r.item.sentence)}
+					note={
+						r.verdict === "exact" ? undefined : r.verdict === "accents" ? (
+							<span>
+								Accents off: <span className="font-medium text-ink-2" lang={lang?.code}>“{r.given}”</span>
+							</span>
+						) : r.given ? (
+							<span>
+								You typed <span className="font-medium text-miss" lang={lang?.code}>“{r.given}”</span>
+							</span>
+						) : (
+							<span>You didn&apos;t know it</span>
+						)
+					}
+				/>
 			))}
-		</ul>
+		</SentenceRows>
 	);
 }
