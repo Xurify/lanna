@@ -408,6 +408,11 @@
 			"tags": [
 				"accusative",
 				"singular"
+			],
+			"notAfter": [
+				"в",
+				"во",
+				"на"
 			]
 		},
 		{
@@ -751,7 +756,7 @@
 			"kind": "grammar",
 			"title": "To and for someone: the dative",
 			"tagline": "брату, маме, к другу",
-			"rule": "To or for someone (дать, звонить, помогать, нравиться) and after к and по: -у or -ю for masculine and neuter (брату, морю), -е for words in -а or -я (маме, папе), -и for feminine words in -ь and in -ия (к двери, по России).",
+			"rule": "To or for someone (дать, звонить, помогать, нравиться) and after к: -у or -ю for masculine and neuter (брату, морю), -е for words in -а or -я (маме, папе), -и for feminine words in -ь and in -ия (к двери, к Марии).",
 			"glyph": "gift",
 			"grammarTerm": "dative singular",
 			"nativeTerm": "дательный падеж",
@@ -759,6 +764,9 @@
 			"tags": [
 				"dative",
 				"singular"
+			],
+			"notAfter": [
+				"по"
 			]
 		},
 		{
@@ -961,7 +969,7 @@
 			"kind": "grammar",
 			"title": "Glad, busy, must: short forms",
 			"tagline": "рад, занята, должны",
-			"rule": "A short adjective follows the noun as what it is: рад, рада, рады; занят, занята, заняты; болен, больна, больны; должен, должна, должны. The stress can move (занята), and an е can appear (болен). Рад, and должен in the sense must, have only short forms.",
+			"rule": "A short adjective follows the noun as what it is: no ending for a masculine subject, -а, -о, -ы or -и for the others (занят, занята, занято, заняты; болен, больна, больно, больны). The stress can move (занята), and an е can appear (болен). Рад has only short forms; должен (must) is always short.",
 			"glyph": "pen-line",
 			"grammarTerm": "short adjectives",
 			"nativeTerm": "краткие прилагательные",
@@ -1474,7 +1482,7 @@
 			"title": "Going on foot, going by car",
 			"tagline": "идти, ходить, ехать, ездить",
 			"glyph": "bus",
-			"brief": "Explain the verbs of going in pairs: one direction now (идти, ехать, нести, вести, везти, бежать, лететь, плыть) against there and back or regularly (ходить, ездить, носить, водить, возить, бегать, летать, плавать); ехать and ездить for any vehicle, and на with the prepositional for the vehicle (на автобусе, на метро). Give me situations, ask which verb fits in the present and the past, and correct me."
+			"brief": "Explain the verbs of going in pairs: one direction now (идти, ехать, нести, вести, везти, бежать, лететь, плыть) against there and back or regularly (ходить, ездить, носить, водить, возить, бегать, летать, плавать); ехать and ездить for any vehicle, and на with the prepositional for the vehicle (на автобусе, на метро), and по with the dative for along or around (по улице, по городу). Give me situations, ask which verb fits in the present and the past, and correct me."
 		},
 		{
 			"id": "tutor-aspect",
@@ -1670,7 +1678,7 @@
 			"title": "Stand, lie, put",
 			"tagline": "стоять, лежать, поставить, положить",
 			"glyph": "box",
-			"brief": "Explain the Russian verbs of position and placing: стоять and ставить, поставить (upright: the bottle stands), лежать and класть, положить (flat: the book lies), сидеть and сажать, посадить, висеть and вешать, повесить; where things are takes the prepositional (на столе), where they go the accusative (на стол). Describe a room, have me say where things are and where to put them, and correct me."
+			"brief": "Explain the Russian verbs of position and placing: стоять and ставить, поставить (upright: the bottle stands), лежать and класть, положить (flat: the book lies), висеть and вешать, повесить (hanging), and сидеть with садиться, сесть (sitting down) and сажать, посадить (seating someone, planting a tree); where things are takes the prepositional (на столе), where they go the accusative (на стол). Describe a room, have me say where things are and where to put them, and correct me."
 		}
 	],
 	"goals": [
