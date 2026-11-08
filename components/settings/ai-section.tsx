@@ -112,11 +112,6 @@ export function composeQuizMechanics(agent: AgentSettings | undefined, mechanics
 	return { ...agent, tools: { ...agent?.tools, explain: mechanics === "free" } };
 }
 
-/** Graph-tools toggle: its own key, never in the tool-toggles map. Absent = on. */
-export function composeGraphTools(agent: AgentSettings | undefined, on: boolean): AgentSettings {
-	return { ...agent, graphTools: { enabled: on } };
-}
-
 /** One slot's override. Empty model = Default (factory pin); empty thinking keeps the resolved level. */
 export function composeSlotModel(
 	models: ModelsSettings | undefined,
@@ -236,7 +231,6 @@ function MenuTrigger({
 export function AiSection({
 	agent,
 	models,
-	graph,
 	compaction,
 	onSectionChange,
 	onModelsChange,
@@ -245,8 +239,6 @@ export function AiSection({
 	agent: AgentSettings | undefined;
 	/** Slot pins. Engine-level, written to /api/settings/models. */
 	models: ModelsSettings | undefined;
-	/** Read only here. graph.enabled off dims and disables the graph-tools row. */
-	graph: GraphSettings | undefined;
 	/** Its own PUT, since the threshold is engine behavior rather than an agent key. */
 	compaction: CompactionSettings | undefined;
 	onSectionChange: (next: AgentSettings) => void;
@@ -634,26 +626,6 @@ export function AiSection({
 			</SettingsGroup>
 
 			<SettingsGroup label="Tools" testid="group-tools">
-				{/* Graph tools: first row. It is about the map but is agent capability, so it is kept out of the tool toggles. */}
-				{(() => {
-					const graphOn = graph?.enabled ?? true;
-					return (
-						<SettingsRow
-							label="Let the tutor use my skill map"
-							hint={graphOn ? "It checks what you learned in earlier sessions." : "Turn on Skill map to use this."}
-							testid="graph-tools-row"
-							dimmed={!graphOn}
-						>
-							<Toggle
-								checked={agent?.graphTools?.enabled ?? true}
-								disabled={!graphOn}
-								label="Let the tutor use my skill map"
-								testid="toggle-graph-tools"
-								onChange={(on) => onSectionChange(composeGraphTools(agent, on))}
-							/>
-						</SettingsRow>
-					);
-				})()}
 				{TOGGLE_TOOLS.map((id) => (
 					<SettingsRow
 						key={id}

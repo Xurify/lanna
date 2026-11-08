@@ -809,8 +809,6 @@ export function Chat({
 	// (invisible, clickable) button in the bottom-right whenever a question
 	// was pending with no plan yet (owner report, UI round 2026-10-01).
 	const hasPlan = useMemo(() => planExists(messages), [messages]);
-	// The coverage ring's refresh chain (extraction-UX redesign): bumped at
-	// turn settle — the moment this session's uncovered mass changes.
 	// The mermaid focus (chrome-melt wave, 2026-09-19): md-blocks' expand
 	// button registers the chart source here; the overlay (and the plan
 	// popup) mount INSIDE the session-area div — both are session-scoped, so
@@ -891,8 +889,6 @@ export function Chat({
 		// immediate: turns-only refetch — the stats bar updates even while
 		// the server's persist/endTurn lags the client by milliseconds
 		void syncTurns();
-		// The coverage ring re-reads at turn settle too (extraction-UX
-		// redesign, 2026-09-24); the ring's own running-poll handles runs.
 		// CANONIZATION (fix B, the duplicate-previous-message bug, 2026-10-02):
 		// turn-settled for OUR OWN turn arrives while the stream is still open
 		// (endTurn emits from onFinish before the response terminates, so the
@@ -1301,13 +1297,6 @@ export function Chat({
 							{showWorking ? "Hide working" : "Show working"}
 						</button>
 					</Hint>
-					{/* The extraction ring (owner-locked redesign, 2026-09-24): fills
-					    with uncovered vs the chunk threshold, pulses while a run is in
-					    flight, vanishes when the graph is off. Click → the exact
-					    numbers. Before the phase label — the chips cluster right. */}
-					{/* Practice (owner, 2026-10-04): the coverage ring hides —
-				    practice never extracts, so an ever-filling ring with no
-				    run behind it would lie. */}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
 					{kind === "practice" ? (

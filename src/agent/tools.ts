@@ -8,14 +8,12 @@ import type { JobStore } from "../core/ports.ts";
 import { jobTools, type DemoInput, type PdfInput, type ResearchInput, type VisualInput } from "./tools/jobs.ts";
 import { planTools, type PlanToolContext } from "./tools/plan.ts";
 import { probeDoneTool, type ProbeDoneContext } from "./tools/probe.ts";
-import { proberGraphTools } from "./tools/graph.ts";
 import { readTool } from "./tools/read.ts";
 import { lsTool } from "./tools/ls.ts";
 import { findTool } from "./tools/find.ts";
 import { grepTool } from "./tools/grep.ts";
 import { healToolRecord } from "./tools/heal.ts";
 import { languageTools, type ReviewSeam } from "./tools/language.ts";
-import type { GraphStore } from "../core/ports.ts";
 
 export { jobTools };
 export type { ProbeDoneContext } from "./tools/probe.ts";
@@ -260,12 +258,6 @@ export interface ProberToolContext extends ProbeDoneContext {
 	spawn: (job: JobRecord, input: ResearchInput | DemoInput | VisualInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
-	/** The prober's graph-map reader (wave 7): present = the two map tools
-	 *  (list_sessions / list_propositions) are registered. The composition
-	 *  root passes it only when graphToolsEnabled(effective) — the graph
-	 *  master switch AND the agent.graphTools toggle (settings-resolution).
-	 *  Absent = the gate is closed, no map tools (tests drive this seam). */
-	graphStore?: GraphStore;
 	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
@@ -326,11 +318,6 @@ export function createProberTools(
 				// remains available without a search-provider key.
 				...(jobs.research ? { research: jobs.research } : {}),
 				pdf: jobs.pdf!,
-				// The map reader (wave 7): present only when the settings gate
-				// opened.
-				...(ctx.graphStore
-					? proberGraphTools({ chatStore: ctx.chatStore, graphStore: ctx.graphStore })
-					: {}),
 				...languageTools(ctx.review),
 				...done,
 			},

@@ -25,7 +25,7 @@ How to read the size column: files and lines are from `git ls-files` at the time
 | `src/store/graph-format.ts`, golden fixtures in `tests/fixtures/golden-data/`, `tests/golden-fixtures.test.ts`, `tests/schema-stamps.test.ts` | Pin the on-disk shapes of chats and the graph. Needed as long as those stores exist. | High to change. Delete only with the graph stack. |
 | Data generators: `scripts/generate-all-stories.ts` with `stories-data-a1/a2/b1/b2.ts`, `generate-distractors.ts`, `generate-why-index.ts` | One-off seeders that wrote stories, near-miss distractors and the Why? index into `data/profiles/slovak/`. No script, doc or test references them. | Medium. 7 files, about 8,400 lines. The authored story text lives only here, so check the stories are already in the owner's data or in git before deleting. |
 | `scripts/sentence-sources.ts` | Report on where sentences come from (written 2026-10-30). Not referenced by `package.json` or docs. | Low. 1 file, 323 lines. Keep if the owner still wants the report. |
-| `scripts/backfill-graph.ts`, `replay-layout.ts`, `import-notes.ts` | Upstream graph maintenance; listed in `docs/development.md`. | Low, but removing needs the graph stack decision. 3 files, 250 lines. |
+| `scripts/replay-layout.ts` | Upstream graph maintenance; listed in `docs/development.md`. | Low, but removing needs the graph stack decision. 3 files, 250 lines. |
 | `scripts/smoke-web-subscriptions.mjs`, `smoke-demo-runtime.mjs` | Smoke checks listed in `docs/development.md`. | Low. |
 
 ## Auth, pairing, remote access

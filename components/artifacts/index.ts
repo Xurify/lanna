@@ -43,11 +43,4 @@ export const artifactRenderers: Record<string, ComponentType<ArtifactPartProps>>
 	// the conclusion carries the outcome + verdict + the reveal.
 	problem: ProblemCard,
 	conclude: ConcludeCard,
-	// The prober's graph tools (wave 7): same quiet expandable card —
-	// collapsed one-liner (tool name + the session id for
-	// list_propositions), the tool's own compact row-per-line output
-	// (name / level / date) verbatim on expand, exactly the read/ls
-	// discipline (their results are pre-formatted strings too).
-	list_sessions: ToolCallCard,
-	list_propositions: ToolCallCard,
 };
