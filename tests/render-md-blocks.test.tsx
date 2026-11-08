@@ -79,30 +79,6 @@ describe("md-blocks — tables", () => {
 	});
 });
 
-describe("md-blocks — display math", () => {
-	it("the block corner reveals ONLY on its own block — named group, not the message-level group (owner report: all-at-once)", () => {
-		const md = "```js\nconst x = 1;\n```\n\n| A | B |\n| --- | --- |\n| 1 | 2 |";
-		const html = render(md);
-		// No UNNAMED group-hover on the corners: that selector would fire from
-		// the Message container's own `group` class and light every block.
-		assert.ok(!html.match(/\s group-hover:opacity-100/), "no unnamed group-hover on any corner");
-		assert.ok(html.includes('data-testid="md-table"'), "table present for the contrast");
-	});
-
-	it("keeps katex-display rendering and adds the TeX copy corner", () => {
-		const html = render("$$\n\\int_0^1 x^2\\,dx = \\tfrac{1}{3}\n$$");
-		assert.ok(html.includes("katex-display"), "display math still renders via KaTeX");
-		assert.ok(html.includes('data-testid="md-math"'), "the md-blocks math wrapper mounts");
-		assert.match(html, /aria-label="Copy equation source"/, "the corner copy affordance is present");
-		// The wrapper is BLOCK: the katex-display child is display:block, and
-		// an inline wrapper around it fragments — the absolute corner then has
-		// no clean containing block and pointer events never land (the math
-		// corner neither highlighted nor copied; owner report, 2026-09-19).
-		assert.match(html, /group\/md relative block/, "the math wrapper is a block box");
-		assert.match(html, /absolute top-0 right-0 z-10/, "the corner stacks above the equation");
-	});
-});
-
 describe("md-blocks — codeSource (pure)", () => {
 	it("extracts the fence source from string children and element-wrapped children", () => {
 		assert.equal(codeSource("const x = 1;"), "const x = 1;");

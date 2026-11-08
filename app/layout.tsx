@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeFromCookie } from "@/lib/theme";
 import { Geist, JetBrains_Mono } from "next/font/google";
-import "katex/dist/katex.min.css";
 import "./globals.css";
 import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";

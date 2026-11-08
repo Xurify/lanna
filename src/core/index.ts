@@ -36,7 +36,7 @@ export * from "./plan-tree.ts";
 export * from "./phases.ts";
 export * from "./pending.ts";
 export * from "./prompt-segments.ts";
-// math-delims and answer-presentation are not re-exported here: they pull KaTeX and the Markdown parsers (about 250 KB), and a client component that imports this barrel would ship them on every route. Import them from "./tutor.ts" (client: "@/src/core/tutor").
+// answer-presentation is not re-exported here: it pulls the Markdown parsers (about 250 KB), and a client component that imports this barrel would ship them on every route. Import them from "./tutor.ts" (client: "@/src/core/tutor").
 // Wave B (owner-approved 2026-09-26): the native record (LhMessage), the
 // and the input-events contract — all
 // pure logic, browser-safe.

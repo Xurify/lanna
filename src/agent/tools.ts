@@ -101,29 +101,28 @@ export const askUserQuestionTool: AgentTool<typeof askInputSchema> = {
 // ONE sanctioned exception (owner, 2026-10-12): each quiz tool's
 // description ends with a COMPLETE example call — compact, phase-correct
 // (probe carries no phase metadata; quiz leads with type+nodeId), doubling
-// as the JSON-escaping exemplar (LaTeX backslashes double inside JSON
+// as the JSON-escaping exemplar (quotes and newlines escape inside JSON
 // strings). Placement ruling: WITH THE TOOL, beside its exact schema — a
 // shared-prompt example is phase-ambiguous (the models fumbled exactly
 // these metadata fields), per-agent prompt copies would drift. Serialized
 // from ONE canonical body so the variants cannot disagree; craft doctrine
 // stays in the prompts.
 
-/** The canonical example body (owner-approved content, 2026-10-12): a
- *  compact applied question whose fields exercise the escaping hazards —
- *  braced commands (\frac, \cos), inline and display math, newlines —
- *  while doubling as an exemplar of good craft: uniform options, stable
- *  values, reasoning (explanation) committed before correctAnswer.
+/** The canonical example body: a compact applied question whose fields
+ *  exercise the escaping hazards (quotation marks, newlines) while doubling
+ *  as an exemplar of good craft: uniform options, stable values, reasoning
+ *  (explanation) committed before correctAnswer.
  *  JSON.stringify renders the wire text, so the escaping the model sees
  *  is by construction the correct one. Exported for the description pins. */
 export const quizExampleBody = {
-	question: "A signal is $y=\\sin(2x)$ and $\\frac{dx}{dt}=3$. What is $\\frac{dy}{dt}$?",
+	question: "Ako sa povie „I read the book“ v minulom čase?",
 	options: [
-		{ label: "$6\\cos(2x)$", value: "a" },
-		{ label: "$2\\cos(2x)$", value: "b" },
-		{ label: "$3\\cos(2x)$", value: "c" },
+		{ label: "Čítal som knihu.", value: "a" },
+		{ label: "Čítam knihu.", value: "b" },
+		{ label: "Prečítam knihu.", value: "c" },
 	],
 	explanation:
-		"The phase changes twice as fast as $x$; multiply by the sine's slope:\n$$\n\\frac{dy}{dt}=\\cos(2x)\\cdot2\\cdot3=6\\cos(2x)\n$$",
+		"Minulý čas slovesa čítať je čítal som. Čítam je prítomný čas a prečítam je budúci čas dokonavého slovesa.",
 	correctAnswer: "a",
 };
 
@@ -157,7 +156,7 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 	const example = delta.nodeId ? { type: "check" as const, nodeId: "chain-rule", ...quizExampleBody } : quizExampleBody;
 	return (
 		base +
-		"\nExample arguments — copy the escaping exactly: inside JSON strings a LaTeX backslash is \\\\ and a newline is \\n.\n```json\n" +
+		"\nExample arguments — copy the escaping exactly: inside JSON strings a newline is \\n.\n```json\n" +
 		JSON.stringify(example, null, 2) +
 		"\n```" +
 		(delta.nodeId ? " The example's nodeId is illustrative — copy an exact id from this session's plan_init." : "")

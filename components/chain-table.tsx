@@ -23,10 +23,9 @@
  *
  * THE CHAIN LINE: every proposition name is a faint-outlined CHIP
  * with the LOGIC as the connectives (owner rulings, 2026-09-30):
- * premises join with the LaTeX LAND (∧) and the conclusion separates
- * by the LaTeX IMPLICATION (⟹) — `A ∧ B ⟹ C`, never the misleading
- * `A → B → C`. The glyphs are REAL KaTeX renders (components/
- * latex-glyph.tsx — the app's math engine, never SVGs), PROMINENT in
+ * premises join with ∧ and the conclusion separates by ⟹ —
+ * `A ∧ B ⟹ C`, never the misleading
+ * `A → B → C`. The glyphs are plain Unicode, PROMINENT in
  * the theme foreground (white), not dim gray. A lonely chip (no
  * premises) carries no glyph — it reads as a standalone proposition;
  * "(no premises)" survives only as the row's aria-label.
@@ -61,7 +60,6 @@ import type { GraphChain, GraphNode } from "@/src/core";
 import { TopBar } from "@/components/top-bar";
 import { Button } from "@/components/ui/button";
 import { DeleteNodeDialog } from "@/components/delete-node-dialog";
-import { LatexGlyph } from "@/components/latex-glyph";
 
 /** The sortable columns (owner ruling: all three — consistency). */
 export type ChainSortCol = "name" | "props" | "created";
@@ -397,11 +395,9 @@ export function ChainTableBody({
 												<Expander open={chainOpen} onClick={() => onToggleChain(chain.id)} testid={`chain-toggle-${chain.id}`} label={`Expand topic ${nameOf(chain.conclusion)}`} />
 												{/* The chain line: proposition names as faint-outlined
 												    chips. THE LOGIC IS THE PAYLOAD (owner rulings,
-												    2026-09-30): premises join with the LaTeX LAND (∧),
-												    the conclusion separates by the LaTeX IMPLICATION
-												    (⟹) — `A ∧ B ⟹ C`, never the misleading `A → B →
-												    C` — the glyphs render through KaTeX (the app's
-												    math engine), PROMINENT in the theme foreground
+												    2026-09-30): premises join with ∧ and the conclusion separates by ⟹ —
+												    `A ∧ B ⟹ C`, never the misleading `A → B →
+												    C`, PROMINENT in the theme foreground
 												    (white), not the old dim gray. A lonely chip reads
 												    as a standalone proposition (no glyphs at all);
 												    the row's aria-label keeps the plain-text form. */}
@@ -411,17 +407,15 @@ export function ChainTableBody({
 														return (
 															<span key={id} className="flex items-center">
 																{i > 0 && (isConclusion ? (
-																	<LatexGlyph
-																		cmd="\implies"
-																		testid={`chain-implies-${chain.id}`}
+																	<span
+																		data-testid={`chain-implies-${chain.id}`}
 																		className="px-1.5 text-foreground"
-																	/>
+																	>⟹</span>
 																) : (
-																	<LatexGlyph
-																		cmd="\land"
-																		testid={`chain-and-${chain.id}-${i}`}
+																	<span
+																		data-testid={`chain-and-${chain.id}-${i}`}
 																		className="px-1.5 text-foreground"
-																	/>
+																	>∧</span>
 																))}
 																<span
 																	data-testid={`prop-chip-${id}`}
