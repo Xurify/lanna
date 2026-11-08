@@ -17,6 +17,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { CaseSketch, SKETCH_UNITS, sketchStages } from "../components/lesson/case-sketch.tsx";
+import { unitInfo } from "../src/core/lesson.ts";
 
 const outDir = process.argv[2];
 if (!outDir) throw new Error("usage: npx tsx scripts/ink-contact-sheet.tsx <out-dir>");
@@ -26,7 +27,7 @@ const cells = SKETCH_UNITS.flatMap((unit) =>
 	sketchStages(unit).map((stage, index) => {
 		const svg = renderToStaticMarkup(<CaseSketch unit={unit} stage={index} />);
 		const sentence = `${stage.before}${stage.base}<span class="end">${stage.ending}</span>${stage.after}`;
-		return `<figure><div>${svg}</div><figcaption>${unit} · ${stage.label}<br><span class="sentence">${sentence}</span></figcaption></figure>`;
+		return `<figure><div>${svg}</div><figcaption>${unitInfo(unit).grammarTerm ?? unitInfo(unit).title} · ${stage.label}<br><span class="sentence">${sentence}</span></figcaption></figure>`;
 	}),
 );
 

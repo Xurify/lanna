@@ -11,6 +11,7 @@ const CASE_OF_UNIT: Record<string, CaseKey> = { gen: "gen", dat: "dat", loc: "lo
 
 /** Forms from the paradigm tables of English Wikipedia "Slovak declension" and the slovak.wiki case pages. */
 const FORMS: Record<string, Partial<Record<CaseKey, string>>> = {
+	pes: { gen: "psa", dat: "psovi", acc: "psa", loc: "psovi", ins: "psom" },
 	brat: { dat: "bratovi", acc: "brata", loc: "bratovi", ins: "bratom" },
 	dom: { gen: "domu", dat: "domu", acc: "dom", loc: "dome", ins: "domom" },
 	škola: { gen: "školy", dat: "škole", acc: "školu", loc: "škole", ins: "školou" },
