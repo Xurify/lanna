@@ -13,10 +13,10 @@ import { progressStore } from "../store/progress.ts";
 import { aspectFrames } from "./aspect-frames.ts";
 
 /** The daily plan offers the personal lesson this long after the guide was written. */
-export const PERSONAL_PLAN_DAYS = 7;
+const PERSONAL_PLAN_DAYS = 7;
 
 /** The targets of the latest guide, or null. */
-export function personalPractice(): PersonalPractice | null {
+function personalPractice(): PersonalPractice | null {
 	return analysisStore.read().guide?.practice ?? null;
 }
 

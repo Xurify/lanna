@@ -64,7 +64,7 @@ export interface DayLog {
 	also: string[];
 }
 
-export interface DayLogInput {
+interface DayLogInput {
 	lessons: readonly DayLogLesson[];
 	reviews: readonly DayLogReview[];
 	cards: readonly DayLogCard[];

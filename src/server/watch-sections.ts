@@ -68,7 +68,7 @@ export async function findSections(id: string, opts: { force?: boolean; engine?:
 	return rec;
 }
 
-export interface SectionOutcome {
+interface SectionOutcome {
 	xp: number;
 	right: number;
 	total: number;

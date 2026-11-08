@@ -44,7 +44,7 @@ const askOptionProps = {
 // and reasoning happens BEFORE the answer is chosen — models emit tool
 // args in schema order, so explanation sits immediately BEFORE correctAnswer.
 // (All consumers read by key; the order is authoring guidance, nothing else.)
-export const quizInputBase = Type.Object({
+const quizInputBase = Type.Object({
 	question: Type.String({
 		description:
 			"The single quiz question to ask. ONE question per turn: ask, then end your turn — the answer determines the next question.",
@@ -178,10 +178,6 @@ export const explainDisplayInputSchema = Type.Object({
 	...explainInputBase.properties,
 	type: Type.Optional(Type.String()),
 });
-
-/** The TEACHER's quiz declaration (base + the position field). */
-export const quizInputSchema = quizInputObject;
-
 export const askInputSchema = Type.Object({
 	// No `mode` param — the pi original has none: the mode is inferred from
 	// whether options are present (the dock does exactly this). One less
@@ -211,5 +207,3 @@ export type QuizToolInput = Static<typeof quizInputObject>;
 export type AskToolInput = Static<typeof askInputSchema>;
 
 export type ExplainToolInput = Static<typeof explainInputObject>;
-
-export type ProbeExplainToolInput = Static<typeof explainInputBase>;

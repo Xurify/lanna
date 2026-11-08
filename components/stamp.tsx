@@ -81,7 +81,7 @@ export function StampDisc({ state, size = "md", pressed = false, className }: { 
 }
 
 /** A stamp with its name under it, for the book. */
-export function StampTile({ state, size = "md" }: { state: StampState; size?: "sm" | "md" }) {
+function StampTile({ state, size = "md" }: { state: StampState; size?: "sm" | "md" }) {
 	const lang = useActiveLanguage();
 	const earned = !!state.earned;
 	return (

@@ -19,7 +19,7 @@ const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 /** "Monday, November 2" for a YYYY-MM-DD key. */
-export function dayTitle(day: string): string {
+function dayTitle(day: string): string {
 	const d = new Date(`${day}T12:00:00`);
 	return `${WEEKDAY[d.getDay()]}, ${MONTH[d.getMonth()]} ${d.getDate()}`;
 }

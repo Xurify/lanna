@@ -49,7 +49,7 @@ export function stripStress(text: string): string {
 	return text.normalize("NFD").replace(/([Ѐ-ӿ])[̀́]/gu, "$1").normalize("NFC");
 }
 
-export function normWord(text: string, tag: string): string {
+function normWord(text: string, tag: string): string {
 	return stripStress(text).toLocaleLowerCase(tag).trim();
 }
 
@@ -113,7 +113,7 @@ const CAT: Record<string, string> = {
 
 /** The Words page groups by these. Other parts of speech (names, letters,
  *  affixes, symbols) are not words a learner drills. */
-export function catOf(pos: string): string | null {
+function catOf(pos: string): string | null {
 	return CAT[pos] ?? null;
 }
 
@@ -221,7 +221,7 @@ function addTags(into: Record<string, string[]>, form: string, tags: readonly st
 
 /** Every form names the lemmas it belongs to; the ones only one lemma owns
  *  can be blanked and can rank it. */
-export function formIndex(words: readonly BuildWord[], tag: string): Map<string, Set<string>> {
+function formIndex(words: readonly BuildWord[], tag: string): Map<string, Set<string>> {
 	const index = new Map<string, Set<string>>();
 	const add = (form: string, key: string) => {
 		const f = normWord(form, tag);
@@ -309,7 +309,7 @@ export function rankWords(words: readonly BuildWord[], freq: ReadonlyMap<string,
 
 const TOKEN = /\p{L}[\p{L}\p{M}]*/gu;
 
-export function tokenize(text: string): Array<{ token: string; at: number }> {
+function tokenize(text: string): Array<{ token: string; at: number }> {
 	return [...text.matchAll(TOKEN)].map((m) => ({ token: m[0], at: m.index! }));
 }
 

@@ -28,13 +28,7 @@ import type { Cefr } from "./curriculum.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { judgeSentence, type ListenLookup } from "./listen.ts";
 import type { PronScore } from "./pronounce.ts";
-import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
-
-export type FluencyMode = "reread" | "fast";
-
-export const FLUENCY_MINUTES = 3;
-
-// ─── Re-reading against the clock ───────────────────────────────────────────
+import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";// ─── Re-reading against the clock ───────────────────────────────────────────
 
 /** First-run pace to beat, words a minute, by level. The app's own
  *  guess, not a published norm: the timed-reading studies report gains
@@ -60,9 +54,9 @@ export function wordsPerMinute(words: number, ms: number): number {
 	return Math.round(words / (ms / 60_000));
 }
 
-export const REREAD_XP = 12;
-export const REREAD_FASTER_XP = 6;
-export const REREAD_QUESTION_XP = 5;
+const REREAD_XP = 12;
+const REREAD_FASTER_XP = 6;
+const REREAD_QUESTION_XP = 5;
 
 /** XP for a re-read: the read itself, the check, and a bonus for beating
  *  the target that is paid only when the question was right and the pace
@@ -103,8 +97,8 @@ export interface FastItem {
 }
 
 export const FAST_COUNT = 6;
-export const FAST_MIN_WORDS = 3;
-export const FAST_MAX_WORDS = 9;
+const FAST_MIN_WORDS = 3;
+const FAST_MAX_WORDS = 9;
 /** Three passes a sentence, each window a share of the first. */
 export const FAST_PASSES = 3;
 
@@ -118,9 +112,9 @@ export function fastWindows(words: number): number[] {
 	return [Math.round(base * 1.6), Math.round(base * 1.25), base];
 }
 
-export const FAST_PASS_XP = 2;
-export const FAST_SENTENCE_XP = 4;
-export const FAST_BONUS = 8;
+const FAST_PASS_XP = 2;
+const FAST_SENTENCE_XP = 4;
+const FAST_BONUS = 8;
 
 /** XP: each pass inside its window, each sentence whose last pass made
  *  it, and a bonus for finishing. */
@@ -190,7 +184,7 @@ export interface FastLogEntry {
 
 export type FluencyLogEntry = RereadLogEntry | FastLogEntry;
 
-export interface PickKnownOptions {
+interface PickKnownOptions {
 	seed: number;
 	count?: number;
 	/** Item ids used lately: skipped while fresher ones remain. */

@@ -65,7 +65,7 @@ export function keptPrep(id: string): PrepRecord | null {
 	return videoStore.prep(id);
 }
 
-export interface PrepOptions {
+interface PrepOptions {
 	force?: boolean;
 	engine?: PiEngine;
 	model?: string;
@@ -77,7 +77,7 @@ export interface PrepOptions {
 /** The summary glossed and measured: the words the learner knows, the words
  *  the level expects (the keys counted as taught, so a summary that uses
  *  them is not punished for it). */
-export function measureSummary(sentences: readonly { sk: string; en: string }[], lexicon: Lexicon | null, k: KnownWords, keys: readonly PrepKey[], videoLines: readonly { sk: string }[]): { summary: PrepSentence[]; known: number; expected: number } {
+function measureSummary(sentences: readonly { sk: string; en: string }[], lexicon: Lexicon | null, k: KnownWords, keys: readonly PrepKey[], videoLines: readonly { sk: string }[]): { summary: PrepSentence[]; known: number; expected: number } {
 	const names = storyNames([...videoLines, ...sentences], lexicon);
 	const taught = keyWords(keys);
 	const summary = sentences.map((s) => {
@@ -155,7 +155,7 @@ function firstObject(text: string): string {
 	return text.slice(start, end + 1);
 }
 
-export interface PrepOutcome {
+interface PrepOutcome {
 	xp: number;
 	right: number;
 	total: number;

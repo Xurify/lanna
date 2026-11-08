@@ -44,7 +44,7 @@ import { activeProfile } from "../../config.ts";
 
 /** Which agent's prompt directory to compose. Practice (2026-10-04)
  *  composes ONLY its own directory — see prompt-segments.ts. */
-export type AgentKind = "prober" | "teacher" | "practice";
+type AgentKind = "prober" | "teacher" | "practice";
 
 // P2 (2026-09-19): segment discovery + override resolution live in ONE
 // canonical place now — src/store/prompt-overrides.ts (listSourceSegments
@@ -304,7 +304,7 @@ export function createTeacherAgent(
  *  invalidInputResult isError result the model retries on, pi 1.0
  *  convention) but NO per-session nodeId check (no record to read),
  *  plus ask. */
-export function bareQuestionTools(): Record<string, AgentTool<any>> {
+function bareQuestionTools(): Record<string, AgentTool<any>> {
 	// A typed const (not an inline literal): the specific AgentTool typing
 	// gives execute its precise Static input; heterogeneous records take
 	// AgentTool<any>, whose loose Static would smudge it to unknown.

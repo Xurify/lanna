@@ -31,11 +31,11 @@ export const TRAJECTORY_METRICS: ReadonlyArray<{ id: TrajectoryMetric; title: st
 /** Snapshots a words line needs before it is drawn. */
 export const MIN_WORD_SNAPSHOTS = 7;
 /** The window the credited rate is measured over, before falling back to all history. */
-export const RATE_WINDOW_DAYS = 28;
+const RATE_WINDOW_DAYS = 28;
 /** A measured rate needs at least this many days between its first and last snapshot... */
-export const MIN_RATE_SPAN_DAYS = 7;
+const MIN_RATE_SPAN_DAYS = 7;
 /** ...and at least this many practice hours inside them. */
-export const MIN_RATE_HOURS = 1;
+const MIN_RATE_HOURS = 1;
 
 export interface TrajectoryDay {
 	day: string;
@@ -65,7 +65,7 @@ export interface TrajectoryInput {
 	goalDays: number;
 }
 
-export interface TrajectoryPace {
+interface TrajectoryPace {
 	/** On a day the learner studies. */
 	minutesPerDay: number;
 	daysPerWeek: number;

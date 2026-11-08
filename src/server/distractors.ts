@@ -30,7 +30,7 @@ const WANT_CLOSE = 2;
 const BATCH_MAX = 16;
 const DEFAULT_WAIT_MS = 6_000;
 
-export function distractorSystem(name: string = activeLanguage().english): string {
+function distractorSystem(name: string = activeLanguage().english): string {
 	return `You write wrong answers for a multiple-choice question inside a ${name} learning app. You answer with ONE JSON object and nothing else: {"near": [["...", "..."], ["...", "..."]]} — one pair per sentence, in the same order, the same count.
 
 For each ${name} sentence you get its right English translation. Write exactly TWO wrong English translations that a learner who misread ONE thing would pick:
@@ -49,7 +49,7 @@ function neighborIndex(lexicon: Lexicon): NeighborIndex {
 	return indexFor.index;
 }
 
-export interface BetterOptionsOptions {
+interface BetterOptionsOptions {
 	/** Test seam: a scripted engine replaces the cheap slot's. */
 	engine?: PiEngine;
 	model?: string;
@@ -58,7 +58,7 @@ export interface BetterOptionsOptions {
 	seed?: number;
 }
 
-export interface OptionItem {
+interface OptionItem {
 	sentence: string;
 	translation: string;
 	options?: string[];

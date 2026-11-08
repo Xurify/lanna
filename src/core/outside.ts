@@ -42,7 +42,7 @@ export const MAX_WHAT = 120;
 /** An entry can be dated back this far, to catch up on a few days. */
 export const BACKDATE_DAYS = 7;
 
-export type ParsedEntry = { ok: true; minutes: number; attention: Attention; what?: string } | { ok: false; message: string };
+type ParsedEntry = { ok: true; minutes: number; attention: Attention; what?: string } | { ok: false; message: string };
 
 export function parseEntry(body: { minutes?: unknown; attention?: unknown; what?: unknown } | null): ParsedEntry {
 	if (!body) return { ok: false, message: "minutes and attention are required" };

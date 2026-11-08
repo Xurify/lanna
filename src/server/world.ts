@@ -46,7 +46,7 @@ export interface World {
 
 const cache = new Map<string, World | null>();
 
-export function worldPath(profile: string = activeProfile()): string {
+function worldPath(profile: string = activeProfile()): string {
 	return curriculumFile(profile, "world.json");
 }
 

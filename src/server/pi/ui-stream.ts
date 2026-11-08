@@ -64,12 +64,12 @@ import type { ChatGPTRequestCycle } from "../../agent/chatgpt-request-cycle.ts";
 
 /** The wire event: a pi AgentEvent (with our slim message_update — see the
  * WIRE DIET note above), or one of the two app events. */
-export type TurnWireEvent =
+type TurnWireEvent =
 	| AgentEvent
 	| { type: "message_update"; message: AgentMessage }
 	| { type: "error"; errorText: string };
 
-export interface PiTurnSpec {
+interface PiTurnSpec {
 	requestCycle?: ChatGPTRequestCycle;
 	/** The per-turn agent (stateless engine — built from the record). */
 	agent: Agent;
@@ -100,7 +100,7 @@ export interface PiTurnSpec {
 
 /** One view onto a running turn: push() replays/streams an event, done()
  *  terminates the view ([DONE] + close). Cheap to be a Set member. */
-export interface PiTurnSubscriber {
+interface PiTurnSubscriber {
 	push(event: TurnWireEvent): void;
 	done(): void;
 }

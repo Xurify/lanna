@@ -97,7 +97,7 @@ export interface ScannedVideo {
  *  published; a video found without captions is looked at again until it is
  *  this old (counted from when it was first checked when the date of
  *  publishing is not known, as when a channel's page stands in for its feed). */
-export const CAPTIONS_WAIT_MS = 3 * 86_400_000;
+const CAPTIONS_WAIT_MS = 3 * 86_400_000;
 
 /** A fresh upload that had no captions when it was checked. */
 export function awaitingCaptions(v: Pick<ScannedVideo, "skip" | "publishedAt" | "scannedAt">, now: Date): boolean {
@@ -141,7 +141,7 @@ export function channelUrl(c: { id: string; handle?: string }): string {
 	return c.handle ? `https://www.youtube.com/${c.handle}` : `https://www.youtube.com/channel/${c.id}`;
 }
 
-export type ChannelInput = { kind: "channel"; id: string } | { kind: "page"; url: string; handle?: string } | { kind: "video"; id: string };
+type ChannelInput = { kind: "channel"; id: string } | { kind: "page"; url: string; handle?: string } | { kind: "video"; id: string };
 
 /** What a pasted creator is: a channel id or link, an @handle or a channel
  *  page (resolved on the server), or one of their videos. Null for anything
@@ -246,7 +246,7 @@ function clockIn(v: unknown, depth = 0): number | undefined {
 	return undefined;
 }
 
-export function parseClock(s: string): number | undefined {
+function parseClock(s: string): number | undefined {
 	const parts = s.trim().split(":").map(Number);
 	if (parts.length < 2 || parts.some((n) => !Number.isFinite(n))) return undefined;
 	return parts.reduce((sum, n) => sum * 60 + n, 0);
@@ -323,7 +323,7 @@ export interface YouTubeAccount {
 /** The account's picture, on Google's image hosts (yt3.ggpht.com for a
  *  channel's, lh3.googleusercontent.com for a Google account's), resized to a
  *  small round crop. Anything else is dropped. */
-export function accountImage(thumbnails: unknown): string | undefined {
+function accountImage(thumbnails: unknown): string | undefined {
 	const yt = channelImage(thumbnails);
 	if (yt) return yt;
 	const list = isObj(thumbnails) && Array.isArray(thumbnails.thumbnails) ? thumbnails.thumbnails : Array.isArray(thumbnails) ? thumbnails : [];
@@ -552,7 +552,7 @@ export function takeoutKind(text: string): "history" | "subscriptions" | null {
 // ─── Is it spoken in the language? ──────────────────────────────────────────
 
 /** Uploaded subtitle languages from which a set reads as translations. */
-export const TRANSLATED_SET = 5;
+const TRANSLATED_SET = 5;
 
 /** Spoken in the language, from the caption tracks and how much of the
  *  original title and description reads as the language:
@@ -617,7 +617,7 @@ export const MIN_PICK_SEC = 60;
  *  then speech that fills the video, captions made by people, a length that
  *  fits a session, and fresh uploads. A video only "unsure" to be spoken in
  *  the language counts less. */
-export function pickScore(v: ScannedVideo, now = new Date()): number {
+function pickScore(v: ScannedVideo, now = new Date()): number {
 	let fit: number;
 	if (v.coverage === undefined) fit = 0.4;
 	else if (v.coverage >= 0.98) fit = 0.9;
@@ -640,7 +640,7 @@ export function pickScore(v: ScannedVideo, now = new Date()): number {
 }
 
 /** Whether a scanned video can be offered at all. */
-export function pickable(v: ScannedVideo): boolean {
+function pickable(v: ScannedVideo): boolean {
 	return !v.skip && v.spoken !== "no" && !!v.trackLang;
 }
 

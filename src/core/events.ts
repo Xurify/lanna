@@ -73,7 +73,7 @@ export type ServerEvent<K extends ServerEventType = ServerEventType> = {
 	type: K;
 } & ServerEvents[K];
 
-export type ServerEventListener = (event: ServerEvent) => void;
+type ServerEventListener = (event: ServerEvent) => void;
 
 interface LhEventsGlobal {
 	__lhEventBus?: Set<ServerEventListener>;

@@ -59,7 +59,7 @@ const WANTED = 30_000;
 const UA = "LangHarness/1.0 (language-learning app; adds a language from open data)";
 const TATOEBA = "https://downloads.tatoeba.org/exports/per_language";
 
-export const taskIdOf = (id: string) => `language:${id}`;
+const taskIdOf = (id: string) => `language:${id}`;
 
 const dirOf = (id: string) => path.join(PATHS.languages, id);
 const buildDir = (id: string) => path.join(dirOf(id), "build");
@@ -80,7 +80,7 @@ function courseInventory(entries: ReadonlyArray<{ cat: string; lemma?: string; f
 	return { tags: top(tags).slice(0, 60), cats: top(cats), words: entries.slice(0, 400).map((e) => (e.lemma ?? "").toLocaleLowerCase(tag)), scenes };
 }
 
-export interface CatalogRow {
+interface CatalogRow {
 	id: string;
 	english: string;
 	endonym: string;
@@ -123,7 +123,7 @@ export function restoreLanguage(id: string): boolean {
 	return true;
 }
 
-export interface AddDeps {
+interface AddDeps {
 	fetch?: typeof fetch;
 	/** The model call that writes the course and the story bible. Defaults
 	 *  to the Strong slot, else the Cheap one. */
@@ -137,7 +137,7 @@ export interface AddDeps {
 /** One model call: the answer, what it used, the thinking level it ran at,
  *  and whether it stopped at `cap` (the most output tokens it may write)
  *  rather than finishing. */
-export type Ask = (system: string, prompt: string, signal: AbortSignal, cap: number) => Promise<{ text: string; usage: StoryUsage; level?: string; cut?: boolean }>;
+type Ask = (system: string, prompt: string, signal: AbortSignal, cap: number) => Promise<{ text: string; usage: StoryUsage; level?: string; cut?: boolean }>;
 
 type DraftKind = "course" | "world";
 
@@ -148,7 +148,7 @@ type DraftKind = "course" | "world";
 const FIRST_GUESS: Record<DraftKind, { input: number; output: number }> = { course: { input: 3_500, output: 8_000 }, world: { input: 1_500, output: 3_000 } };
 const THINKING_GUESS: Record<string, number> = { off: 0, minimal: 1_000, low: 3_000, medium: 8_000, high: 14_000, xhigh: 20_000 };
 
-export interface AddEstimate {
+interface AddEstimate {
 	/** The slot that would write it, or the dictionary alone. */
 	slot: CourseWriter;
 	/** "provider:id" and the model's display name. */
@@ -253,7 +253,7 @@ export function addEstimates(): AddEstimate[] {
 const DICTIONARY_ESTIMATE: AddEstimate = { slot: "dictionary", model: "", name: "From the dictionary only", level: "none", typicalUsd: 0, mostUsd: 0, measured: 0, subscription: false };
 
 /** Why a language cannot be added with `writer` now, or null. */
-export function addBlocker(writer: CourseWriter = "strong"): string | null {
+function addBlocker(writer: CourseWriter = "strong"): string | null {
 	if (writer === "dictionary") return null;
 	return aiStatus("strong").ready || aiStatus().ready ? null : "Writing the course with a model needs one in Settings → AI models. Pick \"From the dictionary only\" to build it without one.";
 }
@@ -480,9 +480,9 @@ async function wiktionary(get: typeof fetch, lang: CatalogLanguage, wanted: Set<
 /** Which model writes a course: the learner picks it when adding the
  *  language (it happens once per language, so it is not a setting). The
  *  Strong slot by default: it is teaching content. */
-export type WriterSlot = "strong" | "cheap";
+type WriterSlot = "strong" | "cheap";
 /** Who builds the course: a model slot, or the dictionary alone (free). */
-export type CourseWriter = WriterSlot | "dictionary";
+type CourseWriter = WriterSlot | "dictionary";
 
 /** The picked slot's model, or the other slot's when that one is empty. */
 function courseEngine(writer: WriterSlot = "strong") {

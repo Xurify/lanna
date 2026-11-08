@@ -16,7 +16,7 @@ export function paceWindow(now: Date, tz?: number): string[] {
 	return keys;
 }
 
-export interface OutsideState {
+interface OutsideState {
 	/** The last seven days' entries, newest first. */
 	recent: OutsideEntry[];
 	summary: OutsideSummary;
@@ -39,7 +39,7 @@ export function outsideSummaryNow(now = new Date(), tz?: number): OutsideSummary
 	return outsideSummary(outsideStore.read().entries, paceWindow(now, tz));
 }
 
-export type LogResult = { ok: true; entry: OutsideEntry; state: OutsideState } | { ok: false; status: number; message: string };
+type LogResult = { ok: true; entry: OutsideEntry; state: OutsideState } | { ok: false; status: number; message: string };
 
 export function logOutside(body: { minutes?: unknown; attention?: unknown; what?: unknown; day?: unknown } | null, now = new Date(), tz?: number): LogResult {
 	const parsed = parseEntry(body);

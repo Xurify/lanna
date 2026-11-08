@@ -55,7 +55,7 @@ function appendJsonl(file: string, value: unknown): void {
 	fs.appendFileSync(file, `${JSON.stringify(value)}\n`, "utf-8");
 }
 
-export function indexEntryOf(story: StoryRecord): StoryIndexEntry {
+function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 	return {
 		id: story.id,
 		series: story.series,

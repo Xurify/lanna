@@ -50,7 +50,7 @@ function overrideFileFor(segmentPath: string): string {
 /** Read one override file, or null when absent/invalid — the composition
  *  side's reader (the store's readOverride is the same mirror layout,
  *  kept separate because the layers may not import each other). */
-export function readPromptOverride(segmentPath: string): string | null {
+function readPromptOverride(segmentPath: string): string | null {
 	if (!isValidSegmentPath(segmentPath)) return null;
 	try {
 		return fs.readFileSync(overrideFileFor(segmentPath), "utf-8");

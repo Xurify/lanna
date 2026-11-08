@@ -23,19 +23,19 @@ import { NARRATOR_VOICE } from "./voices.ts";
  *  in the app, dollars per 1,000 characters on the API. The API rate seen on
  *  elevenlabs.io/pricing/api on 2026-11-07 ranged from $0.022 (a newer,
  *  possibly promotional page) to $0.08 (an older one); check before trusting it. */
-export const CREDITS_PER_CHAR = 1;
+const CREDITS_PER_CHAR = 1;
 export const USD_PER_1K_CHARS = { low: 0.022, high: 0.08 } as const;
 
-export type RegenReason = "older model" | "made without ElevenLabs";
+type RegenReason = "older model" | "made without ElevenLabs";
 
-export interface RegenItem {
+interface RegenItem {
 	entry: AudioClipEntry & { text: string };
 	lang: LanguageInfo;
 	reason: RegenReason;
 	chars: number;
 }
 
-export interface RegenPlan {
+interface RegenPlan {
 	model: string;
 	items: RegenItem[];
 	chars: number;
@@ -93,7 +93,7 @@ function styleOf(voice: string): "narration" | "dialogue" {
 	return voice === "female" || voice === "male" || voice === NARRATOR_VOICE ? "narration" : "dialogue";
 }
 
-export interface RegenResult {
+interface RegenResult {
 	done: number;
 	chars: number;
 	failed: Array<{ text: string; error: string }>;

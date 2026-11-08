@@ -47,7 +47,7 @@ function writeJson(name: string, value: unknown): void {
 	fs.renameSync(tmp, target);
 }
 
-export interface CreatorsFile {
+interface CreatorsFile {
 	creators: Creator[];
 	/** Prepare the best pick in the background when no video is waiting. */
 	keepReady: boolean;
@@ -76,7 +76,7 @@ export interface CaptionLines {
 	at: string;
 }
 
-export interface SearchesFile {
+interface SearchesFile {
 	/** A hash of what the searches were written from. */
 	key: string;
 	at: string;

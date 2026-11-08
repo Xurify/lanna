@@ -40,7 +40,7 @@ import { wikiClip } from "./wiki-audio.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
 
-export interface TtsRequest {
+interface TtsRequest {
 	text: string;
 	/** "sk" | "ru" */
 	lang: string;
@@ -65,7 +65,7 @@ export function ttsVoice(v: string | null | undefined): string {
 	return v && VOICE_ID.test(v) ? v : "female";
 }
 
-export interface TtsClip {
+interface TtsClip {
 	file: string;
 	contentType: string;
 	tier: TtsTier | "cache" | "wiki";
@@ -115,7 +115,7 @@ export function elevenLabsModelsFor(code: string, now = Date.now()): string[] {
 }
 
 /** What a tier made: the audio, and for ElevenLabs the model that spoke it. */
-export interface Spoken {
+interface Spoken {
 	data: Buffer;
 	model?: string;
 }

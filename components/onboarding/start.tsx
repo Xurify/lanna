@@ -512,7 +512,7 @@ function Choices<T extends string>({ items, value, onPick }: { items: ReadonlyAr
  *  tutor's reading of the edge, the words counted, what was tested out,
  *  what comes first in the plan — and the two ways on: the path, or the
  *  tutor for more. */
-export interface CheckResult extends PlacementOutcome {
+interface CheckResult extends PlacementOutcome {
 	probe: { verdicts: ProbeVerdict[]; summary: string; skipped: boolean };
 	vocabulary: VocabEstimate | null;
 	missed: Array<{ item: LessonItem; given: string }>;

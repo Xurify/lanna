@@ -75,19 +75,3 @@ export function PhaseDivider({ phase, nodeCount }: { phase: Phase3; nodeCount?: 
 		</div>
 	);
 }
-
-/**
- * The node count for a plan seam: the first plan-op tree output in the
- * message that carries the seam (the plan_init that made the phase flip).
- * Structural slice of a UI message, same shape-of-shapes as core/phases.ts.
- */
-export function planNodeCount(
-	message: { parts: ReadonlyArray<{ type: string; state?: string; output?: unknown; [k: string]: unknown }> },
-): number | undefined {
-	for (const part of message.parts) {
-		if (!part.type.startsWith("tool-plan_") || part.state !== "output-available") continue;
-		const tree = (part.output as { tree?: { nodes?: unknown[] } } | undefined)?.tree;
-		if (tree && Array.isArray(tree.nodes) && tree.nodes.length > 0) return tree.nodes.length;
-	}
-	return undefined;
-}

@@ -14,7 +14,7 @@ export interface DatedOutcome {
 	text: string;
 }
 
-export type DatedChoice = "2w" | "1m" | "2m" | "3m" | "6m";
+type DatedChoice = "2w" | "1m" | "2m" | "3m" | "6m";
 
 /** The quick choices above the stepper, in reading order. */
 export const DATED_CHOICES: Array<{ id: DatedChoice; label: string }> = [
@@ -28,7 +28,7 @@ export const DATED_CHOICES: Array<{ id: DatedChoice; label: string }> = [
 const CHOICE_MONTHS: Record<Exclude<DatedChoice, "2w">, number> = { "1m": 1, "2m": 2, "3m": 3, "6m": 6 };
 
 /** How far ahead a scene can be dated; past it no measured pace says anything. */
-export const DATED_HORIZON_YEARS = 10;
+const DATED_HORIZON_YEARS = 10;
 
 const DAY_MS = 86_400_000;
 const toMs = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
@@ -101,7 +101,7 @@ export function datedDateProblem(date: unknown, today: string): string | null {
 
 export type DatedStatus = "on-track" | "behind" | "no-speed" | "no-pace" | "passed";
 
-export interface DatedScene {
+interface DatedScene {
 	id: string;
 	title: string;
 	/** The scene in the learner's own words, when they wrote it themselves. */
@@ -114,7 +114,7 @@ export interface DatedScene {
  *  (null until the pace is measured), and the speed the scene asks for with
  *  where that speed came from. "level" is the guided-hours ladder, an
  *  assumption, not a measurement. */
-export interface DatedEstimate {
+interface DatedEstimate {
 	eta: { daysPace: number | null };
 	speed: { need: number; basis: "listen" | "watch" | "both" | "level" };
 }

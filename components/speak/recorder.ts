@@ -14,7 +14,7 @@
 
 import type { PronScore } from "@/src/core";
 
-export interface Recording {
+interface Recording {
 	/** 16 kHz mono 16-bit PCM WAV — the line, as recorded. */
 	wav: Blob;
 	/** Length of the clip, from its samples. */
@@ -23,7 +23,7 @@ export interface Recording {
 	spokeAt: number | null;
 }
 
-export interface RecorderOptions {
+interface RecorderOptions {
 	/** 0..1 loudness, about 120 times a second (one per render quantum). */
 	onLevel?: (level: number) => void;
 	/** Stop by itself this long after the voice goes quiet (after it was heard). */

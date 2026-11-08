@@ -43,7 +43,7 @@ const OVERLAY_ROOTS = '[data-lh-menu], [data-radix-popper-content-wrapper], [rol
 
 /** Pure decision, exported for pins: does a focused BUTTON keep native
  *  Enter (true) or does Enter belong to submit (false)? */
-export function buttonKeepsNativeEnter(el: HTMLElement): boolean {
+function buttonKeepsNativeEnter(el: HTMLElement): boolean {
 	// Keyboard-walked focus: the menu arrows landed here — Enter activates.
 	// (Guarded: a selector engine without the pseudo — linkedom in the
 	// test harness — degrades to "not keyboard focus", never throws on

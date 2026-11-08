@@ -156,7 +156,7 @@ export const SOURCES: readonly Source[] = [
 
 // ─── The features ───────────────────────────────────────────────────────────
 
-export interface Feature {
+interface Feature {
 	id: string;
 	title: string;
 	route: string;

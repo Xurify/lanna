@@ -40,7 +40,7 @@ function why(p: PickedVideo): string | null {
 }
 
 /** The facts under a video's title: the known share, then anything that should give pause. */
-export function PickFacts({ p, name, note }: { p: PickedVideo; name: string; note?: string }) {
+function PickFacts({ p, name, note }: { p: PickedVideo; name: string; note?: string }) {
 	const flags: string[] = [];
 	if (p.coverage === undefined && p.trackLang) flags.push(`captions in ${captionLanguageName(p.trackLang)}`);
 	flags.push(p.captionKind === "captions" ? "captions by people" : "automatic captions");

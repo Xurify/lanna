@@ -21,7 +21,7 @@ import { aiMissing, aiSlot, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { analyzeNow, mistakesReportOf, type MistakesReport } from "./mistakes-snapshot.ts";
 import { activeLanguage } from "./active-language.ts";
 
-export function mistakesGuideSystem(name: string = activeLanguage().english): string {
+function mistakesGuideSystem(name: string = activeLanguage().english): string {
 	return `You are a ${name} teacher reading a learner's own answers. The facts below are their unit scores, trends, word mix-ups and the latest wrong first tries, each with the sentence, the form wanted and what they wrote. Find the patterns behind the mistakes and say what to do about them.
 
 Rules:

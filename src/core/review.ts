@@ -188,7 +188,7 @@ export interface ReviewHelp {
 /** The highest rating an answer can earn with the help it had: with the
  *  meaning shown or picked from four, at most Good; with the word itself
  *  shown, at most Hard (the ending was produced, the word was not). */
-export function ratingCap(help?: ReviewHelp): Rating {
+function ratingCap(help?: ReviewHelp): Rating {
 	if ((help?.hints ?? 0) >= 2) return 2;
 	if ((help?.hints ?? 0) >= 1 || help?.picked) return 3;
 	return 4;
@@ -211,14 +211,6 @@ export function ratingFor(verdict: "exact" | "accents" | "wrong", ms?: number, h
 	if (ms !== undefined && ms < 4000) return Math.min(4, cap) as Rating;
 	return Math.min(3, cap) as Rating;
 }
-
-export interface QueueCounts {
-	due: number;
-	learning: number;
-	newToday: number;
-	total: number;
-}
-
 /** Cards to show now, learning first, then due reviews (oldest first). */
 export function dueCards(cards: ReviewCard[], now: Date): ReviewCard[] {
 	const t = now.getTime();

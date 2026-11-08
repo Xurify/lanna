@@ -76,7 +76,7 @@ const VIDEOS_TAB = "EgZ2aWRlb3PyBgQKAjoA";
 const CHANNEL_SEARCH = "EgZzZWFyY2jyBgQKAloA";
 
 /** How long the picks stay fresh before a visit reads the feeds again. */
-export const REFRESH_AFTER_MS = 6 * 3_600_000;
+const REFRESH_AFTER_MS = 6 * 3_600_000;
 /** Newest uploads read per creator, and per subscribed channel not saved. */
 const PER_CREATOR = 12;
 const PER_SUBSCRIPTION = 2;
@@ -138,7 +138,7 @@ async function pool<T>(items: readonly T[], n: number, job: (item: T) => Promise
 // ─── Channels ───────────────────────────────────────────────────────────────
 
 /** A channel's newest uploads: its feed, or its videos tab when the feed fails. */
-export async function channelVideos(channelId: string, signal?: AbortSignal): Promise<{ channel: FoundChannel | null; videos: FoundVideo[] }> {
+async function channelVideos(channelId: string, signal?: AbortSignal): Promise<{ channel: FoundChannel | null; videos: FoundVideo[] }> {
 	try {
 		const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`, { headers: { "user-agent": UA }, signal });
 		if (res.ok) {
@@ -164,7 +164,7 @@ export async function channelVideos(channelId: string, signal?: AbortSignal): Pr
  *  ranks them. The page is read twice: in the language for the titles as
  *  written (an English page translates them), and in English for the
  *  relative dates, which only English can be read in. */
-export async function channelSearch(channelId: string, query: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
+async function channelSearch(channelId: string, query: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
 	return withDates(channelId, { browseId: channelId, params: CHANNEL_SEARCH, query }, opts);
 }
 
@@ -182,7 +182,7 @@ async function withDates(channelId: string, body: Json, opts: { signal?: AbortSi
 /** A channel's uploads, newest first, from its videos tab (withDates), with
  *  the feed's exact dates where the feed has the video. The feed alone lists
  *  only a few, and no older ones. */
-export async function channelUploads(channelId: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
+async function channelUploads(channelId: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
 	const feed = await channelVideos(channelId, opts.signal).catch(() => ({ channel: null, videos: [] as FoundVideo[] }));
 	const exact = new Map(feed.videos.filter((v) => v.at).map((v) => [v.id, v.at!]));
 	const listed = await withDates(channelId, { browseId: channelId, params: VIDEOS_TAB }, opts, exact);
@@ -234,7 +234,7 @@ export async function creatorVideos(id: string, opts: { query?: string; signal?:
 }
 
 /** The channel a pasted link, @handle or video belongs to. */
-export async function resolveChannel(input: string, signal?: AbortSignal): Promise<FoundChannel> {
+async function resolveChannel(input: string, signal?: AbortSignal): Promise<FoundChannel> {
 	const parsed = parseChannelInput(input);
 	if (!parsed) throw new Error("That is not a YouTube channel. Paste a channel link, an @handle or one of their videos.");
 	let id: string | undefined;
@@ -391,7 +391,7 @@ export function setKeepReady(on: boolean): void {
 
 /** Share of a text's words that are words of the language (the lexicon's
  *  forms), lowercased so a title in capitals counts. */
-export function languageShare(text: string, lexicon: Lexicon | null): { share: number; words: number } {
+function languageShare(text: string, lexicon: Lexicon | null): { share: number; words: number } {
 	if (!lexicon) return { share: 0, words: 0 };
 	const tag = activeLanguage().tag;
 	const words = tokenize(text)
@@ -403,7 +403,7 @@ export function languageShare(text: string, lexicon: Lexicon | null): { share: n
 }
 
 /** The known-word share of a video's caption lines, measured locally. */
-export function measureLines(lines: readonly string[], lexicon: Lexicon | null, k: KnownWords): { coverage: number; expected: number; wordCount: number; unknownCount: number } {
+function measureLines(lines: readonly string[], lexicon: Lexicon | null, k: KnownWords): { coverage: number; expected: number; wordCount: number; unknownCount: number } {
 	const segments = glossSegments(
 		lines.map((sk, i) => ({ start: i, end: i + 1, sk })),
 		[],
@@ -422,7 +422,7 @@ export function measureLines(lines: readonly string[], lexicon: Lexicon | null, 
 
 /** Check one video for the offer: its tracks, whether it is spoken in the
  *  language, and the known-word share of its captions. No model call. */
-export async function scanVideo(found: FoundVideo, sources: readonly PickSource[], ctx: { lexicon: Lexicon | null; k: KnownWords; now?: Date; query?: string; signal?: AbortSignal }): Promise<ScannedVideo> {
+async function scanVideo(found: FoundVideo, sources: readonly PickSource[], ctx: { lexicon: Lexicon | null; k: KnownWords; now?: Date; query?: string; signal?: AbortSignal }): Promise<ScannedVideo> {
 	const now = (ctx.now ?? new Date()).toISOString();
 	const base = { id: found.id, title: found.title, ...(found.channel ? { channel: found.channel } : {}), ...(found.channelId ? { channelId: found.channelId } : {}), scannedAt: now, sources: [...sources], ...(ctx.query ? { query: ctx.query } : {}) };
 	const meta = await fetchVideoMeta(found.id, ctx.signal);
@@ -465,7 +465,7 @@ export async function scanVideo(found: FoundVideo, sources: readonly PickSource[
 
 // ─── Searches from the learner's interests ──────────────────────────────────
 
-export function searchSystem(name: string = activeLanguage().english): string {
+function searchSystem(name: string = activeLanguage().english): string {
 	return `You write YouTube searches in ${name} for someone learning ${name}. From the titles of videos they watch (in any language) and the channels they follow, work out what they are interested in, then write searches a ${name} speaker would type to find videos SPOKEN in ${name} on those interests. You answer with ONE JSON object and nothing else: {"queries": ["...", "..."]}.
 
 Rules:
@@ -492,7 +492,7 @@ function interestLines(yt: YouTubeSignals, creators: readonly Creator[]): string
 
 /** The searches, written once per set of interests on the cheap slot and
  *  kept; reused for two weeks or until the interests change. */
-export async function interestSearches(opts: { engine?: PiEngine; model?: string; now?: Date; force?: boolean } = {}): Promise<string[]> {
+async function interestSearches(opts: { engine?: PiEngine; model?: string; now?: Date; force?: boolean } = {}): Promise<string[]> {
 	const yt = discoverStore.youtube();
 	const lines = interestLines(yt, listCreators());
 	if (lines.length < 3) return [];
@@ -519,14 +519,14 @@ export async function interestSearches(opts: { engine?: PiEngine; model?: string
 }
 
 /** YouTube's search for videos with subtitles, in the language's region. */
-export async function searchVideos(query: string, signal?: AbortSignal): Promise<FoundVideo[]> {
+async function searchVideos(query: string, signal?: AbortSignal): Promise<FoundVideo[]> {
 	const data = await innertube("search", { query, params: SUBTITLES_FILTER }, signal);
 	return data ? extractVideos(data) : [];
 }
 
 // ─── Reading YouTube ────────────────────────────────────────────────────────
 
-export type YouTubeList = YouTubeListName;
+type YouTubeList = YouTubeListName;
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const CHANNEL_ID = /^UC[A-Za-z0-9_-]{22}$/;
@@ -559,7 +559,7 @@ function cleanChannels(list: readonly unknown[]): FoundChannel[] {
 
 /** The lists out of a YouTube page the desktop app read while signed in,
  *  and the signed-in account's picture from its top bar when the page has one. */
-export function listsFromPage(list: YouTubeList, html: string): { videos: FoundVideo[]; channels: FoundChannel[]; account?: YouTubeAccount } {
+function listsFromPage(list: YouTubeList, html: string): { videos: FoundVideo[]; channels: FoundChannel[]; account?: YouTubeAccount } {
 	const data = extractJsonAfter(html, /ytInitialData\s*=\s*/) ?? extractJsonAfter(html, /window\["ytInitialData"\]\s*=\s*/);
 	if (!data) throw new Error("YouTube sent a page without the list. Sign in again and retry.");
 	const context = ((data as Json).responseContext as Json | undefined)?.mainAppWebResponseContext as Json | undefined;
@@ -618,7 +618,7 @@ export function forgetYouTube(): void {
 
 // ─── The refresh ────────────────────────────────────────────────────────────
 
-export type RefreshStatus = DiscoverStateView["refresh"];
+type RefreshStatus = DiscoverStateView["refresh"];
 
 interface RefreshState extends RefreshStatus {
 	job?: Promise<void>;
@@ -631,7 +631,7 @@ function refreshState(): RefreshState {
 	return (g[KEY] ??= { running: false, done: 0, total: 0 });
 }
 
-export function refreshStatus(): RefreshStatus {
+function refreshStatus(): RefreshStatus {
 	const { job: _job, abort: _abort, ...status } = refreshState();
 	return status;
 }

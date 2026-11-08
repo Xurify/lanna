@@ -10,7 +10,7 @@ import { CEFR_ORDER, GUIDED_HOURS, type Cefr } from "./curriculum.ts";
 import { weeklyHours } from "./onboarding.ts";
 import type { LearnerFacts } from "./milestones.ts";
 
-export interface LevelDate {
+interface LevelDate {
 	level: Cefr;
 	/** Guided hours from zero to the top of this level. */
 	hours: number;

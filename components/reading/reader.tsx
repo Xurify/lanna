@@ -33,27 +33,10 @@ import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
-
-export function levelBadgeStyle(level: string): string {
-	switch (level) {
-		case "A1":
-			return "bg-teal-wash text-teal-2 border-teal-line";
-		case "A2":
-			return "bg-teal-wash text-teal-2 border-teal-line";
-		case "B1":
-			return "bg-teal-wash text-teal-2 border-teal-line";
-		case "B2":
-		case "C1":
-			return "bg-purple-500/15 text-purple-400 border-purple-500/30";
-		default:
-			return "bg-accent text-muted-foreground border-border/60";
-	}
-}
-
 /** What a sentence is read with: the speaker's voice for a line of
  *  dialogue, the narrator's for the rest (stories written before voices
  *  were assigned have neither and get the default). */
-export function voiceFor(story: StoryRecord, s: StorySentence): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
+function voiceFor(story: StoryRecord, s: StorySentence): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
 	const who = s.who && story.cast?.find((c) => c.name === s.who);
 	if (who) return { voice: who.voice, gender: who.gender === "f" ? "female" : "male", style: "dialogue" };
 	return { voice: story.narratorVoice, style: "narration" };

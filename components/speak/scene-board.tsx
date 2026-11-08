@@ -32,7 +32,7 @@ function shortDate(iso: string): string {
 	return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-export interface SceneBoardProps {
+interface SceneBoardProps {
 	state: SpeakState | null;
 	/** The language id (scripts) and its BCP-47 tag (the lang attribute). */
 	lang: { id: string; tag: string };

@@ -12,7 +12,7 @@ import { PATHS } from "../../config.ts";
 import { foldDiacritics } from "../core/language.ts";
 import { audioKey, findAudioClip, storeAudioClip } from "../store/corpus.ts";
 
-export const WIKI_VOICE = "slovak-wiki";
+const WIKI_VOICE = "slovak-wiki";
 
 interface WikiAudio {
 	base: string;
@@ -49,7 +49,7 @@ function find(wiki: WikiAudio, text: string) {
 	return wiki.clips.get(t) ?? wiki.folded.get(foldDiacritics(t).toLowerCase()) ?? null;
 }
 
-export function wikiAudioKey(lang: string, text: string): string {
+function wikiAudioKey(lang: string, text: string): string {
 	return audioKey(lang, WIKI_VOICE, text);
 }
 

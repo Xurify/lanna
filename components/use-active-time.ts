@@ -14,7 +14,7 @@
 import { useEffect, useRef } from "react";
 import { createActiveClock, MIN_SEND_MS, type ActiveClock, type TimedActivity } from "@/src/core";
 
-export interface ActiveTime {
+interface ActiveTime {
 	/** The session is done: hand out the unsent active ms and stop counting
 	 *  (the end card is not practice) until `restart()`. */
 	finish(): number;
@@ -22,7 +22,7 @@ export interface ActiveTime {
 	restart(): void;
 }
 
-export interface ActiveTimeOptions {
+interface ActiveTimeOptions {
 	/** `false` for a page that is only sometimes practice (the setup wizard
 	 *  around the level check): nothing counts until `restart()`. */
 	start?: boolean;

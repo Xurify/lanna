@@ -25,7 +25,7 @@ import type { ArtifactPartProps, VisualResult } from "@/src/core";
  *  size the card displays at instead of stretching to full width (owner,
  *  2026-10-07). %, em, "auto", or a missing attribute → null (the caller
  *  falls back to full-width). Pure. */
-export function svgNaturalWidth(svg: string): number | null {
+function svgNaturalWidth(svg: string): number | null {
 	const m = /<svg\b[^>]*?\bwidth\s*=\s*["']([^"']+)["'][^>]*>/i.exec(svg);
 	if (!m) return null;
 	const value = m[1]!.trim();

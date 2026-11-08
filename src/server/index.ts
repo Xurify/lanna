@@ -24,7 +24,7 @@ export { isValidSegmentPath } from "../core/prompt-segments.ts";
 // The canonical segment discovery/resolution lives in the agent layer
 // (composition is an agent concern); the barrel re-exports it for the
 // routes — server→agent is the lawful direction (chat-handler precedent).
-export { effectivePromptSegments, allSegmentPaths, readPromptOverride } from "../agent/prompt-segments.ts";
+export { effectivePromptSegments, allSegmentPaths } from "../agent/prompt-segments.ts";
 
 // The auth/keys composition (auth-keys wave, 2026-09-19): the curated
 // key catalog + the env-reflecting store behind GET/PUT/DELETE /api/keys.
@@ -32,13 +32,12 @@ export { effectivePromptSegments, allSegmentPaths, readPromptOverride } from "..
 // keeps its plain process.env reads (that seam is the point).
 export * from "./keys.ts";
 export * from "./search.ts";
-export { authStore } from "../store/auth.ts";
 export * from "./settings-body.ts";
 export * from "./turn-liveness.ts";
 export * from "./turn-runs.ts";
 export * from "./dismissal-park.ts";
 export * from "./compaction.ts";
-export { runPiTurn, piTurnResponse, type PiTurnHandle, type PiTurnSpec } from "./pi/ui-stream.ts";
+export { piTurnResponse } from "./pi/ui-stream.ts";
 export * from "./observability.ts";
 export * from "./tasks.ts";
 export * from "./model-catalog.ts";
@@ -47,8 +46,8 @@ export { sessionCost } from "./pricing.ts";
 // LangHarness: language profiles + curriculum seeding, speech synthesis,
 // spaced review, and the lexicon lookup the review page and tutor share.
 export * from "./language.ts";
-export { addBlocker, addEstimate, addEstimates, type AddEstimate, type CourseWriter, type WriterSlot, languageCatalog, languageRemovable, removeLanguage, restoreLanguage, startLanguageAdd, type CatalogRow } from "./language-add.ts";
-export { activeLanguage, profileLanguage } from "./active-language.ts";
+export { addEstimates, languageCatalog, removeLanguage, restoreLanguage, startLanguageAdd } from "./language-add.ts";
+export { activeLanguage } from "./active-language.ts";
 export * from "./reset.ts";
 export * from "./storage.ts";
 export * from "./tts.ts";
@@ -69,7 +68,7 @@ export * from "./listen.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
 export * from "./pronounce.ts";
-export { speakStore, fluencyStore } from "../store/speak.ts";
+export { speakStore } from "../store/speak.ts";
 export * from "./watch.ts";
 export * from "./discover.ts";
 export * from "./fragments.ts";
@@ -80,12 +79,11 @@ export * from "./milestones.ts";
 export * from "./outside.ts";
 export * from "./dated-scene.ts";
 export * from "./placement.ts";
-export { placementStore } from "../store/placement.ts";
 export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";
 export * from "./usage-report.ts";
-export { lookupWord, loadLexicon } from "../agent/lexicon.ts";
-export { isLanguageProfile, LANGUAGE_PROFILES, shownProfiles, type LanguageProfile } from "../../config.ts";
+export { loadLexicon } from "../agent/lexicon.ts";
+export { shownProfiles, type LanguageProfile } from "../../config.ts";
 export * from "./distractors.ts";
 export * from "./word-bank.ts";
 export { savedPhraseStore } from "../store/saved-phrases.ts";

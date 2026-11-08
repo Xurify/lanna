@@ -20,7 +20,7 @@ import { mixupList, mixupsLine, type MixupRecord } from "./mixups.ts";
 
 export type Purpose = "family" | "daily" | "work" | "offices" | "media" | "exam" | "curious" | "other";
 
-export interface PurposeInfo {
+interface PurposeInfo {
 	id: Purpose;
 	title: string;
 	blurb: string;
@@ -149,7 +149,7 @@ export const LEVEL_CAN_DO: Record<Cefr, string> = {
 };
 
 /** The level a purpose needs: the exam's own level when given. */
-export function purposeLevel(id: Purpose, examLevel?: Cefr): Cefr {
+function purposeLevel(id: Purpose, examLevel?: Cefr): Cefr {
 	return id === "exam" && examLevel ? examLevel : purposeInfo(id).level;
 }
 
@@ -219,16 +219,16 @@ export const LANG_LEVELS: ReadonlyArray<{ id: LangLevel; title: string; line: st
 	{ id: "native", title: "Native", line: "I grew up with it" },
 ];
 /** Level assumed when none is saved. */
-export const DEFAULT_LANG_LEVEL: LangLevel = "B2";
+const DEFAULT_LANG_LEVEL: LangLevel = "B2";
 const LEVEL_RANK: Record<LangLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5, native: 6 };
 /** Legacy three-step levels, read as CEFR. */
 const LEGACY_LEVEL: Record<string, LangLevel> = { basic: "A2", good: "B2", fluent: "native" };
 /** A level the learner still needs a hand with: lines in it stay short. */
-export function isLowLevel(level: LangLevel): boolean {
+function isLowLevel(level: LangLevel): boolean {
 	return LEVEL_RANK[level] <= LEVEL_RANK.A2;
 }
 
-export interface KnownLanguageInfo {
+interface KnownLanguageInfo {
 	id: Lang;
 	title: string;
 	/** What the language is like, in a few words (the chip's tooltip and the tutor's note). */
@@ -312,7 +312,7 @@ export const MAX_OTHER_LANGUAGE_LENGTH = 40;
 export function isLang(v: unknown): v is Lang {
 	return typeof v === "string" && KNOWN_LANGUAGES.some((l) => l.id === v);
 }
-export function isLangLevel(v: unknown): v is LangLevel {
+function isLangLevel(v: unknown): v is LangLevel {
 	return typeof v === "string" && LANG_LEVELS.some((l) => l.id === v);
 }
 /** A stored level, new or legacy, as a CEFR level; undefined when neither. */
@@ -320,10 +320,10 @@ export function normalizeLangLevel(v: unknown): LangLevel | undefined {
 	if (isLangLevel(v)) return v;
 	return typeof v === "string" ? LEGACY_LEVEL[v] : undefined;
 }
-export function isBridgeLang(v: unknown): v is BridgeLang {
+function isBridgeLang(v: unknown): v is BridgeLang {
 	return typeof v === "string" && (BRIDGE_LANGS as readonly string[]).includes(v);
 }
-export function languageInfo(id: Lang): KnownLanguageInfo {
+function languageInfo(id: Lang): KnownLanguageInfo {
 	return KNOWN_LANGUAGES.find((l) => l.id === id)!;
 }
 export function languageName(id: Lang): string {
@@ -344,7 +344,7 @@ export function knownLanguages(goal: Pick<LearnerGoal, "languages" | "firstLangu
 }
 
 /** How well the learner knows a language (DEFAULT_LANG_LEVEL when unsaid). */
-export function languageLevel(goal: Pick<LearnerGoal, "languageLevels"> | null | undefined, lang: Lang): LangLevel {
+function languageLevel(goal: Pick<LearnerGoal, "languageLevels"> | null | undefined, lang: Lang): LangLevel {
 	return normalizeLangLevel(goal?.languageLevels?.[lang]) ?? DEFAULT_LANG_LEVEL;
 }
 
@@ -494,7 +494,7 @@ export function etaFromScratch(level: Cefr, minutesPerDay: number, daysPerWeek: 
 
 // ─── Placement: the staircase ───────────────────────────────────────────────
 
-export interface PlacementTier {
+interface PlacementTier {
 	id: string;
 	level: Cefr;
 	title: string;
@@ -603,10 +603,10 @@ export interface PlacementOutcome {
 }
 
 /** Does a verdict count as right? Accent slips do, as in lessons. */
-export const isHit = (v: PlacementRep["verdict"]) => v !== "wrong";
+const isHit = (v: PlacementRep["verdict"]) => v !== "wrong";
 
 /** The hits a tier needs from `reps` answers. */
-export function tierNeed(reps: number): number {
+function tierNeed(reps: number): number {
 	return Math.ceil(reps * PASS_SHARE);
 }
 
@@ -652,22 +652,7 @@ export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: n
 export function tierPassed(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
 	const mine = reps.filter((r) => r.tier === tier.id);
 	return mine.length >= tier.units.length && mine.filter((r) => isHit(r.verdict)).length / mine.length >= PASS_SHARE;
-}
-
-/** One more typed rep per unit when a tier lands on the line. */
-export const EXTRA_REPS_PER_UNIT = 1;
-
-/** Is the tier a close call after its base reps (one hit either side of the pass line)? If so, a third rep per unit is asked. */
-export function tierBorderline(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
-	const mine = reps.filter((r) => r.tier === tier.id);
-	const base = tier.units.length * REPS_PER_UNIT;
-	if (mine.length !== base) return false;
-	const hits = mine.filter((r) => isHit(r.verdict)).length;
-	const need = tierNeed(base);
-	return hits === need || hits === need - 1;
-}
-
-/** The tier a unit belongs to (undefined for a unit no tier probes). */
+}/** The tier a unit belongs to (undefined for a unit no tier probes). */
 export function tierOfUnit(unit: UnitId): PlacementTier | undefined {
 	return placementTiers().find((t) => t.units.includes(unit));
 }
@@ -796,7 +781,7 @@ const PRIOR_LINE: Record<Prior, string> = {
 /** One unit's line in the tutor's "Measured weak points": its unaided first
  *  tries when it has six (with the slips behind the wrong ones), else its
  *  lesson answers, labeled as such. Null when neither has six reps. */
-export interface MeasuredWeak {
+interface MeasuredWeak {
 	accuracy: number;
 	text: string;
 }
@@ -900,7 +885,7 @@ export function learnerProfileText(target: { code: string; english: string }, go
 /** What the miss footer says: the form, the judge's reason as clean
  *  sentences, and the unit's rule so the verdict teaches the pattern once
  *  instead of only naming the case. */
-export interface MissVerdict {
+interface MissVerdict {
 	/** "The form here is kuchára" (the form is bolded by the UI). */
 	form: string;
 	/** The judge's note, normalized: no quotes around the Slovak words, no

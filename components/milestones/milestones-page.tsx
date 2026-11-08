@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { dateInWords, daysLeftWords, GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type DatedSceneView, type Eta, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
+import { dateInWords, daysLeftWords, GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX_CUSTOM_LENGTH, MIN_PACE_DAYS, MILESTONE_SOURCES, SPEED_LADDER, SUPPORT_LINE, genreLemmas, type DatedSceneView, type LearnerFacts, type MilestoneEstimate, type MilestonesReport, type NextWord } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { DatePicker } from "@/components/milestones/date-picker";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -707,4 +707,3 @@ function NextWords({ words, queued, onQueue }: { words: NextWord[]; queued: Set<
 	);
 }
 
-export type { Eta };

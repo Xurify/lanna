@@ -12,9 +12,9 @@ import { PATHS } from "../../config.ts";
 import type { ListenGuideRecord } from "../core/listen-guide.ts";
 import type { GuideRecord, MistakeAnalysis } from "../core/mistakes.ts";
 
-export type { GuideRecord, ListenGuideRecord };
+export type { GuideRecord };
 
-export interface AnalysisFile {
+interface AnalysisFile {
 	analysis: MistakeAnalysis | null;
 	guide: GuideRecord | null;
 	/** The deep read of the listening, kept apart so a new snapshot or guide never drops it. */

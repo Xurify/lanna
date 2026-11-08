@@ -37,7 +37,7 @@ export function prepareCorpus(): void {
 	ensureReadmes();
 }
 
-export interface ExportedMessage {
+interface ExportedMessage {
 	role: "user" | "assistant";
 	/** Learner-facing text only: no thinking, no tool plumbing. */
 	text: string;
@@ -46,7 +46,7 @@ export interface ExportedMessage {
 	at?: string;
 }
 
-export interface ExportedDialogue {
+interface ExportedDialogue {
 	id: string;
 	title: string;
 	/** "learn" (course) or "practice" (Talk, Story, Why?, Practice). */
@@ -60,7 +60,7 @@ export interface ExportedDialogue {
 	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number | null; models: string[] };
 }
 
-export interface ExportedExplanation {
+interface ExportedExplanation {
 	sentence: string;
 	answer: string;
 	lemma: string;
@@ -73,7 +73,7 @@ export interface ExportedExplanation {
 	reopened: number;
 }
 
-export interface ExportedSentence {
+interface ExportedSentence {
 	sentence: string;
 	translation: string;
 	answer: string;
@@ -87,7 +87,7 @@ export interface ExportedSentence {
 	answers: Array<{ at: string; kind: string; given: string; verdict: string; assisted: boolean }>;
 }
 
-export interface CorpusSummary {
+interface CorpusSummary {
 	exportedAt: string;
 	profile: string;
 	language: string;
@@ -210,7 +210,7 @@ Text is UTF-8 with diacritics as written. Verdicts: \`exact\`,
 report; \`costUsd\` is null when a model had no price in the catalog.
 `;
 
-export interface ExportResult {
+interface ExportResult {
 	dir: string;
 	summary: CorpusSummary;
 }

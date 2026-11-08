@@ -66,7 +66,7 @@ Numbered findings with inline source citations:
 ## Gaps
 What couldn't be answered. Suggested next steps.`;
 
-export interface ResearcherRunOptions {
+interface ResearcherRunOptions {
 	engine?: PiEngine;
 	/** The search seam (search port wave, 2026-09-20): resolves the LIVE
 	 *  provider per call, null = honestly unavailable (the web_search tool
@@ -106,5 +106,3 @@ export async function runResearcherAgent(prompt: string, opts: ResearcherRunOpti
 	});
 	return text;
 }
-
-export type ResearcherAgent = ReturnType<typeof runResearcherAgent>;

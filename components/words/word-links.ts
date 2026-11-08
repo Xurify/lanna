@@ -1,6 +1,6 @@
 import { referenceLink, type LanguageReferenceSite } from "@/src/core";
 
-export interface WordLinkInput {
+interface WordLinkInput {
 	text: string;
 	langCode: string;
 	langEnglish: string;

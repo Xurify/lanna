@@ -81,7 +81,7 @@ export interface ListenRep {
 	stretchText?: string[];
 }
 
-export interface ListenResultInput {
+interface ListenResultInput {
 	reps: ListenRep[];
 	ms?: number;
 	/** Active milliseconds since the last send (src/core/active-time.ts). */
@@ -89,7 +89,7 @@ export interface ListenResultInput {
 	tz?: number;
 }
 
-export interface ListenOutcome {
+interface ListenOutcome {
 	xp: number;
 	correct: number;
 	/** Typed sentences with only a missing accent (half XP, not understood). */

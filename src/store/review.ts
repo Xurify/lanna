@@ -25,7 +25,7 @@ const CARDS_FILE = () => path.join(PATHS.review, "cards.json");
 const LOG_FILE = () => path.join(PATHS.review, "log.jsonl");
 const META_FILE = () => path.join(PATHS.review, "meta.json");
 
-export interface ReviewMeta {
+interface ReviewMeta {
 	settings: ReviewSettings;
 	/** local day → new cards introduced that day */
 	introduced: Record<string, number>;

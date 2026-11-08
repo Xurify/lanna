@@ -36,11 +36,11 @@ export const PAIRING_CODE_DIGITS = 6;
 /** `desktop:dev` listens here; the fallback when no port is known. */
 const DEFAULT_PORT = 3010;
 
-export const REMOTE_OFF_MESSAGE = "Remote access is off. Turn it on in Settings → Devices, on this computer.";
-export const ONLY_THIS_COMPUTER_API = "The LangHarness API only answers this computer.";
-export const ONLY_THIS_COMPUTER_PAGE = "LangHarness only answers this computer.";
-export const DESKTOP_ONLY_API = "Desktop API access requires the trusted LearnHarness window.";
-export const ADDRESS_NOT_ALLOWED = "This address is not allowed. Use this computer’s Tailscale name.";
+const REMOTE_OFF_MESSAGE = "Remote access is off. Turn it on in Settings → Devices, on this computer.";
+const ONLY_THIS_COMPUTER_API = "The LangHarness API only answers this computer.";
+const ONLY_THIS_COMPUTER_PAGE = "LangHarness only answers this computer.";
+const DESKTOP_ONLY_API = "Desktop API access requires the trusted LearnHarness window.";
+const ADDRESS_NOT_ALLOWED = "This address is not allowed. Use this computer’s Tailscale name.";
 
 /**
  * Headers that only a proxy sends. The x-forwarded-* family is deliberately not
@@ -74,10 +74,10 @@ export type AccessInput = {
 	paired: boolean;
 };
 
-export type AccessDecision = { action: "allow" } | { action: "refuse"; message: string } | { action: "pair" };
+type AccessDecision = { action: "allow" } | { action: "refuse"; message: string } | { action: "pair" };
 
 /** Whether a request came through a reverse proxy (Tailscale Serve, a tunnel, anything). */
-export function proxied(headers: Headers): boolean {
+function proxied(headers: Headers): boolean {
 	return PROXY_HEADERS.some((name) => headers.has(name));
 }
 
@@ -86,7 +86,7 @@ export function proxied(headers: Headers): boolean {
  * Next's router passed it on (x-forwarded-host). The app worker sees the router's
  * own Host, so the original name has to be read from that header, and both must pass.
  */
-export function addressedBy(input: Pick<AccessInput, "host" | "headers">): (string | null)[] {
+function addressedBy(input: Pick<AccessInput, "host" | "headers">): (string | null)[] {
 	const original = input.headers.get("x-forwarded-host");
 	return original ? [input.host, original] : [input.host];
 }

@@ -87,7 +87,7 @@ export interface StoryCharacter {
  *  tales at A2, news and interviews at B1, opinion and history at B2). */
 export type StoryGenre = "robo" | "dialogue" | "message" | "diary" | "folk" | "travel" | "fable" | "news" | "interview" | "work" | "opinion" | "history";
 
-export interface GenreInfo {
+interface GenreInfo {
 	id: StoryGenre;
 	/** May hold {series}, {language} and {country}; genreInfo fills them. */
 	label: string;
@@ -97,7 +97,7 @@ export interface GenreInfo {
 	brief: string;
 }
 
-export const STORY_GENRES: readonly GenreInfo[] = [
+const STORY_GENRES: readonly GenreInfo[] = [
 	{ id: "robo", label: "{series}", from: "A1", brief: "an episode of the running series (see the earlier recaps); mostly dialogue with a little narration" },
 	{ id: "dialogue", label: "A conversation", from: "A1", brief: "a stand-alone conversation between two people in an everyday place (a shop, a bus, a kitchen, a reception desk); almost every line is speech, with one narrator line to set the scene" },
 	{ id: "message", label: "Messages", from: "A1", brief: "an exchange of short text messages or a short email and its reply between two named people; each sentence is one message or one line of a message" },
@@ -113,7 +113,7 @@ export const STORY_GENRES: readonly GenreInfo[] = [
 ];
 
 /** The names a genre's label and brief are filled with. */
-export interface StoryNames {
+interface StoryNames {
 	/** The running series, from the language's story bible. */
 	series: string;
 	language: string;
@@ -131,12 +131,12 @@ export function genreInfo(id: string, names: StoryNames = PLAIN_NAMES): GenreInf
 
 const LEVEL_ORDER: readonly Cefr[] = ["A1", "A2", "B1", "B2", "C1"];
 
-export function levelIndex(level: Cefr): number {
+function levelIndex(level: Cefr): number {
 	return Math.max(0, LEVEL_ORDER.indexOf(level));
 }
 
 /** The genres written at a level. */
-export function genresAt(level: Cefr): GenreInfo[] {
+function genresAt(level: Cefr): GenreInfo[] {
 	return STORY_GENRES.filter((g) => levelIndex(g.from) <= levelIndex(level));
 }
 
@@ -147,7 +147,7 @@ export function genresAt(level: Cefr): GenreInfo[] {
  *  how someone felt. */
 export type StoryQuestionKind = "recall" | "inference" | "vocab" | "paraphrase" | "attitude";
 
-export const STORY_QUESTION_KINDS: readonly StoryQuestionKind[] = ["recall", "inference", "vocab", "paraphrase", "attitude"];
+const STORY_QUESTION_KINDS: readonly StoryQuestionKind[] = ["recall", "inference", "vocab", "paraphrase", "attitude"];
 
 /** How each kind is shown over the question, and what the model is told
  *  to write. */
@@ -170,7 +170,7 @@ export const QUESTION_PLAN: Readonly<Record<Cefr, { count: number; options: numb
 };
 
 /** The most questions an episode can carry. */
-export const MAX_QUESTIONS = 5;
+const MAX_QUESTIONS = 5;
 
 /** One comprehension question in Slovak: three or four options, one right. */
 export interface StoryQuestion {
@@ -324,8 +324,8 @@ export interface PickReason {
 
 /** How many unread stories the shelf keeps ready at the learner's own
  *  level and at the levels either side of it. */
-export const SHELF_OWN = 3;
-export const SHELF_NEAR = 1;
+const SHELF_OWN = 3;
+const SHELF_NEAR = 1;
 /** The most stories written in one day for the shelf (the spend guard). */
 export const SHELF_DAILY_CAP = 8;
 
@@ -376,7 +376,7 @@ export function storyCoverage(story: Pick<StoryRecord, "sentences" | "newWords">
 	return ok / words.length;
 }
 
-export interface PickInput {
+interface PickInput {
 	level: Cefr;
 	known: ReadonlySet<string>;
 	/** Genres of the last readings, newest last. */
@@ -456,15 +456,7 @@ export const NEW_WORDS_MAX: Record<Cefr, number> = { A1: 3, A2: 4, B1: 5, B2: 6,
 export const KNOWN_RANK: Record<Cefr, number> = { A1: 500, A2: 1000, B1: 2000, B2: 3000, C1: 5000 };
 
 /** Below this share of known running words the draft is written again. */
-export const COVERAGE_FLOOR = 0.92;
-
-/** @deprecated the count is per level now: QUESTION_PLAN[level].count. */
-export const QUESTIONS_PER_STORY = QUESTION_PLAN.A1.count;
-
-/** Minutes the daily plan books for a Read task. */
-export const READ_MINUTES = 6;
-
-// ─── XP ─────────────────────────────────────────────────────────────────────
+export const COVERAGE_FLOOR = 0.92;// ─── XP ─────────────────────────────────────────────────────────────────────
 
 /** A finished reading earns XP for the text read and the questions right;
  *  a reread earns the questions only (the words are not new work). */

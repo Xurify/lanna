@@ -406,7 +406,7 @@ function sessionMeta(chat: ChatListItem): string {
  * state-aware meta. Exported for render tests — pure function of the
  * list item.
  */
-export function SessionRow({
+function SessionRow({
 	chat,
 	active,
 	onOpen,
@@ -475,7 +475,7 @@ export function SessionRow({
  *  title line becomes a text input — select-all on entry (the click means
  *  "replace", the header rename's rule), Enter/blur commits, Esc discards.
  *  The meta line stays so the row never changes height mid-edit. */
-export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; onCommit: (next: string) => void; onCancel: () => void }) {
+function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; onCommit: (next: string) => void; onCancel: () => void }) {
 	const [draft, setDraft] = useState(chat.title);
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	useEffect(() => {
@@ -525,7 +525,7 @@ export function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; on
  *  All / Learn / Practice — a client-side filter over the same snapshot.
  *  It lives behind the search button and applies only while search is
  *  open, so a forgotten filter can never leave the list silently short. */
-export type SessionKindFilter = "teach" | "all" | "practice";
+type SessionKindFilter = "teach" | "all" | "practice";
 
 function SessionsSidebar() {
 	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();

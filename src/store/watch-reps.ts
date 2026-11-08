@@ -10,7 +10,7 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { WatchRep } from "../core/watch-reps.ts";
 
-export interface WatchRepsFile {
+interface WatchRepsFile {
 	lines: WatchRep[];
 }
 

@@ -13,7 +13,7 @@
  * "Why?" is a question, not a course (prompts/practice/20-language-drills.md).
  */
 
-export interface WhyReuse {
+interface WhyReuse {
 	sentence: string;
 	answer: string;
 	lemma: string;

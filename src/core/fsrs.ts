@@ -21,7 +21,7 @@ export const FSRS5_WEIGHTS = [
 ] as const;
 
 /** The 19 FSRS-5 parameters. */
-export type Weights = readonly [
+type Weights = readonly [
 	number, number, number, number, number, number, number, number, number, number,
 	number, number, number, number, number, number, number, number, number,
 ];
@@ -34,7 +34,7 @@ export interface MemoryState {
 	difficulty: number;
 }
 
-export interface SchedulerOptions {
+interface SchedulerOptions {
 	/** Target recall probability at the due date (0.7–0.97). */
 	retention?: number;
 	/** Longest interval in days. */
@@ -44,7 +44,7 @@ export interface SchedulerOptions {
 
 const DAY_MS = 86_400_000;
 /** A failed card comes back within the session (minutes), not tomorrow. */
-export const RELEARN_MS = 10 * 60_000;
+const RELEARN_MS = 10 * 60_000;
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 

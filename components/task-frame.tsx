@@ -16,7 +16,7 @@ import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
 
-export { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
 export const COLUMN = "mx-auto w-full max-w-3xl px-6";
 

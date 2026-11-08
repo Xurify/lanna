@@ -17,7 +17,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 
-export interface KnownWordsFile {
+interface KnownWordsFile {
 	/** ISO time of the last mark or unmark. */
 	updatedAt?: string;
 	/** By lexicon slug: the dictionary form and when it was marked. */

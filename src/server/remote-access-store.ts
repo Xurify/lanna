@@ -23,7 +23,7 @@ import {
 	sameHash,
 } from "./remote-access.ts";
 
-export type DeviceRecord = {
+type DeviceRecord = {
 	id: string;
 	name: string;
 	createdAt: string;
@@ -32,9 +32,9 @@ export type DeviceRecord = {
 	tokenHash: string;
 };
 
-export type PairingRecord = { salt: string; codeHash: string; expiresAt: string; failures: number };
+type PairingRecord = { salt: string; codeHash: string; expiresAt: string; failures: number };
 
-export type AccessFile = {
+type AccessFile = {
 	version: 1;
 	enabled: boolean;
 	enabledAt: string | null;
@@ -42,7 +42,7 @@ export type AccessFile = {
 	devices: DeviceRecord[];
 };
 
-export type AccessStatus = {
+type AccessStatus = {
 	enabled: boolean;
 	port: number;
 	serveCommand: string;
@@ -50,7 +50,7 @@ export type AccessStatus = {
 	pairing: { expiresAt: string } | null;
 };
 
-export type RedeemResult =
+type RedeemResult =
 	| { ok: true; token: string; device: DeviceRecord }
 	| { ok: false; reason: "off" | "no-code" | "expired" }
 	| { ok: false; reason: "wrong"; attemptsLeft: number };

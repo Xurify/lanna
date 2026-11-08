@@ -18,7 +18,7 @@ import { analyzeNow, mistakesReportOf, type MistakesReport } from "./mistakes-sn
 import { activeLanguage } from "./active-language.ts";
 import type { LanguageInfo } from "../core/language.ts";
 
-export function listenGuideSystem(lang: Pick<LanguageInfo, "english" | "promptExamples"> = activeLanguage()): string {
+function listenGuideSystem(lang: Pick<LanguageInfo, "english" | "promptExamples"> = activeLanguage()): string {
 	const name = lang.english;
 	const spelling = lang.promptExamples?.spellingSlips ?? "A letter written as it is said rather than as the spelling has it is a spelling rule";
 	return `You are a ${name} teacher reading a learner's Listen results: they heard a sentence, typed what they heard, and the app compared the two word by word and gave every difference one cause. The facts below are the app's own figures, with every trend already called, or not, by a statistical test.
