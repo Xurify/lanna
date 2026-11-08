@@ -870,6 +870,12 @@ Owner's rule: "Code explains itself; name things until it does. A comment is all
 
 **How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` and the repo's own skills point to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
 
+### E72. A session closes to the page it was opened from (2026-11-07, branch `feat/session-close-to-origin`)
+
+The owner closed a grammar drill mid-way and expected to land back on the Grammar atlas; every player's X and Escape went to Today.
+
+**How to apply:** a full-screen session (lesson, listen, speak, watch, the speed strand) keeps the page its session was opened from (`components/origin.tsx` stamps the route on every navigation and skips the session routes themselves) and its close (X, Escape, leave after done) returns there. A lesson paused and rejoined (tutor chat, Today, a reload) keeps the page it was first opened from: the origin rides in the saved lesson. A lesson opened from nowhere keeps Today. The finish screens' own next steps (the score grid, speak's scene board, watch's shelf) stay where they point by themselves.
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.

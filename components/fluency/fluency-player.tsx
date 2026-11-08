@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
+import { readOrigin } from "@/components/origin";
 import { COLUMN, Centered, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
@@ -151,12 +152,12 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") return router.push("/");
+			if (e.key === "Escape") return router.push(readOrigin());
 			if (e.key === "Enter") {
 				e.preventDefault();
 				if (phase === "intro" && plan) begin();
 				else if (phase === "reading") stop();
-				else if (phase === "done") router.push("/");
+				else if (phase === "done") router.push(readOrigin());
 			} else if (phase === "question" && plan) {
 				const n = Number(e.key);
 				if (n >= 1 && n <= plan.question.options.length) void answer(n - 1);
@@ -616,10 +617,10 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
 				recorder.current?.cancel();
-				router.push("/");
+				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter") return router.push("/");
+			if (phase === "done" && e.key === "Enter") return router.push(readOrigin());
 			if (e.key === " " || e.key === "Enter") {
 				e.preventDefault();
 				if (phase === "ready") void startPass();

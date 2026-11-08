@@ -22,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
+import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
 import { COLUMN, Dock, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
@@ -240,11 +241,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			// The Enter that sends a typed answer is already handled by the field. This listener is re-registered on every render, so it is new by the time that same keypress reaches the window with the answer in place, and it would "continue" at once: the sentence and the verdict never showed. A held key must not skip a sentence either.
 			if (e.defaultPrevented || e.repeat) return;
 			if (e.key === "Escape") {
-				router.push("/");
+				router.push(readOrigin());
 				return;
 			}
 			if (outcome) {
-				if (e.key === "Enter") router.push("/");
+				if (e.key === "Enter") router.push(readOrigin());
 				return;
 			}
 			if (!item) return;
