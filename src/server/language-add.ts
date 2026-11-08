@@ -568,8 +568,9 @@ function shippedJson<T>(id: string, name: string): T | null {
 
 async function writeLexicon(lang: CatalogLanguage, sentences: readonly TatoebaSentence[], freq: ReadonlyMap<string, number>, words: readonly BuildWord[], signal: AbortSignal) {
 	const themeWords = new Set(shippedJson<Course>(lang.id, "course.json")?.units.flatMap((u) => u.lemmas ?? []) ?? []);
-	const ranked = rankWords(mergeHomographs(words, lang.tag), freq, lang.tag, WORD_LIMIT, themeWords);
-	const collector = new ExampleCollector(ranked, lang.tag, undefined, undefined, undefined, namesIn(sentences, lang.tag));
+	const merged = mergeHomographs(words, lang.tag);
+	const ranked = rankWords(merged, freq, lang.tag, WORD_LIMIT, themeWords);
+	const collector = new ExampleCollector(ranked, lang.tag, undefined, { names: namesIn(sentences, lang.tag), outside: merged });
 	// About 5 µs a sentence: 50 between yields is a quarter of a millisecond.
 	for (let i = 0; i < sentences.length; i++) {
 		collector.add(sentences[i]!);

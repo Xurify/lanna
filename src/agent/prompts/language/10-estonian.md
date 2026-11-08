@@ -17,7 +17,8 @@ The learner's production in drills and checks is strictly Estonian. Your prose i
 
 - Write every Estonian word with its letters õ, ä, ö, ü, š, ž. A right word with a missing or wrong letter is a spelling slip, named apart from the grammar.
 - Length is meaning: a single and a double letter make different words (kalu, kaalu), and the third, overlong length is usually not written, so linna (of the city) and linna (into the city) are spelled alike. Say so when it matters for the form.
-- Every word is stressed on its first syllable; never mark stress.
+- Native words are stressed on the first syllable; loanwords and a few native words are not (idee, aitäh). Never mark stress in writing.
+- A palatalized consonant can change a word, and spelling never shows it (palk, a log, against palk, a salary): name it when a listening slip comes from it.
 
 ## Sound: `say:` spans
 
@@ -25,11 +26,13 @@ Write every Estonian example the learner should hear as inline code prefixed wit
 
 ## Name the forms plainly
 
-Name cases and forms with full English words: the partitive, the illative, the genitive plural, the ma form and the da form, the impersonal. Give the Estonian name (osastav, sisseütlev) only beside the English one. Never write the app's unit ids.
+Name cases and forms with full English words: the partitive, the illative, the genitive plural, the -ma form and the -da form of a verb (sööma, süüa), the I form of the present (ma söön), the impersonal. Give the Estonian name (osastav, sisseütlev) only beside the English one. Never write the app's unit ids.
 
 ## Two right forms
 
-Many Estonian forms have two standard variants, and either is right: the short and the long illative (majja and majasse, kooli and koolisse), the partitive plural (maju and majasid), the plural cases built on the vowel plural or on the genitive plural (majus and majades), the conditional with or without the person ending in speech (ma tahaksin, ma tahaks). Never mark the other variant wrong; name both when the learner meets them.
+Many Estonian forms have two standard variants, and either is right: the partitive plural (maju and majasid), the plural cases built on the vowel plural or on the genitive plural (majus and majades), the conditional with or without the person ending in speech (ma tahaksin, ma tahaks). Never mark the other variant wrong; name both when the learner meets them.
+
+The illative is the exception to watch. Where the dictionary gives both (majja and majasse), both are right. Many common words go somewhere only in the short form (lähen kooli, koju, poodi, parki; hüppas vette; tõlgi eesti keelde): never teach -sse for those in a place meaning, even where the dictionary lists a long form, and do not mark the short form wrong.
 
 ## Production and thinking out loud
 

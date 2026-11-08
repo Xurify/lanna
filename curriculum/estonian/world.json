@@ -54,55 +54,55 @@
 		"cafe": {
 			"title": "Kohvikus",
 			"blurb": "Order breakfast at a cozy café on the Town Hall Square.",
-			"brief": "You are Kadri, the friendly owner of a small café on Raekoja plats in Tartu. It is morning and the learner comes to the counter.",
+			"brief": "Kadri, the friendly owner of a small café on Raekoja plats in Tartu; it is morning and I come to the counter to order breakfast",
 			"task": "Order a coffee and something to eat, and pay."
 		},
 		"way": {
 			"title": "Tee küsimine",
 			"blurb": "Ask a local how to get to the science center.",
-			"brief": "You are a helpful local passerby standing on Raekoja plats in Tartu. The learner stops you to ask the way.",
+			"brief": "a helpful local passerby on Raekoja plats in Tartu; I stop you to ask the way to Teaduskeskus AHHAA",
 			"task": "Find out how to get to Teaduskeskus AHHAA and how long it takes."
 		},
 		"colleague": {
 			"title": "Kolleegiga",
 			"blurb": "Chat with a colleague on your lunch break.",
-			"brief": "Tiina, a team lead at a design studio in Aparaaditehas, Tartu; it is lunch time and I am the new colleague she is chatting with at a café there",
+			"brief": "Tiina, a team lead at a design studio in Aparaaditehas, Tartu; it is lunch time and I am the new colleague you are chatting with at a café there",
 			"task": "Introduce yourself, talk about your work and ask about the weekend."
 		},
 		"shop": {
 			"title": "Turul",
 			"blurb": "Buy food at the market hall.",
-			"brief": "You are a seller at a vegetable and cheese stall in Tartu Turuhoone. The learner wants to buy some groceries.",
+			"brief": "a seller at a vegetable and cheese stall in Tartu Turuhoone; I want to buy a few groceries",
 			"task": "Buy a few things, ask about prices, and pay."
 		},
 		"doctor": {
 			"title": "Arsti juures",
 			"blurb": "Visit the family doctor with a cold.",
-			"brief": "You are a kind family doctor at a practice in Annelinn, Tartu. The learner has come in with a mild cold.",
+			"brief": "a kind family doctor at a practice in Annelinn, Tartu; I have come in with a mild cold",
 			"task": "Explain how you feel and understand the doctor's simple advice."
 		},
 		"family": {
 			"title": "Pereõhtu",
 			"blurb": "Have dinner with your neighbor's family.",
-			"brief": "You are Liis's mother, hosting a relaxed family dinner in your flat in Karlova, Tartu, and the learner is a guest.",
+			"brief": "Liis's mother, hosting a relaxed family dinner in your flat in Karlova, Tartu; I am a guest at your table",
 			"task": "Talk about your own family and answer questions about yourself."
 		},
 		"station": {
 			"title": "Bussijaamas",
 			"blurb": "Buy a bus ticket home for the weekend.",
-			"brief": "You are a ticket clerk at Tartu bussijaam. The learner wants to travel to Võru.",
+			"brief": "a ticket clerk at Tartu bussijaam; I want to travel to Võru",
 			"task": "Buy a ticket and find out the departure time and platform."
 		},
 		"restaurant": {
 			"title": "Restoranis",
 			"blurb": "Have dinner out on a Friday night.",
-			"brief": "You are a waiter at a cozy restaurant in the old town near Raekoja plats in Tartu. The learner has just sat down.",
+			"brief": "a waiter at a cozy restaurant in the old town near Raekoja plats in Tartu; I have just sat down",
 			"task": "Order a starter, a main course and a drink, and ask for the bill."
 		},
 		"hotel": {
 			"title": "Hotellis",
 			"blurb": "Check in for a weekend trip.",
-			"brief": "You are the receptionist at a small hotel in Tartu old town near the Emajõgi. The learner has a booking.",
+			"brief": "the receptionist at a small hotel in Tartu old town near the Emajõgi; I have a booking",
 			"task": "Check in, ask about breakfast time and get your room key."
 		}
 	},
@@ -192,9 +192,9 @@
 		"where-things-are": "Mart unpacks his boxes, takes things out, puts them into cupboards and asks Peeter where everything goes.",
 		"going-places": "Mart crosses Tartu by bus, from the market to the riverbank and from the station back to work, asking the way.",
 		"wants-and-plans": "Mart, Liis and Rasmus plan a Saturday at AHHAA: what they want to see, what they must bring and when to go.",
-		"yesterday": "Over coffee Mart tells Kadri about his busy yesterday and what he did not manage to do.",
-		"do-it": "Peeter teaches Mart to make jam in his kitchen, giving one instruction after another.",
 		"with-friends": "Mart has friends over for dinner and describes the food, the guests and the colorful table.",
+		"do-it": "Peeter teaches Mart to make jam in his kitchen, giving one instruction after another.",
+		"yesterday": "Over coffee Mart tells Kadri about his busy yesterday and what he did not manage to do.",
 		"some-things": "Mart shops for a housewarming party, buying some of everything and many small things.",
 		"many-places": "Liis shows Mart the town's parks, museums and cafés and tells him about the people in them.",
 		"asking-nicely": "On a weekend trip Mart checks into a small hotel and politely asks for what he would like.",

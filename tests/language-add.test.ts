@@ -101,7 +101,7 @@ describe("ranking and sentences", () => {
 
 	test("after the first sentences, a word gets one more for each form it lacks, then a second, up to the cap", () => {
 		const words = [{ ...word("kočka", "noun", ["kočku", "kočce", "kočkou"]), rank: 1 }];
-		const c = new build.ExampleCollector(words, TAG, 2, 2, 5);
+		const c = new build.ExampleCollector(words, TAG, 2, { perForm: 2, maxPerWord: 5 });
 		const lines = ["Kočka spí.", "Kočka jí.", "Kočka pije.", "Vidím kočku.", "Mám kočku.", "Hladím kočku.", "Dám to kočce.", "Jdu s kočkou."];
 		lines.forEach((text, i) => c.add({ id: i + 1, text, en: text }));
 		const blanks = c.examples.get("kočka\u0000noun")!.map((e) => e.cloze!.answer);
@@ -113,9 +113,19 @@ describe("ranking and sentences", () => {
 		const sentences = [{ text: "Mluvím s Tomem." }, { text: "Ptal se Toma." }, { text: "Toma tu není." }, { text: "Druhý tom je lepší." }];
 		const names = build.namesIn(sentences, TAG);
 		assert.deepEqual([...names].sort(), ["toma", "tomem"]);
-		const c = new build.ExampleCollector(words, TAG, 5, 2, 24, names);
+		const c = new build.ExampleCollector(words, TAG, 5, { names });
 		sentences.forEach((s, i) => c.add({ id: i + 1, text: s.text, en: s.text }));
 		assert.deepEqual(c.examples.get("tom\u0000noun")!.map((e) => e.text), ["Druhý tom je lepší."]);
+	});
+
+	test("a form that a word outside the list also owns is not blanked, nor a word joined by a hyphen", () => {
+		const words = [{ ...word("vann", "noun", ["vannita"], ["bathtub"]), rank: 1 }];
+		const outside = [word("vannitama", "verb", ["vannita"], ["to bathe"])];
+		const c = new build.ExampleCollector(words, TAG, 5, { outside });
+		c.add({ id: 1, text: "Palun vannita lapsed.", en: "Please bathe the children." });
+		c.add({ id: 2, text: "Vann-ruum on suur.", en: "The bathroom is big." });
+		c.add({ id: 3, text: "Ma tahan kohvi ilma vannita.", en: "Without a bathtub." });
+		assert.deepEqual(c.examples.get("vann\u0000noun"), undefined);
 	});
 
 	test("a noun spelled like an adjective in every form is that adjective, which then ranks", () => {

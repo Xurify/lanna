@@ -375,21 +375,29 @@ export class ExampleCollector {
 	private readonly lemmaOf = new Map<string, string>();
 	private readonly lowercaseLemma = new Set<string>();
 	private readonly rankOf = new Map<string, number>();
+	private readonly listed = new Set<string>();
+	private readonly perForm: number;
+	private readonly maxPerWord: number;
+	private readonly names: ReadonlySet<string>;
 
 	constructor(
 		words: ReadonlyArray<BuildWord & { rank?: number }>,
 		private readonly tag: string,
 		private readonly perWord = 5,
-		private readonly perForm = 2,
-		private readonly maxPerWord = 24,
-		private readonly names: ReadonlySet<string> = new Set(),
+		opts: { perForm?: number; maxPerWord?: number; names?: ReadonlySet<string>; outside?: readonly BuildWord[] } = {},
 	) {
-		this.index = formIndex(words, tag);
-		for (const w of words) {
+		this.perForm = opts.perForm ?? 2;
+		this.maxPerWord = opts.maxPerWord ?? 24;
+		this.names = opts.names ?? new Set();
+		const listedKeys = new Set(words.map((w) => w.key));
+		const outside = (opts.outside ?? []).filter((w) => !listedKeys.has(w.key));
+		this.index = formIndex([...words, ...outside], tag);
+		for (const w of [...words, ...outside]) {
 			this.lemmaOf.set(w.key, normWord(w.lemma, tag));
 			if (!startsUppercase(w.lemma)) this.lowercaseLemma.add(w.key);
-			this.rankOf.set(w.key, w.rank ?? Infinity);
+			this.rankOf.set(w.key, listedKeys.has(w.key) ? ((w as { rank?: number }).rank ?? Infinity) : Infinity);
 		}
+		for (const k of listedKeys) this.listed.add(k);
 	}
 
 	/** The one word a token belongs to: its only owner, or else the one
@@ -398,17 +406,19 @@ export class ExampleCollector {
 	private ownerOf(token: string): string | null {
 		const owners = this.index.get(token);
 		if (!owners) return null;
-		if (owners.size === 1) return owners.values().next().value!;
+		const only = (key: string) => (this.listed.has(key) ? key : null);
+		if (owners.size === 1) return only(owners.values().next().value!);
 		const exact = [...owners].filter((k) => this.lemmaOf.get(k) === token).sort((a, b) => this.rankOf.get(a)! - this.rankOf.get(b)!);
 		if (exact.length === 0) return null;
 		if (exact.length > 1 && this.rankOf.get(exact[0]!) === this.rankOf.get(exact[1]!)) return null;
-		return exact[0]!;
+		return only(exact[0]!);
 	}
 
 	add(s: TatoebaSentence): void {
 		const text = s.text.normalize("NFC");
 		const used = new Set<string>();
 		for (const { token, at } of tokenize(text)) {
+			if (text[at - 1] === "-" || text[at + token.length] === "-") continue;
 			const key = this.ownerOf(normWord(token, this.tag));
 			if (!key) continue;
 			if (this.lowercaseLemma.has(key) && startsUppercase(token) && (!startsSentence(text, at) || this.names.has(normWord(token, this.tag)))) continue;

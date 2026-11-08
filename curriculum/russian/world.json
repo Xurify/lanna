@@ -53,37 +53,37 @@
 		"cafe": {
 			"title": "В кафе",
 			"blurb": "Order breakfast at a cozy café on Bauman Street.",
-			"brief": "You are Ildar, the friendly owner of a small café on Bauman Street in Kazan. It is a quiet morning and you take the learner's order, recommend echpochmak and chak-chak, and chat a little.",
+			"brief": "Ildar, the friendly owner of a small café on Bauman Street in Kazan; it is a quiet morning and I come to order, curious about echpochmak and chak-chak",
 			"task": "Order a drink and something to eat, ask about one dish, and pay."
 		},
 		"way": {
 			"title": "Как пройти?",
 			"blurb": "You're lost near the Kremlin. Ask a passer-by for help.",
-			"brief": "You are a helpful local walking near the Kazan Kremlin. The learner stops you to ask how to get to the Kul Sharif Mosque or the metro station Kremlyovskaya, and you give simple directions.",
+			"brief": "a helpful local near the Kazan Kremlin; I stop you to ask how to get to the Kul Sharif Mosque or the Kremlyovskaya metro station",
 			"task": "Ask where a place is, understand the directions, and thank the person."
 		},
 		"colleague": {
 			"title": "Новый коллега",
 			"blurb": "Meet a colleague on your first day at work.",
-			"brief": "You are Marina, a designer at a small IT company near Black Lake Park in Kazan. The learner is a new colleague, and you meet in the office kitchen over coffee.",
+			"brief": "Marina, a designer at a small IT company near Black Lake Park in Kazan; I am the new colleague and we meet in the office kitchen over coffee",
 			"task": "Introduce yourself, say what you do, and ask your colleague one or two questions about work."
 		},
 		"shop": {
 			"title": "На рынке",
 			"blurb": "Buy fruit and honey at the Central Market.",
-			"brief": "You are a cheerful seller at a stall in the Central Market in Kazan, selling apples, cheese and local honey. The learner wants to buy a few things and asks about prices.",
+			"brief": "a cheerful seller at a stall in the Central Market in Kazan, selling apples, cheese and local honey; I want to buy a few things and ask about prices",
 			"task": "Ask the price of two items, buy them in specific amounts, and pay."
 		},
 		"doctor": {
 			"title": "У врача",
 			"blurb": "You've caught a cold. Tell the doctor how you feel.",
-			"brief": "You are a kind general doctor at a city clinic in Kazan. The learner comes in with a cold, and you ask about symptoms and give simple advice.",
+			"brief": "a kind general doctor at a city clinic in Kazan; I have come in with a cold",
 			"task": "Describe how you feel, answer the doctor's questions, and understand the advice."
 		},
 		"family": {
 			"title": "В гостях у бабушки",
 			"blurb": "Sunday lunch at Grandma's. Talk about the family.",
-			"brief": "You are Galina Petrovna, a warm retired teacher who lives near the Kazan Kremlin. Your grandchild has come for Sunday lunch, and you show family photos and ask about their life.",
+			"brief": "Galina Petrovna, a warm retired teacher who lives near the Kazan Kremlin; I am your grandchild, come for Sunday lunch",
 			"task": "Talk about your family members, say what they do, and answer Grandma's questions."
 		},
 		"station": {
@@ -95,13 +95,13 @@
 		"restaurant": {
 			"title": "В ресторане",
 			"blurb": "Dinner with friends at a Tatar restaurant.",
-			"brief": "You are a polite waiter at a traditional Tatar restaurant in the Old Tatar Sloboda in Kazan. The learner is having dinner, and you present the menu, recommend dishes and bring the bill.",
+			"brief": "a polite waiter at a traditional Tatar restaurant in the Old Tatar Sloboda in Kazan; I am having dinner and want your recommendations",
 			"task": "Ask for a recommendation, order a full meal, and ask for the bill."
 		},
 		"hotel": {
 			"title": "В гостинице",
 			"blurb": "Check in at a hotel near the Kremlin.",
-			"brief": "You are a receptionist at a small hotel on Kremlyovskaya Street in Kazan. The learner arrives to check in, and you confirm the booking, explain breakfast and give the room key.",
+			"brief": "a receptionist at a small hotel on Kremlyovskaya Street in Kazan; I have come to check in",
 			"task": "Check in, confirm your booking details, and ask one question about the hotel."
 		}
 	},
@@ -194,12 +194,12 @@
 		"plans": "The team plans a weekend on the island of Sviyazhsk: who will buy the tickets, who will bring food, what they will see.",
 		"likes-and-needs": "Aliya asks Artyom what he likes, what he misses and what he needs for his new flat.",
 		"with-friends": "Artyom spends an evening with Marina's friends, cooking with them and talking about their jobs.",
-		"many-things": "Marina takes Artyom through the Old Tatar Sloboda, describing the colorful houses, people and shops.",
 		"do-it": "Galina Petrovna teaches Artyom to make chak-chak, giving instructions and warnings.",
+		"many-things": "Marina takes Artyom through the Old Tatar Sloboda, describing the colorful houses, people and shops.",
 		"comparing": "Artyom and Marina compare Kazan with Samara and Moscow: which is older, bigger, more beautiful.",
-		"would-you": "Artyom's parents visit, and he books them a hotel and asks politely for what they would like.",
-		"arriving-leaving": "Marina guides Artyom on a walk: they come out of the metro, cross the square, go past the Kremlin and into the park.",
+		"arriving-leaving": "Marina guides Artyom on a walk: out of the metro, across the square, past the Kremlin, and on to a day in the forest by the river.",
 		"at-the-doctor": "Artyom catches a cold and tells the doctor what hurts, and nobody at work believes he is ill.",
+		"would-you": "Artyom's parents visit, and he books them a hotel and asks politely for what they would like.",
 		"linking-ideas": "Artyom explains to his grandmother the people he works with, which friend is which and why he wants to stay.",
 		"written-style": "Artyom reads a museum guide and a city notice and turns the written style into plain speech for Aliya.",
 		"they-say": "Ildar hears news that a famous chef is coming to Kazan, and everyone retells it differently.",

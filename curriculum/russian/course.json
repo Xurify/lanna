@@ -47,10 +47,6 @@
 			"means": "the second prepositional of a few masculine words: в лесу, на мосту",
 			"tutor": "tutor-special-cases",
 			"noDrill": {
-				"singular": {
-					"short": "a few words only",
-					"why": "Only a short list of masculine words take a stressed -у after в and на (в лесу, на мосту, в саду, в аэропорту), and few example sentences hold it. The tutor session on the special forms practices it."
-				},
 				"plural": {
 					"short": "no separate form",
 					"why": "In the plural these words use the ordinary prepositional (в лесах)."
@@ -276,9 +272,9 @@
 		{
 			"id": "possessives",
 			"kind": "grammar",
-			"title": "My, your, our",
+			"title": "My, your, our, whose",
 			"tagline": "мой брат, моя сестра",
-			"rule": "Мой, твой, наш and ваш take the gender, number and case of the thing owned (мой брат, моя сестра, моё окно, мои книги, у моего брата); его, её and их never change. Свой replaces them when the owner is the subject: я люблю свою работу.",
+			"rule": "Мой, твой, наш, ваш and чей take the gender, number and case of the thing owned (мой брат, моя сестра, моё окно, мои книги, у моего брата, чья книга?); его, её and их never change. Свой replaces them when the owner is the subject: я люблю свою работу.",
 			"glyph": "key",
 			"grammarTerm": "possessive pronouns",
 			"nativeTerm": "притяжательные местоимения",
@@ -815,6 +811,10 @@
 			"tags": [
 				"nominative",
 				"plural"
+			],
+			"skipForms": [
+				"учители",
+				"дядья"
 			]
 		},
 		{
@@ -844,6 +844,26 @@
 					"prepositional",
 					"plural"
 				]
+			]
+		},
+		{
+			"id": "locative-u",
+			"kind": "grammar",
+			"title": "В шкафу, на углу",
+			"tagline": "the second prepositional",
+			"rule": "After в or на for a place, a short list of masculine words takes a stressed -у instead of -е (в шкафу, на углу, в снегу, во рту, на льду), and a few feminine words in -ь a stressed -и (в сети, в груди). About something keeps -е: о шкафе.",
+			"glyph": "map-pin",
+			"grammarTerm": "second prepositional",
+			"nativeTerm": "местный падеж",
+			"cat": "Nouns",
+			"tags": [
+				"locative",
+				"singular"
+			],
+			"after": [
+				"в",
+				"во",
+				"на"
 			]
 		},
 		{
@@ -973,7 +993,7 @@
 			"kind": "grammar",
 			"title": "Bigger, better",
 			"tagline": "больше, лучше, новее",
-			"rule": "The comparative adds -ее to the stem (новее, интереснее) or is irregular (лучше, хуже, больше, меньше, проще, дороже); than is чем or the genitive: он старше меня, он старше, чем я.",
+			"rule": "The comparative of adjectives and adverbs adds -ее (новее, быстрее) or is irregular (лучше, больше, проще, дороже); по- in front means a little (побыстрее). Than is чем or the genitive: он старше меня, он старше, чем я.",
 			"glyph": "trending-up",
 			"grammarTerm": "comparative",
 			"nativeTerm": "сравнительная степень",
@@ -1047,9 +1067,9 @@
 		{
 			"id": "demonstratives",
 			"kind": "grammar",
-			"title": "This, that, every",
-			"tagline": "в этом доме, с той женщиной",
-			"rule": "Этот (this) and тот (that), like весь and каждый, change like adjectives: этот дом, эта книга, это окно, эти книги; в этом доме, с той женщиной.",
+			"title": "This, that, such, any",
+			"tagline": "в этом доме, такая книга",
+			"rule": "Этот (this), тот (that), такой (such), какой (which, what kind), другой and любой change like adjectives: этот дом, эта книга, это окно, эти книги; в этом доме, с той женщиной, какую книгу?",
 			"glyph": "hand",
 			"grammarTerm": "demonstratives",
 			"nativeTerm": "указательные местоимения",
@@ -1079,7 +1099,11 @@
 			],
 			"skipForms": [
 				"кое",
-				"кой"
+				"кой",
+				"коей",
+				"коем",
+				"коим",
+				"кою"
 			]
 		},
 		{
@@ -1266,7 +1290,7 @@
 			"title": "Prices, age and the clock",
 			"tagline": "рубль, рубля, рублей",
 			"glyph": "clock",
-			"brief": "Teach me numbers with nouns (один рубль, два рубля, пять рублей; 11 to 14 like five; a compound number follows its last word: двадцать один год, двадцать два года), age with the dative (мне двадцать лет), and clock times (в пять часов, в половине шестого, без пятнадцати шесть). Warn me that after 2 to 4 a Slovak speaker wants a nominative plural, but Russian takes the genitive singular. Quiz me."
+			"brief": "Teach me numbers with nouns (один рубль, два рубля, пять рублей; 11 to 14 like five; a compound number follows its last word: двадцать один год, двадцать два года), age with the dative (мне двадцать лет), clock times (в пять часов, в половине шестого, без пятнадцати шесть) and dates with ordinals (первое мая; пятого мая, on the fifth of May; в две тысячи двадцать шестом году). Warn me that after 2 to 4 Slovak wants a nominative plural, Russian the genitive singular. Quiz me."
 		},
 		{
 			"id": "tutor-motion-basics",
@@ -1577,12 +1601,13 @@
 			"id": "my-family",
 			"stage": "a1",
 			"title": "My family",
-			"tagline": "gender, my and your, agreement",
+			"tagline": "gender, my and your, agreement, the plural",
 			"units": [
 				"lx-words-family",
 				"tutor-gender",
 				"possessives",
 				"adjective-nominative",
+				"nominative-plural",
 				"lx-words-questions",
 				"can-talk-family"
 			]
@@ -1707,9 +1732,8 @@
 			"id": "many-things",
 			"stage": "a2",
 			"title": "Many things",
-			"tagline": "the plural, adjectives in cases",
+			"tagline": "the plural cases, adjectives in cases",
 			"units": [
-				"nominative-plural",
 				"plural-cases",
 				"tutor-plural",
 				"adjective-cases",
@@ -1734,9 +1758,10 @@
 			"id": "arriving-leaving",
 			"stage": "a2",
 			"title": "Arriving and leaving",
-			"tagline": "verbs of motion with prefixes",
+			"tagline": "verbs of motion with prefixes, в лесу",
 			"units": [
 				"tutor-motion-prefixes",
+				"locative-u",
 				"lx-words-nature",
 				"can-describe-route"
 			]

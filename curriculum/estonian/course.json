@@ -90,7 +90,7 @@
 			"noDrill": {
 				"plural": {
 					"short": "too few sentences",
-					"why": "No example sentence holds the plural (majadeni), so there is no lesson for it. It is the genitive plural plus -ni."
+					"why": "No example sentence holds the plural (majadeni), so there is no lesson for it. It is the genitive plural plus -ni. The tutor session As a child, as a doctor practices it."
 				}
 			}
 		},
@@ -265,7 +265,7 @@
 			"kind": "grammar",
 			"title": "Not: ei",
 			"tagline": "ma ei tea, nad ei tule",
-			"rule": "To say not, put ei before the present stem, which is the ma form without -n, the same for every person: (ma tean →) ma ei tea, nad ei tule. Ei ole is often said pole, and the object turns partitive: ma ei näe autot.",
+			"rule": "To say not, put ei before the present stem: the I form without -n, the same for every person: (ma tean →) ma ei tea, nad ei tule. Ei ole is often said pole, and the object turns partitive: ma ei näe autot.",
 			"glyph": "ban",
 			"grammarTerm": "negation, present",
 			"nativeTerm": "eitus",
@@ -405,6 +405,11 @@
 			"tags": [
 				"adessive",
 				"singular"
+			],
+			"skipForms": [
+				"asemel",
+				"nimel",
+				"saatel"
 			]
 		},
 		{
@@ -565,6 +570,9 @@
 			"tags": [
 				"inessive",
 				"singular"
+			],
+			"skipForms": [
+				"värvis"
 			]
 		},
 		{
@@ -580,6 +588,10 @@
 			"tags": [
 				"illative",
 				"singular"
+			],
+			"skipForms": [
+				"kokku",
+				"sekku"
 			]
 		},
 		{
@@ -595,6 +607,9 @@
 			"tags": [
 				"elative",
 				"singular"
+			],
+			"skipForms": [
+				"poolest"
 			]
 		},
 		{
@@ -624,6 +639,12 @@
 					"elative",
 					"singular"
 				]
+			],
+			"skipForms": [
+				"värvis",
+				"poolest",
+				"kokku",
+				"sekku"
 			]
 		},
 		{
@@ -668,6 +689,13 @@
 					"ablative",
 					"singular"
 				]
+			],
+			"skipForms": [
+				"asemel",
+				"nimel",
+				"saatel",
+				"nimelt",
+				"pealt"
 			]
 		},
 		{
@@ -825,7 +853,7 @@
 			"kind": "grammar",
 			"title": "Do it!",
 			"tagline": "Tule! Tulge!",
-			"rule": "A command to sina is the present stem (ma tulen → tule!), except minema → mine; don't is ära: ära tule. To teie add -ge or -ke to the da form's stem: tulla → tulge, oodata → oodake; don't is ärge: ärge tulge.",
+			"rule": "A command to sina is the present stem, the I form without -n (ma tulen → tule!), except minema → mine; don't is ära: ära tule. To teie add -ge or -ke to the da form's stem: tulla → tulge, oodata → oodake; don't is ärge: ärge tulge.",
 			"glyph": "megaphone",
 			"grammarTerm": "imperative",
 			"nativeTerm": "käskiv kõneviis",
@@ -868,6 +896,10 @@
 			"tags": [
 				"comitative",
 				"singular"
+			],
+			"skipForms": [
+				"meelega",
+				"korraga"
 			]
 		},
 		{
@@ -918,19 +950,7 @@
 					"singular"
 				],
 				[
-					"translative",
-					"singular"
-				],
-				[
 					"nominative",
-					"plural"
-				],
-				[
-					"partitive",
-					"plural"
-				],
-				[
-					"genitive",
 					"plural"
 				]
 			]
@@ -1017,6 +1037,112 @@
 			"tags": [
 				"partitive",
 				"plural"
+			],
+			"skipForms": [
+				"ennast"
+			]
+		},
+		{
+			"id": "whole-or-part",
+			"kind": "grammar",
+			"title": "Whole or part: the object",
+			"tagline": "ostsin raamatu, ostan raamatut",
+			"rule": "A whole, finished object is in the genitive singular (ma tõin raamatu); an unfinished action, a part or an amount takes the partitive (ma loen raamatut, ma joon vett), and so does every object of ei and of verbs like armastama and ootama.",
+			"glyph": "git-compare",
+			"grammarTerm": "total and partial object",
+			"nativeTerm": "täis- ja osasihitis",
+			"cat": "Nouns",
+			"tags": [
+				"genitive",
+				"singular"
+			],
+			"variants": [
+				[
+					"genitive",
+					"singular"
+				],
+				[
+					"partitive",
+					"singular"
+				]
+			],
+			"after": [
+				"ostsin",
+				"ostis",
+				"ostsid",
+				"ostan",
+				"ostab",
+				"ostame",
+				"lugesin",
+				"luges",
+				"loen",
+				"loeb",
+				"jõin",
+				"jõi",
+				"joon",
+				"joob",
+				"sõin",
+				"sõi",
+				"söön",
+				"sööb",
+				"nägin",
+				"nägi",
+				"näen",
+				"näeb",
+				"tegin",
+				"tegi",
+				"teen",
+				"teeb",
+				"võtsin",
+				"võttis",
+				"võtan",
+				"võtab",
+				"andsin",
+				"andis",
+				"annan",
+				"annab",
+				"leidsin",
+				"leidis",
+				"leian",
+				"leiab",
+				"otsin",
+				"otsib",
+				"ootan",
+				"ootab",
+				"armastan",
+				"armastab",
+				"kirjutasin",
+				"kirjutas",
+				"kirjutan",
+				"kirjutab",
+				"tõin",
+				"tõi",
+				"toon",
+				"toob",
+				"pesin",
+				"pesi",
+				"parandasin",
+				"parandas",
+				"kaotasin",
+				"kaotas",
+				"müüsin",
+				"müüs",
+				"tellisin",
+				"tellis",
+				"vajan",
+				"vajab",
+				"tahan",
+				"tahab",
+				"kuulsin",
+				"kuulis",
+				"mäletan",
+				"mäletab",
+				"tunnen",
+				"tunneb",
+				"avasin",
+				"avas",
+				"sulgesin",
+				"sulges"
 			]
 		},
 		{
@@ -1050,6 +1176,14 @@
 					"adessive",
 					"plural"
 				]
+			],
+			"skipForms": [
+				"endale",
+				"endast",
+				"enesele",
+				"värvides",
+				"reisile",
+				"reisist"
 			]
 		},
 		{
@@ -1079,6 +1213,9 @@
 					"abessive",
 					"plural"
 				]
+			],
+			"skipForms": [
+				"endaga"
 			]
 		},
 		{
@@ -1101,7 +1238,7 @@
 			"kind": "grammar",
 			"title": "Bigger, better",
 			"tagline": "suurem, parem, rohkem",
-			"rule": "The comparative adds -m to the genitive: suur (suure) → suurem, ilus (ilusa) → ilusam; hea → parem, palju → rohkem. Than is kui, or the elative: suurem kui maja, majast suurem.",
+			"rule": "The comparative adds -m to the genitive: suur (suure) → suurem, ilus (ilusa) → ilusam; hea → parem, palju → rohkem; adverbs take -mini or -malt: kiiremini, aeglasemalt. Than is kui, or the elative: suurem kui maja, majast suurem.",
 			"glyph": "trending-up",
 			"grammarTerm": "comparative",
 			"nativeTerm": "keskvõrre",
@@ -1205,6 +1342,13 @@
 					"abessive",
 					"singular"
 				]
+			],
+			"skipForms": [
+				"kujuta",
+				"haavata",
+				"asjata",
+				"kõrini",
+				"vannita"
 			]
 		},
 		{
@@ -1257,7 +1401,7 @@
 			"kind": "grammar",
 			"title": "It is done: the impersonal",
 			"tagline": "räägitakse, räägiti",
-			"rule": "The impersonal names no doer: -takse or -akse in the present, -ti or -di in the past: Eestis räägitakse eesti keelt. Mu auto varastati eile.",
+			"rule": "The impersonal names no doer: -takse or -akse in the present, -ti or -di in the past (Eestis räägitakse eesti keelt; auto varastati), and the -tud form for what is done: uks on suletud.",
 			"glyph": "shield",
 			"grammarTerm": "impersonal voice",
 			"nativeTerm": "umbisikuline tegumood",
@@ -1277,6 +1421,11 @@
 					"impersonal",
 					"indicative",
 					"past"
+				],
+				[
+					"participle",
+					"passive",
+					"past"
 				]
 			]
 		},
@@ -1285,7 +1434,7 @@
 			"kind": "grammar",
 			"title": "Busy doing, back from doing",
 			"tagline": "käimas, ujumast, söömata",
-			"rule": "The ma form takes case endings: -mas, in the middle of doing (ta on poes käimas); -mast, back from doing (tulen ujumast); -mata, without doing (ta läks söömata).",
+			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas); -mast, back from doing (tulen ujumast); -mata, without doing (ta läks söömata).",
 			"glyph": "activity",
 			"grammarTerm": "ma-infinitive cases",
 			"nativeTerm": "ma-tegevusnime käändevormid",
@@ -1387,7 +1536,7 @@
 			"title": "Estonian sounds",
 			"tagline": "õ, ä, ö, ü and stress",
 			"glyph": "ear",
-			"brief": "Teach me the nine Estonian vowels, especially õ, ä, ö and ü, the common vowel pairs (ai, ei, ui, äe, õu), and that every word is stressed on its first syllable. Then dictate short words for me to spell, one at a time, and correct my spelling."
+			"brief": "Teach me the nine Estonian vowels, especially õ, ä, ö and ü, the common vowel pairs (ai, ei, ui, äe, õu), that native words are stressed on the first syllable, and that a consonant can be palatalized, which spelling never shows but which changes the word (palk, a log, against palk, a salary). Then dictate short words for me to spell, one at a time, and correct my spelling."
 		},
 		{
 			"id": "tutor-length",
@@ -1464,7 +1613,7 @@
 			"title": "Changing stems",
 			"tagline": "why words change inside",
 			"glyph": "shuffle",
-			"brief": "Explain consonant gradation, where a word's stem changes between forms (pood → poe, jalg → jala, tuba → toa, õppima → õpin), and which forms have the strong and which the weak stem. Give me base forms and ask me for the genitive or the ma form, then correct me and point out the patterns."
+			"brief": "Explain consonant gradation, where a word's stem changes between forms (pood → poe, jalg → jala, tuba → toa, õppima → ma õpin), and which forms have the strong and which the weak stem. Give me dictionary forms and ask me for the genitive or the I form of the present, then correct me and point out the patterns."
 		},
 		{
 			"id": "tutor-commands",
@@ -1870,9 +2019,10 @@
 			"id": "some-things",
 			"stage": "a2",
 			"title": "Some and many",
-			"tagline": "the partitive plural, the object",
+			"tagline": "the partitive plural, whole or part",
 			"units": [
 				"partitive-plural",
+				"whole-or-part",
 				"tutor-object-case",
 				"can-describe-things"
 			]
