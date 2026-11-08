@@ -24,15 +24,17 @@ globalThis.fetch = (async (url: unknown, init?: RequestInit) => {
 	return new Response(JSON.stringify({ xp: 10 }), { status: 200 });
 }) as typeof fetch;
 
-const { keepSession, sendSession } = await import("../components/session-save.ts");
+const { _resetSessionsForTests, keepSession, onSessionSaved, RefusedError, sendSession } = await import("../components/session-save.ts");
 const waiting = () => JSON.parse(store.get("lh-session-outbox") ?? "[]") as Array<{ id: string; lang: string }>;
 
 beforeEach(() => {
+	_resetSessionsForTests();
 	store.clear();
 	sent.length = 0;
 	replies = [];
 });
 after(() => {
+	_resetSessionsForTests();
 	globalThis.fetch = realFetch;
 });
 
@@ -57,7 +59,17 @@ describe("a Listen, Read or Watch session is kept until the server has it (E77)"
 	it("is dropped when the server refuses it, since sending it again cannot help", async () => {
 		const session = keepSession("sk", "/api/watch", { action: "finish" });
 		replies = [{ status: 404 }];
-		await assert.rejects(sendSession(session));
+		await assert.rejects(sendSession(session), RefusedError);
 		assert.deepEqual(waiting(), []);
+	});
+
+	it("tells the open end screen when a later send lands", async () => {
+		const session = keepSession("sk", "/api/listen", { reps: [] });
+		replies = ["network"];
+		await assert.rejects(sendSession(session));
+		const told: unknown[] = [];
+		onSessionSaved(session.id, (outcome) => told.push(outcome));
+		await sendSession(session);
+		assert.deepEqual(told, [{ xp: 10 }]);
 	});
 });

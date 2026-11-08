@@ -355,7 +355,10 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 					))}
 				</div>
 			</div>
-			<div className="mt-1 flex gap-1">
+			<p className="sr-only">
+				{history.length > 1 ? `Earlier: ${history.slice(0, -1).map((x) => `${x.wpm}`).join(", ")} words a minute. ` : ""}This time: {history[history.length - 1]?.wpm} words a minute. Target: {target} words a minute.
+			</p>
+			<div className="mt-1 flex gap-1" aria-hidden="true">
 				{history.map((x, i) => (
 					<span key={i} className="w-9 text-center font-ui text-xs tabular-nums text-ink-3">
 						{x.wpm}

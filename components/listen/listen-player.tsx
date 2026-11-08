@@ -32,7 +32,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { keepSession, sendSession, type PendingSession } from "@/components/session-save";
+import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
 interface Rep {
 	item: ListenItem;
@@ -76,6 +76,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const [saveRefused, setSaveRefused] = useState(false);
 	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// Listening is mostly hearing, not clicking: the day's minutes count the
@@ -98,6 +99,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		setPeeked(false);
 		setOutcome(null);
 		setSaveFailed(false);
+		setSaveRefused(false);
 		finishing.current = false;
 		try {
 			const res = await fetch("/api/listen");
@@ -186,8 +188,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						tz: new Date().getTimezoneOffset(),
 				});
 				setOutcome(await sendSession<Outcome>(lastSave.current));
-			} catch {
+			} catch (err) {
 				setSaveFailed(true);
+				setSaveRefused(err instanceof RefusedError);
 				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
 			} finally {
 				setSaving(false);
@@ -202,12 +205,23 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		try {
 			setOutcome(await sendSession<Outcome>(lastSave.current));
 			setSaveFailed(false);
-		} catch {
+			setSaveRefused(false);
+		} catch (err) {
 			setSaveFailed(true);
+			setSaveRefused(err instanceof RefusedError);
 		} finally {
 			setSaving(false);
 		}
 	};
+
+	useEffect(() => {
+		const session = lastSave.current;
+		if (!saveFailed || saveRefused || !session) return;
+		return onSessionSaved(session.id, (saved) => {
+			setOutcome(saved as Outcome);
+			setSaveFailed(false);
+		});
+	}, [saveFailed, saveRefused]);
 
 	/** Grade and show one answer. The time since the text was first shown
 	 *  is the speed model's; the first playback's length is kept too. */
@@ -327,7 +341,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
+				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
 			</Frame>
 		);
 	}
@@ -534,7 +548,7 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 	);
 }
 
-function EndScreen({ outcome, reps, saving, failed, onAgain, onRetrySave }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; onAgain: () => void; onRetrySave: () => void }) {
+function EndScreen({ outcome, reps, saving, failed, refused, onAgain, onRetrySave }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; refused: boolean; onAgain: () => void; onRetrySave: () => void }) {
 	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
@@ -544,7 +558,7 @@ function EndScreen({ outcome, reps, saving, failed, onAgain, onRetrySave }: { ou
 	return (
 		<TaskEnd
 			testId="listen-end"
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} /> : <EnterHint>for Today</EnterHint>}
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for Today</EnterHint>}
 			actions={
 				<>
 					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
@@ -566,9 +580,9 @@ function EndScreen({ outcome, reps, saving, failed, onAgain, onRetrySave }: { ou
 			</h1>
 			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving ? null : failed ? "Not saved" : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label="XP" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label="New words met" value={String(words.length)} />
-				<Stat label="Added to Review" value={saving ? null : failed ? "Not saved" : outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} ink={failed ? "text-ink-3" : undefined} />
+				<Stat label="Added to Review" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} ink={failed ? "text-ink-3" : undefined} />
 			</Stats>
 			<Link href="/mistakes#mistakes-listening" className="mt-3 inline-block font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2" data-testid="listen-trends">
 				How your listening is going

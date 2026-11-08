@@ -54,7 +54,7 @@ import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { keepSession, sendSession, type PendingSession } from "@/components/session-save";
+import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
 type Stage = "shelf" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -102,6 +102,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const [saveRefused, setSaveRefused] = useState(false);
 	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// The watch clock counts while the video plays, and while the learner works
@@ -285,14 +286,16 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			if (!video || saving) return;
 			setSaving(true);
 			setSaveFailed(false);
+			setSaveRefused(false);
 			setStage("end");
 			sfx.done();
 			try {
 				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", { action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
-			} catch {
+			} catch (err) {
 				setSaveFailed(true);
+				setSaveRefused(err instanceof RefusedError);
 				const correct = video.questions.filter((q, i) => all[i] === q.answer).length;
 				const gotFirst = segStats.filter((s) => s.got === "first").length;
 				const gotAfter = segStats.filter((s) => s.got === "after").length;
@@ -310,13 +313,25 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		try {
 			setOutcome(await sendSession<Outcome>(lastSave.current));
 			setSaveFailed(false);
+			setSaveRefused(false);
 			void load();
-		} catch {
+		} catch (err) {
 			setSaveFailed(true);
+			setSaveRefused(err instanceof RefusedError);
 		} finally {
 			setSaving(false);
 		}
 	};
+
+	useEffect(() => {
+		const session = lastSave.current;
+		if (!saveFailed || saveRefused || !session) return;
+		return onSessionSaved(session.id, (saved) => {
+			setOutcome(saved as Outcome);
+			setSaveFailed(false);
+			void load();
+		});
+	}, [saveFailed, saveRefused, load]);
 
 	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to the page the player was opened from; a word popover closes first.
 	useEffect(() => {
@@ -417,7 +432,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End video={video} stats={stats} outcome={outcome} saving={saving} failed={saveFailed} onRetrySave={() => void retrySave()} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
+				<End video={video} stats={stats} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
 			</Frame>
 		);
 	}
@@ -1341,7 +1356,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	);
 }
 
-function End({ failed, onRetrySave, video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; failed: boolean; onRetrySave: () => void; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+function End({ failed, refused, onRetrySave, video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
 	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
@@ -1361,7 +1376,7 @@ function End({ failed, onRetrySave, video, stats, outcome, saving, mode, tapped,
 	return (
 		<TaskEnd
 			testId="watch-end"
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} /> : <EnterHint>for another video</EnterHint>}
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for another video</EnterHint>}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>
@@ -1385,7 +1400,7 @@ function End({ failed, onRetrySave, video, stats, outcome, saving, mode, tapped,
 				{video.title}
 			</p>
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving || !outcome ? null : failed ? "Not saved" : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label="XP" value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label={mode === "step" ? "Got the first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)} />
 				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
 			</Stats>

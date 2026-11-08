@@ -35,12 +35,63 @@ export function keepSession(lang: string, url: string, payload: Record<string, u
 	return session;
 }
 
+export class RefusedError extends Error {}
+
+const listeners = new Map<string, Set<(outcome: unknown) => void>>();
+
+export function onSessionSaved(id: string, listener: (outcome: unknown) => void): () => void {
+	const set = listeners.get(id) ?? new Set();
+	set.add(listener);
+	listeners.set(id, set);
+	return () => {
+		set.delete(listener);
+	};
+}
+
+let failures = 0;
+let retry: ReturnType<typeof setTimeout> | undefined;
+
+function retryLater(lang: string): void {
+	failures++;
+	clearTimeout(retry);
+	retry = setTimeout(
+		() => {
+			retry = undefined;
+			void flushSessions(lang);
+		},
+		Math.min(60_000, 2_000 * 2 ** (failures - 1)),
+	);
+}
+
 export async function sendSession<T>(session: PendingSession): Promise<T> {
-	const res = await fetch(session.url, { method: "POST", headers: { "content-type": "application/json" }, body: session.body, signal: AbortSignal.timeout(15_000) });
-	const refused = res.status >= 400 && res.status < 500;
-	if (res.ok || refused) write(read().filter((s) => s.id !== session.id));
-	if (!res.ok) throw new Error(`HTTP ${res.status}`);
-	return (await res.json()) as T;
+	let res: Response;
+	try {
+		res = await fetch(session.url, { method: "POST", headers: { "content-type": "application/json" }, body: session.body, signal: AbortSignal.timeout(15_000) });
+	} catch (err) {
+		retryLater(session.lang);
+		throw err;
+	}
+	if (res.status >= 400 && res.status < 500) {
+		write(read().filter((s) => s.id !== session.id));
+		throw new RefusedError(`HTTP ${res.status}`);
+	}
+	if (!res.ok) {
+		retryLater(session.lang);
+		throw new Error(`HTTP ${res.status}`);
+	}
+	const outcome = (await res.json()) as T;
+	write(read().filter((s) => s.id !== session.id));
+	failures = 0;
+	for (const listener of listeners.get(session.id) ?? []) listener(outcome);
+	listeners.delete(session.id);
+	return outcome;
+}
+
+export function _resetSessionsForTests(): void {
+	clearTimeout(retry);
+	retry = undefined;
+	failures = 0;
+	listeners.clear();
 }
 
 let flushing = false;
@@ -53,7 +104,7 @@ async function flushSessions(lang: string): Promise<void> {
 			try {
 				await sendSession(session);
 			} catch (err) {
-				if (!(err instanceof Error && /^HTTP 4/.test(err.message))) return;
+				if (!(err instanceof RefusedError)) return;
 			}
 		}
 	} finally {

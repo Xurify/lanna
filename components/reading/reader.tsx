@@ -35,7 +35,7 @@ import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { keepSession, sendSession, type PendingSession } from "@/components/session-save";
+import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 /** What a sentence is read with: the speaker's voice for a line of
  *  dialogue, the narrator's for the rest (stories written before voices
  *  were assigned have neither and get the default). */
@@ -77,6 +77,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const [saveRefused, setSaveRefused] = useState(false);
 	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// Reading is mostly not clicking: the day's minutes count the time this
@@ -146,14 +147,16 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 			if (!story || saving) return;
 			setSaving(true);
 			setSaveFailed(false);
+			setSaveRefused(false);
 			setStage("end");
 			sfx.done();
 			try {
 				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", { action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
-			} catch {
+			} catch (err) {
 				setSaveFailed(true);
+				setSaveRefused(err instanceof RefusedError);
 				const g = gradeAnswers(story.questions, all);
 				setOutcome({ xp: readXp(story.sentences.length, g.correct, false), ...g, queued: [], reread: false });
 			} finally {
@@ -169,13 +172,25 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		try {
 			setOutcome(await sendSession<Outcome>(lastSave.current));
 			setSaveFailed(false);
+			setSaveRefused(false);
 			void load();
-		} catch {
+		} catch (err) {
 			setSaveFailed(true);
+			setSaveRefused(err instanceof RefusedError);
 		} finally {
 			setSaving(false);
 		}
 	};
+
+	useEffect(() => {
+		const session = lastSave.current;
+		if (!saveFailed || saveRefused || !session) return;
+		return onSessionSaved(session.id, (saved) => {
+			setOutcome(saved as Outcome);
+			setSaveFailed(false);
+			void load();
+		});
+	}, [saveFailed, saveRefused, load]);
 
 	// Escape leaves, like a lesson — unless a word popover is open, which
 	// it closes first.
@@ -245,7 +260,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} outcome={outcome} saving={saving} failed={saveFailed} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End story={story} tapped={tapped} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
 			</Frame>
 		);
 	}
@@ -610,7 +625,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ failed, onRetrySave, story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; failed: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+function End({ failed, refused, onRetrySave, story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
 	const lang = useActiveLanguage();
 	const looked = useMemo(() => {
 		const seen = new Set<string>();
@@ -638,7 +653,7 @@ function End({ failed, onRetrySave, story, tapped, outcome, saving, onAgain, onN
 	return (
 		<TaskEnd
 			testId="read-end"
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} /> : <EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>
@@ -668,7 +683,7 @@ function End({ failed, onRetrySave, story, tapped, outcome, saving, onAgain, onN
 				{story.title}
 			</p>
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving || !outcome ? null : failed ? "Not saved" : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label="XP" value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
 				<Stat label="Words" value={String(story.wordCount)} />
 			</Stats>

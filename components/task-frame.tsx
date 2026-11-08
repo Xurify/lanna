@@ -172,7 +172,13 @@ export function SentenceRow({ sentence, lang, translation, note, onPlay, childre
 	);
 }
 
-export function NotSaved({ onRetry, busy = false }: { onRetry: () => void; busy?: boolean }) {
+export function NotSaved({ onRetry, busy = false, refused = false }: { onRetry: () => void; busy?: boolean; refused?: boolean }) {
+	if (refused)
+		return (
+			<p className="font-prose text-[13px] text-ink-3" role="status">
+				Not saved: the app refused this session, so it is not counted.
+			</p>
+		);
 	return (
 		<p className="font-prose text-[13px] text-ink-3" role="status">
 			Not saved yet. The app keeps trying.{" "}

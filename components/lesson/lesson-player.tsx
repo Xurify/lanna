@@ -1756,10 +1756,10 @@ function EndScreen({
 					</p>
 					{reps.length > 0 && <RepStrip reps={reps} />}
 					<Stats className="mt-7 max-w-none">
-						<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
+						<Stat label="XP" value={failed && !recorded ? "Not counted yet" : `+${xp}`} ink={failed && !recorded ? "text-ink-3" : "text-teal-2"} />
 						{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
 						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
-						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
+						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={failed && !recorded ? undefined : <FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
 						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} />
 					</Stats>
 				</section>
