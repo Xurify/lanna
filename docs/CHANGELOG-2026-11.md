@@ -2,12 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
-## 8 November: the lesson end screen, redone (branch `fix/lesson-end-layout`)
+## 8 November: every end screen, redone; exclamations in the language you study (branch `fix/lesson-end-layout`)
 
-- **Why:** the owner: the end screen had "no room", could not be scrolled, was not aligned and was "so cramped"; "full creative control". Rule E77.
-- **What changed:** the end screen scrolls, and Today and Next lesson sit in the bar at the bottom, where Continue was. On a wide screen your score is on the left and the sentences you missed are on the right; on a phone they are one column. The score is one big figure over a strip of tiles, one per answer in order, with the comebacks at the end as their own group. Each missed sentence plays its audio and says what you answered and whether you got it when it came back. A new stamp is pressed beside the heading. Enter on a focused button or link now does that button's job instead of starting the next lesson.
-- **Checked:** in the sandbox, a lesson played to its end with misses, an accent slip and comebacks, and a perfect one, Day and Night, at 1280×860, 1133×700, 820×1180 and 390×844, with one and with four new stamps.
-- **Unverified:** the owner's screen and phone; the Blitz, Mix-ups and Your plan end screens (the same component, not opened in the sandbox).
+- **Why:** the owner: the lesson end screen had "no room", could not be scrolled, was not aligned and was "so cramped"; "full creative control"; then "should some of the text be in Slovak?" and "audit other end screens and have another agent(s) review your work". Rules E77 and E78; research note [research/target-language-ui.md](research/target-language-ui.md).
+- **What changed:** all eight end screens (lesson, Listen, Speak, the scripted scene, the exam, Read it faster, Speed, Read, Watch) scroll, keep their buttons in the bar at the bottom, and share one width and one look. The lesson shows the share right the first time over one tile per answer (filled, half-filled or hollow), the misses beside it on a wide screen with what you answered and how the comeback went, and a new stamp beside the heading. Every missed or heard sentence has a play button. The keyboard reaches every button and scrolls the result; Enter does the filled button. A failed save says so: the lesson keeps trying and lets you go on; Listen, Read and Watch say the session was not counted. The praise and the lesson heading are in the language you study (Slovak, Estonian or Russian, each with a source), with an English gloss on the heading; before, an Estonian lesson praised in Slovak.
+- **Reviewed:** by a Claude reviewer with the `better-*` skills and by Gemini 3.8 Flash (High), in rounds until neither found an issue; their findings and what was declined are in the PR.
+- **Checked:** in the sandbox, every end screen reachable without an AI key, Day and Night, 1280 and 390 px (the lesson also at 1133×700 and 820×1180), with one and four new stamps, a perfect lesson and a failed save. Full suite as in the PR.
+- **Unverified:** the owner's screen and phone; Speak (live) and Watch end screens (they need an AI key or a prepared video); Blitz, Mix-ups and Your plan end screens (the same component, not opened); a real screen reader.
 
 ## 8 November: the chat is a plain conversation, after riddled.ai (branch `feat/light-tutor-chat`)
 

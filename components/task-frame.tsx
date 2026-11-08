@@ -217,7 +217,7 @@ export function Pulse({ className }: { className?: string }) {
 /** Numbers on an end screen, in one card divided into cells (the mockup's
  *  score card). */
 export function Stats({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <div className={cn("flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-y border-[var(--q-line)] text-left", className)}>{children}</div>;
+	return <div className={cn("flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-t border-[var(--q-line)] text-left", className)}>{children}</div>;
 }
 
 export function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink?: string; icon?: React.ReactNode }) {
