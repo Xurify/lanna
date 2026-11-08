@@ -217,7 +217,7 @@ describe("getWordBank", () => {
 		const place = lookupSelection("plače.");
 		assert.equal(place.found, true);
 		assert.equal(place.lemma, "plakať");
-		assert.equal(place.slovakWikiUrl, "https://www.slovak.wiki/dictionary/plakat");
+		assert.equal(place.referenceUrl, "https://www.slovak.wiki/dictionary/plakat");
 
 		// Multi-word phrase breakdown "prečo plače" works synchronously offline AND via lookupSelectionAsync
 		const precoPlaceSync = lookupSelection("prečo plače");
@@ -226,7 +226,7 @@ describe("getWordBank", () => {
 		assert.ok(precoPlaceSync.formNote?.includes("prečo"));
 		assert.ok(precoPlaceSync.formNote?.includes("plače"));
 		assert.equal(
-			precoPlaceSync.slovakWikiUrl,
+			precoPlaceSync.referenceUrl,
 			"https://www.slovak.wiki/search?q=pre%C4%8Do%20pla%C4%8De",
 		);
 

@@ -13,7 +13,8 @@ import { BookmarkCheckIcon, CheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Vol
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode } from "@/components/settings/device-prefs";
-import { referenceLink, type StoryToken } from "@/src/core";
+import { type StoryToken } from "@/src/core";
+import { wordLinks } from "@/components/words/word-links";
 
 interface LookupFallback {
 	slug?: string;
@@ -26,7 +27,6 @@ interface LookupFallback {
 	langEnglish?: string;
 	referenceUrl?: string;
 	referenceLabel?: string;
-	slovakWikiUrl?: string;
 	pos?: string;
 	gender?: string;
 	formNote?: string;
@@ -183,19 +183,16 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 		if (dx) pop.style.translate = `${dx}px`;
 	}, [open, side, placeAbove]);
 
-	const encodedWord = encodeURIComponent(token.text);
-	const referenceSite = activeLang?.referenceSite;
-	const referenceUrl =
-		lookupData?.referenceUrl ??
-		(referenceSite
-			? referenceLink(referenceSite, { slug: resolvedSlug, lemma: resolvedLemma, query: token.text })
-			: undefined);
-	const referenceLabel = lookupData?.referenceLabel ?? referenceSite?.label;
-
-	const wiktionaryUrl = `https://en.wiktionary.org/wiki/${encodedWord}#${encodeURIComponent(langEnglish)}`;
-	const googleTranslateUrl = `https://translate.google.com/?sl=${encodeURIComponent(langCode)}&tl=en&text=${encodedWord}&op=translate`;
-	const deeplUrl = `https://www.deepl.com/translator#${encodeURIComponent(langCode)}/en/${encodedWord}`;
-	const forvoUrl = `https://forvo.com/word/${encodedWord}/#${encodeURIComponent(langCode)}`;
+	const { referenceUrl, referenceLabel, wiktionaryUrl, googleTranslateUrl, deeplUrl, forvoUrl } = wordLinks({
+		text: token.text,
+		langCode,
+		langEnglish,
+		referenceSite: activeLang?.referenceSite,
+		slug: resolvedSlug,
+		lemma: resolvedLemma,
+		lookupUrl: lookupData?.referenceUrl,
+		lookupLabel: lookupData?.referenceLabel,
+	});
 
 	return (
 		<span ref={ref} className="relative inline">
