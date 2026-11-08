@@ -107,7 +107,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		rows: [
 			{ who: "masculine person", from: "lekár", stem: "lekár", ending: "a" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u", note: "or -a: stôl → stola" },
-			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, j or a letter with ˇ: -e (práca → práce)" },
+			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -e (práca → práce)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "a" },
 		],
 		exceptions: "A few men end in -a too (hrdina). They follow the masculine pattern: hrdinu. And večera takes -e although it ends in r: večere.",
@@ -118,7 +118,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "e", note: "after k, g, h, ch: -u (park → parku)" },
-			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, j or a letter with ˇ: -i (ulica → ulici)" },
+			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "e" },
 		],
 	},
@@ -139,7 +139,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u" },
-			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, j or a letter with ˇ: -i (ulica → ulici)" },
+			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "u" },
 		],
 	},
