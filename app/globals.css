@@ -495,8 +495,21 @@ body {
 	--color-sidebar: var(--card);
 }
 
-/* Mermaid diagrams: keep wide charts inside the content column. Mermaid
- * inlines a px max-width on the svg, so !important is required to win. */
+/* Diagrams (rendered via Pele): theme variables mapping onto the app's dark palette */
+.pele {
+	--pele-bg: transparent;
+	--pele-fg: var(--foreground);
+	--pele-muted: var(--muted-foreground);
+	--pele-line: var(--foreground);
+	--pele-surface: var(--card);
+	--pele-surface-alt: var(--muted);
+	--pele-border: var(--border);
+	--pele-accent: var(--primary);
+	--pele-radius: var(--radius);
+	--pele-font: ui-sans-serif, system-ui, sans-serif;
+	--pele-font-mono: ui-monospace, monospace;
+}
+
 [data-streamdown="mermaid"] svg {
 	max-width: 100% !important;
 	height: auto !important;
