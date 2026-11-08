@@ -1665,7 +1665,15 @@ export function Chat({
 							// applies.
 							nextProblem={nextReady}
 							onNext={sendNext}
-							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : undefined}
+							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : kind === "chat" ? "Answer, or ask something else" : undefined}
+							toolbar={
+								kind === "chat" ? (
+									<>
+										<DictationBar dictation={dictation} compact />
+										<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
+									</>
+								) : undefined
+							}
 						/>
 					}
 					onSubmitAnswer={(output) => {
@@ -2288,7 +2296,7 @@ function DockOverlay({
 	return (
 		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: sbInset }}>
 			<div className="h-24" />
-			<div ref={blockRef} className="relative bg-background pb-5 shadow-[0_-1px_0_var(--q-line)]" style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
+			<div ref={blockRef} className={cn("relative bg-background pb-5", plain ? "pt-1" : "shadow-[0_-1px_0_var(--q-line)]")} style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
 				<div className={DOCK}>
 					{setupCta}
 					{/* The queued-steer indicator (owner spec 2026-10-03): quiet
@@ -2319,8 +2327,8 @@ function DockOverlay({
 					)}
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
-					<DiacriticBar />
-					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden rounded-xl", plain ? "border border-line-2 bg-background" : "bg-card shadow-raise-hi")}>
+					{!plain && <DiacriticBar />}
+					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3" : "rounded-xl bg-card shadow-raise-hi")}>
 						<div
 						ref={contentRef}
 						key={mode}
@@ -2363,14 +2371,11 @@ function DockOverlay({
 					{/* The stats row: beneath the composer/question shell, not
 					    flush to the screen bottom — static height, outside the
 					    morphing shell so it never joins a height animation. */}
-					<StatsBar
-						turns={turns}
-						contextTokens={contextTokens}
-						pricing={pricing}
-						dictationSlot={dictationSlot}
-						chatId={chatId}
-						plain={plain}
-					/>
+					{plain ? (
+						<p className="pointer-events-none hidden pt-2 text-center font-ui text-[12px] text-ink-4 pointer-fine:block">Enter to send · Shift+Enter for a new line</p>
+					) : (
+						<StatsBar turns={turns} contextTokens={contextTokens} pricing={pricing} dictationSlot={dictationSlot} chatId={chatId} />
+					)}
 					{/* The scroll-down disc (moved here from the Conversation,
 					    owner refinement round 2026-09-24): anchored to the BLOCK's
 					    top edge — above the composer shell AND the stats row, in

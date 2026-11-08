@@ -34,7 +34,6 @@ export function StatsBar({
 	dictationSlot,
 	chatId,
 	leadingSlot,
-	plain = false,
 }: {
 	turns: TurnUsage[];
 	contextTokens?: number | null;
@@ -53,7 +52,6 @@ export function StatsBar({
 	 *  composer's teach | practice switch rides here — before the session
 	 *  data (which renders nothing pre-chat on that surface). */
 	leadingSlot?: ReactNode;
-	plain?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 	const [selectedModel, setSelectedModel] = useState<string | undefined>();
@@ -114,7 +112,7 @@ export function StatsBar({
 			{leadingSlot}
 			{/* The left side: the session-data summary — only once a session
 			    exists (turns). Pre-chat renders nothing (see the header). */}
-			{!plain && (chatId || turns.length > 0) && (
+			{(chatId || turns.length > 0) && (
 			<div ref={barRef} className="relative">
 				{/* No tooltip — the numbers describe themselves and the popover
 			    speaks on click (owner, subtlety round 2026-09-25). */}
@@ -194,7 +192,7 @@ export function StatsBar({
 			{/* The model + thinking control — one controller for the conversation
 			    agents (prober/teacher); the record's `turns` above still folds
 			    the ACTUAL models billed, regardless of what the picker says. */}
-			{!plain && <ModelControl chatId={chatId} onModelChange={setSelectedModel} />}
+			<ModelControl chatId={chatId} onModelChange={setSelectedModel} />
 		</div>
 	);
 }
