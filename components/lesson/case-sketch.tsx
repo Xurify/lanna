@@ -30,7 +30,7 @@ export interface SketchStage {
 }
 
 export interface SummaryRow {
-	who: "masculine person" | "masculine thing" | "feminine" | "neuter";
+	who: "masculine person" | "masculine thing" | "feminine" | "feminine, ends in a consonant" | "neuter";
 	from: string;
 	stem: string;
 	ending: string;
@@ -97,6 +97,7 @@ const ACCUSATIVE_ROWS: readonly SummaryRow[] = [
 	{ who: "masculine person", from: "brat", stem: "brat", ending: "a" },
 	{ who: "masculine thing", from: "dom", stem: "dom", ending: "", note: "no change" },
 	{ who: "feminine", from: "škola", stem: "škol", ending: "u" },
+	{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "", note: "no change" },
 	{ who: "neuter", from: "mesto", stem: "mesto", ending: "", note: "no change" },
 ];
 
@@ -108,7 +109,8 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "masculine person", from: "lekár", stem: "lekár", ending: "a" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u", note: "or -a: stôl → stola" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -e (práca → práce)" },
-			{ who: "neuter", from: "mesto", stem: "mest", ending: "a" },
+			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "i", note: "pieseň → piesne" },
+			{ who: "neuter", from: "mesto", stem: "mest", ending: "a", note: "námestie → námestia, srdce → srdca" },
 		],
 		exceptions: "A few words for male people end in -a too: hrdina (hero), kolega (colleague). They are masculine, so they follow the masculine pattern: hrdinu, kolegu. And večera is declined like ulica, so večere.",
 	},
@@ -119,7 +121,8 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "e", note: "after k, g, h, ch: -u (park → parku)" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
-			{ who: "neuter", from: "mesto", stem: "mest", ending: "e" },
+			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "i", note: "pieseň → piesni" },
+			{ who: "neuter", from: "mesto", stem: "mest", ending: "e", note: "námestie → námestí, srdce → srdci" },
 		],
 		exceptions: "A few words follow the soft pattern anyway: večera is declined like ulica, so o večeri.",
 	},
@@ -130,7 +133,8 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "om" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "om" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "ou" },
-			{ who: "neuter", from: "mesto", stem: "mest", ending: "om" },
+			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "ou" },
+			{ who: "neuter", from: "mesto", stem: "mest", ending: "om", note: "námestie → námestím, srdce → srdcom" },
 		],
 		exceptions: "In the plural -ami is the usual ending, and male people take -mi: bratmi.",
 	},
@@ -141,7 +145,8 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u" },
 			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -i (ulica → ulici)" },
-			{ who: "neuter", from: "mesto", stem: "mest", ending: "u" },
+			{ who: "feminine, ends in a consonant", from: "noc", stem: "noc", ending: "i", note: "pieseň → piesni" },
+			{ who: "neuter", from: "mesto", stem: "mest", ending: "u", note: "námestie → námestiu, srdce → srdcu" },
 		],
 		exceptions: "A few words follow the soft pattern anyway: večera is declined like ulica, so večeri.",
 	},
