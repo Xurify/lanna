@@ -21,7 +21,6 @@
 		"typecheck": "tsc --noEmit",
 		"lexicon:export": "node scripts/export-slovakwiki-lexicon.mjs ../slovak.wiki",
 		"sources:check": "tsx scripts/check-sources.ts",
-		"seed:build": "tsx scripts/build-seed.ts slovak",
 		"corpus:export": "tsx scripts/corpus-export.ts",
 		"audio:regen": "tsx scripts/regen-audio.ts",
 		"desktop:dev": "node scripts/desktop-dev.mjs",

@@ -12,7 +12,7 @@ import { activeLanguage } from "./active-language.ts";
 import { chatStore } from "../store/chats.ts";
 import { countWhyReuse, findWhy, forgetWhy, rememberWhy, whyKey } from "../store/corpus.ts";
 import { readSettings } from "../store/settings.ts";
-import { titleFromPrompt } from "../core/contracts.ts";
+import { titleFromPrompt } from "../core/title.ts";
 
 export interface WhyRequest {
 	title: string;

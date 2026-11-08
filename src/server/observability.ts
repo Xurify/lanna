@@ -15,7 +15,6 @@
  */
 
 import { chatStore } from "../store/chats.ts";
-import { graphRevision } from "./graph.ts";
 import { catalogContextLimits } from "./model-catalog.ts";
 import { listJobs } from "./jobs.ts";
 import { jobCost } from "./pricing.ts";
@@ -40,16 +39,10 @@ export interface ActivityJob extends JobRecord {
  *  Jobs are RUNNING-ONLY — finished jobs belong to their chat's transcript;
  *  the blob disappears when the process ends. Costs are joined here through
  *  the server-side Pi pricing adapter; clients never reconstruct rates. */
-/** The dock's whole world + the graph's version stamp (wave 6 session
- *  deletion): the payload carries graphRevision (max mtime across the
- *  graph data files — see server/graph.ts) so any view can detect "the
- *  graph changed underneath me" (a merge landed, a deletion purged) and
- *  refetch clusters/layout. Reads never move it; the DELETE response
- *  returns the same stamp. */
+/** The dock's whole world: every running process, every view. */
 export function activityFeed(): {
 	jobs: ActivityJob[];
 	tasks: TaskRecord[];
-	graphRevision: number;
 } {
 	const chats = chatStore.listChats();
 	const limits = catalogContextLimits();
@@ -71,6 +64,5 @@ export function activityFeed(): {
 	return {
 		jobs,
 		tasks: listTasks(),
-		graphRevision: graphRevision(),
 	};
 }

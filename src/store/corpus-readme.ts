@@ -32,8 +32,7 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/fluency/\` | The speed strand's log: every timed re-read (words a minute) and every "say it faster" round (each pass's time, window, what was heard, how clearly it was said) | JSON Lines |
 | \`profiles/slovak/review/\` | The spaced-review deck: \`cards.json\` (every card and its memory state), \`log.jsonl\` (every answer), \`meta.json\` (settings) | JSON + JSON Lines |
 | \`profiles/slovak/progress.json\` | XP, days practiced, each unit's lessons and accuracy | JSON |
-| \`profiles/slovak/graph/\` | The knowledge graph the tutor extracted from your sessions (nodes, chains, sources) | JSON Lines ledgers |
-| \`profiles/slovak/jobs/\` | Background agent jobs (research, extraction) and their usage | JSON |
+| \`profiles/slovak/jobs/\` | Background agent jobs (research, PDF reads) and their usage | JSON |
 | \`profiles/slovak/debug/\` | Raw provider stream recordings, only when debug recording is on | JSON Lines |
 | \`export/\` | Clean, app-independent snapshots made by \`npm run corpus:export\` (see below) | JSON |
 | \`settings.json\`, \`profile.json\`, \`prompts/\` | Your preferences, the active language, and prompt overrides. No secrets | JSON / Markdown |
@@ -103,9 +102,6 @@ where the format is not obvious.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
   tutor read (\`first\`, split \`byGender\`).
-- \`graph/\`: the tutor's knowledge graph of what you know (append-only
-  JSON Lines ledgers: nodes, chains, sessions, coverage; plus sources.json,
-  positions.json, render-settings.json).
 - \`jobs/\`: background agent jobs and their token usage.
 - \`debug/\`: raw provider streams when debug recording is enabled.
 `;
@@ -160,7 +156,6 @@ One JSON file per tutor session, named by its id. Fields:
   writes, reasoning) with the model that ran it. Cost is derived from this
   at read time.
 - \`tree\`: the lesson plan for a Learn course, when there is one.
-- \`extractions\`: usage of the background graph extraction on this chat.
 
 \`trash/\` holds sessions deleted in the app, unchanged. Move a file back up
 one level to restore it.

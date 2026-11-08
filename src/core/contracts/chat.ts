@@ -9,7 +9,6 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { LhMessage } from "../native-messages.ts";
 import type { Phase3 } from "../phases.ts";
 import type { PlanNodeStatus, PlanTree } from "./plan.ts";
-import type { EmissionStats } from "./graph.ts";
 
 // ─── Chat records (the session store's on-disk format) ───────────────────────
 
@@ -24,7 +23,7 @@ import type { EmissionStats } from "./graph.ts";
 /** The session's kind (practice sessions, owner 2026-10-04): "teach" is
  *  the default and ABSENT on pre-practice records (no migration — absence
  *  reads as teach); "practice" marks an adaptive-practice session — the
- *  practice agent, its two tools, no extraction, no graph writes. */
+ *  practice agent and its two tools. */
 export type ChatKind = "teach" | "practice";
 
 export interface ChatRecord {
@@ -45,11 +44,6 @@ export interface ChatRecord {
 	 * each entry onto its message; aggregates are folds over this log
 	 * (core/prices.ts). */
 	turns?: TurnUsage[];
-	/** Append-only background-extraction usage log (2026-09 observability):
-	 *  one entry per finished pipeline run on THIS chat — extraction is real
-	 *  spend too. Same parallel-log discipline as `turns` (nothing rides
-	 *  inside messages). Keyed by startedAt; idempotent appends. */
-	extractions?: ExtractionRunUsage[];
 	/** Per-chat model/thinking overrides for the conversation agents. */
 	settings?: ChatSettings;
 	/** The tutor unit this chat practices (the Tutor task). */
@@ -84,37 +78,6 @@ export interface ChatSettings {
 	thinkingLevel?: ThinkingLevel;
 }
 
-
-// ─── Background-extraction usage (the money channel, extraction side) ────────
-
-/** One pipeline stage's model usage — the stage's model + every step it
- *  billed (CallUsage per agent step). Steps, not a sum: cost and context
- *  folds happen at read time (core/prices.ts). */
-export interface ExtractionStageUsage {
-	/** The model that ran this stage, provider-qualified ("provider:id")
-	 * for key-independent Pi catalog lookup at read time. */
-	model: string;
-	steps: CallUsage[];
-}
-
-/** One finished (or failed mid-flight) extraction run's usage record.
- *  Appended to the chat's `extractions` log when the run ends — success or
- *  failure, because money was spent either way; `stats` is present only
- *  when the merger actually ran. */
-export interface ExtractionRunUsage {
-	/** The run's registry startedAt (ms) — the idempotency key. */
-	startedAt: number;
-	at: string;
-	durationMs: number;
-	/** What the run merged into the graph; absent when it failed first. */
-	stats?: EmissionStats;
-	/** Model usage per stage, in pipeline order (merger is deterministic —
-	 *  no model call, no entry). */
-	stages: {
-		extractor: ExtractionStageUsage;
-		auditor: ExtractionStageUsage;
-	};
-}
 
 // ─── Usage accounting (the money channel) ─────────────────────────────────────
 
