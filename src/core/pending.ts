@@ -26,7 +26,7 @@ function isToolUIPart(part: UIMessage["parts"][number]): boolean {
  * were asked, saved, and rendered as cards; a backward part scan reversed
  * that order (the live modal-realism observation).
  *
- * Job tool parts (research/demo/visual) never pend client-side — the async
+ * Job tool parts (research/visual) never pend client-side — the async
  * protocol resolves them server-side with an immediate ack (see
  * contracts/jobs.ts "THE ASYNC PROTOCOL"), so job tools are NOT returned
  * here. This file carries only the question gate and the shared scan helper.
@@ -58,13 +58,13 @@ export function toolQuestionKind(tool: string): "quiz" | "ask" | "explain" {
 }
 
 /** Tools fulfilled by background sub-agent jobs (W2/W6). */
-export const JOB_TOOLS = ["research", "demo", "visual"] as const;
+export const JOB_TOOLS = ["research", "visual"] as const;
 
 // ─── Tool availability (2026-09 settings seam) ─────────────────────────────
 
 /** The tools a user may toggle off in settings — THE DEFINITIVE LIST
  *  (adjudicated 2026-09-19, P2 reconciliation: the sub-agent JOB tools
- *  only — research/demo/visual/pdf). Deliberately NOT toggleable, ever:
+ *  only — research/visual/pdf). Deliberately NOT toggleable, ever:
  *  quiz + ask_user_question (the prober's flow is graded-quiz brackets →
  *  probe_done; quiz-off would collapse the assessment and teaching
  *  doctrine is built on graded verification — the wedge danger), the
@@ -76,7 +76,7 @@ export const JOB_TOOLS = ["research", "demo", "visual"] as const;
  *  lenient for forward-compat. The names are the MODEL-FACING tool names
  *  (research, not researcher; pdf is the PDF-reader dispatch, sources v0
  *  2026-09). */
-export const TOGGLEABLE_TOOLS = ["research", "demo", "visual", "pdf"] as const;
+export const TOGGLEABLE_TOOLS = ["research", "visual", "pdf"] as const;
 
 /** The keys the settings WRITE side accepts in agent.tools: the plain
  *  toggleables PLUS the quizzing-mechanics switch (`explain: true` arms
@@ -143,7 +143,6 @@ const ACTIVITY_LABELS: Record<string, string> = {
 	find: "Finding files…",
 	grep: "Searching file contents…",
 	research: "Dispatching research…",
-	demo: "Building a demo…",
 	visual: "Making a visual…",
 	pdf: "Reading a PDF…",
 	plan_init: "Drawing up the plan…",

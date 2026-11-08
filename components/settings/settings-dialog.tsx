@@ -23,7 +23,6 @@ import {
 	type AgentSettings,
 	type AppearanceSettings,
 	type CompactionSettings,
-	type GraphSettings,
 	type UserSettings,
 } from "@/src/core";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
@@ -37,7 +36,7 @@ import type { ModelsSettings } from "@/src/core";
 import { MENU_CLOSE_EVENT, MENU_OPEN_EVENT } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { KeysSection } from "./keys-section.tsx";
-import { AppearanceSection, GraphSection } from "./appearance-section.tsx";
+import { AppearanceSection } from "./appearance-section.tsx";
 import {
 	BotIcon,
 	CoinsIcon,
@@ -45,7 +44,6 @@ import {
 	GraduationCapIcon,
 	KeyboardIcon,
 	KeyRoundIcon,
-	NetworkIcon,
 	PaletteIcon,
 	SmartphoneIcon,
 	SlidersHorizontalIcon,
@@ -71,7 +69,6 @@ const SECTIONS = [
 	{ id: "sound", label: "Sound" },
 	{ id: "appearance", label: "Appearance" },
 	{ id: "keyboard", label: "Keyboard" },
-	{ id: "graph", label: "Skill map" },
 	{ id: "devices", label: "Devices" },
 	{ id: "ai", label: "AI models", divider: true },
 	{ id: "keys", label: "API keys" },
@@ -85,7 +82,6 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	ai: BotIcon,
 	learner: GraduationCapIcon,
 	appearance: PaletteIcon,
-	graph: NetworkIcon,
 	keyboard: KeyboardIcon,
 	devices: SmartphoneIcon,
 	usage: CoinsIcon,
@@ -209,7 +205,7 @@ export function SettingsDialogBody({
 	/** The one writer: PUT the section, sync the record, show route errors inline. */
 	const write = useCallback(
 		async (
-			section: "general" | "agent" | "models" | "appearance" | "graph" | "compaction",
+			section: "general" | "agent" | "models" | "appearance" | "compaction",
 			body: object,
 		) => {
 			setError(null);
@@ -390,7 +386,6 @@ export function SettingsDialogBody({
 									<AiSection
 										agent={record.agent}
 										models={record.models}
-										graph={record.graph}
 										compaction={record.compaction}
 										onModelsChange={(next: ModelsSettings) =>
 											void write("models", next)
@@ -414,20 +409,6 @@ export function SettingsDialogBody({
 										appearance={record.appearance}
 										onSectionChange={(next: AppearanceSettings) =>
 											void write("appearance", next)
-										}
-									/>
-								</SettingsSection>
-							)}
-							{active === "graph" && (
-								<SettingsSection
-									title="Skill map"
-									hint="The map of what you have learned, built from your sessions."
-									testid="section-graph"
-								>
-									<GraphSection
-										graph={record.graph}
-										onSectionChange={(next: GraphSettings) =>
-											void write("graph", next)
 										}
 									/>
 								</SettingsSection>

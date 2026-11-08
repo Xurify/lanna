@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, PlayIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
+import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
 import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
 import { formatTokens, planCostLabel } from "@/components/usage-format";
@@ -13,13 +13,13 @@ import { useServerEvent, useServerResync } from "@/components/server-events";
  * THE BACKGROUND-AGENTS SECTION (owner, sidebar round — the successor of
  * the retired bottom-right floating dock): the bottom strip of the LEFT
  * SIDEBAR, one blob per running BACKGROUND process — session sub-agents
- * (research/demo/visual) and global extraction runs. Teaching turns are
+ * (research/visual) and background tasks. Teaching turns are
  * deliberately NOT here: the section exists to give background processes
  * the observability the learner can't otherwise see; an in-flight teaching
  * turn is fully visible where it happens (user decision, 2026-09).
  *
  * Data: ONE feed of GET /api/activity (jobs across ALL chats, title-joined,
- * oldest-first + extraction runs), fetched when truth moves (events
+ * oldest-first + tasks), fetched when truth moves (events
  * channel, S5) and folded client-side with core/prices.ts.
  * Cost is INFERRED server-side through Pi; the context line is the LAST model call's
  * input+output against the model's limit (JobUsage.lastStep — pending
@@ -58,16 +58,6 @@ export interface FeedJob extends JobRecord {
 	contextLimit: number | null;
 }
 
-export interface FeedExtraction {
-	/** Unique row id (source id, or "src#i" for chunk jobs). */
-	id: string;
-	chatId: string;
-	part?: { i: number; n: number };
-	title: string;
-	phase: string;
-	startedAt: number;
-}
-
 /** A background task (server/tasks.ts): running ones are blobs, finished ones
  *  are the ready notice (components/task-notice.tsx). */
 export interface FeedTask {
@@ -88,11 +78,10 @@ export interface FeedTask {
 
 export interface ActivityFeed {
 	jobs: FeedJob[];
-	extractions: FeedExtraction[];
 	tasks: FeedTask[];
 }
 
-const EMPTY_FEED: ActivityFeed = { jobs: [], extractions: [], tasks: [] };
+const EMPTY_FEED: ActivityFeed = { jobs: [], tasks: [] };
 
 // ─── The activity feed (composition root: the root layout) ───────────────────
 
@@ -104,13 +93,12 @@ const ActivityContext = createContext<{ feed: ActivityFeed; refresh: () => void 
 /**
  * THE ACTIVITY FEED, PUSH-DRIVEN (architecture S5, 2026-10-02): the
  * adaptive poll is RETIRED — the dock refetches exactly when truth moves.
- * Every cause is announced on the events channel: extraction phase
- * transitions (activity-changed), job writes
+ * Every cause is announced on the events channel: job writes
  * (jobs-changed — the running-jobs blobs), and channel resync (reconnect /
  * dev-restart catch-up) — plus the one client-local cause that predates
  * the channel: visibility, a tab becoming visible refetches at once.
- * Announced fetches ride a 250ms trailing debounce (extraction phase
- * bursts); resync and visibility are immediate. A failed
+ * Announced fetches ride a 250ms trailing debounce (bursts of job writes);
+ * resync and visibility are immediate. A failed
  * fetch keeps the last feed (the dock never flickers to empty on a blip).
  */
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
@@ -129,7 +117,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 				if (res.ok) {
 					const data = (await res.json()) as Partial<ActivityFeed>;
 					if (alive)
-						setFeed({ jobs: data.jobs ?? [], extractions: data.extractions ?? [], tasks: data.tasks ?? [] });
+						setFeed({ jobs: data.jobs ?? [], tasks: data.tasks ?? [] });
 				}
 			} catch {
 				// transport blip: keep the last feed, announce again next event
@@ -175,27 +163,23 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 }
 
 /** The activity feed seam for the rest of the shell: the dock's data +
- *  its refresh nudge. The remaining nudgers are client-visible causes
- *  (the extract/import buttons — extraction-coverage, graph-view); every
- *  server-side cause announces itself on the events channel now. */
+ *  its refresh nudge. Every server-side cause announces itself on the
+ *  events channel. */
 export function useActivity(): { feed: ActivityFeed; refresh: () => void } {
 	return useContext(ActivityContext);
 }
 
 // ─── Pure presentation helpers (exported for tests) ──────────────────────────
 
-/** One dock blob: the unified view of a job or an extraction run. */
+/** One dock blob: the unified view of a job or a background task. */
 export interface ActivityBlob {
-	/** job.id, or the extraction job's row id (source id, or "src#i" for
-	 *  chunk jobs — unique per row, per-chunk jobs owner 2026-09-28). */
+	/** job.id or task.id. */
 	id: string;
-	process: "job" | "extraction" | "task";
+	process: "job" | "task";
 	/** What a background task does (tasks only). */
 	taskKind?: FeedTask["kind"];
-	/** Sub-agent kind for jobs (extraction blobs have none). */
+	/** Sub-agent kind for jobs. */
 	jobKind?: JobKind;
-	/** Extraction phase (extracting/auditing/merging/embedding); jobs carry none. */
-	phase?: string;
 	title: string;
 	/** Empty for a task (it has no session). */
 	chatId: string;
@@ -262,19 +246,6 @@ export function toBlobs(feed: ActivityFeed): ActivityBlob[] {
 			steps: usage?.steps,
 		};
 	});
-	for (const run of feed.extractions) {
-		blobs.push({
-			id: run.id,
-			process: "extraction",
-			phase: run.phase,
-			title: run.title,
-			chatId: run.chatId,
-			startedAt: run.startedAt,
-			cost: null, // extraction runs don't ride the money channel (v1)
-			context: null,
-			activity: "",
-		});
-	}
 	for (const task of feed.tasks) {
 		if (task.status !== "running") continue;
 		blobs.push({ id: task.id, process: "task", taskKind: task.kind, title: task.title, chatId: "", startedAt: task.startedAt, cost: null, context: null, activity: task.step });
@@ -307,7 +278,6 @@ function useNow(active: boolean): number {
 
 const KIND_ICON: Record<JobKind, typeof SearchIcon> = {
 	research: SearchIcon,
-	demo: PlayIcon,
 	visual: PenToolIcon,
 	pdf: FileTextIcon, // sources v0 — type-forced entry (JobKind grew "pdf")
 };
@@ -341,9 +311,7 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({
 					kind: blob.process,
-					// Extractions abort by SOURCE id (chatId) — chunk rows share one
-					// source and die together.
-					id: blob.process === "extraction" ? blob.chatId : blob.id,
+					id: blob.id,
 				}),
 			});
 			if (!res.ok) {
@@ -421,19 +389,15 @@ function ActivityBlobRow({
 	abortState: AbortState | undefined;
 	onAbort: () => void;
 }) {
-	const Icon = blob.process === "task" ? (blob.taskKind === "language" ? GlobeIcon : ClapperboardIcon) : blob.process === "extraction" ? WaypointsIcon : (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
+	const Icon = blob.process === "task" ? (blob.taskKind === "language" ? GlobeIcon : ClapperboardIcon) : (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
 	const label =
 		blob.process === "task"
 			? blob.taskKind === "language"
 				? "Adding a language"
 				: "Video preparation"
-			: blob.process === "extraction"
-				? `Skill map update — ${blob.phase ?? "running"}`
-				: blob.jobKind === "research"
+			: blob.jobKind === "research"
 					? "Researcher"
-					: blob.jobKind === "demo"
-						? "Demo builder"
-						: blob.jobKind === "visual"
+					: blob.jobKind === "visual"
 							? "Figure maker"
 							: blob.jobKind === "pdf"
 								? "PDF reader"

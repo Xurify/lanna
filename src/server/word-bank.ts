@@ -9,9 +9,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { activeProfile, PATHS } from "../../config.ts";
+import { PATHS } from "../../config.ts";
 import { loadLexicon, lookupWord, type Lexicon } from "../agent/lexicon.ts";
-import { foldDiacritics, LANGUAGES, referenceLink, type LanguageInfo } from "../core/language.ts";
+import { foldDiacritics, referenceLink, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { GRAMMAR_WORDS, grammarWord } from "../core/reading.ts";
 import { reviewStore } from "../store/review.ts";
@@ -57,8 +57,6 @@ export interface SelectionLookupResult {
 	referenceUrl?: string;
 	/** Label for `referenceUrl` (e.g. "slovak.wiki"). */
 	referenceLabel?: string;
-	/** Kept as alias for backwards compatibility in callers/tests. */
-	slovakWikiUrl?: string;
 	pos?: string;
 	gender?: string;
 	formNote?: string;
@@ -80,13 +78,6 @@ export function referenceSiteLinkFor(
 	const site = lang.referenceSite;
 	if (!site) return {};
 	return { url: referenceLink(site, { slug, lemma: lemma ?? query, query }), label: site.label };
-}
-
-export function slovakWikiUrlFor(slug?: string, query?: string): string {
-	return (
-		referenceSiteLinkFor(slug, query, LANGUAGES.slovak).url ??
-		"https://www.slovak.wiki/dictionary"
-	);
 }
 
 const CASE_NAMES = ["nominative", "genitive", "dative", "accusative", "locative", "instrumental"] as const;
@@ -349,7 +340,6 @@ function buildResultFromEntry(
 		googleTranslation: cachedSurface,
 		referenceUrl: refLink.url,
 		referenceLabel: refLink.label,
-		slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(canonicalEntry.slug, cleaned),
 		pos: canonicalEntry.pos ?? canonicalEntry.cat,
 		gender: canonicalEntry.gender,
 		formNote: detectFormNote(cleaned, entry, prefixNote, affirmativeBase),
@@ -414,7 +404,6 @@ export function lookupSelection(text: string): SelectionLookupResult {
 			dictionaryGloss: grammarMatch.gloss,
 			referenceUrl: refLink.url,
 			referenceLabel: refLink.label,
-			slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(lexEntry?.slug, grammarMatch.lemma),
 			pos: lexEntry?.pos ?? lexEntry?.cat ?? "Grammar",
 			gender: lexEntry?.gender,
 			formNote: isDifferent ? `form of ${grammarMatch.lemma}` : undefined,
@@ -479,7 +468,6 @@ export function lookupSelection(text: string): SelectionLookupResult {
 					dictionaryGloss: matchedNewWord.gloss,
 					referenceUrl: refLink.url,
 					referenceLabel: refLink.label,
-					slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(matchedNewWord.slug, matchedNewWord.lemma),
 					pos: "Vocabulary",
 					source: "story",
 					inDeck: !!card,
@@ -511,7 +499,6 @@ export function lookupSelection(text: string): SelectionLookupResult {
 			googleTranslation: cached.gloss,
 			referenceUrl: refLink.url,
 			referenceLabel: refLink.label,
-			slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
 			pos: cached.pos ?? (/\s/.test(cleaned) ? "Phrase" : "Vocabulary"),
 			alternatives: cached.alternatives,
 			source: "translated",
@@ -560,7 +547,6 @@ export function lookupSelection(text: string): SelectionLookupResult {
 				formNote: resolvedParts.join(" + "),
 				referenceUrl: refLink.url,
 				referenceLabel: refLink.label,
-				slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
 				pos: "Phrase",
 				source: "grammar",
 				inDeck: !!card,
@@ -585,7 +571,6 @@ export function lookupSelection(text: string): SelectionLookupResult {
 		langEnglish: lang.english,
 		referenceUrl: refLink.url,
 		referenceLabel: refLink.label,
-		slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
 	};
 }
 
@@ -790,7 +775,6 @@ export async function lookupSelectionAsync(
 		googleTranslation: remote.gloss,
 		referenceUrl: refLink.url,
 		referenceLabel: refLink.label,
-		slovakWikiUrl: refLink.url ?? slovakWikiUrlFor(undefined, cleaned),
 		pos: remote.pos ?? (isMultiWord ? "Phrase" : "Vocabulary"),
 		alternatives: remote.alternatives,
 		source: "translated",

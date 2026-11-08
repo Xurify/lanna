@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeFromCookie } from "@/lib/theme";
 import { Geist, JetBrains_Mono } from "next/font/google";
-import "katex/dist/katex.min.css";
 import "./globals.css";
 import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
@@ -18,6 +17,7 @@ import { AppearanceProvider } from "@/components/settings/appearance";
 import UpdateBanner from "@/components/update-banner";
 import { ThemeSync } from "@/components/quiet/theme-sync";
 import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
+import { OriginStamp } from "@/components/origin";
 import { OutboxFlush } from "@/components/lesson/outbox-flush";
 
 // Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
@@ -86,6 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 			</ServerEventsProvider>
 			<ThemeSync />
 				<KeyboardFocusMode />
+			<OriginStamp />
 			{/* Lessons finished but not yet recorded are sent again (components/lesson/outbox.ts). */}
 			<OutboxFlush />
 			{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}

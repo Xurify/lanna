@@ -5,17 +5,15 @@ import { askInputSchema, explainInputBase, explainInputObject, probeQuizInputSch
 import { filterEnabledTools, type EnabledTools } from "../core/pending.ts";
 import type { JobRecord } from "../core/contracts.ts";
 import type { JobStore } from "../core/ports.ts";
-import { jobTools, type DemoInput, type PdfInput, type ResearchInput, type VisualInput } from "./tools/jobs.ts";
+import { jobTools, type PdfInput, type ResearchInput, type VisualInput } from "./tools/jobs.ts";
 import { planTools, type PlanToolContext } from "./tools/plan.ts";
 import { probeDoneTool, type ProbeDoneContext } from "./tools/probe.ts";
-import { proberGraphTools } from "./tools/graph.ts";
 import { readTool } from "./tools/read.ts";
 import { lsTool } from "./tools/ls.ts";
 import { findTool } from "./tools/find.ts";
 import { grepTool } from "./tools/grep.ts";
 import { healToolRecord } from "./tools/heal.ts";
 import { languageTools, type ReviewSeam } from "./tools/language.ts";
-import type { GraphStore } from "../core/ports.ts";
 
 export { jobTools };
 export type { ProbeDoneContext } from "./tools/probe.ts";
@@ -101,29 +99,28 @@ export const askUserQuestionTool: AgentTool<typeof askInputSchema> = {
 // ONE sanctioned exception (owner, 2026-10-12): each quiz tool's
 // description ends with a COMPLETE example call — compact, phase-correct
 // (probe carries no phase metadata; quiz leads with type+nodeId), doubling
-// as the JSON-escaping exemplar (LaTeX backslashes double inside JSON
+// as the JSON-escaping exemplar (quotes and newlines escape inside JSON
 // strings). Placement ruling: WITH THE TOOL, beside its exact schema — a
 // shared-prompt example is phase-ambiguous (the models fumbled exactly
 // these metadata fields), per-agent prompt copies would drift. Serialized
 // from ONE canonical body so the variants cannot disagree; craft doctrine
 // stays in the prompts.
 
-/** The canonical example body (owner-approved content, 2026-10-12): a
- *  compact applied question whose fields exercise the escaping hazards —
- *  braced commands (\frac, \cos), inline and display math, newlines —
- *  while doubling as an exemplar of good craft: uniform options, stable
- *  values, reasoning (explanation) committed before correctAnswer.
+/** The canonical example body: a compact applied question whose fields
+ *  exercise the escaping hazards (quotation marks, newlines) while doubling
+ *  as an exemplar of good craft: uniform options, stable values, reasoning
+ *  (explanation) committed before correctAnswer.
  *  JSON.stringify renders the wire text, so the escaping the model sees
  *  is by construction the correct one. Exported for the description pins. */
 export const quizExampleBody = {
-	question: "A signal is $y=\\sin(2x)$ and $\\frac{dx}{dt}=3$. What is $\\frac{dy}{dt}$?",
+	question: "Which form completes the sentence correctly: *Idem do ___* (škola)?",
 	options: [
-		{ label: "$6\\cos(2x)$", value: "a" },
-		{ label: "$2\\cos(2x)$", value: "b" },
-		{ label: "$3\\cos(2x)$", value: "c" },
+		{ label: "školy", value: "a" },
+		{ label: "škole", value: "b" },
+		{ label: "školu", value: "c" },
 	],
 	explanation:
-		"The phase changes twice as fast as $x$; multiply by the sine's slope:\n$$\n\\frac{dy}{dt}=\\cos(2x)\\cdot2\\cdot3=6\\cos(2x)\n$$",
+		"The directional preposition *do* requires the genitive case. For feminine noun *škola*, the genitive singular ending is *-y* (školy).",
 	correctAnswer: "a",
 };
 
@@ -140,7 +137,7 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 		"correct answer supplied by you, marks the learner's selection right/wrong, reveals the correct answer, and " +
 		"can show an explanation. Options-only: single-select or multi-select, plus an automatic 'I don't know' " +
 		"choice so the learner can signal a genuine gap instead of guessing. An always-present optional thinking " +
-		"field lets the learner attach his reasoning to ANY answer; it reaches you only when non-empty. " +
+		"field lets the learner attach their reasoning to ANY answer; it reaches you only when non-empty. " +
 		"No free-text answers — for non-graded questions use ask_user_question instead. " +
 		(delta.types
 			? "Every call declares `type` — the question's role in the teaching cycle; the field's own description says when each kind fires. "
@@ -150,14 +147,14 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 			: "") +
 		"ONE question per turn: call a single " +
 		delta.name +
-		", then end your turn — his answer determines the next.";
+		", then end your turn — the learner's answer determines the next.";
 	// Phase-correct shape: the teach example LEADS with the required pair
 	// (type, nodeId — the 2026-10-09 drop-order ruling); the probe example
 	// carries no phase metadata at all, exactly like the probe schema.
-	const example = delta.nodeId ? { type: "check" as const, nodeId: "chain-rule", ...quizExampleBody } : quizExampleBody;
+	const example = delta.nodeId ? { type: "check" as const, nodeId: "prep-do-genitive", ...quizExampleBody } : quizExampleBody;
 	return (
 		base +
-		"\nExample arguments — copy the escaping exactly: inside JSON strings a LaTeX backslash is \\\\ and a newline is \\n.\n```json\n" +
+		"\nExample arguments — copy the escaping exactly: inside JSON strings a newline is \\n.\n```json\n" +
 		JSON.stringify(example, null, 2) +
 		"\n```" +
 		(delta.nodeId ? " The example's nodeId is illustrative — copy an exact id from this session's plan_init." : "")
@@ -171,17 +168,17 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
  *  as recall (owner 2026-10-09). */
 function explainDescription(name: "explain" | "recall", nodeId: boolean): string {
 	return (
-		"Ask the learner to EXPLAIN something in his own words — a graded check with NO options: he types a free-text " +
+		"Ask the learner to EXPLAIN something in their own words — a graded check with NO options: they type a free-text " +
 		"answer. Unlike ask_user_question (no right answer), " +
 		name +
 		" always has one. THE COMMITMENT RULE: " +
-		"correctAnswer is the FULL correct answer in your own words, reasoning included, COMMITTED before he ever " +
-		"sees the question. When his answer returns, grade it strictly against the commitment — never revise it " +
-		"after seeing his words. He sees the committed answer on submit. " +
+		"correctAnswer is the FULL correct answer in your own words, reasoning included, COMMITTED before the learner " +
+		"sees the question. When their answer returns, grade it strictly against the commitment — never revise it " +
+		"after seeing their words. The learner sees the committed answer on submit. " +
 		(nodeId
 			? "Set `nodeId` (required) to the plan node this question is about — validated at call time against the session's plan map. "
 			: "") +
-		"ONE question per turn: call a single " + name + ", then end your turn — his answer determines the next."
+		"ONE question per turn: call a single " + name + ", then end your turn — the learner's answer determines the next."
 	);
 }
 
@@ -258,15 +255,9 @@ export interface ProberToolContext extends ProbeDoneContext {
 	/** Creates the job record (deduped by toolCallId). */
 	jobStore: JobStore;
 	/** Fire the background runner for a freshly created job. */
-	spawn: (job: JobRecord, input: ResearchInput | DemoInput | VisualInput | PdfInput) => void;
+	spawn: (job: JobRecord, input: ResearchInput | VisualInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
-	/** The prober's graph-map reader (wave 7): present = the two map tools
-	 *  (list_sessions / list_propositions) are registered. The composition
-	 *  root passes it only when graphToolsEnabled(effective) — the graph
-	 *  master switch AND the agent.graphTools toggle (settings-resolution).
-	 *  Absent = the gate is closed, no map tools (tests drive this seam). */
-	graphStore?: GraphStore;
 	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
@@ -322,16 +313,11 @@ export function createProberTools(
 				// Job dispatch in the probe phase (owner ruling, 2026-09-20):
 				// research + pdf are ALWAYS available in every phase — the
 				// prober can verify facts or read learner PDFs while assessing.
-				// demo/visual stay teach-phase-only (they need the lesson's plan
+				// visual stays teach-phase-only (it needs the lesson's plan
 				// context). Same user-toggle filtering as the teacher; research
 				// remains available without a search-provider key.
 				...(jobs.research ? { research: jobs.research } : {}),
 				pdf: jobs.pdf!,
-				// The map reader (wave 7): present only when the settings gate
-				// opened.
-				...(ctx.graphStore
-					? proberGraphTools({ chatStore: ctx.chatStore, graphStore: ctx.graphStore })
-					: {}),
 				...languageTools(ctx.review),
 				...done,
 			},
@@ -391,7 +377,7 @@ export interface TeacherToolContext extends PlanToolContext {
 	/** Fire the background runner for a freshly created job. The tool input
 	 *  rides along — the spawn fires mid-stream, before the tool part is
 	 *  persisted to the transcript (a transcript scan would race it). */
-	spawn: (job: JobRecord, input: ResearchInput | DemoInput | VisualInput | PdfInput) => void;
+	spawn: (job: JobRecord, input: ResearchInput | VisualInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
 	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
@@ -404,7 +390,7 @@ export interface TeacherToolContext extends PlanToolContext {
  *
  * `enabled` is the resolved settings seam (core/pending.ts EnabledTools —
  * Platform's chat-handler wiring passes it through from settings). Today
- * only the sub-agent tools (research/demo/visual) are user-toggleable, but
+ * only the sub-agent tools (research/visual) are user-toggleable, but
  * the filtering is GENERIC: any name explicitly false is dropped, so
  * future toggleables (question-tool variants, …) need no change here.
  * Absent/undefined = enabled — tests and old records see today's set.

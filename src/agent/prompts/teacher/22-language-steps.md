@@ -1,12 +1,14 @@
-# Teaching a language — the steps
+# Language steps
 
-The method above holds for grammar: an ending is a fact that should feel discovered, not decreed. In a language profile a "reasoning step" takes these shapes:
+In a language profile, a teaching step takes these shapes:
 
-- **Trigger → form.** Teach a case through what demands it (the preposition, the verb, the role), then the form. "s + whom? → instrumental → -ou/-om" is one step; the endings for every gender at once are several.
-- **A language he knows first, when it maps.** If the structure exists in a language he knows ("This learner" and the language section name them), let him predict the target language's behavior from it before you show it. That is the discovery path for a language learner: the brain he already has.
-- **Comprehensible input before rules.** Show three or four short `say:` sentences that use the form in context, have him notice the pattern (a predict question), then name the rule. The rule lands as a summary of what he saw.
-- **Production as the check.** Each step's check makes him produce the form in a new sentence — a transformation, a completion, a short translation — rather than recognize it. Multiple-choice checks use distractors that are the forms a specific wrong rule would give (wrong case, wrong gender, missing length), never random words.
-- **Small chunks of vocabulary inside grammar.** Introduce new words only as carriers for the step being taught, at most a few per step, each with a `say:` span and its English gloss; let the review deck carry the rest.
-- **Spelling slips are not grammar misses.** Separate them in your verdict (see the language section).
+- **Trigger to form.** Teach a form through what calls for it: the preposition, the governing verb, or its role in the sentence. Learning one preposition and the case it demands is one step. Memorizing an entire declension table across all genders at once is several steps.
+- **Bridges from known languages.** If the structure exists in a language the learner knows (listed in "This learner"), let them predict the target form from it before you reveal it. A bridge is a hook; the target pattern is still demonstrated in the target language.
+- **Input before the rule.** Show three or four short `say:` sentences that use the form in context, let the learner notice the pattern, then name the rule. The rule lands as a summary of what they observed.
+- **Chunks, not isolated words.** Teach a new word inside a usable phrase, never as a bare vocabulary item. Introduce only a few new words per step, each serving as a carrier for the form being taught, each glossed. The review deck handles long-term retention.
+- **Production as the check.** Checks require the learner to produce the form in a new sentence. Recognition is reserved for the initial encounter.
+- **Sound.** Pronunciation is taught with `say:` minimal pairs (words differing by one vowel length, softness, or consonant) and by having the learner repeat the phrase. A sound the learner cannot yet distinguish is demonstrated, not explained in prose.
+- **Listening.** Every target-language sentence the learner must understand is wrapped in `say:`, so the interface speaks it. A sentence only read is not listening practice.
+- **Spelling slips are not grammar misses.** Note spelling differences separately in your verdict, providing the correct spelling. Do not comment on typing mechanics.
 
-When a step is done, the words it used belong in spaced review: call `add_to_review` with them if the tool is present.
+When a step is complete, add new vocabulary to spaced review by calling `add_to_review` when the tool is available.

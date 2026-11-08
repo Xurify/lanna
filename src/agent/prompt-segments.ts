@@ -69,8 +69,7 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
 	// shared appendix — the teaching base and the question/confidence/
 	// file mechanics stay out (the doctrine contradicts them; 00-base.md
 	// plays the base role), but the FORMATTING guide composes for every
-	// agent (owner, 2026-10-04 late): LaTeX delimiters and markdown apply
-	// in all settings — practice shares the $...$/$$...$$ authoring contract.
+	// agent (owner, 2026-10-04 late): markdown applies in all settings.
 	const segments: Array<{ path: string; shared: boolean; file: string }> = agent === "practice" ? [] : [
 		{ path: "system-prompt.md", shared: true, file: PATHS.teacherPrompt },
 	];

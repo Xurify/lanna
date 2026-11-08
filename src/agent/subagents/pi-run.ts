@@ -8,7 +8,7 @@ import type { ModelRole } from "../../../config.ts";
 
 /**
  * The shared sub-agent runner (docs/pi-engine-swap.md §6): one helper every
- * background agent (researcher, demo-builder, visual-maker, extractor,
+ * background agent (researcher, visual-maker, extractor,
  * auditor) runs on — a stateless pi Agent built per call, driven to
  * completion, with the seams the job runner and the money channel need.
  *

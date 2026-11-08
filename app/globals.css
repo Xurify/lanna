@@ -236,7 +236,7 @@ html[data-keyboard] :focus-visible {
 	   (owner, typography round) The Tailwind defaults are ALIASED to the app
 	   fonts: `font-mono`/`font-sans` utilities would otherwise fall to the
 	   SYSTEM stacks — a fourth font the app never chose — and streamdown's
-	   code-block chrome + mermaid-error + demo-card all use them. */
+	   code-block chrome + mermaid-error all use them. */
 	--font-ui: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 	--font-prose: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
@@ -495,17 +495,24 @@ body {
 	--color-sidebar: var(--card);
 }
 
-/* Mermaid diagrams: keep wide charts inside the content column. Mermaid
- * inlines a px max-width on the svg, so !important is required to win. */
+/* Diagrams (rendered via Pele): theme variables mapping onto the app's dark palette */
+.pele {
+	--pele-bg: transparent;
+	--pele-fg: var(--foreground);
+	--pele-muted: var(--muted-foreground);
+	--pele-line: var(--foreground);
+	--pele-surface: var(--card);
+	--pele-surface-alt: var(--muted);
+	--pele-border: var(--border);
+	--pele-accent: var(--primary);
+	--pele-radius: var(--radius);
+	--pele-font: ui-sans-serif, system-ui, sans-serif;
+	--pele-font-mono: ui-monospace, monospace;
+}
+
 [data-streamdown="mermaid"] svg {
 	max-width: 100% !important;
 	height: auto !important;
-}
-
-/* Display math: long equations scroll instead of overflowing the column. */
-.katex-display {
-	overflow-x: auto;
-	overflow-y: hidden;
 }
 
 /* ============================================================

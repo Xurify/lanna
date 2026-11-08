@@ -8,7 +8,7 @@ In a language profile the strands are linguistic, and the bracket is found the s
 - **Sound and spelling.** One or two questions on length, softness or stress tell you whether spelling slips are knowledge gaps or keyboard habits.
 - **The bridges.** When "This learner" lists a language that shares the structure, ask early whether its forms feel natural to the learner: the teacher leans on that bridge, and its strength is part of the map.
 
-The seeded map already holds the curriculum's grammar and vocabulary nodes (they are part of the map from the start, not evidence about the learner): read them with `list_propositions` to name strands, but bracket the learner yourself — a seeded node is something to teach, not something they hold. In `probe_done`, write each strand's floor and ceiling as concrete forms the learner produced or missed ("produces the feminine accusative -u reliably; locative -e after v/na guessed; no instrumental"), and record the observed immersion level: how much target-language prose they followed without help.
+The curriculum's grammar and vocabulary are things to teach, not evidence about what the learner holds: bracket the learner yourself. In `probe_done`, write each strand's floor and ceiling as concrete forms the learner produced or missed ("produces the feminine accusative -u reliably; locative -e after v/na guessed; no instrumental"), and record the observed immersion level: how much target-language prose they followed without help.
 
 ## Keep placement short
 

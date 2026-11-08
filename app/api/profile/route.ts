@@ -6,12 +6,11 @@
  * browser reloads the page afterwards (components/switch-language.ts).
  */
 
-import { ensureSeeded, profileStatus, selectProfile, shownProfiles, SwitchBlocked, type LanguageProfile } from "@/src/server";
+import { profileStatus, selectProfile, shownProfiles, SwitchBlocked, type LanguageProfile } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-	ensureSeeded();
 	return Response.json(profileStatus());
 }
 

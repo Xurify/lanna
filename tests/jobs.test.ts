@@ -29,7 +29,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, afterEach, before, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, fauxText, fauxToolCall, type AssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
-import { accumulateJobUsage, buildAbortSteer, buildSubagentSteer, isSubagentFailure, steerDelivered, type DemoResult, type JobUsage, type PdfResult, type ResearchResult, type SteerMessage, type VisualResult, buildProbeHandoffSteer } from "../src/core/contracts.ts";
+import { accumulateJobUsage, buildAbortSteer, buildSubagentSteer, isSubagentFailure, steerDelivered, type JobUsage, type PdfResult, type ResearchResult, type SteerMessage, type VisualResult, buildProbeHandoffSteer } from "../src/core/contracts.ts";
 import { composeInstructions, createTeacherAgent } from "../src/agent/teacher-agent.ts";
 import { createTeacherTools } from "../src/agent/tools.ts";
 import { webTools } from "../src/agent/tools/web.ts";
@@ -297,7 +297,6 @@ describe("job store", () => {
 
 describe("steer helpers (contracts.ts)", () => {
 	const research: ResearchResult = { brief: "BRIEF", sources: [{ title: "s", url: "https://x.test" }] };
-	const demo: DemoResult = { title: "T", html: "<html></html>", tested: true, notes: "ok" };
 	const visual: VisualResult = { svg: "<svg/>", notes: "ok" };
 
 	it("buildSubagentSteer: a native marker — brief on the model-facing content, artifact payload in details", () => {
@@ -364,14 +363,14 @@ describe("steer helpers (contracts.ts)", () => {
 	});
 
 	it("buildAbortSteer: a subagent-abort marker — teacher-facing text on content, the abort payload in details", () => {
-		const steer = buildAbortSteer({ id: "job_c", kind: "demo", toolCallId: "call-c" });
+		const steer = buildAbortSteer({ id: "job_c", kind: "visual", toolCallId: "call-c" });
 		assert.equal(steer.id, "steer_job_c", "same id space — steerDelivered treats either as delivered");
 		assert.equal(steer.role, "custom");
 		assert.equal(steer.customType, "subagent-abort");
 		assert.ok(/aborted/.test(steer.content), "the teacher-facing text names the abort");
 		// The marker's customType is the message type: the UI renders the
-		// abort badge off the projection (demos.test.tsx pins the card).
-		assert.deepEqual(steer.details, { jobId: "job_c", kind: "demo", toolCallId: "call-c", aborted: true });
+		// abort badge off the projection (the steer card renders it).
+		assert.deepEqual(steer.details, { jobId: "job_c", kind: "visual", toolCallId: "call-c", aborted: true });
 	});
 
 	it("isSubagentFailure: failure shapes only (empty html/svg, failure brief)", () => {
@@ -379,14 +378,12 @@ describe("steer helpers (contracts.ts)", () => {
 		assert.equal(isSubagentFailure("research", { brief: "Research failed: x", sources: [] }), true);
 		// a brief with sources is a success even if the text mentions failure
 		assert.equal(isSubagentFailure("research", { brief: "Research failed: x", sources: [{ title: "s", url: "https://x" }] }), false);
-		assert.equal(isSubagentFailure("demo", demo), false);
-		assert.equal(isSubagentFailure("demo", { ...demo, html: "" }), true);
 		assert.equal(isSubagentFailure("visual", visual), false);
 		assert.equal(isSubagentFailure("visual", { ...visual, svg: "" }), true);
 	});
 
 	it("steerDelivered: matches on the deterministic steer id (any steer kind)", () => {
-		const steer = buildSubagentSteer({ id: "job_y", kind: "demo", toolCallId: "c" }, demo);
+		const steer = buildSubagentSteer({ id: "job_y", kind: "visual", toolCallId: "c" }, visual);
 		assert.equal(steer.id, "steer_job_y");
 		assert.equal(steerDelivered([], steer.id), false);
 		assert.equal(steerDelivered([steer], steer.id), true);
@@ -398,11 +395,10 @@ describe("steer helpers (contracts.ts)", () => {
 		assert.equal(steerDelivered([steer], handoff.id), false);
 	});
 
-	it("failure steers tell the teacher how to recover (research/demo/visual wording)", () => {
+	it("failure steers tell the teacher how to recover (research/visual wording)", () => {
 		const failResearch = buildSubagentSteer({ id: "j1", kind: "research", toolCallId: "c" }, { brief: "Research failed: API down", sources: [] });
-		const failDemo = buildSubagentSteer({ id: "j2", kind: "demo", toolCallId: "c" }, { title: "T", html: "", tested: true, notes: "FAILED: boom" });
 		const failVisual = buildSubagentSteer({ id: "j3", kind: "visual", toolCallId: "c" }, { svg: "", notes: "FAILED: boom" });
-		for (const steer of [failResearch, failDemo, failVisual]) {
+		for (const steer of [failResearch, failVisual]) {
 			assert.ok(!steer.content.includes("rendered in the lesson"), "failure text never claims the artifact landed");
 		}
 		assert.ok(failResearch.content.includes("flag the uncertainty"));
@@ -882,7 +878,7 @@ describe("researcher agent", () => {
  */
 describe("wake pipeline (src/server/jobs.ts)", () => {
 	/** A chat with a finished job ready for delivery. */
-	function setup(kind: "research" | "demo" = "research"): { chatId: string; jobId: string; steer: SteerMessage } {
+	function setup(kind: "research" | "visual" = "research"): { chatId: string; jobId: string; steer: SteerMessage } {
 		const chat = chatStore.createChat("Test: wake pipeline");
 		trackChat(chat.id);
 		chatStore.saveMessages(chat.id, [{ id: "u1", role: "user", content: "hello", timestamp: 1 } as never]);
@@ -1868,7 +1864,7 @@ describe("composer steering: steerLiveChat + the deliver-or-requeue lifecycle", 
 		const chatId = chatStore.createChat("steer: reconcile").id;
 		const delivered = { id: "steer_d1", role: "user", content: "delivered", timestamp: 1 };
 		const stranded = { id: "steer_s1", role: "user", content: "stranded behind a question", timestamp: 2 };
-		const { handed, agent } = fakeAgent();
+		const { agent } = fakeAgent();
 		registerLiveAgent(chatId, agent as never);
 		assert.equal(steerLiveChat(chatId, delivered as never), true);
 		assert.equal(steerLiveChat(chatId, stranded as never), true);

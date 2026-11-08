@@ -13,7 +13,6 @@ import { chatGPTStreamError } from "../agent/chatgpt-stream.ts";
 import { SubscriptionRequestCycle, type SubscriptionDispatchLifecycle } from "../agent/subscription-request-cycle.ts";
 import { reconstructRequestCause } from "../core/native-messages.ts";
 import { createJobRunner } from "../agent/subagents/runner.ts";
-import { createExtractionPipeline } from "../agent/subagents/extraction.ts";
 import { activeProfile, type ModelRole } from "../../config.ts";
 import { slovakLookup } from "../agent/lexicon.ts";
 import { checkerNote, checkSlovak } from "../core/slovak-check.ts";
@@ -26,8 +25,6 @@ import { effectiveSettings, stores } from "./stores.ts";
 import { searchAvailable, searchProvider } from "./search.ts";
 import { providerKeyPresent } from "./keys.ts";
 import {
-	extractionEnabled,
-	graphToolsEnabled,
 	resolveConversationSpec,
 	resolveRoleSpec,
 } from "../core/settings-resolution.ts";
@@ -35,7 +32,7 @@ import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope }
 import { beginTurn, endTurn } from "./turn-liveness.ts";
 import { applyParkedDismissal } from "./dismissal-park.ts";
 import { registerTurn, rememberTurnFailure, unregisterTurn } from "./turn-runs.ts";
-import { persistTurn, triggerExtraction, TurnPersistenceError } from "./turn-service.ts";
+import { persistTurn, TurnPersistenceError } from "./turn-service.ts";
 import { hasProbeDone, danglingQuestionOf } from "../core/native-messages.ts";
 import { composeInstructions } from "../agent/teacher-agent.ts";
 import { ensureCompacted, kickCompaction, effectiveThresholdTokens } from "./compaction.ts";
@@ -111,23 +108,6 @@ const jobRunner = createJobRunner({
 	// same signal so keyless servers never see the research tool at all.
 	searchProvider,
 });
-/** The app's ONE extraction pipeline instance — both front doors share it:
- *  quiz-triggered session runs (turn-service) and notes imports
- *  (/api/graph/import) hit the same single-flight registry. */
-export const extraction = createExtractionPipeline({
-	...stores,
-	// BYOK (owner, 2026-09-22): the extraction stages resolve the chain —
-	// role override → slot → NOTHING — read FRESH per stage call; an empty
-	// chain flows through as undefined and the pipeline refuses the run
-	// with the typed ModelsNotConfiguredError. Direct test values still win.
-	engineFor: (role) =>
-		resolveEngine(role),
-	// Key-presence gate (provider-key interlude, 2026-09-25): same check
-	// the job runner gets — a stage engine whose provider key is gone
-	// refuses BEFORE any batch runs (the typed throw), never mid-run.
-	providerKeyMissing: (provider, tier) =>
-		providerKeyPresent(provider) ? null : providerKeyMissingEnvelope(provider, [tier]),
-});
 
 
 // Wake-pipeline wiring (contracts.ts "THE ASYNC PROTOCOL" §4): the pipeline
@@ -137,13 +117,13 @@ export const extraction = createExtractionPipeline({
 setTurnRunner(async (chatId, input) => {
 	const res = await handleChatInput(chatId, input);
 	// Drive the stream to completion server-side — nobody else will read it,
-	// and onFinish (persist, extraction, endTurn) only runs when it drains.
+	// and onFinish (persist, endTurn) only runs when it drains.
 	await res.arrayBuffer().catch(() => undefined);
 	return res.status;
 });
 /** The settings-resolved engine for one role — BYOK (owner, 2026-09-22):
  *  the chain (role override → slot → NOTHING) may end empty, and undefined
- *  flows through to the per-need refusal gates (runner/extraction), read
+ *  flows through to the per-need refusal gates (runner), read
  *  FRESH so a settings PUT between dispatch and spawn lands. */
 function resolveEngine(role: ModelRole): PiEngine | undefined {
 	const spec = resolveRoleSpec(role, stores.settingsStore.readSettings());
@@ -199,7 +179,7 @@ export async function handleChatInput(
 	// and continuing ones alike — wake-pipeline turns ride this same path).
 	// Placement is deliberate: BEFORE beginTurn (no liveness effects), the
 	// write-ahead persist (nothing durable changes), and every downstream
-	// resolution (jobs/extraction gate per-need on their own tiers).
+	// resolution (jobs gate per-need on their own tiers).
 	const effective = effectiveSettings();
 	const conversation = resolveConversationSpec(record.settings, effective.models.strong);
 	if (!conversation) {
@@ -234,7 +214,7 @@ export async function handleChatInput(
 	// running compaction): await any in-flight compaction (the settle
 	// kick usually finished inside the learner's answer pause), and if
 	// the record is STILL over threshold, compact synchronously — this
-	// request waits. Skipped under tests (the extraction precedent);
+	// request waits. Skipped under tests (the scripted-chat precedent);
 	// placement mirrors the BYOK/key gates — BEFORE appends and
 	// beginTurn, no liveness effects — and the record re-reads after
 	// because compaction appends the marker.
@@ -363,7 +343,7 @@ export async function handleChatInput(
 	// concluded: build the TEACHER (planning + the full toolset). Otherwise
 	// the session is still probing: build the PROBER (quiz/ask + probe_done).
 	// Both share this whole composition (write-ahead persist, liveness,
-	// steers, usage, extraction) — only the agent differs.
+	// steers, usage) — only the agent differs.
 	const teaching = hasProbeDone(merged);
 	// BYOK (owner, 2026-09-22): the conversation chain was resolved by the
 	// turn gate above (chat.model override → strong slot → refused) — the
@@ -380,7 +360,7 @@ export async function handleChatInput(
 	// CROSS-STREAM SEAM (P2 reconciliation, 2026-09-19): `toolToggles`
 	// rides the build opts as the user-level DELTA map (absent key =
 	// enabled). The definitive toggleable set is TOGGLEABLE_TOOLS — the
-	// sub-agent JOB tools (research/demo/visual/pdf; adjudicated with the
+	// sub-agent JOB tools (research/visual/pdf; adjudicated with the
 	// user: quiz/ask/fs/plan/probe_done are always-on).
 	if (isSubscriptionProvider(conversation.provider)) requestCycle = new SubscriptionRequestCycle({
 		initialMessages: asAgentMessages(merged),
@@ -422,22 +402,15 @@ export async function handleChatInput(
 					{
 						chatId,
 						chatStore: stores.chatStore,
-						// TARGET VALIDATION (owner round 9): the practice tools read the
-						// WHOLE graph fresh per pose — targets validate against every
-						// proposition, not just the session's picks (pickless sessions
-						// and future graph-tools poses stay valid).
-						graphNodes: () => stores.graphStore.readNodes(),
 						// THE RARELY-NEEDED SET (owner round 10): research + pdf jobs
 						// (same runner/gating as the teacher's — research honestly
-						// absent when no engine is live) and the map readers behind
-						// the SAME settings gate as the prober's.
+						// absent when no engine is live).
 						jobs: {
 							chatId,
 							jobStore: stores.jobStore,
 							spawn: (job, input) => void jobRunner.runJob(job.id, input),
 							searchAvailable,
 						},
-						...(graphToolsEnabled(effective) ? { graph: { chatStore: stores.chatStore, graphStore: stores.graphStore } } : {}),
 						review: reviewSeam,
 					},
 					agentOpts,
@@ -467,10 +440,6 @@ export async function handleChatInput(
 						jobStore: stores.jobStore,
 						spawn: (job, input) => void jobRunner.runJob(job.id, input),
 						searchAvailable,
-						// The map reader (wave 7): the prober reads the learner's
-						// knowledge graph through tools when the gate opens —
-						// graph master switch AND the agent.graphTools toggle.
-						...(graphToolsEnabled(effective) ? { graphStore: stores.graphStore } : {}),
 						review: reviewSeam,
 					},
 					agentOpts,
@@ -532,7 +501,7 @@ export async function handleChatInput(
 				unregisterLiveAgent(chatId);
 				// The canonical save may have succeeded before later bookkeeping
 				// threw. Reconcile against actual durability, never replay input
-				// merely because usage/extraction/other settlement work failed.
+				// merely because usage/other settlement work failed.
 				const persisted = stores.chatStore.getChat(chatId)?.messages ?? [];
 				reconcileUserSteers(chatId, persisted);
 				settleSteers(chatId, persisted, true, constructed);
@@ -554,17 +523,6 @@ export async function handleChatInput(
 						model: modelId,
 						steps,
 					});
-				}
-				// GRAPH GATE (settings-storage wave, 2026-09-19): the write channel —
-				// extraction, its auditor — dies with the master switch.
-				// PRACTICE (owner, 2026-10-04): practice sessions write nothing —
-				// no extraction, no graph, no coverage (v1: the session itself
-				// is the deliverable).
-				if ((!requestCycle || requestCycle.dispatched) && record.kind !== "practice" && extractionEnabled(effective.graph)) {
-					// Fresh per-turn read of the graph section's chunk budget
-					// (extraction-UX redesign, 2026-09-24): the trigger compares
-					// against it and the pipeline's batches share it.
-					triggerExtraction(stores, extraction, chatId, effective.graph.extractionChunkTokens);
 				}
 				// PARKED DISMISSAL (owner, 2026-10-04): a dismissal that arrived
 				// mid-turn was parked by the dismiss route (202); now that
@@ -599,7 +557,7 @@ export async function handleChatInput(
 				// between-runs window). The next turn's ensureCompacted gate
 				// awaits whatever this leaves running; a lost engine or a
 				// beneath-threshold record is a silent no-op. Skipped under
-				// tests (the extraction precedent — scripted chats are
+				// tests (the scripted-chat precedent — scripted chats are
 				// fixtures; the service itself is pinned directly).
 				if (process.env.NODE_ENV !== "test" && (!requestCycle || requestCycle.dispatched))
 					kickCompaction(() => {

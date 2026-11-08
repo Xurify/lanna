@@ -16,6 +16,7 @@ import { QUESTION_TOOLS, type EnabledTools } from "../core/pending.ts";
 import { toLlmMessages, nativeInputCause, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
 import type { ChatGPTRequestCycle } from "./chatgpt-request-cycle.ts";
 import { usageWasAdmitted } from "./subscription-request-cycle.ts";
+import { activeProfile } from "../../config.ts";
 
 /**
  * The two teaching-side agents (docs/probe-teach-split.md): the PROBER and
@@ -75,15 +76,21 @@ export function composeInstructions(kind: AgentKind, switches?: Record<string, b
 		.join("\n\n---\n\n");
 }
 
-// The switch-free source composition, cached per kind (module-load once).
+// The switch-free source composition, cached per kind and active language profile.
 // With promptSwitches provided, baseAgentOptions composes FRESH per turn —
 // an override file written while its switch is ON must flip the next
 // turn's composition; the cache serves only the switches-less path.
-const composedInstructions: Record<AgentKind, string> = {
-	prober: composeInstructions("prober"),
-	teacher: composeInstructions("teacher"),
-	practice: composeInstructions("practice"),
-};
+const composedInstructionsCache = new Map<string, string>();
+
+function getComposedInstructions(kind: AgentKind): string {
+	const key = `${kind}:${activeProfile()}`;
+	let cached = composedInstructionsCache.get(key);
+	if (!cached) {
+		cached = composeInstructions(kind);
+		composedInstructionsCache.set(key, cached);
+	}
+	return cached;
+}
 
 // Money channel (wave 4): the chat-handler passes a per-turn collector;
 // every model call's usage lands in the chat record's turns log
@@ -182,7 +189,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	const profile = learnerProfileSegment();
 	const composed = opts.promptSwitches
 		? composeInstructions(kind, opts.promptSwitches)
-		: composedInstructions[kind]!;
+		: getComposedInstructions(kind);
 	const systemPrompt = profile ? `${composed}\n\n---\n\n${profile}` : composed;
 	// Debug recorder (owner, 2026-10-04): raw provider events when
 	// LH_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
@@ -279,7 +286,7 @@ export function createProberAgent(ctx: ProberToolContext, opts: AgentBuildOption
  * The TEACHER (agent B): enters at planning (the probe is already
  * concluded — its assessment is in the transcript), owns plan_init and the
  * full toolset (teach questions with validated nodeId, the map, research,
- * demos).
+ * figures).
  */
 export function createTeacherAgent(
 	// Optional so tests can construct a bare mock-driven agent (no storage

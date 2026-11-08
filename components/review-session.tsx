@@ -13,8 +13,6 @@ import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
 import { DayRail, useDaySummary } from "@/components/quiet/day-rail";
-import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
-import { useRouter } from "next/navigation";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
@@ -337,10 +335,6 @@ export function ReviewSession() {
 
 	const counts = status?.counts;
 	const day = useDaySummary();
-	const router = useRouter();
-	const zeroKeys = useZeroKeys();
-	const strongKeyless = useStrongKeyless();
-	const keyless = zeroKeys || strongKeyless;
 	// The bar counts cards, not answers. A card that comes back (a miss goes into relearning) is the same card, so answering it again neither moves the bar nor grows its total; it moves when a card is seen for the first time today. Counting answers made "24 of 25" become "49 of 50" after one card was repeated. The total holds the whole day, so it does not grow while the day goes on: new cards that already exist (the one on screen included, and the ones lessons put in the deck), and cards that fall due later today, are in it from the start. Without them "26 of 26" turned into "45 of 45" by evening.
 	const done = counts?.cardsToday ?? 0;
 	const newLeft = counts ? counts.newLeft + counts.pendingNew : 0;

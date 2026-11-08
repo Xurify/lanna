@@ -41,10 +41,7 @@ export const CURRENT_SETTINGS_VERSION = 1;
  *  the strong slot (one controller, the model picker). Tests pin the set. */
 export const BACKGROUND_MODEL_ROLES = [
 	"researcher",
-	"demoBuilder",
 	"visualMaker",
-	"extractor",
-	"auditor",
 ] as const;
 
 export type BackgroundModelRole = (typeof BACKGROUND_MODEL_ROLES)[number];
@@ -62,7 +59,7 @@ export interface RoleModelOverride {
 
 /** The capability tiers a user can pin models into (owner-settled mapping):
  *  strong = prober + teacher (also the per-session default-teacher
- *  starting point); cheap = researcher, demo-builder, extractor, auditor,
+ *  starting point); cheap = researcher,
 ; vision = visual-maker + pdf-reader. Resolution per role:
  *  ROLE OVERRIDE → slot → factory pin. */
 export const MODEL_SLOTS = ["strong", "cheap", "vision"] as const;
@@ -121,8 +118,7 @@ export function modelsNotConfigured(missing: ModelSlotName[]): ModelsNotConfigur
 export function isModelsRefusal(error: string | undefined): boolean {
 	return !!error && error.startsWith(modelsNotConfigured([]).error);
 }
-/** The typed throw for in-process seams (extraction pipeline): callers
- *  catch it to skip honestly (trigger) or surface the 503 envelope
+/** The typed throw for in-process seams: callers surface the 503 envelope
  *  (routes) instead of logging a failure. */
 export class ModelsNotConfiguredError extends Error {
 	readonly envelope: ModelsNotConfigured;
@@ -170,9 +166,8 @@ export function providerKeyMissing(provider: string, slots: ModelSlotName[]): Pr
 export function isProviderKeyRefusal(error: string | undefined): boolean {
 	return !!error && error.endsWith(PROVIDER_KEY_MISSING_TAIL);
 }
-/** The typed throw for in-process seams (extraction pipeline) — the
- * ProviderKeyMissing sibling of ModelsNotConfiguredError: callers catch
- * it to skip honestly (trigger) or surface the 503 envelope (routes). */
+/** The typed throw for in-process seams — the ProviderKeyMissing sibling of
+ * ModelsNotConfiguredError: callers surface the 503 envelope (routes). */
 export class ProviderKeyMissingError extends Error {
 	readonly envelope: ProviderKeyMissing;
 	constructor(provider: string, slots: ModelSlotName[]) {
@@ -220,9 +215,6 @@ export const ROLE_SLOT: Readonly<Record<ModelRole, ModelSlotName>> = {
 	prober: "strong",
 	teacher: "strong",
 	researcher: "cheap",
-	demoBuilder: "cheap",
-	extractor: "cheap",
-	auditor: "cheap",
 	visualMaker: "vision",
 	pdfReader: "vision",
 };
@@ -248,14 +240,6 @@ export interface AgentSettings {
 	 *  engine must still have its key, else search is honestly unavailable.
 	 *  Absent + no key = unavailable (no silent fallback, no default). */
 	search?: { engine?: SearchEngineId };
-	/** Prober graph tools (wave 7, owner ruling 2026-09-23): read-only
-	 *  knowledge-graph views for the prober agent — a session list +
-	 *  per-session propositions with understanding levels. Its SUBJECT
-	 *  is the graph but its MECHANISM is agent capability (tool
-	 *  registration), so it lives here in its OWN subsection, not in the
-	 *  tool-toggles map. Absent = enabled (the toggle discipline); the
-	 *  effective gate composes graph.enabled AND this switch. */
-	graphTools?: { enabled?: boolean };
 	/** System-prompt override SWITCHES keyed by segment path (absent key =
 	 *  off). Switch-on requires the override file to exist (enforced by the
 	 *  route); the switch is explicit so users keep a file on disk but run
@@ -292,65 +276,6 @@ export interface AppearanceSettings {
 	mdRendering?: MdRenderingSettings;
 }
 
-/** Knowledge-graph settings — a strict dependency ladder (owner decision
- *  2026-09-19): graph → embedding → clustering → labeling, each rung only
- *  meaningful when its parent is on (the UI grays dependents out; stored
- *  values persist but resolve inert). All default true. */
-export interface GraphSettings {
-	/** MASTER (and, since wave 7, ONLY): off = no extraction, no auditor.
-	 *  The wave-7 collapse (owner ruling 2026-09-23) deleted the three
-	 *  subordinate rungs — embedding/clustering/labeling — and the BYOK
-	 *  embeddingModel: clustering is the free birth-session partition
-	 *  derived on read (core/session-clusters.ts), labels ARE session
-	 *  names, and the prober graph tools read the ledgers directly — there
-	 *  is nothing left to configure. Data stays stored either way. */
-	enabled?: boolean;
-	/** GRAPH RENDERING (owner, 2026-10-06 — the release graph-controls
-	 *  round): gates ONLY the home's main view. Off = the home shows the
-	 *  chains view instead of the canvas; the ledgers, the extraction
-	 *  pipeline, and every write path are untouched — this is a display
-	 *  switch, not a data switch (the extraction master above is the
-	 *  data switch). Default on. */
-	rendering?: boolean;
-	/** The chunk budget (extraction-UX redesign, owner 2026-09-24): the
-	 *  transcript-token share of the extractor's context — a run fires
-	 *  when a chat's UNCOVERED tokens reach it, and the run batches the
-	 *  oldest uncovered messages into runs of ≤ this many tokens. It
-	 *  bounds both cost and chunk size (the extractor prompt also
-	 *  carries the whole graph + instructions, so a smaller budget means
-	 *  more, smaller runs — each paying that fixed overhead).
-	 *
-	 *  FACTORY DEFAULT 4096 (owner, 2026-10-13: halved back from the
-	 *  digest-era 8192 — the labeled passages + message anchors made
-	 *  smaller batches worth their overhead again; the pre-setting
-	 *  constant was 4096, vision-extraction-coverage.md, 2026-09-15).
-	 *  Only the FACTORY moves: an explicit user value always wins.
-	 *
-	 *  FLOOR 500 (EXTRACTION_CHUNK_TOKENS_FLOOR, the implementer's call
-	 *  per the owner's dispatch): every run pays the graph-carrying
-	 *  prompt overhead out of the write channel's money — a budget below
-	 *  ~500 tokens would fire penny-batches that cost more per extracted
-	 *  token than the content is worth, so the sanitizer clamps and the
-	 *  PUT rejects below it. NO CEILING on purpose: a large budget just
-	 *  delays extraction — the user's stated cost/thoroughness tradeoff,
-	 *  not a misconfiguration to police. */
-	extractionChunkTokens?: number;
-}
-
-/**
- * COMPACTION (owner round 14, 2026-10-05): the context-fitting mechanic's
- * user-facing knob. One number — the trigger threshold in context tokens.
- * The effective trigger is min(this, model contextWindow − 16k reserve)
- * (owner ruling: on big models the setting rules; on small ones the
- * window rules before the provider overflows).
- *
- * FACTORY DEFAULT 150_000 (owner ruling).
- *
- * FLOOR 32_000 (implementer's call, the chunk-budget discipline): below
- * the kept tail (20k) + a summary the chat would re-compact every turn —
- * a burn, not a preference. NO CEILING: a huge threshold just means "fit
- * everything" until the window rule binds.
- */
 export interface CompactionSettings {
 	thresholdTokens?: number;
 }
@@ -364,7 +289,6 @@ export interface UserSettings {
 	/** The strong/cheap/vision model slots (model slots wave, 2026-09-20). */
 	models?: ModelsSettings;
 	appearance?: AppearanceSettings;
-	graph?: GraphSettings;
 	compaction?: CompactionSettings;
 	[key: string]: unknown;
 }
@@ -389,7 +313,6 @@ export interface FactorySettings {
 			italicColor: string | null;
 		};
 	};
-	graph: Required<GraphSettings>;
 	compaction: Required<CompactionSettings>;
 }
 
@@ -404,14 +327,9 @@ export const FACTORY_SETTINGS: FactorySettings = {
 		sessionNameSerif: false,
 		mdRendering: { headingWeight: 600, boldColor: null, italicColor: null },
 	},
-	graph: { enabled: true, rendering: true, extractionChunkTokens: 4096 },
 	compaction: { thresholdTokens: 150_000 },
 };
 
-/** The chunk budget's validated floor (GraphSettings.extractionChunkTokens
- *  — see its doc for the penny-batch rationale; the settings PUT names this
- *  in its rejection, the sanitizer clamps to it). */
-export const EXTRACTION_CHUNK_TOKENS_FLOOR = 500;
 
 // ─── Sanitizer ─────────────────────────────────────────────────────────────
 
@@ -519,14 +437,6 @@ function sanitizeAgent(raw: Record<string, unknown>): AgentSettings {
 		const engine = (raw.search as Record<string, unknown>).engine;
 		if (engine === "tavily" || engine === "brave") out.search = { engine };
 	}
-	// Prober graph tools (wave 7): its own ai-section subsection —
-	// lenient read side (a bad shape drops the key and the default ON
-	// resumes; the write side's parser is strict).
-	if (raw.graphTools !== null && typeof raw.graphTools === "object" && !Array.isArray(raw.graphTools)) {
-		const enabled = (raw.graphTools as Record<string, unknown>).enabled;
-		if (enabled === undefined) out.graphTools = {};
-		else if (typeof enabled === "boolean") out.graphTools = { enabled };
-	}
 	return out;
 }
 
@@ -558,36 +468,10 @@ function sanitizeAppearance(raw: Record<string, unknown>): AppearanceSettings {
 	return out;
 }
 
-function sanitizeGraph(raw: Record<string, unknown>): GraphSettings {
-	// Wave 7 collapse (owner ruling 2026-09-23): the section is the master
-	// switch ONLY. The dead rungs' keys (embedding/clustering/labeling/
-	// embeddingModel) in existing records are simply UNREAD and DROPPED by
-	// this reconstruction — the migration story: the next graph-section
-	// write (PUT is replace-whole) persists the collapsed shape, and no
-	// active code ever looks at the stale fields.
-	//
-	// extractionChunkTokens (extraction-UX redesign, 2026-09-24): the chunk
-	// budget — clamp-never-reject (the bd68486 discipline): a finite
-	// positive number floors to EXTRACTION_CHUNK_TOKENS_FLOOR (fractions
-	// floor to integers), anything else drops to the factory default at
-	// resolution. A disk record below the floor (older app, hand edit)
-	// clamps UP — the floor is a cost protection, not data to honor.
-	const out: GraphSettings = {};
-	const enabled = boolOrDrop(raw.enabled);
-	if (enabled !== undefined) out.enabled = enabled;
-	const rendering = boolOrDrop(raw.rendering);
-	if (rendering !== undefined) out.rendering = rendering;
-	const rawTokens = raw.extractionChunkTokens;
-	if (typeof rawTokens === "number" && Number.isFinite(rawTokens) && rawTokens > 0) {
-		out.extractionChunkTokens = Math.max(EXTRACTION_CHUNK_TOKENS_FLOOR, Math.floor(rawTokens));
-	}
-	return out;
-}
-
 /** clamp-never-reject (the sanitizer's discipline): a finite positive
  *  number floors to COMPACTION_THRESHOLD_FLOOR, anything else drops (the
  *  factory default resolves at read time). Exported for the PUT parser's
- *  reject-with-rationale (the graph chunk-budget precedent). */
+ *  reject-with-rationale. */
 export const COMPACTION_THRESHOLD_FLOOR = 32_000;
 
 function sanitizeCompaction(raw: Record<string, unknown>): CompactionSettings {
@@ -624,11 +508,8 @@ export function sanitizeUserSettings(raw: unknown): UserSettings | null {
 		const models = sanitizeModels(r.models as Record<string, unknown>);
 		if (Object.keys(models).length) out.models = models;
 	}
-	if (r.graph !== null && typeof r.graph === "object" && !Array.isArray(r.graph)) {
-		out.graph = sanitizeGraph(r.graph as Record<string, unknown>);
-		if (r.compaction !== undefined && r.compaction !== null && typeof r.compaction === "object") {
-			out.compaction = sanitizeCompaction(r.compaction as Record<string, unknown>);
-		}
+	if (r.compaction !== undefined && r.compaction !== null && typeof r.compaction === "object") {
+		out.compaction = sanitizeCompaction(r.compaction as Record<string, unknown>);
 	}
 	// Unknown top-level keys ride along untouched (forward-compat). One
 	// known-DEAD key is stripped instead of riding: `chat` (the old

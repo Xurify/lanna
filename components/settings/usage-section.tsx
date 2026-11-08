@@ -43,7 +43,7 @@ export function UsageSection() {
 
 	const thisMonth = report.byMonth[0];
 	const sessions = showAll ? report.sessions : report.sessions.slice(0, 12);
-	const sessionTotal = (s: UsageReport["sessions"][number]) => (s.costUsd ?? 0) + s.extractionUsd + s.jobsUsd;
+	const sessionTotal = (s: UsageReport["sessions"][number]) => (s.costUsd ?? 0) + s.jobsUsd;
 
 	return (
 		<div data-testid="usage-section" className="flex flex-col">
@@ -56,7 +56,6 @@ export function UsageSection() {
 				</div>
 				<p className="text-xs text-muted-foreground">
 					Tutor replies {formatUsd(report.turnsUsd)}
-					{report.extractionUsd > 0 && <> · skill map updates {formatUsd(report.extractionUsd)}</>}
 					{report.jobsUsd > 0 && <> · background tasks {formatUsd(report.jobsUsd)}</>}
 					{report.stories.count > 0 && <> · {report.stories.count} story {report.stories.count === 1 ? "episode" : "episodes"} {formatUsd(report.storiesUsd)}</>}
 					{(report.speak?.count ?? 0) > 0 && <> · {report.speak.count} spoken {report.speak.count === 1 ? "scene" : "scenes"} {formatUsd(report.speakUsd)}</>}
@@ -124,7 +123,7 @@ export function UsageSection() {
 								<td className="whitespace-nowrap py-1.5 pr-3 text-muted-foreground">
 									{MODE_LABEL[s.mode]} · {dateLabel(s.createdAt)} · {s.turns} {s.turns === 1 ? "turn" : "turns"}
 								</td>
-								<td className="py-1.5 text-right tabular-nums text-foreground">{s.turns === 0 ? "—" : usd(s.costUsd === null && s.extractionUsd + s.jobsUsd === 0 ? null : sessionTotal(s))}</td>
+								<td className="py-1.5 text-right tabular-nums text-foreground">{s.turns === 0 ? "—" : usd(s.costUsd === null && s.jobsUsd === 0 ? null : sessionTotal(s))}</td>
 							</tr>
 						))}
 					</tbody>

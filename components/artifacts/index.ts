@@ -1,6 +1,5 @@
 import type { ComponentType } from "react";
 import type { ArtifactPartProps } from "@/src/core";
-import { DemoCard } from "@/components/artifacts/demo-card";
 import { JobCard, PdfJobCard } from "@/components/artifacts/job-card";
 import { VisualCard } from "@/components/artifacts/visual-card";
 import { ProbeDoneCard } from "@/components/artifacts/probe-done-card";
@@ -26,7 +25,6 @@ export const artifactRenderers: Record<string, ComponentType<ArtifactPartProps>>
 	// message-level boundary, drawn by PhaseDivider in chat.tsx (the old
 	// part-level plan_init divider retired with it).
 	// Artifacts (W6 fills in the components):
-	demo: DemoCard,
 	visual: VisualCard,
 	// The probe conclusion: the assessment belongs to the learner as much as
 	// to the transcript (docs/probe-teach-split.md §2). Plain v1 card.
@@ -43,11 +41,4 @@ export const artifactRenderers: Record<string, ComponentType<ArtifactPartProps>>
 	// the conclusion carries the outcome + verdict + the reveal.
 	problem: ProblemCard,
 	conclude: ConcludeCard,
-	// The prober's graph tools (wave 7): same quiet expandable card —
-	// collapsed one-liner (tool name + the session id for
-	// list_propositions), the tool's own compact row-per-line output
-	// (name / level / date) verbatim on expand, exactly the read/ls
-	// discipline (their results are pre-formatted strings too).
-	list_sessions: ToolCallCard,
-	list_propositions: ToolCallCard,
 };

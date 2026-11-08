@@ -8,7 +8,7 @@
  * read the federated catalog from /api/models, so a stored id stays visible even
  * if its provider key lapsed. The Default row clears the override.
  *
- * Tools: research, demo, visual, pdf. An absent key counts as enabled; the UI
+ * Tools: research, visual, pdf. An absent key counts as enabled; the UI
  * writes explicit booleans for all four. The search engine (Tavily or Brave) is
  * live only with its key, so the row grays without one.
  *
@@ -26,7 +26,6 @@ import {
 	resolveSettings,
 	type AgentSettings,
 	type CompactionSettings,
-	type GraphSettings,
 	type ModelCatalogEntry,
 	type ModelSlotName,
 	type ModelsSettings,
@@ -41,7 +40,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
-	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research, build demos, and grade your work" },
+	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research and grade your work" },
 	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
 };
 
@@ -49,12 +48,11 @@ const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 const SEARCH_ENGINES = ["tavily", "brave"] as const;
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
-export const TOGGLE_TOOLS = ["research", "demo", "visual", "pdf"] as const;
+export const TOGGLE_TOOLS = ["research", "visual", "pdf"] as const;
 
 /** Learner-facing copy. The ids stay the engine's names. */
 export const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
 	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
-	demo: { label: "Interactive demos", hint: "Builds small working demos for ideas that move or change." },
 	visual: { label: "Precise figures", hint: "Draws exact pictures: graphs, number lines and geometry." },
 	pdf: { label: "Read PDFs", hint: "Reads the PDFs you give it and cites their pages." },
 };
@@ -110,11 +108,6 @@ export function QuizStyleRow({ agent, onSectionChange }: { agent: AgentSettings 
 
 export function composeQuizMechanics(agent: AgentSettings | undefined, mechanics: "choice" | "free"): AgentSettings {
 	return { ...agent, tools: { ...agent?.tools, explain: mechanics === "free" } };
-}
-
-/** Graph-tools toggle: its own key, never in the tool-toggles map. Absent = on. */
-export function composeGraphTools(agent: AgentSettings | undefined, on: boolean): AgentSettings {
-	return { ...agent, graphTools: { enabled: on } };
 }
 
 /** One slot's override. Empty model = Default (factory pin); empty thinking keeps the resolved level. */
@@ -236,7 +229,6 @@ function MenuTrigger({
 export function AiSection({
 	agent,
 	models,
-	graph,
 	compaction,
 	onSectionChange,
 	onModelsChange,
@@ -245,8 +237,6 @@ export function AiSection({
 	agent: AgentSettings | undefined;
 	/** Slot pins. Engine-level, written to /api/settings/models. */
 	models: ModelsSettings | undefined;
-	/** Read only here. graph.enabled off dims and disables the graph-tools row. */
-	graph: GraphSettings | undefined;
 	/** Its own PUT, since the threshold is engine behavior rather than an agent key. */
 	compaction: CompactionSettings | undefined;
 	onSectionChange: (next: AgentSettings) => void;
@@ -634,26 +624,6 @@ export function AiSection({
 			</SettingsGroup>
 
 			<SettingsGroup label="Tools" testid="group-tools">
-				{/* Graph tools: first row. It is about the map but is agent capability, so it is kept out of the tool toggles. */}
-				{(() => {
-					const graphOn = graph?.enabled ?? true;
-					return (
-						<SettingsRow
-							label="Let the tutor use my skill map"
-							hint={graphOn ? "It checks what you learned in earlier sessions." : "Turn on Skill map to use this."}
-							testid="graph-tools-row"
-							dimmed={!graphOn}
-						>
-							<Toggle
-								checked={agent?.graphTools?.enabled ?? true}
-								disabled={!graphOn}
-								label="Let the tutor use my skill map"
-								testid="toggle-graph-tools"
-								onChange={(on) => onSectionChange(composeGraphTools(agent, on))}
-							/>
-						</SettingsRow>
-					);
-				})()}
 				{TOGGLE_TOOLS.map((id) => (
 					<SettingsRow
 						key={id}

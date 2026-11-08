@@ -27,7 +27,7 @@ import { getHeadless, type HeadlessApi } from "./headless.ts";
  * loop renders it anyway, shows the image, and asks the model to look before
  * finishing. Nothing is delivered without having been looked at.
  *
- * Failure semantics mirror the demo-builder: { svg: "", notes: "FAILED: …" }.
+ * Failure semantics: { svg: "", notes: "FAILED: …" }.
  */
 
 export interface VisualMakerInput {

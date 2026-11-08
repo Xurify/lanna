@@ -30,6 +30,7 @@ import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
+import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
 import {
 	compareAnswer,
@@ -130,6 +131,7 @@ interface SavedLesson {
 	peeked?: boolean;
 	relearned: number;
 	startedAt: number;
+	from?: string;
 }
 
 /** Missed reps asked again at the end of a lesson, at most (successive
@@ -218,14 +220,17 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// or left on purpose (X, Escape). Blitz is a 60 s sprint and is not kept.
 	const saveKey = mode !== "lesson" ? null : focus ? `lh-lesson:${focus}` : unit ? `lh-lesson:${unit}${gender ? `:${gender}` : ""}` : null;
 	const restoring = useRef(saveKey !== null);
+	const leaveTarget = useRef(readOrigin());
 	useEffect(() => {
 		restoring.current = false;
+		leaveTarget.current = readOrigin();
 		if (!saveKey) return;
 		try {
 			const raw = sessionStorage.getItem(saveKey);
 			if (!raw) return;
 			const saved = JSON.parse(raw) as SavedLesson;
 			if (!saved.plan || (saved.reps.length === 0 && saved.index === 0 && !saved.current)) return;
+			leaveTarget.current = saved.from ?? readOrigin();
 			setPlan(saved.plan);
 			setIndex(saved.index);
 			setReps(saved.reps);
@@ -243,7 +248,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	}, [saveKey]);
 	useEffect(() => {
 		if (!saveKey || !plan || score || restoring.current) return;
-		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, first: firstTry, peeked, relearned: relearned.current, startedAt: startedAt.current };
+		const saved: SavedLesson = { plan, index, reps, current, combo, xp, miss, first: firstTry, peeked, relearned: relearned.current, startedAt: startedAt.current, from: leaveTarget.current };
 		try {
 			sessionStorage.setItem(saveKey, JSON.stringify(saved));
 		} catch {
@@ -263,7 +268,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	const [leaving, setLeaving] = useState(false);
 	const leave = useCallback(() => {
 		forget();
-		router.push("/");
+		router.push(leaveTarget.current);
 	}, [forget, router]);
 
 

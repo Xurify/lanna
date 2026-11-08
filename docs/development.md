@@ -29,8 +29,6 @@ npm run desktop:dev    # next dev + Electron shell pointed at it
 npm run desktop:dist   # local signed/notarized macOS arm64 build (LH_NOTARY keychain)
 
 # one-shot data scripts (run from the master tree only — data never crosses trees)
-npx tsx --env-file=.env.local scripts/import-notes.ts <dir>   # bulk-import notes → graph
-npx tsx --env-file=.env.local scripts/backfill-graph.ts       # wipe + re-extract every chat
 npx tsx --env-file=.env.local scripts/replay-layout.ts        # re-derive layout from the ledgers
 ```
 
@@ -156,8 +154,7 @@ src/
                                 ledgers · jobs (+ render-settings, default-settings)
 electron/                       desktop launcher + security guard (spawns the standalone
                                 server; 1 IPC channel; LH_DATA_DIR + BYOK env)
-scripts/                        build-server.mjs (packaging guards), import-notes,
-                                backfill-graph, replay-layout
+scripts/                        build-server.mjs (packaging guards), replay-layout
 data/                           chats/ · graph/ (nodes/chains/sessions/coverage
                                 ledgers + positions/sources/render-settings maps) ·
                                 jobs/ · settings.json — runtime state, git-ignored
