@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { DraftShell, startDraftSession } from "../components/new-session.tsx";
+import { ChatDraft } from "../components/chat-draft.tsx";
 
 /**
  * The sessionless draft view (/chat/new, owner 2026-09-13): "+ New session"
@@ -41,6 +42,12 @@ describe("startDraftSession — the create-on-send contract", () => {
 		assert.equal(calls.length, 1, "a single create call — the birth stamp is server-side");
 	});
 
+	it("the plain chat carries kind:\"chat\" to the create route", async () => {
+		const { f, calls } = fakeFetch("c_chat");
+		await startDraftSession("this and that", f, "chat");
+		assert.deepEqual(calls[0]!.body, { title: "this and that", kind: "chat" });
+	});
+
 	it("empty or whitespace text never creates anything", async () => {
 		const { f, calls } = fakeFetch("never");
 		assert.equal(await startDraftSession("", f), null);
@@ -61,12 +68,9 @@ describe("DraftShell — the sessionless surface", () => {
 		);
 		// The chat composer, ready for the first message.
 		assert.ok(html.includes('data-testid="composer"'));
-		// The draft's model control binds the strong slot — the
-		// new-session default (per-session models, owner 2026-09-28).
 		assert.ok(html.includes('data-testid="stats-model"'));
 		// No CTA by default: a configured surface stays quiet.
 		assert.ok(!html.includes('data-testid="setup-cta"'));
-		// The same empty state a fresh chat shows.
 		assert.ok(html.includes("Your tutor asks a few quick questions to see what you know, then teaches from there."));
 		// The pointer-events pattern (953b22b): the wrapper stays inert…
 		assert.ok(html.includes("pointer-events-none"));
@@ -110,14 +114,25 @@ describe("DraftShell — the sessionless surface", () => {
 		assert.ok(!/\/chat\/c[a-z0-9_]+/.test(html));
 	});
 });
-describe("the practice draft (?mode=practice, 2026-10-04)", () => {
-	it("the start screen offers Learn and Practice as one choice, the current one marked", () => {
-		const html = renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="practice" onModeChange={() => {}} />);
-		assert.ok(html.includes('data-testid="draft-mode"'));
-		assert.match(html, /data-testid="draft-mode-practice"[^>]*>Practice/);
-		assert.ok(/aria-checked="true"[^>]*data-testid="draft-mode-practice"|data-testid="draft-mode-practice"[^>]*aria-checked="true"|aria-checked="true"[^>]*class="[^"]*on[^"]*"[^>]*data-testid="draft-mode-practice"/.test(html));
-		assert.ok(!renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} />).includes("draft-mode"), "no switch unless a handler is given");
+describe("the plain chat draft (/chat/new)", () => {
+	it("opens on the question line, with the language named and no model control", () => {
+		const html = renderToStaticMarkup(<ChatDraft busy={false} text="" onChange={() => {}} onSend={() => {}} language="Slovak" />);
+		assert.match(html, /A Slovak word you keep forgetting/);
+		assert.match(html, /What's on your mind?/);
+		assert.match(html, /Paste it or describe it/);
+		assert.ok(html.includes('data-testid="draft-suggestions"'));
+		assert.ok(!html.includes('data-testid="stats-model"'));
 	});
+});
+describe("the probed lesson draft (?mode=teach)", () => {
+	it("keeps the lesson's copy and its model control", () => {
+		const html = renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="teach" />);
+		assert.ok(html.includes("Your tutor asks a few quick questions to see what you know, then teaches from there."));
+		assert.ok(html.includes('data-testid="stats-model"'));
+		assert.ok(!html.includes("draft-mode"), "no switch between kinds of chat");
+	});
+});
+describe("the practice draft (?mode=practice, 2026-10-04)", () => {
 
 	it("the shell swaps copy: practice title, empty state, placeholder", () => {
 		const html = renderToStaticMarkup(

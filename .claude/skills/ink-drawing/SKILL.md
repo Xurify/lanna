@@ -79,4 +79,6 @@ Never judge a picture from its code.
 
 ## Figures the model draws
 
+**In the chat (E76)** the tutor writes the drawing itself, as a ` ```svg ` fence in its reply. Its prompt is `src/agent/prompts/chat/20-drawing.md`: the same look in words (thin round strokes with a small bow, a person as round head, straight body, straight legs and one pointing arm, one teal accent, one patch), colors only through `var(--ink)`, `var(--graphite)`, `var(--faint)`, `var(--rule)`, `var(--mark)` and `var(--wash)`. `src/core/sketch.ts` rebuilds it from an allowlist and maps those names to the tokens (`--sk-*` on the figure, set in `components/sketch-figure.tsx`), which also adds the wobble filter and, for a drawing that arrives live, the `ink-draw` and `ink-fade` order. A drawing can step through `<g data-step data-caption>` groups. When this skill changes the look, change that prompt and the token map in the same PR.
+
 The `visual` tool's maker (`src/agent/subagents/visual-maker.ts`) is told the same look in words: thin near-black strokes, round caps, curved arrows with two-stroke heads, one teal accent and one patch, on the white background the figure card and its invert switch rely on. When this skill changes the look, change that prompt in the same PR.

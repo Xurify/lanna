@@ -39,6 +39,7 @@ import type { ExtraProps } from "streamdown";
 import { MERMAID_FONT_SIZE, renderMermaid } from "@/components/mermaid-render";
 import { SpokenPhrase, spokenText } from "@/components/speech";
 import { MermaidError } from "@/components/mermaid-error";
+import { SketchFigure } from "@/components/sketch-figure";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { chartSize, useSessionMermaid } from "@/components/session-overlay";
 import { Hint } from "@/components/ui/hint";
@@ -254,6 +255,7 @@ function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 	const source = codeSource(children);
 
 	if (language === "mermaid") return <MermaidInline chart={source} />;
+	if (language === "svg") return <SketchFigure source={source} incomplete={incomplete} />;
 
 	const startMatch = /startLine=(\d+)/.exec(meta);
 	const startLine = startMatch ? Number.parseInt(startMatch[1]!, 10) : undefined;
