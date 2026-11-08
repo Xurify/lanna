@@ -121,7 +121,7 @@ export function House({ x, ground, seed, delay = 0, kind = "home" }: { x: number
 export function PenRule({ delay = 0, className }: { delay?: number; className?: string }) {
 	return (
 		<svg viewBox="0 0 100 4" preserveAspectRatio="none" className={cn("pointer-events-none h-1 w-full overflow-visible", className)} aria-hidden="true">
-			<path d="M1 2.2 C22 1 40 3.2 62 2 S90 1.4 99 2.4" pathLength={1} className="ink-draw fill-none stroke-current text-line-2" strokeWidth={1.2} strokeLinecap="round" vectorEffect="non-scaling-stroke" style={delayed(delay)} />
+			<path d="M1 2.2 C22 1 40 3.2 62 2 S90 1.4 99 2.4" pathLength={1} className="ink-draw fill-none stroke-current text-line-2" strokeWidth={1.2} strokeLinecap="round" style={delayed(delay)} />
 		</svg>
 	);
 }
@@ -152,7 +152,7 @@ export function Sheet({ viewBox, className, children }: { viewBox: string; class
 export function PenUnderline({ className }: { className?: string }) {
 	return (
 		<svg viewBox="0 0 100 8" preserveAspectRatio="none" className={cn("pointer-events-none absolute -bottom-1.5 left-0 h-1.5 w-full overflow-visible", className)} aria-hidden="true">
-			<path d={UNDERLINE_D} pathLength={1} className="ink-draw fill-none stroke-teal-2" strokeWidth={2.4} strokeLinecap="round" vectorEffect="non-scaling-stroke" style={delayed(0.35)} />
+			<path d={UNDERLINE_D} pathLength={1} className="ink-draw fill-none stroke-teal-2" strokeWidth={2.4} strokeLinecap="round" style={delayed(0.35)} />
 		</svg>
 	);
 }
