@@ -1,9 +1,3 @@
-/**
- * Edge's voice service drops some streams before the end of the reading;
- * the next try usually works. withRetries keeps trying up to its limit and
- * then reports the last failure, so the cascade can fall through.
- */
-
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import * as os from "node:os";

@@ -253,7 +253,6 @@ const EDGE_RATE = "+15%";
 const EDGE_ATTEMPTS = 6;
 const EDGE_RETRY_PAUSE_MS = 500;
 
-/** Runs `run` until it succeeds, at most `attempts` times, waiting `pauseMs` longer before each new try; the last error is thrown. */
 export async function withRetries<T>(run: () => Promise<T>, attempts: number, pauseMs: number): Promise<T> {
 	let last: unknown;
 	for (let i = 0; i < attempts; i++) {
@@ -351,7 +350,6 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	return made;
 }
 
-/** Clips being made now, by cache key: a prefetch and a click on the same sentence share one synthesis. */
 const inFlight = new Map<string, Promise<TtsClip | null>>();
 
 async function synthesizeFresh(req: TtsRequest, lang: LanguageInfo, key: string): Promise<TtsClip | null> {
