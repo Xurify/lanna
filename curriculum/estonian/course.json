@@ -19,7 +19,7 @@
 		{
 			"tag": "genitive",
 			"native": "omastav",
-			"means": "whose, before postpositions, and the stem of most cases: maja, lapse"
+			"means": "whose, the whole object, before postpositions, and the stem of most cases: maja, lapse"
 		},
 		{
 			"tag": "partitive",
@@ -420,7 +420,7 @@
 			"kind": "grammar",
 			"title": "Some of it: the partitive",
 			"tagline": "kohvi, autot, raamatut",
-			"rule": "The partitive is the object of an unfinished action or of a negative, and an amount of something: ma joon kohvi, mul ei ole autot. Learn it with each word: -t (autot, raamatut), -d (teed, maad) or a vowel (kohvi, lauda).",
+			"rule": "The partitive is the object of an unfinished action, and the object or subject after a negative, and an amount of something: ma joon kohvi, mul ei ole autot. Learn it with each word: -t (autot, raamatut), -d (teed, maad) or a vowel (kohvi, lauda).",
 			"glyph": "cup-soda",
 			"grammarTerm": "partitive singular",
 			"nativeTerm": "osastav",
@@ -644,7 +644,7 @@
 			"kind": "grammar",
 			"title": "Out of, about: -st",
 			"tagline": "majast, koolist, ilmast",
-			"rule": "-st on the genitive stem means out of or from inside (majast, toast), about (me räägime ilmast) and what something is made of (puust).",
+			"rule": "-st on the genitive stem means out of or from inside (majast, toast), about (me räägime ilmast), what something is made of (puust), and it follows some verbs (aru saama: saan küsimusest aru; piisama).",
 			"glyph": "footprints",
 			"grammarTerm": "elative singular",
 			"nativeTerm": "seestütlev",
@@ -662,7 +662,7 @@
 			"kind": "grammar",
 			"title": "Kus, kuhu, kust? -s, -sse, -st",
 			"tagline": "koolis, kooli, koolist",
-			"rule": "Pick the ending by the question: kus? (where) -s, kuhu? (where to) -sse or the short form, kust? (where from) -st: ma olen koolis, lähen kooli, tulen koolist.",
+			"rule": "For a place, pick the ending by the question: kus? (where) -s, kuhu? (where to) -sse or the short form, kust? (where from) -st: ma olen koolis, lähen kooli, tulen koolist.",
 			"glyph": "signpost",
 			"grammarTerm": "inner local cases",
 			"nativeTerm": "sisekohakäänded",
@@ -692,6 +692,74 @@
 				"sekku",
 				"suhtes",
 				"külla"
+			],
+			"lemmas": [
+				"maja",
+				"kodu",
+				"tuba",
+				"korter",
+				"köök",
+				"linn",
+				"tänav",
+				"pood",
+				"kool",
+				"kirik",
+				"jaam",
+				"buss",
+				"rong",
+				"auto",
+				"lennuk",
+				"turg",
+				"park",
+				"haigla",
+				"hotell",
+				"restoran",
+				"rand",
+				"sild",
+				"muuseum",
+				"mets",
+				"meri",
+				"järv",
+				"jõgi",
+				"mägi",
+				"maa",
+				"saar",
+				"küla",
+				"töö",
+				"ülikool",
+				"kino",
+				"pank",
+				"vangla",
+				"aed",
+				"klass",
+				"kapp",
+				"voodi",
+				"laud",
+				"tool",
+				"diivan",
+				"sein",
+				"katus",
+				"korrus",
+				"tee",
+				"pink",
+				"riiul",
+				"aken",
+				"uks",
+				"kott",
+				"karp",
+				"tasku",
+				"vesi",
+				"taevas",
+				"õu",
+				"kontor",
+				"baar",
+				"keldri",
+				"kelder",
+				"loomaaed",
+				"lennujaam",
+				"vannituba",
+				"magamistuba",
+				"külmkapp"
 			]
 		},
 		{
@@ -718,7 +786,7 @@
 			"kind": "grammar",
 			"title": "Kus, kuhu, kust? -l, -le, -lt",
 			"tagline": "turul, turule, turult",
-			"rule": "The outer cases answer the same three questions: kus? -l, kuhu? -le, kust? -lt: ma olen turul, lähen turule, tulen turult. Some places always take them: tööl, maal, kontserdil.",
+			"rule": "The outer cases answer the same three questions for a surface or an open place: kus? -l, kuhu? -le, kust? -lt: ma olen turul, lähen turule, tulen turult; laual, lauale, laualt. Some places always take them: tööl, maal, kontserdil.",
 			"glyph": "route",
 			"grammarTerm": "outer local cases",
 			"nativeTerm": "väliskohakäänded",
@@ -749,6 +817,74 @@
 				"pealt",
 				"kõrvale",
 				"omale"
+			],
+			"lemmas": [
+				"maja",
+				"kodu",
+				"tuba",
+				"korter",
+				"köök",
+				"linn",
+				"tänav",
+				"pood",
+				"kool",
+				"kirik",
+				"jaam",
+				"buss",
+				"rong",
+				"auto",
+				"lennuk",
+				"turg",
+				"park",
+				"haigla",
+				"hotell",
+				"restoran",
+				"rand",
+				"sild",
+				"muuseum",
+				"mets",
+				"meri",
+				"järv",
+				"jõgi",
+				"mägi",
+				"maa",
+				"saar",
+				"küla",
+				"töö",
+				"ülikool",
+				"kino",
+				"pank",
+				"vangla",
+				"aed",
+				"klass",
+				"kapp",
+				"voodi",
+				"laud",
+				"tool",
+				"diivan",
+				"sein",
+				"katus",
+				"korrus",
+				"tee",
+				"pink",
+				"riiul",
+				"aken",
+				"uks",
+				"kott",
+				"karp",
+				"tasku",
+				"vesi",
+				"taevas",
+				"õu",
+				"kontor",
+				"baar",
+				"keldri",
+				"kelder",
+				"loomaaed",
+				"lennujaam",
+				"vannituba",
+				"magamistuba",
+				"külmkapp"
 			]
 		},
 		{
@@ -861,7 +997,7 @@
 			"kind": "grammar",
 			"title": "Didn't: ei + -nud",
 			"tagline": "ma ei teadnud",
-			"rule": "Past negation: ei + the -nud form, the same for every person: ma ei teadnud, nad ei tulnud. Some -nud forms are learned by heart: läinud, teinud, näinud, söönud. Ei olnud is often said polnud.",
+			"rule": "Past negation: ei + the -nud form, the same for every person: ma ei teadnud. -nud goes on the da form's stem (teada → teadnud, panna → pannud, võita → võitnud); learn läinud, teinud, näinud, söönud by heart. Ei olnud is often said polnud.",
 			"glyph": "ban",
 			"grammarTerm": "negation, past",
 			"nativeTerm": "minevikueitus",
@@ -908,7 +1044,7 @@
 			"kind": "grammar",
 			"title": "Do it!",
 			"tagline": "Tule! Tulge!",
-			"rule": "A command to sina is the I form without -n (ma tulen → tule!), except minema → mine. For teie: -ge after a vowel or l, n, r (lugege, tulge, minge), -ke after -ta, d or h (oodake, andke, tehke); jooma, sööma keep their vowel (jooge, sööge). Don't: ära tule, ärge tulge.",
+			"rule": "Sina: the I form without -n (tule!; minema → mine). Teie: the da form's stem with -ge after a vowel, l, n or r (lugege, tulge, minge), -ke after -ta or a stem in d, h, s or t (oodake, andke, tehke, ostke, võtke); jooge, sööge. Don't: ära tule, ärge tulge.",
 			"glyph": "megaphone",
 			"grammarTerm": "imperative",
 			"nativeTerm": "käskiv kõneviis",
@@ -1006,7 +1142,10 @@
 				]
 			],
 			"skipForms": [
-				"haiget"
+				"haiget",
+				"kõrgele",
+				"kaugele",
+				"kaugel"
 			]
 		},
 		{
@@ -1288,7 +1427,7 @@
 			"kind": "grammar",
 			"title": "Bigger, better",
 			"tagline": "suurem, parem, rohkem",
-			"rule": "The comparative adds -m to the genitive: suur → suurem, ilus → ilusam; a final a or u of a short word turns into e (vana → vanem, pikk → pikem); väike → väiksem, lühike → lühem, hea → parem, palju → rohkem. Than: kui or the elative (majast suurem).",
+			"rule": "The comparative adds -m to the genitive: suur → suurem; a final a or u of a short word turns e (vana → vanem, pikk → pikem); väike → väiksem, lühike → lühem, hea → parem; adverbs: kiiresti → kiiremini, vähe → vähem, palju → rohkem. Than: kui or the elative.",
 			"glyph": "trending-up",
 			"grammarTerm": "comparative",
 			"nativeTerm": "keskvõrre",
@@ -1301,7 +1440,7 @@
 			"kind": "grammar",
 			"title": "Have done, had done",
 			"tagline": "olen teinud, olin teinud",
-			"rule": "Perfect: olema in the present + the -nud form: ma olen söönud (I have eaten). With olema in the past it is the pluperfect: ma olin söönud (I had eaten).",
+			"rule": "Perfect: olema in the present + the -nud form, built on the da form's stem (tulla → tulnud): ma olen söönud (I have eaten). With olema in the past it is the pluperfect: ma olin söönud (I had eaten).",
 			"glyph": "history",
 			"grammarTerm": "perfect and pluperfect",
 			"nativeTerm": "täisminevik ja enneminevik",
@@ -1350,7 +1489,7 @@
 				"arst",
 				"haigla",
 				"valu",
-				"rohi",
+				"ravim",
 				"abi"
 			]
 		},
@@ -1451,7 +1590,7 @@
 			"kind": "grammar",
 			"title": "It is done: the impersonal",
 			"tagline": "räägitakse, räägiti",
-			"rule": "The impersonal names no doer. Build it from the -tud form: räägitud → räägitakse (present), räägiti (past); tehtud → tehakse, tehti. The -tud form itself is what has been done: uks on suletud, maja on ehitatud.",
+			"rule": "The impersonal names no doer. Past: the -tud form with -i (räägiti, tehti, tuldi). Present: -tud → -takse, -dud → -dakse (räägitakse, saadakse); some short verbs add -kse to the da form (tehakse, tullakse, süüakse). The -tud form itself is what has been done: uks on suletud.",
 			"glyph": "shield",
 			"grammarTerm": "impersonal voice",
 			"nativeTerm": "umbisikuline tegumood",
@@ -1488,7 +1627,7 @@
 			"kind": "grammar",
 			"title": "Busy doing, back from doing",
 			"tagline": "käimas, ujumast, söömata",
-			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas; nägin teda tulemas); -mast, from doing, kept from it or thanked for it (tulen ujumast, keelas mul suitsetamast, tänan kutsumast); -mata, without doing (ta läks söömata).",
+			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas; nägin teda tulemas); -mast, from doing, refusing or thanking for it (tulen ujumast, keeldus söömast, tänan kutsumast); -mata, without doing (ta läks söömata).",
 			"glyph": "activity",
 			"grammarTerm": "ma-infinitive cases",
 			"nativeTerm": "ma-tegevusnime käändevormid",
@@ -1667,11 +1806,13 @@
 			"glyph": "signpost",
 			"lemmas": [
 				"paremale",
+				"vasak",
 				"otse",
 				"edasi",
 				"tagasi",
-				"parem",
-				"vasak"
+				"üle",
+				"kaugel",
+				"lähedal"
 			]
 		},
 		{
@@ -1707,6 +1848,82 @@
 				"hirm",
 				"rõõm"
 			]
+		},
+		{
+			"id": "lx-words-travel",
+			"kind": "words",
+			"title": "Words: Travel",
+			"tagline": "ticket, stop, train",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "bus",
+			"lemmas": [
+				"pilet",
+				"peatus",
+				"buss",
+				"rong",
+				"jaam",
+				"lennuk",
+				"auto",
+				"tee",
+				"reis"
+			]
+		},
+		{
+			"id": "lx-words-day",
+			"kind": "words",
+			"title": "Words: My day",
+			"tagline": "wake, get up, wash",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "alarm-clock",
+			"lemmas": [
+				"ärkama",
+				"tõusma",
+				"pesema",
+				"sööma",
+				"magama",
+				"jooma",
+				"töötama",
+				"minema"
+			]
+		},
+		{
+			"id": "lx-words-relationships",
+			"kind": "words",
+			"title": "Words: People close to me",
+			"tagline": "love, marriage, friend",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "heart",
+			"lemmas": [
+				"armastus",
+				"abielu",
+				"sõber",
+				"naine",
+				"mees",
+				"pere",
+				"abikaasa",
+				"laps"
+			]
+		},
+		{
+			"id": "lx-words-society",
+			"kind": "words",
+			"title": "Words: Society and the news",
+			"tagline": "law, government, nature",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "newspaper",
+			"lemmas": [
+				"ühiskond",
+				"loodus",
+				"kultuur",
+				"poliitika",
+				"majandus",
+				"seadus",
+				"valitsus",
+				"keskkond",
+				"ajaleht",
+				"kohus",
+				"riik"
+			]
 		}
 	],
 	"tutors": [
@@ -1729,14 +1946,14 @@
 			"title": "Sina or teie",
 			"tagline": "informal and polite you",
 			"glyph": "hand",
-			"brief": "Explain when to say sina and when teie in Estonia: with friends, family and children, with strangers, in shops and at work, and how people switch; and the polite address with härra and proua (härra Tamm, proua Kask). Role-play short greetings in both and tell me if my choice fits."
+			"brief": "Explain when to say sina and when teie in Estonia: with friends, family and children, with strangers, in shops and at work, and how people switch; the polite address with härra and proua (härra Tamm, proua Kask); and the greetings and goodbyes of the day (tere hommikust, tere päevast, tere õhtust, head aega, head ööd, nägemist). Role-play short greetings in both and tell me if my choice fits."
 		},
 		{
 			"id": "tutor-word-order",
 			"title": "Where the verb goes",
 			"tagline": "the verb comes second",
 			"glyph": "move-horizontal",
-			"brief": "Explain that in an Estonian main clause the verb usually comes second, so a sentence that starts with a time or place word puts the verb before the subject (Täna lähen ma tööle); that clauses after et, sest and kuna keep that order; and that in a clause after kui, in an indirect question and in a negative that does not start with the subject the verb often goes to the end. Give me jumbled words to build into sentences and comment on what sounds natural."
+			"brief": "Explain that in an Estonian main clause the verb usually comes second, so a sentence that starts with a time or place word puts the verb before the subject (Täna lähen ma tööle); that clauses after et, sest and kuna keep that order; and that in a clause after kui, in a relative clause (mees, keda ma eile nägin), in an indirect question and in a negative that does not start with the subject the verb often goes to the end. Give me jumbled words to build into sentences and comment on what sounds natural."
 		},
 		{
 			"id": "tutor-questions",
@@ -1771,7 +1988,7 @@
 			"title": "Numbers, clock and prices",
 			"tagline": "kell on pool viis",
 			"glyph": "clock",
-			"brief": "Teach me the numbers, prices in euros and cents, clock times (pool kuus is half past five, 5:30; veerand, kolmveerand), ordinals and dates (kahekümnendal aprillil, 1994. aastal), and the days and months, written in lowercase. Quiz me with times, dates and prices in a shop and correct me."
+			"brief": "Teach me the numbers and how they take case endings, every part of a compound number included (kahele, kolmest, kahekümne neljal), prices in euros and cents, clock times (pool kuus is half past five, 5:30; veerand, kolmveerand), ordinals and dates (kahekümnendal aprillil, 1994. aastal), and the days and months, written in lowercase. Quiz me with times, dates and prices in a shop and correct me."
 		},
 		{
 			"id": "tutor-place-cases",
@@ -1926,6 +2143,13 @@
 			"tagline": "-v, -tav, -nud, -tud",
 			"glyph": "file-text",
 			"brief": "Explain the four Estonian participles used as describing words: -v (elav, living), -tav (loetav, being read), -nud (väsinud, tired; who has done) and -tud (suletud, closed; done), how -v and -tav agree like adjectives while -nud and -tud stay the same (väsinud mehele, but vanale mehele), and how one can replace a clause (raamat, mida loetakse → loetav raamat). Give me written sentences to rewrite in plain speech and back, and correct me."
+		},
+		{
+			"id": "tutor-verb-cases",
+			"title": "Which case a verb wants",
+			"tagline": "aru saama, meeldima, huvituma",
+			"glyph": "link",
+			"brief": "Teach me the verbs that want a particular case: the elative (aru saama: saan sellest aru; piisama, keelduma, rääkima, mõtlema), the allative (meeldima: mulle meeldib; kuuluma, helistama), the comitative (tegelema, harjuma), the translative (pidama: pean teda sõbraks) and the -st/-ga verbs of interest (huvituma millestki). Give me verbs to use in short sentences and correct the case."
 		}
 	],
 	"goals": [
@@ -2163,6 +2387,7 @@
 				"outer-cases",
 				"tutor-place-cases",
 				"tutor-postpositions",
+				"lx-words-travel",
 				"can-travel"
 			]
 		},
@@ -2189,6 +2414,7 @@
 				"adjective-agreement",
 				"lx-words-describing",
 				"lx-words-colors",
+				"lx-words-relationships",
 				"can-eat-out"
 			]
 		},
@@ -2214,6 +2440,7 @@
 				"lx-words-time",
 				"lx-words-months",
 				"tutor-particle-verbs",
+				"lx-words-day",
 				"can-tell-yesterday"
 			]
 		},
@@ -2236,8 +2463,8 @@
 			"title": "Many places, many people",
 			"tagline": "the plural cases",
 			"units": [
-				"plural-places",
 				"plural-genitive",
+				"plural-places",
 				"tutor-plural-stems",
 				"can-talk-places"
 			]
@@ -2322,6 +2549,7 @@
 			"units": [
 				"pronoun-cases",
 				"tutor-relative",
+				"tutor-verb-cases",
 				"lx-words-feelings",
 				"can-explain-why"
 			]
@@ -2334,6 +2562,7 @@
 			"units": [
 				"tutor-participles",
 				"tutor-news",
+				"lx-words-society",
 				"can-retell-news"
 			]
 		},

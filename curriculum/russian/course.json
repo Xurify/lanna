@@ -120,7 +120,7 @@
 			"kind": "grammar",
 			"title": "I, you, she: the present",
 			"tagline": "я читаю, ты говоришь",
-			"rule": "Present tense, я / ты / он: -у or -ю, -ешь or -ишь, -ет or -ит, stressed -ёшь, -ёт: я читаю, ты читаешь, он читает; я говорю, ты говоришь; он пьёт. Many verbs change the stem: писать → пишу, пишешь.",
+			"rule": "Present, я / ты / он: -у or -ю, -ешь or -ишь, -ет or -ит, stressed -ёшь, -ёт (читаю, читаешь, читает; говорю, говоришь; пьёт). Stems change: писать → пишу, -овать → -ую (планирую, танцую), -авать → -аю (даю, встаю).",
 			"glyph": "user",
 			"grammarTerm": "present tense, singular",
 			"nativeTerm": "настоящее время, единственное число",
@@ -559,10 +559,10 @@
 			"kind": "grammar",
 			"title": "The accusative after в and на",
 			"tagline": "в школу, в среду, на неделю",
-			"rule": "в and на take the accusative for where to (в школу, на работу), for a day (в среду), for how long (на неделю) and after some verbs (верить в, похож на, обменять на). For where (где?) they take the prepositional: в школе.",
+			"rule": "в and на take the accusative for where to (в школу, на работу), for a day (в среду), for how long (на неделю), and after some verbs and words (верить в, надеяться на, похож на). For where (где?) they take the prepositional: в школе.",
 			"glyph": "signpost",
-			"grammarTerm": "location and direction",
-			"nativeTerm": "где? и куда?",
+			"grammarTerm": "the accusative after в and на",
+			"nativeTerm": "винительный падеж с в и на",
 			"cat": "Nouns",
 			"tags": [
 				"accusative"
@@ -611,7 +611,9 @@
 				"направо",
 				"налево",
 				"прямо",
-				"назад"
+				"назад",
+				"пойти",
+				"поехать"
 			]
 		},
 		{
@@ -619,7 +621,7 @@
 			"kind": "grammar",
 			"title": "Yesterday: -л, -ла, -ли",
 			"tagline": "он читал, она читала",
-			"rule": "Past: drop -ть, add -л for a masculine subject, -ла feminine, -ло neuter, -ли plural, in every person: я читал (a man), я читала (a woman), мы читали. Some -нуть verbs drop -ну- (исчез, привык); most keep it (вернулся). Irregular: шёл, шла; мог; ел.",
+			"rule": "Past: drop -ть, add -л for a masculine subject, -ла feminine, -ло neuter, -ли plural, in every person: я читал (a man), я читала (a woman), мы читали; -ся stays last (вернулся, вернулась). Some -нуть verbs drop -ну- (исчез, привык). Irregular: шёл, шла; мог; ел.",
 			"glyph": "history",
 			"grammarTerm": "past tense",
 			"nativeTerm": "прошедшее время",
@@ -892,7 +894,7 @@
 			"kind": "grammar",
 			"title": "Describing words in every case",
 			"tagline": "нового, новой, новыми",
-			"rule": "The adjective takes its noun's case: -ого, -ому, -ым, -ом (нового, said -ово); feminine -ой, -ую; plural -ых, -ым, -ыми. Soft: синего, синей. After ж, ч, ш, щ unstressed о is е (хорошего); after г, к, х ы is и (русским). Animate masculine object: вижу нового врача.",
+			"rule": "The adjective takes its noun's case: -ого, -ому, -ым, -ом (нового, said -ово); feminine -ой, -ую; plural -ых, -ым, -ыми. Soft: синего, синей. After ж, ч, ш, щ unstressed о is е (хорошего); after г, к, х, ж, ч, ш, щ ы is и (русским, хорошим). Animate object: нового врача.",
 			"glyph": "paintbrush",
 			"grammarTerm": "adjective declension",
 			"nativeTerm": "склонение прилагательных",
@@ -941,7 +943,6 @@
 				"длинный",
 				"короткий",
 				"дорогой",
-				"дешёвый",
 				"интересный"
 			]
 		},
@@ -1229,7 +1230,7 @@
 			"kind": "grammar",
 			"title": "While doing, having done",
 			"tagline": "читая, прочитав",
-			"rule": "A verbal adverb says what else the subject does: -я or -а while doing (читая, слушая), -в or -вшись after doing it (прочитав, умывшись); prefixed идти, нести and вести take -я for that (войдя, придя). Быть → будучи. Он ушёл, не сказав ни слова.",
+			"rule": "A verbal adverb says what else the subject does: -я or -а while doing (читая, слыша, держа), -в or -вшись after doing it (прочитав, умывшись); prefixed идти, нести and вести take -я for that (войдя, придя). Быть → будучи. Он ушёл, не сказав ни слова.",
 			"glyph": "activity",
 			"grammarTerm": "verbal adverbs",
 			"nativeTerm": "деепричастия",
@@ -1411,6 +1412,79 @@
 				"радость",
 				"страх"
 			]
+		},
+		{
+			"id": "lx-words-travel",
+			"kind": "words",
+			"title": "Words: Travel",
+			"tagline": "ticket, stop, timetable",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "bus",
+			"lemmas": [
+				"билет",
+				"остановка",
+				"расписание",
+				"поезд",
+				"автобус",
+				"станция",
+				"аэропорт",
+				"вокзал"
+			]
+		},
+		{
+			"id": "lx-words-day",
+			"kind": "words",
+			"title": "Words: My day",
+			"tagline": "get up, wake up, breakfast",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "alarm-clock",
+			"lemmas": [
+				"вставать",
+				"просыпаться",
+				"завтракать",
+				"спать",
+				"работать",
+				"обед",
+				"ужин"
+			]
+		},
+		{
+			"id": "lx-words-relationships",
+			"kind": "words",
+			"title": "Words: People close to me",
+			"tagline": "love, wedding, friend",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "heart",
+			"lemmas": [
+				"любовь",
+				"свадьба",
+				"развод",
+				"друг",
+				"жена",
+				"муж",
+				"семья"
+			]
+		},
+		{
+			"id": "lx-words-society",
+			"kind": "words",
+			"title": "Words: Society and the news",
+			"tagline": "law, government, nature",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "newspaper",
+			"lemmas": [
+				"общество",
+				"природа",
+				"культура",
+				"политика",
+				"экономика",
+				"закон",
+				"правительство",
+				"власть",
+				"новости",
+				"газета",
+				"суд"
+			]
 		}
 	],
 	"tutors": [
@@ -1454,7 +1528,7 @@
 			"title": "He, she or it",
 			"tagline": "the gender of nouns",
 			"glyph": "user-round",
-			"brief": "Explain how to tell a noun's gender from its ending (a consonant or -й masculine, -а or -я feminine, -о or -е neuter, -ь either), the exceptions (папа, дедушка, мужчина are masculine; время and имя are neuter; кофе is masculine), and how он, она, оно and мой, моя, моё follow it. Give me nouns and ask for the gender and the right мой, then correct me."
+			"brief": "Explain how to tell a noun's gender from its ending (a consonant or -й masculine, -а or -я feminine, -о or -е neuter, -ь either), the exceptions (папа, дедушка, мужчина are masculine; время and имя are neuter; кофе is masculine), that some borrowed nouns never change (кафе, метро, такси, пальто, меню: в метро, not в метре), and how он, она, оно and мой, моя, моё follow it. Give me nouns and ask for the gender and the right мой, then correct me."
 		},
 		{
 			"id": "tutor-v-or-na",
@@ -1475,14 +1549,14 @@
 			"title": "Prices, age and the clock",
 			"tagline": "рубль, рубля, рублей",
 			"glyph": "clock",
-			"brief": "Teach me numbers with nouns (один рубль, два рубля, пять рублей; 11 to 14 like five; a compound number follows its last word: двадцать один год, двадцать два года), the collective двое, трое and оба, обе (нас двое, оба брата), age with the dative (мне двадцать лет), clock times (в пять часов, в половине шестого) and dates (первое мая; пятого мая). If I know another Slavic language, warn me where its rule after 2, 3, 4 differs. Quiz me."
+			"brief": "Teach me numbers with nouns (один рубль, два рубля, пять рублей; 11 to 14 like five; a compound number follows its last word: двадцать один год; два новых стола; пять человек, пять лет), the collective двое, трое, оба (нас двое), age (мне двадцать лет), clock times (в пять часов, в половине шестого) and dates (первое мая; пятого мая). If I know another Slavic language, warn me where its rule after 2, 3, 4 differs. Quiz me."
 		},
 		{
 			"id": "tutor-motion-basics",
 			"title": "Going on foot, going by car",
 			"tagline": "идти, ходить, ехать, ездить",
 			"glyph": "bus",
-			"brief": "Explain the verbs of going in pairs: one direction now (идти, ехать, нести, вести, везти, бежать, лететь, плыть) against there and back or regularly (ходить, ездить, носить, водить, возить, бегать, летать, плавать); ехать and ездить for any vehicle, and на with the prepositional for the vehicle (на автобусе, на метро), and по with the dative for along or around (по улице, по городу). Give me situations, ask which verb fits in the present and the past, and correct me."
+			"brief": "Explain the verbs of going in pairs: one direction now (идти, ехать, нести, вести, везти, бежать, лететь, плыть) against there and back or regularly (ходить, ездить, носить, водить, возить, бегать, летать, плавать); ехать and ездить for any vehicle, and на with the prepositional for the vehicle (на автобусе, на метро), and по with the dative for along or around (по улице, по городу). Give me situations, ask which verb fits, and correct me."
 		},
 		{
 			"id": "tutor-aspect",
@@ -1538,7 +1612,7 @@
 			"title": "Arrive, leave, cross",
 			"tagline": "прийти, уйти, перейти",
 			"glyph": "route",
-			"brief": "Explain prefixed verbs of motion: при- (arrive), у- (leave), в- (in), вы- (out), пере- (across), про- (past), под- (up to), от- (away from), до- (as far as), за- (drop in), об- (around). With идти and ехать the verb is perfective (прийти, уехать); its imperfective partner is built on -ходить and -езжать (приходить, уезжать). Name the prepositions each takes (прийти в, выйти из, подойти к). Describe a route, have me retell it, and correct me."
+			"brief": "Explain prefixed verbs of motion: по- (set off: пошёл, поеду, the usual way to say will go or has gone), при- (arrive), у- (leave), в- (in), вы- (out), пере- (across), про- (past), под- (up to), от- (away from), до- (as far as), за- (drop in), об- (around). With идти and ехать the verb is perfective (прийти, уехать); its imperfective partner is built on -ходить and -езжать (приходить, уезжать). Name the prepositions each takes (прийти в, выйти из, подойти к). Describe a route, have me retell it, and correct me."
 		},
 		{
 			"id": "tutor-doctor",
@@ -1636,7 +1710,7 @@
 			"title": "Questions by the voice",
 			"tagline": "ИК-1, ИК-2, ИК-3",
 			"glyph": "ear",
-			"brief": "Explain Russian intonation: a statement falls at the end (ИК-1), a question with a question word stresses that word (ИК-2: Где ты живёшь?), and a yes or no question with no question word rises sharply on the word in question (ИК-3: Ты живёшь в Москве?), so the same words can be a statement or a question. Read me pairs and have me say which is which, then have me say them."
+			"brief": "Explain Russian intonation: a statement falls at the end (ИК-1), a question with a question word stresses that word (ИК-2: Где ты живёшь?), a yes or no question with no question word rises sharply on the word in question (ИК-3: Ты живёшь в Москве?), and a short contrastive question with а rises at the end (ИК-4: А вы?). Read me pairs and have me say which is which, then have me say them."
 		},
 		{
 			"id": "tutor-pronouns",
@@ -1671,7 +1745,7 @@
 			"title": "My name is, I speak",
 			"tagline": "меня зовут, по-русски, сколько стоит",
 			"glyph": "message-circle-question",
-			"brief": "Teach me the first phrases: меня зовут … and как тебя (вас) зовут?, я говорю по-русски, по-английски (and the по- form of other languages), я из …, сколько стоит? and сколько это стоит?. Have me introduce myself and ask the price of things, and correct me."
+			"brief": "Teach me the first phrases: hello and goodbye (здравствуйте, привет, доброе утро, добрый день, добрый вечер, до свидания, пока, спокойной ночи), меня зовут … and как тебя (вас) зовут?, я говорю по-русски, по-английски, я из …, and сколько стоит? Have me introduce myself and ask the price of things, and correct me."
 		},
 		{
 			"id": "tutor-put-and-stand",
@@ -1679,6 +1753,13 @@
 			"tagline": "стоять, лежать, поставить, положить",
 			"glyph": "box",
 			"brief": "Explain the Russian verbs of position and placing: стоять and ставить, поставить (upright: the bottle stands), лежать and класть, положить (flat: the book lies), висеть and вешать, повесить (hanging), and сидеть with садиться, сесть (sitting down) and сажать, посадить (seating someone, planting a tree); where things are takes the prepositional (на столе), where they go the accusative (на стол). Describe a room, have me say where things are and where to put them, and correct me."
+		},
+		{
+			"id": "tutor-verb-cases",
+			"title": "Which case a verb wants",
+			"tagline": "заниматься чем, бояться чего",
+			"glyph": "link",
+			"brief": "Teach me the common verbs that want a particular case: the instrumental (заниматься, интересоваться, пользоваться, гордиться), the genitive (бояться, ждать with something vague, желать), the dative (звонить, помогать, мешать, верить), and those with a preposition (думать о, ждать + accusative for a person, надеяться на). Give me verbs to use in short sentences and correct the case."
 		}
 	],
 	"goals": [
@@ -1907,6 +1988,7 @@
 				"where-or-where-to",
 				"lx-words-motion",
 				"tutor-motion-basics",
+				"lx-words-travel",
 				"can-travel"
 			]
 		},
@@ -1920,6 +2002,7 @@
 				"lx-words-time",
 				"lx-words-months",
 				"tutor-time",
+				"lx-words-day",
 				"can-tell-yesterday"
 			]
 		},
@@ -1955,6 +2038,7 @@
 			"units": [
 				"instrumental-singular",
 				"lx-words-work",
+				"lx-words-relationships",
 				"can-eat-out"
 			]
 		},
@@ -1981,6 +2065,7 @@
 				"adjective-cases",
 				"possessives",
 				"demonstratives",
+				"tutor-svoj",
 				"lx-words-describing",
 				"lx-words-colors",
 				"lx-words-clothes",
@@ -2035,6 +2120,7 @@
 				"tutor-polite-requests",
 				"tutor-phone",
 				"tutor-word-order",
+				"tutor-verb-cases",
 				"can-request-politely"
 			]
 		},
@@ -2044,7 +2130,6 @@
 			"title": "Who, which, so that",
 			"tagline": "свой, который, что and чтобы",
 			"units": [
-				"tutor-svoj",
 				"tutor-kotoryj",
 				"tutor-chto-chtoby",
 				"lx-words-communication",
@@ -2074,6 +2159,7 @@
 			"units": [
 				"tutor-reported-speech",
 				"tutor-news",
+				"lx-words-society",
 				"can-retell-news"
 			]
 		},
