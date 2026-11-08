@@ -225,6 +225,7 @@ describe("a drawing asked for after the reply", () => {
 				},
 			},
 		});
+		assert.ok(tools.draw);
 		await assert.rejects(
 			tools.draw.execute("d1", { brief: "test" }, controller.signal),
 			(err: any) => err?.name === "AbortError" || err?.message === "aborted",
@@ -258,7 +259,7 @@ describe("a drawing asked for after the reply", () => {
 		};
 		const engine: PiEngine = {
 			model: { provider: "anthropic", id: "claude-haiku-5-5" } as any,
-			stream: faux.stream.bind(faux) as any,
+			streamFn: faux.stream.bind(faux) as any,
 		};
 		const result = await drawForReply({
 			engine,
