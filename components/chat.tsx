@@ -21,8 +21,8 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
-import { questionOpen, repeatsEarlierText } from "@/src/core";
-import { InkBlot } from "@/components/ink-blot";
+import { CHAT_RECORD_TOOLS, questionOpen, repeatsEarlierText } from "@/src/core";
+import { chatMdComponents } from "@/components/chat-link";
 import { ChatBoard, useDrill } from "@/components/chat-board";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
@@ -1434,19 +1434,18 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className={kind === "chat" ? "mt-6 font-ui text-xl font-medium leading-snug tracking-tight text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
+										className={kind === "chat" ? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
 												<div className="sr-only">You</div>
 												<div className={kind === "chat" ? "whitespace-pre-wrap" : "lh-prose whitespace-pre-wrap text-foreground"}>
-													<span className={kind === "chat" ? "lh-asked" : undefined}>{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}</span>
+													{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice relative")}>
-									{kind === "chat" && <InkBlot className="absolute top-2.5 -left-6 size-3 text-foreground max-md:hidden" />}
+									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice")}>
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -1469,7 +1468,8 @@ export function Chat({
 												if (
 													part.state === "output-error" &&
 													part.type.startsWith("tool-") &&
-													part.errorText !== "Operation aborted"
+													part.errorText !== "Operation aborted" &&
+													!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
 												) {
 													return (
 														<SystemLine key={`retry-${pi}`} testId="tool-retry">
@@ -1482,7 +1482,7 @@ export function Chat({
 														if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 														return (
 															<div key={part.id || pi} className="lh-source-passage">
-																<MessageResponse>{part.text}</MessageResponse>
+																<MessageResponse {...(kind === "chat" ? { components: chatMdComponents } : {})}>{part.text}</MessageResponse>
 															</div>
 														);
 													}

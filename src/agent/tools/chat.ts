@@ -21,7 +21,7 @@ export interface ChatToolContext {
 }
 
 const poseInput = Type.Object({
-	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, written before the learner sees the question. Check any form you are not sure of first." }),
+	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, committed before the learner answers. Check any form you are not sure of before you write the question." }),
 	accept: Type.Optional(Type.Array(Type.String(), { description: "Other answers that are also fully correct." })),
 	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words (\"feminine this\", \"locative after v\")." }),
 });
@@ -40,7 +40,7 @@ const poseTool: AgentTool<typeof poseInput> = {
 	name: "pose",
 	label: "pose",
 	description:
-		"Commit the answer to the question you are about to ask. Call it before you write any text in the reply; the learner never sees this call.",
+		"Commit the answer to the question your reply ends on. Call it after the text, as the last call of the turn (after `grade` when there is one); the turn ends with it. The learner never sees this call.",
 	parameters: poseInput,
 	executionMode: "sequential",
 	execute: serverExecute("pose", poseInput, async () => "Committed."),
@@ -51,7 +51,7 @@ function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<typeof gradeInpu
 		name: "grade",
 		label: "grade",
 		description:
-			"Record how the learner answered the question you posed. Call it before you write any text in the reply; one call per answer, a second try included. The learner never sees this call.",
+			"Record how the learner answered the question you posed. Call it after the text of your verdict, before `pose`; one call per answer, a second try included. The learner never sees this call.",
 		parameters: gradeInput,
 		executionMode: "sequential",
 		execute: serverExecute("grade", gradeInput, async (input) => {

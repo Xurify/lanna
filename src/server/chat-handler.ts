@@ -52,6 +52,7 @@ import type {CallUsage} from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
 import { appendChatAnswer } from "../store/chat-answers.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
+import { appContentNow } from "./app-content.ts";
 
 /** LangHarness: the spaced-review seam every agent's language tools use. */
 const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
@@ -59,6 +60,15 @@ const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: 
 function chatCheckerNote(text: string): string | null {
 	if (activeProfile() !== "slovak" || text.startsWith("[")) return null;
 	return checkerNote(checkSlovak(text, slovakLookup() ?? undefined));
+}
+
+function chatAppContent(chatId: string): string | undefined {
+	try {
+		return appContentNow();
+	} catch (err) {
+		console.error(`[chat ${chatId}] the app's content map could not be read:`, err);
+		return undefined;
+	}
 }
 
 function compactionKind(record: ChatRecord): "teach" | "practice" | "probe" {
@@ -426,7 +436,7 @@ export async function handleChatInput(
 							searchAvailable,
 						},
 					},
-					{ ...agentOpts, noteLearnerText: chatCheckerNote },
+					{ ...agentOpts, noteLearnerText: chatCheckerNote, appContent: chatAppContent(chatId) },
 				)
 			: record.kind === "practice"
 			? createPracticeAgent(

@@ -15,6 +15,7 @@ import { quizInputProblems } from "../core/question-core.ts";
 import { quizInputObject } from "../core/question-schemas.ts";
 import { QUESTION_TOOLS, type EnabledTools } from "../core/pending.ts";
 import { toLlmMessages, nativeInputCause, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
+import { closesChatReply } from "../core/chat-answers.ts";
 import type { ChatGPTRequestCycle } from "./chatgpt-request-cycle.ts";
 import { usageWasAdmitted } from "./subscription-request-cycle.ts";
 import { activeProfile } from "../../config.ts";
@@ -132,6 +133,8 @@ export interface AgentBuildOptions {
 	chatId?: string;
 	/** A model-only note appended to the learner's typed text (the chat's checker evidence). */
 	noteLearnerText?: (text: string) => string | null;
+	/** What the app has, with links: the chat's map of lessons, scenes and pages. */
+	appContent?: string;
 }
 
 /**
@@ -158,9 +161,10 @@ export interface AgentBuildOptions {
  */
 function makeQuestionStopper(kind: AgentKind) {
 	return (context: {
-		message: { content: Array<{ type: string; id?: string; name?: string }> };
+		message: { content: Array<{ type: string; id?: string; name?: string; text?: string }> };
 		toolResults: Array<{ toolCallId: string; isError?: boolean }>;
 	}): boolean => {
+		if (kind === "chat" && closesChatReply(context.message.content)) return true;
 		const called = new Set(
 			context.message.content
 				.filter((c) => c.type === "toolCall" && c.name !== undefined && (
@@ -193,7 +197,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	const composed = opts.promptSwitches
 		? composeInstructions(kind, opts.promptSwitches)
 		: getComposedInstructions(kind);
-	const systemPrompt = profile ? `${composed}\n\n---\n\n${profile}` : composed;
+	const systemPrompt = [composed, opts.appContent, profile].filter(Boolean).join("\n\n---\n\n");
 	// Debug recorder (owner, 2026-10-04): raw provider events when
 	// LH_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
 	// the normal no-observer path (tests, env-off).

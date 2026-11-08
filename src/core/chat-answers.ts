@@ -18,6 +18,21 @@ export interface ChatScore {
 
 type ToolPart = { type: string; input?: unknown };
 
+/** The calls a chat reply makes after its text: they record the question, the grade and the words to keep, and need no answer from the model. */
+export const CHAT_RECORD_TOOLS: ReadonlySet<string> = new Set(["pose", "grade", "add_to_review"]);
+
+type ReplyBlock = { type: string; name?: string; text?: string };
+
+/** A chat reply that is written and ends on its record calls: its turn is over, and no second model call is owed. A record call that failed is not retried: a retry would make the model write the reply a second time, and one lost record costs less than a reply shown twice. */
+export function closesChatReply(content: readonly ReplyBlock[]): boolean {
+	const calls = content.filter((b) => b.type === "toolCall");
+	return (
+		calls.length > 0 &&
+		calls.every((b) => b.name !== undefined && CHAT_RECORD_TOOLS.has(b.name)) &&
+		content.some((b) => b.type === "text" && (b.text ?? "").trim().length > 0)
+	);
+}
+
 export function chatScore(messages: ReadonlyArray<{ role: string; parts: readonly ToolPart[] }>): ChatScore {
 	let open = false;
 	let asked = 0;

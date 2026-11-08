@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 import { Composer } from "@/components/composer";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
@@ -63,6 +64,22 @@ export async function startDraftSession(
 	// the SERVER stamps the newborn from the strong slot.
 	return `/chat/${id}?prompt=${encodeURIComponent(t)}`;
 }
+
+/** Create a chat for the first message and return its id and title, without leaving the page. */
+export async function createChatSession(text: string, fetchLike: typeof fetch): Promise<{ id: string; title: string } | null> {
+	const t = text.trim();
+	if (!t) return null;
+	const res = await fetchLike("/api/chats", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ title: t, kind: "chat" }),
+	});
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	return (await res.json()) as { id: string; title: string };
+}
+
+const loadChat = () => import("@/components/chat").then((m) => m.Chat);
+const Chat = dynamic(loadChat, { ssr: false });
 
 /** The pure shell (no router) — the render-test seam: the draft view's
  *  visible surface, assembled from the same pieces a fresh chat shows. */
@@ -228,7 +245,19 @@ export function NewSession({
 	recent?: ReadonlyArray<{ id: string; title: string; updatedAt: string }>;
 }) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const [text, setText] = useState("");
+	/* A chat started here opens in place: the page swaps to it and the address
+	 * becomes the chat's, with no round trip to the server for a new page. */
+	const [started, setStarted] = useState<{ id: string; title: string; prompt: string } | null>(null);
+	const [shownPath, setShownPath] = useState(pathname);
+	if (pathname !== shownPath) {
+		setShownPath(pathname);
+		if (pathname === "/chat/new") setStarted(null);
+	}
+	useEffect(() => {
+		if (mode === "chat") void loadChat();
+	}, [mode]);
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
 	 * finish-first send calls THIS send after the dictation flush — which
 	 * landed via setState and may not have re-rendered yet. The send reads
@@ -272,6 +301,18 @@ export function NewSession({
 			return;
 		}
 		setBusy(true);
+		if (mode === "chat") {
+			void createChatSession(draft, fetch)
+				.then((chat) => {
+					setBusy(false);
+					if (!chat) return;
+					applyText("");
+					setStarted({ ...chat, prompt: draft });
+					window.history.replaceState(null, "", `/chat/${chat.id}`);
+				})
+				.catch(() => setBusy(false));
+			return;
+		}
 		void startDraftSession(draft, fetch, mode === "teach" ? undefined : mode)
 			.then((target) => {
 				if (target) router.push(target);
@@ -279,6 +320,10 @@ export function NewSession({
 			})
 			.catch(() => setBusy(false));
 	}, [busy, router, configured, zeroKeys, strongKeyless, mode]);
+
+	if (started) {
+		return <Chat key={started.id} chatId={started.id} title={started.title} kind="chat" initialMessages={[]} initialPrompt={started.prompt} initialConfigured />;
+	}
 
 	return (
 		<>
