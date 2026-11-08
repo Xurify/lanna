@@ -267,6 +267,10 @@
 					"nominative",
 					"plural"
 				]
+			],
+			"notAfter": [
+				"я",
+				"ты"
 			]
 		},
 		{
@@ -508,7 +512,7 @@
 			"kind": "grammar",
 			"title": "Of many: the genitive plural",
 			"tagline": "столов, книг, дней",
-			"rule": "Genitive plural: masculine -ов or -ев (столов, музеев), and -ей after ж, ш, ч, щ (врачей); -ей for words in -ь (дней, ночей); -ия and -ие become -ий (серий, зданий); words in -а and -о often lose the ending (книг, задач, мест), some with a vowel added (окон).",
+			"rule": "Genitive plural: masculine -ов or -ев (столов), -ей after ж, ш, ч, щ and for -ь words (врачей, дней); -ия, -ие become -ий (серий); -а words lose the ending (книг); -я words lose it (недель), -е takes -ей (морей), -мя → -мён (времён).",
 			"glyph": "layers",
 			"grammarTerm": "genitive plural",
 			"nativeTerm": "родительный падеж, множественное число",
@@ -523,7 +527,7 @@
 			"kind": "grammar",
 			"title": "Two books, five books",
 			"tagline": "два брата, пять братьев",
-			"rule": "After 2, 3, 4 (два, or две before a feminine word) the noun is genitive singular: два брата, две книги; after 5 and up it is genitive plural: пять братьев. Много, мало, сколько: genitive plural for things counted (много книг), singular for an amount (много воды).",
+			"rule": "After 2, 3, 4 (два; две before a feminine word) the noun is genitive singular: два брата, две книги. After 5 to 20 and numbers ending in 5 to 9 or 0, genitive plural: пять братьев, двадцать пять книг. Оба, обе: like два.",
 			"glyph": "hash",
 			"grammarTerm": "nouns after numbers",
 			"nativeTerm": "сочетание числительных с существительными",
@@ -651,6 +655,10 @@
 					"past",
 					"plural"
 				]
+			],
+			"notAfter": [
+				"я",
+				"ты"
 			]
 		},
 		{
@@ -768,7 +776,10 @@
 				"singular"
 			],
 			"notAfter": [
-				"по"
+				"по",
+				"в",
+				"во",
+				"на"
 			]
 		},
 		{
@@ -918,6 +929,10 @@
 				[
 					"prepositional"
 				]
+			],
+			"notAfter": [
+				"быть",
+				"стать"
 			]
 		},
 		{
@@ -980,6 +995,10 @@
 			],
 			"skipForms": [
 				"прям"
+			],
+			"notAfter": [
+				"я",
+				"ты"
 			]
 		},
 		{
@@ -987,7 +1006,7 @@
 			"kind": "grammar",
 			"title": "Do it!",
 			"tagline": "читай, говори, читайте",
-			"rule": "From the present stem: after a vowel -й (читай), after a consonant -и when the я form is stressed on the end or two consonants meet (скажу → скажи), else -ь (верь). -ся becomes -сь after a vowel (садись). Add -те for вы. Irregular: дай, ешь, пей, будь.",
+			"rule": "From the present stem: after a vowel -й (читай); after a consonant -и when the я form is stressed on the end or two consonants meet (скажу → скажи), else -ь (верь). -авать keeps -ва-: давай, вставай; ехать → поезжай. -ся → -сь after a vowel (садись). Add -те for вы.",
 			"glyph": "megaphone",
 			"grammarTerm": "imperative",
 			"nativeTerm": "повелительное наклонение",
@@ -1011,7 +1030,9 @@
 			],
 			"skipForms": [
 				"буди",
-				"побери"
+				"побери",
+				"дай",
+				"встай"
 			]
 		},
 		{
@@ -1633,7 +1654,7 @@
 			"title": "Свой: one's own",
 			"tagline": "свою жену or его жену",
 			"glyph": "key",
-			"brief": "Explain свой: it replaces мой, твой, его, её, их when the owner is the subject of the same clause (Он любит свою жену; Он любит его жену means someone else's wife), and it takes the case of its noun. Give me sentences to complete with свой or его, её, их and explain each."
+			"brief": "Explain свой: it replaces the possessive when the owner is the subject of the same clause (Он любит свою жену; Он любит его жену means someone else's wife). It is required for его, её, их in that case; for мой, твой, наш, ваш it is preferred but optional (я люблю свою/мою жену both occur). Give me sentences to complete with свой or его, её, их and explain each."
 		},
 		{
 			"id": "tutor-kotoryj",

@@ -662,7 +662,7 @@
 			"kind": "grammar",
 			"title": "Kus, kuhu, kust? -s, -sse, -st",
 			"tagline": "koolis, kooli, koolist",
-			"rule": "For a place, pick the ending by the question: kus? (where) -s, kuhu? (where to) -sse or the short form, kust? (where from) -st: ma olen koolis, lähen kooli, tulen koolist.",
+			"rule": "For a place, pick the ending by the question: kus? (where) -s, kuhu? (where to) -sse or the short form, kust? (where from) -st: ma olen koolis, lähen kooli, tulen koolist. Some words take -st although they mean where: linnast väljas, eemal.",
 			"glyph": "signpost",
 			"grammarTerm": "inner local cases",
 			"nativeTerm": "sisekohakäänded",
@@ -1145,7 +1145,8 @@
 				"haiget",
 				"kõrgele",
 				"kaugele",
-				"kaugel"
+				"kaugel",
+				"võltsis"
 			]
 		},
 		{
@@ -1412,7 +1413,7 @@
 			"kind": "grammar",
 			"title": "Would",
 			"tagline": "tahaksin, oleks",
-			"rule": "Would: -ks after the present stem, with the person endings: ma tahaksin, sa tahaksid, ta tahaks, me tahaksime, te tahaksite, nad tahaksid. Not: ei + -ks with no ending (ma ei tahaks). Speech often drops the endings: ma tahaks.",
+			"rule": "Would: -ks after the present stem, with the person endings: ma tahaksin, sa tahaksid, ta tahaks, me tahaksime, te tahaksite, nad tahaksid. Not: ei + -ks with no ending (ma ei tahaks).",
 			"glyph": "wand",
 			"grammarTerm": "conditional mood",
 			"nativeTerm": "tingiv kõneviis",
@@ -1988,7 +1989,7 @@
 			"title": "Numbers, clock and prices",
 			"tagline": "kell on pool viis",
 			"glyph": "clock",
-			"brief": "Teach me the numbers and how they take case endings, every part of a compound number included (kahele, kolmest, kahekümne neljal), prices in euros and cents, clock times (pool kuus is half past five, 5:30; veerand, kolmveerand), ordinals and dates (kahekümnendal aprillil, 1994. aastal), and the days and months, written in lowercase. Quiz me with times, dates and prices in a shop and correct me."
+			"brief": "Teach me the numbers and how they take case endings. The parts of a compound number before the last one stay in the genitive, and the last part takes the case: kahekümne neljal (on twenty-four), kahekümne neljale, kahekümne neljast. Also teach prices in euros and cents, clock times (pool kuus is half past five, 5:30; veerand, kolmveerand), ordinals and dates (kahekümnendal aprillil, 1994. aastal), and the days and months, written in lowercase. Quiz me with times, dates and prices in a shop and correct me."
 		},
 		{
 			"id": "tutor-place-cases",
