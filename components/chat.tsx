@@ -21,8 +21,9 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
+import { questionOpen, repeatsEarlierText } from "@/src/core";
 import { InkBlot } from "@/components/ink-blot";
-import { ChatBoard } from "@/components/chat-board";
+import { ChatBoard, useDrill } from "@/components/chat-board";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -179,7 +180,7 @@ function isSubagentSteer(m: LhViewMessage): boolean {
 function lastReplyText(messages: readonly LhViewMessage[]): string {
 	const last = messages.at(-1);
 	if (!last || last.role !== "assistant") return "";
-	return last.parts.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("\n\n");
+	return last.parts.flatMap((part, i) => (part.type === "text" && !repeatsEarlierText(last.parts, i) ? [part.text] : [])).join("\n\n");
 }
 
 /**
@@ -1133,6 +1134,7 @@ export function Chat({
 		}
 		void dictation.finish().then(doSteerOrSend);
 	};
+	const drillState = useDrill(messages, titleText);
 	const sendQuickReply = (reply: string) => {
 		if (busy || pending || compacting) return;
 		void send({ type: "text", text: reply });
@@ -1477,6 +1479,7 @@ export function Chat({
 												}
 												switch (part.type) {
 													case "text": {
+														if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 														return (
 															<div key={part.id || pi} className="lh-source-passage">
 																<MessageResponse>{part.text}</MessageResponse>
@@ -1569,7 +1572,7 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
-							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} onPick={sendQuickReply} />}
+							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Summarizing the chat so far" />
@@ -1694,7 +1697,7 @@ export function Chat({
 					}}
 				/>
 				</Conversation>
-				{kind === "chat" && <ChatBoard messages={messages} />}
+				{kind === "chat" && <ChatBoard messages={messages} title={titleText} />}
 
 				{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,

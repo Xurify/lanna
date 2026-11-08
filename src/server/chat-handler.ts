@@ -50,10 +50,16 @@ import {
 import { steerDelivered } from "../core/contracts.ts";
 import type {CallUsage} from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
+import { appendChatAnswer } from "../store/chat-answers.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
 
 /** LangHarness: the spaced-review seam every agent's language tools use. */
 const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
+
+function chatCheckerNote(text: string): string | null {
+	if (activeProfile() !== "slovak" || text.startsWith("[")) return null;
+	return checkerNote(checkSlovak(text, slovakLookup() ?? undefined));
+}
 
 function compactionKind(record: ChatRecord): "teach" | "practice" | "probe" {
 	if (record.kind === "practice") return "practice";
@@ -409,7 +415,19 @@ export async function handleChatInput(
 	const constructed: TeachingAgent = buildAgent
 		? buildAgent({ ...agentOpts, teaching })
 		: record.kind === "chat"
-			? createChatAgent({ review: reviewSeam }, agentOpts)
+			? createChatAgent(
+					{
+						review: reviewSeam,
+						answers: { record: (answer) => appendChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
+						jobs: {
+							chatId,
+							jobStore: stores.jobStore,
+							spawn: (job, input) => void jobRunner.runJob(job.id, input),
+							searchAvailable,
+						},
+					},
+					{ ...agentOpts, noteLearnerText: chatCheckerNote },
+				)
 			: record.kind === "practice"
 			? createPracticeAgent(
 					{

@@ -63,6 +63,20 @@ The order of items is variation theory (Marton 2015): a learner notices a featur
 - **A second font for the tutor's voice.** riddled.ai sets the tutor in a serif (Newsreader). LangHarness keeps one font family (E33).
 - **Personas, per-note instructions, margin notes, the "About you" lines.** Not built. The "This learner" block already gives the tutor what the app measured; a short learner-editable memory is a possible next step.
 
+## Checked against real models (2026-11-08)
+
+`scripts/eval-chat.ts` plays three scripted conversations (demonstratives, v + locative against do + genitive, a learner's own sentence with *s sestra*) against the chat agent. Four runs: Haiku 5.5 at low (three times, between prompt fixes), Haiku 5.5 at medium, Sonnet 5.5 at low.
+
+| | Haiku 5.5, low | Haiku 5.5, medium | Sonnet 5.5, low |
+|---|---|---|---|
+| First text, follow-up turns | about 1.4 to 5 s | about 1.4 to 5 s | about 0.6 to 7 s |
+| First text, first reply | 7 to 10.5 s | 12.5 s | 13 s |
+| Prose words per reply | 17 to 138 | 29 to 148 | 11 to 110 |
+| Drawings passing the allowlist | all | all | all |
+| Slovak claims read wrong | none | none | one ("do … answers from what?") |
+
+What the runs found and the prompt now forbids is listed under E76. The Slovak was read by the author of this change against the slovak-language skill, not by a native speaker.
+
 ## Open
 
 - The chat has not been measured against the old Learn chat with real learners, and the owner has not used it yet.

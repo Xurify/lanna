@@ -37,6 +37,7 @@ Write the drawing yourself, in the same reply, as one fenced block after the pro
 ## One idea, and the words are checked
 
 - The drawing says one thing you could put in five words. Two ideas are two replies.
+- A drawing never shows the answer to the question at the end of its reply. Draw the pattern with other words, or leave that cell empty.
 - Every target-language form in the drawing also appears in the prose of the same reply (with its `say:` span), so it is checked and can be heard. Never put a form in a drawing that the prose does not have.
 - A grid of forms states which forms they are (the case, the number) in a small label.
 

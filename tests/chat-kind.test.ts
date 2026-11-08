@@ -26,13 +26,15 @@ after(() => {
 	fs.rmSync(scratch, { recursive: true, force: true });
 });
 
-const { createChatAgent, composeInstructions } = await import("../src/agent/teacher-agent.ts");
+const { createChatAgent, composeInstructions, withLearnerNotes } = await import("../src/agent/teacher-agent.ts");
+const { chatTools } = await import("../src/agent/tools/chat.ts");
+const { appendChatAnswer, readChatAnswers } = await import("../src/store/chat-answers.ts");
 const { POST } = await import("../app/api/chats/route.ts");
 const { writeSettings } = await import("../src/store/settings.ts");
 const { chatStore } = await import("../src/store/chats.ts");
-const { CHAT_THINKING_LEVEL, quickReplies, endsWithQuestion, REPLIES_TO_A_QUESTION, REPLIES_AFTER_AN_ANSWER } = await import("../src/core/index.ts");
+const { CHAT_THINKING_LEVEL, chatScore, quickReplies, endsWithQuestion, REPLIES_TO_A_QUESTION, REPLIES_AFTER_AN_ANSWER } = await import("../src/core/index.ts");
 
-const CHECKING_TOOLS = new Set(["lookup_word", "check_slovak", "slovak_reference", "add_to_review", "review_status"]);
+const CHAT_TOOLS = new Set(["pose", "grade", "read", "ls", "find", "grep", "research", "pdf", "lookup_word", "check_slovak", "slovak_reference", "add_to_review", "review_status"]);
 
 function claudeEngine(): PiEngine {
 	const faux = createFauxCore({ provider: "anthropic", models: [{ id: "claude-haiku-5-5" }] });
@@ -62,13 +64,61 @@ describe("the chat agent's prompt", () => {
 });
 
 describe("the chat agent's tools", () => {
-	it("holds only the silent checks, and no learner-output tool even on a Claude model", () => {
-		const agent = createChatAgent({ review: { enqueue: () => [], digest: () => "" } }, { engine: claudeEngine() });
+	it("holds the commit and grade pair, the checks, the learner's files and the jobs, and no learner-output tool even on a Claude model", () => {
+		const agent = createChatAgent(
+			{ review: { enqueue: () => [], digest: () => "" }, jobs: { chatId: "c", jobStore: {} as never, spawn: () => {}, searchAvailable: () => true } },
+			{ engine: claudeEngine() },
+		);
 		const names = agent.state.tools.map((tool) => tool.name);
-		assert.ok(names.length > 0);
-		for (const name of names) assert.ok(CHECKING_TOOLS.has(name), name);
-		assert.ok(names.includes("add_to_review"));
+		for (const name of names) assert.ok(CHAT_TOOLS.has(name), name);
+		for (const name of ["pose", "grade", "read", "pdf", "research", "add_to_review"]) assert.ok(names.includes(name), name);
+		assert.ok(!names.includes("visual"), "drawings are written in the reply");
 		assert.equal(agent.state.systemPrompt, composeInstructions("chat"));
+	});
+
+	it("grade records what the learner answered through the seam", async () => {
+		const recorded: unknown[] = [];
+		const tools = chatTools({ answers: { record: (a) => recorded.push(a) } });
+		const result = await tools.grade!.execute("t1", { verdict: "slip", given: "tato zena", expected: "táto žena", focus: "feminine this" }, undefined as never, undefined as never);
+		assert.match(JSON.stringify(result), /Recorded/);
+		assert.deepEqual(recorded, [{ verdict: "slip", given: "tato zena", expected: "táto žena", focus: "feminine this", hinted: false }]);
+	});
+
+	it("keeps every answer in the data folder, one line each", () => {
+		appendChatAnswer({ at: "2026-11-08T10:00:00Z", chatId: "c1", verdict: "wrong", given: "tá kniha", expected: "táto kniha", focus: "feminine this", hinted: false });
+		appendChatAnswer({ at: "2026-11-08T10:01:00Z", chatId: "c1", verdict: "right", given: "táto kniha", expected: "táto kniha", focus: "feminine this", hinted: false });
+		assert.deepEqual(readChatAnswers().map((a) => a.verdict), ["wrong", "right"]);
+	});
+});
+
+describe("the model-only checker note", () => {
+	it("is appended to the learner's text in the model's copy only", () => {
+		const note = (text: string) => (text.includes("s sestra") ? "[Checker: s + sestra takes the instrumental: so sestrou]" : null);
+		const messages = [
+			{ role: "user" as const, content: "Idem s sestra", timestamp: 1 },
+			{ role: "user" as const, content: [{ type: "text" as const, text: "Hint" }], timestamp: 2 },
+		];
+		const out = withLearnerNotes(messages as never, note);
+		assert.equal((out[0] as { content: string }).content, "Idem s sestra\n\n[Checker: s + sestra takes the instrumental: so sestrou]");
+		assert.deepEqual(out[1], messages[1]);
+		assert.equal(messages[0]!.content, "Idem s sestra", "the record is untouched");
+	});
+});
+
+describe("the chat's score", () => {
+	const turn = (parts: Array<{ type: string; input?: unknown }>) => ({ role: "assistant", parts });
+	it("counts the first grade after each pose, and names the missed focus once", () => {
+		const score = chatScore([
+			turn([{ type: "tool-pose", input: { focus: "feminine this" } }, { type: "text" }]),
+			{ role: "user", parts: [] },
+			turn([{ type: "tool-grade", input: { verdict: "wrong", focus: "feminine this" } }]),
+			turn([{ type: "tool-grade", input: { verdict: "right", focus: "feminine this" } }]),
+			turn([{ type: "tool-pose", input: { focus: "neuter this" } }]),
+			turn([{ type: "tool-grade", input: { verdict: "slip", focus: "neuter this" } }]),
+			turn([{ type: "tool-pose", input: { focus: "masculine this" } }]),
+			turn([{ type: "tool-grade", input: { verdict: "right", focus: "masculine this", hinted: true } }]),
+		]);
+		assert.deepEqual(score, { asked: 3, firstTryRight: 1, misses: ["feminine this", "masculine this"] });
 	});
 });
 
@@ -106,5 +156,23 @@ describe("the replies under the tutor's message", () => {
 		assert.equal(endsWithQuestion("Which one is near?\n\n```svg\n<svg viewBox=\"0 0 1 1\"><text>far?</text></svg>\n```"), true);
 		assert.equal(endsWithQuestion("Is it near? Yes.\n\nThe ending is -a."), false);
 		assert.equal(endsWithQuestion("How do you say “that book”?”"), true);
+	});
+});
+
+describe("a reply written twice around a tool call", () => {
+	it("shows the second identical text block once", async () => {
+		const { repeatsEarlierText } = await import("../src/core/index.ts");
+		const parts = [{ type: "text", text: "Not yet. Try again." }, { type: "tool-check_slovak" }, { type: "text", text: "Not yet. Try again.\n" }, { type: "text", text: "Something new." }];
+		assert.deepEqual(parts.map((_, i) => repeatsEarlierText(parts, i)), [false, false, true, false]);
+	});
+});
+
+describe("an open question", () => {
+	it("is a pose with no grade after it, whatever the punctuation", async () => {
+		const { questionOpen, quickReplies, REPLIES_TO_A_QUESTION } = await import("../src/core/index.ts");
+		const asked = [{ role: "assistant", parts: [{ type: "tool-pose" }, { type: "text" }] }];
+		assert.equal(questionOpen(asked), true);
+		assert.equal(questionOpen([...asked, { role: "user", parts: [] }, { role: "assistant", parts: [{ type: "tool-grade" }] }]), false);
+		assert.deepEqual(quickReplies("Fill the gap: ___ knihu.", true), REPLIES_TO_A_QUESTION);
 	});
 });
