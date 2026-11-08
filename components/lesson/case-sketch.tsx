@@ -24,6 +24,7 @@ export interface SketchStage {
 	meaning: string;
 	dictionary: string;
 	cue: string;
+	gender: "feminine" | "masculine" | "neuter";
 	why: string;
 }
 
@@ -42,31 +43,31 @@ export type SceneKind = "into" | "outof" | "at" | "inside" | "on" | "about" | "t
 
 const SKETCHES: Partial<Record<UnitId, SketchStage[]>> = {
 	gen: [
-		{ label: "do means “into”", kind: "into", before: "Idem do ", base: "škol", ending: "y", after: ".", meaning: "I am going to school.", dictionary: "škola", cue: "after do", why: "Most words ending in -a swap it for -y: škola → školy, ruka → ruky." },
-		{ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", cue: "after z", why: "A few words ending in -ca take -e instead: práca → práce, ulica → ulice. Learn which with each word." },
-		{ label: "u means “at someone’s place”", kind: "at", before: "Som u ", base: "lekár", ending: "a", after: ".", meaning: "I am at the doctor’s.", dictionary: "lekár", cue: "after u", why: "A male person adds -a: lekár → lekára." },
+		{ label: "do means “into”", kind: "into", before: "Idem do ", base: "škol", ending: "y", after: ".", meaning: "I am going to school.", dictionary: "škola", gender: "feminine", cue: "after do", why: "Feminine words ending in -a swap it for -y: škola → školy, ruka → ruky." },
+		{ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", gender: "feminine", cue: "after z", why: "A few feminine words ending in -ca take -e instead: práca → práce, ulica → ulice. Learn which with each word." },
+		{ label: "u means “at someone’s place”", kind: "at", before: "Som u ", base: "lekár", ending: "a", after: ".", meaning: "I am at the doctor’s.", dictionary: "lekár", gender: "masculine", cue: "after u", why: "A male person adds -a: lekár → lekára." },
 	],
 	loc: [
-		{ label: "v means “inside”", kind: "inside", before: "Žijem v ", base: "mest", ending: "e", after: ".", meaning: "I live in the town.", dictionary: "mesto", cue: "after v", why: "A word ending in -o swaps it for -e: mesto → meste." },
-		{ label: "na means “on top of”", kind: "on", before: "Kniha je na ", base: "stol", ending: "e", after: ".", meaning: "The book is on the table.", dictionary: "stôl", cue: "after na", why: "A masculine thing adds -e: stôl → stole (the ô becomes o)." },
-		{ label: "o means “about”", kind: "about", before: "Hovoríme o ", base: "škol", ending: "e", after: ".", meaning: "We are talking about school.", dictionary: "škola", cue: "after o", why: "Words in -a swap it for -e: škola → škole. o calls for this case just like v and na." },
+		{ label: "v means “inside”", kind: "inside", before: "Žijem v ", base: "mest", ending: "e", after: ".", meaning: "I live in the town.", dictionary: "mesto", gender: "neuter", cue: "after v", why: "A word ending in -o swaps it for -e: mesto → meste." },
+		{ label: "na means “on top of”", kind: "on", before: "Kniha je na ", base: "stol", ending: "e", after: ".", meaning: "The book is on the table.", dictionary: "stôl", gender: "masculine", cue: "after na", why: "A masculine thing adds -e: stôl → stole (the ô becomes o)." },
+		{ label: "o means “about”", kind: "about", before: "Hovoríme o ", base: "škol", ending: "e", after: ".", meaning: "We are talking about school.", dictionary: "škola", gender: "feminine", cue: "after o", why: "Feminine words ending in -a swap it for -e: škola → škole. o calls for this case just like v and na." },
 	],
 	ins: [
-		{ label: "s means “together with”", kind: "together", before: "Športujem s ", base: "kamarát", ending: "om", after: ".", meaning: "I play sports with a friend.", dictionary: "kamarát", cue: "after s", why: "A masculine word adds -om: kamarát → kamarátom." },
-		{ label: "pred means “in front of”", kind: "infront", before: "Stojím pred ", base: "dom", ending: "om", after: ".", meaning: "I am standing in front of the house.", dictionary: "dom", cue: "after pred", why: "The same -om on a masculine thing: dom → domom." },
-		{ label: "-om alone means “by”", kind: "vehicle", before: "Idem ", base: "autobus", ending: "om", after: ".", meaning: "I am going by bus.", dictionary: "autobus", cue: "no preposition", why: "No preposition here. The -om ending alone means “by”: autobus → autobusom." },
+		{ label: "s means “together with”", kind: "together", before: "Športujem s ", base: "kamarát", ending: "om", after: ".", meaning: "I play sports with a friend.", dictionary: "kamarát", gender: "masculine", cue: "after s", why: "A masculine word adds -om: kamarát → kamarátom." },
+		{ label: "pred means “in front of”", kind: "infront", before: "Stojím pred ", base: "dom", ending: "om", after: ".", meaning: "I am standing in front of the house.", dictionary: "dom", gender: "masculine", cue: "after pred", why: "The same -om on a masculine thing: dom → domom." },
+		{ label: "-om alone means “by”", kind: "vehicle", before: "Idem ", base: "autobus", ending: "om", after: ".", meaning: "I am going by bus.", dictionary: "autobus", gender: "masculine", cue: "no preposition", why: "No preposition here. The -om ending alone means “by”: autobus → autobusom." },
 	],
 	dat: [
-		{ label: "k means “toward”", kind: "toward", before: "Idem k ", base: "brat", ending: "ovi", after: ".", meaning: "I am going to my brother’s.", dictionary: "brat", cue: "after k", why: "A male person adds -ovi: brat → bratovi." },
-		{ label: "vďaka means “thanks to”", kind: "gift", before: "Vďaka ", base: "mam", ending: "e", after: ".", meaning: "Thanks to mom.", dictionary: "mama", cue: "after vďaka", why: "Words ending in -a swap it for -e: mama → mame." },
+		{ label: "k means “toward”", kind: "toward", before: "Idem k ", base: "brat", ending: "ovi", after: ".", meaning: "I am going to my brother’s.", dictionary: "brat", gender: "masculine", cue: "after k", why: "A male person adds -ovi: brat → bratovi." },
+		{ label: "vďaka means “thanks to”", kind: "gift", before: "Vďaka ", base: "mam", ending: "e", after: ".", meaning: "Thanks to mom.", dictionary: "mama", gender: "feminine", cue: "after vďaka", why: "Feminine words ending in -a swap it for -e: mama → mame." },
 	],
 	"acc-people": [
-		{ label: "A male person as the object", kind: "toward", before: "Mám ", base: "brat", ending: "a", after: ".", meaning: "I have a brother.", dictionary: "brat", cue: "as the object", why: "A male person as the object adds -a: brat → brata." },
-		{ label: "Another male person as the object", kind: "toward", before: "Vidím ", base: "učiteľ", ending: "a", after: ".", meaning: "I see the teacher.", dictionary: "učiteľ", cue: "as the object", why: "Every male person does this: učiteľ → učiteľa." },
+		{ label: "A male person as the object", kind: "toward", before: "Mám ", base: "brat", ending: "a", after: ".", meaning: "I have a brother.", dictionary: "brat", gender: "masculine", cue: "as the object", why: "A male person as the object adds -a: brat → brata." },
+		{ label: "Another male person as the object", kind: "toward", before: "Vidím ", base: "učiteľ", ending: "a", after: ".", meaning: "I see the teacher.", dictionary: "učiteľ", gender: "masculine", cue: "as the object", why: "Every male person does this: učiteľ → učiteľa." },
 	],
 	"acc-fem": [
-		{ label: "A woman as the object", kind: "toward", before: "Mám ", base: "sestr", ending: "u", after: ".", meaning: "I have a sister.", dictionary: "sestra", cue: "as the object", why: "Words ending in -a swap it for -u when they are the object: sestra → sestru." },
-		{ label: "Another word in -a as the object", kind: "cup", before: "Pijem ", base: "káv", ending: "u", after: ".", meaning: "I drink coffee.", dictionary: "káva", cue: "as the object", why: "The same swap: káva → kávu." },
+		{ label: "A woman as the object", kind: "toward", before: "Mám ", base: "sestr", ending: "u", after: ".", meaning: "I have a sister.", dictionary: "sestra", gender: "feminine", cue: "as the object", why: "Feminine words ending in -a swap it for -u when they are the object: sestra → sestru." },
+		{ label: "Another word in -a as the object", kind: "cup", before: "Pijem ", base: "káv", ending: "u", after: ".", meaning: "I drink coffee.", dictionary: "káva", gender: "feminine", cue: "as the object", why: "The same swap: káva → kávu." },
 	],
 };
 
@@ -76,7 +77,7 @@ const LEADS: Partial<Record<UnitId, string>> = {
 	ins: "After s and pred, and to say “by bus”, a word changes its ending.",
 	dat: "After k and vďaka, a word changes its ending.",
 	"acc-people": "When a male person is the object (I have a brother), the word changes its ending.",
-	"acc-fem": "When a word ending in -a is the object (I have a sister), it changes its ending.",
+	"acc-fem": "When a feminine word ending in -a is the object (I have a sister), it changes its ending.",
 };
 
 export function sketchLead(unit: UnitId): string {
@@ -89,8 +90,8 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "genitive",
 		lines: [
 			"The preposition (do, z, od, bez, u, okolo) calls for this case. The word itself decides the ending.",
-			"Most words in -a swap it for -y: škola → školy, ruka → ruky. A few, like práca and ulica, take -e: práce, ulice.",
-			"A male person adds -a (lekár → lekára). A neuter word swaps -o for -a (mesto → mesta).",
+			"Feminine words in -a swap it for -y: škola → školy, ruka → ruky. A few, like práca and ulica, take -e: práce, ulice.",
+			"A male person adds -a (lekár → lekára). A neuter word swaps -o for -a (mesto → mesta). A few men end in -a too (hrdina), but they follow the masculine pattern: hrdinu.",
 		],
 		exceptions: "A masculine thing takes -u or -a, and there is no safe rule. Learn it with the word: dom → domu, stôl → stola, deň → dňa.",
 	},
@@ -115,7 +116,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		slug: "dative",
 		lines: [
 			"k and vďaka call for this case.",
-			"A male person adds -ovi (bratovi). Words in -a swap it for -e (mame).",
+			"A male person adds -ovi (bratovi). Feminine words in -a swap it for -e (mame).",
 		],
 		exceptions: "Words like ulica take -i instead: ulici.",
 	},
@@ -130,7 +131,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 	"acc-fem": {
 		slug: "accusative",
 		lines: [
-			"Words in -a swap it for -u as the object (sestru, kávu).",
+			"Feminine words in -a swap it for -u as the object (sestru, kávu).",
 			"Other singular words do not change: Mám dom, Vidím mesto.",
 		],
 	},

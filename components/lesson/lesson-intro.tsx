@@ -77,7 +77,7 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 							</p>
 							<FormChange stage={stage!} />
 							<p className="mt-4 min-h-12 max-w-md text-balance text-center font-prose text-[15px] leading-snug text-ink-2" data-testid="intro-why">
-								{stage!.why}
+								{keepEndings(stage!.why)}
 							</p>
 						</figure>
 					)}
@@ -134,13 +134,17 @@ function IntroDock({ hint, action }: { hint?: string; action: React.ReactNode })
 	);
 }
 
+function keepEndings(text: string): string {
+	return text.replace(/-(?=\p{L})/gu, "-\u2060");
+}
+
 function FormChange({ stage }: { stage: SketchStage }) {
 	return (
 		<div className="mt-4 flex items-start justify-center gap-4 font-prose" lang="sk" data-testid="intro-change">
 			<div className="flex flex-col items-center gap-0.5">
 				<span className="text-[22px] font-semibold text-foreground">{stage.dictionary}</span>
 				<span className="font-ui text-[13px] text-ink-3" lang="en">
-					in the dictionary
+					in the dictionary · {stage.gender}
 				</span>
 			</div>
 			<ArrowRightIcon className="mt-2 size-5 text-ink-3" strokeWidth={1.6} aria-hidden />
@@ -194,12 +198,12 @@ function SummaryStage({ summary }: { summary: { lines: readonly string[]; except
 		<div className="lh-rise flex flex-col items-start gap-3 font-prose text-[15px] leading-relaxed text-foreground" data-testid="intro-summary">
 			<p className="font-ui text-[13px] font-semibold text-ink-3">The rule in short</p>
 			{summary.lines.map((l, i) => (
-				<p key={i}>{l}</p>
+				<p key={i}>{keepEndings(l)}</p>
 			))}
 			{summary.exceptions && (
 				<p className="text-ink-3" data-testid="intro-exceptions">
 					<span className="font-semibold text-foreground">Exceptions: </span>
-					{summary.exceptions}
+					{keepEndings(summary.exceptions)}
 				</p>
 			)}
 			{link && (
