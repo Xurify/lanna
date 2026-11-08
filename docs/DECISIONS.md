@@ -868,7 +868,7 @@ Every research pass goes to `docs/research/` in Markdown with its sources, and t
 
 Owner's rule: "Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from)."
 
-**How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` and the repo's own skills point to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
+**How to apply:** the full rule is in [AGENTS.md](../AGENTS.md) under **Code style → Comments**, and `CLAUDE.md` points to it. The product why belongs here, in the changelog and in commit messages, not in the code. Code you add or change follows it; an older comment goes when the code around it is next changed.
 
 ### E72. A session closes to the page it was opened from (2026-11-07, branch `feat/session-close-to-origin`)
 

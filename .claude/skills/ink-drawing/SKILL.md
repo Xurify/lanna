@@ -5,8 +5,6 @@ description: "How LangHarness draws explanatory pictures as pen sketches: the in
 
 # Ink drawing
 
-- **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule in [AGENTS.md](../../../AGENTS.md) under **Code style → Comments**.
-
 The owner's rule (2026-11-07, rule E73 in `docs/DECISIONS.md`): explanations with a lot of text get a picture, and the picture looks like a pen drawing, not a diagram. The reference is a hand-drawn figure (round head, straight body, one pointing arm, straight legs; thin graphite and ink lines; a pale wash behind the objects) and riddled.ai.
 
 Use it twice: once **before** you draw (decide the one idea, pick the pieces), once **after** (the checks at the bottom).
