@@ -95,9 +95,9 @@ export function ChatDraft({
 			<main className="min-h-0 flex-1 overflow-y-auto">
 				<div className="mx-auto flex w-full max-w-[44rem] flex-col px-6 pt-16 pb-20 max-sm:px-4 max-sm:pt-14">
 					<DeskSketch />
-					<h1 className="mt-6 font-ui text-4xl leading-tight font-semibold tracking-[-0.025em] text-foreground max-sm:text-3xl">What should we untangle today?</h1>
+					<h1 className="mt-6 font-ui text-4xl leading-tight font-semibold tracking-[-0.025em] text-foreground max-sm:text-3xl">What’s tripping you up?</h1>
 					<p className="mt-3 max-w-xl text-base leading-relaxed text-ink-2">
-						Ask your {language} tutor about a word, a form or a rule. It answers in a few lines, draws when that helps, and then asks you to try it.
+						A {language} word you keep forgetting, a sentence you got wrong, a rule that won’t stick.
 					</p>
 
 					<div data-testid="composer" className="mt-8 rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3">
@@ -113,7 +113,7 @@ export function ChatDraft({
 								}
 								if (e.key === "Escape" && dictation.active) dictation.cancel();
 							}}
-							placeholder="What do you want to understand?"
+							placeholder="Paste it or describe it"
 							aria-label="Ask your tutor"
 							className="block max-h-60 min-h-20 w-full resize-none bg-transparent px-5 pt-4 font-ui text-lg leading-snug text-foreground outline-none [field-sizing:content] placeholder:text-ink-4"
 						/>
