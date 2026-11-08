@@ -10,7 +10,6 @@
  */
 
 import * as fs from "node:fs";
-import * as path from "node:path";
 import { activeProfile, curriculumFile } from "../../config.ts";
 import { foldDiacritics } from "../core/language.ts";
 import { profileLanguage } from "./profile-language.ts";

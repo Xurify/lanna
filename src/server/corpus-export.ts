@@ -12,7 +12,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { activeProfile, PATHS } from "../../config.ts";
 import type { ChatRecord } from "../core/contracts.ts";
-import { LANGUAGES } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { userFacingTextOf, failedOutputCallIds } from "../core/native-messages.ts";
 import { chatStore } from "../store/chats.ts";

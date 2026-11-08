@@ -90,7 +90,7 @@ describe("saved phrases store", () => {
 
 	it("does not create duplicate saved phrases for the same sentence", () => {
 		const countBefore = savedPhraseStore.readPhrases().length;
-		const second = savedPhraseStore.savePhrase({
+		savedPhraseStore.savePhrase({
 			text: "Vysoké Tatry sú nádherné.",
 			translation: "The High Tatras are beautiful.",
 			source: "story",

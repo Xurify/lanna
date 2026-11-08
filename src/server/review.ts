@@ -7,7 +7,7 @@
 
 import { activeProfile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
-import { compareAnswer, foldDiacritics, LANGUAGES, isLanguageId } from "../core/language.ts";
+import { compareAnswer, foldDiacritics } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";

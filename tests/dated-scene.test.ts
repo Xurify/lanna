@@ -50,7 +50,6 @@ function scriptedEngine() {
 const TODAY = "2026-11-05";
 const NOW = new Date("2026-11-05T12:00:00Z");
 const ahead = (n: number) => dated.isoAddDays(TODAY, n);
-const ICONS = ["monitor-play", "video", "headphones", "newspaper", "coffee", "users", "captions", "clapperboard", "radio", "book-open", "message-circle", "briefcase", "music", "phone", "mail", "landmark", "tv", "mic", "sparkles", "baby", "gamepad-2", "map"];
 
 const est = (daysPace: number | null, need = 105, basis: "listen" | "watch" | "both" | "level" = "listen") => ({ eta: { daysPace }, speed: { need, basis } });
 const scene = (date: string, outcome?: { at: string; text: string }) => ({ id: "custom-test", title: "Lunch with friends", date, ...(outcome ? { outcome } : {}) });

@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { activeProfile, PATHS } from "../../config.ts";
+import { PATHS } from "../../config.ts";
 import { loadLexicon, lookupWord, type Lexicon } from "../agent/lexicon.ts";
 import { foldDiacritics, LANGUAGES, referenceLink, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";

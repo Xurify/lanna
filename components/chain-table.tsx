@@ -654,8 +654,6 @@ export function ChainTableOverlay({
 
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const selectedNodes = [...selection].map((id) => byId.get(id)).filter((n): n is GraphNode => n !== undefined);
-	const derived = chainsForSelection(selectedNodes, storedChains);
-	const nodeIds = [...selection].sort();
 
 	const toggleNodes = (ids: string[], next: boolean) => {
 		const s = new Set(selection);
