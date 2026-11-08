@@ -95,7 +95,7 @@ export function ChatDraft({
 			<main className="min-h-0 flex-1 overflow-y-auto">
 				<div className="mx-auto flex w-full max-w-[44rem] flex-col px-6 pt-16 pb-20 max-sm:px-4 max-sm:pt-14">
 					<DeskSketch />
-					<h1 className="mt-6 font-ui text-4xl leading-tight font-semibold tracking-[-0.025em] text-foreground max-sm:text-3xl">What’s tripping you up?</h1>
+					<h1 className="mt-6 font-ui text-4xl leading-tight font-semibold tracking-[-0.025em] text-foreground max-sm:text-3xl">What's on your mind?</h1>
 					<p className="mt-3 max-w-xl text-base leading-relaxed text-ink-2">
 						A {language} word you keep forgetting, a sentence you got wrong, a rule that won’t stick.
 					</p>

@@ -118,7 +118,7 @@ describe("the plain chat draft (/chat/new)", () => {
 	it("opens on the question line, with the language named and no model control", () => {
 		const html = renderToStaticMarkup(<ChatDraft busy={false} text="" onChange={() => {}} onSend={() => {}} language="Slovak" />);
 		assert.match(html, /A Slovak word you keep forgetting/);
-		assert.match(html, /What’s tripping you up?/);
+		assert.match(html, /What's on your mind?/);
 		assert.match(html, /Paste it or describe it/);
 		assert.ok(html.includes('data-testid="draft-suggestions"'));
 		assert.ok(!html.includes('data-testid="stats-model"'));
