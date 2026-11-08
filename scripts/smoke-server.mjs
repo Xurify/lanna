@@ -45,7 +45,7 @@ const POLL_MS = 500;
 const BOOT_TIMEOUT_MS = 30_000;
 /** GET-only probes — the routes that exercised today's failure class. /start
  *  is where a fresh profile lands, so the setup page must render too. */
-const PROBES = ["/start", "/api/graph", "/api/models", "/api/settings"];
+const PROBES = ["/start", "/api/models", "/api/settings"];
 
 if (!fs.existsSync(SERVER)) {
 	console.error("[smoke-server] .next/standalone/server.js missing — run next build first.");

@@ -13,8 +13,6 @@
  * scenes, so the end screens can say which sounds and words to work on.
  */
 
-import { activeProfile } from "../../config.ts";
-import { LANGUAGES } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { matchScore, parseAzure, pronReport, type AzureResult, type PronEngine, type PronReport, type PronScore } from "../core/pronounce.ts";
 

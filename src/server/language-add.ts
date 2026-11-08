@@ -3,7 +3,7 @@
  * (server/tasks.ts, so it shows in the sidebar's Background section and
  * ends in a ready notice) downloads open data, has a model write the course
  * and the story bible, and writes <data>/languages/<id>/: lexicon.json,
- * course.json, world.json, seed.json, prompt.md, and language.json last,
+ * course.json, world.json, prompt.md, and language.json last,
  * which is what makes the language appear. Without a model there is no
  * course, so the add does not start.
  *
@@ -40,7 +40,7 @@ import {
 	type TatoebaSentence,
 } from "../core/language-build.ts";
 import type { StoryUsage } from "../core/reading.ts";
-import { checkCourse, checkWorld, courseDraftPrompt, courseSeed, worldDraftPrompt, type Course } from "../core/course.ts";
+import { checkCourse, checkWorld, courseDraftPrompt, worldDraftPrompt, type Course } from "../core/course.ts";
 import { proceduralCourse } from "../core/course-procedural.ts";
 import { PURPOSES } from "../core/onboarding.ts";
 import { SPEAK_SCENES } from "../core/speak.ts";
@@ -611,7 +611,6 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 		});
 	}
 	writeJson(path.join(dirOf(id), "course.json"), course);
-	writeJson(path.join(dirOf(id), "seed.json"), courseSeed(course));
 
 	if (writer !== "dictionary") {
 		const ask = deps.ask ?? askOn(writer);

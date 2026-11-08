@@ -105,7 +105,7 @@ export function twinSentences(entryA: LexiconEntry, entryB: LexiconEntry): PairS
 	const regexA = formRegex(formsOfEntry(entryA));
 	const regexB = formRegex(formsOfEntry(entryB));
 	const out: PairSentence[] = [];
-	for (const [entry, ownRegex, otherRegex, member] of [
+	for (const [entry, , otherRegex, member] of [
 		[entryA, regexA, regexB, "a"],
 		[entryB, regexB, regexA, "b"],
 	] as const) {

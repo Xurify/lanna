@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fitPopoverTop, POPOVER_EDGE, POPOVER_GAP } from "@/components/words/popover-fit";
-import { referenceLink } from "@/src/core";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode, type WordTranslationMode } from "@/components/settings/device-prefs";
+import { wordLinks } from "@/components/words/word-links";
 
 /**
  * Evaluates whether a DOM node is valid target-language learning content.
@@ -101,7 +101,6 @@ interface LookupData {
 	googleTranslation?: string;
 	referenceUrl?: string;
 	referenceLabel?: string;
-	slovakWikiUrl?: string;
 	pos?: string;
 	gender?: string;
 	formNote?: string;
@@ -548,19 +547,16 @@ export function SelectionWordBankBar() {
 			? `form of ${lookup.lemma}`
 			: undefined);
 
-	const encodedWord = encodeURIComponent(selection.text);
-	const referenceSite = activeLang?.referenceSite;
-	const referenceUrl =
-		lookup?.referenceUrl ??
-		(referenceSite
-			? referenceLink(referenceSite, { slug: selection.isSingleWord ? lookup?.slug : undefined, lemma: lookup?.lemma ?? selection.text, query: selection.text })
-			: undefined);
-	const referenceLabel = lookup?.referenceLabel ?? referenceSite?.label;
-
-	const wiktionaryUrl = `https://en.wiktionary.org/wiki/${encodedWord}#${encodeURIComponent(langEnglish)}`;
-	const googleTranslateUrl = `https://translate.google.com/?sl=${encodeURIComponent(langCode)}&tl=en&text=${encodedWord}&op=translate`;
-	const deeplUrl = `https://www.deepl.com/translator#${encodeURIComponent(langCode)}/en/${encodedWord}`;
-	const forvoUrl = `https://forvo.com/word/${encodedWord}/#${encodeURIComponent(langCode)}`;
+	const { referenceUrl, referenceLabel, wiktionaryUrl, googleTranslateUrl, deeplUrl, forvoUrl } = wordLinks({
+		text: selection.text,
+		langCode,
+		langEnglish,
+		referenceSite: activeLang?.referenceSite,
+		slug: selection.isSingleWord ? lookup?.slug : undefined,
+		lemma: lookup?.lemma,
+		lookupUrl: lookup?.referenceUrl,
+		lookupLabel: lookup?.referenceLabel,
+	});
 
 	const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 800;
 

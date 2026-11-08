@@ -10,21 +10,16 @@ import fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
-import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 import type { Mixup, MixupRecord } from "../src/core/mixups.ts";
 import { PAIRS } from "../src/core/pairs.ts";
 import { chooseCatch, CATCH_MIN_MISSES, CATCH_RECENT_ITEMS, verifyCatch, type CatchLexicon, type CatchTarget } from "../src/core/catch-pair.ts";
-import { parseStoryDraft, tokenize, type StoryRecord, type StorySentence } from "../src/core/reading.ts";
+import { tokenize, type StorySentence } from "../src/core/reading.ts";
 
 const TMP_DATA = process.env.LH_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-slip-"));
 if (TMP_DATA) process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
-const reading = await import("../src/server/reading.ts");
-const { loadWorld } = await import("../src/server/world.ts");
-const { storyStore } = await import("../src/store/stories.ts");
-const { progressStore } = await import("../src/store/progress.ts");
 
 after(() => {
 	if (TMP_DATA) fs.rmSync(TMP_DATA, { recursive: true, force: true });

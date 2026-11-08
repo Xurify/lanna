@@ -3,8 +3,7 @@
  * much everything has cost? Where can I view that myself?") — behind
  * GET /api/usage and Settings → Spending. Every number is folded at read
  * time from what is already on disk: each chat's `turns` log (one entry
- * per model turn, with the model), its `extractions` log (the background
- * graph pipeline), the sub-agent jobs, the story episodes written for the
+ * per model turn, with the model), the sub-agent jobs, the story episodes written for the
  * Read task (each carries its own usage), and the audio library's index.
  * Nothing is estimated from elsewhere; a turn whose model has no price in
  * the catalog counts as unpriced and is shown as such.
@@ -76,7 +75,6 @@ export function usageReport(now = new Date()): UsageReport {
 	const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 	const sessions: SessionSpend[] = [];
 	let turnsUsd = 0;
-	let extractionUsd = 0;
 	let jobsUsd = 0;
 	let unpricedTurns = 0;
 	for (const { chat, deleted } of [...live, ...trashed]) {
@@ -94,7 +92,6 @@ export function usageReport(now = new Date()): UsageReport {
 			cacheWriteTokens: 0,
 			costUsd: null,
 			unpricedTurns: 0,
-			extractionUsd: 0,
 			jobsUsd: 0,
 			models: [],
 		};
@@ -117,15 +114,6 @@ export function usageReport(now = new Date()): UsageReport {
 			}
 		}
 		s.costUsd = s.turns > 0 && s.unpricedTurns === s.turns ? null : priced;
-		for (const run of chat.extractions ?? []) {
-			for (const stage of [run.stages.extractor, run.stages.auditor]) {
-				const usd = safeTurnCost(stage);
-				if (usd !== null) {
-					s.extractionUsd += usd;
-					addMonth(run.at, usd);
-				}
-			}
-		}
 		for (const job of stores.jobStore.listJobs(chat.id)) {
 			const usd = safeJobCost(job);
 			if (usd !== null) {
@@ -139,7 +127,6 @@ export function usageReport(now = new Date()): UsageReport {
 		tokens.cacheRead += s.cacheReadTokens;
 		tokens.cacheWrite += s.cacheWriteTokens;
 		turnsUsd += priced;
-		extractionUsd += s.extractionUsd;
 		jobsUsd += s.jobsUsd;
 		unpricedTurns += s.unpricedTurns;
 		sessions.push(s);
@@ -150,7 +137,7 @@ export function usageReport(now = new Date()): UsageReport {
 		const m = byModeMap.get(s.mode) ?? { sessions: 0, turns: 0, usd: 0 };
 		m.sessions++;
 		m.turns += s.turns;
-		m.usd += (s.costUsd ?? 0) + s.extractionUsd + s.jobsUsd;
+		m.usd += (s.costUsd ?? 0) + s.jobsUsd;
 		byModeMap.set(s.mode, m);
 	}
 	// Story episodes (the Read task): one generation each, priced like a turn.
@@ -256,9 +243,8 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + extractionUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + languagesUsd),
+		totalUsd: round(turnsUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + languagesUsd),
 		turnsUsd: round(turnsUsd),
-		extractionUsd: round(extractionUsd),
 		jobsUsd: round(jobsUsd),
 		storiesUsd: round(storiesUsd),
 		stories: { count: storyIndex.length, unpriced: storiesUnpriced },
@@ -273,7 +259,7 @@ export function usageReport(now = new Date()): UsageReport {
 		unpricedTurns,
 		byMonth: [...months.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([month, m]) => ({ month, usd: round(m.usd), turns: m.turns })),
 		byMode: [...byModeMap.entries()].sort(([, a], [, b]) => b.usd - a.usd).map(([mode, m]) => ({ mode, ...m, usd: round(m.usd) })),
-		sessions: sessions.map((s) => ({ ...s, costUsd: s.costUsd === null ? null : round(s.costUsd), extractionUsd: round(s.extractionUsd), jobsUsd: round(s.jobsUsd) })),
+		sessions: sessions.map((s) => ({ ...s, costUsd: s.costUsd === null ? null : round(s.costUsd), jobsUsd: round(s.jobsUsd) })),
 		audio: { clips: clips.length, bytes, byTier, elevenLabsCharacters },
 		tokens,
 	};

@@ -17,10 +17,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-	EXTRACTION_CHUNK_TOKENS_FLOOR,
 	resolveSettings,
 	type AppearanceSettings,
-	type GraphSettings,
 } from "@/src/core";
 import { MenuShell } from "@/components/menu-shell";
 import { applyTheme, readThemeChoice, type ThemeChoice } from "@/lib/theme";
@@ -320,80 +318,6 @@ export function AppearanceSection({
 					ariaLabel="Italic color"
 					testid="input-italic-color"
 					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, italicColor: v === "" ? null : v } })}
-				/>
-			</SettingsRow>
-			</SettingsDisclosure>
-		</>
-	);
-}
-
-export function GraphSection({
-	graph,
-	onSectionChange,
-}: {
-	graph: GraphSettings | undefined;
-	onSectionChange: (next: GraphSettings) => void;
-}) {
-	// The section holds the extraction master switch and the chunk budget. The budget sets the coverage ring
-	// and gates the auto-extraction trigger (turn settle >= budget fires a run).
-	//
-	// Resolved through the same core resolver as the server, so the hint reports the number the trigger uses.
-	const resolved = resolveSettings(graph === undefined ? null : { version: 1, graph }).graph;
-	// The hint's "Default" is the factory budget; `resolved` is the stored one when set.
-	const factoryChunk = resolveSettings(null).graph.extractionChunkTokens;
-	return (
-		<>
-			{/* Extraction: the data channel (pipeline, auditor, prober's graph tools). Off means the map stops growing. */}
-			<SettingsRow label="Keep building the map" hint="Off = the map stops growing" testid="graph-row-enabled">
-				<Toggle
-					checked={graph?.enabled ?? true}
-					label="Keep building the map"
-					testid="toggle-extraction-enabled"
-					onChange={(on) =>
-						// Spread the stored section so the sibling chunk budget survives.
-						onSectionChange({ ...graph, enabled: on })
-					}
-				/>
-			</SettingsRow>
-			{/* Rendering is display only. Off shows the chains view on home; data work keeps running. */}
-			<SettingsRow label="Draw the map on the Map page" hint="Off = the Map page shows a summary in numbers instead" testid="graph-row-rendering">
-				<Toggle
-					checked={graph?.rendering ?? true}
-					label="Draw the map on the Map page"
-					testid="toggle-graph-rendering-enabled"
-					onChange={(on) => onSectionChange({ ...graph, rendering: on })}
-				/>
-			</SettingsRow>
-			<SettingsDisclosure
-				label="Advanced"
-				hint="How much conversation each map update reads. Empty = the built-in size."
-				testid="advanced-graph"
-			>
-			<SettingsRow
-				label="Map update size"
-				hint={`Tokens of conversation per update. Default ${factoryChunk.toLocaleString("en-GB")}.`}
-				testid="graph-row-chunk-tokens"
-			>
-				<CommitInput
-					type="number"
-					value={String(graph?.extractionChunkTokens ?? "")}
-					placeholder={String(resolved.extractionChunkTokens)}
-					ariaLabel="Map update size"
-					testid="input-chunk-tokens"
-					onCommit={(v) => {
-						// Empty = factory default. Absence is the unset for numbers; Number("") is 0.
-						if (v === "") {
-							onSectionChange({ ...graph, extractionChunkTokens: undefined });
-							return;
-						}
-						const n = Number(v);
-						if (!Number.isFinite(n) || n <= 0) return; // bad input: no write
-						// Mirror the server: floor only (cost protection), no ceiling.
-						onSectionChange({
-							...graph,
-							extractionChunkTokens: Math.max(EXTRACTION_CHUNK_TOKENS_FLOOR, Math.round(n)),
-						});
-					}}
 				/>
 			</SettingsRow>
 			</SettingsDisclosure>

@@ -236,8 +236,8 @@ async function compact(deps: CompactionDeps, chatId: string): Promise<void> {
 		emit("record-changed", { chatId });
 	} catch (err) {
 		// A failed compaction leaves the record untouched — the next
-		// turn-start gate retries (the same self-healing law as the
-		// extraction trigger).
+		// turn-start gate retries it (the same self-healing law as every
+		// other gate).
 		console.error(`[chat ${chatId}] compaction failed:`, err);
 	} finally {
 		emit("compaction-changed", { chatId, running: false });
@@ -251,7 +251,7 @@ async function compact(deps: CompactionDeps, chatId: string): Promise<void> {
  * under concurrency through the registry mutex.
  */
 export async function ensureCompacted(deps: CompactionDeps, chatId: string): Promise<void> {
-	// Skipped under tests, the extraction-trigger precedent: scripted
+	// Skipped under tests, the scripted-chat precedent: scripted
 	// chats are fixtures — the service itself is tested directly with an
 	// injected summarizer.
 	if (process.env.NODE_ENV === "test" && !deps.summarize) return;

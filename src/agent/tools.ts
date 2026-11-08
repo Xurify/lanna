@@ -8,14 +8,12 @@ import type { JobStore } from "../core/ports.ts";
 import { jobTools, type DemoInput, type PdfInput, type ResearchInput, type VisualInput } from "./tools/jobs.ts";
 import { planTools, type PlanToolContext } from "./tools/plan.ts";
 import { probeDoneTool, type ProbeDoneContext } from "./tools/probe.ts";
-import { proberGraphTools } from "./tools/graph.ts";
 import { readTool } from "./tools/read.ts";
 import { lsTool } from "./tools/ls.ts";
 import { findTool } from "./tools/find.ts";
 import { grepTool } from "./tools/grep.ts";
 import { healToolRecord } from "./tools/heal.ts";
 import { languageTools, type ReviewSeam } from "./tools/language.ts";
-import type { GraphStore } from "../core/ports.ts";
 
 export { jobTools };
 export type { ProbeDoneContext } from "./tools/probe.ts";
@@ -101,18 +99,17 @@ export const askUserQuestionTool: AgentTool<typeof askInputSchema> = {
 // ONE sanctioned exception (owner, 2026-10-12): each quiz tool's
 // description ends with a COMPLETE example call — compact, phase-correct
 // (probe carries no phase metadata; quiz leads with type+nodeId), doubling
-// as the JSON-escaping exemplar (LaTeX backslashes double inside JSON
+// as the JSON-escaping exemplar (quotes and newlines escape inside JSON
 // strings). Placement ruling: WITH THE TOOL, beside its exact schema — a
 // shared-prompt example is phase-ambiguous (the models fumbled exactly
 // these metadata fields), per-agent prompt copies would drift. Serialized
 // from ONE canonical body so the variants cannot disagree; craft doctrine
 // stays in the prompts.
 
-/** The canonical example body (owner-approved content, 2026-10-12): a
- *  compact applied question whose fields exercise the escaping hazards —
- *  braced commands (\frac, \cos), inline and display math, newlines —
- *  while doubling as an exemplar of good craft: uniform options, stable
- *  values, reasoning (explanation) committed before correctAnswer.
+/** The canonical example body: a compact applied question whose fields
+ *  exercise the escaping hazards (quotation marks, newlines) while doubling
+ *  as an exemplar of good craft: uniform options, stable values, reasoning
+ *  (explanation) committed before correctAnswer.
  *  JSON.stringify renders the wire text, so the escaping the model sees
  *  is by construction the correct one. Exported for the description pins. */
 export const quizExampleBody = {
@@ -157,7 +154,7 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 	const example = delta.nodeId ? { type: "check" as const, nodeId: "prep-do-genitive", ...quizExampleBody } : quizExampleBody;
 	return (
 		base +
-		"\nExample arguments — copy the escaping exactly: inside JSON strings a LaTeX backslash is \\\\ and a newline is \\n.\n```json\n" +
+		"\nExample arguments — copy the escaping exactly: inside JSON strings a newline is \\n.\n```json\n" +
 		JSON.stringify(example, null, 2) +
 		"\n```" +
 		(delta.nodeId ? " The example's nodeId is illustrative — copy an exact id from this session's plan_init." : "")
@@ -261,12 +258,6 @@ export interface ProberToolContext extends ProbeDoneContext {
 	spawn: (job: JobRecord, input: ResearchInput | DemoInput | VisualInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
-	/** The prober's graph-map reader (wave 7): present = the two map tools
-	 *  (list_sessions / list_propositions) are registered. The composition
-	 *  root passes it only when graphToolsEnabled(effective) — the graph
-	 *  master switch AND the agent.graphTools toggle (settings-resolution).
-	 *  Absent = the gate is closed, no map tools (tests drive this seam). */
-	graphStore?: GraphStore;
 	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
@@ -327,11 +318,6 @@ export function createProberTools(
 				// remains available without a search-provider key.
 				...(jobs.research ? { research: jobs.research } : {}),
 				pdf: jobs.pdf!,
-				// The map reader (wave 7): present only when the settings gate
-				// opened.
-				...(ctx.graphStore
-					? proberGraphTools({ chatStore: ctx.chatStore, graphStore: ctx.graphStore })
-					: {}),
 				...languageTools(ctx.review),
 				...done,
 			},

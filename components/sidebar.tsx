@@ -6,10 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
-import type { ChatDeleteMode } from "@/src/core";
 import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
-import { CoverageMenuBlock } from "@/components/extraction-coverage";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
@@ -802,25 +800,21 @@ function SessionsSidebar() {
 	// Delete success: patch the list instantly (the poll is the backstop),
 	// navigate home if the open session died (the chat view unmounts —
 	// drafts die with it, no orphan bubbles), and announce the graph
-	// revision so the graph view refetches (deletion is the one writer
-	// the status poll can't see — no run ever transitions some→none).
 	const onDeleted = useCallback(
-		(id: string, _mode: ChatDeleteMode, graphRevision: number) => {
+		(id: string) => {
 			setDeleting(null);
 			setChats((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
 			if (pathname === `/chat/${id}`) router.push("/");
-			window.dispatchEvent(new CustomEvent("lh:graph-revision", { detail: { revision: graphRevision } }));
 		},
 		[pathname, router],
 	);
 
 	const onBulkDeleted = useCallback(
-		(ids: string[], graphRevision: number) => {
+		(ids: string[]) => {
 			const gone = new Set(ids);
 			setChats((prev) => (prev ? prev.filter((c) => !gone.has(c.id)) : prev));
 			setSelected((prev) => new Set([...prev].filter((id) => !gone.has(id))));
 			if (ids.some((id) => pathname === `/chat/${id}`)) router.push("/");
-			window.dispatchEvent(new CustomEvent("lh:graph-revision", { detail: { revision: graphRevision } }));
 		},
 		[pathname, router],
 	);
@@ -895,7 +889,7 @@ function SessionsSidebar() {
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
 					<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-3">
-						<Hint label="Home" action="jump-graph" side="right">
+						<Hint label="Home" side="right">
 							<Link
 								href="/"
 								aria-label="Home"
@@ -1226,7 +1220,6 @@ function SessionsSidebar() {
 							Delete…
 						</button>
 						<div className="my-0.5 border-t border-border/60" aria-hidden="true" />
-						<CoverageMenuBlock chatId={ctxChatId} />
 					</MenuShell>
 				)}
 

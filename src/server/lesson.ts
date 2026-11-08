@@ -26,7 +26,6 @@ import {
 	type RepVerdict,
 	type UnitId,
 } from "../core/lesson.ts";
-import { activeProfile } from "../../config.ts";
 import { addMinutes, sessionMs, type TimedActivity } from "../core/active-time.ts";
 import { pairsLessonFor } from "../core/aspect-tasks.ts";
 import { firstTryOf, recordFirstTry, type FirstAnswer, type FirstTryCount } from "../core/first-try.ts";
