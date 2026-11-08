@@ -152,7 +152,7 @@ setJobRespawn((jobId) => void jobRunner.runJob(jobId));
 /** The route-facing entry: parse {chatId, input} and run one turn. */
 export async function handleChatRequest(
 	req: Request,
-	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean }) => TeachingAgent,
+	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean; kind?: ChatRecord["kind"] }) => TeachingAgent,
 ): Promise<Response> {
 	let body: { chatId?: unknown; input?: unknown };
 	try {
@@ -182,7 +182,7 @@ export async function handleChatRequest(
 export async function handleChatInput(
 	chatId: string,
 	input: TurnInput,
-	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean }) => TeachingAgent,
+	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean; kind?: ChatRecord["kind"] }) => TeachingAgent,
 ): Promise<Response> {
 	let record = stores.chatStore.getChat(chatId);
 	if (!record) {
@@ -413,7 +413,7 @@ export async function handleChatInput(
 	// problem + conclude. buildAgent stays honored (the test seam is
 	// uniform across kinds).
 	const constructed: TeachingAgent = buildAgent
-		? buildAgent({ ...agentOpts, teaching })
+		? buildAgent({ ...agentOpts, teaching, kind: record.kind })
 		: record.kind === "chat"
 			? createChatAgent(
 					{

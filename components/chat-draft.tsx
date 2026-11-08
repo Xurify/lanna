@@ -161,7 +161,7 @@ export function ChatDraft({
 									{recent.map((r) => (
 										<Link key={r.id} href={`/chat/${r.id}`} className="flex items-baseline justify-between gap-4 rounded-lg px-3 py-2.5 transition-colors hover:bg-well">
 											<span className="truncate font-ui text-[15px] text-foreground">{r.title}</span>
-											<span className="shrink-0 font-ui text-xs text-muted-foreground">{r.when}</span>
+											<span className="shrink-0 font-ui text-xs text-muted-foreground" suppressHydrationWarning>{r.when}</span>
 										</Link>
 									))}
 								</div>

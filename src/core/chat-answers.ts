@@ -48,7 +48,7 @@ export function questionOpen(messages: ReadonlyArray<{ role: string; parts: read
 		if (message.role !== "assistant") continue;
 		for (const part of message.parts) {
 			if (part.type === "tool-pose") open = true;
-			else if (part.type === "tool-grade") open = false;
+			else if (part.type === "tool-grade") open = (part.input as { verdict?: ChatVerdict } | undefined)?.verdict === "wrong";
 		}
 	}
 	return open;

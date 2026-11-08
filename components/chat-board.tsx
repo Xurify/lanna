@@ -28,8 +28,8 @@ export function useDrill(messages: readonly LhViewMessage[], title: string) {
 	return { score, drill, opening, label };
 }
 
-export function ChatBoard({ messages, title }: { messages: readonly LhViewMessage[]; title: string }) {
-	const { score, drill, opening, label } = useDrill(messages, title);
+export function ChatBoard({ messages, drill: drillState }: { messages: readonly LhViewMessage[]; drill: ReturnType<typeof useDrill> }) {
+	const { score, drill, opening, label } = drillState;
 	const replies = useMemo(() => replyTexts(messages), [messages]);
 	const drawing = useMemo(() => latestDrawing(replies), [replies]);
 	const phrases = useMemo(() => boardPhrases(replies), [replies]);

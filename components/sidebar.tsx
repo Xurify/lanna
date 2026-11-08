@@ -1023,21 +1023,21 @@ function SessionsSidebar() {
 												<SearchIcon className="size-3.5" />
 											</Button>
 										</Hint>
-										<Hint label="New chat" action="new-session" side="right">
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon-sm"
-												data-testid="new-session"
-												onClick={() => void newSession()}
-												aria-label="New chat with your tutor"
-												className="rounded-lg text-muted-foreground"
-											>
-												<PlusIcon className="size-4" />
-											</Button>
-										</Hint>
 									</>
 								)}
+								<Hint label="New chat" action="new-session" side="right">
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-sm"
+										data-testid="new-session"
+										onClick={() => void newSession()}
+										aria-label="New chat with your tutor"
+										className="ml-1 shrink-0 rounded-lg text-muted-foreground"
+									>
+										<PlusIcon className="size-4" />
+									</Button>
+								</Hint>
 							</div>
 							{searching && (
 								<div className="flex items-center gap-1" role="group" aria-label="Show" data-testid="session-kind-filter">

@@ -172,7 +172,8 @@ describe("an open question", () => {
 		const { questionOpen, quickReplies, REPLIES_TO_A_QUESTION } = await import("../src/core/index.ts");
 		const asked = [{ role: "assistant", parts: [{ type: "tool-pose" }, { type: "text" }] }];
 		assert.equal(questionOpen(asked), true);
-		assert.equal(questionOpen([...asked, { role: "user", parts: [] }, { role: "assistant", parts: [{ type: "tool-grade" }] }]), false);
+		assert.equal(questionOpen([...asked, { role: "user", parts: [] }, { role: "assistant", parts: [{ type: "tool-grade", input: { verdict: "right" } }] }]), false);
+		assert.equal(questionOpen([...asked, { role: "assistant", parts: [{ type: "tool-grade", input: { verdict: "wrong" } }] }]), true, "a miss leaves the question open for a second try");
 		assert.deepEqual(quickReplies("Fill the gap: ___ knihu.", true), REPLIES_TO_A_QUESTION);
 	});
 });

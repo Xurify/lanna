@@ -69,9 +69,25 @@ const GEOMETRY: Record<string, string[]> = {
 };
 
 const NUMBER = /^-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?(?:px)?$/i;
-const NUMBER_LIST = /^(?:-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?[\s,]*)+$/i;
+const PLAIN_NUMBER = /^-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?$/i;
 const PATH_DATA = /^[MmLlHhVvCcSsQqTtAaZz\d\s.,eE+-]+$/;
-const TRANSFORM = /^(?:\s*(?:translate|rotate|scale|matrix|skewX|skewY)\(\s*[-\d.,\se]+\)\s*,?)+$/;
+const TRANSFORM_CALL = /(translate|rotate|scale|matrix|skewX|skewY)\(([^()]*)\)/g;
+
+function isNumberList(value: string): boolean {
+	const items = value.trim().split(/[\s,]+/);
+	return items.length > 0 && items.every((item) => PLAIN_NUMBER.test(item));
+}
+
+function isTransform(value: string): boolean {
+	let rest = value;
+	let calls = 0;
+	for (const call of value.matchAll(TRANSFORM_CALL)) {
+		if (!isNumberList(call[2]!)) return false;
+		rest = rest.replace(call[0], " ");
+		calls++;
+	}
+	return calls > 0 && /^[\s,]*$/.test(rest);
+}
 
 const KEYWORDS: Record<string, Set<string>> = {
 	"stroke-linecap": new Set(["round", "butt", "square"]),
@@ -146,9 +162,9 @@ export function sketchValue(property: string, value: string): string | null {
 			return PATH_DATA.test(v) ? v : null;
 		case "points":
 		case "stroke-dasharray":
-			return v === "none" || NUMBER_LIST.test(v) ? v : null;
+			return v === "none" || isNumberList(v) ? v : null;
 		case "transform":
-			return TRANSFORM.test(v) ? v : null;
+			return isTransform(v) ? v : null;
 		default: {
 			const keywords = KEYWORDS[property];
 			if (keywords) return keywords.has(v) ? v : null;

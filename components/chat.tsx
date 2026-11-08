@@ -1697,7 +1697,7 @@ export function Chat({
 					}}
 				/>
 				</Conversation>
-				{kind === "chat" && <ChatBoard messages={messages} title={titleText} />}
+				{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
 
 				{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,

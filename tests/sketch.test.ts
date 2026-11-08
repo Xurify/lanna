@@ -97,3 +97,17 @@ describe("parseSketch steps and drawing", () => {
 		assert.equal(parseSketch(`<svg viewBox="0 0 1 1"><g><path d="M0 0"/></svg>`)?.body, `<g><g><path d="M0 0"/></g></g>`);
 	});
 });
+
+describe("parseSketch on hostile numbers", () => {
+	it("checks long number lists and transforms in linear time", () => {
+		const started = Date.now();
+		assert.equal(sketchValue("points", `${"1".repeat(5000)} x`), null);
+		assert.equal(sketchValue("points", `${"1.1 ".repeat(4000)}x`), null);
+		assert.equal(sketchValue("transform", `${"translate(1, 1) ".repeat(2000)}!`), null);
+		assert.equal(sketchValue("stroke-dasharray", `${"1,".repeat(5000)}x`), null);
+		assert.ok(Date.now() - started < 500, "no catastrophic backtracking");
+		assert.equal(sketchValue("points", "0,0 10,5 20 10"), "0,0 10,5 20 10");
+		assert.equal(sketchValue("transform", "translate(10 20), rotate(-3)"), "translate(10 20), rotate(-3)");
+		assert.equal(sketchValue("transform", "translate(1) url(x)"), null);
+	});
+});

@@ -112,7 +112,7 @@ export function exportDialogue(chat: ChatRecord, deleted = false): ExportedDialo
 		messages.push({ role: m.role, text, spoken: spokenIn(text), ...(at ? { at } : {}) });
 	}
 	const first = messages.find((m) => m.role === "user")?.text ?? "";
-	const practiceMode = chat.kind === "chat" ? (/^why\?/i.test(first) ? "why" : null) : chat.kind !== "practice" ? null : /^why\?/i.test(first) ? "why" : /^talk:/i.test(first) ? "talk" : /^story:/i.test(first) ? "story" : "practice";
+	const practiceMode = chat.kind === "chat" ? (/^why\b/i.test((first || chat.title).trim()) ? "why" : null) : chat.kind !== "practice" ? null : /^why\?/i.test(first) ? "why" : /^talk:/i.test(first) ? "talk" : /^story:/i.test(first) ? "story" : "practice";
 	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: null as number | null, models: [] as string[] };
 	const models = new Set<string>();
 	for (const turn of chat.turns ?? []) {
