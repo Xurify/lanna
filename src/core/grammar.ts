@@ -51,6 +51,25 @@ const CELL_UNITS: Record<AtlasCase, Partial<Record<AtlasGender, string>>> = {
 	I: { masc: "ins", fem: "ins", neut: "ins" },
 };
 
+export interface NoDrill {
+	short: string;
+	sub: string;
+	why: string;
+}
+
+const NOMINATIVE: NoDrill = {
+	short: "dictionary form",
+	sub: "no ending to practice",
+	why: "The nominative is the form you look up in a dictionary, so no ending changes. What does change is the describing word that goes with it (nový dom, nová kniha, nové mesto: Describing words) and the plural (More than one).",
+};
+
+const NO_DRILL: Partial<Record<AtlasCase, Partial<Record<AtlasGender, NoDrill>>>> = {
+	N: { masc: NOMINATIVE, fem: NOMINATIVE, neut: NOMINATIVE },
+	A: { neut: { short: "same as nominative", sub: "no change", why: "A neuter word as the object looks the same as in the dictionary: Vidím mesto. There is no ending to practice." } },
+};
+
+const NOT_BUILT: NoDrill = { short: "no drill yet", sub: "", why: "There is no drill for this cell yet." };
+
 const unitIds = perCourse(() => new Set<string>(allUnits().map((u) => u.id)));
 
 /** The cell's drill unit, or null while it is "not yet". */
@@ -102,8 +121,10 @@ export interface AtlasStats {
 export interface AtlasCell {
 	row: AtlasCase;
 	col: AtlasGender;
-	/** The drill the cell opens, or null for "not yet". */
+	/** The drill the cell opens, or null when there is none. */
 	unit: UnitId | null;
+	/** Why a cell with no drill has none: nothing to practice, or not built yet. */
+	noDrill: NoDrill | null;
 	/** First-try accuracy (right / tries, 0..1); null with no first tries yet. */
 	accuracy: number | null;
 	/** Unaided first tries in this cell, how many were right, and how many of
@@ -129,6 +150,7 @@ export function grammarAtlas(units: Readonly<Record<string, AtlasStats | undefin
 				row,
 				col,
 				unit,
+				noDrill: unit ? null : (NO_DRILL[row]?.[col] ?? NOT_BUILT),
 				accuracy,
 				reps: tally?.reps ?? 0,
 				right: tally?.right ?? 0,

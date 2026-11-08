@@ -52,7 +52,7 @@ const stage = (s: SketchStage): SketchStage => s;
 const SKETCHES: Partial<Record<UnitId, SketchStage[]>> = {
 	gen: [
 		stage({ label: "do means “into”", kind: "into", before: "Idem do ", base: "škol", ending: "y", after: ".", meaning: "I am going to school.", dictionary: "škola", gender: "feminine", cue: "after do", why: "Feminine words ending in -a swap it for -y: škola → školy, ruka → ruky." }),
-		stage({ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", gender: "feminine", cue: "after z", why: "After c, č, š, ž, j, ľ, ň, ď or ť a feminine word ends in -e instead of -y: práca → práce, ulica → ulice, ruža → ruže." }),
+		stage({ label: "z means “out of”", kind: "outof", before: "Idem z ", base: "prác", ending: "e", after: ".", meaning: "I am coming from work.", dictionary: "práca", gender: "feminine", cue: "after z", why: "Words ending in -ca take -e instead of -y: práca → práce, ulica → ulice." }),
 		stage({ label: "u means “at someone’s place”", kind: "at", before: "Som u ", base: "lekár", ending: "a", after: ".", meaning: "I am at the doctor’s.", dictionary: "lekár", gender: "masculine", cue: "after u", why: "A male person adds -a: lekár → lekára." }),
 		stage({ label: "bez means “without”", kind: "without", before: "Káva bez ", base: "mliek", ending: "a", after: ".", meaning: "Coffee without milk.", dictionary: "mlieko", gender: "neuter", cue: "after bez", why: "A neuter word swaps -o for -a: mlieko → mlieka." }),
 	],
@@ -107,10 +107,10 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		rows: [
 			{ who: "masculine person", from: "lekár", stem: "lekár", ending: "a" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u", note: "or -a: stôl → stola" },
-			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, č, š, ž, j, ľ, ň, ď, ť: -e (práca → práce)" },
+			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, j or a letter with ˇ: -e (práca → práce)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "a" },
 		],
-		exceptions: "A few men end in -a too (hrdina). They follow the masculine pattern: hrdinu.",
+		exceptions: "A few men end in -a too (hrdina). They follow the masculine pattern: hrdinu. And večera takes -e although it ends in r: večere.",
 	},
 	loc: {
 		slug: "locative",
@@ -118,7 +118,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "e", note: "after k, g, h, ch: -u (park → parku)" },
-			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, č, š, ž, j, ľ, ň, ď, ť: -i (ulica → ulici)" },
+			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, j or a letter with ˇ: -i (ulica → ulici)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "e" },
 		],
 	},
@@ -139,7 +139,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 		rows: [
 			{ who: "masculine person", from: "brat", stem: "brat", ending: "ovi" },
 			{ who: "masculine thing", from: "dom", stem: "dom", ending: "u" },
-			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, č, š, ž, j, ľ, ň, ď, ť: -i (ulica → ulici)" },
+			{ who: "feminine", from: "škola", stem: "škol", ending: "e", note: "after c, dz, j or a letter with ˇ: -i (ulica → ulici)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "u" },
 		],
 	},

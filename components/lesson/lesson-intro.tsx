@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KBD, PRIMARY } from "@/components/ui/learn-buttons";
+import { KBD, PRIMARY, QUIET } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, PracticeCard } from "@/components/task-frame";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { CaseSketch, sketchLead, sketchStages, sketchSummary, type SketchStage, type SketchSummary } from "@/components/lesson/case-sketch";
@@ -86,20 +86,7 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 					</div>
 				</>,
 			)}
-			<IntroDock
-				hint="Enter · ← → to step"
-				action={
-					finished ? (
-						<button type="button" onClick={onStart} className={PRIMARY} data-testid="intro-start">
-							Start practicing
-						</button>
-					) : (
-						<button type="button" onClick={() => setStep(step + 1)} className={PRIMARY} data-testid="intro-next">
-							Next
-						</button>
-					)
-				}
-			/>
+			<IntroDock step={step} finished={finished} onBack={() => setStep(step - 1)} onNext={() => setStep(step + 1)} onStart={onStart} />
 		</>
 	);
 }
@@ -117,18 +104,43 @@ function introCard(plan: LessonPlan, progress: string, body: React.ReactNode) {
 	);
 }
 
-function IntroDock({ hint, action }: { hint?: string; action: React.ReactNode }) {
+function IntroDock({ step, finished, onBack, onNext, onStart }: { step: number; finished: boolean; onBack: () => void; onNext: () => void; onStart: () => void }) {
 	return (
 		<Dock>
-			<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
-				{hint ? (
-					<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 pointer-fine:flex">
-						<kbd className={KBD}>{hint}</kbd>
-					</p>
-				) : (
-					<span />
-				)}
-				<div className="ml-auto flex items-center gap-2">{action}</div>
+			<div className={cn(COLUMN, "grid min-h-20 grid-cols-[1fr_auto_1fr] items-center gap-4 py-4")}>
+				<div className="flex justify-start">
+					<button type="button" onClick={onBack} className={cn(QUIET, "-ml-2", step === 0 && "invisible")} tabIndex={step === 0 ? -1 : 0} aria-hidden={step === 0} data-testid="intro-back">
+						<ArrowLeftIcon className="size-4" strokeWidth={1.8} aria-hidden />
+						Back
+					</button>
+				</div>
+				<p className="hidden items-center gap-4 font-ui text-[13px] text-ink-3 pointer-fine:flex">
+					<span className="inline-flex items-center gap-1.5">
+						<kbd className={KBD}>
+							<ArrowLeftIcon className="size-3" strokeWidth={2} aria-hidden />
+						</kbd>
+						<kbd className={KBD}>
+							<ArrowRightIcon className="size-3" strokeWidth={2} aria-hidden />
+						</kbd>
+						step
+					</span>
+					<span className="inline-flex items-center gap-1.5">
+						<kbd className={KBD}>Enter</kbd>
+						{finished ? "start" : "next"}
+					</span>
+				</p>
+				<div className="flex justify-end">
+					{finished ? (
+						<button type="button" onClick={onStart} className={PRIMARY} data-testid="intro-start">
+							Start practicing
+						</button>
+					) : (
+						<button type="button" onClick={onNext} className={PRIMARY} data-testid="intro-next">
+							Next
+							<ArrowRightIcon className="size-4" strokeWidth={1.8} aria-hidden />
+						</button>
+					)}
+				</div>
 			</div>
 		</Dock>
 	);

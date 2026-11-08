@@ -166,3 +166,10 @@ test("the core barrel exposes the atlas", async () => {
 	assert.equal(core.weakestGender, weakestGender);
 	assert.equal(core.weakestAtlasCell, weakestAtlasCell);
 });
+
+test("a cell with nothing to drill says why, and a cell with a drill says nothing", () => {
+	const atlas = grammarAtlas({});
+	for (const g of ["masc", "fem", "neut"] as const) assert.equal(cell(atlas, "N", g).noDrill?.short, "dictionary form");
+	assert.equal(cell(atlas, "A", "neut").noDrill?.short, "same as nominative");
+	for (const c of atlas) assert.equal(c.noDrill === null, c.unit !== null, `${c.row} ${c.col}`);
+});
