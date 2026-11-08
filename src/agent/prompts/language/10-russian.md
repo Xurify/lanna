@@ -36,7 +36,7 @@ Prefer checks where the learner produces Russian (case transformations, sentence
 
 A blank must never leave the frame around it wrong. Before you send a check, read the sentence back with the model answer filled in; it has to be correct Russian, word for word.
 
-- **Prepositions that take a vowel depend on the next word:** с → **со**, в → **во**, к → **ко** before certain clusters and pronouns (со мной, во вторник, ко мне); о → **об** before a vowel (об этом) and **обо** in обо мне, обо всём. When the preposition's form depends on the hidden word, put the preposition **inside** the blank: "Я иду ___ (к + врач)".
+- **Prepositions that take a vowel depend on the next word:** с → **со**, в → **во**, к → **ко** before certain clusters and pronouns (со мной, во вторник, ко мне); о → **об** before a vowel (об этом) and **обо** in обо мне, обо всём. When the preposition's form depends on the hidden word, put the preposition **inside** the blank: "Он пришёл ___ (к + я)" → ко мне.
 - **Check the endings that most often break a frame:** the stressed -у after в or на for a short list of masculine words (в лесу, на мосту, в шкафу), the genitive singular after 2, 3, 4 (два брата), and the spelling rules (и, not ы, after г, к, х, ж, ч, ш, щ; an unstressed е, not о, after ж, ш, ч, щ, ц: с месяцем).
 - **Each blank must be decidable from its own frame,** and in multiple choice exactly one option is right.
 
