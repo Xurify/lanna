@@ -20,6 +20,7 @@ import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-e
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
+import { ChatReplies } from "@/components/chat-replies";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -173,6 +174,12 @@ function isSubagentSteer(m: LhViewMessage): boolean {
 	return (m.metadata as { subagentResult?: unknown } | undefined)?.subagentResult != null;
 }
 
+function lastReplyText(messages: readonly LhViewMessage[]): string {
+	const last = messages.at(-1);
+	if (!last || last.role !== "assistant") return "";
+	return last.parts.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("\n\n");
+}
+
 /**
  * The teaching session. All chat state lives in useChat; the server persists
  * the canonical transcript after every turn.
@@ -201,7 +208,7 @@ export function Chat({
 	/** The session kind (practice sessions, owner 2026-10-04): practice
 	 *  renders no phase chip (no probe→teach arc applies) and a Practice
 	 *  tag rides the header instead. */
-	kind?: "teach" | "practice";
+	kind?: "teach" | "practice" | "chat";
 	initialPrompt?: string;
 	/** A teacher turn is running server-side but attached to no client
 	 * (navigated away mid-turn, returned while in flight). */
@@ -1124,6 +1131,10 @@ export function Chat({
 		}
 		void dictation.finish().then(doSteerOrSend);
 	};
+	const sendQuickReply = (reply: string) => {
+		if (busy || pending || compacting) return;
+		void send({ type: "text", text: reply });
+	};
 	const doSend = () => {
 		if (busy || pending || compacting) return;
 		const t = textRef.current.trim();
@@ -1272,7 +1283,7 @@ export function Chat({
 					)}
 					{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
 					    tool calls are hidden by default; this chip brings them back. */}
-					<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+					{kind !== "chat" && <Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
 						<button
 							type="button"
 							data-testid="show-working"
@@ -1289,10 +1300,10 @@ export function Chat({
 							<CogIcon className="size-3.5" aria-hidden />
 							{showWorking ? "Hide working" : "Show working"}
 						</button>
-					</Hint>
+					</Hint>}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
-					{kind === "practice" ? (
+					{kind === "chat" ? null : kind === "practice" ? (
 						<span
 							data-testid="phase-chip"
 							data-phase="practice"
@@ -1315,7 +1326,7 @@ export function Chat({
 							{messages.length === 0 && !busy && (
 								<ConversationEmptyState
 									title="New chat"
-									description={kind === "practice" ? "Your tutor starts with a first problem." : "Your tutor starts with a few quick questions to see what you know."}
+									description={kind === "practice" ? "Your tutor starts with a first problem." : kind === "chat" ? "Ask anything about the language." : "Your tutor starts with a few quick questions to see what you know."}
 								/>
 							)}
 
@@ -1513,6 +1524,7 @@ export function Chat({
 														// — replaces the retired transcript bottom line. On settling, the
 														// registry's card takes over below.
 														if (part.type.startsWith("tool-") && part.state === "input-streaming") {
+															if (kind === "chat") return null;
 															return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
 														}
 														// Artifact extension point (contracts.ts): job
@@ -1553,6 +1565,7 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
+							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} onPick={sendQuickReply} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Summarizing the chat so far" />
@@ -1588,6 +1601,7 @@ export function Chat({
 				    height morph (typing, a question growing the band, the
 				    fold) and NEVER overlaps the composer. */}
 				<DockOverlay
+					plain={kind === "chat"}
 					pending={pending}
 					initialQuestionDraft={pending ? questionDraft(pending.toolCallId)?.form : undefined}
 					onSaveQuestionDraft={(form) => { if (pending) saveQuestionDraft(pending.toolCallId, { form }); }}
@@ -1842,7 +1856,9 @@ function DockOverlay({
 	dictationCancel,
 	setupCta,
 	queuedSteers,
+	plain = false,
 }: {
+	plain?: boolean;
 	pending: ReturnType<typeof findPendingToolCall>;
 	initialQuestionDraft?: QuestionFormDraft;
 	onSaveQuestionDraft: (draft: QuestionFormDraft) => void;
@@ -2348,6 +2364,7 @@ function DockOverlay({
 						pricing={pricing}
 						dictationSlot={dictationSlot}
 						chatId={chatId}
+						plain={plain}
 					/>
 					{/* The scroll-down disc (moved here from the Conversation,
 					    owner refinement round 2026-09-24): anchored to the BLOCK's

@@ -8,6 +8,7 @@ import { effectivePromptSegments } from "./prompt-segments.ts";
 import { learnerProfileSegment } from "./learner-profile.ts";
 import { askUserQuestionTool, createProberTools, createTeacherTools, type ProberToolContext, type TeacherToolContext } from "./tools.ts";
 import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
+import { languageTools, type ReviewSeam } from "./tools/language.ts";
 import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";
 import { quizInputProblems } from "../core/question-core.ts";
@@ -44,7 +45,7 @@ import { activeProfile } from "../../config.ts";
 
 /** Which agent's prompt directory to compose. Practice (2026-10-04)
  *  composes ONLY its own directory — see prompt-segments.ts. */
-type AgentKind = "prober" | "teacher" | "practice";
+type AgentKind = "prober" | "teacher" | "practice" | "chat";
 
 // P2 (2026-09-19): segment discovery + override resolution live in ONE
 // canonical place now — src/store/prompt-overrides.ts (listSourceSegments
@@ -209,7 +210,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 			// transport. Explicit test registries remain caller-owned.
 			tools: [
 				...tools,
-				...(opts.tools === undefined && engine.model.id.toLowerCase().includes("claude")
+				...(opts.tools === undefined && kind !== "chat" && engine.model.id.toLowerCase().includes("claude")
 					? [withArgumentHeal(sendToUserTool)]
 					: []),
 			],
@@ -343,8 +344,14 @@ export function createPracticeAgent(ctx: PracticeToolContext, opts: AgentBuildOp
 	return baseAgentOptions("practice", opts, Object.values(tools));
 }
 
+export function createChatAgent(ctx: { review?: ReviewSeam }, opts: AgentBuildOptions = {}) {
+	const tools = opts.tools ?? languageTools(ctx.review);
+	return baseAgentOptions("chat", opts, Object.values(tools));
+}
+
 export type ProberAgent = ReturnType<typeof createProberAgent>;
 export type TeacherAgent = ReturnType<typeof createTeacherAgent>;
 export type PracticeAgent = ReturnType<typeof createPracticeAgent>;
-export type TeachingAgent = ProberAgent | TeacherAgent | PracticeAgent;
+export type ChatAgent = ReturnType<typeof createChatAgent>;
+export type TeachingAgent = ProberAgent | TeacherAgent | PracticeAgent | ChatAgent;
 

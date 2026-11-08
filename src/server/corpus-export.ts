@@ -50,7 +50,7 @@ interface ExportedDialogue {
 	id: string;
 	title: string;
 	/** "learn" (course) or "practice" (Talk, Story, Why?, Practice). */
-	kind: "learn" | "practice";
+	kind: "learn" | "practice" | "chat";
 	/** Why?, Talk, Story or Practice, read off the first message; null for a course. */
 	practiceMode: "why" | "talk" | "story" | "practice" | null;
 	deleted: boolean;
@@ -112,7 +112,7 @@ export function exportDialogue(chat: ChatRecord, deleted = false): ExportedDialo
 		messages.push({ role: m.role, text, spoken: spokenIn(text), ...(at ? { at } : {}) });
 	}
 	const first = messages.find((m) => m.role === "user")?.text ?? "";
-	const practiceMode = chat.kind !== "practice" ? null : /^why\?/i.test(first) ? "why" : /^talk:/i.test(first) ? "talk" : /^story:/i.test(first) ? "story" : "practice";
+	const practiceMode = chat.kind === "chat" ? (/^why\?/i.test(first) ? "why" : null) : chat.kind !== "practice" ? null : /^why\?/i.test(first) ? "why" : /^talk:/i.test(first) ? "talk" : /^story:/i.test(first) ? "story" : "practice";
 	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: null as number | null, models: [] as string[] };
 	const models = new Set<string>();
 	for (const turn of chat.turns ?? []) {
@@ -135,7 +135,7 @@ export function exportDialogue(chat: ChatRecord, deleted = false): ExportedDialo
 	return {
 		id: chat.id,
 		title: chat.title,
-		kind: chat.kind === "practice" ? "practice" : "learn",
+		kind: chat.kind === "practice" || chat.kind === "chat" ? chat.kind : "learn",
 		practiceMode,
 		deleted,
 		createdAt: chat.createdAt,
@@ -195,7 +195,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`audio.json\` | spoken clip | \`text\`, \`lang\`, \`voice\`, \`tier\` (engine), \`file\` (relative to \`<data>/audio/\`), \`bytes\`, \`createdAt\`, \`key\` |
 | \`sentences.json\` | distinct lesson sentence | \`sentence\`, \`translation\`, \`answer\` (the blanked form), \`lemma\`, \`gloss\`, \`unit\`, \`trigger\`, \`timesSeen\`, \`timesRight\`, \`answers[]\` (\`at\`, \`kind\`, \`given\`, \`verdict\`, \`assisted\`) |
 | \`lessons.json\` | finished lesson, blitz or placement drill | \`id\`, \`at\`, \`day\`, \`unit\`, \`mode\`, \`ms\`, \`xp\`, \`correct\`, \`total\`, \`perfect\`, \`queued\`, \`reps[]\` (every exercise with sentence, answer, what you gave, verdict) |
-| \`dialogues.json\` | tutor session | \`id\`, \`title\`, \`kind\` (learn/practice), \`practiceMode\` (why/talk/story/practice), \`deleted\`, dates, \`messages[]\` (\`role\`, \`text\`, \`spoken[]\` = the say: phrases), \`usage\` (tokens, cost, models) |
+| \`dialogues.json\` | tutor session | \`id\`, \`title\`, \`kind\` (learn/practice/chat), \`practiceMode\` (why/talk/story/practice; why or null for a chat), \`deleted\`, dates, \`messages[]\` (\`role\`, \`text\`, \`spoken[]\` = the say: phrases), \`usage\` (tokens, cost, models) |
 | \`explanations.json\` | Why? question | \`sentence\`, \`answer\`, \`lemma\`, \`learnerWrote\`, \`question\`, \`explanation\` (the tutor's reply), \`chatId\`, \`askedAt\`, \`reopened\` |
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`known.json\` | an object | \`words\` (the words you marked as known: by slug, the dictionary form and when) and \`updatedAt\` |

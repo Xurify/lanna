@@ -528,7 +528,7 @@ function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; onCommit:
  *  All / Learn / Practice — a client-side filter over the same snapshot.
  *  It lives behind the search button and applies only while search is
  *  open, so a forgotten filter can never leave the list silently short. */
-type SessionKindFilter = "teach" | "all" | "practice";
+type SessionKindFilter = "teach" | "all" | "practice" | "chat";
 
 function SessionsSidebar() {
 	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();
@@ -1040,7 +1040,7 @@ function SessionsSidebar() {
 							</div>
 							{searching && (
 								<div className="flex items-center gap-1" role="group" aria-label="Show" data-testid="session-kind-filter">
-									{(["all", "teach", "practice"] as const).map((f) => (
+									{(["all", "chat", "teach", "practice"] as const).map((f) => (
 										<button
 											key={f}
 											type="button"
@@ -1055,7 +1055,7 @@ function SessionsSidebar() {
 												kindFilter === f ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
 											)}
 										>
-											{f === "teach" ? "Learn" : f === "all" ? "All" : "Practice"}
+											{f === "teach" ? "Learn" : f === "all" ? "All" : f === "chat" ? "Chat" : "Practice"}
 										</button>
 									))}
 								</div>
@@ -1097,7 +1097,7 @@ function SessionsSidebar() {
 									{query.trim()
 										? `No chats match “${query.trim()}”.`
 										: kindFilter !== "all"
-											? `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
+											? kindFilter === "chat" ? "No chats yet." : `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
 											: "Your chats with the tutor show up here."}
 								</p>
 							) : (

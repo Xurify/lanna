@@ -29,6 +29,7 @@ const DOCK = "mx-auto w-full max-w-[46rem] px-4";
 
 /** One-tap starting points for an empty draft (they fill the composer). */
 const TEACH_IDEAS = ["Ordering food in a café", "Talking about my weekend", "The past tense", "Cases after prepositions"];
+const CHAT_IDEAS = ["Explain the cases with a drawing", "This, that and that over there", "The past tense", "How do I say that I like something?"];
 const PRACTICE_IDEAS = ["Verb endings in the present", "Accusative after mám, vidím", "Where? v, na + locative", "Past tense -l, -la, -lo"];
 
 /**
@@ -42,7 +43,7 @@ const PRACTICE_IDEAS = ["Verb endings in the present", "Accusative after mám, v
 export async function startDraftSession(
 	text: string,
 	fetchLike: typeof fetch,
-	mode?: "practice",
+	mode?: "practice" | "chat",
 ): Promise<string | null> {
 	const t = text.trim();
 	if (!t) return null;
@@ -54,9 +55,7 @@ export async function startDraftSession(
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(
-			mode === "practice"
-				? { title: t, kind: "practice" }
-				: { title: t },
+			mode ? { title: t, kind: mode } : { title: t },
 		),
 	});
 	const { id } = (await res.json()) as { id: string };
@@ -76,24 +75,18 @@ export function DraftShell({
 	onChange,
 	onSend,
 	setupCta,
-	mode = "teach",
-		onModeChange,
-	}: {
+	mode = "chat",
+}: {
 	busy: boolean;
 	text: string;
 	onChange: (v: string) => void;
 	onSend: () => void;
-	/** The practice draft (owner, 2026-10-04): ?mode=practice — the
-	 *  created session carries kind:"practice" and the copy changes
-	 *  (the practice agent opens; no probing). */
-	mode?: "teach" | "practice";
+	mode?: "chat" | "teach" | "practice";
 	/** The first-run CTA (fix wave chunk B): the same "Set up your models"
 	 *  affordance home carries, rendered above the draft shell — passed by
 	 *  NewSession, which owns the configured state and the SetupDialog. */
 	setupCta?: ReactNode;
-		/** When given, the start screen offers the two kinds of chat as a choice. */
-		onModeChange?: (mode: "teach" | "practice") => void;
-	}) {
+}) {
 	// Voice dictation (STT wave, 2026-09-17): finals append at the end of the
 	// draft text (via the parent's onChange — the truth lives there); the
 	// strip lives in the stats bar's middle slot.
@@ -151,27 +144,20 @@ export function DraftShell({
 				<div className="relative flex min-h-0 flex-1">
 						<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">
 						<div className="flex min-h-0 flex-1 items-end justify-center overflow-y-auto px-4 pb-10 pt-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
-									{onModeChange && (
-											<div className="pointer-events-auto q-segc" role="radiogroup" aria-label="Kind of chat" data-testid="draft-mode">
-												{(["teach", "practice"] as const).map((m) => (
-													<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("min-w-24", mode === m && "on")} onClick={() => onModeChange(m)} data-testid={`draft-mode-${m}`}>
-														{m === "teach" ? "Learn" : "Practice"}
-													</button>
-												))}
-											</div>
-										)}
 									<div className="max-w-md space-y-1.5">
 										<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
-											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
+											{mode === "practice" ? "What should we drill?" : mode === "chat" ? "What do you want to understand?" : "What do you want to learn?"}
 										</h3>
 										<p className="text-base text-muted-foreground">
 											{mode === "practice"
 												? "Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."
-												: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
+												: mode === "chat"
+													? "Ask about a word, a form or a rule. You get a short answer, a drawing when it helps, and then you try it."
+													: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
 										</p>
 									</div>
 									<div className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2" data-testid="draft-suggestions">
-										{(mode === "practice" ? PRACTICE_IDEAS : TEACH_IDEAS).map((idea) => (
+										{(mode === "practice" ? PRACTICE_IDEAS : mode === "chat" ? CHAT_IDEAS : TEACH_IDEAS).map((idea) => (
 											<button
 												key={idea}
 												type="button"
@@ -206,12 +192,13 @@ export function DraftShell({
 										// input (owner refinement round, 2026-09-24) — no lesson has
 										// started yet, so the composer must not read like one is in
 										// flight.
-										placeholder={mode === "practice" ? "What do you want to practice?" : "What do you want to learn?"}
+										placeholder={mode === "practice" ? "What do you want to practice?" : mode === "chat" ? "Ask anything about the language…" : "What do you want to learn?"}
 									/>
 								</div>
 								<StatsBar
 									dictationSlot={<DictationBar dictation={dictation} />}
 									turns={[]}
+									plain={mode === "chat"}
 								/>
 							</div>
 						</div>
@@ -230,9 +217,8 @@ export function DraftShell({
 	);
 }
 
-export function NewSession({ initialConfigured, mode: initialMode = "teach" }: { initialConfigured: boolean; mode?: "teach" | "practice" }) {
+export function NewSession({ initialConfigured, mode = "chat" }: { initialConfigured: boolean; mode?: "chat" | "teach" | "practice" }) {
 	const router = useRouter();
-	const [mode, setMode] = useState<"teach" | "practice">(initialMode);
 	const [text, setText] = useState("");
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
 	 * finish-first send calls THIS send after the dictation flush — which
@@ -277,13 +263,13 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 			return;
 		}
 		setBusy(true);
-		void startDraftSession(draft, fetch, mode === "practice" ? "practice" : undefined)
+		void startDraftSession(draft, fetch, mode === "teach" ? undefined : mode)
 			.then((target) => {
 				if (target) router.push(target);
 				else setBusy(false);
 			})
 			.catch(() => setBusy(false));
-	}, [busy, router, configured, zeroKeys, strongKeyless]);
+	}, [busy, router, configured, zeroKeys, strongKeyless, mode]);
 
 	return (
 		<>
@@ -292,12 +278,7 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 				text={text}
 				onChange={applyText}
 				onSend={send}
-								mode={mode}
-				onModeChange={(m) => {
-					setMode(m);
-					// replaceState keeps the address shareable without reloading the draft.
-					window.history.replaceState(null, "", m === "practice" ? "/chat/new?mode=practice" : "/chat/new");
-				}}
+				mode={mode}
 				setupCta={
 					zeroKeys ? (
 						<ZeroKeysPill inline onOpen={() => setSetupOpen(true)} />
