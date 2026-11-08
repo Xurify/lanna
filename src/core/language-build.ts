@@ -259,9 +259,8 @@ const INFLECTING = new Set(["noun", "verb", "adj"]);
  *  conjunction and a particle. Entries that do not inflect are one word to
  *  a learner, so they become one row, which then owns the token and gets
  *  its sentences. Inflecting entries (jak, "yak") stay apart. */
-/** A noun spelled like an adjective in every form is that adjective used
- *  as a noun (Russian "красный", a Red; Estonian "must"): kept apart, it
- *  owns none of its forms alone, and neither word would be ranked. */
+// Wiktionary gives an adjective used as a noun (Russian красный, "a Red") an
+// entry of its own with the adjective's forms.
 function adjectiveUsedAsNoun(w: BuildWord, adjectives: ReadonlyMap<string, ReadonlySet<string>>, tag: string): boolean {
 	if (w.pos !== "noun") return false;
 	const forms = adjectives.get(normWord(w.lemma, tag));
@@ -340,9 +339,6 @@ function tokenize(text: string): Array<{ token: string; at: number }> {
 
 const startsUppercase = (word: string) => /^\p{Lu}/u.test(word);
 
-/** Spellings the sentences write with a capital inside a sentence more often
- *  than without: names ("Том", Tom), even where a common word shares them
- *  ("том", a volume). */
 export function namesIn(sentences: Iterable<{ text: string }>, tag: string): Set<string> {
 	const capital = new Map<string, number>();
 	const lower = new Map<string, number>();
@@ -370,16 +366,6 @@ export function sentenceUsable(text: string): boolean {
 	return n >= 2 && n <= 14;
 }
 
-/**
- * Collects Tatoeba sentences per word, each blanked at a form only that word
- * owns. Feed sentences shortest first. The first `perWord` to arrive are the
- * word's first examples, whatever their form, so a review card's
- * "<slug>#<index>" keeps its sentence when the lexicon is built again. After
- * them come up to `perForm` sentences for each form the first ones lack,
- * a new form before a second sentence of a form already there, up to
- * `maxPerWord`: a grammar lesson drills a case only through sentences that
- * hold it, and the first five are mostly the dictionary form.
- */
 export class ExampleCollector {
 	private readonly index: Map<string, Set<string>>;
 	private readonly first = new Map<string, LexiconExample[]>();
@@ -447,8 +433,6 @@ export class ExampleCollector {
 		}
 	}
 
-	/** Each word's sentences: its first ones, then one more sentence for each
-	 *  form in the order they arrived, then a second round, up to the cap. */
 	get examples(): Map<string, LexiconExample[]> {
 		const out = new Map<string, LexiconExample[]>();
 		for (const [key, firstList] of this.first) {

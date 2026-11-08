@@ -36,9 +36,6 @@ export interface CourseUnit {
 	cat?: string;
 	/** grammar: every tag must be in one of the form's cells. */
 	tags?: string[];
-	/** grammar: several tag sets, any one of which a form may fill, for a
-	 *  lesson over a group of forms (the plural of the place cases) that no
-	 *  single set holds enough sentences for. Replaces `tags` when set. */
 	variants?: string[][];
 	/** grammar: the blank must follow one of these words (a preposition, a
 	 *  modal verb), lowercase. */
@@ -75,18 +72,11 @@ export interface CourseChapter {
 	units: string[];
 }
 
-/** A row of the grammar page's case table (app/grammar): a case the
- *  language has, in the order the course wants it read. */
 export interface CourseCase {
-	/** The case's Wiktionary tag, one of CASE_TAGS. */
 	tag: string;
-	/** Its name in the language (seesütlev, предложный). */
 	native: string;
-	/** What it does, in a few plain English words with one example. */
 	means: string;
-	/** Why a number of this case has no drill, when no unit drills it. */
 	noDrill?: Partial<Record<CaseNumber, { short: string; why: string }>>;
-	/** The tutor session that practices this case where no drill can. */
 	tutor?: string;
 }
 
@@ -105,8 +95,6 @@ export interface Course {
 	tutors: CourseTutor[];
 	goals: CourseGoal[];
 	chapters: CourseChapter[];
-	/** The case table, rows in reading order. A course without it (a model's
-	 *  draft) gets one from the cases its units drill. */
 	cases?: CourseCase[];
 }
 
@@ -166,9 +154,8 @@ export const CASE_TAGS = [
 ] as const;
 const CASE_TAG_SET = new Set<string>(CASE_TAGS);
 
-/** Wiktionary's Estonian and Finnish tables label the total object
- *  "accusative" beside the case whose form it borrows ("accusative genitive
- *  singular"): a second name for that form, not a second meaning of it. */
+// Wiktionary's Estonian and Finnish tables label the total object "accusative"
+// beside the case whose form it borrows ("accusative genitive singular").
 function isObjectAlias(cell: readonly string[]): boolean {
 	return cell.includes("accusative") && cell.some((t) => t !== "accusative" && CASE_TAG_SET.has(t));
 }
@@ -218,7 +205,6 @@ export function courseUnitsFor(units: readonly CourseUnit[], entry: LexiconEntry
 	return out;
 }
 
-/** The tag sets a grammar unit drills: its variants, else its one set of tags. */
 export function tagSets(u: Pick<CourseUnit, "tags" | "variants">): string[][] {
 	if (u.variants?.length) return u.variants.filter((v) => v.length > 0);
 	return u.tags?.length ? [u.tags] : [];
@@ -226,9 +212,7 @@ export function tagSets(u: Pick<CourseUnit, "tags" | "variants">): string[][] {
 
 const NUMBER_TAGS = new Set<string>(CASE_NUMBERS);
 
-/** The other forms of a word that fill exactly the cells the answer fills:
- *  Estonian majja and majasse (into the house), maju and majasid. Both are
- *  standard, so a lesson takes either. */
+// Estonian has standard doublets in one cell: majja and majasse, maju and majasid.
 export function sameCellForms(entry: Pick<LexiconEntry, "formTags">, answer: string, tag: string): string[] {
 	const key = (cells: string[][]) => cells.map((c) => [...c].sort().join(" ")).sort().join("|");
 	const own = key(cellsOf(entry, answer, tag));
@@ -239,8 +223,6 @@ export function sameCellForms(entry: Pick<LexiconEntry, "formTags">, answer: str
 		.map(([form]) => form);
 }
 
-/** What a unit asks of this answer: the tags of the form's cell that fits
- *  one of the unit's sets ("inessive plural"), else the unit's own tags. */
 export function filledTags(u: Pick<CourseUnit, "tags" | "variants">, entry: Pick<LexiconEntry, "formTags">, answer: string, tag: string): string[] | null {
 	const sets = tagSets(u);
 	if (sets.length === 0) return null;
@@ -248,9 +230,6 @@ export function filledTags(u: Pick<CourseUnit, "tags" | "variants">, entry: Pick
 	return cell ?? sets[0]!;
 }
 
-/** The case table cells a noun unit drills: "inessive singular" for each of
- *  its tag sets, both numbers when a set names none. Empty for a unit that
- *  is not about a noun's case. */
 export function unitCaseCells(u: Pick<CourseUnit, "kind" | "cat" | "tags" | "variants">): string[] {
 	if (u.kind !== "grammar" || u.cat !== "Nouns") return [];
 	const out = new Set<string>();
@@ -263,8 +242,6 @@ export function unitCaseCells(u: Pick<CourseUnit, "kind" | "cat" | "tags" | "var
 	return [...out];
 }
 
-/** The case table cell an answer filled in a unit's lesson ("inessive
- *  plural"), when its form fills exactly one of the unit's cells; else null. */
 export function formCaseCell(u: Pick<CourseUnit, "kind" | "cat" | "tags" | "variants">, entry: Pick<LexiconEntry, "formTags" | "cat">, answer: string, tag: string): string | null {
 	const wanted = new Set(unitCaseCells(u));
 	if (wanted.size === 0 || entry.cat !== "Nouns") return null;
@@ -431,8 +408,6 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 	return { course, dropped };
 }
 
-/** The case table rows, kept only for known case tags; a tutor link only
- *  to a tutor session the course keeps. */
 function checkCases(raw: unknown, tutors: ReadonlySet<string>): CourseCase[] {
 	const out: CourseCase[] = [];
 	for (const c of Array.isArray(raw) ? raw : []) {

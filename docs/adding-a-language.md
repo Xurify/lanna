@@ -11,7 +11,7 @@ Everything lands in `<data>/languages/<id>/`, shared by every profile. The steps
 | Example sentences with English translations | Tatoeba per-language exports (CC BY 2.0 FR), bzip2 | `build/sentences.json` |
 | Which words are common | FrequencyWords, OpenSubtitles 2018 (CC BY-SA 4.0); a language it lacks would be ranked from its Tatoeba sentences | `build/frequency.json` |
 | Words, glosses, gender, inflected forms | Wiktionary as extracted by kaikki.org (CC BY-SA 4.0), streamed with gzip and filtered line by line | `build/words.json` |
-| The word list (about 3,000 lemmas, commonest first, each with up to five sentences blanked at a form) | the three above | `lexicon.json` |
+| The word list (about 3,000 lemmas, commonest first, plus the words a written course's themes name; each with its first five sentences, then up to 24 with one or two for each form it lacks) | the three above | `lexicon.json` |
 | The tutor's language segment | a template, no model | `prompt.md` |
 | The course: grammar lessons, word themes, tutor sessions, goals, chapters | one call on the Strong slot (the Cheap one when no Strong is set), checked against the dictionary, asked once more if it fails | `course.json`, cost in `build/course-draft.json` |
 | The story bible: series, city, cast, places, a beat per chapter, Read settings, Speak scenes | one more call on the same slot, checked | `world.json`, cost in `build/world-draft.json` |
@@ -25,6 +25,9 @@ Everything lands in `<data>/languages/<id>/`, shared by every profile. The steps
 The rules are in `src/core/language-build.ts` and pinned by `tests/language-add.test.ts`:
 
 - Sentences come only from Tatoeba (E27). A model never writes one.
+- A word keeps its first five sentences in the order they arrived (a review card points at one by its place), then gets sentences for the forms those lack: a case is drilled only through sentences that hold it.
+- A spelling written with a capital inside sentences more often than without is a name (Russian "Тома", Tom), not the common word that shares it (том, a volume).
+- A noun spelled like an adjective in every form (Russian красный, "a Red") is that adjective; kept apart, neither would rank. A word with ё ranks by the е spelling subtitles use.
 - A form is blanked only when one word owns it. When several do, the word whose dictionary form it is wins ("prosím" is "please" before it is a form of prosit), and the commoner one when two share that spelling. This is the homograph guard of E28.
 - Forms come from Wiktionary's inflection tables only. Dated and pre-reform forms (кошкѣ), romanizations, rare forms and related words (diminutives, aspect partners) are left out.
 - Entries that do not inflect and share a spelling ("co" as pronoun, conjunction and particle) become one row. A noun, verb or adjective that shares its spelling with a common word ranks by its own other forms ("jak", the yak, does not ride on "jak", how).
@@ -46,7 +49,8 @@ The dialog asks who builds the course and shows the price of each choice before 
 - **Grammar lessons select real sentences by their form's tags.** Wiktionary labels each form ("kávu": accusative singular). A lesson names the tags it drills and, when the rule depends on it, the words that come right before the blank (a preposition). A sentence counts when its blank carries every tag. With no trigger word, the form must mean only that (Czech "kávě" is dative or locative, so it needs "v" or "na" before it to count as a locative). A dictionary form never counts as a case form ("Dobrý den" is not an accusative). The model never writes a sentence (E27).
 - **What the model writes is checked** against the language's own dictionary (`checkCourse`, `checkWorld` in `src/core/course.ts`): a tag the dictionary does not use, a word theme whose words are not in it, a lesson with fewer than 12 sentences, a chapter that does not end on a goal are dropped. When too little is left, the model is asked once more; a second failure ends the task with "Try again", which keeps the downloads.
 - **The course runs the whole app.** The server reads `course.json` at start (`config.ts`), the browser gets the same course before the page loads (`app/layout.tsx`), and the lesson units, the map, the chapters and the placement tiers are the course's (`src/core/lesson.ts`, `curriculum.ts`, `onboarding.ts`). First words and the frequency bands come with every course.
-- **Not generated:** the grammar atlas (a Slovak case × gender table), the Dvojičky pairs and the aspect tasks are Slovak content. Parallels from the learner's languages exist only in the Slovak lessons.
+- **A written course wins.** Estonian and Russian ship theirs in `curriculum/<id>/` (`course.json`, `world.json`, rule E77). Adding them makes no model call for the course or the story world; the dialog says so. `npx tsx scripts/check-course.ts <id>` runs a written course against a language's dictionary, and `npx tsx scripts/rebuild-lexicon.ts <id>` builds an added language's word list again from its kept downloads.
+- **Grammar page:** every course gets a case table (its cases down the side, singular and plural across), from the course's `cases` or from the cases its drills cover. The Dvojičky pairs and the aspect tasks are Slovak content. Parallels from the learner's languages exist only in the Slovak lessons.
 - A folder without `course.json` (a language added before courses were generated) is not listed as a language; adding it again builds the course from the kept downloads.
 
 ## Removing a language

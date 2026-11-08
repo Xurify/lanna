@@ -104,7 +104,7 @@ describe("the case table of a course", () => {
 		chapters: [{ id: "town", stage: "a1", title: "Town", tagline: "", units: ["nom-pl", "inner", "in", "tutor-places", "can-go"] }],
 	};
 
-	test("rows are the course's cases; a cell opens the lesson that drills only it before a lesson that mixes it", () => {
+	test("rows are the course's cases; a cell opens the lesson that drills only it before a lesson that mixes it, and counts the first tries of both", () => {
 		const rows = caseTable(course, { in: { first: { reps: 4, right: 3, accents: 0, slips: {} } }, inner: { byForm: { "inessive singular": { reps: 2, right: 1, accents: 0, slips: {} } } } });
 		assert.deepEqual(rows.map((r) => r.tag), ["nominative", "inessive"]);
 		const [nomSg, nomPl] = rows[0]!.cells;
@@ -114,7 +114,8 @@ describe("the case table of a course", () => {
 		assert.equal(nomPl!.accuracy, null);
 		const [inSg, inPl] = rows[1]!.cells;
 		assert.equal(inSg!.unit, "in");
-		assert.equal(inSg!.accuracy, 0.75);
+		assert.equal(inSg!.reps, 6);
+		assert.equal(inSg!.right, 4);
 		assert.equal(inPl!.unit, null);
 		assert.equal(inPl!.tutor?.title, "Places");
 	});

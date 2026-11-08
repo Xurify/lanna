@@ -101,7 +101,8 @@ where the format is not obvious.
   wherever the app measures what you know.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
-  tutor read (\`first\`, split \`byGender\`).
+  tutor read (\`first\`, split \`byGender\` in Slovak and \`byForm\`, by case
+  table cell, in another language).
 - \`jobs/\`: background agent jobs and their token usage.
 - \`debug/\`: raw provider streams when debug recording is enabled.
 `;

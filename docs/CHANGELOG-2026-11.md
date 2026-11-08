@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 8 November: Estonian and Russian courses written by hand, and a case table on Grammar (branch `feat/estonian-russian-courses`)
+
+- **Why:** the owner opened Grammar in Estonian and read "The case and gender table is built for Slovak only", and asked for the Estonian and Russian content to be audited, researched and covered in full, reviewed by other agents (Gemini among them) until nothing was left. Rule E77; research: [research/estonian-coverage.md](research/estonian-coverage.md), [research/russian-coverage.md](research/russian-coverage.md).
+- **What changed:** Estonian has 24 chapters from A1 to B2 (31 drills, 28 tutor sessions, 18 word themes): every present and past person, negation, the ma and da forms, the conditional, the impersonal, the perfect, -mas, -mast and -mata, and all 14 cases in the singular and most in the plural. Russian has 22 chapters on the ТРКИ levels (25 drills, 31 tutor sessions, 17 word themes): every person of the present, the past by gender, both futures, the imperative, all six cases in both numbers, где and куда, numbers with nouns, agreement, adjectives and pronouns in every case, short forms, comparison, participles and verbal adverbs. What a drill cannot hold (aspect, motion verbs with prefixes, the essive, the quotative, word order, register, spoken forms) has a tutor session. The Grammar page shows each language's cases, singular and plural, with first tries per cell. Adding a language that ships a course costs nothing.
+- **The word lists were rebuilt:** more sentences per word for the forms it lacked, names no longer counted as common words (Russian "Тома" was filed under том, a volume), adjectives that a noun of the same spelling hid are back (красный, must), words with ё rank properly, and the words of a course's themes are kept past the 3,000.
+- **Unverified:** the courses in the owner's app; the tutor sessions with a real model; the new story beats in Read.
+
 ## 8 November: the chat is a plain conversation, after riddled.ai (branch `feat/light-tutor-chat`)
 
 - **Why:** the owner: the chat is "way too clunky" and slow (picking a model, the thinking, long replies, late drawings), and should "feel very easy to follow along and not overwhelming at all", taking "major inspiration from Riddled.ai". Rule E76; research: [research/riddled-chat.md](research/riddled-chat.md) (riddled.ai's public pages, its shared Slovak demonstratives thread and the demo video; no account, no prompt extraction).

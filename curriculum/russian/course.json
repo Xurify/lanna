@@ -43,8 +43,8 @@
 		},
 		{
 			"tag": "locative",
-			"native": "местный (второй предложный)",
-			"means": "in or on, for a few masculine words: в лесу, на мосту",
+			"native": "местный",
+			"means": "the second prepositional of a few masculine words: в лесу, на мосту",
 			"tutor": "tutor-special-cases",
 			"noDrill": {
 				"singular": {
@@ -59,8 +59,8 @@
 		},
 		{
 			"tag": "partitive",
-			"native": "частичный (второй родительный)",
-			"means": "some of, for a few masculine words: чашка чаю, много народу",
+			"native": "частичный",
+			"means": "the second genitive of a few masculine words: чашка чаю, много народу",
 			"tutor": "tutor-special-cases",
 			"noDrill": {
 				"singular": {

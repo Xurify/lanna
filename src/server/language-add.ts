@@ -562,9 +562,6 @@ function mergeUsage(calls: ReadonlyArray<{ usage: StoryUsage }>): StoryUsage {
 	return { model: calls[0]!.usage.model, steps: calls.flatMap((c) => c.usage.steps) };
 }
 
-/** Runs every step; resolves with a note for the ready notice, if any. */
-/** The word list from the kept downloads: ranked words, each with its
- *  Tatoeba sentences, written to lexicon.json. */
 function shippedJson<T>(id: string, name: string): T | null {
 	return readJson<T>(path.join(ROOT, "curriculum", id, name));
 }
@@ -591,9 +588,6 @@ async function writeLexicon(lang: CatalogLanguage, sentences: readonly TatoebaSe
 	return entries;
 }
 
-/** Build an added language's word list again from its kept downloads, with
- *  no download and no model call (scripts/rebuild-lexicon.ts). The words and
- *  their order do not change, so review cards keep their sentences. */
 export async function rebuildLexicon(id: string): Promise<{ words: number; examples: number }> {
 	const lang = catalogLanguage(id);
 	if (!lang) throw new Error(`${id} is not in the language catalog`);

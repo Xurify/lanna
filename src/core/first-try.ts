@@ -77,10 +77,6 @@ export function countsAsFirstTry(rep: { kind: string; again?: boolean; first?: F
 /** An atlas cell: a case drill's case and the gender column of its word. */
 export type FirstTryCell = { row: AtlasCase; col: AtlasGender } | null;
 
-/** What a unit keeps of its first tries: all of them, a Slovak case drill's
- *  split by the gender column of its word (the atlas cells), and a
- *  generated course's split by the case table cell its form filled
- *  ("inessive plural"). */
 export interface FirstTryStats {
 	first?: FirstTally;
 	byGender?: Partial<Record<AtlasGender, FirstTally>>;
@@ -103,7 +99,6 @@ interface FirstTryRep {
 export interface FirstTryCount {
 	unit: string;
 	cell: FirstTryCell;
-	/** A generated course's case table cell ("inessive plural"), when the form fills one. */
 	form?: string;
 	verdict: RepVerdict;
 	/** Named only for a wrong answer (form-slip.ts). */
@@ -120,8 +115,6 @@ export function firstTryOf(rep: FirstTryRep, tag = "sk-SK"): FirstTryCount | nul
 	return { unit: rep.unit, cell: atlasCellOf(rep.unit, rep.entry.gender), verdict, ...(form ? { form } : {}), ...(slip ? { slip } : {}) };
 }
 
-/** Steps a unit's tally, the gender column's when the try filled an atlas
- *  cell, and the case table cell's when it filled one. */
 function bump<T extends FirstTryStats>(s: T, cell: FirstTryCell, step: (t: FirstTally) => FirstTally, form?: string): T {
 	let out: T = { ...s, first: step(s.first ?? emptyTally()) };
 	if (cell) out = { ...out, byGender: { ...s.byGender, [cell.col]: step(s.byGender?.[cell.col] ?? emptyTally()) } };
@@ -129,7 +122,6 @@ function bump<T extends FirstTryStats>(s: T, cell: FirstTryCell, step: (t: First
 	return out;
 }
 
-/** A counted first try, recorded on its unit and its atlas or case table cell. */
 export function recordFirstTry<T extends FirstTryStats>(s: T, t: FirstTryCount): T {
 	return bump(s, t.cell, (x) => addFirstTry(x, t.verdict, t.slip), t.form);
 }
