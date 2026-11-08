@@ -219,3 +219,13 @@ describe("a drawing asked for after the reply", () => {
 		assert.equal(svgOf("```svg\n<svg><script>x</script></svg>\n```"), null);
 	});
 });
+
+describe("the board's glossed forms", () => {
+	it("keeps a quoted meaning whole, parentheses included", async () => {
+		const { boardPhrases } = await import("../src/core/index.ts");
+		assert.deepEqual(boardPhrases(['`say: kde` = "where (at)", and `say: v meste` (in town).']), [
+			{ phrase: "kde", meaning: "where (at)" },
+			{ phrase: "v meste", meaning: "in town" },
+		]);
+	});
+});

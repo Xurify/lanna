@@ -1,6 +1,6 @@
 export type BoardPhrase = { phrase: string; meaning: string };
 
-const GLOSSED = /`say:\s*([^`]+?)\s*`\s*(?:=\s*|\(\s*)["“]?([^"”)\n]+?)["”]?\s*(?:\)|[.,;:]|$|\s(?=[A-Z]))/gm;
+const GLOSSED = /`say:\s*([^`]+?)\s*`\s*(?:=\s*|\(\s*)(?:["“]([^"”\n]+)["”]|([^"”)\n]+?)\s*(?:\)|[.,;:]|$|\s(?=[A-Z])))/gm;
 
 export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 	const seen = new Set<string>();
@@ -8,7 +8,7 @@ export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 	for (const reply of replies) {
 		for (const match of reply.replace(/```[\s\S]*?(?:```|$)/g, "").matchAll(GLOSSED)) {
 			const phrase = match[1]!.trim();
-			const meaning = match[2]!.trim();
+			const meaning = (match[2] ?? match[3] ?? "").trim();
 			const key = phrase.toLowerCase();
 			if (!meaning || seen.has(key)) continue;
 			seen.add(key);
