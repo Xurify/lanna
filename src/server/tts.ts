@@ -245,15 +245,41 @@ export async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<S
  *  +15% brings it up to a little slower than native. */
 const EDGE_RATE = "+15%";
 
+// Microsoft's service often accepts an Estonian request, sends no audio and
+// hangs up after about 3 s (msedge-tts: "no turn.end received"). Measured
+// 2026-11-08: about half of the Estonian requests, no Slovak ones. Failures
+// come in bursts and parallel tries fail together; a try a little later
+// usually works.
+const EDGE_ATTEMPTS = 6;
+const EDGE_RETRY_PAUSE_MS = 500;
+
+/** Runs `run` until it succeeds, at most `attempts` times, waiting `pauseMs` longer before each new try; the last error is thrown. */
+export async function withRetries<T>(run: () => Promise<T>, attempts: number, pauseMs: number): Promise<T> {
+	let last: unknown;
+	for (let i = 0; i < attempts; i++) {
+		if (i > 0) await new Promise((r) => setTimeout(r, pauseMs * i));
+		try {
+			return await run();
+		} catch (err) {
+			last = err;
+		}
+	}
+	throw last;
+}
+
 async function edge(req: TtsRequest, lang: LanguageInfo): Promise<Spoken | null> {
-	const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
 	const male = req.voice === "male" || (req.voice !== "female" && req.gender === "male");
 	const voice = lang.edgeVoices[male ? 1 : 0] ?? lang.edgeVoices[0];
 	if (!voice) return null;
+	return withRetries(() => edgeOnce(req.text, voice), EDGE_ATTEMPTS, EDGE_RETRY_PAUSE_MS);
+}
+
+async function edgeOnce(text: string, voice: string): Promise<Spoken | null> {
+	const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
 	const tts = new MsEdgeTTS();
 	try {
 		await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-		const { audioStream } = tts.toStream(escapeXml(req.text), { rate: EDGE_RATE });
+		const { audioStream } = tts.toStream(escapeXml(text), { rate: EDGE_RATE });
 		const chunks: Buffer[] = [];
 		await new Promise<void>((resolve, reject) => {
 			const timer = setTimeout(() => reject(new Error("Edge TTS timed out")), 20_000);
@@ -317,6 +343,18 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	const key = ttsCacheKey(req);
 	const hit = cached(key, lang.code);
 	if (hit) return hit;
+	const job = `${key}|${req.skip?.join(",") ?? ""}`;
+	const pending = inFlight.get(job);
+	if (pending) return pending;
+	const made = synthesizeFresh(req, lang, key).finally(() => inFlight.delete(job));
+	inFlight.set(job, made);
+	return made;
+}
+
+/** Clips being made now, by cache key: a prefetch and a click on the same sentence share one synthesis. */
+const inFlight = new Map<string, Promise<TtsClip | null>>();
+
+async function synthesizeFresh(req: TtsRequest, lang: LanguageInfo, key: string): Promise<TtsClip | null> {
 	for (const { tier, ext, run } of TIERS) {
 		if (req.skip?.includes(tier)) continue;
 		try {
