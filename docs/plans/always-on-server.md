@@ -1,6 +1,6 @@
 # Using LangHarness away from the PC: the plan
 
-Status: **proposed; revised 2026-11-08 with the owner's machines.** Nothing in this plan is built yet. The evidence, prices and sources are in [../research/always-on-server.md](../research/always-on-server.md). The rules it builds on are E7 (local data), E20 (an installable web app), E21 (Tailscale and pairing) and E45 (one running language).
+Status: **proposed; revised 2026-11-08: the owner wants a web app at its own address (route W).** Nothing in this plan is built yet. The evidence, prices and sources are in [../research/always-on-server.md](../research/always-on-server.md). The rules it builds on are E7 (local data), E20 (an installable web app), E21 (Tailscale and pairing) and E45 (one running language).
 
 ## The goal
 
@@ -18,7 +18,8 @@ The owner can study on the iPhone and the iPad from anywhere, with the PC switch
 
 | Route | In one line | Watch: new videos | Monthly cost | Status |
 |---|---|---|---|---|
-| **N. The Synology NAS (recommended if the model allows)** | Run the server in Container Manager, reached over the Tailscale package | works (home connection) | $0 | needs the model and its memory (check 1) |
+| **W. A web app at its own address (the owner's pick, 2026-11-08)** | `https://learn.<your domain>` on the flags.games VPS, with a sign-in page; open it in any browser, with no Tailscale | works if YouTube accepts the VPS (check 2); otherwise through the NAS | $0, plus a domain if you want a new one | full steps under "Route W" below |
+| N. The Synology NAS | Run the server in Container Manager, reached over the Tailscale package | works (home connection) | $0 | needs the model and its memory (check 1) | Run the server in Container Manager, reached over the Tailscale package | works (home connection) | $0 | needs the model and its memory (check 1) |
 | **V. The flags.games VPS** | Run the server beside flags.games, reached over Tailscale or at a public address | works only if YouTube accepts the VPS address (check 2) | $0 if it has spare memory | needs checks 2 and 3 |
 | B. The PC, woken from the phone | The PC sleeps; the router's app wakes it (Wake-on-LAN) before a session | works | $0 | fallback |
 | D. A store app | Wrap the web app for the App Store | as the server behind it | Apple $99 a year | not recommended (E20) |
@@ -42,7 +43,7 @@ A web app at a public address (open `https://langharness.<your domain>` in any b
 
 Each decision has a recommendation, and work can start on the recommended option unless the owner says otherwise (W1).
 
-1. **Where the server runs.** Recommended: **the NAS** if check 1 passes. It is already on, it is at home (E7 and E21 stand unchanged), YouTube works there, and DSM already has snapshots and Hyper Backup for the data. Choose **the VPS** if the NAS cannot run containers and check 2 passes. If neither works, fall back to **B**. Combining them is possible but has more parts: the VPS runs the app and sends only YouTube requests through the NAS over the tailnet. That is an option only if the VPS is wanted for another reason.
+1. **Where the server runs.** The owner chose a web app at its own address (route W, 2026-11-08), so the server goes on **the VPS**, and the NAS is the relay for YouTube if check 2 fails. The NAS reasoning below still applies if the owner later prefers a private setup: the **NAS** if check 1 passes. It is already on, it is at home (E7 and E21 stand unchanged), YouTube works there, and DSM already has snapshots and Hyper Backup for the data. Choose **the VPS** if the NAS cannot run containers and check 2 passes. If neither works, fall back to **B**. Combining them is possible but has more parts: the VPS runs the app and sends only YouTube requests through the NAS over the tailnet. That is an option only if the VPS is wanted for another reason.
 2. **How the phone reaches it.**
    - Recommended: **Tailscale**, as built. Leave the Tailscale app connected on the phone (iOS "VPN On Demand"); after that, nothing changes day to day.
    - Alternative: **a public address with the pairing code as the login.** The app then opens in any browser with no Tailscale app. It needs a small change to the gate, because today E21 accepts only tailnet names (work item 1h). The server and its keys would also be reachable from the internet, so only the pairing gate protects them. That reverses part of E21, so it is the owner's call. On the VPS this means a subdomain behind the reverse proxy that already serves flags.games. On the NAS it means a port forward on the router or a tunnel, which is not recommended for a box that also holds your files.
@@ -147,6 +148,72 @@ Study as normal for seven days, mostly on the phone and the iPad. Agents read th
 | The server's disk fails | snapshots and Hyper Backup, or the nightly copy; at most one day is lost |
 | Answers recorded under the wrong language | 1a, before phase 2 |
 
+## Route W: a web app at its own address
+
+**What the owner gets:** LangHarness at `https://learn.<your domain>`, like flags.games. Open it on the iPhone, the iPad, the PC or any other browser, sign in once per device, and add it to the Home Screen. There is no Tailscale, the PC can be off, and every device sees the same progress.
+
+**What it takes:** the app's screens and data stay as they are. Three things change:
+
+1. **Where it runs:** the flags.games VPS, in its own container, beside flags.games.
+2. **How it is reached:** a subdomain behind the reverse proxy that already serves flags.games, with HTTPS from Let's Encrypt.
+3. **Who gets in:** a real sign-in page. The app has had no login, because until now only the PC or a paired phone could reach it (E21).
+
+The pieces already in place carry most of the weight. The device session from E21 (a random token, only its SHA-256 digest stored, 180 days, HttpOnly and Secure) becomes what a sign-in creates. API keys never reach the browser: `GET /api/keys` returns the last four characters and the length only.
+
+### W, phase 1: the app work (agents in the cloud; one pull request each)
+
+| # | Work | Size |
+|---|---|---|
+| W1 | **Sign-in page and password.** `/login` with one owner password, hashed with scrypt and set from the terminal with `npm run web:password`. A correct password creates an E21 device session, which Settings → Devices lists and can sign out. Wrong tries are limited per address (5 a minute, then a 15-minute wait). Turning web access off signs every device out. | medium |
+| W2 | **The gate for a public address.** `LH_PUBLIC_HOST` names the one host the app answers. Requests must arrive from the local reverse proxy with HTTPS; any other host is refused. Everything except `/login`, its POST and the static assets needs a session. A POST must come from the app's own page (an Origin check, on top of SameSite=Lax). The E21 Tailscale path keeps working beside it. | medium |
+| W3 | **A security pass before the address goes live:** response headers (HSTS, CSP, frame-ancestors none), size limits on every upload route, a check that the URLs Watch and the tutor's web tools fetch cannot reach the VPS's own services (localhost, the metadata address, the private ranges), and a check that no API route returns a secret. Each finding is fixed or recorded with its reason. | medium |
+| W4 | **Every write carries its page's language** (work item 1a; queued as a task) | medium |
+| W5 | **Container image and compose file** (1c), **update script** (1e), and **a nightly backup** from the VPS to the NAS or the PC over the tailnet, or to off-site storage (1f) | medium |
+| W6 | **Watch if YouTube refuses the VPS:** an optional `LH_YOUTUBE_PROXY` that sends only YouTube requests, including yt-dlp, through a small proxy on the NAS over the tailnet. Off by default, and built only if check 2 fails. | small |
+| W7 | **Fixes from the phone checks** (phase 0, run against the web address instead of the PC) | depends |
+
+### W, phase 2: going live (owner, about an hour, with `docs/server.md`)
+
+1. Run checks 2 and 3 on the VPS.
+2. Add a DNS record for `learn.<your domain>` pointing at the VPS.
+3. Start the container on the VPS, bound to 127.0.0.1:3010, so only the reverse proxy can reach it.
+4. Add the subdomain to the reverse proxy flags.games uses (nginx, Caddy or similar), with HTTPS, proxying to 127.0.0.1:3010.
+5. Set the password with `npm run web:password` inside the container.
+6. **Move the data:**
+   - Quit LangHarness on the PC.
+   - Copy `data/`, `auth.json` and the keys in `.env.local` to the container's volume.
+   - Start the container, and only then rename the PC's `data/` to `data-moved-<date>`.
+7. Sign in on the iPhone, the iPad and the PC, and add the app to each Home Screen or taskbar.
+8. Turn on the update timer and the nightly backup, and do one restore drill.
+
+**Done when** the "Done means" line at the top holds, and from outside the VPS every page and API route except `/login` answers a request without a session with a sign-in redirect or a 401.
+
+### W, what it costs
+
+| Item | Cost |
+|---|---|
+| Hosting | $0 on the existing VPS, if `free -h` shows about 1–2 GB spare |
+| Address | $0 as a subdomain of a domain you own; about $10–15 a year for a new one |
+| HTTPS | $0 (Let's Encrypt) |
+| AI and voice | unchanged (Settings → Spending) |
+| YouTube relay (W6) | $0 through the NAS, if it is needed |
+| Owner's time | about an hour, plus the phone checks |
+
+### W, what changes in the rules
+
+E7 (data stays local) and E21 (no public address; Funnel refused; no third party holding the keys and data) are reversed for this deployment. The keys and the data move to the owner's own VPS, and the app becomes reachable from the internet behind a sign-in. When W ships, record that in DECISIONS.md: why, what protects it (W1–W3), and that Tailscale stays available.
+
+### W, for other learners later
+
+The steps above are for one learner, the owner. Opening sign-ups to other people is a separate project:
+
+- accounts with a data folder each, and a running language per person instead of per process (E45);
+- each person's own API keys, or the owner paying for their AI use, with limits against abuse;
+- a privacy policy;
+- under the AGPL, a link to the source for every user, which the public GitHub repo covers.
+
+Plan it after the owner has used W for a while.
+
 ## Route B: the PC, woken from the phone
 
 This is for the case where neither the NAS nor the VPS can run the app.
@@ -164,6 +231,6 @@ Not recommended (E20). It is a shell around one of the servers above. It needs t
 
 ## What happens next
 
-1. The owner runs the three checks and sends the NAS model with its memory, the yt-dlp output and `free -h`.
-2. Agents start 1a, 1b and 1c now. They are needed for the NAS and for the VPS.
-3. The route is fixed from the checks: the NAS if it can run containers, else the VPS if YouTube accepts it, else B.
+1. The owner runs checks 2 and 3 on the VPS and sends the yt-dlp output, `free -h`, and the domain to use.
+2. Agents start W1, W2, W4 and W5 now; W3 runs before the address goes live; W6 only if check 2 fails.
+3. If the VPS lacks the memory, W moves to the NAS behind the router, which needs a port forward or a tunnel. Discuss that before doing it.
