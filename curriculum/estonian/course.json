@@ -451,8 +451,7 @@
 				"paar",
 				"mitu",
 				"palju",
-				"vähe",
-				"pool"
+				"vähe"
 			]
 		},
 		{
@@ -460,7 +459,7 @@
 			"kind": "grammar",
 			"title": "Two of something",
 			"tagline": "kaks autot, palju raha",
-			"rule": "After a number from two up, and after mitu, paar and pool, the noun is partitive singular: kaks autot, pool tundi. After palju and vähe an amount is partitive singular (palju raha). A number in another case takes the noun with it: kahe autoga.",
+			"rule": "After a number from two up, and after mitu and paar, the noun is partitive singular: kaks autot, mitu korda. After palju and vähe an amount is partitive singular (palju raha). A number in another case takes the noun with it: kahe autoga.",
 			"glyph": "hash",
 			"grammarTerm": "partitive after numbers",
 			"nativeTerm": "osastav arvsõna järel",
@@ -494,8 +493,7 @@
 				"paar",
 				"mitu",
 				"palju",
-				"vähe",
-				"pool"
+				"vähe"
 			]
 		},
 		{
@@ -975,10 +973,6 @@
 				],
 				[
 					"adessive",
-					"singular"
-				],
-				[
-					"ablative",
 					"singular"
 				],
 				[
@@ -2281,6 +2275,18 @@
 		{
 			"id": 3401642,
 			"why": "ühe õlu mixes cases; the standard phrase is ühe õlle võlgu."
+		},
+		{
+			"id": 4223233,
+			"why": "Mu tulen uses the genitive mu as the subject; the standard sentence is Ma tulen tagasi mõne minuti pärast."
+		},
+		{
+			"id": 12748321,
+			"why": "Tomi oli uses the genitive as the subject; the standard sentence is Tom oli tulemuses pettunud."
+		},
+		{
+			"id": 4436734,
+			"why": "Ma nägid mixes the persons; the standard sentence is Ma nägin, millega sa tegelesid."
 		}
 	]
 }

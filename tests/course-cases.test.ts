@@ -77,6 +77,13 @@ describe("a course unit's tag sets", () => {
 		assert.deepEqual(units(byt, [present], "ru-RU"), [[]]);
 	});
 
+	test("a unit can rule out a form that could also be another case", () => {
+		const night = entry("ночь", { ночь: ["nominative singular", "accusative singular"], ночи: ["genitive singular", "prepositional singular", "nominative plural", "accusative plural"], ночью: ["instrumental singular"] }, [["Мы ушли в ночи.", "ночи"]]);
+		const whereTo = unit({ id: "where-to", cat: "Nouns", tags: ["accusative"], after: ["в"] });
+		assert.deepEqual(units(night, [whereTo], "ru-RU"), [["where-to"]]);
+		assert.deepEqual(units(night, [{ ...whereTo, notWith: [["prepositional"]] }], "ru-RU"), [[]]);
+	});
+
 	test("a unit can be kept to a few words", () => {
 		const onlyTea = unit({ id: "tea", cat: "Nouns", tags: ["partitive", "singular"], lemmas: ["tee"] });
 		assert.deepEqual(units(TEA, [onlyTea]), [["tea"], ["tea"]]);

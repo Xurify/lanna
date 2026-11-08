@@ -552,9 +552,9 @@
 		{
 			"id": "where-or-where-to",
 			"kind": "grammar",
-			"title": "Куда? в школу, на работу",
-			"tagline": "в and на with the accusative",
-			"rule": "в and на with куда? (where to) take the accusative: в школу, на работу, в горы; with где? (where) the prepositional: в школе. в with the accusative also gives the day: в среду, в субботу.",
+			"title": "в and на + the accusative",
+			"tagline": "в школу, в среду, на неделю",
+			"rule": "в and на take the accusative for where to (в школу, на работу), for a day (в среду), for how long (на неделю) and after some verbs (верить в, похож на, обменять на). For where (где?) they take the prepositional: в школе.",
 			"glyph": "signpost",
 			"grammarTerm": "location and direction",
 			"nativeTerm": "где? и куда?",
@@ -566,6 +566,14 @@
 				"в",
 				"во",
 				"на"
+			],
+			"notWith": [
+				[
+					"prepositional"
+				]
+			],
+			"skipForms": [
+				"жопу"
 			]
 		},
 		{
@@ -948,6 +956,9 @@
 			"cat": "Adjectives",
 			"tags": [
 				"short-form"
+			],
+			"skipForms": [
+				"прям"
 			]
 		},
 		{
