@@ -8,7 +8,7 @@
  *
  * The four events (the complete client-originated input taxonomy):
  *   text    — a learner-authored user message (composer send, initial
- *             topic, the demo error-fix loop)
+ *             topic)
  *   answer  — the pending question's graded result (QuestionAnswerData,
  *             built client-side exactly as today; a dismissal is an answer
  *             carrying its flag). Server-side this becomes the call's

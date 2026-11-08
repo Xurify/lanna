@@ -236,7 +236,7 @@ html[data-keyboard] :focus-visible {
 	   (owner, typography round) The Tailwind defaults are ALIASED to the app
 	   fonts: `font-mono`/`font-sans` utilities would otherwise fall to the
 	   SYSTEM stacks — a fourth font the app never chose — and streamdown's
-	   code-block chrome + mermaid-error + demo-card all use them. */
+	   code-block chrome + mermaid-error all use them. */
 	--font-ui: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 	--font-prose: var(--font-geist), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;

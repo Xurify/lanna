@@ -25,7 +25,7 @@ test("activityFeed: running jobs across ALL chats, running-only, title-joined, o
 	const createdJobs: string[] = [];
 	try {
 		const jobA = jobStore.createJob({ kind: "research", chatId: chatA.id, toolCallId: "tc_a" });
-		const jobB = jobStore.createJob({ kind: "demo", chatId: chatB.id, toolCallId: "tc_b" });
+		const jobB = jobStore.createJob({ kind: "visual", chatId: chatB.id, toolCallId: "tc_b" });
 		const jobDone = jobStore.createJob({ kind: "research", chatId: chatA.id, toolCallId: "tc_done" });
 		createdJobs.push(jobA.id, jobB.id, jobDone.id);
 		jobStore.updateJob(jobDone.id, { status: "done" });

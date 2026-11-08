@@ -127,7 +127,6 @@ const catalog = (strongProvider: string | null, ...keyedProviders: string[]): Mo
 	defaults: null,
 	rolePins: {
 		researcher: null,
-		demoBuilder: null,
 		visualMaker: null,
 	},
 	slots: {

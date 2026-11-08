@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, PlayIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
+import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, SearchIcon, SquareIcon, WaypointsIcon } from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
 import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
 import { formatTokens, planCostLabel } from "@/components/usage-format";
@@ -13,7 +13,7 @@ import { useServerEvent, useServerResync } from "@/components/server-events";
  * THE BACKGROUND-AGENTS SECTION (owner, sidebar round — the successor of
  * the retired bottom-right floating dock): the bottom strip of the LEFT
  * SIDEBAR, one blob per running BACKGROUND process — session sub-agents
- * (research/demo/visual) and background tasks. Teaching turns are
+ * (research/visual) and background tasks. Teaching turns are
  * deliberately NOT here: the section exists to give background processes
  * the observability the learner can't otherwise see; an in-flight teaching
  * turn is fully visible where it happens (user decision, 2026-09).
@@ -278,7 +278,6 @@ function useNow(active: boolean): number {
 
 const KIND_ICON: Record<JobKind, typeof SearchIcon> = {
 	research: SearchIcon,
-	demo: PlayIcon,
 	visual: PenToolIcon,
 	pdf: FileTextIcon, // sources v0 — type-forced entry (JobKind grew "pdf")
 };
@@ -398,9 +397,7 @@ function ActivityBlobRow({
 				: "Video preparation"
 			: blob.jobKind === "research"
 					? "Researcher"
-					: blob.jobKind === "demo"
-						? "Demo builder"
-						: blob.jobKind === "visual"
+					: blob.jobKind === "visual"
 							? "Figure maker"
 							: blob.jobKind === "pdf"
 								? "PDF reader"

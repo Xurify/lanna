@@ -6,8 +6,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { standardFontsDir } from "./pdf-ops";
 
 /**
- * Verification engines for sub-agents: demos use the app's own Electron
- * browser-service via puppeteer-core, with system Chrome as fallback.
+ * Verification engines for sub-agents: the SVG maker's browser fallback uses
+ * the app's own Electron browser-service via puppeteer-core, with system
+ * Chrome as fallback.
  * SVGs use resvg (browser fallback); PDFs use pdfjs + Skia (no browser).
  * No extra Chromium is shipped or downloaded.
  *
@@ -18,27 +19,6 @@ import { standardFontsDir } from "./pdf-ops";
  * Test seam: `headlessOverride.current` replaces the whole API (tests inject
  * a fake; nothing here touches a real browser). Builders call `getHeadless()`.
  */
-
-export interface DemoRunResult {
-	/** console.error / console messages of type "error". */
-	consoleErrors: string[];
-	/** Uncaught exceptions (window.onerror / unhandled rejections). */
-	pageErrors: string[];
-	/** Network requests that failed (CDN scripts that didn't load, …). */
-	failedRequests: string[];
-	/** Value of the optional probe expression, when requested and successful. */
-	probeResult?: unknown;
-	/** True when nothing above recorded anything. */
-	ok: boolean;
-}
-
-export interface RunDemoOptions {
-	/** How long to let the page settle (animations, async CDN loads) — default 2s. */
-	settleMs?: number;
-	/** Optional JS expression evaluated in the page after settling; its value
-	 * is returned to the builder so it can assert on internal state. */
-	probe?: string;
-}
 
 export interface RenderSvgOptions {
 	/** Viewport size — defaults to the SVG's width/height attrs, else 900×700. */
@@ -61,8 +41,6 @@ export interface HeadlessApi {
 	available(): boolean;
 	/** Why not — for error messages. */
 	unavailableReason(): string | null;
-	/** Execute HTML in a browser, capture errors, optionally probe. */
-	runDemo(html: string, opts?: RunDemoOptions): Promise<DemoRunResult>;
 	/** Rasterize an SVG to a PNG buffer (for verify-by-looking). */
 	renderSvg(svg: string, opts?: RenderSvgOptions): Promise<Buffer>;
 	/** Render PDF pages to PNGs natively (pdfjs + Skia) for the pdf-reader. */
@@ -110,10 +88,10 @@ export function resolveChromeExecutablePath(): string | null {
 const NO_CHROME_MESSAGE =
 	"No render engine available: the app's own browser helper failed to start and no system Chrome/Chromium was found. " +
 	"Install Google Chrome or set CHROME_PATH to a Chrome executable. " +
-	"(Verification is mandatory — demos are never delivered untested.)";
+	"(Verification is mandatory — figures are never delivered unverified.)";
 
 // ─── The app's own Chromium as a browser service (Wave E stage 3) ────────────
-// Demos execute JS and need a browser. PRIMARY: this very app's binary
+// Browser fallback for pages that execute JS. PRIMARY: this very app's binary
 // spawned with --browser-service (main.cjs boots a hidden window with a CDP
 // port and prints "BROWSER_SERVICE_CDP <port>"). FALLBACK: system Chrome.
 // A Node IPC channel owns its lifetime: parent death/disconnect quits the
@@ -276,60 +254,6 @@ async function withBrowserPage<T>(fn: (page: import("puppeteer-core").Page) => P
 /** A temp dir per invocation; removed in finally. */
 function tempDir(prefix: string): string {
 	return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
-}
-
-// ─── Demo execution ──────────────────────────────────────────────────────────
-
-async function runDemo(html: string, opts: RunDemoOptions = {}): Promise<DemoRunResult> {
-	const settleMs = opts.settleMs ?? 2000;
-	const dir = tempDir("lh-demo-");
-	const file = path.join(dir, "demo.html");
-	fs.writeFileSync(file, html, "utf-8");
-
-	const consoleErrors: string[] = [];
-	const pageErrors: string[] = [];
-	const failedRequests: string[] = [];
-	let probeResult: unknown;
-	let probed = false;
-
-	try {
-		await withBrowserPage(async (page) => {
-		page.on("console", (msg) => {
-			if (msg.type() === "error") consoleErrors.push(msg.text());
-		});
-		page.on("pageerror", (err) => pageErrors.push(err instanceof Error ? err.message : String(err)));
-		page.on("requestfailed", (req) => failedRequests.push(`${req.url()} (${req.failure()?.errorText ?? "failed"})`));
-
-		try {
-			await page.goto(pathToFileURL(file).href, { waitUntil: "load", timeout: 30_000 });
-			await new Promise((resolve) => setTimeout(resolve, settleMs));
-			if (opts.probe) {
-				try {
-					probeResult = await page.evaluate(opts.probe);
-				} catch (err) {
-					pageErrors.push(`probe failed: ${err instanceof Error ? err.message : String(err)}`);
-				}
-				probed = true;
-			}
-		} catch (err) {
-			pageErrors.push(err instanceof Error ? err.message : String(err));
-		}
-		});
-	} finally {
-		try {
-			fs.rmSync(dir, { recursive: true, force: true });
-		} catch {
-			/* best-effort cleanup */
-		}
-	}
-
-	return {
-		consoleErrors,
-		pageErrors,
-		failedRequests,
-		...(probed ? { probeResult } : {}),
-		ok: consoleErrors.length === 0 && pageErrors.length === 0 && failedRequests.length === 0,
-	};
 }
 
 // ─── SVG rasterization ───────────────────────────────────────────────────────
@@ -529,7 +453,6 @@ export const realHeadless: HeadlessApi = {
 	unavailableReason() {
 		return browserServiceBinary() === null && resolveChromeExecutablePath() === null ? NO_CHROME_MESSAGE : null;
 	},
-	runDemo,
 	renderSvg,
 	renderPdfPages,
 };
