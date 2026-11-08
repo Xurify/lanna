@@ -924,25 +924,8 @@ function SessionsSidebar() {
 					{/* The tutor: two ways to start a chat, then the chats themselves.
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
-					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
-						<div className="flex items-center justify-between pr-1">
-							<h2 id="sidebar-tutor" className="px-2.5 text-xs font-bold text-muted-foreground">
-								Chats
-							</h2>
-							<Hint label="New chat" action="new-session" side="right">
-								<button
-									type="button"
-									data-testid="new-session"
-									onClick={() => void newSession()}
-									aria-label="New chat with your tutor"
-									className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-								>
-									<PlusIcon className="size-4" />
-								</button>
-							</Hint>
-						</div>
-
-						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
+					<section aria-label="Chats" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
+						<div ref={searchBoxRef} className="flex flex-col gap-1.5">
 							<div className="flex h-8 items-center">
 								{searching ? (
 									<span className="relative flex-1">
@@ -1009,7 +992,9 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<span aria-hidden="true" />
+										<h2 className="px-2.5 text-xs font-bold text-muted-foreground">
+											Chats
+										</h2>
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
 											<Button
 												type="button"
@@ -1036,6 +1021,19 @@ function SessionsSidebar() {
 												className="rounded-lg text-muted-foreground"
 											>
 												<SearchIcon className="size-3.5" />
+											</Button>
+										</Hint>
+										<Hint label="New chat" action="new-session" side="right">
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon-sm"
+												data-testid="new-session"
+												onClick={() => void newSession()}
+												aria-label="New chat with your tutor"
+												className="rounded-lg text-muted-foreground"
+											>
+												<PlusIcon className="size-4" />
 											</Button>
 										</Hint>
 									</>

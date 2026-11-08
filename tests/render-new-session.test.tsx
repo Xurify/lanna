@@ -117,7 +117,8 @@ describe("DraftShell — the sessionless surface", () => {
 describe("the plain chat draft (/chat/new)", () => {
 	it("opens on the question line, with the language named and no model control", () => {
 		const html = renderToStaticMarkup(<ChatDraft busy={false} text="" onChange={() => {}} onSend={() => {}} language="Slovak" />);
-		assert.match(html, /Your Slovak tutor/);
+		assert.match(html, /Ask your Slovak tutor/);
+		assert.match(html, /What should we untangle today?/);
 		assert.match(html, /What do you want to understand?/);
 		assert.ok(html.includes('data-testid="draft-suggestions"'));
 		assert.ok(!html.includes('data-testid="stats-model"'));

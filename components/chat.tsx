@@ -22,6 +22,7 @@ import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
 import { InkBlot } from "@/components/ink-blot";
+import { ChatBoard } from "@/components/chat-board";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -1685,6 +1686,7 @@ export function Chat({
 					}}
 				/>
 				</Conversation>
+				{kind === "chat" && <ChatBoard messages={messages} />}
 
 				{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,

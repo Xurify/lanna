@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Composer } from "@/components/composer";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
-import { SidebarToggle } from "@/components/sidebar";
+import { SidebarToggle, timeAgo } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys, ZeroKeysPill } from "@/components/setup-cta";
 import { StatsBar } from "@/components/stats-bar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ComposerActions } from "@/components/composer-actions";
-import { ChatDraft } from "@/components/chat-draft";
+import { ChatDraft, type ChatStarterTopic } from "@/components/chat-draft";
 
 /**
  * The sessionless draft view at /chat/new (owner, 2026-09-13): "+ New
@@ -214,7 +214,19 @@ export function DraftShell({
 	);
 }
 
-export function NewSession({ initialConfigured, mode = "chat", language = "" }: { initialConfigured: boolean; mode?: "chat" | "teach" | "practice"; language?: string }) {
+export function NewSession({
+	initialConfigured,
+	mode = "chat",
+	language = "",
+	weakTopics = [],
+	recent = [],
+}: {
+	initialConfigured: boolean;
+	mode?: "chat" | "teach" | "practice";
+	language?: string;
+	weakTopics?: readonly ChatStarterTopic[];
+	recent?: ReadonlyArray<{ id: string; title: string; updatedAt: string }>;
+}) {
 	const router = useRouter();
 	const [text, setText] = useState("");
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
@@ -286,7 +298,7 @@ export function NewSession({ initialConfigured, mode = "chat", language = "" }: 
 						)
 					);
 				return mode === "chat" ? (
-					<ChatDraft busy={busy} text={text} onChange={applyText} onSend={send} language={language} setupCta={setupCta} />
+					<ChatDraft busy={busy} text={text} onChange={applyText} onSend={send} language={language} setupCta={setupCta} weakTopics={weakTopics} recent={recent.map((r) => ({ id: r.id, title: r.title, when: timeAgo(r.updatedAt) }))} />
 				) : (
 					<DraftShell busy={busy} text={text} onChange={applyText} onSend={send} mode={mode} setupCta={setupCta} />
 				);

@@ -1,5 +1,5 @@
 import { NewSession } from "@/components/new-session";
-import { activeLanguage, readSettingsRecord } from "@/src/server";
+import { activeLanguage, listChats, readSettingsRecord, weakestTopics } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,11 @@ export default async function NewSessionPage({
 			initialConfigured={slotsConfigured(readSettingsRecord()?.models)}
 			mode={mode === "practice" || mode === "teach" ? mode : "chat"}
 			language={activeLanguage().english}
+			weakTopics={weakestTopics(3)}
+			recent={listChats()
+				.filter((c) => c.kind === "chat")
+				.slice(0, 3)
+				.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt }))}
 		/>
 	);
 }
