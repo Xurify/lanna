@@ -786,6 +786,18 @@ interface MeasuredWeak {
 	text: string;
 }
 
+export function measuredWeakPoints(state: CurriculumState, tries?: Record<string, FirstTally | undefined>): Array<MeasuredWeak & { title: string }> {
+	return state.chapters
+		.flatMap((c) => c.units)
+		.filter((u) => u.kind === "drill" || u.kind === "words")
+		.map((u) => {
+			const weak = measuredWeak(u, tries?.[u.id]);
+			return weak ? { ...weak, title: u.title } : null;
+		})
+		.filter((m): m is MeasuredWeak & { title: string } => m !== null && m.accuracy < 0.85)
+		.sort((a, b) => a.accuracy - b.accuracy);
+}
+
 export function measuredWeak(u: { title: string; reps: number; accuracy: number | null }, tally: FirstTally | undefined): MeasuredWeak | null {
 	if (tally && tally.reps >= 6) {
 		const accuracy = tally.right / tally.reps;
@@ -861,13 +873,7 @@ export function learnerProfileText(target: { code: string; english: string }, go
 		const cur = state.chapters.find((c) => c.id === state.current);
 		const stage = STAGES.find((s) => s.id === cur?.stage);
 		if (cur && stage) lines.push(`- Working now at ${stage.level}, chapter "${cur.title}" (${cur.doneCount}/${cur.total} units done; ${state.done}/${state.total} on the road to the target).`);
-		const weak = state.chapters
-			.flatMap((c) => c.units)
-			.filter((u) => u.kind === "drill" || u.kind === "words")
-			.map((u) => measuredWeak(u, tries_?.[u.id]))
-			.filter((m): m is MeasuredWeak => m !== null && m.accuracy < 0.85)
-			.sort((a, b) => a.accuracy - b.accuracy)
-			.slice(0, 5);
+		const weak = measuredWeakPoints(state, tries_).slice(0, 5);
 		if (weak.length) lines.push(`- Measured weak points: ${weak.map((m) => m.text).join(", ")}.`);
 		const spots = weakSpotsLine(weakSpotList(weak_));
 		if (spots) lines.push(spots);

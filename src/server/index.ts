@@ -83,6 +83,7 @@ export { storyStore } from "../store/stories.ts";
 export * from "./corpus-export.ts";
 export * from "./usage-report.ts";
 export { loadLexicon } from "../agent/lexicon.ts";
+export { weakestTopics } from "../agent/learner-profile.ts";
 export { activeProfile, shownProfiles, type LanguageProfile } from "../../config.ts";
 export { languageOf } from "./request-language.ts";
 export * from "./distractors.ts";

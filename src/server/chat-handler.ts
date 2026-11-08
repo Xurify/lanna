@@ -1,5 +1,6 @@
 import type { Usage } from "@earendil-works/pi-ai";
 import {
+	createChatAgent,
 	createPracticeAgent,
 	createProberAgent,
 	createTeacherAgent,
@@ -48,10 +49,26 @@ import {
 } from "../core/input-events.ts";
 import { steerDelivered } from "../core/contracts.ts";
 import type {CallUsage} from "../core/contracts.ts";
+import type { ChatRecord } from "../core/contracts/chat.ts";
+import { appendChatAnswer } from "../store/chat-answers.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
 
 /** LangHarness: the spaced-review seam every agent's language tools use. */
 const reviewSeam = { enqueue: (slugs: string[]) => enqueueWords(slugs), digest: () => reviewDigest() };
+
+function chatCheckerNote(text: string): string | null {
+	if (activeProfile() !== "slovak" || text.startsWith("[")) return null;
+	return checkerNote(checkSlovak(text, slovakLookup() ?? undefined));
+}
+
+function compactionKind(record: ChatRecord): "teach" | "practice" | "probe" {
+	if (record.kind === "practice") return "practice";
+	return record.kind === "chat" || hasProbeDone(record.messages) ? "teach" : "probe";
+}
+
+function promptKind(record: ChatRecord): "practice" | "chat" | "teacher" {
+	return record.kind === "practice" || record.kind === "chat" ? record.kind : "teacher";
+}
 
 /** A practice answer in Slovak carries what the checker can say for
  *  certain (core/slovak-check.ts) into the model's copy of it. The learner's
@@ -135,7 +152,7 @@ setJobRespawn((jobId) => void jobRunner.runJob(jobId));
 /** The route-facing entry: parse {chatId, input} and run one turn. */
 export async function handleChatRequest(
 	req: Request,
-	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean }) => TeachingAgent,
+	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean; kind?: ChatRecord["kind"] }) => TeachingAgent,
 ): Promise<Response> {
 	let body: { chatId?: unknown; input?: unknown };
 	try {
@@ -165,7 +182,7 @@ export async function handleChatRequest(
 export async function handleChatInput(
 	chatId: string,
 	input: TurnInput,
-	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean }) => TeachingAgent,
+	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean; kind?: ChatRecord["kind"] }) => TeachingAgent,
 ): Promise<Response> {
 	let record = stores.chatStore.getChat(chatId);
 	if (!record) {
@@ -235,12 +252,12 @@ export async function handleChatInput(
 			engine: piEngineForSpec(conversation, true),
 			canStart: () => connectionBackgroundAllowed(conversation.provider),
 			modelId: modelIdForCompaction,
-			kind: record.kind === "practice" ? "practice" : hasProbeDone(record.messages) ? "teach" : "probe",
+			kind: compactionKind(record),
 			thresholdTokens: effectiveThresholdTokens(
 				effective.compaction?.thresholdTokens,
 				catalogContextLimits().get(modelIdForCompaction),
 			),
-			systemPromptTokens: Math.ceil(composeInstructions(record.kind === "practice" ? "practice" : "teacher").length / 4),
+			systemPromptTokens: Math.ceil(composeInstructions(promptKind(record)).length / 4),
 		},
 		chatId,
 	);
@@ -396,8 +413,22 @@ export async function handleChatInput(
 	// problem + conclude. buildAgent stays honored (the test seam is
 	// uniform across kinds).
 	const constructed: TeachingAgent = buildAgent
-		? buildAgent({ ...agentOpts, teaching })
-		: record.kind === "practice"
+		? buildAgent({ ...agentOpts, teaching, kind: record.kind })
+		: record.kind === "chat"
+			? createChatAgent(
+					{
+						review: reviewSeam,
+						answers: { record: (answer) => appendChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
+						jobs: {
+							chatId,
+							jobStore: stores.jobStore,
+							spawn: (job, input) => void jobRunner.runJob(job.id, input),
+							searchAvailable,
+						},
+					},
+					{ ...agentOpts, noteLearnerText: chatCheckerNote },
+				)
+			: record.kind === "practice"
 			? createPracticeAgent(
 					{
 						chatId,
@@ -574,12 +605,12 @@ export async function handleChatInput(
 							engine: kickEngine,
 							canStart: () => connectionBackgroundAllowed(spec.provider),
 							modelId: kickModelId,
-							kind: freshRecord.kind === "practice" ? "practice" : hasProbeDone(freshRecord.messages) ? "teach" : "probe",
+							kind: compactionKind(freshRecord),
 							thresholdTokens: effectiveThresholdTokens(
 								fresh.compaction?.thresholdTokens,
 								catalogContextLimits().get(kickModelId),
 							),
-							systemPromptTokens: Math.ceil(composeInstructions(freshRecord.kind === "practice" ? "practice" : "teacher").length / 4),
+							systemPromptTokens: Math.ceil(composeInstructions(promptKind(freshRecord)).length / 4),
 						};
 					}, chatId);
 			},

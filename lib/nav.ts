@@ -5,7 +5,7 @@
  * app/ is missing here or a title and a label differ.
  */
 
-export type NavId = "today" | "curriculum" | "review" | "read" | "listen" | "watch" | "speak" | "fluency" | "words" | "grammar" | "progress" | "milestones" | "mistakes" | "log";
+export type NavId = "today" | "ask" | "curriculum" | "review" | "read" | "listen" | "watch" | "speak" | "fluency" | "words" | "grammar" | "progress" | "milestones" | "mistakes" | "log";
 
 interface NavItemDef {
 	id: NavId;
@@ -31,6 +31,7 @@ export const NAV: readonly NavGroupDef[] = [
 		label: null,
 		items: [
 			{ id: "today", href: "/", label: "Today", hint: "The plan for today" },
+			{ id: "ask", href: "/chat/new", label: "Ask", hint: "Any question about the language, answered with a drawing", also: ["/chat"] },
 			{ id: "curriculum", href: "/curriculum", label: "Curriculum", hint: "Your climb, level by level and chapter by chapter", also: ["/exam"] },
 			{ id: "review", href: "/review", label: "Review", hint: "Your word deck" },
 		],

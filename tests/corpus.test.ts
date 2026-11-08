@@ -119,12 +119,13 @@ describe("lesson log", () => {
 });
 
 describe("Why? reuse", () => {
-	it("the first question creates a practice chat and records it; the same sentence reopens it", () => {
+	it("the first question creates a plain chat and records it; the same sentence reopens it", () => {
 		const first = openWhy({ title: "Why dome?", sentence: "Bývam v dome.", answer: "dome", lemma: "dom", given: "dom" });
 		assert.equal(first.reused, false);
 		const chat = chatStore.getChat(first.id);
 		assert.ok(chat);
-		assert.equal(chat.kind, "practice");
+		assert.equal(chat.kind, "chat");
+		assert.equal(chat.settings, undefined, "no model slot in the fixture, so nothing to stamp");
 		assert.equal(chat.title, "Why dome?");
 		const again = openWhy({ title: "Why dome?", sentence: "Bývam v dome.", answer: "dome", lemma: "dom", given: "domu" });
 		assert.equal(again.reused, true);
@@ -225,6 +226,8 @@ describe("spending report", () => {
 		assert.equal(sessionMode({ kind: "practice", title: "x", messages: [{ id: "u", role: "user", content: "Story: tell me", timestamp: 1 } as never] }), "story");
 		assert.equal(sessionMode({ kind: undefined, title: "Cases", messages: [] }), "learn");
 		assert.equal(sessionMode({ kind: "practice", title: "Household items", messages: [] }), "practice");
+		assert.equal(sessionMode({ kind: "chat", title: "This and that", messages: [] }), "chat");
+		assert.equal(sessionMode({ kind: "chat", title: "Why dome?", messages: [] }), "why");
 	});
 });
 

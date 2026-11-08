@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, themeFromCookie } from "@/lib/theme";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
@@ -28,6 +28,7 @@ import { LanguageGoneNotice } from "@/components/language-gone-notice";
 const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist", display: "swap" });
 // Code only: not preloaded, so it never competes with Geist for the first paint.
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains", preload: false });
+const voice = Source_Serif_4({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-voice", preload: false, display: "swap" });
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx), and the theme color
@@ -67,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const vars = appearanceVars(resolveAppearance(appearance));
 	const course = activeCourse();
 	return (
-		<html lang="en" className={`${geist.variable} ${mono.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} data-lh-language={activeProfile()} style={vars as React.CSSProperties} suppressHydrationWarning>
+		<html lang="en" className={`${geist.variable} ${mono.variable} ${voice.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} data-lh-language={activeProfile()} style={vars as React.CSSProperties} suppressHydrationWarning>
 			<body className="min-h-dvh antialiased">
 			{/* A language added from the app runs its generated course: the browser
 			    gets the same one as the server before any module of the core loads

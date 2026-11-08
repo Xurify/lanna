@@ -20,6 +20,10 @@ import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-e
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
+import { ChatReplies } from "@/components/chat-replies";
+import { questionOpen, repeatsEarlierText } from "@/src/core";
+import { InkBlot } from "@/components/ink-blot";
+import { ChatBoard, useDrill } from "@/components/chat-board";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -173,6 +177,12 @@ function isSubagentSteer(m: LhViewMessage): boolean {
 	return (m.metadata as { subagentResult?: unknown } | undefined)?.subagentResult != null;
 }
 
+function lastReplyText(messages: readonly LhViewMessage[]): string {
+	const last = messages.at(-1);
+	if (!last || last.role !== "assistant") return "";
+	return last.parts.flatMap((part, i) => (part.type === "text" && !repeatsEarlierText(last.parts, i) ? [part.text] : [])).join("\n\n");
+}
+
 /**
  * The teaching session. All chat state lives in useChat; the server persists
  * the canonical transcript after every turn.
@@ -201,7 +211,7 @@ export function Chat({
 	/** The session kind (practice sessions, owner 2026-10-04): practice
 	 *  renders no phase chip (no probe→teach arc applies) and a Practice
 	 *  tag rides the header instead. */
-	kind?: "teach" | "practice";
+	kind?: "teach" | "practice" | "chat";
 	initialPrompt?: string;
 	/** A teacher turn is running server-side but attached to no client
 	 * (navigated away mid-turn, returned while in flight). */
@@ -1124,6 +1134,11 @@ export function Chat({
 		}
 		void dictation.finish().then(doSteerOrSend);
 	};
+	const drillState = useDrill(messages, titleText);
+	const sendQuickReply = (reply: string) => {
+		if (busy || pending || compacting) return;
+		void send({ type: "text", text: reply });
+	};
 	const doSend = () => {
 		if (busy || pending || compacting) return;
 		const t = textRef.current.trim();
@@ -1188,6 +1203,7 @@ export function Chat({
 				    LH wordmark band, so the header's border-b continues that
 				    band's bottom edge as one line across the app (owner, round 6). */}
 				<TopBar
+					bare={kind === "chat"}
 					// While renaming the bar is NOT a drag surface: app-region:drag
 					// would eat the mousedown, so click-to-escape (below) could
 					// never fire. Rename mode is interactive mode (owner ask) —
@@ -1241,7 +1257,7 @@ export function Chat({
 								setTitleDraft(titleText);
 								setRenaming(true);
 							}}
-							className="lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left font-title text-2xl font-semibold tracking-tight transition-colors hover:bg-accent"
+							className={cn("lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent", kind === "chat" ? "font-ui text-sm font-medium text-muted-foreground" : "font-title text-2xl font-semibold tracking-tight")}
 						>
 							{titleText}
 							</button>
@@ -1272,7 +1288,7 @@ export function Chat({
 					)}
 					{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
 					    tool calls are hidden by default; this chip brings them back. */}
-					<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+					{kind !== "chat" && <Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
 						<button
 							type="button"
 							data-testid="show-working"
@@ -1289,10 +1305,10 @@ export function Chat({
 							<CogIcon className="size-3.5" aria-hidden />
 							{showWorking ? "Hide working" : "Show working"}
 						</button>
-					</Hint>
+					</Hint>}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
-					{kind === "practice" ? (
+					{kind === "chat" ? null : kind === "practice" ? (
 						<span
 							data-testid="phase-chip"
 							data-phase="practice"
@@ -1311,11 +1327,11 @@ export function Chat({
 				<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
 				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
 					<ConversationContent className="min-h-full gap-0 p-0">
-						<div data-session-find-root="" className={`${COLUMN} flex flex-1 flex-col gap-4 pt-4`}>
+						<div data-session-find-root="" className={cn(COLUMN, "flex flex-1 flex-col gap-4 pt-4", kind === "chat" && "max-w-[46rem] gap-5 pt-10")}>
 							{messages.length === 0 && !busy && (
 								<ConversationEmptyState
 									title="New chat"
-									description={kind === "practice" ? "Your tutor starts with a first problem." : "Your tutor starts with a few quick questions to see what you know."}
+									description={kind === "practice" ? "Your tutor starts with a first problem." : kind === "chat" ? "Ask anything about the language." : "Your tutor starts with a few quick questions to see what you know."}
 								/>
 							)}
 
@@ -1418,18 +1434,19 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className="my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
+										className={kind === "chat" ? "mt-6 font-ui text-xl font-medium leading-snug tracking-tight text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
 												<div className="sr-only">You</div>
-												<div className="lh-prose whitespace-pre-wrap text-foreground">
-													{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}
+												<div className={kind === "chat" ? "whitespace-pre-wrap" : "lh-prose whitespace-pre-wrap text-foreground"}>
+													<span className={kind === "chat" ? "lh-asked" : undefined}>{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}</span>
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className="max-w-full">
+									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice relative")}>
+									{kind === "chat" && <InkBlot className="absolute top-2.5 -left-6 size-3 text-foreground max-md:hidden" />}
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -1462,6 +1479,7 @@ export function Chat({
 												}
 												switch (part.type) {
 													case "text": {
+														if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 														return (
 															<div key={part.id || pi} className="lh-source-passage">
 																<MessageResponse>{part.text}</MessageResponse>
@@ -1513,6 +1531,7 @@ export function Chat({
 														// — replaces the retired transcript bottom line. On settling, the
 														// registry's card takes over below.
 														if (part.type.startsWith("tool-") && part.state === "input-streaming") {
+															if (kind === "chat") return null;
 															return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
 														}
 														// Artifact extension point (contracts.ts): job
@@ -1553,6 +1572,7 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
+							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Summarizing the chat so far" />
@@ -1588,6 +1608,7 @@ export function Chat({
 				    height morph (typing, a question growing the band, the
 				    fold) and NEVER overlaps the composer. */}
 				<DockOverlay
+					plain={kind === "chat"}
 					pending={pending}
 					initialQuestionDraft={pending ? questionDraft(pending.toolCallId)?.form : undefined}
 					onSaveQuestionDraft={(form) => { if (pending) saveQuestionDraft(pending.toolCallId, { form }); }}
@@ -1647,7 +1668,15 @@ export function Chat({
 							// applies.
 							nextProblem={nextReady}
 							onNext={sendNext}
-							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : undefined}
+							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : kind === "chat" ? "Answer, or ask something else" : undefined}
+							toolbar={
+								kind === "chat" ? (
+									<>
+										<DictationBar dictation={dictation} compact />
+										<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
+									</>
+								) : undefined
+							}
 						/>
 					}
 					onSubmitAnswer={(output) => {
@@ -1668,6 +1697,7 @@ export function Chat({
 					}}
 				/>
 				</Conversation>
+				{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
 
 				{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,
@@ -1842,7 +1872,9 @@ function DockOverlay({
 	dictationCancel,
 	setupCta,
 	queuedSteers,
+	plain = false,
 }: {
+	plain?: boolean;
 	pending: ReturnType<typeof findPendingToolCall>;
 	initialQuestionDraft?: QuestionFormDraft;
 	onSaveQuestionDraft: (draft: QuestionFormDraft) => void;
@@ -2267,7 +2299,7 @@ function DockOverlay({
 	return (
 		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: sbInset }}>
 			<div className="h-24" />
-			<div ref={blockRef} className="relative bg-background pb-5 shadow-[0_-1px_0_var(--q-line)]" style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
+			<div ref={blockRef} className={cn("relative bg-background pb-5", plain ? "pt-1" : "shadow-[0_-1px_0_var(--q-line)]")} style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
 				<div className={DOCK}>
 					{setupCta}
 					{/* The queued-steer indicator (owner spec 2026-10-03): quiet
@@ -2298,8 +2330,8 @@ function DockOverlay({
 					)}
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
-					<DiacriticBar />
-					<div ref={shellRef} className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
+					{!plain && <DiacriticBar />}
+					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3" : "rounded-xl bg-card shadow-raise-hi")}>
 						<div
 						ref={contentRef}
 						key={mode}
@@ -2342,13 +2374,11 @@ function DockOverlay({
 					{/* The stats row: beneath the composer/question shell, not
 					    flush to the screen bottom — static height, outside the
 					    morphing shell so it never joins a height animation. */}
-					<StatsBar
-						turns={turns}
-						contextTokens={contextTokens}
-						pricing={pricing}
-						dictationSlot={dictationSlot}
-						chatId={chatId}
-					/>
+					{plain ? (
+						<p className="pointer-events-none hidden pt-2 text-center font-ui text-[12px] text-ink-4 pointer-fine:block">Enter to send · Shift+Enter for a new line</p>
+					) : (
+						<StatsBar turns={turns} contextTokens={contextTokens} pricing={pricing} dictationSlot={dictationSlot} chatId={chatId} />
+					)}
 					{/* The scroll-down disc (moved here from the Conversation,
 					    owner refinement round 2026-09-24): anchored to the BLOCK's
 					    top edge — above the composer shell AND the stats row, in

@@ -12,6 +12,7 @@ import {
 	LoaderCircleIcon,
 	MicIcon,
 	MountainSnowIcon,
+	PenLineIcon,
 	PlusIcon,
 	RepeatIcon,
 	SunIcon,
@@ -262,6 +263,7 @@ export function LanguageSwitcher() {
  *  with a sun bar at its edge and a brighter icon, no pill. */
 const NAV_ICONS: Record<NavId, LucideIcon> = {
 	today: SunIcon,
+	ask: PenLineIcon,
 	curriculum: MountainSnowIcon,
 	review: RepeatIcon,
 	read: BookOpenIcon,

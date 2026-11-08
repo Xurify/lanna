@@ -1061,3 +1061,19 @@ html[data-sidebar-resizing] {
 html[data-sidebar-resizing] .sidebar-motion {
 	transition: none !important;
 }
+
+.lh-voice .lh-prose {
+	font-family: var(--font-voice), Georgia, serif;
+	font-size: 18px;
+	line-height: 1.6;
+}
+.lh-voice .lh-prose :where(code) {
+	font-family: var(--font-prose);
+}
+.lh-asked {
+	text-decoration-line: underline;
+	text-decoration-style: dotted;
+	text-decoration-color: var(--q-ink-3);
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 7px;
+}
