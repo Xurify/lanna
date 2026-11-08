@@ -193,6 +193,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 	const referenceLabel = lookupData?.referenceLabel ?? referenceSite?.label;
 
 	const wiktionaryUrl = `https://en.wiktionary.org/wiki/${encodedWord}#${encodeURIComponent(langEnglish)}`;
+	const googleTranslateUrl = `https://translate.google.com/?sl=${encodeURIComponent(langCode)}&tl=en&text=${encodedWord}&op=translate`;
 	const deeplUrl = `https://www.deepl.com/translator#${encodeURIComponent(langCode)}/en/${encodedWord}`;
 	const forvoUrl = `https://forvo.com/word/${encodedWord}/#${encodeURIComponent(langCode)}`;
 
@@ -319,6 +320,15 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
 						>
 							DeepL <ExternalLinkIcon className="size-3" />
+						</a>
+						<span aria-hidden="true" className="text-ink-4">·</span>
+						<a
+							href={googleTranslateUrl}
+							target="_blank"
+							rel="noreferrer"
+							className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
+						>
+							Google Translate <ExternalLinkIcon className="size-3" />
 						</a>
 						<span aria-hidden="true" className="text-ink-4">·</span>
 						<a
