@@ -19,7 +19,7 @@ core tool surface must appear in real data here.
   2026-10-10): probe-handoff, plan-block, compaction, subagent-steer,
   subagent-abort, and every teach tool (quiz, ask_user_question, plan_init,
   probe, probe_done, recall, explain, research, demo, visual, pdf, find,
-  grep, ls, read, list_sessions, list_propositions). Plan tree + 25 turn
+  grep, ls, read). Plan tree + 25 turn
   records + a per-chat model override.
 - `chats/chat_mv293wv5_10656952.json` — the practice lifecycle (owner-built,
   2026-10-10): graph-context (the bracketed preamble), problem ×2,
