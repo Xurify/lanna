@@ -49,7 +49,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				<>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Each cell is one drill, and the percentage is how often you were right on the first try, with no help. Point at a cell to read its rule and what went wrong, then click it to practice.{" "}
-					<span className="font-semibold text-foreground">Not tried</span> means the drill is there and you have not done it. A grey cell with a reason in it, like <span className="font-semibold text-foreground">dictionary form</span>, has no drill because there is no ending to practice.
+					<span className="font-semibold text-foreground">Not tried</span> means the drill is there and you have not done it. A grey cell with a reason in it, like <span className="font-semibold text-foreground">dictionary form</span>, has no drill because the word does not change.
 				</p>
 
 				<table className="mt-8 w-full border-separate border-spacing-1.5 text-center" data-testid="grammar-atlas">

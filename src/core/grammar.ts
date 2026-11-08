@@ -59,13 +59,13 @@ export interface NoDrill {
 
 const NOMINATIVE: NoDrill = {
 	short: "dictionary form",
-	sub: "no ending to practice",
-	why: "The nominative is the form you look up in a dictionary, so no ending changes. What does change is the describing word that goes with it (nový dom, nová kniha, nové mesto: Describing words) and the plural (More than one).",
+	sub: "the word does not change",
+	why: "The nominative is the case of the subject (Peter číta knihu: Peter is nominative). In the singular its form is the dictionary form, so there is nothing to change and nothing to practice. The plural does have endings (domy, ženy, mestá): that is the lesson More than one. The describing word that goes with it changes with gender (nový dom, nová kniha, nové mesto): that is Describing words.",
 };
 
 const NO_DRILL: Partial<Record<AtlasCase, Partial<Record<AtlasGender, NoDrill>>>> = {
 	N: { masc: NOMINATIVE, fem: NOMINATIVE, neut: NOMINATIVE },
-	A: { neut: { short: "same as nominative", sub: "no change", why: "A neuter word as the object looks the same as in the dictionary: Vidím mesto. There is no ending to practice." } },
+	A: { neut: { short: "same as nominative", sub: "the word does not change", why: "A neuter word as the object keeps its dictionary form, the same as in the nominative: Vidím mesto. So there is nothing to change and nothing to practice." } },
 };
 
 const NOT_BUILT: NoDrill = { short: "no drill yet", sub: "", why: "There is no drill for this cell yet." };
