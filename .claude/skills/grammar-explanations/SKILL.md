@@ -47,7 +47,7 @@ When several forms of one word appear together, each carries its case: `do Žili
 - Say feminine, masculine, neuter, male person, dictionary form. Do not say hard noun, soft stem, men, -a words (when gender is the reason), paradigm, declension pattern.
 - A technical term is defined on the same screen the first time (soft letters are listed, not only named).
 - No ASCII arrows in running text for a rule: use the table.
-- Sentence-case, American spelling, full grammar words (E23).
+- Sentence-case, American spelling, full grammar words (E23). A unit id (`acc-people`, `gen`) is code: in prose, in chat and in captions say the full name (the accusative of masculine people and animals, the genitive).
 
 ## 6. Say why a cell is empty
 

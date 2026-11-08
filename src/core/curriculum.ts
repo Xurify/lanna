@@ -322,7 +322,7 @@ const slovakChapters = (map: readonly CurriculumUnit[]): Chapter[] => [
 	chapter(map, "hello", "a1", "Hello", "Sounds, greetings and the present tense", "words", "can-introduce"),
 	chapter(map, "cafe", "a1", "At the café", "To be, to want, the object case, ordering", "byt", "can-order"),
 	chapter(map, "town", "a1", "In town", "Where and where to", "loc", "can-directions"),
-	chapter(map, "family", "a1", "Family", "People as objects, genitive, gender", "acc-people", "can-family"),
+	chapter(map, "family", "a1", "Family", "People and animals as objects, genitive, gender", "acc-people", "can-family"),
 	chapter(map, "everyday", "a1", "Every day", "With, adjectives, time and routine", "ins", "can-describe-day"),
 	chapter(map, "yesterday", "a1", "Yesterday", "The past tense and the dative", "past", "can-tell-day"),
 	chapter(map, "health", "a2", "Health and body", "-ujem verbs, reflexives", "present-ujem", "can-appointment"),

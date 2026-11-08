@@ -54,7 +54,7 @@ Ask each of these of every picture. A picture that fails one is redrawn, not cap
 Never judge a picture from its code.
 
 - **All sketches at once:** `npx tsx scripts/ink-contact-sheet.tsx <dir>`, then a Chrome screenshot of `sheet-light.html` and `sheet-dark.html` (the command is at the top of the script). Read both themes.
-- **In the app:** `npm run dev:sandbox -- --seed`, open `/lesson?unit=gen` (or `loc`, `ins`, `dat`, `acc-people`, `acc-fem`), click through every step and the table. A dev server already running from the same checkout blocks the sandbox: use the worktree recipe it prints.
+- **In the app:** `npm run dev:sandbox -- --seed`, open `/lesson?unit=gen` (the genitive; the other units are the `SKETCH_UNITS` in `components/lesson/case-sketch.tsx`: locative, instrumental, dative and two accusative units), click through every step and the table. A dev server already running from the same checkout blocks the sandbox: use the worktree recipe it prints.
 - **Animations in a screenshot:** a headless or hidden tab catches strokes at frame zero. Use `--force-prefers-reduced-motion` in Chrome, or inject `.ink-draw{animation:none!important;stroke-dashoffset:0!important}.ink-fade{animation:none!important;opacity:1!important}` before the snapshot.
 - Run it at the lesson card's width and at 390 px.
 
