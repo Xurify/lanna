@@ -2,12 +2,12 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
-## 8 November: a page left open in the old language saves nothing (branch `fix/per-device-language`)
+## 8 November: each device keeps its own language (branch `fix/per-device-language`, PR #145)
 
-- **Why:** a language switch on the PC reloaded only the PC. A phone or iPad page still in the old language kept writing, and its writes went into the new one. Rule E75.
-- **What changed:** every page says which language it shows with each API call, and the server refuses a write from a page whose language is no longer running. The page then shows a notice naming both languages, with **Continue in** the running language or **Switch back**. Active time sent as a page closes goes to the language the page showed. A finished lesson that was refused waits in the outbox and is saved once its language runs again. Switching back saves it at once, and the end screen fills in.
-- **Checked:** reproduced first in the sandbox with two browser contexts (Slovak and an added Czech): before the fix, minutes from the Slovak lesson landed in `profiles/czech/progress.json`; after it, they land in Slovak, the finished lesson gets a 409 and nothing is written to Czech, and **Switch back to Slovak** records the lesson into Slovak. The notice was checked at phone width (iPhone 13 emulation). The proxy follows a switch in `next start` too. Full suite green.
-- **Unverified:** on a real phone over Tailscale, and with Safari or Chrome suspending a background tab's events channel (the focus and visibility check covers it, untested on a device).
+- **Why:** a language switch on the PC reloaded only the PC. A phone or iPad page still in the old language kept writing, and its writes went into the new language. Rule E75.
+- **What changed:** each device runs its own language. Switching on the PC no longer changes the phone, and the switch is remembered per device. A device that has never switched starts in the last language chosen anywhere. Every page writes into the language it shows, even an old tab on a device that has since switched; it takes the new language when it is loaded again. A switch no longer waits for the tutor or a video preparation, since that work stays in its own language. Only a page whose language was removed refuses to save, and it says so.
+- **Checked:** reproduced first in the sandbox with two browser contexts (Slovak and an added Czech). After the fix, with a phone (iPhone 13 emulation) and a PC, the PC switched to Czech and the phone's lesson and minutes went into Slovak; the phone loaded again in Slovak; an old tab kept Slovak through a client-side navigation and took Czech on a full load. The same rules in `next start`. Full suite green.
+- **Unverified:** on a real phone over Tailscale; and a tutor turn or video preparation running across a switch with a real model (the test covers work started by a request, not the model engine itself).
 
 ## 7 November: grammar lessons open on an ink sketch (branch `feat/ink-case-sketches`)
 

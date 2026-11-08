@@ -1,39 +1,40 @@
 export const SHOWN_LANGUAGE_HEADER = "x-lh-language";
 
-export const LANGUAGE_CHANGED = "language_changed";
+export const DEVICE_LANGUAGE_COOKIE = "lh-language";
 
-export interface LanguageChanged {
-	error: typeof LANGUAGE_CHANGED;
+export const LANGUAGE_GONE = "language_gone";
+
+export interface LanguageGone {
+	error: typeof LANGUAGE_GONE;
 	shown: string;
-	running: string;
 	message: string;
 }
 
 const READS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-const NAMES_ITS_OWN_LANGUAGE = new Set(["/api/profile", "/api/progress/time"]);
-
-export function languageChanged(request: { method: string; pathname: string; shown: string | null }, running: string): LanguageChanged | null {
+export function languageGone(request: { method: string; pathname: string; shown: string | null }, isLanguage: (id: string) => boolean): LanguageGone | null {
 	const { method, pathname, shown } = request;
-	if (!pathname.startsWith("/api/") || READS.has(method.toUpperCase()) || NAMES_ITS_OWN_LANGUAGE.has(pathname)) return null;
-	if (!shown || shown === running) return null;
-	return {
-		error: LANGUAGE_CHANGED,
-		shown,
-		running,
-		message: "The language was switched in another window or on another device, so this page saved nothing. Reload it to continue.",
-	};
+	if (!shown || !pathname.startsWith("/api/") || READS.has(method.toUpperCase()) || isLanguage(shown)) return null;
+	return { error: LANGUAGE_GONE, shown, message: "This page's language was removed, so it saved nothing. Reload the page to continue." };
 }
 
-export function isLanguageChanged(body: unknown): body is LanguageChanged {
-	return !!body && typeof body === "object" && (body as { error?: unknown }).error === LANGUAGE_CHANGED;
+export function isLanguageGone(body: unknown): body is LanguageGone {
+	return !!body && typeof body === "object" && (body as { error?: unknown }).error === LANGUAGE_GONE;
 }
 
-export function isOwnApiCall(url: string, origin: string): boolean {
+export function isSameOrigin(url: string, origin: string): boolean {
 	try {
-		const u = new URL(url, origin);
-		return u.origin === origin && u.pathname.startsWith("/api/");
+		return new URL(url, origin).origin === origin;
 	} catch {
 		return false;
 	}
+}
+
+// RFC 6265bis caps a cookie's lifetime at 400 days, and browsers clamp anything longer.
+const COOKIE_MAX_AGE_S = 400 * 86_400;
+
+export function deviceLanguageCookie(profile: string, secure: boolean): string {
+	const attributes = ["Path=/", "HttpOnly", "SameSite=Lax", `Max-Age=${COOKIE_MAX_AGE_S}`];
+	if (secure) attributes.push("Secure");
+	return [`${DEVICE_LANGUAGE_COOKIE}=${encodeURIComponent(profile)}`, ...attributes].join("; ");
 }

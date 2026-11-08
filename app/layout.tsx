@@ -19,7 +19,7 @@ import { ThemeSync } from "@/components/quiet/theme-sync";
 import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
 import { OriginStamp } from "@/components/origin";
 import { OutboxFlush } from "@/components/lesson/outbox-flush";
-import { LanguageChangedNotice } from "@/components/language-changed-notice";
+import { LanguageGoneNotice } from "@/components/language-gone-notice";
 
 // Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
 // JetBrains Mono stays for code. latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä),
@@ -81,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 						<ActivityProvider>
 							<AppShell>{children}</AppShell>
 							<TaskNotice />
-							<LanguageChangedNotice />
+							<LanguageGoneNotice />
 						</ActivityProvider>
 					</SidebarProvider>
 				</AppearanceProvider>

@@ -166,38 +166,39 @@ export function repoCheatsheetsDir(profile: string = activeProfile()): string {
 	return path.join(ROOT, "curriculum", profile, "cheatsheets");
 }
 
-// The running language is process state, switched in place (POST
-// /api/profile) with no restart. `next dev` evaluates this module again for
-// each route it compiles and after HMR, all in one process (2026-11-01: one
-// server read one language on Today while lessons went into another), so the
-// state lives on globalThis, per data folder: every copy of this module reads
-// and switches the same one.
+// `next dev` evaluates this module again for each route it compiles and after
+// HMR, all in one process, so shared state lives on globalThis, per data folder.
 interface Running {
 	profile: LanguageProfile;
+	borrowed?: LanguageProfile;
+	pinnedCourse?: unknown;
 }
 const RUNNING = ((globalThis as { __lhRunning?: Record<string, Running> }).__lhRunning ??= {});
 
-// A language added from the app runs its own generated course;
-// src/core/course.ts reads it from globalThis under this key (config may not
-// import the core). Absent runs the Slovak course.
 const COURSE_KEY = "__lhCourse";
-const COURSES = ((globalThis as { __lhCourses?: Map<string, { mtimeMs: number; course: unknown }> }).__lhCourses ??= new Map());
+const COURSE_RECHECK_MS = 1000;
+const COURSES = ((globalThis as { __lhCourses?: Map<string, { mtimeMs: number; checkedAt: number; course: unknown }> }).__lhCourses ??= new Map());
 
-/** An added language's course.json, kept while the file is unchanged so the
- *  core's tables, cached per course object, are built once. */
 function readCourse(profile: LanguageProfile): unknown {
+	if ((LANGUAGE_PROFILES as readonly string[]).includes(profile)) return undefined;
 	const file = path.join(LANGUAGES_DIR, profile, "course.json");
+	const kept = COURSES.get(file);
+	const now = Date.now();
+	if (kept && now - kept.checkedAt < COURSE_RECHECK_MS) return kept.course;
 	let mtimeMs: number;
 	try {
 		mtimeMs = fs.statSync(file).mtimeMs;
 	} catch {
+		COURSES.delete(file);
 		return undefined;
 	}
-	const kept = COURSES.get(file);
-	if (kept?.mtimeMs === mtimeMs) return kept.course;
+	if (kept?.mtimeMs === mtimeMs) {
+		kept.checkedAt = now;
+		return kept.course;
+	}
 	try {
 		const course: unknown = JSON.parse(fs.readFileSync(file, "utf-8"));
-		COURSES.set(file, { mtimeMs, course });
+		COURSES.set(file, { mtimeMs, checkedAt: now, course });
 		return course;
 	} catch {
 		return undefined;
@@ -212,51 +213,65 @@ function bootProfile(): LanguageProfile {
 
 function running(): Running {
 	let r = RUNNING[PROFILE_FILE];
-	if (!r) {
-		r = RUNNING[PROFILE_FILE] = { profile: bootProfile() };
-		// A test may have put a course in place before this module loaded.
-		const g = globalThis as Record<string, unknown>;
-		if (g[COURSE_KEY] === undefined) g[COURSE_KEY] = readCourse(r.profile);
-	}
+	if (!r) r = RUNNING[PROFILE_FILE] = { profile: bootProfile() };
 	return r;
 }
 
-function enter(profile: LanguageProfile): void {
-	running().profile = profile;
-	(globalThis as Record<string, unknown>)[COURSE_KEY] = readCourse(profile);
+type RequestProfile = () => LanguageProfile | undefined;
+const REQUEST_PROFILE_KEY = "__lhRequestProfile";
+
+export function setRequestProfile(resolve: RequestProfile): void {
+	(globalThis as Record<string, unknown>)[REQUEST_PROFILE_KEY] = resolve;
 }
 
-/** The language the server runs now. Read it when it is used: a switch
- *  changes it in place. */
-export function activeProfile(): LanguageProfile {
+function requestProfile(): LanguageProfile | undefined {
+	return ((globalThis as Record<string, unknown>)[REQUEST_PROFILE_KEY] as RequestProfile | undefined)?.();
+}
+
+export function defaultProfile(): LanguageProfile {
 	return running().profile;
 }
 
-/** Run another language from now on: its data folder, its course, and the
- *  choice saved for the next start. */
+export function activeProfile(): LanguageProfile {
+	const r = running();
+	return r.borrowed ?? requestProfile() ?? r.profile;
+}
+
+function installCourse(): void {
+	const g = globalThis as Record<string, unknown>;
+	const found = Object.getOwnPropertyDescriptor(g, COURSE_KEY);
+	if (found?.get) return;
+	if (found && found.value !== undefined) running().pinnedCourse = found.value;
+	Object.defineProperty(g, COURSE_KEY, {
+		configurable: true,
+		get: () => running().pinnedCourse ?? readCourse(activeProfile()),
+		set: (course: unknown) => {
+			running().pinnedCourse = course;
+		},
+	});
+}
+
 export function switchProfile(profile: LanguageProfile): void {
 	if (!isLanguageProfile(profile)) throw new Error(`"${profile}" is not one of your languages`);
-	enter(profile);
+	const r = running();
+	r.profile = profile;
+	r.pinnedCourse = undefined;
 	saveProfileChoice({ active: profile });
 }
 
-/** Read another language's records without switching to it (the daily plan
- *  across languages). `fn` must be synchronous: nothing else runs in the
- *  process until it returns, so no request ever sees the borrowed language. */
 export function withProfile<T>(profile: LanguageProfile, fn: () => T): T {
+	if (profile === activeProfile()) return fn();
 	const r = running();
-	if (profile === r.profile) return fn();
-	const g = globalThis as Record<string, unknown>;
-	const before = { profile: r.profile, course: g[COURSE_KEY] };
-	enter(profile);
+	const before = r.borrowed;
+	r.borrowed = profile;
 	try {
 		return fn();
 	} finally {
-		r.profile = before.profile;
-		g[COURSE_KEY] = before.course;
+		r.borrowed = before;
 	}
 }
 
+installCourse();
 running();
 
 const dataRoot = () => path.join(BASE_DATA_ROOT, "profiles", activeProfile());
