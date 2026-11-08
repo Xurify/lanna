@@ -43,6 +43,7 @@ export interface CourseUnit {
 	notAfter?: string[];
 	skipForms?: string[];
 	notWith?: string[][];
+	distinct?: boolean;
 	/** words: the lemmas of one theme, from the lexicon. */
 	lemmas?: string[];
 }
@@ -197,6 +198,7 @@ export function courseUnitsFor(units: readonly CourseUnit[], entry: LexiconEntry
 		if (live.length === 0) continue;
 		const fits = (cell: string[]) => live.some((set) => set.every((t) => cell.includes(t)));
 		if (u.notWith?.some((set) => cells.some((cell) => !isObjectAlias(cell) && set.every((t) => cell.includes(t))))) continue;
+		if (u.distinct && live.filter((set) => cells.some((cell) => !isObjectAlias(cell) && set.every((t) => cell.includes(t)))).length > 1) continue;
 		if (u.after?.length) {
 			// The trigger word decides between the cells a form could fill.
 			if (u.after.includes(prev) && cells.some(fits)) out.push(u.id);
@@ -351,6 +353,7 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 			...(strs(x.skipForms).length ? { skipForms: strs(x.skipForms).map((w) => w.toLocaleLowerCase(tag)) } : {}),
 			...(strs(x.lemmas).length ? { lemmas: strs(x.lemmas) } : {}),
 			...(notWith.length ? { notWith } : {}),
+			...(x.distinct === true ? { distinct: true } : {}),
 		};
 		let n = 0;
 		for (const e of lexicon) for (const ex of e.examples) if (!ex.rejected && courseUnitsFor([unit], e, ex, tag).length) n++;

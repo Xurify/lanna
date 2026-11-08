@@ -61,7 +61,7 @@
 			"noDrill": {
 				"singular": {
 					"short": "a few words only",
-					"why": "Some masculine words of substance have a second genitive in -у (чашка чаю, немного сахару), and the ordinary genitive is always right too (чашка чая). Few example sentences hold it; the tutor session on the special forms practices it."
+					"why": "Some masculine words of substance have a second genitive in -у (чашка чаю, немного сахару), and the ordinary genitive is usually right too (чашка чая), except in fixed phrases (ни шагу, без толку). Few example sentences hold it; the tutor session on the special forms practices it."
 				},
 				"plural": {
 					"short": "no separate form",
@@ -241,7 +241,7 @@
 			"kind": "grammar",
 			"title": "New, new, new: agreement",
 			"tagline": "новый дом, новая книга",
-			"rule": "A describing word takes its noun's gender and number: -ый, -ий or -ой (новый, синий, большой), -ая (новая), -ое (новое), -ые (новые). Soft ones keep я, е, и: синяя, синее, синие; after г, к, х, ж, ч, ш, щ write и: хороший, хорошие.",
+			"rule": "A describing word takes its noun's gender and number: -ый, -ий or -ой (новый, синий, большой), -ая, -ое, -ые (новая, новое, новые). Soft ones: синяя, синее, синие. After г, к, х, ж, ч, ш, щ write и (русские, хороший); after ж, ч, ш, щ unstressed о is е (хорошее).",
 			"glyph": "palette",
 			"grammarTerm": "adjective agreement, nominative",
 			"nativeTerm": "согласование прилагательных",
@@ -274,7 +274,7 @@
 			"kind": "grammar",
 			"title": "My, your, our, whose",
 			"tagline": "мой брат, моя сестра",
-			"rule": "Мой, твой, наш, ваш and чей take the gender, number and case of the thing owned (моя сестра, моё окно, мои книги, у моего брата, чья книга?); его, её and их never change. Свой is required for его, её, их when the owner is the subject (он любит свою жену); with мой and твой it is optional.",
+			"rule": "Мой, твой, наш, ваш and чей take the gender, number and case of the thing owned (моя сестра, у моего брата, чья книга?); его, её and их never change. Свой is required for его, её, их when the owner is the subject (он любит свою жену); with мой, твой, наш, ваш it is optional.",
 			"glyph": "key",
 			"grammarTerm": "possessive pronouns",
 			"nativeTerm": "притяжательные местоимения",
@@ -400,7 +400,7 @@
 			"kind": "grammar",
 			"title": "Objects: -у, -ю",
 			"tagline": "я вижу маму, читаю книгу",
-			"rule": "The object takes the accusative: a feminine word in -а or -я takes -у or -ю (маму, книгу, неделю); a masculine person or animal takes -а or -я (брата, кота); other masculine and neuter words and feminine words in -ь stay as they are (стол, окно, ночь).",
+			"rule": "The object takes the accusative: a word in -а or -я takes -у or -ю (маму, папу, неделю); a masculine person or animal takes -а or -я (брата, кота); other masculine and neuter words and feminine words in -ь stay as they are (стол, окно, ночь).",
 			"glyph": "coffee",
 			"grammarTerm": "accusative singular",
 			"nativeTerm": "винительный падеж",
@@ -443,7 +443,7 @@
 			"kind": "grammar",
 			"title": "Of, from, without: the genitive",
 			"tagline": "у брата, из школы, нет воды",
-			"rule": "After у, из, от, до, без, для, около, после and нет the noun takes the genitive: -а or -я for masculine and neuter (у брата), -ы or -и for feminine (из школы, нет соли; -и after г, к, х, ж, ч, ш, щ: нет книги); -мя words take -мени (нет времени).",
+			"rule": "After у, из, от, до, без, для, около, после and нет: -а or -я for masculine and neuter (у брата), -ы or -и for words in -а or -я (из школы, у папы; -и after г, к, х, ж, ч, ш, щ: нет книги), -и for feminine -ь (нет соли); -мя words: нет времени.",
 			"glyph": "door-open",
 			"grammarTerm": "genitive singular",
 			"nativeTerm": "родительный падеж",
@@ -503,7 +503,7 @@
 			"kind": "grammar",
 			"title": "Of many: the genitive plural",
 			"tagline": "столов, книг, дней",
-			"rule": "Genitive plural: masculine -ов or -ев (столов, музеев); -ей after ж, ш, ч, щ and for words in -ь (врачей, дней, ночей); -ия and -ие become -ий (серий, зданий); feminine and neuter words often lose the ending (книг, мест), sometimes with a vowel added (окно → окон).",
+			"rule": "Genitive plural: masculine -ов or -ев (столов, музеев), and -ей after ж, ш, ч, щ (врачей); -ей for words in -ь (дней, ночей); -ия and -ие become -ий (серий, зданий); words in -а and -о often lose the ending (книг, задач, мест), some with a vowel added (окон).",
 			"glyph": "layers",
 			"grammarTerm": "genitive plural",
 			"nativeTerm": "родительный падеж, множественное число",
@@ -552,7 +552,7 @@
 		{
 			"id": "where-or-where-to",
 			"kind": "grammar",
-			"title": "в and на + the accusative",
+			"title": "The accusative after в and на",
 			"tagline": "в школу, в среду, на неделю",
 			"rule": "в and на take the accusative for where to (в школу, на работу), for a day (в среду), for how long (на неделю) and after some verbs (верить в, похож на, обменять на). For where (где?) they take the prepositional: в школе.",
 			"glyph": "signpost",
@@ -602,7 +602,11 @@
 				"выйти",
 				"войти",
 				"приехать",
-				"уехать"
+				"уехать",
+				"направо",
+				"налево",
+				"прямо",
+				"назад"
 			]
 		},
 		{
@@ -610,7 +614,7 @@
 			"kind": "grammar",
 			"title": "Yesterday: -л, -ла, -ли",
 			"tagline": "он читал, она читала",
-			"rule": "Past: drop -ть, add -л for a masculine subject, -ла feminine, -ло neuter, -ли plural, in every person: я читал (a man), я читала (a woman), мы читали. Most -нуть verbs drop -ну-: исчез, исчезла. Irregular: шёл, шла; мог; ел; -ся → -лся, -лась.",
+			"rule": "Past: drop -ть, add -л for a masculine subject, -ла feminine, -ло neuter, -ли plural, in every person: я читал (a man), я читала (a woman), мы читали. Some -нуть verbs drop -ну- (исчез, привык); most keep it (вернулся). Irregular: шёл, шла; мог; ел.",
 			"glyph": "history",
 			"grammarTerm": "past tense",
 			"nativeTerm": "прошедшее время",
@@ -747,7 +751,7 @@
 			"kind": "grammar",
 			"title": "To and for someone: the dative",
 			"tagline": "брату, маме, к другу",
-			"rule": "To or for someone (дать, звонить, помогать, нравиться) and after к and по: -у or -ю for masculine and neuter (брату, морю), -е for feminine in -а or -я (маме), -и for feminine in -ь and in -ия (к двери, по России).",
+			"rule": "To or for someone (дать, звонить, помогать, нравиться) and after к and по: -у or -ю for masculine and neuter (брату, морю), -е for words in -а or -я (маме, папе), -и for feminine words in -ь and in -ия (к двери, по России).",
 			"glyph": "gift",
 			"grammarTerm": "dative singular",
 			"nativeTerm": "дательный падеж",
@@ -820,7 +824,7 @@
 			"kind": "grammar",
 			"title": "To, with, about many",
 			"tagline": "друзьям, книгами, в городах",
-			"rule": "In the plural three cases end the same for every gender: the dative -ам or -ям (друзьям), the instrumental -ами or -ями (книгами), the prepositional -ах or -ях (в городах).",
+			"rule": "In the plural three cases end the same for every gender: the dative -ам or -ям (друзьям), the instrumental -ами or -ями (книгами; but людьми, детьми), the prepositional -ах or -ях (в городах).",
 			"glyph": "layers",
 			"grammarTerm": "plural dative, instrumental, prepositional",
 			"nativeTerm": "множественное число",
@@ -852,7 +856,7 @@
 			"kind": "grammar",
 			"title": "В шкафу, на углу",
 			"tagline": "the second prepositional",
-			"rule": "After в or на for a place, a short list of masculine words takes a stressed -у instead of -е (в шкафу, на углу, в снегу, во рту, на льду), and a few feminine words in -ь a stressed -и (в сети, в груди). About something keeps -е: о шкафе.",
+			"rule": "After в or на for a place, a short list of masculine words takes a stressed -у instead of -е: в шкафу, на углу, в снегу, во рту, на льду, в лесу. About something keeps -е: о шкафе.",
 			"glyph": "map-pin",
 			"grammarTerm": "second prepositional",
 			"nativeTerm": "местный падеж",
@@ -865,6 +869,14 @@
 				"в",
 				"во",
 				"на"
+			],
+			"skipForms": [
+				"сети",
+				"груди",
+				"связи",
+				"тени",
+				"крови",
+				"степи"
 			]
 		},
 		{
@@ -872,7 +884,7 @@
 			"kind": "grammar",
 			"title": "Describing words in every case",
 			"tagline": "нового, новой, новыми",
-			"rule": "The adjective takes its noun's case: masculine and neuter -ого, -ому, -ым, -ом (нового, said -ово); feminine -ой, and -ую in the accusative; plural -ых, -ым, -ыми. Soft ones: синего, синей, синих. A masculine animate object takes -ого: вижу нового врача.",
+			"rule": "The adjective takes its noun's case: -ого, -ому, -ым, -ом (нового, said -ово); feminine -ой, -ую; plural -ых, -ым, -ыми. Soft: синего, синей. After ж, ч, ш, щ unstressed о is е (хорошего); after г, к, х ы is и (русским). Animate masculine object: вижу нового врача.",
 			"glyph": "paintbrush",
 			"grammarTerm": "adjective declension",
 			"nativeTerm": "склонение прилагательных",
@@ -949,7 +961,7 @@
 			"kind": "grammar",
 			"title": "Glad, busy, must: short forms",
 			"tagline": "рад, занята, должны",
-			"rule": "A short adjective follows the noun as what it is: рад, рада, рады; занят, занята, заняты; болен, больна, больны; должен, должна, должны. The stress can move (занята), and an е can appear in the masculine (болен). Рад and должен have only short forms.",
+			"rule": "A short adjective follows the noun as what it is: рад, рада, рады; занят, занята, заняты; болен, больна, больны; должен, должна, должны. The stress can move (занята), and an е can appear (болен). Рад, and должен in the sense must, have only short forms.",
 			"glyph": "pen-line",
 			"grammarTerm": "short adjectives",
 			"nativeTerm": "краткие прилагательные",
@@ -989,7 +1001,8 @@
 				]
 			],
 			"skipForms": [
-				"буди"
+				"буди",
+				"побери"
 			]
 		},
 		{
@@ -1073,7 +1086,7 @@
 			"kind": "grammar",
 			"title": "This, that, such, any",
 			"tagline": "в этом доме, такая книга",
-			"rule": "Этот and тот agree with their noun: этот дом, эта книга, это окно, эти книги; в этом доме, с той женщиной, тех людей, всем, всех. Такой (such), какой (which), другой and любой change like adjectives: такая книга, какую книгу?",
+			"rule": "Этот, тот and весь agree with their noun: этот дом, эта книга, эти книги; в этом доме, с той женщиной, тех людей; весь день, всем, всех. Такой (such), какой (which), другой and любой change like adjectives: такая книга, какую книгу?",
 			"glyph": "hand",
 			"grammarTerm": "demonstratives",
 			"nativeTerm": "указательные местоимения",
@@ -1115,7 +1128,7 @@
 			"kind": "grammar",
 			"title": "Numbers in cases",
 			"tagline": "до десяти, с двумя",
-			"rule": "Numbers take case endings, and the noun takes the same case in the plural: один like этот (в одном доме); два, три, четыре → двух, двум, двумя (с двумя братьями); пять to тридцать like a feminine word in -ь (пяти, пятью); сорок, девяносто, сто → сорока, девяноста, ста.",
+			"rule": "Numbers take case endings: двух, трёх, четырёх; двум, трём, четырём; двумя, тремя, четырьмя; пять to тридцать like ночь (пяти, пятью); сорок, девяносто, сто → сорока, девяноста, ста. The noun follows in the plural (с двумя братьями), after один in the singular.",
 			"glyph": "calculator",
 			"grammarTerm": "numerals in cases",
 			"nativeTerm": "склонение числительных",
@@ -1166,7 +1179,7 @@
 			"kind": "grammar",
 			"title": "Reading participles",
 			"tagline": "читающий, прочитанный",
-			"rule": "Participles describe a noun with a verb, mostly in writing: -ущий, -ющий, -ащий, -ящий (who is doing: читающий), -вший (who did: читавший), -нный or -тый (done: написанный, открытый), -емый or -имый (being done: любимый).",
+			"rule": "Participles describe a noun with a verb, mostly in writing: -ущий, -ющий, -ащий, -ящий (who is doing: читающий), -вший or -ший after a consonant (who did: читавший, выросший), -нный or -тый (done: написанный, открытый), -емый or -имый (being done: любимый).",
 			"glyph": "file-text",
 			"grammarTerm": "participles",
 			"nativeTerm": "причастия",
@@ -1328,7 +1341,10 @@
 				"английский",
 				"немецкий",
 				"французский",
-				"город",
+				"англичанин",
+				"американец",
+				"немец",
+				"француз",
 				"мир"
 			]
 		},
@@ -1350,6 +1366,42 @@
 				"аптека",
 				"банк",
 				"больница"
+			]
+		},
+		{
+			"id": "lx-words-shopping",
+			"kind": "words",
+			"title": "Words: Prices",
+			"tagline": "price, cost, expensive",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "shopping-bag",
+			"lemmas": [
+				"цена",
+				"стоить",
+				"дорогой",
+				"деньги",
+				"купить",
+				"платить",
+				"магазин",
+				"рынок"
+			]
+		},
+		{
+			"id": "lx-words-feelings",
+			"kind": "words",
+			"title": "Words: Feelings",
+			"tagline": "happy, sad, afraid",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "heart",
+			"lemmas": [
+				"грустный",
+				"злой",
+				"весёлый",
+				"счастливый",
+				"скучать",
+				"бояться",
+				"радость",
+				"страх"
 			]
 		}
 	],
@@ -1408,14 +1460,14 @@
 			"title": "У меня есть: having",
 			"tagline": "у меня есть, у меня нет",
 			"glyph": "key",
-			"brief": "Explain possession with у and the genitive (у меня есть машина, у брата есть собака), the pronoun forms after у (у меня, у тебя, у него, у неё, у нас, у вас, у них), that есть is left out when the thing itself is not in question (у неё голубые глаза), and the negative нет with the genitive (у меня нет машины, нет времени). Ask me what I and my family have and correct me."
+			"brief": "Explain possession with у and the genitive (у меня есть машина, у брата есть собака), the pronoun forms after у (у меня, у тебя, у него, у неё, у нас, у вас, у них), that есть is left out when the thing itself is not in question (у неё голубые глаза), and the negative with the genitive in the present and the past (у меня нет машины; у меня не было времени). Ask me what I and my family have and had, and correct me."
 		},
 		{
 			"id": "tutor-numbers-time",
 			"title": "Prices, age and the clock",
 			"tagline": "рубль, рубля, рублей",
 			"glyph": "clock",
-			"brief": "Teach me numbers with nouns (один рубль, два рубля, пять рублей; 11 to 14 like five; a compound number follows its last word: двадцать один год, двадцать два года), age with the dative (мне двадцать лет), clock times (в пять часов, в половине шестого, без пятнадцати шесть) and dates with ordinals (первое мая; пятого мая, on the fifth of May; в две тысячи двадцать шестом году). Warn me that after 2 to 4 Slovak wants a nominative plural, Russian the genitive singular. Quiz me."
+			"brief": "Teach me numbers with nouns (один рубль, два рубля, пять рублей; 11 to 14 like five; a compound number follows its last word: двадцать один год, двадцать два года), the collective двое, трое and оба, обе (нас двое, оба брата), age with the dative (мне двадцать лет), clock times (в пять часов, в половине шестого) and dates (первое мая; пятого мая). If I know another Slavic language, warn me where its rule after 2, 3, 4 differs. Quiz me."
 		},
 		{
 			"id": "tutor-motion-basics",
@@ -1450,7 +1502,7 @@
 			"title": "Which aspect in a command",
 			"tagline": "закройте, садитесь, не открывай",
 			"glyph": "hand",
-			"brief": "Explain the aspect of commands: perfective for one concrete request (Закройте дверь, пожалуйста), imperfective for an invitation, a general instruction or to urge (Садитесь! Проходите!), imperfective after не (Не открывай окно!), and давай or давайте for let's (Давай пойдём в кино). Role-play a home or an office with instructions and correct me."
+			"brief": "Explain the aspect of commands: perfective for one concrete request (Закройте дверь, пожалуйста), imperfective for an invitation, a general instruction or to urge (Садитесь! Проходите!), imperfective after не (Не открывай окно!) but perfective for a warning (Не упади! Не забудь!), давай or давайте for let's (Давай пойдём в кино), and пусть for let him (Пусть он придёт). Role-play a home or an office with instructions and correct me."
 		},
 		{
 			"id": "tutor-comparison",
@@ -1492,7 +1544,7 @@
 			"title": "Nobody, nothing, never",
 			"tagline": "никто не, ничего не, кто-то",
 			"glyph": "ban",
-			"brief": "Explain negative words with не (никто не пришёл, я ничего не знаю, я никогда там не был, нигде, никуда), the double negative, the preposition in the middle (ни с кем, ни о чём), and the words with -то and -нибудь (кто-то, кто-нибудь, что-то, что-нибудь). Ask me questions to answer in the negative and with -то or -нибудь, and correct me."
+			"brief": "Explain negative words with не (никто не пришёл, я ничего не знаю, я никогда там не был, нигде, никуда), the double negative, the preposition in the middle (ни с кем, ни о чём), некого and нечего for there is nobody or nothing to (мне некого спросить, нечего делать), and the words with -то and -нибудь (кто-то, кто-нибудь). Ask me questions to answer in the negative and with -то or -нибудь, and correct me."
 		},
 		{
 			"id": "tutor-svoj",
@@ -1534,7 +1586,7 @@
 			"title": "Reading the news",
 			"tagline": "по словам, как сообщает",
 			"glyph": "newspaper",
-			"brief": "Give me a short news-style text in Russian, explain its typical forms (participles, passive verbs in -ся, по словам, как сообщает), ask me questions about it, and have me retell it in my own words."
+			"brief": "Give me a short news-style text in Russian, explain its typical forms (participles, passive verbs in -ся, по словам, как сообщает, sentences with no subject such as Здесь продают газеты and Говорят, что …), ask me questions about it, and have me retell it in my own words."
 		},
 		{
 			"id": "tutor-colloquial",
@@ -1590,7 +1642,7 @@
 			"title": "When: days, months, years",
 			"tagline": "в среду, в январе, через неделю",
 			"glyph": "calendar-days",
-			"brief": "Teach me time phrases: в with the accusative for days (в среду), в with the prepositional for months and years (в январе, в 2020 году), на with the prepositional for weeks (на прошлой неделе), через and назад (через неделю, неделю назад), на and за with the accusative for how long (на неделю, за неделю). Quiz me with my week and correct me."
+			"brief": "Teach me time phrases: в with the accusative for days (в среду), в with the prepositional for months (в январе) and в … году for years (в 2020 году), на with the prepositional for weeks (на прошлой неделе), через and назад (через неделю, неделю назад), the bare accusative for how long (жил там неделю), на for a planned length (приехал на неделю) and за for the time a thing took (сделал за неделю). Quiz me with my week and correct me."
 		},
 		{
 			"id": "tutor-word-order",
@@ -1605,6 +1657,20 @@
 			"tagline": "алло, перезвоните",
 			"glyph": "phone",
 			"brief": "Teach me how a phone call goes in Russian: answering (Алло! Слушаю), asking for someone (Можно Марину?), saying who is calling, asking to call back (Перезвоните, пожалуйста), leaving a message, spelling a name and saying a number. Role-play a call to a friend and one to an office, and correct me."
+		},
+		{
+			"id": "tutor-first-phrases",
+			"title": "My name is, I speak",
+			"tagline": "меня зовут, по-русски, сколько стоит",
+			"glyph": "message-circle-question",
+			"brief": "Teach me the first phrases: меня зовут … and как тебя (вас) зовут?, я говорю по-русски, по-английски (and the по- form of other languages), я из …, сколько стоит? and сколько это стоит?. Have me introduce myself and ask the price of things, and correct me."
+		},
+		{
+			"id": "tutor-put-and-stand",
+			"title": "Stand, lie, put",
+			"tagline": "стоять, лежать, поставить, положить",
+			"glyph": "box",
+			"brief": "Explain the Russian verbs of position and placing: стоять and ставить, поставить (upright: the bottle stands), лежать and класть, положить (flat: the book lies), сидеть and сажать, посадить, висеть and вешать, повесить; where things are takes the prepositional (на столе), where they go the accusative (на стол). Describe a room, have me say where things are and where to put them, and correct me."
 		}
 	],
 	"goals": [
@@ -1756,6 +1822,7 @@
 				"lx-words-basic-verbs",
 				"tutor-conjugations",
 				"lx-words-countries",
+				"tutor-first-phrases",
 				"can-introduce-self"
 			]
 		},
@@ -1819,6 +1886,7 @@
 				"genitive-plural",
 				"counting",
 				"tutor-numbers-time",
+				"lx-words-shopping",
 				"can-buy-things"
 			]
 		},
@@ -1932,6 +2000,7 @@
 				"locative-u",
 				"tutor-special-cases",
 				"lx-words-nature",
+				"tutor-put-and-stand",
 				"can-describe-route"
 			]
 		},
@@ -1971,6 +2040,7 @@
 				"tutor-kotoryj",
 				"tutor-chto-chtoby",
 				"lx-words-communication",
+				"lx-words-feelings",
 				"can-explain-why"
 			]
 		},
@@ -1990,7 +2060,7 @@
 		},
 		{
 			"id": "they-say",
-			"stage": "b2",
+			"stage": "b1",
 			"title": "They say",
 			"tagline": "reported speech, the news",
 			"units": [

@@ -84,6 +84,15 @@ describe("a course unit's tag sets", () => {
 		assert.deepEqual(units(night, [{ ...whereTo, notWith: [["prepositional"]] }], "ru-RU"), [[]]);
 	});
 
+	test("a unit can ask for forms that fill only one of its sets", () => {
+		const tea = entry("tee", { tee: ["nominative singular"], teed: ["partitive singular"] }, [["Ma joon teed.", "teed"]]);
+		const kiri = entry("kiri", { kiri: ["nominative singular"], kirja: ["genitive singular", "partitive singular"] }, [["Ma kirjutan kirja.", "kirja"]]);
+		const object = unit({ id: "object", cat: "Nouns", tags: ["genitive", "singular"], variants: [["genitive", "singular"], ["partitive", "singular"]], after: ["joon", "kirjutan"], distinct: true });
+		assert.deepEqual(units(tea, [object]), [["object"]]);
+		assert.deepEqual(units(kiri, [object]), [[]]);
+		assert.deepEqual(units(kiri, [{ ...object, distinct: false }]), [["object"]]);
+	});
+
 	test("a unit can be kept to a few words", () => {
 		const onlyTea = unit({ id: "tea", cat: "Nouns", tags: ["partitive", "singular"], lemmas: ["tee"] });
 		assert.deepEqual(units(TEA, [onlyTea]), [["tea"], ["tea"]]);

@@ -353,6 +353,9 @@
 			"tags": [
 				"genitive",
 				"singular"
+			],
+			"skipForms": [
+				"korra"
 			]
 		},
 		{
@@ -441,11 +444,20 @@
 				"kolmteist",
 				"neliteist",
 				"viisteist",
+				"kuusteist",
+				"seitseteist",
+				"kaheksateist",
+				"üheksateist",
 				"kakskümmend",
 				"kolmkümmend",
 				"nelikümmend",
 				"viiskümmend",
+				"kuuskümmend",
+				"seitsekümmend",
+				"kaheksakümmend",
+				"üheksakümmend",
 				"sada",
+				"kakssada",
 				"tuhat",
 				"miljon",
 				"paar",
@@ -459,7 +471,7 @@
 			"kind": "grammar",
 			"title": "Two of something",
 			"tagline": "kaks autot, palju raha",
-			"rule": "After a number from two up, and after mitu and paar, the noun is partitive singular: kaks autot, mitu korda. After palju and vähe an amount is partitive singular (palju raha). A number in another case takes the noun with it: kahe autoga.",
+			"rule": "After a number from two up, and after mitu and paar, the noun is partitive singular: kaks autot, mitu korda. After palju and vähe an amount is partitive singular (palju raha), countable things partitive plural (palju raamatuid). Kahe autoga: the noun takes the number's case.",
 			"glyph": "hash",
 			"grammarTerm": "partitive after numbers",
 			"nativeTerm": "osastav arvsõna järel",
@@ -483,11 +495,20 @@
 				"kolmteist",
 				"neliteist",
 				"viisteist",
+				"kuusteist",
+				"seitseteist",
+				"kaheksateist",
+				"üheksateist",
 				"kakskümmend",
 				"kolmkümmend",
 				"nelikümmend",
 				"viiskümmend",
+				"kuuskümmend",
+				"seitsekümmend",
+				"kaheksakümmend",
+				"üheksakümmend",
 				"sada",
+				"kakssada",
 				"tuhat",
 				"miljon",
 				"paar",
@@ -584,7 +605,7 @@
 			"kind": "grammar",
 			"title": "In: -s",
 			"tagline": "majas, linnas, koolis",
-			"rule": "-s on the genitive stem means in or inside (majas, linnas, koolis) and also in a month or per a time: märtsis, kord nädalas.",
+			"rule": "-s on the genitive stem means in or inside (majas, linnas, koolis), a state (rahus, hädas, korras) and a time: märtsis, kord nädalas (once a week).",
 			"glyph": "map-pin",
 			"grammarTerm": "inessive singular",
 			"nativeTerm": "seesütlev",
@@ -594,7 +615,8 @@
 				"singular"
 			],
 			"skipForms": [
-				"värvis"
+				"värvis",
+				"suhtes"
 			]
 		},
 		{
@@ -613,7 +635,8 @@
 			],
 			"skipForms": [
 				"kokku",
-				"sekku"
+				"sekku",
+				"külla"
 			]
 		},
 		{
@@ -666,7 +689,9 @@
 				"värvis",
 				"poolest",
 				"kokku",
-				"sekku"
+				"sekku",
+				"suhtes",
+				"külla"
 			]
 		},
 		{
@@ -883,7 +908,7 @@
 			"kind": "grammar",
 			"title": "Do it!",
 			"tagline": "Tule! Tulge!",
-			"rule": "A command to sina is the I form without -n (ma tulen → tule!), except minema → mine. For teie use the da form: -da → -ge (lugeda → lugege), -ta → -ke (oodata → oodake), -ke after d or h (anda → andke, teha → tehke). Don't: ära tule, ärge tulge.",
+			"rule": "A command to sina is the I form without -n (ma tulen → tule!), except minema → mine. For teie: -ge after a vowel or l, n, r (lugege, tulge, minge), -ke after -ta, d or h (oodake, andke, tehke); jooma, sööma keep their vowel (jooge, sööge). Don't: ära tule, ärge tulge.",
 			"glyph": "megaphone",
 			"grammarTerm": "imperative",
 			"nativeTerm": "käskiv kõneviis",
@@ -979,6 +1004,9 @@
 					"nominative",
 					"plural"
 				]
+			],
+			"skipForms": [
+				"haiget"
 			]
 		},
 		{
@@ -1054,7 +1082,7 @@
 			"kind": "grammar",
 			"title": "Some things: the partitive plural",
 			"tagline": "raamatuid, autosid, kasse",
-			"rule": "The partitive plural is for an open number of things and for plural objects: ma ostan raamatuid, Tom armastab kasse. Learn it with each word: -sid (autosid), -id (raamatuid), or a vowel (kasse, maju).",
+			"rule": "The partitive plural is for an open number of things (ma ostan raamatuid) and for plural objects of an unfinished or negated action; the whole set is the nominative plural: ma ostsin raamatud. Learn it with each word: -sid (autosid), -id (raamatuid) or a vowel (kasse, maju).",
 			"glyph": "layers",
 			"grammarTerm": "partitive plural",
 			"nativeTerm": "osastav, mitmus",
@@ -1068,28 +1096,18 @@
 			]
 		},
 		{
-			"id": "whole-or-part",
+			"id": "partitive-object",
 			"kind": "grammar",
-			"title": "Whole or part: the object",
-			"tagline": "ostsin raamatu, ostan raamatut",
-			"rule": "A whole, finished object is in the genitive singular (ma tõin raamatu); an unfinished action, a part or an amount takes the partitive (ma loen raamatut, ma joon vett), and so does every object of ei and of verbs like armastama and ootama.",
+			"title": "The object in the partitive",
+			"tagline": "ma joon vett, ma loen raamatut",
+			"rule": "The object is partitive when the action is unfinished or ongoing, when it is a part or an amount, after a negative, and after verbs like armastama: ma joon vett, ma loen raamatut, ma armastan sind. A whole, finished object is the genitive: ma tõin raamatu.",
 			"glyph": "git-compare",
-			"grammarTerm": "total and partial object",
-			"nativeTerm": "täis- ja osasihitis",
+			"grammarTerm": "partial object",
+			"nativeTerm": "osasihitis",
 			"cat": "Nouns",
 			"tags": [
-				"genitive",
+				"partitive",
 				"singular"
-			],
-			"variants": [
-				[
-					"genitive",
-					"singular"
-				],
-				[
-					"partitive",
-					"singular"
-				]
 			],
 			"after": [
 				"ostsin",
@@ -1168,6 +1186,12 @@
 				"avas",
 				"sulgesin",
 				"sulges"
+			],
+			"notWith": [
+				[
+					"genitive",
+					"singular"
+				]
 			]
 		},
 		{
@@ -1240,7 +1264,8 @@
 				]
 			],
 			"skipForms": [
-				"endaga"
+				"endaga",
+				"lõppude"
 			]
 		},
 		{
@@ -1263,7 +1288,7 @@
 			"kind": "grammar",
 			"title": "Bigger, better",
 			"tagline": "suurem, parem, rohkem",
-			"rule": "The comparative adds -m to the genitive: suur → suurem, ilus → ilusam, and a final a or u of a short word turns into e: vana → vanem, pikk → pikem; hea → parem, palju → rohkem. Adverbs: kiiremini. Than: kui or the elative (majast suurem).",
+			"rule": "The comparative adds -m to the genitive: suur → suurem, ilus → ilusam; a final a or u of a short word turns into e (vana → vanem, pikk → pikem); väike → väiksem, lühike → lühem, hea → parem, palju → rohkem. Than: kui or the elative (majast suurem).",
 			"glyph": "trending-up",
 			"grammarTerm": "comparative",
 			"nativeTerm": "keskvõrre",
@@ -1334,7 +1359,7 @@
 			"kind": "grammar",
 			"title": "Becoming: -ks",
 			"tagline": "arstiks, homseks",
-			"rule": "-ks on the genitive stem means becoming or turning into (ta sai arstiks) and by or for a time (homseks, hetkeks).",
+			"rule": "-ks on the genitive stem means becoming or turning into (ta sai arstiks), by or for a time (homseks, hetkeks) and what something is for (hommikusöögiks, for breakfast).",
 			"glyph": "trending-up",
 			"grammarTerm": "translative singular",
 			"nativeTerm": "saav",
@@ -1426,7 +1451,7 @@
 			"kind": "grammar",
 			"title": "It is done: the impersonal",
 			"tagline": "räägitakse, räägiti",
-			"rule": "The impersonal names no doer: -takse, -akse or -dakse in the present (räägitakse, lauldakse), -ti or -di in the past (varastati, lauldi), and the -tud form for what is done: uks on suletud.",
+			"rule": "The impersonal names no doer. Build it from the -tud form: räägitud → räägitakse (present), räägiti (past); tehtud → tehakse, tehti. The -tud form itself is what has been done: uks on suletud, maja on ehitatud.",
 			"glyph": "shield",
 			"grammarTerm": "impersonal voice",
 			"nativeTerm": "umbisikuline tegumood",
@@ -1452,6 +1477,10 @@
 					"passive",
 					"past"
 				]
+			],
+			"skipForms": [
+				"huvitatud",
+				"seotud"
 			]
 		},
 		{
@@ -1459,7 +1488,7 @@
 			"kind": "grammar",
 			"title": "Busy doing, back from doing",
 			"tagline": "käimas, ujumast, söömata",
-			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas; nägin teda tulemas); -mast, from doing or kept from it (tulen ujumast, keelas mul suitsetamast); -mata, without doing (ta läks söömata).",
+			"rule": "The -ma form takes case endings: -mas, in the middle of doing (ta on poes käimas; nägin teda tulemas); -mast, from doing, kept from it or thanked for it (tulen ujumast, keelas mul suitsetamast, tänan kutsumast); -mata, without doing (ta läks söömata).",
 			"glyph": "activity",
 			"grammarTerm": "ma-infinitive cases",
 			"nativeTerm": "ma-tegevusnime käändevormid",
@@ -1604,8 +1633,10 @@
 				"inglise",
 				"vene",
 				"soome",
-				"maa",
-				"linn"
+				"inglane",
+				"venelane",
+				"sakslane",
+				"maa"
 			]
 		},
 		{
@@ -1625,6 +1656,56 @@
 				"pank",
 				"juuksur",
 				"haigla"
+			]
+		},
+		{
+			"id": "lx-words-directions",
+			"kind": "words",
+			"title": "Words: Directions",
+			"tagline": "right, straight, back",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "signpost",
+			"lemmas": [
+				"paremale",
+				"otse",
+				"edasi",
+				"tagasi",
+				"parem",
+				"vasak"
+			]
+		},
+		{
+			"id": "lx-words-shopping",
+			"kind": "words",
+			"title": "Words: Prices",
+			"tagline": "price, pay, cheap",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "shopping-bag",
+			"lemmas": [
+				"hind",
+				"maksma",
+				"kallis",
+				"odav",
+				"euro",
+				"sent",
+				"raha"
+			]
+		},
+		{
+			"id": "lx-words-feelings",
+			"kind": "words",
+			"title": "Words: Feelings",
+			"tagline": "happy, sad, tired",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "heart",
+			"lemmas": [
+				"rõõmus",
+				"kurb",
+				"vihane",
+				"väsinud",
+				"õnnelik",
+				"hirm",
+				"rõõm"
 			]
 		}
 	],
@@ -1648,7 +1729,7 @@
 			"title": "Sina or teie",
 			"tagline": "informal and polite you",
 			"glyph": "hand",
-			"brief": "Explain when to say sina and when teie in Estonia: with friends, family and children, with strangers, in shops and at work, and how people switch. Role-play short greetings in both and tell me if my choice fits."
+			"brief": "Explain when to say sina and when teie in Estonia: with friends, family and children, with strangers, in shops and at work, and how people switch; and the polite address with härra and proua (härra Tamm, proua Kask). Role-play short greetings in both and tell me if my choice fits."
 		},
 		{
 			"id": "tutor-word-order",
@@ -1662,7 +1743,7 @@
 			"title": "Asking questions",
 			"tagline": "kas and question words",
 			"glyph": "message-circle-question",
-			"brief": "Explain that a yes or no question starts with kas (Kas sa tuled?), that a question word needs no kas (Kus sa elad?), and that a short answer repeats the verb (Tulen. Ei tule.). Ask me everyday questions, have me answer and ask back, and correct my questions."
+			"brief": "Explain that a yes or no question starts with kas (Kas sa tuled?), that a question word needs no kas (Kus sa elad?), that a short answer repeats the verb (Tulen. Ei tule.), the tag questions with eks and ega (Sa tuled homme, eks? Ega sa ei tule?), and mitte for not this but that (mitte täna, vaid homme). Ask me everyday questions, have me answer and ask back, and correct my questions."
 		},
 		{
 			"id": "tutor-principal-parts",
@@ -1676,14 +1757,14 @@
 			"title": "Mul on: having",
 			"tagline": "there is no verb 'to have'",
 			"glyph": "key",
-			"brief": "Explain that Estonian says have with the adessive and olema (mul on auto, isal on aega), the pronoun forms mul, sul, tal, meil, teil, neil, and that the negative takes the partitive (mul ei ole autot, mul pole aega). Ask me what I have and do not have, and correct my answers."
+			"brief": "Explain that Estonian says have with the adessive and olema (mul on auto, isal on aega), the pronoun forms mul, sul, tal, meil, teil, neil, that the negative takes the partitive (mul ei ole autot, mul pole aega), and that how I feel is said the same way (mul on külm, igav, palav). Ask me what I have and do not have and how I feel, and correct my answers."
 		},
 		{
 			"id": "tutor-there-is",
 			"title": "There is: laual on raamat",
 			"tagline": "the word order of being",
 			"glyph": "map-pin",
-			"brief": "Explain the Estonian sentence of being somewhere: Raamat on laual (the book is on the table) against Laual on raamat (there is a book on the table), that an indefinite amount puts the subject in the partitive (Toas on lapsi, Pudelis on vett), and that a negative does too (Toas ei ole kedagi, Laual pole raamatut). Describe a room to me, then have me describe one, and correct me."
+			"brief": "Explain the Estonian sentence of being somewhere: Raamat on laual (the book is on the table) against Laual on raamat (there is a book on the table), that an amount of something puts the subject in the partitive (Pudelis on vett), and that a negative does too (Toas ei ole kedagi, Laual pole raamatut). Describe a room to me, then have me describe one, and correct me."
 		},
 		{
 			"id": "tutor-numbers-time",
@@ -1704,7 +1785,7 @@
 			"title": "Must, can, may",
 			"tagline": "pean, võin, saan, tuleb",
 			"glyph": "key",
-			"brief": "Explain how to say must, can, may and need in Estonian: pidama with the -ma form (pean minema); võima, tohtima, saama and oskama with the da form; tuleb and on vaja with the da form (tuleb minna, mul on vaja minna); and the difference between oskan (know how), saan (am able), võin (may) and tohin (am allowed). Give me situations and ask me what I must, can or may do."
+			"brief": "Explain must, can, may and need: pidama with the -ma form (pean minema); võima, tohtima, saama and oskama with the da form; tuleb and on vaja with the da form (tuleb minna); oskan (know how), saan (am able), võin (may), tohin (am allowed). Then the future, which Estonian has no tense for: the present with a time word (homme lähen), a whole object for a result (loen raamatu läbi) and hakkama with the -ma form (hakkan õppima). Give me situations to answer."
 		},
 		{
 			"id": "tutor-gradation",
@@ -1725,7 +1806,7 @@
 			"title": "Whole or partial object",
 			"tagline": "the partitive or the genitive",
 			"glyph": "git-compare",
-			"brief": "Explain when a direct object is a whole object (the genitive singular or the nominative plural: ma ostsin raamatu, ma ostsin raamatud) and when a partial one (the partitive: ma ostan raamatut, ma ei ostnud raamatut), including negatives, unfinished actions, amounts, and the verbs that take the partitive (armastama, aitama; ootama and kuulama unless ära makes the action whole: ootasin ta ära). Give me sentences to complete and explain each choice."
+			"brief": "Explain when a direct object is a whole object (the genitive singular or the nominative plural: ma ostsin raamatu, ma ostsin raamatud; a number as a whole object stays nominative: ostsin kolm saia) and when a partial one (the partitive: ma ostan raamatut, ma ei ostnud raamatut), including negatives, unfinished actions, amounts, and the verbs that take the partitive (armastama, aitama; ootama and kuulama unless ära makes it whole: ootasin ta ära). Give me sentences to complete and explain each choice."
 		},
 		{
 			"id": "tutor-plural-stems",
@@ -1823,7 +1904,7 @@
 			"title": "Building words",
 			"tagline": "-ja, -mine, -lik, -ne",
 			"glyph": "wand",
-			"brief": "Explain how Estonian builds words: compounds (raamatukogu, haigekassa), the doer -ja (õpetaja), the action -mine (lugemine), -lik and -ne for describing words (sõbralik, puust → puine), -tu for without (rahatu), and the small -ke(ne) (majake). Give me words to take apart and to build, and correct me."
+			"brief": "Explain how Estonian builds words: compounds (raamatukogu, haigekassa), the doer -ja (õpetaja), the action -mine (lugemine), -lik and -ne for describing words (sõbralik, puust → puine), -lane for people from a place (eestlane, tallinlane), -tu for without (rahatu), and the small -ke(ne) (majake). Give me words to take apart and to build, and correct me."
 		},
 		{
 			"id": "tutor-pronouns",
@@ -1844,7 +1925,7 @@
 			"title": "Tired man, open door: participles",
 			"tagline": "-v, -tav, -nud, -tud",
 			"glyph": "file-text",
-			"brief": "Explain the four Estonian participles used as describing words: -v (elav, living), -tav (loetav, being read), -nud (väsinud, tired; who has done) and -tud (suletud, closed; done), how they agree like adjectives except -nud and -tud, which stay the same (väsinud mehega), and how one can replace a clause (raamat, mida loetakse → loetav raamat). Give me written sentences to rewrite in plain speech and back, and correct me."
+			"brief": "Explain the four Estonian participles used as describing words: -v (elav, living), -tav (loetav, being read), -nud (väsinud, tired; who has done) and -tud (suletud, closed; done), how -v and -tav agree like adjectives while -nud and -tud stay the same (väsinud mehele, but vanale mehele), and how one can replace a clause (raamat, mida loetakse → loetav raamat). Give me written sentences to rewrite in plain speech and back, and correct me."
 		}
 	],
 	"goals": [
@@ -2037,7 +2118,6 @@
 				"lx-words-home",
 				"adessive-singular",
 				"tutor-habitive",
-				"tutor-there-is",
 				"tutor-pronouns",
 				"can-say-what-i-have"
 			]
@@ -2051,8 +2131,10 @@
 				"lx-words-numbers",
 				"partitive-singular",
 				"after-numbers",
+				"tutor-there-is",
 				"lx-words-food",
 				"tutor-numbers-time",
+				"lx-words-shopping",
 				"can-buy-things"
 			]
 		},
@@ -2067,6 +2149,7 @@
 				"illative-singular",
 				"elative-singular",
 				"inner-cases",
+				"lx-words-directions",
 				"can-ask-way"
 			]
 		},
@@ -2141,7 +2224,7 @@
 			"tagline": "the partitive plural, whole or part",
 			"units": [
 				"partitive-plural",
-				"whole-or-part",
+				"partitive-object",
 				"tutor-object-case",
 				"lx-words-clothes",
 				"can-describe-things"
@@ -2239,6 +2322,7 @@
 			"units": [
 				"pronoun-cases",
 				"tutor-relative",
+				"lx-words-feelings",
 				"can-explain-why"
 			]
 		},
