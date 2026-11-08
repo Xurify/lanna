@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
-import { KBD, QUIET, SMALL } from "@/components/ui/learn-buttons";
+import { KBD } from "@/components/ui/learn-buttons";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -172,17 +172,13 @@ export function SentenceRow({ sentence, lang, translation, note, onPlay, childre
 	);
 }
 
-export function NotSaved({ onRetry, busy = false, children }: { onRetry?: () => void; busy?: boolean; children?: React.ReactNode }) {
+export function NotSaved({ onRetry, busy = false }: { onRetry: () => void; busy?: boolean }) {
 	return (
-		<p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-prose text-[13px] text-ink-3" role="status">
-			<span>
-				Not saved yet.{children ? <> {children}</> : null}
-			</span>
-			{onRetry && (
-				<button type="button" onClick={onRetry} disabled={busy} className={cn(QUIET, SMALL)}>
-					{busy ? "Trying…" : "Try again"}
-				</button>
-			)}
+		<p className="font-prose text-[13px] text-ink-3" role="status">
+			Not saved yet. The app keeps trying.{" "}
+			<button type="button" onClick={onRetry} disabled={busy} className="font-ui font-[550] text-ink-2 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-foreground disabled:text-ink-3 disabled:no-underline pointer-coarse:py-3">
+				{busy ? "Trying…" : "Try again"}
+			</button>
 		</p>
 	);
 }

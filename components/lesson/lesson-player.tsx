@@ -1692,7 +1692,7 @@ function EndScreen({
 			wide={split}
 			hint={
 				failed && !recorded ? (
-					<NotSaved onRetry={onRetrySave} busy={retrying}>The app keeps trying.</NotSaved>
+					<NotSaved onRetry={onRetrySave} busy={retrying} />
 				) : (
 					<EnterHint>{enterHint}</EnterHint>
 				)
@@ -1730,7 +1730,8 @@ function EndScreen({
 							title
 						)}
 					</h1>
-					<div className="mt-2 flex min-h-7 flex-wrap items-center gap-x-3.5 gap-y-1.5">
+					{(where || waiting) && (
+						<div className="mt-2 flex min-h-7 flex-wrap items-center gap-x-3.5 gap-y-1.5">
 						<p className="q-line dim" data-testid="lesson-end-where">
 							{where || (waiting && <Pulse className="h-4 w-28 align-middle" />)}
 						</p>
@@ -1742,6 +1743,7 @@ function EndScreen({
 							</ol>
 						)}
 					</div>
+						)}
 				</header>
 
 				{/* A stamp earned by this lesson is pressed onto the page (src/core/stamps.ts). */}
@@ -1756,9 +1758,9 @@ function EndScreen({
 					<Stats className="mt-7 max-w-none">
 						<Stat label="XP" value={`+${xp}`} ink="text-teal-2" />
 						{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
-						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
-						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
-						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "Not yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} />
+						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
+						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={<FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
+						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} />
 					</Stats>
 				</section>
 

@@ -54,7 +54,7 @@ import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { newSessionId, sendSession } from "@/components/session-save";
+import { keepSession, sendSession, type PendingSession } from "@/components/session-save";
 
 type Stage = "shelf" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -102,7 +102,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
-	const lastSave = useRef<string | null>(null);
+	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// The watch clock counts while the video plays, and while the learner works
 	// (a paused line, a question): after GAP_CAP_MS with no action it stops.
@@ -288,8 +288,8 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			setStage("end");
 			sfx.done();
 			try {
-				lastSave.current = JSON.stringify({ clientId: newSessionId(), action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
-				setOutcome(await sendSession<Outcome>("/api/watch", lastSave.current));
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", { action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
 			} catch {
 				setSaveFailed(true);
@@ -301,14 +301,14 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				setSaving(false);
 			}
 		},
-		[video, saving, mode, tapped, load, activeTime],
+		[video, saving, mode, tapped, load, activeTime, lang],
 	);
 
 	const retrySave = async () => {
 		if (!lastSave.current || saving) return;
 		setSaving(true);
 		try {
-			setOutcome(await sendSession<Outcome>("/api/watch", lastSave.current));
+			setOutcome(await sendSession<Outcome>(lastSave.current));
 			setSaveFailed(false);
 			void load();
 		} catch {

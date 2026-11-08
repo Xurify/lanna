@@ -35,7 +35,7 @@ import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { newSessionId, sendSession } from "@/components/session-save";
+import { keepSession, sendSession, type PendingSession } from "@/components/session-save";
 /** What a sentence is read with: the speaker's voice for a line of
  *  dialogue, the narrator's for the rest (stories written before voices
  *  were assigned have neither and get the default). */
@@ -63,6 +63,7 @@ interface Outcome {
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
 
 export function Reader({ initial, initialStory, startOnShelf = false }: { initial: ReadingState | null; initialStory?: StoryRecord | null; startOnShelf?: boolean }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [state, setState] = useState<ReadingState | null>(initial);
 	const [story, setStory] = useState<StoryRecord | null>(initialStory ?? initial?.current ?? null);
@@ -76,7 +77,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
-	const lastSave = useRef<string | null>(null);
+	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// Reading is mostly not clicking: the day's minutes count the time this
 	// tab is visible and focused while an episode is being read or its
@@ -148,8 +149,8 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 			setStage("end");
 			sfx.done();
 			try {
-				lastSave.current = JSON.stringify({ clientId: newSessionId(), action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
-				setOutcome(await sendSession<Outcome>("/api/read", lastSave.current));
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", { action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
 			} catch {
 				setSaveFailed(true);
@@ -159,14 +160,14 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 				setSaving(false);
 			}
 		},
-		[story, saving, tapped, load, activeTime],
+		[story, saving, tapped, load, activeTime, lang],
 	);
 
 	const retrySave = async () => {
 		if (!lastSave.current || saving) return;
 		setSaving(true);
 		try {
-			setOutcome(await sendSession<Outcome>("/api/read", lastSave.current));
+			setOutcome(await sendSession<Outcome>(lastSave.current));
 			setSaveFailed(false);
 			void load();
 		} catch {

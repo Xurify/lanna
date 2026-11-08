@@ -32,7 +32,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { newSessionId, sendSession } from "@/components/session-save";
+import { keepSession, sendSession, type PendingSession } from "@/components/session-save";
 
 interface Rep {
 	item: ListenItem;
@@ -76,7 +76,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
-	const lastSave = useRef<string | null>(null);
+	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// Listening is mostly hearing, not clicking: the day's minutes count the
 	// time this tab is visible and focused (`ms` stays the wall-clock).
@@ -162,8 +162,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			const correct = understood(all);
 			const almost = almostCount(all);
 			try {
-				lastSave.current = JSON.stringify({
-						clientId: newSessionId(),
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/listen", {
 						reps: all.map((r) => ({
 							itemId: r.item.id,
 							slug: r.item.slug,
@@ -186,7 +185,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 						activeMs: activeTime.finish(),
 						tz: new Date().getTimezoneOffset(),
 				});
-				setOutcome(await sendSession<Outcome>("/api/listen", lastSave.current));
+				setOutcome(await sendSession<Outcome>(lastSave.current));
 			} catch {
 				setSaveFailed(true);
 				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
@@ -194,14 +193,14 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 				setSaving(false);
 			}
 		},
-		[activeTime],
+		[activeTime, lang],
 	);
 
 	const retrySave = async () => {
 		if (!lastSave.current || saving) return;
 		setSaving(true);
 		try {
-			setOutcome(await sendSession<Outcome>("/api/listen", lastSave.current));
+			setOutcome(await sendSession<Outcome>(lastSave.current));
 			setSaveFailed(false);
 		} catch {
 			setSaveFailed(true);

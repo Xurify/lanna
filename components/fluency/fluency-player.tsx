@@ -343,13 +343,23 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 	return (
 		<div className="mt-6" data-testid="reread-history">
 			<h2 className="q-sh">Your pace on this episode</h2>
-			<div className="relative mt-2 flex h-[72px] items-end gap-2">
-				<div className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]" style={{ bottom: `${(target / max) * h}px` }} aria-hidden="true" />
+			<div className="relative mt-2 h-[72px]">
+				<div className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]" style={{ bottom: `${(target / max) * h}px` }}>
+					<span className="absolute right-0 bottom-0.5 font-ui text-xs text-ink-3">target {target} wpm</span>
+				</div>
+				<div className="absolute inset-0 flex items-end gap-1" aria-hidden="true">
+					{history.map((x, i) => (
+						<div key={i} className="flex w-9 justify-center">
+							<span className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-teal" : "bg-[var(--q-bar)]")} style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }} />
+						</div>
+					))}
+				</div>
+			</div>
+			<div className="mt-1 flex gap-1">
 				{history.map((x, i) => (
-					<div key={i} className="flex flex-col items-center gap-1" title={`${x.wpm} wpm`}>
-						<span className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-teal" : "bg-well-2")} style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }} />
-						<span className="font-ui text-xs tabular-nums text-ink-3">{x.wpm}</span>
-					</div>
+					<span key={i} className="w-9 text-center font-ui text-xs tabular-nums text-ink-3">
+						{x.wpm}
+					</span>
 				))}
 			</div>
 		</div>
