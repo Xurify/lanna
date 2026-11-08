@@ -21,7 +21,6 @@ import {
 	type AccessInput,
 } from "../src/server/remote-access.ts";
 
-const SECRET = "s".repeat(64);
 
 function input(overrides: Partial<Omit<AccessInput, "headers">> & { headers?: Record<string, string> } = {}): AccessInput {
 	const { headers, ...rest } = overrides;

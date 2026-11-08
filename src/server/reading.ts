@@ -25,7 +25,6 @@
  * and the number of drafts is on the record.
  */
 
-import { activeProfile } from "../../config.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
@@ -33,7 +32,7 @@ import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { curriculumState, allChapters, STAGES, type Cefr } from "../core/curriculum.ts";
 import { creditedWords, LEVEL_VOCAB } from "../core/milestones.ts";
-import { countryOf, foldDiacritics, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { countryOf, foldDiacritics, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { allUnits } from "../core/lesson.ts";
 import { purposeInfo, type Purpose } from "../core/onboarding.ts";

@@ -34,7 +34,6 @@ function main() {
 	const edges = view.edges;
 	const logicalEdges = view.logicalEdges;
 	const impLinks = view.impLinks;
-	const viewNodeById = new Map(view.nodes.map((n) => [n.id, n]));
 	const chains = graph.chains;
 	// An implication node is delivered the moment its chain is complete
 	// (conclusion + every premise delivered).
@@ -65,7 +64,6 @@ function main() {
 		positions = new Map();
 	}
 
-	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const unmappedFallback = sources[sources.length - 1]?.id ?? "";
 
 	console.log(`[replay] ${nodes.length} nodes, ${chains.length} chains, ${sources.length} sources`);

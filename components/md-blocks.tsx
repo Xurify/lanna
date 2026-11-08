@@ -16,7 +16,6 @@
  * - Code: streamdown's CodeBlock skeleton keeps the shiki plumbing, but the
  *   container melts (subtle bg tint, no border, no header — globals.css) and
  *   the buttons go.
- * - Display math: untouched visually, but gains the corner copy.
  *
  * THE ONE AFFORDANCE (user-decided): a small muted COPY icon at each block's
  * top-right corner, revealed on hover — copying the SOURCE (table →
@@ -410,44 +409,6 @@ export function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
 	);
 }
 
-// ─── Display math (the Streamdown `span` override) ────────────────────────────
-
-/** KaTeX display equations are wrapped in a SPAN.katex-display (rehype-katex
- *  renders them as spans with display:block CSS — NOT divs; verified in the
- *  static render). They gain the corner copy (the raw TeX — KaTeX embeds it
- *  in the MathML <annotation>; read from the DOM on click, no re-parse).
- *  Every other span passes through untouched. */
-export function MathDisplay(props: ComponentProps<"span"> & ExtraProps) {
-	const { children, className, node, ...rest } = props;
-	const ref = useRef<HTMLSpanElement>(null);
-	if (!className?.includes("katex-display")) {
-		return (
-			<span className={className} {...rest}>
-				{children}
-			</span>
-		);
-	}
-	return (
-		// BLOCK, not inline: the katex-display child is itself display:block
-		// (KaTeX's CSS), and an inline wrapper around a block child gets
-		// FRAGMENTED by the anonymous-block rules — the absolutely positioned
-		// corner then has no clean containing block and pointer events never
-		// land on it (owner report: the math corner neither highlights on hover
-		// nor copies; everything else works). display:block gives the corner a
-		// real box; z-10 keeps it above the equation spans it overlays.
-		<span className="group/md relative block z-0" data-testid="md-math">
-			<CopyCorner
-				className="absolute top-0 right-0 z-10"
-				label="Copy equation source"
-				getText={() => ref.current?.querySelector("annotation")?.textContent ?? ""}
-			/>
-			<span ref={ref} className={className} {...rest}>
-				{children}
-			</span>
-		</span>
-	);
-}
-
 // ─── The stable override set (module identity: Streamdown is memoized) ────────
 
 /** Bold as the REAL element (appearance fix, 2026-09-23): streamdown's
@@ -470,7 +431,6 @@ export function MarkdownStrong(props: ComponentProps<"strong"> & ExtraProps) {
 export const mdComponents = {
 	code: MarkdownCode,
 	table: MarkdownTable,
-	span: MathDisplay,
 	strong: MarkdownStrong,
 	blockquote: MarkdownBlockquote,
 };

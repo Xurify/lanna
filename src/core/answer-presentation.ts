@@ -3,7 +3,6 @@
  * the recorded facts; only model-authored display text comes from the call. */
 import { normalizeOptions, type QuestionAnswerData } from "./question-core.ts";
 import { parseAskInput, parseExplainInput, parseQuizInput } from "./tool-parts.ts";
-import { repairMathForDisplay } from "./math-delims.ts";
 
 export function answerForPresentation(answer: QuestionAnswerData, input: unknown): QuestionAnswerData {
 	if (answer.dismissed) return answer;
@@ -39,9 +38,7 @@ export function answerForPresentation(answer: QuestionAnswerData, input: unknown
 		const values = answer.answers.filter((a) => a.index === option.index).map((a) => a.value);
 		return original.flatMap((o, oi) => values.includes(o.value) ? [oi] : []);
 	}));
-	const recoveredLabels = original.map((o) => repairMathForDisplay(o.label));
-	bindUnique(saved.map((option) => original.flatMap((o, oi) =>
-		o.label === option.label || recoveredLabels[oi] === option.label ? [oi] : [])));
+	bindUnique(saved.map((option) => original.flatMap((o, oi) => o.label === option.label ? [oi] : [])));
 	// A bijection with one remaining pair has no ordering ambiguity. With
 	// multiple unmatched rows, keep their snapshots rather than guess.
 	if (saved.length === original.length && bindings.size === saved.length - 1) {

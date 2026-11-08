@@ -28,7 +28,6 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { activeProfile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
