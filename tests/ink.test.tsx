@@ -85,7 +85,7 @@ describe("case sketches in ink", () => {
 
 describe("what the walk-through teaches", () => {
 	const units = ["gen", "loc", "ins", "dat", "acc-people", "acc-fem"] as const;
-	const WHO = ["masculine person or animal", "masculine thing", "feminine", "feminine, ends in a consonant", "neuter"];
+	const WHO = ["masculine animate", "masculine inanimate", "feminine", "feminine, ends in a consonant", "neuter"];
 
 	it("every case with all three genders shows each gender in its steps", () => {
 		for (const unit of ["gen", "loc", "ins", "dat"] as const) {

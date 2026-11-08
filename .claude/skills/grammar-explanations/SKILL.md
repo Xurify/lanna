@@ -22,8 +22,8 @@ A rule that holds for "most" words is incomplete until its patterns are listed. 
 
 | Row | Test word |
 |---|---|
-| masculine person or animal (animate) | brat, lekár, pes (and the few in -a: hrdina, kolega) |
-| masculine thing | dom, stôl |
+| masculine animate (životný: a person or an animal) | brat, lekár, pes (and the few in -a: hrdina, kolega) |
+| masculine inanimate (neživotný: a thing) | dom, stôl |
 | feminine in -a after a hard consonant | škola, ruka, Žilina |
 | feminine in -a after a soft consonant | ulica, práca |
 | feminine ending in a consonant | noc, radosť, pieseň |
