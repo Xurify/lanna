@@ -9,7 +9,6 @@
 
 import fs from "node:fs";
 import { activeProfile, curriculumFile, shownProfiles, switchProfile, type LanguageProfile } from "../../config.ts";
-import { extractionStatuses } from "../agent/subagents/extraction.ts";
 import type { GraphChain, GraphNode } from "../core/contracts.ts";
 import { settleGraphLayout } from "../core/layout-settle.ts";
 import type { LanguageInfo } from "../core/language.ts";
@@ -59,7 +58,6 @@ export class SwitchBlocked extends Error {}
  *  waits for it. */
 export function switchBlocker(): string | null {
 	if (anyTurnRunning()) return "The tutor is still answering. Switch when the reply is done.";
-	if (extractionStatuses().length > 0) return "The skill map is still being updated. Switch when it is done.";
 	const video = listTasks().find((t) => t.kind === "video" && t.status === "running");
 	if (video) return `"${video.title}" is still running. Switch when it is done, or stop it on the Tasks page.`;
 	return null;

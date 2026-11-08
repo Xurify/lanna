@@ -28,15 +28,14 @@ export const TRACES_COPY = {
  *     JetBrains Mono at normal text-sm size (was sized-up text-lg), no
  *     code-block chrome;
  *   - ONE unchecked-by-default checkbox "Also remove its graph traces"
- *     (unchecked = preserve-graph: the session record, its jobs, and its
- *     extraction bookkeeping die; the graph keeps every contribution.
+ *     (unchecked = preserve-graph: the session record and its jobs die;
+ *     the graph keeps every contribution.
  *     checked = delete-nodes: the session's ledger traces go too);
  *   - a bottom row Cancel + destructive-red Delete, exactly the node
  *     dialog's pair.
  *
  * Retryable failures render honestly with a Try-again: 409 turn_in_flight /
- * jobs_running ("wait for running work") and 503 extraction_winding_down
- * ("in a moment") both clear on their own — the server's error line is
+ * jobs_running ("wait for running work") clears on its own — the server's error line is
  * already written for the user; we show it verbatim. Try-again is just
  * Delete pressed again — the mode re-derives from the checkbox.
  */
@@ -102,8 +101,7 @@ export function DeleteSessionDialog({
 				graphRevision?: number;
 			};
 			if (!res.ok) {
-				// 409 (turn/jobs running) and 503 (extraction winding down) are
-				// both retryable — keep the dialog open, show the server's line.
+				// 409 (turn/jobs running) is retryable — keep the dialog open, show the server's line.
 				setFailure({ code: body.code ?? "error", error: body.error ?? `Delete failed (${res.status})` });
 				setBusy(false);
 				return;

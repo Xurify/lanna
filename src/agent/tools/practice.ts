@@ -22,7 +22,6 @@ import { lsTool } from "./ls.ts";
 import { findTool } from "./find.ts";
 import { grepTool } from "./grep.ts";
 import { jobTools, type JobToolContext } from "./jobs.ts";
-import { proberGraphTools, type GraphToolContext } from "./graph.ts";
 import { activeProblemOf } from "../../core/native-messages.ts";
 import type { LhMessage } from "../../core/native-messages.ts";
 import { concludeResult, invalidInputResult, problemResult } from "../tool-execute.ts";
@@ -39,11 +38,8 @@ export interface PracticeToolContext {
 	 *  not just the session's picks, so pickless sessions and future
 	 *  graph-tools poses stay valid. Absent (tests) = no validation. */
 	graphNodes?: () => ReadonlyArray<Pick<import("../../core/contracts/graph.ts").GraphNode, "id" | "name">>;
-	/** THE RARELY-NEEDED SET (owner round 10, 2026-10-05): the map readers
-	 *  behind the SAME settings gate as the prober's (graphToolsEnabled at
-	 *  the composition root); the research + pdf jobs (both keyless).
-	 *  Each absent context (tests) = absent from the registry. */
-	graph?: GraphToolContext;
+	/** THE RARELY-NEEDED SET (owner round 10, 2026-10-05): the research +
+	 *  pdf jobs (both keyless). Absent (tests) = absent from the registry. */
 	jobs?: JobToolContext;
 	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
@@ -253,7 +249,6 @@ export function practiceTools(ctx: PracticeToolContext): Record<string, AgentToo
 		grep: grepTool,
 		...(jobs?.research ? { research: jobs.research } : {}),
 		...(jobs ? { pdf: jobs.pdf! } : {}),
-		...(ctx.graph ? proberGraphTools(ctx.graph) : {}),
 		...languageTools(ctx.review),
 	});
 }

@@ -20,4 +20,4 @@ Two tools; everything else is conversation. **No problem is ever conversation**:
 
 **Fact checks.** If a fact in a problem, model solution, verdict or hint feels unsure, research it before posing; the check arrives as a message. A wrong model solution grades the learner against a lie.
 
-**Side tools.** The learner's files (read, ls, find, grep; PDFs through a pdf job) and the map readers (list_sessions, list_propositions) cover the occasional need.
+**Side tools.** The learner's files (read, ls, find, grep; PDFs through a pdf job) cover the occasional need.
