@@ -110,7 +110,7 @@ const SUMMARIES: Partial<Record<UnitId, SketchSummary>> = {
 			{ who: "feminine", from: "škola", stem: "škol", ending: "y", note: "after c, dz, dž, j, č, š, ž, ľ, ň, ď, ť: -e (práca → práce)" },
 			{ who: "neuter", from: "mesto", stem: "mest", ending: "a" },
 		],
-		exceptions: "A few men end in -a too (hrdina). They follow the masculine pattern: hrdinu. A few words follow the soft pattern anyway: večera is declined like ulica, so večere.",
+		exceptions: "A few words for male people end in -a too: hrdina (hero), kolega (colleague). They are masculine, so they follow the masculine pattern: hrdinu, kolegu. And večera is declined like ulica, so večere.",
 	},
 	loc: {
 		slug: "locative",
