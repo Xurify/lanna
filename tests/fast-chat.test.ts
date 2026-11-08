@@ -212,6 +212,70 @@ describe("a drawing asked for after the reply", () => {
 		assert.deepEqual(result.details, { failed: true });
 	});
 
+	it("throws AbortError when aborted during drawing, rather than masking it as failed: true", async () => {
+		const controller = new AbortController();
+		const { chatTools } = await import("../src/agent/tools/chat.ts");
+		const tools = chatTools({
+			drawing: {
+				draw: async () => {
+					controller.abort();
+					const err = new Error("aborted");
+					err.name = "AbortError";
+					throw err;
+				},
+			},
+		});
+		await assert.rejects(
+			tools.draw.execute("d1", { brief: "test" }, controller.signal),
+			(err: any) => err?.name === "AbortError" || err?.message === "aborted",
+		);
+	});
+
+	it("drawForReply rejects immediately on an aborted signal", async () => {
+		const controller = new AbortController();
+		controller.abort();
+		const { drawForReply } = await import("../src/server/drawing.ts");
+		await assert.rejects(
+			drawForReply({
+				engine: scripted([]).engine,
+				reply: "A reply",
+				brief: "A brief",
+				signal: controller.signal,
+			}),
+			(err: any) => err?.name === "AbortError" || err?.message === "aborted",
+		);
+	});
+
+	it("drawForReply returns null on drawing timeout without aborting", async () => {
+		const { drawForReply } = await import("../src/server/drawing.ts");
+		const faux = createFauxCore({ provider: "anthropic", models: [{ id: "claude-haiku-5-5" }] });
+		faux.stream = () => {
+			return {
+				async *[Symbol.asyncIterator]() {
+					await new Promise((resolve) => setTimeout(resolve, 500));
+				},
+			} as any;
+		};
+		const engine: PiEngine = {
+			model: { provider: "anthropic", id: "claude-haiku-5-5" } as any,
+			stream: faux.stream.bind(faux) as any,
+		};
+		const result = await drawForReply({
+			engine,
+			reply: "A reply",
+			brief: "A brief",
+			timeoutMs: 20,
+		});
+		assert.equal(result, null);
+	});
+
+	it("drawing prompt forbids introducing unverified forms and does not suggest other words for the question answer", () => {
+		const prompt = fs.readFileSync(path.join(process.cwd(), "src/agent/prompts/drawing/10-drawing.md"), "utf-8");
+		assert.ok(!prompt.includes("Draw the pattern with other words"));
+		assert.ok(prompt.includes("leave that cell or spot empty, or marked with `?`"));
+		assert.ok(prompt.includes("Never add a form the reply does not have"));
+	});
+
 	it("accepts only a drawing that passes the sketch allowlist", () => {
 		assert.equal(svgOf("```svg\n" + SVG + "\n```"), SVG);
 		assert.equal(svgOf(`Here: ${SVG}`), SVG);

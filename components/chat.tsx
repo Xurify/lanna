@@ -335,6 +335,12 @@ export function Chat({
 		return () => window.removeEventListener("lh:chat-renamed", onRenamed);
 	}, [chatId]);
 
+	// A chat turn ends right after its record calls, so a steer would wait for the next run; the chat
+	// holds what the learner sends during a turn and sends it the moment the turn is over.
+	const applyTextRef = useRef<(v: string) => void>(() => {});
+	const heldAnswerRef = useRef<string | null>(null);
+	const [heldAnswer, setHeldAnswer] = useState<string | null>(null);
+
 	// The Esc chain's last link: abort the turn. The background runner
 	// decoupled turns from views, so the abort is ALWAYS the remote kill
 	// (POST /api/activity/abort — any in-flight turn dies server-side, our
@@ -343,6 +349,11 @@ export function Chat({
 	// and keeps the partial; the server-side partial persists via the
 	// abort's own onFinish. Inert when nothing runs (busyRef gate).
 	const abortInFlightTurn = useCallback(() => {
+		if (heldAnswerRef.current !== null) {
+			applyTextRef.current(heldAnswerRef.current);
+			heldAnswerRef.current = null;
+			setHeldAnswer(null);
+		}
 		if (localStreamRef.current) stop();
 		void fetch("/api/activity/abort", {
 			method: "POST",
@@ -352,7 +363,7 @@ export function Chat({
 			/* transient — the turn settles on its own; the record poll adopts */
 		});
 		// 409 not_running is the benign raced-settle: the stream's finish
-			// already settled the view (or the poll fallback adopts) — nothing owed.
+		// already settled the view (or the poll fallback adopts) — nothing owed.
 	}, [chatId, stop]);
 	// ESC-abort guard (owner, 2026-10-02): the abort chain opens a confirm
 	// popup EVERYWHERE (streams and pending questions alike). Both window
@@ -553,6 +564,7 @@ export function Chat({
 		textRef.current = v;
 		setText(v);
 	}, []);
+	applyTextRef.current = applyText;
 	// The BYOK setup flow (owner, 2026-09-22): the persistent CTA and the
 	// refusal interception share one SetupDialog mount. `configured` is
 	// seeded server-side (slotsConfigured on the record) and flips on Save.
@@ -1149,14 +1161,20 @@ export function Chat({
 		void send({ type: "text", text: t });
 	};
 
-	// A chat turn ends right after its record calls, so a steer would wait for the next run; the chat
-	// holds what the learner sends during a turn and sends it the moment the turn is over.
-	const [heldAnswer, setHeldAnswer] = useState<string | null>(null);
 	useEffect(() => {
 		if (busy || pending || compacting || heldAnswer === null) return;
+		if (error) {
+			applyText(heldAnswer);
+			heldAnswerRef.current = null;
+			setHeldAnswer(null);
+			return;
+		}
+		const answer = heldAnswer;
+		draftRef.current = answer;
+		heldAnswerRef.current = null;
 		setHeldAnswer(null);
-		void send({ type: "text", text: heldAnswer });
-	}, [busy, pending, compacting, heldAnswer, send]);
+		send({ type: "text", text: answer });
+	}, [busy, pending, compacting, error, heldAnswer, send, applyText]);
 
 	/* STEER VS SEND (owner arc 2026-10-03): a send while a turn runs steers
 	 * it — the quiet queue + the live agent's steering rail; the turn's own
@@ -1173,7 +1191,11 @@ export function Chat({
 		if (!t) return;
 		if (busy && kind === "chat") {
 			applyText("");
-			setHeldAnswer((held) => (held ? `${held}\n${t}` : t));
+			setHeldAnswer((held) => {
+				const next = held ? `${held}\n${t}` : t;
+				heldAnswerRef.current = next;
+				return next;
+			});
 			return;
 		}
 		if (busy) {

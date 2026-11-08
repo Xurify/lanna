@@ -83,7 +83,18 @@ function drawTool(seam: ChatDrawingSeam): AgentTool<typeof drawInput, ChatDrawin
 		parameters: drawInput,
 		executionMode: "parallel",
 		execute: async (_toolCallId, input, signal) => {
-			const svg = await seam.draw(input.brief, signal).catch(() => null);
+			if (signal?.aborted) {
+				const err = new Error("aborted");
+				err.name = "AbortError";
+				throw err;
+			}
+			let svg: string | null = null;
+			try {
+				svg = await seam.draw(input.brief, signal);
+			} catch (err: any) {
+				if (signal?.aborted || err?.name === "AbortError" || err?.message === "aborted") throw err;
+				svg = null;
+			}
 			return svg
 				? { content: [{ type: "text", text: `Drawn under the reply: ${input.brief}` }], details: { svg } }
 				: { content: [{ type: "text", text: "The drawing could not be made; the reply stands without it." }], details: { failed: true } };

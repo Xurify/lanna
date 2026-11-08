@@ -37,7 +37,7 @@ Answer with one fenced block and nothing else: no words before or after it.
 ## One idea, and the words are checked
 
 - The drawing says one thing you could put in five words. Two ideas are two replies.
-- The drawing never shows the answer to the question at the end of the reply. Draw the pattern with other words, or leave that cell empty.
+- The drawing never shows the answer to the question at the end of the reply: leave that cell or spot empty, or marked with `?`. Never add a form the reply does not have to fill it.
 - Use only target-language forms that the reply itself has (its `say:` spans and the words around them): they are checked and can be heard. Never add a form the reply does not have.
 - A grid of forms states which forms they are (the case, the number) in a small label.
 

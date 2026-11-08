@@ -21,16 +21,38 @@ export function latestReplyText(messages: readonly AgentMessage[]): string {
 	return (reply?.content ?? []).flatMap((c) => (c.type === "text" && c.text ? [c.text] : [])).join("\n\n");
 }
 
-export async function drawForReply(opts: { engine: PiEngine; reply: string; brief: string; signal?: AbortSignal; onUsage?: (usage: Usage) => void; chatId?: string }): Promise<string | null> {
-	const { text } = await runSubagent([], {
-		role: "teacher",
-		engine: opts.engine,
-		systemPrompt: fs.readFileSync(DRAWING_PROMPT, "utf-8"),
-		prompt: `The reply:\n\n${opts.reply}\n\nThe brief: ${opts.brief}`,
-		maxTurns: 1,
-		abortSignal: opts.signal,
-		onUsage: opts.onUsage,
-		chatId: opts.chatId,
-	});
-	return svgOf(text);
+export const DRAWING_TIMEOUT_MS = 25_000;
+
+export async function drawForReply(opts: {
+	engine: PiEngine;
+	reply: string;
+	brief: string;
+	signal?: AbortSignal;
+	onUsage?: (usage: Usage) => void;
+	chatId?: string;
+	timeoutMs?: number;
+}): Promise<string | null> {
+	if (opts.signal?.aborted) {
+		const err = new Error("aborted");
+		err.name = "AbortError";
+		throw err;
+	}
+	const timeout = AbortSignal.timeout(opts.timeoutMs ?? DRAWING_TIMEOUT_MS);
+	const signal = opts.signal ? AbortSignal.any([opts.signal, timeout]) : timeout;
+	try {
+		const { text } = await runSubagent([], {
+			role: "teacher",
+			engine: opts.engine,
+			systemPrompt: fs.readFileSync(DRAWING_PROMPT, "utf-8"),
+			prompt: `The reply:\n\n${opts.reply}\n\nThe brief: ${opts.brief}`,
+			maxTurns: 1,
+			abortSignal: signal,
+			onUsage: opts.onUsage,
+			chatId: opts.chatId,
+		});
+		return svgOf(text);
+	} catch (err: any) {
+		if (opts.signal?.aborted || (err?.name === "AbortError" && opts.signal?.aborted)) throw err;
+		return null;
+	}
 }
