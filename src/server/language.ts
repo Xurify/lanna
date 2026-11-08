@@ -7,7 +7,8 @@
  */
 
 import fs from "node:fs";
-import { activeProfile, curriculumFile, shownProfiles, switchProfile, type LanguageProfile } from "../../config.ts";
+import { activeProfile, curriculumFile, isLanguageProfile, shownProfiles, switchProfile, withProfile, type LanguageProfile } from "../../config.ts";
+import { emit } from "../core/events.ts";
 import type { LanguageInfo } from "../core/language.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
 import { languageRemovable } from "./language-add.ts";
@@ -42,6 +43,11 @@ export function profileStatus(): ProfileStatus {
 
 export class SwitchBlocked extends Error {}
 
+export function inShownLanguage<T>(shown: string | null, fn: () => T): T | null {
+	if (!shown) return fn();
+	return isLanguageProfile(shown) ? withProfile(shown, fn) : null;
+}
+
 /** Why the running language cannot change now, or null. Work in flight
  *  writes into the running language's folder when it finishes, so a switch
  *  waits for it. */
@@ -58,6 +64,7 @@ export function selectProfile(profile: LanguageProfile): ProfileStatus {
 		const blocked = switchBlocker();
 		if (blocked) throw new SwitchBlocked(blocked);
 		switchProfile(profile);
+		emit("language-changed", {});
 	}
 	return profileStatus();
 }

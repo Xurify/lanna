@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 8 November: a page left open in the old language saves nothing (branch `fix/per-device-language`)
+
+- **Why:** a language switch on the PC reloaded only the PC. A phone or iPad page still in the old language kept writing, and its writes went into the new one. Rule E75.
+- **What changed:** every page says which language it shows with each API call, and the server refuses a write from a page whose language is no longer running. The page then shows a notice naming both languages, with **Continue in** the running language or **Switch back**. Active time sent as a page closes goes to the language the page showed. A finished lesson that was refused waits in the outbox and is saved once its language runs again. Switching back saves it at once, and the end screen fills in.
+- **Checked:** reproduced first in the sandbox with two browser contexts (Slovak and an added Czech): before the fix, minutes from the Slovak lesson landed in `profiles/czech/progress.json`; after it, they land in Slovak, the finished lesson gets a 409 and nothing is written to Czech, and **Switch back to Slovak** records the lesson into Slovak. The notice was checked at phone width (iPhone 13 emulation). The proxy follows a switch in `next start` too. Full suite green.
+- **Unverified:** on a real phone over Tailscale, and with Safari or Chrome suspending a background tab's events channel (the focus and visibility check covers it, untested on a device).
+
 ## 7 November: grammar lessons open on an ink sketch (branch `feat/ink-case-sketches`)
 
 - **Why:** the owner: grammar felt like review, and the diagrams should look like pen drawings, as riddled.ai’s do. Rule E73.

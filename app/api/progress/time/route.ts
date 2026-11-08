@@ -6,8 +6,8 @@
  * finishes. Returns {minutes} added (src/core/active-time.ts).
  */
 
-import { isTimedActivity } from "@/src/core";
-import { recordActiveTime } from "@/src/server";
+import { isTimedActivity, SHOWN_LANGUAGE_HEADER } from "@/src/core";
+import { inShownLanguage, recordActiveTime } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,5 +19,7 @@ export async function POST(req: Request) {
 	if (!body || !isTimedActivity(body.activity)) return Response.json({ message: "activity must be a timed activity" }, { status: 400 });
 	if (typeof body.ms !== "number" || !Number.isFinite(body.ms) || body.ms < 0) return Response.json({ message: "ms must be a non-negative number" }, { status: 400 });
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
-	return Response.json({ minutes: recordActiveTime(body.activity, Math.min(body.ms, MAX_MS), tz) });
+	const activity = body.activity;
+	const ms = Math.min(body.ms, MAX_MS);
+	return Response.json({ minutes: inShownLanguage(req.headers.get(SHOWN_LANGUAGE_HEADER), () => recordActiveTime(activity, ms, tz)) ?? 0 });
 }

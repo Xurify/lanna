@@ -626,6 +626,7 @@ Data lives in `data/` next to the app and is gitignored. The Electron app and `n
 - `withProfile(id, fn)` reads another language's records for the daily plan across languages. `fn` must be synchronous, so no other request runs while the language is borrowed.
 - A switch waits (409 with the reason) while a tutor turn, a skill-map update or a video preparation is running, since each writes into the running language's folder when it ends. The browser then loads the page again (`window.location.assign`), on the same page when it means the same thing in every language, else on Today. There is no confirm step and no relaunch; the Electron relaunch and the desktop:dev restart that existed only for switching are gone.
 - Open: a model call started by a page (a Read episode, a Speak line) that is still in flight during a switch writes into the new language's folder. Nothing waits for those yet.
+- A page left open in another window or on another device keeps the language it was rendered in; what it may still write is E75.
 
 ### E46. One plan for the day across languages; the split is each language's own minutes (2026-11-05, branch `feat/unified-daily-plan`)
 
@@ -897,6 +898,20 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - `tests/case-forms.test.ts` holds every walk-through sentence and table row to a paradigm table, requires each rule line to name its case, and fails on terms the learner was not given. Add a word to `FORMS` when you add a form.
 - A masculine rule that covers people and animals says "masculine person or animal" (the animate masculine nouns), never "male person" and never plain "masculine" (masculine things such as dom do not change in the accusative). A unit id is code: prose, captions and chat use the full name (E23).
 - What no source gives is written in the changelog, not in the app. The same checklist is in the slovak.wiki authoring reference (`slovak-wiki-authoring.md`).
+
+### E75. A page writes only into the language it shows (2026-11-08, branch `fix/per-device-language`)
+
+**Why:** remote access (E20, E21) puts a phone or an iPad on the same server as the PC, and the running language is one value for the whole process (E45). A switch on one device reloaded only that device. A page left open on another kept showing the old language while its writes went to the new one. Reproduced in the sandbox with two browser contexts, Slovak and an added Czech: a lesson started in Slovak and left after the switch wrote its minutes into `profiles/czech/progress.json`, and the finished Slovak lesson was refused with "unit and reps are required" (Czech has no such unit) and stayed in the outbox with no reason given.
+
+**Considered:** resolving the language per request or per device (a cookie, with the language held per request). That means a second running language beside E45's, a background task (a tutor turn, a video preparation) that would have to carry the device's language, and `withProfile` could no longer be the only borrow. One language per process, with a page that knows when it is out of date, keeps E45 as it is.
+
+**How to apply:**
+- The page names the language it was rendered in. `app/layout.tsx` writes `activeProfile()` into `<html data-lh-language>`, and `components/language-changed-notice.tsx` reads it once when the page loads and wraps `window.fetch` (`lib/shown-language.ts`): every call to this app's `/api/` carries `x-lh-language`. A client-side navigation does not change it; only a full load does.
+- `proxy.ts` refuses a write (any method but GET, HEAD and OPTIONS) whose `x-lh-language` is not the running language: 409 `{error: "language_changed", shown, running, message}`. The rule is `languageChanged()` in `src/core/language-guard.ts`. A request without the header (a script, a test, the server calling itself) is not checked. The proxy and the routes read the same `globalThis` state, checked in `next dev` and `next start`.
+- Two routes are left out. `POST /api/profile`, so a stale page can still switch. `POST /api/progress/time`, which records into the language the page showed with `inShownLanguage()` (`withProfile`, synchronous); a language that has since been removed gets nothing. Active time is sent as the page closes, so there is no one left to show a refusal to.
+- A finished lesson that is refused stays in the outbox (it never drops a lesson) and is sent again whenever its language runs. The outbox now tells the waiting end screen again once a later send is recorded.
+- The open page says so. A switch emits the `language-changed` server event; the notice also checks `/api/profile` when the page gains focus or becomes visible, after the events channel reconnects, and when a write is refused. It names both languages and offers **Continue in <running>** (a full load, on the same page when it means the same thing in every language, else Today, as after a switch) or **Switch back to <shown>** (switches the server back, so the page works again and its waiting lessons are sent).
+- Tests: `tests/language-guard.test.ts` runs the proxy and the routes on a scratch data folder with Slovak and Czech; `tests/outbox.test.ts` covers the refused-then-recorded lesson.
 
 ## Dropped or deferred
 

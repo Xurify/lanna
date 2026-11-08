@@ -1,12 +1,3 @@
-/**
- * THE LESSON OUTBOX (LangHarness, 2026-10-30): a finished lesson waits in
- * storage until the server has recorded it. Pins: the write is synchronous;
- * a sent lesson carries its id and leaves the outbox once recorded (its waiter
- * gets the answer); a server error or a dropped connection keeps it; a request
- * the server refuses is dropped, so it cannot block the rest; another
- * language's lessons are left alone; two flushes at once send each lesson once.
- */
-
 import assert from "node:assert/strict";
 import { after, afterEach, beforeEach, describe, it } from "node:test";
 
@@ -89,6 +80,17 @@ describe("lesson outbox", () => {
 		assert.deepEqual(waiting().map((p) => p.id), [bad.id], "the refused lesson is kept, the recorded one is removed");
 		assert.equal(waiting()[0]!.refused, 400);
 		assert.ok(good.id);
+	});
+
+	it("tells the waiter about a refusal, and again once a later run records the lesson", async () => {
+		replies = [{ status: 409 }, { status: 200 }];
+		const entry = outbox.enqueueLesson("sk", { unit: "loc" });
+		const heard: Array<string | null> = [];
+		outbox.onSettled(entry.id, (recorded) => heard.push(recorded ? recorded.summary.next : null));
+		await outbox.flushOutbox("sk");
+		await outbox.flushOutbox("sk");
+		assert.deepEqual(heard, [null, "loc"]);
+		assert.equal(waiting().length, 0);
 	});
 
 	it("sends a refused lesson again on a later run", async () => {

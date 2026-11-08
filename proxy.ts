@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { activeProfile } from "./config.ts";
+import { languageChanged, SHOWN_LANGUAGE_HEADER } from "./src/core/language-guard.ts";
 import { desktopAPIAuthorized, desktopWindowRequest } from "./src/server/desktop-access.ts";
 import { DEVICE_COOKIE, decideAccess, readCookie, tailnetHost } from "./src/server/remote-access.ts";
 import { readAccess, resolveDevice } from "./src/server/remote-access-store.ts";
@@ -22,7 +24,10 @@ export async function proxy(request: NextRequest) {
 		desktopApiOk: desktopAPIAuthorized(headers),
 		paired: device !== null,
 	});
-	if (decision.action === "allow") return NextResponse.next();
+	if (decision.action === "allow") {
+		const changed = languageChanged({ method: request.method, pathname, shown: headers.get(SHOWN_LANGUAGE_HEADER) }, activeProfile());
+		return changed ? NextResponse.json(changed, { status: 409, headers: NO_STORE }) : NextResponse.next();
+	}
 	const api = pathname.startsWith("/api/");
 	if (decision.action === "pair") {
 		if (api || request.method !== "GET") {
