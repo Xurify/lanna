@@ -12,6 +12,7 @@ import { StatsBar } from "@/components/stats-bar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ComposerActions } from "@/components/composer-actions";
+import { ChatDraft } from "@/components/chat-draft";
 
 /**
  * The sessionless draft view at /chat/new (owner, 2026-09-13): "+ New
@@ -29,7 +30,6 @@ const DOCK = "mx-auto w-full max-w-[46rem] px-4";
 
 /** One-tap starting points for an empty draft (they fill the composer). */
 const TEACH_IDEAS = ["Ordering food in a café", "Talking about my weekend", "The past tense", "Cases after prepositions"];
-const CHAT_IDEAS = ["Explain the cases with a drawing", "This, that and that over there", "The past tense", "How do I say that I like something?"];
 const PRACTICE_IDEAS = ["Verb endings in the present", "Accusative after mám, vidím", "Where? v, na + locative", "Past tense -l, -la, -lo"];
 
 /**
@@ -75,13 +75,13 @@ export function DraftShell({
 	onChange,
 	onSend,
 	setupCta,
-	mode = "chat",
+	mode = "teach",
 }: {
 	busy: boolean;
 	text: string;
 	onChange: (v: string) => void;
 	onSend: () => void;
-	mode?: "chat" | "teach" | "practice";
+	mode?: "teach" | "practice";
 	/** The first-run CTA (fix wave chunk B): the same "Set up your models"
 	 *  affordance home carries, rendered above the draft shell — passed by
 	 *  NewSession, which owns the configured state and the SetupDialog. */
@@ -146,18 +146,16 @@ export function DraftShell({
 						<div className="flex min-h-0 flex-1 items-end justify-center overflow-y-auto px-4 pb-10 pt-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
 									<div className="max-w-md space-y-1.5">
 										<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
-											{mode === "practice" ? "What should we drill?" : mode === "chat" ? "What do you want to understand?" : "What do you want to learn?"}
+											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
 										</h3>
 										<p className="text-base text-muted-foreground">
 											{mode === "practice"
 												? "Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."
-												: mode === "chat"
-													? "Ask about a word, a form or a rule. You get a short answer, a drawing when it helps, and then you try it."
-													: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
+												: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
 										</p>
 									</div>
 									<div className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2" data-testid="draft-suggestions">
-										{(mode === "practice" ? PRACTICE_IDEAS : mode === "chat" ? CHAT_IDEAS : TEACH_IDEAS).map((idea) => (
+										{(mode === "practice" ? PRACTICE_IDEAS : TEACH_IDEAS).map((idea) => (
 											<button
 												key={idea}
 												type="button"
@@ -192,13 +190,12 @@ export function DraftShell({
 										// input (owner refinement round, 2026-09-24) — no lesson has
 										// started yet, so the composer must not read like one is in
 										// flight.
-										placeholder={mode === "practice" ? "What do you want to practice?" : mode === "chat" ? "Ask anything about the language…" : "What do you want to learn?"}
+										placeholder={mode === "practice" ? "What do you want to practice?" : "What do you want to learn?"}
 									/>
 								</div>
 								<StatsBar
 									dictationSlot={<DictationBar dictation={dictation} />}
 									turns={[]}
-									plain={mode === "chat"}
 								/>
 							</div>
 						</div>
@@ -217,7 +214,7 @@ export function DraftShell({
 	);
 }
 
-export function NewSession({ initialConfigured, mode = "chat" }: { initialConfigured: boolean; mode?: "chat" | "teach" | "practice" }) {
+export function NewSession({ initialConfigured, mode = "chat", language = "" }: { initialConfigured: boolean; mode?: "chat" | "teach" | "practice"; language?: string }) {
 	const router = useRouter();
 	const [text, setText] = useState("");
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
@@ -273,14 +270,8 @@ export function NewSession({ initialConfigured, mode = "chat" }: { initialConfig
 
 	return (
 		<>
-			<DraftShell
-				busy={busy}
-				text={text}
-				onChange={applyText}
-				onSend={send}
-				mode={mode}
-				setupCta={
-					zeroKeys ? (
+			{(() => {
+				const setupCta = zeroKeys ? (
 						<ZeroKeysPill inline onOpen={() => setSetupOpen(true)} />
 					) : (
 						!configured && (
@@ -293,9 +284,13 @@ export function NewSession({ initialConfigured, mode = "chat" }: { initialConfig
 								Add an AI key
 							</button>
 						)
-					)
-				}
-			/>
+					);
+				return mode === "chat" ? (
+					<ChatDraft busy={busy} text={text} onChange={applyText} onSend={send} language={language} setupCta={setupCta} />
+				) : (
+					<DraftShell busy={busy} text={text} onChange={applyText} onSend={send} mode={mode} setupCta={setupCta} />
+				);
+			})()}
 			{/* First-run setup: the send interception's landing surface — stage
 			    1 is the self-contained first-key screen (zero-keys wave). */}
 			<SetupDialog

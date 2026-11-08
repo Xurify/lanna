@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { DraftShell, startDraftSession } from "../components/new-session.tsx";
+import { ChatDraft } from "../components/chat-draft.tsx";
 
 /**
  * The sessionless draft view (/chat/new, owner 2026-09-13): "+ New session"
@@ -67,12 +68,10 @@ describe("DraftShell — the sessionless surface", () => {
 		);
 		// The chat composer, ready for the first message.
 		assert.ok(html.includes('data-testid="composer"'));
-		// The plain chat is the default: no model control to pick from.
-		assert.ok(!html.includes('data-testid="stats-model"'));
+		assert.ok(html.includes('data-testid="stats-model"'));
 		// No CTA by default: a configured surface stays quiet.
 		assert.ok(!html.includes('data-testid="setup-cta"'));
-		assert.ok(html.includes("Ask about a word, a form or a rule. You get a short answer, a drawing when it helps, and then you try it."));
-		assert.match(html, /Ask anything about the language…/);
+		assert.ok(html.includes("Your tutor asks a few quick questions to see what you know, then teaches from there."));
 		// The pointer-events pattern (953b22b): the wrapper stays inert…
 		assert.ok(html.includes("pointer-events-none"));
 		// …and the blob re-enables it.
@@ -113,6 +112,15 @@ describe("DraftShell — the sessionless surface", () => {
 			/>,
 		);
 		assert.ok(!/\/chat\/c[a-z0-9_]+/.test(html));
+	});
+});
+describe("the plain chat draft (/chat/new)", () => {
+	it("opens on the question line, with the language named and no model control", () => {
+		const html = renderToStaticMarkup(<ChatDraft busy={false} text="" onChange={() => {}} onSend={() => {}} language="Slovak" />);
+		assert.match(html, /Your Slovak tutor/);
+		assert.match(html, /What do you want to understand?/);
+		assert.ok(html.includes('data-testid="draft-suggestions"'));
+		assert.ok(!html.includes('data-testid="stats-model"'));
 	});
 });
 describe("the probed lesson draft (?mode=teach)", () => {

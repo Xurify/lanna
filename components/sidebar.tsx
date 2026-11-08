@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
-import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
+import { CheckIcon, MessagesSquareIcon, PlusIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -925,19 +925,22 @@ function SessionsSidebar() {
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
 					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
-						<h2 id="sidebar-tutor" className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">
-							Tutor
-						</h2>
-						<button
-							type="button"
-							data-testid="new-session"
-							onClick={() => void newSession()}
-							aria-label="New chat with your tutor"
-							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-						>
-							<BotMessageSquareIcon className="size-[18px]" />
-							New chat
-						</button>
+						<div className="flex items-center justify-between pr-1">
+							<h2 id="sidebar-tutor" className="px-2.5 text-xs font-bold text-muted-foreground">
+								Chats
+							</h2>
+							<Hint label="New chat" action="new-session" side="right">
+								<button
+									type="button"
+									data-testid="new-session"
+									onClick={() => void newSession()}
+									aria-label="New chat with your tutor"
+									className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+								>
+									<PlusIcon className="size-4" />
+								</button>
+							</Hint>
+						</div>
 
 						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
 							<div className="flex h-8 items-center">
@@ -1006,7 +1009,7 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<span className="whitespace-nowrap px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
+										<span aria-hidden="true" />
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
 											<Button
 												type="button"

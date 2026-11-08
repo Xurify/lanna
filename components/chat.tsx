@@ -21,6 +21,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
+import { InkBlot } from "@/components/ink-blot";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -1199,6 +1200,7 @@ export function Chat({
 				    LH wordmark band, so the header's border-b continues that
 				    band's bottom edge as one line across the app (owner, round 6). */}
 				<TopBar
+					bare={kind === "chat"}
 					// While renaming the bar is NOT a drag surface: app-region:drag
 					// would eat the mousedown, so click-to-escape (below) could
 					// never fire. Rename mode is interactive mode (owner ask) —
@@ -1252,7 +1254,7 @@ export function Chat({
 								setTitleDraft(titleText);
 								setRenaming(true);
 							}}
-							className="lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left font-title text-2xl font-semibold tracking-tight transition-colors hover:bg-accent"
+							className={cn("lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent", kind === "chat" ? "font-ui text-sm font-medium text-muted-foreground" : "font-title text-2xl font-semibold tracking-tight")}
 						>
 							{titleText}
 							</button>
@@ -1322,7 +1324,7 @@ export function Chat({
 				<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
 				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
 					<ConversationContent className="min-h-full gap-0 p-0">
-						<div data-session-find-root="" className={`${COLUMN} flex flex-1 flex-col gap-4 pt-4`}>
+						<div data-session-find-root="" className={cn(COLUMN, "flex flex-1 flex-col gap-4 pt-4", kind === "chat" && "max-w-[46rem] gap-5 pt-10")}>
 							{messages.length === 0 && !busy && (
 								<ConversationEmptyState
 									title="New chat"
@@ -1429,18 +1431,19 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className="my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
+										className={kind === "chat" ? "mt-6 font-ui text-xl font-medium leading-snug tracking-tight text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
 												<div className="sr-only">You</div>
-												<div className="lh-prose whitespace-pre-wrap text-foreground">
-													{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}
+												<div className={kind === "chat" ? "whitespace-pre-wrap" : "lh-prose whitespace-pre-wrap text-foreground"}>
+													<span className={kind === "chat" ? "lh-asked" : undefined}>{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}</span>
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className="max-w-full">
+									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice relative")}>
+									{kind === "chat" && <InkBlot className="absolute top-2.5 -left-6 size-3 text-foreground max-md:hidden" />}
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -2315,7 +2318,7 @@ function DockOverlay({
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
 					<DiacriticBar />
-					<div ref={shellRef} className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
+					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden rounded-xl", plain ? "border border-line-2 bg-background" : "bg-card shadow-raise-hi")}>
 						<div
 						ref={contentRef}
 						key={mode}
