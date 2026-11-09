@@ -1011,6 +1011,64 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Russian skill (`russian-language`):** Ships complete skill documentation and 12 modular references in `.agents/skills/russian-language/` and `.claude/skills/russian-language/` (covering core grammar, 3 declensions, modifiers, verb morphology, aspect and verbs of motion with direction prefixes, participles and gerunds, valency and prepositions, syntax and FSP, phonology and orthography with 7/5-letter rules and stress notation, spoken Russian and particles, situational communication and naming customs, and ТРКИ/TORFL progression with diagnostic error taxonomy). Sourced from *Грамматика-80*, ТРКИ state standards, Lopatin 2006 orthographic rules, and Russian National Corpus. Pinned by `tests/russian-skill-copies.test.ts`.
 - **Not solved:** no drill can test the choice between two verbs (Russian aspect, motion verbs), because a drill shows the dictionary form of the blanked word and the pairs drill (E11) is built for Slovak; Wiktionary lists every person's pronoun forms under each pronoun, so pronoun cases cannot be drilled either. Tutor sessions teach them. Crude words from subtitle frequency (хуй, пиздец) still have sentences; dropping them needs Wiktionary's sense tags, which the kept downloads do not hold. A word that shares its spelling with a particle can lose its sentences to it (Russian чай, tea, is filed under the particle "methinks"). Most Russian nouns have no gender in the dictionary, so the case table has no gender columns.
 
+### E81. Zvuk: shadowing with the tutorial's timing, verified lines, one listening check (2026-11-08, branch `t3/pronunciation-principles-review`)
+
+**Why:** the owner asked whether the app's way of thinking matches Kjellin's pronunciation tutorial and Krashen's book, and then to start the sound step (phase 7). The comparison is in [research/shadowing.md](research/shadowing.md). The app takes Kjellin's timing and his short-line rule. It does not take his advice to hold back all writing, or his repeat-one loop.
+
+**How to apply:**
+- The sounds are data: `curriculum/slovak/sounds.json` (chapter, a rule and a bridge, two twins, four verified lines). `src/core/sounds.ts` is pure: `checkSound` is the drop rule (the twins differ in exactly one sound, every line is a verified example of one twin, at most six words), `listenOrder` draws the four-item check, and `shadowVerdict` reads the Speak bar (`PRON_CLEAR`, unchanged).
+- `/sound?id=<id>` runs the screen. A listening check comes first: choose the word heard, two of each twin, capped at four items. Then shadowing: a line plays, the learner has a 700 ms gap (`SHADOW_GAP_MS`), then says it. The recording goes through the same transcript and clarity score as Speak (`/api/stt`, `/api/pronounce`), so no Azure key is needed. Three tries per line, then the line is left as not yet.
+- Without a microphone the line is said aloud and not scored. Without speech-to-text the screen says so and links to Settings → API keys.
+- The twins meet only in the listening check. The soft consonant pair (de, te, ne) from the plan is not built: the lexicon has no verified twins for it, and it is not invented.
+- Two vowel-length pairs so far: pas/pás (chapter "moving") and rad/rád (chapter "people"), each line taken from the lexicon's own verified examples.
+- Not saved yet: the screen keeps its result on the page (E1 says learner-produced data is kept, so saving comes next). The sound step is not on the path yet either (`chapterArc` still says "not yet"), so the screen is reached by its link until the arc names it.
+
+
+### E82. An automated single-case experiment arm: input-first Russian vs Slovak control (2026-11-08, branch `t3/pronunciation-principles-review`)
+
+**Why:** the owner asked to test whether listening-first improves listening faster than the normal plan ("take me out of the loop"), comparing Russian on the input-first arm against Slovak on the normal control over a 42-day study (2026-11-09 to 2026-12-20). Single-case interrupted time-series design (SCED v3, [docs/experiments/input-first-russian.md](experiments/input-first-russian.md)) with randomized onset (uniform draw between days 12 and 22).
+
+**How to apply:**
+- `INPUT_FIRST_TASKS = ["review", "listen", "words", "read", "watch"]` (`src/core/curriculum.ts`). Drops `lesson`, `strengthen`, `blitz`, `speak`, and `fluency` (which records mic output).
+- Deterministic PRNG (`mulberry32` with seed `20261108`) draws Day 15 (2026-11-23) as onset day. Baseline runs Days 1–14; intervention runs Days 15–42.
+- Automation engine (`src/core/experiment.ts`, `src/server/experiment.ts`):
+  - In `src/server/lesson.ts`, `progressSummary` automatically assigns `arm: "input-first"` on and after the onset day for Russian without manual settings changes.
+  - Automatically logs daily first-play understanding share, dictation reps, minutes, covariates, and task compliance to `daily.jsonl`, regenerating `summary.md`.
+  - Weekly checks on Sundays (10 listening dictation probes + 5 spoken production prompts) are served via `/experiments/input-first/check` (with API `/api/experiments/input-first/check`) and saved to `checks.jsonl`.
+  - Dashboard at `/experiments/input-first` (linked in sidebar navigation under Track with `FlaskConicalIcon`) displays timeline, current phase, regression level shift $b_2$, permutation randomization $p$-value, weekly checks, and a reset endpoint (`POST /api/experiments/input-first/reset`). Backward-compatible redirects maintained from `/experiment` and `/experiments`.
+- Protocol provenance (commit `8e767a9f`, SHA-256 `1c9f0bd5e4fb093c8beae59e1207a6db9edf5572b9d1889f146f70e7dd7829d1`) and decision rules are fixed in `experiment.json`. Final `verdict.json` written after Day 42.
+
+
+### E83. Krashen SLA-aligned Roadmap: CI tuning, silent period, and conversational recasting (2026-11-09, branch `t3/pronunciation-principles-review`)
+
+**Why:** To address the cognitive gaps identified in early language acquisition: authentic video overwhelming working memory (<90% coverage), premature oral production triggering high affective filters and L1 syntax crutches, and schoolmaster-style error correction paralyzing conversational spontaneity.
+
+**How to apply:**
+- **Roadmap spec:** Documented in [docs/plans/comprehensible-input-roadmap.md](plans/comprehensible-input-roadmap.md).
+- **Track A (CI Tuning in Watch/Read):** Lexical pre-priming to raise authentic video coverage to ≥94% before play; line-level tempo adaptation (0.85× WPM normalization); interlinear i+1 smart glossing; multi-pass reading (immersion → tap-noticing → fluency).
+- **Track B (Onboarding Silent Period):** A0/A1 phase deactivating microphone and typed cloze in favor of receptive meaning-matching and auditory discrimination until a 250-word / 85% comprehension gate is cleared.
+- **Track C (Immediate Visual Diff / High-Noticing Recast):** Instead of burying errors in a hidden drawer or lecturing with paragraphs of grammatical taxonomy, the tutor highlights mistakes front-and-center using an immediate, high-contrast visual diff (`~~mistake~~ → correct (rule cue)`). The conversational reply answers the learner's idea right beneath it in natural target language without pausing momentum or forcing re-typing.
+
+### E84. The Study views are a page and a task like any other (2026-11-09, branch `t3/pronunciation-principles-review`)
+
+**Why:** the first Study screens were built from raw Tailwind colors (`neutral-950`, `emerald-600`), so they were dark in Day, shouted in capitals, used native selects and looked like another app. The owner: "This design doesn't match our app at all."
+
+**How to apply:**
+- `/experiments/input-first` is a page in the Milestones frame (`components/experiment/study-page.tsx`): the nav word as the title (Study), the question, and one sentence that says where the study stands today. When a weekly check is open it is the one filled button, in a band above the figure.
+- **The page is one figure** (`components/experiment/study-chart.tsx`): the 42 days run left to right once, and everything that has a date sits on that axis. Each language is a lane of dots (a day's share of sentences understood on the first play), the listening-first days are a pale teal band that starts at a line marked "the switch", today is a hairline, and each week ends in its check result under its own lane. When both sides of the switch have enough days, the two fitted lines are drawn, so the jump the study looks for is the gap between them. A day with practice but too few sentences is a hollow ring on the floor of the lane.
+- **The figure reads without a pointer.** A line under it reads the day you point at, tap, or reach with the arrow keys (the day, then both languages); it has a fixed height, so nothing moves. The days are also listed below as text, the latest fourteen first and the rest behind "Earlier".
+- Two quiet panels follow: "Does today count yet?" (typed sentences today against the five a day needs, with a link to Listen) and "Result so far" (the verdict in words, the jump, and how many days count on each side of the switch against the eight needed).
+- `/experiments/input-first/check` is a task in the Listen frame (`TaskFrame`, `PracticeCard`, `Dock`, `TaskEnd`), with `ChoiceMenu` for the language and the week (E4).
+- **The check's progress bar is its record** (`components/experiment/check-track.tsx`): one cell per sentence, ten to hear and five to write, shown on the first screen as what is coming, along the top while answering, and on the end screen as the result. A right answer is a full cell, a partly right one a thin bar, a miss a hollow cell, so the three differ by shape and not only by color.
+- **One play looks like one play.** The play button is a disc inside a ring; the ring empties as the sentence plays and stays empty, and the words beside it say the same. With reduced motion the ring is full, then empty.
+- Colors come from the tokens only, and the figure has two inks: the dots are the text grey in both lanes, and teal means listening first (the band, the switch line, the fitted lines) and the one main button. Marks are 8 px dots on a desktop and 5 px on a phone, where 42 days share about 230 px.
+- The study's terms stay out of the screen: "the switch" for onset, "jump at the switch" for the level shift, "listening first" for the arm. The seed, the test and the protocol file are named once, under "How the result is decided".
+- A weekly check opens on its day and is offered once: a finished check shows its result and has no link back in, because a second sitting would be a second measurement. An item answered twice counts once, with its latest answer (`weeklyCheckRows`, `src/core/experiment.ts`).
+- The listening items are graded by the Listen rule (`judgeTyped`), as the protocol says, and a sentence whose audio failed does not count as heard.
+- **The study's files stay under the data root.** `src/server/experiment.ts` used to copy every file it wrote into `C:/Users/Stream/Projects/langharness/data/` and to fall back to that folder's lesson logs, progress and Russian word list. A test run, a build or a sandbox therefore rewrote the owner's real study files. Those paths are gone and a test (`tests/experiment.test.ts`) fails if a folder outside the data root is named there again (E6).
+- Not built: the protocol asks for the five production prompts to be spoken, and the screen takes them typed (`engine: "typed"`). The screen says "Write this in …", so it does not claim otherwise.
+
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
