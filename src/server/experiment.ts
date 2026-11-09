@@ -282,6 +282,69 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 	return { config, schedule, pool };
 }
 
+/** Resets experiment state and schedule to a fresh start date. */
+export function resetExperiment(newStartDate?: string): { config: ExperimentConfig; schedule: DaySchedule[]; pool: ProbePoolData } {
+	const dir = experimentDir();
+	ensureDir(dir);
+	const startDate = newStartDate || new Date().toISOString().slice(0, 10);
+	const onsetDay = drawOnsetDay(EXPERIMENT_SEED);
+	const onsetDate = dateForDayNumber(startDate, onsetDay);
+	const endDate = dateForDayNumber(startDate, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
+	const provenance = getSystemProvenance();
+
+	const config: ExperimentConfig = {
+		id: EXPERIMENT_CONSTANTS.ID,
+		title: "Input-First Russian vs Slovak Control (SCED 42-day study)",
+		version: "v3",
+		startDate,
+		endDate,
+		days: EXPERIMENT_CONSTANTS.TOTAL_DAYS,
+		seed: EXPERIMENT_SEED,
+		onsetDay,
+		onsetDate,
+		languages: {
+			treatment: "russian",
+			control: "slovak",
+		},
+		protocolHash: provenance.protocolHash,
+		gitCommit: provenance.gitCommit,
+		decisionRule: "Confirmed benefit if immediate level shift b2 >= +10 pp and randomization test p-value = 1/11 (0.0909) with >= 8 valid days per phase.",
+	};
+
+	const schedule = buildSchedule(startDate, onsetDay, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
+	const rand = createRng(EXPERIMENT_SEED);
+	const skPool = extractLanguagePool(findSlovakLexiconPath(), rand);
+	const ruPool = extractLanguagePool(findRussianLexiconPath(), rand);
+
+	const pool: ProbePoolData = {
+		seed: EXPERIMENT_SEED,
+		createdAt: new Date().toISOString(),
+		russian: ruPool,
+		slovak: skPool,
+	};
+
+	writeSyncedFile("experiment.json", JSON.stringify(config, null, 2));
+	writeSyncedFile("schedule.json", JSON.stringify(schedule, null, 2));
+	writeSyncedFile("probe-pool.json", JSON.stringify(pool, null, 2));
+	writeSyncedFile("daily.jsonl", "");
+	writeSyncedFile("checks.jsonl", "");
+	writeSyncedFile("deviations.jsonl", "");
+
+	const initialSummary = generateSummaryMarkdown(config, schedule, [], [], {
+		b0: 0,
+		b1: 0,
+		b2: 0,
+		b3: 0,
+		pValue: 1.0,
+		baselineDays: 0,
+		interventionDays: 0,
+		verdictStatus: "pending",
+	}, config.startDate);
+	writeSyncedFile("summary.md", initialSummary);
+
+	return { config, schedule, pool };
+}
+
 /** Reads scheduled arm for a language on a specific date. */
 export function getScheduledArmForDate(language: string, dateStr: string): "normal" | "input-first" {
 	try {

@@ -6,13 +6,13 @@ import { wordMatch } from "@/src/core/speak";
 import type { ProbeItem, CheckItemRecord } from "@/src/core/experiment";
 
 interface WeeklyCheckPlayerProps {
-	initialWeek: number;
-	initialLang: "russian" | "slovak";
+	initialWeek?: number;
+	initialLang?: "russian" | "slovak";
 }
 
 type CheckPhase = "intro" | "probes" | "production" | "complete";
 
-export function WeeklyCheckPlayer({ initialWeek, initialLang }: WeeklyCheckPlayerProps) {
+export function WeeklyCheckPlayer({ initialWeek = 1, initialLang = "russian" }: WeeklyCheckPlayerProps = {}) {
 	const [week, setWeek] = useState(initialWeek);
 	const [lang, setLang] = useState<"russian" | "slovak">(initialLang);
 	const [phase, setPhase] = useState<CheckPhase>("intro");
@@ -46,7 +46,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLang }: WeeklyCheckPlaye
 		async function loadItems() {
 			setLoading(true);
 			try {
-				const res = await fetch(`/api/experiment/check?week=${week}&lang=${lang}`);
+				const res = await fetch(`/api/experiments/input-first/check?week=${week}&lang=${lang}`);
 				if (res.ok) {
 					const data = await res.json();
 					setProbes(data.probes || []);
@@ -165,7 +165,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLang }: WeeklyCheckPlaye
 		setPhase("complete");
 		setLoading(true);
 		try {
-			const res = await fetch("/api/experiment/check", {
+			const res = await fetch("/api/experiments/input-first/check", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ items: results }),
@@ -453,7 +453,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLang }: WeeklyCheckPlaye
 
 					<div className="pt-2">
 						<Link
-							href="/experiment"
+							href="/experiments/input-first"
 							className="inline-block px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-medium rounded-xl text-xs transition"
 						>
 							&larr; Return to Experiment Dashboard

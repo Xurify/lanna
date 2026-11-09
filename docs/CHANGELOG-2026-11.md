@@ -9,9 +9,11 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Strict Input-First Arm:** `INPUT_FIRST_TASKS = ["review", "listen", "words", "read", "watch"]` (`src/core/curriculum.ts`). Drops `lesson`, `strengthen`, `blitz`, `speak`, and `fluency` (which recorded speech via microphone).
 - **Automated Execution ("Take me out of the loop"):** In `src/server/lesson.ts`, `progressSummary` automatically resolves `getScheduledArmForDate(profile, date)` and enforces the arm from Day 15 onwards without manual intervention. Synchronizes daily first-play understanding share, dictation reps, minutes, covariates, and task compliance to `daily.jsonl` on every session, continuously updating OLS regression ($b_0, b_1, b_2, b_3$), permutation test $p$-value, and `summary.md`.
 - **Pre-generated Pools & Schedules:** Deterministically generates `experiment.json`, `schedule.json`, `probe-pool.json` (60 listening probes + 30 production prompts per language from verified lexicon examples), `daily.jsonl`, `checks.jsonl`, `deviations.jsonl`, and `summary.md`.
-- **UI & Weekly Assessments:**
-  - `/experiment`: Dashboard displaying 42-day timeline, current phase badge, regression level shift $b_2$, permutation test status, compliance, and automated data status.
-  - `/experiment/check`: Sunday check session presenting 10 single-play dictation probes and 5 spoken production prompts, scored and saved to `checks.jsonl`.
+- **UI & Weekly Assessments (Descriptive Routing & Sidebar Navigation):**
+  - `/experiments/input-first`: Full descriptive dashboard displaying study rationale, arms breakdown (Russian treatment vs Slovak control), 42-day timeline, current phase badge, regression level shift $b_2$, permutation test status, compliance, and automated data status. (Backward-compatible redirect from `/experiment` and `/experiments`).
+  - `/experiments/input-first/check`: Sunday check session presenting 10 single-play dictation probes and 5 spoken production prompts, scored and saved to `checks.jsonl`.
+  - `/api/experiments/input-first` & `/api/experiments/input-first/check`: Descriptive API endpoints with `/api/experiments/input-first/reset` to restart from Day 1 on any chosen start date.
+  - **Sidebar Integration:** Integrated under the **Track** section with `FlaskConicalIcon` as "Study" (`/experiments/input-first`), accessible from any screen in the app.
 - **Tested:** 30 unit tests passing in `tests/experiment.test.ts`, `tests/input-first-arm.test.ts`, `tests/sounds.test.ts`, `tests/curriculum.test.ts`; `npm run typecheck` clean (0 errors).
 
 ## 8 November: the sound step, first slice (branch `t3/pronunciation-principles-review`)
