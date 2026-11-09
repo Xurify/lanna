@@ -12,6 +12,15 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Found on the way:** the app's `text-base` is 14 px, and the shared `Input` drops to 14 px from 768 px, so the pairing page's fields (E21) still make Safari zoom on a phone and on an iPad in portrait. The sign-in field is set to 16 px by hand; the pairing page is not changed here.
 - **Unverified:** a real VPS, certificate and domain; Caddy; a CDN in front; a phone or an iPad; iOS password autofill; server events through nginx under load.
 
+## 9 November: the server as a container (branch `feat/server-container`)
+
+- **Why:** the owner cannot always be at the PC, and the phone app only works while the PC runs. Rule E87, guide [server.md](server.md).
+- **What was built:** a `Dockerfile` and `compose.yaml` for the server (the app, Chromium, a pinned yt-dlp; non-root, read-only, no capabilities, port on loopback only); `scripts/boot-check.mjs`, which starts the server on throwaway data and checks it; `scripts/update-server.sh` (build, boot-check, switch only on a pass, roll back, keep three images, push server-edited cheatsheets to a `sheets/<date>` branch); `scripts/backup-data.sh` with `scripts/verify-data.mjs` (dated snapshots, every JSON file read back, restore, copy to another machine); and `docs/server.md` for a VPS and a Synology NAS.
+- **What the boot check found:** yt-dlp cannot run from `/tmp` when Docker mounts it `noexec`, which is its default for a tmpfs. The compose file and the update script now mount it with `exec`.
+- **Checked:** the image builds; the boot check passes inside it (no network, read-only, user 10001); compose starts it healthy with the port on loopback only and refuses a connection through the host's other address; the container refuses to start with a clear message when a mounted folder is not writable; the update script ran update, a second update, rollback and the skip after a rollback against real Docker; backup and restore ran on real files; 22 tests in `tests/server-scripts.test.ts` (temporary git repos, a stand-in `docker`, real rsync); typecheck clean. The idle app uses about 260 MiB; the image is 1.77 GB.
+- **Unverified:** everything on the owner's machines (the NAS, the VPS, a reverse proxy, YouTube from the VPS); an arm64 image; the systemd units; yt-dlp updating itself when the network allows it; `--push-to` over ssh; Chromium's memory under the tutor; moving real data. The guide lists them.
+- **Needs the sign-in work:** a public address. Until then the app answers every request for a public name with 403, and the server is reached over Tailscale.
+
 ## 9 November: the chat reads seamlessly, in a reading face (branch `feat/chat-seamless`)
 
 - **Why:** the owner: the chat felt like a generic chat app, also while it generated, and needed a more fitting font. A bounded sheet and five other layouts were turned down in favor of `main` with its boxes taken out. Rule E85.
