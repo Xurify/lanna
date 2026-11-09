@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { desktopAPIAuthorized, desktopWindowRequest } from "./src/server/desktop-access.ts";
-import { DEVICE_COOKIE, decideAccess, readCookie, tailnetHost } from "./src/server/remote-access.ts";
+import { DEVICE_COOKIE, decideAccess, publicModeFrom, readCookie, tailnetHost } from "./src/server/remote-access.ts";
 import { readAccess, resolveDevice } from "./src/server/remote-access-store.ts";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -12,6 +12,7 @@ export async function proxy(request: NextRequest) {
 	const access = readAccess();
 	const token = access.enabled ? readCookie(headers, DEVICE_COOKIE) : null;
 	const device = token ? await resolveDevice(token) : null;
+	const publicMode = publicModeFrom(headers);
 	const decision = decideAccess({
 		pathname,
 		method: request.method,
@@ -21,9 +22,18 @@ export async function proxy(request: NextRequest) {
 		desktopWindow: desktopWindowRequest(headers),
 		desktopApiOk: desktopAPIAuthorized(headers),
 		paired: device !== null,
+		publicMode,
 	});
 	if (decision.action === "allow") return NextResponse.next();
 	const api = pathname.startsWith("/api/");
+	if (decision.action === "login") {
+		if (api || request.method !== "GET") {
+			return NextResponse.json({ error: "login_required", message: "Sign in first." }, { status: 401, headers: NO_STORE });
+		}
+		const redirect = NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(`${pathname}${search}`)}`, `https://${publicMode?.host ?? headers.get("host")}`), 307);
+		redirect.headers.set("cache-control", "no-store");
+		return redirect;
+	}
 	if (decision.action === "pair") {
 		if (api || request.method !== "GET") {
 			return NextResponse.json(

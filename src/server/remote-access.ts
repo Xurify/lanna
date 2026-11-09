@@ -41,6 +41,12 @@ const ONLY_THIS_COMPUTER_API = "The LangHarness API only answers this computer."
 const ONLY_THIS_COMPUTER_PAGE = "LangHarness only answers this computer.";
 const DESKTOP_ONLY_API = "Desktop API access requires the trusted LearnHarness window.";
 const ADDRESS_NOT_ALLOWED = "This address is not allowed. Use this computer’s Tailscale name.";
+const PUBLIC_NOT_CONFIGURED = "The public address is not set up: LH_PUBLIC_HOST must be a host name, and LH_PROXY_SECRET at least 32 characters.";
+const ONLY_THROUGH_PROXY = "This address answers only through its reverse proxy.";
+const PUBLIC_ADDRESS_MISMATCH = "This address is not allowed. Use the public address.";
+const HTTPS_REQUIRED = "This address needs HTTPS.";
+const WEB_ACCESS_OFF = "Web access is off. Turn it on in Settings → Devices, or run npm run web:password on the server.";
+const CROSS_ORIGIN = "This request did not come from LangHarness’s own page.";
 
 /**
  * Headers that only a proxy sends. The x-forwarded-* family is deliberately not
@@ -59,6 +65,16 @@ const PROXY_HEADERS = [
 	"tailscale-app-capabilities",
 ];
 
+/** The header the reverse proxy adds to every request it forwards, so the app knows the request came through it. */
+export const PROXY_SECRET_HEADER = "x-lh-proxy-secret";
+export const PROXY_SECRET_MIN_LENGTH = 32;
+
+/**
+ * The public address (LH_PUBLIC_HOST) and what the app knows about this request's proxy.
+ * `secretOk` is true when the request carried LH_PROXY_SECRET in the proxy header.
+ */
+export type PublicMode = { host: string; secretConfigured: boolean; secretOk: boolean };
+
 export type AccessInput = {
 	pathname: string;
 	method: string;
@@ -72,9 +88,11 @@ export type AccessInput = {
 	desktopApiOk: boolean;
 	/** A live, unexpired paired-device session was presented. */
 	paired: boolean;
+	/** Set when LH_PUBLIC_HOST is: the app is also served at a public address behind a reverse proxy. */
+	publicMode?: PublicMode | null;
 };
 
-type AccessDecision = { action: "allow" } | { action: "refuse"; message: string } | { action: "pair" };
+type AccessDecision = { action: "allow" } | { action: "refuse"; message: string } | { action: "pair" } | { action: "login" };
 
 /** Whether a request came through a reverse proxy (Tailscale Serve, a tunnel, anything). */
 function proxied(headers: Headers): boolean {
@@ -98,10 +116,7 @@ export function tailnetHost(host: string | null): boolean {
 	return name.endsWith(".ts.net");
 }
 
-/** Public while remote access is on: the pairing page, the one request that pairs, and static assets. */
-export function publicPath(pathname: string, method: string): boolean {
-	if (pathname === "/pair") return method === "GET" || method === "HEAD";
-	if (pathname === "/api/access/pair") return method === "POST";
+function staticPath(pathname: string): boolean {
 	return (
 		pathname.startsWith("/_next/") ||
 		pathname.startsWith("/icons/") ||
@@ -109,6 +124,78 @@ export function publicPath(pathname: string, method: string): boolean {
 		pathname === "/apple-icon.png" ||
 		pathname === "/manifest.webmanifest"
 	);
+}
+
+/** Public while remote access is on: the pairing page, the one request that pairs, and static assets. */
+export function publicPath(pathname: string, method: string): boolean {
+	if (pathname === "/pair") return method === "GET" || method === "HEAD";
+	if (pathname === "/api/access/pair") return method === "POST";
+	return staticPath(pathname);
+}
+
+/** Public at the public address: the sign-in page, the one request that signs in, and static assets. Pairing is not offered there. */
+export function publicWebPath(pathname: string, method: string): boolean {
+	if (pathname === "/login") return method === "GET" || method === "HEAD";
+	if (pathname === "/api/access/login") return method === "POST";
+	return staticPath(pathname);
+}
+
+/** A host name with at least one dot and no scheme, port or path: what LH_PUBLIC_HOST must be. */
+export function validPublicHost(host: string): boolean {
+	return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(host);
+}
+
+/**
+ * Public mode, from the environment and the request: null when LH_PUBLIC_HOST is not set.
+ * The proxy secret proves the request came through the reverse proxy. Next does not
+ * hand the TCP peer to the proxy file, and every x-forwarded-* header is either filled
+ * by Next or sent by the client, so none of them can prove it.
+ */
+export function publicModeFrom(headers: Headers, env: Record<string, string | undefined> = process.env): PublicMode | null {
+	const host = env.LH_PUBLIC_HOST?.trim().toLowerCase();
+	if (!host) return null;
+	const secret = env.LH_PROXY_SECRET ?? "";
+	const secretConfigured = secret.length >= PROXY_SECRET_MIN_LENGTH;
+	const supplied = headers.get(PROXY_SECRET_HEADER);
+	return { host, secretConfigured, secretOk: secretConfigured && supplied !== null && sameHash(hashSecret(supplied), hashSecret(secret)) };
+}
+
+/** An origin that is exactly the public address over HTTPS. A missing Origin is not one. */
+export function originAllowed(origin: string | null, host: string): boolean {
+	return origin === `https://${host}`;
+}
+
+function changesState(method: string): boolean {
+	return method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+}
+
+/**
+ * A request at the public address. Nothing here is this computer: a reverse proxy that
+ * keeps nginx's default Host (the upstream's own 127.0.0.1) would otherwise look local, so
+ * every request must carry the proxy secret, name the public host and say it was HTTPS.
+ */
+function decidePublic(input: AccessInput, mode: PublicMode): AccessDecision {
+	if (!validPublicHost(mode.host) || !mode.secretConfigured) return { action: "refuse", message: PUBLIC_NOT_CONFIGURED };
+	if (!mode.secretOk) return { action: "refuse", message: ONLY_THROUGH_PROXY };
+	if (!addressedBy(input).every((name) => name?.toLowerCase() === mode.host)) return { action: "refuse", message: PUBLIC_ADDRESS_MISMATCH };
+	if (input.headers.get("x-forwarded-proto") !== "https") return { action: "refuse", message: HTTPS_REQUIRED };
+	if (!input.enabled) return { action: "refuse", message: WEB_ACCESS_OFF };
+	if (changesState(input.method) && !originAllowed(input.headers.get("origin"), mode.host)) return { action: "refuse", message: CROSS_ORIGIN };
+	if (publicWebPath(input.pathname, input.method)) return { action: "allow" };
+	return input.paired ? { action: "allow" } : { action: "login" };
+}
+
+/** Where to go after signing in: a path inside the app. Never another origin, and never back to a sign-in page. */
+export function safeNext(path: string | null | undefined): string {
+	if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\") || /[\u0000-\u001f]/.test(path)) return "/";
+	if (path === "/login" || path.startsWith("/login?") || path.startsWith("/pair")) return "/";
+	return path;
+}
+
+/** The client address behind one trusted reverse proxy: the last entry of X-Forwarded-For, which that proxy appended. The earlier entries are whatever the client sent. */
+export function clientAddress(headers: Headers): string {
+	const last = (headers.get("x-forwarded-for") ?? "").split(",").pop()?.trim() ?? "";
+	return last ? last.slice(0, 64) : "unknown";
 }
 
 /**
@@ -128,6 +215,7 @@ export function publicPath(pathname: string, method: string): boolean {
 export function decideAccess(input: AccessInput): AccessDecision {
 	const api = input.pathname === "/api" || input.pathname.startsWith("/api/");
 	const names = addressedBy(input);
+	if (input.publicMode && !names.some((name) => tailnetHost(name))) return decidePublic(input, input.publicMode);
 	const viaProxy = proxied(input.headers);
 	if (!viaProxy && names.every((name) => loopbackHost(name))) {
 		if (api && !input.desktopApiOk) return { action: "refuse", message: DESKTOP_ONLY_API };
