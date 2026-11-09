@@ -70,6 +70,11 @@ LangHarness translates these psycholinguistic principles into four concrete comp
    - Highlights high-functional-load sounds.
    - Adds instant audio listening and retry buttons for isolated phonetic repairs.
 
+5. **Slovak Rhythmic Law & Suprasegmental Cadence Engine (`src/core/rhythm.ts` & `components/phonology/rhythmic-visualizer.tsx`):**
+   - Syllable quantity analysis (mora counting: short 1μ vs long 2μ for vowels, diphthongs, and syllabic liquids).
+   - Enforces the Slovak Rhythmic Law (*Rytmický zákon*), identifying consecutive long syllables and validating morphological suffix shortening (*chválim*, *krásny*, *trávam*, *vŕbam*, *biely*).
+   - Visualizes syllable-timed cadence and word-initial primary stress (`ˈ`) to counter stress deafness in learners from variable-stress backgrounds (Dupoux et al. 2001, 2008).
+
 ---
 
 ## References
@@ -78,9 +83,11 @@ LangHarness translates these psycholinguistic principles into four concrete comp
 2. Best, C. T., & Tyler, M. D. (2007). Nonnative and second-language speech perception: The PAS model. *Language Experience in Second Language Speech Learning*, 13-34.
 3. Bradlow, A. R., Pisoni, D. B., Akahane-Yamada, R., & Tohkura, Y. (1997). Training Japanese listeners to identify English /r/ and /l/: IV. Some effects of perceptual learning on speech production. *The Journal of the Acoustical Society of America*, 101(4), 2299-2310.
 4. Catford, J. C. (1987). Phonetics and the teaching of pronunciation: A systemic description of English phonology. *Current Perspectives on Pronunciation*, 87-100.
-5. Flege, J. E. (1995). Second language speech learning: Theory, findings, and problems. *Speech Perception and Linguistic Experience*, 233-277.
-6. Flege, J. E., & Bohn, O. S. (2021). The Revised Speech Learning Model (SLM-r). *Second Language Speech Learning: Theoretical and Empirical Progress*, 3-83.
-7. Logan, J. S., Lively, S. E., & Pisoni, D. B. (1991). Training Japanese listeners to identify English /r/ and /l/: A first report. *The Journal of the Acoustical Society of America*, 89(2), 874-886.
-8. Munro, M. J., & Derwing, T. M. (2006). The functional load principle in ESL pronunciation instruction: An exploratory study. *System*, 34(4), 520-531.
-9. Neri, A., Cucchiarini, C., & Strik, H. (2008). The effect of corrective feedback on L2 pronunciation in a computer-assisted learning environment. *CALL*, 21(3), 235-259.
-10. Ngo, H., Chen, X., & Lai, C. (2024). A meta-analysis of computer-assisted pronunciation training (CAPT) on L2 pronunciation. *Language Learning & Technology*, 28(1), 1-28.
+5. Dupoux, E., Peperkamp, S., & Sebastián-Gallés, N. (2001). A robust method to study stress 'deafness'. *The Journal of the Acoustical Society of America*, 110(3), 1606-1618.
+6. Dupoux, E., Sebastián-Gallés, N., Navarrete, E., & Peperkamp, S. (2008). Persistent stress 'deafness': The case of French learners of Spanish. *Cognition*, 106(2), 682-706.
+7. Flege, J. E. (1995). Second language speech learning: Theory, findings, and problems. *Speech Perception and Linguistic Experience*, 233-277.
+8. Flege, J. E., & Bohn, O. S. (2021). The Revised Speech Learning Model (SLM-r). *Second Language Speech Learning: Theoretical and Empirical Progress*, 3-83.
+9. Logan, J. S., Lively, S. E., & Pisoni, D. B. (1991). Training Japanese listeners to identify English /r/ and /l/: A first report. *The Journal of the Acoustical Society of America*, 89(2), 874-886.
+10. Munro, M. J., & Derwing, T. M. (2006). The functional load principle in ESL pronunciation instruction: An exploratory study. *System*, 34(4), 520-531.
+11. Neri, A., Cucchiarini, C., & Strik, H. (2008). The effect of corrective feedback on L2 pronunciation in a computer-assisted learning environment. *CALL*, 21(3), 235-259.
+12. Ngo, H., Chen, X., & Lai, C. (2024). A meta-analysis of computer-assisted pronunciation training (CAPT) on L2 pronunciation. *Language Learning & Technology*, 28(1), 1-28.

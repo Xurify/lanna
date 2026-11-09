@@ -114,6 +114,8 @@ export const SOURCES: readonly Source[] = [
 	S("munro2006", "Munro & Derwing 2006", 2006, "The functional load principle in ESL pronunciation instruction: an exploratory study", "System 34(4)", "study", "doi", "10.1016/j.system.2006.09.004", "Instruction targeting high-functional-load contrasts produced greater gains in listener-rated comprehensibility."),
 	S("flege1995", "Flege 1995", 1995, "Second language speech learning: theory, findings, and problems", "In Strange (ed), Speech perception and linguistic experience", "theory", "listed", undefined, "L2 sounds similar to L1 categories are assimilated into native representations unless acoustic variability forces a new category."),
 	S("best1995", "Best 1995", 1995, "A direct realist view of cross-language speech perception", "In Strange (ed), Speech perception and linguistic experience", "theory", "listed", undefined, "The Perceptual Assimilation Model: non-native contrasts mapping to a single native category suffer poorest discrimination."),
+	S("dupoux2001", "Dupoux et al. 2001", 2001, "A robust method to study stress 'deafness'", "The Journal of the Acoustical Society of America 110(3)", "experiment", "doi", "10.1121/1.1380437", "Native speakers of fixed-stress languages exhibit severe stress deafness when learning contrastive stress languages."),
+	S("dupoux2008", "Dupoux et al. 2008", 2008, "Persistent stress 'deafness': the case of French learners of Spanish", "Cognition 106(2)", "experiment", "doi", "10.1016/j.cognition.2007.04.001", "Stress deafness persists even in advanced speakers without explicit suprasegmental entrainment."),
 	// Placement and vocabulary size
 	S("meara1987", "Meara & Buxton 1987", 1987, "An alternative to multiple choice vocabulary tests", "Language Testing 4(2)", "study", "doi", "10.1177/026553228700400202"),
 	S("huibregtse2002", "Huibregtse, Admiraal & Meara 2002", 2002, "Scores on a yes-no vocabulary test: correction for guessing and response style", "Language Testing 19(3)", "study", "doi", "10.1191/0265532202lt229oa"),
@@ -257,6 +259,15 @@ export const FEATURES: readonly Feature[] = [
 		limits: "HVPT laboratory studies use 4 to 6 real recorded native speakers over several weeks. Our Ear Gym utilizes synthetic voices across genders; synthetic voices carry slightly less natural acoustic variation than human talkers, though multi-voice synthesis maintains variability.",
 		ours: "Two-Alternative Forced Choice format, ear-first masking toggle to eliminate orthographic interference, and cross-linguistic contrast priority based on your known languages.",
 		sources: ["logan1991", "bradlow1997", "munro2006", "flege1995", "best1995"],
+	},
+	{
+		id: "rhythmic-law",
+		title: "Rhythmic Law & Cadence",
+		route: "/phonology",
+		evidence: "Native speakers of variable-stress languages require explicit suprasegmental entrainment to overcome stress deafness and vowel reduction (Dupoux et al. 2001, 2008). Standard Slovak enforces the Rhythmic Law prohibiting consecutive long syllables.",
+		limits: "The Rhythmic Law visualizer identifies phonological vowel length and suffix shortening mechanically; dialectal exceptions in Eastern Slovak and specialized morphological classes require individual acquisition.",
+		ours: "The interactive syllable quantity analyzer, paradigmatic contrast pairs, and word-initial primary stress visualizer.",
+		sources: ["dupoux2001", "dupoux2008"],
 	},
 	{
 		id: "line",

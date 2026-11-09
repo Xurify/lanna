@@ -21,6 +21,7 @@ import {
 	type EarGymExercise,
 	type PhonologyFamily,
 } from "@/src/core";
+import { RhythmicVisualizer } from "./rhythmic-visualizer";
 
 const FAMILIES: Array<{ id: PhonologyFamily | "all"; label: string; sub: string }> = [
 	{ id: "all", label: "All Contrasts", sub: "Mixed pool" },
@@ -32,6 +33,7 @@ const FAMILIES: Array<{ id: PhonologyFamily | "all"; label: string; sub: string 
 ];
 
 export function EarGym() {
+	const [tab, setTab] = useState<"pairs" | "rhythm">("pairs");
 	const [activeFamily, setActiveFamily] = useState<PhonologyFamily | "all">("all");
 	const [seed, setSeed] = useState(0);
 	const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -125,27 +127,61 @@ export function EarGym() {
 				</div>
 			</div>
 
-			{/* Contrast Family Selector */}
-			<div className="mb-6 flex flex-wrap gap-1.5">
-				{FAMILIES.map((f) => (
-					<button
-						key={f.id}
-						type="button"
-						onClick={() => {
-							setActiveFamily(f.id);
-							setSeed(0);
-						}}
-						className={cn(
-							"rounded-full px-3 py-1 font-ui text-xs font-[500] transition-colors",
-							activeFamily === f.id
-								? "bg-foreground text-background"
-								: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
-						)}
-					>
-						{f.label}
-					</button>
-				))}
+			{/* Mode Selector */}
+			<div className="mb-6 flex gap-2 border-b border-border pb-3">
+				<button
+					type="button"
+					onClick={() => setTab("pairs")}
+					className={cn(
+						"flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-ui text-xs font-[600] transition-colors",
+						tab === "pairs"
+							? "bg-foreground text-background shadow-sm"
+							: "text-muted-foreground hover:bg-muted hover:text-foreground",
+					)}
+				>
+					<HeadphonesIcon className="size-3.5" />
+					<span>Minimal-Pair Ear Gym</span>
+				</button>
+				<button
+					type="button"
+					onClick={() => setTab("rhythm")}
+					className={cn(
+						"flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-ui text-xs font-[600] transition-colors",
+						tab === "rhythm"
+							? "bg-foreground text-background shadow-sm"
+							: "text-muted-foreground hover:bg-muted hover:text-foreground",
+					)}
+				>
+					<EarIcon className="size-3.5" />
+					<span>Rhythmic Law & Cadence</span>
+				</button>
 			</div>
+
+			{tab === "rhythm" ? (
+				<RhythmicVisualizer />
+			) : (
+				<>
+					{/* Contrast Family Selector */}
+					<div className="mb-6 flex flex-wrap gap-1.5">
+						{FAMILIES.map((f) => (
+							<button
+								key={f.id}
+								type="button"
+								onClick={() => {
+									setActiveFamily(f.id);
+									setSeed(0);
+								}}
+								className={cn(
+									"rounded-full px-3 py-1 font-ui text-xs font-[500] transition-colors",
+									activeFamily === f.id
+										? "bg-foreground text-background"
+										: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
+								)}
+							>
+								{f.label}
+							</button>
+						))}
+					</div>
 
 			{/* Ear-First Mode Toggle */}
 			<div className="mb-6 flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
@@ -299,6 +335,8 @@ export function EarGym() {
 					{pam.rationale} High-Variability Phonetic Training forces your brain to carve out new perceptual boundaries rather than assimilating foreign sounds into your native language habits.
 				</p>
 			</div>
+			</>
+			)}
 		</div>
 	);
 }
