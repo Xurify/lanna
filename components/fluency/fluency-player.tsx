@@ -23,13 +23,13 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LoaderCircleIcon, MicIcon, MicOffIcon, RepeatIcon, TimerIcon, Volume2Icon } from "lucide-react";
+import { CheckIcon, LoaderCircleIcon, MicIcon, MicOffIcon, RepeatIcon, TimerIcon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
-import { COLUMN, Centered, Dock, OptionTile, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, Centered, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -154,10 +154,11 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") return router.push(readOrigin());
 			if (e.key === "Enter") {
+				if (phase === "done" && endEnterBlocked(e)) return;
 				e.preventDefault();
 				if (phase === "intro" && plan) begin();
 				else if (phase === "reading") stop();
-				else if (phase === "done") router.push(readOrigin());
+				else if (phase === "done") router.push("/");
 			} else if (phase === "question" && plan) {
 				const n = Number(e.key);
 				if (n >= 1 && n <= plan.question.options.length) void answer(n - 1);
@@ -202,7 +203,21 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 	if (phase === "done" && outcome) {
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto py-10")} data-testid="reread-end">
+				<TaskEnd
+					testId="reread-end"
+					hint={<EnterHint>for Today</EnterHint>}
+					actions={
+						<>
+							<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="reread-again">
+								<RepeatIcon className="size-4" strokeWidth={1.6} />
+								Another episode
+							</button>
+							<Link href="/" className={PRIMARY} data-testid="reread-today">
+								Today
+							</Link>
+						</>
+					}
+				>
 					<p className="q-date flex items-center gap-1.5">
 							<QIcon name="read" className="text-teal" />
 							Read it faster · done
@@ -210,14 +225,13 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 						<h1 className="q-hello">
 							{outcome.wpm} words a minute{outcome.faster ? ", faster." : "."}
 						</h1>
-						<Stats className="mt-6">
+						<Stats className="mt-7 max-w-none">
 							<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
 							<Stat label={outcome.previousWpm !== null ? "Your recent pace" : "Starting target"} value={`${outcome.targetWpm} wpm`} ink="text-ink-2" />
 							{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
 							<Stat label="The question" value={outcome.right ? "right" : "missed"} ink={outcome.right ? "text-teal-2" : "text-miss"} />
 						</Stats>
 					<History history={[...plan.history, { at: "now", wpm: outcome.wpm }]} target={plan.targetWpm} />
-						<SourcesNote feature="speed-reread" className="mt-6" />
 					<p className="q-sub mt-4">
 							{outcome.faster
 								? "Timed re-reading of easy text raised reading speed in classroom studies, mostly on the texts that were practiced. Same episode again in a few days."
@@ -225,17 +239,8 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 									? "No speed bonus when the question is missed: a fast read you did not follow is not the goal."
 									: "No bonus this time. The point is the climb over weeks, not one run."}
 					</p>
-					<div className="q-acts mt-6">
-							<Link href="/" className={PRIMARY} data-testid="reread-today">
-							Today
-						</Link>
-						<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="reread-again">
-							<RepeatIcon className="size-4" strokeWidth={1.6} />
-								Another episode
-						</button>
-						<span className="self-center font-ui text-xs text-ink-3">Enter goes to Today</span>
-						</div>
-					</div>
+					<SourcesNote feature="speed-reread" className="mt-14" />
+				</TaskEnd>
 				</TaskFrame>
 			);
 		}
@@ -337,14 +342,27 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 	const h = 72;
 	return (
 		<div className="mt-6" data-testid="reread-history">
-			<p className="q-sh">Your pace on this episode</p>
-			<div className="relative mt-2 flex h-[72px] items-end gap-2">
-				<div className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]" style={{ bottom: `${(target / max) * h}px` }} aria-hidden="true" />
+			<h2 className="q-sh">Your pace on this episode</h2>
+			<div className="relative mt-2 h-[72px]">
+				<div className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]" style={{ bottom: `${(target / max) * h}px` }}>
+					<span className="absolute right-0 bottom-0.5 font-ui text-xs text-ink-3">target {target} wpm</span>
+				</div>
+				<div className="absolute inset-0 flex items-end gap-1" aria-hidden="true">
+					{history.map((x, i) => (
+						<div key={i} className="flex w-9 justify-center">
+							<span className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-teal" : "bg-[var(--q-bar)]")} style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }} />
+						</div>
+					))}
+				</div>
+			</div>
+			<p className="sr-only">
+				{history.length > 1 ? `Earlier: ${history.slice(0, -1).map((x) => `${x.wpm}`).join(", ")} words a minute. ` : ""}This time: {history[history.length - 1]?.wpm} words a minute. Target: {target} words a minute.
+			</p>
+			<div className="mt-1 flex gap-1" aria-hidden="true">
 				{history.map((x, i) => (
-					<div key={i} className="flex flex-col items-center gap-1" title={`${x.wpm} wpm`}>
-						<span className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-teal" : "bg-well-2")} style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }} />
-						<span className="font-ui text-xs tabular-nums text-ink-3">{x.wpm}</span>
-					</div>
+					<span key={i} className="w-9 text-center font-ui text-xs tabular-nums text-ink-3">
+						{x.wpm}
+					</span>
 				))}
 			</div>
 		</div>
@@ -620,7 +638,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				router.push(readOrigin());
 				return;
 			}
-			if (phase === "done" && e.key === "Enter") return router.push(readOrigin());
+			if (phase === "done" && e.key === "Enter") return endEnterBlocked(e) ? undefined : router.push("/");
 			if (e.key === " " || e.key === "Enter") {
 				e.preventDefault();
 				if (phase === "ready") void startPass();
@@ -687,7 +705,21 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		const avg = scoredPasses.length ? Math.round(scoredPasses.reduce((n, p) => n + (p.pron?.overall ?? 0), 0) / scoredPasses.length) : null;
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="fast-end">
+				<TaskEnd
+					testId="fast-end"
+					hint={<EnterHint>for Today</EnterHint>}
+					actions={
+						<>
+							<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="fast-again">
+								<RepeatIcon className="size-4" strokeWidth={1.6} />
+								Six more
+							</button>
+							<Link href="/" className={PRIMARY} data-testid="fast-today">
+								Today
+							</Link>
+						</>
+					}
+				>
 					<p className="q-date flex items-center gap-1.5">
 							<QIcon name="fast" className="text-teal" />
 							Speed · done
@@ -695,10 +727,10 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						<h1 className="q-hello">
 							{scoredPasses.length ? `${clean} of ${reps.length} said clearly enough in the last window.` : `${clean} of ${reps.length} finished inside the last window.`}
 						</h1>
-						<Stats className="mt-6">
+						<Stats className="mt-7 max-w-none">
 							<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
-							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink="text-teal-2" />
-							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink="text-teal-2" />}
+							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink={made === reps.length * FAST_PASSES ? "text-teal-2" : undefined} />
+							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink={outcome.pace.last > outcome.pace.first ? "text-teal-2" : undefined} />}
 							{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear enough`} ink={avg >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
 						</Stats>
 					{outcome?.pace && (
@@ -718,47 +750,32 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 							</p>
 						)}
 						<PronWorkOn report={outcome?.report} />
-					<SourcesNote feature="speed-fast" className="mt-6" />
-						<ul className="mt-8 flex flex-col gap-2" data-testid="fast-reps">
-						{reps.map((r) => (
-							<li key={r.itemId} className="q-card px-4 py-3">
-								<div className="flex items-start gap-3">
-									<button type="button" onClick={() => void speak(r.sentence).catch(() => {})} aria-label="Play" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]">
-										<Volume2Icon className="size-4" strokeWidth={1.6} />
-									</button>
-									<div className="min-w-0 flex-1">
-										<p className="font-prose text-lg text-foreground" lang={lang?.code}>
-											{r.sentence}
-										</p>
-										<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">{r.translation}</p>
-									</div>
-									<div className="flex gap-1.5" aria-label="Passes">
-										{r.passes.map((p, i) => (
-											<span key={i} className={cn("rounded-md px-1.5 py-0.5 font-ui text-xs font-bold tabular-nums", p.made ? "bg-teal-wash text-teal-2" : "bg-miss-soft text-miss")} title={`${(p.ms / 1000).toFixed(1)} s of ${(p.window / 1000).toFixed(1)} s${p.pron ? ` · ${p.pron.overall} clear` : ""}${p.heard ? ` · heard: ${p.heard}` : ""}${p.inWindow && !p.made ? " · in the window but not clear" : ""}`}>
-												{(p.ms / 1000).toFixed(1)}s{p.pron ? ` · ${p.pron.overall}` : ""}
-											</span>
-										))}
-									</div>
-								</div>
-							</li>
-						))}
-					</ul>
+						<SentenceRows className="mt-8">
+							{reps.map((r) => (
+								<SentenceRow
+									key={r.itemId}
+									sentence={r.sentence}
+									lang={lang?.code}
+									translation={r.translation}
+									onPlay={() => void speak(r.sentence).catch(() => {})}
+									note={r.passes.map((p, i) => (
+										<span key={i} className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold tabular-nums", p.made ? "bg-teal-wash text-teal-2" : "bg-miss-soft text-miss")}>
+											{p.made ? <CheckIcon className="size-3" strokeWidth={2.4} aria-hidden="true" /> : <XIcon className="size-3" strokeWidth={2.4} aria-hidden="true" />}
+											<span className="sr-only">{p.made ? "Made it:" : "Missed:"} </span>
+											{(p.ms / 1000).toFixed(1)} of {(p.window / 1000).toFixed(1)} s{p.pron ? ` · clear ${p.pron.overall}` : ""}
+											{p.inWindow && !p.made ? " · not clear" : ""}
+										</span>
+									))}
+								/>
+							))}
+						</SentenceRows>
 					{error && (
 						<p className="mt-4 rounded-[10px] bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert">
 							{error}
 						</p>
 					)}
-					<div className="q-acts mt-6">
-							<Link href="/" className={PRIMARY} data-testid="fast-today">
-							Today
-						</Link>
-						<button type="button" onClick={() => void load()} className={SECONDARY} data-testid="fast-again">
-							<RepeatIcon className="size-4" strokeWidth={1.6} />
-									Six more
-						</button>
-						<span className="self-center font-ui text-xs text-ink-3">Enter goes to Today</span>
-						</div>
-					</div>
+					<SourcesNote feature="speed-fast" className="mt-14" />
+				</TaskEnd>
 				</TaskFrame>
 			);
 		}

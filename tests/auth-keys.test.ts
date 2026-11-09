@@ -12,12 +12,12 @@ import { describe, it } from "node:test";
 import { AUTH_KEYS, genericProviderKeyGuard, isKnownAuthKey, maskKey, validateKeyShape } from "../src/core/auth-keys.ts";
 
 describe("the catalog", () => {
-	it("is exactly the six CURATED app-service keys (provider keys live in the provider table)", () => {
+	it("is exactly the seven CURATED app-service keys (provider keys live in the provider table)", () => {
 		assert.deepEqual(
 			AUTH_KEYS.map((k) => k.id),
-			// LangHarness adds ElevenLabs (the first TTS tier) and the Azure
-			// Speech pair (pronunciation assessment, 2026-10-28).
-			["ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION", "TAVILY_API_KEY", "BRAVE_API_KEY"],
+			// LangHarness adds ElevenLabs (the first TTS tier), the Azure
+			// Speech pair (pronunciation assessment, 2026-10-28), and Context (2026-11-09).
+			["ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION", "CONTEXT_API_KEY", "TAVILY_API_KEY", "BRAVE_API_KEY"],
 		);
 		for (const k of AUTH_KEYS) {
 			assert.ok(k.label.length > 0, `${k.id} has a label`);
@@ -34,6 +34,7 @@ describe("the catalog", () => {
 
 	it("isKnownAuthKey: catalog yes, everything else no", () => {
 		assert.ok(isKnownAuthKey("DEEPGRAM_API_KEY"));
+		assert.ok(isKnownAuthKey("CONTEXT_API_KEY"));
 		assert.ok(isKnownAuthKey("TAVILY_API_KEY"));
 		assert.ok(isKnownAuthKey("BRAVE_API_KEY"));
 		assert.ok(!isKnownAuthKey("OPENROUTER_API_KEY"));
@@ -44,6 +45,12 @@ describe("the catalog", () => {
 });
 
 describe("validateKeyShape (the 400 gate — curated keys)", () => {
+	it("Context: no public format — a ≥20-char truncation guard, no whitespace", () => {
+		assert.ok(validateKeyShape("CONTEXT_API_KEY", "c".repeat(40)).ok);
+		assert.ok(!validateKeyShape("CONTEXT_API_KEY", "c".repeat(19)).ok, "truncated paste");
+		assert.ok(!validateKeyShape("CONTEXT_API_KEY", "has whitespace here").ok);
+	});
+
 	it("Tavily: tvly- prefix required, length floor past it", () => {
 		assert.ok(validateKeyShape("TAVILY_API_KEY", "tvly-abc123def456ghi78").ok);
 		assert.ok(!validateKeyShape("TAVILY_API_KEY", "sk-or-v1-abcdefghij").ok, "wrong family");

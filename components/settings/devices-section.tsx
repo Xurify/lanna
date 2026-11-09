@@ -6,7 +6,7 @@
  * every device out, so the confirmation names that first.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 
@@ -38,6 +38,12 @@ async function readStatus(res: Response): Promise<Status> {
 	return (await res.json()) as Status;
 }
 
+const PAIRING_POLL_MS = 2000;
+
+function fetchStatus(): Promise<Status> {
+	return fetch("/api/access", { cache: "no-store" }).then(readStatus);
+}
+
 export function DevicesSection() {
 	const [status, setStatus] = useState<Status | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
@@ -53,14 +59,36 @@ export function DevicesSection() {
 	// paired (or been signed out) while this screen was in the background.
 	useEffect(() => {
 		const refresh = () =>
-			fetch("/api/access", { cache: "no-store" })
-				.then(readStatus)
+			fetchStatus()
 				.then(setStatus)
 				.catch(() => setLoadFailed(true));
 		void refresh();
 		window.addEventListener("focus", refresh);
 		return () => window.removeEventListener("focus", refresh);
 	}, []);
+
+	const knownDevices = useRef<Set<string>>(new Set());
+	useEffect(() => {
+		if (status) knownDevices.current = new Set(status.devices.map((device) => device.id));
+	}, [status]);
+
+	// The phone pairs on its own screen, so this window has to ask. The server retires
+	// the code the moment it is used, which is what ends the poll.
+	useEffect(() => {
+		if (!code) return;
+		const timer = window.setInterval(() => {
+			fetchStatus()
+				.then((next) => {
+					const joined = next.devices.find((device) => !knownDevices.current.has(device.id));
+					setStatus(next);
+					if (next.pairing) return;
+					setCode(null);
+					if (joined) setNotice({ tone: "ok", text: `${joined.name} is paired.` });
+				})
+				.catch(() => {});
+		}, PAIRING_POLL_MS);
+		return () => window.clearInterval(timer);
+	}, [code]);
 
 	// The countdown ticks only while a code is on screen.
 	useEffect(() => {
@@ -107,7 +135,7 @@ export function DevicesSection() {
 			}
 			setCode({ code: body.code, expiresAt: body.expiresAt });
 			setNow(Date.now());
-			setStatus(await fetch("/api/access", { cache: "no-store" }).then(readStatus));
+			setStatus(await fetchStatus());
 		} catch {
 			setNotice({ tone: "error", text: "Couldn’t make a code. Try again." });
 		} finally {

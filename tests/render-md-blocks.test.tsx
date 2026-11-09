@@ -248,3 +248,29 @@ describe("ThinkingBlock — the document band + ⌘T sync (owner rounds, 2026-10
 		setAllUserThinkingOpen(true);
 	});
 });
+
+describe("md-blocks — svg drawings", () => {
+	it("renders a drawing in the page with the theme tokens, never as a code block", () => {
+		const html = render('Near and far.\n\n```svg\n<svg viewBox="0 0 320 120"><title>near and far</title><text x="16" y="40" style="fill:var(--ink)">táto kniha</text><script>alert(1)</script></svg>\n```');
+		assert.ok(html.includes('data-testid="md-sketch"'));
+		assert.ok(html.includes('aria-label="near and far"'));
+		assert.ok(html.includes("fill:var(--sk-ink)"));
+		assert.ok(html.includes("--sk-ink:var(--foreground)"));
+		assert.ok(!html.includes('data-streamdown="code-block"'));
+		assert.ok(!html.includes("alert(1)"));
+	});
+
+	it("says so plainly when a drawing cannot be shown", () => {
+		const html = render("```svg\n<svg><text>no size</text></svg>\n```");
+		assert.ok(html.includes('data-testid="md-sketch-failed"'));
+		assert.ok(html.includes("This drawing could not be shown."));
+	});
+
+	it("shows the first step of a stepped drawing with its caption and the step controls", () => {
+		const html = render('```svg\n<svg viewBox="0 0 100 60"><g data-step="1" data-caption="Near"><circle cx="5" cy="5" r="2"/></g><g data-step="2" data-caption="Far"><circle cx="50" cy="5" r="2"/></g></svg>\n```');
+		assert.ok(html.includes(">Near</p>"));
+		assert.match(html, /Step 1 of 2/);
+		assert.match(html, /g\[data-step="2"\]\{opacity:0\}/);
+		assert.match(html, />Next</);
+	});
+});

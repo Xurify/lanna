@@ -12,12 +12,14 @@ import {
 	LoaderCircleIcon,
 	MicIcon,
 	MountainSnowIcon,
+	PenLineIcon,
 	PlusIcon,
 	RepeatIcon,
 	SunIcon,
 	CircleAlertIcon,
 	ClapperboardIcon,
 	FlagIcon,
+	FlaskConicalIcon,
 	HeadphonesIcon,
 	HistoryIcon,
 	type LucideIcon,
@@ -262,6 +264,7 @@ export function LanguageSwitcher() {
  *  with a sun bar at its edge and a brighter icon, no pill. */
 const NAV_ICONS: Record<NavId, LucideIcon> = {
 	today: SunIcon,
+	ask: PenLineIcon,
 	curriculum: MountainSnowIcon,
 	review: RepeatIcon,
 	read: BookOpenIcon,
@@ -275,6 +278,7 @@ const NAV_ICONS: Record<NavId, LucideIcon> = {
 	milestones: FlagIcon,
 	mistakes: CircleAlertIcon,
 	log: HistoryIcon,
+	experiment: FlaskConicalIcon,
 };
 
 function NavItem({

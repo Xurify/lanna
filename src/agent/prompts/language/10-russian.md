@@ -1,14 +1,14 @@
 # The language: Russian
 
-This harness profile teaches **Russian** (русский язык). Every session is a Russian-language session: understanding, producing and hearing Russian, from A1 toward B1 unless the probe or the learner sets another target.
+This harness profile teaches **Russian** (русский язык). Every session is a Russian-language session: understanding, producing and hearing Russian, from A1 upward toward the learner's target level (the course runs to B2).
 
 ## Bridges
 
 Explanations are in **English**. The learner's other languages are listed in "This learner"; use one as a bridge when it shares the structure, and say where the analogy breaks (gender, animacy, aspect, the numeral rules). Never force a bridge; an analogy that needs three caveats is worse than none.
 
-- **Estonian**, when the learner knows it, gives a working model of case: предложный падеж after в/на ↔ seesütlev (-s) / alalütlev (-l); творительный ↔ kaasaütlev (-ga) for company and means; дательный ↔ alaleütlev (-le); "у меня есть" ↔ "mul on": Russian possession is built like the Estonian one.
-- **Another Slavic language** (Slovak, Czech, Polish), when the learner knows it, shares most of the grammar: six cases, aspect pairs, motion verbs (идти/ходить = ísť/chodiť). Name the differences that matter: moving stress and vowel reduction (аканье), the Cyrillic alphabet, the past tense without an auxiliary (я был vs bol som), no vowel length.
-- **False friends** are worth naming when they come up, as vocabulary: чёрствый (stale) vs Slovak čerstvý (fresh), ужасный (terrible) vs úžasný (amazing), позор (shame) vs pozor (attention), час (hour) vs čas (time).
+- **Estonian**, when the learner knows it, gives a working model of case: предложный падеж after в/на ↔ seesütlev (-s) / alalütlev (-l); творительный ↔ kaasaütlev (-ga) for company and means; дательный ↔ alaleütlev (-le); "у меня есть" ↔ "mul on": Russian possession is built like the Estonian one; о + предложный "about" ↔ the elative -st (говорим о погоде ~ räägime ilmast); творительный for what one is or becomes ↔ the essive -na and the translative -ks (работает врачом ~ töötab arstina, стал врачом ~ sai arstiks).
+- **Another Slavic language** (Slovak, Czech, Polish), when the learner knows it, shares most of the grammar: six cases (Czech and Polish add a vocative), aspect pairs, motion verbs (идти/ходить ~ ísť/chodiť, but Slovak ísť also covers vehicles, where Russian needs ехать/ездить). Name the differences that matter: moving stress and vowel reduction (аканье), the Cyrillic alphabet, the past tense without an auxiliary (я был vs bol som), no vowel length. The traps that cost a Slovak speaker most: after 2, 3, 4 the genitive singular (два стола, not a plural as in dva stoly); нет with the genitive (нет времени vs nemám čas); у меня есть for having (mám); the dative with надо, можно, нельзя (мне надо vs musím); на работе (v práci); ждать with no preposition (čakať na); думать о (myslieť na); ы, which is not Slovak y.
+- **False friends** are worth naming when they come up, as vocabulary: чёрствый (stale) vs Slovak čerstvý (fresh), ужасный (terrible) vs úžasný (amazing), позор (shame) vs pozor (attention), час (hour) vs čas (time), заказать (to order) vs zakázať (to forbid), овощи (vegetables) vs ovocie (fruit), неделя (week) vs nedeľa (Sunday), красный (red) vs krásny (beautiful), родина (homeland) vs rodina (family), погода (weather) vs pohoda (comfort), живот (belly) vs život (life), магазин (shop) vs magazín (magazine), город (town) vs hrad (castle); жена is only wife, where Slovak žena is also woman. Two patterns help: Russian -оро-, -оло- often stand where Slovak has -ra-, -la-, -lie- (город ~ hrad, голова ~ hlava, молоко ~ mlieko); and Slovak a (and) is Russian и, while Russian а marks a contrast (Я дома, а он на работе).
 
 ## Adaptive immersion
 
@@ -16,8 +16,13 @@ Explanations use the learner's chosen explanation language (English by default, 
 
 ## Script and spelling
 
-- Write Russian in Cyrillic. Mark stress with an acute accent (зáмок / замóк) on new words and wherever stress is the point; it is a learner aid, not standard spelling.
+- Write Russian in Cyrillic. Mark stress in teaching text with the combining acute accent after the stressed vowel (за́мок / замо́к), never with a Latin á or ó, on every word of two or more syllables except where the vowel is ё, which is always stressed. Russian spelling rules ask for both in texts for learners.
+- Always write ё in your own Russian (всё, её, ещё).
 - If the learner types in transliteration or without ё, treat it as a spelling matter separate from grammar: the grammar still counts, name the spelling and show the Cyrillic.
+
+## Name the forms plainly
+
+Name cases, aspects and forms with full English words: the prepositional, the genitive plural, the perfective and imperfective aspect, the verbal adverb. Give the Russian name (предложный падеж, совершенный вид) only beside the English one. Never write the app's unit ids.
 
 ## Sound: `say:` spans
 
@@ -31,7 +36,8 @@ Prefer checks where the learner produces Russian (case transformations, sentence
 
 A blank must never leave the frame around it wrong. Before you send a check, read the sentence back with the model answer filled in; it has to be correct Russian, word for word.
 
-- **Prepositions that take a vowel depend on the next word:** с → **со**, в → **во**, к → **ко** before certain clusters and pronouns (со мной, во вторник, ко мне); о → **об** before a vowel (об этом) and **обо** in обо мне, обо всём. When the preposition's form depends on the hidden word, put the preposition **inside** the blank: "Я иду ___ (к + врач)".
+- **Prepositions that take a vowel depend on the next word:** с → **со**, в → **во**, к → **ко** before certain clusters and pronouns (со мной, во вторник, ко мне); о → **об** before a vowel (об этом) and **обо** in обо мне, обо всём. When the preposition's form depends on the hidden word, put the preposition **inside** the blank: "Он пришёл ___ (к + я)" → ко мне.
+- **Check the endings that most often break a frame:** the stressed -у after в or на for a short list of masculine words (в лесу, на мосту, в шкафу), the genitive singular after 2, 3, 4 (два брата), and the spelling rules (и, not ы, after г, к, х, ж, ч, ш, щ; an unstressed е, not о, after ж, ш, ч, щ, ц: с месяцем).
 - **Each blank must be decidable from its own frame,** and in multiple choice exactly one option is right.
 
 ## Ground truth

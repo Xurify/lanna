@@ -35,6 +35,8 @@ import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { endEnterBlocked, EnterHint, NotSaved, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { switchLanguage } from "@/components/switch-language";
 import { speak, useActiveLanguage } from "@/components/speech";
@@ -52,6 +54,7 @@ import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
 type Stage = "shelf" | "preview" | "watch" | "questions" | "end" | "error";
 
@@ -98,6 +101,9 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const [stats, setStats] = useState<SegmentStat[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const [saveRefused, setSaveRefused] = useState(false);
+	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// The watch clock counts while the video plays, and while the learner works
 	// (a paused line, a question): after GAP_CAP_MS with no action it stops.
@@ -279,18 +285,17 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 		async (all: number[], segStats: SegmentStat[]) => {
 			if (!video || saving) return;
 			setSaving(true);
+			setSaveFailed(false);
+			setSaveRefused(false);
 			setStage("end");
 			sfx.done();
 			try {
-				const res = await fetch("/api/watch", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
-				});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				setOutcome((await res.json()) as Outcome);
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", { action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
-			} catch {
+			} catch (err) {
+				setSaveFailed(true);
+				setSaveRefused(err instanceof RefusedError);
 				const correct = video.questions.filter((q, i) => all[i] === q.answer).length;
 				const gotFirst = segStats.filter((s) => s.got === "first").length;
 				const gotAfter = segStats.filter((s) => s.got === "after").length;
@@ -299,8 +304,34 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				setSaving(false);
 			}
 		},
-		[video, saving, mode, tapped, load, activeTime],
+		[video, saving, mode, tapped, load, activeTime, lang],
 	);
+
+	const retrySave = async () => {
+		if (!lastSave.current || saving) return;
+		setSaving(true);
+		try {
+			setOutcome(await sendSession<Outcome>(lastSave.current));
+			setSaveFailed(false);
+			setSaveRefused(false);
+			void load();
+		} catch (err) {
+			setSaveFailed(true);
+			setSaveRefused(err instanceof RefusedError);
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	useEffect(() => {
+		const session = lastSave.current;
+		if (!saveFailed || saveRefused || !session) return;
+		return onSessionSaved(session.id, (saved) => {
+			setOutcome(saved as Outcome);
+			setSaveFailed(false);
+			void load();
+		});
+	}, [saveFailed, saveRefused, load]);
 
 	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to the page the player was opened from; a word popover closes first.
 	useEffect(() => {
@@ -401,7 +432,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End video={video} stats={stats} outcome={outcome} saving={saving} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
+				<End video={video} stats={stats} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
 			</Frame>
 		);
 	}
@@ -1237,8 +1268,8 @@ interface SentenceReply {
 function SentenceStep({ videoId, targets }: { videoId: string; targets: SentenceTarget[] }) {
 	return (
 		<section className="mt-10 text-left" data-testid="watch-sentences">
-			<h2 className="font-ui text-lg font-[600] text-foreground">Use the words</h2>
-			<p className="mt-1 font-prose text-sm text-muted-foreground">Write one sentence with each word, in any form. The meaning shows after your first try.</p>
+			<h2 className="q-sh">Use the words</h2>
+			<p className="mt-1 font-prose text-sm text-ink-3">Write one sentence with each word, in any form. The meaning shows after your first try.</p>
 			<ol className="mt-4 flex flex-col gap-3">
 				{targets.map((t) => (
 					<SentenceRow key={t.lemma} videoId={videoId} target={t} />
@@ -1325,14 +1356,14 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	);
 }
 
-function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+function End({ failed, refused, onRetrySave, video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
 	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
 	const judged = stats.length;
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome && !(e.target instanceof HTMLInputElement)) {
+			if (e.key === "Enter" && outcome && !endEnterBlocked(e)) {
 				e.preventDefault();
 				onShelf();
 			}
@@ -1343,54 +1374,51 @@ function End({ video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: 
 	const total = outcome?.total ?? video.questions.length;
 	const gotFirst = outcome?.gotFirst ?? stats.filter((s) => s.got === "first").length;
 	return (
-		<div className="m-auto w-full max-w-xl px-5 text-center" data-testid="watch-end">
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-				<MonitorPlayIcon className="size-12" />
-			</div>
-			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
+		<TaskEnd
+			testId="watch-end"
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for another video</EnterHint>}
+			actions={
+				<>
+					<Link href="/" className={SECONDARY}>
+						Today
+					</Link>
+					<button type="button" onClick={onAgain} className={SECONDARY}>
+						Watch again
+					</button>
+					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="watch-shelf-button">
+						Pick another video
+					</button>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="play" className="text-teal" />
+				Watch · done
+			</p>
+			<h1 className="q-hello">{outcome?.rewatch ? "Watched again!" : "Watched!"}</h1>
+			<p className="q-line dim mt-2" lang={lang?.code}>
 				{video.title}
 			</p>
-			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label={mode === "step" ? "Got first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst}/${judged}` : "—") : String(video.segments.length)} ink="text-teal-2" />
-				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
-			</div>
+			<Stats className="mt-7 max-w-none">
+				<Stat label="XP" value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label={mode === "step" ? "Got the first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)} />
+				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
+			</Stats>
 			{mode === "step" && judged > 0 && (
-				<p className="mt-4 font-prose text-sm text-muted-foreground" data-testid="watch-speed">
+				<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="watch-speed">
 					{speed.wpmFirst !== null ? `On the lines you got the first time, the speech ran at ${speed.wpmFirst} words a minute` : "You got no line on the first listen this time"}
 					{speed.wpmAll ? `; the whole video runs at ${speed.wpmAll}` : ""}. You got {Math.round(speed.shareFirst * 100)}% the first time
 					{outcome && outcome.missed > 0 ? `, ${outcome.missed} not yet` : ""}.
 				</p>
 			)}
 			{outcome && (
-				<p className="mt-2 font-prose text-sm text-muted-foreground">
-					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
+				<p className="mt-2 font-prose text-[13px] text-ink-3">
+					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to Review. ` : ""}
 					The app counts {Math.round(video.coverage * 100)}% of this video's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
 			{targets.length > 0 && <SentenceStep videoId={video.id} targets={targets} />}
-			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-				<Link href="/" className={SECONDARY}>
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY}>
-					Watch again
-				</button>
-				<button type="button" onClick={onShelf} className={PRIMARY} data-testid="watch-shelf-button">
-					Pick another video
-				</button>
-			</div>
-			<SourcesNote feature="watch" className="mt-8 text-left" />
-		</div>
-	);
-}
-
-function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
-	return (
-		<div className="rounded-lg border bg-card px-3 py-4">
-			<p className="font-ui text-sm font-[600] text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 font-ui text-3xl font-[600] tabular-nums", ink)}>{value}</p>
-		</div>
+			<SourcesNote feature="watch" className="mt-14" />
+		</TaskEnd>
 	);
 }

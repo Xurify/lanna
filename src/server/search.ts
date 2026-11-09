@@ -1,15 +1,15 @@
 /**
  * The search engines' server composition (search port + model slots wave,
- * 2026-09-20): the Tavily + Brave adapters behind the core port
- * (core/search.ts) + the live-engine resolution the settings UI and the
- * agent-layer tool both read.
+ * 2026-09-20; Context added 2026-11-09): the Context + Tavily + Brave adapters
+ * behind the core port (core/search.ts) + the live-engine resolution the
+ * settings UI and the agent-layer tool both read.
  *
- * Owner decisions (2026-09-20) baked in:
+ * Owner decisions baked in:
  *  - NO default engine: an engine is live iff its key is present (auth
  *    store or env — env wins, keyed via server/keys.ts keyValue).
  *  - Setting a key is ALL the user does — auto-detection: explicit
- *    agent.search.engine pins the preference (when BOTH keys are present
- *    the preference order is Tavily → Brave); without a pin, whichever
+ *    agent.search.engine pins the preference (when multiple keys are present
+ *    the preference order is Context → Tavily → Brave); without a pin, whichever
  *    engine has a key is the engine.
  *  - An explicit choice does NOT silently fall back to the other engine:
  *    engine pinned but its key missing = honestly unavailable (reason
@@ -108,10 +108,68 @@ export function braveProvider(apiKey: string, fetchFn: FetchLike = fetch): Searc
 	};
 }
 
+/** Context: POST https://api.context.dev/v1/web/search — Bearer auth in the
+ *  Authorization header, query + numResults in the JSON body.
+ *  Response: {results: [{title, url, description, highlights?: string[] | {highlights: string[]}}]},
+ *  Errors: {message, error_code}. */
+export function contextProvider(apiKey: string, fetchFn: FetchLike = fetch): SearchProvider {
+	return {
+		id: "context",
+		async search(query: string, count: number): Promise<SearchHit[]> {
+			const resp = await fetchFn("https://api.context.dev/v1/web/search", {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					authorization: `Bearer ${apiKey}`,
+				},
+				body: JSON.stringify({ query, numResults: Math.max(1, Math.min(count, 20)) }),
+				signal: AbortSignal.timeout(30_000),
+			});
+			if (!resp.ok) {
+				const body = await resp.text();
+				let detail = body.slice(0, 200);
+				try {
+					const parsed = JSON.parse(body) as { message?: string; error?: string; error_code?: string };
+					if (parsed.message) detail = parsed.message.slice(0, 200);
+					else if (parsed.error) detail = parsed.error.slice(0, 200);
+				} catch {
+					/* keep raw slice */
+				}
+				throw new Error(`Context search API ${resp.status}: ${detail}`);
+			}
+			const data = (await resp.json()) as {
+				results?: Array<{
+					title?: string;
+					url?: string;
+					description?: string;
+					highlights?: string[] | { highlights?: string[] };
+				}>;
+			};
+			return (data.results ?? [])
+				.filter((r) => typeof r.url === "string" && r.url)
+				.map((r) => {
+					const highlightText = Array.isArray(r.highlights)
+						? r.highlights.join(" ")
+						: Array.isArray(r.highlights?.highlights)
+						? r.highlights.highlights.join(" ")
+						: "";
+					return {
+						title: r.title ?? r.url ?? "",
+						url: r.url ?? "",
+						snippet: (r.description?.trim() || highlightText || "")
+							.replace(/\s+/g, " ")
+							.slice(0, 500),
+					};
+				});
+		},
+	};
+}
+
 /** The engines this wave ships, in PREFERENCE order (both keys present,
- *  no explicit pin → the first live engine wins; owner decision
- *  2026-09-20: Tavily first — the AI-native search API the wave chose). */
+ *  no explicit pin → the first live engine wins; owner decision: Context
+ *  first — agent-native search API with highlights, then Tavily, then Brave). */
 const ENGINE_ORDER: ReadonlyArray<{ id: SearchEngineId; envVar: string }> = [
+	{ id: "context", envVar: "CONTEXT_API_KEY" },
 	{ id: "tavily", envVar: "TAVILY_API_KEY" },
 	{ id: "brave", envVar: "BRAVE_API_KEY" },
 ];
@@ -135,10 +193,11 @@ export function resolveSearchEngineFor(
 	const pinnedKey = pinned ? keys[pinned] ?? null : null;
 	if (pinned) {
 		if (!pinnedKey) {
+			const envVar = ENGINE_ORDER.find((e) => e.id === pinned)?.envVar ?? "API_KEY";
 			return {
 				available: false,
 				engine: null,
-				reason: `search engine is set to "${pinned}" but its API key is missing — set the ${pinned === "tavily" ? "TAVILY_API_KEY" : "BRAVE_API_KEY"} key`,
+				reason: `search engine is set to "${pinned}" but its API key is missing — set the ${envVar} key`,
 				key: null,
 			};
 		}
@@ -151,7 +210,7 @@ export function resolveSearchEngineFor(
 	return {
 		available: false,
 		engine: null,
-		reason: "no search engine configured — set a Tavily or Brave search API key",
+		reason: "no search engine configured — set a Context, Tavily or Brave search API key",
 		key: null,
 	};
 }
@@ -163,6 +222,7 @@ export function searchStatus(): SearchStatus {
 	const { available, engine, reason } = resolveSearchEngineFor(
 		effectiveSettings().agent.search?.engine,
 		{
+			context: engineKey("context") ?? undefined,
 			tavily: engineKey("tavily") ?? undefined,
 			brave: engineKey("brave") ?? undefined,
 		},
@@ -181,9 +241,12 @@ export function searchAvailable(): boolean {
  *  rotations take effect immediately. */
 export function searchProvider(): SearchProvider | null {
 	const resolved = resolveSearchEngineFor(effectiveSettings().agent.search?.engine, {
+		context: engineKey("context") ?? undefined,
 		tavily: engineKey("tavily") ?? undefined,
 		brave: engineKey("brave") ?? undefined,
 	});
 	if (!resolved.available || !resolved.key) return null;
-	return resolved.engine === "tavily" ? tavilyProvider(resolved.key) : braveProvider(resolved.key);
+	if (resolved.engine === "context") return contextProvider(resolved.key);
+	if (resolved.engine === "tavily") return tavilyProvider(resolved.key);
+	return braveProvider(resolved.key);
 }

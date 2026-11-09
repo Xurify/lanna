@@ -1,17 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 import { Composer } from "@/components/composer";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
-import { SidebarToggle } from "@/components/sidebar";
+import { SidebarToggle, timeAgo } from "@/components/sidebar";
 import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys, ZeroKeysPill } from "@/components/setup-cta";
 import { StatsBar } from "@/components/stats-bar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ComposerActions } from "@/components/composer-actions";
+import { ChatDraft, type ChatStarterTopic } from "@/components/chat-draft";
 
 /**
  * The sessionless draft view at /chat/new (owner, 2026-09-13): "+ New
@@ -42,7 +44,7 @@ const PRACTICE_IDEAS = ["Verb endings in the present", "Accusative after mám, v
 export async function startDraftSession(
 	text: string,
 	fetchLike: typeof fetch,
-	mode?: "practice",
+	mode?: "practice" | "chat",
 ): Promise<string | null> {
 	const t = text.trim();
 	if (!t) return null;
@@ -54,9 +56,7 @@ export async function startDraftSession(
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(
-			mode === "practice"
-				? { title: t, kind: "practice" }
-				: { title: t },
+			mode ? { title: t, kind: mode } : { title: t },
 		),
 	});
 	const { id } = (await res.json()) as { id: string };
@@ -64,6 +64,21 @@ export async function startDraftSession(
 	// the SERVER stamps the newborn from the strong slot.
 	return `/chat/${id}?prompt=${encodeURIComponent(t)}`;
 }
+
+export async function createChatSession(text: string, fetchLike: typeof fetch): Promise<{ id: string; title: string } | null> {
+	const t = text.trim();
+	if (!t) return null;
+	const res = await fetchLike("/api/chats", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ title: t, kind: "chat" }),
+	});
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	return (await res.json()) as { id: string; title: string };
+}
+
+const loadChat = () => import("@/components/chat").then((m) => m.Chat);
+const Chat = dynamic(loadChat, { ssr: false });
 
 /** The pure shell (no router) — the render-test seam: the draft view's
  *  visible surface, assembled from the same pieces a fresh chat shows. */
@@ -77,23 +92,17 @@ export function DraftShell({
 	onSend,
 	setupCta,
 	mode = "teach",
-		onModeChange,
-	}: {
+}: {
 	busy: boolean;
 	text: string;
 	onChange: (v: string) => void;
 	onSend: () => void;
-	/** The practice draft (owner, 2026-10-04): ?mode=practice — the
-	 *  created session carries kind:"practice" and the copy changes
-	 *  (the practice agent opens; no probing). */
 	mode?: "teach" | "practice";
 	/** The first-run CTA (fix wave chunk B): the same "Set up your models"
 	 *  affordance home carries, rendered above the draft shell — passed by
 	 *  NewSession, which owns the configured state and the SetupDialog. */
 	setupCta?: ReactNode;
-		/** When given, the start screen offers the two kinds of chat as a choice. */
-		onModeChange?: (mode: "teach" | "practice") => void;
-	}) {
+}) {
 	// Voice dictation (STT wave, 2026-09-17): finals append at the end of the
 	// draft text (via the parent's onChange — the truth lives there); the
 	// strip lives in the stats bar's middle slot.
@@ -151,15 +160,6 @@ export function DraftShell({
 				<div className="relative flex min-h-0 flex-1">
 						<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">
 						<div className="flex min-h-0 flex-1 items-end justify-center overflow-y-auto px-4 pb-10 pt-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
-									{onModeChange && (
-											<div className="pointer-events-auto q-segc" role="radiogroup" aria-label="Kind of chat" data-testid="draft-mode">
-												{(["teach", "practice"] as const).map((m) => (
-													<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("min-w-24", mode === m && "on")} onClick={() => onModeChange(m)} data-testid={`draft-mode-${m}`}>
-														{m === "teach" ? "Learn" : "Practice"}
-													</button>
-												))}
-											</div>
-										)}
 									<div className="max-w-md space-y-1.5">
 										<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
 											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
@@ -230,10 +230,38 @@ export function DraftShell({
 	);
 }
 
-export function NewSession({ initialConfigured, mode: initialMode = "teach" }: { initialConfigured: boolean; mode?: "teach" | "practice" }) {
+export function NewSession({
+	initialConfigured,
+	mode = "chat",
+	language = "",
+	weakTopics = [],
+	recent = [],
+}: {
+	initialConfigured: boolean;
+	mode?: "chat" | "teach" | "practice";
+	language?: string;
+	weakTopics?: readonly ChatStarterTopic[];
+	recent?: ReadonlyArray<{ id: string; title: string; updatedAt: string }>;
+}) {
 	const router = useRouter();
-	const [mode, setMode] = useState<"teach" | "practice">(initialMode);
+	const pathname = usePathname();
 	const [text, setText] = useState("");
+	const [started, setStarted] = useState<{ id: string; title: string; prompt: string } | null>(null);
+	const [shownPath, setShownPath] = useState(pathname);
+	if (pathname !== shownPath) {
+		setShownPath(pathname);
+		if (pathname === "/chat/new") setStarted(null);
+	}
+	// Next's replaceState stores this page's tree under the chat's address, so Back or Forward to it
+	// brings the draft back under /chat/<id>. A soft refresh there left the next Forward on the chat,
+	// so the page loads in full, which also gives the history entries Next's own state again.
+	const strandedOnChat = started === null && pathname !== "/chat/new";
+	useEffect(() => {
+		if (strandedOnChat) window.location.reload();
+	}, [strandedOnChat]);
+	useEffect(() => {
+		if (mode === "chat") void loadChat();
+	}, [mode]);
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
 	 * finish-first send calls THIS send after the dictation flush — which
 	 * landed via setState and may not have re-rendered yet. The send reads
@@ -260,9 +288,10 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 	const strongKeyless = useStrongKeyless();
 	const [setupOpen, setSetupOpen] = useState(false);
 
+	const sendingRef = useRef(false);
 	const send = useCallback(() => {
 		const draft = textRef.current.trim();
-		if (!draft || busy) return;
+		if (!draft || busy || sendingRef.current) return;
 		if (!configured) {
 			setSetupOpen(true);
 			return;
@@ -277,29 +306,39 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 			return;
 		}
 		setBusy(true);
-		void startDraftSession(draft, fetch, mode === "practice" ? "practice" : undefined)
+		if (mode === "chat") {
+			sendingRef.current = true;
+			void createChatSession(draft, fetch)
+				.finally(() => {
+					sendingRef.current = false;
+				})
+				.then((chat) => {
+					setBusy(false);
+					if (!chat || window.location.pathname !== "/chat/new") return;
+					applyText("");
+					setStarted({ ...chat, prompt: draft });
+					window.history.replaceState(null, "", `/chat/${chat.id}`);
+				})
+				.catch(() => setBusy(false));
+			return;
+		}
+		void startDraftSession(draft, fetch, mode === "teach" ? undefined : mode)
 			.then((target) => {
 				if (target) router.push(target);
 				else setBusy(false);
 			})
 			.catch(() => setBusy(false));
-	}, [busy, router, configured, zeroKeys, strongKeyless]);
+	}, [busy, router, configured, zeroKeys, strongKeyless, mode]);
+
+	if (strandedOnChat) return null;
+	if (started) {
+		return <Chat key={started.id} chatId={started.id} title={started.title} kind="chat" initialMessages={[]} initialPrompt={started.prompt} initialConfigured />;
+	}
 
 	return (
 		<>
-			<DraftShell
-				busy={busy}
-				text={text}
-				onChange={applyText}
-				onSend={send}
-								mode={mode}
-				onModeChange={(m) => {
-					setMode(m);
-					// replaceState keeps the address shareable without reloading the draft.
-					window.history.replaceState(null, "", m === "practice" ? "/chat/new?mode=practice" : "/chat/new");
-				}}
-				setupCta={
-					zeroKeys ? (
+			{(() => {
+				const setupCta = zeroKeys ? (
 						<ZeroKeysPill inline onOpen={() => setSetupOpen(true)} />
 					) : (
 						!configured && (
@@ -312,9 +351,13 @@ export function NewSession({ initialConfigured, mode: initialMode = "teach" }: {
 								Add an AI key
 							</button>
 						)
-					)
-				}
-			/>
+					);
+				return mode === "chat" ? (
+					<ChatDraft busy={busy} text={text} onChange={applyText} onSend={send} language={language} setupCta={setupCta} weakTopics={weakTopics} recent={recent.map((r) => ({ id: r.id, title: r.title, when: timeAgo(r.updatedAt) }))} />
+				) : (
+					<DraftShell busy={busy} text={text} onChange={applyText} onSend={send} mode={mode} setupCta={setupCta} />
+				);
+			})()}
 			{/* First-run setup: the send interception's landing surface — stage
 			    1 is the self-contained first-key screen (zero-keys wave). */}
 			<SetupDialog

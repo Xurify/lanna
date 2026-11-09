@@ -23,8 +23,9 @@ import type { PlanNodeStatus, PlanTree } from "./plan.ts";
 /** The session's kind (practice sessions, owner 2026-10-04): "teach" is
  *  the default and ABSENT on pre-practice records (no migration — absence
  *  reads as teach); "practice" marks an adaptive-practice session — the
- *  practice agent and its two tools. */
-export type ChatKind = "teach" | "practice";
+ *  practice agent and its two tools; "chat" is the plain conversation with
+ *  the tutor — short replies, inline drawings, only the checking tools. */
+export type ChatKind = "teach" | "practice" | "chat";
 
 export interface ChatRecord {
 	id: string;

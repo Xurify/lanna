@@ -23,7 +23,7 @@ Recommended order:
 | 3. Rented cloud server, reached only over Tailscale | always | probably fails (see below) | on a rented machine; reverses E7 and E21's rejection of third parties | an afternoon, plus backups | Hetzner CX23 about €6 a month with IPv4 |
 | 4. Store app (Capacitor or native) | only with route 1, 2 or 3 underneath | as underneath | as underneath | weeks, plus App Review | Apple $99 a year, Google Play $25 once; App Store guideline 4.2 risk (E20) |
 
-Not costed: a multi-user web app that other learners sign up for. That is a separate project. It needs accounts, a data folder per user, and a running language per user (E45 makes it one per process). It needs keys or billing per user, and it cannot serve other people through the owner's ChatGPT, Copilot or Grok subscription.
+Not costed: a multi-user web app that other learners sign up for. That is a separate project. It needs accounts, a data folder per user, and a data folder per user (E75 gives each device its own language, but one server still has one data folder). It needs keys or billing per user, and it cannot serve other people through the owner's ChatGPT, Copilot or Grok subscription.
 
 ## What costs the same everywhere
 
@@ -32,7 +32,7 @@ AI and voice spending does not depend on where the server runs. It is whatever S
 ## What every route needs
 
 - **A production build, not dev mode.** Dev mode compiles each route the first time it opens and ships unminified React (E36, [slow-tabs.md](slow-tabs.md)), which is worse over a phone connection. `bun run desktop:prod` builds once and serves the build on 127.0.0.1:3010 with the desktop window, so `tailscale serve --bg 3010` works with it. `LH_TAILNET_HOST` is needed in dev mode only. The packaged installer is still not a Serve target, because its port changes on every start (E21). The cost: every update needs a rebuild and a restart.
-- **One running language per server.** The running language is one value for the whole process (`config.ts`, E45). When the phone switches language, only the phone reloads. A page left open on the PC keeps showing the old language, but its next answers are recorded into whatever language the server runs now. `POST /api/lesson` sends no language, and nothing guards against this. Fix it before two devices are used at the same time. Found by reading the code; not reproduced.
+- **Each device runs its own language (E75).** The page and a cookie decide a request's language, so a phone and the PC can study different languages at the same time, and a write is never refused or lost for it. Nothing to build for this.
 - **Checks on the devices.** Still unverified from E20 and E21: pairing in Safari, whether the Home Screen icon keeps Safari's cookie, the microphone over HTTPS, and press-and-hold. One more: sound that starts on its own when a card opens may stay silent on iOS until the learner taps. iOS blocks playback that does not follow a tap, and `components/speech.tsx` ends a rejected `play()` without showing anything. Also unverified.
 - **Pair two devices.** If iOS clears a Home Screen app's storage after seven days without use (WebKit bug 237350, unverified on current iOS), the device has to pair again. Only this computer or a paired device can make a code. With both the iPhone and the iPad paired, each can make a code for the other while away from home.
 
@@ -68,7 +68,6 @@ E20 decided against it, and nothing here changes that. It would still need a ser
 - Every price above comes from secondary sources dated 2026; none was checked on the vendor's own page.
 - The power figures are estimates from typical idle draw, not measured on the owner's PC.
 - How YouTube treats a rented server other than the build machine.
-- The language issue above has not been reproduced in a running app.
 - Nothing has been tried on a phone or an iPad, as in E20 and E21.
 
 ## Sources

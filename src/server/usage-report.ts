@@ -30,10 +30,11 @@ function monthOf(iso: string): string {
 
 /** Why?, Talk, Story or Practice, read off the first user message; a course is "learn". */
 export function sessionMode(chat: Pick<ChatRecord, "kind" | "messages" | "title">): SessionMode {
-	if (chat.kind !== "practice") return "learn";
+	if (chat.kind !== "practice" && chat.kind !== "chat") return "learn";
 	const first = chat.messages.find((m) => m.role === "user");
 	const text = first ? userFacingTextOf(first.content).join(" ") : "";
 	const head = (text || chat.title).trim();
+	if (chat.kind === "chat") return /^why\b/i.test(head) ? "why" : "chat";
 	if (/^why\b/i.test(head)) return "why";
 	if (/^talk\b/i.test(head)) return "talk";
 	if (/^story\b/i.test(head)) return "story";

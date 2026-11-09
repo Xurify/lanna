@@ -22,7 +22,7 @@ export function SettingsSection({
 	testid?: string;
 }) {
 	return (
-		<section data-testid={testid} className="p-6">
+		<section data-testid={testid} className="p-6 max-md:px-4 max-md:py-5">
 			<div className="mb-5 flex flex-col gap-1 border-b border-border pb-4">
 				<h2 className="font-ui text-xl font-semibold tracking-[-0.02em] text-foreground">{title}</h2>
 				{hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
@@ -78,11 +78,11 @@ export function SettingsRow({
 			data-testid={testid}
 			className={cn(
 				"flex rounded-lg bg-well px-4 py-3",
-				stacked ? "flex-col gap-3" : "items-center justify-between gap-4",
+				stacked ? "flex-col gap-3" : "items-center justify-between gap-4 max-md:flex-wrap max-md:gap-y-3",
 				dimmed && "opacity-40",
 			)}
 		>
-			<span className="min-w-0 flex-1">
+			<span className={cn("min-w-0 flex-1", !stacked && "max-md:basis-48")}>
 				<span className="block font-ui text-sm font-medium text-foreground">{label}</span>
 				{hint && <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{hint}</span>}
 			</span>

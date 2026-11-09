@@ -24,6 +24,13 @@ export * from "./plan-tree.ts";
 export * from "./phases.ts";
 export * from "./pending.ts";
 export * from "./prompt-segments.ts";
+export * from "./sketch.ts";
+export * from "./chat-replies.ts";
+export * from "./chat-board.ts";
+export * from "./chat-answers.ts";
+export * from "./chat-lines.ts";
+export * from "./chat-export.ts";
+export * from "./app-content.ts";
 // answer-presentation is not re-exported here: it pulls the Markdown parsers (about 250 KB), and a client component that imports this barrel would ship them on every route. Import them from "./tutor.ts" (client: "@/src/core/tutor").
 // Wave B (owner-approved 2026-09-26): the native record (LhMessage), the
 // and the input-events contract — all
@@ -62,6 +69,8 @@ export * from "./session-markdown.ts";
 // LangHarness: target languages + answer comparison, the FSRS scheduler,
 // and the cloze review model (all pure, browser-safe).
 export * from "./language.ts";
+export * from "./cheers.ts";
+export * from "./language-guard.ts";
 export * from "./course.ts";
 export * from "./variants.ts";
 export * from "./fsrs.ts";
@@ -69,11 +78,14 @@ export * from "./review.ts";
 export * from "./lesson.ts";
 export * from "./reference-pages.ts";
 export * from "./grammar.ts";
+export * from "./course-grammar.ts";
 export * from "./form-slip.ts";
 export * from "./review-miss.ts";
 export * from "./first-try.ts";
 export * from "./word-clusters.ts";
 export * from "./pairs.ts";
+export * from "./sounds.ts";
+export * from "./experiment.ts";
 export * from "./curriculum.ts";
 export * from "./after-plan.ts";
 export * from "./outside.ts";
@@ -100,6 +112,7 @@ export * from "./speak-script.ts";
 export * from "./speak.ts";
 export * from "./fluency.ts";
 export * from "./sources.ts";
+export * from "./credits.ts";
 export * from "./saved-phrases.ts";
 export * from "./cheatsheets.ts";
 export * from "./word-search.ts";

@@ -327,7 +327,7 @@ function PlainSettingRow({
 
 	return (
 		<div data-testid={testid} className={envOwned ? "opacity-40" : undefined}>
-			<div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent/30">
+			<div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent/30 max-md:flex-col max-md:items-stretch">
 				<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
 					<ProviderIcon provider="azure" />
 					<span>{label}</span>
@@ -359,7 +359,7 @@ function PlainSettingRow({
 					autoComplete="off"
 					spellCheck={false}
 					data-testid={`${testid}-input`}
-					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-ink-4 transition-[color,background-color,border-color,box-shadow] hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
+					className="h-8.5 w-48 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs max-md:h-10 max-md:w-full text-foreground outline-hidden placeholder:text-ink-4 transition-[color,background-color,border-color,box-shadow] hover:border-border hover:bg-background focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-default"
 				/>
 			</div>
 			{error && (
