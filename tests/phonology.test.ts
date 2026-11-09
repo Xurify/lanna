@@ -38,14 +38,15 @@ describe("Articulatory motor guidance catalog", () => {
 		}
 	});
 
-	test("handles case-insensitivity and standard phoneme aliases", () => {
+	test("handles case-insensitivity and requires exact NFC match without plain consonant fallback", () => {
 		const upper = getArticulatoryCue("Ť");
 		assert.ok(upper, "Finds uppercase Ť");
 		assert.equal(upper.symbol, "ť");
 
-		const aliasC = getArticulatoryCue("c");
-		assert.ok(aliasC, "Maps 'c' alias to palatal stop ť");
-		assert.equal(aliasC.ipa, "c");
+		assert.equal(getArticulatoryCue("t"), null, "Plain 't' returns null");
+		assert.equal(getArticulatoryCue("d"), null, "Plain 'd' returns null");
+		assert.notEqual(getArticulatoryCue("ť"), null, "Palatal 'ť' returns cue");
+		assert.notEqual(getArticulatoryCue("ď"), null, "Palatal 'ď' returns cue");
 	});
 });
 
@@ -116,6 +117,10 @@ describe("Perceptual Assimilation Model (PAM-L2) contrast prioritization", () =>
 		const hungarianLearner = getPamContrastPriority("palatals", ["hu"]);
 		assert.equal(hungarianLearner.category, "TC");
 		assert.equal(hungarianLearner.priority, "low");
+
+		const czechLearner = getPamContrastPriority("palatals", ["cs"]);
+		assert.equal(czechLearner.category, "TC");
+		assert.equal(czechLearner.priority, "low");
 	});
 });
 
@@ -128,7 +133,7 @@ describe("Slovak voicing assimilation (*spodobovanie*) & orthographic rules", ()
 
 		const tazko = getVoicingAssimilationNotes("ťažko!");
 		assert.ok(tazko);
-		assert.equal(tazko.phonetic, "caskɔ");
+		assert.equal(tazko.phonetic, "caʃkɔ");
 	});
 
 	test("returns null for regular non-assimilated words", () => {
@@ -152,6 +157,7 @@ describe("Slovak phonology minimal pairs dataset", () => {
 		for (const p of PHONOLOGY_PAIRS) {
 			assert.ok(p.id, "Pair has id");
 			assert.notEqual(p.a, p.b, `Twins '${p.a}' and '${p.b}' must differ`);
+			assert.notEqual(p.ipaA, p.ipaB, `Pair ${p.id} must have distinct IPAs: ${p.ipaA} vs ${p.ipaB}`);
 			assert.ok(p.ipaA && p.ipaB, `Pair ${p.id} must have IPA for both`);
 			assert.ok(p.meaningA && p.meaningB, `Pair ${p.id} must have English meanings`);
 			assert.ok(p.cue.length > 10, `Pair ${p.id} has descriptive cue`);
@@ -226,6 +232,13 @@ describe("Ear Gym round", () => {
 	test("the word played is not always the same member of the pair", () => {
 		const members = new Set(earGymRound(PHONOLOGY_PAIRS, 3, 40).map((trial) => trial.targetMember));
 		assert.deepEqual([...members].sort(), ["a", "b"]);
+	});
+
+	test("pickRoundPairs does not repeat the same pair consecutively when pool > 1", () => {
+		const round = earGymRound(PHONOLOGY_PAIRS, 123, 30);
+		for (let i = 1; i < round.length; i++) {
+			assert.notEqual(round[i]!.pairId, round[i - 1]!.pairId, `Consecutive pairId must not match at index ${i}`);
+		}
 	});
 
 	test("an empty pool gives no round", () => {

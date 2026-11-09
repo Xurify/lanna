@@ -161,13 +161,15 @@ describe("Slovak Rhythmic Law & Rhythm Engine", () => {
 			assert.equal(analyzeRhythmicLaw("trávam").hasViolation, false);
 		});
 
-		it("flags consecutive long syllables as violations", () => {
+		it("flags consecutive long syllables as violations and suggests shortened form", () => {
 			const res = analyzeRhythmicLaw("krásný");
 			assert.equal(res.hasViolation, true);
 			assert.equal(res.violations.length, 1);
+			assert.equal(res.suggestion, "krásny");
 
 			const res2 = analyzeRhythmicLaw("chválím");
 			assert.equal(res2.hasViolation, true);
+			assert.equal(res2.suggestion, "chválim");
 		});
 
 		it("identifies standard lexical exceptions", () => {
@@ -178,6 +180,58 @@ describe("Slovak Rhythmic Law & Rhythm Engine", () => {
 			const res2 = analyzeRhythmicLaw("páví");
 			assert.equal(res2.hasViolation, false);
 			assert.equal(res2.isException, true);
+
+			const res3 = analyzeRhythmicLaw("chvália");
+			assert.equal(res3.hasViolation, false);
+			assert.equal(res3.isException, true);
+
+			for (const verb of ["slúžia", "kŕmia", "vrátia", "chváliac"]) {
+				const res4 = analyzeRhythmicLaw(verb);
+				assert.equal(res4.hasViolation, false, verb);
+				assert.equal(res4.isException, true, verb);
+				assert.equal(res4.suggestion, undefined, verb);
+			}
+
+			assert.equal(analyzeRhythmicLaw("KRÁSNÝ").suggestion, "KRÁSNY");
+			assert.equal(analyzeRhythmicLaw("krásnou").hasViolation, false);
+		});
+	});
+
+	describe("segmentSyllables & findNuclei nuances", () => {
+		it("treats stôl as a single syllable with diphthong ô (not syllabic liquid)", () => {
+			const sylls = segmentSyllables("stôl");
+			assert.equal(sylls.length, 1);
+			assert.equal(sylls[0]?.text, "stôl");
+			assert.equal(sylls[0]?.nucleus, "ô");
+			assert.equal(sylls[0]?.quantity, "long");
+		});
+
+		it("treats word-final -ou as a single short diphthong nucleus", () => {
+			const sylls = segmentSyllables("ženou");
+			assert.equal(sylls.length, 2);
+			assert.equal(sylls[0]?.text, "že");
+			assert.equal(sylls[1]?.text, "nou");
+			assert.equal(sylls[1]?.quantity, "short");
+		});
+
+		it("treats internal ou in použiť as hiatus (two syllables)", () => {
+			const sylls = segmentSyllables("použiť");
+			assert.equal(sylls.length, 3);
+			assert.equal(sylls[0]?.text, "po");
+			assert.equal(sylls[1]?.text, "u");
+			assert.equal(sylls[2]?.text, "žiť");
+		});
+
+		it("treats digraphs ch, dz, dž as single consonant units in syllable division", () => {
+			const ucho = segmentSyllables("ucho");
+			assert.equal(ucho.length, 2);
+			assert.equal(ucho[0]?.text, "u");
+			assert.equal(ucho[1]?.text, "cho");
+
+			const medza = segmentSyllables("medza");
+			assert.equal(medza.length, 2);
+			assert.equal(medza[0]?.text, "me");
+			assert.equal(medza[1]?.text, "dza");
 		});
 	});
 
@@ -188,9 +242,17 @@ describe("Slovak Rhythmic Law & Rhythm Engine", () => {
 			assert.equal(res.includes("ˈSlo-ven-sko"), true);
 		});
 
-		it("preserves prepositions without marking separate stress", () => {
-			const res = formatStressCadence("na námestí");
-			assert.equal(res.startsWith("na ˈná-mes-tí"), true);
+		it("vocalic prepositions take primary stress over the following noun", () => {
+			const res = formatStressCadence("na stole");
+			assert.equal(res, "ˈna sto-le");
+
+			const res2 = formatStressCadence("na námestí");
+			assert.equal(res2, "ˈna ná-mes-tí");
+		});
+
+		it("vowelless prepositions do not carry stress, stress falls on the noun", () => {
+			const res = formatStressCadence("v dome");
+			assert.equal(res, "v ˈdo-me");
 		});
 	});
 });

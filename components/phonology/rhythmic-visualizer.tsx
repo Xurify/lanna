@@ -196,7 +196,20 @@ function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 						<VerdictDisc ok={!analysis.hasViolation} />
 						{analysis.hasViolation ? "Two long syllables side by side" : analysis.isException ? "Two long syllables, allowed in this word" : "No two long syllables side by side"}
 					</p>
-					{(analysis.hasViolation || analysis.isException) && <p className="q-t2 !mt-2">{analysis.explanation}</p>}
+					{(analysis.hasViolation || analysis.isException) && (
+						<p className="q-t2 !mt-2">
+							{analysis.explanation}
+							{analysis.suggestion && (
+								<>
+									{" "}By the rule it is{" "}
+									<span lang={lang?.code} className="font-semibold text-foreground">
+										{analysis.suggestion}
+									</span>
+									.
+								</>
+							)}
+						</p>
+					)}
 				</>
 			)}
 		</div>

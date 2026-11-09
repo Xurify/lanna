@@ -45,8 +45,8 @@ interface Side {
 	ipa: string;
 }
 
-function hear(word: string) {
-	void speak(word).catch(() => {});
+function hear(word: string, gender?: "female" | "male") {
+	void speak(word, undefined, gender ? { gender } : {}).catch(() => {});
 }
 
 function sides(trial: EarGymExercise): [Side, Side] {
@@ -72,7 +72,7 @@ export function EarGym({ seed }: { seed: number }) {
 
 	useEffect(() => {
 		if (view !== "pairs" || !trial || answered) return;
-		void speak(trial.targetWord).catch(() => {});
+		void speak(trial.targetWord, undefined, { gender: trial.genderPrompt }).catch(() => {});
 		return () => stopSpeaking();
 	}, [view, trial, answered]);
 
@@ -84,7 +84,7 @@ export function EarGym({ seed }: { seed: number }) {
 	};
 
 	const replay = (slow = false) => {
-		if (trial) void speak(trial.targetWord, undefined, { slow }).catch(() => {});
+		if (trial) void speak(trial.targetWord, undefined, { gender: trial.genderPrompt, slow }).catch(() => {});
 	};
 
 	const answer = (word: Answer) => {
@@ -119,7 +119,7 @@ export function EarGym({ seed }: { seed: number }) {
 			if (e.key === "1" || e.key === "2") {
 				e.preventDefault();
 				const word = sides(trial)[e.key === "1" ? 0 : 1].word;
-				if (answered) hear(word);
+				if (answered) hear(word, trial.genderPrompt);
 				else answer(word);
 				return;
 			}
@@ -235,7 +235,7 @@ export function EarGym({ seed }: { seed: number }) {
 								<OptionTile
 									key={side.word}
 									n={i + 1}
-									onClick={() => (answered ? hear(side.word) : answer(side.word))}
+									onClick={() => (answered ? hear(side.word, trial.genderPrompt) : answer(side.word))}
 									state={!answered ? "idle" : side.word === trial.targetWord ? "right" : side.word === picked ? "wrong" : "idle"}
 									testId={`ear-gym-option-${i + 1}`}
 									trail={<Volume2Icon className={cn("size-4 opacity-70", !answered && "invisible")} strokeWidth={1.6} aria-hidden="true" />}
@@ -316,10 +316,10 @@ function ViewSwitch({ view, onChange }: { view: View; onChange: (next: View) => 
 	);
 }
 
-function HearWord({ side }: { side: Side }) {
+function HearWord({ side, gender }: { side: Side; gender?: "female" | "male" }) {
 	const lang = useActiveLanguage();
 	return (
-		<button type="button" onClick={() => hear(side.word)} aria-label={`Play ${side.word}`} className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}>
+		<button type="button" onClick={() => hear(side.word, gender)} aria-label={`Play ${side.word}`} className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}>
 			<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
 			<span className="font-prose text-[16px] font-semibold" lang={lang?.code}>
 				{side.word}
@@ -390,7 +390,7 @@ function HeardRows({ rows }: { rows: Heard[] }) {
 				<li key={i} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
 					<div className="flex flex-wrap gap-2">
 						{sides(trial).map((side) => (
-							<HearWord key={side.word} side={side} />
+							<HearWord key={side.word} side={side} gender={trial.genderPrompt} />
 						))}
 					</div>
 					<p className="font-ui text-[12.5px] text-ink-3">

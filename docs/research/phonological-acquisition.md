@@ -73,7 +73,7 @@ LangHarness translates these psycholinguistic principles into four concrete comp
 5. **Slovak Rhythmic Law & Suprasegmental Cadence Engine (`src/core/rhythm.ts` & `components/phonology/rhythmic-visualizer.tsx`):**
    - Syllable quantity analysis (mora counting: short 1μ vs long 2μ for vowels, diphthongs, and syllabic liquids).
    - Enforces the Slovak Rhythmic Law (*Rytmický zákon*), identifying consecutive long syllables and validating morphological suffix shortening (*chválim*, *krásny*, *trávam*, *vŕbam*, *biely*).
-   - Visualizes syllable-timed cadence and word-initial primary stress (`ˈ`) to counter stress deafness in learners from variable-stress backgrounds (Dupoux et al. 2001, 2008).
+   - Shows each syllable as long or short, the forms where an ending turns short after a long stem, and the stress on the first syllable. This is a description of the language (Hanulíková & Hamann 2010), not a tested training method. Dupoux et al. (2001, 2008) found that speakers of a language with fixed stress (French) have trouble hearing contrastive stress (Spanish); that finding does not apply to learning Slovak, whose stress is fixed, and an earlier version of this note had it backwards.
 
 ---
 
@@ -87,7 +87,8 @@ LangHarness translates these psycholinguistic principles into four concrete comp
 6. Dupoux, E., Sebastián-Gallés, N., Navarrete, E., & Peperkamp, S. (2008). Persistent stress 'deafness': The case of French learners of Spanish. *Cognition*, 106(2), 682-706.
 7. Flege, J. E. (1995). Second language speech learning: Theory, findings, and problems. *Speech Perception and Linguistic Experience*, 233-277.
 8. Flege, J. E., & Bohn, O. S. (2021). The Revised Speech Learning Model (SLM-r). *Second Language Speech Learning: Theoretical and Empirical Progress*, 3-83.
-9. Logan, J. S., Lively, S. E., & Pisoni, D. B. (1991). Training Japanese listeners to identify English /r/ and /l/: A first report. *The Journal of the Acoustical Society of America*, 89(2), 874-886.
-10. Munro, M. J., & Derwing, T. M. (2006). The functional load principle in ESL pronunciation instruction: An exploratory study. *System*, 34(4), 520-531.
-11. Neri, A., Cucchiarini, C., & Strik, H. (2008). The effect of corrective feedback on L2 pronunciation in a computer-assisted learning environment. *CALL*, 21(3), 235-259.
-12. Ngo, H., Chen, X., & Lai, C. (2024). A meta-analysis of computer-assisted pronunciation training (CAPT) on L2 pronunciation. *Language Learning & Technology*, 28(1), 1-28.
+9. Hanulíková, A., & Hamann, S. (2010). Slovak. *Journal of the International Phonetic Association*, 40(3), 373-378.
+10. Logan, J. S., Lively, S. E., & Pisoni, D. B. (1991). Training Japanese listeners to identify English /r/ and /l/: A first report. *The Journal of the Acoustical Society of America*, 89(2), 874-886.
+11. Munro, M. J., & Derwing, T. M. (2006). The functional load principle in ESL pronunciation instruction: An exploratory study. *System*, 34(4), 520-531.
+12. Neri, A., Cucchiarini, C., & Strik, H. (2008). The effect of corrective feedback on L2 pronunciation in a computer-assisted learning environment. *CALL*, 21(3), 235-259.
+13. Ngo, H., Chen, X., & Lai, C. (2024). A meta-analysis of computer-assisted pronunciation training (CAPT) on L2 pronunciation. *Language Learning & Technology*, 28(1), 1-28.
