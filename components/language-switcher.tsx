@@ -306,6 +306,10 @@ function NavItem({
 			onPointerDown={(e) => {
 				wentOnMouseDown.current = e.pointerType === "mouse" && plain(e);
 				if (!wentOnMouseDown.current) return;
+				// UI Events: the click, when there is one, is dispatched right after pointerup, before a timer set in it runs. A press let go off the row has no click to clear the mark.
+				const forget = () => window.setTimeout(() => (wentOnMouseDown.current = false), 0);
+				window.addEventListener("pointerup", forget, { once: true });
+				window.addEventListener("pointercancel", forget, { once: true });
 				onPress?.();
 				router.push(href);
 			}}

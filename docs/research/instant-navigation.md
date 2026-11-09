@@ -23,7 +23,7 @@ The post gives no timings in its text; the result it states is which routes went
 | Define instant, test it with the server held | Taken: `scripts/instant-check.mjs` |
 | Failing test first, then the fix | Taken: the check was written and run against the old build first (table below) |
 | A prerendered shell per route, cached in the browser | Not taken. Every page here is the learner's own files, so the shell would be the skeleton `app/loading.tsx` already gives, and turning Cache Components on means auditing 72 `force-dynamic` exports ([slow-tabs.md](slow-tabs.md), still true) |
-| Do not prefetch whole pages, it strains the server | Reversed. The server is the learner's own computer and a page renders in 10 to 50 ms, so the whole page can be rendered before the click |
+| Do not prefetch whole pages, it strains the server | Reversed. The server is the learner's own computer and a page renders in 10 to 50 ms, so the whole page can be rendered before the click, once its render starts no paid work |
 
 So the idea kept is the definition and the test. The mechanism is the older one Next.js still has without Cache Components: a full prefetch, asked for when the learner shows where they are going.
 
@@ -33,6 +33,7 @@ Measured on a production build with `scripts/perf-check.mjs` (1x CPU, this PC, s
 
 - A sidebar click changed the URL in about 15 ms and the page was complete in 19 to 45 ms. Interactions (Review check and continue, lesson answer and continue, Settings) painted in 7 to 14 ms and finished in 42 ms or less.
 - So the build was not slow in milliseconds. What a learner could still see or feel: nothing happens until the mouse button comes back up (about 90 ms of a normal click), then the skeleton, then the page.
+- **Two waits on a model, found by reading the code** (the seeded profile has no keys, so no measurement shows them). A unit's lesson and Listen asked the cheap model for close wrong meanings inside the page render and waited up to 6 s for the answer (`DEFAULT_WAIT_MS` in `src/server/distractors.ts`). Listen has been typing-only since E38 and never shows those meanings.
 - **`next dev` is the slow case, and this work does not change it.** With the server held, a click in dev mode changes nothing on screen at all, with or without a pointer resting on the row (`node scripts/instant-check.mjs --dev`, also with `--rest 2500`): Next.js does not use prefetched pages in development. `npm run desktop:dev` is `next dev`. E36 already says to use `npm run desktop:prod` to feel the app's real speed; that is still the largest single difference available on the PC.
 
 ## The check
@@ -43,38 +44,37 @@ Measured on a production build with `scripts/perf-check.mjs` (1x CPU, this PC, s
 - **shell**: the URL changed and `loading.tsx` shows.
 - **blocked**: nothing changed.
 
-Before (old build), with the server held:
+| Build | Rows | On screen with the server held | ms |
+|---|---|---|---|
+| Before | all 16 | shell | 100 to 123 |
+| After | 15 | page | 18 to 47 |
+| After | Review | page | 145 in the last full run; 53 to 145 across ten runs |
 
-| Row | On screen | ms |
-|---|---|---|
-| all 16 rows | shell | 100 to 123 |
-
-After:
-
-| Row | On screen | ms |
-|---|---|---|
-| Today, Ask, Curriculum, Speak, Speed, Words, Grammar, Progress, Milestones, Mistakes, Log | page | 16 to 56 |
-| Review | page | 132 (56 to 61 in three earlier runs) |
-| Read, Listen, Watch, Study | shell | 9 to 12 |
-
-At 4x CPU after the change: page in 94 to 362 ms, shell in 64 to 78 ms (no run of the old build at 4x CPU was kept). With the pointer resting only 40 ms before the click, eleven of the twelve pages were still up; Progress, the slowest to render, showed the shell first.
+At 4x CPU after the change: the page in 140 to 402 ms (no run of the old build at 4x CPU was kept). With the pointer resting only 40 ms before the click (measured when twelve pages were rendered ahead), eleven were still up and Progress, the slowest to render, showed the shell first.
 
 ## What was built
 
-1. **Render ahead on intent** (`components/instant-navigation.tsx`, `lib/render-ahead.ts`). One listener for the whole app: when the pointer comes over a link, a link takes focus, or a finger or mouse button goes down on one, and the link is to a page that can be rendered ahead, the router is asked for the whole page (`router.prefetch` with `kind: "full"`). The jump palette does the same for the row it has selected.
-2. **Which pages** (`rendersAhead` in `lib/nav.ts`). Twelve sidebar pages only read the learner's files. Four start work when they render, so they are left out and still show the skeleton: Read tops up the shelf with a model, Listen asks a model for close options, Watch refreshes the picks from YouTube, Study draws its schedule on the first view. A test reads each page file and fails if a page marked `rendersAhead` calls one of those.
-3. **Freshness.** Next.js keeps a full prefetch for `experimental.staleTimes.static` seconds and will not ask again sooner; the lowest value it takes is 30, and that is what `next.config.ts` sets (the default is 300). A page rendered less than 2 s before the click is shown as it is. One rendered 2 to 30 s before is shown at once and then refreshed (`router.refresh()`), so what stays on screen is current. Milestones, Mistakes and Speak kept their server data in state and would have ignored that refresh; they now follow it (`components/use-server-value.ts`).
+1. **Render ahead on intent** (`components/instant-navigation.tsx`, `lib/render-ahead.ts`). One listener for the whole app: when the pointer comes over a link, a link takes focus, or a finger or mouse button goes down on one, and the link is to a sidebar page, the router is asked for the whole page (`router.prefetch` with `kind: "full"`). The jump palette does the same for the row it has selected, and an end screen for the page it closes to.
+2. **Every sidebar page may be rendered ahead**, because none starts paid or network work when it renders. Three did and were changed: Read's shelf top-up and Watch's refresh of the picks now run when the screen is really open (the reader and the Watch shelf ask for them on mount), and Listen's close-meanings call is gone. A test reads each sidebar page file and fails if it calls one of those starters. Three renders still write a local file the first time: Today's data READMEs (once per server start), Mistakes' first snapshot, and Study's schedule, which is drawn from a fixed seed and start date. A pointer passing the link can now cause that first write.
+3. **Freshness.** Next.js keeps a full prefetch for `experimental.staleTimes.static` seconds and will not ask again sooner; the lowest value it takes is 30, and that is what `next.config.ts` sets (the default is 300). A page rendered less than 2 s before the click is shown as it is. One rendered 2 to 35 s before is shown at once and then refreshed (`router.refresh()`), so what stays on screen is current; the 5 s past 30 cover the gap between when a page was asked for and when it arrived. Milestones, Mistakes, Speak and Watch kept their server data in state and would have ignored that refresh; they follow it now, until the learner changes something on the page (`components/use-server-value.ts`).
 4. **Sidebar rows go on mouse-down**, as tabs do in a desktop app. Touch and the keyboard still go on the click.
+5. **A lesson does not wait on a model when it is opened from Today.** A unit's lesson is the same twelve reps until the unit is practiced or the day turns (`lessonSeed`), and Today asks the server to start writing the close meanings for the first lesson still to do (`GET /api/lesson?unit=…&warm`). Opening the lesson then finds them kept, or still being written, and in neither case waits.
+6. **Log and Words arrive with their first list**, read with the page as the other pages do; both still read again in the browser.
 
 ## What it costs
 
-- One server render per page per 30 s at most, when a pointer passes over its link. Nothing is rendered for a page whose render is not free.
-- A refresh after arriving on a page that was rendered 2 to 30 s earlier: one more render of that page, and the sidebar's links ask for their skeletons again (13 small requests that do not render a page; measured at 7.6 kB against 40 kB for the Progress page itself).
+- One server render per page per 30 s at most, when a pointer passes over its link.
+- A refresh after arriving on a page that was rendered 2 to 35 s earlier: one more render of that page, and the sidebar's links ask for their skeletons again (small requests that do not render a page; measured at 7.6 kB against 40 kB for the Progress page itself).
+- The close meanings for the next lesson are asked for when Today is shown, not when the lesson is opened: at most one cheap batch per unit, per finished lesson, per day, also on a day the lesson is not opened. They are kept by sentence, as before (E1).
+- A lesson left half way comes back with the same twelve reps that day.
 - A sidebar row can no longer be cancelled by dragging off it before letting go.
 
 ## Left open
 
 - **Dev mode**, above.
-- **Today's Start, a lesson, a chat.** A lesson's render may pay for close options and a chat page reads a whole record, so they are not rendered ahead. They still open through `loading.tsx`.
-- **Pages that fetch after they mount** (Log, Words, Review's first deck): the page frame is instant, its list arrives one request later (12 to 45 ms in [slow-tabs.md](slow-tabs.md)).
+- **A lesson opened from the Curriculum or a link** still goes through `loading.tsx`, and still waits up to 6 s the first time its sentences need close meanings.
+- **A chat page** reads a whole record and holds live state (a running turn), so it is not rendered ahead.
+- **Review's first deck** is fetched after the page mounts, because asking for it mints the day's new card.
+- **Saving waits for the server** before the screen changes: adding or removing a milestone, logging outside listening, deleting a chat, changing the goal, switching language. On this PC the calls a page makes take 12 to 45 ms ([slow-tabs.md](slow-tabs.md)); none was changed to show its result first.
+- **The guard test reads page files only.** A page that reaches a model through a helper with another name passes it.
 - **The PC and the packaged window** were not measured here.

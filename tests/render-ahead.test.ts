@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { NAV, rendersAhead } from "../lib/nav.ts";
-import { FRESH_FOR_MS, NEXT_REUSES_FOR_MS, createRenderAheadLog } from "../lib/render-ahead.ts";
+import { FRESH_FOR_MS, NEXT_MAY_STILL_HOLD_MS, NEXT_REUSES_FOR_MS, createRenderAheadLog } from "../lib/render-ahead.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -76,7 +76,17 @@ describe("the render-ahead log", () => {
 		const log = createRenderAheadLog(t.now);
 		assert.equal(log.arrive("/words"), "as-rendered");
 		log.shouldRender("/progress", "/");
-		t.pass(NEXT_REUSES_FOR_MS);
+		t.pass(NEXT_MAY_STILL_HOLD_MS);
 		assert.equal(log.arrive("/progress"), "as-rendered");
+	});
+
+	it("refreshes a page asked for again just past 30 s, which the router may still hold from the first time", () => {
+		const t = clock();
+		const log = createRenderAheadLog(t.now);
+		log.shouldRender("/progress", "/");
+		t.pass(NEXT_REUSES_FOR_MS + 20);
+		assert.equal(log.shouldRender("/progress", "/"), true);
+		t.pass(50);
+		assert.equal(log.arrive("/progress"), "refresh");
 	});
 });
