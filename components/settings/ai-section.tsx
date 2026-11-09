@@ -45,7 +45,7 @@ const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 };
 
 /** Search engines, as in src/core/search.ts. */
-const SEARCH_ENGINES = ["tavily", "brave"] as const;
+const SEARCH_ENGINES = ["context", "tavily", "brave"] as const;
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
 const TOGGLE_TOOLS = ["research", "visual", "pdf"] as const;
@@ -306,7 +306,7 @@ export function AiSection({
 			.then((body: { keys: { id: string; present: boolean }[] }) => {
 				const present: Partial<Record<(typeof SEARCH_ENGINES)[number], boolean>> = {};
 				for (const id of SEARCH_ENGINES) {
-					const envVar = id === "tavily" ? "TAVILY_API_KEY" : "BRAVE_API_KEY";
+					const envVar = id === "context" ? "CONTEXT_API_KEY" : id === "tavily" ? "TAVILY_API_KEY" : "BRAVE_API_KEY";
 					present[id] = body.keys.some((k) => k.id === envVar && k.present);
 				}
 				setEngineKeys(present);
@@ -642,7 +642,7 @@ export function AiSection({
 				))}
 				{(() => {
 					const engine = agent?.search?.engine ?? null;
-					const anyKey = engineKeys.tavily === true || engineKeys.brave === true;
+					const anyKey = engineKeys.context === true || engineKeys.tavily === true || engineKeys.brave === true;
 					const open = openMenu?.target === "search";
 					return (
 						<SettingsRow
@@ -653,7 +653,7 @@ export function AiSection({
 						>
 							<span ref={open ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
 								<MenuTrigger
-									value={engine === "tavily" ? "Tavily" : engine === "brave" ? "Brave" : ""}
+									value={engine === "context" ? "Context" : engine === "tavily" ? "Tavily" : engine === "brave" ? "Brave" : ""}
 									emptyLabel="Automatic"
 									ariaLabel="Search engine"
 									testid="search-engine-trigger"
@@ -674,7 +674,7 @@ export function AiSection({
 											setOpenMenu(null);
 										})}
 										{SEARCH_ENGINES.map((id) =>
-											engineOption(id, id === "tavily" ? "Tavily" : "Brave", engine === id, engineKeys[id] ?? false, () => {
+											engineOption(id, id === "context" ? "Context" : id === "tavily" ? "Tavily" : "Brave", engine === id, engineKeys[id] ?? false, () => {
 												onSectionChange(composeSearchEngine(agent, id));
 												setOpenMenu(null);
 											}),
