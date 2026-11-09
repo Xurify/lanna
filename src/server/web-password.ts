@@ -1,6 +1,6 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 
-/** OWASP's scrypt minimum: N = 2^17, r = 8, p = 1 (https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). */
+/** The minimum scrypt cost in OWASP's Password Storage Cheat Sheet: N = 2^17, r = 8, p = 1. */
 export const SCRYPT_DEFAULT = { N: 131_072, r: 8, p: 1, keyLength: 32, saltBytes: 16 } as const;
 
 export const PASSWORD_MIN_LENGTH = 12;
