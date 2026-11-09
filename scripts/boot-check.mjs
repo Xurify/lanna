@@ -65,6 +65,23 @@ function request(base, route, headers = {}) {
 	});
 }
 
+function post(base, route, headers, json) {
+	const url = new URL(route, base);
+	const payload = JSON.stringify(json);
+	return new Promise((resolve) => {
+		const req = http.request({ host: url.hostname, port: url.port, path: url.pathname, method: "POST", headers: { ...headers, "content-type": "application/json", "content-length": Buffer.byteLength(payload) } }, (res) => {
+			res.resume();
+			resolve({ status: res.statusCode ?? 0, location: res.headers.location ?? "", cookie: [res.headers["set-cookie"] ?? []].flat().join("; ") });
+		});
+		req.on("error", () => resolve({ status: 0, location: "", cookie: "" }));
+		req.setTimeout(10_000, () => {
+			req.destroy();
+			resolve({ status: 0, location: "", cookie: "" });
+		});
+		req.end(payload);
+	});
+}
+
 function firstRunRedirect(res) {
 	return res.status === 307 && new URL(res.location, "http://127.0.0.1").pathname === "/start";
 }
@@ -133,7 +150,7 @@ function checkImage(dir) {
 	}
 }
 
-async function runStartedServer() {
+async function runStartedServer({ label = "", extraEnv = {}, prepare = () => {}, probe = probeServer, isUp = (res) => res.status === 200 || firstRunRedirect(res) } = {}) {
 	const server = path.join(STANDALONE, "server.js");
 	if (!fs.existsSync(server)) {
 		console.error(`[boot-check] ${server} is missing; run next build and scripts/build-server.mjs first.`);
@@ -142,22 +159,23 @@ async function runStartedServer() {
 	const port = await freePort();
 	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-boot-"));
 	fs.writeFileSync(path.join(home, "auth.json"), "{}\n");
+	const env = {
+		PATH: process.env.PATH,
+		HOME: home,
+		NODE_ENV: "production",
+		NEXT_TELEMETRY_DISABLED: "1",
+		HOSTNAME: "127.0.0.1",
+		LH_DATA_DIR: path.join(home, "data"),
+		LH_AUTH_FILE: path.join(home, "auth.json"),
+		LH_REPO_CHEATSHEETS_DIR: path.join(home, "sheets"),
+		LH_IGNORE_ENV_KEYS: "1",
+		...(process.env.CHROME_PATH ? { CHROME_PATH: process.env.CHROME_PATH } : {}),
+	};
+	prepare({ home, env });
 	const tail = [];
 	const child = spawn(process.execPath, [server], {
 		cwd: STANDALONE,
-		env: {
-			PATH: process.env.PATH,
-			HOME: home,
-			NODE_ENV: "production",
-			NEXT_TELEMETRY_DISABLED: "1",
-			PORT: String(port),
-			HOSTNAME: "127.0.0.1",
-			LH_DATA_DIR: path.join(home, "data"),
-			LH_AUTH_FILE: path.join(home, "auth.json"),
-			LH_REPO_CHEATSHEETS_DIR: path.join(home, "sheets"),
-			LH_IGNORE_ENV_KEYS: "1",
-			...(process.env.CHROME_PATH ? { CHROME_PATH: process.env.CHROME_PATH } : {}),
-		},
+		env: { ...env, ...extraEnv, PORT: String(port) },
 		stdio: ["ignore", "pipe", "pipe"],
 	});
 	let exited = false;
@@ -174,14 +192,14 @@ async function runStartedServer() {
 		let up = false;
 		while (Date.now() < deadline && !exited) {
 			const res = await request(base, "/");
-			if (res.status === 200 || firstRunRedirect(res)) {
+			if (isUp(res)) {
 				up = true;
 				break;
 			}
 			await new Promise((resolve) => setTimeout(resolve, 500));
 		}
-		check("the server boots", up, up ? base : exited ? "it exited early" : "no answer in 60 s");
-		if (up) await probeServer(base);
+		check(`the server boots${label}`, up, up ? base : exited ? "it exited early" : "no answer in 60 s");
+		if (up) await probe(base, extraEnv);
 		const wroteHere = fs.existsSync(path.join(STANDALONE, "data"));
 		check("it wrote no data folder next to server.js", !wroteHere);
 	} finally {
@@ -203,10 +221,69 @@ async function runStartedServer() {
 	}
 }
 
+const PASSWORD = "boot-check-password-0123";
+const SECRET = "b".repeat(48);
+const CLI = path.join(STANDALONE, "cli", "web-password.mjs");
+
+function setPassword({ home, env }) {
+	const file = path.join(home, "password.txt");
+	fs.writeFileSync(file, `${PASSWORD}\n`, { mode: 0o600 });
+	execFileSync(process.execPath, [CLI], { env: { ...env, LH_WEB_PASSWORD_FILE: file }, stdio: "ignore", timeout: 60_000 });
+	fs.rmSync(file, { force: true });
+}
+
+async function probePublicMode(base) {
+	const proxied = { host: PUBLIC_NAME, "x-forwarded-host": PUBLIC_NAME, "x-forwarded-proto": "https", "x-lh-proxy-secret": SECRET };
+	const noSecret = { host: PUBLIC_NAME, "x-forwarded-host": PUBLIC_NAME, "x-forwarded-proto": "https" };
+	const wrongSecret = { ...proxied, "x-lh-proxy-secret": "c".repeat(48) };
+	const notHttps = { ...proxied, "x-forwarded-proto": "http" };
+	const refusals = [
+		["a loopback Host, as nginx sends by default", "/api/settings", {}],
+		["a loopback Host with X-Real-IP", "/api/settings", { "x-real-ip": OUTSIDE_ADDRESS }],
+		["the public name without the proxy secret", "/api/settings", noSecret],
+		["the public name with a wrong proxy secret", "/api/settings", wrongSecret],
+		["the public name over plain HTTP", "/api/settings", notHttps],
+		["the pairing page", "/pair", proxied],
+	];
+	for (const [label, route, headers] of refusals) {
+		const res = await request(base, route, headers);
+		check(`public mode, not served: ${label}`, res.status !== 200 && turnedAway(res), `${res.status} ${res.location}`);
+	}
+	const page = await request(base, "/", proxied);
+	check("public mode: a page without a session goes to /login", page.status >= 300 && page.status < 400 && new URL(page.location, "https://x").pathname === "/login", `${page.status} ${page.location}`);
+	const api = await request(base, "/api/settings", proxied);
+	check("public mode: the API without a session answers 401", api.status === 401, String(api.status));
+	const login = await request(base, "/login", proxied);
+	check("public mode: /login is served", login.status === 200, String(login.status));
+
+	const origin = { origin: `https://${PUBLIC_NAME}` };
+	const wrong = await post(base, "/api/access/login", { ...proxied, ...origin }, { password: "not the password" });
+	check("public mode: a wrong password answers 401", wrong.status === 401, String(wrong.status));
+	const right = await post(base, "/api/access/login", { ...proxied, ...origin }, { password: PASSWORD });
+	check("public mode: the right password signs in", right.status === 200, String(right.status));
+	check("public mode: the session cookie is HttpOnly and Secure", /lh_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie));
+	const cookie = right.cookie.match(/lh_device=[^;]+/)?.[0] ?? "";
+	const inside = await request(base, "/api/settings", { ...proxied, cookie });
+	check("public mode: the API answers with the session", inside.status === 200, String(inside.status));
+	const foreign = await post(base, "/api/settings/agent", { ...proxied, cookie, origin: "https://evil.example" }, {});
+	check("public mode: a change from another origin is refused", foreign.status === 403, String(foreign.status));
+}
+
+async function runPublicMode() {
+	if (!fs.existsSync(CLI)) {
+		console.log(`[boot-check] skip public mode: ${CLI} is not built (the image has it).`);
+		return;
+	}
+	await runStartedServer({ label: " in public mode", extraEnv: { LH_PUBLIC_HOST: PUBLIC_NAME, LH_PROXY_SECRET: SECRET }, prepare: setPassword, probe: probePublicMode, isUp: (res) => res.status === 403 });
+}
+
 if (flag("--image-checks")) checkImage(STANDALONE);
 const target = option("--url");
 if (target) await probeServer(target.replace(/\/$/, ""));
-else await runStartedServer();
+else {
+	await runStartedServer();
+	await runPublicMode();
+}
 
 if (failures.length > 0) {
 	console.error(`[boot-check] FAILED: ${failures.length} check(s): ${failures.join("; ")}`);

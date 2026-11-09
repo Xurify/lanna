@@ -18,6 +18,8 @@ services:
       HOSTNAME: 0.0.0.0
       TZ: ${TZ:-UTC}
       LH_UPDATE_YTDLP: ${LH_UPDATE_YTDLP:-0}
+      LH_PUBLIC_HOST: ${LH_PUBLIC_HOST:-}
+      LH_PROXY_SECRET: ${LH_PROXY_SECRET:-}
     volumes:
       - ${LH_HOME:?set LH_HOME in .env to the folder that holds data/, keys/ and sheets/}/data:/data
       - ${LH_HOME}/keys:/keys
