@@ -1,5 +1,5 @@
 import { BODY_LIMITS, bodyTooLarge, compactionInFlight, createChat, isTurnRunning, listChats, readSettingsRecord, stores, titleFromPrompt } from "@/src/server";
-import type { ChatListItem } from "@/src/core";
+import { CHAT_THINKING_LEVEL, type ChatListItem } from "@/src/core";
 
 /** The session picker's list: record-derived summaries (phase, pending
  *  question) + live liveness — a running turn marks the session busy
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 	const title = typeof body.title === "string" ? body.title : "";
 	// Practice sessions (owner, 2026-10-04): kind "practice" marks the
 	// record — the practice agent + its tools from turn 1, no extraction.
-	const kind = body.kind === "practice" ? ("practice" as const) : undefined;
+	const kind = body.kind === "practice" || body.kind === "chat" ? body.kind : undefined;
 	const chat = createChat(titleFromPrompt(title || "Untitled session"), kind);
 	if (typeof body.tutorUnit === "string" && body.tutorUnit) stores.chatStore.setTutorUnit(chat.id, body.tutorUnit.slice(0, 64));
 	// PER-SESSION MODELS (owner, 2026-09-28): a session owns its model +
@@ -40,11 +40,11 @@ export async function POST(req: Request) {
 	// that grade work. Learn-a-topic (prober + teacher) keeps the strong
 	// slot. No cheap slot configured → strong, as before.
 	const models = readSettingsRecord()?.models;
-	const slot = (kind === "practice" && models?.cheap?.model ? models.cheap : models?.strong) ?? null;
+	const slot = (kind === "practice" && models?.cheap?.model ? models.cheap : models?.strong ?? (kind === "chat" ? models?.cheap : undefined)) ?? null;
 	if (slot?.model) {
 		stores.chatStore.saveSettings(chat.id, {
 			model: { provider: slot.model.provider, id: slot.model.id },
-			thinkingLevel: slot.thinkingLevel,
+			thinkingLevel: kind === "chat" ? CHAT_THINKING_LEVEL : slot.thinkingLevel,
 		});
 	}
 	return Response.json({ id: chat.id, title: chat.title });

@@ -20,6 +20,13 @@ import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-e
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
+import { ChatReplies } from "@/components/chat-replies";
+import { CHAT_RECORD_TOOLS, learnerLines, messageText, questionOpen, repeatsEarlierText } from "@/src/core";
+import { HeldLine, LearnerLineView, TutorWriting } from "@/components/chat-voice";
+import { chatMdComponents } from "@/components/chat-link";
+import { SketchFigure } from "@/components/sketch-figure";
+import { ChatBoard, useDrill } from "@/components/chat-board";
+import { ChatExportMenu } from "@/components/chat-export";
 import { Separator } from "@/components/ui/separator";
 import { AnsweredCard } from "@/components/answered-card";
 import { artifactRenderers } from "@/components/artifacts";
@@ -173,6 +180,12 @@ function isSubagentSteer(m: LhViewMessage): boolean {
 	return (m.metadata as { subagentResult?: unknown } | undefined)?.subagentResult != null;
 }
 
+function lastReplyText(messages: readonly LhViewMessage[]): string {
+	const last = messages.at(-1);
+	if (!last || last.role !== "assistant") return "";
+	return last.parts.flatMap((part, i) => (part.type === "text" && !repeatsEarlierText(last.parts, i) ? [part.text] : [])).join("\n\n");
+}
+
 /**
  * The teaching session. All chat state lives in useChat; the server persists
  * the canonical transcript after every turn.
@@ -201,7 +214,7 @@ export function Chat({
 	/** The session kind (practice sessions, owner 2026-10-04): practice
 	 *  renders no phase chip (no probe→teach arc applies) and a Practice
 	 *  tag rides the header instead. */
-	kind?: "teach" | "practice";
+	kind?: "teach" | "practice" | "chat";
 	initialPrompt?: string;
 	/** A teacher turn is running server-side but attached to no client
 	 * (navigated away mid-turn, returned while in flight). */
@@ -324,6 +337,12 @@ export function Chat({
 		return () => window.removeEventListener("lh:chat-renamed", onRenamed);
 	}, [chatId]);
 
+	// A chat turn ends right after its record calls, so a steer would wait for the next run; the chat
+	// holds what the learner sends during a turn and sends it the moment the turn is over.
+	const applyTextRef = useRef<(v: string) => void>(() => {});
+	const heldAnswerRef = useRef<string | null>(null);
+	const [heldAnswer, setHeldAnswer] = useState<string | null>(null);
+
 	// The Esc chain's last link: abort the turn. The background runner
 	// decoupled turns from views, so the abort is ALWAYS the remote kill
 	// (POST /api/activity/abort — any in-flight turn dies server-side, our
@@ -332,6 +351,11 @@ export function Chat({
 	// and keeps the partial; the server-side partial persists via the
 	// abort's own onFinish. Inert when nothing runs (busyRef gate).
 	const abortInFlightTurn = useCallback(() => {
+		if (heldAnswerRef.current !== null) {
+			applyTextRef.current(heldAnswerRef.current);
+			heldAnswerRef.current = null;
+			setHeldAnswer(null);
+		}
 		if (localStreamRef.current) stop();
 		void fetch("/api/activity/abort", {
 			method: "POST",
@@ -341,7 +365,7 @@ export function Chat({
 			/* transient — the turn settles on its own; the record poll adopts */
 		});
 		// 409 not_running is the benign raced-settle: the stream's finish
-			// already settled the view (or the poll fallback adopts) — nothing owed.
+		// already settled the view (or the poll fallback adopts) — nothing owed.
 	}, [chatId, stop]);
 	// ESC-abort guard (owner, 2026-10-02): the abort chain opens a confirm
 	// popup EVERYWHERE (streams and pending questions alike). Both window
@@ -531,6 +555,19 @@ export function Chat({
 	// color-coded dotted divider at each boundary; the header chip reads the
 	// session's current phase.
 	const phases = useMemo(() => phaseTimeline(messages), [messages]);
+	const lines = useMemo(() => (kind === "chat" ? learnerLines(messages) : null), [kind, messages]);
+	const currentLine = useMemo(() => (lines ? Math.max(-1, ...lines.keys()) : -1), [lines]);
+	const [pageTitle, setPageTitle] = useState<HTMLHeadingElement | null>(null);
+	const [pageTitleInView, setPageTitleInView] = useState(false);
+	useEffect(() => {
+		if (!pageTitle) {
+			setPageTitleInView(false);
+			return;
+		}
+		const observer = new IntersectionObserver(([entry]) => setPageTitleInView(entry?.isIntersecting ?? false));
+		observer.observe(pageTitle);
+		return () => observer.disconnect();
+	}, [pageTitle]);
 
 	const [text, setText] = useState("");
 	/* The composer's value MIRROR ("nothing gets lost" round, owner
@@ -542,6 +579,7 @@ export function Chat({
 		textRef.current = v;
 		setText(v);
 	}, []);
+	applyTextRef.current = applyText;
 	// The BYOK setup flow (owner, 2026-09-22): the persistent CTA and the
 	// refusal interception share one SetupDialog mount. `configured` is
 	// seeded server-side (slotsConfigured on the record) and flips on Save.
@@ -1124,6 +1162,11 @@ export function Chat({
 		}
 		void dictation.finish().then(doSteerOrSend);
 	};
+	const drillState = useDrill(messages, titleText);
+	const sendQuickReply = (reply: string) => {
+		if (busy || pending || compacting) return;
+		void send({ type: "text", text: reply });
+	};
 	const doSend = () => {
 		if (busy || pending || compacting) return;
 		const t = textRef.current.trim();
@@ -1132,6 +1175,21 @@ export function Chat({
 		applyText("");
 		void send({ type: "text", text: t });
 	};
+
+	useEffect(() => {
+		if (busy || pending || compacting || heldAnswer === null) return;
+		if (error) {
+			applyText(heldAnswer);
+			heldAnswerRef.current = null;
+			setHeldAnswer(null);
+			return;
+		}
+		const answer = heldAnswer;
+		draftRef.current = answer;
+		heldAnswerRef.current = null;
+		setHeldAnswer(null);
+		send({ type: "text", text: answer });
+	}, [busy, pending, compacting, error, heldAnswer, send, applyText]);
 
 	/* STEER VS SEND (owner arc 2026-10-03): a send while a turn runs steers
 	 * it — the quiet queue + the live agent's steering rail; the turn's own
@@ -1146,6 +1204,15 @@ export function Chat({
 		if (pending || compacting) return;
 		const t = textRef.current.trim();
 		if (!t) return;
+		if (busy && kind === "chat") {
+			applyText("");
+			setHeldAnswer((held) => {
+				const next = held ? `${held}\n${t}` : t;
+				heldAnswerRef.current = next;
+				return next;
+			});
+			return;
+		}
 		if (busy) {
 			applyText("");
 			void steer(t);
@@ -1188,6 +1255,7 @@ export function Chat({
 				    LH wordmark band, so the header's border-b continues that
 				    band's bottom edge as one line across the app (owner, round 6). */}
 				<TopBar
+					bare={kind === "chat"}
 					// While renaming the bar is NOT a drag surface: app-region:drag
 					// would eat the mousedown, so click-to-escape (below) could
 					// never fire. Rename mode is interactive mode (owner ask) —
@@ -1241,7 +1309,9 @@ export function Chat({
 								setTitleDraft(titleText);
 								setRenaming(true);
 							}}
-							className="lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left font-title text-2xl font-semibold tracking-tight transition-colors hover:bg-accent"
+							className={cn("lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent", kind === "chat" ? "font-ui text-sm font-medium text-muted-foreground transition-opacity" : "font-title text-2xl font-semibold tracking-tight", kind === "chat" && pageTitleInView && "pointer-events-none opacity-0")}
+							aria-hidden={kind === "chat" && pageTitleInView ? true : undefined}
+							tabIndex={kind === "chat" && pageTitleInView ? -1 : undefined}
 						>
 							{titleText}
 							</button>
@@ -1272,7 +1342,7 @@ export function Chat({
 					)}
 					{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
 					    tool calls are hidden by default; this chip brings them back. */}
-					<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+					{kind !== "chat" && <Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
 						<button
 							type="button"
 							data-testid="show-working"
@@ -1289,10 +1359,19 @@ export function Chat({
 							<CogIcon className="size-3.5" aria-hidden />
 							{showWorking ? "Hide working" : "Show working"}
 						</button>
-					</Hint>
+					</Hint>}
+					{messages.length > 0 && (
+						<ChatExportMenu
+							chatId={chatId}
+							title={titleText}
+							messages={messages}
+							nativeMessages={nativeMessages}
+							plain={kind === "chat"}
+						/>
+					)}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
-					{kind === "practice" ? (
+					{kind === "chat" ? null : kind === "practice" ? (
 						<span
 							data-testid="phase-chip"
 							data-phase="practice"
@@ -1310,12 +1389,12 @@ export function Chat({
 				<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
 				<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
 				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
-					<ConversationContent className="min-h-full gap-0 p-0">
-						<div data-session-find-root="" className={`${COLUMN} flex flex-1 flex-col gap-4 pt-4`}>
+					<ConversationContent className="min-h-full gap-0 p-0" scrollClassName={kind === "chat" ? "lh-fade-out" : undefined}>
+						<div data-session-find-root="" className={cn(COLUMN, "flex flex-1 flex-col gap-4 pt-4", kind === "chat" && "max-w-[42rem] gap-5 pt-10")}>
 							{messages.length === 0 && !busy && (
 								<ConversationEmptyState
 									title="New chat"
-									description={kind === "practice" ? "Your tutor starts with a first problem." : "Your tutor starts with a few quick questions to see what you know."}
+									description={kind === "practice" ? "Your tutor starts with a first problem." : kind === "chat" ? "Ask anything about the language." : "Your tutor starts with a few quick questions to see what you know."}
 								/>
 							)}
 
@@ -1399,7 +1478,9 @@ export function Chat({
 									teachStepIndex(m.parts) === -1 ? (
 										<PhaseDivider key={`teach-${m.id || `m-${mi}`}`} phase="teach" />
 									) : null}
-									{m.role === "user" ? (
+									{m.role === "user" && lines?.get(mi) ? (
+										<LearnerLineView line={lines.get(mi)!} text={messageText(m)} recede={busy && mi < currentLine} titleRef={lines.get(mi)!.kind === "title" ? setPageTitle : undefined} />
+									) : m.role === "user" ? (
 										/* THE DOCUMENT ROW (owner round, 2026-10-05): no right-aligned
 										    bubble — the transcript reads as a document. User text is a
 										    full-width quote block: muted "You" label, muted rail,
@@ -1418,18 +1499,18 @@ export function Chat({
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className="my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
+										className={kind === "chat" ? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
 									>
 												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
 												<div className="sr-only">You</div>
-												<div className="lh-prose whitespace-pre-wrap text-foreground">
+												<div className={kind === "chat" ? "whitespace-pre-wrap" : "lh-prose whitespace-pre-wrap text-foreground"}>
 													{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className="max-w-full">
+									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice", kind === "chat" && localStream && mi === messages.length - 1 && "lh-writing", kind === "chat" && busy && mi < currentLine && "lh-recede")}>
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -1452,7 +1533,8 @@ export function Chat({
 												if (
 													part.state === "output-error" &&
 													part.type.startsWith("tool-") &&
-													part.errorText !== "Operation aborted"
+													part.errorText !== "Operation aborted" &&
+													!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
 												) {
 													return (
 														<SystemLine key={`retry-${pi}`} testId="tool-retry">
@@ -1462,15 +1544,17 @@ export function Chat({
 												}
 												switch (part.type) {
 													case "text": {
+														if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 														return (
 															<div key={part.id || pi} className="lh-source-passage">
-																<MessageResponse>{part.text}</MessageResponse>
+																<MessageResponse {...(kind === "chat" ? { components: chatMdComponents } : {})}>{part.text}</MessageResponse>
 															</div>
 														);
 													}
 													case "reasoning":
 														// Hidden unless "Show working" is on — except the live
 														// row while this turn streams, which is the activity signal.
+														if (kind === "chat") return status === "streaming" && isLastPart ? <TutorWriting key={pi} /> : null;
 														if (!showWorking && !(status === "streaming" && isLastPart)) return null;
 														return (
 															<Reasoning key={pi} isStreaming={status === "streaming" && isLastPart} className="mb-2">
@@ -1481,7 +1565,7 @@ export function Chat({
 													case "step-start":
 														if (teachBoundary)
 															return <PhaseDivider key={`teach-step-${pi}`} phase="teach" />;
-														return pi > 0 ? <Separator key={pi} className="my-3" /> : null;
+														return pi > 0 && kind !== "chat" ? <Separator key={pi} className="my-3" /> : null;
 													case "data-plan-block":
 														// The plan in the chat (wave 4): a frozen snapshot
 														// block — rendered as carried, never re-derived.
@@ -1492,6 +1576,11 @@ export function Chat({
 																onOpen={() => setPlanOpen(true)}
 															/>
 														);
+													case "tool-draw": {
+														const drawn = part.state === "output-available" ? (part.output as { svg?: string } | null)?.svg : undefined;
+														if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
+														return part.state !== "output-available" && part.state !== "output-error" && busy ? <SketchFigure key={pi} source="" incomplete /> : null;
+													}
 													case "tool-quiz":
 													case "tool-probe":
 													case "tool-ask_user_question":
@@ -1513,6 +1602,7 @@ export function Chat({
 														// — replaces the retired transcript bottom line. On settling, the
 														// registry's card takes over below.
 														if (part.type.startsWith("tool-") && part.state === "input-streaming") {
+															if (kind === "chat") return null;
 															return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
 														}
 														// Artifact extension point (contracts.ts): job
@@ -1553,13 +1643,16 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
+							{kind === "chat" && heldAnswer !== null && <HeldLine text={heldAnswer} />}
+							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Summarizing the chat so far" />
 									<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
 								</span>
 							)}
-							{(status === "submitted" || turnInFlight) && (
+							{(status === "submitted" || turnInFlight) && kind === "chat" && <TutorWriting />}
+							{(status === "submitted" || turnInFlight) && kind !== "chat" && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Thinking" />
 									<Shimmer duration={1}>
@@ -1588,6 +1681,7 @@ export function Chat({
 				    height morph (typing, a question growing the band, the
 				    fold) and NEVER overlaps the composer. */}
 				<DockOverlay
+					plain={kind === "chat"}
 					pending={pending}
 					initialQuestionDraft={pending ? questionDraft(pending.toolCallId)?.form : undefined}
 					onSaveQuestionDraft={(form) => { if (pending) saveQuestionDraft(pending.toolCallId, { form }); }}
@@ -1647,7 +1741,15 @@ export function Chat({
 							// applies.
 							nextProblem={nextReady}
 							onNext={sendNext}
-							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : undefined}
+							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : kind === "chat" ? (busy ? "Write ahead while the tutor writes" : questionOpen(messages) ? "Write your answer" : "Ask something else") : undefined}
+							toolbar={
+								kind === "chat" ? (
+									<>
+										<DictationBar dictation={dictation} compact />
+										<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
+									</>
+								) : undefined
+							}
 						/>
 					}
 					onSubmitAnswer={(output) => {
@@ -1668,6 +1770,7 @@ export function Chat({
 					}}
 				/>
 				</Conversation>
+				{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
 
 				{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,
@@ -1842,7 +1945,9 @@ function DockOverlay({
 	dictationCancel,
 	setupCta,
 	queuedSteers,
+	plain = false,
 }: {
+	plain?: boolean;
 	pending: ReturnType<typeof findPendingToolCall>;
 	initialQuestionDraft?: QuestionFormDraft;
 	onSaveQuestionDraft: (draft: QuestionFormDraft) => void;
@@ -2267,8 +2372,8 @@ function DockOverlay({
 	return (
 		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: sbInset }}>
 			<div className="h-24" />
-			<div ref={blockRef} className="relative bg-background pb-5 shadow-[0_-1px_0_var(--q-line)]" style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
-				<div className={DOCK}>
+			<div ref={blockRef} className={cn("relative pb-5", plain ? "pt-1" : "bg-background shadow-[0_-1px_0_var(--q-line)]")} style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
+				<div className={cn(DOCK, plain && "max-w-[42rem]")}>
 					{setupCta}
 					{/* The queued-steer indicator (owner spec 2026-10-03): quiet
 					    one-liners above the shell - right-aligned to where its corner
@@ -2298,8 +2403,8 @@ function DockOverlay({
 					)}
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
-					<DiacriticBar />
-					<div ref={shellRef} className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
+					{!plain && <DiacriticBar />}
+					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-[20px] bg-card shadow-raise-hi outline-1 outline-transparent transition-[outline-color] focus-within:outline-ink-4" : "rounded-xl bg-card shadow-raise-hi")}>
 						<div
 						ref={contentRef}
 						key={mode}
@@ -2342,13 +2447,7 @@ function DockOverlay({
 					{/* The stats row: beneath the composer/question shell, not
 					    flush to the screen bottom — static height, outside the
 					    morphing shell so it never joins a height animation. */}
-					<StatsBar
-						turns={turns}
-						contextTokens={contextTokens}
-						pricing={pricing}
-						dictationSlot={dictationSlot}
-						chatId={chatId}
-					/>
+					{!plain && <StatsBar turns={turns} contextTokens={contextTokens} pricing={pricing} dictationSlot={dictationSlot} chatId={chatId} />}
 					{/* The scroll-down disc (moved here from the Conversation,
 					    owner refinement round 2026-09-24): anchored to the BLOCK's
 					    top edge — above the composer shell AND the stats row, in

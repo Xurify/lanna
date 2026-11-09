@@ -1,6 +1,6 @@
 # Web security review: what changes when the app has a public address
 
-Date: 2026-11-09. Decision: [E78 in DECISIONS.md](../DECISIONS.md). Context: [plans/always-on-server.md](../plans/always-on-server.md), route W (the app at its own address behind a sign-in).
+Date: 2026-11-09. Decision: [E88 in DECISIONS.md](../DECISIONS.md). Context: [plans/always-on-server.md](../plans/always-on-server.md), route W (the app at its own address behind a sign-in).
 
 ## Question
 

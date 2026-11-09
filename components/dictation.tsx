@@ -614,7 +614,7 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
  *   error     the wide button again, label swapped for the failure reason
  *             (full text in the tooltip), cleared on the next click.
  */
-export function DictationBar({ dictation }: { dictation: Dictation }) {
+export function DictationBar({ dictation, compact = false }: { dictation: Dictation; compact?: boolean }) {
 	const { phase, error, levelRef, toggle, active, clearError } = dictation;
 	const { open: openSettings } = useSettingsDialog();
 	/** The keyless click (zero-keys wave, owner dictation trio): the errored
@@ -688,10 +688,14 @@ export function DictationBar({ dictation }: { dictation: Dictation }) {
 					data-testid="dictation-toggle"
 				// Same blurring as the floating chrome (owner, fix wave round 3),
 			// but lower opacity — the mic stays quieter than the model pills.
-			className="flex h-7 w-auto items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card px-3 text-xs text-muted-foreground shadow-raise transition-colors hover:border-border hover:text-foreground"
+			className={
+				compact
+					? "flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-well hover:text-foreground"
+					: "flex h-7 w-auto items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card px-3 text-xs text-muted-foreground shadow-raise transition-colors hover:border-border hover:text-foreground"
+			}
 			>
-					<MicIcon className="size-3.5" />
-					<span className="max-w-full truncate">{error ?? "Dictate"}</span>
+					<MicIcon className={compact ? "size-4" : "size-3.5"} />
+					{(!compact || error) && <span className="max-w-full truncate">{error ?? "Dictate"}</span>}
 				</button>
 			</Hint>
 		);

@@ -14,7 +14,7 @@ import path from "node:path";
 import { activeProfile, PATHS, shownProfiles, withProfile } from "../../config.ts";
 import { curriculumState, STAGES, type UnitEvidence } from "../core/curriculum.ts";
 import type { FirstTryStats } from "../core/first-try.ts";
-import { LEARNER_FIELDS, learnerProfileText, withLearnerFields, type LearnerFields, type LearnerGoal, type StudiedLanguage } from "../core/onboarding.ts";
+import { LEARNER_FIELDS, learnerProfileText, measuredWeakPoints, withLearnerFields, type LearnerFields, type LearnerGoal, type StudiedLanguage } from "../core/onboarding.ts";
 import { activeLanguage, profileLanguage } from "./profile-language.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
@@ -80,6 +80,16 @@ function otherStudied(): StudiedLanguage[] {
 /** The profile block, or null when nothing is known yet (a fresh profile
  *  with no goal and no lesson evidence). Read fresh on every call: the
  *  prompt composes per turn, and a lesson between turns changes it. */
+export function weakestTopics(limit = 3): Array<{ title: string; accuracy: number }> {
+	const record = readProgress();
+	if (!record) return [];
+	const units = record.units ?? {};
+	const goal = withShared(record.goal);
+	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
+	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
+	return measuredWeakPoints(state, tries).slice(0, limit).map(({ title, accuracy }) => ({ title, accuracy }));
+}
+
 export function learnerProfileSegment(): string | null {
 	const record = readProgress();
 	if (!record) return null;

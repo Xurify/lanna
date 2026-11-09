@@ -25,6 +25,8 @@ import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, Sea
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { endEnterBlocked, EnterHint, NotSaved, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
@@ -33,6 +35,7 @@ import { Word } from "@/components/reading/word";
 import { genreInfo, gradeAnswers, readXp, type ReadingState, type StoryRecord, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 /** What a sentence is read with: the speaker's voice for a line of
  *  dialogue, the narrator's for the rest (stories written before voices
  *  were assigned have neither and get the default). */
@@ -60,6 +63,7 @@ interface Outcome {
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
 
 export function Reader({ initial, initialStory, startOnShelf = false }: { initial: ReadingState | null; initialStory?: StoryRecord | null; startOnShelf?: boolean }) {
+	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [state, setState] = useState<ReadingState | null>(initial);
 	const [story, setStory] = useState<StoryRecord | null>(initialStory ?? initial?.current ?? null);
@@ -72,6 +76,9 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const [saveRefused, setSaveRefused] = useState(false);
+	const lastSave = useRef<PendingSession | null>(null);
 	const startedAt = useRef(Date.now());
 	// Reading is mostly not clicking: the day's minutes count the time this
 	// tab is visible and focused while an episode is being read or its
@@ -139,26 +146,51 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		async (all: number[]) => {
 			if (!story || saving) return;
 			setSaving(true);
+			setSaveFailed(false);
+			setSaveRefused(false);
 			setStage("end");
 			sfx.done();
 			try {
-				const res = await fetch("/api/read", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
-				});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				setOutcome((await res.json()) as Outcome);
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", { action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
-			} catch {
+			} catch (err) {
+				setSaveFailed(true);
+				setSaveRefused(err instanceof RefusedError);
 				const g = gradeAnswers(story.questions, all);
 				setOutcome({ xp: readXp(story.sentences.length, g.correct, false), ...g, queued: [], reread: false });
 			} finally {
 				setSaving(false);
 			}
 		},
-		[story, saving, tapped, load, activeTime],
+		[story, saving, tapped, load, activeTime, lang],
 	);
+
+	const retrySave = async () => {
+		if (!lastSave.current || saving) return;
+		setSaving(true);
+		try {
+			setOutcome(await sendSession<Outcome>(lastSave.current));
+			setSaveFailed(false);
+			setSaveRefused(false);
+			void load();
+		} catch (err) {
+			setSaveFailed(true);
+			setSaveRefused(err instanceof RefusedError);
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	useEffect(() => {
+		const session = lastSave.current;
+		if (!saveFailed || saveRefused || !session) return;
+		return onSessionSaved(session.id, (saved) => {
+			setOutcome(saved as Outcome);
+			setSaveFailed(false);
+			void load();
+		});
+	}, [saveFailed, saveRefused, load]);
 
 	// Escape leaves, like a lesson — unless a word popover is open, which
 	// it closes first.
@@ -228,7 +260,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} outcome={outcome} saving={saving} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End story={story} tapped={tapped} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
 			</Frame>
 		);
 	}
@@ -593,7 +625,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+function End({ failed, refused, onRetrySave, story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; outcome: Outcome | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
 	const lang = useActiveLanguage();
 	const looked = useMemo(() => {
 		const seen = new Set<string>();
@@ -608,99 +640,97 @@ function End({ story, tapped, outcome, saving, onAgain, onNext, onShelf, canWrit
 	}, [story, tapped]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Enter" && outcome) {
+			if (e.key === "Enter" && outcome && !endEnterBlocked(e)) {
 				e.preventDefault();
-				onShelf();
+				if (unreadLeft) onNext();
+				else onShelf();
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [outcome, onShelf]);
+	}, [outcome, onShelf, onNext, unreadLeft]);
 	const total = outcome?.total ?? story.questions.length;
 	return (
-		<div className="m-auto w-full max-w-xl px-5 text-center" data-testid="read-end">
-			<div className="lh-pop mx-auto flex size-24 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-				<BookOpenIcon className="size-12" />
-			</div>
-			<h1 className="mt-5 font-ui text-4xl font-[600] text-foreground">{outcome?.reread ? "Read again!" : "Episode read!"}</h1>
-			<p className="mt-2 font-prose text-lg text-muted-foreground" lang={lang?.code}>
+		<TaskEnd
+			testId="read-end"
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>{unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
+			actions={
+				<>
+					<Link href="/" className={SECONDARY}>
+						Today
+					</Link>
+					<button type="button" onClick={onAgain} className={SECONDARY}>
+						Read again
+					</button>
+					{unreadLeft ? (
+						<button type="button" onClick={onNext} className={PRIMARY}>
+							Next story
+						</button>
+					) : (
+						<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
+							Open the library
+						</button>
+					)}
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="read" className="text-teal" />
+				Read · done
+			</p>
+			<h1 className="q-hello">{outcome?.reread ? "Episode read again!" : "Episode read!"}</h1>
+			<p className="q-line dim mt-2" lang={lang?.code}>
 				{story.title}
 			</p>
-			<div className="mt-8 grid grid-cols-3 gap-3">
-				<Stat label="XP" value={saving || !outcome ? "…" : `+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct}/${total}` : "—") : "…"} ink="text-teal-2" />
-				<Stat label="Words" value={String(story.wordCount)} ink="text-teal-2" />
-			</div>
+			<Stats className="mt-7 max-w-none">
+				<Stat label="XP" value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
+				<Stat label="Words" value={String(story.wordCount)} />
+			</Stats>
 			{outcome && (
-				<p className="mt-4 font-prose text-sm text-muted-foreground">
-					{outcome.queued.length > 0 ? `${outcome.queued.length} new word${outcome.queued.length === 1 ? "" : "s"} added to your review deck. ` : ""}
+				<p className="mt-3 font-prose text-[13px] text-ink-3">
+					{outcome.queued.length > 0 ? `${outcome.queued.length} new word${outcome.queued.length === 1 ? "" : "s"} added to Review. ` : ""}
 					The app counts {Math.round(story.coverage * 100)}% of this episode's words as known. That is its estimate, not a measure of what you understood.
 				</p>
 			)}
 			{(story.newWords.length > 0 || looked.length > 0) && (
-				<div className="mt-6 grid gap-3 text-left sm:grid-cols-2">
+				<div className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2">
 					{story.newWords.length > 0 && (
-						<div className="rounded-lg border bg-card p-4">
-							<p className="font-ui text-sm font-[600] text-muted-foreground">New words</p>
+						<section>
+							<h2 className="q-sh">New words</h2>
 							<ul className="mt-2 flex flex-col gap-1">
 								{story.newWords.slice(0, 8).map((w) => (
 									<li key={w.lemma} className="font-prose text-base leading-snug">
 										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{w.lemma}
 										</span>{" "}
-										<span className="text-muted-foreground">{w.gloss}</span>
+										<span className="text-ink-3">{w.gloss}</span>
 									</li>
 								))}
 							</ul>
-						</div>
+						</section>
 					)}
 					{looked.length > 0 && (
-						<div className="rounded-lg border bg-card p-4">
-							<p className="font-ui text-sm font-[600] text-muted-foreground">You looked up</p>
+						<section>
+							<h2 className="q-sh">You looked up</h2>
 							<ul className="mt-2 flex flex-col gap-1">
 								{looked.slice(0, 8).map((t) => (
 									<li key={t.slug ?? t.text} className="font-prose text-base leading-snug">
 										<span className="font-[600] text-foreground" lang={lang?.code}>
 											{t.lemma ?? t.text}
 										</span>{" "}
-										<span className="text-muted-foreground">{t.gloss ?? ""}</span>
+										<span className="text-ink-3">{t.gloss ?? ""}</span>
 									</li>
 								))}
-								{looked.length > 8 && <li className="font-prose text-sm text-muted-foreground">and {looked.length - 8} more</li>}
+								{looked.length > 8 && <li className="font-prose text-sm text-ink-3">and {looked.length - 8} more</li>}
 							</ul>
-						</div>
+						</section>
 					)}
 				</div>
 			)}
-			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-				<Link href="/" className={SECONDARY}>
-					Today
-				</Link>
-				<button type="button" onClick={onAgain} className={SECONDARY}>
-					Read again
-				</button>
-				{unreadLeft ? (
-					<button type="button" onClick={onNext} className={PRIMARY}>
-						Next story
-					</button>
-				) : (
-					<button type="button" onClick={onShelf} className={PRIMARY} data-testid="read-shelf">
-						Open the library
-					</button>
-				)}
-			</div>
-			<SourcesNote feature="read" className="mt-8 text-left" />
-			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-muted-foreground">New stories are written in the background and wait in the library.</p>}
-		</div>
-	);
-}
-
-function Stat({ label, value, ink }: { label: string; value: string; ink: string }) {
-	return (
-		<div className="rounded-lg border bg-card px-3 py-4">
-			<p className="font-ui text-sm font-[600] text-muted-foreground">{label}</p>
-			<p className={cn("mt-1 font-ui text-3xl font-[600] tabular-nums", ink)}>{value}</p>
-		</div>
+			<SourcesNote feature="read" className="mt-14" />
+			{!unreadLeft && canWrite && <p className="mt-3 font-prose text-xs text-ink-3">New stories are written in the background and wait in the library.</p>}
+		</TaskEnd>
 	);
 }
 

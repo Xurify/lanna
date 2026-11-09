@@ -36,6 +36,7 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, Message, ToolResultMessage, UserMessage } from "@earendil-works/pi-ai";
 import { QUESTION_TOOLS } from "./pending.ts";
+import { chatTurnEnded } from "./chat-answers.ts";
 import {
 	CONCLUDE_ACK_TEXT,
 	HANDOFF_TEXT,
@@ -766,6 +767,7 @@ export function needsContinuation(messages: readonly LhMessage[]): boolean {
 		(m) => m.toolName === PRACTICE_PROBLEM_TOOL && !m.isError && m.details == null,
 	);
 	if (posedProblem) return false;
+	if (chatTurnEnded(content as Array<{ type: string; name?: string; text?: string }>)) return false;
 	const answered = new Set(results.map((m) => m.toolCallId));
 	const calls = (content as Array<{ type?: string; id?: string }>).filter(
 		(b) => b.type === "toolCall" && typeof b.id === "string",
