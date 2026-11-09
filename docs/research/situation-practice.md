@@ -1,6 +1,6 @@
 # Practice for one situation: a game played in Russian only
 
-2026-11-09. Decision: [E86](../DECISIONS.md).
+2026-11-09. Decision: [E89](../DECISIONS.md).
 
 ## The question
 
@@ -47,7 +47,7 @@ Neither tested dictation of a learner's own phrase list, and a phrase coming bac
 
 ## What was built
 
-Listen on a sheet (E86): ten of the sheet's phrases, heard before they are seen and typed as heard; missed phrases come back first; a count of phrases caught by ear on the sheet. It is kept out of XP, Review, the listening speed, the listening trends and the Russian study (E82), because the lines are the learner's own and unchecked.
+Listen on a sheet (E89): ten of the sheet's phrases, heard before they are seen and typed as heard; missed phrases come back first; a count of phrases caught by ear on the sheet. It is kept out of XP, Review, the listening speed, the listening trends and the Russian study (E82), because the lines are the learner's own and unchecked.
 
 ## Open
 
