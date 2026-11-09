@@ -1023,6 +1023,17 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - Protocol provenance (commit `8e767a9f`, SHA-256 `1c9f0bd5e4fb093c8beae59e1207a6db9edf5572b9d1889f146f70e7dd7829d1`) and decision rules are fixed in `experiment.json`. Final `verdict.json` written after Day 42.
 
 
+### E82. Krashen SLA-aligned Roadmap: CI tuning, silent period, and conversational recasting (2026-11-09, branch `t3/pronunciation-principles-review`)
+
+**Why:** To address the cognitive gaps identified in early language acquisition: authentic video overwhelming working memory (<90% coverage), premature oral production triggering high affective filters and L1 syntax crutches, and schoolmaster-style error correction paralyzing conversational spontaneity.
+
+**How to apply:**
+- **Roadmap spec:** Documented in [docs/plans/comprehensible-input-roadmap.md](plans/comprehensible-input-roadmap.md).
+- **Track A (CI Tuning in Watch/Read):** Lexical pre-priming to raise authentic video coverage to ≥94% before play; line-level tempo adaptation (0.85× WPM normalization); interlinear i+1 smart glossing; multi-pass reading (immersion → tap-noticing → fluency).
+- **Track B (Onboarding Silent Period):** A0/A1 phase deactivating microphone and typed cloze in favor of receptive meaning-matching and auditory discrimination until a 250-word / 85% comprehension gate is cleared.
+- **Track C (Conversational Recasting):** Decouple grammar correction from conversational flow. The tutor responds naturally to meaning while recasting errors; precise grammatical noticing is relegated to an unobtrusive side drawer.
+
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
