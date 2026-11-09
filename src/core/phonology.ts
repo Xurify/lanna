@@ -559,3 +559,26 @@ export function earGymRound(pool: readonly PhonologyPair[], seed: number, size: 
 	const rand = rng(seed);
 	return pickRoundPairs(pool, size, rand).map((pair) => createEarGymExercise(pair, Math.floor(rand() * 4)));
 }
+
+export interface ContrastSpans {
+	a: [start: number, end: number];
+	b: [start: number, end: number];
+}
+
+export function contrastSpans(pair: Pick<PhonologyPair, "a" | "b" | "contrast">): ContrastSpans | null {
+	const [left, right] = (pair.contrast.split(",")[0] ?? "").split(" and ").map((piece) => piece.trim().toLowerCase());
+	if (!left || !right) return null;
+	const a = pair.a.toLowerCase();
+	const b = pair.b.toLowerCase();
+	let shared = 0;
+	while (shared < a.length && shared < b.length && a[shared] === b[shared]) shared++;
+	const find = (word: string, piece: string): [number, number] | null => {
+		for (let i = Math.min(shared, word.length - piece.length); i >= Math.max(0, shared - piece.length); i--) {
+			if (word.startsWith(piece, i)) return [i, i + piece.length];
+		}
+		return null;
+	};
+	const spanA = find(a, left);
+	const spanB = find(b, right);
+	return spanA && spanB ? { a: spanA, b: spanB } : null;
+}

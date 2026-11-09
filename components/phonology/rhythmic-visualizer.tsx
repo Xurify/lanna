@@ -51,7 +51,10 @@ const ENDING_CONTRASTS: EndingContrast[] = [
 
 const WORDS_TO_TRY = ["krásny", "chválim", "ženám", "trávam", "vŕbam", "biely", "básňam", "krásný", "lístie", "páví"];
 
-const STRESS_SENTENCE = { text: "Chválime krásne Slovensko", translation: "We praise beautiful Slovakia" };
+const AFTER_SHORT = "short stem, long ending";
+const AFTER_LONG = "long stem, short ending";
+
+const STRESS_SENTENCE ={ text: "Chválime krásne Slovensko", translation: "We praise beautiful Slovakia" };
 
 function play(text: string) {
 	void speak(text).catch(() => {});
@@ -84,7 +87,8 @@ export function RhythmicVisualizer() {
 
 			<section className="mt-10">
 				<h2 className="q-sh">Try a word</h2>
-				<div className="flex gap-2">
+				<Beats analysis={analysis} />
+				<div className="mt-3 flex gap-2">
 					<input
 						type="text"
 						lang={lang?.code}
@@ -103,7 +107,6 @@ export function RhythmicVisualizer() {
 						Hear it
 					</button>
 				</div>
-				<DiacriticBar variant="keys" className="mt-3" />
 				<ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Words to try">
 					{WORDS_TO_TRY.map((w) => (
 						<li key={w}>
@@ -119,18 +122,22 @@ export function RhythmicVisualizer() {
 						</li>
 					))}
 				</ul>
-				<Beats analysis={analysis} />
+				<DiacriticBar variant="keys" className="mt-4" />
 			</section>
 
 			<section className="mt-10">
 				<h2 className="q-sh">Same ending, two lengths</h2>
+				<div className="hidden grid-cols-2 gap-x-8 font-ui text-[12.5px] font-[550] text-ink-2 sm:grid" aria-hidden="true">
+					<p className="first-letter:uppercase">{AFTER_SHORT}</p>
+					<p className="first-letter:uppercase">{AFTER_LONG}</p>
+				</div>
 				<ul className="divide-y divide-[var(--q-line)]">
 					{ENDING_CONTRASTS.map((c) => (
-						<li key={c.label} className="py-4 first:pt-1">
+						<li key={c.label} className="py-4">
 							<p className="font-ui text-[13px] text-ink-3">{c.label}</p>
 							<div className="mt-2.5 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-								<FormLine form={c.afterShort} note="short stem, long ending" />
-								<FormLine form={c.afterLong} note="long stem, short ending" />
+								<FormLine form={c.afterShort} note={AFTER_SHORT} />
+								<FormLine form={c.afterLong} note={AFTER_LONG} />
 							</div>
 						</li>
 					))}
@@ -155,8 +162,17 @@ export function RhythmicVisualizer() {
 function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 	const lang = useActiveLanguage();
 	const clashing = new Set(analysis.hasViolation ? analysis.violations.flatMap((v) => [v.first.index, v.second.index]) : []);
+	const longs = analysis.syllables.filter((s) => s.quantity === "long").length;
+	const note =
+		analysis.hasViolation || analysis.isException
+			? analysis.explanation
+			: longs === 0
+				? "No syllable in this word is long."
+				: longs === 1
+					? "Only one syllable is long, so nothing has to turn short."
+					: "The long syllables are not next to each other.";
 	return (
-		<div className="mt-5 min-h-[11.5rem] rounded-xl bg-well px-5 py-5" data-testid="syllable-bar" aria-live="polite">
+		<div className="min-h-[15.75rem] rounded-xl bg-well px-5 py-6 sm:min-h-[14.25rem] sm:px-7" data-testid="syllable-bar" aria-live="polite">
 			{analysis.syllables.length === 0 ? (
 				<p className="font-ui text-[13px] text-ink-3">Type a word to see its syllables, long and short.</p>
 			) : (
@@ -170,16 +186,16 @@ function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 								<li key={s.index} className="flex flex-col items-center">
 									<span
 										className={cn(
-											"relative font-prose text-[34px] font-semibold leading-none tracking-[-0.03em]",
+											"relative font-prose text-[36px] font-semibold leading-none tracking-[-0.03em] sm:text-[44px]",
 											clash ? "text-miss" : "text-foreground",
-											i > 0 && "before:absolute before:right-full before:w-5 before:text-center before:font-normal before:text-ink-4 before:content-['·']",
+											i > 0 && "before:absolute before:end-full before:w-5 before:text-center before:font-normal before:text-ink-4 before:content-['·']",
 										)}
 										lang={lang?.code}
 									>
 										{s.text}
 									</span>
 									<span aria-hidden="true" className="relative mt-3 flex h-1.5 w-full justify-center">
-										{clashesWithPrevious && <span className="absolute right-full top-1/2 w-5 -translate-y-1/2 text-center font-ui text-[13px] font-bold leading-none text-miss">×</span>}
+										{clashesWithPrevious && <span className="absolute end-full top-1/2 w-5 -translate-y-1/2 text-center font-ui text-[13px] font-bold leading-none text-miss">×</span>}
 										<span className={cn("h-1.5 rounded-full", long ? "w-8 bg-teal" : "w-1.5 bg-ink-4")} />
 									</span>
 									<span className={cn("mt-1.5 whitespace-nowrap font-ui text-[12px]", long ? "font-[550] text-teal-2" : "text-ink-3")}>
@@ -196,20 +212,18 @@ function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 						<VerdictDisc ok={!analysis.hasViolation} />
 						{analysis.hasViolation ? "Two long syllables side by side" : analysis.isException ? "Two long syllables, allowed in this word" : "No two long syllables side by side"}
 					</p>
-					{(analysis.hasViolation || analysis.isException) && (
-						<p className="q-t2 !mt-2">
-							{analysis.explanation}
-							{analysis.suggestion && (
-								<>
-									{" "}By the rule it is{" "}
-									<span lang={lang?.code} className="font-semibold text-foreground">
-										{analysis.suggestion}
-									</span>
-									.
-								</>
-							)}
-						</p>
-					)}
+					<p className="q-t2 !mt-2">
+						{note}
+						{analysis.suggestion && (
+							<>
+								{" "}By the rule it is{" "}
+								<span lang={lang?.code} className="font-semibold text-foreground">
+									{analysis.suggestion}
+								</span>
+								.
+							</>
+						)}
+					</p>
 				</>
 			)}
 		</div>
@@ -229,7 +243,8 @@ function FormLine({ form, note }: { form: Form; note: string }) {
 					<span className="font-semibold text-teal-2 underline decoration-teal-line decoration-2 underline-offset-[5px]">{form.word.slice(form.stem.length)}</span>
 				</p>
 				<p className="mt-1 font-ui text-[12.5px] text-ink-3">
-					{form.translation} · {note}
+					{form.translation}
+					<span className="sm:sr-only"> · {note}</span>
 				</p>
 			</div>
 		</div>

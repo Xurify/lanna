@@ -13,6 +13,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
 	ARTICULATORY_CUES,
+	contrastSpans,
 	createEarGymExercise,
 	EAR_GYM_ROUND,
 	earGymRound,
@@ -186,6 +187,20 @@ describe("Bundled phonology datasets validation", () => {
 				}
 			});
 
+			test("the letters a contrast names are found in both words, where the words differ", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data);
+				for (const p of data.pairs) {
+					const spans = contrastSpans(p);
+					assert.ok(spans, `${p.id}: no letters to mark for "${p.contrast}"`);
+					const [left, right] = p.contrast.split(",")[0]!.split(" and ");
+					assert.equal(p.a.slice(...spans.a).toLowerCase(), left);
+					assert.equal(p.b.slice(...spans.b).toLowerCase(), right);
+					assert.equal(p.a.slice(0, spans.a[0]), p.b.slice(0, spans.b[0]), `${p.id}: the words differ before the marked letters`);
+					assert.equal(p.a.slice(spans.a[1]), p.b.slice(spans.b[1]), `${p.id}: the words differ after the marked letters`);
+				}
+			});
+
 			test("every pair's family is declared in the file", () => {
 				const data = getPhonologyData(lang);
 				assert.ok(data);
@@ -328,5 +343,19 @@ describe("Ear Gym round", () => {
 
 	test("an empty pool gives no round", () => {
 		assert.deepEqual(earGymRound([], 1), []);
+	});
+});
+
+describe("contrastSpans", () => {
+	test("marks one letter, a letter pair, and a letter that only one word has more of", () => {
+		assert.deepEqual(contrastSpans({ a: "pas", b: "pás", contrast: "a and á" }), { a: [1, 2], b: [1, 2] });
+		assert.deepEqual(contrastSpans({ a: "mesto", b: "miesto", contrast: "e and ie" }), { a: [1, 2], b: [1, 3] });
+		assert.deepEqual(contrastSpans({ a: "мат", b: "мать", contrast: "т and ть" }), { a: [2, 3], b: [2, 4] });
+		assert.deepEqual(contrastSpans({ a: "rad", b: "raď", contrast: "d and ď, heard as t and ť at the end of a word" }), { a: [2, 3], b: [2, 3] });
+	});
+
+	test("gives null when the contrast does not name letters of the words", () => {
+		assert.equal(contrastSpans({ a: "pas", b: "pás", contrast: "/a/ vs /aː/" }), null);
+		assert.equal(contrastSpans({ a: "pas", b: "pás", contrast: "o and ô" }), null);
 	});
 });
