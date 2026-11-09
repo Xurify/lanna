@@ -20,11 +20,11 @@ The Russian grammatical architecture rests on a fusional synthetic morphology wi
 | Case | Russian Name | Primary Question | Core Function & Syntax | Anchor Examples |
 | --- | --- | --- | --- | --- |
 | **Nominative** | Именительный | Кто? Что? | Subject of finite verb, predicate nominal in present tense, dictionary citation form. | *Студент читает книгу.* *Это мой брат.* |
-| **Accusative** | Винительный | Кого? Что? Куда? | Direct object of transitive verbs, destination of motion (`в/на + acc`), duration of time (`всю неделю`). | *Я вижу брата (anim).* *Я вижу стол (inanim).* *Мы идём в театр.* |
-| **Genitive** | Родительный | Кого? Чего? Откуда? Чей? | Possession, absence/negation (`нет + gen`), quantity, paucal numerals (`2, 3, 4 + gen sg`, `5+ + gen pl`), prepositions (`из, с, от, до, без, для, около, после, у`). | *Книга студента.* *У меня нет времени.* *Два стола, пять столов.* *Письмо от друга.* |
+| **Accusative** | Винительный | Кого? Что? Куда? | Direct object of transitive verbs, destination of motion (`в/на + accusative`), duration of time (`всю неделю`). | *Я вижу брата (anim).* *Я вижу стол (inanim).* *Мы идём в театр.* |
+| **Genitive** | Родительный | Кого? Чего? Откуда? Чей? | Possession, absence/negation (`нет + genitive`), quantity, paucal numerals (`2, 3, 4 + genitive singular`, `5+ + genitive plural`), prepositions (`из, с, от, до, без, для, около, после, у`). | *Книга студента.* *У меня нет времени.* *Два стола, пять столов.* *Письмо от друга.* |
 | **Dative** | Дательный | Кому? Чему? К кому? | Indirect object (recipient), age (`мне 25 лет`), impersonal modal states (`мне надо, можно, холодно`), prepositions `к, по`. | *Я звоню маме.* *Мне нужно работать.* *Пойдём к врачу.* |
-| **Instrumental** | Творительный | Кем? Чем? С кем? | Means or instrument, accompaniment (`с + inst`), predicate nominal of past/future/infinitive (`он был врачом`), prepositions `с, над, под, перед, за, между`. | *Я пишу карандашом.* *Мы гуляем с другом.* *Она работает учителем.* |
-| **Prepositional** | Предложный | О ком? О чём? Где? | Used ONLY with prepositions: location (`в/на + prep`), topic of thought/speech (`о/об + prep`), transport mode (`на метро, на поезде`). | *Они живут в Москве.* *Мы говорим о музыке.* |
+| **Instrumental** | Творительный | Кем? Чем? С кем? | Means or instrument, accompaniment (`с + instrumental`), predicate nominal of past/future/infinitive (`он был врачом`), prepositions `с, над, под, перед, за, между`. | *Я пишу карандашом.* *Мы гуляем с другом.* *Она работает учителем.* |
+| **Prepositional** | Предложный | О ком? О чём? Где? | Used ONLY with prepositions: location (`в/на + prepositional`), topic of thought/speech (`о/об + prepositional`), transport mode (`на метро, на поезде`). | *Они живут в Москве.* *Мы говорим о музыке.* |
 
 ---
 
@@ -36,7 +36,7 @@ Animacy (*одушевлённость*) affects the accusative case across all 
 Singular:
 - Masculine Inanimate:  Accusative = Nominative  (Я вижу новый стол)
 - Masculine Animate:    Accusative = Genitive    (Я вижу нового студента / кота)
-- Feminine:             Distinct Accusative in -у/-ю regardless of animacy (вижу книгу, вижу сестру)
+- Feminine:             1st declension (-а/-я) takes distinct -у/-ю regardless of animacy (вижу книгу, вижу сестру); 3rd declension (-ь) has Accusative = Nominative (вижу мать, ночь, тетрадь)
 - Neuter:               Accusative = Nominative  (Я вижу красивое окно)
 
 Plural (ALL Genders):

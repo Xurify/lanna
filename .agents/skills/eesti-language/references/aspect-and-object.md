@@ -42,7 +42,7 @@ A large class of Estonian verbs governs the partitive object exclusively, regard
 - *kuulama* (to listen to): *Kuulan raadiot.* (I listen to the radio.)
 - *vaatama* (to look at): *Vaatan televiisorit.* (I watch TV.)
 - *segama* (to disturb): *Ära sega mind!* (Don't disturb me!)
-- *mõistma / aru saama* (to understand): *Ma ei mõista seda.*
+- *mõistma* (to understand): *Ma ei mõista seda.* (Contrast with *aru saama*, which governs the **elative**: *Saan sellest aru*).
 
 ---
 

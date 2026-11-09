@@ -20,8 +20,8 @@ Token-minimized reference for curriculum progression, diagnostic benchmarks, and
 ### 1. The Slavic Aspect Trap
 - **The Error**: Looking for verbal prefixes to express perfective vs. imperfective aspect (e.g. attempting to translate Russian *написать* vs. *писать* through verbal mutation).
 - **The Fix**: Estonian encodes aspect primarily via the **direct object**:
-  - Unfinished / ongoing: Partitive (*Kirjutasin kirja**t***).
-  - Finished / complete: Genitive total object (*Kirjutasin kirja valmis* / *Kirjutasin kirja*).
+  - Unfinished / ongoing: Partitive (*Lugesin raamatut* / *Kirjutasin artiklit*).
+  - Finished / complete: Genitive total object (*Lugesin raamatu läbi* / *Kirjutasin kirja valmis*).
 
 ### 2. The Negative Object Error
 - **The Error**: Leaving the direct object in the Nominative or Genitive in a negative clause:
@@ -55,7 +55,7 @@ Learners with Finnish background often confuse crucial lexical pairs:
 
 | Estonian Word | Estonian Meaning | Finnish False Friend | Finnish Meaning |
 | --- | --- | --- | --- |
-| *pulm* | wedding | *pulma* | problem |
+| *pulmad* (pl.) | wedding | *pulma* (sg.) | problem |
 | *hallitus* | mold / mildew | *hallitus* | government |
 | *raamat* | book | *raamattu* | Bible |
 | *piim* | milk | *piimä* | sour milk / buttermilk |

@@ -52,7 +52,7 @@ Cross-linguistic interference causes severe errors if assumptions from English o
 | **овощи** | vegetables | fruit (Slovak *ovocie*) | *фрукты* |
 | **позор** | shame, disgrace | attention (Slovak *pozor*) | *внимание* |
 | **неделя** | week | Sunday (Slovak *nedeľa*) | *воскресенье* |
-| **красивый** | beautiful | red (Slovak *červený*, archaic Rus.) | *красный* |
+| **красный** | red | beautiful (Slovak *krásny*, archaic Rus.) | *красивый* |
 | **родина** | homeland / motherland | family (Slovak *rodina*) | *семья* |
 | **живот** | belly / stomach | life (Slovak *život*) | *жизнь* |
 | **магазин** | shop / store | periodical magazine | *журнал* |

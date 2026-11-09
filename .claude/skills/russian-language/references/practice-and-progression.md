@@ -25,7 +25,7 @@ When analyzing student errors in drills, categorize by root linguistic mechanism
 | **ERR-ASPECT** | Aspect Confusion | Using imperfective for completed single event or perfective in present tense. | Contrast process vs result; test with time markers (*долго, часто* vs *вдруг, за час*). |
 | **ERR-MOTION** | Motion Verb Misdirection | Using *идти* for habitual trips or for vehicle travel. | Contrast foot (*идти/ходить*) vs vehicle (*ехать/ездить*); single trip (*идти*) vs round trip (*ходить*). |
 | **ERR-SPELL-7** | 7-Letter Rule Breach | Writing *ы* after *г, к, х, ж, ч, ш, щ* (*книгы*). | Enforce standard orthographic filter: write *и*, never *ы*. |
-| **ERR-VOWEL-RED** | Vowel Reduction Error | Spelling words phonetically based on sound (*спасúбо* written *спасúба*). | Highlight base dictionary stem and stress position (*аканье* in pronunciation, etymological *о* in writing). |
+| **ERR-VOWEL-RED** | Vowel Reduction Error | Spelling words phonetically based on sound (*спаси́бо* written *спаси́ба*). | Highlight base dictionary stem and stress position (*аканье* in pronunciation, etymological *о* in writing). |
 
 ---
 

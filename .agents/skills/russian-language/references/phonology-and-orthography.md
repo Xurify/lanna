@@ -24,7 +24,7 @@ Unstressed vowels lose duration and clarity in Russian:
 ### 1. *Аканье* (Reduction of `а` and `о`)
 - In the immediately pre-tonic syllable (one syllable before stress) and in word-initial position: both `а` and `о` are pronounced as short `[ɐ]` (like 'u' in English *cup*):
   - *молоко́* → `[məlɐˈko]`
-  - *Москва́* → `[mɐsˈkwa]`
+  - *Москва́* → `[mɐsˈkva]`
   - *окно́* → `[ɐkˈno]`
 - In other unstressed syllables (post-tonic or two+ syllables before stress): reduced further to weak `[ə]` (schwa):
   - *хорошо́* → `[xərɐˈʂo]`.
@@ -66,7 +66,7 @@ After the velars and sibilants `г, к, х, ж, ч, ш, щ`:
 ### The 5-Letter Rule (*Правило пяти букв*)
 After sibilants and affricate `ж, ч, ш, щ, ц`:
 - Under stress, write `о` or `ё` (*ножо́м, плечо́м, врачо́м, лицо́м*).
-- In **unstressed position**, **never write `о`**: write **`е`** (*му́жем, на́шей, пальцем, солнцем, месяцем*).
+- In **unstressed position**, **never write `о`**: write **`е`** (*му́жем, на́шей, па́льцем, со́лнцем, ме́сяцем*). (Exception: unassimilated foreign loanwords retain unstressed `о`, such as *шокола́д, шофёр, шоссе́*).
 
 ### The Letter `Ё` (*Буква Ё*)
 - `Ё` is always stressed in native Russian words (*её, ещё, самолёт, актёр*).

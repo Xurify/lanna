@@ -27,7 +27,7 @@ Russian nouns decline across 6 cases in the singular and plural according to thr
 1. **Nouns in `-ия, -ие, -ий`:** Take `-ии` in the Prepositional singular instead of `-е` (*в Росси́и, в зда́нии, в санато́рии*). Feminine `-ия` also takes `-ии` in the Dative (*к Росси́и*).
 2. **Locative in `-у́ / -ю́`:** A closed set of monosyllabic masculine nouns take a stressed `-у́` after prepositions `в` and `на` when answering *где?* (location), but regular `-е` when answering *о чём?* (about):
    - *в лесу́* (in the forest) vs. *о ле́се* (about the forest)
-   - *на мосту́* (on the bridge) vs. *о мосте́* (about the bridge)
+   - *на мосту́* (on the bridge) vs. *о мо́сте* (about the bridge)
    - *в шкафу́* (in the cupboard), *в саду́* (in the garden), *в аэропорту́* (at the airport), *на полу́* (on the floor), *на углу́* (on the corner), *на берегу́* (on the shore), *в году́* (in the year).
 3. **Partitive in `-у / -ю`:** Colloquial genitive of indefinite quantity with mass nouns: *ча́шка ча́ю* (beside *ча́я*), *кусо́к сы́ру*, *нали́ть со́ку*.
 4. **Third declension nouns *мать* and *дочь*:** Expand with stem suffix `-ер-` in all oblique cases: *ма́тери, ма́терью; до́чери, до́черью*.

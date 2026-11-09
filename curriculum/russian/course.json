@@ -512,7 +512,7 @@
 			"kind": "grammar",
 			"title": "Of many: the genitive plural",
 			"tagline": "столов, книг, дней",
-			"rule": "Genitive plural: masculine -ов or -ев (столов), -ей after ж, ш, ч, щ and for -ь words (врачей, дней); -ия, -ие become -ий (серий); -а words lose the ending (книг); -я words lose it (недель), -е takes -ей (морей), -мя → -мён (времён).",
+				"rule": "Genitive plural: masc -ов/-ев (столов), -ей after ж, ш, ч, щ, -ь (врачей, дней); neuter -о loses ending (слов, мест; окон); fem -а loses ending (книг; девушек, сестёр); -я → -ь (недель), but -ья → -ей (семей, статей); -ия/-ие → -ий (серий, зданий); -е → -ей (морей), -мя → -мён (времён).",
 			"glyph": "layers",
 			"grammarTerm": "genitive plural",
 			"nativeTerm": "родительный падеж, множественное число",

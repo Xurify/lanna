@@ -19,7 +19,7 @@ In the last four cases (Terminative, Essive, Abessive, Comitative), adjectives *
 | --- | --- | --- | --- | --- |
 | **Terminative** | *-ni* | *suure majani* | *suurte majadeni* | Adjective takes Genitive (*suure*), noun takes *-ni* |
 | **Essive** | *-na* | *hea õpetajana* | *heade õpetajatena* | Adjective takes Genitive (*hea*), noun takes *-na* |
-| **Abessive** | *-ta* | *külma veeta* | *külmade veeta* | Adjective takes Genitive (*külma*), noun takes *-ta* |
+| **Abessive** | *-ta* | *külma veeta* | *külmade veteta* | Adjective takes Genitive (*külma*), noun takes *-ta* |
 | **Comitative** | *-ga* | *uue autoga* | *uute autodega* | Adjective takes Genitive (*uue*), noun takes *-ga* |
 
 *Warning: Never say `*külmata veeta` or `*uuega autoga` — this is a serious grammatical error.*

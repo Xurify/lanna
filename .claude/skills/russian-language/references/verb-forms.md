@@ -15,18 +15,23 @@ Russian verbs inflect for person, number, tense, aspect, mood, and voice. Finite
 | **3pl (*они*)** | чита́-**ют** / жив-**у́т** | говор-**я́т** / у́ч-**ат** (after sibilant) |
 
 ### Conjugation Identification Rules
-1. **2nd Conjugation:** Almost all verbs with infinitives in `-ить` (except *жить, пить, шить, брить, стелить*), plus 7 verbs in `-еть` (*видеть, смотреть, слышать, ненавидеть, обидеть, терпеть, вертеть, зависеть*) and 4 verbs in `-ать` (*слышать, дышать, держать, гнать*).
-2. **1st Conjugation:** Verbs in `-ать/-ять` (not in the list above), `-еть`, `-овать/-евать`, `-нуть`, and monosyllabic stems.
+1. **Unstressed Endings (School Rule):** When personal endings are unstressed, determine conjugation from the infinitive:
+   - **2nd Conjugation:** Verbs in `-ить` (except *брить, стелить, зиждиться*), plus 7 verbs in `-еть` (*видеть, смотреть, ненавидеть, обидеть, терпеть, вертеть, зависеть*) and 4 verbs in `-ать` (*слышать, дышать, держать, гнать*).
+   - **1st Conjugation:** All other unstressed verbs (`-ать/-ять` not in the 4 above, `-еть` not in the 7 above, `-овать/-евать`, `-нуть`, `-ть/ти`).
+2. **Stressed Endings:** When personal endings are stressed, determine conjugation directly from the endings (or 3pl form), **not** the infinitive suffix (Розенталь § 61):
+   - Stressed `-и́шь / -я́т (-а́т)` = **2nd Conjugation**: *спать → спят*, *стоять → стоят*, *сидеть → сидят*, *лежать → лежат*, *лететь → летят*.
+   - Stressed `-ёшь / -у́т (-ю́т)` = **1st Conjugation**: *жить → живут*, *пить → пьют*, *петь → поют*, *идти → идут*.
 3. **Consonant Alternations in 2nd Conjugation:** 1sg (*я*) regularly mutates:
    - `д → ж` (*ходить → хожу*)
    - `т → ч / щ` (*платить → плачу, простить → прощу*)
    - `з → ж` (*возить → вожу*)
    - `с → ш` (*просить → прошу*)
    - Labials `б, п, в, ф, м → бл, пл, вл, фл, мл` (*любить → люблю, купить → куплю, готовить → готовлю*).
-4. **Consonant Alternations in 1st Conjugation:** Mutates across **all** personal forms:
-   - `с → ш` (*писать → пишу, пишешь, пишут*)
-   - `к → ч` (*печь → пеку, печёшь, пекут*)
-   - `г → ж` (*мочь → могу, можешь, могут*).
+4. **Consonant Alternations in 1st Conjugation:**
+   - In dental/sibilant stems like *писать*, mutation applies across **all** personal forms: `с → ш` (*писать → пишу, пишешь, пишут*).
+   - In velar stems (`-чь`), mutation occurs in 2sg, 3sg, 1pl, 2pl, while 1sg and 3pl retain the velar stop:
+     - `к → ч`: *печь → пеку, печёшь, печёт, печём, печёте, пекут*
+     - `г → ж`: *мочь → могу, можешь, может, можем, можете, могут*.
 
 ---
 

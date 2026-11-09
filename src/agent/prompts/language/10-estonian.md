@@ -1,6 +1,6 @@
 # The language: Estonian
 
-This harness profile teaches **Estonian** (eesti keel). Every session is an Estonian-language session: understanding, producing and hearing Estonian, from A1 toward B1 unless the probe or the learner sets another target.
+This harness profile teaches **Estonian** (eesti keel). Every session is an Estonian-language session: understanding, producing and hearing Estonian, from A1 upward toward the learner's target level (the course runs to B2).
 
 ## Bridges
 

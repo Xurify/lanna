@@ -58,7 +58,7 @@ Estonian stops are voiceless across all positions. The letters *b, d, g* do NOT 
 ## 4. Palatalization (Pehmendus / Palatalisatsioon)
 
 The dental consonants **t, d, s, n, l** become palatalized ([tʲ, dʲ, sʲ, nʲ, lʲ]) in syllables where an *i* or *j* historically followed:
-- *palk* [pɑlk] (timber, log) vs. *palk* [pɑlʲk] (salary, pay).
+- *palk* [pɑlk] (salary, pay; Gen: *palga*) vs. *palk* [pɑlʲk] (timber, log; Gen: *palgi*).
 - *tall* [tɑll] (stable) vs. *tall* [tɑlʲlʲ] (lamb).
 - *kott* [kotʲtʲ] (sack/bag).
 

@@ -600,6 +600,12 @@ export async function rebuildLexicon(id: string): Promise<{ words: number; examp
 	const words = readJson<{ value: BuildWord[] }>(path.join(buildDir(id), "words-v2.json"))?.value;
 	if (!sentences || !freqWords || !words) throw new Error(`${id} has no kept downloads under ${buildDir(id)}; add it from the app instead`);
 	const entries = await writeLexicon(lang, sentences, new Map(freqWords.map((w, i) => [w, i + 1])), words, new AbortController().signal);
+	const written = shippedJson<Course>(id, "course.json");
+	if (written) {
+		const sceneIds = SPEAK_SCENES.map((x) => x.id);
+		const built = checkCourse(written, id, entries, lang.tag, sceneIds);
+		if (built) writeJson(path.join(dirOf(id), "course.json"), built.course);
+	}
 	return { words: entries.length, examples: entries.reduce((n, e) => n + e.examples.length, 0) };
 }
 

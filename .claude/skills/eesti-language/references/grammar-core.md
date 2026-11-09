@@ -49,7 +49,7 @@ Estonian organizes 6 spatial cases into two parallel 3-way triads:
 | **Location** ("Where?") | *Kus?* | **Inessive** (*-s*): *linnas*, *koolis* | **Adessive** (*-l*): *tänaval*, *laual* |
 | **Source** ("Where from?") | *Kust?* | **Elative** (*-st*): *linnast*, *koolist* | **Ablative** (*-lt*): *tänavalt*, *laualt* |
 
-- **Settlements**: Most Estonian towns use internal cases (*Tallinnas, Tartus, Viljandis*), but some use external cases by historical convention (*Pärnus, Narvas, Haapsalus, Valgas*). Foreign countries usually take internal (*Soomes, Rootsis, Inglismaal* takes external because of *-maa*).
+- **Settlements**: Most Estonian towns use internal cases (*Tallinnas, Tartus, Pärnus, Narvas, Viljandis*), but some use external cases by historical convention (*Tapal, Elvas, Otepääl, Sauel, Keilas, Sillamäel*). Foreign countries usually take internal (*Soomes, Rootsis*; *Inglismaal* takes external because of *-maa*).
 
 ---
 

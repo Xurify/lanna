@@ -27,11 +27,11 @@ Before finalizing meaningful Estonian output, check:
 
 1. **Stem selection & gradation (astmevaheldus):** Verify whether each noun or verb form requires the strong (*tugev*) or weak (*nõrk*) grade (`tuba : toa`, `mõte : mõtte`, `lugema : loen`, `hakkama : hakkan`). Never build forms by analogy without checking gradation type.
 2. **Object marking (täissihitis vs. osasihitis):** Check whether the object must be in the partitive (*osasihitis*) or total object case (*täissihitis* — nominative or genitive). Remember: negative sentences ALWAYS require partitive objects (`Ma ei ostnud raamatut`).
-3. **Government (rektsioon):** Ensure verbs and adpositions govern their mandatory case (`aitama + partitive`, `meeldima + allative`, `hakkama + ma-infinitive`, `nõustuma + da-infinitive`, `ilma + abessive/partitive`).
-4. **Locative triads (sise- and väliskohakäänded):** Distinguish origin, state, and destination clearly: internal `kuhu? kus? kust?` (*majja, majas, majast*) vs. external (*lauale, laual, laualt*). Use correct municipal locative traditions (*Tallinnas, Tartus, Narvas* vs. *Pärnus*).
+3. **Government (rektsioon):** Ensure verbs and adpositions govern their mandatory case (`aitama + partitive`, `meeldima + allative`, `hakkama + ma-infinitive`, `nõustuma + ma-infinitive`, `ilma + abessive/partitive`).
+4. **Locative triads (sise- and väliskohakäänded):** Distinguish origin, state, and destination clearly: internal `kuhu? kus? kust?` (*majja, majas, majast*) vs. external (*lauale, laual, laualt*). Use correct municipal locative traditions (*Tallinnas, Tartus, Pärnus* vs. *Tapal, Elvas, Otepääl*).
 5. **Verb forms & infinitives:** Check *ma*-infinitive (goal/action start) vs. *da*-infinitive (modal/ability/desire). Impersonal forms (*umbisikuline*) require correct *-takse/-ti/-tud* or *-dakse/-di/-dud* stems.
 6. **Word order:** Main declarative clauses generally follow verb-second (V2) order. Inverted order in existential sentences introduces new information at the end (*Laual on leib* vs. *Leib on laual*).
-7. **Interference:** Avoid Russian interference (do not look for verbal aspect prefixes; use Estonian particle verbs and object case instead), English interference (no calqued dummy pronouns or articles), and Finnish false friends (*pulm* = wedding, not problem; *hallitus* = mold, not government).
+7. **Interference:** Avoid Russian interference (do not look for verbal aspect prefixes; use Estonian particle verbs and object case instead), English interference (no calqued dummy pronouns or articles), and Finnish false friends (*hallitus* = mold in Estonian vs. government in Finnish; *linn* = city/town in Estonian vs. Finnish *linna* castle).
 8. **Spelling & length:** Distinguish short, long, and overlong sounds (*kodu / kood / koodi*; *lina / linna / linna*); observe consonant letters `b, d, g` (short unvoiced) vs. `p, t, k` (long unvoiced) vs. `pp, tt, kk` (overlong).
 
 ## Verify instead of guessing

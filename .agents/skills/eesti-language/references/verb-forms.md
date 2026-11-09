@@ -34,7 +34,7 @@ The division between *ma* and *da* infinitives is strict and grammaticalized:
 
 ### Inflected Forms of the *ma*-Infinitive:
 - **-mas** (Inessive, in progress): *Olen söömas.* (I am in the middle of eating.)
-- **-mast** (Elative, returning from): *Tulen trennist jooksmas käimast.* (I am coming from running.)
+- **-mast** (Elative, returning from): *Tulen trennist jooksmast.* (I am coming from running in practice.)
 - **-mata** (Abessive, without doing): *Töö jäi tegemata.* (The work remained undone.)
 - **-maks** (Translative, purpose): *Seda tehti aitamaks haigeid.* (This was done in order to help the sick.)
 
@@ -83,7 +83,7 @@ Formed by adding *-s-* or *-i-* to the past stem:
 ## 4. Moods (Kõneviisid)
 
 ### 1. Conditional (Tingiv kõneviis)
-Expresses hypothetical actions or polite requests. Suffix is **-ks** appended to the *da*-infinitive stem or vowel stem:
+Expresses hypothetical actions or polite requests. Suffix is **-ks** appended to the present stem (weak or vocalic stem):
 - *olema* -> *oleks*: *Ma oleksin tänulik.* (I would be grateful.)
 - *soovima* -> *sooviksin*: *Sooviksin kohvi.* (I would like coffee.)
 - *saama* -> *saaksite*: *Kas te saaksite mind aidata?* (Could you help me?)
@@ -95,7 +95,7 @@ Commands and requests:
   - *Loe!* (Read!), *Tule siia!* (Come here!), *Võta leiba!* (Take some bread!)
   - Negative: **Ära** + stem: *Ära tee!* (Don't do!), *Ära karda!* (Don't be afraid!)
 - **2pl (*teie*) / Polite form**: Suffix **-ge** or **-ke** (after consonants):
-  - *Lugege!*, *Tulge!*, *Vaadake!*, *Hakkake!*
+  - *Lugege!*, *Tulge!*, *Vaadake!*, *Hakake!*
   - Negative: **Ärge** + *-ge/-ke*: *Ärge rääkige!* (Don't speak!), *Ärge unustage!* (Don't forget!)
 - **1pl (*meie*)**: *Laskem minna* or colloquial *Lähme! / Hakakem!*
 - **3rd Person / Jussive**: Marker **las** or suffix **-gu/-ku**:
@@ -111,7 +111,7 @@ Used to report statements or rumors without personal commitment to their truth. 
 ## 5. Impersonal Voice (Umbisikuline tegumood)
 
 Used when the agent is unspecified or irrelevant (analogous to English passive or German *man*):
-- **Present impersonal**: suffix **-takse** (weak stems) or **-dakse** (vowel/diphthong stems):
+- **Present impersonal**: suffix **-takse** (corresponding to *-tud* participle) or **-dakse** (corresponding to *-dud* participle):
   - *Eestis räägitakse eesti keelt.* (In Estonia, Estonian is spoken.)
   - *Õhtuti süüakse sooja toitu.* (In the evenings, warm food is eaten.)
   - Negative: *ei* + stem (*ei räägita, ei tehta, ei sööda*).

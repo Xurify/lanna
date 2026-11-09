@@ -34,7 +34,7 @@ Russian predicates govern strict nominal cases. Prepositions determine the gramm
 
 ### 4. Accusative Case (*Винительный*)
 - **в / на:** Destination answering *куда?* (*идти в театр, поехать на вокзал*).
-- **за:** Behind/under with motion (*спрятаться за дерево*); in exchange for (*купить за сто рублей*); support (*голосовать за кандидата*); time duration (*сделать за час*).
+- **за:** Behind / beyond with motion (*спрятаться за дерево*); in exchange for (*купить за сто рублей*); support (*голосовать за кандидата*); time duration (*сделать за час*).
 - **под:** Under with motion (*положить под стол*).
 - **через:** Across / through (*перейти через мост*); in (time elapsed into future): *через неделю* (in a week).
 - **про:** About (conversational equivalent of *о + prep*): *расскажи про отпуск*.

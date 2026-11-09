@@ -43,7 +43,7 @@ In addition to the regular *-sse* ending, many common nouns have a synthetic sho
 | --- | --- | --- | --- | --- | --- |
 | **Vowel lengthening / Q3** | Final vowel remains, syllable is pronounced in overlong (Q3) length | *kool* | *kooli* | *kooli* (Q3) | *koolisse* |
 | **Consonant strengthening** | Strong grade with geminate consonant | *tuba* | *toa* | *tuppa* | *toasse* |
-| **-de ending** | Monosyllabic diphthong/long vowel stems take *-de* | *maa* | *maa* | *maade* / *maasse* | *maasse* |
+| **Stem vowel / synthetic form** | Monosyllabic diphthong/long vowel stem | *maa* | *maa* | *maha* / *maasse* | *maasse* |
 | **-he ending** | Historical *h*-stems take *-he* | *pähe* (*pea*) | *pea* | *pähe* | *peasse* |
 | **Stem change** | Irregular historical roots | *vesi* | *vee* | *vette* | *veesse* |
 | | | *käsi* | *käe* | *kätte* | *käesse* |
@@ -64,7 +64,7 @@ Always: **Genitive singular stem + *-d***.
 
 ### Genitive Plural
 Formed by adding *-de* or *-te*:
-1. **-de**: Words ending in a vowel in Gen. Sg. with weak or vocalic stems (*majade, autode, kalade, toade* / *tubade*).
+1. **-de**: Words ending in a vowel in Gen. Sg. with weak or vocalic stems (*majade, autode, kalade, tubade*).
 2. **-te**: Words with consonant partitive stems or strong consonant codas:
    - *mets* (Part: *metsa*) -> *metsade* or *metste*
    - *mees* (Part: *meest*) -> *meeste*
@@ -88,8 +88,6 @@ Regularly formed from the **Genitive Plural stem** + case ending:
 - Gen. Pl: *majade* -> *majades, majadest, majadele, majadel, majadelt, majadeks, majadeni, majadena, majadeta, majadega*.
 - Gen. Pl: *meeste* -> *meestes, meestest, meestele, meestel, meestelt, meesteks, meesteni, meestena, meesteta, meestega*.
 
-*(Note: Certain words also support an i-plural based on the vowel-plural partitive: tubades ~ tubus, koolides ~ koolis).*
-
 ---
 
 ## 5. Locative Usages for Settlements & Proper Names
@@ -99,7 +97,7 @@ Estonian place names diverge on whether they take internal (*-sse, -s, -st*) or 
 | Settlement / Country | In / At (*Kus?*) | To (*Kuhu?*) | From (*Kust?*) | Rule / Notes |
 | --- | --- | --- | --- | --- |
 | **Tallinn** | *Tallinnas* | *Tallinnasse / Tallinna* | *Tallinnast* | Internal (most cities) |
-| **Tartu** | *Tartus* | *Tartusse / Sartu* | *Tartust* | Internal |
+| **Tartu** | *Tartus* | *Tartusse / Tartu* | *Tartust* | Internal |
 | **Pärnu** | *Pärnus* | *Pärnusse / Pärnu* | *Pärnust* | Internal |
 | **Narva** | *Narvas* | *Narvasse / Narva* | *Narvast* | Internal |
 | **Viljandi** | *Viljandis* | *Viljandisse / Viljandi* | *Viljandist* | Internal |

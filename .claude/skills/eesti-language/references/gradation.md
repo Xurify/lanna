@@ -19,15 +19,16 @@ Only the length (quantity) of consonants or vowels changes, but the sound qualit
 
 ### 2. Qualitative Alternation (Kvalitatiivne astmevaheldus)
 A consonant changes into another consonant or disappears completely (*kaob*):
-- **b -> v**: *tuba* : *toa* (historical *b* dropped); *leib* : *leiva*
+- **b -> v**: *leib* : *leiva* (bread); *tõbi* : *tõve* (disease)
+- **b -> Ø**: *tuba* : *toa* (historical *b* dropped)
 - **d -> j**: *rada* : *raja* (path); *sada* : *saja* (hundred)
-- **d -> Ø**: *riid* : *riiu* (quarrel); *vedama* : *vean* (to pull); *tegema* : *teen* (to do)
-- **g -> Ø**: *jõgi* : *jõe* (river); *nuga* : *noa* (knife); *lugu* : *loo* (story); *lugema* : *loen* (to read)
-- **k -> Ø**: *tõbi* : *tõve*
+- **d -> Ø**: *riid* : *riiu* (quarrel); *vedama* : *vean* (to pull)
+- **g -> Ø**: *jõgi* : *jõe* (river); *nuga* : *noa* (knife); *lugu* : *loo* (story); *lugema* : *loen* (to read); *tegema* : *teen* (to do)
 - **ht -> h**: *leht* : *lehe* (leaf/sheet); *täht* : *tähe* (star/letter)
 - **sk -> s**: *usk* : *usu* (faith/belief); *viskama* : *viskan* (to throw)
-- **lk -> l**: *jalg* : *jala* (foot/leg); *palk* : *palga* (salary)
-- **rk -> r**: *hark* : *hargu* (fork); *mürk* : *mürgi* (poison)
+- **lg -> l**: *jalg* : *jala* (foot/leg)
+- **lk -> lg**: *palk* : *palga* (salary)
+- **rk -> rg**: *hark* : *hargu* (fork); *mürk* : *mürgi* (poison)
 
 ---
 
@@ -59,12 +60,12 @@ The dictionary form is in the **weak grade**, while the Genitive Sg or Present s
 | *mõte* (thought) | *mõte* (weak) | *mõtte* (strong) | *mõtet* (weak) |
 | *hammas* (tooth) | *hammas* (weak) | *hamba* (strong) | *hammast* (weak) |
 | *kallis* (expensive/dear) | *kallis* (weak) | *kalli* (strong) | *kallist* (weak) |
-| *kingitus* (gift) | *kingitus* (weak) | *kingituse* (strong) | *kingitust* (weak) |
+| *kallas* (shore/bank) | *kallas* (weak) | *kalda* (strong) | *kallast* (weak) |
 | *tütar* (daughter) | *tütar* (weak) | *tütre* (strong) | *tütart* (weak) |
-| **Verbs** | ***ma*-infinitive** | **1sg Present (*mina*)** | ***da*-infinitive** |
-| *hakkama* (to begin) | *hakkama* (strong) | *hakkan* (strong) | *hakata* (weak) |
-| *tõusma* (to rise) | *tõusma* (strong) | *tõusen* (weak) | *tõusta* (strong) |
-| *pöörduma* (to turn) | *pöörduma* (strong) | *pöördun* (strong) | *pöörduda* (weak) |
+| **Verbs** | ***ma*-infinitive** | **3sg Present (*tema*)** | ***da*-infinitive** |
+| *katkema* (to break) | *katkema* (weak) | *katkeb* (strong) | *katkeda* (weak) |
+| *pettuma* (to be disappointed) | *pettuma* (weak) | *pettub* (strong) | *pettuda* (weak) |
+| *hõljuma* (to hover) | *hõljuma* (weak) | *hõljub* (strong) | *hõljuda* (weak) |
 
 ---
 

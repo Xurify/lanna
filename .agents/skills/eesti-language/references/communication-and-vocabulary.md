@@ -77,7 +77,7 @@ Token-minimized reference for high-frequency communicative frames and essential 
 | **Cold & Fever** | *Mul on nohu, köha ja palavik.* | Adessive *mul on* + Nominative symptoms |
 | | *Mul on paha olla.* | "I feel bad / sick" |
 | **Pharmacy Advice** | *Võtke seda rohtu kaks korda päevas.* | Imperative *võtke* + Partitive *seda rohtu* |
-| | *Pärast sööki / enne magamaminekut.* | Genitive + *pärast*; Preposition *enne* + Genitive |
+| | *Pärast sööki / enne magamaminekut.* | Preposition *pärast* + Partitive (*sööki*); Preposition *enne* + Partitive (*magamaminekut*) |
 | **Well Wishes** | *Saa ruttu terveks!* (informal) | Imperative *saa* + Translative *terveks* |
 | | *Saage ruttu terveks!* (formal) | 2pl Imperative *saage* |
 
