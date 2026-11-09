@@ -5,7 +5,7 @@
  */
 
 import { CheatsheetParseError, CHEATSHEET_MAX_CHARS, REPO_PREFIX } from "@/src/core";
-import { cheatsheetReviewState, cheatsheetStore } from "@/src/server";
+import { cheatsheetReviewState, cheatsheetStore, sheetListenState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 	const { id } = await ctx.params;
 	const sheet = cheatsheetStore.get(id);
 	if (!sheet) return NOT_FOUND();
-	return Response.json({ sheet, review: cheatsheetReviewState(sheet) });
+	return Response.json({ sheet, review: cheatsheetReviewState(sheet), listen: sheetListenState(sheet) });
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {

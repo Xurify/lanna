@@ -217,6 +217,15 @@ export const FEATURES: readonly Feature[] = [
 		sources: ["vanzeeland2013", "nation2006", "staehr2009", "goh2000", "adolphs2003"],
 	},
 	{
+		id: "cheatsheet-listen",
+		title: "Listen to a cheatsheet",
+		route: "/listen",
+		evidence: "Listeners often know the words yet cannot parse them at speed (Goh 2000). Hearing a passage a second time helped listeners more than being taught its words first (Chang & Read 2006). Typing what you hear shows which of your phrases the ear has, and which you can only read.",
+		limits: "Neither study tested dictation of a learner's own phrase list. The second hearing in Chang & Read was the same passage in one sitting, not a phrase that comes back in a later session. Typing also tests spelling, so a miss can be a spelling miss and not a hearing miss. The phrases are yours as written: nothing checks them against the dictionary.",
+		ours: "Ten phrases a session: up to five missed ones first, then phrases not heard yet in the sheet's order, then the ones caught the fewest times in a row. A phrase with two forms (\"a / b\") is played as two, and a phrase with … in it is not played, so the count differs from the sheet's. \"Caught by ear\" means the last answer matched the phrase without the text shown. None of it counts toward words known, the listening speed or the listening trends.",
+		sources: ["goh2000", "chang2006"],
+	},
+	{
 		id: "read",
 		title: "Read",
 		route: "/read",

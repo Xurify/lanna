@@ -94,6 +94,8 @@ export { savedPhraseStore } from "../store/saved-phrases.ts";
 export { knownWordStore } from "../store/known-words.ts";
 export { cheatsheetStore } from "../store/cheatsheets.ts";
 export * from "./cheatsheets.ts";
+export * from "./sheet-listen.ts";
+export { sheetPracticeStore } from "../store/sheet-practice.ts";
 // Remote access (E21): the pairing and device-session API, for app/api/access and Settings.
 export { desktopWindowRequest } from "./desktop-access.ts";
 export {

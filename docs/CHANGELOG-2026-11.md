@@ -2,6 +2,16 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: a cheatsheet can be practiced by ear (branch `feat/cheatsheet-listen-practice`)
+
+- **Why:** the owner wants to play a co-op game with a friend in Russian only, at A1, and asked whether a 3D scene tool (Spline, Hana, Omma) would help and whether the phrase PDFs belong in the app. The phrases were already a cheatsheet; nothing trained hearing them at speed. Rule E86, research note `docs/research/situation-practice.md`.
+- **What changed:** an open cheatsheet has **Listen and type**, and each section has **Listen**. Both open Listen on the sheet's own phrases: ten at a time, heard with the text hidden, typed as heard, then shown with the meaning and the note. Missed phrases come back first in the next session, then phrases not heard yet in the sheet's order. The sheet says how many phrases were caught by ear.
+- **Kept apart:** the phrases are the learner's own and unchecked, so this practice earns no XP, adds nothing to Review and is not in the lesson log. The listening speed, the listening trends and the Russian study do not read it. It counts as listening minutes.
+- **Data:** `cheatsheets/practice/<sheet id>.json` and `practice/log.jsonl`; the corpus export writes `cheatsheet-practice.json`.
+- **Not built:** saying the phrases with a score and a role-play of the situation (both are spoken Russian, which the study drops from 23 November; they wait for 20 December), the workbook's four dialogues, PDF import, any 3D scene.
+- **Checked:** `tsc`, `eslint .`, the full test run (2,150 pass, 3 skipped, 1 fail: `tests/provider-tracing.test.ts`, which fails on `main` too), and a sandbox switched to Russian with the shipped Animal Hospital sheet: a whole session clicked through by a script (a right answer, a wrong one, "I didn't catch it"), the end screen, the sheet before and after, one section's session, a phrase with a note, a sheet that is not there and a section with nothing to play, in Day and Night at 1280 and 390 px. The sandbox wrote the practice files and listening minutes, and no XP, lesson log or Review card.
+- **Unverified:** the owner's machine and phone; how the Russian clips sound (the sandbox made them with the free Edge voice, and nobody listened); typing Cyrillic on a phone keyboard.
+
 ## 9 November: the chat reads seamlessly, in a reading face (branch `feat/chat-seamless`)
 
 - **Why:** the owner: the chat felt like a generic chat app, also while it generated, and needed a more fitting font. A bounded sheet and five other layouts were turned down in favor of `main` with its boxes taken out. Rule E85.

@@ -115,6 +115,7 @@ export * from "./sources.ts";
 export * from "./credits.ts";
 export * from "./saved-phrases.ts";
 export * from "./cheatsheets.ts";
+export * from "./sheet-listen.ts";
 export * from "./word-search.ts";
 export * from "./pronounce.ts";
 export * from "./watch.ts";
