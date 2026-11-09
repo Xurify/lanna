@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { CheckIcon, CodeIcon, CopyIcon, DownloadIcon, FileTextIcon, LayersIcon, PrinterIcon } from "lucide-react";
+import { CheckIcon, CodeIcon, CopyIcon, DownloadIcon, FileTextIcon, PrinterIcon } from "lucide-react";
 import {
 	copyTextToClipboard,
 	chatClozeSentences,
@@ -17,6 +17,23 @@ import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { cn } from "@/lib/utils";
+
+function ClozemasterIcon({ className }: { className?: string }) {
+	return (
+		<svg
+			viewBox="0 0 48 48"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="4"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			className={className}
+			aria-hidden="true"
+		>
+			<path d="M7.4 42.5V6h9.25v5h4.9v5.5h4.9V11h4.9V5.5h9.8v37h-9.8V26.7h-4.9v5h-4.9v-5h-4.9V42.5Z" />
+		</svg>
+	);
+}
 
 export interface ChatExportMenuProps {
 	chatId: string;
@@ -147,8 +164,8 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
 						<ExportItem
 							testid="export-download-clozemaster"
-							icon={<LayersIcon className="size-3.5" aria-hidden />}
-							label="Clozemaster"
+							icon={<ClozemasterIcon className="size-3.5" aria-hidden />}
+							label="Export for Clozemaster"
 							detail={sentenceCount === 0 ? "none yet" : sentenceCount === 1 ? "1 sentence" : `${sentenceCount} sentences`}
 							disabled={sentenceCount === 0}
 							onSelect={(e) => download(e, `${slug}-clozemaster.tsv`, exportChatClozemasterTsv(sourceMessages), "text/tab-separated-values;charset=utf-8")}
