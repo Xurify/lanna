@@ -1180,11 +1180,67 @@ html[data-sidebar-resizing] .sidebar-motion {
 }
 
 .lh-voice .lh-prose {
-	font-size: 17px;
-	line-height: 1.7;
-	letter-spacing: -0.003em;
+	font-family: var(--font-read), var(--font-geist), system-ui, sans-serif;
+	font-size: 18px;
+	line-height: 1.68;
 	text-wrap: pretty;
 }
 .lh-voice .lh-prose :where(p + p) {
-	margin-top: 0.85em;
+	margin-top: 0.8em;
+}
+.lh-voice .lh-prose :where(strong) {
+	font-weight: 600;
+}
+.lh-voice .lh-spoken {
+	gap: 0.15em;
+	padding-inline: 0;
+	background: transparent;
+	font-weight: 600;
+}
+.lh-voice .lh-spoken [role="button"],
+.lh-voice .lh-spoken button {
+	color: var(--q-teal-2);
+}
+@keyframes lh-nib {
+	0%, 100% { transform: scaleX(0.35); opacity: 0.5; }
+	50% { transform: scaleX(1); opacity: 1; }
+}
+.lh-writing .lh-prose > :last-child::after {
+	content: "";
+	display: inline-block;
+	width: 0.9em;
+	height: 2px;
+	margin-inline-start: 0.3em;
+	border-radius: 1px;
+	background: var(--q-teal);
+	vertical-align: 0.2em;
+	transform-origin: left center;
+	animation: lh-nib 1.1s var(--ease-in-out) infinite;
+}
+.lh-recede {
+	opacity: 0.55;
+	transition: opacity var(--dur-base) var(--ease-out);
+}
+@media (hover: hover) {
+	.lh-recede:hover { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.lh-writing .lh-prose > :last-child::after { animation: none; transform: none; opacity: 1; }
+	.lh-recede { transition: none; }
+}
+@keyframes lh-pen {
+	0% { stroke-dashoffset: 1; opacity: 1; }
+	60% { stroke-dashoffset: 0; opacity: 1; }
+	100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.lh-pen {
+	stroke-dasharray: 1 2;
+	stroke-dashoffset: 1;
+	animation: lh-pen 1.6s var(--ease-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+	.lh-pen { stroke-dashoffset: 0; animation: none; }
+}
+.lh-fade-out {
+	mask-image: linear-gradient(to bottom, #000 calc(100% - 9rem), transparent calc(100% - 2rem));
 }
