@@ -8,7 +8,7 @@ export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 	for (const reply of replies) {
 		for (const match of reply.replace(/```[\s\S]*?(?:```|$)/g, "").matchAll(GLOSSED)) {
 			const phrase = match[1]!.trim();
-			const meaning = (match[2] ?? match[3] ?? "").trim();
+			const meaning = (match[2] ?? match[3] ?? "").trim().replace(/[.,;:]+$/, "");
 			const key = phrase.toLowerCase();
 			if (!meaning || seen.has(key)) continue;
 			seen.add(key);

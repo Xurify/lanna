@@ -69,12 +69,18 @@ function extractDrawingSvg(message: LhViewMessage | LhMessage): string | null {
 	return null;
 }
 
+const SAY_SPAN = /`say:\s*([^`]+?)\s*`/g;
+
+function withoutSayMarkup(text: string): string {
+	return text.replace(SAY_SPAN, "**$1**");
+}
+
 /** Formats a chat session as clean, readable Markdown. */
 export function exportChatMarkdown(
 	messages: ReadonlyArray<LhViewMessage | LhMessage>,
 	opts: ChatExportOptions = {},
 ): string {
-	const title = opts.title?.trim() || "Chat Session";
+	const title = opts.title?.trim() || "Chat";
 	const date = opts.exportedAt || new Date().toISOString().slice(0, 10);
 	const lines: string[] = [`# ${title}`, "", `*Exported from LangHarness · ${date}*`, "", "---", ""];
 
@@ -88,7 +94,7 @@ export function exportChatMarkdown(
 
 		const speaker = role === "user" ? "### Learner" : "### Tutor";
 		lines.push(speaker, "");
-		if (text) lines.push(text, "");
+		if (text) lines.push(withoutSayMarkup(text), "");
 		if (svg) {
 			lines.push("```svg", svg, "```", "");
 		}
@@ -97,7 +103,7 @@ export function exportChatMarkdown(
 	return lines.join("\n").trimEnd() + "\n";
 }
 
-/** Extracts Anki-compatible flashcards from vocabulary glosses and questions in the chat. */
+/** Extracts Anki-compatible flashcards from the forms the tutor glossed in the chat. */
 export function extractChatAnkiCards(
 	messages: ReadonlyArray<LhViewMessage | LhMessage>,
 	opts: ChatExportOptions = {},
@@ -106,7 +112,6 @@ export function extractChatAnkiCards(
 	const cards: AnkiCard[] = [];
 	const seen = new Set<string>();
 
-	// 1. Extract vocabulary glosses using boardPhrases
 	const replyTexts: string[] = [];
 	for (const msg of messages) {
 		if (msg.role === "assistant") {
@@ -128,35 +133,10 @@ export function extractChatAnkiCards(
 		});
 	}
 
-	// 2. Extract posed questions & answers
-	for (const msg of messages) {
-		if (msg.role !== "assistant") continue;
-		if ("parts" in msg && Array.isArray(msg.parts)) {
-			for (const part of msg.parts) {
-				if (part.type === "tool-pose") {
-					const input = part.input as { questionText?: string; answer?: string; focus?: string } | undefined;
-					const question = input?.questionText?.trim();
-					const answer = input?.answer?.trim();
-					if (question && answer) {
-						const key = question.toLowerCase();
-						if (!seen.has(key)) {
-							seen.add(key);
-							cards.push({
-								front: question,
-								back: answer,
-								tags: `${defaultTag}::quiz`,
-							});
-						}
-					}
-				}
-			}
-		}
-	}
-
 	return cards;
 }
 
-/** Formats chat vocabulary and questions as a TSV file ready for Anki import. */
+/** Formats the chat's glossed forms as a TSV file ready for Anki import. */
 export function exportChatAnkiTsv(
 	messages: ReadonlyArray<LhViewMessage | LhMessage>,
 	opts: ChatExportOptions = {},
@@ -190,7 +170,7 @@ export function exportChatJson(
 		version: 1,
 		format: "langharness-chat-export",
 		chatId,
-		title: title.trim() || "Chat Session",
+		title: title.trim() || "Chat",
 		exportedAt: new Date().toISOString(),
 		messageCount: messages.length,
 		messages,

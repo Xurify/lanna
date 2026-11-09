@@ -99,6 +99,52 @@ describe("ranking and sentences", () => {
 		assert.equal(c.examples.get("děkovat\u0000verb"), undefined);
 	});
 
+	test("after the first sentences, a word gets one more for each form it lacks, then a second, up to the cap", () => {
+		const words = [{ ...word("kočka", "noun", ["kočku", "kočce", "kočkou"]), rank: 1 }];
+		const c = new build.ExampleCollector(words, TAG, 2, { perForm: 2, maxPerWord: 5 });
+		const lines = ["Kočka spí.", "Kočka jí.", "Kočka pije.", "Vidím kočku.", "Mám kočku.", "Hladím kočku.", "Dám to kočce.", "Jdu s kočkou."];
+		lines.forEach((text, i) => c.add({ id: i + 1, text, en: text }));
+		const blanks = c.examples.get("kočka\u0000noun")!.map((e) => e.cloze!.answer);
+		assert.deepEqual(blanks, ["Kočka", "Kočka", "kočku", "kočce", "kočkou"]);
+	});
+
+	test("a capitalized spelling inside a sentence is a name, not the common word that shares it", () => {
+		const words = [{ ...word("tom", "noun", ["toma", "tomem"], ["volume"]), rank: 1 }];
+		const sentences = [{ text: "Mluvím s Tomem." }, { text: "Ptal se Toma." }, { text: "Toma tu není." }, { text: "Druhý tom je lepší." }];
+		const names = build.namesIn(sentences, TAG);
+		assert.deepEqual([...names].sort(), ["toma", "tomem"]);
+		const c = new build.ExampleCollector(words, TAG, 5, { names });
+		sentences.forEach((s, i) => c.add({ id: i + 1, text: s.text, en: s.text }));
+		assert.deepEqual(c.examples.get("tom\u0000noun")!.map((e) => e.text), ["Druhý tom je lepší."]);
+	});
+
+	test("a form that a word outside the list also owns is not blanked, nor a word joined by a hyphen", () => {
+		const words = [{ ...word("vann", "noun", ["vannita"], ["bathtub"]), rank: 1 }];
+		const outside = [word("vannitama", "verb", ["vannita"], ["to bathe"])];
+		const c = new build.ExampleCollector(words, TAG, 5, { outside });
+		c.add({ id: 1, text: "Palun vannita lapsed.", en: "Please bathe the children." });
+		c.add({ id: 2, text: "Vann-ruum on suur.", en: "The bathroom is big." });
+		c.add({ id: 3, text: "Ma tahan kohvi ilma vannita.", en: "Without a bathtub." });
+		assert.deepEqual(c.examples.get("vann\u0000noun"), undefined);
+	});
+
+	test("a noun spelled like an adjective in every form is that adjective, which then ranks", () => {
+		const merged = build.mergeHomographs([word("červený", "adj", ["červená", "červeného"], ["red"]), word("červený", "noun", ["červeného"], ["a Red"])], TAG);
+		assert.deepEqual(merged.map((w) => w.pos), ["adj"]);
+		assert.deepEqual(build.rankWords(merged, new Map([["červená", 7]]), TAG, 10).map((w) => w.rank), [7]);
+	});
+
+	test("a word written with ё ranks by the е spelling a frequency list may use", () => {
+		const ranked = build.rankWords([word("зелёный", "adj", ["зелёная"])], new Map([["зеленый", 40]]), "ru-RU", 10);
+		assert.deepEqual(ranked.map((w) => w.rank), [40]);
+	});
+
+	test("the course's theme words stay in the list past the limit", () => {
+		const words = [word("a", "noun", ["ax"]), word("b", "noun", ["bx"]), word("c", "noun", ["cx"])];
+		const freq = new Map([["a", 1], ["b", 2], ["c", 3]]);
+		assert.deepEqual(build.rankWords(words, freq, TAG, 1, new Set(["c"])).map((w) => w.lemma), ["a", "c"]);
+	});
+
 	test("usable sentences are short and have no digits", () => {
 		assert.equal(build.sentenceUsable("Kočka spí."), true);
 		assert.equal(build.sentenceUsable("Mám 3 kočky."), false);

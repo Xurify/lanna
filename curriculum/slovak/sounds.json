@@ -1,0 +1,30 @@
+{
+	"language": "slovak",
+	"version": 1,
+	"sounds": [
+		{
+			"id": "dlzka-a-cestovanie",
+			"chapter": "moving",
+			"title": "Long á: pas and pás",
+			"rule": "Vowel length changes the word. pas is a passport; pás is a belt or a strip. Hold the á about twice as long as the a.",
+			"bridge": "Estonian also tells words apart by vowel length, so this is a contrast your ear has already met.",
+			"twins": [
+				{ "slug": "pas-n", "sk": "pas", "en": "passport" },
+				{ "slug": "pas", "sk": "pás", "en": "belt; strip; band" }
+			],
+			"lines": ["Máš sýrsky pas?", "Váš pas, prosím.", "Zapni si pásy.", "Zapnite si pásy."]
+		},
+		{
+			"id": "dlzka-a-ludia",
+			"chapter": "people",
+			"title": "Long á: rad and rád",
+			"rule": "rad is a row, a queue or a turn. rád is glad, or with mať to like. The á makes the difference.",
+			"bridge": "Estonian also tells words apart by vowel length, so this is a contrast your ear has already met.",
+			"twins": [
+				{ "slug": "rad-n", "sk": "rad", "en": "row; line; turn" },
+				{ "slug": "rad", "sk": "rád", "en": "glad; (mať rád) to like" }
+			],
+			"lines": ["Kto je na rade?", "Pred pokladňou stál dlhý rad.", "Mám rád knihy.", "Mám rád čaj."]
+		}
+	]
+}

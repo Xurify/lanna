@@ -416,6 +416,36 @@ body {
 		page-break-inside: avoid;
 	}
 
+	:root,
+	.dark,
+	:root[data-theme="night"],
+	:root:not([data-theme="day"]) {
+		color-scheme: light;
+		--q-bg: #ffffff;
+		--q-card: #ffffff;
+		--q-side: #f6f6f4;
+		--q-well: #f5f5f3;
+		--q-well-2: #ededea;
+		--q-line: #e8e8e5;
+		--q-line-2: #d8d9d5;
+		--q-ink: #16181b;
+		--q-ink-2: #3f444a;
+		--q-ink-3: #656b72;
+		--q-ink-4: #70757b;
+		--q-teal: #0d6764;
+		--q-teal-2: #0a5452;
+		--q-miss: #b42318;
+		--q-field: #f5f5f3;
+	}
+
+	.lh-fade-out {
+		mask-image: none;
+	}
+
+	.lh-recede {
+		opacity: 1;
+	}
+
 	@page {
 		margin: 1.5cm;
 	}
@@ -555,6 +585,56 @@ body {
 	--pele-radius: var(--radius);
 	--pele-font: ui-sans-serif, system-ui, sans-serif;
 	--pele-font-mono: ui-monospace, monospace;
+}
+
+/* Plan diagrams (components/plan-block.tsx): the sizing wrapper decides the
+   size, Pele draws the svg, and these rules set its corners, reading font and
+   the status colors. Every color is a theme token, so day and night follow. */
+.plan-wrap > .pele {
+	display: block;
+	width: 100% !important;
+	height: auto !important;
+}
+.plan-fill > .pele {
+	height: 100% !important;
+}
+.plan-wrap .pele {
+	--pele-radius: 0;
+	--pele-font: var(--font-prose);
+	--pele-line: var(--foreground);
+}
+.plan-wrap .pele-node rect {
+	fill: var(--card);
+	stroke: var(--border);
+	stroke-width: 1;
+}
+.plan-wrap .pele-node .pele-label {
+	fill: var(--foreground);
+}
+.plan-mono .pele-node rect {
+	stroke: var(--foreground);
+}
+/* Visited and current boxes are half see-through, so an arrow behind them
+   shows at half strength. */
+.plan-wrap .pele-node.visited rect,
+.plan-wrap .pele-node.current rect {
+	fill: color-mix(in srgb, var(--background) 50%, transparent);
+	stroke: var(--foreground);
+}
+.plan-wrap .pele-node.upcoming .pele-label {
+	fill: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
+}
+.plan-wrap .pele-node.current .pele-label {
+	font-weight: 500;
+}
+.plan-wrap .pele-node.current rect {
+	filter: drop-shadow(0 0 5px color-mix(in srgb, #facc15 45%, transparent));
+}
+.plan-wrap .pele-edge.dim path {
+	stroke: var(--border);
+}
+.plan-wrap .pele-edge.dim .pele-marker {
+	fill: var(--border);
 }
 
 [data-streamdown="mermaid"] svg {
@@ -1130,11 +1210,67 @@ html[data-sidebar-resizing] .sidebar-motion {
 }
 
 .lh-voice .lh-prose {
-	font-size: 17px;
-	line-height: 1.7;
-	letter-spacing: -0.003em;
+	font-family: var(--font-read), var(--font-geist), system-ui, sans-serif;
+	font-size: 18px;
+	line-height: 1.68;
 	text-wrap: pretty;
 }
 .lh-voice .lh-prose :where(p + p) {
-	margin-top: 0.85em;
+	margin-top: 0.8em;
+}
+.lh-voice .lh-prose :where(strong) {
+	font-weight: 600;
+}
+.lh-voice .lh-spoken {
+	gap: 0.15em;
+	padding-inline: 0;
+	background: transparent;
+	font-weight: 600;
+}
+.lh-voice .lh-spoken [role="button"],
+.lh-voice .lh-spoken button {
+	color: var(--q-teal-2);
+}
+@keyframes lh-nib {
+	0%, 100% { transform: scaleX(0.35); opacity: 0.5; }
+	50% { transform: scaleX(1); opacity: 1; }
+}
+.lh-writing .lh-prose > :last-child::after {
+	content: "";
+	display: inline-block;
+	width: 0.9em;
+	height: 2px;
+	margin-inline-start: 0.3em;
+	border-radius: 1px;
+	background: var(--q-teal);
+	vertical-align: 0.2em;
+	transform-origin: left center;
+	animation: lh-nib 1.1s var(--ease-in-out) infinite;
+}
+.lh-recede {
+	opacity: 0.65;
+	transition: opacity var(--dur-base) var(--ease-out);
+}
+@media (hover: hover) {
+	.lh-recede:hover { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.lh-writing .lh-prose > :last-child::after { animation: none; transform: none; opacity: 1; }
+	.lh-recede { transition: none; }
+}
+@keyframes lh-pen {
+	0% { stroke-dashoffset: 1; opacity: 1; }
+	60% { stroke-dashoffset: 0; opacity: 1; }
+	100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.lh-pen {
+	stroke-dasharray: 1 2;
+	stroke-dashoffset: 1;
+	animation: lh-pen 1.6s var(--ease-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+	.lh-pen { stroke-dashoffset: 0; animation: none; }
+}
+.lh-fade-out {
+	mask-image: linear-gradient(to bottom, #000 calc(100% - 9rem), transparent calc(100% - 2rem));
 }

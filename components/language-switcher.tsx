@@ -19,6 +19,7 @@ import {
 	CircleAlertIcon,
 	ClapperboardIcon,
 	FlagIcon,
+	FlaskConicalIcon,
 	HeadphonesIcon,
 	HistoryIcon,
 	type LucideIcon,
@@ -277,6 +278,7 @@ const NAV_ICONS: Record<NavId, LucideIcon> = {
 	milestones: FlagIcon,
 	mistakes: CircleAlertIcon,
 	log: HistoryIcon,
+	experiment: FlaskConicalIcon,
 };
 
 function NavItem({
