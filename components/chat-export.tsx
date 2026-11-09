@@ -21,16 +21,15 @@ import { cn } from "@/lib/utils";
 function ClozemasterIcon({ className }: { className?: string }) {
 	return (
 		<svg
-			viewBox="0 0 48 48"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="4"
-			strokeLinecap="round"
-			strokeLinejoin="round"
+			viewBox="0 0 14 14"
+			fill="currentColor"
 			className={className}
 			aria-hidden="true"
 		>
-			<path d="M7.4 42.5V6h9.25v5h4.9v5.5h4.9V11h4.9V5.5h9.8v37h-9.8V26.7h-4.9v5h-4.9v-5h-4.9V42.5Z" />
+			<path
+				fillRule="evenodd"
+				d="M0 0h4v2h2v2h2V2h2V0h4v14h-4v-4H4v4H0V0Zm4 8h2v2H4V8Zm4 0h2v2H8V8Z"
+			/>
 		</svg>
 	);
 }
@@ -63,7 +62,7 @@ function ExportItem({ icon, label, detail, disabled, testid, onSelect }: { icon:
 		>
 			<span className="text-ink-3">{icon}</span>
 			<span className="flex-1 font-medium">{label}</span>
-			<span className="text-ink-3 tabular-nums">{detail}</span>
+			<span className="shrink-0 text-ink-3 tabular-nums">{detail}</span>
 		</button>
 	);
 }
@@ -153,11 +152,11 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 			</Hint>
 
 			{open && (
-				<MenuShell anchorRef={triggerRef} testid="export-chat-menu" preferredSide="down" align="right" menuClass="flex w-64 flex-col gap-0.5 rounded-xl border border-border/80 bg-card p-1.5 text-xs shadow-xl">
+				<MenuShell anchorRef={triggerRef} testid="export-chat-menu" preferredSide="down" align="right" menuClass="flex w-72 flex-col gap-0.5 rounded-xl border border-border/80 bg-card p-1.5 text-xs shadow-xl">
 					<div role="menu" aria-label="Export this chat" className="flex flex-col gap-0.5">
 						<ExportItem
 							testid="export-copy-markdown"
-							icon={copy === "copied" ? <CheckIcon className="size-3.5 text-teal" aria-hidden /> : <CopyIcon className="size-3.5" aria-hidden />}
+							icon={copy === "copied" ? <CheckIcon className="size-3.5 text-teal" aria-hidden /> : <CopyIcon className="size-3.5" aria-hidden /> }
 							label={COPY_LABEL[copy]}
 							onSelect={copyMarkdown}
 						/>
@@ -165,7 +164,7 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 						<ExportItem
 							testid="export-download-clozemaster"
 							icon={<ClozemasterIcon className="size-3.5" aria-hidden />}
-							label="Export for Clozemaster"
+							label="Export to Clozemaster"
 							detail={sentenceCount === 0 ? "none yet" : sentenceCount === 1 ? "1 sentence" : `${sentenceCount} sentences`}
 							disabled={sentenceCount === 0}
 							onSelect={(e) => download(e, `${slug}-clozemaster.tsv`, exportChatClozemasterTsv(sourceMessages), "text/tab-separated-values;charset=utf-8")}
