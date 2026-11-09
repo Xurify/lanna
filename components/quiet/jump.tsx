@@ -10,6 +10,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QIcon } from "@/components/quiet/icon";
+import { renderAhead } from "@/components/instant-navigation";
 import { insertAtCaret } from "@/components/diacritic-bar";
 import { useSidebar } from "@/components/sidebar";
 import { useSettingsDialog } from "@/components/settings/settings-context";
@@ -128,6 +129,11 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 			.slice(0, 12)
 			.map((x) => x.p);
 	}, [places, q]);
+
+	const aimedAt = shown[sel]?.id;
+	useEffect(() => {
+		if (aimedAt?.startsWith("/")) renderAhead(router, aimedAt);
+	}, [aimedAt, router]);
 
 	const run = (p: Place | undefined) => {
 		if (!p) return;
