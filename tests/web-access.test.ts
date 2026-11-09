@@ -184,6 +184,83 @@ describe("the Tailscale path beside the public address", () => {
 	});
 });
 
+describe("inside Docker, where every connection comes from 172.17.0.1", () => {
+	const bridge = { "x-forwarded-for": "172.17.0.1" };
+	const raw = (headers: Record<string, string>, extra: Partial<Omit<AccessInput, "headers" | "publicMode" | "host">> = {}, env: Record<string, string | undefined> = ENV): AccessInput => {
+		const all = new Headers(headers);
+		return {
+			pathname: "/",
+			method: "GET",
+			host: all.get("host"),
+			headers: all,
+			enabled: true,
+			desktopWindow: false,
+			desktopApiOk: true,
+			paired: false,
+			publicMode: publicModeFrom(all, env),
+			...extra,
+		};
+	};
+	const refused = (input: AccessInput) => decideAccess(input).action === "refuse";
+
+	const loopbackNames = ["127.0.0.1:3010", "localhost:3010", "[::1]:3010", "127.0.0.1"];
+	const proxyMarks: Record<string, string>[] = [{}, { "x-real-ip": "203.0.113.9" }, { forwarded: "for=203.0.113.9" }, { "x-real-ip": "203.0.113.9", forwarded: "for=203.0.113.9", "x-forwarded-proto": "https" }];
+	const requests = [
+		{ pathname: "/", method: "GET" },
+		{ pathname: "/api/settings", method: "GET" },
+		{ pathname: "/api/keys", method: "GET" },
+		{ pathname: "/api/access", method: "PUT" },
+		{ pathname: "/api/access/login", method: "POST" },
+		{ pathname: "/login", method: "GET" },
+	];
+
+	it("refuses a loopback Host at the public address, with or without proxy headers, on every kind of request", () => {
+		for (const host of loopbackNames) {
+			for (const marks of proxyMarks) {
+				for (const { pathname, method } of requests) {
+					const headers = { host, ...bridge, ...marks };
+					for (const signedIn of [false, true]) {
+						assert.equal(refused(raw(headers, { pathname, method, paired: signedIn })), true, `${method} ${pathname} host=${host} marks=${Object.keys(marks).join("+") || "none"} signedIn=${signedIn}`);
+					}
+				}
+			}
+		}
+	});
+
+	it("refuses a loopback Host even when the proxy secret is right, because the name is not the public one", () => {
+		for (const host of loopbackNames) {
+			const headers = { host, ...bridge, "x-real-ip": "203.0.113.9", "x-forwarded-proto": "https", [PROXY_SECRET_HEADER]: SECRET };
+			assert.equal(refused(raw(headers)), true, host);
+			assert.equal(refused(raw({ ...headers, "x-forwarded-host": HOST })), true, `${host} with the original host named`);
+		}
+	});
+
+	it("refuses the public Host from the bridge when the secret is missing, whatever else the proxy sent", () => {
+		const headers = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", "x-real-ip": "203.0.113.9", ...bridge };
+		assert.equal(refused(raw(headers)), true);
+		assert.equal(refused(raw({ ...headers, forwarded: "for=203.0.113.9;proto=https" })), true);
+	});
+
+	it("lets only the public Host with the secret and HTTPS through, and then needs a session", () => {
+		const good = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", "x-real-ip": "203.0.113.9", "x-forwarded-for": "203.0.113.9", [PROXY_SECRET_HEADER]: SECRET };
+		assert.deepEqual(decideAccess(raw(good)), { action: "login" });
+		assert.deepEqual(decideAccess(raw(good, { paired: true })), { action: "allow" });
+		assert.deepEqual(decideAccess(raw(good, { pathname: "/login" })), { action: "allow" });
+		assert.equal(refused(raw({ ...good, "x-forwarded-proto": "http" })), true);
+	});
+
+	it("keeps desktop and dev as they were when LH_PUBLIC_HOST is not set: this computer passes, a marked request does not", () => {
+		const unset = {};
+		for (const host of loopbackNames) {
+			assert.deepEqual(decideAccess(raw({ host, ...bridge }, {}, unset)), { action: "allow" }, host);
+			assert.deepEqual(decideAccess(raw({ host, ...bridge }, { pathname: "/api/settings" }, unset)), { action: "allow" }, `${host} API`);
+			assert.deepEqual(decideAccess(raw({ host, ...bridge, "x-real-ip": "203.0.113.9" }, {}, unset)), { action: "pair" }, `${host} with X-Real-IP, access on`);
+			assert.equal(refused(raw({ host, ...bridge, "x-real-ip": "203.0.113.9" }, { enabled: false }, unset)), true, `${host} with X-Real-IP, access off`);
+			assert.equal(refused(raw({ host, ...bridge, forwarded: "for=203.0.113.9" }, { enabled: false }, unset)), true, `${host} with Forwarded, access off`);
+		}
+	});
+});
+
 describe("where to go after signing in, and who is asking", () => {
 	it("keeps the redirect inside the app", () => {
 		assert.equal(safeNext("/read?id=3"), "/read?id=3");
