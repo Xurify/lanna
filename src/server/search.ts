@@ -110,9 +110,8 @@ export function braveProvider(apiKey: string, fetchFn: FetchLike = fetch): Searc
 
 /** Context: POST https://api.context.dev/v1/web/search — Bearer auth in the
  *  Authorization header, query + numResults in the JSON body.
- *  VERIFIED against docs.context.dev OpenAPI, 2026-11-09:
- *  response {results: [{title, url, description, highlights?: {highlights: string[]}}]},
- *  errors {message, error_code}. */
+ *  Response: {results: [{title, url, description, highlights?: string[] | {highlights: string[]}}]},
+ *  Errors: {message, error_code}. */
 export function contextProvider(apiKey: string, fetchFn: FetchLike = fetch): SearchProvider {
 	return {
 		id: "context",
@@ -123,15 +122,16 @@ export function contextProvider(apiKey: string, fetchFn: FetchLike = fetch): Sea
 					"content-type": "application/json",
 					authorization: `Bearer ${apiKey}`,
 				},
-				body: JSON.stringify({ query, numResults: Math.min(count, 20) }),
+				body: JSON.stringify({ query, numResults: Math.max(1, Math.min(count, 20)) }),
 				signal: AbortSignal.timeout(30_000),
 			});
 			if (!resp.ok) {
 				const body = await resp.text();
 				let detail = body.slice(0, 200);
 				try {
-					const parsed = JSON.parse(body) as { message?: string; error_code?: string };
+					const parsed = JSON.parse(body) as { message?: string; error?: string; error_code?: string };
 					if (parsed.message) detail = parsed.message.slice(0, 200);
+					else if (parsed.error) detail = parsed.error.slice(0, 200);
 				} catch {
 					/* keep raw slice */
 				}
@@ -142,18 +142,25 @@ export function contextProvider(apiKey: string, fetchFn: FetchLike = fetch): Sea
 					title?: string;
 					url?: string;
 					description?: string;
-					highlights?: { highlights?: string[] };
+					highlights?: string[] | { highlights?: string[] };
 				}>;
 			};
 			return (data.results ?? [])
 				.filter((r) => typeof r.url === "string" && r.url)
-				.map((r) => ({
-					title: r.title ?? r.url ?? "",
-					url: r.url ?? "",
-					snippet: (r.description ?? r.highlights?.highlights?.join(" ") ?? "")
-						.replace(/\n/g, " ")
-						.slice(0, 500),
-				}));
+				.map((r) => {
+					const highlightText = Array.isArray(r.highlights)
+						? r.highlights.join(" ")
+						: Array.isArray(r.highlights?.highlights)
+						? r.highlights.highlights.join(" ")
+						: "";
+					return {
+						title: r.title ?? r.url ?? "",
+						url: r.url ?? "",
+						snippet: (r.description?.trim() || highlightText || "")
+							.replace(/\s+/g, " ")
+							.slice(0, 500),
+					};
+				});
 		},
 	};
 }

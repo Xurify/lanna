@@ -102,7 +102,8 @@ describe("contextProvider (wire shape per docs.context.dev, verified 2026-11-09)
 			{
 				results: [
 					{ title: "Context Example", url: "https://example.com/c", description: "line1\nline2" },
-					{ title: "Highlight Example", url: "https://example.com/h", highlights: { highlights: ["passages", "found"] } },
+					{ title: "Array Highlights", url: "https://example.com/a", highlights: ["passage1", "passage2"] },
+					{ title: "Object Highlights", url: "https://example.com/o", highlights: { highlights: ["nested", "passage"] } },
 					{ title: "No URL", description: "dropped" },
 				],
 			},
@@ -120,15 +121,33 @@ describe("contextProvider (wire shape per docs.context.dev, verified 2026-11-09)
 		const hits = await provider.search("test query", 5);
 		assert.deepEqual(hits, [
 			{ title: "Context Example", url: "https://example.com/c", snippet: "line1 line2" },
-			{ title: "Highlight Example", url: "https://example.com/h", snippet: "passages found" },
+			{ title: "Array Highlights", url: "https://example.com/a", snippet: "passage1 passage2" },
+			{ title: "Object Highlights", url: "https://example.com/o", snippet: "nested passage" },
 		]);
 	});
 
-	it("maps the {message, error_code} error body into the message", async () => {
+	it("clamps numResults between 1 and 20", async () => {
+		let requestedResults = 0;
+		const provider = contextProvider("cxt-throwaway-key-00001", stubFetch({ results: [] }, (_url, init) => {
+			const body = JSON.parse(init.body as string);
+			requestedResults = body.numResults;
+		}));
+		await provider.search("q", 0);
+		assert.equal(requestedResults, 1);
+		await provider.search("q", 99);
+		assert.equal(requestedResults, 20);
+	});
+
+	it("maps the {message, error_code} and {error} error body into the message", async () => {
 		const provider = contextProvider("cxt-throwaway-key-00001", async () =>
 			new Response(JSON.stringify({ message: "Profile not found or subscription expired.", error_code: "PROFILE_NOT_FOUND" }), { status: 401 }),
 		);
 		await assert.rejects(provider.search("q", 5), /Context search API 401: Profile not found/);
+
+		const errorProvider = contextProvider("cxt-throwaway-key-00001", async () =>
+			new Response(JSON.stringify({ error: "Invalid API token" }), { status: 403 }),
+		);
+		await assert.rejects(errorProvider.search("q", 5), /Context search API 403: Invalid API token/);
 	});
 
 	it("surfaces raw HTTP status on error without JSON body", async () => {
