@@ -22,6 +22,8 @@ function ClozemasterIcon({ className }: { className?: string }) {
 	return (
 		<svg
 			viewBox="0 0 14 14"
+			width="14"
+			height="14"
 			fill="currentColor"
 			className={className}
 			aria-hidden="true"
@@ -44,9 +46,9 @@ export interface ChatExportMenuProps {
 
 type CopyState = "idle" | "copied" | "failed";
 
-const COPY_LABEL: Record<CopyState, string> = {
+const COPY_LABEL: Record<"idle" | "copied" | "failed", string> = {
 	idle: "Copy as Markdown",
-	copied: "Copied",
+	copied: "Copied to clipboard",
 	failed: "Could not copy",
 };
 
@@ -58,11 +60,13 @@ function ExportItem({ icon, label, detail, disabled, testid, onSelect }: { icon:
 			data-testid={testid}
 			disabled={disabled}
 			onClick={onSelect}
-			className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
+			className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
 		>
-			<span className="text-ink-3">{icon}</span>
+			<span className="flex size-4 shrink-0 items-center justify-center text-ink-3" aria-hidden="true">
+				{icon}
+			</span>
 			<span className="flex-1 font-medium">{label}</span>
-			<span className="shrink-0 text-ink-3 tabular-nums">{detail}</span>
+			{detail ? <span className="shrink-0 text-ink-3 tabular-nums">{detail}</span> : null}
 		</button>
 	);
 }
@@ -156,22 +160,22 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 					<div role="menu" aria-label="Export this chat" className="flex flex-col gap-0.5">
 						<ExportItem
 							testid="export-copy-markdown"
-							icon={copy === "copied" ? <CheckIcon className="size-3.5 text-teal" aria-hidden /> : <CopyIcon className="size-3.5" aria-hidden /> }
+							icon={copy === "copied" ? <CheckIcon className="size-3.5 shrink-0 text-teal" aria-hidden /> : <CopyIcon className="size-3.5 shrink-0" aria-hidden />}
 							label={COPY_LABEL[copy]}
 							onSelect={copyMarkdown}
 						/>
-						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
+						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5 shrink-0" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
 						<ExportItem
 							testid="export-download-clozemaster"
-							icon={<ClozemasterIcon className="size-3.5" aria-hidden />}
+							icon={<ClozemasterIcon className="size-3.5 shrink-0" aria-hidden />}
 							label="Export to Clozemaster"
 							detail={sentenceCount === 0 ? "none yet" : sentenceCount === 1 ? "1 sentence" : `${sentenceCount} sentences`}
 							disabled={sentenceCount === 0}
 							onSelect={(e) => download(e, `${slug}-clozemaster.tsv`, exportChatClozemasterTsv(sourceMessages), "text/tab-separated-values;charset=utf-8")}
 						/>
-						<ExportItem testid="export-print-pdf" icon={<PrinterIcon className="size-3.5" aria-hidden />} label="Print or save as PDF" detail="PDF" onSelect={print} />
+						<ExportItem testid="export-print-pdf" icon={<PrinterIcon className="size-3.5 shrink-0" aria-hidden />} label="Print or save as PDF" detail="PDF" onSelect={print} />
 						<div role="separator" className="mx-2.5 my-1 h-px bg-border" />
-						<ExportItem testid="export-download-json" icon={<CodeIcon className="size-3.5" aria-hidden />} label="Full session data" detail=".json" onSelect={(e) => download(e, `${slug}-session.json`, exportChatJson(chatId, title, sourceMessages), "application/json;charset=utf-8")} />
+						<ExportItem testid="export-download-json" icon={<CodeIcon className="size-3.5 shrink-0" aria-hidden />} label="Full session data" detail=".json" onSelect={(e) => download(e, `${slug}-session.json`, exportChatJson(chatId, title, sourceMessages), "application/json;charset=utf-8")} />
 					</div>
 					<span role="status" className="sr-only">
 						{copy === "idle" ? "" : copy === "copied" ? "Copied the chat as Markdown" : "Could not copy the chat"}
