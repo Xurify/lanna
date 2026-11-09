@@ -33,6 +33,7 @@ import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
 	foreignCaptions,
+	isYouTubeCaptionUrl,
 	MAX_SEGMENTS,
 	MAX_VIDEO_SEC,
 	MEASURE_VERSION,
@@ -224,6 +225,7 @@ export async function fetchVideoMeta(id: string, signal?: AbortSignal): Promise<
 }
 
 export async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
+	if (!isYouTubeCaptionUrl(track.baseUrl)) return null;
 	const base = track.baseUrl.replace(/&fmt=[^&]*/g, "");
 	for (const [fmt, ext] of [["json3", "json"], ["", "xml"]] as const) {
 		try {
