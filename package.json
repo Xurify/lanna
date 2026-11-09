@@ -38,6 +38,8 @@
 		"dev:sandbox": "tsx scripts/dev-sandbox.ts",
 		"skill:sync": "tsx scripts/sync-slovak-skill.ts",
 		"remote:off": "tsx scripts/remote-access-off.ts",
+		"remote:code": "tsx scripts/remote-code.ts",
+		"web:password": "tsx scripts/web-password.ts",
 		"desktop:dist": "rm -rf dist .next/standalone && next build && node scripts/smoke-provider-runtime.mjs && node scripts/build-server.mjs && node scripts/smoke-server.mjs && DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer} APPLE_KEYCHAIN_PROFILE=LH_NOTARY APPLE_TEAM_ID=JS6XN22HY6 electron-builder --mac --arm64"
 	},
 	"dependencies": {
