@@ -47,6 +47,7 @@ export const CREDITS: Credit[] = [
 	{ id: "youtube", name: "YouTube", url: "https://www.youtube.com", group: "video", use: "videos, their captions and the player in Watch", fetchedHosts: ["www.youtube.com"] },
 	{ id: "yt-dlp", name: "yt-dlp", url: "https://github.com/yt-dlp/yt-dlp", group: "video", use: "captions and audio when YouTube's own can't be read, if installed" },
 
+	{ id: "context", name: "Context", url: "https://context.dev", group: "search", use: "web search, with your Context key", fetchedHosts: ["api.context.dev", "context.dev"] },
 	{ id: "tavily", name: "Tavily", url: "https://tavily.com", group: "search", use: "web search, with your Tavily key", fetchedHosts: ["api.tavily.com", "app.tavily.com"] },
 	{ id: "brave-search", name: "Brave Search", url: "https://brave.com/search/api/", group: "search", use: "web search, with your Brave key", fetchedHosts: ["api.search.brave.com", "brave.com"] },
 	{ id: "jina-reader", name: "Jina Reader", url: "https://jina.ai/reader/", group: "search", use: "reading a web page the tutor opens", fetchedHosts: ["r.jina.ai"] },
