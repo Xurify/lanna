@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { EarGym } from "@/components/phonology/ear-gym";
+import { activeLanguage } from "@/src/server";
 
 export const metadata: Metadata = {
 	title: "Ear gym",
@@ -9,5 +10,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default function PhonologyPage() {
-	return <EarGym seed={Date.now()} />;
+	const lang = activeLanguage();
+	return <EarGym key={lang.id} seed={Date.now()} languageId={lang.id} languageName={lang.english} languageCode={lang.code} />;
 }

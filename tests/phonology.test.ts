@@ -13,6 +13,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
 	ARTICULATORY_CUES,
+	contrastSpans,
 	createEarGymExercise,
 	EAR_GYM_ROUND,
 	earGymRound,
@@ -20,11 +21,14 @@ import {
 	getArticulatoryCue,
 	getFunctionalWeight,
 	getPamContrastPriority,
+	getPhonologyData,
 	getPhonologyPairs,
 	getVoicingAssimilationNotes,
-	PHONOLOGY_PAIRS,
 	type PhonologyPair,
 } from "../src/core/phonology.ts";
+import { hasRhythmPage } from "../src/core/rhythm.ts";
+
+const PHONOLOGY_PAIRS = getPhonologyData("slovak")!.pairs;
 
 describe("Articulatory motor guidance catalog", () => {
 	test("provides explicit motor positioning for core Slovak target sounds", () => {
@@ -142,6 +146,98 @@ describe("Slovak voicing assimilation (*spodobovanie*) & orthographic rules", ()
 	});
 });
 
+describe("Bundled phonology datasets validation", () => {
+	const bundledLangs = ["slovak", "russian"];
+
+	for (const lang of bundledLangs) {
+		describe(`${lang} dataset`, () => {
+			test("loads dataset by language id", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data, `Dataset exists for ${lang}`);
+				assert.equal(data.language, lang);
+				assert.ok(data.pairs.length > 0, `${lang} has pairs`);
+				assert.ok(data.families.length > 0, `${lang} has declared families`);
+			});
+
+			test("every pair is well-formed with distinct words, distinct IPAs, and unique IDs", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data);
+				const ids = new Set<string>();
+				for (const p of data.pairs) {
+					assert.ok(p.id, `Pair has id in ${lang}`);
+					assert.ok(!ids.has(p.id), `Duplicate pair id '${p.id}' in ${lang}`);
+					ids.add(p.id);
+
+					assert.notEqual(p.a, p.b, `Words '${p.a}' and '${p.b}' must differ in pair ${p.id}`);
+					assert.notEqual(p.ipaA, p.ipaB, `IPAs '${p.ipaA}' and '${p.ipaB}' must differ in pair ${p.id}`);
+					assert.ok(p.meaningA && p.meaningB, `Pair ${p.id} has meanings`);
+					assert.ok(p.cue && p.cue.length > 5, `Pair ${p.id} has cue`);
+					assert.ok(p.cue.length <= 100, `Pair ${p.id}: the cue is ${p.cue.length} characters; over 100 it runs past the three lines the card keeps for it on a phone`);
+					assert.ok(p.exampleA && p.exampleB, `Pair ${p.id} has examples`);
+				}
+			});
+
+			test("each example sentence holds its word in exactly that form", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data);
+				const holds = (word: string, sentence: string) => sentence.toLowerCase().split(/[^\p{L}]+/u).includes(word.toLowerCase());
+				for (const p of data.pairs) {
+					assert.ok(holds(p.a, p.exampleA), `${p.id}: "${p.exampleA}" does not hold "${p.a}"`);
+					assert.ok(holds(p.b, p.exampleB), `${p.id}: "${p.exampleB}" does not hold "${p.b}"`);
+				}
+			});
+
+			test("the letters a contrast names are found in both words, where the words differ", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data);
+				for (const p of data.pairs) {
+					const spans = contrastSpans(p);
+					assert.ok(spans, `${p.id}: no letters to mark for "${p.contrast}"`);
+					const [left, right] = p.contrast.split(",")[0]!.split(" and ");
+					assert.equal(p.a.slice(...spans.a).toLowerCase(), left);
+					assert.equal(p.b.slice(...spans.b).toLowerCase(), right);
+					assert.equal(p.a.slice(0, spans.a[0]), p.b.slice(0, spans.b[0]), `${p.id}: the words differ before the marked letters`);
+					assert.equal(p.a.slice(spans.a[1]), p.b.slice(spans.b[1]), `${p.id}: the words differ after the marked letters`);
+				}
+			});
+
+			test("every pair's family is declared in the file", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data);
+				const declared = new Set(data.families.map((f) => f.id));
+				for (const p of data.pairs) {
+					assert.ok(declared.has(p.family), `Family '${p.family}' in pair ${p.id} must be declared in ${lang}`);
+				}
+			});
+
+			test("every family has at least 3 pairs", () => {
+				const data = getPhonologyData(lang);
+				assert.ok(data);
+				for (const f of data.families) {
+					const count = data.pairs.filter((p) => p.family === f.id).length;
+					assert.ok(count >= 3, `Family '${f.id}' in ${lang} must have at least 3 pairs, got ${count}`);
+				}
+			});
+		});
+	}
+
+	test("returns null for unknown language id", () => {
+		assert.equal(getPhonologyData("unknown"), null);
+		assert.equal(getPhonologyData("estonian"), null);
+		assert.equal(getPhonologyData(""), null);
+		assert.equal(getPhonologyData(undefined), null);
+		assert.equal(getPhonologyData("sk"), null);
+		assert.deepEqual(getPhonologyPairs("estonian"), []);
+	});
+
+	test("hasRhythmPage is true for Slovak and false for Russian and other languages", () => {
+		assert.equal(hasRhythmPage("slovak"), true);
+		assert.equal(hasRhythmPage("russian"), false);
+		assert.equal(hasRhythmPage("estonian"), false);
+		assert.equal(hasRhythmPage(undefined), false);
+	});
+});
+
 describe("Slovak phonology minimal pairs dataset", () => {
 	test("contains verified minimal pairs across all five key families", () => {
 		assert.ok(PHONOLOGY_PAIRS.length >= 15, "At least 15 curated minimal pairs exist");
@@ -166,13 +262,17 @@ describe("Slovak phonology minimal pairs dataset", () => {
 	});
 
 	test("filters pairs by family and functional load", () => {
-		const vowelPairs = getPhonologyPairs({ family: "vowel_length" });
+		const vowelPairs = getPhonologyPairs("slovak", { family: "vowel_length" });
 		assert.ok(vowelPairs.length > 0);
 		assert.ok(vowelPairs.every((p) => p.family === "vowel_length"));
 
-		const highFlPairs = getPhonologyPairs({ minFunctionalLoad: "high" });
+		const highFlPairs = getPhonologyPairs("slovak", { minFunctionalLoad: "high" });
 		assert.ok(highFlPairs.length > 0);
 		assert.ok(highFlPairs.every((p) => p.functionalLoad === "high"));
+
+		const russianHardSoft = getPhonologyPairs("russian", { family: "hard_soft" });
+		assert.ok(russianHardSoft.length >= 5);
+		assert.ok(russianHardSoft.every((p) => p.family === "hard_soft"));
 	});
 });
 
@@ -216,7 +316,7 @@ describe("Ear Gym (HVPT) 2AFC exercise generator", () => {
 describe("Ear Gym round", () => {
 	test("a round has the round size, even from a pool smaller than it", () => {
 		assert.equal(earGymRound(PHONOLOGY_PAIRS, 7).length, EAR_GYM_ROUND);
-		const small = getPhonologyPairs({ family: "diphthongs" });
+		const small = getPhonologyPairs("slovak", { family: "diphthongs" });
 		assert.ok(small.length < EAR_GYM_ROUND);
 		const round = earGymRound(small, 7);
 		assert.equal(round.length, EAR_GYM_ROUND);
@@ -243,5 +343,19 @@ describe("Ear Gym round", () => {
 
 	test("an empty pool gives no round", () => {
 		assert.deepEqual(earGymRound([], 1), []);
+	});
+});
+
+describe("contrastSpans", () => {
+	test("marks one letter, a letter pair, and a letter that only one word has more of", () => {
+		assert.deepEqual(contrastSpans({ a: "pas", b: "pás", contrast: "a and á" }), { a: [1, 2], b: [1, 2] });
+		assert.deepEqual(contrastSpans({ a: "mesto", b: "miesto", contrast: "e and ie" }), { a: [1, 2], b: [1, 3] });
+		assert.deepEqual(contrastSpans({ a: "мат", b: "мать", contrast: "т and ть" }), { a: [2, 3], b: [2, 4] });
+		assert.deepEqual(contrastSpans({ a: "rad", b: "raď", contrast: "d and ď, heard as t and ť at the end of a word" }), { a: [2, 3], b: [2, 3] });
+	});
+
+	test("gives null when the contrast does not name letters of the words", () => {
+		assert.equal(contrastSpans({ a: "pas", b: "pás", contrast: "/a/ vs /aː/" }), null);
+		assert.equal(contrastSpans({ a: "pas", b: "pás", contrast: "o and ô" }), null);
 	});
 });
