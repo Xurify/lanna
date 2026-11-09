@@ -1311,7 +1311,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	}, [pathname]);
 
 	// The pairing screen (E21) is for a device with no session yet: no sidebar, no data behind it.
-	if (pathname === "/pair") return <>{children}</>;
+	if (pathname === "/pair" || pathname === "/login") return <>{children}</>;
 
 	return (
 		<SettingsDialogProvider>
