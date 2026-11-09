@@ -2,6 +2,23 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 8 November: automated single-case experiment & input-first arm (branch `t3/pronunciation-principles-review`)
+
+- **Automated SCED Protocol v3 (E81):** Single-case interrupted time-series design over 42 days (2026-11-09 to 2026-12-20) comparing Russian (input-first arm) against Slovak (normal control) to test whether input-first accelerates listening comprehension without harming speech.
+- **Deterministic Randomization:** Mulberry32 PRNG with seed `20261108` drawn uniformly across candidate days [12..22] yielded **Day 15 (Monday 23 November 2026)** as onset day. Baseline runs Days 1–14 (14 days > 8 min); Intervention runs Days 15–42 (28 days > 8 min).
+- **Strict Input-First Arm:** `INPUT_FIRST_TASKS = ["review", "listen", "words", "read", "watch"]` (`src/core/curriculum.ts`). Drops `lesson`, `strengthen`, `blitz`, `speak`, and `fluency` (which recorded speech via microphone).
+- **Automated Execution ("Take me out of the loop"):** In `src/server/lesson.ts`, `progressSummary` automatically resolves `getScheduledArmForDate(profile, date)` and enforces the arm from Day 15 onwards without manual intervention. Synchronizes daily first-play understanding share, dictation reps, minutes, covariates, and task compliance to `daily.jsonl` on every session, continuously updating OLS regression ($b_0, b_1, b_2, b_3$), permutation test $p$-value, and `summary.md`.
+- **Pre-generated Pools & Schedules:** Deterministically generates `experiment.json`, `schedule.json`, `probe-pool.json` (60 listening probes + 30 production prompts per language from verified lexicon examples), `daily.jsonl`, `checks.jsonl`, `deviations.jsonl`, and `summary.md`.
+- **UI & Weekly Assessments:**
+  - `/experiment`: Dashboard displaying 42-day timeline, current phase badge, regression level shift $b_2$, permutation test status, compliance, and automated data status.
+  - `/experiment/check`: Sunday check session presenting 10 single-play dictation probes and 5 spoken production prompts, scored and saved to `checks.jsonl`.
+- **Tested:** 30 unit tests passing in `tests/experiment.test.ts`, `tests/input-first-arm.test.ts`, `tests/sounds.test.ts`, `tests/curriculum.test.ts`; `npm run typecheck` clean (0 errors).
+
+## 8 November: the sound step, first slice (branch `t3/pronunciation-principles-review`)
+
+- **Zvuk (`/sound?id=`):** one vowel-length contrast per screen. A listening check on the two twins, then shadowing: each line plays, a 700 ms gap, then the learner says it. The recording is scored by the same transcript and clarity score Speak uses, three tries per line. Two pairs so far (pas/pás, rad/rád), each line a verified lexicon example. The timing comes from Kjellin's tutorial; the comparison with Krashen is in `docs/research/shadowing.md`.
+- **Unverified:** the scoring path has not run on a real speech-to-text key (that is a paid call); the screen ran on a scratch data folder with a fake microphone and no keys, at 1400 px and 390 px wide; not checked on a device; not on the path yet (the chapter arc's sound step still says "not yet"); nothing is saved.
+
 ## 8 November: the chat starts at once and points to the app's own lessons (branch `feat/instant-chat`)
 
 - **Why:** the owner: starting a chat was slow and not seamless; the dot in the margin and the serif were copied from riddled.ai; the chat said it could not see the app's lessons. Rule E79.

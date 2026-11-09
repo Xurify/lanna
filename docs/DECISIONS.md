@@ -995,6 +995,34 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
   - **Session Data (`.json`)**: Raw backup of transcript, metadata, and turns.
 - Tests: `tests/fast-chat.test.ts` (one model call for a closed reply, also with a failed record or a dispatched job; a second call after a check, a file read or a record before text; the map's links, states and lists; link sorting; the drawer's input, its kept and failed results, the allowlist), `tests/chat-kind.test.ts` (the chat prompt asks for `draw`, the drawer's prompt carries the six colors), `tests/chat-export.test.ts` (Markdown, Anki TSV cards, JSON export, and title slugification).
 
+### E80. Zvuk: shadowing with the tutorial's timing, verified lines, one listening check (2026-11-08, branch `t3/pronunciation-principles-review`)
+
+**Why:** the owner asked whether the app's way of thinking matches Kjellin's pronunciation tutorial and Krashen's book, and then to start the sound step (phase 7). The comparison is in [research/shadowing.md](research/shadowing.md). The app takes Kjellin's timing and his short-line rule. It does not take his advice to hold back all writing, or his repeat-one loop.
+
+**How to apply:**
+- The sounds are data: `curriculum/slovak/sounds.json` (chapter, a rule and a bridge, two twins, four verified lines). `src/core/sounds.ts` is pure: `checkSound` is the drop rule (the twins differ in exactly one sound, every line is a verified example of one twin, at most six words), `listenOrder` draws the four-item check, and `shadowVerdict` reads the Speak bar (`PRON_CLEAR`, unchanged).
+- `/sound?id=<id>` runs the screen. A listening check comes first: choose the word heard, two of each twin, capped at four items. Then shadowing: a line plays, the learner has a 700 ms gap (`SHADOW_GAP_MS`), then says it. The recording goes through the same transcript and clarity score as Speak (`/api/stt`, `/api/pronounce`), so no Azure key is needed. Three tries per line, then the line is left as not yet.
+- Without a microphone the line is said aloud and not scored. Without speech-to-text the screen says so and links to Settings → API keys.
+- The twins meet only in the listening check. The soft consonant pair (de, te, ne) from the plan is not built: the lexicon has no verified twins for it, and it is not invented.
+- Two vowel-length pairs so far: pas/pás (chapter "moving") and rad/rád (chapter "people"), each line taken from the lexicon's own verified examples.
+- Not saved yet: the screen keeps its result on the page (E1 says learner-produced data is kept, so saving comes next). The sound step is not on the path yet either (`chapterArc` still says "not yet"), so the screen is reached by its link until the arc names it.
+
+
+### E81. An automated single-case experiment arm: input-first Russian vs Slovak control (2026-11-08, branch `t3/pronunciation-principles-review`)
+
+**Why:** the owner asked to test whether listening-first improves listening faster than the normal plan ("take me out of the loop"), comparing Russian on the input-first arm against Slovak on the normal control over a 42-day study (2026-11-09 to 2026-12-20). Single-case interrupted time-series design (SCED v3, [docs/experiments/input-first-russian.md](experiments/input-first-russian.md)) with randomized onset (uniform draw between days 12 and 22).
+
+**How to apply:**
+- `INPUT_FIRST_TASKS = ["review", "listen", "words", "read", "watch"]` (`src/core/curriculum.ts`). Drops `lesson`, `strengthen`, `blitz`, `speak`, and `fluency` (which records mic output).
+- Deterministic PRNG (`mulberry32` with seed `20261108`) draws Day 15 (2026-11-23) as onset day. Baseline runs Days 1–14; intervention runs Days 15–42.
+- Automation engine (`src/core/experiment.ts`, `src/server/experiment.ts`):
+  - In `src/server/lesson.ts`, `progressSummary` automatically assigns `arm: "input-first"` on and after the onset day for Russian without manual settings changes.
+  - Automatically logs daily first-play understanding share, dictation reps, minutes, covariates, and task compliance to `daily.jsonl`, regenerating `summary.md`.
+  - Weekly checks on Sundays (10 listening dictation probes + 5 spoken production prompts) are served via `/experiment/check` and saved to `checks.jsonl`.
+  - Dashboard at `/experiment` displays timeline, current phase, regression level shift $b_2$, permutation randomization $p$-value, and weekly checks.
+- Protocol provenance (commit `8e767a9f`, SHA-256 `1c9f0bd5e4fb093c8beae59e1207a6db9edf5572b9d1889f146f70e7dd7829d1`) and decision rules are fixed in `experiment.json`. Final `verdict.json` written after Day 42.
+
+
 ## Dropped or deferred
 
 - **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
