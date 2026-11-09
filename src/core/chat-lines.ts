@@ -55,8 +55,8 @@ export function learnerLines(messages: readonly Line[]): Map<number, LearnerLine
 }
 
 export function answerMark(grade: AnswerGrade): AnswerMark {
-	if (grade.verdict === "wrong") return { tone: "miss", label: "Not yet" };
+	if (grade.verdict === "wrong") return { tone: "miss", label: "Not quite" };
 	if (grade.verdict === "dont_know") return { tone: "shown", label: "Skipped" };
-	if (grade.verdict === "slip") return { tone: "near", label: "Right, check the spelling" };
-	return grade.hinted ? { tone: "near", label: "Right, with a hint" } : { tone: "right", label: "Right" };
+	if (grade.verdict === "slip") return { tone: "near", label: "Almost, check the accents" };
+	return grade.hinted ? { tone: "near", label: "Right with help" } : { tone: "right", label: "Right" };
 }

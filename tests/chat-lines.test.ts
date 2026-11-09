@@ -9,14 +9,14 @@ const pose = { type: "tool-pose", input: { answer: "môj dom", focus: "masculine
 const grade = (verdict: string, hinted = false) => ({ type: "tool-grade", input: { verdict, hinted, given: "x", expected: "y", focus: "f" } });
 
 describe("the mark beside a graded answer", () => {
-	it("says Right only for an unhinted right answer, as the first-try count does", () => {
+	it("says Right only for an unhinted right answer, as the first-try count does, in the words Review uses", () => {
 		assert.deepEqual(answerMark({ verdict: "right", hinted: false }), { tone: "right", label: "Right" });
-		assert.deepEqual(answerMark({ verdict: "right", hinted: true }), { tone: "near", label: "Right, with a hint" });
-		assert.deepEqual(answerMark({ verdict: "slip", hinted: false }), { tone: "near", label: "Right, check the spelling" });
+		assert.deepEqual(answerMark({ verdict: "right", hinted: true }), { tone: "near", label: "Right with help" });
+		assert.deepEqual(answerMark({ verdict: "slip", hinted: false }), { tone: "near", label: "Almost, check the accents" });
 	});
 
-	it("leaves a miss open with Not yet, and names a skipped question", () => {
-		assert.deepEqual(answerMark({ verdict: "wrong", hinted: true }), { tone: "miss", label: "Not yet" });
+	it("uses the words lessons and Review use for a miss, and names a skipped question", () => {
+		assert.deepEqual(answerMark({ verdict: "wrong", hinted: true }), { tone: "miss", label: "Not quite" });
 		assert.deepEqual(answerMark({ verdict: "dont_know", hinted: false }), { tone: "shown", label: "Skipped" });
 	});
 });
