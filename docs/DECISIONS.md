@@ -1082,9 +1082,21 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - No rule between the tutor's steps in a chat; the replies under the text are the app's quiet buttons.
 - Lessons and practice sessions are unchanged.
 
+### E86. A chat exports sentences for Clozemaster, not Anki cards, and its Markdown reads the same outside the app (2026-11-09, branch `feat/clozemaster-export`)
+
+**Why:** the owner: "make sure these exports are actually formatted correctly", and "I don't really use Anki, but I do use Clozemaster". The Anki file cannot be uploaded to Clozemaster: its `#separator` header lines would be read as sentences, and its third column (tags) as the word to blank. Run on the owner's real chats, the exports also had these faults: lines the app shows apart ran together in any other Markdown reader, since the app breaks at every line end (`remark-breaks`) and CommonMark does not; a reply's own `##` heading outranked the `### Tutor` label above it; links to the app's lessons (`/lesson?unit=…`) led nowhere; an answered quiz was missing, so "Wrong: you chose *tú*" followed nothing; a drawing kept in a `draw` tool result was never written, because tool results were skipped; one card was wrong (`naše` = "our car", from an aside in brackets).
+
+**How to apply:**
+
+- **Clozemaster file** (`exportChatClozemasterTsv`): one row per glossed phrase, tab-separated `Sentence`, `Translation`, `Cloze`, with no header row, no `{{braces}}` (those are for a sentence typed in by hand) and no line break after the last row. This layout comes from Clozemaster's forum, since its help page lists no columns: see the links above the function. The owner uploads the file by hand (language dashboard, Collections, upload a CSV or TSV), so nothing here reaches Clozemaster by itself and the rule under "Dropped or deferred" stands.
+- **The word to blank** (`pickClozeWord`) is a word the tutor sent to Review in that chat (`add_to_review`), as the sentence writes it (exact match first, then stem matches like *tvoja*, *tvoje*, *svojimi* for taught words *tvoj*, *svoj*). If the chat has taught words, sentences without one are left out. If the chat sent no words to Review at all (such as free or grammar chats), the longest word in the sentence is blanked so the chat can still be exported. A phrase of one word is always left out: blanking it leaves nothing to read.
+- **A sentence that ends in a full stop gets one on its translation**, so both sides of a row are punctuated alike.
+- **Markdown** (`exportChatMarkdown`): `## Learner` and `## Tutor`, written once per run of the same speaker; headings inside a reply are moved down so the highest is `###`; a line followed by another line of the same paragraph ends in two spaces (a hard break); a link to an app address becomes its label, a web link stays; an answered question is written as the question, its options with "(correct)" on the right ones, and the learner's choice; a drawing is a `svg` code fence, from a view part or from the tool result. Code fences are left as written.
+- **Not changed:** the chat board still reads glosses in brackets its own way (`boardPhrases`), so "naše = our car" can still show there. Print and the JSON file are as before; the JSON holds the messages, not the turns or settings.
+
 ## Dropped or deferred
 
-- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
+- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it. A file the owner uploads by hand is not automated access: see E86.
 - **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.

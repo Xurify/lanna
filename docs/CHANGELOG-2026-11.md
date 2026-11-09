@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: a chat exports sentences for Clozemaster, and its Markdown reads right outside the app (branch `feat/clozemaster-export`)
+
+- **Why:** the owner asked whether the exports are formatted correctly, and uses Clozemaster, not Anki. Rule E86.
+- **What changed:** "Anki cards" in the Export menu is now "Clozemaster": a `.tsv` of sentence, translation and the word to blank, in the layout Clozemaster's upload reads (no header, no braces). The blank is a word the tutor sent to Review in that chat (matching inflected stems like *tvoje* or *svojimi* for *tvoj* / *svoj*), or the longest word if no words were sent to Review. The Markdown file keeps the tutor's line breaks, puts a reply's headings under the speaker's, writes an answered quiz with its options and your choice, writes drawings, and turns links to the app's lessons into plain text.
+- **Checked:** the exports were run on three real chats copied read-only from the profile (possessives, demonstratives, a short one): possessives export includes all relevant sentences with inflected stems, and demonstratives falls back to content words. `tests/chat-export.test.ts`: 10 pass. Typecheck and lint clean.
+- **Unverified:** an upload to Clozemaster itself (its file layout is taken from forum posts, not from a written spec); print, which was not opened in a browser this round; the full test suite.
+
 ## 9 November: the chat reads seamlessly, in a reading face (branch `feat/chat-seamless`)
 
 - **Why:** the owner: the chat felt like a generic chat app, also while it generated, and needed a more fitting font. A bounded sheet and five other layouts were turned down in favor of `main` with its boxes taken out. Rule E85.

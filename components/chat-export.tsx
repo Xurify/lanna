@@ -4,10 +4,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckIcon, CodeIcon, CopyIcon, DownloadIcon, FileTextIcon, LayersIcon, PrinterIcon } from "lucide-react";
 import {
 	copyTextToClipboard,
-	exportChatAnkiTsv,
+	chatClozeSentences,
+	exportChatClozemasterTsv,
 	exportChatJson,
 	exportChatMarkdown,
-	extractChatAnkiCards,
 	slugifyTitle,
 	triggerFileDownload,
 	type LhMessage,
@@ -59,7 +59,7 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 
 	const sourceMessages = useMemo(() => (nativeMessages && nativeMessages.length > 0 ? nativeMessages : messages), [nativeMessages, messages]);
 	const slug = useMemo(() => slugifyTitle(title), [title]);
-	const cardCount = useMemo(() => extractChatAnkiCards(sourceMessages, { title }).length, [sourceMessages, title]);
+	const sentenceCount = useMemo(() => chatClozeSentences(sourceMessages).length, [sourceMessages]);
 
 	useEffect(() => () => clearTimeout(copyTimeoutRef.current), []);
 
@@ -146,12 +146,12 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 						/>
 						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
 						<ExportItem
-							testid="export-download-anki"
+							testid="export-download-clozemaster"
 							icon={<LayersIcon className="size-3.5" aria-hidden />}
-							label="Anki cards"
-							detail={cardCount === 0 ? "none yet" : cardCount === 1 ? "1 card" : `${cardCount} cards`}
-							disabled={cardCount === 0}
-							onSelect={(e) => download(e, `${slug}-anki.tsv`, exportChatAnkiTsv(sourceMessages, { title }), "text/tab-separated-values;charset=utf-8")}
+							label="Clozemaster"
+							detail={sentenceCount === 0 ? "none yet" : sentenceCount === 1 ? "1 sentence" : `${sentenceCount} sentences`}
+							disabled={sentenceCount === 0}
+							onSelect={(e) => download(e, `${slug}-clozemaster.tsv`, exportChatClozemasterTsv(sourceMessages), "text/tab-separated-values;charset=utf-8")}
 						/>
 						<ExportItem testid="export-print-pdf" icon={<PrinterIcon className="size-3.5" aria-hidden />} label="Print or save as PDF" detail="PDF" onSelect={print} />
 						<div role="separator" className="mx-2.5 my-1 h-px bg-border" />
