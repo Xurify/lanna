@@ -1,4 +1,4 @@
-import { compactionInFlight, createChat, isTurnRunning, listChats, readSettingsRecord, stores, titleFromPrompt } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, compactionInFlight, createChat, isTurnRunning, listChats, readSettingsRecord, stores, titleFromPrompt } from "@/src/server";
 import type { ChatListItem } from "@/src/core";
 
 /** The session picker's list: record-derived summaries (phase, pending
@@ -18,6 +18,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => ({}))) as { title?: unknown; kind?: unknown; tutorUnit?: unknown };
 	const title = typeof body.title === "string" ? body.title : "";
 	// Practice sessions (owner, 2026-10-04): kind "practice" marks the

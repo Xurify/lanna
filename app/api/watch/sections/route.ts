@@ -9,7 +9,7 @@
  */
 
 import { isVideoId, type GapResult } from "@/src/core";
-import { findSections, keptSections, recordSection } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, findSections, keptSections, recordSection } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; videoId?: unknown; force?: unknown; section?: unknown; results?: unknown; activeMs?: unknown; tz?: unknown } | null;
 	if (!body || typeof body.videoId !== "string" || !isVideoId(body.videoId)) return Response.json({ message: "videoId is required" }, { status: 400 });
 	if (body.action === "find") {

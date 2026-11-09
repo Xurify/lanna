@@ -31,17 +31,19 @@
 
 import type { AgentSettings, ChatSettings, ModelsSettings } from "@/src/core";
 import {
-	SETTINGS_SECTIONS,
 	allSegmentPaths,
+	BODY_LIMITS,
+	bodyTooLarge,
 	clampChatLevel,
 	clampModelsLevels,
 	effectiveSettings,
 	promptOverrides,
 	readSettingsRecord,
+	SETTINGS_SECTIONS,
+	type SettingsBodyResult,
 	validateChatSettings,
 	validateModelsSettings,
 	writeSettingsRecord,
-	type SettingsBodyResult,
 } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +52,8 @@ export const dynamic = "force-dynamic";
 type AnySectionParser = (body: unknown) => SettingsBodyResult<unknown>;
 
 export async function PUT(request: Request, ctx: { params: Promise<{ section: string }> }) {
+	const oversized = bodyTooLarge(request, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const { section } = await ctx.params;
 	const parser = (SETTINGS_SECTIONS as Record<string, AnySectionParser>)[section];
 	if (!parser) {

@@ -10,7 +10,7 @@
  * session started from the Today page, for the day's speaking task.
  */
 
-import { progressSummary, recordActivity, setGoal } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, progressSummary, recordActivity, setGoal } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,8 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { goal?: Record<string, unknown> } | null;
 	if (body?.goal && typeof body.goal === "object") {
 		const g = body.goal;
@@ -56,6 +58,8 @@ export async function PUT(req: Request) {
 const ACTIVITIES = new Set(["talk", "story", "tutor"]);
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { activity?: unknown; unit?: unknown } | null;
 	if (!body || !ACTIVITIES.has(body.activity as string)) return Response.json({ message: "activity must be talk, story or tutor" }, { status: 400 });
 	return Response.json(recordActivity(body.activity as "talk" | "story" | "tutor", typeof body.unit === "string" ? body.unit : undefined, tzOf(req)));

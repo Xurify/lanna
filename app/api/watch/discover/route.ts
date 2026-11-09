@@ -28,7 +28,7 @@
  */
 
 import { isChannelId, splitChannelInputs } from "@/src/core";
-import { addCreator, addCreators, creatorVideos, discoverState, dismissSuggestion, saveSuggestions, dismissPick, fillAvatars, forgetYouTube, forgetYouTubeAccount, importYouTube, importYouTubeAccount, refreshDiscover, refreshIfStale, removeCreator, setKeepReady } from "@/src/server";
+import { addCreator, addCreators, BODY_LIMITS, bodyTooLarge, creatorVideos, discoverState, dismissPick, dismissSuggestion, fillAvatars, forgetYouTube, forgetYouTubeAccount, importYouTube, importYouTubeAccount, refreshDiscover, refreshIfStale, removeCreator, saveSuggestions, setKeepReady } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +41,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.import);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown; query?: unknown; text?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add-creator") {

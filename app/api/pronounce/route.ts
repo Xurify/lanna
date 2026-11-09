@@ -6,7 +6,7 @@
  * that would answer, or null, and what to work on lately.
  */
 
-import { assess, pronounceEngine, pronunciationReport, STT_MAX_BYTES } from "@/src/server";
+import { assess, BODY_LIMITS, bodyTooLarge, pronounceEngine, pronunciationReport, STT_MAX_BYTES } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.recording);
+	if (oversized) return oversized;
 	let form: FormData;
 	try {
 		form = await req.formData();
