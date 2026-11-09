@@ -557,6 +557,56 @@ body {
 	--pele-font-mono: ui-monospace, monospace;
 }
 
+/* Plan diagrams (components/plan-block.tsx): the sizing wrapper decides the
+   size, Pele draws the svg, and these rules set its corners, reading font and
+   the status colors. Every color is a theme token, so day and night follow. */
+.plan-wrap > .pele {
+	display: block;
+	width: 100% !important;
+	height: auto !important;
+}
+.plan-fill > .pele {
+	height: 100% !important;
+}
+.plan-wrap .pele {
+	--pele-radius: 0;
+	--pele-font: var(--font-prose);
+	--pele-line: var(--foreground);
+}
+.plan-wrap .pele-node rect {
+	fill: var(--card);
+	stroke: var(--border);
+	stroke-width: 1;
+}
+.plan-wrap .pele-node .pele-label {
+	fill: var(--foreground);
+}
+.plan-mono .pele-node rect {
+	stroke: var(--foreground);
+}
+/* Visited and current boxes are half see-through, so an arrow behind them
+   shows at half strength. */
+.plan-wrap .pele-node.visited rect,
+.plan-wrap .pele-node.current rect {
+	fill: color-mix(in srgb, var(--background) 50%, transparent);
+	stroke: var(--foreground);
+}
+.plan-wrap .pele-node.upcoming .pele-label {
+	fill: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
+}
+.plan-wrap .pele-node.current .pele-label {
+	font-weight: 500;
+}
+.plan-wrap .pele-node.current rect {
+	filter: drop-shadow(0 0 5px color-mix(in srgb, #facc15 45%, transparent));
+}
+.plan-wrap .pele-edge.dim path {
+	stroke: var(--border);
+}
+.plan-wrap .pele-edge.dim .pele-marker {
+	fill: var(--border);
+}
+
 [data-streamdown="mermaid"] svg {
 	max-width: 100% !important;
 	height: auto !important;
