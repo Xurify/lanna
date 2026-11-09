@@ -34,6 +34,8 @@ npx tsx --env-file=.env.local scripts/replay-layout.ts        # re-derive layout
 
 The Next server reloads on save. `electron/main.cjs` and the modules it loads do not: they load once, when Electron starts. After changing them, quit the desktop window and run `npm run desktop:dev` again. A window still running older code has no handler for newer IPC calls, so the Settings control that calls one fails (for example, Settings → Data → Clear cache).
 
+To run the server in a container on an always-on machine (a VPS or a NAS), with updates, rollback and backups, see [`server.md`](server.md). `node scripts/boot-check.mjs` after `npm run build` and `node scripts/build-server.mjs` starts the standalone server on throwaway data and checks it; `tests/server-scripts.test.ts` covers the update and backup scripts (it needs bash, flock, git, tar and rsync, and skips without them).
+
 For Windows/Linux packages and the three-OS CI/release flow, see [`desktop-release.md`](desktop-release.md). Native renderer binaries are traced per platform, so release builds run on the target OS, not as cross-builds from macOS.
 
 ## Environment (`.env.local`)
