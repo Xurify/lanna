@@ -13,6 +13,7 @@
 
 import phonologyPairsJson from "../../curriculum/slovak/phonology-pairs.json";
 import type { LanguageId } from "./language.ts";
+import { rng, shuffle } from "./lesson.ts";
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -254,27 +255,8 @@ export const ARTICULATORY_CUES: Record<string, ArticulatoryCue> = {
  * Retrieve articulatory motor cues for a given phoneme, letter, or digraph.
  */
 export function getArticulatoryCue(target: string): ArticulatoryCue | null {
-	const clean = target.trim().toLowerCase();
-	if (ARTICULATORY_CUES[clean]) return ARTICULATORY_CUES[clean];
-
-	// Handle upper-case or letter with accents
-	const mapping: Record<string, string> = {
-		c: "ť", // Azure or phoneme notations sometimes use 'c' for /c/
-		t: "ť",
-		d: "ď",
-		n: "ň",
-		l: "ľ",
-		y: "í",
-		ý: "í",
-		i: "í",
-		u: "ú",
-		a: "á",
-		e: "é",
-		o: "ô",
-	};
-
-	const candidate = mapping[clean];
-	return candidate && ARTICULATORY_CUES[candidate] ? ARTICULATORY_CUES[candidate] : null;
+	const clean = target.trim().toLowerCase().normalize("NFC");
+	return ARTICULATORY_CUES[clean] ?? null;
 }
 
 // ─── Functional Load Scoring ───────────────────────────────────────────
@@ -358,13 +340,11 @@ export function getPamContrastPriority(
 
 	// Palatals (/t, d, n, l/ vs /c, ɟ, ɲ, ʎ/)
 	if (family === "palatals") {
-		// Slavic languages have extensive palatalization
-		const hasSlavic = ["ru", "uk", "pl", "cs", "be"].some((l) => langs.has(l));
-		if (hasSlavic) {
+		if (langs.has("cs")) {
 			return {
-				category: "CG",
-				priority: "medium",
-				rationale: "Palatal contrasts exist in your background. Focus on Slovak's dorsal tongue contact without Russian-style iotation.",
+				category: "TC",
+				priority: "low",
+				rationale: "Czech shares ť, ď, ň with Slovak. Contrast transfers readily.",
 			};
 		}
 		// Hungarian has ty / gy / ny
@@ -373,6 +353,14 @@ export function getPamContrastPriority(
 				category: "TC",
 				priority: "low",
 				rationale: "Hungarian ty, gy, ny share the exact palatal place of articulation with Slovak ť, ď, ň.",
+			};
+		}
+		const hasSlavic = ["ru", "uk", "pl", "be"].some((l) => langs.has(l));
+		if (hasSlavic) {
+			return {
+				category: "CG",
+				priority: "medium",
+				rationale: "Palatal contrasts exist in your background. Focus on Slovak's dorsal tongue contact without Russian-style iotation.",
 			};
 		}
 		return {
@@ -432,13 +420,8 @@ const KNOWN_ASSIMILATIONS: Record<string, AssimilationRule> = {
 	},
 	ťažko: {
 		target: "ťažko",
-		phonetic: "caskɔ",
-		rule: "Regressive devoicing: 'ž' before voiceless 'k' becomes voiceless [s/ʃ].",
-	},
-	odísť: {
-		target: "odísť",
-		phonetic: "ɔciːsc",
-		rule: "Final cluster devoicing: '-sť' is pronounced as voiceless palatal stop [sc].",
+		phonetic: "caʃkɔ",
+		rule: "Regressive devoicing: 'ž' before voiceless 'k' becomes voiceless [ʃ].",
 	},
 	vchod: {
 		target: "vchod",
@@ -539,4 +522,29 @@ export function createEarGymExercise(pair: PhonologyPair, seed: number = 0): Ear
 		functionalLoad: pair.functionalLoad,
 		genderPrompt: isMale ? "male" : "female",
 	};
+}
+
+export const EAR_GYM_ROUND = 10;
+
+export function pickRoundPairs(pool: readonly PhonologyPair[], size: number, rand: () => number): PhonologyPair[] {
+	if (pool.length === 0) return [];
+	if (pool.length === 1) return Array.from({ length: size }, () => pool[0]!);
+	const result: PhonologyPair[] = [];
+	let lastId = "";
+	while (result.length < size) {
+		const shuffled = shuffle(pool, rand);
+		for (const p of shuffled) {
+			if (p.id === lastId && pool.length > 1) continue;
+			result.push(p);
+			lastId = p.id;
+			if (result.length >= size) break;
+		}
+	}
+	return result;
+}
+
+export function earGymRound(pool: readonly PhonologyPair[], seed: number, size: number = EAR_GYM_ROUND): EarGymExercise[] {
+	if (pool.length === 0) return [];
+	const rand = rng(seed);
+	return pickRoundPairs(pool, size, rand).map((pair) => createEarGymExercise(pair, Math.floor(rand() * 4)));
 }

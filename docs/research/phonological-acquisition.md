@@ -63,12 +63,17 @@ LangHarness translates these psycholinguistic principles into four concrete comp
 
 3. **HVPT Minimal-Pair Ear Gym (`src/core/phonology.ts` & `components/phonology/ear-gym.tsx`):**
    - 2AFC auditory discrimination drills utilizing multi-voice TTS.
-   - Immediate acoustic feedback with optional "Ear-First" masking to prevent orthographic interference.
+   - Rounds of ten trials in the task frame the other practice screens use. Both words stay on screen in a fixed order; after each answer each word plays from its tile and the cue is shown under them. The "Ear-First" masking toggle was removed (2026-11-09): it hid both options, so a trial could only be guessed.
 
 4. **Actionable Articulatory Diagnostics (`components/speak/pron.tsx`):**
    - Replaces generic text in `PronWorkOn` with specific motor guidance badges.
    - Highlights high-functional-load sounds.
    - Adds instant audio listening and retry buttons for isolated phonetic repairs.
+
+5. **Slovak Rhythmic Law & Suprasegmental Cadence Engine (`src/core/rhythm.ts` & `components/phonology/rhythmic-visualizer.tsx`):**
+   - Syllable quantity analysis (mora counting: short 1μ vs long 2μ for vowels, diphthongs, and syllabic liquids).
+   - Enforces the Slovak Rhythmic Law (*Rytmický zákon*), identifying consecutive long syllables and validating morphological suffix shortening (*chválim*, *krásny*, *trávam*, *vŕbam*, *biely*).
+   - Shows each syllable as long or short, the forms where an ending turns short after a long stem, and the stress on the first syllable. This is a description of the language (Hanulíková & Hamann 2010), not a tested training method. Dupoux et al. (2001, 2008) found that speakers of a language with fixed stress (French) have trouble hearing contrastive stress (Spanish); that finding does not apply to learning Slovak, whose stress is fixed, and an earlier version of this note had it backwards.
 
 ---
 
@@ -78,9 +83,12 @@ LangHarness translates these psycholinguistic principles into four concrete comp
 2. Best, C. T., & Tyler, M. D. (2007). Nonnative and second-language speech perception: The PAS model. *Language Experience in Second Language Speech Learning*, 13-34.
 3. Bradlow, A. R., Pisoni, D. B., Akahane-Yamada, R., & Tohkura, Y. (1997). Training Japanese listeners to identify English /r/ and /l/: IV. Some effects of perceptual learning on speech production. *The Journal of the Acoustical Society of America*, 101(4), 2299-2310.
 4. Catford, J. C. (1987). Phonetics and the teaching of pronunciation: A systemic description of English phonology. *Current Perspectives on Pronunciation*, 87-100.
-5. Flege, J. E. (1995). Second language speech learning: Theory, findings, and problems. *Speech Perception and Linguistic Experience*, 233-277.
-6. Flege, J. E., & Bohn, O. S. (2021). The Revised Speech Learning Model (SLM-r). *Second Language Speech Learning: Theoretical and Empirical Progress*, 3-83.
-7. Logan, J. S., Lively, S. E., & Pisoni, D. B. (1991). Training Japanese listeners to identify English /r/ and /l/: A first report. *The Journal of the Acoustical Society of America*, 89(2), 874-886.
-8. Munro, M. J., & Derwing, T. M. (2006). The functional load principle in ESL pronunciation instruction: An exploratory study. *System*, 34(4), 520-531.
-9. Neri, A., Cucchiarini, C., & Strik, H. (2008). The effect of corrective feedback on L2 pronunciation in a computer-assisted learning environment. *CALL*, 21(3), 235-259.
-10. Ngo, H., Chen, X., & Lai, C. (2024). A meta-analysis of computer-assisted pronunciation training (CAPT) on L2 pronunciation. *Language Learning & Technology*, 28(1), 1-28.
+5. Dupoux, E., Peperkamp, S., & Sebastián-Gallés, N. (2001). A robust method to study stress 'deafness'. *The Journal of the Acoustical Society of America*, 110(3), 1606-1618.
+6. Dupoux, E., Sebastián-Gallés, N., Navarrete, E., & Peperkamp, S. (2008). Persistent stress 'deafness': The case of French learners of Spanish. *Cognition*, 106(2), 682-706.
+7. Flege, J. E. (1995). Second language speech learning: Theory, findings, and problems. *Speech Perception and Linguistic Experience*, 233-277.
+8. Flege, J. E., & Bohn, O. S. (2021). The Revised Speech Learning Model (SLM-r). *Second Language Speech Learning: Theoretical and Empirical Progress*, 3-83.
+9. Hanulíková, A., & Hamann, S. (2010). Slovak. *Journal of the International Phonetic Association*, 40(3), 373-378.
+10. Logan, J. S., Lively, S. E., & Pisoni, D. B. (1991). Training Japanese listeners to identify English /r/ and /l/: A first report. *The Journal of the Acoustical Society of America*, 89(2), 874-886.
+11. Munro, M. J., & Derwing, T. M. (2006). The functional load principle in ESL pronunciation instruction: An exploratory study. *System*, 34(4), 520-531.
+12. Neri, A., Cucchiarini, C., & Strik, H. (2008). The effect of corrective feedback on L2 pronunciation in a computer-assisted learning environment. *CALL*, 21(3), 235-259.
+13. Ngo, H., Chen, X., & Lai, C. (2024). A meta-analysis of computer-assisted pronunciation training (CAPT) on L2 pronunciation. *Language Learning & Technology*, 28(1), 1-28.

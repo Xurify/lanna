@@ -37,7 +37,21 @@ const LEAVE = "-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 
 
 /** Exit · progress bar · count. The band drags the window. The bar is the
  *  teal of work done; only a clock running low turns it red (`ink` is kept for older callers). */
-export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave }: { progress: number; label: string; count: string; tone?: string; ink?: string; href?: string; onLeave?: () => void }) {
+export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave, lead }: { progress: number; label: string; count: string; tone?: string; ink?: string; href?: string; onLeave?: () => void; lead?: React.ReactNode }) {
+	return (
+		<TaskBar href={href} onLeave={onLeave}>
+			{lead}
+			<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2" aria-label={label}>
+				<div className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={fillStyle(Math.max(0.03, progress))} />
+			</div>
+			<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
+				{count}
+			</span>
+		</TaskBar>
+	);
+}
+
+export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLeave?: () => void; children?: React.ReactNode }) {
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
@@ -50,12 +64,7 @@ export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave
 						<XIcon className="size-5" strokeWidth={1.6} />
 					</Link>
 				)}
-				<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2" aria-label={label}>
-					<div className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={fillStyle(Math.max(0.03, progress))} />
-				</div>
-				<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
-					{count}
-				</span>
+				{children}
 			</div>
 		</div>
 	);
@@ -79,7 +88,7 @@ export function PracticeCard({ icon, title, sub, right, children, className }: {
 
 /** One answer to pick: a raised tile with its key. Right is the teal, a
  *  wrong pick the muted red, the rest step back once an answer is in. */
-export function OptionTile({ n, state = "idle", disabled, onClick, children, testId, lang }: { n: number; state?: "idle" | "right" | "wrong" | "dim" | "ruled-out"; disabled?: boolean; onClick: () => void; children: React.ReactNode; testId?: string; lang?: string }) {
+export function OptionTile({ n, state = "idle", disabled, onClick, children, testId, lang, trail }: { n: number; state?: "idle" | "right" | "wrong" | "dim" | "ruled-out"; disabled?: boolean; onClick: () => void; children: React.ReactNode; testId?: string; lang?: string; trail?: React.ReactNode }) {
 	return (
 		<button
 			type="button"
@@ -98,6 +107,7 @@ export function OptionTile({ n, state = "idle", disabled, onClick, children, tes
 		>
 			<span className="q-kbd shrink-0 justify-center">{n}</span>
 			<span lang={lang}>{children}</span>
+			{trail !== undefined && <span className="ml-auto shrink-0">{trail}</span>}
 		</button>
 	);
 }
@@ -137,7 +147,7 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 	);
 }
 
-const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+export const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
 
 export function SentenceRows({ children, className, "data-testid": testId }: { children: React.ReactNode; className?: string; "data-testid"?: string }) {
 	return (
