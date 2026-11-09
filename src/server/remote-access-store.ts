@@ -30,6 +30,7 @@ type DeviceRecord = {
 	lastSeenAt: string;
 	expiresAt: string;
 	tokenHash: string;
+	via?: "password";
 };
 
 type PairingRecord = { salt: string; codeHash: string; expiresAt: string; failures: number };
@@ -46,7 +47,7 @@ type AccessStatus = {
 	enabled: boolean;
 	port: number;
 	serveCommand: string;
-	devices: { id: string; name: string; createdAt: string; lastSeenAt: string; current: boolean }[];
+	devices: { id: string; name: string; createdAt: string; lastSeenAt: string; current: boolean; via: "pairing" | "password" }[];
 	pairing: { expiresAt: string } | null;
 };
 
@@ -71,7 +72,7 @@ function unreadableAccess(): AccessFile {
 
 function isDevice(value: unknown): value is DeviceRecord {
 	const d = value as Partial<DeviceRecord> | null;
-	return Boolean(d && typeof d.id === "string" && typeof d.tokenHash === "string" && typeof d.expiresAt === "string");
+	return Boolean(d && typeof d.id === "string" && typeof d.tokenHash === "string" && typeof d.expiresAt === "string" && (d.via === undefined || d.via === "password"));
 }
 
 function isPairing(value: unknown): value is PairingRecord {
@@ -226,6 +227,38 @@ export function resolveDevice(token: string, at: Date = new Date()): Promise<Dev
 	});
 }
 
+/** Signs a browser in after a right password (E75). Null while access is off, so a sign-in that raced a switch-off creates nothing. */
+export function issueSession(name: string, at: Date = new Date()): Promise<{ token: string; device: DeviceRecord } | null> {
+	return exclusive(() => {
+		const access = readAccess();
+		if (!access.enabled) return null;
+		const token = newToken();
+		const device: DeviceRecord = { ...newDevice(name, token, at), via: "password" };
+		writeAccess({ ...access, devices: [...access.devices, device] });
+		return { token, device };
+	});
+}
+
+/** Signs every device out and keeps the switch as it is: what changing the password does. */
+export function signEveryoneOut(): Promise<void> {
+	return exclusive(() => {
+		const access = readAccess();
+		if (access.devices.length > 0 || access.pairing) writeAccess({ ...access, devices: [], pairing: null });
+	});
+}
+
+/** Signs out the device a token belongs to. False when it names none. */
+export function revokeToken(token: string): Promise<boolean> {
+	return exclusive(() => {
+		const access = readAccess();
+		const tokenHash = hashSecret(token);
+		const devices = access.devices.filter((d) => !sameHash(d.tokenHash, tokenHash));
+		if (devices.length === access.devices.length) return false;
+		writeAccess({ ...access, devices });
+		return true;
+	});
+}
+
 /** Signs one device out. False when no such device is paired. */
 export function revokeDevice(id: string): Promise<boolean> {
 	return exclusive(() => {
@@ -247,7 +280,7 @@ export function accessStatus(headers: Headers, port: number, at: Date = new Date
 		enabled: access.enabled,
 		port,
 		serveCommand: `tailscale serve --bg ${port}`,
-		devices: live.map((d) => ({ id: d.id, name: d.name, createdAt: d.createdAt, lastSeenAt: d.lastSeenAt, current: d.id === me?.id })),
+		devices: live.map((d) => ({ id: d.id, name: d.name, createdAt: d.createdAt, lastSeenAt: d.lastSeenAt, current: d.id === me?.id, via: d.via ?? "pairing" })),
 		pairing: access.pairing && Date.parse(access.pairing.expiresAt) > at.getTime() ? { expiresAt: access.pairing.expiresAt } : null,
 	};
 }
