@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 	description: "Your words, the ones you know, your saved phrases and your cheatsheets.",
 };
 
+export const dynamic = "force-dynamic";
+
 const TABS: readonly WordsTab[] = ["words", "phrases", "cheatsheets"];
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; sheet?: string; search?: string }> }) {
