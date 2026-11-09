@@ -2403,7 +2403,7 @@ function DockOverlay({
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
 					{!plain && <DiacriticBar />}
-					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-[20px] bg-card shadow-raise-hi" : "rounded-xl bg-card shadow-raise-hi")}>
+					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-[20px] bg-card shadow-raise-hi outline-1 outline-transparent transition-[outline-color] focus-within:outline-ink-4" : "rounded-xl bg-card shadow-raise-hi")}>
 						<div
 						ref={contentRef}
 						key={mode}

@@ -1218,7 +1218,7 @@ html[data-sidebar-resizing] .sidebar-motion {
 	animation: lh-nib 1.1s var(--ease-in-out) infinite;
 }
 .lh-recede {
-	opacity: 0.55;
+	opacity: 0.65;
 	transition: opacity var(--dur-base) var(--ease-out);
 }
 @media (hover: hover) {
