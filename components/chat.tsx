@@ -1366,6 +1366,7 @@ export function Chat({
 							title={titleText}
 							messages={messages}
 							nativeMessages={nativeMessages}
+							plain={kind === "chat"}
 						/>
 					)}
 					{/* Practice sessions: no phase arc — a quiet Practice tag

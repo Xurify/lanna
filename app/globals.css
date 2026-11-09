@@ -416,6 +416,36 @@ body {
 		page-break-inside: avoid;
 	}
 
+	:root,
+	.dark,
+	:root[data-theme="night"],
+	:root:not([data-theme="day"]) {
+		color-scheme: light;
+		--q-bg: #ffffff;
+		--q-card: #ffffff;
+		--q-side: #f6f6f4;
+		--q-well: #f5f5f3;
+		--q-well-2: #ededea;
+		--q-line: #e8e8e5;
+		--q-line-2: #d8d9d5;
+		--q-ink: #16181b;
+		--q-ink-2: #3f444a;
+		--q-ink-3: #656b72;
+		--q-ink-4: #70757b;
+		--q-teal: #0d6764;
+		--q-teal-2: #0a5452;
+		--q-miss: #b42318;
+		--q-field: #f5f5f3;
+	}
+
+	.lh-fade-out {
+		mask-image: none;
+	}
+
+	.lh-recede {
+		opacity: 1;
+	}
+
 	@page {
 		margin: 1.5cm;
 	}
