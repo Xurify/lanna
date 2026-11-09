@@ -11,7 +11,7 @@ import { formatTokens, formatUsd } from "@/components/usage-format";
 import type { SessionMode, UsageReport } from "@/src/core";
 import { SettingsGroup } from "./controls.tsx";
 
-const MODE_LABEL: Record<SessionMode, string> = { learn: "Learn a topic", talk: "Talk", story: "Story", why: "Why?", practice: "Practice" };
+const MODE_LABEL: Record<SessionMode, string> = { learn: "Learn a topic", chat: "Chat", talk: "Talk", story: "Story", why: "Why?", practice: "Practice" };
 
 function monthLabel(month: string): string {
 	const [y, m] = month.split("-").map(Number);

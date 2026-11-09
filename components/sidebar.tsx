@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
-import { BotMessageSquareIcon, CheckIcon, MessagesSquareIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
+import { CheckIcon, MessagesSquareIcon, PlusIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -528,7 +528,7 @@ function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; onCommit:
  *  All / Learn / Practice — a client-side filter over the same snapshot.
  *  It lives behind the search button and applies only while search is
  *  open, so a forgotten filter can never leave the list silently short. */
-type SessionKindFilter = "teach" | "all" | "practice";
+type SessionKindFilter = "teach" | "all" | "practice" | "chat";
 
 function SessionsSidebar() {
 	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();
@@ -924,22 +924,8 @@ function SessionsSidebar() {
 					{/* The tutor: two ways to start a chat, then the chats themselves.
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
-					<section aria-labelledby="sidebar-tutor" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
-						<h2 id="sidebar-tutor" className="px-2.5 pb-1 text-xs font-bold text-muted-foreground">
-							Tutor
-						</h2>
-						<button
-							type="button"
-							data-testid="new-session"
-							onClick={() => void newSession()}
-							aria-label="New chat with your tutor"
-							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-						>
-							<BotMessageSquareIcon className="size-[18px]" />
-							New chat
-						</button>
-
-						<div ref={searchBoxRef} className="mt-3 flex flex-col gap-1.5">
+					<section aria-label="Chats" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
+						<div ref={searchBoxRef} className="flex flex-col gap-1.5">
 							<div className="flex h-8 items-center">
 								{searching ? (
 									<span className="relative flex-1">
@@ -1006,7 +992,9 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<span className="whitespace-nowrap px-2.5 text-xs font-bold text-muted-foreground">Your chats</span>
+										<h2 className="px-2.5 text-xs font-bold text-muted-foreground">
+											Chats
+										</h2>
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
 											<Button
 												type="button"
@@ -1037,10 +1025,23 @@ function SessionsSidebar() {
 										</Hint>
 									</>
 								)}
+								<Hint label="New chat" action="new-session" side="right">
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-sm"
+										data-testid="new-session"
+										onClick={() => void newSession()}
+										aria-label="New chat with your tutor"
+										className="ml-1 shrink-0 rounded-lg text-muted-foreground"
+									>
+										<PlusIcon className="size-4" />
+									</Button>
+								</Hint>
 							</div>
 							{searching && (
 								<div className="flex items-center gap-1" role="group" aria-label="Show" data-testid="session-kind-filter">
-									{(["all", "teach", "practice"] as const).map((f) => (
+									{(["all", "chat", "teach", "practice"] as const).map((f) => (
 										<button
 											key={f}
 											type="button"
@@ -1055,7 +1056,7 @@ function SessionsSidebar() {
 												kindFilter === f ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
 											)}
 										>
-											{f === "teach" ? "Learn" : f === "all" ? "All" : "Practice"}
+											{f === "teach" ? "Learn" : f === "all" ? "All" : f === "chat" ? "Chat" : "Practice"}
 										</button>
 									))}
 								</div>
@@ -1097,7 +1098,7 @@ function SessionsSidebar() {
 									{query.trim()
 										? `No chats match “${query.trim()}”.`
 										: kindFilter !== "all"
-											? `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
+											? kindFilter === "chat" ? "No chats yet." : `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
 											: "Your chats with the tutor show up here."}
 								</p>
 							) : (

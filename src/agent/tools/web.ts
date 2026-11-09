@@ -147,7 +147,7 @@ export function createWebTools(search: () => SearchProvider | null): Record<stri
 				if (!provider) {
 					return (
 						"web_search is not available: no search engine is configured. " +
-						"Set a Tavily or Brave search API key in settings. Report in your brief that web search is unavailable."
+						"Set a Context, Tavily or Brave search API key in settings. Report in your brief that web search is unavailable."
 					);
 				}
 				try {

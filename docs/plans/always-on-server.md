@@ -1,6 +1,6 @@
 # Using LangHarness away from the PC: the plan
 
-Status: **proposed; revised 2026-11-08: the owner wants a web app at its own address (route W).** Nothing in this plan is built yet. The evidence, prices and sources are in [../research/always-on-server.md](../research/always-on-server.md). The rules it builds on are E7 (local data), E20 (an installable web app), E21 (Tailscale and pairing) and E45 (one running language).
+Status: **proposed; revised 2026-11-09: the owner wants a web app at its own address (route W), and each device already runs its own language (E75).** Nothing in this plan is built yet. The evidence, prices and sources are in [../research/always-on-server.md](../research/always-on-server.md). The rules it builds on are E7 (local data), E20 (an installable web app), E21 (Tailscale and pairing) and E45 (one running language).
 
 ## The goal
 
@@ -12,7 +12,7 @@ The owner can study on the iPhone and the iPad from anywhere, with the PC switch
 
 - **LangHarness already is a web app.** The phone uses the same pages in Safari, installed to the Home Screen (E20). There is no second app to build. The only open question is which machine runs the server behind those pages. Today that machine is the PC, so the phone works only while the PC is on.
 - **The owner already has three machines that are always on: the Synology NAS, the VPS that runs flags.games, and the router.** Using one of them adds no new device that has to keep running. The old laptop and the Raspberry Pi are not needed.
-- **The app cannot go on a serverless host such as Vercel.** It writes plain files from one long-running process (E7, `docs/architecture.md`), keeps the running language in memory (E45), and runs yt-dlp and a headless Chromium. It needs an ordinary machine with a disk.
+- **The app cannot go on a serverless host such as Vercel.** It writes plain files from one long-running process (E7, `docs/architecture.md`), keeps each request's language in Next's request store (E75), and runs yt-dlp and a headless Chromium. It needs an ordinary machine with a disk.
 
 ## Routes
 
@@ -70,7 +70,7 @@ This tries the real phone experience before anything moves. The checks below app
 | Watch: play a prepared video | iPad | it plays, and the lines follow |
 | Read: tap a word | iPhone | the card stays on screen |
 | Leave the phone unused for 8 days, then open the icon | iPhone | still signed in (WebKit bug 237350) |
-| Switch language on the phone while the PC has a lesson open | both | see 1a: today this probably records into the wrong language |
+| Switch language on the phone while the PC has a lesson open | both | each device keeps its own language and neither lesson is lost (E75) |
 
 **Phase 0 is done when** every check has a result, even a failing one.
 
@@ -80,7 +80,7 @@ Each item is its own branch and pull request, tested on a scratch data folder (E
 
 | # | Work | Why | Size |
 |---|---|---|---|
-| 1a | **Every write carries the language its page showed.** The server refuses a mismatch with 409, and the page says the language changed (queued as a task: "Stop a second device writing into the wrong language") | with one running language per server, a second device writes into the wrong one (E45) | medium |
+| 1a | **Already on `main`:** each device runs its own language, and a page writes into the language it shows (E75). Nothing to build. | – | – |
 | 1b | **`npm run remote:code`** prints a pairing code in the terminal | a NAS or a VPS has no "this computer" window to make the first code | small |
 | 1c | **A container image** (`Dockerfile`, `compose.yaml`): Node 26, Chromium and yt-dlp; `data/` and the key files on a mounted volume, never in the image; serves 127.0.0.1:3010 inside the box; a boot check like `scripts/smoke-server.mjs`; builds for x86-64 and, if the NAS needs it, ARM | the same image runs on the NAS and the VPS, and one image is what gets updated and rolled back | medium |
 | 1d | **The guide (`docs/server.md`):** Synology steps (Container Manager, the Tailscale package, the share for the data, Hyper Backup) and VPS steps (a separate user, Tailscale, no new public ports, staying clear of flags.games's ports) | setup from one page | small |
@@ -90,7 +90,7 @@ Each item is its own branch and pull request, tested on a scratch data folder (E
 | 1h | **Only if decision 2 picks a public address:** `LH_PUBLIC_HOST` lets the gate accept one named host over HTTPS, always behind pairing; pairing is limited per address as well as per code; the guide covers the reverse proxy | the public option | small to medium |
 | 1i | **Settings → Devices shows the server's address and the exact Serve command** | setup without reading | small |
 
-**Phase 1 is done when** 1a to 1f are merged, and the image boots in the cloud sandbox on a scratch data folder with fake keys.
+**Phase 1 is done when** 1b to 1f are merged, and the image boots in the cloud sandbox on a scratch data folder with fake keys.
 
 ## Phase 2: move the server (owner with the guide, about an hour; an agent can help through Remote Control)
 
@@ -146,7 +146,6 @@ Study as normal for seven days, mostly on the phone and the iPad. Agents read th
 | A slow NAS makes pages slow | measure with `node scripts/perf-check.mjs --cpu 4` (E36) before moving the data; if it is too slow, use the VPS or B |
 | An update breaks the app | the boot check before switching, and three images to roll back to (1e) |
 | The server's disk fails | snapshots and Hyper Backup, or the nightly copy; at most one day is lost |
-| Answers recorded under the wrong language | 1a, before phase 2 |
 
 ## Route W: a web app at its own address
 
@@ -167,7 +166,7 @@ The pieces already in place carry most of the weight. The device session from E2
 | W1 | **Sign-in page and password.** `/login` with one owner password, hashed with scrypt and set from the terminal with `npm run web:password`. A correct password creates an E21 device session, which Settings → Devices lists and can sign out. Wrong tries are limited per address (5 a minute, then a 15-minute wait). Turning web access off signs every device out. | medium |
 | W2 | **The gate for a public address.** `LH_PUBLIC_HOST` names the one host the app answers. Requests must arrive from the local reverse proxy with HTTPS; any other host is refused. Everything except `/login`, its POST and the static assets needs a session. A POST must come from the app's own page (an Origin check, on top of SameSite=Lax). The E21 Tailscale path keeps working beside it. | medium |
 | W3 | **A security pass before the address goes live:** response headers (HSTS, CSP, frame-ancestors none), size limits on every upload route, a check that the URLs Watch and the tutor's web tools fetch cannot reach the VPS's own services (localhost, the metadata address, the private ranges), and a check that no API route returns a secret. Each finding is fixed or recorded with its reason. | medium |
-| W4 | **Every write carries its page's language** (work item 1a; queued as a task) | medium |
+| W4 | **Already on `main`:** each device runs its own language (E75). Nothing to build. | – |
 | W5 | **Container image and compose file** (1c), **update script** (1e), and **a nightly backup** from the VPS to the NAS or the PC over the tailnet, or to off-site storage (1f) | medium |
 | W6 | **Watch if YouTube refuses the VPS:** an optional `LH_YOUTUBE_PROXY` that sends only YouTube requests, including yt-dlp, through a small proxy on the NAS over the tailnet. Off by default, and built only if check 2 fails. | small |
 | W7 | **Fixes from the phone checks** (phase 0, run against the web address instead of the PC) | depends |
@@ -207,7 +206,7 @@ E7 (data stays local) and E21 (no public address; Funnel refused; no third party
 
 The steps above are for one learner, the owner. Opening sign-ups to other people is a separate project:
 
-- accounts with a data folder each, and a running language per person instead of per process (E45);
+- accounts with a data folder each, and a data folder and a default language per person (E75 gives each device its own language, but one server still has one data folder);
 - each person's own API keys, or the owner paying for their AI use, with limits against abuse;
 - a privacy policy;
 - under the AGPL, a link to the source for every user, which the public GitHub repo covers.
@@ -232,5 +231,5 @@ Not recommended (E20). It is a shell around one of the servers above. It needs t
 ## What happens next
 
 1. The owner runs checks 2 and 3 on the VPS and sends the yt-dlp output, `free -h`, and the domain to use.
-2. Agents start W1, W2, W4 and W5 now; W3 runs before the address goes live; W6 only if check 2 fails.
+2. Agents start W1, W2 and W5 now; W3 runs before the address goes live; W6 only if check 2 fails.
 3. If the VPS lacks the memory, W moves to the NAS behind the router, which needs a port forward or a tunnel. Discuss that before doing it.

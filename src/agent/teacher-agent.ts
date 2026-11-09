@@ -2,18 +2,20 @@ import { Agent } from "@earendil-works/pi-agent-core";
 import type { AgentEvent, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
 import { invalidInputResult, questionResult } from "./tool-execute.ts";
 import { providerEventObserver } from "./provider-events.ts";
-import type { Usage } from "@earendil-works/pi-ai";
+import type { Message, Usage } from "@earendil-works/pi-ai";
 import { APP_IDENTITY, piEngineFor, type PiEngine } from "./models.ts";
 import { effectivePromptSegments } from "./prompt-segments.ts";
 import { learnerProfileSegment } from "./learner-profile.ts";
 import { askUserQuestionTool, createProberTools, createTeacherTools, type ProberToolContext, type TeacherToolContext } from "./tools.ts";
 import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
+import { chatTools, type ChatToolContext } from "./tools/chat.ts";
 import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";
 import { quizInputProblems } from "../core/question-core.ts";
 import { quizInputObject } from "../core/question-schemas.ts";
 import { QUESTION_TOOLS, type EnabledTools } from "../core/pending.ts";
 import { toLlmMessages, nativeInputCause, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
+import { closesChatReply } from "../core/chat-answers.ts";
 import type { ChatGPTRequestCycle } from "./chatgpt-request-cycle.ts";
 import { usageWasAdmitted } from "./subscription-request-cycle.ts";
 import { activeProfile } from "../../config.ts";
@@ -44,7 +46,7 @@ import { activeProfile } from "../../config.ts";
 
 /** Which agent's prompt directory to compose. Practice (2026-10-04)
  *  composes ONLY its own directory — see prompt-segments.ts. */
-type AgentKind = "prober" | "teacher" | "practice";
+type AgentKind = "prober" | "teacher" | "practice" | "chat";
 
 // P2 (2026-09-19): segment discovery + override resolution live in ONE
 // canonical place now — src/store/prompt-overrides.ts (listSourceSegments
@@ -129,6 +131,9 @@ export interface AgentBuildOptions {
 	 *  <chatId>.jsonl via providerEventObserver — the GLM-truncation /
 	 *  DeepSeek-id incident layer. Absent or env-off → no observer. */
 	chatId?: string;
+	/** A model-only note appended to the learner's typed text (the chat's checker evidence). */
+	noteLearnerText?: (text: string) => string | null;
+	appContent?: string;
 }
 
 /**
@@ -155,9 +160,14 @@ export interface AgentBuildOptions {
  */
 function makeQuestionStopper(kind: AgentKind) {
 	return (context: {
-		message: { content: Array<{ type: string; id?: string; name?: string }> };
+		message: { content: Array<{ type: string; id?: string; name?: string; text?: string }> };
 		toolResults: Array<{ toolCallId: string; isError?: boolean }>;
 	}): boolean => {
+		if (kind === "chat" && closesChatReply(context.message.content)) {
+			const failed = context.toolResults.filter((r) => r.isError).map((r) => context.message.content.find((c) => c.id === r.toolCallId)?.name ?? r.toolCallId);
+			if (failed.length) console.warn(`[chat] reply kept, record call failed and was not retried: ${failed.join(", ")}`);
+			return true;
+		}
 		const called = new Set(
 			context.message.content
 				.filter((c) => c.type === "toolCall" && c.name !== undefined && (
@@ -190,7 +200,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	const composed = opts.promptSwitches
 		? composeInstructions(kind, opts.promptSwitches)
 		: getComposedInstructions(kind);
-	const systemPrompt = profile ? `${composed}\n\n---\n\n${profile}` : composed;
+	const systemPrompt = [composed, opts.appContent, profile].filter(Boolean).join("\n\n---\n\n");
 	// Debug recorder (owner, 2026-10-04): raw provider events when
 	// LH_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
 	// the normal no-observer path (tests, env-off).
@@ -209,7 +219,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 			// transport. Explicit test registries remain caller-owned.
 			tools: [
 				...tools,
-				...(opts.tools === undefined && engine.model.id.toLowerCase().includes("claude")
+				...(opts.tools === undefined && kind !== "chat" && engine.model.id.toLowerCase().includes("claude")
 					? [withArgumentHeal(sendToUserTool)]
 					: []),
 			],
@@ -237,7 +247,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 		// UI-only markers (plan-block) drop, the app's id fields strip, and
 		// an abort's dangling question call gets its INTERRUPTED result. It
 		// must never throw (pi's convertToLlm contract).
-		convertToLlm: toLlmMessages,
+		convertToLlm: opts.noteLearnerText ? (messages) => withLearnerNotes(toLlmMessages(messages), opts.noteLearnerText!) : toLlmMessages,
 		prepareRequest: (request) => {
 			if (opts.callPurpose) {
 				let learner = false, automatic = false;
@@ -343,8 +353,27 @@ export function createPracticeAgent(ctx: PracticeToolContext, opts: AgentBuildOp
 	return baseAgentOptions("practice", opts, Object.values(tools));
 }
 
+export function withLearnerNotes(messages: Message[], note: (text: string) => string | null): Message[] {
+	return messages.map((message) => {
+		if (message.role !== "user") return message;
+		if (typeof message.content === "string") {
+			const extra = note(message.content);
+			return extra ? { ...message, content: `${message.content}\n\n${extra}` } : message;
+		}
+		const text = message.content.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("\n");
+		const extra = text ? note(text) : null;
+		return extra ? { ...message, content: [...message.content, { type: "text" as const, text: extra }] } : message;
+	});
+}
+
+export function createChatAgent(ctx: ChatToolContext, opts: AgentBuildOptions = {}) {
+	const tools = opts.tools ?? chatTools(ctx);
+	return baseAgentOptions("chat", opts, Object.values(tools));
+}
+
 export type ProberAgent = ReturnType<typeof createProberAgent>;
 export type TeacherAgent = ReturnType<typeof createTeacherAgent>;
 export type PracticeAgent = ReturnType<typeof createPracticeAgent>;
-export type TeachingAgent = ProberAgent | TeacherAgent | PracticeAgent;
+export type ChatAgent = ReturnType<typeof createChatAgent>;
+export type TeachingAgent = ProberAgent | TeacherAgent | PracticeAgent | ChatAgent;
 

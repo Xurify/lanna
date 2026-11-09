@@ -39,12 +39,16 @@ interface CatchOptions {
 	now?: Date;
 }
 
-let inFlight: Promise<CatchNext> | null = null;
+const inFlight = new Map<string, Promise<CatchNext>>();
 
-/** The item to answer now: the one waiting, else a new one. */
 export function nextCatchItem(opts: CatchOptions = {}): Promise<CatchNext> {
-	if (!inFlight) inFlight = makeNext(opts).finally(() => (inFlight = null));
-	return inFlight;
+	const profile = activeProfile();
+	let next = inFlight.get(profile);
+	if (!next) {
+		next = makeNext(opts).finally(() => inFlight.delete(profile));
+		inFlight.set(profile, next);
+	}
+	return next;
 }
 
 async function makeNext(opts: CatchOptions): Promise<CatchNext> {

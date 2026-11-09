@@ -4,7 +4,7 @@
  * the browser section (components/settings/usage-section.tsx).
  */
 
-export type SessionMode = "learn" | "talk" | "story" | "why" | "practice";
+export type SessionMode = "learn" | "chat" | "talk" | "story" | "why" | "practice";
 
 export interface SessionSpend {
 	id: string;

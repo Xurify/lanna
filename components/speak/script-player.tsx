@@ -12,14 +12,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { readOrigin } from "@/components/origin";
 import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, PRIMARY, SECONDARY, TaskFrame, TaskTop } from "@/components/task-frame";
+import { COLUMN, endEnterBlocked, EnterHint, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { QIcon } from "@/components/quiet/icon";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
 export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: string }) {
+	const router = useRouter();
 	const lang = useActiveLanguage();
 	const script = scriptFor(sceneId, langId);
 	const [turnIndex, setTurnIndex] = useState(0);
@@ -101,33 +105,51 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 	// Keys 1 to 3 pick an option.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (done) return;
+			if (done) {
+				if (e.key === "Escape") {
+					e.preventDefault();
+					router.push(readOrigin());
+					return;
+				}
+				if (e.key !== "Enter" || endEnterBlocked(e)) return;
+				e.preventDefault();
+				router.push(`/speak?scene=${scene}`);
+				return;
+			}
 			const n = Number(e.key);
 			if (n >= 1 && n <= 3) pick(turn.options[n - 1]!, n - 1);
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [pick, turn, done]);
+	}, [pick, turn, done, router, scene]);
 
 	if (done) {
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="script-done">
-					<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · step by step · done</p>
-					<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground">Now say it yourself</h1>
-					<p className="mt-3 max-w-md font-prose text-base text-muted-foreground">
+				<TaskEnd
+					testId="script-done"
+					hint={<EnterHint>to say it live</EnterHint>}
+					actions={
+						<>
+							<Link href="/speak" className={SECONDARY}>
+								Other scenes
+							</Link>
+							<Link href={`/speak?scene=${scene}`} className={PRIMARY} data-testid="script-live">
+								<MicIcon className="size-4" />
+								Say it live
+							</Link>
+						</>
+					}
+				>
+					<p className="q-date flex items-center gap-1.5">
+						<QIcon name="speak" className="text-teal" />
+						Speak · step by step · done
+					</p>
+					<h1 className="q-hello">Now say it yourself</h1>
+					<p className="q-line dim mt-3 max-w-xl">
 						You walked through all {total} lines. Now say the same scene out loud. The tutor will follow what you say, not the script.
 					</p>
-					<div className="mt-8 flex flex-wrap gap-3">
-						<Link href={`/speak?scene=${scene}`} className={PRIMARY} data-testid="script-live">
-							<MicIcon className="size-4" />
-							Say it live
-						</Link>
-						<Link href="/speak" className={SECONDARY}>
-							Other scenes
-						</Link>
-					</div>
-				</div>
+				</TaskEnd>
 			</TaskFrame>
 		);
 	}

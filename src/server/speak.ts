@@ -325,7 +325,7 @@ function serial<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /** A scene as the language's story bible sets it (curriculum/<language>/world.json). */
-function sceneFor(id: string): SpeakScene | undefined {
+export function sceneFor(id: string): SpeakScene | undefined {
 	const plain = speakScene(id);
 	return plain && sceneIn(plain, loadWorld()?.scenes?.[id]);
 }

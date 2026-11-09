@@ -38,6 +38,17 @@ Use it twice: once **before** you draw (decide the one idea, pick the pieces), o
 
 A scene is a `case` in `Scene` (`components/lesson/case-sketch.tsx`): `Ground`, scenery, people, `Patch`, `Arrow`, `Note`. Give every stroke its own `seed` (a number nobody else in the scene uses; a figure uses `seed` to `seed + 5`). A new scene kind goes in `SceneKind` and in a stage of `SKETCHES`.
 
+## Blind review before it ships
+
+Checking a picture against what you meant is not a check: you already know the answer. On slovak.wiki the first ink sketches passed every check in this file and the owner still asked "is that a book or a binder?", "what is happening there?". A blind review of the whole set found why: rectangles that read as two objects, one pointing arm for four meanings, a lone preposition that looks like a typo, an eye with no head, an arrow for time.
+
+1. Render the sketches on numbered sheets with no names, with no sentence and no source.
+2. Give two fresh reviewers only the PNGs: a Claude subagent and another model family (Antigravity `gemini-3.8-flash-high` through `delegate_task`). Ask each, per picture: what is drawn, which grammar idea and sentence it guesses, clarity 1 to 5, what is confusing and the smallest fix. Reviewer prompts must say "describe only what is drawn".
+3. Score the answers against what you meant. Act on a confusion both name; a one-reviewer taste call is not a change. Read each reviewer's description of the picture first: Gemini 3.8 Flash sometimes describes things that are not drawn.
+4. Redraw, render again, and use fresh reviewers (they remember). Stop when every picture is 4 or better and both guess the meaning.
+
+The slovak.wiki skill (`.agents/skills/ink-drawing/` in that repo) has the brief, the script that makes the sheets, and twelve rules from four rounds. The ones that apply here too: the **silhouette test** (cover the labels; could it be two things?), **one gesture, one meaning**, **arrows are for movement or handing over and never for time**, **label the phrase, not the letter** (`z práce`, not `z`), **lines of sight are dashed and start at an eye in a head**, **say who is who** (a child holding a woman's hand is "with mama"), and **do not point at the answer to "who?"**.
+
 ## Does it mean one thing
 
 Ask each of these of every picture. A picture that fails one is redrawn, not captioned.
@@ -67,5 +78,7 @@ Never judge a picture from its code.
 - A picture of a house for "from work" read as "from home".
 
 ## Figures the model draws
+
+**In the chat (E76)** the tutor writes the drawing itself, as a ` ```svg ` fence in its reply. Its prompt is `src/agent/prompts/chat/20-drawing.md`: the same look in words (thin round strokes with a small bow, a person as round head, straight body, straight legs and one pointing arm, one teal accent, one patch), colors only through `var(--ink)`, `var(--graphite)`, `var(--faint)`, `var(--rule)`, `var(--mark)` and `var(--wash)`. `src/core/sketch.ts` rebuilds it from an allowlist and maps those names to the tokens (`--sk-*` on the figure, set in `components/sketch-figure.tsx`), which also adds the wobble filter and, for a drawing that arrives live, the `ink-draw` and `ink-fade` order. A drawing can step through `<g data-step data-caption>` groups. When this skill changes the look, change that prompt and the token map in the same PR.
 
 The `visual` tool's maker (`src/agent/subagents/visual-maker.ts`) is told the same look in words: thin near-black strokes, round caps, curved arrows with two-stroke heads, one teal accent and one patch, on the white background the figure card and its invert switch rely on. When this skill changes the look, change that prompt in the same PR.

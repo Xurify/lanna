@@ -1,0 +1,167 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { CheckIcon, CodeIcon, CopyIcon, DownloadIcon, FileTextIcon, LayersIcon, PrinterIcon } from "lucide-react";
+import {
+	copyTextToClipboard,
+	exportChatAnkiTsv,
+	exportChatJson,
+	exportChatMarkdown,
+	extractChatAnkiCards,
+	slugifyTitle,
+	triggerFileDownload,
+	type LhMessage,
+	type LhViewMessage,
+} from "@/src/core";
+import { MenuShell } from "@/components/menu-shell";
+import { Hint } from "@/components/ui/hint";
+import { blurAfterPointerClick } from "@/components/focus-hygiene";
+import { cn } from "@/lib/utils";
+
+export interface ChatExportMenuProps {
+	chatId: string;
+	title: string;
+	messages: readonly LhViewMessage[];
+	nativeMessages?: readonly LhMessage[];
+	plain?: boolean;
+}
+
+type CopyState = "idle" | "copied" | "failed";
+
+const COPY_LABEL: Record<CopyState, string> = {
+	idle: "Copy as Markdown",
+	copied: "Copied",
+	failed: "Could not copy",
+};
+
+function ExportItem({ icon, label, detail, disabled, testid, onSelect }: { icon: ReactNode; label: string; detail?: string; disabled?: boolean; testid: string; onSelect: (e: React.MouseEvent) => void }) {
+	return (
+		<button
+			type="button"
+			role="menuitem"
+			data-testid={testid}
+			disabled={disabled}
+			onClick={onSelect}
+			className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
+		>
+			<span className="text-ink-3">{icon}</span>
+			<span className="flex-1 font-medium">{label}</span>
+			<span className="text-ink-3 tabular-nums">{detail}</span>
+		</button>
+	);
+}
+
+export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain }: ChatExportMenuProps) {
+	const [open, setOpen] = useState(false);
+	const [copy, setCopy] = useState<CopyState>("idle");
+	const triggerRef = useRef<HTMLButtonElement>(null);
+	const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	const sourceMessages = useMemo(() => (nativeMessages && nativeMessages.length > 0 ? nativeMessages : messages), [nativeMessages, messages]);
+	const slug = useMemo(() => slugifyTitle(title), [title]);
+	const cardCount = useMemo(() => extractChatAnkiCards(sourceMessages, { title }).length, [sourceMessages, title]);
+
+	useEffect(() => () => clearTimeout(copyTimeoutRef.current), []);
+
+	useEffect(() => {
+		if (!open) return;
+		const onPointerDown = (e: PointerEvent) => {
+			const target = e.target;
+			if (!(target instanceof Element)) return;
+			if (target.closest("[data-lh-menu]") || triggerRef.current?.contains(target)) return;
+			setOpen(false);
+		};
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key !== "Escape") return;
+			e.stopPropagation();
+			setOpen(false);
+			triggerRef.current?.focus();
+		};
+		document.addEventListener("pointerdown", onPointerDown);
+		document.addEventListener("keydown", onKeyDown);
+		return () => {
+			document.removeEventListener("pointerdown", onPointerDown);
+			document.removeEventListener("keydown", onKeyDown);
+		};
+	}, [open]);
+
+	const showCopy = (state: CopyState) => {
+		setCopy(state);
+		clearTimeout(copyTimeoutRef.current);
+		copyTimeoutRef.current = setTimeout(() => setCopy("idle"), 2000);
+	};
+
+	const copyMarkdown = async (e: React.MouseEvent) => {
+		blurAfterPointerClick(e);
+		const ok = await copyTextToClipboard(exportChatMarkdown(sourceMessages, { title, chatId }));
+		showCopy(ok ? "copied" : "failed");
+	};
+
+	const download = (e: React.MouseEvent, filename: string, content: string, mimeType: string) => {
+		blurAfterPointerClick(e);
+		triggerFileDownload(filename, content, mimeType);
+		setOpen(false);
+	};
+
+	const print = (e: React.MouseEvent) => {
+		blurAfterPointerClick(e);
+		setOpen(false);
+		// The print dialog blocks painting, so let the menu close first.
+		setTimeout(() => window.print(), 100);
+	};
+
+	return (
+		<div className="relative">
+			<Hint label="Export this chat" side="bottom">
+				<button
+					ref={triggerRef}
+					type="button"
+					data-testid="export-chat-trigger"
+					aria-expanded={open}
+					aria-haspopup="menu"
+					onClick={(e) => {
+						blurAfterPointerClick(e);
+						setOpen((v) => !v);
+					}}
+					className={cn(
+						"lh-no-drag flex shrink-0 items-center gap-1.5 text-xs font-semibold transition-colors",
+						plain
+							? cn("h-8 rounded-lg px-2.5", open ? "bg-well text-foreground" : "text-ink-3 hover:bg-well hover:text-foreground")
+							: cn("rounded-full border px-2 py-0.5", open ? "border-border bg-accent text-foreground" : "border-border/80 text-muted-foreground hover:border-border hover:text-foreground"),
+					)}
+				>
+					<DownloadIcon className="size-3.5" aria-hidden />
+					Export
+				</button>
+			</Hint>
+
+			{open && (
+				<MenuShell anchorRef={triggerRef} testid="export-chat-menu" preferredSide="down" align="right" menuClass="flex w-64 flex-col gap-0.5 rounded-xl border border-border/80 bg-card p-1.5 text-xs shadow-xl">
+					<div role="menu" aria-label="Export this chat" className="flex flex-col gap-0.5">
+						<ExportItem
+							testid="export-copy-markdown"
+							icon={copy === "copied" ? <CheckIcon className="size-3.5 text-teal" aria-hidden /> : <CopyIcon className="size-3.5" aria-hidden />}
+							label={COPY_LABEL[copy]}
+							onSelect={copyMarkdown}
+						/>
+						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
+						<ExportItem
+							testid="export-download-anki"
+							icon={<LayersIcon className="size-3.5" aria-hidden />}
+							label="Anki cards"
+							detail={cardCount === 0 ? "none yet" : cardCount === 1 ? "1 card" : `${cardCount} cards`}
+							disabled={cardCount === 0}
+							onSelect={(e) => download(e, `${slug}-anki.tsv`, exportChatAnkiTsv(sourceMessages, { title }), "text/tab-separated-values;charset=utf-8")}
+						/>
+						<ExportItem testid="export-print-pdf" icon={<PrinterIcon className="size-3.5" aria-hidden />} label="Print or save as PDF" detail="PDF" onSelect={print} />
+						<div role="separator" className="mx-2.5 my-1 h-px bg-border" />
+						<ExportItem testid="export-download-json" icon={<CodeIcon className="size-3.5" aria-hidden />} label="Full session data" detail=".json" onSelect={(e) => download(e, `${slug}-session.json`, exportChatJson(chatId, title, sourceMessages), "application/json;charset=utf-8")} />
+					</div>
+					<span role="status" className="sr-only">
+						{copy === "idle" ? "" : copy === "copied" ? "Copied the chat as Markdown" : "Could not copy the chat"}
+					</span>
+				</MenuShell>
+			)}
+		</div>
+	);
+}

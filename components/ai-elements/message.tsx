@@ -111,10 +111,6 @@ type MessageBranchNextProps = ComponentProps<typeof Button>;
 type MessageBranchPageProps = HTMLAttributes<HTMLSpanElement>;
 type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-// Type-only version skew: @streamdown/code bundles shiki@3 types while
-// streamdown@2.5 expects shiki@4 types. Both work at runtime (each ships its
-// own highlighter); the cast papers over the .d.ts mismatch.
-//
 // remark-breaks rides in the cjk plugin's remarkPluginsAfter slot (public
 // PluginConfig API): Streamdown's bare `remarkPlugins` PROP would REPLACE the
 // defaults ([remark-gfm, codeMeta]), silently dropping GFM and code-fence
@@ -131,7 +127,7 @@ export const streamdownPlugins = {
     remarkPluginsAfter: [...cjk.remarkPluginsAfter, remarkBreaks],
   },
   code,
-} as unknown as PluginConfig;
+} satisfies PluginConfig;
 
 export const MessageResponse = memo(
   ({ className, children, ...props }: MessageResponseProps) => {

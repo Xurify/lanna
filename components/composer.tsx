@@ -48,7 +48,9 @@ export function Composer({
 	placeholder = "Write to your tutor…",
 	nextProblem = false,
 	onNext,
+	toolbar,
 }: {
+	toolbar?: React.ReactNode;
 	busy: boolean;
 	value: string;
 	onChange: (v: string) => void;
@@ -83,7 +85,7 @@ export function Composer({
 	return (
 		<form
 			data-testid="composer"
-			className="flex items-end gap-1.5 p-1.5"
+			className={toolbar ? "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-2 px-2 pt-2 pb-2" : "flex items-end gap-1.5 p-1.5"}
 			onSubmit={(e) => {
 				e.preventDefault();
 				act();
@@ -115,8 +117,12 @@ export function Composer({
 				placeholder={placeholder}
 				autoFocus={autoFocus}
 				rows={1}
-				className="field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
+				className={cn(
+					"field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
+					toolbar && "col-span-2 px-3 pt-2 pb-1",
+				)}
 			/>
+			{toolbar && <div className="flex min-w-0 items-center gap-1">{toolbar}</div>}
 			{/* The button follows the text (owner report 2026-10-03): while
 				 a turn runs WITH text typed it stays the SEND affordance
 				 (click = steer — steering must be clickable, not Enter-only);
@@ -147,7 +153,8 @@ export function Composer({
 						aria-label={busy && !canSend ? "Stop" : "Send"}
 						disabled={!busy && !canSend}
 						className={cn(
-							"flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+							"flex shrink-0 items-center justify-center transition-colors",
+							toolbar ? "size-9 rounded-full" : "size-10 rounded-lg",
 							busy && !canSend
 								? "bg-well-2 text-foreground hover:bg-well"
 								: "bg-teal text-primary-foreground hover:bg-teal-2 disabled:opacity-40",
