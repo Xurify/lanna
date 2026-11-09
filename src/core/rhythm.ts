@@ -437,3 +437,7 @@ export function formatStressCadence(text: string): string {
 
 	return result.join("");
 }
+
+export function hasRhythmPage(languageId?: string): boolean {
+	return languageId === "slovak";
+}

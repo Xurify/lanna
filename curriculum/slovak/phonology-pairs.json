@@ -1,6 +1,28 @@
 {
 	"language": "slovak",
 	"version": 2,
+	"families": [
+		{
+			"id": "vowel_length",
+			"label": "Vowel length"
+		},
+		{
+			"id": "palatals",
+			"label": "Soft consonants"
+		},
+		{
+			"id": "syllabic_liquids",
+			"label": "Syllabic r and l"
+		},
+		{
+			"id": "diphthongs",
+			"label": "Diphthongs"
+		},
+		{
+			"id": "voicing",
+			"label": "Voicing"
+		}
+	],
 	"pairs": [
 		{
 			"id": "pas-vs-pas",
@@ -44,7 +66,7 @@
 			"contrast": "a and á",
 			"functionalLoad": "high",
 			"cue": "Listen to the first syllable: short in rada, long in ráda.",
-			"exampleA": "Ďakujem za dobrú radu.",
+			"exampleA": "To bola dobrá rada.",
 			"exampleB": "Ona je veľmi ráda."
 		},
 		{
@@ -75,7 +97,7 @@
 			"functionalLoad": "high",
 			"cue": "The ú in múka lasts about twice as long as the u in muka.",
 			"exampleA": "Bola to pre neho veľká muka.",
-			"exampleB": "Kúpil som kilo hladkej múky."
+			"exampleB": "Na stole je hladká múka."
 		},
 		{
 			"id": "bal-vs-bal",
@@ -105,7 +127,7 @@
 			"functionalLoad": "high",
 			"cue": "The first syllable is short in latka and long in látka.",
 			"exampleA": "Na plote chýba jedna drevená latka.",
-			"exampleB": "Kúpila jemnú látku na šaty."
+			"exampleB": "Táto látka je veľmi jemná."
 		},
 		{
 			"id": "plat-vs-plat",
@@ -118,7 +140,7 @@
 			"meaningB": "pay! (imperative)",
 			"contrast": "t and ť",
 			"functionalLoad": "high",
-			"cue": "For ť the flat front of the tongue touches the roof of the mouth. For t only the tip touches behind the teeth.",
+			"cue": "For ť the flat front of the tongue touches the roof of the mouth. For t only the tip does.",
 			"exampleA": "Mesačný plat príde v piatok.",
 			"exampleB": "Plať kartou, je to rýchlejšie."
 		},
@@ -194,7 +216,7 @@
 			"contrast": "d and ď, heard as t and ť at the end of a word",
 			"functionalLoad": "high",
 			"cue": "At the end of a word d sounds like t and ď like ť, so you hear rat and rať.",
-			"exampleA": "Stáli sme v dlhom rade.",
+			"exampleA": "Pred obchodom stojí dlhý rad.",
 			"exampleB": "Dobre mi raď a pomôž."
 		},
 		{
@@ -223,8 +245,8 @@
 			"meaningB": "field / arable land",
 			"contrast": "l and ľ",
 			"functionalLoad": "medium",
-			"cue": "For ľ the flat front of the tongue touches the roof of the mouth. For l only the tip touches.",
-			"exampleA": "Herec dostal hlavnú rolu.",
+			"cue": "For ľ the flat front of the tongue touches the roof of the mouth. For l only the tip does.",
+			"exampleA": "To je jeho najlepšia rola.",
 			"exampleB": "Za dedinou sa rozprestiera úrodná roľa."
 		},
 		{
@@ -239,8 +261,8 @@
 			"contrast": "r and ŕ",
 			"functionalLoad": "high",
 			"cue": "The r is the vowel of the first syllable. In vŕšok it lasts about twice as long.",
-			"exampleA": "Na vršku stromu sedí vták.",
-			"exampleB": "Dom stojí na malom vŕšku."
+			"exampleA": "Vršok stromu sa hýbe vo vetre.",
+			"exampleB": "Za dedinou je malý vŕšok."
 		},
 		{
 			"id": "krc-vs-krc",

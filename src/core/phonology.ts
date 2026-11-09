@@ -11,18 +11,26 @@
  * Pure and browser-safe: no node builtins, bundled curriculum JSON.
  */
 
-import phonologyPairsJson from "../../curriculum/slovak/phonology-pairs.json";
+import slovakPairsJson from "../../curriculum/slovak/phonology-pairs.json";
+import russianPairsJson from "../../curriculum/russian/phonology-pairs.json";
 import type { LanguageId } from "./language.ts";
 import { rng, shuffle } from "./lesson.ts";
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
-export type PhonologyFamily =
-	| "vowel_length"
-	| "palatals"
-	| "syllabic_liquids"
-	| "diphthongs"
-	| "voicing";
+export type PhonologyFamily = string;
+
+export interface PhonologyFamilyDecl {
+	id: string;
+	label: string;
+}
+
+export interface PhonologyDataset {
+	language: string;
+	version: number;
+	families: PhonologyFamilyDecl[];
+	pairs: PhonologyPair[];
+}
 
 export type FunctionalLoadLevel = "high" | "medium" | "low";
 
@@ -461,16 +469,19 @@ export function getVoicingAssimilationNotes(word: string): AssimilationRule | nu
 
 // ─── Curated Minimal Pairs & Ear Gym Generator ────────────────────────
 
-export const PHONOLOGY_PAIRS: PhonologyPair[] = (phonologyPairsJson as { pairs: PhonologyPair[] }).pairs;
+const BUNDLED_DATASETS: Record<string, PhonologyDataset> = {
+	[slovakPairsJson.language]: slovakPairsJson as unknown as PhonologyDataset,
+	[russianPairsJson.language]: russianPairsJson as unknown as PhonologyDataset,
+};
 
-/**
- * Filter minimal pairs by contrast family or minimum functional load.
- */
-export function getPhonologyPairs(opts: {
-	family?: PhonologyFamily;
-	minFunctionalLoad?: FunctionalLoadLevel;
-} = {}): PhonologyPair[] {
-	return PHONOLOGY_PAIRS.filter((p) => {
+export function getPhonologyData(languageId: string | undefined): PhonologyDataset | null {
+	return (languageId && BUNDLED_DATASETS[languageId]) || null;
+}
+
+export function getPhonologyPairs(languageId: string, opts: { family?: PhonologyFamily; minFunctionalLoad?: FunctionalLoadLevel } = {}): PhonologyPair[] {
+	const dataset = getPhonologyData(languageId);
+	if (!dataset) return [];
+	return dataset.pairs.filter((p) => {
 		if (opts.family && p.family !== opts.family) return false;
 		if (opts.minFunctionalLoad === "high" && p.functionalLoad !== "high") return false;
 		if (opts.minFunctionalLoad === "medium" && p.functionalLoad === "low") return false;

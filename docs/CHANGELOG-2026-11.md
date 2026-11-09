@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: the ear gym uses the language you are learning, with Russian pairs (branch `feat/ear-gym-per-language`)
+
+- **Why:** with Russian active, `/phonology` showed Slovak pairs read by the Russian voice. The owner: "Should we implement this with Russian as well?" and then "Let's fix all of these issues." Rule E81.
+- **What changed:** the ear gym plays the pairs of the active language. Russian has 21 pairs in three groups: hard and soft consonants (*мат* and *мать*), и and ы (*бить* and *быть*), ш and щ (*чаша* and *чаща*). A language with no pairs gets "No pairs for <language> yet" and a button to Today. The Rhythm view is shown for Slovak only.
+- **Checked:** `tsc`, `eslint`, the whole suite (2,115 tests: 2,112 pass, 3 skipped), with new tests for every pair file (the two words and their sounds differ, each example sentence holds its word, a cue is at most 100 characters so it fits a phone). In the sandbox, four Russian rounds by keyboard (Day and Night, 1280 and 390 px) and four Slovak rounds again: no console errors, no sideways scroll, the card at the same place and height before and after every answer; the contrast menu, the end screen and the no-pairs screen looked at.
+- **Unverified:** the real switch to a Russian profile (the sandbox profile is Slovak, so the Russian and no-pairs screens were drawn on a throwaway page that passed the language in); the owner's own machine and phone; the sound of every Russian pair; a Russian speaker's eye on the words and example sentences.
+- **Also on this branch:** on a phone the two answers sit one above the other, so a meaning fits on one line; a contrast whose group has the same name is written once.
+
 ## 9 November: the ear gym and the rhythm page in the app's own look (branch `feat/rhythmic-law-suprasegmentals`)
 
 - **Why:** the owner: "redesign these views and designs to feel better and match our app's feel". Rule E80.

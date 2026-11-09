@@ -13,8 +13,8 @@ import { KBD } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, OptionTile, PracticeCard, PRIMARY, SECONDARY, TaskBar, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
-import { earGymRound, getPhonologyPairs, praiseFor, type EarGymExercise, type PhonologyFamily } from "@/src/core";
+import { speak, stopSpeaking } from "@/components/speech";
+import { earGymRound, getPhonologyData, getPhonologyPairs, hasRhythmPage, praiseFor, type EarGymExercise, type PhonologyFamily } from "@/src/core";
 import { RhythmicVisualizer } from "./rhythmic-visualizer";
 
 type View = "pairs" | "rhythm";
@@ -25,19 +25,6 @@ const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
 	{ id: "pairs", label: "Pairs" },
 	{ id: "rhythm", label: "Rhythm" },
 ];
-
-const FAMILIES: ReadonlyArray<{ value: FamilyChoice; label: string }> = [
-	{ value: "all", label: "All contrasts" },
-	{ value: "vowel_length", label: "Vowel length" },
-	{ value: "palatals", label: "Soft consonants" },
-	{ value: "syllabic_liquids", label: "Syllabic r and l" },
-	{ value: "diphthongs", label: "Diphthongs" },
-	{ value: "voicing", label: "Voicing" },
-];
-
-function familyLabel(family: PhonologyFamily): string {
-	return FAMILIES.find((f) => f.value === family)?.label ?? family;
-}
 
 interface Side {
 	word: string;
@@ -55,16 +42,22 @@ function sides(trial: EarGymExercise): [Side, Side] {
 	return trial.targetMember === "a" ? [target, other] : [other, target];
 }
 
-export function EarGym({ seed }: { seed: number }) {
+export function EarGym({ seed, languageId, languageName, languageCode }: { seed: number; languageId: string; languageName: string; languageCode: string }) {
 	const router = useRouter();
-	const lang = useActiveLanguage();
+	const hasRhythm = hasRhythmPage(languageId);
+	const dataset = getPhonologyData(languageId);
+
 	const [view, setView] = useState<View>("pairs");
 	const [family, setFamily] = useState<FamilyChoice>("all");
 	const [round, setRound] = useState(0);
 	const [index, setIndex] = useState(0);
 	const [answers, setAnswers] = useState<Answer[]>([]);
 
-	const trials = useMemo(() => earGymRound(getPhonologyPairs(family === "all" ? {} : { family }), seed + round), [family, seed, round]);
+	const families: ReadonlyArray<{ value: FamilyChoice; label: string }> = [{ value: "all", label: "All contrasts" }, ...(dataset?.families ?? []).map((f) => ({ value: f.id, label: f.label }))];
+	const familyLabel = (id: PhonologyFamily): string => families.find((f) => f.value === id)?.label ?? id;
+
+	const trials = useMemo(() => earGymRound(getPhonologyPairs(languageId, family === "all" ? {} : { family }), seed + round), [languageId, family, seed, round]);
+
 	const total = trials.length;
 	const trial = trials[index] ?? null;
 	const answered = answers.length > index;
@@ -140,9 +133,30 @@ export function EarGym({ seed }: { seed: number }) {
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const switcher = <ViewSwitch view={view} onChange={setView} />;
+	const switcher = hasRhythm ? <ViewSwitch view={view} onChange={setView} /> : undefined;
 
-	if (view === "rhythm") {
+	if (!dataset || dataset.pairs.length === 0) {
+		return (
+			<TaskFrame strip={false}>
+				<TaskBar>{switcher}</TaskBar>
+				<div className={cn(COLUMN, "pt-[8vh]")}>
+					<EmptyState
+						testid="ear-gym-no-pairs"
+						title={`No pairs for ${languageName} yet`}
+						action={
+							<Link href="/" className="q-btn primary">
+								Go to Today
+							</Link>
+						}
+					>
+						<p>The ear gym has pairs for some languages only.</p>
+					</EmptyState>
+				</div>
+			</TaskFrame>
+		);
+	}
+
+	if (hasRhythm && view === "rhythm") {
 		return (
 			<TaskFrame strip={false}>
 				<TaskBar>{switcher}</TaskBar>
@@ -158,7 +172,7 @@ export function EarGym({ seed }: { seed: number }) {
 	if (finished) {
 		return (
 			<TaskFrame>
-				<RoundEnd trials={trials} answers={answers} onAgain={() => startRound()} />
+				<RoundEnd trials={trials} answers={answers} onAgain={() => startRound()} langCode={languageCode} />
 			</TaskFrame>
 		);
 	}
@@ -186,7 +200,7 @@ export function EarGym({ seed }: { seed: number }) {
 
 	const picked = answered ? answers[index] : undefined;
 	const right = picked === trial.targetWord;
-	const praise = praiseFor(lang?.code, index);
+	const praise = praiseFor(languageCode, index);
 
 	return (
 		<TaskFrame strip={false}>
@@ -198,7 +212,7 @@ export function EarGym({ seed }: { seed: number }) {
 					<PracticeCard
 						icon="ear"
 						title="Ear gym"
-						right={<ChoiceMenu value={family} options={FAMILIES} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Contrast" className="w-44 [&>button]:h-8 [&>button]:text-[13px]" />}
+						right={<ChoiceMenu value={family} options={families} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Contrast" className="w-52 [&>button]:h-8 [&>button]:text-[13px]" />}
 					>
 						<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
 							<button
@@ -215,7 +229,7 @@ export function EarGym({ seed }: { seed: number }) {
 									{!answered ? "Which word was it?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
 								</h2>
 								<p className="mt-1 font-ui text-[13px] text-ink-3" data-testid="ear-gym-contrast">
-									{familyLabel(trial.family)} · {trial.contrast}
+									{familyLabel(trial.family) === trial.contrast ? trial.contrast : `${familyLabel(trial.family)} · ${trial.contrast}`}
 								</p>
 							</div>
 							<button
@@ -230,7 +244,7 @@ export function EarGym({ seed }: { seed: number }) {
 							</button>
 						</div>
 
-						<div className="mt-6 grid grid-cols-2 gap-3">
+						<div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
 							{sides(trial).map((side, i) => (
 								<OptionTile
 									key={side.word}
@@ -241,7 +255,7 @@ export function EarGym({ seed }: { seed: number }) {
 									trail={<Volume2Icon className={cn("size-4 opacity-70", !answered && "invisible")} strokeWidth={1.6} aria-hidden="true" />}
 								>
 									<span className="block">
-										<span lang={lang?.code}>{side.word}</span>
+										<span lang={languageCode}>{side.word}</span>
 										{answered && <span className="ml-2 hidden font-ui text-[13px] font-normal tracking-normal text-ink-3 sm:inline">[{side.ipa}]</span>}
 									</span>
 									<span className="block font-ui text-[13px] font-normal tracking-normal text-ink-3">{side.meaning}</span>
@@ -271,7 +285,7 @@ export function EarGym({ seed }: { seed: number }) {
 									"Heard right"
 								) : (
 									<span>
-										It said <span lang={lang?.code}>{trial.targetWord}</span>
+										It said <span lang={languageCode}>{trial.targetWord}</span>
 									</span>
 								)}
 							</p>
@@ -316,12 +330,11 @@ function ViewSwitch({ view, onChange }: { view: View; onChange: (next: View) => 
 	);
 }
 
-function HearWord({ side, gender }: { side: Side; gender?: "female" | "male" }) {
-	const lang = useActiveLanguage();
+function HearWord({ side, gender, langCode }: { side: Side; gender?: "female" | "male"; langCode: string }) {
 	return (
 		<button type="button" onClick={() => hear(side.word, gender)} aria-label={`Play ${side.word}`} className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}>
 			<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
-			<span className="font-prose text-[16px] font-semibold" lang={lang?.code}>
+			<span className="font-prose text-[16px] font-semibold" lang={langCode}>
 				{side.word}
 			</span>
 			<span className="font-normal text-ink-3">[{side.ipa}]</span>
@@ -334,7 +347,7 @@ interface Heard {
 	answer: Answer;
 }
 
-function RoundEnd({ trials, answers, onAgain }: { trials: EarGymExercise[]; answers: Answer[]; onAgain: () => void }) {
+function RoundEnd({ trials, answers, onAgain, langCode }: { trials: EarGymExercise[]; answers: Answer[]; onAgain: () => void; langCode: string }) {
 	const heard: Heard[] = trials.map((trial, i) => ({ trial, answer: answers[i] ?? null }));
 	const missed = heard.filter((h) => h.answer !== h.trial.targetWord);
 	const right = heard.filter((h) => h.answer === h.trial.targetWord);
@@ -365,7 +378,7 @@ function RoundEnd({ trials, answers, onAgain }: { trials: EarGymExercise[]; answ
 			{missed.length > 0 && (
 				<div className="mt-8">
 					<h2 className="q-sh">Missed</h2>
-					<HeardRows rows={missed} />
+					<HeardRows rows={missed} langCode={langCode} />
 				</div>
 			)}
 			{right.length > 0 && (
@@ -374,7 +387,7 @@ function RoundEnd({ trials, answers, onAgain }: { trials: EarGymExercise[]; answ
 						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
 						Heard right · {right.length} {right.length === 1 ? "pair" : "pairs"}
 					</summary>
-					<HeardRows rows={right} />
+					<HeardRows rows={right} langCode={langCode} />
 				</details>
 			)}
 			<SourcesNote feature="ear-gym" className="mt-14" />
@@ -382,27 +395,26 @@ function RoundEnd({ trials, answers, onAgain }: { trials: EarGymExercise[]; answ
 	);
 }
 
-function HeardRows({ rows }: { rows: Heard[] }) {
-	const lang = useActiveLanguage();
+function HeardRows({ rows, langCode }: { rows: Heard[]; langCode: string }) {
 	return (
 		<ul className="mt-2 divide-y divide-[var(--q-line)]">
 			{rows.map(({ trial, answer }, i) => (
 				<li key={i} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
 					<div className="flex flex-wrap gap-2">
 						{sides(trial).map((side) => (
-							<HearWord key={side.word} side={side} gender={trial.genderPrompt} />
+							<HearWord key={side.word} side={side} gender={trial.genderPrompt} langCode={langCode} />
 						))}
 					</div>
 					<p className="font-ui text-[12.5px] text-ink-3">
 						It said{" "}
-						<span className="font-medium text-ink-2" lang={lang?.code}>
+						<span className="font-medium text-ink-2" lang={langCode}>
 							{trial.targetWord}
 						</span>
 						{answer === trial.targetWord ? null : answer ? (
 							<>
 								{" "}
 								· you chose{" "}
-								<span className="font-medium text-miss" lang={lang?.code}>
+								<span className="font-medium text-miss" lang={langCode}>
 									{answer}
 								</span>
 							</>
