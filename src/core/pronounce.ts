@@ -21,6 +21,7 @@
  */
 
 import { foldedWords, wordMatch } from "./speak.ts";
+import { getArticulatoryCue } from "./phonology.ts";
 
 export type PronEngine = "azure" | "match";
 
@@ -152,7 +153,17 @@ export interface PronReport {
 	/** Mean overall across them, or null. */
 	average: number | null;
 	/** Sounds that keep scoring low (azure only): worst first. */
-	sounds: Array<{ p: string; score: number; n: number; /** Words they were weak in, a few. */ in: string[] }>;
+	sounds: Array<{
+		p: string;
+		score: number;
+		n: number;
+		/** Words they were weak in, a few. */
+		in: string[];
+		/** Articulatory motor guidance cue (if available). */
+		cue?: string;
+		/** Functional load level ("high" | "medium" | "low"). */
+		functionalLoad?: "high" | "medium" | "low";
+	}>;
 	/** Words that keep coming out wrong or missing: worst first. */
 	words: Array<{ word: string; score: number; n: number }>;
 }
@@ -187,7 +198,17 @@ export function pronReport(scores: readonly PronScore[], opts: { sounds?: number
 		lines: scores.length,
 		average: scores.length ? Math.round(sum / scores.length) : null,
 		sounds: [...sounds.entries()]
-			.map(([p, o]) => ({ p, score: Math.round(o.sum / o.n), n: o.n, in: [...o.in].slice(0, 3) }))
+			.map(([p, o]) => {
+				const cueInfo = getArticulatoryCue(p);
+				return {
+					p,
+					score: Math.round(o.sum / o.n),
+					n: o.n,
+					in: [...o.in].slice(0, 3),
+					...(cueInfo?.motor ? { cue: cueInfo.motor } : {}),
+					...(cueInfo?.functionalLoad ? { functionalLoad: cueInfo.functionalLoad } : {}),
+				};
+			})
 			.filter((o) => o.n >= 2 && o.score < WEAK_SOUND)
 			.sort((a, b) => a.score - b.score || b.n - a.n)
 			.slice(0, opts.sounds ?? 5),
