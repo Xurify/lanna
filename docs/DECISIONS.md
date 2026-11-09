@@ -1081,6 +1081,19 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Writing looks like writing.** In place of the spinner and "Thinking…", a pen stroke draws itself over a faint trace beside "Writing…" (`TutorWriting`), and everything above the learner's current line steps back to 65 % (body text still passes 4.5:1) until the turn ends (`.lh-recede`, full again on hover). A reply that streams in pieces ends in a short teal pen stroke (`.lh-writing`). All of it is still under reduced motion.
 - No rule between the tutor's steps in a chat; the replies under the text are the app's quiet buttons.
 - Lessons and practice sessions are unchanged.
+### E86. A page is rendered while the pointer rests on its link, and "instant" is a check (2026-11-09, branch `feat/instant-navigation`)
+
+**Why:** the owner asked for tab and section switches that feel instant, and pointed at how Vercel made v0's navigations instant. On a build the clicks were already 19 to 45 ms; what was left was the wait for the mouse button to come up and the skeleton before every page. Research note: [research/instant-navigation.md](research/instant-navigation.md).
+
+**How to apply:**
+- Instant means the page is on screen while the server cannot answer. `node scripts/instant-check.mjs --check` (after `npm run build`) holds every request, clicks each sidebar row and says what shows: `page`, `shell` or `blocked`. Run it after a change to the layout, the sidebar, `next.config.ts` or the Next.js version. It is this app's version of `instant()` from `@next/playwright`, which needs Cache Components (not adopted, E36).
+- A link to a page marked `rendersAhead` in `lib/nav.ts` is rendered by the server when the pointer comes over it, it takes focus, or a finger or button goes down on it (`components/instant-navigation.tsx`). No call site opts in: the listener is on the document, so a new `<Link>` to one of those pages gets it.
+- **`rendersAhead` is only for a page whose render reads files and nothing else.** A render that calls a model, the network, or writes a first-visit file would then run because a pointer passed by. Read, Listen, Watch and Study are left out for that reason, and `tests/render-ahead.test.ts` fails when a marked page calls one of those starters. A page with a query string is never rendered ahead.
+- A page shown from a render older than 2 s is refreshed on arrival, so a component that keeps server data in state takes it with `useServerValue` (`components/use-server-value.ts`), not `useState`: a plain `useState(initial)` ignores the refresh and can stay up to 30 s behind. A plan drawn at random for one sitting (Speed) stays in `useState` on purpose.
+- `experimental.staleTimes.static` in `next.config.ts` is 30, the lowest Next.js takes, and `lib/render-ahead.ts` counts on it. Change them together.
+- Sidebar rows go when the mouse button goes down. Touch and the keyboard go on the click.
+- None of this works under `next dev`, which does not use prefetched pages. Judge it on `npm run desktop:prod` (E36).
+
 
 ## Dropped or deferred
 

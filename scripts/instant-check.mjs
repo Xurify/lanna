@@ -8,6 +8,7 @@
  *   node scripts/instant-check.mjs --rest 400 # ms the pointer rests on a row before the press (default 300)
  *   node scripts/instant-check.mjs --press 90 # ms the mouse button stays down (default 90)
  *   node scripts/instant-check.mjs --cpu 4    # emulate a CPU four times slower
+ *   node scripts/instant-check.mjs --only /review  # one row
  *
  * For each row: rest the pointer on it, then hold every request the page makes,
  * click (button down, a moment, button up) and look at what is on screen while the
@@ -33,27 +34,31 @@ const DEV = flag("--dev");
 const REST_MS = Number(opt("--rest", "300"));
 const PRESS_MS = Number(opt("--press", "90"));
 const CPU = Number(opt("--cpu", "1"));
+const ONLY = opt("--only", "");
 const HELD_FOR_MS = 1200;
 
 const SHELL_ONLY = new Set(["/read", "/listen", "/watch", "/experiments/input-first"]);
 const RANK = { blocked: 0, shell: 1, page: 2 };
 
-const quiet = (page, ms = 250) =>
+/** Wait until the DOM has not changed for `ms`, or for `atMost` on a page that never rests (a running timer). */
+const quiet = (page, ms = 250, atMost = 4000) =>
 	page.evaluate(
-		(q) =>
+		(q, cap) =>
 			new Promise((res) => {
-				let last = performance.now();
+				const from = performance.now();
+				let last = from;
 				const seen = new MutationObserver(() => (last = performance.now()));
 				seen.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
-				const tick = () => (performance.now() - last >= q ? (seen.disconnect(), res()) : setTimeout(tick, 25));
+				const tick = () => (performance.now() - last >= q || performance.now() - from >= cap ? (seen.disconnect(), res()) : setTimeout(tick, 25));
 				tick();
 			}),
 		ms,
+		atMost,
 	);
 
-/** What is on screen `heldFor` ms after the press, and when it got there. Runs in the page. */
-const WATCH_PRESS = (want, heldFor) =>
-	new Promise((res) => {
+/** What is on screen `heldFor` ms after the press, and when it got there. Runs in the page, and is in place before the press is sent. */
+const WATCH_PRESS = (want, heldFor) => {
+	window.__pressSeen = new Promise((res) => {
 		addEventListener(
 			"pointerdown",
 			(e) => {
@@ -73,6 +78,7 @@ const WATCH_PRESS = (want, heldFor) =>
 			{ capture: true, once: true },
 		);
 	});
+};
 
 async function press(page, base, from, door) {
 	await page.goto(base + from, { waitUntil: "load" });
@@ -86,16 +92,18 @@ async function press(page, base, from, door) {
 	const hold = (req) => held.push(req);
 	await page.setRequestInterception(true);
 	page.on("request", hold);
-	const seen = page.evaluate(WATCH_PRESS, door.path, HELD_FOR_MS);
-	await page.mouse.down();
-	await sleep(PRESS_MS);
-	await page.mouse.up();
-	const result = await seen;
-	page.off("request", hold);
-	await Promise.all(held.map((r) => r.continue().catch(() => {})));
-	await page.setRequestInterception(false);
-	await quiet(page);
-	return { ...result, waited: held.length };
+	try {
+		await page.evaluate(WATCH_PRESS, door.path, HELD_FOR_MS);
+		await page.mouse.down();
+		await sleep(PRESS_MS);
+		await page.mouse.up();
+		return await page.evaluate(() => window.__pressSeen);
+	} finally {
+		page.off("request", hold);
+		await Promise.all(held.map((r) => r.continue().catch(() => {})));
+		await page.setRequestInterception(false);
+		await quiet(page);
+	}
 }
 
 async function main() {
@@ -113,13 +121,13 @@ async function main() {
 		const doors = await page.$$eval('nav[aria-label="Main"] a[data-testid$="-door"]', (as) => as.map((a) => ({ testid: a.dataset.testid, path: a.pathname, label: a.textContent.trim().replace(/\s*\d+( new)?$/, "") })));
 		// `next dev` compiles a route the first time it is asked for; that wait is not what this measures.
 		if (DEV) for (const d of doors) await page.goto(srv.base + d.path, { waitUntil: "load" }).catch(() => {});
-		for (const door of doors) {
+		for (const door of doors.filter((d) => !ONLY || d.path === ONLY)) {
 			const wants = SHELL_ONLY.has(door.path) ? "shell" : "page";
 			try {
 				const r = await press(page, srv.base, door.path === "/" ? "/curriculum" : "/", door);
 				rows.push({ door, wants, ...r });
 			} catch (e) {
-				rows.push({ door, wants, shows: "blocked", ms: null, waited: 0, error: e.message.split("\n")[0] });
+				rows.push({ door, wants, shows: "blocked", ms: null, error: e.message.split("\n")[0] });
 			}
 		}
 	} finally {
