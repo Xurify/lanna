@@ -12,7 +12,7 @@ describe("the mark beside a graded answer", () => {
 	it("says Right only for an unhinted right answer, as the first-try count does, in the words Review uses", () => {
 		assert.deepEqual(answerMark({ verdict: "right", hinted: false }), { tone: "right", label: "Right" });
 		assert.deepEqual(answerMark({ verdict: "right", hinted: true }), { tone: "near", label: "Right with help" });
-		assert.deepEqual(answerMark({ verdict: "slip", hinted: false }), { tone: "near", label: "Almost, check the accents" });
+		assert.deepEqual(answerMark({ verdict: "slip", hinted: false }), { tone: "near", label: "Almost, check the spelling" });
 	});
 
 	it("uses the words lessons and Review use for a miss, and names a skipped question", () => {
