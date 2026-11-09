@@ -57,7 +57,7 @@ import {
 import { appendLessonLog, ensureReadmes } from "../store/corpus.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { speakStore } from "../store/speak.ts";
-import { keyValue } from "./keys.ts";
+import { keyValue, redactSecrets } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { pronounceEngine, pronunciationReport, type PronReport } from "./pronounce.ts";
 import { resolveWord, storyEngine } from "./reading.ts";
@@ -241,7 +241,7 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 			headers: { Authorization: `Bearer ${keyValue("GROQ_API_KEY")!}` },
 			body: form,
 		});
-		if (!res.ok) throw new Error(`Groq Whisper speech-to-text failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+		if (!res.ok) throw new Error(`Groq Whisper speech-to-text failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
 		const data = (await res.json()) as { text?: string };
 		return { text: (data.text ?? "").trim(), engine };
 	}
@@ -253,13 +253,13 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 		form.set("diarize", "false");
 		form.set("file", new Blob([audio as BlobPart], { type: "audio/wav" }), "line.wav");
 		const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", { method: "POST", headers: { "xi-api-key": keyValue("ELEVENLABS_API_KEY")! }, body: form });
-		if (!res.ok) throw new Error(`ElevenLabs speech-to-text failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+		if (!res.ok) throw new Error(`ElevenLabs speech-to-text failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
 		const data = (await res.json()) as { text?: string };
 		return { text: (data.text ?? "").trim(), engine };
 	}
 	const url = `https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true`;
 	const res = await fetch(url, { method: "POST", headers: { Authorization: `Token ${keyValue("DEEPGRAM_API_KEY")!}`, "Content-Type": "audio/wav" }, body: audio as BodyInit });
-	if (!res.ok) throw new Error(`Deepgram failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+	if (!res.ok) throw new Error(`Deepgram failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
 	const data = (await res.json()) as { results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> } };
 	return { text: (data.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim(), engine };
 }

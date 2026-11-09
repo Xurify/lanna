@@ -35,7 +35,7 @@ import { entryLemma, exampleText } from "../core/review.ts";
 import { chatStore } from "../store/chats.ts";
 import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
-import { keyValue } from "./keys.ts";
+import { keyValue, redactSecrets } from "./keys.ts";
 import { wikiClip } from "./wiki-audio.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
@@ -234,7 +234,7 @@ export async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<S
 			signal: AbortSignal.timeout(20_000),
 		});
 		if (res.ok) return { data: Buffer.from(await res.arrayBuffer()), model };
-		last = new Error(`ElevenLabs ${model} ${res.status}: ${(await res.text()).slice(0, 200)}`);
+		last = new Error(`ElevenLabs ${model} ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
 		// A refusal of the model is remembered; a rate limit or a server hiccup is not.
 		if (res.status >= 400 && res.status < 500 && res.status !== 429) refused.set(model, Date.now() + REFUSED_MS);
 	}
