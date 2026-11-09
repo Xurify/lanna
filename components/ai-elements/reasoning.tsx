@@ -1,6 +1,5 @@
 "use client";
 
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import {
   Collapsible,
@@ -26,6 +25,27 @@ import { Streamdown } from "streamdown";
 import { streamdownPlugins } from "./message";
 import { mdComponents } from "@/components/md-blocks";
 import { Shimmer } from "./shimmer";
+
+/** The open state follows `open` when the caller controls it, and keeps its own
+ *  value otherwise. `onChange` runs only when the value actually changes. */
+function useOpenState(
+  open: boolean | undefined,
+  defaultOpen: boolean,
+  onChange: ((open: boolean) => void) | undefined,
+): [boolean, (next: boolean) => void] {
+  const [uncontrolled, setUncontrolled] = useState(defaultOpen);
+  const controlled = open !== undefined;
+  const value = controlled ? open : uncontrolled;
+  const setValue = useCallback(
+    (next: boolean) => {
+      if (next === value) return;
+      if (!controlled) setUncontrolled(next);
+      onChange?.(next);
+    },
+    [controlled, onChange, value],
+  );
+  return [value, setValue];
+}
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -70,11 +90,7 @@ export const Reasoning = memo(
     // row the learner had opened.
     const resolvedDefaultOpen = defaultOpen ?? false;
 
-    const [isOpen, setIsOpen] = useControllableState<boolean>({
-      defaultProp: resolvedDefaultOpen,
-      onChange: onOpenChange,
-      prop: open,
-    });
+    const [isOpen, setIsOpen] = useOpenState(open, resolvedDefaultOpen, onOpenChange);
     const hasEverStreamedRef = useRef(isStreaming);
     const [hasAutoClosed, setHasAutoClosed] = useState(false);
 
