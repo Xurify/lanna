@@ -14,6 +14,8 @@ import { describe, test } from "node:test";
 import {
 	ARTICULATORY_CUES,
 	createEarGymExercise,
+	EAR_GYM_ROUND,
+	earGymRound,
 	functionalLoadWeightedScore,
 	getArticulatoryCue,
 	getFunctionalWeight,
@@ -202,5 +204,31 @@ describe("Ear Gym (HVPT) 2AFC exercise generator", () => {
 
 		const ex2 = createEarGymExercise(samplePair, 2);
 		assert.equal(ex2.genderPrompt, "male", "Alternates speaker gender for multi-talker HVPT variability");
+	});
+});
+
+describe("Ear Gym round", () => {
+	test("a round has the round size, even from a pool smaller than it", () => {
+		assert.equal(earGymRound(PHONOLOGY_PAIRS, 7).length, EAR_GYM_ROUND);
+		const small = getPhonologyPairs({ family: "diphthongs" });
+		assert.ok(small.length < EAR_GYM_ROUND);
+		const round = earGymRound(small, 7);
+		assert.equal(round.length, EAR_GYM_ROUND);
+		assert.ok(round.every((trial) => small.some((p) => p.id === trial.pairId)));
+	});
+
+	test("the same seed gives the same round, another seed a different one", () => {
+		const words = (seed: number) => earGymRound(PHONOLOGY_PAIRS, seed).map((trial) => trial.targetWord).join(" ");
+		assert.equal(words(42), words(42));
+		assert.notEqual(words(42), words(43));
+	});
+
+	test("the word played is not always the same member of the pair", () => {
+		const members = new Set(earGymRound(PHONOLOGY_PAIRS, 3, 40).map((trial) => trial.targetMember));
+		assert.deepEqual([...members].sort(), ["a", "b"]);
+	});
+
+	test("an empty pool gives no round", () => {
+		assert.deepEqual(earGymRound([], 1), []);
 	});
 });

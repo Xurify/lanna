@@ -8,8 +8,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, ChevronUpIcon, HeadphonesIcon, Volume2Icon } from "lucide-react";
+import { ChevronDownIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { PRON_CLEAR, PRON_GOOD, getArticulatoryCue, pronLabel, type PronReport, type PronScore } from "@/src/core";
 
@@ -50,7 +51,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 
 	return (
 		<div className={cn("mt-8", className)} data-testid="pron-workon">
-			<div className="flex items-center justify-between">
+			<div className="flex items-baseline justify-between gap-4">
 				<p className="font-ui text-xs font-[600] tracking-wide text-muted-foreground">
 					{report.sounds.length && report.words.length
 						? "Sounds and words to work on"
@@ -58,94 +59,76 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 							? "Sounds to work on"
 							: "Words to work on"}
 				</p>
-				<Link
-					href="/phonology"
-					className="inline-flex items-center gap-1 text-xs font-ui text-teal-600 hover:text-teal-700 dark:text-teal-400"
-				>
-					<HeadphonesIcon className="size-3" />
-					<span>Train in Ear Gym</span>
+				<Link href="/phonology" className="shrink-0 font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2 pointer-coarse:py-3">
+					Train in the ear gym
 				</Link>
 			</div>
 
 			{report.sounds.length > 0 && (
-				<div className="mt-2 space-y-2">
+				<div className="mt-2">
 					<ul className="flex flex-wrap gap-2">
 						{report.sounds.map((s) => {
 							const cue = getArticulatoryCue(s.p);
 							const isExpanded = activeSound === s.p;
-							const isHighFl = s.functionalLoad === "high" || cue?.functionalLoad === "high";
+							const changesMeaning = s.functionalLoad === "high" || cue?.functionalLoad === "high";
+							const title = `${s.score} on average over ${s.n} ${s.n === 1 ? "time" : "times"}${s.in.length ? ` · in ${s.in.join(", ")}` : ""}`;
+							const chip = (
+								<>
+									<span className={cn("font-ui font-[600]", pronInk(s.score))} lang={lang?.code}>
+										{s.p}
+									</span>
+									{changesMeaning && (
+										<span className="q-pill grey" title="Mixing this sound up can change what a word means">
+											key
+										</span>
+									)}
+									{s.in.length > 0 && <span className="font-ui text-xs text-muted-foreground">in {s.in.join(", ")}</span>}
+								</>
+							);
 
 							return (
 								<li key={s.p}>
-									<button
-										type="button"
-										onClick={() => setActiveSound(isExpanded ? null : s.p)}
-										className={cn(
-											"flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-prose text-base transition-colors",
-											isExpanded
-												? "border-teal-500 bg-teal-50/50 dark:bg-teal-950/20"
-												: "border-border bg-card hover:bg-accent",
-										)}
-										title={`${s.score} average over ${s.n} times${s.in.length ? ` · in ${s.in.join(", ")}` : ""}${cue ? ` · ${cue.motor}` : ""}`}
-									>
-										<span className={cn("font-ui font-[600]", pronInk(s.score))} lang={lang?.code}>
-											{s.p}
+									{cue ? (
+										<button
+											type="button"
+											onClick={() => setActiveSound(isExpanded ? null : s.p)}
+											aria-expanded={isExpanded}
+											title={title}
+											className={cn("lh-press flex items-center gap-2 rounded-lg border px-2.5 py-1 font-prose text-base", isExpanded ? "border-teal bg-teal-wash" : "border-border bg-card hover:bg-well")}
+										>
+											{chip}
+											<ChevronDownIcon className={cn("size-3.5 text-ink-3 transition-transform", isExpanded && "rotate-180")} strokeWidth={1.8} aria-hidden="true" />
+										</button>
+									) : (
+										<span className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" title={title}>
+											{chip}
 										</span>
-										{isHighFl && (
-											<span className="rounded bg-rose-500/10 px-1 py-px text-[10px] font-ui font-[700] text-rose-600 dark:text-rose-400" title="High functional load: alters word meaning">
-												key
-											</span>
-										)}
-										{s.in.length > 0 && (
-											<span className="font-ui text-xs text-muted-foreground">in {s.in.join(", ")}</span>
-										)}
-										{isExpanded ? (
-											<ChevronUpIcon className="size-3 text-muted-foreground" />
-										) : (
-											<ChevronDownIcon className="size-3 text-muted-foreground" />
-										)}
-									</button>
+									)}
 								</li>
 							);
 						})}
 					</ul>
 
-					{/* Articulatory Diagnostic Guide Card */}
-					{activeSound && selectedCue && (
-						<div className="rounded-lg border border-border bg-muted/40 p-3.5 text-xs animate-in fade-in">
-							<div className="flex items-start justify-between gap-2">
-								<div>
-									<div className="flex items-center gap-2">
-										<span className="font-ui font-[700] text-sm text-foreground">
-											Sound: {selectedCue.symbol} [{selectedCue.ipa}]
-										</span>
-										<span className="text-muted-foreground font-[500]">
-											{selectedCue.name}
-										</span>
-										{selectedCue.functionalLoad === "high" && (
-											<span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-ui font-[600] text-rose-600 dark:text-rose-400">
-												Meaning Critical
-											</span>
-										)}
-									</div>
-									<p className="mt-1 font-prose text-foreground/90">
-										<strong>Articulatory cue:</strong> {selectedCue.motor}
-									</p>
-									{selectedCue.commonPitfall && (
-										<p className="mt-1 font-prose text-muted-foreground">
-											<strong>Watch out:</strong> {selectedCue.commonPitfall}
-										</p>
-									)}
-								</div>
-								<button
-									type="button"
-									onClick={() => void speak(selectedCue.drillWord).catch(() => {})}
-									className="flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2 py-1 font-ui font-[500] hover:bg-accent"
-								>
-									<Volume2Icon className="size-3.5 text-teal-600" />
-									<span>Hear &apos;{selectedCue.drillWord}&apos;</span>
-								</button>
+					{selectedCue && (
+						<div className="lh-rise mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 rounded-lg bg-well p-4" data-testid="pron-cue">
+							<div className="min-w-0 flex-1 basis-64">
+								<p className="flex flex-wrap items-baseline gap-x-2 font-ui text-[13px] text-ink-3">
+									<span className="font-prose text-[19px] font-semibold text-foreground" lang={lang?.code}>
+										{selectedCue.symbol}
+									</span>
+									<span>[{selectedCue.ipa}]</span>
+									<span>{selectedCue.name}</span>
+								</p>
+								<p className="mt-2 font-prose text-[15px] leading-relaxed text-ink-2">{selectedCue.motor}</p>
+								{selectedCue.commonPitfall && <p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Watch out: {selectedCue.commonPitfall}</p>}
+								{selectedCue.functionalLoad === "high" && <p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Mixing this sound up can change what a word means.</p>}
 							</div>
+							<button type="button" onClick={() => void speak(selectedCue.drillWord).catch(() => {})} className={cn(SECONDARY, SMALL, "shrink-0")}>
+								<Volume2Icon className="size-3.5 text-ink-3" strokeWidth={1.6} />
+								<span>
+									Hear <span lang={lang?.code}>{selectedCue.drillWord}</span>
+								</span>
+							</button>
 						</div>
 					)}
 				</div>
@@ -163,9 +146,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 					))}
 				</ul>
 			)}
-			<p className="mt-2 font-prose text-sm text-muted-foreground">
-				From your spoken lines lately. Tap a sound to see tongue placement and hear clean model words.
-			</p>
+			<p className="mt-2 font-prose text-sm text-muted-foreground">From your spoken lines lately. Tap a sound to see how to make it and hear a word with it.</p>
 		</div>
 	);
 }

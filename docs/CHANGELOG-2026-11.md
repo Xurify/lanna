@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: the ear gym and the rhythm page in the app's own look (branch `feat/rhythmic-law-suprasegmentals`)
+
+- **Why:** the owner: "redesign these views and designs to feel better and match our app's feel". Rule E80.
+- **What changed:** the ear gym is a round of ten in the same frame as Listen (progress bar, practice card, two answer tiles with keys 1 and 2 that play their word once you have answered, the verdict and Continue in the bar at the bottom, an end screen with the missed pairs). The card keeps one height and sits a little above the middle of the screen. The rhythm page is a second view behind a Pairs / Rhythm switch: a word checker with a bar under each long syllable and a dot under each short one, a list of forms where the same ending is long and short, and one sentence with the stress marked. The sound notes on the Speak end screen use the app's colors and buttons, and only a sound with a note opens.
+- **Removed:** the "ear-first masking" switch (it hid both answers) and the paragraph about the learner's first language (it assumed English).
+- **Checked:** `tsc`, `eslint`, the whole test suite (2,094 pass, 3 skipped; four new tests for the round). In the sandbox with the demo profile: a whole round played by keyboard, the end screen, the contrast menu, the rhythm page and the sound notes, in Day and Night at 1280 and 390 px, no console errors, no sideways scroll, and the card measured at the same place and height before and after each of the 40 answers. The length marks were read blind by a fresh Claude and Gemini 3.8 Flash and changed after it.
+- **Unverified:** the owner's own machine and phone; the sound of each pair (the sandbox was muted); the pairs and cue data listed as open in E80.
+
 ## 8 November: the chat starts at once and points to the app's own lessons (branch `feat/instant-chat`)
 
 - **Why:** the owner: starting a chat was slow and not seamless; the dot in the margin and the serif were copied from riddled.ai; the chat said it could not see the app's lessons. Rule E79.

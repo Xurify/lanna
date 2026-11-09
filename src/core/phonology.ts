@@ -13,6 +13,7 @@
 
 import phonologyPairsJson from "../../curriculum/slovak/phonology-pairs.json";
 import type { LanguageId } from "./language.ts";
+import { rng, shuffle } from "./lesson.ts";
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -539,4 +540,17 @@ export function createEarGymExercise(pair: PhonologyPair, seed: number = 0): Ear
 		functionalLoad: pair.functionalLoad,
 		genderPrompt: isMale ? "male" : "female",
 	};
+}
+
+export const EAR_GYM_ROUND = 10;
+
+export function pickRoundPairs(pool: readonly PhonologyPair[], size: number, rand: () => number): PhonologyPair[] {
+	const shuffled = shuffle(pool, rand);
+	return Array.from({ length: size }, (_, i) => shuffled[i % shuffled.length]!);
+}
+
+export function earGymRound(pool: readonly PhonologyPair[], seed: number, size: number = EAR_GYM_ROUND): EarGymExercise[] {
+	if (pool.length === 0) return [];
+	const rand = rng(seed);
+	return pickRoundPairs(pool, size, rand).map((pair) => createEarGymExercise(pair, Math.floor(rand() * 4)));
 }

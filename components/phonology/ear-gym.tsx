@@ -1,342 +1,417 @@
 "use client";
 
-/**
- * High-Variability Phonetic Training (HVPT) Ear Gym (LangHarness, 2026-11).
- *
- * Implements 2AFC (Two-Alternative Forced Choice) auditory discrimination
- * based on Logan, Lively & Pisoni (1991), Bradlow et al. (1997), and Best (1995).
- * Overcomes equivalence classification through immediate feedback and
- * multi-talker auditory drills.
- */
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRightIcon, CheckCircle2Icon, EarIcon, HeadphonesIcon, RotateCcwIcon, Volume2Icon, XCircleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDownIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
-import {
-	createEarGymExercise,
-	getPamContrastPriority,
-	getPhonologyPairs,
-	type EarGymExercise,
-	type PhonologyFamily,
-} from "@/src/core";
+import { readOrigin } from "@/components/origin";
+import { EmptyState } from "@/components/quiet/empty-state";
+import { QIcon } from "@/components/quiet/icon";
+import { ChoiceMenu } from "@/components/ui/choice-menu";
+import { KBD } from "@/components/ui/learn-buttons";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, OptionTile, PracticeCard, PRIMARY, SECONDARY, TaskBar, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { sfx } from "@/components/lesson/sound";
+import { SourcesNote } from "@/components/sources/sources-note";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { earGymRound, getPhonologyPairs, praiseFor, type EarGymExercise, type PhonologyFamily } from "@/src/core";
 import { RhythmicVisualizer } from "./rhythmic-visualizer";
 
-const FAMILIES: Array<{ id: PhonologyFamily | "all"; label: string; sub: string }> = [
-	{ id: "all", label: "All Contrasts", sub: "Mixed pool" },
-	{ id: "vowel_length", label: "Vowel Length", sub: "pas vs pás" },
-	{ id: "palatals", label: "Palatals", sub: "plat vs plať" },
-	{ id: "syllabic_liquids", label: "Syllabic Liquids", sub: "vrch vs vŕba" },
-	{ id: "diphthongs", label: "Diphthongs", sub: "stôl vs stola" },
-	{ id: "voicing", label: "Voicing", sub: "dub vs dup" },
+type View = "pairs" | "rhythm";
+type FamilyChoice = PhonologyFamily | "all";
+type Answer = string | null;
+
+const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
+	{ id: "pairs", label: "Pairs" },
+	{ id: "rhythm", label: "Rhythm" },
 ];
 
-export function EarGym() {
-	const [tab, setTab] = useState<"pairs" | "rhythm">("pairs");
-	const [activeFamily, setActiveFamily] = useState<PhonologyFamily | "all">("all");
-	const [seed, setSeed] = useState(0);
-	const [selectedWord, setSelectedWord] = useState<string | null>(null);
-	const [stats, setStats] = useState({ correct: 0, total: 0 });
-	const [earFirst, setEarFirst] = useState(true);
-	const [revealed, setRevealed] = useState(false);
-	const [playingAudio, setPlayingAudio] = useState(false);
+const FAMILIES: ReadonlyArray<{ value: FamilyChoice; label: string }> = [
+	{ value: "all", label: "All contrasts" },
+	{ value: "vowel_length", label: "Vowel length" },
+	{ value: "palatals", label: "Soft consonants" },
+	{ value: "syllabic_liquids", label: "Syllabic r and l" },
+	{ value: "diphthongs", label: "Diphthongs" },
+	{ value: "voicing", label: "Voicing" },
+];
 
-	// Filtered pool of minimal pairs
-	const pairs = useMemo(() => {
-		return getPhonologyPairs(activeFamily === "all" ? {} : { family: activeFamily });
-	}, [activeFamily]);
+function familyLabel(family: PhonologyFamily): string {
+	return FAMILIES.find((f) => f.value === family)?.label ?? family;
+}
 
-	// Current exercise
-	const currentPair = pairs[seed % pairs.length];
-	const exercise: EarGymExercise | null = useMemo(() => {
-		if (!currentPair) return null;
-		return createEarGymExercise(currentPair, seed);
-	}, [currentPair, seed]);
+interface Side {
+	word: string;
+	meaning: string;
+	ipa: string;
+}
 
-	// Play target audio
-	const playTarget = useCallback(async () => {
-		if (!exercise) return;
-		setPlayingAudio(true);
-		try {
-			await speak(exercise.targetWord);
-		} finally {
-			setPlayingAudio(false);
-		}
-	}, [exercise]);
+function hear(word: string) {
+	void speak(word).catch(() => {});
+}
 
-	// Play target on fresh exercise mount
+function sides(trial: EarGymExercise): [Side, Side] {
+	const target = { word: trial.targetWord, meaning: trial.targetMeaning, ipa: trial.targetIpa };
+	const other = { word: trial.distractorWord, meaning: trial.distractorMeaning, ipa: trial.distractorIpa };
+	return trial.targetMember === "a" ? [target, other] : [other, target];
+}
+
+export function EarGym({ seed }: { seed: number }) {
+	const router = useRouter();
+	const lang = useActiveLanguage();
+	const [view, setView] = useState<View>("pairs");
+	const [family, setFamily] = useState<FamilyChoice>("all");
+	const [round, setRound] = useState(0);
+	const [index, setIndex] = useState(0);
+	const [answers, setAnswers] = useState<Answer[]>([]);
+
+	const trials = useMemo(() => earGymRound(getPhonologyPairs(family === "all" ? {} : { family }), seed + round), [family, seed, round]);
+	const total = trials.length;
+	const trial = trials[index] ?? null;
+	const answered = answers.length > index;
+	const finished = total > 0 && index >= total;
+
 	useEffect(() => {
-		setSelectedWord(null);
-		setRevealed(false);
-		void playTarget();
-	}, [seed, activeFamily, playTarget]);
+		if (view !== "pairs" || !trial || answered) return;
+		void speak(trial.targetWord).catch(() => {});
+		return () => stopSpeaking();
+	}, [view, trial, answered]);
 
-	if (!exercise) {
+	const startRound = (next: FamilyChoice = family) => {
+		setFamily(next);
+		setRound((r) => r + 1);
+		setIndex(0);
+		setAnswers([]);
+	};
+
+	const replay = (slow = false) => {
+		if (trial) void speak(trial.targetWord, undefined, { slow }).catch(() => {});
+	};
+
+	const answer = (word: Answer) => {
+		if (!trial || answered) return;
+		if (word === trial.targetWord) sfx.right(1);
+		else sfx.wrong();
+		setAnswers((all) => [...all, word]);
+	};
+
+	const advance = () => {
+		if (!answered) return;
+		if (index + 1 >= total) sfx.done();
+		setIndex((i) => i + 1);
+	};
+
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.defaultPrevented || e.repeat) return;
+			if (e.key === "Escape") {
+				router.push(readOrigin());
+				return;
+			}
+			if (view !== "pairs") return;
+			if (finished) {
+				if (e.key === "Enter" && !endEnterBlocked(e)) {
+					e.preventDefault();
+					router.push("/");
+				}
+				return;
+			}
+			if (!trial) return;
+			if (e.key === "1" || e.key === "2") {
+				e.preventDefault();
+				const word = sides(trial)[e.key === "1" ? 0 : 1].word;
+				if (answered) hear(word);
+				else answer(word);
+				return;
+			}
+			if (answered) {
+				const onTile = e.target instanceof Element && !!e.target.closest("[data-testid^='ear-gym-option-']");
+				if (e.key === "Enter" && (onTile || !onFocusedControl(e))) {
+					e.preventDefault();
+					advance();
+				}
+				return;
+			}
+			if (e.key === " " && !onFocusedControl(e)) {
+				e.preventDefault();
+				replay();
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
+
+	const switcher = <ViewSwitch view={view} onChange={setView} />;
+
+	if (view === "rhythm") {
 		return (
-			<div className="mx-auto max-w-xl py-12 text-center">
-				<p className="text-muted-foreground">No minimal pairs found for this contrast.</p>
-			</div>
+			<TaskFrame strip={false}>
+				<TaskBar>{switcher}</TaskBar>
+				<div className="flex-1 overflow-y-auto pb-16 pt-[4vh]">
+					<div className={cn(COLUMN, "q-rise")}>
+						<RhythmicVisualizer />
+					</div>
+				</div>
+			</TaskFrame>
 		);
 	}
 
-	const hasAnswered = selectedWord !== null;
-	const isCorrectAnswer = selectedWord === exercise.targetWord;
-	const pam = getPamContrastPriority(exercise.family, ["en"]);
+	if (finished) {
+		return (
+			<TaskFrame>
+				<RoundEnd trials={trials} answers={answers} onAgain={() => startRound()} />
+			</TaskFrame>
+		);
+	}
 
-	const handleSelect = (word: string) => {
-		if (hasAnswered) return;
-		setSelectedWord(word);
-		setRevealed(true);
-		const correct = word === exercise.targetWord;
-		setStats((s) => ({
-			correct: s.correct + (correct ? 1 : 0),
-			total: s.total + 1,
-		}));
-	};
+	if (!trial) {
+		return (
+			<TaskFrame strip={false}>
+				<TaskBar>{switcher}</TaskBar>
+				<div className={cn(COLUMN, "pt-[8vh]")}>
+					<EmptyState
+						testid="ear-gym-empty"
+						title="No pairs for this contrast yet"
+						action={
+							<button type="button" onClick={() => startRound("all")} className="q-btn primary">
+								Practice all contrasts
+							</button>
+						}
+					>
+						<p>The ear gym plays one word of a pair and asks which one it was. This contrast has no pairs to play.</p>
+					</EmptyState>
+				</div>
+			</TaskFrame>
+		);
+	}
 
-	const handleNext = () => {
-		setSeed((s) => s + 1);
-	};
+	const picked = answered ? answers[index] : undefined;
+	const right = picked === trial.targetWord;
+	const praise = praiseFor(lang?.code, index);
 
 	return (
-		<div className="mx-auto max-w-2xl px-4 py-8" data-testid="ear-gym">
-			{/* Top Bar / Breadcrumb */}
-			<div className="mb-6 flex items-center justify-between border-b border-border pb-4">
-				<div>
-					<div className="flex items-center gap-2">
-						<HeadphonesIcon className="size-5 text-teal-600 dark:text-teal-400" />
-						<h1 className="font-ui text-xl font-[700] tracking-tight">Ear Gym · Minimal Pairs</h1>
-					</div>
-					<p className="font-prose text-xs text-muted-foreground">
-						High-Variability Phonetic Training (HVPT) to tune your auditory perception
-					</p>
-				</div>
-				<div className="flex items-center gap-3">
-					{stats.total > 0 && (
-						<div className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-mono font-[600] tabular-nums">
-							{stats.correct}/{stats.total} ({Math.round((stats.correct / stats.total) * 100)}%)
-						</div>
-					)}
-					<Link
-						href="/"
-						className="rounded-md px-2.5 py-1 text-xs font-ui text-muted-foreground hover:bg-accent hover:text-foreground"
+		<TaskFrame strip={false}>
+			<TaskTop lead={switcher} progress={(index + (answered ? 1 : 0)) / total} label={`${index} of ${total} pairs heard`} count={`${index + 1}/${total}`} />
+
+			<div className="flex flex-1 flex-col overflow-y-auto" data-testid="ear-gym">
+				<div className="min-h-6 flex-[2]" />
+				<div key={`${round}:${index}`} className={cn(COLUMN, "lh-rise shrink-0")}>
+					<PracticeCard
+						icon="ear"
+						title="Ear gym"
+						right={<ChoiceMenu value={family} options={FAMILIES} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Contrast" className="w-44 [&>button]:h-8 [&>button]:text-[13px]" />}
 					>
-						Done
-					</Link>
-				</div>
-			</div>
-
-			{/* Mode Selector */}
-			<div className="mb-6 flex gap-2 border-b border-border pb-3">
-				<button
-					type="button"
-					onClick={() => setTab("pairs")}
-					className={cn(
-						"flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-ui text-xs font-[600] transition-colors",
-						tab === "pairs"
-							? "bg-foreground text-background shadow-sm"
-							: "text-muted-foreground hover:bg-muted hover:text-foreground",
-					)}
-				>
-					<HeadphonesIcon className="size-3.5" />
-					<span>Minimal-Pair Ear Gym</span>
-				</button>
-				<button
-					type="button"
-					onClick={() => setTab("rhythm")}
-					className={cn(
-						"flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-ui text-xs font-[600] transition-colors",
-						tab === "rhythm"
-							? "bg-foreground text-background shadow-sm"
-							: "text-muted-foreground hover:bg-muted hover:text-foreground",
-					)}
-				>
-					<EarIcon className="size-3.5" />
-					<span>Rhythmic Law & Cadence</span>
-				</button>
-			</div>
-
-			{tab === "rhythm" ? (
-				<RhythmicVisualizer />
-			) : (
-				<>
-					{/* Contrast Family Selector */}
-					<div className="mb-6 flex flex-wrap gap-1.5">
-						{FAMILIES.map((f) => (
+						<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
 							<button
-								key={f.id}
 								type="button"
-								onClick={() => {
-									setActiveFamily(f.id);
-									setSeed(0);
-								}}
-								className={cn(
-									"rounded-full px-3 py-1 font-ui text-xs font-[500] transition-colors",
-									activeFamily === f.id
-										? "bg-foreground text-background"
-										: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
-								)}
+								onClick={() => replay()}
+								aria-label="Play the word"
+								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
+								data-testid="ear-gym-play"
 							>
-								{f.label}
+								<Volume2Icon className="size-6" strokeWidth={1.6} />
 							</button>
+							<div>
+								<h2 className="font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
+									{!answered ? "Which word was it?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
+								</h2>
+								<p className="mt-1 font-ui text-[13px] text-ink-3" data-testid="ear-gym-contrast">
+									{familyLabel(trial.family)} · {trial.contrast}
+								</p>
+							</div>
+							<button
+								type="button"
+								onClick={() => replay(true)}
+								aria-label="Play slowly"
+								title="Play slowly"
+								className="col-start-2 flex h-11 shrink-0 items-center justify-center gap-2 justify-self-start rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 transition-colors hover:bg-well-2 sm:col-start-auto"
+							>
+								<SnailIcon className="size-5" strokeWidth={1.6} />
+								Slowly
+							</button>
+						</div>
+
+						<div className="mt-6 grid grid-cols-2 gap-3">
+							{sides(trial).map((side, i) => (
+								<OptionTile
+									key={side.word}
+									n={i + 1}
+									onClick={() => (answered ? hear(side.word) : answer(side.word))}
+									state={!answered ? "idle" : side.word === trial.targetWord ? "right" : side.word === picked ? "wrong" : "idle"}
+									testId={`ear-gym-option-${i + 1}`}
+									trail={<Volume2Icon className={cn("size-4 opacity-70", !answered && "invisible")} strokeWidth={1.6} aria-hidden="true" />}
+								>
+									<span className="block">
+										<span lang={lang?.code}>{side.word}</span>
+										{answered && <span className="ml-2 hidden font-ui text-[13px] font-normal tracking-normal text-ink-3 sm:inline">[{side.ipa}]</span>}
+									</span>
+									<span className="block font-ui text-[13px] font-normal tracking-normal text-ink-3">{side.meaning}</span>
+								</OptionTile>
+							))}
+						</div>
+
+						<div className="mt-4 flex min-h-[4.75rem] items-center sm:min-h-[3.25rem]" data-testid="ear-gym-cue">
+							{answered ? (
+								<p className="lh-rise font-prose text-[15px] leading-relaxed text-ink-2">{trial.cue}</p>
+							) : (
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">Listen first, then pick. After that, each word plays when you tap it.</p>
+							)}
+						</div>
+					</PracticeCard>
+				</div>
+				<div className="min-h-8 flex-[3]" />
+			</div>
+
+			<Dock tone={!answered ? "plain" : right ? "right" : "miss"} live>
+				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
+					{answered ? (
+						<>
+							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", right ? "text-teal-2" : "text-miss")} data-testid="ear-gym-verdict">
+								<VerdictDisc ok={right} />
+								{right ? (
+									"Heard right"
+								) : (
+									<span>
+										It said <span lang={lang?.code}>{trial.targetWord}</span>
+									</span>
+								)}
+							</p>
+							<div className="flex items-center gap-4">
+								<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 sm:pointer-fine:flex">
+									<kbd className={KBD}>1</kbd>
+									<kbd className={KBD}>2</kbd> play each word
+								</p>
+								<button type="button" onClick={advance} className={PRIMARY} data-testid="ear-gym-continue" autoFocus>
+									{index + 1 >= total ? "Finish" : "Continue"}
+									<span className="q-kbd">
+										<QIcon name="enter" />
+									</span>
+								</button>
+							</div>
+						</>
+					) : (
+						<>
+							<button type="button" onClick={() => answer(null)} className={SECONDARY} data-testid="ear-gym-cannot-tell">
+								I can&apos;t tell
+							</button>
+							<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 sm:pointer-fine:flex">
+								<kbd className={KBD}>Space</kbd> plays it again
+							</p>
+						</>
+					)}
+				</div>
+			</Dock>
+		</TaskFrame>
+	);
+}
+
+function ViewSwitch({ view, onChange }: { view: View; onChange: (next: View) => void }) {
+	return (
+		<div className="q-segc shrink-0" role="group" aria-label="View">
+			{VIEWS.map((v) => (
+				<button key={v.id} type="button" aria-pressed={view === v.id} className={cn(view === v.id && "on")} onClick={() => onChange(v.id)}>
+					{v.label}
+				</button>
+			))}
+		</div>
+	);
+}
+
+function HearWord({ side }: { side: Side }) {
+	const lang = useActiveLanguage();
+	return (
+		<button type="button" onClick={() => hear(side.word)} aria-label={`Play ${side.word}`} className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}>
+			<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
+			<span className="font-prose text-[16px] font-semibold" lang={lang?.code}>
+				{side.word}
+			</span>
+			<span className="font-normal text-ink-3">[{side.ipa}]</span>
+		</button>
+	);
+}
+
+interface Heard {
+	trial: EarGymExercise;
+	answer: Answer;
+}
+
+function RoundEnd({ trials, answers, onAgain }: { trials: EarGymExercise[]; answers: Answer[]; onAgain: () => void }) {
+	const heard: Heard[] = trials.map((trial, i) => ({ trial, answer: answers[i] ?? null }));
+	const missed = heard.filter((h) => h.answer !== h.trial.targetWord);
+	const right = heard.filter((h) => h.answer === h.trial.targetWord);
+	return (
+		<TaskEnd
+			testId="ear-gym-end"
+			hint={<EnterHint>for Today</EnterHint>}
+			actions={
+				<>
+					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="ear-gym-again">
+						<RepeatIcon className="size-4" />
+						Another round
+					</button>
+					<Link href="/" className={PRIMARY} data-testid="ear-gym-today">
+						Today
+					</Link>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="ear" className="text-teal" />
+				Ear gym · done
+			</p>
+			<h1 className="q-hello">
+				{right.length} of {heard.length} heard right
+			</h1>
+			<p className="q-line dim mt-2">Practice only: a round earns no XP and is not saved.</p>
+			{missed.length > 0 && (
+				<div className="mt-8">
+					<h2 className="q-sh">Missed</h2>
+					<HeardRows rows={missed} />
+				</div>
+			)}
+			{right.length > 0 && (
+				<details className="group mt-6" data-testid="ear-gym-right">
+					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
+						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
+						Heard right · {right.length} {right.length === 1 ? "pair" : "pairs"}
+					</summary>
+					<HeardRows rows={right} />
+				</details>
+			)}
+			<SourcesNote feature="ear-gym" className="mt-14" />
+		</TaskEnd>
+	);
+}
+
+function HeardRows({ rows }: { rows: Heard[] }) {
+	const lang = useActiveLanguage();
+	return (
+		<ul className="mt-2 divide-y divide-[var(--q-line)]">
+			{rows.map(({ trial, answer }, i) => (
+				<li key={i} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+					<div className="flex flex-wrap gap-2">
+						{sides(trial).map((side) => (
+							<HearWord key={side.word} side={side} />
 						))}
 					</div>
-
-			{/* Ear-First Mode Toggle */}
-			<div className="mb-6 flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
-				<div className="flex items-center gap-2">
-					<EarIcon className="size-4 text-muted-foreground" />
-					<span className="font-ui font-[500]">Ear-First Masking</span>
-					<span className="text-muted-foreground">(prevents reading English spelling habits)</span>
-				</div>
-				<button
-					type="button"
-					onClick={() => setEarFirst(!earFirst)}
-					className={cn(
-						"rounded px-2 py-0.5 font-mono text-[11px] font-[600] transition-colors",
-						earFirst ? "bg-teal-600 text-white" : "bg-muted text-muted-foreground",
-					)}
-				>
-					{earFirst ? "ON" : "OFF"}
-				</button>
-			</div>
-
-			{/* Main Drill Card */}
-			<div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-				{/* Audio Prompt Button */}
-				<div className="flex flex-col items-center justify-center py-6 text-center">
-					<button
-						type="button"
-						onClick={() => void playTarget()}
-						disabled={playingAudio}
-						aria-label="Play sound"
-						className={cn(
-							"relative flex size-20 items-center justify-center rounded-full bg-teal-600 text-white shadow-md transition-transform active:scale-95 hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-500/20",
-							playingAudio && "animate-pulse",
+					<p className="font-ui text-[12.5px] text-ink-3">
+						It said{" "}
+						<span className="font-medium text-ink-2" lang={lang?.code}>
+							{trial.targetWord}
+						</span>
+						{answer === trial.targetWord ? null : answer ? (
+							<>
+								{" "}
+								· you chose{" "}
+								<span className="font-medium text-miss" lang={lang?.code}>
+									{answer}
+								</span>
+							</>
+						) : (
+							" · you could not tell"
 						)}
-					>
-						<Volume2Icon className="size-8" />
-					</button>
-					<p className="mt-3 font-ui text-xs font-[600] text-muted-foreground">
-						{playingAudio ? "Listening..." : "Tap to listen again"}
 					</p>
-					<div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-						<span>Contrast:</span>
-						<strong className="text-foreground font-medium">{exercise.contrast}</strong>
-						{exercise.functionalLoad === "high" && (
-							<span className="rounded bg-rose-500/10 px-1 font-[600] text-rose-600 dark:text-rose-400">
-								High Impact
-							</span>
-						)}
-					</div>
-				</div>
-
-				{/* 2AFC Choices */}
-				<div className="mt-4 grid grid-cols-2 gap-4">
-					{exercise.options.map((opt, i) => {
-						const isSelected = selectedWord === opt.word;
-						const isTarget = opt.word === exercise.targetWord;
-						const isMasked = earFirst && !revealed && !hasAnswered;
-
-						return (
-							<button
-								key={opt.word}
-								type="button"
-								onClick={() => handleSelect(opt.word)}
-								disabled={hasAnswered}
-								className={cn(
-									"group flex flex-col items-center justify-center rounded-xl border-2 p-5 text-center transition-all",
-									!hasAnswered && "border-border hover:border-teal-500/50 hover:bg-muted/40",
-									hasAnswered && isTarget && "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20",
-									hasAnswered && isSelected && !isTarget && "border-rose-500 bg-rose-50/50 dark:bg-rose-950/20",
-									hasAnswered && !isSelected && !isTarget && "border-border/40 opacity-50",
-								)}
-							>
-								<div className="font-ui text-xs font-[600] text-muted-foreground">
-									Option {i === 0 ? "A" : "B"}
-								</div>
-								<div className="mt-1 font-prose text-2xl font-[700] text-foreground">
-									{isMasked ? "???" : opt.word}
-								</div>
-								<div className="mt-1 font-prose text-xs text-muted-foreground">
-									{isMasked ? "Choose what you heard" : opt.meaning}
-								</div>
-							</button>
-						);
-					})}
-				</div>
-
-				{/* Feedback & Articulatory Explanation */}
-				{hasAnswered && (
-					<div className="mt-6 rounded-lg border border-border bg-muted/40 p-4 animate-in fade-in">
-						<div className="flex items-start gap-3">
-							{isCorrectAnswer ? (
-								<CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-600" />
-							) : (
-								<XCircleIcon className="mt-0.5 size-5 shrink-0 text-rose-600" />
-							)}
-							<div className="flex-1">
-								<p className="font-ui text-sm font-[600]">
-									{isCorrectAnswer ? (
-										<span className="text-emerald-700 dark:text-emerald-400">
-											Correct! You heard {exercise.targetWord} [{exercise.targetIpa}].
-										</span>
-									) : (
-										<span className="text-rose-700 dark:text-rose-400">
-											Not quite. That was {exercise.targetWord} [{exercise.targetIpa}].
-										</span>
-									)}
-								</p>
-								<p className="mt-1 font-prose text-xs text-muted-foreground">{exercise.cue}</p>
-
-								{/* Side-by-Side Comparison Audio */}
-								<div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-3">
-									<span className="text-xs text-muted-foreground">Compare:</span>
-									<button
-										type="button"
-										onClick={() => void speak(exercise.targetWord)}
-										className="inline-flex items-center gap-1 rounded border border-border bg-card px-2 py-1 text-xs font-[500] hover:bg-accent"
-									>
-										<Volume2Icon className="size-3 text-teal-600" />
-										{exercise.targetWord} [{exercise.targetIpa}]
-									</button>
-									<button
-										type="button"
-										onClick={() => void speak(exercise.distractorWord)}
-										className="inline-flex items-center gap-1 rounded border border-border bg-card px-2 py-1 text-xs font-[500] hover:bg-accent"
-									>
-										<Volume2Icon className="size-3 text-muted-foreground" />
-										{exercise.distractorWord} [{exercise.distractorIpa}]
-									</button>
-								</div>
-							</div>
-						</div>
-
-						{/* Next Exercise Button */}
-						<div className="mt-4 flex justify-end">
-							<button
-								type="button"
-								onClick={handleNext}
-								className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 font-ui text-xs font-[600] text-white hover:bg-teal-700"
-							>
-								<span>Next Contrast</span>
-								<ArrowRightIcon className="size-3.5" />
-							</button>
-						</div>
-					</div>
-				)}
-			</div>
-
-			{/* Pedagogy Note */}
-			<div className="mt-6 rounded-lg border border-border/60 bg-muted/20 p-4 text-xs text-muted-foreground">
-				<p className="font-ui font-[600] text-foreground">Why Minimal Pairs Work</p>
-				<p className="mt-1 font-prose">
-					{pam.rationale} High-Variability Phonetic Training forces your brain to carve out new perceptual boundaries rather than assimilating foreign sounds into your native language habits.
-				</p>
-			</div>
-			</>
-			)}
-		</div>
+				</li>
+			))}
+		</ul>
 	);
 }

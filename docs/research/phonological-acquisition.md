@@ -63,7 +63,7 @@ LangHarness translates these psycholinguistic principles into four concrete comp
 
 3. **HVPT Minimal-Pair Ear Gym (`src/core/phonology.ts` & `components/phonology/ear-gym.tsx`):**
    - 2AFC auditory discrimination drills utilizing multi-voice TTS.
-   - Immediate acoustic feedback with optional "Ear-First" masking to prevent orthographic interference.
+   - Rounds of ten trials in the task frame the other practice screens use. Both words stay on screen in a fixed order; after each answer each word plays from its tile and the cue is shown under them. The "Ear-First" masking toggle was removed (2026-11-09): it hid both options, so a trial could only be guessed.
 
 4. **Actionable Articulatory Diagnostics (`components/speak/pron.tsx`):**
    - Replaces generic text in `PronWorkOn` with specific motor guidance badges.

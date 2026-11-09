@@ -1,325 +1,223 @@
 "use client";
 
-/**
- * Slovak Rhythmic Law & Suprasegmental Visualizer (LangHarness, 2026-11).
- *
- * Implements interactive visual demonstration of:
- * 1. Syllable quantity analysis (mora count: short ● vs long ●●).
- * 2. Slovak Rhythmic Law (Rytmický zákon): prohibition of consecutive long syllables.
- * 3. Suffix shortening alternations across noun, verb, and adjective paradigms.
- * 4. Fixed word-initial stress cadence to overcome L2 stress deafness (Dupoux et al. 2001, 2008).
- */
-
-import { useState } from "react";
-import { AlertCircleIcon, CheckCircleIcon, SparklesIcon, Volume2Icon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
-import {
-	analyzeRhythmicLaw,
-	applyRhythmicLaw,
-	formatStressCadence,
-	type RhythmicAnalysis,
-} from "@/src/core";
+import { DiacriticBar } from "@/components/diacritic-bar";
+import { SourcesNote } from "@/components/sources/sources-note";
+import { speak, useActiveLanguage } from "@/components/speech";
+import { PLAY_ROW, SECONDARY, SentenceRow, SentenceRows, VerdictDisc } from "@/components/task-frame";
+import { analyzeRhythmicLaw, formatStressCadence, type RhythmicAnalysis } from "@/src/core";
 
-interface PresetContrast {
-	category: string;
-	shortStemExample: {
-		stem: string;
-		suffix: string;
-		word: string;
-		translation: string;
-	};
-	longStemExample: {
-		stem: string;
-		suffix: string;
-		word: string;
-		translation: string;
-	};
-	ruleNote: string;
+interface Form {
+	stem: string;
+	word: string;
+	translation: string;
 }
 
-const PRESET_CONTRASTS: PresetContrast[] = [
+interface EndingContrast {
+	label: string;
+	afterShort: Form;
+	afterLong: Form;
+}
+
+const ENDING_CONTRASTS: EndingContrast[] = [
 	{
-		category: "Adjectives (-ý / -y)",
-		shortStemExample: { stem: "pekn", suffix: "ý", word: "pekný", translation: "nice / pretty" },
-		longStemExample: { stem: "krásn", suffix: "ý", word: "krásny", translation: "beautiful" },
-		ruleNote: "Stem 'krásn-' has long vowel 'á', so ending '-ý' shortens to '-y'.",
+		label: "Adjectives",
+		afterShort: { stem: "pekn", word: "pekný", translation: "nice, pretty" },
+		afterLong: { stem: "krásn", word: "krásny", translation: "beautiful" },
 	},
 	{
-		category: "Noun Dative Plural (-ám / -am)",
-		shortStemExample: { stem: "žen", suffix: "ám", word: "ženám", translation: "to women" },
-		longStemExample: { stem: "tráv", suffix: "ám", word: "trávam", translation: "to grasses" },
-		ruleNote: "Stem 'tráv-' has long vowel 'á', so ending '-ám' shortens to '-am'.",
+		label: "Nouns, dative plural",
+		afterShort: { stem: "žen", word: "ženám", translation: "to women" },
+		afterLong: { stem: "tráv", word: "trávam", translation: "to grasses" },
 	},
 	{
-		category: "Verb Present 1sg (-ím / -im)",
-		shortStemExample: { stem: "rob", suffix: "ím", word: "robím", translation: "I do / make" },
-		longStemExample: { stem: "chvál", suffix: "ím", word: "chválim", translation: "I praise" },
-		ruleNote: "Stem 'chvál-' has long vowel 'á', so ending '-ím' shortens to '-im'.",
+		label: "Verbs, first person singular",
+		afterShort: { stem: "rob", word: "robím", translation: "I do, I make" },
+		afterLong: { stem: "chvál", word: "chválim", translation: "I praise" },
 	},
 	{
-		category: "Diphthong Stems (ia, ie, ô)",
-		shortStemExample: { stem: "nov", suffix: "ý", word: "nový", translation: "new" },
-		longStemExample: { stem: "biel", suffix: "ý", word: "biely", translation: "white" },
-		ruleNote: "Diphthong 'ie' counts as long, so ending '-ý' shortens to '-y'.",
+		label: "A diphthong in the stem counts as long",
+		afterShort: { stem: "nov", word: "nový", translation: "new" },
+		afterLong: { stem: "biel", word: "biely", translation: "white" },
 	},
 	{
-		category: "Syllabic Liquid Stems (ŕ, ĺ)",
-		shortStemExample: { stem: "srn", suffix: "ám", word: "srnám", translation: "to roe deer (pl)" },
-		longStemExample: { stem: "vŕb", suffix: "ám", word: "vŕbam", translation: "to willows" },
-		ruleNote: "Long syllabic 'ŕ' counts as a long beat, so ending '-ám' shortens to '-am'.",
+		label: "A long ŕ or ĺ in the stem counts as long",
+		afterShort: { stem: "srn", word: "srnám", translation: "to roe deer" },
+		afterLong: { stem: "vŕb", word: "vŕbam", translation: "to willows" },
 	},
 ];
 
-const EXPLORER_WORDS = [
-	"krásny",
-	"chválim",
-	"ženám",
-	"trávam",
-	"vŕbam",
-	"biely",
-	"básňam",
-	"krásný",
-	"lístie",
-	"páví",
-];
+const WORDS_TO_TRY = ["krásny", "chválim", "ženám", "trávam", "vŕbam", "biely", "básňam", "krásný", "lístie", "páví"];
+
+const STRESS_SENTENCE = { text: "Chválime krásne Slovensko", translation: "We praise beautiful Slovakia" };
+
+function play(text: string) {
+	void speak(text).catch(() => {});
+}
 
 export function RhythmicVisualizer() {
-	const [inputWord, setInputWord] = useState("krásny");
-	const [analysis, setAnalysis] = useState<RhythmicAnalysis>(() => analyzeRhythmicLaw("krásny"));
-	const [playingWord, setPlayingWord] = useState<string | null>(null);
-
-	const handleAnalyze = (w: string) => {
-		setInputWord(w);
-		setAnalysis(analyzeRhythmicLaw(w));
-	};
-
-	const playAudio = async (text: string) => {
-		setPlayingWord(text);
-		try {
-			await speak(text);
-		} finally {
-			setPlayingWord(null);
-		}
-	};
+	const lang = useActiveLanguage();
+	const [word, setWord] = useState(WORDS_TO_TRY[0]!);
+	const analysis = useMemo(() => analyzeRhythmicLaw(word), [word]);
+	const typed = word.trim().toLocaleLowerCase(lang?.code);
 
 	return (
-		<div className="space-y-10" data-testid="rhythmic-visualizer">
-			{/* Overview Banner */}
-			<div className="rounded-2xl border border-[var(--q-line)] bg-well p-6 sm:p-8">
-				<div className="flex items-start gap-4">
-					<div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-teal-wash text-teal-2">
-						<SparklesIcon className="size-6" />
-					</div>
-					<div>
-						<h2 className="font-prose text-2xl font-semibold text-foreground">
-							The Slovak Rhythmic Law (<span className="italic">Rytmický zákon</span>)
-						</h2>
-						<p className="mt-2 font-prose text-base leading-relaxed text-ink-2">
-							Standard Slovak enforces an ancient constraint: <strong className="text-foreground">two consecutive long syllables cannot occur in a row inside the same word</strong>.
-							When an ending with a long vowel (e.g. <em>-ám</em>, <em>-ím</em>, <em>-ý</em>) attaches to a long stem, the ending obligatorily shortens.
-						</p>
-						<p className="mt-2 font-ui text-xs text-ink-3">
-							Long beats: <span className="font-semibold text-foreground">á, é, í, ó, ú, ý</span>, diphthongs <span className="font-semibold text-foreground">ia, ie, iu, ô</span>, and long liquids <span className="font-semibold text-foreground">ŕ, ĺ</span>.
-						</p>
-					</div>
-				</div>
-			</div>
+		<div data-testid="rhythmic-visualizer">
+			<p className="q-date">Rhythm rule</p>
+			<h1 className="q-hello">Two long syllables never stand side by side</h1>
+			<p className="q-line dim mt-3">
+				When a long ending meets a long stem, the ending turns short:{" "}
+				<span className="q-sk" lang={lang?.code}>
+					krásn- + -ý
+				</span>{" "}
+				gives{" "}
+				<span className="q-sk" lang={lang?.code}>
+					krásny
+				</span>
+				. A few endings are exceptions, and the checker below names them.
+			</p>
+			<p className="q-sub">
+				Long: <b lang={lang?.code}>á é í ó ú ý</b>, the diphthongs <b lang={lang?.code}>ia ie iu ô</b>, and long <b lang={lang?.code}>ŕ ĺ</b>.
+			</p>
 
-			{/* Interactive Word Analyzer */}
-			<div className="rounded-2xl border border-[var(--q-line)] bg-surface p-6 shadow-sm sm:p-8">
-				<h3 className="font-ui text-sm font-semibold uppercase tracking-wider text-ink-3">
-					Interactive Syllable Quantity Analyzer
-				</h3>
-
-				<div className="mt-4 flex flex-wrap gap-2">
-					{EXPLORER_WORDS.map((w) => (
-						<button
-							key={w}
-							type="button"
-							onClick={() => handleAnalyze(w)}
-							className={cn(
-								"rounded-lg px-3 py-1.5 font-ui text-sm transition-colors",
-								inputWord.toLowerCase() === w.toLowerCase()
-									? "bg-teal text-white shadow-sm"
-									: "bg-well text-ink-2 hover:bg-well-2 hover:text-foreground",
-							)}
-						>
-							{w}
-						</button>
-					))}
-				</div>
-
-				<div className="mt-6 flex flex-col gap-3 sm:flex-row">
+			<section className="mt-10">
+				<h2 className="q-sh">Try a word</h2>
+				<div className="flex gap-2">
 					<input
 						type="text"
-						value={inputWord}
-						onChange={(e) => handleAnalyze(e.target.value)}
-						placeholder="Type a Slovak word..."
-						className="flex-1 rounded-xl border border-[var(--q-line)] bg-well px-4 py-3 font-prose text-lg text-foreground focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+						lang={lang?.code}
+						autoComplete="off"
+						autoCapitalize="off"
+						spellCheck={false}
+						value={word}
+						onChange={(e) => setWord(e.target.value)}
+						aria-label="A word to check"
+						placeholder="Type a word"
+						className="q-field h-12 min-w-0 flex-1 px-4 font-prose text-[19px] font-medium tracking-[-0.01em] placeholder:font-normal placeholder:text-ink-3"
+						data-testid="rhythm-input"
 					/>
-					<button
-						type="button"
-						onClick={() => playAudio(analysis.word)}
-						className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal px-5 py-3 font-ui font-medium text-white shadow-sm transition-opacity hover:opacity-95"
-					>
-						<Volume2Icon className="size-5" />
-						Hear Word
+					<button type="button" onClick={() => play(analysis.word)} disabled={analysis.syllables.length === 0} className={cn(SECONDARY, "h-12 shrink-0")}>
+						<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
+						Hear it
 					</button>
 				</div>
-
-				{/* Visual Syllable Bar */}
-				{analysis.syllables.length > 0 && (
-					<div className="mt-8 rounded-xl bg-well p-5 sm:p-6" data-testid="syllable-bar">
-						<p className="font-ui text-xs font-semibold text-ink-3 uppercase tracking-wider">
-							Syllable Quantity Breakdown
-						</p>
-						<div className="mt-4 flex flex-wrap items-center gap-3">
-							{analysis.syllables.map((s, idx) => {
-								const isLong = s.quantity === "long";
-								return (
-									<div
-										key={idx}
-										className={cn(
-											"flex flex-col items-center rounded-xl border px-4 py-3 min-w-[70px]",
-											isLong
-												? "border-teal-line bg-teal-wash text-teal-2"
-												: "border-[var(--q-line)] bg-surface text-ink-2",
-										)}
-									>
-										<span className="font-prose text-2xl font-semibold text-foreground">
-											{s.text}
-										</span>
-										<span className="mt-1 font-ui text-[11px] font-medium uppercase tracking-wider">
-											{isLong ? "●● long (2μ)" : "● short (1μ)"}
-										</span>
-									</div>
-								);
-							})}
-						</div>
-
-						{/* Verdict Banner */}
-						<div className="mt-6 flex items-start gap-3 rounded-lg border border-[var(--q-line)] bg-surface p-4">
-							{analysis.hasViolation ? (
-								<AlertCircleIcon className="size-5 shrink-0 text-miss" />
-							) : (
-								<CheckCircleIcon className="size-5 shrink-0 text-teal-2" />
-							)}
-							<div>
-								<p className={cn("font-ui text-sm font-semibold", analysis.hasViolation ? "text-miss" : "text-teal-2")}>
-									{analysis.hasViolation ? "Rhythmic Law Violation" : analysis.isException ? "Valid Standard Exception" : "Complies with Rhythmic Law"}
-								</p>
-								<p className="mt-1 font-prose text-sm text-ink-2">
-									{analysis.explanation}
-								</p>
-							</div>
-						</div>
-					</div>
-				)}
-			</div>
-
-			{/* Paradigmatic Contrasts Grid */}
-			<div className="rounded-2xl border border-[var(--q-line)] bg-surface p-6 shadow-sm sm:p-8">
-				<h3 className="font-ui text-sm font-semibold uppercase tracking-wider text-ink-3">
-					Classic Paradigmatic Contrasts
-				</h3>
-				<p className="mt-1 font-prose text-sm text-ink-2">
-					Listen to how identical suffixes shorten after long syllables versus remaining long after short syllables.
-				</p>
-
-				<div className="mt-6 grid gap-4">
-					{PRESET_CONTRASTS.map((c) => {
-						return (
-							<div
-								key={c.category}
-								className="rounded-xl border border-[var(--q-line)] bg-well p-5 transition-shadow hover:shadow-sm"
+				<DiacriticBar variant="keys" className="mt-3" />
+				<ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Words to try">
+					{WORDS_TO_TRY.map((w) => (
+						<li key={w}>
+							<button
+								type="button"
+								onClick={() => setWord(w)}
+								aria-pressed={typed === w}
+								lang={lang?.code}
+								className={cn("lh-press rounded-md px-2.5 py-1 font-prose text-[15px] font-medium pointer-coarse:py-2.5", typed === w ? "bg-teal-wash text-teal-2" : "bg-well text-ink-2 hover:bg-well-2")}
 							>
-								<div className="flex items-center justify-between">
-									<h4 className="font-ui text-sm font-semibold text-ink-2">{c.category}</h4>
-									<span className="font-ui text-xs text-ink-3">{c.ruleNote}</span>
-								</div>
+								{w}
+							</button>
+						</li>
+					))}
+				</ul>
+				<Beats analysis={analysis} />
+			</section>
 
-								<div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-									{/* Short stem -> long ending */}
-									<div className="flex items-center justify-between rounded-lg border border-[var(--q-line)] bg-surface px-4 py-3">
-										<div>
-											<div className="flex items-baseline gap-2">
-												<span className="font-prose text-lg font-semibold text-foreground">
-													{c.shortStemExample.word}
-												</span>
-												<span className="font-ui text-xs text-ink-3">
-													({c.shortStemExample.translation})
-												</span>
-											</div>
-											<p className="font-ui text-xs text-teal-2">
-												short stem + <strong className="underline">long ending</strong>
-											</p>
-										</div>
-										<button
-											type="button"
-											onClick={() => playAudio(c.shortStemExample.word)}
-											className="flex size-9 items-center justify-center rounded-lg bg-well text-ink-2 hover:bg-well-2 hover:text-foreground"
-										>
-											<Volume2Icon className="size-4" />
-										</button>
-									</div>
-
-									{/* Long stem -> shortened ending */}
-									<div className="flex items-center justify-between rounded-lg border border-teal-line bg-teal-wash/30 px-4 py-3">
-										<div>
-											<div className="flex items-baseline gap-2">
-												<span className="font-prose text-lg font-semibold text-foreground">
-													{c.longStemExample.word}
-												</span>
-												<span className="font-ui text-xs text-ink-3">
-													({c.longStemExample.translation})
-												</span>
-											</div>
-											<p className="font-ui text-xs text-teal-2">
-												long stem ➔ <strong className="underline">shortened ending</strong>
-											</p>
-										</div>
-										<button
-											type="button"
-											onClick={() => playAudio(c.longStemExample.word)}
-											className="flex size-9 items-center justify-center rounded-lg bg-well text-ink-2 hover:bg-well-2 hover:text-foreground"
-										>
-											<Volume2Icon className="size-4" />
-										</button>
-									</div>
-								</div>
+			<section className="mt-10">
+				<h2 className="q-sh">Same ending, two lengths</h2>
+				<ul className="divide-y divide-[var(--q-line)]">
+					{ENDING_CONTRASTS.map((c) => (
+						<li key={c.label} className="py-4 first:pt-1">
+							<p className="font-ui text-[13px] text-ink-3">{c.label}</p>
+							<div className="mt-2.5 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+								<FormLine form={c.afterShort} note="short stem, long ending" />
+								<FormLine form={c.afterLong} note="long stem, short ending" />
 							</div>
-						);
-					})}
-				</div>
-			</div>
+						</li>
+					))}
+				</ul>
+			</section>
 
-			{/* Suprasegmental Cadence & Stress Section */}
-			<div className="rounded-2xl border border-[var(--q-line)] bg-surface p-6 shadow-sm sm:p-8">
-				<h3 className="font-ui text-sm font-semibold uppercase tracking-wider text-ink-3">
-					Syllable-Timed Cadence & Word-Initial Stress
-				</h3>
-				<p className="mt-1 font-prose text-sm text-ink-2">
-					Unlike English or Russian (which feature mobile stress and vowel reduction), Slovak has <strong className="text-foreground">fixed stress on the first syllable</strong> and is <strong className="text-foreground">syllable-timed</strong>. Every syllable preserves its clean vowel color.
-				</p>
+			<section className="mt-10">
+				<h2 className="q-sh">Stress is on the first syllable</h2>
+				<p className="q-line dim">The first syllable of every word carries the stress, and each vowel keeps its full sound. The mark ˈ shows where the stress falls.</p>
+				<SentenceRows className="mt-1">
+					<SentenceRow sentence={STRESS_SENTENCE.text} lang={lang?.code} translation={STRESS_SENTENCE.translation} onPlay={() => play(STRESS_SENTENCE.text)}>
+						{formatStressCadence(STRESS_SENTENCE.text)}
+					</SentenceRow>
+				</SentenceRows>
+			</section>
 
-				<div className="mt-6 rounded-xl bg-well p-5">
-					<p className="font-ui text-xs text-ink-3">Example Sentence with Syllable Beats & Primary Stress (ˈ):</p>
-					<p className="mt-2 font-prose text-2xl font-semibold tracking-wide text-foreground">
-						{formatStressCadence("Chválime krásne Slovensko")}
-					</p>
-					<p className="mt-1 font-prose text-sm text-ink-2">
-						"We praise beautiful Slovakia"
-					</p>
-					<button
-						type="button"
-						onClick={() => playAudio("Chválime krásne Slovensko")}
-						className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal px-4 py-2 font-ui text-sm font-medium text-white transition-opacity hover:opacity-95"
+			<SourcesNote feature="rhythmic-law" className="mt-14" />
+		</div>
+	);
+}
+
+function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
+	const lang = useActiveLanguage();
+	const clashing = new Set(analysis.hasViolation ? analysis.violations.flatMap((v) => [v.first.index, v.second.index]) : []);
+	return (
+		<div className="mt-5 min-h-[11.5rem] rounded-xl bg-well px-5 py-5" data-testid="syllable-bar" aria-live="polite">
+			{analysis.syllables.length === 0 ? (
+				<p className="font-ui text-[13px] text-ink-3">Type a word to see its syllables, long and short.</p>
+			) : (
+				<>
+					<ol className="flex flex-wrap items-start gap-x-5 gap-y-4" aria-label={`Syllables of ${analysis.word}`}>
+						{analysis.syllables.map((s, i) => {
+							const long = s.quantity === "long";
+							const clash = clashing.has(s.index);
+							const clashesWithPrevious = clash && i > 0 && clashing.has(analysis.syllables[i - 1]!.index);
+							return (
+								<li key={s.index} className="flex flex-col items-center">
+									<span
+										className={cn(
+											"relative font-prose text-[34px] font-semibold leading-none tracking-[-0.03em]",
+											clash ? "text-miss" : "text-foreground",
+											i > 0 && "before:absolute before:right-full before:w-5 before:text-center before:font-normal before:text-ink-4 before:content-['·']",
+										)}
+										lang={lang?.code}
+									>
+										{s.text}
+									</span>
+									<span aria-hidden="true" className="relative mt-3 flex h-1.5 w-full justify-center">
+										{clashesWithPrevious && <span className="absolute right-full top-1/2 w-5 -translate-y-1/2 text-center font-ui text-[13px] font-bold leading-none text-miss">×</span>}
+										<span className={cn("h-1.5 rounded-full", long ? "w-8 bg-teal" : "w-1.5 bg-ink-4")} />
+									</span>
+									<span className={cn("mt-1.5 whitespace-nowrap font-ui text-[12px]", long ? "font-[550] text-teal-2" : "text-ink-3")}>
+										{long ? "long" : "short"} <span lang={lang?.code}>{s.nucleus}</span>
+									</span>
+								</li>
+							);
+						})}
+					</ol>
+					<p
+						className={cn("mt-5 flex items-center gap-2.5 font-ui text-[14px] font-[600] tracking-[-0.01em]", analysis.hasViolation ? "text-miss" : analysis.isException ? "text-ink-2" : "text-teal-2")}
+						data-testid="rhythm-verdict"
 					>
-						<Volume2Icon className="size-4" />
-						Hear Syllable-Timed Rhythm
-					</button>
-				</div>
+						<VerdictDisc ok={!analysis.hasViolation} />
+						{analysis.hasViolation ? "Two long syllables side by side" : analysis.isException ? "Two long syllables, allowed in this word" : "No two long syllables side by side"}
+					</p>
+					{(analysis.hasViolation || analysis.isException) && <p className="q-t2 !mt-2">{analysis.explanation}</p>}
+				</>
+			)}
+		</div>
+	);
+}
+
+function FormLine({ form, note }: { form: Form; note: string }) {
+	const lang = useActiveLanguage();
+	return (
+		<div className="flex items-center gap-3">
+			<button type="button" onClick={() => play(form.word)} className={PLAY_ROW} aria-label={`Play ${form.word}`} title="Play">
+				<Volume2Icon className="size-4" strokeWidth={1.6} />
+			</button>
+			<div className="min-w-0">
+				<p className="font-prose text-[22px] font-[550] leading-tight tracking-[-0.02em] text-foreground" lang={lang?.code}>
+					{form.stem}
+					<span className="font-semibold text-teal-2 underline decoration-teal-line decoration-2 underline-offset-[5px]">{form.word.slice(form.stem.length)}</span>
+				</p>
+				<p className="mt-1 font-ui text-[12.5px] text-ink-3">
+					{form.translation} · {note}
+				</p>
 			</div>
 		</div>
 	);
