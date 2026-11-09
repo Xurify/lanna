@@ -1,18 +1,24 @@
 import { GrammarAtlas } from "@/components/grammar/atlas";
+import { CaseTable } from "@/components/grammar/case-table";
 import { progressStore } from "@/src/server";
-import { grammarAtlas } from "@/src/core";
+import { activeCourse, caseTable, grammarAtlas } from "@/src/core";
 
 export const metadata = { title: "Grammar" };
 
 export const dynamic = "force-dynamic";
 
-/** The grammar atlas (LangHarness): every case × gender cell with the
- *  learner's accuracy, each opening its drill. The cells are computed with
- *  the page, so the table is in the first HTML and never swaps. */
 export default function GrammarRoute() {
+	const course = activeCourse();
+	let units = {};
+	try {
+		units = progressStore.read().units;
+	} catch {
+		units = {};
+	}
+	if (course) return <CaseTable rows={caseTable(course, units)} />;
 	let cells = null;
 	try {
-		cells = grammarAtlas(progressStore.read().units);
+		cells = grammarAtlas(units);
 	} catch {
 		cells = null;
 	}

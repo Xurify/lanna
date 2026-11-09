@@ -91,6 +91,8 @@ import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
+import { activeProfile } from "../../config.ts";
+import { getScheduledArmForDate, syncDailyExperimentData } from "./experiment.ts";
 
 const RECENT_CAP = 240;
 /** Days of history the trajectory draws. */
@@ -575,12 +577,15 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		if (record?.planned) earlier.push({ day, tasks: record.planned.map((t) => ({ ...t, done: t.done || doneInLedger(t.id, record) })) });
 	}
 	const carried = carriedTasks(earlier, key, new Set());
+	const scheduledArm = getScheduledArmForDate(activeProfile(), key);
+	const arm = goal.arm ?? (scheduledArm === "input-first" ? "input-first" : undefined);
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
 		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, mixups: d?.mixups ?? 0, personal: d?.personal ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
 		review,
 		minutesPerDay: goal.minutesPerDay,
+		arm,
 		next,
 		dayOfYear: dayOfYearOf(key),
 		scenes: purposeScenes(goal.purposes ?? []),
@@ -646,6 +651,11 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const xpPerHour = timedMinutes >= 60 ? Math.round((timed.reduce((n, d) => n + (d.xp ?? 0), 0) / timedMinutes) * 60) : null;
 	const stamps = syncStamps(p, curriculum, evidence, key);
 	if (stamps.minted.length) progressStore.write(p);
+	try {
+		syncDailyExperimentData(now);
+	} catch {
+		// Non-blocking sync for experiment
+	}
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),

@@ -85,9 +85,12 @@ for (const asset of [
 	// LangHarness: the language segments and the Slovak curriculum are read
 	// from disk too (prompt composition, lexicon lookups, first-run seeding).
 	path.join("src", "agent", "prompts", "language", "10-slovak.md"),
+	path.join("src", "agent", "prompts", "language", "10-estonian.md"),
 	path.join("src", "agent", "prompts", "language", "10-russian.md"),
 	path.join("src", "agent", "prompts", "drawing", "10-drawing.md"),
 	path.join("curriculum", "slovak", "lexicon.json"),
+	path.join("curriculum", "estonian", "course.json"),
+	path.join("curriculum", "russian", "course.json"),
 ]) {
 	if (!exists(path.join(STANDALONE, asset))) {
 		console.error(`[build-server] prompt asset missing from the trace: ${asset}`);

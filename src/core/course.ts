@@ -36,9 +36,14 @@ export interface CourseUnit {
 	cat?: string;
 	/** grammar: every tag must be in one of the form's cells. */
 	tags?: string[];
+	variants?: string[][];
 	/** grammar: the blank must follow one of these words (a preposition, a
 	 *  modal verb), lowercase. */
 	after?: string[];
+	notAfter?: string[];
+	skipForms?: string[];
+	notWith?: string[][];
+	distinct?: boolean;
 	/** words: the lemmas of one theme, from the lexicon. */
 	lemmas?: string[];
 }
@@ -69,6 +74,17 @@ export interface CourseChapter {
 	units: string[];
 }
 
+export interface CourseCase {
+	tag: string;
+	native: string;
+	means: string;
+	noDrill?: Partial<Record<CaseNumber, { short: string; why: string }>>;
+	tutor?: string;
+}
+
+export type CaseNumber = "singular" | "plural";
+export const CASE_NUMBERS: readonly CaseNumber[] = ["singular", "plural"];
+
 export interface Course {
 	language: string;
 	/** ISO 639-1 and BCP-47: the lessons are in this language. */
@@ -81,6 +97,8 @@ export interface Course {
 	tutors: CourseTutor[];
 	goals: CourseGoal[];
 	chapters: CourseChapter[];
+	cases?: CourseCase[];
+	badSentences?: Array<{ id: number; why: string }>;
 }
 
 // The running language's course: config.ts sets it on the server from
@@ -133,6 +151,18 @@ const LEMMA_TAGS = new Set(["infinitive", "nominative"]);
 
 const GENDER_TAGS = new Set(["masculine", "feminine", "neuter", "animate", "inanimate"]);
 
+export const CASE_TAGS = [
+	"nominative", "genitive", "partitive", "dative", "accusative", "illative", "inessive", "elative", "allative", "adessive", "ablative",
+	"prepositional", "locative", "instrumental", "translative", "terminative", "essive", "abessive", "comitative", "vocative",
+] as const;
+const CASE_TAG_SET = new Set<string>(CASE_TAGS);
+
+// Wiktionary's Estonian and Finnish tables label the total object "accusative"
+// beside the case whose form it borrows ("accusative genitive singular").
+function isObjectAlias(cell: readonly string[]): boolean {
+	return cell.includes("accusative") && cell.some((t) => t !== "accusative" && CASE_TAG_SET.has(t));
+}
+
 function wordBeforeBlank(text: string, at: number, tag: string): string {
 	const before = text.slice(0, at).trim().split(/\s+/);
 	return (before[before.length - 1] ?? "").replace(/^[„“"'(«]+|[,.;:!?„“"')»]+$/g, "").toLocaleLowerCase(tag);
@@ -150,27 +180,85 @@ export function courseUnitsFor(units: readonly CourseUnit[], entry: LexiconEntry
 	const isLemma = c.answer.toLocaleLowerCase(tag) === (entry.lemma ?? entry.sk ?? "").toLocaleLowerCase(tag);
 	const out: string[] = [];
 	for (const u of units) {
-		if (u.kind !== "grammar" || !u.tags?.length) continue;
+		const sets = tagSets(u);
+		if (u.kind !== "grammar" || sets.length === 0) continue;
 		if (u.cat && u.cat !== entry.cat) continue;
+		if (u.notAfter?.includes(prev)) continue;
+		if (u.skipForms?.includes(c.answer.toLocaleLowerCase(tag))) continue;
+		if (u.lemmas?.length && !u.lemmas.some((l) => l.toLocaleLowerCase(tag) === (entry.lemma ?? entry.sk ?? "").toLocaleLowerCase(tag))) continue;
 		// The dictionary form says nothing about a case ("Dobrý den" is not an
 		// accusative); only a unit about that form itself may take it.
-		if (isLemma && !u.tags.some((t) => LEMMA_TAGS.has(t))) continue;
+		if (isLemma && !sets.some((set) => set.some((t) => LEMMA_TAGS.has(t)))) continue;
 		// A noun's gender belongs to the word (tables rarely repeat it on each
 		// form); an adjective's is on the form itself.
 		const byWord = !!entry.gender;
-		if (byWord && u.tags.some((t) => GENDER_TAGS.has(t) && !entry.gender!.split("-").includes(t))) continue;
-		const grammar = byWord ? u.tags.filter((t) => !GENDER_TAGS.has(t)) : u.tags;
-		const fits = (cell: string[]) => grammar.every((t) => cell.includes(t));
+		const live = sets
+			.filter((set) => !byWord || !set.some((t) => GENDER_TAGS.has(t) && !entry.gender!.split("-").includes(t)))
+			.map((set) => (byWord ? set.filter((t) => !GENDER_TAGS.has(t)) : set));
+		if (live.length === 0) continue;
+		const fits = (cell: string[]) => live.some((set) => set.every((t) => cell.includes(t)));
+		if (u.notWith?.some((set) => cells.some((cell) => !isObjectAlias(cell) && set.every((t) => cell.includes(t))))) continue;
+		if (u.distinct && live.filter((set) => cells.some((cell) => !isObjectAlias(cell) && set.every((t) => cell.includes(t)))).length > 1) continue;
 		if (u.after?.length) {
 			// The trigger word decides between the cells a form could fill.
 			if (u.after.includes(prev) && cells.some(fits)) out.push(u.id);
-		} else if (cells.filter((cell) => !cell.includes("vocative")).every(fits) && cells.some(fits)) {
+		} else if (cells.filter((cell) => !cell.includes("vocative") && !isObjectAlias(cell)).every(fits) && cells.some(fits)) {
 			// With nothing to decide by, the form must mean only this (a
 			// vocative twin aside: it is rarely what a sentence holds).
 			out.push(u.id);
 		}
 	}
 	return out;
+}
+
+export function tagSets(u: Pick<CourseUnit, "tags" | "variants">): string[][] {
+	if (u.variants?.length) return u.variants.filter((v) => v.length > 0);
+	return u.tags?.length ? [u.tags] : [];
+}
+
+const NUMBER_TAGS = new Set<string>(CASE_NUMBERS);
+
+// Estonian has standard doublets in one cell: majja and majasse, maju and majasid.
+export function sameCellForms(entry: Pick<LexiconEntry, "formTags">, answer: string, tag: string): string[] {
+	const key = (cells: string[][]) => cells.map((c) => [...c].sort().join(" ")).sort().join("|");
+	const own = key(cellsOf(entry, answer, tag));
+	if (!own) return [];
+	const want = answer.toLocaleLowerCase(tag);
+	return Object.entries(entry.formTags ?? {})
+		.filter(([form, cells]) => form.toLocaleLowerCase(tag) !== want && key(cells.map((c) => c.split(" "))) === own)
+		.map(([form]) => form);
+}
+
+export function filledTags(u: Pick<CourseUnit, "tags" | "variants">, entry: Pick<LexiconEntry, "formTags">, answer: string, tag: string): string[] | null {
+	const sets = tagSets(u);
+	if (sets.length === 0) return null;
+	const cell = cellsOf(entry, answer, tag).find((c) => !isObjectAlias(c) && sets.some((set) => set.every((t) => GENDER_TAGS.has(t) || c.includes(t))));
+	return cell ?? sets[0]!;
+}
+
+export function unitCaseCells(u: Pick<CourseUnit, "kind" | "cat" | "tags" | "variants">): string[] {
+	if (u.kind !== "grammar" || u.cat !== "Nouns") return [];
+	const out = new Set<string>();
+	for (const set of tagSets(u)) {
+		const kase = set.find((t) => CASE_TAG_SET.has(t) && t !== "accusative") ?? set.find((t) => CASE_TAG_SET.has(t));
+		if (!kase) continue;
+		const numbers = set.filter((t) => NUMBER_TAGS.has(t));
+		for (const n of numbers.length ? numbers : CASE_NUMBERS) out.add(`${kase} ${n}`);
+	}
+	return [...out];
+}
+
+export function formCaseCell(u: Pick<CourseUnit, "kind" | "cat" | "tags" | "variants">, entry: Pick<LexiconEntry, "formTags" | "cat">, answer: string, tag: string): string | null {
+	const wanted = new Set(unitCaseCells(u));
+	if (wanted.size === 0 || entry.cat !== "Nouns") return null;
+	const hits = new Set<string>();
+	for (const cell of cellsOf(entry, answer, tag)) {
+		if (isObjectAlias(cell)) continue;
+		const kase = cell.find((t) => CASE_TAG_SET.has(t));
+		const number = cell.find((t) => NUMBER_TAGS.has(t));
+		if (kase && number && wanted.has(`${kase} ${number}`)) hits.add(`${kase} ${number}`);
+	}
+	return hits.size === 1 ? [...hits][0]! : null;
 }
 
 const ID = /^[a-z][a-z0-9-]{1,40}$/;
@@ -245,13 +333,28 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 			continue;
 		}
 		const tags = strs(x.tags).map((t) => t.toLowerCase());
-		const unknown = tags.filter((t) => !known.has(t));
-		if (tags.length === 0 || unknown.length) {
-			dropped.push(`grammar "${id}": ${tags.length ? `tags the dictionary does not use (${unknown.join(", ")})` : "no tags"}`);
+		const variants = (Array.isArray(x.variants) ? x.variants : []).map((v) => strs(v).map((t) => t.toLowerCase())).filter((v) => v.length > 0);
+		const notWith = (Array.isArray(x.notWith) ? x.notWith : []).map((v) => strs(v).map((t) => t.toLowerCase())).filter((v) => v.length > 0);
+		const all = [...tags, ...variants.flat()];
+		const unknown = [...new Set(all.filter((t) => !known.has(t)))];
+		if (all.length === 0 || unknown.length) {
+			dropped.push(`grammar "${id}": ${all.length ? `tags the dictionary does not use (${unknown.join(", ")})` : "no tags"}`);
 			seen.delete(id);
 			continue;
 		}
-		const unit: CourseUnit = { ...base, kind: "grammar", tags, ...(str(x.cat, 20) ? { cat: str(x.cat, 20) } : {}), ...(strs(x.after).length ? { after: strs(x.after).map((w) => w.toLocaleLowerCase(tag)) } : {}) };
+		const unit: CourseUnit = {
+			...base,
+			kind: "grammar",
+			tags: tags.length ? tags : variants[0]!,
+			...(variants.length ? { variants } : {}),
+			...(str(x.cat, 20) ? { cat: str(x.cat, 20) } : {}),
+			...(strs(x.after).length ? { after: strs(x.after).map((w) => w.toLocaleLowerCase(tag)) } : {}),
+			...(strs(x.notAfter).length ? { notAfter: strs(x.notAfter).map((w) => w.toLocaleLowerCase(tag)) } : {}),
+			...(strs(x.skipForms).length ? { skipForms: strs(x.skipForms).map((w) => w.toLocaleLowerCase(tag)) } : {}),
+			...(strs(x.lemmas).length ? { lemmas: strs(x.lemmas) } : {}),
+			...(notWith.length ? { notWith } : {}),
+			...(x.distinct === true ? { distinct: true } : {}),
+		};
 		let n = 0;
 		for (const e of lexicon) for (const ex of e.examples) if (!ex.rejected && courseUnitsFor([unit], e, ex, tag).length) n++;
 		if (n < minSentences) {
@@ -298,6 +401,11 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 	// A stage's chapters stay together and in order.
 	chapters.sort((a, b) => COURSE_STAGES.indexOf(a.stage) - COURSE_STAGES.indexOf(b.stage));
 	const used = (id: string) => placed.has(id);
+	const cases = checkCases(r.cases, new Set(tutors.filter((t) => used(t.id)).map((t) => t.id)));
+	const badSentences = (Array.isArray(r.badSentences) ? r.badSentences : []).flatMap((b) => {
+		const x = (b ?? {}) as Record<string, unknown>;
+		return Number.isInteger(x.id) && str(x.why) ? [{ id: x.id as number, why: str(x.why, 200) }] : [];
+	});
 	const course: Course = {
 		language,
 		code,
@@ -308,9 +416,29 @@ export function checkCourse(raw: unknown, language: string, lexicon: readonly Le
 		tutors: tutors.filter((t) => used(t.id)),
 		goals: goals.filter((g) => used(g.id)),
 		chapters,
+		...(cases.length ? { cases } : {}),
+		...(badSentences.length ? { badSentences } : {}),
 	};
 	if (course.chapters.length < 3 || course.units.filter((u) => u.kind === "grammar").length < 3) return null;
 	return { course, dropped };
+}
+
+function checkCases(raw: unknown, tutors: ReadonlySet<string>): CourseCase[] {
+	const out: CourseCase[] = [];
+	for (const c of Array.isArray(raw) ? raw : []) {
+		const x = (c ?? {}) as Record<string, unknown>;
+		const tag = str(x.tag, 20).toLowerCase();
+		if (!CASE_TAG_SET.has(tag) || out.some((k) => k.tag === tag)) continue;
+		const noDrillRaw = (x.noDrill ?? {}) as Record<string, unknown>;
+		const noDrill: CourseCase["noDrill"] = {};
+		for (const n of CASE_NUMBERS) {
+			const v = (noDrillRaw[n] ?? null) as Record<string, unknown> | null;
+			if (v && str(v.short) && str(v.why)) noDrill[n] = { short: str(v.short, 40), why: str(v.why, 400) };
+		}
+		const tutor = str(x.tutor, 41);
+		out.push({ tag, native: str(x.native, 40), means: str(x.means, 120), ...(Object.keys(noDrill).length ? { noDrill } : {}), ...(tutors.has(tutor) ? { tutor } : {}) });
+	}
+	return out;
 }
 
 /** A language's story bible for Read and Speak (src/server/world.ts). */

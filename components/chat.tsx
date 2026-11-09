@@ -21,7 +21,8 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { LiveToolCard } from "@/components/artifacts/live-tool-card";
 import { ChatReplies } from "@/components/chat-replies";
-import { CHAT_RECORD_TOOLS, questionOpen, repeatsEarlierText } from "@/src/core";
+import { CHAT_RECORD_TOOLS, learnerLines, messageText, questionOpen, repeatsEarlierText } from "@/src/core";
+import { HeldLine, LearnerLineView, TutorWriting } from "@/components/chat-voice";
 import { chatMdComponents } from "@/components/chat-link";
 import { SketchFigure } from "@/components/sketch-figure";
 import { ChatBoard, useDrill } from "@/components/chat-board";
@@ -554,6 +555,19 @@ export function Chat({
 	// color-coded dotted divider at each boundary; the header chip reads the
 	// session's current phase.
 	const phases = useMemo(() => phaseTimeline(messages), [messages]);
+	const lines = useMemo(() => (kind === "chat" ? learnerLines(messages) : null), [kind, messages]);
+	const currentLine = useMemo(() => (lines ? Math.max(-1, ...lines.keys()) : -1), [lines]);
+	const [pageTitle, setPageTitle] = useState<HTMLHeadingElement | null>(null);
+	const [pageTitleInView, setPageTitleInView] = useState(false);
+	useEffect(() => {
+		if (!pageTitle) {
+			setPageTitleInView(false);
+			return;
+		}
+		const observer = new IntersectionObserver(([entry]) => setPageTitleInView(entry?.isIntersecting ?? false));
+		observer.observe(pageTitle);
+		return () => observer.disconnect();
+	}, [pageTitle]);
 
 	const [text, setText] = useState("");
 	/* The composer's value MIRROR ("nothing gets lost" round, owner
@@ -1295,7 +1309,9 @@ export function Chat({
 								setTitleDraft(titleText);
 								setRenaming(true);
 							}}
-							className={cn("lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent", kind === "chat" ? "font-ui text-sm font-medium text-muted-foreground" : "font-title text-2xl font-semibold tracking-tight")}
+							className={cn("lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent", kind === "chat" ? "font-ui text-sm font-medium text-muted-foreground transition-opacity" : "font-title text-2xl font-semibold tracking-tight", kind === "chat" && pageTitleInView && "pointer-events-none opacity-0")}
+							aria-hidden={kind === "chat" && pageTitleInView ? true : undefined}
+							tabIndex={kind === "chat" && pageTitleInView ? -1 : undefined}
 						>
 							{titleText}
 							</button>
@@ -1350,6 +1366,7 @@ export function Chat({
 							title={titleText}
 							messages={messages}
 							nativeMessages={nativeMessages}
+							plain={kind === "chat"}
 						/>
 					)}
 					{/* Practice sessions: no phase arc — a quiet Practice tag
@@ -1372,8 +1389,8 @@ export function Chat({
 				<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
 				<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
 				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
-					<ConversationContent className="min-h-full gap-0 p-0">
-						<div data-session-find-root="" className={cn(COLUMN, "flex flex-1 flex-col gap-4 pt-4", kind === "chat" && "max-w-[46rem] gap-5 pt-10")}>
+					<ConversationContent className="min-h-full gap-0 p-0" scrollClassName={kind === "chat" ? "lh-fade-out" : undefined}>
+						<div data-session-find-root="" className={cn(COLUMN, "flex flex-1 flex-col gap-4 pt-4", kind === "chat" && "max-w-[42rem] gap-5 pt-10")}>
 							{messages.length === 0 && !busy && (
 								<ConversationEmptyState
 									title="New chat"
@@ -1461,7 +1478,9 @@ export function Chat({
 									teachStepIndex(m.parts) === -1 ? (
 										<PhaseDivider key={`teach-${m.id || `m-${mi}`}`} phase="teach" />
 									) : null}
-									{m.role === "user" ? (
+									{m.role === "user" && lines?.get(mi) ? (
+										<LearnerLineView line={lines.get(mi)!} text={messageText(m)} recede={busy && mi < currentLine} titleRef={lines.get(mi)!.kind === "title" ? setPageTitle : undefined} />
+									) : m.role === "user" ? (
 										/* THE DOCUMENT ROW (owner round, 2026-10-05): no right-aligned
 										    bubble — the transcript reads as a document. User text is a
 										    full-width quote block: muted "You" label, muted rail,
@@ -1491,7 +1510,7 @@ export function Chat({
 												</div>
 											</div>
 									) : (
-									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice")}>
+									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice", kind === "chat" && localStream && mi === messages.length - 1 && "lh-writing", kind === "chat" && busy && mi < currentLine && "lh-recede")}>
 									<MessageContent className="w-full">
 											{m.parts.map((part, pi) => {
 												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
@@ -1535,6 +1554,7 @@ export function Chat({
 													case "reasoning":
 														// Hidden unless "Show working" is on — except the live
 														// row while this turn streams, which is the activity signal.
+														if (kind === "chat") return status === "streaming" && isLastPart ? <TutorWriting key={pi} /> : null;
 														if (!showWorking && !(status === "streaming" && isLastPart)) return null;
 														return (
 															<Reasoning key={pi} isStreaming={status === "streaming" && isLastPart} className="mb-2">
@@ -1545,7 +1565,7 @@ export function Chat({
 													case "step-start":
 														if (teachBoundary)
 															return <PhaseDivider key={`teach-step-${pi}`} phase="teach" />;
-														return pi > 0 ? <Separator key={pi} className="my-3" /> : null;
+														return pi > 0 && kind !== "chat" ? <Separator key={pi} className="my-3" /> : null;
 													case "data-plan-block":
 														// The plan in the chat (wave 4): a frozen snapshot
 														// block — rendered as carried, never re-derived.
@@ -1623,12 +1643,7 @@ export function Chat({
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
-							{kind === "chat" && heldAnswer !== null && (
-								<div data-testid="held-answer" className="mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] whitespace-pre-wrap text-ink-3">
-									{heldAnswer}
-									<p className="mt-1 text-xs font-normal tracking-normal text-muted-foreground">Sends when the tutor is done</p>
-								</div>
-							)}
+							{kind === "chat" && heldAnswer !== null && <HeldLine text={heldAnswer} />}
 							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
 							{compacting && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
@@ -1636,7 +1651,8 @@ export function Chat({
 									<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
 								</span>
 							)}
-							{(status === "submitted" || turnInFlight) && (
+							{(status === "submitted" || turnInFlight) && kind === "chat" && <TutorWriting />}
+							{(status === "submitted" || turnInFlight) && kind !== "chat" && (
 								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
 									<BrailleSpinner label="Thinking" />
 									<Shimmer duration={1}>
@@ -1725,7 +1741,7 @@ export function Chat({
 							// applies.
 							nextProblem={nextReady}
 							onNext={sendNext}
-							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : kind === "chat" ? "Answer, or ask something else" : undefined}
+							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : kind === "chat" ? (busy ? "Write ahead while the tutor writes" : questionOpen(messages) ? "Write your answer" : "Ask something else") : undefined}
 							toolbar={
 								kind === "chat" ? (
 									<>
@@ -2356,8 +2372,8 @@ function DockOverlay({
 	return (
 		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: sbInset }}>
 			<div className="h-24" />
-			<div ref={blockRef} className={cn("relative bg-background pb-5", plain ? "pt-1" : "shadow-[0_-1px_0_var(--q-line)]")} style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
-				<div className={DOCK}>
+			<div ref={blockRef} className={cn("relative pb-5", plain ? "pt-1" : "bg-background shadow-[0_-1px_0_var(--q-line)]")} style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
+				<div className={cn(DOCK, plain && "max-w-[42rem]")}>
 					{setupCta}
 					{/* The queued-steer indicator (owner spec 2026-10-03): quiet
 					    one-liners above the shell - right-aligned to where its corner
@@ -2388,7 +2404,7 @@ function DockOverlay({
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
 					{!plain && <DiacriticBar />}
-					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3" : "rounded-xl bg-card shadow-raise-hi")}>
+					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-[20px] bg-card shadow-raise-hi outline-1 outline-transparent transition-[outline-color] focus-within:outline-ink-4" : "rounded-xl bg-card shadow-raise-hi")}>
 						<div
 						ref={contentRef}
 						key={mode}
@@ -2431,11 +2447,7 @@ function DockOverlay({
 					{/* The stats row: beneath the composer/question shell, not
 					    flush to the screen bottom — static height, outside the
 					    morphing shell so it never joins a height animation. */}
-					{plain ? (
-						<p className="pointer-events-none hidden pt-2 text-center font-ui text-[12px] text-ink-4 pointer-fine:block">Enter to send · Shift+Enter for a new line</p>
-					) : (
-						<StatsBar turns={turns} contextTokens={contextTokens} pricing={pricing} dictationSlot={dictationSlot} chatId={chatId} />
-					)}
+					{!plain && <StatsBar turns={turns} contextTokens={contextTokens} pricing={pricing} dictationSlot={dictationSlot} chatId={chatId} />}
 					{/* The scroll-down disc (moved here from the Conversation,
 					    owner refinement round 2026-09-24): anchored to the BLOCK's
 					    top edge — above the composer shell AND the stats row, in

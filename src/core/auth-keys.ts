@@ -43,6 +43,12 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		plain: true,
 	},
 	{
+		id: "CONTEXT_API_KEY",
+		label: "Context",
+		description: "Web-search engine for the researcher sub-agent (agent-focused search API with highlights and content). Setting the key activates it.",
+		docsUrl: "https://context.dev/signup",
+	},
+	{
 		id: "TAVILY_API_KEY",
 		label: "Tavily",
 		description: "Web-search engine for the researcher sub-agent (AI-native search API). Setting the key activates it — no engine toggle needed.",
@@ -143,6 +149,7 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 			return value.startsWith("tvly-")
 				? nonEmpty(20)
 				: { ok: false, error: 'A Tavily key starts with "tvly-". Copy it again from Tavily.' };
+		case "CONTEXT_API_KEY":
 		case "BRAVE_API_KEY":
 			// No public format — a length floor + paste hygiene only.
 			return nonEmpty(20);

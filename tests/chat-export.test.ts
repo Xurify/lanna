@@ -50,11 +50,11 @@ describe("chat-export", () => {
 
 		assert.ok(md.startsWith("# Demonstratives\n\n*Exported from LangHarness · 2026-11-08*"));
 		assert.ok(md.includes("### Learner\n\nWhy is it ten muž, but táto kniha?"));
-		assert.ok(md.includes("### Tutor\n\n`say: ten muž` = \"that man\""));
+		assert.ok(md.includes("### Tutor\n\n**ten muž** = \"that man\""), "a say: span reads as the bold form, not as code");
 		assert.ok(md.includes("```svg\n<svg viewBox=\"0 0 320 180\"><text>ten muž</text></svg>\n```"));
 	});
 
-	it("extracts vocabulary and question cards for Anki export", () => {
+	it("makes Anki cards from the glossed forms only, since a posed question has no question text to put on a card", () => {
 		const messages: LhViewMessage[] = [
 			{
 				id: "m-1",
@@ -73,18 +73,14 @@ describe("chat-export", () => {
 						type: "tool-pose",
 						callId: "call-pose-1",
 						state: "output-available",
-						input: {
-							questionText: "Which demonstrative means 'this' for feminine nouns?",
-							answer: "táto",
-							focus: "feminine this",
-						},
+						input: { answer: "táto", focus: "feminine this" },
 					},
 				],
 			},
 		];
 
 		const cards = extractChatAnkiCards(messages, { tag: "langharness::slovak" });
-		assert.equal(cards.length, 3);
+		assert.equal(cards.length, 2);
 
 		// Card 1: ten muž
 		assert.equal(cards[0]?.front, "ten muž");
@@ -95,11 +91,6 @@ describe("chat-export", () => {
 		assert.equal(cards[1]?.front, "táto kniha");
 		assert.equal(cards[1]?.back, "this book");
 		assert.equal(cards[1]?.tags, "langharness::slovak::vocab");
-
-		// Card 3: posed question
-		assert.equal(cards[2]?.front, "Which demonstrative means 'this' for feminine nouns?");
-		assert.equal(cards[2]?.back, "táto");
-		assert.equal(cards[2]?.tags, "langharness::slovak::quiz");
 	});
 
 	it("formats Anki TSV correctly with headers and tab separation", () => {
