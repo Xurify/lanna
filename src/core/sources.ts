@@ -108,6 +108,12 @@ export const SOURCES: readonly Source[] = [
 	S("lyster2010", "Lyster & Saito 2010", 2010, "Oral feedback in classroom SLA: a meta-analysis", "Studies in Second Language Acquisition 32(2)", "meta-analysis", "doi", "10.1017/s0272263109990520"),
 	S("saito2017", "Saito, Trofimovich & Isaacs 2017", 2017, "Using listener judgments to investigate linguistic influences on L2 comprehensibility and accentedness", "Applied Linguistics 38(4)", "study", "doi", "10.1093/applin/amv047"),
 	S("derwing2005", "Derwing & Munro 2005", 2005, "Second language accent and pronunciation teaching: a research-based approach", "TESOL Quarterly 39(3)", "review", "doi", "10.2307/3588486", "Argues for intelligibility and comprehensibility, not a native accent, as the goal."),
+	// Phonological acquisition and perception
+	S("logan1991", "Logan, Lively & Pisoni 1991", 1991, "Training Japanese listeners to identify English /r/ and /l/: a first report", "The Journal of the Acoustical Society of America 89(2)", "experiment", "doi", "10.1121/1.400646", "High-variability phonetic training across multiple talkers improved non-native phoneme identification."),
+	S("bradlow1997", "Bradlow et al. 1997", 1997, "Training Japanese listeners to identify English /r/ and /l/: IV. Some effects of perceptual learning on speech production", "The Journal of the Acoustical Society of America 101(4)", "experiment", "doi", "10.1121/1.418276", "Auditory perceptual training spontaneously transferred to spoken production without articulatory training."),
+	S("munro2006", "Munro & Derwing 2006", 2006, "The functional load principle in ESL pronunciation instruction: an exploratory study", "System 34(4)", "study", "doi", "10.1016/j.system.2006.09.004", "Instruction targeting high-functional-load contrasts produced greater gains in listener-rated comprehensibility."),
+	S("flege1995", "Flege 1995", 1995, "Second language speech learning: theory, findings, and problems", "In Strange (ed), Speech perception and linguistic experience", "theory", "listed", undefined, "L2 sounds similar to L1 categories are assimilated into native representations unless acoustic variability forces a new category."),
+	S("best1995", "Best 1995", 1995, "A direct realist view of cross-language speech perception", "In Strange (ed), Speech perception and linguistic experience", "theory", "listed", undefined, "The Perceptual Assimilation Model: non-native contrasts mapping to a single native category suffer poorest discrimination."),
 	// Placement and vocabulary size
 	S("meara1987", "Meara & Buxton 1987", 1987, "An alternative to multiple choice vocabulary tests", "Language Testing 4(2)", "study", "doi", "10.1177/026553228700400202"),
 	S("huibregtse2002", "Huibregtse, Admiraal & Meara 2002", 2002, "Scores on a yes-no vocabulary test: correction for guessing and response style", "Language Testing 19(3)", "study", "doi", "10.1191/0265532202lt229oa"),
@@ -242,6 +248,15 @@ export const FEATURES: readonly Feature[] = [
 		limits: "These are classroom studies with a human teacher and human listeners. The tutor is a model, and the clarity score is a machine's reading of one recording.",
 		ours: "The 70 points to count as clear and 85 for a very clear one, the scenes, and the XP.",
 		sources: ["swain1985", "lyster1997", "lyster2010", "derwing2005", "saito2017"],
+	},
+	{
+		id: "ear-gym",
+		title: "Ear Gym",
+		route: "/phonology",
+		evidence: "Multi-talker minimal-pair discrimination (HVPT) expands non-native perceptual categories and transfers directly to spoken production without motor training (Logan et al. 1991; Bradlow et al. 1997). Prioritizing high-functional-load contrasts accelerates comprehensibility gains (Munro & Derwing 2006; Best 1995; Flege 1995).",
+		limits: "HVPT laboratory studies use 4 to 6 real recorded native speakers over several weeks. Our Ear Gym utilizes synthetic voices across genders; synthetic voices carry slightly less natural acoustic variation than human talkers, though multi-voice synthesis maintains variability.",
+		ours: "Two-Alternative Forced Choice format, ear-first masking toggle to eliminate orthographic interference, and cross-linguistic contrast priority based on your known languages.",
+		sources: ["logan1991", "bradlow1997", "munro2006", "flege1995", "best1995"],
 	},
 	{
 		id: "line",
