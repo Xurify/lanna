@@ -2,6 +2,16 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: sign in with a password at a public address (branch `feat/web-sign-in`)
+
+- **Why:** the owner wants LangHarness on the phone with the PC off, at an address of its own and with no Tailscale app ([plans/always-on-server.md](plans/always-on-server.md), route W). Rule E75.
+- **What changed:** with `LH_PUBLIC_HOST` set, the app answers one public host behind a reverse proxy. Every request must carry the proxy's secret (`LH_PROXY_SECRET`), the right host and HTTPS; a page without a session goes to `/login`, the API answers 401, and a change needs the page's own Origin. One owner password (scrypt) opens a 180-day browser session that Settings → Devices lists and signs out. Wrong tries are limited per address and overall and the count is kept in the file. A changed password or a switch-off signs every device out.
+- **Commands:** `npm run web:password` (set or change it; the first one turns web access on) and `npm run remote:code` (a pairing code in the terminal for a machine with no screen; `-- --enable` turns remote access on first).
+- **The proxy secret is not in the plan.** The plan said to accept requests "from loopback", but Next 16 does not tell `proxy.ts` who connected, and nginx's default `Host` of `127.0.0.1:3010` would have looked like this computer. The secret replaces the peer check, and the local shortcut is off at the public address.
+- **Checked in the cloud, on scratch data:** 62 new tests across the gate rules, the throttle, the password record, the store (including eight parallel guesses), `proxy.ts` itself with real `NextRequest` objects, and the login form's markup. The hidden password prompt through a pseudo-terminal (not echoed). A real Next dev server in public mode driven with curl: redirect, 401, 403 for a missing secret, the wrong Origin, plain HTTP and the nginx-default Host; sign-in, the cookie's flags (HttpOnly, SameSite=Lax, Secure, 180 days), sign-out, and the lockout with spoofed `X-Forwarded-For` entries. nginx 1.24 in front of it: its default `Host` is refused, the guide's configuration works, a client's own secret, proto and host headers are overwritten, and the throttle keys on the address nginx appended. The sign-in page in Chromium at 1280 and 390 px, Day and Night: a 16 px field, a 44 px button, no sideways scroll, no layout shift when an error appears, and a right password lands on the page that was asked for.
+- **Found on the way:** the app's `text-base` is 14 px, and the shared `Input` drops to 14 px from 768 px, so the pairing page's fields (E21) still make Safari zoom on a phone and on an iPad in portrait. The sign-in field is set to 16 px by hand; the pairing page is not changed here.
+- **Unverified:** a real VPS, certificate and domain; Caddy; a CDN in front; a phone or an iPad; iOS password autofill; server events through nginx under load.
+
 ## 7 November: grammar lessons open on an ink sketch (branch `feat/ink-case-sketches`)
 
 - **Why:** the owner: grammar felt like review, and the diagrams should look like pen drawings, as riddled.ai’s do. Rule E73.
