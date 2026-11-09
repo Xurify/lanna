@@ -21,7 +21,10 @@ function authorized(request: Request): boolean {
 	return request.method === "GET" ? !supplied || supplied === origin : supplied === origin;
 }
 function error(message: string, status: number) { return Response.json({ error: message }, { status, headers: HEADERS }); }
+const PUBLIC_DEPLOYMENT = "Subscription sign-ins are off when LangHarness is served at a public address. Add an API key in Settings → API keys instead.";
+function publicDeployment(): boolean { return Boolean(process.env.LH_PUBLIC_HOST?.trim()); }
 export async function subscriptionControlsResponse(request: Request): Promise<Response> {
+	if (publicDeployment()) return error(PUBLIC_DEPLOYMENT, 403);
 	if (!webSubscriptionsEnabled()) return error("Web subscription controls are unavailable in desktop-owned mode.", 404);
 	if (!authorized(request)) return error("Subscription controls require a same-origin LearnHarness request.", 403);
 	try {
@@ -56,6 +59,7 @@ export async function subscriptionControlsResponse(request: Request): Promise<Re
 /** One-use same-origin navigation. Full provider authorization URLs go only to
  * a top-level browser redirect, never status JSON, the SSE bus or application JS. */
 export async function subscriptionBrowserResponse(request: Request): Promise<Response> {
+	if (publicDeployment()) return error(PUBLIC_DEPLOYMENT, 403);
 	if (!webSubscriptionsEnabled()) return error("Unavailable.", 404);
 	const origin = subscriptionRequestOrigin(request);
 	if (!origin || (request.method === "POST" ? !authorized(request) : request.headers.get("sec-fetch-site") !== "same-origin")) return error("Open sign-in from LearnHarness.", 403);

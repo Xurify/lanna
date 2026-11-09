@@ -33,6 +33,7 @@ import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import {
 	foreignCaptions,
+	isYouTubeCaptionUrl,
 	MAX_SEGMENTS,
 	MAX_VIDEO_SEC,
 	MEASURE_VERSION,
@@ -65,7 +66,7 @@ import { progressStore } from "../store/progress.ts";
 import { videoStore } from "../store/videos.ts";
 import { knownWordStore } from "../store/known-words.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
-import { keyValue } from "./keys.ts";
+import { keyValue, redactSecrets } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
 import { commonness, glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
@@ -224,6 +225,7 @@ export async function fetchVideoMeta(id: string, signal?: AbortSignal): Promise<
 }
 
 export async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
+	if (!isYouTubeCaptionUrl(track.baseUrl)) return null;
 	const base = track.baseUrl.replace(/&fmt=[^&]*/g, "");
 	for (const [fmt, ext] of [["json3", "json"], ["", "xml"]] as const) {
 		try {
@@ -318,7 +320,7 @@ async function captionsViaDeepgram(id: string, meta: VideoMeta | null, lang: str
 			body: new Uint8Array(audio),
 			signal,
 		});
-		if (!res.ok) throw new Error(`Deepgram answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
+		if (!res.ok) throw new Error(`Deepgram answered ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
 		const body = (await res.json()) as { results?: { utterances?: Array<{ start: number; end: number; transcript: string }> } };
 		const cues: CaptionCue[] = (body.results?.utterances ?? []).filter((u) => u.transcript?.trim()).map((u) => ({ start: u.start, dur: Math.max(0, u.end - u.start), text: u.transcript.trim() }));
 		if (!cues.length) return null;

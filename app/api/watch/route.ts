@@ -26,7 +26,7 @@
  */
 
 import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
-import { checkSentence, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordOnce, recordWatch, sessionClientId, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, checkSentence, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordOnce, recordWatch, sessionClientId, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +48,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; url?: unknown; transcribe?: unknown; force?: unknown; range?: unknown; background?: unknown; videoId?: unknown; mode?: unknown; stats?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; lemma?: unknown; sentence?: unknown; clientId?: unknown } | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add") {

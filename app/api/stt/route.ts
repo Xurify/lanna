@@ -7,7 +7,7 @@
  * the learner's lines with the scene (POST /api/speak turn).
  */
 
-import { sttEngine, STT_MAX_BYTES, transcribe } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, STT_MAX_BYTES, sttEngine, transcribe } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.recording);
+	if (oversized) return oversized;
 	const type = req.headers.get("content-type") ?? "";
 	let data: Uint8Array;
 	try {

@@ -13,7 +13,7 @@
  * /auth/grant (their docs, token-based auth FAQ) — plain read/transcribe
  * keys return FORBIDDEN here.
  */
-import { keyValue } from "@/src/server";
+import { keyValue, redactSecrets } from "@/src/server";
 
 export async function GET() {
 	const key = keyValue("DEEPGRAM_API_KEY");
@@ -33,7 +33,7 @@ export async function GET() {
 		if (!res.ok) {
 			const detail = await res.text();
 			return Response.json(
-				{ message: `Deepgram token grant failed (${res.status}): ${detail.slice(0, 200)}` },
+				{ message: `Deepgram token grant failed (${res.status}): ${redactSecrets(detail).slice(0, 200)}` },
 				{ status: 502 },
 			);
 		}

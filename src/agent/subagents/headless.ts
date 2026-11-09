@@ -368,8 +368,25 @@ async function renderSvg(svg: string, opts: RenderSvgOptions = {}): Promise<Buff
 	return withBrowserPage(async (page) => {
 		const { width, height } = svgViewport(svg, opts);
 		await page.setViewport({ width, height });
-		await page.goto(pathToFileURL(file).href, { waitUntil: "load", timeout: 30_000 });
-		const shot = (await page.screenshot({ fullPage: true, type: "png" })) as Buffer;
+		// The SVG is model-written and may carry script or remote references; a
+		// still picture needs neither, and the browser runs on the same machine as the app.
+		const localOnly = (request: import("puppeteer-core").HTTPRequest) => {
+			const target = request.url();
+			if (target.startsWith("file:") || target.startsWith("data:") || target.startsWith("about:")) void request.continue();
+			else void request.abort();
+		};
+		await page.setJavaScriptEnabled(false);
+		await page.setRequestInterception(true);
+		page.on("request", localOnly);
+		let shot: Buffer;
+		try {
+			await page.goto(pathToFileURL(file).href, { waitUntil: "load", timeout: 30_000 });
+			shot = (await page.screenshot({ fullPage: true, type: "png" })) as Buffer;
+		} finally {
+			page.off("request", localOnly);
+			await page.setRequestInterception(false).catch(() => {});
+			await page.setJavaScriptEnabled(true).catch(() => {});
+		}
 		// Chrome's raw split-IDAT PNG is canonicalized before it reaches a
 		// provider (see providerSafePng) — the visual-maker feeds this exact
 		// buffer back to the vision model as its only way to "look".

@@ -5,13 +5,15 @@
  * (null when the ladder is done) with the bracket so far.
  */
 
-import { answerPlacement } from "@/src/server";
+import { answerPlacement, BODY_LIMITS, bodyTooLarge } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 const VERDICTS = new Set(["exact", "accents", "wrong"]);
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { id?: unknown; itemId?: unknown; given?: unknown; verdict?: unknown; ms?: unknown } | null;
 	if (!body || typeof body.id !== "string" || typeof body.itemId !== "string" || !VERDICTS.has(body.verdict as string)) return Response.json({ message: "id, itemId and verdict are required" }, { status: 400 });
 	try {

@@ -3,11 +3,54 @@ import type { NextConfig } from "next";
 
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string; homepage: string };
 
+const production = process.env.NODE_ENV === "production";
+
+const GOOGLE_AVATAR_HOSTS = ["yt3.ggpht.com", "yt4.ggpht.com", "yt3.googleusercontent.com", "yt4.googleusercontent.com", "lh3.googleusercontent.com", "lh4.googleusercontent.com", "lh5.googleusercontent.com", "lh6.googleusercontent.com"];
+
+// Next writes inline scripts for hydration and the theme, and a static header cannot carry the
+// per-request nonce that would replace 'unsafe-inline' (that needs the proxy). The directives
+// that stop a page from sending data out or loading code from elsewhere are enforced.
+const CONTENT_SECURITY_POLICY = [
+	"default-src 'self'",
+	"script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com",
+	"style-src 'self' 'unsafe-inline'",
+	`img-src 'self' data: blob: https://i.ytimg.com ${GOOGLE_AVATAR_HOSTS.map((host) => `https://${host}`).join(" ")}`,
+	"media-src 'self' blob: data:",
+	"font-src 'self' data:",
+	"connect-src 'self' wss://api.deepgram.com",
+	"frame-src https://www.youtube-nocookie.com https://www.youtube.com",
+	"worker-src 'self' blob:",
+	"manifest-src 'self'",
+	"object-src 'none'",
+	"base-uri 'self'",
+	"form-action 'self'",
+	"frame-ancestors 'none'",
+].join("; ");
+
+const SECURITY_HEADERS = [
+	{ key: "X-Content-Type-Options", value: "nosniff" },
+	{ key: "X-Frame-Options", value: "DENY" },
+	{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+	{ key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+	{ key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self), payment=(), usb=(), serial=(), bluetooth=()" },
+	...(production
+		? [
+				{ key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
+				{ key: "Strict-Transport-Security", value: "max-age=31536000" },
+			]
+		: []),
+];
+
 const nextConfig: NextConfig = {
 	// The Progress page was /plan; old links and bookmarks keep working.
 	async redirects() {
 		return [{ source: "/plan", destination: "/progress", permanent: false }];
 	},
+	async headers() {
+		return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+	},
+	// Next buffers a request body for the proxy up to this size and silently cuts off the rest.
+	experimental: { proxyClientMaxBodySize: "10mb" },
 	// Public build metadata only; no new runtime Electron version API.
 	env: { LH_VERSION: pkg.version, LH_HOMEPAGE: pkg.homepage },
 	// Desktop target (Electron wrapper, 2026-09-17): standalone output = a
