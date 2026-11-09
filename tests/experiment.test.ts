@@ -11,6 +11,7 @@
  */
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
 	buildSchedule,
@@ -162,4 +163,9 @@ test("weeklyCheckRows opens a check on its day and counts a repeated item once",
 	assert.ok(Math.abs(russian.productionMatch! - 0.8) < 1e-9);
 	assert.equal(answered[1]!.state, "open");
 	assert.equal(answered[1]!.productionMatch, null);
+});
+
+test("the study's server code names no folder outside the data root", () => {
+	const source = readFileSync(new URL("../src/server/experiment.ts", import.meta.url), "utf8");
+	assert.doesNotMatch(source, /[A-Za-z]:[\/]Users|Projects\/langharness/, "a sandbox or a test must never read or write the real data folder");
 });

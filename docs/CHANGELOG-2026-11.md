@@ -2,6 +2,14 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: the Study as one figure, and the study's files kept out of the real data folder (branch `t3/pronunciation-principles-review`)
+
+- **Why:** the owner, on the Study views: "Get more creative with it. Don't be afraid to change the layout entirely." Rule E84.
+- **Study:** the strip, the four facts, the list of checks and the list of days became one figure on one 42-day axis: a lane of dots for each language, a pale teal band for the listening-first days starting at a line marked "the switch", a hairline for today, each week's check result under its lane, and the two fitted lines once both sides have enough days. A line under the figure reads the day you point at, tap or reach with the arrow keys. Two panels follow: does today count yet (with a link to Listen), and the result so far with the days counted on each side of the switch. The days are still listed as text below.
+- **Weekly check:** the progress bar is fifteen cells, ten to hear and five to write, and each keeps its verdict (full, thin or hollow), so the bar at the end is the record of the sitting. The play button sits in a ring that empties as the sentence plays, because it plays once.
+- **A data bug, fixed:** the study's server code copied every file it wrote into the owner's real `data/experiments/` folder, from any worktree, test run, build or sandbox, and read the real profile's lesson logs when the sandbox had none. Runs made while building this page rewrote the real `experiment.json` (the recorded commit changed from `8e767a9f` to `381385d3`), `probe-pool.json` (same sentences, a new time stamp), and wrote an empty `checks.jsonl`, `deviations.jsonl`, `daily.jsonl` and a fresh `summary.md`. `experiment.json` and `probe-pool.json` were put back from the copy of the 8 November set-up kept in this worktree, and they match it byte for byte. `checks.jsonl` and `deviations.jsonl` were empty at set-up; whether the owner had added anything to them since cannot be told from what is left. The hardcoded paths are removed and a test pins that.
+- **Checked:** `tsc`, `eslint .`, the full test run, and a sandbox: the Study page on day 1 and with sample data on days 29 and 30 (a temporary page, not in the diff, fed the real component made-up records), and a whole Slovak week 1 check clicked through by a script, in Day and Night at 1280 and 390 px; the Study page also at 320 px. **Unverified:** the Study page with the owner's own days; the ring with sound on (the script ran muted); the arrow keys in the figure (read from the code, not pressed); a real phone.
+
 ## 9 November: the Study views in the app's own look (branch `t3/pronunciation-principles-review`)
 
 - **Why:** the owner: "This design doesn't match our app at all." The Study page and the weekly check were dark in Day, in capitals, with native selects. Rule E84.

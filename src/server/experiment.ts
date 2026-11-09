@@ -44,37 +44,16 @@ export function experimentDir(): string {
 	return path.join(PATHS.base, "experiments", EXPERIMENT_CONSTANTS.ID);
 }
 
-/** Backup/sync directory in main repo if different from PATHS.base. */
-function secondaryDir(): string | null {
-	const mainData = "C:/Users/Stream/Projects/langharness/data/experiments/input-first-russian";
-	const current = experimentDir().replace(/\\/g, "/");
-	if (current.toLowerCase() !== mainData.toLowerCase() && fs.existsSync("C:/Users/Stream/Projects/langharness/data")) {
-		return mainData;
-	}
-	return null;
-}
-
 function ensureDir(dirPath: string): void {
 	if (!fs.existsSync(dirPath)) {
 		fs.mkdirSync(dirPath, { recursive: true });
 	}
 }
 
-function writeSyncedFile(fileName: string, content: string): void {
-	const primary = path.join(experimentDir(), fileName);
-	ensureDir(path.dirname(primary));
-	fs.writeFileSync(primary, content, "utf8");
-
-	const secondary = secondaryDir();
-	if (secondary) {
-		const target = path.join(secondary, fileName);
-		ensureDir(path.dirname(target));
-		try {
-			fs.writeFileSync(target, content, "utf8");
-		} catch {
-			// ignore secondary write errors if permissions differ
-		}
-	}
+function writeExperimentFile(fileName: string, content: string): void {
+	const target = path.join(experimentDir(), fileName);
+	ensureDir(path.dirname(target));
+	fs.writeFileSync(target, content, "utf8");
 }
 
 /** Reads protocol hash and git commit. */
@@ -180,7 +159,6 @@ function extractLanguagePool(lexiconPath: string, rand: () => number): LanguageP
 function findRussianLexiconPath(): string {
 	const candidates = [
 		path.join(PATHS.base, "languages", "russian", "lexicon.json"),
-		"C:/Users/Stream/Projects/langharness/data/languages/russian/lexicon.json",
 		path.join(PATHS.root, "curriculum", "russian", "lexicon.json"),
 	];
 	for (const p of candidates) {
@@ -258,14 +236,14 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 		slovak: skPool,
 	};
 
-	writeSyncedFile("experiment.json", JSON.stringify(config, null, 2));
-	writeSyncedFile("schedule.json", JSON.stringify(schedule, null, 2));
-	writeSyncedFile("probe-pool.json", JSON.stringify(pool, null, 2));
+	writeExperimentFile("experiment.json", JSON.stringify(config, null, 2));
+	writeExperimentFile("schedule.json", JSON.stringify(schedule, null, 2));
+	writeExperimentFile("probe-pool.json", JSON.stringify(pool, null, 2));
 
 	// Initial empty daily.jsonl, checks.jsonl, deviations.jsonl, summary.md
-	if (!fs.existsSync(path.join(dir, "daily.jsonl"))) writeSyncedFile("daily.jsonl", "");
-	if (!fs.existsSync(path.join(dir, "checks.jsonl"))) writeSyncedFile("checks.jsonl", "");
-	if (!fs.existsSync(path.join(dir, "deviations.jsonl"))) writeSyncedFile("deviations.jsonl", "");
+	if (!fs.existsSync(path.join(dir, "daily.jsonl"))) writeExperimentFile("daily.jsonl", "");
+	if (!fs.existsSync(path.join(dir, "checks.jsonl"))) writeExperimentFile("checks.jsonl", "");
+	if (!fs.existsSync(path.join(dir, "deviations.jsonl"))) writeExperimentFile("deviations.jsonl", "");
 
 	const initialSummary = generateSummaryMarkdown(config, schedule, [], [], {
 		b0: 0,
@@ -277,7 +255,7 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 		interventionDays: 0,
 		verdictStatus: "pending",
 	}, config.startDate);
-	writeSyncedFile("summary.md", initialSummary);
+	writeExperimentFile("summary.md", initialSummary);
 
 	return { config, schedule, pool };
 }
@@ -323,12 +301,12 @@ export function resetExperiment(newStartDate?: string): { config: ExperimentConf
 		slovak: skPool,
 	};
 
-	writeSyncedFile("experiment.json", JSON.stringify(config, null, 2));
-	writeSyncedFile("schedule.json", JSON.stringify(schedule, null, 2));
-	writeSyncedFile("probe-pool.json", JSON.stringify(pool, null, 2));
-	writeSyncedFile("daily.jsonl", "");
-	writeSyncedFile("checks.jsonl", "");
-	writeSyncedFile("deviations.jsonl", "");
+	writeExperimentFile("experiment.json", JSON.stringify(config, null, 2));
+	writeExperimentFile("schedule.json", JSON.stringify(schedule, null, 2));
+	writeExperimentFile("probe-pool.json", JSON.stringify(pool, null, 2));
+	writeExperimentFile("daily.jsonl", "");
+	writeExperimentFile("checks.jsonl", "");
+	writeExperimentFile("deviations.jsonl", "");
 
 	const initialSummary = generateSummaryMarkdown(config, schedule, [], [], {
 		b0: 0,
@@ -340,7 +318,7 @@ export function resetExperiment(newStartDate?: string): { config: ExperimentConf
 		interventionDays: 0,
 		verdictStatus: "pending",
 	}, config.startDate);
-	writeSyncedFile("summary.md", initialSummary);
+	writeExperimentFile("summary.md", initialSummary);
 
 	return { config, schedule, pool };
 }
@@ -371,34 +349,18 @@ function readJsonl<T>(filePath: string): T[] {
 
 /** Reads progress.json for a profile. */
 function readProfileProgress(profile: string): any {
-	const candidates = [
-		path.join(PATHS.base, "profiles", profile, "progress.json"),
-		`C:/Users/Stream/Projects/langharness/data/profiles/${profile}/progress.json`,
-	];
-	for (const p of candidates) {
-		if (fs.existsSync(p)) {
-			try {
-				return JSON.parse(fs.readFileSync(p, "utf8"));
-			} catch {
-				// ignore
-			}
-		}
+	const file = path.join(PATHS.base, "profiles", profile, "progress.json");
+	if (!fs.existsSync(file)) return null;
+	try {
+		return JSON.parse(fs.readFileSync(file, "utf8"));
+	} catch {
+		return null;
 	}
-	return null;
 }
 
 /** Reads lesson logs for a day and profile. */
 function readDayLessonLogs(profile: string, day: string): any[] {
-	const candidates = [
-		path.join(PATHS.base, "profiles", profile, "lessons", `${day}.jsonl`),
-		`C:/Users/Stream/Projects/langharness/data/profiles/${profile}/lessons/${day}.jsonl`,
-	];
-	for (const p of candidates) {
-		if (fs.existsSync(p)) {
-			return readJsonl(p);
-		}
-	}
-	return [];
+	return readJsonl(path.join(PATHS.base, "profiles", profile, "lessons", `${day}.jsonl`));
 }
 
 /**
@@ -466,14 +428,14 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 
 	const updatedDaily = Array.from(dailyMap.values()).sort((a, b) => a.dayNumber - b.dayNumber || a.language.localeCompare(b.language));
 	const jsonlLines = updatedDaily.map((r) => JSON.stringify(r)).join("\n") + "\n";
-	writeSyncedFile("daily.jsonl", jsonlLines);
+	writeExperimentFile("daily.jsonl", jsonlLines);
 
 	const checkRecords = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
 	const russianRecords = updatedDaily.filter((r) => r.language === "russian");
 	const analysis = runRandomizationTest(russianRecords, config.onsetDay);
 
 	const summary = generateSummaryMarkdown(config, schedule, updatedDaily, checkRecords, analysis, todayDateStr);
-	writeSyncedFile("summary.md", summary);
+	writeExperimentFile("summary.md", summary);
 
 	// If study is complete (day > 42), write verdict.json
 	if (currentDayNumber > EXPERIMENT_CONSTANTS.TOTAL_DAYS) {
@@ -492,7 +454,7 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 				},
 				verdict: analysis.verdictStatus,
 			};
-			writeSyncedFile("verdict.json", JSON.stringify(verdictData, null, 2));
+			writeExperimentFile("verdict.json", JSON.stringify(verdictData, null, 2));
 		}
 	}
 
@@ -505,7 +467,7 @@ export function recordWeeklyCheckResults(items: CheckItemRecord[]): void {
 	const existing = readJsonl<CheckItemRecord>(path.join(dir, "checks.jsonl"));
 	const merged = [...existing, ...items];
 	const content = merged.map((i) => JSON.stringify(i)).join("\n") + "\n";
-	writeSyncedFile("checks.jsonl", content);
+	writeExperimentFile("checks.jsonl", content);
 
 	syncDailyExperimentData();
 }

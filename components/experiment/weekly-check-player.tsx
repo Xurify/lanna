@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Volume2Icon } from "lucide-react";
+import { Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
+import { CheckTrack, CLEAR_SCORE, markOf, PARTIAL_SCORE, TrackLegend } from "@/components/experiment/check-track";
 import { STUDY_ROUTE, studyLanguage, type StudyLanguage } from "@/components/experiment/study-language";
 import { EXPERIMENT_CONSTANTS, judgeTyped, wordMatch, type CheckItemRecord, type ProbeItem } from "@/src/core";
 
@@ -26,8 +27,6 @@ interface Answer {
 	extra: string[];
 }
 
-const CLEAR_SCORE = 0.8;
-const PARTIAL_SCORE = 0.5;
 const FIELD = "w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background";
 
 function clipUrl(text: string, language: StudyLanguage): string {
@@ -53,6 +52,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 	const [save, setSave] = useState<SaveState>("saving");
 	const clip = useRef<HTMLAudioElement | null>(null);
 	const field = useRef<HTMLInputElement | null>(null);
+	const playRing = useRef<SVGCircleElement | null>(null);
 	const loadSeq = useRef(0);
 
 	const language = studyLanguage(languageId);
@@ -108,14 +108,25 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 		field.current?.focus();
 		const audio = new Audio(clipUrl(item.targetSentence, language));
 		clip.current = audio;
-		audio.onended = () => setPlaying(false);
+		const drainRing = () => {
+			if (clip.current !== audio || audio.ended) return;
+			if (playRing.current && audio.duration > 0) playRing.current.style.strokeDashoffset = String(Math.min(1, audio.currentTime / audio.duration));
+			requestAnimationFrame(drainRing);
+		};
+		audio.onended = () => {
+			if (playRing.current) playRing.current.style.strokeDashoffset = "1";
+			setPlaying(false);
+		};
 		const notHeard = () => {
+			if (playRing.current) playRing.current.style.strokeDashoffset = "";
 			setPlaying(false);
 			setPlayed(false);
 			setPlayFailed(true);
 		};
 		audio.onerror = notHeard;
-		audio.play().catch(notHeard);
+		audio.play().then(() => {
+			if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) requestAnimationFrame(drainRing);
+		}, notHeard);
 	};
 
 	const answerWith = (response: string) => {
@@ -215,7 +226,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 		const productionCount = items?.production.length ?? EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
 		return (
 			<Frame strip={false}>
-				<TaskTop progress={0} label="Nothing answered yet" count={`0/${total}`} href={STUDY_ROUTE} />
+				<CheckTop count={`0/${total}`} />
 				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 					<div className={cn(COLUMN, "q-rise")} data-testid="check-intro">
 						<p className="q-date flex items-center gap-1.5">
@@ -228,7 +239,16 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 						<p className="q-line dim mt-3 max-w-2xl">
 							{probeCount} sentences to hear and type, then {productionCount} to write yourself. It measures where you are this week, so it gives no XP.
 						</p>
-						<div className="mt-6 grid max-w-md grid-cols-2 gap-3">
+						<CheckTrack
+							large
+							className="mt-7 max-w-xl"
+							marks={[]}
+							parts={[
+								{ count: probeCount, caption: `${probeCount} to hear, one play each` },
+								{ count: productionCount, caption: `${productionCount} to write` },
+							]}
+						/>
+						<div className="mt-7 grid max-w-md grid-cols-2 gap-3">
 							<div>
 								<p className="mb-1.5 font-ui text-xs font-semibold text-muted-foreground">Language</p>
 								<ChoiceMenu ariaLabel="Language" value={languageId} options={languages.map((id) => ({ value: id, label: studyLanguage(id).name }))} onChange={setLanguageId} />
@@ -239,7 +259,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 							</div>
 						</div>
 						<ul className="mt-6 flex max-w-2xl flex-col gap-1.5 font-prose text-sm leading-relaxed text-muted-foreground">
-							<li>Each sentence plays once. There is no replay and no slow play.</li>
+							<li>There is no replay and no slow play.</li>
 							<li>Your answers are saved after the last sentence, so finish in one sitting.</li>
 						</ul>
 					</div>
@@ -271,7 +291,9 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 
 	return (
 		<Frame strip={false}>
-			<TaskTop progress={answered / total} label={`${answered} of ${total} answered`} count={`${records.length + 1}/${total}`} href={STUDY_ROUTE} />
+			<CheckTop count={`${records.length + 1}/${total}`}>
+				<CheckTrack className="flex-1" parts={[{ count: items.probes.length }, { count: items.production.length }]} marks={[...records, ...(answer ? [answer.record] : [])].map(markOf)} current={answer ? -1 : records.length} />
+			</CheckTop>
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
@@ -279,21 +301,30 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">{listening ? (!answer ? "Type what you hear" : good ? "Understood" : "It said…") : !answer ? `Write this in ${language.name}` : score === 1 ? "That is it" : "It is…"}</h2>
 
 						{listening ? (
-							<div className="flex flex-wrap items-center gap-3">
+							<div className="flex items-center gap-4">
 								<button
 									type="button"
 									onClick={playOnce}
 									disabled={played}
 									autoFocus
 									aria-label="Play the sentence once"
-									className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2 disabled:cursor-not-allowed disabled:bg-well-2 disabled:text-ink-4 disabled:shadow-none"
+									className="lh-press group relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--q-card),0_0_0_4px_var(--q-teal)] disabled:cursor-not-allowed"
 									data-testid="check-play"
 								>
-									<Volume2Icon className={cn("size-6", playing && "animate-pulse motion-reduce:animate-none")} strokeWidth={1.6} />
+									<svg viewBox="0 0 72 72" className="absolute inset-0 size-full -rotate-90" aria-hidden="true">
+										<circle cx="36" cy="36" r="34" fill="none" stroke="var(--q-well-2)" strokeWidth="3" />
+										<circle ref={playRing} cx="36" cy="36" r="34" fill="none" stroke="var(--q-teal)" strokeWidth="3" pathLength={1} strokeDasharray="1" strokeDashoffset={played && !playing ? 1 : 0} />
+									</svg>
+									<span className={cn("flex size-14 items-center justify-center rounded-full transition-colors duration-150", played && !playing ? "bg-well-2 text-ink-4" : "bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] group-hover:group-enabled:bg-teal-2")}>
+										<Volume2Icon className="size-6" strokeWidth={1.6} />
+									</span>
 								</button>
-								<p className="font-ui text-[13px] text-ink-3" aria-live="polite">
-									{answer ? "Played once." : playing ? "Playing…" : played ? "Played. It does not play again." : playFailed ? "The sentence could not be played, so it does not count as heard. Press play again." : "It plays once. Press play when you are ready."}
-								</p>
+								<div className="min-w-0" aria-live="polite">
+									<p className="font-ui text-sm font-semibold text-foreground">{answer ? "Played" : playing ? "Playing…" : played ? "Played" : "One play"}</p>
+									<p className="mt-0.5 font-ui text-[13px] leading-snug text-ink-3">
+										{answer ? "This sentence had its one play." : playing ? "Listen. It does not play again." : played ? "It does not play again. Type what you heard." : playFailed ? "The sentence could not be played, so it does not count as heard. Press play again." : "Press play when you are ready."}
+									</p>
+								</div>
 							</div>
 						) : (
 							<p className="font-prose text-[26px] font-[550] leading-[1.35] tracking-[-0.02em] text-foreground" data-testid="check-prompt">
@@ -433,8 +464,17 @@ function EndScreen({ week, language, other, records, save, onRetrySave, onOther 
 			<h1 className="q-hello">
 				{understood} of {probes.length} understood on the first play
 			</h1>
-			<Stats className="mt-7 max-w-none">
-				<Stat label={`Words right in the ${production.length} sentences you wrote`} value={`${wordsRight}%`} />
+			<CheckTrack
+				large
+				className="mt-6"
+				marks={records.map(markOf)}
+				parts={[
+					{ count: probes.length, caption: `${understood} of ${probes.length} heard right` },
+					{ count: production.length, caption: `${wordsRight}% of the words written` },
+				]}
+			/>
+			<TrackLegend className="!mt-3" />
+			<Stats className="mt-6 max-w-none">
 				<Stat label="Saved to the study" value={save === "saving" ? null : save === "saved" ? "Yes" : "Not yet"} ink={save === "failed" ? "text-ink-3" : undefined} />
 			</Stats>
 			{missed.length > 0 && (
@@ -466,5 +506,21 @@ function EndScreen({ week, language, other, records, save, onRetrySave, onOther 
 				</div>
 			)}
 		</TaskEnd>
+	);
+}
+
+function CheckTop({ count, children }: { count: string; children?: React.ReactNode }) {
+	return (
+		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
+				<Link href={STUDY_ROUTE} aria-label="Leave" className="-ml-1.5 rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-well hover:text-ink-2 pointer-coarse:-ml-3 pointer-coarse:p-3">
+					<XIcon className="size-5" strokeWidth={1.6} />
+				</Link>
+				{children ?? <span className="flex-1" />}
+				<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
+					{count}
+				</span>
+			</div>
+		</div>
 	);
 }
