@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const SESSION_ROUTES = ["/lesson", "/listen", "/speak", "/watch", "/speed"];
+const SESSION_ROUTES = ["/lesson", "/listen", "/speak", "/watch", "/speed", "/exam"];
 
 function isSessionRoute(pathname: string): boolean {
 	return SESSION_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));

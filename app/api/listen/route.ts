@@ -7,7 +7,7 @@
  * listening, the stretch words sent to the review deck, a fresh summary.
  */
 
-import { listenFor, listenWithBetterOptions, recordListen, type ListenRep } from "@/src/server";
+import { listenFor, listenWithBetterOptions, recordListen, recordOnce, sessionClientId, type ListenRep } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-	const body = (await req.json().catch(() => null)) as { reps?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { reps?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; clientId?: unknown } | null;
 	if (!body || !Array.isArray(body.reps)) return Response.json({ message: "reps must be an array" }, { status: 400 });
 	const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 600) : "");
 	const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.round(Math.min(v, 3_600_000)) : undefined);
@@ -41,5 +41,5 @@ export async function POST(req: Request) {
 		...(Array.isArray(r.stretchText) ? { stretchText: r.stretchText.filter((w): w is string => typeof w === "string").map((w) => w.slice(0, 60)).slice(0, 4) } : {}),
 	}));
 	const tz = Number(body.tz);
-	return Response.json(recordListen({ reps, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: Number.isFinite(tz) && Math.abs(tz) <= 840 ? tz : undefined }));
+	return Response.json(recordOnce("listen", sessionClientId(body.clientId), () => recordListen({ reps, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: Number.isFinite(tz) && Math.abs(tz) <= 840 ? tz : undefined })));
 }

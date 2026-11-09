@@ -1,6 +1,6 @@
 # Running LangHarness on an always-on machine
 
-This guide puts the server on a machine that stays on, so the phone and the iPad work while the PC is off. The plan and the reasons are in [plans/always-on-server.md](plans/always-on-server.md) and [research/always-on-server.md](research/always-on-server.md). The decision is E77 in [DECISIONS.md](DECISIONS.md).
+This guide puts the server on a machine that stays on, so the phone and the iPad work while the PC is off. The plan and the reasons are in [plans/always-on-server.md](plans/always-on-server.md) and [research/always-on-server.md](research/always-on-server.md). The decision is E87 in [DECISIONS.md](DECISIONS.md).
 
 The server runs as a container. The image holds the app, Chromium and yt-dlp. Your data, keys and cheatsheets stay in three folders on the machine and never go into the image.
 

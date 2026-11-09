@@ -13,6 +13,7 @@ import { chatStore } from "../store/chats.ts";
 import { countWhyReuse, findWhy, forgetWhy, rememberWhy, whyKey } from "../store/corpus.ts";
 import { readSettings } from "../store/settings.ts";
 import { titleFromPrompt } from "../core/title.ts";
+import { CHAT_THINKING_LEVEL } from "../core/settings.ts";
 
 interface WhyRequest {
 	title: string;
@@ -39,11 +40,11 @@ export function openWhy(req: WhyRequest, now = new Date()): WhyOutcome {
 		}
 		forgetWhy(key); // the chat was deleted — ask again
 	}
-	const chat = chatStore.createChat(titleFromPrompt(req.title || `Why ${req.answer}?`), "practice");
+	const chat = chatStore.createChat(titleFromPrompt(req.title || `Why ${req.answer}?`), "chat");
 	const models = readSettings()?.models;
 	const slot = (models?.cheap?.model ? models.cheap : models?.strong) ?? null;
 	if (slot?.model) {
-		chatStore.saveSettings(chat.id, { model: { provider: slot.model.provider, id: slot.model.id }, thinkingLevel: slot.thinkingLevel });
+		chatStore.saveSettings(chat.id, { model: { provider: slot.model.provider, id: slot.model.id }, thinkingLevel: CHAT_THINKING_LEVEL });
 	}
 	rememberWhy({ key, lang, sentence: req.sentence, answer: req.answer, lemma: req.lemma, given: req.given, chatId: chat.id, createdAt: now.toISOString() });
 	return { id: chat.id, reused: false };

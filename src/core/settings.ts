@@ -88,6 +88,8 @@ export const DEFAULT_THINKING_ORDER = [
 	"max",
 ] as const satisfies readonly ThinkingLevel[];
 
+export const CHAT_THINKING_LEVEL: ThinkingLevel = "low";
+
 /** The machine-readable NOT-CONFIGURED refusal envelope (owner, 2026-09-22):
  *  every per-need gate — the turn gate in chat-handler, a job spawn, a
  *  notes import — refuses with this exact shape. HTTP callers get 503 +
@@ -412,7 +414,7 @@ function sanitizeAgent(raw: Record<string, unknown>): AgentSettings {
 	// record, it just loses the pin and auto-detection resumes).
 	if (raw.search !== null && typeof raw.search === "object" && !Array.isArray(raw.search)) {
 		const engine = (raw.search as Record<string, unknown>).engine;
-		if (engine === "tavily" || engine === "brave") out.search = { engine };
+		if (engine === "context" || engine === "tavily" || engine === "brave") out.search = { engine };
 	}
 	return out;
 }

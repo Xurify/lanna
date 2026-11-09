@@ -14,17 +14,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { readOrigin } from "@/components/origin";
 import { RotateCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, Dock, OptionTile, PracticeCard, Stat, Stats, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { QIcon } from "@/components/quiet/icon";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
-import { useActiveLanguage } from "@/components/speech";
+import { speak, useActiveLanguage } from "@/components/speech";
 
 type Phase = { state: "playing" } | { state: "saving"; score: ExamScore } | { state: "result"; score: ExamScore; recorded: boolean };
 
 export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; title: string; initial: ExamDraw | null }) {
+	const router = useRouter();
 	const lang = useActiveLanguage();
 	const [draw, setDraw] = useState<ExamDraw | null>(initial);
 	const [index, setIndex] = useState(0);
@@ -94,7 +98,18 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	// Keys 1–4 pick; Enter or Space moves on once the band is up.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (phase.state !== "playing") return;
+			if (phase.state !== "playing") {
+				if (e.key === "Escape") {
+					e.preventDefault();
+					router.push(readOrigin());
+					return;
+				}
+				if (e.key !== "Enter" || endEnterBlocked(e)) return;
+				e.preventDefault();
+				if (phase.score.passed) router.push("/curriculum");
+				else retry();
+				return;
+			}
 			const n = Number(e.key);
 			if (n >= 1 && n <= (item?.options?.length ?? 0)) pick(n - 1);
 			if ((e.key === "Enter" || e.key === " ") && picked !== null) {
@@ -104,7 +119,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [pick, next, item, picked, phase]);
+	}, [pick, next, item, picked, phase, router, retry]);
 
 	if (!draw || empty) {
 		return (
@@ -139,35 +154,70 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		const { score } = phase;
 		return (
 			<TaskFrame>
-				<div className={cn(COLUMN, "my-auto overflow-y-auto py-10")} data-testid="exam-result">
-					<p className="q-date">Chapter exam · {title}</p>
-						<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
-						<Stats className="mt-6 max-w-sm">
+				<TaskEnd
+					testId="exam-result"
+					hint={<EnterHint>{score.passed ? "for Curriculum" : "to try again"}</EnterHint>}
+					actions={
+						<>
+							{score.passed ? (
+								<>
+									<button type="button" onClick={retry} disabled={drawing} className={SECONDARY} data-testid="exam-retry">
+										<RotateCcwIcon className="size-4" strokeWidth={1.6} />
+										Try again
+									</button>
+									<Link href="/curriculum" className={PRIMARY}>
+										Back to Curriculum
+									</Link>
+								</>
+							) : (
+								<>
+									<Link href="/curriculum" className={SECONDARY}>
+										Back to Curriculum
+									</Link>
+									<button type="button" onClick={retry} disabled={drawing} className={PRIMARY} data-testid="exam-retry">
+										<RotateCcwIcon className="size-4" strokeWidth={1.6} />
+										Try again
+									</button>
+								</>
+							)}
+						</>
+					}
+				>
+					<p className="q-date flex items-center gap-1.5">
+						<QIcon name="rule" className="text-teal" />
+						Chapter exam · {title}
+					</p>
+					<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
+					<Stats className="mt-7 max-w-none">
 							<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-teal-2" : "text-foreground"} />
-							<Stat label="Pass mark" value={`${Math.round(EXAM_PASS_MARK * 100)}%`} ink="text-ink-2" />
+							<Stat label="Pass mark" value={`${Math.ceil(EXAM_PASS_MARK * score.total)} of ${score.total}`} ink="text-ink-2" />
 						</Stats>
 						<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
 						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved. It shows in Curriculum." : "This attempt was not saved, so Curriculum will not show it."}
 					</p>
 					{score.misses.length > 0 && (
 						<div className="mt-8" data-testid="exam-misses" data-word-lookup-enabled="true">
-								<p className="q-sh">Missed</p>
-								<ul className="flex flex-col gap-2">
-								{score.misses.map((id) => {
-									const missed = items.find((i) => i.id === id);
-									if (!missed) return null;
-									return (
-										<li key={id} className="q-card px-4 py-3">
-											<p className="font-prose text-base text-foreground" lang={lang?.code}>
-												{missed.sentence}
-											</p>
-											<p className="mt-0.5 font-prose text-sm text-ink-3">
-													The answer is <span className="font-semibold text-teal-2" lang={lang?.code}>{missed.answer}</span>. {missed.translation}
-											</p>
-										</li>
-									);
-								})}
-							</ul>
+								<h2 className="q-sh">Missed</h2>
+								<SentenceRows>
+									{score.misses.map((id) => {
+										const missed = items.find((i) => i.id === id);
+										if (!missed) return null;
+										return (
+											<SentenceRow
+												key={id}
+												sentence={missed.sentence}
+												lang={lang?.code}
+												translation={missed.translation}
+												onPlay={() => void speak(missed.sentence).catch(() => {})}
+												note={
+													<span>
+														The answer is <span className="font-semibold text-teal-2" lang={lang?.code}>{missed.answer}</span>
+													</span>
+												}
+											/>
+										);
+									})}
+								</SentenceRows>
 						</div>
 					)}
 					{error && (
@@ -175,16 +225,7 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 							{error}
 						</p>
 					)}
-					<div className="q-acts mt-6">
-							<button type="button" onClick={retry} disabled={drawing} className={PRIMARY} data-testid="exam-retry">
-								<RotateCcwIcon className="size-4" strokeWidth={1.6} />
-							Try again
-						</button>
-						<Link href="/curriculum" className={SECONDARY}>
-							Back to Curriculum
-						</Link>
-					</div>
-				</div>
+				</TaskEnd>
 			</TaskFrame>
 		);
 	}
