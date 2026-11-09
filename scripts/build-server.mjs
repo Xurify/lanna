@@ -86,6 +86,7 @@ for (const asset of [
 	// from disk too (prompt composition, lexicon lookups, first-run seeding).
 	path.join("src", "agent", "prompts", "language", "10-slovak.md"),
 	path.join("src", "agent", "prompts", "language", "10-russian.md"),
+	path.join("src", "agent", "prompts", "drawing", "10-drawing.md"),
 	path.join("curriculum", "slovak", "lexicon.json"),
 ]) {
 	if (!exists(path.join(STANDALONE, asset))) {

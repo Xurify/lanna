@@ -14,15 +14,20 @@ export interface ChatAnswerSeam {
 	record(answer: Omit<ChatAnswer, "at" | "chatId">): void;
 }
 
+export interface ChatDrawingSeam {
+	draw(brief: string, signal?: AbortSignal): Promise<string | null>;
+}
+
 export interface ChatToolContext {
 	review?: ReviewSeam;
 	answers?: ChatAnswerSeam;
 	jobs?: JobToolContext;
+	drawing?: ChatDrawingSeam;
 }
 
 const poseInput = Type.Object({
-	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, written before the learner sees the question. Check any form you are not sure of first." }),
-	accept: Type.Optional(Type.Array(Type.String(), { description: "Other answers that are also fully correct." })),
+	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, committed before the learner answers. Check any form you are not sure of before you write the question." }),
+	accept: Type.Optional(Type.String({ description: "Other answers that are also fully correct, in quotes like every value, separated by \" | \"." })),
 	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words (\"feminine this\", \"locative after v\")." }),
 });
 
@@ -40,7 +45,7 @@ const poseTool: AgentTool<typeof poseInput> = {
 	name: "pose",
 	label: "pose",
 	description:
-		"Commit the answer to the question you are about to ask. Call it before you write any text in the reply; the learner never sees this call.",
+		"Commit the answer to the question your reply ends on. Call it after the text, as the last call of the turn (after `grade` when there is one); the turn ends with it. The learner never sees this call.",
 	parameters: poseInput,
 	executionMode: "sequential",
 	execute: serverExecute("pose", poseInput, async () => "Committed."),
@@ -51,13 +56,49 @@ function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<typeof gradeInpu
 		name: "grade",
 		label: "grade",
 		description:
-			"Record how the learner answered the question you posed. Call it before you write any text in the reply; one call per answer, a second try included. The learner never sees this call.",
+			"Record how the learner answered the question you posed. Call it after the text of your verdict, before `pose`; one call per answer, a second try included. The learner never sees this call.",
 		parameters: gradeInput,
 		executionMode: "sequential",
 		execute: serverExecute("grade", gradeInput, async (input) => {
 			seam?.record({ verdict: input.verdict, given: input.given, expected: input.expected, focus: input.focus, hinted: input.hinted === true });
 			return "Recorded.";
 		}),
+	};
+}
+
+const drawInput = Type.Object({
+	brief: Type.String({
+		minLength: 1,
+		description: "What the picture shows in a few words, its layout, and the forms it labels with their meanings, all from your reply. Never the answer to your question.",
+	}),
+});
+
+export type ChatDrawing = { svg: string } | { failed: true };
+
+function drawTool(seam: ChatDrawingSeam): AgentTool<typeof drawInput, ChatDrawing> {
+	return {
+		name: "draw",
+		label: "draw",
+		description: "Ask for one drawing under the reply you just wrote. Call it after the text, with the other record calls; a drawer makes it while the learner reads.",
+		parameters: drawInput,
+		executionMode: "parallel",
+		execute: async (_toolCallId, input, signal) => {
+			if (signal?.aborted) {
+				const err = new Error("aborted");
+				err.name = "AbortError";
+				throw err;
+			}
+			let svg: string | null = null;
+			try {
+				svg = await seam.draw(input.brief, signal);
+			} catch (err: any) {
+				if (signal?.aborted || err?.name === "AbortError" || err?.message === "aborted") throw err;
+				svg = null;
+			}
+			return svg
+				? { content: [{ type: "text", text: `Drawn under the reply: ${input.brief}` }], details: { svg } }
+				: { content: [{ type: "text", text: "The drawing could not be made; the reply stands without it." }], details: { failed: true } };
+		},
 	};
 }
 
@@ -73,5 +114,6 @@ export function chatTools(ctx: ChatToolContext): Record<string, AgentTool<any>> 
 		...(jobs?.research ? { research: jobs.research } : {}),
 		...(jobs?.pdf ? { pdf: jobs.pdf } : {}),
 		...languageTools(ctx.review),
+		...(ctx.drawing ? { draw: drawTool(ctx.drawing) } : {}),
 	});
 }

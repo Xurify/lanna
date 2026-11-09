@@ -629,6 +629,7 @@ export function AiSection({
 						key={id}
 						label={TOOL_COPY[id].label}
 						hint={TOOL_COPY[id].hint}
+						stack={false}
 						testid={`tool-row-${id}`}
 					>
 						<Toggle

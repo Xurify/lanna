@@ -77,6 +77,31 @@ The order of items is variation theory (Marton 2015): a learner notices a featur
 
 What the runs found and the prompt now forbids is listed under E76. The Slovak was read by the author of this change against the slovak-language skill, not by a native speaker.
 
+## The /write page, looked at live (2026-11-08, E77)
+
+The owner opened riddled.ai's note editor (`/write`) in a browser signed in to their account, and asked for it to be studied, network included. Three messages were sent from its Chat panel (3 of the account's 12 left): "Why is it v škole but do školy?", a wrong answer ("Toto dieťa je v školy."), and "Can you draw where vs where to?". The client code was read in the page; nothing was sent outside the page's own calls. A separate pass read the public pages and bundles (no account).
+
+### Observed
+
+| What | Evidence |
+|---|---|
+| A note is the center | `/write` is a ProseMirror note. The tutor's remarks are "thoughts" anchored to a quoted passage (`quote`), shown under it or in a margin. A side Chat panel answers about the whole note ("I've read the whole note and its threads. Ask me anything about it.") with three starters: what am I still misunderstanding, what have we figured out, what should I work on next. |
+| Storage | Supabase tables `notes` (`doc`, `revision`, `brief_goal`, `brief_voice`, `read_along`, `riddler_id`), `thoughts` (`kind`, `status`, `quote`, `sketch`), `thought_messages`, `note_messages`, `riddler_versions` (`approach`, `default_voice`, `eagerness`). |
+| One endpoint | `POST /api/riddled` with `{ task, message, messageId, thoughtId, noteId, noteText, voice: "plain", images, imageKeys, timeZone, near }`; `task` is `chat`, `read`, `answer`, `ask`, `visualize`, `reply` or `draw`. The whole note text goes with every call. |
+| No streaming | The client awaits `res.json()`: the reply arrives whole. The page then reveals it word by word in at most about 1.8 s, with a pulsing one-line "writing back" mark before it. |
+| Two-phase drawings | A reply that wants a picture comes back with `drawing: true` and text that describes the picture in words. The client then calls `task: "draw"` for the same message, which returns the text plus an `svg` code fence. Measured: text at 3.3 s, the drawing 7.4 s later. |
+| Times | Text answer 3.7 s; a graded answer 2.6 s (whole JSON, about 60 to 120 words). |
+| Reading along | A tracker marks which passages the tutor has read; a new read waits at least 10 s after the last and 8 s after the last remark, covers at most 3,000 characters, and the server may answer `said: false` (shown as a faint "nothing to add" mark). At most 5 open remarks; older ones are resolved. |
+| Two model tiers | Limit errors name `limit_mini` and `limit_frontier`, and the page polls `/api/ai-status` every 60 s to show an outage before a send fails. |
+| Personas | Riddler presets carry an `approach` text and an `eagerness` (Rarely 0.5, When it matters 1, Often 1.5). |
+| Teaching | The first miss got the right form at once ("For “at school,” use v škole"), as in the shared thread. Examples sit on their own lines (`Som v škole. = I'm at school.`), pairs as `Where? → v škole`, and the task gives the first words ("Start with Toto dieťa…"). |
+
+### What LangHarness took, in its own way (E77)
+
+- **The drawing comes after the text.** The tutor writes its reply and calls `draw` with a brief; a separate call (the same model, its own prompt) draws while the learner reads, and the learner can already answer. LangHarness streams the text, so it starts sooner than a whole-JSON reply.
+- **The tutor knows the app.** Their chat reads the note; ours reads a map of the app's pages, units, scenes, cheatsheets and stories with the learner's state, and links them.
+- **Not taken:** the answer on the first miss (P3 stays), a reveal timer over a streamed reply, the note editor and margin threads, personas.
+
 ## Open
 
 - The chat has not been measured against the old Learn chat with real learners, and the owner has not used it yet.

@@ -34,7 +34,7 @@ const { writeSettings } = await import("../src/store/settings.ts");
 const { chatStore } = await import("../src/store/chats.ts");
 const { CHAT_THINKING_LEVEL, chatScore, quickReplies, endsWithQuestion, REPLIES_TO_A_QUESTION, REPLIES_AFTER_AN_ANSWER } = await import("../src/core/index.ts");
 
-const CHAT_TOOLS = new Set(["pose", "grade", "read", "ls", "find", "grep", "research", "pdf", "lookup_word", "check_slovak", "slovak_reference", "add_to_review", "review_status"]);
+const CHAT_TOOLS = new Set(["pose", "grade", "draw", "read", "ls", "find", "grep", "research", "pdf", "lookup_word", "check_slovak", "slovak_reference", "add_to_review", "review_status"]);
 
 function claudeEngine(): PiEngine {
 	const faux = createFauxCore({ provider: "anthropic", models: [{ id: "claude-haiku-5-5" }] });
@@ -58,8 +58,14 @@ describe("the chat agent's prompt", () => {
 		assert.ok(!prompt.includes("plan_init"));
 	});
 
-	it("names the six drawing colors the page maps", () => {
-		for (const token of ["--ink", "--graphite", "--faint", "--rule", "--mark", "--wash"]) assert.ok(prompt.includes(`var(${token})`), token);
+	it("asks for drawings through the draw call and leaves the drawing format to the drawer", () => {
+		assert.ok(prompt.includes("call `draw` after the text"));
+		assert.ok(!prompt.includes("var(--ink)"));
+	});
+
+	it("gives the drawer the six drawing colors the page maps", () => {
+		const drawer = fs.readFileSync(path.join(process.cwd(), "src", "agent", "prompts", "drawing", "10-drawing.md"), "utf-8");
+		for (const token of ["--ink", "--graphite", "--faint", "--rule", "--mark", "--wash"]) assert.ok(drawer.includes(`var(${token})`), token);
 	});
 });
 

@@ -246,12 +246,12 @@ export function LanguagePicker({
 					{pickable.map((id) => {
 						const level = normalizeLangLevel(levels[id]); // none until pressed; a profile from before may still say "fluent"
 						return (
-							<div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors" data-testid={`level-${id}`}>
+							<div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors max-md:flex-wrap max-md:gap-y-2" data-testid={`level-${id}`}>
 								<span className="flex items-center gap-2.5 w-36 shrink-0 min-w-0">
 									<CountryFlag lang={id} className="w-6 h-4 rounded-[3px]" />
 									<span className="truncate font-ui text-sm font-semibold text-foreground">{languageName(id)}</span>
 								</span>
-								<span className="flex min-w-0 flex-wrap gap-1" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
+								<span className="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:basis-full" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
 									{LANG_LEVELS.map((lv) => (
 										<button
 											key={lv.id}
@@ -260,7 +260,7 @@ export function LanguagePicker({
 											title={lv.line}
 											onClick={() => setLevel(id, lv.id)}
 											className={cn(
-												"whitespace-nowrap rounded-lg border py-1 font-ui text-xs tabular-nums transition-colors",
+												"whitespace-nowrap rounded-lg border py-1 font-ui text-xs tabular-nums transition-colors max-md:min-h-10 max-md:min-w-10 max-md:text-sm",
 												lv.id === "native" ? "px-2.5" : "px-2",
 												lv.id === level ? ON : OFF,
 											)}

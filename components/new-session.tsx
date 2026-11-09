@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 import { Composer } from "@/components/composer";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
@@ -63,6 +64,21 @@ export async function startDraftSession(
 	// the SERVER stamps the newborn from the strong slot.
 	return `/chat/${id}?prompt=${encodeURIComponent(t)}`;
 }
+
+export async function createChatSession(text: string, fetchLike: typeof fetch): Promise<{ id: string; title: string } | null> {
+	const t = text.trim();
+	if (!t) return null;
+	const res = await fetchLike("/api/chats", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ title: t, kind: "chat" }),
+	});
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	return (await res.json()) as { id: string; title: string };
+}
+
+const loadChat = () => import("@/components/chat").then((m) => m.Chat);
+const Chat = dynamic(loadChat, { ssr: false });
 
 /** The pure shell (no router) — the render-test seam: the draft view's
  *  visible surface, assembled from the same pieces a fresh chat shows. */
@@ -228,7 +244,24 @@ export function NewSession({
 	recent?: ReadonlyArray<{ id: string; title: string; updatedAt: string }>;
 }) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const [text, setText] = useState("");
+	const [started, setStarted] = useState<{ id: string; title: string; prompt: string } | null>(null);
+	const [shownPath, setShownPath] = useState(pathname);
+	if (pathname !== shownPath) {
+		setShownPath(pathname);
+		if (pathname === "/chat/new") setStarted(null);
+	}
+	// Next's replaceState stores this page's tree under the chat's address, so Back or Forward to it
+	// brings the draft back under /chat/<id>. A soft refresh there left the next Forward on the chat,
+	// so the page loads in full, which also gives the history entries Next's own state again.
+	const strandedOnChat = started === null && pathname !== "/chat/new";
+	useEffect(() => {
+		if (strandedOnChat) window.location.reload();
+	}, [strandedOnChat]);
+	useEffect(() => {
+		if (mode === "chat") void loadChat();
+	}, [mode]);
 	/* The draft MIRROR ("nothing gets lost" round, 2026-10-01): the shell's
 	 * finish-first send calls THIS send after the dictation flush — which
 	 * landed via setState and may not have re-rendered yet. The send reads
@@ -255,9 +288,10 @@ export function NewSession({
 	const strongKeyless = useStrongKeyless();
 	const [setupOpen, setSetupOpen] = useState(false);
 
+	const sendingRef = useRef(false);
 	const send = useCallback(() => {
 		const draft = textRef.current.trim();
-		if (!draft || busy) return;
+		if (!draft || busy || sendingRef.current) return;
 		if (!configured) {
 			setSetupOpen(true);
 			return;
@@ -272,6 +306,22 @@ export function NewSession({
 			return;
 		}
 		setBusy(true);
+		if (mode === "chat") {
+			sendingRef.current = true;
+			void createChatSession(draft, fetch)
+				.finally(() => {
+					sendingRef.current = false;
+				})
+				.then((chat) => {
+					setBusy(false);
+					if (!chat || window.location.pathname !== "/chat/new") return;
+					applyText("");
+					setStarted({ ...chat, prompt: draft });
+					window.history.replaceState(null, "", `/chat/${chat.id}`);
+				})
+				.catch(() => setBusy(false));
+			return;
+		}
 		void startDraftSession(draft, fetch, mode === "teach" ? undefined : mode)
 			.then((target) => {
 				if (target) router.push(target);
@@ -279,6 +329,11 @@ export function NewSession({
 			})
 			.catch(() => setBusy(false));
 	}, [busy, router, configured, zeroKeys, strongKeyless, mode]);
+
+	if (strandedOnChat) return null;
+	if (started) {
+		return <Chat key={started.id} chatId={started.id} title={started.title} kind="chat" initialMessages={[]} initialPrompt={started.prompt} initialConfigured />;
+	}
 
 	return (
 		<>

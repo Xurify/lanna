@@ -24,10 +24,10 @@ export function SettingsDialogProvider({
 	children: React.ReactNode;
 }) {
 	const [show, setShow] = useState(false);
-	const [landOn, setLandOn] = useState<SectionId>("general");
+	const [landOn, setLandOn] = useState<SectionId | null>(null);
 	const [landOnRow, setLandOnRow] = useState<string | null>(null);
 	const open = useCallback((section?: string, row?: string) => {
-		setLandOn(section ? section as SectionId : "general");
+		setLandOn(section ? (section as SectionId) : null);
 		setLandOnRow(row ?? null);
 		setShow(true);
 	}, []);
