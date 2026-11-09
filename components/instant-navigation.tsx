@@ -12,8 +12,10 @@ const INTENTS = ["pointerover", "focusin", "touchstart", "pointerdown"] as const
 
 const log = createRenderAheadLog();
 
-export function renderAhead(router: Pick<ReturnType<typeof useRouter>, "prefetch">, path: string): void {
-	if (log.shouldRender(path, location.pathname)) router.prefetch(path, { kind: WHOLE_PAGE });
+let mountedRouter: ReturnType<typeof useRouter> | null = null;
+
+export function renderAhead(path: string): void {
+	if (mountedRouter && log.shouldRender(path, location.pathname)) mountedRouter.prefetch(path, { kind: WHOLE_PAGE });
 }
 
 function linkedPath(target: EventTarget | null): string | null {
@@ -28,13 +30,15 @@ export function InstantNavigation() {
 	const pathname = usePathname();
 
 	useEffect(() => {
+		mountedRouter = router;
 		const onIntent = (e: Event) => {
 			const path = linkedPath(e.target);
-			if (path) renderAhead(router, path);
+			if (path) renderAhead(path);
 		};
 		for (const intent of INTENTS) document.addEventListener(intent, onIntent, { passive: true });
 		return () => {
 			for (const intent of INTENTS) document.removeEventListener(intent, onIntent);
+			mountedRouter = null;
 		};
 	}, [router]);
 

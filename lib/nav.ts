@@ -16,8 +16,6 @@ interface NavItemDef {
 	hint: string;
 	/** Other routes that light this item (the pages reached from inside it). */
 	also?: readonly string[];
-	/** The page only reads the learner's files when it renders, so it can be rendered before the click. Left off where a render starts paid or network work: Read tops up the shelf, Listen asks a model for close options, Watch refreshes the picks, Study draws its schedule on the first view. */
-	rendersAhead?: true;
 }
 
 interface NavGroupDef {
@@ -32,10 +30,10 @@ export const NAV: readonly NavGroupDef[] = [
 		id: "main",
 		label: null,
 		items: [
-			{ id: "today", href: "/", rendersAhead: true, label: "Today", hint: "The plan for today" },
-			{ id: "ask", href: "/chat/new", rendersAhead: true, label: "Ask", hint: "Any question about the language, answered with a drawing", also: ["/chat"] },
-			{ id: "curriculum", href: "/curriculum", rendersAhead: true, label: "Curriculum", hint: "Your climb, level by level and chapter by chapter", also: ["/exam"] },
-			{ id: "review", href: "/review", rendersAhead: true, label: "Review", hint: "Your word deck" },
+			{ id: "today", href: "/", label: "Today", hint: "The plan for today" },
+			{ id: "ask", href: "/chat/new", label: "Ask", hint: "Any question about the language, answered with a drawing", also: ["/chat"] },
+			{ id: "curriculum", href: "/curriculum", label: "Curriculum", hint: "Your climb, level by level and chapter by chapter", also: ["/exam"] },
+			{ id: "review", href: "/review", label: "Review", hint: "Your word deck" },
 		],
 	},
 	{
@@ -45,26 +43,26 @@ export const NAV: readonly NavGroupDef[] = [
 			{ id: "read", href: "/read", label: "Read", hint: "Stories, every word tappable" },
 			{ id: "listen", href: "/listen", label: "Listen", hint: "Ten sentences you can follow" },
 			{ id: "watch", href: "/watch", label: "Watch", hint: "A video with both subtitles" },
-			{ id: "speak", href: "/speak", rendersAhead: true, label: "Speak", hint: "A scene said out loud" },
-			{ id: "fluency", href: "/speed", rendersAhead: true, label: "Speed", hint: "Known sentences, said faster" },
+			{ id: "speak", href: "/speak", label: "Speak", hint: "A scene said out loud" },
+			{ id: "fluency", href: "/speed", label: "Speed", hint: "Known sentences, said faster" },
 		],
 	},
 	{
 		id: "understand",
 		label: "Understand",
 		items: [
-			{ id: "words", href: "/words", rendersAhead: true, label: "Words", hint: "Everything you have met" },
-			{ id: "grammar", href: "/grammar", rendersAhead: true, label: "Grammar", hint: "Cases, genders, and your score on each" },
+			{ id: "words", href: "/words", label: "Words", hint: "Everything you have met" },
+			{ id: "grammar", href: "/grammar", label: "Grammar", hint: "Cases, genders, and your score on each" },
 		],
 	},
 	{
 		id: "track",
 		label: "Track",
 		items: [
-			{ id: "progress", href: "/progress", rendersAhead: true, label: "Progress", hint: "Hours, stamps, the plan's pace" },
-			{ id: "milestones", href: "/milestones", rendersAhead: true, label: "Milestones", hint: "When you can handle real situations" },
-			{ id: "mistakes", href: "/mistakes", rendersAhead: true, label: "Mistakes", hint: "What goes wrong and whether it is getting better" },
-			{ id: "log", href: "/log", rendersAhead: true, label: "Log", hint: "What you did, day by day" },
+			{ id: "progress", href: "/progress", label: "Progress", hint: "Hours, stamps, the plan's pace" },
+			{ id: "milestones", href: "/milestones", label: "Milestones", hint: "When you can handle real situations" },
+			{ id: "mistakes", href: "/mistakes", label: "Mistakes", hint: "What goes wrong and whether it is getting better" },
+			{ id: "log", href: "/log", label: "Log", hint: "What you did, day by day" },
 			{ id: "experiment", href: "/experiments/input-first", label: "Study", hint: "Russian input-first study vs Slovak control", also: ["/experiments", "/experiments/input-first/check", "/experiment", "/experiment/check"] },
 		],
 	},
@@ -76,5 +74,5 @@ export function navItemFor(pathname: string): NavItemDef | undefined {
 }
 
 export function rendersAhead(pathname: string): boolean {
-	return NAV_ITEMS.some((i) => i.rendersAhead && i.href === pathname);
+	return NAV_ITEMS.some((i) => i.href === pathname);
 }

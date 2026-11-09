@@ -17,6 +17,8 @@ import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
 import { KBD } from "@/components/ui/learn-buttons";
+import { renderAhead } from "@/components/instant-navigation";
+import { readOrigin } from "@/components/origin";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -119,6 +121,7 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 	const column = cn("mx-auto w-full max-w-2xl px-6", wide && "lg:max-w-5xl");
 	const body = useRef<HTMLDivElement>(null);
 	useEffect(() => {
+		renderAhead(readOrigin());
 		endOpenedAt = performance.now();
 		if (document.activeElement === null || document.activeElement === document.body) body.current?.focus({ preventScroll: true });
 	}, []);
@@ -130,7 +133,9 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 			<Dock>
 				<div className={cn(column, "flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4")}>
 					{hint}
-					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2" onPointerOver={() => renderAhead(readOrigin())} onFocus={() => renderAhead(readOrigin())}>
+						{actions}
+					</div>
 				</div>
 			</Dock>
 		</>

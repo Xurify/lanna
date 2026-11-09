@@ -20,8 +20,8 @@
  *   shell    the URL changed and loading.tsx shows; the page waits for the server
  *   blocked  nothing changed until the server answered
  *
- * A row in SHELL_ONLY is a page whose render starts paid or network work
- * (`rendersAhead` in lib/nav.ts is left off), so "shell" is the most it may show.
+ * Every sidebar page only reads files when it renders (tests/render-ahead.test.ts),
+ * so every row should show "page".
  */
 
 import { BROWSER_ARGS, findBrowser, loadPuppeteer, sleep, startServer, table } from "./perf-harness.mjs";
@@ -37,7 +37,6 @@ const CPU = Number(opt("--cpu", "1"));
 const ONLY = opt("--only", "");
 const HELD_FOR_MS = 1200;
 
-const SHELL_ONLY = new Set(["/read", "/listen", "/watch", "/experiments/input-first"]);
 const RANK = { blocked: 0, shell: 1, page: 2 };
 
 /** Wait until the DOM has not changed for `ms`, or for `atMost` on a page that never rests (a running timer). */
@@ -122,7 +121,7 @@ async function main() {
 		// `next dev` compiles a route the first time it is asked for; that wait is not what this measures.
 		if (DEV) for (const d of doors) await page.goto(srv.base + d.path, { waitUntil: "load" }).catch(() => {});
 		for (const door of doors.filter((d) => !ONLY || d.path === ONLY)) {
-			const wants = SHELL_ONLY.has(door.path) ? "shell" : "page";
+			const wants = "page";
 			try {
 				const r = await press(page, srv.base, door.path === "/" ? "/curriculum" : "/", door);
 				rows.push({ door, wants, ...r });
@@ -139,10 +138,8 @@ async function main() {
 	console.log(table(rows.map((r) => [r.door.label, r.door.path, r.shows, r.ms == null ? "-" : String(Math.round(r.ms)), r.wants, RANK[r.shows] >= RANK[r.wants] ? "ok" : "LESS"]), ["row", "path", "on screen", "ms", "should show", ""]));
 	for (const r of rows) if (r.error) console.log(`  ! ${r.door.label}: ${r.error}`);
 	const less = rows.filter((r) => RANK[r.shows] < RANK[r.wants]);
-	const more = rows.filter((r) => RANK[r.shows] > RANK[r.wants]);
-	if (more.length) console.log(`\nRendered ahead though its render is not free: ${more.map((r) => r.door.label).join(", ")}`);
-	if (less.length || more.length) {
-		console.log(`\n${less.length} row${less.length === 1 ? "" : "s"} show less than they should, ${more.length} more.`);
+	if (less.length) {
+		console.log(`\n${less.length} row${less.length === 1 ? "" : "s"} show less than they should.`);
 		if (CHECK) process.exit(1);
 	} else console.log("\nEvery row shows what it should.");
 }

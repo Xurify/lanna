@@ -132,8 +132,8 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 
 	const aimedAt = shown[sel]?.id;
 	useEffect(() => {
-		if (aimedAt?.startsWith("/")) renderAhead(router, aimedAt);
-	}, [aimedAt, router]);
+		if (aimedAt?.startsWith("/")) renderAhead(aimedAt);
+	}, [aimedAt]);
 
 	const run = (p: Place | undefined) => {
 		if (!p) return;
