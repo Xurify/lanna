@@ -71,7 +71,6 @@ Unverified by the owner: Data and the cache clear in the Electron window (the cl
 
 Known: at 390px wide the settings dialog gives its content about 125px in every section, so the left section list crowds the text. This predates this branch.
 
-<<<<<<< HEAD
 ## 31 October: the first try is the measure
 
 Branch `feat/grammar-error-tracking`. Not pushed.

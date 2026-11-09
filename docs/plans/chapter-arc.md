@@ -102,7 +102,7 @@ The exam is a required gate, but it can't block anyone until we trust it. So it 
 - Tests in `tests/sounds.test.ts`: each pair differs in exactly one sound. The score thresholds are unchanged.
 - Acceptance: works without an Azure key, using transcript matching as Speak does today.
 
-**Status (2026-11-08):** the data (`curriculum/slovak/sounds.json`), the screen (`/sound?id=`) and the pins (`tests/sounds.test.ts`) are in. Two vowel-length pairs: pas/pás in "moving", rad/rád in "people". Not yet: the sound step on the path (`chapterArc` still says "not yet"), saving the results, and the soft consonant pair (no verified twins in the lexicon). See `docs/research/shadowing.md` and E80.
+**Status (2026-11-08):** the data (`curriculum/slovak/sounds.json`), the screen (`/sound?id=`) and the pins (`tests/sounds.test.ts`) are in. Two vowel-length pairs: pas/pás in "moving", rad/rád in "people". Not yet: the sound step on the path (`chapterArc` still says "not yet"), saving the results, and the soft consonant pair (no verified twins in the lexicon). See `docs/research/shadowing.md` and E81.
 
 ### Phase 8: calendar and immersion labels
 

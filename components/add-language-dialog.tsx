@@ -24,6 +24,7 @@ interface CatalogRow {
 	adding: boolean;
 	/** A removed built-in language: adding puts it back at once. */
 	restoreOnly?: boolean;
+	writtenCourse?: boolean;
 }
 
 interface Estimate {
@@ -174,7 +175,12 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 					<p className="text-xs leading-relaxed text-muted-foreground">
 						The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons from the dictionary for free.
 					</p>
-					{writers.length > 0 && !choice?.restoreOnly && (
+					{choice?.writtenCourse ? (
+						<p className="pb-3 text-xs leading-relaxed text-foreground" data-testid="add-language-written">
+							{choice.english} comes with a course written by hand: its lessons, tutor sessions and story world ship with the app, so no model writes them and adding it is free.
+						</p>
+					) : null}
+					{writers.length > 0 && !choice?.restoreOnly && !choice?.writtenCourse && (
 						<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1 pb-3" data-testid="add-language-writers">
 							<p className="pb-1 text-xs font-semibold text-foreground">Written by</p>
 							{writers.map((w) => {
