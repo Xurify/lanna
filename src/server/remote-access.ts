@@ -65,14 +65,9 @@ const PROXY_HEADERS = [
 	"tailscale-app-capabilities",
 ];
 
-/** The header the reverse proxy adds to every request it forwards, so the app knows the request came through it. */
 export const PROXY_SECRET_HEADER = "x-lh-proxy-secret";
 export const PROXY_SECRET_MIN_LENGTH = 32;
 
-/**
- * The public address (LH_PUBLIC_HOST) and what the app knows about this request's proxy.
- * `secretOk` is true when the request carried LH_PROXY_SECRET in the proxy header.
- */
 export type PublicMode = { host: string; secretConfigured: boolean; secretOk: boolean };
 
 export type AccessInput = {
@@ -88,7 +83,6 @@ export type AccessInput = {
 	desktopApiOk: boolean;
 	/** A live, unexpired paired-device session was presented. */
 	paired: boolean;
-	/** Set when LH_PUBLIC_HOST is: the app is also served at a public address behind a reverse proxy. */
 	publicMode?: PublicMode | null;
 };
 
@@ -133,24 +127,17 @@ export function publicPath(pathname: string, method: string): boolean {
 	return staticPath(pathname);
 }
 
-/** Public at the public address: the sign-in page, the one request that signs in, and static assets. Pairing is not offered there. */
 export function publicWebPath(pathname: string, method: string): boolean {
 	if (pathname === "/login") return method === "GET" || method === "HEAD";
 	if (pathname === "/api/access/login") return method === "POST";
 	return staticPath(pathname);
 }
 
-/** A host name with at least one dot and no scheme, port or path: what LH_PUBLIC_HOST must be. */
 export function validPublicHost(host: string): boolean {
 	return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(host);
 }
 
-/**
- * Public mode, from the environment and the request: null when LH_PUBLIC_HOST is not set.
- * The proxy secret proves the request came through the reverse proxy. Next does not
- * hand the TCP peer to the proxy file, and every x-forwarded-* header is either filled
- * by Next or sent by the client, so none of them can prove it.
- */
+/** Next 16 does not hand the TCP peer to proxy.ts, and every x-forwarded-* header is either filled in by Next or sent by the client, so only a secret the reverse proxy adds can prove a request came through it. */
 export function publicModeFrom(headers: Headers, env: Record<string, string | undefined> = process.env): PublicMode | null {
 	const host = env.LH_PUBLIC_HOST?.trim().toLowerCase();
 	if (!host) return null;
@@ -160,7 +147,6 @@ export function publicModeFrom(headers: Headers, env: Record<string, string | un
 	return { host, secretConfigured, secretOk: secretConfigured && supplied !== null && sameHash(hashSecret(supplied), hashSecret(secret)) };
 }
 
-/** An origin that is exactly the public address over HTTPS. A missing Origin is not one. */
 export function originAllowed(origin: string | null, host: string): boolean {
 	return origin === `https://${host}`;
 }
@@ -169,11 +155,7 @@ function changesState(method: string): boolean {
 	return method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
 }
 
-/**
- * A request at the public address. Nothing here is this computer: a reverse proxy that
- * keeps nginx's default Host (the upstream's own 127.0.0.1) would otherwise look local, so
- * every request must carry the proxy secret, name the public host and say it was HTTPS.
- */
+/** nginx sends the upstream's own name (127.0.0.1:3010) as Host unless told otherwise, which would look like this computer, so no request at the public address is treated as local. */
 function decidePublic(input: AccessInput, mode: PublicMode): AccessDecision {
 	if (!validPublicHost(mode.host) || !mode.secretConfigured) return { action: "refuse", message: PUBLIC_NOT_CONFIGURED };
 	if (!mode.secretOk) return { action: "refuse", message: ONLY_THROUGH_PROXY };
@@ -185,14 +167,13 @@ function decidePublic(input: AccessInput, mode: PublicMode): AccessDecision {
 	return input.paired ? { action: "allow" } : { action: "login" };
 }
 
-/** Where to go after signing in: a path inside the app. Never another origin, and never back to a sign-in page. */
 export function safeNext(path: string | null | undefined): string {
 	if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\") || /[\u0000-\u001f]/.test(path)) return "/";
 	if (path === "/login" || path.startsWith("/login?") || path.startsWith("/pair")) return "/";
 	return path;
 }
 
-/** The client address behind one trusted reverse proxy: the last entry of X-Forwarded-For, which that proxy appended. The earlier entries are whatever the client sent. */
+/** nginx's $proxy_add_x_forwarded_for appends the peer to whatever X-Forwarded-For the client sent, so only the last entry is the proxy's. */
 export function clientAddress(headers: Headers): string {
 	const last = (headers.get("x-forwarded-for") ?? "").split(",").pop()?.trim() ?? "";
 	return last ? last.slice(0, 64) : "unknown";

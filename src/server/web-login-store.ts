@@ -1,12 +1,3 @@
-/**
- * The web sign-in file (E75): <data root>/web-login.json holds the owner's
- * password record (scrypt) and the throttle state for wrong tries. A missing
- * or unreadable file means no password is set, so nobody can sign in.
- *
- * A try is counted under one lock before the slow hash runs and is given back
- * only when the password was right, so eight guesses made at once still count
- * as eight. The hash itself runs outside the lock.
- */
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -59,11 +50,6 @@ export function webPasswordIsSet(): boolean {
 	return readLogin().password !== null;
 }
 
-/**
- * Sets or changes the password, clears the throttle, and signs every device out
- * (a changed password must end the sessions the old one opened). Resolves to
- * whether this is the first password.
- */
 export async function setWebPassword(password: string, options: { params?: ScryptParams; at?: Date } = {}): Promise<{ firstTime: boolean }> {
 	const problem = passwordProblem(password);
 	if (problem) throw new Error(problem);

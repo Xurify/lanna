@@ -1,8 +1,3 @@
-/**
- * DELETE /api/access/devices/:id: signs one device out (E21). The desktop
- * window or a paired device may do it, including the device that asks, whose
- * cookie is then cleared.
- */
 import { accessStatus, clearDeviceCookie, listeningPort, revokeDevice, secureRequest } from "@/src/server";
 
 export const dynamic = "force-dynamic";

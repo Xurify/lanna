@@ -1,20 +1,10 @@
-/**
- * Limits on password tries at the public address (E75). Pure: the caller passes
- * the state and the time, and keeps the state. A try is counted when it is made
- * and given back when the password was right, so parallel guesses cannot slip
- * past the limit while one is still being checked.
- */
-
 export const LOGIN_LIMITS = {
-	/** Tries one address may make inside the window before it is locked. */
 	perAddressTries: 5,
 	windowMs: 60_000,
 	lockMs: 15 * 60_000,
-	/** Tries all addresses together may make inside the global window. */
 	globalTries: 40,
 	globalWindowMs: 60 * 60_000,
 	globalLockMs: 15 * 60_000,
-	/** Addresses remembered at once, so a flood of addresses cannot grow the file without bound. */
 	maxAddresses: 500,
 } as const;
 
@@ -37,7 +27,6 @@ function within(times: number[], now: number, windowMs: number): number[] {
 	return times.filter((t) => t > now - windowMs && t <= now);
 }
 
-/** Drops what has expired, so the state stays small. */
 export function pruneThrottle(state: ThrottleState, now: number): ThrottleState {
 	const addresses: Record<string, AddressState> = {};
 	for (const [address, entry] of Object.entries(state.addresses)) {
@@ -51,7 +40,6 @@ export function pruneThrottle(state: ThrottleState, now: number): ThrottleState 
 	};
 }
 
-/** Counts one try for an address, or refuses it because the address or the whole app is locked. */
 export function reserveAttempt(input: ThrottleState, address: string, now: number): Reservation {
 	const state = pruneThrottle(input, now);
 	if (state.globalLockedUntil > now) return { allowed: false, state, scope: "global", retryAfterMs: state.globalLockedUntil - now };
@@ -77,7 +65,6 @@ export function reserveAttempt(input: ThrottleState, address: string, now: numbe
 	};
 }
 
-/** Gives back the try made at `stamp`, once the password turned out right. */
 export function refundAttempt(state: ThrottleState, address: string, stamp: number): ThrottleState {
 	const entry = state.addresses[address];
 	const without = (times: number[]) => {
@@ -91,7 +78,6 @@ export function refundAttempt(state: ThrottleState, address: string, stamp: numb
 	};
 }
 
-/** Whether a stored value is a throttle state; anything else starts clean. */
 export function readThrottle(value: unknown): ThrottleState {
 	const v = value as Partial<ThrottleState> | null;
 	if (!v || typeof v !== "object" || typeof v.addresses !== "object" || v.addresses === null || !Array.isArray(v.globalAttempts)) return emptyThrottle();

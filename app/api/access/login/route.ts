@@ -1,8 +1,3 @@
-/**
- * POST /api/access/login: the password sign-in at the public address (E75).
- * A right password signs the browser in for 180 days with the same HttpOnly
- * device cookie pairing uses. Wrong tries are limited per address and overall.
- */
 import { clientAddress, deviceCookie, deviceNameFromAgent, safeNext, secureRequest, signInWithPassword } from "@/src/server";
 
 export const dynamic = "force-dynamic";

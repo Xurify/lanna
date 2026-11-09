@@ -1,9 +1,3 @@
-/**
- * THE PUBLIC ADDRESS (E75): the gate for a request that came through the
- * reverse proxy at LH_PUBLIC_HOST, the proxy secret, the origin check, the
- * redirect target, the client address, the try limits and the scrypt record.
- * Pure rules only; the store has its own test (web-login-store.test.ts).
- */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -24,7 +18,6 @@ const HOST = "learn.example.com";
 const SECRET = "s".repeat(40);
 const ENV = { LH_PUBLIC_HOST: HOST, LH_PROXY_SECRET: SECRET };
 
-/** What a correctly configured reverse proxy sends for a signed-in browser's page request. */
 const PROXIED = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", [PROXY_SECRET_HEADER]: SECRET };
 
 function request(overrides: Partial<Omit<AccessInput, "headers" | "publicMode">> & { headers?: Record<string, string>; env?: Record<string, string | undefined> } = {}): AccessInput {

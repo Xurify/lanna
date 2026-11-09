@@ -1,9 +1,3 @@
-/**
- * THE WEB SIGN-IN STORE (E75): the password file, the sign-in with its tries
- * counted under one lock, and what a changed password or a switch-off does to
- * the sessions. Runs under a throwaway LH_DATA_DIR, set before any
- * config-loading import (E6).
- */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import * as os from "node:os";

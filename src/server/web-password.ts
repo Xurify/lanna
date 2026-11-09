@@ -1,15 +1,9 @@
-/**
- * The owner's web password (E75): scrypt with a random salt, compared in
- * constant time. The record names its own parameters, so a stronger setting
- * later still verifies the passwords hashed under this one.
- */
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 
 /** OWASP's scrypt minimum: N = 2^17, r = 8, p = 1 (https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). */
 export const SCRYPT_DEFAULT = { N: 131_072, r: 8, p: 1, keyLength: 32, saltBytes: 16 } as const;
 
 export const PASSWORD_MIN_LENGTH = 12;
-/** Bounds the work one request can ask of the hash. */
 export const PASSWORD_MAX_LENGTH = 200;
 
 export type ScryptParams = { N: number; r: number; p: number; keyLength: number; saltBytes: number };
@@ -39,7 +33,6 @@ function derive(password: string, salt: Buffer, params: Pick<ScryptParams, "N" |
 	});
 }
 
-/** The reason a password is not acceptable, or null. */
 export function passwordProblem(password: unknown): string | null {
 	if (typeof password !== "string") return "Enter a password.";
 	if (password.length < PASSWORD_MIN_LENGTH) return `Use at least ${PASSWORD_MIN_LENGTH} characters.`;
@@ -70,7 +63,6 @@ export async function verifyPassword(password: string, record: PasswordRecord): 
 	return key.length === wanted.length && timingSafeEqual(key, wanted);
 }
 
-/** A stored record is used only if its parameters are in a range this server can run. */
 export function isPasswordRecord(value: unknown): value is PasswordRecord {
 	const r = value as Partial<PasswordRecord> | null;
 	if (!r || r.version !== 1 || r.algo !== "scrypt") return false;
