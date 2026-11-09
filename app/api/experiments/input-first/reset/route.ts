@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resetExperiment, getExperimentState } from "@/src/server/experiment";
+import { resetExperiment, getExperimentState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 

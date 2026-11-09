@@ -1,466 +1,470 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { wordMatch } from "@/src/core/speak";
-import type { ProbeItem, CheckItemRecord } from "@/src/core/experiment";
+import { useRouter } from "next/navigation";
+import { Volume2Icon } from "lucide-react";
+import { EmptyState } from "@/components/quiet/empty-state";
+import { QIcon } from "@/components/quiet/icon";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { ChoiceMenu } from "@/components/ui/choice-menu";
+import { cn } from "@/lib/utils";
+import { STUDY_ROUTE, studyLanguage, type StudyLanguage } from "@/components/experiment/study-language";
+import { EXPERIMENT_CONSTANTS, judgeTyped, wordMatch, type CheckItemRecord, type ProbeItem } from "@/src/core";
 
-interface WeeklyCheckPlayerProps {
-	initialWeek?: number;
-	initialLang?: "russian" | "slovak";
+type Step = "intro" | "probes" | "production" | "end";
+type SaveState = "saving" | "saved" | "failed";
+
+interface CheckItems {
+	probes: ProbeItem[];
+	production: ProbeItem[];
 }
 
-type CheckPhase = "intro" | "probes" | "production" | "complete";
+interface Answer {
+	record: CheckItemRecord;
+	missing: string[];
+	extra: string[];
+}
 
-export function WeeklyCheckPlayer({ initialWeek = 1, initialLang = "russian" }: WeeklyCheckPlayerProps = {}) {
+const CLEAR_SCORE = 0.8;
+const PARTIAL_SCORE = 0.5;
+const FIELD = "w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background";
+
+function clipUrl(text: string, language: StudyLanguage): string {
+	const q = new URLSearchParams({ text });
+	if (language.code) q.set("lang", language.code);
+	return `/api/tts?${q.toString()}`;
+}
+
+export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: { initialWeek: number; initialLanguage: string; languages: string[] }) {
+	const router = useRouter();
 	const [week, setWeek] = useState(initialWeek);
-	const [lang, setLang] = useState<"russian" | "slovak">(initialLang);
-	const [phase, setPhase] = useState<CheckPhase>("intro");
+	const [languageId, setLanguageId] = useState(initialLanguage);
+	const [items, setItems] = useState<CheckItems | null>(null);
+	const [loadError, setLoadError] = useState<string | null>(null);
+	const [step, setStep] = useState<Step>("intro");
+	const [index, setIndex] = useState(0);
+	const [draft, setDraft] = useState("");
+	const [played, setPlayed] = useState(false);
+	const [playing, setPlaying] = useState(false);
+	const [playFailed, setPlayFailed] = useState(false);
+	const [answer, setAnswer] = useState<Answer | null>(null);
+	const [records, setRecords] = useState<CheckItemRecord[]>([]);
+	const [save, setSave] = useState<SaveState>("saving");
+	const clip = useRef<HTMLAudioElement | null>(null);
+	const field = useRef<HTMLInputElement | null>(null);
+	const loadSeq = useRef(0);
 
-	const [loading, setLoading] = useState(false);
-	const [probes, setProbes] = useState<ProbeItem[]>([]);
-	const [production, setProduction] = useState<ProbeItem[]>([]);
+	const language = studyLanguage(languageId);
 
-	// Current probe item (0..9)
-	const [probeIndex, setProbeIndex] = useState(0);
-	const [probePlayed, setProbePlayed] = useState(false);
-	const [probeAudioPlaying, setProbeAudioPlaying] = useState(false);
-	const [probeInput, setProbeInput] = useState("");
-	const [probeFeedback, setProbeFeedback] = useState<{ verdict: string; score: number } | null>(null);
-
-	// Current production item (0..4)
-	const [prodIndex, setProdIndex] = useState(0);
-	const [prodInput, setProdInput] = useState("");
-	const [prodFeedback, setProdFeedback] = useState<{ score: number; missing: string[]; extra: string[] } | null>(null);
-	const [isRecording, setIsRecording] = useState(false);
-
-	// Completed results
-	const [results, setResults] = useState<CheckItemRecord[]>([]);
-	const [saved, setSaved] = useState(false);
-	const [saveError, setSaveError] = useState<string | null>(null);
-
-	const audioRef = useRef<HTMLAudioElement | null>(null);
-
-	// Fetch items whenever week or lang changes
-	useEffect(() => {
-		async function loadItems() {
-			setLoading(true);
-			try {
-				const res = await fetch(`/api/experiments/input-first/check?week=${week}&lang=${lang}`);
-				if (res.ok) {
-					const data = await res.json();
-					setProbes(data.probes || []);
-					setProduction(data.production || []);
-				}
-			} catch (err) {
-				console.error("Failed to load check items:", err);
-			} finally {
-				setLoading(false);
-			}
-		}
-		loadItems();
-	}, [week, lang]);
-
-	const langCode = lang === "russian" ? "ru" : "sk";
-
-	function playProbeAudio(text: string) {
-		if (probeAudioPlaying) return;
-		setProbeAudioPlaying(true);
-		setProbePlayed(true);
-
-		const url = `/api/tts?lang=${langCode}&text=${encodeURIComponent(text)}`;
-		const audio = new Audio(url);
-		audioRef.current = audio;
-		audio.onended = () => setProbeAudioPlaying(false);
-		audio.onerror = () => setProbeAudioPlaying(false);
-		audio.play().catch(() => setProbeAudioPlaying(false));
-	}
-
-	function clean(text: string) {
-		return text.toLowerCase().trim().replace(/[.,!?:;«»""'']/g, "");
-	}
-
-	function submitProbe() {
-		const current = probes[probeIndex];
-		if (!current) return;
-
-		const given = clean(probeInput);
-		const expected = clean(current.targetSentence);
-
-		const isExact = given === expected;
-		const isAccents = given.normalize("NFD").replace(/[\u0300-\u036f]/g, "") ===
-			expected.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-		const verdict = isExact ? "exact" : isAccents ? "accents" : "wrong";
-		const score = verdict === "exact" || verdict === "accents" ? 1 : 0;
-
-		const record: CheckItemRecord = {
-			date: new Date().toISOString().slice(0, 10),
-			week,
-			dayNumber: week * 7,
-			language: lang,
-			type: "probe",
-			itemId: current.id,
-			prompt: "Listening Dictation (single play)",
-			expected: current.targetSentence,
-			response: probeInput.trim(),
-			score,
-			verdict,
-		};
-
-		setProbeFeedback({ verdict, score });
-		setResults((prev) => [...prev, record]);
-	}
-
-	function nextProbe() {
-		setProbeFeedback(null);
-		setProbeInput("");
-		setProbePlayed(false);
-		if (probeIndex < probes.length - 1) {
-			setProbeIndex(probeIndex + 1);
-		} else {
-			setPhase("production");
-		}
-	}
-
-	function submitProduction(responseOverride?: string) {
-		const current = production[prodIndex];
-		if (!current) return;
-
-		const text = (responseOverride ?? prodInput).trim();
-		const match = wordMatch(current.targetSentence, text);
-		const score = Math.round(match.score * 100) / 100;
-		const verdict = score >= 0.8 ? "clear" : score >= 0.5 ? "partial" : "not-yet";
-
-		const record: CheckItemRecord = {
-			date: new Date().toISOString().slice(0, 10),
-			week,
-			dayNumber: week * 7,
-			language: lang,
-			type: "production",
-			itemId: current.id,
-			prompt: current.englishTranslation,
-			expected: current.targetSentence,
-			response: text,
-			score,
-			verdict,
-			engine: responseOverride ? "stt" : "typed",
-		};
-
-		setProdFeedback({ score, missing: match.missing, extra: match.extra });
-		setResults((prev) => [...prev, record]);
-	}
-
-	function nextProduction() {
-		setProdFeedback(null);
-		setProdInput("");
-		if (prodIndex < production.length - 1) {
-			setProdIndex(prodIndex + 1);
-		} else {
-			finishCheck();
-		}
-	}
-
-	async function finishCheck() {
-		setPhase("complete");
-		setLoading(true);
+	const load = useCallback(async () => {
+		const seq = ++loadSeq.current;
+		setItems(null);
+		setLoadError(null);
 		try {
-			const res = await fetch("/api/experiments/input-first/check", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ items: results }),
-			});
-			if (res.ok) {
-				setSaved(true);
-			} else {
-				setSaveError("Failed to save check results");
-			}
+			const res = await fetch(`/api/experiments/input-first/check?week=${week}&lang=${languageId}`);
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const body = (await res.json()) as Partial<CheckItems>;
+			if (seq !== loadSeq.current) return;
+			if (!body.probes?.length || !body.production?.length) throw new Error("This check has no sentences.");
+			setItems({ probes: body.probes, production: body.production });
 		} catch (err) {
-			setSaveError(String(err));
-		} finally {
-			setLoading(false);
+			if (seq === loadSeq.current) setLoadError(err instanceof Error ? err.message : String(err));
 		}
+	}, [week, languageId]);
+
+	useEffect(() => {
+		void load();
+	}, [load]);
+
+	const stopClip = () => {
+		clip.current?.pause();
+		clip.current = null;
+	};
+	useEffect(() => () => clip.current?.pause(), []);
+
+	const total = items ? items.probes.length + items.production.length : EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK + EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
+	const item = step === "probes" ? items?.probes[index] : step === "production" ? items?.production[index] : undefined;
+
+	const begin = (nextLanguage = languageId) => {
+		stopClip();
+		setLanguageId(nextLanguage);
+		setRecords([]);
+		setIndex(0);
+		setDraft("");
+		setPlayed(false);
+		setPlaying(false);
+		setPlayFailed(false);
+		setAnswer(null);
+		setSave("saving");
+		setStep(nextLanguage === languageId ? "probes" : "intro");
+	};
+
+	const playOnce = () => {
+		if (!item || played) return;
+		setPlayed(true);
+		setPlaying(true);
+		setPlayFailed(false);
+		field.current?.focus();
+		const audio = new Audio(clipUrl(item.targetSentence, language));
+		clip.current = audio;
+		audio.onended = () => setPlaying(false);
+		const notHeard = () => {
+			setPlaying(false);
+			setPlayed(false);
+			setPlayFailed(true);
+		};
+		audio.onerror = notHeard;
+		audio.play().catch(notHeard);
+	};
+
+	const answerWith = (response: string) => {
+		if (!item || answer) return;
+		const base = { date: new Date().toISOString().slice(0, 10), week, dayNumber: week * 7, language: languageId, itemId: item.id, expected: item.targetSentence, response };
+		if (step === "probes") {
+			const verdict = response ? judgeTyped(response, item.targetSentence, language.tag) : "wrong";
+			setAnswer({ record: { ...base, type: "probe", prompt: "Listening Dictation (single play)", score: verdict === "wrong" ? 0 : 1, verdict }, missing: [], extra: [] });
+			return;
+		}
+		const match = wordMatch(item.targetSentence, response);
+		const score = response ? Math.round(match.score * 100) / 100 : 0;
+		const verdict = score >= CLEAR_SCORE ? "clear" : score >= PARTIAL_SCORE ? "partial" : "not-yet";
+		setAnswer({ record: { ...base, type: "production", prompt: item.englishTranslation, score, verdict, engine: "typed" }, missing: response ? match.missing : [], extra: response ? match.extra : [] });
+	};
+
+	const send = async (all: CheckItemRecord[]) => {
+		setSave("saving");
+		try {
+			const res = await fetch("/api/experiments/input-first/check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: all }) });
+			setSave(res.ok ? "saved" : "failed");
+		} catch {
+			setSave("failed");
+		}
+	};
+
+	const advance = () => {
+		if (!answer || !items) return;
+		const all = [...records, answer.record];
+		setRecords(all);
+		setAnswer(null);
+		setDraft("");
+		setPlayed(false);
+		setPlaying(false);
+		setPlayFailed(false);
+		stopClip();
+		const last = index + 1 >= (step === "probes" ? items.probes.length : items.production.length);
+		if (!last) setIndex((i) => i + 1);
+		else if (step === "probes") {
+			setIndex(0);
+			setStep("production");
+		} else {
+			setStep("end");
+			void send(all);
+		}
+	};
+
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.defaultPrevented) return;
+			if (e.key === "Escape") router.push(STUDY_ROUTE);
+			else if (step === "end" && e.key === "Enter" && !endEnterBlocked(e)) {
+				e.preventDefault();
+				router.push(STUDY_ROUTE);
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [router, step]);
+
+	if (loadError) {
+		return (
+			<Frame>
+				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
+					<EmptyState
+						testid="check-error"
+						title="The check could not start"
+						action={
+							<button type="button" onClick={() => void load()} className="q-btn primary">
+								Try again
+							</button>
+						}
+						secondary={
+							<Link href={STUDY_ROUTE} className="q-btn ghost">
+								Back to Study
+							</Link>
+						}
+					>
+						<p>{loadError}</p>
+						<p>Nothing was recorded, so the check can be taken from the start.</p>
+					</EmptyState>
+				</div>
+			</Frame>
+		);
 	}
 
-	return (
-		<div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 md:p-8 max-w-2xl mx-auto shadow-xl">
-			{/* Phase: INTRO */}
-			{phase === "intro" && (
-				<div className="space-y-6">
-					<div>
-						<span className="text-xs uppercase tracking-wider font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-800/60 px-2 py-0.5 rounded">
-							Weekly Check Session
-						</span>
-						<h2 className="text-2xl font-bold mt-2 text-white">Sunday Assessment Protocol</h2>
-						<p className="text-sm text-neutral-400 mt-1">
-							10 Listening Dictation Probes (played once, typed) followed by 5 Spoken Production Prompts.
+	if (step === "end") {
+		return (
+			<Frame>
+				<EndScreen week={week} language={language} other={languages.find((l) => l !== languageId)} records={records} save={save} onRetrySave={() => void send(records)} onOther={(id) => begin(id)} />
+			</Frame>
+		);
+	}
+
+	if (step === "intro" || !items || !item) {
+		const probeCount = items?.probes.length ?? EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK;
+		const productionCount = items?.production.length ?? EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
+		return (
+			<Frame strip={false}>
+				<TaskTop progress={0} label="Nothing answered yet" count={`0/${total}`} href={STUDY_ROUTE} />
+				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
+					<div className={cn(COLUMN, "q-rise")} data-testid="check-intro">
+						<p className="q-date flex items-center gap-1.5">
+							<QIcon name="listen" className="text-teal" />
+							Study · weekly check
 						</p>
-					</div>
-
-					<div className="grid grid-cols-2 gap-4">
-						<div>
-							<label className="block text-xs font-semibold text-neutral-400 uppercase mb-1">Language</label>
-							<select
-								value={lang}
-								onChange={(e) => setLang(e.target.value as "russian" | "slovak")}
-								className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200"
-							>
-								<option value="russian">Russian (Treatment)</option>
-								<option value="slovak">Slovak (Control)</option>
-							</select>
+						<h1 className="q-hello">
+							Week {week} in {language.name}
+						</h1>
+						<p className="q-line dim mt-3 max-w-2xl">
+							{probeCount} sentences to hear and type, then {productionCount} to write yourself. It measures where you are this week, so it gives no XP.
+						</p>
+						<div className="mt-6 grid max-w-md grid-cols-2 gap-3">
+							<div>
+								<p className="mb-1.5 font-ui text-xs font-semibold text-muted-foreground">Language</p>
+								<ChoiceMenu ariaLabel="Language" value={languageId} options={languages.map((id) => ({ value: id, label: studyLanguage(id).name }))} onChange={setLanguageId} />
+							</div>
+							<div>
+								<p className="mb-1.5 font-ui text-xs font-semibold text-muted-foreground">Week</p>
+								<ChoiceMenu ariaLabel="Week" value={String(week)} options={Array.from({ length: EXPERIMENT_CONSTANTS.TOTAL_WEEKS }, (_, i) => ({ value: String(i + 1), label: `Week ${i + 1}` }))} onChange={(w) => setWeek(Number(w))} />
+							</div>
 						</div>
-						<div>
-							<label className="block text-xs font-semibold text-neutral-400 uppercase mb-1">Study Week</label>
-							<select
-								value={week}
-								onChange={(e) => setWeek(Number(e.target.value))}
-								className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200"
-							>
-								{[1, 2, 3, 4, 5, 6].map((w) => (
-									<option key={w} value={w}>
-										Week {w} (Day {w * 7})
-									</option>
-								))}
-							</select>
-						</div>
-					</div>
-
-					<div className="p-4 rounded-xl bg-neutral-950/80 border border-neutral-800/80 space-y-2 text-xs text-neutral-300">
-						<div className="font-semibold text-neutral-200">Protocol Constraints (SCED v3):</div>
-						<ul className="list-disc list-inside space-y-1 text-neutral-400">
-							<li>Listening probes test first-play understanding. Audio plays only once.</li>
-							<li>Production prompts give English cues; you speak or type the target translation.</li>
-							<li>Responses are scored against verified lexicon sentences and saved automatically.</li>
+						<ul className="mt-6 flex max-w-2xl flex-col gap-1.5 font-prose text-sm leading-relaxed text-muted-foreground">
+							<li>Each sentence plays once. There is no replay and no slow play.</li>
+							<li>Your answers are saved after the last sentence, so finish in one sitting.</li>
 						</ul>
 					</div>
-
-					<button
-						onClick={() => {
-							setResults([]);
-							setProbeIndex(0);
-							setProdIndex(0);
-							setPhase("probes");
-						}}
-						disabled={loading || probes.length === 0}
-						className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold rounded-xl transition shadow"
-					>
-						{loading ? "Loading items..." : "Start Week " + week + " Check &rarr;"}
-					</button>
 				</div>
-			)}
-
-			{/* Phase: LISTENING PROBES */}
-			{phase === "probes" && probes[probeIndex] && (
-				<div className="space-y-6">
-					<div className="flex items-center justify-between border-b border-neutral-800 pb-3">
-						<span className="text-xs uppercase font-semibold text-neutral-400">
-							Part 1: Listening Probe ({probeIndex + 1} of {probes.length})
-						</span>
-						<span className="text-xs font-mono text-neutral-400">Week {week} &bull; {lang}</span>
-					</div>
-
-					<div className="text-center py-6 space-y-4">
-						<button
-							onClick={() => playProbeAudio(probes[probeIndex]!.targetSentence)}
-							disabled={probePlayed || probeAudioPlaying}
-							className={`px-6 py-4 rounded-2xl font-semibold text-sm transition flex items-center gap-3 mx-auto shadow-lg ${
-								probePlayed
-									? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700/50"
-									: "bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse"
-							}`}
-						>
-							<svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-								<path d="M8 5v14l11-7z" />
-							</svg>
-							{probeAudioPlaying ? "Playing audio..." : probePlayed ? "Audio Played (Single Play)" : "Play Audio Clip"}
-						</button>
-						<p className="text-xs text-neutral-400">
-							{probePlayed ? "Type exactly what you heard below:" : "Click play to listen to the sentence once."}
-						</p>
-					</div>
-
-					<div className="space-y-3">
-						<input
-							type="text"
-							value={probeInput}
-							onChange={(e) => setProbeInput(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" && !probeFeedback && probeInput.trim()) submitProbe();
-								else if (e.key === "Enter" && probeFeedback) nextProbe();
-							}}
-							disabled={!probePlayed || !!probeFeedback}
-							placeholder={probePlayed ? "Type in " + lang + "..." : "Listen to audio first..."}
-							className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-200 focus:outline-none focus:border-emerald-500"
-							autoFocus
-						/>
-
-						{probeFeedback && (
-							<div
-								className={`p-4 rounded-xl border text-xs space-y-1 ${
-									probeFeedback.score === 1
-										? "bg-emerald-950/70 border-emerald-800 text-emerald-300"
-										: "bg-rose-950/70 border-rose-800 text-rose-300"
-								}`}
-							>
-								<div className="font-semibold uppercase tracking-wider">
-									{probeFeedback.score === 1 ? "✓ Understood" : "✗ Not understood on first play"}
-								</div>
-								<div>Expected: <span className="font-mono text-neutral-200">{probes[probeIndex]!.targetSentence}</span></div>
-								<div>English: <span className="text-neutral-400">{probes[probeIndex]!.englishTranslation}</span></div>
-							</div>
-						)}
-					</div>
-
-					<div className="flex justify-end pt-2">
-						{!probeFeedback ? (
-							<button
-								onClick={submitProbe}
-								disabled={!probePlayed || !probeInput.trim()}
-								className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 text-neutral-200 font-medium rounded-xl text-xs transition"
-							>
-								Submit Answer &rarr;
-							</button>
-						) : (
-							<button
-								onClick={nextProbe}
-								className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl text-xs transition"
-							>
-								Next Probe &rarr;
-							</button>
-						)}
-					</div>
-				</div>
-			)}
-
-			{/* Phase: PRODUCTION PROMPTS */}
-			{phase === "production" && production[prodIndex] && (
-				<div className="space-y-6">
-					<div className="flex items-center justify-between border-b border-neutral-800 pb-3">
-						<span className="text-xs uppercase font-semibold text-amber-400">
-							Part 2: Spoken Production ({prodIndex + 1} of {production.length})
-						</span>
-						<span className="text-xs font-mono text-neutral-400">Week {week} &bull; {lang}</span>
-					</div>
-
-					<div className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 text-center space-y-2">
-						<span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-							Translate to {lang}
-						</span>
-						<div className="text-lg md:text-xl font-medium text-white">
-							"{production[prodIndex]!.englishTranslation}"
-						</div>
-					</div>
-
-					<div className="space-y-3">
-						<input
-							type="text"
-							value={prodInput}
-							onChange={(e) => setProdInput(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" && !prodFeedback && prodInput.trim()) submitProduction();
-								else if (e.key === "Enter" && prodFeedback) nextProduction();
-							}}
-							disabled={!!prodFeedback}
-							placeholder={`Type or speak the ${lang} sentence...`}
-							className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-200 focus:outline-none focus:border-amber-500"
-							autoFocus
-						/>
-
-						{prodFeedback && (
-							<div className="p-4 rounded-xl border border-neutral-800 bg-neutral-950 text-xs space-y-1">
-								<div className="flex items-center justify-between">
-									<span className="font-semibold text-neutral-200">
-										Accuracy Score: {Math.round(prodFeedback.score * 100)}%
-									</span>
-									<span className="capitalize text-neutral-400">
-										{prodFeedback.score >= 0.8 ? "Clear" : prodFeedback.score >= 0.5 ? "Partial" : "Needs Practice"}
-									</span>
-								</div>
-								<div>Expected: <span className="font-mono text-neutral-300">{production[prodIndex]!.targetSentence}</span></div>
-								{prodFeedback.missing.length > 0 && (
-									<div className="text-rose-400">Missing words: {prodFeedback.missing.join(", ")}</div>
-								)}
-								{prodFeedback.extra.length > 0 && (
-									<div className="text-amber-400">Extra words: {prodFeedback.extra.join(", ")}</div>
-								)}
-							</div>
-						)}
-					</div>
-
-					<div className="flex justify-end pt-2">
-						{!prodFeedback ? (
-							<button
-								onClick={() => submitProduction()}
-								disabled={!prodInput.trim()}
-								className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 text-neutral-200 font-medium rounded-xl text-xs transition"
-							>
-								Check Production &rarr;
-							</button>
-						) : (
-							<button
-								onClick={nextProduction}
-								className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-xl text-xs transition"
-							>
-								{prodIndex < production.length - 1 ? "Next Prompt \u2192" : "Complete Check \u2192"}
-							</button>
-						)}
-					</div>
-				</div>
-			)}
-
-			{/* Phase: COMPLETE */}
-			{phase === "complete" && (
-				<div className="text-center space-y-6 py-4">
-					<div className="w-16 h-16 rounded-full bg-emerald-950/80 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto text-2xl">
-						✓
-					</div>
-					<div>
-						<h2 className="text-2xl font-bold text-white">Week {week} Check Complete!</h2>
-						<p className="text-sm text-neutral-400 mt-1">
-							All 15 assessment items recorded to <code className="text-xs bg-neutral-800 px-1 py-0.5 rounded">checks.jsonl</code>.
-						</p>
-					</div>
-
-					<div className="grid grid-cols-2 gap-4 max-w-sm mx-auto text-left">
-						<div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800">
-							<div className="text-xs text-neutral-400 uppercase font-semibold">Listening Probes</div>
-							<div className="text-2xl font-bold text-emerald-400 mt-1">
-								{results.filter((r) => r.type === "probe" && r.score === 1).length} / 10
-							</div>
-							<div className="text-[11px] text-neutral-400 mt-1">First-play accuracy</div>
-						</div>
-						<div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800">
-							<div className="text-xs text-neutral-400 uppercase font-semibold">Spoken Production</div>
-							<div className="text-2xl font-bold text-amber-400 mt-1">
-								{Math.round(
-									(results.filter((r) => r.type === "production").reduce((a, b) => a + b.score, 0) / 5) * 100
-								)}%
-							</div>
-							<div className="text-[11px] text-neutral-400 mt-1">Average word match</div>
-						</div>
-					</div>
-
-					{saved && (
-						<p className="text-xs text-emerald-400 font-mono">
-							✓ Synced with experiment summary & statistical regression.
-						</p>
-					)}
-					{saveError && (
-						<p className="text-xs text-rose-400 font-mono">
-							⚠ {saveError}
-						</p>
-					)}
-
-					<div className="pt-2">
-						<Link
-							href="/experiments/input-first"
-							className="inline-block px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-medium rounded-xl text-xs transition"
-						>
-							&larr; Return to Experiment Dashboard
+				<Dock>
+					<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
+						<Link href={STUDY_ROUTE} className={SECONDARY}>
+							Back to Study
 						</Link>
+						<button type="button" onClick={() => begin()} disabled={!items} className={PRIMARY} data-testid="check-start" autoFocus>
+							{items ? "Start" : "Loading…"}
+							<span className="q-kbd">
+								<QIcon name="enter" />
+							</span>
+						</button>
 					</div>
+				</Dock>
+			</Frame>
+		);
+	}
+
+	const listening = step === "probes";
+	const stepCount = listening ? items.probes.length : items.production.length;
+	const answered = records.length + (answer ? 1 : 0);
+	const score = answer?.record.score ?? 0;
+	const good = listening ? score === 1 : score >= CLEAR_SCORE;
+	const partly = !listening && !good && score >= PARTIAL_SCORE;
+	const canCheck = draft.trim().length > 0 && (!listening || played);
+
+	return (
+		<Frame strip={false}>
+			<TaskTop progress={answered / total} label={`${answered} of ${total} answered`} count={`${records.length + 1}/${total}`} href={STUDY_ROUTE} />
+
+			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
+				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
+					<PracticeCard icon={listening ? "listen" : "check"} title="Weekly check" sub={`${index + 1} of ${stepCount}`} right={`Week ${week} · ${language.name}`}>
+						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">{listening ? (!answer ? "Type what you hear" : good ? "Understood" : "It said…") : !answer ? `Write this in ${language.name}` : score === 1 ? "That is it" : "It is…"}</h2>
+
+						{listening ? (
+							<div className="flex flex-wrap items-center gap-3">
+								<button
+									type="button"
+									onClick={playOnce}
+									disabled={played}
+									autoFocus
+									aria-label="Play the sentence once"
+									className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2 disabled:cursor-not-allowed disabled:bg-well-2 disabled:text-ink-4 disabled:shadow-none"
+									data-testid="check-play"
+								>
+									<Volume2Icon className={cn("size-6", playing && "animate-pulse motion-reduce:animate-none")} strokeWidth={1.6} />
+								</button>
+								<p className="font-ui text-[13px] text-ink-3" aria-live="polite">
+									{answer ? "Played once." : playing ? "Playing…" : played ? "Played. It does not play again." : playFailed ? "The sentence could not be played, so it does not count as heard. Press play again." : "It plays once. Press play when you are ready."}
+								</p>
+							</div>
+						) : (
+							<p className="font-prose text-[26px] font-[550] leading-[1.35] tracking-[-0.02em] text-foreground" data-testid="check-prompt">
+								{item.englishTranslation}
+							</p>
+						)}
+
+						<div className="mt-6">
+							<input
+								ref={field}
+								type="text"
+								lang={language.code}
+								autoComplete="off"
+								autoCapitalize="off"
+								spellCheck={false}
+								autoFocus={!listening}
+								value={draft}
+								onChange={(e) => setDraft(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									if (canCheck) answerWith(draft.trim());
+								}}
+								disabled={!!answer}
+								aria-label={listening ? "Type the sentence you heard" : `Write the sentence in ${language.name}`}
+								placeholder={listening ? "Type what you hear" : `In ${language.name}`}
+								className={FIELD}
+								data-testid="check-input"
+							/>
+						</div>
+
+						<div className="mt-6 min-h-[4.5rem]" data-testid="check-feedback">
+							{answer ? (
+								<div className="lh-rise">
+									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang={language.code}>
+										{item.targetSentence}
+									</p>
+									{!good && (
+										<p className="mt-2 font-prose text-base text-ink-3">
+											{answer.record.response ? (
+												<>
+													You typed · <span lang={language.code}>{answer.record.response}</span>
+												</>
+											) : listening ? (
+												"Not caught"
+											) : (
+												"Not written"
+											)}
+										</p>
+									)}
+									{answer.missing.length > 0 && (
+										<p className="mt-2 font-prose text-base text-ink-3">
+											Missing ·{" "}
+											<span className="text-miss" lang={language.code}>
+												{answer.missing.join(", ")}
+											</span>
+										</p>
+									)}
+									{answer.extra.length > 0 && (
+										<p className="mt-1 font-prose text-base text-ink-3">
+											Not in the sentence · <span lang={language.code}>{answer.extra.join(", ")}</span>
+										</p>
+									)}
+									{listening && <p className="mt-3 font-prose text-base text-ink-2">{item.englishTranslation}</p>}
+								</div>
+							) : (
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">{listening ? "The text appears once you have typed what you heard." : "The sentence appears once you have written yours."}</p>
+							)}
+						</div>
+					</PracticeCard>
+				</div>
+			</div>
+
+			<Dock tone={!answer ? "plain" : good ? "right" : partly ? "wait" : "miss"} live>
+				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
+					{answer ? (
+						<>
+							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", good ? "text-teal-2" : partly ? "text-ink-2" : "text-miss")} data-testid="check-verdict">
+								<VerdictDisc ok={good || partly} />
+								{listening ? (good ? (answer.record.verdict === "accents" ? "Understood on the first play · only an accent is missing" : "Understood on the first play") : answer.record.response ? "Not quite" : "Not caught this time") : `${Math.round(score * 100)}% of the words`}
+							</p>
+							<button type="button" onClick={advance} onKeyDown={(e) => {
+									if (e.repeat) e.preventDefault();
+								}} className={PRIMARY} data-testid="check-continue" autoFocus>
+								{answered >= total ? "Finish" : "Continue"}
+								<span className="q-kbd">
+									<QIcon name="enter" />
+								</span>
+							</button>
+						</>
+					) : (
+						<>
+							<button type="button" onClick={() => answerWith("")} disabled={listening && !played} className={SECONDARY} data-testid="check-give-up">
+								{listening ? "I didn't catch it" : "I don't know"}
+							</button>
+							<button type="button" onClick={() => answerWith(draft.trim())} disabled={!canCheck} className={PRIMARY} data-testid="check-check">
+								Check
+								<span className="q-kbd">
+									<QIcon name="enter" />
+								</span>
+							</button>
+						</>
+					)}
+				</div>
+			</Dock>
+		</Frame>
+	);
+}
+
+function EndScreen({ week, language, other, records, save, onRetrySave, onOther }: { week: number; language: StudyLanguage; other: string | undefined; records: CheckItemRecord[]; save: SaveState; onRetrySave: () => void; onOther: (id: string) => void }) {
+	const probes = records.filter((r) => r.type === "probe");
+	const production = records.filter((r) => r.type === "production");
+	const understood = probes.filter((r) => r.score === 1).length;
+	const wordsRight = production.length > 0 ? Math.round((production.reduce((sum, r) => sum + r.score, 0) / production.length) * 100) : 0;
+	const missed = records.filter((r) => (r.type === "probe" ? r.score < 1 : r.score < CLEAR_SCORE));
+	return (
+		<TaskEnd
+			testId="check-end"
+			hint={save === "failed" ? <NotSaved onRetry={onRetrySave} /> : <EnterHint>for Study</EnterHint>}
+			actions={
+				<>
+					{other && (
+						<button type="button" onClick={() => onOther(other)} className={SECONDARY} data-testid="check-other">
+							Now {studyLanguage(other).name}
+						</button>
+					)}
+					<Link href={STUDY_ROUTE} className={PRIMARY} data-testid="check-study">
+						Study
+					</Link>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="listen" className="text-teal" />
+				Week {week} check · {language.name} · done
+			</p>
+			<h1 className="q-hello">
+				{understood} of {probes.length} understood on the first play
+			</h1>
+			<Stats className="mt-7 max-w-none">
+				<Stat label={`Words right in the ${production.length} sentences you wrote`} value={`${wordsRight}%`} />
+				<Stat label="Saved to the study" value={save === "saving" ? null : save === "saved" ? "Yes" : "Not yet"} ink={save === "failed" ? "text-ink-3" : undefined} />
+			</Stats>
+			{missed.length > 0 && (
+				<div className="mt-8">
+					<h2 className="q-sh">Worth another look</h2>
+					<SentenceRows className="mt-2">
+						{missed.map((r) => (
+							<SentenceRow
+								key={`${r.type}:${r.itemId}`}
+								sentence={r.expected}
+								lang={language.code}
+								translation={r.type === "production" ? r.prompt : undefined}
+								onPlay={() => void new Audio(clipUrl(r.expected, language)).play().catch(() => {})}
+								note={
+									r.response ? (
+										<span>
+											You typed{" "}
+											<span className="font-medium text-miss" lang={language.code}>
+												“{r.response}”
+											</span>
+										</span>
+									) : (
+										<span>{r.type === "probe" ? "Not caught" : "Not written"}</span>
+									)
+								}
+							/>
+						))}
+					</SentenceRows>
 				</div>
 			)}
-		</div>
+		</TaskEnd>
 	);
 }

@@ -1033,6 +1033,19 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Track B (Onboarding Silent Period):** A0/A1 phase deactivating microphone and typed cloze in favor of receptive meaning-matching and auditory discrimination until a 250-word / 85% comprehension gate is cleared.
 - **Track C (Immediate Visual Diff / High-Noticing Recast):** Instead of burying errors in a hidden drawer or lecturing with paragraphs of grammatical taxonomy, the tutor highlights mistakes front-and-center using an immediate, high-contrast visual diff (`~~mistake~~ → correct (rule cue)`). The conversational reply answers the learner's idea right beneath it in natural target language without pausing momentum or forcing re-typing.
 
+### E83. The Study views are a page and a task like any other (2026-11-09, branch `t3/pronunciation-principles-review`)
+
+**Why:** the first Study screens were built from raw Tailwind colors (`neutral-950`, `emerald-600`), so they were dark in Day, shouted in capitals, used native selects and looked like another app. The owner: "This design doesn't match our app at all."
+
+**How to apply:**
+- `/experiments/input-first` is a page in the Milestones frame (`components/experiment/study-page.tsx`): the nav word as the title (Study), one lead paragraph in plain words, the one next step (the open weekly check, or the day the next one opens), one facts card, then lists. No stat row, no twin cards, no table that scrolls sideways on a phone.
+- `/experiments/input-first/check` is a task in the Listen frame (`TaskFrame`, `PracticeCard`, `Dock`, `TaskEnd`), with `ChoiceMenu` for the language and the week (E4).
+- Colors come from the tokens only. The teal marks the listening-first days and the one main button; the normal-plan days are grey; days still ahead are the pale version of each.
+- The study's terms stay out of the screen: "the switch" for onset, "jump at the switch" for the level shift, "listening first" for the arm. The seed, the test and the protocol file are named once, under "How the result is decided".
+- A weekly check opens on its day and is offered once: a finished check shows its result and has no link back in, because a second sitting would be a second measurement. An item answered twice counts once, with its latest answer (`weeklyCheckRows`, `src/core/experiment.ts`).
+- The listening items are graded by the Listen rule (`judgeTyped`), as the protocol says, and a sentence whose audio failed does not count as heard.
+- Not built: the protocol asks for the five production prompts to be spoken, and the screen takes them typed (`engine: "typed"`). The screen says "Write this in …", so it does not claim otherwise.
+
 
 ## Dropped or deferred
 

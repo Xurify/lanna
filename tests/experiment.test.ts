@@ -23,7 +23,10 @@ import {
 	fitInterruptedTimeSeries,
 	isFirstPlayUnderstood,
 	runRandomizationTest,
+	weeklyCheckRows,
+	type CheckItemRecord,
 	type DailyExperimentRecord,
+	type ExperimentConfig,
 } from "../src/core/experiment.ts";
 
 test("PRNG is deterministic and draws onset within candidate range [12..22]", () => {
@@ -121,4 +124,42 @@ test("fitInterruptedTimeSeries estimates positive level shift b2 accurately", ()
 	const analysis = runRandomizationTest(records, onset);
 	assert.equal(analysis.verdictStatus, "confirmed_benefit");
 	assert.ok(analysis.pValue <= 1 / 11 + 1e-4, `Expected p-value <= 1/11, got ${analysis.pValue}`);
+});
+
+test("weeklyCheckRows opens a check on its day and counts a repeated item once", () => {
+	const config: ExperimentConfig = {
+		id: "input-first-russian",
+		title: "t",
+		version: "3",
+		startDate: "2026-11-09",
+		endDate: "2026-12-20",
+		days: 42,
+		seed: 20261108,
+		onsetDay: 15,
+		onsetDate: "2026-11-23",
+		languages: { treatment: "russian", control: "slovak" },
+		protocolHash: "",
+		gitCommit: "",
+		decisionRule: "",
+	};
+	const item = (type: "probe" | "production", n: number, score: number): CheckItemRecord => ({ date: "2026-11-15", week: 1, dayNumber: 7, language: "russian", type, itemId: `${type}-${n}`, prompt: "", expected: "", response: "", score, verdict: "" });
+	const firstTry = [...Array.from({ length: 10 }, (_, n) => item("probe", n, n < 6 ? 1 : 0)), ...Array.from({ length: 5 }, (_, n) => item("production", n, 0.8))];
+	const secondTry = [item("probe", 9, 1)];
+
+	const beforeTheDay = weeklyCheckRows(config, [], 6);
+	assert.equal(beforeTheDay.length, 12);
+	assert.ok(beforeTheDay.every((r) => r.state === "ahead"));
+
+	const onTheDay = weeklyCheckRows(config, [], 7);
+	assert.deepEqual(onTheDay.filter((r) => r.state === "open").map((r) => `${r.week}:${r.language}`), ["1:russian", "1:slovak"]);
+	assert.equal(onTheDay[0]!.date, "2026-11-15");
+
+	const answered = weeklyCheckRows(config, [...firstTry, ...secondTry], 7);
+	const russian = answered[0]!;
+	assert.equal(russian.state, "done");
+	assert.equal(russian.probesAnswered, 10);
+	assert.equal(russian.probesUnderstood, 7);
+	assert.ok(Math.abs(russian.productionMatch! - 0.8) < 1e-9);
+	assert.equal(answered[1]!.state, "open");
+	assert.equal(answered[1]!.productionMatch, null);
 });

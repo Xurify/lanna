@@ -2,6 +2,15 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 9 November: the Study views in the app's own look (branch `t3/pronunciation-principles-review`)
+
+- **Why:** the owner: "This design doesn't match our app at all." The Study page and the weekly check were dark in Day, in capitals, with native selects. Rule E83.
+- **Study (`/experiments/input-first`):** the Milestones frame. The question in plain words, the open weekly check as the one button (or the day the next one opens), four facts in one card, the 42 days as a strip in six weeks (grey for the normal plan, teal for listening first, pale for days ahead, a ring on today), the weekly checks and the measured days as lists, and how the result is decided at the bottom.
+- **Weekly check (`/experiments/input-first/check`):** the Listen frame. The sentence plays once from a play button, the answer is typed, the verdict sits in the bar at the bottom, and the end screen lists the sentences worth another look. "I didn't catch it" and "I don't know" record a miss without typing something random.
+- **Fixed on the way:** the Start button showed the text `&rarr;`; "Review" on a finished check started it again and added a second set of answers, which also turned the week back to "Scheduled"; the listening items were graded by a looser rule than Listen's (for Russian it read й as и); a clip that failed to play still counted as played; the experiment code was imported past the `@/src/core` and `@/src/server` barrels, which the lint rule forbids.
+- **Checked:** `tsc`, `eslint` on the changed files, the full test run (2,091 pass, 3 skipped), and the sandbox with the demo week: the Study page and a whole Slovak week 1 check clicked through in Day and Night at 1280 and 390 px, every screenshot opened. **Unverified:** the Russian check with real audio on the owner's machine; a day with real measured data on the page (the sandbox had none on day 1).
+- **Not built:** the protocol asks for the five production prompts to be spoken; they are typed.
+
 ## 8 November: automated single-case experiment & input-first arm (branch `t3/pronunciation-principles-review`)
 
 - **Automated SCED Protocol v3 (E81):** Single-case interrupted time-series design over 42 days (2026-11-09 to 2026-12-20) comparing Russian (input-first arm) against Slovak (normal control) to test whether input-first accelerates listening comprehension without harming speech.

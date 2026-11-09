@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getExperimentState, syncDailyExperimentData } from "@/src/server/experiment";
+import { getExperimentState, syncDailyExperimentData } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 

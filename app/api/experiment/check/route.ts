@@ -1,5 +1,5 @@
-import { ensureExperimentInitialized, recordWeeklyCheckResults } from "@/src/server/experiment";
-import type { CheckItemRecord } from "@/src/core/experiment";
+import { ensureExperimentInitialized, recordWeeklyCheckResults } from "@/src/server";
+import type { CheckItemRecord } from "@/src/core";
 
 export const dynamic = "force-dynamic";
 

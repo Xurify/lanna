@@ -346,6 +346,42 @@ export function runRandomizationTest(days: DailyExperimentRecord[], observedOnse
 	};
 }
 
+export interface WeeklyCheckRow {
+	week: number;
+	date: string;
+	language: string;
+	state: "done" | "open" | "ahead";
+	probesUnderstood: number;
+	probesAnswered: number;
+	/** Mean word match over the production prompts answered, 0..1; null before the first one. */
+	productionMatch: number | null;
+}
+
+/** One row per week and language. A check opens on its own day; an item answered twice counts once, with its latest answer. */
+export function weeklyCheckRows(config: ExperimentConfig, checks: CheckItemRecord[], todayDayNumber: number): WeeklyCheckRow[] {
+	const rows: WeeklyCheckRow[] = [];
+	for (let week = 1; week <= EXPERIMENT_CONSTANTS.TOTAL_WEEKS; week++) {
+		const checkDay = week * 7;
+		for (const language of [config.languages.treatment, config.languages.control]) {
+			const latest = new Map<string, CheckItemRecord>();
+			for (const c of checks) if (c.week === week && c.language === language) latest.set(`${c.type}:${c.itemId}`, c);
+			const probes = [...latest.values()].filter((c) => c.type === "probe");
+			const production = [...latest.values()].filter((c) => c.type === "production");
+			const done = probes.length >= EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK && production.length >= EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
+			rows.push({
+				week,
+				date: dateForDayNumber(config.startDate, checkDay),
+				language,
+				state: done ? "done" : todayDayNumber >= checkDay ? "open" : "ahead",
+				probesUnderstood: probes.filter((p) => p.score === 1).length,
+				probesAnswered: probes.length,
+				productionMatch: production.length > 0 ? production.reduce((sum, p) => sum + p.score, 0) / production.length : null,
+			});
+		}
+	}
+	return rows;
+}
+
 export function generateSummaryMarkdown(
 	config: ExperimentConfig,
 	schedule: DaySchedule[],
