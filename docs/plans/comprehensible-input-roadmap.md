@@ -57,15 +57,27 @@ In natural first and second language acquisition, learners undergo an initial st
 ## 4. Track C: Redesigning Tutor Error Correction (Conversational Recasting)
 
 ### C.1. The Shift: Didactic Critique → Communicative Recast
-Instead of acting like a red-pen schoolmaster who stops conversation to parse grammar, the AI tutor will mirror skilled human caretakers and immersion teachers:
+Instead of acting like a red-pen schoolmaster who lectures for three paragraphs or burying corrections in a hidden drawer, the AI tutor uses an **Immediate Visual Diff (High Noticing)** model:
 
-| Dimension | Current Schoolmaster Approach | Krashen-Aligned SLA Redesign |
+| Dimension | Legacy Schoolmaster Approach | Immediate Visual Diff (High Noticing) |
 | :--- | :--- | :--- |
-| **Primary Goal** | Grammatical perfection & overt rule awareness | Meaningful communication & implicit pattern noticing |
-| **Response to Error** | Interruption, red text, explicit grammar label | Authentic answer acknowledging meaning + **Recast** |
-| **Affective Impact** | High anxiety, activates Monitor, freezes speech | Low anxiety, zero shame, encourages continued output |
-| **Grammar Feedback** | Embedded directly in conversation text | Decoupled into an optional "Noticing Card" in the side margin |
+| **Primary Goal** | Grammatical taxonomy & overt rule memorization | Rapid gap noticing (Schmidt 1990) + unbroken communication |
+| **Response to Error** | Interruption, red text, lengthy declension lectures | Instant strike-through diff (`~~slip~~ → correct (rule cue)`) |
+| **Affective Impact** | High anxiety, freezes spontaneous output | High clarity, zero shame, immediate visual comprehension |
+| **Conversational Flow** | Freezes conversation, forces manual re-typing | Unbroken: tutor answers the idea in natural target language right below |
+| **Retention Action** | Lost when chat scrolls away | One-tap button to save the exact sentence slip to FSRS Review deck |
 
-### C.2. Two-Layer Architecture
-1. **Layer 1 (The Conversational Stream):** The tutor responds purely to the idea, casually modeling the correct case, aspect, or gender in its Slovak response.
-2. **Layer 2 (The Passive Noticing Drawer):** If an error occurred, a small, subtle badge appears in the message header (`💡 1 pattern noticed`). Clicking it reveals a gentle side-by-side diff without breaking the conversational turn.
+### C.2. The High-Noticing Card Format
+The tutor prepends a crisp visual correction box at the top of its turn whenever a slip occurs:
+
+```markdown
+┌──────────────────────────────────────────────────────────┐
+│  ~~malé mesto~~ ➔ malom meste  (v + locative)            │
+└──────────────────────────────────────────────────────────┘
+"V malom meste? To je super! Máš tam radšej pokoj, alebo ruch?"
+```
+
+1. **Instant Visual Gap:** The learner sees the crossed-out slip and the native form side-by-side in under a second.
+2. **Minimal Rule Cue:** A brief contextual tag (`v + locative`) explains *why* without a textbook sermon.
+3. **Continuous Dialogue:** The conversational reply follows immediately below, modeling natural usage without forcing the learner to re-type before speaking again.
+4. **FSRS Card Bridge:** The error pair can be saved directly to the review deck with one click.
