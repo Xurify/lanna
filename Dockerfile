@@ -29,7 +29,8 @@ RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY . .
 RUN npm run build \
 	&& node scripts/smoke-provider-runtime.mjs \
-	&& node scripts/build-server.mjs
+	&& node scripts/build-server.mjs \
+	&& npx esbuild scripts/web-password.ts scripts/remote-code.ts --bundle --platform=node --format=esm --target=node22 --out-extension:.js=.mjs --outdir=/src/cli
 
 FROM ${NODE_IMAGE} AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends chromium ca-certificates \
@@ -53,6 +54,7 @@ WORKDIR /app
 COPY --from=build /src/.next/standalone ./
 COPY --from=build /src/.claude/skills/slovak-language ./.claude/skills/slovak-language
 COPY --from=build /src/scripts/boot-check.mjs /src/scripts/verify-data.mjs ./
+COPY --from=build /src/cli ./cli
 COPY docker/entrypoint.sh /usr/local/bin/lh-entrypoint
 RUN chmod 0755 /usr/local/bin/lh-entrypoint \
 	&& mkdir -p /app/.next/cache \
