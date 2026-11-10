@@ -452,7 +452,7 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 								>
 									<span className={cn("w", replays >= PEEK_AFTER_REPLAYS && "!text-ink-2")}>
 										<EyeIcon className="size-3.5" strokeWidth={1.6} />
-										{replays < PEEK_AFTER_REPLAYS ? "Show the text · listen once more first" : "Show the text · not counted"}
+										{replays < PEEK_AFTER_REPLAYS ? "Show the text" : "Show the text (not counted)"}
 									</span>
 								</button>
 							)}
