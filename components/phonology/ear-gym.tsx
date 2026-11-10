@@ -316,7 +316,7 @@ export function EarGym({
 						title="Ear gym"
 						right={<ChoiceMenu quiet align="end" value={family} options={menu} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Sounds" className="-me-2" />}
 					>
-						<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:gap-x-4">
 							<button
 								type="button"
 								onClick={() => replay()}
@@ -327,7 +327,7 @@ export function EarGym({
 							>
 								<SoundIcon on={!!playing?.hidden} className="size-6" />
 							</button>
-							<div>
+							<div className="min-w-0">
 								<h2 className="font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
 									{!answered ? "Which word?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
 								</h2>
@@ -340,10 +340,11 @@ export function EarGym({
 								onClick={() => replay(true)}
 								aria-label="Play slowly"
 								title="Play slowly"
-								className="lh-press col-start-2 flex h-11 shrink-0 items-center justify-center gap-2 justify-self-start rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:col-start-auto"
+								className="lh-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
+								data-testid="ear-gym-slow"
 							>
 								<SnailIcon className="size-5" strokeWidth={1.6} />
-								Slowly
+								<span className="hidden min-[360px]:inline">Slowly</span>
 							</button>
 						</div>
 
