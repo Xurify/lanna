@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
+import { pathToFileURL } from "node:url";
 
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-secrets-"));
 process.env.LH_DATA_DIR = path.join(TMP, "data");
@@ -80,7 +81,7 @@ describe("no route answers with a key or a sign-in token", () => {
 		const reached: string[] = [];
 		for (const file of routeFiles(API_ROOT)) {
 			const relative = path.relative(API_ROOT, file).split(path.sep).join("/");
-			const handlers = (await import(file)) as Record<string, Handler>;
+			const handlers = (await import(pathToFileURL(file).href)) as Record<string, Handler>;
 			if (!handlers.GET) continue;
 			const url = `http://localhost/api/${relative.replace(/\/?route\.ts$/, "").replace(/\[\.\.\.\w+\]/, "x/y").replace(/\[\w+\]/g, "nope")}`;
 			const context = { params: Promise.resolve({ id: "nope", section: "agent", segment: ["x"] }) };

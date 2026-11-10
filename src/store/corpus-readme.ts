@@ -315,6 +315,15 @@ Phrase lists you made under Words → Cheatsheets, one JSON file per sheet:
   \`text\` (the phrase in the language), \`pron\` (how to say it),
   \`meaning\` and \`note\`; the empty ones are left out.
 - \`trash/\`: every version an edit or an add replaced, and removed sheets.
+- \`practice/<sheet id>.json\`: Listen and type on a sheet. One entry per
+  phrase you have heard, keyed by the phrase in lower case without
+  punctuation: \`heard\` (times), \`caughtInARow\` (0 when the last answer
+  missed) and \`at\` (when it was last heard).
+- \`practice/log.jsonl\`: one line per session: \`at\`, \`day\`, \`sheet\`,
+  \`title\`, \`section\` (when one section was practiced) and \`reps[]\`
+  (\`text\`, \`meaning\`, \`given\` = what you typed, \`verdict\`, \`peeked\`,
+  \`replays\`, \`ms\`). These answers are not in \`lessons/\`, so nothing
+  that measures your listening reads them.
 `;
 
 export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS, distractors: DISTRACTORS, cheatsheets: CHEATSHEETS } as const;

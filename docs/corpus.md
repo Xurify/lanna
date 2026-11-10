@@ -20,6 +20,7 @@ Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor
 | `data/profiles/<lang>/speak/<id>.json` + `<id>/NN.wav` + `index.jsonl` | Spoken scenes with the learner's own recordings | `src/store/speak.ts` |
 | `data/profiles/<lang>/fluency/log.jsonl` | Say-it-faster and re-read rounds (words a minute, clarity) | `src/server/fluency.ts` |
 | `data/profiles/<lang>/cheatsheets/<id>.json` + `trash/` | Cheatsheets: title, sections and their phrases; every version an edit or an add replaced goes to `trash/`; exported as `cheatsheets.json` | `src/store/cheatsheets.ts` |
+| `data/profiles/<lang>/cheatsheets/practice/<sheet id>.json` + `practice/log.jsonl` | Listen on a cheatsheet (E95): per phrase, the times heard, how many times in a row it was caught by ear and when; and every session with what was typed. Kept apart from the lesson log, so nothing that measures listening reads it; exported as `cheatsheet-practice.json` | `src/store/sheet-practice.ts` |
 | `data/profiles/<lang>/outside-listening.json` | Listening logged by hand outside the app: day, minutes, focused or background, what it was. Never part of the measured minutes | `src/store/outside.ts` |
 | `data/profiles/<lang>/milestones.json` | Custom "When can I…?" situations mapped once by the cheap slot | `src/server/milestones.ts` |
 | `data/profiles/<lang>/known.json` | Words the learner marked as known (slug, dictionary form, when), counted as met wherever "known" is measured (E71) | `src/store/known-words.ts` |

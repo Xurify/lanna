@@ -1,12 +1,13 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, PencilIcon, PlusIcon, RepeatIcon, SearchIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, HeadphonesIcon, PencilIcon, PlusIcon, RepeatIcon, SearchIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
-import { CheatsheetParseError, cheatsheetRowCount, countOverlap, formatSheetText, parseSheetText, searchSections, type Cheatsheet, type CheatRow, type CheatsheetSummary, type CheatSection } from "@/src/core";
+import { CheatsheetParseError, cheatsheetRowCount, countOverlap, formatSheetText, parseSheetText, searchSections, type Cheatsheet, type CheatRow, type CheatsheetSummary, type CheatSection, type SheetProgress } from "@/src/core";
 
 interface ReviewState {
 	inDictionary: number;
@@ -16,6 +17,11 @@ interface ReviewState {
 const dateLabel = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+function listenHref(sheetId: string, sectionId?: string): string {
+	const href = `/listen?sheet=${encodeURIComponent(sheetId)}`;
+	return sectionId ? `${href}&section=${encodeURIComponent(sectionId)}` : href;
+}
 
 /** The sheet's address, so a link (or a second window during a game) opens it directly. */
 function setSheetInUrl(id: string | null) {
@@ -115,7 +121,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 
 			<div className="min-h-[120px]">
 				{shownSheets && shownSheets.length > 0 && (
-					<ul className="q-card divide-y divide-border/70 overflow-hidden" data-testid="cheatsheet-list">
+					<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden" data-testid="cheatsheet-list">
 						{shownSheets.map((s) => (
 							<li key={s.id}>
 								<button type="button" onClick={() => open(s.id)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-well">
@@ -688,6 +694,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 	const [sheet, setSheet] = useState<Cheatsheet | null>(null);
 	const [missing, setMissing] = useState(false);
 	const [review, setReview] = useState<ReviewState | null>(null);
+	const [heard, setHeard] = useState<SheetProgress | null>(null);
 	const [reviewNote, setReviewNote] = useState<string | null>(null);
 	const [adding, setAdding] = useState(false);
 	const [cover, setCover] = useState(false);
@@ -700,9 +707,10 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 	const load = useCallback(async () => {
 		const res = await fetch(`/api/cheatsheets/${encodeURIComponent(id)}`).catch(() => null);
 		if (!res?.ok) return setMissing(true);
-		const data = (await res.json()) as { sheet: Cheatsheet; review: ReviewState };
+		const data = (await res.json()) as { sheet: Cheatsheet; review: ReviewState; listen: SheetProgress };
 		setSheet(data.sheet);
 		setReview(data.review);
+		setHeard(data.listen);
 	}, [id]);
 
 	useEffect(() => {
@@ -822,6 +830,20 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 						</span>
 					</div>
 
+					{heard && heard.lines > 0 && (
+						<div className="flex flex-wrap items-center gap-x-3 gap-y-2" data-testid="cheatsheet-listen">
+							<Link href={listenHref(sheet.id)} className="q-btn primary pointer-coarse:min-h-11" data-testid="cheatsheet-listen-start">
+								<HeadphonesIcon className="size-4" />
+								Listen and type
+							</Link>
+							<p className="font-ui text-[13px] text-ink-3" data-testid="cheatsheet-listen-progress">
+								{heard.heard === 0
+									? "Ten phrases at a time, heard before they are seen."
+									: `${heard.caught} of ${heard.lines} caught by ear · ${heard.heard} heard so far`}
+							</p>
+						</div>
+					)}
+
 					<div className="flex flex-wrap items-center gap-2">
 						<div className="q-segc" role="radiogroup" aria-label="Show the phrases">
 							<button type="button" role="radio" aria-checked={!cover} className={cn(!cover && "on")} onClick={() => setMode(false)}>
@@ -865,8 +887,19 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 
 					{sections.map((section) => (
 						<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">
-							<h3 className="q-sh !mb-0">{section.title}</h3>
-							<ul className="q-card divide-y divide-border/70 overflow-hidden">
+							<h3 className="q-sh !mb-0">
+								{section.title}
+								<Link
+									href={listenHref(sheet.id, section.id)}
+									aria-label={`Listen to ${section.title}`}
+									className="order-3 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12.5px] font-[550] text-ink-3 hover:text-ink-2 pointer-coarse:min-h-11"
+									data-testid="cheatsheet-listen-section"
+								>
+									<HeadphonesIcon className="size-3.5" strokeWidth={1.8} />
+									Listen
+								</Link>
+							</h3>
+							<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden">
 								{section.rows.map((row, i) => {
 									const key = `${section.id}:${i}`;
 									return <CheatRowItem key={key} row={row} tag={lang?.tag} hidden={cover && !shown.has(key)} onReveal={() => setShown((prev) => new Set(prev).add(key))} />;

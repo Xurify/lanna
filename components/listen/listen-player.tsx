@@ -30,7 +30,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict } from "@/src/core";
+import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict, type SheetProgress } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
@@ -57,10 +57,27 @@ interface Outcome {
 	almost: number;
 	total: number;
 	queued: string[];
+	progress?: SheetProgress;
 }
 
+export interface ListenSheet {
+	id: string;
+	title: string;
+	section?: string;
+}
 
-export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan | null }) {
+function sheetListenUrl(sheet: ListenSheet): string {
+	const url = `/api/cheatsheets/${encodeURIComponent(sheet.id)}/listen`;
+	return sheet.section ? `${url}?section=${encodeURIComponent(sheet.section)}` : url;
+}
+
+function sheetHref(sheet: ListenSheet): string {
+	return `/words?tab=cheatsheets&sheet=${encodeURIComponent(sheet.id)}`;
+}
+
+const SHEET_GONE = "It was removed, or it belongs to another language.";
+
+export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: ListenPlan | null; sheet?: ListenSheet }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [plan, setPlan] = useState<ListenPlan | null>(initialPlan);
@@ -102,18 +119,19 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		setSaveRefused(false);
 		finishing.current = false;
 		try {
-			const res = await fetch("/api/listen");
+			const res = await fetch(sheet ? sheetListenUrl(sheet) : "/api/listen");
+			if (sheet && res.status === 404) throw new Error(SHEET_GONE);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as ListenPlan;
 			if (seq !== loadSeq.current) return;
-			if (next.items.length === 0) throw new Error("No sentences to listen to yet. Finish a lesson or two first.");
+			if (next.items.length === 0) throw new Error(sheet ? "This cheatsheet has no phrase to play. A phrase with … in it is skipped." : "No sentences to listen to yet. Finish a lesson or two first.");
 			setPlan(next);
 			startedAt.current = Date.now();
 			activeTime.restart();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
-	}, [activeTime]);
+	}, [activeTime, sheet]);
 
 	const hadInitial = useRef(initialPlan !== null);
 	useEffect(() => {
@@ -164,7 +182,14 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			const correct = understood(all);
 			const almost = almostCount(all);
 			try {
-				lastSave.current = keepSession(lang?.code ?? "sk", "/api/listen", {
+				const timed = { ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() };
+				lastSave.current = sheet
+					? keepSession(lang?.code ?? "sk", sheetListenUrl(sheet), {
+							reps: all.map((r) => ({ itemId: r.item.id, given: r.given, peeked: r.peeked, replays: r.replays, ms: r.ms, heardMs: r.heardMs })),
+							section: sheet.section,
+							...timed,
+						})
+					: keepSession(lang?.code ?? "sk", "/api/listen", {
 						reps: all.map((r) => ({
 							itemId: r.item.id,
 							slug: r.item.slug,
@@ -183,20 +208,18 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							words: r.item.words,
 							stretchText: r.item.stretch.map((w) => w.text),
 						})),
-						ms: Date.now() - startedAt.current,
-						activeMs: activeTime.finish(),
-						tz: new Date().getTimezoneOffset(),
+						...timed,
 				});
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 			} catch (err) {
 				setSaveFailed(true);
 				setSaveRefused(err instanceof RefusedError);
-				setOutcome({ xp: listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
+				setOutcome({ xp: sheet ? 0 : listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
 			} finally {
 				setSaving(false);
 			}
 		},
-		[activeTime, lang],
+		[activeTime, lang, sheet],
 	);
 
 	const retrySave = async () => {
@@ -238,7 +261,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	const submit = () => {
 		const given = draft.trim();
 		if (!item || current || !given) return;
-		answerWith(given, judgeTyped(given, item.sentence));
+		answerWith(given, sheet ? judgeTyped(given, item.sentence, lang?.tag) : judgeTyped(given, item.sentence));
 	};
 
 	/** Nothing was caught: a miss, without typing something random to get past it. */
@@ -266,13 +289,13 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			// The Enter that sends a typed answer is already handled by the field. This listener is re-registered on every render, so it is new by the time that same keypress reaches the window with the answer in place, and it would "continue" at once: the sentence and the verdict never showed. A held key must not skip a sentence either.
 			if (e.defaultPrevented || e.repeat) return;
 			if (e.key === "Escape") {
-				router.push(readOrigin());
+				router.push(sheet ? sheetHref(sheet) : readOrigin());
 				return;
 			}
 			if (outcome) {
 				if (e.key === "Enter" && !endEnterBlocked(e)) {
 					e.preventDefault();
-					router.push("/");
+					router.push(sheet ? sheetHref(sheet) : "/");
 				}
 				return;
 			}
@@ -292,6 +315,26 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
 	});
+
+	if (error && sheet) {
+		return (
+			<Frame>
+				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
+					<EmptyState
+						testid="listen-error"
+						title={error === SHEET_GONE ? "This cheatsheet is not here" : "Nothing to listen to in this cheatsheet"}
+						action={
+							<Link href={error === SHEET_GONE ? "/words?tab=cheatsheets" : sheetHref(sheet)} className="q-btn primary">
+								{error === SHEET_GONE ? "All cheatsheets" : "Back to the cheatsheet"}
+							</Link>
+						}
+					>
+						<p>{error}</p>
+					</EmptyState>
+				</div>
+			</Frame>
+		);
+	}
 
 	if (error) {
 		return (
@@ -332,7 +375,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 			<Frame>
 				<div className="m-auto flex items-center gap-3 font-ui text-sm text-muted-foreground" data-testid="listen-loading">
 					<HeadphonesIcon className="size-5 animate-pulse" />
-					Choosing sentences you can follow…
+					{sheet ? "Picking phrases from your cheatsheet…" : "Choosing sentences you can follow…"}
 				</div>
 			</Frame>
 		);
@@ -341,7 +384,7 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} reps={reps} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
+				<EndScreen outcome={outcome} reps={reps} sheet={sheet} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
 			</Frame>
 		);
 	}
@@ -359,11 +402,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 					<PracticeCard
 						icon="listen"
 						title="Listen"
-						sub={`Sentence ${index + 1} of ${total}`}
+						sub={`${sheet ? "Phrase" : "Sentence"} ${index + 1} of ${total}`}
 					>
 						{item.source ? (
 							<p className="mb-4 flex min-w-0 items-center gap-2 font-ui text-[13px] text-ink-3" data-testid="listen-source">
-								<span className="q-pill shrink-0">From a video you watched</span>
+								<span className="q-pill shrink-0">{item.source.kind === "sheet" ? "From your cheatsheet" : "From a video you watched"}</span>
 								<span className="truncate" title={item.source.title}>
 									{item.source.title}
 								</span>
@@ -476,6 +519,11 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 											{item.translation}
 										</p>
 									)}
+									{current && item.source?.kind === "sheet" && item.source.note && (
+										<p data-no-word-lookup="true" className="mt-1 font-ui text-[13px] text-ink-3" data-testid="listen-note">
+											{item.source.note}
+										</p>
+									)}
 								</div>
 							) : (
 								<p className="font-ui text-[13px] leading-relaxed text-ink-3">Listen first. The text appears once you have typed what you heard
@@ -495,9 +543,9 @@ export function ListenPlayer({ initialPlan = null }: { initialPlan?: ListenPlan 
 							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", current.verdict === "exact" ? "text-teal-2" : current.verdict === "accents" ? "text-ink-2" : "text-miss")} data-testid="listen-verdict">
 								<VerdictDisc ok={current.verdict !== "wrong"} />
 								{current.verdict === "exact"
-									? `Typed correctly · +${LISTEN_XP} XP`
+									? `Typed correctly${sheet ? "" : ` · +${LISTEN_XP} XP`}`
 									: current.verdict === "accents"
-										? `Almost · only an accent is missing · +${Math.ceil(LISTEN_XP / 2)} XP`
+										? `Almost · only an accent is missing${sheet ? "" : ` · +${Math.ceil(LISTEN_XP / 2)} XP`}`
 										: current.given
 											? "Not quite"
 											: "Not caught this time"}
@@ -548,7 +596,78 @@ function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) 
 	);
 }
 
-function EndScreen({ outcome, reps, saving, failed, refused, onAgain, onRetrySave }: { outcome: Outcome; reps: Rep[]; saving: boolean; failed: boolean; refused: boolean; onAgain: () => void; onRetrySave: () => void }) {
+interface EndScreenProps {
+	outcome: Outcome;
+	reps: Rep[];
+	saving: boolean;
+	failed: boolean;
+	refused: boolean;
+	onAgain: () => void;
+	onRetrySave: () => void;
+}
+
+function SheetEndScreen({ outcome, reps, sheet, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps & { sheet: ListenSheet }) {
+	const missed = reps.filter((r) => r.verdict !== "exact");
+	const typedCorrectly = reps.filter((r) => r.verdict === "exact");
+	const scope = sheet.section ? "this section" : "this cheatsheet";
+	const notCounted = refused ? "Not counted" : "Not counted yet";
+	const share = (n: number | undefined) => (saving ? null : failed || !outcome.progress || n === undefined ? notCounted : `${n} of ${outcome.progress.lines}`);
+	return (
+		<TaskEnd
+			testId="listen-end"
+			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for the cheatsheet</EnterHint>}
+			actions={
+				<>
+					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
+						<RepeatIcon className="size-4" />
+						Ten more
+					</button>
+					<Link href={sheetHref(sheet)} className={PRIMARY} data-testid="listen-sheet">
+						Back to the cheatsheet
+					</Link>
+				</>
+			}
+		>
+			<p className="q-date flex items-center gap-1.5">
+				<QIcon name="listen" className="text-teal" />
+				Listen · {sheet.title || "your cheatsheet"}
+			</p>
+			<h1 className="q-hello">
+				{outcome.correct} of {outcome.total} typed correctly, without the text
+			</h1>
+			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent</p>}
+			<Stats className="mt-7 max-w-none">
+				<Stat label={`Caught by ear in ${scope}`} value={share(outcome.progress?.caught)} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat label={`Heard so far in ${scope}`} value={share(outcome.progress?.heard)} ink={failed ? "text-ink-3" : undefined} />
+			</Stats>
+			<p className="mt-3 max-w-prose font-prose text-sm text-ink-3" data-testid="listen-sheet-terms">
+				These are your own phrases, as you wrote them. Nothing checked them against the dictionary. The time counts as listening; it earns no XP and adds nothing to Review.
+			</p>
+			{missed.length > 0 && (
+				<div className="mt-8">
+					<h2 className="q-sh">Missed · these come back first</h2>
+					<ListenRows reps={missed} />
+				</div>
+			)}
+			{typedCorrectly.length > 0 && (
+				<details className="group mt-6" data-testid="listen-understood">
+					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
+						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
+						Typed correctly · {typedCorrectly.length} {typedCorrectly.length === 1 ? "phrase" : "phrases"}
+					</summary>
+					<ListenRows reps={typedCorrectly} />
+				</details>
+			)}
+			<SourcesNote feature="cheatsheet-listen" className="mt-14" />
+		</TaskEnd>
+	);
+}
+
+function EndScreen({ sheet, ...props }: EndScreenProps & { sheet?: ListenSheet }) {
+	return sheet ? <SheetEndScreen sheet={sheet} {...props} /> : <DictionaryEndScreen {...props} />;
+}
+
+function DictionaryEndScreen({ outcome, reps, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps) {
 	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
