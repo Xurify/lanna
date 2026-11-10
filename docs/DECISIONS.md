@@ -1174,6 +1174,8 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.
+- **One `Pip` for the ear gym and Listen (deferred 2026-11-09, E96).** `components/phonology/ear-gym.tsx` still draws its marks with its own copy. It changed on `feat/ear-gym-estonian` and `feat/sound-guide` while this branch was open, so moving it to `Pip` in `components/task-frame.tsx` is a change of its own.
+- **A flat card on a phone for the other task screens (deferred 2026-11-09, E96).** Only Listen passes `phone="flat"`. The lesson, the exam, Speak and the ear gym keep their card at 390 px until each has been looked at.
 
 ### E91. The server runs as a container on an always-on machine; it updates only to a build that checks itself, and its data is backed up and read back (2026-11-09, branch `feat/server-container`)
 
@@ -1261,12 +1263,3 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Words has no stat cards.** The four counts are one line under the title ("0 can recall at 80%+ · 0 in progress · 0 favorites · 5 saved phrases"); the anti-slop skill names a row of identical cards with a number each. The selected tab is marked by an inset teal line: the border it had was hidden by the app's unlayered `* { border-color }` rule, so no tab looked selected.
 - **The language arrives without a mismatch.** `useActiveLanguage` (`components/speech.tsx`) reads the language through `useSyncExternalStore` with an empty server snapshot. Before, a component that hydrated after the language had been fetched began with it while the server HTML had none, and React threw the tree away and drew it again (seen on Listen in 2 of 6 loads): a flash, and the answer line lost its focus.
 - **Not changed:** the letter keys (E66), the dock, the other task screens (they keep the card on a phone until someone looks at each), the Words and Saved phrases tabs below the header.
-
-## Dropped or deferred
-
-- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it. A file the owner uploads by hand is not automated access: see E89.
-- **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
-- **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
-- **Windows installer and sync:** not built; data is local only.
-- **One `Pip` for the ear gym and Listen (deferred 2026-11-09, E96).** `components/phonology/ear-gym.tsx` still draws its marks with its own copy. It changed on `feat/ear-gym-estonian` and `feat/sound-guide` while this branch was open, so moving it to `Pip` in `components/task-frame.tsx` is a change of its own.
-- **A flat card on a phone for the other task screens (deferred 2026-11-09, E96).** Only Listen passes `phone="flat"`. The lesson, the exam, Speak and the ear gym keep their card at 390 px until each has been looked at.
