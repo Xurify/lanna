@@ -383,11 +383,17 @@ async function captionsViaYtDlp(id: string, langs: readonly string[], signal?: A
 	}
 }
 
-async function transcribeFileViaWhisper(audioPath: string, lang: string, signal?: AbortSignal): Promise<{ cues: CaptionCue[]; durationSec: number } | null> {
+interface Transcript {
+	language: string;
+	cues: CaptionCue[];
+	durationSec: number;
+}
+
+async function transcribeFileViaWhisper(audioPath: string, accepted: readonly string[], signal?: AbortSignal): Promise<Transcript | null> {
 	const py = pythonPath();
 	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
 	if (!py || !fs.existsSync(helper)) return null;
-	const { stdout } = await run(py, [helper, "transcribe", audioPath, lang, "large-v3-turbo"], {
+	const { stdout } = await run(py, [helper, "transcribe", audioPath, accepted.join(","), "large-v3-turbo"], {
 		timeout: 900_000,
 		maxBuffer: 64 * 1024 * 1024,
 		signal,
@@ -396,9 +402,9 @@ async function transcribeFileViaWhisper(audioPath: string, lang: string, signal?
 	});
 	const line = stdout.trim().split("\n").pop() ?? "";
 	if (!line) return null;
-	const parsed = JSON.parse(line) as { durationSec?: number; cues?: CaptionCue[] };
-	if (!parsed.cues?.length) return null;
-	return { cues: parsed.cues, durationSec: Number(parsed.durationSec) || 0 };
+	const parsed = JSON.parse(line) as { language?: string; durationSec?: number; cues?: CaptionCue[] };
+	if (!parsed.language) return null;
+	return { language: parsed.language, cues: parsed.cues ?? [], durationSec: Number(parsed.durationSec) || 0 };
 }
 
 interface ElevenLabsWord {
@@ -452,7 +458,7 @@ function groupWordsIntoCues(words: readonly ElevenLabsWord[]): CaptionCue[] {
 	return cues;
 }
 
-async function transcribeFileViaElevenLabs(audioPath: string, lang: string, signal?: AbortSignal): Promise<{ cues: CaptionCue[]; durationSec: number } | null> {
+async function transcribeFileViaElevenLabs(audioPath: string, lang: string, signal?: AbortSignal): Promise<Transcript | null> {
 	const key = keyValue("ELEVENLABS_API_KEY");
 	if (!key) return null;
 	const audio = fs.readFileSync(audioPath);
@@ -474,19 +480,20 @@ async function transcribeFileViaElevenLabs(audioPath: string, lang: string, sign
 	const cues = words.length > 0 ? groupWordsIntoCues(words) : body.text?.trim() ? [{ start: 0, dur: 5, text: body.text.trim() }] : [];
 	if (!cues.length) return null;
 	const last = cues[cues.length - 1]!;
-	return { cues, durationSec: Math.ceil(last.start + last.dur) };
+	return { language: lang, cues, durationSec: Math.ceil(last.start + last.dur) };
 }
 
 async function transcribeAudioFile(
 	audioPath: string,
-	lang: string,
+	accepted: readonly string[],
 	signal?: AbortSignal,
-): Promise<{ cues: CaptionCue[]; via: "whisper" | "elevenlabs" | "deepgram"; durationSec: number } | null> {
+): Promise<(Transcript & { via: "whisper" | "elevenlabs" | "deepgram" }) | null> {
 	const preferred: TranscriptionEngineId | undefined = settingsStore.readSettings()?.agent?.transcription?.engine;
 	const errors: string[] = [];
+	const cloudLang = accepted[0]!;
 
 	if (preferred === "elevenlabs") {
-		const got = await transcribeFileViaElevenLabs(audioPath, lang, signal);
+		const got = await transcribeFileViaElevenLabs(audioPath, cloudLang, signal);
 		if (got) return { ...got, via: "elevenlabs" };
 		throw new Error(
 			keyValue("ELEVENLABS_API_KEY")
@@ -496,13 +503,13 @@ async function transcribeAudioFile(
 	}
 
 	if (preferred === "whisper") {
-		const got = await transcribeFileViaWhisper(audioPath, lang, signal);
+		const got = await transcribeFileViaWhisper(audioPath, accepted, signal);
 		if (got) return { ...got, via: "whisper" };
 		throw new Error("Whisper (large-v3-turbo) could not transcribe this audio.");
 	}
 
 	try {
-		const got = await transcribeFileViaWhisper(audioPath, lang, signal);
+		const got = await transcribeFileViaWhisper(audioPath, accepted, signal);
 		if (got) return { ...got, via: "whisper" };
 	} catch (err) {
 		errors.push(`whisper: ${err instanceof Error ? err.message : String(err)}`);
@@ -510,7 +517,7 @@ async function transcribeAudioFile(
 
 	if (keyValue("ELEVENLABS_API_KEY")) {
 		try {
-			const got = await transcribeFileViaElevenLabs(audioPath, lang, signal);
+			const got = await transcribeFileViaElevenLabs(audioPath, cloudLang, signal);
 			if (got) return { ...got, via: "elevenlabs" };
 		} catch (err) {
 			errors.push(`elevenlabs: ${err instanceof Error ? err.message : String(err)}`);
@@ -520,7 +527,7 @@ async function transcribeAudioFile(
 	const dgKey = keyValue("DEEPGRAM_API_KEY");
 	if (dgKey) {
 		const audio = fs.readFileSync(audioPath);
-		const res = await fetch(`https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true&utterances=true`, {
+		const res = await fetch(`https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(cloudLang)}&smart_format=true&punctuate=true&utterances=true`, {
 			method: "POST",
 			headers: { authorization: `Token ${dgKey}`, "content-type": "audio/mpeg" },
 			body: new Uint8Array(audio),
@@ -531,7 +538,7 @@ async function transcribeAudioFile(
 		const cues: CaptionCue[] = (body.results?.utterances ?? []).filter((u) => u.transcript?.trim()).map((u) => ({ start: u.start, dur: Math.max(0, u.end - u.start), text: u.transcript.trim() }));
 		if (cues.length) {
 			const last = cues[cues.length - 1]!;
-			return { cues, via: "deepgram", durationSec: Math.ceil(last.start + last.dur) };
+			return { language: cloudLang, cues, via: "deepgram", durationSec: Math.ceil(last.start + last.dur) };
 		}
 	}
 
@@ -539,7 +546,7 @@ async function transcribeAudioFile(
 	return null;
 }
 
-async function captionsForSpotify(id: string, lang: string, signal?: AbortSignal, onStage?: (s: PrepareStage) => void): Promise<FetchedCaptions> {
+async function captionsForSpotify(id: string, accepted: readonly string[], signal?: AbortSignal, onStage?: (s: PrepareStage) => void): Promise<FetchedCaptions> {
 	const py = pythonPath();
 	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
 	if (!py || !fs.existsSync(helper)) {
@@ -562,20 +569,21 @@ async function captionsForSpotify(id: string, lang: string, signal?: AbortSignal
 	const dlMeta = JSON.parse(metaLine) as { title?: string; channel?: string; durationSec?: number };
 
 	onStage?.("transcribing");
-	const transcribed = await transcribeAudioFile(mp3Path, lang, signal);
-	if (!transcribed || !transcribed.cues.length) {
-		throw new Error("Could not transcribe the Spotify track audio.");
-	}
+	const transcribed = await transcribeAudioFile(mp3Path, accepted, signal);
+	if (!transcribed) throw new Error("Could not transcribe the Spotify track audio.");
+	const meta = {
+		id,
+		title: dlMeta.title?.trim() || `Spotify ${id.slice(3)}`,
+		...(dlMeta.channel?.trim() ? { channel: dlMeta.channel.trim() } : {}),
+		durationSec: Math.round(dlMeta.durationSec || transcribed.durationSec || 0),
+	};
+	if (!accepted.includes(transcribed.language)) throw notThisLanguage(transcribed.language, meta);
+	if (!transcribed.cues.length) throw new Error("Could not transcribe the Spotify track audio.");
 	const cues = transcribed.cues;
 	return {
-		meta: {
-			id,
-			title: dlMeta.title?.trim() || `Spotify ${id.slice(3)}`,
-			...(dlMeta.channel?.trim() ? { channel: dlMeta.channel.trim() } : {}),
-			durationSec: Math.round(dlMeta.durationSec || transcribed.durationSec || 0),
-		},
+		meta,
 		cues,
-		source: { kind: "transcription", trackLang: lang, via: transcribed.via },
+		source: { kind: "transcription", trackLang: transcribed.language, via: transcribed.via },
 		raw: {
 			ext: "json",
 			text: JSON.stringify({
@@ -589,7 +597,7 @@ async function captionsForSpotify(id: string, lang: string, signal?: AbortSignal
 	};
 }
 
-async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null, lang: string, signal?: AbortSignal): Promise<FetchedCaptions | null> {
+async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null, accepted: readonly string[], signal?: AbortSignal): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin || !canTranscribeAudio()) return null;
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
@@ -598,13 +606,15 @@ async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null,
 		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number };
 		const file = fs.readdirSync(dir).find((f) => f.endsWith(".mp3"));
 		if (!file) return null;
-		const transcribed = await transcribeAudioFile(path.join(dir, file), lang, signal);
-		if (!transcribed || !transcribed.cues.length) return null;
+		const transcribed = await transcribeAudioFile(path.join(dir, file), accepted, signal);
+		if (!transcribed) return null;
+		if (!accepted.includes(transcribed.language)) throw notThisLanguage(transcribed.language, meta);
+		if (!transcribed.cues.length) return null;
 		const { cues, via } = transcribed;
 		return {
 			meta: { id, title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`, ...(meta?.channel || info.channel || info.uploader ? { channel: (meta?.channel ?? info.channel ?? info.uploader)! } : {}), ...(meta?.channelId ? { channelId: meta.channelId } : {}), durationSec: meta?.durationSec || Number(info.duration) || transcribed.durationSec || 0 },
 			cues,
-			source: { kind: "transcription", trackLang: lang, via },
+			source: { kind: "transcription", trackLang: transcribed.language, via },
 			raw: { ext: "json", text: JSON.stringify({ events: cues.map((c) => ({ tStartMs: Math.round(c.start * 1000), dDurationMs: Math.round(c.dur * 1000), segs: [{ utf8: c.text }] })) }) },
 		};
 	} finally {
@@ -644,9 +654,7 @@ export function spokenLanguage(tracks: readonly CaptionTrack[]): string | null {
 
 /** The learner's other language profile that `tracks` say a video is in, when
  *  it is ready to take it (it has its words). */
-export function elsewhereProfile(tracks: readonly CaptionTrack[]): ElsewhereProfile | null {
-	const spoken = spokenLanguage(tracks);
-	if (!spoken) return null;
+function elsewhereFor(spoken: string): ElsewhereProfile | null {
 	for (const id of shownProfiles()) {
 		if (id === activeProfile()) continue;
 		const info = profileLanguage(id);
@@ -655,15 +663,28 @@ export function elsewhereProfile(tracks: readonly CaptionTrack[]): ElsewhereProf
 	return null;
 }
 
+export function elsewhereProfile(tracks: readonly CaptionTrack[]): ElsewhereProfile | null {
+	const spoken = spokenLanguage(tracks);
+	return spoken ? elsewhereFor(spoken) : null;
+}
+
+export function notThisLanguage(spoken: string, meta: { title: string; channel?: string; durationSec: number } | null): NoCaptionsError {
+	const elsewhere = elsewhereFor(spoken);
+	const wanted = captionLangs().map(captionLanguageName).join(" or ");
+	const why = elsewhere
+		? `This video is in ${elsewhere.english}, not ${wanted}. It belongs in your ${elsewhere.english} profile.`
+		: `This video is in ${captionLanguageName(spoken)}, not ${wanted}.`;
+	return new NoCaptionsError(why, meta, false, elsewhere);
+}
+
 /** The captions of a video in the first of the caption languages it has
  *  (Slovak, then Czech), from the first source that has them: YouTube's
  *  player API, the watch page, yt-dlp; then, only when asked, a
- *  transcription of the audio in the first language. A kept track is reused. */
+ *  transcription of the audio, which must be spoken in one of them. A kept track is reused. */
 export async function fetchCaptions(id: string, opts: { transcribe?: boolean; lang?: string; signal?: AbortSignal; onStage?: (s: PrepareStage) => void } = {}): Promise<FetchedCaptions> {
 	const langs = opts.lang ? [opts.lang] : captionLangs();
-	const lang = langs[0]!;
 	if (isSpotifyId(id)) {
-		return captionsForSpotify(id, lang, opts.signal, opts.onStage);
+		return captionsForSpotify(id, langs, opts.signal, opts.onStage);
 	}
 	let meta: VideoMeta | null = null;
 	const errors: string[] = [];
@@ -695,7 +716,7 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 	const canTranscribe = canTranscribeAudio();
 	if (opts.transcribe && canTranscribe) {
 		opts.onStage?.("transcribing");
-		const got = await captionsViaAudioTranscription(id, meta, lang, opts.signal);
+		const got = await captionsViaAudioTranscription(id, meta, langs, opts.signal);
 		if (got) return got;
 		errors.push("transcription: no speech found");
 	}
