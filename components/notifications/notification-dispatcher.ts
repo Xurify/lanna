@@ -96,3 +96,7 @@ export async function dispatchReminderAlert(options: DispatchAlertOptions): Prom
 		}
 	}
 }
+
+if (typeof window !== "undefined") {
+	(window as unknown as { __lhDispatchReminderAlert?: typeof dispatchReminderAlert }).__lhDispatchReminderAlert = dispatchReminderAlert;
+}
