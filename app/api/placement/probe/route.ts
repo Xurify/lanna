@@ -5,11 +5,13 @@
  * leaves it where it is.
  */
 
-import { probePlacement, skipProbe } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, probePlacement, skipProbe } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { id?: unknown; answer?: unknown; skip?: unknown } | null;
 	if (!body || typeof body.id !== "string") return Response.json({ message: "id is required" }, { status: 400 });
 	try {

@@ -3,7 +3,7 @@
  * profile. The data folder is moved to data/backups/, not deleted.
  */
 
-import { dataLocations, resetProfileData } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, dataLocations, resetProfileData } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { confirm?: unknown } | null;
 	if (body?.confirm !== "RESET") {
 		return Response.json({ error: 'confirm must be "RESET"' }, { status: 400 });

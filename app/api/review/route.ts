@@ -6,7 +6,7 @@
  * updated card, the XP the answer earned and `status`, the deck as GET returns it.
  */
 
-import { answerReview, recordReviewXp, reviewStatus } from "@/src/server";
+import { answerReview, BODY_LIMITS, bodyTooLarge, recordReviewXp, reviewStatus } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; activeMs?: unknown; rating?: unknown; hints?: unknown; picked?: unknown; tz?: unknown } | null;
 	if (typeof body?.cardId !== "string" || typeof body.given !== "string") {
 		return Response.json({ message: "cardId and given are required strings" }, { status: 400 });

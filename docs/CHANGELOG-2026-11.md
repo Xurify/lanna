@@ -13,6 +13,18 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Found on the way:** the app's `text-base` is 14 px, and the shared `Input` drops to 14 px from 768 px, so the pairing page's fields (E21) still make Safari zoom on a phone and on an iPad in portrait. The sign-in field is set to 16 px by hand; the pairing page is not changed here.
 - **Unverified:** a real VPS, certificate and domain; Caddy; a CDN in front; a phone or an iPad; iOS password autofill; server events through nginx under load.
 
+## 9 November: a security pass before the app gets a public address (branch `chore/web-security-pass`)
+
+- **Why:** the plan for a web version ([plans/always-on-server.md](plans/always-on-server.md)) puts the app on the internet behind a sign-in. The review is [research/web-security-review.md](research/web-security-review.md); the rules are E92.
+- **The tutor's page and PDF fetches** go through one guard: public addresses only, every redirect checked again, the connection made to the addresses that were checked, and the redirects, time and size capped. Before, a page the model had read could make it fetch the app's own API on `127.0.0.1`. A caption track is fetched only from YouTube's own address, and the SVG drawing fallback no longer runs script.
+- **Every route that takes a body** answers 413 over a limit (256 KB for JSON, up to 8.25 MB for a recording). A test fails when a new route skips the check.
+- **Keys:** the error text from a speech or voice provider is cleaned of every key before it reaches the page. A test seeds fake keys and sign-in tokens and calls every GET route.
+- **Subscription sign-ins** (ChatGPT, Copilot, Grok) answer 403 while `LH_PUBLIC_HOST` is set.
+- **Headers:** every response sends the usual protective headers; a production build also sends HSTS and a content security policy that blocks images, requests, sockets, frames and scripts to hosts the app does not use.
+- **Checked:** 222 new tests (guard 88, body limits 69, hostile ids 52, keys 8, headers 3, subscriptions 2, plus the stubs converted in three older files); a production build in Chromium: sixteen pages load with no policy violation, and an image, fetch, socket, frame and script to another host are all blocked; the microphone and the dictation worklet still work.
+- **Unverified:** YouTube's player, Deepgram's dictation and Google avatars under the policy (the sandbox cannot reach them); the SVG fallback in a real browser; the owner's PC. React's hydration warning (#418) appears now and then on Today, Review and Watch in a production build; it also appears with the policy removed on Today and Review, and on Watch only with the policy (9 of 54 loads against 0 of 37), which does not show the policy is the cause. If Watch shows it after this ships, remove the CSP header first.
+- **Open:** inline script is still allowed (a nonce has to come from `proxy.ts`); a process on the same machine counts as "this computer" and passes the gate; nine dependency advisories are accepted with reasons in the review.
+
 ## 9 November: the server as a container (branch `feat/server-container`)
 
 - **Why:** the owner cannot always be at the PC, and the phone app only works while the PC runs. Rule E91, guide [server.md](server.md).
