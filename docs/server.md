@@ -75,7 +75,7 @@ Run these before you set anything up. They decide where the server goes.
 
    Open `http://localhost:3010` on the PC, go to Settings → Devices, turn on Remote access, and make a code. Then pair the phone and the iPad through the Tailscale address, as in [remote-access.md](remote-access.md). `docker compose exec langharness node cli/remote-code.mjs` prints a pairing code on the server, so the tunnel is only needed if you prefer Settings.
 
-   **b. A public address with a password.** The app at `https://learn.example.com`, with no Tailscale app on the phone. The rules are in [DECISIONS.md, E86](DECISIONS.md); the proxy details and the day-to-day commands are in [remote-access.md](remote-access.md#at-a-public-address-a-server-with-a-domain).
+   **b. A public address with a password.** The app at `https://learn.example.com`, with no Tailscale app on the phone. The rules are in [DECISIONS.md, E90](DECISIONS.md); the proxy details and the day-to-day commands are in [remote-access.md](remote-access.md#at-a-public-address-a-server-with-a-domain).
 
    1. Make a secret that only the proxy and the app know, and add both lines to `/srv/langharness/repo/.env`:
 
