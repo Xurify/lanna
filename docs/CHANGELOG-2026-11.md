@@ -4,7 +4,7 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 9 November: sign in with a password at a public address (branch `feat/web-sign-in`)
 
-- **The sign-in page (10 November):** redesigned with the app's mark and name, one card, the app's own field and button, and a Show/Hide toggle on the password. Screenshots are in the PR. Tailscale pairing keeps working beside the public address; they share one switch.
+- **The sign-in page (10 November):** redesigned with the rounded app icon and the name, one card, the app's own field and button, and a Show/Hide toggle on the password. Screenshots are in the PR. Tailscale pairing keeps working beside the public address; they share one switch.
 - **Why:** the owner wants LangHarness on the phone with the PC off, at an address of its own and with no Tailscale app ([plans/always-on-server.md](plans/always-on-server.md), route W). Rule E93.
 - **What changed:** with `LH_PUBLIC_HOST` set, the app answers one public host behind a reverse proxy. Every request must carry the proxy's secret (`LH_PROXY_SECRET`), the right host and HTTPS; a page without a session goes to `/login`, the API answers 401, and a change needs the page's own Origin. One owner password (scrypt) opens a 180-day browser session that Settings → Devices lists and signs out. Wrong tries are limited per address and overall and the count is kept in the file. A changed password or a switch-off signs every device out.
 - **Commands:** `npm run web:password` (set or change it; the first one turns web access on) and `npm run remote:code` (a pairing code in the terminal for a machine with no screen; `-- --enable` turns remote access on first).

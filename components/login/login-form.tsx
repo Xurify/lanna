@@ -1,6 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { LhMark } from "@/components/lh-mark";
+import { LhAppIcon } from "@/components/lh-mark";
 
 function waitText(seconds: number): string {
 	const minutes = Math.max(1, Math.ceil(seconds / 60));
@@ -44,7 +44,7 @@ export function LoginForm({ next }: { next: string }) {
 		<main className="flex min-h-dvh w-full items-center justify-center px-4 py-10 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
 			<div className="w-full max-w-[400px]">
 				<div className="flex items-center gap-3" data-testid="login-brand">
-					<LhMark className="size-10" />
+					<LhAppIcon className="size-12" />
 					<span className="font-ui text-[26px] font-extrabold tracking-tight text-foreground">
 						Lang<span className="text-sun">Harness</span>
 					</span>

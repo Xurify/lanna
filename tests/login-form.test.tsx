@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
+import { LhAppIcon } from "@/components/lh-mark";
 import { LoginForm } from "@/components/login/login-form";
 
 const html = renderToStaticMarkup(createElement(LoginForm, { next: "/read?id=3" }));
@@ -26,10 +28,23 @@ describe("the sign-in form", () => {
 		assert.match(html, /aria-pressed="false"/);
 	});
 
-	it("shows the app's name and its mark", () => {
+	it("shows the app's name and its rounded icon", () => {
 		const brand = html.match(/data-testid="login-brand"[^>]*>(.*?)<h1|data-testid="login-brand"[^>]*>(.*)/s)?.[0] ?? "";
 		assert.match(brand, /<svg[^>]*aria-hidden="true"/);
 		assert.match(html, /Lang<span[^>]*>Harness<\/span>/);
+		assert.match(brand, /fill="#0D6764"/);
+	});
+
+	it("draws the icon exactly as build/icon-flat.svg does", () => {
+		const file = readFileSync(new URL("../build/icon-flat.svg", import.meta.url), "utf8");
+		const fileTile = file.match(/<path d="([^"]+)" fill="#0D6764"/)?.[1];
+		const drawn = renderToStaticMarkup(createElement(LhAppIcon));
+		assert.ok(fileTile, "build/icon-flat.svg has the tile");
+		assert.ok(drawn.includes(`d="${fileTile}"`));
+		for (const bar of [/<rect x="262" y="212" width="116" height="600" rx="22" fill="#FFFFFF"/, /<rect x="418" y="696" width="344" height="116" rx="22" fill="#9FE3DE"/]) {
+			assert.match(file, bar);
+			assert.match(drawn, bar);
+		}
 	});
 
 	it("keeps the field at 16 px or more, so iOS does not zoom when it focuses", () => {
