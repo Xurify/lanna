@@ -114,7 +114,7 @@ export function CheatsheetsTab({ initialSheet, onCount, onOpenChange }: { initia
 	return (
 		<div className="space-y-4" data-testid="cheatsheets">
 			<div className="flex items-center gap-3">
-				<SearchField value={query} onChange={(v) => { setQuery(v); if (!v.trim()) setFound(null); }} placeholder="Search cheatsheets" label="Search your cheatsheets and their phrases" />
+				<SearchField value={query} onChange={(v) => { setQuery(v); if (!v.trim()) setFound(null); }} placeholder="Search sheets" label="Search your cheatsheets and their phrases" />
 				<button type="button" className="q-btn primary shrink-0" onClick={() => setCreating(true)} data-testid="cheatsheet-new">
 					<PlusIcon className="size-4" />
 					New cheatsheet
