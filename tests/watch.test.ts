@@ -223,9 +223,30 @@ test("elsewhereProfile: a video spoken in another ready profile of the learner's
 	assert.equal(watch.elsewhereProfile(asr("de")), null, "a language the learner does not study");
 });
 
+test("notThisLanguage: a track spoken in another language is refused, naming the ready profile it belongs in", () => {
+	const languages = path.join(TMP_DATA, "languages");
+	const make = (id: string, tag: string, english: string, lexicon: boolean) => {
+		fs.mkdirSync(path.join(languages, id), { recursive: true });
+		fs.writeFileSync(path.join(languages, id, "language.json"), JSON.stringify({ id, tag, code: tag.split("-")[0], endonym: english, english }));
+		fs.writeFileSync(path.join(languages, id, "course.json"), JSON.stringify({ language: id }));
+		if (lexicon) fs.writeFileSync(path.join(languages, id, "lexicon.json"), "{}");
+	};
+	make("russian", "ru-RU", "Russian", true);
+	make("estonian", "et-EE", "Estonian", false);
+	const track = { title: "Серая звёздочка", durationSec: 911 };
+	const russian = watch.notThisLanguage("ru", track);
+	assert.equal(russian.message, "This video is in Russian, not Slovak or Czech. It belongs in your Russian profile.");
+	assert.deepEqual(russian.elsewhere, { profile: "russian", english: "Russian" });
+	assert.equal(russian.canTranscribe, false, "a transcript in the wrong language is not offered again");
+	const estonian = watch.notThisLanguage("et", track);
+	assert.equal(estonian.message, "This video is in Estonian, not Slovak or Czech.", "no profile is named when its words are not ready");
+	assert.equal(estonian.elsewhere, null);
+});
+
 test("captionLanguageName: the profile's language and its Czech fallback by name, anything else by code", () => {
 	assert.equal(captionLanguageName("sk"), "Slovak");
 	assert.equal(captionLanguageName("cs"), "Czech");
+	assert.equal(captionLanguageName("ru"), "Russian", "a language in the catalog is named even when no profile has it yet");
 	assert.equal(captionLanguageName("de"), "de");
 });
 

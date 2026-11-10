@@ -137,7 +137,7 @@ export function captionLanguageName(code: string): string {
 		const fallback = info.captionFallbacks?.find((f) => f.code === code);
 		if (fallback) return fallback.english;
 	}
-	return code;
+	return LANGUAGE_CATALOG.find((l) => l.tag.split("-")[0] === code)?.english ?? code;
 }
 
 /**

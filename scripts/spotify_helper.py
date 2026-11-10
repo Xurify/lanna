@@ -148,7 +148,7 @@ def cmd_download(spotify_url: str, out_mp3: str, out_jpg: str) -> None:
         remove_tree(tmp_dir)
 
 
-def cmd_transcribe(audio_path: str, lang: str, model_size: str = "large-v3-turbo") -> None:
+def cmd_transcribe(audio_path: str, accepted: str, model_size: str = "large-v3-turbo") -> None:
     from faster_whisper import WhisperModel
 
     try:
@@ -158,21 +158,24 @@ def cmd_transcribe(audio_path: str, lang: str, model_size: str = "large-v3-turbo
         device = "cpu"
     compute_type = "float16" if device == "cuda" else "int8"
     model = WhisperModel(model_size, device=device, compute_type=compute_type)
+    # Whisper forced to a language it does not hear writes the speech in that language's spelling, so the language is detected instead.
     segments, info = model.transcribe(
         audio_path,
-        language=lang if lang else None,
+        language=None,
         beam_size=5,
         vad_filter=True,
         vad_parameters=dict(min_silence_duration_ms=400),
     )
+    wanted = [code for code in accepted.split(",") if code]
     cues = []
-    for seg in segments:
-        text = seg.text.strip()
-        if not text:
-            continue
-        start = round(float(seg.start), 2)
-        dur = round(max(0.2, float(seg.end) - float(seg.start)), 2)
-        cues.append({"start": start, "dur": dur, "text": text})
+    if not wanted or info.language in wanted:
+        for seg in segments:
+            text = seg.text.strip()
+            if not text:
+                continue
+            start = round(float(seg.start), 2)
+            dur = round(max(0.2, float(seg.end) - float(seg.start)), 2)
+            cues.append({"start": start, "dur": dur, "text": text})
     print(
         json.dumps(
             {
@@ -205,7 +208,7 @@ def main() -> None:
         cmd_download(sys.argv[2], sys.argv[3], sys.argv[4])
     elif action == "transcribe":
         if len(sys.argv) < 4:
-            sys.exit("Usage: spotify_helper.py transcribe <audio_path> <lang> [model_size]")
+            sys.exit("Usage: spotify_helper.py transcribe <audio_path> <languages,comma-separated> [model_size]")
         model_size = sys.argv[4] if len(sys.argv) >= 5 else "large-v3-turbo"
         cmd_transcribe(sys.argv[2], sys.argv[3], model_size)
     else:
