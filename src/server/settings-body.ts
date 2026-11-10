@@ -12,7 +12,15 @@
  */
 
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import { isHexColor, type ChatSettings } from "../core";
+import {
+	isHexColor,
+	isValidTimeString,
+	normalizeTimeString,
+	NOTIFICATION_SOUND_PRESETS,
+	type ChatSettings,
+	type NotificationSettings,
+	type NotificationSoundPreset,
+} from "../core";
 import type {
 	AgentSettings,
 	AppearanceSettings,
@@ -316,6 +324,53 @@ function parseCompactionSettingsBody(body: unknown): SettingsBodyResult<Compacti
 	return { ok: true, settings };
 }
 
+export function parseNotificationSettingsBody(body: unknown): SettingsBodyResult<NotificationSettings> {
+	const raw = asRecord(body);
+	if (!raw) return { ok: false, error: "Invalid JSON body" };
+	const settings: NotificationSettings = {
+		enabled: typeof raw.enabled === "boolean" ? raw.enabled : true,
+		times: [],
+		soundPreset: "chime",
+		inAppBanner: typeof raw.inAppBanner === "boolean" ? raw.inAppBanner : true,
+		systemNotification: typeof raw.systemNotification === "boolean" ? raw.systemNotification : true,
+		smartAutoNudge: typeof raw.smartAutoNudge === "boolean" ? raw.smartAutoNudge : true,
+		autoScheduleTasks: typeof raw.autoScheduleTasks === "boolean" ? raw.autoScheduleTasks : true,
+		aiAssisted: typeof raw.aiAssisted === "boolean" ? raw.aiAssisted : false,
+	};
+	if (raw.times !== undefined) {
+		if (!Array.isArray(raw.times)) {
+			return { ok: false, error: "times must be an array of HH:MM strings" };
+		}
+		for (const t of raw.times) {
+			if (typeof t !== "string" || !isValidTimeString(t)) {
+				return { ok: false, error: `Invalid time format "${t}" (expected HH:MM)` };
+			}
+			settings.times.push(normalizeTimeString(t));
+		}
+	} else {
+		settings.times = ["09:00", "18:30"];
+	}
+	if (raw.soundPreset !== undefined) {
+		if (
+			typeof raw.soundPreset !== "string" ||
+			!(NOTIFICATION_SOUND_PRESETS as readonly string[]).includes(raw.soundPreset)
+		) {
+			return {
+				ok: false,
+				error: `soundPreset must be one of: ${(NOTIFICATION_SOUND_PRESETS as readonly string[]).join(", ")}`,
+			};
+		}
+		settings.soundPreset = raw.soundPreset as NotificationSoundPreset;
+	}
+	if (raw.customSoundName !== undefined) {
+		if (typeof raw.customSoundName !== "string") {
+			return { ok: false, error: "customSoundName must be a string" };
+		}
+		settings.customSoundName = raw.customSoundName.trim().slice(0, 100);
+	}
+	return { ok: true, settings };
+}
+
 /** The section→parser map for PUT /api/settings/[section] (the route also
  *  carries the special prompts sub-resource). */
 export const SETTINGS_SECTIONS = {
@@ -325,4 +380,5 @@ export const SETTINGS_SECTIONS = {
 	appearance: parseAppearanceSettingsBody,
 	compaction: parseCompactionSettingsBody,
 	models: parseModelsSettingsBody,
+	notifications: parseNotificationSettingsBody,
 } as const;

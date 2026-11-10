@@ -138,4 +138,5 @@ export * from "./storage.ts";
 export * from "./daylog.ts";
 export * from "./rules-map.ts";
 export * from "./line.ts";
+export * from "./reminders.ts";
 export * from "./stage.ts";
