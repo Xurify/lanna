@@ -1221,6 +1221,17 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 
 **Unverified:** a real VPS, a real certificate and domain, Caddy (only nginx was run, locally, on plain HTTP with `X-Forwarded-Proto` set by the config), Cloudflare or another CDN in front, a phone or an iPad, and the password manager on iOS. Streaming pages (server events) through nginx were not run with `proxy_buffering off` under load. The cookie is not `__Host-` prefixed.
 
+### E94. Sound guide, mouth cross-section drawings, and articulatory contrast notes grounded in phonological research (2026-11-10, branch `feat/sound-guide`)
+
+**Why:** Grounding sound contrasts in phonological acquisition research (Saito 2013; Kissling 2013, 2015; Lin et al. 2019; Lee et al. 2015; Massaro & Light 2003; Massaro et al. 2008) and user request for articulatory explanations, visual sagittal cross-sections, and a dedicated sound guide view integrated with the ear gym and pronunciation scoring.
+
+**How to apply:**
+- **Research grounding & curriculum catalog:** Added curated sound notes for Slovak, Russian, and Estonian in `curriculum/<lang>/sound-notes.json`. Each entry defines `symbol`, `ipa`, `name`, `how` (motor placement), `slip` (common L1 pitfall), `functionalLoad` ("high" | "medium" | "low"), `word`, `meaning`, `pairs` (linking to ear gym families), and `picture`.
+- **Sagittal mouth cross-section drawings (`mouth.tsx`, `mouth-paths.ts`):** Rendered in the app's minimal ink line-and-wash language. A light gray filled tongue body (`fill-foreground/[0.05]`) articulates against the palate with contact patches highlighted in pale teal (`fill-teal/20`), with distinct alveolar gum bumps, teeth, palate, velum, uvula, and pharyngeal wall. Airflow streaks indicate fricative turbulence without stop closure, ripple marks depict trill vibration, and vocal fold lines depict glottal friction. Accent focus (`"tongue" | "lips" | "throat"`) directs attention to the differentiating articulator.
+- **Length distinction visualizer:** Renders sound duration differences via undulating sinusoidal waves for short vs. long sounds.
+- **Sound guide view (`sound-guide.tsx`):** Available via `/phonology?view=sounds` with sticky side navigation chips grouped by natural classes. Supports keyboard arrow keys and space-to-listen, direct training button to launch ear gym on that sound family, and deep links from weak phoneme cards on the Speak end screen (`components/speak/pron.tsx`).
+- **Blind visual review:** 15 minimal-pair cross-sections were evaluated blind by Gemini 3.8 Flash to ensure visual differentiability without reading labels; adjustments made to contrast airflow against closure, improve retroflex curling, and isolate lip protrusions.
+
 ### E95. A cheatsheet's own lines can be practiced by ear, and that practice is kept apart from everything measured (2026-11-09, branch `feat/cheatsheet-listen-practice`)
 
 **Why:** the owner is at A1 in Russian and wants to play a co-op game with a friend in Russian only: "I need to be able to understand and say whatever comes up." The phrases for it are already a cheatsheet (E50), but a sheet could only be read, played one phrase at a time, or covered. The gap that matters in a game is the ear at speed (learner.md: "I can't put them together into meaning fast enough"). The owner asked whether a 3D scene tool would help and then said to build what makes the most sense. Research note: [research/situation-practice.md](research/situation-practice.md).
@@ -1234,5 +1245,6 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Kept (E1):** `cheatsheets/practice/<sheet id>.json` (per phrase: times heard, caught in a row, when) and `cheatsheets/practice/log.jsonl` (every session with what was typed). The corpus export writes `cheatsheet-practice.json`.
 - **E82:** Listen is one of the study's input tasks and nothing here uses the microphone, so the listening-first arm keeps it. The minutes do show in the study's daily minutes.
 - **Not built, with reasons:** saying the phrases with a score and a role-play of the situation (E50's open "custom Speak scene from a sheet") wait until the study ends on 2026-12-20, because both are spoken output in the language under test. Importing a PDF: the chat can already read one, and a sheet is one line per phrase. Dialogues with their questions (the owner's workbook has four) have no home in a sheet yet. A 3D or 2D scene to click through: see the research note.
+
 
 

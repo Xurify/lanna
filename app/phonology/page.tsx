@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EarGym } from "@/components/phonology/ear-gym";
+import { EarGym, type PhonologyView } from "@/components/phonology/ear-gym";
 import { activeLanguage } from "@/src/server";
 
 export const metadata: Metadata = {
@@ -9,7 +9,20 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function PhonologyPage() {
+const VIEWS: readonly PhonologyView[] = ["pairs", "sounds", "rhythm"];
+
+export default async function PhonologyPage({ searchParams }: { searchParams: Promise<{ view?: string; sound?: string }> }) {
+	const { view, sound } = await searchParams;
 	const lang = activeLanguage();
-	return <EarGym key={lang.id} seed={Date.now()} languageId={lang.id} languageName={lang.english} languageCode={lang.code} />;
+	return (
+		<EarGym
+			key={`${lang.id}:${view ?? ""}:${sound ?? ""}`}
+			seed={Date.now()}
+			languageId={lang.id}
+			languageName={lang.english}
+			languageCode={lang.code}
+			initialView={VIEWS.find((v) => v === view)}
+			initialSound={sound}
+		/>
+	);
 }

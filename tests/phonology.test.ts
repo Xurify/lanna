@@ -2,7 +2,7 @@
  * PHONOLOGICAL ACQUISITION TESTS (LangHarness, 2026-11).
  *
  * Verifies the empirical phonology engine:
- * 1. Articulatory motor cues & diagnostic guidance
+ * 1. Articulatory motor cues & diagnostic guidance: tests/sound-notes.test.tsx
  * 2. Functional Load weighting in pronunciation scoring
  * 3. Cross-linguistic contrast prioritization (PAM-L2)
  * 4. Slovak voicing assimilation & orthographic de-biasing
@@ -12,13 +12,11 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
-	ARTICULATORY_CUES,
 	contrastSpans,
 	createEarGymExercise,
 	EAR_GYM_ROUND,
 	earGymRound,
 	functionalLoadWeightedScore,
-	getArticulatoryCue,
 	getFunctionalWeight,
 	getPamContrastPriority,
 	getPhonologyData,
@@ -27,32 +25,9 @@ import {
 	type PhonologyPair,
 } from "../src/core/phonology.ts";
 import { hasRhythmPage } from "../src/core/rhythm.ts";
+import { getSoundNote } from "../src/core/sound-notes.ts";
 
 const PHONOLOGY_PAIRS = getPhonologyData("slovak")!.pairs;
-
-describe("Articulatory motor guidance catalog", () => {
-	test("provides explicit motor positioning for core Slovak target sounds", () => {
-		const targetSounds = ["ť", "ď", "ň", "ľ", "ô", "ä", "ŕ", "ĺ", "ch", "á", "í", "ú"];
-		for (const s of targetSounds) {
-			const cue = getArticulatoryCue(s, "slovak");
-			assert.ok(cue, `Cue exists for ${s}`);
-			assert.ok(cue.motor.length > 20, `Motor description is detailed for ${s}`);
-			assert.ok(cue.ipa.length > 0, `IPA symbol exists for ${s}`);
-			assert.ok(cue.drillWord.length > 0, `Drill word exists for ${s}`);
-		}
-	});
-
-	test("handles case-insensitivity and requires exact NFC match without plain consonant fallback", () => {
-		const upper = getArticulatoryCue("Ť", "slovak");
-		assert.ok(upper, "Finds uppercase Ť");
-		assert.equal(upper.symbol, "ť");
-
-		assert.equal(getArticulatoryCue("t", "slovak"), null, "Plain 't' returns null");
-		assert.equal(getArticulatoryCue("d", "slovak"), null, "Plain 'd' returns null");
-		assert.notEqual(getArticulatoryCue("ť", "slovak"), null, "Palatal 'ť' returns cue");
-		assert.notEqual(getArticulatoryCue("ď", "slovak"), null, "Palatal 'ď' returns cue");
-	});
-});
 
 describe("Functional Load (FL) weighting in pronunciation scoring", () => {
 	test("assigns weights based on communicative impact", () => {
@@ -236,10 +211,10 @@ describe("Bundled phonology datasets validation", () => {
 	});
 
 	test("sound notes belong to one language and never show for another", () => {
-		assert.notEqual(getArticulatoryCue("ť", "slovak"), null);
-		assert.equal(getArticulatoryCue("ť", "russian"), null);
-		assert.equal(getArticulatoryCue("ť", "estonian"), null);
-		assert.equal(getArticulatoryCue("ť", undefined), null);
+		assert.notEqual(getSoundNote("ť", "slovak"), null);
+		assert.equal(getSoundNote("ť", "russian"), null);
+		assert.equal(getSoundNote("ť", "estonian"), null);
+		assert.equal(getSoundNote("ť", undefined), null);
 		assert.equal(getFunctionalWeight("ť", "russian"), 1.0);
 		assert.equal(hasRhythmPage(undefined), false);
 	});
