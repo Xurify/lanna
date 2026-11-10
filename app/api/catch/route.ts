@@ -4,7 +4,7 @@
  * word's verdict, and the whole item with its translations.
  */
 
-import { answerCatch, nextCatchItem } from "@/src/server";
+import { answerCatch, BODY_LIMITS, bodyTooLarge, nextCatchItem } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { id?: unknown; sentence?: unknown; token?: unknown; typed?: unknown } | null;
 	if (!body || typeof body.id !== "string" || !Number.isInteger(body.sentence) || !Number.isInteger(body.token)) {
 		return Response.json({ message: "id, sentence and token are required" }, { status: 400 });

@@ -3,7 +3,7 @@
  * POST /api/words — adds a word to the active FSRS word bank / review deck (and optionally favorites it)
  */
 
-import { addWordToBank, getWordBank, lookupSelectionAsync, type WordBankQuery } from "@/src/server";
+import { addWordToBank, BODY_LIMITS, bodyTooLarge, getWordBank, lookupSelectionAsync, type WordBankQuery } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +49,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as {
 		slug?: unknown;
 		word?: unknown;

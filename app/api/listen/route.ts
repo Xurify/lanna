@@ -5,7 +5,7 @@
  * listening, the stretch words sent to the review deck, a fresh summary.
  */
 
-import { listenFor, recordListen, recordOnce, sessionClientId, type ListenRep } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, listenFor, recordListen, recordOnce, sessionClientId, type ListenRep } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { reps?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; clientId?: unknown } | null;
 	if (!body || !Array.isArray(body.reps)) return Response.json({ message: "reps must be an array" }, { status: 400 });
 	const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 600) : "");

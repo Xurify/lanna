@@ -10,7 +10,7 @@
  * listening, written from the same saved analysis and kept apart from the guide.
  */
 
-import { analyzeNow, mistakesReport, writeGuide, writeListenGuide } from "@/src/server";
+import { analyzeNow, BODY_LIMITS, bodyTooLarge, mistakesReport, writeGuide, writeListenGuide } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; force?: unknown } | null;
 	try {
 		if (body?.action === "analyze") return Response.json(analyzeNow());
