@@ -21,6 +21,7 @@ import {
 	buildSchedule,
 	calculateCompliance,
 	createRng,
+	dailyRowsWithinSchedule,
 	dateForDayNumber,
 	dayNumberForDate,
 	drawOnsetDay,
@@ -375,7 +376,7 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 	const todayDateStr = dayKey(now);
 	const currentDayNumber = dayNumberForDate(config.startDate, todayDateStr);
 
-	const existingDaily = readJsonl<DailyExperimentRecord>(path.join(experimentDir(), "daily.jsonl"));
+	const existingDaily = dailyRowsWithinSchedule(readJsonl<DailyExperimentRecord>(path.join(experimentDir(), "daily.jsonl")), schedule);
 	const dailyMap = new Map<string, DailyExperimentRecord>();
 	for (const r of existingDaily) {
 		dailyMap.set(`${r.date}:${r.language}`, r);

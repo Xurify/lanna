@@ -177,6 +177,11 @@ export function buildSchedule(startDateStr: string, onsetDay: number, totalDays 
 	return schedule;
 }
 
+export function dailyRowsWithinSchedule(rows: DailyExperimentRecord[], schedule: DaySchedule[]): DailyExperimentRecord[] {
+	const dates = new Set(schedule.map((s) => s.date));
+	return rows.filter((r) => dates.has(r.date));
+}
+
 /**
  * Checks whether a listen rep is first-play understood:
  * - answer or kind is dictation

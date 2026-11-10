@@ -17,6 +17,7 @@ import {
 	buildSchedule,
 	calculateCompliance,
 	createRng,
+	dailyRowsWithinSchedule,
 	dateForDayNumber,
 	dayNumberForDate,
 	drawOnsetDay,
@@ -73,6 +74,31 @@ test("Schedule generation properly assigns arms, phases and weekly check days", 
 	// Weekly checks on Sundays (7, 14, 21, 28, 35, 42)
 	const checkDays = schedule.filter((s) => s.weeklyCheckDue).map((s) => s.dayNumber);
 	assert.deepEqual(checkDays, [7, 14, 21, 28, 35, 42]);
+});
+
+test("rows dated outside the study window are dropped, so a moved start leaves no day behind", () => {
+	const schedule = buildSchedule("2026-11-10", 15, 42);
+	const row = (date: string): DailyExperimentRecord => ({
+		date,
+		dayNumber: dayNumberForDate("2026-11-10", date),
+		language: "slovak",
+		phase: "baseline",
+		arm: "normal",
+		firstPlayShare: null,
+		dictationReps: 0,
+		understoodReps: 0,
+		covariates: { meanWordsPerSentence: 0 },
+		minutes: 1,
+		minutesBy: { read: 1 },
+		compliance: 100,
+		compliant: true,
+	});
+
+	const kept = dailyRowsWithinSchedule([row("2026-11-09"), row("2026-11-10"), row("2026-12-21")], schedule);
+	assert.deepEqual(
+		kept.map((r) => r.date),
+		["2026-11-10", "2026-12-21"],
+	);
 });
 
 test("isFirstPlayUnderstood checks dictation, zero replays, not peeked, exact or accents verdict", () => {

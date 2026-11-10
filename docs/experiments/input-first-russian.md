@@ -87,7 +87,7 @@ Written to `data/experiments/input-first-russian/` (the owner's data folder, not
 - `daily.jsonl`: one line per day per language: date, phase, first-play share, dictation reps, covariates, minutes per activity, compliance inputs. Rewritten for the days that have data; the lesson log stays the raw source.
 - `checks.jsonl`: one line per weekly check item: date, language, item id, the sentence or prompt, what was said or typed, the score, and the engine used.
 - `summary.md`: the readable table, the current analysis and verdict status; regenerated each time the page or the daily job runs.
-- `verdict.json`: written once, after day 42 (on the first run after 20 December), with the analysis, the flags, and the rule version.
+- `verdict.json`: written once, after day 42 (on the first run after 21 December), with the analysis, the flags, and the rule version.
 - `deviations.jsonl`: a log for missed days or checks, a changed key, or an app change that touches the measure. Written by the app when it can see the event, and by hand otherwise.
 
 The app writes `daily.jsonl` and `summary.md` on each load of Today and of `/experiment`, at most once per day. `/experiment` shows the same table, the schedule, the current phase, and the next check.
@@ -106,7 +106,7 @@ The check is a page, `/experiment/check`. It runs the 10 probe sentences (play o
 ## Start
 
 - **Set-up** (the agent does this, once): write `experiment.json`, the seed, the onset, the pools and `schedule.json`. Record the git commit of the app and the hash of this file.
-- **Day 1** (Monday 9 November): the Russian plan is the normal one. Nothing is switched by hand.
+- **Day 1** (Tuesday 10 November): the Russian plan is the normal one. Nothing is switched by hand.
 - **Day of onset**: the arm applies to that day's plan automatically. Nothing is switched by hand.
 - **Weekly**: the check is due on the last day of each week. Today shows a line; `/experiment` shows the table.
 - **Day 43 onward**: the verdict is written once.
