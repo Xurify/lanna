@@ -105,7 +105,9 @@ export {
 	formatCode,
 	listeningPort,
 	normalizeCode,
+	clientAddress,
 	readCookie,
+	safeNext,
 	secureRequest,
 } from "./remote-access.ts";
 export {
@@ -116,7 +118,9 @@ export {
 	isPairedToken,
 	redeemPairingCode,
 	revokeDevice,
+	revokeToken,
 } from "./remote-access-store.ts";
+export { signInWithPassword, webPasswordIsSet } from "./web-login-store.ts";
 export * from "./daylog.ts";
 export * from "./line.ts";
 export * from "./stage.ts";
