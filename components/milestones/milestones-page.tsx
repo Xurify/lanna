@@ -52,6 +52,7 @@ import { dateInWords, daysLeftWords, GENRES, INFLECTION_FACTOR, LEVEL_VOCAB, MAX
 import { fillStyle } from "@/components/ui/fill";
 import { DatePicker } from "@/components/milestones/date-picker";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { useServerValue } from "@/components/use-server-value";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 	"monitor-play": MonitorPlayIcon,
@@ -111,7 +112,7 @@ const STATUS: Record<MilestoneEstimate["status"], { label: string; cls: string }
 };
 
 export function MilestonesPage({ initialReport, modelReady }: { initialReport: MilestonesReport | null; modelReady: boolean }) {
-	const [report, setReport] = useState<MilestonesReport | null>(initialReport);
+	const [report, setReport] = useServerValue<MilestonesReport | null>(initialReport);
 	const [error, setError] = useState<string | null>(null);
 	const [text, setText] = useState("");
 	const [adding, setAdding] = useState(false);

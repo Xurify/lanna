@@ -124,6 +124,10 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		void next();
 	}, [stage, next]);
 
+	useEffect(() => {
+		void load();
+	}, [load]);
+
 	const open = (id: string) => {
 		void fetch(`/api/read?id=${encodeURIComponent(id)}`)
 			.then((r) => (r.ok ? (r.json() as Promise<StoryRecord>) : Promise.reject(new Error(`HTTP ${r.status}`))))

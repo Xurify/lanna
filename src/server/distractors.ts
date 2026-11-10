@@ -1,6 +1,6 @@
 /**
  * Meaning questions with wrong answers worth reading (LangHarness,
- * 2026-10-30). A lesson's meaning reps and the Listen task come out of the
+ * 2026-10-30). A lesson's meaning reps come out of the
  * local builders with length-matched wrong meanings, which a learner can rule
  * out without knowing a word of the language. This swaps them for close ones:
  *
@@ -18,12 +18,12 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { buildNeighborIndex, chooseOptions, neighbors, type NeighborIndex } from "../core/distractors.ts";
 import { rng } from "../core/lesson.ts";
-import type { ListenPlan } from "../core/listen.ts";
-import type { LessonPlan } from "../core/lesson.ts";
-import { isWatchItem } from "../core/watch-reps.ts";
+import type { LessonPlan, UnitId } from "../core/lesson.ts";
 import { distractorStore, type NearMiss } from "../store/distractors.ts";
 import { storyEngine } from "./reading.ts";
 import { activeLanguage } from "./active-language.ts";
+import { lessonFor, lessonSeed } from "./lesson.ts";
+import type { AtlasGender } from "../core/grammar.ts";
 
 /** Close wrong options a sentence should have before the model is asked. */
 const WANT_CLOSE = 2;
@@ -132,15 +132,13 @@ export async function betterOptions(items: readonly OptionItem[], opts: BetterOp
 	for (const item of items) if (item.translation) item.options = choose(item).options;
 }
 
+export function unitLesson(unit: UnitId, opts: { gender?: AtlasGender } = {}): Promise<LessonPlan> {
+	const seed = lessonSeed(unit, opts.gender);
+	return lessonWithBetterOptions(lessonFor(unit, seed, opts), { seed });
+}
+
 /** A lesson plan with its meaning reps' options made close. */
 export async function lessonWithBetterOptions(plan: LessonPlan, opts?: BetterOptionsOptions): Promise<LessonPlan> {
 	await betterOptions(plan.items.filter((i) => i.kind === "meaning"), opts);
-	return plan;
-}
-
-/** A Listen plan with every sentence's options made close. */
-export async function listenWithBetterOptions(plan: ListenPlan, opts?: BetterOptionsOptions): Promise<ListenPlan> {
-	// A watch line has no options (src/core/watch-reps.ts); a near-miss call for it would be paid for and never shown.
-	await betterOptions(plan.items.filter((i) => !isWatchItem(i.id)), opts);
 	return plan;
 }
