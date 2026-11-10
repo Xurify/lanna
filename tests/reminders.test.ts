@@ -10,7 +10,7 @@ import {
 	DEFAULT_NOTIFICATION_SETTINGS,
 	type NotificationSettings,
 	type DayLog,
-	type PlanTask,
+	type PlanTaskItem,
 	sanitizeUserSettings,
 } from "../src/core/index.ts";
 
@@ -45,34 +45,40 @@ test("study trends analysis with empty or sparse history", () => {
 test("study trends analysis extracts peak hours and habit clusters", () => {
 	const sampleDays: DayLog[] = [
 		{
-			isoDate: "2026-11-01",
-			sessions: [
-				{ time: "09:10", seconds: 1200, kind: "blitz" },
-				{ time: "09:35", seconds: 900, kind: "words" },
+			day: "2026-11-01",
+			entries: [
+				{ at: "2026-11-01T09:10:00Z", time: "09:10", kind: "blitz", title: "Blitz", line: "done" },
+				{ at: "2026-11-01T09:35:00Z", time: "09:35", kind: "words", title: "Words", line: "done" },
 			],
-			seconds: 2100,
-			itemsReviewed: 45,
-			wordsLearned: 5,
+			rules: [],
+			words: [],
+			mistakes: [],
+			strands: { minutes: {} as any, total: 35, estimated: 35 },
+			also: [],
 		},
 		{
-			isoDate: "2026-11-02",
-			sessions: [
-				{ time: "09:05", seconds: 1500, kind: "lesson" },
-				{ time: "20:15", seconds: 1800, kind: "listen" },
+			day: "2026-11-02",
+			entries: [
+				{ at: "2026-11-02T09:05:00Z", time: "09:05", kind: "lesson", title: "Lesson", line: "done" },
+				{ at: "2026-11-02T20:15:00Z", time: "20:15", kind: "listen", title: "Listen", line: "done" },
 			],
-			seconds: 3300,
-			itemsReviewed: 50,
-			wordsLearned: 8,
+			rules: [],
+			words: [],
+			mistakes: [],
+			strands: { minutes: {} as any, total: 55, estimated: 55 },
+			also: [],
 		},
 		{
-			isoDate: "2026-11-03",
-			sessions: [
-				{ time: "09:20", seconds: 1200, kind: "blitz" },
-				{ time: "20:30", seconds: 1200, kind: "review" },
+			day: "2026-11-03",
+			entries: [
+				{ at: "2026-11-03T09:20:00Z", time: "09:20", kind: "blitz", title: "Blitz", line: "done" },
+				{ at: "2026-11-03T20:30:00Z", time: "20:30", kind: "review", title: "Review", line: "done" },
 			],
-			seconds: 2400,
-			itemsReviewed: 60,
-			wordsLearned: 10,
+			rules: [],
+			words: [],
+			mistakes: [],
+			strands: { minutes: {} as any, total: 40, estimated: 40 },
+			also: [],
 		},
 	];
 
@@ -85,10 +91,10 @@ test("study trends analysis extracts peak hours and habit clusters", () => {
 });
 
 test("optimal task picker matches time of day circadian windows", () => {
-	const tasks: PlanTask[] = [
-		{ id: "1", title: "Morning Vocabulary Blitz", kind: "words", estimatedMinutes: 10, done: false },
-		{ id: "2", title: "Grammar Cases Deep Dive", kind: "lesson", estimatedMinutes: 15, done: false },
-		{ id: "3", title: "Evening Audio Comprehension", kind: "listen", estimatedMinutes: 15, done: false },
+	const tasks: PlanTaskItem[] = [
+		{ id: "1", title: "Morning Vocabulary Blitz", kind: "words", done: false },
+		{ id: "2", title: "Grammar Cases Deep Dive", kind: "lesson", done: false },
+		{ id: "3", title: "Evening Audio Comprehension", kind: "listen", done: false },
 	];
 
 	// Morning (hour 8) -> words task
@@ -131,15 +137,16 @@ test("buildDailyNudges generates scheduled, smart trend, and deadline alerts", (
 
 	const trends = {
 		peakHour: 15,
+		peakHours: [15],
 		hourlyDistribution: new Array(24).fill(0),
 		totalSessions: 10,
 		suggestedTimes: ["15:00"],
 		summary: "Active at 15:00",
 	};
 
-	const tasks: PlanTask[] = [
-		{ id: "t1", title: "Flashcard Sprint", kind: "blitz", estimatedMinutes: 5, done: false },
-		{ id: "t2", title: "Conversation Scene", kind: "lesson", estimatedMinutes: 15, done: false },
+	const tasks: PlanTaskItem[] = [
+		{ id: "t1", title: "Flashcard Sprint", kind: "blitz", done: false },
+		{ id: "t2", title: "Conversation Scene", kind: "lesson", done: false },
 	];
 
 	const nudges = buildDailyNudges({

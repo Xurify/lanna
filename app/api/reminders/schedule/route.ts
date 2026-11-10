@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 	const settingsRecord = readSettingsRecord();
 	const settings: NotificationSettings = {
 		...DEFAULT_NOTIFICATION_SETTINGS,
-		...(settingsRecord.notifications ?? {}),
+		...(settingsRecord?.notifications ?? {}),
 	};
 
 	// 2. Read recent activity logs across all profiles to analyze habitual windows
@@ -86,7 +86,7 @@ export async function GET(req: Request) {
 		schedule,
 		todayMinutes: dayPlan.practiced,
 		dailyGoal: dayPlan.minutes,
-		streak: activeSummary.streak?.current ?? 0,
+		streak: activeSummary.streak?.days ?? 0,
 		languages: dayPlan.languages,
 	};
 

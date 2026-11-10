@@ -113,8 +113,8 @@ export function normalizeTimeString(time: string): string {
 export function parseHourMinute(time: string): { hour: number; minute: number } {
 	const [h, m] = time.split(":").map(Number);
 	return {
-		hour: Number.isFinite(h) ? Math.min(Math.max(h, 0), 23) : 9,
-		minute: Number.isFinite(m) ? Math.min(Math.max(m, 0), 59) : 0,
+		hour: h !== undefined && Number.isFinite(h) ? Math.min(Math.max(h, 0), 23) : 9,
+		minute: m !== undefined && Number.isFinite(m) ? Math.min(Math.max(m, 0), 59) : 0,
 	};
 }
 
