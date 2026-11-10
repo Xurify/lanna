@@ -34,7 +34,7 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { sharedJson } from "@/lib/shared-fetch";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
-import { catalogLanguage } from "@/src/core";
+import { catalogLanguage, type TodayExperimentStatus } from "@/src/core";
 
 interface Counts {
 	due: number;
@@ -65,6 +65,7 @@ export function LanguageSwitcher() {
 	const pathname = usePathname();
 	const [profile, setProfile] = useState<ProfileInfo | null>(null);
 	const [counts, setCounts] = useState<Counts | null>(null);
+	const [experiment, setExperiment] = useState<TodayExperimentStatus | null>(null);
 	const [open, setOpen] = useState(false);
 	const { feed } = useActivity();
 	const addsRunning = feed.tasks.filter((t) => t.kind === "language" && t.status === "running");
@@ -73,17 +74,21 @@ export function LanguageSwitcher() {
 	const menuRef = useRef<HTMLDivElement>(null);
 
 	const refresh = useCallback(() => {
+		const tz = new Date().getTimezoneOffset();
 		void sharedJson<ProfileInfo>("/api/profile")
 			.then(setProfile)
 			.catch(() => {});
-		void sharedJson<{ counts: Counts }>(`/api/review?peek&tz=${new Date().getTimezoneOffset()}`, 300)
+		void sharedJson<{ counts: Counts }>(`/api/review?peek&tz=${tz}`, 300)
 			.then((s) => setCounts(s.counts))
+			.catch(() => {});
+		void sharedJson<{ experiment?: TodayExperimentStatus | null }>(`/api/progress?tz=${tz}`, 300)
+			.then((s) => setExperiment(s.experiment ?? null))
 			.catch(() => {});
 	}, []);
 
 	useEffect(() => {
 		refresh();
-	}, [refresh]);
+	}, [refresh, pathname]);
 	useEffect(() => {
 		if (open) refresh();
 	}, [open, refresh]);
@@ -252,13 +257,40 @@ export function LanguageSwitcher() {
 									icon={<Icon className="size-[18px]" />}
 								>
 									{item.label}
-									{item.badge && (
+									{item.id === "experiment" && experiment?.active ? (
 										<span
-											className="ml-auto rounded-full border border-teal/30 bg-teal-wash px-1.5 py-0.5 text-[10px] font-semibold text-teal tabular-nums"
-											data-testid={`${item.id}-badge`}
+											className={cn(
+												"ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+												experiment.weeklyCheckDue && !experiment.weeklyCheckCompleted
+													? "bg-amber-500 text-white"
+													: experiment.validDay
+														? "border border-teal/40 bg-teal/20 text-teal"
+														: "bg-sun text-sun-ink",
+											)}
+											data-testid="experiment-badge"
+											title={
+												experiment.weeklyCheckDue && !experiment.weeklyCheckCompleted
+													? `Week ${experiment.weekNumber} check due today`
+													: experiment.validDay
+														? `Day ${experiment.dayNumber} validated (${experiment.russian.dictationReps}/5 reps)`
+														: `${experiment.russian.dictationReps} of 5 Listen sentences done today`
+											}
 										>
-											{item.badge}
+											{experiment.weeklyCheckDue && !experiment.weeklyCheckCompleted
+												? "Check!"
+												: experiment.validDay
+													? "✓ 5/5"
+													: `${experiment.russian.dictationReps}/5`}
 										</span>
+									) : (
+										item.badge && (
+											<span
+												className="ml-auto rounded-full border border-teal/30 bg-teal-wash px-1.5 py-0.5 text-[10px] font-semibold text-teal tabular-nums"
+												data-testid={`${item.id}-badge`}
+											>
+												{item.badge}
+											</span>
+										)
 									)}
 									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
 										<span

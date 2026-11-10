@@ -11,6 +11,7 @@
  */
 
 import type { DayLog } from "./daylog.ts";
+import type { TodayExperimentStatus } from "./experiment.ts";
 
 export const NOTIFICATION_SOUND_PRESETS = [
 	"chime",
@@ -76,7 +77,7 @@ export interface ScheduledNudge {
 	id: string;
 	/** 24h format HH:MM */
 	time: string;
-	source: "scheduled" | "smart_trend" | "evening_deadline" | "deadline_warning" | "streak_saver";
+	source: "scheduled" | "smart_trend" | "evening_deadline" | "deadline_warning" | "streak_saver" | "experiment";
 	languageId?: string;
 	languageName?: string;
 	taskKind?: string;
@@ -245,6 +246,7 @@ export function buildDailyNudges(options: {
 	tasks?: readonly PlanTaskItem[];
 	languageName?: string;
 	languages?: readonly DayLanguageItem[];
+	experiment?: TodayExperimentStatus | null;
 }): ScheduledNudge[] {
 	const { settings } = options;
 	if (!settings.enabled) return [];
@@ -261,7 +263,10 @@ export function buildDailyNudges(options: {
 		? rawLanguages.reduce((n, l) => n + l.practiced, 0)
 		: (options.todayMinutes ?? 0);
 
-	if (todayMinutes >= dailyGoal) return [];
+	const exp = options.experiment;
+	const experimentPending = Boolean(exp?.active && (!exp.validDay || (exp.weeklyCheckDue && !exp.weeklyCheckCompleted)));
+
+	if (todayMinutes >= dailyGoal && !experimentPending) return [];
 
 	const remainingMinutes = Math.max(0, dailyGoal - todayMinutes);
 
@@ -400,13 +405,51 @@ export function buildDailyNudges(options: {
 		}
 	}
 
+	// 4. Study experiment alerts (if study is active and reps or weekly check pending)
+	if (exp?.active) {
+		// Daily 5 Listen dictation reps alert
+		if (!exp.validDay) {
+			const remainingReps = Math.max(0, 5 - exp.russian.dictationReps);
+			const deadlineTime = "20:30";
+			timeMap.set(deadlineTime, {
+				id: `nudge-study-daily-${deadlineTime}`,
+				time: deadlineTime,
+				source: "experiment",
+				languageId: "russian",
+				languageName: "Russian",
+				taskKind: "listen",
+				taskTitle: "5 Listen dictation reps",
+				title: `Study Alert: ${remainingReps} dictation rep${remainingReps === 1 ? "" : "s"} needed`,
+				message: `Day ${exp.dayNumber} of ${exp.totalDays}: complete 5 Listen dictation reps (${exp.russian.dictationReps}/5 done) to validate today's study data.`,
+				urgent: true,
+			});
+		}
+
+		// Weekly check alert (due on days 7, 14, 21, 28, 35, 42)
+		if (exp.weeklyCheckDue && !exp.weeklyCheckCompleted) {
+			const checkTime = "19:00";
+			timeMap.set(checkTime, {
+				id: `nudge-study-check-${checkTime}`,
+				time: checkTime,
+				source: "experiment",
+				languageId: "russian",
+				languageName: "Russian",
+				taskKind: "experiment",
+				taskTitle: "Weekly Check",
+				title: `Study Alert: Week ${exp.weekNumber} Check Due`,
+				message: "Complete your 10 listening probe sentences and 5 spoken production prompts today.",
+				urgent: true,
+			});
+		}
+	}
+
 	return Array.from(timeMap.values()).sort((a, b) => a.time.localeCompare(b.time));
 }
 
 /**
  * Evaluates whether a nudge should fire right now.
  * - Current time HH:MM must match a scheduled nudge.
- * - Goal must be unmet (todayMinutes < dailyGoal).
+ * - Goal must be unmet (todayMinutes < dailyGoal) OR experiment pending.
  * - Must not have already fired today for this slot.
  */
 export function shouldTriggerNudge(options: {
@@ -415,11 +458,9 @@ export function shouldTriggerNudge(options: {
 	now: Date;
 	dailyGoal: number;
 	todayMinutes: number;
+	experimentPending?: boolean;
 }): ScheduledNudge | null {
-	const { nudges, firedKeys, now, dailyGoal, todayMinutes } = options;
-
-	// If goal is already met, no daily goal reminder is needed
-	if (todayMinutes >= dailyGoal) return null;
+	const { nudges, firedKeys, now, dailyGoal, todayMinutes, experimentPending } = options;
 
 	const currentHour = now.getHours();
 	const currentMinute = now.getMinutes();
@@ -431,6 +472,10 @@ export function shouldTriggerNudge(options: {
 		if (nudge.time === currentTimeStr) {
 			const slotKey = `${nudge.id}-${nudge.time}`;
 			if (!firedSet.has(slotKey) && !firedSet.has(nudge.time)) {
+				// If goal is already met, only fire if it's an experiment nudge or experiment is still pending
+				if (todayMinutes >= dailyGoal && nudge.source !== "experiment" && !experimentPending) {
+					continue;
+				}
 				return nudge;
 			}
 		}

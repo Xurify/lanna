@@ -18,6 +18,7 @@ import {
 	type NotificationSettings,
 	type ScheduledNudge,
 	type StudyTrendInsights,
+	type TodayExperimentStatus,
 } from "@/src/core";
 import {
 	dayLogDays,
@@ -43,6 +44,7 @@ export interface ReminderScheduleResponse {
 	dailyGoal: number;
 	streak: number;
 	languages?: DayLanguage[];
+	experiment?: TodayExperimentStatus | null;
 }
 
 export async function GET(req: Request) {
@@ -69,7 +71,7 @@ export async function GET(req: Request) {
 	const dayPlan = languageDay(tz);
 	const activeSummary = progressSummary(tz);
 
-	// 4. Build schedule taking into account all languages and their task plans
+	// 4. Build schedule taking into account all languages, their task plans, and active experiment status
 	const schedule = buildDailyNudges({
 		settings,
 		trends,
@@ -78,6 +80,7 @@ export async function GET(req: Request) {
 		tasks: activeSummary.plan?.tasks ?? [],
 		languageName: dayPlan.languages.find((l) => l.running)?.english ?? "your language",
 		languages: dayPlan.languages,
+		experiment: activeSummary.experiment,
 	});
 
 	const response: ReminderScheduleResponse = {
@@ -88,6 +91,7 @@ export async function GET(req: Request) {
 		dailyGoal: dayPlan.minutes,
 		streak: activeSummary.streak?.days ?? 0,
 		languages: dayPlan.languages,
+		experiment: activeSummary.experiment,
 	};
 
 	return Response.json(response);

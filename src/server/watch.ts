@@ -15,12 +15,12 @@
  * embedded player, where YouTube's terms allow it.
  */
 
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { activeProfile, curriculumFile, shownProfiles } from "../../config.ts";
+import { activeProfile, curriculumFile, PATHS, shownProfiles } from "../../config.ts";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
@@ -28,11 +28,13 @@ import type { Usage } from "@earendil-works/pi-ai";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
 import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
-import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryUsage } from "../core/reading.ts";
+import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryRecord, type StoryUsage } from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
+import type { TranscriptionEngineId } from "../core/settings.ts";
 import {
 	foreignCaptions,
+	isSpotifyId,
 	isYouTubeCaptionUrl,
 	MAX_SEGMENTS,
 	MAX_VIDEO_SEC,
@@ -63,6 +65,8 @@ import { missedWatchReps } from "../core/watch-reps.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { discoverStore } from "../store/discover.ts";
 import { progressStore } from "../store/progress.ts";
+import { settingsStore } from "../store/settings.ts";
+import { storyStore } from "../store/stories.ts";
 import { videoStore } from "../store/videos.ts";
 import { knownWordStore } from "../store/known-words.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
@@ -249,6 +253,78 @@ export interface FetchedCaptions {
 	raw?: { ext: "json" | "xml" | "vtt"; text: string };
 }
 
+function extraPathEntries(): string[] {
+	const home = os.homedir();
+	return [
+		path.join(home, ".spotdl"),
+		"C:\\Python313",
+		"C:\\Python313\\Scripts",
+	].filter((d) => {
+		try {
+			return fs.statSync(d).isDirectory();
+		} catch {
+			return false;
+		}
+	});
+}
+
+function subprocessEnv(): NodeJS.ProcessEnv {
+	const extra = extraPathEntries();
+	const currentPath = process.env.PATH ?? "";
+	return {
+		...process.env,
+		PATH: [...extra, currentPath].filter(Boolean).join(path.delimiter),
+		PYTHONIOENCODING: "utf-8",
+		PYTHONUTF8: "1",
+	};
+}
+
+function pythonPath(): string | null {
+	const configured = process.env.PYTHON_PATH?.trim();
+	if (configured && fs.existsSync(configured)) return configured;
+	const candidates = process.platform === "win32" ? ["C:\\Python313\\python.exe", "python.exe", "python"] : ["python3", "python"];
+	const searchDirs = [...extraPathEntries(), ...(process.env.PATH ?? "").split(path.delimiter)];
+	for (const c of candidates) {
+		if (path.isAbsolute(c)) {
+			try {
+				if (fs.statSync(c).isFile()) return c;
+			} catch {
+				// continue
+			}
+			continue;
+		}
+		for (const dir of searchDirs) {
+			if (!dir) continue;
+			const file = path.join(dir, c);
+			try {
+				if (fs.statSync(file).isFile()) return file;
+			} catch {
+				// continue
+			}
+		}
+	}
+	return null;
+}
+
+let cachedWhisperAvailable: boolean | null = null;
+
+function hasFasterWhisper(): boolean {
+	if (process.env.VITEST) return false;
+	if (cachedWhisperAvailable !== null) return cachedWhisperAvailable;
+	const py = pythonPath();
+	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
+	cachedWhisperAvailable = false;
+	if (py && fs.existsSync(helper)) {
+		try {
+			const out = execFileSync(py, [helper, "check"], { encoding: "utf8", timeout: 60_000, windowsHide: true, env: subprocessEnv() });
+			cachedWhisperAvailable = (JSON.parse(out.trim().split("\n").pop() ?? "{}") as { whisper?: boolean }).whisper === true;
+		} catch {
+			cachedWhisperAvailable = false;
+		}
+	}
+	return cachedWhisperAvailable;
+}
+
 /** yt-dlp on the PATH (or YTDLP_PATH), when it is. */
 function ytDlpPath(): string | null {
 	const configured = process.env.YTDLP_PATH?.trim();
@@ -267,6 +343,13 @@ function ytDlpPath(): string | null {
 	return null;
 }
 
+function canTranscribeAudio(): boolean {
+	if (ytDlpPath() !== null && (!!keyValue("DEEPGRAM_API_KEY") || !!keyValue("ELEVENLABS_API_KEY") || hasFasterWhisper())) {
+		return true;
+	}
+	return false;
+}
+
 /** The captions through yt-dlp: it keeps up with YouTube's changes better
  *  than any hand-written fetch. Subtitles only; nothing else is written.
  *  The first of `langs` the video has captions in wins. */
@@ -276,7 +359,7 @@ async function captionsViaYtDlp(id: string, langs: readonly string[], signal?: A
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-captions-"));
 	try {
 		const subLangs = langs.map((lang) => `${lang},${lang}-orig,${lang}.*`).join(",");
-		const { stdout } = await run(bin, ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", subLangs, "--sub-format", "json3/srv3/vtt/best", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 120_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true });
+		const { stdout } = await run(bin, ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", subLangs, "--sub-format", "json3/srv3/vtt/best", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 120_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() });
 		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number; subtitles?: Record<string, unknown>; automatic_captions?: Record<string, unknown> };
 		const files = fs.readdirSync(dir).filter((f) => f.startsWith(`${id}.`) && /\.(json3|srv3|xml|vtt)$/.test(f));
 		for (const lang of langs) {
@@ -300,34 +383,228 @@ async function captionsViaYtDlp(id: string, langs: readonly string[], signal?: A
 	}
 }
 
-/** The audio transcribed by Deepgram (Slovak, nova-2) when the video has
- *  no captions: yt-dlp pulls the audio to a temp folder, it goes to
- *  Deepgram, and the file is deleted; only the transcript is kept. */
-async function captionsViaDeepgram(id: string, meta: VideoMeta | null, lang: string, signal?: AbortSignal): Promise<FetchedCaptions | null> {
-	const bin = ytDlpPath();
-	const key = keyValue("DEEPGRAM_API_KEY");
-	if (!bin || !key) return null;
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
+async function transcribeFileViaWhisper(audioPath: string, lang: string, signal?: AbortSignal): Promise<{ cues: CaptionCue[]; durationSec: number } | null> {
+	const py = pythonPath();
+	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
+	if (!py || !fs.existsSync(helper)) return null;
+	const { stdout } = await run(py, [helper, "transcribe", audioPath, lang, "large-v3-turbo"], {
+		timeout: 900_000,
+		maxBuffer: 64 * 1024 * 1024,
+		signal,
+		windowsHide: true,
+		env: subprocessEnv(),
+	});
+	const line = stdout.trim().split("\n").pop() ?? "";
+	if (!line) return null;
+	const parsed = JSON.parse(line) as { durationSec?: number; cues?: CaptionCue[] };
+	if (!parsed.cues?.length) return null;
+	return { cues: parsed.cues, durationSec: Number(parsed.durationSec) || 0 };
+}
+
+interface ElevenLabsWord {
+	text?: string;
+	start?: number;
+	end?: number;
+	type?: string;
+}
+
+function groupWordsIntoCues(words: readonly ElevenLabsWord[]): CaptionCue[] {
+	const cues: CaptionCue[] = [];
+	let curWords: string[] = [];
+	let curStart = 0;
+	let curEnd = 0;
+	let curChars = 0;
+
+	const flush = () => {
+		const text = curWords.join("").trim();
+		if (text) {
+			cues.push({
+				start: Math.round(curStart * 100) / 100,
+				dur: Math.round(Math.max(0.25, curEnd - curStart) * 100) / 100,
+				text,
+			});
+		}
+		curWords = [];
+		curChars = 0;
+	};
+
+	for (const w of words) {
+		const token = w.text ?? "";
+		if (!token) continue;
+		const s = typeof w.start === "number" ? w.start : curEnd;
+		const e = typeof w.end === "number" ? w.end : s;
+		if (curWords.length > 0 && w.type !== "spacing" && s - curEnd > 0.85) {
+			flush();
+		}
+		if (curWords.length === 0) {
+			if (w.type === "spacing") continue;
+			curStart = s;
+		}
+		curWords.push(token);
+		curEnd = Math.max(curEnd, e);
+		curChars += token.length;
+		const endsSentence = /[.!?…]["»”)]*$/.test(token.trim());
+		if ((endsSentence && curEnd - curStart >= 1.2) || curChars >= 80 || curEnd - curStart >= 7.5) {
+			flush();
+		}
+	}
+	flush();
+	return cues;
+}
+
+async function transcribeFileViaElevenLabs(audioPath: string, lang: string, signal?: AbortSignal): Promise<{ cues: CaptionCue[]; durationSec: number } | null> {
+	const key = keyValue("ELEVENLABS_API_KEY");
+	if (!key) return null;
+	const audio = fs.readFileSync(audioPath);
+	const form = new FormData();
+	form.append("model_id", "scribe_v2");
+	form.append("language_code", lang);
+	form.append("file", new Blob([new Uint8Array(audio)], { type: "audio/mpeg" }), path.basename(audioPath));
+	const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+		method: "POST",
+		headers: { "xi-api-key": key },
+		body: form,
+		signal,
+	});
+	if (!res.ok) {
+		throw new Error(`ElevenLabs Scribe v2 answered ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
+	}
+	const body = (await res.json()) as { text?: string; words?: ElevenLabsWord[] };
+	const words = Array.isArray(body.words) ? body.words : [];
+	const cues = words.length > 0 ? groupWordsIntoCues(words) : body.text?.trim() ? [{ start: 0, dur: 5, text: body.text.trim() }] : [];
+	if (!cues.length) return null;
+	const last = cues[cues.length - 1]!;
+	return { cues, durationSec: Math.ceil(last.start + last.dur) };
+}
+
+async function transcribeAudioFile(
+	audioPath: string,
+	lang: string,
+	signal?: AbortSignal,
+): Promise<{ cues: CaptionCue[]; via: "whisper" | "elevenlabs" | "deepgram"; durationSec: number } | null> {
+	const preferred: TranscriptionEngineId | undefined = settingsStore.readSettings()?.agent?.transcription?.engine;
+	const errors: string[] = [];
+
+	if (preferred === "elevenlabs") {
+		const got = await transcribeFileViaElevenLabs(audioPath, lang, signal);
+		if (got) return { ...got, via: "elevenlabs" };
+		throw new Error(
+			keyValue("ELEVENLABS_API_KEY")
+				? "ElevenLabs Scribe v2 found no speech in this audio."
+				: "ElevenLabs Scribe v2 is selected in Settings → Tutor, but no ELEVENLABS_API_KEY is configured in Settings → API keys.",
+		);
+	}
+
+	if (preferred === "whisper") {
+		const got = await transcribeFileViaWhisper(audioPath, lang, signal);
+		if (got) return { ...got, via: "whisper" };
+		throw new Error("Whisper (large-v3-turbo) could not transcribe this audio.");
+	}
+
 	try {
-		const { stdout } = await run(bin, ["-x", "--audio-format", "mp3", "--audio-quality", "6", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 300_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true });
-		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number };
-		const file = fs.readdirSync(dir).find((f) => f.endsWith(".mp3"));
-		if (!file) return null;
-		const audio = fs.readFileSync(path.join(dir, file));
+		const got = await transcribeFileViaWhisper(audioPath, lang, signal);
+		if (got) return { ...got, via: "whisper" };
+	} catch (err) {
+		errors.push(`whisper: ${err instanceof Error ? err.message : String(err)}`);
+	}
+
+	if (keyValue("ELEVENLABS_API_KEY")) {
+		try {
+			const got = await transcribeFileViaElevenLabs(audioPath, lang, signal);
+			if (got) return { ...got, via: "elevenlabs" };
+		} catch (err) {
+			errors.push(`elevenlabs: ${err instanceof Error ? err.message : String(err)}`);
+		}
+	}
+
+	const dgKey = keyValue("DEEPGRAM_API_KEY");
+	if (dgKey) {
+		const audio = fs.readFileSync(audioPath);
 		const res = await fetch(`https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true&utterances=true`, {
 			method: "POST",
-			headers: { authorization: `Token ${key}`, "content-type": "audio/mpeg" },
+			headers: { authorization: `Token ${dgKey}`, "content-type": "audio/mpeg" },
 			body: new Uint8Array(audio),
 			signal,
 		});
 		if (!res.ok) throw new Error(`Deepgram answered ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
 		const body = (await res.json()) as { results?: { utterances?: Array<{ start: number; end: number; transcript: string }> } };
 		const cues: CaptionCue[] = (body.results?.utterances ?? []).filter((u) => u.transcript?.trim()).map((u) => ({ start: u.start, dur: Math.max(0, u.end - u.start), text: u.transcript.trim() }));
-		if (!cues.length) return null;
+		if (cues.length) {
+			const last = cues[cues.length - 1]!;
+			return { cues, via: "deepgram", durationSec: Math.ceil(last.start + last.dur) };
+		}
+	}
+
+	if (errors.length) throw new Error(errors.join("; "));
+	return null;
+}
+
+async function captionsForSpotify(id: string, lang: string, signal?: AbortSignal, onStage?: (s: PrepareStage) => void): Promise<FetchedCaptions> {
+	const py = pythonPath();
+	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
+	if (!py || !fs.existsSync(helper)) {
+		throw new Error("Python + spotdl are required to download Spotify tracks.");
+	}
+	const audioDir = path.join(PATHS.videos, "audio");
+	fs.mkdirSync(audioDir, { recursive: true });
+	const mp3Path = path.join(audioDir, `${id}.mp3`);
+	const jpgPath = path.join(audioDir, `${id}.jpg`);
+	const url = videoUrl(id);
+
+	const { stdout } = await run(py, [helper, "download", url, mp3Path, jpgPath], {
+		timeout: 300_000,
+		maxBuffer: 32 * 1024 * 1024,
+		signal,
+		windowsHide: true,
+		env: subprocessEnv(),
+	});
+	const metaLine = stdout.trim().split("\n").pop() ?? "{}";
+	const dlMeta = JSON.parse(metaLine) as { title?: string; channel?: string; durationSec?: number };
+
+	onStage?.("transcribing");
+	const transcribed = await transcribeAudioFile(mp3Path, lang, signal);
+	if (!transcribed || !transcribed.cues.length) {
+		throw new Error("Could not transcribe the Spotify track audio.");
+	}
+	const cues = transcribed.cues;
+	return {
+		meta: {
+			id,
+			title: dlMeta.title?.trim() || `Spotify ${id.slice(3)}`,
+			...(dlMeta.channel?.trim() ? { channel: dlMeta.channel.trim() } : {}),
+			durationSec: Math.round(dlMeta.durationSec || transcribed.durationSec || 0),
+		},
+		cues,
+		source: { kind: "transcription", trackLang: lang, via: transcribed.via },
+		raw: {
+			ext: "json",
+			text: JSON.stringify({
+				events: cues.map((c) => ({
+					tStartMs: Math.round(c.start * 1000),
+					dDurationMs: Math.round(c.dur * 1000),
+					segs: [{ utf8: c.text }],
+				})),
+			}),
+		},
+	};
+}
+
+async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null, lang: string, signal?: AbortSignal): Promise<FetchedCaptions | null> {
+	const bin = ytDlpPath();
+	if (!bin || !canTranscribeAudio()) return null;
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
+	try {
+		const { stdout } = await run(bin, ["-x", "--audio-format", "mp3", "--audio-quality", "6", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 300_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() });
+		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number };
+		const file = fs.readdirSync(dir).find((f) => f.endsWith(".mp3"));
+		if (!file) return null;
+		const transcribed = await transcribeAudioFile(path.join(dir, file), lang, signal);
+		if (!transcribed || !transcribed.cues.length) return null;
+		const { cues, via } = transcribed;
 		return {
-			meta: { id, title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`, ...(meta?.channel || info.channel || info.uploader ? { channel: (meta?.channel ?? info.channel ?? info.uploader)! } : {}), ...(meta?.channelId ? { channelId: meta.channelId } : {}), durationSec: meta?.durationSec || Number(info.duration) || 0 },
+			meta: { id, title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`, ...(meta?.channel || info.channel || info.uploader ? { channel: (meta?.channel ?? info.channel ?? info.uploader)! } : {}), ...(meta?.channelId ? { channelId: meta.channelId } : {}), durationSec: meta?.durationSec || Number(info.duration) || transcribed.durationSec || 0 },
 			cues,
-			source: { kind: "transcription", trackLang: lang, via: "deepgram" },
+			source: { kind: "transcription", trackLang: lang, via },
 			raw: { ext: "json", text: JSON.stringify({ events: cues.map((c) => ({ tStartMs: Math.round(c.start * 1000), dDurationMs: Math.round(c.dur * 1000), segs: [{ utf8: c.text }] })) }) },
 		};
 	} finally {
@@ -385,6 +662,9 @@ export function elsewhereProfile(tracks: readonly CaptionTrack[]): ElsewhereProf
 export async function fetchCaptions(id: string, opts: { transcribe?: boolean; lang?: string; signal?: AbortSignal; onStage?: (s: PrepareStage) => void } = {}): Promise<FetchedCaptions> {
 	const langs = opts.lang ? [opts.lang] : captionLangs();
 	const lang = langs[0]!;
+	if (isSpotifyId(id)) {
+		return captionsForSpotify(id, lang, opts.signal, opts.onStage);
+	}
 	let meta: VideoMeta | null = null;
 	const errors: string[] = [];
 	for (const get of [metaFromInnertube, metaFromWatchPage]) {
@@ -412,12 +692,12 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 	} catch (err) {
 		errors.push(`yt-dlp: ${err instanceof Error ? err.message : String(err)}`);
 	}
-	const canTranscribe = ytDlpPath() !== null && !!keyValue("DEEPGRAM_API_KEY");
+	const canTranscribe = canTranscribeAudio();
 	if (opts.transcribe && canTranscribe) {
 		opts.onStage?.("transcribing");
-		const got = await captionsViaDeepgram(id, meta, lang, opts.signal);
+		const got = await captionsViaAudioTranscription(id, meta, lang, opts.signal);
 		if (got) return got;
-		errors.push("deepgram: no speech found");
+		errors.push("transcription: no speech found");
 	}
 	const wanted = langs.map(captionLanguageName).join(" or ");
 	// A caller that chose `lang` wants that language, so no other profile is suggested.
@@ -429,7 +709,7 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 				? `This video has captions in ${[...new Set(meta.tracks.map((t) => t.languageCode))].join(", ")} but none in ${wanted}.`
 				: `This video has no captions at all.`
 			: `YouTube did not answer for this video${errors.length ? ` (${errors[errors.length - 1]})` : ""}.`;
-	throw new NoCaptionsError(`${why}${!elsewhere && (!meta || meta.tracks.length === 0) ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and a Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe, elsewhere);
+	throw new NoCaptionsError(`${why}${!elsewhere && (!meta || meta.tracks.length === 0) ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and local Whisper or an ElevenLabs/Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe, elsewhere);
 }
 
 // ─── Translation and questions on the cheap slot ────────────────────────────
@@ -472,7 +752,7 @@ interface PrepareOptions {
 	model?: string;
 	/** Test seam: captions without YouTube. */
 	captions?: (id: string) => Promise<FetchedCaptions>;
-	/** Transcribe the audio when the video has no captions (yt-dlp + Deepgram). */
+	/** Transcribe the audio when the video has no captions (yt-dlp + Whisper / ElevenLabs / Deepgram). */
 	transcribe?: boolean;
 	now?: Date;
 	/** Prepare again even when the video is already in the library. */
@@ -632,7 +912,7 @@ export function glossSegments(lines: readonly { start: number; end: number; sk: 
  *  waits for the first. */
 export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<VideoRecord> {
 	const id = parseVideoUrl(url);
-	if (!id) return Promise.reject(new Error("That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link."));
+	if (!id) return Promise.reject(new Error("That is not a YouTube or Spotify link. Paste a youtube.com/watch, youtu.be, shorts, or open.spotify.com/track link."));
 	const range = opts.range;
 	if (range && !(Number.isFinite(range.startSec) && Number.isFinite(range.endSec) && range.startSec >= 0 && range.endSec - range.startSec >= FRAGMENT_PICK_MIN_SEC && range.endSec - range.startSec <= FRAGMENT_PICK_MAX_SEC)) {
 		return Promise.reject(new Error(`A fragment is between ${FRAGMENT_PICK_MIN_SEC} seconds and ${FRAGMENT_PICK_MAX_SEC / 60} minutes long.`));
@@ -646,7 +926,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			const kept = videoStore.get(id);
 			if (kept && sameCut(kept, range)) return kept;
 		}
-		const task = startTask({ id: taskIdOf(id), kind: "video", title: videoStore.get(id)?.title ?? `Video ${id}`, step: PREPARE_STAGE_LINE.captions });
+		const task = startTask({ id: taskIdOf(id), kind: "video", title: videoStore.get(id)?.title ?? (isSpotifyId(id) ? `Spotify ${id.slice(3)}` : `Video ${id}`), step: PREPARE_STAGE_LINE.captions });
 		const signal = opts.signal ? AbortSignal.any([opts.signal, task.signal]) : task.signal;
 		setStage(id, "captions");
 		const lexicon = loadLexicon();
@@ -857,7 +1137,7 @@ export function watchState(tz?: number, now = new Date()): WatchState {
 	return {
 		library: videoLibrary(),
 		canPrepare: storyEngine() !== null,
-		canTranscribe: ytDlpPath() !== null && !!keyValue("DEEPGRAM_API_KEY"),
+		canTranscribe: canTranscribeAudio(),
 		preparing: [...stages.entries()].filter(([, s]) => s.stage !== "done" && s.stage !== "error").map(([id, s]) => ({ id, stage: s.stage })),
 		watchedToday: videoStore.watches().filter((w) => w.day === today).length,
 	};
@@ -955,6 +1235,49 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 		console.warn("[watch] could not queue the missed lines:", err instanceof Error ? err.message : err);
 	}
 	return { xp, correct, total, gotFirst, gotAfter, missed, queued, rewatch, summary: progressSummary(input.tz, now) };
+}
+
+export function importVideoToRead(videoId: string, now = new Date()): StoryRecord {
+	const video = currentVideo(videoId);
+	if (!video) throw new Error(`unknown video ${videoId}`);
+	const safeSlug = video.id.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+	const storyId = `watch-${safeSlug}`;
+	const existing = storyStore.get(storyId);
+	if (existing) return existing;
+
+	const sentences = video.segments.map((seg) => ({
+		sk: seg.rendered ?? seg.sk,
+		en: seg.en,
+		tokens: seg.tokens,
+	}));
+	const newWords = video.preTeach.map((w) => ({
+		lemma: w.lemma,
+		gloss: w.gloss,
+		...(w.slug ? { slug: w.slug } : {}),
+	}));
+	const story: StoryRecord = {
+		id: storyId,
+		lang: video.lang,
+		series: video.channel ?? (isSpotifyId(video.id) ? "Spotify" : "Watch"),
+		episode: 1,
+		genre: "folk",
+		title: video.title,
+		recap: video.channel ? `${video.title} — ${video.channel}` : video.title,
+		level: video.level,
+		chapter: "watch",
+		theme: isSpotifyId(video.id) ? "spotify" : "video",
+		createdAt: now.toISOString(),
+		sentences,
+		newWords,
+		questions: video.questions,
+		coverage: video.coverage,
+		wordCount: video.wordCount,
+		drafts: 1,
+		usage: video.usage,
+	};
+	storyStore.put(story);
+	ensureReadmes();
+	return story;
 }
 
 // ─── The sentence step ──────────────────────────────────────────────────────

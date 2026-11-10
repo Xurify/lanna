@@ -213,6 +213,9 @@ export interface GeneralSettings {
 	autoUpdate?: boolean;
 }
 
+export const TRANSCRIPTION_ENGINES = ["whisper", "elevenlabs"] as const;
+export type TranscriptionEngineId = (typeof TRANSCRIPTION_ENGINES)[number];
+
 /** Agent settings — everything about the non-conversation machinery. */
 export interface AgentSettings {
 	/** Background-role model/thinking overrides (absent role = config pin). */
@@ -227,6 +230,7 @@ export interface AgentSettings {
 	 *  engine must still have its key, else search is honestly unavailable.
 	 *  Absent + no key = unavailable (no silent fallback, no default). */
 	search?: { engine?: SearchEngineId };
+	transcription?: { engine?: TranscriptionEngineId };
 	/** System-prompt override SWITCHES keyed by segment path (absent key =
 	 *  off). Switch-on requires the override file to exist (enforced by the
 	 *  route); the switch is explicit so users keep a file on disk but run
@@ -426,6 +430,10 @@ function sanitizeAgent(raw: Record<string, unknown>): AgentSettings {
 	if (raw.search !== null && typeof raw.search === "object" && !Array.isArray(raw.search)) {
 		const engine = (raw.search as Record<string, unknown>).engine;
 		if (engine === "context" || engine === "tavily" || engine === "brave") out.search = { engine };
+	}
+	if (raw.transcription !== null && typeof raw.transcription === "object" && !Array.isArray(raw.transcription)) {
+		const engine = (raw.transcription as Record<string, unknown>).engine;
+		if (engine === "whisper" || engine === "elevenlabs") out.transcription = { engine };
 	}
 	return out;
 }

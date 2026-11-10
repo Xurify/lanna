@@ -46,6 +46,8 @@ export const CREDITS: Credit[] = [
 
 	{ id: "youtube", name: "YouTube", url: "https://www.youtube.com", group: "video", use: "videos, their captions and the player in Watch", fetchedHosts: ["www.youtube.com"] },
 	{ id: "yt-dlp", name: "yt-dlp", url: "https://github.com/yt-dlp/yt-dlp", group: "video", use: "captions and audio when YouTube's own can't be read, if installed" },
+	{ id: "spotify", name: "Spotify", url: "https://open.spotify.com", group: "video", use: "a track's title, cover and audio in Watch, when you paste a Spotify track link", fetchedHosts: ["open.spotify.com"] },
+	{ id: "spotdl", name: "spotdl", url: "https://github.com/spotDL/spotify-downloader", group: "video", use: "downloads a Spotify track's audio for Watch, if installed (Python)" },
 
 	{ id: "context", name: "Context", url: "https://context.dev", group: "search", use: "web search, with your Context key", fetchedHosts: ["api.context.dev", "context.dev"] },
 	{ id: "tavily", name: "Tavily", url: "https://tavily.com", group: "search", use: "web search, with your Tavily key", fetchedHosts: ["api.tavily.com", "app.tavily.com"] },

@@ -13,7 +13,7 @@ import { chartData } from "@/components/quiet/chart-data";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { useSettingsDialog } from "@/components/settings/settings-context";
 import type { Goal } from "@/components/daily-plan";
-import type { AfterPlan, CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
+import type { AfterPlan, CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TodayExperimentStatus, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
 export interface UnitSummary {
@@ -59,6 +59,7 @@ export interface Summary {
 	wordsKnown?: number;
 	stamps?: { all: StampState[]; earned: number; total: number; recent: StampState[]; next: StampState[] };
 	log?: TrailLog;
+	experiment?: TodayExperimentStatus | null;
 }
 
 
@@ -77,7 +78,7 @@ const TASK_LABEL: Record<PlanTask["id"], string> = {
 	blitz: "Blitz",
 	words: "Words",
 	read: "Read",
-	watch: "Watch",
+	watch: "Media",
 	speak: "Speak",
 	fluency: "Speed",
 };

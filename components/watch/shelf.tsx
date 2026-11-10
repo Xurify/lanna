@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The Watch shelf (LangHarness, 2026-11-07): what the learner sees before a
+ * The Media shelf (LangHarness, 2026-11-07): what the learner sees before a
  * video starts. One shape, the video card, in four places, behind four tabs
  * that stay in reach while the page scrolls:
  *
@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, LinkIcon, ListPlusIcon, LoaderCircleIcon, PlayIcon, ScissorsIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, BookOpenIcon, LinkIcon, ListPlusIcon, LoaderCircleIcon, PlayIcon, ScissorsIcon, Trash2Icon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActiveLanguage } from "@/components/speech";
 import type { FeedTask } from "@/components/activity-dock";
@@ -26,13 +26,14 @@ import { PRIMARY } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { CreatorsPanel } from "@/components/watch/creators-panel";
+import { useAddToRead } from "@/components/watch/read-import";
 import { YouTubeSection, type useDiscover } from "@/components/watch/discover";
 import { atLevel, PicksPanel } from "@/components/watch/picks-panel";
 import { PreparingContext, usePreparing } from "@/components/watch/preparing";
 import { StretchDialog } from "@/components/watch/stretch-dialog";
 import { Poster } from "@/components/watch/thumb";
 import { CardGrid, CardIconButton, Known, VideoCard } from "@/components/watch/video-card";
-import { captionLanguageName, coverageBand, coverageKind, formatClock, parseVideoUrl, videoUrl, type FragmentRange, type PickedVideo, type VideoLibraryEntry, type WatchState } from "@/src/core";
+import { captionLanguageName, coverageBand, coverageKind, formatClock, isSpotifyId, parseVideoUrl, videoUrl, type FragmentRange, type PickedVideo, type VideoLibraryEntry, type WatchState } from "@/src/core";
 
 type TabId = "picks" | "videos" | "creators" | "youtube";
 
@@ -82,7 +83,7 @@ export function Shelf({ state, running, starting, discover, onOpen, onPrepare, o
 			</header>
 			<main className="lh-rise @container mx-auto w-full max-w-6xl px-5 pb-24" data-testid="watch-shelf">
 				<div className="flex items-baseline gap-3">
-					<h1 className="text-[32px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Watch</h1>
+					<h1 className="text-[32px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Media</h1>
 					{state && state.watchedToday > 0 && <span className="font-ui text-[13px] text-ink-3">{state.watchedToday} watched today</span>}
 				</div>
 
@@ -149,6 +150,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 	const [url, setUrl] = useState("");
 	const field = useRef<HTMLInputElement>(null);
 	const id = parseVideoUrl(url);
+	const spotify = !!id && isSpotifyId(id);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -171,7 +173,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 				data-testid="watch-form"
 			>
 				<label className="sr-only" htmlFor="watch-url">
-					YouTube link
+					YouTube or Spotify link
 				</label>
 				<div className="relative min-w-0 flex-1">
 					<LinkIcon className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-3" strokeWidth={1.6} />
@@ -180,7 +182,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 						id="watch-url"
 						value={url}
 						onChange={(e) => setUrl(e.target.value)}
-						placeholder={`Paste a link to a YouTube video in ${name}`}
+						placeholder={`Paste a YouTube or Spotify link in ${name}`}
 						autoFocus
 						autoComplete="off"
 						spellCheck={false}
@@ -192,9 +194,9 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 				<div className="flex gap-2">
 					<button type="submit" disabled={!id || !canPrepare} className={cn(PRIMARY, "h-12 flex-1 rounded-xl px-5 @2xl:flex-none")} data-testid="watch-prepare">
 						<ListPlusIcon className="size-4" strokeWidth={1.8} />
-						Add video
+						{spotify ? "Add track" : "Add video"}
 					</button>
-					<button type="button" disabled={!id} onClick={() => id && onCut(id)} className="q-btn sec h-12 flex-1 rounded-xl px-4 @2xl:flex-none" title="Watch only a stretch of it" data-testid="watch-fragments-open">
+					<button type="button" disabled={!id || spotify} onClick={() => id && !spotify && onCut(id)} className="q-btn sec h-12 flex-1 rounded-xl px-4 @2xl:flex-none" title="Watch only a stretch of it" data-testid="watch-fragments-open">
 						<ScissorsIcon className="size-4" strokeWidth={1.6} />
 						Pick a stretch
 					</button>
@@ -206,7 +208,7 @@ function LinkField({ name, fallbacks, canPrepare, canTranscribe, onPrepare, onCu
 				</div>
 			) : (
 				<p className="mt-2.5 max-w-3xl font-prose text-[13px] leading-relaxed text-ink-3">
-					Uses YouTube's captions, written by people or automatic{fallbacks.length > 0 ? `, or ${fallbacks.join(" or ")} ones when there are none in ${name}` : ""}. Adding a video costs one or two short AI requests, once. Nothing is downloaded.{canTranscribe ? " A video without captions can be transcribed from its audio." : ""}
+					Uses YouTube's captions, written by people or automatic{fallbacks.length > 0 ? `, or ${fallbacks.join(" or ")} ones when there are none in ${name}` : ""}, or transcribes Spotify tracks and uncaptioned videos from audio. Adding a video or track costs one or two short AI requests, once.{canTranscribe ? " Audio transcription is ready." : ""}
 				</p>
 			)}
 		</div>
@@ -269,7 +271,7 @@ function UpNext(props: UpNextProps) {
 					{v ? (
 						<button type="button" onClick={props.onOpen} className={cn(PRIMARY, "h-11 rounded-xl px-6")} data-testid="watch-up-next-start">
 							<PlayIcon className="size-4 fill-current" />
-							Start watching
+							{isSpotifyId(v.id) ? "Start playing" : "Start watching"}
 						</button>
 					) : (
 						<>
@@ -307,7 +309,7 @@ function Tabs({ tab, onTab, counts }: { tab: TabId; onTab: (t: TabId) => void; c
 	return (
 		// Sticks under the header (52px), so the way to the other lists is in reach however far down the page is scrolled.
 		<div className="sticky top-[52px] z-10 -mx-5 mt-8 bg-background px-5">
-			<div role="tablist" aria-label="Watch" className="flex max-w-full gap-6 overflow-x-auto border-b border-border" data-testid="watch-tabs">
+			<div role="tablist" aria-label="Media" className="flex max-w-full gap-6 overflow-x-auto border-b border-border" data-testid="watch-tabs">
 				{TABS.map((t, i) => {
 					const on = t.id === tab;
 					const n = t.count ? counts[t.id] : undefined;
@@ -338,12 +340,13 @@ function Tabs({ tab, onTab, counts }: { tab: TabId; onTab: (t: TabId) => void; c
 // ─── My videos ──────────────────────────────────────────────────────────────
 
 function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut, onFind }: { library: VideoLibraryEntry[]; /** Shown above as the next step, so not twice. */ exclude?: string; watchedToday: number; onOpen: (id: string) => void; onDelete: (id: string) => void; onCut: (v: VideoLibraryEntry) => void; onFind: () => void }) {
+	const readIn = useAddToRead();
 	const [confirming, setConfirming] = useState<string | null>(null);
 	if (library.length === 0) {
 		return (
 			<div className="max-w-lg" data-testid="watch-library-empty">
 				<p className="font-ui text-[17px] font-[600] text-foreground">Nothing prepared yet</p>
-				<p className="q-sub">Paste a YouTube link above, or add one of the videos picked for you. It is translated once and kept here.</p>
+				<p className="q-sub">Paste a YouTube or Spotify link above, or add one of the videos picked for you. It is translated once and kept here.</p>
 				<button type="button" onClick={onFind} className="q-btn sec t mt-4">
 					See what is picked for you
 				</button>
@@ -357,6 +360,11 @@ function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut,
 				{library.length} {library.length === 1 ? "video" : "videos"}, newest first{rest.length < library.length ? " (the first is above)" : ""}
 				{watchedToday > 0 ? ` · ${watchedToday} watched today` : ""}
 			</p>
+			{readIn.error && (
+				<p className="mb-3 font-prose text-sm text-miss" role="alert" data-testid="watch-library-read-error">
+					{readIn.error}
+				</p>
+			)}
 			<CardGrid testid="watch-library">
 				{rest.map((v) => {
 					const kind = coverageKind(v);
@@ -408,11 +416,16 @@ function LibraryPanel({ library, exclude, watchedToday, onOpen, onDelete, onCut,
 									<>
 										<button type="button" onClick={() => onOpen(v.id)} className="q-btn sec t h-8 min-w-0 flex-1 px-3 pointer-coarse:h-11" data-testid="watch-shelf-open">
 											<PlayIcon className="size-3.5 fill-current" />
-											{v.watches === 0 ? "Watch" : "Watch again"}
+											{isSpotifyId(v.id) ? "Play" : "Watch"}{v.watches > 0 ? " again" : ""}
 										</button>
-										<CardIconButton label="Pick another stretch of this video" onClick={() => onCut(v)} testid="watch-shelf-fragments">
-											<ScissorsIcon className="size-4" strokeWidth={1.6} />
+										<CardIconButton label="Add to Read" onClick={() => readIn.add(v.id)} testid="watch-shelf-read">
+											<BookOpenIcon className="size-4" strokeWidth={1.6} />
 										</CardIconButton>
+										{!isSpotifyId(v.id) && (
+											<CardIconButton label="Pick another stretch of this video" onClick={() => onCut(v)} testid="watch-shelf-fragments">
+												<ScissorsIcon className="size-4" strokeWidth={1.6} />
+											</CardIconButton>
+										)}
 										<CardIconButton label={`Delete ${v.title}`} onClick={() => setConfirming(v.id)} testid="watch-delete">
 											<Trash2Icon className="size-4" strokeWidth={1.6} />
 										</CardIconButton>

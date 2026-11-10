@@ -30,6 +30,7 @@ const { strandMinutes } = await import("../src/core/strands.ts");
 const { QUESTION_PLAN } = await import("../src/core/reading.ts");
 const watch = await import("../src/server/watch.ts");
 const { videoStore } = await import("../src/store/videos.ts");
+const { storyStore } = await import("../src/store/stories.ts");
 const { progressStore } = await import("../src/store/progress.ts");
 const { reviewStore } = await import("../src/store/review.ts");
 const { progressSummary } = await import("../src/server/lesson.ts");
@@ -54,6 +55,19 @@ test("parseVideoUrl: watch, short, shorts, embed, bare id; nothing else", () => 
 	}
 	for (const u of ["https://vimeo.com/12345", "https://www.youtube.com/", "not a link", "https://www.youtube.com/watch?v=short"]) assert.equal(core.parseVideoUrl(u), null, u);
 });
+
+test("parseVideoUrl and isVideoId: a Spotify track is its own id, kept apart from YouTube's", () => {
+	const spotifyId = "sp_0rgXffrQ2Fj9kCDotdURKQ";
+	for (const u of ["https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ?si=aa12017500d7499b", "open.spotify.com/intl-de/track/0rgXffrQ2Fj9kCDotdURKQ", "spotify:track:0rgXffrQ2Fj9kCDotdURKQ", spotifyId]) {
+		assert.equal(core.parseVideoUrl(u), spotifyId, u);
+	}
+	assert.equal(core.parseVideoUrl("https://open.spotify.com/album/0rgXffrQ2Fj9kCDotdURKQ"), null);
+	assert.equal(core.isVideoId(spotifyId), true);
+	assert.equal(core.isSpotifyId(spotifyId), true);
+	assert.equal(core.isSpotifyId("dQw4w9WgXcQ"), false);
+	assert.equal(core.videoUrl(spotifyId), "https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ");
+});
+
 
 test("the caption formats: json3 (rolling appends folded in), VTT, both XML shapes", () => {
 	const json = core.parseJson3(FIXTURE);
@@ -597,4 +611,20 @@ test("a preparation is a background task: running with its step, done with where
 	await assert.rejects(stopped);
 	assert.equal(listTasks().find((t) => t.id === "video:GGGGGGGGGGG")!.error, "Stopped.");
 	assert.equal(videoStore.get("GGGGGGGGGGG"), null, "a stopped preparation keeps nothing");
+});
+
+test("a prepared track becomes one Read episode: its lines, questions and words, once", async () => {
+	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	const v = await watch.prepareVideo("https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ", { engine, model: "faux:watch", captions, now: new Date("2026-11-10T10:00:00Z") });
+	const story = watch.importVideoToRead(v.id, new Date("2026-11-10T10:05:00Z"));
+	assert.equal(story.id, "watch-sp-0rgxffrq2fj9kcdotdurkq");
+	assert.equal(story.lang, v.lang);
+	assert.equal(story.theme, "spotify");
+	assert.equal(story.sentences.length, v.segments.length);
+	assert.equal(story.questions.length, v.questions.length);
+	assert.equal(story.newWords.length, v.preTeach.length);
+	assert.equal(storyStore.get(story.id)?.title, v.title);
+	assert.equal(watch.importVideoToRead(v.id, new Date("2026-11-11T10:00:00Z")).createdAt, story.createdAt, "asking again returns the episode already made");
+	assert.throws(() => watch.importVideoToRead("sp_AAAAAAAAAAAAAAAAAAAAAA"), /unknown video/);
+	videoStore.remove(v.id);
 });

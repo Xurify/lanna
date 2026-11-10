@@ -39,7 +39,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Review", hint: "Your word deck", href: "/review", icon: "review", words: "cards deck spaced" },
 	{ title: "Listen", hint: "Ten sentences you can follow", href: "/listen", icon: "listen", words: "hear audio" },
 	{ title: "Read", hint: "Stories, every word tappable", href: "/read", icon: "read", words: "stories episode library" },
-	{ title: "Watch", hint: "A video with both subtitles", href: "/watch", icon: "play", words: "youtube video" },
+	{ title: "Media", hint: "Videos and songs, with the text under them", href: "/watch", icon: "play", words: "youtube video spotify song track watch" },
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
 	{ title: "Ear gym", hint: "Which of two close words did you hear", href: "/phonology", icon: "listen", words: "phonology minimal pairs sound contrast ear hvpt sounds sound guide rhythm mouth articulation" },
 	{ title: "Talk in writing", hint: "A role-play in writing", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },

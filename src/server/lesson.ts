@@ -92,7 +92,8 @@ import { personalLessonFor, personalPlanEntry } from "./personal.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 import { activeProfile } from "../../config.ts";
-import { getScheduledArmForDate, syncDailyExperimentData } from "./experiment.ts";
+import type { TodayExperimentStatus } from "../core/experiment.ts";
+import { getScheduledArmForDate, getTodayExperimentStatus, syncDailyExperimentData } from "./experiment.ts";
 
 const RECENT_CAP = 240;
 /** Days of history the trajectory draws. */
@@ -492,6 +493,8 @@ export interface ProgressSummary {
 	stamps: StampReport;
 	/** The trail log: the totals, every one an outcome. */
 	log: TrailLog;
+	/** Active 42-day experiment status for today. */
+	experiment?: TodayExperimentStatus | null;
 }
 
 /** The video the daily plan should show: the one watched today (so the
@@ -702,6 +705,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		wordsKnown: log.wordsKnown,
 		stamps: stamps.report,
 		log,
+		experiment: getTodayExperimentStatus(now, activeProfile()),
 	};
 }
 

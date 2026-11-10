@@ -458,3 +458,31 @@ export function generateSummaryMarkdown(
 	lines.push(`*Generated automatically by LangHarness experiment tracker.*`);
 	return lines.join("\n");
 }
+
+/** Real-time status for the current day of the experiment (for Today UI and notifications). */
+export interface TodayExperimentStatus {
+	active: boolean;
+	startDate: string;
+	endDate: string;
+	dayNumber: number;
+	totalDays: number;
+	phase: "baseline" | "intervention";
+	russianArm: "normal" | "input-first";
+	slovakArm: "normal";
+	weeklyCheckDue: boolean;
+	weeklyCheckCompleted: boolean;
+	weekNumber: number;
+	validDay: boolean;
+	russian: {
+		dictationReps: number;
+		understoodReps: number;
+		validDay: boolean;
+		firstPlayShare: number | null;
+	};
+	slovak: {
+		dictationReps: number;
+		understoodReps: number;
+		validDay: boolean;
+		firstPlayShare: number | null;
+	};
+}

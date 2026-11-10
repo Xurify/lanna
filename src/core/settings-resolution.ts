@@ -26,7 +26,7 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { ModelRole } from "../../config.ts";
 import type { ChatSettings } from "./contracts/chat.ts";
 import type { SearchEngineId } from "./search.ts";
-import { BACKGROUND_MODEL_ROLES, FACTORY_SETTINGS, ROLE_SLOT, type BackgroundModelRole, type FactorySettings, type GeneralSettings, type CompactionSettings, type ModelSlot, type ModelSlotName, type RoleModelOverride, type UserSettings } from "./settings.ts";
+import { BACKGROUND_MODEL_ROLES, FACTORY_SETTINGS, ROLE_SLOT, type BackgroundModelRole, type FactorySettings, type GeneralSettings, type CompactionSettings, type ModelSlot, type ModelSlotName, type RoleModelOverride, type TranscriptionEngineId, type UserSettings } from "./settings.ts";
 
 /** A configured model slot: the tier's concrete model, with its optional
  *  thinking level. UNSET level is legal — the engine build resolves it
@@ -64,6 +64,7 @@ export interface EffectiveSettings {
 		 *  passthrough delta — engine resolution (pin → auto → unavailable)
 		 *  lives in server/search.ts, where keys are visible. */
 		search: { engine?: SearchEngineId };
+		transcription: { engine?: TranscriptionEngineId };
 	};
 	/** The resolved strong/cheap/vision slots: each tier's concrete model or
 	 *  NULL when the tier holds no model (no factory floor — BYOK all the
@@ -161,6 +162,7 @@ export function resolveSettings(record: UserSettings | null): EffectiveSettings 
 			tools: agent.tools ?? {},
 			prompts: agent.prompts ?? {},
 			search: agent.search ?? {},
+			transcription: agent.transcription ?? {},
 		},
 		models: {
 			strong: resolveSlot(modelsSection.strong),

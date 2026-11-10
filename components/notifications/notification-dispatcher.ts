@@ -87,6 +87,10 @@ export async function dispatchReminderAlert(options: DispatchAlertOptions): Prom
 				notification.close();
 				if (onActionClick) {
 					onActionClick();
+				} else if (nudge.taskKind === "experiment") {
+					window.location.href = "/experiments/input-first/check";
+				} else if (nudge.taskKind === "listen") {
+					window.location.href = "/listen";
 				} else if (nudge.taskKind) {
 					window.location.href = `/#task-${encodeURIComponent(nudge.taskKind)}`;
 				}
