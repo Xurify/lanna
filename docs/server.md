@@ -56,7 +56,7 @@ Run these before you set anything up. They decide where the server goes.
    TZ=Europe/Bratislava
    ```
 
-   Other settings, all optional: `LH_PORT` (default 3010), `LH_MEM_LIMIT` (default 2g), `LH_UPDATE_YTDLP=1` (update yt-dlp each time the container starts, instead of using the version pinned in the image), `LH_DOCKER_BUILD_ARGS` (extra `docker build` arguments, such as `--build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim` when Docker Hub refuses with "429 Too Many Requests").
+   For a public address (7b) add `LH_PUBLIC_HOST` and `LH_PROXY_SECRET` as shown there. Other settings, all optional: `LH_PORT` (default 3010), `LH_MEM_LIMIT` (default 2g), `LH_UPDATE_YTDLP=1` (update yt-dlp each time the container starts, instead of using the version pinned in the image), `LH_DOCKER_BUILD_ARGS` (extra `docker build` arguments, such as `--build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim` when Docker Hub refuses with "429 Too Many Requests").
 5. **First start.** The update script builds the image, runs the boot check, and starts the container:
 
    ```bash
@@ -73,53 +73,78 @@ Run these before you set anything up. They decide where the server goes.
    ssh -L 3010:127.0.0.1:3010 you@your-vps
    ```
 
-   Open `http://localhost:3010` on the PC, go to Settings → Devices, turn on Remote access, and make a code. Then pair the phone and the iPad through the Tailscale address, as in [remote-access.md](remote-access.md). Once the sign-in work is merged, `npm run remote:code` replaces the tunnel.
+   Open `http://localhost:3010` on the PC, go to Settings → Devices, turn on Remote access, and make a code. Then pair the phone and the iPad through the Tailscale address, as in [remote-access.md](remote-access.md). `docker compose exec langharness node cli/remote-code.mjs` prints a pairing code on the server, so the tunnel is only needed if you prefer Settings.
 
-   **b. A public address (after the sign-in work).** Do not point a public name at the server before the sign-in page and the public-host gate are merged (work items W1 and W2 in the plan). Until then the app answers every request addressed to a public name with 403, which is safe but not usable. When they are merged, add the name to the reverse proxy flags.games already uses. The headers matter, see "How the app sees a request" below.
+   **b. A public address with a password.** The app at `https://learn.example.com`, with no Tailscale app on the phone. The rules are in [DECISIONS.md, E93](DECISIONS.md); the proxy details and the day-to-day commands are in [remote-access.md](remote-access.md#at-a-public-address-a-server-with-a-domain).
 
-   Caddy:
+   1. Make a secret that only the proxy and the app know, and add both lines to `/srv/langharness/repo/.env`:
 
-   ```
-   learn.example.com {
-   	reverse_proxy 127.0.0.1:3010 {
-   		header_up Host {host}
-   		header_up X-Real-IP {remote_host}
-   		header_up X-Forwarded-For {remote_host}
-   		header_up X-Forwarded-Proto {scheme}
-   	}
-   }
-   ```
+      ```bash
+      openssl rand -hex 32
+      ```
 
-   nginx (certificates from certbot):
+      ```
+      LH_PUBLIC_HOST=learn.example.com
+      LH_PROXY_SECRET=<the 64 characters from the command above>
+      ```
 
-   ```
-   server {
-   	listen 80;
-   	server_name learn.example.com;
-   	return 301 https://$host$request_uri;
-   }
-   server {
-   	listen 443 ssl;
-   	http2 on;
-   	server_name learn.example.com;
-   	ssl_certificate     /etc/letsencrypt/live/learn.example.com/fullchain.pem;
-   	ssl_certificate_key /etc/letsencrypt/live/learn.example.com/privkey.pem;
-   	client_max_body_size 12m;
-   	location / {
-   		proxy_pass http://127.0.0.1:3010;
-   		proxy_http_version 1.1;
-   		proxy_set_header Host $host;
-   		proxy_set_header X-Real-IP $remote_addr;
-   		proxy_set_header X-Forwarded-For $remote_addr;
-   		proxy_set_header X-Forwarded-Proto $scheme;
-   		proxy_set_header Connection "";
-   		proxy_buffering off;
-   		proxy_read_timeout 300s;
-   	}
-   }
-   ```
+   2. Add a DNS record for `learn.example.com` that points at the VPS, and add the name to the reverse proxy flags.games already uses. Every header line matters: the app refuses a request that lacks the secret, the right `Host`, or `X-Forwarded-Proto https`.
 
-   `proxy_buffering off` and the long read timeout are for the tutor's streaming answers. `client_max_body_size` is above the 8 MB cap on a spoken line.
+      Caddy (not run):
+
+      ```
+      learn.example.com {
+      	reverse_proxy 127.0.0.1:3010 {
+      		header_up Host {host}
+      		header_up X-Forwarded-Host {host}
+      		header_up X-Forwarded-Proto https
+      		header_up X-LH-Proxy-Secret "<the same 64 characters>"
+      	}
+      }
+      ```
+
+      nginx (certificates from certbot; the headers were run against nginx 1.24 on plain HTTP):
+
+      ```
+      server {
+      	listen 80;
+      	server_name learn.example.com;
+      	return 301 https://$host$request_uri;
+      }
+      server {
+      	listen 443 ssl;
+      	http2 on;
+      	server_name learn.example.com;
+      	ssl_certificate     /etc/letsencrypt/live/learn.example.com/fullchain.pem;
+      	ssl_certificate_key /etc/letsencrypt/live/learn.example.com/privkey.pem;
+      	client_max_body_size 12m;
+      	location / {
+      		proxy_pass http://127.0.0.1:3010;
+      		proxy_http_version 1.1;
+      		proxy_set_header Host $host;
+      		proxy_set_header X-Forwarded-Host $host;
+      		proxy_set_header X-Forwarded-Proto https;
+      		proxy_set_header X-Forwarded-For $remote_addr;
+      		proxy_set_header X-Real-IP $remote_addr;
+      		proxy_set_header X-LH-Proxy-Secret "<the same 64 characters>";
+      		proxy_set_header Connection "";
+      		proxy_buffering off;
+      		proxy_read_timeout 300s;
+      	}
+      }
+      ```
+
+      `proxy_buffering off` and the long read timeout are for the tutor's streaming answers. `client_max_body_size` is above the 8 MB cap on a spoken line.
+   3. Start the container with the new settings, then set the password. It asks twice and shows nothing as you type. The first password also turns web access on:
+
+      ```bash
+      cd /srv/langharness/repo
+      sudo -u langharness docker compose up -d
+      sudo -u langharness docker compose exec langharness node cli/web-password.mjs
+      ```
+
+      The same container has `node cli/remote-code.mjs`, which prints a pairing code for a Tailscale device (7a) and replaces the SSH tunnel.
+   4. Open `https://learn.example.com`, sign in, and on the phone choose Share, then Add to Home Screen.
 8. **Updates and backups on a timer.** As root, create these four files.
 
    `/etc/systemd/system/langharness-update.service`:
@@ -262,10 +287,10 @@ Use the image tag `update-server.sh status` shows if `langharness:local` does no
 Read this before you make the server public.
 
 - The container sees every connection from Docker's bridge address (`172.17.0.1` here), whatever the real sender. The app never uses the sender's address.
-- The app decides from two things only: the `Host` header, and headers a proxy adds (`Forwarded`, `X-Real-IP`, Tailscale's identity headers). A request with a loopback `Host` and none of those headers is treated as coming from this computer, and is let in without pairing.
-- So a reverse proxy that sends `Host: 127.0.0.1:3010` and no `X-Real-IP` would present the whole internet as this computer. nginx does exactly that when you leave out `proxy_set_header Host $host`, because its default is the address in `proxy_pass`. Both snippets above set `Host` and `X-Real-IP`, and replace any value the visitor sent.
-- A request addressed to a public name is refused (403) today, whether remote access is on or off. So is a request with a loopback `Host` that carries `X-Real-IP` or `Forwarded`. The boot check tests both, and the update script will not switch to an image that fails them.
-- The public-host gate and the sign-in page (work items W1 and W2) are meant to change this so that a visitor signs in. Read this section again against what they actually do before you rely on it, and keep the outside test below.
+- **Without `LH_PUBLIC_HOST` (Tailscale, or this computer).** The app decides from the `Host` header and the headers a proxy adds (`Forwarded`, `X-Real-IP`, Tailscale's identity headers). A request with a loopback `Host` and none of those headers is treated as coming from this computer, and is let in without pairing. A request addressed to a public name is refused (403), and so is a loopback `Host` that carries `X-Real-IP` or `Forwarded`.
+- **With `LH_PUBLIC_HOST` set.** Nothing counts as this computer, whatever the `Host`. A request passes the gate only if it carries `LH_PROXY_SECRET` in `X-LH-Proxy-Secret`, names the public host in both `Host` and `X-Forwarded-Host`, and has `X-Forwarded-Proto: https`. Anything else gets 403. A request that passes still needs a session: pages go to `/login`, the API answers 401, and a change must come from the page's own origin.
+- So a reverse proxy that leaves `Host` at its default (nginx sends `127.0.0.1:3010` when you leave out `proxy_set_header Host $host`) is refused, not let in.
+- The boot check starts the server twice. The second time is in public mode: it sets a throwaway password with the bundled command, then checks the refusals above, signs in over HTTP with the proxy's headers set by hand, and checks the cookie and the API. The update script will not switch to an image that fails it.
 
 **After you point a name at the server, test it from a machine outside the VPS, such as your phone on mobile data:**
 
@@ -277,7 +302,7 @@ It must print 401, 403 or a redirect (301 to 308), never 200. Do the same for `/
 
 ## 6. What is not verified
 
-Checked on the build machine (Docker 29, Debian-based image, x86-64): the image builds; the boot check passes inside it with no network, a read-only filesystem, no capabilities and user 10001; compose starts it healthy with the port on loopback only; a connection through the host's other address is refused; the container refuses to start with a clear message when a mounted folder is not writable; `update-server.sh` runs update, a second update, rollback and the skip after a rollback against real Docker; backup and restore run on real files; the tests in `tests/server-scripts.test.ts` run the scripts against temporary git repos, a stand-in `docker` and real rsync.
+Checked on the build machine (Docker 29, Debian-based image, x86-64; its network re-signs HTTPS, so the image was built from a copy of the Dockerfile that trusts that certificate): the image builds; the boot check, including public mode and a sign-in, passes inside it with no network, a read-only filesystem, no capabilities and user 10001; compose starts it healthy with the port on loopback only; a connection through the host's other address is refused; the container refuses to start with a clear message when a mounted folder is not writable; `update-server.sh` runs update, a second update, rollback and the skip after a rollback against real Docker; backup and restore run on real files; the tests in `tests/server-scripts.test.ts` run the scripts against temporary git repos, a stand-in `docker` and real rsync.
 
 Not checked:
 
@@ -289,4 +314,4 @@ Not checked:
 - `--push-to` over ssh. It ran against a local folder; the ssh path was only run to the point of failing.
 - Memory while the tutor drives Chromium, and how a 2 GB cap fares under that.
 - Moving real data. Nothing was moved from the PC.
-- The public address, sign-in and the public-host gate: they are other work items.
+- The public address on a real domain: a certificate, a real reverse proxy in front of this image, Caddy at all (nginx 1.24 was run in front of the app on plain HTTP, not in front of this image), and a phone. The boot check runs the gate and the sign-in inside the image over plain HTTP, with the proxy's headers set by hand.
