@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import type { SavedPhrase, WordBankItem, WordBankSummary } from "@/src/core";
+import { WORDS_PAGE_SIZE } from "@/components/words/page-size";
 import { fillStyle } from "@/components/ui/fill";
 import { CheatsheetsTab } from "@/components/words/cheatsheets";
 
@@ -15,7 +16,7 @@ const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
 export type WordsTab = "words" | "phrases" | "cheatsheets";
 
-export function WordBankPage({ initialTab = "words", initialSheet, initialSearch }: { initialTab?: WordsTab; initialSheet?: string; initialSearch?: string }) {
+export function WordBankPage({ initialTab = "words", initialSheet, initialSearch, initialWords = null }: { initialTab?: WordsTab; initialSheet?: string; initialSearch?: string; initialWords?: { items: WordBankItem[]; total: number; summary: WordBankSummary } | null }) {
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
@@ -30,15 +31,15 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 	};
 
 	// Word Bank state
-	const [words, setWords] = useState<WordBankItem[]>([]);
-	const [totalWords, setTotalWords] = useState(0);
-	const [summary, setSummary] = useState<WordBankSummary | null>(null);
+	const [words, setWords] = useState<WordBankItem[]>(initialWords?.items ?? []);
+	const [totalWords, setTotalWords] = useState(initialWords?.total ?? 0);
+	const [summary, setSummary] = useState<WordBankSummary | null>(initialWords?.summary ?? null);
 	const [searchQuery, setSearchQuery] = useState(initialSearch ?? "");
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [posFilter, setPosFilter] = useState<string>("all");
 	const [loadingWords, setLoadingWords] = useState(false);
 	const [page, setPage] = useState(0);
-	const PAGE_SIZE = 35;
+	const PAGE_SIZE = WORDS_PAGE_SIZE;
 
 	// Saved Phrases state
 	const [phrases, setPhrases] = useState<SavedPhrase[]>([]);

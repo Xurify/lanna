@@ -1,6 +1,6 @@
 # Running LangHarness on an always-on machine
 
-This guide puts the server on a machine that stays on, so the phone and the iPad work while the PC is off. The plan and the reasons are in [plans/always-on-server.md](plans/always-on-server.md) and [research/always-on-server.md](research/always-on-server.md). The decision is E87 in [DECISIONS.md](DECISIONS.md).
+This guide puts the server on a machine that stays on, so the phone and the iPad work while the PC is off. The plan and the reasons are in [plans/always-on-server.md](plans/always-on-server.md) and [research/always-on-server.md](research/always-on-server.md). The decision is E91 in [DECISIONS.md](DECISIONS.md).
 
 The server runs as a container. The image holds the app, Chromium and yt-dlp. Your data, keys and cheatsheets stay in three folders on the machine and never go into the image.
 
@@ -75,7 +75,7 @@ Run these before you set anything up. They decide where the server goes.
 
    Open `http://localhost:3010` on the PC, go to Settings → Devices, turn on Remote access, and make a code. Then pair the phone and the iPad through the Tailscale address, as in [remote-access.md](remote-access.md). `docker compose exec langharness node cli/remote-code.mjs` prints a pairing code on the server, so the tunnel is only needed if you prefer Settings.
 
-   **b. A public address with a password.** The app at `https://learn.example.com`, with no Tailscale app on the phone. The rules are in [DECISIONS.md, E86](DECISIONS.md); the proxy details and the day-to-day commands are in [remote-access.md](remote-access.md#at-a-public-address-a-server-with-a-domain).
+   **b. A public address with a password.** The app at `https://learn.example.com`, with no Tailscale app on the phone. The rules are in [DECISIONS.md, E90](DECISIONS.md); the proxy details and the day-to-day commands are in [remote-access.md](remote-access.md#at-a-public-address-a-server-with-a-domain).
 
    1. Make a secret that only the proxy and the app know, and add both lines to `/srv/langharness/repo/.env`:
 

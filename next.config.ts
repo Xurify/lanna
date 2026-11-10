@@ -49,8 +49,14 @@ const nextConfig: NextConfig = {
 	async headers() {
 		return [{ source: "/:path*", headers: SECURITY_HEADERS }];
 	},
-	// Next buffers a request body for the proxy up to this size and silently cuts off the rest.
-	experimental: { proxyClientMaxBodySize: "10mb" },
+	experimental: {
+		// Next buffers a request body for the proxy up to this size and silently cuts off the rest.
+		proxyClientMaxBodySize: "10mb",
+		// A page rendered before the click (components/instant-navigation.tsx) is reused by
+		// the router for `static` seconds. Next's default is 300; 30 is the lowest it takes.
+		// lib/render-ahead.ts counts on this number.
+		staleTimes: { static: 30 },
+	},
 	// Public build metadata only; no new runtime Electron version API.
 	env: { LH_VERSION: pkg.version, LH_HOMEPAGE: pkg.homepage },
 	// Desktop target (Electron wrapper, 2026-09-17): standalone output = a

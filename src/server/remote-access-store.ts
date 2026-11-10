@@ -227,7 +227,7 @@ export function resolveDevice(token: string, at: Date = new Date()): Promise<Dev
 	});
 }
 
-/** Signs a browser in after a right password (E86). Null while access is off, so a sign-in that raced a switch-off creates nothing. */
+/** Signs a browser in after a right password (E90). Null while access is off, so a sign-in that raced a switch-off creates nothing. */
 export function issueSession(name: string, at: Date = new Date()): Promise<{ token: string; device: DeviceRecord } | null> {
 	return exclusive(() => {
 		const access = readAccess();

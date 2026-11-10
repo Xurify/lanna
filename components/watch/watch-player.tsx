@@ -52,6 +52,7 @@ import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
 import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
+import { useServerValue } from "@/components/use-server-value";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
@@ -86,7 +87,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const discover = useDiscover(initialDiscover ?? null);
-	const [state, setState] = useState<WatchState | null>(initial);
+	const [state, setState] = useServerValue<WatchState | null>(initial);
 	const [video, setVideo] = useState<VideoRecord | null>(initialVideo ?? null);
 	const [stage, setStage] = useState<Stage>(initialVideo ? "preview" : "shelf");
 	const [error, setError] = useState<PrepareError | null>(null);

@@ -123,6 +123,10 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 	// Enter starts the day's next step (input once the plan is done).
 	// Tasks that open a tutor chat start a model turn, so they wait for a click.
 	const enterable = s ? (up ? !up.task || Boolean(up.task.href) : true) : false;
+	const lessonUpNext = steps.find((x) => !x.done && (!x.lang || x.lang.running) && x.task?.href?.startsWith("/lesson?unit="))?.task?.href ?? null;
+	useEffect(() => {
+		if (lessonUpNext) void fetch(`/api${lessonUpNext}&warm`).catch(() => {});
+	}, [lessonUpNext]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "Enter" || !enterable || !s || setupOpen) return;
