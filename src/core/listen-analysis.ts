@@ -259,6 +259,31 @@ export function sentenceWordSpans(text: string): Array<{ text: string; word: str
 	return [...text.normalize("NFC").matchAll(WORD_SPAN)].map((m) => ({ text: m[0], word: m[0].replace(/['’ʼ]/g, "").toLowerCase() }));
 }
 
+export interface HeardPiece {
+	text: string;
+	newWord: boolean;
+	mark?: "missed" | "almost";
+}
+
+const HYPHENATED_WORD = /\p{L}+(?:[-'’]\p{L}+)*/gu;
+
+export function heardPieces(sentence: string, opts: { newWords?: readonly string[]; marks?: ReadonlyArray<{ caught: boolean; almost: boolean }>; tag?: string } = {}): HeardPiece[] {
+	const text = sentence.normalize("NFC");
+	const wanted = new Set((opts.newWords ?? []).map((w) => w.normalize("NFC").toLocaleLowerCase(opts.tag)));
+	const newRanges = [...text.matchAll(HYPHENATED_WORD)].filter((m) => wanted.has(m[0].toLocaleLowerCase(opts.tag))).map((m) => [m.index, m.index + m[0].length] as const);
+	const isNew = (at: number) => newRanges.some(([from, to]) => at >= from && at < to);
+	const pieces: HeardPiece[] = [];
+	let at = 0;
+	[...text.matchAll(WORD_SPAN)].forEach((m, i) => {
+		if (m.index > at) pieces.push({ text: text.slice(at, m.index), newWord: isNew(at) });
+		const mark = opts.marks?.[i];
+		pieces.push({ text: m[0], newWord: isNew(m.index), ...(mark && !mark.caught ? { mark: mark.almost ? ("almost" as const) : ("missed" as const) } : {}) });
+		at = m.index + m[0].length;
+	});
+	if (at < text.length) pieces.push({ text: text.slice(at), newWord: false });
+	return pieces;
+}
+
 /** Words of a sentence, lower-cased, without punctuation. */
 export function listenWords(text: string): string[] {
 	return sentenceWordSpans(text).map((s) => s.word);
