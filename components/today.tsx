@@ -222,18 +222,18 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 				<header className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden" data-testid="today-topbar">
 					<SidebarToggle />
 					<QPie frac={s && s.dailyGoal > 0 ? s.todayXp / s.dailyGoal : 0} size={28} />
-					<div className="flex min-w-0 flex-col leading-[1.2]">
-						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">
+					<div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
+						<b className="q-num whitespace-nowrap text-[15px] font-semibold tracking-[-0.01em]">
 							{s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {s?.dailyGoal ?? 50} XP</span>
 						</b>
-						<small className="text-xs text-ink-3">{s ? (toGoal > 0 ? `${toGoal} XP to today's goal` : "Today's goal is met") : " "}</small>
+						<small className="block truncate text-xs text-ink-3">{s ? (toGoal > 0 ? `${toGoal} XP to today's goal` : "Today's goal is met") : " "}</small>
 					</div>
-					<div className="ml-auto flex items-center rounded-[9px] bg-well-2 p-0.5" aria-label={`${streak} days in a row, level ${s?.level.level ?? 1}`}>
-						<span className="inline-flex h-7 items-center gap-1.5 px-2.5 text-[13px] font-[550] text-ink-2">
+					<div className="ml-auto flex shrink-0 items-center rounded-[9px] bg-well-2 p-0.5" aria-label={`${streak} days in a row, level ${s?.level.level ?? 1}`}>
+						<span className="inline-flex h-7 items-center gap-1.5 whitespace-nowrap px-2.5 text-[13px] font-[550] text-ink-2">
 							<i className="size-[9px] rounded-[3px] bg-teal" aria-hidden="true" />
 							{streak} {streak === 1 ? "day" : "days"}
 						</span>
-						<span className="inline-flex h-7 items-center rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)]">Level {s?.level.level ?? 1}</span>
+						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)]">Level {s?.level.level ?? 1}</span>
 					</div>
 				</header>
 

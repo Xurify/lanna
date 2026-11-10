@@ -48,10 +48,10 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 			)}
 			data-testid="study-entry-container"
 		>
-			<div className="flex flex-wrap items-center justify-between gap-3">
+			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
 				<Link
 					href="/experiments/input-first"
-					className="group flex min-w-0 flex-1 items-center gap-3 text-left"
+					className="group flex min-w-0 flex-1 items-start gap-3 text-left sm:items-center"
 					data-testid="study-entry-row"
 					aria-label={`Study: Day ${dayNumber} of ${totalDays}, ${pillText}`}
 				>
@@ -85,7 +85,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					</span>
 				</Link>
 
-				<div className="flex shrink-0 items-center gap-2">
+				<div className="flex items-center gap-2 sm:shrink-0">
 					{/* Visual 5-dot pip counter */}
 					<div className="hidden items-center gap-1 sm:flex" aria-hidden="true" title={`${reps} of 5 Listen sentences today`}>
 						{[0, 1, 2, 3, 4].map((i) => (
@@ -103,7 +103,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					{weeklyCheckDue && !weeklyCheckCompleted ? (
 						<Link
 							href="/experiments/input-first/check"
-							className="lh-press inline-flex h-8 items-center gap-1.5 rounded-lg bg-amber-500 px-3 text-xs font-semibold text-white shadow-xs hover:bg-amber-600"
+							className="lh-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 text-xs font-semibold text-white shadow-xs hover:bg-amber-600 sm:h-8 sm:w-auto"
 							data-testid="study-quick-check"
 						>
 							<span>Take Week {weekNumber} Check</span>
@@ -112,7 +112,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					) : !validDay ? (
 						<Link
 							href="/listen"
-							className="lh-press inline-flex h-8 items-center gap-1.5 rounded-lg bg-teal px-3 text-xs font-semibold text-white shadow-xs hover:bg-teal-2"
+							className="lh-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-teal px-3 text-xs font-semibold text-white shadow-xs hover:bg-teal-2 sm:h-8 sm:w-auto"
 							data-testid="study-quick-listen"
 						>
 							<span>Do {needed} in Listen</span>
@@ -121,7 +121,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					) : (
 						<Link
 							href="/experiments/input-first"
-							className="lh-press inline-flex h-8 items-center gap-1 rounded-lg bg-well-2 px-2.5 text-xs font-medium text-ink-2 hover:text-foreground"
+							className="lh-press inline-flex h-10 w-full items-center justify-center gap-1 rounded-lg bg-well-2 px-2.5 text-xs font-medium text-ink-2 hover:text-foreground sm:h-8 sm:w-auto"
 						>
 							<span>View Study</span>
 							<QIcon name="chev" className="size-3.5 text-ink-4" />
