@@ -601,7 +601,7 @@ function AllDone({ minutes, goal, next, after, className }: { minutes: number; g
 				</div>
 				{step ? (
 					<Link href={step.href} className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" data-testid="after-plan-start">
-						Start<span className="@xl:hidden"> {step.kind === "watch" ? "Watch" : "Listen"}</span>
+						Start<span className="@xl:hidden"> {step.kind === "watch" ? "Media" : "Listen"}</span>
 						<kbd className="q-kbd pointer-coarse:hidden">
 							<QIcon name="enter" />
 						</kbd>

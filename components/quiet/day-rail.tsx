@@ -77,7 +77,7 @@ const TASK_LABEL: Record<PlanTask["id"], string> = {
 	blitz: "Blitz",
 	words: "Words",
 	read: "Read",
-	watch: "Watch",
+	watch: "Media",
 	speak: "Speak",
 	fluency: "Speed",
 };

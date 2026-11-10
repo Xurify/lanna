@@ -29,7 +29,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, BookOpenIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
@@ -44,9 +44,10 @@ import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
+import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, isSpotifyId, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { ChannelLink } from "@/components/watch/channel-link";
+import { useAddToRead } from "@/components/watch/read-import";
 import { Shelf } from "@/components/watch/shelf";
 import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
@@ -163,7 +164,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			rangeRef.current = range;
 			const id = parseVideoUrl(url);
 			if (!id) {
-				setError({ message: "That is not a YouTube link. Paste a youtube.com/watch, youtu.be or shorts link." });
+				setError({ message: "That is not a YouTube or Spotify link. Paste a youtube.com/watch, youtu.be, shorts or open.spotify.com/track link." });
 				setStarting(null);
 				setStage("error");
 				return;
@@ -496,6 +497,9 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating, regenError }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void; /** The video measured again (a word marked as known). */ onVideo: (v: VideoRecord) => void; regenerating: { step: string } | null; regenError?: string }) {
 	const lang = useActiveLanguage();
+	const spotify = isSpotifyId(video.id);
+	const readIn = useAddToRead();
+	const readBusy = readIn.busyId === video.id;
 	const [marking, setMarking] = useState<string | null>(null);
 	const [marked, setMarked] = useState<string[]>([]);
 	/** "I know this" on a pre-teach word: marked for good (E71), then the video is measured again so the share and the list follow. */
@@ -546,7 +550,7 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang={video.lang}>
 					{video.title}
-					<a href={videoUrl(video.id)} target="_blank" rel="noreferrer" aria-label="Open this video on YouTube" title="Open on YouTube" className="ml-2 inline-flex size-8 translate-y-0.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-preview-youtube">
+					<a href={videoUrl(video.id)} target="_blank" rel="noreferrer" aria-label={spotify ? "Open this track on Spotify" : "Open this video on YouTube"} title={spotify ? "Open on Spotify" : "Open on YouTube"} className="ml-2 inline-flex size-8 translate-y-0.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-preview-youtube">
 						<ExternalLinkIcon className="size-4" strokeWidth={1.6} />
 					</a>
 				</h1>
@@ -639,7 +643,19 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 
 				{video.source.trackLang === video.lang && <StudySections video={video} canFind={canFind} />}
 
-				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
+				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
+					<button type="button" onClick={() => readIn.add(video.id)} disabled={readBusy} aria-busy={readBusy} className="q-btn sec t" data-testid="watch-add-to-read">
+						<BookOpenIcon className="size-4" strokeWidth={1.6} />
+						{readBusy ? "Adding…" : "Add to Read"}
+					</button>
+					<span className="font-prose text-sm text-muted-foreground">Adds these lines to Read as an episode, every word tappable.</span>
+				</div>
+				{readIn.error && (
+					<p className="mt-2 font-prose text-sm text-miss" role="alert" data-testid="watch-add-to-read-error">
+						{readIn.error}
+					</p>
+				)}
+				<div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
 					<button type="button" onClick={onRegenerate} disabled={!!regenerating || !canFind} aria-busy={!!regenerating} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 disabled:hover:bg-transparent" data-testid="watch-regenerate">
 						{regenerating ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RepeatIcon className="size-4" strokeWidth={1.6} />}
 						{regenerating ? "Regenerating…" : "Regenerate"}
@@ -690,7 +706,6 @@ interface YTPlayer {
 	pauseVideo(): void;
 	seekTo(seconds: number, allowSeekAhead: boolean): void;
 	getCurrentTime(): number;
-	getPlayerState(): number;
 	setPlaybackRate(rate: number): void;
 	destroy(): void;
 	/** Undocumented but long-standing: drops the player's own caption
@@ -698,9 +713,52 @@ interface YTPlayer {
 	 *  line we are hiding. */
 	unloadModule?(name: string): void;
 }
+interface PlayerEvents {
+	onReady: () => void;
+	onStateChange: (e: { data: number }) => void;
+	onError: (e: { data: number }) => void;
+}
+/** YouTube's IFrame API state numbers; the audio player reports the same. */
+const PLAYER_STATE = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 } as const;
+const PLAYER_ERROR_AUDIO = -1;
 interface YTNamespace {
 	Player: new (el: HTMLElement, opts: Record<string, unknown>) => YTPlayer;
-	PlayerState: { PLAYING: number; PAUSED: number; ENDED: number; BUFFERING: number };
+}
+
+function mountAudioPlayer(holder: HTMLElement, id: string, events: PlayerEvents): YTPlayer {
+	const src = `/api/watch/audio?id=${encodeURIComponent(id)}`;
+	const cover = document.createElement("img");
+	cover.src = `${src}&cover=1`;
+	cover.alt = "";
+	cover.className = "absolute inset-0 size-full object-cover";
+	cover.onerror = () => cover.remove();
+	const audio = document.createElement("audio");
+	audio.src = src;
+	audio.preload = "auto";
+	audio.controls = true;
+	audio.className = "absolute inset-x-0 bottom-0 w-full";
+	holder.replaceChildren(cover, audio);
+	audio.addEventListener("loadedmetadata", () => events.onReady());
+	audio.addEventListener("play", () => events.onStateChange({ data: PLAYER_STATE.PLAYING }));
+	audio.addEventListener("pause", () => events.onStateChange({ data: PLAYER_STATE.PAUSED }));
+	audio.addEventListener("ended", () => events.onStateChange({ data: PLAYER_STATE.ENDED }));
+	audio.addEventListener("error", () => events.onError({ data: PLAYER_ERROR_AUDIO }));
+	return {
+		playVideo: () => void audio.play().catch(() => {}),
+		pauseVideo: () => audio.pause(),
+		seekTo: (seconds: number) => {
+			audio.currentTime = seconds;
+		},
+		getCurrentTime: () => audio.currentTime,
+		setPlaybackRate: (rate: number) => {
+			audio.playbackRate = rate;
+		},
+		destroy: () => {
+			audio.pause();
+			audio.removeAttribute("src");
+			audio.load();
+		},
+	};
 }
 declare global {
 	interface Window {
@@ -781,9 +839,40 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 	useEffect(() => {
 		let alive = true;
 		let p: YTPlayer | null = null;
-		loadYouTubeApi()
+		const spotify = isSpotifyId(video.id);
+		const api: Promise<YTNamespace | null> = spotify ? Promise.resolve(null) : loadYouTubeApi();
+		api
 			.then((YT) => {
 				if (!alive || !holder.current) return;
+				const events: PlayerEvents = {
+					onReady: () => {
+						if (!alive) return;
+						player.current = p;
+						// YouTube remembers "captions on" per viewer and ignores
+						// cc_load_policy for it; the lines are ours to show.
+						try {
+							p!.unloadModule?.("captions");
+							p!.unloadModule?.("cc");
+						} catch {}
+						setReady(true);
+						p!.seekTo(segs[0]!.start, true);
+						p!.playVideo();
+					},
+					onStateChange: (e) => {
+						if (!alive) return;
+						setPlaying(e.data === PLAYER_STATE.PLAYING);
+						if (e.data === PLAYER_STATE.PLAYING) setHeard(true);
+						if (e.data === PLAYER_STATE.ENDED && modeRef.current === "flow") setAtEnd(true);
+					},
+					onError: (e) => {
+						if (!alive) return;
+						setPlayerError(e.data === PLAYER_ERROR_AUDIO ? "The audio could not be played. The lines still work here." : e.data === 101 || e.data === 150 ? "The owner of this video does not allow it to be embedded. Open it on YouTube and read the lines here." : e.data === 100 ? "This video was removed or is private." : `YouTube could not play this video (error ${e.data}). The lines still work here.`);
+					},
+				};
+				if (!YT) {
+					p = mountAudioPlayer(holder.current, video.id, events);
+					return;
+				}
 				const el = document.createElement("div");
 				holder.current.replaceChildren(el);
 				p = new YT.Player(el, {
@@ -792,31 +881,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					height: "100%",
 					host: "https://www.youtube-nocookie.com",
 					playerVars: { controls: 1, rel: 0, modestbranding: 1, playsinline: 1, cc_load_policy: 0, iv_load_policy: 3, disablekb: 1, fs: 0, origin: window.location.origin, start: Math.floor(segs[0]!.start), ...(video.fragment ? { end: Math.ceil(segs[segs.length - 1]!.end + 1) } : {}) },
-					events: {
-						onReady: () => {
-							if (!alive) return;
-							player.current = p;
-							// YouTube remembers "captions on" per viewer and ignores
-							// cc_load_policy for it; the lines are ours to show.
-							try {
-								p!.unloadModule?.("captions");
-								p!.unloadModule?.("cc");
-							} catch {}
-							setReady(true);
-							p!.seekTo(segs[0]!.start, true);
-							p!.playVideo();
-						},
-						onStateChange: (e: { data: number }) => {
-							if (!alive) return;
-							setPlaying(e.data === YT.PlayerState.PLAYING);
-							if (e.data === YT.PlayerState.PLAYING) setHeard(true);
-							if (e.data === YT.PlayerState.ENDED && modeRef.current === "flow") setAtEnd(true);
-						},
-						onError: (e: { data: number }) => {
-							if (!alive) return;
-							setPlayerError(e.data === 101 || e.data === 150 ? "The owner of this video does not allow it to be embedded. Open it on YouTube and read the lines here." : e.data === 100 ? "This video was removed or is private." : `YouTube could not play this video (error ${e.data}). The lines still work here.`);
-						},
-					},
+					events,
 				});
 			})
 			.catch((err: Error) => alive && setPlayerError(err.message));
@@ -1108,7 +1173,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 						<div className="mx-auto mt-3 flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player-error">
 							<p className="font-prose text-sm text-foreground">{playerError}</p>
 							<a href={video.url} target="_blank" rel="noreferrer" className={cn(SECONDARY, "h-9 px-3 text-sm")}>
-								Open on YouTube
+								{isSpotifyId(video.id) ? "Open on Spotify" : "Open on YouTube"}
 							</a>
 						</div>
 					)}

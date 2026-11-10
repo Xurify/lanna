@@ -23,12 +23,14 @@ import { defaultOrderLevel, populateLevel } from "@/components/thinking-default"
 import {
 	COMPACTION_THRESHOLD_FLOOR,
 	MODEL_SLOTS,
+	TRANSCRIPTION_ENGINES,
 	resolveSettings,
 	type AgentSettings,
 	type CompactionSettings,
 	type ModelCatalogEntry,
 	type ModelSlotName,
 	type ModelsSettings,
+	type TranscriptionEngineId,
 } from "@/src/core";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { prettyModel } from "@/components/usage-format";
@@ -51,6 +53,11 @@ const SEARCH_ENGINE_LABELS: Record<(typeof SEARCH_ENGINES)[number], string> = {
 	context: "Context",
 	tavily: "Tavily",
 	brave: "Brave",
+};
+
+const TRANSCRIPTION_ENGINE_LABELS: Record<TranscriptionEngineId, string> = {
+	whisper: "Whisper (large-v3-turbo)",
+	elevenlabs: "ElevenLabs Scribe v2",
 };
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
@@ -148,6 +155,18 @@ function composeSearchEngine(
 		return { ...rest } as AgentSettings;
 	}
 	return { ...agent, search: { engine } };
+}
+
+function composeTranscriptionEngine(
+	agent: AgentSettings | undefined,
+	engine: TranscriptionEngineId | null,
+): AgentSettings {
+	if (engine === null) {
+		if (!agent?.transcription) return { ...agent };
+		const { transcription: _drop, ...rest } = agent;
+		return { ...rest } as AgentSettings;
+	}
+	return { ...agent, transcription: { engine } };
 }
 
 /** Hint under a prompt row whose override is in use. Shown only while the switch is on. */
@@ -254,14 +273,14 @@ export function AiSection({
 	/** Live search state; feeds the row's reason line. */
 	const [search, setSearch] = useState<{ available: boolean; engine: string | null; reason: string } | null>(null);
 	/** Which search engines have a key. With none, the row grays. */
-	const [engineKeys, setEngineKeys] = useState<Partial<Record<(typeof SEARCH_ENGINES)[number], boolean>>>({});
+	const [engineKeys, setEngineKeys] = useState<Partial<Record<(typeof SEARCH_ENGINES)[number] | "elevenlabs", boolean>>>({});
 	const [prompts, setPrompts] = useState<{ prober: SegmentInfo[]; teacher: SegmentInfo[] } | null>(null);
 	const [openSegment, setOpenSegment] = useState<string | null>(null);
 	const [segmentDraft, setSegmentDraft] = useState<Record<string, string>>({});
 	const [segmentStatus, setSegmentStatus] = useState<string | null>(null);
 	const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(null);
 	/** One open dropdown per section: the slot or search row, and the kind. */
-	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | "search"; kind: "model" | "thinking" | "engine" } | null>(null);
+	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | "search" | "transcription"; kind: "model" | "thinking" | "engine" } | null>(null);
 	const menuAnchorRef = useRef<HTMLSpanElement>(null);
 
 	const refreshSearch = () =>
@@ -310,11 +329,12 @@ export function AiSection({
 		fetch("/api/keys")
 			.then((r) => r.json())
 			.then((body: { keys: { id: string; present: boolean }[] }) => {
-				const present: Partial<Record<(typeof SEARCH_ENGINES)[number], boolean>> = {};
+				const present: Partial<Record<(typeof SEARCH_ENGINES)[number] | "elevenlabs", boolean>> = {};
 				for (const id of SEARCH_ENGINES) {
 					const envVar = id === "context" ? "CONTEXT_API_KEY" : id === "tavily" ? "TAVILY_API_KEY" : "BRAVE_API_KEY";
 					present[id] = body.keys.some((k) => k.id === envVar && k.present);
 				}
+				present.elevenlabs = body.keys.some((k) => k.id === "ELEVENLABS_API_KEY" && k.present);
 				setEngineKeys(present);
 			})
 			.catch(() => {});
@@ -388,7 +408,7 @@ export function AiSection({
 
 	/** Search-engine menu row: label, a has-key mark, and a check on the chosen engine. */
 	const engineOption = (
-		id: (typeof SEARCH_ENGINES)[number] | "auto",
+		id: string,
 		label: string,
 		active: boolean,
 		live: boolean | null,
@@ -520,8 +540,6 @@ export function AiSection({
 			</div>
 		);
 	};
-
-
 
 	// Same core resolver as the server, so the hint reports the number the trigger uses.
 	const resolvedCompaction = resolveSettings(
@@ -684,6 +702,54 @@ export function AiSection({
 												onSectionChange(composeSearchEngine(agent, id));
 												setOpenMenu(null);
 											}),
+										)}
+									</MenuShell>
+								)}
+							</span>
+						</SettingsRow>
+					);
+				})()}
+				{(() => {
+					const engine = agent?.transcription?.engine ?? null;
+					const open = openMenu?.target === "transcription";
+					return (
+						<SettingsRow
+							label="Transcription engine"
+							hint="Transcribes Spotify tracks and captionless videos. Automatic prefers local Whisper (large-v3-turbo) and falls back to ElevenLabs Scribe v2."
+							testid="transcription-engine-row"
+						>
+							<span ref={open ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
+								<MenuTrigger
+									value={engine ? TRANSCRIPTION_ENGINE_LABELS[engine] : ""}
+									emptyLabel="Automatic"
+									ariaLabel="Transcription engine"
+									testid="transcription-engine-trigger"
+									open={open}
+									onClick={() => setOpenMenu(open ? null : { target: "transcription", kind: "engine" })}
+									widthClass="min-w-28"
+								/>
+								{open && (
+									<MenuShell
+										preferredSide="down"
+										anchorTestid="transcription-engine-trigger"
+										testid="transcription-engine-menu"
+										menuClass="flex w-56 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+									>
+										{engineOption("auto-transcription", "Automatic (Whisper → ElevenLabs)", engine === null, null, () => {
+											onSectionChange(composeTranscriptionEngine(agent, null));
+											setOpenMenu(null);
+										})}
+										{TRANSCRIPTION_ENGINES.map((id) =>
+											engineOption(
+												id,
+												TRANSCRIPTION_ENGINE_LABELS[id],
+												engine === id,
+												id === "elevenlabs" ? (engineKeys.elevenlabs ?? false) : null,
+												() => {
+													onSectionChange(composeTranscriptionEngine(agent, id));
+													setOpenMenu(null);
+												},
+											),
 										)}
 									</MenuShell>
 								)}

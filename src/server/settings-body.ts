@@ -178,6 +178,16 @@ export function parseAgentSettingsBody(body: unknown): SettingsBodyResult<AgentS
 			settings.search = { engine: search.engine };
 		}
 	}
+	if (raw.transcription !== undefined) {
+		const transcription = asRecord(raw.transcription);
+		if (!transcription) return { ok: false, error: "transcription must be an object" };
+		if (transcription.engine !== undefined) {
+			if (transcription.engine !== "whisper" && transcription.engine !== "elevenlabs") {
+				return { ok: false, error: 'transcription.engine must be "whisper" or "elevenlabs"' };
+			}
+			settings.transcription = { engine: transcription.engine };
+		}
+	}
 	return { ok: true, settings };
 }
 
