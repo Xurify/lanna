@@ -28,11 +28,15 @@ describe("the sign-in form", () => {
 		assert.match(html, /aria-pressed="false"/);
 	});
 
-	it("shows the app's name and its rounded icon", () => {
-		const brand = html.match(/data-testid="login-brand"[^>]*>(.*?)<h1|data-testid="login-brand"[^>]*>(.*)/s)?.[0] ?? "";
-		assert.match(brand, /<svg[^>]*aria-hidden="true"/);
-		assert.match(html, /Lang<span[^>]*>Harness<\/span>/);
-		assert.match(brand, /fill="#0D6764"/);
+	it("shows the app's rounded icon above a heading that names the app", () => {
+		const beforeHeading = html.slice(0, html.indexOf("<h1"));
+		assert.match(beforeHeading, /<svg[^>]*aria-hidden="true"/);
+		assert.match(beforeHeading, /fill="#0D6764"/);
+		assert.match(html, /<h1[^>]*>Welcome to Lang<span[^>]*>Harness<\/span><\/h1>/);
+	});
+
+	it("is one column on the page, not a card", () => {
+		assert.doesNotMatch(html, /\bq-card\b/);
 	});
 
 	it("draws the icon exactly as build/icon-flat.svg does", () => {
@@ -72,7 +76,11 @@ describe("the sign-in form", () => {
 	it("uses the app's own field and button styles, not stock components", () => {
 		assert.match(html, /class="[^"]*\bq-field\b/);
 		assert.match(html, /class="[^"]*\bq-btn\b[^"]*\bprimary\b/);
-		assert.match(html, /class="[^"]*\bq-card\b/);
+	});
+
+	it("keeps a label for the field even though it is not drawn, and a placeholder that names it", () => {
+		assert.match(html, /<label[^>]*class="sr-only"[^>]*>Password<\/label>/);
+		assert.match(html, /<input[^>]*placeholder="Password"/);
 	});
 
 	it("uses no native widget beyond the text field", () => {
