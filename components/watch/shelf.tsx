@@ -271,7 +271,7 @@ function UpNext(props: UpNextProps) {
 					{v ? (
 						<button type="button" onClick={props.onOpen} className={cn(PRIMARY, "h-11 rounded-xl px-6")} data-testid="watch-up-next-start">
 							<PlayIcon className="size-4 fill-current" />
-							Start watching
+							{isSpotifyId(v.id) ? "Start playing" : "Start watching"}
 						</button>
 					) : (
 						<>

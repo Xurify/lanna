@@ -1157,7 +1157,7 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 						    mode (a viewer's remembered caption setting survives
 						    cc_load_policy, and after a reveal the player would
 						    already show the next line). Clicks pass through. */}
-						{ready && !playerError && step && (
+						{ready && !playerError && step && !isSpotifyId(video.id) && (
 							<div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[26%] items-end justify-center bg-black pb-2" aria-hidden data-testid="watch-caption-cover">
 								<span className="font-ui text-[11px] font-[600] text-sun-ink/40">{textShown ? "the line is below" : "subtitles covered · T to reveal"}</span>
 							</div>

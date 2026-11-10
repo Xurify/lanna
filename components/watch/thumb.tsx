@@ -29,7 +29,7 @@ export function Poster({ id, watched = false, className }: { id: string; watched
 	const maxSteps = spotify ? 1 : SIZES.length;
 	const next = () => setAt({ id, size: size + 1, loaded: false });
 	const img = useRef<HTMLImageElement>(null);
-	const settle = (el: HTMLImageElement) => (!spotify && el.naturalWidth <= STAND_IN_WIDTH ? next() : setAt({ id, size, loaded: true }));
+	const settle = (el: HTMLImageElement) => (el.naturalWidth === 0 || (!spotify && el.naturalWidth <= STAND_IN_WIDTH) ? next() : setAt({ id, size, loaded: true }));
 	// A picture that finished (or failed) before the page was interactive fired its events to nobody.
 	useEffect(() => {
 		if (img.current?.complete && !loaded) settle(img.current);
