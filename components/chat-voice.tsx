@@ -48,8 +48,8 @@ export function LearnerLineView({ line, text, recede, titleRef }: { line: Learne
 			<span className="sr-only">Your answer: </span>
 			<span className="font-ui text-lg leading-snug font-semibold whitespace-pre-wrap text-foreground">{text}</span>
 			{mark && (
-				<span data-testid="answer-mark" className={cn("inline-flex items-center gap-1 font-ui text-[13px] font-medium", TONE[mark.tone])}>
-					<svg viewBox="0 0 24 24" className="size-4 self-center" aria-hidden="true">
+				<span data-testid="answer-mark" className={cn("inline-flex items-baseline gap-1 font-ui text-[13px] font-medium", TONE[mark.tone])}>
+					<svg viewBox="0 0 24 24" className="size-4 translate-y-[0.22em]" aria-hidden="true">
 						<path d={STROKE[mark.tone]} pathLength={1} className="fill-none stroke-current" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
 					</svg>
 					{mark.label}

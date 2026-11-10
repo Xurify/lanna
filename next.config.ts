@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
 	// The dev "N" bubble sat on top of the sidebar's Settings button in
 	// desktop:dev; build errors still show as an overlay.
 	devIndicators: false,
+	// A page rendered before the click (components/instant-navigation.tsx) is reused by
+	// the router for `static` seconds. Next's default is 300; 30 is the lowest it takes.
+	// lib/render-ahead.ts counts on this number.
+	experimental: { staleTimes: { static: 30 } },
 	// Tailscale Serve (E21): a phone loads this dev server's chunks from its tailnet
 	// name. Next refuses a dev resource from any origin not listed here, so the page
 	// never hydrates and pairing does nothing. The name lives in .env.local, which is

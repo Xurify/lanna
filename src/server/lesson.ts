@@ -102,6 +102,15 @@ function entries() {
 	return loadLexicon()?.entries ?? [];
 }
 
+export function lessonSeed(unit: UnitId, gender?: AtlasGender, now = new Date()): number {
+	const rec = progressStore.read().units[unit];
+	const sitting = `${unit}:${gender ?? ""}:${rec?.lessons ?? 0}:${rec?.reps ?? 0}:${dayKey(now)}`;
+	// FNV-1a, 32 bit: the offset basis and the prime are the published ones.
+	let hash = 2166136261;
+	for (let i = 0; i < sitting.length; i++) hash = Math.imul(hash ^ sitting.charCodeAt(i), 16777619);
+	return hash >>> 0;
+}
+
 /**
  * The lesson for a unit, shaped by how far the learner is with it: a first
  * lesson recognizes before it produces; once the unit holds (two lessons at

@@ -39,8 +39,8 @@ export function useDiscover(initial: State | null) {
 		}
 	}, []);
 	useEffect(() => {
-		if (!initial) void load();
-	}, [initial, load]);
+		void load();
+	}, [load]);
 	const running = state?.refresh.running ?? false;
 	useEffect(() => {
 		if (!running) return;

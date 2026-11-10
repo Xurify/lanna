@@ -36,7 +36,7 @@ Next.js 16.4's [Partial Prefetching](https://nextjs.org/docs/app/guides/instant-
 - **Route handlers (53):** a `GET` that does not read its request would also be baked at build time. Every one has to be audited by hand.
 - **Payoff:** the App Shell of these pages would be their skeleton, because all their content is per-request. `app/loading.tsx` already gives that shell on a client navigation. What Partial Prefetching adds is prefetching URL-specific content, which these pages do not have.
 
-So the cost is high and the risk is stale data in a learning app, for a result `loading.tsx` mostly gives already. Not adopted. Revisit if pages move to cached reads (a cache keyed on file mtime would make `"use cache"` honest), which would also speed the server render itself.
+So the cost is high and the risk is stale data in a learning app, for a result `loading.tsx` mostly gives already. Not adopted. What was done in its place on 2026-11-09 is in [instant-navigation.md](instant-navigation.md): the whole page is rendered while the pointer rests on its link. Revisit if pages move to cached reads (a cache keyed on file mtime would make `"use cache"` honest), which would also speed the server render itself.
 
 ## What did not need fixing
 
