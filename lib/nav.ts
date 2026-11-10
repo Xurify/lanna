@@ -44,7 +44,7 @@ export const NAV: readonly NavGroupDef[] = [
 		items: [
 			{ id: "read", href: "/read", label: "Read", hint: "Stories, every word tappable" },
 			{ id: "listen", href: "/listen", label: "Listen", hint: "Ten sentences you can follow" },
-			{ id: "watch", href: "/watch", label: "Watch", hint: "A video with both subtitles" },
+			{ id: "watch", href: "/watch", label: "Media", hint: "Videos and songs, with the text under them" },
 			{ id: "speak", href: "/speak", label: "Speak", hint: "A scene said out loud" },
 			{ id: "eargym", href: "/phonology", label: "Ear gym", hint: "Which of two close words did you hear", also: ["/sound"] },
 			{ id: "fluency", href: "/speed", label: "Speed", hint: "Known sentences, said faster" },

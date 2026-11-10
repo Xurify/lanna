@@ -1,7 +1,7 @@
 import { WatchPlayer } from "@/components/watch/watch-player";
 import { currentVideo, discoverState, watchState } from "@/src/server";
 
-export const metadata = { title: "Watch" };
+export const metadata = { title: "Media" };
 
 export const dynamic = "force-dynamic";
 

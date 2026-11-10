@@ -26,7 +26,7 @@
  */
 
 import { isVideoId, parseVideoUrl, type SegmentStat, type WatchMode } from "@/src/core";
-import { BODY_LIMITS, bodyTooLarge, checkSentence, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordOnce, recordWatch, sessionClientId, storyEngine, videoStore, watchState, currentVideo } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, checkSentence, currentVideo, importVideoToRead, NoCaptionsError, prepareStage, prepareVideo, prepareVideoInBackground, recordOnce, recordWatch, sessionClientId, storyEngine, videoStore, watchState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -67,12 +67,21 @@ export async function POST(req: Request) {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			if (err instanceof NoCaptionsError) return Response.json({ message, noCaptions: true, canTranscribe: err.canTranscribe, meta: err.meta, elsewhere: err.elsewhere }, { status: 422 });
-			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /not a YouTube link|minutes long|A fragment is between|no speech in that stretch/.test(message) ? 400 : 502 });
+			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /not a YouTube|minutes long|A fragment is between|no speech in that stretch/.test(message) ? 400 : 502 });
 		}
 	}
 	if (body.action === "delete") {
 		if (typeof body.videoId !== "string" || !isVideoId(body.videoId)) return Response.json({ message: "videoId is required" }, { status: 400 });
 		return videoStore.remove(body.videoId) ? Response.json({ ok: true }) : Response.json({ message: "no such video" }, { status: 404 });
+	}
+	if (body.action === "import-read") {
+		if (typeof body.videoId !== "string" || !isVideoId(body.videoId)) return Response.json({ message: "videoId is required" }, { status: 400 });
+		try {
+			const story = importVideoToRead(body.videoId);
+			return Response.json({ storyId: story.id, story });
+		} catch (err) {
+			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
+		}
 	}
 	if (body.action === "finish") {
 		if (typeof body.videoId !== "string") return Response.json({ message: "videoId is required" }, { status: 400 });
@@ -109,5 +118,5 @@ export async function POST(req: Request) {
 			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /is not a word|Write one sentence|not in the language|unknown video/.test(message) ? 400 : 502 });
 		}
 	}
-	return Response.json({ message: "action must be add, finish or sentence" }, { status: 400 });
+	return Response.json({ message: "action must be add, finish, import-read or sentence" }, { status: 400 });
 }

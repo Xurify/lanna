@@ -259,7 +259,7 @@ export const FEATURES: readonly Feature[] = [
 	},
 	{
 		id: "watch",
-		title: "Watch",
+		title: "Media",
 		route: "/watch",
 		evidence: "Films and TV use a lot of rare words (Webb & Rodgers 2009a, 2009b), and viewing in the language can teach words (Peters & Webb 2018). Listening one line at a time with the text hidden is dictation-style practice. Before a hard video, knowing what it is about helped listeners more than learning its words first did, and helped the weaker listeners most (Chang & Read 2006); a short description of what a video will show, given before it, raised comprehension of the video (Herron 1994), statements more than questions (Herron et al. 1998), and with captions more than alone (Chung 1999).",
 		limits: "The word counts are English. The coverage and the speed in Milestones for Slovak are estimates built on them. The before-listening studies used short classroom passages and teacher-written introductions, not a model's, and pre-taught words gave only a small gain (Chang & Read 2006); none tested a summary written in the language at the learner's level.",

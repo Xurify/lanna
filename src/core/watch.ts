@@ -78,7 +78,7 @@ export interface VideoSourceInfo {
 	trackLang: string;
 	trackName?: string;
 	/** How the track was obtained. */
-	via: "watch-page" | "innertube" | "yt-dlp" | "deepgram" | "test";
+	via: "watch-page" | "innertube" | "yt-dlp" | "deepgram" | "whisper" | "elevenlabs" | "test";
 }
 
 /** An unknown word worth meeting before the video: it recurs, or it is
@@ -270,6 +270,11 @@ export const PREPARE_STAGE_LINE: Record<PrepareStage, string> = {
 // ─── URLs ───────────────────────────────────────────────────────────────────
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
+const SPOTIFY_ID = /^sp_([A-Za-z0-9]{22})$/;
+
+export function isSpotifyId(id: string): boolean {
+	return SPOTIFY_ID.test(id);
+}
 
 /** Whether a caption track's address is one YouTube served, so a player response cannot point the server at another host. */
 export function isYouTubeCaptionUrl(raw: string): boolean {
@@ -285,7 +290,9 @@ export function isYouTubeCaptionUrl(raw: string): boolean {
  *  live, a bare id), or null. */
 export function parseVideoUrl(input: string): string | null {
 	const s = input.trim();
-	if (VIDEO_ID.test(s)) return s;
+	if (VIDEO_ID.test(s) || SPOTIFY_ID.test(s)) return s;
+	const spUri = /^spotify:track:([A-Za-z0-9]{22})$/i.exec(s);
+	if (spUri) return `sp_${spUri[1]!}`;
 	let u: URL;
 	try {
 		u = new URL(/^[a-z]+:\/\//i.test(s) ? s : `https://${s}`);
@@ -301,10 +308,15 @@ export function parseVideoUrl(input: string): string | null {
 		const m = /^\/(?:shorts|embed|live|v)\/([A-Za-z0-9_-]{11})(?:[/?#]|$)/.exec(u.pathname);
 		if (m) return m[1]!;
 	}
+	if (host === "open.spotify.com" || host === "spotify.com") {
+		const m = /^\/(?:intl-[a-z-]+\/)?track\/([A-Za-z0-9]{22})(?:[/?#]|$)/.exec(u.pathname);
+		if (m) return `sp_${m[1]!}`;
+	}
 	return null;
 }
 
 export function videoUrl(id: string): string {
+	if (isSpotifyId(id)) return `https://open.spotify.com/track/${id.slice(3)}`;
 	return `https://www.youtube.com/watch?v=${id}`;
 }
 
@@ -641,7 +653,7 @@ export function parseTranslations(text: string, count: number): string[] {
 
 /** "ep" ids are the stories'; a video is keyed by its YouTube id. */
 export function isVideoId(id: string): boolean {
-	return VIDEO_ID.test(id);
+	return VIDEO_ID.test(id) || SPOTIFY_ID.test(id);
 }
 
 export function formatClock(sec: number): string {
