@@ -14,20 +14,19 @@ import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PracticeCar
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { speak, stopSpeaking } from "@/components/speech";
-import { contrastSpans, earGymRound, getPhonologyData, getPhonologyPairs, hasRhythmPage, praiseFor, type EarGymExercise, type PhonologyFamily } from "@/src/core";
+import { contrastSpans, earGymRound, getPhonologyData, getPhonologyPairs, getSoundNotes, hasRhythmPage, praiseFor, soundNotesForPairs, type EarGymExercise, type PhonologyFamily } from "@/src/core";
 import { RhythmicVisualizer } from "./rhythmic-visualizer";
+import { SoundGuide } from "./sound-guide";
 
-type View = "pairs" | "rhythm";
+export type PhonologyView = "pairs" | "sounds" | "rhythm";
+type View = PhonologyView;
 type FamilyChoice = PhonologyFamily | "all";
 type Answer = string | null;
 type Span = [start: number, end: number];
 type TileState = "idle" | "right" | "wrong";
 type Outcome = "right" | "miss" | "now" | "ahead";
 
-const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
-	{ id: "pairs", label: "Pairs" },
-	{ id: "rhythm", label: "Rhythm" },
-];
+const VIEW_LABELS: Record<View, string> = { pairs: "Pairs", sounds: "Sounds", rhythm: "Rhythm" };
 
 interface Side {
 	word: string;
@@ -52,12 +51,29 @@ function sides(trial: EarGymExercise): [Side, Side] {
 	];
 }
 
-export function EarGym({ seed, languageId, languageName, languageCode }: { seed: number; languageId: string; languageName: string; languageCode: string }) {
+export function EarGym({
+	seed,
+	languageId,
+	languageName,
+	languageCode,
+	initialView,
+	initialSound,
+}: {
+	seed: number;
+	languageId: string;
+	languageName: string;
+	languageCode: string;
+	initialView?: PhonologyView;
+	initialSound?: string;
+}) {
 	const router = useRouter();
 	const hasRhythm = hasRhythmPage(languageId);
+	const hasSounds = (getSoundNotes(languageId)?.sounds.length ?? 0) > 0;
 	const dataset = getPhonologyData(languageId);
+	const views: View[] = ["pairs", ...(hasSounds ? (["sounds"] as const) : []), ...(hasRhythm ? (["rhythm"] as const) : [])];
 
-	const [view, setView] = useState<View>("pairs");
+	const [view, setView] = useState<View>(initialView && views.includes(initialView) ? initialView : "pairs");
+	const [guideSound, setGuideSound] = useState(initialSound);
 	const [family, setFamily] = useState<FamilyChoice>("all");
 	const [round, setRound] = useState(0);
 	const [index, setIndex] = useState(0);
@@ -161,7 +177,29 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const switcher = hasRhythm ? <ViewSwitch view={view} onChange={setView} /> : undefined;
+	const switcher = views.length > 1 ? <ViewSwitch views={views} view={view} onChange={setView} /> : undefined;
+
+	if (hasSounds && view === "sounds") {
+		return (
+			<TaskFrame strip={false}>
+				<TaskBar>{switcher}</TaskBar>
+				<div className="flex-1 overflow-y-auto pb-16 pt-[2vh]">
+					<div className={cn(COLUMN, "q-rise")}>
+						<SoundGuide
+							key={guideSound ?? ""}
+							languageId={languageId}
+							languageCode={languageCode}
+							initialSound={guideSound}
+							onTrain={(id) => {
+								startRound(id);
+								setView("pairs");
+							}}
+						/>
+					</div>
+				</div>
+			</TaskFrame>
+		);
+	}
 
 	if (!dataset || dataset.pairs.length === 0) {
 		return (
@@ -198,9 +236,26 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 	}
 
 	if (finished) {
+		const weakest = trials.find((t, i) => answers[i] !== t.targetWord) ?? trials[0];
+		const guide = weakest ? soundNotesForPairs(weakest.family, languageId)[0] : undefined;
 		return (
 			<TaskFrame>
-				<RoundEnd trials={trials} answers={answers} contrasts={family === "all" ? contrasts : []} onAgain={() => startRound()} onTrain={(id) => startRound(id)} langCode={languageCode} />
+				<RoundEnd
+					trials={trials}
+					answers={answers}
+					contrasts={family === "all" ? contrasts : []}
+					onAgain={() => startRound()}
+					onTrain={(id) => startRound(id)}
+					onGuide={
+						guide
+							? () => {
+									setGuideSound(guide.symbol);
+									setView("sounds");
+								}
+							: undefined
+					}
+					langCode={languageCode}
+				/>
 			</TaskFrame>
 		);
 	}
@@ -248,7 +303,7 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 						<Pip key={i} className="flex-1" outcome={i < answers.length ? (answers[i] === t.targetWord ? "right" : "miss") : i === index ? "now" : "ahead"} />
 					))}
 				</div>
-				<span className={cn("font-ui text-[12.5px] font-[450] tabular-nums text-ink-3", hasRhythm && "hidden sm:inline")} data-testid="task-count">
+				<span className={cn("font-ui text-[12.5px] font-[450] tabular-nums text-ink-3", switcher && "hidden sm:inline")} data-testid="task-count">
 					{index + 1}/{total}
 				</span>
 			</TaskBar>
@@ -362,15 +417,19 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 	);
 }
 
-function ViewSwitch({ view, onChange }: { view: View; onChange: (next: View) => void }) {
+function ViewSwitch({ views, view, onChange }: { views: readonly View[]; view: View; onChange: (next: View) => void }) {
+	const crowded = views.length > 2;
 	return (
-		<div className="q-segc shrink-0 pointer-coarse:[&>button]:h-10" role="group" aria-label="View">
-			{VIEWS.map((v) => (
-				<button key={v.id} type="button" aria-pressed={view === v.id} className={cn(view === v.id && "on")} onClick={() => onChange(v.id)}>
-					{v.label}
-				</button>
-			))}
-		</div>
+		<>
+			<div className={cn("q-segc shrink-0 pointer-coarse:[&>button]:h-10", crowded && "hidden sm:inline-flex")} role="group" aria-label="View" data-testid="phonology-views">
+				{views.map((v) => (
+					<button key={v} type="button" aria-pressed={view === v} className={cn(view === v && "on")} onClick={() => onChange(v)}>
+						{VIEW_LABELS[v]}
+					</button>
+				))}
+			</div>
+			{crowded && <ChoiceMenu quiet value={view} options={views.map((v) => ({ value: v, label: VIEW_LABELS[v] }))} onChange={(next) => onChange(next as View)} ariaLabel="View" className="-ms-2 shrink-0 sm:hidden" />}
+		</>
 	);
 }
 
@@ -473,6 +532,7 @@ function RoundEnd({
 	contrasts,
 	onAgain,
 	onTrain,
+	onGuide,
 	langCode,
 }: {
 	trials: EarGymExercise[];
@@ -480,6 +540,7 @@ function RoundEnd({
 	contrasts: ReadonlyArray<{ id: string; label: string }>;
 	onAgain: () => void;
 	onTrain: (family: PhonologyFamily) => void;
+	onGuide?: () => void;
 	langCode: string;
 }) {
 	const heard: Heard[] = trials.map((trial, i) => ({ trial, answer: answers[i] ?? null }));
@@ -556,6 +617,20 @@ function RoundEnd({
 					<h2 className="q-sh">Missed</h2>
 					<HeardRows rows={missed} langCode={langCode} />
 				</div>
+			)}
+			{onGuide && (
+				<button
+					type="button"
+					onClick={onGuide}
+					className="group -mx-2 mt-4 flex min-h-12 w-[calc(100%+1rem)] items-center gap-4 rounded-lg px-2 py-2.5 text-start transition-colors duration-150 hover:bg-well motion-reduce:transition-none"
+					data-testid="ear-gym-guide"
+				>
+					<span className="min-w-0 flex-1">
+						<span className="block font-ui text-[14.5px] font-medium tracking-[-0.006em] text-foreground">How these sounds are made</span>
+						<span className="block font-ui text-[13px] text-ink-3">Where the tongue and the lips go, with a drawing</span>
+					</span>
+					<QIcon name="chev" className="shrink-0 text-ink-4 group-hover:text-ink-2" />
+				</button>
 			)}
 			{right.length > 0 && (
 				<details className="group mt-6" data-testid="ear-gym-right">
