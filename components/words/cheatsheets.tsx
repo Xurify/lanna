@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, HeadphonesIcon, PencilIcon, PlusIcon, RepeatIcon, SearchIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
+import { SheetProgressBar } from "@/components/words/sheet-progress";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
 import { CheatsheetParseError, cheatsheetRowCount, countOverlap, formatSheetText, parseSheetText, searchSections, type Cheatsheet, type CheatRow, type CheatsheetSummary, type CheatSection, type SheetProgress } from "@/src/core";
@@ -32,9 +33,9 @@ function setSheetInUrl(id: string | null) {
 	window.history.replaceState(null, "", url);
 }
 
-function SearchField({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+function SearchField({ value, onChange, placeholder, label, className }: { value: string; onChange: (v: string) => void; placeholder: string; label: string; className?: string }) {
 	return (
-		<div className="relative min-w-0 flex-1">
+		<div className={cn("relative min-w-0 flex-1", className)}>
 			<SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
 			<input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} autoComplete="off" spellCheck={false} className="q-field h-10 w-full rounded-xl pl-10 pr-10 font-prose text-[15px]" />
 			{value && (
@@ -46,7 +47,7 @@ function SearchField({ value, onChange, placeholder, label }: { value: string; o
 	);
 }
 
-export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: string; onCount?: (n: number) => void }) {
+export function CheatsheetsTab({ initialSheet, onCount, onOpenChange }: { initialSheet?: string; onCount?: (n: number) => void; onOpenChange?: (open: boolean) => void }) {
 	const [sheets, setSheets] = useState<CheatsheetSummary[] | null>(null);
 	const [openId, setOpenId] = useState<string | null>(initialSheet ?? null);
 	const [creating, setCreating] = useState(false);
@@ -85,6 +86,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 	const open = (id: string | null) => {
 		setOpenId(id);
 		setSheetInUrl(id);
+		onOpenChange?.(id !== null);
 	};
 
 	if (openId) {
@@ -112,7 +114,7 @@ export function CheatsheetsTab({ initialSheet, onCount }: { initialSheet?: strin
 	return (
 		<div className="space-y-4" data-testid="cheatsheets">
 			<div className="flex items-center gap-3">
-				<SearchField value={query} onChange={(v) => { setQuery(v); if (!v.trim()) setFound(null); }} placeholder="Search your cheatsheets and their phrases" label="Search cheatsheets" />
+				<SearchField value={query} onChange={(v) => { setQuery(v); if (!v.trim()) setFound(null); }} placeholder="Search sheets" label="Search your cheatsheets and their phrases" />
 				<button type="button" className="q-btn primary shrink-0" onClick={() => setCreating(true)} data-testid="cheatsheet-new">
 					<PlusIcon className="size-4" />
 					New cheatsheet
@@ -765,18 +767,20 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 	}
 
 	const waiting = review ? review.inDictionary - review.inReview : 0;
+	const canReview = waiting > 0;
+	const canListen = !!heard && heard.lines > 0;
 	const languageName = lang?.english ?? "phrases";
 
 	return (
-		<div className="min-h-[60vh] space-y-5" data-testid="cheatsheet-view">
-			<button type="button" onClick={onBack} className="q-btn ghost -ml-2.5">
+		<div className="min-h-[60vh]" data-testid="cheatsheet-view">
+			<button type="button" onClick={onBack} className="q-btn ghost -ml-2.5 pointer-coarse:min-h-11">
 				<ArrowLeftIcon className="size-4" />
 				All cheatsheets
 			</button>
 
 			{!sheet && (
-				<div className="space-y-3" aria-busy="true" aria-label="Loading the cheatsheet" data-testid="cheatsheet-loading">
-					<div className="h-8 w-56 rounded-lg bg-well" />
+				<div className="mt-4 space-y-3" aria-busy="true" aria-label="Loading the cheatsheet" data-testid="cheatsheet-loading">
+					<div className="h-9 w-64 max-w-full rounded-lg bg-well" />
 					<div className="h-4 w-32 rounded-md bg-well" />
 					<div className="q-card h-48" />
 				</div>
@@ -784,18 +788,27 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 
 			{sheet && (
 				<>
-					<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-						<div className="min-w-0 space-y-1">
-							<h2 className="font-title text-2xl font-semibold tracking-tight text-foreground">{sheet.title}</h2>
-							<p className="font-ui text-xs text-muted-foreground">
-								{plural(cheatsheetRowCount(sheet), "phrase")} · {sheet.repoFile ? `in the repo: ${sheet.repoFile}` : sheet.updatedAt ? `edited ${dateLabel(sheet.updatedAt)}` : `made ${dateLabel(sheet.importedAt)}`}
+					<header className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+						<div className="min-w-0">
+							<h1 className="font-title text-[28px] font-semibold leading-[1.15] tracking-[-0.025em] text-foreground sm:text-[34px]">{sheet.title}</h1>
+							<p className="mt-1.5 font-ui text-[13px] text-ink-3" title={sheet.repoFile}>
+								{plural(cheatsheetRowCount(sheet), "phrase")} ·{" "}
+								{sheet.repoFile ? (
+									<>
+										in the repo<span className="hidden sm:inline">: {sheet.repoFile}</span>
+									</>
+								) : sheet.updatedAt ? (
+									`edited ${dateLabel(sheet.updatedAt)}`
+								) : (
+									`made ${dateLabel(sheet.importedAt)}`
+								)}
 							</p>
-							{moveError && <p className="font-ui text-xs text-miss">{moveError}</p>}
+							{moveError && <p className="mt-1 font-ui text-xs text-miss">{moveError}</p>}
 						</div>
-						<span className="flex flex-wrap items-center gap-1">
+						<span className="-mx-2.5 flex flex-wrap items-center gap-1 sm:mx-0 pointer-coarse:[&>.q-btn]:min-h-11">
 							{confirmRemove ? (
 								<>
-									<span className="font-ui text-xs text-ink-2">Remove this sheet?</span>
+									<span className="pl-2.5 font-ui text-xs text-ink-2 sm:pl-0">Remove this sheet?</span>
 									<button type="button" className="q-btn ghost text-miss" onClick={() => void remove()} data-testid="cheatsheet-remove-yes">
 										Remove
 									</button>
@@ -817,35 +830,55 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 										<>
 											<button type="button" className="q-btn ghost" onClick={() => void toRepo()} title="Keep it in the repo, as a text file you can commit" data-testid="cheatsheet-to-repo">
 												<FolderGit2Icon className="size-4" />
-												Move to repo
+												<span className="max-sm:sr-only">Move to repo</span>
 											</button>
 											<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(true)} data-testid="cheatsheet-remove">
 												<Trash2Icon className="size-4" />
-												Remove
+												<span className="max-sm:sr-only">Remove</span>
 											</button>
 										</>
 									)}
 								</>
 							)}
 						</span>
-					</div>
+					</header>
 
-					{heard && heard.lines > 0 && (
-						<div className="flex flex-wrap items-center gap-x-3 gap-y-2" data-testid="cheatsheet-listen">
-							<Link href={listenHref(sheet.id)} className="q-btn primary pointer-coarse:min-h-11" data-testid="cheatsheet-listen-start">
-								<HeadphonesIcon className="size-4" />
-								Listen and type
-							</Link>
-							<p className="font-ui text-[13px] text-ink-3" data-testid="cheatsheet-listen-progress">
-								{heard.heard === 0
-									? "Ten phrases at a time, heard before they are seen."
-									: `${heard.caught} of ${heard.lines} caught by ear · ${heard.heard} heard so far`}
-							</p>
-						</div>
+					{(canListen || canReview || reviewNote) && (
+						<section className="mt-6" aria-label="Practice this cheatsheet" data-testid="cheatsheet-listen">
+							<div className="flex flex-wrap items-center gap-2 pointer-coarse:[&>.q-btn]:min-h-11">
+								{canListen && (
+									<Link href={listenHref(sheet.id)} className="q-btn primary" data-testid="cheatsheet-listen-start">
+										<HeadphonesIcon className="size-4" />
+										Listen and type
+									</Link>
+								)}
+								{canReview && (
+									<button type="button" className="q-btn sec" onClick={() => void addToReview()} disabled={adding} data-testid="cheatsheet-to-review">
+										<RepeatIcon className="size-4" />
+										{adding ? "Adding…" : `Add ${plural(Math.min(waiting, 30), "word")} to Review`}
+									</button>
+								)}
+								{reviewNote && (
+									<span className="font-ui text-[13px] text-ink-2" aria-live="polite">
+										{reviewNote}
+									</span>
+								)}
+							</div>
+							{canListen &&
+								(heard.heard === 0 ? (
+									<p className="q-sub !mt-3" data-testid="cheatsheet-listen-progress">
+										Ten phrases at a time, heard before they are seen.
+									</p>
+								) : (
+									<div className="mt-4" data-testid="cheatsheet-listen-progress">
+										<SheetProgressBar progress={heard} />
+									</div>
+								))}
+						</section>
 					)}
 
-					<div className="flex flex-wrap items-center gap-2">
-						<div className="q-segc" role="radiogroup" aria-label="Show the phrases">
+					<div className="mt-7 flex flex-wrap items-center gap-2">
+						<div className="q-segc pointer-coarse:[&>button]:h-10" role="radiogroup" aria-label="Show the phrases">
 							<button type="button" role="radio" aria-checked={!cover} className={cn(!cover && "on")} onClick={() => setMode(false)}>
 								Show all
 							</button>
@@ -853,17 +886,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 								Cover the {languageName}
 							</button>
 						</div>
-						{review && waiting > 0 && (
-							<button type="button" className="q-btn sec t" onClick={() => void addToReview()} disabled={adding} data-testid="cheatsheet-to-review">
-								<RepeatIcon className="size-4" />
-								{adding ? "Adding…" : `Add ${plural(Math.min(waiting, 30), "word")} to Review`}
-							</button>
-						)}
-						{reviewNote && (
-							<span className="font-ui text-xs text-ink-2" aria-live="polite">
-								{reviewNote}
-							</span>
-						)}
+						<SearchField value={find} onChange={setFind} placeholder="Search this sheet" label="Search this cheatsheet by phrase, meaning or note" className="min-w-[13rem]" />
 						{sections.length > 1 && (
 							<ChoiceMenu
 								value={jump}
@@ -872,41 +895,41 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 									document.getElementById(`cs-${next}`)?.scrollIntoView({ block: "start" });
 								}}
 								ariaLabel="Jump to a section"
-								className="w-full sm:ml-auto sm:w-64"
+								className="w-full sm:w-56"
 								options={[{ value: "", label: "Jump to a section" }, ...sections.map((s) => ({ value: s.id, label: s.title }))]}
 							/>
 						)}
 					</div>
-
-					<SearchField value={find} onChange={setFind} placeholder="Search this sheet by phrase, meaning or note" label="Search this cheatsheet" />
 					{find.trim() && sections.length === 0 && (
-						<p className="font-prose text-[15px] text-ink-3" data-testid="cheatsheet-find-empty">
+						<p className="mt-4 font-prose text-[15px] text-ink-3" data-testid="cheatsheet-find-empty">
 							Nothing in this sheet matches “{find.trim()}”. Accents are optional.
 						</p>
 					)}
 
-					{sections.map((section) => (
-						<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">
-							<h3 className="q-sh !mb-0">
-								{section.title}
-								<Link
-									href={listenHref(sheet.id, section.id)}
-									aria-label={`Listen to ${section.title}`}
-									className="order-3 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12.5px] font-[550] text-ink-3 hover:text-ink-2 pointer-coarse:min-h-11"
-									data-testid="cheatsheet-listen-section"
-								>
-									<HeadphonesIcon className="size-3.5" strokeWidth={1.8} />
-									Listen
-								</Link>
-							</h3>
-							<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden">
-								{section.rows.map((row, i) => {
-									const key = `${section.id}:${i}`;
-									return <CheatRowItem key={key} row={row} tag={lang?.tag} hidden={cover && !shown.has(key)} onReveal={() => setShown((prev) => new Set(prev).add(key))} />;
-								})}
-							</ul>
-						</section>
-					))}
+					<div className="mt-7 space-y-7">
+						{sections.map((section) => (
+							<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+								<h2 className="q-sh !mb-0">
+									{section.title}
+									<Link
+										href={listenHref(sheet.id, section.id)}
+										aria-label={`Listen to ${section.title}`}
+										className="order-3 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12.5px] font-[550] text-ink-3 hover:text-ink-2 pointer-coarse:min-h-11"
+										data-testid="cheatsheet-listen-section"
+									>
+										<HeadphonesIcon className="size-3.5" strokeWidth={1.8} />
+										Listen
+									</Link>
+								</h2>
+								<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden">
+									{section.rows.map((row, i) => {
+										const key = `${section.id}:${i}`;
+										return <CheatRowItem key={key} row={row} tag={lang?.tag} hidden={cover && !shown.has(key)} onReveal={() => setShown((prev) => new Set(prev).add(key))} />;
+									})}
+								</ul>
+							</section>
+						))}
+					</div>
 				</>
 			)}
 
@@ -932,9 +955,9 @@ function CheatRowItem({ row, tag, hidden, onReveal }: { row: CheatRow; tag?: str
 		<li className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] sm:items-baseline">
 			<span className="row-span-2 pt-0.5 sm:row-span-1">
 				{hidden ? (
-					<span className="block size-8" aria-hidden="true" />
+					<span className="block size-8 pointer-coarse:size-11" aria-hidden="true" />
 				) : (
-					<button type="button" onClick={() => void speak(row.text).catch(() => {})} aria-label={`Play ${row.text}`} className="lh-press grid size-8 place-items-center rounded-full bg-well text-ink-2 hover:text-foreground">
+					<button type="button" onClick={() => void speak(row.text).catch(() => {})} aria-label={`Play ${row.text}`} className="lh-press grid size-8 place-items-center rounded-full bg-well text-ink-2 hover:text-foreground pointer-coarse:size-11">
 						<Volume2Icon className="size-4" />
 					</button>
 				)}

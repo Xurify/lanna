@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { alignWords, analyzeListening, CAUSE_MIN_SENTENCES, causeOfSub, holm, LISTEN_MIN_TYPED, listenWords, readTyped, sentenceWordSpans, twoProportionZ, type LoggedListen } from "../src/core/listen-analysis.ts";
+import { alignWords, analyzeListening, CAUSE_MIN_SENTENCES, causeOfSub, heardPieces, holm, LISTEN_MIN_TYPED, listenWords, readTyped, sentenceWordSpans, twoProportionZ, type LoggedListen } from "../src/core/listen-analysis.ts";
+import { scoreLine } from "../src/core/line.ts";
 
 const causes = (sentence: string, given: string, stretch: string[] = []) => readTyped(sentence, given, stretch).map((e) => e.cause);
 
@@ -187,5 +188,30 @@ describe("listening trends", () => {
 		assert.equal(analyzeListening([session("2026-11-10T10:00:00Z", fast)], NOW).pace, null);
 		const close = Array.from({ length: 25 }, (_, i) => rep("Peter varil večeru a pritom telefonoval s mamou.", i < 2 ? "Peter varil večeru." : "Peter varil večeru a pritom telefonoval s mamou.", { heardMs: 3000 }));
 		assert.equal(analyzeListening([session("2026-11-10T10:00:00Z", [...close, ...slow])], NOW).pace!.fastHarder, false);
+	});
+});
+
+describe("the sentence shown after an answer keeps its punctuation and marks its words", () => {
+	const shown = (pieces: ReturnType<typeof heardPieces>) => pieces.map((p) => `${p.mark === "missed" ? "✗" : p.mark === "almost" ? "~" : ""}${p.newWord ? "+" : ""}${p.text}`);
+
+	it("with nothing to mark, the pieces are the sentence as written", () => {
+		const pieces = heardPieces("Фото не совпадает.");
+		assert.equal(pieces.map((p) => p.text).join(""), "Фото не совпадает.");
+		assert.ok(pieces.every((p) => !p.mark && !p.newWord));
+	});
+
+	it("a missed word and a word with only an accent off are marked on their own word, punctuation is not", () => {
+		const { marks } = scoreLine("Mám dve mapy, áno.", "mam dve karty ano");
+		assert.deepEqual(shown(heardPieces("Mám dve mapy, áno.", { marks })), ["~Mám", " ", "dve", " ", "✗mapy", ", ", "~áno", "."]);
+	});
+
+	it("a caught word carries no mark", () => {
+		const { marks } = scoreLine("Фото не совпадает.", "это не то");
+		assert.deepEqual(shown(heardPieces("Фото не совпадает.", { marks })), ["✗Фото", " ", "не", " ", "✗совпадает", "."]);
+	});
+
+	it("a new word is marked whatever its case, and a hyphenated one in one piece of color", () => {
+		assert.deepEqual(shown(heardPieces("Mapa je tu.", { newWords: ["mapa"], tag: "sk-SK" })), ["+Mapa", " ", "je", " ", "tu", "."]);
+		assert.deepEqual(shown(heardPieces("Hovorí po-slovensky.", { newWords: ["po-slovensky"], tag: "sk-SK" })), ["Hovorí", " ", "+po", "+-", "+slovensky", "."]);
 	});
 });

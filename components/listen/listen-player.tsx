@@ -24,14 +24,15 @@ import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, Pips, PracticeCard, PRIMARY, Pulse, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskRound, VerdictDisc, type PipOutcome } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, praiseFor, understood, type ListenItem, type ListenPlan, type ListenVerdict, type SheetProgress } from "@/src/core";
+import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, heardPieces, praiseFor, scoreLine, understood, type LineMark, type ListenItem, type ListenPlan, type ListenVerdict, type SheetProgress } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { SheetProgressBar } from "@/components/words/sheet-progress";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
 interface Rep {
@@ -76,6 +77,27 @@ function sheetHref(sheet: ListenSheet): string {
 }
 
 const SHEET_GONE = "It was removed, or it belongs to another language.";
+
+const TOUCH_TALL = "pointer-coarse:h-11";
+const ENTER_KEY = "q-kbd hidden pointer-fine:inline-flex";
+
+// Browsers move focus on mousedown, so a tap on Play would blur the answer field and close a phone's keyboard.
+const keepFieldFocus = (e: React.MouseEvent) => e.preventDefault();
+
+function pipOf(rep: Pick<Rep, "verdict" | "peeked">): PipOutcome {
+	if (rep.peeked) return "shown";
+	return rep.verdict === "exact" ? "right" : rep.verdict === "accents" ? "almost" : "miss";
+}
+
+function marksOf(rep: Pick<Rep, "item" | "given" | "verdict">): LineMark[] | undefined {
+	return rep.verdict !== "exact" && rep.given ? scoreLine(rep.item.sentence, rep.given).marks : undefined;
+}
+
+function sourceOf(item: ListenItem): string {
+	if (item.source) return item.source.kind === "sheet" ? item.source.title : `From a video you watched · ${item.source.title}`;
+	if (isWatchItem(item.id)) return "From a video you watched";
+	return item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`;
+}
 
 export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: ListenPlan | null; sheet?: ListenSheet }) {
 	const lang = useActiveLanguage();
@@ -389,84 +411,91 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 		);
 	}
 
-	const progress = (index + (current ? 1 : 0)) / total;
 	const praise = praiseFor(lang?.code, index);
 	const tone = !current ? "plain" : current.verdict === "wrong" ? "miss" : current.verdict === "exact" ? "right" : "wait";
+	const unit = sheet ? "phrase" : "sentence";
+	const canPeek = replays >= PEEK_AFTER_REPLAYS;
+	const outcomes = plan.items.map((_, i): PipOutcome => (i < reps.length ? pipOf(reps[i]!) : i > index ? "ahead" : current ? pipOf(current) : "now"));
+	const stretch = item.stretch.map((w) => w.text);
 
 	return (
 		<Frame strip={false}>
-			<TaskTop progress={progress} label={`${index} of ${total} heard`} count={`${index + 1}/${total}`} />
+			<TaskRound outcomes={outcomes} label={`${unit} ${index + 1} of ${total}`} count={`${index + 1}/${total}`} href={sheet ? sheetHref(sheet) : "/"} />
 
-			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
+			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
-					<PracticeCard
-						icon="listen"
-						title="Listen"
-						sub={`${sheet ? "Phrase" : "Sentence"} ${index + 1} of ${total}`}
-					>
-						{item.source ? (
-							<p className="mb-4 flex min-w-0 items-center gap-2 font-ui text-[13px] text-ink-3" data-testid="listen-source">
-								<span className="q-pill shrink-0">{item.source.kind === "sheet" ? "From your cheatsheet" : "From a video you watched"}</span>
-								<span className="truncate" title={item.source.title}>
-									{item.source.title}
-								</span>
-							</p>
-						) : (
-							<p className="mb-4 font-ui text-[13px] text-ink-3">{isWatchItem(item.id) ? "From a video you watched" : item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`}</p>
-						)}
-						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
-							{!current ? "Type what you hear" : current.verdict === "exact" ? <span lang={praise.lang}>{praise.text}</span> : current.verdict === "accents" ? "So close" : "It says…"}
-						</h2>
-
-						{/* Hear it: the big play, the slow play, and the text behind a tap. */}
-						<div className="flex flex-wrap items-center gap-3">
+					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)} phone="flat">
+						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 sm:gap-x-4">
 							<button
 								type="button"
+								onMouseDown={keepFieldFocus}
 								onClick={() => replay()}
-								aria-label="Play the sentence"
+								aria-label={`Play the ${unit}`}
 								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="listen-play"
 							>
 								<Volume2Icon className="size-6" strokeWidth={1.6} />
 							</button>
+							<h2 className="min-w-0 font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
+								{!current ? "Type what you hear" : current.verdict === "exact" ? <span lang={praise.lang}>{praise.text}</span> : current.verdict === "accents" ? "So close" : "It says…"}
+							</h2>
 							<button
 								type="button"
+								onMouseDown={keepFieldFocus}
 								onClick={() => replay(true)}
 								aria-label="Play slowly"
 								title="Play slowly"
-								className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 transition-colors hover:bg-well-2"
+								className="lh-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
+								data-testid="listen-slow"
 							>
 								<SnailIcon className="size-5" strokeWidth={1.6} />
-								Slowly
+								<span className="hidden min-[360px]:inline">Slowly</span>
 							</button>
-							{/* The text, only after two listens, and it costs the sentence:
-							    the ear has to try first (docs/research/desirable-difficulties.md). */}
-							{!current && !peeked && (
-								<button
-									type="button"
-									onClick={() => setPeeked(true)}
-									disabled={replays < PEEK_AFTER_REPLAYS}
-									title={replays < PEEK_AFTER_REPLAYS ? "Listen once more first" : "Show the text — this sentence then does not count as typed correctly"}
-									className="q-why-off ml-auto !mt-0"
-									data-testid="listen-peek"
-								>
-									<span className={cn("w", replays >= PEEK_AFTER_REPLAYS && "!text-ink-2")}>
-										<EyeIcon className="size-3.5" strokeWidth={1.6} />
-										{replays < PEEK_AFTER_REPLAYS ? "Show the text" : "Show the text (not counted)"}
-									</span>
-								</button>
-							)}
 						</div>
 
-						{/* The Slovak as heard, graded letter by letter. The field is the
-						    answer, so it is locked once checked. */}
-						<div className="mt-6">
+						{(current || peeked) && (
+							<div className="lh-rise mt-6" data-testid="listen-sentence" data-word-lookup-enabled="true">
+								<p className="font-prose text-[24px] font-[550] leading-[1.35] tracking-[-0.025em] text-foreground sm:text-[30px]" lang={lang?.code}>
+									<Heard sentence={item.sentence} stretch={stretch} marks={current ? marksOf(current) : undefined} tag={lang?.tag} />
+								</p>
+								{current && current.verdict !== "exact" && current.given && (
+									<p className="mt-2 font-prose text-base text-ink-3" data-testid="listen-typed">
+										You typed · <span lang={lang?.code}>{current.given}</span>
+									</p>
+								)}
+								{item.stretch.length > 0 && (
+									<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
+										{item.stretch.map((w) => (
+											<li key={w.text} className="q-ex">
+												<u lang={lang?.code}>{w.lemma}</u>
+												{w.gloss && <span className="ml-1.5 font-normal text-ink-3">· {w.gloss}</span>}
+											</li>
+										))}
+									</ul>
+								)}
+								{current && item.translation && (
+									<p data-no-word-lookup="true" className="mt-3 font-prose text-base text-ink-2" data-testid="listen-translation">
+										{item.translation}
+									</p>
+								)}
+								{current && item.source?.kind === "sheet" && item.source.note && (
+									<p data-no-word-lookup="true" className="mt-1 font-ui text-[13px] text-ink-3" data-testid="listen-note">
+										{item.source.note}
+									</p>
+								)}
+							</div>
+						)}
+
+						{!current && (
+							<div className="mt-3 sm:mt-4">
 								<input
 									type="text"
 									lang={lang?.code}
 									autoComplete="off"
 									autoCapitalize="off"
+									autoCorrect="off"
 									spellCheck={false}
+									enterKeyHint="done"
 									autoFocus
 									value={draft}
 									onChange={(e) => setDraft(e.target.value)}
@@ -476,71 +505,42 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 											submit();
 										}
 									}}
-									disabled={!!current}
-									aria-label="Type the sentence you heard"
-									placeholder="Type what you hear"
-									className="w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background"
+									aria-label={`Type the ${unit} you heard`}
+									className="q-write h-12 w-full px-0.5 font-prose text-[22px] font-[550] tracking-[-0.02em] text-foreground outline-none sm:text-[26px]"
 									data-testid="listen-input"
 								/>
-								{!current && <DiacriticBar variant="keys" className="mt-4" />}
-						</div>
-
-						{/* The sentence: hidden until answered or peeked; then every word,
-						    the stretch words marked and glossed. */}
-						<div className="mt-6 min-h-[4.5rem]" data-testid="listen-sentence" data-word-lookup-enabled={current !== null || peeked ? "true" : "false"}>
-							{current || peeked ? (
-								<div className="lh-rise">
-									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang={lang?.code}>
-										<Marked sentence={item.sentence} stretch={item.stretch.map((w) => w.text)} />
-									</p>
-									{current && current.verdict !== "exact" && (
-										<p className="mt-2 font-prose text-base text-ink-3" data-testid="listen-typed">
-											{current.given ? (
-												<>
-													You typed · <span lang={lang?.code}>{current.given}</span>
-												</>
-											) : (
-												"Not caught"
-											)}
-										</p>
-									)}
-									{item.stretch.length > 0 && (
-										<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
-											{item.stretch.map((w) => (
-												<li key={w.text} className="q-ex">
-													<u lang={lang?.code}>{w.lemma}</u>
-													{w.gloss && <span className="ml-1.5 font-normal text-ink-3">· {w.gloss}</span>}
-												</li>
-											))}
-										</ul>
-									)}
-									{current && item.translation && (
-										<p data-no-word-lookup="true" className="mt-3 font-prose text-base text-ink-2" data-testid="listen-translation">
-											{item.translation}
-										</p>
-									)}
-									{current && item.source?.kind === "sheet" && item.source.note && (
-										<p data-no-word-lookup="true" className="mt-1 font-ui text-[13px] text-ink-3" data-testid="listen-note">
-											{item.source.note}
-										</p>
+								<DiacriticBar variant="keys" className="mt-4" />
+								<div className="mt-4 flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 font-ui text-[13px] text-ink-3">
+									{peeked ? (
+										<p data-testid="listen-hint">The text is shown, so this {unit} is not counted.</p>
+									) : (
+										<>
+											<button
+												type="button"
+												onMouseDown={keepFieldFocus}
+												onClick={() => setPeeked(true)}
+												disabled={!canPeek}
+												className={cn("lh-press inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)] pointer-coarse:h-11", canPeek ? "text-ink-2 hover:bg-well" : "text-ink-4")}
+												data-testid="listen-peek"
+											>
+												<EyeIcon className="size-4" strokeWidth={1.6} />
+												{canPeek ? "Show the text (not counted)" : "Show the text"}
+											</button>
+											{!canPeek && <p data-testid="listen-hint">after one more listen</p>}
+										</>
 									)}
 								</div>
-							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">Listen first. The text appears once you have typed what you heard
-									{peeked ? "" : replays < PEEK_AFTER_REPLAYS ? " (or after a second listen, at a price)" : ""}.</p>
-							)}
-						</div>
-
+							</div>
+						)}
 					</PracticeCard>
 				</div>
 			</div>
 
-			{/* One bar at the bottom: the hint and Check before, the verdict and Continue after. */}
 			<Dock tone={tone} live>
-				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
+				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-3 py-4")}>
 					{current ? (
 						<>
-							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", current.verdict === "exact" ? "text-teal-2" : current.verdict === "accents" ? "text-ink-2" : "text-miss")} data-testid="listen-verdict">
+							<p className={cn("flex min-w-0 items-center gap-2.5 font-ui text-[15px] font-[600] leading-snug tracking-[-0.01em]", current.verdict === "exact" ? "text-teal-2" : current.verdict === "accents" ? "text-ink-2" : "text-miss")} data-testid="listen-verdict">
 								<VerdictDisc ok={current.verdict !== "wrong"} />
 								{current.verdict === "exact"
 									? `Typed correctly${sheet ? "" : ` · +${LISTEN_XP} XP`}`
@@ -550,21 +550,21 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 											? "Not quite"
 											: "Not caught this time"}
 							</p>
-							<button type="button" onClick={advance} className={PRIMARY} data-testid="listen-continue" autoFocus>
+							<button type="button" onClick={advance} className={cn(PRIMARY, TOUCH_TALL, "shrink-0")} data-testid="listen-continue" autoFocus>
 								{index + 1 >= total ? "Finish" : "Continue"}
-								<span className="q-kbd">
+								<span className={ENTER_KEY}>
 									<QIcon name="enter" />
 								</span>
 							</button>
 						</>
 					) : (
 						<>
-							<button type="button" onClick={giveUp} className={SECONDARY} data-testid="listen-give-up">
+							<button type="button" onClick={giveUp} className={cn(SECONDARY, TOUCH_TALL)} data-testid="listen-give-up">
 								I didn&apos;t catch it
 							</button>
-							<button type="button" onClick={submit} disabled={!draft.trim()} className={PRIMARY} data-testid="listen-check">
+							<button type="button" onClick={submit} disabled={!draft.trim()} className={cn(PRIMARY, TOUCH_TALL)} data-testid="listen-check">
 								Check
-								<span className="q-kbd">
+								<span className={ENTER_KEY}>
 									<QIcon name="enter" />
 								</span>
 							</button>
@@ -576,22 +576,20 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 	);
 }
 
-/** The sentence with its stretch words marked. */
-function Marked({ sentence, stretch }: { sentence: string; stretch: string[] }) {
-	if (stretch.length === 0) return <>{sentence}</>;
-	const set = new Set(stretch.map((s) => s.toLocaleLowerCase("sk-SK")));
-	const parts = sentence.split(/(\p{L}+(?:[-'’]\p{L}+)*)/u);
+const WORD_LINE = "underline decoration-2 underline-offset-[6px]";
+
+function Heard({ sentence, stretch, marks, tag }: { sentence: string; stretch: string[]; marks?: LineMark[]; tag?: string }) {
 	return (
 		<>
-			{parts.map((p, i) =>
-				set.has(p.toLocaleLowerCase("sk-SK")) ? (
-					<mark key={i} className="bg-transparent px-0 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]">
-						{p}
-					</mark>
-				) : (
-					<span key={i}>{p}</span>
-				),
-			)}
+			{heardPieces(sentence, { newWords: stretch, marks, tag }).map((piece, i) => (
+				<span
+					key={i}
+					title={piece.mark === "missed" ? "Not typed correctly" : piece.mark === "almost" ? "The right word, an accent missing" : undefined}
+					className={cn(piece.newWord && "font-semibold text-teal-2", piece.mark === "missed" ? cn(WORD_LINE, "decoration-miss") : (piece.mark === "almost" || piece.newWord) && cn(WORD_LINE, "decoration-teal"))}
+				>
+					{piece.text}
+				</span>
+			))}
 		</>
 	);
 }
@@ -609,20 +607,19 @@ interface EndScreenProps {
 function SheetEndScreen({ outcome, reps, sheet, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps & { sheet: ListenSheet }) {
 	const missed = reps.filter((r) => r.verdict !== "exact");
 	const typedCorrectly = reps.filter((r) => r.verdict === "exact");
-	const scope = sheet.section ? "this section" : "this cheatsheet";
-	const notCounted = refused ? "Not counted" : "Not counted yet";
-	const share = (n: number | undefined) => (saving ? null : failed || !outcome.progress || n === undefined ? notCounted : `${n} of ${outcome.progress.lines}`);
+	const shown = reps.filter((r) => r.peeked).length;
+	const asides = [outcome.almost > 0 && `${outcome.almost} with only an accent missing`, shown > 0 && `${shown} with the text shown, not counted`].filter(Boolean);
 	return (
 		<TaskEnd
 			testId="listen-end"
 			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for the cheatsheet</EnterHint>}
 			actions={
 				<>
-					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
+					<button type="button" onClick={onAgain} className={cn(SECONDARY, TOUCH_TALL)} data-testid="listen-again">
 						<RepeatIcon className="size-4" />
 						Ten more
 					</button>
-					<Link href={sheetHref(sheet)} className={PRIMARY} data-testid="listen-sheet">
+					<Link href={sheetHref(sheet)} className={cn(PRIMARY, TOUCH_TALL)} data-testid="listen-sheet">
 						Back to the cheatsheet
 					</Link>
 				</>
@@ -633,16 +630,26 @@ function SheetEndScreen({ outcome, reps, sheet, saving, failed, refused, onAgain
 				Listen · {sheet.title || "your cheatsheet"}
 			</p>
 			<h1 className="q-hello">
-				{outcome.correct} of {outcome.total} typed correctly, without the text
+				{outcome.correct + outcome.almost} of {outcome.total} caught by ear
 			</h1>
-			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent</p>}
-			<Stats className="mt-7 max-w-none">
-				<Stat label={`Caught by ear in ${scope}`} value={share(outcome.progress?.caught)} ink={failed ? "text-ink-3" : "text-teal-2"} />
-				<Stat label={`Heard so far in ${scope}`} value={share(outcome.progress?.heard)} ink={failed ? "text-ink-3" : undefined} />
-			</Stats>
-			<p className="mt-3 max-w-prose font-prose text-sm text-ink-3" data-testid="listen-sheet-terms">
-				These are your own phrases, as you wrote them. Nothing checked them against the dictionary. The time counts as listening; it earns no XP and adds nothing to Review.
-			</p>
+			<Pips outcomes={reps.map(pipOf)} className="mt-4 max-w-xs" />
+			{asides.length > 0 && <p className="q-sub !mt-3">{asides.join(" · ")}</p>}
+			<div className="mt-8" data-testid="listen-sheet-progress">
+				<h2 className="q-sh">{sheet.section ? "This section" : "This cheatsheet"}</h2>
+				{saving ? (
+					<div className="flex flex-col gap-2.5">
+						<Pulse className="h-2 w-full" />
+						<Pulse className="h-4 w-56" />
+					</div>
+				) : failed || !outcome.progress ? (
+					<p className="font-ui text-[13px] text-ink-3">{refused ? "Not counted" : "Not counted yet"}</p>
+				) : (
+					<SheetProgressBar progress={outcome.progress} />
+				)}
+				<p className="q-sub !mt-4 max-w-prose" data-testid="listen-sheet-terms">
+					These are your own phrases, as you wrote them. Nothing checked them against the dictionary. The time counts as listening; it earns no XP and adds nothing to Review.
+				</p>
+			</div>
 			{missed.length > 0 && (
 				<div className="mt-8">
 					<h2 className="q-sh">Missed · these come back first</h2>
@@ -680,11 +687,11 @@ function DictionaryEndScreen({ outcome, reps, saving, failed, refused, onAgain, 
 			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for Today</EnterHint>}
 			actions={
 				<>
-					<button type="button" onClick={onAgain} className={SECONDARY} data-testid="listen-again">
+					<button type="button" onClick={onAgain} className={cn(SECONDARY, TOUCH_TALL)} data-testid="listen-again">
 						<RepeatIcon className="size-4" />
 						Ten more
 					</button>
-					<Link href="/" className={PRIMARY} data-testid="listen-today">
+					<Link href="/" className={cn(PRIMARY, TOUCH_TALL)} data-testid="listen-today">
 						Today
 					</Link>
 				</>
@@ -697,7 +704,8 @@ function DictionaryEndScreen({ outcome, reps, saving, failed, refused, onAgain, 
 			<h1 className="q-hello">
 				{outcome.correct} of {outcome.total} typed correctly, without the text
 			</h1>
-			{outcome.almost > 0 && <p className="q-line dim mt-2">{outcome.almost} typed with only a missing accent (half XP)</p>}
+			<Pips outcomes={reps.map(pipOf)} className="mt-4 max-w-xs" />
+			{outcome.almost > 0 && <p className="q-sub !mt-3">{outcome.almost} typed with only a missing accent (half XP)</p>}
 			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label="New words met" value={String(words.length)} />
@@ -754,7 +762,9 @@ function ListenRows({ reps }: { reps: Rep[] }) {
 					translation={r.item.translation}
 					onPlay={() => void speak(r.item.sentence)}
 					note={
-						r.verdict === "exact" ? undefined : r.verdict === "accents" ? (
+						r.peeked ? (
+							<span>The text was shown</span>
+						) : r.verdict === "exact" ? undefined : r.verdict === "accents" ? (
 							<span>
 								Accents off: <span className="font-medium text-ink-2" lang={lang?.code}>“{r.given}”</span>
 							</span>
@@ -763,10 +773,12 @@ function ListenRows({ reps }: { reps: Rep[] }) {
 								You typed <span className="font-medium text-miss" lang={lang?.code}>“{r.given}”</span>
 							</span>
 						) : (
-							<span>You didn&apos;t know it</span>
+							<span>Not caught</span>
 						)
 					}
-				/>
+				>
+					<Heard sentence={r.item.sentence} stretch={[]} marks={marksOf(r)} tag={lang?.tag} />
+				</SentenceRow>
 			))}
 		</SentenceRows>
 	);
