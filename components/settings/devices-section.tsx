@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 
-type Device = { id: string; name: string; createdAt: string; lastSeenAt: string; current: boolean };
+type Device = { id: string; name: string; createdAt: string; lastSeenAt: string; current: boolean; via: "pairing" | "password" };
 type Status = {
 	enabled: boolean;
 	port: number;
@@ -148,7 +148,12 @@ export function DevicesSection() {
 		setNotice(null);
 		try {
 			const res = await fetch(`/api/access/devices/${encodeURIComponent(id)}`, { method: "DELETE", cache: "no-store" });
-			setStatus(await readStatus(res));
+			const next = await readStatus(res);
+			if (status?.devices.some((device) => device.id === id && device.current && device.via === "password")) {
+				window.location.assign("/login");
+				return;
+			}
+			setStatus(next);
 			setConfirming(null);
 			setNotice({ tone: "ok", text: "That device is signed out." });
 		} catch {
@@ -259,7 +264,7 @@ export function DevicesSection() {
 							<SettingsRow
 								key={device.id}
 								label={device.current ? `${device.name} · this device` : device.name}
-								hint={`Paired ${when(device.createdAt)} · last used ${when(device.lastSeenAt)}`}
+								hint={`${device.via === "password" ? "Signed in" : "Paired"} ${when(device.createdAt)} · last used ${when(device.lastSeenAt)}`}
 								testid={`devices-row-${device.id}`}
 							>
 								{confirming === device.id ? (
