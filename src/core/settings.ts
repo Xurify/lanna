@@ -31,6 +31,14 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { AUTH_PROVIDER_KEYS } from "./auth-keys.ts";
 import type { ModelRole } from "../../config.ts";
 import type { SearchEngineId } from "./search.ts";
+import {
+	DEFAULT_NOTIFICATION_SETTINGS,
+	NOTIFICATION_SOUND_PRESETS,
+	isValidTimeString,
+	normalizeTimeString,
+	type NotificationSettings,
+	type NotificationSoundPreset,
+} from "./reminders.ts";
 
 /** The schema version this code understands. Bump ONLY for breaking shape
  *  changes (a field renamed/meaning changed); pure additions never bump. */
@@ -273,6 +281,7 @@ export interface UserSettings {
 	models?: ModelsSettings;
 	appearance?: AppearanceSettings;
 	compaction?: CompactionSettings;
+	notifications?: NotificationSettings;
 	[key: string]: unknown;
 }
 
@@ -297,6 +306,7 @@ export interface FactorySettings {
 		};
 	};
 	compaction: Required<CompactionSettings>;
+	notifications: Required<NotificationSettings>;
 }
 
 export const FACTORY_SETTINGS: FactorySettings = {
@@ -311,6 +321,7 @@ export const FACTORY_SETTINGS: FactorySettings = {
 		mdRendering: { headingWeight: 600, boldColor: null, italicColor: null },
 	},
 	compaction: { thresholdTokens: 150_000 },
+	notifications: DEFAULT_NOTIFICATION_SETTINGS,
 };
 
 
@@ -470,6 +481,40 @@ function sanitizeCompaction(raw: Record<string, unknown>): CompactionSettings {
 	return out;
 }
 
+function sanitizeNotifications(raw: Record<string, unknown>): NotificationSettings {
+	const out: NotificationSettings = {
+		enabled: typeof raw.enabled === "boolean" ? raw.enabled : DEFAULT_NOTIFICATION_SETTINGS.enabled,
+		times: Array.isArray(raw.times)
+			? raw.times
+					.filter((t): t is string => typeof t === "string" && isValidTimeString(t))
+					.map(normalizeTimeString)
+					.slice(0, 10)
+			: [...DEFAULT_NOTIFICATION_SETTINGS.times],
+		soundPreset:
+			typeof raw.soundPreset === "string" &&
+			(NOTIFICATION_SOUND_PRESETS as readonly string[]).includes(raw.soundPreset)
+				? (raw.soundPreset as NotificationSoundPreset)
+				: DEFAULT_NOTIFICATION_SETTINGS.soundPreset,
+		customSoundName:
+			typeof raw.customSoundName === "string" && raw.customSoundName.trim()
+				? raw.customSoundName.trim().slice(0, 100)
+				: undefined,
+		inAppBanner: typeof raw.inAppBanner === "boolean" ? raw.inAppBanner : DEFAULT_NOTIFICATION_SETTINGS.inAppBanner,
+		systemNotification:
+			typeof raw.systemNotification === "boolean"
+				? raw.systemNotification
+				: DEFAULT_NOTIFICATION_SETTINGS.systemNotification,
+		smartAutoNudge:
+			typeof raw.smartAutoNudge === "boolean" ? raw.smartAutoNudge : DEFAULT_NOTIFICATION_SETTINGS.smartAutoNudge,
+		autoScheduleTasks:
+			typeof raw.autoScheduleTasks === "boolean"
+				? raw.autoScheduleTasks
+				: DEFAULT_NOTIFICATION_SETTINGS.autoScheduleTasks,
+		aiAssisted: typeof raw.aiAssisted === "boolean" ? raw.aiAssisted : DEFAULT_NOTIFICATION_SETTINGS.aiAssisted,
+	};
+	return out;
+}
+
 /**
  * Coerce arbitrary JSON (disk file, network body) into a valid delta record:
  * known fields validated strictly (invalid ones drop/clamp per module doc),
@@ -497,6 +542,9 @@ export function sanitizeUserSettings(raw: unknown): UserSettings | null {
 	}
 	if (r.compaction !== undefined && r.compaction !== null && typeof r.compaction === "object") {
 		out.compaction = sanitizeCompaction(r.compaction as Record<string, unknown>);
+	}
+	if (r.notifications !== undefined && r.notifications !== null && typeof r.notifications === "object" && !Array.isArray(r.notifications)) {
+		out.notifications = sanitizeNotifications(r.notifications as Record<string, unknown>);
 	}
 	// Unknown top-level keys ride along untouched (forward-compat). One
 	// known-DEAD key is stripped instead of riding: `chat` (the old

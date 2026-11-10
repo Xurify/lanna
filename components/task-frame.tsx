@@ -52,6 +52,50 @@ export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave
 	);
 }
 
+export type PipOutcome = "right" | "almost" | "miss" | "shown" | "now" | "ahead";
+
+export function Pip({ outcome, className }: { outcome: PipOutcome; className?: string }) {
+	return (
+		<span
+			aria-hidden="true"
+			className={cn(
+				"h-1.5 rounded-full transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
+				outcome === "right" && "bg-teal",
+				outcome === "almost" && "bg-teal-line",
+				outcome === "miss" && "shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
+				outcome === "shown" && "shadow-[inset_0_0_0_1.5px_var(--q-ink-4)]",
+				outcome === "now" && "bg-ink-4",
+				outcome === "ahead" && "bg-well-2",
+				className,
+			)}
+		/>
+	);
+}
+
+export function Pips({ outcomes, className }: { outcomes: readonly PipOutcome[]; className?: string }) {
+	return (
+		<span className={cn("flex items-center gap-[3px]", className)} aria-hidden="true">
+			{outcomes.map((outcome, i) => (
+				<Pip key={i} outcome={outcome} className="flex-1" />
+			))}
+		</span>
+	);
+}
+
+export function TaskRound({ outcomes, label, count, href = "/", onLeave }: { outcomes: readonly PipOutcome[]; label: string; count: string; href?: string; onLeave?: () => void }) {
+	const answered = outcomes.filter((o) => o !== "now" && o !== "ahead").length;
+	return (
+		<TaskBar href={href} onLeave={onLeave}>
+			<div role="progressbar" aria-valuemin={0} aria-valuemax={outcomes.length} aria-valuenow={answered} aria-label={label} className="min-w-0 flex-1" data-testid="task-round">
+				<Pips outcomes={outcomes} />
+			</div>
+			<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
+				{count}
+			</span>
+		</TaskBar>
+	);
+}
+
 export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLeave?: () => void; children?: React.ReactNode }) {
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
@@ -73,16 +117,17 @@ export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLe
 
 /** The practice card (the mockup's `.q-cloze`): a head with what this is, a
  *  body for the question. `right` is the quiet note in the head's far corner. */
-export function PracticeCard({ icon, title, sub, right, children, className }: { icon?: QIconName; title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string }) {
+export function PracticeCard({ icon, title, sub, right, children, className, phone }: { icon?: QIconName; title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string; phone?: "flat" }) {
+	const flat = phone === "flat";
 	return (
-		<div className={cn("q-cloze", className)}>
-			<div className="q-card-head">
+		<div className={cn("q-cloze", flat && "max-sm:rounded-none max-sm:bg-transparent max-sm:shadow-none", className)}>
+			<div className={cn("q-card-head", flat && "max-sm:h-auto max-sm:border-b-0 max-sm:px-0")}>
 				{icon && <QIcon name={icon} />}
-				<span className="text-ink first-letter:uppercase">{title}</span>
-				{sub && <span className="font-[450] text-ink-3">{sub}</span>}
-				{right !== undefined && <span className="mins">{right}</span>}
+				<span className="shrink-0 text-ink first-letter:uppercase">{title}</span>
+				{sub && <span className="min-w-0 truncate font-[450] text-ink-3">{sub}</span>}
+				{right !== undefined && <span className="mins shrink-0">{right}</span>}
 			</div>
-			<div className="px-5 py-6 sm:px-7 sm:pb-6 sm:pt-7">{children}</div>
+			<div className={cn("px-5 py-6 sm:px-7 sm:pb-6 sm:pt-7", flat && "max-sm:px-0 max-sm:pb-0 max-sm:pt-5")}>{children}</div>
 		</div>
 	);
 }

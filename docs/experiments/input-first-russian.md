@@ -19,11 +19,11 @@ The learner is the owner. Russian is the listening goal, A1 listening is confirm
 
 ## Design
 
-Forty-two days from **Monday 9 November 2026** to **Sunday 20 December 2026**, in the app's local days.
+Forty-two days from **Tuesday 10 November 2026** to **Monday 21 December 2026**, in the app's local days.
 
 - **Russian, days 1 to onset − 1:** normal plan (baseline).
 - **Russian, from the onset day to day 42:** listening-first arm.
-- **Onset:** a whole day drawn uniformly from **12 to 22** (days 12 to 22, which is 20 November to 30 November). Drawn once with a stored seed and written into `experiment.json` before day 1. The owner does not know it, unless the owner reads the file.
+- **Onset:** a whole day drawn uniformly from **12 to 22** (days 12 to 22, which is 21 November to 1 December). Drawn once with a stored seed and written into `experiment.json` before day 1. The owner does not know it, unless the owner reads the file.
 - **Slovak, all 42 days:** normal plan (control), with the same daily and weekly measures.
 
 Why this design: each learner day is a data point, so there are many points per phase. The random onset lets the analysis separate a treatment effect from a calendar trend (a trend would show at every candidate onset, a treatment only at the real one). The Slovak control shows what a non-treated series does over the same weeks.

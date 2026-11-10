@@ -109,7 +109,7 @@ export interface RegressionResult {
 
 export const EXPERIMENT_CONSTANTS = {
 	ID: "input-first-russian",
-	START_DATE: "2026-11-09",
+	START_DATE: "2026-11-10",
 	TOTAL_DAYS: 42,
 	CANDIDATE_ONSETS: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] as const,
 	MIN_DAYS_PER_PHASE: 8,

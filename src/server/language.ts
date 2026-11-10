@@ -10,6 +10,8 @@ import type { LanguageInfo } from "../core/language.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
 import { languageRemovable } from "./language-add.ts";
 
+export { activeProfile, shownProfiles, withProfile };
+
 interface ProfileStatus {
 	active: LanguageProfile;
 	/** The running language in full: the browser reads its tag, voices and letters here. */

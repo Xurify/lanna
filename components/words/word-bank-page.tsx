@@ -3,7 +3,7 @@
 import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, CheckCheckIcon, FootprintsIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
@@ -20,6 +20,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
+	const [sheetOpen, setSheetOpen] = useState(initialTab === "cheatsheets" && !!initialSheet);
 	const setActiveTab = (tab: WordsTab) => {
 		setActiveTabState(tab);
 		const url = new URL(window.location.href);
@@ -218,141 +219,99 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 	return (
 		<div className="min-h-dvh bg-background pb-28 pt-8">
 			<div className={COLUMN}>
-				{/* Top Header */}
-				<div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-					<div>
-						<h1 className="font-title text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-							Words
-						</h1>
-						<p className="mt-1 font-prose text-sm text-muted-foreground sm:text-base">
-							Your words, saved phrases and cheatsheets.
-						</p>
-					</div>
+				{!sheetOpen && (
+					<>
+						<div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+							<div className="min-w-0">
+								<h1 className="font-title text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Words</h1>
+								<p className="q-legend min-h-5" data-testid="words-summary">
+									{summary && (
+										<>
+											<span title="Cards in Review that you have answered at least once and that the scheduler predicts you can recall at 80% or more. It is not a count of all the words you know.">
+												<b className="tabular-nums">{summary.wordsMastered}</b> can recall at 80%+
+											</span>
+											<span>
+												<b className="tabular-nums">{summary.wordsLearning}</b> in progress
+											</span>
+											<span>
+												<b className="tabular-nums">{summary.wordsFavorited}</b> {summary.wordsFavorited === 1 ? "favorite" : "favorites"}
+											</span>
+											<span>
+												<b className="tabular-nums">{summary.savedPhrasesCount}</b> {summary.savedPhrasesCount === 1 ? "saved phrase" : "saved phrases"}
+											</span>
+										</>
+									)}
+								</p>
+							</div>
+							{summary && summary.wordsDue > 0 && (
+								<Link href="/review" className="q-btn sec self-start md:self-auto pointer-coarse:min-h-11">
+									<RepeatIcon className="size-4" />
+									{summary.wordsDue} due for review
+								</Link>
+							)}
+						</div>
 
-					{/* Action / Review Door */}
-					<div className="flex items-center gap-2">
-						{summary && summary.wordsDue > 0 && (
-							<Link
-								href="/review"
-								className="flex items-center gap-1.5 rounded-xl bg-sky/15 px-3.5 py-2 text-xs font-semibold text-sky transition-colors hover:bg-sky/25"
+						{/* Primary Tab Selector */}
+						<div className="mb-6 flex overflow-x-auto border-b border-border/80">
+							<button
+								type="button"
+								onClick={() => setActiveTab("words")}
+								className={cn(
+									"flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
+									activeTab === "words"
+										? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
+										: "text-muted-foreground hover:text-foreground",
+								)}
 							>
-								<RepeatIcon className="size-4" />
-								<span>{summary.wordsDue} due for review</span>
-							</Link>
-						)}
-					</div>
-				</div>
+								<BookOpenIcon className="hidden size-4 sm:block" />
+								<span>Words</span>
+								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
+									{totalWords}
+								</span>
+							</button>
 
-				{/* Lingvist / Speakly Style Metrics Ribbon */}
-				{/* The four cards arrive with the summary; their height is held (2 rows on a phone, 1 from sm up) so the tabs and the list below never move. */}
-				<div className="mb-8 min-h-[228px] sm:min-h-[108px]">
-				{summary && (
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm" title="Cards in your review deck that you have answered at least once and that the scheduler predicts you can recall at 80% or more. It is not a count of all the words you know.">
-							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Can recall</span>
-								<CheckCheckIcon className="size-4 text-go" />
-							</div>
-							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
-								{summary.wordsMastered}
-							</p>
-							<p className="text-[11px] text-muted-foreground">Review cards at 80%+ recall</p>
+							<button
+								type="button"
+								onClick={() => setActiveTab("phrases")}
+								className={cn(
+									"flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
+									activeTab === "phrases"
+										? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								<BookmarkIcon className="hidden size-4 sm:block" />
+								<span>Saved phrases</span>
+								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
+									{phrases.length}
+								</span>
+							</button>
+
+							<button
+								type="button"
+								onClick={() => setActiveTab("cheatsheets")}
+								data-testid="tab-cheatsheets"
+								className={cn(
+									"flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
+									activeTab === "cheatsheets"
+										? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								<FileTextIcon className="hidden size-4 sm:block" />
+								<span>Cheatsheets</span>
+								{sheetCount !== null && (
+									<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
+										{sheetCount}
+									</span>
+								)}
+							</button>
 						</div>
 
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
-							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">In progress</span>
-								<FootprintsIcon className="size-4 text-sun" />
-							</div>
-							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
-								{summary.wordsLearning}
-							</p>
-							<p className="text-[11px] text-muted-foreground">Practicing</p>
-						</div>
-
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
-							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Favorite words</span>
-								<StarIcon className="size-4 fill-gold text-gold" />
-							</div>
-							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
-								{summary.wordsFavorited}
-							</p>
-							<p className="text-[11px] text-muted-foreground">Marked with a star</p>
-						</div>
-
-						<div className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
-							<div className="flex items-center justify-between text-muted-foreground">
-								<span className="font-ui text-xs font-semibold">Saved phrases</span>
-								<BookmarkIcon className="size-4 text-trail-blue" />
-							</div>
-							<p className="mt-2 font-ui text-2xl font-semibold text-foreground">
-								{summary.savedPhrasesCount}
-							</p>
-							<p className="text-[11px] text-muted-foreground">From stories, scenes and lessons</p>
-						</div>
-					</div>
+					</>
 				)}
-				</div>
 
-				{/* Primary Tab Selector */}
-				<div className="mb-6 flex overflow-x-auto border-b border-border/80">
-					<button
-						type="button"
-						onClick={() => setActiveTab("words")}
-						className={cn(
-							"flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 sm:px-5 font-ui text-sm font-semibold transition-colors",
-							activeTab === "words"
-								? "border-primary text-foreground"
-								: "border-transparent text-muted-foreground hover:text-foreground",
-						)}
-					>
-						<BookOpenIcon className="hidden size-4 sm:block" />
-						<span>Words</span>
-						<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
-							{totalWords}
-						</span>
-					</button>
-
-					<button
-						type="button"
-						onClick={() => setActiveTab("phrases")}
-						className={cn(
-							"flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 sm:px-5 font-ui text-sm font-semibold transition-colors",
-							activeTab === "phrases"
-								? "border-primary text-foreground"
-								: "border-transparent text-muted-foreground hover:text-foreground",
-						)}
-					>
-						<BookmarkIcon className="hidden size-4 sm:block" />
-						<span>Saved phrases</span>
-						<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
-							{phrases.length}
-						</span>
-					</button>
-
-					<button
-						type="button"
-						onClick={() => setActiveTab("cheatsheets")}
-						data-testid="tab-cheatsheets"
-						className={cn(
-							"flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 sm:px-5 font-ui text-sm font-semibold transition-colors",
-							activeTab === "cheatsheets"
-								? "border-primary text-foreground"
-								: "border-transparent text-muted-foreground hover:text-foreground",
-						)}
-					>
-						<FileTextIcon className="hidden size-4 sm:block" />
-						<span>Cheatsheets</span>
-						{sheetCount !== null && (
-							<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
-								{sheetCount}
-							</span>
-						)}
-					</button>
-				</div>
-
-				{activeTab === "cheatsheets" && <CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} />}
+				{activeTab === "cheatsheets" && <CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} onOpenChange={setSheetOpen} />}
 
 				{/* ──────────────── TAB 1: WORD BANK ──────────────── */}
 				{activeTab === "words" && (

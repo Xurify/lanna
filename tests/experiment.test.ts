@@ -39,19 +39,19 @@ test("PRNG is deterministic and draws onset within candidate range [12..22]", ()
 
 	const onset = drawOnsetDay(20261108);
 	assert.ok(EXPERIMENT_CONSTANTS.CANDIDATE_ONSETS.includes(onset as any), `Onset ${onset} not in candidate set`);
-	assert.equal(onset, 15, "Seed 20261108 draws Day 15 (2026-11-23)");
+	assert.equal(onset, 15, "Seed 20261108 draws Day 15 (2026-11-24)");
 });
 
 test("Date and day number arithmetic handles 42-day span correctly", () => {
-	assert.equal(dateForDayNumber("2026-11-09", 1), "2026-11-09");
-	assert.equal(dateForDayNumber("2026-11-09", 42), "2026-12-20");
-	assert.equal(dayNumberForDate("2026-11-09", "2026-11-09"), 1);
-	assert.equal(dayNumberForDate("2026-11-09", "2026-12-20"), 42);
-	assert.equal(dayNumberForDate("2026-11-09", "2026-11-23"), 15);
+	assert.equal(dateForDayNumber("2026-11-10", 1), "2026-11-10");
+	assert.equal(dateForDayNumber("2026-11-10", 42), "2026-12-21");
+	assert.equal(dayNumberForDate("2026-11-10", "2026-11-10"), 1);
+	assert.equal(dayNumberForDate("2026-11-10", "2026-12-21"), 42);
+	assert.equal(dayNumberForDate("2026-11-10", "2026-11-24"), 15);
 });
 
 test("Schedule generation properly assigns arms, phases and weekly check days", () => {
-	const schedule = buildSchedule("2026-11-09", 15, 42);
+	const schedule = buildSchedule("2026-11-10", 15, 42);
 	assert.equal(schedule.length, 42);
 
 	// Baseline days 1..14
@@ -102,7 +102,7 @@ test("fitInterruptedTimeSeries estimates positive level shift b2 accurately", ()
 		const baseShare = 0.5;
 		const shift = isPost ? 0.2 : 0.0;
 		records.push({
-			date: dateForDayNumber("2026-11-09", d),
+			date: dateForDayNumber("2026-11-10", d),
 			dayNumber: d,
 			language: "russian",
 			phase: isPost ? "intervention" : "baseline",
@@ -132,18 +132,18 @@ test("weeklyCheckRows opens a check on its day and counts a repeated item once",
 		id: "input-first-russian",
 		title: "t",
 		version: "3",
-		startDate: "2026-11-09",
-		endDate: "2026-12-20",
+		startDate: "2026-11-10",
+		endDate: "2026-12-21",
 		days: 42,
 		seed: 20261108,
 		onsetDay: 15,
-		onsetDate: "2026-11-23",
+		onsetDate: "2026-11-24",
 		languages: { treatment: "russian", control: "slovak" },
 		protocolHash: "",
 		gitCommit: "",
 		decisionRule: "",
 	};
-	const item = (type: "probe" | "production", n: number, score: number): CheckItemRecord => ({ date: "2026-11-15", week: 1, dayNumber: 7, language: "russian", type, itemId: `${type}-${n}`, prompt: "", expected: "", response: "", score, verdict: "" });
+	const item = (type: "probe" | "production", n: number, score: number): CheckItemRecord => ({ date: "2026-11-16", week: 1, dayNumber: 7, language: "russian", type, itemId: `${type}-${n}`, prompt: "", expected: "", response: "", score, verdict: "" });
 	const firstTry = [...Array.from({ length: 10 }, (_, n) => item("probe", n, n < 6 ? 1 : 0)), ...Array.from({ length: 5 }, (_, n) => item("production", n, 0.8))];
 	const secondTry = [item("probe", 9, 1)];
 
@@ -153,7 +153,7 @@ test("weeklyCheckRows opens a check on its day and counts a repeated item once",
 
 	const onTheDay = weeklyCheckRows(config, [], 7);
 	assert.deepEqual(onTheDay.filter((r) => r.state === "open").map((r) => `${r.week}:${r.language}`), ["1:russian", "1:slovak"]);
-	assert.equal(onTheDay[0]!.date, "2026-11-15");
+	assert.equal(onTheDay[0]!.date, "2026-11-16");
 
 	const answered = weeklyCheckRows(config, [...firstTry, ...secondTry], 7);
 	const russian = answered[0]!;

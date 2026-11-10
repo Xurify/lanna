@@ -39,7 +39,9 @@ import { MENU_CLOSE_EVENT, MENU_OPEN_EVENT } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { KeysSection } from "./keys-section.tsx";
 import { AppearanceSection } from "./appearance-section.tsx";
+import { NotificationsSection } from "./notifications-section.tsx";
 import {
+	BellIcon,
 	BookMarkedIcon,
 	BotIcon,
 	ChevronLeftIcon,
@@ -71,6 +73,7 @@ import { sharedJson } from "@/lib/shared-fetch";
 const SECTIONS = [
 	{ id: "general", label: "General" },
 	{ id: "learner", label: "Learning" },
+	{ id: "notifications", label: "Notifications" },
 	{ id: "sound", label: "Sound" },
 	{ id: "appearance", label: "Appearance" },
 	{ id: "keyboard", label: "Keyboard" },
@@ -87,6 +90,7 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	keys: KeyRoundIcon,
 	ai: BotIcon,
 	learner: GraduationCapIcon,
+	notifications: BellIcon,
 	appearance: PaletteIcon,
 	keyboard: KeyboardIcon,
 	devices: SmartphoneIcon,
@@ -214,7 +218,7 @@ function SettingsDialogBody({
 	/** The one writer: PUT the section, sync the record, show route errors inline. */
 	const write = useCallback(
 		async (
-			section: "general" | "agent" | "models" | "appearance" | "compaction",
+			section: "general" | "agent" | "models" | "appearance" | "compaction" | "notifications",
 			body: object,
 		) => {
 			setError(null);
@@ -377,6 +381,12 @@ function SettingsDialogBody({
 										<WordLookupModeRow />
 									</SettingsGroup>
 								</SettingsSection>
+							)}
+							{active === "notifications" && (
+								<NotificationsSection
+									settings={record.notifications}
+									onSave={(next) => void write("notifications", next)}
+								/>
 							)}
 							{active === "sound" && (
 								<SettingsSection

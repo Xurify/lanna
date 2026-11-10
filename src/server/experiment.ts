@@ -197,7 +197,9 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 		config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 		schedule = JSON.parse(fs.readFileSync(schedulePath, "utf8"));
 		pool = JSON.parse(fs.readFileSync(poolPath, "utf8"));
-		return { config, schedule, pool };
+		if (config.startDate === EXPERIMENT_CONSTANTS.START_DATE) {
+			return { config, schedule, pool };
+		}
 	}
 
 	const provenance = getSystemProvenance();
@@ -265,7 +267,7 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 export function resetExperiment(newStartDate?: string): { config: ExperimentConfig; schedule: DaySchedule[]; pool: ProbePoolData } {
 	const dir = experimentDir();
 	ensureDir(dir);
-	const startDate = newStartDate || dayKey(new Date());
+	const startDate = newStartDate || EXPERIMENT_CONSTANTS.START_DATE;
 	const onsetDay = drawOnsetDay(EXPERIMENT_SEED);
 	const onsetDate = dateForDayNumber(startDate, onsetDay);
 	const endDate = dateForDayNumber(startDate, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
@@ -379,7 +381,7 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 		dailyMap.set(`${r.date}:${r.language}`, r);
 	}
 
-	const maxDay = Math.min(Math.max(currentDayNumber, 1), EXPERIMENT_CONSTANTS.TOTAL_DAYS);
+	const maxDay = currentDayNumber < 1 ? 0 : Math.min(currentDayNumber, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
 
 	for (let d = 1; d <= maxDay; d++) {
 		const s = schedule[d - 1];
@@ -486,7 +488,7 @@ export function getExperimentState(now = new Date()) {
 		phase: currentDayNumber >= config.onsetDay ? "intervention" : "baseline",
 		russianArm: currentDayNumber >= config.onsetDay ? "input-first" : "normal",
 		slovakArm: "normal",
-		weeklyCheckDue: currentDayNumber % 7 === 0,
+		weeklyCheckDue: currentDayNumber > 0 && currentDayNumber % 7 === 0,
 	};
 
 	const analysis = runRandomizationTest(
